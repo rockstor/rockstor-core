@@ -1,0 +1,73 @@
+<script>
+/*
+ * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ * 
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ * 
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ */
+</script>
+
+
+<div class="row-fluid">
+  <div class="span12">
+    <div class="module-header">
+      <div class="title"><span class="h3">Snapshots</span></div>
+    </div>
+  </div> <!-- span12 -->
+</div> <!-- row-fluid -->
+
+
+<div class="row-fluid">
+  <div class="span12">
+    <!-- Content -->
+    <div class="module-content">
+      <% if (!snapshots.isEmpty()) { %>
+        <table id="snapshots-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of snapshots">
+          <thead>
+            <tr>
+              <th>No.</th>
+              <th>Name</th>
+              <th>Size</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% snapshots.each(function(snapshot, index) { %>
+              <tr>
+                <td><%= index+1 %></td>
+                <td><a href="#shares/<%= snapshot.get('name') %>"><%= snapshot.get('name') %></a></td>
+                <td><%= snapshot.get('size') %></td>
+                <td><button id="delete_snapshot_<%= snapshot.get('name') %>"
+                    data-name="<%= snapshot.get('name') %>" data-share-name="<%= share.get('name') %>" data-action="delete" class="btn btn-danger">Delete</button></td>
+              </tr>
+            <% }); %>
+          </tbody>
+
+        </table>
+      <% } else { %>
+        <table id="snapshots-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of snapshots">
+          <tbody>
+            <tr>
+              <td colspan="4">
+                <h4>No snapshots have been created</h4>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+  </div> <!-- span12 -->
+</div> <!-- row-fluid -->
+

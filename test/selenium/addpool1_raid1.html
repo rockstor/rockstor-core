@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head profile="http://selenium-ide.openqa.org/profiles/test-case">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="selenium.base" href="https://192.168.1.21/" />
+<title>addpool1_raid1</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">addpool1_raid1</td></tr>
+</thead><tbody>
+<tr>
+	<td>open</td>
+	<td>//login_page?next=/</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=inputUsername</td>
+	<td>admin</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=inputPassword</td>
+	<td>admin</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>css=button.btn.btn-primary</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=disks_nav</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>Disks</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=pools_nav</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForCondition</td>
+	<td>selenium.browserbot.getCurrentWindow().document.getElementById('add_pool')</td>
+	<td>3000</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=add_pool</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForElementPresent</td>
+	<td>id=pool_name</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=pool_name</td>
+	<td>poolwithraid1</td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>id=raid_level</td>
+	<td>label=Raid1</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=sdd</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=sde</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=create_pool</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForElementPresent</td>
+	<td>link=poolwithraid1</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>id=logout_user</td>
+	<td></td>
+</tr>
+</tbody></table>
+</body>
+</html>
