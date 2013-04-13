@@ -1,0 +1,69 @@
+<script>
+/*
+ * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ * 
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ * 
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ */
+</script>
+
+<div class="row-fluid">
+  <div class="span12">
+    <div class="module-header">
+      <div class="title"><span class="h3">Samba</span></div>
+    </div>
+  </div> <!-- span12 -->
+</div> <!-- row-fluid -->
+
+<div class="row-fluid">
+  <div class="span12">
+    <div class="module-content">
+      <% if (!_.isNull(smb_share)) { %>
+        <table id="smb-shares-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="SMB Share">
+          <thead>
+            <tr>
+              <th>Browsable</th>
+              <th>Guest Ok</th>
+              <th>Read only</th>
+              <th>Comment</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="smb-shares-table-body">
+            <%= window.JST.share_smb_shares_table_row_template({smb_share: smb_share}) %>
+          </tbody>
+
+        </table>
+      <% } else { %>
+        <table id="smb-shares-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="SMB Share">
+          <thead>
+            <tr>
+              <th>Browsable</th>
+              <th>Guest Ok</th>
+              <th>Read only</th>
+              <th>Comment</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="smb-shares-table-body">
+            <%= window.JST.share_smb_shares_table_empty_body_template() %>
+          </tbody>
+        </table>
+        <a id="add-smb-share" class="btn btn-primary table-header-action" href="#">Add</a>
+      <% } %>
+    </div> <!-- module-content -->
+  </div> <!-- span12 -->
+</div> <!-- row-fluid -->
+

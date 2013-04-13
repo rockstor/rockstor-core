@@ -1,0 +1,63 @@
+<script>
+/*
+ * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ * 
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ * 
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ */
+</script>
+
+<!-- page heading -->
+<div class="row-fluid">
+  <div class="span12">
+    <div class="pageheading">
+      <div id="title" class="title"><span class="h1">Pool <%= pool.get('name') %></span></div>
+    </div>
+  </div> <!-- span12 -->
+</div> <!-- row-fluid -->
+
+<div class="row-fluid">
+  <div class="span5">
+    <div id="ph-pool-info"></div>
+  </div> <!-- span5 -->
+  <div class="span6">
+    <div id="ph-pool-usage"></div>
+  </div> <!-- span5 -->
+</div> <!-- row-fluid -->
+
+<!-- Buttons -->
+<div class="row-fluid">
+  <div class="span12">
+    <div id="ph-button-bar">
+      <button id="resize-pool-popup" rel="#resize-pool-form" class="btn btn-primary" type="button">Resize</button>
+      <button id="delete-pool" class="btn btn-danger" type="button">Delete</button>
+      <a href="#add_share" id="add_share" class="btn btn-primary">Add Share</a>
+    </div> <!-- button-bar -->
+  </div> <!-- span12 -->
+</div> <!-- row-fluid -->
+
+<div class="simple-overlay" id="resize-pool-form">
+  <div class="span6 well">
+    <h4>Resize Pool</h4>
+    Select disks to add<br/>
+    <div id="disks-to-add"></div>
+
+    <br/>
+    <button id="resize-pool" class="btn btn-primary">Submit</button>
+  </div>
+</div>
+
+
+

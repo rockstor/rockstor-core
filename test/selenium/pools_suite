@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <meta content="text/html; charset=UTF-8" http-equiv="content-type" />
+  <title>Test Suite</title>
+</head>
+<body>
+<table id="suiteTable" cellpadding="1" cellspacing="1" border="1" class="selenium"><tbody>
+<tr><td><b>Test Suite</b></td></tr>
+<tr><td><a href="test_addpool_raid0">addpool1_raid0</a></td></tr>
+<tr><td><a href="deletepool1_raid0.html">deletepool1_raid0</a></td></tr>
+<tr><td><a href="addpool1_raid1.html">addpool1_raid1</a></td></tr>
+<tr><td><a href="deletepool1_raid1">deletepool1_raid1</a></td></tr>
+<tr><td><a href="addpool1_raid10">addpool1_raid10</a></td></tr>
+<tr><td><a href="deletepool1_raid10">deletepool1_raid10</a></td></tr>
+<tr><td><a href="addpool_10disks_raid0">addpool_10disks_raid0</a></td></tr>
+<tr><td><a href="addpool_10disks_raid1">addpool_10disks_raid1</a></td></tr>
+<tr><td><a href="addpool_10disks_raid10">addpool_10disks_raid10</a></td></tr>
+<tr><td><a href="addpool_1disk_raid0">addpool_1disk_raid0</a></td></tr>
+<tr><td><a href="addpool_1disk_raid1">addpool_1disk_raid1</a></td></tr>
+<tr><td><a href="addpool_1disk_raid10">addpool_1disk_raid10</a></td></tr>
+<tr><td><a href="addpool_2disks_raid10">addpool_2disks_raid10</a></td></tr>
+<tr><td><a href="addpool_3disks_raid10">addpool_3disks_raid10</a></td></tr>
+<tr><td><a href="poolname_exact32char_raid0">poolname_exact32char_raid0</a></td></tr>
+<tr><td><a href="morethan32_poolname_raid0">morethan32_poolname_raid0</a></td></tr>
+<tr><td><a href="addpool_2pools_2disks_raid0">addpool_2pools_2disks_raid0</a></td></tr>
+<tr><td><a href="deletepool_2pools_raid0">deletepool_2pools_raid0</a></td></tr>
+</tbody></table>
+</body>
+</html>

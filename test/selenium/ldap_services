@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head profile="http://selenium-ide.openqa.org/profiles/test-case">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="selenium.base" href="https://192.168.1.21/" />
+<title>ldap_services</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">ldap_services</td></tr>
+</thead><tbody>
+<tr>
+	<td>open</td>
+	<td>/login_page</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=inputUsername</td>
+	<td>admin</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=inputPassword</td>
+	<td>admin</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>id=sign_in</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=services_nav</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForTable</td>
+	<td>id=services-table.0.0</td>
+	<td>Service Name</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=ldap-start</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForText</td>
+	<td>id=messages ldap started successfully</td>
+	<td>20000</td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>ldap started successfully</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForElementPresent</td>
+	<td>css=div.service-status.running</td>
+	<td>30000</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=ldap-stop</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForText</td>
+	<td>id=messages ldap stopped successfully</td>
+	<td>20000</td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>ldap stopped successfully</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForElementPresent</td>
+	<td>css=div.service-status.stopped</td>
+	<td>30000</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=ldap-restart</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForText</td>
+	<td>id=messages ldap restarted successfully</td>
+	<td>20000</td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>ldap restarted successfully</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForElementPresent</td>
+	<td>css=div.service-status.running</td>
+	<td>30000</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=ldap-reload</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForText</td>
+	<td>id=messages ldap reloaded successfully</td>
+	<td>20000</td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>ldap reloaded successfully</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=ldap-stop</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForText</td>
+	<td>id=messages ldap restopped successfully</td>
+	<td>20000</td>
+</tr>
+<tr>
+	<td>waitForElementPresent</td>
+	<td>css=div.service-status.stopped</td>
+	<td>30000</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=logout_user</td>
+	<td></td>
+</tr>
+
+</tbody></table>
+</body>
+</html>

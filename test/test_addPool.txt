@@ -1,0 +1,12 @@
+Steps to Test Add pool :
+
+1.Login to rockstor website and go to Pools.  
+2.Click on Add pool button.
+3.Make sure the add pool form appears which asks for the following inputs:
+	initial column is where the name of pool is to be given
+	raid : ( select one from given raid)
+4.Fill out the input fields in the form
+5.Select the disks to form a pool.
+6.Click on 'Create Pool'.
+7. Make sure a new pool is added when the pool list page displays.
+

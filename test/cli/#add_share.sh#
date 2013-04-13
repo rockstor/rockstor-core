@@ -1,0 +1,3 @@
+#!/bin/sh
+
+/root/rock-dep/bin/rcli setup disks

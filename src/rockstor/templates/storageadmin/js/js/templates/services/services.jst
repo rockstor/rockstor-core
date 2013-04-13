@@ -1,0 +1,67 @@
+<script>
+/*
+ * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ * 
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ * 
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ */
+</script>
+
+
+<div class="row-fluid">
+  <div class="span8">
+    <div id="services-list">
+      <div id="service">
+        <span class="h3">Services</span>
+        <span id="service-loading-indicator" style="visibility:hidden"><img src="/img/ajax-loader.gif"/></span>
+        <table id="services-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" width="100%">
+          <thead>
+            <tr>
+              <th scope="col">Service Name</th>
+              <th scope="col">Status</th>
+              <th scope="col"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% _.each(_.keys(services), function(name) { %>
+              <% var service = services[name]; %>
+              <tr id="<%= service.get('name') %>">
+                <td><%= service.get('name') %></td>
+                  <td id="<%= service.get('name') %>-status">
+                    <% if (service.get('status')) { %>
+                      <div class="service-status running"></div>
+                    <% } else { %>
+                      <div class="service-status stopped"></div>
+                    <% } %>
+                  </td>
+                <td>
+                  <a href="#" id="<%= service.get('name') %>-start" class="service-command" data-service-name="<%= service.get('name') %>" data-command="start">Start</a>
+                  &nbsp;
+                  <a href="#" id="<%= service.get('name') %>-stop" class="service-command" data-service-name="<%= service.get('name') %>" data-command="stop">Stop</a>
+                  &nbsp;
+                  <a href="#" id="<%= service.get('name') %>-restart" class="service-command" data-service-name="<%= service.get('name') %>" data-command="restart">Restart</a>
+                  &nbsp;
+                  <a href="#" id="<%= service.get('name') %>-reload" class="service-command" data-service-name="<%= service.get('name') %>" data-command="reload">Reload</a>
+                </td>
+              </tr>
+
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+

@@ -1,0 +1,86 @@
+<script>
+/*
+ * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ * 
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ * 
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ */
+</script>
+
+<div class="row-fluid">
+  <div class="span12">
+    <div class="pageheading">
+      <div id="title" class="title"><span class="h1">Create Pool</span></div>
+    </div>
+  </div> <!-- span12 -->
+</div> <!-- row-fluid -->
+
+<div class="row-fluid">
+  <div class="span12">
+    <div class="module">
+      <div class="row-fluid">
+        <div class="span12">
+          <!-- Content -->
+          <div class="module-content">
+            <form name="add-pool-form" id="add-pool-form">
+              Pool Name: 
+              <br/>
+              <input type="text" name="pool_name" id="pool_name">
+              <br/>
+              Raid Configuration<br/>
+              <select id="raid_level" name="raid_level">
+                <option value="raid0">Raid0</option>
+                <option value="raid1">Raid1</option>
+                <option value="raid10">Raid10</option>
+              </select>
+              <br/>
+              <h2>Select disks</h2>
+              <table id="disks-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of disks">
+                <thead>
+                  <tr>
+                    <th>No.</th>
+                    <th>Name</th>
+                    <th>Size</th>
+                    <th>In use</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% disks.each(function(disk, index) { %>
+                    <% if (_.isNull(disk.get('pool'))) { %>
+                      <tr>
+                        <td><%= index+1 %></td>
+                        <td><%= disk.get('name') %></td>
+                        <td><%= disk.get('size') %></td>
+                        <td><%= disk.get('parted') %></td>
+                        <td>
+                          <input type="checkbox" class="disk" name="<%= disk.get('name') %>" id="<%= disk.get('name') %>" value="<%= disk.get('name') %>">
+                        </td>
+                      </tr>
+                    <% } %>
+                  <% }); %>
+                </tbody>
+              </table>
+              <br/>
+              <input type="Submit" id="create_pool" class="btn btn-primary" value="Submit"></input>
+            </form>
+          </div> <!-- module-content -->
+        </div> <!-- span12 -->
+      </div> <!-- row-fluid -->
+
+    </div> <!-- module -->
+  </div> <!-- span12 -->
+</div> <!-- row-fluid -->
+
