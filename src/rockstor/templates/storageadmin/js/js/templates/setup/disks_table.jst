@@ -1,0 +1,65 @@
+<script>
+/*
+ * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ * 
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ * 
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ */
+</script>
+
+<!-- Header -->
+<div class="row-fluid">
+  <div class="span12">
+    <div class="module-header">
+      <div class="title"><span class="h3">Disks</span></div>
+    </div>
+  </div> <!-- span12 -->
+</div> <!-- row-fluid -->
+
+<!-- Module Body -->
+<div class="row-fluid">
+  <div class="span12">
+    <!-- Content -->
+    <div class="span12">
+      <% if (!disks.isEmpty()) { %>
+        <table id="disks-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of disks">
+          <thead>
+            <tr>
+              <th scope="col" abbr="Name">Disk Name</th>
+              <th scope="col" abbr="Capacity">Capacity</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% disks.each(function(disk, index) { %>
+              <tr>
+                <td>
+                  <a href="#disks/<%= disk.get('name') %>" class="disk_row" id="<%= disk.id %>">
+                    <%= disk.get('name') %>
+                  </a>
+                </td>
+                <td><%= disk.get('size') %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      <% } else { %>
+        <h4>No disks added. Please run Setup to discover disks</h4>
+      <% } %>
+    </div>
+    <!-- End Content -->
+  </div> <!-- span12 -->
+</div> <!-- row-fluid --> 
+<!-- end module body -->
+

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <meta content="text/html; charset=UTF-8" http-equiv="content-type" />
+  <title>Test Suite</title>
+</head>
+<body>
+<table id="suiteTable" cellpadding="1" cellspacing="1" border="1" class="selenium"><tbody>
+<tr><td><b>Test Suite</b></td></tr>
+<tr><td><a href="addpool1_raid0.html">addpool1_raid0</a></td></tr>
+<tr><td><a href="deletepool1_raid0.html">deletepool1_raid0</a></td></tr>
+<tr><td><a href="addpool1_raid1.html">addpool1_raid1</a></td></tr>
+<tr><td><a href="deletepool1_raid1">deletepool1_raid1</a></td></tr>
+<tr><td><a href="addpool1_raid10">addpool1_raid10</a></td></tr>
+<tr><td><a href="deletepool1_raid10">deletepool1_raid10</a></td></tr>
+<tr><td><a href="addpool1_disk1">addpool1_disk1_raid0</a></td></tr>
+<tr><td><a href="addpool1_disk3_raid0">addpool1_disk3_raid0</a></td></tr>
+<tr><td><a href="addpool1_disk2_raid10">addpool1_disk2_raid10</a></td></tr>
+<tr><td><a href="test_addpool_raid0">test_addpool_raid0</a></td></tr>
+</tbody></table>
+</body>
+</html>

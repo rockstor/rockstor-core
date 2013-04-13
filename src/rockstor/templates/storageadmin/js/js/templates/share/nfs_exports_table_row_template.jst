@@ -1,0 +1,24 @@
+<tr id="new-nfs-export-row">
+  <td></td>
+  <td> <input type="text" name="host_str" id="host_str"> </td>
+  <td>
+    <select id="mod_choice" name="mod_choice">
+      <% _.each(modify_choices, function(c) { %>
+        <option value="<%= c.value %>"><%= c.name %></option>
+      <% }); %>
+    </select>
+  </td>
+  <td>
+    <select id="sync_choice" name="sync_choice">
+      <% _.each(sync_choices, function(c) { %>
+        <option value="<%= c.value %>"><%= c.name %></option>
+      <% }); %>
+    </select>
+
+  </td>
+  <td>
+    <button class="btn btn-primary" id="save-new">Save</button>
+    <a href="#" id="cancel-add">Cancel</a>
+  </td>
+</tr>
+

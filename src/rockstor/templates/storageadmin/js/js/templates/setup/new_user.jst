@@ -1,0 +1,44 @@
+<script>
+/*
+ * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ * 
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ * 
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ */
+</script>
+
+<h3>Add User</h3>
+<div id="add-user-msg"></div>
+<table id="new-users-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of user">
+  <thead>
+    <tr>
+      <th scope="col" abbr="username">Username</th>
+      <th scope="col" abbr="password">Password</th>
+      <th scope="col" abbr="confirm_password">Confirm Password</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><input type="text" id="username" name="username"/></td>
+      <td><input type="password" id="password" name="password"/></td>
+      <td><input type="password" id="password_confirmation" name="password_confirmation"/></td>
+    </tr>
+  </tbody>
+</table>
+
+<button id="save-new-user" type="submit" class="btn btn-primary">Save</button>
+<button id="cancel-new-user" type="submit" class="btn">Cancel</button>
+
+

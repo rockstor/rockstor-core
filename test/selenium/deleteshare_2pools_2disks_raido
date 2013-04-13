@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head profile="http://selenium-ide.openqa.org/profiles/test-case">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="selenium.base" href="https://192.168.1.21/" />
+<title>deleteshare_2pools_2disks_raido</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">deleteshare_2pools_2disks_raido</td></tr>
+</thead><tbody>
+<tr>
+	<td>open</td>
+	<td>//login_page</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=inputUsername</td>
+	<td>admin</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=inputPassword</td>
+	<td>admin</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>id=sign_in</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=disks_nav</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForTable</td>
+	<td>id=disks-table.0.1</td>
+	<td>Capacity</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=pools_nav</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForTable</td>
+	<td>id=pools-table.0.1</td>
+	<td>Name</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=shares_nav</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForTable</td>
+	<td>id=shares-table.0.1</td>
+	<td>Name</td>
+</tr>
+<tr>
+	<td>waitForElementPresent</td>
+	<td>id=add_share</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=delete_share_share1</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForElementPresent</td>
+	<td>id=add_share</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>id=logout_user</td>
+	<td></td>
+</tr>
+
+</tbody></table>
+</body>
+</html>
