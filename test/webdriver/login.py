@@ -28,13 +28,8 @@ passwordField.send_keys("admin")
 # submit the form
 driver.find_element_by_id("sign_in").click()
 
-disks_nav = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "disks_nav")))
-disks_nav.click()
-
-disks_table = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "disks-table"))) 
-disk_rows = driver.find_elements_by_class_name("disk_row")
-for d in disk_rows:
-    print d.get_attribute('href')
+current_step = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.className, "current_step")))
+print current_step.text()
 
 driver.quit()
 
