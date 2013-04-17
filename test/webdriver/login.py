@@ -29,7 +29,7 @@ passwordField.send_keys("admin")
 driver.find_element_by_id("sign_in").click()
 
 current_step = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "current-step")))
-print current_step.text()
+print current_step.text
 
 driver.quit()
 
