@@ -10,7 +10,6 @@ import sys, getopt
 
 class RockStorTestCase(unittest.TestCase):
     def setUp(self):
-        print "doing setup"
         self.driver = webdriver.Firefox()
         self.driver.implicitly_wait(30)
         with open('config.yaml','r') as f:
