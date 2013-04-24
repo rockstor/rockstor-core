@@ -16,8 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
-body { 
-  color: #555; 
+body {
+  color: #555;
   background: #fff;
 
 }
@@ -26,9 +26,9 @@ body {
 
 /* fonts */
 body { font: 12px/1.5em "Helvetica Neue",Helvetica,Arial,sans-serif; }
-h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 { 
+h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
   font-family: "Lucida Sans Unicode","Lucida Grande",sans-serif;
-  font-weight: normal; 
+  font-weight: normal;
   letter-spacing: -1px;
 }
 h1, .h1 { font-size: 218%; line-height: 1.5em; }
@@ -55,12 +55,16 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
 .smallinput { width: 100px; }
 
 /* Navbar */
-.navbar-outer { 
+.navbar-outer {
   border-bottom: 1px solid #ddd;
   background: #3E454C;
 }
 
-.navbar { margin-bottom: 4px; margin-top: 4px; }
+.navbar {
+    padding: 24px 0px 24px 0px;
+    margin-bottom: 0px;
+    font: 12px/1.5em "Helvetica Neue",Helvetica,Arial,sans-serif;
+}
 
 .navbar-inner {
   padding-left: 0;
@@ -119,7 +123,7 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
 /* Logo */
 #logo {
   float: left;
-  padding: 10px 20px 10px;
+  padding: 1px 20px 1px;
   margin-left: -20px;
 }
 
@@ -164,20 +168,20 @@ a#logo-name { color: #fff; }
   /*float: left;*/
 /*}*/
 
-.module-header .gear { 
+.module-header .gear {
   position: absolute;
   top: 4px;
   right: 4px;
   visibility: hidden;
 }
 
-.module .smalltitle{ 
+.module .smalltitle{
   color: #000;
   letter-spacing: 1px;
-  font-size: 18px; 
-  line-height: 24px; 
+  font-size: 18px;
+  line-height: 24px;
   font-weight: 200;
-  margin-bottom: 5px; 
+  margin-bottom: 5px;
 }
 
 .module .edit-module {
@@ -285,7 +289,7 @@ a#logo-name { color: #fff; }
 
 .table-striped th {
 	/*background: #7AA1D7 !important;*/
-  color: #555; 
+  color: #555;
   font-weight: normal !important;
   background: #9AB5C8;
 }
@@ -367,7 +371,7 @@ background-color: #8dbdd8;
     box-shadow: 0 0 90px #000;
     padding-top: 20px;
 }
- 
+
 /* close button positioned on upper right corner */
 .simple-overlay .close {
     background-image:url(/img/close.png);
@@ -419,7 +423,7 @@ ul#breadcrumbs { padding: 0; margin: 0; }
   background-image: -moz-linear-gradient(left, #f5f5f5, #ddd);
   background-image: -ms-linear-gradient(left, #f5f5f5, #ddd);
   background-image: -o-linear-gradient(left, #f5f5f5, #ddd);
-  background-image: linear-gradient(to right, #f5f5f5, #ddd);  
+  background-image: linear-gradient(to right, #f5f5f5, #ddd);
 }
 
 #breadcrumbs li:first-child a {
@@ -436,22 +440,22 @@ ul#breadcrumbs { padding: 0; margin: 0; }
   content: "";
   position: absolute;
   top: 50%;
-  margin-top: -1.5em;   
+  margin-top: -1.5em;
   border-top: 1.5em solid transparent;
   border-bottom: 1.5em solid transparent;
   border-left: 1em solid;
   right: -1em;
 }
 
-#breadcrumbs a::after { 
+#breadcrumbs a::after {
   z-index: 2;
-  border-left-color: #ddd;  
+  border-left-color: #ddd;
 }
 
 #breadcrumbs a::before {
-  border-left-color: #ccc;  
+  border-left-color: #ccc;
   right: -1.1em;
-  z-index: 1; 
+  z-index: 1;
 }
 
 #breadcrumbs a:hover::after {
@@ -466,7 +470,7 @@ ul#breadcrumbs { padding: 0; margin: 0; }
 
 #breadcrumbs .current::after,
 #breadcrumbs .current::before {
-  content: normal;  
+  content: normal;
 }
 
 form#login_form {
@@ -631,9 +635,9 @@ label.error { color: #b94a48; }
 
 #appliance-name h3 { margin-bottom: 24px; }
 
-#appliance-select-content { 
-  height: 400px; 
-  overflow-y: auto; 
+#appliance-select-content {
+  height: 400px;
+  overflow-y: auto;
   padding: 24px;
 }
 
