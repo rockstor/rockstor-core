@@ -298,11 +298,11 @@ TAP_SERVER = ('localhost', ${django-settings-conf:tapport})
 
 SUPPORT = {
         'email': 'suman@rockstor.com',
-        'log_loc': '${buildout:directory}/var/log',
+        'log_loc': '${django-settings-conf:rootdir}/var/log',
 }
 
 WEBSOCKET_CLIENT = {
-		 'logfile': '${buildout:directory}/var/log/wc.log',
+		 'logfile': '${django-settings-conf:rootdir}/var/log/wc.log',
 }
 
 NGINX_WEBSOCKET_PORT = ${myvar:nginx_websocket_port}
