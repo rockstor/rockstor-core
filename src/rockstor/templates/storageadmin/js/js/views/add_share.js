@@ -40,6 +40,9 @@ AddShareView = Backbone.View.extend({
       success: function(collection, response) {
         $(_this.el).append(_this.template({pools: _this.pools}));
         this.$('#create_share').click(function() {
+          if (_this.$('#create_share').data("executing")) return false;
+          _this.$('#create_share').data("executing", true);
+          _this.$('#create_share').attr("disabled", true);
           var share_name = $('#share_name').val();
           var pool_name = $('#pool_name').val();
           console.log('pool_name is ' + pool_name);
@@ -50,9 +53,13 @@ AddShareView = Backbone.View.extend({
             dataType: "json",
             data: {"pool": pool_name, "name": share_name, "size": size},
             success: function() {
+              _this.$('#create_share').data("executing", false);
+              _this.$('#create_share').attr("disabled", false);
               app_router.navigate('shares', {trigger: true}) 
             },
             error: function(request, status, error) {
+              _this.$('#create_share').data("executing", false);
+              _this.$('#create_share').attr("disabled", false);
               showError(request.responseText);	
             }
           });
