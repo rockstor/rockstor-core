@@ -88,6 +88,7 @@ class ShareSambaView(APIView):
                         e_msg = ('Invalid choice for read_only. Possible '
                                  'options are yes or no.')
                         handle_exception(Exception(e_msg), request)
+                    options['read_only'] = request.DATA['read_only']
                 if ('create_mask' in request.DATA):
                     if (request.DATA['create_mask'] not in self.CREATE_MASKS):
                         e_msg = ('Invalid choice for create_mask. Possible '
