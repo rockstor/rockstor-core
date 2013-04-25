@@ -19,21 +19,20 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from setuptools import setup
 
-VERSION = '1.0.1'
+VERSION = '1.4.1'
 
 setup(
   name='rockstor',
   version=VERSION,
   description='Smart Powerful Storage Solution',
-  author='Suman Chakravartula',
-  author_email='schakrava@gmail.com',
+  author='RockStor, Inc.',
+  author_email='help@rockstor.com',
 
   packages=['storageadmin', 'smart_manager',],
   package_dir={'': 'src/rockstor'},
   entry_points={
         'console_scripts': [
             'sm = smart_manager.smd:main',
-            'wc = websocket_client.cpu_info:main',
             'rcli = cli.rock_cli:main',
             'prep_db = prep_db:main',
             ],
