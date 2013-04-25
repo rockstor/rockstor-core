@@ -171,7 +171,7 @@ function showError(errorMsg) {
     msg = JSON.parse(errorMsg).detail;
   } catch(err) {
   }
-  $('#errorContent').append(msg);
+  $('#errorContent').html(msg);
   $('#errorPopup').modal('show');
 }
 
@@ -218,5 +218,23 @@ function showLoadingIndicator(elementName, context) {
 function hideLoadingIndicator(elementName, context) {
   var _this = context;
   _this.$('#'+elementName).css('visibility', 'hidden');
+}
+
+function disableButton(button) {
+  button.data("executing", true);
+  button.attr("disabled", true);
+}
+
+function enableButton(button) {
+  button.data("executing", false);
+  button.attr("disabled", false);
+}
+
+function buttonDisabled(button) {
+  if (button.data("executing")) {
+    return true;
+  } else {
+    return false;
+  }
 }
 

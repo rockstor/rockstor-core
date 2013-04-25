@@ -120,6 +120,8 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
     this.$('button[rel]').overlay();
     // create snapshot form submit action
     this.$('#create-snapshot').click(function() {
+      var button = _this.$('#create-snapshot');
+      if (buttonDisabled(button)) return false;
       $.ajax({
         url: "/api/shares/" + _this.share.get('name') + "/snapshots/",
         type: "POST",
@@ -130,13 +132,15 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
         _this.snapshots.fetch();
         //_this.$('#snapshots').empty().append(_this.snapshotsTableView.render().el);
       }).fail(function() {
+        enableButton(button);
         showError('error while creating snapshot');
       });
     });
     
     this.$('#resize-share').click(function() {
-      var _this = this;
-      console.log('resizing share');
+      var button = _this.$('#resize-share');
+      if (buttonDisabled(button)) return false;
+      disableButton(button);
       $.ajax({
         url: "/api/shares/" + _this.share.get('name') + "/resize/",
         type: "POST",
@@ -147,10 +151,32 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
           _this.share.fetch();
         },
         error: function(request, status, error) {
-          showError('error while creating snapshot');
+          enableButton(button);
+          showError(request.responseText);
         }
       });
     });
+
+    this.$('#js-delete').click(function() {
+      logger.info('deleting share ' + _this.share.get('name'));
+      var button = _this.$('#js-delete');
+      if (buttonDisabled(button)) return false;
+      disableButton(button);
+      $.ajax({
+        url: "/api/shares/",
+        type: "DELETE",
+        dataType: "json",
+        data: {name: _this.share.get('name')},
+        success: function() {
+          app_router.navigate('shares', {trigger: true}) 
+        },
+        error: function(request, status, error) {
+          enableButton(button);
+          showError(request.responseText);
+        }
+      });
+    });
+
 
   }
 

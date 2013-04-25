@@ -72,6 +72,9 @@ NFSExportsTableRow  = RockstoreModuleView.extend({
 
   deleteRow: function(event) {
     event.preventDefault();
+    var button = this.$('.delete-row');
+    if (buttonDisabled(button)) return false;
+    disableButton(button);
     console.log('deleting')
     var _this = this;
     data = {id: this.nfs_export.id};
@@ -85,6 +88,7 @@ NFSExportsTableRow  = RockstoreModuleView.extend({
         _this.parentView.render();
       },
       error: function(request, status, error) {
+        enableButton(button)
         showError(request.responseText);	
       },
     });

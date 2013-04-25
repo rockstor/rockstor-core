@@ -106,9 +106,9 @@
           
         
           submitHandler: function() {
-            if ($('#create_pool').data("executing")) return false;
-            $('#create_pool').data("executing", true);
-            $('#create_pool').attr("disabled", true);
+            var button = $('#create_pool');
+            if (buttonDisabled(button)) return false;
+            disableButton(button);
             var pool_name = $('#pool_name').val();
             var raid_level = $('#raid_level').val();
             var disk_names = '';
@@ -127,13 +127,11 @@
               dataType: "json",
               data: {"disks": disk_names, "raid_level": raid_level, "pname": pool_name},
               success: function() {
-                $('#create_pool').data("executing", false);
-                $('#create_pool').attr("disabled", false);
+                enableButton(button);
                 app_router.navigate('pools', {trigger: true}) 
               },
               error: function(request, status, error) {
-                $('#create_pool').data("executing", false);
-                $('#create_pool').attr("disabled", false);
+                enableButton(button);
                 showError(request.responseText);	
               },
             });

@@ -114,8 +114,18 @@ SMBShares  = RockstoreModuleView.extend({
 
   create: function(event) {
     event.preventDefault();
+    var button = this.$('#create');
+    if (buttonDisabled(button)) return false;
+    disableButton(button);
     var _this = this;
-    data = this.$('#smb-row').getJSON();
+    data = {
+      browsable: this.$('#browsable').val(),
+      guest_ok: this.$('#guest_ok').val(),
+      read_only: this.$('#read_only').val(),
+      comment: this.$('#comment').val()
+    }
+    logger.info('saving with data');
+    console.log(data);
     this.smb_share = new SMBShare({shareName: this.share.get('name')});
     this.smb_share.save(
       data,
@@ -124,6 +134,7 @@ SMBShares  = RockstoreModuleView.extend({
           _this.render();
         },
         error: function(model, xhr, options) {
+          enableButton(button);
           showError(xhr.responseText);
         }
       }
@@ -153,7 +164,9 @@ SMBShares  = RockstoreModuleView.extend({
   },
 
   deleteSmbShare: function(event) {
-    console.log('delete');
+    var button = this.$('#delete');
+    if (buttonDisabled(button)) return false;
+    disableButton(button);
     event.preventDefault();
     var _this = this;
     if (!_.isNull(this.smb_share)) {
@@ -165,6 +178,7 @@ SMBShares  = RockstoreModuleView.extend({
           _this.render();
         },
         error: function(request, status, error) {
+          enableButton(button);
           showError(request.responseText);
         },
       });
