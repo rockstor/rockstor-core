@@ -123,6 +123,7 @@ NFSExportsTableModule  = RockstoreModuleView.extend({
       dataType: "json",
       data: data,
       success: function() {
+        enableButton(button);
         _this.render();
       },
       error: function(request, status, error) {

@@ -122,12 +122,14 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
     this.$('#create-snapshot').click(function() {
       var button = _this.$('#create-snapshot');
       if (buttonDisabled(button)) return false;
+      disableButton(button);
       $.ajax({
         url: "/api/shares/" + _this.share.get('name') + "/snapshots/",
         type: "POST",
         dataType: "json",
         data: { name: $('#snapshot-name').val()}
       }).done(function() {
+        enableButton(button);
         _this.$('#js-snapshot-popup').overlay().close();
         _this.snapshots.fetch();
         //_this.$('#snapshots').empty().append(_this.snapshotsTableView.render().el);
@@ -147,6 +149,7 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
         dataType: "json",
         data: { size: $('#new-size').val()},
         success: function() {
+          enableButton(button);
           _this.$('#js-resize').overlay().close();
           _this.share.fetch();
         },
@@ -168,6 +171,7 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
         dataType: "json",
         data: {name: _this.share.get('name')},
         success: function() {
+          enableButton(button);
           app_router.navigate('shares', {trigger: true}) 
         },
         error: function(request, status, error) {

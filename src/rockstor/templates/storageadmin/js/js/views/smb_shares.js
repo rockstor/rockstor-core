@@ -131,6 +131,7 @@ SMBShares  = RockstoreModuleView.extend({
       data,
       {
         success: function(model, response, options) {
+          enableButton(button);
           _this.render();
         },
         error: function(model, xhr, options) {
@@ -174,6 +175,7 @@ SMBShares  = RockstoreModuleView.extend({
       this.smb_share.destroy({
         success: function() {
           console.log('destroyed smb_share successfully')
+          enableButton(button);
           _this.smb_share = null        
           _this.render();
         },
