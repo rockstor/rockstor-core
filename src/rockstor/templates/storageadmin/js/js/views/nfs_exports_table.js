@@ -111,17 +111,23 @@ NFSExportsTableModule  = RockstoreModuleView.extend({
   },
 
   saveNew: function() {
+    var button = this.$('#save-new');
+    if (buttonDisabled(button)) return false;
+    disableButton(button);
     var _this = this;
     data = $('#new-nfs-export-row').getJSON();
+    console.log(data);
     $.ajax({
       url: "/api/shares/"+_this.share.get('name')+'/nfs/',
       type: "POST",
       dataType: "json",
       data: data,
       success: function() {
+        enableButton(button);
         _this.render();
       },
       error: function(request, status, error) {
+        enableButton(button);
         showError(request.responseText);
       },
     });
