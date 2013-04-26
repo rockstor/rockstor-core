@@ -43,16 +43,20 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
     this.$('button[data-action=delete]').click(function(event) {
       name = $(event.target).attr('data-name');
       share_name = $(event.target).attr('data-share-name');
+      var button = $(event.target);
+      if (buttonDisabled(button)) return false;
+      disableButton(button);
       console.log('sending delete event');
       $.ajax({
         url: "/api/shares/" + share_name + "/snapshots/" + name + "/",
         type: "DELETE",
         success: function() {
-          console.log('delete successful');
+          enableButton(button)
           _this.collection.fetch();
         },
         error: function(request, status, error) {
-          alert(request.responseTest);
+          enableButton(button)
+          showError(request.responseTest);
         }
       });
     });
