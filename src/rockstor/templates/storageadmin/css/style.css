@@ -61,7 +61,7 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
 }
 
 .navbar {
-    padding: 24px 0px 24px 0px;
+    padding: 8px 0px 8px 0px;
     margin-bottom: 0px;
     font: 12px/1.5em "Helvetica Neue",Helvetica,Arial,sans-serif;
 }
