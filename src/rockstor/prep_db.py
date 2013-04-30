@@ -21,14 +21,16 @@ from django.contrib.auth.models import User
 
 def register_services():
     service_list = ('nfs', 'samba', 'sftp', 'ldap', 'ad', 'iscsi',)
-    Service.objects.all().delete()
     for s in service_list:
-        s_o = Service(name=s, registered=True)
-        s_o.save()
+        if len(Service.objects.filter(name=s)) == 0: 
+            s_o = Service(name=s, registered=True)
+            s_o.save()
 
 def create_admin_users():
-    User.objects.create_user('rocky', 'rocky@rockstor.com', 'iltwas')
-    User.objects.create_user('admin', 'admin@rockstor.com', 'admin')
+    if len(User.objects.filter(username='rocky')) == 0:
+        User.objects.create_user('rocky', 'rocky@rockstor.com', 'iltwas')
+    if len(User.objects.filter(username='admin')) == 0:
+        User.objects.create_user('admin', 'admin@rockstor.com', 'admin')
 
 def main():
     create_admin_users()
