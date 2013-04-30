@@ -32,6 +32,8 @@ from fs.btrfs import (add_share, remove_share, share_id, update_quota,
                       share_usage)
 from storageadmin.serializers import ShareSerializer
 from storageadmin.util import handle_exception
+from storageadmin.exceptions import RockStorAPIException
+
 
 import logging
 logger = logging.getLogger(__name__)
@@ -52,10 +54,13 @@ class ShareView(APIView):
             handle_exception(e, request)
 
     @transaction.commit_on_success
-    def post(self, request):
+    def post(self, request, sname):
         try:
+            if (Share.objects.filter(name=sname).exists()):
+                e_msg = ('Share with name: %s already exists.' % sname)
+                handle_exception(Exception(e_msg), request)
+
             pool_name = request.DATA['pool']
-            share_name = request.DATA['name']
             size = int(request.DATA['size'])
             pool = None
             for p in Pool.objects.all():
@@ -63,32 +68,33 @@ class ShareView(APIView):
                     pool = p
                     break
             disk = Disk.objects.filter(pool=p)[0]
-            add_share(pool_name, disk.name, share_name)
-            sid = share_id(pool_name, disk.name, share_name)
+            add_share(pool_name, disk.name, sname)
+            sid = share_id(pool_name, disk.name, sname)
             qgroup_id = '0/' + sid
             update_quota(pool_name, disk.name, qgroup_id, str(size))
             cur_usage = int(share_usage(pool_name, disk.name, qgroup_id))
             qgroup = Qgroup(uuid=qgroup_id)
             qgroup.save()
-            s = Share(pool=pool, qgroup=qgroup, name=share_name, size=size,
+            s = Share(pool=pool, qgroup=qgroup, name=sname, size=size,
                     free=(size - cur_usage))
             s.save()
             return Response(ShareSerializer(s).data)
+        except RockStorAPIException:
+            raise
         except Exception, e:
             handle_exception(e, request)
 
     @transaction.commit_on_success
-    def delete(self, request):
+    def delete(self, request, sname):
         """
         For now, we delete all snapshots, if any of the share and delete the
         share itself.
         """
         try:
-            share_name = request.DATA['name']
-            if (Share.objects.filter(name=share_name).exists()):
-                share = Share.objects.get(name=share_name)
+            if (Share.objects.filter(name=sname).exists()):
+                share = Share.objects.get(name=sname)
                 pool_device = Disk.objects.filter(pool=share.pool)[0].name
-                remove_share(share.pool.name, pool_device, share_name)
+                remove_share(share.pool.name, pool_device, sname)
                 share.delete()
                 return Response()
         except Exception, e:

@@ -41,22 +41,22 @@ class SharesConsole(BaseConsole):
         """
         To add a share
 
-        add -ppool_name -nshare_name -ssize
+        add share_name -ppool_name -ssize
         """
         arg_fields = args.split()
+        sname = arg_fields[0]
         input_data = {}
-        for f in arg_fields:
-            if(f[0:2] == '-n'):
-                input_data['name'] = f[2:]
-            elif(f[0:2] == '-p'):
+        for f in arg_fields[1:]:
+            if(f[0:2] == '-p'):
                 input_data['pool'] = f[2:]
             elif(f[0:2] == '-s'):
                 input_data['size'] = f[2:]
             else:
                 return self.do_help(args)
-        if(len(input_data) != 3):
+        if(len(input_data) != 2):
             return self.do_help(args)
-        share_info = api_call(self.url, data=input_data, calltype='post')
+        url = ('%s/%s/' % (self.url, sname))
+        share_info = api_call(url, data=input_data, calltype='post')
         print_share_info(share_info)
 
     def do_delete(self, args):
@@ -82,9 +82,6 @@ class SharesConsole(BaseConsole):
         To go to a share console: share share_name
         """
         input_share = args.split()
-        try:
-            url =
-            share_info = api_call()
         if (len(input_share) > 0):
             sd_console = ShareDetailConsole(self.greeting, input_share[0])
             if (len(input_share) > 1):
