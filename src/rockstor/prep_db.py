@@ -22,14 +22,14 @@ from django.contrib.auth.models import User
 def register_services():
     service_list = ('nfs', 'samba', 'sftp', 'ldap', 'ad', 'iscsi',)
     for s in service_list:
-        if len(Service.objects.filter(name=s)) == 0: 
+        if (not Service.objects.filter(name=s).exists()):
             s_o = Service(name=s, registered=True)
             s_o.save()
 
 def create_admin_users():
-    if len(User.objects.filter(username='rocky')) == 0:
+    if (not User.objects.filter(username='rocky').exists()):
         User.objects.create_user('rocky', 'rocky@rockstor.com', 'iltwas')
-    if len(User.objects.filter(username='admin')) == 0:
+    if (not User.objects.filter(username='admin').exists()):
         User.objects.create_user('admin', 'admin@rockstor.com', 'admin')
 
 def main():
