@@ -51,5 +51,6 @@ setup(
     'gevent-socketio == 0.3.6',
     'requests == 1.1.0',
     'pyzmq == 13.0.0',
+    'South == 0.7.6',
   ]
 )
