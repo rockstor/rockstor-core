@@ -47,11 +47,7 @@
           <tbody>
             <% disks.each(function(disk, index) { %>
               <tr>
-                <td>
-                  <a href="#disks/<%= disk.get('name') %>" class="disk_row" id="<%= disk.id %>">
-                    <%= disk.get('name') %>
-                  </a>
-                </td>
+                <td><%= disk.get('name') %></td>
                 <td><%= disk.get('size') %></td>
                 <td>
                   <a href="#pools/<%= disk.get('pool') %>">

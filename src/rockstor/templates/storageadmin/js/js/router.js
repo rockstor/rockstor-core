@@ -34,7 +34,6 @@ var AppRouter = Backbone.Router.extend({
     "setup": "doSetup",
     "home": "showHome",
     "disks": "showDisks",
-    "disks/:diskName": "showDisk",
     "pools": "showPools",
     "pools/:poolName": "showPool",
     "add_pool": "addPool",
@@ -74,16 +73,7 @@ var AppRouter = Backbone.Router.extend({
     this.currentLayout = new DisksView();
     $('#maincontent').append(this.currentLayout.render().el);
   },
-
-  showDisk: function(diskName) {
-    RockStorSocket.removeAllListeners();
-    var diskDetailView = new DiskDetailView({
-      model: new Disk({diskName: diskName})
-    });
-    $('#maincontent').empty();
-    $('#maincontent').append(diskDetailView.render().el);
-  },
-
+  
   showPools: function() {
     RockStorSocket.removeAllListeners();
     $('#maincontent').empty();
