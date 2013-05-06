@@ -474,7 +474,30 @@ ul#breadcrumbs { padding: 0; margin: 0; }
 }
 
 form#login_form {
+}
+
+#login-container {
   padding-top: 100px;
+}
+
+#login-box {
+  background: none repeat scroll 0% 0% rgb(255, 246, 229);
+  padding: 12px 12px 12px 24px;
+  color: #777;
+  border-radius: 4px 4px 4px 4px;
+}
+
+#login-box input { width: 170px; }
+
+.main-story {
+  padding: 24px 24px 96px 24px;
+  margin-top: 48px;
+  border: 1px solid rgb(204, 204, 204);
+  box-shadow: 0px 0px 12px 0px rgb(204, 204, 204);
+}
+
+.centertext {
+  text-align: center;
 }
 
 .well hr {

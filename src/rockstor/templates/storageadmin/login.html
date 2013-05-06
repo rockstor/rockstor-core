@@ -33,45 +33,54 @@
     <![endif]-->
   </head>
   <body>
-    <div class="navbar-outer">
-      <div class="container">
-
-        <div class="navbar">
-          <div class="navbar-inner">
-            <div id="logo">
-	      <object width="100px" data="/img/rockstor_logo_website_150x50.svg"
-		      type="image/svg+xml"></object>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <div class="container">
       <div class="inner-container">
         <div class="row-fluid">
-          <div id="maincontent">
-            <form id="login_form" method="post" action="/login_submit" name="aform" target="_top" class="form-horizontal">
-              {% csrf_token %}
-              {% if messages %}
-              <ul class="messages">
-                {% for message in messages %}
-                <li>{{ message }}</li>
-                {% endfor %}
-              </ul>
-              {% endif %}
-              <div class="control-group">
-                <input type="text" id="inputUsername" name="login" placeholder="Username" >
-              </div>
-              <div class="control-group">
-                <input type="password" id="inputPassword" name="password" placeholder="Password">
-              </div>
-              <div class="control-group">
-                <button type="submit" id="sign_in" class="btn btn-primary">Sign in</button>
-              </div>
+          <div class="span12">
+            <div class="main-story">
+            <div id="login-container">
 
-            </form>
-          </div> <!-- maincontent -->
+              <div class="row-fluid">
+                
+                <div class="span8">
+                  <div id="logo">
+                    <object width="100px" data="/img/rockstor_logo_website_150x50.svg" type="image/svg+xml"></object>
+                  </div>
+                  <span class="h1">The Smart Storage Platform</span>
+                  <h2>Smart and Powerful Open source platform for Storage clouds.</h2>
+                </div>
+
+                <div class="span4">
+                  <form id="login_form" method="post" action="/login_submit" name="aform" target="_top" class="form-horizontal">
+                    <div id="login-box">
+                      {% csrf_token %}
+                      {% if messages %}
+                      <ul class="messages">
+                        {% for message in messages %}
+                        <li>{{ message }}</li>
+                        {% endfor %}
+                      </ul>
+                      {% endif %}
+                      <div class="control-group">
+                        <label>Username</label>
+                        <input type="text" id="inputUsername" name="login" placeholder="Username" >
+                      </div>
+                      <div class="control-group">
+                        <label>Password</label>
+                        <input type="password" id="inputPassword" name="password" placeholder="Password">
+                      </div>
+                      <div class="control-group">
+                        <button type="submit" id="sign_in" class="btn btn-primary">Sign in</button>
+                      </div>
+
+                    </div>
+                  </form>
+                </div>
+
+              </div> <!-- row-fluid -->
+            </div> <!-- main-story -->
+          </div>
+          </div>
         </div> <!-- row-fluid -->
       </div> <!-- inner-container -->
     </div> <!-- container -->
