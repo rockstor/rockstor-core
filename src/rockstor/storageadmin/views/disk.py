@@ -32,6 +32,7 @@ from storageadmin.models import (Disk)
 from system.osi import (scan_disks)
 from storageadmin.serializers import (DiskInfoSerializer,)
 from storageadmin.util import handle_exception
+from django.conf import settings
 
 import logging
 logger = logging.getLogger(__name__)
@@ -78,7 +79,7 @@ class SystemDiskView(APIView):
 
     @transaction.commit_on_success
     def post(self, request):
-        disks = scan_disks()
+        disks = scan_disks(settings.MIN_DISK_SIZE)
         for k,v in disks.items():
             if (Disk.objects.filter(name=v['name']).exists()):
                 continue
