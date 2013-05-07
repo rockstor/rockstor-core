@@ -308,3 +308,8 @@ WEBSOCKET_CLIENT = {
 
 NGINX_WEBSOCKET_PORT = ${myvar:nginx_websocket_port}
 
+"""
+Minimum disk size allowed is 1GB. Anything less is not really usable. Reduce
+this to 100MB if you really need to, but any less would just break things.
+"""
+MIN_DISK_SIZE = 1024 * 1024
