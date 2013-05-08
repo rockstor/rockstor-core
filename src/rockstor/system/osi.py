@@ -54,7 +54,11 @@ class Disk():
                 'free': self.free,
                 'parted': self.parted, }
 
-def scan_disks():
+def scan_disks(min_size):
+    """
+    min_size is in KB, so it is also number of blocks. Discard any disk with
+    num_blocks < min_size
+    """
     disks = {}
     with open('/proc/partitions') as pfo:
         for line in pfo.readlines():
@@ -64,6 +68,8 @@ def scan_disks():
             if (re.match('sd[a-z]+$', disk_fields[3]) is not None):
                 name = disk_fields[3]
                 num_blocks = int(disk_fields[2]) # each block is 1KB
+                if (num_blocks < min_size):
+                    continue
                 size = num_blocks / (1024 * 1024) # in GB
                 free = size
                 disk = Disk(name=name, size=size, free=free)
