@@ -54,6 +54,31 @@ class ShareView(APIView):
             handle_exception(e, request)
 
     @transaction.commit_on_success
+    def put(self, request, sname):
+        try:
+            if (not Share.objects.filter(name=sname).exists()):
+                e_msg = ('Share with name: %s does not exist' % sname)
+                handle_exception(Exception(e_msg), request)
+
+            share = Share.objects.get(name=sname)
+            new_size = int(request.DATA['size'])
+
+            #if new_size < cur_usage, throw exception
+
+            disk = Disk.objects.filter(pool=share.pool)[0]
+            qgroup_id = self._update_quota(share.pool.name, disk.name, sname,
+                                           new_size)
+            cur_usage = int(share_usage(share.pool.name, disk.name, qgroup_id))
+            share.size = new_size
+            share.free = new_size - cur_usage
+            share.save()
+            return Response(ShareSerializer(share).data)
+        except RockStorAPIException:
+            raise
+        except Exception, e:
+            handle_exception(e, request)
+
+    @transaction.commit_on_success
     def post(self, request, sname):
         try:
             if (Share.objects.filter(name=sname).exists()):
@@ -69,9 +94,7 @@ class ShareView(APIView):
                     break
             disk = Disk.objects.filter(pool=p)[0]
             add_share(pool_name, disk.name, sname)
-            sid = share_id(pool_name, disk.name, sname)
-            qgroup_id = '0/' + sid
-            update_quota(pool_name, disk.name, qgroup_id, str(size))
+            qgroup_id = self._update_quota(pool_name, disk.name, sname, size)
             cur_usage = int(share_usage(pool_name, disk.name, qgroup_id))
             qgroup = Qgroup(uuid=qgroup_id)
             qgroup.save()
@@ -83,6 +106,12 @@ class ShareView(APIView):
             raise
         except Exception, e:
             handle_exception(e, request)
+
+    def _update_quota(self, pool_name, disk_name, share_name, size):
+        sid = share_id(pool_name, disk_name, share_name)
+        qgroup_id = '0/' + sid
+        update_quota(pool_name, disk_name, qgroup_id, str(size))
+        return qgroup_id
 
     @transaction.commit_on_success
     def delete(self, request, sname):

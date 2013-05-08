@@ -59,6 +59,23 @@ class SharesConsole(BaseConsole):
         share_info = api_call(url, data=input_data, calltype='post')
         print_share_info(share_info)
 
+    def do_resize(self, args):
+        """
+        To resize a share
+
+        resize share_name new_size
+        """
+        try:
+            fields = args.split()
+            sname = fields[0]
+            new_size = int(fields[1])
+        except:
+            return self.do_help(args)
+        input_data = {'size': new_size,}
+        url = ('%s/%s/' % (self.url, sname))
+        share_info = api_call(url, data=input_data, calltype='put')
+        print_share_info(share_info)
+
     def do_delete(self, args):
         """
         Delete a share
