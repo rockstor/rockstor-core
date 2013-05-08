@@ -144,8 +144,8 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
       if (buttonDisabled(button)) return false;
       disableButton(button);
       $.ajax({
-        url: "/api/shares/" + _this.share.get('name') + "/resize/",
-        type: "POST",
+        url: "/api/shares/" + _this.share.get('name') + "/",
+        type: "PUT",
         dataType: "json",
         data: { size: $('#new-size').val()},
         success: function() {
