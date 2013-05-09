@@ -29,10 +29,16 @@
  */
 
 SharesTableView = RockstoreModuleView.extend({
+  initialize: function() {
+    // call initialize of base
+    this.constructor.__super__.initialize.apply(this, arguments);
+    this.pools = this.options.pools;
+  },
+
   render: function() {
     this.template = window.JST.share_shares_table_template;
     $(this.el).empty();
-    $(this.el).append(this.template({shares: this.collection}));
+    $(this.el).append(this.template({shares: this.collection, pools: this.pools}));
     this.$('#shares-table').tablesorter();
     var _this = this;
     this.$('button[data-action=delete]').click(function(event) {

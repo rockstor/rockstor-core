@@ -36,8 +36,10 @@ SharesLayoutView = RockstoreLayoutView.extend({
     // set template
     this.template = window.JST.share_shares_template;
     // create collection
+    this.pools = new PoolCollection();
     this.shares = new ShareCollection();
     // set dependencies
+    this.dependencies.push(this.pools);
     this.dependencies.push(this.shares);
   },
 
@@ -47,9 +49,15 @@ SharesLayoutView = RockstoreLayoutView.extend({
   },
 
   renderSubViews: function() {
-    $(this.el).append(this.template({shares: this.shares}));
+    $(this.el).append(this.template({
+      shares: this.shares,
+      pools: this.pools
+    }));
     // Create subviews
-    this.subviews['shares-table'] = new SharesTableView({collection: this.shares});
+    this.subviews['shares-table'] = new SharesTableView({
+      collection: this.shares,
+      pools: this.pools
+    });
     // Bind subviews to models
     this.shares.on('reset', this.subviews['shares-table'].render, this.subviews['shares-table']);
     // render subviews
