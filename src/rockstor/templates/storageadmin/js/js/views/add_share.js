@@ -39,7 +39,31 @@ AddShareView = Backbone.View.extend({
     this.pools.fetch({
       success: function(collection, response) {
         $(_this.el).append(_this.template({pools: _this.pools}));
-        this.$('#create_share').click(function() {
+        var size_err_msg = function() {
+            return err_msg;
+          }
+        $.validator.addMethod('validateSize', function(value) {
+            var share_size = $('#share_size').val();
+            
+            if(/^[0-9]*$/.test(share_size) == false){
+            	err_msg = 'Please enter valid number';
+            	return false;
+            }
+    
+            return true;
+         }, size_err_msg);
+          
+        
+        
+        $('#add-share-form').validate({
+            onfocusout: false,
+            onkeyup: false,
+            rules: {
+             share_size: "validateSize",
+          	},
+        
+        //this.$('#create_share').click(function() {
+        submitHandler: function() {
           var button = _this.$('#create_share');
           if (buttonDisabled(button)) return false;
           disableButton(button);
@@ -49,6 +73,16 @@ AddShareView = Backbone.View.extend({
           var pool_name = $('#pool_name').val();
           console.log('pool_name is ' + pool_name);
           var size = $('#share_size').val();
+          
+          var sizeFormat = $('#size_format').val();
+            if(sizeFormat == 'Kilo Bytes'){
+        	  size = size*1024;
+        	}else if(sizeFormat == 'Mega Bytes'){
+        	  size = size*1024*1024;	
+        	}else if(sizeFormat == 'Giga Bytes'){
+        	  size = size*1024*1024*1024;
+        	}
+            
           $.ajax({
             url: "/api/shares/"+share_name+"/",
             type: "POST",
@@ -61,10 +95,10 @@ AddShareView = Backbone.View.extend({
             error: function(request, status, error) {
               enableButton(button);
               showError(request.responseText);	
-            }
+            },
           });
-
-        });
+         }
+       });
       }
     });
     return this;
