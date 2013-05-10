@@ -54,9 +54,15 @@
         </tbody>
       </table>
     <% } else { %>
-      <h4>No shares have been created</h4>
+      <% if (!pools.isEmpty()) { %>
+        <h4>No shares have been created</h4>
+      <% } else { %>
+        <h4>No shares have been created. To create a share, at least one pool must be created. Please go to the <a href="#pools">Pools</a> page to create a pool.</h4>
+      <% } %>
     <% } %>
-    <a href="#add_share" id="add_share" class="btn btn-primary">Create Share</a>
+    <% if (!pools.isEmpty()) { %>
+      <a href="#add_share" id="add_share" class="btn btn-primary">Create Share</a>
+    <% } %>
   </div>
 </div>
 
