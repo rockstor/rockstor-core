@@ -36,9 +36,10 @@
         <div class="span12">
           <!-- Content -->
           <div class="module-content">
-            Share name:<br/>
-            <input type="text" name="share_name" id="share_name">
-            <br/>
+            <form name="add-share-form" id="add-share-form">
+             Share name:<br/>
+             <input type="text" name="share_name" id="share_name">
+             <br/>
             Select pool<br/>
             <select id="pool_name" name="pool_name">
 
@@ -53,8 +54,15 @@
             <br/>
             Size:<br/>
             <input type="text" name="share_size" id="share_size">
+              <select id="size_format" name="size_format">
+                <option>Bytes</option>
+                <option>Kilo Bytes</option>
+                <option>Mega Bytes</option>
+                <option>Giga Bytes</option>
+              </select>
             <br/>
-            <button id="create_share" class="btn btn-primary">Submit</button>
+            <input type="Submit" id="create_share" class="btn btn-primary" value="Submit"></input>
+          </form>
           </div> <!-- module-content -->
         </div> <!-- span12 -->
       </div> <!-- row-fluid -->
