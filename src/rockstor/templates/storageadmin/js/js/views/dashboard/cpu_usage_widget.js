@@ -25,9 +25,10 @@
  */
 
 
-CpuUsageWidget = Backbone.View.extend({
+CpuUsageWidget = RockStorWidgetView.extend({
   
   initialize: function() {
+    this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.dashboard_widgets_cpuusage;
     this.numSamples = 120;
     this.cpu_data = [];

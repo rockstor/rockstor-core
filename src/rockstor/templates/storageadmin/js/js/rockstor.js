@@ -106,6 +106,51 @@ RockstoreModuleView = Backbone.View.extend({
   }
 });
 
+RockStorWidgetView = Backbone.View.extend({
+  tagName: 'div',
+  className: 'widget',
+  
+  events: {
+    'click .resize-widget': 'resize',
+    'click .configure-widget': 'configure',
+    'click .close-widget': 'close',
+  },
+
+  initialize: function() {
+  },
+
+  resize: function(event) {
+    logger.debug('in resize');
+    if (!_.isUndefined(event) && !_.isNull(event)) {
+      event.preventDefault();
+    }
+    var li = $(this.el).closest('li');
+    if (_.isUndefined(li.attr('data-ss-colspan'))) {
+      li.attr('data-ss-colspan',2);
+    } else {
+      li.removeAttr('data-ss-colspan');
+    }
+    $('.widgets-container').trigger('ss-rearrange');
+  },
+  
+  configure: function(event) {
+    if (!_.isUndefined(event) && !_.isNull(event)) {
+      event.preventDefault();
+    }
+    logger.debug('in rockstor widget configure');
+  },
+
+  close: function(event) {
+    var li = $(event.currentTarget).closest('li');
+    console.log(li); 
+    li.remove();
+    $('.widgets-container').trigger('ss-rearrange');
+    
+    // TODO save layout
+  }
+
+});
+
 RockstoreButtonView = Backbone.View.extend({
   tagName: 'div',
   className: 'button-bar',
