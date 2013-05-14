@@ -751,7 +751,6 @@ hr.module-sep { margin: 0; border: 0; border-top: 1px solid #ddd; }
 
 /* Dashboard */
 #dashboard-config-content {
-  height: 400px;
   padding: 24px;
 }
 

@@ -30,14 +30,14 @@ SampleWidget = RockStorWidgetView.extend({
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.dashboard_widgets_sample;
-    this.display_name = this.options.display_name;
+    this.displayName = this.options.displayName;
   },
 
   render: function() {
     var _this = this;
     $(this.el).html(this.template({ 
       module_name: this.module_name,
-      display_name: this.display_name
+      displayName: this.displayName
     }));
     return this;
   },
