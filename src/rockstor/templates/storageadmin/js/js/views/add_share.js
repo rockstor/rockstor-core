@@ -75,12 +75,14 @@ AddShareView = Backbone.View.extend({
           var size = $('#share_size').val();
           
           var sizeFormat = $('#size_format').val();
-            if(sizeFormat == 'Kilo Bytes'){
+            if(sizeFormat == 'KB'){
         	  size = size*1024;
-        	}else if(sizeFormat == 'Mega Bytes'){
+        	}else if(sizeFormat == 'MB'){
         	  size = size*1024*1024;	
-        	}else if(sizeFormat == 'Giga Bytes'){
+        	}else if(sizeFormat == 'GB'){
         	  size = size*1024*1024*1024;
+        	}else if(sizeFormat == 'TB'){
+        	  size = size*1024*1024*1024*1024;
         	}
             
           $.ajax({
