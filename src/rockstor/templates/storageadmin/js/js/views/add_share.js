@@ -31,6 +31,7 @@
 AddShareView = Backbone.View.extend({
   initialize: function() {
     this.pools = new PoolCollection();
+    this.poolName = this.options.poolName;
   },
   render: function() {
     $(this.el).empty();
@@ -38,7 +39,7 @@ AddShareView = Backbone.View.extend({
     var _this = this;
     this.pools.fetch({
       success: function(collection, response) {
-        $(_this.el).append(_this.template({pools: _this.pools}));
+        $(_this.el).append(_this.template({pools: _this.pools, poolName: _this.poolName}));
         var size_err_msg = function() {
             return err_msg;
           }

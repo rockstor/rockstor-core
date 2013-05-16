@@ -42,14 +42,24 @@
              <br/>
             Select pool<br/>
             <select id="pool_name" name="pool_name">
-
+              <% if(poolName == ''){%>
               <% pools.each(function(pool, index) { %>
                 <% if (index > 0) { %>
                   <option value="<%= pool.get('name') %>"> <%= pool.get('name') %> </option>
-                <% } else { %>
+                <% } else{ %> 
                   <option value="<%= pool.get('name') %>" selected="selected"> <%= pool.get('name') %> </option>
-                <% } %>
-              <% }); %>
+                <% }}); %>
+                
+             <%} else { %>
+             <% pools.each(function(pool, index) { %>
+                <% if (index >= 0) { %>
+                  <% if(poolName != pool.get('name')){ %>
+                  <option value="<%= pool.get('name') %>"> <%= pool.get('name') %> </option>
+                <% }else{ %> 
+                  <option value="<%= pool.get('name') %>" selected="selected"> <%= pool.get('name') %> </option>
+                  
+             <% }}}); }%>
+             
             </select>
             <br/>
             Size:<br/>
