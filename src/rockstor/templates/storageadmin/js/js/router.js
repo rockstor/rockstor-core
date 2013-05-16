@@ -38,6 +38,7 @@ var AppRouter = Backbone.Router.extend({
     "pools/:poolName": "showPool",
     "add_pool": "addPool",
     "shares": "showShares",
+    "add_share?poolName=:poolName": "addShare",
     "add_share": "addShare",
     "shares/:shareName": "showShare",
     "shares/:shareName/:snapshots": "showSnaps",
@@ -97,6 +98,7 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').append(poolDetailsLayoutView.render().el);
   },
   
+  
   //Support
   
   showSupport: function() {
@@ -139,15 +141,27 @@ var AppRouter = Backbone.Router.extend({
       model: new Share({shareName: shareName})
     });  
   },
+  
   showSnap: function(shareName, snapName) {
     var snapshotsTableView = new SnapshotsTableView({
       model: new Share({shareName: shareName})
     });  
   },
-  addShare: function() {
+  
+  addShare: function(poolName) {
     RockStorSocket.removeAllListeners();
-    $('#maincontent').empty();
-    $('#maincontent').append(addShareView.render().el);
+    var addShareView;
+    if (_.isUndefined(poolName)){ 
+    	   	addShareView = new AddShareView();
+		} else {
+			addShareView = new AddShareView({
+			 poolName: poolName
+	       });
+		}
+		$('#maincontent').empty();
+	    
+		$('#maincontent').append(addShareView.render().el);
+    
   },
   showShare: function(shareName) {
     RockStorSocket.removeAllListeners();
