@@ -23,7 +23,7 @@
 <div class="row-fluid">
   <div class="span12">
     <div class="pageheading">
-      <div id="title" class="title"><span class="h1">Pool <%= pool.get('name') %></span></div>
+      <div id="title" class="title"><span class="h1">Pool<%= pool.get('name') %></span></div>
     </div>
   </div> <!-- span12 -->
 </div> <!-- row-fluid -->
@@ -43,7 +43,7 @@
     <div id="ph-button-bar">
       <button id="resize-pool-popup" rel="#resize-pool-form" class="btn btn-primary" type="button">Resize</button>
       <button id="delete-pool" class="btn btn-danger" type="button">Delete</button>
-      <a href="#add_share" id="add_share" class="btn btn-primary">Add Share</a>
+      <a href="#add_share?poolName=<%= pool.get('name') %>" id="add_share" class="btn btn-primary">Add Share</a>
     </div> <!-- button-bar -->
   </div> <!-- span12 -->
 </div> <!-- row-fluid -->
