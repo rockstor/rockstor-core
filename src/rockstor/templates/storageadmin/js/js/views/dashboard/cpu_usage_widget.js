@@ -51,7 +51,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
 			yaxis: { min: 0, max: 110 },
       xaxis: {  
         tickFormatter: this.cpuTickFormatter,
-        tickSize: 5,
+        tickSize: 12,
         min: 0, 
         max: 60 
         },
@@ -63,7 +63,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
   },
   
   cpuTickFormatter: function(val, axis) {
-    return (60 - parseInt(val)).toString();
+    return (5 - (parseInt(val)/12)).toString() + ' m';
   },
 
   render: function() {
