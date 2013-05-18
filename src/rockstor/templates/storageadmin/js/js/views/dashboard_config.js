@@ -49,6 +49,7 @@ DashboardConfigView = Backbone.View.extend({
     logger.debug('in dashboard_config save');
     var _this = this;
     var selected_widgets = this.dashboardconfig.get('widgets').split(',');
+    
     this.$("input.widget-name").each(function() {
       var name = $(this).val();
       n = _.indexOf(selected_widgets, name);
@@ -58,6 +59,10 @@ DashboardConfigView = Backbone.View.extend({
         selected_widgets.splice(n,1);
       }
     });
+    
+    logger.debug('after');
+    logger.debug(selected_widgets);
+   
     this.dashboardconfig.set({'widgets': selected_widgets.join(',')});
     logger.debug(selected_widgets);
     this.dashboardconfig.save( null, {
@@ -78,6 +83,7 @@ DashboardConfigView = Backbone.View.extend({
       }
 
     });
+    
   }
 
 });

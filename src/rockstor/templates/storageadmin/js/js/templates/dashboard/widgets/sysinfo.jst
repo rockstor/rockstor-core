@@ -19,36 +19,36 @@
  */
 </script>
 
-<div class="widget">
-  <!-- Header -->
-  <div class="row-fluid">
-    <div class="span12">
-      <div class="module-header">
-        <div class="title"><span class="h3">System Info</span></div>
-        <div class="gear"><a id="configure-module" href="#"><img src="img/gear.png" width="18px" /></a></div>
+<!-- Header -->
+<div class="row-fluid">
+  <div class="span12">
+    <div class="widget-header">
+      <div class="title"><span class="h3">System Info</span></div>
+      <div class="gear">
+        <a class="resize-widget" href="#"><i class="icon-white icon-resize-full"></i></a>
+        <a class="close-widget" href="#"><i class="icon-white icon-remove"></i></a>
       </div>
-    </div> <!-- span12 -->
-  </div> <!-- row-fluid -->
+    </div>
+  </div> <!-- span12 -->
+</div> <!-- row-fluid -->
 
 
-  <!-- Module Body -->
-  <div class="row-fluid">
-    <div class="span12">
-      <!-- Content -->
-      <div class="module-content">
-        <div class="row-fluid">
-          <div class="span12">
-            Load average: <span id="load-avg"></span> <br>
-            <% _.each(_.keys(model.attributes), function(k) { %>
-              <%= k %>: <%= model.get(k) %><br>
-            <% }); %>
-          </div>
+<!-- widget Body -->
+<div class="row-fluid">
+  <div class="span12">
+    <!-- Content -->
+    <div class="widget-content">
+      <div class="row-fluid">
+        <div class="span12">
+          Load average: <span id="load-avg"></span> <br>
+          <% _.each(_.keys(model.attributes), function(k) { %>
+            <%= k %>: <%= model.get(k) %><br>
+          <% }); %>
         </div>
       </div>
-      <!-- End Content -->
-    </div> <!-- span12 -->
-  </div> <!-- row-fluid --> 
-  <!-- end module body -->
-</div>
-
+    </div>
+    <!-- End Content -->
+  </div> <!-- span12 -->
+</div> <!-- row-fluid --> 
+<!-- end widget body -->
 

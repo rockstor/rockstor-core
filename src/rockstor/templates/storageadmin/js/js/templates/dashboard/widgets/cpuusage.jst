@@ -19,30 +19,43 @@
  */
 </script>
 
-<div class="widget">
-  <div class="row-fluid">
-    <div class="span12">
-      <div class="module-header">
-        <div class="title"><span class="h3">CPU</span></div>
+<div class="row-fluid">
+  <div class="span12">
+    <div class="widget-header">
+      <div class="title">
+        <span class="h3">CPU</span>
       </div>
-    </div> <!-- span12 -->
-  </div> <!-- row-fluid -->
+      <div class="gear">
+        <a class="resize-widget" href="#"><i class="icon-white icon-resize-full"></i></a>
+        <a class="configure-widget" href="#"><i class="icon-white icon-cog"></i></a>
+        <a class="close-widget" href="#"><i class="icon-white icon-remove"></i></a>
+      </div>
+    </div>
+  </div> <!-- span12 -->
+</div> <!-- row-fluid -->
 
-  <!-- Module Body -->
-  <div class="row-fluid">
-    <div class="span12">
-      <!-- Content -->
-      <div class="module-content">
-        <div class="row-fluid">
-          <div class="span12">
-            <div id="cpuusage"> </div>
+<!-- Widget Body -->
+<div class="row-fluid">
+  <div class="span12">
+    <!-- Content -->
+    <div class="widget-content">
+      <div class="row-fluid">
+        <div class="span12">
+          <div id="cpuusage" style="width: 250px; height: 175px;"> </div>
+          <div class="clear"></div>
+          <div id="cpuusage_legend">
+            <% console.log(colors); %>
+            <% _.each(modes, function(mode,i) { %>
+              <div class="cpuusage_color" style="width: 15px; height: 15px; background: <%= colors[i] %>; float: left;"></div><div style="float: left">&nbsp;<%= mode %>&nbsp;&nbsp;</div>
+            <% }); %>
           </div>
+
+
         </div>
       </div>
-      <!-- End Content -->
-    </div> <!-- span12 -->
-  </div> <!-- row-fluid --> 
-  <!-- end module body -->
-</div>
-
+    </div>
+    <!-- End Content -->
+  </div> <!-- span12 -->
+</div> <!-- row-fluid --> 
+<!-- end Widget body -->
 

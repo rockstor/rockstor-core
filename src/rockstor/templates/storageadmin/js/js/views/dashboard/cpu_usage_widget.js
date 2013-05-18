@@ -25,71 +25,63 @@
  */
 
 
-CpuUsageWidget = Backbone.View.extend({
+CpuUsageWidget = RockStorWidgetView.extend({
   
   initialize: function() {
+    this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.dashboard_widgets_cpuusage;
-    this.numSamples = 120;
+    this.numSamples = 60;
     this.cpu_data = [];
-    this.modes = ['umode', 'umode_nice', 'smode', 'idle'];
+    this.modes = ['umode', 'smode', 'umode_nice', 'idle'];
+    this.colors = ["#CCC1F5", "#A39BC2", "#BAB8C2", "#E1E1E3"];
     for (var i=0; i < this.numSamples; i++) {
       this.cpu_data.push({umode: 0, umode_nice: 0, smode: 0, idle: 0});
     }
     this.cleanupArray = this.options.cleanupArray;
+    this.updateInterval = 5000;
+    this.graphOptions = { 
+      grid : { hoverable : true },
+			series: {
+        stack: true,
+        stackpercent : false,
+        bars: { show: true, barWidth: 0.4, fillColor: {colors:[{opacity: 1},{opacity: 1}]}, align: "center" },
+        lines: { show: false, fill: false },
+        shadowSize: 0	// Drawing is faster without shadows
+			},
+			yaxis: { min: 0, max: 110 },
+      xaxis: {  
+        tickFormatter: this.cpuTickFormatter,
+        tickSize: 12,
+        min: 0, 
+        max: 60 
+        },
+      legend : { container : "#legends", noColumns : 3 },
+      tooltip: true,
+      tooltipOpts: { content: "<b>%s</b> (%p.2%)" }
+    };
+    this.prev_cpu_data = null;
+  },
+  
+  cpuTickFormatter: function(val, axis) {
+    return (5 - (parseInt(val)/12)).toString() + ' m';
   },
 
   render: function() {
     var _this = this;
-    $(this.el).html(this.template());
-   
-    // display cpu graph 
-    var w = 200; // width
-    var h = 100; // height
-    var padding = 30;
-    var id = "#cpuusage";
-    /*
-    var graph = d3.select(this.el).select(id).append("svg:svg")
-    .attr("width", w)
-    .attr("height", h);
-    */
-    var elem = this.$(id)[0];
-    var max_y = 100;
-    var padding = 30;
-    var xscale = d3.scale.linear().domain([0, 120]).range([padding, w]); 
-    var yscale = d3.scale.linear().domain([0, 100]).range([0, h-padding]);
-    var xdiff = xscale(1) - xscale(0);
+    $(this.el).html(this.template({
+      modes: this.modes,
+      colors: this.colors
+    }));
 
-    var initial = true; 
-    var cpu_data = null; 
-    this.displayGraph(elem, w, h, padding, cpu_data, xscale, yscale, 1000, 1000);
-
-    return this;
-  },
-
-  displayGraph: function(elem, width, height, padding, data, x, y) {
-    var tv = 5000;
-    this.graph = new Rickshaw.Graph( {
-      element: elem,
-      width: width,
-      height: height,
-      renderer: 'bar',
-      series: new Rickshaw.Series.FixedDuration([{ color: 'steelblue', name: 'one' }], undefined, {
-        timeInterval: tv,
-        maxDataPoints: this.numSamples,
-        timeBase: new Date().getTime() / 1000
-      }) 
-    } );
-    this.graph.render();
-    var _this = this;
     this.intervalId = window.setInterval(function() {
       return function() { _this.getData(_this); }
-    }(), 5000)
+    }(), this.updateInterval)
+    return this;
   },
   
   updateGraph: function(data) {
     var new_data = this.modifyData(data);
-    this.graph.series.addData(new_data[new_data.length-1]);
-    this.graph.render();
+    $.plot("#cpuusage", new_data, this.graphOptions);
   },
 
   getData: function(context) {
@@ -110,38 +102,57 @@ CpuUsageWidget = Backbone.View.extend({
     });
   },
 
+  /* Calculate utilization as difference in data for two consecutive times */
   modifyData: function(data) {
-    this.prev_cpu_data = this.cpu_data;
     var tmp = [];
-    if (data.length < this.numSamples) {
-      for (var i=0; i < this.numSamples-data.length; i++) {
-        tmp.push({umode: 0, umode_nice: 0, smode: 0, idle: 0});
-      }
-      data = tmp.concat(data);
+    var res = [];
+    var new_data = [];
+    var totals = [];
+    if (data.length > this.numSamples) {
+      data = data.slice(data.length - this.numSamples);
     }
-    this.cpu_data = data;
-    var cpu_util = [];
-    for (var i=0; i < this.numSamples; i++) {
-      cpu_util.push({
-        umode: this.cpu_data[i].umode - this.prev_cpu_data[i].umode,
-        umode_nice: this.cpu_data[i].umode_nice - this.prev_cpu_data[i].umode_nice,
-        smode: this.cpu_data[i].smode - this.prev_cpu_data[i].smode,
-        idle: this.cpu_data[i].idle - this.prev_cpu_data[i].idle,
-      })
-    }
-    var data_umode = null; 
-    data_umode = _.map(cpu_util, function(d,i) {
-      var sum = _.reduce(this.modes, function(memo, mode) { return memo + d[mode];}, 0, this);
-      if (sum == 0) {
-        return {one: 0}; 
-      } else {
-        return {one: Math.round((d['umode']/sum) * 100)};
+    // calculate diffs from previous for each mode.
+    for (var m = 0; m < this.modes.length; m++) {
+      var mode = this.modes[m];
+      tmp[m] = [];
+      res[m] = [];
+      for (var i=0; i< data.length; i++) {
+        if (!_.isNull(this.prev_cpu_data) && this.prev_cpu_data.length == data.length) {
+          var diff = data[i][mode] - this.prev_cpu_data[i][mode];
+          tmp[m].push(diff);
+        } else {
+          tmp[m].push(0);
+        }
       }
+    }
+    // calculate totals for each sample
+    for (var i=0; i< data.length; i++) {
+      totals[i] = 0;
+      for (var m = 0; m < this.modes.length; m++) {
+        totals[i] = totals[i] + tmp[m][i];
+      }
+      for (var m = 0; m < this.modes.length; m++) {
+        if (totals[i] != 0) {
+          tmp[m][i] = (tmp[m][i] / totals[i]) * 100;
+        } else {
+          tmp[m][i] = 0;
+        }
+        
+      }
+    }
+    // create series with x as index and y as util percent
+    for (var m = 0; m < this.modes.length; m++) {
+      res[m] = [];
+      for (var i=0; i < this.numSamples; i++) {
+        res[m].push([i, tmp[m][i]]);
+      }
+      new_data.push({ "label": this.modes[m], "data": res[m], "color": this.colors[m] });
+    }
 
-    }, this);
-    return data_umode;
+    this.prev_cpu_data = data;
+    return new_data;
   },
-  
+
   cleanup: function() {
     logger.debug('clearing setInterval in cpu_usage_widget'); 
     if (!_.isUndefined(this.intervalId)) {

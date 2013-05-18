@@ -47,6 +47,7 @@ var HomeLayoutView = RockstoreLayoutView.extend({
     this.dependencies.push(this.appliances);
     this.dependencies.push(this.dashboardconfig);
 
+    /*
     this.available_widgets = { 
       'sysinfo': { display_name: 'System Information', view: 'SysInfoWidget' },
       'cpu_usage': { display_name: 'CPU Usage', view: 'CpuUsageWidget' },
@@ -54,6 +55,7 @@ var HomeLayoutView = RockstoreLayoutView.extend({
       'alerts': { display_name: 'Alerts', view: 'SampleWidget' },
       'top_shares_usage': { display_name: 'Top Shares By Usage', view: 'SampleWidget' },
     };
+    */
     this.cleanupArray = []; // widgets add themselves here so that their cleanup routines can be called from this view's cleanup
   },
 
@@ -85,12 +87,6 @@ var HomeLayoutView = RockstoreLayoutView.extend({
     // render dashboard widgets
     this.renderWidgets();
 
-    //create subviews
-    //this.subviews['sysinfo'] = new SysInfoModule({model: this.sysinfo});
-    //this.subviews['cpuusage'] = new CpuUsageModule();
-    // render subviews
-    //this.$('#ph-sysinfo').append(this.subviews['sysinfo'].render().el);
-    //this.$('#ph-cpuusage').append(this.subviews['cpuusage'].render().el);
   },
 
   dashboardConfig: function() {
@@ -108,43 +104,53 @@ var HomeLayoutView = RockstoreLayoutView.extend({
   },
 
   renderWidgets: function() {
-    parentElem = this.$('#widgets-container');
+    parentElem = this.$('.widgets-container');
     var _this = this;
     parentElem.empty();
     logger.debug('in home.js renderWidgets');
-    // if no dashboardconfig for this user exists, add sysinfo
-    // and cpu_usage widgets to selected
+    // if no dashboardconfig for this user exists, get default widgets 
     if (_.isUndefined(this.dashboardconfig.get('widgets'))) {
-      this.dashboardconfig.set('widgets', "sysinfo,cpu_usage");
+      this.dashboardconfig.set('widgets', RockStorWidgets.defaultWidgetNames().join(","));
     }
     var i = 0;
     logger.debug('widgets are');
     logger.debug(this.dashboardconfig.get('widgets'));
-    widget_list = this.dashboardconfig.get('widgets').split(',');
-    logger.debug(widget_list);
+    widgetNames = this.dashboardconfig.get('widgets').split(',');
+    
     this.cleanupArray.length = 0;
-    _.each(widget_list, function(widget, index, list ) {
-      logger.debug('rendering ' + widget); 
-      logger.debug('i = ' + i);
-      if ((i % 3) == 0) {
-        logger.debug('creating row');
-        row = $('<div class="row-fluid"/>');
-        parentElem.append(row);
-      }
-      var view_name = _this.available_widgets[widget].view;
-      if (!_.isUndefined(window[view_name] && !_.isNull(window[view_name]))) {
-        logger.debug('creating view ' + view_name);
-        var view = new window[view_name]({
-          display_name: _this.available_widgets[widget].display_name,
+    _.each(widgetNames, function(widgetName, index, list ) {
+      logger.debug('getting view for widget' + widgetName);
+      var widget = RockStorWidgets.findByName(widgetName);
+      var viewName = widget.view;
+      if (!_.isUndefined(window[widget.view] && !_.isNull(window[widget.view]))) {
+        logger.debug('creating view ' + widget.view);
+        var view = new window[widget.view]({
+          displayName: widget.displayName,
           cleanupArray: _this.cleanupArray
         });
+        var widget_elem = $('<li></li>');
+        parentElem.append(widget_elem);
+        var position_div = $('<div class="position"></div>');
+        widget_elem.append(position_div);
+        position_div.append(view.render().el);
         _this.cleanupArray.push(view);
-        var span = $('<div class="span4"></div>');
-        span.append(view.render().el);
-        row.append(span);
-        i = i+1;
+
       }
     });
+    logger.debug('calling shapeshift');
+    this.$('.widgets-container').shapeshift();
+   
+    // set handlers for layout modification events
+    this.$('.widgets-container').on('ss-rearranged', function(e, selected) {
+      logger.debug('in rearranged handler');
+    });
+    this.$('.widgets-container').on('ss-drop-complete', function(e, selected) {
+      logger.debug('in drop-complete handler');
+    });
+    this.$('.widgets-container').on('ss-trashed', function(e, selected) {
+      logger.debug('in ss-trashed handler');
+    });
+
   },
 
   cleanup: function() {
