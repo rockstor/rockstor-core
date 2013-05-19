@@ -111,43 +111,85 @@ RockStorWidgetView = Backbone.View.extend({
   className: 'widget',
   
   events: {
-    'click .resize-widget': 'resize',
     'click .configure-widget': 'configure',
+    'click .resize-widget': 'resize',
     'click .close-widget': 'close',
   },
 
   initialize: function() {
+    this.maximized = false;
+    this.name = this.options.name;
+    this.displayName = this.options.displayName;
   },
-
-  resize: function(event) {
-    logger.debug('in resize');
-    if (!_.isUndefined(event) && !_.isNull(event)) {
-      event.preventDefault();
-    }
-    var li = $(this.el).closest('li');
-    if (_.isUndefined(li.attr('data-ss-colspan'))) {
-      li.attr('data-ss-colspan',2);
-    } else {
-      li.removeAttr('data-ss-colspan');
-    }
-    $('.widgets-container').trigger('ss-rearrange');
+  
+  render: function() {
+    $(this.el).attr('id', this.name + '_widget');
   },
   
   configure: function(event) {
     if (!_.isUndefined(event) && !_.isNull(event)) {
       event.preventDefault();
     }
-    logger.debug('in rockstor widget configure');
   },
-
+  
+  resize: function(event) {
+    if (!_.isUndefined(event) && !_.isNull(event)) {
+      event.preventDefault();
+    }
+    logger.debug('in resize');
+    var ul = $(this.el).closest('ul'); // list
+    var li = $(this.el).closest('li'); // current list item
+    if (!this.maximized) {
+      // Maximizing
+      // Remember current position
+      this.original_position = li.index();
+      // Remember current dimentions
+      this.original_width = li.attr('data-ss-colspan');
+      this.original_height = li.attr('data-ss-rowspan');
+      logger.debug('saving original height and width ' + this.original_height + '   ' + this.original_width);
+      // remove list item from current position
+      li.detach();
+      // insert at first position in the list
+      ul.prepend(li);
+      // resize to max
+      li.attr('data-ss-colspan',RockStorWidgets.max_width);
+      li.attr('data-ss-rowspan',RockStorWidgets.max_height);
+      this.maximized = true;
+    } else {
+      // Restoring
+      li.detach();
+      // resize to original
+      logger.debug('restoring original height and width ' + this.original_height + '   ' + this.original_width);
+      li.attr('data-ss-colspan',this.original_width);
+      li.attr('data-ss-rowspan',this.original_height);
+      // find current list item at original index
+      curr_li = ul.find("li:eq("+this.original_position+")");
+      // insert widget at original position
+      if (curr_li.length > 0) {
+        // if not last widget
+        curr_li.before(li);
+      } else {
+        ul.append(li);
+      }
+      this.maximized = false;
+    }
+    // trigger rearrange so shapeshift can do its job
+    ul.trigger('ss-rearrange');
+  },
+  
   close: function(event) {
+    if (!_.isUndefined(event) && !_.isNull(event)) {
+      event.preventDefault();
+    }
     var li = $(event.currentTarget).closest('li');
     console.log(li); 
     li.remove();
-    $('.widgets-container').trigger('ss-rearrange');
+    var ul = $(this.el).closest('ul'); // list
+    ul.trigger('ss-rearrange');
     
     // TODO save layout
-  }
+  },
+
 
 });
 

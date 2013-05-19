@@ -34,6 +34,8 @@ SampleWidget = RockStorWidgetView.extend({
   },
 
   render: function() {
+    // call render of base
+    this.constructor.__super__.render.apply(this, arguments);
     var _this = this;
     $(this.el).html(this.template({ 
       module_name: this.module_name,

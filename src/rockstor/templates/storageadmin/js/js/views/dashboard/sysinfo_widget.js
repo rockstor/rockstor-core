@@ -33,6 +33,8 @@ SysInfoWidget = RockStorWidgetView.extend({
   },
 
   render: function() {
+    // call render of base
+    this.constructor.__super__.render.apply(this, arguments);
     var _this = this;
     this.sysinfo.fetch({
       success: function() {

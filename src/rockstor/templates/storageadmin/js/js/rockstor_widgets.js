@@ -1,4 +1,6 @@
 RockStorWidgets = {};
+RockStorWidgets.max_width = 3;
+RockStorWidgets.max_height = 2;
 
 RockStorWidgets.findByName = function(name) {
   return _.find(RockStorWidgets.available_widgets, function(widget) {
@@ -31,6 +33,8 @@ RockStorWidgets.available_widgets = [
     view: 'SysInfoWidget', 
     description: 'System Information',
     defaultWidget: true,
+    rows: 1,
+    cols: 2,
     category: 'Compute'
   },
   { 
@@ -39,6 +43,8 @@ RockStorWidgets.available_widgets = [
     view: 'CpuUsageWidget',
     description: 'CPU Utilization',
     defaultWidget: true,
+    rows: 1,
+    cols: 1,
     category: 'Compute'
   },
   { 
@@ -47,6 +53,8 @@ RockStorWidgets.available_widgets = [
     view: 'SampleWidget',
     description: 'A Sample Widget',
     defaultWidget: false,
+    rows: 1,
+    cols: 1,
     category: 'Network'
   },
   { 
@@ -55,6 +63,8 @@ RockStorWidgets.available_widgets = [
     view: 'SampleWidget',
     description: 'Displays Top Shares by percentage of space used',
     defaultWidget: true,
+    rows: 1,
+    cols: 1,
     category: 'Storage'
   },
 ];

@@ -37,7 +37,6 @@ CpuUsageWidget = RockStorWidgetView.extend({
     for (var i=0; i < this.numSamples; i++) {
       this.cpu_data.push({umode: 0, umode_nice: 0, smode: 0, idle: 0});
     }
-    this.cleanupArray = this.options.cleanupArray;
     this.updateInterval = 5000;
     this.graphOptions = { 
       grid : { hoverable : true },
@@ -67,10 +66,14 @@ CpuUsageWidget = RockStorWidgetView.extend({
   },
 
   render: function() {
+    // call render of base
+    this.constructor.__super__.render.apply(this, arguments);
     var _this = this;
     $(this.el).html(this.template({
       modes: this.modes,
-      colors: this.colors
+      colors: this.colors,
+      height: this.defaultHeight,
+      width: this.defaultWidth
     }));
 
     this.intervalId = window.setInterval(function() {
