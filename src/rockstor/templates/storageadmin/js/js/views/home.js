@@ -108,20 +108,18 @@ var HomeLayoutView = RockstoreLayoutView.extend({
     var _this = this;
     this.widgetsContainer.empty();
     
-    var widgetConfs = null;
-    if (!_.isUndefined(this.dashboardconfig.get('widgets'))) {
-     widgetConfs = JSON.parse(this.dashboardconfig.get("widgets"));
-    } else {
-      // if no dashboardconfig for this user exists, get default widgets 
-      widgetConfs = RockStorWidgets.defaultWidgets();  
+    var wConfigs = null;
+    wConfigs = this.dashboardconfig.getConfig();
+    if (_.isNull(wConfigs)) {
+      this.dashboardconfig.setConfig(RockStorWidgets.defaultWidgets());
+      wConfigs = this.dashboardconfig.getConfig();
+      logger.debug('dashboardconfig was null, set it to');
+      logger.debug(wConfigs);
     }
-     
     this.cleanupArray.length = 0;
     // Add widgets to ul (widgetsContainer);
-    _.each(widgetConfs, function(widgetConf, index, list ) {
-      logger.debug('adding widget');
-      logger.debug(widgetConf);
-      _this.addWidget(widgetConf, _this.widgetsContainer, _this.cleanupArray);
+    _.each(wConfigs, function(wConfig, index, list ) {
+      _this.addWidget(wConfig, _this.widgetsContainer, _this.cleanupArray);
     });
     // call shapeshift to do layout
     this.widgetsContainer.shapeshift();

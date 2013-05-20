@@ -135,6 +135,29 @@ var ISCSITarget = Backbone.Model.extend({
 });
 
 var DashboardConfig = Backbone.Model.extend({ 
-  url: '/api/dashboardconfig/'
+  url: '/api/dashboardconfig/',
+  setConfig: function(wConfigs) {
+    var tmp = [];
+    _.each(wConfigs, function(wConfig) {
+      tmp.push({
+        name: wConfig.name, 
+        displayName: wConfig.displayName,
+        view: wConfig.view,
+        rows: wConfig.rows, 
+        cols: wConfig.cols,
+        position: wConfig.position, 
+      });
+    });
+    this.set({ widgets: JSON.stringify(tmp) });
+  },
+  getConfig: function() {
+    if (!_.isUndefined(this.get('widgets')) && 
+    !_.isNull(this.get('widgets'))) {
+      return JSON.parse(this.get('widgets')); 
+    } else {
+      return null;
+    }
+  }
+
 });
 
