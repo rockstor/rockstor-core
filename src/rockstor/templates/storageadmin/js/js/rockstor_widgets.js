@@ -15,8 +15,15 @@ RockStorWidgets.findByCategory = function(category) {
 };
 
 RockStorWidgets.defaultWidgets = function() {
-  return _.filter(RockStorWidgets.available_widgets, function(widget) {
+  var tmp = _.filter(RockStorWidgets.available_widgets, function(widget) {
     return widget.defaultWidget;
+  });
+  return _.sortBy(tmp, function(w) {
+    if (!_.isUndefined(w.position) && !_.isNull(w.position)) {
+      return w.position;
+    } else {
+      return Number.MAX_VALUE;
+    }
   });
 };
 
@@ -26,46 +33,5 @@ RockStorWidgets.defaultWidgetNames = function(name) {
   });
 };
 
-RockStorWidgets.available_widgets = [ 
-  { 
-    name: 'sysinfo', 
-    displayName: 'System Information', 
-    view: 'SysInfoWidget', 
-    description: 'System Information',
-    defaultWidget: true,
-    rows: 1,
-    cols: 2,
-    category: 'Compute'
-  },
-  { 
-    name: 'cpuusage', 
-    displayName: 'CPU Utilization', 
-    view: 'CpuUsageWidget',
-    description: 'CPU Utilization',
-    defaultWidget: true,
-    rows: 1,
-    cols: 1,
-    category: 'Compute'
-  },
-  { 
-    name: 'sample', 
-    displayName: 'Sample Widget', 
-    view: 'SampleWidget',
-    description: 'A Sample Widget',
-    defaultWidget: false,
-    rows: 1,
-    cols: 1,
-    category: 'Network'
-  },
-  { 
-    name: 'top_shares_usage', 
-    displayName: 'Top Shares By Usage', 
-    view: 'SampleWidget',
-    description: 'Displays Top Shares by percentage of space used',
-    defaultWidget: true,
-    rows: 1,
-    cols: 1,
-    category: 'Storage'
-  },
-];
+RockStorWidgets.available_widgets = [];
 

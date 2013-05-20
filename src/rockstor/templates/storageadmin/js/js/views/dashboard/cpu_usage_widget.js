@@ -73,7 +73,8 @@ CpuUsageWidget = RockStorWidgetView.extend({
       modes: this.modes,
       colors: this.colors,
       height: this.defaultHeight,
-      width: this.defaultWidth
+      width: this.defaultWidth,
+      displayName: this.displayName
     }));
 
     this.intervalId = window.setInterval(function() {
@@ -163,5 +164,18 @@ CpuUsageWidget = RockStorWidgetView.extend({
     }
   }
 
+});
+
+// Default configuration for cpu widget
+RockStorWidgets.available_widgets.push({ 
+  name: 'cpuusage', 
+  displayName: 'CPU Utilization', 
+  view: 'CpuUsageWidget',
+  description: 'CPU Utilization',
+  defaultWidget: true,
+  rows: 1,
+  cols: 1,
+  category: 'Compute',
+  position: 2
 });
 

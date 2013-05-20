@@ -45,4 +45,14 @@ SampleWidget = RockStorWidgetView.extend({
   },
 
 });
+RockStorWidgets.available_widgets.push({ 
+    name: 'sample', 
+    displayName: 'Sample Widget', 
+    view: 'SampleWidget',
+    description: 'A Sample Widget',
+    defaultWidget: false,
+    rows: 1,
+    cols: 1,
+    category: 'Network', 
+});
 

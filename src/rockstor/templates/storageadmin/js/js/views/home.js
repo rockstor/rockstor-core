@@ -116,6 +116,7 @@ var HomeLayoutView = RockstoreLayoutView.extend({
     this.cleanupArray.length = 0;
     // Add widgets to ul (widgetsContainer);
     _.each(wConfigs, function(wConfig, index, list ) {
+      logger.debug('adding widget ' + wConfig.name);
       _this.addWidget(wConfig, _this.widgetsContainer, _this.cleanupArray);
     });
     // call shapeshift to do layout
