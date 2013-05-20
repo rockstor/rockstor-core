@@ -35,27 +35,21 @@
 </div> <!-- row-fluid -->
 
 <!-- Widget Body -->
-<div class="row-fluid">
-  <div class="span12">
-    <!-- Content -->
-    <div class="widget-content">
-      <div class="row-fluid">
-        <div class="span12">
-          <div id="cpuusage" style="width: 250px; height: 175px;"> </div>
-          <div class="clear"></div>
-          <div id="cpuusage_legend">
-            <% console.log(colors); %>
-            <% _.each(modes, function(mode,i) { %>
-              <div class="cpuusage_color" style="width: 15px; height: 15px; background: <%= colors[i] %>; float: left;"></div><div style="float: left">&nbsp;<%= mode %>&nbsp;&nbsp;</div>
-            <% }); %>
-          </div>
+<!-- Content -->
+<div class="widget-content">
+  <!--
+  <div id="cpuusage" style="width: 250px; height: 175px;"> </div>
+  -->
+  <div id="cpuusage" style="width: 90%; height: 60%;"> </div>
+  <div class="clear"></div>
+  <div id="cpuusage_legend">
+    <% console.log(colors); %>
+    <% _.each(modes, function(mode,i) { %>
+      <div class="cpuusage_color" style="width: 15px; height: 15px; background: <%= colors[i] %>; float: left;"></div><div style="float: left">&nbsp;<%= mode %>&nbsp;&nbsp;</div>
+    <% }); %>
+  </div>
 
-
-        </div>
-      </div>
-    </div>
-    <!-- End Content -->
-  </div> <!-- span12 -->
-</div> <!-- row-fluid --> 
+</div>
+<!-- End Content -->
 <!-- end Widget body -->
 
