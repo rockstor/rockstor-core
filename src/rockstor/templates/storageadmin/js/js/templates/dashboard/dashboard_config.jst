@@ -29,30 +29,37 @@
 
 <div class="row-fluid">
   <div class="span12">
-    <table id="widget-selections" class="table table-condensed table-bordered table-hover table-striped"style="width: 100%">
-      <thead>
-      </thead>
-      <tbody>
-        <% _.each(available_widgets, function(widget, name) { %>
-          <tr>
-            <td>
-              <% if (_.indexOf(selected_widgets, name) == -1) { %>
-                <input class="widget-name" type="checkbox" name="selections" value="<%= name %>"></input>
 
-              <% } else { %>
-                <input class="widget-name" type="checkbox" name="selections" value="<%= name %>" checked="checked"></input>
+    <% var widget_categories = ['Compute', 'Storage', 'Network']; %>
+    <% _.each(widget_categories, function(category) { %>
+      <h3><%= category %></h3>
+      <table id="widget-selections" class="table table-condensed table-bordered table-hover table-striped"style="width: 100%">
+        <thead>
+        </thead>
+        <tbody>
+          <% _.each(RockStorWidgets.findByCategory(category), function(widget) { %>
+            <tr>
+              <td>
+                <% if (_.some(wSelected, function(w) { return w.name == widget.name})) { %>
+                  <input class="widget-name" type="checkbox" name="selections" value="<%= widget.name %>" checked="checked"></input>
 
-              <% } %>
-            </td>
-            <td>
-              <%= widget.display_name %>
-            </td>
+                <% } else { %>
+                  <input class="widget-name" type="checkbox" name="selections" value="<%= widget.name %>"></input>
+
+                <% } %>
+              </td>
+              <td>
+                <%= widget.displayName %><br>
+                <%= widget.description %>
+              </td>
+            </tr>
           <% }); %>
-        </tr>
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+    <% }); %>
 
     <button id="save" class="btn btn-primary">Save</button>
+
   </div>
 </div>
 

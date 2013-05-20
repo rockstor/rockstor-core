@@ -47,6 +47,7 @@ var HomeLayoutView = RockstoreLayoutView.extend({
     this.dependencies.push(this.appliances);
     this.dependencies.push(this.dashboardconfig);
 
+    /*
     this.available_widgets = { 
       'sysinfo': { display_name: 'System Information', view: 'SysInfoWidget' },
       'cpu_usage': { display_name: 'CPU Usage', view: 'CpuUsageWidget' },
@@ -54,6 +55,7 @@ var HomeLayoutView = RockstoreLayoutView.extend({
       'alerts': { display_name: 'Alerts', view: 'SampleWidget' },
       'top_shares_usage': { display_name: 'Top Shares By Usage', view: 'SampleWidget' },
     };
+    */
     this.cleanupArray = []; // widgets add themselves here so that their cleanup routines can be called from this view's cleanup
   },
 
@@ -81,16 +83,10 @@ var HomeLayoutView = RockstoreLayoutView.extend({
     // render template
     $(this.el).empty();
     $(this.el).append(this.template());
-
+    this.widgetsContainer = this.$('.widgets-container');
     // render dashboard widgets
     this.renderWidgets();
 
-    //create subviews
-    //this.subviews['sysinfo'] = new SysInfoModule({model: this.sysinfo});
-    //this.subviews['cpuusage'] = new CpuUsageModule();
-    // render subviews
-    //this.$('#ph-sysinfo').append(this.subviews['sysinfo'].render().el);
-    //this.$('#ph-cpuusage').append(this.subviews['cpuusage'].render().el);
   },
 
   dashboardConfig: function() {
@@ -100,7 +96,6 @@ var HomeLayoutView = RockstoreLayoutView.extend({
     this.$('#dashboard-config-content').empty();
     this.$('#dashboard-config-content').append((new DashboardConfigView({
       parentView: this,
-      available_widgets: this.available_widgets,
       dashboardconfig: this.dashboardconfig
     })).render().el);
     this.$('#dashboard-config-popup').modal('show');
@@ -108,41 +103,89 @@ var HomeLayoutView = RockstoreLayoutView.extend({
   },
 
   renderWidgets: function() {
-    parentElem = this.$('#widgets-container');
+
     var _this = this;
-    parentElem.empty();
-    logger.debug('in home.js renderWidgets');
-    // if no dashboardconfig for this user exists, add sysinfo
-    // and cpu_usage widgets to selected
-    if (_.isUndefined(this.dashboardconfig.get('widgets'))) {
-      this.dashboardconfig.set('widgets', "sysinfo,cpu_usage");
+    this.widgetsContainer.empty();
+    
+    var wConfigs = null;
+    wConfigs = this.dashboardconfig.getConfig();
+    if (_.isNull(wConfigs)) {
+      this.dashboardconfig.setConfig(RockStorWidgets.defaultWidgets());
+      wConfigs = this.dashboardconfig.getConfig();
     }
-    var i = 0;
-    logger.debug('widgets are');
-    logger.debug(this.dashboardconfig.get('widgets'));
-    widget_list = this.dashboardconfig.get('widgets').split(',');
-    logger.debug(widget_list);
     this.cleanupArray.length = 0;
-    _.each(widget_list, function(widget, index, list ) {
-      logger.debug('rendering ' + widget); 
-      logger.debug('i = ' + i);
-      if ((i % 3) == 0) {
-        logger.debug('creating row');
-        row = $('<div class="row-fluid"/>');
-        parentElem.append(row);
-      }
-      var view_name = _this.available_widgets[widget].view;
-      if (!_.isUndefined(window[view_name] && !_.isNull(window[view_name]))) {
-        logger.debug('creating view ' + view_name);
-        var view = new window[view_name]({
-          display_name: _this.available_widgets[widget].display_name,
-          cleanupArray: _this.cleanupArray
-        });
-        _this.cleanupArray.push(view);
-        var span = $('<div class="span4"></div>');
-        span.append(view.render().el);
-        row.append(span);
-        i = i+1;
+    // Add widgets to ul (widgetsContainer);
+    _.each(wConfigs, function(wConfig, index, list ) {
+      logger.debug('adding widget ' + wConfig.name);
+      _this.addWidget(wConfig, _this.widgetsContainer, _this.cleanupArray);
+    });
+    // call shapeshift to do layout
+    this.widgetsContainer.shapeshift();
+   
+    // set handler for drop event, when a widget is moved around and 
+    // the drop completes.
+    this.widgetsContainer.on('ss-drop-complete', function(e, selected) {
+      _this.saveWidgetConfiguration();
+    });
+
+  },
+
+  addWidget: function(widgetConf, container, cleanupArray) {
+    var li = null;
+    var viewName = widgetConf.view;
+    if (!_.isUndefined(window[viewName] && !_.isNull(window[viewName]))) {
+      var view = new window[viewName]({
+        displayName: widgetConf.displayName,
+        name: widgetConf.name,
+        cleanupArray: this.cleanupArray,
+      });
+      // create li for widget
+      li = $("<li>");
+      li.attr("data-ss-colspan", widgetConf.cols);
+      li.attr("data-ss-rowspan", widgetConf.rows);
+      container.append(li);
+      var position_div = $('<div class="position"></div>');
+      li.append(position_div);
+      position_div.append(view.render().el);
+      cleanupArray.push(view);
+    }
+  },
+  
+  removeWidget: function(name) {
+    var li = this.$('div#'+name+'_widget').closest('li');
+    li.remove();
+  },
+
+  saveWidgetConfiguration: function() {
+    var lis = this.widgetsContainer.find('li');
+    var tmp = [];
+    lis.each(function(index) {
+      var li = $(this);
+      var name = li.find('div.widget').attr('id').replace('_widget','');; 
+      var widgetConf = RockStorWidgets.findByName(name);
+      var rows = li.attr('data-ss-rowspan');
+      var cols = li.attr('data-ss-colspan');
+      tmp.push({
+        name: name, 
+        displayName: widgetConf.displayName,
+        view: widgetConf.view,
+        rows: rows, 
+        cols: cols,
+        position: index, 
+      });
+    });
+    this.dashboardconfig.set({ widgets: JSON.stringify(tmp) });
+    this.dashboardconfig.save( null, {
+      success: function(model, response, options) {
+      },
+      error: function(model, xhr, options) {
+        logger.debug('error while saving dashboardconfig');
+        var msg = xhr.responseText;
+        try {
+          msg = JSON.parse(msg).detail;
+        } catch(err) {
+        }
+        logger.debug(msg);
       }
     });
   },

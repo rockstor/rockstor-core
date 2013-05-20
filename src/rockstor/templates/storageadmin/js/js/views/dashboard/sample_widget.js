@@ -25,21 +25,34 @@
  */
 
 
-SampleWidget = Backbone.View.extend({
+SampleWidget = RockStorWidgetView.extend({
 
   initialize: function() {
+    this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.dashboard_widgets_sample;
-    this.display_name = this.options.display_name;
+    this.displayName = this.options.displayName;
   },
 
   render: function() {
+    // call render of base
+    this.constructor.__super__.render.apply(this, arguments);
     var _this = this;
     $(this.el).html(this.template({ 
       module_name: this.module_name,
-      display_name: this.display_name
+      displayName: this.displayName
     }));
     return this;
   },
 
+});
+RockStorWidgets.available_widgets.push({ 
+    name: 'sample', 
+    displayName: 'Sample Widget', 
+    view: 'SampleWidget',
+    description: 'A Sample Widget',
+    defaultWidget: false,
+    rows: 1,
+    cols: 1,
+    category: 'Network', 
 });
 

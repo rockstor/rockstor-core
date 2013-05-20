@@ -24,47 +24,36 @@
  * 
  */
 
-SysInfoWidget = RockStorWidgetView.extend({
+
+TopSharesWidget = RockStorWidgetView.extend({
 
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
-    this.template = window.JST.dashboard_widgets_sysinfo;
-    this.sysinfo = new SysInfo();
+    this.template = window.JST.dashboard_widgets_sample;
+    this.displayName = this.options.displayName;
   },
 
   render: function() {
     // call render of base
     this.constructor.__super__.render.apply(this, arguments);
     var _this = this;
-    this.sysinfo.fetch({
-      success: function() {
-        _this.renderSysInfo();
-      }
-    });
+    $(this.el).html(this.template({ 
+      module_name: this.module_name,
+      displayName: this.displayName
+    }));
     return this;
   },
 
-  renderSysInfo: function() {
-    $(this.el).html(this.template({ 
-      module_name: this.module_name,
-      model: this.sysinfo,
-      displayName: this.displayName
-      
-    }));
-
-  }
-
 });
-
 RockStorWidgets.available_widgets.push({ 
-  name: 'sysinfo', 
-  displayName: 'System Information', 
-  view: 'SysInfoWidget', 
-  description: 'System Information',
-  defaultWidget: true,
-  rows: 1,
-  cols: 2,
-  category: 'Compute',
-  position: 1
+    name: 'top_shares', 
+    displayName: 'Top Shares by usage', 
+    view: 'TopSharesWidget',
+    description: 'Displays Top Shares by percentage of space used',
+    defaultWidget: true,
+    rows: 1,
+    cols: 1,
+    category: 'Storage', 
+    position: 3
 });
 
