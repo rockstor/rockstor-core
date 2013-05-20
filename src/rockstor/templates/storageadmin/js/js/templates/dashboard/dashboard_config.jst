@@ -40,11 +40,11 @@
           <% _.each(RockStorWidgets.findByCategory(category), function(widget) { %>
             <tr>
               <td>
-                <% if (_.indexOf(selected_widgets, widget.name) == -1) { %>
-                  <input class="widget-name" type="checkbox" name="selections" value="<%= widget.name %>"></input>
+                <% if (_.some(wSelected, function(w) { return w.name == widget.name})) { %>
+                  <input class="widget-name" type="checkbox" name="selections" value="<%= widget.name %>" checked="checked"></input>
 
                 <% } else { %>
-                  <input class="widget-name" type="checkbox" name="selections" value="<%= widget.name %>" checked="checked"></input>
+                  <input class="widget-name" type="checkbox" name="selections" value="<%= widget.name %>"></input>
 
                 <% } %>
               </td>

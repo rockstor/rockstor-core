@@ -96,7 +96,6 @@ var HomeLayoutView = RockstoreLayoutView.extend({
     this.$('#dashboard-config-content').empty();
     this.$('#dashboard-config-content').append((new DashboardConfigView({
       parentView: this,
-      available_widgets: this.available_widgets,
       dashboardconfig: this.dashboardconfig
     })).render().el);
     this.$('#dashboard-config-popup').modal('show');
@@ -113,8 +112,6 @@ var HomeLayoutView = RockstoreLayoutView.extend({
     if (_.isNull(wConfigs)) {
       this.dashboardconfig.setConfig(RockStorWidgets.defaultWidgets());
       wConfigs = this.dashboardconfig.getConfig();
-      logger.debug('dashboardconfig was null, set it to');
-      logger.debug(wConfigs);
     }
     this.cleanupArray.length = 0;
     // Add widgets to ul (widgetsContainer);
@@ -124,16 +121,10 @@ var HomeLayoutView = RockstoreLayoutView.extend({
     // call shapeshift to do layout
     this.widgetsContainer.shapeshift();
    
-    // set handlers for layout modification events
-    this.widgetsContainer.on('ss-arranged', function(e, selected) {
-      logger.debug('in arranged handler');
-    });
+    // set handler for drop event, when a widget is moved around and 
+    // the drop completes.
     this.widgetsContainer.on('ss-drop-complete', function(e, selected) {
-      logger.debug('in drop-complete handler');
       _this.saveWidgetConfiguration();
-    });
-    this.widgetsContainer.on('ss-trashed', function(e, selected) {
-      logger.debug('in ss-trashed handler');
     });
 
   },
@@ -158,6 +149,11 @@ var HomeLayoutView = RockstoreLayoutView.extend({
       cleanupArray.push(view);
     }
   },
+  
+  removeWidget: function(name) {
+    var li = this.$('div#'+name+'_widget').closest('li');
+    li.remove();
+  },
 
   saveWidgetConfiguration: function() {
     var lis = this.widgetsContainer.find('li');
@@ -168,8 +164,6 @@ var HomeLayoutView = RockstoreLayoutView.extend({
       var widgetConf = RockStorWidgets.findByName(name);
       var rows = li.attr('data-ss-rowspan');
       var cols = li.attr('data-ss-colspan');
-      logger.debug('widget name = ' + name + '   position = ' + index + 
-      '  rows = ' + rows + '  cols = ' + cols);
       tmp.push({
         name: name, 
         displayName: widgetConf.displayName,
@@ -182,7 +176,6 @@ var HomeLayoutView = RockstoreLayoutView.extend({
     this.dashboardconfig.set({ widgets: JSON.stringify(tmp) });
     this.dashboardconfig.save( null, {
       success: function(model, response, options) {
-        logger.debug('saved dashboardconfig successfully');
       },
       error: function(model, xhr, options) {
         logger.debug('error while saving dashboardconfig');
