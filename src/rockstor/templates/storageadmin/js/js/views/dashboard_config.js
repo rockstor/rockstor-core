@@ -30,7 +30,6 @@ DashboardConfigView = Backbone.View.extend({
   },
 
   initialize: function() {
-    this.available_widgets = this.options.available_widgets;
     this.dashboardconfig = this.options.dashboardconfig;
     this.template = window.JST.dashboard_dashboard_config;
     this.parentView = this.options.parentView;
@@ -38,8 +37,7 @@ DashboardConfigView = Backbone.View.extend({
 
   render: function() {
     $(this.el).html(this.template({
-      available_widgets: this.available_widgets,
-      selected_widgets: this.dashboardconfig.get('widgets').split(',')
+      wSelected: this.dashboardconfig.getConfig()
     }));
     return this;
   },
@@ -48,36 +46,28 @@ DashboardConfigView = Backbone.View.extend({
     event.preventDefault();
     logger.debug('in dashboard_config save');
     var _this = this;
-    var selected_widgets = this.dashboardconfig.get('widgets').split(',');
+    var wSelected = this.dashboardconfig.getConfig();
+    
+    this.parentView.widgetsContainer.trigger('ss-destroy');  
     this.$("input.widget-name").each(function() {
       var name = $(this).val();
-      n = _.indexOf(selected_widgets, name);
-      if (this.checked && n == -1 ) {
-        selected_widgets.push(name);
-      } else if (!this.checked && n != -1) {
-        selected_widgets.splice(n,1);
+      var isPresent = _.some(wSelected, function(w) {
+        return w.name == name;
+      });
+      if (this.checked && !isPresent ) {
+        _this.parentView.addWidget(
+          RockStorWidgets.findByName(name),
+          _this.parentView.widgetsContainer,
+          _this.parentView.cleanupArray
+        )
+      } else if (!this.checked && isPresent) {
+        _this.parentView.removeWidget(name);
       }
     });
-    this.dashboardconfig.set({'widgets': selected_widgets.join(',')});
-    logger.debug(selected_widgets);
-    this.dashboardconfig.save( null, {
-      success: function(model, response, options) {
-        logger.debug('saved dashboardconfig successfully');
-        _this.parentView.$('#dashboard-config-popup').modal('hide');
-        _this.parentView.renderWidgets();
-      },
-      error: function(model, xhr, options) {
-        logger.debug('error while saving dashboardconfig');
-        _this.parentView.$('#dashboard-config-popup').modal('hide');
-        var msg = xhr.responseText;
-        try {
-          msg = JSON.parse(msg).detail;
-        } catch(err) {
-        }
-        logger.debug(msg);
-      }
-
-    });
+    this.parentView.$('#dashboard-config-popup').modal('hide');
+    this.parentView.widgetsContainer.shapeshift();
+    this.parentView.saveWidgetConfiguration();
+    
   }
 
 });

@@ -751,14 +751,77 @@ hr.module-sep { margin: 0; border: 0; border-top: 1px solid #ddd; }
 
 /* Dashboard */
 #dashboard-config-content {
-  height: 400px;
   padding: 24px;
 }
 
 /* Widgets */
 .widget {
-  padding: 12px 12px 12px 12px;
   margin-bottom: 24px;
   border: 1px solid #ddd;
   box-shadow: 0px 0px 12px rgb(238, 238, 238);
+  border-radius: 4px;
+  height: 100%;
+}
+
+.widget-header {
+  position: relative;
+  margin-bottom: 12px;
+  padding: 4px 12px 4px 12px;
+  background: rgb(32, 141, 190);
+  color: #fff;
+  border-radius: 4px 4px 0 0;
+}
+
+.widget-header .gear {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+}
+
+.widget-content {
+  padding: 4px 12px 4px 12px;
+  height: 100%;
+  width: 100%;
+}
+
+/* Styles for jquery shapeshift plugin */
+ul.widgets-container {
+  position: relative;
+  width: 100%;
+  margin: 0px;
+}
+
+ul.widgets-container li {
+  position: absolute;
+  height: 300px;
+  width: 300px;
+  list-style: none outside none; 
+}
+
+/* TODO * adjust sizes of colspan 2 and 3 based on media queries */
+ul.widgets-container li[data-ss-colspan="1"] { width: 300px;} 
+ul.widgets-container li[data-ss-colspan="2"] { width: 610px;} 
+ul.widgets-container li[data-ss-colspan="3"] { width: 920px;} 
+ul.widgets-container li[data-ss-rowspan="1"] { height: 300px;} 
+ul.widgets-container li[data-ss-rowspan="2"] { height: 610px;} 
+ul.widgets-container li[data-ss-rowspan="3"] { height: 920px;} 
+ul.widgets-container li div.position { 
+  width: 100%; 
+  height: 100%; 
+  display: block;
+}
+
+/* expand icon */
+.expand-icon {
+  background: #3E454C;
+  padding: 4px 4px;
+}
+
+.expand-icon .icon-bar {
+  width: 18px;
+  display: block;
+  height: 2px;
+  background: none repeat scroll 0% 0% rgb(255, 255, 255);
+  border-radius: 1px 1px 1px 1px;
+  margin: 3px;
 }
