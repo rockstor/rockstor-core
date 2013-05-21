@@ -34,3 +34,4 @@ from share_samba import ShareSambaView
 from support import SupportView
 from dashboardconfig import DashboardConfigView
 from share_nfs import ShareNFSView
+from recipe import RecipeView

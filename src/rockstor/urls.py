@@ -21,7 +21,8 @@ from storageadmin.views import (DiskView, SystemDiskView, PoolView, ShareView,
                                 SnapshotView, InfoView, SetupWizardView,
                                 ShareIscsiView, AppliancesView, LoginView,
                                 UserView, ShareSambaView, SupportView,
-                                DashboardConfigView, ShareNFSView)
+                                DashboardConfigView, ShareNFSView,
+                                RecipeView)
 from smart_manager.views import (SmartManagerView, ServiceView, StapView)
 
 import os.path
@@ -120,5 +121,9 @@ urlpatterns = patterns('',
 
     # Dashboard config
     url(r'^api/dashboardconfig/$', DashboardConfigView.as_view(), name='dashboardconfig-view'),
+    
+    # Recipes
+    url(r'^api/recipes/nfs/start$', RecipeView.as_view(), name='recipe-view'),
+    url(r'^api/recipes/nfs/(?P<recipe_id>[0-9]+)$', RecipeView.as_view(), name='recipe-view'),
 
 )
