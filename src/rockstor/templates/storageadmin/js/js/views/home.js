@@ -120,7 +120,10 @@ var HomeLayoutView = RockstoreLayoutView.extend({
       _this.addWidget(wConfig, _this.widgetsContainer, _this.cleanupArray);
     });
     // call shapeshift to do layout
-    this.widgetsContainer.shapeshift();
+    this.widgetsContainer.shapeshift({
+      align: "left",
+      minColumns: 2
+    });
    
     // set handler for drop event, when a widget is moved around and 
     // the drop completes.
@@ -128,6 +131,10 @@ var HomeLayoutView = RockstoreLayoutView.extend({
       _this.saveWidgetConfiguration();
     });
 
+    this.widgetsContainer.on('ss-rearranged', function(e, selected) {
+      logger.debug('in rearrange'); 
+      //_this.saveWidgetConfiguration();
+    });
   },
 
   addWidget: function(widgetConf, container, cleanupArray) {
@@ -138,6 +145,7 @@ var HomeLayoutView = RockstoreLayoutView.extend({
         displayName: widgetConf.displayName,
         name: widgetConf.name,
         cleanupArray: this.cleanupArray,
+        parentView: this
       });
       // create li for widget
       li = $("<li>");
