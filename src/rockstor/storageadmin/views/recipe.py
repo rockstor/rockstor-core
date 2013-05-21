@@ -12,6 +12,7 @@ from fs.btrfs import (add_share, remove_share, share_id, update_quota,
 from storageadmin.serializers import ShareSerializer
 from storageadmin.util import handle_exception
 from storageadmin.exceptions import RockStorAPIException
+import random
 
 import logging
 logger = logging.getLogger(__name__)
@@ -29,7 +30,7 @@ class RecipeView(APIView):
             if 'status' in request.QUERY_PARAMS:
                 return Response({"recipe_status": "running"});
             else:
-                data = [ { "x": 1, "y": 2}, { "x": 2, "y": 5} ]
+                data = { "value": random.random() * 100}
                 return Response(data);
         except Exception, e:
             handle_exception(e, request)

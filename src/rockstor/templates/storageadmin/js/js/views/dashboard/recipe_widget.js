@@ -29,6 +29,8 @@ RecipeWidget = RockStorWidgetView.extend({
   events: {
     'click .start-recipe' : 'start',
     'click .stop-recipe' : 'stop',
+    'click .resize-widget': 'resize',
+    'click .close-widget': 'close',
 
   },
 
@@ -39,7 +41,26 @@ RecipeWidget = RockStorWidgetView.extend({
     this.timestamp = 0;
     // periodically check status while polling for data is 
     // going on. this interval controls the frequence
-    this.sc_interval = 0; 
+    this.scInterval = 0; 
+    //this.nfsData = [[[1,10],[2,10], [3,10], [4,10], [5,10], [6,10],
+      //[7,10], [8,10], [9,10], [10,10]]];
+    this.nfsData = [0,0,0,0,0,0,0,0,0,0];
+
+		this.graphOptions = {
+			lines: { show: true },
+			points: { show: true },
+			xaxis: {
+        min: 0,
+        max: 10,
+				tickDecimals: 0,
+				tickSize: 1
+			},
+      yaxis: {
+        min: 0,
+        max: 100
+      }
+		};
+    
   },
 
   render: function() {
@@ -49,6 +70,11 @@ RecipeWidget = RockStorWidgetView.extend({
       module_name: this.module_name,
       displayName: this.displayName
     }));
+    var series = [[]];
+    for (i=0; i<10; i++) {
+      series[0].push([i, this.nfsData[i]]);
+    }
+    //$.plot(this.$('#nfsgraph'), this.makeSeries(this.nfsData), this.graphOptions);
     return this;
   },
 
@@ -64,6 +90,7 @@ RecipeWidget = RockStorWidgetView.extend({
       dataType: "json",
       success: function(data, textStatus, jqXHR) {
         logger.debug('started recipe');
+        _this.$('#recipestatus').html('Recipe started - getting status');
         _this.waitTillRunning(data.recipe_uri);
       },
       error: function(jqXHR, textStatus, error) {
@@ -84,12 +111,15 @@ RecipeWidget = RockStorWidgetView.extend({
           dataType: "json",
           success: function(data, textStatus, jqXHR) {
             if (data.recipe_status == 'running') {
+              _this.$('#recipestatus').html('Recipe running - getting data');
               // stop polling for status
               window.clearInterval(_this.statusIntervalId);
               // TODO show message - "recipe started, polling for data"
               // start polling for Data
               logger.debug('recipe running');
               _this.pollForData(recipe_uri);
+            } else {
+
             }
           },
           error: function(jqXHR, textStatus, error) {
@@ -112,9 +142,13 @@ RecipeWidget = RockStorWidgetView.extend({
           url: recipe_uri + '?t=' + this.timestamp,
           type: 'GET',
           success: function(data, textStatus, jqXHR) {
+            _this.$('#recipestatus').html('Recipe running ');
             logger.debug('received data ');
             logger.debug(data);
-            // TODO render new data  
+            
+            _this.nfsData = _this.nfsData.slice(1);
+            _this.nfsData.push(data.value);
+            $.plot('#nfsgraph', _this.makeSeries(_this.nfsData), _this.graphOptions);
             // TODO update timestamp from data
             // _this.timestamp = new timestamp from data
           },
@@ -127,7 +161,7 @@ RecipeWidget = RockStorWidgetView.extend({
       
       
       }
-    }(), 5000)
+    }(), 2000)
 
   },
 
@@ -135,7 +169,19 @@ RecipeWidget = RockStorWidgetView.extend({
     if (!_.isUndefined(event)) {
       event.preventDefault();
     }
+    if (!_.isUndefined(this.dataIntervalId) && !_.isNull(this.dataIntervalId)) {
+      window.clearInterval(this.dataIntervalId);
+      this.$('#recipestatus').html('Recipe stopped ');
+    }
 
+  },
+
+  makeSeries: function(data) {
+    var series = [[]];
+    for (i=0; i<10; i++) {
+      series[0].push([i,data[i]]);
+    }
+    return series;
   }
 
 });
