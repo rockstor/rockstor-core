@@ -35,7 +35,7 @@
         <tr>
           <td><%= index+1 %></td>
           <td><%= disk.get('name') %></td>
-          <td><%= disk.get('size') %></td>
+          <td><%= humanize.filesize(disk.get('size')) %></td>
           <td><%= disk.get('parted') %></td>
           <td>
             <input type="checkbox" name="<%= disk.get('name') %>" id="<%= disk.get('name') %>" value="<%= disk.get('name') %>">

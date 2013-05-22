@@ -48,8 +48,8 @@
             <% disks.each(function(disk, index) { %>
               <tr>
                 <td><%= disk.get('name') %></td>
-                <td><%= disk.get('size') %></td>
-                <td>
+                <td><%= humanize.filesize(disk.get('size')) %></td>
+               <td>
                   <a href="#pools/<%= disk.get('pool') %>">
                     <%= disk.get('pool') %>
                   </a>
