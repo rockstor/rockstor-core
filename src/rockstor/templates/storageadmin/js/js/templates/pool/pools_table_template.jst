@@ -47,7 +47,7 @@
             <tr>
               <td><%= index+1 %></td>
               <td><a href="#pools/<%= pool.get('name') %>"><%= pool.get('name') %></a></td>
-              <td><%= pool.get('size') %></td>
+              <td><%= humanize.filesize(pool.get('size')) %></td>
               <td><%= pool.get('raid') %></td>
               <td><button id="delete_pool_<%= pool.get('name') %>" data-name="<%= pool.get('name') %>" data-action="delete" class="btn btn-danger">Delete</button></td>
             </tr>

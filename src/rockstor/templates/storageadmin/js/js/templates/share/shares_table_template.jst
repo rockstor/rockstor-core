@@ -46,7 +46,7 @@
             <tr>
               <td><%= index+1 %></td>
               <td><a href="#shares/<%= share.get('name') %>"><%= share.get('name') %></a></td>
-              <td><%= share.get('size') %></td>
+              <td><%= humanize.filesize(share.get('size')) %></td>
               <td><button id="delete_share_<%= share.get('name') %>" data-name="<%= share.get('name') %>" data-action="delete" data-pool="<%= share.get('pool').name %>" data-size="<%= share.get('size') %>" class="btn btn-danger">Delete</button></td>
 
             </tr>
