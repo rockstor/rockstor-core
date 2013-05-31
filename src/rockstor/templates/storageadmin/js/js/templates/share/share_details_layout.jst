@@ -80,12 +80,20 @@
 </div>
 
 <div class="simple-overlay" id="resize-share-form">
-  <div class="span6 well">
-    <h4>Resize Share </h4>
-    <label>Size</label>
-    <input type="text" name="new-size" id="new-size">
-    <br>
-    <button id="resize-share" class="btn btn-primary">Submit</button>
-  </div>
+  <div class="span10 well">
+    <h4>Resize Share</h4>
+      <br/>
+     Size:<br/>
+            <input type="text" name="new-size" id="new-size" value="<%= humanize.filesize(share.get('size')).replace(/[^0-9\.]+/g,"") %>">
+            
+              <select id="size_format" name="size_format">
+                <option <%if(humanize.filesize(share.get('size')).match(/Kb/g,"")){%> selected="selected"<%}%> >KB</option>
+                <option <%if(humanize.filesize(share.get('size')).match(/Mb/g,"")){%> selected="selected"<%}%> >MB</option>
+                <option <%if(humanize.filesize(share.get('size')).match(/Gb/g,"")){%> selected="selected"<%}%> >GB</option>
+                <option <%if(humanize.filesize(share.get('size')).match(/Tb/g,"")){%> selected="selected"<%}%> >TB</option>
+              </select>
+            <br/>
+     <input type="Submit" id="resize-share" class="btn btn-primary" value="Submit"></input>
+    </div>
 </div>
 

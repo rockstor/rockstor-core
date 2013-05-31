@@ -143,11 +143,23 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
       var button = _this.$('#resize-share');
       if (buttonDisabled(button)) return false;
       disableButton(button);
+      var size = $('#new-size').val();
+      
+      var sizeFormat = $('#size_format').val();
+        if(sizeFormat == 'KB'){
+    	  size = size*1024;
+    	}else if(sizeFormat == 'MB'){
+    	  size = size*1024*1024;	
+    	}else if(sizeFormat == 'GB'){
+    	  size = size*1024*1024*1024;
+    	}else if(sizeFormat == 'TB'){
+    	  size = size*1024*1024*1024*1024;
+    	}
       $.ajax({
         url: "/api/shares/" + _this.share.get('name') + "/",
         type: "PUT",
         dataType: "json",
-        data: { size: $('#new-size').val()},
+        data: { "size": size},
         success: function() {
           enableButton(button);
           _this.$('#js-resize').overlay().close();
