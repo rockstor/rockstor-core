@@ -109,6 +109,10 @@ class Stap(Process):
                 try:
                     part_out = rp.stdout.read()
                     self.__process_output(part_out, task['tap'], ro)
+                except IOError:
+                    #occurs when there's no output to read
+                    pass
+                finally:
                     try:
                         stop_task = pull_socket.recv_json()
                         #should we reload from db to see 'stopped' state?
@@ -117,9 +121,6 @@ class Stap(Process):
                         logger.info('received stop')
                     except:
                         pass
-                except IOError:
-                    #occurs when there's no output to read
-                    pass
 
                 if (rp.poll() is not None):
                     if (probe_stopped is not True):
@@ -129,6 +130,7 @@ class Stap(Process):
                         ro = SProbe.objects.get(id=task['roid'])
                         ro.state = 'error'
                         self.q.put(ro)
+                    break
                 time.sleep(.5)
 
         pull_socket.close()
@@ -136,5 +138,5 @@ class Stap(Process):
         logger.info('terminated context. exiting')
 
     def __process_output(self, part_out, tap, ro):
-        if (tap == 'nfs-distrib'):
+        if (tap == 'nfs-distrib' or tap == 'nfs-client-distrib'):
             process_nfsd_calls(self.q, part_out, ro, logger)
