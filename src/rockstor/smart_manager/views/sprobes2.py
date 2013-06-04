@@ -29,8 +29,9 @@ from django.conf import settings
 from django.db import transaction
 from smart_manager import serializers
 from smart_manager.serializers import (SProbeSerializer,
-                                       NFSDCallDistributionSerializer)
-from smart_manager.models import NFSDCallDistribution
+                                       NFSDCallDistributionSerializer,
+                                       NFSDClientDistributionSerializer)
+from smart_manager.models import (NFSDCallDistribution, NFSDClientDistribution)
 import os
 import zmq
 
@@ -61,6 +62,10 @@ class SProbeView2(APIView):
         if (pname == 'nfs-distrib'):
             dos = NFSDCallDistribution.objects.filter(rid=ro).order_by('ts')
             return Response(NFSDCallDistributionSerializer(dos).data)
+        elif (pname == 'nfs-client-distrib'):
+            dos = NFSDClientDistribution.objects.filter(rid=ro).order_by('ts')
+            return Response(NFSDClientDistributionSerializer(dos).data)
+        return Response()
 
     @transaction.commit_on_success
     def post(self, request, pname, pid, command):
