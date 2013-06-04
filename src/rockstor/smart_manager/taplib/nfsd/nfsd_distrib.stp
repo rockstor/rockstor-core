@@ -1,0 +1,100 @@
+#! /usr/bin/env stap
+
+# nfsd global counters
+global nfsd_lookups
+global nfsd_reads
+global nfsd_writes
+global nfsd_creates
+global nfsd_commits
+global nfsd_removes
+
+global nfsd_lookup_clients
+global nfsd_read_clients
+global nfsd_write_clients
+global nfsd_create_clients
+global nfsd_commit_clients
+global nfsd_remove_clients
+
+global nfsd_clients
+
+# Accumulate lookup stats
+# Keep a count of lookups globally and by client_ip
+# also keep track of the last file looked up by each
+# client_ip
+probe nfsd.proc.lookup {
+	nfsd_lookups <<< 1
+	nfsd_lookup_clients[client_ip] <<< 1
+	nfsd_clients[client_ip] <<< 1
+}
+
+# Accumulate read stats
+# Keep a count of reads globally and by client_ip
+# also keep track of the number of bytes read globally
+# and per-client_ip
+probe nfsd.proc.read {
+	nfsd_reads <<< size
+	nfsd_read_clients[client_ip] <<< size
+	nfsd_clients[client_ip] <<< 1
+}
+
+# Accumulate write stats
+# Keep a count of writes globally and by client_ip
+# also keep track of the number of bytes writen globally
+# and per-client_ip
+probe nfsd.proc.write {
+	nfsd_writes <<< size
+	nfsd_write_clients[client_ip] <<< size
+	nfsd_clients[client_ip] <<< 1
+}
+
+probe nfsd.proc.create {
+	nfsd_creates <<< 1
+	nfsd_create_clients[client_ip] <<< 1
+	nfsd_clients[client_ip] <<< 1
+}
+
+probe nfsd.proc.commit {
+	nfsd_commits <<< 1
+	nfsd_commit_clients[client_ip] <<< 1
+	nfsd_clients[client_ip] <<< 1
+}
+
+probe nfsd.proc.remove {
+	nfsd_removes <<< 1
+	nfsd_remove_clients[client_ip] <<< 1
+	nfsd_clients[client_ip] <<< 1
+}
+
+probe timer.ms(1000)
+{
+	tod = gettimeofday_s()
+	printf("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n", tod, @count(nfsd_lookups),
+	@count(nfsd_reads), @count(nfsd_writes), @count(nfsd_creates),
+	@count(nfsd_commits), @count(nfsd_removes), @sum(nfsd_reads),
+	@sum(nfsd_writes))
+
+	foreach (ip in nfsd_clients)
+	        printf("%d\t%s\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
+		tod, ip,
+		@count(nfsd_lookup_clients[ip]),
+	        @count(nfsd_read_clients[ip]), @count(nfsd_write_clients[ip]),
+	        @count(nfsd_create_clients[ip]),
+	        @count(nfsd_commit_clients[ip]),
+	        @count(nfsd_remove_clients[ip]),
+		@sum(nfsd_read_clients[ip]) >> 10,
+		@sum(nfsd_write_clients[ip]) >> 10)
+
+
+	delete nfsd_lookups
+	delete nfsd_reads
+	delete nfsd_writes
+	delete nfsd_creates
+	delete nfsd_commits
+	delete nfsd_removes
+
+	delete nfsd_read_clients
+	delete nfsd_write_clients
+	delete nfsd_create_clients
+	delete nfsd_commit_clients
+	delete nfsd_remove_clients
+}
