@@ -51,6 +51,7 @@ class NFSDClientDistribution(models.Model):
     rid = models.ForeignKey(SProbe)
     ts = models.DateTimeField()
     ip = models.CharField(max_length=15)
+    num_lookup = models.IntegerField()
     num_read = models.IntegerField()
     num_write = models.IntegerField()
     num_create = models.IntegerField()
