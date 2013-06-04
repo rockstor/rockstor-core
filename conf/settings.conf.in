@@ -291,10 +291,9 @@ MNT_PT = '/mnt2/'
 
 TAP_DIR = '${django-settings-conf:taplib}'
 TAP_MAP = {
-        'hello' : 'HelloTapTS',
-        'iostats': 'IOStatsTap',
+	'nfs-distrib': 'nfsd/nfsd_distrib',
 }
-TAP_SERVER = ('localhost', ${django-settings-conf:tapport})
+TAP_SERVER = ('127.0.0.1', ${django-settings-conf:tapport})
 
 SUPPORT = {
         'email': 'suman@rockstor.com',
