@@ -22,7 +22,7 @@ from load_avg import LoadAvg
 from mem_info import MemInfo
 from vm_stat import VmStat
 from service import (Service, ServiceStatus)
-from recipe import Recipe
+from sprobe import SProbe
 from nfsd import (NFSDCallDistribution,
                   NFSDClientDistribution)
 

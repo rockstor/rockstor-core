@@ -17,14 +17,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.db import models
-from smart_manager.models import Recipe
+from smart_manager.models import SProbe
 
 class NFSDCallDistribution(models.Model):
 
     """
     for a given ts, number and i/o size of various nfs calls
     """
-    rid = models.ForeignKey(Recipe)
+    rid = models.ForeignKey(SProbe)
     ts = models.DateTimeField()
     num_lookup = models.IntegerField()
     num_read = models.IntegerField()
@@ -48,7 +48,7 @@ class NFSDClientDistribution(models.Model):
     """
     for a given ts and client_ip, number and i/o size of various nfs calls
     """
-    rid = models.ForeignKey(Recipe)
+    rid = models.ForeignKey(SProbe)
     ts = models.DateTimeField()
     ip = models.CharField(max_length=15)
     num_read = models.IntegerField()

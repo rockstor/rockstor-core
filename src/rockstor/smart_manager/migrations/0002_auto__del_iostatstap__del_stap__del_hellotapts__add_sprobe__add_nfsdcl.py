@@ -17,10 +17,20 @@ class Migration(SchemaMigration):
         # Deleting model 'HelloTapTS'
         db.delete_table('smart_manager_hellotapts')
 
+        # Adding model 'SProbe'
+        db.create_table('smart_manager_sprobe', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('name', self.gf('django.db.models.fields.CharField')(max_length=255)),
+            ('smart', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('state', self.gf('django.db.models.fields.CharField')(max_length=7)),
+            ('ts', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
+        ))
+        db.send_create_signal('smart_manager', ['SProbe'])
+
         # Adding model 'NFSDClientDistribution'
         db.create_table('smart_manager_nfsdclientdistribution', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('rid', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['smart_manager.Recipe'])),
+            ('rid', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['smart_manager.SProbe'])),
             ('ts', self.gf('django.db.models.fields.DateTimeField')()),
             ('ip', self.gf('django.db.models.fields.CharField')(max_length=15)),
             ('num_read', self.gf('django.db.models.fields.IntegerField')()),
@@ -33,20 +43,10 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal('smart_manager', ['NFSDClientDistribution'])
 
-        # Adding model 'Recipe'
-        db.create_table('smart_manager_recipe', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('name', self.gf('django.db.models.fields.CharField')(max_length=255)),
-            ('smart', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('state', self.gf('django.db.models.fields.CharField')(max_length=7)),
-            ('ts', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
-        ))
-        db.send_create_signal('smart_manager', ['Recipe'])
-
         # Adding model 'NFSDCallDistribution'
         db.create_table('smart_manager_nfsdcalldistribution', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('rid', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['smart_manager.Recipe'])),
+            ('rid', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['smart_manager.SProbe'])),
             ('ts', self.gf('django.db.models.fields.DateTimeField')()),
             ('num_lookup', self.gf('django.db.models.fields.IntegerField')()),
             ('num_read', self.gf('django.db.models.fields.IntegerField')()),
@@ -93,11 +93,11 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal('smart_manager', ['HelloTapTS'])
 
+        # Deleting model 'SProbe'
+        db.delete_table('smart_manager_sprobe')
+
         # Deleting model 'NFSDClientDistribution'
         db.delete_table('smart_manager_nfsdclientdistribution')
-
-        # Deleting model 'Recipe'
-        db.delete_table('smart_manager_recipe')
 
         # Deleting model 'NFSDCallDistribution'
         db.delete_table('smart_manager_nfsdcalldistribution')
@@ -158,7 +158,7 @@ class Migration(SchemaMigration):
             'num_read': ('django.db.models.fields.IntegerField', [], {}),
             'num_remove': ('django.db.models.fields.IntegerField', [], {}),
             'num_write': ('django.db.models.fields.IntegerField', [], {}),
-            'rid': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['smart_manager.Recipe']"}),
+            'rid': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['smart_manager.SProbe']"}),
             'sum_read': ('django.db.models.fields.IntegerField', [], {}),
             'sum_write': ('django.db.models.fields.IntegerField', [], {}),
             'ts': ('django.db.models.fields.DateTimeField', [], {})
@@ -172,18 +172,10 @@ class Migration(SchemaMigration):
             'num_read': ('django.db.models.fields.IntegerField', [], {}),
             'num_remove': ('django.db.models.fields.IntegerField', [], {}),
             'num_write': ('django.db.models.fields.IntegerField', [], {}),
-            'rid': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['smart_manager.Recipe']"}),
+            'rid': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['smart_manager.SProbe']"}),
             'sum_read': ('django.db.models.fields.IntegerField', [], {}),
             'sum_write': ('django.db.models.fields.IntegerField', [], {}),
             'ts': ('django.db.models.fields.DateTimeField', [], {})
-        },
-        'smart_manager.recipe': {
-            'Meta': {'object_name': 'Recipe'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'smart': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'state': ('django.db.models.fields.CharField', [], {'max_length': '7'}),
-            'ts': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
         },
         'smart_manager.service': {
             'Meta': {'object_name': 'Service'},
@@ -196,6 +188,14 @@ class Migration(SchemaMigration):
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'service': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['smart_manager.Service']"}),
             'status': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'ts': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
+        },
+        'smart_manager.sprobe': {
+            'Meta': {'object_name': 'SProbe'},
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'smart': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'state': ('django.db.models.fields.CharField', [], {'max_length': '7'}),
             'ts': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
         },
         'smart_manager.vmstat': {

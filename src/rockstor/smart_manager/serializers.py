@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework import serializers
 from smart_manager.models import (CPUMetric, LoadAvg, MemInfo, ServiceStatus,
-                                  HelloTapTS, IOStatsTap)
+                                  SProbe, NFSDCallDistribution)
 
 
 
@@ -40,11 +40,10 @@ class ServiceStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = ServiceStatus
 
-class HelloTapTSSerializer(serializers.ModelSerializer):
+class SProbeSerializer(serializers.ModelSerializer):
     class Meta:
-        model = HelloTapTS
+        model = SProbe
 
-class IOStatsTapSerializer(serializers.ModelSerializer):
+class NFSDCallDistributionSerializer(serializers.ModelSerializer):
     class Meta:
-        model = IOStatsTap
-
+        model = NFSDCallDistribution

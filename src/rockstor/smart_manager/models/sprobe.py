@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from django.db import models
 
 
-class Recipe(models.Model):
+class SProbe(models.Model):
 
     """
     smart = True for on demand recipes. False for data collected from proc
