@@ -292,6 +292,7 @@ MNT_PT = '/mnt2/'
 TAP_DIR = '${django-settings-conf:taplib}'
 TAP_MAP = {
 	'nfs-distrib': 'nfsd/nfsd_distrib',
+	'nfs-client-distrib': 'nfsd/nfsd_distrib_client',
 }
 TAP_SERVER = ('127.0.0.1', ${django-settings-conf:tapport})
 
