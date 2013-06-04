@@ -25,19 +25,16 @@ probe nfsd.proc.write {
 }
 
 probe nfsd.proc.create {
-	nfsd_creates <<< 1
 	nfsd_create_clients[client_ip] <<< 1
 	nfsd_clients[client_ip] <<< 1
 }
 
 probe nfsd.proc.commit {
-	nfsd_commits <<< 1
 	nfsd_commit_clients[client_ip] <<< 1
 	nfsd_clients[client_ip] <<< 1
 }
 
 probe nfsd.proc.remove {
-	nfsd_removes <<< 1
 	nfsd_remove_clients[client_ip] <<< 1
 	nfsd_clients[client_ip] <<< 1
 }
@@ -45,21 +42,19 @@ probe nfsd.proc.remove {
 probe timer.ms(1000)
 {
 	tod = gettimeofday_s()
-	printf("%d\t%d\t%d\t%d\t%d\t%d\t%d\n", tod, @count(nfsd_lookups), @count(nfsd_reads), @count(nfsd_writes), @count(nfsd_creates), @count(nfsd_commits), @count(nfsd_removes))
-
 	foreach (ip in nfsd_clients)
-	        printf("%d\t%s\t%d\t%d\t%d\t%d\t%d\n", tod, ip,
+	        printf("%d\t%s\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
+		tod, ip,
+		@count(nfsd_lookup_clients[ip]),
 	        @count(nfsd_read_clients[ip]), @count(nfsd_write_clients[ip]),
 	        @count(nfsd_create_clients[ip]),
-	        @count(nfsd_commit_clients[ip]), @count(nfsd_remove_clients[ip]))
+	        @count(nfsd_commit_clients[ip]),
+	        @count(nfsd_remove_clients[ip]),
+		@sum(nfsd_read_clients[ip]) >> 10,
+		@sum(nfsd_write_clients[ip]) >> 10)
 
-	delete nfsd_lookups
-	delete nfsd_reads
-	delete nfsd_writes
-	delete nfsd_creates
-	delete nfsd_commits
-	delete nfsd_removes
-
+	delete nfsd_clients
+	delete nfsd_lookup_clients
 	delete nfsd_read_clients
 	delete nfsd_write_clients
 	delete nfsd_create_clients

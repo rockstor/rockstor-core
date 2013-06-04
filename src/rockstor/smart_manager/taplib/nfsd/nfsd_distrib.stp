@@ -92,9 +92,12 @@ probe timer.ms(1000)
 	delete nfsd_commits
 	delete nfsd_removes
 
+	delete nfsd_lookup_clients
 	delete nfsd_read_clients
 	delete nfsd_write_clients
 	delete nfsd_create_clients
 	delete nfsd_commit_clients
 	delete nfsd_remove_clients
+
+	delete nfsd_clients
 }
