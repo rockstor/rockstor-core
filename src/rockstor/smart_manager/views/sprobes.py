@@ -44,7 +44,7 @@ class SProbeView(APIView):
     task_socket = ctx.socket(zmq.PUSH)
     task_socket.connect('tcp://%s:%d' % settings.TAP_SERVER)
 
-    def get(self, request, pname=None):
+    def get(self, request, pname=None, pid=None):
         """
         return the latest tap module
         """
@@ -55,8 +55,16 @@ class SProbeView(APIView):
         if (pname is None):
             return Response(self.tap_map.keys())
 
-        ros = SProbe.objects.filter(name=pname).order_by('-ts')
-        return Response(SProbeSerializer(ros).data)
+        if (pid is None):
+            ros = SProbe.objects.filter(name=pname).order_by('-ts')
+            return Response(SProbeSerializer(ros).data)
+
+        try:
+            ros = SProbe.objects.get(name=pname, id=pid)
+            return Response(SProbeSerializer(ros).data)
+        except:
+            e_msg = ('Probe: %s with id: %s does not exist' % (pname, pid))
+            handle_exception(Exception(e_msg), request)
 
     @transaction.commit_on_success
     def post(self, request, pname):
