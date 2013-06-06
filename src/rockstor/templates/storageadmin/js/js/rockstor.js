@@ -120,6 +120,7 @@ RockStorWidgetView = Backbone.View.extend({
     this.maximized = false;
     this.name = this.options.name;
     this.displayName = this.options.displayName;
+    this.parentView = this.options.parentView;
   },
   
   render: function() {
@@ -175,19 +176,21 @@ RockStorWidgetView = Backbone.View.extend({
     }
     // trigger rearrange so shapeshift can do its job
     ul.trigger('ss-rearrange');
+    this.parentView.saveWidgetConfiguration();
   },
   
   close: function(event) {
+    logger.debug(' in RockStorWidget close');
     if (!_.isUndefined(event) && !_.isNull(event)) {
       event.preventDefault();
     }
     var li = $(event.currentTarget).closest('li');
     console.log(li); 
-    li.remove();
     var ul = $(this.el).closest('ul'); // list
+    logger.debug(ul);
+    li.remove();
     ul.trigger('ss-rearrange');
-    
-    // TODO save layout
+    this.parentView.saveWidgetConfiguration();
   },
 
 

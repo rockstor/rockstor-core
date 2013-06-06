@@ -17,4 +17,5 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 from sm import SmartManagerView
 from service import ServiceView
-from stap import StapView
+from sprobes import SProbeView
+from sprobes2 import SProbeView2
