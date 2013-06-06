@@ -76,10 +76,12 @@ CpuUsageWidget = RockStorWidgetView.extend({
       width: this.defaultWidth,
       displayName: this.displayName
     }));
-
+    
+    
     this.intervalId = window.setInterval(function() {
       return function() { _this.getData(_this); }
     }(), this.updateInterval)
+    
     return this;
   },
   

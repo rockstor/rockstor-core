@@ -291,10 +291,11 @@ MNT_PT = '/mnt2/'
 
 TAP_DIR = '${django-settings-conf:taplib}'
 TAP_MAP = {
-        'hello' : 'HelloTapTS',
-        'iostats': 'IOStatsTap',
+	'nfs-distrib': 'nfsd/nfsd_distrib',
+	'nfs-client-distrib': 'nfsd/nfsd_distrib_client',
+	'nfs-share-distrib': 'nfsd/nfsd_distrib_share',
 }
-TAP_SERVER = ('localhost', ${django-settings-conf:tapport})
+TAP_SERVER = ('127.0.0.1', ${django-settings-conf:tapport})
 
 SUPPORT = {
         'email': 'suman@rockstor.com',
@@ -312,3 +313,9 @@ Minimum disk size allowed is 1GB. Anything less is not really usable. Reduce
 this to 100MB if you really need to, but any less would just break things.
 """
 MIN_DISK_SIZE = 1024 * 1024
+
+"""
+Maximum number of seconds to keep data collected by smart probes. The logic
+behind this needs to evolve quite a bit.
+"""
+PROBE_DATA_INTERVAL = 600

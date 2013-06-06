@@ -27,7 +27,9 @@ from django.conf import settings
 
 def process_model_queue(q):
     cleanup_map = {}
-    new_start = datetime.utcnow().replace(tzinfo=utc) - timedelta(seconds=600)
+    max_interval = timedelta(seconds=settings.PROBE_DATA_INTERVAL)
+    new_start = datetime.utcnow().replace(tzinfo=utc) - max_interval
+
     while (not q.empty()):
         metric = q.get()
         metric.save()
@@ -61,4 +63,4 @@ def main():
     while (True):
         process_model_queue(proc_q)
         process_model_queue(service_q)
-        process_tap_queue(tap_q)
+        process_model_queue(tap_q)

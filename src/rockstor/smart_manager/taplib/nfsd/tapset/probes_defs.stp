@@ -1,0 +1,131 @@
+/*
+Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+This file is part of RockStor.
+
+RockStor is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published
+by the Free Software Foundation; either version 2 of the License,
+or (at your option) any later version.
+
+RockStor is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+probe nfsd.proc4.lookup.sp = kernel.function("nfsd4_lookup").call !,
+                           module("nfsd").function("nfsd4_lookup").call ?
+{
+        client_ip = addr_from_rqst_str($rqstp)
+        proto = $rqstp->rq_prot
+        version = 4
+        fh = & @cast($cstate, "nfsd4_compound_state", "kernel:nfsd")->current_fh
+
+        filelen = $lookup->lo_len
+        filename  = kernel_string_n($lookup->lo_name, $lookup->lo_len)
+	share = kernel_string($cstate->current_fh->fh_export->ex_path->mnt->mnt_root->d_name->name)
+
+        name = "nfsd.proc4.lookup"
+        argstr = sprintf("%s", kernel_string_n($lookup->lo_name, $lookup->lo_len))
+}
+
+probe nfsd.proc4.read.sp = kernel.function("nfsd4_read").call !,
+                     	 module("nfsd").function("nfsd4_read").call ?
+{
+        client_ip = addr_from_rqst_str($rqstp)
+        proto = $rqstp->rq_prot
+        version = 4
+        fh = & @cast($cstate, "nfsd4_compound_state", "kernel:nfsd")->current_fh
+
+        count = $read->rd_length
+        offset = $read->rd_offset
+        vec = $rqstp->rq_vec
+        vlen = $read->rd_vlen
+        share = kernel_string($cstate->current_fh->fh_export->ex_path->mnt->mnt_root->d_name->name)
+
+	name = "nfsd.proc4.read"
+        argstr = sprintf("%d,%d",count,offset)
+
+        size = count
+        units = "bytes"
+}
+
+probe nfsd.proc4.write.sp = kernel.function("nfsd4_write").call !,
+                          module("nfsd").function("nfsd4_write").call ?
+{
+        client_ip = addr_from_rqst_str($rqstp)
+        proto = $rqstp->rq_prot
+        version = 4
+        fh = & @cast($cstate, "nfsd4_compound_state", "kernel:nfsd")->current_fh
+        count = $write->wr_buflen
+        offset = $write->wr_offset
+        vec = $rqstp->rq_vec
+        vlen = $write->wr_vlen
+        stable = $write->wr_stable_how
+	share = kernel_string($cstate->current_fh->fh_export->ex_path->mnt->mnt_root->d_name->name)
+
+        name = "nfsd.proc4.write"
+        argstr = sprintf("%d,%d",count,offset)
+
+        size = count
+        units = "bytes"
+}
+
+probe nfsd.proc4.create.sp = kernel.function("nfsd4_create").call !,
+                           module("nfsd").function("nfsd4_create").call ?
+{
+        client_ip = addr_from_rqst_str($rqstp)
+        proto = $rqstp->rq_prot
+        version = 4
+        fh = (@defined($cstate)
+              ? &@cast($cstate, "nfsd4_compound_state", "kernel:nfsd")->current_fh
+              : $current_fh)
+        filelen = $create->cr_namelen
+        filename  = kernel_string_n($create->cr_name, $create->cr_namelen)
+        createmode = $create->cr_type
+	share = kernel_string($cstate->current_fh->fh_export->ex_path->mnt->mnt_root->d_name->name)
+
+        name = "nfsd.proc4.create"
+        argstr = sprintf("%s (type=%s)",
+                kernel_string_n($create->cr_name, $create->cr_namelen),
+                nfs4_ctype(createmode))
+
+}
+
+probe nfsd.proc4.commit.sp = kernel.function("nfsd4_commit").call !,
+                           module("nfsd").function("nfsd4_commit").call ?
+{
+        client_ip = addr_from_rqst_str($rqstp)
+        proto = $rqstp->rq_prot
+        version = 4
+        fh = & @cast($cstate, "nfsd4_compound_state", "kernel:nfsd")->current_fh
+        count = $commit->co_count
+        offset = $commit->co_offset
+	share = kernel_string($cstate->current_fh->fh_export->ex_path->mnt->mnt_root->d_name->name)
+
+        name = "nfsd.proc4.commit"
+        argstr = sprintf("%d,%d",count,offset)
+
+        size = count
+        units = "bytes"
+}
+
+probe nfsd.proc4.remove.sp = kernel.function("nfsd4_remove").call !,
+                           module("nfsd").function("nfsd4_remove").call ?
+{
+        client_ip = addr_from_rqst_str($rqstp)
+        proto = $rqstp->rq_prot
+        version = 4
+        fh = & @cast($cstate, "nfsd4_compound_state", "kernel:nfsd")->current_fh
+        filelen = $remove->rm_namelen
+        filename  = kernel_string_n($remove->rm_name, $remove->rm_namelen)
+	share = kernel_string($cstate->current_fh->fh_export->ex_path->mnt->mnt_root->d_name->name)
+
+        name = "nfsd.proc4.remove"
+        argstr = sprintf("%s",
+                kernel_string_n($remove->rm_name, $remove->rm_namelen))
+
+}

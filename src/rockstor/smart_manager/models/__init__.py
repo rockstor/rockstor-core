@@ -16,22 +16,15 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+from cpu_metric import CPUMetric
+from disk_stat import DiskStat
+from load_avg import LoadAvg
+from mem_info import MemInfo
+from vm_stat import VmStat
+from service import (Service, ServiceStatus)
+from sprobe import SProbe
+from nfsd import (NFSDCallDistribution,
+                  NFSDClientDistribution)
+from nfsd_share import NFSDShareDistribution
 
-from home import (login_page, login_submit, logout_user, home)
-from snapshot import SnapshotView
-from share import ShareView
-from pool import PoolView
-from disk import (DiskView, SystemDiskView)
-from info import InfoView
-from service import ServiceView
-from setupwizard import SetupWizardView
-from share_iscsi import ShareIscsiView
-from appliances import AppliancesView
-from login import LoginView
-from socketio_service import RockStorMessageNamespace
-from user import UserView
-from share_samba import ShareSambaView
-from support import SupportView
-from dashboardconfig import DashboardConfigView
-from share_nfs import ShareNFSView
-from recipe import RecipeView
+
