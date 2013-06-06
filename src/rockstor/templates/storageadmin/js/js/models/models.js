@@ -161,3 +161,25 @@ var DashboardConfig = Backbone.Model.extend({
 
 });
 
+var Probe = Backbone.Model.extend({
+  urlRoot: function() {
+      return '/api/sm/sprobes/' + this.get('name') + '/';
+  },
+  dataUrl: function() {
+    return '/api/sm/sprobes/' + this.get('name') + '/' + this.id + '/data/';
+  }
+});
+
+var ProbeCollection = Backbone.Collection.extend({
+  model: Probe,
+  initialize: function(models, options) {
+    if (!_.isUndefined(options) && !_.isNull(options)) {
+      this.name = options.name;
+    }
+  },
+  url: function() {
+    return '/api/sm/sprobes/' + this.name + '/';
+  }
+});
+
+
