@@ -122,7 +122,7 @@ var HomeLayoutView = RockstoreLayoutView.extend({
     // call shapeshift to do layout
     this.widgetsContainer.shapeshift({
       align: "left",
-      minColumns: 2
+      minColumns: 3
     });
    
     // set handler for drop event, when a widget is moved around and 
