@@ -208,7 +208,7 @@ ProbeWidget = RockStorWidgetView.extend({
     this.dataIntervalId = window.setInterval(function() {
       return function() { 
         $.ajax({
-          url: this.probe.dataUrl(),
+          url: _this.probe.dataUrl(),
           type: 'GET',
           dataType: "json",
           success: function(data, textStatus, jqXHR) {
@@ -325,31 +325,6 @@ ProbeWidget = RockStorWidgetView.extend({
 
   },
 
-  showTopShares: function(recipe_uri) {
-    var _this = this;
-    this.topSharesIntervalId = window.setInterval(function() {
-      return function() { 
-        $.ajax({
-          url: recipe_uri + '?top_shares',
-          type: 'GET',
-          dataType: "json",
-          success: function(data, textStatus, jqXHR) {
-            _this.$('#nfs-shares').html(_this.top_shares_template({
-              sharelist: data
-            }));
-          },
-          error: function(jqXHR, textStatus, error) {
-            window.clearInterval(_this.topSharesIntervalId);
-            logger.debug(error);
-            // TODO show error message on widget
-          }
-        });
-      }
-    }(), 5000);
-
-  },
-
-
   start: function() {
     logger.debug('probe created');
     this.disableStartProbe();
@@ -387,9 +362,7 @@ ProbeWidget = RockStorWidgetView.extend({
   },
 
   startRender: function() {
-    //var probeDataUri = '/api/recipes/nfs/123';
     this.showNfsIO(this.probe.dataUrl());
-    //this.showTopShares(probeDataUri);
   },
 
   stopRender: function() {
