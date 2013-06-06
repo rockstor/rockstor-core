@@ -19,7 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from rest_framework import serializers
 from smart_manager.models import (CPUMetric, LoadAvg, MemInfo, ServiceStatus,
                                   SProbe, NFSDCallDistribution,
-                                  NFSDClientDistribution)
+                                  NFSDClientDistribution,
+                                  NFSDShareDistribution)
 
 
 
@@ -52,3 +53,7 @@ class NFSDCallDistributionSerializer(serializers.ModelSerializer):
 class NFSDClientDistributionSerializer(serializers.ModelSerializer):
     class Meta:
         model = NFSDClientDistribution
+
+class NFSDShareDistributionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NFSDShareDistribution

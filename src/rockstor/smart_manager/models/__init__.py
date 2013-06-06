@@ -25,5 +25,6 @@ from service import (Service, ServiceStatus)
 from sprobe import SProbe
 from nfsd import (NFSDCallDistribution,
                   NFSDClientDistribution)
+from nfsd_share import NFSDShareDistribution
 
 
