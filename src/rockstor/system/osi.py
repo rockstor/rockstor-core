@@ -70,9 +70,7 @@ def scan_disks(min_size):
                 num_blocks = int(disk_fields[2]) # each block is 1KB
                 if (num_blocks < min_size):
                     continue
-                size = num_blocks / (1024 * 1024) # in GB
-                free = size
-                disk = Disk(name=name, size=size, free=free)
+                disk = Disk(name=name, size=num_blocks, free=num_blocks)
                 disks[name] = disk.__repr__()
             elif (re.match('sd[a-z]+[0-9]+$', disk_fields[3]) is not None):
                 name = disk_fields[3][0:3]
