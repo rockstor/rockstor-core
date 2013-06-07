@@ -207,7 +207,7 @@ def disable_quota(pool_name, device):
 def update_quota(pool_name, pool_device, qgroup, size_bytes):
     pool_device = '/dev/' + pool_device
     root_pool_mnt = mount_root(pool_name, pool_device)
-    cmd = [BTRFS, 'qgroup', 'limit', size_bytes, qgroup, root_pool_mnt]
+    cmd = [BTRFS, 'qgroup', 'limit', str(size_bytes), qgroup, root_pool_mnt]
     out, err, rc = run_command(cmd)
     run_command(SYNC)
     umount_root(root_pool_mnt)
@@ -225,7 +225,7 @@ def share_usage(pool_name, pool_device, share_id):
     for line in out:
         fields = line.split()
         if (fields[0] == share_id):
-            usage = fields[-1]
+            usage = int(fields[-1]) / 1024 # usage in KB
             break
     run_command(SYNC)
     umount_root(root_pool_mnt)

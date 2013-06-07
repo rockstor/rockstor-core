@@ -68,7 +68,7 @@ class ShareView(APIView):
             disk = Disk.objects.filter(pool=share.pool)[0]
             qgroup_id = self._update_quota(share.pool.name, disk.name, sname,
                                            new_size)
-            cur_usage = int(share_usage(share.pool.name, disk.name, qgroup_id))
+            cur_usage = share_usage(share.pool.name, disk.name, qgroup_id)
             share.size = new_size
             share.free = new_size - cur_usage
             share.save()
@@ -99,7 +99,7 @@ class ShareView(APIView):
             qgroup = Qgroup(uuid=qgroup_id)
             qgroup.save()
             s = Share(pool=pool, qgroup=qgroup, name=sname, size=size,
-                    free=(size - cur_usage))
+                      free=(size - cur_usage))
             s.save()
             return Response(ShareSerializer(s).data)
         except RockStorAPIException:
@@ -110,7 +110,7 @@ class ShareView(APIView):
     def _update_quota(self, pool_name, disk_name, share_name, size):
         sid = share_id(pool_name, disk_name, share_name)
         qgroup_id = '0/' + sid
-        update_quota(pool_name, disk_name, qgroup_id, str(size))
+        update_quota(pool_name, disk_name, qgroup_id, size * 1024)
         return qgroup_id
 
     @transaction.commit_on_success
