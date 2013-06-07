@@ -55,17 +55,11 @@ class Disk(models.Model):
     and such that may not be part of any pool but need to be in the model"""
     parted = models.BooleanField()
 
-class Qgroup(models.Model):
-    """uuid of the qgroup"""
-    """for now, one qgroup per share, but we need to support multiple shares
-    per qgroup"""
-    uuid = models.CharField(max_length=4096, unique=True)
-
 class Share(models.Model):
     """pool that this share is part of"""
     pool = models.ForeignKey(Pool)
     """quota group this share is part of"""
-    qgroup = models.ForeignKey(Qgroup)
+    qgroup = models.CharField(max_length=100)
     """name of the share, kind of like id"""
     name = models.CharField(max_length=4096, unique=True)
     """id of the share. numeric in case of btrfs"""
