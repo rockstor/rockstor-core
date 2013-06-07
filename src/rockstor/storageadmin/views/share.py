@@ -27,7 +27,7 @@ from rest_framework.authentication import (BasicAuthentication,
 from rest_framework.permissions import IsAuthenticated
 from storageadmin.auth import DigestAuthentication
 from django.db import transaction
-from storageadmin.models import (Share, Snapshot, Disk, Qgroup, Pool)
+from storageadmin.models import (Share, Snapshot, Disk, Pool)
 from fs.btrfs import (add_share, remove_share, share_id, update_quota,
                       share_usage)
 from storageadmin.serializers import ShareSerializer
@@ -96,10 +96,8 @@ class ShareView(APIView):
             add_share(pool_name, disk.name, sname)
             qgroup_id = self._update_quota(pool_name, disk.name, sname, size)
             cur_usage = int(share_usage(pool_name, disk.name, qgroup_id))
-            qgroup = Qgroup(uuid=qgroup_id)
-            qgroup.save()
-            s = Share(pool=pool, qgroup=qgroup, name=sname, size=size,
-                      free=(size - cur_usage))
+            s = Share(pool=pool, qgroup=qgroup_id, name=sname, size=size,
+                    free=(size - cur_usage))
             s.save()
             return Response(ShareSerializer(s).data)
         except RockStorAPIException:

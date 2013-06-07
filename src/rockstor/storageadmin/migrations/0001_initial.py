@@ -29,18 +29,11 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal('storageadmin', ['Disk'])
 
-        # Adding model 'Qgroup'
-        db.create_table('storageadmin_qgroup', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('uuid', self.gf('django.db.models.fields.CharField')(unique=True, max_length=4096)),
-        ))
-        db.send_create_signal('storageadmin', ['Qgroup'])
-
         # Adding model 'Share'
         db.create_table('storageadmin_share', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('pool', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['storageadmin.Pool'])),
-            ('qgroup', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['storageadmin.Qgroup'])),
+            ('qgroup', self.gf('django.db.models.fields.CharField')(max_length=100)),
             ('name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=4096)),
             ('uuid', self.gf('django.db.models.fields.CharField')(max_length=100, null=True)),
             ('size', self.gf('django.db.models.fields.IntegerField')()),
@@ -172,9 +165,6 @@ class Migration(SchemaMigration):
 
         # Deleting model 'Disk'
         db.delete_table('storageadmin_disk')
-
-        # Deleting model 'Qgroup'
-        db.delete_table('storageadmin_qgroup')
 
         # Deleting model 'Share'
         db.delete_table('storageadmin_share')
@@ -321,11 +311,6 @@ class Migration(SchemaMigration):
             'perms': ('django.db.models.fields.CharField', [], {'max_length': '3'}),
             'smb_share': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storageadmin.SambaShare']"})
         },
-        'storageadmin.qgroup': {
-            'Meta': {'object_name': 'Qgroup'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'uuid': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '4096'})
-        },
         'storageadmin.sambashare': {
             'Meta': {'object_name': 'SambaShare'},
             'browsable': ('django.db.models.fields.CharField', [], {'default': "'yes'", 'max_length': '3'}),
@@ -343,7 +328,7 @@ class Migration(SchemaMigration):
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '4096'}),
             'pool': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storageadmin.Pool']"}),
-            'qgroup': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storageadmin.Qgroup']"}),
+            'qgroup': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'size': ('django.db.models.fields.IntegerField', [], {}),
             'uuid': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True'})
         },
