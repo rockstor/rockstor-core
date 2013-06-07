@@ -14,10 +14,26 @@
 <!-- Module Body -->
 <!-- Content -->
 <div class="widget-content">
+  <!--
   <div id="nfsgraph" style="width: 90%; height: 60%;"> </div>
-  <div id="recipestatus">Recipe stopped</div>
-  <a class="btn btn-primary start-recipe">Start Recipe</a>
-  <a class="btn btn-primary stop-recipe">Stop Recipe</a>
+  -->
+  <div class="row-fluid">
+    <div class="span3">
+      <h3>Select probe</h3>
+      <div id="probe-list-container"></div>
+    </div>
+
+    <div class="span9">
+      <div id="selected-probe-name"></div>
+      <div id="probe-content">
+      </div>
+      <div class="clear"></div>
+      <div id="probe-status"></div>
+      <a class="btn btn-primary start-probe">Start Probe</a>
+      <a class="btn btn-primary stop-probe">Stop Probe</a>
+    </div>
+  </div> 
+
 </div>
 <!-- End Content -->
 <!-- end module body -->
