@@ -328,3 +328,5 @@ function buttonDisabled(button) {
   }
 }
 
+RockStorProbeMap = [];
+

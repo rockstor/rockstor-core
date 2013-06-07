@@ -17,23 +17,23 @@
   <!--
   <div id="nfsgraph" style="width: 90%; height: 60%;"> </div>
   -->
-
-  <div id="nfs-container">
-    <span id="nfs-breadcrumb">
-      <span id="nfs-title"></span>
-      <span id="nfs-sharename"></span>
-    </span>
-
-    <div class="clear"></div>
-    <div id="nfs-graph">
+  <div class="row-fluid">
+    <div class="span3">
+      <h3>Select probe</h3>
+      <div id="probe-list-container"></div>
     </div>
-    <div id="nfs-shares">
+
+    <div class="span9">
+      <div id="selected-probe-name"></div>
+      <div id="probe-content">
+      </div>
+      <div class="clear"></div>
+      <div id="probe-status"></div>
+      <a class="btn btn-primary start-probe">Start Probe</a>
+      <a class="btn btn-primary stop-probe">Stop Probe</a>
     </div>
-  </div>
-  <br> 
-  <div id="probe-status"></div>
-  <a class="btn btn-primary start-probe">Start Probe</a>
-  <a class="btn btn-primary stop-probe">Stop Probe</a>
+  </div> 
+
 </div>
 <!-- End Content -->
 <!-- end module body -->
