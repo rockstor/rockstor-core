@@ -70,7 +70,7 @@ function displayUsagePieChart(svg, outerRadius, innerRadius, w, h, dataset, data
   })
   .text(function(d,i) {
     percent = Math.round((dataset[i]/total)*100);
-    return percent + '% ' + d + ' - ' + dataset[i] + ' bytes';;
+    return percent + '% ' + d + ' - ' + humanize.filesize(dataset[i]);;
   });
 
 
