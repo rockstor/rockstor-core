@@ -165,7 +165,7 @@ var HomeLayoutView = RockstoreLayoutView.extend({
   },
 
   saveWidgetConfiguration: function() {
-    var lis = this.widgetsContainer.find('li');
+    var lis = this.widgetsContainer.children('li');
     var tmp = [];
     lis.each(function(index) {
       var li = $(this);

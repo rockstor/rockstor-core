@@ -31,44 +31,18 @@ ProbeWidget = RockStorWidgetView.extend({
     'click .stop-probe' : 'stopProbe',
     'click .resize-widget': 'resize',
     'click .close-widget': 'close',
-
+    'click .probe-select': 'selectProbe',
   },
 
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.dashboard_widgets_probe;
-    this.top_shares_template = window.JST.dashboard_widgets_top_shares;
+    this.probe_list_template = window.JST.dashboard_widgets_probe_list;
     this.displayName = this.options.displayName;
     this.timestamp = 0;
     // periodically check status while polling for data is 
     // going on. this interval controls the frequence
     this.scInterval = 0; 
-    //this.nfsData = [[[1,10],[2,10], [3,10], [4,10], [5,10], [6,10],
-      //[7,10], [8,10], [9,10], [10,10]]];
-    this.nfsData = [0,0,0,0,0,0,0,0,0,0];
-		this.graphOptions = {
-			lines: { show: true },
-			points: { show: true },
-			xaxis: {
-        min: 0,
-        max: 10,
-				tickDecimals: 0,
-				tickSize: 1
-			},
-      yaxis: {
-        min: 0,
-        max: 100
-      }
-		};
-    /*
-    this.nfsMetricsAll = [
-      { name: 'Reads/sec', min: 20, max: 30 },
-      { name: 'Writes/sec', min: 50, max: 60 },
-      { name: 'Lookups/sec', min: 20, max: 30 },
-      { name: 'Bytes read/sec', min: 500000, max: 600000 },
-      { name: 'Bytes written/sec', min: 700000, max: 800000 }
-    ]; 
-    */
     this.probeStates = {
       STOPPED: 'stopped',
       CREATED: 'created',
@@ -97,44 +71,54 @@ ProbeWidget = RockStorWidgetView.extend({
       module_name: this.module_name,
       displayName: this.displayName
     }));
-    var series = [[]];
-    for (i=0; i<10; i++) {
-      series[0].push([i, this.nfsData[i]]);
-    }
-
-    //$.plot(this.$('#nfsgraph'), this.makeSeries(this.nfsData), this.graphOptions);
+    this.disableStartProbe();
+    this.disableStopProbe();
+    this.displayProbeList();
     this.initializeProbe('nfs-distrib');
     return this;
   },
 
+  selectProbe: function(event) {
+    event.preventDefault(); 
+    if ($(event.currentTarget).hasClass('disabled')) {
+      return false;
+    }
+    probeName = $(event.currentTarget).attr('data-probe-name');
+    this.$('#selected-probe-name').html(probeName);
+    logger.debug(probeName + ' selected');
+    this.probe = this.createNewProbe(probeName);
+    this.probe.trigger(this.probeEvents.STOP);
+  },
+
   initializeProbe: function(name) {
+    //checks if probe is running and if so, loads it and displays
     var _this = this;
     // check probe status
     this.probes = new ProbeCollection([],{name: name});
-    logger.debug('probes url is ' + this.probes.url());
     this.probes.fetch({
       success: function(collection, response, options) {
         if (collection.length > 0) {
           _this.probe = _this.probes.at(0);
           if (_this.probe.get('state') == _this.probeStates.RUNNING) {
             // probe was run before and is running
+            _this.disableProbeSelect();
             _this.setProbeEvents(_this.probe);
             _this.probe.trigger(_this.probeEvents.RUN);
           } else {
             // probe was run before but is not running
-            _this.probe = _this.createNewProbe(name);
-            _this.probe.trigger(_this.probeEvents.STOP);
+            //_this.probe = _this.createNewProbe(name);
+            //_this.probe.trigger(_this.probeEvents.STOP);
           }
         } else {
           // probe was not run before
-          _this.probe = _this.createNewProbe(name);
-          _this.probe.trigger(_this.probeEvents.STOP);
+          //_this.probe = _this.createNewProbe(name);
+          //_this.probe.trigger(_this.probeEvents.STOP);
         }
       },
       error: function(collection, response, options) {
         // probe was not run before
-        _this.probe = _this.createNewProbe(name);
-        _this.probe.trigger(_this.probeEvents.STOP);
+        //_this.probe = _this.createNewProbe(name);
+        //_this.probe.trigger(_this.probeEvents.STOP);
       }
 
     });
@@ -148,11 +132,13 @@ ProbeWidget = RockStorWidgetView.extend({
     if (buttonDisabled(this.$('.start-probe'))) {
       return false;
     }
-    logger.debug('in startProbe');
+    // set the id to new probe if it was run before
+    if (!_.isNull(this.probe.id)) {
+      this.probe = this.createNewProbe(this.probe.get('name'));
+    }
+    this.disableProbeSelect();
     this.probe.save(null, {
       success: function(model, response, options) {
-        logger.debug('probe create success');
-        logger.debug(_this.probe.get('state'));
         if (_this.probe.get('state') == _this.probeStates.CREATED) {
           _this.probe.trigger(_this.probeEvents.START);
         } else {
@@ -160,8 +146,6 @@ ProbeWidget = RockStorWidgetView.extend({
         }
       },
       error: function(model, response, options) {
-        logger.debug('probe create error');
-        logger.debug(_this.probe.get('state'));
         _this.probe.trigger(_this.probeEvents.ERROR_START);
       }
     });
@@ -174,7 +158,6 @@ ProbeWidget = RockStorWidgetView.extend({
       return function() { 
         _this.probe.fetch({
           success: function(model, response, options) {
-            logger.debug('in waitTillRunning - probe state is ' + _this.probe.get('state'));
             if (_this.probe.get('state') == _this.probeStates.RUNNING) {
               // stop polling for status
               window.clearInterval(_this.statusIntervalId);
@@ -211,6 +194,7 @@ ProbeWidget = RockStorWidgetView.extend({
           url: _this.probe.dataUrl(),
           type: 'GET',
           dataType: "json",
+          global: false, // dont show global loading indicator
           success: function(data, textStatus, jqXHR) {
             if (data.length > 0) {
               window.clearInterval(_this.dataIntervalId);
@@ -255,6 +239,7 @@ ProbeWidget = RockStorWidgetView.extend({
       type: 'POST',
       data: {},
       dataType: "json",
+      global: false, // dont show global loading indicator
       success: function(data, textStatus, jqXHR) {
         _this.probe.trigger(_this.probeEvents.STOP);
       },
@@ -263,6 +248,7 @@ ProbeWidget = RockStorWidgetView.extend({
         _this.probe.trigger(_this.probeEvents.ERROR);
       }
     });
+    this.enableProbeSelect();
 
   },
 
@@ -272,57 +258,6 @@ ProbeWidget = RockStorWidgetView.extend({
       series[0].push([i,data[i]]);
     }
     return series;
-  },
-
-  showNfsIO: function(probeDataUrl) {
-    var _this = this;
-    // set title
-    this.$('#nfs-title').html(this.probe.get('name'));
-
-    // clear rendering area
-    this.$('#nfs-graph').empty();
-
-    // create context
-    this.cubism_context = cubism.context()
-    .step(1e3)
-    .size(600);
-    
-    // create horizon
-    this.horizon = this.cubism_context.horizon()
-    .colors(['#08519c', '#bae4b3'])
-    .height(60);
-
-    // axis
-    d3.select(this.el).select("#nfs-graph").selectAll(".axis")
-    .data(["top", "bottom"])
-    .enter().append("div")
-    .attr("class", function(d) { return d + " axis"; })
-    .each(function(d) { 
-      d3.select(this).call(_this.cubism_context.axis().ticks(12).orient(d)); 
-    });
-
-    d3.select(this.el).select("#nfs-graph").append("div")
-    .attr("class", "rule")
-    .call(_this.cubism_context.rule());
-    
-    var nfsContext = this.cubism_context.nfs();
-    var nfsMetricRead = nfsContext.metric('Reads/sec', 'num_read', probeDataUrl);
-    var nfsMetricWrites = nfsContext.metric('Writes/sec', 'num_write', probeDataUrl);
-    //var nfsMetricLookups = nfsContext.metric('Lookups/sec', recipe_uri);
-    //var nfsMetricReadBytes = nfsContext.metric('Bytes read/sec', recipe_uri);
-    //var nfsMetricWriteBytes = nfsContext.metric('Bytes written/sec', recipe_uri);
-
-    d3.select(this.el).select("#nfs-graph").selectAll(".horizon")
-    .data([nfsMetricRead, nfsMetricWrites ])
-    .enter().insert("div", ".bottom")
-    .attr("class", "horizon")
-    .call(_this.horizon);
-
-    this.cubism_context.on("focus", function(i) {
-      d3.selectAll(".value").style("right", i == null ? null : _this.cubism_context.size() - i + "px");
-    });
-
-
   },
 
   start: function() {
@@ -362,23 +297,24 @@ ProbeWidget = RockStorWidgetView.extend({
   },
 
   startRender: function() {
-    this.showNfsIO(this.probe.dataUrl());
+    var _this = this;
+    var tmp = _.find(RockStorProbeMap, function(p) {
+      return p.name == _this.probe.get('name');
+    });
+    logger.debug(tmp);
+    var viewName = tmp.view;
+    logger.debug('found probe view ' + viewName);
+    this.currentProbeView = new window[viewName]({probe: this.probe});
+    this.$('#probe-content').empty();
+    this.$('#probe-content').append(this.currentProbeView.render().el);
   },
 
   stopRender: function() {
     var _this = this;
-    if (!_.isUndefined(this.horizon) && !_.isNull(this.horizon)) {
-      d3.select(this.el).select("#nfs-graph").selectAll(".horizon")
-      .call(_this.horizon.remove).remove();
+    if (!_.isUndefined(this.currentProbeView)) {
+      this.currentProbeView.cleanup();
     }
-    d3.select(this.el).select("#nfs-graph").selectAll(".axis").remove();
-    this.cubism_context.stop();
-    window.clearInterval(this.topSharesIntervalId);
-
-  },
-
-  clear: function() {
-
+    this.$('#probe-content').empty();
   },
 
   setProbeEvents: function(probe) {
@@ -411,7 +347,32 @@ ProbeWidget = RockStorWidgetView.extend({
   enableStopProbe: function() {
     enableButton(this.$('.stop-probe'));
   },
+  disableProbeSelect: function() {
+    logger.debug('disabling probe select');
+    this.$('.probe-select').addClass('disabled');
+  },
+  enableProbeSelect: function() {
+    logger.debug('enabling probe select');
+    this.$('.probe-select').removeClass('disabled');
+  },
+  displayProbeList: function() {
+    var _this = this;
+    $.ajax({
+      //url: '/api/recipes/nfs/123?t=' + this.timestamp,
+      url: '/api/sm/sprobes/',
+      type: 'GET',
+      global: false, // dont show global loading indicator
+      success: function(data, textStatus, jqXHR) {
+        logger.debug('got list of probes');
+        logger.debug(data);
+        _this.$('#probe-list-container').append(_this.probe_list_template({probes: data}));
+      },
+      error: function(jqXHR, textStatus, error) {
+        logger.debug(error);
+      }
+    });
 
+  },
 
 });
 
@@ -426,6 +387,7 @@ cubism.context.prototype.nfs = function() {
         //url: '/api/recipes/nfs/123?t=' + this.timestamp,
         url: probeDataUrl,
         type: 'GET',
+        global: false, // dont show global loading indicator
         success: function(data, textStatus, jqXHR) {
           tmp = data.map(function(d) { return d[attrName]; });
           callback(null, tmp);
@@ -448,10 +410,10 @@ cubism.context.prototype.nfs = function() {
 
 
 RockStorWidgets.available_widgets.push({ 
-  name: 'nfs_distrib_probe', 
-  displayName: 'NFS Usage', 
+  name: 'smart_probe', 
+  displayName: 'Smart Probe', 
   view: 'ProbeWidget',
-  description: 'NFS Usage',
+  description: 'Smart Probes that display nfs call distribution',
   defaultWidget: false,
   rows: 2,
   cols: 3,
