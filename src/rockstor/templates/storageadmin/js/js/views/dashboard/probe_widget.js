@@ -102,6 +102,7 @@ ProbeWidget = RockStorWidgetView.extend({
           if (_this.probe.get('state') == _this.probeStates.RUNNING) {
             // probe was run before and is running
             _this.disableProbeSelect();
+            this.$('#selected-probe-name').html(_this.probe.get('name'));
             _this.setProbeEvents(_this.probe);
             _this.probe.trigger(_this.probeEvents.RUN);
           } else {
@@ -198,6 +199,7 @@ ProbeWidget = RockStorWidgetView.extend({
           success: function(data, textStatus, jqXHR) {
             if (data.length > 0) {
               window.clearInterval(_this.dataIntervalId);
+              _this.$('#probe-status').html(': Probe Running - receiving data');
               _this.startRender();
             }
           },
@@ -264,7 +266,7 @@ ProbeWidget = RockStorWidgetView.extend({
     logger.debug('probe created');
     this.disableStartProbe();
     this.enableStopProbe();
-    this.$('#probe-status').html('<h3>Probe created - getting status</h3>');
+    this.$('#probe-status').html(': Probe created - waiting for status');
     this.waitTillRunning();
   },
   
@@ -272,7 +274,7 @@ ProbeWidget = RockStorWidgetView.extend({
     logger.debug('probe running');
     this.disableStartProbe();
     this.enableStopProbe();
-    this.$('#probe-status').html('<h3>Probe running - getting data</h3>');
+    this.$('#probe-status').html(': Probe running - waiting for data');
     // start polling for Data
     this.pollForDataReady();
 
@@ -282,7 +284,7 @@ ProbeWidget = RockStorWidgetView.extend({
     logger.debug('probe stopped');
     this.enableStartProbe();
     this.disableStopProbe();
-    this.$('#probe-status').html('<h3>Probe stopped</h3>');
+    this.$('#probe-status').html(': Probe stopped');
     if (!_.isUndefined(this.probe.id) && !_.isNull(this.probe.id)) {
       this.stopRender();
     }
@@ -293,7 +295,7 @@ ProbeWidget = RockStorWidgetView.extend({
     this.enableStartProbe();
     this.disableStopProbe();
     this.probeState = this.probeStates.ERROR;
-    this.$('#probe-status').html('<h3>Error!</h3>');
+    this.$('#probe-status').html(': Error!');
   },
 
   startRender: function() {
@@ -304,14 +306,17 @@ ProbeWidget = RockStorWidgetView.extend({
     logger.debug(tmp);
     var viewName = tmp.view;
     logger.debug('found probe view ' + viewName);
-    this.currentProbeView = new window[viewName]({probe: this.probe});
-    this.$('#probe-content').empty();
-    this.$('#probe-content').append(this.currentProbeView.render().el);
+    var probeClass = window[viewName];
+    if (!_.isUndefined(probeClass) && !_.isNull(probeClass)) {
+      this.currentProbeView = new window[viewName]({probe: this.probe});
+      this.$('#probe-content').empty();
+      this.$('#probe-content').append(this.currentProbeView.render().el);
+    }
   },
 
   stopRender: function() {
     var _this = this;
-    if (!_.isUndefined(this.currentProbeView)) {
+    if (!_.isUndefined(this.currentProbeView) && !_.isNull(this.currentProbeView)) {
       this.currentProbeView.cleanup();
     }
     this.$('#probe-content').empty();
@@ -363,8 +368,6 @@ ProbeWidget = RockStorWidgetView.extend({
       type: 'GET',
       global: false, // dont show global loading indicator
       success: function(data, textStatus, jqXHR) {
-        logger.debug('got list of probes');
-        logger.debug(data);
         _this.$('#probe-list-container').append(_this.probe_list_template({probes: data}));
       },
       error: function(jqXHR, textStatus, error) {

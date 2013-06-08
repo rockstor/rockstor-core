@@ -928,8 +928,8 @@ ul.widgets-container li div.position {
 
 /* probe list */
 .probe-list {
-  width: 228px;
-  margin: 30px 0 0;
+  width: 150px;
+  /*margin: 30px 0 0;*/
   padding: 0;
   background-color: #fff;
   -webkit-border-radius: 6px;
@@ -993,13 +993,39 @@ ul.widgets-container li div.position {
   bottom: 270px;
 }
 
+.probe-list > li > a.probe-select-header {
+  background: #555;
+  color: #fff;
+
+}
+.probe-list > li > a.probe-select-header h3 {
+  margin: 0;
+}
+
+
 #probe-content {
   height: 400px;
+  margin-top: 12px;
 }
 
 .probe-select.disabled {
   background: rgb(245,245,245); 
   cursor: default;
   color: #555;
+}
+
+#probe-left {
+  width: 150px;
+  float: left;
+}
+
+#probe-right {
+  width: 650px;
+  margin-left: 20px;
+  padding: 20px;
+  float: left;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  margin-bottom: 12px;
 }
 
