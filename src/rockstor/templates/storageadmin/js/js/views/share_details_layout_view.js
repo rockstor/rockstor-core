@@ -32,6 +32,7 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
     this.shareName = this.options.shareName;
     this.template = window.JST.share_share_details_layout;
     this.iscsi_target = new ISCSITarget({shareName: this.shareName});
+    this.appliances = new ApplianceCollection();
 
 
     // create models
@@ -43,6 +44,7 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
     this.dependencies.push(this.share);
     this.dependencies.push(this.snapshots);
     this.dependencies.push(this.iscsi_target);
+    this.dependencies.push(this.appliances);
     this.modify_choices = [
       {name: 'ro', value: 'ro'}, 
       {name: 'rw', value: 'rw'},
@@ -64,6 +66,9 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
   },
   
   renderSubViews: function() {
+    var current_appliance = this.appliances.find(function(appliance) {
+      return appliance.get('current_appliance') == true; 
+    })
     this.subviews['share-info'] = new ShareInfoModule({ model: this.share });
     this.subviews['share-usage'] = new ShareUsageModule({ model: this.share });
     this.subviews['snapshots'] = new SnapshotsTableModule({ 
@@ -74,6 +79,7 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
       share: this.share,
       modify_choices: this.modify_choices,
       sync_choices: this.sync_choices,
+      appliance_ip: current_appliance.get('ip'),
     });
     this.subviews['smb-shares'] = new SMBShares({ 
       share: this.share,
