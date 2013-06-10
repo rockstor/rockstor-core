@@ -414,12 +414,13 @@ cubism.context.prototype.nfs = function() {
 
 RockStorWidgets.available_widgets.push({ 
   name: 'smart_probe', 
-  displayName: 'Smart Probe', 
+  displayName: 'Smart Probes', 
   view: 'ProbeWidget',
   description: 'Smart Probes that display nfs call distribution',
-  defaultWidget: false,
+  defaultWidget: true,
   rows: 2,
   cols: 3,
-  category: 'Storage'
+  category: 'Storage',
+  position: 3
 });
 

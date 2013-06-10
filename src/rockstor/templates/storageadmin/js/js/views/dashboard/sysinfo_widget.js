@@ -63,8 +63,8 @@ RockStorWidgets.available_widgets.push({
   description: 'System Information',
   defaultWidget: true,
   rows: 1,
-  cols: 2,
+  cols: 1,
   category: 'Compute',
-  position: 1
+  position: 2
 });
 

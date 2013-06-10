@@ -50,10 +50,9 @@ RockStorWidgets.available_widgets.push({
     displayName: 'Top Shares by usage', 
     view: 'TopSharesWidget',
     description: 'Displays Top Shares by percentage of space used',
-    defaultWidget: true,
+    defaultWidget: false,
     rows: 1,
     cols: 1,
-    category: 'Storage', 
-    position: 3
+    category: 'Storage'
 });
 
