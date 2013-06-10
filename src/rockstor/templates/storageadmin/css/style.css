@@ -1029,3 +1029,10 @@ ul.widgets-container li div.position {
   margin-bottom: 12px;
 }
 
+/* Code section */
+code {
+  background-color: rgb(105,105,105);
+  color: rgb(255,255,255);
+  padding: 2px 12px;
+  border: 0px;
+}
