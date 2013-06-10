@@ -18,19 +18,22 @@
   <div id="nfsgraph" style="width: 90%; height: 60%;"> </div>
   -->
   <div class="row-fluid">
-    <div class="span3">
-      <h3>Select probe</h3>
+    <div id="probe-left">
       <div id="probe-list-container"></div>
     </div>
 
-    <div class="span9">
-      <div id="selected-probe-name"></div>
-      <div id="probe-content">
+    <div id="probe-right">
+      <div id="probe-main">
+        <span class="h3" id="selected-probe-name">No probe selected</span>
+        <span class="h3" id="probe-status"></span>
+        <br><br>
+        <div id="probe-actions">
+          <a class="btn btn-primary start-probe">Start Probe</a>
+          <a class="btn btn-primary stop-probe">Stop Probe</a>
+        </div>
+        <div id="probe-content">
+        </div>
       </div>
-      <div class="clear"></div>
-      <div id="probe-status"></div>
-      <a class="btn btn-primary start-probe">Start Probe</a>
-      <a class="btn btn-primary stop-probe">Stop Probe</a>
     </div>
   </div> 
 
