@@ -87,12 +87,22 @@ class ShareView(APIView):
 
             pool_name = request.DATA['pool']
             size = int(request.DATA['size'])
+
             pool = None
-            for p in Pool.objects.all():
-                if (p.name == pool_name):
-                    pool = p
-                    break
-            disk = Disk.objects.filter(pool=p)[0]
+            try:
+                pool = Pool.objects.get(name=pool_name)
+            except:
+                e_msg = ('Pool with name: %s does not exist.' % pool_name)
+                handle_exception(Exception(e_msg), request)
+
+            disk = None
+            try:
+                disk = Disk.objects.filter(pool=pool)[0]
+            except:
+                e_msg = ('Pool with name: %s does not have any disks in it.' %
+                         pool_name)
+                handle_exception(Exception(e_msg), request)
+
             add_share(pool_name, disk.name, sname)
             qgroup_id = self._update_quota(pool_name, disk.name, sname, size)
             cur_usage = int(share_usage(pool_name, disk.name, qgroup_id))
