@@ -43,6 +43,7 @@ AddShareView = Backbone.View.extend({
         var size_err_msg = function() {
             return err_msg;
           }
+      
         $.validator.addMethod('validateSize', function(value) {
             var share_size = $('#share_size').val();
             
