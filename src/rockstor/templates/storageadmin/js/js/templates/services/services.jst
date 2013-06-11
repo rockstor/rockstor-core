@@ -46,8 +46,9 @@
                       <div class="service-status stopped"></div>
                     <% } %>
                   </td>
+                <% if(service.get('status')){%>  
                 <td>
-                  <a href="#" id="<%= service.get('name') %>-start" class="service-command" data-service-name="<%= service.get('name') %>" data-command="start">Start</a>
+                  <span href="#" id="<%= service.get('name') %>-start" class="service-command" data-service-name="<%= service.get('name') %>" data-command="start">Start</span>
                   &nbsp;
                   <a href="#" id="<%= service.get('name') %>-stop" class="service-command" data-service-name="<%= service.get('name') %>" data-command="stop">Stop</a>
                   &nbsp;
@@ -55,6 +56,17 @@
                   &nbsp;
                   <a href="#" id="<%= service.get('name') %>-reload" class="service-command" data-service-name="<%= service.get('name') %>" data-command="reload">Reload</a>
                 </td>
+                <%}else{%>
+                <td>
+                  <a href="#" id="<%= service.get('name') %>-start" class="service-command" data-service-name="<%= service.get('name') %>" data-command="start">Start</a>
+                  &nbsp;
+                  <span href="#" id="<%= service.get('name') %>-stop" class="service-command" data-service-name="<%= service.get('name') %>" data-command="stop">Stop</span>
+                  &nbsp;
+                  <span href="#" id="<%= service.get('name') %>-restart" class="service-command" data-service-name="<%= service.get('name') %>" data-command="restart">Restart</span>
+                  &nbsp;
+                  <span href="#" id="<%= service.get('name') %>-reload" class="service-command" data-service-name="<%= service.get('name') %>" data-command="reload">Reload</span>
+                </td>
+                <%}%>
               </tr>
 
             <% }); %>
