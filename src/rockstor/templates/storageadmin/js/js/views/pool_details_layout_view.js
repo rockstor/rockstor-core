@@ -90,7 +90,8 @@ PoolDetailsLayoutView = RockstoreLayoutView.extend({
                 _this.pool.fetch();
               },
               error: function(request, status, error) {
-                alert(request.responseText);
+                //alert(request.responseText);
+            	_this.$('#alert-msg').html("<font color='red'>No Disks Selected</font>");
               }
             });
           });
