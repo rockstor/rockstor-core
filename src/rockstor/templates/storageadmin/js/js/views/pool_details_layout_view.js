@@ -72,6 +72,7 @@ PoolDetailsLayoutView = RockstoreLayoutView.extend({
           _this.$('#resize-pool').click(function() {
             var disk_names = '';
             var n = $("input:checked").length;
+           
             $("input:checked").each(function(i) {
               if (i < n-1) {
                 disk_names += $(this).val() + ',';
@@ -90,7 +91,9 @@ PoolDetailsLayoutView = RockstoreLayoutView.extend({
                 _this.pool.fetch();
               },
               error: function(request, status, error) {
-                alert(request.responseText);
+                //alert("No disks Selected");
+                _this.$('#disk-alert').html("<font color ='red'>No disks Selected</font>");
+            	  
               }
             });
           });

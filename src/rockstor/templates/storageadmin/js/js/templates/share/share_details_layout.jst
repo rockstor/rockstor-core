@@ -87,10 +87,10 @@
             <input type="text" name="new-size" id="new-size" value="<%= humanize.filesize(share.get('size')).replace(/[^0-9\.]+/g,"") %>">
             
               <select id="size_format" name="size_format">
-                <option <%if(humanize.filesize(share.get('size')).match(/Kb/g,"")){%> selected="selected"<%}%> >KB</option>
-                <option <%if(humanize.filesize(share.get('size')).match(/Mb/g,"")){%> selected="selected"<%}%> >MB</option>
-                <option <%if(humanize.filesize(share.get('size')).match(/Gb/g,"")){%> selected="selected"<%}%> >GB</option>
-                <option <%if(humanize.filesize(share.get('size')).match(/Tb/g,"")){%> selected="selected"<%}%> >TB</option>
+                <option <%if(humanize.filesize(share.get('size')*1024).match(/Kb/g,"")){%> selected="selected"<%}%> >KB</option>
+                <option <%if(humanize.filesize(share.get('size')*1024).match(/Mb/g,"")){%> selected="selected"<%}%> >MB</option>
+                <option <%if(humanize.filesize(share.get('size')*1024).match(/Gb/g,"")){%> selected="selected"<%}%> >GB</option>
+                <option <%if(humanize.filesize(share.get('size')*1024).match(/Tb/g,"")){%> selected="selected"<%}%> >TB</option>
               </select>
             <br/>
      <input type="Submit" id="resize-share" class="btn btn-primary" value="Submit"></input>

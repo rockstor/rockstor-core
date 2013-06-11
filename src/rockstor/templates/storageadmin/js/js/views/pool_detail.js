@@ -113,7 +113,8 @@ PoolDetailView = Backbone.View.extend({
                     _this.$('button[rel]').overlay().close();
                   },
                   error: function(request, status, error) {
-                    alert(request.responseText);
+                    alert(request.responseText);                  
+                    
                   }
                 });
               });
