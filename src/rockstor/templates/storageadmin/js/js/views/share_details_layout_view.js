@@ -153,13 +153,13 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
       
       var sizeFormat = $('#size_format').val();
         if(sizeFormat == 'KB'){
-    	  size = size*1024;
+    	  size = size;
     	}else if(sizeFormat == 'MB'){
-    	  size = size*1024*1024;	
+    	  size = size*1024;	
     	}else if(sizeFormat == 'GB'){
-    	  size = size*1024*1024*1024;
+    	  size = size*1024*1024;
     	}else if(sizeFormat == 'TB'){
-    	  size = size*1024*1024*1024*1024;
+    	  size = size*1024*1024*1024;
     	}
       $.ajax({
         url: "/api/shares/" + _this.share.get('name') + "/",
