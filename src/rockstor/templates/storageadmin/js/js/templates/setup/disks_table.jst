@@ -45,7 +45,7 @@
             <% disks.each(function(disk, index) { %>
               <tr>
                 <td><%= disk.get('name') %></td>
-                <td><%= humanize.filesize(disk.get('size')) %></td>
+                <td><%= humanize.filesize(disk.get('size')*1024) %></td>
                 
               </tr>
             <% }); %>
