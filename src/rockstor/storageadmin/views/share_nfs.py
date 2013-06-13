@@ -132,6 +132,7 @@ class ShareNFSView(APIView):
                 s_exports['mount_point'] = e.mount
                 if (e.id != cur_export.id):
                     s_exports['clients'].append(self._client_input(e))
-            exports.append(s_exports)
+            if (len(s_exports['clients']) > 0):
+                exports.append(s_exports)
         logger.debug('exports: %s' % repr(exports))
         return exports
