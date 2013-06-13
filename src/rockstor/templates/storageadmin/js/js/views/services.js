@@ -119,11 +119,14 @@ ServicesView = RockstoreLayoutView.extend({
         _.each(data, function(service) {
           var name = service.name;
           status_elem = _this.$('#'+name+'-status');
+          update_elem = _this.$('#'+name+'-update');
           if (!_.isNull(status_elem) && !_.isUndefined(status_elem)) {
             if (service.status) {
               status_elem.html('<div class="service-status running"></div>');
+              update_elem.html('<span href="#" id="'+name+'-start" class="service-command" data-service-name="'+name+'" data-command="start">Start</span>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" id="'+name+'-stop" class="service-command" data-service-name="'+name+'" data-command="stop">Stop</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" id="'+name+'-restart" class="service-command" data-service-name="'+name+'" data-command="restart">Restart</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" id="'+name+'-reload" class="service-command" data-service-name="'+name+'" data-command="reload">Reload</a>');
             } else {
               status_elem.html('<div class="service-status stopped"></div>');
+              update_elem.html('<a href="#" id="'+name+'-start" class="service-command" data-service-name="'+name+'" data-command="start">Start</a>&nbsp;&nbsp;&nbsp;&nbsp;<span href="#" id="'+name+'-stop" class="service-command" data-service-name="'+name+'" data-command="stop">Stop</span>&nbsp;&nbsp;&nbsp;&nbsp;<span href="#" id="'+name+'-restart" class="service-command" data-service-name="'+name+'" data-command="restart">Restart</span>&nbsp;&nbsp;&nbsp;&nbsp;<span href="#" id="'+name+'-reload" class="service-command" data-service-name="'+name+'" data-command="reload">Reload</span>');
             }
           }
         });
