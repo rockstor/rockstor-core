@@ -115,22 +115,24 @@ class ShareNFSView(APIView):
         except Exception, e:
             handle_exception(e, request)
 
+    def _client_input(self, export):
+        return {'client_str': export.host_str,
+                'option_list': ('%s,%s,%s,no_root_squash' %
+                                (export.editable, export.syncable,
+                                 export.mount_security))}
+
     def _create_nfs_export_input(self, cur_export):
         exports = []
         for s in Share.objects.all():
             s_exports = {'clients': [],}
+            if (cur_export.share.id == s.id and cur_export.enabled is True):
+                s_exports['mount_point'] = cur_export.mount
+                s_exports['clients'].append(self._client_input(cur_export))
             for e in NFSExport.objects.filter(share=s):
                 s_exports['mount_point'] = e.mount
-                if (e.id == cur_export.id and cur_export.enabled is False):
-                    logger.debug('export matched. id = %s enabled = %s' %
-                                 (e.id, repr(cur_export.enabled)))
-                    continue
-                else:
-                    client = {'client_str': e.host_str,
-                              'option_list': ('%s,%s,%s' %
-                                              (e.editable, e.syncable,
-                                               e.mount_security))}
-                    s_exports['clients'].append(client)
-            exports.append(s_exports)
+                if (e.id != cur_export.id):
+                    s_exports['clients'].append(self._client_input(e))
+            if (len(s_exports['clients']) > 0):
+                exports.append(s_exports)
         logger.debug('exports: %s' % repr(exports))
         return exports
