@@ -47,7 +47,7 @@
             <% snapshots.each(function(snapshot, index) { %>
               <tr>
                 <td><%= index+1 %></td>
-                <td><a href="#shares/<%= snapshot.get('name') %>"><%= snapshot.get('name') %></a></td>
+                <td><%= snapshot.get('name') %></td>
                 <td><%= humanize.filesize(snapshot.get('size')*1024) %></td>
                 <td><button id="delete_snapshot_<%= snapshot.get('name') %>"
                     data-name="<%= snapshot.get('name') %>" data-share-name="<%= share.get('name') %>" data-action="delete" class="btn btn-danger">Delete</button></td>
