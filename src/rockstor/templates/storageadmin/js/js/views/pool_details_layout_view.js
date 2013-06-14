@@ -62,6 +62,9 @@ PoolDetailsLayoutView = RockstoreLayoutView.extend({
     this.attachActions();
   },
 
+  
+  
+  
   attachActions: function() {
     var _this = this;
     this.$('#resize-pool-popup').click(function() {
@@ -69,9 +72,12 @@ PoolDetailsLayoutView = RockstoreLayoutView.extend({
         success: function(collection, response) {
           console.log('got disks');
           _this.$('#disks-to-add').html(_this.select_disks_template({disks: _this.disks}));
+          _this.$('#alert-msg').empty();
           _this.$('#resize-pool').click(function() {
             var disk_names = '';
+            var err_msg = "Please select atleast one disk";
             var n = $("input:checked").length;
+            if(n > 0){
             $("input:checked").each(function(i) {
               if (i < n-1) {
                 disk_names += $(this).val() + ',';
@@ -90,11 +96,15 @@ PoolDetailsLayoutView = RockstoreLayoutView.extend({
                 _this.pool.fetch();
               },
               error: function(request, status, error) {
-                alert(request.responseText);
+            	 _this.$('#alert-msg').html("<font color='red'>"+request.responseText+"</font>");
               }
             });
+          }else{
+        	  _this.$('#alert-msg').html("<font color='red'>"+err_msg+"</font>");
+          }
           });
           $('#resize-pool-form').overlay().load();
+          
         }});
     });
     _this.$('#resize-pool-form').overlay({ load: false });
