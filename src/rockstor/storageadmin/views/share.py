@@ -33,6 +33,7 @@ from fs.btrfs import (add_share, remove_share, share_id, update_quota,
 from storageadmin.serializers import ShareSerializer
 from storageadmin.util import handle_exception
 from storageadmin.exceptions import RockStorAPIException
+from django.conf import settings
 
 
 import logging
@@ -53,6 +54,17 @@ class ShareView(APIView):
         except Exception, e:
             handle_exception(e, request)
 
+    def _validate_share_size(self, request, size):
+        e_msg = None
+        if (size < settings.MIN_SHARE_SIZE):
+            e_msg = ('Share size should atleast be %dKB. Given size is %dKB'
+                     % (settings.MIN_SHARE_SIZE, size))
+        elif (size > settings.MAX_SHARE_SIZE):
+            e_msg = ('Share size cannot be more than %dKB. Given size is %dKB' %
+                     (settings.MAX_SHARE_SIZE, size))
+        if (e_msg is not None):
+            handle_exception(Exception(e_msg), request)
+
     @transaction.commit_on_success
     def put(self, request, sname):
         try:
@@ -62,13 +74,17 @@ class ShareView(APIView):
 
             share = Share.objects.get(name=sname)
             new_size = int(request.DATA['size'])
-
-            #if new_size < cur_usage, throw exception
+            self._validate_share_size(request, new_size)
 
             disk = Disk.objects.filter(pool=share.pool)[0]
             qgroup_id = self._update_quota(share.pool.name, disk.name, sname,
                                            new_size)
             cur_usage = share_usage(share.pool.name, disk.name, qgroup_id)
+            if (new_size < cur_usage):
+                e_msg = ('Unable to resize because requested new size(%dKB) '
+                         'is less than current usage(%dKB) of the share.' %
+                         (new_size, cur_usage))
+                handle_exception(Exception(e_msg), request)
             share.size = new_size
             share.free = new_size - cur_usage
             share.save()
@@ -86,8 +102,8 @@ class ShareView(APIView):
                 handle_exception(Exception(e_msg), request)
 
             pool_name = request.DATA['pool']
-            size = int(request.DATA['size'])
-
+            size = int(request.DATA['size']) #in KB
+            self._validate_share_size(request, size)
             pool = None
             try:
                 pool = Pool.objects.get(name=pool_name)
