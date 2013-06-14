@@ -116,7 +116,7 @@ PoolDetailsLayoutView = RockstoreLayoutView.extend({
     var _this = this;
     console.log('deleting ' + this.pool.get('name'));
     $.ajax({
-      url: "/api/pools/",
+      url: "/api/pools/" + this.pool.get('name') + "/",
       type: "DELETE",
       dataType: "json",
       data: { "name": this.pool.get('name'), "disks": "foo", "raid_level": "foo" }
