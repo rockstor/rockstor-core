@@ -36,6 +36,9 @@ PoolsTableView = RockstoreModuleView.extend({
     $(this.el).append(this.template({pools: this.collection}));
     this.$('#pools-table').tablesorter();
     this.$('button[data-action=delete]').click(function(event) {
+      var button = _this.$('button[data-action=delete]');
+      if (buttonDisabled(button)) return false;
+      disableButton(button);
       name = $(event.target).attr('data-name');
       $.ajax({
         url: "/api/pools/" + name + "/",
@@ -44,6 +47,10 @@ PoolsTableView = RockstoreModuleView.extend({
         data: { "name": name, "disks": "foo", "raid_level": "foo" }
       }).done(function() {
         _this.collection.fetch();
+      }).fail(function(request, status, error) {
+        showError(request.responseText); 
+      }).always(function() {
+        enableButton(button);
       });
     });
     return this;

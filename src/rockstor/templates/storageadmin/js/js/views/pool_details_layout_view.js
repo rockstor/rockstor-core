@@ -115,6 +115,9 @@ PoolDetailsLayoutView = RockstoreLayoutView.extend({
   deletePool: function() {
     var _this = this;
     console.log('deleting ' + this.pool.get('name'));
+    var button = this.$('#delete-pool');
+    if (buttonDisabled(button)) return false;
+    disableButton(button);
     $.ajax({
       url: "/api/pools/" + this.pool.get('name') + "/",
       type: "DELETE",
@@ -122,6 +125,10 @@ PoolDetailsLayoutView = RockstoreLayoutView.extend({
       data: { "name": this.pool.get('name'), "disks": "foo", "raid_level": "foo" }
     }).done(function() {
       app_router.navigate('pools', {trigger: true});
+    }).fail(function(request, status, error) {
+        showError(request.responseText); 
+    }).always(function() {
+      enableButton(button);
     });
 
   }
