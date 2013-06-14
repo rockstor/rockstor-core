@@ -181,13 +181,13 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
     this.$('#js-delete').click(function() {
       logger.info('deleting share ' + _this.share.get('name'));
       var button = _this.$('#js-delete');
+      var name = _this.share.get('name');
       if (buttonDisabled(button)) return false;
       disableButton(button);
       $.ajax({
-        url: "/api/shares/",
+        url: "/api/shares/"+name+"/",
         type: "DELETE",
         dataType: "json",
-        data: {name: _this.share.get('name')},
         success: function() {
           enableButton(button);
           app_router.navigate('shares', {trigger: true}) 
