@@ -159,9 +159,15 @@ class PoolView(APIView):
     def delete(self, request, pname):
         try:
             pool = Pool.objects.get(name=pname)
+            if (Share.objects.filter(pool=pool).exists()):
+                e_msg = ('Pool: %s is not empty. Cannot delete until all '
+                         'shares in the pool are deleted' % (pname))
+                handle_exception(Exception(e_msg), request)
             remove_pool(pname)
             pool.delete()
             return Response()
+        except RockStorAPIException:
+            raise
         except Exception, e:
             handle_exception(e, request)
 
