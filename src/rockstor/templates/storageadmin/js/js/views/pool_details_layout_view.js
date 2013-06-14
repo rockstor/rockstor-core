@@ -96,7 +96,7 @@ PoolDetailsLayoutView = RockstoreLayoutView.extend({
                 _this.pool.fetch();
               },
               error: function(request, status, error) {
-            	 alert(request.responseText);
+            	 _this.$('#alert-msg').html("<font color='red'>"+request.responseText+"</font>");
               }
             });
           }else{
