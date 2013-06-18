@@ -16,15 +16,15 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from cpu_metric import CPUMetric
-from disk_stat import DiskStat
-from load_avg import LoadAvg
-from mem_info import MemInfo
-from vm_stat import VmStat
-from service import (Service, ServiceStatus)
-from sprobe import SProbe
-from nfsd import (NFSDCallDistribution,
-                  NFSDClientDistribution)
-from nfsd_share import NFSDShareDistribution
-from pool_usage import (PoolUsage)
+from django.db import models
+
+
+class PoolUsage(models.Model):
+    """pool usage information as time series"""
+    pool = models.CharField(max_length=4096)
+    usage = models.IntegerField(default=0)
+    ts = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = 'smart_manager'
 
