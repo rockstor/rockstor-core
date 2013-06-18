@@ -22,12 +22,14 @@ from storageadmin.models import (Disk, Pool, Share, Snapshot, NFSExport,
                                  SupportCase, DashboardConfig)
 from django.contrib.auth.models import User
 
+
 class DiskInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Disk
 
 class PoolInfoSerializer(serializers.ModelSerializer):
     disks = DiskInfoSerializer(source='disk_set')
+    usage = serializers.IntegerField(source='cur_usage')
     class Meta:
         model = Pool
 

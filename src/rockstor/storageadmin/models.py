@@ -22,6 +22,7 @@ from fs.btrfs import (add_pool, pool_usage, remove_pool, resize_pool)
 from django.contrib.auth.models import User
 from validators import (validate_nfs_host_str, validate_nfs_modify_str,
                         validate_nfs_sync_choice)
+from smart_manager.models import PoolUsage
 
 
 class Pool(models.Model):
@@ -41,6 +42,13 @@ class Pool(models.Model):
         ]
     """raid type"""
     raid = models.CharField(max_length=10, choices=RAID_CHOICES)
+
+    def cur_usage(self, *args, **kwargs):
+        try:
+            pu = PoolUsage.objects.filter(pool=self.name).order_by('-ts')[0]
+            return pu.usage
+        except:
+            return -1
 
 class Disk(models.Model):
     """Pool can be null for disks that are not part of any pool currently"""

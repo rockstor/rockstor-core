@@ -30,7 +30,7 @@ from django.db import transaction
 from storageadmin.serializers import PoolInfoSerializer
 from storageadmin.forms import (PoolForm)
 from storageadmin.models import (Disk, Pool, Share, PoolStatistic)
-from fs.btrfs import (add_pool, pool_usage, pool_usage2, remove_pool,
+from fs.btrfs import (add_pool, pool_usage, remove_pool,
                       resize_pool)
 from storageadmin.util import handle_exception
 from storageadmin.exceptions import RockStorAPIException
@@ -94,8 +94,8 @@ class PoolView(APIView):
 
             p = Pool(name=pname, raid=raid_level)
             add_pool(pname, raid_level, raid_level, disks)
-            usage = pool_usage2(pname, disks[0]).split()
-            p.size = int(usage[2]) + int(usage[3])
+            usage = pool_usage(pname, disks[0])
+            p.size = usage[0]
             p.save()
             p.disk_set.add(*[Disk.objects.get(name=d) for d in disks])
             return Response(PoolInfoSerializer(p).data)
@@ -150,6 +150,9 @@ class PoolView(APIView):
             else:
                 msg = ('unknown command: %s' % command)
                 raise Exception(msg)
+            usage = pool_usage(pname, mount_disk)
+            pool.size = usage[0]
+            pool.save()
             return Response(PoolInfoSerializer(pool).data)
 
         except Exception, e:
