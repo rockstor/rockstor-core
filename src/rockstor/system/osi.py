@@ -65,14 +65,15 @@ def scan_disks(min_size):
             disk_fields = line.split()
             if (len(disk_fields) != 4):
                 continue
-            if (re.match('sd[a-z]+$', disk_fields[3]) is not None):
+            if (re.match('sd[a-z]+$|xvd[a-z]+$', disk_fields[3]) is not None):
                 name = disk_fields[3]
                 num_blocks = int(disk_fields[2]) # each block is 1KB
                 if (num_blocks < min_size):
                     continue
                 disk = Disk(name=name, size=num_blocks, free=num_blocks)
                 disks[name] = disk.__repr__()
-            elif (re.match('sd[a-z]+[0-9]+$', disk_fields[3]) is not None):
+            elif (re.match('sd[a-z]+[0-9]+$|xvd[a-z]+[0-9]+$', disk_fields[3])
+                  is not None):
                 name = disk_fields[3][0:3]
                 if (name in disks):
                     del(disks[name])
