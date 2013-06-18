@@ -94,7 +94,7 @@ class PoolView(APIView):
 
             p = Pool(name=pname, raid=raid_level)
             add_pool(pname, raid_level, raid_level, disks)
-            usage = pool_usage(pname, disks[0])
+            usage = pool_usage(disks[0])
             p.size = usage[0]
             p.save()
             p.disk_set.add(*[Disk.objects.get(name=d) for d in disks])
@@ -150,7 +150,7 @@ class PoolView(APIView):
             else:
                 msg = ('unknown command: %s' % command)
                 raise Exception(msg)
-            usage = pool_usage(pname, mount_disk)
+            usage = pool_usage(mount_disk)
             pool.size = usage[0]
             pool.save()
             return Response(PoolInfoSerializer(pool).data)
