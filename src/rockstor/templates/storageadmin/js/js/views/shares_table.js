@@ -46,6 +46,7 @@ SharesTableView = RockstoreModuleView.extend({
       pool = $(event.target).attr('data-pool');
       size = $(event.target).attr('data-size');
       console.log('sending delete event');
+      if(confirm("Are you sure you want to delete?")){
       $.ajax({
         url: "/api/shares/"+name+"/",
         type: "DELETE",
@@ -55,6 +56,9 @@ SharesTableView = RockstoreModuleView.extend({
         console.log('delete successful');
         _this.collection.fetch();
       });
+    }else{
+  	  enableButton(button); 
+    }
     });
     return this;
   }

@@ -36,10 +36,12 @@ PoolsTableView = RockstoreModuleView.extend({
     $(this.el).append(this.template({pools: this.collection}));
     this.$('#pools-table').tablesorter();
     this.$('button[data-action=delete]').click(function(event) {
+    
       var button = _this.$('button[data-action=delete]');
       if (buttonDisabled(button)) return false;
       disableButton(button);
       name = $(event.target).attr('data-name');
+      if(confirm("Are you sure you want to delete?")){	
       $.ajax({
         url: "/api/pools/" + name + "/",
         type: "DELETE",
@@ -52,7 +54,11 @@ PoolsTableView = RockstoreModuleView.extend({
       }).always(function() {
         enableButton(button);
       });
+      }else{
+    	  enableButton(button); 
+      }
     });
+    
     return this;
   }
 });

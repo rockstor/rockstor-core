@@ -184,6 +184,7 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
       var name = _this.share.get('name');
       if (buttonDisabled(button)) return false;
       disableButton(button);
+      if(confirm("Are you sure you want to delete?")){
       $.ajax({
         url: "/api/shares/"+name+"/",
         type: "DELETE",
@@ -196,7 +197,10 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
           enableButton(button);
           showError(request.responseText);
         }
-      });
+       });
+      }else{
+    	  enableButton(button); 
+      }
     });
 
 

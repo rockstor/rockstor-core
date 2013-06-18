@@ -79,7 +79,8 @@ NFSExportsTableRow  = RockstoreModuleView.extend({
     var _this = this;
     data = {id: this.nfs_export.id};
     console.log(data);
-    $.ajax({
+    if(confirm("Are you sure you want to delete?")){
+   $.ajax({
       url: "/api/shares/"+_this.share.get('name')+'/nfs/' + this.nfs_export.id + '/',
       type: "DELETE",
       dataType: "json",
@@ -93,6 +94,9 @@ NFSExportsTableRow  = RockstoreModuleView.extend({
         showError(request.responseText);	
       },
     });
+    }else{
+    	  enableButton(button); 
+      }
   },
 
   saveRow: function(event) {
