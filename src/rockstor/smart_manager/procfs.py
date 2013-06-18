@@ -25,7 +25,9 @@ from multiprocessing import Process
 import time
 import os
 
-from models import (CPUMetric, LoadAvg, MemInfo)
+from models import (CPUMetric, LoadAvg, MemInfo, PoolUsage)
+from storageadmin.models import (Disk, Pool)
+from fs.btrfs import pool_usage
 
 
 class ProcRetreiver(Process):
@@ -37,6 +39,7 @@ class ProcRetreiver(Process):
 
     def run(self):
         #extract metrics and put in q
+        pu_time = time.mktime(time.gmtime())
         while (True):
             if (os.getppid() != self.ppid):
                 return
@@ -45,8 +48,8 @@ class ProcRetreiver(Process):
                 self.cpu_stats()
                 self.loadavg()
                 self.meminfo()
+                pu_time = self.pools_usage(pu_time)
             time.sleep(5)
-
 
     def cpu_stats(self):
         stats_file = '/proc/stat'
@@ -85,3 +88,18 @@ class ProcRetreiver(Process):
     def vmstat(self):
         stats_file = '/proc/vmstat'
         pass
+
+    def pools_usage(self, last_ts):
+        """
+        This info is not from proc atm, but will eventually be.
+        """
+        #collect usage only if the data is more than 30 seconds old
+        now = time.mktime(time.gmtime())
+        if (now - last_ts < 30):
+            return last_ts
+        for p in Pool.objects.all():
+            arb_disk = Disk.objects.filter(pool=p)[0].name
+            usage = pool_usage(arb_disk)
+            pu = PoolUsage(pool=p.name, usage=usage[1])
+            self.q.put(pu)
+        return now
