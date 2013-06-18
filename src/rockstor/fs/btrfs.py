@@ -33,6 +33,7 @@ DD = '/bin/dd'
 SYNC = '/bin/sync'
 DEFAULT_MNT_DIR = '/mnt2/'
 DF = '/bin/df'
+BTRFS_DEBUG_TREE = '/sbin/btrfs-debug-tree'
 
 def add_pool(name, data_raid, meta_raid, disks):
     """
@@ -44,22 +45,6 @@ def add_pool(name, data_raid, meta_raid, disks):
     out, err, rc = run_command(cmd)
     enable_quota(name, disks_fp[0])
     return out, err, rc
-
-def pool_usage(pool_name, device):
-    device = '/dev/' + device
-    root_mnt_pt = mount_root(pool_name, device)
-    usage_cmd = [BTRFS, 'filesystem', 'df', root_mnt_pt]
-    out, err, rc = run_command(usage_cmd)
-    umount_root(root_mnt_pt)
-    return out, err, rc
-
-def pool_usage2(pool_name, device):
-    device = ('/dev/%s' % device)
-    root_mnt_pt = mount_root(pool_name, device)
-    usage_cmd = [DF, '-k', '-P', root_mnt_pt]
-    out, err, rc = run_command(usage_cmd)
-    umount_root(root_mnt_pt)
-    return out[1]
 
 def resize_pool(pool_name, device, dev_list, add=True):
     device = '/dev/' + device
@@ -233,3 +218,20 @@ def share_usage(pool_name, pool_device, share_id):
         raise Exception('usage cannot be determined for share_id: %s' %
                         share_id)
     return usage
+
+def pool_usage(pool_device):
+    pool_device = ('/dev/%s' % pool_device)
+    cmd = [BTRFS_DEBUG_TREE, '-r', pool_device]
+    out, err, rc = run_command(cmd)
+    total = None
+    usage = None
+    for line in out:
+        if (re.match('total bytes ', line) is not None):
+            total = int(line.split()[2]) / 1024 # in KB
+        if (re.match('bytes used ', line) is not None):
+            usage = int(line.split()[2]) / 1024 # in KB
+            break #usage line is right after total line.
+    if (usage is None or total is None):
+        raise Exception('usage not available for pool device: %s' %
+                        pool_device)
+    return (total, usage)
