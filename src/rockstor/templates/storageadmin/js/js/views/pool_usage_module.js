@@ -48,9 +48,6 @@ PoolUsageModule = RockstoreModuleView.extend({
     var outerRadius = 50;
     var innerRadius = 0;
     
-    //total = parseInt(this.model.get('stats').total_capacity);
-    //free = parseInt(this.model.get('stats').free);
-    //used = total - free;
     total = parseInt(this.model.get('size')*1024);
     used = parseInt(this.model.get('usage')*1024);
     free = total - used;
