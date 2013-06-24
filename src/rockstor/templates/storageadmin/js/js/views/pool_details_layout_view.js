@@ -117,7 +117,8 @@ PoolDetailsLayoutView = RockstoreLayoutView.extend({
     console.log('deleting ' + this.pool.get('name'));
     var button = this.$('#delete-pool');
     if (buttonDisabled(button)) return false;
-    disableButton(button);
+    if(confirm("Delete pool: "+ this.pool.get('name') + "... Are you sure?")){
+      disableButton(button);
     $.ajax({
       url: "/api/pools/" + this.pool.get('name') + "/",
       type: "DELETE",
@@ -130,8 +131,8 @@ PoolDetailsLayoutView = RockstoreLayoutView.extend({
     }).always(function() {
       enableButton(button);
     });
-
-  }
+    }
+   }
 
 
 

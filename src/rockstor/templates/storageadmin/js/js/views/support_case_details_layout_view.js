@@ -34,11 +34,8 @@ SupportCaseDetailsLayoutView = RockstoreLayoutView.extend({
    
     this.support = new SupportCase({supportCaseId: this.supportCaseId});
     this.dependencies.push(this.support);
-
-   
-  },
-
  
+  },
 
   render: function() {
     this.fetch(this.renderSubViews, this);
@@ -46,20 +43,21 @@ SupportCaseDetailsLayoutView = RockstoreLayoutView.extend({
 
   },
 
- 
-
-  deleteSupportCase: function() {
+ deleteSupportCase: function() {
     var _this = this;
     console.log('deleting ' + this.supportCase.get('id'));
+    if(confirm("Delete support case :  "+ this.support.get('id') +"Are you sure?")){
     $.ajax({
       url: "/api/support/",
       type: "DELETE",
       dataType: "json",
-      data: { "id": this.spport.get('id')}
+      data: { "id": this.support.get('id')}
     }).done(function() {
       app_router.navigate('support', {trigger: true});
     });
-
+    }else{
+    	  enableButton(button); 
+      }
   }
 
 

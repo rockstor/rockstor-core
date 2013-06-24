@@ -45,8 +45,9 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
       share_name = $(event.target).attr('data-share-name');
       var button = $(event.target);
       if (buttonDisabled(button)) return false;
-      disableButton(button);
       console.log('sending delete event');
+      if(confirm("Delete snapshot:  "+ name +"...Are you sure?")){
+      disableButton(button);
       $.ajax({
         url: "/api/shares/" + share_name + "/snapshots/" + name + "/",
         type: "DELETE",
@@ -59,6 +60,7 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
           showError(request.responseTest);
         }
       });
+      }
     });
     return this;
   },
