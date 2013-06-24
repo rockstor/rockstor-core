@@ -74,13 +74,13 @@ NFSExportsTableRow  = RockstoreModuleView.extend({
     event.preventDefault();
     var button = this.$('.delete-row');
     if (buttonDisabled(button)) return false;
-    disableButton(button);
     console.log('deleting')
     var _this = this;
     data = {id: this.nfs_export.id};
     console.log(data);
-    if(confirm("Are you sure you want to delete?")){
-   $.ajax({
+    if(confirm("Delete nfs : "+ this.nfs_export.id +"...Are you sure?")){
+    disableButton(button);
+    $.ajax({
       url: "/api/shares/"+_this.share.get('name')+'/nfs/' + this.nfs_export.id + '/',
       type: "DELETE",
       dataType: "json",
@@ -94,9 +94,7 @@ NFSExportsTableRow  = RockstoreModuleView.extend({
         showError(request.responseText);	
       },
     });
-    }else{
-    	  enableButton(button); 
-      }
+    }
   },
 
   saveRow: function(event) {

@@ -39,9 +39,9 @@ PoolsTableView = RockstoreModuleView.extend({
     
       var button = _this.$('button[data-action=delete]');
       if (buttonDisabled(button)) return false;
-      disableButton(button);
       name = $(event.target).attr('data-name');
-      if(confirm("Are you sure you want to delete?")){	
+      if(confirm("Delete pool: "+ name + "... Are you sure?")){
+      disableButton(button);	
       $.ajax({
         url: "/api/pools/" + name + "/",
         type: "DELETE",
@@ -54,9 +54,7 @@ PoolsTableView = RockstoreModuleView.extend({
       }).always(function() {
         enableButton(button);
       });
-      }else{
-    	  enableButton(button); 
-      }
+     }
     });
     
     return this;
