@@ -46,7 +46,7 @@ SharesTableView = RockstoreModuleView.extend({
       pool = $(event.target).attr('data-pool');
       size = $(event.target).attr('data-size');
       console.log('sending delete event');
-      if(confirm("Delete pool:  "+ pool +"...Are you sure?")){
+      if(confirm("Delete share:  "+ name +"...Are you sure?")){
       $.ajax({
         url: "/api/shares/"+name+"/",
         type: "DELETE",
