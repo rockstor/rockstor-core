@@ -25,21 +25,26 @@ from multiprocessing import Process
 import time
 import os
 
-from models import (CPUMetric, LoadAvg, MemInfo, PoolUsage)
+from models import (CPUMetric, LoadAvg, MemInfo, PoolUsage, DiskStat)
 from storageadmin.models import (Disk, Pool)
 from fs.btrfs import pool_usage
 
+
+import logging
+logger = logging.getLogger(__name__)
 
 class ProcRetreiver(Process):
 
     def __init__(self, q):
         self.q = q
         self.ppid = os.getpid()
+        self.sleep_time = 1
         super(ProcRetreiver, self).__init__()
 
     def run(self):
         #extract metrics and put in q
         pu_time = time.mktime(time.gmtime())
+        cur_disk_stats = None
         while (True):
             if (os.getppid() != self.ppid):
                 return
@@ -49,7 +54,9 @@ class ProcRetreiver(Process):
                 self.loadavg()
                 self.meminfo()
                 pu_time = self.pools_usage(pu_time)
-            time.sleep(5)
+                cur_disk_stats = self.disk_stats(cur_disk_stats,
+                                                 self.sleep_time)
+            time.sleep(self.sleep_time)
 
     def cpu_stats(self):
         stats_file = '/proc/stat'
@@ -62,9 +69,48 @@ class ProcRetreiver(Process):
                                     idle=fields[4])
                     self.q.put(cm)
 
-    def disk_stats(self):
+    def disk_stats(self, prev_stats, interval):
         stats_file = '/proc/diskstats'
-        pass
+        cur_stats = {}
+        disks = [d.name for d in Disk.objects.all()]
+        with open(stats_file) as sfo:
+            for line in sfo.readlines():
+                fields = line.split()
+                if (fields[2] not in disks):
+                    continue
+                cur_stats[fields[2]] = fields[2:]
+        if (isinstance(prev_stats, dict)):
+            for disk in cur_stats.keys():
+                if (disk in prev_stats):
+                    prev = prev_stats[disk]
+                    cur = cur_stats[disk]
+                    data = []
+                    for i in range(1, len(prev)):
+                        if (i == 9):
+                            #special case for pending ios
+                            #just take average
+                            avg_ios = (float(cur[i]) + float(prev[i]))/2
+                            data.append(avg_ios)
+                            continue
+                        datum = None
+                        if (cur[i] < prev[i]):
+                            datum = float(cur[i])/interval
+                        else:
+                            datum = (float(cur[i]) - float(prev[i]))/interval
+                        data.append(datum)
+                    ds = DiskStat(name=disk, reads_completed=data[0],
+                                  reads_merged=data[1],
+                                  sectors_read=data[2],
+                                  ms_reading=data[3],
+                                  writes_completed=data[4],
+                                  writes_merged=data[5],
+                                  sectors_written=data[6],
+                                  ms_writing=data[7],
+                                  ios_progress=data[8],
+                                  ms_ios=data[9],
+                                  weighted_ios=data[10])
+                    self.q.put(ds)
+        return cur_stats
 
     def loadavg(self):
         stats_file = '/proc/loadavg'
