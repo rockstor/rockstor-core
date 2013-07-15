@@ -24,18 +24,20 @@ from storageadmin.auth import DigestAuthentication
 from storageadmin.util import handle_exception
 from rest_framework.permissions import IsAuthenticated
 from system.services import init_service_op
-from smart_manager.models import (Service, ServiceStatus, SProbe)
+from smart_manager.models import (Service, ServiceStatus, SProbe, DiskStat)
 from django.conf import settings
 from django.db import transaction
 from smart_manager import serializers
 from smart_manager.serializers import (SProbeSerializer,
                                        NFSDCallDistributionSerializer,
                                        NFSDClientDistributionSerializer,
-                                       NFSDShareDistributionSerializer)
+                                       NFSDShareDistributionSerializer,
+                                       DiskStatSerializer)
 from smart_manager.models import (NFSDCallDistribution, NFSDClientDistribution,
                                   NFSDShareDistribution)
 import os
 import zmq
+from django.utils.dateparse import parse_datetime
 
 import logging
 logger = logging.getLogger(__name__)
@@ -50,6 +52,8 @@ class SProbeView2(APIView):
     task_socket.connect('tcp://%s:%d' % settings.TAP_SERVER)
 
     def _validate_probe(self, pname, pid, request):
+        if (pname == 'disk-stat'):
+            return True
         try:
             return SProbe.objects.get(name=pname, id=pid)
         except:
@@ -70,6 +74,24 @@ class SProbeView2(APIView):
         elif (pname == 'nfs-share-distrib'):
             dos = NFSDShareDistribution.objects.filter(rid=ro).order_by('ts')
             return Response(NFSDShareDistributionSerializer(dos).data)
+        elif (pname == 'disk-stat'):
+            limit = request.GET.get('limit')
+            t1 = request.GET.get('t1')
+            t2 = request.GET.get('t2')
+            logger.info('Limit = %s' % limit)
+            ds = None
+            if (t1 is not None and t2 is not None):
+                t1 = parse_datetime(t1)
+                t2 = parse_datetime(t2)
+                ds = DiskStat.objects.filter(ts__gt=t1, ts__lte=t2)
+            else:
+                if (limit is None):
+                    limit = 10000
+                else:
+                    limit = int(limit)
+                ds = DiskStat.objects.all().order_by('-ts')[0:int(limit)]
+
+            return Response(DiskStatSerializer(ds).data)
         return Response()
 
     @transaction.commit_on_success

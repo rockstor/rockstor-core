@@ -20,7 +20,8 @@ from rest_framework import serializers
 from smart_manager.models import (CPUMetric, LoadAvg, MemInfo, ServiceStatus,
                                   SProbe, NFSDCallDistribution,
                                   NFSDClientDistribution,
-                                  NFSDShareDistribution)
+                                  NFSDShareDistribution,
+                                  DiskStat)
 
 
 
@@ -35,6 +36,10 @@ class LoadAvgSerializer(serializers.ModelSerializer):
 class MemInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = MemInfo
+
+class DiskStatSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DiskStat
 
 class ServiceStatusSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='service.name')

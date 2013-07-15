@@ -69,7 +69,7 @@ for k, v in sys.modules.items():
 
 is_jython = sys.platform.startswith('java')
 
-setuptools_source = 'http://peak.telecommunity.com/dist/ez_setup.py'
+setuptools_source = 'https://bitbucket.org/pypa/setuptools/raw/0.7.2/ez_setup.py'
 distribute_source = 'http://python-distribute.org/distribute_setup.py'
 
 
