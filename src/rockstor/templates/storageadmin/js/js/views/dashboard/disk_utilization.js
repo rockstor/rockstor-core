@@ -34,6 +34,15 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     this.disks = new DiskCollection();
     this.created = false;
     this.intervalId = null;
+    this.readsArray = {};
+    var _this = this;
+    _.each(['sdb','sdc','sdd','sde'], function(d,i) {
+      if (_.isUndefined(_this.readsArray[d])) {
+        _this.readsArray[d] = [0,0,0,0,0,0,0,0,0,0];
+      }
+    });
+
+    this.writesArray = [];
   },
 
   render: function() {
@@ -47,9 +56,11 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
           displayName: _this.displayName,
           disks: _this.disks
         }));
+        
         _this.intervalId = window.setInterval(function() {
           return function() { _this.getData(_this); }
-        }(), 2000)
+        }(), 1000)
+        
       },
       error: function(request, response) {
           logger.debug('failed to fetch disks in disk_utilization');
@@ -61,22 +72,28 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
   getData: function(context) {
     var _this = context;
     var data = [
-      {name: 'sdb', reads: Math.floor(200 + Math.random()*50), writes: Math.floor(100 + Math.random()*50)},
-      {name: 'sdc', reads: Math.floor(300 + Math.random()*50), writes: Math.floor(200 + Math.random()*50)},
-      {name: 'sdd', reads: Math.floor(50 + Math.random()*50), writes: Math.floor(400 + Math.random()*50)},
-      {name: 'sde', reads: Math.floor(10 + Math.random()*50), writes: Math.floor(20 + Math.random()*50)},
+      {name: 'sdb', reads: Math.floor(200 + Math.random()*50), writes: Math.floor(100 + Math.random()*50), kbread: 0, kbwrite: 0},
+      {name: 'sdc', reads: Math.floor(300 + Math.random()*50), writes: Math.floor(200 + Math.random()*50), kbread: 0, kbwrite: 0},
+      {name: 'sdd', reads: Math.floor(50 + Math.random()*50), writes: Math.floor(400 + Math.random()*50), kbread: 0, kbwrite: 0},
+      {name: 'sde', reads: Math.floor(10 + Math.random()*50), writes: Math.floor(20 + Math.random()*50), kbread: 0, kbwrite: 0},
     ];
+    _.each(['sdb','sdc','sdd','sde'], function(d,i) {
+      _this.readsArray[d].push(data[i].reads);
+      if (_this.readsArray[d].length > 10) {
+        _this.readsArray[d].splice(0,1);
+      }
+    });
     if (!_this.created) {
-      _this.createRows(data); 
+      _this.createRows(data, _this); 
       _this.$("#disk-utilization-table").tablesorter();
     } else {
-      _this.updateRows(data); 
+      _this.updateRows(data, _this); 
     }
 
   },
   
-  createRows: function(data) {
-    var columns = ["name", "reads", "writes"];
+  createRows: function(data, _this) {
+    var columns = ["name", "reads", "writes", "kbread", "kbwrite"];
     var rows = d3.select(this.el)
     .select("table#disk-utilization-table")
     .select("tbody")
@@ -91,17 +108,29 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
       return _.map(columns, function(c) {
         return {name: c, value: row[c]}
       });
-    }, function(d) { return d.name; })
-    .enter()
-    .append("td")
-    .text(function(d) { return d.value });
+    }, function(d) { return d.name; });
+
+    cells.enter().append("td")
+    .append("span")
+    .attr("class", "graph");
+    
+    cells.select("span.graph")
+    .each(function(d,i) {
+      if (d.name == 'reads') {
+        $(this).sparkline(_this.readsArray["sdb"], {composite: false, height: '1.3em', fillColor:false, lineColor:'black', tooltipPrefix: 'Index: '});
+      }
+    });
+
+    cells.append("span")
+    .attr("class","value")
+    .text(function(d) { return " " + d.value; });
    
     this.created = true;
     
   },
 
-  updateRows: function(data) {
-    var columns = ["name", "reads", "writes"];
+  updateRows: function(data, _this) {
+    var columns = ["name", "reads", "writes", "kbread", "kbwrite"];
     var rows = d3.select(this.el)
     .select("table#disk-utilization-table")
     .select("tbody")
@@ -113,8 +142,18 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
       return _.map(columns, function(c) {
         return {name: c, value: row[c]}
       });
-    }, function(d) { return d.name; })
-    .text(function(d) { return d.value });
+    }, function(d) { return d.name; });
+
+    cells.select("span.value").text(function(d) { return " " + d.value });
+    
+    cells.select("span.graph")
+    .each(function(d,i) {
+      if (d.name == 'reads') {
+        $(this).sparkline(_this.readsArray["sdb"], {composite: false, height: '1.3em', fillColor:false, lineColor:'black', tooltipPrefix: 'Index: '});
+      }
+    });
+
+    //cells.text(function(d) { return d.value });
     
   },
 
