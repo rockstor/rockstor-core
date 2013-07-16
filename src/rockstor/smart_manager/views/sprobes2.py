@@ -32,12 +32,14 @@ from smart_manager.serializers import (SProbeSerializer,
                                        NFSDCallDistributionSerializer,
                                        NFSDClientDistributionSerializer,
                                        NFSDShareDistributionSerializer,
-                                       DiskStatSerializer)
+                                       DiskStatSerializer,
+                                       PaginatedDiskStat)
 from smart_manager.models import (NFSDCallDistribution, NFSDClientDistribution,
                                   NFSDShareDistribution)
 import os
 import zmq
 from django.utils.dateparse import parse_datetime
+from django.core.paginator import Paginator, EmptyPage
 
 import logging
 logger = logging.getLogger(__name__)
@@ -64,6 +66,20 @@ class SProbeView2(APIView):
         """
         return all ts data for the given pname and pid
         """
+        limit = request.GET.get('limit')
+        t1 = request.GET.get('t1')
+        t2 = request.GET.get('t2')
+        page = request.GET.get('page')
+        if (page is None):
+            page = 1
+        page = int(page)
+        if (limit is None):
+            limit = 10000
+        limit = int(limit)
+        if (t1 is not None and t2 is not None):
+            t1 = parse_datetime(t1)
+            t2 = parse_datetime(t2)
+
         ro = self._validate_probe(pname, pid, request)
         if (pname == 'nfs-distrib'):
             dos = NFSDCallDistribution.objects.filter(rid=ro).order_by('ts')
@@ -75,10 +91,6 @@ class SProbeView2(APIView):
             dos = NFSDShareDistribution.objects.filter(rid=ro).order_by('ts')
             return Response(NFSDShareDistributionSerializer(dos).data)
         elif (pname == 'disk-stat'):
-            limit = request.GET.get('limit')
-            t1 = request.GET.get('t1')
-            t2 = request.GET.get('t2')
-            logger.info('Limit = %s' % limit)
             ds = None
             if (t1 is not None and t2 is not None):
                 t1 = parse_datetime(t1)
@@ -90,8 +102,14 @@ class SProbeView2(APIView):
                 else:
                     limit = int(limit)
                 ds = DiskStat.objects.all().order_by('-ts')[0:int(limit)]
-
-            return Response(DiskStatSerializer(ds).data)
+            paginator = Paginator(ds, 50)
+            try:
+                stats = paginator.page(page)
+            except EmptyPage:
+                stats = paginator.page(paginator.num_pages)
+            serializer_context = {'request': request}
+            serializer = PaginatedDiskStat(stats, context=serializer_context)
+            return Response(serializer.data)
         return Response()
 
     @transaction.commit_on_success
