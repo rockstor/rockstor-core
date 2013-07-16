@@ -1036,3 +1036,28 @@ code {
   padding: 2px 12px;
   border: 0px;
 }
+
+/* Borderless table */
+table#disk-utilization-table {
+  width: 90%;
+
+}
+table#disk-utilization-table thead tr th, 
+table#disk-utilization-table tfoot tr th {
+  background: none;
+  text-align: left;
+}
+
+table#disk-utilization-table thead tr .header {
+  background-image: url('/img/bg.gif');
+  background-repeat: no-repeat;
+  background-position: center right;
+  cursor: pointer;
+}
+table#disk-utilization-table thead tr .headerSortUp {
+        background-image: url('/img/asc.gif');
+}
+table#disk-utilization-table thead tr .headerSortDown {
+        background-image: url('/img/desc.gif');
+}
+

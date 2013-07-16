@@ -26,14 +26,14 @@ class SMConsole(BaseConsole):
         self.greeting = 'Smart Manager'
         self.pprompt = prompt
         self.prompt = ('%s %s>' % (self.pprompt, self.greeting))
-        self.baseurl = BaseConsole.url + 'sm/stap/'
+        self.baseurl = BaseConsole.url + 'sm/sprobes/'
 
     def do_list(self, args):
         url = self.baseurl
         if (args is not None):
             tap_fields = args.split()
-            if (len(tap_fields) > 0):
-                url = url + tap_fields[0] + '/'
+            url = ('%s/%s/%s/data/?%s' % (url, tap_fields[0], tap_fields[1],
+                                          tap_fields[2]))
         stap_info = api_call(url)
         print stap_info
 
