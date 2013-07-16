@@ -24,6 +24,8 @@ import re
 from multiprocessing import Process
 import time
 import os
+from datetime import datetime
+from django.utils.timezone import utc
 
 from models import (CPUMetric, LoadAvg, MemInfo, PoolUsage, DiskStat)
 from storageadmin.models import (Disk, Pool)
@@ -79,6 +81,7 @@ class ProcRetreiver(Process):
                 if (fields[2] not in disks):
                     continue
                 cur_stats[fields[2]] = fields[2:]
+        ts = datetime.utcnow().replace(tzinfo=utc)
         if (isinstance(prev_stats, dict)):
             for disk in cur_stats.keys():
                 if (disk in prev_stats):
@@ -108,7 +111,8 @@ class ProcRetreiver(Process):
                                   ms_writing=data[7],
                                   ios_progress=data[8],
                                   ms_ios=data[9],
-                                  weighted_ios=data[10])
+                                  weighted_ios=data[10],
+                                  ts=ts)
                     self.q.put(ds)
         return cur_stats
 
@@ -145,7 +149,12 @@ class ProcRetreiver(Process):
             return last_ts
         for p in Pool.objects.all():
             arb_disk = Disk.objects.filter(pool=p)[0].name
-            usage = pool_usage(arb_disk)
-            pu = PoolUsage(pool=p.name, usage=usage[1])
-            self.q.put(pu)
+            try:
+                usage = pool_usage(arb_disk)
+                pu = PoolUsage(pool=p.name, usage=usage[1])
+                self.q.put(pu)
+            except:
+                logger.debug('command exception while getting pool usage '
+                             'for: %s' % (p.name))
+                logger.exception('exception')
         return now
