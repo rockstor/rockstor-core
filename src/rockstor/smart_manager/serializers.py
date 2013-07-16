@@ -16,11 +16,12 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from rest_framework import serializers
+from rest_framework import (serializers, pagination)
 from smart_manager.models import (CPUMetric, LoadAvg, MemInfo, ServiceStatus,
                                   SProbe, NFSDCallDistribution,
                                   NFSDClientDistribution,
-                                  NFSDShareDistribution)
+                                  NFSDShareDistribution,
+                                  DiskStat)
 
 
 
@@ -35,6 +36,14 @@ class LoadAvgSerializer(serializers.ModelSerializer):
 class MemInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = MemInfo
+
+class DiskStatSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DiskStat
+
+class PaginatedDiskStat(pagination.PaginationSerializer):
+    class Meta:
+        object_serializer_class = DiskStatSerializer
 
 class ServiceStatusSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='service.name')

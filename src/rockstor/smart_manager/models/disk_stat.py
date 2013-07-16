@@ -22,18 +22,18 @@ from django.db import models
 class DiskStat(models.Model):
 
     name = models.CharField(max_length=3)
-    reads_completed = models.IntegerField()
-    reads_merged = models.IntegerField()
-    sectors_read = models.IntegerField()
-    ms_reading = models.IntegerField()
-    writes_completed = models.IntegerField()
-    writes_merged = models.IntegerField()
-    sectors_written = models.IntegerField()
-    ms_writing = models.IntegerField()
-    ios_progress = models.IntegerField()
-    ms_ios = models.IntegerField()
-    weighted_ios = models.IntegerField()
-    ts = models.DateTimeField(auto_now=True)
+    reads_completed = models.FloatField()
+    reads_merged = models.FloatField()
+    sectors_read = models.FloatField()
+    ms_reading = models.FloatField()
+    writes_completed = models.FloatField()
+    writes_merged = models.FloatField()
+    sectors_written = models.FloatField()
+    ms_writing = models.FloatField()
+    ios_progress = models.FloatField()
+    ms_ios = models.FloatField()
+    weighted_ios = models.FloatField()
+    ts = models.DateTimeField()
 
     class Meta:
         app_label = 'smart_manager'

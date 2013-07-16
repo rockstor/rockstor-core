@@ -38,12 +38,6 @@ def process_model_queue(q):
         model = getattr(models, c.__class__.__name__)
         model.objects.filter(ts__lt=new_start).delete()
 
-def process_tap_queue(q):
-    while (not q.empty()):
-        m = q.get()
-        m.save()
-
-
 def main():
 
     proc_q = Queue()
