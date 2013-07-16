@@ -102,7 +102,7 @@ class SProbeView2(APIView):
                 else:
                     limit = int(limit)
                 ds = DiskStat.objects.all().order_by('-ts')[0:int(limit)]
-            paginator = Paginator(ds, 50)
+            paginator = Paginator(ds, 5000)
             try:
                 stats = paginator.page(page)
             except EmptyPage:
