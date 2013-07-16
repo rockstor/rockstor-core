@@ -36,18 +36,19 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     this.intervalId = null;
     this.readsArray = {};
     this.begin = 100;
-    this.dataLength = 5;
+    this.dataLength = 20;
     this.refreshInterval = 1000;
     this.end = this.begin + this.dataLength-1;
     this.cols = ["reads_completed", "writes_completed", "sectors_read", 
     "sectors_written"];
+    this.data_prev = null;
     var _this = this;
     _.each(['sdb','sdc','sdd','sde'], function(d,i) {
       if (_.isUndefined(_this.readsArray[d])) {
         _this.readsArray[d] = [0,0,0,0,0,0,0,0,0,0];
       }
     });
-    this.data_a = [];
+    this.data_a = {};
     this.writesArray = [];
   },
 
@@ -110,7 +111,6 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     console.log(rawData); 
     */
     var data = _this.formatData(rawData);
-    console.log(data);
 
     // get data point of most recent timestamp 
     var data_current = [];
@@ -119,17 +119,54 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
       var x = data[name][current_t];
       var y = [];
 
-      y.push(name);
+      y.push([name, []]);
       _.each(_this.cols, function(c,j) {
-        y.push(x[c]);
-        
+        var col_a = [];
+        if (c.indexOf('sectors')!=-1) {
+          y.push([x[c]/2, col_a]);
+        } else {
+          y.push([x[c],col_a]);
+        }
       });
-      
-      console.log(y);
+       
       data_current.push(y);
     });
+    /*
+    if (_this.data_prev != null) {
+      _.each(this.diskNames, function(name,i) {
+        _.each(_this.cols, function(c,j) {
+          console.log("i = " + i + "    j = " + j);
+          if (!_.isUndefined(_this.data_prev[i])) {
 
+            if (!_.isUndefined(_this.data_prev[i][j])) {
+              console.log(_this.data_prev[i][j]);
+              data_current[i][j][1] = _this.data_prev[i][j][1].push(data_current[i][j][0]);
+              if (data_current[i][j][1].length > _this.dataLength) {
+                data_current[i][j][1].splice(0,1);
+              }
+            }
+          }
+
+        });
+      });
+    }
+    */
+    if (_this.data_prev != null) {
+      _.each(data_current, function(row, i) {
+        _.each(row, function(col, j) {
+          console.log(col[1]); 
+          col[1] = _this.data_prev[i][j][1];
+          col[1].push(col[0]);
+          if (col[1].length > _this.dataLength) {
+            col[1].splice(0,1);
+          }
+        });
+      });
+    }
+    
+    console.log(_this.data_prev);
     console.log(data_current);
+    _this.data_prev = data_current;
     /*
     _.each(['sdb','sdc','sdd','sde'], function(d,i) {
       _this.readsArray[d].push(data[i].reads);
@@ -154,7 +191,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     .select("table#disk-utilization-table")
     .select("tbody")
     .selectAll("tr.data-utilization-row")
-    .data(data, function(d) { return d[0] })
+    .data(data, function(d) { return d[0][0] })
     .enter()
     .append("tr")
     .attr("class","data-utilization-row");
@@ -168,18 +205,17 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     .append("span")
     .attr("class", "graph");
    
-    /*
+    
     cells.select("span.graph")
     .each(function(d,i) {
-      if (d.name == 'reads') {
-        $(this).sparkline(_this.readsArray["sdb"], {composite: false, height: '1.3em', fillColor:false, lineColor:'black', tooltipPrefix: 'Index: '});
+      if (i>0) {
+        $(this).sparkline(d[1], {composite: false, height: '1.3em', fillColor:false, lineColor:'black', tooltipPrefix: ''});
       }
     });
-    */
-
+    
     cells.append("span")
     .attr("class","value")
-    .text(function(d) { return " " + d; });
+    .text(function(d) { return " " + d[0]; });
    
     this.created = true;
     
@@ -191,21 +227,21 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     .select("table#disk-utilization-table")
     .select("tbody")
     .selectAll("tr.data-utilization-row")
-    .data(data, function(d) { return d[0] });
+    .data(data, function(d) { return d[0][0] });
    
     var cells = rows.selectAll("td")
     .data(function(d) { return d; });
 
-    cells.select("span.value").text(function(d) { return " " + d });
+    cells.select("span.value").text(function(d) { return " " + d[0] });
    
-    /*
+    
     cells.select("span.graph")
     .each(function(d,i) {
-      if (d.name == 'reads') {
-        $(this).sparkline(_this.readsArray["sdb"], {composite: false, height: '1.3em', fillColor:false, lineColor:'black', tooltipPrefix: 'Index: '});
+      if (i>0) {
+        $(this).sparkline(d[1], {composite: false, height: '1.3em', fillColor:false, lineColor:'black', tooltipPrefix: 'Index: '});
       }
     });
-    */
+    
 
     //cells.text(function(d) { return d.value });
     
@@ -240,7 +276,6 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
   // ]
   //
   formatData: function(rawData) {
-    var DATA_LEN_MAX = 600;
     var rows = [];
     var data = {};
 
