@@ -47,7 +47,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
         _this.readsArray[d] = [0,0,0,0,0,0,0,0,0,0];
       }
     });
-
+    this.data_a = [];
     this.writesArray = [];
   },
 
@@ -81,6 +81,25 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
 
   getData: function(context, t1, t2) {
     var _this = context;
+    $.ajax({
+      url: "/api/sm/sprobes/disk-stat/1/data/?limit=10", 
+      type: "GET",
+      dataType: "json",
+      global: false, // dont show global loading indicator
+      success: function(data, status, xhr) {
+        _this.update(data.results);
+      },
+      error: function(xhr, status, error) {
+        logger.debug(error);
+      }
+
+    });
+
+  },
+
+  update: function(rawData) {
+    var _this = this;
+  /*
     var rawData = [];
     for (i=0; i<t2-t1; i++) {
       rawData.push( {name: 'sdb', t: t1+i, reads_completed: Math.floor(200 + Math.random()*50), writes_completed: Math.floor(100 + Math.random()*50), sectors_read: 0, sectors_written: 0});
@@ -89,19 +108,23 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
       rawData.push({name: 'sde', t: t1+i, reads_completed: Math.floor(10 + Math.random()*50), writes_completed: Math.floor(20 + Math.random()*50), sectors_read: 0, sectors_written: 0});
     }
     console.log(rawData); 
+    */
     var data = _this.formatData(rawData);
     console.log(data);
 
     // get data point of most recent timestamp 
     var data_current = [];
     var current_t = _this.timestamps[0];
-    _.each(this.diskNames, function(name) {
+    _.each(this.diskNames, function(name,i) {
       var x = data[name][current_t];
       var y = [];
+
       y.push(name);
-      _.each(_this.cols, function(c) {
+      _.each(_this.cols, function(c,j) {
         y.push(x[c]);
+        
       });
+      
       console.log(y);
       data_current.push(y);
     });
@@ -229,8 +252,8 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
       if (!_.contains(_this.diskNames, d.name)) {
         _this.diskNames.push(d.name);
       }
-      if (!_.contains(_this.timestamps, d.t)) {
-        _this.timestamps.push(d.t);
+      if (!_.contains(_this.timestamps, d.ts)) {
+        _this.timestamps.push(d.ts);
       }
     });
     this.timestamps = _.sortBy(this.timestamps, function(ts) {
@@ -243,11 +266,11 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
       if (_.isUndefined(data[name])) {
         data[name] = {};
       }
-      _.each(_this.timestamps, function(t) {
-        if (_.isUndefined(data[name][t])) {
-          data[name][t] = {};
+      _.each(_this.timestamps, function(ts) {
+        if (_.isUndefined(data[name][ts])) {
+          data[name][ts] = {};
           _.each(_this.cols, function(c) {
-            data[name][t][c] = 0;
+            data[name][ts][c] = 0;
           });
         }
       });
@@ -256,13 +279,15 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
       if (_.isUndefined(data[d.name])) {
         data[d.name] = {};
       }
-      if (_.isUndefined(data[d.name][d.t])) {
-        data[d.name][d.t] = {};
+      if (_.isUndefined(data[d.name][d.ts])) {
+        data[d.name][d.ts] = {};
       }
       _.each(_this.cols, function(c) {
-        data[d.name][d.t][c] = d[c];
+        data[d.name][d.ts][c] = d[c];
       });
     });
+
+
     return data;
 
   }
