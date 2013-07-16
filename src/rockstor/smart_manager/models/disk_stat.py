@@ -33,7 +33,7 @@ class DiskStat(models.Model):
     ios_progress = models.FloatField()
     ms_ios = models.FloatField()
     weighted_ios = models.FloatField()
-    ts = models.DateTimeField(auto_now=True)
+    ts = models.DateTimeField()
 
     class Meta:
         app_label = 'smart_manager'
