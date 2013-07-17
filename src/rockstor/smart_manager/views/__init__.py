@@ -19,3 +19,4 @@ from sm import SmartManagerView
 from service import ServiceView
 from sprobes import SProbeView
 from sprobes2 import SProbeView2
+from mem_info import MemInfoView

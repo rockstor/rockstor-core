@@ -23,7 +23,7 @@ from storageadmin.views import (DiskView, SystemDiskView, PoolView, ShareView,
                                 UserView, ShareSambaView, SupportView,
                                 DashboardConfigView, ShareNFSView)
 from smart_manager.views import (SmartManagerView, ServiceView, SProbeView,
-                                 SProbeView2)
+                                 SProbeView2, MemInfoView)
 
 
 import os.path
@@ -128,6 +128,8 @@ urlpatterns = patterns('',
 
     # Smart probes
     url(r'^api/sm/sprobes/$', SProbeView.as_view(), name='probe-view'),
+    url(r'^api/sm/sprobes/meminfo/$', MemInfoView.as_view(),
+        name='meminfo-view'),
     url(r'^api/sm/sprobes/(?P<pname>[a-z-]+)/$',
         SProbeView.as_view(), name='probe-view'),
     url(r'^api/sm/sprobes/(?P<pname>[a-z-]+)/(?P<pid>[0-9]+)/$',
