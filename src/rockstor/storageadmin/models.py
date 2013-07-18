@@ -252,4 +252,12 @@ class DashboardConfig(models.Model):
     user = models.ForeignKey(User, null=False, unique=True)
     widgets = models.CharField(max_length=4096)
 
+class NetworkInterface(models.Model):
+    name = models.CharField(max_length=100)
+    mac = models.CharField(max_length=100)
+    boot_proto = models.CharField(max_length=100, null=True)
+    onboot = models.CharField(max_length=100, null=True)
+    network = models.CharField(max_length=100, null=True)
+    netmask = models.CharField(max_length=100, null=True)
+    ipaddr = models.CharField(max_length=100, null=True)
 
