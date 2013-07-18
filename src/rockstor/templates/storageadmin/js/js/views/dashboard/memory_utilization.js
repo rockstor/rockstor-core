@@ -26,9 +26,6 @@
 
 
 MemoryUtilizationWidget = RockStorWidgetView.extend({
-  events: {
-    "click #download-mem-data": "downloadData"
-  },
 
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
@@ -71,7 +68,7 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
 			series: {
         //stack: false,
         //bars: { show: false, barWidth: 0.4, fillColor: {colors:[{opacity: 1},{opacity: 1}]}, align: "center" },
-        lines: { show: true, fill: false },
+        lines: { show: true, fill: 0.5 },
         shadowSize: 0	// Drawing is faster without shadows
 			},
       legend : { 
@@ -96,13 +93,33 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
       displayName: this.displayName,
     }));
     var _this = this;
-    this.intervalId = window.setInterval(function() {
-      return function() { 
-        _this.getData(_this, _this.begin, _this.end); 
-        _this.begin = _this.end;
-        _this.end = _this.begin + _this.refreshInterval;
+    $.ajax({
+      url: "/api/sm/sprobes/meminfo/?limit=" + this.dataLength + "&format=json", 
+      type: "GET",
+      dataType: "json",
+      global: false, // dont show global loading indicator
+      success: function(data, status, xhr) {
+        // fill dataBuffer
+        _.each(data.results, function(d) {
+          _this.dataBuffer.push(d);
+        });
+        if (_this.dataBuffer.length > _this.dataLength) {
+          _this.dataBuffer.splice(0,
+          _this.dataBuffer.length - _this.dataLength);
+        }
+        this.intervalId = window.setInterval(function() {
+          return function() { 
+            _this.getData(_this, _this.begin, _this.end); 
+            _this.begin = _this.end;
+            _this.end = _this.begin + _this.refreshInterval;
+          }
+        }(), _this.refreshInterval);
+      },
+      error: function(xhr, status, error) {
+        logger.debug(error);
       }
-    }(), _this.refreshInterval);
+
+    });
     return this;
   },
 
@@ -171,7 +188,7 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
     return new_data;
   },
 
-  downloadData: function(event) {
+  download: function(event) {
     if (!_.isUndefined(event) && !_.isNull(event)) {
       event.preventDefault();
     }

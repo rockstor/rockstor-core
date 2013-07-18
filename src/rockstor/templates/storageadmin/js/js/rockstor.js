@@ -114,6 +114,7 @@ RockStorWidgetView = Backbone.View.extend({
     'click .configure-widget': 'configure',
     'click .resize-widget': 'resize',
     'click .close-widget': 'close',
+    'click .download-widget': 'download',
   },
 
   initialize: function() {
@@ -192,7 +193,12 @@ RockStorWidgetView = Backbone.View.extend({
     ul.trigger('ss-rearrange');
     this.parentView.saveWidgetConfiguration();
   },
-
+  
+  download: function(event) {
+    if (!_.isUndefined(event) && !_.isNull(event)) {
+      event.preventDefault();
+    }
+  }
 
 });
 
