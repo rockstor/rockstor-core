@@ -26,6 +26,10 @@
 
 
 MemoryUtilizationWidget = RockStorWidgetView.extend({
+  events: {
+    "click #download-mem-data": "downloadData"
+  },
+
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.dashboard_widgets_memory_utilization;
@@ -34,7 +38,8 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
     this.end = null;
     var emptyData = {"id": 0, "total": 0, "free": 0, "buffers": 0, "cached": 0, "swap_total": 0, "swap_free": 0, "active": 0, "inactive": 0, "dirty": 0, "ts": "2013-07-17T00:00:16.109Z"};
     this.dataBuffer = [];
-    this.dataLength = 60;
+    this.dataLength = 300;
+    this.currentTs = null;
     for (i=0; i<this.dataLength; i++) {
       this.dataBuffer.push(emptyData);
     }
@@ -53,7 +58,14 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
       xaxis: {
         min: 0,
         max: this.dataLength,
+        tickSize: 60,
         tickFormatter: this.memTimeTickFormatter(this.dataLength)
+      },
+      yaxis: {
+        min: 0,
+        max: 100,
+        tickSize: 20,
+        tickFormatter: this.memValueTickFormatter,
       },
 			series: {
         //stack: false,
@@ -61,10 +73,16 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
         lines: { show: true, fill: false },
         shadowSize: 0	// Drawing is faster without shadows
 			},
-      legend : { container : "#legends", noColumns : 3 },
+      legend : { 
+        container: "#mem-legend", 
+        noColumns: 1,
+        margin: [10,0],
+        labelBoxBorderColor: "#fff"
+
+      },
       tooltip: true,
       tooltipOpts: {
-        content: "%s (%y)" 
+        content: "%s (%y.2%)" 
       }
     };
   },
@@ -90,35 +108,61 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
 
   getData: function(context, t1, t2) {
     var _this = context;
-    var data = {"id": 7120, "total": 2055148, "free": 1524904, "buffers": 140224, "cached": 139152, "swap_total": 4128764, "swap_free": 4128764, "active": 324000, "inactive": 123260, "dirty": 56, "ts": "2013-07-17T00:00:16.109Z"};
-    _this.dataBuffer.push(data);
-    if (_this.dataBuffer.length > _this.dataLength) {
-      _this.dataBuffer.splice(0,1);
-    }
-    _this.update(_this.dataBuffer);
+    //var data = {"id": 7120, "total": 2055148, "free": 1524904, "buffers": 140224, "cached": 139152, "swap_total": 4128764, "swap_free": 4128764, "active": 324000, "inactive": 123260, "dirty": 56, "ts": "2013-07-17T00:00:16.109Z"};
+    $.ajax({
+      url: "/api/sm/sprobes/meminfo/?limit=1&format=json", 
+      type: "GET",
+      dataType: "json",
+      global: false, // dont show global loading indicator
+      success: function(data, status, xhr) {
+        _this.dataBuffer.push(data.results[0]);
+        if (_this.dataBuffer.length > _this.dataLength) {
+          _this.dataBuffer.splice(0,1);
+        }
+        _this.update(_this.dataBuffer);
+      },
+      error: function(xhr, status, error) {
+        logger.debug(error);
+      }
+
+    });
 
   },
 
   update: function(dataBuffer) {
-    var new_data = this.modifyData(dataBuffer);
-    $.plot(this.$("#mem-util-chart"), new_data, this.graphOptions);
+    var newData = this.modifyData(dataBuffer);
+    $.plot(this.$("#mem-util-chart"), newData, this.graphOptions);
+    var currentData = this.dataBuffer[this.dataBuffer.length-1];
+    // Memory
+    this.$("#mem-total").html(humanize.filesize(currentData["total"]*1024));
+    this.$("#mem-used").html(humanize.filesize((currentData["total"] - currentData["free"])*1024));  
+    this.$("#mem-free").html(humanize.filesize(currentData["free"]*1024));
+    // Swap
+    this.$("#mem-totalswap").html(humanize.filesize(
+    currentData["swap_total"]*1024));
+    this.$("#mem-usedswap").html(humanize.filesize(
+      (currentData["swap_total"] - currentData["swap_free"])*1024));  
+    this.$("#mem-freeswap").html(humanize.filesize(
+    currentData["swap_free"]*1024));
   },
 
   // Creates series to be used by flot
   modifyData: function(dataBuffer) {
+    var _this = this;
     var new_data = [];
     var free = [];
     var used = [];
     this.totalMem = dataBuffer[dataBuffer.length-1].total;
-    console.log(this.totalMem);
-    this.graphOptions.yaxis = {
-      min: 0,
-      max: this.totalMem,
-      tickFormatter: this.memValueTickFormatter,
-    }
+    this.currentTs = dataBuffer[dataBuffer.length-1].ts;
+
+    //this.graphOptions.yaxis = {
+     // min: 0,
+      //max: 100,
+      //tickFormatter: this.memValueTickFormatter,
+    //}
     _.each(dataBuffer, function(d,i) {
-      free.push([i, d["free"]]);
-      used.push([i, d["total"] - d["free"]]);
+      free.push([i, (d["free"]/_this.totalMem)*100]);
+      used.push([i, ((d["total"] - d["free"])/_this.totalMem)*100]);
     });
   
     new_data.push({"label": "free", "data": free});
@@ -126,13 +170,29 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
     return new_data;
   },
 
+  downloadData: function(event) {
+    if (!_.isUndefined(event) && !_.isNull(event)) {
+      event.preventDefault();
+    }
+    // calculate date 24hrs ago
+    console.log(this.currentTs);
+    var t2Date = new Date(this.currentTs);
+    var t1Date =  new Date(t2Date - 1000 * 60 * 60 * 24); // one day ago
+    console.log(t2Date);
+    console.log(t1Date);
+    var t2 = t2Date.toISOString();
+    var t1 = t1Date.toISOString();
+    document.location.href = "/api/sm/sprobes/meminfo/?t1="+t1+"&t2="+t2+"&download=true";
+  },
+
   memValueTickFormatter: function(val, axis) {
-    return humanize.filesize(val, 1024, 1); 
+    return val + "%";
   },
 
   memTimeTickFormatter: function(dataLength) {
     return function(val, axis) {
-      return dataLength - val;
+      return (dataLength/60) - (parseInt(val/60)).toString() + ' m';
+      //return dataLength - val;
     };
   },
 

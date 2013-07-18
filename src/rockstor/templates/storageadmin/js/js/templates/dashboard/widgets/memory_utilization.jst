@@ -14,8 +14,27 @@
 <!-- Module Body -->
 <!-- Content -->
 <div class="widget-content">
-  <div id="mem-util-chart" style="float: left; width: 60%; height: 60%"></div>
+  <div id="mem-util-chart" style="float: left; width: 80%; height: 60%"></div>
   <div id="mem-legend" style="float: left;"></div>
+  <div class="clear"></div>
+  <div id="mem-values" style="float: left">
+    <table>
+      <tr>
+        <td>Total memory: <span id="mem-total"></span></td>
+        <td>Used: <span id="mem-used"></span></td>
+        <td>Free: <span id="mem-free"></span></td>
+      </tr>
+      <tr>
+        <td>Total swap: <span id="mem-totalswap"></span></td>
+        <td>Used: <span id="mem-usedswap"></span></td>
+        <td>Free: <span id="mem-freeswap"></span></td>
+      </tr>
+    </table>
+  </div>
+  <div id="download-link" style="float: left; padding-left: 20px;">
+      <button id="download-mem-data" class="btn btn-primary">Download data</a>
+
+  </div>
 </div>
 <!-- End Content -->
 <!-- end module body -->
