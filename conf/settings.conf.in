@@ -328,3 +328,8 @@ enough for all practical purposes and also is the max allowed in btrfs.
 """
 MIN_SHARE_SIZE = 100
 MAX_SHARE_SIZE = 18014398509481984L
+
+PAGINATION = {
+	   'page_size': 5000,
+	   'max_limit': 10000,
+}
