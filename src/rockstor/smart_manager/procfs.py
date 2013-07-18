@@ -30,7 +30,7 @@ from django.utils.timezone import utc
 from models import (CPUMetric, LoadAvg, MemInfo, PoolUsage, DiskStat)
 from storageadmin.models import (Disk, Pool)
 from fs.btrfs import pool_usage
-
+from proc.net import network_stats
 
 import logging
 logger = logging.getLogger(__name__)
@@ -47,6 +47,7 @@ class ProcRetreiver(Process):
         #extract metrics and put in q
         pu_time = time.mktime(time.gmtime())
         cur_disk_stats = None
+        cur_net_stats = None
         while (True):
             if (os.getppid() != self.ppid):
                 return
@@ -58,6 +59,8 @@ class ProcRetreiver(Process):
                 pu_time = self.pools_usage(pu_time)
                 cur_disk_stats = self.disk_stats(cur_disk_stats,
                                                  self.sleep_time)
+                cur_net_stats = network_stats(cur_net_stats, self.sleep_time,
+                logger, self.q)
             time.sleep(self.sleep_time)
 
     def cpu_stats(self):
