@@ -40,6 +40,7 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
     this.dataBuffer = [];
     this.dataLength = 300;
     this.currentTs = null;
+    this.colors = ["#04BA44", "#C95351"];
     for (i=0; i<this.dataLength; i++) {
       this.dataBuffer.push(emptyData);
     }
@@ -165,8 +166,8 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
       used.push([i, ((d["total"] - d["free"])/_this.totalMem)*100]);
     });
   
-    new_data.push({"label": "free", "data": free});
-    new_data.push({"label": "used", "data": used});
+    new_data.push({"label": "free", "data": free, "color": this.colors[0]});
+    new_data.push({"label": "used", "data": used, "color": this.colors[1]});
     return new_data;
   },
 
