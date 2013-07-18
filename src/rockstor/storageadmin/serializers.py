@@ -19,7 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from rest_framework import serializers
 from storageadmin.models import (Disk, Pool, Share, Snapshot, NFSExport,
                                  SambaShare, IscsiTarget, Appliance,
-                                 SupportCase, DashboardConfig)
+                                 SupportCase, DashboardConfig,
+                                 NetworkInterface)
 from django.contrib.auth.models import User
 
 
@@ -74,3 +75,6 @@ class DashboardConfigSerializer(serializers.ModelSerializer):
     class Meta:
         model = DashboardConfig
 
+class NetworkInterfaceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NetworkInterface

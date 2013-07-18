@@ -21,7 +21,7 @@ from smart_manager.models import (CPUMetric, LoadAvg, MemInfo, ServiceStatus,
                                   SProbe, NFSDCallDistribution,
                                   NFSDClientDistribution,
                                   NFSDShareDistribution,
-                                  DiskStat)
+                                  DiskStat, NetStat)
 
 
 
@@ -44,6 +44,10 @@ class DiskStatSerializer(serializers.ModelSerializer):
 class PaginatedDiskStat(pagination.PaginationSerializer):
     class Meta:
         object_serializer_class = DiskStatSerializer
+
+class NetStatSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NetStat
 
 class ServiceStatusSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='service.name')
