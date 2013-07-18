@@ -129,11 +129,33 @@ class ProcRetreiver(Process):
 
     def meminfo(self):
         stats_file = '/proc/meminfo'
+        (total, free, buffers, cached, swap_total, swap_free, active, inactive,
+         dirty,) = (None,) * 9
         with open(stats_file) as sfo:
-            mem_total = sfo.readline().split()[1]
-            mem_free = sfo.readline().split()[1]
-            mi = MemInfo(total=mem_total, free=mem_free)
-            self.q.put(mi)
+            for l in sfo.readlines():
+                if (re.match('MemTotal:', l) is not None):
+                    total = int(l.split()[1])
+                elif (re.match('MemFree:', l) is not None):
+                    free = int(l.split()[1])
+                elif (re.match('Buffers:', l) is not None):
+                    buffers = int(l.split()[1])
+                elif (re.match('Cached:', l) is not None):
+                    cached = int(l.split()[1])
+                elif (re.match('SwapTotal:', l) is not None):
+                    swap_total = int(l.split()[1])
+                elif (re.match('SwapFree:', l) is not None):
+                    swap_free = int(l.split()[1])
+                elif (re.match('Active:', l) is not None):
+                    active = int(l.split()[1])
+                elif (re.match('Inactive:', l) is not None):
+                    inactive = int(l.split()[1])
+                elif (re.match('Dirty:', l) is not None):
+                    dirty = int(l.split()[1])
+                    break # no need to look at lines after dirty.
+        mi = MemInfo(total=total, free=free, buffers=buffers, cached=cached,
+                     swap_total=swap_total, swap_free=swap_free, active=active,
+                     inactive=inactive, dirty=dirty)
+        self.q.put(mi)
 
     def vmstat(self):
         stats_file = '/proc/vmstat'
