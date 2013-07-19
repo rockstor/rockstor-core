@@ -208,6 +208,7 @@ PIPELINE_JS = {
             'js/views/setup_users.js',
             'js/views/setup_disks.js',
             'js/views/setup_system.js',
+            'js/views/setup_network.js',
             'js/views/services.js',
             'js/views/dashboard_config.js',
             'js/views/dashboard/*.js',
