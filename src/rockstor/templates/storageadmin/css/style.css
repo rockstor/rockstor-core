@@ -645,6 +645,10 @@ label.error { color: #b94a48; }
 #errorContent { padding: 20px; }
 
 /* Modal */
+.modal {
+  position: absolute;
+}
+
 .modal.fade {
   -webkit-transition: none;
   -moz-transition: none;
