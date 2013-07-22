@@ -28,3 +28,4 @@ from nfsd import (NFSDCallDistribution,
 from nfsd_share import NFSDShareDistribution
 from pool_usage import (PoolUsage)
 from net_stat import NetStat
+from nfsd_share_client import NFSDShareClientDistribution
