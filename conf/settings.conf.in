@@ -296,6 +296,7 @@ TAP_MAP = {
 	'nfs-distrib': 'nfsd/nfsd_distrib',
 	'nfs-client-distrib': 'nfsd/nfsd_distrib_client',
 	'nfs-share-distrib': 'nfsd/nfsd_distrib_share',
+	'nfs-share-client-distrib': 'nfsd/nfsd_distrib_share_client',
 }
 TAP_SERVER = ('127.0.0.1', ${django-settings-conf:tapport})
 
