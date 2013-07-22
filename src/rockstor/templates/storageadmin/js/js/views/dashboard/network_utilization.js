@@ -185,18 +185,16 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
     $.plot(this.$("#network-util-chart"), newData, this.graphOptions);
     var currentData = dataBuffer[dataBuffer.length-1];
     
-    /*
-    this.$("#mem-total").html(humanize.filesize(currentData["total"]*1024));
-    this.$("#mem-used").html(humanize.filesize((currentData["total"] - currentData["free"])*1024));  
-    this.$("#mem-free").html(humanize.filesize(currentData["free"]*1024));
-    // Swap
-    this.$("#mem-totalswap").html(humanize.filesize(
-    currentData["swap_total"]*1024));
-    this.$("#mem-usedswap").html(humanize.filesize(
-      (currentData["swap_total"] - currentData["swap_free"])*1024));  
-    this.$("#mem-freeswap").html(humanize.filesize(
-    currentData["swap_free"]*1024));
-    */
+    
+    this.$("#data-rec").html(humanize.filesize(currentData["kb_rx"]*1024));
+    this.$("#packets-rec").html(currentData["packets_rx"]);  
+    this.$("#errors-rec").html(currentData["errs_rx"]);
+    this.$("#drop-rec").html(currentData["drop_rx"]);
+    this.$("#data-sent").html(humanize.filesize(currentData["kb_tx"]*1024));
+    this.$("#packets-sent").html(currentData["packets_tx"]);  
+    this.$("#errors-sent").html(currentData["errs_tx"]);
+    this.$("#drop-sent").html(currentData["drop_tx"]);
+    
   },
 
   // Creates series to be used by flot
@@ -244,7 +242,7 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
   },
 
   valueTickFormatter: function(val, axis) {
-    return humanize.filesize(val, 1024, 2);
+    return humanize.filesize(val*1024, 1024, 2);
   },
 
   timeTickFormatter: function(dataLength) {
