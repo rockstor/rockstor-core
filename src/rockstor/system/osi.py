@@ -217,12 +217,12 @@ def get_mac_addr(interface):
 def config_network_device(name, mac, ipaddr, netmask):
     config_script = ('/etc/sysconfig/network-scripts/ifcfg-%s' % name)
     with open(config_script, 'w') as cfo:
-        cfo.write('DEVICE=%s\n' % name)
-        cfo.write('HWADDR=%s\n' % mac)
-        cfo.write('BOOTPROTO=static\n')
-        cfo.write('ONBOOT=yes\n')
-        cfo.write('IPADDR=%s\n' % ipaddr)
-        cfo.write('NETMASK=%s\n' % netmask)
+        cfo.write('DEVICE="%s"\n' % name)
+        cfo.write('HWADDR="%s"\n' % mac)
+        cfo.write('BOOTPROTO="static"\n')
+        cfo.write('ONBOOT="yes"\n')
+        cfo.write('IPADDR="%s"\n' % ipaddr)
+        cfo.write('NETMASK="%s"\n' % netmask)
 
 def get_net_config(device_name):
     try:
@@ -238,15 +238,15 @@ def get_net_config(device_name):
         with open(config_script) as cfo:
             for l in cfo.readlines():
                 if (re.match('BOOTPROTO', l) is not None):
-                    config['bootproto'] = l.split('=')[1][1:-1]
+                    config['bootproto'] = l.strip().split('=')[1][1:-1]
                 elif (re.match('ONBOOT', l) is not None):
-                    config['onboot'] = l.split('=')[1][1:-1]
+                    config['onboot'] = l.strip().split('=')[1][1:-1]
                 elif (re.match('IPADDR', l) is not None):
-                    config['ipaddr'] = l.split('=')[1][1:-1]
+                    config['ipaddr'] = l.strip().split('=')[1][1:-1]
                 elif (re.match('NETMASK', l) is not None):
-                    config['netmask'] = l.split('=')[1][1:-1]
+                    config['netmask'] = l.strip().split('=')[1][1:-1]
                 elif (re.match('NETWORK', l) is not None):
-                    config['network'] = l.split('=')[1][1:-1]
+                    config['network'] = l.strip().split('=')[1][1:-1]
         return config
     except:
         return None

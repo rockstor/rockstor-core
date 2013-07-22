@@ -41,8 +41,9 @@ def network_stats(prev_stats, interval, logger, q):
                            (float(x) - float(y))/interval,
                            cur_stats[interface], prev_stats[interface])
 
-                ns = NetStat(kb_rx=data[0], packets_rx=data[1],
-                             errs_rx=data[2], drop_rx=data[3], fifo_rx=data[4],
+                ns = NetStat(device=interface, kb_rx=data[0],
+                             packets_rx=data[1], errs_rx=data[2],
+                             drop_rx=data[3], fifo_rx=data[4],
                              frame=data[5], compressed_rx=data[6],
                              multicast_rx=data[7], kb_tx=data[8],
                              packets_tx=data[9], errs_tx=data[10],

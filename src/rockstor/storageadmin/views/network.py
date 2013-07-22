@@ -50,7 +50,7 @@ class NetworkView(APIView):
     @transaction.commit_on_success
     def post(self, request):
         for d in network_devices():
-            if (d in NetworkInterface.objects.filter(name=d)):
+            if (NetworkInterface.objects.filter(name=d).exists()):
                 continue
             dconfig = get_net_config(d)
             new_device = NetworkInterface(name=d, mac=dconfig['mac'],
