@@ -11,6 +11,7 @@ class Migration(SchemaMigration):
         # Adding model 'NetStat'
         db.create_table('smart_manager_netstat', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('device', self.gf('django.db.models.fields.CharField')(max_length=100)),
             ('kb_rx', self.gf('django.db.models.fields.FloatField')()),
             ('packets_rx', self.gf('django.db.models.fields.FloatField')()),
             ('errs_rx', self.gf('django.db.models.fields.FloatField')()),
@@ -96,6 +97,7 @@ class Migration(SchemaMigration):
             'colls': ('django.db.models.fields.IntegerField', [], {}),
             'compressed_rx': ('django.db.models.fields.IntegerField', [], {}),
             'compressed_tx': ('django.db.models.fields.IntegerField', [], {}),
+            'device': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'drop_rx': ('django.db.models.fields.IntegerField', [], {}),
             'drop_tx': ('django.db.models.fields.IntegerField', [], {}),
             'errs_rx': ('django.db.models.fields.FloatField', [], {}),

@@ -21,6 +21,7 @@ from django.db import models
 
 class NetStat(models.Model):
 
+    device = models.CharField(max_length=100)
     kb_rx = models.FloatField()
     packets_rx = models.FloatField()
     errs_rx = models.FloatField()
