@@ -56,7 +56,9 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
     this.dataBuffers = {};
     this.dataLength = 300;
     this.currentTs = null;
-    this.interfaces = [];
+    this.networkInterfaces = new NetworkInterfaceCollection();
+    this.networkInterfaces.on("reset", this.getInitialData, this);
+    this.selectedInterface = null;
     this.colors = ["#1224E3", "#F25805", "#04D6D6", "#F5CC73", "#750413"];
     this.totalMem = 0;
     this.graphOptions = { 
@@ -113,13 +115,36 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
   },
   
   render: function() {
+    var _this = this;
     // call render of base
     this.constructor.__super__.render.apply(this, arguments);
     $(this.el).html(this.template({ 
       module_name: this.module_name,
       displayName: this.displayName,
     }));
+    this.$("#interface-select").change(function(event) {
+      _this.selectedInterface = $(event.currentTarget).val();
+      console.log("changed interface");
+      console.log(_this.selectedInterface);
+    });
+    this.networkInterfaces.fetch();
+    return this;
+  },
+
+  getInitialData: function() {
     var _this = this;
+    var niselect = this.$("#interface-select");
+    this.networkInterfaces.each(function(ni,i) {
+      var opt = $("<option/>");
+      opt.val(ni.get("name"));
+      opt.text(ni.get("name"));
+      console.log(opt);
+      if (i==0) {
+        opt.attr({selected:"selected"});
+      }
+      niselect.append(opt);
+    });
+    this.selectedInterface = this.networkInterfaces.at(0).get("name");
     $.ajax({
       url: "/api/sm/sprobes/netstat/?limit=" + this.dataLength + "&format=json", 
       type: "GET",
@@ -129,16 +154,20 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
         // fill dataBuffers
         // TODO get network interface name when its added to the json
         // and fill data for each network interface
-        _this.interfaces.push("eth0"); 
-        _this.dataBuffers["eth0"] = [];
-        var dataBuffer = _this.dataBuffers["eth0"];
-        _.each(data.results, function(d) {
-          dataBuffer.push(d);
+        _this.networkInterfaces.each(function(ni) {
+          _this.dataBuffers[ni.get("name")] = [];
         });
-        if (dataBuffer.length > _this.dataLength) {
-          dataBuffer.splice(0,
-          dataBuffer.length - _this.dataLength);
-        }
+        _.each(data.results, function(d) {
+          _this.dataBuffers[d.device].push(d);
+        });
+        _.each(_this.dataBuffers, function(dataBuffer) {
+          if (dataBuffer.length > _this.dataLength) {
+            dataBuffer.splice(0,
+            dataBuffer.length - _this.dataLength);
+          }
+        });
+       
+       
         this.intervalId = window.setInterval(function() {
           return function() { 
             _this.getData(_this, _this.begin, _this.end); 
@@ -146,15 +175,15 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
             _this.end = _this.begin + _this.refreshInterval;
           }
         }(), _this.refreshInterval);
+         
       },
       error: function(xhr, status, error) {
         logger.debug(error);
       }
 
     });
-    return this;
-  },
 
+  },
 
   getData: function(context, t1, t2) {
     var _this = context;
@@ -165,11 +194,16 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
       dataType: "json",
       global: false, // dont show global loading indicator
       success: function(data, status, xhr) {
-        var dataBuffer = _this.dataBuffers["eth0"];
-        dataBuffer.push(data.results[0]);
-        if (dataBuffer.length > _this.dataLength) {
-          dataBuffer.splice(0,1);
-        }
+        var d = data.results[0];
+        _.each(data.results, function(d) {
+          _this.dataBuffers[d.device].push(d);
+        });
+        _.each(_this.dataBuffers, function(dataBuffer) {
+          if (dataBuffer.length > _this.dataLength) {
+            dataBuffer.splice(0,1);
+          }
+        });
+        var dataBuffer = _this.dataBuffers[_this.selectedInterface];
         _this.update(dataBuffer);
       },
       error: function(xhr, status, error) {
@@ -231,11 +265,8 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
       event.preventDefault();
     }
     // calculate date 24hrs ago
-    console.log(this.currentTs);
     var t2Date = new Date(this.currentTs);
     var t1Date =  new Date(t2Date - 1000 * 60 * 60 * 24); // one day ago
-    console.log(t2Date);
-    console.log(t1Date);
     var t2 = t2Date.toISOString();
     var t1 = t1Date.toISOString();
     document.location.href = "/api/sm/sprobes/netstat/?t1="+t1+"&t2="+t2+"&download=true";
@@ -254,7 +285,7 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
   tooltipFormatter: function(label, xval, yval) {
     return "%s (%p.2%)"
     //return "%s (" + humanize.filesize(xval, 1024, 1) + ")"; 
-  }
+  },
 
 });
 
