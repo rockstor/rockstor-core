@@ -225,16 +225,16 @@ def config_network_device(name, mac, ipaddr, netmask):
         cfo.write('NETMASK="%s"\n' % netmask)
 
 def get_net_config(device_name):
+    config = {'name': device_name,
+              'bootproto': None,
+              'onboot': None,
+              'network': None,
+              'netmask': None,
+              'ipaddr': None,}
+    config['mac'] = get_mac_addr(device_name)
     try:
         config_script = ('/etc/sysconfig/network-scripts/ifcfg-%s' %
                          device_name)
-        config = {'name': device_name,
-                  'bootproto': None,
-                  'onboot': None,
-                  'network': None,
-                  'netmask': None,
-                  'ipaddr': None,}
-        config['mac'] = get_mac_addr(device_name)
         with open(config_script) as cfo:
             for l in cfo.readlines():
                 if (re.match('BOOTPROTO', l) is not None):
@@ -247,9 +247,10 @@ def get_net_config(device_name):
                     config['netmask'] = l.strip().split('=')[1][1:-1]
                 elif (re.match('NETWORK', l) is not None):
                     config['network'] = l.strip().split('=')[1][1:-1]
-        return config
     except:
-        return None
+        pass
+    finally:
+        return config
 
 def set_networking(hostname, default_gw):
     with open('/etc/sysconfig/network', 'w') as nfo:
