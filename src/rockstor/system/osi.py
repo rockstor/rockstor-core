@@ -189,3 +189,77 @@ def hostid():
     return the hostid of the machine
     """
     return run_command([HOSTID])
+
+def restart_network():
+    """
+    restart network service
+    """
+    cmd = [SERVICE, 'network', 'restart']
+    return run_command(cmd)
+
+def network_devices():
+    """
+    return all network devices on the system
+    """
+    devices = os.listdir('/sys/class/net')
+    if ('lo' in devices):
+        devices.remove('lo')
+    return devices
+
+def get_mac_addr(interface):
+    """
+    return the mac address of the given interface
+    """
+    ifile = ('/sys/class/net/%s/address' % interface)
+    with open(ifile) as ifo:
+        return ifo.readline().strip()
+
+def config_network_device(name, mac, ipaddr, netmask):
+    config_script = ('/etc/sysconfig/network-scripts/ifcfg-%s' % name)
+    with open(config_script, 'w') as cfo:
+        cfo.write('DEVICE="%s"\n' % name)
+        cfo.write('HWADDR="%s"\n' % mac)
+        cfo.write('BOOTPROTO="static"\n')
+        cfo.write('ONBOOT="yes"\n')
+        cfo.write('IPADDR="%s"\n' % ipaddr)
+        cfo.write('NETMASK="%s"\n' % netmask)
+
+def get_net_config(device_name):
+    config = {'name': device_name,
+              'bootproto': None,
+              'onboot': None,
+              'network': None,
+              'netmask': None,
+              'ipaddr': None,}
+    config['mac'] = get_mac_addr(device_name)
+    try:
+        config_script = ('/etc/sysconfig/network-scripts/ifcfg-%s' %
+                         device_name)
+        with open(config_script) as cfo:
+            for l in cfo.readlines():
+                if (re.match('BOOTPROTO', l) is not None):
+                    config['bootproto'] = l.strip().split('=')[1][1:-1]
+                elif (re.match('ONBOOT', l) is not None):
+                    config['onboot'] = l.strip().split('=')[1][1:-1]
+                elif (re.match('IPADDR', l) is not None):
+                    config['ipaddr'] = l.strip().split('=')[1][1:-1]
+                elif (re.match('NETMASK', l) is not None):
+                    config['netmask'] = l.strip().split('=')[1][1:-1]
+                elif (re.match('NETWORK', l) is not None):
+                    config['network'] = l.strip().split('=')[1][1:-1]
+    except:
+        pass
+    finally:
+        return config
+
+def set_networking(hostname, default_gw):
+    with open('/etc/sysconfig/network', 'w') as nfo:
+        nfo.write('NETWORKING=yes\n')
+        nfo.write('HOSTNAME=%s\n' % hostname)
+        nfo.write('GATEWAY=%s\n' % default_gw)
+
+def set_nameservers(servers):
+    with open('/etc/resolv.conf', 'w') as rfo:
+        for s in servers:
+            rfo.write('nameserver %s\n' % s)
+

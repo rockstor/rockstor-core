@@ -27,6 +27,7 @@ from shares_console import SharesConsole
 from services_console import ServicesConsole
 from sm_console import SMConsole
 from support_console import SupportConsole
+from network_console import NetworkConsole
 
 
 ASCII_LOGO = """
@@ -142,6 +143,16 @@ class RockConsole(BaseConsole):
             support_console.cmdloop()
         else:
             support_console.onecmd(args)
+
+    def do_network(self, args):
+        """
+        Network console
+        """
+        network_console = NetworkConsole(self.greeting)
+        if (len(args) == 0):
+            network_console.cmdloop()
+        else:
+            network_console.onecmd(args)
 
 def main():
     rc = RockConsole()

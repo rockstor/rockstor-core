@@ -21,9 +21,9 @@ from storageadmin.views import (DiskView, SystemDiskView, PoolView, ShareView,
                                 SnapshotView, InfoView, SetupWizardView,
                                 ShareIscsiView, AppliancesView, LoginView,
                                 UserView, ShareSambaView, SupportView,
-                                DashboardConfigView, ShareNFSView)
+                                DashboardConfigView, ShareNFSView, NetworkView)
 from smart_manager.views import (SmartManagerView, ServiceView, SProbeView,
-                                 SProbeView2, MemInfoView)
+                                 SProbeView2, MemInfoView, NetStatView)
 
 
 import os.path
@@ -84,6 +84,11 @@ urlpatterns = patterns('',
     url(r'^api/disks/$', DiskView.as_view(), name='disk-view'),
     url(r'^api/disks/(?P<dname>.*)/$', DiskView.as_view(), name='disk-view'),
 
+    # Network section
+    url(r'^api/network/$', NetworkView.as_view(), name='net-view'),
+    url(r'^api/network/(?P<iname>[A-Za-z0-9]+)/$', NetworkView.as_view(),
+        name='net-view'),
+
     # Pools section
     url(r'^api/pools/$', PoolView.as_view(), name='pool-view'),
     url(r'^api/pools/(?P<pname>[A-Za-z0-9_]+)/$', PoolView.as_view(),
@@ -130,6 +135,8 @@ urlpatterns = patterns('',
     url(r'^api/sm/sprobes/$', SProbeView.as_view(), name='probe-view'),
     url(r'^api/sm/sprobes/meminfo/$', MemInfoView.as_view(),
         name='meminfo-view'),
+    url(r'^api/sm/sprobes/netstat/$', NetStatView.as_view(),
+        name='netstat-view'),
     url(r'^api/sm/sprobes/(?P<pname>[a-z-]+)/$',
         SProbeView.as_view(), name='probe-view'),
     url(r'^api/sm/sprobes/(?P<pname>[a-z-]+)/(?P<pid>[0-9]+)/$',

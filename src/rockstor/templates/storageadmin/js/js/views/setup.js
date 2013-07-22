@@ -35,7 +35,8 @@ SetupView = RockstoreLayoutView.extend({
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.setup_setup;
-    this.pages = [SetupSystemView, SetupUsersView, SetupDisksView];
+    this.pages = [SetupSystemView, SetupUsersView, SetupDisksView, 
+    SetupNetworkView];
     this.current_page = 0;
     this.current_view = null;
     this.sysinfo = new SysInfo();

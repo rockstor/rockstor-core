@@ -1,0 +1,48 @@
+<!-- Header -->
+<div class="row-fluid">
+  <div class="span12">
+    <div class="widget-header">
+      <div class="title"><span class="h3"><%= displayName %></span></div>
+      <div class="gear">
+        <a class="download-widget" href="#"><i class="icon-white icon-download-alt"></i></a>
+        <a class="resize-widget" href="#"><i class="icon-white icon-resize-full"></i></a>
+        <a class="close-widget" href="#"><i class="icon-white icon-remove"></i></a>
+      </div>
+    </div>
+  </div> <!-- span12 -->
+</div> <!-- row-fluid -->
+
+<!-- Module Body -->
+<!-- Content -->
+<div class="widget-content">
+  <div id="network-util-chart" style="float: left; width: 80%; height: 60%"></div>
+  <div id="network-util-legend" style="float: left;"></div>
+  <div class="clear"></div>
+  <div id="network-util-values" style="float: left">
+    <table>
+      <tr>
+        <td>Data rec: <span id="data-rec"></span></td>
+        <td>Packets rec: <span id="packets-rec"></span></td>
+        <td>Errors rec: <span id="errors-rec"></span></td>
+        <td>Drop rec: <span id="drop-rec"></span></td>
+      </tr>
+      <tr>
+        <td>Data sent: <span id="data-sent"></span></td>
+        <td>Packets sent: <span id="packets-sent"></span></td>
+        <td>Errors sent: <span id="errors-sent"></span></td>
+        <td>Drop sent: <span id="drop-sent"></span></td>
+      </tr>
+    </table> 
+  </div>
+  <div id="interface-select-div" style="float: left">
+    Select interface:
+    <select id="interface-select" name="interface-select" style="width: 50px;">
+    </select>
+  </div>
+</div>
+<!-- End Content -->
+<!-- end module body -->
+
+
+
+

@@ -182,4 +182,13 @@ var ProbeCollection = Backbone.Collection.extend({
   }
 });
 
+var NetworkInterface = Backbone.Model.extend({
+  url: function() {
+    return '/api/network/' + this.get('name') + '/';
+  }
+});
+var NetworkInterfaceCollection = Backbone.Collection.extend({
+  model: NetworkInterface,
+  url: '/api/network/'
+});
 
