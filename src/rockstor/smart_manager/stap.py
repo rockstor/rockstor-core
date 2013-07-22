@@ -33,7 +33,8 @@ import os
 import time
 import subprocess
 import fcntl
-from smart_manager.agents import (process_nfsd_calls, share_distribution)
+from smart_manager.agents import (process_nfsd_calls, share_distribution,
+                                  share_client_distribution)
 from smart_manager.models import SProbe
 from django.conf import settings
 
@@ -140,5 +141,7 @@ class Stap(Process):
     def __process_output(self, part_out, tap, ro):
         if (tap == 'nfs-distrib' or tap == 'nfs-client-distrib'):
             process_nfsd_calls(self.q, part_out, ro, logger)
-        if (tap == 'nfs-share-distrib'):
+        elif (tap == 'nfs-share-distrib'):
             share_distribution(self.q, part_out, ro, logger)
+        elif (tap == 'nfs-share-client-distrib'):
+            share_client_distribution(self.q, part_out, ro, logger)

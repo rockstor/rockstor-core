@@ -1,0 +1,59 @@
+#! /usr/bin/env stap
+
+global nfsd_shares
+global nfsd_lookup_shares
+global nfsd_read_shares
+global nfsd_write_shares
+global nfsd_create_shares
+global nfsd_commit_shares
+global nfsd_remove_shares
+
+probe nfsd.proc4.lookup.sp {
+	nfsd_shares[share, client_ip] <<< 1
+	nfsd_lookup_shares[share] <<< 1
+}
+
+probe nfsd.proc4.read.sp {
+	nfsd_shares[share, client_ip] <<< 1
+	nfsd_read_shares[share] <<< size
+}
+
+probe nfsd.proc4.write.sp {
+	nfsd_shares[share, client_ip] <<< 1
+	nfsd_write_shares[share] <<< size
+}
+
+probe nfsd.proc4.create.sp {
+      nfsd_shares[share, client_ip] <<< 1
+      nfsd_create_shares[share] <<< 1
+}
+
+probe nfsd.proc4.commit.sp {
+      nfsd_shares[share, client_ip] <<< 1
+      nfsd_commit_shares[share] <<< 1
+}
+
+probe nfsd.proc4.remove.sp {
+      nfsd_shares[share, client_ip] <<< 1
+      nfsd_commit_shares[share] <<< 1
+}
+
+probe timer.ms(1000)
+{
+	tod = gettimeofday_s()
+	foreach ([s, ip] in nfsd_shares)
+		printf("%d\t%s\t%s\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n", tod, s,
+		ip, @count(nfsd_lookup_shares[s]), @count(nfsd_read_shares[s]),
+		@count(nfsd_write_shares[s]), @count(nfsd_create_shares[s]),
+		@count(nfsd_commit_shares[s]), @count(nfsd_remove_shares[s]),
+		@sum(nfsd_read_shares[s]), @sum(nfsd_write_shares[s]))
+
+	delete nfsd_shares
+	delete nfsd_lookup_shares
+	delete nfsd_read_shares
+	delete nfsd_write_shares
+	delete nfsd_create_shares
+	delete nfsd_commit_shares
+	delete nfsd_remove_shares
+
+}

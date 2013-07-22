@@ -33,9 +33,11 @@ from smart_manager.serializers import (SProbeSerializer,
                                        NFSDClientDistributionSerializer,
                                        NFSDShareDistributionSerializer,
                                        DiskStatSerializer,
-                                       PaginatedDiskStat)
+                                       PaginatedDiskStat,
+                                       NFSDShareClientDistributionSerializer)
 from smart_manager.models import (NFSDCallDistribution, NFSDClientDistribution,
-                                  NFSDShareDistribution)
+                                  NFSDShareDistribution,
+                                  NFSDShareClientDistribution)
 import os
 import zmq
 from django.utils.dateparse import parse_datetime
@@ -90,6 +92,9 @@ class SProbeView2(APIView):
         elif (pname == 'nfs-share-distrib'):
             dos = NFSDShareDistribution.objects.filter(rid=ro).order_by('ts')
             return Response(NFSDShareDistributionSerializer(dos).data)
+        elif (pname == 'nfs-share-client-distrib'):
+            dos = NFSDShareClientDistribution.objects.filter(rid=ro).order_by('ts')
+            return Response(NFSDShareClientDistributionSerializer(dos).data)
         elif (pname == 'disk-stat'):
             ds = None
             if (t1 is not None and t2 is not None):
