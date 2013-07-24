@@ -81,6 +81,14 @@ class SProbeView(APIView):
             e_msg = ('Smart probe: %s already running' % pname)
             handle_exception(Exception(e_msg), request)
 
+        #if max number of probes already running, throw error
+        if (len(SProbe.objects.filter(state__regex=r'(created|running)')) >
+            settings.MAX_TAP_WORKERS):
+            e_msg = ('Maximum number(%d) of smart probes running. Cannot '
+                     'start another one until one of them is stopped' %
+                     settings.MAX_TAP_WORKERS)
+            handle_exception(Exception(e_msg), request)
+
         #get last id
         cur_id = 0
         try:
