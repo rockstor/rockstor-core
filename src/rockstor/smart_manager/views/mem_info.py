@@ -16,36 +16,12 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from rest_framework import generics
+from generic_sprobe import GenericSProbeView
 from smart_manager.models import MemInfo
-from smart_manager.serializers import (MemInfoSerializer)
-from rest_framework.authentication import (BasicAuthentication,
-                                           SessionAuthentication,)
-from storageadmin.auth import DigestAuthentication
-from rest_framework.permissions import IsAuthenticated
-from renderers import IgnoreClient
-from django.conf import settings
+from smart_manager.serializers import MemInfoSerializer
 
 
-class MemInfoView(generics.ListAPIView):
-    authentication_classes = (DigestAuthentication, SessionAuthentication,
-                              BasicAuthentication,)
-    permission_classes = (IsAuthenticated,)
+class MemInfoView(GenericSProbeView):
+
     serializer_class = MemInfoSerializer
-    content_negotiation_class = IgnoreClient
-
-    def get_queryset(self):
-        limit = self.request.QUERY_PARAMS.get('limit',
-                                              settings.PAGINATION['max_limit'])
-        limit = int(limit)
-        t1 = self.request.QUERY_PARAMS.get('t1', None)
-        t2 = self.request.QUERY_PARAMS.get('t2', None)
-        if (t1 is not None and t2 is not None):
-            return MemInfo.objects.filter(ts__gt=t1, ts__lte=t2)
-        return MemInfo.objects.all().order_by('-ts')[0:limit]
-
-    def get_paginate_by(self, foo):
-        download = self.request.QUERY_PARAMS.get('download', None)
-        if (download is not None):
-            return None
-        return settings.PAGINATION['page_size']
+    model_obj = MemInfo
