@@ -16,12 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from generic_sprobe import GenericSProbeView
-from smart_manager.models import NetStat
-from smart_manager.serializers import NetStatSerializer
+from advanced_sprobe import AdvancedSProbeView
+from smart_manager.models import NFSDShareDistribution
+from smart_manager.serializers import NFSDShareDistributionSerializer
 
 
-class NetStatView(GenericSProbeView):
+class NFSDShareDistribView(AdvancedSProbeView):
 
-    serializer_class = NetStatSerializer
-    model_obj = NetStat
+    serializer_class = NFSDShareDistributionSerializer
+    model_obj = NFSDShareDistribution
+    pname = 'nfs-share-distrib'

@@ -167,6 +167,13 @@ var Probe = Backbone.Model.extend({
   },
   dataUrl: function() {
     return '/api/sm/sprobes/' + this.get('name') + '/' + this.id + '/data/';
+  },
+  parse: function(response) {
+    if (response.results && response.results.length > 0) {
+      return response.results[0];
+    } else {
+      return {};
+    }
   }
 });
 
@@ -179,6 +186,9 @@ var ProbeCollection = Backbone.Collection.extend({
   },
   url: function() {
     return '/api/sm/sprobes/' + this.name + '/';
+  },
+  parse: function(response) {
+    return response.results;
   }
 });
 

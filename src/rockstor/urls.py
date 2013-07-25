@@ -23,8 +23,8 @@ from storageadmin.views import (DiskView, SystemDiskView, PoolView, ShareView,
                                 UserView, ShareSambaView, SupportView,
                                 DashboardConfigView, ShareNFSView, NetworkView)
 from smart_manager.views import (SmartManagerView, ServiceView, SProbeView,
-                                 SProbeView2, MemInfoView, NetStatView)
-
+                                 SProbeView2, MemInfoView, NetStatView,
+                                 DiskStatView, NFSDistribView)
 
 import os.path
 import socketio.sdjango
@@ -125,27 +125,6 @@ urlpatterns = patterns('',
     # Dashboard config
     url(r'^api/dashboardconfig/$', DashboardConfigView.as_view(), name='dashboardconfig-view'),
 
-    # Smart manager stuff
-    # Services
-    url(r'^api/sm/services/$', ServiceView.as_view(), name='service-view'),
-    url(r'^api/sm/services/(?P<sname>[A-Za-z_]+)/$', ServiceView.as_view(),
-        name='service-view'),
-
-    # Smart probes
-    url(r'^api/sm/sprobes/$', SProbeView.as_view(), name='probe-view'),
-    url(r'^api/sm/sprobes/meminfo/$', MemInfoView.as_view(),
-        name='meminfo-view'),
-    url(r'^api/sm/sprobes/netstat/$', NetStatView.as_view(),
-        name='netstat-view'),
-    url(r'^api/sm/sprobes/(?P<pname>[a-z-]+)/$',
-        SProbeView.as_view(), name='probe-view'),
-    url(r'^api/sm/sprobes/(?P<pname>[a-z-]+)/(?P<pid>[0-9]+)/$',
-        SProbeView.as_view(), name='probe-view'),
-    url(r'^api/sm/sprobes/(?P<pname>[a-z-]+)/(?P<pid>[0-9]+)/data/$',
-        SProbeView2.as_view(), name='probe-view2'),
-    url(r'^api/sm/sprobes/(?P<pname>[a-z-]+)/(?P<pid>[0-9]+)/(?P<command>[a-z]+)/$',
-        SProbeView2.as_view(), name='probe-view2'),
-    url(r'^api/sm/(?P<mname>[A-Za-z0-9_]+)/$', SmartManagerView.as_view(),
-        name='sm-view'),
-
+    (r'^api/sm/services/', include('smart_manager.urls.services')),
+    (r'^api/sm/sprobes/', include('smart_manager.urls.sprobes')),
 )

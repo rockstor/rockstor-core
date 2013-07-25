@@ -140,7 +140,9 @@ ProbeWidget = RockStorWidgetView.extend({
     this.disableProbeSelect();
     this.probe.save(null, {
       success: function(model, response, options) {
+        logger.debug(_this.probe);
         if (_this.probe.get('state') == _this.probeStates.CREATED) {
+          logger.debug("got probe created state")
           _this.probe.trigger(_this.probeEvents.START);
         } else {
           _this.probe.trigger(_this.probeEvents.ERROR_START);
