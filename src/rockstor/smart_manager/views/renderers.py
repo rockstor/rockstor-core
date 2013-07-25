@@ -17,10 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from rest_framework.renderers import JSONRenderer
-from rest_framework.negotiation import BaseContentNegotiation
+from rest_framework.negotiation import DefaultContentNegotiation
 from rest_framework.utils import encoders
 from django.http.multipartparser import parse_header
 from django.utils import simplejson as json
+from rest_framework.settings import api_settings
+from rest_framework.utils.mediatypes import (order_by_precedence,
+                                             media_type_matches)
+from rest_framework.utils.mediatypes import _MediaType
+from rest_framework import exceptions
 
 
 class DownloadRenderer(JSONRenderer):
@@ -49,11 +54,51 @@ class DownloadRenderer(JSONRenderer):
         return json.dumps(data, cls=self.encoder_class, indent=indent)
 
 
-class IgnoreClient(BaseContentNegotiation):
-    def select_parser(self, request, parsers):
-        return parsers[0]
+class IgnoreClient(DefaultContentNegotiation):
 
-    def select_renderer(self, request, renderers, format_suffix):
+    #def select_parser(self, request, parsers):
+    #    return parsers[0]
+
+    def select_renderer(self, request, renderers, format_suffix=None):
+        """
+        Given a request and a list of renderers, return a two-tuple of:
+        (renderer, media type).
+        """
+        if (request.GET.get('download') is not None):
+            r = DownloadRenderer()
+            return (r, r.media_type)
+
+        # Allow URL style format override.  eg. "?format=json
+        format_query_param = self.settings.URL_FORMAT_OVERRIDE
+        format = format_suffix or request.GET.get(format_query_param)
+
+        if format:
+            renderers = self.filter_renderers(renderers, format)
+
+        accepts = self.get_accept_list(request)
+
+        # Check the acceptable media types against each renderer,
+        # attempting more specific media types first
+        # NB. The inner loop here isn't as bad as it first looks :)
+        #     Worst case is we're looping over len(accept_list) * len(self.renderers)
+        for media_type_set in order_by_precedence(accepts):
+            for renderer in renderers:
+                for media_type in media_type_set:
+                    if media_type_matches(renderer.media_type, media_type):
+                        # Return the most specific media type as accepted.
+                        if (_MediaType(renderer.media_type).precedence >
+                            _MediaType(media_type).precedence):
+                            # Eg client requests '*/*'
+                            # Accepted media type is 'application/json'
+                            return renderer, renderer.media_type
+                        else:
+                            # Eg client requests 'application/json; indent=8'
+                            # Accepted media type is 'application/json; indent=8'
+                            return renderer, media_type
+
+        raise exceptions.NotAcceptable(available_renderers=renderers)
+
+    def select_renderer2(self, request, renderers, format_suffix):
         download = request.GET.get('download')
         if (download is not None):
             r = DownloadRenderer()

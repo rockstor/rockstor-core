@@ -16,12 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from generic_sprobe import GenericSProbeView
-from smart_manager.models import NetStat
-from smart_manager.serializers import NetStatSerializer
+from advanced_sprobe import AdvancedSProbeView
+from smart_manager.models import NFSDClientDistribution
+from smart_manager.serializers import NFSDClientDistributionSerializer
 
 
-class NetStatView(GenericSProbeView):
+class NFSDClientDistribView(AdvancedSProbeView):
 
-    serializer_class = NetStatSerializer
-    model_obj = NetStat
+    serializer_class = NFSDClientDistributionSerializer
+    model_obj = NFSDClientDistribution
+    pname = 'nfs-client-distrib'
