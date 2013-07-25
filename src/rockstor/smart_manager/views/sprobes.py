@@ -21,90 +21,15 @@ from rest_framework.response import Response
 from rest_framework.authentication import (BasicAuthentication,
                                            SessionAuthentication,)
 from storageadmin.auth import DigestAuthentication
-from storageadmin.util import handle_exception
 from rest_framework.permissions import IsAuthenticated
-from system.services import init_service_op
-from smart_manager.models import (Service, ServiceStatus, SProbe)
 from django.conf import settings
-from django.db import transaction
-from smart_manager import serializers
-from smart_manager.serializers import SProbeSerializer
-import os
-import zmq
 
-import logging
-logger = logging.getLogger(__name__)
 
 class SProbeView(APIView):
     authentication_classes = (DigestAuthentication, SessionAuthentication,
                               BasicAuthentication,)
     permission_classes = (IsAuthenticated,)
     tap_map = settings.TAP_MAP
-    ctx = zmq.Context()
-    task_socket = ctx.socket(zmq.PUSH)
-    task_socket.connect('tcp://%s:%d' % settings.TAP_SERVER)
 
-    def get(self, request, pname=None, pid=None):
-        """
-        return the latest tap module
-        """
-        if (pname is not None and pname not in self.tap_map.keys()):
-            e_msg = ('Unknown tap: %s requested' % pname)
-            handle_exception(Exception(e_msg), request)
-
-        if (pname is None):
-            return Response(self.tap_map.keys())
-
-        if (pid is None):
-            ros = SProbe.objects.filter(name=pname).order_by('-ts')
-            return Response(SProbeSerializer(ros).data)
-
-        try:
-            ros = SProbe.objects.get(name=pname, id=pid)
-            return Response(SProbeSerializer(ros).data)
-        except:
-            e_msg = ('Probe: %s with id: %s does not exist' % (pname, pid))
-            handle_exception(Exception(e_msg), request)
-
-    @transaction.commit_on_success
-    def post(self, request, pname):
-        """
-        start a new tap
-        """
-        if (pname not in self.tap_map.keys()):
-            e_msg = ('Unknown tap: %s requested' % pname)
-            handle_exception(Exception(e_msg), request)
-
-        #if there's a recipe already running, throw error
-        if (SProbe.objects.filter(name=pname,
-                                  state__regex=r'(created|running)').exists()):
-            e_msg = ('Smart probe: %s already running' % pname)
-            handle_exception(Exception(e_msg), request)
-
-        #if max number of probes already running, throw error
-        if (len(SProbe.objects.filter(state__regex=r'(created|running)')) >
-            settings.MAX_TAP_WORKERS):
-            e_msg = ('Maximum number(%d) of smart probes running. Cannot '
-                     'start another one until one of them is stopped' %
-                     settings.MAX_TAP_WORKERS)
-            handle_exception(Exception(e_msg), request)
-
-        #get last id
-        cur_id = 0
-        try:
-            cur_id = SProbe.objects.all().order_by('-ts')[0].id
-        except:
-            logger.info('no previous probe ids found for: %s' % pname)
-
-        ro = SProbe(name=pname, smart=True, state='created')
-        kernel_module = os.path.join(settings.TAP_DIR,
-                                     settings.TAP_MAP[pname] + '.ko')
-        task = {
-            'module': kernel_module,
-            'tap': pname,
-            'action': 'start',
-            'roid': cur_id + 1,
-            }
-        ro.save()
-        self.task_socket.send_json(task)
-        return Response(SProbeSerializer(ro).data)
+    def get(self, request):
+        return Response(self.tap_map.keys())
