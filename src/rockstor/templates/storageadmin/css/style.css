@@ -1065,3 +1065,39 @@ table#disk-utilization-table thead tr .headerSortDown {
         background-image: url('/img/desc.gif');
 }
 
+/* nfs client share */
+.node circle {
+  cursor: pointer;
+  fill: #fff;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+
+.node text {
+  font-size: 11px;
+  cursor: pointer;
+}
+
+path.link {
+  fill: none;
+  stroke: #ccc;
+  stroke-width: 1.5px;
+}
+
+#nfs-share-client-msg {
+}
+
+#nfs-share-client-msg input[type="radio"], 
+#nfs-share-client-msg input[type="checkbox"] {
+    margin: 0px 4px 0px 0px;
+}
+
+#selected-node-detail {
+  font-size: 12px;
+  margin-top: 50px;
+  margin-left: 20px;
+  width: 180px;
+  min-height: 200px;
+  padding: 20px;
+}
+
