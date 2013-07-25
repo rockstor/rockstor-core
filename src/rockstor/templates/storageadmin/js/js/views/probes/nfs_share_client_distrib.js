@@ -24,6 +24,19 @@
  * 
  */
 
+/*
+ * The NFSShareClientDistrib probe displays the following information
+ * 1. Displays the top 5 clients on which there is nfs activity happening, 
+ *    and the shares per client where there is nfs activity
+ * 2. Allows the user to select the nfs io attribute (reads, writes, etc)
+ * acc to which the top clients are determined
+ * 3. Displays the selected attribute on every client or share 
+ *    that is displayed.
+ * 4. Allows the user to select a client to view details. The details list
+ *    all the collected nfs attributes for that node.
+ * 5. Updates this information every 5 seconds
+ */
+
 NfsShareClientDistribView = Backbone.View.extend({
   initialize: function() {
     this.probe = this.options.probe;
@@ -88,14 +101,15 @@ NfsShareClientDistribView = Backbone.View.extend({
         type: "GET",
         dataType: "json",
         success: function(data, textStatus, jqXHR) {
-          console.log("data length is " + data.length);
+          var rawData = data.results;
+          console.log("data length is " + rawData.length);
           console.log("ts is "  + _this.tsN);
-          if (data.length > 0 && _.isNull(_this.tsN)) {
+          if (rawData.length > 0 && _.isNull(_this.tsN)) {
             console.log("got data length > 0");
-            console.log(data[0]);
-            _this.tsN = (new Date(data[0].ts)).getTime();
+            console.log(rawData[0]);
+            _this.tsN = (new Date(rawData[0].ts)).getTime();
           }
-          _this.fullTree = _this.generateTree(data, "client");
+          _this.fullTree = _this.generateTree(rawData, "client");
           _this.sortTree(_this.fullTree, _this.selectedAttr);
           _this.currentTree = _this.getTopN(_this.fullTree, 5);
           console.log("current tree is ");
