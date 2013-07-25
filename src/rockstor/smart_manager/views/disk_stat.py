@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from generic_sprobe import GenericSProbeView
-from smart_manager.models import NetStat
-from smart_manager.serializers import NetStatSerializer
+from smart_manager.models import DiskStat
+from smart_manager.serializers import DiskStatSerializer
 
 
-class NetStatView(GenericSProbeView):
+class DiskStatView(GenericSProbeView):
 
-    serializer_class = NetStatSerializer
-    model_obj = NetStat
+    serializer_class = DiskStatSerializer
+    model_obj = DiskStat

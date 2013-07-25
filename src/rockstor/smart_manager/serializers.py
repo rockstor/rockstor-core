@@ -59,6 +59,10 @@ class SProbeSerializer(serializers.ModelSerializer):
     class Meta:
         model = SProbe
 
+class PaginatedSProbe(pagination.PaginationSerializer):
+    class Meta:
+        object_serializer_class = SProbeSerializer
+
 class NFSDCallDistributionSerializer(serializers.ModelSerializer):
     class Meta:
         model = NFSDCallDistribution

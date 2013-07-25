@@ -21,3 +21,8 @@ from sprobes import SProbeView
 from sprobes2 import SProbeView2
 from mem_info import MemInfoView
 from net_stat import NetStatView
+from disk_stat import DiskStatView
+from nfs_distrib import NFSDistribView
+from nfs_client_distrib import NFSDClientDistribView
+from nfs_share_distrib import NFSDShareDistribView
+from nfs_share_client_distrib import NFSDShareClientDistribView
