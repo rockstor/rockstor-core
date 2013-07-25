@@ -1,0 +1,27 @@
+<div id="nfs-share-client-msg">
+  <table>
+    <tr>
+      <td>Select root: </td>
+      <td>
+        <input type="radio" name="selectedRoot" checked value="Clients">Clients</input>
+        <input type="radio" name="selectedRoot" value="Shares">Shares</input>
+      </td>
+    </tr>
+    <tr>
+      <td>Select attribute: </td>
+      <td>
+        <input type="radio" name="selectedAttr" checked value="num_read">num_read</input>
+        <input type="radio" name="selectedAttr" value="num_write">num_write</input>
+        <input type="radio" name="selectedAttr" value="num_lookup">num_lookup</input>
+      </td>
+    </tr>
+  </table>
+  Click a node to view details. Click + / - to expand / close.
+  <br>
+  <br>
+  Displaying top 5 <span id="selectedRootName">Clients</span> by <span id="selectedAttrName">num_read</span>
+</div>
+
+<div id="nfs-share-client-graph" style="float: left;"></div>
+<div id="selected-node-detail" style="float: left;"></div>
+
