@@ -30,7 +30,7 @@ NfsShareClientDistribView = Backbone.View.extend({
     this.template = window.JST.probes_nfs_share_client_distrib;
     this.nfsAttrs = ["num_read", "num_write", "num_lookup"];
 
-    this.m = [20, 100, 20, 60]; 
+    this.m = [20, 100, 20, 20]; 
     this.w = 400 - this.m[1] - this.m[3],
     this.h = 400 - this.m[0] - this.m[2];
 
@@ -44,6 +44,8 @@ NfsShareClientDistribView = Backbone.View.extend({
     this.currentTree = null;
     this.selectedNode = null;
     this.selectedAttr = "num_read";
+    this.ts = null;
+    this.tsN = null;
     
   },
 
@@ -69,12 +71,30 @@ NfsShareClientDistribView = Backbone.View.extend({
     .attr("transform", "translate(" + this.m[3] + "," + this.m[0] + ")");
     var _this = this;
     this.renderIntervalId = window.setInterval(function() {
-
+      var dataUrl = _this.probe.dataUrl();
+      if (!_.isNull(_this.tsN)) {
+        console.log(_this.tsN);
+        var t1Date = new Date(_this.tsN);
+        console.log(t1Date);
+        var t2Date = new Date(_this.tsN + 1000*5); // 5 sec later
+        console.log(t2Date);
+        var t2 = t2Date.toISOString();
+        var t1 = t1Date.toISOString();
+        dataUrl = dataUrl + "?t1=" + t1 + "&t2=" + t2;
+      } 
+      console.log("dataUrl is " + dataUrl); 
       $.ajax({
-        url: this.probe.dataUrl(),
+        url: dataUrl,
         type: "GET",
         dataType: "json",
         success: function(data, textStatus, jqXHR) {
+          console.log("data length is " + data.length);
+          console.log("ts is "  + _this.tsN);
+          if (data.length > 0 && _.isNull(_this.tsN)) {
+            console.log("got data length > 0");
+            console.log(data[0]);
+            _this.tsN = (new Date(data[0].ts)).getTime();
+          }
           _this.fullTree = _this.generateTree(data, "client");
           _this.sortTree(_this.fullTree, _this.selectedAttr);
           _this.currentTree = _this.getTopN(_this.fullTree, 5);
@@ -93,7 +113,9 @@ NfsShareClientDistribView = Backbone.View.extend({
           }
           _this.updateDetail(_this.selectedNode, _this.selectedAttr);
           _this.prevTree = _this.currentTree;
-
+          if (!_.isNull(_this.tsN)) {
+            _this.tsN = _this.tsN + 1000*5;
+          }
         },
         error: function(request, status, error) {
           logger.debug(error);
@@ -122,36 +144,38 @@ NfsShareClientDistribView = Backbone.View.extend({
           return x.clientName == d.client; 
         });
         if (_.isUndefined(c)) {
-          c = { 
-            name: d.client, 
-            displayName: d.client,
-            label: d.client, 
-            clientName: d.client, 
-            children: [],
-            type: 'client',
-          };
-          _.each(_this.nfsAttrs, function(attr) {
-            c[attr] = 0;
-          })
+          //c = { 
+            //name: d.client, 
+            //displayName: d.client,
+            //label: d.client, 
+            //clientName: d.client, 
+            //children: [],
+            //type: 'client',
+          //};
+          //_.each(_this.nfsAttrs, function(attr) {
+            //c[attr] = 0;
+          //})
+          c = _this.createNode("client", d, _this.nfsAttrs);
           root.children.push(c);
         }
         var s = _.find(c.children, function(x) {
           return x.shareName == d.share;
         });
         if (_.isUndefined(s)) {
-          s = {
-            clientName: c.displayName,
-            shareName: d.share,
-            label: d.share,
-            name: c.name + "_" + d.share,
-            displayName: d.share,
-            type: 'share',
-          }
+          //s = {
+            //clientName: c.displayName,
+            //shareName: d.share,
+            //label: d.share,
+            //name: c.name + "_" + d.share,
+            //displayName: d.share,
+            //type: 'share',
+          //}
+          s = _this.createNode("share", d, _this.nfsAttrs, c);
           c.children.push(s);
         }
         _.each(_this.nfsAttrs, function(attr) {
           // copy attributes from data
-          s[attr] = d[attr];
+          s[attr] = s[attr] + d[attr];
           // accumulate attributes
           c[attr] = c[attr] + d[attr];
         });
@@ -227,6 +251,28 @@ NfsShareClientDistribView = Backbone.View.extend({
     return root;
   },
 
+  createNode: function(nodeType, d, nfsAttrs, c) {
+    var node = {};
+    if (nodeType == "client") {
+      node.type = "client";
+      node.name = d.client;
+      node.displayName = d.client;
+      node.label = d.client;
+      node.clientName = d.client;
+      node.children = [];
+    } else if (nodeType == "share") {
+      node.type = "share";
+      node.name = c.name + "_" + d.share;
+      node.displayName = d.share;
+      node.label = d.share;
+      node.clientName = c.displayName;
+      node.shareName = d.share;
+    }
+    _.each(nfsAttrs, function(attr) {
+      node[attr] = 0;
+    });
+    return node;
+  },
   // copies attrs from old root, does not copy children
   copyRoot: function(oldRoot, nfsAttrs) {
     var newRoot = {}; 
@@ -276,7 +322,12 @@ NfsShareClientDistribView = Backbone.View.extend({
       nodeEnter.append("svg:circle")
       .attr("r", 1e-6)
       .style("fill", function(d) { 
-        return d._children ? "lightsteelblue" : "#fff"; 
+        if (!_.isNull(_this.selectedNode) && 
+        _this.selectedNode.name == d.name) {
+          return "#DEFAA5"
+        } else {
+          return d._children ? "lightsteelblue" : "#fff"; 
+        }
       })
       .on("click", function(d) { 
         _this.setSelectedNode(d.name);
@@ -321,7 +372,12 @@ NfsShareClientDistribView = Backbone.View.extend({
       nodeUpdate.select("circle")
       .attr("r", 10)
       .style("fill", function(d) { 
-        return d._children ? "lightsteelblue" : "#fff"; 
+        if (!_.isNull(_this.selectedNode) && 
+        _this.selectedNode.name == d.name) {
+          return "#DEFAA5"
+        } else {
+          return d._children ? "lightsteelblue" : "#fff"; 
+        }
       });
 
       nodeUpdate.select("text.nodeLabel")

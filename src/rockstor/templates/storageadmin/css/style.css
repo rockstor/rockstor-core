@@ -1085,7 +1085,11 @@ path.link {
 }
 
 #nfs-share-client-msg {
-  margin-left: 60px;
+}
+
+#nfs-share-client-msg input[type="radio"], 
+#nfs-share-client-msg input[type="checkbox"] {
+    margin: 0px 4px 0px 0px;
 }
 
 #selected-node-detail {
@@ -1095,7 +1099,5 @@ path.link {
   width: 180px;
   min-height: 200px;
   padding: 20px;
-  border: 1px solid #aaa;
-  border-radius: 4px;
 }
 
