@@ -28,20 +28,42 @@ class SMConsole(BaseConsole):
         self.prompt = ('%s %s>' % (self.pprompt, self.greeting))
         self.baseurl = BaseConsole.url + 'sm/sprobes/'
 
-    def do_list(self, args):
-        url = self.baseurl
+    def do_data(self, args):
         if (args is not None):
             tap_fields = args.split()
-            url = ('%s/%s/%s/data/?%s' % (url, tap_fields[0], tap_fields[1],
-                                          tap_fields[2]))
-        stap_info = api_call(url)
-        print stap_info
+            url = ('%s%s/%s/data/?%s' % (self.baseurl, tap_fields[0],
+                                          tap_fields[1], tap_fields[2]))
+            stap_info = api_call(url)
+            print stap_info
+        else:
+            return self.do_help(args)
 
-    def do_run(self, args):
+    def do_data2(self, args):
+        if (args is not None):
+            tap_fields = args.split()
+            url = ('%s%s/?%s' % (self.baseurl, tap_fields[0], tap_fields[1]))
+            print api_call(url)
+        else:
+            return self.do_help(args)
+
+    def do_list(self, args):
+        print api_call(self.baseurl)
+
+    def do_stop(self, args):
+        if (args is not None):
+            tap_fields = args.split()
+            url = ('%s%s/%s/stop/' % (self.baseurl, tap_fields[0],
+                                      tap_fields[1]))
+            stap_info = api_call(url, data=None, calltype='post')
+            print stap_info
+        else:
+            return self.do_help(args)
+
+    def do_start(self, args):
         tap_fields = args.split()
         if (len(tap_fields) > 0):
             tname = tap_fields[0]
-            url = ('%ssm/stap/%s/' % (BaseConsole.url, tname))
+            url = ('%s%s/' % (self.baseurl, tname))
             stap_info = api_call(url, data=None, calltype='post')
             print stap_info
         else:
