@@ -197,11 +197,9 @@ ProbeWidget = RockStorWidgetView.extend({
           dataType: "json",
           global: false, // dont show global loading indicator
           success: function(data, textStatus, jqXHR) {
-            if (data.length > 0) {
-              window.clearInterval(_this.dataIntervalId);
-              _this.$('#probe-status').html(': Probe Running - receiving data');
-              _this.startRender();
-            }
+            window.clearInterval(_this.dataIntervalId);
+            _this.$('#probe-status').html(': Probe Running - receiving data');
+            _this.startRender();
           },
           error: function(jqXHR, textStatus, error) {
             logger.debug(error);
@@ -232,6 +230,9 @@ ProbeWidget = RockStorWidgetView.extend({
     }
     if (buttonDisabled(this.$('.stop-probe'))) {
       return false;
+    }
+    if (!_.isUndefined(this.statusIntervalId) && !_.isNull(this.statusIntervalId)) {
+      window.clearInterval(this.dataIntervalId);
     }
     if (!_.isUndefined(this.dataIntervalId) && !_.isNull(this.dataIntervalId)) {
       window.clearInterval(this.dataIntervalId);
@@ -319,7 +320,7 @@ ProbeWidget = RockStorWidgetView.extend({
     if (!_.isUndefined(this.currentProbeView) && !_.isNull(this.currentProbeView)) {
       this.currentProbeView.cleanup();
     }
-    this.$('#probe-content').empty();
+    //this.$('#probe-content').empty();
   },
 
   setProbeEvents: function(probe) {
