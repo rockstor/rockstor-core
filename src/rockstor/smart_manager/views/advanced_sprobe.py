@@ -20,7 +20,7 @@ from smart_manager.models import SProbe
 from django.conf import settings
 from django.db import transaction
 from storageadmin.util import handle_exception
-from smart_manager.serializers import SProbeSerializer
+from smart_manager.serializers import (SProbeSerializer, PaginatedSProbe)
 from rest_framework.response import Response
 import zmq
 import os
@@ -28,6 +28,7 @@ from django.http import Http404
 import logging
 logger = logging.getLogger(__name__)
 from generic_sprobe import GenericSProbeView
+from django.core.paginator import Paginator
 
 
 class AdvancedSProbeView(GenericSProbeView):
@@ -151,7 +152,7 @@ class AdvancedSProbeView(GenericSProbeView):
                 e_msg = ('command: %s not supported.' % command)
                 handle_exception(Exception(e_msg), request)
             if (command == 'status'):
-                return Response(SProbeSerializer(ro).data)
+                return self._paginated_response((ro,), request)
             if (ro.state == 'stopped' or ro.state == 'error'):
                 e_msg = ('Probe: %s with id: %s already in state: %s. It '
                          'cannot be stopped.' % (self.pname, pid, ro.state))
@@ -166,4 +167,11 @@ class AdvancedSProbeView(GenericSProbeView):
         task_socket = ctx.socket(zmq.PUSH)
         task_socket.connect('tcp://%s:%d' % settings.TAP_SERVER)
         task_socket.send_json(task)
-        return Response(SProbeSerializer(ro).data)
+        return self._paginated_response((ro,), request)
+
+    def _paginated_response(self, qs, request):
+        p = Paginator(qs, 100)
+        data = p.page(1)
+        serializer_context = {'request': request}
+        serializer = PaginatedSProbe(data, context=serializer_context)
+        return Response(serializer.data)
