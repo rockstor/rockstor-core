@@ -94,7 +94,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
     var _this = context;
     // showLoadingIndicator('service-loading-indicator', _this);
     $.ajax({
-      url: "/api/sm/cpumetric/", 
+      url: "/api/sm/sprobes/cpumetric/", 
       type: "GET",
       dataType: "json",
       global: false, // dont show global loading indicator
