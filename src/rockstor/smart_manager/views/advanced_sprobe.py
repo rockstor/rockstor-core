@@ -82,6 +82,7 @@ class AdvancedSProbeView(GenericSProbeView):
             command = kwargs['command']
         if (command is None):
             self.serializer_class = SProbeSerializer
+            self.paginate_by = None
             return SProbe.objects.filter(name=self.pname, id=pid)
 
         if (command != 'data'):
