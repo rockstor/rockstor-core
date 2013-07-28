@@ -15,15 +15,13 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-from sm import SmartManagerView
-from service import ServiceView
-from sprobes import SProbeView
-from sprobes2 import SProbeView2
-from mem_info import MemInfoView
-from net_stat import NetStatView
-from disk_stat import DiskStatView
-from nfs_distrib import NFSDistribView
-from nfs_client_distrib import NFSDClientDistribView
-from nfs_share_distrib import NFSDShareDistribView
-from nfs_share_client_distrib import NFSDShareClientDistribView
-from cpu_util import CPUMetricView
+
+from generic_sprobe import GenericSProbeView
+from smart_manager.models import CPUMetric
+from smart_manager.serializers import CPUMetricSerializer
+
+
+class CPUMetricView(GenericSProbeView):
+
+    serializer_class = CPUMetricSerializer
+    model_obj = CPUMetric

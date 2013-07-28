@@ -21,7 +21,7 @@ from smart_manager.views import (SmartManagerView, ServiceView, SProbeView,
                                  MemInfoView, NetStatView,
                                  DiskStatView, NFSDistribView,
                                  NFSDClientDistribView, NFSDShareDistribView,
-                                 NFSDShareClientDistribView)
+                                 NFSDShareClientDistribView, CPUMetricView)
 
 
 urlpatterns = patterns('',
@@ -36,6 +36,8 @@ urlpatterns = patterns('',
         name='meminfo-view'),
     url(r'^netstat/$', NetStatView.as_view(),
         name='netstat-view'),
+    url(r'^cpumetric/$', CPUMetricView.as_view(), name='cpumetric-view'),
+
 
     # Advanced smart probes
     url(r'^nfs-distrib/$', NFSDistribView.as_view(), name='nfsdistrib-view'),
