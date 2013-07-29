@@ -51,19 +51,13 @@ var AppRouter = Backbone.Router.extend({
   },
 
   before: function (route, param) {
-    logger.debug("In route before filter");
-    logger.debug("route is " + route);
-    logger.debug("setup_done is " + setup_done);
     if (route != "setup" && !setup_done) {
-      logger.debug("not setup - redirecting to setup page");
       app_router.navigate('setup', {trigger: true});
       return false;
     } else if (route == "setup" && setup_done) {
-      logger.debug("setup is already done - redirecting to dashboard");
       app_router.navigate('home', {trigger: true});
       return false;
     } else {
-      logger.debug("all ok - fwd to regular route");
     }
   },
 
