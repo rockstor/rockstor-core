@@ -80,7 +80,7 @@ SetupUsersView = Backbone.View.extend({
     event.preventDefault();
     var tgt = $(event.currentTarget);
     $(this.el).html(this.edit_user_template({
-      user: this.users.get(tgt.attr('data-id'))
+      user: this.users.get(tgt.attr('data-username'))
     }));
   },
   
@@ -95,8 +95,7 @@ SetupUsersView = Backbone.View.extend({
     var _this = this;
     var tgt = $(event.currentTarget);
     var user = new User({ 
-      id: tgt.attr('data-id'),
-      username: tgt.attr('data-username') 
+      name: tgt.attr('data-username') 
     });
     user.destroy({
       success: function(model, response, options) {
@@ -156,9 +155,11 @@ SetupUsersView = Backbone.View.extend({
     var tgt = $(event.currentTarget);
     var password = this.$('#password').val();
     var password_confirmation = this.$('#password_confirmation').val();
-    var user = new User();
+    var user = new User({
+      name: tgt.attr("data-username") 
+    });
     user.save(
-      { id: tgt.attr('data-id'), password: password } , 
+      { password: password } , 
       {
         success: function(model, response, options) {
           console.log('user updated successfully');

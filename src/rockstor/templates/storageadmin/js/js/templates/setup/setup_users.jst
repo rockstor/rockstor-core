@@ -43,9 +43,9 @@
       <tbody>
         <% users.each(function(user, index) { %>
           <tr>
-            <td><%= user.get('username') %></td>
+            <td><%= user.get('name') %></td>
             <td>
-              <a href="#" class="edit-user" data-id="<%= user.get('id') %>" data-username="<%= user.get('username') %>">Change password</a>
+              <a href="#" class="edit-user" data-id="<%= user.get('id') %>" data-username="<%= user.get('name') %>">Change password</a>
             </td>
           </tr>
         <% }); %>

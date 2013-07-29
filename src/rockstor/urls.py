@@ -113,10 +113,7 @@ urlpatterns = patterns('',
     url(r'^api/shares/(?P<sname>[A-Za-z0-9_]+)/iscsi/$',
         ShareIscsiView.as_view(), name='share-iscsi-view'),
 
-    # User configuration
-    url(r'^api/users/(?P<id>\d+)$', UserView.as_view(), name='user-view'),
-    url(r'^api/users/$', UserView.as_view(), name='user-view'),
-
+    (r'^api/users/', include('storageadmin.urls.users')),
 
 
     url(r'^api/support/$', SupportView.as_view(), name='support-view'),
