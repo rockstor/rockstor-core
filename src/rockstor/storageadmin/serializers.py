@@ -54,6 +54,7 @@ class ShareSerializer(serializers.ModelSerializer):
     pool = PoolInfoSerializer(source='pool')
     nfs_exports = NFSExportSerializer(source='nfsexport_set')
     smb_shares = SambaShareSerializer(source='sambashare_set')
+    usage = serializers.IntegerField(source='cur_usage')
 
     class Meta:
         model = Share
