@@ -20,8 +20,7 @@ from rest_framework import serializers
 from storageadmin.models import (Disk, Pool, Share, Snapshot, NFSExport,
                                  SambaShare, IscsiTarget, Appliance,
                                  SupportCase, DashboardConfig,
-                                 NetworkInterface)
-from django.contrib.auth.models import User
+                                 NetworkInterface, User)
 
 
 class DiskInfoSerializer(serializers.ModelSerializer):
