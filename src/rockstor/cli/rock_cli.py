@@ -28,7 +28,7 @@ from services_console import ServicesConsole
 from sm_console import SMConsole
 from support_console import SupportConsole
 from network_console import NetworkConsole
-
+from users_console import UsersConsole
 
 ASCII_LOGO = """
  __   __   __        __  ___  __   __
@@ -153,6 +153,16 @@ class RockConsole(BaseConsole):
             network_console.cmdloop()
         else:
             network_console.onecmd(args)
+
+    def do_users(self, args):
+        """
+        Users console
+        """
+        users_console = UsersConsole(self.greeting)
+        if (len(args) == 0):
+            users_console.cmdloop()
+        else:
+            users_console.onecmd(args)
 
 def main():
     rc = RockConsole()

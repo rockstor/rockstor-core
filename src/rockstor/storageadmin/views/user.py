@@ -16,10 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-"""
-view for anything at the share level
-"""
-
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.authentication import (BasicAuthentication,
@@ -28,52 +24,90 @@ from storageadmin.auth import DigestAuthentication
 from django.db import transaction
 from django.conf import settings
 from storageadmin.util import handle_exception
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User as DjangoUser
 from storageadmin.serializers import UserSerializer
+from storageadmin.models import User
+from generic_view import GenericView
+from system.users import (useradd, usermod, userdel, get_epasswd)
 
 import logging
 logger = logging.getLogger(__name__)
 
-class UserView(APIView):
-    
-    def get(self, request, id=None):
-        try:
-            if (id is None):
-                return Response(UserSerializer(User.objects.all()).data)
-            else:
-                user = UserSerializer(User.objects.get(pk=id))
-                return Response(user.data)
-        except Exception, e:
-            handle_exception(e, request)
+class UserView(GenericView):
+    serializer_class = UserSerializer
+
+    def get_queryset(self, *args, **kwargs):
+        if ('username' in kwargs):
+            self.paginate_by = None
+            return User.objects.filter(name=kwargs['username'])
+        return User.objects.all()
 
     @transaction.commit_on_success
     def post(self, request):
         try:
             username = request.DATA['username']
             password = request.DATA['password']
-            user = User.objects.create_user(username, None, password)
-            return Response(UserSerializer(user).data)
+            utype = request.DATA['utype']
+            admin = False
+            if (utype == 'admin'):
+                admin = True
+                auser = DjangoUser.objects.create_user(username, None,
+                                                       password)
+            max_uid = settings.START_UID
+            shell = settings.USER_SHELL
+            try:
+                max_uid = User.objects.all().order_by('-uid')[0].uid
+            except:
+                pass
+            uid = max_uid + 1
+            useradd(username, uid, shell)
+            usermod(username, password)
+            epw = get_epasswd(username)
+            suser = User(name=username, password=epw, uid=uid,
+                         gid=uid, admin=admin)
+            suser.save()
+            return Response(UserSerializer(suser).data)
         except Exception, e:
             handle_exception(e, request)
 
     @transaction.commit_on_success
-    def put(self, request, id):
+    def put(self, request, username):
+        suser, auser = self._get_user_objects(request, username)
         try:
             password = request.DATA['password']
-            user = User.objects.get(pk=id)
-            user.set_password(password)
-            user.save()
-            return Response(UserSerializer(user).data)
+            usermod(username, password)
+            if (auser is not None):
+                auser.set_password(password)
+                auser.save()
+            suser.password = get_epasswd(username)
+            suser.save()
+            return Response(UserSerializer(suser).data)
         except Exception, e:
             handle_exception(e, request)
 
     @transaction.commit_on_success
-    def delete(self, request, id):
+    def delete(self, request, username):
+        suser, auser = self._get_user_objects(request, username)
         try:
-            user_to_delete = User.objects.get(pk=id)
-            logger.debug('deleting user %s' % user_to_delete)
-            user_to_delete.delete()
+            epw = get_epasswd(username)
+            logger.debug('epw: %s' % repr(epw))
+            if (epw is not None):
+                userdel(username)
+            suser.delete()
+            if (auser is not None):
+                auser.delete()
+            logger.debug('deleted user %s' % username)
             return Response()
         except Exception, e:
             handle_exception(e, request)
 
+    def _get_user_objects(self, request, username):
+        try:
+            suser = User.objects.get(name=username)
+            auser = None
+            if (suser.admin is True):
+                auser = DjangoUser.objects.get(username=username)
+            return (suser, auser)
+        except:
+            e_msg = ('user: %s does not exist' % username)
+            handle_exception(Exception(e_msg), request)

@@ -19,7 +19,7 @@
  */
 </script>
 
-<h3>Change password for user <%= user.get('username') %></h3>
+<h3>Change password for user <%= user.get('name') %></h3>
 <div id="edit-user-msg"></div>
 <table id="edit-user-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="Edit user">
   <thead>
@@ -31,14 +31,14 @@
   </thead>
   <tbody>
     <tr>
-      <td><%= user.get('username') %></td>
+      <td><%= user.get('name') %></td>
       <td><input class="smallinput" type="password" id="password" name="password"/></td>
       <td><input class="smallinput" type="password" id="password_confirmation" name="password_confirmation"/></td>
     </tr>
   </tbody>
 </table>
 
-<button id="save-user" type="submit" class="btn btn-primary" data-id="<%= user.get('id') %>" data-username="<%= user.get('username') %>">Save</button>
+<button id="save-user" type="submit" class="btn btn-primary" data-id="<%= user.get('id') %>" data-username="<%= user.get('name') %>">Save</button>
 <button id="cancel-edit-user" type="submit" class="btn">Cancel</button>
 
 

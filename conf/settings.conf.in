@@ -337,3 +337,6 @@ PAGINATION = {
 	   'page_size': 5000,
 	   'max_limit': 10000,
 }
+
+START_UID = 5000
+USER_SHELL = os.path.dirname(__file__) + '/bin/rcli'
