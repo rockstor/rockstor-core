@@ -73,12 +73,7 @@ var HomeLayoutView = RockstoreLayoutView.extend({
         return appliance.get('current_appliance') == true; 
       })
     }
-    /*
-    if (_.isUndefined(current_appliance)) {
-      app_router.navigate('setup', {trigger: true});
-      return;
-    }
-    */
+    
     // set current appliance name
     $('#appliance-name').html(current_appliance.get('ip')); 
 
