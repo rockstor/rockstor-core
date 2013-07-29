@@ -50,6 +50,17 @@ var AppRouter = Backbone.Router.extend({
     "*path": "showHome"
   },
 
+  before: function (route, param) {
+    if (route != "setup" && !setup_done) {
+      app_router.navigate('setup', {trigger: true});
+      return false;
+    } else if (route == "setup" && setup_done) {
+      app_router.navigate('home', {trigger: true});
+      return false;
+    } else {
+    }
+  },
+
   doSetup: function() {
     RockStorSocket.removeAllListeners();
     $('#maincontent').empty();
