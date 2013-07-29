@@ -111,6 +111,7 @@ SetupView = RockstoreLayoutView.extend({
         },
         {
           success: function(model, response, options) {
+            setup_done = true;
             app_router.navigate('home', {trigger: true});
           },
           error: function(model, xhr, options) {
