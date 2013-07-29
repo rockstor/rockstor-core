@@ -185,6 +185,9 @@ RockStorWidgetView = Backbone.View.extend({
     if (!_.isUndefined(event) && !_.isNull(event)) {
       event.preventDefault();
     }
+    // cleanup widget
+    this.cleanup();
+    // remove widget li and rearrange
     var li = $(event.currentTarget).closest('li');
     console.log(li); 
     var ul = $(this.el).closest('ul'); // list
@@ -192,12 +195,18 @@ RockStorWidgetView = Backbone.View.extend({
     li.remove();
     ul.trigger('ss-rearrange');
     this.parentView.saveWidgetConfiguration();
+    // remove from parent array
+    this.parentView.removeWidget();
   },
   
   download: function(event) {
     if (!_.isUndefined(event) && !_.isNull(event)) {
       event.preventDefault();
     }
+  },
+
+  cleanup: function() {
+    logger.debug("In RockStorWidgetView close");
   }
 
 });
