@@ -24,6 +24,6 @@ urlpatterns = patterns(
     '',
     # User configuration
     url(r'^$', UserView.as_view(), name='user-view'),
-    url(r'(?P<username>[A-Za-z]+[A-Za-z0-9]*)/$', UserView.as_view(),
+    url(r'(?P<username>[A-Za-z]+[A-Za-z0-9]*)$', UserView.as_view(),
         name='user-view'),
 )
