@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.db import models
 from storageadmin.models import Pool
+from smart_manager.models import ShareUsage
 
 
 class Share(models.Model):
@@ -31,8 +32,13 @@ class Share(models.Model):
     uuid = models.CharField(max_length=100, null=True)
     """total size in GB"""
     size = models.IntegerField()
-    """free space in GB"""
-    free = models.IntegerField()
+
+    def cur_usage(self, *args, **kwargs):
+        try:
+            su = ShareUsage.objects.filter(name=self.name).order_by('-ts')[0]
+            return su.usage
+        except:
+            return -1
 
     class Meta:
         app_label = 'storageadmin'

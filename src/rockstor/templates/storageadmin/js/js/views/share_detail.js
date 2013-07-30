@@ -47,8 +47,8 @@ ShareDetailView = Backbone.View.extend({
         r = 100,                            //radius
         //color = d3.scale.category20c();     //builtin range of colors
         total_size = parseInt(model.get('size'));
-        free_size = parseInt(model.get('free'));
-        used_size = total_size - free_size;
+        used_size = parseInt(model.get('usage'));
+        free_size = total_size - used_size;
         data = [{"label":"used", "value":used_size, "color":"#7C807D"},
         {"label":"free", "value":free_size, "color": "#3AF265"}];
 
