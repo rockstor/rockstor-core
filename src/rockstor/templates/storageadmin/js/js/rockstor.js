@@ -196,7 +196,7 @@ RockStorWidgetView = Backbone.View.extend({
     ul.trigger('ss-rearrange');
     this.parentView.saveWidgetConfiguration();
     // remove from parent array
-    this.parentView.removeWidget();
+    this.parentView.removeWidget(this.name);
   },
   
   download: function(event) {
