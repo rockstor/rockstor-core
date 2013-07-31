@@ -325,6 +325,16 @@ ProbeWidget = RockStorWidgetView.extend({
     //this.$('#probe-content').empty();
   },
 
+  cleanup: function() {
+    if (!_.isUndefined(this.statusIntervalId)) {
+      window.clearInterval(this.statusIntervalId);
+    }
+    if (!_.isUndefined(this.dataIntervalId)) {
+      window.clearInterval(this.dataIntervalId);
+    }
+
+  },
+
   setProbeEvents: function(probe) {
     probe.on(this.probeEvents.START, this.start, this);
     probe.on(this.probeEvents.RUN, this.run, this);

@@ -128,10 +128,10 @@ var HomeLayoutView = RockstoreLayoutView.extend({
       _this.saveWidgetConfiguration();
     });
 
-    this.widgetsContainer.on('ss-rearranged', function(e, selected) {
-      logger.debug('in rearrange'); 
-      //_this.saveWidgetConfiguration();
-    });
+    //this.widgetsContainer.on('ss-rearranged', function(e, selected) {
+    //  logger.debug('in rearrange'); 
+    //  //_this.saveWidgetConfiguration();
+    //});
   },
 
   addWidget: function(widgetConf, container, cleanupArray) {
@@ -157,8 +157,14 @@ var HomeLayoutView = RockstoreLayoutView.extend({
   },
   
   removeWidget: function(name) {
-    var li = this.$('div#'+name+'_widget').closest('li');
-    li.remove();
+    var i=0, found=false; 
+    for (i=0; i<this.cleanupArray.length; i++) {
+      if (this.cleanupArray[i].name == name) {
+        found = true;
+        break;
+      }
+    }
+    if (found) delete this.cleanupArray[i];
   },
 
   saveWidgetConfiguration: function() {

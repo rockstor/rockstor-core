@@ -286,6 +286,13 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
     return "%s (%p.2%)"
     //return "%s (" + humanize.filesize(xval, 1024, 1) + ")"; 
   },
+  
+  cleanup: function() {
+    logger.debug('clearing setInterval in network_utilization widget'); 
+    if (!_.isUndefined(this.intervalId)) {
+      window.clearInterval(this.intervalId);
+    }
+  }
 
 });
 
