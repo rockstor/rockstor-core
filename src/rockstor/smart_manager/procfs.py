@@ -27,9 +27,10 @@ import os
 from datetime import datetime
 from django.utils.timezone import utc
 
-from models import (CPUMetric, LoadAvg, MemInfo, PoolUsage, DiskStat)
-from storageadmin.models import (Disk, Pool)
-from fs.btrfs import pool_usage
+from models import (CPUMetric, LoadAvg, MemInfo, PoolUsage, DiskStat,
+                    ShareUsage)
+from storageadmin.models import (Disk, Pool, Share)
+from fs.btrfs import pool_usage, shares_usage
 from proc.net import network_stats
 
 import logging
@@ -178,6 +179,16 @@ class ProcRetreiver(Process):
                 usage = pool_usage(arb_disk)
                 pu = PoolUsage(pool=p.name, usage=usage[1])
                 self.q.put(pu)
+
+                #get usage of all shares in this pool
+                pool_device = Disk.objects.filter(pool=p)[0].name
+                share_map = {}
+                for share in Share.objects.filter(pool=p):
+                    share_map[share.qgroup] = share.name
+                usaged = shares_usage(p.name, pool_device, share_map)
+                for s in usaged.keys():
+                    su = ShareUsage(name=s, usage=usaged[s])
+                    self.q.put(su)
             except:
                 logger.debug('command exception while getting pool usage '
                              'for: %s' % (p.name))

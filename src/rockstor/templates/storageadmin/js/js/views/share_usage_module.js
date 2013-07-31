@@ -48,8 +48,8 @@ ShareUsageModule = RockstoreModuleView.extend({
     var innerRadius = 0;
     
     total = parseInt(this.model.get('size')*1024);
-    free = parseInt(this.model.get('free')*1024);
-    used = total - free;
+    used = parseInt(this.model.get('usage')*1024);
+    free = total - used
     var dataset = [free, used]
     var dataLabels = ['free', 'used']
 

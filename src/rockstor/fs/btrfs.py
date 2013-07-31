@@ -219,6 +219,29 @@ def share_usage(pool_name, pool_device, share_id):
                         share_id)
     return usage
 
+def shares_usage(pool_name, pool_device, share_map):
+    #don't mount the pool if at least one share in the map is mounted.
+    usage_map = {}
+    mnt_pt = None
+    umount = False
+    for s in share_map.keys():
+        if (is_share_mounted(share_map[s])):
+            mnt_pt = ('%s%s' % (DEFAULT_MNT_DIR, share_map[s]))
+            break
+    if (mnt_pt is None):
+        mnt_pt = mount_root(pool_name, '/dev/' + pool_device)
+        umount = True
+    cmd = [BTRFS, 'qgroup', 'show', mnt_pt]
+    out, err, rc = run_command(cmd)
+    for line in out:
+        fields = line.split()
+        if (len(fields) > 0 and fields[0] in share_map.keys()):
+            usage = int(fields[-1]) / 1024 # usage in KB
+            usage_map[share_map[fields[0]]] = usage
+    if (umount is True):
+        umount_root(mnt_pt)
+    return usage_map
+
 def pool_usage(pool_device):
     pool_device = ('/dev/%s' % pool_device)
     cmd = [BTRFS_DEBUG_TREE, '-r', pool_device]
