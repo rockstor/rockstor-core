@@ -30,10 +30,13 @@ CpuUsageWidget = RockStorWidgetView.extend({
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.dashboard_widgets_cpuusage;
-    this.numSamples = 5;
+    this.numSamples = 60;
     this.cpu_data = [];
-    this.modes = ['smode', 'umode', 'umode_nice', 'idle'];
-    this.colors = ["#CCC1F5", "#A39BC2", "#BAB8C2", "#FFFFFF"];
+    //this.modes = ['smode', 'umode', 'umode_nice', 'idle'];
+    this.modes = ['smode', 'umode', 'umode_nice'];
+    this.colors = ["#E41A1C", "#377EB8", "#4DAF4A", "#FFFFFF"];
+    //this.colors = ["#CCC1F5", "#A39BC2", "#BAB8C2", "#FFFFFF"];
+    this.numCpus = 4; // TODO get from backend
     this.cpuData = {};
     this.avg = this.genEmptyCpuData(this.numSamples);
     this.cpuNames = [];
@@ -47,27 +50,32 @@ CpuUsageWidget = RockStorWidgetView.extend({
         clickable: true,
         show : true,
         borderWidth: {
-          top: 0,
-          right: 1,
+          top: 1,
+          right: 0,
           bottom: 1,
-          left: 0
+          left: 1
         },
-        borderColor: "#aaa"
+        aboveData: true,
+        borderColor: "#ddd",
+        color: "#aaa"
       },
 			series: {
         stack: true,
         stackpercent : false,
-        bars: { show: true, barWidth: 10*this.numSamples/300, fillColor: {colors:[{opacity: 1},{opacity: 1}]}, align: "center" },
+        bars: { show: true, barWidth: 10*this.numCpus/300, fillColor: {colors:[{opacity: 1},{opacity: 1}]}, align: "center" },
         lines: { show: false, fill: false },
         shadowSize: 0	// Drawing is faster without shadows
 			},
 			yaxis: { 
         min: 0, 
         max: 100,
-        tickLength: 2
+        ticks: 4,
+        //tickLength: 2,
+        tickFormatter: this.pctTickFormatter,
       },
       xaxis: { 
-        tickFormatter: this.allCpuTickFormatter(this.cpuNames, this)
+        tickLength: 2,
+        tickFormatter: this.allCpuTickFormatter(this.cpuNames, this),
       },
       legend: { show: false },
       
@@ -75,22 +83,37 @@ CpuUsageWidget = RockStorWidgetView.extend({
 
 
     this.graphOptions = { 
-      //grid : { hoverable : true },
+      grid : { 
+        borderWidth: {
+          top: 1,
+          right: 1,
+          bottom: 1,
+          left: 1
+        },
+        aboveData: true,
+        borderColor: "#ddd",
+        color: "#aaa"
+      },
 			series: {
         stack: true,
         stackpercent : false,
         //bars: { show: true, barWidth: 0.4, fillColor: {colors:[{opacity: 1},{opacity: 1}]}, align: "center" },
         lines: { show: true, fill: 0.9 },
-        shadowSize: 0	// Drawing is faster without shadows
+        shadowSize: 0	
 			},
-			yaxis: { min: 0, max: 100 },
-      //xaxis: {  
-      //  tickFormatter: this.cpuTickFormatter,
-      //  tickSize: 12,
-      //  min: 0, 
-      //  max: 60 
-      //  },
-      legend : { container : "#legends", noColumns : 3 },
+			yaxis: { 
+        min: 0, 
+        max: 100,
+        ticks: 4,
+        tickFormatter: this.pctTickFormatter,
+      },
+      xaxis: {  
+        tickFormatter: this.cpuTickFormatter,
+        tickSize: 12,
+        min: 0, 
+        max: 60,
+      },
+      legend : { container : "#cpuusage-legend", noColumns : 4 },
       //tooltip: true,
       //tooltipOpts: { content: "<b>%s</b> (%p.2%)" }
     };
@@ -107,6 +130,11 @@ CpuUsageWidget = RockStorWidgetView.extend({
     return (5 - (parseInt(val)/12)).toString() + ' m';
   },
 
+  pctTickFormatter: function(val, axis) {
+    return val + "%";
+  },
+  
+
   render: function() {
     // call render of base
     this.constructor.__super__.render.apply(this, arguments);
@@ -120,7 +148,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
     }));
     
     
-    this.intervalId = window.setTimeout(function() {
+    this.intervalId = window.setInterval(function() {
       return function() { _this.getData(_this); }
     }(), this.updateInterval)
     
@@ -147,6 +175,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
     });
     */
     var rawData = _this.genRawData(); 
+    console.log(rawData);
     _this.parseData(rawData); 
     _this.updateGraph();
     
@@ -186,7 +215,6 @@ CpuUsageWidget = RockStorWidgetView.extend({
       _this.avg[mode].push(tmpSum[mode]);
       _this.avg[mode].splice(0,1);
     })
-    console.log(_this.avg);
 
     _this.allCpuGraphData = [];
     _.each(_this.modes, function(mode, i) {
@@ -214,7 +242,6 @@ CpuUsageWidget = RockStorWidgetView.extend({
         "color": _this.colors[i]
       });
     });
-    console.log(_this.avgGraphData);
   },
 
   genEmptyCpuData: function(numSamples) {
@@ -233,9 +260,8 @@ CpuUsageWidget = RockStorWidgetView.extend({
   genRawData: function(n) {
     //{"id": 96262, "name": "cpu1", "umode": 188641, "umode_nice": 0, "smode": 269451, "idle": 17115082, "ts": "2013-07-29T00:44:09.250Z"}, 
 
-    var n = 4; // no of cpus
     var rawData = [];
-    for (i=0; i<n; i++) {
+    for (i=0; i<this.numCpus; i++) {
       var cpu = {name: "cpu" + i};
       cpu.smode = 10 + parseInt(Math.random()*10);
       cpu.umode = 40 + parseInt(Math.random()*10);
@@ -249,9 +275,10 @@ CpuUsageWidget = RockStorWidgetView.extend({
 
   updateGraph: function(data) {
     this.allCpuGraphOptions.xaxis.ticks = this.cpuNames.length;
+    console.log(this.allCpuGraphData);
     $.plot($("#cpuusage-all"), this.allCpuGraphData, this.allCpuGraphOptions);
-    $("#cpuusage-all").bind("plotclick", function(event, pos, item) {
-    });
+    //$("#cpuusage-all").bind("plotclick", function(event, pos, item) {
+    //});
     $.plot($("#cpuusage"), this.avgGraphData, this.graphOptions);
   },
 
