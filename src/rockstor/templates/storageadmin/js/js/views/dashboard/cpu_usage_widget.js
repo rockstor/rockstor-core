@@ -35,6 +35,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
     this.modes = ['smode', 'umode', 'umode_nice', 'idle'];
     this.colors = ["#CCC1F5", "#A39BC2", "#BAB8C2", "#FFFFFF"];
     this.cpuData = {};
+    this.avg = this.genEmptyCpuData(this.numSamples);
     this.cpuNames = [];
     this.allCpuGraphData = null;
     for (var i=0; i < this.numSamples; i++) {
@@ -43,11 +44,12 @@ CpuUsageWidget = RockStorWidgetView.extend({
     this.updateInterval = 2000;
     this.allCpuGraphOptions = { 
       grid : { 
+        clickable: true,
         show : true,
         borderWidth: {
           top: 0,
           right: 1,
-          bottom: 0,
+          bottom: 1,
           left: 0
         },
         borderColor: "#aaa"
@@ -59,7 +61,11 @@ CpuUsageWidget = RockStorWidgetView.extend({
         lines: { show: false, fill: false },
         shadowSize: 0	// Drawing is faster without shadows
 			},
-			yaxis: { min: 0, max: 100 },
+			yaxis: { 
+        min: 0, 
+        max: 100,
+        tickLength: 2
+      },
       xaxis: { 
         tickFormatter: this.allCpuTickFormatter(this.cpuNames, this)
       },
@@ -73,20 +79,20 @@ CpuUsageWidget = RockStorWidgetView.extend({
 			series: {
         stack: true,
         stackpercent : false,
-        bars: { show: true, barWidth: 0.4, fillColor: {colors:[{opacity: 1},{opacity: 1}]}, align: "center" },
-        lines: { show: false, fill: false },
+        //bars: { show: true, barWidth: 0.4, fillColor: {colors:[{opacity: 1},{opacity: 1}]}, align: "center" },
+        lines: { show: true, fill: 0.9 },
         shadowSize: 0	// Drawing is faster without shadows
 			},
-			yaxis: { min: 0, max: 110 },
-      xaxis: {  
-        tickFormatter: this.cpuTickFormatter,
-        tickSize: 12,
-        min: 0, 
-        max: 60 
-        },
+			yaxis: { min: 0, max: 100 },
+      //xaxis: {  
+      //  tickFormatter: this.cpuTickFormatter,
+      //  tickSize: 12,
+      //  min: 0, 
+      //  max: 60 
+      //  },
       legend : { container : "#legends", noColumns : 3 },
-      tooltip: true,
-      tooltipOpts: { content: "<b>%s</b> (%p.2%)" }
+      //tooltip: true,
+      //tooltipOpts: { content: "<b>%s</b> (%p.2%)" }
     };
     this.prev_cpu_data = null;
   },
@@ -142,7 +148,6 @@ CpuUsageWidget = RockStorWidgetView.extend({
     */
     var rawData = _this.genRawData(); 
     _this.parseData(rawData); 
-    console.log(_this.allCpuGraphData);
     _this.updateGraph();
     
     
@@ -158,6 +163,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
 
   parseData: function(data) {
     var _this = this;
+    var tmpSum = {};
     _.each(data, function(d) {
       var cpu = _this.cpuData[d.name];
       if (_.isUndefined(cpu)) {
@@ -167,10 +173,21 @@ CpuUsageWidget = RockStorWidgetView.extend({
       _.each(_this.modes, function(mode) {
         cpu[mode].push(d[mode]);
         cpu[mode].splice(0,1);
+        if (!_.isUndefined(tmpSum[mode])) {
+          tmpSum[mode] = tmpSum[mode] + d[mode];
+        } else {
+          tmpSum[mode] = d[mode];
+        }
       });
     });
     this.cpuNames = _.keys(this.cpuData);
-    console.log(this.cpuNames);
+    _.each(_this.modes, function(mode) {
+      tmpSum[mode] = tmpSum[mode]/_this.cpuNames.length;  
+      _this.avg[mode].push(tmpSum[mode]);
+      _this.avg[mode].splice(0,1);
+    })
+    console.log(_this.avg);
+
     _this.allCpuGraphData = [];
     _.each(_this.modes, function(mode, i) {
       var tmp = [];
@@ -185,7 +202,19 @@ CpuUsageWidget = RockStorWidgetView.extend({
       });
 
     });
-    
+    _this.avgGraphData = [];
+    _.each(_this.modes, function(mode, i) {
+      var tmp = [];
+      _.each(_this.avg[mode], function(d,j) {
+        tmp.push([j+1, d]);
+      });
+      _this.avgGraphData.push({
+        "label": mode,
+        "data": tmp,
+        "color": _this.colors[i]
+      });
+    });
+    console.log(_this.avgGraphData);
   },
 
   genEmptyCpuData: function(numSamples) {
@@ -198,6 +227,8 @@ CpuUsageWidget = RockStorWidgetView.extend({
     });
     return cpu;
   },
+
+  
 
   genRawData: function(n) {
     //{"id": 96262, "name": "cpu1", "umode": 188641, "umode_nice": 0, "smode": 269451, "idle": 17115082, "ts": "2013-07-29T00:44:09.250Z"}, 
@@ -218,7 +249,10 @@ CpuUsageWidget = RockStorWidgetView.extend({
 
   updateGraph: function(data) {
     this.allCpuGraphOptions.xaxis.ticks = this.cpuNames.length;
-    $.plot("#cpuusage_all", this.allCpuGraphData, this.allCpuGraphOptions);
+    $.plot($("#cpuusage-all"), this.allCpuGraphData, this.allCpuGraphOptions);
+    $("#cpuusage-all").bind("plotclick", function(event, pos, item) {
+    });
+    $.plot($("#cpuusage"), this.avgGraphData, this.graphOptions);
   },
 
   /* Calculate utilization as difference in data for two consecutive times */
