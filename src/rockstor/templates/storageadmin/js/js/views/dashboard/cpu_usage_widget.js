@@ -175,7 +175,6 @@ CpuUsageWidget = RockStorWidgetView.extend({
     });
     */
     var rawData = _this.genRawData(); 
-    console.log(rawData);
     _this.parseData(rawData); 
     _this.updateGraph();
     
@@ -275,7 +274,6 @@ CpuUsageWidget = RockStorWidgetView.extend({
 
   updateGraph: function(data) {
     this.allCpuGraphOptions.xaxis.ticks = this.cpuNames.length;
-    console.log(this.allCpuGraphData);
     $.plot($("#cpuusage-all"), this.allCpuGraphData, this.allCpuGraphOptions);
     //$("#cpuusage-all").bind("plotclick", function(event, pos, item) {
     //});
