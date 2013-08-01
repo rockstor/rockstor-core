@@ -98,7 +98,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
         stack: true,
         stackpercent : false,
         //bars: { show: true, barWidth: 0.4, fillColor: {colors:[{opacity: 1},{opacity: 1}]}, align: "center" },
-        lines: { show: true, fill: 0.9 },
+        lines: { show: true, fill: 0.5, lineWidth: 1 },
         shadowSize: 0	
 			},
 			yaxis: { 
