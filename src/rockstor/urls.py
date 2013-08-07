@@ -21,7 +21,8 @@ from storageadmin.views import (DiskView, SystemDiskView, PoolView, ShareView,
                                 SnapshotView, InfoView, SetupWizardView,
                                 ShareIscsiView, AppliancesView, LoginView,
                                 UserView, ShareSambaView, SupportView,
-                                DashboardConfigView, ShareNFSView, NetworkView)
+                                DashboardConfigView, ShareNFSView, NetworkView,
+                                SetupUserView)
 from smart_manager.views import (SmartManagerView, ServiceView, SProbeView,
                                  SProbeView2, MemInfoView, NetStatView,
                                  DiskStatView, NFSDistribView)
@@ -53,6 +54,7 @@ urlpatterns = patterns('',
     url(r'^logout_user$', 'storageadmin.views.logout_user', name='logout_user'),
     url(r'^home$', 'storageadmin.views.home', name='home'),
     url(r'^setupwizard$', SetupWizardView.as_view(), name='setupwizard'),
+    url(r'^setup_user$', SetupUserView.as_view(), name='setupwizard'),
     url(r'^site_media/(?P<path>.*)$', 'django.views.static.serve',
             { 'document_root': site_media }),
     url(r'^css/(?P<path>.*)$', 'django.views.static.serve',

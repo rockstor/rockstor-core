@@ -172,6 +172,11 @@
       {% else %}
       logged_in = false;
       {% endif %}
+      {% if setup_user %}
+      RockStorGlobals.setup_user = true; 
+      {% else %}
+      RockStorGlobals.setup_user = false; 
+      {% endif %}
     </script>
   </body>
 </html>

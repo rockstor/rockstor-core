@@ -32,3 +32,5 @@ from support_case import SupportCase
 from dashboard_config import DashboardConfig
 from network_interface import NetworkInterface
 from user import User
+from setup import Setup
+

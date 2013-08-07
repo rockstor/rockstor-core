@@ -28,34 +28,75 @@ LoginView = Backbone.View.extend({
   tagName: 'div',
   events: {
     'click #sign_in': 'login',
+    'click #create_user': 'createUser',
   },
   initialize: function() {
-    this.template = window.JST.home_login_template;
+    this.login_template = window.JST.home_login_template;
+    this.user_create_template = window.JST.home_user_create_template;
   },
 
   render: function() {
     console.log("rendering LoginView");
-    $(this.el).append(this.template());
+    if (RockStorGlobals.setup_user) {
+      $(this.el).append(this.login_template());
+    } else {
+      $(this.el).append(this.user_create_template());
+    }
 
     return this;
   },
 
   login: function(event) {
-    event.preventDefault();
+    if (!_.isUndefined(event) && !_.isNull(event)) {
+      event.preventDefault();
+    }
+    this.makeLoginRequest(
+      this.$("#username").val(),
+      this.$("#password").val());
+  },
+  
+  makeLoginRequest: function(username, password) {
     $.ajax({
       url: "/api/login",
       type: "POST",
       dataType: "json",
       data: {
-        username: this.$("#username").val(),
-        password: this.$("#password").val()
+        username: username,
+        password: password,
       }, 
       success: function(data, status, xhr) {
         console.log("logged in successfully");
         logged_in = true;
         refreshNavbar();
         app_router.navigate('home', {trigger: true}) 
+      },
+      error: function(xhr, status, error) {
+        showError(xhr.responseText);	
+      }
+    });
 
+  },
+
+  createUser: function(event) {
+    var _this = this;
+    if (!_.isUndefined(event) && !_.isNull(event)) {
+      event.preventDefault();
+    }
+    var username = this.$("#username").val();
+    var password = this.$("#password").val();
+    console.log("Create user clicked");
+    $.ajax({
+      url: "/setup_user",
+      type: "POST",
+      dataType: "json",
+      data: {
+        username: username,
+        password: password,
+        utype: "admin"
+      }, 
+      success: function(data, status, xhr) {
+        console.log("created user successfully");
+        _this.makeLoginRequest(username, password);
       },
       error: function(xhr, status, error) {
         showError(xhr.responseText);	
