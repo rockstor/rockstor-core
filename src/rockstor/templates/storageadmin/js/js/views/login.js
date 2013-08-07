@@ -56,6 +56,7 @@ LoginView = Backbone.View.extend({
   },
   
   makeLoginRequest: function(username, password) {
+    var _this = this;
     $.ajax({
       url: "/api/login",
       type: "POST",
@@ -71,7 +72,7 @@ LoginView = Backbone.View.extend({
         app_router.navigate('home', {trigger: true}) 
       },
       error: function(xhr, status, error) {
-        showError(xhr.responseText);	
+        _this.$(".messages").html("<li>Login incorrect!</li>");
       }
     });
 
@@ -99,7 +100,7 @@ LoginView = Backbone.View.extend({
         _this.makeLoginRequest(username, password);
       },
       error: function(xhr, status, error) {
-        showError(xhr.responseText);	
+        _this.$(".messages").html("<li>" + xhr.responseText + "</li>");
       }
     });
 
