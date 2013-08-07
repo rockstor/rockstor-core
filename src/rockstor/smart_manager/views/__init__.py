@@ -27,3 +27,4 @@ from nfs_client_distrib import NFSDClientDistribView
 from nfs_share_distrib import NFSDShareDistribView
 from nfs_share_client_distrib import NFSDShareClientDistribView
 from cpu_util import CPUMetricView
+from nfs_uid_gid import NFSDUidGidDistributionView
