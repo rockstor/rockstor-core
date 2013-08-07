@@ -35,9 +35,8 @@ SetupView = RockstoreLayoutView.extend({
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.setup_setup;
-    this.pages = [SetupSystemView, SetupUsersView, SetupDisksView, 
-    SetupNetworkView];
-    this.current_page = 0;
+    this.pages = [null, SetupSystemView, SetupDisksView, SetupNetworkView];
+    this.current_page = 1;
     this.current_view = null;
     this.sysinfo = new SysInfo();
     this.appliances = new ApplianceCollection();
@@ -74,7 +73,7 @@ SetupView = RockstoreLayoutView.extend({
   },
 
   prevPage: function() {
-    if (this.current_page > 0) {
+    if (this.current_page > 1) {
       this.current_page = this.current_page - 1;
       this.renderCurrentPage();
       this.modifyButtonText();

@@ -28,7 +28,7 @@ LoginView = Backbone.View.extend({
   tagName: 'div',
   events: {
     'click #sign_in': 'login',
-    'click #create_user': 'createUser',
+    'click #create-user': 'createUser',
   },
   initialize: function() {
     this.login_template = window.JST.home_login_template;
