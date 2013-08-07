@@ -297,6 +297,7 @@ TAP_MAP = {
 	'nfs-client-distrib': 'nfsd/nfsd_distrib_client',
 	'nfs-share-distrib': 'nfsd/nfsd_distrib_share',
 	'nfs-share-client-distrib': 'nfsd/nfsd_distrib_share_client',
+	'nfs-uid-gid-distrib': 'nfsd/nfsd_distrib_uid_gid',
 }
 TAP_SERVER = ('127.0.0.1', ${django-settings-conf:tapport})
 MAX_TAP_WORKERS = 10

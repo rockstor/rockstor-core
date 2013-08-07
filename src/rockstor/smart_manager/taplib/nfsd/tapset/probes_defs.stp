@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 probe nfsd.proc4.lookup.sp = kernel.function("nfsd4_lookup").call !,
                            module("nfsd").function("nfsd4_lookup").call ?
 {
-        client_ip = addr_from_rqst_str($rqstp)
-        proto = $rqstp->rq_prot
+        client_ip = kernel_string($rqstp->rq_client->name)
+	proto = $rqstp->rq_prot
         version = 4
         fh = & @cast($cstate, "nfsd4_compound_state", "kernel:nfsd")->current_fh
 
@@ -28,6 +28,8 @@ probe nfsd.proc4.lookup.sp = kernel.function("nfsd4_lookup").call !,
         filename  = kernel_string_n($lookup->lo_name, $lookup->lo_len)
 	share = kernel_string($cstate->current_fh->fh_export->ex_path->mnt->mnt_root->d_name->name)
 
+	uid = $rqstp->rq_cred->cr_uid
+	gid = $rqstp->rq_cred->cr_gid
         name = "nfsd.proc4.lookup"
         argstr = sprintf("%s", kernel_string_n($lookup->lo_name, $lookup->lo_len))
 }
@@ -35,7 +37,7 @@ probe nfsd.proc4.lookup.sp = kernel.function("nfsd4_lookup").call !,
 probe nfsd.proc4.read.sp = kernel.function("nfsd4_read").call !,
                      	 module("nfsd").function("nfsd4_read").call ?
 {
-        client_ip = addr_from_rqst_str($rqstp)
+	client_ip = kernel_string($rqstp->rq_client->name)
         proto = $rqstp->rq_prot
         version = 4
         fh = & @cast($cstate, "nfsd4_compound_state", "kernel:nfsd")->current_fh
@@ -46,6 +48,8 @@ probe nfsd.proc4.read.sp = kernel.function("nfsd4_read").call !,
         vlen = $read->rd_vlen
         share = kernel_string($cstate->current_fh->fh_export->ex_path->mnt->mnt_root->d_name->name)
 
+	uid = $rqstp->rq_cred->cr_uid
+	gid = $rqstp->rq_cred->cr_gid
 	name = "nfsd.proc4.read"
         argstr = sprintf("%d,%d",count,offset)
 
@@ -56,7 +60,7 @@ probe nfsd.proc4.read.sp = kernel.function("nfsd4_read").call !,
 probe nfsd.proc4.write.sp = kernel.function("nfsd4_write").call !,
                           module("nfsd").function("nfsd4_write").call ?
 {
-        client_ip = addr_from_rqst_str($rqstp)
+	client_ip = kernel_string($rqstp->rq_client->name)
         proto = $rqstp->rq_prot
         version = 4
         fh = & @cast($cstate, "nfsd4_compound_state", "kernel:nfsd")->current_fh
@@ -67,6 +71,8 @@ probe nfsd.proc4.write.sp = kernel.function("nfsd4_write").call !,
         stable = $write->wr_stable_how
 	share = kernel_string($cstate->current_fh->fh_export->ex_path->mnt->mnt_root->d_name->name)
 
+	uid = $rqstp->rq_cred->cr_uid
+	gid = $rqstp->rq_cred->cr_gid
         name = "nfsd.proc4.write"
         argstr = sprintf("%d,%d",count,offset)
 
@@ -77,8 +83,8 @@ probe nfsd.proc4.write.sp = kernel.function("nfsd4_write").call !,
 probe nfsd.proc4.create.sp = kernel.function("nfsd4_create").call !,
                            module("nfsd").function("nfsd4_create").call ?
 {
-        client_ip = addr_from_rqst_str($rqstp)
-        proto = $rqstp->rq_prot
+       	client_ip = kernel_string($rqstp->rq_client->name)
+	proto = $rqstp->rq_prot
         version = 4
         fh = (@defined($cstate)
               ? &@cast($cstate, "nfsd4_compound_state", "kernel:nfsd")->current_fh
@@ -88,6 +94,8 @@ probe nfsd.proc4.create.sp = kernel.function("nfsd4_create").call !,
         createmode = $create->cr_type
 	share = kernel_string($cstate->current_fh->fh_export->ex_path->mnt->mnt_root->d_name->name)
 
+	uid = $rqstp->rq_cred->cr_uid
+	gid = $rqstp->rq_cred->cr_gid
         name = "nfsd.proc4.create"
         argstr = sprintf("%s (type=%s)",
                 kernel_string_n($create->cr_name, $create->cr_namelen),
@@ -98,7 +106,7 @@ probe nfsd.proc4.create.sp = kernel.function("nfsd4_create").call !,
 probe nfsd.proc4.commit.sp = kernel.function("nfsd4_commit").call !,
                            module("nfsd").function("nfsd4_commit").call ?
 {
-        client_ip = addr_from_rqst_str($rqstp)
+	client_ip = kernel_string($rqstp->rq_client->name)
         proto = $rqstp->rq_prot
         version = 4
         fh = & @cast($cstate, "nfsd4_compound_state", "kernel:nfsd")->current_fh
@@ -106,6 +114,8 @@ probe nfsd.proc4.commit.sp = kernel.function("nfsd4_commit").call !,
         offset = $commit->co_offset
 	share = kernel_string($cstate->current_fh->fh_export->ex_path->mnt->mnt_root->d_name->name)
 
+	uid = $rqstp->rq_cred->cr_uid
+	gid = $rqstp->rq_cred->cr_gid
         name = "nfsd.proc4.commit"
         argstr = sprintf("%d,%d",count,offset)
 
@@ -116,7 +126,7 @@ probe nfsd.proc4.commit.sp = kernel.function("nfsd4_commit").call !,
 probe nfsd.proc4.remove.sp = kernel.function("nfsd4_remove").call !,
                            module("nfsd").function("nfsd4_remove").call ?
 {
-        client_ip = addr_from_rqst_str($rqstp)
+	client_ip = kernel_string($rqstp->rq_client->name)
         proto = $rqstp->rq_prot
         version = 4
         fh = & @cast($cstate, "nfsd4_compound_state", "kernel:nfsd")->current_fh
@@ -124,6 +134,8 @@ probe nfsd.proc4.remove.sp = kernel.function("nfsd4_remove").call !,
         filename  = kernel_string_n($remove->rm_name, $remove->rm_namelen)
 	share = kernel_string($cstate->current_fh->fh_export->ex_path->mnt->mnt_root->d_name->name)
 
+	uid = $rqstp->rq_cred->cr_uid
+	gid = $rqstp->rq_cred->cr_gid
         name = "nfsd.proc4.remove"
         argstr = sprintf("%s",
                 kernel_string_n($remove->rm_name, $remove->rm_namelen))
