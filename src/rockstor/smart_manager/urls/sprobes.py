@@ -21,7 +21,8 @@ from smart_manager.views import (SmartManagerView, ServiceView, SProbeView,
                                  MemInfoView, NetStatView,
                                  DiskStatView, NFSDistribView,
                                  NFSDClientDistribView, NFSDShareDistribView,
-                                 NFSDShareClientDistribView, CPUMetricView)
+                                 NFSDShareClientDistribView, CPUMetricView,
+                                 NFSDUidGidDistributionView)
 
 
 urlpatterns = patterns('',
@@ -69,4 +70,11 @@ urlpatterns = patterns('',
         NFSDShareClientDistribView.as_view(),
         name='nfsshareclientdistrib-view'),
 
+    url(r'^nfs-uid-gid-distrib/$', NFSDUidGidDistributionView.as_view(),
+        name='nfsuidgid-view'),
+    url(r'^nfs-uid-gid-distrib/(?P<pid>[0-9]+)/$',
+        NFSDUidGidDistributionView.as_view(),
+        name='nfsuidgid-view'),
+    url(r'^nfs-uid-gid-distrib/(?P<pid>[0-9]+)/(?P<command>[a-z]+)/$',
+        NFSDUidGidDistributionView.as_view(), name='nfsuidgid-view'),
 )
