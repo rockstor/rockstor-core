@@ -48,7 +48,7 @@ def login_submit(request):
                               context_instance=RequestContext(request))
     #return redirect('/login_page')
 
-@login_required(login_url='/login_page')
+#@login_required(login_url='/login_page')
 def home(request):
     template = get_template('index.html')
     current_appliance = None
@@ -67,6 +67,6 @@ def home(request):
 
 def logout_user(request):
     logout(request)
-    return redirect('/login_page')
+    return redirect('/')
 
 

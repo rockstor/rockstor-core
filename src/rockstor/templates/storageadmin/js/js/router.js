@@ -31,6 +31,7 @@ var AppRouter = Backbone.Router.extend({
   },
 
   routes: {
+    "login": "loginPage",
     "setup": "doSetup",
     "home": "showHome",
     "disks": "showDisks",
@@ -51,16 +52,31 @@ var AppRouter = Backbone.Router.extend({
   },
 
   before: function (route, param) {
-    if (route != "setup" && !setup_done) {
-      app_router.navigate('setup', {trigger: true});
-      return false;
-    } else if (route == "setup" && setup_done) {
-      app_router.navigate('home', {trigger: true});
-      return false;
+    if (!logged_in) {
+      console.log("user *is not* logged in!");
+      if (route != "login") {
+        app_router.navigate('login', {trigger: true});
+        return false;
+      }
     } else {
+      if (route != "setup" && !setup_done) {
+        app_router.navigate('setup', {trigger: true});
+        return false;
+      } else if (route == "setup" && setup_done) {
+        app_router.navigate('home', {trigger: true});
+        return false;
+      } 
     }
   },
 
+  loginPage: function() {
+    RockStorSocket.removeAllListeners();
+    $('#maincontent').empty();
+    this.cleanup();
+    this.currentLayout = new LoginView();
+    $('#maincontent').append(this.currentLayout.render().el);
+
+  },
   doSetup: function() {
     RockStorSocket.removeAllListeners();
     $('#maincontent').empty();
@@ -218,6 +234,9 @@ var app_router = new AppRouter;
 // On document load, render the view.
 $(document).ready(function() {
   // Start Backbone history a neccesary step for bookmarkable URL's
+  if (!RockStorGlobals.navbarLoaded) {
+    refreshNavbar();
+  }
   Backbone.history.start();
   $('#appliance-name').click(function(event) {
     event.preventDefault();
