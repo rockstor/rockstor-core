@@ -26,51 +26,25 @@ from storageadmin.serializers import UserSerializer
 from storageadmin.models import User, Setup
 from system.users import (useradd, usermod, userdel, get_epasswd)
 from django.conf import settings
+from storageadmin.views import UserView
 
 import logging
 logger = logging.getLogger(__name__)
 
-class SetupUserView(APIView):
-    
+class SetupUserView(UserView):
+
+    authentication_classes = ()
+    permission_classes = ()
+
     @transaction.commit_on_success
     def post(self, request):
-        try:
-            # check if any users have been created already
-            # if so, throw an exception
-            users = User.objects.all()
-            if len(users) > 0:
-                raise Exception("A user has already been created")
+        setup = Setup.objects.all()[0]
+        setup.setup_user = True
+        setup.save()
+        return super(SetupUserView, self).post(request)
 
-            # if no users have been created, proceed to create one
-            username = request.DATA['username']
-            password = request.DATA['password']
-            utype = request.DATA['utype']
-            admin = False
-            if (utype == 'admin'):
-                admin = True
-                auser = DjangoUser.objects.create_user(username, None,
-                                                       password)
-            max_uid = settings.START_UID
-            shell = settings.USER_SHELL
-            try:
-                max_uid = User.objects.all().order_by('-uid')[0].uid
-            except:
-                pass
-            uid = max_uid + 1
-            useradd(username, uid, shell)
-            usermod(username, password)
-            epw = get_epasswd(username)
-            suser = User(name=username, password=epw, uid=uid,
-                         gid=uid, admin=admin)
-            
-            # save setup status
-            suser.save()
-            setup = Setup.objects.all()[0]
-            setup.setup_user = True
-            setup.save()
+    def put(self, request, username):
+        pass
 
-            return Response(UserSerializer(suser).data)
-        except Exception, e:
-            handle_exception(e, request)
-
-
+    def delete(self, request, username):
+        pass
