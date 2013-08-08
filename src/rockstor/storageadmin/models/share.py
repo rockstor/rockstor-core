@@ -32,6 +32,9 @@ class Share(models.Model):
     uuid = models.CharField(max_length=100, null=True)
     """total size in GB"""
     size = models.IntegerField()
+    owner = models.CharField(max_length=4096, default='root')
+    group = models.CharField(max_length=4096, default='root')
+    perms = models.CharField(max_length=9, default='755')
 
     def cur_usage(self, *args, **kwargs):
         try:

@@ -16,23 +16,25 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+from osi import run_command
 
-from home import (login_page, login_submit, logout_user, home)
-from snapshot import SnapshotView
-from share import ShareView
-from pool import PoolView
-from disk import (DiskView, SystemDiskView)
-from info import InfoView
-from service import ServiceView
-from setupwizard import SetupWizardView
-from share_iscsi import ShareIscsiView
-from appliances import AppliancesView
-from login import LoginView
-from socketio_service import RockStorMessageNamespace
-from user import UserView
-from share_samba import ShareSambaView
-from support import SupportView
-from dashboardconfig import DashboardConfigView
-from share_nfs import ShareNFSView
-from network import NetworkView
-from share_acl import ShareACLView
+CHOWN = '/bin/chown'
+CHMOD = '/bin/chmod'
+LS = '/bin/ls'
+
+def chown(share, owner, group=None, recursive=False):
+    cmd = [CHOWN,]
+    if (recursive is True):
+        cmd.append('-R')
+    if (group is not None):
+        owner = ('%s:%s' % (owner, group))
+    cmd.extend([owner, share])
+    return run_command(cmd)
+
+
+def chmod(share, perm_bits, recursive=False):
+    cmd = [CHMOD,]
+    if (recursive is True):
+        cmd.append('-R')
+    cmd.extend([perm_bits, share])
+    return run_command(cmd)
