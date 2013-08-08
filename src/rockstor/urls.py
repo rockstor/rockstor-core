@@ -96,23 +96,7 @@ urlpatterns = patterns('',
     url(r'^api/pools/(?P<pname>[A-Za-z0-9_]+)/(?P<command>.*)/$',
         PoolView.as_view(), name='pool-view'),
 
-    # Shares section
-    url(r'^api/shares/$', ShareView.as_view(), name='share-view'),
-    url(r'^api/shares/(?P<sname>[A-Za-z0-9_]+)/$', ShareView.as_view(),
-        name='share-view'),
-    url(r'^api/shares/(?P<sname>[A-Za-z0-9_]+)/nfs/$', ShareNFSView.as_view(),
-        name='nfs-view'),
-    url(r'^api/shares/(?P<sname>[A-Za-z0-9_]+)/nfs/(?P<export_id>[0-9]+)/$',
-        ShareNFSView.as_view(), name='nfs-view'),
-    url(r'^api/shares/(?P<sname>[A-Za-z0-9_]+)/samba/$',
-        ShareSambaView.as_view(), name='samba-view'),
-    url(r'^api/shares/(?P<sname>[A-Za-z0-9_]+)/snapshots/$',
-        SnapshotView.as_view(), name='snapshot-view'),
-    url(r'^api/shares/(?P<sname>[A-Za-z0-9_]+)/snapshots/(?P<snap_name>.*)/$',
-        SnapshotView.as_view(), name='snapshot-view'),
-    url(r'^api/shares/(?P<sname>[A-Za-z0-9_]+)/iscsi/$',
-        ShareIscsiView.as_view(), name='share-iscsi-view'),
-
+    (r'^api/shares/', include('storageadmin.urls.share')),
     (r'^api/users/', include('storageadmin.urls.users')),
 
 
