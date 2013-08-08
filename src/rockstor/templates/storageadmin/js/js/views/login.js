@@ -28,7 +28,7 @@ LoginView = Backbone.View.extend({
   tagName: 'div',
   events: {
     'click #sign_in': 'login',
-    'click #create-user': 'createUser',
+    //'click #create-user': 'createUser',
   },
   initialize: function() {
     this.login_template = window.JST.home_login_template;
@@ -37,12 +37,45 @@ LoginView = Backbone.View.extend({
 
   render: function() {
     console.log("rendering LoginView");
+    var _this = this;
     if (RockStorGlobals.setup_user) {
       $(this.el).append(this.login_template());
     } else {
       $(this.el).append(this.user_create_template());
+      this.$("#user-create-form").validate({
+        onfocusout: false,
+        onkeyup: false,
+        rules: {
+          username: "required",
+          password: "required",
+          password_confirmation: {
+            equalTo: "#password"
+          }
+        },
+        submitHandler: function() {
+          var username = _this.$("#username").val();
+          var password = _this.$("#password").val();
+          console.log("Create user clicked");
+          $.ajax({
+            url: "/setup_user",
+            type: "POST",
+            dataType: "json",
+            data: {
+              username: username,
+              password: password,
+              utype: "admin"
+            }, 
+            success: function(data, status, xhr) {
+              console.log("created user successfully");
+              _this.makeLoginRequest(username, password);
+            },
+            error: function(xhr, status, error) {
+              _this.$(".messages").html("<li>" + xhr.responseText + "</li>");
+            }
+          });
+        }
+      });
     }
-
     return this;
   },
 
