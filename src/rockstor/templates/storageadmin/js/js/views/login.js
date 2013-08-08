@@ -28,7 +28,6 @@ LoginView = Backbone.View.extend({
   tagName: 'div',
   events: {
     'click #sign_in': 'login',
-    //'click #create-user': 'createUser',
   },
   initialize: function() {
     this.login_template = window.JST.home_login_template;
@@ -36,26 +35,30 @@ LoginView = Backbone.View.extend({
   },
 
   render: function() {
-    console.log("rendering LoginView");
     var _this = this;
     if (RockStorGlobals.setup_user) {
       $(this.el).append(this.login_template());
     } else {
       $(this.el).append(this.user_create_template());
-      this.$("#user-create-form").validate({
+      this.validator = this.$("#user-create-form").validate({
         onfocusout: false,
         onkeyup: false,
         rules: {
           username: "required",
           password: "required",
           password_confirmation: {
+            required: "true",
             equalTo: "#password"
+          }
+        },
+        messages: {
+          password_confirmation: {
+            equalTo: "The passwords do not match"
           }
         },
         submitHandler: function() {
           var username = _this.$("#username").val();
           var password = _this.$("#password").val();
-          console.log("Create user clicked");
           $.ajax({
             url: "/setup_user",
             type: "POST",
@@ -66,11 +69,33 @@ LoginView = Backbone.View.extend({
               utype: "admin"
             }, 
             success: function(data, status, xhr) {
-              console.log("created user successfully");
               _this.makeLoginRequest(username, password);
             },
             error: function(xhr, status, error) {
-              _this.$(".messages").html("<li>" + xhr.responseText + "</li>");
+              var msg = xhr.responseText;
+              var fieldName = null;
+              try {
+                msg = JSON.parse(msg).detail;
+              } catch(err) {
+              }
+              if (typeof(msg)=="string") {
+                try {
+                  msg = JSON.parse(msg);
+                } catch(err) {
+
+                }
+              }
+              if (_.isObject(msg)) {
+                fieldName = _.keys(msg)[0];
+                msg = msg[fieldName];
+              }
+              if (fieldName) {
+                e = {};
+                e[fieldName] = msg;
+                _this.validator.showErrors(e);
+              } else {
+                _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
+              }
             }
           });
         }
@@ -99,44 +124,15 @@ LoginView = Backbone.View.extend({
         password: password,
       }, 
       success: function(data, status, xhr) {
-        console.log("logged in successfully");
         logged_in = true;
         refreshNavbar();
         app_router.navigate('home', {trigger: true}) 
       },
       error: function(xhr, status, error) {
-        _this.$(".messages").html("<li>Login incorrect!</li>");
+        _this.$(".messages").html("<label class=\"error\">Login incorrect!</label>");
       }
     });
 
   },
-
-  createUser: function(event) {
-    var _this = this;
-    if (!_.isUndefined(event) && !_.isNull(event)) {
-      event.preventDefault();
-    }
-    var username = this.$("#username").val();
-    var password = this.$("#password").val();
-    console.log("Create user clicked");
-    $.ajax({
-      url: "/setup_user",
-      type: "POST",
-      dataType: "json",
-      data: {
-        username: username,
-        password: password,
-        utype: "admin"
-      }, 
-      success: function(data, status, xhr) {
-        console.log("created user successfully");
-        _this.makeLoginRequest(username, password);
-      },
-      error: function(xhr, status, error) {
-        _this.$(".messages").html("<li>" + xhr.responseText + "</li>");
-      }
-    });
-
-  }
 
 });

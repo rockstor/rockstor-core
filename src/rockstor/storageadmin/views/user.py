@@ -30,6 +30,7 @@ from storageadmin.models import User
 from generic_view import GenericView
 from system.users import (useradd, usermod, userdel, get_epasswd, get_users)
 from storageadmin.exceptions import RockStorAPIException
+from rest_framework.renderers import JSONRenderer
 
 import logging
 logger = logging.getLogger(__name__)
@@ -53,12 +54,12 @@ class UserView(GenericView):
                 User.objects.filter(name=username).exists()):
                 e_msg = ('user: %s already exists. Choose a different'
                          'username' % username)
-                handle_exception(Exception({'username': e_msg}), request)
+                handle_exception(Exception(JSONRenderer().render({'username': e_msg})), request)
             unix_users = get_users(min_uid=0, uname=username)
             if (username in unix_users):
                 e_msg = ('user: %s exists as a system user. Choose a '
                          'different username' % username)
-                handle_exception(Exception({'username': e_msg}), request)
+                handle_exception(Exception(JSONRenderer().render({'username': e_msg})), request)
 
             admin = False
             if (utype == 'admin'):
