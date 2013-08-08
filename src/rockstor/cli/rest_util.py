@@ -65,7 +65,7 @@ def print_share_info(share_info):
         print("Name\tSize\tFree\tPool")
         for s in share_info:
             print('%s\t%s\t%s\t%s' %
-                  (s['name'], s['size'], s['free'], s['pool']['name']))
+                  (s['name'], s['size'], s['usage'], s['pool']['name']))
 
 def print_disk_info(disk_info):
     if (disk_info is None):

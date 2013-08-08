@@ -76,6 +76,21 @@ class SharesConsole(BaseConsole):
         share_info = api_call(url, data=input_data, calltype='put')
         print_share_info(share_info)
 
+    def do_change_op(self, args):
+        """
+        To change ownership and permissions
+
+        change_op share_name owner group perms
+        """
+        fields = args.split()
+        input_data = {'owner': fields[1],
+                      'group': fields[2],
+                      'perms': fields[3],}
+        url = ('%s%s/acl/' % (self.url, fields[0]))
+        print url
+        share_info = api_call(url, data=input_data, calltype='post')
+        print_share_info(share_info)
+
     def do_delete(self, args):
         """
         Delete a share
