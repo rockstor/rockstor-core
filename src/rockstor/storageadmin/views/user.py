@@ -28,7 +28,9 @@ from django.contrib.auth.models import User as DjangoUser
 from storageadmin.serializers import UserSerializer
 from storageadmin.models import User
 from generic_view import GenericView
-from system.users import (useradd, usermod, userdel, get_epasswd)
+from system.users import (useradd, usermod, userdel, get_epasswd, get_users)
+from storageadmin.exceptions import RockStorAPIException
+from rest_framework.renderers import JSONRenderer
 
 import logging
 logger = logging.getLogger(__name__)
@@ -48,6 +50,17 @@ class UserView(GenericView):
             username = request.DATA['username']
             password = request.DATA['password']
             utype = request.DATA['utype']
+            if (DjangoUser.objects.filter(username=username).exists() or
+                User.objects.filter(name=username).exists()):
+                e_msg = ('user: %s already exists. Choose a different'
+                         'username' % username)
+                handle_exception(Exception(JSONRenderer().render({'username': e_msg})), request)
+            unix_users = get_users(min_uid=0, uname=username)
+            if (username in unix_users):
+                e_msg = ('user: %s exists as a system user. Choose a '
+                         'different username' % username)
+                handle_exception(Exception(JSONRenderer().render({'username': e_msg})), request)
+
             admin = False
             if (utype == 'admin'):
                 admin = True
@@ -67,6 +80,8 @@ class UserView(GenericView):
                          gid=uid, admin=admin)
             suser.save()
             return Response(UserSerializer(suser).data)
+        except RockStorAPIException:
+            raise
         except Exception, e:
             handle_exception(e, request)
 

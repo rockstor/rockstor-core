@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from smart_manager.models import Service
 from django.conf import settings
 from django.contrib.auth.models import User as DjangoUser
-from storageadmin.models import User
+from storageadmin.models import User, Setup
 from system.users import (get_users, useradd, usermod, userdel, get_epasswd)
 
 def register_services():
@@ -69,7 +69,15 @@ def create_admin_users():
                     gid=uid, admin=admin)
             suser.save()
 
+def create_setup():
+    setup = Setup.objects.all()
+    if len(setup) == 0:
+        print "Creating setup"
+        s = Setup()
+        s.save()
+
 def main():
-    create_admin_users()
+    #create_admin_users()
+    create_setup()
     register_services()
 
