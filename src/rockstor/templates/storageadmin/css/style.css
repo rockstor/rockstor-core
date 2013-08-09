@@ -1101,3 +1101,7 @@ path.link {
   padding: 20px;
 }
 
+/* Inline form fields */
+label.inline { display: inline; }
+.checkbox.inline { margin-top: 0px; }
+
