@@ -89,12 +89,7 @@ urlpatterns = patterns('',
     url(r'^api/network/(?P<iname>[A-Za-z0-9]+)/$', NetworkView.as_view(),
         name='net-view'),
 
-    # Pools section
-    url(r'^api/pools/$', PoolView.as_view(), name='pool-view'),
-    url(r'^api/pools/(?P<pname>[A-Za-z0-9_]+)/$', PoolView.as_view(),
-        name='pool-view'),
-    url(r'^api/pools/(?P<pname>[A-Za-z0-9_]+)/(?P<command>.*)/$',
-        PoolView.as_view(), name='pool-view'),
+    (r'^api/pools/', include('storageadmin.urls.pools')),
 
     # Shares section
     url(r'^api/shares/$', ShareView.as_view(), name='share-view'),
