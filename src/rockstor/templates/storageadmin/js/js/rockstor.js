@@ -348,6 +348,7 @@ function refreshNavbar() {
   $("#navbar-links").html(navbarTemplate({
     logged_in: logged_in  
   }));
+  $('.dropdown-toggle').dropdown();
 
 }
 
