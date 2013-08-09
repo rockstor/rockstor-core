@@ -101,10 +101,14 @@ class ShareNFSView(APIView):
                 handle_exception(Exception(e_msg), request)
             export = NFSExport.objects.get(id=export_id)
 
-            if (is_share_mounted(share.name) and
-                not SambaShare.objects.filter(share=share).exists() and
-                not len(NFSExport.objects.filter(share=share)) > 1):
-                umount_root(export.mount)
+            if (len(NFSExport.objects.filter(share=share)) == 1):
+                export_mnt_pt = ('/export/%s' % sname)
+                umount_root(export_mnt_pt)
+                if (is_share_mounted(sname, mnt_prefix='/export/')):
+                    e_msg = ('Cannot delete nfs export with id: %d due to '
+                             'busy mount. Try again later.' % export_id)
+                    handle_exception(Exception(e_msg), request)
+
             export.enabled = False
             exports = self._create_nfs_export_input(export)
             export.delete()

@@ -35,4 +35,5 @@ from support import SupportView
 from dashboardconfig import DashboardConfigView
 from share_nfs import ShareNFSView
 from network import NetworkView
+from pool_scrub import PoolScrubView
 from setup_user import SetupUserView
