@@ -110,8 +110,8 @@ def mount_share(share_name, pool_device, mnt_pt):
     mnt_cmd = [MOUNT, '-t', 'btrfs', '-o', subvol_str, pool_device, mnt_pt]
     return run_command(mnt_cmd)
 
-def is_share_mounted(sname):
-    mnt_pt = DEFAULT_MNT_DIR + sname
+def is_share_mounted(sname, mnt_prefix=DEFAULT_MNT_DIR):
+    mnt_pt = mnt_prefix + sname
     with open ('/proc/mounts') as pfo:
         for line in pfo.readlines():
             if (re.search(' ' + mnt_pt + ' ', line) is not None):
@@ -144,6 +144,9 @@ def remove_share(pool_name, pool_device, share_name):
     btrfs subvolume delete root_mnt/vol_name
     umount root pool
     """
+    if (is_share_mounted(share_name)):
+        mnt_pt = ('%s%s' % (DEFAULT_MNT_DIR, share_name))
+        umount_root(mnt_pt)
     pool_device = '/dev/' + pool_device
     root_pool_mnt = mount_root(pool_name, pool_device)
     subvol_mnt_pt = root_pool_mnt + '/' + share_name
