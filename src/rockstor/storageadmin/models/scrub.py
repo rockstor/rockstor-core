@@ -16,20 +16,19 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pool import Pool
-from disk import Disk
-from share import Share
-from snapshot import Snapshot
-from pool_statistic import PoolStatistic
-from share_statistic import ShareStatistic
-from nfs_export import NFSExport
-from samba_share import SambaShare
-from iscsi_target import IscsiTarget
-from posix_acls import PosixACLs
-from api_keys import APIKeys
-from appliance import Appliance
-from support_case import SupportCase
-from dashboard_config import DashboardConfig
-from network_interface import NetworkInterface
-from user import User
-from scrub import PoolScrub
+from django.db import models
+from storageadmin.models import Pool
+
+
+class PoolScrub(models.Model):
+
+    pool = models.ForeignKey(Pool)
+    status = models.CharField(max_length=10, default='started')
+    pid = models.IntegerField()
+    start_time = models.DateTimeField(auto_now=True)
+    end_time = models.DateTimeField(null=True)
+    kb_scrubbed = models.IntegerField(null=True)
+    errors = models.IntegerField(null=True)
+
+    class Meta:
+        app_label = 'storageadmin'

@@ -20,7 +20,7 @@ from rest_framework import serializers
 from storageadmin.models import (Disk, Pool, Share, Snapshot, NFSExport,
                                  SambaShare, IscsiTarget, Appliance,
                                  SupportCase, DashboardConfig,
-                                 NetworkInterface, User)
+                                 NetworkInterface, User, PoolScrub)
 
 
 class DiskInfoSerializer(serializers.ModelSerializer):
@@ -78,3 +78,7 @@ class DashboardConfigSerializer(serializers.ModelSerializer):
 class NetworkInterfaceSerializer(serializers.ModelSerializer):
     class Meta:
         model = NetworkInterface
+
+class PoolScrubSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PoolScrub
