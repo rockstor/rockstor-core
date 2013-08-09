@@ -24,27 +24,31 @@
  * 
  */
 
-AddUserView = RockstoreLayoutView.extend({
+EditUserView = RockstoreLayoutView.extend({
 
   initialize: function() {
     // call initialize of base
     this.constructor.__super__.initialize.apply(this, arguments);
     // set template
-    this.template = window.JST.users_add_user;
+    this.template = window.JST.users_edit_user;
+    this.user = new User({name: this.options.username});
+    this.user.on("change", this.renderUser, this);
+  },
+  
+  render: function() {
+    this.user.fetch();
+    return this;
   },
 
-  render: function() {
+  renderUser: function() {
     var _this = this;
-    $(this.el).html(this.template());
+    $(this.el).html(this.template({user: this.user}));
 
     this.validator = this.$("#user-create-form").validate({
       onfocusout: false,
       onkeyup: false,
       rules: {
-        username: "required",
-        password: "required",
         password_confirmation: {
-          required: "true",
           equalTo: "#password"
         }
       },
@@ -54,48 +58,23 @@ AddUserView = RockstoreLayoutView.extend({
         }
       },
       submitHandler: function() {
-        var username = _this.$("#username").val();
-        var password = _this.$("#password").val();
+        var password = _this.$("#password").val().trim();
+        if (password != "") {
+          _this.user.set({password: password});
+        }
         var admin = _this.$("#admin").prop("checked") ? true : false; 
-        $.ajax({
-          url: "/api/users/",
-          type: "POST",
-          dataType: "json",
-          data: {
-            name: username,
-            password: password,
-            admin: admin
-          }, 
-          success: function(data, status, xhr) {
-            console.log("user created successfully");
+        _this.user.set({admin: admin});
+        this.user.save(null, {
+          success: function(model, response, options) {
+            console.log("user saved successfully");
             app_router.navigate("users", {trigger: true});
           },
-          error: function(xhr, status, error) {
-            var msg = xhr.responseText;
-            var fieldName = null;
-            try {
-              msg = JSON.parse(msg).detail;
-            } catch(err) {
-            }
-            if (typeof(msg)=="string") {
-              try {
-                msg = JSON.parse(msg);
-              } catch(err) {
-              }
-            }
-            if (_.isObject(msg)) {
-              fieldName = _.keys(msg)[0];
-              msg = msg[fieldName];
-            }
-            if (fieldName) {
-              e = {};
-              e[fieldName] = msg;
-              _this.validator.showErrors(e);
-            } else {
-              _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
-            }
+          error: function(model, xhr, options) {
+            var msg = parseXhrError(xhr)
+            _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
           }
         });
+
       }
     });
     return this;
@@ -106,4 +85,5 @@ AddUserView = RockstoreLayoutView.extend({
   }
 
 });
+
 

@@ -58,7 +58,7 @@
             <td><%= user.get("uid") %></td>
             <td><%= user.get("gid") %></td>
             <td>
-              <a href="#" class="edit-user" data-username="<%= user.get('name') %>"><i class="icon-pencil"></i></a>
+              <a href="#users/<%= user.get('name') %>/edit" class="edit-user" data-username="<%= user.get('name') %>"><i class="icon-pencil"></i></a>
               &nbsp;
               <a href="#" class="delete-user" data-username="<%= user.get('name') %>"><i class="icon-remove"></i></a>
             </td>

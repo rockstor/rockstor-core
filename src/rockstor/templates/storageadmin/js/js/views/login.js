@@ -64,9 +64,9 @@ LoginView = Backbone.View.extend({
             type: "POST",
             dataType: "json",
             data: {
-              username: username,
+              name: username,
               password: password,
-              utype: "admin"
+              admin: true 
             }, 
             success: function(data, status, xhr) {
               _this.makeLoginRequest(username, password);

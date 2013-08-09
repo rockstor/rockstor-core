@@ -47,9 +47,14 @@ class UserView(GenericView):
     @transaction.commit_on_success
     def post(self, request):
         try:
-            username = request.DATA['username']
+            username = request.DATA['name']
             password = request.DATA['password']
-            utype = request.DATA['utype']
+            admin = False
+            if request.DATA['admin'] == "true":
+                admin = True
+            else:
+                admin = False
+
             if (DjangoUser.objects.filter(username=username).exists() or
                 User.objects.filter(name=username).exists()):
                 e_msg = ('user: %s already exists. Choose a different'
@@ -61,9 +66,7 @@ class UserView(GenericView):
                          'different username' % username)
                 handle_exception(Exception(JSONRenderer().render({'username': e_msg})), request)
 
-            admin = False
-            if (utype == 'admin'):
-                admin = True
+            if admin:
                 auser = DjangoUser.objects.create_user(username, None,
                                                        password)
             max_uid = settings.START_UID
@@ -89,13 +92,25 @@ class UserView(GenericView):
     def put(self, request, username):
         suser, auser = self._get_user_objects(request, username)
         try:
-            password = request.DATA['password']
-            usermod(username, password)
-            if (auser is not None):
-                auser.set_password(password)
-                auser.save()
-            suser.password = get_epasswd(username)
-            suser.save()
+            # if password is present in input data, change password
+            if 'password' in request.DATA.keys():
+                # change password
+                password = request.DATA['password']
+                usermod(username, password)
+                if (auser is not None):
+                    auser.set_password(password)
+                    auser.save()
+                suser.password = get_epasswd(username)
+                suser.save()
+            # check if admin attribute has changed
+            if 'admin' in request.DATA.keys():
+                admin = request.DATA['admin']
+                if admin == "true" and not suser.admin:
+                    suser.admin = True
+                    suser.save
+                elif suser.admin:
+                    suser.admin = False
+                    suser.save
             return Response(UserSerializer(suser).data)
         except Exception, e:
             handle_exception(e, request)

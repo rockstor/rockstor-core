@@ -49,6 +49,7 @@ var AppRouter = Backbone.Router.extend({
     "support/:supportCaseId": "showSupportCase",
     "add_support_case": "addSupportCase",
     "users": "showUsers",
+    "users/:username/edit": "editUser",
     "add-user": "addUser",
     "*path": "showHome"
   },
@@ -228,6 +229,13 @@ var AppRouter = Backbone.Router.extend({
   addUser: function() {
     this.cleanup();
     this.currentLayout = new AddUserView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+  
+  editUser: function(username) {
+    this.cleanup();
+    this.currentLayout = new EditUserView();
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },
