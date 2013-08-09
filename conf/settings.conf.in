@@ -201,6 +201,7 @@ PIPELINE_JS = {
             'js/views/smb_shares.js',
             'js/views/iscsi_target.js',
             'js/views/home.js',
+            'js/views/login.js',
             'js/views/sysinfo_module.js',
             'js/views/cpuusage_module.js',
             'js/views/snapshots_table.js',

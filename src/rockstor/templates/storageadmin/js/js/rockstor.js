@@ -343,5 +343,16 @@ function buttonDisabled(button) {
   }
 }
 
+function refreshNavbar() {
+  var navbarTemplate = window.JST.common_navbar;
+  $("#navbar-links").html(navbarTemplate({
+    logged_in: logged_in  
+  }));
+
+}
+
 RockStorProbeMap = [];
+RockStorGlobals = {
+  navbarLoaded: false
+}
 
