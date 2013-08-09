@@ -217,6 +217,13 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
   tooltipFormatter: function(label, xval, yval) {
     return "%s (%p.2%)"
     //return "%s (" + humanize.filesize(xval, 1024, 1) + ")"; 
+  },
+  
+  cleanup: function() {
+    logger.debug('clearing setInterval in memory_utilization widget'); 
+    if (!_.isUndefined(this.intervalId)) {
+      window.clearInterval(this.intervalId);
+    }
   }
 
 });

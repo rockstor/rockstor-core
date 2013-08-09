@@ -35,3 +35,4 @@ from support import SupportView
 from dashboardconfig import DashboardConfigView
 from share_nfs import ShareNFSView
 from network import NetworkView
+from setup_user import SetupUserView

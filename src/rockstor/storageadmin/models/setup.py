@@ -17,28 +17,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.db import models
-from storageadmin.models import Pool
-from smart_manager.models import ShareUsage
 
-
-class Share(models.Model):
-    """pool that this share is part of"""
-    pool = models.ForeignKey(Pool)
-    """quota group this share is part of"""
-    qgroup = models.CharField(max_length=100)
-    """name of the share, kind of like id"""
-    name = models.CharField(max_length=4096, unique=True)
-    """id of the share. numeric in case of btrfs"""
-    uuid = models.CharField(max_length=100, null=True)
-    """total size in GB"""
-    size = models.IntegerField()
-
-    def cur_usage(self, *args, **kwargs):
-        try:
-            su = ShareUsage.objects.filter(name=self.name).order_by('-ts')[0]
-            return su.usage
-        except:
-            return -1
-
+class Setup(models.Model):
+    setup_user = models.BooleanField(default=False)
+    setup_system = models.BooleanField(default=False)
+    setup_disks = models.BooleanField(default=False)
+    setup_network = models.BooleanField(default=False)
     class Meta:
         app_label = 'storageadmin'
+

@@ -38,30 +38,30 @@
     <![endif]-->
     <script>
       /*
-       *
-       * @licstart  The following is the entire license notice for the
-       * JavaScript code in this page.
-       *
-       * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
-       * This file is part of RockStor.
-       *
-       * RockStor is free software; you can redistribute it and/or modify
-       * it under the terms of the GNU General Public License as published
-       * by the Free Software Foundation; either version 2 of the License,
-       * or (at your option) any later version.
-       *
-       * RockStor is distributed in the hope that it will be useful, but
-       * WITHOUT ANY WARRANTY; without even the implied warranty of
-       * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-       * General Public License for more details.
-       *
-       * You should have received a copy of the GNU General Public License
-       * along with this program. If not, see <http://www.gnu.org/licenses/>.
-       *
-       * @licend  The above is the entire license notice
-       * for the JavaScript code in this page.
-       *
-       */
+      *
+      * @licstart  The following is the entire license notice for the
+      * JavaScript code in this page.
+      *
+      * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+      * This file is part of RockStor.
+      *
+      * RockStor is free software; you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published
+      * by the Free Software Foundation; either version 2 of the License,
+      * or (at your option) any later version.
+      *
+      * RockStor is distributed in the hope that it will be useful, but
+      * WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+      * General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with this program. If not, see <http://www.gnu.org/licenses/>.
+      *
+      * @licend  The above is the entire license notice
+      * for the JavaScript code in this page.
+      *
+      */
 
     </script>
 
@@ -101,22 +101,11 @@
         <div class="navbar">
           <div class="navbar-inner">
             <div id="logo">
-	      <object data="/img/rockstor_logo_website_150x50.svg" width="100px"
-		      type="image/svg+xml"></object>
-	    </div>
-            <ul class="nav">
-              <li><a id="home_nav" href="#home">Dashboard</a></li>
-              <li><a id="disks_nav" href="#disks">Disks</a></li>
-              <li><a id="pools_nav" href="#pools">Pools</a></li>
-              <li><a id="shares_nav" href="#shares">Shares</a></li>
-              <li><a id="services_nav" href="#services">Services</a></li>
-              <li><a id="support_nav" href="#support">Support</a></li>
-            </ul>
-            <ul class="nav pull-right">
-              {% if request.user.is_authenticated %}
-              <li><a id="logout_user" href="/logout_user">Logout</a></li>
-              {% endif %}
-            </ul>
+              <object data="/img/rockstor_logo_website_150x50.svg" width="100px"
+                type="image/svg+xml"></object>
+            </div>
+            <div id="navbar-links">
+            </div>
           </div>
         </div>
       </div>  <!-- container -->
@@ -125,7 +114,7 @@
     <div id="appliance-breadcrumb">
       <div class="container">
         <div class="pull-right">
-          <a id="appliance-name" href="#">{{ current_appliance.ip }}</a>
+          <a id="appliance-name" href="#"></a>
         </div>
       </div>
     </div>
@@ -157,13 +146,13 @@
 
     <div id="errorPopup" class="modal hide fade" tabindex="-1" role="dialog" >
       <div class="modal-header">
-	     <button type="button" class="close" data-dismiss="modal" aria-hidden="true" >x</button>
-	     <h3>Error!</h3>
-	  </div>
-	  <div class="modal-body" id="errorContent" style="overflow: scroll; height: 200px;"></div>
-	  <div class="modal-footer">
-	     <button type="button" data-dismiss="modal" class="btn">Close</button>
-	  </div>
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" >x</button>
+        <h3>Error!</h3>
+      </div>
+      <div class="modal-body" id="errorContent" style="overflow: scroll; height: 200px;"></div>
+      <div class="modal-footer">
+        <button type="button" data-dismiss="modal" class="btn">Close</button>
+      </div>
     </div>
 
     <div id="appliance-select-popup" class="modal hide fade">
@@ -177,6 +166,16 @@
       setup_done = true;
       {% else %}
       setup_done = false;
+      {% endif %}
+      {% if request.user.is_authenticated %}
+      logged_in = true;
+      {% else %}
+      logged_in = false;
+      {% endif %}
+      {% if setup_user %}
+      RockStorGlobals.setup_user = true; 
+      {% else %}
+      RockStorGlobals.setup_user = false; 
       {% endif %}
     </script>
   </body>

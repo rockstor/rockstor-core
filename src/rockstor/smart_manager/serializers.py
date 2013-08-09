@@ -22,7 +22,8 @@ from smart_manager.models import (CPUMetric, LoadAvg, MemInfo, ServiceStatus,
                                   NFSDClientDistribution,
                                   NFSDShareDistribution,
                                   DiskStat, NetStat,
-                                  NFSDShareClientDistribution)
+                                  NFSDShareClientDistribution,
+                                  NFSDUidGidDistribution)
 
 
 class CPUMetricSerializer(serializers.ModelSerializer):
@@ -79,3 +80,6 @@ class NFSDShareClientDistributionSerializer(serializers.ModelSerializer):
     class Meta:
         model = NFSDShareClientDistribution
 
+class NFSDUidGidDistributionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NFSDUidGidDistribution

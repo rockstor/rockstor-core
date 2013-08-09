@@ -4,7 +4,7 @@ from smart_manager.models import (NFSDCallDistribution,
                                   NFSDClientDistribution,
                                   NFSDShareDistribution,
                                   NFSDShareClientDistribution,
-                                  SProbe)
+                                  SProbe, NFSDUidGidDistribution)
 from django.utils.timezone import utc
 
 def get_datetime(ts):
@@ -68,7 +68,7 @@ def share_client_distribution(output, rid, l):
         if (line == ''):
             continue
         fields = line.split()
-        if (len(fields) < 10):
+        if (len(fields) < 11):
             l.info('ignoring incomplete sprobe output: %s' % repr(fields))
             continue
         no = NFSDShareClientDistribution(rid=ro, ts=get_datetime(fields[0]),
@@ -81,4 +81,24 @@ def share_client_distribution(output, rid, l):
                                          num_remove=fields[8],
                                          sum_read=fields[9],
                                          sum_write=fields[10])
+        no.save()
+
+def nfs_uid_gid_distribution(output, rid, l):
+
+    ro = SProbe.objects.get(id=rid)
+    for line in output.split('\n'):
+        if (line == ''):
+            continue
+        fields = line.split()
+        if (len(fields) < 13):
+            l.info('ignoring incomplete sprobe output: %s' % repr(fields))
+            continue
+        no = NFSDUidGidDistribution(rid=ro, ts=get_datetime(fields[0]),
+                                    share=fields[1], client=fields[2],
+                                    uid=fields[3], gid=fields[4],
+                                    num_lookup=fields[5], num_read=fields[6],
+                                    num_write=fields[7], num_create=fields[8],
+                                    num_commit=fields[9],
+                                    num_remove=fields[10], sum_read=fields[11],
+                                    sum_write=fields[12])
         no.save()

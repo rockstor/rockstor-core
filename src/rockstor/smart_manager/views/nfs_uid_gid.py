@@ -16,18 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from cpu_metric import CPUMetric
-from disk_stat import DiskStat
-from load_avg import LoadAvg
-from mem_info import MemInfo
-from vm_stat import VmStat
-from service import (Service, ServiceStatus)
-from sprobe import SProbe
-from nfsd import (NFSDCallDistribution,
-                  NFSDClientDistribution)
-from nfsd_share import NFSDShareDistribution
-from pool_usage import PoolUsage
-from net_stat import NetStat
-from nfsd_share_client import NFSDShareClientDistribution
-from share_usage import ShareUsage
-from nfsd_uid_gid import NFSDUidGidDistribution
+from advanced_sprobe import AdvancedSProbeView
+from smart_manager.models import NFSDUidGidDistribution
+from smart_manager.serializers import NFSDUidGidDistributionSerializer
+
+
+class NFSDUidGidDistributionView(AdvancedSProbeView):
+
+    serializer_class = NFSDUidGidDistributionSerializer
+    model_obj = NFSDUidGidDistribution
+    pname = 'nfs-uid-gid-distrib'

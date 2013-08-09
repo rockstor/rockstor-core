@@ -60,7 +60,6 @@ def main():
     service_mon.daemon = True
     service_mon.start()
     stap_proc = Stap(settings.TAP_SERVER)
-    #stap_proc.daemon = True
     stap_proc.start()
 
     while (True):

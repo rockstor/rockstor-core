@@ -1,0 +1,93 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+  <head>
+    <!--
+    /**
+    * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+    * This file is part of RockStor.
+    *
+    * RockStor is free software; you can redistribute it and/or modify
+    * it under the terms of the GNU General Public License as published
+    * by the Free Software Foundation; either version 2 of the License,
+    * or (at your option) any later version.
+    *
+    * RockStor is distributed in the hope that it will be useful, but
+    * WITHOUT ANY WARRANTY; without even the implied warranty of
+    * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    * General Public License for more details.
+    *
+    * You should have received a copy of the GNU General Public License
+    * along with this program. If not, see <http://www.gnu.org/licenses/>.
+    *
+    */
+    -->
+    <meta charset="utf-8">
+    <title>RockStor | {% block title %}{% endblock %}</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="/css/bootstrap-responsive.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+    <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="container">
+      <div class="inner-container">
+        <div class="row-fluid">
+          <div class="span12">
+            <div class="main-story">
+            <div id="login-container">
+
+              <div class="row-fluid">
+                
+                <div class="span8">
+                  <div id="logo">
+                    <object width="100px" data="/img/rockstor_logo_website_150x50.svg" type="image/svg+xml"></object>
+                  </div>
+                  <span class="h1">The Smart Storage Platform</span>
+                  <h2>Smart and Powerful Open source platform for Storage clouds.</h2>
+                </div>
+
+                <div class="span4">
+                  Create a user to begin using RockStor.
+                  <form id="login_form" method="post" action="/user_create_login" name="aform" target="_top" class="form-horizontal">
+                    <div id="login-box">
+                      {% csrf_token %}
+                      {% if messages %}
+                      <ul class="messages">
+                        {% for message in messages %}
+                        <li>{{ message }}</li>
+                        {% endfor %}
+                      </ul>
+                      {% endif %}
+                      <div class="control-group">
+                        <label>Username</label>
+                        <input type="text" id="inputUsername" name="login" placeholder="Username" >
+                      </div>
+                      <div class="control-group">
+                        <label>Password</label>
+                        <input type="password" id="inputPassword" name="password" placeholder="Password">
+                      </div>
+                      <div class="control-group">
+                        <button type="submit" id="sign_in" class="btn btn-primary">Sign in</button>
+                      </div>
+
+                    </div>
+                  </form>
+                </div>
+
+              </div> <!-- row-fluid -->
+            </div> <!-- main-story -->
+          </div>
+          </div>
+        </div> <!-- row-fluid -->
+      </div> <!-- inner-container -->
+    </div> <!-- container -->
+  </body>
+</html>
+
+
+
+

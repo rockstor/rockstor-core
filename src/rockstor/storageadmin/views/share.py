@@ -86,7 +86,6 @@ class ShareView(APIView):
                          (new_size, cur_usage))
                 handle_exception(Exception(e_msg), request)
             share.size = new_size
-            share.free = new_size - cur_usage
             share.save()
             return Response(ShareSerializer(share).data)
         except RockStorAPIException:
@@ -121,9 +120,7 @@ class ShareView(APIView):
 
             add_share(pool_name, disk.name, sname)
             qgroup_id = self._update_quota(pool_name, disk.name, sname, size)
-            cur_usage = int(share_usage(pool_name, disk.name, qgroup_id))
-            s = Share(pool=pool, qgroup=qgroup_id, name=sname, size=size,
-                    free=(size - cur_usage))
+            s = Share(pool=pool, qgroup=qgroup_id, name=sname, size=size)
             s.save()
             return Response(ShareSerializer(s).data)
         except RockStorAPIException:

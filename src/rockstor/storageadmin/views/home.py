@@ -26,11 +26,13 @@ from django.shortcuts import render_to_response
 from django.template.loader import get_template
 from django.contrib.auth import (authenticate, login, logout)
 
-from storageadmin.models import Appliance
+from storageadmin.models import Appliance, Setup
+from storageadmin.serializers import SetupSerializer
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect
 from django.contrib import messages
 from django.conf import settings
+from rest_framework.renderers import JSONRenderer
 
 def login_page(request):
     return render_to_response('login.html',
@@ -48,7 +50,7 @@ def login_submit(request):
                               context_instance=RequestContext(request))
     #return redirect('/login_page')
 
-@login_required(login_url='/login_page')
+#@login_required(login_url='/login_page')
 def home(request):
     template = get_template('index.html')
     current_appliance = None
@@ -56,17 +58,20 @@ def home(request):
         current_appliance = Appliance.objects.get(current_appliance=True)
     except Exception, e:
         pass 
+    #setup = JSONRenderer().render(SetupSerializer(Setup.objects.all()[0]).data)
+    setup = Setup.objects.all()[0]
 
     variables = Context({ 
         'request': request, 
         'current_appliance': current_appliance,
-        'nginx_websocket_port': settings.NGINX_WEBSOCKET_PORT
+        'nginx_websocket_port': settings.NGINX_WEBSOCKET_PORT,
+        'setup_user': setup.setup_user
         })
     output = template.render(variables)
     return HttpResponse(output)
 
 def logout_user(request):
     logout(request)
-    return redirect('/login_page')
+    return redirect('/')
 
 
