@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.conf.urls.defaults import patterns, include, url
 from storageadmin.views import (DiskView, SystemDiskView, PoolView, ShareView,
-                                SnapshotView, InfoView, SetupWizardView,
+                                SnapshotView, SetupWizardView,
                                 ShareIscsiView, AppliancesView, LoginView,
                                 UserView, ShareSambaView, SupportView,
                                 DashboardConfigView, ShareNFSView, NetworkView,
@@ -80,7 +80,7 @@ urlpatterns = patterns('',
     url(r'^api/appliances/(?P<id>\d+)$', AppliancesView.as_view(),
         name='appliances-view'),
     url(r'^api/tools/sysdisks', SystemDiskView.as_view(), name='sys-disk-view'),
-    url(r'^api/tools/sysinfo', InfoView.as_view(), name='sys-info'),
+    (r'^api/commands/', include('storageadmin.urls.commands')),
 
     # Disks section
     url(r'^api/disks/$', DiskView.as_view(), name='disk-view'),
