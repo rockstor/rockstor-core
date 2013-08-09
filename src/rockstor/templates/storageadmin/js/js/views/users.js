@@ -25,6 +25,11 @@
  */
 
 UsersView = RockstoreLayoutView.extend({
+  events: {
+    "click .edit-user": "editUser",
+    "click .delete-user": "deleteUser"
+  },
+
   initialize: function() {
     // call initialize of base
     this.constructor.__super__.initialize.apply(this, arguments);
@@ -33,15 +38,42 @@ UsersView = RockstoreLayoutView.extend({
     // add dependencies
     this.users = new UserCollection();
     this.dependencies.push(this.users);
+    this.users.on("reset", this.renderUsers, this);
   },
 
   render: function() {
-    this.fetch(this.renderUsers, this);
+    this.users.fetch();
     return this;
   },
 
   renderUsers: function() {
     $(this.el).html(this.template({users: this.users}));
-  }
+  },
+
+  editUser: function() {
+
+  },
+
+  deleteUser: function(event) {
+    event.preventDefault();
+    var _this = this;
+    var username = $(event.currentTarget).attr('data-username');
+    if(confirm("Delete user:  "+ username +". Are you sure?")){
+      $.ajax({
+        url: "/api/users/"+username,
+        type: "DELETE",
+        dataType: "json",
+        success: function() {
+          _this.users.fetch();
+        },
+        error: function(xhr, status, error) {
+          var msg = parseXhrError(xhr)
+          _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
+        }
+      });
+    } else {
+      return false;
+    }
+  } 
 
 });

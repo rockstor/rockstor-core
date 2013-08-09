@@ -104,6 +104,9 @@ class UserView(GenericView):
     def delete(self, request, username):
         suser, auser = self._get_user_objects(request, username)
         try:
+            if request.user.username == username:
+                raise Exception("Cannot delete the currently logged in user")
+
             epw = get_epasswd(username)
             logger.debug('epw: %s' % repr(epw))
             if (epw is not None):

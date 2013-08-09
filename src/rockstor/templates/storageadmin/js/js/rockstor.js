@@ -351,6 +351,26 @@ function refreshNavbar() {
 
 }
 
+// Parses error message from ajax request
+// Returns the value of the detail attribute as json
+// or a string if it cannot be parsed as json
+function parseXhrError(xhr) {
+  var msg = xhr.responseText;
+  try {
+    msg = JSON.parse(msg).detail;
+  } catch(err) {
+  }
+  if (typeof(msg)=="string") {
+    try {
+      msg = JSON.parse(msg);
+    } catch(err) {
+    }
+  }
+  return msg;
+
+}
+
+
 RockStorProbeMap = [];
 RockStorGlobals = {
   navbarLoaded: false
