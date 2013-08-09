@@ -30,7 +30,6 @@ BTRFS = '/sbin/btrfs'
 MOUNT = '/bin/mount'
 UMOUNT = '/bin/umount'
 DD = '/bin/dd'
-SYNC = '/bin/sync'
 DEFAULT_MNT_DIR = '/mnt2/'
 DF = '/bin/df'
 BTRFS_DEBUG_TREE = '/sbin/btrfs-debug-tree'
@@ -56,7 +55,6 @@ def resize_pool(pool_name, device, dev_list, add=True):
     resize_cmd = [BTRFS, 'device', resize_flag, ' '.join(dev_list),
                   root_mnt_pt]
     out, err, rc = run_command(resize_cmd)
-    umount_root(root_mnt_pt)
     return out, err, rc
 
 def remove_pool(name):
@@ -83,6 +81,8 @@ def remove_pool(name):
 
 def mount_root(pool_name, device):
     root_pool_mnt = DEFAULT_MNT_DIR + pool_name
+    if (is_share_mounted(pool_name)):
+        return root_pool_mnt
     create_tmp_dir(root_pool_mnt)
     mnt_cmd = [MOUNT, '-t', 'btrfs', device, root_pool_mnt]
     run_command(mnt_cmd)
@@ -102,8 +102,6 @@ def add_share(pool_name, pool_device, share_name):
     subvol_mnt_pt = root_pool_mnt + '/' + share_name
     sub_vol_cmd = [BTRFS, 'subvolume', 'create', subvol_mnt_pt]
     run_command(sub_vol_cmd)
-    run_command(SYNC)
-    umount_root(root_pool_mnt)
 
 def mount_share(share_name, pool_device, mnt_pt):
     pool_device = '/dev/' + pool_device
@@ -135,8 +133,6 @@ def share_id(pool_name, pool_device, share_name):
         if (re.search(share_name + '$', line) is not None):
             subvol_id = line.split()[1]
             break
-    run_command(SYNC)
-    umount_root(root_pool_mnt)
     if (subvol_id is not None):
         return subvol_id
     raise Exception('subvolume id for share: %s not found.' % share_name)
@@ -153,7 +149,6 @@ def remove_share(pool_name, pool_device, share_name):
     subvol_mnt_pt = root_pool_mnt + '/' + share_name
     delete_cmd = [BTRFS, 'subvolume', 'delete', subvol_mnt_pt]
     run_command(delete_cmd)
-    umount_root(root_pool_mnt)
 
 def add_snap(pool_name, pool_device, share_name, snap_name):
     """
@@ -166,7 +161,6 @@ def add_snap(pool_name, pool_device, share_name, snap_name):
     snap_cmd = [BTRFS, 'subvolume', 'snapshot', share_full_path,
                 snap_full_path]
     run_command(snap_cmd)
-    umount_root(root_pool_mnt)
 
 def remove_snap(pool_name, pool_device, snap_name):
     """
@@ -177,11 +171,7 @@ def remove_snap(pool_name, pool_device, snap_name):
 def switch_quota(pool_name, device, flag='enable'):
     root_mnt_pt = mount_root(pool_name, device)
     cmd = [BTRFS, 'quota', flag, root_mnt_pt]
-    out, err, rc = run_command(cmd)
-    #@hack -- umount without sync failes.
-    run_command(SYNC)
-    umount_root(root_mnt_pt)
-    return out, err, rc
+    return run_command(cmd)
 
 def enable_quota(pool_name, device):
     return switch_quota(pool_name, device)
@@ -193,10 +183,7 @@ def update_quota(pool_name, pool_device, qgroup, size_bytes):
     pool_device = '/dev/' + pool_device
     root_pool_mnt = mount_root(pool_name, pool_device)
     cmd = [BTRFS, 'qgroup', 'limit', str(size_bytes), qgroup, root_pool_mnt]
-    out, err, rc = run_command(cmd)
-    run_command(SYNC)
-    umount_root(root_pool_mnt)
-    return out, err, rc
+    return run_command(cmd)
 
 def share_usage(pool_name, pool_device, share_id):
     """
@@ -212,8 +199,6 @@ def share_usage(pool_name, pool_device, share_id):
         if (fields[0] == share_id):
             usage = int(fields[-1]) / 1024 # usage in KB
             break
-    run_command(SYNC)
-    umount_root(root_pool_mnt)
     if (usage is None):
         raise Exception('usage cannot be determined for share_id: %s' %
                         share_id)
@@ -223,14 +208,12 @@ def shares_usage(pool_name, pool_device, share_map):
     #don't mount the pool if at least one share in the map is mounted.
     usage_map = {}
     mnt_pt = None
-    umount = False
     for s in share_map.keys():
         if (is_share_mounted(share_map[s])):
             mnt_pt = ('%s%s' % (DEFAULT_MNT_DIR, share_map[s]))
             break
     if (mnt_pt is None):
         mnt_pt = mount_root(pool_name, '/dev/' + pool_device)
-        umount = True
     cmd = [BTRFS, 'qgroup', 'show', mnt_pt]
     out, err, rc = run_command(cmd)
     for line in out:
@@ -238,8 +221,6 @@ def shares_usage(pool_name, pool_device, share_map):
         if (len(fields) > 0 and fields[0] in share_map.keys()):
             usage = int(fields[-1]) / 1024 # usage in KB
             usage_map[share_map[fields[0]]] = usage
-    if (umount is True):
-        umount_root(mnt_pt)
     return usage_map
 
 def pool_usage(pool_device):
