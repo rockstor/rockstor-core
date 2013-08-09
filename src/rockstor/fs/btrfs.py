@@ -239,3 +239,38 @@ def pool_usage(pool_device):
         raise Exception('usage not available for pool device: %s' %
                         pool_device)
     return (total, usage)
+
+def scrub_start(pool_name, pool_device):
+    mnt_pt = mount_root(pool_name, '/dev/' + pool_device)
+    out, err, rc = run_command([BTRFS, 'scrub', 'start', mnt_pt])
+    return int(out[0].split('(pid=')[1][:-1])
+
+def scrub_cancel(mnt_pt):
+    pass
+
+def scrub_resume(mnt_pt):
+    pass
+
+def scrub_status(pool_name, pool_device):
+    stats = {}
+    mnt_pt = mount_root(pool_name, '/dev/' + pool_device)
+    out, err, rc = run_command([BTRFS, 'scrub', 'status', mnt_pt])
+    if (len(out) > 2):
+        if (out[1].strip() == 'no stats available'):
+            stats['status'] = 'running'
+            return stats
+        stats['duration'] = out[1].strip().split()[-2]
+        fields = out[2].strip().split()
+        stats['errors'] = fields[-2]
+        mult_factor = 1
+        if (fields[3][-2:] == 'MB'):
+            mult_factor = 1024
+        elif (fields[3][-2:] == 'GB'):
+            mult_factor = 1024 ** 2
+        elif (fields[3][-2:] == 'TB'):
+            mult_factor = 1024 ** 3
+        stats['kb_scrubbed'] = int(float(fields[3][:-2]) * mult_factor)
+        stats['status'] = 'finished'
+        return stats
+    return {'status': 'unknown',}
+
