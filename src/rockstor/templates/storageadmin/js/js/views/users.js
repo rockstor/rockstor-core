@@ -26,8 +26,8 @@
 
 UsersView = RockstoreLayoutView.extend({
   events: {
-    "click .edit-user": "editUser",
-    "click .delete-user": "deleteUser"
+    "click .delete-user": "deleteUser",
+    "click .user-admin": "updateUserAdmin"
   },
 
   initialize: function() {
@@ -50,10 +50,6 @@ UsersView = RockstoreLayoutView.extend({
     $(this.el).html(this.template({users: this.users}));
   },
 
-  editUser: function() {
-
-  },
-
   deleteUser: function(event) {
     event.preventDefault();
     var _this = this;
@@ -74,6 +70,24 @@ UsersView = RockstoreLayoutView.extend({
     } else {
       return false;
     }
-  } 
+  },
+
+  updateUserAdmin: function(event) {
+    var _this = this;
+    var cbox = $(event.currentTarget);
+    var admin = cbox.prop("checked") ? true : false;
+    console.log(admin);
+    var user = this.users.get(cbox.attr("data-username"));
+    console.log(user);
+    user.save({admin: admin}, {
+      success: function(model, response, options) {
+        console.log("user saved successfully");
+      },
+      error: function(model, xhr, options) {
+        var msg = parseXhrError(xhr)
+        _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
+      }
+    });
+  }
 
 });

@@ -50,9 +50,9 @@
             <td><%= user.get("name") %></td>
             <td>
               <% if (user.get("admin")) { %>
-                <input class="user-admin" type="checkbox" name="admin" value="<%= user.get('name') %>" checked="checked" disabled="true"></input>
+                <input class="user-admin" type="checkbox" name="admin" data-username="<%= user.get('name') %>" checked="checked" ></input>
               <% } else { %>
-                <input class="user-admin" type="checkbox" name="admin" value="<%= user.get('name') %>" disabled="true"></input>
+                <input class="user-admin" type="checkbox" name="admin" data-username="<%= user.get('name') %>" ></input>
               <% } %>
             </td>
             <td><%= user.get("uid") %></td>
