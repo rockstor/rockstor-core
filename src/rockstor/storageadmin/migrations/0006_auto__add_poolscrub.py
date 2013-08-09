@@ -8,9 +8,6 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Deleting model 'Setup'
-        db.delete_table('storageadmin_setup')
-
         # Adding model 'PoolScrub'
         db.create_table('storageadmin_poolscrub', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
@@ -26,16 +23,6 @@ class Migration(SchemaMigration):
 
 
     def backwards(self, orm):
-        # Adding model 'Setup'
-        db.create_table('storageadmin_setup', (
-            ('setup_system', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('setup_network', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('setup_user', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('setup_disks', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-        ))
-        db.send_create_signal('storageadmin', ['Setup'])
-
         # Deleting model 'PoolScrub'
         db.delete_table('storageadmin_poolscrub')
 
@@ -180,6 +167,14 @@ class Migration(SchemaMigration):
             'path': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '4096'}),
             'read_only': ('django.db.models.fields.CharField', [], {'default': "'no'", 'max_length': '3'}),
             'share': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storageadmin.Share']"})
+        },
+        'storageadmin.setup': {
+            'Meta': {'object_name': 'Setup'},
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'setup_disks': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'setup_network': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'setup_system': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'setup_user': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
         },
         'storageadmin.share': {
             'Meta': {'object_name': 'Share'},
