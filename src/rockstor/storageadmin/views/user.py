@@ -42,47 +42,58 @@ class UserView(GenericView):
         if ('username' in kwargs):
             self.paginate_by = None
             return User.objects.filter(name=kwargs['username'])
-        return User.objects.all()
+        return DjangoUser.objects.all()
 
     @transaction.commit_on_success
     def post(self, request):
         try:
-            username = request.DATA['name']
+            username = request.DATA['username']
             password = request.DATA['password']
-            admin = False
-            if request.DATA['admin'] == "true":
-                admin = True
-            else:
-                admin = False
-
+            is_active = request.DATA['is_active']
+            logger.debug("is_active: %s" % is_active)
+            
+            # Check that a django user with the same name does not exist
             if (DjangoUser.objects.filter(username=username).exists() or
                 User.objects.filter(name=username).exists()):
                 e_msg = ('user: %s already exists. Choose a different'
                          'username' % username)
-                handle_exception(Exception(JSONRenderer().render({'username': e_msg})), request)
+                raise Exception(JSONRenderer().render({'username': e_msg}))
+
+            # Check that a unix user with the same name does not exist
             unix_users = get_users(min_uid=0, uname=username)
             if (username in unix_users):
                 e_msg = ('user: %s exists as a system user. Choose a '
                          'different username' % username)
-                handle_exception(Exception(JSONRenderer().render({'username': e_msg})), request)
-
-            if admin:
-                auser = DjangoUser.objects.create_user(username, None,
-                                                       password)
-            max_uid = settings.START_UID
+                raise Exception(JSONRenderer().render({'username': e_msg}))
+            
+            # Create Django user
+            user = DjangoUser.objects.create_user(username, None, password)
+            user.is_active = is_active
+            user.save()
+            
+            # Create unix user
+            max_used_uid = settings.START_UID
             shell = settings.USER_SHELL
             try:
-                max_uid = User.objects.all().order_by('-uid')[0].uid
-            except:
+                # Find max uid from existing rockstor unix users
+                unix_users = get_users(min_uid=settings.START_UID,
+                        max_uid=settings.END_UID)
+                l = sorted(unix_users.iterkeys(), 
+                        key = lambda k: unix_users[k][0], 
+                        reverse=True)
+                logger.debug("sorted list ")
+                logger.debug(l)
+                max_used_uid = int(unix_users[l[0]][0])
+            except Exception, e:
+                logger.exception(e)
                 pass
-            uid = max_uid + 1
+            logger.debug('max_used_uid: %d' % max_used_uid)
+            uid = max_used_uid + 1
             useradd(username, uid, shell)
             usermod(username, password)
             epw = get_epasswd(username)
-            suser = User(name=username, password=epw, uid=uid,
-                         gid=uid, admin=admin)
-            suser.save()
-            return Response(UserSerializer(suser).data)
+
+            return Response(UserSerializer(user).data)
         except RockStorAPIException:
             raise
         except Exception, e:
@@ -90,34 +101,34 @@ class UserView(GenericView):
 
     @transaction.commit_on_success
     def put(self, request, username):
-        suser, auser = self._get_user_objects(request, username)
+        user = self._get_user_object(request, username)
         try:
             # if password is present in input data, change password
             if 'password' in request.DATA.keys():
                 # change password
                 password = request.DATA['password']
                 usermod(username, password)
-                if (auser is not None):
-                    auser.set_password(password)
-                    auser.save()
-                suser.password = get_epasswd(username)
-                suser.save()
+                user.set_password(password)
+                user.save()
             # check if admin attribute has changed
-            if 'admin' in request.DATA.keys():
-                admin = request.DATA['admin']
-                if admin == "true" and not suser.admin:
-                    suser.admin = True
-                    suser.save
-                elif suser.admin:
-                    suser.admin = False
-                    suser.save
-            return Response(UserSerializer(suser).data)
+            if 'is_active' in request.DATA.keys():
+                is_active = request.DATA['is_active']
+                logger.debug('is_active : %s' % is_active)
+                # put is through bacbone model save so is_active comes in 
+                # as a boolean
+                if is_active != user.is_active:
+                    if request.user.username == username:
+                        raise Exception("Cannot modify admin attribute of \
+                                the currently logged in user")
+                    user.is_active = is_active
+                    user.save()
+            return Response(UserSerializer(user).data)
         except Exception, e:
             handle_exception(e, request)
 
     @transaction.commit_on_success
     def delete(self, request, username):
-        suser, auser = self._get_user_objects(request, username)
+        user = self._get_user_object(request, username)
         try:
             if request.user.username == username:
                 raise Exception("Cannot delete the currently logged in user")
@@ -126,21 +137,18 @@ class UserView(GenericView):
             logger.debug('epw: %s' % repr(epw))
             if (epw is not None):
                 userdel(username)
-            suser.delete()
-            if (auser is not None):
-                auser.delete()
+            user.delete()
             logger.debug('deleted user %s' % username)
             return Response()
         except Exception, e:
             handle_exception(e, request)
 
-    def _get_user_objects(self, request, username):
+    def _get_user_object(self, request, username):
         try:
-            suser = User.objects.get(name=username)
-            auser = None
-            if (suser.admin is True):
-                auser = DjangoUser.objects.get(username=username)
-            return (suser, auser)
+            user = DjangoUser.objects.get(username=username)
+            return user
         except:
             e_msg = ('user: %s does not exist' % username)
+            logger.debug(e_msg)
             handle_exception(Exception(e_msg), request)
+

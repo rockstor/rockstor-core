@@ -39,28 +39,24 @@
         <tr>
           <th scope="col" abbr="Name">Username</th>
           <th scope="col" abbr="Admin">Admin</th>
-          <th scope="col" abbr="UID">UID</th>
-          <th scope="col" abbr="GID">GID</th>
           <th scope="col" abbr="Actions">Actions</th>
         </tr>
       </thead>
       <tbody>
         <% users.each(function(user, index) { %>
           <tr>
-            <td><%= user.get("name") %></td>
+            <td><%= user.get("username") %></td>
             <td>
-              <% if (user.get("admin")) { %>
-                <input class="user-admin" type="checkbox" name="admin" data-username="<%= user.get('name') %>" checked="checked" ></input>
+              <% if (user.get("is_active")) { %>
+                <input class="user-admin" type="checkbox" name="admin" data-username="<%= user.get('username') %>" checked="checked" ></input>
               <% } else { %>
-                <input class="user-admin" type="checkbox" name="admin" data-username="<%= user.get('name') %>" ></input>
+                <input class="user-admin" type="checkbox" name="admin" data-username="<%= user.get('username') %>" ></input>
               <% } %>
             </td>
-            <td><%= user.get("uid") %></td>
-            <td><%= user.get("gid") %></td>
             <td>
-              <a href="#users/<%= user.get('name') %>/edit" class="edit-user" data-username="<%= user.get('name') %>"><i class="icon-pencil"></i></a>
+              <a href="#users/<%= user.get('username') %>/edit" class="edit-user" data-username="<%= user.get('username') %>"><i class="icon-pencil"></i></a>
               &nbsp;
-              <a href="#" class="delete-user" data-username="<%= user.get('name') %>"><i class="icon-remove"></i></a>
+              <a href="#" class="delete-user" data-username="<%= user.get('username') %>"><i class="icon-remove"></i></a>
             </td>
           </tr>
         <% }); %>

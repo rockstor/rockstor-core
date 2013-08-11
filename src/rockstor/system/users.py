@@ -31,12 +31,12 @@ USERDEL = '/usr/sbin/userdel'
 PASSWD = '/usr/bin/passwd'
 
 
-def get_users(min_uid=5000, uname=None):
+def get_users(min_uid=5000, max_uid=6000, uname=None):
     users = {}
     with open(PW_FILE) as pfo:
         for l in pfo.readlines():
             fields = l.strip().split(':')
-            if (int(fields[2]) < min_uid):
+            if (int(fields[2]) < min_uid or int(fields[2]) > max_uid):
                 continue
             if (uname is not None):
                 if (uname == fields[0]):

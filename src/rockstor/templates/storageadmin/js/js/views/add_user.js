@@ -54,48 +54,42 @@ AddUserView = RockstoreLayoutView.extend({
         }
       },
       submitHandler: function() {
+        console.log("submitHandler");
         var username = _this.$("#username").val();
+        console.log("username: " + username);
         var password = _this.$("#password").val();
-        var admin = _this.$("#admin").prop("checked") ? true : false; 
-        $.ajax({
-          url: "/api/users/",
-          type: "POST",
-          dataType: "json",
-          data: {
-            name: username,
+        console.log("password: " + password);
+        var is_active = _this.$("#is_active").prop("checked"); 
+        // create a dummy user model class that does not have idAttribute 
+        // = username, so backbone will treat is as a new object,
+        // ie isNew will return true
+        var tmpUserModel = Backbone.Model.extend({ 
+          urlRoot: "/api/users/"
+        });
+        var user = new tmpUserModel()
+        user.save(
+          {
+            username: username,
             password: password,
-            admin: admin
-          }, 
-          success: function(data, status, xhr) {
-            console.log("user created successfully");
-            app_router.navigate("users", {trigger: true});
+            is_active: is_active
           },
-          error: function(xhr, status, error) {
-            var msg = xhr.responseText;
-            var fieldName = null;
-            try {
-              msg = JSON.parse(msg).detail;
-            } catch(err) {
-            }
-            if (typeof(msg)=="string") {
-              try {
-                msg = JSON.parse(msg);
-              } catch(err) {
+          {
+            success: function(model, response, options) {
+              console.log("user created successfully");
+              app_router.navigate("users", {trigger: true});
+            },
+            error: function(model, xhr, options) {
+              var msg = parseXhrError(xhr)
+              if (_.isObject(msg)) {
+                _this.validator.showErrors(msg);
+              } else {
+                _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
               }
             }
-            if (_.isObject(msg)) {
-              fieldName = _.keys(msg)[0];
-              msg = msg[fieldName];
-            }
-            if (fieldName) {
-              e = {};
-              e[fieldName] = msg;
-              _this.validator.showErrors(e);
-            } else {
-              _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
-            }
           }
-        });
+        );
+        
+        return false;
       }
     });
     return this;
