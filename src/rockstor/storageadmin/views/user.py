@@ -41,7 +41,7 @@ class UserView(GenericView):
     def get_queryset(self, *args, **kwargs):
         if ('username' in kwargs):
             self.paginate_by = None
-            return User.objects.filter(name=kwargs['username'])
+            return DjangoUser.objects.filter(username=kwargs['username'])
         return DjangoUser.objects.all()
 
     @transaction.commit_on_success
