@@ -25,6 +25,9 @@
  */
 
 AddUserView = RockstoreLayoutView.extend({
+  events: {
+    "click #cancel": "cancel"
+  },
 
   initialize: function() {
     // call initialize of base

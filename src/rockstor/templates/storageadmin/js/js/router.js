@@ -235,7 +235,7 @@ var AppRouter = Backbone.Router.extend({
   
   editUser: function(username) {
     this.cleanup();
-    this.currentLayout = new EditUserView();
+    this.currentLayout = new EditUserView({username: username});
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },

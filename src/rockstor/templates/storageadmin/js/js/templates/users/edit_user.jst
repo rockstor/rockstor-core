@@ -19,40 +19,36 @@
  */
 </script>
 
-<h3>Edit User <%= user.get("name") %></h3>
-<div id="add-user-msg"></div>
+<h3>Change password for user <%= username %></h3>
 
-<form id="user-create-form" name="aform" class="form-horizontal">
+<div class="row-fluid">
+  <div class="span8">
+    <label class="control-label"><span class="required">*</span> indicates required fields</label>
+    <div class="form-box">
+      <form id="change-password-form" name="aform">
+        <div class="messages"></div>
+        <div class="control-group">
+          <label class="control-label">New Password<span class="required"> *</span></label>
+          <div class="controls">
+            <input type="password" id="password" name="password" placeholder="Password">
+          </div>
+        </div>
+        <div class="control-group">
+          <label class="control-label">Confirm Password<span class="required"> *</span></label>
+          <div class="controls">
+            <input type="password" id="password_confirmation" name="password_confirmation" placeholder="Password">
+          </div>
+        </div>
+        <div class="control-group">
+          <div class="controls">
+            <button type="Submit" id="edit-user" class="btn btn-primary">Change Password</button>
+            <button id="cancel" class="btn">Cancel</button>
+          </div>
+        </div>
 
-  <div class="row-fluid">
-    <div class="span12">
-        <ul class="messages">
-        </ul>
-        <div class="control-group">
-          <label class="inline">Admin</label>
-          <% if (user.get("admin")) { %>
-            <input class="checkbox inline" type="checkbox" id="admin" name="admin" placeholder="Admin" checked="true">
-          <% } else { %>
-            <input class="checkbox inline" type="checkbox" id="admin" name="admin" placeholder="Admin">
-          <% } %>
-        </div>
-        <div class="control-group">
-          <label>Password</label>
-          <input type="password" id="password" name="password" placeholder="Password">
-        </div>
-        <div class="control-group">
-          <label>Confirm Password</label>
-          <input type="password" id="password_confirmation" name="password_confirmation" placeholder="Password">
-        </div>
+      </form>
     </div>
   </div>
+</div>
 
-  <div class="row-fluid">
-    <div class="span12">
-      <button type="Submit" id="create-user" class="btn btn-primary">Create User</button>
-      <button id="cancel" class="btn">Cancel</button>
-    </div>
-  </div>
-
-</form>
 

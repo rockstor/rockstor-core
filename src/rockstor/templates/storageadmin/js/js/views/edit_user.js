@@ -25,29 +25,32 @@
  */
 
 EditUserView = RockstoreLayoutView.extend({
+  events: {
+    "click #cancel": "cancel"
+  },
 
   initialize: function() {
     // call initialize of base
     this.constructor.__super__.initialize.apply(this, arguments);
     // set template
     this.template = window.JST.users_edit_user;
-    this.user = new User({name: this.options.username});
-    this.user.on("change", this.renderUser, this);
+    this.username = this.options.username;
   },
   
   render: function() {
-    this.user.fetch();
+    this.renderUser();
     return this;
   },
 
   renderUser: function() {
     var _this = this;
-    $(this.el).html(this.template({user: this.user}));
+    $(this.el).html(this.template({username: this.username}));
 
-    this.validator = this.$("#user-create-form").validate({
+    this.validator = this.$("#change-password-form").validate({
       onfocusout: false,
       onkeyup: false,
       rules: {
+        password: "required",
         password_confirmation: {
           equalTo: "#password"
         }
@@ -59,12 +62,9 @@ EditUserView = RockstoreLayoutView.extend({
       },
       submitHandler: function() {
         var password = _this.$("#password").val().trim();
-        if (password != "") {
-          _this.user.set({password: password});
-        }
-        var admin = _this.$("#admin").prop("checked") ? true : false; 
-        _this.user.set({admin: admin});
-        this.user.save(null, {
+        var user = new User({username: _this.username});
+        user.set({password: password});
+        user.save(null, {
           success: function(model, response, options) {
             console.log("user saved successfully");
             app_router.navigate("users", {trigger: true});
@@ -74,10 +74,9 @@ EditUserView = RockstoreLayoutView.extend({
             _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
           }
         });
-
+        return false;  
       }
     });
-    return this;
   },
 
   cancel: function() {
