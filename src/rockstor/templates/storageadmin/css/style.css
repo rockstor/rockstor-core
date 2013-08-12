@@ -55,17 +55,25 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
 .smallinput { width: 100px; }
 
 /* Navbar */
+.navbar .container { width: 940px; }
+.navbar-inner { border-radius: 0px; }
+
+/*
 .navbar-outer {
   border-bottom: 1px solid #ddd;
   background: #3E454C;
 }
+*/
 
+/*
 .navbar {
     padding: 8px 0px 8px 0px;
     margin-bottom: 0px;
     font: 12px/1.5em "Helvetica Neue",Helvetica,Arial,sans-serif;
 }
+*/
 
+/*
 .navbar-inner {
   padding-left: 0;
   padding-right: 0;
@@ -76,9 +84,13 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
   -moz-box-shadow: none;
   box-shadow: none;
 }
+*/
 
+/*
 .nav li a { font-size: 13px; }
 .navbar .nav>li>a { text-shadow: none; color: #fff; }
+*/
+
 #social-links { padding-top: 6px; }
 
 .navbar-search .search-query {
@@ -86,12 +98,15 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
   font-size: 12px;
 }
 
+/*
 .navbar .nav li.dropdown>.dropdown-toggle .caret {
   display: none;
   border-top-color: #000;
   border-bottom-color: #000;
 }
+*/
 
+/*
 .navbar .nav>li>a:hover {
   color: #6191bf;
   text-decoration: none;
@@ -108,7 +123,9 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
   color: #000;
   background-color: transparent;
 }
+*/
 
+/*
 .navbar .nav li.dropdown>a:focus .caret {
   border-top-color: #333;
   border-bottom-color: #333;
@@ -118,6 +135,7 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
   border-top-color: #333;
   border-bottom-color: #333;
 }
+*/
 /***/
 
 /* Logo */
@@ -660,7 +678,7 @@ label.error { color: #b94a48; }
 
 #breadcrumbs h3 { color: #005580; padding: 0; margin: 0;}
 
-#appliance-name h3 { margin-bottom: 24px; }
+#appliance-name { color: #2AA7FA; }
 
 #appliance-select-content {
   height: 400px;
