@@ -70,6 +70,9 @@ var AppRouter = Backbone.Router.extend({
         return false;
       } 
     }
+    if (RockStorGlobals.currentAppliance == null) {
+      setApplianceName();
+    }
   },
 
   loginPage: function() {
