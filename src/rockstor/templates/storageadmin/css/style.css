@@ -153,10 +153,10 @@ a#logo-name { color: #fff; }
 
 /* Module */
 .module {
-  padding: 12px 12px 12px 12px;
-  margin-bottom: 24px;
-  border: 1px solid #ddd;
-  border-radius: 8px 8px 8px 8px;
+  /*padding: 12px 12px 12px 12px;*/
+  /*margin-bottom: 24px;*/
+  /*border: 1px solid #ddd;*/
+  /*border-radius: 8px 8px 8px 8px;*/
 }
 
 .module-header {
@@ -334,7 +334,8 @@ table.tablesorter thead tr th.title h4 {
 }
 
 table.tablesorter thead tr th, table.tablesorter tfoot tr th {
-	background: #9AB5C8;
+	background: #868C97;
+  color: #fff;
 }
 
 table.tablesorter thead tr .header {
@@ -1103,9 +1104,9 @@ path.link {
 
 /* Form */
 .form-box {
-  background: none repeat scroll 0% 0% rgb(255, 246, 229);
   padding: 24px 12px 24px 12px;
-  border: 1px solid #eee;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }
 form { margin: 0px; }
 input[type="checkbox"].inline {

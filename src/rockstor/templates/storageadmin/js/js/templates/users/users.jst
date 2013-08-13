@@ -38,14 +38,14 @@
       <thead>
         <tr>
           <th scope="col" abbr="Name">Username</th>
-          <th scope="col" abbr="Admin">Admin</th>
+          <th scope="col" abbr="Admin">Admin access</th>
           <th scope="col" abbr="Actions">Actions</th>
         </tr>
       </thead>
       <tbody>
         <% users.each(function(user, index) { %>
           <tr>
-            <td><%= user.get("username") %></td>
+            <td><i class="icon-user"></i> <%= user.get("username") %></td>
             <td>
               <% if (user.get("is_active")) { %>
                 <input class="user-admin" type="checkbox" name="admin" data-username="<%= user.get('username') %>" checked="checked" ></input>
