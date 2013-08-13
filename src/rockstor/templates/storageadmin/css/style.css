@@ -1105,8 +1105,8 @@ path.link {
 /* Form */
 .form-box {
   padding: 24px 12px 24px 12px;
-  border: 1px solid #ccc;
   border-radius: 4px;
+  background: #eee;
 }
 form { margin: 0px; }
 input[type="checkbox"].inline {
