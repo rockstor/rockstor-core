@@ -159,6 +159,10 @@
       <div id="appliance-select-content"></div>
     </div>
 
+    <form name="dummy-form" action="/login" method="post">
+      {% csrf_token %}
+    </form>
+
     <script type="text/javascript" language="javascript" src="/js/bootstrap.min.js"></script>
     <script type="text/javascript">
       NGINX_WEBSOCKET_PORT = {{ nginx_websocket_port }};

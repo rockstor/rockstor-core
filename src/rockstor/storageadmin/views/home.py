@@ -61,14 +61,15 @@ def home(request):
     #setup = JSONRenderer().render(SetupSerializer(Setup.objects.all()[0]).data)
     setup = Setup.objects.all()[0]
 
-    variables = Context({ 
+    context = { 
         'request': request, 
         'current_appliance': current_appliance,
         'nginx_websocket_port': settings.NGINX_WEBSOCKET_PORT,
         'setup_user': setup.setup_user
-        })
-    output = template.render(variables)
-    return HttpResponse(output)
+    }
+    return render_to_response('index.html',
+            context,
+            context_instance=RequestContext(request))
 
 def logout_user(request):
     logout(request)
