@@ -27,6 +27,7 @@ class LoadAvg(models.Model):
     active_threads = models.IntegerField()
     total_threads = models.IntegerField()
     latest_pid = models.IntegerField()
+    idle_seconds = models.IntegerField()
     ts = models.DateTimeField(auto_now=True)
 
     class Meta:

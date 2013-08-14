@@ -47,6 +47,7 @@ class ProcRetreiver(Process):
     def run(self):
         #extract metrics and put in q
         pu_time = time.mktime(time.gmtime())
+        loadavg_time = pu_time
         cur_disk_stats = None
         cur_net_stats = None
         while (True):
@@ -55,7 +56,7 @@ class ProcRetreiver(Process):
 
             if (self.q.qsize() < 1000):
                 self.cpu_stats()
-                self.loadavg()
+                loadavg_time = self.loadavg(loadavg_time)
                 self.meminfo()
                 pu_time = self.pools_usage(pu_time)
                 cur_disk_stats = self.disk_stats(cur_disk_stats,
@@ -120,16 +121,23 @@ class ProcRetreiver(Process):
                     self.q.put(ds)
         return cur_stats
 
-    def loadavg(self):
+    def loadavg(self, last_ts):
+        now = time.mktime(time.gmtime())
+        if (now - last_ts < 30):
+            return last_ts
+
         stats_file = '/proc/loadavg'
-        with open(stats_file) as sfo:
+        with open(stats_file) as sfo, open('/proc/uptime') as ufo:
             line = sfo.readline()
             fields = line.split()
             thread_fields = fields[3].split('/')
+            idle_seconds = int(float(ufo.readline().split()[1]))
             la = LoadAvg(load_1=fields[0], load_5=fields[1], load_15=fields[2],
                          active_threads=thread_fields[0],
-                         total_threads=thread_fields[1], latest_pid=fields[4])
+                         total_threads=thread_fields[1], latest_pid=fields[4],
+                         idle_seconds=idle_seconds)
             self.q.put(la)
+        return now
 
     def meminfo(self):
         stats_file = '/proc/meminfo'

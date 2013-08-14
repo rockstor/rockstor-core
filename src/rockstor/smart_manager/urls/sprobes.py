@@ -22,7 +22,7 @@ from smart_manager.views import (SmartManagerView, ServiceView, SProbeView,
                                  DiskStatView, NFSDistribView,
                                  NFSDClientDistribView, NFSDShareDistribView,
                                  NFSDShareClientDistribView, CPUMetricView,
-                                 NFSDUidGidDistributionView)
+                                 NFSDUidGidDistributionView, LoadAvgView)
 
 
 urlpatterns = patterns('',
@@ -38,6 +38,7 @@ urlpatterns = patterns('',
     url(r'^netstat/$', NetStatView.as_view(),
         name='netstat-view'),
     url(r'^cpumetric/$', CPUMetricView.as_view(), name='cpumetric-view'),
+    url(r'^loadavg/$', LoadAvgView.as_view(), name='loadavg-view'),
 
 
     # Advanced smart probes
