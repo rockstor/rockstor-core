@@ -90,21 +90,9 @@ def run_command(cmd, shell=False, stdout=subprocess.PIPE,
         raise CommandException(out, err, rc)
     return (out, err, rc)
 
-def sys_info():
-    sys_info = {}
-    sys_info['hostname'] = socket.gethostname()
+def uptime():
     with open('/proc/uptime') as ufo:
-        sys_info['uptime'] = ufo.readline().split()[0]
-    with open('/proc/meminfo') as mfo:
-        sys_info['memory'] = mfo.readline().split()[1]
-    with open('/proc/loadavg') as lfo:
-        sys_info['load'] = lfo.readline().strip()
-    with open('/proc/cpuinfo') as cfo:
-        sys_info['processors'] = 0
-        for line in cfo.readlines():
-            if (re.search('processor', line)):
-                sys_info['processors'] = sys_info['processors'] + 1
-    return sys_info
+        return int(float(ufo.readline().split()[0]))
 
 def create_tmp_dir(dirname):
     return run_command([MKDIR, '-p', dirname])
