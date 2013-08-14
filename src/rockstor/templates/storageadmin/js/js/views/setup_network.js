@@ -68,9 +68,6 @@ SetupNetworkView = Backbone.View.extend({
 
   setIp: function() {
     RockStorGlobals.ip = this.networkInterfaces.at(0).get("ipaddr");
-    if (_.isNull(RockStorGlobals.ip)) {
-      RockStorGlobals.ip = "192.168.1.128";
-    }
   }
 
 
