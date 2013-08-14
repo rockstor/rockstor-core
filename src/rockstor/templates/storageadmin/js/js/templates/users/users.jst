@@ -1,0 +1,77 @@
+<script>
+/*
+ * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ * 
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ * 
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ */
+</script>
+
+
+<!-- Header -->
+<div class="row-fluid">
+  <div class="span12">
+    <div class="module-header">
+      <div class="title"><span class="h3">Users</span></div>
+    </div>
+  </div> <!-- span12 -->
+</div> <!-- row-fluid -->
+
+<!-- Module Body -->
+<div class="row-fluid">
+  <div class="span8">
+    <div class="messages"></div>
+    <!-- Content -->
+    <table id="users-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of user">
+      <thead>
+        <tr>
+          <th scope="col" abbr="Name">Username</th>
+          <th scope="col" abbr="Admin">Admin access</th>
+          <th scope="col" abbr="UID">UID</th>
+          <th scope="col" abbr="GID">GID</th>
+          <th scope="col" abbr="Actions">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% users.each(function(user, index) { %>
+          <tr>
+            <td><i class="icon-user"></i> <%= user.get("username") %></td>
+            <td>
+              <% if (user.get("is_active")) { %>
+                <input class="user-admin" type="checkbox" name="admin" data-username="<%= user.get('username') %>" checked="checked" ></input>
+              <% } else { %>
+                <input class="user-admin" type="checkbox" name="admin" data-username="<%= user.get('username') %>" ></input>
+              <% } %>
+            </td>
+            <td><%= user.get("suser").uid %></td>
+            <td><%= user.get("suser").gid %></td>
+            <td>
+              <a href="#users/<%= user.get('username') %>/edit" class="edit-user" data-username="<%= user.get('username') %>"><i class="icon-pencil"></i></a>
+              &nbsp;
+              <a href="#" class="delete-user" data-username="<%= user.get('username') %>"><i class="icon-remove"></i></a>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+
+    <a href="#add-user" id="add-user" class="btn btn-primary">Add User</a>
+
+  </div> <!-- span12 -->
+</div> <!-- row-fluid -->
+
+
+
+

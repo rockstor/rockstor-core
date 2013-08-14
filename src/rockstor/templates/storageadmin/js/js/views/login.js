@@ -59,45 +59,30 @@ LoginView = Backbone.View.extend({
         submitHandler: function() {
           var username = _this.$("#username").val();
           var password = _this.$("#password").val();
-          $.ajax({
-            url: "/setup_user",
-            type: "POST",
-            dataType: "json",
-            data: {
+          var setupUserModel = Backbone.Model.extend({
+            urlRoot: "/setup_user",
+          });
+          var user = new setupUserModel();
+          user.save(
+            {
               username: username,
               password: password,
-              utype: "admin"
-            }, 
-            success: function(data, status, xhr) {
-              _this.makeLoginRequest(username, password);
+              is_active: true
             },
-            error: function(xhr, status, error) {
-              var msg = xhr.responseText;
-              var fieldName = null;
-              try {
-                msg = JSON.parse(msg).detail;
-              } catch(err) {
-              }
-              if (typeof(msg)=="string") {
-                try {
-                  msg = JSON.parse(msg);
-                } catch(err) {
-
+            {
+              success: function(model, response, options) {
+                _this.makeLoginRequest(username, password);
+              },
+              error: function(model, xhr, options) {
+                var msg = parseXhrError(xhr)
+                if (_.isObject(msg)) {
+                  _this.validator.showErrors(msg);
+                } else {
+                  _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
                 }
               }
-              if (_.isObject(msg)) {
-                fieldName = _.keys(msg)[0];
-                msg = msg[fieldName];
-              }
-              if (fieldName) {
-                e = {};
-                e[fieldName] = msg;
-                _this.validator.showErrors(e);
-              } else {
-                _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
-              }
             }
-          });
+          );
         }
       });
     }

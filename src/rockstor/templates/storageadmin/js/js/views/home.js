@@ -68,14 +68,15 @@ var HomeLayoutView = RockstoreLayoutView.extend({
 
     // redirect to setup if current appliance is not setup
     var current_appliance = undefined;
+    /*
     if (this.appliances.length > 0) {
-      var current_appliance = this.appliances.find(function(appliance) {
+      RockStorGlobals.currentAppliance = this.appliances.find(function(appliance) {
         return appliance.get('current_appliance') == true; 
       })
     }
-    
+    */ 
     // set current appliance name
-    $('#appliance-name').html(current_appliance.get('ip')); 
+    //$('#appliance-name').html(current_appliance.get('ip')); 
 
     // render template
     $(this.el).empty();

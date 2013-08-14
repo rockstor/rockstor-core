@@ -124,7 +124,7 @@ var ApplianceCollection = Backbone.Collection.extend({
 
 var User = Backbone.Model.extend({
   urlRoot: '/api/users/',
-  idAttribute: 'name'
+  idAttribute: 'username'
 });
 var UserCollection = Backbone.Collection.extend({
   model: User,
