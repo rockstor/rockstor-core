@@ -32,6 +32,7 @@ class Share(models.Model):
     uuid = models.CharField(max_length=100, null=True)
     """total size in GB"""
     size = models.IntegerField()
+    toc = models.DateTimeField(auto_now=True)
 
     def cur_usage(self, *args, **kwargs):
         try:
