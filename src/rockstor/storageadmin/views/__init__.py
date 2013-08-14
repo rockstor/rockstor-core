@@ -36,3 +36,4 @@ from dashboardconfig import DashboardConfigView
 from share_nfs import ShareNFSView
 from network import NetworkView
 from setup_user import SetupUserView
+from share_acl import ShareACLView

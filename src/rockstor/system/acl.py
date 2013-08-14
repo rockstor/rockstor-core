@@ -16,17 +16,25 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from django.conf.urls.defaults import patterns, url
-from smart_manager.views import (SmartManagerView, ServiceView, SProbeView,
-                                 MemInfoView, NetStatView,
-                                 DiskStatView, NFSDistribView,
-                                 NFSDClientDistribView, NFSDShareDistribView,
-                                 NFSDShareClientDistribView)
+from osi import run_command
+
+CHOWN = '/bin/chown'
+CHMOD = '/bin/chmod'
+LS = '/bin/ls'
+
+def chown(share, owner, group=None, recursive=False):
+    cmd = [CHOWN,]
+    if (recursive is True):
+        cmd.append('-R')
+    if (group is not None):
+        owner = ('%s:%s' % (owner, group))
+    cmd.extend([owner, share])
+    return run_command(cmd)
 
 
-urlpatterns = patterns('',
-    # Services
-    url(r'^$', ServiceView.as_view(), name='service-view'),
-    url(r'^(?P<sname>[A-Za-z_]+)/$', ServiceView.as_view(),
-        name='service-view'),
-)
+def chmod(share, perm_bits, recursive=False):
+    cmd = [CHMOD,]
+    if (recursive is True):
+        cmd.append('-R')
+    cmd.extend([perm_bits, share])
+    return run_command(cmd)
