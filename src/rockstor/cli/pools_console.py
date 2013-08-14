@@ -88,3 +88,28 @@ class PoolsConsole(BaseConsole):
         else:
             pd_console.onecmd(args)
 
+    def do_scrub(self, args):
+        """
+        To scrub a pool:
+
+        scrub pool0
+        """
+        try:
+            url = ('%s%s/scrub/' % (self.url, args))
+            scrub_info = api_call(url, calltype='post')
+            print scrub_info
+        except:
+            return self.do_help(args)
+
+    def do_scrub_status(self, args):
+        """
+        get scrub status for a pool
+
+        scrub_status pool0
+        """
+        try:
+            url = ('%s%s/scrub/status/' % (self.url, args))
+            scrub_info = api_call(url, calltype='post')
+            print scrub_info
+        except:
+            return self.do_help(args)

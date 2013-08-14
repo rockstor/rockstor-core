@@ -35,5 +35,5 @@ class CommandView(APIView):
 
     def get(self, request, command):
         if (command == 'uptime'):
-            return Response(uptime)
+            return Response(uptime())
         return Response()

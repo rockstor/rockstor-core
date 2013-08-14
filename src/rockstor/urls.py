@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.conf.urls.defaults import patterns, include, url
 from storageadmin.views import (DiskView, SystemDiskView, PoolView, ShareView,
-                                SnapshotView, InfoView, SetupWizardView,
+                                SnapshotView, SetupWizardView,
                                 ShareIscsiView, AppliancesView, LoginView,
                                 UserView, ShareSambaView, SupportView,
                                 DashboardConfigView, ShareNFSView, NetworkView,
@@ -80,7 +80,7 @@ urlpatterns = patterns('',
     url(r'^api/appliances/(?P<id>\d+)$', AppliancesView.as_view(),
         name='appliances-view'),
     url(r'^api/tools/sysdisks', SystemDiskView.as_view(), name='sys-disk-view'),
-    url(r'^api/tools/sysinfo', InfoView.as_view(), name='sys-info'),
+    (r'^api/commands/', include('storageadmin.urls.commands')),
 
     # Disks section
     url(r'^api/disks/$', DiskView.as_view(), name='disk-view'),
@@ -91,30 +91,9 @@ urlpatterns = patterns('',
     url(r'^api/network/(?P<iname>[A-Za-z0-9]+)/$', NetworkView.as_view(),
         name='net-view'),
 
-    # Pools section
-    url(r'^api/pools/$', PoolView.as_view(), name='pool-view'),
-    url(r'^api/pools/(?P<pname>[A-Za-z0-9_]+)/$', PoolView.as_view(),
-        name='pool-view'),
-    url(r'^api/pools/(?P<pname>[A-Za-z0-9_]+)/(?P<command>.*)/$',
-        PoolView.as_view(), name='pool-view'),
+    (r'^api/pools/', include('storageadmin.urls.pools')),
 
-    # Shares section
-    url(r'^api/shares/$', ShareView.as_view(), name='share-view'),
-    url(r'^api/shares/(?P<sname>[A-Za-z0-9_]+)/$', ShareView.as_view(),
-        name='share-view'),
-    url(r'^api/shares/(?P<sname>[A-Za-z0-9_]+)/nfs/$', ShareNFSView.as_view(),
-        name='nfs-view'),
-    url(r'^api/shares/(?P<sname>[A-Za-z0-9_]+)/nfs/(?P<export_id>[0-9]+)/$',
-        ShareNFSView.as_view(), name='nfs-view'),
-    url(r'^api/shares/(?P<sname>[A-Za-z0-9_]+)/samba/$',
-        ShareSambaView.as_view(), name='samba-view'),
-    url(r'^api/shares/(?P<sname>[A-Za-z0-9_]+)/snapshots/$',
-        SnapshotView.as_view(), name='snapshot-view'),
-    url(r'^api/shares/(?P<sname>[A-Za-z0-9_]+)/snapshots/(?P<snap_name>.*)/$',
-        SnapshotView.as_view(), name='snapshot-view'),
-    url(r'^api/shares/(?P<sname>[A-Za-z0-9_]+)/iscsi/$',
-        ShareIscsiView.as_view(), name='share-iscsi-view'),
-
+    (r'^api/shares/', include('storageadmin.urls.share')),
     (r'^api/users/', include('storageadmin.urls.users')),
 
 

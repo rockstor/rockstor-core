@@ -35,6 +35,7 @@ EXPORT_DIR = '/export/'
 SMB_CONFIG = '/etc/samba/smb.conf'
 SERVICE = '/sbin/service'
 HOSTID = '/usr/bin/hostid'
+IFCONFIG = '/sbin/ifconfig'
 
 
 import logging
@@ -90,21 +91,9 @@ def run_command(cmd, shell=False, stdout=subprocess.PIPE,
         raise CommandException(out, err, rc)
     return (out, err, rc)
 
-def sys_info():
-    sys_info = {}
-    sys_info['hostname'] = socket.gethostname()
+def uptime():
     with open('/proc/uptime') as ufo:
-        sys_info['uptime'] = ufo.readline().split()[0]
-    with open('/proc/meminfo') as mfo:
-        sys_info['memory'] = mfo.readline().split()[1]
-    with open('/proc/loadavg') as lfo:
-        sys_info['load'] = lfo.readline().strip()
-    with open('/proc/cpuinfo') as cfo:
-        sys_info['processors'] = 0
-        for line in cfo.readlines():
-            if (re.search('processor', line)):
-                sys_info['processors'] = sys_info['processors'] + 1
-    return sys_info
+        return int(float(ufo.readline().split()[0]))
 
 def create_tmp_dir(dirname):
     return run_command([MKDIR, '-p', dirname])
@@ -214,6 +203,16 @@ def get_mac_addr(interface):
     with open(ifile) as ifo:
         return ifo.readline().strip()
 
+def get_ip_addr(interface):
+    """
+    useful when the interface gets ip from a dhcp server
+    """
+    out, err, rc = run_command([IFCONFIG, interface])
+    line2 = out[1].strip()
+    if (re.match('inet addr', line2) is not None):
+        return line2.split()[1].split(':')[1]
+    return '0.0.0.0'
+
 def config_network_device(name, mac, ipaddr, netmask):
     config_script = ('/etc/sysconfig/network-scripts/ifcfg-%s' % name)
     with open(config_script, 'w') as cfo:
@@ -247,6 +246,8 @@ def get_net_config(device_name):
                     config['netmask'] = l.strip().split('=')[1][1:-1]
                 elif (re.match('NETWORK', l) is not None):
                     config['network'] = l.strip().split('=')[1][1:-1]
+        if (config['bootproto'] == 'dhcp'):
+            config['ipaddr'] = get_ip_addr(device_name)
     except:
         pass
     finally:

@@ -20,9 +20,8 @@ from rest_framework import serializers
 from storageadmin.models import (Disk, Pool, Share, Snapshot, NFSExport,
                                  SambaShare, IscsiTarget, Appliance,
                                  SupportCase, DashboardConfig,
-                                 NetworkInterface, User, Setup)
+                                 NetworkInterface, User, PoolScrub, Setup)
 from django.contrib.auth.models import User as DjangoUser
-
 
 class DiskInfoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -86,7 +85,10 @@ class NetworkInterfaceSerializer(serializers.ModelSerializer):
     class Meta:
         model = NetworkInterface
 
+class PoolScrubSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PoolScrub
+
 class SetupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Setup
-

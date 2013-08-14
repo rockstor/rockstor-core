@@ -22,7 +22,7 @@ from snapshot import SnapshotView
 from share import ShareView
 from pool import PoolView
 from disk import (DiskView, SystemDiskView)
-from info import InfoView
+from command import CommandView
 from service import ServiceView
 from setupwizard import SetupWizardView
 from share_iscsi import ShareIscsiView
@@ -35,4 +35,6 @@ from support import SupportView
 from dashboardconfig import DashboardConfigView
 from share_nfs import ShareNFSView
 from network import NetworkView
+from pool_scrub import PoolScrubView
 from setup_user import SetupUserView
+from share_acl import ShareACLView

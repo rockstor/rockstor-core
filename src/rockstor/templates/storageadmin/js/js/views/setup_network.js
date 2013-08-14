@@ -32,6 +32,7 @@ SetupNetworkView = Backbone.View.extend({
     this.interfacesTemplate = window.JST.setup_interfaces;
     this.networkInterfaces = new NetworkInterfaceCollection();
     this.networkInterfaces.on("reset", this.renderInterfaces, this);
+    this.networkInterfaces.on("reset", this.setIp, this);
   },
 
   render: function() {
@@ -59,11 +60,14 @@ SetupNetworkView = Backbone.View.extend({
   },
 
   renderInterfaces: function() {
-    console.log(this.networkInterfaces);
     this.$("#interfaces").html(this.interfacesTemplate({
       networkInterfaces: this.networkInterfaces
     }));
 
+  },
+
+  setIp: function() {
+    RockStorGlobals.ip = this.networkInterfaces.at(0).get("ipaddr");
   }
 
 

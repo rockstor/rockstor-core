@@ -16,21 +16,25 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pool import Pool
-from disk import Disk
-from share import Share
-from snapshot import Snapshot
-from pool_statistic import PoolStatistic
-from share_statistic import ShareStatistic
-from nfs_export import NFSExport
-from samba_share import SambaShare
-from iscsi_target import IscsiTarget
-from posix_acls import PosixACLs
-from api_keys import APIKeys
-from appliance import Appliance
-from support_case import SupportCase
-from dashboard_config import DashboardConfig
-from network_interface import NetworkInterface
-from user import User
-from scrub import PoolScrub
-from setup import Setup
+from osi import run_command
+
+CHOWN = '/bin/chown'
+CHMOD = '/bin/chmod'
+LS = '/bin/ls'
+
+def chown(share, owner, group=None, recursive=False):
+    cmd = [CHOWN,]
+    if (recursive is True):
+        cmd.append('-R')
+    if (group is not None):
+        owner = ('%s:%s' % (owner, group))
+    cmd.extend([owner, share])
+    return run_command(cmd)
+
+
+def chmod(share, perm_bits, recursive=False):
+    cmd = [CHMOD,]
+    if (recursive is True):
+        cmd.append('-R')
+    cmd.extend([perm_bits, share])
+    return run_command(cmd)

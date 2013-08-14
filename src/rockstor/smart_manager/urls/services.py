@@ -27,6 +27,6 @@ from smart_manager.views import (SmartManagerView, ServiceView, SProbeView,
 urlpatterns = patterns('',
     # Services
     url(r'^$', ServiceView.as_view(), name='service-view'),
-    url(r'^/(?P<sname>[A-Za-z_]+)/$', ServiceView.as_view(),
+    url(r'^(?P<sname>[A-Za-z_]+)/$', ServiceView.as_view(),
         name='service-view'),
 )
