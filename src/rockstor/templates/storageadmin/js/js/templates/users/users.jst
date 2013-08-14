@@ -39,6 +39,8 @@
         <tr>
           <th scope="col" abbr="Name">Username</th>
           <th scope="col" abbr="Admin">Admin access</th>
+          <th scope="col" abbr="UID">UID</th>
+          <th scope="col" abbr="GID">GID</th>
           <th scope="col" abbr="Actions">Actions</th>
         </tr>
       </thead>
@@ -53,6 +55,8 @@
                 <input class="user-admin" type="checkbox" name="admin" data-username="<%= user.get('username') %>" ></input>
               <% } %>
             </td>
+            <td><%= user.get("suser").uid %></td>
+            <td><%= user.get("suser").gid %></td>
             <td>
               <a href="#users/<%= user.get('username') %>/edit" class="edit-user" data-username="<%= user.get('username') %>"><i class="icon-pencil"></i></a>
               &nbsp;

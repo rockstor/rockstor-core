@@ -54,46 +54,49 @@ class UserView(GenericView):
             
             # Check that a django user with the same name does not exist
             if (DjangoUser.objects.filter(username=username).exists() or
-                User.objects.filter(name=username).exists()):
-                e_msg = ('user: %s already exists. Choose a different'
+                User.objects.filter(username=username).exists()):
+                e_msg = ('user: %s already exists. Please choose a different'
                          'username' % username)
                 raise Exception(JSONRenderer().render({'username': e_msg}))
 
             # Check that a unix user with the same name does not exist
             unix_users = get_users(min_uid=0, uname=username)
             if (username in unix_users):
-                e_msg = ('user: %s exists as a system user. Choose a '
+                e_msg = ('user: %s exists as a system user. Please choose a '
                          'different username' % username)
                 raise Exception(JSONRenderer().render({'username': e_msg}))
             
             # Create Django user
-            user = DjangoUser.objects.create_user(username, None, password)
-            user.is_active = is_active
-            user.save()
+            auser = DjangoUser.objects.create_user(username, None, password)
+            auser.is_active = is_active
+            auser.save()
             
             # Create unix user
-            max_used_uid = settings.START_UID
+            max_uid = settings.START_UID
             shell = settings.USER_SHELL
             try:
-                # Find max uid from existing rockstor unix users
-                unix_users = get_users(min_uid=settings.START_UID,
-                        max_uid=settings.END_UID)
-                l = sorted(unix_users.iterkeys(), 
-                        key = lambda k: unix_users[k][0], 
-                        reverse=True)
-                logger.debug("sorted list ")
-                logger.debug(l)
-                max_used_uid = int(unix_users[l[0]][0])
+                # Find max uid 
+                max_uid = User.objects.all().order_by('-uid')[0].uid 
+                #unix_users = get_users(min_uid=settings.START_UID,
+                #        max_uid=settings.END_UID)
+                #l = sorted(unix_users.iterkeys(), 
+                #        key = lambda k: unix_users[k][0], 
+                #        reverse=True)
+                #logger.debug("sorted list ")
+                #logger.debug(l)
+                #max_used_uid = int(unix_users[l[0]][0])
             except Exception, e:
                 logger.exception(e)
                 pass
-            logger.debug('max_used_uid: %d' % max_used_uid)
-            uid = max_used_uid + 1
+            logger.debug('max_uid: %d' % max_uid)
+            uid = max_uid + 1
             useradd(username, uid, shell)
             usermod(username, password)
-            epw = get_epasswd(username)
+            #epw = get_epasswd(username)
+            suser = User(username=username, uid=uid, gid=uid, user=auser)
+            suser.save() 
 
-            return Response(UserSerializer(user).data)
+            return Response(UserSerializer(auser).data)
         except RockStorAPIException:
             raise
         except Exception, e:

@@ -64,9 +64,15 @@ class ApplianceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Appliance
 
+class SUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+
 class UserSerializer(serializers.ModelSerializer):
+    suser = SUserSerializer(source='suser')
     class Meta:
         model = DjangoUser
+        fields = ('username', 'is_active', 'suser')
 
 class SupportSerializer(serializers.ModelSerializer):
     class Meta:

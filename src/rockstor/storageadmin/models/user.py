@@ -17,14 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.db import models
-
+from django.contrib.auth.models import User as DjangoUser
+from django.conf import settings
 
 class User(models.Model):
-    name = models.CharField(max_length=4096, unique=True)
-    password = models.CharField(max_length=128)
-    uid = models.IntegerField()
-    gid = models.IntegerField()
-    admin = models.BooleanField(default=False)
+    user = models.OneToOneField(DjangoUser, null=True, 
+            related_name = 'suser')
+    username = models.CharField(max_length=4096, unique=True, default='')
+    uid = models.IntegerField(default=settings.START_UID)
+    gid = models.IntegerField(default=settings.START_UID)
 
     class Meta:
         app_label = 'storageadmin'
