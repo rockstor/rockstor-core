@@ -38,9 +38,7 @@ SetupView = RockstoreLayoutView.extend({
     this.pages = [null, SetupDisksView, SetupNetworkView];
     this.current_page = 1;
     this.current_view = null;
-    this.sysinfo = new SysInfo();
     this.appliances = new ApplianceCollection();
-    this.dependencies.push(this.sysinfo);
     this.dependencies.push(this.appliances);
 
   },
@@ -54,7 +52,6 @@ SetupView = RockstoreLayoutView.extend({
 
   renderCurrentPage: function() {
     opts = {
-      sysinfo: this.sysinfo,
       appliances: this.appliances
     };
     this.current_view = new this.pages[this.current_page](opts);
@@ -105,7 +102,7 @@ SetupView = RockstoreLayoutView.extend({
       var new_appliance = new Appliance();
       new_appliance.save(
         {
-          ip: this.sysinfo.get('hostname'),
+          ip: RockStorGlobals.ip,
           current_appliance: true
         },
         {
