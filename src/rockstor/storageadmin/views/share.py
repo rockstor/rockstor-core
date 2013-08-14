@@ -27,9 +27,10 @@ from rest_framework.authentication import (BasicAuthentication,
 from rest_framework.permissions import IsAuthenticated
 from storageadmin.auth import DigestAuthentication
 from django.db import transaction
-from storageadmin.models import (Share, Snapshot, Disk, Pool)
+from storageadmin.models import (Share, Snapshot, Disk, Pool, Snapshot,
+                                 NFSExport, SambaShare)
 from fs.btrfs import (add_share, remove_share, share_id, update_quota,
-                      share_usage)
+                      share_usage, is_share_mounted)
 from storageadmin.serializers import ShareSerializer
 from storageadmin.util import handle_exception
 from storageadmin.exceptions import RockStorAPIException
@@ -141,11 +142,36 @@ class ShareView(APIView):
         share itself.
         """
         try:
-            if (Share.objects.filter(name=sname).exists()):
+            try:
                 share = Share.objects.get(name=sname)
-                pool_device = Disk.objects.filter(pool=share.pool)[0].name
-                remove_share(share.pool.name, pool_device, sname)
-                share.delete()
-                return Response()
+            except:
+                e_msg = ('Share: %s does not exist' % sname)
+                handle_exception(Exception(e_msg), request)
+
+            if (NFSExport.objects.filter(share=share).exists()):
+                e_msg = ('Share: %s cannot be deleted as it is exported via '
+                         'nfs. Delete nfs exports and try again' % sname)
+                handle_exception(Exception(e_msg), request)
+
+            if (SambaShare.objects.filter(share=share).exists()):
+                e_msg = ('Share: %s cannot be deleted as it is shared via '
+                         'Samba. Unshare and try again' % sname)
+                handle_exception(Exception(e_msg), request)
+
+            if (Snapshot.objects.filter(share=share).exists()):
+                e_msg = ('Share: %s cannot be deleted as it has '
+                         'snapshots. Delete snapshots and try again' % sname)
+                handle_exception(Exception(e_msg), request)
+
+            pool_device = Disk.objects.filter(pool=share.pool)[0].name
+            remove_share(share.pool.name, pool_device, sname)
+            if (is_share_mounted(sname)):
+                e_msg = ('Share: %s is still mounted and cannot be deleted.'
+                         ' Try again later' % sname)
+                handle_exception(Exception(e_msg), request)
+            share.delete()
+            return Response()
+        except RockStorAPIException:
+            raise
         except Exception, e:
             handle_exception(e, request)

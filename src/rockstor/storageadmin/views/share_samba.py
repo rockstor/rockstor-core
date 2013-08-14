@@ -124,9 +124,6 @@ class ShareSambaView(APIView):
                 e_msg = ('Share is not exported via Samba. Nothing to delete')
                 handle_exception(Exception(e_msg), request)
             samba_share = SambaShare.objects.get(share=share)
-            if (not NFSExport.objects.filter(share=share).exists() and
-                is_share_mounted(share.name)):
-                umount_root(samba_share.path)
             samba_share.delete()
             refresh_smb_config(list(SambaShare.objects.all()),
                                settings.SMB_CONF)
