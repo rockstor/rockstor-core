@@ -50,8 +50,7 @@ class UserView(GenericView):
             username = request.DATA['username']
             password = request.DATA['password']
             is_active = request.DATA['is_active']
-            logger.debug("is_active: %s" % is_active)
-            
+
             # Check that a django user with the same name does not exist
             if (DjangoUser.objects.filter(username=username).exists() or
                 User.objects.filter(username=username).exists()):
@@ -65,36 +64,26 @@ class UserView(GenericView):
                 e_msg = ('user: %s exists as a system user. Please choose a '
                          'different username' % username)
                 raise Exception(JSONRenderer().render({'username': e_msg}))
-            
+
             # Create Django user
             auser = DjangoUser.objects.create_user(username, None, password)
             auser.is_active = is_active
             auser.save()
-            
+
             # Create unix user
             max_uid = settings.START_UID
             shell = settings.USER_SHELL
             try:
-                # Find max uid 
-                max_uid = User.objects.all().order_by('-uid')[0].uid 
-                #unix_users = get_users(min_uid=settings.START_UID,
-                #        max_uid=settings.END_UID)
-                #l = sorted(unix_users.iterkeys(), 
-                #        key = lambda k: unix_users[k][0], 
-                #        reverse=True)
-                #logger.debug("sorted list ")
-                #logger.debug(l)
-                #max_used_uid = int(unix_users[l[0]][0])
+                # Find max uid
+                max_uid = User.objects.all().order_by('-uid')[0].uid
             except Exception, e:
                 logger.exception(e)
                 pass
-            logger.debug('max_uid: %d' % max_uid)
             uid = max_uid + 1
             useradd(username, uid, shell)
             usermod(username, password)
-            #epw = get_epasswd(username)
             suser = User(username=username, uid=uid, gid=uid, user=auser)
-            suser.save() 
+            suser.save()
 
             return Response(UserSerializer(auser).data)
         except RockStorAPIException:
@@ -117,7 +106,7 @@ class UserView(GenericView):
             if 'is_active' in request.DATA.keys():
                 is_active = request.DATA['is_active']
                 logger.debug('is_active : %s' % is_active)
-                # put is through bacbone model save so is_active comes in 
+                # put is through bacbone model save so is_active comes in
                 # as a boolean
                 if is_active != user.is_active:
                     if request.user.username == username:
