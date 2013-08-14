@@ -21,6 +21,7 @@ from storageadmin.models import (Disk, Pool, Share, Snapshot, NFSExport,
                                  SambaShare, IscsiTarget, Appliance,
                                  SupportCase, DashboardConfig,
                                  NetworkInterface, User, Setup)
+from django.contrib.auth.models import User as DjangoUser
 
 
 class DiskInfoSerializer(serializers.ModelSerializer):
@@ -63,9 +64,15 @@ class ApplianceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Appliance
 
-class UserSerializer(serializers.ModelSerializer):
+class SUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
+
+class UserSerializer(serializers.ModelSerializer):
+    suser = SUserSerializer(source='suser')
+    class Meta:
+        model = DjangoUser
+        fields = ('username', 'is_active', 'suser')
 
 class SupportSerializer(serializers.ModelSerializer):
     class Meta:

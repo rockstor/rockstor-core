@@ -19,42 +19,32 @@
  */
 </script>
 
-<!-- Header -->
-<div class="row-fluid">
-  <div class="span12">
-    <div class="module-header">
-      <div class="title"><span class="h3">Disks</span></div>
-    </div>
-  </div> <!-- span12 -->
-</div> <!-- row-fluid -->
-
 <!-- Module Body -->
 <div class="row-fluid">
   <div class="span12">
     <!-- Content -->
-    <div class="span12">
-      <% if (!disks.isEmpty()) { %>
-        <table id="disks-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of disks">
-          <thead>
+    <% if (!disks.isEmpty()) { %>
+      <h4>The following disks were found on the system</h4>
+      <table id="disks-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of disks">
+        <thead>
+          <tr>
+            <th scope="col" abbr="Name">Disk Name</th>
+            <th scope="col" abbr="Capacity">Capacity</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% disks.each(function(disk, index) { %>
             <tr>
-              <th scope="col" abbr="Name">Disk Name</th>
-              <th scope="col" abbr="Capacity">Capacity</th>
+              <td><%= disk.get('name') %></td>
+              <td><%= humanize.filesize(disk.get('size')*1024) %></td>
+
             </tr>
-          </thead>
-          <tbody>
-            <% disks.each(function(disk, index) { %>
-              <tr>
-                <td><%= disk.get('name') %></td>
-                <td><%= humanize.filesize(disk.get('size')*1024) %></td>
-                
-              </tr>
-            <% }); %>
-          </tbody>
-        </table>
-      <% } else { %>
-        <h4>No disks added. Please run Setup to discover disks</h4>
-      <% } %>
-    </div>
+          <% }); %>
+        </tbody>
+      </table>
+    <% } else { %>
+      <h4>No disks were found on the system. Click Rescan to scan the system again.</h4>
+    <% } %>
     <!-- End Content -->
   </div> <!-- span12 -->
 </div> <!-- row-fluid --> 

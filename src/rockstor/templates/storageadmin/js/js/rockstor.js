@@ -348,11 +348,78 @@ function refreshNavbar() {
   $("#navbar-links").html(navbarTemplate({
     logged_in: logged_in  
   }));
+  $('.dropdown-toggle').dropdown();
 
+}
+
+// Parses error message from ajax request
+// Returns the value of the detail attribute as json
+// or a string if it cannot be parsed as json
+function parseXhrError(xhr) {
+  var msg = xhr.responseText;
+  try {
+    msg = JSON.parse(msg).detail;
+  } catch(err) {
+  }
+  if (typeof(msg)=="string") {
+    try {
+      msg = JSON.parse(msg);
+    } catch(err) {
+    }
+  }
+  return msg;
+
+}
+
+function setApplianceName() {
+  var appliances = new ApplianceCollection();
+  appliances.fetch({
+    success: function(request) {
+      if (appliances.length > 0) {
+        RockStorGlobals.currentAppliance = 
+        appliances.find(function(appliance) {
+          return appliance.get('current_appliance') == true; 
+        });
+        $('#appliance-name').html(RockStorGlobals.currentAppliance.get('ip')); 
+      }
+    },
+    error: function(request, response) {
+      console.log("error while loading appliances");
+    }
+
+  });
+}
+
+function fetchDependencies(dependencies, callback, context) {
+  if (dependencies.length == 0) {
+    if (callback) callback.apply(context);
+  }
+  var requestCount = dependencies.length;
+  _.each(dependencies, function(dependency) {
+    dependency.fetch({
+      success: function(request){
+        requestCount -= 1;
+        if (requestCount == 0) {
+          if (callback) callback.apply(context);
+        }
+      },
+      error: function(request, response) {
+        console.log('failed to fetch model in fetchDependencies');
+        requestCount -= 1;
+        if (requestCount == 0) {
+          if (callback) callback.apply(context);
+        }
+      }
+    });
+  });
 }
 
 RockStorProbeMap = [];
 RockStorGlobals = {
-  navbarLoaded: false
+  navbarLoaded: false,
+  applianceNameSet: false,
+  currentAppliance: null,
+
+
 }
 
