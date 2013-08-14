@@ -221,6 +221,9 @@ PIPELINE_JS = {
             'js/views/support_case_details_layout_view.js',
             'js/views/add_support_case.js',
             'js/views/probes/*.js',
+            'js/views/users.js',
+            'js/views/add_user.js',
+            'js/views/edit_user.js',
             ),
         'output_filename': 'js/application.js'
         },
@@ -341,4 +344,5 @@ PAGINATION = {
 }
 
 START_UID = 5000
+END_UID = 6000
 USER_SHELL = os.path.dirname(__file__) + '/bin/rcli'

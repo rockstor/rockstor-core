@@ -48,6 +48,9 @@ var AppRouter = Backbone.Router.extend({
     "support":"showSupport",
     "support/:supportCaseId": "showSupportCase",
     "add_support_case": "addSupportCase",
+    "users": "showUsers",
+    "users/:username/edit": "editUser",
+    "add-user": "addUser",
     "*path": "showHome"
   },
 
@@ -66,6 +69,9 @@ var AppRouter = Backbone.Router.extend({
         app_router.navigate('home', {trigger: true});
         return false;
       } 
+    }
+    if (RockStorGlobals.currentAppliance == null) {
+      setApplianceName();
     }
   },
 
@@ -214,6 +220,27 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
 
+  },
+  
+  showUsers: function() {
+    this.cleanup();
+    this.currentLayout = new UsersView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  addUser: function() {
+    this.cleanup();
+    this.currentLayout = new AddUserView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+  
+  editUser: function(username) {
+    this.cleanup();
+    this.currentLayout = new EditUserView({username: username});
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
   },
 
   cleanup: function() {
