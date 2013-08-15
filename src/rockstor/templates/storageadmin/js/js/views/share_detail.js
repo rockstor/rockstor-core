@@ -92,10 +92,9 @@ ShareDetailView = Backbone.View.extend({
           // create snapshot form submit
           _this.$('#create_snapshot').click(function() {
             $.ajax({
-              url: "/api/shares/" + model.get('name') + "/snapshots/",
+              url: "/api/shares/" + model.get('name') + "/snapshots/" + $('#snapshot_name').val(),
               type: "POST",
-              dataType: "json",
-              data: { name: $('#snapshot_name').val()}
+	      dataType: "json"
             }).done(function() {
               _this.$('#snapshot_popup_button').overlay().close();
               _this.$('#snapshots').empty().append(_this.snapshotsTableView.render().el);

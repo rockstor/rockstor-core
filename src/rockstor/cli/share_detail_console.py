@@ -20,6 +20,7 @@ from base_console import BaseConsole
 from share_nfs_console import ShareNFSConsole
 from share_smb_console import ShareSMBConsole
 from share_iscsi_console import ShareIscsiConsole
+from snapshot_console import SnapshotConsole
 
 
 class ShareDetailConsole(BaseConsole):
@@ -51,3 +52,10 @@ class ShareDetailConsole(BaseConsole):
         """
         i_console = ShareIscsiConsole(self.greeting, self.share)
         i_console.cmdloop()
+
+    def do_snapshot(self, args):
+        """
+        snapshot operations on the share
+        """
+        s_console = SnapshotConsole(self.greeting, self.share)
+        s_console.cmdloop()
