@@ -178,18 +178,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
   parseData: function(data) {
     var _this = this;
     var tmpSum = {};
-    _.each(data, function(dRaw) {
-      // convert mode value into percentage
-      var d = _.clone(dRaw);
-      var modes = ['smode', 'umode', 'umode_nice', 'idle'];
-      var sum = 0;
-      _.each(modes, function(m) {
-        sum = sum + dRaw[m];
-      });
-      _.each(modes, function(m) {
-        d[m] = parseInt((dRaw[m]/sum)*100);
-      });
-
+    _.each(data, function(d) {
       var cpu = _this.cpuData[d.name];
       if (_.isUndefined(cpu)) {
         cpu = _this.genEmptyCpuData(_this.numSamples );
