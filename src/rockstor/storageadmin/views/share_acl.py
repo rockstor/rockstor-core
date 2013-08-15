@@ -72,7 +72,7 @@ class ShareACLView(ShareView):
             force_mount = False
             if (not is_share_mounted(share.name)):
                 pool_device = Disk.objects.filter(pool=share.pool)[0].name
-                mount_share(share.name, pool_device, mnt_pt)
+                mount_share(share.subvol_name, pool_device, mnt_pt)
                 force_mount = True
             chown(mnt_pt, options['owner'], options['group'],
                   options['orecursive'])

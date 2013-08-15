@@ -75,7 +75,7 @@ var ShareCollection = Backbone.Collection.extend({
 
 var Snapshot = Backbone.Model.extend({
   url: function() {
-    return '/api/shares/' + this.get('shareName') + '/' + this.get('snapName') + '/';			} 
+    return '/api/shares/' + this.get('shareName') + '/' + this.get('snapName');			} 
 });
 
 
@@ -86,7 +86,7 @@ var SnapshotCollection = Backbone.Collection.extend({
   //},
 
   setUrl: function(shareName) {
-      this.url ='/api/shares/' + shareName + '/snapshots/'    
+      this.url ='/api/shares/' + shareName + '/snapshots'    
   }
 
 });

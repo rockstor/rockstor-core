@@ -73,7 +73,7 @@ class ShareNFSView(APIView):
             mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
             if (not is_share_mounted(share.name)):
                 pool_device = Disk.objects.filter(pool=share.pool)[0].name
-                mount_share(share.name, pool_device, mnt_pt)
+                mount_share(share.subvol_name, pool_device, mnt_pt)
 
             export = NFSExport(share=share, mount=mnt_pt,
                                host_str=options['host_str'],
