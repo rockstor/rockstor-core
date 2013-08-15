@@ -25,6 +25,8 @@ from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
 from renderers import IgnoreClient
 from django.conf import settings
+from django.db.models import Count
+
 
 class GenericSProbeView(generics.ListCreateAPIView):
     authentication_classes = (DigestAuthentication, SessionAuthentication,
@@ -38,6 +40,14 @@ class GenericSProbeView(generics.ListCreateAPIView):
         limit = int(limit)
         t1 = self.request.QUERY_PARAMS.get('t1', None)
         t2 = self.request.QUERY_PARAMS.get('t2', None)
+        group_field = self.request.QUERY_PARAMS.get('group', None)
+        if (group_field is not None):
+            qs = []
+            distinct_fields = self.model_obj.objects.values(group_field).annotate(c=Count(group_field))
+            filter_field = ('%s__exact' % group_field)
+            for d in distinct_fields:
+                qs.extend(self.model_obj.objects.filter(**{filter_field : d[group_field]}).order_by('-ts')[0:limit])
+            return qs
         if (t1 is not None and t2 is not None):
             return self.model_obj.objects.filter(ts__gt=t1, ts__lte=t2)
         return self.model_obj.objects.all().order_by('-ts')[0:limit]
