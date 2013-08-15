@@ -171,6 +171,18 @@ def remove_snap(pool_name, pool_device, snap_name):
     """
     return remove_share(pool_name, pool_device, snap_name)
 
+def rollback_snap(snap_name, sname, subvol_name, pool_name, pool_device):
+    """
+    1. umount the share
+    2. mount the snap as the share
+    3. remove the share
+    """
+    mnt_pt = ('%s%s' % (DEFAULT_MNT_DIR, sname))
+    if (is_share_mounted(sname)):
+        umount_root(mnt_pt)
+    mount_share(snap_name, pool_device, mnt_pt)
+    remove_share(pool_name, pool_device, subvol_name)
+
 def switch_quota(pool_name, device, flag='enable'):
     root_mnt_pt = mount_root(pool_name, device)
     cmd = [BTRFS, 'quota', flag, root_mnt_pt]
