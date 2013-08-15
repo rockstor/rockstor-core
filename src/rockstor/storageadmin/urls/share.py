@@ -19,29 +19,35 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from django.conf.urls.defaults import patterns, url
 from storageadmin.views import (ShareView, ShareNFSView, ShareSambaView,
                                 ShareACLView, SnapshotView, ShareIscsiView)
+share_regex = r'[A-Za-z]+[A-Za-z0-9_]*'
+snap_regex = share_regex
 
 urlpatterns = patterns(
     '',
     url(r'^$', ShareView.as_view(), name='share-view'),
-    url(r'^(?P<sname>[A-Za-z]+[A-Za-z0-9_]*)/$', ShareView.as_view(),
+    url(r'^(?P<sname>%s)/$' % share_regex, ShareView.as_view(),
         name='share-view'),
 
-    url(r'^(?P<sname>[A-Za-z]+[A-Za-z0-9_]*)/nfs/$', ShareNFSView.as_view(),
+    url(r'^(?P<sname>%s)/nfs/$' % share_regex, ShareNFSView.as_view(),
         name='nfs-view'),
-    url(r'^(?P<sname>[A-Za-z]+[A-Za-z0-9_]*)/nfs/(?P<export_id>[0-9]+)/$',
+    url(r'^(?P<sname>%s)/nfs/(?P<export_id>[0-9]+)/$' % share_regex,
         ShareNFSView.as_view(), name='nfs-view'),
 
-    url(r'^(?P<sname>[A-Za-z]+[A-Za-z0-9_]*)/samba/$',
+    url(r'^(?P<sname>%s)/samba/$' % share_regex,
         ShareSambaView.as_view(), name='samba-view'),
 
-    url(r'^(?P<sname>[A-Za-z]+[A-Za-z0-9_]*)/snapshots/$',
+    url(r'^(?P<sname>%s)/snapshots$' % share_regex,
         SnapshotView.as_view(), name='snapshot-view'),
-    url(r'^(?P<sname>[A-Za-z]+[A-Za-z0-9_]*)/snapshots/(?P<snap_name>.*)/$',
+    url(r'^(?P<sname>%s)/snapshots/(?P<snap_name>%s)$' % (share_regex,
+                                                          snap_regex),
+        SnapshotView.as_view(), name='snapshot-view'),
+    url(r'^(?P<sname>%s)/snapshots/(?P<snap_name>%s)/(?P<command>.*)$' %
+        (share_regex, snap_regex),
         SnapshotView.as_view(), name='snapshot-view'),
 
     url(r'^(?P<sname>[A-Za-z]+[A-Za-z0-9_]*)/iscsi/$', ShareIscsiView.as_view(),
         name='share-iscsi-view'),
 
-    url(r'^(?P<sname>[A-Za-z]+[A-Za-z0-9_]*)/acl/$', ShareACLView.as_view(),
+    url(r'^(?P<sname>%s)/acl/$' % share_regex, ShareACLView.as_view(),
         name='acl-view'),
 )

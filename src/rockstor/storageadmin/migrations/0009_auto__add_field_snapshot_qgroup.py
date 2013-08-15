@@ -8,31 +8,15 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding field 'Share.owner'
-        db.add_column('storageadmin_share', 'owner',
-                      self.gf('django.db.models.fields.CharField')(default='root', max_length=4096),
-                      keep_default=False)
-
-        # Adding field 'Share.group'
-        db.add_column('storageadmin_share', 'group',
-                      self.gf('django.db.models.fields.CharField')(default='root', max_length=4096),
-                      keep_default=False)
-
-        # Adding field 'Share.perms'
-        db.add_column('storageadmin_share', 'perms',
-                      self.gf('django.db.models.fields.CharField')(default='755', max_length=9),
+        # Adding field 'Snapshot.qgroup'
+        db.add_column('storageadmin_snapshot', 'qgroup',
+                      self.gf('django.db.models.fields.CharField')(default='unknown', max_length=100),
                       keep_default=False)
 
 
     def backwards(self, orm):
-        # Deleting field 'Share.owner'
-        db.delete_column('storageadmin_share', 'owner')
-
-        # Deleting field 'Share.group'
-        db.delete_column('storageadmin_share', 'group')
-
-        # Deleting field 'Share.perms'
-        db.delete_column('storageadmin_share', 'perms')
+        # Deleting field 'Snapshot.qgroup'
+        db.delete_column('storageadmin_snapshot', 'qgroup')
 
 
     models = {
@@ -137,7 +121,19 @@ class Migration(SchemaMigration):
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '4096'}),
             'raid': ('django.db.models.fields.CharField', [], {'max_length': '10'}),
             'size': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
+            'toc': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'uuid': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True'})
+        },
+        'storageadmin.poolscrub': {
+            'Meta': {'object_name': 'PoolScrub'},
+            'end_time': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
+            'errors': ('django.db.models.fields.IntegerField', [], {'null': 'True'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'kb_scrubbed': ('django.db.models.fields.IntegerField', [], {'null': 'True'}),
+            'pid': ('django.db.models.fields.IntegerField', [], {}),
+            'pool': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storageadmin.Pool']"}),
+            'start_time': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
+            'status': ('django.db.models.fields.CharField', [], {'default': "'started'", 'max_length': '10'})
         },
         'storageadmin.poolstatistic': {
             'Meta': {'object_name': 'PoolStatistic'},
@@ -165,6 +161,14 @@ class Migration(SchemaMigration):
             'read_only': ('django.db.models.fields.CharField', [], {'default': "'no'", 'max_length': '3'}),
             'share': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storageadmin.Share']"})
         },
+        'storageadmin.setup': {
+            'Meta': {'object_name': 'Setup'},
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'setup_disks': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'setup_network': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'setup_system': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'setup_user': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
+        },
         'storageadmin.share': {
             'Meta': {'object_name': 'Share'},
             'group': ('django.db.models.fields.CharField', [], {'default': "'root'", 'max_length': '4096'}),
@@ -175,6 +179,8 @@ class Migration(SchemaMigration):
             'pool': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storageadmin.Pool']"}),
             'qgroup': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'size': ('django.db.models.fields.IntegerField', [], {}),
+            'subvol_name': ('django.db.models.fields.CharField', [], {'max_length': '4096'}),
+            'toc': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'uuid': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True'})
         },
         'storageadmin.sharestatistic': {
@@ -189,8 +195,10 @@ class Migration(SchemaMigration):
             'Meta': {'unique_together': "(('share', 'name'),)", 'object_name': 'Snapshot'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '4096'}),
+            'qgroup': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'share': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storageadmin.Share']"}),
             'size': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
+            'toc': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'writable': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
         },
         'storageadmin.supportcase': {
@@ -203,12 +211,11 @@ class Migration(SchemaMigration):
         },
         'storageadmin.user': {
             'Meta': {'object_name': 'User'},
-            'admin': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'gid': ('django.db.models.fields.IntegerField', [], {}),
+            'gid': ('django.db.models.fields.IntegerField', [], {'default': '5000'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '4096'}),
-            'password': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
-            'uid': ('django.db.models.fields.IntegerField', [], {})
+            'uid': ('django.db.models.fields.IntegerField', [], {'default': '5000'}),
+            'user': ('django.db.models.fields.related.OneToOneField', [], {'related_name': "'suser'", 'unique': 'True', 'null': 'True', 'to': "orm['auth.User']"}),
+            'username': ('django.db.models.fields.CharField', [], {'default': "''", 'unique': 'True', 'max_length': '4096'})
         }
     }
 

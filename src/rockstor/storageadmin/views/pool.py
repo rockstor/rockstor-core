@@ -31,10 +31,10 @@ from storageadmin.serializers import PoolInfoSerializer
 from storageadmin.forms import (PoolForm)
 from storageadmin.models import (Disk, Pool, Share, PoolStatistic)
 from fs.btrfs import (add_pool, pool_usage, remove_pool,
-                      resize_pool)
+                      resize_pool, umount_root)
 from storageadmin.util import handle_exception
 from storageadmin.exceptions import RockStorAPIException
-
+from django.conf import settings
 
 import logging
 logger = logging.getLogger(__name__)
@@ -166,6 +166,7 @@ class PoolView(APIView):
                 e_msg = ('Pool: %s is not empty. Cannot delete until all '
                          'shares in the pool are deleted' % (pname))
                 handle_exception(Exception(e_msg), request)
+            umount_root('%s%s' % (settings.MNT_PT, pname))
             remove_pool(pname)
             pool.delete()
             return Response()

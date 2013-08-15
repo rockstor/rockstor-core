@@ -129,10 +129,9 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
       if (buttonDisabled(button)) return false;
       disableButton(button);
       $.ajax({
-        url: "/api/shares/" + _this.share.get('name') + "/snapshots/",
+        url: "/api/shares/" + _this.share.get('name') + "/snapshots/" + $('#snapshot-name').val(),
         type: "POST",
-        dataType: "json",
-        data: { name: $('#snapshot-name').val()}
+        dataType: "json"
       }).done(function() {
         enableButton(button);
         _this.$('#js-snapshot-popup').overlay().close();

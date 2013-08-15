@@ -121,7 +121,8 @@ class ShareView(APIView):
 
             add_share(pool_name, disk.name, sname)
             qgroup_id = self._update_quota(pool_name, disk.name, sname, size)
-            s = Share(pool=pool, qgroup=qgroup_id, name=sname, size=size)
+            s = Share(pool=pool, qgroup=qgroup_id, name=sname, size=size,
+                      subvol_name=sname)
             s.save()
             return Response(ShareSerializer(s).data)
         except RockStorAPIException:
@@ -164,10 +165,14 @@ class ShareView(APIView):
                 handle_exception(Exception(e_msg), request)
 
             pool_device = Disk.objects.filter(pool=share.pool)[0].name
-            remove_share(share.pool.name, pool_device, sname)
+            e_msg = ('Share: %s is still mounted and cannot be deleted.'
+                     ' Try again later' % sname)
+            try:
+                remove_share(share.pool.name, pool_device, share.subvol_name)
+            except Exception, e:
+                logger.exception(e)
+                handle_exception(Exception(e_msg), request)
             if (is_share_mounted(sname)):
-                e_msg = ('Share: %s is still mounted and cannot be deleted.'
-                         ' Try again later' % sname)
                 handle_exception(Exception(e_msg), request)
             share.delete()
             return Response()

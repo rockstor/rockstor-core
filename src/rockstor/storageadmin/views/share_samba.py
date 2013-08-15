@@ -105,7 +105,7 @@ class ShareSambaView(APIView):
             smb_share.save()
             if (not is_share_mounted(share.name)):
                 pool_device = Disk.objects.filter(pool=share.pool)[0].name
-                mount_share(share.name, pool_device, mnt_pt)
+                mount_share(share.subvol_name, pool_device, mnt_pt)
             refresh_smb_config(list(SambaShare.objects.all()),
                                settings.SMB_CONF)
             restart_samba()

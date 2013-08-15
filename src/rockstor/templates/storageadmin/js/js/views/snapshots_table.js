@@ -49,7 +49,7 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
       if(confirm("Delete snapshot:  "+ name +"...Are you sure?")){
       disableButton(button);
       $.ajax({
-        url: "/api/shares/" + share_name + "/snapshots/" + name + "/",
+        url: "/api/shares/" + share_name + "/snapshots/" + name,
         type: "DELETE",
         success: function() {
           enableButton(button)
