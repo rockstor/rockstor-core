@@ -28,6 +28,7 @@ class Snapshot(models.Model):
     writable = models.BooleanField(default=False)
     """size of the snapshot"""
     size = models.IntegerField(default=0)
+    toc = models.DateTimeField(auto_now=True)
 
     class Meta:
         unique_together = ('share', 'name',)

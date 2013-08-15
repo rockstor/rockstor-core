@@ -35,6 +35,7 @@ class Share(models.Model):
     owner = models.CharField(max_length=4096, default='root')
     group = models.CharField(max_length=4096, default='root')
     perms = models.CharField(max_length=9, default='755')
+    toc = models.DateTimeField(auto_now=True)
 
     def cur_usage(self, *args, **kwargs):
         try:

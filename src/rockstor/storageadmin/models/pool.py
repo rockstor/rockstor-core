@@ -37,6 +37,7 @@ class Pool(models.Model):
         ]
     """raid type"""
     raid = models.CharField(max_length=10, choices=RAID_CHOICES)
+    toc = models.DateTimeField(auto_now=True)
 
     def cur_usage(self, *args, **kwargs):
         try:
