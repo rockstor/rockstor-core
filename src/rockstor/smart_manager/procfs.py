@@ -50,12 +50,13 @@ class ProcRetreiver(Process):
         loadavg_time = pu_time
         cur_disk_stats = None
         cur_net_stats = None
+        cur_cpu_stats = {}
         while (True):
             if (os.getppid() != self.ppid):
                 return
 
             if (self.q.qsize() < 1000):
-                self.cpu_stats()
+                cur_cpu_stats = self.cpu_stats(cur_cpu_stats)
                 loadavg_time = self.loadavg(loadavg_time)
                 self.meminfo()
                 pu_time = self.pools_usage(pu_time)
@@ -65,16 +66,28 @@ class ProcRetreiver(Process):
                 logger, self.q)
             time.sleep(self.sleep_time)
 
-    def cpu_stats(self):
+    def cpu_stats(self, prev_stats):
         stats_file = '/proc/stat'
+        cur_stats = {}
         with open(stats_file) as sfo:
             for line in sfo.readlines():
                 if (re.match('cpu\d', line) is not None):
                     fields = line.split()
-                    cm = CPUMetric(name=fields[0], umode=fields[1],
+                    fields[1:] = map(int, fields[1:])
+                    cm = None
+                    if (fields[0] not in prev_stats):
+                        cm = CPUMetric(name=fields[0], umode=fields[1],
                                     umode_nice=fields[2], smode=fields[3],
                                     idle=fields[4])
+                    else:
+                        prev = prev_stats[fields[0]]
+                        cm = CPUMetric(name=fields[0], umode=fields[1]-prev[1],
+                                       umode_nice=fields[2]-prev[2],
+                                       smode=fields[3]-prev[3],
+                                       idle=fields[4]-prev[4])
+                    cur_stats[fields[0]] = fields
                     self.q.put(cm)
+        return cur_stats
 
     def disk_stats(self, prev_stats, interval):
         stats_file = '/proc/diskstats'
