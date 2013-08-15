@@ -59,6 +59,9 @@ function displayUsagePieChart(svg, outerRadius, innerRadius, w, h, dataset, data
   .attr("height", 13)
   .attr("fill", function(d, i) {
     return colors[d].fill;
+  })
+  .attr("stroke", function(d, i) {
+    return colors[d].stroke;
   });
 
 

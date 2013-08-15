@@ -31,7 +31,7 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
     this.constructor.__super__.initialize.apply(this, arguments);
     this.shareName = this.options.shareName;
     this.template = window.JST.share_share_details_layout;
-    this.iscsi_target = new ISCSITarget({shareName: this.shareName});
+    //this.iscsi_target = new ISCSITarget({shareName: this.shareName});
     this.appliances = new ApplianceCollection();
 
 
@@ -43,7 +43,7 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
     // add dependencies
     this.dependencies.push(this.share);
     this.dependencies.push(this.snapshots);
-    this.dependencies.push(this.iscsi_target);
+    //this.dependencies.push(this.iscsi_target);
     this.dependencies.push(this.appliances);
     this.modify_choices = [
       {name: 'ro', value: 'ro'}, 
@@ -84,18 +84,17 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
     this.subviews['smb-shares'] = new SMBShares({ 
       share: this.share,
     });
-    console.log('create ISCSITarget subview');
-    this.subviews['iscsi-target'] = new ISCSITargetView({ 
-      share: this.share,
-      iscsi_target: this.iscsi_target
-    });
+    //console.log('create ISCSITarget subview');
+    //this.subviews['iscsi-target'] = new ISCSITargetView({ 
+    //  share: this.share,
+    //  iscsi_target: this.iscsi_target
+    //});
     this.subviews['button-bar'] = new RockstoreButtonView({ 
       actions: [
-        { name: 'resize', class: 'btn-primary', text: 'Resize', options: {rel: '#resize-share-form'}},
+        //{ name: 'resize', class: 'btn-primary', text: 'Resize', options: {rel: '#resize-share-form'}},
         //{ name: 'nfs-popup', class: 'btn-primary', text: 'NFS Export', options: {rel: '#nfs-export-form'}},
         //{ name: 'smb-popup', class: 'btn-primary', text: 'CIFS Export', options: {rel: '#smb-share-form'}},
         { name: 'snapshot-popup', class: 'btn-primary', text: 'Snapshot', options: {rel: '#create-snapshot-form'}},
-        { name: 'delete', class: 'btn-danger', text: 'Delete'},
       ]
     });
     this.share.on('change', this.subviews['share-info'].render, this.subviews['share-info']);
@@ -114,7 +113,7 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
     this.$('#ph-snapshots').append(this.subviews['snapshots'].render().el);
     this.$('#ph-nfs-exports').append(this.subviews['nfs-exports'].render().el);
     this.$('#ph-smb-shares').append(this.subviews['smb-shares'].render().el);
-    this.$('#ph-iscsi-target').append(this.subviews['iscsi-target'].render().el);
+    //this.$('#ph-iscsi-target').append(this.subviews['iscsi-target'].render().el);
     this.$('#ph-button-bar').append(this.subviews['button-bar'].render().el);
 
     this.attachActions();

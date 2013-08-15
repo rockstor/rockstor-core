@@ -1114,3 +1114,24 @@ input[type="checkbox"].inline {
 }
 .required { color: #ff0000; }
 
+/* Module container */
+.module-container {
+  border: 1px solid #ddd;
+  box-shadow: 0px 0px 12px rgb(238, 238, 238);
+  border-radius: 4px;
+}
+
+.module-container-header {
+  padding: 12px;
+  border-bottom: 1px solid #ddd;
+
+}
+
+.module-container-content {
+  padding: 12px; 
+}
+
+.module-container-left {
+  border-right: 1px solid #ddd;
+}
+
