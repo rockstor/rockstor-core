@@ -30,6 +30,9 @@ class BaseConsole(cmd.Cmd):
     def do_exit(self, args):
         """
         Exit from this console.
+
+        To exit from this console: exit
+
         """
         return -1
 
@@ -68,3 +71,9 @@ class BaseConsole(cmd.Cmd):
            In that case we execute the line as Python code.
         """
         self.do_help(line)
+
+    def help_wrapper(self, error, args):
+        print('Error: %s' % error)
+        print('====================================')
+        print('Documentation for %s' % args)
+        return self.do_help(args)

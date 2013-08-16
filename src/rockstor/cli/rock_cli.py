@@ -55,9 +55,10 @@ class RockConsole(BaseConsole):
     """
     def do_shares(self, args):
         """
-        Operations on shares can be done with this command.
+        Subconsole for share related operations.
 
-        Display the list of shares: shares list <share_name>
+        Go to shares subconsole:    shares
+        Display list of shares:     shares list <share_name>
         Add a share:                shares add pool_name share_name
         Remove a share:             shares delete share_name
         share detail console:       shares share_name
@@ -73,6 +74,7 @@ class RockConsole(BaseConsole):
         """
         Operations on pools can be done with this command.
 
+        Go to pools subconsole:    pools
         Display the list of pools: pools list
         Add a pool:                pools add
         Remove a pool:             pools delete
@@ -89,7 +91,9 @@ class RockConsole(BaseConsole):
         """
         Operations on disks can be done with this command.
 
+        Go to disks subconsole:    disks
         Dispaly the list of disks: disks list
+        Scan for new disks:        disks scan
         """
         disks_console = DisksConsole(self.greeting)
         if (len(args) == 0):
