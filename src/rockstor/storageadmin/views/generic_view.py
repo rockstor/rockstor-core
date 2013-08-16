@@ -70,6 +70,9 @@ class GenericView(generics.ListAPIView):
     def get_queryset(self, *args, **kwargs):
         pass
 
+    def get_allow_empty(self):
+        return False
+
     def get_paginate_by(self, foo):
         download = self.request.QUERY_PARAMS.get('download', None)
         if (download is not None):

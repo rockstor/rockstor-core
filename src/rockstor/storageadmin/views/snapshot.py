@@ -46,12 +46,10 @@ class SnapshotView(GenericView):
         if ('snap_name' in kwargs):
             self.paginate_by = None
             try:
-                return Snapshot.objects.fiilter(share=share,
-                                                name=kwargs['snap_name'])
+                return Snapshot.objects.get(share=share,
+                                            name=kwargs['snap_name'])
             except:
-                e_msg = ('Snapshot with name: %s does not exist' %
-                         kwargs['snap_name'])
-                handle_exception(Exception(e_msg), self.request)
+                return []
 
         return Snapshot.objects.filter(share=share)
 

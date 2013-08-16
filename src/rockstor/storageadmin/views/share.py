@@ -43,7 +43,10 @@ class ShareView(GenericView):
     def get_queryset(self, *args, **kwargs):
         if ('sname' in kwargs):
             self.paginate_by = 0
-            return Share.objects.filter(name=kwargs['sname'])
+            try:
+                return Share.objects.get(name=kwargs['sname'])
+            except:
+                return []
         return Share.objects.all()
 
     def _validate_share_size(self, request, size):

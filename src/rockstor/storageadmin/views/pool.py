@@ -42,7 +42,10 @@ class PoolView(GenericView):
     def get_queryset(self, *args, **kwargs):
         if ('pname' in kwargs):
             self.paginate_by = 0
-            return Pool.objects.filter(name=kwargs['pname'])
+            try:
+                return Pool.objects.get(name=kwargs['pname'])
+            except:
+                return []
         return Pool.objects.all()
 
     @transaction.commit_on_success

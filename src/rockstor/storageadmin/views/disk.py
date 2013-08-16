@@ -39,7 +39,10 @@ class DiskView(GenericView):
     def get_queryset(self, *args, **kwargs):
         if ('dname' in kwargs):
             self.paginate_by = 0
-            return Disk.objects.filter(name=kwargs['dname'])
+            try:
+                return Disk.objects.get(name=kwargs['dname'])
+            except:
+                return []
         return Disk.objects.all()
 
     @transaction.commit_on_success
