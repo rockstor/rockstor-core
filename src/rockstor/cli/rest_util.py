@@ -70,15 +70,20 @@ def print_share_info(share_info):
 def print_disk_info(disk_info):
     if (disk_info is None):
         print("There are no disks in the system")
-    else:
-        if (isinstance(disk_info, dict)):
+    try:
+        if ('count' not in disk_info):
             disk_info = [disk_info]
+        else:
+            disk_info = disk_info['results']
         print("List of disks in the system")
         print("--------------------------------------------")
-        print("Name\tSize\tFree\tPool")
+        print("Name\tSize(KB)\tFree(KB)\tPool")
         for d in disk_info:
             print('%s\t%s\t%s\t%s' %
 		  (d['name'], d['size'], d['free'], d['pool']))
+    except Exception, e:
+        print('Error rendering disk info')
+
 
 def print_export_info(export_info):
     if (export_info is None):
