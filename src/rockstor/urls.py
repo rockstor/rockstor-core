@@ -17,12 +17,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf.urls.defaults import patterns, include, url
-from storageadmin.views import (DiskView, SystemDiskView, PoolView, ShareView,
-                                SnapshotView, SetupWizardView,
-                                ShareIscsiView, AppliancesView, LoginView,
-                                UserView, ShareSambaView, SupportView,
-                                DashboardConfigView, ShareNFSView, NetworkView,
+from storageadmin.views import (SetupWizardView, AppliancesView, LoginView,
+                                SupportView, DashboardConfigView, NetworkView,
                                 SetupUserView)
+
 from smart_manager.views import (SmartManagerView, ServiceView, SProbeView,
                                  SProbeView2, MemInfoView, NetStatView,
                                  DiskStatView, NFSDistribView)
@@ -79,12 +77,9 @@ urlpatterns = patterns('',
         name='appliances-view'),
     url(r'^api/appliances/(?P<id>\d+)$', AppliancesView.as_view(),
         name='appliances-view'),
-    url(r'^api/tools/sysdisks', SystemDiskView.as_view(), name='sys-disk-view'),
-    (r'^api/commands/', include('storageadmin.urls.commands')),
 
-    # Disks section
-    url(r'^api/disks/$', DiskView.as_view(), name='disk-view'),
-    url(r'^api/disks/(?P<dname>.*)/$', DiskView.as_view(), name='disk-view'),
+    (r'^api/commands/', include('storageadmin.urls.commands')),
+    (r'^api/disks/', include('storageadmin.urls.disks')),
 
     # Network section
     url(r'^api/network/$', NetworkView.as_view(), name='net-view'),
