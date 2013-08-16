@@ -44,15 +44,21 @@ def api_call(url, data=None, calltype='get'):
 def print_pool_info(pool_info):
     if (pool_info is None):
         print("There are no pools in the system")
-    else:
-        if (isinstance(pool_info, dict)):
+        return
+
+    try:
+        if ('count' not in pool_info):
             pool_info = [pool_info]
+        else:
+            pool_info = pool_info['results']
         print("List of pools in the system")
         print("--------------------------------------")
-        print("Name\tid\traid\tsize")
+        print("Name\tSize(KB)\tUsage(KB)Raid")
         for p in pool_info:
-            print('%s\t%s\t%s\t%s' %
-                  (p['name'], p['id'], p['raid'], p['size']))
+            print('%s\t%d\t%s\t%s' %
+                  (p['name'], p['size'], p['usage'], p['raid']))
+    except Exception, e:
+        print('Error rendering pool info')
 
 def print_share_info(share_info):
     if (share_info is None):
@@ -70,6 +76,7 @@ def print_share_info(share_info):
 def print_disk_info(disk_info):
     if (disk_info is None):
         print("There are no disks in the system")
+        return
     try:
         if ('count' not in disk_info):
             disk_info = [disk_info]
