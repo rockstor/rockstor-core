@@ -25,45 +25,96 @@ class SharesConsole(BaseConsole):
 
     def __init__(self, prompt):
         BaseConsole.__init__(self)
-        self.parent_prompt = prompt
-        self.greeting = ('%s Shares' % self.parent_prompt)
-        self.prompt = ('%s>' % self.greeting)
+        self.pprompt = prompt
+        self.prompt = ('%s Shares>' % self.pprompt)
         self.url = ('%sshares/' % BaseConsole.url)
 
     def do_list(self, args):
         """
-        List brief information about all shares
+        List brief information about shares.
+
+        Details of all shares:     list
+        Details of a single share: list <share_name>
         """
-        share_info = api_call(self.url)
+        url = self.url
+        if (args is not None):
+            url = ('%s%s' % (self.url, args))
+        share_info = api_call(url)
         print_share_info(share_info)
 
     def do_add(self, args):
         """
-        To add a share
+        Create a new share.
 
-        add share_name -ppool_name -ssize
+        Create a new share: add share_name pool_name size
+
+        Parameters:
+        share_name:    Intended name of the share.
+        pool_name:     Pool in which to create the share. The pool should
+                       exist in order to create shares.
+        size:          Intened size of the share. An integer is expected with
+                       an optional suffix(MB, GB, TB, PB). When no suffix is
+                       given, MB is presumed.
+
+        Examples:
+        To create a 20 GB share in a valid pool called pool0.
+            add share1234 pool0 20GB
+
+        To create a 100 MB share in a valid pool called mypool.
+            add share100 mypool 100
         """
         arg_fields = args.split()
-        sname = arg_fields[0]
-        input_data = {}
-        for f in arg_fields[1:]:
-            if(f[0:2] == '-p'):
-                input_data['pool'] = f[2:]
-            elif(f[0:2] == '-s'):
-                input_data['size'] = f[2:]
+        if (len(arg_fields) < 3):
+            error = ('3 arguments expected. %d given' % len(arg_fields))
+            return self.help_wrapper(error, 'add')
+
+        multiplier = 1024
+        num = None
+        try:
+            num = int(arg_fields[2])
+        except:
+            if (len(arg_fields[2]) > 2):
+                try:
+                    num = int(arg_fields[2][:-2])
+                except:
+                    error = ('Invalid size parameter: %s' % arg_fields[2])
+                    return self.help_wrapper(error, 'add')
+                suffix = arg_fields[2][-2:].lower()
+                if (suffix == 'mb'):
+                    multiplier = multiplier ** 1
+                elif (suffix == 'gb'):
+                    multiplier = multiplier ** 2
+                elif (suffix == 'tb'):
+                    multiplier = multiplier ** 3
+                elif (suffix == 'pb'):
+                    multiplier = multiplier ** 4
+                else:
+                    error = ('Invalid size suffix: %s. must be one of '
+                             'MB, GB, TB or PB' % suffix)
+                    return self.help_wrapper(error, 'add')
             else:
-                return self.do_help(args)
-        if(len(input_data) != 2):
-            return self.do_help(args)
-        url = ('%s/%s/' % (self.url, sname))
+                error = 'Invalid size parameter: %s' % arg_fields[2]
+                return self.help_wrapper(error, 'add')
+        size = num * multiplier
+        input_data = {'pool' : arg_fields[1],
+                      'size': size,}
+        url = ('%s%s' % (self.url, arg_fields[0]))
         share_info = api_call(url, data=input_data, calltype='post')
         print_share_info(share_info)
 
     def do_resize(self, args):
         """
-        To resize a share
+        Resize a valid share.
 
-        resize share_name new_size
+        Resize a valid share: resize share_name new_size
+
+        Parameters:
+        share_name: A valid share to resize
+        new_size:   The new size of the share after resize.
+
+        Examples:
+        Resize a share called myshare to 100GB
+            resize myshare 100GB
         """
         try:
             fields = args.split()
@@ -72,7 +123,7 @@ class SharesConsole(BaseConsole):
         except:
             return self.do_help(args)
         input_data = {'size': new_size,}
-        url = ('%s/%s/' % (self.url, sname))
+        url = ('%s/%s' % (self.url, sname))
         share_info = api_call(url, data=input_data, calltype='put')
         print_share_info(share_info)
 
@@ -86,8 +137,7 @@ class SharesConsole(BaseConsole):
         input_data = {'owner': fields[1],
                       'group': fields[2],
                       'perms': fields[3],}
-        url = ('%s%s/acl/' % (self.url, fields[0]))
-        print url
+        url = ('%s%s/acl' % (self.url, fields[0]))
         share_info = api_call(url, data=input_data, calltype='post')
         print_share_info(share_info)
 
@@ -120,3 +170,5 @@ class SharesConsole(BaseConsole):
                 sd_console.onecmd(' '.join(input_share[1:]))
             else:
                 sd_console.cmdloop()
+
+

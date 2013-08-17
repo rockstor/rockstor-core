@@ -45,7 +45,6 @@ def print_pool_info(pool_info):
     if (pool_info is None):
         print("There are no pools in the system")
         return
-
     try:
         if ('count' not in pool_info):
             pool_info = [pool_info]
@@ -63,15 +62,20 @@ def print_pool_info(pool_info):
 def print_share_info(share_info):
     if (share_info is None):
         print("There are no shares in the system")
-    else:
-        if (isinstance(share_info, dict)):
+        return
+    try:
+        if ('count' not in share_info):
             share_info = [share_info]
+        else:
+            share_info = share_info['results']
         print("List of shares in the system")
         print("---------------------------------------")
-        print("Name\tSize\tFree\tPool")
+        print("Name\tSize(KB)\tUsage(KB)\tPool")
         for s in share_info:
             print('%s\t%s\t%s\t%s' %
                   (s['name'], s['size'], s['usage'], s['pool']['name']))
+    except Exception, e:
+        print('Error rendering share info')
 
 def print_disk_info(disk_info):
     if (disk_info is None):
