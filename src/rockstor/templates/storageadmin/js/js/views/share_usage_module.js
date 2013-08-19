@@ -37,8 +37,8 @@ ShareUsageModule = RockstoreModuleView.extend({
       model: this.model,
       collection: this.collection
     }));
-    //this.renderGraph();
-    this.renderBar();
+    this.renderGraph();
+    //this.renderBar();
     return this;
   },
    
@@ -46,32 +46,35 @@ ShareUsageModule = RockstoreModuleView.extend({
     var _this = this;
     var w = 300;
     var h = 100;
-    var barHeight = 10; 
+    var padding = [10,10,10,1];
+    var barHeight = 50; 
 
     total = parseInt(this.model.get('size')*1024);
     used = parseInt(this.model.get('usage')*1024);
     free = total - used;
-    var dataSet = [70, 30]; 
-    //var data = [Math.round((used/total)*100), 
-    //Math.round((free/total)*100)];
-    var data = [70,30]; //convert to percentages
+    var dataSet = [used, free]; 
+    var data = [Math.round((used/total)*100), Math.round((free/total)*100)];
+    //var data = [70,30]; //convert to percentages
     var dataLabels = ['used', 'free']
     var colors = {
-      used: {fill: "rgb(128,128,128)", stroke: "rgb(122,122,122)"},
-      free: {fill: "rgb(168,247,171)", stroke: "rgb(122,122,122)"}, 
+      used: {fill: "rgb(128,128,128)", stroke: "rgb(221,221,221)"},
+      free: {fill: "rgb(168,247,171)", stroke: "rgb(221,221,221)"}, 
     };
 
     var svg = d3.select(this.el).select("#chart")
     .append("svg")
-    .attr("width", w)
-    .attr("height", h);
+    .attr("width", w + padding[1] + padding[3])
+    .attr("height", h + padding[0] + padding[2]);
 
     var xScale = d3.scale.linear().domain([0, 100]).range([0, w]);
     var xOffset = function(i) {
       return i == 0 ? 0 : xScale(data[i-1]);
     }
 
-    var gridContainer = svg.append("g");
+    var gridContainer = svg.append("g")
+    .attr("transform", function(d,i) {
+      return "translate(" + padding[3] + "," + padding[0] + ")";
+    });
     gridContainer.selectAll("rect")
     .data(data)
     .enter()
@@ -87,12 +90,12 @@ ShareUsageModule = RockstoreModuleView.extend({
       return colors[dataLabels[i]].stroke;
     })
 
-    var labels = svg.selectAll("g.labels")
+    var labels = gridContainer.selectAll("g.labels")
     .data(dataLabels)
     .enter()
     .append("g")
     .attr("transform", function(d,i) {
-      return "translate(10," + (15 + i*30)+ ")";
+      return "translate(0," + (barHeight + 5 + i*30)+ ")";
     });
 
     labels.append("rect")
@@ -118,23 +121,22 @@ ShareUsageModule = RockstoreModuleView.extend({
 
   renderGraph: function() {
     var w = 350;                        //width
-    h = 250;                            //height
-    var outerRadius = 50;
+    h = 100;                            //height
+    var outerRadius = 20;
     var innerRadius = 0;
     
     total = parseInt(this.model.get('size')*1024);
     used = parseInt(this.model.get('usage')*1024);
     free = total - used;
-    var data = [Math.round((used/total)*100), 
-    Math.round((free/total)*100)];
-    var labels = ['used', 'free']
+    var dataset = [free, used];
+    var dataLabels = ["free", "used"];
 
     var svg = d3.select(this.el).select("#chart")
     .append("svg")
     .attr("width", w)
     .attr("height", h);
     
-    displayUsagePieChart(svg, outerRadius, innerRadius, w, h, dataset, dataLabels);
+    displayUsagePieChart(svg, outerRadius, innerRadius, w, h, dataset, dataLabels, total);
 
   }
 });

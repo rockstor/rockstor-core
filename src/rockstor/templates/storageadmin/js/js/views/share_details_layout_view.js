@@ -25,6 +25,7 @@
  */
 
 ShareDetailsLayoutView = RockstoreLayoutView.extend({
+  id: "share-details-container",
 
   initialize: function() {
     // call initialize of base
@@ -94,7 +95,7 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
         //{ name: 'resize', class: 'btn-primary', text: 'Resize', options: {rel: '#resize-share-form'}},
         //{ name: 'nfs-popup', class: 'btn-primary', text: 'NFS Export', options: {rel: '#nfs-export-form'}},
         //{ name: 'smb-popup', class: 'btn-primary', text: 'CIFS Export', options: {rel: '#smb-share-form'}},
-        { name: 'snapshot-popup', class: 'btn-primary', text: 'Snapshot', options: {rel: '#create-snapshot-form'}},
+        //{ name: 'snapshot-popup', class: 'btn-primary', text: 'Snapshot', options: {rel: '#create-snapshot-form'}},
       ]
     });
     this.share.on('change', this.subviews['share-info'].render, this.subviews['share-info']);
@@ -123,6 +124,7 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
     var _this = this;
     // attach overlays
     this.$('button[rel]').overlay();
+    this.$('a[rel]').overlay();
     // create snapshot form submit action
     this.$('#create-snapshot').click(function() {
       var button = _this.$('#create-snapshot');

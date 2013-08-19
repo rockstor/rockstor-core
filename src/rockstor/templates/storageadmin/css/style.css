@@ -55,11 +55,13 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
 .smallinput { width: 100px; }
 
 /*Responsive container */
+/*
 @media (min-width: 1200px) {
   .container {
     width: 940px;
   }
 }
+*/
 
 /* Navbar */
 .navbar .container { width: 940px; }
@@ -678,7 +680,8 @@ label.error { color: #b94a48; }
   border-bottom: 1px solid #ddd;
 }
 
-hr.module-sep { margin: 0; border: 0; border-top: 1px solid #ddd; }
+hr.module-sep { margin: 0; border: 0; border-top: 1px solid #ddd; 
+}
 
 /* Services page */
 
@@ -1119,19 +1122,28 @@ input[type="checkbox"].inline {
   border: 1px solid #ddd;
   box-shadow: 0px 0px 12px rgb(238, 238, 238);
   border-radius: 4px;
+  margin-bottom: 12px;
 }
 
 .module-container-header {
-  padding: 12px;
+  padding: 12px 24px;
   border-bottom: 1px solid #ddd;
-
 }
 
 .module-container-content {
-  padding: 12px; 
+  padding: 0px 24px 24px 24px; 
 }
 
 .module-container-left {
   border-right: 1px solid #ddd;
+}
+
+.module-container-footer {
+  overflow: hidden;
+  padding: 24px;
+}
+
+#share-details-container .h1, #share-details-container .h3 {
+  color: #D95700;
 }
 

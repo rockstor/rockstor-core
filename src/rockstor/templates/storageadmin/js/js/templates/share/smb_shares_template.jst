@@ -22,7 +22,12 @@
 <div class="row-fluid">
   <div class="span12">
     <div class="module-header">
-      <div class="title"><span class="h3">Samba</span></div>
+      <div class="title">
+        <span class="h3">Samba</span>
+        <div class="pull-right">
+          <a href="#"><i class="icon-pencil"></i> Edit</a>
+        </div>
+      </div>
     </div>
   </div> <!-- span12 -->
 </div> <!-- row-fluid -->
@@ -61,7 +66,9 @@
             <%= window.JST.share_smb_shares_table_empty_body_template() %>
           </tbody>
         </table>
+        <!--
         <a id="add-smb-share" class="btn btn-primary table-header-action" href="#">Add</a>
+        -->
       <% } %>
     </div> <!-- module-content -->
   </div> <!-- span12 -->
