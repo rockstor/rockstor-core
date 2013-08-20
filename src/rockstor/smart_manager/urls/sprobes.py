@@ -22,13 +22,15 @@ from smart_manager.views import (SmartManagerView, ServiceView, SProbeView,
                                  DiskStatView, NFSDistribView,
                                  NFSDClientDistribView, NFSDShareDistribView,
                                  NFSDShareClientDistribView, CPUMetricView,
-                                 NFSDUidGidDistributionView, LoadAvgView)
+                                 NFSDUidGidDistributionView, LoadAvgView,
+                                 SProbeMetadataView)
 
 
 urlpatterns = patterns('',
 
     # Smart probes
     url(r'^$', SProbeView.as_view(), name='probe-view'),
+    url(r'^metadata$', SProbeMetadataView.as_view(), name='probe-view'),
 
     # Generic smart probes
     url(r'^diskstat/$', DiskStatView.as_view(),
