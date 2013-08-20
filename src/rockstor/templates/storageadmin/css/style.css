@@ -1116,9 +1116,10 @@ input[type="checkbox"].inline {
 .required { color: #ff0000; }
 
 /* probe progress */
-.probe-status-title {
+.probe-title {
   line-height: 5em; 
   float: left;
+  margin-right: 12px;
 }
 
 ol.probe-status {
@@ -1126,18 +1127,20 @@ ol.probe-status {
   padding: 0;
   list-style-type: none;
   float: left;
+  width: 75%;
 }
 
 ol.probe-status li { 
   float: left;
-  padding-left: 12px;
   text-align: center;
   line-height: 3em;
 }
 
+ol.probe-status[data-status-tracker-steps="4"] li { width: 24%; }
+
 ol.probe-status li.status-tracker-done {
   color: black;
-  border-bottom: 2px solid yellowgreen;
+  border-bottom: 2px solid #D95700;
 }
 
 ol.probe-status li.status-tracker-todo {
@@ -1159,7 +1162,7 @@ ol.probe-status li:before {
 ol.probe-status li.status-tracker-done:before {
   content: "\2713";
   color: white;
-  background-color: yellowgreen;
+  background-color: #D95700;
   height: 1.2em;
   width: 1.2em;
   line-height: 1.2em;
@@ -1175,10 +1178,30 @@ ol.probe-status li.status-tracker-todo:before {
   bottom: -1.6em;
 }
 
+.probe-time {
+  width: 75%;
+  margin-top: 12px;
+  float: left;
+}
+
+.probe-start-time {
+  float: left;
+  margin-left: 12px;
+  width: 72%;
+}
+
+.probe-end-time {
+  float: left;
+}
+
+.probe-end-time .h4 {
+  color: silver;
+}
+
 .probe-data {
-  margin-top: 3em;
   border: 1px solid #ddd;
   border-radius: 12px;
   min-height: 400px;
 }
+
 
