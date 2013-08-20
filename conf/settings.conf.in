@@ -224,6 +224,8 @@ PIPELINE_JS = {
             'js/views/users.js',
             'js/views/add_user.js',
             'js/views/edit_user.js',
+            'js/views/probe_run_list.js',
+            'js/views/probe_detail.js',
             ),
         'output_filename': 'js/application.js'
         },
