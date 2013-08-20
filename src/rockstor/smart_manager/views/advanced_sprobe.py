@@ -29,6 +29,7 @@ import logging
 logger = logging.getLogger(__name__)
 from generic_sprobe import GenericSProbeView
 from django.core.paginator import Paginator
+from smart_manager.taplib.probe_config import TAP_MAP
 
 
 class AdvancedSProbeView(GenericSProbeView):
@@ -61,6 +62,7 @@ class AdvancedSProbeView(GenericSProbeView):
 
     def get_queryset(self, *args, **kwargs):
 
+        pname = self.request.path.split('/')[4]
         limit = self.request.QUERY_PARAMS.get('limit',
                                               settings.PAGINATION['max_limit'])
         limit = int(limit)
@@ -72,9 +74,9 @@ class AdvancedSProbeView(GenericSProbeView):
         if (pid is None):
             self.serializer_class = SProbeSerializer
             try:
-                return SProbe.objects.filter(name=self.pname).order_by('-ts')[0:limit]
+                return SProbe.objects.filter(name=pname).order_by('-ts')[0:limit]
             except:
-                e_msg = ('No smart probe instances exist for: %s' % self.pname)
+                e_msg = ('No smart probe instances exist for: %s' % pname)
                 handle_exception(Exception(e_msg), self.request)
 
         command = None
@@ -83,7 +85,7 @@ class AdvancedSProbeView(GenericSProbeView):
         if (command is None):
             self.serializer_class = SProbeSerializer
             self.paginate_by = None
-            return SProbe.objects.filter(name=self.pname, id=pid)
+            return SProbe.objects.filter(name=pname, id=pid)
 
         if (command != 'data'):
             e_msg = ('unknown command: %s' % repr(command))
@@ -91,9 +93,9 @@ class AdvancedSProbeView(GenericSProbeView):
 
         ro = None
         try:
-            ro = SProbe.objects.get(name=self.pname, id=pid)
+            ro = SProbe.objects.get(name=pname, id=pid)
         except:
-            e_msg = ('Probe: %s with id: %s does not exist' % (self.pname,
+            e_msg = ('Probe: %s with id: %s does not exist' % (pname,
                                                                pid))
             handle_exception(Exception(e_msg), self.request)
 
@@ -114,13 +116,15 @@ class AdvancedSProbeView(GenericSProbeView):
         """
         start or stop a smart probe
         """
+        #get the task uuid from the url string
+        pname = request.path.split('/')[4]
         task = {}
         ro = None
         if (pid is None): #start a probe
             #if there's a recipe already running, throw error
-            if (SProbe.objects.filter(name=self.pname,
+            if (SProbe.objects.filter(name=pname,
                                       state__regex=r'(created|running)').exists()):
-                e_msg = ('Smart probe: %s already running' % self.pname)
+                e_msg = ('Smart probe: %s already running' % pname)
                 handle_exception(Exception(e_msg), request)
             #if max number of probes already running, throw error
             num_live = len(SProbe.objects.filter(state__regex=r'(created|running'))
@@ -135,20 +139,20 @@ class AdvancedSProbeView(GenericSProbeView):
             try:
                 cur_id = SProbe.objects.all().order_by('-ts')[0].id
             except:
-                logger.info('no previous probe ids found for: %s' % self.pname)
+                logger.info('no previous probe ids found for: %s' % pname)
 
-            ro = SProbe(name=self.pname, smart=True, state='created')
+            ro = SProbe(name=pname, smart=True, state='created')
             ro.save()
             kernel_module = os.path.join(settings.TAP_DIR,
-                                         settings.TAP_MAP[self.pname] + '.ko')
+                                         TAP_MAP[pname]['location'] + '.ko')
             task = {
                 'module': kernel_module,
-                'tap': self.pname,
+                'tap': pname,
                 'action': 'start',
                 'roid': cur_id + 1,
                 }
         else:
-            ro = self._validate_probe(self.pname, pid, request)
+            ro = self._validate_probe(pname, pid, request)
             if (command not in ('stop', 'status',)):
                 e_msg = ('command: %s not supported.' % command)
                 handle_exception(Exception(e_msg), request)
@@ -156,10 +160,10 @@ class AdvancedSProbeView(GenericSProbeView):
                 return self._paginated_response((ro,), request)
             if (ro.state == 'stopped' or ro.state == 'error'):
                 e_msg = ('Probe: %s with id: %s already in state: %s. It '
-                         'cannot be stopped.' % (self.pname, pid, ro.state))
+                         'cannot be stopped.' % (pname, pid, ro.state))
                 handle_exception(Exception(e_msg), request)
             task = {
-                'tap': self.pname,
+                'tap': pname,
                 'action': 'stop',
                 'roid': ro.id,
                 }

@@ -25,4 +25,3 @@ class NFSDUidGidDistributionView(AdvancedSProbeView):
 
     serializer_class = NFSDUidGidDistributionSerializer
     model_obj = NFSDUidGidDistribution
-    pname = 'nfs-uid-gid-distrib'

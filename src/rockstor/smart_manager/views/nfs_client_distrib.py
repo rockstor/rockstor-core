@@ -25,4 +25,3 @@ class NFSDClientDistribView(AdvancedSProbeView):
 
     serializer_class = NFSDClientDistributionSerializer
     model_obj = NFSDClientDistribution
-    pname = 'nfs-client-distrib'
