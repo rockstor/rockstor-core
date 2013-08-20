@@ -205,3 +205,16 @@ var NetworkInterfaceCollection = Backbone.Collection.extend({
   url: '/api/network/'
 });
 
+var ProbeRun = Backbone.Model.extend();
+
+var ProbeRunCollection = Backbone.Collection.extend({
+  model: ProbeRun,
+  url: "/api/sm/sprobes/metadata?format=json"
+})
+
+var ProbeTemplate = Backbone.Model.extend();
+var ProbeTemplateCollection = Backbone.Collection.extend({
+  model: ProbeTemplate,
+  url: "/api/sm/sprobes/?format=json"
+});
+
