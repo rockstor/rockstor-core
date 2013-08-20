@@ -25,7 +25,7 @@ import fcntl
 
 from django.conf import settings
 from smart_manager.models import SProbe
-from smart_manager.agents import cb_map
+from smart_manager.taplib.probe_config import TAP_MAP
 import logging
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ class StapWorker(Process):
         fcntl.fcntl(rp.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
         logger.info('started tap')
         probe_stopped = False
-        sink_data = {'cb': cb_map[self.task['tap']],
+        sink_data = {'cb': TAP_MAP[self.task['tap']]['cb'],
                      'rid': self.task['roid'],}
         while True:
             try:

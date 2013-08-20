@@ -24,6 +24,7 @@ from smart_manager.models import (CPUMetric, LoadAvg, MemInfo, ServiceStatus,
                                   DiskStat, NetStat,
                                   NFSDShareClientDistribution,
                                   NFSDUidGidDistribution)
+from smart_manager.taplib.probe_config import TapConfig
 
 
 class CPUMetricSerializer(serializers.ModelSerializer):
@@ -83,3 +84,14 @@ class NFSDShareClientDistributionSerializer(serializers.ModelSerializer):
 class NFSDUidGidDistributionSerializer(serializers.ModelSerializer):
     class Meta:
         model = NFSDUidGidDistribution
+
+class SProbeConfigSerializer(serializers.Serializer):
+    uuid = serializers.CharField(max_length=100)
+    sdetail = serializers.CharField(max_length=4096)
+
+    def restore_object(self, attrs, instance=None):
+        if (instance is not None):
+            instance.uuid = attrs.get('uuid', instance.uuid)
+            instance.sdetail = attrs.get('sdetail', instance.sdetail)
+            return instance
+        return TapConfig(**attrs)
