@@ -38,6 +38,7 @@ ProbeRunListView = RockstoreLayoutView.extend({
     this.constructor.__super__.initialize.apply(this, arguments);
     // set template
     this.template = window.JST.probes_probe_run_list;
+    this.tableTemplate = window.JST.probes_probe_table;
     this.probeRuns = new ProbeRunCollection();
     this.probeTemplates = new ProbeTemplateCollection();
     this.dependencies.push(this.probeRuns);
@@ -63,7 +64,7 @@ ProbeRunListView = RockstoreLayoutView.extend({
       probeTemplateNames: probeTemplateNames
 
     }));
-    this.$("#probe-run-table").tablesorter();
+    this.renderTable();
     this.$("#new-probe-form").overlay({
       left: "center",
       load: false
@@ -73,6 +74,13 @@ ProbeRunListView = RockstoreLayoutView.extend({
       
     });
     this.$("[rel=tooltip]").tooltip({ placement: "bottom"});
+  },
+  
+  renderTable: function() {
+    this.$("#probe-run-list").html(this.tableTemplate({
+      probeRuns: this.probeRuns
+    }));
+    this.$("#probe-run-table").tablesorter();
   },
 
   createProbe: function(event) {
