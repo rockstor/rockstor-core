@@ -1,0 +1,109 @@
+<script>
+/*
+ * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ * 
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ * 
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ */
+</script>
+
+
+<div class="row-fluid">
+  <div class="span12">
+    <div class="module-header">
+      <div class="title">
+        <span class="h3">Probe runs</span>
+        <form class="navbar-search pull-right">
+          <input type="text" class="search-query" placeholder="Search">
+        </form>
+      </div>
+
+    </div>
+  </div> <!-- span12 -->
+</div> <!-- row-fluid -->
+
+<div class="row-fluid">
+  <div class="span12">
+    <div id="probe-run-list">
+      <table id="probe-run-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" width="100%">
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Type</th>
+            <th scope="col">Status</th>
+            <th scope="col">Start Time</th>
+            <th scope="col">End Time</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a href="#probeDetail/1">Run 1</a></td>
+            <td>NFS Client, Share and User distribution</td>
+            <td>Completed</td>
+            <td>Jul 10th 9.30am</td>
+            <td>Jul 10th 9.35am</td>
+            <td>
+              <a href="#"><i class="icon-zoom-in" rel="tooltip" title="View"></i></a>
+              &nbsp;
+              <a href="#"><i class="icon-stop" rel="tooltip" title="Stop"></i></a>
+            </td>
+
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <button id="new-probe-button" class="btn btn-primary" rel="#new-probe-form" type="button">Run New Probe</button>
+  </div>
+</div>
+
+<div class="simple-overlay" id="new-probe-form">
+  <div class="overlay-content">
+    <div class="row-fluid">
+      <div class="span12">
+        <h3>Start a new probe</h3>
+        <label class="control-label"><span class="required">*</span> indicates required fields</label>
+        <div class="form-box">
+          <form id="probe-create-form" name="aform">
+            <div class="control-group">
+              <label class="control-label" for="probe-name">Probe Name<span class="required"> *</span></label>
+              <div class="controls">
+                <input type="text" id="probe-name" name="probeName" placeholder="Probe Name" >
+
+              </div>
+            </div>
+            <div class="control-group">
+              <label class="control-label" for="probe-type">Probe Type<span class="required"> *</span></label>
+              <div class="controls">
+                <select id="probe-type" name="probeType">
+                  <option value="nfs-client-share-distrib">NFS Client, Share, User distribution</option>
+                  <option value="nfs-file-distrib">NFS File distribution</option>
+                </select>
+
+              </div>
+            </div>
+            <div class="control-group">
+              <div class="controls">
+                <button type="Submit" id="create-probe" class="btn btn-primary">Run Probe</button>
+                <button id="cancel-new-probe" class="btn">Cancel</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div> <!-- overlay-content -->
+</div>
+
