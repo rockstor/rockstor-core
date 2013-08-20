@@ -25,4 +25,3 @@ class NFSDShareClientDistribView(AdvancedSProbeView):
 
     serializer_class = NFSDShareClientDistributionSerializer
     model_obj = NFSDShareClientDistribution
-    pname = 'nfs-share-client-distrib'
