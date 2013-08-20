@@ -49,19 +49,23 @@
           </tr>
         </thead>
         <tbody>
+          <% probeRuns.each(function(p) { %>
           <tr>
-            <td><a href="#probeDetail/1">Run 1</a></td>
-            <td>NFS Client, Share and User distribution</td>
-            <td>Completed</td>
-            <td>Jul 10th 9.30am</td>
-            <td>Jul 10th 9.35am</td>
+            <td><a href="#probeDetail/<%= p.get('id') %>"><%= p.get("name") %></a></td>
+            <td></td>
+            <td><%= p.get("state") %></td>
+            <td><%= (new Date(p.get("ts"))).toString() %> </td>
+            <td></td>
             <td>
               <a href="#"><i class="icon-zoom-in" rel="tooltip" title="View"></i></a>
               &nbsp;
-              <a href="#"><i class="icon-stop" rel="tooltip" title="Stop"></i></a>
+              <% if (p.get("state") == "running") { %>
+                <a class="stop-probe" href="#" data-probe-id="<%= p.get('id') %>" data-probe-name="<%= p.get('name') %>"><i class="icon-stop" rel="tooltip" title="Stop"></i></a>
+              <% } %>
             </td>
 
           </tr>
+        <% }); %>
         </tbody>
       </table>
     </div>
@@ -88,10 +92,10 @@
               <label class="control-label" for="probe-type">Probe Type<span class="required"> *</span></label>
               <div class="controls">
                 <select id="probe-type" name="probeType">
-                  <option value="nfs-client-share-distrib">NFS Client, Share, User distribution</option>
-                  <option value="nfs-file-distrib">NFS File distribution</option>
+                  <% _.each(probeTemplateNames, function(name) { %>
+                    <option value="<%= name %>"><%= name %></option>
+                  <% }); %>
                 </select>
-
               </div>
             </div>
             <div class="control-group">
