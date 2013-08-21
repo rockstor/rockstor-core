@@ -74,7 +74,7 @@ class AdvancedSProbeView(GenericSProbeView):
         if (pid is None):
             self.serializer_class = SProbeSerializer
             try:
-                return SProbe.objects.filter(name=pname).order_by('-ts')[0:limit]
+                return SProbe.objects.filter(name=pname).order_by('-start')[0:limit]
             except:
                 e_msg = ('No smart probe instances exist for: %s' % pname)
                 handle_exception(Exception(e_msg), self.request)
@@ -137,7 +137,7 @@ class AdvancedSProbeView(GenericSProbeView):
             #get last id
             cur_id = 0
             try:
-                cur_id = SProbe.objects.all().order_by('-ts')[0].id
+                cur_id = SProbe.objects.all().order_by('-start')[0].id
             except:
                 logger.info('no previous probe ids found for: %s' % pname)
 
