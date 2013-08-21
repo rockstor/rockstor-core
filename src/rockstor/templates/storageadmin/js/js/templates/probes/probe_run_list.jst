@@ -61,8 +61,8 @@
               <label class="control-label" for="probe-type">Probe Type<span class="required"> *</span></label>
               <div class="controls">
                 <select id="probe-type" name="probeType">
-                  <% _.each(probeTemplateNames, function(name) { %>
-                    <option value="<%= name %>"><%= name %></option>
+                  <% probeTemplates.each(function(p) { %>
+                    <option value="<%= p.get('uuid') %>"><%= p.get("uuid") %> (<%= p.get("sdetail") %>)</option>
                   <% }); %>
                 </select>
               </div>

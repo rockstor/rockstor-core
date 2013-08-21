@@ -12,7 +12,7 @@
   <tbody>
     <% probeRuns.each(function(p) { %>
       <tr>
-        <td><a href="#probeDetail/<%= p.get('id') %>"><%= p.get("name") %></a></td>
+        <td><a href="#probeDetail/<%= p.get('name') %>/<%= p.get('id') %>"><%= p.get("name") %></a></td>
         <td></td>
         <td><%= p.get("state") %></td>
         <td><%= (new Date(p.get("ts"))).toString() %> </td>
