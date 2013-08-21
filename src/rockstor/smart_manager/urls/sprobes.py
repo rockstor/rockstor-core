@@ -31,6 +31,8 @@ urlpatterns = patterns('',
     # Smart probes
     url(r'^$', SProbeView.as_view(), name='probe-view'),
     url(r'^metadata$', SProbeMetadataView.as_view(), name='probe-view'),
+    url(r'^metadata/(?P<pid>[0-9]+)$', SProbeMetadataView.as_view(),
+        name='probe-view'),
 
     # Generic smart probes
     url(r'^diskstat/$', DiskStatView.as_view(),

@@ -26,16 +26,16 @@ from rest_framework.permissions import IsAuthenticated
 from renderers import IgnoreClient
 from django.conf import settings
 from django.db.models import Count
+from advanced_sprobe import AdvancedSProbeView
 
 
-class SProbeMetadataView(generics.ListAPIView):
-    authentication_classes = (DigestAuthentication, SessionAuthentication,
-                              BasicAuthentication,)
-    permission_classes = (IsAuthenticated,)
-    content_negotiation_class = IgnoreClient
+class SProbeMetadataView(AdvancedSProbeView):
     serializer_class = SProbeSerializer
 
-    def get_queryset(self):
+    def get_queryset(self, *args, **kwargs):
+        if ('pid' in kwargs):
+            return SProbe.objects.filter(id=kwargs['pid'])
+
         limit = self.request.QUERY_PARAMS.get('limit',
                                               settings.PAGINATION['max_limit'])
         limit = int(limit)
@@ -59,7 +59,7 @@ class SProbeMetadataView(generics.ListAPIView):
             filter_params['end__lte'] = end_t2
         if (state is not None):
             filter_params['state'] = state
-        return SProbe.objects.filter(**filter_params).order_by('-ts')[0:limit]
+        return SProbe.objects.filter(**filter_params).order_by('-start')[0:limit]
 
     def get_paginate_by(self, foo):
         download = self.request.QUERY_PARAMS.get('download', None)
