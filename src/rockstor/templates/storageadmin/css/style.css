@@ -1140,7 +1140,7 @@ ol.probe-status[data-status-tracker-steps="4"] li { width: 24%; }
 
 ol.probe-status li.status-tracker-done {
   color: black;
-  border-bottom: 2px solid #D95700;
+  border-bottom: 2px solid #55CF04;
 }
 
 ol.probe-status li.status-tracker-todo {
@@ -1162,7 +1162,7 @@ ol.probe-status li:before {
 ol.probe-status li.status-tracker-done:before {
   content: "\2713";
   color: white;
-  background-color: #D95700;
+  background-color: #55CF04;
   height: 1.2em;
   width: 1.2em;
   line-height: 1.2em;

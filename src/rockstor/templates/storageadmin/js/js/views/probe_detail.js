@@ -33,7 +33,47 @@ ProbeDetailView = RockstoreLayoutView.extend({
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
     this.probeId = this.options.probeId;
+    this.probeName = this.options.probeName;
+    this.probeRunTmp = Backbone.Model.extend({
+      url: function() {
+        return "/api/sm/sprobes/" + this.get("name") + "/" + this.id + "?format=json";
+      },
+      parse: function(response, options) {
+        return response[0];
+      }
+    });
+    this.probeRun = new this.probeRunTmp({
+      id: this.probeId,
+      name: this.probeName,
+    });
+    this.dependencies.push(this.probeRun);
     this.template = window.JST.probes_probe_detail;
+    this.probeStatusMap = {
+      Initialized: {
+        created: "done",
+        running: "done",
+        stopped: "done",
+        error: "done"
+      },
+      Running: {
+        created: "todo",
+        running: "done",
+        stopped: "done",
+        error: null
+      },
+      Completed: {
+        created: "done",
+        running: "done",
+        stopped: "done",
+        error: null
+      },
+      Error: {
+        created: "done",
+        running: null,
+        stopped: null,
+        error: "error"
+      }
+    };
   },
 
   render: function() {
@@ -44,6 +84,9 @@ ProbeDetailView = RockstoreLayoutView.extend({
   renderProbeDetail: function() {
     var _this = this;
     $(this.el).append(this.template({
+      probeRun: this.probeRun,
+      runStatus: this.probeRun.get("state"),
+      statusMap: this.probeStatusMap
     }));
   },
 

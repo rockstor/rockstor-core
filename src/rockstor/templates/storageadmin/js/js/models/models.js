@@ -205,7 +205,9 @@ var NetworkInterfaceCollection = Backbone.Collection.extend({
   url: '/api/network/'
 });
 
-var ProbeRun = Backbone.Model.extend();
+var ProbeRun = Backbone.Model.extend({
+  
+});
 
 var ProbeRunCollection = Backbone.Collection.extend({
   model: ProbeRun,

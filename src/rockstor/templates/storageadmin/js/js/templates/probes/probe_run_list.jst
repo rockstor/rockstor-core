@@ -37,37 +37,6 @@
 <div class="row-fluid">
   <div class="span12">
     <div id="probe-run-list">
-      <table id="probe-run-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" width="100%">
-        <thead>
-          <tr>
-            <th scope="col">Name</th>
-            <th scope="col">Type</th>
-            <th scope="col">Status</th>
-            <th scope="col">Start Time</th>
-            <th scope="col">End Time</th>
-            <th scope="col">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% probeRuns.each(function(p) { %>
-          <tr>
-            <td><a href="#probeDetail/<%= p.get('id') %>"><%= p.get("name") %></a></td>
-            <td></td>
-            <td><%= p.get("state") %></td>
-            <td><%= (new Date(p.get("ts"))).toString() %> </td>
-            <td></td>
-            <td>
-              <a href="#"><i class="icon-zoom-in" rel="tooltip" title="View"></i></a>
-              &nbsp;
-              <% if (p.get("state") == "running") { %>
-                <a class="stop-probe" href="#" data-probe-id="<%= p.get('id') %>" data-probe-name="<%= p.get('name') %>"><i class="icon-stop" rel="tooltip" title="Stop"></i></a>
-              <% } %>
-            </td>
-
-          </tr>
-        <% }); %>
-        </tbody>
-      </table>
     </div>
     <button id="new-probe-button" class="btn btn-primary" rel="#new-probe-form" type="button">Run New Probe</button>
   </div>
@@ -92,8 +61,8 @@
               <label class="control-label" for="probe-type">Probe Type<span class="required"> *</span></label>
               <div class="controls">
                 <select id="probe-type" name="probeType">
-                  <% _.each(probeTemplateNames, function(name) { %>
-                    <option value="<%= name %>"><%= name %></option>
+                  <% probeTemplates.each(function(p) { %>
+                    <option value="<%= p.get('uuid') %>"><%= p.get("uuid") %> (<%= p.get("sdetail") %>)</option>
                   <% }); %>
                 </select>
               </div>
