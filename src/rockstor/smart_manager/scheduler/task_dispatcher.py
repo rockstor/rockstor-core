@@ -32,19 +32,19 @@ from datetime import datetime
 from smart_manager.models import SProbe
 from django.conf import settings
 from django.core.serializers import serialize
-from stap_worker import StapWorker
+from task_worker import TaskWorker
 
 
 import logging
 logger = logging.getLogger(__name__)
 
-class Stap(Process):
+class TaskDispatcher(Process):
 
     def __init__(self, address):
         self.address = address
         self.ppid = os.getpid()
         self.workers = {}
-        super(Stap, self).__init__()
+        super(TaskDispatcher, self).__init__()
 
     def run(self):
         context = zmq.Context()

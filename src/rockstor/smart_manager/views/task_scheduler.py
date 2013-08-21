@@ -15,19 +15,26 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-from sm import SmartManagerView
-from service import ServiceView
-from sprobes import SProbeView
-from mem_info import MemInfoView
-from net_stat import NetStatView
-from disk_stat import DiskStatView
-from nfs_distrib import NFSDistribView
-from nfs_client_distrib import NFSDClientDistribView
-from nfs_share_distrib import NFSDShareDistribView
-from nfs_share_client_distrib import NFSDShareClientDistribView
-from cpu_util import CPUMetricView
-from nfs_uid_gid import NFSDUidGidDistributionView
-from load_avg import LoadAvgView
-from sprobe_metadata import SProbeMetadataView
-from task_scheduler import TaskSchedulerView
-from snap_scheduler import SnapSchedulerView
+
+from smart_manager.models import Task
+from smart_manager.serializers import TaskSerializer
+from django.conf import settings
+from advanced_sprobe import AdvancedSProbeView
+
+
+class TaskSchedulerView(AdvancedSProbeView):
+    serializer_class = TaskSerializer
+
+    def get_queryset(self, *args, **kwargs):
+        return Task.objects.all()
+
+    def get_paginate_by(self, foo):
+        download = self.request.QUERY_PARAMS.get('download', None)
+        if (download is not None):
+            return None
+        if (self.paginate_by is None):
+            return None
+        return settings.PAGINATION['page_size']
+
+    def post(self, request, *args, **kwargs):
+        pass
