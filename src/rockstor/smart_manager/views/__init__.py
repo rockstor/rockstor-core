@@ -18,7 +18,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from sm import SmartManagerView
 from service import ServiceView
 from sprobes import SProbeView
-from sprobes2 import SProbeView2
 from mem_info import MemInfoView
 from net_stat import NetStatView
 from disk_stat import DiskStatView
