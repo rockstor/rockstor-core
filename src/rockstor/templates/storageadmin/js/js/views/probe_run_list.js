@@ -108,7 +108,10 @@ ProbeRunListView = RockstoreLayoutView.extend({
     });
   },
 
-  cancelNewProbe: function() {
+  cancelNewProbe: function(event) {
+    if (event) {
+      event.preventDefault();
+    }
     this.$('#new-probe-form').overlay().close();
   },
 
@@ -120,7 +123,7 @@ ProbeRunListView = RockstoreLayoutView.extend({
     var probeId = $(event.currentTarget).attr("data-probe-id");
     var probeName = $(event.currentTarget).attr("data-probe-name");
     $.ajax({
-      url: "/api/sm/sprobes/" + probeName + "/" + probeId + "/stop/?format=json",
+      url: "/api/sm/sprobes/" + probeName + "/" + probeId + "/stop?format=json",
       type: 'POST',
       data: {},
       dataType: "json",

@@ -30,11 +30,9 @@
       <% }); %>
     </ol>
     <div class="probe-time">
-      <div class="probe-start-time">
-        <span class="h4">Start Time:&nbsp;&nbsp;Jul 5th 9.30 am</span>
+      <div class="probe-start-time">Start: <% if (probeRun.get("start")) { %><%= (new Date(probeRun.get("start"))).toString() %><% } %>
       </div> 
-      <div class="probe-end-time">
-        <span class="h4">End Time:</span>
+      <div class="probe-end-time">End: <% if (probeRun.get("start")) { %><%= (new Date(probeRun.get("start"))).toString() %><% } %>
       </div>
     </div>
     <div class="clear"></div>

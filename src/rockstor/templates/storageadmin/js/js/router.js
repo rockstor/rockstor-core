@@ -253,9 +253,6 @@ var AppRouter = Backbone.Router.extend({
   },
 
   showProbeDetail: function(probeName, probeId) {
-    console.log("In showProbeDetail");
-    console.log(probeName);
-    console.log(probeId);
     this.cleanup();
     this.currentLayout = new ProbeDetailView({
       probeId: probeId,
