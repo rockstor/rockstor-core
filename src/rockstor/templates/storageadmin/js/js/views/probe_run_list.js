@@ -56,12 +56,10 @@ ProbeRunListView = RockstoreLayoutView.extend({
     var probeTemplateNames = this.probeTemplates.map(function(pt) {
       return (_.keys(pt.attributes))[0];
     });
-    console.log("probeTemplateNames");
-    console.log(probeTemplateNames);
     var _this = this;
     $(this.el).append(this.template({
       probeRuns: this.probeRuns,
-      probeTemplateNames: probeTemplateNames
+      probeTemplates: this.probeTemplates
 
     }));
     this.renderTable();
@@ -88,7 +86,6 @@ ProbeRunListView = RockstoreLayoutView.extend({
       event.preventDefault();
     }
     var _this = this;
-    console.log("Creating probe " + this.$("#probe-type").val());
     var probeName = this.$("#probe-type").val();
     $.ajax({
       url: "/api/sm/sprobes/" + probeName + "/" + "?format=json",
@@ -97,8 +94,12 @@ ProbeRunListView = RockstoreLayoutView.extend({
       dataType: "json",
       global: false, // dont show global loading indicator
       success: function(data, textStatus, jqXHR) {
-        console.log("probe started successfully");
-        _this.$("#new-probe-form").overlay().close();
+        _this.probeRuns.fetch({
+          success: function(collection, response, options) {
+            _this.$("#new-probe-form").overlay().close();
+            _this.renderTable();
+          }
+        });
       },
       error: function(jqXHR, textStatus, error) {
         var msg = parseXhrError(xhr)
@@ -115,9 +116,9 @@ ProbeRunListView = RockstoreLayoutView.extend({
     if (event) {
       event.preventDefault();
     }
+    var _this = this;
     var probeId = $(event.currentTarget).attr("data-probe-id");
     var probeName = $(event.currentTarget).attr("data-probe-name");
-    console.log("stopping probe " + probeName + " " + probeId);
     $.ajax({
       url: "/api/sm/sprobes/" + probeName + "/" + probeId + "/stop/?format=json",
       type: 'POST',
@@ -125,7 +126,11 @@ ProbeRunListView = RockstoreLayoutView.extend({
       dataType: "json",
       global: false, // dont show global loading indicator
       success: function(data, textStatus, jqXHR) {
-        console.log("probe stopped successfully");
+        _this.probeRuns.fetch({
+          success: function(collection, response, options) {
+            _this.renderTable();
+          }
+        });
       },
       error: function(jqXHR, textStatus, error) {
         var msg = parseXhrError(xhr)

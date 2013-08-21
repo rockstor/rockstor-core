@@ -52,7 +52,7 @@ var AppRouter = Backbone.Router.extend({
     "users/:username/edit": "editUser",
     "add-user": "addUser",
     "analytics": "showProbeRunList",
-    "probeDetail/:probeId": "showProbeDetail",
+    "probeDetail/:probeName/:probeId": "showProbeDetail",
     "*path": "showHome"
   },
 
@@ -252,10 +252,14 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').append(this.currentLayout.render().el);
   },
 
-  showProbeDetail: function(probeId) {
+  showProbeDetail: function(probeName, probeId) {
+    console.log("In showProbeDetail");
+    console.log(probeName);
+    console.log(probeId);
     this.cleanup();
     this.currentLayout = new ProbeDetailView({
-      probeId: probeId
+      probeId: probeId,
+      probeName: probeName
     });
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
