@@ -39,8 +39,10 @@ class SProbeMetadataView(generics.ListAPIView):
         limit = self.request.QUERY_PARAMS.get('limit',
                                               settings.PAGINATION['max_limit'])
         limit = int(limit)
-        t1 = self.request.QUERY_PARAMS.get('t1', None)
-        t2 = self.request.QUERY_PARAMS.get('t2', None)
+        start_t1 = self.request.QUERY_PARAMS.get('start_t1', None)
+        start_t2 = self.request.QUERY_PARAMS.get('start_t2', None)
+        end_t1 = self.request.QUERY_PARAMS.get('end_t1', None)
+        end_t2 = self.request.QUERY_PARAMS.get('end_t2', None)
         name_regex = self.request.QUERY_PARAMS.get('name_regex', None)
         name_exact = self.request.QUERY_PARAMS.get('name', None)
         state = self.request.QUERY_PARAMS.get('state', None)
@@ -49,9 +51,12 @@ class SProbeMetadataView(generics.ListAPIView):
             filter_params['name__regex'] = name_regex
         if (name_exact is not None):
             filter_params['name'] = name_exact
-        if (t1 is not None and t2 is not None):
-            filter_params['ts__gt'] = t1
-            filter_params['ts__lte'] = t2
+        if (start_t1 is not None and start_t2 is not None):
+            filter_params['start__gt'] = start_t1
+            filter_params['start__lte'] = start_t2
+        if (end_t1 is not None and end_t2 is not None):
+            filter_params['end__gt'] = end_t1
+            filter_params['end__lte'] = end_t2
         if (state is not None):
             filter_params['state'] = state
         return SProbe.objects.filter(**filter_params).order_by('-ts')[0:limit]

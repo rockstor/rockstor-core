@@ -28,6 +28,7 @@ from multiprocessing import (Process, Queue)
 import zmq
 import os
 import time
+from datetime import datetime
 from smart_manager.models import SProbe
 from django.conf import settings
 from django.core.serializers import serialize
@@ -67,6 +68,7 @@ class Stap(Process):
                 if (not self.workers[w].is_alive()):
                     ro = SProbe.objects.get(id=w)
                     ro.state = 'error'
+                    ro.end = datetime.utcnow()
                     data = serialize("json", (ro,))
                     sink_socket.send_json(data)
                     del(self.workers[w])
@@ -100,6 +102,7 @@ class Stap(Process):
                 if (not start_tap):
                     logger.error('not starting the tap')
                     ro.state = 'error'
+                    ro.end = datetime.utcnow()
                     data = serialize("json", (ro,))
                     sink_socket.send_json(data)
                     continue
@@ -116,6 +119,7 @@ class Stap(Process):
                     sink_socket.send_json(data)
                 else:
                     ro.state = 'error'
+                    ro.end = datetime.utcnow()
                     data = serialize("json", (ro,))
                     sink_socket.send_json(data)
 
@@ -127,6 +131,7 @@ class Stap(Process):
                     del(self.workers[task['roid']])
                 ro = SProbe.objects.get(id=task['roid'])
                 ro.state = 'stopped'
+                ro.end = datetime.utcnow()
                 data = serialize("json", (ro,))
                 sink_socket.send_json(data)
 
