@@ -36,7 +36,7 @@ ProbeDetailView = RockstoreLayoutView.extend({
     this.probeName = this.options.probeName;
     this.probeRunTmp = Backbone.Model.extend({
       url: function() {
-        return "/api/sm/sprobes/" + this.get("name") + "/" + this.id + "?format=json";
+        return "/api/sm/sprobes/metadata" + "/" + this.id + "?format=json";
       },
       parse: function(response, options) {
         return response[0];
@@ -63,7 +63,7 @@ ProbeDetailView = RockstoreLayoutView.extend({
       },
       Completed: {
         created: "done",
-        running: "done",
+        running: "todo",
         stopped: "done",
         error: null
       },
