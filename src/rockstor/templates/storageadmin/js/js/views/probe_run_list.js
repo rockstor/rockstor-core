@@ -88,7 +88,7 @@ ProbeRunListView = RockstoreLayoutView.extend({
     var _this = this;
     var probeName = this.$("#probe-type").val();
     $.ajax({
-      url: "/api/sm/sprobes/" + probeName + "/" + "?format=json",
+      url: "/api/sm/sprobes/" + probeName + "?format=json",
       type: 'POST',
       data: {},
       dataType: "json",

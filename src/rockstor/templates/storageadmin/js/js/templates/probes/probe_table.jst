@@ -15,8 +15,12 @@
         <td><a href="#probeDetail/<%= p.get('name') %>/<%= p.get('id') %>"><%= p.get("name") %></a></td>
         <td></td>
         <td><%= p.get("state") %></td>
-        <td><%= (new Date(p.get("ts"))).toString() %> </td>
-        <td></td>
+        <td><%= (new Date(p.get("start"))).toString() %> </td>
+        <td>
+          <% if (p.get("end")) { %>
+            <%= (new Date(p.get("end"))).toString() %> </td>
+          <% } %>
+        </td>
         <td>
           <a href="#"><i class="icon-zoom-in" rel="tooltip" title="View"></i></a>
           &nbsp;
