@@ -1148,6 +1148,11 @@ ol.probe-status li.status-tracker-todo {
   border-bottom: 2px solid silver;
 }
 
+ol.probe-status li.status-tracker-error {
+  color: #b94a48; 
+  border-bottom: 2px solid #b94a48;
+}
+
 ol.probe-status li:after {
   content: "\00a0\00a0";
 }
@@ -1176,6 +1181,17 @@ ol.probe-status li.status-tracker-todo:before {
   background-color: white;
   font-size: 1.5em;
   bottom: -1.6em;
+}
+
+ol.probe-status li.status-tracker-error:before {
+  content: "\2716";
+  color: white;
+  background-color: #b94a48;
+  height: 1.2em;
+  width: 1.2em;
+  line-height: 1.2em;
+  border: none;
+  border-radius: 1.2em;
 }
 
 .probe-time {
