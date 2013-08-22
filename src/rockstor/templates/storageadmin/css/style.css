@@ -1214,10 +1214,15 @@ ol.probe-status li.status-tracker-error:before {
   color: silver;
 }
 
-.probe-data {
+#probe-viz {
   border: 1px solid #ddd;
-  border-radius: 12px;
-  min-height: 400px;
+  height: 500px;
+  padding: 12px;
+}
+
+#nfs-share-client-attributes td {
+  vertical-align: top;
+  padding-bottom: 12px;
 }
 
 

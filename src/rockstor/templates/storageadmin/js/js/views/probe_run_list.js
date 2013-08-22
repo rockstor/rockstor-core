@@ -75,6 +75,7 @@ ProbeRunListView = RockstoreLayoutView.extend({
   },
   
   renderTable: function() {
+    this.$("[rel=tooltip]").tooltip("hide");
     this.$("#probe-run-list").html(this.tableTemplate({
       probeRuns: this.probeRuns
     }));

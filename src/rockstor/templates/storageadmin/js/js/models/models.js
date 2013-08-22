@@ -206,7 +206,9 @@ var NetworkInterfaceCollection = Backbone.Collection.extend({
 });
 
 var ProbeRun = Backbone.Model.extend({
-  
+  dataUrl: function() {
+    return '/api/sm/sprobes/' + this.get('name') + '/' + this.id + '/data?format=json';
+  },
 });
 
 var ProbeRunCollection = Backbone.Collection.extend({
