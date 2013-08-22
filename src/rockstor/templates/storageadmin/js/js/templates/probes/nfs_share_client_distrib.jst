@@ -1,27 +1,33 @@
-<div id="nfs-share-client-msg">
-  <table>
-    <tr>
-      <td>Select root: </td>
-      <td>
-        <input type="radio" name="selectedRoot" checked value="Clients">Clients</input>
-        <input type="radio" name="selectedRoot" value="Shares">Shares</input>
-      </td>
-    </tr>
-    <tr>
-      <td>Select attribute: </td>
-      <td>
-        <input type="radio" name="selectedAttr" checked value="num_read">num_read</input>
-        <input type="radio" name="selectedAttr" value="num_write">num_write</input>
-        <input type="radio" name="selectedAttr" value="num_lookup">num_lookup</input>
-      </td>
-    </tr>
-  </table>
-  Click a node to view details. Click + / - to expand / close.
-  <br>
-  <br>
-  Displaying top 5 <span id="selectedRootName">Clients</span> by <span id="selectedAttrName">num_read</span>
+<div class="row-fluid">
+  <div class="span4">
+
+    <h4>Displaying top 5 <span id="selectedRootName">Clients</span> and connected <span id="selectedChildName">Shares</span> for each client</h4> 
+
+    <div id="nfs-share-client-msg">
+      <table id="nfs-share-client-attributes">
+        <tr>
+          <td>Root:&nbsp;&nbsp;</td>
+          <td>
+            <input type="radio" name="selectedRoot" checked value="Clients" data-treetype="client">Clients</input>
+            <br>
+            <input type="radio" name="selectedRoot" value="Shares" data-treetype="share">Shares</input>
+          </td>
+        </tr>
+        <tr>
+          <td>Sort by:&nbsp;&nbsp;</td>
+          <td>
+            <input type="radio" name="selectedAttr" checked value="num_read">num_read</input>
+            <br>
+            <input type="radio" name="selectedAttr" value="num_write">num_write</input>
+            <br>
+            <input type="radio" name="selectedAttr" value="num_lookup">num_lookup</input>
+          </td>
+      </table>
+    </div>
+
+  </div>
+  <div class="span8">
+    <div id="nfs-share-client-graph"></div>
+  </div>
+
 </div>
-
-<div id="nfs-share-client-graph" style="float: left;"></div>
-<div id="selected-node-detail" style="float: left;"></div>
-
