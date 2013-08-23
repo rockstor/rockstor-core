@@ -142,8 +142,8 @@ class AdvancedSProbeView(GenericSProbeView):
                 logger.info('no previous probe ids found for: %s' % pname)
 
             display_name = None
-            if ('dname' in request.DATA):
-                display_name = request.DATA['dname']
+            if ('display_name' in request.DATA):
+                display_name = request.DATA['display_name']
             ro = SProbe(name=pname, display_name=display_name, smart=True,
                         state='created')
             ro.save()
