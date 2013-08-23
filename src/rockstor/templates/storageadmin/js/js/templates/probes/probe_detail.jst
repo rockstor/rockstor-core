@@ -23,17 +23,11 @@
   <div class="span12">
     <span class="h3 probe-title">Probe Run 1</span>
     <ol class="probe-status" data-status-tracker-steps="4">
-      <% _.each(_.keys(statusMap), function(displayStatus) { %>
-        <% if (statusMap[displayStatus][runStatus]) { %>
-          <li class="status-tracker-<%= statusMap[displayStatus][runStatus] %>"><%= displayStatus %></li>
-        <% } %>
-      <% }); %>
     </ol>
+    <div class="probe-actions">
+    </div>
+    <div class="clear"></div>
     <div class="probe-time">
-      <div class="probe-start-time">Start: <% if (probeRun.get("start")) { %><%= (new Date(probeRun.get("start"))).toString() %><% } %>
-      </div> 
-      <div class="probe-end-time">End: <% if (probeRun.get("start")) { %><%= (new Date(probeRun.get("start"))).toString() %><% } %>
-      </div>
     </div>
     <div class="clear"></div>
     <br>

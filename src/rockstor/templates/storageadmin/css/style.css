@@ -1127,7 +1127,7 @@ ol.probe-status {
   padding: 0;
   list-style-type: none;
   float: left;
-  width: 75%;
+  width: 50%;
 }
 
 ol.probe-status li { 
@@ -1195,23 +1195,32 @@ ol.probe-status li.status-tracker-error:before {
 }
 
 .probe-time {
-  width: 75%;
+  /*width: 50%;*/
   margin-top: 12px;
-  float: left;
+  /*float: left;*/
 }
 
 .probe-start-time {
-  float: left;
-  margin-left: 12px;
-  width: 72%;
+  /*float: left;*/
+  /*margin-left: 12px;*/
+  /*width: 72%;*/
 }
 
 .probe-end-time {
-  float: left;
+  /*float: left;*/
 }
 
 .probe-end-time .h4 {
   color: silver;
+}
+
+.probe-actions {
+  float: right;
+}
+
+.probe-actions button {
+  float: right;
+  margin-left: 4px;
 }
 
 #probe-viz {
