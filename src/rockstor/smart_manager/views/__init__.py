@@ -18,7 +18,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from sm import SmartManagerView
 from service import ServiceView
 from sprobes import SProbeView
-from sprobes2 import SProbeView2
 from mem_info import MemInfoView
 from net_stat import NetStatView
 from disk_stat import DiskStatView
@@ -29,3 +28,4 @@ from nfs_share_client_distrib import NFSDShareClientDistribView
 from cpu_util import CPUMetricView
 from nfs_uid_gid import NFSDUidGidDistributionView
 from load_avg import LoadAvgView
+from sprobe_metadata import SProbeMetadataView

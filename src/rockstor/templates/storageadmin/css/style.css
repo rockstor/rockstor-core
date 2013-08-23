@@ -372,6 +372,7 @@ background-color: #8dbdd8;
     -webkit-box-shadow: 0 0 90px #000;
     box-shadow: 0 0 90px #000;
     padding-top: 20px;
+    position: relative;
 }
 
 /* close button positioned on upper right corner */
@@ -1113,4 +1114,124 @@ input[type="checkbox"].inline {
   margin-top: 0px;
 }
 .required { color: #ff0000; }
+
+/* probe progress */
+.probe-title {
+  line-height: 5em; 
+  float: left;
+  margin-right: 12px;
+}
+
+ol.probe-status {
+  margin: 0 0 0 12px;
+  padding: 0;
+  list-style-type: none;
+  float: left;
+  width: 50%;
+}
+
+ol.probe-status li { 
+  float: left;
+  text-align: center;
+  line-height: 3em;
+}
+
+ol.probe-status[data-status-tracker-steps="4"] li { width: 24%; }
+
+ol.probe-status li.status-tracker-done {
+  color: black;
+  border-bottom: 2px solid #55CF04;
+}
+
+ol.probe-status li.status-tracker-todo {
+  color: silver; 
+  border-bottom: 2px solid silver;
+}
+
+ol.probe-status li.status-tracker-error {
+  color: #b94a48; 
+  border-bottom: 2px solid #b94a48;
+}
+
+ol.probe-status li:after {
+  content: "\00a0\00a0";
+}
+ol.probe-status li:before {
+  position: relative;
+  bottom: -2.5em;
+  float: left;
+  left: 50%;
+  line-height: 1em;
+}
+
+ol.probe-status li.status-tracker-done:before {
+  content: "\2713";
+  color: white;
+  background-color: #55CF04;
+  height: 1.2em;
+  width: 1.2em;
+  line-height: 1.2em;
+  border: none;
+  border-radius: 1.2em;
+}
+
+ol.probe-status li.status-tracker-todo:before {
+  content: "\039F";
+  color: silver;
+  background-color: white;
+  font-size: 1.5em;
+  bottom: -1.6em;
+}
+
+ol.probe-status li.status-tracker-error:before {
+  content: "\2716";
+  color: white;
+  background-color: #b94a48;
+  height: 1.2em;
+  width: 1.2em;
+  line-height: 1.2em;
+  border: none;
+  border-radius: 1.2em;
+}
+
+.probe-time {
+  /*width: 50%;*/
+  margin-top: 12px;
+  /*float: left;*/
+}
+
+.probe-start-time {
+  /*float: left;*/
+  /*margin-left: 12px;*/
+  /*width: 72%;*/
+}
+
+.probe-end-time {
+  /*float: left;*/
+}
+
+.probe-end-time .h4 {
+  color: silver;
+}
+
+.probe-actions {
+  float: right;
+}
+
+.probe-actions button {
+  float: right;
+  margin-left: 4px;
+}
+
+#probe-viz {
+  border: 1px solid #ddd;
+  height: 500px;
+  padding: 12px;
+}
+
+#nfs-share-client-attributes td {
+  vertical-align: top;
+  padding-bottom: 12px;
+}
+
 

@@ -21,10 +21,6 @@ from storageadmin.views import (SetupWizardView, AppliancesView, LoginView,
                                 SupportView, DashboardConfigView, NetworkView,
                                 SetupUserView)
 
-from smart_manager.views import (SmartManagerView, ServiceView, SProbeView,
-                                 SProbeView2, MemInfoView, NetStatView,
-                                 DiskStatView, NFSDistribView)
-
 import os.path
 import socketio.sdjango
 

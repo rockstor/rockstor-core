@@ -26,6 +26,7 @@ class SProbe(models.Model):
     etc..
     """
     name = models.CharField(max_length=255)
+    display_name = models.CharField(max_length=255, null=True)
     smart = models.BooleanField(default=False)
     STATE_CHOICES = [
         ('created',) * 2,
@@ -34,7 +35,8 @@ class SProbe(models.Model):
         ('stopped',) * 2,
         ]
     state = models.CharField(max_length=7, choices=STATE_CHOICES)
-    ts = models.DateTimeField(auto_now=True)
+    start = models.DateTimeField(auto_now=True)
+    end = models.DateTimeField(null=True)
 
     class Meta:
         app_label = 'smart_manager'

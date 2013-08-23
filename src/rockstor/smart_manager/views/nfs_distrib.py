@@ -25,4 +25,3 @@ class NFSDistribView(AdvancedSProbeView):
 
     serializer_class = NFSDCallDistributionSerializer
     model_obj = NFSDCallDistribution
-    pname = 'nfs-distrib'
