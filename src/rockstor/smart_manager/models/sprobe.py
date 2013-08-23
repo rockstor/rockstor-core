@@ -26,6 +26,7 @@ class SProbe(models.Model):
     etc..
     """
     name = models.CharField(max_length=255)
+    display_name = models.CharField(max_length=255, null=True)
     smart = models.BooleanField(default=False)
     STATE_CHOICES = [
         ('created',) * 2,
