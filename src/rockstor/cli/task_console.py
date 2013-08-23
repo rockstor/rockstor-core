@@ -18,6 +18,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from base_console import BaseConsole
 from rest_util import api_call
+import time
+import json
+
 
 class TaskConsole(BaseConsole):
 
@@ -33,15 +36,43 @@ class TaskConsole(BaseConsole):
 
     def do_snap(self, args):
         """
-        snap share_name
+        snap share_name name_prefix frequency
         """
         if (args is not None):
-            url = ('%ssnapshot' % self.baseurl)
-            input_data = {'share': args,}
-            snap_info = api_call(url, data=input_data, calltype='post')
+            fields = args.split()
+            input_data = {'meta': {'share': fields[0],
+                                   'prefix': fields[1],},
+                          'name': 'snapshot',
+                          'ts': time.time() + 120,
+                          'frequency': fields[2],}
+            print input_data
+            headers = {'content-type': 'application/json'}
+            snap_info = api_call(self.baseurl, data=json.dumps(input_data),
+                                 calltype='post', headers=headers)
             print snap_info
         else:
             return self.do_help(args)
 
     def do_scrub(self, args):
-        pass
+        """
+        scrub pool_name
+        """
+        if (args is None):
+            return self.do_help(args)
+
+        url = ('%sscrub' % self.baseurl)
+        input_data = {'pool': args,}
+        scrub_info = api_call(url, data=input_data, calltype='post')
+        print scrub_info
+
+    def do_delete(self, args):
+        """
+        delete event_id
+        """
+        if (args is None):
+            return self.do_help(args)
+
+        event_info = api_call(self.baseurl, data={'id': args,},
+                              calltype='delete')
+        print event_info
+

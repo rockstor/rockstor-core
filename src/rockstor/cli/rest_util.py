@@ -22,9 +22,13 @@ import time
 
 auth_params = {'apikey': 'adminapikey'}
 
-def api_call(url, data=None, calltype='get'):
+def api_call(url, data=None, calltype='get', headers=None):
     call = getattr(requests, calltype)
-    r = call(url, verify=False, params=auth_params, data=data)
+    if (headers is not None):
+        r = call(url, verify=False, params=auth_params, data=data,
+                 headers=headers)
+    else:
+        r = call(url, verify=False, params=auth_params, data=data)
 
     if (r.status_code != 200):
         cur_time = str(int(time.time()))
