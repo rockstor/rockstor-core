@@ -1,11 +1,11 @@
 <% if (probeRun.get("state") == "stopped") { %>
   <button id="download" class="btn btn-primary" type="button">Download Data</button>
 <% } else { %>
-  <button id="download" class="btn btn-primary disabled" type="button">Download Data</button>
+  <button id="download" class="btn btn-primary disabled" type="button" disabled="disabled">Download Data</button>
 <% } %>
 <% if (probeRun.get("state") == "running") { %>
   <button id="stop-probe" class="btn btn-primary" type="button">Stop Probe</button>
 <% } else { %>
-  <button id="stop-probe" class="btn btn-primary disabled" type="button">Stop Probe</button>
+  <button id="stop-probe" class="btn btn-primary disabled" type="button" disabled="disabled">Stop Probe</button>
 <% } %>
 
