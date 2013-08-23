@@ -60,11 +60,15 @@ class SMConsole(BaseConsole):
             return self.do_help(args)
 
     def do_start(self, args):
+        """
+        start probe_name display_name
+        """
         tap_fields = args.split()
         if (len(tap_fields) > 0):
             tname = tap_fields[0]
             url = ('%s%s' % (self.baseurl, tname))
-            stap_info = api_call(url, data=None, calltype='post')
+            stap_info = api_call(url, data={'dname': tap_fields[1],},
+                                 calltype='post')
             print stap_info
         else:
             return self.do_help(args)
