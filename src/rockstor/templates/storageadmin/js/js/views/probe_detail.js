@@ -28,7 +28,8 @@
 
 ProbeDetailView = RockstoreLayoutView.extend({
   events: {
-    "click #stop-probe": "stopProbe"
+    "click #stop-probe": "stopProbe",
+    "click #download": "downloadProbeData"
   },
 
   initialize: function() {
@@ -38,6 +39,12 @@ ProbeDetailView = RockstoreLayoutView.extend({
     this.probeRunTmp = Backbone.Model.extend({
       url: function() {
         return "/api/sm/sprobes/metadata" + "/" + this.id + "?format=json";
+      },
+      downloadUrl: function() {
+        return "/api/sm/sprobes/" + this.get("name") + "/" + this.id 
+        + "/data" + "?" 
+        + "t1="+this.get("start") + "&t2=" + this.get("end") 
+        + "&download=true";
       },
       parse: function(response, options) {
         return response[0];
@@ -233,6 +240,11 @@ ProbeDetailView = RockstoreLayoutView.extend({
         });
       }
     }(), this.statusPollInterval);
+  },
+
+  downloadProbeData: function(event) {
+    if (event) { event.preventDefault(); }
+    document.location.href = this.probeRun.downloadUrl();
   },
 
   cleanup: function() {
