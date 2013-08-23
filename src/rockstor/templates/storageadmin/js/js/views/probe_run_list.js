@@ -30,7 +30,9 @@ ProbeRunListView = RockstoreLayoutView.extend({
   events: {
     "click #cancel-new-probe": "cancelNewProbe",
     "click .stop-probe": "stopProbe",
-    "click .view-probe": "viewProbe"
+    "click .view-probe": "viewProbe",
+    "click .download-probe-data": "downloadProbeData",
+
   },
 
   initialize: function() {
@@ -195,6 +197,14 @@ ProbeRunListView = RockstoreLayoutView.extend({
         }
       });
     }, this.statusPollInterval);
+  },
+  
+  downloadProbeData: function(event) {
+    if (event) { event.preventDefault(); }
+    var _this = this;
+    var probeId = $(event.currentTarget).attr("data-probe-id");
+    var probeName = $(event.currentTarget).attr("data-probe-name");
+    document.location.href = this.probeRuns.get(probeId).downloadUrl();
   },
 
 });

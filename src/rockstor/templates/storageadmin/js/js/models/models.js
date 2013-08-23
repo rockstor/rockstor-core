@@ -209,6 +209,12 @@ var ProbeRun = Backbone.Model.extend({
   dataUrl: function() {
     return '/api/sm/sprobes/' + this.get('name') + '/' + this.id + '/data?format=json';
   },
+  downloadUrl: function() {
+    return "/api/sm/sprobes/" + this.get("name") + "/" + this.id 
+    + "/data" + "?" 
+    + "t1="+this.get("start") + "&t2=" + this.get("end") 
+    + "&download=true";
+  },
 });
 
 var ProbeRunCollection = Backbone.Collection.extend({
