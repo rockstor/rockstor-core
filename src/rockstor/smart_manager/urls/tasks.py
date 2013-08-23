@@ -17,11 +17,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf.urls.defaults import patterns, url
-from smart_manager.views import (TaskSchedulerView, SnapSchedulerView)
+from smart_manager.views import TaskSchedulerView
 
 
 urlpatterns = patterns('',
-    # Services
     url(r'^$', TaskSchedulerView.as_view(), name='task-view'),
-    url(r'^snapshot$', SnapSchedulerView.as_view(), name='snapshot-view'),
 )

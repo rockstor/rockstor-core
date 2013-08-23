@@ -23,7 +23,7 @@ from smart_manager.models import (CPUMetric, LoadAvg, MemInfo, ServiceStatus,
                                   NFSDShareDistribution,
                                   DiskStat, NetStat,
                                   NFSDShareClientDistribution,
-                                  NFSDUidGidDistribution, Task)
+                                  NFSDUidGidDistribution, TaskDefinition)
 from smart_manager.taplib.probe_config import TapConfig
 
 
@@ -96,6 +96,6 @@ class SProbeConfigSerializer(serializers.Serializer):
             return instance
         return TapConfig(**attrs)
 
-class TaskSerializer(serializers.ModelSerializer):
+class TaskDefinitionSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Task
+        model = TaskDefinition

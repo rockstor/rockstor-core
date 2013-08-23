@@ -30,4 +30,3 @@ from nfs_uid_gid import NFSDUidGidDistributionView
 from load_avg import LoadAvgView
 from sprobe_metadata import SProbeMetadataView
 from task_scheduler import TaskSchedulerView
-from snap_scheduler import SnapSchedulerView
