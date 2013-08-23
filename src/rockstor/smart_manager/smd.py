@@ -62,7 +62,7 @@ def main():
     service_mon.start()
     stap_proc = Stap(settings.TAP_SERVER)
     stap_proc.start()
-    task_proc = TaskDispatcher(settings.TASK_SERVER)
+    task_proc = TaskDispatcher(settings.SCHEDULER)
     task_proc.start()
 
     while (True):

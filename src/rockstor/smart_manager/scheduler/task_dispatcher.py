@@ -16,24 +16,16 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-"""
-IR from systemtap
-
-First implementation:
-Have a predefined set of stap scripts (saved as script files?)
-User can turn a script on to collect data and turn off to stop
-"""
-
 from multiprocessing import (Process, Queue)
 import zmq
 import os
 import time
 from datetime import datetime
-from smart_manager.models import SProbe
+from smart_manager.models import (Task, TaskDefinition)
 from django.conf import settings
 from django.core.serializers import serialize
 from task_worker import TaskWorker
-
+from django.utils.timezone import utc
 
 import logging
 logger = logging.getLogger(__name__)
@@ -46,94 +38,76 @@ class TaskDispatcher(Process):
         self.workers = {}
         super(TaskDispatcher, self).__init__()
 
+    def _schedulable(self, td, now):
+        if (td.ts > now):
+            logger.info('Event: %s is in the future' % td.name)
+            return False
+        if (td.ts == now):
+            logger.info('Event: %s is now' % td.name)
+            return True
+        delta = (now - td.ts).total_seconds()
+        logger.info('delta: %d. frequency: %d' % (delta, td.frequency))
+        if (delta % td.frequency == 0):
+            return True
+        logger.info('returning false. now: %s ts: %s' % (now, td.ts))
+        return False
+
     def run(self):
         context = zmq.Context()
-        pull_socket = context.socket(zmq.PULL)
-        pull_socket.RCVTIMEO = 500
-        pull_socket.bind('tcp://%s:%d' % self.address)
         sink_socket = context.socket(zmq.PUSH)
         sink_socket.connect('tcp://%s:%d' % settings.SPROBE_SINK)
+        total_sleep = 0
         while True:
             if (os.getppid() != self.ppid):
                 logger.info('ppids: %d, %d' % (os.getppid(), self.ppid))
                 for w in self.workers.keys():
                     worker = self.workers[w]
                     if (worker.is_alive()):
+                        #@todo: signal worker to cleanup and exit.
                         worker.task['queue'].put('stop')
                 break
 
             for w in self.workers.keys():
                 if (not self.workers[w].is_alive()):
-                    ro = SProbe.objects.get(id=w)
-                    ro.state = 'error'
-                    ro.end = datetime.utcnow()
-                    data = serialize("json", (ro,))
+                    to = Task.objects.get(id=w)
+                    if (self.workers[w].exitcode == 0):
+                        to.state = 'finished'
+                    else:
+                        to.state = 'error'
+                    to.end = datetime.utcnow().replace(tzinfo=utc)
+                    data = serialize("json", (to,))
                     sink_socket.send_json(data)
                     del(self.workers[w])
 
-            task = None
-            try:
-                task = pull_socket.recv_json()
-                logger.info('received task: %s' % (repr(task)))
-            except:
-                #will sleeping here help? or some other zmq based wakeup?
-                continue
+            if (total_sleep == 60):
+                for td in TaskDefinition.objects.all():
+                    now = datetime.utcnow().replace(second=0, microsecond=0,
+                                                    tzinfo=utc)
+                    if (self._schedulable(td, now)):
+                        t = Task(name=td.name, json_meta=td.json_meta,
+                                 state='scheduled', start=now)
+                        data = serialize("json", (t,))
+                        sink_socket.send_json(data)
+                total_sleep = 0
 
-            if (task['action'] == 'start'):
-                #wait a little till the recipe instance is saved by the
-                #API. non-issue most of the time.
-                num_tries = 0
-                while True:
-                    try:
-                        ro = SProbe.objects.get(id=task['roid'])
-                        start_tap = True
-                        logger.info('start_tap is true')
-                        break
-                    except:
-                        logger.error('waiting for recipe object. num_tries '
-                                     '= %d' % num_tries)
-                        time.sleep(1)
-                        num_tries = num_tries + 1
-                        if (num_tries > 20):
-                            break
+            for t in Task.objects.filter(state='scheduled'):
+                worker = TaskWorker(t)
+                self.workers[t.id] = worker
+                worker.daemon = True
+                worker.start()
 
-                if (not start_tap):
-                    logger.error('not starting the tap')
-                    ro.state = 'error'
-                    ro.end = datetime.utcnow()
-                    data = serialize("json", (ro,))
-                    sink_socket.send_json(data)
-                    continue
-
-                task['queue'] = Queue()
-                task['ro'] = ro
-                sworker = StapWorker(task)
-                self.workers[task['roid']] = sworker
-                sworker.daemon = True
-                sworker.start()
-                if (sworker.is_alive()):
-                    ro.state = 'running'
-                    data = serialize("json", (ro,))
+                if (worker.is_alive()):
+                    t.state = 'running'
+                    data = serialize("json", (t,))
                     sink_socket.send_json(data)
                 else:
-                    ro.state = 'error'
-                    ro.end = datetime.utcnow()
-                    data = serialize("json", (ro,))
+                    t.state = 'error'
+                    t.end = datetime.utcnow().replace(tzinfo=utc)
+                    data = serialize("json", (t,))
                     sink_socket.send_json(data)
+            time.sleep(1)
+            total_sleep = total_sleep + 1
 
-            elif (task['action'] == 'stop'):
-                if (task['roid'] in self.workers):
-                    sworker = self.workers[task['roid']]
-                    #stop the worker, make sure it's stopped
-                    sworker.task['queue'].put('stop')
-                    del(self.workers[task['roid']])
-                ro = SProbe.objects.get(id=task['roid'])
-                ro.state = 'stopped'
-                ro.end = datetime.utcnow()
-                data = serialize("json", (ro,))
-                sink_socket.send_json(data)
-
-        pull_socket.close()
         sink_socket.close()
         context.term()
         logger.info('terminated context. exiting')
