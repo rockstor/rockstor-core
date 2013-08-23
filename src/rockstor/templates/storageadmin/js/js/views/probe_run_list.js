@@ -29,7 +29,7 @@
 ProbeRunListView = RockstoreLayoutView.extend({
   events: {
     "click #cancel-new-probe": "cancelNewProbe",
-    "click #create-probe": "createProbe",
+    //"click #create-probe": "createProbe",
     "click .stop-probe": "stopProbe",
     "click .view-probe": "viewProbe"
   },
@@ -73,6 +73,38 @@ ProbeRunListView = RockstoreLayoutView.extend({
       
     });
     this.$("[rel=tooltip]").tooltip({ placement: "bottom"});
+    this.$("#probe-create-form").validate({
+      onfocusout: false,
+      onkeyup: false,
+      rules: {
+        probe_name: "required"
+      },
+      submitHandler: function() {
+        var probeName = _this.$("#probe-type").val();
+        var displayName = _this.$("#probe-name").val();
+        $.ajax({
+          url: "/api/sm/sprobes/" + probeName + "?format=json",
+          type: 'POST',
+          data: { display_name: displayName },
+          dataType: "json",
+          global: false, // dont show global loading indicator
+          success: function(data, textStatus, jqXHR) {
+            _this.probeRuns.fetch({
+              success: function(collection, response, options) {
+                _this.$("#new-probe-form").overlay().close();
+                _this.renderTable();
+              }
+            });
+          },
+          error: function(jqXHR, textStatus, error) {
+            var msg = parseXhrError(jqXHR)
+            console.log(msg);
+          }
+        });
+        return false;
+      }
+
+    });
   },
   
   renderTable: function() {
@@ -89,10 +121,14 @@ ProbeRunListView = RockstoreLayoutView.extend({
     }
     var _this = this;
     var probeName = this.$("#probe-type").val();
+    var displayName = this.$("#probe-name").val();
     $.ajax({
       url: "/api/sm/sprobes/" + probeName + "?format=json",
       type: 'POST',
-      data: {},
+      data: {
+
+      
+      },
       dataType: "json",
       global: false, // dont show global loading indicator
       success: function(data, textStatus, jqXHR) {
@@ -104,7 +140,7 @@ ProbeRunListView = RockstoreLayoutView.extend({
         });
       },
       error: function(jqXHR, textStatus, error) {
-        var msg = parseXhrError(xhr)
+        var msg = parseXhrError(jqXHR)
         console.log(msg);
       }
     });
@@ -138,7 +174,7 @@ ProbeRunListView = RockstoreLayoutView.extend({
         });
       },
       error: function(jqXHR, textStatus, error) {
-        var msg = parseXhrError(xhr)
+        var msg = parseXhrError(jqXHR)
         console.log(msg);
       }
     });

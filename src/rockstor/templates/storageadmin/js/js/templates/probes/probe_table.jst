@@ -2,7 +2,6 @@
   <thead>
     <tr>
       <th scope="col">Name</th>
-      <th scope="col">Type</th>
       <th scope="col">Status</th>
       <th scope="col">Start Time</th>
       <th scope="col">End Time</th>
@@ -12,8 +11,7 @@
   <tbody>
     <% probeRuns.each(function(p) { %>
       <tr>
-        <td><a href="#probeDetail/<%= p.get('name') %>/<%= p.get('id') %>"><%= p.get("name") %></a></td>
-        <td></td>
+        <td><a href="#probeDetail/<%= p.get('name') %>/<%= p.get('id') %>"><%= p.get("display_name") %></a></td>
         <td><%= p.get("state") %></td>
         <td><%= (new Date(p.get("start"))).toString() %> </td>
         <td>
