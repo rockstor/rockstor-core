@@ -30,7 +30,8 @@ ProbeRunListView = RockstoreLayoutView.extend({
   events: {
     "click #cancel-new-probe": "cancelNewProbe",
     "click #create-probe": "createProbe",
-    "click .stop-probe": "stopProbe"
+    "click .stop-probe": "stopProbe",
+    "click .view-probe": "viewProbe"
   },
 
   initialize: function() {
@@ -141,8 +142,17 @@ ProbeRunListView = RockstoreLayoutView.extend({
         console.log(msg);
       }
     });
-  }
+  },
 
+  viewProbe: function(event) {
+    if (event) { event.preventDefault(); }
+    var _this = this;
+    var probeId = $(event.currentTarget).attr("data-probe-id");
+    var probeName = $(event.currentTarget).attr("data-probe-name");
+    this.$("[rel=tooltip]").tooltip("hide");
+    app_router.navigate("#probeDetail/" + probeName + "/" + probeId, {trigger: true});
+
+  }
 
 });
 
