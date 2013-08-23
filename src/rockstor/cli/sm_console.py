@@ -67,7 +67,7 @@ class SMConsole(BaseConsole):
         if (len(tap_fields) > 0):
             tname = tap_fields[0]
             url = ('%s%s' % (self.baseurl, tname))
-            stap_info = api_call(url, data={'dname': tap_fields[1],},
+            stap_info = api_call(url, data={'display_name': tap_fields[1],},
                                  calltype='post')
             print stap_info
         else:
