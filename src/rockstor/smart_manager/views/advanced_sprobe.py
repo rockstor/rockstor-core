@@ -141,7 +141,11 @@ class AdvancedSProbeView(GenericSProbeView):
             except:
                 logger.info('no previous probe ids found for: %s' % pname)
 
-            ro = SProbe(name=pname, smart=True, state='created')
+            display_name = None
+            if ('dname' in request.DATA):
+                display_name = request.DATA['dname']
+            ro = SProbe(name=pname, display_name=display_name, smart=True,
+                        state='created')
             ro.save()
             kernel_module = os.path.join(settings.TAP_DIR,
                                          TAP_MAP[pname]['location'] + '.ko')
