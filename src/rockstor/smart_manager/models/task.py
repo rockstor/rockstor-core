@@ -22,6 +22,7 @@ from django.db import models
 class Task(models.Model):
 
     name = models.CharField(max_length=255)
+    json_meta = models.CharField(max_length=8192)
     STATE_CHOICES = [
         ('scheduled',) * 2,
         ('aborted',) * 2,
@@ -29,7 +30,6 @@ class Task(models.Model):
         ('finished',) * 2,
         ]
     state = models.CharField(max_length=7, choices=STATE_CHOICES)
-    tos = models.DateTimeField()
     start = models.DateTimeField(auto_now=True)
     end = models.DateTimeField(null=True)
 

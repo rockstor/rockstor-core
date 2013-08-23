@@ -17,15 +17,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.db import models
-from smart_manager.models import Task
-from storageadmin.models import Share
 
 
-class SnapTask(models.Model):
+class TaskDefinition(models.Model):
 
-    task = models.ForeignKey(Task)
-    share = models.ForeignKey(Share)
     name = models.CharField(max_length=255)
+    ts = models.DateTimeField()
+    frequency = models.IntegerField(null=True)
+    json_meta = models.CharField(max_length=8192)
 
     class Meta:
         app_label = 'smart_manager'
