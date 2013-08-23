@@ -17,35 +17,27 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.db import transaction
-from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.authentication import (BasicAuthentication,
-                                           SessionAuthentication)
-from storageadmin.auth import DigestAuthentication
-from rest_framework.permissions import IsAuthenticated
 from storageadmin.models import NetworkInterface
 from storageadmin.util import handle_exception
 from storageadmin.serializers import NetworkInterfaceSerializer
 from system.osi import (get_mac_addr, config_network_device, restart_network,
                         network_devices, get_net_config)
 from storageadmin.exceptions import RockStorAPIException
+from generic_view import GenericView
 
 
-class NetworkView(APIView):
-    authentication_classes = (DigestAuthentication, SessionAuthentication,
-                              BasicAuthentication)
-    permission_classes = (IsAuthenticated,)
+class NetworkView(GenericView):
+    serializer_class = NetworkInterfaceSerializer
 
-    def get(self, request, iname=None):
-        try:
-            if (iname is None):
-                interfaces = NetworkInterface.objects.all()
-                serializer = NetworkInterfaceSerializer(interfaces)
-            else:
-                serializer = NetworkInterfaceSerializer(NetworkInterface.objects.get(name=iname))
-            return Response(serializer.data)
-        except Exception, e:
-            handle_exception(e, request)
+    def get_queryset(self, *args, **kwargs):
+        if ('iname' in kwargs):
+            self.paginate_by = 0
+            try:
+                return NetworkInterface.objects.get(name=kwargs['iname'])
+            except:
+                return []
+        return NetworkInterface.objects.all()
 
     @transaction.commit_on_success
     def post(self, request):
