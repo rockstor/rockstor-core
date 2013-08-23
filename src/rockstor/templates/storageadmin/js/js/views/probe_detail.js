@@ -28,6 +28,7 @@
 
 ProbeDetailView = RockstoreLayoutView.extend({
   events: {
+    "click #stop-probe": "stopProbe"
   },
 
   initialize: function() {
@@ -48,6 +49,9 @@ ProbeDetailView = RockstoreLayoutView.extend({
     });
     this.dependencies.push(this.probeRun);
     this.template = window.JST.probes_probe_detail;
+    this.time_template = window.JST.probes_probe_time;
+    this.action_template = window.JST.probes_probe_actions;
+    this.status_template = window.JST.probes_probe_status;
     // The class to append for the display status for each possible probe
     // status. null indicates not to display that status
     // Initialized -> running -> done - means append 'done' to the display 
@@ -70,7 +74,7 @@ ProbeDetailView = RockstoreLayoutView.extend({
       STOPPED: 'stopped', CREATED: 'created',
       RUNNING: 'running', ERROR: 'error',
     };
-    this.statusPollInterval = 2; // poll interval for status changes 
+    this.statusPollInterval = 2000; // poll interval for status changes 
   },
 
   render: function() {
@@ -96,15 +100,21 @@ ProbeDetailView = RockstoreLayoutView.extend({
     } else {
       console.log("did not find probe view for probe " + this.probeRun.get("name"));
     }
+    this.setProbeEvents();
     this.probeRun.trigger(this.probeRun.get("state"));
   },
 
   probeInitialized: function() {
-    // TODO update probe status bar
+    this.updateStatus();
+    this.updateActions();
+    this.updateTime();
     
     // TODO display waiting for probe to run message in viz area
     
     // poll till Running
+    this.pollTillStatus(this.probeStates.RUNNING);
+
+    /*
     this.statusIntervalId = window.setInterval(function() {
       return function() { 
         _this.probeRun.fetch({
@@ -113,27 +123,32 @@ ProbeDetailView = RockstoreLayoutView.extend({
               // stop polling for status
               window.clearInterval(_this.statusIntervalId);
               // go to running state
-              _this.probeRun.trigger(_this.probeEvents.RUNNING);
+              _this.probeRun.trigger(_this.probeStates.RUNNING);
             } else if (_this.probeRun.get('state') == _this.probeStates.ERROR) {
               // stop polling for status
               window.clearInterval(_this.statusIntervalId);
               // go to error state
-              _this.probeRun.trigger(_this.probeEvents.ERROR);
+              _this.probeRun.trigger(_this.probeStates.ERROR);
             }
           },
           error: function(model, response, options) {
             // stop polling for status
             window.clearInterval(_this.statusIntervalId);
             // go to error state
-            _this.probeRun.trigger(_this.probeEvents.ERROR);
+            _this.probeRun.trigger(_this.probeStates.ERROR);
           }
         });
       }
     }(), this.statusPollInterval)
+   */
   },
 
   probeRunning: function() {
-    if (probeClass) {
+    this.updateStatus();
+    this.updateActions();
+    this.updateTime();
+    if (this.probeClass) {
+      console.log("rendering probeclass");
       //var probeVizView = new NfsShareClientDistribView({probe: this.probeRun});
       //this.probeVizView = new window[viewName]({probe: this.probeRun});
       //this.$("#probe-viz").empty();
@@ -144,10 +159,15 @@ ProbeDetailView = RockstoreLayoutView.extend({
   },
 
   probeStopped: function() {
+    this.updateStatus();
+    this.updateActions();
+    this.updateTime();
     if (this.probeVizView) {
-      this.probeVizView.trigger(this.probeEvents.STOPPED);
+      this.probeVizView.trigger(this.probeStates.STOPPED);
     } else {
-      if (probeClass) {
+      if (this.probeClass) {
+        // TODO initialize probeVizView 
+        
         //this.probeVizView = new window[viewName]({probe: this.probeRun});
         //this.$("#probe-viz").empty();
         //this.$("#probe-viz").append(probeVizView.render().el);
@@ -158,18 +178,131 @@ ProbeDetailView = RockstoreLayoutView.extend({
   },
 
   probeError: function() {
-    // TODO update probe status bar
+    this.updateStatus();
+    this.updateActions();
+    this.updateTime();
     console.log("Probe error!");
 
     // TODO display error message in viz area
   },
 
   setProbeEvents: function(probe) {
-    probe.on(this.probeStates.CREATED, this.probeInitialized, this);
-    probe.on(this.probeStates.RUNNING, this.probeRunning, this);
-    probe.on(this.probeStates.STOPPED, this.probeStopped, this);
-    probe.on(this.probeStates.ERROR, this.probeError, this);
+    this.probeRun.on(this.probeStates.CREATED, this.probeInitialized, this);
+    this.probeRun.on(this.probeStates.RUNNING, this.probeRunning, this);
+    this.probeRun.on(this.probeStates.STOPPED, this.probeStopped, this);
+    this.probeRun.on(this.probeStates.ERROR, this.probeError, this);
   },
+  
+  stopProbe: function(event) {
+    if (event) {
+      event.preventDefault();
+    }
+    var button = this.$('#stop-probe');
+    if (buttonDisabled(button)) return false;
+    disableButton(button);
+    var _this = this;
+    var probeId = this.probeRun.id;
+    var probeName = this.probeRun.get("name");
+    $.ajax({
+      url: "/api/sm/sprobes/" + probeName + "/" + probeId + "/stop?format=json",
+      type: 'POST',
+      data: {},
+      dataType: "json",
+      global: false, // dont show global loading indicator
+      success: function(data, textStatus, jqXHR) {
+        _this.pollTillStatus(_this.probeStates.STOPPED);
+      },
+      error: function(jqXHR, textStatus, error) {
+        var msg = parseXhrError(jqXHR)
+        console.log(msg);
+      }
+    });
+  },
+
+  pollTillStopped: function() {
+    var _this = this;
+    this.statusIntervalId = window.setInterval(function() {
+      return function() { 
+        _this.probeRun.fetch({
+          success: function(model, response, options) {
+            if (_this.probeRun.get('state') == _this.probeStates.STOPPED) {
+              // stop polling for status
+              window.clearInterval(_this.statusIntervalId);
+              // go to running state
+              _this.probeRun.trigger(_this.probeStates.STOPPED);
+            } else if (_this.probeRun.get('state') == _this.probeStates.ERROR) {
+              // stop polling for status
+              window.clearInterval(_this.statusIntervalId);
+              // go to error state
+              _this.probeRun.trigger(_this.probeStates.ERROR);
+            }
+          },
+          error: function(model, response, options) {
+            // stop polling for status
+            window.clearInterval(_this.statusIntervalId);
+            // go to error state
+            _this.probeRun.trigger(_this.probeStates.ERROR);
+          }
+        });
+      }
+    }(), this.statusPollInterval)
+  },
+
+  updateActions: function() {
+    this.$(".probe-actions").html(this.action_template({
+      probeRun: this.probeRun
+    }));
+  },
+
+  updateStatus: function() {
+    this.$(".probe-status").html(this.status_template({
+      probeRun: this.probeRun,
+      runStatus: this.probeRun.get("state"),
+      statusMap: this.probeStatusMap
+    }));
+  },
+
+  updateTime: function() {
+    this.$(".probe-time").html(this.time_template({
+      probeRun: this.probeRun,
+    }));
+  },
+
+  pollTillStatus: function(status) {
+    var _this = this;
+    this.statusIntervalId = window.setInterval(function() {
+      return function() { 
+        _this.probeRun.fetch({
+          success: function(model, response, options) {
+            if (_this.probeRun.get('state') == status) {
+              // stop polling for status
+              window.clearInterval(_this.statusIntervalId);
+              // go to running state
+              _this.probeRun.trigger(status);
+            } else if (_this.probeRun.get('state') == _this.probeStates.ERROR) {
+              // stop polling for status
+              window.clearInterval(_this.statusIntervalId);
+              // go to error state
+              _this.probeRun.trigger(_this.probeStates.ERROR);
+            }
+          },
+          error: function(model, response, options) {
+            // stop polling for status
+            window.clearInterval(_this.statusIntervalId);
+            // go to error state
+            _this.probeRun.trigger(_this.probeStates.ERROR);
+          }
+        });
+      }
+    }(), this.statusPollInterval);
+  },
+
+  cleanup: function() {
+    // TODO remove any setIntervals
+    if (this.probeVizView) {
+      this.probeVizView.cleanup();
+    }
+  }
 
 });
 
