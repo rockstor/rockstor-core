@@ -29,7 +29,6 @@
 ProbeRunListView = RockstoreLayoutView.extend({
   events: {
     "click #cancel-new-probe": "cancelNewProbe",
-    //"click #create-probe": "createProbe",
     "click .stop-probe": "stopProbe",
     "click .view-probe": "viewProbe"
   },
@@ -44,6 +43,7 @@ ProbeRunListView = RockstoreLayoutView.extend({
     this.probeTemplates = new ProbeTemplateCollection();
     this.dependencies.push(this.probeRuns);
     this.dependencies.push(this.probeTemplates);
+    this.statusPollInterval = 2000; // poll interval for status changes 
   },
 
   render: function() {
@@ -115,37 +115,6 @@ ProbeRunListView = RockstoreLayoutView.extend({
     this.$("#probe-run-table").tablesorter();
   },
 
-  createProbe: function(event) {
-    if (event) {
-      event.preventDefault();
-    }
-    var _this = this;
-    var probeName = this.$("#probe-type").val();
-    var displayName = this.$("#probe-name").val();
-    $.ajax({
-      url: "/api/sm/sprobes/" + probeName + "?format=json",
-      type: 'POST',
-      data: {
-
-      
-      },
-      dataType: "json",
-      global: false, // dont show global loading indicator
-      success: function(data, textStatus, jqXHR) {
-        _this.probeRuns.fetch({
-          success: function(collection, response, options) {
-            _this.$("#new-probe-form").overlay().close();
-            _this.renderTable();
-          }
-        });
-      },
-      error: function(jqXHR, textStatus, error) {
-        var msg = parseXhrError(jqXHR)
-        console.log(msg);
-      }
-    });
-  },
-
   cancelNewProbe: function(event) {
     if (event) {
       event.preventDefault();
@@ -160,6 +129,8 @@ ProbeRunListView = RockstoreLayoutView.extend({
     var _this = this;
     var probeId = $(event.currentTarget).attr("data-probe-id");
     var probeName = $(event.currentTarget).attr("data-probe-name");
+    if (buttonDisabled($(event.currentTarget))) return false;
+    disableButton($(event.currentTarget));
     $.ajax({
       url: "/api/sm/sprobes/" + probeName + "/" + probeId + "/stop?format=json",
       type: 'POST',
@@ -167,14 +138,21 @@ ProbeRunListView = RockstoreLayoutView.extend({
       dataType: "json",
       global: false, // dont show global loading indicator
       success: function(data, textStatus, jqXHR) {
-        _this.probeRuns.fetch({
-          success: function(collection, response, options) {
-            _this.renderTable();
+         
+        var probeRunTmp = Backbone.Model.extend({
+          url: function() {
+            return "/api/sm/sprobes/metadata" + "/" + probeId + "?format=json";
+          },
+          parse: function(response, options) {
+            return response[0];
           }
         });
+        var probeRun = new probeRunTmp({ id: probeId, name: probeName });
+        _this.pollTillStatus(probeRun, "stopped");
       },
       error: function(jqXHR, textStatus, error) {
         var msg = parseXhrError(jqXHR)
+        _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
         console.log(msg);
       }
     });
@@ -188,7 +166,36 @@ ProbeRunListView = RockstoreLayoutView.extend({
     this.$("[rel=tooltip]").tooltip("hide");
     app_router.navigate("#probeDetail/" + probeName + "/" + probeId, {trigger: true});
 
-  }
+  },
+
+  pollTillStatus: function(probeRun, status, callback, errCallback) {
+    var _this = this;
+    this.statusIntervalId = window.setInterval(function() {
+      probeRun.fetch({
+        success: function(model, response, options) {
+          if (probeRun.get("state") == status ||
+              probeRun.get("state") == "error") {
+            // stop polling for status
+            window.clearInterval(_this.statusIntervalId);
+            _this.probeRuns.fetch({
+              success: function(collection, response, options) {
+                _this.renderTable();
+              },
+              error: function(collection, response, options) {
+                console.log("error while fetching probe runs");
+              }
+            });
+          } 
+        },
+        error: function(model, response, options) {
+          // stop polling for status
+          window.clearInterval(_this.statusIntervalId);
+          // go to running state
+          _this.renderTable();
+        }
+      });
+    }, this.statusPollInterval);
+  },
 
 });
 
