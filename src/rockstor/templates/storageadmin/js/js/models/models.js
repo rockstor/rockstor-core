@@ -205,3 +205,26 @@ var NetworkInterfaceCollection = Backbone.Collection.extend({
   url: '/api/network/'
 });
 
+var ProbeRun = Backbone.Model.extend({
+  dataUrl: function() {
+    return '/api/sm/sprobes/' + this.get('name') + '/' + this.id + '/data?format=json';
+  },
+  downloadUrl: function() {
+    return "/api/sm/sprobes/" + this.get("name") + "/" + this.id 
+    + "/data" + "?" 
+    + "t1="+this.get("start") + "&t2=" + this.get("end") 
+    + "&download=true";
+  },
+});
+
+var ProbeRunCollection = Backbone.Collection.extend({
+  model: ProbeRun,
+  url: "/api/sm/sprobes/metadata?format=json"
+})
+
+var ProbeTemplate = Backbone.Model.extend();
+var ProbeTemplateCollection = Backbone.Collection.extend({
+  model: ProbeTemplate,
+  url: "/api/sm/sprobes/?format=json"
+});
+

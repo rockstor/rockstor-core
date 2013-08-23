@@ -17,19 +17,27 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from rest_framework.views import APIView
+from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.authentication import (BasicAuthentication,
                                            SessionAuthentication,)
 from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
 from django.conf import settings
+from smart_manager.serializers import SProbeConfigSerializer
+from smart_manager.taplib.probe_config import (TapConfig, TAP_MAP)
 
 
-class SProbeView(APIView):
+class SProbeView(generics.ListAPIView):
     authentication_classes = (DigestAuthentication, SessionAuthentication,
                               BasicAuthentication,)
     permission_classes = (IsAuthenticated,)
-    tap_map = settings.TAP_MAP
+    serializer_class = SProbeConfigSerializer
 
-    def get(self, request):
-        return Response(self.tap_map.keys())
+    def get_queryset(self):
+        config_list = []
+        for pid in TAP_MAP.keys():
+            config_list.append(TapConfig(uuid=pid,
+                                         location=TAP_MAP[pid]['location'],
+                                         sdetail=TAP_MAP[pid]['sdetail']))
+        return config_list

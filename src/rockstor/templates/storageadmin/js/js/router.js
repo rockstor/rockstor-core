@@ -51,6 +51,8 @@ var AppRouter = Backbone.Router.extend({
     "users": "showUsers",
     "users/:username/edit": "editUser",
     "add-user": "addUser",
+    "analytics": "showProbeRunList",
+    "probeDetail/:probeName/:probeId": "showProbeDetail",
     "*path": "showHome"
   },
 
@@ -239,6 +241,23 @@ var AppRouter = Backbone.Router.extend({
   editUser: function(username) {
     this.cleanup();
     this.currentLayout = new EditUserView({username: username});
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+  
+  showProbeRunList: function() {
+    this.cleanup();
+    this.currentLayout = new ProbeRunListView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  showProbeDetail: function(probeName, probeId) {
+    this.cleanup();
+    this.currentLayout = new ProbeDetailView({
+      probeId: probeId,
+      probeName: probeName
+    });
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },

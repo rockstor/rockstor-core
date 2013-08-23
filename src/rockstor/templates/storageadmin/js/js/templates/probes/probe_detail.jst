@@ -1,8 +1,5 @@
+<script>
 /*
- *
- * @licstart  The following is the entire license notice for the 
- * JavaScript code in this page.
- * 
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
  * 
@@ -19,32 +16,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  * 
- * @licend  The above is the entire license notice
- * for the JavaScript code in this page.
- * 
  */
+</script>
 
-NfsClientDistribView = Backbone.View.extend({
-  initialize: function() {
-    this.probe = this.options.probe;
-    this.template = window.JST.probes_nfs_client_distrib;
-  },
+<div class="row-fluid">
+  <div class="span12">
+    <span class="h3 probe-title"><%= probeRun.get("display_name") %></span>
+    <ol class="probe-status" data-status-tracker-steps="4">
+    </ol>
+    <div class="probe-actions">
+    </div>
+    <div class="clear"></div>
+    <div class="probe-time">
+    </div>
+    <div class="clear"></div>
+    <div class="messages"></div>
+    <br>
+    <div id="probe-viz">
+    </div>
 
-  render: function() {
-    $(this.el).html(this.template({probe: this.probe}));
-    return this;
-  },
-
-  cleanup: function() {
-    logger.debug('calling cleanup');
-  }
-
-});
-
-RockStorProbeMap.push({
-  name: 'nfs-4',
-  view: 'NfsClientDistribView',
-  description: 'NFS Client Distribution',
-});
-
+  </div>
+</div>
 
