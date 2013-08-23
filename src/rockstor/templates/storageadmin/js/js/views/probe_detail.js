@@ -75,6 +75,8 @@ ProbeDetailView = RockstoreLayoutView.extend({
       RUNNING: 'running', ERROR: 'error',
     };
     this.statusPollInterval = 2000; // poll interval for status changes 
+    // the class name for the specific visualization.
+    this.probeVizClass = null; 
   },
 
   render: function() {
@@ -95,10 +97,9 @@ ProbeDetailView = RockstoreLayoutView.extend({
     });
     if (tmp) {
       var viewName = tmp.view;
-      this.probeClass = window[viewName];
-      console.log("found probe class " + this.probeClass);
+      this.probeVizClass = window[viewName];
     } else {
-      console.log("did not find probe view for probe " + this.probeRun.get("name"));
+      //  TODO handle no probe viz class found 
     }
     this.setProbeEvents();
     this.probeRun.trigger(this.probeRun.get("state"));
@@ -114,47 +115,15 @@ ProbeDetailView = RockstoreLayoutView.extend({
     // poll till Running
     this.pollTillStatus(this.probeStates.RUNNING);
 
-    /*
-    this.statusIntervalId = window.setInterval(function() {
-      return function() { 
-        _this.probeRun.fetch({
-          success: function(model, response, options) {
-            if (_this.probeRun.get('state') == _this.probeStates.RUNNING) {
-              // stop polling for status
-              window.clearInterval(_this.statusIntervalId);
-              // go to running state
-              _this.probeRun.trigger(_this.probeStates.RUNNING);
-            } else if (_this.probeRun.get('state') == _this.probeStates.ERROR) {
-              // stop polling for status
-              window.clearInterval(_this.statusIntervalId);
-              // go to error state
-              _this.probeRun.trigger(_this.probeStates.ERROR);
-            }
-          },
-          error: function(model, response, options) {
-            // stop polling for status
-            window.clearInterval(_this.statusIntervalId);
-            // go to error state
-            _this.probeRun.trigger(_this.probeStates.ERROR);
-          }
-        });
-      }
-    }(), this.statusPollInterval)
-   */
   },
 
   probeRunning: function() {
     this.updateStatus();
     this.updateActions();
     this.updateTime();
-    if (this.probeClass) {
-      console.log("rendering probeclass");
-      //var probeVizView = new NfsShareClientDistribView({probe: this.probeRun});
-      //this.probeVizView = new window[viewName]({probe: this.probeRun});
-      //this.$("#probe-viz").empty();
-      //this.$("#probe-viz").append(probeVizView.render().el);
+    if (this.probeVizClass) {
+      // TODO render probe viz view
     } else {
-      console.log("No probe Class found for probe " + this.probeRun.get("name"));
     }
   },
 
@@ -165,14 +134,10 @@ ProbeDetailView = RockstoreLayoutView.extend({
     if (this.probeVizView) {
       this.probeVizView.trigger(this.probeStates.STOPPED);
     } else {
-      if (this.probeClass) {
-        // TODO initialize probeVizView 
-        
-        //this.probeVizView = new window[viewName]({probe: this.probeRun});
-        //this.$("#probe-viz").empty();
-        //this.$("#probe-viz").append(probeVizView.render().el);
+      // user is loading this page after the probe has completed.
+      if (this.probeVizClass) {
+        // TODO render probe viz view
       } else {
-        console.log("No probe Class found for probe " + this.probeRun.get("name"));
       }
     }
   },
@@ -181,9 +146,8 @@ ProbeDetailView = RockstoreLayoutView.extend({
     this.updateStatus();
     this.updateActions();
     this.updateTime();
-    console.log("Probe error!");
 
-    // TODO display error message in viz area
+    this.$(".messages").html("<label class=\"error\">Probe Error!</label>");
   },
 
   setProbeEvents: function(probe) {
@@ -203,6 +167,7 @@ ProbeDetailView = RockstoreLayoutView.extend({
     var _this = this;
     var probeId = this.probeRun.id;
     var probeName = this.probeRun.get("name");
+    _this.$(".messages").html("Stopping probe");
     $.ajax({
       url: "/api/sm/sprobes/" + probeName + "/" + probeId + "/stop?format=json",
       type: 'POST',
@@ -214,38 +179,9 @@ ProbeDetailView = RockstoreLayoutView.extend({
       },
       error: function(jqXHR, textStatus, error) {
         var msg = parseXhrError(jqXHR)
-        console.log(msg);
+        _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
       }
     });
-  },
-
-  pollTillStopped: function() {
-    var _this = this;
-    this.statusIntervalId = window.setInterval(function() {
-      return function() { 
-        _this.probeRun.fetch({
-          success: function(model, response, options) {
-            if (_this.probeRun.get('state') == _this.probeStates.STOPPED) {
-              // stop polling for status
-              window.clearInterval(_this.statusIntervalId);
-              // go to running state
-              _this.probeRun.trigger(_this.probeStates.STOPPED);
-            } else if (_this.probeRun.get('state') == _this.probeStates.ERROR) {
-              // stop polling for status
-              window.clearInterval(_this.statusIntervalId);
-              // go to error state
-              _this.probeRun.trigger(_this.probeStates.ERROR);
-            }
-          },
-          error: function(model, response, options) {
-            // stop polling for status
-            window.clearInterval(_this.statusIntervalId);
-            // go to error state
-            _this.probeRun.trigger(_this.probeStates.ERROR);
-          }
-        });
-      }
-    }(), this.statusPollInterval)
   },
 
   updateActions: function() {
@@ -278,7 +214,9 @@ ProbeDetailView = RockstoreLayoutView.extend({
               // stop polling for status
               window.clearInterval(_this.statusIntervalId);
               // go to running state
+              _this.$(".messages").html("Probe " + status);
               _this.probeRun.trigger(status);
+
             } else if (_this.probeRun.get('state') == _this.probeStates.ERROR) {
               // stop polling for status
               window.clearInterval(_this.statusIntervalId);
@@ -298,7 +236,9 @@ ProbeDetailView = RockstoreLayoutView.extend({
   },
 
   cleanup: function() {
-    // TODO remove any setIntervals
+    if (this.statusIntervalId) {
+      window.clearInterval(this.statusIntervalId);
+    }
     if (this.probeVizView) {
       this.probeVizView.cleanup();
     }
