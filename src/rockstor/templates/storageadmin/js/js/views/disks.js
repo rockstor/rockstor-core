@@ -59,7 +59,7 @@ DisksView = RockstoreLayoutView.extend({
     var _this = this;
     this.$('#setup').click(function() {
       $.ajax({
-        url: "/api/tools/sysdisks",
+        url: "/api/disks/",
         type: "POST"
       }).done(function() {
         _this.disks.fetch();

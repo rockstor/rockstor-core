@@ -36,7 +36,13 @@ var Disk = Backbone.Model.extend({
 });
 var DiskCollection = Backbone.Collection.extend({
   model: Disk,
-  url: '/api/disks/'
+  url: '/api/disks/',
+  parse: function(response) {
+    if (response.results) {
+	return response.results;
+        }
+    return {};
+  }
 });
 
 var Pool = Backbone.Model.extend({
