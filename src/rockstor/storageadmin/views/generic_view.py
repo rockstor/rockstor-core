@@ -71,6 +71,8 @@ class GenericView(generics.ListAPIView):
         pass
 
     def get_allow_empty(self):
+        if (self.paginate_by is None):
+            return True
         return False
 
     def get_paginate_by(self, foo):
