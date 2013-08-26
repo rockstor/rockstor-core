@@ -26,15 +26,15 @@ class SMBConsole(BaseConsole):
     def __init__(self, prompt):
         BaseConsole.__init__(self)
         self.prompt = prompt + ' Samba>'
-        self.url = BaseConsole.url + 'sm/services/samba/'
+        self.baseurl = ('%ssm/services/samba' % BaseConsole.url)
 
     def do_status(self, args):
-        smb_info = api_call(self.url)
+        smb_info = api_call(self.baseurl)
         print smb_info
 
     def put_wrapper(self, args, command):
-        input_data = {'command': command,}
-        smb_info = api_call(self.url, data=input_data, calltype='put')
+        url = ('%s/%s' % (self.baseurl, command))
+        smb_info = api_call(url, calltype='post')
         print smb_info
 
     def do_start(self, args):

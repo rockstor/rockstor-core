@@ -53,7 +53,6 @@ class NISConsole(BaseConsole):
         return self.put_wrapper(args, 'stop')
 
     def put_wrapper(self, args, command):
-        url = ('%ssm/services/nis/%s' % (BaseConsole.url, command))
-        input_data = {'command': command,}
-        nis_info = api_call(url, data=input_data, calltype='post')
+        url = ('%s/%s' % (self.baseurl, command))
+        nis_info = api_call(url, calltype='post')
         print nis_info
