@@ -23,7 +23,7 @@ from storageadmin.models import User, Setup
 from system.users import (get_users, useradd, usermod, userdel, get_epasswd)
 
 def register_services():
-    service_list = ('nfs', 'samba', 'sftp', 'ldap', 'ad', 'iscsi',)
+    service_list = ('nfs', 'samba', 'sftp', 'ldap', 'ad', 'iscsi', 'nis',)
     for s in service_list:
         if (not Service.objects.filter(name=s).exists()):
             s_o = Service(name=s, registered=True)
