@@ -23,10 +23,6 @@ from storageadmin.views import (DiskView, SystemDiskView, PoolView, ShareView,
                                 UserView, ShareSambaView, SupportView,
                                 DashboardConfigView, ShareNFSView, NetworkView,
                                 SetupUserView)
-from smart_manager.views import (SmartManagerView, ServiceView, SProbeView,
-                                 SProbeView2, MemInfoView, NetStatView,
-                                 DiskStatView, NFSDistribView)
-
 import os.path
 import socketio.sdjango
 
