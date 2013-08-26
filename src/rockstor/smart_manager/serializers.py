@@ -52,6 +52,7 @@ class NetStatSerializer(serializers.ModelSerializer):
 
 class ServiceStatusSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='service.name')
+    config = serializers.CharField(source='service.config')
 
     class Meta:
         model = ServiceStatus
