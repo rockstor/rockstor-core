@@ -71,7 +71,7 @@ class BaseServiceView(generics.ListCreateAPIView):
         limit = self.request.QUERY_PARAMS.get('limit',
                                               settings.PAGINATION['max_limit'])
         limit = int(limit)
-        url_fields = self.request.path.split('/')
+        url_fields = self.request.path.strip('/').split('/')
         if (len(url_fields) < 4):
             sos = []
             for s in Service.objects.filter(registered=True):
@@ -79,5 +79,5 @@ class BaseServiceView(generics.ListCreateAPIView):
                     so = ServiceStatus.objects.filter(service=s).order_by('-ts')[0]
                     sos.append(so)
             return sos
-        s = Service.objects.get(name=url_fields[4])
+        s = Service.objects.get(name=url_fields[3])
         return ServiceStatus.objects.filter(service=s).order_by('-ts')[0]

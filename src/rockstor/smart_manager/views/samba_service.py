@@ -28,33 +28,31 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class NISServiceView(BaseServiceView):
+class SambaServiceView(BaseServiceView):
 
     @transaction.commit_on_success
     def post(self, request, command):
         """
         execute a command on the service
         """
-        service = Service.objects.get(name='nis')
+        service = Service.objects.get(name='samba')
         if (command == 'config'):
+            #nothing to really configure atm. just save the model
             try:
                 config = request.DATA['config']
-                configure_nis(config['domain'], config['server'])
                 service.config = config
                 service.save()
             except Exception, e:
                 logger.exception(e)
-                e_msg = ('NIS could not be configured. Try again')
+                e_msg = ('Samba could not be configured. Try again')
                 handle_exception(Exception(e_msg), request)
 
         else:
             try:
-                init_service_op('rpcbind', command)
-                init_service_op('ypbind', command)
+                init_service_op('smb', command)
             except Exception, e:
                 logger.exception(e)
-                e_msg = ('Failed to %s NIS service due to system error.' %
-                         command)
+                e_msg = ('Failed to %s samba due to a system error.')
                 handle_exception(Exception(e_msg), request)
 
         return Response()
