@@ -17,16 +17,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf.urls.defaults import patterns, url
-from smart_manager.views import (SmartManagerView, ServiceView, SProbeView,
-                                 MemInfoView, NetStatView,
-                                 DiskStatView, NFSDistribView,
-                                 NFSDClientDistribView, NFSDShareDistribView,
-                                 NFSDShareClientDistribView)
+from smart_manager.views import (ServiceView, NISServiceView)
 
 
 urlpatterns = patterns('',
     # Services
     url(r'^$', ServiceView.as_view(), name='service-view'),
+    url(r'^nis$', NISServiceView.as_view(), name='nis-view'),
+    url(r'^nis/(?P<command>.*)$', NISServiceView.as_view(), name='nis-view'),
     url(r'^(?P<sname>[A-Za-z_]+)/$', ServiceView.as_view(),
         name='service-view'),
 )
