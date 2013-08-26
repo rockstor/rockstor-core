@@ -36,6 +36,7 @@ PoolsView = RockstoreLayoutView.extend({
     this.template = window.JST.pool_pools_template;
     // create collection
     this.pools = new PoolCollection();
+    this.collection = this.pools; // for pagination mixin
     // add dependencies
     this.dependencies.push(this.pools);
   },

@@ -24,6 +24,26 @@
  * 
  */
 
+PaginationMixin = {
+  events: {
+    "click .go-to-page": "goToPage",
+    "click .prev-page": "prevPage",
+    "click .next-page": "nextPage",
+  },
+  goToPage: function(event) {
+    if (event) event.preventDefault();
+    this.collection.goToPage(parseInt($(event.currentTarget).attr("data-page")));
+  },
+  prevPage: function(event) {
+    if (event) event.preventDefault();
+    this.collection.prevPage();
+  },
+  nextPage: function(event) {
+    if (event) event.preventDefault();
+    this.collection.nextPage();
+  }
+};
+
 RockstoreLayoutView = Backbone.View.extend({
   tagName: 'div',
   className: 'layout',
@@ -422,4 +442,5 @@ RockStorGlobals = {
 
 
 }
+
 

@@ -34,15 +34,9 @@ var Disk = Backbone.Model.extend({
     return '/api/disks/' + this.get('diskName') + '/';
   }
 });
-var DiskCollection = Backbone.Collection.extend({
+var DiskCollection = RockStorPaginatedCollection.extend({
   model: Disk,
-  url: '/api/disks/',
-  parse: function(response) {
-    if (response.results) {
-	return response.results;
-        }
-    return {};
-  }
+  baseUrl: '/api/disks/',
 });
 
 var Pool = Backbone.Model.extend({
@@ -51,11 +45,10 @@ var Pool = Backbone.Model.extend({
   }
 });
 
-var PoolCollection = Backbone.Collection.extend({
+var PoolCollection = RockStorPaginatedCollection.extend({
   model: Pool,
-  url: '/api/pools/'
+  baseUrl: '/api/pools/'
 });
-
 
 var SupportCase = Backbone.Model.extend({
 	  url: function() {
@@ -132,9 +125,10 @@ var User = Backbone.Model.extend({
   urlRoot: '/api/users/',
   idAttribute: 'username'
 });
-var UserCollection = Backbone.Collection.extend({
+
+var UserCollection = RockStorPaginatedCollection.extend({
   model: User,
-  url: '/api/users/'
+  baseUrl: '/api/users/'
 });
 
 var ISCSITarget = Backbone.Model.extend({ 

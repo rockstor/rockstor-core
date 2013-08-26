@@ -24,49 +24,50 @@
  * 
  */
 
-DisksView = RockstoreLayoutView.extend({
+DisksView = Backbone.View.extend({
+  events: {
+    "click #setup": "setupDisks"
+  },
+
   initialize: function() {
     // call initialize of base
     this.constructor.__super__.initialize.apply(this, arguments);
-    // set template
-    this.template = window.JST.disk_disks_template;
-    // create collection
-    this.disks = new DiskCollection();
-    // add dependencies
-    this.dependencies.push(this.disks);
+    this.template = window.JST.disk_disks;
+    this.disks_table_template = window.JST.disk_disks_table;
+    this.pagination_template = window.JST.common_pagination;
+    this.collection = new DiskCollection; 
+    this.collection.on("reset", this.renderDisks, this);
   },
 
   render: function() {
-    this.fetch(this.renderSubViews, this);
+    this.collection.fetch();
     return this;
   },
-
-  renderSubViews: function() {
-    //create subviews
-    this.subviews['disks-table'] = new DisksTableView({collection: this.disks});
-    // bind subviews to models
-    this.disks.on('reset', this.subviews['disks-table'].render, this.subviews['disks-table']);
-    // render
-    $(this.el).empty();
-    $(this.el).append(this.template());
-    // render subviews
-    this.$('#ph-disks-table').append(this.subviews['disks-table'].render().el);
-    // attach actions
-    this.attachActions();
+  
+  renderDisks: function() {
+    $(this.el).html(this.template({ collection: this.collection }));
+    this.$("#disks-table-ph").html(this.disks_table_template({
+      collection: this.collection
+    }));
+    this.$(".pagination-ph").html(this.pagination_template({
+      collection: this.collection
+    }));
   },
 
-  attachActions: function() {
+  setupDisks: function() {
     var _this = this;
-    this.$('#setup').click(function() {
-      $.ajax({
-        url: "/api/disks/",
-        type: "POST"
-      }).done(function() {
-        _this.disks.fetch();
-      });
+    $.ajax({
+      url: "/api/disks/",
+      type: "POST"
+    }).done(function() {
+      // reset the current page
+      _this.collection.page = 1;
+      _this.collection.fetch();
     });
-
-  }
+  },
 
 });
+
+// Add pagination
+Cocktail.mixin(DisksView, PaginationMixin);
 
