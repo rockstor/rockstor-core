@@ -16,6 +16,9 @@ var RockStorPaginatedCollection = Backbone.Collection.extend({
   },
 
   url: function() {
+    if (_.isFunction(this.baseUrl)) {
+      return this.baseUrl() + '?' + $.param(this.extraParams());
+    } 
     return this.baseUrl + '?' + $.param(this.extraParams());
   },
   
