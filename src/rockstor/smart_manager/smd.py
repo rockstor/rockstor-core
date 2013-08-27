@@ -28,6 +28,7 @@ import zmq
 import logging
 logger = logging.getLogger(__name__)
 from smart_manager import agents
+from scheduler.task_dispatcher import TaskDispatcher
 
 
 def process_model_queue(q):
@@ -61,6 +62,8 @@ def main():
     service_mon.start()
     stap_proc = Stap(settings.TAP_SERVER)
     stap_proc.start()
+    task_proc = TaskDispatcher(settings.SCHEDULER)
+    task_proc.start()
 
     while (True):
         process_model_queue(proc_q)

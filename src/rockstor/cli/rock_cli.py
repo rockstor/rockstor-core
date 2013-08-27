@@ -29,6 +29,8 @@ from sm_console import SMConsole
 from support_console import SupportConsole
 from network_console import NetworkConsole
 from users_console import UsersConsole
+from task_console import TaskConsole
+
 
 ASCII_LOGO = """
  __   __   __        __  ___  __   __
@@ -167,6 +169,16 @@ class RockConsole(BaseConsole):
             users_console.cmdloop()
         else:
             users_console.onecmd(args)
+
+    def do_tasks(self, args):
+        """
+        Task Scheduler Console
+        """
+        task_console = TaskConsole(self.greeting)
+        if (len(args) == 0):
+            task_console.cmdloop()
+        else:
+            task_console.onecmd(args)
 
 def main():
     rc = RockConsole()
