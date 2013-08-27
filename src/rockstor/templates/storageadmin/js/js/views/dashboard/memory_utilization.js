@@ -233,9 +233,10 @@ RockStorWidgets.available_widgets.push({
     displayName: 'Memory Utilization', 
     view: 'MemoryUtilizationWidget',
     description: 'Display memory utilization',
-    defaultWidget: false,
+    defaultWidget: true,
     rows: 1,
     cols: 2,
     category: 'Compute', 
+    position: 2
 });
 
