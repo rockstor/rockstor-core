@@ -26,11 +26,40 @@ class DisksConsole(BaseConsole):
     def __init__(self, prompt):
         BaseConsole.__init__(self)
         self.prompt = prompt + ' Disks>'
+        self.baseurl = ('%sdisks/' % BaseConsole.url)
 
     def do_list(self, args):
-        url = BaseConsole.url + 'disks/'
-        input_disk_list = args.split()
-        if (len(input_disk_list) > 0):
-            url = url + input_disk_list[0] + '/'
+        """
+        List brief information about disks in the system.
+
+        Details of all disks:     list
+        Details of a single disk: list <disk_name>
+
+        Parameters:
+        disk_name: If this optional parameter is given, details are printed
+                   for the given disk only.
+
+        Examples:
+        Print information of all disks in the system
+            list
+
+        Print information for the disk sdd
+            list sdd
+        """
+        url = self.baseurl
+        if (args is not None):
+            url = ('%s%s' % (url, args))
         disk_info = api_call(url)
         print_disk_info(disk_info)
+
+    def do_scan(self, args):
+        """
+        Scan the system for any new disks since the last scan.
+
+        Example:
+        Scan the system for any new disks:
+            scan
+        """
+        disk_info = api_call(self.baseurl, data=None, calltype='post')
+        print_disk_info(disk_info)
+

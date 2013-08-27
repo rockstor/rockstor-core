@@ -157,6 +157,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
       dataType: "json",
       global: false, // dont show global loading indicator
       success: function(data, status, xhr) {
+        data = data.results;
         if (_.isNull(_this.numCpus)) {
           _this.numCpus = data.length;
         }

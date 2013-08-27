@@ -31,6 +31,9 @@
  AddPoolView = Backbone.View.extend({
   initialize: function() {
     this.disks = new DiskCollection();
+    // dont paginate disk selection table for now
+    this.disks.pageSize = 1000; 
+
   },
 
   render: function() {

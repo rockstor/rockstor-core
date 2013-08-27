@@ -1,0 +1,29 @@
+<% if (!collection.isEmpty()) { %>
+  <table id="disks-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of disks">
+    <thead>
+      <tr>
+        <th scope="col" abbr="Name">Disk Name</th>
+        <th scope="col" abbr="Capacity">Capacity</th>
+        <th scope="col" abbr="Pool">Pool</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% collection.each(function(disk, index) { %>
+        <tr>
+          <td><%= disk.get('name') %></td>
+          <td><%= humanize.filesize(disk.get('size')*1024) %></td>
+          <td>
+            <a href="#pools/<%= disk.get('pool') %>">
+              <%= disk.get('pool') %>
+            </a>
+          </td>
+        </tr>
+      <% }); %>
+    </tbody>
+  </table>
+  <div class="pagination-ph">
+  </div>
+<% } else { %>
+  <h4>No disks added. Please run Setup to discover disks</h4>
+<% } %>
+

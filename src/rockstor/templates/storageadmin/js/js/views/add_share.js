@@ -87,10 +87,10 @@ AddShareView = Backbone.View.extend({
         	}
             
           $.ajax({
-            url: "/api/shares/"+share_name+"/",
+            url: "/api/shares/",
             type: "POST",
             dataType: "json",
-            data: {"pool": pool_name, "size": size},
+            data: {sname: share_name, "pool": pool_name, "size": size},
             success: function() {
               enableButton(button);
               app_router.navigate('shares', {trigger: true}) 

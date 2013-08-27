@@ -25,15 +25,15 @@ snap_regex = share_regex
 urlpatterns = patterns(
     '',
     url(r'^$', ShareView.as_view(), name='share-view'),
-    url(r'^(?P<sname>%s)/$' % share_regex, ShareView.as_view(),
+    url(r'^(?P<sname>%s)$' % share_regex, ShareView.as_view(),
         name='share-view'),
 
-    url(r'^(?P<sname>%s)/nfs/$' % share_regex, ShareNFSView.as_view(),
+    url(r'^(?P<sname>%s)/nfs$' % share_regex, ShareNFSView.as_view(),
         name='nfs-view'),
-    url(r'^(?P<sname>%s)/nfs/(?P<export_id>[0-9]+)/$' % share_regex,
+    url(r'^(?P<sname>%s)/nfs/(?P<export_id>[0-9]+)$' % share_regex,
         ShareNFSView.as_view(), name='nfs-view'),
 
-    url(r'^(?P<sname>%s)/samba/$' % share_regex,
+    url(r'^(?P<sname>%s)/samba$' % share_regex,
         ShareSambaView.as_view(), name='samba-view'),
 
     url(r'^(?P<sname>%s)/snapshots$' % share_regex,
@@ -48,6 +48,6 @@ urlpatterns = patterns(
     url(r'^(?P<sname>[A-Za-z]+[A-Za-z0-9_]*)/iscsi/$', ShareIscsiView.as_view(),
         name='share-iscsi-view'),
 
-    url(r'^(?P<sname>%s)/acl/$' % share_regex, ShareACLView.as_view(),
+    url(r'^(?P<sname>%s)/acl$' % share_regex, ShareACLView.as_view(),
         name='acl-view'),
 )

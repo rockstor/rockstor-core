@@ -28,57 +28,83 @@ class PoolsConsole(BaseConsole):
 
     def __init__(self, prompt):
         BaseConsole.__init__(self)
-        self.parent_prompt = prompt
-        self.greeting = ('%s Pools' % self.parent_prompt)
-        self.prompt = ('%s>' % self.greeting)
+        self.pprompt = prompt
+        self.prompt = ('%s Pools>' % self.pprompt)
         self.url = ('%spools/' % BaseConsole.url)
 
     def do_list(self, args):
         """
-        List brief information about all pools
+        List brief information about pools
 
+        Details of all pools:     list
+        Details of a single pool: list <pool_name>
         """
-        pool_info = api_call(self.url)
+        url = self.url
+        if (args is not None):
+            url = ('%s%s' % (self.url, args))
+        pool_info = api_call(url)
         print_pool_info(pool_info)
 
     def do_add(self, args):
         """
-        To add a pool:
+        Create a new pool.
 
-        add -dsdb,sdc -rraid0 -npool0
+        Create a new pool: add pool_name disk_list raid_type
+
+        Parameters:
+        pool_name:    Intended name of the pool.
+        disk_list:    A list of comma-separated(no whitespace) disks. For
+                      example: sdb,sdc.
+        raid_type:    One of the following: raid0, raid1
+
+        Examples:
+        To create a raid0 pool with two disks(sdb and sdc) called pool0
+            add pool0 sdb,sdc raid0
         """
         arg_fields = args.split()
-        input_data = {}
-        for f in arg_fields:
-            if(f[0:2] == '-d'):
-                input_data['disks'] = f[2:]
-            elif(f[0:2] == '-r'):
-                input_data['raid_level'] = f[2:]
-            elif(f[0:2] == '-n'):
-                input_data['name'] = f[2:]
-            else:
-                return self.do_help(args)
-        if(len(input_data) != 3):
-            return self.do_help(args)
-        url = ('%s%s/' % (self.url, input_data['name']))
+        if (len(arg_fields) < 3):
+            error = '3 arguments expected. %d given' % len(arg_fields)
+            return self.help_wrapper(error, 'add')
+
+        input_data = {'disks': arg_fields[1],
+                      'raid_level': arg_fields[2],}
+        url = ('%s%s' % (self.url, arg_fields[0]))
         pool_info = api_call(url, data=input_data, calltype='post')
-        print_pool_info(pool_info)
+        print pool_info
 
     def do_delete(self, args):
         """
-        To delete a pool:
+        Delete a pool.
 
-        delete pool0
-        """
-        input_pool_list = args.split()
-        if (len(input_pool_list) > 0):
-            url = ('%s%s/' % (self.url, input_pool_list[0]))
-            pool_info = api_call(url, calltype='delete')
-            print pool_info
+        Delete a pool: delete pool_name
 
-    def do_pool(self, args):
+        Parameters:
+        pool_name:    Name of a valid pool to delete.
+
+        Example:
+        To delete a pool named pool0
+            delete pool0
         """
-        To go to a pool console: pool pool_name
+        if (args is None):
+            self.do_help(args)
+        url = ('%s%s' % (self.url, args))
+        pool_info = api_call(url, calltype='delete')
+        print pool_info
+
+    def do_console(self, args):
+        """
+        Subconsole for a single pool.
+
+        To go to a particular
+        pool's exclusive subconsole: console pool_name
+
+        Parameters:
+        pool_name:    Name of a valid pool.
+
+        Example:
+        To perform operations on a pool called mypool inside it's exclusive
+        subconsole
+            console mypool
         """
         pd_console = PoolDetailConsole('foo')
         input_pool = args.split()

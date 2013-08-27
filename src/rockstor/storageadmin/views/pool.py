@@ -20,45 +20,33 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Pool view. for all things at pool level
 """
 import re
-from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.authentication import (BasicAuthentication,
-                                           SessionAuthentication,)
-from storageadmin.auth import DigestAuthentication
-from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
 from storageadmin.serializers import PoolInfoSerializer
-from storageadmin.forms import (PoolForm)
 from storageadmin.models import (Disk, Pool, Share, PoolStatistic)
 from fs.btrfs import (add_pool, pool_usage, remove_pool,
                       resize_pool, umount_root)
 from storageadmin.util import handle_exception
 from storageadmin.exceptions import RockStorAPIException
 from django.conf import settings
+from generic_view import GenericView
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-class PoolView(APIView):
-    authentication_classes = (DigestAuthentication, SessionAuthentication,
-                              BasicAuthentication,)
-    permission_classes = (IsAuthenticated,)
-    form = PoolForm
-
+class PoolView(GenericView):
+    serializer_class = PoolInfoSerializer
     RAID_LEVELS = ('raid0', 'raid1', 'raid10', 'single',)
 
-    def get(self, request, pname=None):
-        try:
-            if (pname is None):
-                pools = Pool.objects.all()
-                ps = PoolInfoSerializer(pools)
-                return Response(ps.data)
-
-            ps = PoolInfoSerializer(Pool.objects.get(name=pname))
-            return Response(ps.data)
-        except Exception, e:
-            handle_exception(e, request)
+    def get_queryset(self, *args, **kwargs):
+        if ('pname' in kwargs):
+            self.paginate_by = 0
+            try:
+                return Pool.objects.get(name=kwargs['pname'])
+            except:
+                return []
+        return Pool.objects.all()
 
     @transaction.commit_on_success
     def post(self, request):
@@ -66,8 +54,8 @@ class PoolView(APIView):
         input is a list of disks, raid_level and name of the pool.
         """
         try:
-            pname = request.DATA['pname']
             disks = request.DATA['disks'].split(',')
+            pname = request.DATA['pname']
 
             if (Pool.objects.filter(name=pname).exists()):
                 e_msg = ('Pool with name: %s already exists.' % pname)

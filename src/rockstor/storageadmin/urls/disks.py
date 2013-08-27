@@ -17,18 +17,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf.urls.defaults import patterns, url
-from storageadmin.views import (PoolView, PoolScrubView)
+from storageadmin.views import DiskView
 
-pool_regex = r'[A-Za-z]+[A-Za-z0-9_]*'
 
 urlpatterns = patterns(
     '',
-    url(r'^$', PoolView.as_view(), name='pool-view'),
-    url(r'^(?P<pname>%s)$' % pool_regex, PoolView.as_view(), name='pool-view'),
-    url(r'^(?P<pname>%s)/scrub$' % pool_regex, PoolScrubView.as_view(),
-        name='pool-scrub-view'),
-    url(r'^(?P<pname>%s)/scrub/(?P<command>.*)$' % pool_regex,
-        PoolScrubView.as_view(), name='pool-scrub-view'),
-    url(r'^(?P<pname>%s)/(?P<command>.*)$' % pool_regex,
-        PoolView.as_view(), name='pool-view'),
+    url(r'^$', DiskView.as_view(), name='disk-view'),
+    url(r'(?P<dname>[A-Za-z]+[A-Za-z0-9]*)$', DiskView.as_view(),
+        name='user-view'),
 )

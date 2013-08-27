@@ -20,12 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 view for anything at the share level
 """
 
-from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.authentication import (BasicAuthentication,
-                                           SessionAuthentication)
-from rest_framework.permissions import IsAuthenticated
-from storageadmin.auth import DigestAuthentication
 from django.db import transaction
 from storageadmin.models import (Share, Snapshot, Disk, Pool, Snapshot,
                                  NFSExport, SambaShare)
@@ -35,25 +30,24 @@ from storageadmin.serializers import ShareSerializer
 from storageadmin.util import handle_exception
 from storageadmin.exceptions import RockStorAPIException
 from django.conf import settings
+from generic_view import GenericView
 
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-class ShareView(APIView):
+class ShareView(GenericView):
+    serializer_class = ShareSerializer
 
-    authentication_classes = (DigestAuthentication, SessionAuthentication,
-                              BasicAuthentication,)
-    permission_classes = (IsAuthenticated,)
-
-    def get(self, request, sname=None):
-        try:
-            if (sname is None):
-                return Response(ShareSerializer(Share.objects.all()).data)
-            return Response(ShareSerializer(Share.objects.get(name=sname)).data)
-        except Exception, e:
-            handle_exception(e, request)
+    def get_queryset(self, *args, **kwargs):
+        if ('sname' in kwargs):
+            self.paginate_by = 0
+            try:
+                return Share.objects.get(name=kwargs['sname'])
+            except:
+                return []
+        return Share.objects.all()
 
     def _validate_share_size(self, request, size):
         e_msg = None
@@ -95,8 +89,9 @@ class ShareView(APIView):
             handle_exception(e, request)
 
     @transaction.commit_on_success
-    def post(self, request, sname):
+    def post(self, request):
         try:
+            sname = request.DATA['sname']
             if (Share.objects.filter(name=sname).exists()):
                 e_msg = ('Share with name: %s already exists.' % sname)
                 handle_exception(Exception(e_msg), request)

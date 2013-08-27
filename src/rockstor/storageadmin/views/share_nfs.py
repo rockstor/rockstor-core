@@ -16,41 +16,40 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.authentication import (BasicAuthentication,
-                                           SessionAuthentication)
 from django.db import transaction
 from django.conf import settings
-from storageadmin.auth import DigestAuthentication
 from storageadmin.models import (Share, SambaShare, NFSExport, Disk)
 from storageadmin.util import handle_exception
 from storageadmin.serializers import NFSExportSerializer
 from storageadmin.exceptions import RockStorAPIException
 from fs.btrfs import (mount_share, is_share_mounted, umount_root)
 from system.osi import refresh_nfs_exports
+from generic_view import GenericView
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-class ShareNFSView(APIView):
+class ShareNFSView(GenericView):
+    serializer_class = NFSExportSerializer
 
-    def get(self, request, sname, export_id=None):
+    def _validate_share(self, sname, request):
         try:
-            share = Share.objects.get(name=sname)
+            return Share.objects.get(name=sname)
+        except:
+            e_msg = ('Share with name: %s does not exist' % sname)
+            handle_exception(Exception(e_msg), request)
+
+    def get_queryset(self, *args, **kwargs):
+        share = self._validate_share(kwargs['sname'], self.request)
+        if ('export_id' in kwargs):
+            self.paginate_by = 0
             try:
-                exports = None
-                if (export_id is not None):
-                    exports = NFSExport.objects.get(id=export_id)
-                else:
-                    exports = NFSExport.objects.filter(share=share)
-                ns = NFSExportSerializer(exports)
-                return Response(ns.data)
+                return NFSExport.objects.get(id=kwargs['export_id'])
             except:
-                return Response()
-        except Exception, e:
-            handle_exception(e, request)
+                return []
+        return NFSExport.objects.filter(share=share)
 
     @transaction.commit_on_success
     def post(self, request, sname):

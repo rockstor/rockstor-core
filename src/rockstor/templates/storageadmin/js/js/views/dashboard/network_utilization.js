@@ -301,10 +301,11 @@ RockStorWidgets.available_widgets.push({
     displayName: 'Network Utilization', 
     view: 'NetworkUtilizationWidget',
     description: 'Display network utilization',
-    defaultWidget: false,
+    defaultWidget: true,
     rows: 1,
     cols: 2,
     category: 'Network', 
+    position: 3
 });
 
 

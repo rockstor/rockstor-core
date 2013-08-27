@@ -28,41 +28,75 @@
  * Shares View
  */
 
-SharesLayoutView = RockstoreLayoutView.extend({
-  tagName: 'div',
+SharesView = RockstoreLayoutView.extend({
+  events: {
+    "click button[data-action=delete]": "deleteShare"
+  },
+
   initialize: function() {
-    // call initialize of base
     this.constructor.__super__.initialize.apply(this, arguments);
-    // set template
-    this.template = window.JST.share_shares_template;
-    // create collection
+    
+    this.template = window.JST.share_shares;
+    this.shares_table_template = window.JST.share_shares_table;
+    this.pagination_template = window.JST.common_pagination;
+    
     this.pools = new PoolCollection();
-    this.shares = new ShareCollection();
-    // set dependencies
+    this.collection = new ShareCollection();
     this.dependencies.push(this.pools);
-    this.dependencies.push(this.shares);
+    this.dependencies.push(this.collection);
+    
+    this.pools.on("reset", this.renderShares, this);
+    this.collection.on("reset", this.renderShares, this);
   },
 
   render: function() {
-    this.fetch(this.renderSubViews, this);
+    this.fetch(this.renderShares, this);
     return this;
   },
 
-  renderSubViews: function() {
-    $(this.el).append(this.template({
-      shares: this.shares,
+  renderShares: function() {
+    if (!this.pools.fetched || !this.collection.fetched) { 
+      return false;
+    }
+    $(this.el).html(this.template({
+      collection: this.collection,
       pools: this.pools
     }));
-    // Create subviews
-    this.subviews['shares-table'] = new SharesTableView({
-      collection: this.shares,
+    this.$("#shares-table-ph").html(this.shares_table_template({
+      collection: this.collection,
       pools: this.pools
-    });
-    // Bind subviews to models
-    this.shares.on('reset', this.subviews['shares-table'].render, this.subviews['shares-table']);
-    // render subviews
-    this.$('#ph-shares-table').append(this.subviews['shares-table'].render().el);
+    }));
+    this.$(".pagination-ph").html(this.pagination_template({
+      collection: this.collection
+    }));
+    this.$("#shares-table").tablesorter();
+  },
+
+  deleteShare: function(event) {
+    var _this = this;
+    var button = $(event.currentTarget);
+    if (buttonDisabled(button)) return false;
+    name = button.attr('data-name');
+    if(confirm("Delete share:  " + name + " ...Are you sure?")){
+      $.ajax({
+        url: "/api/shares/"+name,
+        type: "DELETE",
+        dataType: "json",
+        success: function() {
+          _this.collection.fetch({reset: true});
+          enableButton(button);
+        },
+        error: function(xhr, status, error) {
+          var msg = parseXhrError(xhr)
+          _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
+          enableButton(button);
+        }
+      });
+    }
   }
 
 });
+
+// Add pagination
+Cocktail.mixin(SharesView, PaginationMixin);
 

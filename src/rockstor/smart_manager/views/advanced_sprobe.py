@@ -50,7 +50,8 @@ class AdvancedSProbeView(GenericSProbeView):
 
         # Pagination size is set by the `.paginate_by` attribute,
         # which may be `None` to disable pagination.
-        page_size = self.get_paginate_by(self.object_list)
+        page_size = self.request.QUERY_PARAMS.get('page_size',
+                                                  self.get_paginate_by(self.object_list))
         if page_size:
             packed = self.paginate_queryset(self.object_list, page_size)
             paginator, page, queryset, is_paginated = packed

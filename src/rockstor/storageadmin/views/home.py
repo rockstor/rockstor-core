@@ -65,7 +65,8 @@ def home(request):
         'request': request, 
         'current_appliance': current_appliance,
         'nginx_websocket_port': settings.NGINX_WEBSOCKET_PORT,
-        'setup_user': setup.setup_user
+        'setup_user': setup.setup_user,
+        'page_size': settings.PAGINATION['page_size']
     }
     return render_to_response('index.html',
             context,

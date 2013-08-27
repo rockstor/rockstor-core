@@ -32,14 +32,12 @@ from rest_framework.authentication import (BasicAuthentication,
                                            SessionAuthentication,)
 from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
-from renderers import IgnoreClient
 
 
 class GenericView(generics.ListAPIView):
     authentication_classes = (DigestAuthentication, SessionAuthentication,
                               BasicAuthentication,)
     permission_classes = (IsAuthenticated,)
-    content_negotiation_class = IgnoreClient
 
     empty_error = u"Empty list and '%(class_name)s.allow_empty' is False."
     #overriding parent method to pass *args and **kwargs down to get_queryset
@@ -57,7 +55,8 @@ class GenericView(generics.ListAPIView):
 
         # Pagination size is set by the `.paginate_by` attribute,
         # which may be `None` to disable pagination.
-        page_size = self.get_paginate_by(self.object_list)
+        page_size = self.request.QUERY_PARAMS.get('page_size',
+                                                  self.get_paginate_by(self.object_list))
         if page_size:
             packed = self.paginate_queryset(self.object_list, page_size)
             paginator, page, queryset, is_paginated = packed
@@ -70,11 +69,16 @@ class GenericView(generics.ListAPIView):
     def get_queryset(self, *args, **kwargs):
         pass
 
+    def get_allow_empty(self):
+        if (self.paginate_by is None):
+            return True
+        return False
+
     def get_paginate_by(self, foo):
         download = self.request.QUERY_PARAMS.get('download', None)
         if (download is not None):
             return None
-        if (self.paginate_by is None):
+        if (self.paginate_by is not None and self.paginate_by == 0):
             return None
         return settings.PAGINATION['page_size']
 

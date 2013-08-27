@@ -34,9 +34,9 @@ var Disk = Backbone.Model.extend({
     return '/api/disks/' + this.get('diskName') + '/';
   }
 });
-var DiskCollection = Backbone.Collection.extend({
+var DiskCollection = RockStorPaginatedCollection.extend({
   model: Disk,
-  url: '/api/disks/'
+  baseUrl: '/api/disks/',
 });
 
 var Pool = Backbone.Model.extend({
@@ -45,11 +45,10 @@ var Pool = Backbone.Model.extend({
   }
 });
 
-var PoolCollection = Backbone.Collection.extend({
+var PoolCollection = RockStorPaginatedCollection.extend({
   model: Pool,
-  url: '/api/pools/'
+  baseUrl: '/api/pools/'
 });
-
 
 var SupportCase = Backbone.Model.extend({
 	  url: function() {
@@ -64,13 +63,13 @@ var SupportCaseCollection = Backbone.Collection.extend({
 	
 var Share = Backbone.Model.extend({
   url: function() {
-    return '/api/shares/' + this.get('shareName') + '/';
+    return '/api/shares/' + this.get('shareName');
   }
 });
 
-var ShareCollection = Backbone.Collection.extend({
+var ShareCollection = RockStorPaginatedCollection.extend({
   model: Share,
-  url: '/api/shares/'
+  baseUrl: '/api/shares/'
 });
 
 var Snapshot = Backbone.Model.extend({
@@ -78,17 +77,11 @@ var Snapshot = Backbone.Model.extend({
     return '/api/shares/' + this.get('shareName') + '/' + this.get('snapName');			} 
 });
 
-
-var SnapshotCollection = Backbone.Collection.extend({
+var SnapshotCollection = RockStorPaginatedCollection.extend({
   model: Snapshot,
-  //url: function() {
-   //return 
-  //},
-
   setUrl: function(shareName) {
-      this.url ='/api/shares/' + shareName + '/snapshots'    
+    this.baseUrl = '/api/shares/' + shareName + '/snapshots'    
   }
-
 });
 
 var SysInfo = Backbone.Model.extend({
@@ -96,24 +89,28 @@ var SysInfo = Backbone.Model.extend({
 });
 
 var NFSExport = Backbone.Model.extend();
-var NFSExportCollection = Backbone.Collection.extend({
+
+var NFSExportCollection = RockStorPaginatedCollection.extend({
   model: NFSExport,
   setUrl: function(shareName) {
-      this.url = '/api/shares/' + shareName + '/nfs/'    
+    this.baseUrl = '/api/shares/' + shareName + '/nfs'    
   }
-
 });
+
 var SMBShare = Backbone.Model.extend({ 
   url: function() {
-      return '/api/shares/' + this.get('shareName') + '/samba/'    
+      return '/api/shares/' + this.get('shareName') + '/samba'    
   }
 });
 var SMBShareCollection = Backbone.Collection.extend({model: SMBShare});
 
 var Service = Backbone.Model.extend({
-  url: function() {
-    return '/api/sm/services/' + this.get('name') + '/';
-  }
+  idAttribute: "name",
+});
+
+var ServiceCollection = Backbone.Collection.extend({
+  model: Service,
+  url: "/api/sm/services"
 });
 
 var Appliance = Backbone.Model.extend({urlRoot: '/api/appliances/'});
@@ -126,9 +123,10 @@ var User = Backbone.Model.extend({
   urlRoot: '/api/users/',
   idAttribute: 'username'
 });
-var UserCollection = Backbone.Collection.extend({
+
+var UserCollection = RockStorPaginatedCollection.extend({
   model: User,
-  url: '/api/users/'
+  baseUrl: '/api/users/'
 });
 
 var ISCSITarget = Backbone.Model.extend({ 
@@ -200,9 +198,9 @@ var NetworkInterface = Backbone.Model.extend({
     return '/api/network/' + this.get('name') + '/';
   }
 });
-var NetworkInterfaceCollection = Backbone.Collection.extend({
+var NetworkInterfaceCollection = RockStorPaginatedCollection.extend({
   model: NetworkInterface,
-  url: '/api/network/'
+  baseUrl: '/api/network/'
 });
 
 var ProbeRun = Backbone.Model.extend({
@@ -217,9 +215,9 @@ var ProbeRun = Backbone.Model.extend({
   },
 });
 
-var ProbeRunCollection = Backbone.Collection.extend({
+var ProbeRunCollection = RockStorPaginatedCollection.extend({
   model: ProbeRun,
-  url: "/api/sm/sprobes/metadata?format=json"
+  baseUrl: "/api/sm/sprobes/metadata"
 })
 
 var ProbeTemplate = Backbone.Model.extend();

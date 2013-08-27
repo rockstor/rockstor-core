@@ -42,8 +42,7 @@
             </tr>
           </thead>
           <tbody>
-            <% _.each(_.keys(services), function(name) { %>
-              <% var service = services[name]; %>
+            <% services.each(function(service) { %>
               <tr id="<%= service.get('name') %>">
                 <td><%= service.get('name') %></td>
                   <td id="<%= service.get('name') %>-status">

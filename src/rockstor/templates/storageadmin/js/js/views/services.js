@@ -26,7 +26,7 @@
 
 /* Services */
 
-ServicesView = RockstoreLayoutView.extend({
+ServicesView = Backbone.View.extend({
   
   events: {
     'click .service-command': 'doCommand',
@@ -37,16 +37,8 @@ ServicesView = RockstoreLayoutView.extend({
     this.constructor.__super__.initialize.apply(this, arguments);
     // set template
     this.template = window.JST.services_services;
-    this.snames = ['nfs', 'samba', 'sftp', 'ldap', 'ad', 'iscsi'];
-    this.services = {};
-    _.each(this.snames, function(name) {
-      console.log('creating service model for ' + name);
-      this.services[name] = new Service({name: name});
-    }, this);
-    _.each(_.keys(this.services), function(name) {
-      console.log('adding dependency for ' + name);
-      this.dependencies.push(this.services[name]);
-    }, this);
+    this.collection = new ServiceCollection();
+    this.collection.on("reset", this.renderServices, this);
     this.actionMessages = {
       'start': 'started',
       'stop': 'stopped',
@@ -57,22 +49,23 @@ ServicesView = RockstoreLayoutView.extend({
 
   render: function() {
     console.log('in services render');
-    this.fetch(this.renderStatus, this);
+    //this.fetch(this.renderStatus, this);
+    this.collection.fetch();
     return this;
   },
 
-  renderStatus: function() {
+  renderServices: function() {
     $(this.el).empty();
     console.log('rendering template');
     
     $(this.el).append(this.template({
-      services: this.services
+      services: this.collection
     }));
     
     var _this = this;
     this.intervalId = window.setInterval(function() {
       return function() { _this.updateStatus(_this); }
-    }(), 5000)
+    }(), 5000);
   },
   
   doCommand: function(event) {
@@ -87,7 +80,7 @@ ServicesView = RockstoreLayoutView.extend({
       command = tgt.attr('data-command');
     }
     var name = tgt.attr('data-service-name');
-    var service = this.services[name];
+    //var service = this.services[name];
     
     $.ajax({
       url: "/api/sm/services/" + name + "/",

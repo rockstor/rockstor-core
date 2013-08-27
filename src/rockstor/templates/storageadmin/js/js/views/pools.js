@@ -28,38 +28,62 @@
  * Pools View
  */
 
-PoolsView = RockstoreLayoutView.extend({
+PoolsView = Backbone.View.extend({
+  events: {
+    "click button[data-action=delete]": "deletePool"
+  },
+
   initialize: function() {
-    // call initialize of base
-    this.constructor.__super__.initialize.apply(this, arguments);
-    // set template
-    this.template = window.JST.pool_pools_template;
-    // create collection
-    this.pools = new PoolCollection();
-    // add dependencies
-    this.dependencies.push(this.pools);
+    this.template = window.JST.pool_pools;
+    this.pools_table_template = window.JST.pool_pools_table;
+    this.pagination_template = window.JST.common_pagination;
+    this.collection = new PoolCollection();
+    this.collection.on("reset", this.renderPools, this);
   },
 
   render: function() {
-    this.fetch(this.renderSubViews, this);
+    this.collection.fetch();
     return this;
   },
 
-  renderSubViews: function() {
-    // create subviews
-    this.subviews['pools-table'] = new PoolsTableView({collection: this.pools});
-    // bind subviews to collection
-    this.pools.on('reset', this.subviews['pools-table'].render, this.subviews['pools-table']);
-    // render
-    $(this.el).empty();
-    $(this.el).append(this.template());
-    // render subviews
-    this.$('#ph-pools-table').append(this.subviews['pools-table'].render().el);
+  renderPools: function() {
+    var _this = this;
+    $(this.el).html(this.template({ collection: this.collection }));
+    this.$("#pools-table-ph").html(this.pools_table_template({
+      collection: this.collection
+    }));
+    this.$(".pagination-ph").html(this.pagination_template({
+      collection: this.collection
+    }));
+    this.$("#pools-table").tablesorter();
+    return this;
   },
 
-  attachActions: function() {
-    
+  deletePool: function(event) {
+    var _this = this;
+    var button = $(event.currentTarget);
+    if (buttonDisabled(button)) return false;
+    name = button.attr('data-name');
+    if(confirm("Delete pool: " + name + " ... Are you sure?")){
+      disableButton(button);	
+      $.ajax({
+        url: "/api/pools/" + name,
+        type: "DELETE",
+        dataType: "json",
+        data: { "name": name, "disks": "foo", "raid_level": "foo" },
+        success: function() {
+          _this.collection.fetch({reset: true});
+          enableButton(button);
+        },
+        error: function(xhr, status, error) {
+          var msg = parseXhrError(xhr)
+          _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
+          enableButton(button);
+        }
+      });
+    }
   }
-
 });
 
+// Add pagination
+Cocktail.mixin(PoolsView, PaginationMixin);

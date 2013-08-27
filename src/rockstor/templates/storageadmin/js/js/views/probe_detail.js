@@ -46,9 +46,6 @@ ProbeDetailView = RockstoreLayoutView.extend({
         + "t1="+this.get("start") + "&t2=" + this.get("end") 
         + "&download=true";
       },
-      parse: function(response, options) {
-        return response[0];
-      }
     });
     this.probeRun = new this.probeRunTmp({
       id: this.probeId,

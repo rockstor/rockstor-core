@@ -161,7 +161,7 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
     	  size = size*1024*1024*1024;
     	}
       $.ajax({
-        url: "/api/shares/" + _this.share.get('name') + "/",
+        url: "/api/shares/" + _this.share.get('name'),
         type: "PUT",
         dataType: "json",
         data: { "size": size},

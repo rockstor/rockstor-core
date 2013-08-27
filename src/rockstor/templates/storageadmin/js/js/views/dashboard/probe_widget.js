@@ -430,10 +430,9 @@ RockStorWidgets.available_widgets.push({
   displayName: 'Smart Probes', 
   view: 'ProbeWidget',
   description: 'Smart Probes that display nfs call distribution',
-  defaultWidget: true,
+  defaultWidget: false,
   rows: 2,
   cols: 3,
   category: 'Storage',
-  position: 3
 });
 

@@ -176,6 +176,7 @@ PIPELINE_JS = {
             'js/rockstor.js',
             'js/rockstor_widgets.js',
             'js/rockstor_logger.js',
+            'js/paginated_collection.js',
             'js/graph.js',
             'js/models/models.js',
             'js/views/appliances.js',

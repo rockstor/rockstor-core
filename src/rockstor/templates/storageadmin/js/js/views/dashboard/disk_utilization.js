@@ -83,7 +83,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
   getData: function(context, t1, t2) {
     var _this = context;
     $.ajax({
-      url: "/api/sm/sprobes/disk-stat/1/data/?limit=10", 
+      url: "/api/sm/sprobes/diskstat/?limit=10", 
       type: "GET",
       dataType: "json",
       global: false, // dont show global loading indicator

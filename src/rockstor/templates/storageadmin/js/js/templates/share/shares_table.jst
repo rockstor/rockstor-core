@@ -1,0 +1,37 @@
+<% if (!collection.isEmpty()) { %>
+  <table id="shares-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of shares">
+    <thead>
+      <tr>
+        <th>No.</th>
+        <th>Name</th>
+        <th>Size</th>
+        <th>Pool</th>
+        <th>Usage</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% collection.each(function(share, index) { %>
+        <tr>
+          <td><%= index+1 %></td>
+          <td><a href="#shares/<%= share.get('name') %>"><%= share.get('name') %></a></td>
+          <td><%= humanize.filesize(share.get('size')*1024) %></td>
+          <td><%= share.get('pool').name %></td>
+          <td><%= humanize.filesize(share.get('usage')*1024)%></td>
+          <td><button id="delete_share_<%= share.get('name') %>" data-name="<%= share.get('name') %>" data-action="delete" data-pool="<%= share.get('pool').name %>" data-size="<%= share.get('size')*1024 %>" class="btn btn-danger">Delete</button></td>
+
+        </tr>
+      <% }); %>
+    </tbody>
+  </table>
+  <div class="pagination-ph"></div>
+<% } else { %>
+  <% if (!pools.isEmpty()) { %>
+    <h4>No shares have been created</h4>
+  <% } else { %>
+    <h4>No shares have been created. To create a share, at least one pool must be created. Please go to the <a href="#pools">Pools</a> page to create a pool.</h4>
+  <% } %>
+<% } %>
+<% if (!pools.isEmpty()) { %>
+  <a href="#add_share" id="add_share" class="btn btn-primary">Create Share</a>
+<% } %>

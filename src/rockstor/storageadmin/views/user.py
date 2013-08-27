@@ -16,11 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.authentication import (BasicAuthentication,
-                                           SessionAuthentication)
-from storageadmin.auth import DigestAuthentication
 from django.db import transaction
 from django.conf import settings
 from storageadmin.util import handle_exception
@@ -40,7 +36,7 @@ class UserView(GenericView):
 
     def get_queryset(self, *args, **kwargs):
         if ('username' in kwargs):
-            self.paginate_by = None
+            self.paginate_by = 0
             return DjangoUser.objects.filter(username=kwargs['username'])
         return DjangoUser.objects.all()
 

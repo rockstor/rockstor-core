@@ -56,9 +56,14 @@ class GenericSProbeView(generics.ListCreateAPIView):
         download = self.request.QUERY_PARAMS.get('download', None)
         if (download is not None):
             return None
-        if (self.paginate_by is None):
+        if (self.paginate_by is not None and self.paginate_by == 0):
             return None
         return settings.PAGINATION['page_size']
+
+    def get_allow_empty(self):
+        if (self.paginate_by is None):
+            return True
+        return False
 
     def post(self, request, *args, **kwargs):
         pass
