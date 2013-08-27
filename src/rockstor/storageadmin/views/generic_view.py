@@ -32,14 +32,12 @@ from rest_framework.authentication import (BasicAuthentication,
                                            SessionAuthentication,)
 from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
-from renderers import IgnoreClient
 
 
 class GenericView(generics.ListAPIView):
     authentication_classes = (DigestAuthentication, SessionAuthentication,
                               BasicAuthentication,)
     permission_classes = (IsAuthenticated,)
-    content_negotiation_class = IgnoreClient
 
     empty_error = u"Empty list and '%(class_name)s.allow_empty' is False."
     #overriding parent method to pass *args and **kwargs down to get_queryset
