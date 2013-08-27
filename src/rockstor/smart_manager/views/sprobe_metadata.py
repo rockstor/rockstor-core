@@ -34,7 +34,11 @@ class SProbeMetadataView(AdvancedSProbeView):
 
     def get_queryset(self, *args, **kwargs):
         if ('pid' in kwargs):
-            return SProbe.objects.filter(id=kwargs['pid'])
+            self.paginate_by = 0
+            try:
+                return SProbe.objects.get(id=kwargs['pid'])
+            except:
+                return []
 
         limit = self.request.QUERY_PARAMS.get('limit',
                                               settings.PAGINATION['max_limit'])
