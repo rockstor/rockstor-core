@@ -49,12 +49,13 @@ class PoolView(GenericView):
         return Pool.objects.all()
 
     @transaction.commit_on_success
-    def post(self, request, pname):
+    def post(self, request):
         """
         input is a list of disks, raid_level and name of the pool.
         """
         try:
             disks = request.DATA['disks'].split(',')
+            pname = request.DATA['pname']
 
             if (Pool.objects.filter(name=pname).exists()):
                 e_msg = ('Pool with name: %s already exists.' % pname)

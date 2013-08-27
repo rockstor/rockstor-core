@@ -63,13 +63,13 @@ var SupportCaseCollection = Backbone.Collection.extend({
 	
 var Share = Backbone.Model.extend({
   url: function() {
-    return '/api/shares/' + this.get('shareName') + '/';
+    return '/api/shares/' + this.get('shareName');
   }
 });
 
-var ShareCollection = Backbone.Collection.extend({
+var ShareCollection = RockStorPaginatedCollection.extend({
   model: Share,
-  url: '/api/shares/'
+  baseUrl: '/api/shares/'
 });
 
 var Snapshot = Backbone.Model.extend({

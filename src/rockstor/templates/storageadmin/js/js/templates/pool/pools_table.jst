@@ -1,0 +1,28 @@
+<% if (!collection.isEmpty()) { %>
+  <table id="pools-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of pools">
+    <thead>
+      <tr>
+        <th>No.</th>
+        <th>Name</th>
+        <th>Size</th>
+        <th>Raid</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% collection.each(function(pool, index) { %>
+        <tr>
+          <td><%= index+1 %></td>
+          <td><a href="#pools/<%= pool.get('name') %>"><%= pool.get('name') %></a></td>
+          <td><%= humanize.filesize(pool.get('size')*1024) %></td>
+          <td><%= pool.get('raid') %></td>
+          <td><button id="delete_pool_<%= pool.get('name') %>" data-name="<%= pool.get('name') %>" data-action="delete" class="btn btn-danger">Delete</button></td>
+        </tr>
+      <% }); %>
+    </tbody>
+  </table>
+  <div class="pagination-ph">
+<% } else { %>
+  <h4>No pools have been created.</h4>
+<% } %>
+

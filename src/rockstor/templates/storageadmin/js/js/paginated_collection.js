@@ -5,10 +5,13 @@ var RockStorPaginatedCollection = Backbone.Collection.extend({
     typeof(options) != 'undefined' || (options = {});
     this.page = 1;
     this.perPage = RockStorGlobals.pageSize;
+    this.fetched = false;
   },
 
   parse: function(resp) {
     this.count = resp.count;
+    // fetched is only false if it has never been fetched.
+    this.fetched = true; 
     return resp.results;
   },
 

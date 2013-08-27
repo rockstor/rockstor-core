@@ -7,7 +7,7 @@
     <% } %>
     <% for (var i=1; i<= collection.pageInfo().pages; i++) { %>
       <% if (i == collection.pageInfo().page) { %>
-        <li class="active"><a class="current-page" href="#" data-page="<%= i %>"><%= i %></a></li>
+        <li class="active"><a class="go-to-page" href="#" data-page="<%= i %>"><%= i %></a></li>
       <% } else { %>
         <li><a class="go-to-page" href="#" data-page="<%= i %>"><%= i %></a></li>
       <% } %>

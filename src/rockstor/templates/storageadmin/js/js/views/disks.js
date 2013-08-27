@@ -30,8 +30,6 @@ DisksView = Backbone.View.extend({
   },
 
   initialize: function() {
-    // call initialize of base
-    this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.disk_disks;
     this.disks_table_template = window.JST.disk_disks_table;
     this.pagination_template = window.JST.common_pagination;
@@ -52,6 +50,7 @@ DisksView = Backbone.View.extend({
     this.$(".pagination-ph").html(this.pagination_template({
       collection: this.collection
     }));
+    this.$("#disks-table").tablesorter();
   },
 
   setupDisks: function() {

@@ -89,8 +89,9 @@ class ShareView(GenericView):
             handle_exception(e, request)
 
     @transaction.commit_on_success
-    def post(self, request, sname):
+    def post(self, request):
         try:
+            sname = request.DATA['sname']
             if (Share.objects.filter(name=sname).exists()):
                 e_msg = ('Share with name: %s already exists.' % sname)
                 handle_exception(Exception(e_msg), request)

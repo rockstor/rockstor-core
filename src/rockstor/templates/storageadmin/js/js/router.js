@@ -168,7 +168,7 @@ var AppRouter = Backbone.Router.extend({
     RockStorSocket.removeAllListeners();
     $('#maincontent').empty();
     this.cleanup();
-    this.currentLayout = new SharesLayoutView();
+    this.currentLayout = new SharesView();
     $('#maincontent').append(this.currentLayout.render().el);
   },
   showSnaps: function(shareName) {
