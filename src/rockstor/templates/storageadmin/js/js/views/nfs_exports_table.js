@@ -122,7 +122,7 @@ NFSExportsTableModule  = RockstoreModuleView.extend({
     data = $('#new-nfs-export-row').getJSON();
     console.log(data);
     $.ajax({
-      url: "/api/shares/"+_this.share.get('name')+'/nfs/',
+      url: "/api/shares/"+_this.share.get('name')+'/nfs',
       type: "POST",
       dataType: "json",
       data: data,

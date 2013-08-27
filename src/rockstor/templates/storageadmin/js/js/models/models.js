@@ -99,7 +99,7 @@ var NFSExportCollection = RockStorPaginatedCollection.extend({
 
 var SMBShare = Backbone.Model.extend({ 
   url: function() {
-      return '/api/shares/' + this.get('shareName') + '/samba/'    
+      return '/api/shares/' + this.get('shareName') + '/samba'    
   }
 });
 var SMBShareCollection = Backbone.Collection.extend({model: SMBShare});
