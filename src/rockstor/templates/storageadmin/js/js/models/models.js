@@ -108,9 +108,9 @@ var Service = Backbone.Model.extend({
   idAttribute: "name",
 });
 
-var ServiceCollection = Backbone.Collection.extend({
+var ServiceCollection = RockStorPaginatedCollection.extend({
   model: Service,
-  url: "/api/sm/services"
+  baseUrl: "/api/sm/services"
 });
 
 var Appliance = Backbone.Model.extend({urlRoot: '/api/appliances/'});

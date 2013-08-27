@@ -83,10 +83,9 @@ ServicesView = Backbone.View.extend({
     //var service = this.services[name];
     
     $.ajax({
-      url: "/api/sm/services/" + name + "/",
-      type: "PUT",
+      url: "/api/sm/services/" + name + "/" + command,
+      type: "POST",
       dataType: "json",
-      data: {command: command}, 
       success: function(data, status, xhr) {
         console.log('service saved successfully');
         var action = _this.actionMessages[command];
@@ -109,6 +108,7 @@ ServicesView = Backbone.View.extend({
       global: false, // dont show global loading indicator
       success: function(data, status, xhr) {
         hideLoadingIndicator('service-loading-indicator', _this);
+        data = data.results;
         _.each(data, function(service) {
           var name = service.name;
           status_elem = _this.$('#'+name+'-status');

@@ -26,10 +26,10 @@ class NFSConsole(BaseConsole):
     def __init__(self, prompt):
         BaseConsole.__init__(self)
         self.prompt = prompt + ' NFS>'
+        self.baseurl = ('%ssm/services/nfs' % BaseConsole.url)
 
     def do_status(self, args):
-        url = BaseConsole.url + 'sm/services/nfs/'
-        nfs_info = api_call(url)
+        nfs_info = api_call(self.baseurl)
         print nfs_info
 
     def do_start(self, args):
@@ -39,9 +39,8 @@ class NFSConsole(BaseConsole):
         return self.put_wrapper(args, 'stop')
 
     def put_wrapper(self, args, command):
-        url = BaseConsole.url + 'sm/services/nfs/'
-        input_data = {'command': command,}
-        nfs_info = api_call(url, data=input_data, calltype='put')
+        url = ('%s/%s' % (self.baseurl, command))
+        nfs_info = api_call(url, calltype='post')
         print nfs_info
 
     def do_shares(self, args):

@@ -25,17 +25,11 @@ from osi import run_command
 SERVICE_BIN = '/sbin/service'
 
 def init_service_op(service_name, command):
-    service = None
-    if (service_name == 'nfs'):
-        service = 'nfs'
-    elif (service_name == 'samba'):
-        service = 'smb'
-    elif (service_name == 'sftp'):
-        service = 'sshd'
-    else:
+    supported_services = ('nfs', 'smb', 'sshd', 'ypbind', 'rpcbind',)
+    if (service_name not in supported_services):
         raise Exception('unknown service: %s' % service_name)
 
-    cmd = [SERVICE_BIN, service, command]
+    cmd = [SERVICE_BIN, service_name, command]
     out, err, rc = run_command(cmd)
     return out, err, rc
 

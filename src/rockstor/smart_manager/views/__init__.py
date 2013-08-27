@@ -16,7 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 from sm import SmartManagerView
-from service import ServiceView
 from sprobes import SProbeView
 from mem_info import MemInfoView
 from net_stat import NetStatView
@@ -30,3 +29,7 @@ from nfs_uid_gid import NFSDUidGidDistributionView
 from load_avg import LoadAvgView
 from sprobe_metadata import SProbeMetadataView
 from task_scheduler import TaskSchedulerView
+from base_service import BaseServiceView
+from nis_service import NISServiceView
+from samba_service import SambaServiceView
+from nfs_service import NFSServiceView
