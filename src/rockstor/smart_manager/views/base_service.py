@@ -17,54 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from smart_manager.models import (Service, ServiceStatus)
-from rest_framework import generics
 from django.conf import settings
-from django.db import transaction
-from storageadmin.util import handle_exception
 from smart_manager.serializers import ServiceStatusSerializer
-from rest_framework.response import Response
-import os
-from django.http import Http404
 import logging
 logger = logging.getLogger(__name__)
-from django.core.paginator import Paginator
-from rest_framework.authentication import (BasicAuthentication,
-                                           SessionAuthentication,)
-from storageadmin.auth import DigestAuthentication
-from rest_framework.permissions import IsAuthenticated
+from advanced_sprobe import AdvancedSProbeView
 
 
-class BaseServiceView(generics.ListCreateAPIView):
-    authentication_classes = (DigestAuthentication, SessionAuthentication,
-                              BasicAuthentication,)
-    permission_classes = (IsAuthenticated,)
+class BaseServiceView(AdvancedSProbeView):
     serializer_class = ServiceStatusSerializer
-
-    empty_error = u"Empty list and '%(class_name)s.allow_empty' is False."
-    #overriding parent method to pass *args and **kwargs down to get_queryset
-    def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset(*args, **kwargs)
-        self.object_list = self.filter_queryset(queryset)
-
-        # Default is to allow empty querysets.  This can be altered by setting
-        # `.allow_empty = False`, to raise 404 errors on empty querysets.
-        allow_empty = self.get_allow_empty()
-        if not allow_empty and not self.object_list:
-            class_name = self.__class__.__name__
-            error_msg = self.empty_error % {'class_name': class_name}
-            raise Http404(error_msg)
-
-        # Pagination size is set by the `.paginate_by` attribute,
-        # which may be `None` to disable pagination.
-        page_size = self.get_paginate_by(self.object_list)
-        if page_size:
-            packed = self.paginate_queryset(self.object_list, page_size)
-            paginator, page, queryset, is_paginated = packed
-            serializer = self.get_pagination_serializer(page)
-        else:
-            serializer = self.get_serializer(self.object_list)
-
-        return Response(serializer.data)
 
     def get_queryset(self, *args, **kwargs):
 
@@ -80,4 +41,5 @@ class BaseServiceView(generics.ListCreateAPIView):
                     sos.append(so)
             return sos
         s = Service.objects.get(name=url_fields[3])
+        self.paginate_by = 0
         return ServiceStatus.objects.filter(service=s).order_by('-ts')[0]
