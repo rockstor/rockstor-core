@@ -215,9 +215,9 @@ var ProbeRun = Backbone.Model.extend({
   },
 });
 
-var ProbeRunCollection = Backbone.Collection.extend({
+var ProbeRunCollection = RockStorPaginatedCollection.extend({
   model: ProbeRun,
-  url: "/api/sm/sprobes/metadata?format=json"
+  baseUrl: "/api/sm/sprobes/metadata"
 })
 
 var ProbeTemplate = Backbone.Model.extend();
