@@ -4,7 +4,7 @@ var RockStorPaginatedCollection = Backbone.Collection.extend({
     _.bindAll(this, 'parse', 'url', 'pageInfo', 'nextPage', 'prevPage');
     typeof(options) != 'undefined' || (options = {});
     this.page = 1;
-    this.perPage = RockStorGlobals.pageSize;
+    this.pageSize = RockStorGlobals.pageSize;
     this.fetched = false;
   },
 
@@ -26,19 +26,19 @@ var RockStorPaginatedCollection = Backbone.Collection.extend({
     var info = {
       count: this.count,
       page: this.page,
-      perPage: this.perPage,
-      pages: Math.ceil(this.count / this.perPage),
+      pageSize: this.pageSize,
+      pages: Math.ceil(this.count / this.pageSize),
       prev: false,
       next: false
     };
 
-    var max = Math.min(this.count, this.page * this.perPage);
+    var max = Math.min(this.count, this.page * this.pageSize);
 
-    if (this.total == this.pages * this.perPage) {
+    if (this.total == this.pages * this.pageSize) {
       max = this.total;
     }
 
-    info.range = [(this.page - 1) * this.perPage + 1, max];
+    info.range = [(this.page - 1) * this.pageSize + 1, max];
 
     if (this.page > 1) {
       info.prev = this.page - 1;
@@ -71,7 +71,7 @@ var RockStorPaginatedCollection = Backbone.Collection.extend({
   },
 
   extraParams: function() {
-    return { page: this.page, format: "json" };
+    return { page: this.page, format: "json", page_size: this.pageSize };
   }
 
 });
