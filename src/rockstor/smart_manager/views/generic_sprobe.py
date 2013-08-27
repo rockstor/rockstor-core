@@ -60,5 +60,10 @@ class GenericSProbeView(generics.ListCreateAPIView):
             return None
         return settings.PAGINATION['page_size']
 
+    def get_allow_empty(self):
+        if (self.paginate_by is None):
+            return True
+        return False
+
     def post(self, request, *args, **kwargs):
         pass
