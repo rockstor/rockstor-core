@@ -203,11 +203,13 @@ class Migration(SchemaMigration):
         },
         'smart_manager.sprobe': {
             'Meta': {'object_name': 'SProbe'},
+            'display_name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
+            'end': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'smart': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'state': ('django.db.models.fields.CharField', [], {'max_length': '7'}),
-            'ts': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
+            'start': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
+            'state': ('django.db.models.fields.CharField', [], {'max_length': '7'})
         },
         'smart_manager.vmstat': {
             'Meta': {'object_name': 'VmStat'},
