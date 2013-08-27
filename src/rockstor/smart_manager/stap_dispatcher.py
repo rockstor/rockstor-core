@@ -35,8 +35,6 @@ from django.core.serializers import serialize
 from stap_worker import StapWorker
 
 
-STAP_RUN = '/usr/bin/staprun'
-
 import logging
 logger = logging.getLogger(__name__)
 
