@@ -17,16 +17,21 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf.urls.defaults import patterns, url
-from smart_manager.views import (SmartManagerView, ServiceView, SProbeView,
-                                 MemInfoView, NetStatView,
-                                 DiskStatView, NFSDistribView,
-                                 NFSDClientDistribView, NFSDShareDistribView,
-                                 NFSDShareClientDistribView)
+from smart_manager.views import (BaseServiceView, NISServiceView,
+                                 SambaServiceView, NFSServiceView)
 
+command_regex = ('config|start|stop|reload|restart')
 
 urlpatterns = patterns('',
     # Services
-    url(r'^$', ServiceView.as_view(), name='service-view'),
-    url(r'^(?P<sname>[A-Za-z_]+)/$', ServiceView.as_view(),
-        name='service-view'),
+    url(r'^$', BaseServiceView.as_view(), name='service-view'),
+    url(r'^nis$', NISServiceView.as_view(), name='nis-view'),
+    url(r'^nis/(?P<command>%s)$' % command_regex, NISServiceView.as_view(),
+        name='nis-view'),
+    url(r'^samba$', SambaServiceView.as_view(), name='samba-view'),
+    url(r'^samba/(?P<command>%s)$' % command_regex, SambaServiceView.as_view(),
+        name='samba-view'),
+    url(r'^nfs$', NFSServiceView.as_view(), name='nfs-view'),
+    url(r'^nfs/(?P<command>%s)$' % command_regex, NFSServiceView.as_view(),
+        name='nfs-view'),
 )

@@ -16,26 +16,35 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+
 from base_console import BaseConsole
-from share_smb_console import ShareSMBConsole
 from rest_util import api_call
+import json
 
 
-class SMBConsole(BaseConsole):
+class NISConsole(BaseConsole):
 
     def __init__(self, prompt):
         BaseConsole.__init__(self)
-        self.prompt = prompt + ' Samba>'
-        self.baseurl = ('%ssm/services/samba' % BaseConsole.url)
+        self.prompt = prompt + ' NIS>'
+        self.baseurl = ('%ssm/services/nis' % BaseConsole.url)
+
+    def do_config(self, args):
+        """
+        config domain_name server_name
+        """
+        url = ('%s/config' % self.baseurl)
+        fields = args.split()
+        input_data = {'config': {'domain': fields[0],
+                                 'server': fields[1],},}
+        headers = {'content-type': 'application/json'}
+        nis_info = api_call(url, data=json.dumps(input_data), calltype='post',
+                            headers=headers)
 
     def do_status(self, args):
-        smb_info = api_call(self.baseurl)
-        print smb_info
-
-    def put_wrapper(self, args, command):
-        url = ('%s/%s' % (self.baseurl, command))
-        smb_info = api_call(url, calltype='post')
-        print smb_info
+        url = BaseConsole.url + 'sm/services/nis'
+        nfs_info = api_call(url)
+        print nfs_info
 
     def do_start(self, args):
         return self.put_wrapper(args, 'start')
@@ -43,14 +52,7 @@ class SMBConsole(BaseConsole):
     def do_stop(self, args):
         return self.put_wrapper(args, 'stop')
 
-    def do_shares(self, args):
-        pass
-
-    def do_share(self, args):
-        input_share = args.split()
-        if (len(input_share) > 0):
-            ss_console = ShareSMBConsole(input_share[0])
-            if (len(input_share) > 1):
-                ss_console.onecmd(' '.join(input_share[1:]))
-            else:
-                ss_console.cmdloop()
+    def put_wrapper(self, args, command):
+        url = ('%s/%s' % (self.baseurl, command))
+        nis_info = api_call(url, calltype='post')
+        print nis_info

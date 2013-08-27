@@ -20,7 +20,6 @@ from django.conf.urls.defaults import patterns, include, url
 from storageadmin.views import (SetupWizardView, AppliancesView, LoginView,
                                 SupportView, DashboardConfigView, NetworkView,
                                 SetupUserView)
-
 import os.path
 import socketio.sdjango
 

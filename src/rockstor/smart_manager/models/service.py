@@ -23,6 +23,7 @@ class Service(models.Model):
 
     name = models.CharField(max_length=24, unique=True)
     registered = models.BooleanField(default=False)
+    config = models.CharField(max_length=8192, null=True)
 
     class Meta:
         app_label = 'smart_manager'
