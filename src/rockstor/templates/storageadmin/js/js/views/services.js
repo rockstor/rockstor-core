@@ -83,10 +83,9 @@ ServicesView = Backbone.View.extend({
     //var service = this.services[name];
     
     $.ajax({
-      url: "/api/sm/services/" + name + "/",
-      type: "PUT",
+      url: "/api/sm/services/" + name + "/" + command,
+      type: "POST",
       dataType: "json",
-      data: {command: command}, 
       success: function(data, status, xhr) {
         console.log('service saved successfully');
         var action = _this.actionMessages[command];
