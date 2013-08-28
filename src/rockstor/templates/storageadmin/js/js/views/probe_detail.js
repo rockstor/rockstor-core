@@ -105,6 +105,9 @@ ProbeDetailView = RockstoreLayoutView.extend({
     } else {
       //  TODO handle no probe viz class found 
     }
+    // TODO remove after testing
+    this.probeVizClass = window["NfsShareClientUserView"];
+    // end TODO
     this.setProbeEvents();
     this.probeRun.trigger(this.probeRun.get("state"));
   },
@@ -126,7 +129,10 @@ ProbeDetailView = RockstoreLayoutView.extend({
     this.updateActions();
     this.updateTime();
     if (this.probeVizClass) {
-      // TODO render probe viz view
+      this.probeVizView = new this.probeVizClass({
+        probeRun: this.probeRun
+      });
+      this.$('#probe-viz-ph').append(this.probeVizView.render().el);
     } else {
     }
   },
@@ -140,7 +146,11 @@ ProbeDetailView = RockstoreLayoutView.extend({
     } else {
       // user is loading this page after the probe has completed.
       if (this.probeVizClass) {
-        // TODO render probe viz view
+        console.log("rendering probe viz");
+        this.probeVizView = new this.probeVizClass({
+          probeRun: this.probeRun
+        });
+        this.$('#probe-viz-ph').append(this.probeVizView.render().el);
       } else {
       }
     }

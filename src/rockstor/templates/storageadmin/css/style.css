@@ -1223,7 +1223,7 @@ ol.probe-status li.status-tracker-error:before {
   margin-left: 4px;
 }
 
-#probe-viz {
+#probe-viz-ph {
   border: 1px solid #ddd;
   height: 500px;
   padding: 12px;
