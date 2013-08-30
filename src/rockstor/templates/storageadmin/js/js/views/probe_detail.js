@@ -46,6 +46,9 @@ ProbeDetailView = RockstoreLayoutView.extend({
         + "t1="+this.get("start") + "&t2=" + this.get("end") 
         + "&download=true";
       },
+      dataUrl: function() {
+        return '/api/sm/sprobes/' + this.get('name') + '/' + this.id + '/data';
+      },
     });
     this.probeRun = new this.probeRunTmp({
       id: this.probeId,
@@ -130,9 +133,9 @@ ProbeDetailView = RockstoreLayoutView.extend({
     this.updateTime();
     if (this.probeVizClass) {
       this.probeVizView = new this.probeVizClass({
-        probeRun: this.probeRun
+        probe: this.probeRun
       });
-      this.$('#probe-viz-ph').append(this.probeVizView.render().el);
+      this.$('#probe-viz-ph').html(this.probeVizView.render().el);
     } else {
     }
   },
@@ -142,13 +145,16 @@ ProbeDetailView = RockstoreLayoutView.extend({
     this.updateActions();
     this.updateTime();
     if (this.probeVizView) {
-      this.probeVizView.trigger(this.probeStates.STOPPED);
+      this.probeVizView.cleanup();
+      this.$('#probe-viz-ph').html(this.probeVizView.render().el);
     } else {
       // user is loading this page after the probe has completed.
       if (this.probeVizClass) {
         console.log("rendering probe viz");
+        console.log(this.probeRun.get("start"));
+        console.log(this.probeRun.get("end"));
         this.probeVizView = new this.probeVizClass({
-          probeRun: this.probeRun
+          probe: this.probeRun
         });
         this.$('#probe-viz-ph').append(this.probeVizView.render().el);
       } else {

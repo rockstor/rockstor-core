@@ -31,29 +31,153 @@ NfsShareClientUserView = Backbone.View.extend({
     this.nfsAttrs = ["num_read", "num_write", "num_lookup"];
     this.treeType = "client";
     this.updateInterval = 5000; // update every updateInterval seconds
-    this.ts = this.options.ts; // ISO format timestamp
     this.rawData = null; // data returned from probe backend
+    console.log("In initialize");
+    console.log(this.probe);
   },
 
   render: function() {
-    
     $(this.el).html(this.template({probe: this.probe}));
+    this.viz = d3.select(this.el).select("#nfs-share-client-user-viz");
     var _this = this;
-
-    this.renderIntervalId = window.setInterval(function() {
-      var data = _this.generateData();
-      //var filteredData = _this.filterData(data, _this.treeType, _this.selAttrs, _this.numTop);
-      //console.log(filteredData);
-      _this.root = _this.createTree(data, _this.treeType, _this.nfsAttrs);
-      console.log(_this.root);
-      _this.renderViz(_this.root);
-    }, this.updateInterval);
-    
+    if (this.probe.get("state") == probeStates.RUNNING) {
+      var t2 = this.probe.get("start");
+      var t1 = moment(t2).subtract("ms",this.updateInterval).toISOString();
+      this.update(this.probe, t1, t2, true, this.updateInterval);
+    } else if (this.probe.get("state") == probeStates.STOPPED) {
+      var t1 = this.probe.get("start");
+      var t2 = this.probe.get("end");
+      this.update(this.probe, t1, t2, false, null);
+    } 
     return this;
   },
+  
+  update: function(probe, t1, t2, repeat, updateInterval) {
+    var _this = this;
+    var dataUrl = this.probe.dataUrl() + "?t1=" + t1 + "&t2=" + t2;
+    if (repeat) {
+      this.renderIntervalId = window.setInterval(function() {
+        _this.fetchAndRender(dataUrl);
+        // update times
+        t1 = t2;
+        t2 = moment(t1).add("ms",_this.updateInterval).toISOString();
+        dataUrl = _this.probe.dataUrl() + "?t1=" + t1 + "&t2=" + t2;
+      }, updateInterval);
+    } else {
+      this.fetchAndRender(dataUrl);
+    }
+  },
 
-  // gets data every updateInterval seconds and renders it
-  renderViz: function() {
+  fetchAndRender: function(dataUrl) {
+    var _this = this;
+    $.ajax({
+      url: dataUrl,
+      type: "GET",
+      dataType: "json",
+      success: function(data, textStatus, jqXHR) {
+        var data = _this.generateData(); // TODO remove after test
+        _this.renderViz(data);
+      },
+      error: function(request, status, error) {
+        console.log(error);
+      }
+    });
+  },
+
+  renderViz: function(data) {
+    var _this = this;
+    this.root = this.createTree(data, this.treeType, this.nfsAttrs);
+    var rowHeight = 60;
+    var rowPadding = 4;
+    var row = this.viz.selectAll("div.nfs-viz-row")
+    .data(this.root.children, function(d,i) {
+      return d.id;
+    });
+    
+    var rowEnter = row.enter()
+    .append("div")
+    .attr("class", "nfs-viz-row");
+  
+    var rowSumEnter = rowEnter.append("div").attr("class", "row-sum");
+    
+    var rowSum = row.select("div.row-sum");
+    this.renderRowSumContents(rowSum);
+    
+    var rowTitleEnter = rowEnter.append("div").attr("class", "row-title");
+    
+    var rowTitle = row.select("div.row-title");
+    this.renderRowTitleContents(rowTitle);
+  
+    var rowContentsEnter = rowEnter.append("div")
+    .attr("class", "row-contents");
+    
+    var rowContents = row.select("div.row-contents");
+    this.renderRowContents(rowContents);
+
+    var rowUpdate = row.transition()
+    .style("top",function(d,i) { return (i*(rowHeight + rowPadding*2)) + "px"; });
+    var rowExit = row.exit();
+    rowExit.remove();
+    
+  },
+  
+
+  renderRowTitleContents: function(rowTitle) {
+    rowTitle.html("");
+    rowTitle.append("img")
+    .attr("src", "/img/computer.png")
+    .attr("width", "20")
+    .attr("height", "20");
+    rowTitle.append("br");    
+    rowTitle.append("span")
+    .attr("class","nodeLabel")
+    .text(function(d) { return d.name; });
+  },
+  
+  renderRowSumContents: function(rowSum) {
+    var nfsAttrs = this.nfsAttrs;
+    rowSum.html("");
+    rowSum.each(function(d,i) {
+      var el = d3.select(this);  
+      _.each(nfsAttrs, function(a) {
+        el.append("span").text(a + ":" + d[a]);
+        el.append("br");
+      });
+    });
+  },
+
+  renderRowContents: function(rowContents) {
+    var contentItemWidth = 60;
+    var contentItemPadding = 4;
+    var paddingLeft = 100;
+    var contentItem = rowContents.selectAll("div.row-content-item")
+    .data(function(d) { return d.children; }, function(dItem){
+      return dItem.id;
+    });
+    var contentItemEnter = contentItem.enter()
+    .append("div")
+    .attr("class","row-content-item")
+    
+    contentItemEnter.append("img")
+    .attr("src", "/img/Closed_32x32x32.png")
+    .attr("width", "20")
+    .attr("height", "20");
+    
+    contentItemEnter.append("br");
+    
+    contentItemEnter.append("span")
+    .attr("class","nodeLabel")
+    .text(function(d) { return d.name; });
+
+    var contentItemUpdate = contentItem.transition()
+    .style("left", function(d,i) { 
+      return ((i*(contentItemWidth + contentItemPadding*2)) 
+      + paddingLeft) + "px";
+    });
+
+    var contentItemExit = contentItem.exit();
+    contentItemExit.remove();
+
   },
 
   cleanup: function() {

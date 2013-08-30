@@ -167,7 +167,7 @@ var Probe = Backbone.Model.extend({
       return '/api/sm/sprobes/' + this.get('name') + '/';
   },
   dataUrl: function() {
-    return '/api/sm/sprobes/' + this.get('name') + '/' + this.id + '/data/';
+    return '/api/sm/sprobes/' + this.get('name') + '/' + this.id + '/data';
   },
   parse: function(response) {
     if (response.results && response.results.length > 0) {
