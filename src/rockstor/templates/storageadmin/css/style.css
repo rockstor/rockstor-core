@@ -1226,7 +1226,6 @@ ol.probe-status li.status-tracker-error:before {
 #probe-viz-ph {
   border: 1px solid #ddd;
   height: 500px;
-  padding: 12px;
 }
 
 
@@ -1236,33 +1235,51 @@ ol.probe-status li.status-tracker-error:before {
   padding-bottom: 12px;
 }
 
-#nfs-share-client-user-viz {
+#nfs-share-client-user-rows {
   position: relative;
 }
 
 .nfs-viz-row {
   width: 100%;
-  height: 60px;
-  padding: 4px;
-  border: 1px solid rgb(238, 238, 238);
+  height: 75px;
+  border-bottom: 1px solid rgb(238, 238, 238);
   position: absolute;
+  font: 11px/1.1em "Helvetica Neue",Helvetica,Arial,sans-serif;
 }
 
-.nfs-viz-row .row-title {
+.nfs-viz-header {
+  width: 100%;
+  height: 30px;
+  border-bottom: 1px solid rgb(238, 238, 238);
+  font-weight: bold;
+
+}
+
+.nfs-viz-row-inner {
+  padding: 12px;
+}
+
+.nfs-viz-row .row-title, .nfs-viz-header .row-title {
   width: 100px;
   border-right: 1px solid #eee;
   height: 100%;
   float: left;
 }
 
-.nfs-viz-row .row-sum {
-  width: 200px;
+.nfs-viz-row .row-sum, .nfs-viz-header .row-sum {
+  width: 250px;
   border-left: 1px solid #eee;
   float: right;
   height: 100%;
+  padding-left: 4px;
 }
 
-.nfs-viz-row .row-contents {
+.nfs-viz-row .row-sum table {
+  width: 100%;
+
+}
+
+.nfs-viz-row .row-contents, .nfs-viz-header .row-contents {
   position: relative;
 }
 

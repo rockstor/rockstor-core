@@ -28,17 +28,16 @@ NfsShareClientUserView = Backbone.View.extend({
   initialize: function() {
     this.probe = this.options.probe;
     this.template = window.JST.probes_nfs_share_client_user;
+    this.rowsumTemplate = window.JST.probes_nfs_share_client_user_rowsum;
     this.nfsAttrs = ["num_read", "num_write", "num_lookup"];
     this.treeType = "client";
     this.updateInterval = 5000; // update every updateInterval seconds
     this.rawData = null; // data returned from probe backend
-    console.log("In initialize");
-    console.log(this.probe);
   },
 
   render: function() {
     $(this.el).html(this.template({probe: this.probe}));
-    this.viz = d3.select(this.el).select("#nfs-share-client-user-viz");
+    this.rows = d3.select(this.el).select("#nfs-share-client-user-rows");
     var _this = this;
     if (this.probe.get("state") == probeStates.RUNNING) {
       var t2 = this.probe.get("start");
@@ -87,17 +86,25 @@ NfsShareClientUserView = Backbone.View.extend({
   renderViz: function(data) {
     var _this = this;
     this.root = this.createTree(data, this.treeType, this.nfsAttrs);
-    var rowHeight = 60;
+    var rowHeight = 75;
     var rowPadding = 4;
-    var row = this.viz.selectAll("div.nfs-viz-row")
+    var row = this.rows.selectAll("div.nfs-viz-row")
     .data(this.root.children, function(d,i) {
       return d.id;
     });
+    var length = this.root.children.length;
+    var x = d3.scale.ordinal()
+    x.domain(d3.range(length));
+    var nodes = this.root.children;
+    x.range(d3.range(length).sort(function(a,b) {
+      return nodes[a].num_read - nodes[b].num_read;
+    }).reverse());
     
     var rowEnter = row.enter()
     .append("div")
-    .attr("class", "nfs-viz-row");
-  
+    .attr("class", "nfs-viz-row")
+    .style("top", (length*(rowHeight + rowPadding*2)) + "px");
+    
     var rowSumEnter = rowEnter.append("div").attr("class", "row-sum");
     
     var rowSum = row.select("div.row-sum");
@@ -115,7 +122,11 @@ NfsShareClientUserView = Backbone.View.extend({
     this.renderRowContents(rowContents);
 
     var rowUpdate = row.transition()
-    .style("top",function(d,i) { return (i*(rowHeight + rowPadding*2)) + "px"; });
+    .duration(1000)
+    .style("top",function(d,i) { 
+      return (x(i)*(rowHeight + rowPadding*2)) + "px"; 
+    });
+    
     var rowExit = row.exit();
     rowExit.remove();
     
@@ -135,14 +146,12 @@ NfsShareClientUserView = Backbone.View.extend({
   },
   
   renderRowSumContents: function(rowSum) {
+    var _this = this;
     var nfsAttrs = this.nfsAttrs;
     rowSum.html("");
     rowSum.each(function(d,i) {
       var el = d3.select(this);  
-      _.each(nfsAttrs, function(a) {
-        el.append("span").text(a + ":" + d[a]);
-        el.append("br");
-      });
+      el.html(_this.rowsumTemplate({d:d}));
     });
   },
 
