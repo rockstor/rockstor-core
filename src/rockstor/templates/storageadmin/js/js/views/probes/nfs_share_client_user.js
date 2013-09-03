@@ -85,46 +85,38 @@ NfsShareClientUserView = Backbone.View.extend({
 
   renderViz: function(data) {
     var _this = this;
-    this.root = this.createTree(data, this.treeType, this.nfsAttrs);
-    var rowHeight = 75;
+    this.root = this.createTree(data, this.treeType, this.nfsAttrs, "num_read", 4);
+    var rowHeight = 50;
     var rowPadding = 4;
+    var length = this.root.children.length;
+    this.attr = "num_read";
+    
+    var attrArray = _.flatten(_.map(this.root.children, function(n) {
+      return _.map(n.children, function(d) { return d[_this.attr]; } );
+    }));
+    console.log(attrArray);
+    this.attrMax = d3.max(attrArray);
+    console.log(this.attrMax);
+    
+    // Create rows 
     var row = this.rows.selectAll("div.nfs-viz-row")
     .data(this.root.children, function(d,i) {
       return d.id;
     });
-    var length = this.root.children.length;
-    var x = d3.scale.ordinal()
-    x.domain(d3.range(length));
-    var nodes = this.root.children;
-    x.range(d3.range(length).sort(function(a,b) {
-      return nodes[a].num_read - nodes[b].num_read;
-    }).reverse());
-    
     var rowEnter = row.enter()
     .append("div")
     .attr("class", "nfs-viz-row")
-    .style("top", (length*(rowHeight + rowPadding*2)) + "px");
-    
-    var rowSumEnter = rowEnter.append("div").attr("class", "row-sum");
-    
-    var rowSum = row.select("div.row-sum");
-    this.renderRowSumContents(rowSum);
-    
-    var rowTitleEnter = rowEnter.append("div").attr("class", "row-title");
-    
-    var rowTitle = row.select("div.row-title");
-    this.renderRowTitleContents(rowTitle);
+    // enter at the bottom of the list
+    .style("top", ((length-1)*(rowHeight + rowPadding*2)) + "px");
   
-    var rowContentsEnter = rowEnter.append("div")
-    .attr("class", "row-contents");
-    
-    var rowContents = row.select("div.row-contents");
-    this.renderRowContents(rowContents);
+    // Render row contents 
+    this.renderRow(row); 
 
+    // move to sorted position
     var rowUpdate = row.transition()
     .duration(1000)
     .style("top",function(d,i) { 
-      return (x(i)*(rowHeight + rowPadding*2)) + "px"; 
+      return (i*(rowHeight + rowPadding*2)) + "px"; 
     });
     
     var rowExit = row.exit();
@@ -132,19 +124,111 @@ NfsShareClientUserView = Backbone.View.extend({
     
   },
   
+  renderRow: function(row) {
+    var client = row.selectAll("div.client")
+    .data(function(d,i) { return [d]; }, function(d) { return d.name});
+    var clientEnter = client.enter().append("div").attr("class", "client");
+    this.renderClient(client);
+   
+    var shares = row.selectAll("div.top-shares")
+    .data(function(d,i) { return [d]; }, function(d) { return d.name});
+    var sharesEnter = shares.enter().append("div").attr("class", "top-shares");
+    this.renderShares(shares);
+    
+    var reads = row.selectAll("div.nfs-reads")
+    .data(function(d,i) { return [d]; }, function(d) { return d.name});
+    var readsEnter = reads.enter().append("div").attr("class", "nfs-reads");
+    this.renderReads(reads);
+   
+    var writes = row.selectAll("div.nfs-writes")
+    .data(function(d,i) { return [d]; }, function(d) { return d.name});
+    var writesEnter = writes.enter().append("div").attr("class", "nfs-writes");
+    this.renderWrites(writes);
+    
+    var lookups = row.selectAll("div.nfs-lookups")
+    .data(function(d,i) { return [d]; }, function(d) { return d.name});
+    var lookupsEnter = lookups.enter().append("div").attr("class", "nfs-lookups");
+    this.renderLookups(lookups);
 
-  renderRowTitleContents: function(rowTitle) {
-    rowTitle.html("");
-    rowTitle.append("img")
+  },
+
+  renderClient: function(client) {
+    client.html("");
+    client.append("img")
     .attr("src", "/img/computer.png")
     .attr("width", "20")
     .attr("height", "20");
-    rowTitle.append("br");    
-    rowTitle.append("span")
+    client.append("br");    
+    client.append("span")
     .attr("class","nodeLabel")
     .text(function(d) { return d.name; });
   },
+
+  renderShares: function(shares) {
+    var _this = this;
+    var shareWidth = 60;
+    var sharePadding = 4;
+
+    var shareData = shares.datum();
+    var rScale = d3.scale.linear()
+    .domain([0, this.attrMax])
+    .range([2,10]);
+
+    var share = shares.selectAll("div.share")
+    .data(function(d) { return d.children; }, function(dItem){
+      return dItem.id;
+    });
+    var shareEnter = share.enter()
+    .append("div")
+    .attr("class","share")
+    
+    shareEnter.append("svg")
+    .attr("width", 50)
+    .attr("height", 25)
+    .append("g")
+    .append("circle")
+    .attr("cx", 25)
+    .attr("cy", 10)
+    .attr("r", function(d) { return rScale(d[_this.attr]); })
+    .attr("fill", "steelblue");
+    
+    shareEnter.append("br");
+    
+    shareEnter.append("span")
+    .attr("class","nodeLabel")
+    .text(function(d) { return d.name; });
+
+    share.select("circle").attr("r", function(d) { return rScale(d[_this.attr]); })
+
+    var shareUpdate = share.transition()
+    .style("left", function(d,i) { 
+      return (i*(shareWidth + sharePadding*2)) + "px";
+    });
+    
+    var shareExit = share.exit();
+    shareExit.remove();
+
+  },
   
+  renderReads: function(reads) {
+    reads.text(function(d) { return d["num_read"]; });
+  },
+
+  renderWrites: function(writes) {
+    writes.text(function(d) { return d["num_write"]; });
+  },
+
+  renderLookups: function(lookups) {
+    lookups.text(function(d) { return d["num_lookup"]; });
+  },
+
+  cleanup: function() {
+    if (!_.isUndefined(this.renderIntervalId) && 
+    !_.isNull(this.renderIntervalId)) {
+      window.clearInterval(this.renderIntervalId);
+    }
+  },
+
   renderRowSumContents: function(rowSum) {
     var _this = this;
     var nfsAttrs = this.nfsAttrs;
@@ -155,48 +239,7 @@ NfsShareClientUserView = Backbone.View.extend({
     });
   },
 
-  renderRowContents: function(rowContents) {
-    var contentItemWidth = 60;
-    var contentItemPadding = 4;
-    var paddingLeft = 100;
-    var contentItem = rowContents.selectAll("div.row-content-item")
-    .data(function(d) { return d.children; }, function(dItem){
-      return dItem.id;
-    });
-    var contentItemEnter = contentItem.enter()
-    .append("div")
-    .attr("class","row-content-item")
-    
-    contentItemEnter.append("img")
-    .attr("src", "/img/Closed_32x32x32.png")
-    .attr("width", "20")
-    .attr("height", "20");
-    
-    contentItemEnter.append("br");
-    
-    contentItemEnter.append("span")
-    .attr("class","nodeLabel")
-    .text(function(d) { return d.name; });
-
-    var contentItemUpdate = contentItem.transition()
-    .style("left", function(d,i) { 
-      return ((i*(contentItemWidth + contentItemPadding*2)) 
-      + paddingLeft) + "px";
-    });
-
-    var contentItemExit = contentItem.exit();
-    contentItemExit.remove();
-
-  },
-
-  cleanup: function() {
-    if (!_.isUndefined(this.renderIntervalId) && 
-    !_.isNull(this.renderIntervalId)) {
-      window.clearInterval(this.renderIntervalId);
-    }
-  },
-
-  createTree: function(data, treeType, attrList) {
+  createTree: function(data, treeType, attrList, sortAttr, n) {
     var _this = this;
     var root = null;
     // types of nodes at level 1 and 2 of the tree
@@ -220,7 +263,20 @@ NfsShareClientUserView = Backbone.View.extend({
         nodeL2[a] = _.isUndefined(nodeL2[a]) ? d[a] : nodeL2[a] + d[a];
       });
     });
+   
+    // get top n children sorted by sortAttr 
+    var children = root.children;
+    root.children = [];
+    var x = d3.scale.ordinal()
+    x.range(d3.range(children.length));
+    x.domain(d3.range(length).sort(function(a,b) {
+      return children[b][sortAttr] - children[a][sortAttr];
+    }));
+    for (i=0; i<n; i++) {
+      root.children.push(children[x(i)]);
+    }
     return root;
+
   },
 
   findNodeWithName: function(nodeList, name) {

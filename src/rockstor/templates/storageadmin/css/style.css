@@ -1241,7 +1241,7 @@ ol.probe-status li.status-tracker-error:before {
 
 .nfs-viz-row {
   width: 100%;
-  height: 75px;
+  height: 50px;
   border-bottom: 1px solid rgb(238, 238, 238);
   position: absolute;
   font: 11px/1.1em "Helvetica Neue",Helvetica,Arial,sans-serif;
@@ -1251,41 +1251,26 @@ ol.probe-status li.status-tracker-error:before {
   width: 100%;
   height: 30px;
   border-bottom: 1px solid rgb(238, 238, 238);
-  font-weight: bold;
-
 }
 
-.nfs-viz-row-inner {
-  padding: 12px;
-}
+.nfs-viz-header .client { float: left; width: 100px; padding: 4px;}
+.nfs-viz-header .top-shares { float: left; width: 300px; padding: 4px;}
+.nfs-viz-header .nfs-reads { float: left; width: 100px; padding: 4px;}
+.nfs-viz-header .nfs-writes { float: left; width: 100px; padding: 4px;}
+.nfs-viz-header .nfs-lookups { float: left; width: 100px; padding: 4px;}
+.nfs-viz-header .nfs-data-in-out { float: left; width: 100px; padding: 4px;}
+
+.nfs-viz-row .client { float: left; width: 100px; padding: 4px;}
+.nfs-viz-row .top-shares { float: left; width: 300px; padding: 4px;}
+.nfs-viz-row .nfs-reads { float: left; width: 100px; padding: 4px;}
+.nfs-viz-row .nfs-writes { float: left; width: 100px; padding: 4px;}
+.nfs-viz-row .nfs-lookups { float: left; width: 100px; padding: 4px;}
+.nfs-viz-row .nfs-data-in-out { float: left; width: 100px; padding: 4px;}
+.nfs-viz-row .share { float: left; }
 
 .nfs-viz-row .row-title, .nfs-viz-header .row-title {
   width: 100px;
-  border-right: 1px solid #eee;
-  height: 100%;
   float: left;
-}
-
-.nfs-viz-row .row-sum, .nfs-viz-header .row-sum {
-  width: 250px;
-  border-left: 1px solid #eee;
-  float: right;
-  height: 100%;
-  padding-left: 4px;
-}
-
-.nfs-viz-row .row-sum table {
-  width: 100%;
-
-}
-
-.nfs-viz-row .row-contents, .nfs-viz-header .row-contents {
-  position: relative;
-}
-
-.nfs-viz-row .row-content-item {
-  position: absolute;
-  width: 60px;
-  padding: 0px 4px;
+  padding: 12px 0 0 12px;
 }
 
