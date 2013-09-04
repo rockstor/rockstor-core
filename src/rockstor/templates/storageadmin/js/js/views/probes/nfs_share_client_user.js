@@ -83,8 +83,11 @@ NfsShareClientUserView = Backbone.View.extend({
       type: "GET",
       dataType: "json",
       success: function(data, textStatus, jqXHR) {
-        var data = _this.generateData(); // TODO remove after test
-        _this.renderViz(data);
+        var results = data.results;
+        results = _this.generateData(); // TODO remove after test
+        if (!_.isEmpty(results)) {
+          _this.renderViz(results);
+        }
       },
       error: function(request, status, error) {
         console.log(error);
@@ -164,6 +167,16 @@ NfsShareClientUserView = Backbone.View.extend({
     .data(function(d,i) { return [d]; }, function(d) { return d.id});
     var lookupsEnter = lookups.enter().append("div").attr("class", "nfs-lookups");
     this.renderLookups(lookups);
+    
+    var dataRead = row.selectAll("div.nfs-data-read")
+    .data(function(d,i) { return [d]; }, function(d) { return d.id});
+    var dataReadEnter = lookups.enter().append("div").attr("class", "nfs-data-read");
+    this.renderDataRead(dataRead);
+    
+    var dataWritten = row.selectAll("div.nfs-data-written")
+    .data(function(d,i) { return [d]; }, function(d) { return d.id});
+    var dataWrittenEnter = lookups.enter().append("div").attr("class", "nfs-data-written");
+    this.renderDataWritten(dataWritten);
 
   },
 
@@ -245,6 +258,18 @@ NfsShareClientUserView = Backbone.View.extend({
 
   renderLookups: function(lookups) {
     lookups.text(function(d) { return d["num_lookup"]; });
+  },
+  
+  renderDataRead: function(dataRead) {
+    dataRead.text(function(d) { 
+      return d["sum_read"]; 
+    });
+  },
+
+  renderDataWritten: function(dataWritten) {
+    dataWritten.text(function(d) { 
+      return d["sum_write"]; 
+    });
   },
 
   cleanup: function() {
@@ -518,7 +543,7 @@ NfsShareClientUserView = Backbone.View.extend({
 });
 
 RockStorProbeMap.push({
-  name: 'nfs-share-client-user',
+  name: 'nfs-5',
   view: 'NfsShareClientUserView',
   description: 'NFS Share, Client, User Distribution',
 });

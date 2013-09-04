@@ -1275,19 +1275,21 @@ input[type="radio"].selectedRoot {
 .nfs-viz-header .client { float: left; width: 100px; padding: 4px;}
 .nfs-viz-header .user { float: left; width: 100px; padding: 4px;}
 .nfs-viz-header .top-shares { float: left; width: 300px; padding: 4px;}
-.nfs-viz-header .nfs-reads { float: left; width: 100px; padding: 4px;}
-.nfs-viz-header .nfs-writes { float: left; width: 100px; padding: 4px;}
-.nfs-viz-header .nfs-lookups { float: left; width: 100px; padding: 4px;}
-.nfs-viz-header .nfs-data-in-out { float: left; width: 100px; padding: 4px;}
+.nfs-viz-header .nfs-reads { float: left; width: 50px; padding: 4px;}
+.nfs-viz-header .nfs-writes { float: left; width: 50px; padding: 4px;}
+.nfs-viz-header .nfs-lookups { float: left; width: 50px; padding: 4px;}
+.nfs-viz-header .nfs-data-read { float: left; width: 65px; padding: 4px;}
+.nfs-viz-header .nfs-data-written { float: left; width: 65px; padding: 4px;}
 .nfs-viz-header .update-value { float: left; margin-left: 400px;}
 
 .nfs-viz-row .client { float: left; width: 100px; padding: 4px;}
 .nfs-viz-row .user { float: left; width: 100px; padding: 4px;}
 .nfs-viz-row .top-shares { float: left; width: 300px; padding: 4px; position: relative;}
-.nfs-viz-row .nfs-reads { float: left; width: 100px; padding: 4px;}
-.nfs-viz-row .nfs-writes { float: left; width: 100px; padding: 4px;}
-.nfs-viz-row .nfs-lookups { float: left; width: 100px; padding: 4px;}
-.nfs-viz-row .nfs-data-in-out { float: left; width: 100px; padding: 4px;}
+.nfs-viz-row .nfs-reads { float: left; width: 50px; padding: 4px;}
+.nfs-viz-row .nfs-writes { float: left; width: 50px; padding: 4px;}
+.nfs-viz-row .nfs-lookups { float: left; width: 50px; padding: 4px;}
+.nfs-viz-row .nfs-data-read { float: left; width: 65px; padding: 4px;}
+.nfs-viz-row .nfs-data-written { float: left; width: 65px; padding: 4px;}
 .nfs-viz-row .share { position: absolute; }
 
 .nfs-viz-row .row-title, .nfs-viz-header .row-title {
