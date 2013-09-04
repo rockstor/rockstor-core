@@ -161,7 +161,7 @@ def add_snap(pool_name, pool_device, share_name, snap_name):
     root_pool_mnt = mount_root(pool_name, pool_device)
     share_full_path = root_pool_mnt + '/' + share_name
     snap_full_path = root_pool_mnt + '/' + snap_name
-    snap_cmd = [BTRFS, 'subvolume', 'snapshot', share_full_path,
+    snap_cmd = [BTRFS, 'subvolume', 'snapshot', '-r', share_full_path,
                 snap_full_path]
     run_command(snap_cmd)
 
