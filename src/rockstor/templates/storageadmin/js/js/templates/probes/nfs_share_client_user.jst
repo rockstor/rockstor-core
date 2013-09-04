@@ -1,16 +1,10 @@
 <div id="nfs-share-client-header">
   <h3>Top <span id="treeType">Clients</span> and associated <span id="childType">Shares</span> by NFS Activity</h3>
-  <div id="nfs-share-client-selected-root">
-    <span class="h4">View:&nbsp;
-      <input type="radio" class="selectedRoot" name="selectedRoot" checked value="Clients" data-treetype="client">Clients</input>
-      <input type="radio" class="selectedRoot" name="selectedRoot" value="Shares" data-treetype="share">Shares</input>
-    </span>
-  </div>
   <div id="nfs-share-client-sortby">
     <span class="h4">Sort by NFS Attributes:&nbsp;
-      <input type="checkbox" class="selectedAttr" checked name="num_read">Reads</input>&nbsp;
-      <input type="checkbox" class="selectedAttr" checked name="num_write">Writes</input>&nbsp;
-      <input type="checkbox" class="selectedAttr" checked name="num_lookup">Lookups</input>&nbsp;
+      <input type="checkbox" class="selectedAttr" checked value="num_read" name="num_read">Reads</input>&nbsp;
+      <input type="checkbox" class="selectedAttr" value="num_write" name="num_write">Writes</input>&nbsp;
+      <input type="checkbox" class="selectedAttr" value="num_lookup" name="num_lookup">Lookups</input>&nbsp;
     </span>
   </div>
 </div>

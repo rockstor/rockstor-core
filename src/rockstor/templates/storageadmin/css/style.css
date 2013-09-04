@@ -1246,9 +1246,9 @@ ol.probe-status li.status-tracker-error:before {
   float: left;
 }
 
-#nfs-share-client-sortby {
-  float: right;
-}
+/*#nfs-share-client-sortby {*/
+  /*float: right;*/
+/*}*/
 
 input[type="checkbox"].selectedAttr {
   margin: -4px 2px 0 4px;
@@ -1281,12 +1281,12 @@ input[type="radio"].selectedRoot {
 .nfs-viz-header .update-value { float: left; margin-left: 400px;}
 
 .nfs-viz-row .client { float: left; width: 100px; padding: 4px;}
-.nfs-viz-row .top-shares { float: left; width: 300px; padding: 4px;}
+.nfs-viz-row .top-shares { float: left; width: 300px; padding: 4px; position: relative;}
 .nfs-viz-row .nfs-reads { float: left; width: 100px; padding: 4px;}
 .nfs-viz-row .nfs-writes { float: left; width: 100px; padding: 4px;}
 .nfs-viz-row .nfs-lookups { float: left; width: 100px; padding: 4px;}
 .nfs-viz-row .nfs-data-in-out { float: left; width: 100px; padding: 4px;}
-.nfs-viz-row .share { float: left; }
+.nfs-viz-row .share { position: absolute; }
 
 .nfs-viz-row .row-title, .nfs-viz-header .row-title {
   width: 100px;
