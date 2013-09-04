@@ -36,7 +36,7 @@ NfsShareClientUserView = Backbone.View.extend({
   },
 
   render: function() {
-    $(this.el).html(this.template({probe: this.probe}));
+    $(this.el).html(this.template({probe: this.probe, updateInterval: this.updateInterval}));
     this.rows = d3.select(this.el).select("#nfs-share-client-user-rows");
     var _this = this;
     if (this.probe.get("state") == probeStates.RUNNING) {
@@ -94,9 +94,7 @@ NfsShareClientUserView = Backbone.View.extend({
     var attrArray = _.flatten(_.map(this.root.children, function(n) {
       return _.map(n.children, function(d) { return d[_this.attr]; } );
     }));
-    console.log(attrArray);
     this.attrMax = d3.max(attrArray);
-    console.log(this.attrMax);
     
     // Create rows 
     var row = this.rows.selectAll("div.nfs-viz-row")
@@ -169,10 +167,7 @@ NfsShareClientUserView = Backbone.View.extend({
     var shareWidth = 60;
     var sharePadding = 4;
 
-    var shareData = shares.datum();
-    var rScale = d3.scale.linear()
-    .domain([0, this.attrMax])
-    .range([2,10]);
+    var rScale = d3.scale.linear().domain([0, this.attrMax]).range([2,10]);
 
     var share = shares.selectAll("div.share")
     .data(function(d) { return d.children; }, function(dItem){
@@ -189,7 +184,8 @@ NfsShareClientUserView = Backbone.View.extend({
     .append("circle")
     .attr("cx", 25)
     .attr("cy", 10)
-    .attr("r", function(d) { return rScale(d[_this.attr]); })
+    //.attr("r", function(d) { return rScale(d[_this.attr]); })
+    .attr("r", 2)
     .attr("fill", "steelblue");
     
     shareEnter.append("br");
@@ -198,9 +194,10 @@ NfsShareClientUserView = Backbone.View.extend({
     .attr("class","nodeLabel")
     .text(function(d) { return d.name; });
 
-    share.select("circle").attr("r", function(d) { return rScale(d[_this.attr]); })
+    share.select("circle").transition().duration(500).attr("r", function(d) { return rScale(d[_this.attr]); })
 
     var shareUpdate = share.transition()
+    .duration(500)
     .style("left", function(d,i) { 
       return (i*(shareWidth + sharePadding*2)) + "px";
     });
@@ -267,16 +264,17 @@ NfsShareClientUserView = Backbone.View.extend({
     // get top n children sorted by sortAttr 
     var children = root.children;
     root.children = [];
-    var x = d3.scale.ordinal()
-    x.range(d3.range(children.length));
-    x.domain(d3.range(length).sort(function(a,b) {
-      return children[b][sortAttr] - children[a][sortAttr];
-    }));
-    for (i=0; i<n; i++) {
-      root.children.push(children[x(i)]);
+    var tmp = _.sortBy(children, function(d) { return d[sortAttr]; }).reverse();
+    for (i=0; i<n && i<tmp.length; i++) {
+      var c = tmp[i].children;
+      tmp[i].children = [];
+      var tmp2 = _.sortBy(c, function(d) { return d[sortAttr]; }).reverse();
+      for (j=0; j<n && j<tmp2.length; j++) {
+        tmp[i].children.push(tmp2[j])
+      }
+      root.children.push(tmp[i]);
     }
     return root;
-
   },
 
   findNodeWithName: function(nodeList, name) {

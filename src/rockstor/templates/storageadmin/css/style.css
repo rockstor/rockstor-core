@@ -1229,7 +1229,6 @@ ol.probe-status li.status-tracker-error:before {
 }
 
 
-
 #nfs-share-client-attributes td {
   vertical-align: top;
   padding-bottom: 12px;
@@ -1237,6 +1236,26 @@ ol.probe-status li.status-tracker-error:before {
 
 #nfs-share-client-user-rows {
   position: relative;
+}
+
+#nfs-share-client-header {
+  padding: 4px;
+}
+
+#nfs-share-client-selected-root {
+  float: left;
+}
+
+#nfs-share-client-sortby {
+  float: right;
+}
+
+input[type="checkbox"].selectedAttr {
+  margin: -4px 2px 0 4px;
+}
+
+input[type="radio"].selectedRoot {
+  margin: -4px 2px 0 4px;
 }
 
 .nfs-viz-row {
@@ -1259,6 +1278,7 @@ ol.probe-status li.status-tracker-error:before {
 .nfs-viz-header .nfs-writes { float: left; width: 100px; padding: 4px;}
 .nfs-viz-header .nfs-lookups { float: left; width: 100px; padding: 4px;}
 .nfs-viz-header .nfs-data-in-out { float: left; width: 100px; padding: 4px;}
+.nfs-viz-header .update-value { float: left; margin-left: 400px;}
 
 .nfs-viz-row .client { float: left; width: 100px; padding: 4px;}
 .nfs-viz-row .top-shares { float: left; width: 300px; padding: 4px;}
