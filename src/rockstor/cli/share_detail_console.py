@@ -21,6 +21,7 @@ from share_nfs_console import ShareNFSConsole
 from share_smb_console import ShareSMBConsole
 from share_iscsi_console import ShareIscsiConsole
 from snapshot_console import SnapshotConsole
+from rest_util import api_call
 
 
 class ShareDetailConsole(BaseConsole):
@@ -31,6 +32,7 @@ class ShareDetailConsole(BaseConsole):
         self.parent_prompt = prompt
         self.greeting = ('%s %s' % (self.parent_prompt, self.share))
         self.prompt = ('%s>' % self.greeting)
+        self.url = ('%sshares/%s/' % (BaseConsole.url, self.share))
 
     def do_nfs(self, args):
         """
@@ -59,3 +61,4 @@ class ShareDetailConsole(BaseConsole):
         """
         s_console = SnapshotConsole(self.greeting, self.share)
         s_console.cmdloop()
+
