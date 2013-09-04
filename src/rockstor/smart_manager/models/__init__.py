@@ -33,3 +33,4 @@ from share_usage import ShareUsage
 from nfsd_uid_gid import NFSDUidGidDistribution
 from task_def import TaskDefinition
 from task import Task
+from share_replication import (Replica, ReplicaTrail)
