@@ -35,13 +35,17 @@ NfsShareClientUserView = Backbone.View.extend({
     this.rowsumTemplate = window.JST.probes_nfs_share_client_user_rowsum;
     this.nfsAttrs = ["num_read", "num_write", "num_lookup"];
     this.sortAttrs = ["num_read"]; // default
-    this.treeType = "client";
+    this.treeType = "uid";
     this.updateInterval = 5000; // update every updateInterval seconds
     this.rawData = null; // data returned from probe backend
   },
 
   render: function() {
-    $(this.el).html(this.template({probe: this.probe, updateInterval: this.updateInterval}));
+    $(this.el).html(this.template({
+      probe: this.probe, 
+      updateInterval: this.updateInterval,
+      treeType: this.treeType
+    }));
     this.rows = d3.select(this.el).select("#nfs-share-client-user-rows");
     var _this = this;
     if (this.probe.get("state") == probeStates.RUNNING) {
@@ -129,11 +133,18 @@ NfsShareClientUserView = Backbone.View.extend({
   },
   
   renderRow: function(row) {
-    var client = row.selectAll("div.client")
-    .data(function(d,i) { return [d]; }, function(d) { return d.id});
-    var clientEnter = client.enter().append("div").attr("class", "client");
-    this.renderClient(client);
-   
+    if (this.treeType == "client") {
+      var client = row.selectAll("div.client")
+      .data(function(d,i) { return [d]; }, function(d) { return d.id});
+      var clientEnter = client.enter().append("div").attr("class", "client");
+      this.renderClient(client);
+    } else if (this.treeType == "uid") {
+      var user = row.selectAll("div.user")
+      .data(function(d,i) { return [d]; }, function(d) { return d.id});
+      var userEnter = user.enter().append("div").attr("class", "user");
+      this.renderUser(user);
+    }
+
     var shares = row.selectAll("div.top-shares")
     .data(function(d,i) { return [d]; }, function(d) { return d.id});
     var sharesEnter = shares.enter().append("div").attr("class", "top-shares");
@@ -164,6 +175,16 @@ NfsShareClientUserView = Backbone.View.extend({
     .attr("height", "20");
     client.append("br");    
     client.append("span")
+    .attr("class","nodeLabel")
+    .text(function(d) { return d.name; });
+  },
+
+  renderUser: function(user) {
+    user.html("");
+    user.append("i")
+    .attr("class", "icon-user")
+    user.append("br");    
+    user.append("span")
     .attr("class","nodeLabel")
     .text(function(d) { return d.name; });
   },
@@ -358,9 +379,13 @@ NfsShareClientUserView = Backbone.View.extend({
       var ip = "10.0.0." + i;
       for (j=1; j<=2; j++) {
         var share = "share_" + j;
+        var uid = 5000 + j;
+        var gid = 5000 + j;
         data.push({
           share: share,
           client: ip,
+          uid: uid,
+          gid: gid,
           num_read: 5 + Math.floor(Math.random() * 5),
           num_write: 1 + Math.floor(Math.random() * 5),
           num_lookup: 1 + Math.floor(Math.random() * 5),
@@ -369,13 +394,21 @@ NfsShareClientUserView = Backbone.View.extend({
     }
     var ipRandom1 = "10.0.0." + (5 + (Math.floor(Math.random() * 5)));
     var share1 = "share_1";
+    var uid1 = 5005;
+    var gid1 = 5005;
     var ipRandom2 = "10.0.0." + (10 + (Math.floor(Math.random() * 5)));
     var share2 = "share_2";
+    var uid2 = 5006;
+    var gid2 = 5006;
     var ipRandom3 = "10.0.0." + (15 + (Math.floor(Math.random() * 5)));
     var share3 = "share_3";
+    var uid3 = 5007;
+    var gid3 = 5007;
     data.push({
       share: share1,
       client: ipRandom1,
+      uid: uid1,
+      gid: gid1,
       num_read: 5 + Math.floor(Math.random() * 5),
       num_write: 1 + Math.floor(Math.random() * 5),
       num_lookup: 1 + Math.floor(Math.random() * 5),
@@ -383,6 +416,8 @@ NfsShareClientUserView = Backbone.View.extend({
     data.push({
       share: share2,
       client: ipRandom2,
+      uid: uid2,
+      gid: gid2,
       num_read: 5 + Math.floor(Math.random() * 5),
       num_write: 1 + Math.floor(Math.random() * 5),
       num_lookup: 1 + Math.floor(Math.random() * 5),
@@ -390,6 +425,8 @@ NfsShareClientUserView = Backbone.View.extend({
     data.push({
       share: share3,
       client: ipRandom3,
+      uid: uid3,
+      gid: gid3,
       num_read: 5 + Math.floor(Math.random() * 5),
       num_write: 1 + Math.floor(Math.random() * 5),
       num_lookup: 1 + Math.floor(Math.random() * 5),

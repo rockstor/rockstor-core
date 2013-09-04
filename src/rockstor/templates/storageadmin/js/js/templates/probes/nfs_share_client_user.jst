@@ -1,5 +1,9 @@
 <div id="nfs-share-client-header">
-  <h3>Top <span id="treeType">Clients</span> and associated <span id="childType">Shares</span> by NFS Activity</h3>
+  <% if (treeType == "client") { %>
+    <h3>Top <span id="treeType">Clients</span> and associated <span id="childType">Shares</span> by NFS Activity</h3>
+  <% } else if (treeType == "uid") { %>
+    <h3>Top <span id="treeType">Users</span> and associated <span id="childType">Shares</span> by NFS Activity</h3>
+  <% } %>
   <div id="nfs-share-client-sortby">
     <span class="h4">Sort by NFS Attributes:&nbsp;
       <input type="checkbox" class="selectedAttr" checked value="num_read" name="num_read">Reads</input>&nbsp;
@@ -16,11 +20,17 @@
   </div>
   <div class="clear"></div>
   <div class="nfs-viz-header">
+    <% if (treeType == "client") { %>
     <div class="client">
       Client
     </div>
+  <% } else if (treeType == "uid") { %>
+    <div class="user">
+      User
+    </div>
+  <% } %>
     <div class="top-shares">
-      <div class="top-shares-inner">Top shares for client</div>
+      <div class="top-shares-inner">Associated shares</div>
     </div>
     <div class="nfs-reads">
       <div class="nfs-reads-inner">Reads</div>
