@@ -84,7 +84,7 @@ NfsShareClientUserView = Backbone.View.extend({
       dataType: "json",
       success: function(data, textStatus, jqXHR) {
         var results = data.results;
-        results = _this.generateData(); // TODO remove after test
+        //results = _this.generateData(); // TODO remove after test
         if (!_.isEmpty(results)) {
           _this.renderViz(results);
         }

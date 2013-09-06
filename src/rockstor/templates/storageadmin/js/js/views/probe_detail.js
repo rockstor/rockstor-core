@@ -105,11 +105,12 @@ ProbeDetailView = RockstoreLayoutView.extend({
     if (tmp) {
       var viewName = tmp.view;
       this.probeVizClass = window[viewName];
+
     } else {
       //  TODO handle no probe viz class found 
     }
-    // TODO remove after testing
-    this.probeVizClass = window["NfsView"];
+    console.log("Found probeVizClass");
+    console.log(this.probeVizClass);
     // end TODO
     this.setProbeEvents();
     this.probeRun.trigger(this.probeRun.get("state"));

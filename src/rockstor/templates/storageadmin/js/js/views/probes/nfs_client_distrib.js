@@ -41,10 +41,4 @@ NfsClientDistribView = Backbone.View.extend({
 
 });
 
-RockStorProbeMap.push({
-  name: 'nfs-4',
-  view: 'NfsClientDistribView',
-  description: 'NFS Client Distribution',
-});
-
 

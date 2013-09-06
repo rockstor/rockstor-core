@@ -35,7 +35,7 @@ NfsView = Backbone.View.extend({
     // nfs attributes
     this.attrs = ["num_read", "num_write", "num_lookup", 
     "num_create", "num_commit", "num_remove", "sum_read", "sum_write"];
-    this.numSamples = 300; // number of data points stored for graph
+    this.numSamples = 60; // number of data points stored for graph
     // Initialize empty arrays of length numSamples for attributes
     this.attrArrays = {};
     _.each(this.attrs, function(a) { 
@@ -44,7 +44,7 @@ NfsView = Backbone.View.extend({
         _this.attrArrays[a][i] = null; 
       }
     });
-    this.graphOptions = { 
+    this.attrGraphOptions = { 
       grid : { 
         //hoverable : true,
         borderWidth: { top: 1, right: 1, bottom: 0, left: 0 },
@@ -54,7 +54,7 @@ NfsView = Backbone.View.extend({
         min: 0,
         max: this.numSamples,
         tickSize: 60,
-        tickFormatter: this.timeTickFormatter(this.numSamples),
+        tickFormatter: this.timeTickFormatter(this.numSamples, this.updateInterval),
         axisLabel: "Time (minutes)",
         axisLabelColour: "#000"
       },
@@ -70,8 +70,45 @@ NfsView = Backbone.View.extend({
         shadowSize: 0	// Drawing is faster without shadows
 			},
       legend : { 
-        container: "#network-util-legend", 
-        noColumns: 1,
+        container: "#nfs-attrs-legend", 
+        noColumns: 4,
+        margin: [30,0],
+        labelBoxBorderColor: "#fff"
+
+      },
+      //tooltip: true,
+      //tooltipOpts: {
+        //content: "%s (%y.2)" 
+      //}
+    };
+    this.dataGraphOptions = { 
+      grid : { 
+        //hoverable : true,
+        borderWidth: { top: 1, right: 1, bottom: 0, left: 0 },
+        borderColor: "#aaa"
+      },
+      xaxis: {
+        min: 0,
+        max: this.numSamples,
+        tickSize: 60,
+        tickFormatter: this.timeTickFormatter(this.numSamples, this.updateInterval),
+        axisLabel: "Time (minutes)",
+        axisLabelColour: "#000"
+      },
+      yaxis:  { 
+        min: 0, 
+        tickFormatter: this.valueTickFormatter,
+        axisLabelColour: "#000"
+      }, 
+			series: {
+        //stack: false,
+        //bars: { show: false, barWidth: 0.4, fillColor: {colors:[{opacity: 1},{opacity: 1}]}, align: "center" },
+        lines: { show: true, fill: false },
+        shadowSize: 0	// Drawing is faster without shadows
+			},
+      legend : { 
+        container: "#nfs-data-legend", 
+        noColumns: 4,
         margin: [30,0],
         labelBoxBorderColor: "#fff"
 
@@ -127,7 +164,7 @@ NfsView = Backbone.View.extend({
       dataType: "json",
       success: function(data, textStatus, jqXHR) {
         var results = data.results;
-        results = _this.generateData(); // TODO remove after test
+        //results = _this.generateData(); // TODO remove after test
         if (!_.isEmpty(results)) {
           _this.renderViz(results);
         }
@@ -176,8 +213,9 @@ NfsView = Backbone.View.extend({
     var series1 = { label: "Reads", data: tmp1, color: this.colors[0] };
     var series2 = { label: "Writes", data: tmp2, color: this.colors[1] };
     var series3 = { label: "Lookups", data: tmp3, color: this.colors[2] };
-    $.plot( this.$("#nfs-attrs"), [series1, series2, series3], 
-    this.graphOptions);
+    $.plot( this.$("#nfs-attrs"), 
+           [series1, series2, series3], 
+           this.attrGraphOptions);
   },
 
   renderData: function(dataRead, dataWritten) {
@@ -188,7 +226,7 @@ NfsView = Backbone.View.extend({
     }
     var series1 = { label: "Data read", data: tmp1, color: this.colors[0] };
     var series2 = { label: "Data written", data: tmp2, color: this.colors[1] };
-    $.plot( this.$("#nfs-data"), [series1, series2], this.graphOptions);
+    $.plot( this.$("#nfs-data"), [series1, series2], this.dataGraphOptions);
   },
 
   cleanup: function() {
@@ -198,9 +236,14 @@ NfsView = Backbone.View.extend({
     }
   },
 
-  timeTickFormatter: function(dataLength) {
+  timeTickFormatter: function(dataLength, updateInterval) {
+    var t = updateInterval/1000;
+    var n = dataLength * t;
+    console.log("t = " + t);
+    console.log("n = " + n);
     return function(val, axis) {
-      return (dataLength/60) - (parseInt(val/60)).toString() + ' m';
+      console.log("val = " + val);
+      return ((n/60) - (parseInt((val*t)/60))).toString() + ' m';
     };
   },
 
@@ -277,9 +320,9 @@ NfsView = Backbone.View.extend({
 });
 
 RockStorProbeMap.push({
-  name: 'nfs-4',
-  view: 'NfsShareClientView',
-  description: 'NFS Share, Client, User Distribution',
+  name: 'nfs-1',
+  view: 'NfsView',
+  description: 'All NFS calls',
 });
 
 
