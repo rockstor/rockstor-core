@@ -1225,7 +1225,6 @@ ol.probe-status li.status-tracker-error:before {
 
 #probe-viz-ph {
   border: 1px solid #ddd;
-  height: 500px;
 }
 
 
@@ -1297,4 +1296,9 @@ input[type="radio"].selectedRoot {
   float: left;
   padding: 12px 0 0 12px;
 }
+
+/* NFS probe */
+#nfs-graphs { padding: 12px; }
+#nfs-graphs #nfs-attrs { width: 800px; height: 200px; }
+#nfs-graphs #nfs-data { width: 800px; height: 200px; }
 
