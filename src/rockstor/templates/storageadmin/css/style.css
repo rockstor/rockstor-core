@@ -1236,6 +1236,10 @@ ol.probe-status li.status-tracker-error:before {
   position: relative;
 }
 
+#nfs-share-client-rows {
+  position: relative;
+}
+
 #nfs-share-client-header {
 }
 

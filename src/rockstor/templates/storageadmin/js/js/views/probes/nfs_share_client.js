@@ -47,9 +47,11 @@ NfsShareClientView = Backbone.View.extend({
       updateInterval: this.updateInterval,
       treeType: this.treeType
     }));
-    this.rows = d3.select(this.el).select("#nfs-share-client-user-rows");
+    this.rows = d3.select(this.el).select("#nfs-share-client-rows");
     var _this = this;
     if (this.probe.get("state") == probeStates.RUNNING) {
+      // TODO initialize t1 and t2 from current time on server, 
+      // and not from probe start time
       var t2 = this.probe.get("start");
       var t1 = moment(t2).subtract("ms",this.updateInterval).toISOString();
       this.update(this.probe, t1, t2, true, this.updateInterval);
@@ -86,11 +88,18 @@ NfsShareClientView = Backbone.View.extend({
       success: function(data, textStatus, jqXHR) {
         _this.data = data;
         var results = data.results;
-        //results = _this.generateData(); // TODO remove after test
         if (!_.isEmpty(results)) {
+          // remove no data message if present
+          if (_this.$("#no-activity-msg").length > 0) {
+          _this.$("#nfs-share-client-rows").empty();
+          }
+          // render visualization
           _this.renderViz(results);
         } else {
-          // TODO show no data msg
+          // display no data message if not already displayed
+          if (_this.$("#no-activity-msg").length == 0) {
+            _this.$("#nfs-share-client-rows").html('<span id="no-activity-msg">No NFS Activity</span>');
+          }
         }
       },
       error: function(request, status, error) {
