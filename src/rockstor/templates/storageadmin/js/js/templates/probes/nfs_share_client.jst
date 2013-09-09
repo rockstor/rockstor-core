@@ -1,9 +1,5 @@
 <div id="nfs-share-client-header">
-  <% if (treeType == "client") { %>
-    <h3>Top <span id="treeType">Clients</span> and associated <span id="childType">Shares</span> by NFS Activity</h3>
-  <% } else if (treeType == "uid") { %>
-    <h3>Top <span id="treeType">Users</span> and associated <span id="childType">Shares</span> by NFS Activity</h3>
-  <% } %>
+  <h3>Top <span id="treeType">Clients</span> and associated <span id="childType">Shares</span> by NFS Activity</h3>
   <div id="nfs-share-client-sortby">
     <span class="h4">Sort by NFS Attributes:&nbsp;
       <input type="checkbox" class="selectedAttr" checked value="num_read" name="num_read">Reads</input>&nbsp;
@@ -15,37 +11,32 @@
 <br>
 <br>
 <div id="nfs-share-client-user-viz">
-  <div class="nfs-viz-header">
-    <div class="update-value"><h4>Values over last <%= updateInterval/1000 %> seconds</h4></div>
-  </div>
+  <div class="update-value"><h4>Values over last <%= updateInterval/1000 %> seconds</h4></div>
   <div class="clear"></div>
   <div class="nfs-viz-header">
-    <% if (treeType == "client") { %>
     <div class="client">
       Client
     </div>
-  <% } else if (treeType == "uid") { %>
-    <div class="user">
-      User
-    </div>
-  <% } %>
     <div class="top-shares">
-      <div class="top-shares-inner">Associated shares</div>
+      <div class="column-inner">Associated shares</div>
     </div>
     <div class="nfs-reads">
-      <div class="nfs-reads-inner">Reads</div>
+      <div class="column-inner">Reads</div>
     </div>
     <div class="nfs-writes">
-      <div class="nfs-writes-inner">Writes</div>
+      <div class="column-inner">Writes</div>
     </div>
     <div class="nfs-lookups">
-      <div class="nfs-lookups-inner">Lookups</div>
+      <div class="column-inner">Lookups</div>
     </div>
     <div class="nfs-data-read">
-      <div class="nfs-data-read-inner">Data read</div>
+      <div class="column-inner">Data read</div>
     </div>
     <div class="nfs-data-written">
-      <div class="nfs-data-written-inner">Data written</div>
+      <div class="column-inner">Data written</div>
+    </div>
+    <div class="nfs-last-seen">
+      <div class="column-inner">Last activity</div>
     </div>
     
   </div>

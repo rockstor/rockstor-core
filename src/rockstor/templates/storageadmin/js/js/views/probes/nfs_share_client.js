@@ -31,9 +31,11 @@ NfsShareClientView = Backbone.View.extend({
 
   initialize: function() {
     this.probe = this.options.probe;
-    this.template = window.JST.probes_nfs_share_client_user;
+    this.template = window.JST.probes_nfs_share_client;
     this.rowsumTemplate = window.JST.probes_nfs_share_client_user_rowsum;
-    this.nfsAttrs = ["num_read", "num_write", "num_lookup"];
+    this.nfsAttrs = ["num_read", "num_write", "num_lookup",
+      "num_create", "num_commit", "num_remove",
+      "sum_read", "sum_write"];
     this.sortAttrs = ["num_read"]; // default
     this.treeType = "client";
     this.updateInterval = 5000; // update every updateInterval seconds
@@ -41,7 +43,6 @@ NfsShareClientView = Backbone.View.extend({
   },
 
   render: function() {
-    console.log("In NfsShareClientView render");
     $(this.el).html(this.template({
       probe: this.probe, 
       updateInterval: this.updateInterval,
@@ -98,7 +99,6 @@ NfsShareClientView = Backbone.View.extend({
 
   renderViz: function(data) {
     var _this = this;
-    console.log(this.sortAttrs);
     this.root = this.createTree(data, this.treeType, this.nfsAttrs, this.sortAttrs, 4);
     var rowHeight = 50;
     var rowPadding = 4;
@@ -108,7 +108,6 @@ NfsShareClientView = Backbone.View.extend({
       return _.map(n.children, function(d) { return d.sortVal; } );
     }));
     this.attrMax = d3.max(attrArray);
-    console.log(this.attrMax);
     
     // Create rows 
     var row = this.rows.selectAll("div.nfs-viz-row")
@@ -138,10 +137,19 @@ NfsShareClientView = Backbone.View.extend({
   
   renderRow: function(row) {
     if (this.treeType == "client") {
-      var client = row.selectAll("div.client")
+      var clients = row.selectAll("div.client")
       .data(function(d,i) { return [d]; }, function(d) { return d.id});
-      var clientEnter = client.enter().append("div").attr("class", "client");
-      this.renderClient(client);
+      var clientsEnter = clients.enter().append("div").attr("class", "client");
+
+      var clientsInner = clients.selectAll("div.column-inner")
+      .data(function(d,i) { return [d]; }, function(d) { return d.id});
+
+      var clientsInnerEnter = clientsInner.enter()
+      .append("div")
+      .attr("class", "column-inner");
+
+      this.renderClient(clientsInner);
+
     } else if (this.treeType == "uid") {
       var user = row.selectAll("div.user")
       .data(function(d,i) { return [d]; }, function(d) { return d.id});
@@ -152,33 +160,90 @@ NfsShareClientView = Backbone.View.extend({
     var shares = row.selectAll("div.top-shares")
     .data(function(d,i) { return [d]; }, function(d) { return d.id});
     var sharesEnter = shares.enter().append("div").attr("class", "top-shares");
-    this.renderShares(shares);
+    
+    var sharesInner = shares.selectAll("div.column-inner")
+    .data(function(d,i) { return [d]; }, function(d) { return d.id});
+    
+    var sharesInnerEnter = sharesInner.enter()
+    .append("div")
+    .attr("class", "column-inner");
+
+    this.renderShares(sharesInner);
     
     var reads = row.selectAll("div.nfs-reads")
     .data(function(d,i) { return [d]; }, function(d) { return d.id});
     var readsEnter = reads.enter().append("div").attr("class", "nfs-reads");
-    this.renderReads(reads);
+    
+    var readsInner = reads.selectAll("div.column-inner")
+    .data(function(d,i) { return [d]; }, function(d) { return d.id});
+    
+    var readsInnerEnter = readsInner.enter()
+    .append("div")
+    .attr("class", "column-inner");
+
+    this.renderReads(readsInner);
    
     var writes = row.selectAll("div.nfs-writes")
     .data(function(d,i) { return [d]; }, function(d) { return d.id});
     var writesEnter = writes.enter().append("div").attr("class", "nfs-writes");
-    this.renderWrites(writes);
+    
+    var writesInner = writes.selectAll("div.column-inner")
+    .data(function(d,i) { return [d]; }, function(d) { return d.id});
+
+    var writesInnerEnter = writesInner.enter()
+    .append("div")
+    .attr("class", "column-inner")
+
+    this.renderWrites(writesInner);
     
     var lookups = row.selectAll("div.nfs-lookups")
     .data(function(d,i) { return [d]; }, function(d) { return d.id});
     var lookupsEnter = lookups.enter().append("div").attr("class", "nfs-lookups");
-    this.renderLookups(lookups);
+
+    var lookupsInner = lookups.selectAll("div.column-inner")
+    .data(function(d,i) { return [d]; }, function(d) { return d.id});
+
+    var lookupsInnerEnter = lookupsInner.enter()
+    .append("div")
+    .attr("class", "column-inner")
+    
+    this.renderLookups(lookupsInner);
     
     var dataRead = row.selectAll("div.nfs-data-read")
     .data(function(d,i) { return [d]; }, function(d) { return d.id});
-    var dataReadEnter = lookups.enter().append("div").attr("class", "nfs-data-read");
-    this.renderDataRead(dataRead);
+    var dataReadEnter = dataRead.enter().append("div").attr("class", "nfs-data-read");
+    
+    var dataReadInner = dataRead.selectAll("div.column-inner")
+    .data(function(d,i) { return [d]; }, function(d) { return d.id});
+
+    var dataReadInnerEnter = dataReadInner.enter()
+    .append("div")
+    .attr("class", "column-inner")
+    this.renderDataRead(dataReadInner);
     
     var dataWritten = row.selectAll("div.nfs-data-written")
     .data(function(d,i) { return [d]; }, function(d) { return d.id});
-    var dataWrittenEnter = lookups.enter().append("div").attr("class", "nfs-data-written");
-    this.renderDataWritten(dataWritten);
+    var dataWrittenEnter = dataWritten.enter().append("div").attr("class", "nfs-data-written");
+    
+    var dataWrittenInner = dataWritten.selectAll("div.column-inner")
+    .data(function(d,i) { return [d]; }, function(d) { return d.id});
 
+    var dataWrittenInnerEnter = dataWrittenInner.enter()
+    .append("div")
+    .attr("class", "column-inner")
+    this.renderDataWritten(dataWrittenInner);
+
+    var lastSeen = row.selectAll("div.nfs-last-seen")
+    .data(function(d,i) { return [d]; }, function(d) { return d.id});
+    var lastSeenEnter = lastSeen.enter().append("div").attr("class", "nfs-last-seen");
+    
+    var lastSeenInner = lastSeen.selectAll("div.column-inner")
+    .data(function(d,i) { return [d]; }, function(d) { return d.id});
+
+    var lastSeenInnerEnter = lastSeenInner.enter()
+    .append("div")
+    .attr("class", "column-inner")
+    this.renderLastSeen(lastSeenInner);
   },
 
   renderClient: function(client) {
@@ -262,15 +327,15 @@ NfsShareClientView = Backbone.View.extend({
   },
   
   renderDataRead: function(dataRead) {
-    dataRead.text(function(d) { 
-      return d["sum_read"]; 
-    });
+    dataRead.text(function(d) { return humanize.filesize(d["sum_read"]); });
   },
 
   renderDataWritten: function(dataWritten) {
-    dataWritten.text(function(d) { 
-      return d["sum_write"]; 
-    });
+    dataWritten.text(function(d) { return humanize.filesize(d["sum_write"]); });
+  },
+
+  renderLastSeen: function(lastSeen) {
+    lastSeen.text(function(d) { return d.lastSeen.format(); });
   },
 
   cleanup: function() {
@@ -313,6 +378,15 @@ NfsShareClientView = Backbone.View.extend({
         nodeL1[a] = _.isUndefined(nodeL1[a]) ? d[a] : nodeL1[a] + d[a];
         nodeL2[a] = _.isUndefined(nodeL2[a]) ? d[a] : nodeL2[a] + d[a];
       });
+      if (moment(d.ts).isAfter(root.lastSeen)) {
+        root.lastSeen = moment(d.ts);
+      }
+      if (moment(d.ts).isAfter(nodeL1.lastSeen)) {
+        nodeL1.lastSeen = moment(d.ts);
+      }
+      if (moment(d.ts).isAfter(nodeL2.lastSeen)) {
+        nodeL2.lastSeen = moment(d.ts);
+      }
      
     });
   
@@ -368,7 +442,8 @@ NfsShareClientView = Backbone.View.extend({
   },
 
   createNode: function(name, nodeType) {
-    return {name: name, nodeType: nodeType, children: []};
+    return {name: name, nodeType: nodeType, children: [], 
+      lastSeen: moment.unix(0)};
   },
   
   filterData: function(data, treeType, selAttrs, n) {
@@ -527,7 +602,6 @@ NfsShareClientView = Backbone.View.extend({
     var _this = this;
     var tgt = $(event.currentTarget);
     var val = tgt.val();
-    console.log(val + " clicked");
     if (tgt.is(':checked')) {
       if (this.sortAttrs.indexOf(val) == -1) {
         this.sortAttrs.push(val);
@@ -538,7 +612,6 @@ NfsShareClientView = Backbone.View.extend({
         this.sortAttrs.splice(i, 1);
       }
     }
-    console.log(this.sortAttrs);
   }
 
 });
@@ -546,7 +619,7 @@ NfsShareClientView = Backbone.View.extend({
 RockStorProbeMap.push({
   name: 'nfs-4',
   view: 'NfsShareClientView',
-  description: 'NFS Share, Client, User Distribution',
+  description: 'NFS Share and Client Distribution',
 });
 
 
