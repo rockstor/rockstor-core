@@ -220,7 +220,7 @@ var ProbeRunCollection = RockStorPaginatedCollection.extend({
   baseUrl: "/api/sm/sprobes/metadata"
 })
 
-var ProbeTemplate = Backbone.Model.extend();
+var ProbeTemplate = Backbone.Model.extend({idAttribute: "uuid"});
 var ProbeTemplateCollection = Backbone.Collection.extend({
   model: ProbeTemplate,
   url: "/api/sm/sprobes/?format=json"

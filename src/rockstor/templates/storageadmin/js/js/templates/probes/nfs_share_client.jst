@@ -1,5 +1,5 @@
 <div id="nfs-share-client-header">
-  <h3>Top <span id="treeType">Clients</span> and associated <span id="childType">Shares</span> by NFS Activity</h3>
+  <h4><span class="update-value">Top clients and associated shares over last <%= updateInterval/1000 %> seconds</span></h4>
   <div id="nfs-share-client-sortby">
     <span class="h4">Sort by NFS Attributes:&nbsp;
       <input type="checkbox" class="selectedAttr" checked value="num_read" name="num_read">Reads</input>&nbsp;
@@ -9,13 +9,10 @@
   </div>
 </div>
 <br>
-<br>
 <div id="nfs-share-client-user-viz">
-  <div class="update-value"><h4>Values over last <%= updateInterval/1000 %> seconds</h4></div>
-  <div class="clear"></div>
   <div class="nfs-viz-header">
     <div class="client">
-      Client
+      <div class="column-inner">Client</div>
     </div>
     <div class="top-shares">
       <div class="column-inner">Associated shares</div>

@@ -54,7 +54,9 @@ ProbeDetailView = RockstoreLayoutView.extend({
       id: this.probeId,
       name: this.probeName,
     });
+    this.probeTemplateCollection = new ProbeTemplateCollection();
     this.dependencies.push(this.probeRun);
+    this.dependencies.push(this.probeTemplateCollection);
     this.template = window.JST.probes_probe_detail;
     this.time_template = window.JST.probes_probe_time;
     this.action_template = window.JST.probes_probe_actions;
@@ -93,8 +95,12 @@ ProbeDetailView = RockstoreLayoutView.extend({
 
   renderProbeDetail: function() {
     var _this = this;
+    this.probeTemplate = this.probeTemplateCollection.find(function(p) {
+      return p.get("uuid") == _this.probeName;
+    });
     $(this.el).append(this.template({
       probeRun: this.probeRun,
+      probeTemplate: this.probeTemplate,
       runStatus: this.probeRun.get("state"),
       statusMap: this.probeStatusMap
     }));

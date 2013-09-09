@@ -32,7 +32,6 @@ NfsShareClientView = Backbone.View.extend({
   initialize: function() {
     this.probe = this.options.probe;
     this.template = window.JST.probes_nfs_share_client;
-    this.rowsumTemplate = window.JST.probes_nfs_share_client_user_rowsum;
     this.nfsAttrs = ["num_read", "num_write", "num_lookup",
       "num_create", "num_commit", "num_remove",
       "sum_read", "sum_write"];
@@ -85,10 +84,13 @@ NfsShareClientView = Backbone.View.extend({
       type: "GET",
       dataType: "json",
       success: function(data, textStatus, jqXHR) {
+        _this.data = data;
         var results = data.results;
         //results = _this.generateData(); // TODO remove after test
         if (!_.isEmpty(results)) {
           _this.renderViz(results);
+        } else {
+          // TODO show no data msg
         }
       },
       error: function(request, status, error) {
@@ -273,7 +275,10 @@ NfsShareClientView = Backbone.View.extend({
     var shareWidth = 60;
     var sharePadding = 4;
 
-    var rScale = d3.scale.linear().domain([0, this.attrMax]).range([2,10]);
+    //var rScale = d3.scale.linear().domain([0, this.attrMax]).range([2,10]);
+    var rScale = d3.scale.linear()
+    .domain([0, this.attrMax])
+    .range(["#F7C8A8","#F26F18"]);
 
     var share = shares.selectAll("div.share")
     .data(function(d) { return d.children; }, function(dItem){
@@ -287,12 +292,19 @@ NfsShareClientView = Backbone.View.extend({
     .attr("width", 50)
     .attr("height", 25)
     .append("g")
-    .append("circle")
-    .attr("cx", 25)
-    .attr("cy", 10)
-    //.attr("r", function(d) { return rScale(d[_this.attr]); })
-    .attr("r", 2)
-    .attr("fill", "steelblue");
+    .append("rect")
+    .attr("x", 10)
+    .attr("y", 10)
+    .attr("width", 10)
+    .attr("height", 10)
+    .attr("fill", function(d) { return rScale(d.sortVal); });
+  
+    //.append("circle")
+    //.attr("cx", 25)
+    //.attr("cy", 10)
+    ////.attr("r", function(d) { return rScale(d[_this.attr]); })
+    //.attr("r", 2)
+    //.attr("fill", "steelblue");
     
     shareEnter.append("br");
     
@@ -300,7 +312,9 @@ NfsShareClientView = Backbone.View.extend({
     .attr("class","nodeLabel")
     .text(function(d) { return d.name; });
 
-    share.select("circle").transition().duration(500).attr("r", function(d) { return rScale(d.sortVal); })
+    //share.select("circle").transition().duration(500).attr("r", function(d) { return rScale(d.sortVal); })
+    share.select("rect").transition().duration(500)
+    .attr("fill", function(d) {  return rScale(d.sortVal); });
     share.select("nodeLabel").text(function(d) { return d.name; });
 
     var shareUpdate = share.transition()
@@ -343,16 +357,6 @@ NfsShareClientView = Backbone.View.extend({
     !_.isNull(this.renderIntervalId)) {
       window.clearInterval(this.renderIntervalId);
     }
-  },
-
-  renderRowSumContents: function(rowSum) {
-    var _this = this;
-    var nfsAttrs = this.nfsAttrs;
-    rowSum.html("");
-    rowSum.each(function(d,i) {
-      var el = d3.select(this);  
-      el.html(_this.rowsumTemplate({d:d}));
-    });
   },
 
   createTree: function(data, treeType, attrList, sortAttrs, n) {
@@ -607,11 +611,12 @@ NfsShareClientView = Backbone.View.extend({
         this.sortAttrs.push(val);
       }
     } else {
-      var i = this.sortAttrs.indexOf(val) 
+      var i = this.sortAttrs.indexOf(val);
       if (i != -1) {
         this.sortAttrs.splice(i, 1);
       }
     }
+    this.renderViz(this.data.results);
   }
 
 });
