@@ -171,6 +171,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
   },
 
   cleanup: function() {
+    console.log("In cpu widget cleanup");
     if (!_.isUndefined(this.intervalId)) {
       window.clearInterval(this.intervalId);
     }
