@@ -19,81 +19,115 @@
  */
 </script>
 
-<!-- page heading -->
-<div class="row-fluid">
-  <div class="span12">
-    <div class="pageheading">
-      <div id="title" class="title"><span class="h1">Share <%= share.get('name') %></span></div>
+<div class="module-container">
+  <!-- page heading -->
+  <div class="module-container-header">
+    <div class="title">
+      <span class="h1"><%= share.get('name') %></span>
     </div>
-  </div> <!-- span12 -->
-</div> <!-- row-fluid -->
-
-<div class="row-fluid">
-  <div class="span5">
-    <div id="ph-share-info"></div>
-  </div> <!-- span5 -->
-  <div class="span6">
-    <div id="ph-share-usage"></div>
-  </div> <!-- span5 -->
-</div> <!-- row-fluid -->
-
-<!-- Buttons -->
-<div class="row-fluid">
-  <div class="span12">
-    <div id="ph-button-bar"> </div>
-  </div> <!-- span12 -->
-</div> <!-- row-fluid -->
-      
-<br/>
-<div class="row-fluid">
-  <div class="span12">
-    <div id="ph-snapshots"> </div> 
-  </div> <!-- span12 -->
-</div> <!-- row-fluid -->
-
-<div class="row-fluid">
-  <div class="span12">
-    <div id="ph-nfs-exports"> </div> 
-  </div> <!-- span12 -->
-</div> <!-- row-fluid -->
-
-<div class="row-fluid">
-  <div class="span12">
-    <div id="ph-smb-shares"> </div> 
-  </div> <!-- span12 -->
-</div> <!-- row-fluid -->
-
-<div class="row-fluid">
-  <div class="span12">
-    <div id="ph-iscsi-target"> </div> 
-  </div> <!-- span12 -->
-</div> <!-- row-fluid -->
-
-<div class="simple-overlay" id="create-snapshot-form">
-  <div class="span6 well">
-    <h4>Create a snapshot</h4>
-    <label>Snapshot Name</label>
-    <input type="text" name="snapshot-name" id="snapshot-name">
-    <br>
-    <button id="create-snapshot" class="btn btn-primary">Submit</button>
   </div>
-</div>
 
-<div class="simple-overlay" id="resize-share-form">
-  <div class="span10 well">
-    <h4>Resize Share</h4>
-      <br/>
-     Size:<br/>
-            <input type="text" name="new-size" id="new-size" value="<%= humanize.filesize(share.get('size')*1024).replace(/[^0-9\.]+/g,"") %>">
-            
-              <select id="size_format" name="size_format">
-                <option <%if(humanize.filesize(share.get('size')*1024).match(/Kb/g,"")){%> selected="selected"<%}%> >KB</option>
-                <option <%if(humanize.filesize(share.get('size')*1024).match(/Mb/g,"")){%> selected="selected"<%}%> >MB</option>
-                <option <%if(humanize.filesize(share.get('size')*1024).match(/Gb/g,"")){%> selected="selected"<%}%> >GB</option>
-                <option <%if(humanize.filesize(share.get('size')*1024).match(/Tb/g,"")){%> selected="selected"<%}%> >TB</option>
-              </select>
-            <br/>
-     <input type="Submit" id="resize-share" class="btn btn-primary" value="Submit"></input>
+  <div class="row-fluid">
+    <div class="span6">
+      <div class="module-container-content module-container-left">
+        <br>
+        <div id="ph-share-info"></div>
+        <br>
+        <hr class="module-sep">
+        <br>
+        <div id="ph-access-control">
+          <div class="module">
+            <div class="row-fluid">
+              <div class="span12">
+                <div class="module-header">
+                  <div class="title">
+                    <span class="h3">Access Control</span>
+                    <div class="pull-right">
+                      <a href="#" rel="#access-control-form" id="js-access-control"><i class="icon-pencil"></i> Edit</a>
+                    </div>
+                  </div>
+                </div>
+              </div> <!-- span12 -->
+            </div> <!-- row-fluid -->
+            <div class="row-fluid">
+              <div class="span12">
+                <!-- Content -->
+                <div class="module-content">
+                  Owned by <a href="#">root</a><br>
+                  Permissions: rwxrwxrwx
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <br>
+        <hr class="module-sep">
+        <br>
+        <div id="ph-share-usage"></div>
+        <br>
+        <hr class="module-sep">
+        <br>
+        <div id="ph-snapshots"> </div> 
+        <br>
+      </div>
     </div>
-</div>
+    <div class="span6">
+      <div class="module-container-content">
+        <br>
+        <div id="ph-nfs-exports"> </div> 
+        <br>
+        <hr class="module-sep">
+        <br>
+        <div id="ph-smb-shares"> </div> 
+      </div>
+    </div>
+  </div>
+  <div class="row-fluid">
+    <div class="span12">
+      <div class="module-container-footer">
+        <div class="pull-right">
+          <!--
+          <button id="js-edit" class="btn btn-primary" type="button" type="button">Edit</button>
+          <button id="js-resize" class="btn btn-primary" type="button" rel="#resize-share-form" type="button">Resize</button>
+          <button id="js-snapshot-popup" class="btn btn-primary" type="button" rel="#create-snapshot-form" type="button">Snapshot</button>
+          <button id="js-nfs-export" class="btn btn-primary" type="button" type="button">NFS Export</button>
+          <button id="js-samba" class="btn btn-primary" type="button" type="button">Samba</button>
+          -->
+          <button id="js-delete" class="btn btn-danger" type="button" type="button">Delete Share</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="simple-overlay" id="create-snapshot-form">
+    <div class="span6 well">
+      <h4>Create a snapshot</h4>
+      <label>Snapshot Name</label>
+      <input type="text" name="snapshot-name" id="snapshot-name">
+      <br>
+      <button id="create-snapshot" class="btn btn-primary">Submit</button>
+    </div>
+  </div>
 
+  <div class="simple-overlay" id="resize-share-form">
+    <div class="span10 well">
+      <h4>Resize Share</h4>
+      <br/>
+      Size:<br/>
+      <input type="text" name="new-size" id="new-size" value="<%= humanize.filesize(share.get('size')*1024).replace(/[^0-9\.]+/g,"") %>">
+
+      <select id="size_format" name="size_format">
+        <option <%if(humanize.filesize(share.get('size')*1024).match(/Kb/g,"")){%> selected="selected"<%}%> >KB</option>
+        <option <%if(humanize.filesize(share.get('size')*1024).match(/Mb/g,"")){%> selected="selected"<%}%> >MB</option>
+        <option <%if(humanize.filesize(share.get('size')*1024).match(/Gb/g,"")){%> selected="selected"<%}%> >GB</option>
+        <option <%if(humanize.filesize(share.get('size')*1024).match(/Tb/g,"")){%> selected="selected"<%}%> >TB</option>
+      </select>
+      <br/>
+      <input type="Submit" id="resize-share" class="btn btn-primary" value="Submit"></input>
+    </div>
+  </div>
+  
+  <div class="simple-overlay" id="access-control-form">
+
+  </div>
+
+</div> <!-- module-container -->

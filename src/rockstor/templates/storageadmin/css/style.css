@@ -55,16 +55,21 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
 .smallinput { width: 100px; }
 
 /*Responsive container */
+/*
 @media (min-width: 1200px) {
   .container {
     width: 940px;
   }
 }
+*/
 
 /* Navbar */
-.navbar .container { width: 940px; }
+/*.navbar .container { width: 940px; }*/
 .navbar-inner { border-radius: 0px; }
-.navbar { margin-bottom: 0px; }
+.navbar { 
+  margin-bottom: 0px; 
+  box-shadow: 0px 0px 12px rgb(85, 85, 85);
+}
 .navbar-outer { box-shadow: 0px 0px 12px rgb(85, 85, 85); }
 
 .navbar-search .search-query {
@@ -674,12 +679,13 @@ label.error { color: #b94a48; }
 #appliance-breadcrumb {
   padding: 2px 0px 2px 0px;
   background: #eee;
-  margin-top: 6px;
+  margin-top: 46px;
   border-top: 1px solid #ddd;
   border-bottom: 1px solid #ddd;
 }
 
-hr.module-sep { margin: 0; border: 0; border-top: 1px solid #ddd; }
+hr.module-sep { margin: 0; border: 0; border-top: 1px solid #ddd; 
+}
 
 /* Services page */
 
@@ -1037,8 +1043,8 @@ ul.widgets-container li div.position {
 
 /* Code section */
 code {
-  background-color: rgb(105,105,105);
-  color: rgb(255,255,255);
+  background-color: #f5f5dc;
+  color: #555;
   padding: 2px 12px;
   border: 0px;
 }
@@ -1234,4 +1240,34 @@ ol.probe-status li.status-tracker-error:before {
   padding-bottom: 12px;
 }
 
+
+/* Module container */
+.module-container {
+  border: 1px solid #ddd;
+  box-shadow: 0px 0px 12px rgb(238, 238, 238);
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+
+.module-container-header {
+  padding: 12px 24px;
+  border-bottom: 1px solid #ddd;
+}
+
+.module-container-content {
+  padding: 0px 24px 24px 24px; 
+}
+
+.module-container-left {
+  border-right: 1px solid #ddd;
+}
+
+.module-container-footer {
+  overflow: hidden;
+  padding: 24px;
+}
+
+#share-details-container .h1, #share-details-container .h3 {
+  color: #D95700;
+}
 
