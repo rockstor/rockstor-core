@@ -88,9 +88,15 @@ NfsShareClientUserView = Backbone.View.extend({
         var results = data.results;
         //results = _this.generateData(); // TODO remove after test
         if (!_.isEmpty(results)) {
+          // remove no data message if present
+          if (_this.$("#no-activity-msg").length > 0) {
+          _this.$("#nfs-share-client-user-rows").empty();
+          }
           _this.renderViz(results);
         } else {
-          // TODO show no data msg
+          if (_this.$("#no-activity-msg").length == 0) {
+            _this.$("#nfs-share-client-user-rows").html('<span id="no-activity-msg">No NFS Activity</span>');
+          }
         }
       },
       error: function(request, status, error) {

@@ -1307,7 +1307,7 @@ input[type="radio"].selectedRoot {
 }
 
 /* NFS probe */
-#nfs-graphs { padding: 12px; }
-#nfs-graphs #nfs-attrs { width: 800px; height: 200px; }
-#nfs-graphs #nfs-data { width: 800px; height: 200px; }
+#nfs-graphs {  }
+#nfs-graphs #nfs-attrs { width: 100%; height: 200px; }
+#nfs-graphs #nfs-data { width: 100%; height: 200px; }
 

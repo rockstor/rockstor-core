@@ -1,5 +1,9 @@
 <div id="nfs-share-client-header">
-  <h4><span class="update-value">Top clients and associated shares over last <%= updateInterval/1000 %> seconds</span></h4>
+  <% if (probe.get("state") == probeStates.RUNNING) { %>
+    <h4><span class="update-value">Top clients and associated shares over last <%= updateInterval/1000 %> seconds</span></h4>
+  <% } else { %>
+    <h4><span class="update-value">Top clients and associated shares over probe lifetime </span></h4>
+  <% } %>
   <div id="nfs-share-client-sortby">
     <span class="h4">Sort by NFS Attributes:&nbsp;
       <input type="checkbox" class="selectedAttr" checked value="num_read" name="num_read">Reads</input>&nbsp;

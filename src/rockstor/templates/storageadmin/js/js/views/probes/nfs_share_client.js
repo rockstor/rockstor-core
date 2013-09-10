@@ -44,6 +44,7 @@ NfsShareClientView = Backbone.View.extend({
   render: function() {
     $(this.el).html(this.template({
       probe: this.probe, 
+      probeStates: probeStates,
       updateInterval: this.updateInterval,
       treeType: this.treeType
     }));
