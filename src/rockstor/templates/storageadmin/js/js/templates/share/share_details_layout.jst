@@ -53,8 +53,47 @@
               <div class="span12">
                 <!-- Content -->
                 <div class="module-content">
-                  Owned by <a href="#">root</a><br>
-                  Permissions: rwxrwxrwx
+                  <table>
+                    <tr>
+                      <td>Owner</td>
+                      <td><%= share.get("owner") %></td>
+                    </tr>
+                    <tr>
+                      <td>Group</td>
+                      <td><%= share.get("group") %></td>
+                    </tr>
+                  </table>
+                  Permissions
+
+                  <table>
+                    <tr>
+                      <td colspan="3">Owner</td>
+                      <td colspan="3">Group</td>
+                      <td colspan="3">Other</td>
+                    </tr>
+                    <tr>
+                      <td>r</td>
+                      <td>w</td>
+                      <td>x</td>
+                      <td>r</td>
+                      <td>w</td>
+                      <td>x</td>
+                      <td>r</td>
+                      <td>w</td>
+                      <td>x</td>
+                    </tr>
+                    <tr>
+                      <td><%= permStr[0] %></td>
+                      <td><%= permStr[1] %></td>
+                      <td><%= permStr[2] %></td>
+                      <td><%= permStr[3] %></td>
+                      <td><%= permStr[4] %></td>
+                      <td><%= permStr[5] %></td>
+                      <td><%= permStr[6] %></td>
+                      <td><%= permStr[7] %></td>
+                      <td><%= permStr[8] %></td>
+                    </tr>
+                  </table>
                 </div>
               </div>
             </div>

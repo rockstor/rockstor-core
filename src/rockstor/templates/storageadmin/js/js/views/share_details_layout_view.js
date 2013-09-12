@@ -35,7 +35,6 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
     //this.iscsi_target = new ISCSITarget({shareName: this.shareName});
     this.appliances = new ApplianceCollection();
 
-
     // create models
     this.share = new Share({shareName: this.shareName});
     this.snapshots = new SnapshotCollection();
@@ -103,8 +102,10 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
     this.share.on('change', this.subviews['nfs-exports'].render, this.subviews['nfs-exports']);
     this.share.on('change', this.subviews['smb-shares'].render, this.subviews['smb-shares']);
     this.snapshots.on('reset', this.subviews['snapshots'].render, this.subviews['snapshots']);
+    console.log(this.parsePerms(this.share.get("perms")));
     $(this.el).append(this.template({
       share: this.share,
+      permStr: this.parsePerms(this.share.get("perms")),
       modify_choices: this.modify_choices, 
       sync_choices: this.sync_choices, 
       nsecurity_choices: this.nsecurity_choices,
@@ -201,6 +202,19 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
     });
 
 
-  }
+  },
+
+  parsePerms: function(perms) {
+    var p = "";
+    for (var i=0; i<3; i++) {
+      var tmp = parseInt(perms.charAt(i)).toString(2);
+      console.log(tmp);
+      p = (tmp.length == 3) ? p.concat(tmp) :
+        (tmp.length == 2) ? p.concat("0").concat(tmp) :
+        p.concat("00").concat(tmp);
+    }
+    return p;
+  },
+
 
 });
