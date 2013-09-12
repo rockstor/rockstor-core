@@ -25,7 +25,7 @@
       <div class="title">
         <span class="h3">NFS Exports</span>
         <div class="pull-right">
-          <a href="#"><i class="icon-pencil"></i> Edit</a>
+          <a href="#" id="add-export" rel="#nfs-export-form"><i class="icon-edit"></i> Add export</a>
         </div>
       </div>
     </div>
@@ -74,3 +74,56 @@
   </div> <!-- span12 -->
 </div> <!-- row-fluid -->
 
+<div class="simple-overlay" id="nfs-export-form">
+  <div class="overlay-content">
+    <div class="row-fluid">
+      <div class="span12">
+
+        <h3>Add NFS Export</h3>
+        <label class="control-label"><span class="required">*</span> indicates required fields</label>
+        <div class="form-box">
+          <form id="add-nfs-export-form" name="aform">
+            <div class="messages"></div>
+            <div class="control-group">
+              <label class="control-label" for="host_str">Host<span class="required"> *</span></label>
+              <div class="controls">
+                <input type="text" name="host_str" id="host_str"> 
+              </div>
+            </div>
+
+            <div class="control-group">
+              <label class="control-label" for="mod_choice">Writable</label>
+              <div class="controls">
+                <select id="mod_choice" name="mod_choice">
+                  <% _.each(modify_choices, function(c) { %>
+                    <option value="<%= c.value %>"><%= c.name %></option>
+                  <% }); %>
+                </select>
+              </div>
+            </div>
+
+            <div class="control-group">
+              <label class="control-label" for="sync_choice">Sync</label>
+              <div class="controls">
+                <select id="sync_choice" name="sync_choice">
+                  <% _.each(sync_choices, function(c) { %>
+                    <option value="<%= c.value %>"><%= c.name %></option>
+                  <% }); %>
+                </select>
+              </div>
+            </div>
+
+            <div class="control-group">
+              <div class="controls">
+                <button class="btn" id="cancel-add">Cancel</button>
+                <button class="btn btn-primary" id="save-export">Submit</button>
+              </div>
+            </div>
+          </form>
+        </div>        
+
+      </div> <!-- span12 -->
+    </div> <!-- row-fluid -->
+
+  </div> <!-- overlay-content -->
+</div>

@@ -369,7 +369,7 @@ background-color: #8dbdd8;
 .simple-overlay {
     display:none; /* must be initially hidden */
     z-index:10000; /* place overlay on top of other elements */
-    width:675px;
+    width:800px;
     min-height:200px;
     border:1px solid #aaa;
     background: #fff;
@@ -378,6 +378,9 @@ background-color: #8dbdd8;
     box-shadow: 0 0 90px #000;
     padding-top: 20px;
     position: relative;
+    left: 50%;
+    margin-left: -400px;
+    top: 80px;
 }
 
 /* close button positioned on upper right corner */

@@ -123,8 +123,7 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
   attachActions: function() {
     var _this = this;
     // attach overlays
-    this.$('button[rel]').overlay();
-    this.$('a[rel]').overlay();
+    this.$('#js-access-control').overlay();
     // create snapshot form submit action
     this.$('#create-snapshot').click(function() {
       var button = _this.$('#create-snapshot');

@@ -26,9 +26,8 @@
 
 NFSExportsTableModule  = RockstoreModuleView.extend({
   events: {
-    'click #add-export': 'addRow',
-    'click #cancel-add': 'cancelAdd',
-    'click #save-new': 'saveNew',
+    'click #add-export': 'addExport',
+    'click #cancel-add': 'cancel',
   },
 
   initialize: function() {
@@ -55,7 +54,10 @@ NFSExportsTableModule  = RockstoreModuleView.extend({
         $(_this.el).append(_this.template({
           share: _this.share,
           nfs_exports: _this.nfs_exports,
+            modify_choices: _this.modify_choices,
+            sync_choices: _this.sync_choices,
         }));
+        _this.$("#nfs-export-form").overlay({load: false, top: 80, fixed: false });
         _this.nfs_exports.each(function(nfs_export, index) {
           var nfs_export_row = new NFSExportsTableRow({
             nfs_export: nfs_export,
@@ -71,6 +73,40 @@ NFSExportsTableModule  = RockstoreModuleView.extend({
         if (_this.nfs_exports.length > 0) {
           _this.$('#nfs-exports-table-body').append('<tr><td colspan="5">Mount this share using <code>mount ' + _this.appliance_ip + ':' + _this.nfs_exports.at(0).get('mount') + ' &lt;mount_pt&gt;</code></td></tr>');
         }
+        _this.$("#add-nfs-export-form").validate({
+          onfocusout: false,
+          onkeyup: false,
+          rules: {
+            host_str: "required"
+          },
+          submitHandler: function() {
+            var button = _this.$('#save-export');
+            if (buttonDisabled(button)) return false;
+            disableButton(button);
+            $.ajax({
+              url: "/api/shares/"+_this.share.get('name')+'/nfs',
+              type: "POST",
+              dataType: "json",
+              data: {
+                host_str: _this.$("#host_str").val(),
+                mod_choice: _this.$("#mod_choice").val(),  
+                sync_choice: _this.$("#sync_choice").val()  
+              },
+              success: function() {
+                enableButton(button);
+                _this.$("#nfs-export-form").overlay().close();
+                _this.render();
+              },
+              error: function(request, status, error) {
+                enableButton(button);
+                var msg = parseXhrError(xhr)
+                _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
+              },
+            });
+            return false;
+          }
+
+        });
 
       },
       error: function(collection, response, options) {
@@ -79,6 +115,12 @@ NFSExportsTableModule  = RockstoreModuleView.extend({
       }
     });
     return this;
+  },
+
+  addExport : function(event) {
+    event.preventDefault();
+    this.$("#nfs-export-form").overlay().load();
+  
   },
 
   addRow: function(event) {
@@ -97,13 +139,9 @@ NFSExportsTableModule  = RockstoreModuleView.extend({
     this.disableAddButton();
   },
 
-  cancelAdd: function(event) {
+  cancel: function(event) {
     event.preventDefault();
-    this.$('#new-nfs-export-row').remove();
-    this.enableAddButton();
-    if (this.nfs_exports.length == 0) {
-      this.$('#nfs-exports-table-body').empty().append(this.empty_template());
-    }
+    this.$("#nfs-export-form").overlay().close();
   },
 
   disableAddButton: function() {
@@ -112,31 +150,6 @@ NFSExportsTableModule  = RockstoreModuleView.extend({
 
   enableAddButton: function() {
     this.$('#add-export').removeClass('disabled');
-  },
-
-  saveNew: function() {
-    var button = this.$('#save-new');
-    if (buttonDisabled(button)) return false;
-    disableButton(button);
-    var _this = this;
-    data = $('#new-nfs-export-row').getJSON();
-    console.log(data);
-    $.ajax({
-      url: "/api/shares/"+_this.share.get('name')+'/nfs',
-      type: "POST",
-      dataType: "json",
-      data: data,
-      success: function() {
-        enableButton(button);
-        _this.render();
-      },
-      error: function(request, status, error) {
-        enableButton(button);
-        showError(request.responseText);
-      },
-    });
-
-
   },
 
 });
