@@ -36,68 +36,6 @@
         <hr class="module-sep">
         <br>
         <div id="ph-access-control">
-          <div class="module">
-            <div class="row-fluid">
-              <div class="span12">
-                <div class="module-header">
-                  <div class="title">
-                    <span class="h3">Access Control</span>
-                    <div class="pull-right">
-                      <a href="#" rel="#access-control-form" id="js-access-control"><i class="icon-pencil"></i> Edit</a>
-                    </div>
-                  </div>
-                </div>
-              </div> <!-- span12 -->
-            </div> <!-- row-fluid -->
-            <div class="row-fluid">
-              <div class="span12">
-                <!-- Content -->
-                <div class="module-content">
-                  <table>
-                    <tr>
-                      <td>Owner</td>
-                      <td><%= share.get("owner") %></td>
-                    </tr>
-                    <tr>
-                      <td>Group</td>
-                      <td><%= share.get("group") %></td>
-                    </tr>
-                  </table>
-                  Permissions
-
-                  <table>
-                    <tr>
-                      <td colspan="3">Owner</td>
-                      <td colspan="3">Group</td>
-                      <td colspan="3">Other</td>
-                    </tr>
-                    <tr>
-                      <td>r</td>
-                      <td>w</td>
-                      <td>x</td>
-                      <td>r</td>
-                      <td>w</td>
-                      <td>x</td>
-                      <td>r</td>
-                      <td>w</td>
-                      <td>x</td>
-                    </tr>
-                    <tr>
-                      <td><%= permStr[0] %></td>
-                      <td><%= permStr[1] %></td>
-                      <td><%= permStr[2] %></td>
-                      <td><%= permStr[3] %></td>
-                      <td><%= permStr[4] %></td>
-                      <td><%= permStr[5] %></td>
-                      <td><%= permStr[6] %></td>
-                      <td><%= permStr[7] %></td>
-                      <td><%= permStr[8] %></td>
-                    </tr>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
         <br>
         <hr class="module-sep">
@@ -165,8 +103,4 @@
     </div>
   </div>
   
-  <div class="simple-overlay" id="access-control-form">
-
-  </div>
-
 </div> <!-- module-container -->

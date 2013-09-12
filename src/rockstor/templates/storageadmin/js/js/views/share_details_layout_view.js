@@ -26,12 +26,20 @@
 
 ShareDetailsLayoutView = RockstoreLayoutView.extend({
   id: "share-details-container",
+  events: {
+    "click #js-acl-edit": "editAcl",
+    "click #js-acl-save": "saveAcl",
+    "click #js-acl-cancel": "cancelAcl",
+    "click input[name='perms[]']": "showPermStr",
+  },
 
   initialize: function() {
     // call initialize of base
     this.constructor.__super__.initialize.apply(this, arguments);
     this.shareName = this.options.shareName;
     this.template = window.JST.share_share_details_layout;
+    this.shareAclTemplate = window.JST.share_share_acl;
+    this.shareAclEditTemplate = window.JST.share_share_acl_edit;
     //this.iscsi_target = new ISCSITarget({shareName: this.shareName});
     this.appliances = new ApplianceCollection();
 
@@ -40,9 +48,11 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
     this.snapshots = new SnapshotCollection();
     this.snapshots.setUrl(this.shareName);
 
+    this.users = new UserCollection();
     // add dependencies
     this.dependencies.push(this.share);
     this.dependencies.push(this.snapshots);
+    this.dependencies.push(this.users);
     //this.dependencies.push(this.iscsi_target);
     this.dependencies.push(this.appliances);
     this.modify_choices = [
@@ -99,17 +109,17 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
     });
     this.share.on('change', this.subviews['share-info'].render, this.subviews['share-info']);
     this.share.on('change', this.subviews['share-usage'].render, this.subviews['share-usage']);
-    this.share.on('change', this.subviews['nfs-exports'].render, this.subviews['nfs-exports']);
-    this.share.on('change', this.subviews['smb-shares'].render, this.subviews['smb-shares']);
-    this.snapshots.on('reset', this.subviews['snapshots'].render, this.subviews['snapshots']);
-    console.log(this.parsePerms(this.share.get("perms")));
+    //this.share.on('change', this.subviews['nfs-exports'].render, this.subviews['nfs-exports']);
+    //this.share.on('change', this.subviews['smb-shares'].render, this.subviews['smb-shares']);
+    //this.snapshots.on('reset', this.subviews['snapshots'].render, this.subviews['snapshots']);
     $(this.el).append(this.template({
       share: this.share,
-      permStr: this.parsePerms(this.share.get("perms")),
+      permStr: this.parsePermStr(this.share.get("perms")),
       modify_choices: this.modify_choices, 
       sync_choices: this.sync_choices, 
       nsecurity_choices: this.nsecurity_choices,
     }));
+    this.renderAcl();
     this.$('#ph-share-info').append(this.subviews['share-info'].render().el);
     this.$('#ph-share-usage').append(this.subviews['share-usage'].render().el);
     this.$('#ph-snapshots').append(this.subviews['snapshots'].render().el);
@@ -201,20 +211,96 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
       }
     });
 
-
+  },
+  
+  renderAcl: function() {
+    this.$("#ph-access-control").html(this.shareAclTemplate({
+      share: this.share,
+      permStr: this.parsePermStr(this.share.get("perms")),
+    }));
   },
 
-  parsePerms: function(perms) {
+  editAcl: function(event) {
+    event.preventDefault();
+    this.$("#ph-access-control").html(this.shareAclEditTemplate({
+      share: this.share,
+      permStr: this.parsePermStr(this.share.get("perms")),
+      users: this.users
+    }));
+  },
+
+  saveAcl: function(event) {
+    event.preventDefault();
+    var _this = this;
+    var button = _this.$('#js-acl-save');
+    if (buttonDisabled(button)) return false;
+    disableButton(button);
+    var permStr = this.createPermStr();
+    var data = {
+      owner: this.$("#share-owner").val(),
+      perms: permStr
+    }
+    $.ajax({
+      url: "/api/shares/"+this.share.get("name")+"/acl",
+      type: "POST",
+      data: data,
+      dataType: "json",
+      success: function() {
+        enableButton(button);
+        _this.share.fetch({
+          success: function() {
+            _this.renderAcl();
+          }
+        });
+      },
+      error: function(request, status, error) {
+        enableButton(button);
+        var msg = parseXhrError(error)
+        _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
+      }
+    });
+  },
+
+  cancelAcl: function(event) {
+    event.preventDefault();
+    this.$("#ph-access-control").html(this.shareAclTemplate({
+      share: this.share,
+      permStr: this.parsePermStr(this.share.get("perms")),
+    }));
+  },
+
+  parsePermStr: function(perms) {
     var p = "";
     for (var i=0; i<3; i++) {
       var tmp = parseInt(perms.charAt(i)).toString(2);
-      console.log(tmp);
       p = (tmp.length == 3) ? p.concat(tmp) :
         (tmp.length == 2) ? p.concat("0").concat(tmp) :
         p.concat("00").concat(tmp);
     }
     return p;
   },
+  
+  createPermStr: function() {
+    var perms = [];
+    this.$("input[name='perms[]']:checked").each(function() {
+      perms.push($(this).val());
+    });
+    var us = ["owner","group","other"];
+    var ps = ["r","w","x"];
+    var permStr = "";
+    _.each(us, function(u) {
+      var t = "";
+      _.each(ps, function(p) {
+        var s = u + "-" + p;
+        t = t + (perms.indexOf(s) != -1 ? "1" : "0"); 
+      });
+      permStr = permStr + parseInt(t,2);
+    });
+    return permStr;
+  },
 
+  showPermStr: function() {
+    this.$("#permStrEdit").html(this.createPermStr());
+  }
 
 });

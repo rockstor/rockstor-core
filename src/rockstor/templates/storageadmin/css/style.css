@@ -273,7 +273,9 @@ a#logo-name { color: #fff; }
 */
 
 /* Tables */
-
+table.noborder { border: none; }
+.noborder td { border: none; }
+.noborder tr { border: none; }
 #disks-table, #shares-table { width: 100%; }
 
 .table-title {
