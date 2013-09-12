@@ -25,9 +25,6 @@
     <div class="module-header">
       <div class="title">
         <span class="h3">Usage</span>
-        <div class="pull-right">
-          <a href="#" rel="#resize-share-form" id="js-resize"><i class="icon-edit"></i> Edit</a>
-        </div>
       </div>
     </div>
   </div> <!-- span12 -->
@@ -37,9 +34,23 @@
   <div class="span12">
     <!-- Content -->
     <div class="module-content">
-      <div id="chart"></div>
+      <h4>Resize Share</h4>
+      <div class="messages"></div>
+      Size:<br/>
+      <input class="smallinput" type="text" name="new-size" id="new-size" value="<%= humanize.filesize(share.get('size')*1024).replace(/[^0-9\.]+/g,"") %>">
+
+      <select class="smallinput" id="size_format" name="size_format">
+        <option <%if(humanize.filesize(share.get('size')*1024).match(/Kb/g,"")){%> selected="selected"<%}%> >KB</option>
+        <option <%if(humanize.filesize(share.get('size')*1024).match(/Mb/g,"")){%> selected="selected"<%}%> >MB</option>
+        <option <%if(humanize.filesize(share.get('size')*1024).match(/Gb/g,"")){%> selected="selected"<%}%> >GB</option>
+        <option <%if(humanize.filesize(share.get('size')*1024).match(/Tb/g,"")){%> selected="selected"<%}%> >TB</option>
+      </select>
+      <br/>
+      <input type="Submit" id="js-resize-save" class="btn btn-primary" value="Submit"></input>
+      <button id="js-resize-cancel" class="btn" value="Cancel">Cancel</button>
     </div> <!-- module-content -->
 
   </div> <!-- span12 -->
 </div> <!-- row-fluid -->
+
 

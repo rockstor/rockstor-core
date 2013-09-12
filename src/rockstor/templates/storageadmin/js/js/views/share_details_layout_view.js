@@ -79,8 +79,8 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
     var current_appliance = this.appliances.find(function(appliance) {
       return appliance.get('current_appliance') == true; 
     })
-    this.subviews['share-info'] = new ShareInfoModule({ model: this.share });
-    this.subviews['share-usage'] = new ShareUsageModule({ model: this.share });
+    //this.subviews['share-info'] = new ShareInfoModule({ model: this.share });
+    this.subviews['share-usage'] = new ShareUsageModule({ share: this.share });
     this.subviews['snapshots'] = new SnapshotsTableModule({ 
       collection: this.snapshots,
       share: this.share
@@ -107,7 +107,7 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
         //{ name: 'snapshot-popup', class: 'btn-primary', text: 'Snapshot', options: {rel: '#create-snapshot-form'}},
       ]
     });
-    this.share.on('change', this.subviews['share-info'].render, this.subviews['share-info']);
+    //this.share.on('change', this.subviews['share-info'].render, this.subviews['share-info']);
     this.share.on('change', this.subviews['share-usage'].render, this.subviews['share-usage']);
     //this.share.on('change', this.subviews['nfs-exports'].render, this.subviews['nfs-exports']);
     //this.share.on('change', this.subviews['smb-shares'].render, this.subviews['smb-shares']);
@@ -120,7 +120,7 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
       nsecurity_choices: this.nsecurity_choices,
     }));
     this.renderAcl();
-    this.$('#ph-share-info').append(this.subviews['share-info'].render().el);
+    //this.$('#ph-share-info').append(this.subviews['share-info'].render().el);
     this.$('#ph-share-usage').append(this.subviews['share-usage'].render().el);
     this.$('#ph-snapshots').append(this.subviews['snapshots'].render().el);
     this.$('#ph-nfs-exports').append(this.subviews['nfs-exports'].render().el);
@@ -155,38 +155,38 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
       });
     });
     
-    this.$('#resize-share').click(function() {
-      var button = _this.$('#resize-share');
-      if (buttonDisabled(button)) return false;
-      disableButton(button);
-      var size = $('#new-size').val();
+    //this.$('#resize-share').click(function() {
+      //var button = _this.$('#resize-share');
+      //if (buttonDisabled(button)) return false;
+      //disableButton(button);
+      //var size = $('#new-size').val();
       
-      var sizeFormat = $('#size_format').val();
-        if(sizeFormat == 'KB'){
-    	  size = size;
-    	}else if(sizeFormat == 'MB'){
-    	  size = size*1024;	
-    	}else if(sizeFormat == 'GB'){
-    	  size = size*1024*1024;
-    	}else if(sizeFormat == 'TB'){
-    	  size = size*1024*1024*1024;
-    	}
-      $.ajax({
-        url: "/api/shares/" + _this.share.get('name'),
-        type: "PUT",
-        dataType: "json",
-        data: { "size": size},
-        success: function() {
-          enableButton(button);
-          _this.$('#js-resize').overlay().close();
-          _this.share.fetch();
-        },
-        error: function(request, status, error) {
-          enableButton(button);
-          showError(request.responseText);
-        }
-      });
-    });
+      //var sizeFormat = $('#size_format').val();
+        //if(sizeFormat == 'KB'){
+        //size = size;
+      //}else if(sizeFormat == 'MB'){
+        //size = size*1024;	
+      //}else if(sizeFormat == 'GB'){
+        //size = size*1024*1024;
+      //}else if(sizeFormat == 'TB'){
+        //size = size*1024*1024*1024;
+      //}
+      //$.ajax({
+        //url: "/api/shares/" + _this.share.get('name'),
+        //type: "PUT",
+        //dataType: "json",
+        //data: { "size": size},
+        //success: function() {
+          //enableButton(button);
+          //_this.$('#js-resize').overlay().close();
+          //_this.share.fetch();
+        //},
+        //error: function(request, status, error) {
+          //enableButton(button);
+          //showError(request.responseText);
+        //}
+      //});
+    //});
 
     this.$('#js-delete').click(function() {
       logger.info('deleting share ' + _this.share.get('name'));

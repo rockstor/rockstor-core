@@ -25,16 +25,24 @@
  */
 
 ShareUsageModule = RockstoreModuleView.extend({
-  
+  events: {
+    "click #js-resize": "edit",
+    "click #js-resize-save": "save",
+    "click #js-resize-cancel": "cancel",
+
+  },
+
   initialize: function() {
     this.template = window.JST.share_share_usage_module;
+    this.editTemplate = window.JST.share_share_usage_edit;
     this.module_name = 'share-usage';
+    this.share = this.options.share;
   },
 
   render: function() {
     $(this.el).html(this.template({ 
       module_name: this.module_name,
-      model: this.model,
+      share: this.share,
       collection: this.collection
     }));
     this.renderGraph();
@@ -49,8 +57,8 @@ ShareUsageModule = RockstoreModuleView.extend({
     var padding = [10,10,10,1];
     var barHeight = 50; 
 
-    total = parseInt(this.model.get('size')*1024);
-    used = parseInt(this.model.get('usage')*1024);
+    total = parseInt(this.share.get('size')*1024);
+    used = parseInt(this.share.get('usage')*1024);
     free = total - used;
     var dataSet = [used, free]; 
     var data = [Math.round((used/total)*100), Math.round((free/total)*100)];
@@ -125,8 +133,8 @@ ShareUsageModule = RockstoreModuleView.extend({
     var outerRadius = 20;
     var innerRadius = 0;
     
-    total = parseInt(this.model.get('size')*1024);
-    used = parseInt(this.model.get('usage')*1024);
+    total = parseInt(this.share.get('size')*1024);
+    used = parseInt(this.share.get('usage')*1024);
     free = total - used;
     var dataset = [free, used];
     var dataLabels = ["free", "used"];
@@ -138,7 +146,58 @@ ShareUsageModule = RockstoreModuleView.extend({
     
     displayUsagePieChart(svg, outerRadius, innerRadius, w, h, dataset, dataLabels, total);
 
-  }
+  },
+
+  edit: function(event) {
+    event.preventDefault();
+    $(this.el).html(this.editTemplate({ share: this.share }));
+  },
+
+  save: function(event) {
+    var _this = this;
+    event.preventDefault();
+    var button = _this.$('#js-resize-save');
+    if (buttonDisabled(button)) return false;
+    disableButton(button);
+    var size = this.$('#new-size').val();
+
+    var sizeFormat = $('#size_format').val();
+    if(sizeFormat == 'KB'){
+      size = size;
+    }else if(sizeFormat == 'MB'){
+      size = size*1024;	
+    }else if(sizeFormat == 'GB'){
+      size = size*1024*1024;
+    }else if(sizeFormat == 'TB'){
+      size = size*1024*1024*1024;
+    }
+    $.ajax({
+      url: "/api/shares/" + this.share.get('name'),
+      type: "PUT",
+      dataType: "json",
+      data: { "size": size},
+      success: function() {
+        enableButton(button);
+        _this.share.fetch({
+          success: function() {
+            _this.render();
+          }
+        });
+      },
+      error: function(request, status, error) {
+        enableButton(button);
+        var msg = parseXhrError(error)
+        _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
+      }
+    });
+  },
+
+  cancel: function(event) {
+    event.preventDefault();
+    this.render();
+  },
+
+
 });
 
 

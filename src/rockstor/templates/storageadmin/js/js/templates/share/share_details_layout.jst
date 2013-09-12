@@ -31,7 +31,10 @@
     <div class="span6">
       <div class="module-container-content module-container-left">
         <br>
-        <div id="ph-share-info"></div>
+        <div id="ph-share-info">
+          Created on <%= new Date(share.get("toc")).toString() %> <br>
+          Pool: <a href="#pools/<%= share.get('pool').name %>"><%= share.get('pool').name %></a> <br>
+        </div>
         <br>
         <hr class="module-sep">
         <br>
