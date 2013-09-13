@@ -1,121 +1,105 @@
-<div class="module">
-  <div class="row-fluid">
-    <div class="span12">
-      <div class="module-header">
-        <div class="title">
-          <span class="h3">Access Control</span>
-          <div class="pull-right">
-            <a href="#" id="js-acl-edit"><i class="icon-edit"></i> Edit</a>
-          </div>
-        </div>
-      </div>
-    </div> <!-- span12 -->
-  </div> <!-- row-fluid -->
-  <div class="row-fluid">
-    <div class="span12">
-      <!-- Content -->
-      <div class="module-content">
-        <table class="table table-bordered table-condensed">
-          <tr>
-            <td>Owner</td>
-            <td><%= share.get("owner") %></td>
-          </tr>
-          <tr>
-            <td>Group</td>
-            <td><%= share.get("group") %></td>
-          </tr>
-          <tr>
-            <td>
-              Permissions<br>
-              (<span id="permStrEdit"><%= share.get("perms") %></span>)
-            </td>
-            <td>
-              <table class="noborder table-condensed">
-                <tr>
-                  <td>&nbsp;</td>
-                  <td>Owner</td>
-                  <td>Group</td>
-                  <td>Other</td>
-                </tr>
-                <tr>
-                  <td>Read</td>
-                  <td>
-                    <% if (permStr[0] == "1") { %>
-                      <input type="checkbox" checked="true" disabled>
-                    <% } else { %>
-                      <input type="checkbox" disabled>
-                    <% } %>
-                  </td>
-                  <td>
-                    <% if (permStr[3] == "1") { %>
-                      <input type="checkbox" checked="true" disabled>
-                    <% } else { %>
-                      <input type="checkbox" disabled>
-                    <% } %>
-                  </td>
-                  <td>
-                    <% if (permStr[6] == "1") { %>
-                      <input type="checkbox" checked="true" disabled>
-                    <% } else { %>
-                      <input type="checkbox" disabled>
-                    <% } %>
-                  </td>
-                </tr>
-                <tr>
-                  <td>Write</td>
-                  <td>
-                    <% if (permStr[1] == "1") { %>
-                      <input type="checkbox" checked="true" disabled>
-                    <% } else { %>
-                      <input type="checkbox" disabled>
-                    <% } %>
-                  </td>
-                  <td>
-                    <% if (permStr[4] == "1") { %>
-                      <input type="checkbox" checked="true" disabled>
-                    <% } else { %>
-                      <input type="checkbox" disabled>
-                    <% } %>
-                  </td>
-                  <td>
-                    <% if (permStr[7] == "1") { %>
-                      <input type="checkbox" checked="true" disabled>
-                    <% } else { %>
-                      <input type="checkbox" disabled>
-                    <% } %>
-                  </td>
-                </tr>
-                <tr>
-                  <td>Execute</td>
-                  <td>
-                    <% if (permStr[2] == "1") { %>
-                      <input type="checkbox" checked="true" disabled>
-                    <% } else { %>
-                      <input type="checkbox" disabled>
-                    <% } %>
-                  </td>
-                  <td>
-                    <% if (permStr[5] == "1") { %>
-                      <input type="checkbox" checked="true" disabled>
-                    <% } else { %>
-                      <input type="checkbox" disabled>
-                    <% } %>
-                  </td>
-                  <td>
-                    <% if (permStr[8] == "1") { %>
-                      <input type="checkbox" checked="true" disabled>
-                    <% } else { %>
-                      <input type="checkbox" disabled>
-                    <% } %>
-                  </td>
-                </tr>
-
-              </table>
-            </td>
-          </tr>
-        </table>
-      </div>
-    </div>
-  </div>
+<span class="h3">Access Control</span>
+<div class="pull-right">
+  <a href="#" id="js-acl-edit"><i class="icon-edit"></i> Edit</a>
 </div>
+<!-- Content -->
+<table class="table table-bordered table-condensed">
+  <tr>
+    <td>Owner</td>
+    <td><%= share.get("owner") %></td>
+  </tr>
+  <tr>
+    <td>Group</td>
+    <td><%= share.get("group") %></td>
+  </tr>
+  <tr>
+    <td>
+      Permissions<br>
+      (<span id="permStrEdit"><%= share.get("perms") %></span>)
+    </td>
+    <td>
+      <table class="noborder table-condensed">
+        <tr>
+          <td>&nbsp;</td>
+          <td>Owner</td>
+          <td>Group</td>
+          <td>Other</td>
+        </tr>
+        <tr>
+          <td>Read</td>
+          <td>
+            <% if (permStr[0] == "1") { %>
+              <input type="checkbox" checked="true" disabled>
+            <% } else { %>
+              <input type="checkbox" disabled>
+            <% } %>
+          </td>
+          <td>
+            <% if (permStr[3] == "1") { %>
+              <input type="checkbox" checked="true" disabled>
+            <% } else { %>
+              <input type="checkbox" disabled>
+            <% } %>
+          </td>
+          <td>
+            <% if (permStr[6] == "1") { %>
+              <input type="checkbox" checked="true" disabled>
+            <% } else { %>
+              <input type="checkbox" disabled>
+            <% } %>
+          </td>
+        </tr>
+        <tr>
+          <td>Write</td>
+          <td>
+            <% if (permStr[1] == "1") { %>
+              <input type="checkbox" checked="true" disabled>
+            <% } else { %>
+              <input type="checkbox" disabled>
+            <% } %>
+          </td>
+          <td>
+            <% if (permStr[4] == "1") { %>
+              <input type="checkbox" checked="true" disabled>
+            <% } else { %>
+              <input type="checkbox" disabled>
+            <% } %>
+          </td>
+          <td>
+            <% if (permStr[7] == "1") { %>
+              <input type="checkbox" checked="true" disabled>
+            <% } else { %>
+              <input type="checkbox" disabled>
+            <% } %>
+          </td>
+        </tr>
+        <tr>
+          <td>Execute</td>
+          <td>
+            <% if (permStr[2] == "1") { %>
+              <input type="checkbox" checked="true" disabled>
+            <% } else { %>
+              <input type="checkbox" disabled>
+            <% } %>
+          </td>
+          <td>
+            <% if (permStr[5] == "1") { %>
+              <input type="checkbox" checked="true" disabled>
+            <% } else { %>
+              <input type="checkbox" disabled>
+            <% } %>
+          </td>
+          <td>
+            <% if (permStr[8] == "1") { %>
+              <input type="checkbox" checked="true" disabled>
+            <% } else { %>
+              <input type="checkbox" disabled>
+            <% } %>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
 

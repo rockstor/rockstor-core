@@ -20,59 +20,44 @@
 </script>
 
 
-<div class="row-fluid">
-  <div class="span12">
-    <div class="module-header">
-      <div class="title">
-        <span class="h3">Snapshots</span>
-        <div class="pull-right">
-          <a href="#"><i class="icon-pencil"></i> Edit</a>
-        </div>
-      </div>
-    </div>
-  </div> <!-- span12 -->
-</div> <!-- row-fluid -->
+<span class="h3">Snapshots</span>
+<div class="pull-right">
+  <a href="#" id="js-snapshot-add"><i class="icon-edit"></i> Create snapshot</a>
+</div>
 
 
-<div class="row-fluid">
-  <div class="span12">
-    <!-- Content -->
-    <div class="module-content">
-      <% if (!snapshots.isEmpty()) { %>
-        <table id="snapshots-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of snapshots">
-          <thead>
-            <tr>
-              <th>No.</th>
-              <th>Name</th>
-              <th>Size</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <% snapshots.each(function(snapshot, index) { %>
-              <tr>
-                <td><%= index+1 %></td>
-                <td><%= snapshot.get('name') %></td>
-                <td><%= humanize.filesize(snapshot.get('size')*1024) %></td>
-                <td><button id="delete_snapshot_<%= snapshot.get('name') %>"
-                    data-name="<%= snapshot.get('name') %>" data-share-name="<%= share.get('name') %>" data-action="delete" class="btn btn-danger">Delete</button></td>
-              </tr>
-            <% }); %>
-          </tbody>
+<div class="messages"></div>
+<% if (!snapshots.isEmpty()) { %>
+  <table id="snapshots-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of snapshots">
+    <thead>
+      <tr>
+        <th>No.</th>
+        <th>Name</th>
+        <th>Size</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% snapshots.each(function(snapshot, index) { %>
+        <tr>
+          <td><%= index+1 %></td>
+          <td><%= snapshot.get('name') %></td>
+          <td><%= humanize.filesize(snapshot.get('size')*1024) %></td>
+          <td><a href="#" class="js-snapshot-delete" id="delete_snapshot_<%= snapshot.get('name') %>" data-name="<%= snapshot.get('name') %>" data-share-name="<%= share.get('name') %>" data-action="delete"><i class="icon-trash"></i></a></td>
+        </tr>
+      <% }); %>
+    </tbody>
 
-        </table>
-      <% } else { %>
-        <table id="snapshots-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of snapshots">
-          <tbody>
-            <tr>
-              <td colspan="4">
-                <h4>No snapshots have been created</h4>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      <% } %>
-    </div>
-  </div> <!-- span12 -->
-</div> <!-- row-fluid -->
+  </table>
+<% } else { %>
+  <table id="snapshots-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of snapshots">
+    <tbody>
+      <tr>
+        <td colspan="4">
+          <h4>No snapshots have been created</h4>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+<% } %>
 

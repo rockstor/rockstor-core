@@ -82,7 +82,7 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
     //this.subviews['share-info'] = new ShareInfoModule({ model: this.share });
     this.subviews['share-usage'] = new ShareUsageModule({ share: this.share });
     this.subviews['snapshots'] = new SnapshotsTableModule({ 
-      collection: this.snapshots,
+      snapshots: this.snapshots,
       share: this.share
     });
     this.subviews['nfs-exports'] = new NFSExportsTableModule({ 

@@ -19,60 +19,42 @@
  */
 </script>
 
-<div class="row-fluid">
-  <div class="span12">
-    <div class="module-header">
-      <div class="title">
-        <span class="h3">NFS Exports</span>
-        <div class="pull-right">
-          <a href="#" id="add-export" rel="#nfs-export-form"><i class="icon-edit"></i> Add export</a>
-        </div>
-      </div>
-    </div>
-  </div> <!-- span12 -->
-</div> <!-- row-fluid -->
+<span class="h3">NFS Exports</span>
+<div class="pull-right">
+  <a href="#" id="add-export" rel="#nfs-export-form"><i class="icon-edit"></i> Add export</a>
+</div>
 
-<div class="row-fluid">
-  <div class="span12">
-    <!-- Content -->
-    <div class="module-content">
-      <% if (nfs_exports.length > 0) { %>
-        <table id="nfs-exports-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of nfs exports">
-          <thead>
-            <tr>
-              <th>No.</th>
-              <th>Host</th>
-              <th>Writable</th>
-              <th>Sync</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="nfs-exports-table-body">
-          </tbody>
+<% if (nfs_exports.length > 0) { %>
+  <table id="nfs-exports-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of nfs exports">
+    <thead>
+      <tr>
+        <th>No.</th>
+        <th>Host</th>
+        <th>Writable</th>
+        <th>Sync</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="nfs-exports-table-body">
+    </tbody>
 
-        </table>
-      <% } else { %>
-        <table id="nfs-exports-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of nfs exports">
-          <thead>
-            <tr>
-              <th>No.</th>
-              <th>Host</th>
-              <th>Writable</th>
-              <th>Sync</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="nfs-exports-table-body">
-            <%= window.JST.share_nfs_exports_table_empty_body_template() %>
-          </tbody>
-        </table>
-      <% } %>
-      <!--
-      <a id="add-export" class="btn btn-primary tab    le-header-action" href="#">Add Export</a>
-      -->
-    </div> <!-- module-content -->
-  </div> <!-- span12 -->
-</div> <!-- row-fluid -->
+  </table>
+<% } else { %>
+  <table id="nfs-exports-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of nfs exports">
+    <thead>
+      <tr>
+        <th>No.</th>
+        <th>Host</th>
+        <th>Writable</th>
+        <th>Sync</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="nfs-exports-table-body">
+      <%= window.JST.share_nfs_exports_table_empty_body_template() %>
+    </tbody>
+  </table>
+<% } %>
 
 <div class="simple-overlay" id="nfs-export-form">
   <div class="overlay-content">

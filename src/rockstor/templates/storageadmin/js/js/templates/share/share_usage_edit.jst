@@ -25,6 +25,10 @@
     <div class="module-header">
       <div class="title">
         <span class="h3">Usage</span>
+        <div class="pull-right">
+          <a href="#" id="js-resize-save"><i class="icon-edit"></i> Save</a>
+          <a href="#" id="js-resize-cancel"> Cancel</a>
+        </div>
       </div>
     </div>
   </div> <!-- span12 -->
@@ -45,9 +49,6 @@
         <option <%if(humanize.filesize(share.get('size')*1024).match(/Gb/g,"")){%> selected="selected"<%}%> >GB</option>
         <option <%if(humanize.filesize(share.get('size')*1024).match(/Tb/g,"")){%> selected="selected"<%}%> >TB</option>
       </select>
-      <br/>
-      <input type="Submit" id="js-resize-save" class="btn btn-primary" value="Submit"></input>
-      <button id="js-resize-cancel" class="btn" value="Cancel">Cancel</button>
     </div> <!-- module-content -->
 
   </div> <!-- span12 -->

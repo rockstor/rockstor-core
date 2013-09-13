@@ -164,11 +164,7 @@ a#logo-name { color: #fff; }
   /*border-radius: 8px 8px 8px 8px;*/
 }
 
-.module-header {
-  position: relative;
-  margin-bottom: 12px;
-  padding-bottom: 4px;
-}
+.module-header { }
 
 /*.module-header .title { */
   /*float: left;*/
@@ -1248,31 +1244,22 @@ ol.probe-status li.status-tracker-error:before {
 
 /* Module container */
 .module-container {
-  border: 1px solid #ddd;
-  box-shadow: 0px 0px 12px rgb(238, 238, 238);
-  border-radius: 4px;
-  margin-bottom: 12px;
 }
 
 .module-container-header {
-  padding: 12px 24px;
-  border-bottom: 1px solid #ddd;
 }
 
 .module-container-content {
-  padding: 0px 24px 24px 24px; 
 }
 
 .module-container-left {
-  border-right: 1px solid #ddd;
 }
 
 .module-container-footer {
   overflow: hidden;
-  padding: 24px;
 }
 
 #share-details-container .h1, #share-details-container .h3 {
-  color: #D95700;
+  /*color: #D95700;*/
 }
 
