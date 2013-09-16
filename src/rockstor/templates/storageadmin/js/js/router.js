@@ -203,6 +203,8 @@ var AppRouter = Backbone.Router.extend({
     //var shareDetailView = new ShareDetailView({
       //model: new Share({shareName: shareName})
     //});
+
+    this.renderSidebar("Storage", "Shares");
     var shareDetailsLayoutView = new ShareDetailsLayoutView({
       shareName: shareName 
     });
@@ -260,6 +262,11 @@ var AppRouter = Backbone.Router.extend({
     });
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  renderSidebar: function(name, selected) {
+    var sidenavTemplate = window.JST.common_sidenav_storage;
+    $("#sidebar-inner").html(sidenavTemplate({selected: selected}));
   },
 
   cleanup: function() {

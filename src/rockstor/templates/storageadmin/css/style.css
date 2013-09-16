@@ -1290,7 +1290,7 @@ ol.probe-status li.status-tracker-error:before {
   bottom: 20px;
   left: 0px;
   overflow: hidden;
-  border-bottom: 1px solid #ddd;
+  background: rgb(238, 238, 238);
 }
 
 #sidebar {
@@ -1300,14 +1300,18 @@ ol.probe-status li.status-tracker-error:before {
 	position: absolute;
 	left: 0px;
 	top: 0px;
-  background: rgb(242, 242, 247);
   border: 1px solid #ddd;
   border-radius: 4px;
   box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.5);
+  background: #fff;
 }
 
 #sidebar-inner {
   padding: 12px;
+}
+
+.nav > li > a.selected {
+  background-color: #eeeeee;
 }
 
 #content {
@@ -1318,9 +1322,10 @@ ol.probe-status li.status-tracker-error:before {
 	left: 222px;
 	bottom: 0px;
 	right: 0px;
-  overflow-y: scroll;
+  overflow-y: auto;
   border: 1px solid #ddd;
   border-radius: 4px;
+  background: #fff;
 }
 
 #maincontent {
