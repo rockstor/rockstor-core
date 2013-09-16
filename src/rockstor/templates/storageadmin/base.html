@@ -100,49 +100,47 @@
 
     <div class="navbar navbar-inverse navbar-fixed-top">
       <div class="navbar-inner">
-        <div class="container">
-          <div id="logo">
-            <object data="/img/rockstor_logo_website_150x50.svg" width="100px"
-              type="image/svg+xml"></object>
-          </div>
-          <div id="navbar-links">
-          </div>
-        </div> <!-- container -->
+        <div id="logo">
+          <object data="/img/rockstor_logo_website_150x50.svg" width="100px"
+            type="image/svg+xml"></object>
+        </div>
+        <div id="navbar-links">
+        </div>
       </div> <!-- navbar-inner -->
     </div> <!-- navbar -->
-
-    
     <div id="appliance-breadcrumb">
-      <div class="container">
-        <a id="appliance-name" href="#"></a>
-      </div>
+      <a id="appliance-name" href="#"></a>
     </div>
     
 
-    <div class="container">
-      <div class="inner-container">
+    <div id="wrapper1">
+
+      <div id="wrapper2">
+
         <div id="loading-indicator" style="visibility:hidden"><img src="/img/ajax-loader.gif"/></div>
-        <div class="row-fluid">
-          <div class="span6">
-            <div id="messages" class="alert alert-success" style="visibility: hidden">&nbsp;</div>
+        <div id="sidebar">
+          <div id="sidebar-inner">
+            <ul>
+              <li>One</li>
+              <li>Two</li>
+              <li>Three</li>
+              <li>Four</li>
+              <li>Five</li>
+              <li>Six</li>
+            </ul>
           </div>
         </div>
-        <div class="row-fluid">
-          <div class="span12">
-            <div id="maincontent">
+        <div id="content">
+          <div id="maincontent">
+          <!--Body content-->
+          {% block content %}{% endblock %}
+          </div>
+        </div> <!-- maincontent -->
 
-              <!-- Breadcrumbs -->
-              <!--
-              -->
-              <!--Body content-->
-              {% block content %}{% endblock %}
+      </div> <!-- wrapper2 -->
+      <div id="footer"></div>
 
-            </div> <!-- maincontent -->
-          </div> <!-- span12 -->
-        </div> <!-- row-fluid -->
-
-      </div> <!-- inner-container -->
-    </div> <!-- container -->
+    </div> <!-- wrapper1 -->
 
     <div id="errorPopup" class="modal hide fade" tabindex="-1" role="dialog" >
       <div class="modal-header">
