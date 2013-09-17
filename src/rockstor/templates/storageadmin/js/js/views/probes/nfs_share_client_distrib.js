@@ -809,10 +809,5 @@ NfsShareClientDistribView = Backbone.View.extend({
 
 });
 
-RockStorProbeMap.push({
-  name: 'nfs-share-client-distrib',
-  view: 'NfsShareClientDistribView',
-  description: 'NFS Share and Client Distribution',
-});
 
 

@@ -21,7 +21,8 @@
 
 <div class="row-fluid">
   <div class="span12">
-    <span class="h3 probe-title"><%= probeRun.get("display_name") %></span>
+    <h3><%= probeRun.get("display_name") %> (<%= probeTemplate.get("sdetail") %>)</h3>
+    <span class="h4 probe-status-title">Probe status</span>
     <ol class="probe-status" data-status-tracker-steps="4">
     </ol>
     <div class="probe-actions">
@@ -32,7 +33,7 @@
     <div class="clear"></div>
     <div class="messages"></div>
     <br>
-    <div id="probe-viz">
+    <div id="probe-viz-ph">
     </div>
 
   </div>

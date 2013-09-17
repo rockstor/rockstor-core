@@ -267,6 +267,7 @@ var AppRouter = Backbone.Router.extend({
     RockStorSocket.removeAllListeners();
     if (!_.isNull(this.currentLayout)) {
       if (_.isFunction(this.currentLayout.cleanup)) {
+        console.log("In router - calling currentLayout cleanup");
         this.currentLayout.cleanup();
       }
     }
