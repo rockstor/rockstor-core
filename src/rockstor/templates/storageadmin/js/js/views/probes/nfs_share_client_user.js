@@ -636,8 +636,8 @@ NfsShareClientUserView = Backbone.View.extend({
 
 RockStorProbeMap.push({
   name: 'nfs-5',
-  view: 'NfsShareClientView',
-  description: 'NFS Share and Client Distribution',
+  view: 'NfsShareClientUserView',
+  description: 'NFS Share, Client, and User Distribution',
 });
 
 

@@ -110,13 +110,14 @@ ProbeDetailView = RockstoreLayoutView.extend({
     });
     if (tmp) {
       var viewName = tmp.view;
+      console.log("probe viz view name is ");
+      console.log(viewName);
+
       this.probeVizClass = window[viewName];
 
     } else {
       //  TODO handle no probe viz class found 
     }
-    console.log("Found probeVizClass");
-    console.log(this.probeVizClass);
     // end TODO
     this.setProbeEvents();
     this.probeRun.trigger(this.probeRun.get("state"));
