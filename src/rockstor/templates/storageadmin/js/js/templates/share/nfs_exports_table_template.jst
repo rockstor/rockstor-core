@@ -19,10 +19,7 @@
  */
 </script>
 
-<span class="h3">NFS Exports</span>
-<div class="pull-right">
-  <a href="#" id="add-export" rel="#nfs-export-form"><i class="icon-edit"></i> Add export</a>
-</div>
+<h3>NFS Exports</h3>
 
 <% if (nfs_exports.length > 0) { %>
   <table id="nfs-exports-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of nfs exports">
@@ -55,6 +52,7 @@
     </tbody>
   </table>
 <% } %>
+<a class="btn btn-primary" href="#" id="add-export" rel="#nfs-export-form"><i class="icon-edit icon-white"></i> Add export</a>
 
 <div class="simple-overlay" id="nfs-export-form">
   <div class="overlay-content">

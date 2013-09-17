@@ -20,38 +20,21 @@
 </script>
 
 
-<div class="row-fluid">
-  <div class="span12">
-    <div class="module-header">
-      <div class="title">
-        <span class="h3">Usage</span>
-        <div class="pull-right">
-          <a href="#" id="js-resize-save"><i class="icon-edit"></i> Save</a>
-          <a href="#" id="js-resize-cancel"> Cancel</a>
-        </div>
-      </div>
-    </div>
-  </div> <!-- span12 -->
-</div> <!-- row-fluid -->
+<h3>Usage</h3>
 
-<div class="row-fluid">
-  <div class="span12">
-    <!-- Content -->
-    <div class="module-content">
-      <h4>Resize Share</h4>
-      <div class="messages"></div>
-      Size:<br/>
-      <input class="smallinput" type="text" name="new-size" id="new-size" value="<%= humanize.filesize(share.get('size')*1024).replace(/[^0-9\.]+/g,"") %>">
+<h4>Resize Share</h4>
+<div class="messages"></div>
+Size:<br/>
+<input class="smallinput" type="text" name="new-size" id="new-size" value="<%= humanize.filesize(share.get('size')*1024).replace(/[^0-9\.]+/g,"") %>">
 
-      <select class="smallinput" id="size_format" name="size_format">
-        <option <%if(humanize.filesize(share.get('size')*1024).match(/Kb/g,"")){%> selected="selected"<%}%> >KB</option>
-        <option <%if(humanize.filesize(share.get('size')*1024).match(/Mb/g,"")){%> selected="selected"<%}%> >MB</option>
-        <option <%if(humanize.filesize(share.get('size')*1024).match(/Gb/g,"")){%> selected="selected"<%}%> >GB</option>
-        <option <%if(humanize.filesize(share.get('size')*1024).match(/Tb/g,"")){%> selected="selected"<%}%> >TB</option>
-      </select>
-    </div> <!-- module-content -->
+<select class="smallinput" id="size_format" name="size_format">
+  <option <%if(humanize.filesize(share.get('size')*1024).match(/Kb/g,"")){%> selected="selected"<%}%> >KB</option>
+  <option <%if(humanize.filesize(share.get('size')*1024).match(/Mb/g,"")){%> selected="selected"<%}%> >MB</option>
+  <option <%if(humanize.filesize(share.get('size')*1024).match(/Gb/g,"")){%> selected="selected"<%}%> >GB</option>
+  <option <%if(humanize.filesize(share.get('size')*1024).match(/Tb/g,"")){%> selected="selected"<%}%> >TB</option>
+</select>
 
-  </div> <!-- span12 -->
-</div> <!-- row-fluid -->
-
+<div class="clear"></div>
+<a class="btn btn-primary" href="#" id="js-resize-save"> Save</a>
+<a class="btn" href="#" id="js-resize-cancel"> Cancel</a>
 
