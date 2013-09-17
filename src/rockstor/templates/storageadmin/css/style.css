@@ -688,7 +688,7 @@ label.error { color: #b94a48; }
   margin-top: 46px;
   right: 0px;
   left: 0px;
-  z-index: 1030;
+  z-index: 999;
   padding: 2px 20px 2px 20px;
   background: #eee;
   border-top: 1px solid #ddd;
@@ -1307,11 +1307,12 @@ ol.probe-status li.status-tracker-error:before {
 }
 
 #sidebar-inner {
-  padding: 12px;
+  padding: 12px 12px 12px 20px;
 }
 
 .nav > li > a.selected {
-  background-color: #eeeeee;
+  background-color: rgb(33, 133, 197);
+  color: #fff;
 }
 
 #content {
