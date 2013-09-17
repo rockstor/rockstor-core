@@ -1,0 +1,45 @@
+<div id="nfs-share-client-header">
+  <% if (probe.get("state") == probeStates.RUNNING) { %>
+    <h4><span class="update-value">Top clients and associated shares over last <%= updateInterval/1000 %> seconds</span></h4>
+  <% } else { %>
+    <h4><span class="update-value">Top clients and associated shares over probe lifetime </span></h4>
+  <% } %>
+  <div id="nfs-share-client-sortby">
+    <span class="h4">Sort by NFS Attributes:&nbsp;
+      <input type="checkbox" class="selectedAttr" checked value="num_read" name="num_read">Reads</input>&nbsp;
+      <input type="checkbox" class="selectedAttr" value="num_write" name="num_write">Writes</input>&nbsp;
+      <input type="checkbox" class="selectedAttr" value="num_lookup" name="num_lookup">Lookups</input>&nbsp;
+    </span>
+  </div>
+</div>
+<br>
+<div id="nfs-share-client-user-viz">
+  <div class="nfs-viz-header">
+    <div class="client">
+      <div class="column-inner">Client</div>
+    </div>
+    <div class="top-shares">
+      <div class="column-inner">Associated shares</div>
+    </div>
+    <div class="nfs-reads">
+      <div class="column-inner">Reads</div>
+    </div>
+    <div class="nfs-writes">
+      <div class="column-inner">Writes</div>
+    </div>
+    <div class="nfs-lookups">
+      <div class="column-inner">Lookups</div>
+    </div>
+    <div class="nfs-data-read">
+      <div class="column-inner">Data read</div>
+    </div>
+    <div class="nfs-data-written">
+      <div class="column-inner">Data written</div>
+    </div>
+    <div class="nfs-last-seen">
+      <div class="column-inner">Last activity</div>
+    </div>
+    
+  </div>
+  <div id="nfs-share-client-rows"></div>
+</div>

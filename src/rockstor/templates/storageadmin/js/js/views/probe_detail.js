@@ -46,12 +46,17 @@ ProbeDetailView = RockstoreLayoutView.extend({
         + "t1="+this.get("start") + "&t2=" + this.get("end") 
         + "&download=true";
       },
+      dataUrl: function() {
+        return '/api/sm/sprobes/' + this.get('name') + '/' + this.id + '/data';
+      },
     });
     this.probeRun = new this.probeRunTmp({
       id: this.probeId,
       name: this.probeName,
     });
+    this.probeTemplateCollection = new ProbeTemplateCollection();
     this.dependencies.push(this.probeRun);
+    this.dependencies.push(this.probeTemplateCollection);
     this.template = window.JST.probes_probe_detail;
     this.time_template = window.JST.probes_probe_time;
     this.action_template = window.JST.probes_probe_actions;
@@ -90,8 +95,12 @@ ProbeDetailView = RockstoreLayoutView.extend({
 
   renderProbeDetail: function() {
     var _this = this;
+    this.probeTemplate = this.probeTemplateCollection.find(function(p) {
+      return p.get("uuid") == _this.probeName;
+    });
     $(this.el).append(this.template({
       probeRun: this.probeRun,
+      probeTemplate: this.probeTemplate,
       runStatus: this.probeRun.get("state"),
       statusMap: this.probeStatusMap
     }));
@@ -101,10 +110,15 @@ ProbeDetailView = RockstoreLayoutView.extend({
     });
     if (tmp) {
       var viewName = tmp.view;
+      console.log("probe viz view name is ");
+      console.log(viewName);
+
       this.probeVizClass = window[viewName];
+
     } else {
       //  TODO handle no probe viz class found 
     }
+    // end TODO
     this.setProbeEvents();
     this.probeRun.trigger(this.probeRun.get("state"));
   },
@@ -126,7 +140,10 @@ ProbeDetailView = RockstoreLayoutView.extend({
     this.updateActions();
     this.updateTime();
     if (this.probeVizClass) {
-      // TODO render probe viz view
+      this.probeVizView = new this.probeVizClass({
+        probe: this.probeRun
+      });
+      this.$('#probe-viz-ph').html(this.probeVizView.render().el);
     } else {
     }
   },
@@ -136,11 +153,18 @@ ProbeDetailView = RockstoreLayoutView.extend({
     this.updateActions();
     this.updateTime();
     if (this.probeVizView) {
-      this.probeVizView.trigger(this.probeStates.STOPPED);
+      this.probeVizView.cleanup();
+      this.$('#probe-viz-ph').html(this.probeVizView.render().el);
     } else {
       // user is loading this page after the probe has completed.
       if (this.probeVizClass) {
-        // TODO render probe viz view
+        console.log("rendering probe viz");
+        console.log(this.probeRun.get("start"));
+        console.log(this.probeRun.get("end"));
+        this.probeVizView = new this.probeVizClass({
+          probe: this.probeRun
+        });
+        this.$('#probe-viz-ph').append(this.probeVizView.render().el);
       } else {
       }
     }
