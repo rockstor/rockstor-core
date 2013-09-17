@@ -140,14 +140,10 @@ ProbeRunListView = RockstoreLayoutView.extend({
       dataType: "json",
       global: false, // dont show global loading indicator
       success: function(data, textStatus, jqXHR) {
-         
         var probeRunTmp = Backbone.Model.extend({
           url: function() {
             return "/api/sm/sprobes/metadata" + "/" + probeId + "?format=json";
           },
-          parse: function(response, options) {
-            return response[0];
-          }
         });
         var probeRun = new probeRunTmp({ id: probeId, name: probeName });
         _this.pollTillStatus(probeRun, "stopped");
@@ -172,9 +168,11 @@ ProbeRunListView = RockstoreLayoutView.extend({
 
   pollTillStatus: function(probeRun, status, callback, errCallback) {
     var _this = this;
+    console.log("polling till status = " + status);
     this.statusIntervalId = window.setInterval(function() {
       probeRun.fetch({
         success: function(model, response, options) {
+          console.log("probe state is " + probeRun.get("state"));
           if (probeRun.get("state") == status ||
               probeRun.get("state") == "error") {
             // stop polling for status

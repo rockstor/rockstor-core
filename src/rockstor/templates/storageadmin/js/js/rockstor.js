@@ -444,3 +444,11 @@ RockStorGlobals = {
 }
 
 
+// Constants
+probeStates = {
+  STOPPED: 'stopped', 
+  CREATED: 'created',
+  RUNNING: 'running', 
+  ERROR: 'error',
+};
+

@@ -41,7 +41,7 @@ TAP_MAP = {
                'sdetail': 'NFS call distribution over clients and shares',
                'cb': 'share_client_distribution',},
 
-    'nfs-5': { 'location': 'nfsd/nfsd_distrib_uid_git',
+    'nfs-5': { 'location': 'nfsd/nfsd_distrib_uid_gid',
                'sdetail': 'NFS call distribution over uids and gids',
                'cb': 'nfs_uid_gid_distribution',},
 
