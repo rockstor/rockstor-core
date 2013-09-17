@@ -30,7 +30,7 @@
 
 PoolsView = Backbone.View.extend({
   events: {
-    "click button[data-action=delete]": "deletePool"
+    "click a[data-action=delete]": "deletePool"
   },
 
   initialize: function() {

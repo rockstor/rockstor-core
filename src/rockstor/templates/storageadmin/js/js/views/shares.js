@@ -30,7 +30,7 @@
 
 SharesView = RockstoreLayoutView.extend({
   events: {
-    "click button[data-action=delete]": "deleteShare"
+    "click a[data-action=delete]": "deleteShare"
   },
 
   initialize: function() {

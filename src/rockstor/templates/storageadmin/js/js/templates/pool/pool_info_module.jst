@@ -34,12 +34,10 @@
   <div class="span12">
     <!-- Content -->
     <div class="module-content">
-      Created on Oct 1 2011 <br>
-      Last action on Sep 20 2012 <br>
-      0 alerts <br>
+      Created on <%= new Date(model.get("toc")).toString() %><br>
       Disks: 
       <% _.each(model.get('disks'), function(disk, i) { %>
-        <a href="#disks/<%= disk.name %>"><%= disk.name %></a>
+        <%= disk.name %>
         <% if (i < model.get('disks').length-1) { %>, <% } %>
       <% }); %>
     </div> <!-- module-content -->
