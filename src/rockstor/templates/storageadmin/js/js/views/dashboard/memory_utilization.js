@@ -107,7 +107,7 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
           _this.dataBuffer.splice(0,
           _this.dataBuffer.length - _this.dataLength);
         }
-        this.intervalId = window.setInterval(function() {
+        _this.intervalId = window.setInterval(function() {
           return function() { 
             _this.getData(_this, _this.begin, _this.end); 
             _this.begin = _this.end;
@@ -193,11 +193,8 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
       event.preventDefault();
     }
     // calculate date 24hrs ago
-    console.log(this.currentTs);
     var t2Date = new Date(this.currentTs);
     var t1Date =  new Date(t2Date - 1000 * 60 * 60 * 24); // one day ago
-    console.log(t2Date);
-    console.log(t1Date);
     var t2 = t2Date.toISOString();
     var t1 = t1Date.toISOString();
     document.location.href = "/api/sm/sprobes/meminfo/?t1="+t1+"&t2="+t2+"&download=true";
@@ -220,7 +217,6 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
   },
   
   cleanup: function() {
-    logger.debug('clearing setInterval in memory_utilization widget'); 
     if (!_.isUndefined(this.intervalId)) {
       window.clearInterval(this.intervalId);
     }

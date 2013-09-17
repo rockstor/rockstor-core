@@ -87,7 +87,7 @@ PoolDetailsLayoutView = RockstoreLayoutView.extend({
             });
             console.log(disk_names);
             $.ajax({
-              url: "/api/pools/"+_this.pool.get('name')+'/add/',
+              url: "/api/pools/"+_this.pool.get('name')+'/add',
               type: "PUT",
               dataType: "json",
               data: {"disks": disk_names},

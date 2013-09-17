@@ -154,7 +154,6 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     if (_this.data_prev != null) {
       _.each(data_current, function(row, i) {
         _.each(row, function(col, j) {
-          console.log(col[1]); 
           col[1] = _this.data_prev[i][j][1];
           col[1].push(col[0]);
           if (col[1].length > _this.dataLength) {
@@ -164,8 +163,6 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
       });
     }
     
-    console.log(_this.data_prev);
-    console.log(data_current);
     _this.data_prev = data_current;
     /*
     _.each(['sdb','sdc','sdd','sde'], function(d,i) {
@@ -294,8 +291,6 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     this.timestamps = _.sortBy(this.timestamps, function(ts) {
       return ts;
     }).reverse();
-    console.log(this.diskNames);
-    console.log(this.timestamps);
     // initialize everything to 0
     _.each(this.diskNames, function(name) {
       if (_.isUndefined(data[name])) {
