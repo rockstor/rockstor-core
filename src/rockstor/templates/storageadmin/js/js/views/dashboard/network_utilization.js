@@ -124,8 +124,6 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
     }));
     this.$("#interface-select").change(function(event) {
       _this.selectedInterface = $(event.currentTarget).val();
-      console.log("changed interface");
-      console.log(_this.selectedInterface);
     });
     this.networkInterfaces.fetch();
     return this;
@@ -138,7 +136,6 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
       var opt = $("<option/>");
       opt.val(ni.get("name"));
       opt.text(ni.get("name"));
-      console.log(opt);
       if (i==0) {
         opt.attr({selected:"selected"});
       }
@@ -168,7 +165,7 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
         });
        
        
-        this.intervalId = window.setInterval(function() {
+        _this.intervalId = window.setInterval(function() {
           return function() { 
             _this.getData(_this, _this.begin, _this.end); 
             _this.begin = _this.end;
@@ -288,7 +285,6 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
   },
   
   cleanup: function() {
-    logger.debug('clearing setInterval in network_utilization widget'); 
     if (!_.isUndefined(this.intervalId)) {
       window.clearInterval(this.intervalId);
     }

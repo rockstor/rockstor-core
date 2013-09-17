@@ -47,16 +47,7 @@ var HomeLayoutView = RockstoreLayoutView.extend({
     this.dependencies.push(this.appliances);
     this.dependencies.push(this.dashboardconfig);
 
-    /*
-    this.available_widgets = { 
-      'sysinfo': { display_name: 'System Information', view: 'SysInfoWidget' },
-      'cpu_usage': { display_name: 'CPU Usage', view: 'CpuUsageWidget' },
-      'sample': { display_name: 'Sample Widget', view: 'SampleWidget' },
-      'alerts': { display_name: 'Alerts', view: 'SampleWidget' },
-      'top_shares_usage': { display_name: 'Top Shares By Usage', view: 'SampleWidget' },
-    };
-    */
-    this.cleanupArray = []; // widgets add themselves here so that their cleanup routines can be called from this view's cleanup
+    this.widgetList = []; // widgets add themselves here so that their cleanup routines can be called from this view's cleanup
   },
 
   render: function() {
@@ -111,10 +102,10 @@ var HomeLayoutView = RockstoreLayoutView.extend({
       this.dashboardconfig.setConfig(RockStorWidgets.defaultWidgets());
       wConfigs = this.dashboardconfig.getConfig();
     }
-    this.cleanupArray.length = 0;
+    this.widgetList.length = 0;
     // Add widgets to ul (widgetsContainer);
     _.each(wConfigs, function(wConfig, index, list ) {
-      _this.addWidget(wConfig, _this.widgetsContainer, _this.cleanupArray);
+      _this.addWidget(wConfig, _this.widgetsContainer, _this.widgetList);
     });
     // call shapeshift to do layout
     this.widgetsContainer.shapeshift({
@@ -134,14 +125,14 @@ var HomeLayoutView = RockstoreLayoutView.extend({
     //});
   },
 
-  addWidget: function(widgetConf, container, cleanupArray) {
+  addWidget: function(widgetConf, container, widgetList) {
     var li = null;
     var viewName = widgetConf.view;
     if (!_.isUndefined(window[viewName] && !_.isNull(window[viewName]))) {
       var view = new window[viewName]({
         displayName: widgetConf.displayName,
         name: widgetConf.name,
-        cleanupArray: this.cleanupArray,
+        cleanupArray: this.widgetList,
         parentView: this
       });
       // create li for widget
@@ -152,19 +143,19 @@ var HomeLayoutView = RockstoreLayoutView.extend({
       var position_div = $('<div class="position"></div>');
       li.append(position_div);
       position_div.append(view.render().el);
-      cleanupArray.push(view);
+      this.widgetList.push(view);
     }
   },
   
   removeWidget: function(name) {
     var i=0, found=false; 
-    for (i=0; i<this.cleanupArray.length; i++) {
-      if (this.cleanupArray[i].name == name) {
+    for (i=0; i<this.widgetList.length; i++) {
+      if (this.widgetList[i].name == name) {
         found = true;
         break;
       }
     }
-    if (found) delete this.cleanupArray[i];
+    if (found) delete this.widgetList[i];
   },
 
   saveWidgetConfiguration: function() {
@@ -202,7 +193,7 @@ var HomeLayoutView = RockstoreLayoutView.extend({
   },
 
   cleanup: function() {
-    _.each(this.cleanupArray, function(widget) {
+    _.each(this.widgetList, function(widget) {
       if (_.isFunction(widget.cleanup)) {
         widget.cleanup();
       }
