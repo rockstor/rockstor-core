@@ -1,0 +1,54 @@
+<h3>Add SMB Share</h3>
+<label class="control-label"><span class="required">*</span> indicates required fields</label>
+<div class="form-box">
+  <form id="add-smb-form" name="aform">
+    <div class="messages"></div>
+
+    <div class="control-group">
+      <label class="control-label" for="browsable">Browsable</label>
+      <div class="controls">
+        <select id="browsable" name="browsable">
+          <% _.each(browsable_choices, function(c) { %>
+            <option value="<%= c.value %>"><%= c.name %></option>
+          <% }); %>
+        </select>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label" for="guest_ok">Guest Ok</label>
+      <div class="controls">
+        <select id="guest_ok" name="guest_ok">
+          <% _.each(guest_ok_choices, function(c) { %>
+            <option value="<%= c.value %>"><%= c.name %></option>
+          <% }); %>
+        </select>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label" for="read_only">Read Only</label>
+      <div class="controls">
+        <select id="read_only" name="read_only">
+          <% _.each(read_only_choices, function(c) { %>
+            <option value="<%= c.value %>"><%= c.name %></option>
+          <% }); %>
+        </select>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label" for="comment">Comment</label>
+      <div class="controls">
+        <input type="text" id="comment" name="comment">
+      </div>
+
+      <div class="control-group">
+        <div class="controls">
+          <button class="btn" id="cancel-add-smb">Cancel</button>
+          <button class="btn btn-primary" id="save-smb">Submit</button>
+        </div>
+      </div>
+    </form>
+  </div>        
+</div>

@@ -27,32 +27,16 @@
 SMBShares  = RockstoreModuleView.extend({
   events: {
     'click #add-smb-share': 'addSmbShare',
-    'click #cancel-add': 'cancelAdd',
-    'click #cancel-edit': 'cancelEdit',
-    'click #create': 'create',
-    'click #edit': 'edit',
-    'click #delete': 'deleteSmbShare',
-    'click #update': 'update',
+    'click #delete-smb-share': 'deleteSmbShare',
+    'click #cancel-smb': 'cancelSmb',
   },
 
   initialize: function() {
     this.template = window.JST.share_smb_shares_template;
+    this.smbAddTemplate = window.JST.share_smb_share_edit;
     this.module_name = 'smb_shares';
     this.share = this.options.share;
-    this.smb_shares = new SMBShareCollection();
-    this.smb_shares.reset(this.share.get('smb_shares'));
-    this.smb_share = null;
-    if (this.smb_shares.length > 0) {
-      this.smb_share = this.smb_shares.at(0);
-      this.smb_share.set({shareName: this.share.get('name')});
-    }
-    this.row_template = window.JST.share_smb_shares_table_row_template;
-    this.add_row_template = window.JST.share_smb_shares_table_new_row_template;
-    this.edit_row_template = window.JST.share_smb_shares_table_edit_row_template;
-    this.empty_body_template = window.JST.share_smb_shares_table_empty_body_template;
-    this.share.on('change', function() {
-      this.smb_shares.reset(this.share.get('smb_shares'));
-    }, this)
+    this.smbShare = new SMBShare({shareName: this.share.get("name")});
     this.yes_no_choices = [
       {name: 'yes', value: 'yes'},
       {name: 'no', value: 'no'}, 
@@ -66,102 +50,80 @@ SMBShares  = RockstoreModuleView.extend({
     console.log('smb_shares render called');
     var _this = this;
     $(this.el).empty();
-    $(this.el).append(this.template({
-      share: this.share,
-      smb_shares: this.smb_shares,
-      smb_share: this.smb_share,
-      browsable_choices: this.browsable_choices,
-      guest_ok_choices: this.guest_ok_choices,
-      read_only_choices: this.read_only_choices,
-    }));
+    this.smbShare.fetch({
+      success: function(model, response, options) {
+        $(_this.el).append(_this.template({
+          share: _this.share,
+          smbShare: _this.smbShare,
+          browsable_choices: _this.browsable_choices,
+          guest_ok_choices: _this.guest_ok_choices,
+          read_only_choices: _this.read_only_choices,
+        }));
+        _this.$("#smb-export-form").overlay({
+          load: false, 
+          top: 80, 
+          fixed: false 
+        });
+      },
+      error: function(model, response, options) {
+        console.log("Error while fetching smb share");
+        console.log(response);
+      }
+    });
     return this;
   },
 
   addSmbShare: function(event) {
-    event.preventDefault();
-    var button = $(event.currentTarget);
-    if (!button.hasClass('disabled')) {
-      if (this.smb_shares.length == 0) {
-        this.$('#smb-shares-table-body').empty();
-      }
-      this.$('#smb-shares-table-body').append(this.add_row_template({
-        browsable_choices: this.browsable_choices,
-        guest_ok_choices: this.guest_ok_choices,
-        read_only_choices: this.read_only_choices,
-
-      }));
-    }
-    this.disableAddButton();
-
-  },
-
-  disableAddButton: function() {
-    this.$('#add-smb-share').addClass('disabled');
-  },
-  
-  enableAddButton: function() {
-    this.$('#add-smb-share').removeClass('disabled');
-  },
-
-  cancelAdd: function(event) {
-    event.preventDefault();
-    this.$('#new-row').remove();
-    this.enableAddButton();
-    if (this.smb_shares.length == 0) {
-      this.$('#smb-shares-table-body').append(this.empty_body_template());
-    }
-  },
-
-  create: function(event) {
-    event.preventDefault();
-    var button = this.$('#create');
-    if (buttonDisabled(button)) return false;
-    disableButton(button);
     var _this = this;
-    data = {
-      browsable: this.$('#browsable').val(),
-      guest_ok: this.$('#guest_ok').val(),
-      read_only: this.$('#read_only').val(),
-      comment: this.$('#comment').val()
-    }
-    logger.info('saving with data');
-    console.log(data);
-    this.smb_share = new SMBShare({shareName: this.share.get('name')});
-    this.smb_share.save(
-      data,
-      {
-        success: function(model, response, options) {
-          enableButton(button);
-          _this.render();
-        },
-        error: function(model, xhr, options) {
-          enableButton(button);
-          showError(xhr.responseText);
-        }
-      }
-    );
-  },
-
-  cancelEdit: function(event) {
     event.preventDefault();
-    this.$('#smb-shares-table-body').empty();
-    this.$('#smb-shares-table-body').append(this.row_template({
-      smb_share: this.smb_shares.at(0),
-    }));
-  },
-
-  edit: function(event) {
-    event.preventDefault();
-    console.log('edit');
-    this.$('#smb-shares-table-body').empty();
-    this.$('#smb-shares-table-body').append(this.edit_row_template({
+    this.$("#smb-export-ph").html(this.smbAddTemplate({
+      smbShare: this.smbShare,
       browsable_choices: this.browsable_choices,
       guest_ok_choices: this.guest_ok_choices,
       read_only_choices: this.read_only_choices,
-      smb_share: this.smb_shares.at(0),
-
     }));
+    this.$("#add-smb-form").validate({
+      onfocusout: false,
+      onkeyup: false,
+      rules: {
+        host_str: "required"
+      },
+      submitHandler: function() {
+        console.log("In add smb form submitHandler");
+        var button = _this.$('#save-smb');
+        if (buttonDisabled(button)) return false;
+        disableButton(button);
+        var data = {
+          browsable: _this.$("#browsable").val(),
+          guest_ok: _this.$("#guest_ok").val(),  
+          read_only: _this.$("#read_only").val(),
+          comment: _this.$("#comment").val()
+        };
+        _this.smbShare.save(
+          data,
+          {
+            success: function() {
+              enableButton(button);
+              _this.$("#smb-export-form").overlay().close();
+              _this.render();
+            },
+            error: function(model, xhr, options) {
+              enableButton(button);
+              var msg = parseXhrError(xhr.responseText);
+              _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
+            },
+          }
+        );
+        return false;
+      }
 
+    });
+    this.$("#smb-export-form").overlay().load();
+  },
+
+  cancelSmb: function(event) {
+    event.preventDefault();
+    this.$("#smb-export-form").overlay().close();
   },
 
   deleteSmbShare: function(event) {
@@ -170,44 +132,22 @@ SMBShares  = RockstoreModuleView.extend({
     disableButton(button);
     event.preventDefault();
     var _this = this;
-    if (!_.isNull(this.smb_share)) {
+    if (!_.isNull(this.smbShare)) {
       console.log('calling smb_share destroy');
-      this.smb_share.destroy({
+      this.smbShare.destroy({
         success: function() {
           console.log('destroyed smb_share successfully')
+          _this.smbShare = new SMBShare({shareName: _this.share.get("name")});
           enableButton(button);
-          _this.smb_share = null        
           _this.render();
         },
-        error: function(request, status, error) {
+        error: function(model, xhr, options) {
           enableButton(button);
-          showError(request.responseText);
+          var msg = parseXhrError(xhr.responseText);
+          _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
         },
       });
     }
   },
-  
-  update: function(event) {
-    event.preventDefault();
-    var _this = this;
-    data = this.$('#smb-row').getJSON();
-    console.log(data);
-    $.ajax({
-      url: "/api/shares/"+_this.share.get('name')+'/smb-update/',
-      type: "PUT",
-      dataType: "json",
-      data: data,
-      success: function() {
-        _this.render();
-      },
-      error: function(request, status, error) {
-        showError(request.responseText);
-      },
-    });
-
-  },
-
-
-
   
 });

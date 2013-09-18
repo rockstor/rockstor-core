@@ -5,7 +5,7 @@
 <td><%= nfs_export.get('editable') %></td>
 <td><%= nfs_export.get('syncable') %></td>
 <td>
-  <button class="delete-row btn btn-danger" id="unexport-nfs-export_<%= nfs_export.id %>"
-    data-id="<%= nfs_export.id %>" data-share-name="<%= share.get('name') %>" data-action="delete">Delete</button>
+  <a href="#" class="delete-row" id="unexport-nfs-export_<%= nfs_export.id %>"
+    data-id="<%= nfs_export.id %>" data-share-name="<%= share.get('name') %>" data-action="delete"><i class="icon-trash"></i></a>
 </td>
 

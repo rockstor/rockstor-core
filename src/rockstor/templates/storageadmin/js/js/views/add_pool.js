@@ -28,7 +28,11 @@
  * Add Pool View
  */
 
- AddPoolView = Backbone.View.extend({
+AddPoolView = Backbone.View.extend({
+  events: {
+    "click #js-cancel": "cancel"
+  },
+
   initialize: function() {
     this.disks = new DiskCollection();
     // dont paginate disk selection table for now
@@ -47,30 +51,30 @@
         var raid_err_msg = function() {
           return err_msg;
         }
-        
+
         $.validator.addMethod('validatePoolName', function(value) {
-            var pool_name = $('#pool_name').val();
-            
-           
-            if (pool_name == "") {
-                err_msg = 'Please enter pool name';
-                return false;
-                } 
-            else
+          var pool_name = $('#pool_name').val();
+
+
+          if (pool_name == "") {
+            err_msg = 'Please enter pool name';
+            return false;
+          } 
+          else
             if(pool_name.length >127){
-                	err_msg = 'Please enter pool name less than 128 characters';
-                	return false;
-                	}
+              err_msg = 'Please enter pool name less than 128 characters';
+              return false;
+            }
             else
-            if(/^[A-Za-z][A-Za-z0-9]*$/.test(pool_name) == false){
-                    	err_msg = 'Pool name must be an alphanumeric starting with an alphabet';
-                    	return false;
-                    }
-            
-            return true;
-          }, raid_err_msg);
-        
-        
+              if(/^[A-Za-z][A-Za-z0-9]*$/.test(pool_name) == false){
+                err_msg = 'Pool name must be an alphanumeric starting with an alphabet';
+                return false;
+              }
+
+              return true;
+        }, raid_err_msg);
+
+
         $.validator.addMethod('validateRaid', function(value) {
           var raid_level = $('#raid_level').val();
           var n = $("input:checked.disk").length;
@@ -94,20 +98,20 @@
           }
           return true;
         }, raid_err_msg);
-        
-        
-       
-             
-         $('#add-pool-form').validate({
+
+
+
+
+        $('#add-pool-form').validate({
           onfocusout: false,
           onkeyup: false,
           rules: {
-        	  
-         pool_name: "validatePoolName",  
-         raid_level: "validateRaid"
-         },
-          
-        
+
+            pool_name: "validatePoolName",  
+            raid_level: "validateRaid"
+          },
+
+
           submitHandler: function() {
             var button = $('#create_pool');
             if (buttonDisabled(button)) return false;
@@ -146,6 +150,11 @@
       }
     });
     return this;
+  },
+
+  cancel: function(event) {
+    event.preventDefault();
+    app_router.navigate('pools', {trigger: true});
   }
 });
 
