@@ -151,12 +151,14 @@ var DashboardConfig = Backbone.Model.extend({
     });
     this.set({ widgets: JSON.stringify(tmp) });
   },
+
   getConfig: function() {
     if (!_.isUndefined(this.get('widgets')) && 
-    !_.isNull(this.get('widgets'))) {
+        !_.isNull(this.get('widgets'))) {
       return JSON.parse(this.get('widgets')); 
     } else {
-      return null;
+      this.setConfig(RockStorWidgets.defaultWidgets());
+      return JSON.parse(this.get("widgets"));
     }
   }
 

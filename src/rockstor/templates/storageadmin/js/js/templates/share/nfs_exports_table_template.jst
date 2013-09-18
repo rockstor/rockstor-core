@@ -19,51 +19,91 @@
  */
 </script>
 
-<div class="row-fluid">
-  <div class="span12">
-    <div class="module-header">
-      <div class="title"><span class="h3">NFS Exports</span></div>
-    </div>
-  </div> <!-- span12 -->
-</div> <!-- row-fluid -->
+<h3>NFS Exports</h3>
 
-<div class="row-fluid">
-  <div class="span12">
-    <!-- Content -->
-    <div class="module-content">
-      <% if (nfs_exports.length > 0) { %>
-        <table id="nfs-exports-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of nfs exports">
-          <thead>
-            <tr>
-              <th>No.</th>
-              <th>Host</th>
-              <th>Writable</th>
-              <th>Sync</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="nfs-exports-table-body">
-          </tbody>
+<% if (nfs_exports.length > 0) { %>
+  <table id="nfs-exports-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of nfs exports">
+    <thead>
+      <tr>
+        <th>No.</th>
+        <th>Host</th>
+        <th>Writable</th>
+        <th>Sync</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="nfs-exports-table-body">
+    </tbody>
 
-        </table>
-      <% } else { %>
-        <table id="nfs-exports-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of nfs exports">
-          <thead>
-            <tr>
-              <th>No.</th>
-              <th>Host</th>
-              <th>Writable</th>
-              <th>Sync</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="nfs-exports-table-body">
-            <%= window.JST.share_nfs_exports_table_empty_body_template() %>
-          </tbody>
-        </table>
-      <% } %>
-      <a id="add-export" class="btn btn-primary tab    le-header-action" href="#">Add Export</a>
-    </div> <!-- module-content -->
-  </div> <!-- span12 -->
-</div> <!-- row-fluid -->
+  </table>
+<% } else { %>
+  <table id="nfs-exports-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of nfs exports">
+    <thead>
+      <tr>
+        <th>No.</th>
+        <th>Host</th>
+        <th>Writable</th>
+        <th>Sync</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="nfs-exports-table-body">
+      <%= window.JST.share_nfs_exports_table_empty_body_template() %>
+    </tbody>
+  </table>
+<% } %>
+<a class="btn btn-primary" href="#" id="add-export" rel="#nfs-export-form"><i class="icon-edit icon-white"></i> Add export</a>
 
+<div class="simple-overlay" id="nfs-export-form">
+  <div class="overlay-content">
+    <div class="row-fluid">
+      <div class="span12">
+
+        <h3>Add NFS Export</h3>
+        <label class="control-label"><span class="required">*</span> indicates required fields</label>
+        <div class="form-box">
+          <form id="add-nfs-export-form" name="aform">
+            <div class="messages"></div>
+            <div class="control-group">
+              <label class="control-label" for="host_str">Host<span class="required"> *</span></label>
+              <div class="controls">
+                <input type="text" name="host_str" id="host_str"> 
+              </div>
+            </div>
+
+            <div class="control-group">
+              <label class="control-label" for="mod_choice">Writable</label>
+              <div class="controls">
+                <select id="mod_choice" name="mod_choice">
+                  <% _.each(modify_choices, function(c) { %>
+                    <option value="<%= c.value %>"><%= c.name %></option>
+                  <% }); %>
+                </select>
+              </div>
+            </div>
+
+            <div class="control-group">
+              <label class="control-label" for="sync_choice">Sync</label>
+              <div class="controls">
+                <select id="sync_choice" name="sync_choice">
+                  <% _.each(sync_choices, function(c) { %>
+                    <option value="<%= c.value %>"><%= c.name %></option>
+                  <% }); %>
+                </select>
+              </div>
+            </div>
+
+            <div class="control-group">
+              <div class="controls">
+                <button class="btn" id="cancel-add">Cancel</button>
+                <button class="btn btn-primary" id="save-export">Submit</button>
+              </div>
+            </div>
+          </form>
+        </div>        
+
+      </div> <!-- span12 -->
+    </div> <!-- row-fluid -->
+
+  </div> <!-- overlay-content -->
+</div>

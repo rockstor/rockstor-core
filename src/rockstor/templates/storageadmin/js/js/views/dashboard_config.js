@@ -26,7 +26,7 @@
 
 DashboardConfigView = Backbone.View.extend({
   events: {
-    'click #save': 'save'
+    "click .widget-name": "widgetClicked"
   },
 
   initialize: function() {
@@ -42,33 +42,20 @@ DashboardConfigView = Backbone.View.extend({
     return this;
   },
 
-  save: function(event) {
-    event.preventDefault();
-    logger.debug('in dashboard_config save');
-    var _this = this;
-    var wSelected = this.dashboardconfig.getConfig();
-    
-    this.parentView.widgetsContainer.trigger('ss-destroy');  
-    this.$("input.widget-name").each(function() {
-      var name = $(this).val();
-      var isPresent = _.some(wSelected, function(w) {
-        return w.name == name;
-      });
-      if (this.checked && !isPresent ) {
-        _this.parentView.addWidget(
-          RockStorWidgets.findByName(name),
-          _this.parentView.widgetsContainer,
-          _this.parentView.cleanupArray
-        )
-      } else if (!this.checked && isPresent) {
-        _this.parentView.removeWidget(name);
-      }
-    });
-    this.parentView.$('#dashboard-config-popup').modal('hide');
-    this.parentView.widgetsContainer.shapeshift();
-    this.parentView.saveWidgetConfiguration();
-    
+  widgetClicked: function(event) {
+    var cbox = $(event.currentTarget);
+    this.parentView.trigger("widgetClicked", cbox.val(), cbox.is(":checked"));
+  },
+
+  setCheckbox: function(name, checked) {
+    var cbox = this.$('#input[type="checkbox"][value="' + name + '"]');
+    if (checked) {
+      cbox.attr("checked", "true");
+    } else {
+      cbox.removeAttr("checked");
+    }
   }
+
 
 });
 

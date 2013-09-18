@@ -19,51 +19,45 @@
  */
 </script>
 
-<div class="row-fluid">
-  <div class="span12">
-    <div class="module-header">
-      <div class="title"><span class="h3">Samba</span></div>
-    </div>
-  </div> <!-- span12 -->
-</div> <!-- row-fluid -->
+<h3>Samba</h3>
 
-<div class="row-fluid">
-  <div class="span12">
-    <div class="module-content">
-      <% if (!_.isNull(smb_share)) { %>
-        <table id="smb-shares-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="SMB Share">
-          <thead>
-            <tr>
-              <th>Browsable</th>
-              <th>Guest Ok</th>
-              <th>Read only</th>
-              <th>Comment</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="smb-shares-table-body">
-            <%= window.JST.share_smb_shares_table_row_template({smb_share: smb_share}) %>
-          </tbody>
+<% if (!_.isUndefined(smbShare.id)) { %>
+  <table id="smb-shares-table" summary="SMB Share">
+    <tbody id="smb-shares-table-body">
+      <tr>
+        <td>Browsable: </td><td><%= smbShare.get("browsable") %></td>
+      </tr>
+      <tr>
+        <td>Guest ok: </td><td><%= smbShare.get('guest_ok') %></td>
+      </tr>
+      <tr>
+        <td>Read only: </td><td><%= smbShare.get('read_only') %></td>
+      </tr>
+      <tr>
+        <td>Comments: </td><td><%= smbShare.get('comment') %></td>
+      </tr>
+    </tbody>
+  </table>
+<% } else { %>
+  No smb share created 
+  <br/>
+  <br/>
+<% } %>
+<div class="clear"></div>
+<% if (_.isUndefined(smbShare.id)) { %>
+  <a class="btn btn-primary" href="#" id="add-smb-share"><i class="icon-edit icon-white"></i> Create SMB Share</a>
+<% } else { %>
+  <a class="btn btn-danger" href="#" id="delete-smb-share"><i class="icon-trash icon-white"></i> Delete SMB Share</a>
+<% } %>
 
-        </table>
-      <% } else { %>
-        <table id="smb-shares-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="SMB Share">
-          <thead>
-            <tr>
-              <th>Browsable</th>
-              <th>Guest Ok</th>
-              <th>Read only</th>
-              <th>Comment</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="smb-shares-table-body">
-            <%= window.JST.share_smb_shares_table_empty_body_template() %>
-          </tbody>
-        </table>
-        <a id="add-smb-share" class="btn btn-primary table-header-action" href="#">Add</a>
-      <% } %>
-    </div> <!-- module-content -->
-  </div> <!-- span12 -->
-</div> <!-- row-fluid -->
+<div class="simple-overlay" id="smb-export-form">
+  <div class="overlay-content">
+    <div class="row-fluid">
+      <div class="span12">
+        <div id="smb-export-ph"></div>
 
+      </div> <!-- span12 -->
+    </div> <!-- row-fluid -->
+
+  </div> <!-- overlay-content -->
+</div>

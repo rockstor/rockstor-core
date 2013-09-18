@@ -16,9 +16,14 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
+
+html { height: 100%; }
+
 body {
-  color: #555;
+  color: rgb(85,85,85);
   background: #fff;
+  height: 100%;
+
 
 }
 .orange { color: #FF7F66; }
@@ -30,6 +35,7 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
   font-family: "Lucida Sans Unicode","Lucida Grande",sans-serif;
   font-weight: normal;
   letter-spacing: -1px;
+  color: rgb(34,34,34);
 }
 h1, .h1 { font-size: 218%; line-height: 1.5em; }
 h2, .h2 { font-size: 164%; line-height: 1.5em; }
@@ -55,16 +61,21 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
 .smallinput { width: 100px; }
 
 /*Responsive container */
+/*
 @media (min-width: 1200px) {
   .container {
     width: 940px;
   }
 }
+*/
 
 /* Navbar */
-.navbar .container { width: 940px; }
-.navbar-inner { border-radius: 0px; }
-.navbar { margin-bottom: 0px; }
+/*.navbar .container { width: 940px; }*/
+.navbar-fixed-top .navbar-inner { padding-left: 20px; padding-right: 20px; }
+.navbar { 
+  margin-bottom: 0px; 
+  box-shadow: 0px 0px 12px rgb(85, 85, 85);
+}
 .navbar-outer { box-shadow: 0px 0px 12px rgb(85, 85, 85); }
 
 .navbar-search .search-query {
@@ -159,11 +170,7 @@ a#logo-name { color: #fff; }
   /*border-radius: 8px 8px 8px 8px;*/
 }
 
-.module-header {
-  position: relative;
-  margin-bottom: 12px;
-  padding-bottom: 4px;
-}
+.module-header { }
 
 /*.module-header .title { */
   /*float: left;*/
@@ -268,7 +275,9 @@ a#logo-name { color: #fff; }
 */
 
 /* Tables */
-
+table.noborder { border: none; }
+.noborder td { border: none; }
+.noborder tr { border: none; }
 #disks-table, #shares-table { width: 100%; }
 
 .table-title {
@@ -364,7 +373,7 @@ background-color: #8dbdd8;
 .simple-overlay {
     display:none; /* must be initially hidden */
     z-index:10000; /* place overlay on top of other elements */
-    width:675px;
+    width:800px;
     min-height:200px;
     border:1px solid #aaa;
     background: #fff;
@@ -373,6 +382,9 @@ background-color: #8dbdd8;
     box-shadow: 0 0 90px #000;
     padding-top: 20px;
     position: relative;
+    left: 50%;
+    margin-left: -400px;
+    top: 80px;
 }
 
 /* close button positioned on upper right corner */
@@ -573,13 +585,15 @@ input[type="submit"] {
 
 
 .btn {
-  padding: 6px 12px;
+  padding: 4px 12px;
   line-height: 18px;
   *line-height: 18px;
   font-size: 12px;
-  -webkit-border-radius: 6px;
-  -moz-border-radius: 6px;
-  border-radius: 6px;
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background-image: none;
 }
 
 .btn-primary {
@@ -587,7 +601,7 @@ input[type="submit"] {
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
   background-color: #2185C5;
   background-image: none;
-  border: none;
+  border: 1px solid #0E7DC4;
   text-shadow: none;
 
   /*
@@ -672,14 +686,19 @@ label.error { color: #b94a48; }
 }
 
 #appliance-breadcrumb {
-  padding: 2px 0px 2px 0px;
+  position: fixed;
+  margin-top: 46px;
+  right: 0px;
+  left: 0px;
+  z-index: 999;
+  padding: 2px 20px 2px 20px;
   background: #eee;
-  margin-top: 6px;
   border-top: 1px solid #ddd;
   border-bottom: 1px solid #ddd;
 }
 
-hr.module-sep { margin: 0; border: 0; border-top: 1px solid #ddd; }
+hr.module-sep { margin: 0; border: 0; border-top: 1px solid #ddd; 
+}
 
 /* Services page */
 
@@ -791,13 +810,13 @@ hr.module-sep { margin: 0; border: 0; border-top: 1px solid #ddd; }
 }
 
 /* Styles for jquery shapeshift plugin */
-ul.widgets-container {
+div.widgets-container {
   position: relative;
   width: 100%;
   margin: 0px;
 }
 
-ul.widgets-container>li {
+div.widgets-container > div {
   position: absolute;
   height: 300px;
   width: 300px;
@@ -805,13 +824,13 @@ ul.widgets-container>li {
 }
 
 /* TODO * adjust sizes of colspan 2 and 3 based on media queries */
-ul.widgets-container li[data-ss-colspan="1"] { width: 300px;} 
-ul.widgets-container li[data-ss-colspan="2"] { width: 610px;} 
-ul.widgets-container li[data-ss-colspan="3"] { width: 920px;} 
-ul.widgets-container li[data-ss-rowspan="1"] { height: 300px;} 
-ul.widgets-container li[data-ss-rowspan="2"] { height: 610px;} 
-ul.widgets-container li[data-ss-rowspan="3"] { height: 920px;} 
-ul.widgets-container li div.position { 
+div.widgets-container div[data-ss-colspan="1"] { width: 300px;} 
+div.widgets-container div[data-ss-colspan="2"] { width: 610px;} 
+div.widgets-container div[data-ss-colspan="3"] { width: 920px;} 
+div.widgets-container div[data-ss-rowspan="1"] { height: 300px;} 
+div.widgets-container div[data-ss-rowspan="2"] { height: 610px;} 
+div.widgets-container div[data-ss-rowspan="3"] { height: 920px;} 
+div.widgets-container div div.position { 
   width: 100%; 
   height: 100%; 
   display: block;
@@ -1037,8 +1056,8 @@ ul.widgets-container li div.position {
 
 /* Code section */
 code {
-  background-color: rgb(105,105,105);
-  color: rgb(255,255,255);
+  background-color: #f5f5dc;
+  color: #555;
   padding: 2px 12px;
   border: 0px;
 }
@@ -1105,7 +1124,7 @@ path.link {
 
 /* Form */
 .form-box {
-  padding: 24px 12px 24px 12px;
+  padding: 12px;
   border-radius: 4px;
   background: #eee;
 }
@@ -1310,4 +1329,89 @@ input[type="radio"].selectedRoot {
 #nfs-graphs {  }
 #nfs-graphs #nfs-attrs { width: 100%; height: 200px; }
 #nfs-graphs #nfs-data { width: 100%; height: 200px; }
+
+/* Module container */
+.module-container {
+}
+
+.module-container-header {
+}
+
+.module-container-content {
+}
+
+.module-container-left {
+}
+
+.module-container-footer {
+  overflow: hidden;
+}
+
+#share-details-container .h1, #share-details-container .h3 {
+  /*color: #D95700;*/
+}
+
+/* Layout */
+#wrapper1 {
+  position: relative;
+  top: 0px;
+  left: 0px;	
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+#wrapper2 {
+  position: absolute;
+  top: 70px;	
+  right: 0px;	
+  bottom: 20px;
+  left: 0px;
+  overflow: hidden;
+  background: rgb(238, 238, 238);
+}
+
+#sidebar {
+	height: 100%;
+	width: 220px;
+	overflow: hidden;
+	position: absolute;
+	left: 0px;
+	top: 0px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.5);
+  background: #fff;
+}
+
+#sidebar-inner {
+  padding: 12px 12px 12px 20px;
+}
+
+.nav > li > a.selected {
+  background-color: rgb(33, 133, 197);
+  color: #fff;
+}
+
+#content {
+	position: absolute;
+	height: auto;
+	width: auto;
+	top: 0px;
+	left: 222px;
+	bottom: 0px;
+	right: 0px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #fff;
+}
+
+#maincontent {
+  padding: 24px 12px 12px 12px;
+}
+
+#footer {
+	position: absolute;
+}
 

@@ -29,6 +29,10 @@
  */
 
 AddShareView = Backbone.View.extend({
+  events: {
+    "click #js-cancel": "cancel"
+  },
+
   initialize: function() {
     this.pools = new PoolCollection();
     this.poolName = this.options.poolName;
@@ -105,7 +109,12 @@ AddShareView = Backbone.View.extend({
       }
     });
     return this;
+  },
+  cancel: function(event) {
+    event.preventDefault();
+    app_router.navigate('shares', {trigger: true}) 
   }
+
 });
 
 var addShareView = new AddShareView();

@@ -81,7 +81,7 @@ NFSExportsTableRow  = RockstoreModuleView.extend({
     if(confirm("Delete nfs : "+ this.nfs_export.id +"...Are you sure?")){
     disableButton(button);
     $.ajax({
-      url: "/api/shares/"+_this.share.get('name')+'/nfs/' + this.nfs_export.id + '/',
+      url: "/api/shares/"+_this.share.get('name')+'/nfs/' + this.nfs_export.id,
       type: "DELETE",
       dataType: "json",
       data: data,

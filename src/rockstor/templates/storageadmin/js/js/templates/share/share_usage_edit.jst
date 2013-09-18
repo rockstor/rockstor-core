@@ -1,0 +1,40 @@
+<script>
+/*
+ * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ * 
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ * 
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ */
+</script>
+
+
+<h3>Usage</h3>
+
+<h4>Resize Share</h4>
+<div class="messages"></div>
+Size:<br/>
+<input class="smallinput" type="text" name="new-size" id="new-size" value="<%= humanize.filesize(share.get('size')*1024).replace(/[^0-9\.]+/g,"") %>">
+
+<select class="smallinput" id="size_format" name="size_format">
+  <option <%if(humanize.filesize(share.get('size')*1024).match(/Kb/g,"")){%> selected="selected"<%}%> >KB</option>
+  <option <%if(humanize.filesize(share.get('size')*1024).match(/Mb/g,"")){%> selected="selected"<%}%> >MB</option>
+  <option <%if(humanize.filesize(share.get('size')*1024).match(/Gb/g,"")){%> selected="selected"<%}%> >GB</option>
+  <option <%if(humanize.filesize(share.get('size')*1024).match(/Tb/g,"")){%> selected="selected"<%}%> >TB</option>
+</select>
+
+<div class="clear"></div>
+<a class="btn btn-primary" href="#" id="js-resize-save"> Save</a>
+<a class="btn" href="#" id="js-resize-cancel"> Cancel</a>
+
