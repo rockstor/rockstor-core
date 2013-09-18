@@ -165,7 +165,7 @@ class SharesConsole(BaseConsole):
         """
         input_share = args.split()
         if (len(input_share) > 0):
-            sd_console = ShareDetailConsole(self.greeting, input_share[0])
+            sd_console = ShareDetailConsole(self.prompt, input_share[0])
             if (len(input_share) > 1):
                 sd_console.onecmd(' '.join(input_share[1:]))
             else:

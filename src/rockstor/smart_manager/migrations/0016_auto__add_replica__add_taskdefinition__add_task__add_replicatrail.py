@@ -8,6 +8,19 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
+        # Adding model 'Replica'
+        db.create_table('smart_manager_replica', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('share', self.gf('django.db.models.fields.CharField')(max_length=4096)),
+            ('pool', self.gf('django.db.models.fields.CharField')(max_length=4096)),
+            ('appliance', self.gf('django.db.models.fields.CharField')(max_length=4096)),
+            ('dpool', self.gf('django.db.models.fields.CharField')(max_length=4096)),
+            ('dshare', self.gf('django.db.models.fields.CharField')(max_length=4096, null=True)),
+            ('enabled', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('frequency', self.gf('django.db.models.fields.IntegerField')()),
+        ))
+        db.send_create_signal('smart_manager', ['Replica'])
+
         # Adding model 'TaskDefinition'
         db.create_table('smart_manager_taskdefinition', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
@@ -29,13 +42,29 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal('smart_manager', ['Task'])
 
+        # Adding model 'ReplicaTrail'
+        db.create_table('smart_manager_replicatrail', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('replica', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['smart_manager.Replica'])),
+            ('snap_name', self.gf('django.db.models.fields.CharField')(max_length=1024)),
+            ('status', self.gf('django.db.models.fields.CharField')(max_length=10)),
+            ('state_ts', self.gf('django.db.models.fields.DateTimeField')(null=True)),
+        ))
+        db.send_create_signal('smart_manager', ['ReplicaTrail'])
+
 
     def backwards(self, orm):
+        # Deleting model 'Replica'
+        db.delete_table('smart_manager_replica')
+
         # Deleting model 'TaskDefinition'
         db.delete_table('smart_manager_taskdefinition')
 
         # Deleting model 'Task'
         db.delete_table('smart_manager_task')
+
+        # Deleting model 'ReplicaTrail'
+        db.delete_table('smart_manager_replicatrail')
 
 
     models = {
@@ -199,8 +228,28 @@ class Migration(SchemaMigration):
             'ts': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'usage': ('django.db.models.fields.IntegerField', [], {'default': '0'})
         },
+        'smart_manager.replica': {
+            'Meta': {'object_name': 'Replica'},
+            'appliance': ('django.db.models.fields.CharField', [], {'max_length': '4096'}),
+            'dpool': ('django.db.models.fields.CharField', [], {'max_length': '4096'}),
+            'dshare': ('django.db.models.fields.CharField', [], {'max_length': '4096', 'null': 'True'}),
+            'enabled': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'frequency': ('django.db.models.fields.IntegerField', [], {}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'pool': ('django.db.models.fields.CharField', [], {'max_length': '4096'}),
+            'share': ('django.db.models.fields.CharField', [], {'max_length': '4096'})
+        },
+        'smart_manager.replicatrail': {
+            'Meta': {'object_name': 'ReplicaTrail'},
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'replica': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['smart_manager.Replica']"}),
+            'snap_name': ('django.db.models.fields.CharField', [], {'max_length': '1024'}),
+            'state_ts': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
+            'status': ('django.db.models.fields.CharField', [], {'max_length': '10'})
+        },
         'smart_manager.service': {
             'Meta': {'object_name': 'Service'},
+            'config': ('django.db.models.fields.CharField', [], {'max_length': '8192', 'null': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '24'}),
             'registered': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
@@ -221,6 +270,7 @@ class Migration(SchemaMigration):
         },
         'smart_manager.sprobe': {
             'Meta': {'object_name': 'SProbe'},
+            'display_name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
             'end': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),

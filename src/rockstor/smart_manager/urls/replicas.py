@@ -16,21 +16,20 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from cpu_metric import CPUMetric
-from disk_stat import DiskStat
-from load_avg import LoadAvg
-from mem_info import MemInfo
-from vm_stat import VmStat
-from service import (Service, ServiceStatus)
-from sprobe import SProbe
-from nfsd import (NFSDCallDistribution,
-                  NFSDClientDistribution)
-from nfsd_share import NFSDShareDistribution
-from pool_usage import PoolUsage
-from net_stat import NetStat
-from nfsd_share_client import NFSDShareClientDistribution
-from share_usage import ShareUsage
-from nfsd_uid_gid import NFSDUidGidDistribution
-from task_def import TaskDefinition
-from task import Task
-from share_replication import (Replica, ReplicaTrail)
+from django.conf.urls.defaults import patterns, url
+from smart_manager.views import (ReplicaView, ReplicaTrailView)
+
+share_regex = r'[A-Za-z]+[A-Za-z0-9_]*'
+
+urlpatterns = patterns('',
+    url(r'^$', ReplicaView.as_view(), name='replica-view'),
+    url(r'^(?P<rid>[0-9]+)$', ReplicaView.as_view(), name='replica-view'),
+    url(r'^share/(?P<sname>%s)$' % share_regex, ReplicaView.as_view(),
+        name='replica-view'),
+
+    url(r'^trail$', ReplicaTrailView.as_view(), name='replica-view'),
+    url(r'^trail/replica/(?P<rid>[0-9]+)', ReplicaTrailView.as_view(), name='replica-view'),
+    url(r'^trail/(?P<rtid>[0-9]+)', ReplicaTrailView.as_view(),
+        name='replica-view'),
+
+)

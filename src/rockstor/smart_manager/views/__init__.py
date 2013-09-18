@@ -33,3 +33,5 @@ from base_service import BaseServiceView
 from nis_service import NISServiceView
 from samba_service import SambaServiceView
 from nfs_service import NFSServiceView
+from replication import ReplicaView
+from replica_trail import ReplicaTrailView

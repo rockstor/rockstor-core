@@ -30,6 +30,7 @@ from support_console import SupportConsole
 from network_console import NetworkConsole
 from users_console import UsersConsole
 from task_console import TaskConsole
+from replication_console import ReplicationConsole
 
 
 ASCII_LOGO = """
@@ -179,6 +180,16 @@ class RockConsole(BaseConsole):
             task_console.cmdloop()
         else:
             task_console.onecmd(args)
+
+    def do_replication(self, args):
+        """
+        Replication console
+        """
+        rc = ReplicationConsole(self.greeting)
+        if (len(args) == 0):
+            rc.cmdloop()
+        else:
+            rc.onecmd(args)
 
 def main():
     rc = RockConsole()
