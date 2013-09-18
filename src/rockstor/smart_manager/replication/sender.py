@@ -94,6 +94,7 @@ class Sender(Process):
         meta_push.send_json(self.meta_begin)
         logger.info('sent meta: %s. waiting for ack' % self.meta_begin)
         self.q.get(block=True)
+        logger.info('ack received')
 
         snap_path = ('%s%s/%s' % (settings.MNT_PT, self.replica.pool,
                                   self.snap_name))
@@ -127,10 +128,7 @@ class Sender(Process):
                                 (sp.returncode, sp.stderr.read()))
                     alive = False
                 fs_data = sp.stdout.read()
-                #self.pub.send('%s%s' % (self.snap_id, fs_data))
-                for i in range(100):
-                    self.pub.send(fs_data)
-                    time.sleep(0.1)
+                self.pub.put('%s%s' % (self.snap_id, fs_data))
                 logger.info('published data. len: %d' % len(fs_data))
             except IOError:
                 logger.info('no data read out of send')
@@ -139,16 +137,28 @@ class Sender(Process):
                 if (alive):
                     sp.terminate()
                 sys.exit(3)
+            finally:
+                if (not alive):
+                    if (sp.returncode != 0):
+                        self.pub.put('%sEND_FAIL' % self.snap_id)
+                    else:
+                        self.pub.put('%sEND_SUCCESS' % self.snap_id)
+                    logger.info('sent END')
+                if (os.getppid() != self.ppid):
+                    logger.info('parent exited. aborting.')
+                    break
 
-        logger.info('send finished. snap: %s' % snap_path)
-        meta_push.send_json(self.meta_end)
-        logger.info('sent meta: %s. waiting for ack' % self.meta_end)
-        self.q.get(block=True)
-
+        logger.info('fsdata send finished. waiting for confirmation: %s' %
+                    self.meta_begin)
+        msg = self.q.get(block=True)
+        logger.info('confirmation: %s received' % msg)
         url = ('%ssm/replicas/trail/%d' % (self.baseurl, rt2['id']))
+        data = {'status': 'send_succeeded',}
+        if (msg == 'receive_error'):
+            data = {'status': 'send_failed',}
         try:
-            api_call(url, data={'status': 'send_succeeded'}, calltype='put')
-            logger.info('replica status updated to send_succeeded')
+            api_call(url, data=data, calltype='put')
+            logger.info('replica status updated to %s' % data['status'])
         except Exception, e:
             msg = ('failed to update replica status to send_succeeded')
             #@todo: add retries

@@ -45,11 +45,9 @@ class Receiver(Process):
         ctx = zmq.Context()
         try:
             recv_sub = ctx.socket(zmq.SUB)
-            recv_sub.connect('tcp://%s:%d' % (self.meta['ip'],
-                                              self.data_port))
+            recv_sub.connect('tcp://%s:%d' % (self.meta['ip'], self.data_port))
             recv_sub.RCVTIMEO = 500
-            #recv_sub.setsockopt(zmq.SUBSCRIBE, str(self.meta['id']))
-            recv_sub.setsockopt(zmq.SUBSCRIBE, '')
+            recv_sub.setsockopt(zmq.SUBSCRIBE, str(self.meta['id']))
             logger.info('subscribed for fsdata for meta: %s' % self.meta)
         except Exception, e:
             logger.info('could not subscribe for fsdata for meta: %s' %
@@ -68,46 +66,47 @@ class Receiver(Process):
             logger.exception(e)
             sys.exit(3)
 
-        sub_vol = ('%s%s/%s' % (settings.MNT_PT, self.meta['pool'],
-                                self.meta['share']))
-        cmd = [BTRFS, 'recv', sub_vol]
-        with open('/tmp/btrfs-recv', 'w') as rfo:
-            ack = {'msg': 'begin_ok',
-                   'id': self.meta['id'],}
-            meta_push.send_json(ack)
-            logger.info('ack sent: %s' % ack)
-            rp = subprocess.Popen(cmd, shell=False, stdin=rfo,
-                                  stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE)
-            logger.info('btrfs recv started')
-            more_data = True
-            while True:
-                try:
-                    recv_data = recv_sub.recv()
-                    #recv_data = recv_data[len(self.meta['id']):]
-                    rfo.write(recv_data)
-                    logger.info('fsdata received. meta: %s' % self.meta)
-                except zmq.error.Again:
-                    if (not more_data):
-                        logger.info('no more data to receive from '
-                                    'publisher. meta: %s' % self.meta)
-                        break
-                except Exception, e:
-                    logger.info('exception occured while receiving fsdata')
-                    logger.exception(e)
+        sub_vol = ('%s%s' % (settings.MNT_PT, self.meta['pool']))
+        cmd = [BTRFS, 'receive', sub_vol]
+        ack = {'msg': 'begin_ok',
+               'id': self.meta['id'],}
+        meta_push.send_json(ack)
+        logger.info('ack sent: %s' % ack)
+        rp = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE,
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        logger.info('btrfs recv started')
+        while True:
+            try:
+                recv_data = recv_sub.recv()
+                recv_data = recv_data[len(self.meta['id']):]
+                logger.info('fsdata received. meta: %s' % self.meta)
+                if (recv_data == 'END_SUCCESS'):
+                    logger.info('sentinel received. breaking')
+                    break
+                elif (recv_data == 'END_FAIL'):
+                    logger.info('END_FAIL received. terminating')
                     rp.terminate()
                     sys.exit(3)
-                finally:
-                    logger.info('in finally')
-                    if (not self.q.empty()):
-                        msg = self.q.get()
-                        logger.info('end(%s) received. meta: %s' %
-                                    (msg, self.meta))
-                        ack = {'msg': 'end_ok',
-                               'id': self.meta['id'],}
-                        meta_push.send_json(ack)
-                        logger.info('ack sent: %s' % ack)
-                        more_data = False
+                rp.stdin.write(recv_data)
+                rp.stdin.flush()
+                logger.info('fsdata written')
+            except zmq.error.Again:
+                logger.info('nothing received')
+            except Exception, e:
+                logger.info('exception occured while receiving fsdata')
+                logger.exception(e)
+                rp.terminate()
+                sys.exit(3)
+            finally:
+                if (os.getppid() != self.ppid):
+                    logger.info('parent exited. aborting.')
+                    break
         #rfo/stdin should be closed by now
-        rp.communicate()
+        out, err = rp.communicate()
+        logger.info('rc: %d out: %s err: %s' % (rp.returncode, out, err))
+        ack = {'msg': 'receive_ok',
+               'id': self.meta['id'],}
+        if (rp.returncode != 0):
+            ack['msg'] = 'receive_error'
+        meta_push.send_json(ack)
 
