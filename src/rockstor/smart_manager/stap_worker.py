@@ -71,9 +71,8 @@ class StapWorker(Process):
 
             if (rp.poll() is not None):
                 if (probe_stopped is not True):
-                    out, err = rp.communicate()
                     msg = ('Probe process died. returncode: %s. '
-                           'stderr: %s' % (rp.returncode, err))
+                           'stderr: %s' % (rp.returncode, rp.stderr.read()))
                     logger.error(msg)
                 break
             time.sleep(.5)

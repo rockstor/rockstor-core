@@ -37,6 +37,7 @@ class Share(models.Model):
     perms = models.CharField(max_length=9, default='755')
     toc = models.DateTimeField(auto_now=True)
     subvol_name = models.CharField(max_length=4096)
+    replica = models.BooleanField(default=False)
 
     def cur_usage(self, *args, **kwargs):
         try:
