@@ -19,6 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from django.conf.urls.defaults import patterns, url
 from storageadmin.views import (ShareView, ShareNFSView, ShareSambaView,
                                 ShareACLView, SnapshotView, ShareIscsiView)
+
 share_regex = r'[A-Za-z]+[A-Za-z0-9_]*'
 snap_regex = share_regex
 
@@ -33,8 +34,8 @@ urlpatterns = patterns(
     url(r'^(?P<sname>%s)/nfs/(?P<export_id>[0-9]+)$' % share_regex,
         ShareNFSView.as_view(), name='nfs-view'),
 
-    url(r'^(?P<sname>%s)/samba$' % share_regex,
-        ShareSambaView.as_view(), name='samba-view'),
+    url(r'^(?P<sname>%s)/samba$' % share_regex, ShareSambaView.as_view(),
+        name='samba-view'),
 
     url(r'^(?P<sname>%s)/snapshots$' % share_regex,
         SnapshotView.as_view(), name='snapshot-view'),
