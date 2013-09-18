@@ -1124,7 +1124,7 @@ path.link {
 
 /* Form */
 .form-box {
-  padding: 24px 12px 24px 12px;
+  padding: 12px;
   border-radius: 4px;
   background: #eee;
 }
@@ -1408,7 +1408,7 @@ input[type="radio"].selectedRoot {
 }
 
 #maincontent {
-  padding: 12px;
+  padding: 24px 12px 12px 12px;
 }
 
 #footer {
