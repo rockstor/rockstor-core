@@ -201,22 +201,10 @@ RockStorWidgetView = Backbone.View.extend({
   },
   
   close: function(event) {
-    logger.debug(' in RockStorWidget close');
     if (!_.isUndefined(event) && !_.isNull(event)) {
       event.preventDefault();
     }
-    // cleanup widget
-    this.cleanup();
-    // remove widget li and rearrange
-    var li = $(event.currentTarget).closest('li');
-    console.log(li); 
-    var ul = $(this.el).closest('ul'); // list
-    logger.debug(ul);
-    li.remove();
-    ul.trigger('ss-rearrange');
-    this.parentView.saveWidgetConfiguration();
-    // remove from parent array
-    this.parentView.removeWidget(this.name);
+    this.parentView.removeWidget(this.name, this);
   },
   
   download: function(event) {

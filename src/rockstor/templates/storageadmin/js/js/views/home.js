@@ -30,7 +30,6 @@
 
 var HomeLayoutView = RockstoreLayoutView.extend({
   events: {
-    'click #configure-dashboard': 'dashboardConfig',
   },
 
   initialize: function() {
@@ -39,15 +38,15 @@ var HomeLayoutView = RockstoreLayoutView.extend({
     // set template
     this.template = window.JST.home_home_template;
     // create models and collections
-    this.sysinfo = new SysInfo();
     this.appliances = new ApplianceCollection();
     this.dashboardconfig = new DashboardConfig();
     // add dependencies
-    this.dependencies.push(this.sysinfo);
     this.dependencies.push(this.appliances);
     this.dependencies.push(this.dashboardconfig);
-
-    this.widgetList = []; // widgets add themselves here so that their cleanup routines can be called from this view's cleanup
+    
+    this.selectedWidgetNames = [];
+    this.widgetViews = []; // widgets add themselves here so that their cleanup routines can be called from this view's cleanup
+    this.on("widgetClicked", this.widgetClicked, this);
   },
 
   render: function() {
@@ -57,18 +56,6 @@ var HomeLayoutView = RockstoreLayoutView.extend({
 
   renderSubViews: function() {
 
-    // redirect to setup if current appliance is not setup
-    var current_appliance = undefined;
-    /*
-    if (this.appliances.length > 0) {
-      RockStorGlobals.currentAppliance = this.appliances.find(function(appliance) {
-        return appliance.get('current_appliance') == true; 
-      })
-    }
-    */ 
-    // set current appliance name
-    //$('#appliance-name').html(current_appliance.get('ip')); 
-
     // render template
     $(this.el).empty();
     $(this.el).append(this.template());
@@ -76,101 +63,116 @@ var HomeLayoutView = RockstoreLayoutView.extend({
     // render dashboard widgets
     this.renderWidgets();
 
-  },
-
-  dashboardConfig: function() {
-    var dashboardConfigPopup = this.$('#dashboard-config-popup').modal({
-      show: false
-    });
-    this.$('#dashboard-config-content').empty();
-    this.$('#dashboard-config-content').append((new DashboardConfigView({
+    this.dashboardConfigView = new DashboardConfigView({
       parentView: this,
       dashboardconfig: this.dashboardconfig
-    })).render().el);
-    this.$('#dashboard-config-popup').modal('show');
-
+    });
+    $('#dashboard-config-ph').append(this.dashboardConfigView.render().el);
   },
 
   renderWidgets: function() {
-
     var _this = this;
     this.widgetsContainer.empty();
     
-    var wConfigs = null;
-    wConfigs = this.dashboardconfig.getConfig();
-    if (_.isNull(wConfigs)) {
-      this.dashboardconfig.setConfig(RockStorWidgets.defaultWidgets());
-      wConfigs = this.dashboardconfig.getConfig();
-    }
-    this.widgetList.length = 0;
+    var selectedWidgets = this.dashboardconfig.getConfig();
+    this.widgetViews.length = 0;
     // Add widgets to ul (widgetsContainer);
-    _.each(wConfigs, function(wConfig, index, list ) {
-      _this.addWidget(wConfig, _this.widgetsContainer, _this.widgetList);
+    _.each(selectedWidgets, function(widget, index, list ) {
+      _this.addWidget(widget, _this.widgetsContainer, _this.widgetViews);
     });
     // call shapeshift to do layout
     this.widgetsContainer.shapeshift({
       align: "left",
       minColumns: 3
     });
-   
+     
     // set handler for drop event, when a widget is moved around and 
     // the drop completes.
     this.widgetsContainer.on('ss-drop-complete', function(e, selected) {
       _this.saveWidgetConfiguration();
     });
-
-    //this.widgetsContainer.on('ss-rearranged', function(e, selected) {
-    //  logger.debug('in rearrange'); 
-    //  //_this.saveWidgetConfiguration();
-    //});
   },
 
-  addWidget: function(widgetConf, container, widgetList) {
-    var li = null;
-    var viewName = widgetConf.view;
+  addWidgetByName: function(widgetName) {
+    var widget = RockStorWidgets.findByName(widgetName);
+    this.addWidget(widget, this.widgetsContainer, this.widgetViews);
+  },
+
+  addWidget: function(widget, container, widgetViews) {
+    var div = null;
+    var viewName = widget.view;
+    
     if (!_.isUndefined(window[viewName] && !_.isNull(window[viewName]))) {
+      // Create widget view 
       var view = new window[viewName]({
-        displayName: widgetConf.displayName,
-        name: widgetConf.name,
-        cleanupArray: this.widgetList,
+        displayName: widget.displayName,
+        name: widget.name,
+        cleanupArray: widgetViews,
         parentView: this
       });
-      // create li for widget
-      li = $("<li>");
-      li.attr("data-ss-colspan", widgetConf.cols);
-      li.attr("data-ss-rowspan", widgetConf.rows);
-      container.append(li);
+      
+      // create shapeshift div for widget and render
+      div = $("<div>");
+      div.attr("data-ss-colspan", widget.cols);
+      div.attr("data-ss-rowspan", widget.rows);
+      div.attr("data-widget-name", widget.name);
+      container.append(div);
       var position_div = $('<div class="position"></div>');
-      li.append(position_div);
+      div.append(position_div);
       position_div.append(view.render().el);
-      this.widgetList.push(view);
+      
+      // Add widget view to widget list
+      widgetViews.push(view);
     }
   },
-  
-  removeWidget: function(name) {
+
+  findWidgetView: function(name) {
     var i=0, found=false; 
-    for (i=0; i<this.widgetList.length; i++) {
-      if (this.widgetList[i].name == name) {
-        found = true;
-        break;
+    for (i=0; i<this.widgetViews.length; i++) {
+      if (this.widgetViews[i].name == name) {
+        return [this.widgetViews[i], i];
       }
     }
-    if (found) delete this.widgetList[i];
+    return [null, null];
+  },
+
+  removeWidget: function(name, view) {
+    // view cleanup and remove
+    view.cleanup();
+    view.remove();
+
+    // remove view shapeshift div
+    var ssDiv = $(this.el).find('div[data-widget-name="' + name + '"]');
+    ssDiv.remove();
+    
+    // remove view from widget list
+    this.widgetViews = _.reject(this.widgetViews, function(view) {
+      return view.name == name; 
+    });
+
+    // trigger ss rearrange
+    this.widgetsContainer.trigger("ss-rearrange");
+    
+    // uncheck widget in widget selection list
+    this.dashboardConfigView.setCheckbox(name, false); 
+
+    // save new widget configuration
+    this.saveWidgetConfiguration(); 
   },
 
   saveWidgetConfiguration: function() {
-    var lis = this.widgetsContainer.children('li');
+    var divs = this.widgetsContainer.children('div');
     var tmp = [];
-    lis.each(function(index) {
-      var li = $(this);
-      var name = li.find('div.widget').attr('id').replace('_widget','');; 
-      var widgetConf = RockStorWidgets.findByName(name);
-      var rows = li.attr('data-ss-rowspan');
-      var cols = li.attr('data-ss-colspan');
+    divs.each(function(index) {
+      var div = $(this);
+      var name = div.find('div.widget').attr('id').replace('_widget','');; 
+      var widget = RockStorWidgets.findByName(name);
+      var rows = div.attr('data-ss-rowspan');
+      var cols = div.attr('data-ss-colspan');
       tmp.push({
         name: name, 
-        displayName: widgetConf.displayName,
-        view: widgetConf.view,
+        displayName: widget.displayName,
+        view: widget.view,
         rows: rows, 
         cols: cols,
         position: index, 
@@ -191,14 +193,31 @@ var HomeLayoutView = RockstoreLayoutView.extend({
       }
     });
   },
+  
+  widgetClicked: function(name, selected) {
+    if (selected) {
+      this.addWidgetByName(name);
+      this.widgetsContainer.trigger("ss-destroy");
+      this.widgetsContainer.shapeshift({
+        align: "left",
+        minColumns: 3
+      });
+      this.saveWidgetConfiguration();
+    } else {
+      var [view, index] = this.findWidgetView(name);
+      if (view) {
+        this.removeWidget(name, view);
+      }
+    }
+  },
 
   cleanup: function() {
-    _.each(this.widgetList, function(widget) {
+    _.each(this.widgetViews, function(widget) {
       if (_.isFunction(widget.cleanup)) {
         widget.cleanup();
       }
     });
-  }
+  },
 
 });
 

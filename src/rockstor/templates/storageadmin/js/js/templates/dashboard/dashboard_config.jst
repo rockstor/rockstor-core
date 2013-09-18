@@ -18,51 +18,20 @@
  * 
  */
 </script>
-<div class="modal-header">
-<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-<div class="row-fluid">
-  <div class="span12">
-    <div class="pageheading">
-      <div id="title" class="title"><span class="h1">Select Widgets</span></div>
-    </div>
-  </div> <!-- span12 -->
-</div> <!-- row-fluid -->
-</div>
-     
-
-<div class="row-fluid">
-  <div class="span12">
-
-    <% var widget_categories = ['Compute', 'Storage', 'Network']; %>
-    <% _.each(widget_categories, function(category) { %>
-      <h3><%= category %></h3>
-      <table id="widget-selections" class="table table-condensed table-bordered table-hover table-striped"style="width: 100%">
-        <thead>
-        </thead>
-        <tbody>
-          <% _.each(RockStorWidgets.findByCategory(category), function(widget) { %>
-            <tr>
-              <td>
-                <% if (_.some(wSelected, function(w) { return w.name == widget.name})) { %>
-                  <input class="widget-name" type="checkbox" name="selections" value="<%= widget.name %>" checked="checked"></input>
-
-                <% } else { %>
-                  <input class="widget-name" type="checkbox" name="selections" value="<%= widget.name %>"></input>
-
-                <% } %>
-              </td>
-              <td>
-                <%= widget.displayName %><br>
-                <%= widget.description %>
-              </td>
-            </tr>
-          <% }); %>
-        </tbody>
-      </table>
+<% var widget_categories = ['Compute', 'Storage', 'Network']; %>
+<div class="form-box">
+  <h4>Widgets</h4>
+  <% _.each(widget_categories, function(category) { %>
+    <strong><%= category %></strong><br>
+    <% _.each(RockStorWidgets.findByCategory(category), function(widget) { %>
+      <% if (_.some(wSelected, function(w) { return w.name == widget.name})) { %>
+        <input class="widget-name inline" type="checkbox" name="selections" value="<%= widget.name %>" checked="checked"></input>
+      <% } else { %>
+        <input class="widget-name inline" type="checkbox" name="selections" value="<%= widget.name %>"></input>
+      <% } %>
+      <%= widget.displayName %>
+      <br>
     <% }); %>
-
-    <button id="save" class="btn btn-primary">Save</button>
-
-  </div>
+    <br>
+  <% }); %>
 </div>
-

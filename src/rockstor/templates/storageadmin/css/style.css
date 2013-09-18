@@ -810,13 +810,13 @@ hr.module-sep { margin: 0; border: 0; border-top: 1px solid #ddd;
 }
 
 /* Styles for jquery shapeshift plugin */
-ul.widgets-container {
+div.widgets-container {
   position: relative;
   width: 100%;
   margin: 0px;
 }
 
-ul.widgets-container>li {
+div.widgets-container > div {
   position: absolute;
   height: 300px;
   width: 300px;
@@ -824,13 +824,13 @@ ul.widgets-container>li {
 }
 
 /* TODO * adjust sizes of colspan 2 and 3 based on media queries */
-ul.widgets-container li[data-ss-colspan="1"] { width: 300px;} 
-ul.widgets-container li[data-ss-colspan="2"] { width: 610px;} 
-ul.widgets-container li[data-ss-colspan="3"] { width: 920px;} 
-ul.widgets-container li[data-ss-rowspan="1"] { height: 300px;} 
-ul.widgets-container li[data-ss-rowspan="2"] { height: 610px;} 
-ul.widgets-container li[data-ss-rowspan="3"] { height: 920px;} 
-ul.widgets-container li div.position { 
+div.widgets-container div[data-ss-colspan="1"] { width: 300px;} 
+div.widgets-container div[data-ss-colspan="2"] { width: 610px;} 
+div.widgets-container div[data-ss-colspan="3"] { width: 920px;} 
+div.widgets-container div[data-ss-rowspan="1"] { height: 300px;} 
+div.widgets-container div[data-ss-rowspan="2"] { height: 610px;} 
+div.widgets-container div[data-ss-rowspan="3"] { height: 920px;} 
+div.widgets-container div div.position { 
   width: 100%; 
   height: 100%; 
   display: block;
@@ -1414,3 +1414,4 @@ input[type="radio"].selectedRoot {
 #footer {
 	position: absolute;
 }
+
