@@ -503,6 +503,11 @@ form#login_form {
 }
 
 #login-box input { width: 170px; }
+#logincontent {
+  padding: 24px 12px 12px 12px;
+  background: #fff;
+  height: 100%;
+}
 
 .main-story {
   padding: 24px 24px 96px 24px;
