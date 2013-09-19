@@ -19,17 +19,16 @@
  */
 </script>
 
-
-<h3>Snapshots</h3>
-
-
+<a class="btn btn-primary" href="#" id="js-snapshot-add"><i class="icon-edit icon-white"></i> Create snapshot</a>
+<br>
+<br>
 <div class="messages"></div>
 <% if (!snapshots.isEmpty()) { %>
   <table id="snapshots-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of snapshots">
     <thead>
       <tr>
-        <th>No.</th>
         <th>Name</th>
+        <th>Created on</th>
         <th>Size</th>
         <th></th>
       </tr>
@@ -37,8 +36,8 @@
     <tbody>
       <% snapshots.each(function(snapshot, index) { %>
         <tr>
-          <td><%= index+1 %></td>
-          <td><%= snapshot.get('name') %></td>
+          <td><i class="icon-camera"></i> <%= snapshot.get('name') %></td>
+          <td><%= new Date(snapshot.get('toc')).toString() %></td>
           <td><%= humanize.filesize(snapshot.get('size')*1024) %></td>
           <td><a href="#" class="js-snapshot-delete" id="delete_snapshot_<%= snapshot.get('name') %>" data-name="<%= snapshot.get('name') %>" data-share-name="<%= share.get('name') %>" data-action="delete"><i class="icon-trash"></i></a></td>
         </tr>
@@ -46,6 +45,7 @@
     </tbody>
 
   </table>
+<div class="pagination-ph"></div>
 <% } else { %>
   <table id="snapshots-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of snapshots">
     <tbody>
@@ -57,6 +57,4 @@
     </tbody>
   </table>
 <% } %>
-<div class="clear"></div>
-<a class="btn btn-primary" href="#" id="js-snapshot-add"><i class="icon-edit icon-white"></i> Create snapshot</a>
 

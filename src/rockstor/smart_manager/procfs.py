@@ -200,7 +200,11 @@ class ProcRetreiver(Process):
                 usage = pool_usage(arb_disk)
                 pu = PoolUsage(pool=p.name, usage=usage[1])
                 self.q.put(pu)
-
+            except Exception, e:
+                logger.debug('command exception while getting pool usage '
+                             'for: %s' % (p.name))
+                logger.exception(e)
+            try:
                 #get usage of all shares in this pool
                 pool_device = Disk.objects.filter(pool=p)[0].name
                 share_map = {}
@@ -210,8 +214,8 @@ class ProcRetreiver(Process):
                 for s in usaged.keys():
                     su = ShareUsage(name=s, usage=usaged[s])
                     self.q.put(su)
-            except:
-                logger.debug('command exception while getting pool usage '
-                             'for: %s' % (p.name))
-                logger.exception('exception')
+            except Exception, e:
+                logger.debug('command exception while getting shares usage '
+                             'for pool: %s' % (p.name))
+                logger.exception(e)
         return now
