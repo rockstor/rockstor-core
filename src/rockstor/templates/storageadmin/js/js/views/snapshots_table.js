@@ -34,32 +34,37 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
 
   initialize: function() {
     this.template = window.JST.share_snapshots_table_template;
+    this.paginationTemplate = window.JST.common_pagination;
     this.addTemplate = window.JST.share_snapshot_add;
     this.module_name = 'snapshots';
     this.share = this.options.share;
     this.snapshots = this.options.snapshots;
+    this.collection = this.options.snapshots;
+    this.collection.on("reset", this.render, this);
   },
 
   render: function() {
     var _this = this;
     $(this.el).empty();
     $(this.el).append(this.template({
-      snapshots: this.snapshots,
+      snapshots: this.collection,
       share: this.share
     }));
     this.$('#snapshots-table').tablesorter();
-    this.$('button[data-action=delete]').click(function(event) {
-    });
+    this.$(".pagination-ph").html(this.paginationTemplate({
+      collection: this.collection
+    }));
     return this;
   },
+
   setShareName: function(shareName) {
-      this.snapshots.setUrl(shareName);
+      this.collection.setUrl(shareName);
   },
 
   add: function(event) {
     event.preventDefault();
     $(this.el).html(this.addTemplate({
-      snapshots: this.snapshots,
+      snapshots: this.collection,
       share: this.share
     }));
   },
@@ -76,7 +81,7 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
       dataType: "json",
       success: function() {
         enableButton(button);
-        _this.snapshots.fetch({
+        _this.collection.fetch({
           success: function() { _this.render(); }
         });
       },
@@ -95,7 +100,6 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
     share_name = this.share.get("name");
     var button = $(event.currentTarget);
     if (buttonDisabled(button)) return false;
-    console.log('sending delete event');
     if(confirm("Delete snapshot:  "+ name +"...Are you sure?")){
       disableButton(button);
       $.ajax({
@@ -103,7 +107,7 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
         type: "DELETE",
         success: function() {
           enableButton(button)
-          _this.snapshots.fetch({
+          _this.collection.fetch({
             success: function() { _this.render(); }
           });
         },
@@ -121,7 +125,8 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
     this.render();
   },
 
-
-
 });
+
+// Add pagination
+Cocktail.mixin(SnapshotsTableModule, PaginationMixin);
 
