@@ -212,7 +212,7 @@ def share_usage(pool_name, pool_device, share_id):
     for line in out:
         fields = line.split()
         if (fields[0] == share_id):
-            usage = int(fields[-1]) / 1024 # usage in KB
+            usage = int(fields[-2]) / 1024 # usage in KB
             break
     if (usage is None):
         raise Exception('usage cannot be determined for share_id: %s' %
@@ -234,7 +234,7 @@ def shares_usage(pool_name, pool_device, share_map):
     for line in out:
         fields = line.split()
         if (len(fields) > 0 and fields[0] in share_map.keys()):
-            usage = int(fields[-1]) / 1024 # usage in KB
+            usage = int(fields[-2]) / 1024 # usage in KB
             usage_map[share_map[fields[0]]] = usage
     return usage_map
 
