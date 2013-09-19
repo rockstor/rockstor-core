@@ -197,16 +197,17 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
       if(confirm("Delete share:  "+ name +"...Are you sure?")){
       disableButton(button);
       $.ajax({
-        url: "/api/shares/"+name+"/",
+        url: "/api/shares/" + name,
         type: "DELETE",
         dataType: "json",
         success: function() {
           enableButton(button);
           app_router.navigate('shares', {trigger: true}) 
         },
-        error: function(request, status, error) {
+        error: function(xhr, status, error) {
+          var msg = parseXhrError(xhr)
+          _this.$(".share-messages").html("<label class=\"error\">" + msg + "</label>");
           enableButton(button);
-          showError(request.responseText);
         }
        });
       }

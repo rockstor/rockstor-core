@@ -70,7 +70,7 @@ PoolsView = Backbone.View.extend({
         url: "/api/pools/" + name,
         type: "DELETE",
         dataType: "json",
-        data: { "name": name, "disks": "foo", "raid_level": "foo" },
+        data: { "name": name },
         success: function() {
           _this.collection.fetch({reset: true});
           enableButton(button);

@@ -92,7 +92,8 @@ ServicesView = Backbone.View.extend({
         showSuccessMessage(name + ' ' + action + ' successfully');
       },
       error: function(xhr, status, error) {
-        showError(xhr.responseText);	
+        var msg = parseXhrError(xhr)
+        _this.$(".share-messages").html("<label class=\"error\">" + msg + "</label>");
       }
     });
 
