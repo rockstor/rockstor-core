@@ -94,6 +94,7 @@
     <script src="/js/jquery.sparkline.min.js"></script>
     <script src="/js/humanize.js"></script>
     <script src="/js/moment.min.js"></script>
+    <script src="/js/application.js"></script>
   </head>
   <body>
 
@@ -107,39 +108,46 @@
         <div id="navbar-links"></div>
       </div> <!-- navbar-inner -->
     </div> <!-- navbar -->
+    
     <div id="wrapper1">
+
       <div id="wrapper2">
 
-        <div id="maincontent">
-          <div class="row-fluid">
-            <div class="span8">
-              <span class="h1">The Smart Storage Platform</span>
-              <h2>Smart and Powerful Open source platform for Storage clouds.</h2>
-            </div>
-            <div class="span4">
-              <form id="login_form" name="aform" class="form-horizontal" method="POST" action="/login_submit">
-                <div id="login-box">
-                  <div class="messages"></div>
-                  <div class="control-group">
-                    <label>Username</label>
-                    <input type="text" id="username" name="login" placeholder="Username" >
-                  </div>
-                  <div class="control-group">
-                    <label>Password</label>
-                    <input type="password" id="password" name="password" placeholder="Password">
-                  </div>
-                  <div class="control-group">
-                    <button type="submit" id="sign_in" class="btn btn-primary">Sign in</button>
-                  </div>
-
-                </div>
-                {% csrf_token %}
-              </form>
-            </div>
+        <div id="loading-indicator" style="visibility:hidden"><img src="/img/ajax-loader.gif"/></div>
+        <div id="sidebar">
+          <div id="sidebar-inner">
+          </div>
+        </div>
+        <div id="content">
+          <div id="maincontent">
+          <!--Body content-->
+          {% block content %}{% endblock %}
           </div>
         </div> <!-- maincontent -->
+
+      </div> <!-- wrapper2 -->
+      <div id="footer"></div>
+
+    </div> <!-- wrapper1 -->
+
+    <div id="errorPopup" class="modal hide fade" tabindex="-1" role="dialog" >
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" >x</button>
+        <h3>Error!</h3>
+      </div>
+      <div class="modal-body" id="errorContent" style="overflow: scroll; height: 200px;"></div>
+      <div class="modal-footer">
+        <button type="button" data-dismiss="modal" class="btn">Close</button>
       </div>
     </div>
+
+    <div id="appliance-select-popup" class="modal hide fade">
+      <div id="appliance-select-content"></div>
+    </div>
+
+    <form name="dummy-form" action="/login" method="post">
+      {% csrf_token %}
+    </form>
 
     <script type="text/javascript" language="javascript" src="/js/bootstrap.min.js"></script>
     <script type="text/javascript">

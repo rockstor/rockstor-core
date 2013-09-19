@@ -79,6 +79,7 @@ var AppRouter = Backbone.Router.extend({
 
   loginPage: function() {
     RockStorSocket.removeAllListeners();
+    this.renderSidebar("setup", "user");
     $('#maincontent').empty();
     this.cleanup();
     this.currentLayout = new LoginView();

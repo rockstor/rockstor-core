@@ -728,13 +728,9 @@ hr.module-sep { margin: 0; border: 0; border-top: 1px solid #ddd;
 }
 
 #current-page {
-  border: 1px solid #ddd;
-  padding: 24px;
 }
 
 #current-page-inner {
-  height: 350px;
-  scroll: auto;
 }
 
 
@@ -1391,6 +1387,10 @@ input[type="radio"].selectedRoot {
 .nav > li > a.selected {
   background-color: rgb(33, 133, 197);
   color: #fff;
+}
+
+.nav > li > a {
+  padding-left: 4px;
 }
 
 #content {
