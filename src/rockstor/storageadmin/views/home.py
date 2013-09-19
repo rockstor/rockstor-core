@@ -34,6 +34,9 @@ from django.contrib import messages
 from django.conf import settings
 from rest_framework.renderers import JSONRenderer
 
+import logging
+logger = logging.getLogger(__name__)
+
 def login_page(request):
     return render_to_response('login.html',
                               context_instance=RequestContext(request))
@@ -52,7 +55,6 @@ def login_submit(request):
 
 #@login_required(login_url='/login_page')
 def home(request):
-    template = get_template('index.html')
     current_appliance = None
     try:
         current_appliance = Appliance.objects.get(current_appliance=True)
@@ -68,9 +70,25 @@ def home(request):
         'setup_user': setup.setup_user,
         'page_size': settings.PAGINATION['page_size']
     }
-    return render_to_response('index.html',
-            context,
-            context_instance=RequestContext(request))
+    logger.debug(request.user.is_authenticated())
+    if request.user.is_authenticated():
+        logger.debug("User is authenticated - rendering index")
+        return render_to_response('index.html',
+                context,
+                context_instance=RequestContext(request))
+    else:
+        if setup.setup_user:
+            logger.debug("User is setup but not authenticated \
+                    - rendering login.html")
+            return render_to_response('login.html',
+                    context,
+                    context_instance=RequestContext(request))
+        else:
+            logger.debug("User is not setup - rendering index.html")
+            return render_to_response('setup.html',
+                    context,
+                    context_instance=RequestContext(request))
+
 
 def logout_user(request):
     logout(request)
