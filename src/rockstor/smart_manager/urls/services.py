@@ -18,7 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.conf.urls.defaults import patterns, url
 from smart_manager.views import (BaseServiceView, NISServiceView,
-                                 SambaServiceView, NFSServiceView)
+                                 SambaServiceView, NFSServiceView,
+                                 NTPServiceView)
 
 command_regex = ('config|start|stop|reload|restart')
 
@@ -34,4 +35,7 @@ urlpatterns = patterns('',
     url(r'^nfs$', NFSServiceView.as_view(), name='nfs-view'),
     url(r'^nfs/(?P<command>%s)$' % command_regex, NFSServiceView.as_view(),
         name='nfs-view'),
+    url(r'^ntpd$', NTPServiceView.as_view(), name='ntp-view'),
+    url(r'^ntpd/(?P<command>%s)$' % command_regex, NTPServiceView.as_view(),
+        name='ntp-view'),
 )
