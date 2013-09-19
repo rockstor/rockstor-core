@@ -35,3 +35,4 @@ from samba_service import SambaServiceView
 from nfs_service import NFSServiceView
 from replication import ReplicaView
 from replica_trail import ReplicaTrailView
+from ntp_service import NTPServiceView
