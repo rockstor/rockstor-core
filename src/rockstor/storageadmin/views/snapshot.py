@@ -24,7 +24,7 @@ from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (Snapshot, Share, Disk)
 from fs.btrfs import (add_snap, remove_snap, rollback_snap, share_id,
-                      update_quota)
+                      update_quota, share_usage)
 from storageadmin.serializers import SnapshotSerializer
 from storageadmin.util import handle_exception
 from generic_view import GenericView
@@ -67,7 +67,9 @@ class SnapshotView(GenericView):
                      snap_name)
             snap_id = share_id(share.pool.name, pool_device, snap_name)
             qgroup_id = ('0/%s' % snap_id)
-            s = Snapshot(share=share, name=snap_name, qgroup=qgroup_id)
+            snap_size = share_usage(share.pool.name, pool_device, qgroup_id)
+            s = Snapshot(share=share, name=snap_name, size=snap_size,
+                         qgroup=qgroup_id)
             s.save()
             return Response(SnapshotSerializer(s).data)
 
