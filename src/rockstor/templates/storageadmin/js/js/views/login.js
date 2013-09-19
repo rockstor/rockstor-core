@@ -37,7 +37,6 @@ LoginView = Backbone.View.extend({
   render: function() {
     var _this = this;
     if (RockStorGlobals.setup_user) {
-      $(this.el).append(this.login_template());
     } else {
       $(this.el).append(this.user_create_template());
       this.validator = this.$("#user-create-form").validate({

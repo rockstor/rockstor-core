@@ -36,6 +36,7 @@ SetupView = RockstoreLayoutView.extend({
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.setup_setup;
     this.pages = [null, SetupDisksView, SetupNetworkView];
+    this.sidebars = [null, "disks", "network"];
     this.current_page = 1;
     this.current_view = null;
     this.appliances = new ApplianceCollection();
@@ -54,8 +55,10 @@ SetupView = RockstoreLayoutView.extend({
     opts = {
       appliances: this.appliances
     };
+    this.renderSidebar("setup", this.sidebars[this.current_page]);
     this.current_view = new this.pages[this.current_page](opts);
     this.$('#current-page-inner').html(this.current_view.render().el);
+
   },
 
   nextPage: function() {
@@ -108,7 +111,9 @@ SetupView = RockstoreLayoutView.extend({
         {
           success: function(model, response, options) {
             setup_done = true;
-            app_router.navigate('home', {trigger: true});
+            //app_router.navigate('home', {trigger: true});
+
+            window.location.replace("/")
           },
           error: function(model, xhr, options) {
             var msg = xhr.responseText;
@@ -132,7 +137,12 @@ SetupView = RockstoreLayoutView.extend({
       new_step_str = new_step + '';
       new_sel_str = '#setup-titles li[data-step="' + new_step_str + '"]';
       this.$(new_sel_str).addClass('current-step');
-  }
+  },
+
+  renderSidebar: function(name, selected) {
+    var sidenavTemplate = window.JST["common_sidenav_" + name];
+    $("#sidebar-inner").html(sidenavTemplate({selected: selected}));
+  },
 
 
 });
