@@ -32,5 +32,11 @@ class Disk(models.Model):
     and such that may not be part of any pool but need to be in the model"""
     parted = models.BooleanField()
 
+    def pool_name(self, *args, **kwargs):
+        try:
+            return self.pool.name
+        except:
+            return None
+
     class Meta:
         app_label = 'storageadmin'
