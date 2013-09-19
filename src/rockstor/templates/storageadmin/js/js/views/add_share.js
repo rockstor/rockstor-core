@@ -99,9 +99,10 @@ AddShareView = Backbone.View.extend({
               enableButton(button);
               app_router.navigate('shares', {trigger: true}) 
             },
-            error: function(request, status, error) {
+            error: function(xhr, status, error) {
               enableButton(button);
-              showError(request.responseText);	
+              var msg = parseXhrError(xhr)
+              _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
             },
           });
          }

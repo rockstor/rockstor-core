@@ -661,7 +661,7 @@ path {
 }
 
 /* Error labels for forms */
-label.error { color: #b94a48; }
+label.error { font-size: 12px; color: #b94a48; }
 
 /* Error content */
 #errorContent { padding: 20px; }
