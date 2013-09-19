@@ -36,6 +36,7 @@ SMB_CONFIG = '/etc/samba/smb.conf'
 SERVICE = '/sbin/service'
 HOSTID = '/usr/bin/hostid'
 IFCONFIG = '/sbin/ifconfig'
+NTPDATE = '/usr/sbin/ntpdate'
 
 
 import logging
@@ -264,3 +265,5 @@ def set_nameservers(servers):
         for s in servers:
             rfo.write('nameserver %s\n' % s)
 
+def set_ntpserver(server):
+    return run_command([NTPDATE, server])

@@ -23,6 +23,7 @@ from sftp_console import SFTPConsole
 from rest_util import api_call
 from iscsi_console import IscsiConsole
 from nis_console import NISConsole
+from ntp_console import NTPConsole
 
 
 class ServicesConsole(BaseConsole):
@@ -56,6 +57,9 @@ class ServicesConsole(BaseConsole):
     def do_iscsi(self, args):
         return self.sub_service(args, 'iscsi')
 
+    def do_ntp(self, args):
+        return self.sub_service(args, 'ntp')
+
     def sub_service(self, args, name):
         greeting = self.pprompt + ' ' + self.greeting
         sub_console = None
@@ -69,6 +73,8 @@ class ServicesConsole(BaseConsole):
             sub_console = IscsiConsole(greeting)
         elif (name == 'nis'):
             sub_console = NISConsole(greeting)
+        elif (name == 'ntp'):
+            sub_console = NTPConsole(greeting)
         else:
             return self.do_help(args)
         if (len(args) == 0):
