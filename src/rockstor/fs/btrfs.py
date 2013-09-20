@@ -160,16 +160,17 @@ def add_snap(pool_name, pool_device, share_name, snap_name):
     pool_device = '/dev/' + pool_device
     root_pool_mnt = mount_root(pool_name, pool_device)
     share_full_path = root_pool_mnt + '/' + share_name
-    snap_full_path = root_pool_mnt + '/' + snap_name
+    snap_full_path = share_full_path + '/' + snap_name
     snap_cmd = [BTRFS, 'subvolume', 'snapshot', '-r', share_full_path,
                 snap_full_path]
     run_command(snap_cmd)
 
-def remove_snap(pool_name, pool_device, snap_name):
+def remove_snap(pool_name, pool_device, share_name, snap_name):
     """
     remove a snapshot. same as removing a share
     """
-    return remove_share(pool_name, pool_device, snap_name)
+    name = ('%s/%s' % (share_name, snap_name))
+    return remove_share(pool_name, pool_device, name)
 
 def rollback_snap(snap_name, sname, subvol_name, pool_name, pool_device):
     """
