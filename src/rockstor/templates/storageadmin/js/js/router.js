@@ -247,6 +247,7 @@ var AppRouter = Backbone.Router.extend({
   },
 
   addUser: function() {
+    this.renderSidebar("system", "users");
     this.cleanup();
     this.currentLayout = new AddUserView();
     $('#maincontent').empty();
