@@ -19,12 +19,29 @@
  */
 </script>
 
-<h3>Snapshots</h3>
+<h4>Create Snapshot</h4>
 
-<div class="messages"></div>
-<h4>Create a snapshot</h4>
-<label>Snapshot Name</label>
-<input type="text" name="snapshot-name" id="snapshot-name">
-<div class="clear"></div>
-<a class="btn btn-primary" href="#" id="js-snapshot-save"> Save</a>
-<a class="btn" href="#" id="js-snapshot-cancel"> Cancel</a>
+<div class="row-fluid">
+  <div class="span8">
+    <label class="control-label"><span class="required">*</span> indicates required fields</label>
+    <div class="form-box"> 
+      <form name="add-snapshot-form" id="add-snapshot-form">
+        <div class="messages"></div>
+        <div class="control-group">
+          <label class="control-label" for="snapshot-name">Name<span class="required"> *</span></label>
+          <div class="controls">
+            <input type="text" name="snapshot-name" id="snapshot-name">
+          </div>
+        </div>
+        <div class="control-group">
+          <div class="controls">
+            <input type="Submit" class="btn btn-primary" value="Submit" id="js-snapshot-save"></input>
+            <a class="btn" href="#" id="js-snapshot-cancel"> Cancel</a>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+

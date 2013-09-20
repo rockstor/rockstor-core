@@ -27,7 +27,6 @@
 SnapshotsTableModule  = RockstoreModuleView.extend({
   events: {
     "click #js-snapshot-add": "add",
-    "click #js-snapshot-save": "save",
     "click #js-snapshot-cancel": "cancel",
     "click .js-snapshot-delete": "deleteSnapshot"
   },
@@ -62,33 +61,39 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
   },
 
   add: function(event) {
+    var _this = this;
     event.preventDefault();
     $(this.el).html(this.addTemplate({
       snapshots: this.collection,
       share: this.share
     }));
-  },
-
-  save: function(event) {
-    event.preventDefault();
-    var _this = this;
-    var button = this.$('#js-snapshot-save');
-    if (buttonDisabled(button)) return false;
-    disableButton(button);
-    $.ajax({
-      url: "/api/shares/" + this.share.get('name') + "/snapshots/" + this.$('#snapshot-name').val(),
-      type: "POST",
-      dataType: "json",
-      success: function() {
-        enableButton(button);
-        _this.collection.fetch({
-          success: function() { _this.render(); }
-        });
+    this.$('#add-snapshot-form').validate({
+      onfocusout: false,
+      onkeyup: false,
+      rules: {
+        'snapshot-name': 'required',
       },
-      error: function(request, status, error) {
-        enableButton(button);
-        var msg = parseXhrError(error)
-        _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
+      submitHandler: function() {
+        var button = _this.$('#js-snapshot-save');
+        if (buttonDisabled(button)) return false;
+        disableButton(button);
+        $.ajax({
+          url: "/api/shares/" + _this.share.get('name') + "/snapshots/" + _this.$('#snapshot-name').val(),
+          type: "POST",
+          dataType: "json",
+          success: function() {
+            enableButton(button);
+            _this.collection.fetch({
+              success: function() { _this.render(); }
+            });
+          },
+          error: function(xhr, status, error) {
+            enableButton(button);
+            var msg = parseXhrError(xhr)
+            _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
+          }
+        });
+        return false;
       }
     });
   },
