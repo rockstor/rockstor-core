@@ -48,7 +48,6 @@ NFSExportsTableRow  = RockstoreModuleView.extend({
   },
 
   render: function() {
-    logger.debug('in nfs_exports_table_row render');
     $(this.el).empty();
     $(this.el).append(this.show_template({
       nfs_export: this.nfs_export,
@@ -74,10 +73,8 @@ NFSExportsTableRow  = RockstoreModuleView.extend({
     event.preventDefault();
     var button = this.$('.delete-row');
     if (buttonDisabled(button)) return false;
-    console.log('deleting')
     var _this = this;
     data = {id: this.nfs_export.id};
-    console.log(data);
     if(confirm("Delete nfs : "+ this.nfs_export.id +"...Are you sure?")){
     disableButton(button);
     $.ajax({
@@ -98,11 +95,9 @@ NFSExportsTableRow  = RockstoreModuleView.extend({
   },
 
   saveRow: function(event) {
-    console.log('saving')
     event.preventDefault();
     var _this = this;
     data = $(this.el).getJSON();
-    console.log(data);
     $.ajax({
       url: "/api/shares/"+_this.share.get('name')+'/nfs-update/',
       type: "PUT",

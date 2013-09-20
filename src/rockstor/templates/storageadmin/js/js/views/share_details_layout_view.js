@@ -190,7 +190,6 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
     //});
 
     this.$('#js-delete').click(function() {
-      logger.info('deleting share ' + _this.share.get('name'));
       var button = _this.$('#js-delete');
       var name = _this.share.get('name');
       if (buttonDisabled(button)) return false;

@@ -47,7 +47,6 @@ SMBShares  = RockstoreModuleView.extend({
   },
 
   render: function() {
-    console.log('smb_shares render called');
     var _this = this;
     $(this.el).empty();
     this.smbShare.fetch({
@@ -59,14 +58,8 @@ SMBShares  = RockstoreModuleView.extend({
           guest_ok_choices: _this.guest_ok_choices,
           read_only_choices: _this.read_only_choices,
         }));
-        _this.$("#smb-export-form").overlay({
-          load: false, 
-          top: 80, 
-          fixed: false 
-        });
       },
       error: function(model, response, options) {
-        console.log("Error while fetching smb share");
         console.log(response);
       }
     });
@@ -76,7 +69,7 @@ SMBShares  = RockstoreModuleView.extend({
   addSmbShare: function(event) {
     var _this = this;
     event.preventDefault();
-    this.$("#smb-export-ph").html(this.smbAddTemplate({
+    $(this.el).html(this.smbAddTemplate({
       smbShare: this.smbShare,
       browsable_choices: this.browsable_choices,
       guest_ok_choices: this.guest_ok_choices,
@@ -89,7 +82,6 @@ SMBShares  = RockstoreModuleView.extend({
         host_str: "required"
       },
       submitHandler: function() {
-        console.log("In add smb form submitHandler");
         var button = _this.$('#save-smb');
         if (buttonDisabled(button)) return false;
         disableButton(button);
@@ -104,7 +96,6 @@ SMBShares  = RockstoreModuleView.extend({
           {
             success: function() {
               enableButton(button);
-              _this.$("#smb-export-form").overlay().close();
               _this.render();
             },
             error: function(model, xhr, options) {
@@ -118,12 +109,11 @@ SMBShares  = RockstoreModuleView.extend({
       }
 
     });
-    this.$("#smb-export-form").overlay().load();
   },
 
   cancelSmb: function(event) {
     event.preventDefault();
-    this.$("#smb-export-form").overlay().close();
+    this.render();
   },
 
   deleteSmbShare: function(event) {
@@ -133,10 +123,8 @@ SMBShares  = RockstoreModuleView.extend({
     event.preventDefault();
     var _this = this;
     if (!_.isNull(this.smbShare)) {
-      console.log('calling smb_share destroy');
       this.smbShare.destroy({
         success: function() {
-          console.log('destroyed smb_share successfully')
           _this.smbShare = new SMBShare({shareName: _this.share.get("name")});
           enableButton(button);
           _this.render();
