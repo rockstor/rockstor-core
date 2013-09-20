@@ -126,19 +126,21 @@ var AppRouter = Backbone.Router.extend({
     RockStorSocket.removeAllListeners();
     this.renderSidebar("storage", "pools");
     $('#maincontent').empty();
-    $('#maincontent').append(addPoolView.render().el);
+    this.cleanup();
+    this.currentLayout = new AddPoolView();
+    $('#maincontent').append(this.currentLayout.render().el);
   },
 
   showPool: function(poolName) {
     RockStorSocket.removeAllListeners();
     this.renderSidebar("storage", "pools");
-    var poolDetailsLayoutView = new PoolDetailsLayoutView({
+    $('#maincontent').empty();
+    this.cleanup();
+    this.currentLayout = new PoolDetailsLayoutView({
       poolName: poolName
     });
-    $('#maincontent').empty();
-    $('#maincontent').append(poolDetailsLayoutView.render().el);
+    $('#maincontent').append(this.currentLayout.render().el);
   },
-  
   
   //Support
   
@@ -196,19 +198,17 @@ var AppRouter = Backbone.Router.extend({
   addShare: function(poolName) {
     RockStorSocket.removeAllListeners();
     this.renderSidebar("storage", "shares");
-    var addShareView;
-    if (_.isUndefined(poolName)){ 
-    	   	addShareView = new AddShareView();
-		} else {
-			addShareView = new AddShareView({
-			 poolName: poolName
-	       });
-		}
 		$('#maincontent').empty();
-	    
-		$('#maincontent').append(addShareView.render().el);
+    this.cleanup();
+    if (_.isUndefined(poolName)){ 
+    	   	this.currentLayout = new AddShareView();
+		} else {
+			this.currentLayout = new AddShareView({ poolName: poolName });
+		}
+		$('#maincontent').append(this.currentLayout.render().el);
     
   },
+
   showShare: function(shareName) {
     RockStorSocket.removeAllListeners();
     //var shareDetailView = new ShareDetailView({
