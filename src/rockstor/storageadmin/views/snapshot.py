@@ -121,7 +121,7 @@ class SnapshotView(GenericView):
         if (Snapshot.objects.filter(share=share, name=snap_name).exists()):
             snapshot = Snapshot.objects.get(share=share, name=snap_name)
             pool_device = Disk.objects.filter(pool=share.pool)[0].name
-            remove_snap(share.pool.name, pool_device, snap_name)
+            remove_snap(share.pool.name, pool_device, sname, snap_name)
             snapshot.delete()
         return Response()
 
