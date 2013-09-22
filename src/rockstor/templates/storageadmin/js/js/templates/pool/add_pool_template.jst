@@ -19,70 +19,69 @@
  */
 </script>
 
-<div class="messages"></div>
-<div class="row-fluid">
-  <div class="span12">
-    <div class="pageheading">
-      <div id="title" class="title"><h3>Create Pool</h3></div>
-    </div>
-  </div> <!-- span12 -->
-</div> <!-- row-fluid -->
+<h3>Create Pool</h3>
 
 <div class="row-fluid">
-  <div class="span12">
-    <div class="module">
-      <div class="row-fluid">
-        <div class="span12">
-          <!-- Content -->
-          <div class="module-content">
-            <form name="add-pool-form" id="add-pool-form">
-              Pool Name: 
-              <br/>
-              <input type="text" name="pool_name" id="pool_name">
-              <br/>
-              Raid Configuration<br/>
-              <select id="raid_level" name="raid_level">
-                <option value="raid0">Raid0</option>
-                <option value="raid1">Raid1</option>
-                <option value="raid10">Raid10</option>
-              </select>
-              <br/>
-              Select disks<br>
-              <table id="disks-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of disks">
-                <thead>
-                  <tr>
-                    <th>No.</th>
-                    <th>Name</th>
-                    <th>Size</th>
-                    <th>In use</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% disks.each(function(disk, index) { %>
-                    <% if (_.isNull(disk.get('pool'))) { %>
-                      <tr>
-                        <td><%= index+1 %></td>
-                        <td><%= disk.get('name') %></td>
-                        <td><%= humanize.filesize(disk.get('size')*1024) %></td>
-                        <td><%= disk.get('parted') %></td>
-                        <td>
-                          <input type="checkbox" class="disk" name="<%= disk.get('name') %>" id="<%= disk.get('name') %>" value="<%= disk.get('name') %>">
-                        </td>
-                      </tr>
-                    <% } %>
-                  <% }); %>
-                </tbody>
-              </table>
-              <br/>
-              <input type="Submit" id="create_pool" class="btn btn-primary" value="Submit"></input>
-              <a id="js-cancel" class="btn" href="#">Cancel</a>
-            </form>
-          </div> <!-- module-content -->
-        </div> <!-- span12 -->
-      </div> <!-- row-fluid -->
-
-    </div> <!-- module -->
-  </div> <!-- span12 -->
+  <div class="span8">
+    <label class="control-label"><span class="required">*</span> indicates required fields</label>
+    <div class="form-box">
+      <form name="add-pool-form" id="add-pool-form">
+        <div class="messages"></div>
+        <div class="control-group">
+          <label class="control-label" for="pool_name">Name<span class="required"> *</span></label>
+          <div class="controls">
+            <input type="text" name="pool_name" id="pool_name">
+          </div>
+        </div>
+        <div class="control-group">
+          <label class="control-label" for="raid_level">Raid configuration<span class="required"> *</span></label>
+          <div class="controls">
+            <select id="raid_level" name="raid_level">
+              <option value="raid0">Raid0</option>
+              <option value="raid1">Raid1</option>
+              <option value="raid10">Raid10</option>
+            </select>
+          </div>
+        </div>
+        <div class="control-group">
+          <label class="control-label" for="disks">Select disks<span class="required"> *</span></label>
+          <div class="controls">
+            <table id="disks-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of disks">
+              <thead>
+                <tr>
+                  <th>No.</th>
+                  <th>Name</th>
+                  <th>Size</th>
+                  <th>In use</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <% disks.each(function(disk, index) { %>
+                  <% if (_.isNull(disk.get('pool'))) { %>
+                    <tr>
+                      <td><%= index+1 %></td>
+                      <td><%= disk.get('name') %></td>
+                      <td><%= humanize.filesize(disk.get('size')*1024) %></td>
+                      <td><%= disk.get('parted') %></td>
+                      <td>
+                        <input type="checkbox" class="disk" name="<%= disk.get('name') %>" id="<%= disk.get('name') %>" value="<%= disk.get('name') %>">
+                      </td>
+                    </tr>
+                  <% } %>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="control-group">
+          <div class="controls">
+            <a id="js-cancel" class="btn" href="#">Cancel</a>
+            <input type="Submit" id="create_pool" class="btn btn-primary" value="Submit"></input>
+          </div>
+        </div>
+      </form>
+    </div> <!-- form-box -->
+  </div> <!-- span8 -->
 </div> <!-- row-fluid -->
 

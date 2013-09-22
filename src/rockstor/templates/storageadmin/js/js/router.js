@@ -52,13 +52,13 @@ var AppRouter = Backbone.Router.extend({
     "users/:username/edit": "editUser",
     "add-user": "addUser",
     "analytics": "showProbeRunList",
+    "run_probe": "runProbe",
     "probeDetail/:probeName/:probeId": "showProbeDetail",
     "*path": "showHome"
   },
 
   before: function (route, param) {
     if (!logged_in) {
-      console.log("user *is not* logged in!");
       if (route != "login") {
         app_router.navigate('login', {trigger: true});
         return false;
@@ -126,19 +126,21 @@ var AppRouter = Backbone.Router.extend({
     RockStorSocket.removeAllListeners();
     this.renderSidebar("storage", "pools");
     $('#maincontent').empty();
-    $('#maincontent').append(addPoolView.render().el);
+    this.cleanup();
+    this.currentLayout = new AddPoolView();
+    $('#maincontent').append(this.currentLayout.render().el);
   },
 
   showPool: function(poolName) {
     RockStorSocket.removeAllListeners();
     this.renderSidebar("storage", "pools");
-    var poolDetailsLayoutView = new PoolDetailsLayoutView({
+    $('#maincontent').empty();
+    this.cleanup();
+    this.currentLayout = new PoolDetailsLayoutView({
       poolName: poolName
     });
-    $('#maincontent').empty();
-    $('#maincontent').append(poolDetailsLayoutView.render().el);
+    $('#maincontent').append(this.currentLayout.render().el);
   },
-  
   
   //Support
   
@@ -196,19 +198,17 @@ var AppRouter = Backbone.Router.extend({
   addShare: function(poolName) {
     RockStorSocket.removeAllListeners();
     this.renderSidebar("storage", "shares");
-    var addShareView;
-    if (_.isUndefined(poolName)){ 
-    	   	addShareView = new AddShareView();
-		} else {
-			addShareView = new AddShareView({
-			 poolName: poolName
-	       });
-		}
 		$('#maincontent').empty();
-	    
-		$('#maincontent').append(addShareView.render().el);
+    this.cleanup();
+    if (_.isUndefined(poolName)){ 
+    	   	this.currentLayout = new AddShareView();
+		} else {
+			this.currentLayout = new AddShareView({ poolName: poolName });
+		}
+		$('#maincontent').append(this.currentLayout.render().el);
     
   },
+
   showShare: function(shareName) {
     RockStorSocket.removeAllListeners();
     //var shareDetailView = new ShareDetailView({
@@ -247,6 +247,7 @@ var AppRouter = Backbone.Router.extend({
   },
 
   addUser: function() {
+    this.renderSidebar("system", "users");
     this.cleanup();
     this.currentLayout = new AddUserView();
     $('#maincontent').empty();
@@ -265,6 +266,14 @@ var AppRouter = Backbone.Router.extend({
     this.renderSidebar("analytics", "probe_runs");
     this.cleanup();
     this.currentLayout = new ProbeRunListView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+  
+  runProbe: function() {
+    this.renderSidebar("analytics", "run_probe");
+    this.cleanup();
+    this.currentLayout = new RunProbeView();
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },
@@ -289,7 +298,6 @@ var AppRouter = Backbone.Router.extend({
     RockStorSocket.removeAllListeners();
     if (!_.isNull(this.currentLayout)) {
       if (_.isFunction(this.currentLayout.cleanup)) {
-        console.log("In router - calling currentLayout cleanup");
         this.currentLayout.cleanup();
       }
     }
@@ -309,7 +317,6 @@ $(document).ready(function() {
   Backbone.history.start();
   $('#appliance-name').click(function(event) {
     event.preventDefault();
-    console.log('appliance-name clicked');
     showApplianceList();
   });
 
