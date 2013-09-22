@@ -52,13 +52,13 @@ var AppRouter = Backbone.Router.extend({
     "users/:username/edit": "editUser",
     "add-user": "addUser",
     "analytics": "showProbeRunList",
+    "run_probe": "runProbe",
     "probeDetail/:probeName/:probeId": "showProbeDetail",
     "*path": "showHome"
   },
 
   before: function (route, param) {
     if (!logged_in) {
-      console.log("user *is not* logged in!");
       if (route != "login") {
         app_router.navigate('login', {trigger: true});
         return false;
@@ -269,6 +269,14 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },
+  
+  runProbe: function() {
+    this.renderSidebar("analytics", "run_probe");
+    this.cleanup();
+    this.currentLayout = new RunProbeView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
 
   showProbeDetail: function(probeName, probeId) {
     this.cleanup();
@@ -290,7 +298,6 @@ var AppRouter = Backbone.Router.extend({
     RockStorSocket.removeAllListeners();
     if (!_.isNull(this.currentLayout)) {
       if (_.isFunction(this.currentLayout.cleanup)) {
-        console.log("In router - calling currentLayout cleanup");
         this.currentLayout.cleanup();
       }
     }
@@ -310,7 +317,6 @@ $(document).ready(function() {
   Backbone.history.start();
   $('#appliance-name').click(function(event) {
     event.preventDefault();
-    console.log('appliance-name clicked');
     showApplianceList();
   });
 

@@ -66,47 +66,7 @@ ProbeRunListView = RockstoreLayoutView.extend({
 
     }));
     this.renderTable();
-    this.$("#new-probe-form").overlay({
-      left: "center",
-      load: false
-    });
-    this.$("#new-probe-button").click(function() {
-      _this.$("#new-probe-form").overlay().load();
-      
-    });
     this.$("[rel=tooltip]").tooltip({ placement: "bottom"});
-    this.$("#probe-create-form").validate({
-      onfocusout: false,
-      onkeyup: false,
-      rules: {
-        probe_name: "required"
-      },
-      submitHandler: function() {
-        var probeName = _this.$("#probe-type").val();
-        var displayName = _this.$("#probe-name").val();
-        $.ajax({
-          url: "/api/sm/sprobes/" + probeName + "?format=json",
-          type: 'POST',
-          data: { display_name: displayName },
-          dataType: "json",
-          global: false, // dont show global loading indicator
-          success: function(data, textStatus, jqXHR) {
-            _this.probeRuns.fetch({
-              success: function(collection, response, options) {
-                _this.$("#new-probe-form").overlay().close();
-                _this.renderTable();
-              }
-            });
-          },
-          error: function(jqXHR, textStatus, error) {
-            var msg = parseXhrError(jqXHR)
-            console.log(msg);
-          }
-        });
-        return false;
-      }
-
-    });
   },
   
   renderTable: function() {

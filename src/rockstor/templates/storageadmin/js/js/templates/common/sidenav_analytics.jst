@@ -5,5 +5,10 @@
   <% } else { %>
   <li><a href="#analytics"> Probe runs</span></a></li>
   <% } %>
+  <% if (selected == "run_probe") { %>
+  <li><a href="#run_probe" class="selected"> Run New Probe</span></a></li>
+  <% } else { %>
+  <li><a href="#run_probe"> Run New Probe</span></a></li>
+  <% } %>
 </ul>
 
