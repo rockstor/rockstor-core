@@ -37,6 +37,7 @@ AddShareView = Backbone.View.extend({
     this.pools = new PoolCollection();
     this.poolName = this.options.poolName;
   },
+
   render: function() {
     $(this.el).empty();
     this.template = window.JST.share_add_share_template;
@@ -44,73 +45,67 @@ AddShareView = Backbone.View.extend({
     this.pools.fetch({
       success: function(collection, response) {
         $(_this.el).append(_this.template({pools: _this.pools, poolName: _this.poolName}));
-        var size_err_msg = function() {
-            return err_msg;
-          }
-        $.validator.addMethod('validateSize', function(value) {
-            var share_size = $('#share_size').val();
-            
-            if(/^[0-9]*$/.test(share_size) == false){
-            	err_msg = 'Please enter valid number';
-            	return false;
-            }
-    
-            return true;
-         }, size_err_msg);
-          
-        
         
         $('#add-share-form').validate({
             onfocusout: false,
             onkeyup: false,
             rules: {
-             share_size: "validateSize",
-          	},
-        
-        //this.$('#create_share').click(function() {
-        submitHandler: function() {
-          var button = _this.$('#create_share');
-          if (buttonDisabled(button)) return false;
-          disableButton(button);
-          _this.$('#create_share').data("executing", true);
-          _this.$('#create_share').attr("disabled", true);
-          var share_name = $('#share_name').val();
-          var pool_name = $('#pool_name').val();
-          console.log('pool_name is ' + pool_name);
-          var size = $('#share_size').val();
-          
-          var sizeFormat = $('#size_format').val();
-            if(sizeFormat == 'KB'){
-        	  size = size;
-        	}else if(sizeFormat == 'MB'){
-        	  size = size*1024;	
-        	}else if(sizeFormat == 'GB'){
-        	  size = size*1024*1024;
-        	}else if(sizeFormat == 'TB'){
-        	  size = size*1024*1024*1024;
-        	}
+              share_name: 'required',
+              share_size: {
+                required: true,
+                number: true
+              },
+            },
+            errorPlacement: function(error, element) {
+              if (element.attr("name") == "share_size") {
+                // insert error for share size after the size format field.
+                error.insertAfter("#size_format");
+              } else {
+                error.insertAfter(element);
+              }
+            },
             
-          $.ajax({
-            url: "/api/shares/",
-            type: "POST",
-            dataType: "json",
-            data: {sname: share_name, "pool": pool_name, "size": size},
-            success: function() {
-              enableButton(button);
-              app_router.navigate('shares', {trigger: true}) 
-            },
-            error: function(xhr, status, error) {
-              enableButton(button);
-              var msg = parseXhrError(xhr)
-              _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
-            },
-          });
-         }
-       });
+            submitHandler: function() {
+              var button = _this.$('#create_share');
+              if (buttonDisabled(button)) return false;
+              disableButton(button);
+              var share_name = $('#share_name').val();
+              var pool_name = $('#pool_name').val();
+              var size = $('#share_size').val();
+
+              var sizeFormat = $('#size_format').val();
+              if(sizeFormat == 'KB'){
+                size = size;
+              }else if(sizeFormat == 'MB'){
+                size = size*1024;	
+              }else if(sizeFormat == 'GB'){
+                size = size*1024*1024;
+              }else if(sizeFormat == 'TB'){
+                size = size*1024*1024*1024;
+              }
+
+              $.ajax({
+                url: "/api/shares/",
+                type: "POST",
+                dataType: "json",
+                data: {sname: share_name, "pool": pool_name, "size": size},
+                success: function() {
+                  enableButton(button);
+                  app_router.navigate('shares', {trigger: true}) 
+                },
+                error: function(xhr, status, error) {
+                  enableButton(button);
+                  var msg = parseXhrError(xhr)
+                  _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
+                },
+              });
+            }
+        });
       }
     });
     return this;
   },
+
   cancel: function(event) {
     event.preventDefault();
     app_router.navigate('shares', {trigger: true}) 
@@ -118,4 +113,3 @@ AddShareView = Backbone.View.extend({
 
 });
 
-var addShareView = new AddShareView();

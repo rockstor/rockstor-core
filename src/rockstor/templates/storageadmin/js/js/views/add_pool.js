@@ -55,7 +55,6 @@ AddPoolView = Backbone.View.extend({
         $.validator.addMethod('validatePoolName', function(value) {
           var pool_name = $('#pool_name').val();
 
-
           if (pool_name == "") {
             err_msg = 'Please enter pool name';
             return false;
@@ -99,18 +98,13 @@ AddPoolView = Backbone.View.extend({
           return true;
         }, raid_err_msg);
 
-
-
-
         $('#add-pool-form').validate({
           onfocusout: false,
           onkeyup: false,
           rules: {
-
             pool_name: "validatePoolName",  
             raid_level: "validateRaid"
           },
-
 
           submitHandler: function() {
             var button = $('#create_pool');
@@ -154,9 +148,9 @@ AddPoolView = Backbone.View.extend({
   },
 
   cancel: function(event) {
+    console.log("add pool cancel clicked");
     event.preventDefault();
     app_router.navigate('pools', {trigger: true});
   }
 });
 
-var addPoolView = new AddPoolView();

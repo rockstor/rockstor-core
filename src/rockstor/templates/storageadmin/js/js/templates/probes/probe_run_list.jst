@@ -24,45 +24,8 @@
     <div class="messages"></div>
     <div id="probe-run-list">
     </div>
-    <button id="new-probe-button" class="btn btn-primary" rel="#new-probe-form" type="button">Run New Probe</button>
+    <a id="new-probe-button" class="btn btn-primary" href="#run_probe" type="button">Run New Probe</a>
   </div>
 </div>
 
-<div class="simple-overlay" id="new-probe-form">
-  <div class="overlay-content">
-    <div class="row-fluid">
-      <div class="span12">
-        <h3>Start a new probe</h3>
-        <label class="control-label"><span class="required">*</span> indicates required fields</label>
-        <div class="form-box">
-          <form id="probe-create-form" name="aform">
-            <div class="control-group">
-              <label class="control-label" for="probe-name">Probe Name<span class="required"> *</span></label>
-              <div class="controls">
-                <input type="text" name="probe_name" id="probe-name" name="probeName" placeholder="Probe Name" >
-
-              </div>
-            </div>
-            <div class="control-group">
-              <label class="control-label" for="probe-type">Probe Type<span class="required"> *</span></label>
-              <div class="controls">
-                <select id="probe-type" name="probeType">
-                  <% probeTemplates.each(function(p) { %>
-                    <option value="<%= p.get('uuid') %>"><%= p.get("uuid") %> (<%= p.get("sdetail") %>)</option>
-                  <% }); %>
-                </select>
-              </div>
-            </div>
-            <div class="control-group">
-              <div class="controls">
-                <button type="Submit" id="create-probe" class="btn btn-primary">Run Probe</button>
-                <button id="cancel-new-probe" class="btn">Cancel</button>
-              </div>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div> <!-- overlay-content -->
-</div>
 
