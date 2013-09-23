@@ -32,21 +32,51 @@ PoolDetailsLayoutView = RockstoreLayoutView.extend({
     this.poolName = this.options.poolName;
     this.template = window.JST.pool_pool_details_layout;
     this.select_disks_template = window.JST.disk_select_disks_template;
-
+    this.scrubTemplate = window.JST.pool_pool_scrub;
     this.pool = new Pool({poolName: this.poolName});
     this.dependencies.push(this.pool);
-
     this.disks = new DiskCollection();
+    this.statusPollInterval = 1000;
   },
 
   events: {
-    'click #delete-pool': 'deletePool'
+    'click #delete-pool': 'deletePool',
+    'click #scrub-pool-start': 'scrubPoolStart',
+    'click #scrub-pool-stop': 'scrubPoolStop',
   },
 
   render: function() {
     this.fetch(this.renderSubViews, this);
+    this.pollScrubStatus();
     return this;
+  },
 
+  pollScrubStatus: function() {
+    var _this = this;
+    _this.statusIntervalId = window.setInterval(function() {
+      return function() {
+        $.ajax({
+	  url: '/api/pools/' + _this.pool.get('name') + '/scrub/status',
+          type: 'POST',
+          success: function(data, textStatus, jqXHR) {
+            var scrubStatus = 'finished';
+            var scrubPercent = 100
+            if (data != null) {
+              scrubStatus = data.status;
+              scrubPercent = data.kb_scrubbed;
+	    }
+            _this.$('#ph-scrub-button').html(_this.scrubTemplate({status: scrubStatus,
+								  percent: scrubPercent}));
+          },
+          error: function(xhr, status, error) {
+	    var msg = parseXhrError(xhr);
+	    console.log(msg);
+            var buttons = _this.$('.scrub_button');
+            disableButton(buttons);
+	  }	   
+	});
+      };						   
+    }(), this.statusPollInterval);    
   },
 
   renderSubViews: function() {
@@ -56,21 +86,15 @@ PoolDetailsLayoutView = RockstoreLayoutView.extend({
     this.pool.on('change', this.subviews['pool-info'].render, this.subviews['pool-info']);
     this.pool.on('change', this.subviews['pool-usage'].render, this.subviews['pool-usage']);
     this.$('#ph-pool-info').append(this.subviews['pool-info'].render().el);
-    console.log('rendered pool info module');
     this.$('#ph-pool-usage').append(this.subviews['pool-usage'].render().el);
-    console.log('rendered pool usage module');
     this.attachActions();
   },
-
-  
-  
   
   attachActions: function() {
     var _this = this;
     this.$('#resize-pool-popup').click(function() {
       _this.disks.fetch({
         success: function(collection, response) {
-          console.log('got disks');
           _this.$('#disks-to-add').html(_this.select_disks_template({disks: _this.disks}));
           _this.$('#alert-msg').empty();
           _this.$('#resize-pool').click(function() {
@@ -85,7 +109,6 @@ PoolDetailsLayoutView = RockstoreLayoutView.extend({
                 disk_names += $(this).val();	  
               }
             });
-            console.log(disk_names);
             $.ajax({
               url: "/api/pools/"+_this.pool.get('name')+'/add',
               type: "PUT",
@@ -133,8 +156,25 @@ PoolDetailsLayoutView = RockstoreLayoutView.extend({
         }
       });
     }
-  }
+  },
 
+  scrubPoolStart: function() {
+    var _this = this;
+    var button = this.$('#scrub-pool-start');
+    if (buttonDisabled(button)) return false;
+    disableButton(button);
+    $.ajax({
+      url: '/api/pools/'+_this.pool.get('name')+'/scrub',
+      type: 'POST',
+      error: function(jqXHR) {
+        var msg = parseXhrError(jqXHR)
+	_this.$('.messages').html("<label class=\"error\">" + msg + "</label>");
+      }
+    });
+  },
+
+  scrubPoolStop: function() {      
+  },
 
 });
 

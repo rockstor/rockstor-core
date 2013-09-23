@@ -121,7 +121,7 @@ class PoolsConsole(BaseConsole):
         scrub pool0
         """
         try:
-            url = ('%s%s/scrub/' % (self.url, args))
+            url = ('%s%s/scrub' % (self.url, args))
             scrub_info = api_call(url, calltype='post')
             print scrub_info
         except:
@@ -134,7 +134,7 @@ class PoolsConsole(BaseConsole):
         scrub_status pool0
         """
         try:
-            url = ('%s%s/scrub/status/' % (self.url, args))
+            url = ('%s%s/scrub/status' % (self.url, args))
             scrub_info = api_call(url, calltype='post')
             print scrub_info
         except:
