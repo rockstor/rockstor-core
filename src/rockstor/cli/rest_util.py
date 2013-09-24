@@ -22,7 +22,7 @@ import time
 
 auth_params = {'apikey': 'adminapikey'}
 
-def api_call(url, data=None, calltype='get', headers=None):
+def api_call(url, data=None, calltype='get', headers=None, save_error=True):
     call = getattr(requests, calltype)
     if (headers is not None):
         r = call(url, verify=False, params=auth_params, data=data,
@@ -31,12 +31,13 @@ def api_call(url, data=None, calltype='get', headers=None):
         r = call(url, verify=False, params=auth_params, data=data)
 
     if (r.status_code != 200):
-        cur_time = str(int(time.time()))
-        err_file = '/tmp/err-%s.html' % cur_time
-        with open(err_file, 'w') as efo:
-            for line in r.text.split('\n'):
-                efo.write('%s\n' % line)
-        print('Error detail is saved at %s' % err_file)
+        if (save_error is True):
+            cur_time = str(int(time.time()))
+            err_file = '/tmp/err-%s.html' % cur_time
+            with open(err_file, 'w') as efo:
+                for line in r.text.split('\n'):
+                    efo.write('%s\n' % line)
+            print('Error detail is saved at %s' % err_file)
         r.raise_for_status()
 
     try:
