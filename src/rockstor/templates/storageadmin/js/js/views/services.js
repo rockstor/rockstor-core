@@ -29,7 +29,10 @@
 ServicesView = Backbone.View.extend({
   
   events: {
-    'click .service-command': 'doCommand',
+    'click .slider-stop': "stopService",
+    'click .slider-start': "startService",
+    'click .configure': "configureService",
+
   },
 
   initialize: function() {
@@ -48,46 +51,49 @@ ServicesView = Backbone.View.extend({
   },
 
   render: function() {
-    console.log('in services render');
     //this.fetch(this.renderStatus, this);
     this.collection.fetch();
     return this;
   },
 
   renderServices: function() {
+    var _this = this;
     $(this.el).empty();
-    console.log('rendering template');
     
     $(this.el).append(this.template({
       services: this.collection
     }));
+    this.$('input.service-status').simpleSlider({
+      "theme": "volume",
+      allowedValues: [0,1],
+      snap: true 
+    });
+
+    this.$('input.service-status').bind('slider:changed', function(event, data) {
+      var val = data.value.toString();
+      var serviceName = $(event.currentTarget).data('service-name'); 
+      startSpan = _this.$('span.slider-start[data-service-name="' + serviceName + '"]');
+      if (val == "0") {
+        startSpan.removeClass('on');
+      } else {
+        startSpan.addClass('on');
+      }
+    });
     
-    var _this = this;
+    /*
     this.intervalId = window.setInterval(function() {
       return function() { _this.updateStatus(_this); }
     }(), 5000);
+   */
   },
   
-  doCommand: function(event) {
-    event.preventDefault();
-    var _this = this;
-    var tgt = $(event.currentTarget);
-    var inputType = tgt.attr('type');
-    var command = null;
-    if (inputType == 'checkbox') {
-      command = _.isUndefined(tgt.attr('checked')) ? 'stop' : 'start';
-    } else {
-      command = tgt.attr('data-command');
-    }
-    var name = tgt.attr('data-service-name');
-    //var service = this.services[name];
+  doCommand: function(name, command) {
     
     $.ajax({
       url: "/api/sm/services/" + name + "/" + command,
       type: "POST",
       dataType: "json",
       success: function(data, status, xhr) {
-        console.log('service saved successfully');
         var action = _this.actionMessages[command];
         showSuccessMessage(name + ' ' + action + ' successfully');
       },
@@ -97,6 +103,53 @@ ServicesView = Backbone.View.extend({
       }
     });
 
+  },
+
+  startService: function(event) {
+    var _this = this;
+    var span = $(event.currentTarget);
+    var serviceName = span.data('service-name');
+    var commandStatus = this.$('span.command-status[data-service-name="' + serviceName + '"]')
+    commandStatus.html('<img src="/img/ajax-loader.gif"></img>');
+    $.ajax({
+      url: "/api/sm/services/" + serviceName + "/start",
+      type: "POST",
+      dataType: "json",
+      success: function(data, status, xhr) {
+        // add highlight class
+        span.addClass('on');
+        _this.$('input[data-service-name="' + serviceName + '"]').simpleSlider('setValue',1);
+        commandStatus.html('&nbsp;');
+      },
+      error: function(xhr, status, error) {
+        var msg = parseXhrError(xhr)
+        commandStatus.html('<i class="icon-exclamation-sign"></i>');
+      }
+    });
+    
+  },
+
+  stopService: function(event) {
+    var _this = this;
+    var span = $(event.currentTarget);
+    var serviceName = $(event.currentTarget).data('service-name');
+    var commandStatus = this.$('span.command-status[data-service-name="' + serviceName + '"]')
+    commandStatus.html('<img src="/img/ajax-loader.gif"></img>');
+    $.ajax({
+      url: "/api/sm/services/" + serviceName + "/stop",
+      type: "POST",
+      dataType: "json",
+      success: function(data, status, xhr) {
+        startSpan = _this.$('span.slider-start[data-service-name="' + serviceName + '"]');
+        startSpan.removeClass('on');
+        _this.$('input[data-service-name="' + serviceName + '"]').simpleSlider('setValue',0);
+        commandStatus.html('&nbsp;');
+      },
+      error: function(xhr, status, error) {
+        var msg = parseXhrError(xhr)
+        commandStatus.html('<i class="icon-exclamation-sign"></i>');
+      }
+    });
   },
 
   updateStatus: function(context) {
@@ -132,8 +185,11 @@ ServicesView = Backbone.View.extend({
     });
   },
 
+  configureService: function(event) {
+    event.preventDefault();
+  },
+
   cleanup: function() {
-    console.log('clearing setInterval'); 
     if (!_.isUndefined(this.intervalId)) {
       window.clearInterval(this.intervalId);
     }

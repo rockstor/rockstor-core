@@ -22,65 +22,39 @@
 
 <div id="messages"></div>
 <div class="row-fluid">
-  <div class="span8">
+  <div class="span12">
     <div id="services-list">
       <div id="service">
-        <span id="service-loading-indicator" style="visibility:hidden"><img src="/img/ajax-loader.gif"/></span>
         <table id="services-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" width="100%">
           <thead>
             <tr>
-              <th scope="col">Service Name</th>
+              <th scope="col">Name</th>
               <th scope="col">Status</th>
-              <th scope="col">Actions</th>
+              <th scope="col">Configure</th>
             </tr>
           </thead>
           <tbody>
             <% services.each(function(service) { %>
               <tr id="<%= service.get('name') %>">
                 <td><%= service.get('name') %></td>
-                  <td id="<%= service.get('name') %>-status">
-                    <% if (service.get('status')) { %>
-                      <div class="service-status running"></div>
-                    <% } else { %>
-                      <div class="service-status stopped"></div>
-                    <% } %>
-                    </td>
-                    
-                    <td id="<%= service.get('name') %>-update"> 
-                     <% if(service.get('status')){%>
-                      	<span href="#" id="<%= service.get('name') %>-start" class="service-command" data-service-name="<%= service.get('name') %>" data-command="start">Start</span>
-                 		 &nbsp;
-                  		<a href="#" id="<%= service.get('name') %>-stop" class="service-command" data-service-name="<%= service.get('name') %>" data-command="stop">Stop</a>
-                  		&nbsp;
-                  		<a href="#" id="<%= service.get('name') %>-restart" class="service-command" data-service-name="<%= service.get('name') %>" data-command="restart">Restart</a>
-                  		&nbsp;
-                  		<a href="#" id="<%= service.get('name') %>-reload" class="service-command" data-service-name="<%= service.get('name') %>" data-command="reload">Reload</a>
-                				
-                	<%}else{%>
-                		
-                       <a href="#" id="<%= service.get('name') %>-start" class="service-command" data-service-name="<%= service.get('name') %>" data-command="start">Start</a>
-                  		&nbsp;
-                  		<span href="#" id="<%= service.get('name') %>-stop" class="service-command" data-service-name="<%= service.get('name') %>" data-command="stop">Stop</span>
-                  		&nbsp;
-                  		<span href="#" id="<%= service.get('name') %>-restart" class="service-command" data-service-name="<%= service.get('name') %>" data-command="restart">Restart</span>
-                  		&nbsp;
-                  		<span href="#" id="<%= service.get('name') %>-reload" class="service-command" data-service-name="<%= service.get('name') %>" data-command="reload">Reload</span>
-                		</td>
-                		
-                    <% } %>
-                    </div>
-                 </tr>
+                <td id="<%= service.get('name') %>-status">
+                  <% if (service.get('status')) { %>
+                    <span class="slider-stop" data-service-name="<%= service.get('name') %>">OFF</span>
+                    <input type="text" class="service-status" value="1" data-service-name="<%= service.get('name') %>"></input>
+                    <span class="slider-start on" data-service-name="<%= service.get('name') %>">ON</span>
+                  <% } else { %>
+                    <span class="slider-stop" data-service-name="<%= service.get('name') %>">OFF</span>
+                    <input type="text" class="service-status" value="0" data-service-name="<%= service.get('name') %>"></input>
+                    <span class="slider-start" data-service-name="<%= service.get('name') %>">ON</span>
+                  <% } %>
+                    <span class="command-status" data-service-name="<%= service.get('name') %>">&nbsp;</span>
+                </td>
+                <td><a href="#" class="configure" data-service-name="<%= service.get('name') %>"><i class="icon-wrench"></i></a></td>
 
+              </tr>
             <% }); %>
-          </tbody>
+        </tbody>
         </table>
-        <!-- Legend -->
-        <div>
-          <span style="float: left">Running:&nbsp;&nbsp;</span>
-          <div class="service-status running" style="float: left"></div>
-          <span style="float: left">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Stopped:&nbsp;&nbsp;</span>
-          <div class="service-status stopped" style="float: left"></div>
-        </div>
       </div>
     </div>
   </div>
