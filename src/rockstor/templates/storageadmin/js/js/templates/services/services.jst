@@ -39,15 +39,20 @@
                 <td><%= service.get('name') %></td>
                 <td id="<%= service.get('name') %>-status">
                   <% if (service.get('status')) { %>
-                    <span class="slider-stop" data-service-name="<%= service.get('name') %>">OFF</span>
-                    <input type="text" class="service-status" value="1" data-service-name="<%= service.get('name') %>"></input>
-                    <span class="slider-start on" data-service-name="<%= service.get('name') %>">ON</span>
+                    <div class="slider-stop" data-service-name="<%= service.get('name') %>">OFF</div>
+                    <div class="slider-ph">
+                      <input type="text" class="service-status" value="1" data-service-name="<%= service.get('name') %>"></input>
+                    </div>
+                    <div class="slider-start on" data-service-name="<%= service.get('name') %>">ON</div>
                   <% } else { %>
-                    <span class="slider-stop" data-service-name="<%= service.get('name') %>">OFF</span>
-                    <input type="text" class="service-status" value="0" data-service-name="<%= service.get('name') %>"></input>
-                    <span class="slider-start" data-service-name="<%= service.get('name') %>">ON</span>
+                    <div class="slider-stop" data-service-name="<%= service.get('name') %>">OFF</div>
+                    <div class="slider-ph">
+                      <input type="text" class="service-status" value="0" data-service-name="<%= service.get('name') %>"></input>
+                    </div>
+                    <div class="slider-start" data-service-name="<%= service.get('name') %>">ON</div>
                   <% } %>
-                    <span class="command-status" data-service-name="<%= service.get('name') %>">&nbsp;</span>
+                  <div class="command-status" data-service-name="<%= service.get('name') %>">&nbsp;</div>
+                  <div class="simple-overlay" id="<%= service.get('name') %>-err-popup"></div>
                 </td>
                 <td><a href="#" class="configure" data-service-name="<%= service.get('name') %>"><i class="icon-wrench"></i></a></td>
 

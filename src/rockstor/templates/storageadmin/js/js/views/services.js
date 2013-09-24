@@ -32,7 +32,6 @@ ServicesView = Backbone.View.extend({
     'click .slider-stop': "stopService",
     'click .slider-start': "startService",
     'click .configure': "configureService",
-
   },
 
   initialize: function() {
@@ -68,125 +67,100 @@ ServicesView = Backbone.View.extend({
       allowedValues: [0,1],
       snap: true 
     });
-
-    this.$('input.service-status').bind('slider:changed', function(event, data) {
-      var val = data.value.toString();
-      var serviceName = $(event.currentTarget).data('service-name'); 
-      startSpan = _this.$('span.slider-start[data-service-name="' + serviceName + '"]');
-      if (val == "0") {
-        startSpan.removeClass('on');
-      } else {
-        startSpan.addClass('on');
-      }
-    });
     
-    /*
-    this.intervalId = window.setInterval(function() {
-      return function() { _this.updateStatus(_this); }
-    }(), 5000);
-   */
+    this.$('input.service-status').each(function(i, el) {
+      var slider = $(el).data('slider-object');
+      // disable track and dragger events to disable slider
+      slider.trackEvent = function(e) {};
+      slider.dragger.unbind('mousedown');
+    });
+    this.$('.simple-overlay').overlay({load: false}); 
   },
   
-  doCommand: function(name, command) {
-    
-    $.ajax({
-      url: "/api/sm/services/" + name + "/" + command,
-      type: "POST",
-      dataType: "json",
-      success: function(data, status, xhr) {
-        var action = _this.actionMessages[command];
-        showSuccessMessage(name + ' ' + action + ' successfully');
-      },
-      error: function(xhr, status, error) {
-        var msg = parseXhrError(xhr)
-        _this.$(".share-messages").html("<label class=\"error\">" + msg + "</label>");
-      }
-    });
-
-  },
-
   startService: function(event) {
     var _this = this;
-    var span = $(event.currentTarget);
-    var serviceName = span.data('service-name');
-    var commandStatus = this.$('span.command-status[data-service-name="' + serviceName + '"]')
-    commandStatus.html('<img src="/img/ajax-loader.gif"></img>');
+    var serviceName = $(event.currentTarget).data('service-name'); 
+    // if already started, return
+    if (this.getSliderVal(serviceName).toString() == "1") return; 
+    this.setStatusLoading(serviceName, true);
     $.ajax({
       url: "/api/sm/services/" + serviceName + "/start",
       type: "POST",
       dataType: "json",
       success: function(data, status, xhr) {
-        // add highlight class
-        span.addClass('on');
-        _this.$('input[data-service-name="' + serviceName + '"]').simpleSlider('setValue',1);
-        commandStatus.html('&nbsp;');
+        _this.highlightStartEl(serviceName, true);
+        _this.setSliderVal(serviceName, 1); 
+        _this.setStatusLoading(serviceName, false);
       },
       error: function(xhr, status, error) {
-        var msg = parseXhrError(xhr)
-        commandStatus.html('<i class="icon-exclamation-sign"></i>');
+        _this.setStatusError(serviceName, xhr);
       }
     });
-    
   },
 
   stopService: function(event) {
     var _this = this;
-    var span = $(event.currentTarget);
-    var serviceName = $(event.currentTarget).data('service-name');
-    var commandStatus = this.$('span.command-status[data-service-name="' + serviceName + '"]')
-    commandStatus.html('<img src="/img/ajax-loader.gif"></img>');
+    var serviceName = $(event.currentTarget).data('service-name'); 
+    // if already stopped, return
+    if (this.getSliderVal(serviceName).toString() == "0") return; 
+    this.setStatusLoading(serviceName, true);
     $.ajax({
       url: "/api/sm/services/" + serviceName + "/stop",
       type: "POST",
       dataType: "json",
       success: function(data, status, xhr) {
-        startSpan = _this.$('span.slider-start[data-service-name="' + serviceName + '"]');
-        startSpan.removeClass('on');
-        _this.$('input[data-service-name="' + serviceName + '"]').simpleSlider('setValue',0);
-        commandStatus.html('&nbsp;');
+        _this.highlightStartEl(serviceName, false);
+        _this.setSliderVal(serviceName, 0); 
+        _this.setStatusLoading(serviceName, false);
       },
       error: function(xhr, status, error) {
-        var msg = parseXhrError(xhr)
-        commandStatus.html('<i class="icon-exclamation-sign"></i>');
+        _this.setStatusError(serviceName, xhr);
       }
-    });
-  },
-
-  updateStatus: function(context) {
-    var _this = context;
-    showLoadingIndicator('service-loading-indicator', _this);
-    $.ajax({
-      url: "/api/sm/services/", 
-      type: "GET",
-      dataType: "json",
-      global: false, // dont show global loading indicator
-      success: function(data, status, xhr) {
-        hideLoadingIndicator('service-loading-indicator', _this);
-        data = data.results;
-        _.each(data, function(service) {
-          var name = service.name;
-          status_elem = _this.$('#'+name+'-status');
-          update_elem = _this.$('#'+name+'-update');
-          if (!_.isNull(status_elem) && !_.isUndefined(status_elem)) {
-            if (service.status) {
-              status_elem.html('<div class="service-status running"></div>');
-              update_elem.html('<span href="#" id="'+name+'-start" class="service-command" data-service-name="'+name+'" data-command="start">Start</span>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" id="'+name+'-stop" class="service-command" data-service-name="'+name+'" data-command="stop">Stop</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" id="'+name+'-restart" class="service-command" data-service-name="'+name+'" data-command="restart">Restart</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" id="'+name+'-reload" class="service-command" data-service-name="'+name+'" data-command="reload">Reload</a>');
-            } else {
-              status_elem.html('<div class="service-status stopped"></div>');
-              update_elem.html('<a href="#" id="'+name+'-start" class="service-command" data-service-name="'+name+'" data-command="start">Start</a>&nbsp;&nbsp;&nbsp;&nbsp;<span href="#" id="'+name+'-stop" class="service-command" data-service-name="'+name+'" data-command="stop">Stop</span>&nbsp;&nbsp;&nbsp;&nbsp;<span href="#" id="'+name+'-restart" class="service-command" data-service-name="'+name+'" data-command="restart">Restart</span>&nbsp;&nbsp;&nbsp;&nbsp;<span href="#" id="'+name+'-reload" class="service-command" data-service-name="'+name+'" data-command="reload">Reload</span>');
-            }
-          }
-        });
-      },
-      error: function(xhr, status, error) {
-        hideLoadingIndicator('service-loading-indicator', _this);
-      }
-
     });
   },
 
   configureService: function(event) {
     event.preventDefault();
+  },
+
+  setStatusLoading: function(serviceName, show) {
+    var statusEl = this.$('div.command-status[data-service-name="' + serviceName + '"]')
+    if (show) {
+      statusEl.html('<img src="/img/ajax-loader.gif"></img>');
+    } else {
+      statusEl.empty();
+    }
+  },
+
+  setStatusError: function(serviceName, xhr) {
+    var statusEl = this.$('div.command-status[data-service-name="' + serviceName + '"]')
+    var msg = parseXhrError(xhr)
+    // remove any existing error popups
+    $('body').find('#' + serviceName + 'err-popup').remove();
+    // add icon and popup
+    statusEl.empty();
+    var icon = $('<i>').addClass('icon-exclamation-sign').attr('rel', '#' + serviceName + '-err-popup');
+    statusEl.append(icon);
+    var errPopup = this.$('#' + serviceName + '-err-popup');
+    errPopup.html(msg);
+    statusEl.click(function(){ errPopup.overlay().load(); });
+  },
+
+  highlightStartEl: function(serviceName, on) {
+    var startEl = this.$('div.slider-start[data-service-name="' + serviceName + '"]');
+    if (on) {
+      startEl.addClass('on');
+    } else {
+      startEl.removeClass('on');
+    }
+  },
+
+  setSliderVal: function(serviceName, val) {
+    this.$('input[data-service-name="' + serviceName + '"]').simpleSlider('setValue',val);
+  },
+
+  getSliderVal: function(serviceName) {
+    return this.$('input[data-service-name="' + serviceName + '"]').data('slider-object').value;
   },
 
   cleanup: function() {

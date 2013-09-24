@@ -375,7 +375,7 @@ function parseXhrError(xhr) {
     } catch(err) {
     }
   }
-  return msg;
+  return "";
 
 }
 

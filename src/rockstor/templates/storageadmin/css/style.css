@@ -1499,6 +1499,7 @@ input[type="radio"].selectedRoot {
 	background:	-webkit-radial-gradient(  50%   0%,  12% 50%, hsla(0,0%,100%,1) 0%, hsla(0,0%,100%,0) 100%),
   	          -webkit-radial-gradient(  50% 100%, 12% 50%, hsla(0,0%,100%,.6) 0%, hsla(0,0%,100%,0) 100%),
               -webkit-radial-gradient(	50% 50%, 200% 50%, hsla(0,0%,90%,1) 5%, hsla(0,0%,85%,1) 30%, hsla(0,0%,60%,1) 100%);
+  cursor: inherit !important;
 }
 
 .slider-volume > .track, .slider-volume > .highlight-track {
@@ -1516,6 +1517,7 @@ input[type="radio"].selectedRoot {
   -moz-border-radius: 5px;
   -webkit-border-radius: 5px;
   border-radius: 5px;
+  cursor: inherit !important;
 }
 
 .slider-volume > .highlight-track {
@@ -1525,9 +1527,10 @@ input[type="radio"].selectedRoot {
   background: linear-gradient(top, #c5c5c5, #a2a2a2);
 }
 [class^=slider-volume] { display: inline-block; }
-.slider-stop { cursor: pointer; vertical-align: top; }
-.slider-start { cursor: pointer; vertical-align: top; }
+.slider-stop { float: left; cursor: pointer; vertical-align: top; }
+.slider-start { float: left; cursor: pointer; vertical-align: top; }
 .slider-start.on { color: #05B529; }
+.slider-ph { margin-left: 4px; margin-right: 4px; float: left; }
 
-.command-status { width: 20px; }
+.command-status { float: left; width: 20px; }
 
