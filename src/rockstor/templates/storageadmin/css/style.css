@@ -1532,5 +1532,5 @@ input[type="radio"].selectedRoot {
 .slider-start.on { color: #05B529; }
 .slider-ph { margin-left: 4px; margin-right: 4px; float: left; }
 
-.command-status { float: left; width: 20px; }
+.command-status { cursor: pointer; float: left; width: 20px; }
 

@@ -142,7 +142,8 @@ ServicesView = Backbone.View.extend({
     var icon = $('<i>').addClass('icon-exclamation-sign').attr('rel', '#' + serviceName + '-err-popup');
     statusEl.append(icon);
     var errPopup = this.$('#' + serviceName + '-err-popup');
-    errPopup.html(msg);
+    var errPopupContent = this.$('#' + serviceName + '-err-popup > div');
+    errPopupContent.html(msg);
     statusEl.click(function(){ errPopup.overlay().load(); });
   },
 
