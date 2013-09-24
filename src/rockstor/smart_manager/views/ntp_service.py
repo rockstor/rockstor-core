@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework.response import Response
 from storageadmin.util import handle_exception
-from system.services import init_service_op
+from system.services import init_service_op, chkconfig
 from system.osi import set_ntpserver
 from django.db import transaction
 from base_service import BaseServiceView
@@ -51,6 +51,10 @@ class NTPServiceView(BaseServiceView):
                 handle_exception(Exception(e_msg), request)
         else:
             try:
+                switch = 'on'
+                if (command == 'stop'):
+                    switch = 'off'
+                chkconfig('ntpd', switch)
                 init_service_op('ntpd', command)
             except Exception, e:
                 logger.exception(e)

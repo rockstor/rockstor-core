@@ -35,7 +35,7 @@ class BaseServiceView(AdvancedSProbeView):
         url_fields = self.request.path.strip('/').split('/')
         if (len(url_fields) < 4):
             sos = []
-            for s in Service.objects.filter(registered=True):
+            for s in Service.objects.all():
                 if (ServiceStatus.objects.filter(service=s).exists()):
                     so = ServiceStatus.objects.filter(service=s).order_by('-ts')[0]
                     sos.append(so)
