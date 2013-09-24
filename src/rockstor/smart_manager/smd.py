@@ -29,7 +29,7 @@ import logging
 logger = logging.getLogger(__name__)
 from smart_manager import agents
 from scheduler.task_dispatcher import TaskDispatcher
-
+import time
 
 def process_model_queue(q):
     cleanup_map = {}
@@ -45,7 +45,6 @@ def process_model_queue(q):
         model.objects.filter(ts__lt=new_start).delete()
 
 def main():
-
     context = zmq.Context()
     pull_socket = context.socket(zmq.PULL)
     pull_socket.RCVTIMEO = 500
@@ -53,7 +52,6 @@ def main():
 
     proc_q = Queue()
     service_q = Queue()
-
     pr = ProcRetreiver(proc_q)
     pr.daemon = True
     pr.start()
@@ -78,8 +76,10 @@ def main():
                 for d in deserialize("json", sink_data):
                     d.save()
         except zmq.error.Again:
-            continue
+            pass
         except Exception, e:
-            logger.exception('exception while processing sink data')
-            continue
+            logger.info('exception while processing sink data')
+            logger.exception(e)
+        finally:
+            time.sleep(1)
     #@todo: close zmq context
