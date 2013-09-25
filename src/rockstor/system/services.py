@@ -23,6 +23,8 @@ import subprocess
 from osi import run_command
 
 SERVICE_BIN = '/sbin/service'
+CHKCONFIG_BIN = '/sbin/chkconfig'
+
 
 def init_service_op(service_name, command):
     supported_services = ('nfs', 'smb', 'sshd', 'ypbind', 'rpcbind', 'ntpd')
@@ -33,3 +35,5 @@ def init_service_op(service_name, command):
     out, err, rc = run_command(cmd)
     return out, err, rc
 
+def chkconfig(service_name, switch):
+    return run_command([CHKCONFIG_BIN, service_name, switch])

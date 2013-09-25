@@ -22,7 +22,7 @@ from django.db import models
 class Service(models.Model):
 
     name = models.CharField(max_length=24, unique=True)
-    registered = models.BooleanField(default=False)
+    display_name = models.CharField(max_length=24, unique=True)
     config = models.CharField(max_length=8192, null=True)
 
     class Meta:

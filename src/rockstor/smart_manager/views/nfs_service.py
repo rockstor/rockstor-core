@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework.response import Response
 from storageadmin.util import handle_exception
-from system.services import init_service_op
+from system.services import init_service_op, chkconfig
 from system.nis import configure_nis
 from django.db import transaction
 from base_service import BaseServiceView
@@ -49,6 +49,10 @@ class NFSServiceView(BaseServiceView):
 
         else:
             try:
+                switch = 'on'
+                if (command == 'stop'):
+                    switch = 'off'
+                chkconfig('nfs', switch)
                 init_service_op('nfs', command)
             except Exception, e:
                 logger.exception(e)
