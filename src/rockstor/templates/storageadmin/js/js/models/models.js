@@ -106,6 +106,7 @@ var SMBShareCollection = Backbone.Collection.extend({model: SMBShare});
 
 var Service = Backbone.Model.extend({
   idAttribute: "name",
+  urlRoot: "/api/sm/services"
 });
 
 var ServiceCollection = RockStorPaginatedCollection.extend({

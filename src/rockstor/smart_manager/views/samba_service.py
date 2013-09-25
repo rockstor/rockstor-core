@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework.response import Response
 from storageadmin.util import handle_exception
-from system.services import init_service_op
+from system.services import init_service_op, chkconfig
 from system.nis import configure_nis
 from django.db import transaction
 from base_service import BaseServiceView
@@ -35,13 +35,13 @@ class SambaServiceView(BaseServiceView):
         """
         execute a command on the service
         """
-        service = Service.objects.get(name='samba')
+        service_name = 'smb'
+        service = Service.objects.get(name=service_name)
         if (command == 'config'):
             #nothing to really configure atm. just save the model
             try:
                 config = request.DATA['config']
-                service.config = config
-                service.save()
+                self._save_config(service, config)
             except Exception, e:
                 logger.exception(e)
                 e_msg = ('Samba could not be configured. Try again')
@@ -49,7 +49,11 @@ class SambaServiceView(BaseServiceView):
 
         else:
             try:
-                init_service_op('smb', command)
+                switch = 'on'
+                if (command == 'stop'):
+                    switch = 'off'
+                chkconfig(service_name, switch)
+                init_service_op(service_name, command)
             except Exception, e:
                 logger.exception(e)
                 e_msg = ('Failed to %s samba due to a system error.')

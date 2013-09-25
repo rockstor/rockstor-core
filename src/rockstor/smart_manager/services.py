@@ -44,7 +44,7 @@ class ServiceMonitor(Process):
                 return
 
             if (self.q.qsize() < 1000):
-                for s in Service.objects.filter(registered=True):
+                for s in Service.objects.all():
                     # get status
                     service_status = ServiceStatus(service=s, status=False)
                     try:
