@@ -42,7 +42,7 @@ class SambaServiceView(BaseServiceView):
             try:
                 config = request.DATA['config']
                 self._save_config(service, config)
-             except Exception, e:
+            except Exception, e:
                 logger.exception(e)
                 e_msg = ('Samba could not be configured. Try again')
                 handle_exception(Exception(e_msg), request)
