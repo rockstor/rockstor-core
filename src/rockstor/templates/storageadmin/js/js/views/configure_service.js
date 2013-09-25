@@ -35,67 +35,53 @@ ConfigureServiceView = RockstoreLayoutView.extend({
     this.serviceName = this.options.serviceName;
     // set template
     this.template = window.JST['services_configure_' + this.serviceName];
+    this.rules = {
+      ntpd: { server_name: "required" }
+    }
+    this.formName = this.serviceName + '-form';
   },
 
   render: function() {
     var _this = this;
     $(this.el).html(this.template());
 
-    //this.validator = this.$("#user-create-form").validate({
-    //  onfocusout: false,
-    //  onkeyup: false,
-    //  rules: {
-    //    username: "required",
-    //    password: "required",
-    //    password_confirmation: {
-    //      required: "true",
-    //      equalTo: "#password"
-    //    }
-    //  },
-    //  messages: {
-    //    password_confirmation: {
-    //      equalTo: "The passwords do not match"
-    //    }
-    //  },
-    //  submitHandler: function() {
-    //    console.log("submitHandler");
-    //    var username = _this.$("#username").val();
-    //    console.log("username: " + username);
-    //    var password = _this.$("#password").val();
-    //    console.log("password: " + password);
-    //    var is_active = _this.$("#is_active").prop("checked"); 
-    //    // create a dummy user model class that does not have idAttribute 
-    //    // = username, so backbone will treat is as a new object,
-    //    // ie isNew will return true
-    //    var tmpUserModel = Backbone.Model.extend({ 
-    //      urlRoot: "/api/users/"
-    //    });
-    //    var user = new tmpUserModel()
-    //    user.save(
-    //      {
-    //        username: username,
-    //        password: password,
-    //        is_active: is_active
-    //      },
-    //      {
-    //        success: function(model, response, options) {
-    //          console.log("user created successfully");
-    //          app_router.navigate("users", {trigger: true});
-    //        },
-    //        error: function(model, xhr, options) {
-    //          var msg = parseXhrError(xhr)
-    //          if (_.isObject(msg)) {
-    //            _this.validator.showErrors(msg);
-    //          } else {
-    //            _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
-    //          }
-    //        }
-    //      }
-    //    );
-    //    
-    //    return false;
-    //  }
-    //});
+    this.validator = this.$('#' + this.formName).validate({
+      onfocusout: false,
+      onkeyup: false,
+      rules: this.rules[this.serviceName],
+      //messages: {
+        //password_confirmation: {
+          //equalTo: "The passwords do not match"
+        //}
+      //},
+      submitHandler: function() {
+        var button = _this.$('#submit');
+        if (buttonDisabled(button)) return false;
+        disableButton(button);
+        var data = JSON.stringify({config: _this.$('#' + _this.formName).getJSON()});
+        $.ajax({
+          url: "/api/sm/services/" + _this.serviceName + "/config",
+          type: "POST",
+          contentType: 'application/json',
+          dataType: "json",
+          data: data,
+          success: function(data, status, xhr) {
+            enableButton(button);
+            app_router.navigate("services", {trigger: true});
+          },
+          error: function(xhr, status, error) {
+            enableButton(button);
+            var msg = parseXhrError(xhr)
+            if (_.isObject(msg)) {
+              _this.validator.showErrors(msg);
+            } else {
+              _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
+            }
+          }
+        });
+        return false;
+      }
+    });
     return this;
   },
 
