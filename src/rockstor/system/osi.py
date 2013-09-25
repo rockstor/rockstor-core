@@ -238,15 +238,15 @@ def get_net_config(device_name):
         with open(config_script) as cfo:
             for l in cfo.readlines():
                 if (re.match('BOOTPROTO', l) is not None):
-                    config['bootproto'] = l.strip().split('=')[1][1:-1]
+                    config['bootproto'] = char_strip(l.strip().split('=')[1])
                 elif (re.match('ONBOOT', l) is not None):
-                    config['onboot'] = l.strip().split('=')[1][1:-1]
+                    config['onboot'] = char_strip(l.strip().split('=')[1])
                 elif (re.match('IPADDR', l) is not None):
-                    config['ipaddr'] = l.strip().split('=')[1][1:-1]
+                    config['ipaddr'] = char_strip(l.strip().split('=')[1])
                 elif (re.match('NETMASK', l) is not None):
-                    config['netmask'] = l.strip().split('=')[1][1:-1]
+                    config['netmask'] = char_strip(l.strip().split('=')[1])
                 elif (re.match('NETWORK', l) is not None):
-                    config['network'] = l.strip().split('=')[1][1:-1]
+                    config['network'] = char_strip(l.strip().split('=')[1])
         if (config['bootproto'] == 'dhcp'):
             config['ipaddr'] = get_ip_addr(device_name)
     except:
