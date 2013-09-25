@@ -35,9 +35,6 @@ ServicesView = Backbone.View.extend({
   },
 
   initialize: function() {
-    // call initialize of base
-    this.constructor.__super__.initialize.apply(this, arguments);
-    // set template
     this.template = window.JST.services_services;
     this.collection = new ServiceCollection();
     this.collection.on("reset", this.renderServices, this);
@@ -121,6 +118,9 @@ ServicesView = Backbone.View.extend({
 
   configureService: function(event) {
     event.preventDefault();
+    var _this = this;
+    var serviceName = $(event.currentTarget).data('service-name'); 
+    app_router.navigate('services/' + serviceName + '/edit', {trigger: true});
   },
 
   setStatusLoading: function(serviceName, show) {
