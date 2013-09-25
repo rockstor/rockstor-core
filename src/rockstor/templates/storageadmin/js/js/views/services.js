@@ -37,18 +37,24 @@ ServicesView = Backbone.View.extend({
   initialize: function() {
     this.template = window.JST.services_services;
     this.collection = new ServiceCollection();
-    this.collection.on("reset", this.renderServices, this);
+    //this.collection.on("reset", this.renderServices, this);
     this.actionMessages = {
       'start': 'started',
       'stop': 'stopped',
       'restart': 'restarted',
       'reload': 'reloaded'
     }
+    this.pollInterval = 5000;
   },
 
   render: function() {
-    //this.fetch(this.renderStatus, this);
-    this.collection.fetch();
+    var _this = this;
+    this.collection.fetch({
+      success: function(collection, response, options) {
+        _this.renderServices();
+      }
+    });
+    this.startPolling();
     return this;
   },
 
@@ -79,6 +85,7 @@ ServicesView = Backbone.View.extend({
     var serviceName = $(event.currentTarget).data('service-name'); 
     // if already started, return
     if (this.getSliderVal(serviceName).toString() == "1") return; 
+    this.stopPolling();
     this.setStatusLoading(serviceName, true);
     $.ajax({
       url: "/api/sm/services/" + serviceName + "/start",
@@ -88,9 +95,11 @@ ServicesView = Backbone.View.extend({
         _this.highlightStartEl(serviceName, true);
         _this.setSliderVal(serviceName, 1); 
         _this.setStatusLoading(serviceName, false);
+        _this.startPolling();
       },
       error: function(xhr, status, error) {
         _this.setStatusError(serviceName, xhr);
+        _this.startPolling();
       }
     });
   },
@@ -100,6 +109,7 @@ ServicesView = Backbone.View.extend({
     var serviceName = $(event.currentTarget).data('service-name'); 
     // if already stopped, return
     if (this.getSliderVal(serviceName).toString() == "0") return; 
+    this.stopPolling();
     this.setStatusLoading(serviceName, true);
     $.ajax({
       url: "/api/sm/services/" + serviceName + "/stop",
@@ -109,9 +119,11 @@ ServicesView = Backbone.View.extend({
         _this.highlightStartEl(serviceName, false);
         _this.setSliderVal(serviceName, 0); 
         _this.setStatusLoading(serviceName, false);
+        _this.startPolling();
       },
       error: function(xhr, status, error) {
         _this.setStatusError(serviceName, xhr);
+        _this.startPolling();
       }
     });
   },
@@ -165,6 +177,33 @@ ServicesView = Backbone.View.extend({
   },
 
   cleanup: function() {
+    this.stopPolling();
+  },
+
+  startPolling: function() {
+    var _this = this;
+    this.intervalId = window.setInterval(function() {
+      return function() { 
+        _this.collection.fetch({
+          success: function(collection, response, options) {
+            _this.collection.each(function(service) {
+              var serviceName = service.get('name');
+              if (service.get('status')) {
+                _this.highlightStartEl(serviceName, true);
+                _this.setSliderVal(serviceName, 1); 
+              } else {
+                _this.highlightStartEl(serviceName, false);
+                _this.setSliderVal(serviceName, 0); 
+              }
+            }); 
+          } 
+        }); 
+      }
+    }(), this.pollInterval);
+  },
+
+  stopPolling: function() {
+    var _this = this;
     if (!_.isUndefined(this.intervalId)) {
       window.clearInterval(this.intervalId);
     }
