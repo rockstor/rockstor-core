@@ -24,6 +24,7 @@ from django.db import transaction
 from base_service import BaseServiceView
 from smart_manager.models import Service
 from storageadmin.models import Appliance
+import json
 
 import logging
 logger = logging.getLogger(__name__)
@@ -43,8 +44,7 @@ class NTPServiceView(BaseServiceView):
                 init_service_op('ntpd', 'stop')
                 set_ntpserver(config['server'])
                 init_service_op('ntpd', 'start')
-                service.config = config
-                service.save()
+                self._save_config(service, config)
             except Exception, e:
                 logger.exception(e)
                 e_msg = ('NTP could not be configured. Try again')

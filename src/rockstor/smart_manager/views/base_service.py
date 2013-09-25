@@ -22,6 +22,7 @@ from smart_manager.serializers import ServiceStatusSerializer
 import logging
 logger = logging.getLogger(__name__)
 from advanced_sprobe import AdvancedSProbeView
+import json
 
 
 class BaseServiceView(AdvancedSProbeView):
@@ -43,3 +44,7 @@ class BaseServiceView(AdvancedSProbeView):
         s = Service.objects.get(name=url_fields[3])
         self.paginate_by = 0
         return ServiceStatus.objects.filter(service=s).order_by('-ts')[0]
+
+    def _save_config(self, service, config):
+        service.config = json.dumps(config)
+        return service.save()

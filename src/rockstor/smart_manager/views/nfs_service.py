@@ -40,8 +40,7 @@ class NFSServiceView(BaseServiceView):
             #nothing to really configure atm. just save the model
             try:
                 config = request.DATA['config']
-                service.config = config
-                service.save()
+                self._save_config(service, config)
             except Exception, e:
                 logger.exception(e)
                 e_msg = ('NFS could not be configured. Try again')

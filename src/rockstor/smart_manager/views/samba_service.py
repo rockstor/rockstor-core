@@ -41,9 +41,8 @@ class SambaServiceView(BaseServiceView):
             #nothing to really configure atm. just save the model
             try:
                 config = request.DATA['config']
-                service.config = config
-                service.save()
-            except Exception, e:
+                self._save_config(service, config)
+             except Exception, e:
                 logger.exception(e)
                 e_msg = ('Samba could not be configured. Try again')
                 handle_exception(Exception(e_msg), request)

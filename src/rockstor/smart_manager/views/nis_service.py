@@ -40,8 +40,7 @@ class NISServiceView(BaseServiceView):
             try:
                 config = request.DATA['config']
                 configure_nis(config['domain'], config['server'])
-                service.config = config
-                service.save()
+                self._save_config(service, config)
             except Exception, e:
                 logger.exception(e)
                 e_msg = ('NIS could not be configured. Try again')
