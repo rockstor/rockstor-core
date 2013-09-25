@@ -224,6 +224,11 @@ def config_network_device(name, mac, ipaddr, netmask):
         cfo.write('IPADDR="%s"\n' % ipaddr)
         cfo.write('NETMASK="%s"\n' % netmask)
 
+def char_strip(line, char='"'):
+    if (line[0] == char and line[-1] == char):
+        return line[1:-1]
+    return line
+
 def get_net_config(device_name):
     config = {'name': device_name,
               'bootproto': None,
