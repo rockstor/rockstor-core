@@ -66,15 +66,15 @@ class ReplicaScheduler(Process):
                 time.sleep(0.5)
 
         logger.info('got rep_ip: %s' % self.rep_ip)
-        ctx = zmq.Context()
 
+        ctx = zmq.Context()
         #fs diffs are sent via this publisher.
         rep_pub = ctx.socket(zmq.PUB)
         rep_pub.bind('tcp://%s:%d' % (self.rep_ip, self.data_port))
 
         #synchronization messages are received in this pull socket
         meta_pull = ctx.socket(zmq.PULL)
-        meta_pull.RCVTIMEO = 500
+        meta_pull.RCVTIMEO = 100
         meta_pull.bind('tcp://%s:%d' % (self.rep_ip, self.meta_port))
 
         total_sleep = 0
@@ -84,7 +84,6 @@ class ReplicaScheduler(Process):
                 break
 
             while(not self.pubq.empty()):
-                logger.info('pubq not empty')
                 msg = self.pubq.get()
                 rep_pub.send(msg)
 
@@ -97,17 +96,11 @@ class ReplicaScheduler(Process):
                     rw = Receiver(self.recv_meta, Queue())
                     self.receivers[snap_id] = rw
                     rw.start()
-                    logger.info('started receiver')
                 elif (self.recv_meta['msg'] == 'begin_ok'):
                     self.senders[snap_id].q.put('send')
-                    logger.info('begin_ok received: %s' % snap_id)
                 elif (self.recv_meta['msg'] == 'receive_ok' or
                       self.recv_meta['msg'] == 'receive_error'):
                     self.senders[snap_id].q.put(self.recv_meta['msg'])
-                    logger.info('%s received: %s' % (self.recv_meta['msg'],
-                                                     snap_id))
-                else:
-                    pass
             except zmq.error.Again:
                 pass
 
@@ -148,5 +141,4 @@ def main():
     rs = ReplicaScheduler()
     rs.start()
     logger.info('started replica scheduler')
-    while(True):
-        pass
+    rs.join()

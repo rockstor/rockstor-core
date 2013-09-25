@@ -84,7 +84,7 @@ class Sender(Process):
         url = ('%sshares/%s/snapshots/%s' %
                (self.baseurl, sname, self.snap_name))
         try:
-            api_call(url, data=None, calltype='post')
+            api_call(url, data=None, calltype='post', save_error=False)
             logger.info('created snapshot. url: %s' % url)
         except Exception, e:
             msg = ('failed to create snapshot. url: %s' % url)
@@ -92,9 +92,7 @@ class Sender(Process):
 
         #let the receiver know that following diff is coming
         meta_push.send_json(self.meta_begin)
-        logger.info('sent meta: %s. waiting for ack' % self.meta_begin)
         self.q.get(block=True)
-        logger.info('ack received')
 
         snap_path = ('%s%s/%s' % (settings.MNT_PT, self.replica.pool,
                                   self.snap_name))
@@ -102,8 +100,7 @@ class Sender(Process):
                                                    self.replica.id))
         try:
             rt2 = api_call(url, data={'snap_name': self.snap_name,},
-                           calltype='post')
-            logger.info('created replica trail. url: %s' % url)
+                           calltype='post', save_error=False)
         except Exception, e:
             msg = ('Failed to create replica trail')
             self._clean_exit(msg, e)
@@ -129,9 +126,8 @@ class Sender(Process):
                     alive = False
                 fs_data = sp.stdout.read()
                 self.pub.put('%s%s' % (self.snap_id, fs_data))
-                logger.info('published data. len: %d' % len(fs_data))
             except IOError:
-                logger.info('no data read out of send')
+                pass
             except Exception, e:
                 logger.exception(e)
                 if (alive):
@@ -148,16 +144,14 @@ class Sender(Process):
                     logger.info('parent exited. aborting.')
                     break
 
-        logger.info('fsdata send finished. waiting for confirmation: %s' %
-                    self.meta_begin)
         msg = self.q.get(block=True)
-        logger.info('confirmation: %s received' % msg)
+        logger.info('fsdata sent, confirmation: %s received' % msg)
         url = ('%ssm/replicas/trail/%d' % (self.baseurl, rt2['id']))
         data = {'status': 'send_succeeded',}
         if (msg == 'receive_error'):
             data = {'status': 'send_failed',}
         try:
-            api_call(url, data=data, calltype='put')
+            api_call(url, data=data, calltype='put', save_error=False)
             logger.info('replica status updated to %s' % data['status'])
         except Exception, e:
             msg = ('failed to update replica status to send_succeeded')
