@@ -70,7 +70,6 @@ PoolDetailsLayoutView = RockstoreLayoutView.extend({
           },
           error: function(xhr, status, error) {
 	    var msg = parseXhrError(xhr);
-	    console.log(msg);
             var buttons = _this.$('.scrub_button');
             disableButton(buttons);
 	  }	   
@@ -171,6 +170,12 @@ PoolDetailsLayoutView = RockstoreLayoutView.extend({
 	_this.$('.messages').html("<label class=\"error\">" + msg + "</label>");
       }
     });
+  },
+
+  cleanup: function() {
+    if (!_.isUndefined(this.statusIntervalId)) {
+	window.clearInterval(this.statusIntervalId);
+    }
   },
 
   scrubPoolStop: function() {      

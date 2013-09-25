@@ -148,7 +148,6 @@ AddPoolView = Backbone.View.extend({
   },
 
   cancel: function(event) {
-    console.log("add pool cancel clicked");
     event.preventDefault();
     app_router.navigate('pools', {trigger: true});
   }
