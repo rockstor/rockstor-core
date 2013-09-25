@@ -30,13 +30,17 @@
             <tr>
               <th scope="col">Name</th>
               <th scope="col">Status</th>
-              <th scope="col">Configure</th>
             </tr>
           </thead>
           <tbody>
             <% services.each(function(service) { %>
               <tr id="<%= service.get('name') %>">
-                <td><%= service.get('display_name') %></td>
+                <td>
+                  <%= service.get('display_name') %>&nbsp;
+                  <% if ((service.get('name') == 'nis') || (service.get('name') == 'ntpd')) { %>
+                    <a href="#" class="configure" data-service-name="<%= service.get('name') %>"><i class="icon-wrench"></i></a>
+                  <% } %>
+                </td>
                 <td id="<%= service.get('name') %>-status">
                   <% if (service.get('status')) { %>
                     <div class="slider-stop" data-service-name="<%= service.get('name') %>">OFF</div>
@@ -54,7 +58,9 @@
                   <div class="command-status" data-service-name="<%= service.get('name') %>">&nbsp;</div>
                   <div class="simple-overlay" id="<%= service.get('name') %>-err-popup"><div class="overlay-content"></div></div>
                 </td>
+                <!--
                 <td><a href="#" class="configure" data-service-name="<%= service.get('name') %>"><i class="icon-wrench"></i></a></td>
+                -->
 
               </tr>
             <% }); %>

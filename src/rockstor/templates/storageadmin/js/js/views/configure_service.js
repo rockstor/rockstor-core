@@ -36,7 +36,8 @@ ConfigureServiceView = RockstoreLayoutView.extend({
     // set template
     this.template = window.JST['services_configure_' + this.serviceName];
     this.rules = {
-      ntpd: { server_name: "required" }
+      ntpd: { server: 'required' },
+      nis: { domain: 'required', server: 'required' },
     }
     this.formName = this.serviceName + '-form';
     this.service = new Service({name: this.serviceName});

@@ -19,7 +19,7 @@
   */
 </script>
 
-<h3>Configure NIS</h3>
+<h3>Configure <%= service.get('display_name') %></h3>
 
 <div class="row-fluid">
   <div class="span8">
@@ -28,9 +28,15 @@
       <form id="nis-form" name="aform">
         <div class="messages"></div>
         <div class="control-group">
-          <label class="control-label" for="username">Server<span class="required"> *</span></label>
+          <label class="control-label" for="domain">Domain<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" id="server" name="server" placeholder="Server" >
+            <input type="text" id="domain" name="domain" value="<%= config.domain %>" placeholder="Domain" >
+          </div>
+        </div>
+        <div class="control-group">
+          <label class="control-label" for="server">Server<span class="required"> *</span></label>
+          <div class="controls">
+            <input type="text" id="server" name="server" value="<%= config.server %>" placeholder="Server" >
           </div>
         </div>
         <div class="control-group">
