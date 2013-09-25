@@ -173,6 +173,13 @@ PoolDetailsLayoutView = RockstoreLayoutView.extend({
     });
   },
 
+  cleanup: function() {
+    console.log('clearing setInterval');
+    if (!_.isUndefined(this.statusIntervalId)) {
+	window.clearInterval(this.statusIntervalId);
+    }
+  },
+
   scrubPoolStop: function() {      
   },
 
