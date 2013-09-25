@@ -36,7 +36,7 @@
           <tbody>
             <% services.each(function(service) { %>
               <tr id="<%= service.get('name') %>">
-                <td><%= service.get('name') %></td>
+                <td><%= service.get('display_name') %></td>
                 <td id="<%= service.get('name') %>-status">
                   <% if (service.get('status')) { %>
                     <div class="slider-stop" data-service-name="<%= service.get('name') %>">OFF</div>

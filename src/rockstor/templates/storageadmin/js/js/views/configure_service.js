@@ -39,11 +39,23 @@ ConfigureServiceView = RockstoreLayoutView.extend({
       ntpd: { server_name: "required" }
     }
     this.formName = this.serviceName + '-form';
+    this.service = new Service({name: this.serviceName});
+    this.dependencies.push(this.service);
   },
 
   render: function() {
+    this.fetch(this.renderServiceConfig, this);
+    return this;
+  },
+
+  renderServiceConfig: function() {
     var _this = this;
-    $(this.el).html(this.template());
+    var config = this.service.get('config');
+    var configObj = {};
+    if (config != null) {
+      configObj = JSON.parse(this.service.get('config'));
+    }
+    $(this.el).html(this.template({config: configObj}));
 
     this.validator = this.$('#' + this.formName).validate({
       onfocusout: false,
