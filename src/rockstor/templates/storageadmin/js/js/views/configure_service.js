@@ -55,7 +55,7 @@ ConfigureServiceView = RockstoreLayoutView.extend({
     if (config != null) {
       configObj = JSON.parse(this.service.get('config'));
     }
-    $(this.el).html(this.template({config: configObj}));
+    $(this.el).html(this.template({service: this.service, config: configObj}));
 
     this.validator = this.$('#' + this.formName).validate({
       onfocusout: false,
