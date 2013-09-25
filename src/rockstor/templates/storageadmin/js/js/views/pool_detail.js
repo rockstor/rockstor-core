@@ -91,7 +91,6 @@ PoolDetailView = Backbone.View.extend({
         _this.$('button[rel]').click(function() {
           _this.disks.fetch({
             success: function(collection, response) {
-              console.log('got disks');
               _this.$('#disks_to_add').html(_this.select_disks_template({disks: _this.disks}));
               _this.$('#resize_pool').click(function() {
                 var disk_names = '';
@@ -103,7 +102,6 @@ PoolDetailView = Backbone.View.extend({
                     disk_names += $(this).val();	  
                   }
                 });
-                console.log(disk_names);
                 $.ajax({
                   url: "/api/pools/"+_this.model.get('name')+'/add/',
                   type: "PUT",

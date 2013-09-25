@@ -70,7 +70,6 @@ PoolDetailsLayoutView = RockstoreLayoutView.extend({
           },
           error: function(xhr, status, error) {
 	    var msg = parseXhrError(xhr);
-	    console.log(msg);
             var buttons = _this.$('.scrub_button');
             disableButton(buttons);
 	  }	   
@@ -174,7 +173,6 @@ PoolDetailsLayoutView = RockstoreLayoutView.extend({
   },
 
   cleanup: function() {
-    console.log('clearing setInterval');
     if (!_.isUndefined(this.statusIntervalId)) {
 	window.clearInterval(this.statusIntervalId);
     }
