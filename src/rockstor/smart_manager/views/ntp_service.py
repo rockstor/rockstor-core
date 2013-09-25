@@ -47,7 +47,7 @@ class NTPServiceView(BaseServiceView):
                 service.save()
             except Exception, e:
                 logger.exception(e)
-                e_msg = ('NIS could not be configured. Try again')
+                e_msg = ('NTP could not be configured. Try again')
                 handle_exception(Exception(e_msg), request)
         else:
             try:
