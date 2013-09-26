@@ -37,3 +37,11 @@ def init_service_op(service_name, command):
 
 def chkconfig(service_name, switch):
     return run_command([CHKCONFIG_BIN, service_name, switch])
+
+def service_status(service_name):
+    if (service_name == 'nis'):
+        out, err, rc = init_service_op('rpcbind', 'status')
+        if (rc == 0):
+            return out, err, rc
+        return init_service_op('ypbind', 'status')
+    return init_service_op(service_name, 'status')
