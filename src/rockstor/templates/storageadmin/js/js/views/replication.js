@@ -26,6 +26,8 @@
 
 ReplicationView = RockstoreLayoutView.extend({
   events: {
+    'click .enable': 'enable',
+    'click .disable': 'disable'
   },
 
   initialize: function() {
@@ -44,9 +46,70 @@ ReplicationView = RockstoreLayoutView.extend({
   },
 
   renderReplicas: function() {
+    // remove existing tooltips
+    if (this.$('[rel=tooltip]')) { 
+      this.$('[rel=tooltip]').tooltip('hide');
+    }
     $(this.el).html(this.template({
       replicas: this.collection,
     }));
+    this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
+  },
+
+  enable: function(event) {
+    var _this = this;
+    if (event) { event.preventDefault(); }
+    var button = $(event.currentTarget);
+    if (buttonDisabled(button)) return false;
+    disableButton(button); 
+    var replicaId = $(event.currentTarget).attr("data-replica-id");
+    $.ajax({
+      url: '/api/sm/replicas/' + replicaId,
+      type: 'PUT',
+      dataType: 'json',
+      data: {enabled: 'True'},
+      success: function() {
+        enableButton(button);
+        _this.collection.fetch({
+          success: function() {
+            _this.renderReplicas();
+          }
+        });
+      },
+      error: function(xhr, status, error) {
+        enableButton(button);
+        var msg = parseXhrError(xhr)
+        _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
+      }
+    });
+  },
+
+  disable: function(event) {
+    var _this = this;
+    if (event) { event.preventDefault(); }
+    var button = $(event.currentTarget);
+    if (buttonDisabled(button)) return false;
+    disableButton(button); 
+    var replicaId = $(event.currentTarget).attr("data-replica-id");
+    $.ajax({
+      url: '/api/sm/replicas/' + replicaId,
+      type: 'PUT',
+      dataType: 'json',
+      data: {enabled: 'False'},
+      success: function() {
+        enableButton(button);
+        _this.collection.fetch({
+          success: function() {
+            _this.renderReplicas();
+          }
+        });
+      },
+      error: function(xhr, status, error) {
+        enableButton(button);
+        var msg = parseXhrError(xhr)
+        _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
+      }
+    });
   }
 
 });
