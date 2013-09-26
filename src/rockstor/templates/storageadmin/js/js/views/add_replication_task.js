@@ -33,6 +33,8 @@ AddReplicationTaskView = RockstoreLayoutView.extend({
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.replication_add_replication_task;
+    this.shares = new ShareCollection();
+    this.dependencies.push(this.shares);
     this.appliances = new ApplianceCollection();
     this.dependencies.push(this.appliances);
   },
@@ -43,9 +45,42 @@ AddReplicationTaskView = RockstoreLayoutView.extend({
   },
   
   renderNewReplicationTask: function() {
+    var _this = this;
     $(this.el).html(this.template({
+      shares: this.shares,
       appliances: this.appliances
     }));
+    $('#replication-task-create-form').validate({
+      onfocusout: false,
+      onkeyup: false,
+      rules: {
+        task_name: "required",  
+        target_pool: "required"
+      },
+      submitHandler: function() {
+        var button = $('#create_replication_task');
+        if (buttonDisabled(button)) return false;
+        disableButton(button);
+        $.ajax({
+          url: '/api/sm/replicas/',
+          type: 'POST',
+          dataType: 'json',
+          contentType: 'application/json',
+          data: JSON.stringify(_this.$('#replication-task-create-form').getJSON()),
+          success: function() {
+            enableButton(button);
+            app_router.navigate('replication', {trigger: true});
+          },
+          error: function(xhr, status, error) {
+            enableButton(button);
+            var msg = parseXhrError(xhr)
+            _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
+
+          }
+        });
+        return false;
+      }
+    });
   },
 
   cancel: function(event) {

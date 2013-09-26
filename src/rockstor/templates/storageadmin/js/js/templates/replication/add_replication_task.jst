@@ -34,7 +34,18 @@
           </div>
         </div>
         <div class="control-group">
-          <label class="control-label" for="appliance_name">Target appliance<span class="required"> *</span></label>
+          <label class="control-label" for="share">Share to replicate<span class="required"> *</span></label>
+          <div class="controls">
+            <select id="share" name="share">
+              <% shares.each(function(share, index) { %>
+                <option value="<%= share.get('name') %>"> <%= share.get('name') %> </option>
+              <% }); %> 
+
+            </select>
+          </div>
+        </div>
+        <div class="control-group">
+          <label class="control-label" for="appliance">Target appliance<span class="required"> *</span></label>
           <div class="controls">
             <select id="appliance" name="appliance">
               <% appliances.each(function(appliance, index) { %>
@@ -45,9 +56,15 @@
           </div>
         </div>
         <div class="control-group">
-          <label class="control-label" for="target_pool">Target pool name<span class="required"> *</span></label>
+          <label class="control-label" for="pool">Target pool name<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" id="target_pool" name="target_pool" placeholder="Target pool name" >
+            <input type="text" id="pool" name="pool" placeholder="Target pool name" >
+          </div>
+        </div>
+        <div class="control-group">
+          <label class="control-label" for="frequency">Frequency<span class="required"> *</span></label>
+          <div class="controls">
+            <input type="text" id="frequency" name="frequency" placeholder="Frequency" >
           </div>
         </div>
         <div class="control-group">
