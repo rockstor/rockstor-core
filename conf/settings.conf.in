@@ -226,6 +226,8 @@ PIPELINE_JS = {
             'js/views/probe_run_list.js',
             'js/views/probe_detail.js',
             'js/views/run_probe.js',
+            'js/views/replication.js',
+            'js/views/add_replication_task.js',
             ),
         'output_filename': 'js/application.js'
         },

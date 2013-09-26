@@ -229,3 +229,11 @@ var ProbeTemplateCollection = Backbone.Collection.extend({
   url: "/api/sm/sprobes/?format=json"
 });
 
+var Replica = Backbone.Model.extend({
+  urlRoot: "/api/sm/replicas"                                   
+});
+var ReplicaCollection = RockStorPaginatedCollection.extend({
+  model: Replica,
+  baseUrl: "/api/sm/replicas/"
+});
+
