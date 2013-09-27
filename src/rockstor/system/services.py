@@ -39,9 +39,12 @@ def chkconfig(service_name, switch):
     return run_command([CHKCONFIG_BIN, service_name, switch])
 
 def service_status(service_name):
-    if (service_name == 'nis'):
+    if (service_name == 'nis' or service_name == 'nfs'):
         out, err, rc = init_service_op('rpcbind', 'status', throw=False)
         if (rc != 0):
             return out, err, rc
-        return init_service_op('ypbind', 'status', throw=False)
+        if (service_name == 'nis'):
+            return init_service_op('ypbind', 'status', throw=False)
+        else:
+            return init_service_op('nfs', 'status', throw=False)
     return init_service_op(service_name, 'status', throw=False)
