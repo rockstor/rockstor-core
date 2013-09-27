@@ -237,3 +237,29 @@ var ReplicaCollection = RockStorPaginatedCollection.extend({
   baseUrl: "/api/sm/replicas/"
 });
 
+var ReplicaTrail = Backbone.Model.extend({
+  urlRoot: '/api/sm/replicas/trail/replica/' + this.replicaId
+});
+
+var ReplicaTrailCollection = Backbone.Collection.extend({
+  initialize: function(models, options) {
+    if (options) {
+      this.replicaId = options.replicaId;
+    }
+  },
+  baseUrl: function() {
+    if (this.replicaId) {
+      return '/api/sm/replicas/trail/replica/' + this.replicaId;
+    } else {
+      return '/api/sm/replicas/trail';
+    }
+  },
+  url: function() {
+    if (this.replicaId) {
+      return '/api/sm/replicas/trail/replica/' + this.replicaId;
+    } else {
+      return '/api/sm/replicas/trail';
+    }
+  }
+});
+
