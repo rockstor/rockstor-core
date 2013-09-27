@@ -53,7 +53,15 @@
               <td>
                 <% if (replicaTrailMap[replica.id]) { %>
                   <% if (replicaTrailMap[replica.id].length > 0) { %>
-                    <a href="#replication/<%= replica.id %>/trails" class="replica-trail"><%= moment(replicaTrailMap[replica.id][0].get('state_ts')).fromNow() %></a>
+                    <% var rt = replicaTrailMap[replica.id][0]; %>
+                    <% if (rt.get('status') == 'failed') { %>
+                      <a href="#replication/<%= replica.id %>/trails" class="replica-trail"><i class="icon-warning-sign></i> <%= rt.get('status') %></a>
+                    <% } else if (rt.get('status') == 'pending') { %>
+                      <a href="#replication/<%= replica.id %>/trails" class="replica-trail"><%= rt.get('status') %></a>
+                    
+                    <% } else if (rt.get('status') == 'succeeded') { %>
+                      <a href="#replication/<%= replica.id %>/trails" class="replica-trail"><%= moment(rt.get('end_ts')).fromNow() %></a>
+                    <% } %>
                   <% } %>
                 <% } %>
 
