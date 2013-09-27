@@ -1,0 +1,79 @@
+<script>
+/*
+ * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ * 
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ * 
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ */
+</script>
+
+
+<div class="messages"></div>
+<% if (!replicas.isEmpty()) { %>
+  <div class="row-fluid">
+    <div class="span8">
+      <div class="messages"></div>
+      <!-- Content -->
+      <table id="replicas-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of replicas">
+        <thead>
+          <tr>
+            <th scope="col" abbr="Share">Source (Share) </th>
+            <th scope="col" abbr="Appliance">Destination (Appliance and Pool)</th>
+            <th scope="col" abbr="Frequency">Frequency</th>
+            <th scope="col" abbr="Enabled">Enabled</th>
+            <th scope="col" abbr="Last">Last backup</th>
+            <th scope="col" abbr="Actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% replicas.each(function(replica, index) { %>
+            <tr>
+              <td><%= replica.get('share') %></td>
+              <td><%= replica.get('appliance') %> (<%= replica.get('dpool') %>)</td>
+              <td><%= moment.duration(replica.get('frequency')*1000).humanize() %></td>
+              <td>
+                <% if (replica.get('enabled')) { %>
+                  <input type="checkbox" disabled="true" checked="true"></input>
+                <% } else { %>
+                  <input type="checkbox" disabled="true"></input>
+                <% } %>
+              </td>
+              <td>
+                <% if (replicaTrailMap[replica.id]) { %>
+                  <% if (replicaTrailMap[replica.id].length > 0) { %>
+                    <a href="#replication/<%= replica.id %>/trails" class="replica-trail"><%= moment(replicaTrailMap[replica.id][0].get('state_ts')).fromNow() %></a>
+                  <% } %>
+                <% } %>
+
+              </td>
+              <td>
+                <% if (replica.get('enabled')) { %>
+                  <a href="#" class="disable" data-replica-id="<%= replica.id %>"><i class="icon-minus-sign" rel="tooltip" title="Disable"></i></a>
+                <% } else { %>
+                  <a href="#" class="enable" data-replica-id="<%= replica.id %>"><i class="icon-plus-sign" rel="tooltip" title="Enable"></i></a>
+                <% } %>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div> <!-- span8 -->
+  </div> <!-- row-fluid -->
+<% } else { %>
+  <h4>No replication tasks have been created</h4>
+<% } %>
+
+<a href="#add_replication_task" class="btn btn-primary">Add Replication Task</a>
+
