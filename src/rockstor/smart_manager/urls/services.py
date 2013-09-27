@@ -21,7 +21,7 @@ from smart_manager.views import (BaseServiceView, NISServiceView,
                                  SambaServiceView, NFSServiceView,
                                  NTPServiceView)
 
-command_regex = ('config|start|stop|reload|restart')
+command_regex = ('config|start|stop')
 
 urlpatterns = patterns('',
     # Services
