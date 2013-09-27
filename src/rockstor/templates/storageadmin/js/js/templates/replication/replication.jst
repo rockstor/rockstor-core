@@ -30,7 +30,8 @@
         <thead>
           <tr>
             <th scope="col" abbr="Share">Source (Share) </th>
-            <th scope="col" abbr="Appliance">Destination (Appliance and Pool)</th>
+            <th scope="col" abbr="Appliance">Destination Appliance</th>
+            <th scope="col" abbr="Appliance">Destination Pool</th>
             <th scope="col" abbr="Frequency">Frequency</th>
             <th scope="col" abbr="Enabled">Enabled</th>
             <th scope="col" abbr="Last">Last backup</th>
@@ -41,7 +42,8 @@
           <% replicas.each(function(replica, index) { %>
             <tr>
               <td><%= replica.get('share') %></td>
-              <td><%= replica.get('appliance') %> (<%= replica.get('dpool') %>)</td>
+              <td><%= replica.get('appliance') %></td>
+              <td><%= replica.get('dpool') %></td>
               <td><%= moment.duration(replica.get('frequency')*1000).humanize() %></td>
               <td>
                 <% if (replica.get('enabled')) { %>

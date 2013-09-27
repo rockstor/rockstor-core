@@ -67,7 +67,7 @@ var RockStorPaginatedCollection = Backbone.Collection.extend({
   
   goToPage: function(newPage) {
     this.page = newPage;
-    return this.fetch();
+    return this.fetch({reset: true});
   },
 
   extraParams: function() {

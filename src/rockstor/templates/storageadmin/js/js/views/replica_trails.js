@@ -34,26 +34,41 @@ ReplicaTrailsView = RockstoreLayoutView.extend({
     this.constructor.__super__.initialize.apply(this, arguments);
     // set template
     this.template = window.JST.replication_replica_trails;
+    this.paginationTemplate = window.JST.common_pagination;
     // add dependencies
     this.replicaId = this.options.replicaId;
     this.replica = new Replica({id: this.replicaId});
     this.dependencies.push(this.replica);
-    this.replicaTrails = new ReplicaTrailCollection(null, {
+    this.collection = new ReplicaTrailCollection(null, {
       replicaId: this.replicaId
     });
-    this.dependencies.push(this.replicaTrails);
+    this.collection.pageSize = 10;
+    this.dependencies.push(this.collection);
+    this.collection.on("reset", this.renderReplicaTrails, this);
+    // has the replica been fetched? prevents renderReplicaTrails executing
+    // (because of collection reset) before replica has been fetched
+    this.replicaFetched = false;  
   },
 
   render: function() {
-    this.fetch(this.renderReplicaTrails, this);
+    this.fetch(this.firstFetch, this);
     return this;
+  },
+  
+  firstFetch: function() {
+    this.replicaFetched = true;
+    this.renderReplicaTrails();
   },
 
   renderReplicaTrails: function() {
+    if (!this.replicaFetched) return false;
     var _this = this;
     $(this.el).html(this.template({
       replica: this.replica,
-      replicaTrails: this.replicaTrails
+      replicaTrails: this.collection
+    }));
+    this.$(".pagination-ph").html(this.paginationTemplate({
+      collection: this.collection
     }));
     this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
   },
