@@ -52,20 +52,23 @@ class ReplicaScheduler(Process):
     def _prune_workers(self, workers):
         for wd in workers:
             for w in wd.keys():
-                if (not wd[w].is_alive()):
+                if (wd[w].exitcode is not None):
                     del(wd[w])
         return workers
 
     def run(self):
+        sleep_time = 0
         while True:
             try:
                 self.rep_ip = self._replication_interface()
                 break
             except:
-                logger.info('failed to get replication interface')
-                time.sleep(0.5)
-
-        logger.info('got rep_ip: %s' % self.rep_ip)
+                time.sleep(1)
+                sleep_time = sleep_time + 1
+                if (sleep_time % 30 == 0):
+                    msg = ('Failed to get replication interface for last %d'
+                           ' seconds' % sleep_time)
+                    logger.info('failed to get replication interface')
 
         ctx = zmq.Context()
         #fs diffs are sent via this publisher.
@@ -109,7 +112,7 @@ class ReplicaScheduler(Process):
             if (total_sleep >= 60 and len(self.senders) < 50):
                 logger.info('scanning for replicas')
                 for r in Replica.objects.filter(enabled=True):
-                    rt = ReplicaTrail.objects.filter(replica=r).order_by('-state_ts')
+                    rt = ReplicaTrail.objects.filter(replica=r).order_by('-snapshot_created')
                     now = datetime.utcnow().replace(second=0,
                                                     microsecond=0,
                                                     tzinfo=utc)
@@ -119,8 +122,8 @@ class ReplicaScheduler(Process):
                         snap_name = ('%s_1' % snap_name)
                         sw = Sender(r, self.rep_ip, self.pubq, Queue(),
                                     snap_name)
-                    elif (rt[0].status == 'send_succeeded' and
-                          (now - rt[0].state_ts).total_seconds() >
+                    elif (rt[0].status == 'succeeded' and
+                          (now - rt[0].end_ts).total_seconds() >
                           r.frequency):
                         snap_name = ('%s_%d' % (snap_name, rt[0].id + 1))
                         sw = Sender(r, self.rep_ip, self.pubq, Queue(),
