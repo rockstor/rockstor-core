@@ -82,13 +82,13 @@ def scan_disks(min_size):
         return disks
 
 def run_command(cmd, shell=False, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE):
+                stderr=subprocess.PIPE, throw=True):
     p = subprocess.Popen(cmd, shell=shell, stdout=stdout, stderr=stderr)
     out, err = p.communicate()
     out = out.split('\n')
     err = err.split('\n')
     rc = p.returncode
-    if (rc != 0):
+    if (throw and rc != 0):
         raise CommandException(out, err, rc)
     return (out, err, rc)
 
