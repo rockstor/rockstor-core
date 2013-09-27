@@ -48,10 +48,12 @@ class NFSServiceView(BaseServiceView):
 
         else:
             try:
-                switch = 'on'
                 if (command == 'stop'):
-                    switch = 'off'
-                chkconfig('nfs', switch)
+                    chkconfig('nfs', 'on')
+                else:
+                    chkconfig('nfs', 'on')
+                    chkconfig('rpcbind', 'on')
+                    init_service_op('rpcbind', command)
                 init_service_op('nfs', command)
             except Exception, e:
                 logger.exception(e)
