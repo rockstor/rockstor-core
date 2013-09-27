@@ -50,7 +50,7 @@ class ReplicaTrailView(GenericView):
         snap_name = request.DATA['snap_name']
         ts = datetime.utcnow().replace(tzinfo=utc)
         rt = ReplicaTrail(replica=replica, snap_name=snap_name,
-                          status='snap_created', state_ts=ts)
+                          status='pending', snapshot_created=ts)
         rt.save()
         return Response(ReplicaTrailSerializer(rt).data)
 
@@ -58,6 +58,12 @@ class ReplicaTrailView(GenericView):
     def put(self, request, rtid):
         rt = ReplicaTrail.objects.get(id=rtid)
         new_status = request.DATA['status']
+        if ('error' in request.DATA):
+            rt.error = request.DATA['error']
+        if ('kb_sent' in request.DATA):
+            rt.kb_sent = request.DATA['kb_sent']
+        if ('end_ts' in request.DATA):
+            rt.end_ts = request.DATA['end_ts']
         rt.status = new_status
         rt.save()
         return Response(ReplicaTrailSerializer(rt).data)
