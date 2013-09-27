@@ -55,7 +55,11 @@ AddReplicationTaskView = RockstoreLayoutView.extend({
       onkeyup: false,
       rules: {
         task_name: "required",  
-        target_pool: "required"
+        pool: "required",
+        frequency: {
+          required: true,
+          number: true
+        }
       },
       submitHandler: function() {
         var button = $('#create_replication_task');
