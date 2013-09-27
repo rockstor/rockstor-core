@@ -241,20 +241,15 @@ var ReplicaTrail = Backbone.Model.extend({
   urlRoot: '/api/sm/replicas/trail/replica/' + this.replicaId
 });
 
-var ReplicaTrailCollection = Backbone.Collection.extend({
+var ReplicaTrailCollection = RockStorPaginatedCollection.extend({
+  model: ReplicaTrail,
   initialize: function(models, options) {
+    this.constructor.__super__.initialize.apply(this, arguments);
     if (options) {
       this.replicaId = options.replicaId;
     }
   },
   baseUrl: function() {
-    if (this.replicaId) {
-      return '/api/sm/replicas/trail/replica/' + this.replicaId;
-    } else {
-      return '/api/sm/replicas/trail';
-    }
-  },
-  url: function() {
     if (this.replicaId) {
       return '/api/sm/replicas/trail/replica/' + this.replicaId;
     } else {

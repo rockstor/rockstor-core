@@ -50,7 +50,9 @@ ReplicationView = RockstoreLayoutView.extend({
   },
 
   renderReplicas: function() {
+
     var _this = this;
+    
     // remove existing tooltips
     if (this.$('[rel=tooltip]')) { 
       this.$('[rel=tooltip]').tooltip('hide');
@@ -68,8 +70,8 @@ ReplicationView = RockstoreLayoutView.extend({
         return replicaTrail.get('replica') == replica.id;
       });
       _this.replicaTrailMap[replica.id] = _.sortBy(tmp, function(replicaTrail) {
-        return -moment(replicaTrail.get('state_ts')).valueOf();
-      });
+        return moment(replicaTrail.get('snapshot_created')).valueOf();
+      }).reverse();
     });
     $(this.el).html(this.template({
       replicas: this.collection,
@@ -77,6 +79,7 @@ ReplicationView = RockstoreLayoutView.extend({
       replicaTrailMap: this.replicaTrailMap
     }));
     this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
+   
   },
 
   enable: function(event) {
