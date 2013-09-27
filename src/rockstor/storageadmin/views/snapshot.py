@@ -54,15 +54,13 @@ class SnapshotView(GenericView):
         return Snapshot.objects.filter(share=share)
 
     @transaction.commit_on_success
-    def post(self, request, sname, snap_name, command=None):
-        share = self._validate_share(sname, request)
-        pool_device = Disk.objects.filter(pool=share.pool)[0].name
-        if (command is None):
-            if (Snapshot.objects.filter(share=share, name=snap_name).exists()):
-                e_msg = ('Snapshot with name: %s already exists for the '
-                         'share: %s' % (snap_name, sname))
-                handle_exception(Exception(e_msg), request)
+    def _create(self, share, snap_name, pool_device, request):
+        if (Snapshot.objects.filter(share=share, name=snap_name).exists()):
+            e_msg = ('Snapshot with name: %s already exists for the '
+                     'share: %s' % (snap_name, share.name))
+            handle_exception(Exception(e_msg), request)
 
+        try:
             add_snap(share.pool.name, pool_device, share.subvol_name,
                      snap_name)
             snap_id = share_id(share.pool.name, pool_device, snap_name)
@@ -72,31 +70,41 @@ class SnapshotView(GenericView):
                          qgroup=qgroup_id)
             s.save()
             return Response(SnapshotSerializer(s).data)
+        except Exception, e:
+            logger.exception(e)
+            handle_exception(e, request)
 
-        if (command == 'rollback'):
-            try:
-                snap = Snapshot.objects.get(share=share, name=snap_name)
-            except:
-                e_msg = ('Snapshot with name: %s does not exist for the '
-                         'share: %s' % (snap_name, sname))
-                handle_exception(Exception(e_msg), request)
-            try:
-                rollback_snap(snap_name, sname, share.subvol_name,
-                              share.pool.name, pool_device)
-                share.subvol_name = snap_name
-                update_quota(share.pool.name, pool_device, snap.qgroup,
-                             share.size * 1024)
-                share.qgroup = snap.qgroup
-                share.save()
-                snap.delete()
-                return Response()
-            except Exception, e:
-                logger.exception(e)
-                handle_exception(e, request)
-        else:
-            e_msg = ('Unknown command: %s' % command)
+    @transaction.commit_on_success
+    def _rollback(self, share, snap_name, pool_device, request):
+        try:
+            snap = Snapshot.objects.get(share=share, name=snap_name)
+        except:
+            e_msg = ('Snapshot with name: %s does not exist for the '
+                     'share: %s' % (snap_name, share.name))
             handle_exception(Exception(e_msg), request)
+        try:
+            rollback_snap(snap_name, share.name, share.subvol_name,
+                          share.pool.name, pool_device)
+            share.subvol_name = snap_name
+            update_quota(share.pool.name, pool_device, snap.qgroup,
+                         share.size * 1024)
+            share.qgroup = snap.qgroup
+            share.save()
+            snap.delete()
+            return Response()
+        except Exception, e:
+            logger.exception(e)
+            handle_exception(e, request)
 
+    def post(self, request, sname, snap_name, command=None):
+        share = self._validate_share(sname, request)
+        pool_device = Disk.objects.filter(pool=share.pool)[0].name
+        if (command is None):
+            return self._create(share, snap_name, pool_device, request)
+        if (command == 'rollback'):
+            return self._rollback(share, snap_name, pool_device, request)
+        e_msg = ('Unknown command: %s' % command)
+        handle_exception(Exception(e_msg), request)
 
     def _validate_share(self, sname, request):
         try:
