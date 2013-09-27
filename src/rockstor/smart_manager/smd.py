@@ -29,7 +29,7 @@ import logging
 logger = logging.getLogger(__name__)
 from smart_manager import agents
 from scheduler.task_dispatcher import TaskDispatcher
-import time
+import sys
 
 def process_model_queue(q):
     cleanup_map = {}
@@ -52,34 +52,38 @@ def main():
 
     proc_q = Queue()
     service_q = Queue()
-    pr = ProcRetreiver(proc_q)
-    pr.daemon = True
-    pr.start()
-    service_mon = ServiceMonitor(service_q)
-    service_mon.daemon = True
-    service_mon.start()
-    stap_proc = Stap(settings.TAP_SERVER)
-    stap_proc.start()
-    task_proc = TaskDispatcher(settings.SCHEDULER)
-    task_proc.start()
+    live_procs = [ProcRetreiver(proc_q), ServiceMonitor(service_q),
+                  Stap(settings.TAP_SERVER),
+                  TaskDispatcher(settings.SCHEDULER),]
+    for p in live_procs:
+        p.start()
+    stap_proc = live_procs[2]
 
     while (True):
+        for p in live_procs:
+            if (not p.is_alive()):
+                msg = ('%s is dead. exitcode: %d' % (p.name, p.exitcode))
+                logger.error(msg)
+                live_procs.remove(p)
+        if (len(live_procs) == 0):
+            logger.error('All child processes have exited. I am returning.')
+            context.term()
+            return -1
+
         process_model_queue(proc_q)
         process_model_queue(service_q)
-        try:
-            sink_data = pull_socket.recv_json()
-            if (isinstance(sink_data, dict)): #worker data
-                cb = getattr(agents, sink_data['cb'])
-                cb(sink_data['part_out'], sink_data['rid'], logger)
-            else:
-                #smart probe django model
-                for d in deserialize("json", sink_data):
-                    d.save()
-        except zmq.error.Again:
-            pass
-        except Exception, e:
-            logger.info('exception while processing sink data')
-            logger.exception(e)
-        finally:
-            time.sleep(1)
-    #@todo: close zmq context
+        if (stap_proc.is_alive()):
+            try:
+                sink_data = pull_socket.recv_json()
+                if (isinstance(sink_data, dict)): #worker data
+                    cb = getattr(agents, sink_data['cb'])
+                    cb(sink_data['part_out'], sink_data['rid'], logger)
+                else:
+                    #smart probe django model
+                    for d in deserialize("json", sink_data):
+                        d.save()
+            except zmq.error.Again:
+                pass
+            except Exception, e:
+                logger.error('exception while processing sink data')
+                logger.exception(e)

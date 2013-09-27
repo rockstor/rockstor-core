@@ -48,12 +48,12 @@ class NISServiceView(BaseServiceView):
 
         else:
             try:
-                switch = 'on'
                 if (command == 'stop'):
-                    switch = 'off'
-                chkconfig('rpcbind', switch)
-                chkconfig('ypbind', switch)
-                init_service_op('rpcbind', command)
+                    chkconfig('ypbind', 'off')
+                else:
+                    chkconfig('ypbind', 'on')
+                    chkconfig('rpcbind', 'on')
+                    init_service_op('rpcbind', command)
                 init_service_op('ypbind', command)
             except Exception, e:
                 logger.exception(e)

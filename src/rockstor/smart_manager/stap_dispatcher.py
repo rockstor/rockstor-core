@@ -32,9 +32,8 @@ from datetime import datetime
 from smart_manager.models import SProbe
 from django.conf import settings
 from django.core.serializers import serialize
+from django.utils.timezone import utc
 from stap_worker import StapWorker
-
-
 import logging
 logger = logging.getLogger(__name__)
 
@@ -46,95 +45,94 @@ class Stap(Process):
         self.workers = {}
         super(Stap, self).__init__()
 
-    def run(self):
-        context = zmq.Context()
-        pull_socket = context.socket(zmq.PULL)
-        pull_socket.RCVTIMEO = 500
-        pull_socket.bind('tcp://%s:%d' % self.address)
-        sink_socket = context.socket(zmq.PUSH)
-        sink_socket.connect('tcp://%s:%d' % settings.SPROBE_SINK)
-        while True:
-            if (os.getppid() != self.ppid):
-                logger.info('ppids: %d, %d' % (os.getppid(), self.ppid))
-                for w in self.workers.keys():
-                    worker = self.workers[w]
-                    if (worker.is_alive()):
-                        worker.task['queue'].put('stop')
-                break
-
-            for w in self.workers.keys():
-                if (not self.workers[w].is_alive()):
+    def _prune_workers(self, workers, sink_socket):
+        for w in workers.keys():
+            #reading exitcode of properly exited child relieves it from
+            #being a zombie.
+            ec = workers[w].exitcode
+            if (ec is not None):
+                if (ec != 0):
                     ro = SProbe.objects.get(id=w)
                     ro.state = 'error'
-                    ro.end = datetime.utcnow()
-                    data = serialize("json", (ro,))
-                    sink_socket.send_json(data)
-                    del(self.workers[w])
+                    ro.end = datetime.utcnow().replace(tzinfo=utc)
+                    self._sink_put(sink_socket, ro)
+                del(self.workers[w])
 
-            task = None
+    def _sink_put(self, sink, ro):
+        data = serialize("json", (ro,))
+        sink.send_json(data)
+
+    def _get_ro(self, rid, num_tries):
+        for i in range(num_tries):
             try:
-                task = pull_socket.recv_json()
-                logger.info('received task: %s' % (repr(task)))
+                return SProbe.objects.get(id=rid)
             except:
-                #will sleeping here help? or some other zmq based wakeup?
-                continue
+                logger.error('waiting for probe object. num_tries '
+                             '= %d' % i)
+                time.sleep(1)
+        return None
 
-            if (task['action'] == 'start'):
-                #wait a little till the recipe instance is saved by the
-                #API. non-issue most of the time.
-                num_tries = 0
-                while True:
-                    try:
-                        ro = SProbe.objects.get(id=task['roid'])
-                        start_tap = True
-                        logger.info('start_tap is true')
-                        break
-                    except:
-                        logger.error('waiting for recipe object. num_tries '
-                                     '= %d' % num_tries)
-                        time.sleep(1)
-                        num_tries = num_tries + 1
-                        if (num_tries > 20):
-                            break
+    def run(self):
+        try:
+            context = zmq.Context()
+            pull_socket = context.socket(zmq.PULL)
+            pull_socket.RCVTIMEO = 1000
+            pull_socket.bind('tcp://%s:%d' % self.address)
+            sink_socket = context.socket(zmq.PUSH)
+            sink_socket.connect('tcp://%s:%d' % settings.SPROBE_SINK)
+        except Exception, e:
+            msg = ('Exception while creating initial sockets. Aborting.')
+            logger.error(msg)
+            logger.exception(e)
+            raise e
+        try:
+            while (True):
+                if (os.getppid() != self.ppid):
+                    msg = ('Parent process(smd) exited. I am exiting too.')
+                    logger.error(msg)
+                    return -1
+                self.run_dispatcher(pull_socket, sink_socket)
+        except Exception, e:
+            msg = ('Unhandled exception in smart probe dispatcher. Exiting.')
+            logger.error(msg)
+            logger.exception(e)
+            pull_socket.close()
+            sink_socket.close()
+            context.term()
+            raise e
 
-                if (not start_tap):
-                    logger.error('not starting the tap')
-                    ro.state = 'error'
-                    ro.end = datetime.utcnow()
-                    data = serialize("json", (ro,))
-                    sink_socket.send_json(data)
-                    continue
+    def run_dispatcher(self, pull_socket, sink_socket):
+        self._prune_workers(self.workers, sink_socket)
+        task = None
+        try:
+            task = pull_socket.recv_json()
+        except:
+            return
 
-                task['queue'] = Queue()
-                task['ro'] = ro
-                sworker = StapWorker(task)
-                self.workers[task['roid']] = sworker
-                sworker.daemon = True
-                sworker.start()
-                if (sworker.is_alive()):
-                    ro.state = 'running'
-                    data = serialize("json", (ro,))
-                    sink_socket.send_json(data)
-                else:
-                    ro.state = 'error'
-                    ro.end = datetime.utcnow()
-                    data = serialize("json", (ro,))
-                    sink_socket.send_json(data)
+        if (task['action'] == 'start'):
+            #wait a little till the recipe instance is saved by the
+            #API. non-issue most of the time.
+            ro = self._get_ro(task['roid'], 20)
+            if (ro is None):
+                return logger.error('Unable to retreive rid: %d. giving up.')
+            task['queue'] = Queue()
+            task['ro'] = ro
+            sworker = StapWorker(task)
+            self.workers[task['roid']] = sworker
+            sworker.start()
+            if (sworker.is_alive()):
+                ro.state = 'running'
+            else:
+                ro.state = 'error'
+                ro.end = datetime.utcnow().replace(tzinfo=utc)
+            return self._sink_put(sink_socket, ro)
 
-            elif (task['action'] == 'stop'):
-                if (task['roid'] in self.workers):
-                    sworker = self.workers[task['roid']]
-                    #stop the worker, make sure it's stopped
-                    sworker.task['queue'].put('stop')
-                    del(self.workers[task['roid']])
-                ro = SProbe.objects.get(id=task['roid'])
-                ro.state = 'stopped'
-                ro.end = datetime.utcnow()
-                data = serialize("json", (ro,))
-                sink_socket.send_json(data)
-
-        pull_socket.close()
-        sink_socket.close()
-        context.term()
-        logger.info('terminated context. exiting')
+        if (task['action'] == 'stop'):
+            if (task['roid'] in self.workers):
+                sworker = self.workers[task['roid']]
+                sworker.task['queue'].put('stop')
+            ro = SProbe.objects.get(id=task['roid'])
+            ro.state = 'stopped'
+            ro.end = datetime.utcnow().replace(tzinfo=utc)
+            return self._sink_put(sink_socket, ro)
 
