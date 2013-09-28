@@ -21,9 +21,10 @@ system level helper methods to interact with the filesystem
 """
 
 import re
+import time
 
 from system.osi import (run_command, create_tmp_dir, rm_tmp_dir)
-
+from system.exceptions import CommandException
 
 MKFS_BTRFS = '/sbin/mkfs.btrfs'
 BTRFS = '/sbin/btrfs'
@@ -118,6 +119,24 @@ def is_share_mounted(sname, mnt_prefix=DEFAULT_MNT_DIR):
                 return True
     return False
 
+def subvol_list_helper(mnt_pt):
+    """
+    temporary solution until btrfs is fixed. wait upto 30 secs :(
+    """
+    num_tries = 0
+    while (True):
+        try:
+            return run_command([BTRFS, 'subvolume', 'list', mnt_pt])
+        except CommandException, ce:
+            if (ce.rc != 19):
+                #rc == 19 is due to the slow kernel cleanup thread. It should
+                #eventually succeed.
+                raise ce
+            time.sleep(1)
+            num_tries = num_tries + 1
+            if (num_tries > 30):
+                raise ce
+
 def share_id(pool_name, pool_device, share_name):
     """
     returns the subvolume id, becomes the share's uuid.
@@ -126,8 +145,7 @@ def share_id(pool_name, pool_device, share_name):
     """
     pool_device = '/dev/' + pool_device
     root_pool_mnt = mount_root(pool_name, pool_device)
-    cmd = [BTRFS, 'subvolume', 'list', root_pool_mnt]
-    out, err, rc = run_command(cmd)
+    out, err, rc = subvol_list_helper(root_pool_mnt)
     subvol_id = None
     for line in out:
         if (re.search(share_name + '$', line) is not None):
@@ -163,7 +181,13 @@ def add_snap(pool_name, pool_device, share_name, snap_name):
     snap_full_path = share_full_path + '/' + snap_name
     snap_cmd = [BTRFS, 'subvolume', 'snapshot', '-r', share_full_path,
                 snap_full_path]
-    run_command(snap_cmd)
+    try:
+        run_command(snap_cmd)
+    except CommandException, ce:
+        if (ce.rc != 19):
+            #rc == 19 is due to the slow kernel cleanup thread. snapshot gets
+            #created just fine. lookup is delayed arbitrarily.
+            raise ce
 
 def remove_snap(pool_name, pool_device, share_name, snap_name):
     """
