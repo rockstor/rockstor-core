@@ -29,6 +29,7 @@
       <table id="replicas-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of replicas">
         <thead>
           <tr>
+            <th scope="col" abbr="Share">Task name </th>
             <th scope="col" abbr="Share">Source (Share) </th>
             <th scope="col" abbr="Appliance">Destination Appliance</th>
             <th scope="col" abbr="Appliance">Destination Pool</th>
@@ -41,6 +42,7 @@
         <tbody>
           <% replicas.each(function(replica, index) { %>
             <tr>
+              <td><%= replica.get('task_name') %></td>
               <td><%= replica.get('share') %></td>
               <td><a href="https://<%= replica.get('appliance') %>" target="_blank"><%= replica.get('appliance') %></a></td>
               <td><%= replica.get('dpool') %></td>

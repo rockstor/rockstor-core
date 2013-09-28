@@ -19,7 +19,7 @@
  */
 </script>
 
-<h4>Replication history for <%= replica.get('share') %> on target appliance:pool <%= replica.get('appliance') %>: <%= replica.get('dpool') %></h4>
+<h4>Replication history for <%= replica.get('task_name') %> ( <%= replica.get('share') %> on <%= replica.get('appliance') %>: <%= replica.get('dpool') %> )</h4>
 <% if (!replicaTrails.isEmpty()) { %>
   <div class="row-fluid">
     <div class="span12">
