@@ -8,8 +8,8 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding field 'Replica.user_tag'
-        db.add_column('smart_manager_replica', 'user_tag',
+        # Adding field 'Replica.task_name'
+        db.add_column('smart_manager_replica', 'task_name',
                       self.gf('django.db.models.fields.CharField')(default='default', max_length=1024),
                       keep_default=False)
 
@@ -58,8 +58,8 @@ class Migration(SchemaMigration):
 
 
     def backwards(self, orm):
-        # Deleting field 'Replica.user_tag'
-        db.delete_column('smart_manager_replica', 'user_tag')
+        # Deleting field 'Replica.task_name'
+        db.delete_column('smart_manager_replica', 'task_name')
 
         # Adding field 'ReplicaTrail.state_ts'
         db.add_column('smart_manager_replicatrail', 'state_ts',
@@ -262,7 +262,7 @@ class Migration(SchemaMigration):
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'pool': ('django.db.models.fields.CharField', [], {'max_length': '4096'}),
             'share': ('django.db.models.fields.CharField', [], {'max_length': '4096'}),
-            'user_tag': ('django.db.models.fields.CharField', [], {'max_length': '1024'})
+            'task_name': ('django.db.models.fields.CharField', [], {'max_length': '1024'})
         },
         'smart_manager.replicatrail': {
             'Meta': {'object_name': 'ReplicaTrail'},
