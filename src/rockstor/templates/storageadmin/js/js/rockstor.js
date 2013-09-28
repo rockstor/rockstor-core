@@ -428,9 +428,9 @@ RockStorGlobals = {
   applianceNameSet: false,
   currentAppliance: null,
 
-
 }
 
+var RS_DATE_FORMAT = 'h:mm:ss a ddd MMM DD YYYY';
 
 // Constants
 probeStates = {

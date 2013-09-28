@@ -23,6 +23,7 @@ from rest_framework.authentication import (BasicAuthentication,
                                            SessionAuthentication,)
 from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
+from django.conf import settings
 
 
 class GenericView(generics.ListCreateAPIView):
@@ -56,3 +57,9 @@ class GenericView(generics.ListCreateAPIView):
             serializer = self.get_serializer(self.object_list)
 
         return Response(serializer.data)
+
+    def get_paginate_by(self, foo):
+        if (self.paginate_by is not None and self.paginate_by == 0):
+            return None
+        return settings.PAGINATION['page_size']
+

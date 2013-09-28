@@ -55,6 +55,9 @@ var AppRouter = Backbone.Router.extend({
     "analytics": "showProbeRunList",
     "run_probe": "runProbe",
     "probeDetail/:probeName/:probeId": "showProbeDetail",
+    "replication": "showReplication",
+    "replication/:replicaId/trails": "showReplicaTrails",
+    "add_replication_task": "addReplicationTask",
     "*path": "showHome"
   },
 
@@ -300,6 +303,32 @@ var AppRouter = Backbone.Router.extend({
   renderSidebar: function(name, selected) {
     var sidenavTemplate = window.JST["common_sidenav_" + name];
     $("#sidebar-inner").html(sidenavTemplate({selected: selected}));
+  },
+
+  showReplication: function() {
+    this.renderSidebar("storage", "replication");
+    this.cleanup();
+    this.currentLayout = new ReplicationView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  showReplicaTrails: function(replicaId) {
+    this.renderSidebar("storage", "replication");
+    this.cleanup();
+    this.currentLayout = new ReplicaTrailsView({
+      replicaId: replicaId
+    });
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  addReplicationTask: function() {
+    this.renderSidebar("storage", "replication");
+    this.cleanup();
+    this.currentLayout = new AddReplicationTaskView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
   },
 
   cleanup: function() {

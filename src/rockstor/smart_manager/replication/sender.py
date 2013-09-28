@@ -28,6 +28,8 @@ import fcntl
 import json
 from django.conf import settings
 import time
+from datetime import datetime
+from django.utils.timezone import utc
 
 BTRFS = '/sbin/btrfs'
 logger = logging.getLogger(__name__)
@@ -61,6 +63,7 @@ class Sender(Process):
                            'meta_port': self.meta_port,}
         self.meta_end = {'id': self.snap_id,
                          'msg': 'end',}
+        self.kb_sent = 0
         super(Sender, self).__init__()
 
     def _clean_exit(self, msg, exception):
@@ -94,8 +97,7 @@ class Sender(Process):
         meta_push.send_json(self.meta_begin)
         self.q.get(block=True)
 
-        snap_path = ('%s%s/%s' % (settings.MNT_PT, self.replica.pool,
-                                  self.snap_name))
+
         url = ('%ssm/replicas/trail/replica/%d' % (self.baseurl,
                                                    self.replica.id))
         try:
@@ -105,18 +107,18 @@ class Sender(Process):
             msg = ('Failed to create replica trail')
             self._clean_exit(msg, e)
 
-
+        snap_path = ('%s%s/%s/%s' % (settings.MNT_PT, self.replica.pool,
+                                     sname, self.snap_name))
         cmd = [BTRFS, 'send', snap_path]
         if (self.rt is not None):
-            prev_snap = ('%s%s/%s' % (settings.MNT_PT, self.replica.pool,
-                                      self.rt.snap_name))
+            prev_snap = ('%s%s/%s/%s' % (settings.MNT_PT, self.replica.pool,
+                                         sname, self.rt.snap_name))
             cmd = [BTRFS, 'send', '-p', prev_snap, snap_path]
 
         sp = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE,
                               stderr=subprocess.PIPE)
         fcntl.fcntl(sp.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
         logger.info('send started. snap: %s' % snap_path)
-
         alive = True
         while alive:
             try:
@@ -126,6 +128,7 @@ class Sender(Process):
                     alive = False
                 fs_data = sp.stdout.read()
                 self.pub.put('%s%s' % (self.snap_id, fs_data))
+                self.kb_sent = self.kb_sent + len(fs_data)
             except IOError:
                 pass
             except Exception, e:
@@ -147,9 +150,15 @@ class Sender(Process):
         msg = self.q.get(block=True)
         logger.info('fsdata sent, confirmation: %s received' % msg)
         url = ('%ssm/replicas/trail/%d' % (self.baseurl, rt2['id']))
-        data = {'status': 'send_succeeded',}
+        end_ts = datetime.utcnow().replace(tzinfo=utc)
+        data = {'status': 'succeeded',
+                'kb_sent': self.kb_sent,
+                'end_ts' : end_ts,}
         if (msg == 'receive_error'):
-            data = {'status': 'send_failed',}
+            msg = ('Error while transferring data to the remote appliance')
+            data['status'] = 'failed'
+            data['error'] = msg
+            data['send_failed'] = end_ts
         try:
             api_call(url, data=data, calltype='put', save_error=False)
             logger.info('replica status updated to %s' % data['status'])

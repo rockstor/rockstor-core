@@ -229,3 +229,32 @@ var ProbeTemplateCollection = Backbone.Collection.extend({
   url: "/api/sm/sprobes/?format=json"
 });
 
+var Replica = Backbone.Model.extend({
+  urlRoot: "/api/sm/replicas"                                   
+});
+var ReplicaCollection = RockStorPaginatedCollection.extend({
+  model: Replica,
+  baseUrl: "/api/sm/replicas/"
+});
+
+var ReplicaTrail = Backbone.Model.extend({
+  urlRoot: '/api/sm/replicas/trail/replica/' + this.replicaId
+});
+
+var ReplicaTrailCollection = RockStorPaginatedCollection.extend({
+  model: ReplicaTrail,
+  initialize: function(models, options) {
+    this.constructor.__super__.initialize.apply(this, arguments);
+    if (options) {
+      this.replicaId = options.replicaId;
+    }
+  },
+  baseUrl: function() {
+    if (this.replicaId) {
+      return '/api/sm/replicas/trail/replica/' + this.replicaId;
+    } else {
+      return '/api/sm/replicas/trail';
+    }
+  }
+});
+
