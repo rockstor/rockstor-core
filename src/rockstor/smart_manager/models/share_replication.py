@@ -20,7 +20,7 @@ from django.db import models
 
 
 class Replica(models.Model):
-    user_tag = models.CharField(max_length=1024)
+    task_name = models.CharField(max_length=1024)
     share = models.CharField(max_length=4096)
     pool = models.CharField(max_length=4096)
     appliance = models.CharField(max_length=4096)

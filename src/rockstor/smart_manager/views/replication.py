@@ -54,8 +54,8 @@ class ReplicaView(GenericView):
         appliance = self._validate_appliance(aip, request)
         dpool = request.DATA['pool']
         frequency = int(request.DATA['frequency'])
-        user_tag = request.DATA['task_name']
-        r = Replica(user_tag=user_tag,share=sname, appliance=aip,
+        task_name = request.DATA['task_name']
+        r = Replica(task_name=task_name, share=sname, appliance=aip,
                     pool=share.pool.name, dpool=dpool, enabled=True,
                     frequency=frequency)
         r.save()
