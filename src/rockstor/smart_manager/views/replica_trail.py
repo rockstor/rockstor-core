@@ -40,9 +40,8 @@ class ReplicaTrailView(GenericView):
 
         if ('rid' in kwargs):
             replica = Replica.objects.get(id=kwargs['rid'])
-            return ReplicaTrail.objects.filter(replica=replica)
-
-        return ReplicaTrail.objects.all()
+            return ReplicaTrail.objects.filter(replica=replica).order_by('-id')
+        return ReplicaTrail.objects.filter().order_by('-id')
 
     @transaction.commit_on_success
     def post(self, request, rid):

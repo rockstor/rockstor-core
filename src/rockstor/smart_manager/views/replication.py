@@ -44,7 +44,7 @@ class ReplicaView(GenericView):
                 return Replica.objects.get(id=kwargs['rid'])
             except:
                 return []
-        return Replica.objects.all()
+        return Replica.objects.filter().order_by('-id')
 
     @transaction.commit_on_success
     def post(self, request):
@@ -54,8 +54,10 @@ class ReplicaView(GenericView):
         appliance = self._validate_appliance(aip, request)
         dpool = request.DATA['pool']
         frequency = int(request.DATA['frequency'])
-        r = Replica(share=sname, appliance=aip, pool=share.pool.name,
-                    dpool=dpool, enabled=True, frequency=frequency)
+        user_tag = request.DATA['task_name']
+        r = Replica(user_tag=user_tag,share=sname, appliance=aip,
+                    pool=share.pool.name, dpool=dpool, enabled=True,
+                    frequency=frequency)
         r.save()
         return Response(ReplicaSerializer(r).data)
 
