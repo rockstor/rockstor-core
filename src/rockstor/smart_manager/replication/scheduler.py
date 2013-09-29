@@ -52,29 +52,32 @@ class ReplicaScheduler(Process):
     def _prune_workers(self, workers):
         for wd in workers:
             for w in wd.keys():
-                if (not wd[w].is_alive()):
+                if (wd[w].exitcode is not None):
                     del(wd[w])
         return workers
 
     def run(self):
+        sleep_time = 0
         while True:
             try:
                 self.rep_ip = self._replication_interface()
                 break
             except:
-                logger.info('failed to get replication interface')
-                time.sleep(0.5)
+                time.sleep(1)
+                sleep_time = sleep_time + 1
+                if (sleep_time % 30 == 0):
+                    msg = ('Failed to get replication interface for last %d'
+                           ' seconds' % sleep_time)
+                    logger.info('failed to get replication interface')
 
-        logger.info('got rep_ip: %s' % self.rep_ip)
         ctx = zmq.Context()
-
         #fs diffs are sent via this publisher.
         rep_pub = ctx.socket(zmq.PUB)
         rep_pub.bind('tcp://%s:%d' % (self.rep_ip, self.data_port))
 
         #synchronization messages are received in this pull socket
         meta_pull = ctx.socket(zmq.PULL)
-        meta_pull.RCVTIMEO = 500
+        meta_pull.RCVTIMEO = 100
         meta_pull.bind('tcp://%s:%d' % (self.rep_ip, self.meta_port))
 
         total_sleep = 0
@@ -84,7 +87,6 @@ class ReplicaScheduler(Process):
                 break
 
             while(not self.pubq.empty()):
-                logger.info('pubq not empty')
                 msg = self.pubq.get()
                 rep_pub.send(msg)
 
@@ -97,17 +99,11 @@ class ReplicaScheduler(Process):
                     rw = Receiver(self.recv_meta, Queue())
                     self.receivers[snap_id] = rw
                     rw.start()
-                    logger.info('started receiver')
                 elif (self.recv_meta['msg'] == 'begin_ok'):
                     self.senders[snap_id].q.put('send')
-                    logger.info('begin_ok received: %s' % snap_id)
                 elif (self.recv_meta['msg'] == 'receive_ok' or
                       self.recv_meta['msg'] == 'receive_error'):
                     self.senders[snap_id].q.put(self.recv_meta['msg'])
-                    logger.info('%s received: %s' % (self.recv_meta['msg'],
-                                                     snap_id))
-                else:
-                    pass
             except zmq.error.Again:
                 pass
 
@@ -116,7 +112,7 @@ class ReplicaScheduler(Process):
             if (total_sleep >= 60 and len(self.senders) < 50):
                 logger.info('scanning for replicas')
                 for r in Replica.objects.filter(enabled=True):
-                    rt = ReplicaTrail.objects.filter(replica=r).order_by('-state_ts')
+                    rt = ReplicaTrail.objects.filter(replica=r).order_by('-snapshot_created')
                     now = datetime.utcnow().replace(second=0,
                                                     microsecond=0,
                                                     tzinfo=utc)
@@ -126,8 +122,8 @@ class ReplicaScheduler(Process):
                         snap_name = ('%s_1' % snap_name)
                         sw = Sender(r, self.rep_ip, self.pubq, Queue(),
                                     snap_name)
-                    elif (rt[0].status == 'send_succeeded' and
-                          (now - rt[0].state_ts).total_seconds() >
+                    elif (rt[0].status == 'succeeded' and
+                          (now - rt[0].end_ts).total_seconds() >
                           r.frequency):
                         snap_name = ('%s_%d' % (snap_name, rt[0].id + 1))
                         sw = Sender(r, self.rep_ip, self.pubq, Queue(),
@@ -148,5 +144,4 @@ def main():
     rs = ReplicaScheduler()
     rs.start()
     logger.info('started replica scheduler')
-    while(True):
-        pass
+    rs.join()

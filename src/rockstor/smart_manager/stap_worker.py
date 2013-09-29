@@ -39,25 +39,47 @@ class StapWorker(Process):
         super(StapWorker, self).__init__()
 
     def run(self):
+        try:
+            ctx = zmq.Context()
+            sink_socket = ctx.socket(zmq.PUSH)
+            sink_socket.connect('tcp://%s:%d' % settings.SPROBE_SINK)
+        except Exception, e:
+            msg = ('Exception while creating initial sockets. Aborting.')
+            logger.error(msg)
+            logger.exception(e)
+            raise e
+        try:
+            return self._run_worker(sink_socket)
+        except Exception, e:
+            msg = ('Unhandled exception in smart probe worker. Exiting.')
+            logger.error(msg)
+            logger.exception(e)
+            sink_socket.close()
+            ctx.term()
+            raise e
 
-        self.ctx = zmq.Context()
-        self.sink_socket = self.ctx.socket(zmq.PUSH)
-        self.sink_socket.connect('tcp://%s:%d' % settings.SPROBE_SINK)
-        logger.info('running command')
+    def _run_worker(self, sink_socket):
+        retval = 0
         cmd = [STAP_RUN, self.task['module'],]
         rp = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE,
                               stderr=subprocess.PIPE)
         fcntl.fcntl(rp.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
-        logger.info('started tap')
         probe_stopped = False
         sink_data = {'cb': TAP_MAP[self.task['tap']]['cb'],
                      'rid': self.task['roid'],}
         while True:
+            if (os.getppid() != self.ppid):
+                logger.error('Parent process(stap dispatcher) exited.')
+                rp.terminate()
+                logger.error('Terminated the probe process for rid: %s' %
+                             self.task['roid'])
+                logger.error('I am exiting too.')
+                retval = -1
+                break
             try:
                 sink_data['part_out'] = rp.stdout.read()
-                self.sink_socket.send_json(sink_data)
+                sink_socket.send_json(sink_data)
             except IOError:
-                #occurs when there's no output to read
                 pass
             finally:
                 if (not self.task['queue'].empty()):
@@ -66,13 +88,14 @@ class StapWorker(Process):
                     #@todo: handle pause.
                     rp.terminate()
                     probe_stopped = True
-                    logger.info('received stop')
                     break
 
             if (rp.poll() is not None):
                 if (probe_stopped is not True):
                     msg = ('Probe process died. returncode: %s. '
-                           'stderr: %s' % (rp.returncode, rp.stderr.read()))
+                           'stderr: %s' % (rp.returncode,
+                                           rp.stderr.read()))
                     logger.error(msg)
                 break
             time.sleep(.5)
+        return retval

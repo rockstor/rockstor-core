@@ -20,6 +20,7 @@ from django.db import models
 
 
 class Replica(models.Model):
+    task_name = models.CharField(max_length=1024)
     share = models.CharField(max_length=4096)
     pool = models.CharField(max_length=4096)
     appliance = models.CharField(max_length=4096)
@@ -33,18 +34,28 @@ class Replica(models.Model):
 
 
 class ReplicaTrail(models.Model):
+    """
+    valid paths for the trail
+    1. snapshot_failed (DOA)
+    2. snapshot_created -> send_pending -> send_succeeded (happy path)
+    3. snapshot_created -> send_pending -> send_failed (error)
+    """
     replica = models.ForeignKey(Replica)
     snap_name = models.CharField(max_length=1024)
+    kb_sent = models.IntegerField(default=0)
+    snapshot_created = models.DateTimeField(null=True)
+    snapshot_failed = models.DateTimeField(null=True)
+    send_pending = models.DateTimeField(null=True)
+    send_succeeded = models.DateTimeField(null=True)
+    send_failed = models.DateTimeField(null=True)
+    end_ts = models.DateTimeField(null=True)
     STATUS_CHOICES = [
-        ('snap_created',) * 2,
-        ('snap_failed',) * 2,
-        ('send_pending',) * 2,
-        ('send_succeeded',) * 2,
-        ('send_failed',) * 2,
+        ('pending',) * 2,
+        ('succeeded',) * 2,
+        ('failed',) * 2,
         ]
     status = models.CharField(max_length=10)
-    state_ts = models.DateTimeField(null=True)
-
+    error = models.CharField(max_length=4096, null=True)
 
     class Meta:
         app_label = 'smart_manager'

@@ -15,5 +15,10 @@
   <% } else { %>
     <li><a href="#shares"><i class="icon-folder-open"></i> Shares</a></li>
   <% } %>
+  <% if (selected == "replication") { %>
+    <li><a href="#replication" class="selected"><i class="icon-random icon-white"></i> Replication</a></li>
+  <% } else { %>
+    <li><a href="#replication"><i class="icon-random"></i> Replication</a></li>
+  <% } %>
 </ul>
 

@@ -29,111 +29,181 @@
 ServicesView = Backbone.View.extend({
   
   events: {
-    'click .service-command': 'doCommand',
+    'click .slider-stop': "stopService",
+    'click .slider-start': "startService",
+    'click .configure': "configureService",
   },
 
   initialize: function() {
-    // call initialize of base
-    this.constructor.__super__.initialize.apply(this, arguments);
-    // set template
     this.template = window.JST.services_services;
     this.collection = new ServiceCollection();
-    this.collection.on("reset", this.renderServices, this);
+    //this.collection.on("reset", this.renderServices, this);
     this.actionMessages = {
       'start': 'started',
       'stop': 'stopped',
       'restart': 'restarted',
       'reload': 'reloaded'
     }
+    this.pollInterval = 5000;
   },
 
   render: function() {
-    console.log('in services render');
-    //this.fetch(this.renderStatus, this);
-    this.collection.fetch();
+    var _this = this;
+    this.collection.fetch({
+      success: function(collection, response, options) {
+        _this.renderServices();
+      }
+    });
+    this.startPolling();
     return this;
   },
 
   renderServices: function() {
+    var _this = this;
     $(this.el).empty();
-    console.log('rendering template');
     
     $(this.el).append(this.template({
       services: this.collection
     }));
+    this.$('input.service-status').simpleSlider({
+      "theme": "volume",
+      allowedValues: [0,1],
+      snap: true 
+    });
     
-    var _this = this;
-    this.intervalId = window.setInterval(function() {
-      return function() { _this.updateStatus(_this); }
-    }(), 5000);
+    this.$('input.service-status').each(function(i, el) {
+      var slider = $(el).data('slider-object');
+      // disable track and dragger events to disable slider
+      slider.trackEvent = function(e) {};
+      slider.dragger.unbind('mousedown');
+    });
+    this.$('.simple-overlay').overlay({load: false}); 
   },
   
-  doCommand: function(event) {
-    event.preventDefault();
+  startService: function(event) {
     var _this = this;
-    var tgt = $(event.currentTarget);
-    var inputType = tgt.attr('type');
-    var command = null;
-    if (inputType == 'checkbox') {
-      command = _.isUndefined(tgt.attr('checked')) ? 'stop' : 'start';
-    } else {
-      command = tgt.attr('data-command');
-    }
-    var name = tgt.attr('data-service-name');
-    //var service = this.services[name];
-    
+    var serviceName = $(event.currentTarget).data('service-name'); 
+    // if already started, return
+    if (this.getSliderVal(serviceName).toString() == "1") return; 
+    this.stopPolling();
+    this.setStatusLoading(serviceName, true);
     $.ajax({
-      url: "/api/sm/services/" + name + "/" + command,
+      url: "/api/sm/services/" + serviceName + "/start",
       type: "POST",
       dataType: "json",
       success: function(data, status, xhr) {
-        console.log('service saved successfully');
-        var action = _this.actionMessages[command];
-        showSuccessMessage(name + ' ' + action + ' successfully');
+        _this.highlightStartEl(serviceName, true);
+        _this.setSliderVal(serviceName, 1); 
+        _this.setStatusLoading(serviceName, false);
+        _this.startPolling();
       },
       error: function(xhr, status, error) {
-        var msg = parseXhrError(xhr)
-        _this.$(".share-messages").html("<label class=\"error\">" + msg + "</label>");
+        _this.setStatusError(serviceName, xhr);
+        _this.startPolling();
       }
     });
-
   },
 
-  updateStatus: function(context) {
-    var _this = context;
-    showLoadingIndicator('service-loading-indicator', _this);
+  stopService: function(event) {
+    var _this = this;
+    var serviceName = $(event.currentTarget).data('service-name'); 
+    // if already stopped, return
+    if (this.getSliderVal(serviceName).toString() == "0") return; 
+    this.stopPolling();
+    this.setStatusLoading(serviceName, true);
     $.ajax({
-      url: "/api/sm/services/", 
-      type: "GET",
+      url: "/api/sm/services/" + serviceName + "/stop",
+      type: "POST",
       dataType: "json",
-      global: false, // dont show global loading indicator
       success: function(data, status, xhr) {
-        hideLoadingIndicator('service-loading-indicator', _this);
-        data = data.results;
-        _.each(data, function(service) {
-          var name = service.name;
-          status_elem = _this.$('#'+name+'-status');
-          update_elem = _this.$('#'+name+'-update');
-          if (!_.isNull(status_elem) && !_.isUndefined(status_elem)) {
-            if (service.status) {
-              status_elem.html('<div class="service-status running"></div>');
-              update_elem.html('<span href="#" id="'+name+'-start" class="service-command" data-service-name="'+name+'" data-command="start">Start</span>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" id="'+name+'-stop" class="service-command" data-service-name="'+name+'" data-command="stop">Stop</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" id="'+name+'-restart" class="service-command" data-service-name="'+name+'" data-command="restart">Restart</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" id="'+name+'-reload" class="service-command" data-service-name="'+name+'" data-command="reload">Reload</a>');
-            } else {
-              status_elem.html('<div class="service-status stopped"></div>');
-              update_elem.html('<a href="#" id="'+name+'-start" class="service-command" data-service-name="'+name+'" data-command="start">Start</a>&nbsp;&nbsp;&nbsp;&nbsp;<span href="#" id="'+name+'-stop" class="service-command" data-service-name="'+name+'" data-command="stop">Stop</span>&nbsp;&nbsp;&nbsp;&nbsp;<span href="#" id="'+name+'-restart" class="service-command" data-service-name="'+name+'" data-command="restart">Restart</span>&nbsp;&nbsp;&nbsp;&nbsp;<span href="#" id="'+name+'-reload" class="service-command" data-service-name="'+name+'" data-command="reload">Reload</span>');
-            }
-          }
-        });
+        _this.highlightStartEl(serviceName, false);
+        _this.setSliderVal(serviceName, 0); 
+        _this.setStatusLoading(serviceName, false);
+        _this.startPolling();
       },
       error: function(xhr, status, error) {
-        hideLoadingIndicator('service-loading-indicator', _this);
+        _this.setStatusError(serviceName, xhr);
+        _this.startPolling();
       }
-
     });
+  },
+
+  configureService: function(event) {
+    event.preventDefault();
+    var _this = this;
+    var serviceName = $(event.currentTarget).data('service-name'); 
+    app_router.navigate('services/' + serviceName + '/edit', {trigger: true});
+  },
+
+  setStatusLoading: function(serviceName, show) {
+    var statusEl = this.$('div.command-status[data-service-name="' + serviceName + '"]')
+    if (show) {
+      statusEl.html('<img src="/img/ajax-loader.gif"></img>');
+    } else {
+      statusEl.empty();
+    }
+  },
+
+  setStatusError: function(serviceName, xhr) {
+    var statusEl = this.$('div.command-status[data-service-name="' + serviceName + '"]')
+    var msg = parseXhrError(xhr)
+    // remove any existing error popups
+    $('body').find('#' + serviceName + 'err-popup').remove();
+    // add icon and popup
+    statusEl.empty();
+    var icon = $('<i>').addClass('icon-exclamation-sign').attr('rel', '#' + serviceName + '-err-popup');
+    statusEl.append(icon);
+    var errPopup = this.$('#' + serviceName + '-err-popup');
+    var errPopupContent = this.$('#' + serviceName + '-err-popup > div');
+    errPopupContent.html(msg);
+    statusEl.click(function(){ errPopup.overlay().load(); });
+  },
+
+  highlightStartEl: function(serviceName, on) {
+    var startEl = this.$('div.slider-start[data-service-name="' + serviceName + '"]');
+    if (on) {
+      startEl.addClass('on');
+    } else {
+      startEl.removeClass('on');
+    }
+  },
+
+  setSliderVal: function(serviceName, val) {
+    this.$('input[data-service-name="' + serviceName + '"]').simpleSlider('setValue',val);
+  },
+
+  getSliderVal: function(serviceName) {
+    return this.$('input[data-service-name="' + serviceName + '"]').data('slider-object').value;
   },
 
   cleanup: function() {
-    console.log('clearing setInterval'); 
+    this.stopPolling();
+  },
+
+  startPolling: function() {
+    var _this = this;
+    this.intervalId = window.setInterval(function() {
+      return function() { 
+        _this.collection.fetch({
+          success: function(collection, response, options) {
+            _this.collection.each(function(service) {
+              var serviceName = service.get('name');
+              if (service.get('status')) {
+                _this.highlightStartEl(serviceName, true);
+                _this.setSliderVal(serviceName, 1); 
+              } else {
+                _this.highlightStartEl(serviceName, false);
+                _this.setSliderVal(serviceName, 0); 
+              }
+            }); 
+          } 
+        }); 
+      }
+    }(), this.pollInterval);
+  },
+
+  stopPolling: function() {
+    var _this = this;
     if (!_.isUndefined(this.intervalId)) {
       window.clearInterval(this.intervalId);
     }

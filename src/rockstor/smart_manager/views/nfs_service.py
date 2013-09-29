@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework.response import Response
 from storageadmin.util import handle_exception
-from system.services import init_service_op
+from system.services import init_service_op, chkconfig
 from system.nis import configure_nis
 from django.db import transaction
 from base_service import BaseServiceView
@@ -40,8 +40,7 @@ class NFSServiceView(BaseServiceView):
             #nothing to really configure atm. just save the model
             try:
                 config = request.DATA['config']
-                service.config = config
-                service.save()
+                self._save_config(service, config)
             except Exception, e:
                 logger.exception(e)
                 e_msg = ('NFS could not be configured. Try again')
@@ -49,6 +48,12 @@ class NFSServiceView(BaseServiceView):
 
         else:
             try:
+                if (command == 'stop'):
+                    chkconfig('nfs', 'on')
+                else:
+                    chkconfig('nfs', 'on')
+                    chkconfig('rpcbind', 'on')
+                    init_service_op('rpcbind', command)
                 init_service_op('nfs', command)
             except Exception, e:
                 logger.exception(e)

@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework.response import Response
 from storageadmin.util import handle_exception
-from system.services import init_service_op
+from system.services import init_service_op, chkconfig
 from system.nis import configure_nis
 from django.db import transaction
 from base_service import BaseServiceView
@@ -40,8 +40,7 @@ class NISServiceView(BaseServiceView):
             try:
                 config = request.DATA['config']
                 configure_nis(config['domain'], config['server'])
-                service.config = config
-                service.save()
+                self._save_config(service, config)
             except Exception, e:
                 logger.exception(e)
                 e_msg = ('NIS could not be configured. Try again')
@@ -49,7 +48,12 @@ class NISServiceView(BaseServiceView):
 
         else:
             try:
-                init_service_op('rpcbind', command)
+                if (command == 'stop'):
+                    chkconfig('ypbind', 'off')
+                else:
+                    chkconfig('ypbind', 'on')
+                    chkconfig('rpcbind', 'on')
+                    init_service_op('rpcbind', command)
                 init_service_op('ypbind', command)
             except Exception, e:
                 logger.exception(e)

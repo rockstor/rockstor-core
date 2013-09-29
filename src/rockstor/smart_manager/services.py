@@ -28,32 +28,42 @@ import time
 import os
 from multiprocessing import Process
 from models import (Service, ServiceStatus)
-from system.services import init_service_op
-
+from system.services import service_status
+import logging
+logger = logging.getLogger(__name__)
 
 class ServiceMonitor(Process):
 
     def __init__(self, q):
         self.q = q
         self.ppid = os.getpid()
+        self.interval = 10 #seconds
         super(ServiceMonitor, self).__init__()
 
     def run(self):
-        while (True):
-            if (os.getppid() != self.ppid):
-                return
+        try:
+            while (True):
+                if (os.getppid() != self.ppid):
+                    msg = ('Parent process(smd) exited. I am exiting too.')
+                    return logger.error(msg)
 
-            if (self.q.qsize() < 1000):
-                for s in Service.objects.filter(registered=True):
-                    # get status
-                    service_status = ServiceStatus(service=s, status=False)
-                    try:
-                        out, err, rc = init_service_op(s.name, 'status')
-                        if (rc == 0):
-                            service_status.status = True
-                    except Exception, e:
-                        pass
-                    finally:
-                        self.q.put(service_status)
-
-            time.sleep(5)
+                if (self.q.qsize() < 1000):
+                    for s in Service.objects.all():
+                        sso = ServiceStatus(service=s, status=False)
+                        try:
+                            out, err, rc = service_status(s.name)
+                            if (rc == 0):
+                                sso.status = True
+                        except Exception, e:
+                            msg = ('Exception while getting status of '
+                                   'service: %s' % s.name)
+                            logger.error(msg)
+                            logger.exception(e)
+                        finally:
+                            self.q.put(sso)
+                time.sleep(self.interval)
+        except Exception, e:
+            msg = ('unhandled exception in %s. Exiting' % self.name)
+            logger.error(msg)
+            logger.exception(e)
+            raise e

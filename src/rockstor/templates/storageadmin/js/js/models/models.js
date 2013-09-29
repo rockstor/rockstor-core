@@ -106,6 +106,7 @@ var SMBShareCollection = Backbone.Collection.extend({model: SMBShare});
 
 var Service = Backbone.Model.extend({
   idAttribute: "name",
+  urlRoot: "/api/sm/services"
 });
 
 var ServiceCollection = RockStorPaginatedCollection.extend({
@@ -226,5 +227,34 @@ var ProbeTemplate = Backbone.Model.extend({idAttribute: "uuid"});
 var ProbeTemplateCollection = Backbone.Collection.extend({
   model: ProbeTemplate,
   url: "/api/sm/sprobes/?format=json"
+});
+
+var Replica = Backbone.Model.extend({
+  urlRoot: "/api/sm/replicas"                                   
+});
+var ReplicaCollection = RockStorPaginatedCollection.extend({
+  model: Replica,
+  baseUrl: "/api/sm/replicas/"
+});
+
+var ReplicaTrail = Backbone.Model.extend({
+  urlRoot: '/api/sm/replicas/trail/replica/' + this.replicaId
+});
+
+var ReplicaTrailCollection = RockStorPaginatedCollection.extend({
+  model: ReplicaTrail,
+  initialize: function(models, options) {
+    this.constructor.__super__.initialize.apply(this, arguments);
+    if (options) {
+      this.replicaId = options.replicaId;
+    }
+  },
+  baseUrl: function() {
+    if (this.replicaId) {
+      return '/api/sm/replicas/trail/replica/' + this.replicaId;
+    } else {
+      return '/api/sm/replicas/trail';
+    }
+  }
 });
 

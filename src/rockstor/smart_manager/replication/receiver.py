@@ -46,9 +46,8 @@ class Receiver(Process):
         try:
             recv_sub = ctx.socket(zmq.SUB)
             recv_sub.connect('tcp://%s:%d' % (self.meta['ip'], self.data_port))
-            recv_sub.RCVTIMEO = 500
+            recv_sub.RCVTIMEO = 100
             recv_sub.setsockopt(zmq.SUBSCRIBE, str(self.meta['id']))
-            logger.info('subscribed for fsdata for meta: %s' % self.meta)
         except Exception, e:
             logger.info('could not subscribe for fsdata for meta: %s' %
                         self.meta)
@@ -59,7 +58,6 @@ class Receiver(Process):
             meta_push = ctx.socket(zmq.PUSH)
             meta_push.connect('tcp://%s:%d' % (self.meta['ip'],
                                                self.meta_port))
-            logger.info('connected to pull socket for meta: %s' % self.meta)
         except Exception, e:
             logger.info('could not connect to target(%s:%d)' %
                         (self.meta['ip'], self.meta_port))
@@ -71,15 +69,12 @@ class Receiver(Process):
         ack = {'msg': 'begin_ok',
                'id': self.meta['id'],}
         meta_push.send_json(ack)
-        logger.info('ack sent: %s' % ack)
         rp = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE,
                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        logger.info('btrfs recv started')
         while True:
             try:
                 recv_data = recv_sub.recv()
                 recv_data = recv_data[len(self.meta['id']):]
-                logger.info('fsdata received. meta: %s' % self.meta)
                 if (recv_data == 'END_SUCCESS'):
                     logger.info('sentinel received. breaking')
                     break
@@ -89,9 +84,8 @@ class Receiver(Process):
                     sys.exit(3)
                 rp.stdin.write(recv_data)
                 rp.stdin.flush()
-                logger.info('fsdata written')
             except zmq.error.Again:
-                logger.info('nothing received')
+                pass
             except Exception, e:
                 logger.info('exception occured while receiving fsdata')
                 logger.exception(e)

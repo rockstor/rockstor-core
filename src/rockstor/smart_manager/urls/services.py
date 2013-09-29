@@ -21,7 +21,7 @@ from smart_manager.views import (BaseServiceView, NISServiceView,
                                  SambaServiceView, NFSServiceView,
                                  NTPServiceView)
 
-command_regex = ('config|start|stop|reload|restart')
+command_regex = ('config|start|stop')
 
 urlpatterns = patterns('',
     # Services
@@ -29,8 +29,8 @@ urlpatterns = patterns('',
     url(r'^nis$', NISServiceView.as_view(), name='nis-view'),
     url(r'^nis/(?P<command>%s)$' % command_regex, NISServiceView.as_view(),
         name='nis-view'),
-    url(r'^samba$', SambaServiceView.as_view(), name='samba-view'),
-    url(r'^samba/(?P<command>%s)$' % command_regex, SambaServiceView.as_view(),
+    url(r'^smb$', SambaServiceView.as_view(), name='samba-view'),
+    url(r'^smb/(?P<command>%s)$' % command_regex, SambaServiceView.as_view(),
         name='samba-view'),
     url(r'^nfs$', NFSServiceView.as_view(), name='nfs-view'),
     url(r'^nfs/(?P<command>%s)$' % command_regex, NFSServiceView.as_view(),

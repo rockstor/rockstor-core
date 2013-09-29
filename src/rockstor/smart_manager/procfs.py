@@ -51,20 +51,26 @@ class ProcRetreiver(Process):
         cur_disk_stats = None
         cur_net_stats = None
         cur_cpu_stats = {}
-        while (True):
-            if (os.getppid() != self.ppid):
-                return
+        try:
+            while (True):
+                if (os.getppid() != self.ppid):
+                    msg = ('Parent process(smd) exited. I am exiting too.')
+                    return logger.error(msg)
 
-            if (self.q.qsize() < 1000):
-                cur_cpu_stats = self.cpu_stats(cur_cpu_stats)
-                loadavg_time = self.loadavg(loadavg_time)
-                self.meminfo()
-                pu_time = self.pools_usage(pu_time)
-                cur_disk_stats = self.disk_stats(cur_disk_stats,
-                                                 self.sleep_time)
-                cur_net_stats = network_stats(cur_net_stats, self.sleep_time,
-                logger, self.q)
-            time.sleep(self.sleep_time)
+                if (self.q.qsize() < 1000):
+                    cur_cpu_stats = self.cpu_stats(cur_cpu_stats)
+                    loadavg_time = self.loadavg(loadavg_time)
+                    self.meminfo()
+                    pu_time = self.pools_usage(pu_time)
+                    cur_disk_stats = self.disk_stats(cur_disk_stats,
+                                                     self.sleep_time)
+                    cur_net_stats = network_stats(cur_net_stats,
+                    self.sleep_time, logger, self.q)
+                time.sleep(self.sleep_time)
+        except Exception, e:
+            logger.error('unhandled exception in %s. Exiting' % self.name)
+            logger.exception(e)
+            raise e
 
     def cpu_stats(self, prev_stats):
         stats_file = '/proc/stat'
