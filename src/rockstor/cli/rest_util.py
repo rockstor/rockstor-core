@@ -86,7 +86,10 @@ def print_disk_info(disk_info):
         print("There are no disks in the system")
         return
     try:
-        if ('count' not in disk_info):
+        if ('results' not in disk_info):
+            #scan cmd is  used, don't do anything
+            disk_info = disk_info
+        elif ('count' not in disk_info):
             disk_info = [disk_info]
         else:
             disk_info = disk_info['results']
