@@ -30,7 +30,7 @@ class NetworkConsole(BaseConsole):
         pass
 
     def do_scan(self, args):
-        url = ('%s/network/' % BaseConsole.url)
+        url = ('%s/network' % BaseConsole.url)
         network_info = api_call(url, calltype='post')
         print network_info
 
