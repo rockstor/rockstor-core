@@ -102,7 +102,8 @@ class ShareNFSView(GenericView):
 
             if (len(NFSExport.objects.filter(share=share)) == 1):
                 export_mnt_pt = ('/export/%s' % sname)
-                umount_root(export_mnt_pt)
+                if (is_share_mounted(sname, mnt_prefix='/export/')):
+                    umount_root(export_mnt_pt)
                 if (is_share_mounted(sname, mnt_prefix='/export/')):
                     e_msg = ('Cannot delete nfs export with id: %d due to '
                              'busy mount. Try again later.' % export_id)

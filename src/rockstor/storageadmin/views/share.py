@@ -167,8 +167,6 @@ class ShareView(GenericView):
             except Exception, e:
                 logger.exception(e)
                 handle_exception(Exception(e_msg), request)
-            if (is_share_mounted(sname)):
-                handle_exception(Exception(e_msg), request)
             share.delete()
             return Response()
         except RockStorAPIException:
