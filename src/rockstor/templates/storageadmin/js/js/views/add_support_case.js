@@ -76,7 +76,7 @@ AddSupportCaseView = Backbone.View.extend({
             var support_notes = $('#support_notes').val();
                   
                $.ajax({
-                 url: "/api/support/",
+                 url: "/api/support",
                  type: "PUT",
                  dataType: "json",
                  data: {"type": "manual","notes":support_notes },

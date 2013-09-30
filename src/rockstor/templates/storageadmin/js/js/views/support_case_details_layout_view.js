@@ -45,10 +45,9 @@ SupportCaseDetailsLayoutView = RockstoreLayoutView.extend({
 
  deleteSupportCase: function() {
     var _this = this;
-    console.log('deleting ' + this.supportCase.get('id'));
     if(confirm("Delete support case :  "+ this.support.get('id') +"Are you sure?")){
     $.ajax({
-      url: "/api/support/",
+      url: "/api/support",
       type: "DELETE",
       dataType: "json",
       data: { "id": this.support.get('id')}

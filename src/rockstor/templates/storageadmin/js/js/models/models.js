@@ -58,7 +58,7 @@ var SupportCase = Backbone.Model.extend({
 
 var SupportCaseCollection = Backbone.Collection.extend({
 	  model: SupportCase,
-	  url: '/api/support/'
+	  url: '/api/support'
 });
 	
 var Share = Backbone.Model.extend({
@@ -114,10 +114,10 @@ var ServiceCollection = RockStorPaginatedCollection.extend({
   baseUrl: "/api/sm/services"
 });
 
-var Appliance = Backbone.Model.extend({urlRoot: '/api/appliances/'});
+var Appliance = Backbone.Model.extend({urlRoot: '/api/appliances'});
 var ApplianceCollection = Backbone.Collection.extend({
   model: Appliance,
-  url: '/api/appliances/'
+  url: '/api/appliances'
 });
 
 var User = Backbone.Model.extend({
@@ -203,7 +203,7 @@ var NetworkInterface = Backbone.Model.extend({
 });
 var NetworkInterfaceCollection = RockStorPaginatedCollection.extend({
   model: NetworkInterface,
-  baseUrl: '/api/network/'
+  baseUrl: '/api/network'
 });
 
 var ProbeRun = Backbone.Model.extend({
