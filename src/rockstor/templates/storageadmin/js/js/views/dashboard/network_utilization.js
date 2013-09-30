@@ -299,7 +299,7 @@ RockStorWidgets.available_widgets.push({
     description: 'Display network utilization',
     defaultWidget: true,
     rows: 1,
-    cols: 2,
+    cols: 5,
     category: 'Network', 
     position: 3
 });

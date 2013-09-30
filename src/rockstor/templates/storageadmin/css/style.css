@@ -820,14 +820,17 @@ div.widgets-container {
 div.widgets-container > div {
   position: absolute;
   height: 300px;
-  width: 300px;
+  width: 50px;
   list-style: none outside none; 
 }
 
 /* TODO * adjust sizes of colspan 2 and 3 based on media queries */
-div.widgets-container div[data-ss-colspan="1"] { width: 300px;} 
-div.widgets-container div[data-ss-colspan="2"] { width: 610px;} 
-div.widgets-container div[data-ss-colspan="3"] { width: 920px;} 
+div.widgets-container div[data-ss-colspan="1"] { width: 50px;} 
+div.widgets-container div[data-ss-colspan="2"] { width: 105px;} 
+div.widgets-container div[data-ss-colspan="3"] { width: 160px;} 
+div.widgets-container div[data-ss-colspan="4"] { width: 215px;} 
+div.widgets-container div[data-ss-colspan="5"] { width: 270px;} 
+div.widgets-container div[data-ss-colspan="6"] { width: 375px;} 
 div.widgets-container div[data-ss-rowspan="1"] { height: 300px;} 
 div.widgets-container div[data-ss-rowspan="2"] { height: 610px;} 
 div.widgets-container div[data-ss-rowspan="3"] { height: 920px;} 

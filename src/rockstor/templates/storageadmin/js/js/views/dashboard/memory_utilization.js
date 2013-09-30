@@ -231,7 +231,7 @@ RockStorWidgets.available_widgets.push({
     description: 'Display memory utilization',
     defaultWidget: true,
     rows: 1,
-    cols: 2,
+    cols: 3,
     category: 'Compute', 
     position: 2
 });

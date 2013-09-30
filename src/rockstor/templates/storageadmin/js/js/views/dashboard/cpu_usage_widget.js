@@ -283,7 +283,7 @@ RockStorWidgets.available_widgets.push({
   description: 'CPU Utilization',
   defaultWidget: true,
   rows: 1,
-  cols: 2,
+  cols: 5,
   category: 'Compute',
   position: 1
 });
