@@ -112,7 +112,8 @@ var HomeLayoutView = RockstoreLayoutView.extend({
         displayName: widgetDef.displayName,
         name: widget.name,
         cleanupArray: widgetViews,
-        parentView: this
+        parentView: this,
+        maximized: widget.maximized
       });
       
       // create shapeshift div for widget and render
@@ -171,14 +172,15 @@ var HomeLayoutView = RockstoreLayoutView.extend({
   },
 
   saveWidgetConfiguration: function() {
-    var divs = this.widgetsContainer.children('div');
+    var _this = this;
+    var divs = this.widgetsContainer.children('div.widget-ph');
     var tmp = [];
     divs.each(function(index) {
       var div = $(this);
-      var name = div.find('div.widget').attr('id').replace('_widget','');; 
-      var widget = RockStorWidgets.findByName(name);
-      var rows = div.attr('data-ss-rowspan');
-      var cols = div.attr('data-ss-colspan');
+      var name = div.data('widget-name');
+      var widget = _.find(_this.widgetViews, function(w) {
+        return w.name == name;
+      });
       tmp.push({
         name: name, 
         position: index, 

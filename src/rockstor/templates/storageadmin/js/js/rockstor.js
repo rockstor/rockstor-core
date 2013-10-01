@@ -138,7 +138,7 @@ RockStorWidgetView = Backbone.View.extend({
   },
 
   initialize: function() {
-    this.maximized = false;
+    this.maximized = this.options.maximized;
     this.name = this.options.name;
     this.displayName = this.options.displayName;
     this.parentView = this.options.parentView;
@@ -179,17 +179,14 @@ RockStorWidgetView = Backbone.View.extend({
       w.detach();
       w.attr('data-ss-colspan',widgetDef.cols);
       w.attr('data-ss-rowspan',widgetDef.rows);
-      console.log('restoring');
       // find current list item at original index
       if (_.isNull(this.originalPosition) || 
           _.isUndefined(this.originalPosition)) {
         this.originalPosition = 0;
       }
-      console.log('originalPosition is ' + this.originalPosition);
       curr_w = c.find("div.widget-ph:eq("+this.originalPosition+")");
       // insert widget at original position
       if (curr_w.length > 0) {
-        console.log(curr_w);
         // if not last widget
         curr_w.before(w);
       } else {
