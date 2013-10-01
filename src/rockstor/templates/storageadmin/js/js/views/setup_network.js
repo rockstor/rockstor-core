@@ -44,13 +44,11 @@ SetupNetworkView = Backbone.View.extend({
   scanNetwork: function() {
     var _this = this;
     $.ajax({
-      url: "/api/network/", 
+      url: "/api/network", 
       type: "POST",
       dataType: "json",
       global: false, // dont show global loading indicator
       success: function(data, status, xhr) {
-        console.log("scanned network");
-        console.log(data);
         _this.networkInterfaces.fetch();
       },
       error: function(xhr, status, error) {

@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf.urls.defaults import patterns, include, url
-from storageadmin.views import (SetupWizardView, AppliancesView, LoginView,
-                                SupportView, DashboardConfigView, NetworkView,
+from storageadmin.views import (SetupWizardView, LoginView,
+                                SupportView, DashboardConfigView,
                                 SetupUserView)
 import os.path
 import socketio.sdjango
@@ -68,27 +68,14 @@ urlpatterns = patterns('',
 
     # REST API
     url(r'^api/login', LoginView.as_view(), name='login-api-view'),
-    url(r'^api/appliances/$', AppliancesView.as_view(),
-        name='appliances-view'),
-    url(r'^api/appliances/(?P<id>\d+)$', AppliancesView.as_view(),
-        name='appliances-view'),
-
+    (r'^api/appliances', include('storageadmin.urls.appliances')),
     (r'^api/commands/', include('storageadmin.urls.commands')),
     (r'^api/disks/', include('storageadmin.urls.disks')),
-
-    # Network section
-    url(r'^api/network/$', NetworkView.as_view(), name='net-view'),
-    url(r'^api/network/(?P<iname>[A-Za-z0-9]+)/$', NetworkView.as_view(),
-        name='net-view'),
-
+    (r'^api/network', include('storageadmin.urls.network')),
     (r'^api/pools/', include('storageadmin.urls.pools')),
-
     (r'^api/shares/', include('storageadmin.urls.share')),
     (r'^api/users/', include('storageadmin.urls.users')),
-
-
-    url(r'^api/support/$', SupportView.as_view(), name='support-view'),
-    url(r'^api/support/(?P<caseid>[0-9]+)/$', SupportView.as_view(), name='support-view'),
+    (r'^api/support', include('storageadmin.urls.support')),
 
     # Dashboard config
     url(r'^api/dashboardconfig/$', DashboardConfigView.as_view(), name='dashboardconfig-view'),
