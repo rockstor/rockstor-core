@@ -292,14 +292,16 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
 
 });
 
-RockStorWidgets.available_widgets.push({ 
+RockStorWidgets.widgetDefs.push({ 
     name: 'network', 
-    displayName: 'Network Utilization', 
+    displayName: 'Network', 
     view: 'NetworkUtilizationWidget',
     description: 'Display network utilization',
     defaultWidget: true,
     rows: 1,
     cols: 5,
+    maxRows: 2,
+    maxCols: 10,
     category: 'Network', 
     position: 3
 });

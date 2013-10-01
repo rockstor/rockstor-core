@@ -143,11 +143,8 @@ var DashboardConfig = Backbone.Model.extend({
     _.each(wConfigs, function(wConfig) {
       tmp.push({
         name: wConfig.name, 
-        displayName: wConfig.displayName,
-        view: wConfig.view,
-        rows: wConfig.rows, 
-        cols: wConfig.cols,
         position: wConfig.position, 
+        maximized: wConfig.maximized
       });
     });
     this.set({ widgets: JSON.stringify(tmp) });

@@ -83,7 +83,7 @@ var HomeLayoutView = RockstoreLayoutView.extend({
     // call shapeshift to do layout
     this.widgetsContainer.shapeshift({
       align: "left",
-      minColumns: 3,
+      minColumns: 10,
       gutterX: 5,
       gutterY: 5,
       paddingX: 5,
@@ -104,12 +104,12 @@ var HomeLayoutView = RockstoreLayoutView.extend({
 
   addWidget: function(widget, container, widgetViews) {
     var div = null;
-    var viewName = widget.view;
-    
+    var widgetDef = RockStorWidgets.findByName(widget.name);  
+    var viewName = widgetDef.view;
     if (!_.isUndefined(window[viewName] && !_.isNull(window[viewName]))) {
       // Create widget view 
       var view = new window[viewName]({
-        displayName: widget.displayName,
+        displayName: widgetDef.displayName,
         name: widget.name,
         cleanupArray: widgetViews,
         parentView: this
@@ -117,8 +117,14 @@ var HomeLayoutView = RockstoreLayoutView.extend({
       
       // create shapeshift div for widget and render
       div = $("<div>");
-      div.attr("data-ss-colspan", widget.cols);
-      div.attr("data-ss-rowspan", widget.rows);
+      div.attr('class','widget-ph');
+      if (widget.maximized) {
+        div.attr("data-ss-colspan", widgetDef.maxCols);
+        div.attr("data-ss-rowspan", widgetDef.maxRows);
+      } else {
+        div.attr("data-ss-colspan", widgetDef.cols);
+        div.attr("data-ss-rowspan", widgetDef.rows);
+      }
       div.attr("data-widget-name", widget.name);
       container.append(div);
       var position_div = $('<div class="position"></div>');
@@ -175,11 +181,8 @@ var HomeLayoutView = RockstoreLayoutView.extend({
       var cols = div.attr('data-ss-colspan');
       tmp.push({
         name: name, 
-        displayName: widget.displayName,
-        view: widget.view,
-        rows: rows, 
-        cols: cols,
         position: index, 
+        maximized: widget.maximized
       });
     });
     this.dashboardconfig.set({ widgets: JSON.stringify(tmp) });
@@ -204,7 +207,7 @@ var HomeLayoutView = RockstoreLayoutView.extend({
       this.widgetsContainer.trigger("ss-destroy");
       this.widgetsContainer.shapeshift({
         align: "left",
-        minColumns: 3
+        minColumns: 10
       });
       this.saveWidgetConfiguration();
     } else {

@@ -30,6 +30,9 @@ CpuUsageWidget = RockStorWidgetView.extend({
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.dashboard_widgets_cpuusage;
+    // maximized size for shapeshift
+    this.maxCols = 10;
+    this.maxRows = 2;
     this.numSamples = 60;
     this.maxCpus = 16;
     this.modes = ['smode', 'umode', 'umode_nice'];
@@ -276,14 +279,16 @@ CpuUsageWidget = RockStorWidgetView.extend({
 });
 
 // Default configuration for cpu widget
-RockStorWidgets.available_widgets.push({ 
+RockStorWidgets.widgetDefs.push({ 
   name: 'cpuusage', 
-  displayName: 'CPU Utilization', 
+  displayName: 'CPU', 
   view: 'CpuUsageWidget',
   description: 'CPU Utilization',
   defaultWidget: true,
   rows: 1,
   cols: 5,
+  maxRows: 2,
+  maxCols: 10,
   category: 'Compute',
   position: 1
 });

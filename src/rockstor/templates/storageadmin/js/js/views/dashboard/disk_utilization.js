@@ -324,14 +324,16 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
 
 });
 
-RockStorWidgets.available_widgets.push({ 
+RockStorWidgets.widgetDefs.push({ 
     name: 'disk_utilization', 
-    displayName: 'Disk Utilization', 
+    displayName: 'Disk Usage', 
     view: 'DiskUtilizationWidget',
     description: 'Display disk utilization',
     defaultWidget: false,
     rows: 1,
-    cols: 2,
+    cols: 5,
+    maxRows: 2,
+    maxCols: 10,
     category: 'Storage', 
 });
 

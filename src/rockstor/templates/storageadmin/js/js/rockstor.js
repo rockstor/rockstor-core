@@ -159,44 +159,46 @@ RockStorWidgetView = Backbone.View.extend({
       event.preventDefault();
     }
     logger.debug('in resize');
-    var ul = $(this.el).closest('ul'); // list
-    var li = $(this.el).closest('li'); // current list item
+    var c = $(this.el).closest('div.widgets-container'); 
+    var w = $(this.el).closest('div.widget-ph'); // current widget
+    var widgetDef = RockStorWidgets.findByName(this.name);  
     if (!this.maximized) {
       // Maximizing
       // Remember current position
-      this.original_position = li.index();
-      // Remember current dimentions
-      this.original_width = li.attr('data-ss-colspan');
-      this.original_height = li.attr('data-ss-rowspan');
-      logger.debug('saving original height and width ' + this.original_height + '   ' + this.original_width);
+      this.originalPosition = w.index();
       // remove list item from current position
-      li.detach();
+      w.detach();
       // insert at first position in the list
-      ul.prepend(li);
+      c.prepend(w);
       // resize to max
-      li.attr('data-ss-colspan',RockStorWidgets.max_width);
-      li.attr('data-ss-rowspan',RockStorWidgets.max_height);
+      w.attr('data-ss-colspan',widgetDef.maxCols);
+      w.attr('data-ss-rowspan',widgetDef.maxRows);
       this.maximized = true;
     } else {
       // Restoring
-      li.detach();
-      // resize to original
-      logger.debug('restoring original height and width ' + this.original_height + '   ' + this.original_width);
-      li.attr('data-ss-colspan',this.original_width);
-      li.attr('data-ss-rowspan',this.original_height);
+      w.detach();
+      w.attr('data-ss-colspan',widgetDef.cols);
+      w.attr('data-ss-rowspan',widgetDef.rows);
+      console.log('restoring');
       // find current list item at original index
-      curr_li = ul.find("li:eq("+this.original_position+")");
+      if (_.isNull(this.originalPosition) || 
+          _.isUndefined(this.originalPosition)) {
+        this.originalPosition = 0;
+      }
+      console.log('originalPosition is ' + this.originalPosition);
+      curr_w = c.find("div.widget-ph:eq("+this.originalPosition+")");
       // insert widget at original position
-      if (curr_li.length > 0) {
+      if (curr_w.length > 0) {
+        console.log(curr_w);
         // if not last widget
-        curr_li.before(li);
+        curr_w.before(w);
       } else {
-        ul.append(li);
+        c.append(w);
       }
       this.maximized = false;
     }
     // trigger rearrange so shapeshift can do its job
-    ul.trigger('ss-rearrange');
+    c.trigger('ss-rearrange');
     this.parentView.saveWidgetConfiguration();
   },
   

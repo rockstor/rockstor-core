@@ -224,14 +224,16 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
 
 });
 
-RockStorWidgets.available_widgets.push({ 
+RockStorWidgets.widgetDefs.push({ 
     name: 'memory_utilization', 
-    displayName: 'Memory Utilization', 
+    displayName: 'Memory', 
     view: 'MemoryUtilizationWidget',
     description: 'Display memory utilization',
     defaultWidget: true,
     rows: 1,
-    cols: 3,
+    cols: 5,
+    maxRows: 2,
+    maxCols: 10,
     category: 'Compute', 
     position: 2
 });
