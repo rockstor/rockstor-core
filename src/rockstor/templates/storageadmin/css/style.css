@@ -787,6 +787,7 @@ hr.module-sep { margin: 0; border: 0; border-top: 1px solid #ddd;
   box-shadow: 0px 0px 12px rgb(238, 238, 238);
   border-radius: 4px;
   height: 100%;
+  background: #fff;
 }
 
 .widget-header {
@@ -795,6 +796,7 @@ hr.module-sep { margin: 0; border: 0; border-top: 1px solid #ddd;
   padding: 4px;
   border-radius: 4px 4px 0 0;
   background: #ddd;
+  cursor: move;
 }
 
 .widget-header .gear {
