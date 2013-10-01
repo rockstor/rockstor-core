@@ -843,6 +843,10 @@ div.widgets-container div div.position {
   display: block;
 }
 
+.ss-placeholder-child {
+  border: 1px dashed #CC0227;
+}
+
 /* expand icon */
 .expand-icon {
   background: #3E454C;

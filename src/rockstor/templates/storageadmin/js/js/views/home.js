@@ -87,7 +87,8 @@ var HomeLayoutView = RockstoreLayoutView.extend({
       gutterX: 5,
       gutterY: 5,
       paddingX: 5,
-      paddingY: 5
+      paddingY: 5,
+      handle: 'div.widget-header'
     });
      
     // set handler for drop event, when a widget is moved around and 
