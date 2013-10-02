@@ -5,6 +5,7 @@
         <th>Name</th>
         <th>Size</th>
         <th>Raid</th>
+        <th>Usage</th>
         <th></th>
       </tr>
     </thead>
@@ -14,6 +15,7 @@
           <td><a href="#pools/<%= pool.get('name') %>"><i class="icon-list"></i> <%= pool.get('name') %></a></td>
           <td><%= humanize.filesize(pool.get('size')*1024) %></td>
           <td><%= pool.get('raid') %></td>
+          <td><%= humanize.filesize(pool.get('usage')*1024) %></td>
           <td><a id="delete_pool_<%= pool.get('name') %>" data-name="<%= pool.get('name') %>" data-action="delete"><i class="icon-trash"></i></a></td>
         </tr>
       <% }); %>
