@@ -189,7 +189,6 @@ PIPELINE_JS = {
             'js/views/pool_usage_module.js',
             'js/views/add_pool.js',
             'js/views/shares.js',
-            'js/views/share_detail.js',
             'js/views/share_details_layout_view.js',
             'js/views/share_info_module.js',
             'js/views/share_usage_module.js',
