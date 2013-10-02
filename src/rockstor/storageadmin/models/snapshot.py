@@ -30,6 +30,7 @@ class Snapshot(models.Model):
     size = models.IntegerField(default=0)
     toc = models.DateTimeField(auto_now=True)
     qgroup = models.CharField(max_length=100)
+    uvisible = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ('share', 'name',)

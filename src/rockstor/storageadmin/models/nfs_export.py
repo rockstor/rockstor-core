@@ -63,6 +63,7 @@ class NFSExport(models.Model):
         )
     mount_security = models.CharField(max_length=8, choices=MSECURITY_CHOICES,
                                       default=INSECURE)
+    nohide = models.BooleanField(default=False)
     enabled = models.BooleanField(default=True)
 
     class Meta:
