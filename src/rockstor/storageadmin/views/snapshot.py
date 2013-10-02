@@ -62,12 +62,14 @@ class SnapshotView(GenericView):
             snap_realname = ('%s_%s' % (share.name, snap_name))
             mnt_pt = ('%s%s/%s' % (settings.MNT_PT, share.pool.name,
                                    snap_realname))
+            export_pt = mnt_pt.replace(settings.MNT_PT,
+                                       settings.NFS_EXPORT_ROOT)
             export = None
             if (on):
                 if (not NFSExport.objects.filter(share=share, nohide=False)):
                     #master share is not exported, so don't export the snap
                     continue
-                export = NFSExport(share=share, mount=mnt_pt,
+                export = NFSExport(share=share, mount=export_pt,
                                    host_str=se.host_str, nohide=True)
                 export.full_clean()
                 export.save()
@@ -75,7 +77,7 @@ class SnapshotView(GenericView):
                 try:
                     export = NFSExport.objects.get(share=share,
                                                    host_str=se.host_str,
-                                                   mount=mnt_pt,
+                                                   mount=export_pt,
                                                    nohide=True)
                     export.enabled = False
                 except Exception, e:

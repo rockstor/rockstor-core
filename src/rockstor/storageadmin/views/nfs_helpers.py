@@ -16,8 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+from django.conf import settings
 from storageadmin.models import (Share, NFSExport)
-EXPORT_DIR = '/export/'
 
 
 def client_input(export):
@@ -27,14 +27,15 @@ def client_input(export):
                            export.mount_security))}
     if (export.nohide):
         ci['option_list'] = ('%s,nohide' % ci['option_list'])
-    ci['mnt_pt'] = export.mount
+    ci['mnt_pt'] = export.mount.replace(settings.NFS_EXPORT_ROOT,
+                                        settings.MNT_PT)
     return ci
 
 def create_nfs_export_input(cur_export):
     exports = {}
     for e in NFSExport.objects.all():
         e_list = []
-        export_pt = ('%s%s' % (EXPORT_DIR, e.share.name))
+        export_pt = ('%s%s' % (settings.NFS_EXPORT_ROOT, e.share.name))
         if (e.nohide):
             snap_name = e.mount.split(e.share.name + '_')[-1]
             export_pt = ('%s/%s' % (export_pt, snap_name))

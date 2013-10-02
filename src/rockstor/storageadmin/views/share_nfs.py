@@ -71,11 +71,12 @@ class ShareNFSView(GenericView):
                 options['sync_choice'] = request.DATA['sync_choice']
 
             mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
+            export_pt = ('%s%s' % (settings.NFS_EXPORT_ROOT, share.name))
             if (not is_share_mounted(share.name)):
                 pool_device = Disk.objects.filter(pool=share.pool)[0].name
                 mount_share(share.subvol_name, pool_device, mnt_pt)
 
-            export = NFSExport(share=share, mount=mnt_pt,
+            export = NFSExport(share=share, mount=export_pt,
                                host_str=options['host_str'],
                                editable=options['mod_choice'],
                                syncable=options['sync_choice'],
