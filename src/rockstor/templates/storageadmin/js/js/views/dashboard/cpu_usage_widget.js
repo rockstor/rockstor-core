@@ -34,7 +34,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
     this.maxCols = 10;
     this.maxRows = 2;
     this.numSamples = 60;
-    this.maxCpus = 16;
+    this.maxCpus = 8;
     this.modes = ['smode', 'umode', 'umode_nice'];
     this.colors = ["#E41A1C", "#377EB8", "#4DAF4A", "#FFFFFF"];
     this.numCpus = null; 
@@ -69,10 +69,12 @@ CpuUsageWidget = RockStorWidgetView.extend({
         max: 100,
         ticks: 4,
         tickFormatter: this.pctTickFormatter,
+        font: { color: "#333" }
       },
       xaxis: { 
         tickLength: 2,
         tickFormatter: this.allCpuTickFormatter(this.cpuNames, this),
+        font: { color: "#333" }
       },
       legend: { show: false },
       
