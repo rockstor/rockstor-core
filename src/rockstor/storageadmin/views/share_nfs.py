@@ -26,6 +26,7 @@ from storageadmin.exceptions import RockStorAPIException
 from fs.btrfs import (mount_share, is_share_mounted, umount_root)
 from system.osi import refresh_nfs_exports
 from generic_view import GenericView
+from nfs_helpers import create_nfs_export_input
 
 import logging
 logger = logging.getLogger(__name__)
@@ -49,7 +50,7 @@ class ShareNFSView(GenericView):
                 return NFSExport.objects.get(id=kwargs['export_id'])
             except:
                 return []
-        return NFSExport.objects.filter(share=share)
+        return NFSExport.objects.filter(share=share, nohide=False)
 
     @transaction.commit_on_success
     def post(self, request, sname):
@@ -82,7 +83,7 @@ class ShareNFSView(GenericView):
             export.full_clean()
             export.save()
 
-            exports = self._create_nfs_export_input(export)
+            exports = create_nfs_export_input(export)
             refresh_nfs_exports(exports)
             nfs_serializer = NFSExportSerializer(export)
             return Response(nfs_serializer.data)
@@ -99,20 +100,16 @@ class ShareNFSView(GenericView):
                 e_msg = ('NFS export with id: %d does not exist' % export_id)
                 handle_exception(Exception(e_msg), request)
             export = NFSExport.objects.get(id=export_id)
-
-            if (len(NFSExport.objects.filter(share=share)) == 1):
-                export_mnt_pt = ('/export/%s' % sname)
-                if (is_share_mounted(sname, mnt_prefix='/export/')):
-                    umount_root(export_mnt_pt)
-                if (is_share_mounted(sname, mnt_prefix='/export/')):
-                    e_msg = ('Cannot delete nfs export with id: %d due to '
-                             'busy mount. Try again later.' % export_id)
-                    handle_exception(Exception(e_msg), request)
-
             export.enabled = False
-            exports = self._create_nfs_export_input(export)
+            exports = create_nfs_export_input(export)
             export.delete()
-            refresh_nfs_exports(exports)
+            try:
+                refresh_nfs_exports(exports)
+            except Exception, e:
+                e_msg = ('Unable to delete the export because it is in use.'
+                         ' Try again Later')
+                logger.exception(e)
+                handle_exception(Exception(e_msg), request)
             return Response()
         except RockStorAPIException:
             raise
@@ -138,5 +135,4 @@ class ShareNFSView(GenericView):
                     s_exports['clients'].append(self._client_input(e))
             if (len(s_exports['clients']) > 0):
                 exports.append(s_exports)
-        logger.debug('exports: %s' % repr(exports))
         return exports
