@@ -67,7 +67,7 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
       snapshots: this.collection,
       share: this.share
     }));
-    this.$('#add-snapshot-form').validate({
+    this.validator = this.$('#add-snapshot-form').validate({
       onfocusout: false,
       onkeyup: false,
       rules: {
@@ -81,6 +81,8 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
           url: "/api/shares/" + _this.share.get('name') + "/snapshots/" + _this.$('#snapshot-name').val(),
           type: "POST",
           dataType: "json",
+          contentType: 'application/json',
+          data: JSON.stringify({uvisible: _this.$('#snapshot-visible').prop('checked')}),
           success: function() {
             enableButton(button);
             _this.collection.fetch({
@@ -90,7 +92,11 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
           error: function(xhr, status, error) {
             enableButton(button);
             var msg = parseXhrError(xhr)
-            _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
+            if (_.isObject(msg)) {
+              _this.validator.showErrors(msg);
+            } else {
+              _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
+            }
           }
         });
         return false;
