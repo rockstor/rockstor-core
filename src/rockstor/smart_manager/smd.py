@@ -29,7 +29,8 @@ import logging
 logger = logging.getLogger(__name__)
 from smart_manager import agents
 from scheduler.task_dispatcher import TaskDispatcher
-import sys
+from cli.rest_util import api_call
+import time
 
 def process_model_queue(q):
     cleanup_map = {}
@@ -49,6 +50,16 @@ def main():
     pull_socket = context.socket(zmq.PULL)
     pull_socket.RCVTIMEO = 500
     pull_socket.bind('tcp://%s:%d' % settings.SPROBE_SINK)
+
+    #bootstrap the machine. success of quit
+    url = 'https://localhost/api/commands/bootstrap'
+    time.sleep(5)
+    try:
+        api_call(url, calltype='post')
+    except Exception, e:
+        logger.error('Unable to bootstrap the machine. Aborting')
+        logger.exception(e)
+        return -1
 
     proc_q = Queue()
     service_q = Queue()

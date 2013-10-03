@@ -26,7 +26,14 @@ from rest_framework.authentication import (BasicAuthentication,
                                            SessionAuthentication)
 from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
-from system.osi import uptime
+from system.osi import (uptime, refresh_nfs_exports)
+from storageadmin.models import NFSExport
+from nfs_helpers import create_nfs_export_input
+from storageadmin.util import handle_exception
+
+import logging
+logger = logging.getLogger(__name__)
+
 
 class CommandView(APIView):
     authentication_classes = (DigestAuthentication, SessionAuthentication,
@@ -37,3 +44,20 @@ class CommandView(APIView):
         if (command == 'uptime'):
             return Response(uptime())
         return Response()
+
+    def post(self, request, command):
+        if (command != 'bootstrap'):
+            return Response()
+
+        try:
+            logger.info('bootstrapping')
+            for e in NFSExport.objects.all():
+                exports = create_nfs_export_input(e)
+                logger.info('export = %s' % exports)
+                refresh_nfs_exports(exports)
+            return Response()
+        except Exception, e:
+            e_msg = ('Unable to export all nfs shares due to a system error')
+            logger.error(e_msg)
+            logger.exception(e)
+            handle_exception(Exception(e_msg), request)

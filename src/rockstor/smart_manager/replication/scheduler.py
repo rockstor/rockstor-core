@@ -45,7 +45,7 @@ class ReplicaScheduler(Process):
 
     def _replication_interface(self):
         url = 'https://localhost/api/network'
-        interfaces = api_call(url)
+        interfaces = api_call(url, save_error=False)
         logger.info('interfaces: %s' % interfaces)
         return interfaces['results'][0]['ipaddr']
 

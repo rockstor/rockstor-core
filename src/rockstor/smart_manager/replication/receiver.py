@@ -20,7 +20,6 @@ from multiprocessing import Process
 import os
 import sys
 import logging
-from cli.rest_util import api_call
 import zmq
 import subprocess
 import fcntl
