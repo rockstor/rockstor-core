@@ -1,21 +1,21 @@
 RockStorWidgets = {};
-RockStorWidgets.max_width = 3;
+RockStorWidgets.max_width = 10;
 RockStorWidgets.max_height = 2;
 
 RockStorWidgets.findByName = function(name) {
-  return _.find(RockStorWidgets.available_widgets, function(widget) {
+  return _.find(RockStorWidgets.widgetDefs, function(widget) {
     return widget.name == name;
   });
 };
 
 RockStorWidgets.findByCategory = function(category) {
-  return _.filter(RockStorWidgets.available_widgets, function(widget) {
+  return _.filter(RockStorWidgets.widgetDefs, function(widget) {
     return widget.category == category;
   });
 };
 
 RockStorWidgets.defaultWidgets = function() {
-  var tmp = _.filter(RockStorWidgets.available_widgets, function(widget) {
+  var tmp = _.filter(RockStorWidgets.widgetDefs, function(widget) {
     return widget.defaultWidget;
   });
   return _.sortBy(tmp, function(w) {
@@ -33,5 +33,5 @@ RockStorWidgets.defaultWidgetNames = function(name) {
   });
 };
 
-RockStorWidgets.available_widgets = [];
+RockStorWidgets.widgetDefs = [];
 

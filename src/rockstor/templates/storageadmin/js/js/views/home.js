@@ -83,7 +83,12 @@ var HomeLayoutView = RockstoreLayoutView.extend({
     // call shapeshift to do layout
     this.widgetsContainer.shapeshift({
       align: "left",
-      minColumns: 3
+      minColumns: 10,
+      gutterX: 5,
+      gutterY: 5,
+      paddingX: 5,
+      paddingY: 5,
+      handle: 'div.widget-header'
     });
      
     // set handler for drop event, when a widget is moved around and 
@@ -100,21 +105,28 @@ var HomeLayoutView = RockstoreLayoutView.extend({
 
   addWidget: function(widget, container, widgetViews) {
     var div = null;
-    var viewName = widget.view;
-    
+    var widgetDef = RockStorWidgets.findByName(widget.name);  
+    var viewName = widgetDef.view;
     if (!_.isUndefined(window[viewName] && !_.isNull(window[viewName]))) {
       // Create widget view 
       var view = new window[viewName]({
-        displayName: widget.displayName,
+        displayName: widgetDef.displayName,
         name: widget.name,
         cleanupArray: widgetViews,
-        parentView: this
+        parentView: this,
+        maximized: widget.maximized
       });
       
       // create shapeshift div for widget and render
       div = $("<div>");
-      div.attr("data-ss-colspan", widget.cols);
-      div.attr("data-ss-rowspan", widget.rows);
+      div.attr('class','widget-ph');
+      if (widget.maximized) {
+        div.attr("data-ss-colspan", widgetDef.maxCols);
+        div.attr("data-ss-rowspan", widgetDef.maxRows);
+      } else {
+        div.attr("data-ss-colspan", widgetDef.cols);
+        div.attr("data-ss-rowspan", widgetDef.rows);
+      }
       div.attr("data-widget-name", widget.name);
       container.append(div);
       var position_div = $('<div class="position"></div>');
@@ -161,21 +173,19 @@ var HomeLayoutView = RockstoreLayoutView.extend({
   },
 
   saveWidgetConfiguration: function() {
-    var divs = this.widgetsContainer.children('div');
+    var _this = this;
+    var divs = this.widgetsContainer.children('div.widget-ph');
     var tmp = [];
     divs.each(function(index) {
       var div = $(this);
-      var name = div.find('div.widget').attr('id').replace('_widget','');; 
-      var widget = RockStorWidgets.findByName(name);
-      var rows = div.attr('data-ss-rowspan');
-      var cols = div.attr('data-ss-colspan');
+      var name = div.data('widget-name');
+      var widget = _.find(_this.widgetViews, function(w) {
+        return w.name == name;
+      });
       tmp.push({
         name: name, 
-        displayName: widget.displayName,
-        view: widget.view,
-        rows: rows, 
-        cols: cols,
         position: index, 
+        maximized: widget.maximized
       });
     });
     this.dashboardconfig.set({ widgets: JSON.stringify(tmp) });
@@ -200,7 +210,7 @@ var HomeLayoutView = RockstoreLayoutView.extend({
       this.widgetsContainer.trigger("ss-destroy");
       this.widgetsContainer.shapeshift({
         align: "left",
-        minColumns: 3
+        minColumns: 10
       });
       this.saveWidgetConfiguration();
     } else {
