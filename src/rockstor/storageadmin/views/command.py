@@ -55,7 +55,7 @@ class CommandView(APIView):
                 exports = create_nfs_export_input(e)
                 logger.info('export = %s' % exports)
                 refresh_nfs_exports(exports)
-                return Response()
+            return Response()
         except Exception, e:
             e_msg = ('Unable to export all nfs shares due to a system error')
             logger.error(e_msg)
