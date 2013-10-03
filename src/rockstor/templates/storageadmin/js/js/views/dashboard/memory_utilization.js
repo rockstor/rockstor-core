@@ -66,9 +66,9 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
         tickFormatter: this.memValueTickFormatter,
       },
 			series: {
-        //stack: false,
+        stack: true,
         //bars: { show: false, barWidth: 0.4, fillColor: {colors:[{opacity: 1},{opacity: 1}]}, align: "center" },
-        lines: { show: true, fill: 0.5 },
+        lines: { show: true, fill: 0.8 },
         shadowSize: 0	// Drawing is faster without shadows
 			},
       legend : { 
@@ -183,7 +183,7 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
       used.push([i, ((d["total"] - d["free"])/_this.totalMem)*100]);
     });
   
-    new_data.push({"label": "free", "data": free, "color": this.colors[0]});
+    //new_data.push({"label": "free", "data": free, "color": this.colors[0]});
     new_data.push({"label": "used", "data": used, "color": this.colors[1]});
     return new_data;
   },
