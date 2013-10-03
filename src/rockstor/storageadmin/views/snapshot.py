@@ -22,12 +22,15 @@ View for things at snapshot level
 
 from rest_framework.response import Response
 from django.db import transaction
-from storageadmin.models import (Snapshot, Share, Disk)
+from django.conf import settings
+from storageadmin.models import (Snapshot, Share, Disk, NFSExport)
 from fs.btrfs import (add_snap, remove_snap, rollback_snap, share_id,
                       update_quota, share_usage)
+from system.osi import refresh_nfs_exports
 from storageadmin.serializers import SnapshotSerializer
 from storageadmin.util import handle_exception
 from generic_view import GenericView
+from nfs_helpers import create_nfs_export_input
 
 import logging
 logger = logging.getLogger(__name__)
@@ -54,7 +57,40 @@ class SnapshotView(GenericView):
         return Snapshot.objects.filter(share=share)
 
     @transaction.commit_on_success
-    def _create(self, share, snap_name, pool_device, request):
+    def _toggle_visibility(self, share, snap_name, on=True):
+        for se in NFSExport.objects.filter(share=share):
+            snap_realname = ('%s_%s' % (share.name, snap_name))
+            mnt_pt = ('%s%s/%s' % (settings.MNT_PT, share.pool.name,
+                                   snap_realname))
+            export_pt = mnt_pt.replace(settings.MNT_PT,
+                                       settings.NFS_EXPORT_ROOT)
+            export = None
+            if (on):
+                if (not NFSExport.objects.filter(share=share, nohide=False)):
+                    #master share is not exported, so don't export the snap
+                    continue
+                export = NFSExport(share=share, mount=export_pt,
+                                   host_str=se.host_str, nohide=True)
+                export.full_clean()
+                export.save()
+            else:
+                try:
+                    export = NFSExport.objects.get(share=share,
+                                                   host_str=se.host_str,
+                                                   mount=export_pt,
+                                                   nohide=True)
+                    export.enabled = False
+                except Exception, e:
+                    logger.exception(e)
+                    continue
+            exports = create_nfs_export_input(export)
+            refresh_nfs_exports(exports)
+            if (not on):
+                export.delete()
+        return True
+
+    @transaction.commit_on_success
+    def _create(self, share, snap_name, pool_device, request, uvisible):
         if (Snapshot.objects.filter(share=share, name=snap_name).exists()):
             e_msg = ('Snapshot with name: %s already exists for the '
                      'share: %s' % (snap_name, share.name))
@@ -67,12 +103,14 @@ class SnapshotView(GenericView):
             qgroup_id = ('0/%s' % snap_id)
             snap_size = share_usage(share.pool.name, pool_device, qgroup_id)
             s = Snapshot(share=share, name=snap_name, size=snap_size,
-                         qgroup=qgroup_id)
+                         qgroup=qgroup_id, uvisible=uvisible)
             s.save()
             return Response(SnapshotSerializer(s).data)
         except Exception, e:
+            e_msg = ('Failed to create snapshot due to a system error.')
+            logger.error(e_msg)
             logger.exception(e)
-            handle_exception(e, request)
+            handle_exception(Exception(e_msg), request)
 
     @transaction.commit_on_success
     def _rollback(self, share, snap_name, pool_device, request):
@@ -98,9 +136,24 @@ class SnapshotView(GenericView):
 
     def post(self, request, sname, snap_name, command=None):
         share = self._validate_share(sname, request)
+        uvisible = False
+        if (request.DATA is not None and 'uvisible' in request.DATA):
+            uvisible = request.DATA['uvisible']
+            if (type(uvisible) != bool):
+                e_msg = ('uvisible must be a boolean, not %s' % type(uvisible))
+                handle_exception(Exception(e_msg), request)
         pool_device = Disk.objects.filter(pool=share.pool)[0].name
         if (command is None):
-            return self._create(share, snap_name, pool_device, request)
+            ret = self._create(share, snap_name, pool_device, request,
+                               uvisible=uvisible)
+            if (uvisible):
+                try:
+                    self._toggle_visibility(share, snap_name)
+                except Exception, e:
+                    msg = ('snapshot created but nfs exporting it failed')
+                    logger.error(msg)
+                    logger.exception(e)
+            return ret
         if (command == 'rollback'):
             return self._rollback(share, snap_name, pool_device, request)
         e_msg = ('Unknown command: %s' % command)
@@ -125,11 +178,31 @@ class SnapshotView(GenericView):
         """
         deletes a snapshot
         """
-        share = Share.objects.get(name=sname)
-        if (Snapshot.objects.filter(share=share, name=snap_name).exists()):
+        share = self._validate_share(sname, request)
+        try:
             snapshot = Snapshot.objects.get(share=share, name=snap_name)
-            pool_device = Disk.objects.filter(pool=share.pool)[0].name
+        except:
+            e_msg = ('Snapshot with name: %s does not exist' % snap_name)
+            handle_exception(Exception(e_msg), request)
+
+        pool_device = Disk.objects.filter(pool=share.pool)[0].name
+        try:
+            if (snapshot.uvisible):
+                self._toggle_visibility(share, snap_name, on=False)
+        except Exception, e:
+            e_msg = ('Unable to nfs unexport the snapshot, requirement for '
+                     'deletion. Try again later')
+            logger.error(e_msg)
+            logger.exception(e)
+            handle_exception(Exception(e_msg), request)
+
+        try:
             remove_snap(share.pool.name, pool_device, sname, snap_name)
             snapshot.delete()
-        return Response()
-
+            return Response()
+        except Exception, e:
+            e_msg = ('Unable to delete snapshot due to a system error. Try '
+                     'again later.')
+            logger.error(e_msg)
+            logger.exception(e)
+            handle_exception(Exception(e_msg), request)

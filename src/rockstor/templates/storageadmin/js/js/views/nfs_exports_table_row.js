@@ -86,9 +86,14 @@ NFSExportsTableRow  = RockstoreModuleView.extend({
         enableButton(button)
         _this.parentView.render();
       },
-      error: function(request, status, error) {
+      error: function(xhr, status, error) {
         enableButton(button)
-        showError(request.responseText);	
+        var msg = parseXhrError(xhr)
+        if (_.isObject(msg)) {
+          _this.validator.showErrors(msg);
+        } else {
+          _this.parentView.$(".messages").html("<label class=\"error\">" + msg + "</label>");
+        }
       },
     });
     }

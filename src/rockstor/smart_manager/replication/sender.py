@@ -107,11 +107,11 @@ class Sender(Process):
             msg = ('Failed to create replica trail')
             self._clean_exit(msg, e)
 
-        snap_path = ('%s%s/%s/%s' % (settings.MNT_PT, self.replica.pool,
+        snap_path = ('%s%s/%s_%s' % (settings.MNT_PT, self.replica.pool,
                                      sname, self.snap_name))
         cmd = [BTRFS, 'send', snap_path]
         if (self.rt is not None):
-            prev_snap = ('%s%s/%s/%s' % (settings.MNT_PT, self.replica.pool,
+            prev_snap = ('%s%s/%s_%s' % (settings.MNT_PT, self.replica.pool,
                                          sname, self.rt.snap_name))
             cmd = [BTRFS, 'send', '-p', prev_snap, snap_path]
 

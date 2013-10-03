@@ -31,16 +31,12 @@ MOUNT = '/bin/mount'
 UMOUNT = '/bin/umount'
 EXPORTFS = '/usr/sbin/exportfs'
 RESTART = '/sbin/restart'
-EXPORT_DIR = '/export/'
 SMB_CONFIG = '/etc/samba/smb.conf'
 SERVICE = '/sbin/service'
 HOSTID = '/usr/bin/hostid'
 IFCONFIG = '/sbin/ifconfig'
 NTPDATE = '/usr/sbin/ntpdate'
 
-
-import logging
-logger = logging.getLogger(__name__)
 
 class Disk():
 
@@ -102,57 +98,50 @@ def create_tmp_dir(dirname):
 def rm_tmp_dir(dirname):
     return run_command([RMDIR, dirname])
 
-def nfs4_mount_setup(mnt_pt):
-    """
-    nfs4 without any authentication, for now.
-    create /export/share_name with 777, where share_name is the last dentry in
-    the mnt_pt.
-    mount --bind mnt_pt /export/share_name
-    """
-    share_name = mnt_pt.split('/')[-1]
-    export_dir = EXPORT_DIR + share_name
-    if (not os.path.ismount(export_dir)):
-        run_command([MKDIR, '-p', export_dir])
-        run_command([CHMOD, '-R', '777', export_dir])
-        return run_command([MOUNT, '--bind', mnt_pt, export_dir])
-    return True
-
-def nfs4_mount_teardown(mnt_pt):
+def nfs4_mount_teardown(export_pt):
     """
     reverse of setup. cleanup when there are no more exports
     """
-    share_name = mnt_pt.split('/')[-1]
-    export_dir = EXPORT_DIR + share_name
-    if (os.path.exists(export_dir)):
-        if (os.path.ismount(export_dir)):
-            run_command([UMOUNT, export_dir])
-        return run_command([RMDIR, export_dir])
+    if (os.path.exists(export_pt)):
+        if (os.path.ismount(export_pt)):
+            run_command([UMOUNT, export_pt])
+        return run_command([RMDIR, export_pt])
     return True
 
 def refresh_nfs_exports(exports):
     """
     input format:
 
-    [{'mount_point': '/mnt2/share1',
-     'clients': [{'client_str': 'www.example.com',
-                  'option_list' 'rw,insecure,'},]},]
+    {'export_point': [{'client_str': 'www.example.com',
+                       'option_list': 'rw,insecure,'
+                       'mnt_pt': mnt_pt,},],
+                       ...}
 
     if 'clients' is an empty list, then unmount and cleanup.
     """
-    logger.debug('refreshing exports: %s' % exports)
     with open('/etc/exports', 'w') as efo:
-        for e in exports:
-            if (len(e['clients']) == 0):
-                nfs4_mount_teardown(e['mount_point'])
+        shares = []
+        for e in exports.keys():
+            if (len(exports[e]) == 0):
+                #do share tear down at the end, only snaps here
+                if (len(e.split('/')) == 4):
+                    nfs4_mount_teardown(e)
+                else:
+                    shares.append(e)
                 continue
 
-            nfs4_mount_setup(e['mount_point'])
+            if (not os.path.ismount(e)):
+                run_command([MKDIR, '-p', e])
+                run_command([CHMOD, '-R', '777', e])
+                run_command([MOUNT, '--bind', exports[e][0]['mnt_pt'], e])
             client_str = ''
-            for c in e['clients']:
+            for c in exports[e]:
                 client_str = ('%s%s(%s) ' % (client_str, c['client_str'],
                                              c['option_list']))
-            export_str = ('%s %s\n' % (e['mount_point'], client_str))
+            export_str = ('%s %s\n' % (e, client_str))
             efo.write(export_str)
+        for s in shares:
+            nfs4_mount_teardown(s)
     return run_command([EXPORTFS, '-ra'])
 
 def refresh_smb_config(exports, clean_config):
