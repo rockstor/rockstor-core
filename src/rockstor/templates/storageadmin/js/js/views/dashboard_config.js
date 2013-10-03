@@ -48,7 +48,7 @@ DashboardConfigView = Backbone.View.extend({
   },
 
   setCheckbox: function(name, checked) {
-    var cbox = this.$('#input[type="checkbox"][value="' + name + '"]');
+    var cbox = this.$('input[type="checkbox"][value="' + name + '"]');
     if (checked) {
       cbox.attr("checked", "true");
     } else {

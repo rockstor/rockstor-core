@@ -30,29 +30,10 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.dashboard_widgets_network_utilization;
+    this.valuesTemplate = window.JST.dashboard_widgets_network_util_values;
     this.begin = null;
     this.refreshInterval = 1000;
     this.end = null;
-    var emptyData = {
-      "id": 0, 
-      "kb_rx": 0, 
-      "packets_rx": 0, 
-      "errs_rx": 0, 
-      "drop_rx": 0, 
-      "fifo_rx": 0, 
-      "frame": 0, 
-      "compressed_rx": 0, 
-      "multicast_rx": 0, 
-      "kb_tx": 0, 
-      "packets_tx": 0, 
-      "errs_tx": 0, 
-      "drop_tx": 0, 
-      "fifo_tx": 0, 
-      "colls": 0, 
-      "carrier": 0, 
-      "compressed_tx": 0, 
-      "ts": ""
-    }; 
     this.dataBuffers = {};
     this.dataLength = 300;
     this.currentTs = null;
@@ -85,32 +66,28 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
           min: 0, 
           tickFormatter: this.valueTickFormatter,
           axisLabel: "Data",
-          axisLabelColour: "#000"
+          axisLabelColour: "#000",
+          axisLabelPadding: 0,
         }, 
         { 
           position: "right", 
           min: 0,
           axisLabel: "Packets",
-          axisLabelColour: "#000"
+          axisLabelColour: "#000",
+          axisLabelPadding: 0,
         } 
       ],
 			series: {
-        //stack: false,
-        //bars: { show: false, barWidth: 0.4, fillColor: {colors:[{opacity: 1},{opacity: 1}]}, align: "center" },
         lines: { show: true, fill: false },
         shadowSize: 0	// Drawing is faster without shadows
 			},
       legend : { 
         container: "#network-util-legend", 
-        noColumns: 1,
+        noColumns: 2,
         margin: [30,0],
         labelBoxBorderColor: "#fff"
 
       },
-      //tooltip: true,
-      //tooltipOpts: {
-        //content: "%s (%y.2)" 
-      //}
     };
   },
   
@@ -121,7 +98,11 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
     $(this.el).html(this.template({ 
       module_name: this.module_name,
       displayName: this.displayName,
+      maximized: this.maximized
     }));
+    if (this.maximized) {
+      this.$('#network-util-values-ph').html(this.valuesTemplate());
+    }
     this.$("#interface-select").change(function(event) {
       _this.selectedInterface = $(event.currentTarget).val();
     });
@@ -143,27 +124,28 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
     });
     this.selectedInterface = this.networkInterfaces.at(0).get("name");
     $.ajax({
-      url: "/api/sm/sprobes/netstat/?limit=" + this.dataLength + "&format=json", 
+      url: "/api/sm/sprobes/netstat/?limit=1&format=json", 
       type: "GET",
       dataType: "json",
       global: false, // dont show global loading indicator
       success: function(data, status, xhr) {
         // fill dataBuffers
-        // TODO get network interface name when its added to the json
-        // and fill data for each network interface
+        
         _this.networkInterfaces.each(function(ni) {
-          _this.dataBuffers[ni.get("name")] = [];
+          var tmp = [];
+          for (var i=0; i<_this.dataLength; i++) {
+            tmp.push(_this.genEmptyData());
+          }
+          _this.dataBuffers[ni.get("name")] = tmp;
         });
         _.each(data.results, function(d) {
           _this.dataBuffers[d.device].push(d);
         });
         _.each(_this.dataBuffers, function(dataBuffer) {
           if (dataBuffer.length > _this.dataLength) {
-            dataBuffer.splice(0,
-            dataBuffer.length - _this.dataLength);
+            dataBuffer.splice(0, dataBuffer.length - _this.dataLength);
           }
         });
-       
        
         _this.intervalId = window.setInterval(function() {
           return function() { 
@@ -216,15 +198,16 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
     $.plot(this.$("#network-util-chart"), newData, this.graphOptions);
     var currentData = dataBuffer[dataBuffer.length-1];
     
-    
-    this.$("#data-rec").html(humanize.filesize(currentData["kb_rx"]*1024));
-    this.$("#packets-rec").html(currentData["packets_rx"]);  
-    this.$("#errors-rec").html(currentData["errs_rx"]);
-    this.$("#drop-rec").html(currentData["drop_rx"]);
-    this.$("#data-sent").html(humanize.filesize(currentData["kb_tx"]*1024));
-    this.$("#packets-sent").html(currentData["packets_tx"]);  
-    this.$("#errors-sent").html(currentData["errs_tx"]);
-    this.$("#drop-sent").html(currentData["drop_tx"]);
+    if (this.maximized) { 
+      this.$("#data-rec").html(humanize.filesize(currentData["kb_rx"]*1024));
+      this.$("#packets-rec").html(currentData["packets_rx"]);  
+      this.$("#errors-rec").html(currentData["errs_rx"]);
+      this.$("#drop-rec").html(currentData["drop_rx"]);
+      this.$("#data-sent").html(humanize.filesize(currentData["kb_tx"]*1024));
+      this.$("#packets-sent").html(currentData["packets_tx"]);  
+      this.$("#errors-sent").html(currentData["errs_tx"]);
+      this.$("#drop-sent").html(currentData["drop_tx"]);
+    }
     
   },
 
@@ -283,7 +266,41 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
     return "%s (%p.2%)"
     //return "%s (" + humanize.filesize(xval, 1024, 1) + ")"; 
   },
-  
+
+  genEmptyData: function() {
+    return {
+      "id": 0, 
+      "kb_rx": 0, 
+      "packets_rx": 0, 
+      "errs_rx": 0, 
+      "drop_rx": 0, 
+      "fifo_rx": 0, 
+      "frame": 0, 
+      "compressed_rx": 0, 
+      "multicast_rx": 0, 
+      "kb_tx": 0, 
+      "packets_tx": 0, 
+      "errs_tx": 0, 
+      "drop_tx": 0, 
+      "fifo_tx": 0, 
+      "colls": 0, 
+      "carrier": 0, 
+      "compressed_tx": 0, 
+      "ts": ""
+    }; 
+  },
+
+  resize: function(event) {
+    this.constructor.__super__.resize.apply(this, arguments);
+    if (this.maximized) {
+      console.log('maximizing');
+      this.$('#network-util-values-ph').html(this.valuesTemplate());
+    } else {
+      console.log('minimizing');
+      this.$('#network-util-values-ph').empty();
+    }
+  },
+
   cleanup: function() {
     if (!_.isUndefined(this.intervalId)) {
       window.clearInterval(this.intervalId);
@@ -292,14 +309,16 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
 
 });
 
-RockStorWidgets.available_widgets.push({ 
+RockStorWidgets.widgetDefs.push({ 
     name: 'network', 
-    displayName: 'Network Utilization', 
+    displayName: 'Network', 
     view: 'NetworkUtilizationWidget',
     description: 'Display network utilization',
     defaultWidget: true,
     rows: 1,
-    cols: 2,
+    cols: 5,
+    maxRows: 2,
+    maxCols: 10,
     category: 'Network', 
     position: 3
 });

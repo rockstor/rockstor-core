@@ -2,10 +2,10 @@
 <div class="row-fluid">
   <div class="span12">
     <div class="widget-header">
-      <div class="title"><span class="h3"><%= displayName %></span></div>
+      <div class="title"><span class="h4"><%= displayName %></span></div>
       <div class="gear">
-        <a class="resize-widget" href="#"><i class="icon-white icon-resize-full"></i></a>
-        <a class="close-widget" href="#"><i class="icon-white icon-remove"></i></a>
+        <a class="resize-widget" href="#"><i class="icon-resize-full"></i></a>
+        <a class="close-widget" href="#"><i class="icon-remove"></i></a>
       </div>
     </div>
   </div> <!-- span12 -->
@@ -18,28 +18,6 @@
     <div class="widget-content">
       <div class="row-fluid">
         <div class="span12">
-          <table id="disk-utilization-table" class="table-hover tablesorter" summary="List of disks and utilization">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Reads/sec</th>
-                <th>Writes/sec</th>
-                <th>KB Read/sec</th>
-                <th>KB Written/sec</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!--
-              <% disks.each(function(disk, index) { %>
-                <tr class="disk-utilization-row">
-                  <td class="disk-utilization-name"><%= disk.get("name") %></td>
-                  <td class="disk-utilization-reads" data-disk="<%= disk.get('name') %>"></td>
-                  <td class="disk-utilization-writes" data-disk="<%= disk.get('name') %>"></td>
-                </tr>
-              <% }); %>
-              -->
-            </tbody>
-          </table>
         </div>
       </div>
     </div>
