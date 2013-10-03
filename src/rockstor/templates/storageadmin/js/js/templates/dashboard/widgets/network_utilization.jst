@@ -16,29 +16,15 @@
 <!-- Content -->
 <div class="widget-content">
   <div id="network-util-chart" style="float: left; width: 80%; height: 60%"></div>
-  <div id="network-util-legend" style="float: left;"></div>
   <div class="clear"></div>
-  <div id="network-util-values" style="float: left">
-    <table>
-      <tr>
-        <td>Data rec: <span id="data-rec"></span></td>
-        <td>Packets rec: <span id="packets-rec"></span></td>
-        <td>Errors rec: <span id="errors-rec"></span></td>
-        <td>Drop rec: <span id="drop-rec"></span></td>
-      </tr>
-      <tr>
-        <td>Data sent: <span id="data-sent"></span></td>
-        <td>Packets sent: <span id="packets-sent"></span></td>
-        <td>Errors sent: <span id="errors-sent"></span></td>
-        <td>Drop sent: <span id="drop-sent"></span></td>
-      </tr>
-    </table> 
-  </div>
-  <div id="interface-select-div" style="float: left">
-    Select interface:
-    <select id="interface-select" name="interface-select" style="width: 50px;">
+  <div id="network-util-legend" style="float: left;"></div>
+  <div id="interface-select-div" style="float: left; margin-left: 2px; font-size: smaller;">
+    Interface:<br>
+    <select id="interface-select" name="interface-select" style="font-size: smaller; line-height: 1em; width: 50px; height: 22px;">
     </select>
   </div>
+  <div class="clear"></div>
+  <div id="network-util-values-ph" style="float: left;"></div>
 </div>
 <!-- End Content -->
 <!-- end module body -->

@@ -158,7 +158,6 @@ RockStorWidgetView = Backbone.View.extend({
     if (!_.isUndefined(event) && !_.isNull(event)) {
       event.preventDefault();
     }
-    logger.debug('in resize');
     var c = $(this.el).closest('div.widgets-container'); 
     var w = $(this.el).closest('div.widget-ph'); // current widget
     var widgetDef = RockStorWidgets.findByName(this.name);  
