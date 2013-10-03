@@ -808,7 +808,6 @@ hr.module-sep { margin: 0; border: 0; border-top: 1px solid #ddd;
 .widget-content {
   padding: 4px 12px 4px 12px;
   height: 100%;
-  width: 100%;
 }
 
 /* Styles for jquery shapeshift plugin */
