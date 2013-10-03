@@ -122,10 +122,14 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
             success: function() { _this.render(); }
           });
         },
-        error: function(request, status, error) {
+        error: function(xhr, status, error) {
           enableButton(button)
-          var msg = parseXhrError(error)
-          _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
+          var msg = parseXhrError(xhr)
+          if (_.isObject(msg)) {
+            _this.validator.showErrors(msg);
+          } else {
+            _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
+          }
         }
       });
     }
