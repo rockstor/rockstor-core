@@ -46,6 +46,15 @@ class PoolView(GenericView):
                 return Pool.objects.get(name=kwargs['pname'])
             except:
                 return []
+        sort_col = self.request.QUERY_PARAMS.get('sortby', None)
+        if (sort_col is not None and sort_col == 'usage'):
+            reverse = self.request.QUERY_PARAMS.get('reverse', 'no')
+            if (reverse == 'yes'):
+                reverse = True
+            else:
+                reverse = False
+            return sorted(Pool.objects.all(), key=lambda u: u.cur_usage(),
+                          reverse=reverse)
         return Pool.objects.all()
 
     @transaction.commit_on_success
