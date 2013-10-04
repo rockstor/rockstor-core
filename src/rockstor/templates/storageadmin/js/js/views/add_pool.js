@@ -123,7 +123,7 @@ AddPoolView = Backbone.View.extend({
 
             });
             $.ajax({
-              url: "/api/pools/",
+              url: "/api/pools",
               type: "POST",
               dataType: "json",
               data: {"disks": disk_names, "raid_level": raid_level, "pname": pool_name},
