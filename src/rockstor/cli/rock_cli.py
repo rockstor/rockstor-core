@@ -31,6 +31,7 @@ from network_console import NetworkConsole
 from users_console import UsersConsole
 from task_console import TaskConsole
 from replication_console import ReplicationConsole
+from rest_util import api_call
 
 
 ASCII_LOGO = """
@@ -56,6 +57,28 @@ class RockConsole(BaseConsole):
     """
     Commands
     """
+    def do_utcnow(self, args):
+        """
+        returns utc time on the server
+        """
+        url = ('%scommands/utcnow' % BaseConsole.url)
+        print api_call(url, calltype='post')
+
+    def do_uptime(self, args):
+        """
+        return uptime(in seconds) of the server
+        """
+        url = ('%scommands/uptime' % BaseConsole.url)
+        print api_call(url, calltype='post')
+
+    def do_bootstrap(self, args):
+        """
+        bootraps the storage state, mounts anything that needs to be mounted
+        etc..
+        """
+        url = ('%scommands/bootstrap' % BaseConsole.url)
+        print api_call(url, calltype='post')
+
     def do_shares(self, args):
         """
         Subconsole for share related operations.
