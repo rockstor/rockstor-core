@@ -50,6 +50,15 @@ class GenericSProbeView(generics.ListCreateAPIView):
             return qs
         if (t1 is not None and t2 is not None):
             return self.model_obj.objects.filter(ts__gt=t1, ts__lte=t2)
+
+        sort_col = self.request.QUERY_PARAMS.get('sortby', None)
+        if (sort_col is not None):
+            reverse = self.request.QUERY_PARAMS.get('reverse', 'no')
+            if (reverse == 'yes'):
+                reverse = True
+            else:
+                reverse = False
+            return self._sorted_results(sort_col, reverse)
         return self.model_obj.objects.all().order_by('-ts')[0:limit]
 
     def get_paginate_by(self, foo):
