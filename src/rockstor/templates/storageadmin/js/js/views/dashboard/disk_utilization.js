@@ -37,10 +37,16 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     // see genEmptyDiskData for an example of this format
     this.disksData = {};
     this.disks = new DiskCollection();
+    
     this.topDisks = [];
-    this.updateInterval = 1000;
+    this.topDisksWidth = this.maximized ? 400 : 200;
+    this.topDisksHeight = 50;
+
+    this.updateInterval = 5000;
     this.sortAttrs = ['reads_completed']; // attrs to sort by
     this.numTop = 5; // no of top shares
+    this.partition = d3.layout.partition()
+    .value(function(d) { return d.reads_completed; });
   },
 
   render: function() {
@@ -52,6 +58,14 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
       displayName: this.displayName,
       maximized: this.maximized
     }));
+    this.$('#top-disks-ph').css('width', this.topDisksWidth);
+    this.topDisksPh = d3.select(this.el).select('#top-disks-ph');
+    
+    this.topDisksVis = this.topDisksPh 
+    .append('svg:svg')
+    .attr('height', 100)
+    .attr('width', this.topDisksWidth);
+    
     this.disks.fetch({
       success: function(collection, response, options) {
         _this.initializeDisksData();
@@ -79,7 +93,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
 
   startLoop: function() {
     var _this = this;
-    this.intervalId = window.setTimeout(function() {
+    this.intervalId = window.setInterval(function() {
       return function() { _this.getData(_this); }
     }(), this.updateInterval)
   },
@@ -127,35 +141,31 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
       return _.reduce(_this.sortAttrs, function(s, a) { return s + d[a]; }, 0); 
     }).reverse();
     this.topDisks = sorted.slice(0,_this.numTop);
-    
   },
 
+  // render bars for top disks. the width of each bar is proportional
+  // to the sort value. Use d3 partition layout to calculate coordinates.
   renderTopDisks: function() {
-    
+    var w = this.topDisksWidth;
+    var h = this.topDisksHeight;
     var root = {name: 'root', reads_completed: 0, children: this.topDisks};
-    var partition = d3.layout.partition()
-    .value(function(d) { return d.reads_completed; });
-    var w = 200;
-    var h = 50;
     var x = d3.scale.linear().range([0, w]);
     var y = d3.scale.linear().range([0, h]);
-    
-    var vis = d3.select(this.el).select('#top-disks-ph')
-    .append('svg:svg')
-    .attr('height', h)
-    .attr('width', w);
-    
-    var g = vis.selectAll('g')
-    .data(partition.nodes(root))
-    .enter().append('svg:g')
-    .attr('transform', function(d) {
-      return 'translate(' + x(d.x) + ',' + y(d.y) + ')'; 
-    });
-    
+    var diskNodes = this.partition.nodes(root);
     var kx = w / root.dx, ky = h / 1;
+    var duration = 1000;
 
-    g.append('svg:rect')
-    .attr('width', function(d) { return d.dx * w; })
+    var disk = this.topDisksVis.selectAll('g')
+    .data(diskNodes, function(d) { return d.name; });
+    
+    // Create g elements - each g element is positioned at appropriate
+    // x coordinate, and contains a rect with width acc to disk sort value,
+    // and a text element with the disk name 
+    var diskEnter = disk
+    .enter().append('svg:g');
+    
+    diskEnter.append('svg:rect')
+    .attr('class', 'diskRect')
     .attr('height', function(d) { 
       if (d.name == 'root') { 
         return 0;
@@ -165,6 +175,31 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     })
     .attr('fill', 'steelblue');
 
+    diskEnter.append("svg:text")
+    .attr('class', 'diskText')
+    .attr("transform", function(d) {
+      return 'translate(0,' + 32 + ')'; 
+    })
+    .text(function(d) { 
+      if (d.name == 'root') {
+        return '';
+      } else {
+        return d.name; 
+      }
+    })
+    .attr('fill-opacity', 1.0);
+
+    var diskUpdate = disk.transition() 
+    .duration(duration)
+    .attr('transform', function(d) {
+      return 'translate(' + x(d.x) + ',' + y(d.y) + ')'; 
+    });
+    
+    var diskRectUpdate = diskUpdate.select('rect.diskRect')
+    .attr('width', function(d) { return (d.dx * w) - 1; });
+
+    var diskExit = disk.exit().remove();
+    
   },
 
   genEmptyDiskData: function() {
@@ -189,7 +224,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     return [
       {
         'name': 'sdb',
-        "reads_completed": 10, 
+        "reads_completed": 10 + parseInt(Math.random()*10), 
         "reads_merged": 0, 
         "sectors_read": 0, 
         "ms_reading": 0, 
@@ -204,7 +239,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
       },
       {
         'name': 'sdc',
-        "reads_completed": 20, 
+        "reads_completed": 20 + parseInt(Math.random()*10), 
         "reads_merged": 0, 
         "sectors_read": 0, 
         "ms_reading": 0, 
@@ -219,7 +254,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
       },
       {
         'name': 'sdd',
-        "reads_completed": 5, 
+        "reads_completed": 5 + parseInt(Math.random()*5), 
         "reads_merged": 0, 
         "sectors_read": 0, 
         "ms_reading": 0, 
@@ -234,7 +269,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
       },
       {
         'name': 'sde',
-        "reads_completed": 7, 
+        "reads_completed": 7 + parseInt(Math.random()*5), 
         "reads_merged": 0, 
         "sectors_read": 0, 
         "ms_reading": 0, 
@@ -251,6 +286,16 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
 
 
   },
+  
+  resize: function(event) {
+    this.constructor.__super__.resize.apply(this, arguments);
+    this.topDisksWidth = this.maximized ? 400 : 200;
+    //this.$('#top-disks-ph').empty();
+    this.$('#top-disks-ph').css('width', this.topDisksWidth);
+    this.topDisksVis.attr('width', this.topDisksWidth);
+    this.renderTopDisks();
+  },
+
 
   cleanup: function() {
     if (!_.isNull(this.intervalId)) {
