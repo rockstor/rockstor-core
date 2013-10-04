@@ -26,11 +26,13 @@
 
 ConfigureServiceView = RockstoreLayoutView.extend({
   events: {
-    "click #cancel": "cancel"
+    "click #cancel": "cancel",
+    "click #security": "toggleFormFields",
   },
 
   initialize: function() {
     // call initialize of base
+    var _this = this;
     this.constructor.__super__.initialize.apply(this, arguments);
     this.serviceName = this.options.serviceName;
     // set template
@@ -38,6 +40,24 @@ ConfigureServiceView = RockstoreLayoutView.extend({
     this.rules = {
       ntpd: { server: 'required' },
       nis: { domain: 'required', server: 'required' },
+      winbind: {domain: 'required', controllers: 'required', 
+		security: 'required', 
+		realm: {
+		    required: {
+			depends: function(element) {
+			    return (_this.$('#security').val() == 'ad');
+			}
+		    }
+		},
+		templateshell: {
+		    required: {
+			depends: function(element) {
+			    return ((_this.$('#security').val() == 'ad') ||
+				    (_this.$('#security').val() == 'domain'));
+			}
+		    }
+		}
+	       },
     }
     this.formName = this.serviceName + '-form';
     this.service = new Service({name: this.serviceName});
@@ -56,6 +76,7 @@ ConfigureServiceView = RockstoreLayoutView.extend({
     if (config != null) {
       configObj = JSON.parse(this.service.get('config'));
     }
+    console.log(this.serviceName);
     $(this.el).html(this.template({service: this.service, config: configObj}));
 
     this.validator = this.$('#' + this.formName).validate({
@@ -100,7 +121,22 @@ ConfigureServiceView = RockstoreLayoutView.extend({
 
   cancel: function() {
     app_router.navigate("services", {trigger: true});
-  }
+  },
+
+  toggleFormFields: function() {
+    if (this.$('#security').val() == 'ad') {
+	this.$('#realm').removeAttr('disabled');
+    } else {
+        this.$('#realm').attr('disabled', 'true');    	
+    }
+
+    if (this.$('#security').val() == 'ad' ||
+        this.$('#security').val() == 'domain') {
+	this.$('#templateshell').removeAttr('disabled');
+    } else {
+	this.$('#templateshell').attr('disabled', 'true');
+    }
+  },
 
 });
 

@@ -24,10 +24,12 @@ from osi import run_command
 
 SERVICE_BIN = '/sbin/service'
 CHKCONFIG_BIN = '/sbin/chkconfig'
+AUTHCONFIG = '/usr/sbin/authconfig'
 
 
 def init_service_op(service_name, command, throw=True):
-    supported_services = ('nfs', 'smb', 'sshd', 'ypbind', 'rpcbind', 'ntpd')
+    supported_services = ('nfs', 'smb', 'sshd', 'ypbind', 'rpcbind', 'ntpd',
+                          'winbind')
     if (service_name not in supported_services):
         raise Exception('unknown service: %s' % service_name)
 
@@ -48,3 +50,29 @@ def service_status(service_name):
         else:
             return init_service_op('nfs', 'status', throw=False)
     return init_service_op(service_name, 'status', throw=False)
+
+def winbind_input(config, command):
+    ac_cmd = []
+    if (command == 'stop'):
+        ac_cmd.extend(['--disablewinbind','--disablewinbindauth'])
+    else:
+        ac_cmd.append('--smbsecurity=%s' % config['security'])
+        if (config['allow-offline'] is True):
+            ac_cmd.append('--enablewinbindoffline')
+        ac_cmd.append('--smbservers=%s' % config['controllers'])
+        ac_cmd.append('--smbworkgroup=%s' % config['domain'])
+        if (config['security'] == 'ad' or config['security'] == 'domain'):
+            ac_cmd.append('--winbindtemplateshell=%s' %
+                          config['templateshell'])
+        if (config['security'] == 'ad'):
+            ac_cmd.append('--smbrealm=%s' % config['realm'])
+        ac_cmd.extend(['--enablewinbind', '--enablewinbindauth'])
+    return ac_cmd
+
+def toggle_auth_service(service, command, config=None):
+    ac_cmd = [AUTHCONFIG, '--update',]
+    if (service == 'winbind'):
+        ac_cmd.extend(winbind_input(config, command))
+    return run_command(ac_cmd)
+
+
