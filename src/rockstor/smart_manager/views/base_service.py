@@ -48,3 +48,7 @@ class BaseServiceView(AdvancedSProbeView):
     def _save_config(self, service, config):
         service.config = json.dumps(config)
         return service.save()
+
+    def _get_config(self, service):
+        return json.loads(service.config)
+

@@ -30,6 +30,8 @@ from system.osi import (uptime, refresh_nfs_exports)
 from storageadmin.models import NFSExport
 from nfs_helpers import create_nfs_export_input
 from storageadmin.util import handle_exception
+from datetime import datetime
+from django.utils.timezone import utc
 
 import logging
 logger = logging.getLogger(__name__)
@@ -40,24 +42,24 @@ class CommandView(APIView):
                               BasicAuthentication,)
     permission_classes = (IsAuthenticated,)
 
-    def get(self, request, command):
-        if (command == 'uptime'):
-            return Response(uptime())
-        return Response()
-
     def post(self, request, command):
-        if (command != 'bootstrap'):
-            return Response()
+        if (command == 'bootstrap'):
+            try:
+                logger.info('bootstrapping')
+                for e in NFSExport.objects.all():
+                    exports = create_nfs_export_input(e)
+                    logger.info('export = %s' % exports)
+                    refresh_nfs_exports(exports)
+                return Response()
+            except Exception, e:
+                e_msg = ('Unable to export all nfs shares due to a system error')
+                logger.error(e_msg)
+                logger.exception(e)
+                handle_exception(Exception(e_msg), request)
 
-        try:
-            logger.info('bootstrapping')
-            for e in NFSExport.objects.all():
-                exports = create_nfs_export_input(e)
-                logger.info('export = %s' % exports)
-                refresh_nfs_exports(exports)
-            return Response()
-        except Exception, e:
-            e_msg = ('Unable to export all nfs shares due to a system error')
-            logger.error(e_msg)
-            logger.exception(e)
-            handle_exception(Exception(e_msg), request)
+        elif (command == 'utcnow'):
+            return Response(datetime.utcnow().replace(tzinfo=utc))
+
+        elif (command == 'uptime'):
+            return Response(uptime())
+

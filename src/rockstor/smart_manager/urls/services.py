@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from django.conf.urls.defaults import patterns, url
 from smart_manager.views import (BaseServiceView, NISServiceView,
                                  SambaServiceView, NFSServiceView,
-                                 NTPServiceView)
+                                 NTPServiceView, WinbindServiceView)
 
 command_regex = ('config|start|stop')
 
@@ -38,4 +38,7 @@ urlpatterns = patterns('',
     url(r'^ntpd$', NTPServiceView.as_view(), name='ntp-view'),
     url(r'^ntpd/(?P<command>%s)$' % command_regex, NTPServiceView.as_view(),
         name='ntp-view'),
+    url(r'^winbind$', WinbindServiceView.as_view()),
+    url(r'^winbind/(?P<command>%s)$' % command_regex,
+        WinbindServiceView.as_view()),
 )
