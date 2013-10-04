@@ -47,6 +47,15 @@ class ShareView(GenericView):
                 return Share.objects.get(name=kwargs['sname'])
             except:
                 return []
+        sort_col = self.request.QUERY_PARAMS.get('sortby', None)
+        if (sort_col is not None and sort_col == 'usage'):
+            reverse = self.request.QUERY_PARAMS.get('reverse', 'no')
+            if (reverse == 'yes'):
+                reverse = True
+            else:
+                reverse = False
+            return sorted(Share.objects.all(), key=lambda u: u.cur_usage(),
+                          reverse=reverse)
         return Share.objects.all()
 
     def _validate_share_size(self, request, size):

@@ -85,7 +85,7 @@ AddShareView = Backbone.View.extend({
               }
 
               $.ajax({
-                url: "/api/shares/",
+                url: "/api/shares",
                 type: "POST",
                 dataType: "json",
                 data: {sname: share_name, "pool": pool_name, "size": size},

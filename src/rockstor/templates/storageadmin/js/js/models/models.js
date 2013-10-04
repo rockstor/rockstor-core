@@ -47,7 +47,7 @@ var Pool = Backbone.Model.extend({
 
 var PoolCollection = RockStorPaginatedCollection.extend({
   model: Pool,
-  baseUrl: '/api/pools/'
+  baseUrl: '/api/pools'
 });
 
 var SupportCase = Backbone.Model.extend({
@@ -69,7 +69,7 @@ var Share = Backbone.Model.extend({
 
 var ShareCollection = RockStorPaginatedCollection.extend({
   model: Share,
-  baseUrl: '/api/shares/'
+  baseUrl: '/api/shares'
 });
 
 var Snapshot = Backbone.Model.extend({
