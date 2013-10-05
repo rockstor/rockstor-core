@@ -32,7 +32,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class ShareNFSView(GenericView):
+class NFSExportView(GenericView):
     serializer_class = NFSExportSerializer
 
     def _validate_share(self, sname, request):
@@ -43,19 +43,21 @@ class ShareNFSView(GenericView):
             handle_exception(Exception(e_msg), request)
 
     def get_queryset(self, *args, **kwargs):
-        share = self._validate_share(kwargs['sname'], self.request)
         if ('export_id' in kwargs):
             self.paginate_by = 0
             try:
                 return NFSExport.objects.get(id=kwargs['export_id'])
             except:
                 return []
-        return NFSExport.objects.filter(share=share, nohide=False)
+        return NFSExport.objects.filter(nohide=False)
 
     @transaction.commit_on_success
-    def post(self, request, sname):
+    def post(self, request):
+        if ('sname' not in request.DATA):
+            e_msg = ('Cannot export without sname parameter')
+            handle_exception(Exception(e_msg), request)
+        share = self._validate_share(request.DATA['sname'], request)
         try:
-            share = Share.objects.get(name=sname)
             options = {
                 'host_str': '*',
                 'mod_choice': 'ro',
@@ -94,9 +96,8 @@ class ShareNFSView(GenericView):
             handle_exception(e, request)
 
     @transaction.commit_on_success
-    def delete(self, request, sname, export_id):
+    def delete(self, request, export_id):
         try:
-            share = Share.objects.get(name=sname)
             if (not NFSExport.objects.filter(id=export_id).exists()):
                 e_msg = ('NFS export with id: %d does not exist' % export_id)
                 handle_exception(Exception(e_msg), request)
