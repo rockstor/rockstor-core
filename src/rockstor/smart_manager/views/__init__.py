@@ -37,3 +37,4 @@ from replication import ReplicaView
 from replica_trail import ReplicaTrailView
 from ntp_service import NTPServiceView
 from winbind_service import WinbindServiceView
+from ldap_service import LdapServiceView
