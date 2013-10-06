@@ -29,7 +29,7 @@ AUTHCONFIG = '/usr/sbin/authconfig'
 
 def init_service_op(service_name, command, throw=True):
     supported_services = ('nfs', 'smb', 'sshd', 'ypbind', 'rpcbind', 'ntpd',
-                          'winbind')
+                          'winbind', 'ldap',)
     if (service_name not in supported_services):
         raise Exception('unknown service: %s' % service_name)
 
@@ -69,10 +69,24 @@ def winbind_input(config, command):
         ac_cmd.extend(['--enablewinbind', '--enablewinbindauth'])
     return ac_cmd
 
+def ldap_input(config, command):
+    ac_cmd = []
+    if (command == 'stop'):
+        ac_cmd.extend(['--disableldap', '--disableldapauth'])
+    else:
+        ac_cmd.append('--ldapserver=%s' % config['server'])
+        ac_cmd.append('--ldapbasedn=%s' % config['basedn'])
+        if (config['enabletsl'] is True):
+            ac_cmd.append('--enableldaptls')
+            ac_cmd.append('--ldaploadcert=%s' % config['cert'])
+    return ac_cmd
+
 def toggle_auth_service(service, command, config=None):
     ac_cmd = [AUTHCONFIG, '--update',]
     if (service == 'winbind'):
         ac_cmd.extend(winbind_input(config, command))
+    elif (service == 'ldap'):
+        ac_cmd.extend(ldap_input(config, command))
+    else:
+        return None
     return run_command(ac_cmd)
-
-
