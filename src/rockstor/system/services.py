@@ -76,7 +76,7 @@ def ldap_input(config, command):
     else:
         ac_cmd.append('--ldapserver=%s' % config['server'])
         ac_cmd.append('--ldapbasedn=%s' % config['basedn'])
-        if (config['enabletsl'] is True):
+        if (config['enabletls'] is True):
             ac_cmd.append('--enableldaptls')
             ac_cmd.append('--ldaploadcert=%s' % config['cert'])
     return ac_cmd
