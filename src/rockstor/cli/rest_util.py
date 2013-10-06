@@ -87,14 +87,19 @@ def print_disk_info(disk_info):
         print("There are no disks in the system")
         return
     try:
-        if ('count' not in disk_info):
+        if ('results' not in disk_info):
+            #scan cmd is  used, don't do anything
+            disk_info = disk_info
+        elif ('count' not in disk_info):
             disk_info = [disk_info]
         else:
             disk_info = disk_info['results']
         print("List of disks in the system")
         print("--------------------------------------------")
-        print("Name\tSize(KB)\tFree(KB)\tPool")
+        print("Name\tSize\tFree\tPool")
         for d in disk_info:
+            d['size'] = sizeof_fmt(d['size'])
+            d['free'] = sizeof_fmt(d['free'])
             print('%s\t%s\t%s\t%s' %
 		  (d['name'], d['size'], d['free'], d['pool']))
     except Exception, e:
@@ -114,3 +119,11 @@ def print_export_info(export_info):
             print('%s\t%s\t%s\t%s\t%s\t%s' %
                   (e['id'], e['mount'], e['host_str'], e['editable'],
                    e['syncable'], e['enabled']))
+
+
+def sizeof_fmt(num):
+    for x in ['K','M','G','T','P','E']:
+        if num < 1024.00 and num > -1024.00:
+            return "%3.2f%s" % (num, x)
+        num /= 1024.00
+    return "%3.2f%s" % (num, 'ZB')
