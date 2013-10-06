@@ -1,0 +1,8 @@
+<h4>Disk activity</h4>
+Select disk
+<select name="disk-select" id="disk-select">
+  <% disks.each(function(disk) { %>
+    <option value="<%= disk.get('name') %>"><%= disk.get('name') %></option>
+  <% }); %>
+</select>
+
