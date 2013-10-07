@@ -26,6 +26,10 @@
 
 
 DiskUtilizationWidget = RockStorWidgetView.extend({
+  events: {
+    'click #disk-select': 'setSelectedDisk'
+  },
+
 
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
@@ -43,6 +47,8 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     this.topDisks = [];
     this.topDisksWidth = this.maximized ? 400 : 200;
     this.topDisksHeight = 50;
+    
+    this.selectedDisk = null;
 
     this.updateInterval = 1000;
     this.sortAttrs = ['reads_completed', 'writes_completed']; // attrs to sort by
@@ -124,6 +130,9 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
       }));
     } else {
       this.$('#disk-details-ph').html("<a href=\"#\" class=\"resize-widget\">Expand</a> for details");
+      if (this.selectedDisk) {
+        this.$('#disk-select').val(this.selectedDisk);
+      }
     }
   },
 
@@ -246,14 +255,16 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
   },
 
   renderDiskGraph: function() {
-    if (this.topDisks.length > 0) {
-      var name = this.topDisks[0].name;
-    } else {
-      var name = this.disks.at(0).get('name');
+    if (!this.selectedDisk) {
+      if (this.topDisks.length > 0) {
+        this.selectedDisk = this.topDisks[0].name;
+      } else {
+        this.selectedDisk = this.disks.at(0).get('name');
+      }
+      this.$('#disk-select').val(this.selectedDisk);
     }
-    this.$('#disk-select').val(name);
-
-    var vals = this.disksData[name];
+    
+    var vals = this.disksData[this.selectedDisk];
     var tmpReads = [];
     for (var i=0; i<this.dataLength; i++) {
       tmpReads.push([i, vals[i].reads_completed]);
@@ -382,12 +393,19 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     } else {
       this.$('#disk-details-ph').html("<a href=\"#\" class=\"resize-widget\">Expand</a> for details");
     }
+    if (this.selectedDisk) {
+      this.$('#disk-select').val(this.selectedDisk);
+    }
   },
   
   timeTickFormatter: function(dataLength) {
     return function(val, axis) {
       return ((dataLength/60) - (parseInt(val/60))).toString() + ' m';
     };
+  },
+
+  setSelectedDisk: function(event) {
+    this.selectedDisk = this.$('#disk-select').val();
   },
 
   cleanup: function() {
