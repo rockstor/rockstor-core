@@ -49,6 +49,16 @@
 	    <% } %> Enable TLS to encrypt connections?
           </label>
         </div>
+        <% if (config.enabletls) { %>
+          <div class="control-group" id="cert-ph">
+          <% } else { %>
+            <div class="control-group" id="cert-ph" style="visibility: hidden">
+        <% } %>
+          <label class="control-label" for="cert-utl">Certificate URL<span class="required"> *</span></label>
+          <div class="controls">
+            <input type="text" id="cert" name="cert" value="<%= config.cert %>" placeholder="Certificate URL" >
+          </div>
+        </div>
         <div class="control-group">
           <div class="controls">
             <button id="cancel" class="btn">Cancel</button>
