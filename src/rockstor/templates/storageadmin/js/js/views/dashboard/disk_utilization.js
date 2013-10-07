@@ -26,10 +26,6 @@
 
 
 DiskUtilizationWidget = RockStorWidgetView.extend({
-  events: {
-    'click #disk-select': 'setSelectedDisk'
-  },
-
 
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
@@ -128,11 +124,15 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
       this.$('#disk-details-ph').html(this.diskUtilSelect({
         disks: this.disks
       }));
-    } else {
-      this.$('#disk-details-ph').html("<a href=\"#\" class=\"resize-widget\">Expand</a> for details");
       if (this.selectedDisk) {
         this.$('#disk-select').val(this.selectedDisk);
       }
+      this.$('#disk-select').change(function(event) {
+        _this.selectedDisk = _this.$('#disk-select').val();
+        console.log(_this.selectedDisk);
+      });
+    } else {
+      this.$('#disk-details-ph').html("<a href=\"#\" class=\"resize-widget\">Expand</a> for details");
     }
   },
 
@@ -380,6 +380,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
   },
   
   resize: function(event) {
+    var _this = this;
     this.constructor.__super__.resize.apply(this, arguments);
     this.topDisksWidth = this.maximized ? 400 : 200;
     //this.$('#top-disks-ph').empty();
@@ -390,11 +391,15 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
       this.$('#disk-details-ph').html(this.diskUtilSelect({
         disks: this.disks
       }));
+      if (this.selectedDisk) {
+        this.$('#disk-select').val(this.selectedDisk);
+      }
+      this.$('#disk-select').change(function(event) {
+        _this.selectedDisk = _this.$('#disk-select').val();
+        console.log(_this.selectedDisk);
+      });
     } else {
       this.$('#disk-details-ph').html("<a href=\"#\" class=\"resize-widget\">Expand</a> for details");
-    }
-    if (this.selectedDisk) {
-      this.$('#disk-select').val(this.selectedDisk);
     }
   },
   
