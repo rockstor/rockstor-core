@@ -1549,5 +1549,6 @@ input[type="radio"].selectedRoot {
 #top-disks-ph { height: 75px; }
 #top-disks-ph { font-size: 10px; }
 #top-disks-ph rect { fill: steelblue; strole: #eee; fill-opacity: 0.8; }
-#disk-graph-ph { width: 90%; height: 25%; }
+#disk-graph-reads-ph { width: 90%; height: 25%; }
+#disk-graph-data-ph { width: 90%; height: 25%; }
 

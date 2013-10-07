@@ -260,11 +260,25 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     for (var i=0; i<this.numSamples; i++) {
       tmpWrites.push([i, vals[i].writes_completed]);
     }
-    var series = [
+    var series1 = [
       { label: 'Reads', data: tmpReads, color: this.colors[0] },
       { label: 'Writes', data: tmpWrites, color: this.colors[1] }
     ];
-    $.plot(this.$('#disk-graph-ph'), series, this.graphOptions);
+    $.plot(this.$('#disk-graph-reads-ph'), series1, this.graphOptions);
+
+    var tmpReadData = [];
+    for (var i=0; i<this.numSamples; i++) {
+      tmpReadData.push([i, vals[i].sectors_read]);
+    }
+    var tmpWriteData = [];
+    for (var i=0; i<this.numSamples; i++) {
+      tmpWrites.push([i, vals[i].sectors_written]);
+    }
+    var series2 = [
+      { label: 'KB read', data: tmpReadData, color: this.colors[0] },
+      { label: 'KB written', data: tmpWriteData, color: this.colors[1] }
+    ];
+    $.plot(this.$('#disk-graph-data-ph'), series2, this.graphOptions);
   },
 
   genEmptyDiskData: function() {
