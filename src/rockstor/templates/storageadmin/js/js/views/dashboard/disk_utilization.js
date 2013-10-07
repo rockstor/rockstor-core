@@ -31,10 +31,10 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.dashboard_widgets_disk_utilization;
     this.diskUtilSelect = window.JST.dashboard_widgets_disk_util_select;
-    this.numSamples = 600;
-    this.colors = ["#E41A1C", "#377EB8", "#4DAF4A", "#FFFFFF"];
+    this.dataLength = 300;
+    this.colors = ["#4DAF4A", "#377EB8"];
     // disks data is a map of diskname to array of values of length 
-    // numSamples
+    // dataLength
     // each value is of the format of the data returned by the api
     // see genEmptyDiskData for an example of this format
     this.disksData = {};
@@ -62,9 +62,10 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
       },
       xaxis: {
         min: 0,
-        max: this.numSamples-1,
+        max: this.dataLength-1,
+        tickFormatter: this.timeTickFormatter(this.dataLength),
         axisLabel: "Time (minutes)",
-        axisLabelColour: "#000"
+        axisLabelColour: "#000",
       },
       yaxis: { 
         min: 0, 
@@ -112,15 +113,17 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
       var name = disk.get('name');
       //var name = disk;
       _this.disksData[name] = [];
-      for (var i=0; i<_this.numSamples; i++) {
+      for (var i=0; i<_this.dataLength; i++) {
         _this.disksData[name].push(_this.genEmptyDiskData());
       }
     });
     if (this.maximized) {
       // initialize disk-select
-      this.$('#disk-select-ph').html(this.diskUtilSelect({
+      this.$('#disk-details-ph').html(this.diskUtilSelect({
         disks: this.disks
       }));
+    } else {
+      this.$('#disk-details-ph').html("<a href=\"#\" class=\"resize-widget\">Expand</a> for details");
     }
   },
 
@@ -168,7 +171,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
   updateTopDisks: function() {
     var _this = this;
     var tmp = _.map(_.keys(_this.disksData), function(k) {
-      return _this.disksData[k][_this.numSamples - 1];
+      return _this.disksData[k][_this.dataLength - 1];
     });
     tmp = _.reject(tmp, function(d) {
       var x = _.reduce(_this.sortAttrs, function(s, a) { return s + d[a]; }, 0); 
@@ -178,7 +181,6 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
       return _.reduce(_this.sortAttrs, function(s, a) { return s + d[a]; }, 0); 
     }).reverse();
     this.topDisks = sorted.slice(0,_this.numTop);
-    console.log(this.topDisks);
   },
 
   // render bars for top disks. the width of each bar is proportional
@@ -253,11 +255,11 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
 
     var vals = this.disksData[name];
     var tmpReads = [];
-    for (var i=0; i<this.numSamples; i++) {
+    for (var i=0; i<this.dataLength; i++) {
       tmpReads.push([i, vals[i].reads_completed]);
     }
     var tmpWrites = [];
-    for (var i=0; i<this.numSamples; i++) {
+    for (var i=0; i<this.dataLength; i++) {
       tmpWrites.push([i, vals[i].writes_completed]);
     }
     var series1 = [
@@ -267,11 +269,11 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     $.plot(this.$('#disk-graph-reads-ph'), series1, this.graphOptions);
 
     var tmpReadData = [];
-    for (var i=0; i<this.numSamples; i++) {
+    for (var i=0; i<this.dataLength; i++) {
       tmpReadData.push([i, vals[i].sectors_read]);
     }
     var tmpWriteData = [];
-    for (var i=0; i<this.numSamples; i++) {
+    for (var i=0; i<this.dataLength; i++) {
       tmpWrites.push([i, vals[i].sectors_written]);
     }
     var series2 = [
@@ -374,12 +376,18 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     this.topDisksVis.attr('width', this.topDisksWidth);
     this.renderTopDisks();
     if (this.maximized) {
-      this.$('#disk-select-ph').html(this.diskUtilSelect({
+      this.$('#disk-details-ph').html(this.diskUtilSelect({
         disks: this.disks
       }));
     } else {
-      this.$('#disk-select-ph').empty();
+      this.$('#disk-details-ph').html("<a href=\"#\" class=\"resize-widget\">Expand</a> for details");
     }
+  },
+  
+  timeTickFormatter: function(dataLength) {
+    return function(val, axis) {
+      return ((dataLength/60) - (parseInt(val/60))).toString() + ' m';
+    };
   },
 
   cleanup: function() {
