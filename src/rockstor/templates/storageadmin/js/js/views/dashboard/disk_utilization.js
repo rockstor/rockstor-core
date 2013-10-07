@@ -28,10 +28,18 @@
 DiskUtilizationWidget = RockStorWidgetView.extend({
 
   initialize: function() {
+    var _this = this;
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.dashboard_widgets_disk_utilization;
     this.diskUtilSelect = window.JST.dashboard_widgets_disk_util_select;
     this.dataLength = 300;
+    this.topDiskColors = [];
+    // calculate colors from dark to light for top disks 
+    var startColor = d3.rgb('#CC6104');
+    for (var i=0; i<5; i++)  {
+      this.topDiskColors.push(startColor.toString());
+      startColor = startColor.brighter();
+    }
     this.colors = ["#4DAF4A", "#377EB8"];
     // disks data is a map of diskname to array of values of length 
     // dataLength
@@ -47,10 +55,12 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     this.selectedDisk = null;
 
     this.updateInterval = 1000;
-    this.sortAttrs = ['reads_completed', 'writes_completed']; // attrs to sort by
+    this.sortAttrs = ['reads_completed']; // attrs to sort by
     this.numTop = 5; // no of top shares
     this.partition = d3.layout.partition()
-    .value(function(d) { return d.reads_completed; });
+    .value(function(d) { 
+      return _.reduce(_this.sortAttrs, function(s, a) { return s + d[a]; }, 0); 
+    });
     this.graphOptions = { 
       grid : { 
         //hoverable : true,
@@ -88,11 +98,31 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
       displayName: this.displayName,
       maximized: this.maximized
     }));
+    
+    this.$('.diskSortAttr').change(function(event) {
+      var cbox = $(event.currentTarget);
+      var v = cbox.val();
+      if (cbox.is(':checked')) {
+        if (_.indexOf(_this.sortAttrs, v) == -1 ) {
+          _this.sortAttrs.push(v);
+        } 
+      } else {
+        if (_.indexOf(_this.sortAttrs, v) != -1 ) {
+          if (_this.sortAttrs.length > 1) {
+            _this.sortAttrs = _.without(_this.sortAttrs, v);
+          } else {
+            // dont allow the last attr to be unchecked
+            cbox.prop('checked', true);
+          }
+        } 
+      }
+    });
     this.$('#top-disks-ph').css('width', this.topDisksWidth);
     this.topDisksPh = d3.select(this.el).select('#top-disks-ph');
     
     this.topDisksVis = this.topDisksPh 
     .append('svg:svg')
+    .attr('id', 'top-disks-svg')
     .attr('height', 75)
     .attr('width', this.topDisksWidth);
     
@@ -129,7 +159,6 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
       }
       this.$('#disk-select').change(function(event) {
         _this.selectedDisk = _this.$('#disk-select').val();
-        console.log(_this.selectedDisk);
       });
     } else {
       this.$('#disk-details-ph').html("<a href=\"#\" class=\"resize-widget\">Expand</a> for details");
@@ -195,20 +224,41 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
   // render bars for top disks. the width of each bar is proportional
   // to the sort value. Use d3 partition layout to calculate coordinates.
   renderTopDisks: function() {
+    var _this = this;
     var w = this.topDisksWidth;
     var h = this.topDisksHeight;
+
     if (this.topDisks.length == 0) {
-      this.$('#top-disks-ph').html('<h4>No disk activity</h4>');
+      if (!this.noDisks) {
+        this.$('#top-disks-svg').empty();
+        this.topDisksVis.append('g')
+        .append('svg:text')
+        .attr("transform", function(d) {
+          return 'translate(0,' + 32 + ')'; 
+        })
+        .text('No disk activity')
+        .attr('fill-opacity', 1.0);
+        this.noDisks = true;
+      }
     } else { 
-      var root = {name: 'root', reads_completed: 0, children: this.topDisks};
+      if (this.noDisks) {
+        // clear no disk activity msg
+        this.$('#top-disks-svg').empty();
+      }
+      this.noDisks = false;
+      var root = {name: 'root', 
+        reads_completed: 0, 
+        writes_completed: 0, 
+        children: this.topDisks
+      };
       var x = d3.scale.linear().range([0, w]);
       var y = d3.scale.linear().range([0, h]);
       var diskNodes = this.partition.nodes(root);
       var kx = w / root.dx, ky = h / 1;
-      var duration = 1000;
+      var duration = 200;
 
       var disk = this.topDisksVis.selectAll('g')
-      .data(diskNodes, function(d) { return d.name; });
+      .data(diskNodes, function(d, i) { return d.name; });
 
       // Create g elements - each g element is positioned at appropriate
       // x coordinate, and contains a rect with width acc to disk sort value,
@@ -225,7 +275,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
           return 25;
         }
       })
-      .attr('fill', 'steelblue');
+      .attr('fill', function(d,i) { return _this.topDiskColors[i-1]; });
 
       diskEnter.append("svg:text")
       .attr('class', 'diskText')
@@ -248,7 +298,8 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
       });
 
       var diskRectUpdate = diskUpdate.select('rect.diskRect')
-      .attr('width', function(d) { return (d.dx * w) - 1; });
+      .attr('width', function(d) { return (d.dx * w) - 1; })
+      .attr('fill', function(d,i) { return _this.topDiskColors[i-1]; });
 
       var diskExit = disk.exit().remove();
     }    
@@ -396,7 +447,6 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
       }
       this.$('#disk-select').change(function(event) {
         _this.selectedDisk = _this.$('#disk-select').val();
-        console.log(_this.selectedDisk);
       });
     } else {
       this.$('#disk-details-ph').html("<a href=\"#\" class=\"resize-widget\">Expand</a> for details");
