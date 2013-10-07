@@ -16,8 +16,10 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+from operator import attrgetter
 from generic_sprobe import GenericSProbeView
 from smart_manager.models import DiskStat
+from storageadmin.models import Disk
 from smart_manager.serializers import DiskStatSerializer
 
 
@@ -25,3 +27,12 @@ class DiskStatView(GenericSProbeView):
 
     serializer_class = DiskStatSerializer
     model_obj = DiskStat
+
+    def _sorted_results(self, sort_col, reverse):
+        disk_names = [d.name for d in Disk.objects.all()]
+        qs = []
+        for d in Disk.objects.all():
+            qs.append(self.model_obj.objects.filter(**{'name__exact':
+                                                       d.name}).order_by('-ts')[0])
+        return sorted(qs, key=attrgetter(sort_col), reverse=reverse)
+
