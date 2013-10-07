@@ -19,7 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from django.conf.urls.defaults import patterns, url
 from smart_manager.views import (BaseServiceView, NISServiceView,
                                  SambaServiceView, NFSServiceView,
-                                 NTPServiceView, WinbindServiceView)
+                                 NTPServiceView, WinbindServiceView,
+                                 LdapServiceView)
 
 command_regex = ('config|start|stop')
 
@@ -41,4 +42,6 @@ urlpatterns = patterns('',
     url(r'^winbind$', WinbindServiceView.as_view()),
     url(r'^winbind/(?P<command>%s)$' % command_regex,
         WinbindServiceView.as_view()),
+    url(r'^ldap$', LdapServiceView.as_view()),
+    url(r'^ldap/(?P<command>%s)$' % command_regex, LdapServiceView.as_view()),
 )

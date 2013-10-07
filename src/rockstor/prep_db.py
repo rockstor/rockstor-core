@@ -27,7 +27,8 @@ def register_services():
                 'Samba': 'smb',
                 'NIS': 'nis',
                 'NTP': 'ntpd',
-                'AD': 'winbind',}
+                'AD': 'winbind',
+                'LDAP': 'ldap',}
     for s in services.keys():
         if (not Service.objects.filter(display_name=s).exists()):
             s_o = Service(display_name=s, name=services[s])

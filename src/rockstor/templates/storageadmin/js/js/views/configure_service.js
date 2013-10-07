@@ -28,6 +28,7 @@ ConfigureServiceView = RockstoreLayoutView.extend({
   events: {
     "click #cancel": "cancel",
     "click #security": "toggleFormFields",
+    "click #enabletls": "toggleCertUrl",
   },
 
   initialize: function() {
@@ -41,23 +42,34 @@ ConfigureServiceView = RockstoreLayoutView.extend({
       ntpd: { server: 'required' },
       nis: { domain: 'required', server: 'required' },
       winbind: {domain: 'required', controllers: 'required', 
-		security: 'required', 
-		realm: {
-		    required: {
-			depends: function(element) {
-			    return (_this.$('#security').val() == 'ad');
-			}
-		    }
-		},
-		templateshell: {
-		    required: {
-			depends: function(element) {
-			    return ((_this.$('#security').val() == 'ad') ||
-				    (_this.$('#security').val() == 'domain'));
-			}
-		    }
-		}
-	       },
+        security: 'required', 
+        realm: {
+          required: {
+            depends: function(element) {
+              return (_this.$('#security').val() == 'ad');
+            }
+          }
+        },
+        templateshell: {
+          required: {
+            depends: function(element) {
+              return ((_this.$('#security').val() == 'ad') ||
+                      (_this.$('#security').val() == 'domain'));
+            }
+          }
+        }
+      },
+      ldap: {
+        server: 'required',
+        basedn: 'required',
+        cert: {
+          required: {
+            depends: function(element) {
+              return _this.$('#enabletls').prop('checked'); 
+            }
+          }
+        }
+      }
     }
     this.formName = this.serviceName + '-form';
     this.service = new Service({name: this.serviceName});
@@ -76,7 +88,6 @@ ConfigureServiceView = RockstoreLayoutView.extend({
     if (config != null) {
       configObj = JSON.parse(this.service.get('config'));
     }
-    console.log(this.serviceName);
     $(this.el).html(this.template({service: this.service, config: configObj}));
 
     this.validator = this.$('#' + this.formName).validate({
@@ -137,6 +148,15 @@ ConfigureServiceView = RockstoreLayoutView.extend({
 	this.$('#templateshell').attr('disabled', 'true');
     }
   },
+
+  toggleCertUrl: function() {
+    var cbox = this.$('#enabletls');
+    if (cbox.prop('checked')) {
+      this.$('#cert-ph').css('visibility','visible');
+    } else {
+      this.$('#cert-ph').css('visibility','hidden');
+    }
+  }
 
 });
 
