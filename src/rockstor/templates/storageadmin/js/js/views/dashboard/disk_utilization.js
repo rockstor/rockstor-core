@@ -31,7 +31,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.dashboard_widgets_disk_utilization;
     this.diskUtilSelect = window.JST.dashboard_widgets_disk_util_select;
-    this.numSamples = 5;
+    this.numSamples = 600;
     this.colors = ["#E41A1C", "#377EB8", "#4DAF4A", "#FFFFFF"];
     // disks data is a map of diskname to array of values of length 
     // numSamples
@@ -44,7 +44,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     this.topDisksWidth = this.maximized ? 400 : 200;
     this.topDisksHeight = 50;
 
-    this.updateInterval = 5000;
+    this.updateInterval = 1000;
     this.sortAttrs = ['reads_completed', 'writes_completed']; // attrs to sort by
     this.numTop = 5; // no of top shares
     this.partition = d3.layout.partition()
@@ -170,14 +170,15 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     var tmp = _.map(_.keys(_this.disksData), function(k) {
       return _this.disksData[k][_this.numSamples - 1];
     });
-    //tmp = _.reject(tmp, function(d) {
-    //  var x = _.reduce(_this.sortAttrs, function(s, a) { return s + d[a]; }, 0); 
-    //  return x == 0;
-    //});
+    tmp = _.reject(tmp, function(d) {
+      var x = _.reduce(_this.sortAttrs, function(s, a) { return s + d[a]; }, 0); 
+      return x == 0;
+    });
     var sorted = _.sortBy(tmp, function(d) {
       return _.reduce(_this.sortAttrs, function(s, a) { return s + d[a]; }, 0); 
     }).reverse();
     this.topDisks = sorted.slice(0,_this.numTop);
+    console.log(this.topDisks);
   },
 
   // render bars for top disks. the width of each bar is proportional
@@ -243,15 +244,26 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
   },
 
   renderDiskGraph: function() {
-    var name = this.topDisks[0].name;
+    if (this.topDisks.length > 0) {
+      var name = this.topDisks[0].name;
+    } else {
+      var name = this.disks.at(0).get('name');
+    }
     this.$('#disk-select').val(name);
 
     var vals = this.disksData[name];
-    var tmp = [];
+    var tmpReads = [];
     for (var i=0; i<this.numSamples; i++) {
-      tmp.push([i, vals[i].reads_completed]);
+      tmpReads.push([i, vals[i].reads_completed]);
     }
-    var series = [{ label: 'Reads', data: tmp, color: this.colors[0] }];
+    var tmpWrites = [];
+    for (var i=0; i<this.numSamples; i++) {
+      tmpWrites.push([i, vals[i].writes_completed]);
+    }
+    var series = [
+      { label: 'Reads', data: tmpReads, color: this.colors[0] },
+      { label: 'Writes', data: tmpWrites, color: this.colors[1] }
+    ];
     $.plot(this.$('#disk-graph-ph'), series, this.graphOptions);
   },
 

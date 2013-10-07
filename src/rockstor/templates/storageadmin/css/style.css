@@ -1546,7 +1546,7 @@ input[type="radio"].selectedRoot {
 .command-status { cursor: pointer; float: left; width: 20px; }
 
 /* top disks widget */
-#top-disks-ph {  }
+#top-disks-ph { height: 75px; }
 #top-disks-ph { font-size: 10px; }
 #top-disks-ph rect { fill: steelblue; strole: #eee; fill-opacity: 0.8; }
 #disk-graph-ph { width: 90%; height: 25%; }
