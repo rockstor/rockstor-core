@@ -38,7 +38,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     var startColor = d3.rgb('#CC6104');
     for (var i=0; i<5; i++)  {
       this.topDiskColors.push(startColor.toString());
-      startColor = startColor.brighter();
+      startColor = startColor.brighter(2);
     }
     this.colors = ["#4DAF4A", "#377EB8"];
     // disks data is a map of diskname to array of values of length 
@@ -81,6 +81,33 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
       },
       yaxis: { 
         min: 0, 
+      },
+			series: {
+        lines: { show: true, fill: false },
+        shadowSize: 0	// Drawing is faster without shadows
+			},
+    };
+    this.dataGraphOptions = { 
+      grid : { 
+        //hoverable : true,
+        borderWidth: {
+          top: 1,
+          right: 1,
+          bottom: 1,
+          left: 1
+        },
+        borderColor: "#ddd"
+      },
+      xaxis: {
+        min: 0,
+        max: this.dataLength-1,
+        tickFormatter: this.timeTickFormatter(this.dataLength),
+        axisLabel: "Time (minutes)",
+        axisLabelColour: "#000",
+      },
+      yaxis: { 
+        min: 0, 
+        tickFormatter: this.valueTickFormatter
       },
 			series: {
         lines: { show: true, fill: false },
@@ -227,7 +254,14 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     var _this = this;
     var w = this.topDisksWidth;
     var h = this.topDisksHeight;
-
+    // calculate total value of all sortAttrs over all disks
+    var totalAttr = _.reduce(this.topDisks, function(total, disk) {
+      return total + _.reduce(_this.sortAttrs, function(s, a) { 
+        return s + disk[a]; 
+      }, 0); 
+    }, 0);
+    this.$('#attr-total').html(totalAttr);
+    
     if (this.topDisks.length == 0) {
       if (!this.noDisks) {
         this.$('#top-disks-svg').empty();
@@ -286,7 +320,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
         if (d.name == 'root') {
           return '';
         } else {
-          return d.name; 
+          return d.name + ' (' + (d.dx*100).toFixed(2) + '%)'; 
         }
       })
       .attr('fill-opacity', 1.0);
@@ -332,17 +366,17 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
 
     var tmpReadData = [];
     for (var i=0; i<this.dataLength; i++) {
-      tmpReadData.push([i, vals[i].sectors_read]);
+      tmpReadData.push([i, vals[i].sectors_read * 512]);
     }
     var tmpWriteData = [];
     for (var i=0; i<this.dataLength; i++) {
-      tmpWrites.push([i, vals[i].sectors_written]);
+      tmpWriteData.push([i, vals[i].sectors_written * 512]);
     }
     var series2 = [
       { label: 'KB read', data: tmpReadData, color: this.colors[0] },
       { label: 'KB written', data: tmpWriteData, color: this.colors[1] }
     ];
-    $.plot(this.$('#disk-graph-data-ph'), series2, this.graphOptions);
+    $.plot(this.$('#disk-graph-data-ph'), series2, this.dataGraphOptions);
   },
 
   genEmptyDiskData: function() {
@@ -457,6 +491,10 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     return function(val, axis) {
       return ((dataLength/60) - (parseInt(val/60))).toString() + ' m';
     };
+  },
+  
+  valueTickFormatter: function(val, axis) {
+    return humanize.filesize(val, 1024, 2);
   },
 
   setSelectedDisk: function(event) {
