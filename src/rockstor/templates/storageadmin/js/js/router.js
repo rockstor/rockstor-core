@@ -335,7 +335,7 @@ var AppRouter = Backbone.Router.extend({
   showNFSExports: function() {
     this.renderSidebar('storage', 'nfs-exports');
     this.cleanup();
-    this.currentLayout = new NFSExportView();
+    this.currentLayout = new NFSExportsView();
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },

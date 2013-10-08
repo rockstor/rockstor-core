@@ -98,9 +98,8 @@ var NFSExportCollection = RockStorPaginatedCollection.extend({
 });
 
 var NFSExport2 = Backbone.Model.extend({
-  url: function() {
-    return '/api/nfs-exports/' + this.get('exportId');    
-  }
+  idAttribute: 'exportId',
+  urlRoot: '/api/nfs-exports'    
 });
 
 var NFSExport2Collection = RockStorPaginatedCollection.extend({
