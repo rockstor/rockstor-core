@@ -35,7 +35,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
     this.maxRows = 2;
     this.numSamples = 60;
     this.maxCpus = 8;
-    this.modes = ['smode', 'umode', 'umode_nice'];
+    this.modes = ['smode', 'umode', 'umode_nice', 'idle'];
     this.colors = ["#E41A1C", "#377EB8", "#4DAF4A", "#FFFFFF"];
     this.numCpus = null; 
     this.cpuData = {};
@@ -219,11 +219,13 @@ CpuUsageWidget = RockStorWidgetView.extend({
       for (var k=_this.numCpus; k<_this.maxCpus; k++) {
         tmp.push([k+1, null]);
       }
-      _this.allCpuGraphData.push({
-        "label": mode, 
-        "data": tmp, 
-        "color": _this.colors[i]
-      });
+      if (mode != 'idle') {
+        _this.allCpuGraphData.push({
+          "label": mode, 
+          "data": tmp, 
+          "color": _this.colors[i]
+        });
+      }
 
     });
     _this.avgGraphData = [];
@@ -232,11 +234,13 @@ CpuUsageWidget = RockStorWidgetView.extend({
       _.each(_this.avg[mode], function(d,j) {
         tmp.push([j+1, d]);
       });
-      _this.avgGraphData.push({
-        "label": mode,
-        "data": tmp,
-        "color": _this.colors[i]
-      });
+      if (mode!= 'idle') {
+        _this.avgGraphData.push({
+          "label": mode,
+          "data": tmp,
+          "color": _this.colors[i]
+        });
+      }
     });
   },
 
