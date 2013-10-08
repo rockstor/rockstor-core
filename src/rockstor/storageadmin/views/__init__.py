@@ -38,3 +38,4 @@ from network import NetworkView
 from pool_scrub import PoolScrubView
 from setup_user import SetupUserView
 from share_acl import ShareACLView
+from nfs_exports import NFSExportView

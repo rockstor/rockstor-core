@@ -58,6 +58,7 @@ var AppRouter = Backbone.Router.extend({
     "replication": "showReplication",
     "replication/:replicaId/trails": "showReplicaTrails",
     "add_replication_task": "addReplicationTask",
+    "nfs-exports": "showNFSExports",
     "*path": "showHome"
   },
 
@@ -327,6 +328,14 @@ var AppRouter = Backbone.Router.extend({
     this.renderSidebar("storage", "replication");
     this.cleanup();
     this.currentLayout = new AddReplicationTaskView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  showNFSExports: function() {
+    this.renderSidebar('storage', 'nfs-exports');
+    this.cleanup();
+    this.currentLayout = new NFSExportView();
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },

@@ -97,6 +97,17 @@ var NFSExportCollection = RockStorPaginatedCollection.extend({
   }
 });
 
+var NFSExport2 = Backbone.Model.extend({
+  url: function() {
+    return '/api/nfs-exports/' + this.get('exportId');    
+  }
+});
+
+var NFSExport2Collection = RockStorPaginatedCollection.extend({
+  model: NFSExport2,
+  baseUrl: '/api/nfs-exports'
+});
+
 var SMBShare = Backbone.Model.extend({ 
   url: function() {
       return '/api/shares/' + this.get('shareName') + '/samba'    
