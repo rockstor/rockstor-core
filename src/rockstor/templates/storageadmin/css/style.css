@@ -808,7 +808,6 @@ hr.module-sep { margin: 0; border: 0; border-top: 1px solid #ddd;
 .widget-content {
   padding: 4px 12px 4px 12px;
   height: 100%;
-  width: 100%;
 }
 
 /* Styles for jquery shapeshift plugin */
@@ -1545,4 +1544,15 @@ input[type="radio"].selectedRoot {
 .slider-ph { margin-left: 4px; margin-right: 4px; float: left; }
 
 .command-status { cursor: pointer; float: left; width: 20px; }
+
+/* top disks widget */
+#top-disks-ph { height: 75px; }
+#top-disks-ph { font-size: 10px; }
+#top-disks-ph rect { stroke: #eee; fill-opacity: 0.8; }
+#disk-graph-reads-ph { width: 90%; height: 25%; }
+#disk-graph-data-ph { width: 90%; height: 25%; }
+#disk-details-ph {
+  width: 90%;
+  height: 100%;
+}
 
