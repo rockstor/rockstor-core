@@ -229,6 +229,7 @@ PIPELINE_JS = {
             'js/views/replica_trails.js',
             'js/views/add_replication_task.js',
             'js/views/nfs_exports.js',
+            'js/views/add_nfs_export.js',
             ),
         'output_filename': 'js/application.js'
         },
