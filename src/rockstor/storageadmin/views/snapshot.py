@@ -23,7 +23,8 @@ View for things at snapshot level
 from rest_framework.response import Response
 from django.db import transaction
 from django.conf import settings
-from storageadmin.models import (Snapshot, Share, Disk, NFSExport)
+from storageadmin.models import (Snapshot, Share, Disk, NFSExport,
+                                 NFSExportGroup)
 from fs.btrfs import (add_snap, remove_snap, rollback_snap, share_id,
                       update_quota, share_usage)
 from system.osi import refresh_nfs_exports
@@ -58,6 +59,7 @@ class SnapshotView(GenericView):
 
     @transaction.commit_on_success
     def _toggle_visibility(self, share, snap_name, on=True):
+        cur_exports = list(NFSExport.objects.all())
         for se in NFSExport.objects.filter(share=share):
             snap_realname = ('%s_%s' % (share.name, snap_name))
             mnt_pt = ('%s%s/%s' % (settings.MNT_PT, share.pool.name,
@@ -66,27 +68,29 @@ class SnapshotView(GenericView):
                                        settings.NFS_EXPORT_ROOT)
             export = None
             if (on):
-                if (not NFSExport.objects.filter(share=share, nohide=False)):
-                    #master share is not exported, so don't export the snap
+                if (se.export_group.nohide is False):
                     continue
-                export = NFSExport(share=share, mount=export_pt,
-                                   host_str=se.host_str, nohide=True)
+
+                export_group = NFSExportGroup(host_str=se.host_str,
+                                              nohide=True)
+                export_group.save()
+                export = NFSExport(share=share, export_group=export_group,
+                                   mount=export_pt)
                 export.full_clean()
                 export.save()
+                cur_exports.append(export)
             else:
                 try:
                     export = NFSExport.objects.get(share=share,
-                                                   host_str=se.host_str,
-                                                   mount=export_pt,
-                                                   nohide=True)
-                    export.enabled = False
+                                                   mount=export_pt)
+                    export.delete()
+                    export.export_group.delete()
+                    cur_exports.remove(export)
                 except Exception, e:
                     logger.exception(e)
                     continue
-            exports = create_nfs_export_input(export)
-            refresh_nfs_exports(exports)
-            if (not on):
-                export.delete()
+        exports = create_nfs_export_input2(cur_exports)
+        refresh_nfs_exports(exports)
         return True
 
     @transaction.commit_on_success
