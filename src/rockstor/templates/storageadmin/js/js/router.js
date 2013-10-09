@@ -60,6 +60,7 @@ var AppRouter = Backbone.Router.extend({
     "add_replication_task": "addReplicationTask",
     "nfs-exports": "showNFSExports",
     "add-nfs-export": "addNFSExport",
+    "nfs-exports/edit/:nfsExportGroupId": "showNFSExports",
     "*path": "showHome"
   },
 

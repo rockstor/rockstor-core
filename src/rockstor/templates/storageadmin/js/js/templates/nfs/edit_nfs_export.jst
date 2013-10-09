@@ -25,7 +25,7 @@
   <div class="span8">
     <label class="control-label"><span class="required">*</span> indicates required fields</label>
     <div class="form-box">
-      <form id="add-nfs-export-form" name="aform">
+      <form id="edit-nfs-export-form" name="aform">
         <div class="messages"></div>
 
         <!-- Shares -->
@@ -37,7 +37,7 @@
               <% shares.each(function(share, index) { %>
 
                 <% if (_.indexOf(nShares, share) != -1) { %>
-                  <option value="<%= share.get('name') %>" selected="true"><%= share.get('name') %></option>
+                  <option value="<%= share.get('name') %>" selected="selected"><%= share.get('name') %></option>
                 <% } else { %>
                   <option value="<%= share.get('name') %>" ><%= share.get('name') %></option>
                 <% } %>
@@ -50,7 +50,7 @@
         <div class="control-group">
           <label class="control-label" for="host_str">Host String<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" name="host_str" id="host_str">
+            <input type="text" name="host_str" id="host_str" value="<%= nfsExportGroup.get('host_str') %>">
           </div>
         </div>
 
@@ -60,7 +60,11 @@
           <div class="controls">
             <select id="mod_choice" name="mod_choice">
               <% _.each(modify_choices, function(c) { %>
-                <option value="<%= c.value %>"><%= c.name %></option>
+                <% if (nfsExportGroup.get('mod_choice') == c.value) { %>
+                  <option value="<%= c.value %>" selectd="true"><%= c.name %></option>
+                <% } else { %>
+                  <option value="<%= c.value %>"><%= c.name %></option>
+                <% } %>
               <% }); %>
             </select>
           </div>
@@ -72,7 +76,11 @@
           <div class="controls">
             <select id="sync_choice" name="sync_choice">
               <% _.each(sync_choices, function(c) { %>
-                <option value="<%= c.value %>"><%= c.name %></option>
+                <% if (nfsExportGroup.get('sync_choice') == c.value) { %>
+                  <option value="<%= c.value %>" selected="selected"><%= c.name %></option>
+                <% } else { %>
+                  <option value="<%= c.value %>"><%= c.name %></option>
+                <% } %>
               <% }); %>
             </select>
           </div>
