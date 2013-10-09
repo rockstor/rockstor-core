@@ -63,8 +63,7 @@ NFSExportsView  = RockstoreModuleView.extend({
       dataType: 'json',
       contentType: 'application/json',
       success: function() {
-        enableButton(button);
-        app_router.navigate('nfs-exports', {trigger: true});
+        _this.render();
       },
       error: function(xhr, status, error) {
         enableButton(button);
