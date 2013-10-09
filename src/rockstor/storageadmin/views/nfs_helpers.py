@@ -21,36 +21,27 @@ from storageadmin.models import (Share, NFSExport)
 
 
 def client_input(export):
-    ci = {'client_str': export.host_str,
-          'option_list': ('%s,%s,%s,no_root_squash' %
-                          (export.editable, export.syncable,
-                           export.mount_security))}
-    if (export.nohide):
-        ci['option_list'] = ('%s,nohide' % ci['option_list'])
+    eg = export.export_group
+    ci = {'client_str': eg.host_str,
+          'option_list': ('%s,%s,%s,no_root_squash' % (eg.editable,
+                                                       eg.syncable,
+                                                       eg.mount_security))}
+    if (eg.nohide):
+        ci['option_list'] = ('%s,nohide' % ci['options_list'])
     ci['mnt_pt'] = export.mount.replace(settings.NFS_EXPORT_ROOT,
                                         settings.MNT_PT)
     return ci
 
-def create_nfs_export_input(cur_export):
-    exports = {}
-    for e in NFSExport.objects.all():
+def create_nfs_export_input(exports):
+    exports_d = {}
+    for e in exports:
         e_list = []
         export_pt = ('%s%s' % (settings.NFS_EXPORT_ROOT, e.share.name))
-        if (e.nohide):
+        if (e.export_group.nohide):
             snap_name = e.mount.split(e.share.name + '_')[-1]
             export_pt = ('%s/%s' % (export_pt, snap_name))
-            if (e.share.id == cur_export.share.id and
-                cur_export.enabled is False):
-                exports[export_pt] = []
-                continue
-
-        if (export_pt in exports):
-            e_list = exports[export_pt]
-
-        if (cur_export.id == e.id):
-            if (cur_export.enabled is True):
-                e_list.append(client_input(cur_export))
-        else:
-            e_list.append(client_input(e))
-        exports[export_pt] = e_list
-    return exports
+        if (export_pt in exports_d):
+            e_list = exports_d[export_pt]
+        e_list.append(client_input(e))
+        exports_d[export_pt] = e_list
+    return exports_d
