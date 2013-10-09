@@ -25,7 +25,10 @@
  */
 
 NFSExportsView  = RockstoreModuleView.extend({
-
+  events: {
+    'click .delete-nfs-export': 'deleteNfsExport'
+  },
+    
   initialize: function() {
     this.template = window.JST.nfs_nfs_exports;
     this.module_name = 'nfs_exports';
@@ -46,6 +49,30 @@ NFSExportsView  = RockstoreModuleView.extend({
     });
     return this;
   },
+
+  deleteNfsExport: function(event) {
+    var _this = this;
+    if (event) event.preventDefault();
+    var button = $(event.currentTarget);
+    if (buttonDisabled(button)) return false;
+    disableButton(button)
+    var id = $(event.currentTarget).data('id');
+    $.ajax({
+      url: '/api/nfs-exports/' + id,
+      type: 'DELETE',
+      dataType: 'json',
+      contentType: 'application/json',
+      success: function() {
+        enableButton(button);
+        app_router.navigate('nfs-exports', {trigger: true});
+      },
+      error: function(xhr, status, error) {
+        enableButton(button);
+        var msg = parseXhrError(xhr)
+        _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
+      }
+    });
+  }
 
 });
 
