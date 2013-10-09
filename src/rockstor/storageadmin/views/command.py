@@ -28,7 +28,7 @@ from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
 from system.osi import (uptime, refresh_nfs_exports)
 from storageadmin.models import NFSExport
-from nfs_helpers import create_nfs_export_input
+from nfs_helpers import create_nfs_export_input2
 from storageadmin.util import handle_exception
 from datetime import datetime
 from django.utils.timezone import utc
@@ -46,10 +46,9 @@ class CommandView(APIView):
         if (command == 'bootstrap'):
             try:
                 logger.info('bootstrapping')
-                for e in NFSExport.objects.all():
-                    exports = create_nfs_export_input(e)
-                    logger.info('export = %s' % exports)
-                    refresh_nfs_exports(exports)
+                exports = create_nfs_export_input2(NFSExport.objects.all())
+                logger.info('export = %s' % exports)
+                refresh_nfs_exports(exports)
                 return Response()
             except Exception, e:
                 e_msg = ('Unable to export all nfs shares due to a system error')
