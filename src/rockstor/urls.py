@@ -76,8 +76,8 @@ urlpatterns = patterns('',
     (r'^api/shares', include('storageadmin.urls.share')),
     (r'^api/users/', include('storageadmin.urls.users')),
     (r'^api/support', include('storageadmin.urls.support')),
-    (r'^api/nfs-exports', NFSExportGroupView.as_view()),
-    (r'^api/nfs-exports/(?P<export_id>\d+)', NFSExportGroupView.as_view()),
+    url(r'^api/nfs-exports$', NFSExportGroupView.as_view()),
+    url(r'^api/nfs-exports/(?P<export_id>\d+)$', NFSExportGroupView.as_view()),
 
     # Dashboard config
     url(r'^api/dashboardconfig/$', DashboardConfigView.as_view(), name='dashboardconfig-view'),
