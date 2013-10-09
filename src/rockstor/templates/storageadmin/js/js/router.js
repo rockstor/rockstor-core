@@ -79,6 +79,9 @@ var AppRouter = Backbone.Router.extend({
     if (RockStorGlobals.currentAppliance == null) {
       setApplianceName();
     }
+    if (!RockStorGlobals.loadAvgDisplayed) {
+      displayLoadAvg();
+    }
   },
 
   loginPage: function() {
