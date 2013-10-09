@@ -97,13 +97,12 @@ var NFSExportCollection = RockStorPaginatedCollection.extend({
   }
 });
 
-var NFSExport2 = Backbone.Model.extend({
-  idAttribute: 'exportId',
+var NFSExportGroup = Backbone.Model.extend({
   urlRoot: '/api/nfs-exports'    
 });
 
-var NFSExport2Collection = RockStorPaginatedCollection.extend({
-  model: NFSExport2,
+var NFSExportGroupCollection = RockStorPaginatedCollection.extend({
+  model: NFSExportGroup,
   baseUrl: '/api/nfs-exports'
 });
 

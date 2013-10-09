@@ -1,0 +1,95 @@
+<script>
+/*
+ * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ * 
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ * 
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ */
+</script>
+
+
+<h3>Edit NFS export</h3>
+<div class="row-fluid">
+  <div class="span8">
+    <label class="control-label"><span class="required">*</span> indicates required fields</label>
+    <div class="form-box">
+      <form id="add-nfs-export-form" name="aform">
+        <div class="messages"></div>
+
+        <!-- Shares -->
+        <div class="control-group">
+          <label class="control-label" for="shares">Shares to export<span class="required"> *</span></label>
+          <div class="controls">
+            <select name="shares" id="shares" size="10" multiple>
+              <% var nShares = nfsExportGroup.get('shares'); %>
+              <% shares.each(function(share, index) { %>
+
+                <% if (_.indexOf(nShares, share) != -1) { %>
+                  <option value="<%= share.get('name') %>" selected="true"><%= share.get('name') %></option>
+                <% } else { %>
+                  <option value="<%= share.get('name') %>" ><%= share.get('name') %></option>
+                <% } %>
+              <% }); %>
+            </select>
+          </div>
+        </div>
+
+        <!-- host string -->
+        <div class="control-group">
+          <label class="control-label" for="host_str">Host String<span class="required"> *</span></label>
+          <div class="controls">
+            <input type="text" name="host_str" id="host_str">
+          </div>
+        </div>
+
+        <!-- writable -->
+        <div class="control-group">
+          <label class="control-label" for="mod_choice">Writable</label>
+          <div class="controls">
+            <select id="mod_choice" name="mod_choice">
+              <% _.each(modify_choices, function(c) { %>
+                <option value="<%= c.value %>"><%= c.name %></option>
+              <% }); %>
+            </select>
+          </div>
+        </div>
+        
+        <!-- sync -->
+        <div class="control-group">
+          <label class="control-label" for="sync_choice">Sync</label>
+          <div class="controls">
+            <select id="sync_choice" name="sync_choice">
+              <% _.each(sync_choices, function(c) { %>
+                <option value="<%= c.value %>"><%= c.name %></option>
+              <% }); %>
+            </select>
+          </div>
+        </div>
+        
+        <!-- Submit -->
+        <div class="control-group">
+          <div class="controls">
+            <a id="js-cancel" class="btn">Cancel</a>
+            <input type="Submit" id="create-nfs-export" class="btn btn-primary" value="Submit"></input>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div> <!-- span8 -->
+</div>  <!-- row-fluid -->
+
+
+

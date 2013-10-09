@@ -22,10 +22,32 @@
 <!-- Module Body -->
 <div class="row-fluid">
   <div class="span12">
-    <!-- Content -->
     <div class="messages"></div>
-    <div id="nfs-exports-table-ph">
-    </div>
+    <!-- Content -->
+    <table id="nfs-exports-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of nfs exports">
+      <thead>
+        <tr>
+          <th scope="col" abbr="Host String">Host String</th>
+          <th scope="col" abbr="Shares">Shares</th>
+          <th scope="col" abbr="Writable">Writable</th>
+          <th scope="col" abbr="Sync">Sync / Async</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% nfsExportGroups.each(function(n) { %>
+          <td><%= n.get('host_str') %></td>
+          <td>
+            <% if (n.get('shares')) { %>
+              <% _.each(n.get('shares'), function(s) { %>
+                <%= s %>
+              <% }); %>
+            <% } %>
+            </td>
+          <td><%= n.get('mod_choice') %></td>
+          <td><%= n.get('sync_choice') %></td>
+        <% }); %>
+      </tbody>
+    </table>
     <!-- End Content -->
   </div> <!-- span12 -->
 </div> <!-- row-fluid --> 

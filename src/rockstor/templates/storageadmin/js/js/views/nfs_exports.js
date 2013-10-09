@@ -29,18 +29,15 @@ NFSExportsView  = RockstoreModuleView.extend({
   initialize: function() {
     this.template = window.JST.nfs_nfs_exports;
     this.module_name = 'nfs_exports';
-    this.nfs_exports = new NFSExport2Collection();
-    this.modify_choices = this.options.modify_choices;
-    this.sync_choices = this.options.sync_choices;
-    this.appliance_ip = this.options.appliance_ip;
+    this.nfsExportGroups = new NFSExportGroupCollection();
   },
 
   render: function() {
     var _this = this;
-    this.nfs_exports.fetch({
+    this.nfsExportGroups.fetch({
       success: function(collection, response, options) {
         $(_this.el).html(_this.template({
-          nfs_exports: _this.nfs_exports,
+          nfsExportGroups: _this.nfsExportGroups,
         }));
       },
       error: function(collection, response, options) {
