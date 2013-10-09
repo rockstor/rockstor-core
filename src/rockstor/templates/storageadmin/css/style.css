@@ -1556,3 +1556,7 @@ input[type="radio"].selectedRoot {
   height: 100%;
 }
 
+#top-shares-graph-ph {
+  height: 250px;
+}
+
