@@ -89,7 +89,7 @@ class SnapshotView(GenericView):
                 except Exception, e:
                     logger.exception(e)
                     continue
-        exports = create_nfs_export_input2(cur_exports)
+        exports = create_nfs_export_input(cur_exports)
         refresh_nfs_exports(exports)
         return True
 
