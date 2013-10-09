@@ -25,7 +25,7 @@ from storageadmin.util import handle_exception
 from storageadmin.serializers import NFSExportGroupSerializer
 from storageadmin.exceptions import RockStorAPIException
 from fs.btrfs import (mount_share, is_share_mounted, umount_root)
-from system.osi import refresh_nfs_exports
+from system.osi import (refresh_nfs_exports, nfs4_mount_teardown)
 from generic_view import GenericView
 from nfs_helpers import create_nfs_export_input
 
@@ -110,8 +110,20 @@ class NFSExportGroupView(GenericView):
             eg = NFSExportGroup.objects.get(id=export_id)
             cur_exports = list(NFSExport.objects.all())
             for e in NFSExport.objects.filter(export_group=eg):
+                export_pt = ('%s%s' % (settings.NFS_EXPORT_ROOT, e.share.name))
+                if (e.export_group.nohide):
+                    snap_name = e.mount.split(e.share.name + '_')[-1]
+                    export_pt = ('%s/%s' % (export_pt, snap_name))
+                try:
+                    nfs4_mount_teardown(export_pt)
+                except Exception, e:
+                    e_msg = ('Unable to delete the export(%s) because it is '
+                             'in use' % (export_pt))
+                    logger.exception(e)
+                    handle_exception(Exception(e_msg), request)
                 cur_exports.remove(e)
                 e.delete()
+            eg.delete()
             exports = create_nfs_export_input(cur_exports)
             try:
                 refresh_nfs_exports(exports)
