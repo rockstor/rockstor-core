@@ -19,9 +19,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from rest_framework.response import Response
 from django.db import transaction
 from django.conf import settings
-from storageadmin.models import (Share, SambaShare, NFSExport, Disk)
+from storageadmin.models import (Share, SambaShare, NFSExport,
+                                 NFSExportGroup, Disk)
 from storageadmin.util import handle_exception
-from storageadmin.serializers import NFSExportSerializer
+from storageadmin.serializers import NFSExportGroupSerializer
 from storageadmin.exceptions import RockStorAPIException
 from fs.btrfs import (mount_share, is_share_mounted, umount_root)
 from system.osi import refresh_nfs_exports
@@ -32,8 +33,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class NFSExportView(GenericView):
-    serializer_class = NFSExportSerializer
+class NFSExportGroupView(GenericView):
+    serializer_class = NFSExportGroupSerializer
 
     def _validate_share(self, sname, request):
         try:
@@ -46,17 +47,18 @@ class NFSExportView(GenericView):
         if ('export_id' in kwargs):
             self.paginate_by = 0
             try:
-                return NFSExport.objects.get(id=kwargs['export_id'])
+                return NFSExportGroup.objects.get(id=kwargs['export_id'])
             except:
                 return []
-        return NFSExport.objects.filter(nohide=False)
+        return NFSExportGroup.objects.filter(nohide=False)
 
     @transaction.commit_on_success
     def post(self, request):
-        if ('sname' not in request.DATA):
-            e_msg = ('Cannot export without sname parameter')
+        if ('shares' not in request.DATA):
+            e_msg = ('Cannot export without specifying shares')
             handle_exception(Exception(e_msg), request)
-        share = self._validate_share(request.DATA['sname'], request)
+        shares = [self._validate_share(s, request) for s in
+                  request.DATA['shares']]
         try:
             options = {
                 'host_str': '*',
@@ -72,23 +74,26 @@ class NFSExportView(GenericView):
             if ('sync_choice' in request.DATA):
                 options['sync_choice'] = request.DATA['sync_choice']
 
-            mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
-            export_pt = ('%s%s' % (settings.NFS_EXPORT_ROOT, share.name))
-            if (not is_share_mounted(share.name)):
-                pool_device = Disk.objects.filter(pool=share.pool)[0].name
-                mount_share(share.subvol_name, pool_device, mnt_pt)
+            cur_exports = list(NFSExport.objects.all())
+            eg = NFSExportGroup(host_str=options['host_str'],
+                                editable=options['mod_choice'],
+                                syncable=options['sync_choice'],
+                                mount_security=options['security'])
+            eg.save()
+            for s in shares:
+                mnt_pt = ('%s%s' % (settings.MNT_PT, s.name))
+                export_pt = ('%s%s' % (settings.NFS_EXPORT_ROOT, s.name))
+                if (not is_share_mounted(s.name)):
+                    pool_device = Disk.objects.filter(pool=s.pool)[0].name
+                    mount_share(s.subvol_name, pool_device, mnt_pt)
+                export = NFSExport(export_group=eg, share=s, mount=export_pt)
+                export.full_clean()
+                export.save()
+                cur_exports.append(export)
 
-            export = NFSExport(share=share, mount=export_pt,
-                               host_str=options['host_str'],
-                               editable=options['mod_choice'],
-                               syncable=options['sync_choice'],
-                               mount_security=options['security'])
-            export.full_clean()
-            export.save()
-
-            exports = create_nfs_export_input(export)
+            exports = create_nfs_export_input(cur_exports)
             refresh_nfs_exports(exports)
-            nfs_serializer = NFSExportSerializer(export)
+            nfs_serializer = NFSExportGroupSerializer(eg)
             return Response(nfs_serializer.data)
         except RockStorAPIException:
             raise
@@ -98,13 +103,16 @@ class NFSExportView(GenericView):
     @transaction.commit_on_success
     def delete(self, request, export_id):
         try:
-            if (not NFSExport.objects.filter(id=export_id).exists()):
-                e_msg = ('NFS export with id: %d does not exist' % export_id)
+            if (not NFSExportGroup.objects.filter(id=export_id).exists()):
+                e_msg = ('NFS export group with id: %d does not exist' %
+                         export_id)
                 handle_exception(Exception(e_msg), request)
-            export = NFSExport.objects.get(id=export_id)
-            export.enabled = False
-            exports = create_nfs_export_input(export)
-            export.delete()
+            eg = NFSExportGroup.objects.get(id=export_id)
+            cur_exports = list(NFSExport.objects.all())
+            for e in NFSExport.objects.filter(export_group=eg):
+                cur_exports.remove(e)
+                e.delete()
+            exports = create_nfs_export_input(cur_exports)
             try:
                 refresh_nfs_exports(exports)
             except Exception, e:
