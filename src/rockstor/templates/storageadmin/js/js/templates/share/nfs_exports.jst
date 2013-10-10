@@ -22,7 +22,7 @@
 <a class="btn btn-primary" href="#" id="add-export" rel="#nfs-export-form"><i class="icon-edit icon-white"></i> Add export</a>
 <br><br>
 <div class="messages"></div>
-<% if (nfs_exports.length > 0) { %>
+<% if (nfsExports.length > 0) { %>
   <table id="nfs-exports-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of nfs exports">
     <thead>
       <tr>
@@ -33,6 +33,18 @@
       </tr>
     </thead>
     <tbody id="nfs-exports-table-body">
+      <% nfsExports.each(function(nfsExport) { %>
+        <tr>
+          <td><%= nfsExport.get('host_str') %></td>
+          <td><%= nfsExport.get('editable') %></td>
+          <td><%= nfsExport.get('syncable') %></td>
+          <td>
+            <a href="#" class="edit-nfs-export" data-id="<%= nfsExport.id %>" data-share-name="<%= share.get('name') %>" data-action="edit-nfs-export"><i class="icon-edit"></i></a>
+            &nbsp;
+            <a href="#" class="delete-nfs-export" data-id="<%= nfsExport.id %>" data-share-name="<%= share.get('name') %>" data-hoststr="<%= nfsExport.get('host_str') %>" data-action="delete-nfs-export"><i class="icon-trash"></i></a>
+          </td>
+        </tr>
+      <% }); %>
     </tbody>
 
   </table>
