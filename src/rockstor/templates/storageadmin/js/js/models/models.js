@@ -31,12 +31,12 @@ var Setup = Backbone.Model.extend({
 
 var Disk = Backbone.Model.extend({
   url: function() {
-    return '/api/disks/' + this.get('diskName') + '/';
+    return '/api/disks/' + this.get('diskName');
   }
 });
 var DiskCollection = RockStorPaginatedCollection.extend({
   model: Disk,
-  baseUrl: '/api/disks/',
+  baseUrl: '/api/disks',
 });
 
 var Pool = Backbone.Model.extend({
