@@ -46,10 +46,9 @@ class CommandView(APIView):
         if (command == 'bootstrap'):
             try:
                 logger.info('bootstrapping')
-                for e in NFSExport.objects.all():
-                    exports = create_nfs_export_input(e)
-                    logger.info('export = %s' % exports)
-                    refresh_nfs_exports(exports)
+                exports = create_nfs_export_input(NFSExport.objects.all())
+                logger.info('export = %s' % exports)
+                refresh_nfs_exports(exports)
                 return Response()
             except Exception, e:
                 e_msg = ('Unable to export all nfs shares due to a system error')
