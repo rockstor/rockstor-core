@@ -56,7 +56,7 @@ DisksView = Backbone.View.extend({
   setupDisks: function() {
     var _this = this;
     $.ajax({
-      url: "/api/disks/",
+      url: "/api/disks/scan",
       type: "POST"
     }).done(function() {
       // reset the current page
