@@ -1,0 +1,67 @@
+<script>
+/*
+ * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ * 
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ * 
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ */
+</script>
+
+<a class="btn btn-primary" href="#" id="add-export" rel="#nfs-export-form"><i class="icon-edit icon-white"></i> Add export</a>
+<br><br>
+<div class="messages"></div>
+<% if (nfsExports.length > 0) { %>
+  <table id="nfs-exports-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of nfs exports">
+    <thead>
+      <tr>
+        <th>Host</th>
+        <th>Writable</th>
+        <th>Sync</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="nfs-exports-table-body">
+      <% nfsExports.each(function(nfsExport) { %>
+        <tr>
+          <td><%= nfsExport.get('host_str') %></td>
+          <td><%= nfsExport.get('editable') %></td>
+          <td><%= nfsExport.get('syncable') %></td>
+          <td>
+            <a href="#" class="edit-nfs-export" data-id="<%= nfsExport.id %>" data-share-name="<%= share.get('name') %>" data-action="edit-nfs-export"><i class="icon-edit"></i></a>
+            &nbsp;
+            <a href="#" class="delete-nfs-export" data-id="<%= nfsExport.id %>" data-share-name="<%= share.get('name') %>" data-hoststr="<%= nfsExport.get('host_str') %>" data-action="delete-nfs-export"><i class="icon-trash"></i></a>
+          </td>
+        </tr>
+      <% }); %>
+    </tbody>
+
+  </table>
+<% } else { %>
+  <table id="nfs-exports-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of nfs exports">
+    <thead>
+      <tr>
+        <th>No.</th>
+        <th>Host</th>
+        <th>Writable</th>
+        <th>Sync</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="nfs-exports-table-body">
+      <%= window.JST.share_nfs_exports_table_empty_body_template() %>
+    </tbody>
+  </table>
+<% } %>
+

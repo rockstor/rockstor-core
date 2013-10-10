@@ -33,6 +33,8 @@ class CPUMetricSerializer(serializers.ModelSerializer):
         model = CPUMetric
 
 class LoadAvgSerializer(serializers.ModelSerializer):
+    uptime = serializers.IntegerField(source='uptime')
+
     class Meta:
         model = LoadAvg
 

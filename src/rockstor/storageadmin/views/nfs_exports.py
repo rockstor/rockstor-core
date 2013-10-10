@@ -35,39 +35,42 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class ShareNFSView(GenericView):
+class NFSExportGroupView(GenericView):
     serializer_class = NFSExportGroupSerializer
 
     def get_queryset(self, *args, **kwargs):
-        share = validate_share(kwargs['sname'], self.request)
         if ('export_id' in kwargs):
             self.paginate_by = 0
             try:
                 return NFSExportGroup.objects.get(id=kwargs['export_id'])
             except:
                 return []
-        exports = NFSExport.objects.filter(share=share)
-        ids = [e.export_group.id for e in exports]
-        return NFSExportGroup.objects.filter(nohide=False, id__in=ids)
+        return NFSExportGroup.objects.filter(nohide=False)
 
     @transaction.commit_on_success
-    def post(self, request, sname):
+    def post(self, request):
+        if ('shares' not in request.DATA):
+            e_msg = ('Cannot export without specifying shares')
+            handle_exception(Exception(e_msg), request)
+        shares = [validate_share(s, request) for s in request.DATA['shares']]
         try:
-            share = validate_share(sname, request)
             options = parse_options(request)
-            dup_export_check(share, options['host_str'], request)
+            for s in shares:
+                dup_export_check(s, options['host_str'], request)
+
             cur_exports = list(NFSExport.objects.all())
             eg = NFSExportGroup(**options)
             eg.save()
-            mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
-            export_pt = ('%s%s' % (settings.NFS_EXPORT_ROOT, share.name))
-            if (not is_share_mounted(share.name)):
-                pool_device = Disk.objects.filter(pool=share.pool)[0].name
-                mount_share(share.subvol_name, pool_device, mnt_pt)
-            export = NFSExport(export_group=eg, share=share, mount=export_pt)
-            export.full_clean()
-            export.save()
-            cur_exports.append(export)
+            for s in shares:
+                mnt_pt = ('%s%s' % (settings.MNT_PT, s.name))
+                export_pt = ('%s%s' % (settings.NFS_EXPORT_ROOT, s.name))
+                if (not is_share_mounted(s.name)):
+                    pool_device = Disk.objects.filter(pool=s.pool)[0].name
+                    mount_share(s.subvol_name, pool_device, mnt_pt)
+                export = NFSExport(export_group=eg, share=s, mount=export_pt)
+                export.full_clean()
+                export.save()
+                cur_exports.append(export)
 
             exports = create_nfs_export_input(cur_exports)
             refresh_wrapper(exports, request, logger)
@@ -79,15 +82,35 @@ class ShareNFSView(GenericView):
             handle_exception(e, request)
 
     @transaction.commit_on_success
-    def put(self, request, sname, export_id):
+    def put(self, request, export_id):
+        if ('shares' not in request.DATA):
+            e_msg = ('Cannot export without specifying shares')
+            handle_exception(Exception(e_msg), request)
+        shares = [validate_share(s, request) for s in request.DATA['shares']]
         try:
-            share = validate_share(sname, request)
             eg = validate_export_group(export_id, request)
             options = parse_options(request)
-            dup_export_check(share, options['host_str'], request)
+            for s in shares:
+                dup_export_check(s, options['host_str'], request)
             NFSExportGroup.objects.filter(id=export_id).update(**options)
             NFSExportGroup.objects.filter(id=export_id)[0].save()
             cur_exports = list(NFSExport.objects.all())
+            for e in NFSExport.objects.filter(export_group=eg):
+                if (e.share not in shares):
+                    cur_exports.remove(e)
+                    e.delete()
+                else:
+                    shares.remove(e.share)
+            for s in shares:
+                mnt_pt = ('%s%s' % (settings.MNT_PT, s.name))
+                export_pt = ('%s%s' % (settings.NFS_EXPORT_ROOT, s.name))
+                if (not is_share_mounted(s.name)):
+                    pool_device = Disk.objects.filter(pool=s.pool)[0].name
+                    mount_share(s.subvol_name, pool_device, mnt_pt)
+                export = NFSExport(export_group=eg, share=s, mount=export_pt)
+                export.full_clean()
+                export.save()
+                cur_exports.append(export)
             exports = create_nfs_export_input(cur_exports)
             refresh_wrapper(exports, request, logger)
             nfs_serializer = NFSExportGroupSerializer(eg)
@@ -98,27 +121,20 @@ class ShareNFSView(GenericView):
             handle_exception(e, request)
 
     @transaction.commit_on_success
-    def delete(self, request, sname, export_id):
+    def delete(self, request, export_id):
         try:
-            share = validate_share(sname, request)
             eg = validate_export_group(export_id, request)
             cur_exports = list(NFSExport.objects.all())
-            export = NFSExport.objects.get(export_group=eg, share=share)
-            for e in NFSExport.objects.filter(share=share):
-                if (e.export_group.host_str == eg.host_str):
-                    export_pt = ('%s%s' % (settings.NFS_EXPORT_ROOT,
-                                           share.name))
-                    if (e.export_group.nohide):
-                        snap_name = e.mount.split(e.share.name + '_')[-1]
-                        export_pt = ('%s%s/%s' % (settings.NFS_EXPORT_ROOT,
-                                                  e.share.name, snap_name))
-                    teardown_wrapper(export_pt, request, logger)
-                    cur_exports.remove(e)
+            for e in NFSExport.objects.filter(export_group=eg):
+                export_pt = ('%s%s' % (settings.NFS_EXPORT_ROOT, e.share.name))
+                if (e.export_group.nohide):
+                    snap_name = e.mount.split(e.share.name + '_')[-1]
+                    export_pt = ('%s/%s' % (export_pt, snap_name))
+                teardown_wrapper(export_pt, request, logger)
+                cur_exports.remove(e)
+                e.delete()
+            eg.delete()
             exports = create_nfs_export_input(cur_exports)
-            export.delete()
-            if (NFSExport.objects.filter(export_group=eg).count() == 0):
-                #delete only when this is the only share in the group
-                eg.delete()
             refresh_wrapper(exports, request, logger)
             return Response()
         except RockStorAPIException:

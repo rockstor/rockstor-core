@@ -17,40 +17,86 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf import settings
-from storageadmin.models import (Share, NFSExport)
-
+from storageadmin.models import (Share, NFSExport, NFSExportGroup)
+from storageadmin.util import handle_exception
+from system.osi import (refresh_nfs_exports, nfs4_mount_teardown)
 
 def client_input(export):
-    ci = {'client_str': export.host_str,
-          'option_list': ('%s,%s,%s,no_root_squash' %
-                          (export.editable, export.syncable,
-                           export.mount_security))}
-    if (export.nohide):
-        ci['option_list'] = ('%s,nohide' % ci['option_list'])
+    eg = export.export_group
+    ci = {'client_str': eg.host_str,
+          'option_list': ('%s,%s,%s,no_root_squash' % (eg.editable,
+                                                       eg.syncable,
+                                                       eg.mount_security))}
+    if (eg.nohide):
+        ci['option_list'] = ('%s,nohide' % ci['options_list'])
     ci['mnt_pt'] = export.mount.replace(settings.NFS_EXPORT_ROOT,
                                         settings.MNT_PT)
     return ci
 
-def create_nfs_export_input(cur_export):
-    exports = {}
-    for e in NFSExport.objects.all():
+def create_nfs_export_input(exports):
+    exports_d = {}
+    for e in exports:
         e_list = []
         export_pt = ('%s%s' % (settings.NFS_EXPORT_ROOT, e.share.name))
-        if (e.nohide):
+        if (e.export_group.nohide):
             snap_name = e.mount.split(e.share.name + '_')[-1]
             export_pt = ('%s/%s' % (export_pt, snap_name))
-            if (e.share.id == cur_export.share.id and
-                cur_export.enabled is False):
-                exports[export_pt] = []
-                continue
+        if (export_pt in exports_d):
+            e_list = exports_d[export_pt]
+        e_list.append(client_input(e))
+        exports_d[export_pt] = e_list
+    return exports_d
 
-        if (export_pt in exports):
-            e_list = exports[export_pt]
+def parse_options(request):
+    options = {
+        'host_str': '*',
+        'editable': 'ro',
+        'syncable': 'async',
+        'mount_security': 'insecure',
+        }
+    if ('host_str' in request.DATA):
+        options['host_str'] = request.DATA['host_str']
+    if ('mod_choice' in request.DATA):
+        options['editable'] = request.DATA['mod_choice']
+    if ('sync_choice' in request.DATA):
+        options['syncable'] = request.DATA['sync_choice']
+    return options
 
-        if (cur_export.id == e.id):
-            if (cur_export.enabled is True):
-                e_list.append(client_input(cur_export))
-        else:
-            e_list.append(client_input(e))
-        exports[export_pt] = e_list
-    return exports
+def dup_export_check(share, host_str, request):
+    for e in NFSExport.objects.filter(share=share):
+        if (e.export_group.host_str == host_str):
+            e_msg = ('An export already exists for the host string: %s' %
+                     host_str)
+            handle_exception(Exception(e_msg), request)
+
+def validate_share(sname, request):
+    try:
+        return Share.objects.get(name=sname)
+    except:
+        e_msg = ('Share with name: %s does not exist' % sname)
+        handle_exception(Exception(e_msg), request)
+
+def validate_export_group(export_id, request):
+    try:
+        return NFSExportGroup.objects.get(id=export_id)
+    except:
+        e_msg = ('NFS export with id: %d does not exist' % export_id)
+        handle_exception(Exception(e_msg), request)
+
+def refresh_wrapper(exports, request, logger):
+    try:
+        refresh_nfs_exports(exports)
+    except Exception, e:
+        e_msg = ('Unable to delete the export because it is in use.'
+                 ' Try again Later')
+        logger.exception(e)
+        handle_exception(Exception(e_msg), request)
+
+def teardown_wrapper(export_pt, request, logger):
+    try:
+        nfs4_mount_teardown(export_pt)
+    except Exception, e:
+        e_msg = ('Unable to delete the export(%s) because it is '
+                 'in use' % (export_pt))
+        logger.exception(e)
+        handle_exception(Exception(e_msg), request)

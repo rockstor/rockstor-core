@@ -30,5 +30,9 @@ class LoadAvg(models.Model):
     idle_seconds = models.IntegerField()
     ts = models.DateTimeField(auto_now=True)
 
+    def uptime(self, *args, **kwargs):
+        with open('/proc/uptime') as ufo:
+            return int(float(ufo.readline().split()[0]))
+
     class Meta:
         app_label = 'smart_manager'

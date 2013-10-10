@@ -1,0 +1,80 @@
+<script>
+/*
+ * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ * 
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ * 
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ */
+</script>
+
+<!-- Module Body -->
+<div class="row-fluid">
+  <div class="span12">
+    <div class="messages"></div>
+    <!-- Content -->
+    <table id="nfs-exports-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of nfs exports">
+      <thead>
+        <tr>
+          <th scope="col" abbr="Host String">Host String</th>
+          <th scope="col" abbr="Shares">Shares</th>
+          <th scope="col" abbr="Writable">Writable</th>
+          <th scope="col" abbr="Sync">Sync / Async</th>
+          <th scope="col" abbr="Actions">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (nfsExportGroups.length > 0) { %>
+          <% nfsExportGroups.each(function(n) { %>
+            <tr>
+              <td><%= n.get('host_str') %></td>
+              <td>
+                <% _.each(n.get('exports'), function(e, i) { %>
+                  <% if (i < (n.get('exports').length - 1)) { %>
+                    <%= e.share %>,
+                  <% } else { %>
+                    <%= e.share %>
+                  <% } %>
+                  
+                <% }); %>
+              </td>
+              <td><%= n.get('editable') %></td>
+              <td><%= n.get('syncable') %></td>
+              <td>
+                <a href="#nfs-exports/edit/<%= n.id %>"><i class="icon-edit"></i></a>
+                &nbsp;
+                <a href="#" class="delete-nfs-export" data-id="<%= n.id %>"><i class="icon-trash"></i></a>
+            </td>
+            </tr>
+          <% }); %>
+        <% } else { %>
+          <tr>
+            <td colspan="5">
+              <h4>No nfs exports have been created</h4>
+            </td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+    <% if (nfsExportGroups.length > 0) { %>
+      Mount a share using <code>mount <%= currentAppliance.get('ip') %>:/export/&lt;share_name&gt;</code>
+    <% } %>
+    <!-- End Content -->
+  </div> <!-- span12 -->
+</div> <!-- row-fluid --> 
+<br>
+<a href="#add-nfs-export" id="add-nfs-export" class="btn btn-primary"><i class="icon-edit icon-white"></i> Add NFS Export</a>
+<!-- end module body -->
+
+
