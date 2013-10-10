@@ -396,6 +396,51 @@ function setApplianceName() {
   });
 }
 
+function updateLoadAvg() {
+  RockStorGlobals.loadAvgTimer = window.setInterval(function() {
+    fetchLoadAvg();
+  }, 60000);
+  fetchLoadAvg();
+  RockStorGlobals.loadAvgDisplayed = true;
+}
+
+function fetchLoadAvg() {
+  $.ajax({
+    url: "/api/commands/uptime?format=json", 
+    type: "POST",
+    dataType: "json",
+    global: false, // dont show global loading indicator
+    success: function(data, status, xhr) {
+      displayLoadAvg(data);
+    },
+    error: function(xhr, status, error) {
+      console.log(error);
+    }
+  });
+}
+
+function displayLoadAvg(data) {
+  var n = parseInt(data);
+  var secs = n % 60;
+  var mins = Math.round(n/60) % 60;
+  var hrs = Math.round(n / (60*60)) % 24;
+  var days = Math.round(n / (60*60*24)) % 365;
+  var yrs = Math.round(n / (60*60*24*365));
+  var str = 'Uptime: ';
+  if (yrs == 1) {
+    str += yrs + ' year, ';
+  } else if (yrs > 1) {
+    str += yrs + ' years, ';
+  }
+  if (days == 1) {
+    str += days + ' day, '; 
+  } else {
+    str += days + ' days, ';
+  }
+  str += hrs + ':' + mins;  
+  $('#appliance-loadavg').html(str);
+}
+
 function fetchDependencies(dependencies, callback, context) {
   if (dependencies.length == 0) {
     if (callback) callback.apply(context);
