@@ -406,8 +406,8 @@ function updateLoadAvg() {
 
 function fetchLoadAvg() {
   $.ajax({
-    url: "/api/commands/uptime?format=json", 
-    type: "POST",
+    url: "/api/sm/sprobes/loadavg?limit=1&format=json", 
+    type: "GET",
     dataType: "json",
     global: false, // dont show global loading indicator
     success: function(data, status, xhr) {
@@ -420,7 +420,10 @@ function fetchLoadAvg() {
 }
 
 function displayLoadAvg(data) {
-  var n = parseInt(data);
+  var n = parseInt(data.results[0]['uptime']);
+  var load_1 = parseFloat(data.results[0]['load_1']);
+  var load_5 = parseFloat(data.results[0]['load_5']);
+  var load_15 = parseFloat(data.results[0]['load_15']);
   var secs = n % 60;
   var mins = Math.round(n/60) % 60;
   var hrs = Math.round(n / (60*60)) % 24;
@@ -434,10 +437,18 @@ function displayLoadAvg(data) {
   }
   if (days == 1) {
     str += days + ' day, '; 
-  } else {
+  } else if (days > 1) {
     str += days + ' days, ';
   }
-  str += hrs + ':' + mins;  
+  if (hrs < 10) {
+    str += '0';
+  }
+  str += hrs + ':';
+  if (mins < 10) {
+    str += '0';  
+  }
+  str += mins;
+  str += ' &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Load: ' + load_1 + ', ' + load_5 + ', ' + load_15;  
   $('#appliance-loadavg').html(str);
 }
 
