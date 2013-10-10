@@ -27,7 +27,7 @@ from storageadmin.exceptions import RockStorAPIException
 from fs.btrfs import (mount_share, is_share_mounted, umount_root)
 from system.osi import (refresh_nfs_exports, nfs4_mount_teardown)
 from generic_view import GenericView
-from nfs_helpers import create_nfs_export_input
+from nfs_helpers import (create_nfs_export_input, parse_options)
 
 import logging
 logger = logging.getLogger(__name__)
@@ -60,19 +60,13 @@ class NFSExportGroupView(GenericView):
         shares = [self._validate_share(s, request) for s in
                   request.DATA['shares']]
         try:
-            options = {
-                'host_str': '*',
-                'mod_choice': 'ro',
-                'sync_choice': 'async',
-                'security': 'insecure',
-                'id': -1,
-                }
-            if ('host_str' in request.DATA):
-                options['host_str'] = request.DATA['host_str']
-            if ('mod_choice' in request.DATA):
-                options['mod_choice'] = request.DATA['mod_choice']
-            if ('sync_choice' in request.DATA):
-                options['sync_choice'] = request.DATA['sync_choice']
+            options = parse_options(request)
+            for s in shares:
+                for e in NFSExport.objects.filter(share=s):
+                    if (e.export_group.host_str == options['host_str']):
+                        e_msg = ('An export already exists for the host '
+                                 'string: %s' % options['host_str'])
+                        handle_exception(Exception(e_msg), request)
 
             cur_exports = list(NFSExport.objects.all())
             eg = NFSExportGroup(host_str=options['host_str'],

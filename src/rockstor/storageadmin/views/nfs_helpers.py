@@ -45,3 +45,19 @@ def create_nfs_export_input(exports):
         e_list.append(client_input(e))
         exports_d[export_pt] = e_list
     return exports_d
+
+def parse_options(request):
+    options = {
+        'host_str': '*',
+        'mod_choice': 'ro',
+        'sync_choice': 'async',
+        'security': 'insecure',
+        'id': -1,
+        }
+    if ('host_str' in request.DATA):
+        options['host_str'] = request.DATA['host_str']
+    if ('mod_choice' in request.DATA):
+        options['mod_choice'] = request.DATA['mod_choice']
+    if ('sync_choice' in request.DATA):
+        options['sync_choice'] = request.DATA['sync_choice']
+    return options
