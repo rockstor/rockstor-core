@@ -82,7 +82,7 @@ class ShareNFSView(GenericView):
     def put(self, request, sname, export_id):
         try:
             share = validate_share(sname, request)
-            validate_export_group(export_id, request)
+            eg = validate_export_group(export_id, request)
             options = parse_options(request)
             dup_export_check(share, options['host_str'], request)
             NFSExportGroup.objects.filter(id=export_id).update(**options)
@@ -90,6 +90,8 @@ class ShareNFSView(GenericView):
             cur_exports = list(NFSExport.objects.all())
             exports = create_nfs_export_input(cur_exports)
             refresh_wrapper(exports, request, logger)
+            nfs_serializer = NFSExportGroupSerializer(eg)
+            return Response(nfs_serializer.data)
         except RockStorAPIException:
             raise
         except Exception, e:
