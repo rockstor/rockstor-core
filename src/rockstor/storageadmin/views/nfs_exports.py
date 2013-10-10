@@ -90,6 +90,8 @@ class NFSExportGroupView(GenericView):
         try:
             eg = validate_export_group(export_id, request)
             options = parse_options(request)
+            for s in shares:
+                dup_export_check(s, options['host_str'], request)
             NFSExportGroup.objects.filter(id=export_id).update(**options)
             NFSExportGroup.objects.filter(id=export_id)[0].save()
             cur_exports = list(NFSExport.objects.all())

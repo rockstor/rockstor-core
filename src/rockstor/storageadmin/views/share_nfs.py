@@ -81,9 +81,10 @@ class ShareNFSView(GenericView):
     @transaction.commit_on_success
     def put(self, request, sname, export_id):
         try:
-            validate_share(sname, request)
+            share = validate_share(sname, request)
             validate_export_group(export_id, request)
             options = parse_options(request)
+            dup_export_check(share, options['host_str'], request)
             NFSExportGroup.objects.filter(id=export_id).update(**options)
             NFSExportGroup.objects.filter(id=export_id)[0].save()
             cur_exports = list(NFSExport.objects.all())
