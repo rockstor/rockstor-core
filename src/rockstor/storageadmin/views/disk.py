@@ -46,7 +46,12 @@ class DiskView(GenericView):
         return Disk.objects.all()
 
     @transaction.commit_on_success
-    def post(self, request):
+    def post(self, request, command):
+        if (command != 'scan'):
+            e_msg = ('Unknown command: %s. Only valid command is: scan' %
+                     command)
+            handle_exception(Exception(e_msg), request)
+
         disks = scan_disks(settings.MIN_DISK_SIZE)
         for k,v in disks.items():
             if (Disk.objects.filter(name=v['name']).exists()):

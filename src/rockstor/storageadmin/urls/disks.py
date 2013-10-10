@@ -22,7 +22,7 @@ from storageadmin.views import DiskView
 
 urlpatterns = patterns(
     '',
-    url(r'^$', DiskView.as_view(), name='disk-view'),
-    url(r'(?P<dname>[A-Za-z]+[A-Za-z0-9]*)$', DiskView.as_view(),
-        name='user-view'),
+    url(r'^$', DiskView.as_view()),
+    url(r'^/(?P<command>scan)$', DiskView.as_view()),
+    url(r'^/(?P<dname>[A-Za-z]+[A-Za-z0-9]*)$', DiskView.as_view()),
 )
