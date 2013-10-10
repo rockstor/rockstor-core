@@ -20,7 +20,8 @@ from rest_framework import serializers
 from storageadmin.models import (Disk, Pool, Share, Snapshot, NFSExport,
                                  SambaShare, IscsiTarget, Appliance,
                                  SupportCase, DashboardConfig,
-                                 NetworkInterface, User, PoolScrub, Setup)
+                                 NetworkInterface, User, PoolScrub, Setup,
+                                 NFSExportGroup)
 from django.contrib.auth.models import User as DjangoUser
 
 class DiskInfoSerializer(serializers.ModelSerializer):
@@ -39,8 +40,14 @@ class SnapshotSerializer(serializers.ModelSerializer):
         model = Snapshot
 
 class NFSExportSerializer(serializers.ModelSerializer):
+    share = serializers.CharField(source='share_name')
     class Meta:
         model = NFSExport
+
+class NFSExportGroupSerializer(serializers.ModelSerializer):
+    exports = NFSExportSerializer(source='nfsexport_set')
+    class Meta:
+        model = NFSExportGroup
 
 class SambaShareSerializer(serializers.ModelSerializer):
     class Meta:

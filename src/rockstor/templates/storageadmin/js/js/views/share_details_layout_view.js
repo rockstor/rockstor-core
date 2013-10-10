@@ -86,7 +86,7 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
       snapshots: this.snapshots,
       share: this.share
     });
-    this.subviews['nfs-exports'] = new NFSExportsTableModule({ 
+    this.subviews['nfs-exports'] = new ShareNFSExports({ 
       share: this.share,
       modify_choices: this.modify_choices,
       sync_choices: this.sync_choices,
