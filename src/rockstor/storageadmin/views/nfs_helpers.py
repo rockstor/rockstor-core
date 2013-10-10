@@ -17,8 +17,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf import settings
-from storageadmin.models import (Share, NFSExport)
-
+from storageadmin.models import (Share, NFSExport, NFSExportGroup)
+from storageadmin.util import handle_exception
+from system.osi import (refresh_nfs_exports, nfs4_mount_teardown)
 
 def client_input(export):
     eg = export.export_group
@@ -49,15 +50,53 @@ def create_nfs_export_input(exports):
 def parse_options(request):
     options = {
         'host_str': '*',
-        'mod_choice': 'ro',
-        'sync_choice': 'async',
-        'security': 'insecure',
-        'id': -1,
+        'editable': 'ro',
+        'syncable': 'async',
+        'mount_security': 'insecure',
         }
     if ('host_str' in request.DATA):
         options['host_str'] = request.DATA['host_str']
     if ('mod_choice' in request.DATA):
-        options['mod_choice'] = request.DATA['mod_choice']
+        options['editable'] = request.DATA['mod_choice']
     if ('sync_choice' in request.DATA):
-        options['sync_choice'] = request.DATA['sync_choice']
+        options['syncable'] = request.DATA['sync_choice']
     return options
+
+def dup_export_check(share, host_str, request):
+    for e in NFSExport.objects.filter(share=share):
+        if (e.export_group.host_str == host_str):
+            e_msg = ('An export already exists for the host string: %s' %
+                     host_str)
+            handle_exception(Exception(e_msg), request)
+
+def validate_share(sname, request):
+    try:
+        return Share.objects.get(name=sname)
+    except:
+        e_msg = ('Share with name: %s does not exist' % sname)
+        handle_exception(Exception(e_msg), request)
+
+def validate_export_group(export_id, request):
+    try:
+        return NFSExportGroup.objects.get(id=export_id)
+    except:
+        e_msg = ('NFS export with id: %d does not exist' % export_id)
+        handle_exception(Exception(e_msg), request)
+
+def refresh_wrapper(exports, request, logger):
+    try:
+        refresh_nfs_exports(exports)
+    except Exception, e:
+        e_msg = ('Unable to delete the export because it is in use.'
+                 ' Try again Later')
+        logger.exception(e)
+        handle_exception(Exception(e_msg), request)
+
+def teardown_wrapper(export_pt, request, logger):
+    try:
+        nfs4_mount_teardown(export_pt)
+    except Exception, e:
+        e_msg = ('Unable to delete the export(%s) because it is '
+                 'in use' % (export_pt))
+        logger.exception(e)
+        handle_exception(Exception(e_msg), request)

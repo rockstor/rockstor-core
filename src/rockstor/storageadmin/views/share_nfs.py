@@ -27,7 +27,9 @@ from storageadmin.exceptions import RockStorAPIException
 from fs.btrfs import (mount_share, is_share_mounted, umount_root)
 from system.osi import (refresh_nfs_exports, nfs4_mount_teardown)
 from generic_view import GenericView
-from nfs_helpers import (create_nfs_export_input, parse_options)
+from nfs_helpers import (create_nfs_export_input, parse_options,
+                         dup_export_check, validate_share, refresh_wrapper,
+                         teardown_wrapper, validate_export_group)
 
 import logging
 logger = logging.getLogger(__name__)
@@ -36,15 +38,8 @@ logger = logging.getLogger(__name__)
 class ShareNFSView(GenericView):
     serializer_class = NFSExportGroupSerializer
 
-    def _validate_share(self, sname, request):
-        try:
-            return Share.objects.get(name=sname)
-        except:
-            e_msg = ('Share with name: %s does not exist' % sname)
-            handle_exception(Exception(e_msg), request)
-
     def get_queryset(self, *args, **kwargs):
-        share = self._validate_share(kwargs['sname'], self.request)
+        share = validate_share(kwargs['sname'], self.request)
         if ('export_id' in kwargs):
             self.paginate_by = 0
             try:
@@ -58,18 +53,11 @@ class ShareNFSView(GenericView):
     @transaction.commit_on_success
     def post(self, request, sname):
         try:
-            share = Share.objects.get(name=sname)
+            share = validate_share(sname, request)
             options = parse_options(request)
-            for e in NFSExport.objects.filter(share=share):
-                if (e.export_group.host_str == options['host_str']):
-                    e_msg = ('An export already exists for the host string: %s'
-                             % options['host_str'])
-                    handle_exception(Exception(e_msg), request)
+            dup_export_check(share, options['host_str'], request)
             cur_exports = list(NFSExport.objects.all())
-            eg = NFSExportGroup(host_str=options['host_str'],
-                                editable=options['mod_choice'],
-                                syncable=options['sync_choice'],
-                                mount_security=options['security'])
+            eg = NFSExportGroup(**options)
             eg.save()
             mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
             export_pt = ('%s%s' % (settings.NFS_EXPORT_ROOT, share.name))
@@ -82,7 +70,7 @@ class ShareNFSView(GenericView):
             cur_exports.append(export)
 
             exports = create_nfs_export_input(cur_exports)
-            refresh_nfs_exports(exports)
+            refresh_wrapper(exports, request, logger)
             nfs_serializer = NFSExportGroupSerializer(eg)
             return Response(nfs_serializer.data)
         except RockStorAPIException:
@@ -108,26 +96,14 @@ class ShareNFSView(GenericView):
                         snap_name = e.mount.split(e.share.name + '_')[-1]
                         export_pt = ('%s%s/%s' % (settings.NFS_EXPORT_ROOT,
                                                   e.share.name, snap_name))
-                    try:
-                        nfs4_mount_teardown(export_pt)
-                    except Exception, e:
-                        e_msg = ('Unable to delete the export(%s) because '
-                                 'it is in use' % (export_pt))
-                        logger.exception(e)
-                        handle_exception(Exception(e_msg), request)
+                    teardown_wrapper(export_pt, request, logger)
                     cur_exports.remove(e)
             exports = create_nfs_export_input(cur_exports)
             export.delete()
             if (NFSExport.objects.filter(export_group=eg).count() == 0):
                 #delete only when this is the only share in the group
                 eg.delete()
-            try:
-                refresh_nfs_exports(exports)
-            except Exception, e:
-                e_msg = ('Unable to delete the export because it is in use.'
-                         ' Try again Later')
-                logger.exception(e)
-                handle_exception(Exception(e_msg), request)
+            refresh_wrapper(exports, request, logger)
             return Response()
         except RockStorAPIException:
             raise
