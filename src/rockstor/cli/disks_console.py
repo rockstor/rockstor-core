@@ -26,7 +26,7 @@ class DisksConsole(BaseConsole):
     def __init__(self, prompt):
         BaseConsole.__init__(self)
         self.prompt = prompt + ' Disks>'
-        self.baseurl = ('%sdisks/' % BaseConsole.url)
+        self.baseurl = ('%sdisks' % BaseConsole.url)
 
     def do_list(self, args):
         """
@@ -60,6 +60,7 @@ class DisksConsole(BaseConsole):
         Scan the system for any new disks:
             scan
         """
-        disk_info = api_call(self.baseurl, data=None, calltype='post')
+        url = ('%s/scan' % self.baseurl)
+        disk_info = api_call(url, data=None, calltype='post')
         print_disk_info(disk_info)
 
