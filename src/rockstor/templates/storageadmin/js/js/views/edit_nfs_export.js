@@ -31,7 +31,7 @@ EditNFSExportView = RockstoreLayoutView.extend({
 
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
-    this.template = window.JST.edit_add_nfs_export;
+    this.template = window.JST.nfs_edit_nfs_export;
     this.shares = new ShareCollection();
     this.nfsExportGroupId = this.options.nfsExportGroupId;
     this.nfsExportGroup = new NFSExportGroup({id: this.nfsExportGroupId});
@@ -70,18 +70,16 @@ EditNFSExportView = RockstoreLayoutView.extend({
         host_str: 'required'
       },
       submitHandler: function() {
-        var button = $('#save-nfs-export');
+        var button = $('#update-nfs-export');
         if (buttonDisabled(button)) return false;
         disableButton(button);
-        console.log(JSON.stringify(_this.$('#add-nfs-export-form').getJSON()));
         $.ajax({
-          url: '/api/nfs-exports/' + this.nfsExportGroup.id,
-          type: 'POST',
+          url: '/api/nfs-exports/' + _this.nfsExportGroup.id,
+          type: 'PUT',
           dataType: 'json',
           contentType: 'application/json',
-          data: JSON.stringify(_this.$('#add-nfs-export-form').getJSON()),
+          data: JSON.stringify(_this.$('#edit-nfs-export-form').getJSON()),
           success: function() {
-            enableButton(button);
             app_router.navigate('nfs-exports', {trigger: true});
           },
           error: function(xhr, status, error) {
@@ -92,10 +90,8 @@ EditNFSExportView = RockstoreLayoutView.extend({
             } else {
               _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
             }
-
           }
         });
-       
         return false;
       }
     });

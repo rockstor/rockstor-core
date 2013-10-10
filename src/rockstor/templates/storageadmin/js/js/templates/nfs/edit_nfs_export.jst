@@ -33,10 +33,14 @@
           <label class="control-label" for="shares">Shares to export<span class="required"> *</span></label>
           <div class="controls">
             <select name="shares" id="shares" size="10" multiple>
-              <% var nShares = nfsExportGroup.get('shares'); %>
+              <% 
+                var nShares = _.map(nfsExportGroup.get('exports'),
+                function(e) { return e.share; }); 
+                console.log(nShares);
+              %>
               <% shares.each(function(share, index) { %>
 
-                <% if (_.indexOf(nShares, share) != -1) { %>
+                <% if (_.indexOf(nShares, share.get('name')) != -1) { %>
                   <option value="<%= share.get('name') %>" selected="selected"><%= share.get('name') %></option>
                 <% } else { %>
                   <option value="<%= share.get('name') %>" ><%= share.get('name') %></option>
@@ -60,8 +64,8 @@
           <div class="controls">
             <select id="mod_choice" name="mod_choice">
               <% _.each(modify_choices, function(c) { %>
-                <% if (nfsExportGroup.get('mod_choice') == c.value) { %>
-                  <option value="<%= c.value %>" selectd="true"><%= c.name %></option>
+                <% if (nfsExportGroup.get('editable') == c.value) { %>
+                  <option value="<%= c.value %>" selected="selected"><%= c.name %></option>
                 <% } else { %>
                   <option value="<%= c.value %>"><%= c.name %></option>
                 <% } %>
@@ -76,7 +80,7 @@
           <div class="controls">
             <select id="sync_choice" name="sync_choice">
               <% _.each(sync_choices, function(c) { %>
-                <% if (nfsExportGroup.get('sync_choice') == c.value) { %>
+                <% if (nfsExportGroup.get('syncable') == c.value) { %>
                   <option value="<%= c.value %>" selected="selected"><%= c.name %></option>
                 <% } else { %>
                   <option value="<%= c.value %>"><%= c.name %></option>
@@ -90,7 +94,7 @@
         <div class="control-group">
           <div class="controls">
             <a id="js-cancel" class="btn">Cancel</a>
-            <input type="Submit" id="create-nfs-export" class="btn btn-primary" value="Submit"></input>
+            <input type="Submit" id="update-nfs-export" class="btn btn-primary" value="Submit"></input>
           </div>
         </div>
 
