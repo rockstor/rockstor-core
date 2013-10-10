@@ -24,30 +24,37 @@
  * 
  */
 
-NFSExportsView  = RockstoreModuleView.extend({
+NFSExportsView  = RockstoreLayoutView.extend({
   events: {
     'click .delete-nfs-export': 'deleteNfsExport'
   },
     
   initialize: function() {
+    this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.nfs_nfs_exports;
     this.module_name = 'nfs_exports';
     this.nfsExportGroups = new NFSExportGroupCollection();
+    this.dependencies.push(this.nfsExportGroups);
+    this.appliances = new ApplianceCollection();
+    this.dependencies.push(this.appliances);
+    
   },
 
   render: function() {
     var _this = this;
-    this.nfsExportGroups.fetch({
-      success: function(collection, response, options) {
-        $(_this.el).html(_this.template({
-          nfsExportGroups: _this.nfsExportGroups,
-        }));
-      },
-      error: function(collection, response, options) {
-        console.log(response);
-      }
-    });
+    this.fetch(this.renderNFSExportGroups, this);
     return this;
+  },
+  
+  renderNFSExportGroups: function() {
+    var currentAppliance = this.appliances.find(function(appliance) {
+      return appliance.get('current_appliance') == true; 
+    });
+    $(this.el).html(this.template({
+      nfsExportGroups: this.nfsExportGroups,
+      currentAppliance: currentAppliance
+    }));
+
   },
 
   deleteNfsExport: function(event) {

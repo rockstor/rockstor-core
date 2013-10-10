@@ -67,9 +67,13 @@
         <% } %>
       </tbody>
     </table>
+    <% if (nfsExportGroups.length > 0) { %>
+      Mount a share using <code>mount <%= currentAppliance.get('ip') %>:/export/&lt;share_name&gt;</code>
+    <% } %>
     <!-- End Content -->
   </div> <!-- span12 -->
 </div> <!-- row-fluid --> 
+<br>
 <a href="#add-nfs-export" id="add-nfs-export" class="btn btn-primary"><i class="icon-edit icon-white"></i> Add NFS Export</a>
 <!-- end module body -->
 
