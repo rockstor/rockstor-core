@@ -80,7 +80,7 @@ var AppRouter = Backbone.Router.extend({
       setApplianceName();
     }
     if (!RockStorGlobals.loadAvgDisplayed) {
-      displayLoadAvg();
+      updateLoadAvg();
     }
   },
 
