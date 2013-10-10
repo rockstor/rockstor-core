@@ -79,13 +79,26 @@ class ShareNFSView(GenericView):
             handle_exception(e, request)
 
     @transaction.commit_on_success
+    def put(self, request, sname, export_id):
+        try:
+            validate_share(sname, request)
+            validate_export_group(export_id, request)
+            options = parse_options(request)
+            NFSExportGroup.objects.filter(id=export_id).update(**options)
+            NFSExportGroup.objects.filter(id=export_id)[0].save()
+            cur_exports = list(NFSExport.objects.all())
+            exports = create_nfs_export_input(cur_exports)
+            refresh_wrapper(exports, request, logger)
+        except RockStorAPIException:
+            raise
+        except Exception, e:
+            handle_exception(e, request)
+
+    @transaction.commit_on_success
     def delete(self, request, sname, export_id):
         try:
-            share = Share.objects.get(name=sname)
-            if (not NFSExportGroup.objects.filter(id=export_id).exists()):
-                e_msg = ('NFS export with id: %d does not exist' % export_id)
-                handle_exception(Exception(e_msg), request)
-            eg = NFSExportGroup.objects.get(id=export_id)
+            share = validate_share(sname, request)
+            eg = validate_export_group(export_id, request)
             cur_exports = list(NFSExport.objects.all())
             export = NFSExport.objects.get(export_group=eg, share=share)
             for e in NFSExport.objects.filter(share=share):

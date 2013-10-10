@@ -73,7 +73,44 @@ class NFSExportGroupView(GenericView):
                 cur_exports.append(export)
 
             exports = create_nfs_export_input(cur_exports)
-            refresh_nfs_exports(exports)
+            refresh_wrapper(exports, request, logger)
+            nfs_serializer = NFSExportGroupSerializer(eg)
+            return Response(nfs_serializer.data)
+        except RockStorAPIException:
+            raise
+        except Exception, e:
+            handle_exception(e, request)
+
+    @transaction.commit_on_success
+    def put(self, request, export_id):
+        if ('shares' not in request.DATA):
+            e_msg = ('Cannot export without specifying shares')
+            handle_exception(Exception(e_msg), request)
+        shares = [validate_share(s, request) for s in request.DATA['shares']]
+        try:
+            eg = validate_export_group(export_id, request)
+            options = parse_options(request)
+            NFSExportGroup.objects.filter(id=export_id).update(**options)
+            NFSExportGroup.objects.filter(id=export_id)[0].save()
+            cur_exports = list(NFSExport.objects.all())
+            for e in NFSExport.objects.filter(export_group=eg):
+                if (e.share not in shares):
+                    cur_exports.remove(e)
+                    e.delete()
+                else:
+                    shares.remove(e.share)
+            for s in shares:
+                mnt_pt = ('%s%s' % (settings.MNT_PT, s.name))
+                export_pt = ('%s%s' % (settings.NFS_EXPORT_ROOT, s.name))
+                if (not is_share_mounted(s.name)):
+                    pool_device = Disk.objects.filter(pool=s.pool)[0].name
+                    mount_share(s.subvol_name, pool_device, mnt_pt)
+                export = NFSExport(export_group=eg, share=s, mount=export_pt)
+                export.full_clean()
+                export.save()
+                cur_exports.append(export)
+            exports = create_nfs_export_input(cur_exports)
+            refresh_wrapper(exports, request, logger)
             nfs_serializer = NFSExportGroupSerializer(eg)
             return Response(nfs_serializer.data)
         except RockStorAPIException:
