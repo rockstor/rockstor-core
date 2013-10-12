@@ -31,36 +31,47 @@ from models import (Service, ServiceStatus)
 from system.services import service_status
 import logging
 logger = logging.getLogger(__name__)
+import zmq
+from django.conf import settings
+from django.core.serializers import serialize
+from datetime import datetime
+from django.utils.timezone import utc
 
 class ServiceMonitor(Process):
 
-    def __init__(self, q):
-        self.q = q
+    def __init__(self):
         self.ppid = os.getpid()
         self.interval = 10 #seconds
         super(ServiceMonitor, self).__init__()
 
+    def _sink_put(self, sink, ro):
+        data = serialize("json", (ro,))
+        sink.send_json(data)
+
     def run(self):
+        context = zmq.Context()
+        sink_socket = context.socket(zmq.PUSH)
+        sink_socket.connect('tcp://%s:%d' % settings.SPROBE_SINK)
         try:
             while (True):
                 if (os.getppid() != self.ppid):
                     msg = ('Parent process(smd) exited. I am exiting too.')
                     return logger.error(msg)
 
-                if (self.q.qsize() < 1000):
-                    for s in Service.objects.all():
-                        sso = ServiceStatus(service=s, status=False)
-                        try:
-                            out, err, rc = service_status(s.name)
-                            if (rc == 0):
-                                sso.status = True
-                        except Exception, e:
-                            msg = ('Exception while getting status of '
-                                   'service: %s' % s.name)
-                            logger.error(msg)
-                            logger.exception(e)
-                        finally:
-                            self.q.put(sso)
+                ts = datetime.utcnow().replace(tzinfo=utc)
+                for s in Service.objects.all():
+                    sso = ServiceStatus(service=s, status=False, ts=ts)
+                    try:
+                        out, err, rc = service_status(s.name)
+                        if (rc == 0):
+                            sso.status = True
+                    except Exception, e:
+                        msg = ('Exception while getting status of '
+                               'service: %s' % s.name)
+                        logger.error(msg)
+                        logger.exception(e)
+                    finally:
+                        self._sink_put(sink_socket, sso)
                 time.sleep(self.interval)
         except Exception, e:
             msg = ('unhandled exception in %s. Exiting' % self.name)
