@@ -21,8 +21,10 @@ from django.utils.timezone import utc
 
 from storageadmin.models import NetworkInterface
 from smart_manager.models import NetStat
+from django.core.serializers import serialize
 
-def network_stats(prev_stats, interval, logger, q):
+
+def network_stats(prev_stats, interval, logger, sink_socket):
     interfaces = [i.name for i in NetworkInterface.objects.all()]
     cur_stats = {}
     with open('/proc/net/dev') as sfo:
@@ -50,5 +52,5 @@ def network_stats(prev_stats, interval, logger, q):
                              drop_tx=data[11], fifo_tx=data[12],
                              colls=data[13], carrier=data[14],
                              compressed_tx=data[15], ts=ts)
-                q.put(ns)
+                sink_socket.send_json(serialize("json", (ns,)))
     return cur_stats
