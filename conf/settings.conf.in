@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 # Django settings for RockStor project.
 import os
 
-DEBUG = True
+DEBUG = ${django-settings-conf:debug}
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
