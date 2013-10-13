@@ -1,0 +1,57 @@
+<h3>Edit NFS Export</h3>
+<div class="row-fluid">
+  <div class="span8">
+    <label class="control-label"><span class="required">*</span> indicates required fields</label>
+    <div class="form-box">
+      <form id="edit-nfs-export-form" name="aform">
+        <div class="messages"></div>
+        <div class="control-group">
+          <label class="control-label" for="host_str">Host<span class="required"> *</span></label>
+          <div class="controls">
+            <input type="text" name="host_str" id="host_str" value="<%= nfsExport.get('host_str') %>"> 
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label class="control-label" for="mod_choice">Writable</label>
+          <div class="controls">
+            <select id="mod_choice" name="mod_choice">
+              <% _.each(modify_choices, function(c) { %>
+                <% if (nfsExport.get('editable') == c.value) { %>
+                  <option value="<%= c.value %>" selected="selected"><%= c.name %></option>
+                <% } else { %>
+                  <option value="<%= c.value %>"><%= c.name %></option>
+                <% } %>
+              <% }); %>
+            </select>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label class="control-label" for="sync_choice">Sync</label>
+          <div class="controls">
+            <select id="sync_choice" name="sync_choice">
+              <% _.each(sync_choices, function(c) { %>
+                <% if (nfsExport.get('syncable') == c.value) { %>
+                  <option value="<%= c.value %>"><%= c.name %></option>
+                <% } else { %>
+                  <option value="<%= c.value %>"><%= c.name %></option>
+                <% } %>
+              <% }); %>
+            </select>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <div class="controls">
+            <button class="btn" id="cancel-edit-export">Cancel</button>
+            <button class="btn btn-primary" id="update-export">Submit</button>
+          </div>
+        </div>
+      </form>
+    </div>        
+
+  </div> <!-- span12 -->
+</div> <!-- row-fluid -->
+
+

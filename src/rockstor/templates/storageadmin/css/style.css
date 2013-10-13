@@ -72,8 +72,8 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
 /* Navbar */
 /*.navbar .container { width: 940px; }*/
 .navbar-fixed-top .navbar-inner { padding-left: 20px; padding-right: 20px; }
-.navbar { 
-  margin-bottom: 0px; 
+.navbar {
+  margin-bottom: 0px;
   box-shadow: 0px 0px 12px rgb(85, 85, 85);
 }
 .navbar-outer { box-shadow: 0px 0px 12px rgb(85, 85, 85); }
@@ -702,7 +702,11 @@ label.error { font-size: 12px; color: #b94a48; }
   border-bottom: 1px solid #ddd;
 }
 
-hr.module-sep { margin: 0; border: 0; border-top: 1px solid #ddd; 
+#appliance-loadavg {
+  float:right;
+}
+
+hr.module-sep { margin: 0; border: 0; border-top: 1px solid #ddd;
 }
 
 /* Services page */
@@ -821,26 +825,26 @@ div.widgets-container > div {
   position: absolute;
   height: 300px;
   width: 50px;
-  list-style: none outside none; 
+  list-style: none outside none;
 }
 
 /* TODO * adjust sizes of colspan 2 and 3 based on media queries */
-div.widgets-container div[data-ss-colspan="1"] { width: 50px;} 
-div.widgets-container div[data-ss-colspan="2"] { width: 105px;} 
-div.widgets-container div[data-ss-colspan="3"] { width: 160px;} 
-div.widgets-container div[data-ss-colspan="4"] { width: 215px;} 
-div.widgets-container div[data-ss-colspan="5"] { width: 270px;} 
-div.widgets-container div[data-ss-colspan="6"] { width: 325px;} 
-div.widgets-container div[data-ss-colspan="7"] { width: 380px;} 
-div.widgets-container div[data-ss-colspan="8"] { width: 435px;} 
-div.widgets-container div[data-ss-colspan="9"] { width: 490px;} 
-div.widgets-container div[data-ss-colspan="10"] { width: 545px;} 
-div.widgets-container div[data-ss-rowspan="1"] { height: 300px;} 
-div.widgets-container div[data-ss-rowspan="2"] { height: 605px;} 
-div.widgets-container div[data-ss-rowspan="3"] { height: 910px;} 
-div.widgets-container div div.position { 
-  width: 100%; 
-  height: 100%; 
+div.widgets-container div[data-ss-colspan="1"] { width: 50px;}
+div.widgets-container div[data-ss-colspan="2"] { width: 105px;}
+div.widgets-container div[data-ss-colspan="3"] { width: 160px;}
+div.widgets-container div[data-ss-colspan="4"] { width: 215px;}
+div.widgets-container div[data-ss-colspan="5"] { width: 270px;}
+div.widgets-container div[data-ss-colspan="6"] { width: 325px;}
+div.widgets-container div[data-ss-colspan="7"] { width: 380px;}
+div.widgets-container div[data-ss-colspan="8"] { width: 435px;}
+div.widgets-container div[data-ss-colspan="9"] { width: 490px;}
+div.widgets-container div[data-ss-colspan="10"] { width: 545px;}
+div.widgets-container div[data-ss-rowspan="1"] { height: 300px;}
+div.widgets-container div[data-ss-rowspan="2"] { height: 605px;}
+div.widgets-container div[data-ss-rowspan="3"] { height: 910px;}
+div.widgets-container div div.position {
+  width: 100%;
+  height: 100%;
   display: block;
 }
 
@@ -1046,7 +1050,7 @@ div.widgets-container div div.position {
 }
 
 .probe-select.disabled {
-  background: rgb(245,245,245); 
+  background: rgb(245,245,245);
   cursor: default;
   color: #555;
 }
@@ -1079,7 +1083,7 @@ table#disk-utilization-table {
   width: 90%;
 
 }
-table#disk-utilization-table thead tr th, 
+table#disk-utilization-table thead tr th,
 table#disk-utilization-table tfoot tr th {
   background: none;
   text-align: left;
@@ -1120,7 +1124,7 @@ path.link {
 #nfs-share-client-msg {
 }
 
-#nfs-share-client-msg input[type="radio"], 
+#nfs-share-client-msg input[type="radio"],
 #nfs-share-client-msg input[type="checkbox"] {
     margin: 0px 4px 0px 0px;
 }
@@ -1148,7 +1152,7 @@ input[type="checkbox"].inline {
 
 /* probe progress */
 .probe-status-title {
-  line-height: 5em; 
+  line-height: 5em;
   float: left;
   margin-right: 12px;
 }
@@ -1161,7 +1165,7 @@ ol.probe-status {
   width: 50%;
 }
 
-ol.probe-status li { 
+ol.probe-status li {
   float: left;
   text-align: center;
   line-height: 3em;
@@ -1175,12 +1179,12 @@ ol.probe-status li.status-tracker-done {
 }
 
 ol.probe-status li.status-tracker-todo {
-  color: silver; 
+  color: silver;
   border-bottom: 2px solid silver;
 }
 
 ol.probe-status li.status-tracker-error {
-  color: #b94a48; 
+  color: #b94a48;
   border-bottom: 2px solid #b94a48;
 }
 
@@ -1367,7 +1371,7 @@ input[type="radio"].selectedRoot {
 #wrapper1 {
   position: relative;
   top: 0px;
-  left: 0px;	
+  left: 0px;
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -1375,8 +1379,8 @@ input[type="radio"].selectedRoot {
 
 #wrapper2 {
   position: absolute;
-  top: 70px;	
-  right: 0px;	
+  top: 70px;
+  right: 0px;
   bottom: 20px;
   left: 0px;
   overflow: hidden;
@@ -1483,7 +1487,7 @@ input[type="radio"].selectedRoot {
 	background: -webkit-linear-gradient(top, #8DCA09, #72A307);
 	background: -moz-linear-gradient(top, #8DCA09, #72A307);
 	background: linear-gradient(top, #8DCA09, #72A307);
-	
+
 	border-color: #496805;
 }
 

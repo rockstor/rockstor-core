@@ -42,7 +42,7 @@ urlpatterns = patterns('',
     url(r'^netstat/$', NetStatView.as_view(),
         name='netstat-view'),
     url(r'^cpumetric/$', CPUMetricView.as_view(), name='cpumetric-view'),
-    url(r'^loadavg/$', LoadAvgView.as_view(), name='loadavg-view'),
+    url(r'^loadavg$', LoadAvgView.as_view(), name='loadavg-view'),
 
 
     # Advanced smart probes

@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 # Django settings for RockStor project.
 import os
 
-DEBUG = True
+DEBUG = ${django-settings-conf:debug}
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
@@ -193,8 +193,7 @@ PIPELINE_JS = {
             'js/views/share_info_module.js',
             'js/views/share_usage_module.js',
             'js/views/add_share.js',
-            'js/views/nfs_exports_table.js',
-            'js/views/nfs_exports_table_row.js',
+            'js/views/share_nfs_exports.js',
             'js/views/smb_shares.js',
             'js/views/iscsi_target.js',
             'js/views/home.js',
@@ -228,6 +227,9 @@ PIPELINE_JS = {
             'js/views/replication.js',
             'js/views/replica_trails.js',
             'js/views/add_replication_task.js',
+            'js/views/nfs_exports.js',
+            'js/views/add_nfs_export.js',
+            'js/views/edit_nfs_export.js',
             ),
         'output_filename': 'js/application.js'
         },

@@ -58,6 +58,9 @@ var AppRouter = Backbone.Router.extend({
     "replication": "showReplication",
     "replication/:replicaId/trails": "showReplicaTrails",
     "add_replication_task": "addReplicationTask",
+    "nfs-exports": "showNFSExports",
+    "add-nfs-export": "addNFSExport",
+    "nfs-exports/edit/:nfsExportGroupId": "editNFSExport",
     "*path": "showHome"
   },
 
@@ -78,6 +81,9 @@ var AppRouter = Backbone.Router.extend({
     }
     if (RockStorGlobals.currentAppliance == null) {
       setApplianceName();
+    }
+    if (!RockStorGlobals.loadAvgDisplayed) {
+      updateLoadAvg();
     }
   },
 
@@ -327,6 +333,32 @@ var AppRouter = Backbone.Router.extend({
     this.renderSidebar("storage", "replication");
     this.cleanup();
     this.currentLayout = new AddReplicationTaskView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  showNFSExports: function() {
+    this.renderSidebar('storage', 'nfs-exports');
+    this.cleanup();
+    this.currentLayout = new NFSExportsView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  addNFSExport: function() {
+    this.renderSidebar('storage', 'nfs-exports');
+    this.cleanup();
+    this.currentLayout = new AddNFSExportView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  editNFSExport: function(nfsExportGroupId) {
+    this.renderSidebar('storage', 'nfs-exports');
+    this.cleanup();
+    this.currentLayout = new EditNFSExportView({
+      nfsExportGroupId: nfsExportGroupId 
+    });
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },

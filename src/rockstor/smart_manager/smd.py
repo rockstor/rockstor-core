@@ -16,7 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 from datetime import (datetime, timedelta)
-from multiprocessing import Queue
 from django.utils.timezone import utc
 from procfs import ProcRetreiver
 from services import ServiceMonitor
@@ -61,14 +60,11 @@ def main():
         logger.exception(e)
         return -1
 
-    proc_q = Queue()
-    service_q = Queue()
-    live_procs = [ProcRetreiver(proc_q), ServiceMonitor(service_q),
+    live_procs = [ProcRetreiver(), ServiceMonitor(),
                   Stap(settings.TAP_SERVER),
                   TaskDispatcher(settings.SCHEDULER),]
     for p in live_procs:
         p.start()
-    stap_proc = live_procs[2]
 
     while (True):
         for p in live_procs:
@@ -80,21 +76,18 @@ def main():
             logger.error('All child processes have exited. I am returning.')
             context.term()
             return -1
-
-        process_model_queue(proc_q)
-        process_model_queue(service_q)
-        if (stap_proc.is_alive()):
-            try:
+        try:
+            while (True):
                 sink_data = pull_socket.recv_json()
                 if (isinstance(sink_data, dict)): #worker data
                     cb = getattr(agents, sink_data['cb'])
                     cb(sink_data['part_out'], sink_data['rid'], logger)
                 else:
-                    #smart probe django model
+                    #smart probe, proc, service django models
                     for d in deserialize("json", sink_data):
                         d.save()
-            except zmq.error.Again:
-                pass
-            except Exception, e:
-                logger.error('exception while processing sink data')
-                logger.exception(e)
+        except zmq.error.Again:
+            pass
+        except Exception, e:
+            logger.error('exception while processing sink data')
+            logger.exception(e)

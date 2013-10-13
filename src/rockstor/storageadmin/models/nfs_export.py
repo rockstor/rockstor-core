@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.db import models
-from storageadmin.models import Share
+from storageadmin.models import (Share, NFSExportGroup)
 from validators import (validate_nfs_host_str, validate_nfs_modify_str,
                         validate_nfs_sync_choice)
 
@@ -25,46 +25,15 @@ from validators import (validate_nfs_host_str, validate_nfs_modify_str,
 NFS export history
 """
 class NFSExport(models.Model):
-    READ_ONLY = "ro"
-    READ_WRITE = "rw"
-    ASYNC = "async"
-    SYNC = "sync"
-    SECURE = "secure"
-    INSECURE = "insecure"
 
+    export_group = models.ForeignKey(NFSExportGroup)
     """share that is exported"""
     share = models.ForeignKey(Share)
     """mount point of the share"""
     mount = models.CharField(max_length=4096)
-    """hostname string in /etc/exports"""
-    host_str = models.CharField(max_length=4096,
-                                validators=[validate_nfs_host_str])
-    """mount options"""
-    """mount read only by default"""
-    MODIFY_CHOICES = (
-        (READ_ONLY, 'ro'),
-        (READ_WRITE, 'rw'),
-        )
-    editable = models.CharField(max_length=2, choices=MODIFY_CHOICES,
-                                default=READ_ONLY,
-                                validators=[validate_nfs_modify_str])
-    """mount async by default"""
-    SYNC_CHOICES = (
-        (ASYNC, 'async'),
-        (SYNC, 'sync'),
-        )
-    syncable = models.CharField(max_length=5, choices=SYNC_CHOICES,
-                                default=ASYNC,
-                                validators=[validate_nfs_sync_choice])
-    """allow mouting from a >1024 port by default"""
-    MSECURITY_CHOICES = (
-        (SECURE, 'secure'),
-        (INSECURE, 'insecure'),
-        )
-    mount_security = models.CharField(max_length=8, choices=MSECURITY_CHOICES,
-                                      default=INSECURE)
-    nohide = models.BooleanField(default=False)
-    enabled = models.BooleanField(default=True)
+
+    def share_name(self, *args, **kwargs):
+        return self.share.name
 
     class Meta:
         app_label = 'storageadmin'
