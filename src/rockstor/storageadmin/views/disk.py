@@ -56,9 +56,12 @@ class DiskView(GenericView):
         for k,v in disks.items():
             if (Disk.objects.filter(name=v['name']).exists()):
                 continue
-            new_disk = Disk(name=v['name'], size=v['size'], free=v['free'],
-                            parted=v['parted'])
+            new_disk = Disk(name=v['name'], size=v['size'], parted=v['parted'])
             new_disk.save()
+        for d in Disk.objects.all():
+            if (d.name not in disks.keys()):
+                d.offline = True
+                d.save()
         disks = Disk.objects.all()
         ds = DiskInfoSerializer(disks)
         return Response(ds.data)
