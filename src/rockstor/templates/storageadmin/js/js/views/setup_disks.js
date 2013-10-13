@@ -39,21 +39,19 @@ SetupDisksView = Backbone.View.extend({
   },
 
   render: function() {
-    console.log('in setup_disks render');
     $(this.el).html(this.template());
     this.rescan();
     return this;
   },
 
   renderDisks: function() {
-    console.log('in setup_disks renderDisks');
     this.$('#disks-table').html(this.disks_table_template({disks: this.disks}));
   },
 
   rescan: function() {
     var _this = this;
     $.ajax({
-      url: "/api/disks/",
+      url: "/api/disks/scan",
       type: "POST"
     }).done(function() {
       _this.disks.fetch();
