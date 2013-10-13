@@ -36,6 +36,8 @@ SERVICE = '/sbin/service'
 HOSTID = '/usr/bin/hostid'
 IFCONFIG = '/sbin/ifconfig'
 NTPDATE = '/usr/sbin/ntpdate'
+LVS = '/sbin/lvs'
+VGS = '/sbin/vgs'
 
 
 class Disk():
@@ -52,11 +54,46 @@ class Disk():
                 'free': self.free,
                 'parted': self.parted, }
 
+def run_command(cmd, shell=False, stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE, throw=True):
+    p = subprocess.Popen(cmd, shell=shell, stdout=stdout, stderr=stderr)
+    out, err = p.communicate()
+    out = out.split('\n')
+    err = err.split('\n')
+    rc = p.returncode
+    if (throw and rc != 0):
+        raise CommandException(out, err, rc)
+    return (out, err, rc)
+
+def root_disks():
+    """
+    returns the partition(s) used for /. Typically it's sda.
+    This may change after el7 release.
+    """
+    root_lvm = None
+    drives = []
+    with open('/proc/mounts') as fo:
+        for line in fo.readlines():
+            fields = line.split()
+            if (fields[1] == '/' and fields[2] == 'ext4'):
+                root_lvm = fields[0]
+                break
+    o, e, c = run_command([LVS, '--noheadings', '-o', 'vg_name',
+                           root_lvm])
+    vg_name = o[0].strip()
+    o, e, c = run_command([VGS, '--noheadings', '-o', 'pv_name', vg_name])
+    for p in o:
+        p = p.strip()
+        if (re.match('/dev/', p.strip()) is not None):
+            drives.append(p[5:8])
+    return drives
+
 def scan_disks(min_size):
     """
     min_size is in KB, so it is also number of blocks. Discard any disk with
     num_blocks < min_size
     """
+    roots = root_disks()
     disks = {}
     with open('/proc/partitions') as pfo:
         for line in pfo.readlines():
@@ -74,19 +111,11 @@ def scan_disks(min_size):
                   is not None):
                 name = disk_fields[3][0:3]
                 if (name in disks):
-                    del(disks[name])
+                    if (name in roots):
+                        del(disks[name])
+                    else:
+                        disks[name]['parted'] = True
         return disks
-
-def run_command(cmd, shell=False, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE, throw=True):
-    p = subprocess.Popen(cmd, shell=shell, stdout=stdout, stderr=stderr)
-    out, err = p.communicate()
-    out = out.split('\n')
-    err = err.split('\n')
-    rc = p.returncode
-    if (throw and rc != 0):
-        raise CommandException(out, err, rc)
-    return (out, err, rc)
 
 def uptime():
     with open('/proc/uptime') as ufo:
