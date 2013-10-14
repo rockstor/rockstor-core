@@ -23,7 +23,7 @@ Disk view, for anything at the disk level
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import Disk
-from system.osi import scan_disks
+from system.osi import (scan_disks, wipe_disk)
 from storageadmin.serializers import DiskInfoSerializer
 from storageadmin.util import handle_exception
 from django.conf import settings
@@ -36,6 +36,13 @@ logger = logging.getLogger(__name__)
 class DiskView(GenericView):
     serializer_class = DiskInfoSerializer
 
+    def _validate_disk(self, dname, request):
+        try:
+            return Disk.objects.get(name=dname)
+        except:
+            e_msg = ('Disk: %s does not exist' % dname)
+            handle_exception(Exception(e_msg), request)
+
     def get_queryset(self, *args, **kwargs):
         if ('dname' in kwargs):
             self.paginate_by = 0
@@ -46,12 +53,7 @@ class DiskView(GenericView):
         return Disk.objects.all()
 
     @transaction.commit_on_success
-    def post(self, request, command):
-        if (command != 'scan'):
-            e_msg = ('Unknown command: %s. Only valid command is: scan' %
-                     command)
-            handle_exception(Exception(e_msg), request)
-
+    def _scan(self):
         disks = scan_disks(settings.MIN_DISK_SIZE)
         for k,v in disks.items():
             if (Disk.objects.filter(name=v['name']).exists()):
@@ -70,6 +72,30 @@ class DiskView(GenericView):
         disks = Disk.objects.all()
         ds = DiskInfoSerializer(disks)
         return Response(ds.data)
+
+    @transaction.commit_on_success
+    def _wipe(self, dname, request):
+        disk = self._validate_disk(dname, request)
+        try:
+            wipe_disk(disk.name)
+        except Exception, e:
+            logger.exception(e)
+            e_msg = ('Failed to wipe the disk due to a system error.')
+            handle_exception(Exception(e_msg))
+
+        disk.parted = False
+        disk.save()
+        return Response(DiskInfoSerializer(disk).data)
+
+    def post(self, request, command, dname=None):
+        if (command == 'scan'):
+            return self._scan()
+        if (command == 'wipe'):
+            return self._wipe(dname, request)
+        e_msg = ('Unknown command: %s. Only valid command is: scan' % command)
+        handle_exception(Exception(e_msg), request)
+
+
 
     @transaction.commit_on_success
     def delete(self, request, dname):
