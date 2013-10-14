@@ -22,10 +22,12 @@ import time
 import json
 import settings
 from storageadmin.exceptions import RockStorAPIException
+from functools import wraps
 
 auth_params = {'apikey': 'adminapikey'}
 
 def api_error(console_func):
+    @wraps(console_func)
     def arg_wrapper(a1, a2):
         try:
             console_func(a1, a2)
