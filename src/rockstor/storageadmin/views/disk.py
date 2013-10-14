@@ -65,3 +65,23 @@ class DiskView(GenericView):
         disks = Disk.objects.all()
         ds = DiskInfoSerializer(disks)
         return Response(ds.data)
+
+    @transaction.commit_on_success
+    def delete(self, request, dname):
+        try:
+            disk = Disk.objects.get(name=dname)
+        except:
+            e_msg = ('Disk: %s does not exist' % dname)
+            handle_exception(Exception(e_msg), request)
+
+        if (disk.offline is not True):
+            e_msg = ('Disk: %s is not offline. Cannot delete' % dname)
+            handle_exception(Exception(e_msg), request)
+
+        try:
+            disk.delete()
+            return Response()
+        except Exception, e:
+            e_msg = ('Could not remove disk(%s) due to system error' % dname)
+            logger.exception(e)
+            handle_exception(Exception(e_msg), request)
