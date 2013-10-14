@@ -26,7 +26,9 @@
 
 DisksView = Backbone.View.extend({
   events: {
-    "click #setup": "setupDisks"
+    "click #setup": "setupDisks",
+    'click .wipe': 'wipeDisk',
+    'click .delete': 'deleteDisk'
   },
 
   initialize: function() {
@@ -51,6 +53,10 @@ DisksView = Backbone.View.extend({
       collection: this.collection
     }));
     this.$("#disks-table").tablesorter();
+    this.$("[rel=tooltip]").tooltip({ 
+      placement: "bottom",
+      container: '#disks-table' 
+    });
   },
 
   setupDisks: function() {
@@ -63,6 +69,52 @@ DisksView = Backbone.View.extend({
       _this.collection.page = 1;
       _this.collection.fetch();
     });
+  },
+
+  wipeDisk: function(event) {
+    var _this = this;
+    if (event) event.preventDefault();
+    var button = $(event.currentTarget);
+    if (buttonDisabled(button)) return false;
+    disableButton(button);
+    var diskName = button.data('disk-name');
+    if (confirm('Wipe disk ' + diskName + ' ... Are you sure?')) {
+      $.ajax({
+        url: '/api/disks/' + diskName + '/wipe',
+        type: 'POST',
+        success: function(data, status, xhr) {
+          _this.render();
+        },
+        error: function(xhr, status, error) {
+          enableButton(button);
+          var msg = parseXhrError(xhr)
+          _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
+        }
+      });
+    }
+  },
+
+  deleteDisk: function(event) {
+    var _this = this;
+    if (event) event.preventDefault();
+    var button = $(event.currentTarget);
+    if (buttonDisabled(button)) return false;
+    disableButton(button);
+    var diskName = button.data('disk-name');
+    if (confirm('Delete disk ' + diskName + ' ... Are you sure?')) {
+      $.ajax({
+        url: '/api/disks/' + diskName,
+        type: 'DELETE',
+        success: function(data, status, xhr) {
+          _this.render();
+        },
+        error: function(xhr, status, error) {
+          enableButton(button);
+          var msg = parseXhrError(xhr)
+          _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
+        }
+      });
+    }
   },
 
 });

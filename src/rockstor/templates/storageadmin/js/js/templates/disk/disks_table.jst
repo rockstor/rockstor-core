@@ -10,7 +10,13 @@
     <tbody>
       <% collection.each(function(disk, index) { %>
         <tr>
-          <td><i class="icon-hdd"></i> <%= disk.get('name') %>&nbsp<% if (disk.get('offline')) { %><i class="icon-trash"></i> <% } else if (disk.get('parted')) { %><i class="icon-cog"></i> <% } %></td>
+          <td><i class="icon-hdd"></i> <%= disk.get('name') %>&nbsp;
+            <% if (disk.get('offline')) { %>
+              <a href="#" class="delete" data-disk-name="<%= disk.get('name') %>" title="Disk <%= disk.get('name') %> is ... Click to delete the disk" rel="tooltip"><i class="icon-trash"></i></a>
+            <% } else if (disk.get('parted')) { %>
+              <a href="#" class="wipe" data-disk-name="<%= disk.get('name') %>" title="Disk <%= disk.get('name') %> has partitions. Click to wipe the disk" rel="tooltip"><i class="icon-cog"></i></a>
+            <% } %>
+          </td>
           <td><%= humanize.filesize(disk.get('size')*1024) %></td>
           <td>
             <% if (!_.isNull(disk.get("pool_name"))) { %>
