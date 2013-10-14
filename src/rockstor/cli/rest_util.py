@@ -19,6 +19,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import requests
 import time
+import json
+import settings
+from storageadmin.exceptions import RockStorAPIException
 
 auth_params = {'apikey': 'adminapikey'}
 
@@ -31,13 +34,16 @@ def api_call(url, data=None, calltype='get', headers=None, save_error=True):
         r = call(url, verify=False, params=auth_params, data=data)
 
     if (r.status_code != 200):
-        if (save_error is True):
+        if (settings.DEBUG is True and save_error is True):
             cur_time = str(int(time.time()))
             err_file = '/tmp/err-%s.html' % cur_time
             with open(err_file, 'w') as efo:
                 for line in r.text.split('\n'):
                     efo.write('%s\n' % line)
             print('Error detail is saved at %s' % err_file)
+        error_d = json.loads(r.text)
+        if ('detail' in error_d):
+            raise RockStorAPIException(detail=error_d['detail'])
         r.raise_for_status()
 
     try:
@@ -96,12 +102,10 @@ def print_disk_info(disk_info):
             disk_info = disk_info['results']
         print("List of disks in the system")
         print("--------------------------------------------")
-        print("Name\tSize\tFree\tPool")
+        print("Name\tSize\tPool")
         for d in disk_info:
             d['size'] = sizeof_fmt(d['size'])
-            d['free'] = sizeof_fmt(d['free'])
-            print('%s\t%s\t%s\t%s' %
-		  (d['name'], d['size'], d['free'], d['pool']))
+            print('%s\t%s\t%s' % (d['name'], d['size'], d['pool']))
     except Exception, e:
         print('Error rendering disk info')
 
