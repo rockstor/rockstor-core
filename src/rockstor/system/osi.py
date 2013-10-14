@@ -39,6 +39,7 @@ NTPDATE = '/usr/sbin/ntpdate'
 LVS = '/sbin/lvs'
 VGS = '/sbin/vgs'
 DD = '/bin/dd'
+SFDISK = '/sbin/sfdisk'
 
 
 class Disk():
@@ -71,8 +72,8 @@ def wipe_disk(disk):
     removes partition table on a disk by dd'ing first 512 bytes
     """
     disk = ('/dev/%s' % disk)
-    return run_command([DD, 'if=/dev/zero', 'of=%s' % disk, 'bs=512',
-                        'count=1'])
+    run_command([DD, 'if=/dev/zero', 'of=%s' % disk, 'bs=512', 'count=1'])
+    return run_command([SFDISK, '-R', disk])
 
 def root_disks():
     """
