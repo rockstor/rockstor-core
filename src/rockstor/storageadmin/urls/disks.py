@@ -19,10 +19,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from django.conf.urls.defaults import patterns, url
 from storageadmin.views import DiskView
 
+disk_regex = '[A-Za-z]+[A-Za-z0-9]*'
 
 urlpatterns = patterns(
     '',
-    url(r'^$', DiskView.as_view(), name='disk-view'),
-    url(r'(?P<dname>[A-Za-z]+[A-Za-z0-9]*)$', DiskView.as_view(),
-        name='user-view'),
+    url(r'^$', DiskView.as_view()),
+    url(r'^/(?P<command>scan)$', DiskView.as_view()),
+    url(r'^/(?P<dname>%s)$' % disk_regex, DiskView.as_view()),
+    url(r'^/(?P<dname>%s)/(?P<command>wipe)$' % disk_regex,
+        DiskView.as_view()),
 )

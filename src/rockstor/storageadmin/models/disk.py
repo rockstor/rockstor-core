@@ -26,8 +26,8 @@ class Disk(models.Model):
     name = models.CharField(max_length=10, unique=True)
     """total size in GB"""
     size = models.IntegerField()
-    """free space in GB"""
-    free = models.IntegerField()
+    """true if disk went offline"""
+    offline = models.BooleanField(default=False)
     """whether the disk is partitioned at the moment. relevent for root disks
     and such that may not be part of any pool but need to be in the model"""
     parted = models.BooleanField()
