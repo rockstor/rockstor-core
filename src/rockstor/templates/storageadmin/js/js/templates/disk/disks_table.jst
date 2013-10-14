@@ -12,9 +12,9 @@
         <tr>
           <td><i class="icon-hdd"></i> <%= disk.get('name') %>&nbsp;
             <% if (disk.get('offline')) { %>
-              <a href="#" class="delete" data-disk-name="<%= disk.get('name') %>" title="Disk <%= disk.get('name') %> is ... Click to delete the disk" rel="tooltip"><i class="icon-trash"></i></a>
+              <a href="#" class="delete" data-disk-name="<%= disk.get('name') %>" title="Disk is unusable because it is offline. Click to delete it from the system" rel="tooltip"><i class="icon-trash"></i></a>
             <% } else if (disk.get('parted')) { %>
-              <a href="#" class="wipe" data-disk-name="<%= disk.get('name') %>" title="Disk <%= disk.get('name') %> has partitions. Click to wipe the disk" rel="tooltip"><i class="icon-cog"></i></a>
+              <a href="#" class="wipe" data-disk-name="<%= disk.get('name') %>" title="Disk is unusable because it has partitions. Click to wipe the disk" rel="tooltip"><i class="icon-cog"></i></a>
             <% } %>
           </td>
           <td><%= humanize.filesize(disk.get('size')*1024) %></td>
