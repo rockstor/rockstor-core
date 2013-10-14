@@ -55,6 +55,11 @@ class DiskView(GenericView):
         disks = scan_disks(settings.MIN_DISK_SIZE)
         for k,v in disks.items():
             if (Disk.objects.filter(name=v['name']).exists()):
+                d = Disk.objects.get(name=v['name'])
+                if (d.size != v['size'] or d.parted != v['parted']):
+                    d.size = v['size']
+                    d.parted = v['parted']
+                    d.save()
                 continue
             new_disk = Disk(name=v['name'], size=v['size'], parted=v['parted'])
             new_disk.save()
