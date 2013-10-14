@@ -38,6 +38,7 @@ IFCONFIG = '/sbin/ifconfig'
 NTPDATE = '/usr/sbin/ntpdate'
 LVS = '/sbin/lvs'
 VGS = '/sbin/vgs'
+DD = '/bin/dd'
 
 
 class Disk():
@@ -64,6 +65,14 @@ def run_command(cmd, shell=False, stdout=subprocess.PIPE,
     if (throw and rc != 0):
         raise CommandException(out, err, rc)
     return (out, err, rc)
+
+def wipe_disk(disk):
+    """
+    removes partition table on a disk by dd'ing first 512 bytes
+    """
+    disk = ('/dev/%s' % disk)
+    return run_command([DD, 'if=/dev/zero', 'of=%s' % disk, 'bs=512',
+                        'count=1'])
 
 def root_disks():
     """
