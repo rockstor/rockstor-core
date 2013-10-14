@@ -25,6 +25,18 @@ from storageadmin.exceptions import RockStorAPIException
 
 auth_params = {'apikey': 'adminapikey'}
 
+def api_error(console_func):
+    def arg_wrapper(a1, a2):
+        try:
+            console_func(a1, a2)
+        except RockStorAPIException, e:
+            print ('Operation failed due to the following error returned '
+                   'from the server:')
+            print ('-----------------------------------------')
+            print e.detail
+            print ('-----------------------------------------')
+    return arg_wrapper
+
 def api_call(url, data=None, calltype='get', headers=None, save_error=True):
     call = getattr(requests, calltype)
     if (headers is not None):
