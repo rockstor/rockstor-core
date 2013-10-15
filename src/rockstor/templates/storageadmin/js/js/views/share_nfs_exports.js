@@ -80,7 +80,7 @@ ShareNFSExports  = RockstoreModuleView.extend({
       modify_choices: this.modify_choices,
       sync_choices: this.sync_choices,
     }));
-    this.$("#add-nfs-export-form").validate({
+    this.validator = this.$("#add-nfs-export-form").validate({
       onfocusout: false,
       onkeyup: false,
       rules: {
@@ -103,10 +103,14 @@ ShareNFSExports  = RockstoreModuleView.extend({
             enableButton(button);
             _this.render();
           },
-          error: function(request, status, error) {
+          error: function(xhr, status, error) {
             enableButton(button);
-            var msg = parseXhrError(error)
-            _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
+            var msg = parseXhrError(xhr)
+            if (_.isObject(msg)) {
+              _this.validator.showErrors(msg);
+            } else {
+              _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
+            }
           },
         });
         return false;
