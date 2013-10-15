@@ -40,6 +40,8 @@ LVS = '/sbin/lvs'
 VGS = '/sbin/vgs'
 DD = '/bin/dd'
 SFDISK = '/sbin/sfdisk'
+IFUP = '/sbin/ifup'
+IFDOWN = '/sbin/ifdown'
 
 
 class Disk():
@@ -215,6 +217,13 @@ def restart_network():
     cmd = [SERVICE, 'network', 'restart']
     return run_command(cmd)
 
+def restart_network_interface(iname):
+    """
+    ifdown followed by ifup of a ethernet interface
+    """
+    run_command([IFDOWN, iname])
+    return run_command([IFUP, iname])
+
 def network_devices():
     """
     return all network devices on the system
@@ -242,15 +251,21 @@ def get_ip_addr(interface):
         return line2.split()[1].split(':')[1]
     return '0.0.0.0'
 
-def config_network_device(name, mac, ipaddr, netmask):
+def config_network_device(name, mac, boot_proto='dhcp', ipaddr=None,
+                          netmask=None, on_boot='yes', gateway=None):
     config_script = ('/etc/sysconfig/network-scripts/ifcfg-%s' % name)
     with open(config_script, 'w') as cfo:
         cfo.write('DEVICE="%s"\n' % name)
+        cfo.write('TYPE="Ethernet"\n')
+        cfo.write('NM_CONTROLLED="no"\n')
         cfo.write('HWADDR="%s"\n' % mac)
-        cfo.write('BOOTPROTO="static"\n')
-        cfo.write('ONBOOT="yes"\n')
-        cfo.write('IPADDR="%s"\n' % ipaddr)
-        cfo.write('NETMASK="%s"\n' % netmask)
+        cfo.write('BOOTPROTO="%s"\n' % boot_proto)
+        cfo.write('ONBOOT="%s"\n' % on_boot)
+        if (boot_proto == 'static'):
+            cfo.write('IPADDR="%s"\n' % ipaddr)
+            cfo.write('NETMASK="%s"\n' % netmask)
+            if (gateway is not None):
+                cfo.write('GATEWAY="%s"\n' % gateway)
 
 def char_strip(line, char='"'):
     if (line[0] == char and line[-1] == char):
