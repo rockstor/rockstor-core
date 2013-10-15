@@ -65,6 +65,11 @@ EditNetworkView = RockstoreLayoutView.extend({
         disableButton(button);
         var network = new NetworkInterface({name: _this.name});
         var data = _this.$('#edit-network-form').getJSON();
+        if (_this.$("#itype").prop("checked")) {
+          data.itype = 'management';
+        } else {
+          data.itype = '';
+        }
         data.boot_protocol = data.boot_proto;
         network.save(data, {
           success: function(model, response, options) {

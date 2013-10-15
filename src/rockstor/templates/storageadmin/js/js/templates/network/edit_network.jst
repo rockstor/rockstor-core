@@ -66,6 +66,18 @@
         </div>
         <div class="control-group">
           <div class="controls">
+            <label class="checkbox">
+              <% if (network.get('itype') == 'management') { %>
+                <input class="checkbox inline" type="checkbox" id="itype" name="itype" placeholder="Management Interface" checked="checked">
+              <% } else { %>
+                <input class="checkbox inline" type="checkbox" id="itype" name="itype" placeholder="Management Interface" >
+              <% } %>
+              Allow RockStor administration through this interface
+            </label>
+          </div>
+        </div>
+        <div class="control-group">
+          <div class="controls">
             <button type="Submit" id="submit" class="btn btn-primary">Submit</button>
             <button id="cancel" class="btn">Cancel</button>
           </div>
