@@ -52,13 +52,13 @@ def main():
 
     #bootstrap the machine. success of quit
     url = 'https://localhost/api/commands/bootstrap'
-    time.sleep(5)
+    time.sleep(10)
     try:
         api_call(url, calltype='post')
     except Exception, e:
-        logger.error('Unable to bootstrap the machine. Aborting')
+        logger.error('Unable to bootstrap the machine. Moving on..')
         logger.exception(e)
-        return -1
+        pass
 
     live_procs = [ProcRetreiver(), ServiceMonitor(),
                   Stap(settings.TAP_SERVER),

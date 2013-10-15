@@ -84,7 +84,8 @@ class ShareNFSView(GenericView):
             share = validate_share(sname, request)
             eg = validate_export_group(export_id, request)
             options = parse_options(request)
-            dup_export_check(share, options['host_str'], request)
+            dup_export_check(share, options['host_str'], request,
+                             export_id=int(export_id))
             NFSExportGroup.objects.filter(id=export_id).update(**options)
             NFSExportGroup.objects.filter(id=export_id)[0].save()
             cur_exports = list(NFSExport.objects.all())
