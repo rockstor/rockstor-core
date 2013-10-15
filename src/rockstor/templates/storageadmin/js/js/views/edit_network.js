@@ -26,7 +26,8 @@
 
 EditNetworkView = RockstoreLayoutView.extend({
   events: {
-    "click #cancel": "cancel"
+    'click #cancel': 'cancel',
+    'change #boot_proto': 'changeBootProtocol'
   },
 
   initialize: function() {
@@ -61,11 +62,12 @@ EditNetworkView = RockstoreLayoutView.extend({
       submitHandler: function() {
         var button = _this.$('#submit');
         if (buttonDisabled(button)) return false;
-        var network = new Network({name: _this.name});
+        disableButton(button);
+        var network = new NetworkInterface({name: _this.name});
         var data = _this.$('#edit-network-form').getJSON();
+        data.boot_protocol = data.boot_proto;
         network.save(data, {
           success: function(model, response, options) {
-            console.log("network saved successfully");
             app_router.navigate("network", {trigger: true});
           },
           error: function(model, xhr, options) {
@@ -82,7 +84,18 @@ EditNetworkView = RockstoreLayoutView.extend({
       }
     });
   },
+  
+  changeBootProtocol: function(event) {
+    if (this.$('#boot_proto').val() == 'static') {
+      this.$('#ipaddr').removeAttr('disabled');
+      this.$('#netmask').removeAttr('disabled');
+    } else {
+      this.$('#ipaddr').attr('disabled', 'disabled');
+      this.$('#netmask').attr('disabled', 'disabled');
+    }
 
+  },
+  
   cancel: function() {
     app_router.navigate("network", {trigger: true});
   }
