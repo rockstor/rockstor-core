@@ -85,30 +85,34 @@ class NetworkView(GenericView):
                 handle_exception(Exception(e_msg), request)
             ni = NetworkInterface.objects.get(name=iname)
 
+            itype = request.DATA['itype']
+            if (itype != 'management'):
+                itype = 'io'
             boot_proto = request.DATA['boot_protocol']
             ni.onboot = 'yes'
             if (boot_proto == 'dhcp'):
-                ni.boot_proto = 'dhcp'
-                ni.save()
                 config_network_device(ni.name, ni.mac)
             elif (boot_proto == 'static'):
-                ni.ipaddr = request.DATA['ipaddr']
-                for i in NetworkInterface.objects.filter(ipaddr=ni.ipaddr):
+                ipaddr = request.DATA['ipaddr']
+                for i in NetworkInterface.objects.filter(ipaddr=ipaddr):
                     if (i.id != ni.id):
                         e_msg = ('IP: %s already in use by another '
                                  'interface: %s' % (ni.ipaddr, i.name))
                         handle_exception(Exception(e_msg), request)
-
-                ni.boot_proto = boot_proto
-                ni.netmask = request.DATA['netmask']
-                ni.save()
+                netmask = request.DATA['netmask']
                 config_network_device(ni.name, ni.mac, boot_proto='static',
-                                      ipaddr=ni.ipaddr, netmask=ni.netmask)
+                                      ipaddr=ipaddr, netmask=netmask)
             else:
                 e_msg = ('Boot protocol must be dhcp or static. not: %s' %
                          boot_proto)
                 handle_exception(Exception(e_msg), request)
             self._restart_wrapper(ni, request)
+            dconfig = get_net_config(ni.name)
+            ni.boot_proto = dconfig['bootproto']
+            ni.netmask = dconfig['netmask']
+            ni.ipaddr = dconfig['ipaddr']
+            ni.itype = itype
+            ni.save()
             return Response(NetworkInterfaceSerializer(ni).data)
         except RockStorAPIException:
             raise
