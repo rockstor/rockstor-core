@@ -41,8 +41,6 @@ ShareNFSExports  = RockstoreModuleView.extend({
     this.share = this.options.share;
     this.nfsExports = new NFSExportCollection();
     this.nfsExports.setUrl(this.share.get('shareName'));
-    this.add_row_template = window.JST.share_nfs_exports_table_row_template;
-    this.empty_template = window.JST.share_nfs_exports_table_empty_body_template;
     this.modify_choices = this.options.modify_choices;
     this.sync_choices = this.options.sync_choices;
     this.appliance_ip = this.options.appliance_ip;
@@ -203,20 +201,5 @@ ShareNFSExports  = RockstoreModuleView.extend({
     this.$('#add-export').removeClass('disabled');
   },
 
-  //addRow: function(event) {
-    //event.preventDefault();
-    //var button = $(event.currentTarget);
-    //if (!button.hasClass('disabled')) {
-      //if (this.nfs_exports.length == 0) {
-        //// remove 'no exports' message from body
-        //this.$('#nfs-exports-table-body').empty();
-      //}
-      //this.$('#nfs-exports-table-body').append(this.add_row_template({
-        //modify_choices: this.modify_choices,
-        //sync_choices: this.sync_choices
-      //}));
-    //}
-    //this.disableAddButton();
-  //},
 });
 
