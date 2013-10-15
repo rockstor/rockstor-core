@@ -28,6 +28,7 @@ class NetworkInterface(models.Model):
     network = models.CharField(max_length=100, null=True)
     netmask = models.CharField(max_length=100, null=True)
     ipaddr = models.CharField(max_length=100, null=True)
+    itype = models.CharField(max_length=100, default='management')
 
     class Meta:
         app_label = 'storageadmin'
