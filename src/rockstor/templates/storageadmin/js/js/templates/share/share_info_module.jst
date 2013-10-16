@@ -21,7 +21,7 @@
 
 <!-- Content -->
 <div class="module-content">
-  Created on <%= new Date(model.get("toc")).toString() %> <br>
+  Created on <%= moment(model.get("toc")).format(RS_DATE_FORMAT) %> <br>
   Pool: <a href="#pools/<%= model.get('pool').name %>"><%= model.get('pool').name %></a> <br>
   <br>
 
