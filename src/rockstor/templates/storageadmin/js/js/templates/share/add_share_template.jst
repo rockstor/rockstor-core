@@ -37,7 +37,7 @@
         <div class="control-group">
           <label class="control-label" for="pool_name">Pool<span class="required"> *</span></label>
           <div class="controls">
-            <select id="pool_name" name="pool_name" title="Select the pool name from the drop-down">
+            <select id="pool_name" name="pool_name" title="Select pool the share should belong to">
               <% if(poolName == ''){%>
                 <% pools.each(function(pool, index) { %>
                   <% if (index > 0) { %>
@@ -67,8 +67,8 @@
         <div class="control-group">
           <label class="control-label" for="share_size">Size<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" name="share_size" id="share_size" title="Enter the share size">
-            <select id="size_format" name="size_format" title="Select the size scale from the drop-down">
+            <input type="text" name="share_size" id="share_size" title="Enter share size in KB, MB, GB or TB">
+            <select id="size_format" name="size_format">
               <option>KB</option>
               <option>MB</option>
               <option>GB</option>
@@ -79,7 +79,7 @@
         <div class="control-group">
           <div class="controls">
             <a id="js-cancel" class="btn">Cancel</a>
-            <input type="Submit" id="create_share" class="btn btn-primary" value="Submit" title="Creates the share on submission"></input>
+            <input type="Submit" id="create_share" class="btn btn-primary" value="Submit" ></input>
           </div>
         </div>
       </form>
