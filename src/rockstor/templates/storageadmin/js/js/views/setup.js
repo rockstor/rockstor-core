@@ -35,12 +35,14 @@ SetupView = RockstoreLayoutView.extend({
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.setup_setup;
-    this.pages = [null, SetupDisksView, SetupNetworkView];
-    this.sidebars = [null, "disks", "network"];
+    this.pages = [null, SetupDisksView];
+    this.sidebars = [null, "disks"];
     this.current_page = 1;
     this.current_view = null;
     this.appliances = new ApplianceCollection();
     this.dependencies.push(this.appliances);
+    this.networkInterfaces = new NetworkInterfaceCollection();
+    this.networkInterfaces.on("reset", this.saveAppliance, this);
 
   },
 
@@ -90,11 +92,42 @@ SetupView = RockstoreLayoutView.extend({
   },
 
   lastPage: function() {
-    console.log('in lastPage - current_page = ' + this.current_page);
     return (this.current_page == (this.pages.length - 1));
   },
-
+  
   save: function() {
+    this.scanNetwork();
+  },
+
+  scanNetwork: function() {
+    var _this = this;
+    $.ajax({
+      url: "/api/network", 
+      type: "POST",
+      dataType: "json",
+      global: false, // dont show global loading indicator
+      success: function(data, status, xhr) {
+        _this.networkInterfaces.fetch();
+      },
+      error: function(xhr, status, error) {
+        logger.debug(error);
+      }
+    });
+  },
+  
+  setIp: function() {
+    var mgmtIface = this.networkInterfaces.find(function(iface) {
+      return iface.get('itype') == 'management';
+    });
+    if (!_.isUndefined(mgmtIface)) {
+      RockStorGlobals.ip = mgmtIface.get("ipaddr");
+    } else {
+      RockStorGlobals.ip = this.networkInterfaces.at(0).get("ipaddr");
+    }
+  },
+
+  saveAppliance: function() {
+    this.setIp();
     // create current appliance if not created already
     if (this.appliances.length > 0) {
       var current_appliance = this.appliances.find(function(appliance) {

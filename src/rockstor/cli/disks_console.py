@@ -29,6 +29,7 @@ class DisksConsole(BaseConsole):
         self.prompt = prompt + ' Disks>'
         self.baseurl = ('%sdisks' % BaseConsole.url)
 
+    @api_error
     def do_list(self, args):
         """
         List brief information about disks in the system.
