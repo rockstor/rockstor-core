@@ -18,14 +18,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.db import transaction
 from rest_framework.response import Response
-from storageadmin.models import NetworkInterface
+from storageadmin.models import (NetworkInterface, Appliance)
 from storageadmin.util import handle_exception
 from storageadmin.serializers import NetworkInterfaceSerializer
 from system.osi import (get_mac_addr, config_network_device, restart_network,
                         network_devices, get_net_config,
-                        restart_network_interface)
+                        restart_network_interface, get_default_interface)
 from storageadmin.exceptions import RockStorAPIException
 from generic_view import GenericView
+import socket
 
 import logging
 logger = logging.getLogger(__name__)
@@ -45,6 +46,7 @@ class NetworkView(GenericView):
 
     @transaction.commit_on_success
     def post(self, request):
+        default_if = get_default_interface()
         for d in network_devices():
             dconfig = get_net_config(d)
             ni = None
@@ -63,6 +65,8 @@ class NetworkView(GenericView):
                                       network=dconfig['network'],
                                       netmask=dconfig['netmask'],
                                       ipaddr=dconfig['ipaddr'])
+            if (default_if == ni.name):
+                ni.itype = 'management'
             ni.save()
         devices = NetworkInterface.objects.all()
         serializer = NetworkInterfaceSerializer(devices)
@@ -113,6 +117,10 @@ class NetworkView(GenericView):
             ni.ipaddr = dconfig['ipaddr']
             ni.itype = itype
             ni.save()
+            if (itype == 'management'):
+                a = Appliance.objects.get(current_appliance=True)
+                a.ip = ni.ipaddr
+                a.save()
             return Response(NetworkInterfaceSerializer(ni).data)
         except RockStorAPIException:
             raise
