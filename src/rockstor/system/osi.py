@@ -42,7 +42,7 @@ DD = '/bin/dd'
 SFDISK = '/sbin/sfdisk'
 IFUP = '/sbin/ifup'
 IFDOWN = '/sbin/ifdown'
-
+ROUTE = '/sbin/route'
 
 class Disk():
 
@@ -240,6 +240,17 @@ def get_mac_addr(interface):
     ifile = ('/sys/class/net/%s/address' % interface)
     with open(ifile) as ifo:
         return ifo.readline().strip()
+
+def get_default_interface():
+    """
+    returns the interface configured with default gateway
+    """
+    out, err, rc = run_command([ROUTE])
+    for line in out:
+        fields = line.split()
+        if (fields[0] == 'default'):
+            return fields[-1]
+    return None
 
 def get_ip_addr(interface):
     """
