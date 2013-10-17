@@ -18,22 +18,59 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 from base_console import BaseConsole
-from rest_util import api_call
+from rest_util import (api_error, api_call)
 
 class NetworkConsole(BaseConsole):
 
     def __init__(self, prompt):
         BaseConsole.__init__(self)
         self.prompt = prompt + ' Network>'
+        self.baseurl = ('%s/network' % BaseConsole.url)
 
-    def do_list(self, args):
-        pass
-
+    @api_error
     def do_scan(self, args):
-        url = ('%s/network' % BaseConsole.url)
-        network_info = api_call(url, calltype='post')
+        """
+        scan the system for any new network interfaces
+
+        scan
+        """
+        network_info = api_call(self.baseurl, calltype='post')
         print network_info
 
+    @api_error
+    def do_list(self, args):
+        """
+        list all network interfaces known in the system
+        """
+        return self.do_scan(args)
+
+    @api_error
     def do_config(self, args):
-        pass
+        """
+        configure a network interface. dhcp and static ipv4 configurations are
+        supported. Note that there is a risk of losing connectivity to the
+        system. So this is best done via console connection.
+
+        to configure using dhcp:
+        config <interface> -d
+
+        to configure static ip:
+        config <interface> -s <ip_addr> <netmask>
+        """
+        fields = args.split()
+        if (len(fields) < 2):
+            return self.do_help(args)
+        url =('%s/%s' % (self.baseurl, fields[0]))
+        if (fields[1] == '-d'):
+            print api_call(url, data={'boot_protocol': 'dhcp',},
+                           calltype='put')
+        elif (fields[1] == '-s'):
+            if (len(fields) < 4):
+                return self.do_help(args[:2])
+            input_data = {'boot_protocol': 'static',
+                          'ipaddr': fields[2],
+                          'netmask': fields[3],}
+            print api_call(url, data=input_data, calltype='put')
+        else:
+            return self.do_help(args)
 
