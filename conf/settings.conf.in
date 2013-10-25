@@ -233,6 +233,7 @@ PIPELINE_JS = {
             'js/views/networks.js',
             'js/views/edit_network.js',
             'js/views/scheduled_tasks.js',
+            'js/views/add_scheduled_task.js',
             ),
         'output_filename': 'js/application.js'
         },
