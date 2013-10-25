@@ -264,3 +264,12 @@ var ReplicaTrailCollection = RockStorPaginatedCollection.extend({
   }
 });
 
+var ScheduledTask = Backbone.Model.extend({
+  urlRoot: "/api/sm/tasks/"                                   
+});
+
+var ScheduledTaskCollection = RockStorPaginatedCollection.extend({
+  model: ScheduledTask,
+  baseUrl: "/api/sm/tasks/"
+});
+
