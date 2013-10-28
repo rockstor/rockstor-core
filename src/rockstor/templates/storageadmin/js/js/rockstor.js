@@ -484,7 +484,7 @@ RockStorGlobals = {
 
 }
 
-var RS_DATE_FORMAT = 'h:mm:ss a ddd MMM DD YYYY';
+var RS_DATE_FORMAT = 'MMMM Do YYYY, h:mm:ss a';
 
 // Constants
 probeStates = {
