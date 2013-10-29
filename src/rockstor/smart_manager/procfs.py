@@ -213,11 +213,12 @@ class ProcRetreiver(Process):
         now = time.mktime(time.gmtime())
         if (now - last_ts < 30):
             return last_ts
+        ts = datetime.utcnow().replace(tzinfo=utc)
         for p in Pool.objects.all():
             arb_disk = Disk.objects.filter(pool=p)[0].name
             try:
                 usage = pool_usage(arb_disk)
-                pu = PoolUsage(pool=p.name, usage=usage[1])
+                pu = PoolUsage(pool=p.name, usage=usage[1], ts=ts)
                 self._sink_put(self.sink_socket, pu)
             except Exception, e:
                 logger.debug('command exception while getting pool usage '
@@ -231,7 +232,7 @@ class ProcRetreiver(Process):
                     share_map[share.qgroup] = share.name
                 usaged = shares_usage(p.name, pool_device, share_map)
                 for s in usaged.keys():
-                    su = ShareUsage(name=s, usage=usaged[s])
+                    su = ShareUsage(name=s, usage=usaged[s], ts=ts)
                     self._sink_put(self.sink_socket, su)
             except Exception, e:
                 logger.debug('command exception while getting shares usage '

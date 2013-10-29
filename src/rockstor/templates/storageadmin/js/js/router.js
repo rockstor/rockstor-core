@@ -61,6 +61,8 @@ var AppRouter = Backbone.Router.extend({
     "nfs-exports": "showNFSExports",
     "add-nfs-export": "addNFSExport",
     "nfs-exports/edit/:nfsExportGroupId": "editNFSExport",
+    "network": "showNetworks",
+    "network/:name/edit": "editNetwork",
     "*path": "showHome"
   },
 
@@ -359,6 +361,24 @@ var AppRouter = Backbone.Router.extend({
     this.currentLayout = new EditNFSExportView({
       nfsExportGroupId: nfsExportGroupId 
     });
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+  
+  showNetworks: function() {
+    RockStorSocket.removeAllListeners();
+    this.renderSidebar("system", "network");
+    this.cleanup();
+    this.currentLayout = new NetworksView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  editNetwork: function(name) {
+    RockStorSocket.removeAllListeners();
+    this.renderSidebar("system", "network");
+    this.cleanup();
+    this.currentLayout = new EditNetworkView({name: name});
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },
