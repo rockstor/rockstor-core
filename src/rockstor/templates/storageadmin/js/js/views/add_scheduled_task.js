@@ -127,6 +127,10 @@ AddScheduledTaskView = RockstoreLayoutView.extend({
         pools: this.pools,
       }));
     }
+    // Reattach tooltips
+    this.$('#scheduled-task-create-form :input').tooltip({
+      placement: 'right'
+    });
   },
 
   cancel: function(event) {
