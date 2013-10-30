@@ -62,8 +62,6 @@ AddSupportCaseView = Backbone.View.extend({
             return true;
           }, raid_err_msg);
         
-        $('#add-support-case-form :input').tooltip();
-        
         
         $('#add-support-case-form').validate({
             onfocusout: false,
