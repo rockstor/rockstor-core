@@ -30,13 +30,13 @@
         <div class="control-group">
           <label class="control-label" for="pool_name">Name<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" name="pool_name" id="pool_name" title="Enter the pool name">
+            <input type="text" name="pool_name" id="pool_name" title="A descriptive name for the pool">
           </div>
         </div>
         <div class="control-group">
           <label class="control-label" for="raid_level">Raid configuration<span class="required"> *</span></label>
           <div class="controls">
-            <select id="raid_level" name="raid_level" title="Select raid level">
+            <select id="raid_level" name="raid_level" title="Desired RAID level for the pool">
               <option value="raid0">Raid0</option>
               <option value="raid1">Raid1</option>
               <option value="raid10">Raid10</option>
@@ -65,7 +65,7 @@
                       <td><%= humanize.filesize(disk.get('size')*1024) %></td>
                       <td><%= disk.get('parted') %></td>
                       <td>
-                        <input type="checkbox" class="disk" name="<%= disk.get('name') %>" id="<%= disk.get('name') %>" value="<%= disk.get('name') %>" title="select the disk">
+                        <input type="checkbox" class="disk" name="<%= disk.get('name') %>" id="<%= disk.get('name') %>" value="<%= disk.get('name') %>" title="select disk">
                       </td>
                     </tr>
                   <% } %>

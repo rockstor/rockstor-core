@@ -67,6 +67,7 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
       snapshots: this.collection,
       share: this.share
     }));
+    this.$('#add-snapshot-form :input').tooltip();
     this.validator = this.$('#add-snapshot-form').validate({
       onfocusout: false,
       onkeyup: false,
