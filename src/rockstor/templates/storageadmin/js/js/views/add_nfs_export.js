@@ -68,6 +68,7 @@ AddNFSExportView = RockstoreLayoutView.extend({
         shares: 'required',  
         host_str: 'required'
       },
+      
       submitHandler: function() {
         var button = $('#create-nfs-export');
         if (buttonDisabled(button)) return false;

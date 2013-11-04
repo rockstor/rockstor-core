@@ -42,7 +42,9 @@ NetworksView = Backbone.View.extend({
     });
     return this;
   },
-
+  
+  $('#edit-network-form :input').tooltip();
+  
   renderNetworks: function() {
     var _this = this;
     $(this.el).empty();

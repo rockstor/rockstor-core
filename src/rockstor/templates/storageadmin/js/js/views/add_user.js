@@ -39,6 +39,8 @@ AddUserView = RockstoreLayoutView.extend({
   render: function() {
     var _this = this;
     $(this.el).html(this.template());
+    
+    
 
     this.validator = this.$("#user-create-form").validate({
       onfocusout: false,
@@ -56,6 +58,9 @@ AddUserView = RockstoreLayoutView.extend({
           equalTo: "The passwords do not match"
         }
       },
+      
+      $('#user-create-form :input').tooltip();
+      
       submitHandler: function() {
         console.log("submitHandler");
         var username = _this.$("#username").val();
