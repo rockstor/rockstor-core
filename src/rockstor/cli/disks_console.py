@@ -18,7 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 from base_console import BaseConsole
-from rest_util import (api_call, print_disk_info)
+from rest_util import (api_error, api_call, print_disk_info)
+from storageadmin.exceptions import RockStorAPIException
 
 
 class DisksConsole(BaseConsole):
@@ -26,8 +27,9 @@ class DisksConsole(BaseConsole):
     def __init__(self, prompt):
         BaseConsole.__init__(self)
         self.prompt = prompt + ' Disks>'
-        self.baseurl = ('%sdisks/' % BaseConsole.url)
+        self.baseurl = ('%sdisks' % BaseConsole.url)
 
+    @api_error
     def do_list(self, args):
         """
         List brief information about disks in the system.
@@ -52,6 +54,7 @@ class DisksConsole(BaseConsole):
         disk_info = api_call(url)
         print_disk_info(disk_info)
 
+    @api_error
     def do_scan(self, args):
         """
         Scan the system for any new disks since the last scan.
@@ -60,6 +63,30 @@ class DisksConsole(BaseConsole):
         Scan the system for any new disks:
             scan
         """
-        disk_info = api_call(self.baseurl, data=None, calltype='post')
+        url = ('%s/scan' % self.baseurl)
+        disk_info = api_call(url, data=None, calltype='post')
         print_disk_info(disk_info)
+
+    @api_error
+    def do_delete(self, args):
+        """
+        Delete a offlined disk
+
+        delete disk_name
+        """
+        url = ('%s/%s' % (self.baseurl, args))
+        api_call(url, calltype='delete')
+        print_disk_info(api_call(self.baseurl))
+
+    @api_error
+    def do_wipe(self, args):
+        """
+        Wipe the partition table of a disk. This is required for
+        used/partitioned disks to be usable by rockstor.
+
+        wipe disk_name
+        """
+        url = ('%s/%s/wipe' % (self.baseurl, args))
+        api_call(url, calltype='post')
+        print_disk_info(api_call(self.baseurl))
 

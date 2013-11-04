@@ -1,0 +1,64 @@
+<script>
+/*
+ * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ * 
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ * 
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ */
+</script>
+
+
+<!-- Module Body -->
+<div class="row-fluid">
+  <div class="span8">
+    <div class="messages"></div>
+    <!-- Content -->
+    <table id="networks-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of network interfaces">
+      <thead>
+        <tr>
+          <th scope="col" abbr="Name">Name</th>
+          <th scope="col" abbr="Admin">IP Address</th>
+          <th scope="col" abbr="UID">Configuration</th>
+          <th scope="col" abbr="UID">Management</th>
+          <th scope="col" abbr="Actions">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% networks.each(function(network, index) { %>
+          <tr>
+            <td><i class="icon-signal"></i> <%= network.get("name") %></td>
+            <td><%= network.get("ipaddr") %></td>
+            <td><%= network.get("boot_proto") %></td>
+            <td>
+              <% if (network.get("itype") == 'management') { %>
+                <input type="checkbox" name="itype" data-network"<%= network.get('name') %>" checked="checked" disabled="disabled" ></input>
+              <% } else { %>
+                <input type="checkbox" name="itype" data-network="<%= network.get('name') %>" disabled="disabled" ></input>
+              <% } %>
+            </td>
+            <td>
+              <a href="#network/<%= network.get('name') %>/edit" class="edit-network" data-network="<%= network.get('name') %>"><i class="icon-pencil"></i></a>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div> <!-- span12 -->
+</div> <!-- row-fluid -->
+
+
+
+
+

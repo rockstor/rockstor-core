@@ -24,39 +24,33 @@
  * 
  */
 
-SetupDisksView = Backbone.View.extend({
-  tagName: 'div',
-  
-  events: {
-    'click #rescan': 'rescan',
-  },
+/* Services */
+
+NetworksView = Backbone.View.extend({
 
   initialize: function() {
-    this.template = window.JST.setup_disks;
-    this.disks_table_template = window.JST.setup_disks_table;
-    this.disks = new DiskCollection();
-    this.disks.on('reset', this.renderDisks, this);
+    this.template = window.JST.network_networks;
+    this.collection = new NetworkInterfaceCollection();
   },
 
   render: function() {
-    $(this.el).html(this.template());
-    this.rescan();
+    var _this = this;
+    this.collection.fetch({
+      success: function(collection, response, options) {
+        _this.renderNetworks();
+      }
+    });
     return this;
   },
 
-  renderDisks: function() {
-    this.$('#disks-table').html(this.disks_table_template({disks: this.disks}));
-  },
-
-  rescan: function() {
+  renderNetworks: function() {
     var _this = this;
-    $.ajax({
-      url: "/api/disks/scan",
-      type: "POST"
-    }).done(function() {
-      _this.disks.fetch();
-    });
+    $(this.el).empty();
+    $(this.el).append(this.template({
+      networks: this.collection
+    }));
   },
-
+  
 });
+
 

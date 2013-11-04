@@ -31,12 +31,12 @@ var Setup = Backbone.Model.extend({
 
 var Disk = Backbone.Model.extend({
   url: function() {
-    return '/api/disks/' + this.get('diskName') + '/';
+    return '/api/disks/' + this.get('diskName');
   }
 });
 var DiskCollection = RockStorPaginatedCollection.extend({
   model: Disk,
-  baseUrl: '/api/disks/',
+  baseUrl: '/api/disks',
 });
 
 var Pool = Backbone.Model.extend({
@@ -203,10 +203,10 @@ var ProbeCollection = Backbone.Collection.extend({
 });
 
 var NetworkInterface = Backbone.Model.extend({
-  url: function() {
-    return '/api/network/' + this.get('name') + '/';
-  }
+  idAttribute: 'name',
+  urlRoot: '/api/network'
 });
+
 var NetworkInterfaceCollection = RockStorPaginatedCollection.extend({
   model: NetworkInterface,
   baseUrl: '/api/network'
