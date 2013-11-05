@@ -153,8 +153,8 @@ CpuUsageWidget = RockStorWidgetView.extend({
   getData: function(context) {
     var _this = context;
     
-    this.startTime = new Date().getTime(); 
-    this.jqXhr = $.ajax({
+    _this.startTime = new Date().getTime(); 
+    _this.jqXhr = $.ajax({
       url: "/api/sm/sprobes/cpumetric/?format=json&group=name&limit=1", 
       type: "GET",
       dataType: "json",
@@ -167,12 +167,12 @@ CpuUsageWidget = RockStorWidgetView.extend({
         _this.parseData(data); 
         _this.updateGraph();
         var currentTime = new Date().getTime();
-        if ((currentTime - this.startTime) > this.updateInterval) {
+        if ((currentTime - _this.startTime) > _this.updateInterval) {
           _this.getData(_this); 
         } else {
           _this.timeoutId = window.setTimeout( function() { 
             _this.getData(_this); 
-          }, currentTime - this.startTime)
+          }, currentTime - _this.startTime)
         }
       },
       error: function(xhr, status, error) {

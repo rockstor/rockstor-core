@@ -148,12 +148,6 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
         });
        
         _this.getData(_this, _this.begin, _this.end); 
-        //_this.intervalId = window.setInterval(function() {
-          //return function() { 
-            //_this.begin = _this.end;
-            //_this.end = _this.begin + _this.updateInterval;
-          //}
-        //}(), _this.updateInterval);
          
       },
       error: function(xhr, status, error) {
@@ -167,8 +161,8 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
   getData: function(context, t1, t2) {
     var _this = context;
     //var data = {"id": 7120, "total": 2055148, "free": 1524904, "buffers": 140224, "cached": 139152, "swap_total": 4128764, "swap_free": 4128764, "active": 324000, "inactive": 123260, "dirty": 56, "ts": "2013-07-17T00:00:16.109Z"};
-    this.startTime = new Date().getTime(); 
-    this.jqXhr = $.ajax({
+    _this.startTime = new Date().getTime(); 
+    _this.jqXhr = $.ajax({
       url: "/api/sm/sprobes/netstat/?limit=1&format=json", 
       type: "GET",
       dataType: "json",
@@ -185,17 +179,16 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
         });
         var dataBuffer = _this.dataBuffers[_this.selectedInterface];
         _this.update(dataBuffer);
+        // Check time interval from beginning of last call
+        // and call getData or setTimeout accordingly
         var currentTime = new Date().getTime();
-        if ((currentTime - this.startTime) > this.updateInterval) {
-          _this.begin = _this.end;
-          _this.end = _this.begin + currentTime - this.startTime;
+        var diff = (currentTime = _this.startTime) - this.updateInterval;
+        if (diff < 0) {
           _this.getData(_this, _this.begin, _this.end); 
         } else {
           _this.timeoutId = window.setTimeout( function() { 
-            _this.begin = _this.end;
-            _this.end = _this.begin + _this.updateInterval;
             _this.getData(_this, _this.begin, _this.end); 
-          }, currentTime - this.startTime)
+          }, diff)
         }
       },
       error: function(xhr, status, error) {
