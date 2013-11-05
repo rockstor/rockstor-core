@@ -145,10 +145,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
       displayName: this.displayName
     }));
     
-    this.intervalId = window.setInterval(function() {
-      return function() { _this.getData(_this); }
-    }(), this.updateInterval)
-    
+    this.getData(this); 
     return this;
   },
   
@@ -156,7 +153,8 @@ CpuUsageWidget = RockStorWidgetView.extend({
   getData: function(context) {
     var _this = context;
     
-    $.ajax({
+    this.startTime = new Date().getTime(); 
+    this.jqXhr = $.ajax({
       url: "/api/sm/sprobes/cpumetric/?format=json&group=name&limit=1", 
       type: "GET",
       dataType: "json",
@@ -168,6 +166,14 @@ CpuUsageWidget = RockStorWidgetView.extend({
         }
         _this.parseData(data); 
         _this.updateGraph();
+        var currentTime = new Date().getTime();
+        if ((currentTime - this.startTime) > this.updateInterval) {
+          _this.getData(_this); 
+        } else {
+          _this.timeoutId = window.setTimeout( function() { 
+            _this.getData(_this); 
+          }, currentTime - this.startTime)
+        }
       },
       error: function(xhr, status, error) {
         logger.debug(error);
@@ -176,9 +182,11 @@ CpuUsageWidget = RockStorWidgetView.extend({
   },
 
   cleanup: function() {
-    console.log("In cpu widget cleanup");
-    if (!_.isUndefined(this.intervalId)) {
-      window.clearInterval(this.intervalId);
+    if (!_.isUndefined(this.timeoutId)) {
+      window.clearTimeout(this.timeoutId);
+    }
+    if (this.jqXhr) {
+      this.jqXhr.abort();
     }
   },
 

@@ -32,7 +32,7 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
     this.template = window.JST.dashboard_widgets_network_utilization;
     this.valuesTemplate = window.JST.dashboard_widgets_network_util_values;
     this.begin = null;
-    this.refreshInterval = 1000;
+    this.updateInterval = 1000;
     this.end = null;
     this.dataBuffers = {};
     this.dataLength = 300;
@@ -147,13 +147,13 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
           }
         });
        
-        _this.intervalId = window.setInterval(function() {
-          return function() { 
-            _this.getData(_this, _this.begin, _this.end); 
-            _this.begin = _this.end;
-            _this.end = _this.begin + _this.refreshInterval;
-          }
-        }(), _this.refreshInterval);
+        _this.getData(_this, _this.begin, _this.end); 
+        //_this.intervalId = window.setInterval(function() {
+          //return function() { 
+            //_this.begin = _this.end;
+            //_this.end = _this.begin + _this.updateInterval;
+          //}
+        //}(), _this.updateInterval);
          
       },
       error: function(xhr, status, error) {
@@ -167,7 +167,8 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
   getData: function(context, t1, t2) {
     var _this = context;
     //var data = {"id": 7120, "total": 2055148, "free": 1524904, "buffers": 140224, "cached": 139152, "swap_total": 4128764, "swap_free": 4128764, "active": 324000, "inactive": 123260, "dirty": 56, "ts": "2013-07-17T00:00:16.109Z"};
-    $.ajax({
+    this.startTime = new Date().getTime(); 
+    this.jqXhr = $.ajax({
       url: "/api/sm/sprobes/netstat/?limit=1&format=json", 
       type: "GET",
       dataType: "json",
@@ -184,6 +185,18 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
         });
         var dataBuffer = _this.dataBuffers[_this.selectedInterface];
         _this.update(dataBuffer);
+        var currentTime = new Date().getTime();
+        if ((currentTime - this.startTime) > this.updateInterval) {
+          _this.begin = _this.end;
+          _this.end = _this.begin + currentTime - this.startTime;
+          _this.getData(_this, _this.begin, _this.end); 
+        } else {
+          _this.timeoutId = window.setTimeout( function() { 
+            _this.begin = _this.end;
+            _this.end = _this.begin + _this.updateInterval;
+            _this.getData(_this, _this.begin, _this.end); 
+          }, currentTime - this.startTime)
+        }
       },
       error: function(xhr, status, error) {
         logger.debug(error);
@@ -302,9 +315,9 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
   },
 
   cleanup: function() {
-    if (!_.isUndefined(this.intervalId)) {
-      window.clearInterval(this.intervalId);
-    }
+    console.log('in network widget - clearing timeout');
+    if (this.jqXhr) this.jqXhr.abort(); 
+    if (this.timeoutId) window.clearTimeout(this.timeoutId);
   }
 
 });
