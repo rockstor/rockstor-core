@@ -16,4 +16,9 @@
 <% } else { %>
   <li><a href="#network"><i class="icon-signal"></i> Network Interfaces</span></a></li>
   <% } %>
+  <% if (selected == "scheduled-tasks") { %>
+    <li><a href="#scheduled-tasks" class="selected"><i class="icon-tasks icon-white"></i> Scheduled Tasks</span></a></li>
+<% } else { %>
+  <li><a href="#scheduled-tasks"><i class="icon-tasks"></i> Scheduled Tasks</span></a></li>
+  <% } %>
 </ul>

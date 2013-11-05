@@ -63,6 +63,8 @@ var AppRouter = Backbone.Router.extend({
     "nfs-exports/edit/:nfsExportGroupId": "editNFSExport",
     "network": "showNetworks",
     "network/:name/edit": "editNetwork",
+    "scheduled-tasks": "showScheduledTasks",
+    "add-scheduled-task": "addScheduledTask",
     "*path": "showHome"
   },
 
@@ -379,6 +381,22 @@ var AppRouter = Backbone.Router.extend({
     this.renderSidebar("system", "network");
     this.cleanup();
     this.currentLayout = new EditNetworkView({name: name});
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  showScheduledTasks: function() {
+    this.renderSidebar('system', 'scheduled-tasks');
+    this.cleanup();
+    this.currentLayout = new ScheduledTasksView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+  
+  addScheduledTask: function() {
+    this.renderSidebar('system', 'scheduled-tasks');
+    this.cleanup();
+    this.currentLayout = new AddScheduledTaskView();
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },

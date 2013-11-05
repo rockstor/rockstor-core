@@ -1,0 +1,15 @@
+<div class="control-group">
+  <label class="control-label" for="share">Share to replicate<span class="required"> *</span></label>
+  <div class="controls">
+    <select id="share" name="meta.share">
+      <% shares.each(function(share, index) { %>
+        <option value="<%= share.get('name') %>"> <%= share.get('name') %> </option>
+      <% }); %> 
+
+    </select>
+  </div>
+  <div class="controls">
+    <input type="text" id="prefix" name="meta.prefix" placeholder="Prefix" title="Snapshot will be named with this prefix">
+  </div>
+</div>
+
