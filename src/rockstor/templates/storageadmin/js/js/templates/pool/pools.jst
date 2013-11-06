@@ -23,6 +23,7 @@
 <div class="row-fluid">
   <div class="span12">
     <!-- Content -->
+    <% if (!disks.isEmpty()) { %>
     <div class="messages"></div>
     <div id="pools-table-ph">
     </div>
@@ -30,6 +31,9 @@
   </div> <!-- span12 -->
 </div> <!-- row-fluid --> 
 <a href="#add_pool" id="add_pool" class="btn btn-primary"><i class="icon-edit icon-white"></i> Create Pool</a>
+<% }else{ %>
+<h4>No disks exist to create pool.</h4>
+<% } %>
 <!-- end module body -->
 
 
