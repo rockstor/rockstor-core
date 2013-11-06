@@ -120,13 +120,13 @@ CpuUsageWidget = RockStorWidgetView.extend({
     this.updateFreq = 1000;
 
     // Start and end timestamps for api call
-    this.t2 = RockStorGlobals.currentTimeOnServer.getTime();
+    this.t2 = RockStorGlobals.currentTimeOnServer.getTime()-30000;
     this.t1 = this.t2 - this.windowLength;
     
     // cpu data array 
-    this.cpuData = [];
+    this.cpuData = {};
 
-    this.margin = {top: 20, right: 20, bottom: 20, left: 40};
+    this.margin = {top: 20, right: 20, bottom: 20, left: 30};
     this.width = 250 - this.margin.left - this.margin.right,
     this.height = 100 - this.margin.top - this.margin.bottom;
     this.padding = {top: 0, right: 0, bottom: 20, left: 0};
@@ -172,6 +172,12 @@ CpuUsageWidget = RockStorWidgetView.extend({
     var _this = context;
     
     _this.startTime = new Date().getTime(); 
+    // if t2 is more than 10 sec behind current time
+    // update t2 and t1
+    //if (RockStorGlobals.currentTimeOnServer - _this.t2 > 20000) {
+    //  _this.t2 = RockStorGlobals.currentTimeOnServer-5000;
+    //  _this.t1 = _this.t2 - _this.windowLength;
+    //}
     var t1Str = moment(_this.t1).toISOString();
     var t2Str = moment(_this.t2).toISOString();
     _this.jqXhr = $.ajax({
@@ -182,6 +188,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
       global: false, // dont show global loading indicator
       success: function(data, status, xhr) {
         data = data.results;
+        var tmp = _this.modifyData(data);
         data = _.filter(data, function(d) { return d.name == 'cpu0';});
         /* 
         if (_.isNull(_this.numCpus)) {
@@ -191,6 +198,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
         _this.updateGraph();
        */
         if (!_this.graphRendered) {
+          console.log(tmp);
           _this.renderGraph(data);
           _this.graphRendered = true;
         } else {
@@ -377,6 +385,13 @@ CpuUsageWidget = RockStorWidgetView.extend({
     .data([this.cpuData])
     .attr("class", "cpugraph line");
 
+    // Grpah title
+    this.svg.append("text")  
+    .attr("x", this.margin.left + this.padding.left + this.width/2 )
+    .attr("y",  this.margin.top/2) 
+    .style("text-anchor", "middle")
+    .text("Average CPU Usage (%)");
+     
     // X axis label
     this.svg.append("text")  
     .attr("x", this.margin.left + this.padding.left + this.width/2 )
@@ -395,7 +410,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
     this.yGrid = d3.svg.axis()
     .scale(this.y)
     .orient('left')
-    .ticks(5)
+    .ticks(4)
     .tickSize(-this.width, 0, 0)
     .tickFormat('')
 
@@ -408,12 +423,12 @@ CpuUsageWidget = RockStorWidgetView.extend({
     .call(this.yGrid);
 
     // Y axis label
-    this.svgG.append("text")  
-    .attr("x", 0-(this.height/2) )
-    .attr("y",  0 - (this.margin.left/2)  )
-    .style("text-anchor", "middle")
-    .text("Value")
-    .attr("transform", "rotate(-90)");
+    //this.svgG.append("text")  
+    //.attr("x", 0-(this.height/2) )
+    //.attr("y",  0 - (this.margin.left/2)  )
+    //.style("text-anchor", "middle")
+    //.text("Value")
+    //.attr("transform", "rotate(-90)");
   
     this.svgG.select(".line")
     .attr("d", this.line);
@@ -459,6 +474,16 @@ CpuUsageWidget = RockStorWidgetView.extend({
     
     this.cpuData.shift(data.length);
   },
+
+  modifyData: function(data) {
+    var tsData = _.groupBy(data, function(d) {
+      return d.ts;
+    });
+    var cpuData = _.groupBy(data, function(d) {
+      return d.name;
+    });
+    return [tsData, cpuData];
+  }
 
 });
 
