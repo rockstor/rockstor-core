@@ -21,10 +21,16 @@ from django.db import models
 
 class TaskDefinition(models.Model):
 
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
+    TASK_TYPES = [
+        ('scrub',) * 2,
+        ('snapshot',) * 2,
+        ]
+    task_type = models.CharField(max_length=100, choices=TASK_TYPES)
     ts = models.DateTimeField()
     frequency = models.IntegerField(null=True)
     json_meta = models.CharField(max_length=8192)
+    enabled = models.BooleanField(default=True)
 
     class Meta:
         app_label = 'smart_manager'
