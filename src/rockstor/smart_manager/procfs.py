@@ -86,12 +86,12 @@ class ProcRetreiver(Process):
         stats_file = '/proc/stat'
         cur_stats = {}
         with open(stats_file) as sfo:
+            ts = datetime.utcnow().replace(tzinfo=utc)
             for line in sfo.readlines():
                 if (re.match('cpu\d', line) is not None):
                     fields = line.split()
                     fields[1:] = map(int, fields[1:])
                     cm = None
-                    ts = datetime.utcnow().replace(tzinfo=utc)
                     if (fields[0] not in prev_stats):
                         cm = CPUMetric(name=fields[0], umode=fields[1],
                                        umode_nice=fields[2], smode=fields[3],
@@ -117,6 +117,7 @@ class ProcRetreiver(Process):
                     continue
                 cur_stats[fields[2]] = fields[2:]
         if (isinstance(prev_stats, dict)):
+            ts = datetime.utcnow().replace(tzinfo=utc)
             for disk in cur_stats.keys():
                 if (disk in prev_stats):
                     prev = prev_stats[disk]
@@ -135,7 +136,6 @@ class ProcRetreiver(Process):
                         else:
                             datum = (float(cur[i]) - float(prev[i]))/interval
                         data.append(datum)
-                    ts = datetime.utcnow().replace(tzinfo=utc)
                     ds = DiskStat(name=disk, reads_completed=data[0],
                                   reads_merged=data[1],
                                   sectors_read=data[2],
