@@ -40,7 +40,7 @@ AddUserView = RockstoreLayoutView.extend({
     var _this = this;
     $(this.el).html(this.template());
     
-    
+    this.$('#user-create-form :input').tooltip();
 
     this.validator = this.$("#user-create-form").validate({
       onfocusout: false,
@@ -59,7 +59,7 @@ AddUserView = RockstoreLayoutView.extend({
         }
       },
       
-      $('#user-create-form :input').tooltip();
+     
       
       submitHandler: function() {
         console.log("submitHandler");

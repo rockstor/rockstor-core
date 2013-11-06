@@ -52,6 +52,9 @@ EditNetworkView = RockstoreLayoutView.extend({
   renderNetwork: function() {
     var _this = this;
     $(this.el).html(this.template({network: this.network}));
+    
+    this.$('#edit-network-form :input').tooltip();
+    
     this.validator = this.$("#edit-network-form").validate({
       onfocusout: false,
       onkeyup: false,
@@ -59,6 +62,7 @@ EditNetworkView = RockstoreLayoutView.extend({
       },
       messages: {
       },
+      
       submitHandler: function() {
         var button = _this.$('#submit');
         if (buttonDisabled(button)) return false;
