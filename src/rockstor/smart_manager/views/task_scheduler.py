@@ -35,12 +35,15 @@ class TaskSchedulerView(AdvancedSProbeView):
     valid_tasks = ('snapshot', 'scrub',)
 
     def get_queryset(self, *args, **kwargs):
-        return TaskDefinition.objects.all()
+        if ('tdid' in kwargs):
+            self.paginate_by = 0
+            try:
+                return TaskDefinition.objects.get(id=kwargs['tdid'])
+            except:
+                return []
+        return TaskDefinition.objects.filter().order_by('-id')
 
     def get_paginate_by(self, foo):
-        download = self.request.QUERY_PARAMS.get('download', None)
-        if (download is not None):
-            return None
         if (self.paginate_by is None):
             return None
         return settings.PAGINATION['page_size']
@@ -48,7 +51,8 @@ class TaskSchedulerView(AdvancedSProbeView):
     @transaction.commit_on_success
     def post(self, request):
         name = request.DATA['name']
-        if (name not in self.valid_tasks):
+        task_type = request.DATA['task_type']
+        if (task_type not in self.valid_tasks):
             e_msg = ('Unknown task type: %s cannot be scheduled' % name)
             handle_exception(Exception(e_msg), request)
 
@@ -68,18 +72,32 @@ class TaskSchedulerView(AdvancedSProbeView):
         ts_dto = datetime.utcfromtimestamp(float(ts)).replace(second=0,
                                                               microsecond=0,
                                                               tzinfo=utc)
-        td = TaskDefinition(name=name, ts=ts_dto, frequency=frequency,
-                            json_meta=json_meta)
+        td = TaskDefinition(name=name, task_type=task_type, ts=ts_dto,
+                            frequency=frequency, json_meta=json_meta)
         td.save()
-        return Response()
+        return Response(TaskDefinitionSerializer(td).data)
+
+    def _task_def(self, request, tdid):
+        try:
+            return TaskDefinition.objects.get(id=tdid)
+        except:
+            e_msg = ('Event with id: %s does not exist' % tdid)
+            handle_exception(Exception(e_msg), request)
 
     @transaction.commit_on_success
-    def delete(self, request):
-        event_id = request.DATA['id']
-        try:
-            TaskDefinition.objects.get(id=event_id).delete()
-            return Response()
-        except Exception, e:
-            logger.exception(e)
-            e_msg = ('Event with id: %s does not exist' % event_id)
-            handle_exception(Exception(e_msg), request)
+    def put(self, request, tdid):
+        tdo = self._task_def(request, tdid)
+        enabled = request.DATA['enabled']
+        if (enabled == 'False'):
+            enabled = False
+        else:
+            enabled = True
+        tdo.enabled = enabled
+        tdo.save()
+        return Response(TaskDefinitionSerializer(tdo).data)
+
+    @transaction.commit_on_success
+    def delete(self, request, tdid):
+        tdo = self._task_def(request, tdid)
+        tdo.delete()
+        return Response()
