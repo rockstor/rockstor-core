@@ -113,6 +113,8 @@ CpuUsageWidget = RockStorWidgetView.extend({
       //tooltipOpts: { content: "<b>%s</b> (%p.2%)" }
     };
 
+    // d3 graph 
+    
     this.windowLength = 60000; // window length in msec (1 min)
     this.transDuration = 1000; // transition duration
     this.updateFreq = 1000;
@@ -189,24 +191,24 @@ CpuUsageWidget = RockStorWidgetView.extend({
         _this.updateGraph();
        */
         if (!_this.graphRendered) {
-          console.log(data);
           _this.renderGraph(data);
           _this.graphRendered = true;
+        } else {
+          if (data.length > 0) {
+            _this.updateGraph(data);
+          }
         }
         var currentTime = new Date().getTime();
         var diff = currentTime - _this.startTime;
-        console.log('diff is ' + diff);
         if (diff > _this.updateFreq) {
-          console.log('calling immediately');
           _this.t1 = _this.t2; 
           _this.t2 = _this.t2 + diff;
-          //_this.getData(_this); 
+          _this.getData(_this); 
         } else {
-          console.log('setting timeout');
           _this.timeoutId = window.setTimeout( function() { 
             _this.t1 = _this.t2; 
             _this.t2 = _this.t2 + _this.updateFreq;
-            //_this.getData(_this); 
+            _this.getData(_this); 
           }, _this.updateFreq - diff);
         }
       },
@@ -316,6 +318,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
   },
 
   renderGraph: function(data) {
+    this.cpuData = data;
     var _this = this;
     // Render svg
     this.svg = d3.select(this.el).select('.widget-content')
@@ -340,7 +343,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
     // Scales
     this.x = d3.time.scale().domain([this.t2-this.windowLength, this.t2]).range([0, this.width]);
     this.y = d3.scale.linear().range([this.height, 0]);
-    this.x.domain(d3.extent(data, function(d) { return new Date(d.ts); }));
+    this.x.domain(d3.extent(this.cpuData, function(d) { return new Date(d.ts); }));
     this.y.domain([0, 100]);
 
     // Line graph
@@ -368,10 +371,10 @@ CpuUsageWidget = RockStorWidgetView.extend({
     .attr("transform", "translate(0," + this.height + ")")
     .call(this.x.grid) ;
 
-    var path = this.svgG.append("g")
+    this.path = this.svgG.append("g")
     .attr("clip-path", "url(#clip)")
     .append("path")
-    .data([data])
+    .data([this.cpuData])
     .attr("class", "cpugraph line");
 
     // X axis label
@@ -413,12 +416,12 @@ CpuUsageWidget = RockStorWidgetView.extend({
     .attr("transform", "rotate(-90)");
   
     this.svgG.select(".line")
-    .attr("d", this.line)
-    .attr("transform", null);
+    .attr("d", this.line);
 
   },
 
   updateGraph: function(data) {
+    var _this = this;
     /*
     //this.allCpuGraphOptions.xaxis.ticks = this.cpuNames.length;
     this.allCpuGraphOptions.xaxis.ticks = this.maxCpus;
@@ -427,6 +430,34 @@ CpuUsageWidget = RockStorWidgetView.extend({
     //});
     $.plot($("#cpuusage"), this.avgGraphData, this.graphOptions);
    */
+    
+    var now = new Date(data[data.length-1].ts).getTime();
+    this.x.domain([now-(this.windowLength + this.updateFreq), now - this.updateFreq]);
+   
+    this.cpuData.push.apply(this.cpuData, data); 
+    
+    this.svgG.select(".line")
+    .attr("d", this.line)
+    .attr("transform", null);
+
+    this.xAxis.transition()
+    .duration(this.transDuration)
+    .ease("linear")
+    .call(this.x.axis);
+
+    this.xGrid.transition()
+    .duration(this.transDuration)
+    .ease("linear")
+    .call(this.x.grid);
+   
+    // slide the line left
+    
+    this.path.transition()
+    .duration(this.transDuration)
+    .ease("linear")
+    .attr("transform", "translate(" + this.x(now - (this.windowLength+2*this.updateFreq)) + ")"); 
+    
+    this.cpuData.shift(data.length);
   },
 
 });
