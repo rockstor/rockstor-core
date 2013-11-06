@@ -80,12 +80,11 @@ class TaskDispatcher(Process):
                     del(self.workers[w])
 
             if (total_sleep == 60):
-                for td in TaskDefinition.objects.all():
+                for td in TaskDefinition.objects.filter(enabled=True):
                     now = datetime.utcnow().replace(second=0, microsecond=0,
                                                     tzinfo=utc)
                     if (self._schedulable(td, now)):
-                        t = Task(name=td.name, json_meta=td.json_meta,
-                                 state='scheduled', start=now)
+                        t = Task(task_def=td, state='scheduled', start=now)
                         data = serialize("json", (t,))
                         sink_socket.send_json(data)
                 total_sleep = 0
