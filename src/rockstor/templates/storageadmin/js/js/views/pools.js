@@ -40,6 +40,7 @@ PoolsView = RockstoreLayoutView.extend({
     this.pools_table_template = window.JST.pool_pools_table;
     this.pagination_template = window.JST.common_pagination;
     this.collection = new PoolCollection();
+    
     this.disks = new DiskCollection();
     this.dependencies.push(this.disks);
     this.dependencies.push(this.collection);
@@ -49,12 +50,18 @@ PoolsView = RockstoreLayoutView.extend({
 
   render: function() {
     this.fetch(this.renderPools,this);
+    $('#pool-table-ph-form :input').tooltip();
     return this;
   },
 
   renderPools: function() {
     var _this = this;
-    $(this.el).html(this.template({ collection: this.collection, disks: this.disks }));
+    
+    var freedisks = this.disks.filter(function(disk) { return disk.get('pool') == null; });
+    
+    $(this.el).html(this.template({ collection: this.collection, disks: this.disks,noOfFreeDisks: _.size(freedisks)  }));
+    
+    
     this.$("#pools-table-ph").html(this.pools_table_template({
       collection: this.collection
     }));
