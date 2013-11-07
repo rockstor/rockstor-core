@@ -32,7 +32,7 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
     this.template = window.JST.dashboard_widgets_network_utilization;
     this.valuesTemplate = window.JST.dashboard_widgets_network_util_values;
     this.begin = null;
-    this.updateInterval = 1000;
+    this.updateFreq = 1000;
     this.end = null;
     this.dataBuffers = {};
     this.dataLength = 300;
@@ -89,6 +89,11 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
 
       },
     };
+    
+    // Start and end timestamps for api call
+    this.windowLength = 300000;
+    this.t2 = RockStorGlobals.currentTimeOnServer.getTime()-30000;
+    this.t1 = this.t2 - this.windowLength;
   },
   
   render: function() {
@@ -123,8 +128,11 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
       niselect.append(opt);
     });
     this.selectedInterface = this.networkInterfaces.at(0).get("name");
-    $.ajax({
-      url: "/api/sm/sprobes/netstat/?limit=1&format=json", 
+    var t1Str = moment(_this.t1).toISOString();
+    var t2Str = moment(_this.t2).toISOString();
+    this.jqXhr = $.ajax({
+      url: "/api/sm/sprobes/netstat/?format=json&t1" +
+        t1Str + "&t2=" + t2Str, 
       type: "GET",
       dataType: "json",
       global: false, // dont show global loading indicator
@@ -162,8 +170,11 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
     var _this = context;
     //var data = {"id": 7120, "total": 2055148, "free": 1524904, "buffers": 140224, "cached": 139152, "swap_total": 4128764, "swap_free": 4128764, "active": 324000, "inactive": 123260, "dirty": 56, "ts": "2013-07-17T00:00:16.109Z"};
     _this.startTime = new Date().getTime(); 
+    var t1Str = moment(_this.t1).toISOString();
+    var t2Str = moment(_this.t2).toISOString();
     _this.jqXhr = $.ajax({
-      url: "/api/sm/sprobes/netstat/?limit=1&format=json", 
+      url: "/api/sm/sprobes/netstat/?format=json&t1=" +
+        t1Str + "&t2=" + t2Str, 
       type: "GET",
       dataType: "json",
       global: false, // dont show global loading indicator
@@ -182,13 +193,17 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
         // Check time interval from beginning of last call
         // and call getData or setTimeout accordingly
         var currentTime = new Date().getTime();
-        var diff = (currentTime = _this.startTime) - this.updateInterval;
-        if (diff < 0) {
-          _this.getData(_this, _this.begin, _this.end); 
+        var diff = currentTime - _this.startTime;
+        if (diff > _this.updateFreq) {
+          _this.t1 = _this.t2; 
+          _this.t2 = _this.t2 + diff;
+          _this.getData(_this); 
         } else {
           _this.timeoutId = window.setTimeout( function() { 
-            _this.getData(_this, _this.begin, _this.end); 
-          }, diff)
+            _this.t1 = _this.t2; 
+            _this.t2 = _this.t2 + _this.updateFreq;
+            _this.getData(_this); 
+          }, _this.updateFreq - diff)
         }
       },
       error: function(xhr, status, error) {
