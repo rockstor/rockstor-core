@@ -18,23 +18,25 @@
  * 
  */
 </script>
-
+<form name="pool-table-ph-form" id="pool-table-ph-form">
 <!-- Module Body -->
 <div class="row-fluid">
   <div class="span12">
     <!-- Content -->
-    <% if (!disks.isEmpty()) { %>
-    <div class="messages"></div>
-    <div id="pools-table-ph">
-    </div>
+     <div class="messages"></div>
+      <div id="pools-table-ph">
+      </div>
     <!-- End Content -->
   </div> <!-- span12 -->
 </div> <!-- row-fluid --> 
+
+ <% if(noOfFreeDisks > 0){ %>    
 <a href="#add_pool" id="add_pool" class="btn btn-primary"><i class="icon-edit icon-white"></i> Create Pool</a>
+
 <% }else{ %>
-<h4>No disks exist to create pool.</h4>
+<a  id="add_pool" class="btn btn-primary.disabled" title="No free disks available" ><i class="icon-edit icon-white"></i> Create Pool</a>
 <% } %>
 <!-- end module body -->
-
+</form>
 
 
