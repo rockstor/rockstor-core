@@ -31,9 +31,7 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.dashboard_widgets_network_utilization;
     this.valuesTemplate = window.JST.dashboard_widgets_network_util_values;
-    this.begin = null;
     this.updateFreq = 1000;
-    this.end = null;
     this.dataBuffers = {};
     this.dataLength = 300;
     this.currentTs = null;
@@ -91,7 +89,7 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
     };
     
     // Start and end timestamps for api call
-    this.windowLength = 300000;
+    this.windowLength = 10000;
     this.t2 = RockStorGlobals.currentTimeOnServer.getTime()-30000;
     this.t1 = this.t2 - this.windowLength;
   },
@@ -131,14 +129,14 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
     var t1Str = moment(_this.t1).toISOString();
     var t2Str = moment(_this.t2).toISOString();
     this.jqXhr = $.ajax({
-      url: "/api/sm/sprobes/netstat/?format=json&t1" +
+      url: "/api/sm/sprobes/netstat/?format=json&t1=" +
         t1Str + "&t2=" + t2Str, 
       type: "GET",
       dataType: "json",
       global: false, // dont show global loading indicator
       success: function(data, status, xhr) {
         // fill dataBuffers
-        
+        console.log(data.results); 
         _this.networkInterfaces.each(function(ni) {
           var tmp = [];
           for (var i=0; i<_this.dataLength; i++) {
@@ -149,13 +147,14 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
         _.each(data.results, function(d) {
           _this.dataBuffers[d.device].push(d);
         });
-        _.each(_this.dataBuffers, function(dataBuffer) {
+        _.each(_.keys(_this.dataBuffers), function(device) {
+          var dataBuffer = _this.dataBuffers[device];
           if (dataBuffer.length > _this.dataLength) {
             dataBuffer.splice(0, dataBuffer.length - _this.dataLength);
           }
         });
-       
-        _this.getData(_this, _this.begin, _this.end); 
+        console.log(_this.dataBuffers); 
+        _this.getData(_this); 
          
       },
       error: function(xhr, status, error) {
@@ -179,13 +178,13 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
       dataType: "json",
       global: false, // dont show global loading indicator
       success: function(data, status, xhr) {
-        var d = data.results[0];
         _.each(data.results, function(d) {
           _this.dataBuffers[d.device].push(d);
         });
-        _.each(_this.dataBuffers, function(dataBuffer) {
+        _.each(_.keys(_this.dataBuffers), function(device) {
+          var dataBuffer = _this.dataBuffers[device];
           if (dataBuffer.length > _this.dataLength) {
-            dataBuffer.splice(0,1);
+            dataBuffer.splice(0, dataBuffer.length - _this.dataLength);
           }
         });
         var dataBuffer = _this.dataBuffers[_this.selectedInterface];
