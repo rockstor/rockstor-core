@@ -35,8 +35,8 @@ class SProbe(models.Model):
         ('stopped',) * 2,
         ]
     state = models.CharField(max_length=7, choices=STATE_CHOICES)
-    start = models.DateTimeField(auto_now=True)
-    end = models.DateTimeField(null=True)
+    start = models.DateTimeField(auto_now=True, db_index=True)
+    end = models.DateTimeField(null=True, db_index=True)
 
     class Meta:
         app_label = 'smart_manager'

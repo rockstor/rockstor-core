@@ -15,6 +15,7 @@ class Migration(SchemaMigration):
             ('uuid', self.gf('django.db.models.fields.CharField')(max_length=100, null=True)),
             ('size', self.gf('django.db.models.fields.IntegerField')(default=0)),
             ('raid', self.gf('django.db.models.fields.CharField')(max_length=10)),
+            ('toc', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
         ))
         db.send_create_signal('storageadmin', ['Pool'])
 
@@ -24,7 +25,7 @@ class Migration(SchemaMigration):
             ('pool', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['storageadmin.Pool'], null=True, on_delete=models.SET_NULL)),
             ('name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=10)),
             ('size', self.gf('django.db.models.fields.IntegerField')()),
-            ('free', self.gf('django.db.models.fields.IntegerField')()),
+            ('offline', self.gf('django.db.models.fields.BooleanField')(default=False)),
             ('parted', self.gf('django.db.models.fields.BooleanField')(default=False)),
         ))
         db.send_create_signal('storageadmin', ['Disk'])
@@ -37,7 +38,12 @@ class Migration(SchemaMigration):
             ('name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=4096)),
             ('uuid', self.gf('django.db.models.fields.CharField')(max_length=100, null=True)),
             ('size', self.gf('django.db.models.fields.IntegerField')()),
-            ('free', self.gf('django.db.models.fields.IntegerField')()),
+            ('owner', self.gf('django.db.models.fields.CharField')(default='root', max_length=4096)),
+            ('group', self.gf('django.db.models.fields.CharField')(default='root', max_length=4096)),
+            ('perms', self.gf('django.db.models.fields.CharField')(default='755', max_length=9)),
+            ('toc', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
+            ('subvol_name', self.gf('django.db.models.fields.CharField')(max_length=4096)),
+            ('replica', self.gf('django.db.models.fields.BooleanField')(default=False)),
         ))
         db.send_create_signal('storageadmin', ['Share'])
 
@@ -48,6 +54,9 @@ class Migration(SchemaMigration):
             ('name', self.gf('django.db.models.fields.CharField')(max_length=4096)),
             ('writable', self.gf('django.db.models.fields.BooleanField')(default=False)),
             ('size', self.gf('django.db.models.fields.IntegerField')(default=0)),
+            ('toc', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
+            ('qgroup', self.gf('django.db.models.fields.CharField')(max_length=100)),
+            ('uvisible', self.gf('django.db.models.fields.BooleanField')(default=False)),
         ))
         db.send_create_signal('storageadmin', ['Snapshot'])
 
@@ -74,16 +83,24 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal('storageadmin', ['ShareStatistic'])
 
-        # Adding model 'NFSExport'
-        db.create_table('storageadmin_nfsexport', (
+        # Adding model 'NFSExportGroup'
+        db.create_table('storageadmin_nfsexportgroup', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('share', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['storageadmin.Share'])),
-            ('mount', self.gf('django.db.models.fields.CharField')(max_length=4096)),
             ('host_str', self.gf('django.db.models.fields.CharField')(max_length=4096)),
             ('editable', self.gf('django.db.models.fields.CharField')(default='ro', max_length=2)),
             ('syncable', self.gf('django.db.models.fields.CharField')(default='async', max_length=5)),
             ('mount_security', self.gf('django.db.models.fields.CharField')(default='insecure', max_length=8)),
+            ('nohide', self.gf('django.db.models.fields.BooleanField')(default=False)),
             ('enabled', self.gf('django.db.models.fields.BooleanField')(default=True)),
+        ))
+        db.send_create_signal('storageadmin', ['NFSExportGroup'])
+
+        # Adding model 'NFSExport'
+        db.create_table('storageadmin_nfsexport', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('export_group', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['storageadmin.NFSExportGroup'])),
+            ('share', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['storageadmin.Share'])),
+            ('mount', self.gf('django.db.models.fields.CharField')(max_length=4096)),
         ))
         db.send_create_signal('storageadmin', ['NFSExport'])
 
@@ -155,6 +172,53 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal('storageadmin', ['DashboardConfig'])
 
+        # Adding model 'NetworkInterface'
+        db.create_table('storageadmin_networkinterface', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('name', self.gf('django.db.models.fields.CharField')(max_length=100)),
+            ('mac', self.gf('django.db.models.fields.CharField')(max_length=100)),
+            ('boot_proto', self.gf('django.db.models.fields.CharField')(max_length=100, null=True)),
+            ('onboot', self.gf('django.db.models.fields.CharField')(max_length=100, null=True)),
+            ('network', self.gf('django.db.models.fields.CharField')(max_length=100, null=True)),
+            ('netmask', self.gf('django.db.models.fields.CharField')(max_length=100, null=True)),
+            ('ipaddr', self.gf('django.db.models.fields.CharField')(max_length=100, null=True)),
+            ('itype', self.gf('django.db.models.fields.CharField')(default='io', max_length=100)),
+        ))
+        db.send_create_signal('storageadmin', ['NetworkInterface'])
+
+        # Adding model 'User'
+        db.create_table('storageadmin_user', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('user', self.gf('django.db.models.fields.related.OneToOneField')(related_name='suser', unique=True, null=True, to=orm['auth.User'])),
+            ('username', self.gf('django.db.models.fields.CharField')(default='', unique=True, max_length=4096)),
+            ('uid', self.gf('django.db.models.fields.IntegerField')(default=5000)),
+            ('gid', self.gf('django.db.models.fields.IntegerField')(default=5000)),
+        ))
+        db.send_create_signal('storageadmin', ['User'])
+
+        # Adding model 'PoolScrub'
+        db.create_table('storageadmin_poolscrub', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('pool', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['storageadmin.Pool'])),
+            ('status', self.gf('django.db.models.fields.CharField')(default='started', max_length=10)),
+            ('pid', self.gf('django.db.models.fields.IntegerField')()),
+            ('start_time', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
+            ('end_time', self.gf('django.db.models.fields.DateTimeField')(null=True)),
+            ('kb_scrubbed', self.gf('django.db.models.fields.IntegerField')(null=True)),
+            ('errors', self.gf('django.db.models.fields.IntegerField')(null=True)),
+        ))
+        db.send_create_signal('storageadmin', ['PoolScrub'])
+
+        # Adding model 'Setup'
+        db.create_table('storageadmin_setup', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('setup_user', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('setup_system', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('setup_disks', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('setup_network', self.gf('django.db.models.fields.BooleanField')(default=False)),
+        ))
+        db.send_create_signal('storageadmin', ['Setup'])
+
 
     def backwards(self, orm):
         # Removing unique constraint on 'Snapshot', fields ['share', 'name']
@@ -177,6 +241,9 @@ class Migration(SchemaMigration):
 
         # Deleting model 'ShareStatistic'
         db.delete_table('storageadmin_sharestatistic')
+
+        # Deleting model 'NFSExportGroup'
+        db.delete_table('storageadmin_nfsexportgroup')
 
         # Deleting model 'NFSExport'
         db.delete_table('storageadmin_nfsexport')
@@ -201,6 +268,18 @@ class Migration(SchemaMigration):
 
         # Deleting model 'DashboardConfig'
         db.delete_table('storageadmin_dashboardconfig')
+
+        # Deleting model 'NetworkInterface'
+        db.delete_table('storageadmin_networkinterface')
+
+        # Deleting model 'User'
+        db.delete_table('storageadmin_user')
+
+        # Deleting model 'PoolScrub'
+        db.delete_table('storageadmin_poolscrub')
+
+        # Deleting model 'Setup'
+        db.delete_table('storageadmin_setup')
 
 
     models = {
@@ -261,9 +340,9 @@ class Migration(SchemaMigration):
         },
         'storageadmin.disk': {
             'Meta': {'object_name': 'Disk'},
-            'free': ('django.db.models.fields.IntegerField', [], {}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '10'}),
+            'offline': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'parted': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'pool': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storageadmin.Pool']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
             'size': ('django.db.models.fields.IntegerField', [], {})
@@ -277,15 +356,33 @@ class Migration(SchemaMigration):
             'tid': ('django.db.models.fields.IntegerField', [], {'unique': 'True'}),
             'tname': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '128'})
         },
+        'storageadmin.networkinterface': {
+            'Meta': {'object_name': 'NetworkInterface'},
+            'boot_proto': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'ipaddr': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True'}),
+            'itype': ('django.db.models.fields.CharField', [], {'default': "'io'", 'max_length': '100'}),
+            'mac': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
+            'netmask': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True'}),
+            'network': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True'}),
+            'onboot': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True'})
+        },
         'storageadmin.nfsexport': {
             'Meta': {'object_name': 'NFSExport'},
+            'export_group': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storageadmin.NFSExportGroup']"}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'mount': ('django.db.models.fields.CharField', [], {'max_length': '4096'}),
+            'share': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storageadmin.Share']"})
+        },
+        'storageadmin.nfsexportgroup': {
+            'Meta': {'object_name': 'NFSExportGroup'},
             'editable': ('django.db.models.fields.CharField', [], {'default': "'ro'", 'max_length': '2'}),
             'enabled': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'host_str': ('django.db.models.fields.CharField', [], {'max_length': '4096'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'mount': ('django.db.models.fields.CharField', [], {'max_length': '4096'}),
             'mount_security': ('django.db.models.fields.CharField', [], {'default': "'insecure'", 'max_length': '8'}),
-            'share': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storageadmin.Share']"}),
+            'nohide': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'syncable': ('django.db.models.fields.CharField', [], {'default': "'async'", 'max_length': '5'})
         },
         'storageadmin.pool': {
@@ -294,7 +391,19 @@ class Migration(SchemaMigration):
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '4096'}),
             'raid': ('django.db.models.fields.CharField', [], {'max_length': '10'}),
             'size': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
+            'toc': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'uuid': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True'})
+        },
+        'storageadmin.poolscrub': {
+            'Meta': {'object_name': 'PoolScrub'},
+            'end_time': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
+            'errors': ('django.db.models.fields.IntegerField', [], {'null': 'True'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'kb_scrubbed': ('django.db.models.fields.IntegerField', [], {'null': 'True'}),
+            'pid': ('django.db.models.fields.IntegerField', [], {}),
+            'pool': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storageadmin.Pool']"}),
+            'start_time': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
+            'status': ('django.db.models.fields.CharField', [], {'default': "'started'", 'max_length': '10'})
         },
         'storageadmin.poolstatistic': {
             'Meta': {'object_name': 'PoolStatistic'},
@@ -322,14 +431,27 @@ class Migration(SchemaMigration):
             'read_only': ('django.db.models.fields.CharField', [], {'default': "'no'", 'max_length': '3'}),
             'share': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storageadmin.Share']"})
         },
+        'storageadmin.setup': {
+            'Meta': {'object_name': 'Setup'},
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'setup_disks': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'setup_network': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'setup_system': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'setup_user': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
+        },
         'storageadmin.share': {
             'Meta': {'object_name': 'Share'},
-            'free': ('django.db.models.fields.IntegerField', [], {}),
+            'group': ('django.db.models.fields.CharField', [], {'default': "'root'", 'max_length': '4096'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '4096'}),
+            'owner': ('django.db.models.fields.CharField', [], {'default': "'root'", 'max_length': '4096'}),
+            'perms': ('django.db.models.fields.CharField', [], {'default': "'755'", 'max_length': '9'}),
             'pool': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storageadmin.Pool']"}),
             'qgroup': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
+            'replica': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'size': ('django.db.models.fields.IntegerField', [], {}),
+            'subvol_name': ('django.db.models.fields.CharField', [], {'max_length': '4096'}),
+            'toc': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'uuid': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True'})
         },
         'storageadmin.sharestatistic': {
@@ -344,8 +466,11 @@ class Migration(SchemaMigration):
             'Meta': {'unique_together': "(('share', 'name'),)", 'object_name': 'Snapshot'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '4096'}),
+            'qgroup': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'share': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storageadmin.Share']"}),
             'size': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
+            'toc': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
+            'uvisible': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'writable': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
         },
         'storageadmin.supportcase': {
@@ -355,6 +480,14 @@ class Migration(SchemaMigration):
             'notes': ('django.db.models.fields.TextField', [], {}),
             'status': ('django.db.models.fields.CharField', [], {'max_length': '9'}),
             'zipped_log': ('django.db.models.fields.CharField', [], {'max_length': '128'})
+        },
+        'storageadmin.user': {
+            'Meta': {'object_name': 'User'},
+            'gid': ('django.db.models.fields.IntegerField', [], {'default': '5000'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'uid': ('django.db.models.fields.IntegerField', [], {'default': '5000'}),
+            'user': ('django.db.models.fields.related.OneToOneField', [], {'related_name': "'suser'", 'unique': 'True', 'null': 'True', 'to': "orm['auth.User']"}),
+            'username': ('django.db.models.fields.CharField', [], {'default': "''", 'unique': 'True', 'max_length': '4096'})
         }
     }
 

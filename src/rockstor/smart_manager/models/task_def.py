@@ -22,7 +22,7 @@ from django.db import models
 class TaskDefinition(models.Model):
 
     name = models.CharField(max_length=255)
-    ts = models.DateTimeField()
+    ts = models.DateTimeField(db_index=True)
     frequency = models.IntegerField(null=True)
     json_meta = models.CharField(max_length=8192)
 
