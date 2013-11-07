@@ -1588,3 +1588,18 @@ input[type="radio"].selectedRoot {
 .cpugraph text {
   font-size: 10px;
 }
+
+#cpuusage-individual div.cpu {
+  float: left; 
+  margin-right: 2px;
+}
+
+#cpuusage-individual text {
+  font-size: 10px;
+}
+
+#cpuusage_widget {
+  font-size: 10px;
+  color: #000;
+}
+

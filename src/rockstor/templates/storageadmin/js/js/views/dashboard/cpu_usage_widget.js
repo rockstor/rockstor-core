@@ -36,7 +36,8 @@ CpuUsageWidget = RockStorWidgetView.extend({
     this.numSamples = 60;
     this.maxCpus = 8;
     this.modes = ['smode', 'umode', 'umode_nice', 'idle'];
-    this.colors = ["#E41A1C", "#377EB8", "#4DAF4A", "#FFFFFF"];
+    //this.colors = ["#E41A1C", "#377EB8", "#4DAF4A", "#FFFFFF"];
+    this.colors = ['#FF8C00', '#98abc5', '#8a89a6', '#ffffff'];
     this.numCpus = null; 
     this.avg = this.genEmptyCpuData(this.numSamples);
     this.cpuNames = [];
@@ -51,30 +52,35 @@ CpuUsageWidget = RockStorWidgetView.extend({
           bottom: 1,
           left: 1
         },
-        aboveData: true,
         borderColor: "#ddd",
         color: "#aaa"
       },
 			series: {
         stack: true,
         stackpercent : false,
-        bars: { show: true, barWidth: 0.9, fillColor: {colors:[{opacity: 1},{opacity: 1}]}, align: "center" },
+        bars: { show: true, barWidth: 0.8, fillColor: {colors:[{opacity: 1},{opacity: 1}]}, align: "center" },
         lines: { show: false, fill: false },
         shadowSize: 0	// Drawing is faster without shadows
 			},
 			yaxis: { 
         min: 0, 
         max: 100,
-        ticks: 4,
+        ticks: 2,
         tickFormatter: this.pctTickFormatter,
         font: { color: "#333" }
       },
       xaxis: { 
-        tickLength: 2,
-        tickFormatter: this.allCpuTickFormatter(this.cpuNames, this),
+        ticks: this.maxCpus,
+        tickLength: 1,
+        tickFormatter: this.allCpuTickFormatter(this),
         font: { color: "#333" }
       },
-      legend: { show: false },
+      legend : { 
+        container : "#cpuusage-legend", 
+        noColumns : 4,
+        labelBoxBorderColor: '#ffffff'
+
+      },
       
     }
 
@@ -115,6 +121,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
 
     // d3 graph 
     
+    this.rawData = null;
     this.windowLength = 60000; // window length in msec (1 min)
     this.transDuration = 1000; // transition duration
     this.updateFreq = 1000;
@@ -124,16 +131,24 @@ CpuUsageWidget = RockStorWidgetView.extend({
     this.t1 = this.t2 - this.windowLength;
     
     // cpu data array 
-    this.cpuData = {};
+    this.cpuData = []
 
     this.margin = {top: 20, right: 20, bottom: 20, left: 30};
-    this.width = 250 - this.margin.left - this.margin.right,
-    this.height = 100 - this.margin.top - this.margin.bottom;
+    if (this.maximized) {
+      this.width = 500 - this.margin.left - this.margin.right;
+      this.height = 200 - this.margin.top - this.margin.bottom;
+    } else {
+      this.width = 250 - this.margin.left - this.margin.right;
+      this.height = 100 - this.margin.top - this.margin.bottom;
+    }
     this.padding = {top: 0, right: 0, bottom: 20, left: 0};
 
+    this.cpuColorScale = d3.scale.linear()
+    .domain([0, 100])
+    .range(["#F7C8A8","#F26F18"]);
   },
  
-  allCpuTickFormatter: function(cpuNames, context) {
+  allCpuTickFormatter: function(context) {
     return function(val, axis) {
       if (!_.isUndefined(context.cpuNames[val-1])) {
         return context.cpuNames[val-1];
@@ -159,7 +174,8 @@ CpuUsageWidget = RockStorWidgetView.extend({
       colors: this.colors,
       height: this.defaultHeight,
       width: this.defaultWidth,
-      displayName: this.displayName
+      displayName: this.displayName,
+      maximized: this.maximized
     }));
     
  
@@ -188,8 +204,8 @@ CpuUsageWidget = RockStorWidgetView.extend({
       global: false, // dont show global loading indicator
       success: function(data, status, xhr) {
         data = data.results;
-        var tmp = _this.modifyData(data);
-        data = _.filter(data, function(d) { return d.name == 'cpu0';});
+        _this.displayIndividualCpuUsage(data);
+
         /* 
         if (_.isNull(_this.numCpus)) {
           _this.numCpus = data.length;
@@ -198,7 +214,6 @@ CpuUsageWidget = RockStorWidgetView.extend({
         _this.updateGraph();
        */
         if (!_this.graphRendered) {
-          console.log(tmp);
           _this.renderGraph(data);
           _this.graphRendered = true;
         } else {
@@ -206,6 +221,11 @@ CpuUsageWidget = RockStorWidgetView.extend({
             _this.updateGraph(data);
           }
         }
+        
+        // call getData immediately to fetch the next set of  data, 
+        // or set a timer
+        // depending on how much time has elapsed since the 
+        // start of the ajax call.
         var currentTime = new Date().getTime();
         var diff = currentTime - _this.startTime;
         if (diff > _this.updateFreq) {
@@ -326,10 +346,12 @@ CpuUsageWidget = RockStorWidgetView.extend({
   },
 
   renderGraph: function(data) {
+    // TODO calculate avg
+    data = _.filter(data, function(d) { return d.name == 'cpu0';});
     this.cpuData = data;
     var _this = this;
     // Render svg
-    this.svg = d3.select(this.el).select('.widget-content')
+    this.svg = d3.select(this.el).select('#cpuusage-avg')
     .append("svg")
     .attr("class", "cpugraph")
     .attr("width", this.width + this.margin.left + this.margin.right)
@@ -436,6 +458,8 @@ CpuUsageWidget = RockStorWidgetView.extend({
   },
 
   updateGraph: function(data) {
+    // TODO calculate avg 
+    data = _.filter(data, function(d) { return d.name == 'cpu0';});
     var _this = this;
     /*
     //this.allCpuGraphOptions.xaxis.ticks = this.cpuNames.length;
@@ -475,15 +499,99 @@ CpuUsageWidget = RockStorWidgetView.extend({
     this.cpuData.shift(data.length);
   },
 
-  modifyData: function(data) {
-    var tsData = _.groupBy(data, function(d) {
-      return d.ts;
+  displayIndividualCpuUsage: function(data) {
+    var _this = this;
+    // get latest value for each cpu
+    var tmp = _.groupBy(data, function(d) { return d.name; });
+    this.cpuNames = _.keys(tmp);
+    this.numCpus = this.cpuNames.length;
+    data = _.map(_.keys(tmp), function(d) {
+      var a = tmp[d];
+      return a[a.length-1];
     });
-    var cpuData = _.groupBy(data, function(d) {
+    _this.allCpuGraphData = [];
+    _.each(_this.modes, function(mode, i) {
+      var tmp2 = [];
+      _.each(_this.cpuNames, function(name, j) {
+        var dm = data[j][mode];
+        tmp2.push([j+1, dm]);
+      });
+      // Add empty data so that bar width is acc to maxCpus .
+      for (var k=_this.numCpus; k<_this.maxCpus; k++) {
+        tmp2.push([k+1, null]);
+      }
+      if (mode != 'idle') {
+        _this.allCpuGraphData.push({
+          "label": mode, 
+          "data": tmp2, 
+          "color": _this.colors[i]
+        });
+      }
+
+    });
+    $.plot($("#cpuusage-individual"), this.allCpuGraphData, this.allCpuGraphOptions);
+
+    /*
+    var cpu = d3.select(this.el).select('#cpuusage-individual')
+    .selectAll('div.cpu')
+    .data(data, function(d) {
       return d.name;
     });
-    return [tsData, cpuData];
-  }
+   
+    var cpuEnter = cpu.enter()
+    .append("div")
+    .attr("class","cpu")
+     
+    var cpuSvg = cpuEnter.append('svg')
+    .attr('width', 50)
+    .attr('height', 42)
+    .append('g');
+   
+    var cpuName = cpuSvg.append('text')
+    .attr('class', 'cpuName')
+    .attr('x', 25)
+    .attr('y', 10)
+    .style('text-anchor', 'middle');
+     
+    var cpuRect = cpuSvg.append('rect')
+    .attr('x',0)
+    .attr('y',12)
+    .attr('width', 50)
+    .attr('height', 20);
+
+    var cpuText = cpuSvg.append('text')
+    .attr('class','cpuUsage')
+    .attr('x', 25)
+    .attr('y', 25)
+    .style('text-anchor', 'middle');
+
+    cpu.select('rect')
+    .attr('fill', function(d) { return _this.cpuColorScale(100 - d.idle); });
+    
+    cpu.select('text.cpuName')
+    .text(function(d) { return d.name; });
+
+    cpu.select('text.cpuUsage')
+    .text(function(d) { return (100 - d.idle) + '%'; });
+    */
+  },
+
+  resize: function(event) {
+    this.constructor.__super__.resize.apply(this, arguments);
+    if (this.maximized) {
+      this.width = 500 - this.margin.left - this.margin.right;
+      this.height = 200 - this.margin.top - this.margin.bottom;
+      this.$('#cpuusage-individual').css('width', '500px');
+      this.$('#cpuusage-individual-title').css('width', '500px');
+    } else {
+      this.width = 250 - this.margin.left - this.margin.right;
+      this.height = 100 - this.margin.top - this.margin.bottom;
+      this.$('#cpuusage-individual').css('width', '250');
+      this.$('#cpuusage-individual-title').css('width', '250');
+    }
+    this.$('#cpuusage-avg').empty();
+    this.renderGraph(this.cpuData);
+  },
 
 });
 
