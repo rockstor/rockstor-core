@@ -346,8 +346,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
   },
 
   renderGraph: function(data) {
-    // TODO calculate avg
-    data = _.filter(data, function(d) { return d.name == 'cpu0';});
+    data = this.getAvgCpuUsge(data);
     this.cpuData = data;
     var _this = this;
     // Render svg
@@ -444,31 +443,14 @@ CpuUsageWidget = RockStorWidgetView.extend({
     .attr("class", "cpugraph grid")
     .call(this.yGrid);
 
-    // Y axis label
-    //this.svgG.append("text")  
-    //.attr("x", 0-(this.height/2) )
-    //.attr("y",  0 - (this.margin.left/2)  )
-    //.style("text-anchor", "middle")
-    //.text("Value")
-    //.attr("transform", "rotate(-90)");
-  
     this.svgG.select(".line")
     .attr("d", this.line);
 
   },
 
   updateGraph: function(data) {
-    // TODO calculate avg 
-    data = _.filter(data, function(d) { return d.name == 'cpu0';});
+    data = this.getAvgCpuUsge(data);
     var _this = this;
-    /*
-    //this.allCpuGraphOptions.xaxis.ticks = this.cpuNames.length;
-    this.allCpuGraphOptions.xaxis.ticks = this.maxCpus;
-    $.plot($("#cpuusage-all"), this.allCpuGraphData, this.allCpuGraphOptions);
-    //$("#cpuusage-all").bind("plotclick", function(event, pos, item) {
-    //});
-    $.plot($("#cpuusage"), this.avgGraphData, this.graphOptions);
-   */
     
     var now = new Date(data[data.length-1].ts).getTime();
     this.x.domain([now-(this.windowLength + this.updateFreq), now - this.updateFreq]);
@@ -496,7 +478,11 @@ CpuUsageWidget = RockStorWidgetView.extend({
     .ease("linear")
     .attr("transform", "translate(" + this.x(now - (this.windowLength+2*this.updateFreq)) + ")"); 
     
-    this.cpuData.shift(data.length);
+    if (this.cpuData.length > 0) { 
+      while (new Date(this.cpuData[0].ts).getTime() < this.t1-this.windowLength) {
+        this.cpuData.shift();
+      }
+    } 
   },
 
   displayIndividualCpuUsage: function(data) {
@@ -531,49 +517,25 @@ CpuUsageWidget = RockStorWidgetView.extend({
     });
     $.plot($("#cpuusage-individual"), this.allCpuGraphData, this.allCpuGraphOptions);
 
-    /*
-    var cpu = d3.select(this.el).select('#cpuusage-individual')
-    .selectAll('div.cpu')
-    .data(data, function(d) {
-      return d.name;
+  },
+  
+  getAvgCpuUsge: function(data) {
+    var _this = this;
+    var tmp = _.groupBy(data, function(d) {
+      return d.ts;
     });
-   
-    var cpuEnter = cpu.enter()
-    .append("div")
-    .attr("class","cpu")
-     
-    var cpuSvg = cpuEnter.append('svg')
-    .attr('width', 50)
-    .attr('height', 42)
-    .append('g');
-   
-    var cpuName = cpuSvg.append('text')
-    .attr('class', 'cpuName')
-    .attr('x', 25)
-    .attr('y', 10)
-    .style('text-anchor', 'middle');
-     
-    var cpuRect = cpuSvg.append('rect')
-    .attr('x',0)
-    .attr('y',12)
-    .attr('width', 50)
-    .attr('height', 20);
-
-    var cpuText = cpuSvg.append('text')
-    .attr('class','cpuUsage')
-    .attr('x', 25)
-    .attr('y', 25)
-    .style('text-anchor', 'middle');
-
-    cpu.select('rect')
-    .attr('fill', function(d) { return _this.cpuColorScale(100 - d.idle); });
-    
-    cpu.select('text.cpuName')
-    .text(function(d) { return d.name; });
-
-    cpu.select('text.cpuUsage')
-    .text(function(d) { return (100 - d.idle) + '%'; });
-    */
+    return _.map(_.keys(tmp), function(key) {
+      var ds = tmp[key];
+      if (ds.length > 0) {
+        var s = _.reduce(ds, function(sum, d) {
+          return d.idle + sum;
+        }, 0);
+        var avg = s / ds.length;
+        return {idle: avg, ts: key};
+      } else {
+        return {idle: 0, ts: key};
+      }
+    });
   },
 
   resize: function(event) {
