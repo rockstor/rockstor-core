@@ -469,7 +469,6 @@ function getCurrentTimeOnServer() {
     global: false, // dont show global loading indicator
     success: function(data, status, xhr) {
       RockStorGlobals.currentTimeOnServer = new Date(data);
-      console.log('current time on server is ' + RockStorGlobals.currentTimeOnServer.toString());
     },
     error: function(xhr, status, error) {
       console.log(error);
