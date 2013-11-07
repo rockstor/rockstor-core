@@ -136,7 +136,6 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
       global: false, // dont show global loading indicator
       success: function(data, status, xhr) {
         // fill dataBuffers
-        console.log(data.results); 
         _this.networkInterfaces.each(function(ni) {
           var tmp = [];
           for (var i=0; i<_this.dataLength; i++) {
@@ -153,7 +152,6 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
             dataBuffer.splice(0, dataBuffer.length - _this.dataLength);
           }
         });
-        console.log(_this.dataBuffers); 
         _this.getData(_this); 
          
       },
@@ -313,16 +311,13 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
   resize: function(event) {
     this.constructor.__super__.resize.apply(this, arguments);
     if (this.maximized) {
-      console.log('maximizing');
       this.$('#network-util-values-ph').html(this.valuesTemplate());
     } else {
-      console.log('minimizing');
       this.$('#network-util-values-ph').empty();
     }
   },
 
   cleanup: function() {
-    console.log('in network widget - clearing timeout');
     if (this.jqXhr) this.jqXhr.abort(); 
     if (this.timeoutId) window.clearTimeout(this.timeoutId);
   }
