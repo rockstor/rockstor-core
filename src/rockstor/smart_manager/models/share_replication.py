@@ -48,7 +48,7 @@ class ReplicaTrail(models.Model):
     send_pending = models.DateTimeField(null=True)
     send_succeeded = models.DateTimeField(null=True)
     send_failed = models.DateTimeField(null=True)
-    end_ts = models.DateTimeField(null=True)
+    end_ts = models.DateTimeField(null=True, db_index=True)
     STATUS_CHOICES = [
         ('pending',) * 2,
         ('succeeded',) * 2,

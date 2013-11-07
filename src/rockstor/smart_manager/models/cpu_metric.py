@@ -26,7 +26,7 @@ class CPUMetric(models.Model):
     umode_nice = models.IntegerField()
     smode = models.IntegerField()
     idle = models.IntegerField()
-    ts = models.DateTimeField(auto_now=True)
+    ts = models.DateTimeField(auto_now=True, db_index=True)
 
     class Meta:
         app_label = 'smart_manager'

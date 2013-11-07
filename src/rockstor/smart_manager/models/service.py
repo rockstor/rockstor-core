@@ -33,7 +33,7 @@ class ServiceStatus(models.Model):
 
     service = models.ForeignKey(Service)
     status = models.BooleanField(default=False)
-    ts = models.DateTimeField(auto_now=True)
+    ts = models.DateTimeField(auto_now=True, db_index=True)
 
     class Meta:
         app_label = 'smart_manager'
