@@ -30,13 +30,13 @@
         <div class="control-group">
           <label class="control-label" for="domain">Domain<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" id="domain" name="domain" value="<%= config.domain %>" placeholder="Domain" >
+            <input type="text" id="domain" name="domain" value="<%= config.domain %>" placeholder="Domain" title="Please enter domain controller to connect to" >
           </div>
         </div>
         <div class="control-group">
           <label class="control-label" for="controllers">Controllers<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" id="controllers" name="controllers" value="<%= config.controllers %>" placeholder="Controllers" >
+            <input type="text" id="controllers" name="controllers" value="<%= config.controllers %>" placeholder="Controllers" title="Please enter domain controller">
           </div>
         </div>
 	<% var securityTypes = ['user', 'server', 'domain', 'ad']; %>
@@ -44,7 +44,7 @@
 	  <label class="control-label" for="security">Security<span
   	  class="required"> *</span></label>
 	  <div class="controls">
-	    <select id="security" name="security">
+	    <select id="security" name="security" title="Please select security model">
 	      <% _.each(securityTypes, function(security, index) { %>
 	        <% if (security == config.security) { %>
 		    <option value="<%= security %>" selected="selected">
@@ -62,7 +62,7 @@
   	  <div class="controls">
 	    <% if (config.security == 'ad') { %>
             <input type="text" id="realm" name="realm"
-	    value="<%= config.realm %>" placeholder="Realm" >
+	    value="<%= config.realm %>" placeholder="Realm" title=""Please specify the Realm>
   	    <% } else { %>
             <input type="text" id="realm" name="realm"
 	    disabled="true" value="<%= config.realm %>"
@@ -76,7 +76,7 @@
   	  class="required"> *</span></label>
 	  <div class="controls">
 	  <% if (config.security == 'ad' || config.security == 'domain') { %>
-	    <select id="templateshell" name="templateshell">
+	    <select id="templateshell" name="templateshell" title="Please select login shell for user">
 	  <% } else { %>
 	    <select id="templateshell" name="templateshell" disabled="true">
 	  <% } %>
