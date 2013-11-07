@@ -171,15 +171,18 @@ def remove_share(pool_name, pool_device, share_name):
     delete_cmd = [BTRFS, 'subvolume', 'delete', subvol_mnt_pt]
     run_command(delete_cmd)
 
-def add_snap(pool_name, pool_device, share_name, snap_name):
+def add_snap(pool_name, pool_device, share_name, snap_name,
+             share_prepend=True):
     """
     create a snapshot
     """
     pool_device = '/dev/' + pool_device
     root_pool_mnt = mount_root(pool_name, pool_device)
     share_full_path = root_pool_mnt + '/' + share_name
-    snap_full_path = ('%s/%s_%s' % (root_pool_mnt, share_name, snap_name))
-    snap_cmd = [BTRFS, 'subvolume', 'snapshot', '-r', share_full_path,
+    snap_full_path = ('%s/%s' % (root_pool_mnt, snap_name))
+    if (share_prepend is True):
+        snap_full_path = ('%s/%s_%s' % (root_pool_mnt, share_name, snap_name))
+    snap_cmd = [BTRFS, 'subvolume', 'snapshot', share_full_path,
                 snap_full_path]
     try:
         run_command(snap_cmd)

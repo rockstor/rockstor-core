@@ -18,10 +18,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.conf.urls.defaults import patterns, url
 from storageadmin.views import (ShareView, ShareNFSView, ShareSambaView,
-                                ShareACLView, SnapshotView, ShareIscsiView)
+                                ShareACLView, SnapshotView, ShareIscsiView,
+                                ShareCommandView)
 
 share_regex = r'[A-Za-z]+[A-Za-z0-9_]*'
 snap_regex = share_regex
+snap_command = 'rollback|clone'
 
 urlpatterns = patterns(
     '',
@@ -42,13 +44,15 @@ urlpatterns = patterns(
     url(r'^/(?P<sname>%s)/snapshots/(?P<snap_name>%s)$' % (share_regex,
                                                           snap_regex),
         SnapshotView.as_view(), name='snapshot-view'),
-    url(r'^/(?P<sname>%s)/snapshots/(?P<snap_name>%s)/(?P<command>.*)$' %
-        (share_regex, snap_regex),
-        SnapshotView.as_view(), name='snapshot-view'),
+    url(r'^/(?P<sname>%s)/snapshots/(?P<snap_name>%s)/(?P<command>%s)$' %
+        (share_regex, snap_regex, snap_command), SnapshotView.as_view()),
 
     url(r'^/(?P<sname>[A-Za-z]+[A-Za-z0-9_]*)/iscsi/$',
         ShareIscsiView.as_view(), name='share-iscsi-view'),
 
     url(r'^/(?P<sname>%s)/acl$' % share_regex, ShareACLView.as_view(),
         name='acl-view'),
+
+    url(r'^/(?P<sname>%s)/(?P<command>clone)$' % share_regex,
+        ShareCommandView.as_view()),
 )

@@ -32,6 +32,7 @@ from storageadmin.serializers import SnapshotSerializer
 from storageadmin.util import handle_exception
 from generic_view import GenericView
 from nfs_helpers import create_nfs_export_input
+from clone_helpers import create_clone
 
 import logging
 logger = logging.getLogger(__name__)
@@ -160,6 +161,9 @@ class SnapshotView(GenericView):
             return ret
         if (command == 'rollback'):
             return self._rollback(share, snap_name, pool_device, request)
+        if (command == 'clone'):
+            new_name = request.DATA['name']
+            return create_clone(share, new_name, request, logger)
         e_msg = ('Unknown command: %s' % command)
         handle_exception(Exception(e_msg), request)
 
