@@ -89,7 +89,7 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
     };
     
     // Start and end timestamps for api call
-    this.windowLength = 10000;
+    this.windowLength = 300000;
     this.t2 = RockStorGlobals.currentTimeOnServer.getTime()-30000;
     this.t1 = this.t2 - this.windowLength;
   },
