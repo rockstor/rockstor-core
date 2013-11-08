@@ -31,7 +31,7 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.dashboard_widgets_memory_utilization;
     this.begin = null;
-    this.refreshInterval = 1000;
+    this.updateFreq = 1000;
     this.end = null;
     var emptyData = {"id": 0, "total": 0, "free": 0, "buffers": 0, "cached": 0, "swap_total": 0, "swap_free": 0, "active": 0, "inactive": 0, "dirty": 0, "ts": "2013-07-17T00:00:16.109Z"};
     this.dataBuffer = [];
@@ -83,6 +83,10 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
         content: "%s (%y.2%)" 
       }
     };
+    // Start and end timestamps for api call
+    this.windowLength = 300000;
+    this.t2 = RockStorGlobals.currentTimeOnServer.getTime()-30000;
+    this.t1 = this.t2 - this.windowLength;
   },
   
   render: function() {
@@ -93,8 +97,11 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
       displayName: this.displayName,
     }));
     var _this = this;
+    var t1Str = moment(_this.t1).toISOString();
+    var t2Str = moment(_this.t2).toISOString();
     $.ajax({
-      url: "/api/sm/sprobes/meminfo/?limit=" + this.dataLength + "&format=json", 
+      url: "/api/sm/sprobes/meminfo/?format=json&t1=" +
+        t1Str + "&t2=" + t2Str, 
       type: "GET",
       dataType: "json",
       global: false, // dont show global loading indicator
@@ -107,13 +114,7 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
           _this.dataBuffer.splice(0,
           _this.dataBuffer.length - _this.dataLength);
         }
-        _this.intervalId = window.setInterval(function() {
-          return function() { 
-            _this.getData(_this, _this.begin, _this.end); 
-            _this.begin = _this.end;
-            _this.end = _this.begin + _this.refreshInterval;
-          }
-        }(), _this.refreshInterval);
+        _this.getData(_this); 
       },
       error: function(xhr, status, error) {
         logger.debug(error);
@@ -124,20 +125,42 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
   },
 
 
-  getData: function(context, t1, t2) {
+  getData: function(context) {
     var _this = context;
     //var data = {"id": 7120, "total": 2055148, "free": 1524904, "buffers": 140224, "cached": 139152, "swap_total": 4128764, "swap_free": 4128764, "active": 324000, "inactive": 123260, "dirty": 56, "ts": "2013-07-17T00:00:16.109Z"};
-    $.ajax({
-      url: "/api/sm/sprobes/meminfo/?limit=1&format=json", 
+    _this.startTime = new Date().getTime(); 
+    var t1Str = moment(_this.t1).toISOString();
+    var t2Str = moment(_this.t2).toISOString();
+    _this.jqXhr = $.ajax({
+      url: "/api/sm/sprobes/meminfo/?format=json&t1=" + 
+        t1Str + "&t2=" + t2Str, 
       type: "GET",
       dataType: "json",
       global: false, // dont show global loading indicator
       success: function(data, status, xhr) {
-        _this.dataBuffer.push(data.results[0]);
+        _.each(data.results, function(d) {
+          _this.dataBuffer.push(d);
+        });
         if (_this.dataBuffer.length > _this.dataLength) {
-          _this.dataBuffer.splice(0,1);
+          _this.dataBuffer.splice(0,
+          _this.dataBuffer.length - _this.dataLength);
         }
         _this.update(_this.dataBuffer);
+        // Check time interval from beginning of last call
+        // and call getData or setTimeout accordingly
+        var currentTime = new Date().getTime();
+        var diff = currentTime - _this.startTime;
+        if (diff > _this.updateFreq) {
+          _this.t1 = _this.t2; 
+          _this.t2 = _this.t2 + diff;
+          _this.getData(_this); 
+        } else {
+          _this.timeoutId = window.setTimeout( function() { 
+            _this.t1 = _this.t2; 
+            _this.t2 = _this.t2 + _this.updateFreq;
+            _this.getData(_this); 
+          }, _this.updateFreq - diff)
+        }
       },
       error: function(xhr, status, error) {
         logger.debug(error);
@@ -217,9 +240,8 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
   },
   
   cleanup: function() {
-    if (!_.isUndefined(this.intervalId)) {
-      window.clearInterval(this.intervalId);
-    }
+    if (this.jqXhr) this.jqXhr.abort(); 
+    if (this.timeoutId) window.clearTimeout(this.timeoutId);
   }
 
 });

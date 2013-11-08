@@ -39,7 +39,7 @@ class NetStat(models.Model):
     colls = models.IntegerField()
     carrier = models.IntegerField()
     compressed_tx = models.IntegerField()
-    ts = models.DateTimeField()
+    ts = models.DateTimeField(db_index=True)
 
 
     class Meta:

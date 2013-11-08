@@ -26,7 +26,7 @@ class NFSDShareClientDistribution(models.Model):
     for a given ts and share, number and i/o size of various nfs calls
     """
     rid = models.ForeignKey(SProbe)
-    ts = models.DateTimeField()
+    ts = models.DateTimeField(db_index=True)
     share = models.CharField(max_length=255)
     client = models.CharField(max_length=100)
     num_lookup = models.IntegerField()

@@ -30,13 +30,13 @@
         <div class="control-group">
           <label class="control-label" for="server">LDAP Server<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" id="server" name="server" value="<%= config.server %>" placeholder="LDAP Server" title="Please enter IP address of LDAP Server">
+            <input type="text" id="server" name="server" value="<%= config.server %>" placeholder="LDAP Server" title="IP address of LDAP Server">
           </div>
         </div>
         <div class="control-group">
           <label class="control-label" for="basedn">Search base DN<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" id="basedn" name="basedn" value="<%= config.basedn %>" placeholder="Search base DN" title="Please enter Distinguished Name ">
+            <input type="text" id="basedn" name="basedn" value="<%= config.basedn %>" placeholder="Search base DN" title="Distinguished Name ">
           </div>
         </div>
 	<div class="control-group">
@@ -56,7 +56,7 @@
         <% } %>
           <label class="control-label" for="cert-utl">Certificate URL<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" id="cert" name="cert" value="<%= config.cert %>" placeholder="Certificate URL" title="Please enter the URL from which to download">
+            <input type="text" id="cert" name="cert" value="<%= config.cert %>" placeholder="Certificate URL" title="URL to download Certificate in PEM format">
           </div>
         </div>
         <div class="control-group">

@@ -54,7 +54,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     
     this.selectedDisk = null;
 
-    this.updateInterval = 1000;
+    this.updateFreq = 1000;
     this.sortAttrs = ['reads_completed']; // attrs to sort by
     this.numTop = 5; // no of top shares
     this.partition = d3.layout.partition()
@@ -114,6 +114,10 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
         shadowSize: 0	// Drawing is faster without shadows
 			},
     };
+    // Start and end timestamps for api call
+    this.windowLength = 300000;
+    this.t2 = RockStorGlobals.currentTimeOnServer.getTime()-30000;
+    this.t1 = this.t2 - this.windowLength;
   },
 
   render: function() {
@@ -156,7 +160,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     this.disks.fetch({
       success: function(collection, response, options) {
         _this.initializeDisksData();
-        _this.startLoop();
+        _this.getData(_this);
       }
     });
     return this;
@@ -192,22 +196,41 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     }
   },
 
-  startLoop: function() {
-    var _this = this;
-    this.intervalId = window.setInterval(function() {
-      return function() { _this.getData(_this); }
-    }(), this.updateInterval)
-  },
+  //startLoop: function() {
+    //var _this = this;
+    //this.intervalId = window.setInterval(function() {
+      //return function() { _this.getData(_this); }
+    //}(), this.updateInterval)
+  //},
 
-  getData: function(context, t1, t2) {
+  getData: function(context) {
     var _this = context;
-    $.ajax({
-      url: "/api/sm/sprobes/diskstat/?group=name&limit=1", 
+    _this.startTime = new Date().getTime(); 
+    var t1Str = moment(_this.t1).toISOString();
+    var t2Str = moment(_this.t2).toISOString();
+    _this.jqXhr = $.ajax({
+      url: "/api/sm/sprobes/diskstat/?format=json&t1=" +
+        t1Str + "&t2=" + t2Str, 
       type: "GET",
       dataType: "json",
       global: false, // dont show global loading indicator
       success: function(data, status, xhr) {
         _this.update(data.results);
+        // Check time interval from beginning of last call
+        // and call getData or setTimeout accordingly
+        var currentTime = new Date().getTime();
+        var diff = currentTime - _this.startTime;
+        if (diff > _this.updateFreq) {
+          _this.t1 = _this.t2; 
+          _this.t2 = _this.t2 + diff;
+          _this.getData(_this); 
+        } else {
+          _this.timeoutId = window.setTimeout( function() { 
+            _this.t1 = _this.t2; 
+            _this.t2 = _this.t2 + _this.updateFreq;
+            _this.getData(_this); 
+          }, _this.updateFreq - diff)
+        }
       },
       error: function(xhr, status, error) {
         console.log(error);
@@ -228,7 +251,12 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     var _this = this;
     _.each(data, function(d) {
       _this.disksData[d.name].push(d);
-      _this.disksData[d.name].splice(0,1);
+    });
+    _.each(_.keys(_this.disksData), function(diskName) {
+      var diskData = _this.disksData[diskName];
+      if (diskData.length > _this.dataLength) {
+        diskData.splice(0, diskData.length - _this.dataLength);
+      }
     });
   },
 

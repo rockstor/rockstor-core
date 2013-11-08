@@ -25,7 +25,7 @@ class NFSDCallDistribution(models.Model):
     for a given ts, number and i/o size of various nfs calls
     """
     rid = models.ForeignKey(SProbe)
-    ts = models.DateTimeField()
+    ts = models.DateTimeField(db_index=True)
     num_lookup = models.IntegerField()
     num_read = models.IntegerField()
     num_write = models.IntegerField()

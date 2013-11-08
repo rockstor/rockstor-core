@@ -23,7 +23,7 @@ class ShareUsage(models.Model):
     """pool usage information as time series"""
     name = models.CharField(max_length=4096)
     usage = models.IntegerField(default=0)
-    ts = models.DateTimeField(auto_now=True)
+    ts = models.DateTimeField(auto_now=True, db_index=True)
 
     class Meta:
         app_label = 'smart_manager'
