@@ -35,8 +35,11 @@ ScheduledTasksView = RockstoreLayoutView.extend({
     // set template
     this.template = window.JST.scheduled_tasks_tasks;
     // add dependencies
-    this.collection = new ScheduledTaskCollection();
+    this.collection = new TaskDefCollection();
+    this.tasks = new TaskCollection();
     this.dependencies.push(this.collection);
+    this.dependencies.push(this.tasks);
+    this.taskMap = {};
   },
 
   render: function() {
@@ -47,12 +50,21 @@ ScheduledTasksView = RockstoreLayoutView.extend({
   renderScheduledTasks: function() {
     var _this = this;
     
+    this.collection.each(function(taskDef, index) {
+      var tmp = _this.tasks.filter(function(task) {
+        return task.get('task_def') == taskDef.id;
+      });
+      _this.taskMap[taskDef.id] = _.sortBy(tmp, function(task) {
+        return moment(task.get('start')).valueOf();
+      }).reverse();
+    });
     // remove existing tooltips
     if (this.$('[rel=tooltip]')) { 
       this.$('[rel=tooltip]').tooltip('hide');
     }
     $(this.el).html(this.template({
       scheduledTasks: this.collection,
+      taskMap: this.taskMap
     }));
     this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
    

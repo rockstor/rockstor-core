@@ -28,43 +28,41 @@
       <form id="scheduled-task-create-form" name="aform">
         <div class="messages"></div>
         <div class="control-group">
-          <label class="control-label" for="task_name">Task name<span class="required"> *</span></label>
-          <div class="controls">
-            <input type="text" id="name" name="name" placeholder="Task name" title="A descriptive name for this task">
+          <div class="controls controls-row">
+            <label class="control-label span4" for="task_name">Task name<span class="required"> *</span></label>
+            <label class="control-label span4" for="task_type">Task type<span class="required"> *</span></label>
           </div>
-        </div>
-        <div class="control-group">
-          <label class="control-label" for="start_date">Start Date (MM/DD/YYYY)<span class="required"> *</span></label>
-          <div class="controls">
-            <input type="text" id="start_date" name="start_date" placeholder="Start Date">
-          </div>
-        </div>
-        <div class="control-group">
-          <label class="control-label" for="start_time">Start Time (hh:mm)<span class="required"> *</span></label>
-          <div class="controls">
-            <input type="text" id="start_time" name="start_time" placeholder="Start Time">
-          </div>
-        </div>
-        <div class="control-group">
-          <label class="control-label" for="frequency">Frequency in seconds<span class="required"> *</span></label>
-          <div class="controls">
-            <input type="text" id="frequency" name="frequency" placeholder="Frequency" title="How often should this task run?">
-          </div>
-        </div>
-        <div class="control-group">
-          <label class="control-label" for="task_type">Task type<span class="required"> *</span></label>
-          <div class="controls">
-            <select id="task-type" name="task_type">
+          <div class="controls controls-row">
+            <input class="span4" type="text" id="name" name="name" placeholder="Task name" title="A descriptive name for this task">
+            <select class="span4" id="task-type" name="task_type">
               <% _.each(taskTypes, function(taskType, index) { %>
                 <option value="<%= taskType %>"> <%= taskType %> </option>
               <% }); %> 
             </select>
           </div>
         </div>
+        <div class="control-group">
+          <div class="controls controls-row">
+            <label class="control-label span4" for="start_date">Start Date (MM/DD/YYYY)<span class="required"> *</span></label>
+            <label class="control-label span4" for="start_time">Start Time (hh:mm)<span class="required"> *</span></label>
+          </div>
+          <div class="controls controls-row">
+            <input class="span4" type="text" id="start_date" name="start_date" placeholder="Start Date">
+            <input class="span4" type="text" id="start_time" name="start_time" placeholder="Start Time">
+          </div>
+        </div>
+        <div class="control-group">
+          <label class="control-label" for="frequency">Task Frequency (in seconds)<span class="required"> *</span></label>
+          <div class="controls">
+            <input class="span4" type="text" id="frequency" name="frequency" placeholder="Frequency" title="How often should this task run?">
+          </div>
+        </div>
         <div id="optional-fields"></div>
         <div class="control-group">
-          <div class="controls">
-            <input class="checkbox inline" type="checkbox" id="enabled" name="enabled" placeholder="Enable this task" title="Disabled tasks will be created but not run till they are enabled"> Enable this task?
+          <div class="controls form-inline">
+            <label class="checkbox">
+              <input class="checkbox inline" type="checkbox" checked="true" id="enabled" name="enabled" placeholder="Enable this task" title="Disabled tasks will be created but not run till they are enabled"> Enable this task?
+            </label>
           </div>
         </div>
         <div class="control-group">
