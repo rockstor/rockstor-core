@@ -89,6 +89,9 @@ var AppRouter = Backbone.Router.extend({
     if (!RockStorGlobals.loadAvgDisplayed) {
       updateLoadAvg();
     }
+    if (!RockStorGlobals.serverTimeFetched) {
+      fetchServerTime();
+    }
   },
 
   loginPage: function() {

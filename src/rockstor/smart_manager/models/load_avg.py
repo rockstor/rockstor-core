@@ -28,7 +28,7 @@ class LoadAvg(models.Model):
     total_threads = models.IntegerField()
     latest_pid = models.IntegerField()
     idle_seconds = models.IntegerField()
-    ts = models.DateTimeField(auto_now=True)
+    ts = models.DateTimeField(auto_now=True, db_index=True)
 
     def uptime(self, *args, **kwargs):
         with open('/proc/uptime') as ufo:

@@ -48,9 +48,9 @@
           <label class="control-label" for="ipaddr">IP Address<span class="required"> *</span></label>
           <div class="controls">
             <% if (network.get('boot_proto') == 'static') { %>
-              <input type="text" id="ipaddr" name="ipaddr" value="<%= network.get('ipaddr') %>" placeholder="IP Address" >
+              <input type="text" id="ipaddr" name="ipaddr" value="<%= network.get('ipaddr') %>" placeholder="IP Address" title="Enter IP Address" >
             <% } else { %>
-              <input type="text" id="ipaddr" name="ipaddr" value="<%= network.get('ipaddr') %>" placeholder="IP Address" disabled="disabled">
+              <input type="text" id="ipaddr" name="ipaddr" value="<%= network.get('ipaddr') %>" placeholder="IP Address" disabled="disabled"  >
             <% } %>
           </div>
         </div>
@@ -58,7 +58,7 @@
           <label class="control-label" for="netmask">Netmask<span class="required"> *</span></label>
           <div class="controls">
             <% if (network.get('boot_proto') == 'static') { %>
-              <input type="text" id="netmask" name="netmask" value="<%= network.get('netmask') %>" placeholder="Netmask">
+              <input type="text" id="netmask" name="netmask" value="<%= network.get('netmask') %>" placeholder="Netmask" title="Enter Netmask">
             <% } else { %>
               <input type="text" id="netmask" name="netmask" value="<%= network.get('netmask') %>" placeholder="Netmask" disabled="disabled" >
             <% } %>

@@ -55,11 +55,16 @@ AddScheduledTaskView = RockstoreLayoutView.extend({
       taskTypes: ['snapshot', 'scrub']
     }));
     this.renderOptionalFields();
+    this.$('#start_date').datepicker();
+    var timePicker = this.$('#start_time').timepicker({
+      showMeridian: false
+    });
     this.validator = $('#scheduled-task-create-form').validate({
       onfocusout: false,
       onkeyup: false,
       rules: {
-        name: "required",  
+        name: 'required',  
+        start_date: 'required',
         frequency: {
           required: true,
           number: true
@@ -91,6 +96,12 @@ AddScheduledTaskView = RockstoreLayoutView.extend({
         if (buttonDisabled(button)) return false;
         disableButton(button);
         var data = _this.$('#scheduled-task-create-form').getJSON();
+        var ts = moment(data.start_date, 'MM/DD/YYYY');
+        var tmp = _this.$('#start_time').val().split(':')
+        ts.add('h',tmp[0]).add('m', tmp[1]);
+        data.ts = ts.unix();
+        console.log(ts.unix());
+        
         $.ajax({
           url: '/api/sm/tasks/',
           type: 'POST',
@@ -111,6 +122,7 @@ AddScheduledTaskView = RockstoreLayoutView.extend({
             }
           }
         });
+        
         return false;
       }
     });

@@ -34,15 +34,27 @@
           </div>
         </div>
         <div class="control-group">
+          <label class="control-label" for="start_date">Start Date (MM/DD/YYYY)<span class="required"> *</span></label>
+          <div class="controls">
+            <input type="text" id="start_date" name="start_date" placeholder="Start Date">
+          </div>
+        </div>
+        <div class="control-group">
+          <label class="control-label" for="start_time">Start Time (hh:mm)<span class="required"> *</span></label>
+          <div class="controls">
+            <input type="text" id="start_time" name="start_time" placeholder="Start Time">
+          </div>
+        </div>
+        <div class="control-group">
           <label class="control-label" for="frequency">Frequency in seconds<span class="required"> *</span></label>
           <div class="controls">
             <input type="text" id="frequency" name="frequency" placeholder="Frequency" title="How often should this task run?">
           </div>
         </div>
         <div class="control-group">
-          <label class="control-label" for="type">Task type<span class="required"> *</span></label>
+          <label class="control-label" for="task_type">Task type<span class="required"> *</span></label>
           <div class="controls">
-            <select id="task-type" name="type">
+            <select id="task-type" name="task_type">
               <% _.each(taskTypes, function(taskType, index) { %>
                 <option value="<%= taskType %>"> <%= taskType %> </option>
               <% }); %> 
@@ -50,6 +62,11 @@
           </div>
         </div>
         <div id="optional-fields"></div>
+        <div class="control-group">
+          <div class="controls">
+            <input class="checkbox inline" type="checkbox" id="enabled" name="enabled" placeholder="Enable this task" title="Disabled tasks will be created but not run till they are enabled"> Enable this task?
+          </div>
+        </div>
         <div class="control-group">
           <div class="controls">
             <a id="js-cancel" class="btn">Cancel</a>

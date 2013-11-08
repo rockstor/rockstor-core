@@ -26,8 +26,7 @@
 
 ScheduledTasksView = RockstoreLayoutView.extend({
   events: {
-    'click .enable': 'enable',
-    'click .disable': 'disable'
+    'click .toggle-task': 'toggleEnabled',
   },
 
   initialize: function() {
@@ -59,23 +58,25 @@ ScheduledTasksView = RockstoreLayoutView.extend({
    
   },
 
-  enable: function(event) {
+  toggleEnabled: function(event) {
     var _this = this;
     if (event) { event.preventDefault(); }
     var button = $(event.currentTarget);
     if (buttonDisabled(button)) return false;
     disableButton(button); 
-    var replicaId = $(event.currentTarget).attr("data-replica-id");
+    var taskId = $(event.currentTarget).attr("data-task-id");
+    var enabled = $(event.currentTarget).attr('data-action') == 'enable' 
+    ? true : false;
     $.ajax({
-      url: '/api/sm/replicas/' + replicaId,
+      url: '/api/sm/tasks/' + taskId,
       type: 'PUT',
       dataType: 'json',
-      data: {enabled: 'True'},
+      data: {enabled: enabled},
       success: function() {
         enableButton(button);
         _this.collection.fetch({
           success: function() {
-            _this.renderReplicas();
+            _this.renderScheduledTasks();
           }
         });
       },
@@ -86,34 +87,6 @@ ScheduledTasksView = RockstoreLayoutView.extend({
       }
     });
   },
-
-  disable: function(event) {
-    var _this = this;
-    if (event) { event.preventDefault(); }
-    var button = $(event.currentTarget);
-    if (buttonDisabled(button)) return false;
-    disableButton(button); 
-    var replicaId = $(event.currentTarget).attr("data-replica-id");
-    $.ajax({
-      url: '/api/sm/replicas/' + replicaId,
-      type: 'PUT',
-      dataType: 'json',
-      data: {enabled: 'False'},
-      success: function() {
-        enableButton(button);
-        _this.collection.fetch({
-          success: function() {
-            _this.renderReplicas();
-          }
-        });
-      },
-      error: function(xhr, status, error) {
-        enableButton(button);
-        var msg = parseXhrError(xhr)
-        _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
-      }
-    });
-  }
 
 });
 

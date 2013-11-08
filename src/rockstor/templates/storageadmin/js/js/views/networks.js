@@ -42,7 +42,8 @@ NetworksView = Backbone.View.extend({
     });
     return this;
   },
-
+  
+ 
   renderNetworks: function() {
     var _this = this;
     $(this.el).empty();

@@ -22,7 +22,7 @@ from django.db import models
 class VmStat(models.Model):
 
     free_pages = models.IntegerField()
-    ts = models.DateTimeField(auto_now=True)
+    ts = models.DateTimeField(auto_now=True, db_index=True)
 
     class Meta:
         app_label = 'smart_manager'

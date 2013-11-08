@@ -97,6 +97,8 @@ AddPoolView = Backbone.View.extend({
           }
           return true;
         }, raid_err_msg);
+        
+        $('#add-pool-form :input').tooltip();
 
         $('#add-pool-form').validate({
           onfocusout: false,
@@ -105,6 +107,8 @@ AddPoolView = Backbone.View.extend({
             pool_name: "validatePoolName",  
             raid_level: "validateRaid"
           },
+          
+         
 
           submitHandler: function() {
             var button = $('#create_pool');

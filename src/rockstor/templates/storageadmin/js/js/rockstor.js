@@ -404,6 +404,7 @@ function updateLoadAvg() {
   RockStorGlobals.loadAvgDisplayed = true;
 }
 
+
 function fetchLoadAvg() {
   $.ajax({
     url: "/api/sm/sprobes/loadavg?limit=1&format=json", 
@@ -450,6 +451,29 @@ function displayLoadAvg(data) {
   str += mins;
   str += ' &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Load: ' + load_1 + ', ' + load_5 + ', ' + load_15;  
   $('#appliance-loadavg').html(str);
+}
+
+function fetchServerTime() {
+  RockStorGlobals.serverTimeTimer = window.setInterval(function() {
+    getCurrentTimeOnServer();
+  }, 10000);
+  getCurrentTimeOnServer();
+  RockStorGlobals.serverTimeFetched = true;
+}
+
+function getCurrentTimeOnServer() {
+  $.ajax({
+    url: "/api/commands/utcnow", 
+    type: "POST",
+    dataType: "json",
+    global: false, // dont show global loading indicator
+    success: function(data, status, xhr) {
+      RockStorGlobals.currentTimeOnServer = new Date(data);
+    },
+    error: function(xhr, status, error) {
+      console.log(error);
+    }
+  });
 }
 
 function fetchDependencies(dependencies, callback, context) {
