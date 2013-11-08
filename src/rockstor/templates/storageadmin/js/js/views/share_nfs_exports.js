@@ -80,6 +80,7 @@ ShareNFSExports  = RockstoreModuleView.extend({
       modify_choices: this.modify_choices,
       sync_choices: this.sync_choices,
     }));
+    this.$('#add-nfs-export-form :input').tooltip();
     this.validator = this.$("#add-nfs-export-form").validate({
       onfocusout: false,
       onkeyup: false,

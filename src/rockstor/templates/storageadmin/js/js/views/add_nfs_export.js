@@ -58,6 +58,9 @@ AddNFSExportView = RockstoreLayoutView.extend({
       modify_choices: this.modify_choices,
       sync_choices: this.sync_choices
     }));
+    
+    $('#add-nfs-export-form :input').tooltip();
+    
     $('#add-nfs-export-form').validate({
       onfocusout: false,
       onkeyup: false,
@@ -65,6 +68,7 @@ AddNFSExportView = RockstoreLayoutView.extend({
         shares: 'required',  
         host_str: 'required'
       },
+      
       submitHandler: function() {
         var button = $('#create-nfs-export');
         if (buttonDisabled(button)) return false;

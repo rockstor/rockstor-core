@@ -90,6 +90,11 @@ ConfigureServiceView = RockstoreLayoutView.extend({
     }
     $(this.el).html(this.template({service: this.service, config: configObj}));
 
+    this.$('#nis-form :input').tooltip();
+    this.$('#ldap-form :input').tooltip();
+    this.$('#ntpd-form :input').tooltip();
+    this.$('#winbind-form :input').tooltip();
+    
     this.validator = this.$('#' + this.formName).validate({
       onfocusout: false,
       onkeyup: false,
