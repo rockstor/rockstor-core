@@ -347,7 +347,7 @@ PAGINATION = {
 
 START_UID = 5000
 END_UID = 6000
-USER_SHELL = os.path.dirname(__file__) + '/bin/rcli'
+USER_SHELL = '${buildout:depdir}/bin/rcli'
 
 SCHEDULER = ('127.0.0.1', ${django-settings-conf:schedulerport})
 REPLICA_DATA_PORT = ${django-settings-conf:reppubport}
