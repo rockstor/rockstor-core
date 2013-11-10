@@ -203,10 +203,10 @@ var ProbeCollection = Backbone.Collection.extend({
 });
 
 var NetworkInterface = Backbone.Model.extend({
-  url: function() {
-    return '/api/network/' + this.get('name') + '/';
-  }
+  idAttribute: 'name',
+  urlRoot: '/api/network'
 });
+
 var NetworkInterfaceCollection = RockStorPaginatedCollection.extend({
   model: NetworkInterface,
   baseUrl: '/api/network'

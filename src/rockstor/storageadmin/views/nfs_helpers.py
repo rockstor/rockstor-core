@@ -62,9 +62,11 @@ def parse_options(request):
         options['syncable'] = request.DATA['sync_choice']
     return options
 
-def dup_export_check(share, host_str, request):
+def dup_export_check(share, host_str, request, export_id=None):
     for e in NFSExport.objects.filter(share=share):
         if (e.export_group.host_str == host_str):
+            if (e.export_group.id == export_id):
+                continue
             e_msg = ('An export already exists for the host string: %s' %
                      host_str)
             handle_exception(Exception(e_msg), request)

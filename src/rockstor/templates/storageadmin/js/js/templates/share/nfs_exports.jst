@@ -60,7 +60,11 @@
       </tr>
     </thead>
     <tbody id="nfs-exports-table-body">
-      <%= window.JST.share_nfs_exports_table_empty_body_template() %>
+      <tr>
+        <td colspan="5">
+          <h4>No nfs exports for this share </h4>
+        </td>
+      </tr>
     </tbody>
   </table>
 <% } %>

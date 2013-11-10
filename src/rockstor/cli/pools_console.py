@@ -30,7 +30,7 @@ class PoolsConsole(BaseConsole):
         BaseConsole.__init__(self)
         self.pprompt = prompt
         self.prompt = ('%s Pools>' % self.pprompt)
-        self.url = ('%spools/' % BaseConsole.url)
+        self.url = ('%spools' % BaseConsole.url)
 
     def do_list(self, args):
         """
@@ -39,7 +39,7 @@ class PoolsConsole(BaseConsole):
         Details of all pools:     list
         Details of a single pool: list <pool_name>
         """
-        url = self.url
+        url = self.url+'?format=json'
         if (args is not None):
             url = ('%s%s' % (self.url, args))
         pool_info = api_call(url)
@@ -66,11 +66,12 @@ class PoolsConsole(BaseConsole):
             error = '3 arguments expected. %d given' % len(arg_fields)
             return self.help_wrapper(error, 'add')
 
-        input_data = {'disks': arg_fields[1],
-                      'raid_level': arg_fields[2],}
-        url = ('%s%s' % (self.url, arg_fields[0]))
+        input_data = {'pname': arg_fields[0],
+                      'disks': arg_fields[1],
+                      'raid_level': arg_fields[2]}
+        url = (self.url)
         pool_info = api_call(url, data=input_data, calltype='post')
-        print pool_info
+        print_pool_info(pool_info)
 
     def do_delete(self, args):
         """
@@ -87,7 +88,7 @@ class PoolsConsole(BaseConsole):
         """
         if (args is None):
             self.do_help(args)
-        url = ('%s%s' % (self.url, args))
+        url = ('%s/%s' % (self.url, args))
         pool_info = api_call(url, calltype='delete')
         print pool_info
 

@@ -19,8 +19,25 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import requests
 import time
+import json
+import settings
+from storageadmin.exceptions import RockStorAPIException
+from functools import wraps
 
 auth_params = {'apikey': 'adminapikey'}
+
+def api_error(console_func):
+    @wraps(console_func)
+    def arg_wrapper(a1, a2):
+        try:
+            console_func(a1, a2)
+        except RockStorAPIException, e:
+            print ('Operation failed due to the following error returned '
+                   'from the server:')
+            print ('-----------------------------------------')
+            print e.detail
+            print ('-----------------------------------------')
+    return arg_wrapper
 
 def api_call(url, data=None, calltype='get', headers=None, save_error=True):
     call = getattr(requests, calltype)
@@ -31,13 +48,16 @@ def api_call(url, data=None, calltype='get', headers=None, save_error=True):
         r = call(url, verify=False, params=auth_params, data=data)
 
     if (r.status_code != 200):
-        if (save_error is True):
+        if (settings.DEBUG is True and save_error is True):
             cur_time = str(int(time.time()))
             err_file = '/tmp/err-%s.html' % cur_time
             with open(err_file, 'w') as efo:
                 for line in r.text.split('\n'):
                     efo.write('%s\n' % line)
             print('Error detail is saved at %s' % err_file)
+        error_d = json.loads(r.text)
+        if ('detail' in error_d):
+            raise RockStorAPIException(detail=error_d['detail'])
         r.raise_for_status()
 
     try:
@@ -57,10 +77,16 @@ def print_pool_info(pool_info):
             pool_info = pool_info['results']
         print("List of pools in the system")
         print("--------------------------------------")
-        print("Name\tSize(KB)\tUsage(KB)Raid")
-        for p in pool_info:
-            print('%s\t%d\t%s\t%s' %
-                  (p['name'], p['size'], p['usage'], p['raid']))
+        print("Name\tSize\tUsage\tRaid")
+        # Check if any pools exist, if not display no pools created message
+        if ([] == pool_info):
+            print('No pools have been created.')
+        else:
+            for p in pool_info:
+                p['size'] = sizeof_fmt(p['size'])
+                p['usage'] = sizeof_fmt(p['usage'])
+                print('%s\t%s\t%s\t%s' %
+                      (p['name'], p['size'], p['usage'], p['raid']))
     except Exception, e:
         print('Error rendering pool info')
 
@@ -88,7 +114,7 @@ def print_disk_info(disk_info):
         return
     try:
         if ('results' not in disk_info):
-            #scan cmd is  used, don't do anything
+            #POST is used, don't do anything
             disk_info = disk_info
         elif ('count' not in disk_info):
             disk_info = [disk_info]
@@ -96,12 +122,10 @@ def print_disk_info(disk_info):
             disk_info = disk_info['results']
         print("List of disks in the system")
         print("--------------------------------------------")
-        print("Name\tSize\tFree\tPool")
+        print("Name\tSize\tPool")
         for d in disk_info:
             d['size'] = sizeof_fmt(d['size'])
-            d['free'] = sizeof_fmt(d['free'])
-            print('%s\t%s\t%s\t%s' %
-		  (d['name'], d['size'], d['free'], d['pool']))
+            print('%s\t%s\t%s' % (d['name'], d['size'], d['pool']))
     except Exception, e:
         print('Error rendering disk info')
 
@@ -123,7 +147,12 @@ def print_export_info(export_info):
 
 def sizeof_fmt(num):
     for x in ['K','M','G','T','P','E']:
-        if (num < 1024.00 and num > -1024.00):
-            return "%3.2f%s" % (num, x)
-        num /= 1024.00
-    return "%3.2f%s" % (num, 'ZB')
+        if (num < 0.00):
+            num = 0
+            break
+        if (num < 1024.00):
+            break
+        else:
+            num /= 1024.00
+            x = 'Z'
+    return ("%3.2f%s" % (num, x))
