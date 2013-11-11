@@ -27,6 +27,7 @@
 ScheduledTasksView = RockstoreLayoutView.extend({
   events: {
     'click .toggle-task': 'toggleEnabled',
+    'click a[data-action=delete]': 'deleteTask'
   },
 
   initialize: function() {
@@ -100,6 +101,35 @@ ScheduledTasksView = RockstoreLayoutView.extend({
       }
     });
   },
+  
+  deleteTask: function(event) {
+    var _this = this;
+    if (event) { event.preventDefault(); }
+    var button = $(event.currentTarget);
+    if (buttonDisabled(button)) return false;
+    var taskId = $(event.currentTarget).attr("data-task-id");
+    var taskName = $(event.currentTarget).attr("data-task-name");
+    if(confirm("Delete task:  " + taskName + ". Are you sure?")){
+      $.ajax({
+        url: '/api/sm/tasks/' + taskId,
+        type: "DELETE",
+        dataType: "json",
+        success: function() {
+          enableButton(button);
+          _this.collection.fetch({
+            success: function() {
+              _this.renderScheduledTasks();
+            }
+          });
+        },
+        error: function(xhr, status, error) {
+          var msg = parseXhrError(xhr)
+          _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
+          enableButton(button);
+        }
+      });
+    }
+  }
 
 });
 
