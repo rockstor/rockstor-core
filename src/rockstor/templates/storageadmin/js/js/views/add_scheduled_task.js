@@ -100,7 +100,6 @@ AddScheduledTaskView = RockstoreLayoutView.extend({
         var tmp = _this.$('#start_time').val().split(':')
         ts.add('h',tmp[0]).add('m', tmp[1]);
         data.ts = ts.unix();
-        console.log(ts.unix());
         
         $.ajax({
           url: '/api/sm/tasks/',

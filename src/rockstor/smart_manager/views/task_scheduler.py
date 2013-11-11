@@ -88,11 +88,8 @@ class TaskSchedulerView(AdvancedSProbeView):
     def put(self, request, tdid):
         tdo = self._task_def(request, tdid)
         enabled = request.DATA['enabled']
-        if (enabled == 'False'):
-            enabled = False
-        else:
-            enabled = True
         tdo.enabled = enabled
+        logger.info('enabled: %s. type: %s' % (request.DATA, type(enabled)))
         tdo.save()
         return Response(TaskDefinitionSerializer(tdo).data)
 

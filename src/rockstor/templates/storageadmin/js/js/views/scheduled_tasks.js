@@ -33,7 +33,7 @@ ScheduledTasksView = RockstoreLayoutView.extend({
     // call initialize of base
     this.constructor.__super__.initialize.apply(this, arguments);
     // set template
-    this.template = window.JST.scheduled_tasks_tasks;
+    this.template = window.JST.scheduled_tasks_task_defs;
     // add dependencies
     this.collection = new TaskDefCollection();
     this.tasks = new TaskCollection();
@@ -83,7 +83,8 @@ ScheduledTasksView = RockstoreLayoutView.extend({
       url: '/api/sm/tasks/' + taskId,
       type: 'PUT',
       dataType: 'json',
-      data: {enabled: enabled},
+      contentType: 'application/json',
+      data: JSON.stringify({enabled: enabled}),
       success: function() {
         enableButton(button);
         _this.collection.fetch({

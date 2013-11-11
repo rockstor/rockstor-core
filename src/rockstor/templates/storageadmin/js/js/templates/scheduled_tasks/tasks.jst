@@ -19,61 +19,44 @@
  */
 </script>
 
-
-<div class="messages"></div>
-
-<% if (!scheduledTasks.isEmpty()) { %>
+<h4>Task history for <%= taskDef.get('name') %> </h4>
+<% if (!tasks.isEmpty()) { %>
   <div class="row-fluid">
     <div class="span12">
-      <table id="scheduled-tasks-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of scheduled tasks">
+      <div class="messages"></div>
+      <table id="replica-trails-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="Replica trails">
         <thead>
           <tr>
-            <th scope="col" abbr="Task name">Task name</th>
-            <th scope="col" abbr="Task type">Type</th>
-            <th scope="col" abbr="Start date/time">Start date/time</th>
-            <th scope="col" abbr="Task type">Frequency (sec)</th>
-            <th scope="col" abbr="Task type">Enabled</th>
-            <th scope="col" abbr="Last">Last run</th>
-            <th scope="col" abbr="Actions">Actions</th>
+            <th scope="col" abbr="ID">ID</th>
+            <th scope="col" abbr="Start Time">Start Time</th>
+            <th scope="col" abbr="Start Time">End Time</th>
+            <th scope="col" abbr="Start Time">Status</th>
+            <th scope="col" abbr="Start Time">Duration</th>
           </tr>
         </thead>
         <tbody>
-          <% scheduledTasks.each(function(t) { %>
+          <% tasks.each(function(r) { %>
             <tr>
-              <td><%= t.get('name') %></td>
+              <td><%= task.get('id') %></td>
+              <td><%= moment(r.get('start')).format(RS_DATE_FORMAT) %></td>
               <td>
-                <%= t.get('task_type') %>
-                <% if (t.get('task_type') == 'snapshot') { %>
-                  (<%= JSON.parse(t.get('json_meta')).share %>)
-                <% } else { %>
-                  (<%= JSON.parse(t.get('json_meta')).pool %>)
+                <% if (r.get('end_ts')) { %>
+                  <%= moment(r.get('end')).format(RS_DATE_FORMAT) %>
                 <% } %>
               </td>
-              <td><%= moment(t.get('ts')).format(RS_DATE_FORMAT) %></td>
-              <td><%= t.get('frequency') %>
+              <td><%= r.get('state') %></td>
               <td>
-                <% if (t.get('enabled')) { %>
-                  <input type="checkbox" disabled="true" checked="true"></input>
+                <% if (r.get('end_ts')) { %>
+                  <%= moment(r.get('end')).from(moment(r.get('start'))) %>
                 <% } else { %>
-                  <input type="checkbox" disabled="true"></input>
                 <% } %>
-              </td>
-              <td></td>
-              <td>
-                <% if (t.get('enabled')) { %>
-                  <a href="#" class="toggle-task" data-task-id="<%= t.id %>" data-action="disable"><i class="icon-minus-sign" rel="tooltip" title="Disable"></i></a>
-                <% } else { %>
-                  <a href="#" class="toggle-task" data-task-id="<%= t.id %>" data-action="enable"><i class="icon-plus-sign" rel="tooltip" title="Enable"></i></a>
-                <% } %>
-              
               </td>
             </tr>
           <% }); %>
         </tbody>
       </table>
+      <div class="pagination-ph"></div>
     </div>
   </div>
-<% } else { %>
-  <h4>No tasks have been scheduled</h4>
 <% } %>
-<a href="#add-scheduled-task" class="btn btn-primary">Add Scheduled Task</a>
+

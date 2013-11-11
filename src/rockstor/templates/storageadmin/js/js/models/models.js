@@ -279,6 +279,18 @@ var Task = Backbone.Model.extend({
 
 var TaskCollection = RockStorPaginatedCollection.extend({
   model: Task,
-  baseUrl: "/api/sm/tasks/log"
+  initialize: function(models, options) {
+    this.constructor.__super__.initialize.apply(this, arguments);
+    if (options) {
+      this.taskDefId = options.taskDefId;
+    }
+  },
+  baseUrl: function() {
+    if (this.taskDefId) {
+      return '/api/sm/tasks/log/taskdef/' + this.taskDefId;
+    } else {
+      return '/api/sm/tasks/log';
+    }
+  }
 });
 
