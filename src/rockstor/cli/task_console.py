@@ -31,18 +31,45 @@ class TaskConsole(BaseConsole):
         self.prompt = ('%s %s>' % (self.pprompt, self.greeting))
         self.baseurl = BaseConsole.url + 'sm/tasks/'
 
+    def do_types(self, args):
+        """
+        print all task types that can be scheduled
+        """
+        url = ('%stypes' % self.baseurl)
+        print api_call(url)
+
     def do_list(self, args):
-        print api_call(self.baseurl)
+        """
+        print all scheduled tasks, or optionally for the given id.
+
+        list <task_id>
+        """
+        url = self.baseurl
+        if (len(args) > 0):
+            url = ('%s%s' % (url, args))
+        print api_call(url)
+
+    def do_log(self, args):
+        """
+        print all task logs, or optionally for the given task
+
+        log <task_id>
+        """
+        url = ('%slog' % self.baseurl)
+        if (len(args) > 0):
+            url = ('%s/taskdef/%s' % (url, args))
+        print api_call(url)
 
     def do_snap(self, args):
         """
-        snap share_name name_prefix frequency
+        snap share_name name_prefix frequency tag
         """
-        if (args is not None):
+        if (len(args) > 0):
             fields = args.split()
             input_data = {'meta': {'share': fields[0],
                                    'prefix': fields[1],},
-                          'name': 'snapshot',
+                          'task_type': 'snapshot',
+                          'name': fields[3],
                           'ts': time.time() + 120,
                           'frequency': fields[2],}
             print input_data
@@ -55,24 +82,55 @@ class TaskConsole(BaseConsole):
 
     def do_scrub(self, args):
         """
-        scrub pool_name
+        scrub pool_name frequency tag
         """
-        if (args is None):
+        if (len(args) == 0):
             return self.do_help(args)
 
-        url = ('%sscrub' % self.baseurl)
-        input_data = {'pool': args,}
-        scrub_info = api_call(url, data=input_data, calltype='post')
+        fields = args.split()
+        input_data = {'meta': {'pool': fields[0]},
+                      'task_type': 'scrub',
+                      'name': fields[2],
+                      'ts': time.time() + 120,
+                      'frequency': fields[1],}
+        print input_data
+        headers = {'content-type': 'application/json'}
+        scrub_info = api_call(self.baseurl, data=json.dumps(input_data),
+                              calltype='post', headers=headers)
         print scrub_info
+
+    def _toggle_event(self, event_id, enabled=False):
+        url = ('%s/%s' % (self.baseurl, event_id))
+        input_data = {'enabled': enabled,}
+        print api_call(url, data=input_data, calltype='put')
+
+    def do_disable(self, args):
+        """
+        disable an event.
+
+        disable event_id
+        """
+        if (len(args) == 0):
+            return self.do_help(args)
+        self._toggle_event(args)
+
+    def do_enable(self, args):
+        """
+        enable an event
+
+        eanble event_id
+        """
+        if (len(args) == 0):
+            return self.do_help(args)
+        self._toggle_event(args, enabled=True)
 
     def do_delete(self, args):
         """
         delete event_id
         """
-        if (args is None):
+        if (len(args) == 0):
             return self.do_help(args)
-
-        event_info = api_call(self.baseurl, data={'id': args,},
-                              calltype='delete')
+        url = ('%s%s' % (self.baseurl, args))
+        event_info = api_call(url, calltype='delete')
         print event_info
 

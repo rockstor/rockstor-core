@@ -75,10 +75,6 @@ class ReplicaView(GenericView):
         else:
             enabled = True
         logger.info('enabled: %s. type: %s' % (request.DATA, type(enabled)))
-        if (not isinstance(enabled, bool)):
-            e_msg = ('enabled flag must be a boolean')
-            handle_exception(Exception(e_msg), request)
-
         r.enabled = enabled
         r.save()
         return Response(ReplicaSerializer(r).data)

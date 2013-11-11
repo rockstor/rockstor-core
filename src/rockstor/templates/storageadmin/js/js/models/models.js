@@ -264,3 +264,33 @@ var ReplicaTrailCollection = RockStorPaginatedCollection.extend({
   }
 });
 
+var TaskDef = Backbone.Model.extend({
+  urlRoot: "/api/sm/tasks/"                                   
+});
+
+var TaskDefCollection = RockStorPaginatedCollection.extend({
+  model: TaskDef,
+  baseUrl: "/api/sm/tasks/"
+});
+
+var Task = Backbone.Model.extend({
+  urlRoot: "/api/sm/tasks/log"                                   
+});
+
+var TaskCollection = RockStorPaginatedCollection.extend({
+  model: Task,
+  initialize: function(models, options) {
+    this.constructor.__super__.initialize.apply(this, arguments);
+    if (options) {
+      this.taskDefId = options.taskDefId;
+    }
+  },
+  baseUrl: function() {
+    if (this.taskDefId) {
+      return '/api/sm/tasks/log/taskdef/' + this.taskDefId;
+    } else {
+      return '/api/sm/tasks/log';
+    }
+  }
+});
+

@@ -62,6 +62,9 @@ var AppRouter = Backbone.Router.extend({
     "nfs-exports/edit/:nfsExportGroupId": "editNFSExport",
     "network": "showNetworks",
     "network/:name/edit": "editNetwork",
+    "scheduled-tasks": "showScheduledTasks",
+    "scheduled-tasks/:taskId/log": "showTasks",
+    "add-scheduled-task": "addScheduledTask",
     "*path": "showHome"
   },
 
@@ -392,6 +395,32 @@ var AppRouter = Backbone.Router.extend({
     this.currentLayout = new CreateCloneView({
       sourceType: 'share',
       shareName: shareName
+    });
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  showScheduledTasks: function() {
+    this.renderSidebar('system', 'scheduled-tasks');
+    this.cleanup();
+    this.currentLayout = new ScheduledTasksView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+  
+  addScheduledTask: function() {
+    this.renderSidebar('system', 'scheduled-tasks');
+    this.cleanup();
+    this.currentLayout = new AddScheduledTaskView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  showTasks: function(taskDefId) {
+    this.renderSidebar("system", "scheduled-tasks");
+    this.cleanup();
+    this.currentLayout = new TasksView({
+      taskDefId: taskDefId
     });
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);

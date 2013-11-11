@@ -1,0 +1,68 @@
+<script>
+/*
+ * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ *
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ *
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+</script>
+
+<h4>Task history for <%= taskDef.get('name') %> &nbsp;  
+(<% if (taskDef.get('task_type') == 'snapshot') { %>
+  Share <%= JSON.parse(taskDef.get('json_meta')).share %> <%= taskDef.get('task_type') %>
+<% } else { %> 
+  Pool <%= JSON.parse(taskDef.get('json_meta')).pool %> <%= taskDef.get('task_type') %>
+<% } %>)
+</h4>
+<% if (!tasks.isEmpty()) { %>
+  <div class="row-fluid">
+    <div class="span12">
+      <div class="messages"></div>
+      <table id="tasks-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="Tasks">
+        <thead>
+          <tr>
+            <th scope="col" abbr="ID">ID</th>
+            <th scope="col" abbr="Start Time">Start Time</th>
+            <th scope="col" abbr="Start Time">End Time</th>
+            <th scope="col" abbr="Start Time">Status</th>
+            <th scope="col" abbr="Start Time">Duration</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% tasks.each(function(task) { %>
+            <tr>
+              <td><%= task.get('id') %></td>
+              <td><%= moment(task.get('start')).format(RS_DATE_FORMAT) %></td>
+              <td>
+                <% if (task.get('end')) { %>
+                  <%= moment(task.get('end')).format(RS_DATE_FORMAT) %>
+                <% } %>
+              </td>
+              <td><%= task.get('state') %></td>
+              <td>
+                <% if (task.get('end')) { %>
+                  <%= moment(task.get('end')).from(moment(task.get('start'))) %>
+                <% } else { %>
+                <% } %>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+      <div class="pagination-ph"></div>
+    </div>
+  </div>
+<% } %>
+
