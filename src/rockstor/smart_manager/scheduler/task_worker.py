@@ -36,17 +36,27 @@ class TaskWorker(Process):
 
     def run(self):
 
-        meta = json.loads(self.task.json_meta)
+        meta = json.loads(self.task.task_def.json_meta)
         url = None
-        if (self.task.name == 'snapshot'):
+        if (self.task.task_def.task_type == 'snapshot'):
             name = ('%s_%d' % (meta['prefix'], int(time.time())))
             url = ('%sshares/%s/snapshots/%s' % (self.baseurl, meta['share'],
                                                  name))
-        elif (self.task.name == 'scrub'):
-            url = ('%spools/%s/scrub/' % (self.baseurl, meta['pool']))
+        elif (self.task.task_def.task_type == 'scrub'):
+            url = ('%spools/%s/scrub' % (self.baseurl, meta['pool']))
 
         try:
             api_call(url, data=None, calltype='post')
+            if (self.task.task_def.task_type == 'scrub'):
+                url = ('%spools/%s/scrub/status' % (self.baseurl,
+                                                    meta['pool']))
+                while (True):
+                    status = api_call(url, data=None, calltype='post')
+                    logger.info('scrub status: %s' % status)
+                    if (status['status'] == 'finished'):
+                        break
+                    time.sleep(10)
+
         except Exception, e:
             logger.exception(e)
             sys.exit(3)

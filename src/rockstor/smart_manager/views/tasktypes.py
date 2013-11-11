@@ -23,20 +23,14 @@ from rest_framework.authentication import (BasicAuthentication,
                                            SessionAuthentication,)
 from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
-from smart_manager.serializers import SProbeConfigSerializer
-from smart_manager.taplib.probe_config import (TapConfig, TAP_MAP)
+from smart_manager.serializers import (TaskType, TaskTypeSerializer)
 
-
-class SProbeView(generics.ListAPIView):
+class TaskTypeView(generics.ListAPIView):
     authentication_classes = (DigestAuthentication, SessionAuthentication,
                               BasicAuthentication,)
     permission_classes = (IsAuthenticated,)
-    serializer_class = SProbeConfigSerializer
+    serializer_class = TaskTypeSerializer
 
     def get_queryset(self):
-        config_list = []
-        for pid in TAP_MAP.keys():
-            config_list.append(TapConfig(uuid=pid,
-                                         location=TAP_MAP[pid]['location'],
-                                         sdetail=TAP_MAP[pid]['sdetail']))
-        return config_list
+        return [TaskType('scrub', 'scrub a pool'),
+                TaskType('snapshot', 'take snapshot of a pool'),]
