@@ -35,6 +35,8 @@ CreateCloneView = RockstoreLayoutView.extend({
     this.sourceType = this.options.sourceType;
     this.shareName = this.options.shareName;
     this.snapName = this.options.snapName;
+    console.log('shareName = ' + this.shareName);
+    console.log('snapName = ' + this.snapName);
   },
 
   render: function() {
