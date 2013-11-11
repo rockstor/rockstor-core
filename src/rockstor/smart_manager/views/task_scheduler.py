@@ -38,12 +38,10 @@ class TaskSchedulerView(GenericView):
         if ('tdid' in kwargs):
             self.paginate_by = 0
             try:
-                logger.debug('getting task definition for %s' % kwargs['tdid'])
                 return TaskDefinition.objects.get(id=kwargs['tdid'])
             except:
                 logger.debug('exception')
                 return []
-        logger.debug('returning objects')
         return TaskDefinition.objects.filter().order_by('-id')
 
     @transaction.commit_on_success
@@ -61,10 +59,7 @@ class TaskSchedulerView(GenericView):
                 frequency = None
             else:
                 frequency = frequency - (frequency % 60)
-        logger.info('meta: %s' % request.DATA['meta'])
         json_meta = json.dumps(request.DATA['meta'])
-        logger.info('json_meta: %s' % json_meta)
-        logger.info('request: %s' % request.DATA)
 
         ts = int(float(request.DATA['ts']))
         ts_dto = datetime.utcfromtimestamp(float(ts)).replace(second=0,
@@ -87,7 +82,6 @@ class TaskSchedulerView(GenericView):
         tdo = self._task_def(request, tdid)
         enabled = request.DATA['enabled']
         tdo.enabled = enabled
-        logger.info('enabled: %s. type: %s' % (request.DATA, type(enabled)))
         tdo.save()
         return Response(TaskDefinitionSerializer(tdo).data)
 

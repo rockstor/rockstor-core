@@ -40,16 +40,13 @@ class TaskDispatcher(Process):
 
     def _schedulable(self, td, now):
         if (td.ts > now):
-            logger.info('Event: %s is in the future' % td.name)
             return False
         if (td.ts == now):
             logger.info('Event: %s is now' % td.name)
             return True
         delta = (now - td.ts).total_seconds()
-        logger.info('delta: %d. frequency: %d' % (delta, td.frequency))
         if (delta % td.frequency == 0):
             return True
-        logger.info('returning false. now: %s ts: %s' % (now, td.ts))
         return False
 
     def run(self):
