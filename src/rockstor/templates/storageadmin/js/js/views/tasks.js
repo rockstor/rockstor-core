@@ -40,7 +40,7 @@ TasksView = RockstoreLayoutView.extend({
     this.taskDef = new TaskDef({id: this.taskDefId});
     this.dependencies.push(this.taskDef);
     this.collection = new TaskCollection(null, {
-      replicaId: this.replicaId
+      taskDefId: this.taskDefId
     });
     this.collection.pageSize = 10;
     this.dependencies.push(this.collection);
@@ -56,7 +56,7 @@ TasksView = RockstoreLayoutView.extend({
   },
   
   firstFetch: function() {
-    this.replicaFetched = true;
+    this.taskDefFetched = true;
     this.renderTasks();
   },
 
@@ -76,6 +76,6 @@ TasksView = RockstoreLayoutView.extend({
 });
 
 // Add pagination
-Cocktail.mixin(ReplicaTrailsView, PaginationMixin);
+Cocktail.mixin(TasksView, PaginationMixin);
 
 

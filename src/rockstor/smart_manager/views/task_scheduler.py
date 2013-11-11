@@ -21,16 +21,16 @@ from smart_manager.serializers import TaskDefinitionSerializer
 from django.conf import settings
 from django.db import transaction
 import json
-from advanced_sprobe import AdvancedSProbeView
 from rest_framework.response import Response
 from django.utils.timezone import utc
 from datetime import datetime
 from storageadmin.util import handle_exception
+from generic_view import GenericView
 import logging
 logger = logging.getLogger(__name__)
 
 
-class TaskSchedulerView(AdvancedSProbeView):
+class TaskSchedulerView(GenericView):
     serializer_class = TaskDefinitionSerializer
     valid_tasks = ('snapshot', 'scrub',)
 
@@ -38,15 +38,13 @@ class TaskSchedulerView(AdvancedSProbeView):
         if ('tdid' in kwargs):
             self.paginate_by = 0
             try:
+                logger.debug('getting task definition for %s' % kwargs['tdid'])
                 return TaskDefinition.objects.get(id=kwargs['tdid'])
             except:
+                logger.debug('exception')
                 return []
+        logger.debug('returning objects')
         return TaskDefinition.objects.filter().order_by('-id')
-
-    def get_paginate_by(self, foo):
-        if (self.paginate_by is None):
-            return None
-        return settings.PAGINATION['page_size']
 
     @transaction.commit_on_success
     def post(self, request):

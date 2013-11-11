@@ -19,12 +19,18 @@
  */
 </script>
 
-<h4>Task history for <%= taskDef.get('name') %> </h4>
+<h4>Task history for <%= taskDef.get('name') %> &nbsp;  
+(<% if (taskDef.get('task_type') == 'snapshot') { %>
+  Share <%= JSON.parse(taskDef.get('json_meta')).share %> <%= taskDef.get('task_type') %>
+<% } else { %> 
+  Pool <%= JSON.parse(taskDef.get('json_meta')).pool %> <%= taskDef.get('task_type') %>
+<% } %>)
+</h4>
 <% if (!tasks.isEmpty()) { %>
   <div class="row-fluid">
     <div class="span12">
       <div class="messages"></div>
-      <table id="replica-trails-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="Replica trails">
+      <table id="tasks-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="Tasks">
         <thead>
           <tr>
             <th scope="col" abbr="ID">ID</th>
@@ -35,19 +41,19 @@
           </tr>
         </thead>
         <tbody>
-          <% tasks.each(function(r) { %>
+          <% tasks.each(function(task) { %>
             <tr>
               <td><%= task.get('id') %></td>
-              <td><%= moment(r.get('start')).format(RS_DATE_FORMAT) %></td>
+              <td><%= moment(task.get('start')).format(RS_DATE_FORMAT) %></td>
               <td>
-                <% if (r.get('end_ts')) { %>
-                  <%= moment(r.get('end')).format(RS_DATE_FORMAT) %>
+                <% if (task.get('end')) { %>
+                  <%= moment(task.get('end')).format(RS_DATE_FORMAT) %>
                 <% } %>
               </td>
-              <td><%= r.get('state') %></td>
+              <td><%= task.get('state') %></td>
               <td>
-                <% if (r.get('end_ts')) { %>
-                  <%= moment(r.get('end')).from(moment(r.get('start'))) %>
+                <% if (task.get('end')) { %>
+                  <%= moment(task.get('end')).from(moment(task.get('start'))) %>
                 <% } else { %>
                 <% } %>
               </td>
