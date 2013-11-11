@@ -23,7 +23,7 @@ from smart_manager.models import (CPUMetric, LoadAvg, MemInfo, ServiceStatus,
                                   NFSDShareDistribution,
                                   DiskStat, NetStat,
                                   NFSDShareClientDistribution,
-                                  NFSDUidGidDistribution, TaskDefinition,
+                                  NFSDUidGidDistribution, TaskDefinition, Task,
                                   Replica, ReplicaTrail)
 from smart_manager.taplib.probe_config import TapConfig
 
@@ -104,6 +104,28 @@ class SProbeConfigSerializer(serializers.Serializer):
 class TaskDefinitionSerializer(serializers.ModelSerializer):
     class Meta:
         model = TaskDefinition
+
+class TaskSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Task
+
+class TaskType(object):
+
+    def __init__(self, name, detail):
+        self.name = name
+        self.detail = detail
+
+class TaskTypeSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=255)
+    detail = serializers.CharField(max_length=255)
+
+    def restore_object(self, attrs, instance=None):
+        if (instance is not None):
+            instance.name = attrs.get('name', instance.name)
+            instance.detail = attrs.get('detail', instance.detail)
+            return instance
+        return TaskType(**attrs)
+
 
 class ReplicaSerializer(serializers.ModelSerializer):
     class Meta:
