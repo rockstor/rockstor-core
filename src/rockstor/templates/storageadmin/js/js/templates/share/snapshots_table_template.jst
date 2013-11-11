@@ -39,7 +39,10 @@
           <td><i class="icon-camera"></i> <%= snapshot.get('name') %></td>
           <td><%= moment(snapshot.get("toc")).format(RS_DATE_FORMAT) %></td>
           <td><%= humanize.filesize(snapshot.get('size')*1024) %></td>
-          <td><a href="#" class="js-snapshot-delete" id="delete_snapshot_<%= snapshot.get('name') %>" data-name="<%= snapshot.get('name') %>" data-share-name="<%= share.get('name') %>" data-action="delete"><i class="icon-trash"></i></a></td>
+          <td>
+            <a href="#shares/<%= share.get('name') %>/snapshots/<%= snapshot.get('name') %>/create-clone"><i class="icon-book"></i></a>
+            <a href="#" class="js-snapshot-delete" id="delete_snapshot_<%= snapshot.get('name') %>" data-name="<%= snapshot.get('name') %>" data-share-name="<%= share.get('name') %>" data-action="delete"><i class="icon-trash"></i></a>
+          </td>
         </tr>
       <% }); %>
     </tbody>
