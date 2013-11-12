@@ -2,38 +2,39 @@
 /*
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
- * 
+ *
  * RockStor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
- * 
+ *
  * RockStor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 </script>
 
 <% if (sourceType == 'share') { %>
-  <h3>Create clone from share <%= shareName %></h3>
+  <h3>Create clone from share(<%= shareName %>)</h3>
 <% } else { %>
-  <h3>Create clone from snapshot <%= snapName %> of share <%= shareName %></h3>
+  <h3>Create clone from snapshot(<%= snapName %>) of share(<%= shareName %>)</h3>
 <% } %>
 <div class="row-fluid">
   <div class="span8">
     <label class="control-label"><span class="required">*</span> indicates required fields</label>
-    <div class="form-box"> 
+    <div class="form-box">
       <form name="create-clone-form" id="create-clone-form">
         <div class="messages"></div>
         <div class="control-group">
           <label class="control-label" for="name">Clone Name<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" name="name" id="name" title="Clone Name">
+            <input type="text" name="name" id="name" title="Desired name of the
+  Clone">
           </div>
         </div>
         <div class="control-group">
