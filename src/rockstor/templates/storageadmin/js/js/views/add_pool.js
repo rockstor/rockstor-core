@@ -77,7 +77,12 @@ AddPoolView = Backbone.View.extend({
         $.validator.addMethod('validateRaid', function(value) {
           var raid_level = $('#raid_level').val();
           var n = $("input:checked.disk").length;
-          if (raid_level == 'raid0') {
+          if (raid_level == 'single') {
+            if (n < 1) {
+              err_msg = 'At least one disk must be selected';
+              return false;
+            }
+          } else if (raid_level == 'raid0') {
             if (n < 2) {
               err_msg = 'Raid0 requires at least 2 disks to be selected';
               return false;
@@ -98,7 +103,11 @@ AddPoolView = Backbone.View.extend({
           return true;
         }, raid_err_msg);
         
-        $('#add-pool-form :input').tooltip();
+        this.$('#add-pool-form input').tooltip();
+        this.$('#raid_level').tooltip({
+          html: true,
+          title: "Desired RAID level of the pool<br><strong>Single</strong>: No software raid. (Recommended while using hardware raid).<br><strong>Raid0</strong>, <strong>Raid1</strong> and <strong>Raid10</strong> are similar to conventional implementations with key differences.<br>See documentation for more information"
+        });
 
         $('#add-pool-form').validate({
           onfocusout: false,
