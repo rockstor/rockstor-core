@@ -62,6 +62,7 @@ RockstoreLayoutView = Backbone.View.extend({
     _.each(this.dependencies, function(dependency) {
       _this.requestCount += 1;
       dependency.fetch({
+        silent: true,
         success: function(request){
           _this.requestCount -= 1;
           if (_this.requestCount == 0) {
