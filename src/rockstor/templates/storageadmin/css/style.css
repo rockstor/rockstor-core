@@ -1562,6 +1562,7 @@ input[type="radio"].selectedRoot {
 
 /* Bootstrap tooltip */
 .tooltip {
+  line-height: 1.2;
 }
 
 .tooltip.in {
@@ -1606,10 +1607,10 @@ input[type="radio"].selectedRoot {
 }
 
 .tooltip-inner {
-  max-width: 200px;
+  text-align: left;
+  max-width: 250px;
   padding: 3px 8px;
   color: #555;
-  text-align: center;
   text-decoration: none;
   background-color: #FCF99A;
   -webkit-border-radius: 4px;
