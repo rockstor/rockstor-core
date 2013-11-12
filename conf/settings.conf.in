@@ -232,6 +232,7 @@ PIPELINE_JS = {
             'js/views/edit_nfs_export.js',
             'js/views/networks.js',
             'js/views/edit_network.js',
+            'js/views/create_clone.js',
             'js/views/scheduled_tasks.js',
             'js/views/add_scheduled_task.js',
             'js/views/tasks.js',

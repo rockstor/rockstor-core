@@ -42,8 +42,8 @@ var AppRouter = Backbone.Router.extend({
     "add_share?poolName=:poolName": "addShare",
     "add_share": "addShare",
     "shares/:shareName": "showShare",
-    "shares/:shareName/:snapshots": "showSnaps",
-    "shares/:shareName/:snapshots/:snapName": "showSnap",
+    "shares/:shareName/create-clone": "createCloneFromShare",
+    "shares/:shareName/snapshots/:snapName/create-clone": "createCloneFromSnapshot",
     "services": "showServices",
     "services/:serviceName/edit": "configureService",
     "support":"showSupport",
@@ -385,6 +385,31 @@ var AppRouter = Backbone.Router.extend({
     this.renderSidebar("system", "network");
     this.cleanup();
     this.currentLayout = new EditNetworkView({name: name});
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+  
+  createCloneFromShare: function(shareName) {
+    RockStorSocket.removeAllListeners();
+    this.renderSidebar("storage", "shares");
+    this.cleanup();
+    this.currentLayout = new CreateCloneView({
+      sourceType: 'share',
+      shareName: shareName
+    });
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  createCloneFromSnapshot: function(shareName, snapName) {
+    RockStorSocket.removeAllListeners();
+    this.renderSidebar("storage", "shares");
+    this.cleanup();
+    this.currentLayout = new CreateCloneView({
+      sourceType: 'snapshot',
+      shareName: shareName,
+      snapName: snapName
+    });
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },

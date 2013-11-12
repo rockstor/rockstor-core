@@ -27,7 +27,7 @@ class SharesConsole(BaseConsole):
         BaseConsole.__init__(self)
         self.pprompt = prompt
         self.prompt = ('%s Shares>' % self.pprompt)
-        self.url = ('%sshares/' % BaseConsole.url)
+        self.url = ('%sshares' % BaseConsole.url)
 
     def do_list(self, args):
         """
@@ -126,6 +126,17 @@ class SharesConsole(BaseConsole):
         url = ('%s/%s' % (self.url, sname))
         share_info = api_call(url, data=input_data, calltype='put')
         print_share_info(share_info)
+
+    def do_clone(self, args):
+        """
+        Clone a share.
+
+        clone <share_name> <clone_name>
+        """
+        fields = args.split()
+        input_data = {'name': fields[1],}
+        url = ('%s/%s/clone' % (self.url, fields[0]))
+        print api_call(url, data=input_data, calltype='post')
 
     def do_change_op(self, args):
         """

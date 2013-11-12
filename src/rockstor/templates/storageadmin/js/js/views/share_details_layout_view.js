@@ -302,6 +302,6 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
 
   showPermStr: function() {
     this.$("#permStrEdit").html(this.createPermStr());
-  }
+  },
 
 });
