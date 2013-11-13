@@ -20,7 +20,6 @@
 </script>
 
 <h3>Rollback share (<%= share.get('name') %>) to selected snapshot</h3>
-<div class="messages"></div>
 
 <form name="rollback-form" id="rollback-form">
   <div id="ph-snapshot-list"></div>
@@ -38,6 +37,7 @@
     <h3 id="myModalLabel">Confirm share rollback</h3>
   </div>
   <div class="modal-body">
+    <div class="messages"></div>
     <h4>Share <%= share.get('name') %> will be rolled back to snapshot <span id="confirm-snap-name"></span>. Are you sure?</h4>
   </div>
   <div class="modal-footer">
