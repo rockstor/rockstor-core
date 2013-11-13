@@ -39,11 +39,14 @@ class PoolsConsole(BaseConsole):
         Details of all pools:     list
         Details of a single pool: list <pool_name>
         """
-        url = self.url+'?format=json'
-        if (args is not None):
-            url = ('%s%s' % (self.url, args))
-        pool_info = api_call(url)
-        print_pool_info(pool_info)
+        try:
+            url = self.url+'?format=json'
+            if (args is not None):
+                url = ('%s%s' % (self.url, args))
+            pool_info = api_call(url)
+            print_pool_info(pool_info)
+        except:
+            print('Error rendering pool info, is ROCKSTOR running?')
 
     def do_add(self, args):
         """
@@ -86,11 +89,14 @@ class PoolsConsole(BaseConsole):
         To delete a pool named pool0
             delete pool0
         """
-        if (args is None):
-            self.do_help(args)
-        url = ('%s/%s' % (self.url, args))
-        pool_info = api_call(url, calltype='delete')
-        print pool_info
+        try:
+            if (args is None):
+                self.do_help(args)
+            url = ('%s/%s' % (self.url, args))
+            pool_info = api_call(url, calltype='delete')
+            print pool_info
+        except:
+            print('Error while attempting to delete pool')
 
     def do_console(self, args):
         """
