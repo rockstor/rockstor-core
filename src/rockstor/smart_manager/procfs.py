@@ -35,16 +35,27 @@ from proc.net import network_stats
 
 import logging
 logger = logging.getLogger(__name__)
+from django.core.serializers import serialize
+import zmq
+from django.conf import settings
+
 
 class ProcRetreiver(Process):
 
-    def __init__(self, q):
-        self.q = q
+    def __init__(self):
+        #self.q = q
         self.ppid = os.getpid()
         self.sleep_time = 1
         super(ProcRetreiver, self).__init__()
 
+    def _sink_put(self, sink, ro):
+        data = serialize("json", (ro,))
+        sink.send_json(data)
+
     def run(self):
+        context = zmq.Context()
+        self.sink_socket = context.socket(zmq.PUSH)
+        self.sink_socket.connect('tcp://%s:%d' % settings.SPROBE_SINK)
         #extract metrics and put in q
         pu_time = time.mktime(time.gmtime())
         loadavg_time = pu_time
@@ -57,15 +68,14 @@ class ProcRetreiver(Process):
                     msg = ('Parent process(smd) exited. I am exiting too.')
                     return logger.error(msg)
 
-                if (self.q.qsize() < 1000):
-                    cur_cpu_stats = self.cpu_stats(cur_cpu_stats)
-                    loadavg_time = self.loadavg(loadavg_time)
-                    self.meminfo()
-                    pu_time = self.pools_usage(pu_time)
-                    cur_disk_stats = self.disk_stats(cur_disk_stats,
-                                                     self.sleep_time)
-                    cur_net_stats = network_stats(cur_net_stats,
-                    self.sleep_time, logger, self.q)
+                cur_cpu_stats = self.cpu_stats(cur_cpu_stats)
+                loadavg_time = self.loadavg(loadavg_time)
+                self.meminfo()
+                pu_time = self.pools_usage(pu_time)
+                cur_disk_stats = self.disk_stats(cur_disk_stats,
+                                                 self.sleep_time)
+                cur_net_stats = network_stats(cur_net_stats, self.sleep_time,
+                                              logger, self.sink_socket)
                 time.sleep(self.sleep_time)
         except Exception, e:
             logger.error('unhandled exception in %s. Exiting' % self.name)
@@ -76,6 +86,7 @@ class ProcRetreiver(Process):
         stats_file = '/proc/stat'
         cur_stats = {}
         with open(stats_file) as sfo:
+            ts = datetime.utcnow().replace(tzinfo=utc)
             for line in sfo.readlines():
                 if (re.match('cpu\d', line) is not None):
                     fields = line.split()
@@ -83,16 +94,16 @@ class ProcRetreiver(Process):
                     cm = None
                     if (fields[0] not in prev_stats):
                         cm = CPUMetric(name=fields[0], umode=fields[1],
-                                    umode_nice=fields[2], smode=fields[3],
-                                    idle=fields[4])
+                                       umode_nice=fields[2], smode=fields[3],
+                                       idle=fields[4], ts=ts)
                     else:
                         prev = prev_stats[fields[0]]
                         cm = CPUMetric(name=fields[0], umode=fields[1]-prev[1],
                                        umode_nice=fields[2]-prev[2],
                                        smode=fields[3]-prev[3],
-                                       idle=fields[4]-prev[4])
+                                       idle=fields[4]-prev[4], ts=ts)
                     cur_stats[fields[0]] = fields
-                    self.q.put(cm)
+                    self._sink_put(self.sink_socket, cm)
         return cur_stats
 
     def disk_stats(self, prev_stats, interval):
@@ -105,8 +116,8 @@ class ProcRetreiver(Process):
                 if (fields[2] not in disks):
                     continue
                 cur_stats[fields[2]] = fields[2:]
-        ts = datetime.utcnow().replace(tzinfo=utc)
         if (isinstance(prev_stats, dict)):
+            ts = datetime.utcnow().replace(tzinfo=utc)
             for disk in cur_stats.keys():
                 if (disk in prev_stats):
                     prev = prev_stats[disk]
@@ -137,7 +148,7 @@ class ProcRetreiver(Process):
                                   ms_ios=data[9],
                                   weighted_ios=data[10],
                                   ts=ts)
-                    self.q.put(ds)
+                    self._sink_put(self.sink_socket, ds)
         return cur_stats
 
     def loadavg(self, last_ts):
@@ -151,11 +162,12 @@ class ProcRetreiver(Process):
             fields = line.split()
             thread_fields = fields[3].split('/')
             idle_seconds = int(float(ufo.readline().split()[1]))
+            ts = datetime.utcnow().replace(tzinfo=utc)
             la = LoadAvg(load_1=fields[0], load_5=fields[1], load_15=fields[2],
                          active_threads=thread_fields[0],
                          total_threads=thread_fields[1], latest_pid=fields[4],
-                         idle_seconds=idle_seconds)
-            self.q.put(la)
+                         idle_seconds=idle_seconds, ts=ts)
+            self._sink_put(self.sink_socket, la)
         return now
 
     def meminfo(self):
@@ -183,10 +195,11 @@ class ProcRetreiver(Process):
                 elif (re.match('Dirty:', l) is not None):
                     dirty = int(l.split()[1])
                     break # no need to look at lines after dirty.
+        ts = datetime.utcnow().replace(tzinfo=utc)
         mi = MemInfo(total=total, free=free, buffers=buffers, cached=cached,
                      swap_total=swap_total, swap_free=swap_free, active=active,
-                     inactive=inactive, dirty=dirty)
-        self.q.put(mi)
+                     inactive=inactive, dirty=dirty, ts=ts)
+        self._sink_put(self.sink_socket, mi)
 
     def vmstat(self):
         stats_file = '/proc/vmstat'
@@ -200,12 +213,13 @@ class ProcRetreiver(Process):
         now = time.mktime(time.gmtime())
         if (now - last_ts < 30):
             return last_ts
+        ts = datetime.utcnow().replace(tzinfo=utc)
         for p in Pool.objects.all():
             arb_disk = Disk.objects.filter(pool=p)[0].name
             try:
                 usage = pool_usage(arb_disk)
-                pu = PoolUsage(pool=p.name, usage=usage[1])
-                self.q.put(pu)
+                pu = PoolUsage(pool=p.name, usage=usage[1], ts=ts)
+                self._sink_put(self.sink_socket, pu)
             except Exception, e:
                 logger.debug('command exception while getting pool usage '
                              'for: %s' % (p.name))
@@ -218,8 +232,8 @@ class ProcRetreiver(Process):
                     share_map[share.qgroup] = share.name
                 usaged = shares_usage(p.name, pool_device, share_map)
                 for s in usaged.keys():
-                    su = ShareUsage(name=s, usage=usaged[s])
-                    self.q.put(su)
+                    su = ShareUsage(name=s, usage=usaged[s], ts=ts)
+                    self._sink_put(self.sink_socket, su)
             except Exception, e:
                 logger.debug('command exception while getting shares usage '
                              'for pool: %s' % (p.name))

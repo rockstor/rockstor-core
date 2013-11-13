@@ -1,0 +1,95 @@
+<script>
+/*
+ * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ *
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ *
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+</script>
+
+
+<div class="messages"></div>
+
+<% if (!scheduledTasks.isEmpty()) { %>
+  <div class="row-fluid">
+    <div class="span12">
+      <table id="scheduled-tasks-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of scheduled tasks">
+        <thead>
+          <tr>
+            <th scope="col" abbr="Task name">Task name</th>
+            <th scope="col" abbr="Task type">Type</th>
+            <th scope="col" abbr="Start date/time">Start date/time</th>
+            <th scope="col" abbr="Task type">Frequency (sec)</th>
+            <th scope="col" abbr="Task type">Enabled</th>
+            <th scope="col" abbr="Last">Last run</th>
+            <th scope="col" abbr="Actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% scheduledTasks.each(function(t) { %>
+            <tr>
+              <td><%= t.get('name') %></td>
+              <td>
+                <%= t.get('task_type') %>
+                <% if (t.get('task_type') == 'snapshot') { %>
+                  (<%= JSON.parse(t.get('json_meta')).share %>)
+                <% } else { %>
+                  (<%= JSON.parse(t.get('json_meta')).pool %>)
+                <% } %>
+              </td>
+              <td><%= moment(t.get('ts')).format(RS_DATE_FORMAT) %></td>
+              <td><%= t.get('frequency') %>
+              <td>
+                <% if (t.get('enabled')) { %>
+                  <input type="checkbox" disabled="true" checked="true"></input>
+                <% } else { %>
+                  <input type="checkbox" disabled="true"></input>
+                <% } %>
+              </td>
+              <td>
+                <% if (taskMap[t.id]) { %>
+                  <% if (taskMap[t.id].length > 0) { %>
+                    <% var task = taskMap[t.id][0]; %>
+                    <% if (task.get('state') == 'failed') { %>
+                      <a href="#scheduled-tasks/<%= t.id %>/log" class="task-log"><i class="icon-warning-sign"></i> <%= task.get('state') %></a>
+                    <% } else if (task.get('state') == 'pending') { %>
+                      <a href="#scheduled-tasks/<%= t.id %>/log" class="task-log"><%= task.get('state') %></a>
+
+                    <% } else if (task.get('state') == 'finished') { %>
+                      <a href="#scheduled-tasks/<%= t.id %>/log" class="task-log"><%= moment(task.get('end')).fromNow() %></a>
+                    <% } %>
+                  <% } %>
+                <% } %>
+
+              
+              </td>
+              <td>
+                <% if (t.get('enabled')) { %>
+                  <a href="#" class="toggle-task" data-task-id="<%= t.id %>" data-action="disable"><i class="icon-minus-sign" rel="tooltip" title="Disable"></i></a>
+                <% } else { %>
+                  <a href="#" class="toggle-task" data-task-id="<%= t.id %>" data-action="enable"><i class="icon-plus-sign" rel="tooltip" title="Enable"></i></a>
+                <% } %>
+                <a href="#" data-task-name="<%= t.get('name') %>" data-task-id="<%= t.id %>" data-action="delete"><i class="icon-trash" rel="tooltip" title="Delete"></i></a>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% } else { %>
+  <h4>No tasks have been scheduled</h4>
+<% } %>
+<a href="#add-scheduled-task" class="btn btn-primary">Add Scheduled Task</a>

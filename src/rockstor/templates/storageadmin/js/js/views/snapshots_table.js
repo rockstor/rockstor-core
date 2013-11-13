@@ -28,7 +28,8 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
   events: {
     "click #js-snapshot-add": "add",
     "click #js-snapshot-cancel": "cancel",
-    "click .js-snapshot-delete": "deleteSnapshot"
+    "click .js-snapshot-delete": "deleteSnapshot",
+    "click .js-snapshot-clone": "cloneSnapshot"
   },
 
   initialize: function() {
@@ -49,6 +50,9 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
       snapshots: this.collection,
       share: this.share
     }));
+    this.$('[rel=tooltip]').tooltip({ 
+      placement: 'bottom'
+    });
     this.$('#snapshots-table').tablesorter();
     this.$(".pagination-ph").html(this.paginationTemplate({
       collection: this.collection
@@ -67,6 +71,7 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
       snapshots: this.collection,
       share: this.share
     }));
+    this.$('#add-snapshot-form :input').tooltip();
     this.validator = this.$('#add-snapshot-form').validate({
       onfocusout: false,
       onkeyup: false,
@@ -133,6 +138,18 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
         }
       });
     }
+  },
+
+  cloneSnapshot: function(event) {
+    if (event) event.preventDefault();
+    // Remove current tooltips to prevent them hanging around 
+    // even after new page has loaded.
+    this.$('[rel=tooltip]').tooltip('hide');
+    var name = $(event.currentTarget).attr('data-name');
+    var url = 'shares/' + this.share.get('name') + '/snapshots/' +
+      name + '/create-clone';
+    app_router.navigate(url, {trigger: true});
+
   },
 
   cancel: function(event) {

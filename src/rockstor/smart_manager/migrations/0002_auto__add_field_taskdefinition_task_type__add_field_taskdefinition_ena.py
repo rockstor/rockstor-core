@@ -8,29 +8,53 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Deleting field 'SProbe.ts'
-        db.delete_column('smart_manager_sprobe', 'ts')
-
-        # Adding field 'SProbe.start'
-        db.add_column('smart_manager_sprobe', 'start',
-                      self.gf('django.db.models.fields.DateTimeField')(auto_now=True, default=datetime.datetime(2013, 8, 20, 0, 0), blank=True),
+        # Adding field 'TaskDefinition.task_type'
+        db.add_column('smart_manager_taskdefinition', 'task_type',
+                      self.gf('django.db.models.fields.CharField')(default='snapshot', max_length=100),
                       keep_default=False)
 
-        # Adding field 'SProbe.end'
-        db.add_column('smart_manager_sprobe', 'end',
-                      self.gf('django.db.models.fields.DateTimeField')(null=True),
+        # Adding field 'TaskDefinition.enabled'
+        db.add_column('smart_manager_taskdefinition', 'enabled',
+                      self.gf('django.db.models.fields.BooleanField')(default=True),
+                      keep_default=False)
+
+        # Adding unique constraint on 'TaskDefinition', fields ['name']
+        db.create_unique('smart_manager_taskdefinition', ['name'])
+
+        # Deleting field 'Task.name'
+        db.delete_column('smart_manager_task', 'name')
+
+        # Deleting field 'Task.json_meta'
+        db.delete_column('smart_manager_task', 'json_meta')
+
+        # Adding field 'Task.task_def'
+        db.add_column('smart_manager_task', 'task_def',
+                      self.gf('django.db.models.fields.related.ForeignKey')(default=1, to=orm['smart_manager.TaskDefinition']),
                       keep_default=False)
 
 
     def backwards(self, orm):
+        # Removing unique constraint on 'TaskDefinition', fields ['name']
+        db.delete_unique('smart_manager_taskdefinition', ['name'])
 
-        # User chose to not deal with backwards NULL issues for 'SProbe.ts'
-        raise RuntimeError("Cannot reverse this migration. 'SProbe.ts' and its values cannot be restored.")
-        # Deleting field 'SProbe.start'
-        db.delete_column('smart_manager_sprobe', 'start')
+        # Deleting field 'TaskDefinition.task_type'
+        db.delete_column('smart_manager_taskdefinition', 'task_type')
 
-        # Deleting field 'SProbe.end'
-        db.delete_column('smart_manager_sprobe', 'end')
+        # Deleting field 'TaskDefinition.enabled'
+        db.delete_column('smart_manager_taskdefinition', 'enabled')
+
+        # Adding field 'Task.name'
+        db.add_column('smart_manager_task', 'name',
+                      self.gf('django.db.models.fields.CharField')(default='mysnap123', max_length=255),
+                      keep_default=False)
+
+        # Adding field 'Task.json_meta'
+        db.add_column('smart_manager_task', 'json_meta',
+                      self.gf('django.db.models.fields.CharField')(default={}, max_length=8192),
+                      keep_default=False)
+
+        # Deleting field 'Task.task_def'
+        db.delete_column('smart_manager_task', 'task_def_id')
 
 
     models = {
@@ -194,11 +218,39 @@ class Migration(SchemaMigration):
             'ts': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'usage': ('django.db.models.fields.IntegerField', [], {'default': '0'})
         },
+        'smart_manager.replica': {
+            'Meta': {'object_name': 'Replica'},
+            'appliance': ('django.db.models.fields.CharField', [], {'max_length': '4096'}),
+            'dpool': ('django.db.models.fields.CharField', [], {'max_length': '4096'}),
+            'dshare': ('django.db.models.fields.CharField', [], {'max_length': '4096', 'null': 'True'}),
+            'enabled': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'frequency': ('django.db.models.fields.IntegerField', [], {}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'pool': ('django.db.models.fields.CharField', [], {'max_length': '4096'}),
+            'share': ('django.db.models.fields.CharField', [], {'max_length': '4096'}),
+            'task_name': ('django.db.models.fields.CharField', [], {'max_length': '1024'})
+        },
+        'smart_manager.replicatrail': {
+            'Meta': {'object_name': 'ReplicaTrail'},
+            'end_ts': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
+            'error': ('django.db.models.fields.CharField', [], {'max_length': '4096', 'null': 'True'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'kb_sent': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
+            'replica': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['smart_manager.Replica']"}),
+            'send_failed': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
+            'send_pending': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
+            'send_succeeded': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
+            'snap_name': ('django.db.models.fields.CharField', [], {'max_length': '1024'}),
+            'snapshot_created': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
+            'snapshot_failed': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
+            'status': ('django.db.models.fields.CharField', [], {'max_length': '10'})
+        },
         'smart_manager.service': {
             'Meta': {'object_name': 'Service'},
+            'config': ('django.db.models.fields.CharField', [], {'max_length': '8192', 'null': 'True'}),
+            'display_name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '24'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '24'}),
-            'registered': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
+            'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '24'})
         },
         'smart_manager.servicestatus': {
             'Meta': {'object_name': 'ServiceStatus'},
@@ -216,12 +268,31 @@ class Migration(SchemaMigration):
         },
         'smart_manager.sprobe': {
             'Meta': {'object_name': 'SProbe'},
+            'display_name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
             'end': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'smart': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'start': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'state': ('django.db.models.fields.CharField', [], {'max_length': '7'})
+        },
+        'smart_manager.task': {
+            'Meta': {'object_name': 'Task'},
+            'end': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'start': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
+            'state': ('django.db.models.fields.CharField', [], {'max_length': '7'}),
+            'task_def': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['smart_manager.TaskDefinition']"})
+        },
+        'smart_manager.taskdefinition': {
+            'Meta': {'object_name': 'TaskDefinition'},
+            'enabled': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'frequency': ('django.db.models.fields.IntegerField', [], {'null': 'True'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'json_meta': ('django.db.models.fields.CharField', [], {'max_length': '8192'}),
+            'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '255'}),
+            'task_type': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
+            'ts': ('django.db.models.fields.DateTimeField', [], {})
         },
         'smart_manager.vmstat': {
             'Meta': {'object_name': 'VmStat'},

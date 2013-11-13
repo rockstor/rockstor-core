@@ -1,3 +1,3 @@
-Start: <% if (probeRun.get("start")) { %><%= (new Date(probeRun.get("start"))).toString() %><% } %>&nbsp;&nbsp; 
-End: <% if (probeRun.get("end")) { %><%= (new Date(probeRun.get("end"))).toString() %><% } %> 
+Start: <% if (probeRun.get("start")) { %><%= moment(probeRun.get("start")).format(RS_DATE_FORMAT) %><% } %>&nbsp;&nbsp; 
+End: <% if (probeRun.get("end")) { %><%= moment(probeRun.get("end")).format(RS_DATE_FORMAT) %><% } %> 
 

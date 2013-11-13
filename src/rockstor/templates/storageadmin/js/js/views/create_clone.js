@@ -1,0 +1,100 @@
+/*
+ *
+ * @licstart  The following is the entire license notice for the 
+ * JavaScript code in this page.
+ * 
+ * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ * 
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ * 
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * @licend  The above is the entire license notice
+ * for the JavaScript code in this page.
+ * 
+ */
+
+CreateCloneView = RockstoreLayoutView.extend({
+  events: {
+    "click #js-cancel": "cancel"
+  },
+  
+  initialize: function() {
+    this.constructor.__super__.initialize.apply(this, arguments);
+    this.template = window.JST.share_create_clone;
+    this.sourceType = this.options.sourceType;
+    this.shareName = this.options.shareName;
+    this.snapName = this.options.snapName;
+  },
+
+  render: function() {
+    var _this = this;
+    $(this.el).html(this.template({
+      sourceType: this.sourceType,
+      shareName: this.shareName,
+      snapName: this.snapName
+    }));
+    this.$('#create-clone-form :input').tooltip();
+    this.$('#create-clone-form').validate({
+      onfocusout: false,
+      onkeyup: false,
+      rules: {
+        name: 'required',  
+      },
+      submitHandler: function() {
+        var button = _this.$('#create-clone');
+        if (buttonDisabled(button)) return false;
+        disableButton(button);
+        if (_this.sourceType == 'share') {
+          var url = '/api/shares/' + _this.shareName + '/clone';
+        } else if (_this.sourceType == 'snapshot') {
+          var url = '/api/shares/' + _this.shareName + '/snapshots/'
+          + _this.snapName + '/clone';
+        }
+        $.ajax({
+          url: url,
+          type: 'POST',
+          dataType: 'json',
+          contentType: 'application/json',
+          data: JSON.stringify(_this.$('#create-clone-form').getJSON()),
+          success: function() {
+            enableButton(button);
+            app_router.navigate('shares', {trigger: true});
+          },
+          error: function(xhr, status, error) {
+            enableButton(button);
+            var msg = parseXhrError(xhr)
+            if (_.isObject(msg)) {
+              _this.validator.showErrors(msg);
+            } else {
+              _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
+            }
+          }
+        });
+        return false;
+      }
+    });
+    return this;
+  },
+  
+  cancel: function(event) {
+    event.preventDefault();
+    if (this.sourceType == 'share') {
+      app_router.navigate('#shares/'+this.shareName, {trigger: true});
+    } else if (this.sourceType == 'snapshot') {
+      app_router.navigate('#shares/'+this.shareName, {trigger: true});
+    }
+  }
+
+});
+

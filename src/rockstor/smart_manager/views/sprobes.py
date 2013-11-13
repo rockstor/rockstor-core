@@ -23,7 +23,6 @@ from rest_framework.authentication import (BasicAuthentication,
                                            SessionAuthentication,)
 from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
-from django.conf import settings
 from smart_manager.serializers import SProbeConfigSerializer
 from smart_manager.taplib.probe_config import (TapConfig, TAP_MAP)
 

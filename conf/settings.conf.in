@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 # Django settings for RockStor project.
 import os
 
-DEBUG = True
+DEBUG = ${django-settings-conf:debug}
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
@@ -230,6 +230,12 @@ PIPELINE_JS = {
             'js/views/nfs_exports.js',
             'js/views/add_nfs_export.js',
             'js/views/edit_nfs_export.js',
+            'js/views/networks.js',
+            'js/views/edit_network.js',
+            'js/views/create_clone.js',
+            'js/views/scheduled_tasks.js',
+            'js/views/add_scheduled_task.js',
+            'js/views/tasks.js',
             ),
         'output_filename': 'js/application.js'
         },
@@ -345,7 +351,7 @@ PAGINATION = {
 
 START_UID = 5000
 END_UID = 6000
-USER_SHELL = os.path.dirname(__file__) + '/bin/rcli'
+USER_SHELL = '${buildout:depdir}/bin/rcli'
 
 SCHEDULER = ('127.0.0.1', ${django-settings-conf:schedulerport})
 REPLICA_DATA_PORT = ${django-settings-conf:reppubport}

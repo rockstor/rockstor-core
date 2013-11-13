@@ -34,7 +34,7 @@
   <div class="span12">
     <!-- Content -->
     <div class="module-content">
-      Created on <%= new Date(model.get("toc")).toString() %><br>
+      Created on <%= moment(model.get("toc")).format(RS_DATE_FORMAT) %><br>
       Disks: 
       <% _.each(model.get('disks'), function(disk, i) { %>
         <%= disk.name %>

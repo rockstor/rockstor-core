@@ -38,14 +38,16 @@
 <!-- Widget Body -->
 <!-- Content -->
 <div class="widget-content">
-  <!--
-  <div id="cpuusage" style="width: 250px; height: 175px;"> </div>
-  -->
-  <div id="cpuusage-all" style="width: 90%; height: 30%;"> </div>
-  <div id="cpuusage" style="width: 90%; height: 30%;"> </div>
-  <div class="clear"></div>
-  <div id="cpuusage-legend">
 
+  <div id="cpuusage-avg"></div>
+  <% if (maximized) { %>
+    <div id="cpuusage-individual-title" style="width: 500px; text-align: center;">Individual cpu usage (%) </div>
+    <div id="cpuusage-individual" style="width: 500px; height: 30%;"></div>
+  <% } else { %>
+    <div id="cpuusage-individual-title" style="width: 250px; text-align: center;">Individual cpu usage (%) </div>
+    <div id="cpuusage-individual" style="width: 250px; height: 30%;"></div>
+  <% } %>
+  <div id="cpuusage-legend">
   </div>
 
 </div>

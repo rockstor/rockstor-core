@@ -27,6 +27,8 @@
     <title>RockStor | {% block title %}{% endblock %}</title>
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <link href="/css/bootstrap-responsive.css" rel="stylesheet">
+    <link href="/css/datepicker.css" rel="stylesheet">
+    <link href="/css/bootstrap-timepicker.css" rel="stylesheet">
     <link href="/css/style.css" rel="stylesheet">
     <!--
     <link href="/css/bootstrap-responsive.css" rel="stylesheet">
@@ -153,7 +155,9 @@
       {% csrf_token %}
     </form>
 
-    <script type="text/javascript" language="javascript" src="/js/bootstrap.min.js"></script>
+    <script src="/js/lib/bootstrap.js"></script>
+    <script src="/js/lib/bootstrap-datepicker.js"></script>
+    <script src="/js/lib/bootstrap-timepicker.js"></script>
     <script type="text/javascript">
       NGINX_WEBSOCKET_PORT = {{ nginx_websocket_port }};
       {% if current_appliance %}

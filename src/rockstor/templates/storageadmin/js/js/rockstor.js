@@ -404,6 +404,7 @@ function updateLoadAvg() {
   RockStorGlobals.loadAvgDisplayed = true;
 }
 
+
 function fetchLoadAvg() {
   $.ajax({
     url: "/api/sm/sprobes/loadavg?limit=1&format=json", 
@@ -452,6 +453,29 @@ function displayLoadAvg(data) {
   $('#appliance-loadavg').html(str);
 }
 
+function fetchServerTime() {
+  RockStorGlobals.serverTimeTimer = window.setInterval(function() {
+    getCurrentTimeOnServer();
+  }, 10000);
+  getCurrentTimeOnServer();
+  RockStorGlobals.serverTimeFetched = true;
+}
+
+function getCurrentTimeOnServer() {
+  $.ajax({
+    url: "/api/commands/utcnow", 
+    type: "POST",
+    dataType: "json",
+    global: false, // dont show global loading indicator
+    success: function(data, status, xhr) {
+      RockStorGlobals.currentTimeOnServer = new Date(data);
+    },
+    error: function(xhr, status, error) {
+      console.log(error);
+    }
+  });
+}
+
 function fetchDependencies(dependencies, callback, context) {
   if (dependencies.length == 0) {
     if (callback) callback.apply(context);
@@ -484,7 +508,7 @@ RockStorGlobals = {
 
 }
 
-var RS_DATE_FORMAT = 'h:mm:ss a ddd MMM DD YYYY';
+var RS_DATE_FORMAT = 'MMMM Do YYYY, h:mm:ss a';
 
 // Constants
 probeStates = {

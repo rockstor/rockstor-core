@@ -42,8 +42,8 @@ var AppRouter = Backbone.Router.extend({
     "add_share?poolName=:poolName": "addShare",
     "add_share": "addShare",
     "shares/:shareName": "showShare",
-    "shares/:shareName/:snapshots": "showSnaps",
-    "shares/:shareName/:snapshots/:snapName": "showSnap",
+    "shares/:shareName/create-clone": "createCloneFromShare",
+    "shares/:shareName/snapshots/:snapName/create-clone": "createCloneFromSnapshot",
     "services": "showServices",
     "services/:serviceName/edit": "configureService",
     "support":"showSupport",
@@ -61,6 +61,11 @@ var AppRouter = Backbone.Router.extend({
     "nfs-exports": "showNFSExports",
     "add-nfs-export": "addNFSExport",
     "nfs-exports/edit/:nfsExportGroupId": "editNFSExport",
+    "network": "showNetworks",
+    "network/:name/edit": "editNetwork",
+    "scheduled-tasks": "showScheduledTasks",
+    "scheduled-tasks/:taskId/log": "showTasks",
+    "add-scheduled-task": "addScheduledTask",
     "*path": "showHome"
   },
 
@@ -84,6 +89,9 @@ var AppRouter = Backbone.Router.extend({
     }
     if (!RockStorGlobals.loadAvgDisplayed) {
       updateLoadAvg();
+    }
+    if (!RockStorGlobals.serverTimeFetched) {
+      fetchServerTime();
     }
   },
 
@@ -358,6 +366,75 @@ var AppRouter = Backbone.Router.extend({
     this.cleanup();
     this.currentLayout = new EditNFSExportView({
       nfsExportGroupId: nfsExportGroupId 
+    });
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+  
+  showNetworks: function() {
+    RockStorSocket.removeAllListeners();
+    this.renderSidebar("system", "network");
+    this.cleanup();
+    this.currentLayout = new NetworksView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  editNetwork: function(name) {
+    RockStorSocket.removeAllListeners();
+    this.renderSidebar("system", "network");
+    this.cleanup();
+    this.currentLayout = new EditNetworkView({name: name});
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+  
+  createCloneFromShare: function(shareName) {
+    RockStorSocket.removeAllListeners();
+    this.renderSidebar("storage", "shares");
+    this.cleanup();
+    this.currentLayout = new CreateCloneView({
+      sourceType: 'share',
+      shareName: shareName
+    });
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  createCloneFromSnapshot: function(shareName, snapName) {
+    RockStorSocket.removeAllListeners();
+    this.renderSidebar("storage", "shares");
+    this.cleanup();
+    this.currentLayout = new CreateCloneView({
+      sourceType: 'snapshot',
+      shareName: shareName,
+      snapName: snapName
+    });
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  showScheduledTasks: function() {
+    this.renderSidebar('system', 'scheduled-tasks');
+    this.cleanup();
+    this.currentLayout = new ScheduledTasksView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+  
+  addScheduledTask: function() {
+    this.renderSidebar('system', 'scheduled-tasks');
+    this.cleanup();
+    this.currentLayout = new AddScheduledTaskView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  showTasks: function(taskDefId) {
+    this.renderSidebar("system", "scheduled-tasks");
+    this.cleanup();
+    this.currentLayout = new TasksView({
+      taskDefId: taskDefId
     });
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);

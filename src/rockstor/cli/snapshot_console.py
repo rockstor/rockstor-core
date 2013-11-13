@@ -66,3 +66,14 @@ class SnapshotConsole(BaseConsole):
         snap_info = api_call(url, data=None, calltype='post')
         print snap_info
 
+    def do_clone(self, args):
+        """
+        Clone a snapshot into a brand new share
+
+        clone <snap_name> <new_share_name>
+        """
+        fields = args.split()
+        url = ('%s/%s/clone' % (self.url, fields[0]))
+        input_data = {'name': fields[1],}
+        print api_call(url, data=input_data, calltype='post')
+

@@ -31,7 +31,7 @@ class MemInfo(models.Model):
     active = models.IntegerField()
     inactive = models.IntegerField()
     dirty = models.IntegerField()
-    ts = models.DateTimeField(auto_now=True)
+    ts = models.DateTimeField(auto_now=True, db_index=True)
 
     class Meta:
         app_label = 'smart_manager'

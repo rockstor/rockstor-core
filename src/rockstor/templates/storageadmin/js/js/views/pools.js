@@ -28,27 +28,40 @@
  * Pools View
  */
 
-PoolsView = Backbone.View.extend({
+PoolsView = RockstoreLayoutView.extend({
   events: {
     "click a[data-action=delete]": "deletePool"
   },
 
   initialize: function() {
+	
+	this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.pool_pools;
     this.pools_table_template = window.JST.pool_pools_table;
     this.pagination_template = window.JST.common_pagination;
     this.collection = new PoolCollection();
+    
+    this.disks = new DiskCollection();
+    this.dependencies.push(this.disks);
+    this.dependencies.push(this.collection);
     this.collection.on("reset", this.renderPools, this);
+    
   },
 
   render: function() {
-    this.collection.fetch();
+    this.fetch(this.renderPools,this);
+    $('#pool-table-ph-form :input').tooltip();
     return this;
   },
 
   renderPools: function() {
     var _this = this;
-    $(this.el).html(this.template({ collection: this.collection }));
+    
+    var freedisks = this.disks.filter(function(disk) { return disk.get('pool') == null; });
+    
+    $(this.el).html(this.template({ collection: this.collection, disks: this.disks,noOfFreeDisks: _.size(freedisks)  }));
+    
+    
     this.$("#pools-table-ph").html(this.pools_table_template({
       collection: this.collection
     }));
@@ -56,6 +69,7 @@ PoolsView = Backbone.View.extend({
       collection: this.collection
     }));
     this.$("#pools-table").tablesorter();
+   
     return this;
   },
 

@@ -1,0 +1,89 @@
+<script>
+/*
+ * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ * 
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ * 
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ */
+</script>
+
+<h3>Configure network interface <%= network.get('name') %></h3>
+
+<div class="row-fluid">
+  <div class="span8">
+    <label class="control-label"><span class="required">*</span> indicates required fields</label>
+    <div class="form-box">
+      <form id="edit-network-form" name="aform">
+        <div class="messages"></div>
+        <div class="control-group">
+          <label class="control-label" for="boot_proto">Configuration<span class="required"> *</span></label>
+          <div class="controls">
+            <select id="boot_proto" name="boot_proto">
+              <% if (network.get('boot_proto') == 'dhcp') { %>
+                <option value="dhcp" selected="selected">DHCP</option>
+              <% } else { %>
+                <option value="dhcp">DHCP</option>
+              <% } %>
+              <% if (network.get('boot_proto') == 'static') { %>
+                <option value="static" selected="selected">Static</option>
+              <% } else { %>
+                <option value="static">static</option>
+              <% } %>
+            </select>
+          </div>
+        </div>
+        <div class="control-group">
+          <label class="control-label" for="ipaddr">IP Address<span class="required"> *</span></label>
+          <div class="controls">
+            <% if (network.get('boot_proto') == 'static') { %>
+              <input type="text" id="ipaddr" name="ipaddr" value="<%= network.get('ipaddr') %>" placeholder="IP Address" title="Enter IP Address" >
+            <% } else { %>
+              <input type="text" id="ipaddr" name="ipaddr" value="<%= network.get('ipaddr') %>" placeholder="IP Address" disabled="disabled"  >
+            <% } %>
+          </div>
+        </div>
+        <div class="control-group">
+          <label class="control-label" for="netmask">Netmask<span class="required"> *</span></label>
+          <div class="controls">
+            <% if (network.get('boot_proto') == 'static') { %>
+              <input type="text" id="netmask" name="netmask" value="<%= network.get('netmask') %>" placeholder="Netmask" title="Enter Netmask">
+            <% } else { %>
+              <input type="text" id="netmask" name="netmask" value="<%= network.get('netmask') %>" placeholder="Netmask" disabled="disabled" >
+            <% } %>
+          </div>
+        </div>
+        <div class="control-group">
+          <div class="controls">
+            <label class="checkbox">
+              <% if (network.get('itype') == 'management') { %>
+                <input class="checkbox inline" type="checkbox" id="itype" name="itype" placeholder="Management Interface" checked="checked">
+              <% } else { %>
+                <input class="checkbox inline" type="checkbox" id="itype" name="itype" placeholder="Management Interface" >
+              <% } %>
+              Allow RockStor administration through this interface
+            </label>
+          </div>
+        </div>
+        <div class="control-group">
+          <div class="controls">
+            <button type="Submit" id="submit" class="btn btn-primary">Submit</button>
+            <button id="cancel" class="btn">Cancel</button>
+          </div>
+        </div>
+      </form>
+    </div> <!-- form-box -->
+  </div> <!-- span8 -->
+</div> <!-- row-fluid -->
+

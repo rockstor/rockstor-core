@@ -36,7 +36,13 @@ SERVICE = '/sbin/service'
 HOSTID = '/usr/bin/hostid'
 IFCONFIG = '/sbin/ifconfig'
 NTPDATE = '/usr/sbin/ntpdate'
-
+LVS = '/sbin/lvs'
+VGS = '/sbin/vgs'
+DD = '/bin/dd'
+SFDISK = '/sbin/sfdisk'
+IFUP = '/sbin/ifup'
+IFDOWN = '/sbin/ifdown'
+ROUTE = '/sbin/route'
 
 class Disk():
 
@@ -52,11 +58,54 @@ class Disk():
                 'free': self.free,
                 'parted': self.parted, }
 
+def run_command(cmd, shell=False, stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE, throw=True):
+    p = subprocess.Popen(cmd, shell=shell, stdout=stdout, stderr=stderr)
+    out, err = p.communicate()
+    out = out.split('\n')
+    err = err.split('\n')
+    rc = p.returncode
+    if (throw and rc != 0):
+        raise CommandException(out, err, rc)
+    return (out, err, rc)
+
+def wipe_disk(disk):
+    """
+    removes partition table on a disk by dd'ing first 512 bytes
+    """
+    disk = ('/dev/%s' % disk)
+    run_command([DD, 'if=/dev/zero', 'of=%s' % disk, 'bs=512', 'count=1'])
+    return run_command([SFDISK, '-R', disk])
+
+def root_disks():
+    """
+    returns the partition(s) used for /. Typically it's sda.
+    This may change after el7 release.
+    """
+    root_lvm = None
+    drives = []
+    with open('/proc/mounts') as fo:
+        for line in fo.readlines():
+            fields = line.split()
+            if (fields[1] == '/' and fields[2] == 'ext4'):
+                root_lvm = fields[0]
+                break
+    o, e, c = run_command([LVS, '--noheadings', '-o', 'vg_name',
+                           root_lvm])
+    vg_name = o[0].strip()
+    o, e, c = run_command([VGS, '--noheadings', '-o', 'pv_name', vg_name])
+    for p in o:
+        p = p.strip()
+        if (re.match('/dev/', p.strip()) is not None):
+            drives.append(p[5:8])
+    return drives
+
 def scan_disks(min_size):
     """
     min_size is in KB, so it is also number of blocks. Discard any disk with
     num_blocks < min_size
     """
+    roots = root_disks()
     disks = {}
     with open('/proc/partitions') as pfo:
         for line in pfo.readlines():
@@ -74,19 +123,11 @@ def scan_disks(min_size):
                   is not None):
                 name = disk_fields[3][0:3]
                 if (name in disks):
-                    del(disks[name])
+                    if (name in roots):
+                        del(disks[name])
+                    else:
+                        disks[name]['parted'] = True
         return disks
-
-def run_command(cmd, shell=False, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE, throw=True):
-    p = subprocess.Popen(cmd, shell=shell, stdout=stdout, stderr=stderr)
-    out, err = p.communicate()
-    out = out.split('\n')
-    err = err.split('\n')
-    rc = p.returncode
-    if (throw and rc != 0):
-        raise CommandException(out, err, rc)
-    return (out, err, rc)
 
 def uptime():
     with open('/proc/uptime') as ufo:
@@ -176,6 +217,13 @@ def restart_network():
     cmd = [SERVICE, 'network', 'restart']
     return run_command(cmd)
 
+def restart_network_interface(iname):
+    """
+    ifdown followed by ifup of a ethernet interface
+    """
+    run_command([IFDOWN, iname])
+    return run_command([IFUP, iname])
+
 def network_devices():
     """
     return all network devices on the system
@@ -193,6 +241,17 @@ def get_mac_addr(interface):
     with open(ifile) as ifo:
         return ifo.readline().strip()
 
+def get_default_interface():
+    """
+    returns the interface configured with default gateway
+    """
+    out, err, rc = run_command([ROUTE])
+    for line in out:
+        fields = line.split()
+        if (fields[0] == 'default'):
+            return fields[-1]
+    return None
+
 def get_ip_addr(interface):
     """
     useful when the interface gets ip from a dhcp server
@@ -203,15 +262,21 @@ def get_ip_addr(interface):
         return line2.split()[1].split(':')[1]
     return '0.0.0.0'
 
-def config_network_device(name, mac, ipaddr, netmask):
+def config_network_device(name, mac, boot_proto='dhcp', ipaddr=None,
+                          netmask=None, on_boot='yes', gateway=None):
     config_script = ('/etc/sysconfig/network-scripts/ifcfg-%s' % name)
     with open(config_script, 'w') as cfo:
         cfo.write('DEVICE="%s"\n' % name)
+        cfo.write('TYPE="Ethernet"\n')
+        cfo.write('NM_CONTROLLED="no"\n')
         cfo.write('HWADDR="%s"\n' % mac)
-        cfo.write('BOOTPROTO="static"\n')
-        cfo.write('ONBOOT="yes"\n')
-        cfo.write('IPADDR="%s"\n' % ipaddr)
-        cfo.write('NETMASK="%s"\n' % netmask)
+        cfo.write('BOOTPROTO="%s"\n' % boot_proto)
+        cfo.write('ONBOOT="%s"\n' % on_boot)
+        if (boot_proto == 'static'):
+            cfo.write('IPADDR="%s"\n' % ipaddr)
+            cfo.write('NETMASK="%s"\n' % netmask)
+            if (gateway is not None):
+                cfo.write('GATEWAY="%s"\n' % gateway)
 
 def char_strip(line, char='"'):
     if (line[0] == char and line[-1] == char):

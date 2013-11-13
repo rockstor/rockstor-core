@@ -30,16 +30,16 @@
         <div class="control-group">
           <label class="control-label" for="task_name">Task name<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" id="task_name" name="task_name" placeholder="Task name" >
+            <input type="text" id="task_name" name="task_name" placeholder="Task name" title="Enter task name" >
           </div>
         </div>
         <div class="control-group">
           <label class="control-label" for="share">Share to replicate<span class="required"> *</span></label>
           <div class="controls">
-            <select id="share" name="share">
+            <select id="share" name="share" title="Select share to replicate">
               <% shares.each(function(share, index) { %>
                 <option value="<%= share.get('name') %>"> <%= share.get('name') %> </option>
-              <% }); %> 
+              <% }); %>  
 
             </select>
           </div>
@@ -47,7 +47,7 @@
         <div class="control-group">
           <label class="control-label" for="appliance">Target appliance<span class="required"> *</span></label>
           <div class="controls">
-            <select id="appliance" name="appliance">
+            <select id="appliance" name="appliance" title="Select target appliance">
               <% appliances.each(function(appliance, index) { %>
                 <option value="<%= appliance.get('ip') %>"> <%= appliance.get('ip') %> </option>
               <% }); %> 
@@ -58,13 +58,13 @@
         <div class="control-group">
           <label class="control-label" for="pool">Target pool name<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" id="pool" name="pool" placeholder="Target pool name" >
+            <input type="text" id="pool" name="pool" placeholder="Target pool name" title="Enter target pool name">
           </div>
         </div>
         <div class="control-group">
           <label class="control-label" for="frequency">Frequency in seconds<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" id="frequency" name="frequency" placeholder="Frequency" >
+            <input type="text" id="frequency" name="frequency" placeholder="Frequency" title="Enter frequency" >
           </div>
         </div>
         <div class="control-group">

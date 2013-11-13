@@ -868,93 +868,93 @@ div.widgets-container div div.position {
 }
 
 /* horizon chart */
-.group {
-  margin-bottom: 1em;
-}
+/*.group {*/
+  /*margin-bottom: 1em;*/
+/*}*/
 
-.axis {
-  font: 10px sans-serif;
-  position: fixed;
-  pointer-events: none;
-  z-index: 2;
-}
+/*.axis {*/
+  /*font: 10px sans-serif;*/
+  /*position: fixed;*/
+  /*pointer-events: none;*/
+  /*z-index: 2;*/
+/*}*/
 
-.axis text {
-  -webkit-transition: fill-opacity 250ms linear;
-}
+/*.axis text {*/
+  /*-webkit-transition: fill-opacity 250ms linear;*/
+/*}*/
 
-.axis path {
-  display: none;
-}
+/*.axis path {*/
+  /*display: none;*/
+/*}*/
 
-.axis line {
-  stroke: #000;
-  shape-rendering: crispEdges;
-}
+/*.axis line {*/
+  /*stroke: #000;*/
+  /*shape-rendering: crispEdges;*/
+/*}*/
 
-.axis.top {
-  background-image: linear-gradient(top, #fff 0%, rgba(255,255,255,0) 100%);
-  background-image: -o-linear-gradient(top, #fff 0%, rgba(255,255,255,0) 100%);
-  background-image: -moz-linear-gradient(top, #fff 0%, rgba(255,255,255,0) 100%);
-  background-image: -webkit-linear-gradient(top, #fff 0%, rgba(255,255,255,0) 100%);
-  background-image: -ms-linear-gradient(top, #fff 0%, rgba(255,255,255,0) 100%);
-  top: 0px;
-  padding: 0 0 24px 0;
-}
+/*.axis.top {*/
+  /*background-image: linear-gradient(top, #fff 0%, rgba(255,255,255,0) 100%);*/
+  /*background-image: -o-linear-gradient(top, #fff 0%, rgba(255,255,255,0) 100%);*/
+  /*background-image: -moz-linear-gradient(top, #fff 0%, rgba(255,255,255,0) 100%);*/
+  /*background-image: -webkit-linear-gradient(top, #fff 0%, rgba(255,255,255,0) 100%);*/
+  /*background-image: -ms-linear-gradient(top, #fff 0%, rgba(255,255,255,0) 100%);*/
+  /*top: 0px;*/
+  /*padding: 0 0 24px 0;*/
+/*}*/
 
-.axis.bottom {
-  background-image: linear-gradient(bottom, #fff 0%, rgba(255,255,255,0) 100%);
-  background-image: -o-linear-gradient(bottom, #fff 0%, rgba(255,255,255,0) 100%);
-  background-image: -moz-linear-gradient(bottom, #fff 0%, rgba(255,255,255,0) 100%);
-  background-image: -webkit-linear-gradient(bottom, #fff 0%, rgba(255,255,255,0) 100%);
-  background-image: -ms-linear-gradient(bottom, #fff 0%, rgba(255,255,255,0) 100%);
-  bottom: 0px;
-  padding: 24px 0 0 0;
-}
+/*.axis.bottom {*/
+  /*background-image: linear-gradient(bottom, #fff 0%, rgba(255,255,255,0) 100%);*/
+  /*background-image: -o-linear-gradient(bottom, #fff 0%, rgba(255,255,255,0) 100%);*/
+  /*background-image: -moz-linear-gradient(bottom, #fff 0%, rgba(255,255,255,0) 100%);*/
+  /*background-image: -webkit-linear-gradient(bottom, #fff 0%, rgba(255,255,255,0) 100%);*/
+  /*background-image: -ms-linear-gradient(bottom, #fff 0%, rgba(255,255,255,0) 100%);*/
+  /*bottom: 0px;*/
+  /*padding: 24px 0 0 0;*/
+/*}*/
 
-.horizon {
-  width: 600px;
-  border-bottom: solid 1px #000;
-  overflow: hidden;
-  position: relative;
-}
+/*.horizon {*/
+  /*width: 600px;*/
+  /*border-bottom: solid 1px #000;*/
+  /*overflow: hidden;*/
+  /*position: relative;*/
+/*}*/
 
-.horizon {
-  border-top: solid 1px #000;
-  border-bottom: solid 1px #000;
-}
+/*.horizon {*/
+  /*border-top: solid 1px #000;*/
+  /*border-bottom: solid 1px #000;*/
+/*}*/
 
-.horizon + .horizon {
-  border-top: none;
-}
+/*.horizon + .horizon {*/
+  /*border-top: none;*/
+/*}*/
 
-.horizon canvas {
-  display: block;
-}
+/*.horizon canvas {*/
+  /*display: block;*/
+/*}*/
 
-.horizon .title,
-.horizon .value {
-  bottom: 0;
-  line-height: 30px;
-  margin: 0 6px;
-  position: absolute;
-  text-shadow: 0 1px 0 rgba(255,255,255,.5);
-  white-space: nowrap;
-}
+/*.horizon .title,*/
+/*.horizon .value {*/
+  /*bottom: 0;*/
+  /*line-height: 30px;*/
+  /*margin: 0 6px;*/
+  /*position: absolute;*/
+  /*text-shadow: 0 1px 0 rgba(255,255,255,.5);*/
+  /*white-space: nowrap;*/
+/*}*/
 
-.horizon .title {
-  left: 0;
-}
+/*.horizon .title {*/
+  /*left: 0;*/
+/*}*/
 
-.horizon .value {
-  right: 0;
-}
+/*.horizon .value {*/
+  /*right: 0;*/
+/*}*/
 
-.line {
-  background: #000;
-  opacity: .2;
-  z-index: 2;
-}
+/*.line {*/
+  /*background: #000;*/
+  /*opacity: .2;*/
+  /*z-index: 2;*/
+/*}*/
 
 @media all and (max-width: 1439px) {
   .axis { position: static; }
@@ -1562,5 +1562,107 @@ input[type="radio"].selectedRoot {
 
 #top-shares-graph-ph {
   height: 250px;
+}
+
+/* Bootstrap tooltip */
+.tooltip {
+  line-height: 1.2;
+}
+
+.tooltip.in {
+  opacity: 0.9;
+  filter: alpha(opacity=90);
+}
+
+.tooltip.top .tooltip-arrow {
+  bottom: 0;
+  left: 50%;
+  margin-left: -5px;
+  border-top: 5px solid #FCF99A;
+  border-right: 5px solid transparent;
+  border-left: 5px solid transparent;
+}
+
+.tooltip.left .tooltip-arrow {
+  top: 50%;
+  right: 0;
+  margin-top: -5px;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 5px solid #FCF99A;
+}
+
+.tooltip.bottom .tooltip-arrow {
+  top: 0;
+  left: 50%;
+  margin-left: -5px;
+  border-right: 5px solid transparent;
+  border-bottom: 5px solid #FCF99A;
+  border-left: 5px solid transparent;
+}
+
+.tooltip.right .tooltip-arrow {
+  top: 50%;
+  left: 0;
+  margin-top: -5px;
+  border-top: 5px solid transparent;
+  border-right: 5px solid #FCF99A;
+  border-bottom: 5px solid transparent;
+}
+
+.tooltip-inner {
+  text-align: left;
+  max-width: 250px;
+  padding: 3px 8px;
+  color: #555;
+  text-decoration: none;
+  background-color: #FCF99A;
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  border-radius: 4px;
+  box-shadow: 0 0 12px #555;
+}
+
+/* cpu graph */
+.cpugraph path { 
+  stroke: steelblue;
+  stroke-width: 1;
+  fill: none;
+}
+.cpugraph.axis path,
+.cpugraph.axis line {
+  fill: none;
+  stroke: #aaa;
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.cpugraph.grid .tick {
+  stroke: lightgrey;
+  opacity: 0.7;
+}
+.cpugraph.grid path {
+  stroke-width: 0;
+}    
+.cpugraph line {
+
+}
+
+.cpugraph text {
+  font-size: 10px;
+}
+
+#cpuusage-individual div.cpu {
+  float: left; 
+  margin-right: 2px;
+}
+
+#cpuusage-individual text {
+  font-size: 10px;
+}
+
+#cpuusage_widget {
+  font-size: 10px;
+  color: #000;
 }
 

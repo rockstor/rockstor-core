@@ -31,12 +31,12 @@ var Setup = Backbone.Model.extend({
 
 var Disk = Backbone.Model.extend({
   url: function() {
-    return '/api/disks/' + this.get('diskName') + '/';
+    return '/api/disks/' + this.get('diskName');
   }
 });
 var DiskCollection = RockStorPaginatedCollection.extend({
   model: Disk,
-  baseUrl: '/api/disks/',
+  baseUrl: '/api/disks',
 });
 
 var Pool = Backbone.Model.extend({
@@ -203,10 +203,10 @@ var ProbeCollection = Backbone.Collection.extend({
 });
 
 var NetworkInterface = Backbone.Model.extend({
-  url: function() {
-    return '/api/network/' + this.get('name') + '/';
-  }
+  idAttribute: 'name',
+  urlRoot: '/api/network'
 });
+
 var NetworkInterfaceCollection = RockStorPaginatedCollection.extend({
   model: NetworkInterface,
   baseUrl: '/api/network'
@@ -260,6 +260,36 @@ var ReplicaTrailCollection = RockStorPaginatedCollection.extend({
       return '/api/sm/replicas/trail/replica/' + this.replicaId;
     } else {
       return '/api/sm/replicas/trail';
+    }
+  }
+});
+
+var TaskDef = Backbone.Model.extend({
+  urlRoot: "/api/sm/tasks/"                                   
+});
+
+var TaskDefCollection = RockStorPaginatedCollection.extend({
+  model: TaskDef,
+  baseUrl: "/api/sm/tasks/"
+});
+
+var Task = Backbone.Model.extend({
+  urlRoot: "/api/sm/tasks/log"                                   
+});
+
+var TaskCollection = RockStorPaginatedCollection.extend({
+  model: Task,
+  initialize: function(models, options) {
+    this.constructor.__super__.initialize.apply(this, arguments);
+    if (options) {
+      this.taskDefId = options.taskDefId;
+    }
+  },
+  baseUrl: function() {
+    if (this.taskDefId) {
+      return '/api/sm/tasks/log/taskdef/' + this.taskDefId;
+    } else {
+      return '/api/sm/tasks/log';
     }
   }
 });

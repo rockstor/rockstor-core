@@ -22,9 +22,10 @@
 <h3><%= share.get('name') %></h3>
 <div id="ph-share-info">
   <div class="pull-right">
-    <button id="js-delete" class="btn btn-danger" type="button" type="button"><i class="icon-trash icon-white"></i> Delete Share</button>
+    <a id="js-clone" class="btn btn-primary" href="#shares/<%= share.get('name') %>/create-clone"><i class="icon-book icon-white"></i> Clone</a>
+    <button id="js-delete" class="btn btn-danger" type="button" type="button"><i class="icon-trash icon-white"></i> Delete </button>
   </div>
-  Created on <%= new Date(share.get("toc")).toString() %> <br>
+  Created on <%= moment(share.get("toc")).format(RS_DATE_FORMAT) %> <br>
   Pool: <a href="#pools/<%= share.get('pool').name %>"><%= share.get('pool').name %></a> 
 </div>
 <br>

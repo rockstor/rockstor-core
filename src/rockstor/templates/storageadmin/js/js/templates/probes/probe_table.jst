@@ -13,10 +13,10 @@
       <tr>
         <td><a href="#probeDetail/<%= p.get('name') %>/<%= p.get('id') %>"><%= p.get("display_name") %></a></td>
         <td><%= p.get("state") %></td>
-        <td><%= (new Date(p.get("start"))).toString() %> </td>
+        <td><%= moment(p.get("start")).format(RS_DATE_FORMAT) %> </td>
         <td>
           <% if (p.get("end")) { %>
-            <%= (new Date(p.get("end"))).toString() %> </td>
+            <%= moment(p.get("end")).format(RS_DATE_FORMAT) %> </td>
           <% } %>
         </td>
         <td>
