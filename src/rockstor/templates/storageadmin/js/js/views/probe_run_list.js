@@ -46,6 +46,7 @@ ProbeRunListView = RockstoreLayoutView.extend({
     this.dependencies.push(this.probeRuns);
     this.dependencies.push(this.probeTemplates);
     this.statusPollInterval = 2000; // poll interval for status changes 
+    this.statusIntervalIds = {};
   },
 
   render: function() {
@@ -128,15 +129,13 @@ ProbeRunListView = RockstoreLayoutView.extend({
 
   pollTillStatus: function(probeRun, status, callback, errCallback) {
     var _this = this;
-    console.log("polling till status = " + status);
-    this.statusIntervalId = window.setInterval(function() {
+    this.statusIntervalIds[probeRun.id] = window.setInterval(function() {
       probeRun.fetch({
         success: function(model, response, options) {
-          console.log("probe state is " + probeRun.get("state"));
           if (probeRun.get("state") == status ||
               probeRun.get("state") == "error") {
             // stop polling for status
-            window.clearInterval(_this.statusIntervalId);
+            window.clearInterval(_this.statusIntervalIds[probeRun.id]);
             _this.probeRuns.fetch({
               success: function(collection, response, options) {
                 _this.renderTable();
@@ -149,7 +148,7 @@ ProbeRunListView = RockstoreLayoutView.extend({
         },
         error: function(model, response, options) {
           // stop polling for status
-          window.clearInterval(_this.statusIntervalId);
+          window.clearInterval(_this.statusIntervalIds[probeRun.id]);
           // go to running state
           _this.renderTable();
         }
