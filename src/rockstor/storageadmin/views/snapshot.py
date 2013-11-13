@@ -25,8 +25,8 @@ from django.db import transaction
 from django.conf import settings
 from storageadmin.models import (Snapshot, Share, Disk, NFSExport,
                                  NFSExportGroup)
-from fs.btrfs import (add_snap, remove_snap, rollback_snap, share_id,
-                      update_quota, share_usage)
+from fs.btrfs import (add_snap, remove_share, share_id, update_quota,
+                      share_usage)
 from system.osi import refresh_nfs_exports
 from storageadmin.serializers import SnapshotSerializer
 from storageadmin.util import handle_exception
@@ -62,9 +62,8 @@ class SnapshotView(GenericView):
     def _toggle_visibility(self, share, snap_name, on=True):
         cur_exports = list(NFSExport.objects.all())
         for se in NFSExport.objects.filter(share=share):
-            snap_realname = ('%s_%s' % (share.name, snap_name))
             mnt_pt = ('%s%s/%s' % (settings.MNT_PT, share.pool.name,
-                                   snap_realname))
+                                   snap_name))
             export_pt = mnt_pt.replace(settings.MNT_PT,
                                        settings.NFS_EXPORT_ROOT)
             export = None
@@ -102,13 +101,14 @@ class SnapshotView(GenericView):
             handle_exception(Exception(e_msg), request)
 
         try:
+            real_name = ('%s_%s' % (share.name, snap_name))
             add_snap(share.pool.name, pool_device, share.subvol_name,
-                     snap_name)
-            snap_id = share_id(share.pool.name, pool_device, snap_name)
+                     real_name, share_prepend=False)
+            snap_id = share_id(share.pool.name, pool_device, real_name)
             qgroup_id = ('0/%s' % snap_id)
             snap_size = share_usage(share.pool.name, pool_device, qgroup_id)
-            s = Snapshot(share=share, name=snap_name, size=snap_size,
-                         qgroup=qgroup_id, uvisible=uvisible)
+            s = Snapshot(share=share, name=snap_name, real_name=real_name,
+                         size=snap_size, qgroup=qgroup_id, uvisible=uvisible)
             s.save()
             return Response(SnapshotSerializer(s).data)
         except Exception, e:
@@ -116,28 +116,6 @@ class SnapshotView(GenericView):
             logger.error(e_msg)
             logger.exception(e)
             handle_exception(Exception(e_msg), request)
-
-    @transaction.commit_on_success
-    def _rollback(self, share, snap_name, pool_device, request):
-        try:
-            snap = Snapshot.objects.get(share=share, name=snap_name)
-        except:
-            e_msg = ('Snapshot with name: %s does not exist for the '
-                     'share: %s' % (snap_name, share.name))
-            handle_exception(Exception(e_msg), request)
-        try:
-            rollback_snap(snap_name, share.name, share.subvol_name,
-                          share.pool.name, pool_device)
-            share.subvol_name = snap_name
-            update_quota(share.pool.name, pool_device, snap.qgroup,
-                         share.size * 1024)
-            share.qgroup = snap.qgroup
-            share.save()
-            snap.delete()
-            return Response()
-        except Exception, e:
-            logger.exception(e)
-            handle_exception(e, request)
 
     def post(self, request, sname, snap_name, command=None):
         share = self._validate_share(sname, request)
@@ -153,14 +131,12 @@ class SnapshotView(GenericView):
                                uvisible=uvisible)
             if (uvisible):
                 try:
-                    self._toggle_visibility(share, snap_name)
+                    self._toggle_visibility(share, ret.data['real_name'])
                 except Exception, e:
                     msg = ('snapshot created but nfs exporting it failed')
                     logger.error(msg)
                     logger.exception(e)
             return ret
-        if (command == 'rollback'):
-            return self._rollback(share, snap_name, pool_device, request)
         if (command == 'clone'):
             new_name = request.DATA['name']
             return create_clone(share, new_name, request, logger)
@@ -196,7 +172,7 @@ class SnapshotView(GenericView):
         pool_device = Disk.objects.filter(pool=share.pool)[0].name
         try:
             if (snapshot.uvisible):
-                self._toggle_visibility(share, snap_name, on=False)
+                self._toggle_visibility(share, snapshot.real_name, on=False)
         except Exception, e:
             e_msg = ('Unable to nfs unexport the snapshot, requirement for '
                      'deletion. Try again later')
@@ -205,7 +181,7 @@ class SnapshotView(GenericView):
             handle_exception(Exception(e_msg), request)
 
         try:
-            remove_snap(share.pool.name, pool_device, sname, snap_name)
+            remove_share(share.pool.name, pool_device, snapshot.real_name)
             snapshot.delete()
             return Response()
         except Exception, e:
