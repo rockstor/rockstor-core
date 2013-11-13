@@ -115,6 +115,7 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
     //this.snapshots.on('reset', this.subviews['snapshots'].render, this.subviews['snapshots']);
     $(this.el).append(this.template({
       share: this.share,
+      snapshots: this.snapshots,
       permStr: this.parsePermStr(this.share.get("perms")),
       modify_choices: this.modify_choices, 
       sync_choices: this.sync_choices, 
