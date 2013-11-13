@@ -77,10 +77,16 @@ def print_pool_info(pool_info):
             pool_info = pool_info['results']
         print("List of pools in the system")
         print("--------------------------------------")
-        print("Name\tSize(KB)\tUsage(KB)Raid")
-        for p in pool_info:
-            print('%s\t%d\t%s\t%s' %
-                  (p['name'], p['size'], p['usage'], p['raid']))
+        print("Name\tSize\tUsage\tRaid")
+        # Check if any pools exist, if not display no pools created message
+        if ([] == pool_info):
+            print('No pools have been created.')
+        else:
+            for p in pool_info:
+                p['size'] = sizeof_fmt(p['size'])
+                p['usage'] = sizeof_fmt(p['usage'])
+                print('%s\t%s\t%s\t%s' %
+                      (p['name'], p['size'], p['usage'], p['raid']))
     except Exception, e:
         print('Error rendering pool info')
 
@@ -108,7 +114,7 @@ def print_disk_info(disk_info):
         return
     try:
         if ('results' not in disk_info):
-            #scan cmd is  used, don't do anything
+            #POST is used, don't do anything
             disk_info = disk_info
         elif ('count' not in disk_info):
             disk_info = [disk_info]
@@ -141,7 +147,12 @@ def print_export_info(export_info):
 
 def sizeof_fmt(num):
     for x in ['K','M','G','T','P','E']:
-        if (num < 1024.00 and num > -1024.00):
-            return "%3.2f%s" % (num, x)
-        num /= 1024.00
-    return "%3.2f%s" % (num, 'ZB')
+        if (num < 0.00):
+            num = 0
+            break
+        if (num < 1024.00):
+            break
+        else:
+            num /= 1024.00
+            x = 'Z'
+    return ("%3.2f%s" % (num, x))
