@@ -138,6 +138,17 @@ class SharesConsole(BaseConsole):
         url = ('%s/%s/clone' % (self.url, fields[0]))
         print api_call(url, data=input_data, calltype='post')
 
+    def do_rollback(self, args):
+        """
+        Rollback a share to the state of one of it's snapshots.
+
+        rollback <share_name> <snap_name>
+        """
+        fields = args.split()
+        input_data = {'name': fields[1],}
+        url = ('%s/%s/rollback' % (self.url, fields[0]))
+        print api_call(url, data=input_data, calltype='post')
+
     def do_change_op(self, args):
         """
         To change ownership and permissions
