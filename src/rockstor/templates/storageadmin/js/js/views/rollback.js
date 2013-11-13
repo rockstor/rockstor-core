@@ -26,7 +26,7 @@
 
 RollbackView = RockstoreLayoutView.extend({
   events: {
-    'click .js-cancel': 'cancel',
+    'click #js-cancel': 'cancel',
     'click #js-confirm-rollback-submit': 'confirmRollback'
   },
 
@@ -92,15 +92,15 @@ RollbackView = RockstoreLayoutView.extend({
     if (buttonDisabled(button)) return false;
     var snapName = this.$('input:radio[name=snapshot]:checked').val(); 
     $.ajax({
-      url: '/api/shares/' + _this.share.get('name') + '/snapshots/' + snapName + '/rollback',
+      url: '/api/shares/' + _this.share.get('name') + '/rollback',
       type: "POST",
       dataType: "json",
       contentType: 'application/json',
-      data: '',
+      data: JSON.stringify({name: snapName}),
       success: function() {
         enableButton(button);
         _this.$('#confirm-rollback').modal('hide');
-        app_router.navigate('shares/' + this.share.get('name'), {trigger: true}) 
+        app_router.navigate('shares/' + _this.share.get('name'), {trigger: true}) 
       },
       error: function(xhr, status, error) {
         enableButton(button);
@@ -111,9 +111,9 @@ RollbackView = RockstoreLayoutView.extend({
 
   },
 
-  cancel: function() {
-    event.preventDefault();
-    app_router.navigate('shares', {trigger: true}) 
+  cancel: function(event) {
+    if (event) event.preventDefault();
+    app_router.navigate('shares/' + this.share.get('name'), {trigger: true}) 
   }
 
 });
