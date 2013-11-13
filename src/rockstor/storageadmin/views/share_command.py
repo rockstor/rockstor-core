@@ -82,6 +82,17 @@ class ShareCommandView(GenericView):
                 e_msg = ('Snapshot with name: %s does not exist for the '
                          'share: %s' % (snap_name, share.name))
                 handle_exception(Exception(e_msg), request)
+
+            if (NFSExport.objects.filter(share=share).exists()):
+                e_msg = ('Share: %s cannot be rolled back as it is exported '
+                         'via nfs. Delete nfs exports and try again' % sname)
+                handle_exception(Exception(e_msg), request)
+
+            if (SambaShare.objects.filter(share=share).exists()):
+                e_msg = ('Share: %s cannot be rolled back as it is shared '
+                         ' via Samba. Unshare and try again' % sname)
+                handle_exception(Exception(e_msg), request)
+
             try:
                 pool_device = Disk.objects.filter(pool=share.pool)[0].name
                 rollback_snap(snap.real_name, share.name, share.subvol_name,
