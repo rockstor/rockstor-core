@@ -1,0 +1,48 @@
+<script>
+/*
+ * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ * 
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ * 
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ */
+</script>
+
+<h3>Rollback share (<%= share.get('name') %>) to selected snapshot</h3>
+
+<form name="rollback-form" id="rollback-form">
+  <div id="ph-snapshot-list"></div>
+  <div class="control-group">
+    <div class="controls">
+      <a id="js-cancel" class="btn">Cancel</a>
+      <input type="Submit" id="rollback-share" class="btn btn-primary" value="Submit"></input>
+    </div>
+  </div>
+</form>
+
+<div id="confirm-rollback" class="modal hide" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">Confirm share rollback</h3>
+  </div>
+  <div class="modal-body">
+    <div class="messages"></div>
+    <h4>Share <%= share.get('name') %> will be rolled back to snapshot <span id="confirm-snap-name"></span>. Are you sure?</h4>
+  </div>
+  <div class="modal-footer">
+    <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+    <button id="js-confirm-rollback-submit" class="btn btn-primary">Confirm</button>
+  </div>
+</div>
+
