@@ -1560,10 +1560,6 @@ input[type="radio"].selectedRoot {
   height: 100%;
 }
 
-#top-shares-graph-ph {
-  height: 250px;
-}
-
 /* Bootstrap tooltip */
 .tooltip {
   line-height: 1.2;
@@ -1664,5 +1660,23 @@ input[type="radio"].selectedRoot {
 #cpuusage_widget {
   font-size: 10px;
   color: #000;
+}
+
+/* top shares graph */
+.top-shares text.title {
+  color: #000;
+  font-weight: bold;
+}
+
+.top-shares text.data {
+  color: #000;
+}
+
+.top-shares .bar.used {
+  fill: #FF951C;
+}
+
+.top-shares .bar.unused {
+  fill: #BDBBB9;
 }
 
