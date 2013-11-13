@@ -22,8 +22,10 @@ from storageadmin.models import Share
 class Snapshot(models.Model):
     """share which this snapshot belongs to"""
     share = models.ForeignKey(Share)
-    """name of the snapshot"""
+    """display name of the snapshot"""
     name = models.CharField(max_length=4096)
+    """real name of the snapshot"""
+    real_name = models.CharField(max_length=4096, default='unknownsnap')
     """read-only by default"""
     writable = models.BooleanField(default=False)
     """size of the snapshot"""
