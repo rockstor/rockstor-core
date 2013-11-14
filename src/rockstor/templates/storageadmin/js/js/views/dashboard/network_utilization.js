@@ -335,7 +335,7 @@ RockStorWidgets.widgetDefs.push({
     maxRows: 2,
     maxCols: 10,
     category: 'Network', 
-    position: 3
+    position: 5,
 });
 
 

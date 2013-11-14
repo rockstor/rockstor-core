@@ -257,6 +257,6 @@ RockStorWidgets.widgetDefs.push({
     maxRows: 2,
     maxCols: 10,
     category: 'Compute', 
-    position: 2
+    position: 4
 });
 
