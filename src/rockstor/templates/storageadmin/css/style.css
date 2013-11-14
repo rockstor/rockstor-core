@@ -1668,15 +1668,52 @@ input[type="radio"].selectedRoot {
   font-weight: bold;
 }
 
-.top-shares text.data {
-  color: #000;
+.top-shares .data-row text {
+  fill: #555;
+}
+
+.top-shares .data-row text.share-name {
+  fill: #098AE6;
+  cursor: pointer;
 }
 
 .top-shares .bar.used {
+  stroke: #FF951C;
   fill: #FF951C;
 }
 
 .top-shares .bar.unused {
-  fill: #BDBBB9;
+  fill: #fff;
+  stroke: #ccc;
+}
+
+.d3-tip {
+  line-height: 1.1;
+  padding: 12px;
+  background-color: #757575;
+  color: #fff;
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  border-radius: 4px;
+}
+
+/* Creates a small triangle extender for the tooltip */
+.d3-tip:after {
+  box-sizing: border-box;
+  display: inline;
+  font-size: 10px;
+  width: 100%;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.8);
+  content: "\25BC";
+  position: absolute;
+  text-align: center;
+}
+
+/* Style northward tooltips differently */
+.d3-tip.n:after {
+  margin: -1px 0 0 0;
+  top: 100%;
+  left: 0;
 }
 

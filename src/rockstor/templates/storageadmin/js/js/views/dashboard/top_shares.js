@@ -33,11 +33,11 @@ TopSharesWidget = RockStorWidgetView.extend({
     this.template = window.JST.dashboard_widgets_top_shares;
     this.shares = new ShareCollection();
     this.shares.pageSize = 1000;
-    this.numTop = 10;
+    this.numTop = 5;
     this.graphWidth = this.maximized ? 400 : 250;
-    this.rowHeight = this.maximized ? 40 : 20;
-    this.barHeight = 12;
-    this.barWidth = this.maximized ? 120 : 60;
+    this.rowHeight = this.maximized ? 30 : 30;
+    this.barHeight = 30;
+    this.barWidth = this.maximized ? 120 : 200;
     this.x = d3.scale.linear().domain([0,100]).range([0, this.barWidth]);
   },
 
@@ -60,19 +60,33 @@ TopSharesWidget = RockStorWidgetView.extend({
  
   renderTopShares: function() {
     var _this = this;
+
+    // Get top shares by % used
     this.data = this.shares.sortBy(function(s) {
       return ((s.get('usage')/s.get('size'))*100);
-    }).slice(0,this.numTop).reverse();
+    }).reverse().slice(0,this.numTop);
     this.data.map(function(d) { 
       d.set({'pUsed': ((d.get('usage')/d.get('size'))*100)});
     });
+
+    var tip = d3.tip()
+    .attr('class', 'd3-tip')
+    .offset([-10, 0])
+    .html(function(d) {
+      return '<strong>' + d.get('name') + '</strong>' + '<br>' + 'Used: ' +
+        humanize.filesize(d.get('usage')*1024) + '<br>' +
+        'Free: ' + 
+        humanize.filesize((d.get('size')-d.get('usage'))*1024); 
+    })
 
     this.svg = d3.select(this.el).select('#ph-top-shares-graph')
     .append('svg')
     .attr('class', 'top-shares')
     .attr('width', this.graphWidth)
     .attr('height', this.rowHeight * this.data.length)
-   
+    
+    this.svg.call(tip);
+
     // Header 
     var titleRow = this.svg.append('g')
     .attr('class','.title-row');
@@ -81,69 +95,50 @@ TopSharesWidget = RockStorWidgetView.extend({
     .attr('class', 'title')
     .attr('x', 0)
     .attr('y', 10)
-    .style("text-anchor", "left")
-    .text('Share')
+    .style("text-anchor", "start")
+    .text('Top ' + this.numTop + ' shares sorted by % used')
 
-    titleRow.append("text")  
-    .attr('class', 'title')
-    .attr('x', 75)
-    .attr('y', 10)
-    .style("text-anchor", "left")
-    .text('Used')
-
-    titleRow.append("text")  
-    .attr('class', 'title')
-    .attr('x', 75 + 75)
-    .attr('y', 10)
-    .style("text-anchor", "left")
-    .text('% Used')
-
+    // Data rows
     var dataRow = this.svg.selectAll('g.data-row')
     .data(this.data)
-    .attr('class', 'data-row')
     .enter().append('g')
+    .attr('class', 'data-row')
     .attr("transform", function(d, i) { 
       return "translate(0," + ((i+1) * _this.rowHeight) + ")"; 
     });
-
-    // Share Name
+    
+    // % Used text 
     dataRow.append("text")  
     .attr('x', 0)
-    .attr('y', 10)
+    .attr('y', 20)
     .style("text-anchor", "left")
-    .text(function(d) { return d.get('name'); });
-    
-    // Share usage in KB
-    dataRow.append("text")  
-    .attr('x', 75)
-    .attr('y', 10)
-    .style("text-anchor", "left")
-    .text(function(d) { return humanize.filesize(d.get('usage')*1024); });
-
-    // % Used bar
+    .text(function(d) { return d.get('pUsed').toFixed(2) + '%' });
+   
+    // % Used bar 
     dataRow.append('rect')
     .attr('class', 'bar used')
-    .attr('x', 0)
+    .attr('x', 50)
     .attr('y', 0)
     .attr('width', function(d) { return _this.x(d.get('pUsed')); })
-    .attr('height', this.barHeight - 1)
-    .attr('transform', function(d, i) { return 'translate(' + (75 + 75) + ',0)'; });
+    .attr('height', this.barHeight - 2);
    
     // % Unused bar 
     dataRow.append('rect')
     .attr('class', 'bar unused')
-    .attr('x', 0)
+    .attr('x', function(d) { return 50 + _this.x(d.get('pUsed'));})
     .attr('y', 0)
     .attr('width', function(d) { return _this.barWidth - _this.x(d.get('pUsed')); })
-    .attr('height', this.barHeight - 1)
-    .attr('transform', function(d, i) { return 'translate(' +  (75 + 75 + _this.x(d.get('pUsed'))) + ',0)'; });
+    .attr('height', this.barHeight - 2);
     
-    // % Used text 
+    // Share Name
     dataRow.append("text")  
-    .attr('x', 75 + 75 + this.barWidth + 2)
-    .attr('y', 10)
-    .style("text-anchor", "left")
-    .text(function(d) { return d.get('pUsed').toFixed(2) + '%' });
+    .attr('class', 'share-name')
+    .attr('x', 245)
+    .attr('y', 20)
+    .style("text-anchor", "end")
+    .text(function(d) { return d.get('name') + ' (' + humanize.filesize(d.get('usage')*1024) + ')'; })
+    .on('mouseover', tip.show)
+    .on('mouseout', tip.hide);
 
   },
 
