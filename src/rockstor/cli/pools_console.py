@@ -21,7 +21,7 @@ import json
 
 from base_console import BaseConsole
 from pool_detail_console import PoolDetailConsole
-from rest_util import (api_call, print_pool_info)
+from rest_util import (api_error, api_call, print_pool_info)
 
 
 class PoolsConsole(BaseConsole):
@@ -30,8 +30,9 @@ class PoolsConsole(BaseConsole):
         BaseConsole.__init__(self)
         self.pprompt = prompt
         self.prompt = ('%s Pools>' % self.pprompt)
-        self.url = ('%spools/' % BaseConsole.url)
+        self.url = ('%spools' % BaseConsole.url)
 
+    @api_error
     def do_list(self, args):
         """
         List brief information about pools
@@ -39,12 +40,13 @@ class PoolsConsole(BaseConsole):
         Details of all pools:     list
         Details of a single pool: list <pool_name>
         """
-        url = self.url
+        url = self.url+'?format=json'
         if (args is not None):
             url = ('%s%s' % (self.url, args))
         pool_info = api_call(url)
         print_pool_info(pool_info)
 
+    @api_error
     def do_add(self, args):
         """
         Create a new pool.
@@ -55,7 +57,7 @@ class PoolsConsole(BaseConsole):
         pool_name:    Intended name of the pool.
         disk_list:    A list of comma-separated(no whitespace) disks. For
                       example: sdb,sdc.
-        raid_type:    One of the following: raid0, raid1
+        raid_type:    One of the following: single, raid0, raid1 and raid10
 
         Examples:
         To create a raid0 pool with two disks(sdb and sdc) called pool0
@@ -66,12 +68,14 @@ class PoolsConsole(BaseConsole):
             error = '3 arguments expected. %d given' % len(arg_fields)
             return self.help_wrapper(error, 'add')
 
-        input_data = {'disks': arg_fields[1],
-                      'raid_level': arg_fields[2],}
-        url = ('%s%s' % (self.url, arg_fields[0]))
+        input_data = {'pname': arg_fields[0],
+                      'disks': arg_fields[1],
+                      'raid_level': arg_fields[2]}
+        url = (self.url)
         pool_info = api_call(url, data=input_data, calltype='post')
-        print pool_info
+        print_pool_info(pool_info)
 
+    @api_error
     def do_delete(self, args):
         """
         Delete a pool.
@@ -85,12 +89,13 @@ class PoolsConsole(BaseConsole):
         To delete a pool named pool0
             delete pool0
         """
-        if (args is None):
-            self.do_help(args)
-        url = ('%s%s' % (self.url, args))
+        if (len(args) == 0):
+            return self.help_wrapper('missing pool_name', 'delete')
+        url = ('%s/%s' % (self.url, args))
         pool_info = api_call(url, calltype='delete')
         print pool_info
 
+    @api_error
     def do_console(self, args):
         """
         Subconsole for a single pool.
@@ -114,28 +119,28 @@ class PoolsConsole(BaseConsole):
         else:
             pd_console.onecmd(args)
 
+    @api_error
     def do_scrub(self, args):
         """
         To scrub a pool:
 
         scrub pool0
         """
-        try:
-            url = ('%s%s/scrub' % (self.url, args))
-            scrub_info = api_call(url, calltype='post')
-            print scrub_info
-        except:
-            return self.do_help(args)
+        if (len(args) == 0):
+            return self.help_wrapper('missing pool_name', 'scrub')
+        url = ('%s/%s/scrub' % (self.url, args))
+        scrub_info = api_call(url, calltype='post')
+        print scrub_info
 
+    @api_error
     def do_scrub_status(self, args):
         """
         get scrub status for a pool
 
         scrub_status pool0
         """
-        try:
-            url = ('%s%s/scrub/status' % (self.url, args))
-            scrub_info = api_call(url, calltype='post')
-            print scrub_info
-        except:
-            return self.do_help(args)
+        if (len(args) == 0):
+            return self.help_wrapper('missing pool_name', 'scrub_status')
+        url = ('%s/%s/scrub/status' % (self.url, args))
+        scrub_info = api_call(url, calltype='post')
+        print scrub_info
