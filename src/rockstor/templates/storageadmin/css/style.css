@@ -1663,34 +1663,42 @@ input[type="radio"].selectedRoot {
 }
 
 /* top shares graph */
+
 .top-shares text.title {
-  color: #000;
+  fill: #000;
+}
+.top-shares .data-row text {
+  fill: #000;
+  font-size: 10px;
 }
 
-.top-shares .data-row text {
-  fill: #555;
+.top-shares .data-row text.usedpc {
+  font-size: 12px;
 }
 
 .top-shares .data-row text.share-name {
-  fill: #fff;
+  fill: #000;
   cursor: pointer;
 }
 
 .top-shares .bar.used {
-  fill: #3182bd;
+  fill: #9ecae1;
 }
 
 .top-shares .bar.unused {
-  fill: #31a354;
+  fill: #ddd;
 }
 
 .d3-tip {
-  padding: 12px;
-  background-color: #757575;
-  color: #fff;
+  padding: 3px 8px;
+  color: #555;
+  text-decoration: none;
+  background-color: #FCF99A;
   -webkit-border-radius: 4px;
   -moz-border-radius: 4px;
   border-radius: 4px;
+  box-shadow: 0 0 12px #555;
+  line-height: 1.2;
 }
 
 /* Creates a small triangle extender for the tooltip */
