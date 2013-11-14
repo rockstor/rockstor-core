@@ -39,8 +39,6 @@ def create_clone(share, new_name, request, logger):
                  snap_name, share_prepend=False)
         snap_id = share_id(share.pool.name, pool_device, snap_name)
         qgroup_id = ('0/%s' % snap_id)
-        #mount_share(snap_name, pool_device, ('%s%s' % (settings.MNT_PT,
-        #                                               new_name)))
         update_quota(share.pool.name, pool_device, qgroup_id,
                      share.size * 1024)
         new_share = Share(pool=share.pool, qgroup=qgroup_id, name=new_name,

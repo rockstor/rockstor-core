@@ -81,8 +81,8 @@ class ShareView(GenericView):
             self._validate_share_size(request, new_size)
 
             disk = Disk.objects.filter(pool=share.pool)[0]
-            qgroup_id = self._update_quota(share.pool.name, disk.name, sname,
-                                           new_size)
+            qgroup_id = self._update_quota(share.pool.name, disk.name,
+                                           share.subvol_name, new_size)
             cur_usage = share_usage(share.pool.name, disk.name, qgroup_id)
             if (new_size < cur_usage):
                 e_msg = ('Unable to resize because requested new size(%dKB) '

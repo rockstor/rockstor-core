@@ -41,13 +41,20 @@ def api_error(console_func):
 
 def api_call(url, data=None, calltype='get', headers=None, save_error=True):
     call = getattr(requests, calltype)
-    if (headers is not None):
-        r = call(url, verify=False, params=auth_params, data=data,
-                 headers=headers)
-    else:
-        r = call(url, verify=False, params=auth_params, data=data)
+    try:
+        if (headers is not None):
+            r = call(url, verify=False, params=auth_params, data=data,
+                     headers=headers)
+        else:
+            r = call(url, verify=False, params=auth_params, data=data)
+    except requests.exceptions.ConnectionError:
+        print('Error connecting to Rockstor. Is it running?')
+        return {}
 
     if (r.status_code != 200):
+        error_d = json.loads(r.text)
+        if ('detail' in error_d):
+            raise RockStorAPIException(detail=error_d['detail'])
         if (settings.DEBUG is True and save_error is True):
             cur_time = str(int(time.time()))
             err_file = '/tmp/err-%s.html' % cur_time
@@ -55,9 +62,6 @@ def api_call(url, data=None, calltype='get', headers=None, save_error=True):
                 for line in r.text.split('\n'):
                     efo.write('%s\n' % line)
             print('Error detail is saved at %s' % err_file)
-        error_d = json.loads(r.text)
-        if ('detail' in error_d):
-            raise RockStorAPIException(detail=error_d['detail'])
         r.raise_for_status()
 
     try:
@@ -67,8 +71,10 @@ def api_call(url, data=None, calltype='get', headers=None, save_error=True):
     return ret_val
 
 def print_pool_info(pool_info):
-    if (pool_info is None):
-        print("There are no pools in the system")
+    if (pool_info is None or
+        not isinstance(pool_info, dict) or
+        len(pool_info) == 0):
+        print('There are no pools in the system')
         return
     try:
         if ('count' not in pool_info):
@@ -77,16 +83,20 @@ def print_pool_info(pool_info):
             pool_info = pool_info['results']
         print("List of pools in the system")
         print("--------------------------------------")
-        print("Name\tSize(KB)\tUsage(KB)Raid")
+        print("Name\tSize\tUsage\tRaid")
         for p in pool_info:
-            print('%s\t%d\t%s\t%s' %
+            p['size'] = sizeof_fmt(p['size'])
+            p['usage'] = sizeof_fmt(p['usage'])
+            print('%s\t%s\t%s\t%s' %
                   (p['name'], p['size'], p['usage'], p['raid']))
     except Exception, e:
         print('Error rendering pool info')
 
 def print_share_info(share_info):
-    if (share_info is None):
-        print("There are no shares in the system")
+    if (share_info is None or
+        not isinstance(share_info, dict) or
+        len(share_info) == 0):
+        print('There are no shares in the system')
         return
     try:
         if ('count' not in share_info):
@@ -103,12 +113,14 @@ def print_share_info(share_info):
         print('Error rendering share info')
 
 def print_disk_info(disk_info):
-    if (disk_info is None):
-        print("There are no disks in the system")
+    if (disk_info is None or
+        not isinstance(disk_info, dict) or
+        len(disk_info) == 0):
+        print('There are no disks in the system')
         return
     try:
         if ('results' not in disk_info):
-            #scan cmd is  used, don't do anything
+            #POST is used, don't do anything
             disk_info = disk_info
         elif ('count' not in disk_info):
             disk_info = [disk_info]
@@ -125,23 +137,29 @@ def print_disk_info(disk_info):
 
 
 def print_export_info(export_info):
-    if (export_info is None):
-        print("There are no exports for this share")
-    else:
-        if (isinstance(export_info, dict)):
-            export_info = [export_info]
-        print("List of exports for the share")
-        print("----------------------------------------")
-        print("Id\tMount\tClient\tReadable\tSyncable\tEnabled")
-        for e in export_info:
-            print('%s\t%s\t%s\t%s\t%s\t%s' %
-                  (e['id'], e['mount'], e['host_str'], e['editable'],
-                   e['syncable'], e['enabled']))
+    if (export_info is None or
+        not isinstance(export_info, dict) or
+        len(export_info) == 0):
+        print('There are no exports for this share')
+        return
+    export_info = [export_info]
+    print("List of exports for the share")
+    print("----------------------------------------")
+    print("Id\tMount\tClient\tReadable\tSyncable\tEnabled")
+    for e in export_info:
+        print('%s\t%s\t%s\t%s\t%s\t%s' %
+              (e['id'], e['mount'], e['host_str'], e['editable'],
+               e['syncable'], e['enabled']))
 
 
 def sizeof_fmt(num):
     for x in ['K','M','G','T','P','E']:
-        if (num < 1024.00 and num > -1024.00):
-            return "%3.2f%s" % (num, x)
-        num /= 1024.00
-    return "%3.2f%s" % (num, 'ZB')
+        if (num < 0.00):
+            num = 0
+            break
+        if (num < 1024.00):
+            break
+        else:
+            num /= 1024.00
+            x = 'Z'
+    return ("%3.2f%s" % (num, x))
