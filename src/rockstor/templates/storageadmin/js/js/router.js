@@ -44,6 +44,7 @@ var AppRouter = Backbone.Router.extend({
     "shares/:shareName": "showShare",
     "shares/:shareName/create-clone": "createCloneFromShare",
     "shares/:shareName/snapshots/:snapName/create-clone": "createCloneFromSnapshot",
+    "shares/:shareName/rollback": "rollbackShare",
     "services": "showServices",
     "services/:serviceName/edit": "configureService",
     "support":"showSupport",
@@ -409,6 +410,17 @@ var AppRouter = Backbone.Router.extend({
       sourceType: 'snapshot',
       shareName: shareName,
       snapName: snapName
+    });
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  rollbackShare: function(shareName) {
+    RockStorSocket.removeAllListeners();
+    this.renderSidebar("storage", "shares");
+    this.cleanup();
+    this.currentLayout = new RollbackView({
+      shareName: shareName,
     });
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);

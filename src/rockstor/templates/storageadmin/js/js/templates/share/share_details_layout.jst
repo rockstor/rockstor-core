@@ -22,6 +22,11 @@
 <h3><%= share.get('name') %></h3>
 <div id="ph-share-info">
   <div class="pull-right">
+    <% if (snapshots.isEmpty()) { %>
+      <a id="js-rollback" class="btn btn-primary disabled" title="At least one snapshot must be created to rollback to." href="#shares/<%= share.get('name') %>/rollback"><i class="icon-repeat icon-white"></i> Rollback</a>
+    <% } else { %>
+      <a id="js-rollback" class="btn btn-primary" href="#shares/<%= share.get('name') %>/rollback"><i class="icon-repeat icon-white"></i> Rollback</a>
+    <% } %>
     <a id="js-clone" class="btn btn-primary" href="#shares/<%= share.get('name') %>/create-clone"><i class="icon-book icon-white"></i> Clone</a>
     <button id="js-delete" class="btn btn-danger" type="button" type="button"><i class="icon-trash icon-white"></i> Delete </button>
   </div>
