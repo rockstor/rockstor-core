@@ -89,6 +89,8 @@ class PoolsConsole(BaseConsole):
         To delete a pool named pool0
             delete pool0
         """
+        if (len(args) == 0):
+            return self.help_wrapper('missing pool_name', 'delete')
         url = ('%s/%s' % (self.url, args))
         pool_info = api_call(url, calltype='delete')
         print pool_info
@@ -124,7 +126,9 @@ class PoolsConsole(BaseConsole):
 
         scrub pool0
         """
-        url = ('%s%s/scrub' % (self.url, args))
+        if (len(args) == 0):
+            return self.help_wrapper('missing pool_name', 'scrub')
+        url = ('%s/%s/scrub' % (self.url, args))
         scrub_info = api_call(url, calltype='post')
         print scrub_info
 
@@ -135,6 +139,8 @@ class PoolsConsole(BaseConsole):
 
         scrub_status pool0
         """
-        url = ('%s%s/scrub/status' % (self.url, args))
+        if (len(args) == 0):
+            return self.help_wrapper('missing pool_name', 'scrub_status')
+        url = ('%s/%s/scrub/status' % (self.url, args))
         scrub_info = api_call(url, calltype='post')
         print scrub_info
