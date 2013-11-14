@@ -62,11 +62,8 @@ AddUserView = RockstoreLayoutView.extend({
      
       
       submitHandler: function() {
-        console.log("submitHandler");
         var username = _this.$("#username").val();
-        console.log("username: " + username);
         var password = _this.$("#password").val();
-        console.log("password: " + password);
         var is_active = _this.$("#is_active").prop("checked"); 
         // create a dummy user model class that does not have idAttribute 
         // = username, so backbone will treat is as a new object,
@@ -83,7 +80,6 @@ AddUserView = RockstoreLayoutView.extend({
           },
           {
             success: function(model, response, options) {
-              console.log("user created successfully");
               app_router.navigate("users", {trigger: true});
             },
             error: function(model, xhr, options) {
