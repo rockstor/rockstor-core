@@ -19,7 +19,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import cmd
 import readline
 
-
 class BaseConsole(cmd.Cmd):
 
     url = 'https://localhost/api/'
@@ -40,23 +39,20 @@ class BaseConsole(cmd.Cmd):
         print("")
         return self.do_exit(args)
 
+    def preloop(self):
+        cmd.Cmd.preloop(self)
+
     def do_hist(self, args):
         """
         History of commands in this session
         """
-        print self._hist
+        for i in range(readline.get_current_history_length()):
+            print readline.get_history_item(i)
 
     def do_shell(self, args):
         pass
 
-    def preloop(self):
-        cmd.Cmd.preloop(self)
-        self._hist    = []
-        self._locals  = {}
-        self._globals = {}
-
     def precmd(self, line):
-        self._hist += [ line.strip() ]
         return line
 
     def postcmd(self, stop, line):
