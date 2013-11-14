@@ -26,7 +26,8 @@
 
 EditNFSExportView = RockstoreLayoutView.extend({
   events: {
-    "click #js-cancel": "cancel"
+    //"click #js-cancel": "cancel"
+	  'click #cancel': 'cancel',
   },
 
   initialize: function() {
@@ -97,8 +98,8 @@ EditNFSExportView = RockstoreLayoutView.extend({
     });
   },
   
-  cancel: function(event) {
-    event.preventDefault();
+  cancel: function() {
+   // event.preventDefault();
     app_router.navigate('nfs-exports', {trigger: true});
   }
 

@@ -62,6 +62,7 @@ NFSExportsView  = RockstoreLayoutView.extend({
     if (event) event.preventDefault();
     var button = $(event.currentTarget);
     if (buttonDisabled(button)) return false;
+    if(confirm("Delete nfs-export... Are you sure? ")){
     disableButton(button)
     var id = $(event.currentTarget).data('id');
     $.ajax({
@@ -78,6 +79,7 @@ NFSExportsView  = RockstoreLayoutView.extend({
         _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
       }
     });
+    }
   }
 
 });
