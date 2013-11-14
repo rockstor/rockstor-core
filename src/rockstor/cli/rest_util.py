@@ -71,38 +71,42 @@ def api_call(url, data=None, calltype='get', headers=None, save_error=True):
     return ret_val
 
 def print_pool_info(pool_info):
+    empty_msg = ('There are no pools in the system')
     if (pool_info is None):
-        print("There are no pools in the system")
+        print(empty_msg)
         return
     try:
         if ('count' not in pool_info):
             pool_info = [pool_info]
         else:
             pool_info = pool_info['results']
+        if (len(pool_info) == 0):
+            print(empty_msg)
+            return
         print("List of pools in the system")
         print("--------------------------------------")
         print("Name\tSize\tUsage\tRaid")
-        # Check if any pools exist, if not display no pools created message
-        if ([] == pool_info):
-            print('No pools have been created.')
-        else:
-            for p in pool_info:
-                p['size'] = sizeof_fmt(p['size'])
-                p['usage'] = sizeof_fmt(p['usage'])
-                print('%s\t%s\t%s\t%s' %
-                      (p['name'], p['size'], p['usage'], p['raid']))
+        for p in pool_info:
+            p['size'] = sizeof_fmt(p['size'])
+            p['usage'] = sizeof_fmt(p['usage'])
+            print('%s\t%s\t%s\t%s' %
+                  (p['name'], p['size'], p['usage'], p['raid']))
     except Exception, e:
         print('Error rendering pool info')
 
 def print_share_info(share_info):
+    empty_msg = ('There are no shares in the system')
     if (share_info is None):
-        print("There are no shares in the system")
+        print(empty_msg)
         return
     try:
         if ('count' not in share_info):
             share_info = [share_info]
         else:
             share_info = share_info['results']
+        if (len(share_info) == 0):
+            print(empty_msg)
+            return
         print("List of shares in the system")
         print("---------------------------------------")
         print("Name\tSize(KB)\tUsage(KB)\tPool")
@@ -113,8 +117,9 @@ def print_share_info(share_info):
         print('Error rendering share info')
 
 def print_disk_info(disk_info):
+    empty_msg = ('There are no disks in the system.')
     if (disk_info is None):
-        print("There are no disks in the system")
+        print(empty_msg)
         return
     try:
         if ('results' not in disk_info):
@@ -124,6 +129,9 @@ def print_disk_info(disk_info):
             disk_info = [disk_info]
         else:
             disk_info = disk_info['results']
+        if (len(disk_info) == 0):
+            print(empty_msg)
+            return
         print("List of disks in the system")
         print("--------------------------------------------")
         print("Name\tSize\tPool")
@@ -135,18 +143,20 @@ def print_disk_info(disk_info):
 
 
 def print_export_info(export_info):
-    if (export_info is None):
-        print("There are no exports for this share")
-    else:
-        if (isinstance(export_info, dict)):
-            export_info = [export_info]
-        print("List of exports for the share")
-        print("----------------------------------------")
-        print("Id\tMount\tClient\tReadable\tSyncable\tEnabled")
-        for e in export_info:
-            print('%s\t%s\t%s\t%s\t%s\t%s' %
-                  (e['id'], e['mount'], e['host_str'], e['editable'],
-                   e['syncable'], e['enabled']))
+    empty_msg = ('There are no exports for this share')
+    if (export_info is None or
+        not isinstance(export_info, dict) or
+        len(export_info) == 0):
+        print(empty_msg)
+        return
+    export_info = [export_info]
+    print("List of exports for the share")
+    print("----------------------------------------")
+    print("Id\tMount\tClient\tReadable\tSyncable\tEnabled")
+    for e in export_info:
+        print('%s\t%s\t%s\t%s\t%s\t%s' %
+              (e['id'], e['mount'], e['host_str'], e['editable'],
+               e['syncable'], e['enabled']))
 
 
 def sizeof_fmt(num):
