@@ -80,9 +80,10 @@ TopSharesWidget = RockStorWidgetView.extend({
     .attr('class', 'd3-tip')
     .offset([-10, 0])
     .html(function(d) {
-      return '<strong>' + d.get('name') + '</strong>' + '<br>' + 'Used: ' +
-        humanize.filesize(d.get('usage')*1024) + '<br>' +
-        'Free: ' + 
+      return '<strong>' + d.get('name') + '</strong><br>' + 
+        '   <strong>Used:</strong> ' +
+        humanize.filesize(d.get('usage')*1024) + '<br>' + 
+        ' <strong>Free:</strong> ' + 
         humanize.filesize((d.get('size')-d.get('usage'))*1024); 
     })
 

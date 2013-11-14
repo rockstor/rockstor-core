@@ -1681,12 +1681,10 @@ input[type="radio"].selectedRoot {
 }
 
 .top-shares .bar.unused {
-  /*fill: #31a354;*/
-  fill: #8FCCA2;
+  fill: #31a354;
 }
 
 .d3-tip {
-  line-height: 1.1;
   padding: 12px;
   background-color: #757575;
   color: #fff;
@@ -1702,7 +1700,7 @@ input[type="radio"].selectedRoot {
   font-size: 10px;
   width: 100%;
   line-height: 1;
-  color: rgba(0, 0, 0, 0.8);
+  color: #757575;
   content: "\25BC";
   position: absolute;
   text-align: center;
