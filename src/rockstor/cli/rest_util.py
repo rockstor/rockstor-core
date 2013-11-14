@@ -41,11 +41,15 @@ def api_error(console_func):
 
 def api_call(url, data=None, calltype='get', headers=None, save_error=True):
     call = getattr(requests, calltype)
-    if (headers is not None):
-        r = call(url, verify=False, params=auth_params, data=data,
-                 headers=headers)
-    else:
-        r = call(url, verify=False, params=auth_params, data=data)
+    try:
+        if (headers is not None):
+            r = call(url, verify=False, params=auth_params, data=data,
+                     headers=headers)
+        else:
+            r = call(url, verify=False, params=auth_params, data=data)
+    except requests.exceptions.ConnectionError:
+        print('Error connecting to Rockstor. Is it running?')
+        return {}
 
     if (r.status_code != 200):
         error_d = json.loads(r.text)
