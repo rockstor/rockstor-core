@@ -34,11 +34,6 @@ TopSharesWidget = RockStorWidgetView.extend({
     this.shares = new ShareCollection();
     this.shares.pageSize = 1000;
     this.numTop = 5;
-    this.graphWidth = this.maximized ? 400 : 250;
-    this.rowHeight = this.maximized ? 30 : 30;
-    this.barHeight = 30;
-    this.barWidth = this.maximized ? 120 : 200;
-    this.x = d3.scale.linear().domain([0,100]).range([0, this.barWidth]);
   },
 
   render: function() {
@@ -52,23 +47,35 @@ TopSharesWidget = RockStorWidgetView.extend({
     }));
     this.shares.fetch({
       success: function(collection, response, options) {
+        _this.setData();
+        _this.setGraphDimensions();
         _this.renderTopShares();
       }
     }) 
     return this;
   },
- 
-  renderTopShares: function() {
-    var _this = this;
-
-    // Get top shares by % used
+  
+  setData: function() {
     this.data = this.shares.sortBy(function(s) {
       return ((s.get('usage')/s.get('size'))*100);
     }).reverse().slice(0,this.numTop);
     this.data.map(function(d) { 
       d.set({'pUsed': ((d.get('usage')/d.get('size'))*100)});
     });
-    console.log(this.data.length);
+  },
+
+  setGraphDimensions: function() {
+    this.graphWidth = this.maximized ? 500 : 250;
+    this.rowHeight = this.maximized ? 60 : 30;
+    this.barHeight = this.maximized? 60: 30;
+    this.barWidth = this.maximized ? 350 : 175;
+    this.x = d3.scale.linear().domain([0,100]).range([0, this.barWidth]);
+  },
+
+  renderTopShares: function() {
+    var _this = this;
+
+    // Get top shares by % used
     var tip = d3.tip()
     .attr('class', 'd3-tip')
     .offset([-10, 0])
@@ -83,7 +90,7 @@ TopSharesWidget = RockStorWidgetView.extend({
     .append('svg')
     .attr('class', 'top-shares')
     .attr('width', this.graphWidth)
-    .attr('height', this.rowHeight * (this.data.length+1))
+    .attr('height', this.rowHeight * (this.data.length+2))
     
     this.svg.call(tip);
 
@@ -111,7 +118,7 @@ TopSharesWidget = RockStorWidgetView.extend({
     dataRow.append("text")  
     .attr('x', 0)
     .attr('y', 20)
-    .style("text-anchor", "left")
+    .style("text-anchor", "start")
     .text(function(d) { return d.get('pUsed').toFixed(2) + '%' });
    
     // % Used bar 
@@ -133,19 +140,54 @@ TopSharesWidget = RockStorWidgetView.extend({
     // Share Name
     dataRow.append("text")  
     .attr('class', 'share-name')
-    .attr('x', 245)
+    .attr('x', 45 + this.barWidth)
     .attr('y', 20)
     .style("text-anchor", "end")
     .text(function(d) { return d.get('name') + ' (' + humanize.filesize(d.get('usage')*1024) + ')'; })
     .on('mouseover', tip.show)
     .on('mouseout', tip.hide);
+    
+    // Legend
+
+    var legend = this.svg.append('g')
+    .attr('class', 'legend')
+    .attr("transform", function(d, i) { 
+      return "translate(0," + ((_this.data.length + 1) * _this.rowHeight) + ")"; 
+    });
+
+    legend.append('rect')
+    .attr('x', 50)
+    .attr('y', 10)
+    .attr('width', 10)
+    .attr('height', 10)
+    .attr('class', 'bar used');
+    
+    legend.append('text')
+    .attr('x', 50 + 10 + 2)
+    .attr('y', 20)
+    .style("text-anchor", "start")
+    .text('Used');
+
+    legend.append('rect')
+    .attr('x', 50 + 50)
+    .attr('y', 10)
+    .attr('width', 10)
+    .attr('height', 10)
+    .attr('class', 'bar unused');
+
+    legend.append('text')
+    .attr('x', 50 + 50 + 10 + 2)
+    .attr('y', 20)
+    .style("text-anchor", "start")
+    .text('Free');
 
   },
-
+  
   resize: function(event) {
     this.constructor.__super__.resize.apply(this, arguments);
-    this.graphWidth = this.maximized ? 400 : 200;
-    this.barHeight = this.maximized ? 40 : 20;
+    this.$('#ph-top-shares-graph').empty();
+    this.setGraphDimensions();
+    this.renderTopShares();
   }
 
 });

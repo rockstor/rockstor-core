@@ -1665,7 +1665,6 @@ input[type="radio"].selectedRoot {
 /* top shares graph */
 .top-shares text.title {
   color: #000;
-  font-weight: bold;
 }
 
 .top-shares .data-row text {
@@ -1678,11 +1677,12 @@ input[type="radio"].selectedRoot {
 }
 
 .top-shares .bar.used {
-  fill: #d6616b;
+  fill: #3182bd;
 }
 
 .top-shares .bar.unused {
-  fill: #31a354;
+  /*fill: #31a354;*/
+  fill: #8FCCA2;
 }
 
 .d3-tip {
