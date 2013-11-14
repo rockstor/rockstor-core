@@ -24,7 +24,8 @@ from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (Share, Snapshot, Disk, Pool, Snapshot,
                                  NFSExport, SambaShare)
-from fs.btrfs import (add_snap, share_id, update_quota, mount_share)
+from fs.btrfs import (add_snap, share_id, update_quota, mount_share,
+                      rollback_snap)
 from storageadmin.serializers import (ShareSerializer, SnapshotSerializer)
 from storageadmin.util import handle_exception
 from storageadmin.exceptions import RockStorAPIException
@@ -65,9 +66,45 @@ class ShareCommandView(GenericView):
             e_msg = ('Share: %s does not exist' % sname)
             handle_exception(Exception(e_msg), request)
 
-        new_name = request.DATA['name']
-        if (Share.objects.filter(name=new_name).exists()):
-            e_msg = ('Share with name: %s already exists.' % new_name)
-            handle_exception(Exception(e_msg), request)
-        pool_device = Disk.objects.filter(pool=share.pool)[0].name
-        return create_clone(share, new_name, pool_device, request)
+        if (command == 'clone'):
+            new_name = request.DATA['name']
+            if (Share.objects.filter(name=new_name).exists()):
+                e_msg = ('Share with name: %s already exists.' % new_name)
+                handle_exception(Exception(e_msg), request)
+            pool_device = Disk.objects.filter(pool=share.pool)[0].name
+            return create_clone(share, new_name, pool_device, request)
+
+        elif (command == 'rollback'):
+            snap_name = request.DATA['name']
+            try:
+                snap = Snapshot.objects.get(share=share, name=snap_name)
+            except:
+                e_msg = ('Snapshot with name: %s does not exist for the '
+                         'share: %s' % (snap_name, share.name))
+                handle_exception(Exception(e_msg), request)
+
+            if (NFSExport.objects.filter(share=share).exists()):
+                e_msg = ('Share: %s cannot be rolled back as it is exported '
+                         'via nfs. Delete nfs exports and try again' % sname)
+                handle_exception(Exception(e_msg), request)
+
+            if (SambaShare.objects.filter(share=share).exists()):
+                e_msg = ('Share: %s cannot be rolled back as it is shared '
+                         ' via Samba. Unshare and try again' % sname)
+                handle_exception(Exception(e_msg), request)
+
+            try:
+                pool_device = Disk.objects.filter(pool=share.pool)[0].name
+                rollback_snap(snap.real_name, share.name, share.subvol_name,
+                              share.pool.name, pool_device)
+                share.subvol_name = snap.real_name
+                update_quota(share.pool.name, pool_device, snap.qgroup,
+                             share.size * 1024)
+                share.qgroup = snap.qgroup
+                share.save()
+                snap.delete()
+                return Response()
+            except Exception, e:
+                logger.exception(e)
+                handle_exception(e, request)
+

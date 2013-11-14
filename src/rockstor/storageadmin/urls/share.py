@@ -23,7 +23,8 @@ from storageadmin.views import (ShareView, ShareNFSView, ShareSambaView,
 
 share_regex = r'[A-Za-z]+[A-Za-z0-9_]*'
 snap_regex = share_regex
-snap_command = 'rollback|clone'
+snap_command = 'clone'
+share_command = 'rollback|clone'
 
 urlpatterns = patterns(
     '',
@@ -53,6 +54,6 @@ urlpatterns = patterns(
     url(r'^/(?P<sname>%s)/acl$' % share_regex, ShareACLView.as_view(),
         name='acl-view'),
 
-    url(r'^/(?P<sname>%s)/(?P<command>clone)$' % share_regex,
+    url(r'^/(?P<sname>%s)/(?P<command>%s)$' % (share_regex, share_command),
         ShareCommandView.as_view()),
 )
