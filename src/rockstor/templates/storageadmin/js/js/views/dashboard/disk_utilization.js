@@ -542,12 +542,13 @@ RockStorWidgets.widgetDefs.push({
     displayName: 'Disk Activity', 
     view: 'DiskUtilizationWidget',
     description: 'Display disk activity',
-    defaultWidget: false,
+    defaultWidget: true,
     rows: 1,
     cols: 5,
     maxRows: 2,
     maxCols: 10,
     category: 'Storage', 
+    position: 1,
 });
 
 

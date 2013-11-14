@@ -152,12 +152,20 @@ TopSharesWidget = RockStorWidgetView.extend({
     .attr('x', 45 + this.barWidth)
     .attr('y', this.textOffset)
     .style("text-anchor", "end")
-    .text(function(d) { return d.get('name') + ' (' + humanize.filesize(d.get('usage')*1024) + ')'; })
+    .text(function(d) { 
+      var n = d.get('name');
+      // truncate name to 15 chars
+      if (n.length > 15) {
+        n = n.slice(0,12) + '...';
+      }
+      return n + ' (' + humanize.filesize(d.get('usage')*1024) + 
+        '/' + humanize.filesize(d.get('size')*1024) + 
+        ')' ; 
+    })
     .on('mouseover', tip.show)
     .on('mouseout', tip.hide);
     
     // Legend
-
     var legend = this.svg.append('g')
     .attr('class', 'legend')
     .attr("transform", function(d, i) { 
@@ -206,12 +214,13 @@ RockStorWidgets.widgetDefs.push({
     displayName: 'Top Shares by Usage', 
     view: 'TopSharesWidget',
     description: 'Display top shares by usage',
-    defaultWidget: false,
+    defaultWidget: true,
     rows: 1,
     cols: 5,
     maxRows: 2,
     maxCols: 10,
     category: 'Storage', 
+    position: 2,
 });
 
 
