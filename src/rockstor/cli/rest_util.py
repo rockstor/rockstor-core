@@ -48,6 +48,9 @@ def api_call(url, data=None, calltype='get', headers=None, save_error=True):
         r = call(url, verify=False, params=auth_params, data=data)
 
     if (r.status_code != 200):
+        error_d = json.loads(r.text)
+        if ('detail' in error_d):
+            raise RockStorAPIException(detail=error_d['detail'])
         if (settings.DEBUG is True and save_error is True):
             cur_time = str(int(time.time()))
             err_file = '/tmp/err-%s.html' % cur_time
@@ -55,9 +58,6 @@ def api_call(url, data=None, calltype='get', headers=None, save_error=True):
                 for line in r.text.split('\n'):
                     efo.write('%s\n' % line)
             print('Error detail is saved at %s' % err_file)
-        error_d = json.loads(r.text)
-        if ('detail' in error_d):
-            raise RockStorAPIException(detail=error_d['detail'])
         r.raise_for_status()
 
     try:
