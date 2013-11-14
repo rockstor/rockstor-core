@@ -68,7 +68,7 @@ TopSharesWidget = RockStorWidgetView.extend({
     this.data.map(function(d) { 
       d.set({'pUsed': ((d.get('usage')/d.get('size'))*100)});
     });
-
+    console.log(this.data.length);
     var tip = d3.tip()
     .attr('class', 'd3-tip')
     .offset([-10, 0])
@@ -83,7 +83,7 @@ TopSharesWidget = RockStorWidgetView.extend({
     .append('svg')
     .attr('class', 'top-shares')
     .attr('width', this.graphWidth)
-    .attr('height', this.rowHeight * this.data.length)
+    .attr('height', this.rowHeight * (this.data.length+1))
     
     this.svg.call(tip);
 

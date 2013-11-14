@@ -1673,18 +1673,16 @@ input[type="radio"].selectedRoot {
 }
 
 .top-shares .data-row text.share-name {
-  fill: #098AE6;
+  fill: #fff;
   cursor: pointer;
 }
 
 .top-shares .bar.used {
-  stroke: #FF951C;
-  fill: #FF951C;
+  fill: #d6616b;
 }
 
 .top-shares .bar.unused {
-  fill: #fff;
-  stroke: #ccc;
+  fill: #31a354;
 }
 
 .d3-tip {
