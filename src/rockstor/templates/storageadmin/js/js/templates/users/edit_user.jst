@@ -19,29 +19,40 @@
  */
 </script>
 
-<h3>Change password for user <%= username %></h3>
+<h3>Edit user (<%= username %>)</h3>
 
 <div class="row-fluid">
   <div class="span8">
-    <label class="control-label"><span class="required">*</span> indicates required fields</label>
     <div class="form-box">
       <form id="change-password-form" name="aform">
         <div class="messages"></div>
         <div class="control-group">
-          <label class="control-label">New Password<span class="required"> *</span></label>
+          <label class="control-label">New Password</label>
           <div class="controls">
             <input type="password" id="password" name="password" placeholder="Password">
           </div>
         </div>
         <div class="control-group">
-          <label class="control-label">Confirm Password<span class="required"> *</span></label>
+          <label class="control-label">Confirm Password</label>
           <div class="controls">
             <input type="password" id="password_confirmation" name="password_confirmation" placeholder="Password">
           </div>
         </div>
         <div class="control-group">
           <div class="controls">
-            <button type="Submit" id="edit-user" class="btn btn-primary">Change Password</button>
+            <label class="checkbox">
+              <% if (user.get('is_active')) { %>
+                <input class="checkbox inline" type="checkbox" id="is_active" name="is_active" placeholder="Admin" checked="true">
+              <% } else { %>
+                <input class="checkbox inline" type="checkbox" id="is_active" name="is_active" placeholder="Admin">
+              <% } %>
+              Allow this user to login to RockStor Web UI?
+            </label>
+          </div>
+        </div>
+        <div class="control-group">
+          <div class="controls">
+            <button type="Submit" id="edit-user" class="btn btn-primary">Submit</button>
             <button id="cancel" class="btn">Cancel</button>
           </div>
         </div>

@@ -27,7 +27,7 @@
 UsersView = RockstoreLayoutView.extend({
   events: {
     "click .delete-user": "deleteUser",
-    "click .user-admin": "updateUserAdmin"
+    "click .edit-user": "editUser"
   },
 
   initialize: function() {
@@ -47,8 +47,11 @@ UsersView = RockstoreLayoutView.extend({
   },
 
   renderUsers: function() {
-    console.log("rendering Users");
+    if (this.$('[rel=tooltip]')) { 
+      this.$('[rel=tooltip]').tooltip('hide');
+    }
     $(this.el).html(this.template({users: this.users}));
+    this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
   },
 
   deleteUser: function(event) {
@@ -73,26 +76,13 @@ UsersView = RockstoreLayoutView.extend({
     }
   },
 
-  updateUserAdmin: function(event) {
-    var _this = this;
-    var cbox = $(event.currentTarget);
-    var is_active = cbox.prop("checked");
-    console.log(is_active);
-    var user = this.users.get(cbox.attr("data-username"));
-    // dont send password
-    user.unset("password");
-    user.save({is_active: is_active}, {
-      success: function(model, response, options) {
-        console.log("user saved successfully");
-        _this.users.fetch({silent: true});
-      },
-      error: function(model, xhr, options) {
-        // reset checkbox to previous value on error
-        cbox.prop("checked", !is_active);
-        var msg = parseXhrError(xhr)
-        _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
-      }
-    });
+  editUser: function(event) {
+    if (event) event.preventDefault();
+    if (this.$('[rel=tooltip]')) { 
+      this.$('[rel=tooltip]').tooltip('hide');
+    }
+    var username = $(event.currentTarget).attr('data-username');
+    app_router.navigate('users/' + username + '/edit', {trigger: true});
   }
 
 });

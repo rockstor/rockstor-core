@@ -29,6 +29,7 @@ GROUP_FILE = '/etc/group'
 USERADD = '/usr/sbin/useradd'
 USERDEL = '/usr/sbin/userdel'
 PASSWD = '/usr/bin/passwd'
+USERMOD = '/usr/sbin/usermod'
 
 
 def get_users(min_uid=5000, uname=None):
@@ -65,6 +66,9 @@ def usermod(username, passwd):
     if (rc != 0):
         raise CommandException(out, err, rc)
     return (out, err, rc)
+
+def update_shell(username, shell):
+    return run_command([USERMOD, '-s', shell, username])
 
 def useradd(username, uid, shell):
     return run_command([USERADD, '-s', shell, '-d', '/', '-u', str(uid),
