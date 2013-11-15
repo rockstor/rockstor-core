@@ -352,7 +352,8 @@ PAGINATION = {
 
 START_UID = 5000
 END_UID = 6000
-USER_SHELL = '${buildout:depdir}/bin/rcli'
+ADMIN_SHELL = '${buildout:depdir}/bin/rcli'
+DEFAULT_SHELL = '/sbin/nologin'
 
 SCHEDULER = ('127.0.0.1', ${django-settings-conf:schedulerport})
 REPLICA_DATA_PORT = ${django-settings-conf:reppubport}

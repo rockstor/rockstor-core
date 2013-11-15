@@ -41,17 +41,17 @@
             <td><i class="icon-user"></i> <%= user.get("username") %></td>
             <td>
               <% if (user.get("is_active")) { %>
-                <input class="user-admin" type="checkbox" name="admin" data-username="<%= user.get('username') %>" checked="checked" ></input>
+                <input class="user-admin" type="checkbox" name="admin" data-username="<%= user.get('username') %>" checked="checked" disabled="true"></input>
               <% } else { %>
-                <input class="user-admin" type="checkbox" name="admin" data-username="<%= user.get('username') %>" ></input>
+                <input class="user-admin" type="checkbox" name="admin" data-username="<%= user.get('username') %>" disabled="true"></input>
               <% } %>
             </td>
             <td><%= user.get("suser").uid %></td>
             <td><%= user.get("suser").gid %></td>
             <td>
-              <a href="#users/<%= user.get('username') %>/edit" class="edit-user" data-username="<%= user.get('username') %>"><i class="icon-pencil"></i></a>
+              <a href="#" class="edit-user" data-username="<%= user.get('username') %>" rel="tooltip" title="Edit user"><i class="icon-pencil"></i></a>
               &nbsp;
-              <a href="#" class="delete-user" data-username="<%= user.get('username') %>"><i class="icon-trash"></i></a>
+              <a href="#" class="delete-user" data-username="<%= user.get('username') %>" rel="tooltip" title="Delete user"><i class="icon-trash"></i></a>
             </td>
           </tr>
         <% }); %>
