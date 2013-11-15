@@ -27,7 +27,7 @@
 UsersView = RockstoreLayoutView.extend({
   events: {
     "click .delete-user": "deleteUser",
-    "click .toggle-admin": "updateUserAdmin"
+    "click .edit-user": "editUser"
   },
 
   initialize: function() {
@@ -76,26 +76,13 @@ UsersView = RockstoreLayoutView.extend({
     }
   },
 
-  updateUserAdmin: function(event) {
-    var _this = this;
-    if (event) { event.preventDefault(); }
-    var button = $(event.currentTarget);
-    if (buttonDisabled(button)) return false;
+  editUser: function(event) {
+    if (event) event.preventDefault();
+    if (this.$('[rel=tooltip]')) { 
+      this.$('[rel=tooltip]').tooltip('hide');
+    }
     var username = $(event.currentTarget).attr('data-username');
-    var is_active = $(event.currentTarget).attr('data-action') == 'enable' 
-    var user = this.users.get(username);
-    // dont send password
-    user.unset("password");
-    user.save({is_active: is_active}, {
-      success: function(model, response, options) {
-        _this.users.fetch();
-      },
-      error: function(model, xhr, options) {
-        // reset checkbox to previous value on error
-        var msg = parseXhrError(xhr)
-        _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
-      }
-    });
+    app_router.navigate('users/' + username + '/edit', {trigger: true});
   }
 
 });

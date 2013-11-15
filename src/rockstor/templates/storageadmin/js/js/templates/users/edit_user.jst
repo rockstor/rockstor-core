@@ -19,7 +19,7 @@
  */
 </script>
 
-<h3>Change password for user <%= username %></h3>
+<h3>Edit user (<%= username %>)</h3>
 
 <div class="row-fluid">
   <div class="span8">
@@ -41,7 +41,19 @@
         </div>
         <div class="control-group">
           <div class="controls">
-            <button type="Submit" id="edit-user" class="btn btn-primary">Change Password</button>
+            <label class="checkbox">
+              <% if (user.get('is_active')) { %>
+                <input class="checkbox inline" type="checkbox" id="is_active" name="is_active" placeholder="Admin" checked="true">
+              <% } else { %>
+                <input class="checkbox inline" type="checkbox" id="is_active" name="is_active" placeholder="Admin">
+              <% } %>
+              Allow this user to login to RockStor Web UI?
+            </label>
+          </div>
+        </div>
+        <div class="control-group">
+          <div class="controls">
+            <button type="Submit" id="edit-user" class="btn btn-primary">Submit</button>
             <button id="cancel" class="btn">Cancel</button>
           </div>
         </div>

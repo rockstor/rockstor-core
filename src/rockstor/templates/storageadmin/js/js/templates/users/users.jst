@@ -49,13 +49,7 @@
             <td><%= user.get("suser").uid %></td>
             <td><%= user.get("suser").gid %></td>
             <td>
-              <% if (user.get('is_active')) { %>
-                <a href="#" class="toggle-admin" data-username="<%= user.get('username') %>" data-action="disable"><i class="icon-minus-sign" rel="tooltip" title="Disable admin access"></i></a>
-              <% } else { %>
-                  <a href="#" class="toggle-admin" data-username="<%= user.get('username') %>" data-action="enable"><i class="icon-plus-sign" rel="tooltip" title="Enable admin access"></i></a>
-              <% } %>
-              &nbsp;
-              <a href="#users/<%= user.get('username') %>/edit" class="edit-user" data-username="<%= user.get('username') %>" rel="tooltip" title="Change password"><i class="icon-pencil"></i></a>
+              <a href="#" class="edit-user" data-username="<%= user.get('username') %>" rel="tooltip" title="Edit user"><i class="icon-pencil"></i></a>
               &nbsp;
               <a href="#" class="delete-user" data-username="<%= user.get('username') %>" rel="tooltip" title="Delete user"><i class="icon-trash"></i></a>
             </td>

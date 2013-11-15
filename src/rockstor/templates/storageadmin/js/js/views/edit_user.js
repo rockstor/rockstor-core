@@ -35,22 +35,27 @@ EditUserView = RockstoreLayoutView.extend({
     // set template
     this.template = window.JST.users_edit_user;
     this.username = this.options.username;
+    this.user = new User({username: this.username});
+    this.dependencies.push(this.user);
   },
   
   render: function() {
-    this.renderUser();
+    this.fetch(this.renderUser, this);
     return this;
   },
 
   renderUser: function() {
     var _this = this;
-    $(this.el).html(this.template({username: this.username}));
+    $(this.el).html(this.template({
+      username: this.username,
+      user: this.user
+
+    }));
 
     this.validator = this.$("#change-password-form").validate({
       onfocusout: false,
       onkeyup: false,
       rules: {
-        password: "required",
         password_confirmation: {
           equalTo: "#password"
         }
@@ -63,10 +68,15 @@ EditUserView = RockstoreLayoutView.extend({
       submitHandler: function() {
         var password = _this.$("#password").val().trim();
         var user = new User({username: _this.username});
-        user.set({password: password});
+        var is_active = _this.$('#is_active').prop('checked');
+        if (!_.isEmpty(password)) {
+          user.set({password: password});
+        } else {
+          user.unset('password');
+        }
+        user.set({is_active: is_active});
         user.save(null, {
           success: function(model, response, options) {
-            console.log("user saved successfully");
             app_router.navigate("users", {trigger: true});
           },
           error: function(model, xhr, options) {
