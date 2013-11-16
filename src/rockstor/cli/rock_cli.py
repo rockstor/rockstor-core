@@ -34,7 +34,6 @@ from users_console import UsersConsole
 from task_console import TaskConsole
 from replication_console import ReplicationConsole
 from rest_util import api_call
-import settings
 
 
 ASCII_LOGO = """
@@ -51,8 +50,7 @@ class RockConsole(BaseConsole):
         self.prompt = greeting + '>'
         self.intro = ('%s\nWelcome to Rockstor. Smart Powerful Open Storage '
                       'Cloud Builders' % ASCII_LOGO)
-        self.user_hist_file = ('%s%d-rcli.hist' % (settings.HIST_DIR,
-                                                   os.getuid()))
+        self.user_hist_file = os.path.expanduser('~') + '/.rcli.hist'
         try:
             readline.read_history_file(self.user_hist_file)
         except:

@@ -357,5 +357,3 @@ USER_SHELL = '${buildout:depdir}/bin/rcli'
 SCHEDULER = ('127.0.0.1', ${django-settings-conf:schedulerport})
 REPLICA_DATA_PORT = ${django-settings-conf:reppubport}
 REPLICA_META_PORT = ${django-settings-conf:reprecvport}
-
-HIST_DIR = '${buildout:depdir}/var/log/'

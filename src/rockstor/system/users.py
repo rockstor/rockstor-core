@@ -67,5 +67,5 @@ def usermod(username, passwd):
     return (out, err, rc)
 
 def useradd(username, uid, shell):
-    return run_command([USERADD, '-s', shell, '-d', '/', '-u', str(uid),
+    return run_command([USERADD, '-s', shell, '-m', '-u', str(uid),
                         username])
