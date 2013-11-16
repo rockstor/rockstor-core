@@ -71,5 +71,5 @@ def update_shell(username, shell):
     return run_command([USERMOD, '-s', shell, username])
 
 def useradd(username, uid, shell):
-    return run_command([USERADD, '-s', shell, '-d', '/', '-u', str(uid),
+    return run_command([USERADD, '-s', shell, '-m', '-u', str(uid),
                         username])

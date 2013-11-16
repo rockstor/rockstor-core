@@ -18,6 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import cmd
 import sys
+import os
+import readline
 
 from base_console import BaseConsole
 from setup_console import SetupConsole
@@ -46,13 +48,21 @@ class RockConsole(BaseConsole):
         BaseConsole.__init__(self)
         self.greeting = greeting
         self.prompt = greeting + '>'
-
         self.intro = ('%s\nWelcome to Rockstor. Smart Powerful Open Storage '
                       'Cloud Builders' % ASCII_LOGO)
+        self.user_hist_file = os.path.expanduser('~') + '/.rcli.hist'
+        try:
+            readline.read_history_file(self.user_hist_file)
+        except:
+            pass
 
     def postloop(self):
         cmd.Cmd.postloop(self)
         print "Thanks for Rocking on the Console"
+        try:
+            readline.write_history_file(self.user_hist_file)
+        except:
+            print('Command history could not be saved')
 
     """
     Commands
