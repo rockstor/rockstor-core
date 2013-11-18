@@ -34,6 +34,7 @@ SetupDisksView = Backbone.View.extend({
   initialize: function() {
     this.template = window.JST.setup_disks;
     this.disks_table_template = window.JST.setup_disks_table;
+    this.paginationTemplate = window.JST.common_pagination;
     this.disks = new DiskCollection();
     this.disks.on('reset', this.renderDisks, this);
   },
@@ -46,6 +47,9 @@ SetupDisksView = Backbone.View.extend({
 
   renderDisks: function() {
     this.$('#disks-table').html(this.disks_table_template({disks: this.disks}));
+    this.$(".pagination-ph").html(this.paginationTemplate({
+      collection: this.disks
+    }));
   },
 
   rescan: function() {
@@ -59,4 +63,7 @@ SetupDisksView = Backbone.View.extend({
   },
 
 });
+
+// Add pagination
+Cocktail.mixin(SetupDisksView, PaginationMixin);
 

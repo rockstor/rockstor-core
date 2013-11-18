@@ -42,6 +42,7 @@ PoolsView = RockstoreLayoutView.extend({
     this.collection = new PoolCollection();
     
     this.disks = new DiskCollection();
+    this.disks.pageSize = RockStorGlobals.maxPageSize;
     this.dependencies.push(this.disks);
     this.dependencies.push(this.collection);
     this.collection.on("reset", this.renderPools, this);

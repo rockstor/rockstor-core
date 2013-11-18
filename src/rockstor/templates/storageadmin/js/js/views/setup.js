@@ -40,8 +40,10 @@ SetupView = RockstoreLayoutView.extend({
     this.current_page = 1;
     this.current_view = null;
     this.appliances = new ApplianceCollection();
+    this.appliances.pageSize = RockStorGlobals.maxPageSize;
     this.dependencies.push(this.appliances);
     this.networkInterfaces = new NetworkInterfaceCollection();
+    this.networkInterfaces.pageSize = RockStorGlobals.maxPageSize;
     this.networkInterfaces.on("reset", this.saveAppliance, this);
 
   },
