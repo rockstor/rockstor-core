@@ -346,7 +346,7 @@ MIN_SHARE_SIZE = 100
 MAX_SHARE_SIZE = 18014398509481984L
 
 PAGINATION = {
-	   'page_size': 10,
+	   'page_size': 15,
 	   'max_limit': 10000,
 }
 

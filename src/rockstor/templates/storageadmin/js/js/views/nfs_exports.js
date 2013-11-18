@@ -32,12 +32,13 @@ NFSExportsView  = RockstoreLayoutView.extend({
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.nfs_nfs_exports;
+    this.paginationTemplate = window.JST.common_pagination;
     this.module_name = 'nfs_exports';
-    this.nfsExportGroups = new NFSExportGroupCollection();
-    this.dependencies.push(this.nfsExportGroups);
+    this.collection = new NFSExportGroupCollection();
+    this.dependencies.push(this.collection);
     this.appliances = new ApplianceCollection();
     this.dependencies.push(this.appliances);
-    
+    this.collection.on('reset', this.renderNFSExportGroups, this);  
   },
 
   render: function() {
@@ -51,8 +52,11 @@ NFSExportsView  = RockstoreLayoutView.extend({
       return appliance.get('current_appliance') == true; 
     });
     $(this.el).html(this.template({
-      nfsExportGroups: this.nfsExportGroups,
+      nfsExportGroups: this.collection,
       currentAppliance: currentAppliance
+    }));
+    this.$(".ph-pagination").html(this.paginationTemplate({
+      collection: this.collection
     }));
 
   },
@@ -83,4 +87,7 @@ NFSExportsView  = RockstoreLayoutView.extend({
   }
 
 });
+
+// Add pagination
+Cocktail.mixin(NFSExportsView, PaginationMixin);
 

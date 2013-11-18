@@ -37,32 +37,25 @@ ShareNFSExports  = RockstoreModuleView.extend({
     this.template = window.JST.share_nfs_exports;
     this.addTemplate = window.JST.share_add_nfs_export;
     this.editTemplate = window.JST.share_edit_nfs_export;
+    this.paginationTemplate = window.JST.common_pagination;
     this.module_name = 'nfs_exports';
     this.share = this.options.share;
-    this.nfsExports = new NFSExportCollection();
-    this.nfsExports.setUrl(this.share.get('shareName'));
+    this.collection = new NFSExportCollection();
+    this.collection.setUrl(this.share.get('shareName'));
     this.modify_choices = this.options.modify_choices;
     this.sync_choices = this.options.sync_choices;
     this.appliance_ip = this.options.appliance_ip;
     this.share.on('change', function() {
-      this.nfsExports.reset(this.share.get('nfs_exports'));
+      this.collection.reset(this.share.get('nfs_exports'));
     }, this)
   },
 
   render: function() {
     var _this = this;
-    this.nfsExports.fetch({
+    this.collection.fetch({
       success: function(collection, response, options) {
-        $(_this.el).empty();
-        $(_this.el).append(_this.template({
-          share: _this.share,
-          nfsExports: _this.nfsExports,
-          modify_choices: _this.modify_choices,
-          sync_choices: _this.sync_choices,
-        }));
-        if (_this.nfsExports.length > 0) {
-          _this.$('#nfs-exports-table-body').append('<tr><td colspan="5">Mount this share using <code>mount ' + _this.appliance_ip + ':' + _this.nfsExports.at(0).get('exports')[0].mount + ' &lt;mount_pt&gt;</code></td></tr>');
-        }
+        _this.renderNfsExports();
+        _this.collection.on('reset', _this.renderNfsExports, _this);
       },
       error: function(collection, response, options) {
         logger.debug(response);
@@ -70,13 +63,31 @@ ShareNFSExports  = RockstoreModuleView.extend({
     });
     return this;
   },
-  
+ 
+  renderNfsExports: function() {
+    var _this = this;
+    $(this.el).empty();
+    $(this.el).append(this.template({
+      share: this.share,
+      nfsExports: this.collection,
+      modify_choices: this.modify_choices,
+      sync_choices: this.sync_choices,
+    }));
+    if (this.collection.length > 0) {
+      this.$('#nfs-exports-table-body').append('<tr><td colspan="5">Mount this share using <code>mount ' + this.appliance_ip + ':' + this.collection.at(0).get('exports')[0].mount + ' &lt;mount_pt&gt;</code></td></tr>');
+    }
+    this.$(".ph-pagination").html(this.paginationTemplate({
+      collection: this.collection
+    }));
+
+  },
+
   addExport : function(event) {
     var _this = this;
     event.preventDefault();
     $(this.el).html(this.addTemplate({ 
       share: this.share,
-      nfsExports: this.nfsExports,
+      nfsExports: this.collection,
       modify_choices: this.modify_choices,
       sync_choices: this.sync_choices,
     }));
@@ -123,7 +134,7 @@ ShareNFSExports  = RockstoreModuleView.extend({
     var _this = this;
     if (event) event.preventDefault();
     var button = $(event.currentTarget);
-    var nfsExport = this.nfsExports.get(button.data('id'));
+    var nfsExport = this.collection.get(button.data('id'));
     $(this.el).html(this.editTemplate({ 
       share: this.share,
       nfsExport: nfsExport,
@@ -207,4 +218,7 @@ ShareNFSExports  = RockstoreModuleView.extend({
   },
 
 });
+
+// Add pagination
+Cocktail.mixin(ShareNFSExports, PaginationMixin);
 
