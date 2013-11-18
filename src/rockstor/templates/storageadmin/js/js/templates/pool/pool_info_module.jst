@@ -19,20 +19,7 @@
  */
 </script>
 
-
-<!-- Header -->
-<div class="row-fluid">
-  <div class="span12">
-    <div class="module-header">
-      <div class="title"><span class="h3">Details</span></div>
-    </div>
-  </div> <!-- span12 -->
-</div> <!-- row-fluid -->
-
-<!-- Module Body -->
-<div class="row-fluid">
-  <div class="span12">
-    <!-- Content -->
+  <!-- Content -->
     <div class="module-content">
       Created on <%= moment(model.get("toc")).format(RS_DATE_FORMAT) %><br>
       Disks: 
@@ -41,8 +28,4 @@
         <% if (i < model.get('disks').length-1) { %>, <% } %>
       <% }); %>
     </div> <!-- module-content -->
-    
-
-  </div> <!-- span12 -->
-</div> <!-- row-fluid -->
-
+ 
