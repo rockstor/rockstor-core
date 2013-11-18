@@ -530,9 +530,8 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
   },
 
   cleanup: function() {
-    if (!_.isNull(this.intervalId)) {
-      window.clearInterval(this.intervalId);
-    }
+    if (this.jqXhr) this.jqXhr.abort(); 
+    if (this.timeoutId) window.clearTimeout(this.timeoutId);
   },
 
 });
