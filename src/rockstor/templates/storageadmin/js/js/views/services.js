@@ -36,8 +36,8 @@ ServicesView = Backbone.View.extend({
 
   initialize: function() {
     this.template = window.JST.services_services;
+    this.paginationTemplate = window.JST.common_pagination;
     this.collection = new ServiceCollection();
-    //this.collection.on("reset", this.renderServices, this);
     this.actionMessages = {
       'start': 'started',
       'stop': 'stopped',
@@ -45,6 +45,7 @@ ServicesView = Backbone.View.extend({
       'reload': 'reloaded'
     }
     this.pollInterval = 5000;
+    this.collection.on('reset', this.renderServices, this);
   },
 
   render: function() {
@@ -64,6 +65,9 @@ ServicesView = Backbone.View.extend({
     
     $(this.el).append(this.template({
       services: this.collection
+    }));
+    this.$(".ph-pagination").html(this.paginationTemplate({
+      collection: this.collection
     }));
     this.$('input.service-status').simpleSlider({
       "theme": "volume",
@@ -185,6 +189,7 @@ ServicesView = Backbone.View.extend({
     this.intervalId = window.setInterval(function() {
       return function() { 
         _this.collection.fetch({
+          silent: true,
           success: function(collection, response, options) {
             _this.collection.each(function(service) {
               var serviceName = service.get('name');
@@ -210,4 +215,7 @@ ServicesView = Backbone.View.extend({
   }
 
 });
+
+// Add pagination
+Cocktail.mixin(ServicesView, PaginationMixin);
 
