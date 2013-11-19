@@ -246,8 +246,8 @@ def get_ip_addr(interface):
     """
     out, err, rc = run_command([IFCONFIG, interface])
     line2 = out[1].strip()
-    if (re.match('inet addr', line2) is not None):
-        return line2.split()[1].split(':')[1]
+    if (re.match('inet ', line2) is not None):
+        return line2.split()[1]
     return '0.0.0.0'
 
 def config_network_device(name, mac, boot_proto='dhcp', ipaddr=None,
