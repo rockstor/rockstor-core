@@ -52,6 +52,7 @@ class NetworkView(GenericView):
             ni = None
             if (NetworkInterface.objects.filter(name=dconfig['name']).exists()):
                 ni = NetworkInterface.objects.get(name=dconfig['name'])
+                ni.alias = dconfig['alias']
                 ni.mac = dconfig['mac']
                 ni.boot_proto = dconfig['bootproto']
                 ni.onboot=dconfig['onboot']
@@ -59,7 +60,9 @@ class NetworkView(GenericView):
                 ni.netmask=dconfig['netmask']
                 ni.ipaddr=dconfig['ipaddr']
             else:
-                ni = NetworkInterface(name=dconfig['name'], mac=dconfig['mac'],
+                ni = NetworkInterface(name=dconfig['name'],
+                                      alias=dconfig['alias'],
+                                      mac=dconfig['mac'],
                                       boot_proto=dconfig['bootproto'],
                                       onboot=dconfig['onboot'],
                                       network=dconfig['network'],
@@ -111,7 +114,7 @@ class NetworkView(GenericView):
                          boot_proto)
                 handle_exception(Exception(e_msg), request)
             self._restart_wrapper(ni, request)
-            dconfig = get_net_config(ni.name)
+            dconfig = get_net_config_fedora([ni.name])[0]
             ni.boot_proto = dconfig['bootproto']
             ni.netmask = dconfig['netmask']
             ni.ipaddr = dconfig['ipaddr']
