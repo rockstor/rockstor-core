@@ -120,7 +120,7 @@ var Service = Backbone.Model.extend({
 
 var ServiceCollection = RockStorPaginatedCollection.extend({
   model: Service,
-  baseUrl: "/api/sm/services"
+  baseUrl: "/api/sm/services/"
 });
 
 var Appliance = Backbone.Model.extend({urlRoot: '/api/appliances'});

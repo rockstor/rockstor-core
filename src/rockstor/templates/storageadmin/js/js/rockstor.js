@@ -506,7 +506,7 @@ RockStorGlobals = {
   navbarLoaded: false,
   applianceNameSet: false,
   currentAppliance: null,
-
+  maxPageSize: 5000,
 }
 
 var RS_DATE_FORMAT = 'MMMM Do YYYY, h:mm:ss a';

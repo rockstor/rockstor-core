@@ -35,6 +35,7 @@ AddShareView = Backbone.View.extend({
 
   initialize: function() {
     this.pools = new PoolCollection();
+    this.pools.pageSize = RockStorGlobals.maxPageSize;
     this.poolName = this.options.poolName;
   },
 
