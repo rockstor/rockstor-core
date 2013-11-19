@@ -80,25 +80,13 @@ def wipe_disk(disk):
 def root_disks():
     """
     returns the partition(s) used for /. Typically it's sda.
-    This may change after el7 release.
     """
-    root_lvm = None
-    drives = []
     with open('/proc/mounts') as fo:
         for line in fo.readlines():
             fields = line.split()
-            if (fields[1] == '/' and fields[2] == 'ext4'):
-                root_lvm = fields[0]
-                break
-    o, e, c = run_command([LVS, '--noheadings', '-o', 'vg_name',
-                           root_lvm])
-    vg_name = o[0].strip()
-    o, e, c = run_command([VGS, '--noheadings', '-o', 'pv_name', vg_name])
-    for p in o:
-        p = p.strip()
-        if (re.match('/dev/', p.strip()) is not None):
-            drives.append(p[5:8])
-    return drives
+            if (fields[1] == '/' and fields[2] == 'btrfs'):
+                return fields[0][5:8]
+    return None
 
 def scan_disks(min_size):
     """
