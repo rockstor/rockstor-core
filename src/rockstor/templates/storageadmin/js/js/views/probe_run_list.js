@@ -63,7 +63,7 @@ ProbeRunListView = RockstoreLayoutView.extend({
       return (_.keys(pt.attributes))[0];
     });
     var _this = this;
-    $(this.el).append(this.template({
+    $(this.el).html(this.template({
       probeRuns: this.collection,
       probeTemplates: this.probeTemplates
 
@@ -172,4 +172,7 @@ ProbeRunListView = RockstoreLayoutView.extend({
 
 });
 
+
+// Add pagination
+Cocktail.mixin(ProbeRunListView, PaginationMixin);
 
