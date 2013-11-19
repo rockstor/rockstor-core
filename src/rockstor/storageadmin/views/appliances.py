@@ -81,26 +81,6 @@ class AppliancesView(APIView):
             appliance = Appliance(uuid=appliance_uuid, ip=ip,
                                   current_appliance=True)
             appliance.save()
-            # the current appliance is created - open a support case
-            # and send email
-            try: 
-                notes = 'Appliance %s initialized' % appliance.uuid
-                sc = SupportCase(notes=notes, status='created', 
-                        case_type='auto')
-                sc.save()
-                emsg = EmailMessage(subject='support case',
-                        body=notes,
-                        from_email='rocky@customer.com',
-                        to=[settings.SUPPORT['email']])
-                emsg.send()
-                sc.status = 'submitted'
-                sc.save()
-            except Exception, e:
-                # if an exception occurs during the above, dont exit, 
-                # the appliance should still be usable.
-                logger.exception('exception while creating support \
-                        case for Appliance initialization')
-
         return Response(ApplianceSerializer(appliance).data)
       except Exception, e:
         handle_exception(e, request)
@@ -109,7 +89,6 @@ class AppliancesView(APIView):
         try:
             appliance = Appliance.objects.get(pk=id)
             appliance.delete()
-            logger.debug('found appliance')
             return Response()
         except Exception, e:
             handle_exception(e, request)
