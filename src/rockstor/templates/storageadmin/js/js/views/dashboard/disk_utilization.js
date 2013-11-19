@@ -208,9 +208,10 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     _this.startTime = new Date().getTime(); 
     var t1Str = moment(_this.t1).toISOString();
     var t2Str = moment(_this.t2).toISOString();
+    var pageSizeStr = '&page_size=' + RockStorGlobals.maxPageSize;
     _this.jqXhr = $.ajax({
-      url: "/api/sm/sprobes/diskstat/?format=json&t1=" +
-        t1Str + "&t2=" + t2Str, 
+      url: '/api/sm/sprobes/diskstat/?format=json' + pageSizeStr + '&t1=' +
+        t1Str + '&t2=' + t2Str, 
       type: "GET",
       dataType: "json",
       global: false, // dont show global loading indicator

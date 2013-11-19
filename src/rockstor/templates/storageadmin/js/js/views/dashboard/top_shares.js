@@ -32,7 +32,7 @@ TopSharesWidget = RockStorWidgetView.extend({
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.dashboard_widgets_top_shares;
     this.shares = new ShareCollection();
-    this.shares.pageSize = 1000;
+    this.shares.pageSize = RockStorGlobals.maxPageSize;
     this.numTop = 10;
   },
 
