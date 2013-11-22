@@ -1437,26 +1437,28 @@ input[type="radio"].selectedRoot {
 
 /* Simple slider plugin */
 .slider {
-  width: 25px;
+  width: 400px;
 }
 
 .slider > .dragger {
-  background: #8DCA09;
-  background: -webkit-linear-gradient(top, #8DCA09, #72A307);
-  background: -moz-linear-gradient(top, #8DCA09, #72A307);
-  background: linear-gradient(top, #8DCA09, #72A307);
+	width: 10px;
+	height: 10px;
+	margin: 0 auto;
+  border: 1px solid rgba(255,255,255,0.6);
 
-  -webkit-box-shadow: inset 0 2px 2px rgba(255,255,255,0.5), 0 2px 8px rgba(0,0,0,0.2);
-  -moz-box-shadow: inset 0 2px 2px rgba(255,255,255,0.5), 0 2px 8px rgba(0,0,0,0.2);
-  box-shadow: inset 0 2px 2px rgba(255,255,255,0.5), 0 2px 8px rgba(0,0,0,0.2);
+  -moz-box-shadow: 0 0px 2px 1px rgba(0,0,0,0.5), 0 2px 5px 2px rgba(0,0,0,0.2);
+  -webkit-box-shadow: 0 0px 2px 1px rgba(0,0,0,0.5), 0 2px 5px 2px rgba(0,0,0,0.2);
+  box-shadow: 0 0px 2px 1px rgba(0,0,0,0.5), 0 2px 5px 2px rgba(0,0,0,0.2);
 
-  -webkit-border-radius: 10px;
-  -moz-border-radius: 10px;
-  border-radius: 10px;
+	-moz-border-radius: 10px;
+	-webkit-border-radius: 10px;
+	border-radius: 10px;
 
-  border: 1px solid #496805;
-  width: 16px;
-  height: 16px;
+  background: #c5c5c5;
+  background: -moz-linear-gradient(90deg, rgba(180,180,180,1) 20%, rgba(230,230,230,1) 50%, rgba(180,180,180,1) 80%);
+	background:	-webkit-radial-gradient(  50%   0%,  12% 50%, hsla(0,0%,100%,1) 0%, hsla(0,0%,100%,0) 100%),
+  	          -webkit-radial-gradient(  50% 100%, 12% 50%, hsla(0,0%,100%,.6) 0%, hsla(0,0%,100%,0) 100%),
+              -webkit-radial-gradient(	50% 50%, 200% 50%, hsla(0,0%,90%,1) 5%, hsla(0,0%,85%,1) 30%, hsla(0,0%,60%,1) 100%);
 }
 
 .slider > .dragger:hover {
@@ -1465,30 +1467,28 @@ input[type="radio"].selectedRoot {
 
 
 .slider > .track, .slider > .highlight-track {
-  background: #ccc;
-  background: -webkit-linear-gradient(top, #bbb, #ddd);
-  background: -moz-linear-gradient(top, #bbb, #ddd);
-  background: linear-gradient(top, #bbb, #ddd);
+  height: 5px;
 
-  -webkit-box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
-  -moz-box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+  background: #787878;
+  background: -moz-linear-gradient(top, #787878, #a2a2a2);
+  background: -webkit-linear-gradient(top, #787878, #a2a2a2);
+  background: linear-gradient(top, #787878, #a2a2a2);
 
-  -webkit-border-radius: 8px;
-  -moz-border-radius: 8px;
-  border-radius: 8px;
+  -moz-box-shadow: inset 0 2px 5px 1px rgba(0,0,0,0.15), 0 1px 0px 0px rgba(230,230,230,0.9), inset 0 0 1px 1px rgba(0,0,0,0.2);
+  -webkit-box-shadow: inset 0 2px 5px 1px rgba(0,0,0,0.15), 0 1px 0px 0px rgba(230,230,230,0.9), inset 0 0 1px 1px rgba(0,0,0,0.2);
+  box-shadow: inset 0 2px 5px 1px rgba(0,0,0,0.15), 0 1px 0px 0px rgba(230,230,230,0.9), inset 0 0 1px 1px rgba(0,0,0,0.2);
 
-  border: 1px solid #aaa;
-  height: 4px;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border-radius: 5px;
+  cursor: inherit !important;
 }
 
 .slider > .highlight-track {
-	background-color: #8DCA09;
-	background: -webkit-linear-gradient(top, #8DCA09, #72A307);
-	background: -moz-linear-gradient(top, #8DCA09, #72A307);
-	background: linear-gradient(top, #8DCA09, #72A307);
-
-	border-color: #496805;
+  background-color: #c5c5c5;
+  background: -moz-linear-gradient(top, #c5c5c5, #a2a2a2);
+  background: -webkit-linear-gradient(top, #c5c5c5, #a2a2a2);
+  background: linear-gradient(top, #c5c5c5, #a2a2a2);
 }
 
 .slider-volume {
