@@ -49,6 +49,23 @@ AddShareView = Backbone.View.extend({
         
         $('#add-share-form :input').tooltip();
         
+        $("#share_size").simpleSlider({
+        	"theme": "volume",
+        	width: "500px",
+            range: [0,500],
+            step: 50 
+        });
+        
+        $("#share_size").bind("slider:changed", function (event, data) {
+        	  // The currently selected value of the slider
+        	$("#share_size_val").val(data.value);
+        	  
+
+        	});
+
+
+      
+        
         $('#add-share-form').validate({
             onfocusout: false,
             onkeyup: false,
