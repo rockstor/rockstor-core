@@ -59,14 +59,13 @@ def home(request):
     try:
         current_appliance = Appliance.objects.get(current_appliance=True)
     except Exception, e:
-        pass 
+        pass
     #setup = JSONRenderer().render(SetupSerializer(Setup.objects.all()[0]).data)
     setup = Setup.objects.all()[0]
 
-    context = { 
-        'request': request, 
+    context = {
+        'request': request,
         'current_appliance': current_appliance,
-        'nginx_websocket_port': settings.NGINX_WEBSOCKET_PORT,
         'setup_user': setup.setup_user,
         'page_size': settings.PAGINATION['page_size']
     }
