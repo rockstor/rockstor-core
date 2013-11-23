@@ -21,7 +21,6 @@ from storageadmin.views import (SetupWizardView, LoginView,
                                 SupportView, DashboardConfigView,
                                 SetupUserView, NFSExportGroupView)
 import os.path
-import socketio.sdjango
 
 site_media = os.path.join(
   os.path.dirname(__file__), 'site_media'
