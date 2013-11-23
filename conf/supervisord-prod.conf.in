@@ -33,7 +33,7 @@ serverurl=http://${supervisord-conf:host}:${supervisord-conf:port} ; use an http
 
 ; Nginx
 [program:nginx]
-command=/usr/sbin/nginx -c ${buildout:directory}/etc/nginx/nginx.conf             ; the program (relative uses PATH, can take args)
+command=/usr/sbin/nginx -c ${buildout:depdir}/etc/nginx/nginx.conf             ; the program (relative uses PATH, can take args)
 process_name=%(program_name)s ; process_name expr (default %(program_name)s)
 numprocs=1                    ; number of processes copies to start (def 1)
 priority=50
