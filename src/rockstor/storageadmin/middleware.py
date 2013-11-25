@@ -16,20 +16,15 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from django.db import models
-from django.contrib.auth.models import User
+import logging
+logger = logging.getLogger(__name__)
 
+"""
+Simple exception middleware that writes to rockstor log instead of emailing
+ADMINS.
+"""
+class ProdExceptionMiddleware(object):
 
-class NetworkInterface(models.Model):
-    name = models.CharField(max_length=100)
-    alias = models.CharField(max_length=100, null=True)
-    mac = models.CharField(max_length=100)
-    boot_proto = models.CharField(max_length=100, null=True)
-    onboot = models.CharField(max_length=100, null=True)
-    network = models.CharField(max_length=100, null=True)
-    netmask = models.CharField(max_length=100, null=True)
-    ipaddr = models.CharField(max_length=100, null=True)
-    itype = models.CharField(max_length=100, default='io')
-
-    class Meta:
-        app_label = 'storageadmin'
+    def process_exception(self, request, exception):
+        """just log the exception"""
+        logger.exception(exception)

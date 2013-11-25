@@ -79,9 +79,7 @@
     <script src="/js/cocktail.js"></script>
     <script src="/js/bootstrap.js"></script>
     <script src="/js/jsonform.js"></script>
-    <script src="/js/rickshaw.min.js"></script>
     <script src="/js/jquery.validate.js"></script>
-    <script src="/js/socket.io.js"></script>
     <script src="/js/jquery.flot.js"></script>
     <script src="/js/jquery.flot.navigate.js"></script>
     <script src="/js/jquery.flot.resize.js"></script>
@@ -141,9 +139,10 @@
       </div>
     </div>
 
-    <script type="text/javascript" language="javascript" src="/js/bootstrap.min.js"></script>
+    <script src="/js/lib/bootstrap.js"></script>
+    <script src="/js/lib/bootstrap-datepicker.js"></script>
+    <script src="/js/lib/bootstrap-timepicker.js"></script>
     <script type="text/javascript">
-      NGINX_WEBSOCKET_PORT = {{ nginx_websocket_port }};
       {% if current_appliance %}
       setup_done = true;
       {% else %}

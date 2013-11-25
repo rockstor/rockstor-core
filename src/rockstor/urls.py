@@ -21,7 +21,6 @@ from storageadmin.views import (SetupWizardView, LoginView,
                                 SupportView, DashboardConfigView,
                                 SetupUserView, NFSExportGroupView)
 import os.path
-import socketio.sdjango
 
 site_media = os.path.join(
   os.path.dirname(__file__), 'site_media'
@@ -56,9 +55,6 @@ urlpatterns = patterns('',
             { 'document_root': js_doc_root }),
     url(r'^img/(?P<path>.*)$', 'django.views.static.serve',
             { 'document_root': img_doc_root }),
-
-    # Socket.io
-    url("^socket\.io", include(socketio.sdjango.urls)),
 
     # Uncomment the admin/doc line below to enable admin documentation:
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
