@@ -23,12 +23,6 @@ import os
 DEBUG = ${django-settings-conf:debug}
 TEMPLATE_DEBUG = DEBUG
 
-ADMINS = (
-    ('Suman Chakravartula', 'schakrava@gmail.com'),
-)
-
-MANAGERS = ADMINS
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
@@ -124,6 +118,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'storageadmin.middleware.ProdExceptionMiddleware',
     # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
@@ -346,7 +341,7 @@ PAGINATION = {
 
 START_UID = 5000
 END_UID = 6000
-ADMIN_SHELL = '${buildout:depdir}/bin/rcli'
+ADMINx_SHELL = '${buildout:depdir}/bin/rcli'
 DEFAULT_SHELL = '/sbin/nologin'
 
 SCHEDULER = ('127.0.0.1', ${django-settings-conf:schedulerport})
