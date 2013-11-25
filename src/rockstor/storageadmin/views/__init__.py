@@ -28,7 +28,6 @@ from setupwizard import SetupWizardView
 from share_iscsi import ShareIscsiView
 from appliances import AppliancesView
 from login import LoginView
-from socketio_service import RockStorMessageNamespace
 from user import UserView
 from share_samba import ShareSambaView
 from support import SupportView

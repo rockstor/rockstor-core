@@ -57,7 +57,7 @@ class NFSServiceView(BaseServiceView):
                 init_service_op('nfs', command)
             except Exception, e:
                 logger.exception(e)
-                e_msg = ('Failed to %s NFS due to a system error.')
+                e_msg = ('Failed to %s NFS due to a system error.' % command)
                 handle_exception(Exception(e_msg), request)
 
         return Response()

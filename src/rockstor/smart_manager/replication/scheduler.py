@@ -59,6 +59,9 @@ class ReplicaScheduler(Process):
     def run(self):
         sleep_time = 0
         while True:
+            if (os.getppid() != self.ppid):
+                logger.info('parent exited. aborting.')
+                break
             try:
                 self.rep_ip = self._replication_interface()
                 break
