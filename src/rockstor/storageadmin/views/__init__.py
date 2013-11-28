@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-from home import (login_page, login_submit, logout_user, home, notfound)
+from home import (login_page, login_submit, logout_user, home)
 from snapshot import SnapshotView
 from share import ShareView
 from pool import PoolView
@@ -39,3 +39,6 @@ from setup_user import SetupUserView
 from share_acl import ShareACLView
 from nfs_exports import NFSExportGroupView
 from share_command import ShareCommandView
+from custom_404 import error404
+from custom_500 import error500
+
