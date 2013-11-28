@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-from home import (login_page, login_submit, logout_user, home)
+from home import (login_page, login_submit, logout_user, home, notfound)
 from snapshot import SnapshotView
 from share import ShareView
 from pool import PoolView
