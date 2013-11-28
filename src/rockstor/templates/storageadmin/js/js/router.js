@@ -67,6 +67,8 @@ var AppRouter = Backbone.Router.extend({
     "scheduled-tasks": "showScheduledTasks",
     "scheduled-tasks/:taskId/log": "showTasks",
     "add-scheduled-task": "addScheduledTask",
+    "404": "handle404",
+    "500": "handle500",
     "*path": "showHome"
   },
 
@@ -448,6 +450,20 @@ var AppRouter = Backbone.Router.extend({
     this.currentLayout = new TasksView({
       taskDefId: taskDefId
     });
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  handle404: function() {
+    this.cleanup();
+    this.currentLayout = new Handle404View();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  handle500: function() {
+    this.cleanup();
+    this.currentLayout = new Handle500View();
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },
