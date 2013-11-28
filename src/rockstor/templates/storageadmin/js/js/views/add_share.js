@@ -49,6 +49,21 @@ AddShareView = Backbone.View.extend({
         
         $('#add-share-form :input').tooltip();
         
+        $("#slider-size").simpleSlider({
+            range: [0,2049],
+            step: '10'
+    
+        });
+       
+        $("#slider-size").bind("slider:changed", function (event, data) {
+              // The currently selected value of the slider
+            if(data.value < 1024){
+            $("#share_size_val").val((data.value).toFixed(2)+" GB");
+            }else{
+                $("#share_size_val").val(((data.value)/1024).toFixed(2)+" TB");
+            }
+            });
+        
         $('#add-share-form').validate({
             onfocusout: false,
             onkeyup: false,
