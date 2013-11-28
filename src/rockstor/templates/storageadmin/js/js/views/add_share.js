@@ -58,9 +58,9 @@ AddShareView = Backbone.View.extend({
         $("#slider-size").bind("slider:changed", function (event, data) {
               // The currently selected value of the slider
             if(data.value < 1024){
-            $("#share_size_val").val((data.value).toFixed(2)+" GB");
+            $("#share_size_val").val((data.value).toFixed(2));
             }else{
-                $("#share_size_val").val(((data.value)/1024).toFixed(2)+" TB");
+                $("#share_size_val").val(((data.value)/1024).toFixed(2));
             }
             });
         
@@ -89,14 +89,10 @@ AddShareView = Backbone.View.extend({
               disableButton(button);
               var share_name = $('#share_name').val();
               var pool_name = $('#pool_name').val();
-              var size = $('#share_size').val();
+              var size = $('#share_size_val').val();
 
               var sizeFormat = $('#size_format').val();
-              if(sizeFormat == 'KB'){
-                size = size;
-              }else if(sizeFormat == 'MB'){
-                size = size*1024;	
-              }else if(sizeFormat == 'GB'){
+              if(sizeFormat == 'GB'){
                 size = size*1024*1024;
               }else if(sizeFormat == 'TB'){
                 size = size*1024*1024*1024;
