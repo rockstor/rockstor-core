@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework.response import Response
 from storageadmin.util import handle_exception
-from system.services import init_service_op, chkconfig
+from system.services import init_service_op, systemctl
 from system.nis import configure_nis
 from django.db import transaction
 from base_service import BaseServiceView
@@ -36,6 +36,7 @@ class NFSServiceView(BaseServiceView):
         execute a command on the service
         """
         service = Service.objects.get(name='nfs')
+        service_name = 'nfs-server'
         if (command == 'config'):
             #nothing to really configure atm. just save the model
             try:
@@ -49,12 +50,14 @@ class NFSServiceView(BaseServiceView):
         else:
             try:
                 if (command == 'stop'):
-                    chkconfig('nfs', 'on')
+                    systemctl(service_name, 'disable')
+                    systemctl(service_name, 'stop')
                 else:
-                    chkconfig('nfs', 'on')
-                    chkconfig('rpcbind', 'on')
-                    init_service_op('rpcbind', command)
-                init_service_op('nfs', command)
+                    systemctl(service_name, 'enable')
+                    #chkconfig('rpcbind', 'on')
+                    #init_service_op('rpcbind', command)
+                    systemctl(service_name, 'restart')
+                #init_service_op('nfs', command)
             except Exception, e:
                 logger.exception(e)
                 e_msg = ('Failed to %s NFS due to a system error.' % command)

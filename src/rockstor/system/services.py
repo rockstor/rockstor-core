@@ -25,6 +25,7 @@ from osi import run_command
 SERVICE_BIN = '/sbin/service'
 CHKCONFIG_BIN = '/sbin/chkconfig'
 AUTHCONFIG = '/usr/sbin/authconfig'
+SYSTEMCTL_BIN = '/usr/bin/systemctl'
 
 
 def init_service_op(service_name, command, throw=True):
@@ -39,6 +40,9 @@ def init_service_op(service_name, command, throw=True):
 
 def chkconfig(service_name, switch):
     return run_command([CHKCONFIG_BIN, service_name, switch])
+
+def systemctl(service_name, switch):
+    return run_command([SYSTEMCTL_BIN, switch, service_name])
 
 def service_status(service_name):
     if (service_name == 'nis' or service_name == 'nfs'):
