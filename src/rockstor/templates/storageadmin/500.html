@@ -21,10 +21,10 @@
 
 {% extends "base.html" %}
 
-{% block title %}Page not found{% endblock %}
+{% block title %}Internal Error {% endblock %}
 
 {% block content %}
-<h1>Rockstor backend error</h1>
+<h1>Internal Error</h1>
 
 <p>Sorry, A backend error has occured. Error details are saved to
   /opt/rockstor/var/log directory. Please zip the directory and provide it to
@@ -33,7 +33,6 @@
 
 <ul>
 <li>Send an email to support@rockstor.com or</li>
-<li>Open an issue on github</li>
 </ul>
 
 {% endblock %}
