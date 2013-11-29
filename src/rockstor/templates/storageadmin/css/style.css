@@ -1431,6 +1431,11 @@ input[type="radio"].selectedRoot {
   padding: 24px 12px 12px 12px;
 }
 
+#globalerrmsg {
+  padding: 4px;
+}
+
+
 #footer {
 	position: absolute;
 }
