@@ -28,7 +28,8 @@ def register_services():
                 'NIS': 'nis',
                 'NTP': 'ntpd',
                 'AD': 'winbind',
-                'LDAP': 'ldap',}
+                'LDAP': 'ldap',
+                'Replication': 'replication',}
     for s in services.keys():
         if (not Service.objects.filter(display_name=s).exists()):
             s_o = Service(display_name=s, name=services[s])

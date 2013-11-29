@@ -20,12 +20,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import re
 import subprocess
 
+from django.conf import settings
 from osi import run_command
 
 SERVICE_BIN = '/sbin/service'
 CHKCONFIG_BIN = '/sbin/chkconfig'
 AUTHCONFIG = '/usr/sbin/authconfig'
 SYSTEMCTL_BIN = '/usr/bin/systemctl'
+SUPERCTL_BIN = ('%s/supervisorctl' % settings.BIN_DIR)
 
 
 def init_service_op(service_name, command, throw=True):
@@ -44,6 +46,15 @@ def chkconfig(service_name, switch):
 def systemctl(service_name, switch):
     return run_command([SYSTEMCTL_BIN, switch, service_name])
 
+def superctl(service, switch):
+    service = 'rd'
+    out, err, rc = run_command([SUPERCTL_BIN, switch, service])
+    if (switch == 'status'):
+        status = out[0].split()[1]
+        if (status != 'RUNNING'):
+            rc = 1
+    return out, err, rc
+
 def service_status(service_name):
     if (service_name == 'nis' or service_name == 'nfs'):
         out, err, rc = init_service_op('rpcbind', 'status', throw=False)
@@ -55,6 +66,8 @@ def service_status(service_name):
             return init_service_op('nfs', 'status', throw=False)
     elif (service_name == 'ldap'):
         return init_service_op('nslcd', 'status', throw=False)
+    elif (service_name == 'replication'):
+        return superctl(service_name, 'status')
     return init_service_op(service_name, 'status', throw=False)
 
 def winbind_input(config, command):

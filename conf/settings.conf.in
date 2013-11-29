@@ -347,3 +347,5 @@ DEFAULT_SHELL = '/sbin/nologin'
 SCHEDULER = ('127.0.0.1', ${django-settings-conf:schedulerport})
 REPLICA_DATA_PORT = ${django-settings-conf:reppubport}
 REPLICA_META_PORT = ${django-settings-conf:reprecvport}
+
+BIN_DIR = '${buildout:depdir}/bin'
