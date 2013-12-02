@@ -23,6 +23,7 @@ from stap_dispatcher import Stap
 import models
 from django.conf import settings
 from django.core.serializers import deserialize
+from django.db import transaction
 import zmq
 import logging
 logger = logging.getLogger(__name__)
@@ -79,13 +80,18 @@ def main():
         try:
             while (True):
                 sink_data = pull_socket.recv_json()
-                if (isinstance(sink_data, dict)): #worker data
-                    cb = getattr(agents, sink_data['cb'])
-                    cb(sink_data['part_out'], sink_data['rid'], logger)
-                else:
-                    #smart probe, proc, service django models
-                    for d in deserialize("json", sink_data):
-                        d.save()
+                with transaction.commit_on_success(using='smart_manager'):
+                    if (isinstance(sink_data, dict)): #worker data
+                        cb = getattr(agents, sink_data['cb'])
+                        cb(sink_data['part_out'], sink_data['rid'], logger)
+                    else:
+                        #smart probe, proc, service django models
+                        for d in deserialize("json", sink_data):
+                            d.save()
+                #in case of no zmq exception, which means there was something
+                #on the queue that we just processed, sleep a little longer to
+                #let stuff queue up a little.
+                time.sleep(.5)
         except zmq.error.Again:
             pass
         except Exception, e:
