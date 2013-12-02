@@ -193,12 +193,20 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
         var currentTime = new Date().getTime();
         var diff = currentTime - _this.startTime;
         if (diff > _this.updateFreq) {
-          _this.t1 = new Date(dataBuffer[dataBuffer.length-1].ts).getTime();
+          if (dataBuffer.length > 0) {
+            _this.t1 = new Date(dataBuffer[dataBuffer.length-1].ts).getTime();
+          } else {
+            _this.t1 = _this.t1 + diff;
+          }
           _this.t2 = _this.t2 + diff;
           _this.getData(_this); 
         } else {
           _this.timeoutId = window.setTimeout( function() { 
-            _this.t1 = new Date(dataBuffer[dataBuffer.length-1].ts).getTime();
+            if (dataBuffer.length > 0) {
+              _this.t1 = new Date(dataBuffer[dataBuffer.length-1].ts).getTime();
+            } else {
+              _this.t1 = _this.t1 + _this.updateFreq;
+            }
             _this.t2 = _this.t2 + _this.updateFreq;
             _this.getData(_this); 
           }, _this.updateFreq - diff)

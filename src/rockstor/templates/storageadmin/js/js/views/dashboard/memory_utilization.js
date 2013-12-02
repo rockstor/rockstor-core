@@ -38,9 +38,9 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
     this.dataLength = 300;
     this.currentTs = null;
     this.colors = ["#04BA44", "#C95351"];
-    for (i=0; i<this.dataLength; i++) {
-      this.dataBuffer.push(emptyData);
-    }
+    //for (i=0; i<this.dataLength; i++) {
+    //  this.dataBuffer.push(emptyData);
+    //}
     this.totalMem = 0;
     this.graphOptions = { 
       grid : { 
@@ -146,18 +146,33 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
           _this.dataBuffer.splice(0,
           _this.dataBuffer.length - _this.dataLength);
         }
+        
+        // remove data outside window
+        if (_this.dataBuffer.length > 0) {
+          while (new Date(_this.dataBuffer[0].ts).getTime() < _this.t2 - _this.windowLength) {
+            _this.dataBuffer.shift();
+          }
+        }
         _this.update(_this.dataBuffer);
         // Check time interval from beginning of last call
         // and call getData or setTimeout accordingly
         var currentTime = new Date().getTime();
         var diff = currentTime - _this.startTime;
         if (diff > _this.updateFreq) {
-          _this.t1 = new Date(_this.dataBuffer[_this.dataBuffer.length-1].ts).getTime();
+          if (_this.dataBuffer.length > 0) {
+            _this.t1 = new Date(_this.dataBuffer[_this.dataBuffer.length-1].ts).getTime();
+          } else {
+            _this.t1 = _this.t1 + diff;
+          }
           _this.t2 = _this.t2 + diff;
           _this.getData(_this); 
         } else {
           _this.timeoutId = window.setTimeout( function() { 
-            _this.t1 = new Date(_this.dataBuffer[_this.dataBuffer.length-1].ts).getTime();
+            if (_this.dataBuffer.length > 0) {
+              _this.t1 = new Date(_this.dataBuffer[_this.dataBuffer.length-1].ts).getTime();
+            } else {
+              _this.t1 = _this.t1 + _this.updateFreq;
+            }
             _this.t2 = _this.t2 + _this.updateFreq;
             _this.getData(_this); 
           }, _this.updateFreq - diff)
@@ -172,20 +187,22 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
   },
 
   update: function(dataBuffer) {
-    var newData = this.modifyData(dataBuffer);
-    $.plot(this.$("#mem-util-chart"), newData, this.graphOptions);
-    var currentData = this.dataBuffer[this.dataBuffer.length-1];
-    // Memory
-    this.$("#mem-total").html(humanize.filesize(currentData["total"]*1024));
-    this.$("#mem-used").html(humanize.filesize((currentData["total"] - currentData["free"])*1024));  
-    this.$("#mem-free").html(humanize.filesize(currentData["free"]*1024));
-    // Swap
-    this.$("#mem-totalswap").html(humanize.filesize(
-    currentData["swap_total"]*1024));
-    this.$("#mem-usedswap").html(humanize.filesize(
-      (currentData["swap_total"] - currentData["swap_free"])*1024));  
-    this.$("#mem-freeswap").html(humanize.filesize(
-    currentData["swap_free"]*1024));
+    if (dataBuffer.length > 0) {
+      var newData = this.modifyData(dataBuffer);
+      this.$('#mem-util-chart').empty();
+      $.plot(this.$("#mem-util-chart"), newData, this.graphOptions);
+      var currentData = this.dataBuffer[this.dataBuffer.length-1];
+      // Memory
+      this.$("#mem-total").html(humanize.filesize(currentData["total"]*1024));
+      this.$("#mem-used").html(humanize.filesize((currentData["total"] - currentData["free"])*1024));  
+      this.$("#mem-free").html(humanize.filesize(currentData["free"]*1024));
+      // Swap
+      this.$("#mem-totalswap").html(humanize.filesize(currentData["swap_total"]*1024));
+      this.$("#mem-usedswap").html(humanize.filesize((currentData["swap_total"] - currentData["swap_free"])*1024));  
+      this.$("#mem-freeswap").html(humanize.filesize(currentData["swap_free"]*1024));
+    } else {
+      this.$('#mem-util-chart').html('<strong>No data received</strong>');
+    }
   },
 
   // Creates series to be used by flot

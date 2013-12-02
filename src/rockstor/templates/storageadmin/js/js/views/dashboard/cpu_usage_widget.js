@@ -206,14 +206,6 @@ CpuUsageWidget = RockStorWidgetView.extend({
       success: function(data, status, xhr) {
         data = data.results;
         _this.displayIndividualCpuUsage(data);
-
-        /* 
-        if (_.isNull(_this.numCpus)) {
-          _this.numCpus = data.length;
-        }
-        _this.parseData(data); 
-        _this.updateGraph();
-       */
         if (!_this.graphRendered) {
           _this.renderGraph(data);
           _this.graphRendered = true;
@@ -230,12 +222,20 @@ CpuUsageWidget = RockStorWidgetView.extend({
         var currentTime = new Date().getTime();
         var diff = currentTime - _this.startTime;
         if (diff > _this.updateFreq) {
-          _this.t1 = new Date(_this.cpuData[_this.cpuData.length-1].ts).getTime();
+          if (_this.cpuData.length > 0) {
+            _this.t1 = new Date(_this.cpuData[_this.cpuData.length-1].ts).getTime();
+          } else {
+            _this.t1 = _this.t1 + diff;
+          }
           _this.t2 = _this.t2 + diff;
           _this.getData(_this); 
         } else {
           _this.timeoutId = window.setTimeout( function() { 
-            _this.t1 = new Date(_this.cpuData[_this.cpuData.length-1].ts).getTime();
+            if (_this.cpuData.length > 0) {
+              _this.t1 = new Date(_this.cpuData[_this.cpuData.length-1].ts).getTime();
+            } else {
+              _this.t1 = _this.t1 + _this.updateFreq;
+            }
             _this.t2 = _this.t2 + _this.updateFreq;
             _this.getData(_this); 
           }, _this.updateFreq - diff);
@@ -346,7 +346,13 @@ CpuUsageWidget = RockStorWidgetView.extend({
     return rawData;
   },
 
+  displayNoDataMsg: function() {
+    this.$('#cpuusage-avg').html('<strong>No data received</strong>');
+    this.$('#cpuusage-individual').empty();
+  },
+
   renderGraph: function(data) {
+    this.$('#cpuusage-avg').empty();
     data = this.getAvgCpuUsge(data);
     this.cpuData = data;
     var _this = this;
