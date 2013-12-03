@@ -80,18 +80,13 @@ def main():
         try:
             while (True):
                 sink_data = pull_socket.recv_json()
-                with transaction.commit_on_success(using='smart_manager'):
-                    if (isinstance(sink_data, dict)): #worker data
-                        cb = getattr(agents, sink_data['cb'])
-                        cb(sink_data['part_out'], sink_data['rid'], logger)
-                    else:
-                        #smart probe, proc, service django models
-                        for d in deserialize("json", sink_data):
-                            d.save()
-                #in case of no zmq exception, which means there was something
-                #on the queue that we just processed, sleep a little longer to
-                #let stuff queue up a little.
-                time.sleep(.5)
+                if (isinstance(sink_data, dict)): #worker data
+                    cb = getattr(agents, sink_data['cb'])
+                    cb(sink_data['part_out'], sink_data['rid'], logger)
+                else:
+                    #smart probe, proc, service django models
+                    for d in deserialize("json", sink_data):
+                        d.save()
         except zmq.error.Again:
             pass
         except Exception, e:
