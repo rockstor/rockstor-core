@@ -207,19 +207,15 @@ CpuUsageWidget = RockStorWidgetView.extend({
       success: function(data, status, xhr) {
         data = data.results;
         if (data.length > 0) {
-          console.log(data);
           _this.cpuData.push.apply(_this.cpuData, _this.getAvgCpuUsge(data));
         }
 
         _this.displayIndividualCpuUsage(data);
-        console.log(_this.cpuData);
         if (!_this.graphRendered) {
           _this.renderGraph(data);
           _this.graphRendered = true;
         } else {
-          if (data.length > 0) {
-            _this.updateGraph(data);
-          }
+          _this.updateGraph(data);
         }
         
         if (_this.cpuData.length > 0) { 
@@ -392,7 +388,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
     // Scales
     this.x = d3.time.scale().domain([this.t2-this.windowLength, this.t2]).range([0, this.width]);
     this.y = d3.scale.linear().range([this.height, 0]);
-    this.x.domain(d3.extent(this.cpuData, function(d) { return new Date(d.ts); }));
+    //this.x.domain(d3.extent(this.cpuData, function(d) { return new Date(d.ts); }));
     this.y.domain([0, 100]);
 
     // Line graph
@@ -469,7 +465,6 @@ CpuUsageWidget = RockStorWidgetView.extend({
   },
 
   updateGraph: function(data) {
-    data = this.getAvgCpuUsge(data);
     var _this = this;
     
     //var now = new Date(data[data.length-1].ts).getTime();

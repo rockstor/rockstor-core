@@ -33,7 +33,7 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
     this.begin = null;
     this.updateFreq = 1000;
     this.end = null;
-    var emptyData = {"id": 0, "total": 0, "free": 0, "buffers": 0, "cached": 0, "swap_total": 0, "swap_free": 0, "active": 0, "inactive": 0, "dirty": 0, "ts": "2013-07-17T00:00:16.109Z"};
+    this.emptyData = {"id": 0, "total": 0, "free": 0, "buffers": 0, "cached": 0, "swap_total": 0, "swap_free": 0, "active": 0, "inactive": 0, "dirty": 0, "ts": "2013-07-17T00:00:16.109Z"};
     this.dataBuffer = [];
     this.dataLength = 300;
     this.currentTs = null;
@@ -86,6 +86,7 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
     // Start and end timestamps for api call
     this.windowLength = 300000;
     this.t2 = RockStorGlobals.currentTimeOnServer.getTime()-30000;
+    //this.t2 = new Date('2013-12-03T17:18:06.312Z').getTime();
     this.t1 = this.t2 - this.windowLength;
   },
   
@@ -111,10 +112,16 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
         _.each(data.results, function(d) {
           _this.dataBuffer.push(d);
         });
-        if (_this.dataBuffer.length > _this.dataLength) {
-          _this.dataBuffer.splice(0,
-          _this.dataBuffer.length - _this.dataLength);
-        }
+        //if (_this.dataBuffer.length > _this.dataLength) {
+          //_this.dataBuffer.splice(0,
+          //_this.dataBuffer.length - _this.dataLength);
+        //}
+
+        if (_this.dataBuffer.length > 0) { 
+          while (new Date(_this.dataBuffer[0].ts).getTime() < _this.t2-(_this.windowLength )) {
+            _this.dataBuffer.shift();
+          }
+        } 
         _this.getData(_this); 
       },
       error: function(xhr, status, error) {
@@ -187,22 +194,27 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
   },
 
   update: function(dataBuffer) {
-    if (dataBuffer.length > 0) {
-      var newData = this.modifyData(dataBuffer);
-      this.$('#mem-util-chart').empty();
-      $.plot(this.$("#mem-util-chart"), newData, this.graphOptions);
-      var currentData = this.dataBuffer[this.dataBuffer.length-1];
-      // Memory
-      this.$("#mem-total").html(humanize.filesize(currentData["total"]*1024));
-      this.$("#mem-used").html(humanize.filesize((currentData["total"] - currentData["free"])*1024));  
-      this.$("#mem-free").html(humanize.filesize(currentData["free"]*1024));
-      // Swap
-      this.$("#mem-totalswap").html(humanize.filesize(currentData["swap_total"]*1024));
-      this.$("#mem-usedswap").html(humanize.filesize((currentData["swap_total"] - currentData["swap_free"])*1024));  
-      this.$("#mem-freeswap").html(humanize.filesize(currentData["swap_free"]*1024));
-    } else {
-      this.$('#mem-util-chart').html('<strong>No data received</strong>');
+    var newData = this.modifyData(dataBuffer);
+    this.$('#mem-util-chart').empty();
+    this.graphOptions.xaxis = {
+      mode: 'time',
+      min: this.t2 - this.windowLength,
+      max: this.t2,
+      timezone: 'browser'
     }
+    $.plot(this.$("#mem-util-chart"), newData, this.graphOptions);
+    var currentData = this.emptyData; 
+    if (this.dataBuffer.length > 0) {
+      currentData = this.dataBuffer[this.dataBuffer.length-1];
+    }
+    // Memory
+    this.$("#mem-total").html(humanize.filesize(currentData["total"]*1024));
+    this.$("#mem-used").html(humanize.filesize((currentData["total"] - currentData["free"])*1024));  
+    this.$("#mem-free").html(humanize.filesize(currentData["free"]*1024));
+    // Swap
+    this.$("#mem-totalswap").html(humanize.filesize(currentData["swap_total"]*1024));
+    this.$("#mem-usedswap").html(humanize.filesize((currentData["swap_total"] - currentData["swap_free"])*1024));  
+    this.$("#mem-freeswap").html(humanize.filesize(currentData["swap_free"]*1024));
   },
 
   // Creates series to be used by flot
@@ -211,18 +223,20 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
     var new_data = [];
     var free = [];
     var used = [];
-    this.totalMem = dataBuffer[dataBuffer.length-1].total;
-    this.currentTs = dataBuffer[dataBuffer.length-1].ts;
+    if (dataBuffer.length > 0) {
+      this.totalMem = dataBuffer[dataBuffer.length-1].total;
+      this.currentTs = dataBuffer[dataBuffer.length-1].ts;
 
-    //this.graphOptions.yaxis = {
-     // min: 0,
+      //this.graphOptions.yaxis = {
+      // min: 0,
       //max: 100,
       //tickFormatter: this.memValueTickFormatter,
-    //}
-    _.each(dataBuffer, function(d,i) {
-      free.push([i, (d["free"]/_this.totalMem)*100]);
-      used.push([i, ((d["total"] - d["free"])/_this.totalMem)*100]);
-    });
+      //}
+      _.each(dataBuffer, function(d,i) {
+        free.push([(new Date(d.ts)).getTime(), (d["free"]/_this.totalMem)*100]);
+        used.push([(new Date(d.ts)).getTime(), ((d["total"] - d["free"])/_this.totalMem)*100]);
+      });
+    }
   
     //new_data.push({"label": "free", "data": free, "color": this.colors[0]});
     new_data.push({"label": "used", "data": used, "color": this.colors[1]});
