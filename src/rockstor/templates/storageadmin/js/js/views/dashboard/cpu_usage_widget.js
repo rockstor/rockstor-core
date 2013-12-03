@@ -207,12 +207,10 @@ CpuUsageWidget = RockStorWidgetView.extend({
       success: function(data, status, xhr) {
         data = data.results;
         if (data.length > 0) {
-          console.log(data);
           _this.cpuData.push.apply(_this.cpuData, _this.getAvgCpuUsge(data));
         }
 
         _this.displayIndividualCpuUsage(data);
-        console.log(_this.cpuData);
         if (!_this.graphRendered) {
           _this.renderGraph(data);
           _this.graphRendered = true;
