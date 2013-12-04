@@ -59,8 +59,10 @@ AddShareView = Backbone.View.extend({
               // The currently selected value of the slider
             if(data.value < 1024){
             $("#share_size_val").val((data.value).toFixed(2));
+            $("#size_format").val("GB");
             }else{
                 $("#share_size_val").val(((data.value)/1024).toFixed(2));
+                $("#size_format").val("TB");
             }
             });
         
