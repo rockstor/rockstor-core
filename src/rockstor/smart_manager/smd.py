@@ -23,6 +23,7 @@ from stap_dispatcher import Stap
 import models
 from django.conf import settings
 from django.core.serializers import deserialize
+from django.db import transaction
 import zmq
 import logging
 logger = logging.getLogger(__name__)
