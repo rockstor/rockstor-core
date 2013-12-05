@@ -101,7 +101,7 @@ class ShareView(GenericView):
             if (re.match('%s$' % settings.SHARE_REGEX, sname) is None):
                 e_msg = ('Share name must start with a letter(a-z) and can'
                          ' be followed by any of the following characters: '
-                         'letter(a-z), digits(0-9), hiphen(-), underscore'
+                         'letter(a-z), digits(0-9), hyphen(-), underscore'
                          '(_) or a period(.).')
                 handle_exception(Exception(e_msg), request)
 
