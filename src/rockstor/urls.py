@@ -84,6 +84,4 @@ urlpatterns = patterns('',
     (r'^api/sm/replicas/', include('smart_manager.urls.replicas')),
 )
 
-handler404 = 'storageadmin.views.custom_404'
-handler500 = 'storageadmin.views.custom_500'
 

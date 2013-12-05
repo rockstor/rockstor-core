@@ -495,6 +495,17 @@ $(document).ready(function() {
     showApplianceList();
   });
 
+  $(document).ajaxError(function(event, jqXhr, ajaxSettings, e) {
+    var template = window.JST.common_globalerr;
+    var htmlErr = null;
+    var resType = jqXhr.getResponseHeader('Content-Type');
+    console.log(resType);
+    $('#globalerrmsg').html(template({
+      jqXhr: jqXhr, 
+      ajaxSettings: ajaxSettings
+    }));
+  });
+
   // Initialize websocket connection
   // logger.debug('connecting to websocket');
   // RockStorSocket.socket = io.connect('https://' + document.location.host + ':' + NGINX_WEBSOCKET_PORT, 
