@@ -180,9 +180,10 @@ def refresh_smb_config(exports, clean_config):
             sfo.write('[%s]\n' % e.share.name)
             sfo.write('    comment = %s\n' % e.comment)
             sfo.write('    path = %s\n' % e.path)
-            sfo.write('    browsable = %s\n' % e.browsable)
+            sfo.write('    browseable = %s\n' % e.browsable)
             sfo.write('    read only = %s\n' % e.read_only)
             sfo.write('    create mask = %s\n' % e.create_mask)
+            sfo.write('    guest ok = %s\n' % e.guest_ok)
     return True
 
 def restart_samba():
