@@ -16,10 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-"""
-view for anything at the share level
-"""
-
+import re
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (Share, Snapshot, Disk, Pool, Snapshot,
@@ -101,6 +98,13 @@ class ShareView(GenericView):
     def post(self, request):
         try:
             sname = request.DATA['sname']
+            if (re.match('%s$' % settings.SHARE_REGEX, sname) is None):
+                e_msg = ('Share name must start with a letter(a-z) and can'
+                         ' be followed by any of the following characters: '
+                         'letter(a-z), digits(0-9), hyphen(-), underscore'
+                         '(_) or a period(.).')
+                handle_exception(Exception(e_msg), request)
+
             if (Share.objects.filter(name=sname).exists()):
                 e_msg = ('Share with name: %s already exists.' % sname)
                 handle_exception(Exception(e_msg), request)

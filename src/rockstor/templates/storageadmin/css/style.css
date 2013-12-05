@@ -1431,11 +1431,6 @@ input[type="radio"].selectedRoot {
   padding: 24px 12px 12px 12px;
 }
 
-#globalerrmsg {
-  padding: 4px;
-}
-
-
 #footer {
 	position: absolute;
 }
@@ -1725,4 +1720,6 @@ input[type="radio"].selectedRoot {
   top: 100%;
   left: 0;
 }
+
+#globalerrmsg { margin: 4px; }
 
