@@ -496,14 +496,20 @@ $(document).ready(function() {
   });
 
   $(document).ajaxError(function(event, jqXhr, ajaxSettings, e) {
-    var template = window.JST.common_globalerr;
+    var commonerr_template = window.JST.common_commonerr;
+    var unknownerr_template = window.JST.common_unknownerr;
     var htmlErr = null;
     var resType = jqXhr.getResponseHeader('Content-Type');
     console.log(resType);
-    $('#globalerrmsg').html(template({
-      jqXhr: jqXhr, 
-      ajaxSettings: ajaxSettings
-    }));
+    if (resType.match(/json/)) {
+      var msg = parseXhrError(jqXhr)
+      $("#globalerrmsg").html(commonerr_template({ msg: msg }));
+    } else {
+      $('#globalerrmsg').html(unknownerr_template({
+        jqXhr: jqXhr, 
+        ajaxSettings: ajaxSettings
+      }));
+    }
   });
 
   // Initialize websocket connection

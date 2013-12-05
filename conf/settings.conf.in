@@ -232,8 +232,6 @@ PIPELINE_JS = {
             'js/views/add_scheduled_task.js',
             'js/views/tasks.js',
             'js/views/rollback.js',
-            'js/views/handle_404.js',
-            'js/views/handle_500.js',
             ),
         'output_filename': 'js/application.js'
         },
