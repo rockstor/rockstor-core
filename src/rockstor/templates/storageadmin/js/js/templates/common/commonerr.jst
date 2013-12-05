@@ -1,9 +1,32 @@
 <div class="row-fluid">
   <div class="span8">
     <div class="alert alert-error">
-      <button class="close" data-dismiss="alert" type="button">x</button>
-      <%= msg %>
+      <button class="close" type="button">x</button>
+      <strong>Error!</strong>
+      <br>
+      <%= detail %>
+      <br>
+      <a class="err-help-toggle" href="#">More...</a>
+      <br>
+      <br>
+      <div class="err-help" style="display: none;">
+        For help on this issue, contact us using one of the methods below:
+        <ul>
+          <li><strong>Email:</strong>  Send an email to <a href="mailto:support@rockstor.com" target="_blank">support@rockstor.com</a> with the following:
+            <ul>
+              <li>The error message: "<%= detail %>"</li>
+              <li>A step by step description of the actions leading up to the error.</li>
+              <li>Attach the log.tgz file (containing the tarred and zipped server logs), available at <a href="/logs/logs.tgz" target="_blank">logs.tgz</a></li>
+            </ul>
+          </li>
+          <li><strong>Issue on github:</strong> Create an issue on our <a href="https://github.com/rockstor/rockstor-core/issues?state=open" target="_blank">Github project page</a> with the following:
+            <ul>
+              <li>Title as "<%= detail %>"</li>
+              <li>A step by step description of the actions leading up to the error.</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
     </div>
   </div>
 </div>
-
