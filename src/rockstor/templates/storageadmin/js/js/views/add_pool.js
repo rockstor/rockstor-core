@@ -113,11 +113,8 @@ AddPoolView = Backbone.View.extend({
           onfocusout: false,
           onkeyup: false,
           rules: {
-            pool_name: "validatePoolName",  
             raid_level: "validateRaid"
           },
-          
-         
 
           submitHandler: function() {
             var button = $('#create_pool');
