@@ -20,8 +20,9 @@ from django.conf.urls.defaults import patterns, url
 from storageadmin.views import (ShareView, ShareNFSView, ShareSambaView,
                                 ShareACLView, SnapshotView, ShareIscsiView,
                                 ShareCommandView)
+from django.conf import settings
 
-share_regex = r'[A-Za-z]+[A-Za-z0-9_]*'
+share_regex = settings.SHARE_REGEX
 snap_regex = share_regex
 snap_command = 'clone'
 share_command = 'rollback|clone'

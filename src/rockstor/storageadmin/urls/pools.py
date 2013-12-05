@@ -18,8 +18,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.conf.urls.defaults import patterns, url
 from storageadmin.views import (PoolView, PoolScrubView)
+from django.conf import settings
 
-pool_regex = r'[A-Za-z]+[A-Za-z0-9_]*'
+pool_regex = settings.POOL_REGEX
 
 urlpatterns = patterns(
     '',
