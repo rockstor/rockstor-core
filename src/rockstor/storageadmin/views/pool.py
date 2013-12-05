@@ -66,9 +66,9 @@ class PoolView(GenericView):
             disks = request.DATA['disks'].split(',')
             pname = request.DATA['pname']
             if (re.match('%s$' % settings.POOL_REGEX, pname) is None):
-                e_msg = ('Share name must start with a letter(a-z) and can'
+                e_msg = ('Pool name must start with a letter(a-z) and can'
                          ' be followed by any of the following characters: '
-                         'letter(a-z), digits(0-9), hiphen(-), underscore'
+                         'letter(a-z), digits(0-9), hyphen(-), underscore'
                          '(_) or a period(.).')
                 handle_exception(Exception(e_msg), request)
 
