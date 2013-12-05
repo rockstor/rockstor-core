@@ -23,10 +23,12 @@ from storageadmin.util import handle_exception
 from storageadmin.serializers import NetworkInterfaceSerializer
 from system.osi import (get_mac_addr, config_network_device, restart_network,
                         network_devices, get_net_config, get_net_config_fedora,
-                        restart_network_interface, get_default_interface)
+                        restart_network_interface, get_default_interface,
+                        update_samba_discovery)
 from storageadmin.exceptions import RockStorAPIException
 from generic_view import GenericView
 import socket
+from django.conf import settings
 
 import logging
 logger = logging.getLogger(__name__)
@@ -70,6 +72,8 @@ class NetworkView(GenericView):
                                       ipaddr=dconfig['ipaddr'])
             if (default_if == ni.name):
                 ni.itype = 'management'
+                update_samba_discovery(dconfig['ipaddr'],
+                                       settings.AVAHI_SMB_CONF)
             ni.save()
         devices = NetworkInterface.objects.all()
         serializer = NetworkInterfaceSerializer(devices)
@@ -124,6 +128,7 @@ class NetworkView(GenericView):
                 a = Appliance.objects.get(current_appliance=True)
                 a.ip = ni.ipaddr
                 a.save()
+                update_samba_discovery(ni.ipaddr, settings.AVAHI_SMB_CONF)
             return Response(NetworkInterfaceSerializer(ni).data)
         except RockStorAPIException:
             raise

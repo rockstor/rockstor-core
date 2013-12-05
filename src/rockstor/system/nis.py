@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from exceptions import CommandException
-from osi import run_command
+from osi import (run_command, inplace_replace)
 import subprocess
 import re
 from tempfile import mkstemp
@@ -31,24 +31,6 @@ NETWORK_FILE = '/etc/sysconfig/network'
 AUTH_FILE = '/etc/sysconfig/authconfig'
 YP_FILE = '/etc/yp.conf'
 NSSWITCH_FILE = '/etc/nsswitch.conf'
-
-def inplace_replace(of, nf, regex, nl):
-    with open(of) as afo, open(nf, 'w') as tfo:
-        replaced = [False,] * len(regex)
-        for l in afo.readlines():
-            ireplace = False
-            for i in range(0, len(regex)):
-                if (re.match(regex[i], l) is not None):
-                    tfo.write(nl[i])
-                    replaced[i] = True
-                    ireplace = True
-                    break
-            if (not ireplace):
-                tfo.write(l)
-        for i in range(0, len(replaced)):
-            logger.info('regex: %s nl: %s replaced: %s' % (nf, regex, nl))
-            if (not replaced[i]):
-                tfo.write(nl[i])
 
 def configure_nis(nis_domain, server):
 
