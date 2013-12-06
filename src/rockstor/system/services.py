@@ -27,7 +27,7 @@ SERVICE_BIN = '/sbin/service'
 CHKCONFIG_BIN = '/sbin/chkconfig'
 AUTHCONFIG = '/usr/sbin/authconfig'
 SYSTEMCTL_BIN = '/usr/bin/systemctl'
-SUPERCTL_BIN = ('%s/supervisorctl' % settings.BIN_DIR)
+SUPERCTL_BIN = ('%s/bin/supervisorctl' % settings.ROOT_DIR)
 
 
 def init_service_op(service_name, command, throw=True):
