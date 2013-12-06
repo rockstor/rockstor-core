@@ -504,14 +504,13 @@ $(document).ready(function() {
     console.log(resType);
     var detail = '';
     if (jqXhr.getResponseHeader('Content-Type').match(/json/)) {
-      var errJson = parseXhrError(jqXhr);
+      var errJson = getXhrErrorJson(jqXhr);
       detail = errJson.detail;
     } else if (jqXhr.status >= 400 && jqXhr.status < 500) {
       detail = 'Unknown client error doing a ' + ajaxSettings.type + ' to ' + ajaxSettings.url;
     } else if (jqXhr.status >= 500 && jqXhr.status < 600) {
       detail = 'Unknown internal error doing a ' + ajaxSettings.type + ' to ' + ajaxSettings.url;
     }
-    var errJson = parseXhrError(jqXhr)
     $("#globalerrmsg").html(commonerr_template({ 
       jqXhr: jqXhr, 
       detail: detail,

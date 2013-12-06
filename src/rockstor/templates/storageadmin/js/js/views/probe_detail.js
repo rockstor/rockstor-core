@@ -206,8 +206,6 @@ ProbeDetailView = RockstoreLayoutView.extend({
         _this.pollTillStatus(_this.probeStates.STOPPED);
       },
       error: function(jqXHR, textStatus, error) {
-        var msg = parseXhrError(jqXHR)
-        _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
       }
     });
   },

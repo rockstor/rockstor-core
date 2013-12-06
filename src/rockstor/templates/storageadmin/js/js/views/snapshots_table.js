@@ -96,12 +96,6 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
           },
           error: function(xhr, status, error) {
             enableButton(button);
-            var msg = parseXhrError(xhr)
-            if (_.isObject(msg)) {
-              _this.validator.showErrors(msg);
-            } else {
-              _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
-            }
           }
         });
         return false;
