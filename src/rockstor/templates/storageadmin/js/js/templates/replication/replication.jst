@@ -19,6 +19,11 @@
  */
 </script>
 
+<% if (!replicationService.get('status')) { %>
+  <div class="alert">
+    <strong>Warning!</strong> The Replication service is not turned on. You can start it on the <a href="#services">Services</a> page.
+  </div>
+<% } %>
 
 <div class="messages"></div>
 <% if (!replicas.isEmpty()) { %>

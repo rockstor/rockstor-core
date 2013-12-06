@@ -25,7 +25,7 @@ from storageadmin.serializers import UserSerializer
 from storageadmin.models import User
 from generic_view import GenericView
 from system.users import (useradd, usermod, userdel, get_epasswd, get_users,
-                          update_shell)
+                          update_shell, smbpasswd)
 from storageadmin.exceptions import RockStorAPIException
 
 import logging
@@ -54,7 +54,7 @@ class UserView(GenericView):
             if (DjangoUser.objects.filter(username=username).exists() or
                 User.objects.filter(username=username).exists()):
                 e_msg = ('user: %s already exists. Please choose a different'
-                         'username' % username)
+                         ' username' % username)
                 handle_exception(Exception(e_msg), request)
 
             # Check that a unix user with the same name does not exist
@@ -83,6 +83,7 @@ class UserView(GenericView):
             uid = max_uid + 1
             useradd(username, uid, shell)
             usermod(username, password)
+            smbpasswd(username, password)
             suser = User(username=username, uid=uid, gid=uid, user=auser)
             suser.save()
 
@@ -101,6 +102,7 @@ class UserView(GenericView):
                 # change password
                 password = request.DATA['password']
                 usermod(username, password)
+                smbpasswd(username, password)
                 user.set_password(password)
                 user.save()
             # check if admin attribute has changed
@@ -139,6 +141,8 @@ class UserView(GenericView):
                 userdel(username)
             user.delete()
             return Response()
+        except RockStorAPIException:
+            raise
         except Exception, e:
             handle_exception(e, request)
 

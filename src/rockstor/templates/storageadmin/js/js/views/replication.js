@@ -39,6 +39,8 @@ ReplicationView = RockstoreLayoutView.extend({
     // add dependencies
     this.collection = new ReplicaCollection();
     this.dependencies.push(this.collection);
+    this.replicationService = new Service({name: 'replication'});
+    this.dependencies.push(this.replicationService);
     this.replicaTrails = new ReplicaTrailCollection();
     this.replicaTrails.pageSize = RockStorGlobals.maxPageSize;
     this.dependencies.push(this.replicaTrails);
@@ -77,6 +79,7 @@ ReplicationView = RockstoreLayoutView.extend({
       }).reverse();
     });
     $(this.el).html(this.template({
+      replicationService: this.replicationService,
       replicas: this.collection,
       replicaShareMap: this.replicaShareMap,
       replicaTrailMap: this.replicaTrailMap
