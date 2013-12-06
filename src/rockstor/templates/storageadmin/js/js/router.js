@@ -501,22 +501,25 @@ $(document).ready(function() {
     var unknownerr_template = window.JST.common_unknownerr;
     var htmlErr = null;
     var resType = jqXhr.getResponseHeader('Content-Type');
-    console.log(resType);
     var detail = '';
-    if (jqXhr.getResponseHeader('Content-Type').match(/json/)) {
-      var errJson = getXhrErrorJson(jqXhr);
-      detail = errJson.detail;
-    } else if (jqXhr.status >= 400 && jqXhr.status < 500) {
-      detail = 'Unknown client error doing a ' + ajaxSettings.type + ' to ' + ajaxSettings.url;
-    } else if (jqXhr.status >= 500 && jqXhr.status < 600) {
-      detail = 'Unknown internal error doing a ' + ajaxSettings.type + ' to ' + ajaxSettings.url;
+    if (jqXhr.status != 403) {
+      // dont show forbidden errors (for setup screen)
+      
+      if (jqXhr.getResponseHeader('Content-Type').match(/json/)) {
+        var errJson = getXhrErrorJson(jqXhr);
+        detail = errJson.detail;
+      } else if (jqXhr.status >= 400 && jqXhr.status < 500) {
+        detail = 'Unknown client error doing a ' + ajaxSettings.type + ' to ' + ajaxSettings.url;
+      } else if (jqXhr.status >= 500 && jqXhr.status < 600) {
+        detail = 'Unknown internal error doing a ' + ajaxSettings.type + ' to ' + ajaxSettings.url;
+      }
+      $("#globalerrmsg").html(commonerr_template({ 
+        jqXhr: jqXhr, 
+        detail: detail,
+        help: errJson.help,
+        ajaxSettings: ajaxSettings
+      }));
     }
-    $("#globalerrmsg").html(commonerr_template({ 
-      jqXhr: jqXhr, 
-      detail: detail,
-      help: errJson.help,
-      ajaxSettings: ajaxSettings
-    }));
   });
 
   $('#globalerrmsg').on('click', '.err-help-toggle', function(event) {
