@@ -21,6 +21,7 @@ import os
 import subprocess
 import shutil
 import socket
+from tempfile import mkstemp
 
 from exceptions import CommandException
 
@@ -43,6 +44,10 @@ SFDISK = '/sbin/sfdisk'
 IFUP = '/sbin/ifup'
 IFDOWN = '/sbin/ifdown'
 ROUTE = '/sbin/route'
+SYSTEMCTL = '/usr/bin/systemctl'
+
+import logging
+logger = logging.getLogger(__name__)
 
 class Disk():
 
@@ -57,6 +62,24 @@ class Disk():
                 'size': self.size,
                 'free': self.free,
                 'parted': self.parted, }
+
+def inplace_replace(of, nf, regex, nl):
+    with open(of) as afo, open(nf, 'w') as tfo:
+        replaced = [False,] * len(regex)
+        for l in afo.readlines():
+            ireplace = False
+            for i in range(0, len(regex)):
+                if (re.match(regex[i], l) is not None):
+                    tfo.write(nl[i])
+                    replaced[i] = True
+                    ireplace = True
+                    break
+            if (not ireplace):
+                tfo.write(l)
+        for i in range(0, len(replaced)):
+            logger.info('regex: %s nl: %s replaced: %s' % (nf, regex, nl))
+            if (not replaced[i]):
+                tfo.write(nl[i])
 
 def run_command(cmd, shell=False, stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE, throw=True):
@@ -180,17 +203,28 @@ def refresh_smb_config(exports, clean_config):
             sfo.write('[%s]\n' % e.share.name)
             sfo.write('    comment = %s\n' % e.comment)
             sfo.write('    path = %s\n' % e.path)
-            sfo.write('    browsable = %s\n' % e.browsable)
+            sfo.write('    browseable = %s\n' % e.browsable)
             sfo.write('    read only = %s\n' % e.read_only)
             sfo.write('    create mask = %s\n' % e.create_mask)
+            sfo.write('    guest ok = %s\n' % e.guest_ok)
     return True
 
 def restart_samba():
     """
     call whenever config is updated
     """
-    smbd_cmd = [SERVICE, 'smb', 'restart']
+    smbd_cmd = [SYSTEMCTL, 'restart', 'smb']
     return run_command(smbd_cmd)
+
+def update_samba_discovery(ipaddr, clean_config):
+    fo, npath = mkstemp()
+    dest_file = '/etc/avahi/services/smb.service'
+    regex = (' <name replace-wildcards="yes">')
+    nl = (' <name replace-wildcards="yes">RockStor@%s</name>\n' % ipaddr,)
+    inplace_replace(clean_config, npath, (regex,), nl)
+    shutil.copy(npath, dest_file)
+    run_command([CHMOD, '755', dest_file])
+    return run_command([SYSTEMCTL, 'restart', 'avahi-daemon',])
 
 def hostid():
     """

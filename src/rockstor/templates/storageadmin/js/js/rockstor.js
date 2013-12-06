@@ -375,7 +375,12 @@ function parseXhrError(xhr) {
     }
   }
   return msg;
+}
 
+function getXhrErrorJson(xhr) {
+  var json = {};
+  try { json = JSON.parse(xhr.responseText); } catch(err) { }
+  return json;
 }
 
 function setApplianceName() {

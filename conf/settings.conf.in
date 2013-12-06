@@ -301,6 +301,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 )
 
 SMB_CONF = '${django-settings-conf:smb_conf}'
+AVAHI_SMB_CONF = '${django-settings-conf:avahi_smb_conf}'
 MNT_PT = '/mnt2/'
 NFS_EXPORT_ROOT = '/export/'
 
@@ -348,4 +349,6 @@ SCHEDULER = ('127.0.0.1', ${django-settings-conf:schedulerport})
 REPLICA_DATA_PORT = ${django-settings-conf:reppubport}
 REPLICA_META_PORT = ${django-settings-conf:reprecvport}
 
-BIN_DIR = '${buildout:depdir}/bin'
+SHARE_REGEX = r'[A-Za-z]+[A-Za-z0-9_.-]*'
+POOL_REGEX = SHARE_REGEX
+ROOT_DIR = '${buildout:depdir}/'

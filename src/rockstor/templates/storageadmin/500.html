@@ -21,19 +21,25 @@
 
 {% extends "base.html" %}
 
-{% block title %}Page not found{% endblock %}
+{% block title %}Internal Error {% endblock %}
 
 {% block content %}
-<h1>Rockstor backend error</h1>
 
-<p>Sorry, A backend error has occured. Error details are saved to
-  /opt/rockstor/var/log directory. Please zip the directory and provide it to
-  Rockstor support team to help fix this problem. You can report this problem
-  by doing one of the following</p>
+<div class="row-fluid">
+  <div class="span8">
+    <h1>Page not found</h1>
+    <div class="alert alert-error">
+      Sorry, an unexpected internal error has occured.
+    </div>
+  </div>
+</div>
 
-<ul>
-<li>Send an email to support@rockstor.com or</li>
-<li>Open an issue on github</li>
-</ul>
+<div>
+  If you need more help on this issue, email us at <a href="mailto:support@rockstor.com" target="_blank">support@rockstor.com</a> with the following information:
+  <ul>
+    <li>A step by step description of the actions leading up to the error.</li>
+    <li>Download the log.tgz file (containing the tarred and zipped server logs) available at <a href="/logs/error.tgz" target="_blank">error.tgz</a>, and attach it to the email.</li>
+  </ul>
+</div>
 
 {% endblock %}

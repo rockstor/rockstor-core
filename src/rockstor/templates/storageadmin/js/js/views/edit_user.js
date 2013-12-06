@@ -80,8 +80,6 @@ EditUserView = RockstoreLayoutView.extend({
             app_router.navigate("users", {trigger: true});
           },
           error: function(model, xhr, options) {
-            var msg = parseXhrError(xhr)
-            _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
           }
         });
         return false;  

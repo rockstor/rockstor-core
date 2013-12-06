@@ -214,7 +214,8 @@ var HomeLayoutView = RockstoreLayoutView.extend({
       });
       this.saveWidgetConfiguration();
     } else {
-      var [view, index] = this.findWidgetView(name);
+      var tmp = this.findWidgetView(name);
+      var view = tmp[0];
       if (view) {
         this.removeWidget(name, view);
       }
