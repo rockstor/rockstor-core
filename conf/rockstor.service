@@ -1,0 +1,8 @@
+[Unit]
+Description=RockStor startup script
+
+[Service]
+ExecStart=/opt/rockstor/bin/supervisord -c /opt/rockstor/etc/supervisord.conf
+
+[Install]
+WantedBy=multi-user.target
