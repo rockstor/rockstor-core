@@ -34,6 +34,7 @@ from samba_service import SambaServiceView
 from nfs_service import NFSServiceView
 from replication import ReplicaView
 from replica_trail import ReplicaTrailView
+from replication_service import ReplicationServiceView
 from ntp_service import NTPServiceView
 from winbind_service import WinbindServiceView
 from ldap_service import LdapServiceView
