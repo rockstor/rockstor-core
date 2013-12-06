@@ -16,6 +16,9 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+from system.osi import run_command
+from django.conf import settings
+
 import logging
 logger = logging.getLogger(__name__)
 
@@ -27,4 +30,10 @@ class ProdExceptionMiddleware(object):
 
     def process_exception(self, request, exception):
         """just log the exception"""
+        e_msg = ('Exception occured while processing a request. Path: %s '
+                 'method: %s' % (request.path, request.method))
+        logger.error(e_msg)
         logger.exception(exception)
+        run_command(['/usr/bin/tar', '-c', '-z', '-f',
+                     settings.ROOT_DIR + 'src/rockstor/logs/error.tgz',
+                     settings.ROOT_DIR + 'var/log'])
