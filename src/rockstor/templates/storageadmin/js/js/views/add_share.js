@@ -58,12 +58,10 @@ AddShareView = Backbone.View.extend({
         $("#slider-size").bind("slider:changed", function (event, data) {
               // The currently selected value of the slider
             if(data.value < 1024){
-            $("#share_size_val").val((data.value).toFixed(2));
-            $("#size_format").val("GB");
+            $("#share_size_val").val((data.value).toFixed(2)+"GB");
             }else{
-                $("#share_size_val").val(((data.value)/1024).toFixed(2));
-                $("#size_format").val("TB");
-            }
+                $("#share_size_val").val(((data.value)/1024).toFixed(2)+"TB");
+             }
             });
         
         $('#add-share-form').validate({
@@ -92,19 +90,22 @@ AddShareView = Backbone.View.extend({
               var share_name = $('#share_name').val();
               var pool_name = $('#pool_name').val();
               var size = $('#share_size_val').val();
-
-              var sizeFormat = $('#size_format').val();
-              if(sizeFormat == 'GB'){
-                size = size*1024*1024;
-              }else if(sizeFormat == 'TB'){
-                size = size*1024*1024*1024;
+             
+              var sizeFormat = size.replace(/[^a-z]/gi, ""); 
+              var size_array = size.split(sizeFormat)
+              var size_value = size_array[0];    
+              
+              if(sizeFormat == 'GB' || sizeFormat == 'gb' || sizeFormat == 'Gb'){
+                size_value = size_value*1024*1024;
+              }else if(sizeFormat == 'TB' || sizeFormat == 'tb' || sizeFormat == 'Tb'){
+            	  size_value = size_value*1024*1024*1024;
               }
 
               $.ajax({
                 url: "/api/shares",
                 type: "POST",
                 dataType: "json",
-                data: {sname: share_name, "pool": pool_name, "size": size},
+                data: {sname: share_name, "pool": pool_name, "size": size_value},
                 success: function() {
                   enableButton(button);
                   app_router.navigate('shares', {trigger: true}) 
