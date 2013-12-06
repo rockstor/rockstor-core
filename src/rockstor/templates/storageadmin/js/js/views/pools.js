@@ -91,8 +91,6 @@ PoolsView = RockstoreLayoutView.extend({
           enableButton(button);
         },
         error: function(xhr, status, error) {
-          var msg = parseXhrError(xhr)
-          _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
           enableButton(button);
         }
       });

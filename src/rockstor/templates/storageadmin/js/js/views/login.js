@@ -73,12 +73,6 @@ LoginView = Backbone.View.extend({
                 _this.makeLoginRequest(username, password);
               },
               error: function(model, xhr, options) {
-                var msg = parseXhrError(xhr)
-                if (_.isObject(msg)) {
-                  _this.validator.showErrors(msg);
-                } else {
-                  _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
-                }
               }
             }
           );

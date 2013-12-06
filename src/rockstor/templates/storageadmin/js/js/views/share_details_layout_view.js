@@ -201,8 +201,6 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
           app_router.navigate('shares', {trigger: true}) 
         },
         error: function(xhr, status, error) {
-          var msg = parseXhrError(xhr)
-          _this.$(".share-messages").html("<label class=\"error\">" + msg + "</label>");
           enableButton(button);
         }
        });
@@ -253,8 +251,6 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
       },
       error: function(request, status, error) {
         enableButton(button);
-        var msg = parseXhrError(error)
-        _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
       }
     });
   },

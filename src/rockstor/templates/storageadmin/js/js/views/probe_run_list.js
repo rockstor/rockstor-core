@@ -115,9 +115,6 @@ ProbeRunListView = RockstoreLayoutView.extend({
         _this.pollTillStatus(probeRun, "stopped");
       },
       error: function(jqXHR, textStatus, error) {
-        var msg = parseXhrError(jqXHR)
-        _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
-        console.log(msg);
       }
     });
   },

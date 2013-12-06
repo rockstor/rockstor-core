@@ -69,8 +69,6 @@ RunProbeView = RockstoreModuleView.extend({
             app_router.navigate('#analytics', {trigger: true});
           },
           error: function(jqXHR, textStatus, error) {
-            var msg = parseXhrError(jqXHR)
-            _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
           }
         });
         return false;

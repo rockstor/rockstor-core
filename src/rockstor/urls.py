@@ -83,3 +83,5 @@ urlpatterns = patterns('',
     (r'^api/sm/tasks/', include('smart_manager.urls.tasks')),
     (r'^api/sm/replicas/', include('smart_manager.urls.replicas')),
 )
+
+

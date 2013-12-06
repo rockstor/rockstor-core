@@ -1721,3 +1721,5 @@ input[type="radio"].selectedRoot {
   left: 0;
 }
 
+#globalerrmsg { margin: 4px; }
+
