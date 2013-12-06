@@ -70,8 +70,6 @@ RockstoreLayoutView = Backbone.View.extend({
           }
         },
         error: function(request, response) {
-          console.log('failed to fetch model in rockstorlayoutview');
-          console.log(dependency);
           _this.requestCount -= 1;
           if (_this.requestCount == 0) {
             if (callback) callback.apply(context);
@@ -396,7 +394,6 @@ function setApplianceName() {
       }
     },
     error: function(request, response) {
-      console.log("error while loading appliances");
     }
 
   });
@@ -421,7 +418,6 @@ function fetchLoadAvg() {
       displayLoadAvg(data);
     },
     error: function(xhr, status, error) {
-      console.log(error);
     }
   });
 }
@@ -477,7 +473,6 @@ function getCurrentTimeOnServer() {
       RockStorGlobals.currentTimeOnServer = new Date(data);
     },
     error: function(xhr, status, error) {
-      console.log(error);
     }
   });
 }
@@ -496,7 +491,6 @@ function fetchDependencies(dependencies, callback, context) {
         }
       },
       error: function(request, response) {
-        console.log('failed to fetch model in fetchDependencies');
         requestCount -= 1;
         if (requestCount == 0) {
           if (callback) callback.apply(context);
