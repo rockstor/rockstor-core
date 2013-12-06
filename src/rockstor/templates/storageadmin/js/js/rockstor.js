@@ -363,9 +363,23 @@ function refreshNavbar() {
 // Returns the value of the detail attribute as json
 // or a string if it cannot be parsed as json
 function parseXhrError(xhr) {
+  var msg = xhr.responseText;
+  try {
+    msg = JSON.parse(msg).detail;
+  } catch(err) {
+  }
+  if (typeof(msg)=="string") {
+    try {
+      msg = JSON.parse(msg);
+    } catch(err) {
+    }
+  }
+  return msg;
+}
+
+function getXhrErrorJson(xhr) {
   var json = {};
   try { json = JSON.parse(xhr.responseText); } catch(err) { }
-  console.log(json);
   return json;
 }
 

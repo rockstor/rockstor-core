@@ -100,8 +100,6 @@ SMBShares  = RockstoreModuleView.extend({
             },
             error: function(model, xhr, options) {
               enableButton(button);
-              var msg = parseXhrError(xhr.responseText);
-              _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
             },
           }
         );

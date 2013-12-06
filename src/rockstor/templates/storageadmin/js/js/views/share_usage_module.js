@@ -186,8 +186,6 @@ ShareUsageModule = RockstoreModuleView.extend({
       },
       error: function(request, status, error) {
         enableButton(button);
-        var msg = parseXhrError(error)
-        _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
       }
     });
   },
