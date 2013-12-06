@@ -57,7 +57,7 @@ http {
 		location /site_media  {
 			root /media/; # Notice this is the /media folder that we create above
 		}
-		location ~* ^.+\.(zip|tgz|gz|rar|bz2|doc|xls|exe|pdf|ppt|txt|tar|mid|midi|wav|bmp|rtf|mov) {
+		location ~* ^.+\.(zip|gz|rar|bz2|doc|xls|exe|pdf|ppt|txt|tar|mid|midi|wav|bmp|rtf|mov) {
 			access_log   off;
 			expires      30d;
 		}
@@ -69,6 +69,9 @@ http {
 		}
 		location /img  {
 			root ${buildout:depdir}/src/rockstor/templates/storageadmin/;
+		}
+		location /logs {
+			root ${buildout:depdir}/src/rockstor/;
 		}
                 location / {
                         proxy_pass_header Server;
