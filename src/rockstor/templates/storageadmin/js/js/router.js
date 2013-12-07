@@ -96,6 +96,10 @@ var AppRouter = Backbone.Router.extend({
     if (!RockStorGlobals.serverTimeFetched) {
       fetchServerTime();
     }
+    if (!RockStorGlobals.browserChecked) {
+      checkBrowser();
+    }
+    
   },
 
   loginPage: function() {

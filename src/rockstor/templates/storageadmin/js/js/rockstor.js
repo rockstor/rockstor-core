@@ -500,12 +500,21 @@ function fetchDependencies(dependencies, callback, context) {
   });
 }
 
+function checkBrowser() {
+  var userAgent = navigator.userAgent
+  if (!/firefox/i.test(userAgent)) {
+    $('#browsermsg').html('<div class="alert"><button type="button" class="close" data-dismiss="alert">&times;</button>The RockStor WebUI is supported only on Firefox. Some features may not work correctly.</div>');
+  }
+  RockStorGlobals.browserChecked = true;
+}
+
 RockStorProbeMap = [];
 RockStorGlobals = {
   navbarLoaded: false,
   applianceNameSet: false,
   currentAppliance: null,
   maxPageSize: 5000,
+  browserChecked: false,
 }
 
 var RS_DATE_FORMAT = 'MMMM Do YYYY, h:mm:ss a';
