@@ -46,7 +46,10 @@ AddShareView = Backbone.View.extend({
     this.pools.fetch({
       success: function(collection, response) {
         $(_this.el).append(_this.template({pools: _this.pools, poolName: _this.poolName}));
-        
+        var err_msg = 'Size can be GB/gb/Gb or TB/tb/Tb';
+        var size_err_msg = function() {
+          return err_msg;
+        }
         $('#add-share-form :input').tooltip();
         
         $("#slider-size").simpleSlider({
@@ -54,13 +57,24 @@ AddShareView = Backbone.View.extend({
             step: '10'
     
         });
+        
+        $.validator.addMethod('validateShareSize', function(value) {
+            var size = $('#share_size').val();
+            var sizeFormat = size.replace(/[^a-z]/gi, ""); 
+            if(sizeFormat != 'GB' && sizeFormat != 'gb' && sizeFormat != 'Gb' && sizeFormat != 'TB' && sizeFormat != 'Tb' && sizeFormat != 'tb'){
+                err_msg = 'Size can be GB/gb/Gb or TB/tb/Tb';
+                return false;
+              }
+             return true;
+          }, size_err_msg);
+        
        
         $("#slider-size").bind("slider:changed", function (event, data) {
               // The currently selected value of the slider
             if(data.value < 1024){
-            $("#share_size_val").val((data.value).toFixed(2)+"GB");
+            $("#share_size").val((data.value).toFixed(2)+"GB");
             }else{
-                $("#share_size_val").val(((data.value)/1024).toFixed(2)+"TB");
+                $("#share_size").val(((data.value)/1024).toFixed(2)+"TB");
              }
             });
         
@@ -69,19 +83,9 @@ AddShareView = Backbone.View.extend({
             onkeyup: false,
             rules: {
               share_name: 'required',
-              share_size: {
-                required: true,
-                number: true
-              },
+              share_size: "validateShareSize"
             },
-            errorPlacement: function(error, element) {
-              if (element.attr("name") == "share_size") {
-                // insert error for share size after the size format field.
-                error.insertAfter("#size_format");
-              } else {
-                error.insertAfter(element);
-              }
-            },
+           
             
             submitHandler: function() {
               var button = _this.$('#create_share');
@@ -89,7 +93,7 @@ AddShareView = Backbone.View.extend({
               disableButton(button);
               var share_name = $('#share_name').val();
               var pool_name = $('#pool_name').val();
-              var size = $('#share_size_val').val();
+              var size = $('#share_size').val();
              
               var sizeFormat = size.replace(/[^a-z]/gi, ""); 
               var size_array = size.split(sizeFormat)
