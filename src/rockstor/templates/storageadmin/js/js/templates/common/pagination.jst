@@ -1,12 +1,23 @@
 <% if (collection.pageInfo().pages > 1) { %>
   <div class="pagination">
     <ul>
+    
+    <li><a class="go-to-page" href="#" data-page="1">First</a></li>
       <% if (collection.pageInfo().prev) { %>
         <li><a class="prev-page" href="#">Prev</a></li>
       <% } else { %>
         <li class="disabled"><a class="prev-page" href="#">Prev</a></li>
       <% } %>
-      <% for (var i=1; i<= collection.pageInfo().pages; i++) { %>
+      
+      <% var start = collection.pageInfo().page - 4 ;
+          if(start <= 0){
+          start = 1;
+          }
+         var end = start + 9;
+         if(end > collection.pageInfo().pages){
+         end = collection.pageInfo().pages;
+         }
+         for (var i=start; i<= end; i++) { %> 
         <% if (i == collection.pageInfo().page) { %>
           <li class="active"><a class="go-to-page" href="#" data-page="<%= i %>"><%= i %></a></li>
         <% } else { %>
@@ -18,6 +29,7 @@
       <% } else { %>
         <li class="disabled"><a class="next-page" href="#">Next</a></li>
       <% } %>
+      <li><a class="go-to-page" href="#" data-page="<%= collection.pageInfo().pages%>">Last</a></li>
     </ul>
   </div>
 <% } %>
