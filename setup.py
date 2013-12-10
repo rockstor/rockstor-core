@@ -36,6 +36,7 @@ setup(
             'rcli = cli.rock_cli:main',
             'prep_db = prep_db:main',
             'replicad = smart_manager.replication.scheduler:main',
+            'mgmt_ip = mgmt_ip:main',
             ],
         },
 
