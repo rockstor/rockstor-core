@@ -24,7 +24,7 @@ from storageadmin.serializers import NetworkInterfaceSerializer
 from system.osi import (get_mac_addr, config_network_device, restart_network,
                         network_devices, get_net_config, get_net_config_fedora,
                         restart_network_interface, get_default_interface,
-                        update_samba_discovery)
+                        update_samba_discovery, update_issue)
 from storageadmin.exceptions import RockStorAPIException
 from generic_view import GenericView
 import socket
@@ -74,6 +74,10 @@ class NetworkView(GenericView):
                 ni.itype = 'management'
                 update_samba_discovery(dconfig['ipaddr'],
                                        settings.AVAHI_SMB_CONF)
+                try:
+                    update_issue(dconfig['ipaddr'])
+                except:
+                    logger.error('Unable to update /etc/issue')
             ni.save()
         devices = NetworkInterface.objects.all()
         serializer = NetworkInterfaceSerializer(devices)
@@ -129,6 +133,10 @@ class NetworkView(GenericView):
                 a.ip = ni.ipaddr
                 a.save()
                 update_samba_discovery(ni.ipaddr, settings.AVAHI_SMB_CONF)
+                try:
+                    update_issue(ni.ipaddr)
+                except:
+                    logger.error('Unable to update /etc/issue')
             return Response(NetworkInterfaceSerializer(ni).data)
         except RockStorAPIException:
             raise

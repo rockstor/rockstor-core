@@ -391,3 +391,11 @@ def set_nameservers(servers):
 
 def set_ntpserver(server):
     return run_command([NTPDATE, server])
+
+def update_issue(ipaddr):
+    shutil.copyfile('/etc/issue.rockstor', '/etc/issue')
+    msg = ("\n\nYou can go to RockStor's webui by pointing your web browser"
+           " to https://%s\n\n" % ipaddr)
+    with open('/etc/issue', 'a') as ifo:
+        ifo.write(msg)
+
