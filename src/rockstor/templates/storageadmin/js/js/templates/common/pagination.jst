@@ -1,7 +1,12 @@
 <% if (collection.pageInfo().pages > 1) { %>
  
    <div class="pagination">
-   <p><i>  Displaying entries <%= (collection.pageInfo().page-1)*15+1 %> - <%= (collection.pageInfo().page-1)*15+15 %> of <%= (collection.pageInfo().pages)*15 %></i></p>
+   <% var entries = (collection.pageInfo().page)*5 ; 
+   if(collection.pageInfo().page*5 > collection.pageInfo().count){
+   entries = collection.pageInfo().count;
+   }
+   %>
+    <p><i>Displaying entries <%= (collection.pageInfo().page-1)*5+1 %>  -  <%= entries %>  of  <%= collection.pageInfo().count %></i></p>
     <ul>
     
     <li><a class="go-to-page" href="#" data-page="1"><i class="icon-fast-backward"></i></a></li>
