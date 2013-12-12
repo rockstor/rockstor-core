@@ -67,6 +67,8 @@ var AppRouter = Backbone.Router.extend({
     "scheduled-tasks": "showScheduledTasks",
     "scheduled-tasks/:taskId/log": "showTasks",
     "add-scheduled-task": "addScheduledTask",
+    "404": "handle404",
+    "500": "handle500",
     "*path": "showHome"
   },
 
@@ -94,6 +96,10 @@ var AppRouter = Backbone.Router.extend({
     if (!RockStorGlobals.serverTimeFetched) {
       fetchServerTime();
     }
+    if (!RockStorGlobals.browserChecked) {
+      checkBrowser();
+    }
+    
   },
 
   loginPage: function() {
@@ -452,6 +458,20 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').append(this.currentLayout.render().el);
   },
 
+  handle404: function() {
+    this.cleanup();
+    this.currentLayout = new Handle404View();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  handle500: function() {
+    this.cleanup();
+    this.currentLayout = new Handle500View();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
   cleanup: function() {
     hideMessage();
     RockStorSocket.removeAllListeners();
@@ -477,6 +497,47 @@ $(document).ready(function() {
   $('#appliance-name').click(function(event) {
     event.preventDefault();
     showApplianceList();
+  });
+ 
+  // Global ajax error handler 
+  $(document).ajaxError(function(event, jqXhr, ajaxSettings, e) {
+    var commonerr_template = window.JST.common_commonerr;
+    var unknownerr_template = window.JST.common_unknownerr;
+    var htmlErr = null;
+    var resType = jqXhr.getResponseHeader('Content-Type');
+    var detail = '';
+    if (jqXhr.status != 403) {
+      // dont show forbidden errors (for setup screen)
+      
+      if (jqXhr.getResponseHeader('Content-Type').match(/json/)) {
+        var errJson = getXhrErrorJson(jqXhr);
+        detail = errJson.detail;
+      } else if (jqXhr.status >= 400 && jqXhr.status < 500) {
+        detail = 'Unknown client error doing a ' + ajaxSettings.type + ' to ' + ajaxSettings.url;
+      } else if (jqXhr.status >= 500 && jqXhr.status < 600) {
+        detail = 'Unknown internal error doing a ' + ajaxSettings.type + ' to ' + ajaxSettings.url;
+      }
+      $("#globalerrmsg").html(commonerr_template({ 
+        jqXhr: jqXhr, 
+        detail: detail,
+        help: errJson.help,
+        ajaxSettings: ajaxSettings
+      }));
+    }
+  });
+
+  $('#globalerrmsg').on('click', '.err-help-toggle', function(event) {
+    if (event) event.preventDefault();
+    var displayed = $('.err-help').css('display') == 'block'; 
+    var display = displayed ? 'none' : 'block';
+    $('.err-help').css('display', display);
+    var val = displayed ? 'More...' : 'Close';
+    $('.err-help-toggle').html(val);
+  });
+
+  $('#globalerrmsg').on('click', '.close', function(event) {
+    if (event) event.preventDefault();
+    $('#globalerrmsg').empty();
   });
 
   // Initialize websocket connection

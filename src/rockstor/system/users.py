@@ -30,7 +30,7 @@ USERADD = '/usr/sbin/useradd'
 USERDEL = '/usr/sbin/userdel'
 PASSWD = '/usr/bin/passwd'
 USERMOD = '/usr/sbin/usermod'
-
+SMBPASSWD = '/usr/bin/smbpasswd'
 
 def get_users(min_uid=5000, uname=None):
     users = {}
@@ -67,9 +67,20 @@ def usermod(username, passwd):
         raise CommandException(out, err, rc)
     return (out, err, rc)
 
+def smbpasswd(username, passwd):
+    cmd = [SMBPASSWD, '-s', '-a', username]
+    p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+    pstr = ('%s\n%s\n' % (passwd, passwd))
+    out, err = p.communicate(input=pstr)
+    rc = p.returncode
+    if (rc != 0):
+        raise CommandException(out, err, rc)
+    return (out, err, rc)
+
 def update_shell(username, shell):
     return run_command([USERMOD, '-s', shell, username])
 
 def useradd(username, uid, shell):
-    return run_command([USERADD, '-s', shell, '-d', '/', '-u', str(uid),
+    return run_command([USERADD, '-s', shell, '-m', '-u', str(uid),
                         username])

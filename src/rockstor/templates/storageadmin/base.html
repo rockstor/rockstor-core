@@ -90,6 +90,7 @@
     <script src="/js/lib/jquery.flot.tooltip_0.5.js"></script>
     <script src="/js/lib/jquery.flot.axislabels.js"></script>
     <script src="/js/lib/jquery.flot.stackpercent.js"></script>
+    <script src="/js/lib/jquery.flot.time.js"></script>
     <script src="/js/lib/jquery.touch-punch.min.js"></script>
     <script src="/js/lib/jquery.shapeshift.js"></script>
     <script src="/js/lib/jquery.sparkline.min.js"></script>
@@ -126,6 +127,9 @@
           </div>
         </div>
         <div id="content">
+          <div id="browsermsg" style="clear: both;"></div>
+          <div id="globalerrmsg"></div>
+
           <div id="maincontent">
           <!--Body content-->
           {% block content %}{% endblock %}
@@ -160,7 +164,6 @@
     <script src="/js/lib/bootstrap-datepicker.js"></script>
     <script src="/js/lib/bootstrap-timepicker.js"></script>
     <script type="text/javascript">
-      NGINX_WEBSOCKET_PORT = {{ nginx_websocket_port }};
       {% if current_appliance %}
       setup_done = true;
       {% else %}

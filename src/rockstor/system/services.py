@@ -20,12 +20,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import re
 from shutil import move
 
+from django.conf import settings
 from osi import run_command
 
 SERVICE_BIN = '/sbin/service'
 CHKCONFIG_BIN = '/sbin/chkconfig'
 AUTHCONFIG = '/usr/sbin/authconfig'
 SSHD_CONFIG = '/etc/ssh/sshd_config'
+SYSTEMCTL_BIN = '/usr/bin/systemctl'
+SUPERCTL_BIN = ('%s/bin/supervisorctl' % settings.ROOT_DIR)
 
 def init_service_op(service_name, command, throw=True):
     supported_services = ('nfs', 'smb', 'sshd', 'ypbind', 'rpcbind', 'ntpd',
@@ -39,6 +42,18 @@ def init_service_op(service_name, command, throw=True):
 
 def chkconfig(service_name, switch):
     return run_command([CHKCONFIG_BIN, service_name, switch])
+
+def systemctl(service_name, switch):
+    return run_command([SYSTEMCTL_BIN, switch, service_name])
+
+def superctl(service, switch):
+    service = 'rd'
+    out, err, rc = run_command([SUPERCTL_BIN, switch, service])
+    if (switch == 'status'):
+        status = out[0].split()[1]
+        if (status != 'RUNNING'):
+            rc = 1
+    return out, err, rc
 
 def service_status(service_name):
     if (service_name == 'nis' or service_name == 'nfs'):
@@ -60,6 +75,8 @@ def service_status(service_name):
                 if (re.match('Subsystem', line) is not None):
                     return out, err, rc
             return out, err, -1
+    elif (service_name == 'replication'):
+        return superctl(service_name, 'status')
     return init_service_op(service_name, 'status', throw=False)
 
 def winbind_input(config, command):

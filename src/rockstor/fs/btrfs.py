@@ -40,7 +40,7 @@ def add_pool(name, data_raid, meta_raid, disks):
     pool is a btrfs filesystem.
     """
     disks_fp = ['/dev/' + d for d in disks]
-    cmd = [MKFS_BTRFS, '-d', data_raid, '-m', meta_raid, '-L', name]
+    cmd = [MKFS_BTRFS, '-f', '-d', data_raid, '-m', meta_raid, '-L', name]
     cmd.extend(disks_fp)
     out, err, rc = run_command(cmd)
     enable_quota(name, disks_fp[0])

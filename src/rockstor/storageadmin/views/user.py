@@ -25,9 +25,8 @@ from storageadmin.serializers import UserSerializer
 from storageadmin.models import User
 from generic_view import GenericView
 from system.users import (useradd, usermod, userdel, get_epasswd, get_users,
-                          update_shell)
+                          update_shell, smbpasswd)
 from storageadmin.exceptions import RockStorAPIException
-from rest_framework.renderers import JSONRenderer
 
 import logging
 logger = logging.getLogger(__name__)
@@ -55,15 +54,15 @@ class UserView(GenericView):
             if (DjangoUser.objects.filter(username=username).exists() or
                 User.objects.filter(username=username).exists()):
                 e_msg = ('user: %s already exists. Please choose a different'
-                         'username' % username)
-                raise Exception(JSONRenderer().render({'username': e_msg}))
+                         ' username' % username)
+                handle_exception(Exception(e_msg), request)
 
             # Check that a unix user with the same name does not exist
             unix_users = get_users(min_uid=0, uname=username)
             if (username in unix_users):
                 e_msg = ('user: %s exists as a system user. Please choose a '
                          'different username' % username)
-                raise Exception(JSONRenderer().render({'username': e_msg}))
+                handle_exception(Exception(e_msg), request)
 
             # Create Django user
             auser = DjangoUser.objects.create_user(username, None, password)
@@ -84,6 +83,7 @@ class UserView(GenericView):
             uid = max_uid + 1
             useradd(username, uid, shell)
             usermod(username, password)
+            smbpasswd(username, password)
             suser = User(username=username, uid=uid, gid=uid, user=auser)
             suser.save()
 
@@ -102,6 +102,7 @@ class UserView(GenericView):
                 # change password
                 password = request.DATA['password']
                 usermod(username, password)
+                smbpasswd(username, password)
                 user.set_password(password)
                 user.save()
             # check if admin attribute has changed
@@ -131,15 +132,17 @@ class UserView(GenericView):
         user = self._get_user_object(request, username)
         try:
             if request.user.username == username:
-                raise Exception("Cannot delete the currently logged in user")
+                e_msg = ('Cannot delete the currently logged in user')
+                handle_exception(Exception(e_msg), request)
 
             epw = get_epasswd(username)
             logger.debug('epw: %s' % repr(epw))
             if (epw is not None):
                 userdel(username)
             user.delete()
-            logger.debug('deleted user %s' % username)
             return Response()
+        except RockStorAPIException:
+            raise
         except Exception, e:
             handle_exception(e, request)
 

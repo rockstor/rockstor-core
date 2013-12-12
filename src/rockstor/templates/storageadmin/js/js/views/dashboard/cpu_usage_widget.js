@@ -128,6 +128,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
 
     // Start and end timestamps for api call
     this.t2 = RockStorGlobals.currentTimeOnServer.getTime()-30000;
+    //this.t2 = new Date('2013-12-03T17:18:06.312Z').getTime();
     this.t1 = this.t2 - this.windowLength;
     
     // cpu data array 
@@ -196,32 +197,33 @@ CpuUsageWidget = RockStorWidgetView.extend({
     //}
     var t1Str = moment(_this.t1).toISOString();
     var t2Str = moment(_this.t2).toISOString();
+    var pageSizeStr = '&page_size=' + RockStorGlobals.maxPageSize;
     _this.jqXhr = $.ajax({
-      url: "/api/sm/sprobes/cpumetric/?format=json&t1=" + 
-        t1Str + "&t2=" + t2Str, 
+      url: '/api/sm/sprobes/cpumetric/?format=json' + pageSizeStr + '&t1=' + 
+        t1Str + '&t2=' + t2Str, 
       type: "GET",
       dataType: "json",
       global: false, // dont show global loading indicator
       success: function(data, status, xhr) {
         data = data.results;
-        _this.displayIndividualCpuUsage(data);
-
-        /* 
-        if (_.isNull(_this.numCpus)) {
-          _this.numCpus = data.length;
+        if (data.length > 0) {
+          _this.cpuData.push.apply(_this.cpuData, _this.getAvgCpuUsge(data));
         }
-        _this.parseData(data); 
-        _this.updateGraph();
-       */
+
+        _this.displayIndividualCpuUsage(data);
         if (!_this.graphRendered) {
           _this.renderGraph(data);
           _this.graphRendered = true;
         } else {
-          if (data.length > 0) {
-            _this.updateGraph(data);
-          }
+          _this.updateGraph(data);
         }
         
+        if (_this.cpuData.length > 0) { 
+          while (new Date(_this.cpuData[0].ts).getTime() < _this.t2-(_this.windowLength + _this.updateFreq)) {
+            _this.cpuData.shift();
+          }
+        } 
+
         // call getData immediately to fetch the next set of  data, 
         // or set a timer
         // depending on how much time has elapsed since the 
@@ -229,12 +231,20 @@ CpuUsageWidget = RockStorWidgetView.extend({
         var currentTime = new Date().getTime();
         var diff = currentTime - _this.startTime;
         if (diff > _this.updateFreq) {
-          _this.t1 = _this.t2; 
+          if (_this.cpuData.length > 0) {
+            _this.t1 = new Date(_this.cpuData[_this.cpuData.length-1].ts).getTime();
+          } else {
+            _this.t1 = _this.t1 + diff;
+          }
           _this.t2 = _this.t2 + diff;
           _this.getData(_this); 
         } else {
           _this.timeoutId = window.setTimeout( function() { 
-            _this.t1 = _this.t2; 
+            if (_this.cpuData.length > 0) {
+              _this.t1 = new Date(_this.cpuData[_this.cpuData.length-1].ts).getTime();
+            } else {
+              _this.t1 = _this.t1 + _this.updateFreq;
+            }
             _this.t2 = _this.t2 + _this.updateFreq;
             _this.getData(_this); 
           }, _this.updateFreq - diff);
@@ -345,9 +355,15 @@ CpuUsageWidget = RockStorWidgetView.extend({
     return rawData;
   },
 
+  displayNoDataMsg: function() {
+    this.$('#cpuusage-avg').html('<strong>No data received</strong>');
+    this.$('#cpuusage-individual').empty();
+  },
+
   renderGraph: function(data) {
-    data = this.getAvgCpuUsge(data);
-    this.cpuData = data;
+    this.$('#cpuusage-avg').empty();
+    //data = this.getAvgCpuUsge(data);
+    //this.cpuData = data;
     var _this = this;
     // Render svg
     this.svg = d3.select(this.el).select('#cpuusage-avg')
@@ -372,7 +388,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
     // Scales
     this.x = d3.time.scale().domain([this.t2-this.windowLength, this.t2]).range([0, this.width]);
     this.y = d3.scale.linear().range([this.height, 0]);
-    this.x.domain(d3.extent(this.cpuData, function(d) { return new Date(d.ts); }));
+    //this.x.domain(d3.extent(this.cpuData, function(d) { return new Date(d.ts); }));
     this.y.domain([0, 100]);
 
     // Line graph
@@ -449,13 +465,13 @@ CpuUsageWidget = RockStorWidgetView.extend({
   },
 
   updateGraph: function(data) {
-    data = this.getAvgCpuUsge(data);
     var _this = this;
     
-    var now = new Date(data[data.length-1].ts).getTime();
-    this.x.domain([now-(this.windowLength + this.updateFreq), now - this.updateFreq]);
+    //var now = new Date(data[data.length-1].ts).getTime();
+    //this.x.domain([now-(this.windowLength + this.updateFreq), now - this.updateFreq]);
+    this.x.domain([this.t2-(this.windowLength + this.updateFreq), this.t2 - this.updateFreq]);
    
-    this.cpuData.push.apply(this.cpuData, data); 
+    //this.cpuData.push.apply(this.cpuData, data); 
     
     this.svgG.select(".line")
     .attr("d", this.line)
@@ -476,13 +492,14 @@ CpuUsageWidget = RockStorWidgetView.extend({
     this.path.transition()
     .duration(this.transDuration)
     .ease("linear")
-    .attr("transform", "translate(" + this.x(now - (this.windowLength+2*this.updateFreq)) + ")"); 
+    .attr("transform", "translate(" + this.x(this.t2 - (this.windowLength+2*this.updateFreq)) + ")"); 
     
-    if (this.cpuData.length > 0) { 
-      while (new Date(this.cpuData[0].ts).getTime() < this.t1-this.windowLength) {
-        this.cpuData.shift();
-      }
-    } 
+    //if (this.cpuData.length > 0) { 
+      //while (new Date(this.cpuData[0].ts).getTime() < this.t1-this.windowLength) {
+        //this.cpuData.shift();
+      //}
+    //} 
+    
   },
 
   displayIndividualCpuUsage: function(data) {

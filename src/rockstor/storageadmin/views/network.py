@@ -22,11 +22,13 @@ from storageadmin.models import (NetworkInterface, Appliance)
 from storageadmin.util import handle_exception
 from storageadmin.serializers import NetworkInterfaceSerializer
 from system.osi import (get_mac_addr, config_network_device, restart_network,
-                        network_devices, get_net_config,
-                        restart_network_interface, get_default_interface)
+                        network_devices, get_net_config, get_net_config_fedora,
+                        restart_network_interface, get_default_interface,
+                        update_samba_discovery, update_issue)
 from storageadmin.exceptions import RockStorAPIException
 from generic_view import GenericView
 import socket
+from django.conf import settings
 
 import logging
 logger = logging.getLogger(__name__)
@@ -47,11 +49,12 @@ class NetworkView(GenericView):
     @transaction.commit_on_success
     def post(self, request):
         default_if = get_default_interface()
-        for d in network_devices():
-            dconfig = get_net_config(d)
+        config_list = get_net_config_fedora(network_devices())
+        for dconfig in config_list:
             ni = None
-            if (NetworkInterface.objects.filter(name=d).exists()):
-                ni = NetworkInterface.objects.get(name=d)
+            if (NetworkInterface.objects.filter(name=dconfig['name']).exists()):
+                ni = NetworkInterface.objects.get(name=dconfig['name'])
+                ni.alias = dconfig['alias']
                 ni.mac = dconfig['mac']
                 ni.boot_proto = dconfig['bootproto']
                 ni.onboot=dconfig['onboot']
@@ -59,7 +62,9 @@ class NetworkView(GenericView):
                 ni.netmask=dconfig['netmask']
                 ni.ipaddr=dconfig['ipaddr']
             else:
-                ni = NetworkInterface(name=d, mac=dconfig['mac'],
+                ni = NetworkInterface(name=dconfig['name'],
+                                      alias=dconfig['alias'],
+                                      mac=dconfig['mac'],
                                       boot_proto=dconfig['bootproto'],
                                       onboot=dconfig['onboot'],
                                       network=dconfig['network'],
@@ -67,6 +72,12 @@ class NetworkView(GenericView):
                                       ipaddr=dconfig['ipaddr'])
             if (default_if == ni.name):
                 ni.itype = 'management'
+                update_samba_discovery(dconfig['ipaddr'],
+                                       settings.AVAHI_SMB_CONF)
+                try:
+                    update_issue(dconfig['ipaddr'])
+                except:
+                    logger.error('Unable to update /etc/issue')
             ni.save()
         devices = NetworkInterface.objects.all()
         serializer = NetworkInterfaceSerializer(devices)
@@ -95,7 +106,7 @@ class NetworkView(GenericView):
             boot_proto = request.DATA['boot_protocol']
             ni.onboot = 'yes'
             if (boot_proto == 'dhcp'):
-                config_network_device(ni.name, ni.mac)
+                config_network_device(ni.alias, ni.mac)
             elif (boot_proto == 'static'):
                 ipaddr = request.DATA['ipaddr']
                 for i in NetworkInterface.objects.filter(ipaddr=ipaddr):
@@ -104,14 +115,14 @@ class NetworkView(GenericView):
                                  'interface: %s' % (ni.ipaddr, i.name))
                         handle_exception(Exception(e_msg), request)
                 netmask = request.DATA['netmask']
-                config_network_device(ni.name, ni.mac, boot_proto='static',
+                config_network_device(ni.alias, ni.mac, boot_proto='static',
                                       ipaddr=ipaddr, netmask=netmask)
             else:
                 e_msg = ('Boot protocol must be dhcp or static. not: %s' %
                          boot_proto)
                 handle_exception(Exception(e_msg), request)
             self._restart_wrapper(ni, request)
-            dconfig = get_net_config(ni.name)
+            dconfig = get_net_config_fedora([ni.name])[0]
             ni.boot_proto = dconfig['bootproto']
             ni.netmask = dconfig['netmask']
             ni.ipaddr = dconfig['ipaddr']
@@ -121,6 +132,11 @@ class NetworkView(GenericView):
                 a = Appliance.objects.get(current_appliance=True)
                 a.ip = ni.ipaddr
                 a.save()
+                update_samba_discovery(ni.ipaddr, settings.AVAHI_SMB_CONF)
+                try:
+                    update_issue(ni.ipaddr)
+                except:
+                    logger.error('Unable to update /etc/issue')
             return Response(NetworkInterfaceSerializer(ni).data)
         except RockStorAPIException:
             raise

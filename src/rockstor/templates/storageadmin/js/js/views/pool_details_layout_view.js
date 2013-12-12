@@ -36,6 +36,7 @@ PoolDetailsLayoutView = RockstoreLayoutView.extend({
     this.pool = new Pool({poolName: this.poolName});
     this.dependencies.push(this.pool);
     this.disks = new DiskCollection();
+    this.disks.pageSize = RockStorGlobals.maxPageSize;
     this.statusPollInterval = 1000;
   },
 
@@ -69,7 +70,6 @@ PoolDetailsLayoutView = RockstoreLayoutView.extend({
 								  percent: scrubPercent}));
           },
           error: function(xhr, status, error) {
-	    var msg = parseXhrError(xhr);
             var buttons = _this.$('.scrub_button');
             disableButton(buttons);
 	  }	   
@@ -149,8 +149,6 @@ PoolDetailsLayoutView = RockstoreLayoutView.extend({
           app_router.navigate('pools', {trigger: true});
         },
         error: function(xhr, status, error) {
-          var msg = parseXhrError(xhr)
-          _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
           enableButton(button);
         }
       });
@@ -166,8 +164,6 @@ PoolDetailsLayoutView = RockstoreLayoutView.extend({
       url: '/api/pools/'+_this.pool.get('name')+'/scrub',
       type: 'POST',
       error: function(jqXHR) {
-        var msg = parseXhrError(jqXHR)
-	_this.$('.messages').html("<label class=\"error\">" + msg + "</label>");
       }
     });
   },

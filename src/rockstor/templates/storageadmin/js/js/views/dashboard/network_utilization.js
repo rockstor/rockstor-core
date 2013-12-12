@@ -91,6 +91,7 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
     // Start and end timestamps for api call
     this.windowLength = 300000;
     this.t2 = RockStorGlobals.currentTimeOnServer.getTime()-30000;
+    //this.t2 = new Date('2013-12-03T17:18:06.312Z').getTime();
     this.t1 = this.t2 - this.windowLength;
   },
   
@@ -128,9 +129,10 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
     this.selectedInterface = this.networkInterfaces.at(0).get("name");
     var t1Str = moment(_this.t1).toISOString();
     var t2Str = moment(_this.t2).toISOString();
+    var pageSizeStr = '&page_size=' + RockStorGlobals.maxPageSize;
     this.jqXhr = $.ajax({
-      url: "/api/sm/sprobes/netstat/?format=json&t1=" +
-        t1Str + "&t2=" + t2Str, 
+      url: '/api/sm/sprobes/netstat/?format=json' + pageSizeStr + '&t1=' +
+        t1Str + '&t2=' + t2Str, 
       type: "GET",
       dataType: "json",
       global: false, // dont show global loading indicator
@@ -138,9 +140,9 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
         // fill dataBuffers
         _this.networkInterfaces.each(function(ni) {
           var tmp = [];
-          for (var i=0; i<_this.dataLength; i++) {
-            tmp.push(_this.genEmptyData());
-          }
+          //for (var i=0; i<_this.dataLength; i++) {
+            //tmp.push(_this.genEmptyData());
+          //}
           _this.dataBuffers[ni.get("name")] = tmp;
         });
         _.each(data.results, function(d) {
@@ -148,9 +150,11 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
         });
         _.each(_.keys(_this.dataBuffers), function(device) {
           var dataBuffer = _this.dataBuffers[device];
-          if (dataBuffer.length > _this.dataLength) {
-            dataBuffer.splice(0, dataBuffer.length - _this.dataLength);
-          }
+          if (dataBuffer.length > 0) { 
+            while (new Date(dataBuffer[0].ts).getTime() < _this.t2-(_this.windowLength )) {
+              dataBuffer.shift();
+            }
+          } 
         });
         _this.getData(_this); 
          
@@ -181,9 +185,11 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
         });
         _.each(_.keys(_this.dataBuffers), function(device) {
           var dataBuffer = _this.dataBuffers[device];
-          if (dataBuffer.length > _this.dataLength) {
-            dataBuffer.splice(0, dataBuffer.length - _this.dataLength);
-          }
+          if (dataBuffer.length > 0) { 
+            while (new Date(dataBuffer[0].ts).getTime() < _this.t2-(_this.windowLength )) {
+              dataBuffer.shift();
+            }
+          } 
         });
         var dataBuffer = _this.dataBuffers[_this.selectedInterface];
         _this.update(dataBuffer);
@@ -192,12 +198,20 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
         var currentTime = new Date().getTime();
         var diff = currentTime - _this.startTime;
         if (diff > _this.updateFreq) {
-          _this.t1 = _this.t2; 
+          if (dataBuffer.length > 0) {
+            _this.t1 = new Date(dataBuffer[dataBuffer.length-1].ts).getTime();
+          } else {
+            _this.t1 = _this.t1 + diff;
+          }
           _this.t2 = _this.t2 + diff;
           _this.getData(_this); 
         } else {
           _this.timeoutId = window.setTimeout( function() { 
-            _this.t1 = _this.t2; 
+            if (dataBuffer.length > 0) {
+              _this.t1 = new Date(dataBuffer[dataBuffer.length-1].ts).getTime();
+            } else {
+              _this.t1 = _this.t1 + _this.updateFreq;
+            }
             _this.t2 = _this.t2 + _this.updateFreq;
             _this.getData(_this); 
           }, _this.updateFreq - diff)
@@ -213,8 +227,17 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
 
   update: function(dataBuffer) {
     var newData = this.modifyData(dataBuffer);
+    this.graphOptions.xaxis = {
+      mode: 'time',
+      min: this.t2 - this.windowLength,
+      max: this.t2,
+      timezone: 'browser'
+    }
     $.plot(this.$("#network-util-chart"), newData, this.graphOptions);
-    var currentData = dataBuffer[dataBuffer.length-1];
+    var currentData = this.genEmptyData();
+    if (dataBuffer.length > 0) {
+      currentData = dataBuffer[dataBuffer.length-1];
+    } 
     
     if (this.maximized) { 
       this.$("#data-rec").html(humanize.filesize(currentData["kb_rx"]*1024));
@@ -237,24 +260,27 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
     var kb_tx = [];
     var packets_rx = [];
     var packets_tx = [];
-    this.currentTs = dataBuffer[dataBuffer.length-1].ts;
 
-    //this.graphOptions.yaxis = {
-     // min: 0,
+    if (dataBuffer.length > 0) {
+      this.currentTs = dataBuffer[dataBuffer.length-1].ts;
+
+      //this.graphOptions.yaxis = {
+      // min: 0,
       //max: 100,
       //tickFormatter: this.memValueTickFormatter,
-    //}
-    _.each(dataBuffer, function(d,i) {
-      kb_rx.push([i, d["kb_rx"]]);
-      kb_tx.push([i, d["kb_tx"]]);
-      packets_rx.push([i, d["packets_rx"]]);
-      packets_tx.push([i, d["packets_tx"]]);
-    });
-  
+      //}
+      _.each(dataBuffer, function(d,i) {
+        kb_rx.push([(new Date(d.ts)).getTime(), d["kb_rx"]]);
+        kb_tx.push([(new Date(d.ts)).getTime(), d["kb_tx"]]);
+        packets_rx.push([(new Date(d.ts)).getTime(), d["packets_rx"]]);
+        packets_tx.push([(new Date(d.ts)).getTime(), d["packets_tx"]]);
+      });
+    } 
     new_data.push({"label": "Data rec", "data": kb_rx, "color": this.colors[0]});
     new_data.push({"label": "Data sent", "data": kb_tx, "color": this.colors[1]});
     new_data.push({"label": "Packets rec", "data": packets_rx, "color": this.colors[2], yaxis: 2, lines: { show: true, lineWidth: 0.5}});
     new_data.push({"label": "Packets sent", "data": packets_tx, "color": this.colors[3], yaxis: 2, lines: {show: true, lineWidth: 0.5}});
+
     return new_data;
   },
 

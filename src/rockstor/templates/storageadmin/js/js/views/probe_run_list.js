@@ -40,13 +40,15 @@ ProbeRunListView = RockstoreLayoutView.extend({
     this.constructor.__super__.initialize.apply(this, arguments);
     // set template
     this.template = window.JST.probes_probe_run_list;
+    this.paginationTemplate = window.JST.common_pagination;
     this.tableTemplate = window.JST.probes_probe_table;
-    this.probeRuns = new ProbeRunCollection();
+    this.collection = new ProbeRunCollection();
     this.probeTemplates = new ProbeTemplateCollection();
-    this.dependencies.push(this.probeRuns);
+    this.dependencies.push(this.collection);
     this.dependencies.push(this.probeTemplates);
     this.statusPollInterval = 2000; // poll interval for status changes 
     this.statusIntervalIds = {};
+    this.collection.on('reset', this.renderProbeList, this);
   },
 
   render: function() {
@@ -61,19 +63,22 @@ ProbeRunListView = RockstoreLayoutView.extend({
       return (_.keys(pt.attributes))[0];
     });
     var _this = this;
-    $(this.el).append(this.template({
-      probeRuns: this.probeRuns,
+    $(this.el).html(this.template({
+      probeRuns: this.collection,
       probeTemplates: this.probeTemplates
 
     }));
     this.renderTable();
+    this.$(".ph-pagination").html(this.paginationTemplate({
+      collection: this.collection
+    }));
     this.$("[rel=tooltip]").tooltip({ placement: "bottom"});
   },
   
   renderTable: function() {
     this.$("[rel=tooltip]").tooltip("hide");
     this.$("#probe-run-list").html(this.tableTemplate({
-      probeRuns: this.probeRuns
+      probeRuns: this.collection
     }));
     this.$("#probe-run-table").tablesorter();
   },
@@ -110,9 +115,6 @@ ProbeRunListView = RockstoreLayoutView.extend({
         _this.pollTillStatus(probeRun, "stopped");
       },
       error: function(jqXHR, textStatus, error) {
-        var msg = parseXhrError(jqXHR)
-        _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
-        console.log(msg);
       }
     });
   },
@@ -136,7 +138,8 @@ ProbeRunListView = RockstoreLayoutView.extend({
               probeRun.get("state") == "error") {
             // stop polling for status
             window.clearInterval(_this.statusIntervalIds[probeRun.id]);
-            _this.probeRuns.fetch({
+            _this.collection.fetch({
+              silent: true,
               success: function(collection, response, options) {
                 _this.renderTable();
               },
@@ -161,9 +164,12 @@ ProbeRunListView = RockstoreLayoutView.extend({
     var _this = this;
     var probeId = $(event.currentTarget).attr("data-probe-id");
     var probeName = $(event.currentTarget).attr("data-probe-name");
-    document.location.href = this.probeRuns.get(probeId).downloadUrl();
+    document.location.href = this.collection.get(probeId).downloadUrl();
   },
 
 });
 
+
+// Add pagination
+Cocktail.mixin(ProbeRunListView, PaginationMixin);
 

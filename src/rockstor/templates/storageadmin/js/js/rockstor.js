@@ -70,8 +70,6 @@ RockstoreLayoutView = Backbone.View.extend({
           }
         },
         error: function(request, response) {
-          console.log('failed to fetch model in rockstorlayoutview');
-          console.log(dependency);
           _this.requestCount -= 1;
           if (_this.requestCount == 0) {
             if (callback) callback.apply(context);
@@ -375,7 +373,12 @@ function parseXhrError(xhr) {
     }
   }
   return msg;
+}
 
+function getXhrErrorJson(xhr) {
+  var json = {};
+  try { json = JSON.parse(xhr.responseText); } catch(err) { }
+  return json;
 }
 
 function setApplianceName() {
@@ -391,7 +394,6 @@ function setApplianceName() {
       }
     },
     error: function(request, response) {
-      console.log("error while loading appliances");
     }
 
   });
@@ -416,7 +418,6 @@ function fetchLoadAvg() {
       displayLoadAvg(data);
     },
     error: function(xhr, status, error) {
-      console.log(error);
     }
   });
 }
@@ -472,7 +473,6 @@ function getCurrentTimeOnServer() {
       RockStorGlobals.currentTimeOnServer = new Date(data);
     },
     error: function(xhr, status, error) {
-      console.log(error);
     }
   });
 }
@@ -491,7 +491,6 @@ function fetchDependencies(dependencies, callback, context) {
         }
       },
       error: function(request, response) {
-        console.log('failed to fetch model in fetchDependencies');
         requestCount -= 1;
         if (requestCount == 0) {
           if (callback) callback.apply(context);
@@ -501,12 +500,21 @@ function fetchDependencies(dependencies, callback, context) {
   });
 }
 
+function checkBrowser() {
+  var userAgent = navigator.userAgent
+  if (!/firefox/i.test(userAgent)) {
+    $('#browsermsg').html('<div class="alert alert-error"><button type="button" class="close" data-dismiss="alert">&times;</button>The RockStor WebUI is supported only on Firefox. Some features may not work correctly.</div>');
+  }
+  RockStorGlobals.browserChecked = true;
+}
+
 RockStorProbeMap = [];
 RockStorGlobals = {
   navbarLoaded: false,
   applianceNameSet: false,
   currentAppliance: null,
-
+  maxPageSize: 5000,
+  browserChecked: false,
 }
 
 var RS_DATE_FORMAT = 'MMMM Do YYYY, h:mm:ss a';

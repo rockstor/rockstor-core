@@ -35,11 +35,14 @@ ScheduledTasksView = RockstoreLayoutView.extend({
     this.constructor.__super__.initialize.apply(this, arguments);
     // set template
     this.template = window.JST.scheduled_tasks_task_defs;
+    this.paginationTemplate = window.JST.common_pagination;
     // add dependencies
     this.collection = new TaskDefCollection();
     this.tasks = new TaskCollection();
+    this.tasks.pageSize = RockStorGlobals.maxPageSize;
     this.dependencies.push(this.collection);
     this.dependencies.push(this.tasks);
+    this.collection.on('reset', this.renderScheduledTasks, this);
     this.taskMap = {};
   },
 
@@ -50,7 +53,6 @@ ScheduledTasksView = RockstoreLayoutView.extend({
 
   renderScheduledTasks: function() {
     var _this = this;
-    
     this.collection.each(function(taskDef, index) {
       var tmp = _this.tasks.filter(function(task) {
         return task.get('task_def') == taskDef.id;
@@ -66,6 +68,9 @@ ScheduledTasksView = RockstoreLayoutView.extend({
     $(this.el).html(this.template({
       scheduledTasks: this.collection,
       taskMap: this.taskMap
+    }));
+    this.$(".ph-pagination").html(this.paginationTemplate({
+      collection: this.collection
     }));
     this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
    
@@ -96,8 +101,6 @@ ScheduledTasksView = RockstoreLayoutView.extend({
       },
       error: function(xhr, status, error) {
         enableButton(button);
-        var msg = parseXhrError(xhr)
-        _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
       }
     });
   },
@@ -123,8 +126,6 @@ ScheduledTasksView = RockstoreLayoutView.extend({
           });
         },
         error: function(xhr, status, error) {
-          var msg = parseXhrError(xhr)
-          _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
           enableButton(button);
         }
       });
@@ -134,6 +135,6 @@ ScheduledTasksView = RockstoreLayoutView.extend({
 });
 
 // Add pagination
-Cocktail.mixin(ReplicationView, PaginationMixin);
+Cocktail.mixin(ScheduledTasksView, PaginationMixin);
 
 

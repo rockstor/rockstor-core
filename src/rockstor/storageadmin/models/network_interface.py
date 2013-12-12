@@ -22,6 +22,7 @@ from django.contrib.auth.models import User
 
 class NetworkInterface(models.Model):
     name = models.CharField(max_length=100)
+    alias = models.CharField(max_length=100, null=True)
     mac = models.CharField(max_length=100)
     boot_proto = models.CharField(max_length=100, null=True)
     onboot = models.CharField(max_length=100, null=True)

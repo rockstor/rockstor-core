@@ -42,6 +42,7 @@ PoolsView = RockstoreLayoutView.extend({
     this.collection = new PoolCollection();
     
     this.disks = new DiskCollection();
+    this.disks.pageSize = RockStorGlobals.maxPageSize;
     this.dependencies.push(this.disks);
     this.dependencies.push(this.collection);
     this.collection.on("reset", this.renderPools, this);
@@ -50,14 +51,16 @@ PoolsView = RockstoreLayoutView.extend({
 
   render: function() {
     this.fetch(this.renderPools,this);
-    $('#pool-table-ph-form :input').tooltip();
     return this;
   },
 
   renderPools: function() {
     var _this = this;
     
-    var freedisks = this.disks.filter(function(disk) { return disk.get('pool') == null; });
+    var freedisks = this.disks.filter(function(disk) { 
+      return (disk.get('pool') == null) && !(disk.get('offline')) && 
+        !(disk.get('parted')); 
+    });
     
     $(this.el).html(this.template({ collection: this.collection, disks: this.disks,noOfFreeDisks: _.size(freedisks)  }));
     
@@ -69,6 +72,7 @@ PoolsView = RockstoreLayoutView.extend({
       collection: this.collection
     }));
     this.$("#pools-table").tablesorter();
+    this.$('#pool-table-ph-form :input').tooltip();
    
     return this;
   },
@@ -86,12 +90,10 @@ PoolsView = RockstoreLayoutView.extend({
         dataType: "json",
         data: { "name": name },
         success: function() {
-          _this.collection.fetch({reset: true});
+          _this.render();
           enableButton(button);
         },
         error: function(xhr, status, error) {
-          var msg = parseXhrError(xhr)
-          _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
           enableButton(button);
         }
       });

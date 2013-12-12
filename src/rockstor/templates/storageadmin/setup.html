@@ -79,9 +79,7 @@
     <script src="/js/lib/cocktail.js"></script>
     <script src="/js/lib/bootstrap.js"></script>
     <script src="/js/lib/jsonform.js"></script>
-    <script src="/js/lib/rickshaw.min.js"></script>
     <script src="/js/lib/jquery.validate.js"></script>
-    <script src="/js/lib/socket.io.js"></script>
     <script src="/js/lib/jquery.flot.js"></script>
     <script src="/js/lib/jquery.flot.navigate.js"></script>
     <script src="/js/lib/jquery.flot.resize.js"></script>
@@ -119,6 +117,7 @@
           </div>
         </div>
         <div id="content">
+          <div id="globalerrmsg"></div>
           <div id="maincontent">
           <!--Body content-->
           {% block content %}{% endblock %}
@@ -149,9 +148,10 @@
       {% csrf_token %}
     </form>
 
-    <script type="text/javascript" language="javascript" src="/js/bootstrap.min.js"></script>
+    <script src="/js/lib/bootstrap.js"></script>
+    <script src="/js/lib/bootstrap-datepicker.js"></script>
+    <script src="/js/lib/bootstrap-timepicker.js"></script>
     <script type="text/javascript">
-      NGINX_WEBSOCKET_PORT = {{ nginx_websocket_port }};
       {% if current_appliance %}
       setup_done = true;
       {% else %}

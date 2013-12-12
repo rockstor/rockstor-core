@@ -64,36 +64,12 @@
       */
 
     </script>
+    
+    <script src="/js/lib/json2.js"></script>
+    <script src="/js/lib/jquery-1.9.1.min.js"></script>
+    <script src="/js/lib/jquery-migrate-1.2.1.min.js"></script>
+    <script src="/js/lib/jquery-ui.min.js"></script>
 
-    <script src="/js/json2.js"></script>
-    <script src="/js/jquery-1.9.1.min.js"></script>
-    <script src="/js/jquery-migrate-1.2.1.min.js"></script>
-    <script src="/js/jquery-ui.min.js"></script>
-    <script src="/js/jquery.tablesorter.js"></script>
-    <script src="/js/jquery.tools.min.js"></script>
-    <script src="/js/d3.v3.min.js"></script>
-    <script src="/js/cubism.v1.js"></script>
-    <script src="/js/underscore-1.3.2.js"></script>
-    <script src="/js/backbone-0.9.2.js"></script>
-    <script src="/js/backbone.routefilter.min.js"></script>
-    <script src="/js/cocktail.js"></script>
-    <script src="/js/bootstrap.js"></script>
-    <script src="/js/jsonform.js"></script>
-    <script src="/js/rickshaw.min.js"></script>
-    <script src="/js/jquery.validate.js"></script>
-    <script src="/js/socket.io.js"></script>
-    <script src="/js/jquery.flot.js"></script>
-    <script src="/js/jquery.flot.navigate.js"></script>
-    <script src="/js/jquery.flot.resize.js"></script>
-    <script src="/js/jquery.flot.stack.js"></script>
-    <script src="/js/jquery.flot.tooltip_0.5.js"></script>
-    <script src="/js/jquery.flot.axislabels.js"></script>
-    <script src="/js/jquery.flot.stackpercent.js"></script>
-    <script src="/js/jquery.touch-punch.min.js"></script>
-    <script src="/js/jquery.shapeshift.js"></script>
-    <script src="/js/jquery.sparkline.min.js"></script>
-    <script src="/js/humanize.js"></script>
-    <script src="/js/moment.min.js"></script>
   </head>
   <body>
 
@@ -119,7 +95,15 @@
             <div class="span4">
               <form id="login_form" name="aform" class="form-horizontal" method="POST" action="/login_submit">
                 <div id="login-box">
-                  <div class="messages"></div>
+                  {% if messages %}
+                  <div class="alert alert-error">
+                    <ul class="messages">
+                      {% for message in messages %}
+                      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                      {% endfor %}
+                    </ul>
+                  </div>
+                  {% endif %} 
                   <div class="control-group">
                     <label>Username</label>
                     <input type="text" id="username" name="login" placeholder="Username" >
@@ -141,26 +125,9 @@
       </div>
     </div>
 
-    <script type="text/javascript" language="javascript" src="/js/bootstrap.min.js"></script>
-    <script type="text/javascript">
-      NGINX_WEBSOCKET_PORT = {{ nginx_websocket_port }};
-      {% if current_appliance %}
-      setup_done = true;
-      {% else %}
-      setup_done = false;
-      {% endif %}
-      {% if request.user.is_authenticated %}
-      logged_in = true;
-      {% else %}
-      logged_in = false;
-      {% endif %}
-      {% if setup_user %}
-      RockStorGlobals.setup_user = true; 
-      {% else %}
-      RockStorGlobals.setup_user = false; 
-      {% endif %}
-      RockStorGlobals.pageSize = {{ page_size }}; 
-    </script>
+    <script src="/js/lib/bootstrap.js"></script>
+    <script src="/js/lib/bootstrap-datepicker.js"></script>
+    <script src="/js/lib/bootstrap-timepicker.js"></script>
   </body>
 </html>
 

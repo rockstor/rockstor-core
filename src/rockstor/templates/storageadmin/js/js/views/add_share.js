@@ -35,6 +35,7 @@ AddShareView = Backbone.View.extend({
 
   initialize: function() {
     this.pools = new PoolCollection();
+    this.pools.pageSize = RockStorGlobals.maxPageSize;
     this.poolName = this.options.poolName;
   },
 
@@ -97,8 +98,6 @@ AddShareView = Backbone.View.extend({
                 },
                 error: function(xhr, status, error) {
                   enableButton(button);
-                  var msg = parseXhrError(xhr)
-                  _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
                 },
               });
             }

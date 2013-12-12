@@ -20,29 +20,29 @@ from django.conf.urls.defaults import patterns, url
 from smart_manager.views import (BaseServiceView, NISServiceView,
                                  SambaServiceView, NFSServiceView,
                                  NTPServiceView, WinbindServiceView,
-                                 LdapServiceView, SFTPServiceView)
+                                 LdapServiceView, SFTPServiceView,
+                                 ReplicationServiceView)
 
 command_regex = ('config|start|stop')
 
 urlpatterns = patterns('',
     # Services
-    url(r'^$', BaseServiceView.as_view(), name='service-view'),
-    url(r'^nis$', NISServiceView.as_view(), name='nis-view'),
-    url(r'^nis/(?P<command>%s)$' % command_regex, NISServiceView.as_view(),
-        name='nis-view'),
-    url(r'^smb$', SambaServiceView.as_view(), name='samba-view'),
-    url(r'^smb/(?P<command>%s)$' % command_regex, SambaServiceView.as_view(),
-        name='samba-view'),
-    url(r'^nfs$', NFSServiceView.as_view(), name='nfs-view'),
-    url(r'^nfs/(?P<command>%s)$' % command_regex, NFSServiceView.as_view(),
-        name='nfs-view'),
-    url(r'^ntpd$', NTPServiceView.as_view(), name='ntp-view'),
-    url(r'^ntpd/(?P<command>%s)$' % command_regex, NTPServiceView.as_view(),
-        name='ntp-view'),
+    url(r'^$', BaseServiceView.as_view()),
+    url(r'^nis$', NISServiceView.as_view()),
+    url(r'^nis/(?P<command>%s)$' % command_regex, NISServiceView.as_view()),
+    url(r'^smb$', SambaServiceView.as_view()),
+    url(r'^smb/(?P<command>%s)$' % command_regex, SambaServiceView.as_view()),
+    url(r'^nfs$', NFSServiceView.as_view()),
+    url(r'^nfs/(?P<command>%s)$' % command_regex, NFSServiceView.as_view()),
+    url(r'^ntpd$', NTPServiceView.as_view()),
+    url(r'^ntpd/(?P<command>%s)$' % command_regex, NTPServiceView.as_view()),
     url(r'^winbind$', WinbindServiceView.as_view()),
     url(r'^winbind/(?P<command>%s)$' % command_regex,
         WinbindServiceView.as_view()),
     url(r'^ldap$', LdapServiceView.as_view()),
     url(r'^ldap/(?P<command>%s)$' % command_regex, LdapServiceView.as_view()),
     url(r'^sftp/(?P<command>%s)$' % command_regex, SFTPServiceView.as_view()),
+    url(r'^replication$', ReplicationServiceView.as_view()),
+    url(r'^replication/(?P<command>%s)$' % command_regex,
+        ReplicationServiceView.as_view()),
 )

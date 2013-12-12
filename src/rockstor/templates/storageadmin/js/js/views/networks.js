@@ -31,15 +31,13 @@ NetworksView = Backbone.View.extend({
   initialize: function() {
     this.template = window.JST.network_networks;
     this.collection = new NetworkInterfaceCollection();
+    this.paginationTemplate = window.JST.common_pagination;
+    this.collection.on('reset', this.renderNetworks, this);
   },
 
   render: function() {
     var _this = this;
-    this.collection.fetch({
-      success: function(collection, response, options) {
-        _this.renderNetworks();
-      }
-    });
+    this.collection.fetch()
     return this;
   },
   
@@ -50,8 +48,12 @@ NetworksView = Backbone.View.extend({
     $(this.el).append(this.template({
       networks: this.collection
     }));
+    this.$(".ph-pagination").html(this.paginationTemplate({
+      collection: this.collection
+    }));
   },
   
 });
 
-
+// Add pagination
+Cocktail.mixin(NetworksView, PaginationMixin);

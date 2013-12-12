@@ -23,12 +23,6 @@ import os
 DEBUG = ${django-settings-conf:debug}
 TEMPLATE_DEBUG = DEBUG
 
-ADMINS = (
-    ('Suman Chakravartula', 'schakrava@gmail.com'),
-)
-
-MANAGERS = ADMINS
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
@@ -124,6 +118,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'storageadmin.middleware.ProdExceptionMiddleware',
     # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
@@ -306,6 +301,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 )
 
 SMB_CONF = '${django-settings-conf:smb_conf}'
+AVAHI_SMB_CONF = '${django-settings-conf:avahi_smb_conf}'
 MNT_PT = '/mnt2/'
 NFS_EXPORT_ROOT = '/export/'
 
@@ -318,12 +314,6 @@ SUPPORT = {
         'email': 'suman@rockstor.com',
         'log_loc': '${buildout:depdir}/var/log',
 }
-
-WEBSOCKET_CLIENT = {
-		 'logfile': '${buildout:depdir}/var/log/wc.log',
-}
-
-NGINX_WEBSOCKET_PORT = ${myvar:nginx_websocket_port}
 
 """
 Minimum disk size allowed is 1GB. Anything less is not really usable. Reduce
@@ -346,7 +336,7 @@ MIN_SHARE_SIZE = 100
 MAX_SHARE_SIZE = 18014398509481984L
 
 PAGINATION = {
-	   'page_size': 5000,
+	   'page_size': 15,
 	   'max_limit': 10000,
 }
 
@@ -358,3 +348,7 @@ DEFAULT_SHELL = '/sbin/nologin'
 SCHEDULER = ('127.0.0.1', ${django-settings-conf:schedulerport})
 REPLICA_DATA_PORT = ${django-settings-conf:reppubport}
 REPLICA_META_PORT = ${django-settings-conf:reprecvport}
+
+SHARE_REGEX = r'[A-Za-z]+[A-Za-z0-9_.-]*'
+POOL_REGEX = SHARE_REGEX
+ROOT_DIR = '${buildout:depdir}/'

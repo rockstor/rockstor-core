@@ -36,10 +36,9 @@ setup(
             'rcli = cli.rock_cli:main',
             'prep_db = prep_db:main',
             'replicad = smart_manager.replication.scheduler:main',
+            'mgmt_ip = mgmt_ip:main',
             ],
         },
-
-  dependency_links = ['http://rockstor.com/downloads/gevent-socketio-0.3.6.tgz'],
 
   install_requires=[
     'django == 1.4.3',
@@ -48,8 +47,6 @@ setup(
     'djangorestframework == 2.1.15',
     'pytz',
     'django-pipeline == 1.2.23',
-    'socketIO-client == 0.3',
-    'gevent-socketio == 0.3.6',
     'requests == 1.1.0',
     'pyzmq == 13.0.0',
     'South == 0.7.6',

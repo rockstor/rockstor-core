@@ -33,16 +33,15 @@ UsersView = RockstoreLayoutView.extend({
   initialize: function() {
     // call initialize of base
     this.constructor.__super__.initialize.apply(this, arguments);
-    // set template
     this.template = window.JST.users_users;
-    // add dependencies
-    this.users = new UserCollection();
-    this.dependencies.push(this.users);
-    this.users.on("reset", this.renderUsers, this);
+    this.paginationTemplate = window.JST.common_pagination;
+    this.collection = new UserCollection();
+    this.dependencies.push(this.collection);
+    this.collection.on("reset", this.renderUsers, this);
   },
 
   render: function() {
-    this.users.fetch();
+    this.collection.fetch();
     return this;
   },
 
@@ -50,8 +49,11 @@ UsersView = RockstoreLayoutView.extend({
     if (this.$('[rel=tooltip]')) { 
       this.$('[rel=tooltip]').tooltip('hide');
     }
-    $(this.el).html(this.template({users: this.users}));
+    $(this.el).html(this.template({users: this.collection}));
     this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
+    this.$(".ph-pagination").html(this.paginationTemplate({
+      collection: this.collection
+    }));
   },
 
   deleteUser: function(event) {
@@ -64,11 +66,9 @@ UsersView = RockstoreLayoutView.extend({
         type: "DELETE",
         dataType: "json",
         success: function() {
-          _this.users.fetch();
+          _this.collection.fetch();
         },
         error: function(xhr, status, error) {
-          var msg = parseXhrError(xhr)
-          _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
         }
       });
     } else {
@@ -86,3 +86,7 @@ UsersView = RockstoreLayoutView.extend({
   }
 
 });
+
+// Add pagination
+Cocktail.mixin(UsersView, PaginationMixin);
+

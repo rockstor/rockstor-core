@@ -16,11 +16,17 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 from storageadmin.exceptions import RockStorAPIException
+from system.osi import run_command
+from django.conf import settings
 
 import logging
 logger = logging.getLogger(__name__)
 
 def handle_exception(e, request):
-    logger.debug('request data: %s' % (request.DATA))
+    logger.error('request path: %s method: %s data: %s' %
+                 (request.path, request.method, request.DATA))
     logger.exception('exception')
+    run_command(['/usr/bin/tar', '-c', '-z', '-f',
+                     settings.ROOT_DIR + 'src/rockstor/logs/error.tgz',
+                     settings.ROOT_DIR + 'var/log'])
     raise RockStorAPIException(detail=e.__str__())

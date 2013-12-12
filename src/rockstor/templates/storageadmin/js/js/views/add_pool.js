@@ -36,7 +36,7 @@ AddPoolView = Backbone.View.extend({
   initialize: function() {
     this.disks = new DiskCollection();
     // dont paginate disk selection table for now
-    this.disks.pageSize = 1000; 
+    this.disks.pageSize = RockStorGlobals.maxPageSize; 
 
   },
 
@@ -113,11 +113,8 @@ AddPoolView = Backbone.View.extend({
           onfocusout: false,
           onkeyup: false,
           rules: {
-            pool_name: "validatePoolName",  
             raid_level: "validateRaid"
           },
-          
-         
 
           submitHandler: function() {
             var button = $('#create_pool');
@@ -146,8 +143,6 @@ AddPoolView = Backbone.View.extend({
               },
               error: function(xhr, status, error) {
                 enableButton(button);
-                var msg = parseXhrError(xhr)
-                _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
               },
             });
 

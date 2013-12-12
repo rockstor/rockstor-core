@@ -21,6 +21,7 @@ import os
 import subprocess
 import shutil
 import socket
+from tempfile import mkstemp
 
 from exceptions import CommandException
 
@@ -43,6 +44,10 @@ SFDISK = '/sbin/sfdisk'
 IFUP = '/sbin/ifup'
 IFDOWN = '/sbin/ifdown'
 ROUTE = '/sbin/route'
+SYSTEMCTL = '/usr/bin/systemctl'
+
+import logging
+logger = logging.getLogger(__name__)
 
 class Disk():
 
@@ -57,6 +62,24 @@ class Disk():
                 'size': self.size,
                 'free': self.free,
                 'parted': self.parted, }
+
+def inplace_replace(of, nf, regex, nl):
+    with open(of) as afo, open(nf, 'w') as tfo:
+        replaced = [False,] * len(regex)
+        for l in afo.readlines():
+            ireplace = False
+            for i in range(0, len(regex)):
+                if (re.match(regex[i], l) is not None):
+                    tfo.write(nl[i])
+                    replaced[i] = True
+                    ireplace = True
+                    break
+            if (not ireplace):
+                tfo.write(l)
+        for i in range(0, len(replaced)):
+            logger.info('regex: %s nl: %s replaced: %s' % (nf, regex, nl))
+            if (not replaced[i]):
+                tfo.write(nl[i])
 
 def run_command(cmd, shell=False, stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE, throw=True):
@@ -80,25 +103,13 @@ def wipe_disk(disk):
 def root_disks():
     """
     returns the partition(s) used for /. Typically it's sda.
-    This may change after el7 release.
     """
-    root_lvm = None
-    drives = []
     with open('/proc/mounts') as fo:
         for line in fo.readlines():
             fields = line.split()
-            if (fields[1] == '/' and fields[2] == 'ext4'):
-                root_lvm = fields[0]
-                break
-    o, e, c = run_command([LVS, '--noheadings', '-o', 'vg_name',
-                           root_lvm])
-    vg_name = o[0].strip()
-    o, e, c = run_command([VGS, '--noheadings', '-o', 'pv_name', vg_name])
-    for p in o:
-        p = p.strip()
-        if (re.match('/dev/', p.strip()) is not None):
-            drives.append(p[5:8])
-    return drives
+            if (fields[1] == '/' and fields[2] == 'btrfs'):
+                return fields[0][5:8]
+    return None
 
 def scan_disks(min_size):
     """
@@ -192,17 +203,28 @@ def refresh_smb_config(exports, clean_config):
             sfo.write('[%s]\n' % e.share.name)
             sfo.write('    comment = %s\n' % e.comment)
             sfo.write('    path = %s\n' % e.path)
-            sfo.write('    browsable = %s\n' % e.browsable)
+            sfo.write('    browseable = %s\n' % e.browsable)
             sfo.write('    read only = %s\n' % e.read_only)
             sfo.write('    create mask = %s\n' % e.create_mask)
+            sfo.write('    guest ok = %s\n' % e.guest_ok)
     return True
 
 def restart_samba():
     """
     call whenever config is updated
     """
-    smbd_cmd = [SERVICE, 'smb', 'restart']
+    smbd_cmd = [SYSTEMCTL, 'restart', 'smb']
     return run_command(smbd_cmd)
+
+def update_samba_discovery(ipaddr, clean_config):
+    fo, npath = mkstemp()
+    dest_file = '/etc/avahi/services/smb.service'
+    regex = (' <name replace-wildcards="yes">')
+    nl = (' <name replace-wildcards="yes">RockStor@%s</name>\n' % ipaddr,)
+    inplace_replace(clean_config, npath, (regex,), nl)
+    shutil.copy(npath, dest_file)
+    run_command([CHMOD, '755', dest_file])
+    return run_command([SYSTEMCTL, 'restart', 'avahi-daemon',])
 
 def hostid():
     """
@@ -258,30 +280,73 @@ def get_ip_addr(interface):
     """
     out, err, rc = run_command([IFCONFIG, interface])
     line2 = out[1].strip()
-    if (re.match('inet addr', line2) is not None):
-        return line2.split()[1].split(':')[1]
+    if (re.match('inet ', line2) is not None):
+        return line2.split()[1]
     return '0.0.0.0'
 
 def config_network_device(name, mac, boot_proto='dhcp', ipaddr=None,
                           netmask=None, on_boot='yes', gateway=None):
     config_script = ('/etc/sysconfig/network-scripts/ifcfg-%s' % name)
     with open(config_script, 'w') as cfo:
-        cfo.write('DEVICE="%s"\n' % name)
+        cfo.write('NAME="%s"\n' % name)
         cfo.write('TYPE="Ethernet"\n')
-        cfo.write('NM_CONTROLLED="no"\n')
         cfo.write('HWADDR="%s"\n' % mac)
         cfo.write('BOOTPROTO="%s"\n' % boot_proto)
         cfo.write('ONBOOT="%s"\n' % on_boot)
         if (boot_proto == 'static'):
-            cfo.write('IPADDR="%s"\n' % ipaddr)
+            cfo.write('IPADDR0="%s"\n' % ipaddr)
             cfo.write('NETMASK="%s"\n' % netmask)
             if (gateway is not None):
-                cfo.write('GATEWAY="%s"\n' % gateway)
+                cfo.write('GATEWAY0="%s"\n' % gateway)
 
 def char_strip(line, char='"'):
     if (line[0] == char and line[-1] == char):
         return line[1:-1]
     return line
+
+def parse_ifcfg(config_file, config_d):
+    try:
+        with open(config_file) as cfo:
+            for l in cfo.readlines():
+                if (re.match('BOOTPROTO', l) is not None):
+                    config_d['bootproto'] = char_strip(l.strip().split('=')[1])
+                elif (re.match('ONBOOT', l) is not None):
+                    config_d['onboot'] = char_strip(l.strip().split('=')[1])
+                elif (re.match('IPADDR', l) is not None):
+                    config_d['ipaddr'] = char_strip(l.strip().split('=')[1])
+                elif (re.match('NETMASK', l) is not None):
+                    config_d['netmask'] = char_strip(l.strip().split('=')[1])
+                elif (re.match('NETWORK', l) is not None):
+                    config_d['network'] = char_strip(l.strip().split('=')[1])
+                elif (re.match('NAME', l) is not None):
+                    config_d['alias'] = char_strip(l.strip().split('=')[1])
+        if (config_d['bootproto'] == 'dhcp'):
+            config_d['ipaddr'] = get_ip_addr(config_d['name'])
+    except:
+        pass
+    finally:
+        return config_d
+
+def get_net_config_fedora(devices):
+
+    config_list = []
+    script_dir = ('/etc/sysconfig/network-scripts/')
+    for d in devices:
+        config = {'name': d,
+                  'alias': d,
+                  'bootproto': None,
+                  'onboot': None,
+                  'network': None,
+                  'netmask': None,
+                  'ipaddr': None,}
+        config['mac'] = get_mac_addr(d)
+        for f in os.listdir(script_dir):
+            if (re.match('ifcfg-', f) is not None and
+                f != 'ifcfg-lo'):
+                full_path = ('%s/%s' % (script_dir, f))
+                config = parse_ifcfg(full_path, config)
+        config_list.append(config)
+    return config_list
 
 def get_net_config(device_name):
     config = {'name': device_name,
@@ -326,3 +391,11 @@ def set_nameservers(servers):
 
 def set_ntpserver(server):
     return run_command([NTPDATE, server])
+
+def update_issue(ipaddr):
+    shutil.copyfile('/etc/issue.rockstor', '/etc/issue')
+    msg = ("\n\nYou can go to RockStor's webui by pointing your web browser"
+           " to https://%s\n\n" % ipaddr)
+    with open('/etc/issue', 'a') as ifo:
+        ifo.write(msg)
+

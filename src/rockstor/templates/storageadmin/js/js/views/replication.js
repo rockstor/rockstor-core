@@ -35,13 +35,18 @@ ReplicationView = RockstoreLayoutView.extend({
     this.constructor.__super__.initialize.apply(this, arguments);
     // set template
     this.template = window.JST.replication_replication;
+    this.paginationTemplate = window.JST.common_pagination;
     // add dependencies
     this.collection = new ReplicaCollection();
     this.dependencies.push(this.collection);
+    this.replicationService = new Service({name: 'replication'});
+    this.dependencies.push(this.replicationService);
     this.replicaTrails = new ReplicaTrailCollection();
+    this.replicaTrails.pageSize = RockStorGlobals.maxPageSize;
     this.dependencies.push(this.replicaTrails);
     this.replicaShareMap = {};
     this.replicaTrailMap = {};
+    this.collection.on('reset', this.renderReplicas, this);
   },
 
   render: function() {
@@ -74,11 +79,15 @@ ReplicationView = RockstoreLayoutView.extend({
       }).reverse();
     });
     $(this.el).html(this.template({
+      replicationService: this.replicationService,
       replicas: this.collection,
       replicaShareMap: this.replicaShareMap,
       replicaTrailMap: this.replicaTrailMap
     }));
     this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
+    this.$(".ph-pagination").html(this.paginationTemplate({
+      collection: this.collection
+    }));
    
   },
 
@@ -104,8 +113,6 @@ ReplicationView = RockstoreLayoutView.extend({
       },
       error: function(xhr, status, error) {
         enableButton(button);
-        var msg = parseXhrError(xhr)
-        _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
       }
     });
   },
@@ -132,8 +139,6 @@ ReplicationView = RockstoreLayoutView.extend({
       },
       error: function(xhr, status, error) {
         enableButton(button);
-        var msg = parseXhrError(xhr)
-        _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
       }
     });
   }
