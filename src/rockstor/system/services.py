@@ -72,8 +72,9 @@ def service_status(service_name):
             return out, err, rc
         with open(SSHD_CONFIG) as sfo:
             for line in sfo.readlines():
-                if (re.match('Subsystem', line) is not None):
-                    return out, err, rc
+                if (re.match("Subsystem\tsftp\tinternal-sftp", line) is not
+                None):
+                        return out, err, rc
             return out, err, -1
     elif (service_name == 'replication'):
         return superctl(service_name, 'status')
