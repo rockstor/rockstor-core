@@ -16,23 +16,21 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pool import Pool
-from disk import Disk
-from share import Share
-from snapshot import Snapshot
-from pool_statistic import PoolStatistic
-from share_statistic import ShareStatistic
-from nfs_export_group import NFSExportGroup
-from nfs_export import NFSExport
-from samba_share import SambaShare
-from iscsi_target import IscsiTarget
-from posix_acls import PosixACLs
-from api_keys import APIKeys
-from appliance import Appliance
-from support_case import SupportCase
-from dashboard_config import DashboardConfig
-from network_interface import NetworkInterface
-from user import User
-from scrub import PoolScrub
-from setup import Setup
-from sftp import SFTP
+from django.db import models
+from storageadmin.models import Share
+
+class SFTP(models.Model):
+    READ_ONLY = "ro"
+    READ_WRITE = "rw"
+    share = models.ForeignKey(Share)
+    """read only by default"""
+    MODIFY_CHOICES = (
+        (READ_ONLY, 'ro'),
+        (READ_WRITE, 'rw'),
+        )
+    editable = models.CharField(max_length=2, choices=MODIFY_CHOICES,
+                                default=READ_ONLY)
+    class Meta:
+        app_label = 'storageadmin'
+
+
