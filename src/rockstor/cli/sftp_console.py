@@ -16,9 +16,9 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-
+import json
 from base_console import BaseConsole
-from rest_util import api_call
+from rest_util import (api_error, api_call,)
 
 
 class SFTPConsole(BaseConsole):
@@ -43,4 +43,31 @@ class SFTPConsole(BaseConsole):
     def do_stop(self, args):
         return self.put_wrapper(args, 'stop')
 
+    @api_error
+    def do_add_sftp(self, args):
+        """
+        enable_sftp share1,share2,... <rw|ro>
+        """
+        fields = args.split()
+        shares = fields[0].split(',')
+        print shares
+        input_data = {'shares': shares,
+                      'read_only': True,}
+        url = BaseConsole.url + 'sftp'
+        headers = {'content-type': 'application/json'}
+        sftp_info = api_call(url, data=json.dumps(input_data),
+                             headers=headers, calltype='post')
+        print sftp_info
 
+    def do_list_sftp(self, args):
+        """
+        list_sftp
+        """
+        print api_call(BaseConsole.url + 'sftp')
+
+    def do_delete_sftp(self, args):
+        """
+        delete_sftp id
+        """
+        url = ('%ssftp/%s' % (BaseConsole.url, args))
+        print api_call(url, calltype='delete')
