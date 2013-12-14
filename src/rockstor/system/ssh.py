@@ -21,10 +21,14 @@ from shutil import move
 from tempfile import mkstemp
 
 from services import systemctl
+from fs.btrfs import (mount_share, is_share_mounted)
+from system.osi import run_command
 
 SSHD_CONFIG = '/etc/ssh/sshd_config'
+MKDIR = '/bin/mkdir'
+MOUNT = '/bin/mount'
 
-def update_sftp(input_list):
+def update_sftp_config(input_list):
     """
     input list is a list of dictionaries. sample dictionary:
     {'user': 'rocky',
@@ -32,20 +36,45 @@ def update_sftp(input_list):
 
     """
     fo, npath = mkstemp()
-    with open(SSHD_CONFIG) as sfo:
+    with open(SSHD_CONFIG) as sfo, open(npath, 'w') as tfo:
         for line in sfo.readlines():
             if (re.match('####BEGIN: Rockstor SFTP CONFIG####', line) is not
                 None):
-                fo.write(line)
+                tfo.write(line)
                 for entry in input_list:
-                    fo.write('Match User %s\n' % entry['user'])
-                    fo.write('\tChrootDirectory %s\n' % entry['dir'])
-                    fo.write('\tForceCommand internal-sftp\n\n')
-                fo.write('####END: Rockstor SFTP CONFIG####\n')
+                    tfo.write('Match User %s\n' % entry['user'])
+                    tfo.write('\tChrootDirectory %s\n' % entry['dir'])
+                    tfo.write('\tForceCommand internal-sftp\n\n')
+                tfo.write('####END: Rockstor SFTP CONFIG####\n')
                 break
             else:
-                fo.write(line)
+                tfo.write(line)
     move(npath, SSHD_CONFIG)
     return systemctl('sshd', 'reload')
 
+def sftp_mount_map(mnt_prefix):
+    mnt_map = {}
+    with open('/proc/mounts') as pfo:
+        for line in pfo.readlines():
+            if (re.search(' ' + mnt_prefix, line) is not None):
+                fields = line.split()
+                sname = fields[2].split('/')[-1]
+                editable = fields[5][1:3]
+                mnt_map[sname] = editable
+    return mnt_map
 
+def sftp_mount(share, mnt_prefix, sftp_mnt_prefix, mnt_map, editable='rw'):
+    #don't mount if already mounted
+    sftp_mnt_pt = ('%s%s' % (sftp_mnt_prefix, share.name))
+    share_mnt_pt = ('%s%s' % (mnt_prefix, share.name))
+    if (share.name in mnt_map):
+        cur_editable = mnt_map[share.name]
+        if (cur_editable != editable):
+            return run_command([MOUNT, '-o', 'remount,%s,bind' % editable,
+                                share_mnt_pt, sftp_mnt_pt])
+    else:
+        run_command([MKDIR, '-p', sftp_mnt_pt])
+        run_command([MOUNT, '--bind', share_mnt_pt, sftp_mnt_pt])
+        if (editable == 'ro'):
+            run_command([MOUNT, '-o', 'remount,%s,bind' % editable,
+                         share_mnt_pt, sftp_mnt_pt])
