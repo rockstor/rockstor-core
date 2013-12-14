@@ -22,7 +22,7 @@ from storageadmin.models import Share
 class SFTP(models.Model):
     READ_ONLY = "ro"
     READ_WRITE = "rw"
-    share = models.ForeignKey(Share)
+    share = models.OneToOneField('Share')
     """read only by default"""
     MODIFY_CHOICES = (
         (READ_ONLY, 'ro'),
