@@ -71,13 +71,6 @@ def dup_export_check(share, host_str, request, export_id=None):
                      host_str)
             handle_exception(Exception(e_msg), request)
 
-def validate_share(sname, request):
-    try:
-        return Share.objects.get(name=sname)
-    except:
-        e_msg = ('Share with name: %s does not exist' % sname)
-        handle_exception(Exception(e_msg), request)
-
 def validate_export_group(export_id, request):
     try:
         return NFSExportGroup.objects.get(id=export_id)
