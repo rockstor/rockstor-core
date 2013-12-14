@@ -24,7 +24,8 @@ from storageadmin.util import handle_exception
 from storageadmin.serializers import SFTPSerializer
 from storageadmin.exceptions import RockStorAPIException
 from fs.btrfs import (mount_share, is_share_mounted, umount_root)
-from system.osi import (refresh_nfs_exports, nfs4_mount_teardown)
+from system.ssh import (update_sftp_config, sftp_mount_map, sftp_mount)
+from share_helpers import (helper_mount_share, validate_share)
 from generic_view import GenericView
 
 import logging
@@ -46,93 +47,63 @@ class SFTPView(GenericView):
     @transaction.commit_on_success
     def post(self, request):
         if ('shares' not in request.DATA):
-            e_msg = ('Cannot export without specifying shares')
+            e_msg = ('Must provide share names')
             handle_exception(Exception(e_msg), request)
         shares = [validate_share(s, request) for s in request.DATA['shares']]
+        logger.info('shares = %s' % shares)
+        editable = 'ro'
+        if ('read_only' in request.DATA):
+            editable = 'rw'
         try:
-            options = parse_options(request)
-            for s in shares:
-                dup_export_check(s, options['host_str'], request)
-
-            cur_exports = list(NFSExport.objects.all())
-            eg = NFSExportGroup(**options)
-            eg.save()
-            for s in shares:
-                mnt_pt = ('%s%s' % (settings.MNT_PT, s.name))
-                export_pt = ('%s%s' % (settings.NFS_EXPORT_ROOT, s.name))
-                if (not is_share_mounted(s.name)):
-                    pool_device = Disk.objects.filter(pool=s.pool)[0].name
-                    mount_share(s.subvol_name, pool_device, mnt_pt)
-                export = NFSExport(export_group=eg, share=s, mount=export_pt)
-                export.full_clean()
-                export.save()
-                cur_exports.append(export)
-
-            exports = create_nfs_export_input(cur_exports)
-            refresh_wrapper(exports, request, logger)
-            nfs_serializer = NFSExportGroupSerializer(eg)
-            return Response(nfs_serializer.data)
+            mnt_map = sftp_mount_map(settings.SFTP_MNT_ROOT)
+            logger.info('sftp mnt map = %s' % mnt_map)
+            input_list = []
+            for share in shares:
+                sftpo = SFTP(share=share, editable=editable)
+                sftpo.save()
+                #mount if not already mounted
+                helper_mount_share(share)
+                #bindmount if not already
+                sftp_mount(share, settings.MNT_PT, settings.SFTP_MNT_ROOT,
+                           mnt_map, editable)
+                input_list.append({'user': share.owner,
+                                   'dir': ('%s%s' % (settings.SFTP_MNT_ROOT,
+                                                     share.name)),})
+            for sftpo in SFTP.objects.all():
+                if (sftpo.share not in shares):
+                    input_list.append({'user': sftpo.share.owner,
+                                       'dir': ('%s%s' %
+                                               (settings.SFTP_MNT_ROOT,
+                                                sftpo.share.name)),})
+            logger.info('input_list = %s' % input_list)
+            update_sftp_config(input_list)
+            return Response()
         except RockStorAPIException:
             raise
         except Exception, e:
             handle_exception(e, request)
 
     @transaction.commit_on_success
-    def put(self, request, export_id):
-        if ('shares' not in request.DATA):
-            e_msg = ('Cannot export without specifying shares')
+    def delete(self, request, id):
+        try:
+            sftpo = SFTP.objects.get(id=id)
+        except:
+            e_msg = ('SFTP config for the id: %s does not exist' % id)
             handle_exception(Exception(e_msg), request)
-        shares = [validate_share(s, request) for s in request.DATA['shares']]
-        try:
-            eg = validate_export_group(export_id, request)
-            options = parse_options(request)
-            for s in shares:
-                dup_export_check(s, options['host_str'], request,
-                                 export_id=int(export_id))
-            NFSExportGroup.objects.filter(id=export_id).update(**options)
-            NFSExportGroup.objects.filter(id=export_id)[0].save()
-            cur_exports = list(NFSExport.objects.all())
-            for e in NFSExport.objects.filter(export_group=eg):
-                if (e.share not in shares):
-                    cur_exports.remove(e)
-                    e.delete()
-                else:
-                    shares.remove(e.share)
-            for s in shares:
-                mnt_pt = ('%s%s' % (settings.MNT_PT, s.name))
-                export_pt = ('%s%s' % (settings.NFS_EXPORT_ROOT, s.name))
-                if (not is_share_mounted(s.name)):
-                    pool_device = Disk.objects.filter(pool=s.pool)[0].name
-                    mount_share(s.subvol_name, pool_device, mnt_pt)
-                export = NFSExport(export_group=eg, share=s, mount=export_pt)
-                export.full_clean()
-                export.save()
-                cur_exports.append(export)
-            exports = create_nfs_export_input(cur_exports)
-            refresh_wrapper(exports, request, logger)
-            nfs_serializer = NFSExportGroupSerializer(eg)
-            return Response(nfs_serializer.data)
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)
 
-    @transaction.commit_on_success
-    def delete(self, request, export_id):
         try:
-            eg = validate_export_group(export_id, request)
-            cur_exports = list(NFSExport.objects.all())
-            for e in NFSExport.objects.filter(export_group=eg):
-                export_pt = ('%s%s' % (settings.NFS_EXPORT_ROOT, e.share.name))
-                if (e.export_group.nohide):
-                    snap_name = e.mount.split(e.share.name + '_')[-1]
-                    export_pt = ('%s/%s' % (export_pt, snap_name))
-                teardown_wrapper(export_pt, request, logger)
-                cur_exports.remove(e)
-                e.delete()
-            eg.delete()
-            exports = create_nfs_export_input(cur_exports)
-            refresh_wrapper(exports, request, logger)
+            if (is_share_mounted(sftpo.share.name, settings.SFTP_MNT_ROOT)):
+                umount_root(('%s%s' % (settings.SFTP_MNT_ROOT,
+                                       sftpo.share.name)))
+            sftpo.delete()
+            input_list = []
+            for so in SFTP.objects.all():
+                if (so.id != sftpo.id):
+                    input_list.append({'user': so.share.owner,
+                                       'dir': ('%s%s' %
+                                               (settings.SFTP_MNT_ROOT,
+                                                so.share.name)),})
+            update_sftp_config(input_list)
             return Response()
         except RockStorAPIException:
             raise
