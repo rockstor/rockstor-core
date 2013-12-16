@@ -26,6 +26,7 @@
 
 SambaView  = RockstoreLayoutView.extend({
   events: {
+    'click .delete-samba-export' : 'deleteSambaExport'
   },
     
   initialize: function() {
@@ -50,19 +51,18 @@ SambaView  = RockstoreLayoutView.extend({
     this.$(".ph-pagination").html(this.paginationTemplate({
       collection: this.collection
     }));
-
   },
 
-  deleteSambaShare: function(event) {
+  deleteSambaExport: function(event) {
     var _this = this;
     if (event) event.preventDefault();
     var button = $(event.currentTarget);
     if (buttonDisabled(button)) return false;
     if(confirm("Delete samba export... Are you sure? ")){
     disableButton(button)
-    var id = $(event.currentTarget).data('id');
+    var share = $(event.currentTarget).data('share');
     $.ajax({
-      url: '/api/nfs-exports/' + id,
+      url: '/api/shares/' + share + '/samba',
       type: 'DELETE',
       dataType: 'json',
       contentType: 'application/json',
