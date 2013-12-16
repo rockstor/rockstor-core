@@ -1,0 +1,74 @@
+<h3>Add Samba export</h3>
+<div class="row-fluid">
+  <div class="span8">
+    <label class="control-label"><span class="required">*</span> indicates required fields</label>
+    <div class="form-box">
+      <form id="add-samba-export-form" name="aform">
+        <div class="messages"></div>
+
+        <!-- Shares -->
+        <div class="control-group">
+          <label class="control-label" for="shares">Share to export<span class="required"> *</span></label>
+          <div class="controls">
+            <select name="share" id="share" size="10" >
+              <% shares.each(function(share, index) { %>
+                <option value="<%= share.get('name') %>"><%= share.get('name') %></option>
+              <% }); %>
+            </select>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label class="control-label" for="browseable">Browseable<span class="required"> *</span></label>
+          <div class="controls">
+            <select id="browsable" name="browsable">
+              <% _.each(browsable_choices, function(c) { %>
+                <option value="<%= c.value %>"><%= c.name %></option>
+              <% }); %>
+            </select>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label class="control-label" for="guest_ok">Guest Ok<span class="required"> *</span></label>
+          <div class="controls">
+            <select id="guest_ok" name="guest_ok">
+              <% _.each(guest_ok_choices, function(c) { %>
+                <option value="<%= c.value %>"><%= c.name %></option>
+              <% }); %>
+            </select>
+          </div>
+        </div>
+        
+        <div class="control-group">
+          <label class="control-label" for="read_only">Read only<span class="required"> *</span></label>
+          <div class="controls">
+            <select id="read_only" name="read_only">
+              <% _.each(read_only_choices, function(c) { %>
+                <option value="<%= c.value %>"><%= c.name %></option>
+              <% }); %>
+            </select>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label class="control-label" for="comment">Comment</span></label>
+          <div class="controls">
+            <input type="text" id="comment" name="comment">
+          </div>
+        </div>
+        
+        <div class="control-group">
+          <div class="controls">
+            <a id="cancel" class="btn">Cancel</a>
+            <input type="Submit" id="create-samba-export" class="btn btn-primary" value="Submit"></input>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+        
+

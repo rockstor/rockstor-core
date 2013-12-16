@@ -42,5 +42,8 @@ class SambaShare(models.Model):
                                 default=NO)
     create_mask = models.CharField(max_length=4, default='0755')
 
+    def share_name(self, *args, **kwargs):
+        return self.share.name
+
     class Meta:
         app_label = 'storageadmin'
