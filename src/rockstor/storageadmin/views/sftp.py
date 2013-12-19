@@ -51,9 +51,9 @@ class SFTPView(GenericView):
             handle_exception(Exception(e_msg), request)
         shares = [validate_share(s, request) for s in request.DATA['shares']]
         logger.info('shares = %s' % shares)
-        editable = 'ro'
+        editable = 'rw'
         if ('read_only' in request.DATA):
-            editable = 'rw'
+            editable = 'ro'
         try:
             mnt_map = sftp_mount_map(settings.SFTP_MNT_ROOT)
             logger.info('sftp mnt map = %s' % mnt_map)

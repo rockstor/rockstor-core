@@ -294,3 +294,11 @@ var TaskCollection = RockStorPaginatedCollection.extend({
   }
 });
 
+var SFTP = Backbone.Model.extend({
+  urlRoot: '/api/sftp'    
+});
+
+var SFTPCollection = RockStorPaginatedCollection.extend({
+  model: SFTP,
+  baseUrl: '/api/sftp'
+});

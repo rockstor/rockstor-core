@@ -30,6 +30,10 @@ class SFTP(models.Model):
         )
     editable = models.CharField(max_length=2, choices=MODIFY_CHOICES,
                                 default=READ_ONLY)
+
+    def share_name(self, *args, **kwargs):
+        return self.share.name
+    
     class Meta:
         app_label = 'storageadmin'
 

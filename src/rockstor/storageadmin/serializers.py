@@ -102,5 +102,6 @@ class SetupSerializer(serializers.ModelSerializer):
         model = Setup
 
 class SFTPSerializer(serializers.ModelSerializer):
+    share = serializers.CharField(source='share_name')
     class Meta:
         model = SFTP

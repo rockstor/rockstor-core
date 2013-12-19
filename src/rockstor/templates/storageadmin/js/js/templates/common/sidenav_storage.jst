@@ -25,5 +25,10 @@
   <% } else { %>
     <li><a href="#nfs-exports"><i class="icon-share"></i> NFS Exports</a></li>
   <% } %>
+  <% if (selected == "sftp") { %>
+    <li><a href="#sftp" class="selected"><i class="icon-share icon-white"></i> SFTP</a></li>
+  <% } else { %>
+    <li><a href="#sftp"><i class="icon-share"></i> SFTP</a></li>
+  <% } %>
 </ul>
 
