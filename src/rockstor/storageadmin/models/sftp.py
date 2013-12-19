@@ -15,18 +15,22 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-from storageadmin.exceptions import RockStorAPIException
-from system.osi import run_command
-from django.conf import settings
 
-import logging
-logger = logging.getLogger(__name__)
+from django.db import models
+from storageadmin.models import Share
 
-def handle_exception(e, request):
-    logger.error('request path: %s method: %s data: %s' %
-                 (request.path, request.method, request.DATA))
-    logger.exception('exception: %s' % e.__str__())
-    run_command(['/usr/bin/tar', '-c', '-z', '-f',
-                     settings.ROOT_DIR + 'src/rockstor/logs/error.tgz',
-                     settings.ROOT_DIR + 'var/log'])
-    raise RockStorAPIException(detail=e.__str__())
+class SFTP(models.Model):
+    READ_ONLY = "ro"
+    READ_WRITE = "rw"
+    share = models.OneToOneField('Share')
+    """read only by default"""
+    MODIFY_CHOICES = (
+        (READ_ONLY, 'ro'),
+        (READ_WRITE, 'rw'),
+        )
+    editable = models.CharField(max_length=2, choices=MODIFY_CHOICES,
+                                default=READ_ONLY)
+    class Meta:
+        app_label = 'storageadmin'
+
+

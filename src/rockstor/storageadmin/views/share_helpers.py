@@ -15,18 +15,25 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-from storageadmin.exceptions import RockStorAPIException
-from system.osi import run_command
+
 from django.conf import settings
+from storageadmin.models import (Share, Disk)
+from fs.btrfs import (mount_share, is_share_mounted)
+from storageadmin.util import handle_exception
 
 import logging
 logger = logging.getLogger(__name__)
 
-def handle_exception(e, request):
-    logger.error('request path: %s method: %s data: %s' %
-                 (request.path, request.method, request.DATA))
-    logger.exception('exception: %s' % e.__str__())
-    run_command(['/usr/bin/tar', '-c', '-z', '-f',
-                     settings.ROOT_DIR + 'src/rockstor/logs/error.tgz',
-                     settings.ROOT_DIR + 'var/log'])
-    raise RockStorAPIException(detail=e.__str__())
+def helper_mount_share(share, mnt_pt=None):
+    if (not is_share_mounted(share.name)):
+        pool_device = Disk.objects.filter(pool=share.pool)[0].name
+        if(mnt_pt is None):
+            mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
+        mount_share(share.subvol_name, pool_device, mnt_pt)
+
+def validate_share(sname, request):
+    try:
+        return Share.objects.get(name=sname)
+    except:
+        e_msg = ('Share with name: %s does not exist' % sname)
+        handle_exception(Exception(e_msg), request)

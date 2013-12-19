@@ -21,7 +21,7 @@ from storageadmin.models import (Disk, Pool, Share, Snapshot, NFSExport,
                                  SambaShare, IscsiTarget, Appliance,
                                  SupportCase, DashboardConfig,
                                  NetworkInterface, User, PoolScrub, Setup,
-                                 NFSExportGroup)
+                                 NFSExportGroup, SFTP)
 from django.contrib.auth.models import User as DjangoUser
 
 class DiskInfoSerializer(serializers.ModelSerializer):
@@ -100,3 +100,7 @@ class PoolScrubSerializer(serializers.ModelSerializer):
 class SetupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Setup
+
+class SFTPSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SFTP
