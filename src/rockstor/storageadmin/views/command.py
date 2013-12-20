@@ -26,7 +26,7 @@ from rest_framework.authentication import (BasicAuthentication,
                                            SessionAuthentication)
 from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
-from system.osi import (uptime, refresh_nfs_exports)
+from system.osi import (uptime, refresh_nfs_exports, update_check, update_run)
 from storageadmin.models import NFSExport
 from nfs_helpers import create_nfs_export_input
 from storageadmin.util import handle_exception
@@ -62,3 +62,11 @@ class CommandView(APIView):
         elif (command == 'uptime'):
             return Response(uptime())
 
+        elif (command == 'update-check'):
+            if (update_check()):
+                return Response('Yes')
+            return Response('No')
+
+        elif (command == 'update'):
+            update_run()
+            return Response('Done')

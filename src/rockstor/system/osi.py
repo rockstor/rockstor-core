@@ -45,6 +45,7 @@ IFUP = '/sbin/ifup'
 IFDOWN = '/sbin/ifdown'
 ROUTE = '/sbin/route'
 SYSTEMCTL = '/usr/bin/systemctl'
+YUM = '/usr/bin/yum'
 
 import logging
 logger = logging.getLogger(__name__)
@@ -399,3 +400,11 @@ def update_issue(ipaddr):
     with open('/etc/issue', 'a') as ifo:
         ifo.write(msg)
 
+def update_check():
+    out, err, rc = run_command([YUM, 'check-update'])
+    if (rc == 100):
+        return True
+    return False
+
+def update_run():
+    return run_command([YUM, '-y', 'update'])
