@@ -9,7 +9,7 @@ base = os.path.dirname(base)
 import sys
 sys.path[0:0] = [
   join(base, 'src/rockstor'),
-  join(base, 'eggs/djangorecipe-1.6-py2.7.egg'),
+  join(base, 'eggs/djangorecipe-1.7-py2.7.egg'),
   join(base, 'eggs/Django-1.4.3-py2.7.egg'),
   join(base, 'eggs/zc.recipe.egg-2.0.1-py2.7.egg'),
   join(base, 'eggs/zc.buildout-2.2.1-py2.7.egg'),
