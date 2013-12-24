@@ -43,6 +43,10 @@
   </div>
 </div>
 
+<% if (freeShares.length > 0) { %>
+  <a href="#add-sftp-share" id="add-sftp-share" class="btn btn-primary"><i class="icon-edit icon-white"></i> Add SFTP Share</a>
+<% } else { %>
+  <a href="#add-sftp-share" id="add-sftp-share" class="btn btn-primary disabled" title="No shares available to export via SFTP"><i class="icon-edit icon-white"></i> Add SFTP Share</a>
 
-<a href="#add-sftp-share" id="add-sftp-share" class="btn btn-primary"><i class="icon-edit icon-white"></i> Add SFTP Share</a>
+<% } %>
 

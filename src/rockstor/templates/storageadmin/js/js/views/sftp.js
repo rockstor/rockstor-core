@@ -36,6 +36,10 @@ SFTPView  = RockstoreLayoutView.extend({
     this.module_name = 'sftp';
     this.collection = new SFTPCollection();
     this.dependencies.push(this.collection);
+    this.shares = new ShareCollection();
+    // dont paginate shares for now
+    this.shares.pageSize = 1000; 
+    this.dependencies.push(this.shares);
   },
 
   render: function() {
@@ -45,8 +49,15 @@ SFTPView  = RockstoreLayoutView.extend({
   },
   
   renderSFTP: function() {
+    this.freeShares = this.shares.reject(function(share) {
+      s = this.collection.find(function(sftpShare) {
+        return (sftpShare.get('share') == share.get('name'));
+      });
+      return !_.isUndefined(s);
+    }, this);
     $(this.el).html(this.template({
-      sftp: this.collection
+      sftp: this.collection,
+      freeShares: this.freeShares
     }));
     this.$(".ph-pagination").html(this.paginationTemplate({
       collection: this.collection
