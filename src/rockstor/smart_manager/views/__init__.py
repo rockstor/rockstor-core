@@ -38,6 +38,7 @@ from replication_service import ReplicationServiceView
 from ntp_service import NTPServiceView
 from winbind_service import WinbindServiceView
 from ldap_service import LdapServiceView
+from sftp_service import SFTPServiceView
 from tasktypes import TaskTypeView
 from task_scheduler import TaskSchedulerView
 from task_log import TaskLogView
