@@ -65,7 +65,7 @@ def sftp_mount_map(mnt_prefix):
 
 def sftp_mount(share, mnt_prefix, sftp_mnt_prefix, mnt_map, editable='rw'):
     #don't mount if already mounted
-    sftp_mnt_pt = ('%s%s' % (sftp_mnt_prefix, share.name))
+    sftp_mnt_pt = ('%s%s/%s' % (sftp_mnt_prefix, share.name, share.name))
     share_mnt_pt = ('%s%s' % (mnt_prefix, share.name))
     if (share.name in mnt_map):
         cur_editable = mnt_map[share.name]
