@@ -59,6 +59,10 @@ class SFTPView(GenericView):
             logger.info('sftp mnt map = %s' % mnt_map)
             input_list = []
             for share in shares:
+                if (SFTP.objects.filter(share=share).exists()):
+                    e_msg = ('Share: %s is already exported via SFTP')
+                    handle_exception(Exception(e_msg), request)
+            for share in shares:
                 sftpo = SFTP(share=share, editable=editable)
                 sftpo.save()
                 #mount if not already mounted
@@ -92,9 +96,11 @@ class SFTPView(GenericView):
             handle_exception(Exception(e_msg), request)
 
         try:
-            if (is_share_mounted(sftpo.share.name, settings.SFTP_MNT_ROOT)):
-                umount_root(('%s%s' % (settings.SFTP_MNT_ROOT,
-                                       sftpo.share.name)))
+            mnt_prefix = ('%s%s/' % (settings.SFTP_MNT_ROOT, sftpo.share.name))
+            if (is_share_mounted(sftpo.share.name, mnt_prefix)):
+                umount_root(('%s%s/%s' %
+                             (settings.SFTP_MNT_ROOT,
+                              sftpo.share.name, sftpo.share.name)))
             sftpo.delete()
             input_list = []
             for so in SFTP.objects.all():
