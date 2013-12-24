@@ -63,6 +63,11 @@ class SFTPView(GenericView):
                     e_msg = ('Share(%s) is already exported via SFTP' %
                              share.name)
                     handle_exception(Exception(e_msg), request)
+                if (share.owner == 'root'):
+                    e_msg = ('Share(%s) is owned by root. It cannot be '
+                             'exported via SFTP with root ownership' %
+                             share.name)
+                    handle_exception(Exception(e_msg), request)
             for share in shares:
                 sftpo = SFTP(share=share, editable=editable)
                 sftpo.save()
