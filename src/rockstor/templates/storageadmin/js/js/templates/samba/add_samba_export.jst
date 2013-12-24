@@ -10,7 +10,7 @@
         <div class="control-group">
           <label class="control-label" for="shares">Share to export<span class="required"> *</span></label>
           <div class="controls">
-            <select name="share" id="share" size="10" >
+            <select name="share" id="share" size="10" multiple>
               <% shares.each(function(share, index) { %>
                 <% if (share.get('smb_shares').length == 0) { %>
                   <option value="<%= share.get('name') %>"><%= share.get('name') %></option>
