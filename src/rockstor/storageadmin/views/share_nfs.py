@@ -28,8 +28,9 @@ from fs.btrfs import (mount_share, is_share_mounted, umount_root)
 from system.osi import (refresh_nfs_exports, nfs4_mount_teardown)
 from generic_view import GenericView
 from nfs_helpers import (create_nfs_export_input, parse_options,
-                         dup_export_check, validate_share, refresh_wrapper,
+                         dup_export_check, refresh_wrapper,
                          teardown_wrapper, validate_export_group)
+from share_helpers import validate_share
 
 import logging
 logger = logging.getLogger(__name__)

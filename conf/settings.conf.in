@@ -232,6 +232,8 @@ PIPELINE_JS = {
             'js/views/add_scheduled_task.js',
             'js/views/tasks.js',
             'js/views/rollback.js',
+            'js/views/sftp.js',
+            'js/views/add_sftp_share.js',
             ),
         'output_filename': 'js/application.js'
         },
@@ -304,6 +306,7 @@ SMB_CONF = '${django-settings-conf:smb_conf}'
 AVAHI_SMB_CONF = '${django-settings-conf:avahi_smb_conf}'
 MNT_PT = '/mnt2/'
 NFS_EXPORT_ROOT = '/export/'
+SFTP_MNT_ROOT = '/mnt3/'
 
 TAP_DIR = '${django-settings-conf:taplib}'
 TAP_SERVER = ('127.0.0.1', ${django-settings-conf:tapport})

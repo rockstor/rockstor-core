@@ -20,7 +20,8 @@ from django.conf.urls.defaults import patterns, url
 from smart_manager.views import (BaseServiceView, NISServiceView,
                                  SambaServiceView, NFSServiceView,
                                  NTPServiceView, WinbindServiceView,
-                                 LdapServiceView, ReplicationServiceView)
+                                 LdapServiceView, SFTPServiceView,
+                                 ReplicationServiceView)
 
 command_regex = ('config|start|stop')
 
@@ -40,6 +41,7 @@ urlpatterns = patterns('',
         WinbindServiceView.as_view()),
     url(r'^ldap$', LdapServiceView.as_view()),
     url(r'^ldap/(?P<command>%s)$' % command_regex, LdapServiceView.as_view()),
+    url(r'^sftp/(?P<command>%s)$' % command_regex, SFTPServiceView.as_view()),
     url(r'^replication$', ReplicationServiceView.as_view()),
     url(r'^replication/(?P<command>%s)$' % command_regex,
         ReplicationServiceView.as_view()),

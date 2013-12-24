@@ -1,0 +1,45 @@
+<h3>Add SFTP Share</h3>
+<div class="row-fluid">
+  <div class="span8">
+    <label class="control-label"><span class="required">*</span> indicates required fields</label>
+    <div class="form-box">
+      <form id="add-sftp-share-form" name="aform">
+        <div class="messages"></div>
+
+        <!-- Shares -->
+        <div class="control-group">
+          <label class="control-label" for="shares">Shares to export via sftp<span class="required"> *</span></label>
+          <div class="controls">
+            <select name="shares" id="shares" size="10" multiple>
+              <% _.each(shares, function(share, index) { %>
+                <% console.log(share); %>
+                <option value="<%= share.get('name') %>"><%= share.get('name') %></option>
+              <% }); %>
+            </select>
+          </div>
+        </div>
+
+        <!-- Read only -->
+        <div class="control-group">
+          <div class="controls">
+            <label class="checkbox">
+              <input class="checkbox inline" type="checkbox" id="read_only" name="read_only" placeholder="Read only">
+              Read only
+            </label>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="control-group">
+          <div class="controls">
+            <a id="cancel" class="btn">Cancel</a>
+            <input type="Submit" id="create-sftp-share" class="btn btn-primary" value="Submit"></input>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div> <!-- span8 -->
+</div>  <!-- row-fluid -->
+
+
