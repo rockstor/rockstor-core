@@ -12,7 +12,9 @@
           <div class="controls">
             <select name="share" id="share" size="10" >
               <% shares.each(function(share, index) { %>
-                <option value="<%= share.get('name') %>"><%= share.get('name') %></option>
+                <% if (share.get('smb_shares').length == 0) { %>
+                  <option value="<%= share.get('name') %>"><%= share.get('name') %></option>
+                <% } %>
               <% }); %>
             </select>
           </div>
