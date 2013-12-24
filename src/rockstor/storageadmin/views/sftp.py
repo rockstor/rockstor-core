@@ -72,13 +72,13 @@ class SFTPView(GenericView):
                            mnt_map, editable)
                 input_list.append({'user': share.owner,
                                    'dir': ('%s%s' % (settings.SFTP_MNT_ROOT,
-                                                     share.name)),})
+                                                     share.owner)),})
             for sftpo in SFTP.objects.all():
                 if (sftpo.share not in shares):
                     input_list.append({'user': sftpo.share.owner,
                                        'dir': ('%s%s' %
                                                (settings.SFTP_MNT_ROOT,
-                                                sftpo.share.name)),})
+                                                sftpo.share.owner)),})
             logger.info('input_list = %s' % input_list)
             update_sftp_config(input_list)
             return Response()
@@ -96,11 +96,9 @@ class SFTPView(GenericView):
             handle_exception(Exception(e_msg), request)
 
         try:
-            mnt_prefix = ('%s%s/' % (settings.SFTP_MNT_ROOT, sftpo.share.name))
+            mnt_prefix = ('%s%s/' % (settings.SFTP_MNT_ROOT, sftpo.share.owner))
             if (is_share_mounted(sftpo.share.name, mnt_prefix)):
-                umount_root(('%s%s/%s' %
-                             (settings.SFTP_MNT_ROOT,
-                              sftpo.share.name, sftpo.share.name)))
+                umount_root(('%s%s' % (mnt_prefix,sftpo.share.name)))
             sftpo.delete()
             input_list = []
             for so in SFTP.objects.all():
