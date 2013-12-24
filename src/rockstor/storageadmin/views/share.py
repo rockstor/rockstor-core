@@ -20,7 +20,7 @@ import re
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (Share, Snapshot, Disk, Pool, Snapshot,
-                                 NFSExport, SambaShare)
+                                 NFSExport, SambaShare, SFTP)
 from fs.btrfs import (add_share, remove_share, share_id, update_quota,
                       share_usage, is_share_mounted)
 from storageadmin.serializers import ShareSerializer
@@ -158,22 +158,27 @@ class ShareView(GenericView):
                 handle_exception(Exception(e_msg), request)
 
             if (NFSExport.objects.filter(share=share).exists()):
-                e_msg = ('Share: %s cannot be deleted as it is exported via '
+                e_msg = ('Share(%s) cannot be deleted as it is exported via '
                          'nfs. Delete nfs exports and try again' % sname)
                 handle_exception(Exception(e_msg), request)
 
             if (SambaShare.objects.filter(share=share).exists()):
-                e_msg = ('Share: %s cannot be deleted as it is shared via '
+                e_msg = ('Share(%s) cannot be deleted as it is shared via '
                          'Samba. Unshare and try again' % sname)
                 handle_exception(Exception(e_msg), request)
 
             if (Snapshot.objects.filter(share=share).exists()):
-                e_msg = ('Share: %s cannot be deleted as it has '
+                e_msg = ('Share(%s) cannot be deleted as it has '
                          'snapshots. Delete snapshots and try again' % sname)
                 handle_exception(Exception(e_msg), request)
 
+            if (SFTP.objects.filter(share=share).exists()):
+                e_msg = ('Share(%s) cannot be deleted as it is exported via '
+                         'SFTP. Delete SFTP export and try again' % sname)
+                handle_exception(Exception(e_msg), request)
+
             pool_device = Disk.objects.filter(pool=share.pool)[0].name
-            e_msg = ('Share: %s is still mounted and cannot be deleted.'
+            e_msg = ('Share(%s) is still mounted and cannot be deleted.'
                      ' Try again later' % sname)
             try:
                 remove_share(share.pool.name, pool_device, share.subvol_name)
