@@ -25,5 +25,10 @@
   <% } else { %>
     <li><a href="#nfs-exports"><i class="icon-share"></i> NFS Exports</a></li>
   <% } %>
+  <% if (selected == "samba-exports") { %>
+    <li><a href="#samba-exports" class="selected"><i class="icon-share icon-white"></i> Samba Exports</a></li>
+  <% } else { %>
+    <li><a href="#samba-exports"><i class="icon-share"></i> Samba Exports</a></li>
+  <% } %>
 </ul>
 

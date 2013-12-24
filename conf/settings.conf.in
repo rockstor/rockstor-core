@@ -223,6 +223,8 @@ PIPELINE_JS = {
             'js/views/replica_trails.js',
             'js/views/add_replication_task.js',
             'js/views/nfs_exports.js',
+            'js/views/samba.js',
+            'js/views/add_samba_export.js',
             'js/views/add_nfs_export.js',
             'js/views/edit_nfs_export.js',
             'js/views/networks.js',

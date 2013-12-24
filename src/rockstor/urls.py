@@ -19,7 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from django.conf.urls.defaults import patterns, include, url
 from storageadmin.views import (SetupWizardView, LoginView,
                                 SupportView, DashboardConfigView,
-                                SetupUserView, NFSExportGroupView)
+                                SetupUserView, NFSExportGroupView,
+                                SambaView)
 import os.path
 
 site_media = os.path.join(
@@ -74,6 +75,7 @@ urlpatterns = patterns('',
     (r'^api/support', include('storageadmin.urls.support')),
     url(r'^api/nfs-exports$', NFSExportGroupView.as_view()),
     url(r'^api/nfs-exports/(?P<export_id>\d+)$', NFSExportGroupView.as_view()),
+    url(r'^api/samba$', SambaView.as_view()),
 
     # Dashboard config
     url(r'^api/dashboardconfig/$', DashboardConfigView.as_view(), name='dashboardconfig-view'),
