@@ -26,6 +26,7 @@
 
 SFTPView  = RockstoreLayoutView.extend({
   events: {
+    'click .delete-sftp-share': 'deleteSFTP'
   },
     
   initialize: function() {
