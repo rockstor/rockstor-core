@@ -26,6 +26,7 @@
 
 AddSambaExportView = RockstoreLayoutView.extend({
   events: {
+    'click #cancel': 'cancel'
   },
 
   initialize: function() {
