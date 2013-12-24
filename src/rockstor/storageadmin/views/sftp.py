@@ -52,15 +52,16 @@ class SFTPView(GenericView):
         shares = [validate_share(s, request) for s in request.DATA['shares']]
         logger.info('shares = %s' % shares)
         editable = 'rw'
-        if ('read_only' in request.DATA):
+        if ('read_only' in request.DATA and request.DATA['read_only'] is True):
             editable = 'ro'
         try:
             mnt_map = sftp_mount_map(settings.SFTP_MNT_ROOT)
-            logger.info('sftp mnt map = %s' % mnt_map)
+            logger.info('mount map: %s' % mnt_map)
             input_list = []
             for share in shares:
                 if (SFTP.objects.filter(share=share).exists()):
-                    e_msg = ('Share: %s is already exported via SFTP')
+                    e_msg = ('Share(%s) is already exported via SFTP' %
+                             share.name)
                     handle_exception(Exception(e_msg), request)
             for share in shares:
                 sftpo = SFTP(share=share, editable=editable)
