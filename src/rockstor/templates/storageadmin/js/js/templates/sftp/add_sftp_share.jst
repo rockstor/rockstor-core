@@ -11,7 +11,8 @@
           <label class="control-label" for="shares">Shares to export via sftp<span class="required"> *</span></label>
           <div class="controls">
             <select name="shares" id="shares" size="10" multiple>
-              <% shares.each(function(share, index) { %>
+              <% _.each(shares, function(share, index) { %>
+                <% console.log(share); %>
                 <option value="<%= share.get('name') %>"><%= share.get('name') %></option>
               <% }); %>
             </select>
@@ -22,7 +23,7 @@
         <div class="control-group">
           <div class="controls">
             <label class="checkbox">
-              <input class="checlbox inline" type="checkbox" id="read_only" name="read_only" placeholder="Read only">
+              <input class="checkbox inline" type="checkbox" id="read_only" name="read_only" placeholder="Read only">
               Read only
             </label>
           </div>

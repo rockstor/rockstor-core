@@ -26,7 +26,7 @@
 
 AddSFTPShareView = RockstoreLayoutView.extend({
   events: {
-    "click #js-cancel": "cancel"
+    "click #cancel": "cancel"
   },
 
   initialize: function() {
@@ -36,6 +36,8 @@ AddSFTPShareView = RockstoreLayoutView.extend({
     // dont paginate shares for now
     this.shares.pageSize = 1000; 
     this.dependencies.push(this.shares);
+    this.sftpShares = new SFTPCollection();
+    this.dependencies.push(this.sftpShares);
     this.modify_choices = [
       {name: 'ro', value: 'ro'}, 
       {name: 'rw', value: 'rw'},
@@ -49,8 +51,14 @@ AddSFTPShareView = RockstoreLayoutView.extend({
 
   renderSFTPForm: function() {
     var _this = this;
+    this.freeShares = this.shares.reject(function(share) {
+      s = this.sftpShares.find(function(sftpShare) {
+        return (sftpShare.get('share') == share.get('name'));
+      });
+      return !_.isUndefined(s);
+    }, this);
     $(this.el).html(this.template({
-      shares: this.shares,
+      shares: this.freeShares,
     }));
     
     $('#add-sftp-share-form :input').tooltip();
