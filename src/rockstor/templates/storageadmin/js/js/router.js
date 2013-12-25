@@ -61,6 +61,8 @@ var AppRouter = Backbone.Router.extend({
     "add_replication_task": "addReplicationTask",
     "nfs-exports": "showNFSExports",
     "add-nfs-export": "addNFSExport",
+    "samba-exports": "showSambaExports",
+    "add-samba-export": "addSambaExport",
     "nfs-exports/edit/:nfsExportGroupId": "editNFSExport",
     "network": "showNetworks",
     "network/:name/edit": "editNetwork",
@@ -460,6 +462,22 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').append(this.currentLayout.render().el);
   },
   
+  showSambaExports: function() {
+    this.renderSidebar('storage', 'samba');
+    this.cleanup();
+    this.currentLayout = new SambaView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+  
+  addSambaExport: function() {
+    this.renderSidebar('storage', 'samba');
+    this.cleanup();
+    this.currentLayout = new AddSambaExportView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
   showSFTP: function() {
     this.renderSidebar('storage', 'sftp');
     this.cleanup();

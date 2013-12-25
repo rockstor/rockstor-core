@@ -50,6 +50,7 @@ class NFSExportGroupSerializer(serializers.ModelSerializer):
         model = NFSExportGroup
 
 class SambaShareSerializer(serializers.ModelSerializer):
+    share = serializers.CharField(source='share_name')
     class Meta:
         model = SambaShare
 
@@ -61,7 +62,6 @@ class ShareSerializer(serializers.ModelSerializer):
     snapshots = SnapshotSerializer(source='snapshot_set')
     pool = PoolInfoSerializer(source='pool')
     nfs_exports = NFSExportSerializer(source='nfsexport_set')
-    smb_shares = SambaShareSerializer(source='sambashare_set')
     usage = serializers.IntegerField(source='cur_usage')
 
     class Meta:

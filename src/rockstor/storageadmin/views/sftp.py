@@ -50,7 +50,6 @@ class SFTPView(GenericView):
             e_msg = ('Must provide share names')
             handle_exception(Exception(e_msg), request)
         shares = [validate_share(s, request) for s in request.DATA['shares']]
-        logger.info('shares = %s' % shares)
         editable = 'rw'
         if ('read_only' in request.DATA and request.DATA['read_only'] is True):
             editable = 'ro'
@@ -85,7 +84,6 @@ class SFTPView(GenericView):
                                        'dir': ('%s%s' %
                                                (settings.SFTP_MNT_ROOT,
                                                 sftpo.share.owner)),})
-            logger.info('input_list = %s' % input_list)
             update_sftp_config(input_list)
             return Response()
         except RockStorAPIException:
@@ -98,7 +96,7 @@ class SFTPView(GenericView):
         try:
             sftpo = SFTP.objects.get(id=id)
         except:
-            e_msg = ('SFTP config for the id: %s does not exist' % id)
+            e_msg = ('SFTP config for the id(%s) does not exist' % id)
             handle_exception(Exception(e_msg), request)
 
         try:
