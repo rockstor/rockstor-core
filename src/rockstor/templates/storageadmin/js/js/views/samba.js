@@ -48,9 +48,11 @@ SambaView  = RockstoreLayoutView.extend({
   
   renderSamba: function() {
     this.freeShares = this.shares.reject(function(share) {
-      return (share.get('smb_shares').length > 0);
-    });
-    console.log(this.freeShares);
+      s = this.collection.find(function(sambaShare) {
+        return (sambaShare.get('share') == share.get('name'));
+      });
+      return !_.isUndefined(s);
+    }, this);
     $(this.el).html(this.template({
       collection: this.collection,
       freeShares: this.freeShares

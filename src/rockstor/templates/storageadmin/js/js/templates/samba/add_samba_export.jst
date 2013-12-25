@@ -11,10 +11,8 @@
           <label class="control-label" for="shares">Select one or more shares<span class="required"> *</span></label>
           <div class="controls">
             <select name="shares" id="share" size="10" multiple>
-              <% shares.each(function(share, index) { %>
-                <% if (share.get('smb_shares').length == 0) { %>
-                  <option value="<%= share.get('name') %>"><%= share.get('name') %></option>
-                <% } %>
+              <% _.each(shares, function(share, index) { %>
+                <option value="<%= share.get('name') %>"><%= share.get('name') %></option>
               <% }); %>
             </select>
           </div>

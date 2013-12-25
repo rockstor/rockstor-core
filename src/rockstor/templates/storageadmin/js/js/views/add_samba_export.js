@@ -36,6 +36,9 @@ AddSambaExportView = RockstoreLayoutView.extend({
     // dont paginate shares for now
     this.shares.pageSize = 1000; 
     this.dependencies.push(this.shares);
+    this.sambaShares = new SambaCollection();
+    this.dependencies.push(this.sambaShares);
+
     this.yes_no_choices = [
       {name: 'yes', value: 'yes'},
       {name: 'no', value: 'no'}, 
@@ -53,8 +56,14 @@ AddSambaExportView = RockstoreLayoutView.extend({
 
   renderSambaForm: function() {
     var _this = this;
+    this.freeShares = this.shares.reject(function(share) {
+      s = this.sambaShares.find(function(sambaShare) {
+        return (sambaShare.get('share') == share.get('name'));
+      });
+      return !_.isUndefined(s);
+    }, this);
     $(this.el).html(this.template({
-      shares: this.shares,
+      shares: this.freeShares,
       browsable_choices: this.browsable_choices,
       guest_ok_choices: this.guest_ok_choices,
       read_only_choices: this.read_only_choices
