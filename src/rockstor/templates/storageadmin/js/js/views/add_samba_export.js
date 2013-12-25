@@ -76,7 +76,7 @@ AddSambaExportView = RockstoreLayoutView.extend({
 
         console.log(JSON.stringify(_this.$('#add-samba-export-form').getJSON()));
         $.ajax({
-          url: '/api/shares/' + _this.$('#share').val() + '/samba',
+          url: '/api/samba',
           type: 'POST',
           dataType: 'json',
           contentType: 'application/json',
