@@ -36,6 +36,8 @@ SambaView  = RockstoreLayoutView.extend({
     this.module_name = 'samba';
     this.collection = new SambaCollection();
     this.dependencies.push(this.collection);
+    this.shares = new ShareCollection();
+    this.dependencies.push(this.shares);
   },
 
   render: function() {
@@ -45,8 +47,13 @@ SambaView  = RockstoreLayoutView.extend({
   },
   
   renderSamba: function() {
+    this.freeShares = this.shares.reject(function(share) {
+      return (share.get('smb_shares').length > 0);
+    });
+    console.log(this.freeShares);
     $(this.el).html(this.template({
       collection: this.collection,
+      freeShares: this.freeShares
     }));
     this.$(".ph-pagination").html(this.paginationTemplate({
       collection: this.collection

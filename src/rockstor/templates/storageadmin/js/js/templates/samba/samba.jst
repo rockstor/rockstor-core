@@ -33,7 +33,11 @@
     <% } else { %>
       <h4>No samba exports have been created</h4>
     <% } %>
-    <a href="#add-samba-export" id="add-samba-export" class="btn btn-primary"><i class="icon-edit icon-white"></i> Add Samba Export</a>
+    <% if (freeShares.length > 0) { %>
+      <a href="#add-samba-export" id="add-samba-export" class="btn btn-primary"><i class="icon-edit icon-white"></i> Add Samba Export</a>
+    <% } else { %>
+      <a href="#add-samba-export" id="add-samba-export" class="btn btn-primary disabled" title="No shares available to export through Samba"><i class="icon-edit icon-white"></i> Add Samba Export</a>
+    <% } %>
   </div>
 </div>
 
