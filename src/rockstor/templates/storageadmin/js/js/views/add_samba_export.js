@@ -75,7 +75,7 @@ AddSambaExportView = RockstoreLayoutView.extend({
       onfocusout: false,
       onkeyup: false,
       rules: {
-        share: 'required',  
+        shares: 'required',  
       },
       
       submitHandler: function() {
