@@ -26,6 +26,7 @@
 
 VersionView = RockstoreLayoutView.extend({
   events: {
+    'click #update': 'update'
   },
 
   initialize: function() {
@@ -43,6 +44,45 @@ VersionView = RockstoreLayoutView.extend({
   renderVersionInfo: function() {
     $(this.el).html(this.template());
   },
+
+  update: function() {
+    var _this = this;
+    $.ajax({
+      url: "/api/commands/update", 
+      type: "POST",
+      dataType: "json",
+      global: false, // dont show global loading indicator
+      success: function(data, status, xhr) {
+        _this.checkIfUp();
+      },
+      error: function(xhr, status, error) {
+        _this.checkIfUp();
+      }
+    });
+  },
+
+  checkIfUp: function() {
+    var _this = this;
+    this.isUpTimer = window.setInterval(function() {
+      $.ajax({
+        url: "/api/sm/sprobes/loadavg?limit=1&format=json", 
+        type: "GET",
+        dataType: "json",
+        global: false, // dont show global loading indicator
+        success: function(data, status, xhr) {
+          window.clearInterval(_this.isUpTimer);
+          _this.reloadWindow();
+        },
+        error: function(xhr, status, error) {
+          // server is not up, continue checking
+        }
+      });
+    }, 5000);
+  },
+
+  reloadWindow: function() {
+    location.reload(true);
+  }
 
 });
 
