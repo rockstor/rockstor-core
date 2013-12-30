@@ -61,12 +61,16 @@ var AppRouter = Backbone.Router.extend({
     "add_replication_task": "addReplicationTask",
     "nfs-exports": "showNFSExports",
     "add-nfs-export": "addNFSExport",
+    "samba-exports": "showSambaExports",
+    "add-samba-export": "addSambaExport",
     "nfs-exports/edit/:nfsExportGroupId": "editNFSExport",
     "network": "showNetworks",
     "network/:name/edit": "editNetwork",
     "scheduled-tasks": "showScheduledTasks",
     "scheduled-tasks/:taskId/log": "showTasks",
     "add-scheduled-task": "addScheduledTask",
+    "sftp": "showSFTP",
+    "add-sftp-share": "addSFTPShare",
     "404": "handle404",
     "500": "handle500",
     "*path": "showHome"
@@ -454,6 +458,38 @@ var AppRouter = Backbone.Router.extend({
     this.currentLayout = new TasksView({
       taskDefId: taskDefId
     });
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+  
+  showSambaExports: function() {
+    this.renderSidebar('storage', 'samba');
+    this.cleanup();
+    this.currentLayout = new SambaView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+  
+  addSambaExport: function() {
+    this.renderSidebar('storage', 'samba');
+    this.cleanup();
+    this.currentLayout = new AddSambaExportView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  showSFTP: function() {
+    this.renderSidebar('storage', 'sftp');
+    this.cleanup();
+    this.currentLayout = new SFTPView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  addSFTPShare: function() {
+    this.renderSidebar('storage', 'sftp');
+    this.cleanup();
+    this.currentLayout = new AddSFTPShareView();
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },

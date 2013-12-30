@@ -20,10 +20,28 @@
   <% } else { %>
     <li><a href="#replication"><i class="icon-random"></i> Replication</a></li>
   <% } %>
-  <% if (selected == "nfs-exports") { %>
-    <li><a href="#nfs-exports" class="selected"><i class="icon-share icon-white"></i> NFS Exports</a></li>
-  <% } else { %>
-    <li><a href="#nfs-exports"><i class="icon-share"></i> NFS Exports</a></li>
-  <% } %>
+  <li>
+    <div class="subnav">
+      <i class="icon-share"></i> File Sharing
+      <ul>
+        <% if (selected == "nfs-exports") { %>
+          <li><a href="#nfs-exports" class="selected">NFS</a></li>
+        <% } else { %>
+          <li><a href="#nfs-exports">NFS</a></li>
+        <% } %>
+        <% if (selected == "samba") { %>
+          <li><a href="#samba-exports" class="selected">Samba</a></li>
+        <% } else { %>
+          <li><a href="#samba-exports">Samba</a></li>
+        <% } %>
+        <% if (selected == "sftp") { %>
+          <li><a href="#sftp" class="selected">SFTP</a></li>
+        <% } else { %>
+          <li><a href="#sftp">SFTP</a></li>
+        <% } %>
+      </ul>
+    </div>
+  </li>
+   
 </ul>
 

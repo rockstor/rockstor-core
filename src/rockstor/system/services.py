@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 import re
-import subprocess
+from shutil import move
 
 from django.conf import settings
 from osi import run_command
@@ -26,9 +26,9 @@ from osi import run_command
 SERVICE_BIN = '/sbin/service'
 CHKCONFIG_BIN = '/sbin/chkconfig'
 AUTHCONFIG = '/usr/sbin/authconfig'
+SSHD_CONFIG = '/etc/ssh/sshd_config'
 SYSTEMCTL_BIN = '/usr/bin/systemctl'
 SUPERCTL_BIN = ('%s/bin/supervisorctl' % settings.ROOT_DIR)
-
 
 def init_service_op(service_name, command, throw=True):
     supported_services = ('nfs', 'smb', 'sshd', 'ypbind', 'rpcbind', 'ntpd',
@@ -66,6 +66,16 @@ def service_status(service_name):
             return init_service_op('nfs', 'status', throw=False)
     elif (service_name == 'ldap'):
         return init_service_op('nslcd', 'status', throw=False)
+    elif (service_name == 'sftp'):
+        out, err, rc = init_service_op('sshd', 'status', throw=False)
+        if (rc != 0):
+            return out, err, rc
+        with open(SSHD_CONFIG) as sfo:
+            for line in sfo.readlines():
+                if (re.match("Subsystem\tsftp\tinternal-sftp", line) is not
+                None):
+                        return out, err, rc
+            return out, err, -1
     elif (service_name == 'replication'):
         return superctl(service_name, 'status')
     return init_service_op(service_name, 'status', throw=False)
@@ -110,3 +120,20 @@ def toggle_auth_service(service, command, config=None):
     else:
         return None
     return run_command(ac_cmd)
+
+def toggle_sftp_service(switch=True):
+    written = False
+    sftp_str = ("Subsystem\tsftp\tinternal-sftp\n")
+    with open(SSHD_CONFIG) as sfo:
+        with open('/tmp/sshd_config', 'w') as tfo:
+            for line in sfo.readlines():
+                if (re.match('Subsystem', line) is not None):
+                    if (switch == True):
+                        tfo.write(sftp_str)
+                        written = True
+                else:
+                    tfo.write(line)
+            if (switch is True and written is False):
+                tfo.write(sftp_str)
+    move('/tmp/sshd_config', '/etc/ssh/sshd_config')
+    return init_service_op('sshd', 'reload')

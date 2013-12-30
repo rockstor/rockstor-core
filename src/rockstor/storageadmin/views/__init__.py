@@ -39,3 +39,5 @@ from setup_user import SetupUserView
 from share_acl import ShareACLView
 from nfs_exports import NFSExportGroupView
 from share_command import ShareCommandView
+from samba import SambaView
+from sftp import SFTPView
