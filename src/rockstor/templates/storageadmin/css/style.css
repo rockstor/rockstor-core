@@ -1750,3 +1750,22 @@ input[type="radio"].selectedRoot {
 
 #globalerrmsg { margin: 4px; }
 
+@keyframes versionflash {
+  0% { background-color: none; }
+  50% { background-color: #FAF611; }
+  100% { background-color: none; }
+}
+
+@-webkit-keyframes versionflash {
+  0% { background-color: none; }
+  50% { background-color: #FAF611; }
+  100% { background-color: none; }
+}
+
+#version-msg i { 
+  animation: versionflash 2s;
+  animation-iteration-count: infinite;
+  -webkit-animation: versionflash 2s;
+  border-radius: 7px; 
+}
+

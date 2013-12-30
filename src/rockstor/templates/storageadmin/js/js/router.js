@@ -69,6 +69,7 @@ var AppRouter = Backbone.Router.extend({
     "scheduled-tasks": "showScheduledTasks",
     "scheduled-tasks/:taskId/log": "showTasks",
     "add-scheduled-task": "addScheduledTask",
+    "version": "showVersion",
     "sftp": "showSFTP",
     "add-sftp-share": "addSFTPShare",
     "404": "handle404",
@@ -102,6 +103,12 @@ var AppRouter = Backbone.Router.extend({
     }
     if (!RockStorGlobals.browserChecked) {
       checkBrowser();
+    }
+
+    // set a timer to get current rockstor version and checkif there is an
+    // update available
+    if (!RockStorGlobals.versionCheckTimerStarted) {
+      setVersionCheckTimer();
     }
     
   },
@@ -490,6 +497,14 @@ var AppRouter = Backbone.Router.extend({
     this.renderSidebar('storage', 'sftp');
     this.cleanup();
     this.currentLayout = new AddSFTPShareView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  showVersion: function() {
+    this.renderSidebar("system", "version");
+    this.cleanup();
+    this.currentLayout = new VersionView();
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },
