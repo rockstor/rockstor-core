@@ -61,10 +61,15 @@ VersionView = RockstoreLayoutView.extend({
       mostRecentVersion: this.mostRecentVersion,
       changeList: this.changeList    
     }));
+    this.$('#updateModal').modal({
+      keyboard: false,
+      show: false
+    });
   },
 
   update: function() {
     var _this = this;
+    this.$('#updateModal').modal('show');
     $.ajax({
       url: "/api/commands/update", 
       type: "POST",
@@ -89,6 +94,7 @@ VersionView = RockstoreLayoutView.extend({
         global: false, // dont show global loading indicator
         success: function(data, status, xhr) {
           window.clearInterval(_this.isUpTimer);
+          _this.$('#updateModal').modal('hide');
           _this.reloadWindow();
         },
         error: function(xhr, status, error) {
