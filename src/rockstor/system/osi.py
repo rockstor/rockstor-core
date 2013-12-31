@@ -414,12 +414,11 @@ def update_check():
             if (re.match('---> Package rockstor.* updated', out[i])
                 is not None):
                 cur_version = out[i].split()[3].split(':')[1]
+            if (re.match('---> Package rockstor.* be an update', out[i])
+                is not None):
+                version = out[i].split()[3].split(':')[1]
             if (re.match('ChangeLog for: ', out[i]) is not None):
-                if (version is None):
-                    rpm = out[i].split()[-1]
-                    version = rpm.split('rockstor-')[1].split('.x86_64')[0]
-                    i = i + 1
-
+                i = i + 1
                 while True:
                     if (len(out) > i):
                         if (out[i+1] == ''):
