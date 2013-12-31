@@ -429,7 +429,10 @@ def update_check():
         if (version is None):
             version = cur_version
         return (cur_version, version, updates)
-    return False
+    #no update available
+    out, err, rc = run_command([YUM, 'info', 'installed', 'rockstor'])
+    version = ('%s-%s' % (out[4].split(': ')[1], out[5].split(': ')[1]))
+    return (version, version, [])
 
 def update_run():
     return run_command([YUM, '-y', 'update'])
