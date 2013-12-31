@@ -236,6 +236,7 @@ PIPELINE_JS = {
             'js/views/rollback.js',
             'js/views/sftp.js',
             'js/views/add_sftp_share.js',
+            'js/views/version.js',
             ),
         'output_filename': 'js/application.js'
         },

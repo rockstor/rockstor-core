@@ -477,6 +477,37 @@ function getCurrentTimeOnServer() {
   });
 }
 
+function setVersionCheckTimer() {
+  RockStorGlobals.versionCheckTimer = window.setInterval(function() {
+    checkVersion();
+  }, 10000);
+  checkVersion();
+  RockStorGlobals.versionCheckTimerStarted = true;
+}
+
+function checkVersion() {
+  $.ajax({
+    url: "/api/commands/update-check", 
+    type: "POST",
+    dataType: "json",
+    global: false, // dont show global loading indicator
+    success: function(data, status, xhr) {
+
+      var currentVersion = data[0];
+      var mostRecentVersion = data[1];
+      var changeList = data[2];
+      if (currentVersion != mostRecentVersion) {
+        $('#version-msg').html('RockStor ' + currentVersion + ' <i class="icon-arrow-up"></i>');
+      } else {
+        $('#version-msg').html('RockStor ' + currentVersion);
+      }
+    },
+    error: function(xhr, status, error) {
+    }
+  });
+
+}
+
 function fetchDependencies(dependencies, callback, context) {
   if (dependencies.length == 0) {
     if (callback) callback.apply(context);
@@ -515,6 +546,7 @@ RockStorGlobals = {
   currentAppliance: null,
   maxPageSize: 5000,
   browserChecked: false,
+  versionCheckTimerStarted: false
 }
 
 var RS_DATE_FORMAT = 'MMMM Do YYYY, h:mm:ss a';

@@ -22,6 +22,6 @@ from storageadmin.views import CommandView
 
 urlpatterns = patterns(
     '',
-    url(r'(?P<command>uptime|bootstrap|utcnow)$', CommandView.as_view(),
+    url(r'(?P<command>uptime|bootstrap|utcnow|update-check|update)$', CommandView.as_view(),
         name='user-view'),
 )

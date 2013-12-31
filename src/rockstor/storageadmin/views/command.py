@@ -26,7 +26,7 @@ from rest_framework.authentication import (BasicAuthentication,
                                            SessionAuthentication)
 from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
-from system.osi import (uptime, refresh_nfs_exports)
+from system.osi import (uptime, refresh_nfs_exports, update_check, update_run)
 from storageadmin.models import NFSExport
 from nfs_helpers import create_nfs_export_input
 from storageadmin.util import handle_exception
@@ -62,3 +62,19 @@ class CommandView(APIView):
         elif (command == 'uptime'):
             return Response(uptime())
 
+        elif (command == 'update-check'):
+            try:
+                return Response(update_check())
+            except Exception, e:
+                e_msg = ('Unalbe to check update due to a system error')
+                logger.exception(e)
+                handle_exception(Exception(e_msg), request)
+
+        elif (command == 'update'):
+            try:
+                update_run()
+                return Response('Done')
+            except Exception, e:
+                e_msg = ('Update failed due to a system error')
+                logger.exception(e)
+                handle_exception(Exception(e_msg), request)
