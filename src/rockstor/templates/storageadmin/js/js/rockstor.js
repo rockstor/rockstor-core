@@ -497,9 +497,9 @@ function checkVersion() {
       var mostRecentVersion = data[1];
       var changeList = data[2];
       if (currentVersion != mostRecentVersion) {
-        $('#version-msg').html(currentVersion + ' <i class="icon-arrow-up"></i>');
+        $('#version-msg').html('RockStor ' + currentVersion + ' <i class="icon-arrow-up"></i>');
       } else {
-        $('#version-msg').html(currentVersion);
+        $('#version-msg').html('RockStor ' + currentVersion);
       }
     },
     error: function(xhr, status, error) {
