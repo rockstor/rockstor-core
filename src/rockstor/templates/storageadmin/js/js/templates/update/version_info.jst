@@ -1,16 +1,15 @@
-<h3>RockStor Version 2.0</h3>
-Released December 27th, 2013
-<br><br>
-<h3>Update available!</h3>
-<p>A more recent version of RockStor has been released</p>
-<span class="h3">RockStor Version 2.1</span>&nbsp;&nbsp;&nbsp;&nbsp;
-<a id="update" class="btn btn-primary" title="Update">Update</a>
-<ol>
-  <li>Improved Samba/CIFS access including auto discovery of Shares</li>
-  <li>Better error handling where if a user experiences an error, clear next steps are provided to help fix the issue quickly</li>
-  <li>Integrated Rockstor services with systemd. Rockstor now starts automatically during boot and the overall management is more robust</li>
-  <li>Initial installation of RockStor is even simpler with fewer steps</li>
-</ol>
-
+<h3>RockStor <%= currentVersion %></h3>
+<% if (currentVersion != mostRecentVersion) { %>
+  <br><br>
+  <h3>Update available!</h3>
+  <p>A more recent version of RockStor has been released</p>
+  <span class="h3">RockStor <%= mostRecentVersion %></span>&nbsp;&nbsp;&nbsp;&nbsp;
+  <a id="update" class="btn btn-primary" title="Update">Update</a>
+  <ol>
+    <%= _.each(changeList, function(item) { %>
+      <li><%= item %> </li>
+    <% }); %>
+  </ol>
+<% } %>
 
 

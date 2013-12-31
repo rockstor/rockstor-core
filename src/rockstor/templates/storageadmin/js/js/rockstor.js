@@ -492,18 +492,17 @@ function checkVersion() {
     dataType: "json",
     global: false, // dont show global loading indicator
     success: function(data, status, xhr) {
-      // TODO parse version from data
-      var versionStr = 'RockStor 2.0';
-      if (data == 'yes') {
-        $('#version-msg').html(versionStr + ' <i class="icon-exclamation-sign icon-white"></i>');
+
+      var currentVersion = data[0];
+      var mostRecentVersion = data[1];
+      var changeList = data[2];
+      if (currentVersion != mostRecentVersion) {
+        $('#version-msg').html(currentVersion + ' <i class="icon-arrow-up"></i>');
       } else {
-        $('#version-msg').html(versionStr);
+        $('#version-msg').html(currentVersion);
       }
     },
     error: function(xhr, status, error) {
-      // TODO handle error
-      var versionStr = 'RockStor 2.0';
-      $('#version-msg').html(versionStr + ' <i class="icon-arrow-up"></i>');
     }
   });
 

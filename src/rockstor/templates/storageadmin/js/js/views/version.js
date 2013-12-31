@@ -37,12 +37,30 @@ VersionView = RockstoreLayoutView.extend({
   },
 
   render: function() {
-    this.renderVersionInfo();
+    $.ajax({
+      url: "/api/commands/update-check", 
+      type: "POST",
+      dataType: "json",
+      global: false, // dont show global loading indicator
+      success: function(data, status, xhr) {
+        this.currentVersion = data[0];
+        this.mostRecentVersion = data[1];
+        this.changeList = data[2];
+        this.renderVersionInfo();
+      },
+      error: function(xhr, status, error) {
+      }
+  });
+
     return this;
   },
 
   renderVersionInfo: function() {
-    $(this.el).html(this.template());
+    $(this.el).html(this.template({
+      currentVersion: this.currentVersion,
+      mostRecentVersion: this.mostRecentVersion,
+      changeList: this.changeList    
+    }));
   },
 
   update: function() {
