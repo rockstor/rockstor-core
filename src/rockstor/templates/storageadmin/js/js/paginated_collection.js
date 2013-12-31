@@ -71,7 +71,7 @@ var RockStorPaginatedCollection = Backbone.Collection.extend({
   },
 
   extraParams: function() {
-    return { page: this.page, format: "json", page_size: this.pageSize };
+    return { page: this.page, format: "json", page_size: this.pageSize, count: this.count };
   }
 
 });

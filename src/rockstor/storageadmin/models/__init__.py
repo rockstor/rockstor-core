@@ -35,4 +35,4 @@ from network_interface import NetworkInterface
 from user import User
 from scrub import PoolScrub
 from setup import Setup
-
+from sftp import SFTP

@@ -112,6 +112,10 @@ var SMBShare = Backbone.Model.extend({
   }
 });
 var SMBShareCollection = Backbone.Collection.extend({model: SMBShare});
+var SambaCollection = RockStorPaginatedCollection.extend({
+  model: SMBShare,
+  baseUrl: '/api/samba'
+});
 
 var Service = Backbone.Model.extend({
   idAttribute: "name",
@@ -294,3 +298,11 @@ var TaskCollection = RockStorPaginatedCollection.extend({
   }
 });
 
+var SFTP = Backbone.Model.extend({
+  urlRoot: '/api/sftp'    
+});
+
+var SFTPCollection = RockStorPaginatedCollection.extend({
+  model: SFTP,
+  baseUrl: '/api/sftp'
+});
