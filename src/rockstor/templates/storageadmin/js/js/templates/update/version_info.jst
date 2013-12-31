@@ -1,15 +1,17 @@
-<h3>RockStor <%= currentVersion %></h3>
+<h3>You are currently running RockStor <%= currentVersion %></h3>
 <% if (currentVersion != mostRecentVersion) { %>
-  <br><br>
-  <h3>Update available!</h3>
-  <p>A more recent version of RockStor has been released</p>
+  <br>
+  <h3>A new update is available!</h3>
   <span class="h3">RockStor <%= mostRecentVersion %></span>&nbsp;&nbsp;&nbsp;&nbsp;
   <a id="update" class="btn btn-primary" title="Update">Update</a>
-  <ol>
+  <br>
+  <br>
+  <h4>Here are the changes with this update</h4>
+  <ul>
     <% _.each(changeList, function(item) { %>
-      <li><%= item %> </li>
+      <li><h4><%= item %></h4></li>
     <% }); %>
-  </ol>
+  </ul>
 <% } else { %>
   <p>You are running the latest version of RockStor.</p>
 <% } %>
