@@ -6,10 +6,12 @@
   <span class="h3">RockStor <%= mostRecentVersion %></span>&nbsp;&nbsp;&nbsp;&nbsp;
   <a id="update" class="btn btn-primary" title="Update">Update</a>
   <ol>
-    <%= _.each(changeList, function(item) { %>
+    <% _.each(changeList, function(item) { %>
       <li><%= item %> </li>
     <% }); %>
   </ol>
+<% } else { %>
+  <p>You are running the latest version of RockStor.</p>
 <% } %>
 
 
