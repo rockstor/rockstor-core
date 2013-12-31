@@ -63,8 +63,18 @@ class CommandView(APIView):
             return Response(uptime())
 
         elif (command == 'update-check'):
-            return Response(update_check())
+            try:
+                return Response(update_check())
+            except Exception, e:
+                e_msg = ('Unalbe to check update due to a system error')
+                logger.exception(e)
+                handle_exception(Exception(e_msg), request)
 
         elif (command == 'update'):
-            update_run()
-            return Response('Done')
+            try:
+                update_run()
+                return Response('Done')
+            except Exception, e:
+                e_msg = ('Update failed due to a system error')
+                logger.exception(e)
+                handle_exception(Exception(e_msg), request)
