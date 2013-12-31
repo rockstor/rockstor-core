@@ -63,9 +63,7 @@ class CommandView(APIView):
             return Response(uptime())
 
         elif (command == 'update-check'):
-            if (update_check()):
-                return Response('Yes')
-            return Response('No')
+            return Response(update_check())
 
         elif (command == 'update'):
             update_run()

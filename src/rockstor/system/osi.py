@@ -401,9 +401,34 @@ def update_issue(ipaddr):
         ifo.write(msg)
 
 def update_check():
-    out, err, rc = run_command([YUM, 'check-update'])
-    if (rc == 100):
-        return True
+    out, err, rc = run_command([YUM, 'update', 'rockstor', '--changelog',
+                                '--assumeno'], throw=False)
+    if (rc == 1):
+        #parse the output for the following information
+        #1. what's the latest update version?
+        #2. what are the updates?
+        updates = []
+        cur_version = None
+        version = None
+        for i in range(len(out)):
+            if (re.match('---> Package rockstor.* updated', out[i])
+                is not None):
+                cur_version = out[i].split()[3].split(':')[1]
+            if (re.match('ChangeLog for: ', out[i]) is not None):
+                if (version is None):
+                    rpm = out[i].split()[-1]
+                    version = rpm.split('rockstor-')[1].split('.x86_64')[0]
+                    i = i + 1
+
+                while True:
+                    if (len(out) > i):
+                        if (out[i+1] == ''):
+                            break
+                        updates.append(out[i+1])
+                        i = i + 1
+        if (version is None):
+            version = cur_version
+        return (cur_version, version, updates)
     return False
 
 def update_run():
