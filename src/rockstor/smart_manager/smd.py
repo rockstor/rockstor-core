@@ -24,6 +24,7 @@ import models
 from django.conf import settings
 from django.core.serializers import deserialize
 from django.db import transaction
+from django.core.exceptions import ObjectDoesNotExist
 import zmq
 import logging
 logger = logging.getLogger(__name__)
@@ -31,6 +32,8 @@ from smart_manager import agents
 from scheduler.task_dispatcher import TaskDispatcher
 from cli.rest_util import api_call
 import time
+from smart_manager.models import (CPUMetric, LoadAvg, MemInfo, PoolUsage,
+                                  DiskStat, ShareUsage, ServiceStatus)
 
 def process_model_queue(q):
     cleanup_map = {}
@@ -44,6 +47,29 @@ def process_model_queue(q):
     for c in cleanup_map.keys():
         model = getattr(models, c.__class__.__name__)
         model.objects.filter(ts__lt=new_start).delete()
+
+def truncate_ts_data(max_records=settings.MAX_TS_RECORDS):
+    """
+    cleanup ts tables: CPUMetric, LoadAvg, MemInfo, PoolUsage, DiskStat and
+    ShareUsage, ServiceStatus
+    Discard all records older than last max_records.
+    """
+    ts_models = (CPUMetric, LoadAvg, MemInfo, PoolUsage, DiskStat, ShareUsage,
+                 ServiceStatus)
+    try:
+        for m in ts_models:
+            try:
+                latest_id = m.objects.latest('id').id
+            except ObjectDoesNotExist, e:
+                msg = ('Unable to get latest id for the model: %s. Moving '
+                       'on' % (m.__name__))
+                logger.error(msg)
+                continue
+            m.objects.filter(id__lt=latest_id-max_records).delete()
+    except Exception, e:
+        logger.error('Unable to truncate time series data')
+        logger.exception(e)
+        raise e
 
 def main():
     context = zmq.Context()
@@ -60,6 +86,11 @@ def main():
         logger.error('Unable to bootstrap the machine. Moving on..')
         logger.exception(e)
         pass
+    try:
+        truncate_ts_data()
+    except Exception, e:
+        e_msg = ('Unable to do the initial ts data truncation. Aborting...')
+        return
 
     live_procs = [ProcRetreiver(), ServiceMonitor(),
                   Stap(settings.TAP_SERVER),
@@ -67,6 +98,7 @@ def main():
     for p in live_procs:
         p.start()
 
+    num_ts_records = 0
     while (True):
         for p in live_procs:
             if (not p.is_alive()):
@@ -86,9 +118,18 @@ def main():
                 else:
                     #smart probe, proc, service django models
                     for d in deserialize("json", sink_data):
+                        num_ts_records = num_ts_records + 1
                         d.save()
         except zmq.error.Again:
             pass
         except Exception, e:
-            logger.error('exception while processing sink data')
+            logger.error('exception while processing sink data.')
             logger.exception(e)
+
+        if (num_ts_records > (settings.MAX_TS_RECORDS * 5)):
+            try:
+                truncate_ts_data()
+                num_ts_records = 0
+            except Exception, e:
+                logger.error('Error truncating time series data. Aborting...')
+                return
