@@ -15,26 +15,24 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-from datetime import (datetime, timedelta)
-from django.utils.timezone import utc
+import zmq
+import time
+import sys
+from django.conf import settings
+from django.core.serializers import deserialize
+from django.core.exceptions import ObjectDoesNotExist
+
 from procfs import ProcRetreiver
 from services import ServiceMonitor
 from stap_dispatcher import Stap
-import models
-from django.conf import settings
-from django.core.serializers import deserialize
-from django.db import transaction
-from django.core.exceptions import ObjectDoesNotExist
-import zmq
-import logging
-logger = logging.getLogger(__name__)
-from smart_manager import agents
 from scheduler.task_dispatcher import TaskDispatcher
+from smart_manager import agents
 from cli.rest_util import api_call
-import time
 from smart_manager.models import (CPUMetric, LoadAvg, MemInfo, PoolUsage,
                                   DiskStat, ShareUsage, ServiceStatus)
-import sys
+
+import logging
+logger = logging.getLogger(__name__)
 
 def truncate_ts_data(max_records=settings.MAX_TS_RECORDS):
     """
