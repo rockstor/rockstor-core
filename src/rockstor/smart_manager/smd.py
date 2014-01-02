@@ -36,19 +36,6 @@ from smart_manager.models import (CPUMetric, LoadAvg, MemInfo, PoolUsage,
                                   DiskStat, ShareUsage, ServiceStatus)
 import sys
 
-def process_model_queue(q):
-    cleanup_map = {}
-    max_interval = timedelta(seconds=settings.PROBE_DATA_INTERVAL)
-    new_start = datetime.utcnow().replace(tzinfo=utc) - max_interval
-
-    while (not q.empty()):
-        metric = q.get()
-        metric.save()
-        cleanup_map[metric] = True
-    for c in cleanup_map.keys():
-        model = getattr(models, c.__class__.__name__)
-        model.objects.filter(ts__lt=new_start).delete()
-
 def truncate_ts_data(max_records=settings.MAX_TS_RECORDS):
     """
     cleanup ts tables: CPUMetric, LoadAvg, MemInfo, PoolUsage, DiskStat and
