@@ -34,6 +34,7 @@ from cli.rest_util import api_call
 import time
 from smart_manager.models import (CPUMetric, LoadAvg, MemInfo, PoolUsage,
                                   DiskStat, ShareUsage, ServiceStatus)
+import sys
 
 def process_model_queue(q):
     cleanup_map = {}
@@ -54,8 +55,8 @@ def truncate_ts_data(max_records=settings.MAX_TS_RECORDS):
     ShareUsage, ServiceStatus
     Discard all records older than last max_records.
     """
-    ts_models = (CPUMetric, LoadAvg, MemInfo, PoolUsage, DiskStat, ShareUsage,
-                 ServiceStatus)
+    ts_models = (CPUMetric, LoadAvg, MemInfo, PoolUsage, DiskStat,
+                 ShareUsage, ServiceStatus)
     try:
         for m in ts_models:
             try:
@@ -71,6 +72,32 @@ def truncate_ts_data(max_records=settings.MAX_TS_RECORDS):
         logger.exception(e)
         raise e
 
+def clean_exit(children, pull_socket=None, context=None):
+    logger.error('clean exiting smd')
+    if (pull_socket is not None):
+        logger.error('closing pull socket')
+        pull_socket.close()
+        logger.error('pull socket closed')
+
+    if (context is not None):
+        logger.error('terminating zmq context')
+        context.term()
+        logger.error('zmq context terminated')
+
+    for p in children:
+        if (not p.is_alive()):
+            logger.error('child process: %s not alive. no need to terminate' %
+                         p.name)
+            continue
+
+        logger.error('terminating the child process: %s' % p.name)
+        p.terminate()
+        logger.error('waiting for child process: %s to exit' % p.name)
+        p.join()
+        logger.error('child process: %s terminated successfully' % p.name)
+    logger.error('smd out!')
+    sys.exit(0)
+
 def main():
     context = zmq.Context()
     pull_socket = context.socket(zmq.PULL)
@@ -85,12 +112,14 @@ def main():
     except Exception, e:
         logger.error('Unable to bootstrap the machine. Moving on..')
         logger.exception(e)
-        pass
+
     try:
         truncate_ts_data()
     except Exception, e:
         e_msg = ('Unable to do the initial ts data truncation. Aborting...')
-        return
+        logger.error(e_msg)
+        logger.exception(e)
+        clean_exit([], pull_socket, context)
 
     live_procs = [ProcRetreiver(), ServiceMonitor(),
                   Stap(settings.TAP_SERVER),
@@ -104,11 +133,11 @@ def main():
             if (not p.is_alive()):
                 msg = ('%s is dead. exitcode: %d' % (p.name, p.exitcode))
                 logger.error(msg)
-                live_procs.remove(p)
+                clean_exit(live_procs, pull_socket, context)
         if (len(live_procs) == 0):
             logger.error('All child processes have exited. I am returning.')
-            context.term()
-            return -1
+            clean_exit([], pull_socket, context)
+
         try:
             while (True):
                 sink_data = pull_socket.recv_json()
@@ -123,8 +152,9 @@ def main():
         except zmq.error.Again:
             pass
         except Exception, e:
-            logger.error('exception while processing sink data.')
+            logger.error('exception while processing sink data. Aborting...')
             logger.exception(e)
+            clean_exit(live_procs, pull_socket, context)
 
         if (num_ts_records > (settings.MAX_TS_RECORDS * 5)):
             try:
@@ -132,4 +162,5 @@ def main():
                 num_ts_records = 0
             except Exception, e:
                 logger.error('Error truncating time series data. Aborting...')
-                return
+                logger.exception(e)
+                clean_exit(live_procs, pull_socket, context)
