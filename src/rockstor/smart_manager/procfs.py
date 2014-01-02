@@ -246,7 +246,21 @@ class ProcRetreiver(Process):
                     share_map[share.qgroup] = share.name
                 usaged = shares_usage(p.name, pool_device, share_map)
                 for s in usaged.keys():
-                    su = ShareUsage(name=s, usage=usaged[s], ts=ts)
+                    su = None
+                    try:
+                        su = ShareUsage.objects.filter(name=s).latest('id')
+                        if ((ts - su.ts).total_seconds() > 90):
+                            su = None
+                    except Exception, e:
+                        e_msg = ('Unable to get latest share usage object '
+                                 'for share(%s)')
+                        logger.error(e_msg)
+                        logger.exception(e)
+                    if (su is None or su.usage != usaged[s]):
+                        su = ShareUsage(name=s, usage=usaged[s], ts=ts)
+                    else:
+                        su.ts = ts
+                        su.count = su.count + 1
                     self._sink_put(self.sink_socket, su)
             except Exception, e:
                 logger.debug('command exception while getting shares usage '
