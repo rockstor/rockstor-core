@@ -68,6 +68,7 @@ class ServiceMonitor(Process):
                         except Exception, e:
                             e_msg = ('Error getting the last status object '
                                      'for  service(%s)' % s.name)
+                            logger.error(e_msg)
                             logger.exception(e)
 
                     status = False
