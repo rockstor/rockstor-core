@@ -58,8 +58,8 @@ def sftp_mount_map(mnt_prefix):
         for line in pfo.readlines():
             if (re.search(' ' + mnt_prefix, line) is not None):
                 fields = line.split()
-                sname = fields[2].split('/')[-1]
-                editable = fields[5][1:3]
+                sname = fields[1].split('/')[-1]
+                editable = fields[3][:2]
                 mnt_map[sname] = editable
     return mnt_map
 
