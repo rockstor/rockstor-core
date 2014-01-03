@@ -27,11 +27,13 @@ from rest_framework.authentication import (BasicAuthentication,
 from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
 from system.osi import (uptime, refresh_nfs_exports, update_check, update_run)
-from storageadmin.models import NFSExport
+from fs.btrfs import (is_share_mounted, mount_share)
+from storageadmin.models import (Share, Disk, NFSExport)
 from nfs_helpers import create_nfs_export_input
 from storageadmin.util import handle_exception
 from datetime import datetime
 from django.utils.timezone import utc
+from django.conf import settings
 
 import logging
 logger = logging.getLogger(__name__)
@@ -46,6 +48,11 @@ class CommandView(APIView):
         if (command == 'bootstrap'):
             try:
                 logger.info('bootstrapping')
+                for share in Share.objects.all():
+                    if (not is_share_mounted(share.name)):
+                        mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
+                        pool_device = Disk.objects.filter(pool=share.pool)[0].name
+                        mount_share(share.subvol_name, pool_device, mnt_pt)
                 exports = create_nfs_export_input(NFSExport.objects.all())
                 logger.info('export = %s' % exports)
                 refresh_nfs_exports(exports)
