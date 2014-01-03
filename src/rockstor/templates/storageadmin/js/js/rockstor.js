@@ -480,7 +480,7 @@ function getCurrentTimeOnServer() {
 function setVersionCheckTimer() {
   RockStorGlobals.versionCheckTimer = window.setInterval(function() {
     checkVersion();
-  }, 10000);
+  }, 7200000);
   checkVersion();
   RockStorGlobals.versionCheckTimerStarted = true;
 }
