@@ -27,11 +27,14 @@ from rest_framework.authentication import (BasicAuthentication,
 from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
 from system.osi import (uptime, refresh_nfs_exports, update_check, update_run)
-from storageadmin.models import NFSExport
+from fs.btrfs import (is_share_mounted, mount_share)
+from system.ssh import (sftp_mount_map, sftp_mount)
+from storageadmin.models import (Share, Disk, NFSExport, SFTP)
 from nfs_helpers import create_nfs_export_input
 from storageadmin.util import handle_exception
 from datetime import datetime
 from django.utils.timezone import utc
+from django.conf import settings
 
 import logging
 logger = logging.getLogger(__name__)
@@ -44,17 +47,43 @@ class CommandView(APIView):
 
     def post(self, request, command):
         if (command == 'bootstrap'):
+            logger.info('bootstrapping...')
             try:
-                logger.info('bootstrapping')
+                for share in Share.objects.all():
+                    if (not is_share_mounted(share.name)):
+                        mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
+                        pool_device = Disk.objects.filter(pool=share.pool)[0].name
+                        mount_share(share.subvol_name, pool_device, mnt_pt)
+            except Exception, e:
+                e_msg = ('Unable to mount all shares during bootstrap.')
+                logger.error(e_msg)
+                logger.exception(e)
+                handle_exception(Exception(e_msg), request)
+
+            try:
+                mnt_map = sftp_mount_map(settings.SFTP_MNT_ROOT)
+                logger.info('mnt map = %s' % mnt_map)
+                for sftpo in SFTP.objects.all():
+                    sftp_mount(sftpo.share, settings.MNT_PT,
+                               settings.SFTP_MNT_ROOT, mnt_map, sftpo.editable)
+            except Exception, e:
+                e_msg = ('Unable to export all sftp shares due to a system'
+                         ' error')
+                logger.error(e_msg)
+                logger.exception(e)
+                handle_exception(Exception(e_msg), request)
+
+            try:
                 exports = create_nfs_export_input(NFSExport.objects.all())
                 logger.info('export = %s' % exports)
                 refresh_nfs_exports(exports)
-                return Response()
             except Exception, e:
                 e_msg = ('Unable to export all nfs shares due to a system error')
                 logger.error(e_msg)
                 logger.exception(e)
                 handle_exception(Exception(e_msg), request)
+
+            return Response()
 
         elif (command == 'utcnow'):
             return Response(datetime.utcnow().replace(tzinfo=utc))
