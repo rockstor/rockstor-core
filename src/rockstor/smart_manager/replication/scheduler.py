@@ -114,7 +114,16 @@ class ReplicaScheduler(Process):
 
             if (total_sleep >= 60 and len(self.senders) < 50):
                 logger.info('scanning for replicas')
-                for r in Replica.objects.filter(enabled=True):
+                enabled_replicas = []
+                try:
+                    enabled_replicas = Replica.objects.filter(enabled=True)
+                except Exception, e:
+                    e_msg = ('Error getting the list of enabled replica '
+                             'tasks. Moving on')
+                    logger.error(e_msg)
+                    logger.exception(e)
+
+                for r in enabled_replicas:
                     rt = ReplicaTrail.objects.filter(replica=r).order_by('-snapshot_created')
                     now = datetime.utcnow().replace(second=0,
                                                     microsecond=0,

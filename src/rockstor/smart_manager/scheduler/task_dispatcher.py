@@ -86,7 +86,16 @@ class TaskDispatcher(Process):
                         sink_socket.send_json(data)
                 total_sleep = 0
 
-            for t in Task.objects.filter(state='scheduled'):
+            task_qs = []
+            try:
+                task_qs = Task.objects.filter(state='scheduled')
+            except Exception, e:
+                e_msg = ('Error getting the list of scheduled tasks. Moving'
+                         ' on')
+                logger.error(e_msg)
+                logger.exception(e)
+
+            for t in task_qs:
                 worker = TaskWorker(t)
                 self.workers[t.id] = worker
                 worker.daemon = True
