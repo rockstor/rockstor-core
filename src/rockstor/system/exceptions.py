@@ -26,3 +26,12 @@ class CommandException(Exception):
 
     def __str__(self):
         return repr(self.err)
+
+class NonBTRFSRootException(Exception):
+
+    def __init__(self, err):
+        self.err = err
+
+    def __str__(self):
+        return repr(self.err)
+
