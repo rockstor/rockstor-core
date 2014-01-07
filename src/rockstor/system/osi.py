@@ -107,7 +107,7 @@ def root_disk():
         for line in fo.readlines():
             fields = line.split()
             if (fields[1] == '/' and fields[2] == 'btrfs'):
-                return fields[0][5:8]
+                return fields[0][5:-1]
     msg = ('root filesystem is not BTRFS. During Rockstor installation, '
            'you must select BTRFS instead of LVM and other options for '
            'root filesystem. Please re-install Rockstor properly.')
@@ -134,7 +134,7 @@ def scan_disks(min_size):
                 disks[name] = disk.__repr__()
             elif (re.match('sd[a-z]+[0-9]+$|xvd[a-z]+[0-9]+$', disk_fields[3])
                   is not None):
-                name = disk_fields[3][0:3]
+                name = disk_fields[3][0:-1]
                 if (name in disks):
                     if (name == root):
                         del(disks[name])
