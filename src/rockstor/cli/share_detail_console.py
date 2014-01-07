@@ -59,6 +59,10 @@ class ShareDetailConsole(BaseConsole):
         """
         snapshot operations on the share
         """
-        s_console = SnapshotConsole(self.greeting, self.share)
-        s_console.cmdloop()
+        input_snap = args.split()
+        snap_console = SnapshotConsole(self.greeting, self.share)
+        if (len(input_snap) > 0):
+            snap_console.onecmd(' '.join(input_snap))
+        else:
+            snap_console.cmdloop()
 
