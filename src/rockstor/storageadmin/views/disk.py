@@ -88,11 +88,16 @@ class DiskView(GenericView):
         return Response(DiskInfoSerializer(disk).data)
 
     def post(self, request, command, dname=None):
-        if (command == 'scan'):
-            return self._scan()
-        if (command == 'wipe'):
-            return self._wipe(dname, request)
-        e_msg = ('Unknown command: %s. Only valid command is: scan' % command)
+        try:
+            if (command == 'scan'):
+                return self._scan()
+            if (command == 'wipe'):
+                return self._wipe(dname, request)
+        except Exception, e:
+            handle_exception(e, request)
+
+        e_msg = ('Unknown command: %s. Only valid commands are scan, wipe' %
+                 command)
         handle_exception(Exception(e_msg), request)
 
 
