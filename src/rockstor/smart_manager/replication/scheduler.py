@@ -30,6 +30,7 @@ from django.utils.timezone import utc
 from cli.rest_util import api_call
 import logging
 logger = logging.getLogger(__name__)
+from django.db import DatabaseError
 
 class ReplicaScheduler(Process):
 
@@ -114,40 +115,38 @@ class ReplicaScheduler(Process):
 
             if (total_sleep >= 60 and len(self.senders) < 50):
                 logger.info('scanning for replicas')
-                enabled_replicas = []
+
                 try:
-                    enabled_replicas = Replica.objects.filter(enabled=True)
-                except Exception, e:
+                    for r in Replica.objects.filter(enabled=True):
+                        rt = ReplicaTrail.objects.filter(replica=r).order_by('-snapshot_created')
+                        now = datetime.utcnow().replace(second=0,
+                                                        microsecond=0,
+                                                        tzinfo=utc)
+                        sw = None
+                        snap_name = ('%s_replica_snap' % r.share)
+                        if (len(rt) == 0):
+                            snap_name = ('%s_1' % snap_name)
+                            sw = Sender(r, self.rep_ip, self.pubq, Queue(),
+                                        snap_name)
+                        elif (rt[0].status == 'succeeded' and
+                              (now - rt[0].end_ts).total_seconds() >
+                              r.frequency):
+                            snap_name = ('%s_%d' % (snap_name, rt[0].id + 1))
+                            sw = Sender(r, self.rep_ip, self.pubq, Queue(),
+                                        snap_name, rt[0])
+                        else:
+                            continue
+                        snap_id = ('%s_%s_%s_%s' %
+                                   (self.rep_ip, r.pool, r.share, snap_name))
+                        self.senders[snap_id] = sw
+                        sw.daemon = True
+                        sw.start()
+                    total_sleep = 0
+                except DatabaseError, e:
                     e_msg = ('Error getting the list of enabled replica '
                              'tasks. Moving on')
                     logger.error(e_msg)
                     logger.exception(e)
-
-                for r in enabled_replicas:
-                    rt = ReplicaTrail.objects.filter(replica=r).order_by('-snapshot_created')
-                    now = datetime.utcnow().replace(second=0,
-                                                    microsecond=0,
-                                                    tzinfo=utc)
-                    sw = None
-                    snap_name = ('%s_replica_snap' % r.share)
-                    if (len(rt) == 0):
-                        snap_name = ('%s_1' % snap_name)
-                        sw = Sender(r, self.rep_ip, self.pubq, Queue(),
-                                    snap_name)
-                    elif (rt[0].status == 'succeeded' and
-                          (now - rt[0].end_ts).total_seconds() >
-                          r.frequency):
-                        snap_name = ('%s_%d' % (snap_name, rt[0].id + 1))
-                        sw = Sender(r, self.rep_ip, self.pubq, Queue(),
-                                    snap_name, rt[0])
-                    else:
-                        continue
-                    snap_id = ('%s_%s_%s_%s' %
-                               (self.rep_ip, r.pool, r.share, snap_name))
-                    self.senders[snap_id] = sw
-                    sw.daemon = True
-                    sw.start()
-                total_sleep = 0
 
             time.sleep(1)
             total_sleep = total_sleep + 1

@@ -24,6 +24,7 @@ from datetime import datetime
 from smart_manager.models import (Task, TaskDefinition)
 from django.conf import settings
 from django.core.serializers import serialize
+from django.db import DatabaseError
 from task_worker import TaskWorker
 from django.utils.timezone import utc
 
@@ -86,32 +87,29 @@ class TaskDispatcher(Process):
                         sink_socket.send_json(data)
                 total_sleep = 0
 
-            task_qs = []
             try:
-                task_qs = Task.objects.filter(state='scheduled')
-            except Exception, e:
+                for t in Task.objects.filter(state='scheduled'):
+                    worker = TaskWorker(t)
+                    self.workers[t.id] = worker
+                    worker.daemon = True
+                    worker.start()
+
+                    if (worker.is_alive()):
+                        t.state = 'running'
+                        data = serialize("json", (t,))
+                        sink_socket.send_json(data)
+                    else:
+                        t.state = 'error'
+                        t.end = datetime.utcnow().replace(tzinfo=utc)
+                        data = serialize("json", (t,))
+                        sink_socket.send_json(data)
+                    time.sleep(1)
+                    total_sleep = total_sleep + 1
+            except DatabaseError, e:
                 e_msg = ('Error getting the list of scheduled tasks. Moving'
                          ' on')
                 logger.error(e_msg)
                 logger.exception(e)
-
-            for t in task_qs:
-                worker = TaskWorker(t)
-                self.workers[t.id] = worker
-                worker.daemon = True
-                worker.start()
-
-                if (worker.is_alive()):
-                    t.state = 'running'
-                    data = serialize("json", (t,))
-                    sink_socket.send_json(data)
-                else:
-                    t.state = 'error'
-                    t.end = datetime.utcnow().replace(tzinfo=utc)
-                    data = serialize("json", (t,))
-                    sink_socket.send_json(data)
-            time.sleep(1)
-            total_sleep = total_sleep + 1
 
         sink_socket.close()
         context.term()
