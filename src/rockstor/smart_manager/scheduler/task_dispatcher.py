@@ -77,7 +77,7 @@ class TaskDispatcher(Process):
                     sink_socket.send_json(data)
                     del(self.workers[w])
 
-            if (total_sleep == 60):
+            if (total_sleep >= 60):
                 for td in TaskDefinition.objects.filter(enabled=True):
                     now = datetime.utcnow().replace(second=0, microsecond=0,
                                                     tzinfo=utc)
@@ -103,13 +103,14 @@ class TaskDispatcher(Process):
                         t.end = datetime.utcnow().replace(tzinfo=utc)
                         data = serialize("json", (t,))
                         sink_socket.send_json(data)
-                    time.sleep(1)
-                    total_sleep = total_sleep + 1
             except DatabaseError, e:
                 e_msg = ('Error getting the list of scheduled tasks. Moving'
                          ' on')
                 logger.error(e_msg)
                 logger.exception(e)
+            finally:
+                time.sleep(1)
+                total_sleep = total_sleep + 1
 
         sink_socket.close()
         context.term()
