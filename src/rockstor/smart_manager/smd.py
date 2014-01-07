@@ -141,7 +141,8 @@ def main():
             logger.exception(e)
             clean_exit(live_procs, pull_socket, context)
 
-        if (num_ts_records > (settings.MAX_TS_RECORDS * 5)):
+        if (num_ts_records > (settings.MAX_TS_RECORDS *
+                              settings.MAX_TS_MULTIPLIER)):
             try:
                 truncate_ts_data()
                 num_ts_records = 0

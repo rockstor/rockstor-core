@@ -83,14 +83,11 @@ class ServiceMonitor(Process):
                         logger.exception(e)
                     finally:
                         if (sso is None or sso.status != status):
-                            logger.info('creating a new sso')
                             sso = ServiceStatus(service=s,
                                                 status=status, ts=ts)
                         else:
                             sso.ts = ts
                             sso.count = sso.count + 1
-                            logger.info('incrementing sso(%d) count to %d' %
-                                        (sso.id, sso.count))
                         self._sink_put(sink_socket, sso)
                         first_loop = False
                 time.sleep(self.interval)

@@ -359,4 +359,7 @@ SHARE_REGEX = r'[A-Za-z]+[A-Za-z0-9_.-]*'
 POOL_REGEX = SHARE_REGEX
 ROOT_DIR = '${buildout:depdir}/'
 
-MAX_TS_RECORDS = 50
+#things get purged when they are > MAX_TS_RECORDS x MAX_TS_MULTIPLIER of if the service just
+#starts and they are > MAX_TS_RECORDS.
+MAX_TS_RECORDS = 40000
+MAX_TS_MULTIPLIER = 3
