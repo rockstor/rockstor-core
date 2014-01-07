@@ -24,6 +24,7 @@ class PoolUsage(models.Model):
     pool = models.CharField(max_length=4096)
     usage = models.IntegerField(default=0)
     ts = models.DateTimeField(auto_now=True, db_index=True)
+    count = models.IntegerField(default=1)
 
     class Meta:
         app_label = 'smart_manager'

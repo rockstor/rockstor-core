@@ -33,6 +33,7 @@ class ServiceStatus(models.Model):
 
     service = models.ForeignKey(Service)
     status = models.BooleanField(default=False)
+    count = models.IntegerField(default=1)
     ts = models.DateTimeField(auto_now=True, db_index=True)
 
     class Meta:

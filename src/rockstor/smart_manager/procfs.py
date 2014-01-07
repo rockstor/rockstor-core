@@ -218,7 +218,21 @@ class ProcRetreiver(Process):
             arb_disk = Disk.objects.filter(pool=p)[0].name
             try:
                 usage = pool_usage(arb_disk)
-                pu = PoolUsage(pool=p.name, usage=usage[1], ts=ts)
+                pu = None
+                try:
+                    pu = PoolUsage.objects.filter(pool=p.name).latest('id')
+                    if ((ts - pu.ts).total_seconds() > 90):
+                        pu = None
+                except Exception, e:
+                    e_msg = ('Unable to get latest pool usage object for '
+                             'pool(%s)' % p.name)
+                    logger.error(e_msg)
+                    logger.exception(e)
+                if (pu is None or pu.usage != usage[1]):
+                    pu = PoolUsage(pool=p.name, usage=usage[1], ts=ts)
+                else:
+                    pu.ts = ts
+                    pu.count = pu.count + 1
                 self._sink_put(self.sink_socket, pu)
             except Exception, e:
                 logger.debug('command exception while getting pool usage '
@@ -232,7 +246,21 @@ class ProcRetreiver(Process):
                     share_map[share.qgroup] = share.name
                 usaged = shares_usage(p.name, pool_device, share_map)
                 for s in usaged.keys():
-                    su = ShareUsage(name=s, usage=usaged[s], ts=ts)
+                    su = None
+                    try:
+                        su = ShareUsage.objects.filter(name=s).latest('id')
+                        if ((ts - su.ts).total_seconds() > 90):
+                            su = None
+                    except Exception, e:
+                        e_msg = ('Unable to get latest share usage object '
+                                 'for share(%s)')
+                        logger.error(e_msg)
+                        logger.exception(e)
+                    if (su is None or su.usage != usaged[s]):
+                        su = ShareUsage(name=s, usage=usaged[s], ts=ts)
+                    else:
+                        su.ts = ts
+                        su.count = su.count + 1
                     self._sink_put(self.sink_socket, su)
             except Exception, e:
                 logger.debug('command exception while getting shares usage '

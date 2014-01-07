@@ -69,21 +69,16 @@ def home(request):
         'setup_user': setup.setup_user,
         'page_size': settings.PAGINATION['page_size']
     }
-    logger.debug(request.user.is_authenticated())
     if request.user.is_authenticated():
-        logger.debug("User is authenticated - rendering index")
         return render_to_response('index.html',
                 context,
                 context_instance=RequestContext(request))
     else:
         if setup.setup_user:
-            logger.debug("User is setup but not authenticated \
-                    - rendering login.html")
             return render_to_response('login.html',
                     context,
                     context_instance=RequestContext(request))
         else:
-            logger.debug("User is not setup - rendering index.html")
             return render_to_response('setup.html',
                     context,
                     context_instance=RequestContext(request))

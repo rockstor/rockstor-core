@@ -52,6 +52,7 @@ class ServiceMonitor(Process):
         context = zmq.Context()
         sink_socket = context.socket(zmq.PUSH)
         sink_socket.connect('tcp://%s:%d' % settings.SPROBE_SINK)
+        first_loop = True
         try:
             while (True):
                 if (os.getppid() != self.ppid):
@@ -60,18 +61,35 @@ class ServiceMonitor(Process):
 
                 ts = datetime.utcnow().replace(tzinfo=utc)
                 for s in Service.objects.all():
-                    sso = ServiceStatus(service=s, status=False, ts=ts)
+                    sso = None
+                    if (first_loop is not True):
+                        try:
+                            sso = ServiceStatus.objects.filter(service=s).latest('id')
+                        except Exception, e:
+                            e_msg = ('Error getting the last status object '
+                                     'for  service(%s)' % s.name)
+                            logger.error(e_msg)
+                            logger.exception(e)
+
+                    status = False
                     try:
                         out, err, rc = service_status(s.name)
                         if (rc == 0):
-                            sso.status = True
+                            status = True
                     except Exception, e:
                         msg = ('Exception while getting status of '
                                'service: %s' % s.name)
                         logger.error(msg)
                         logger.exception(e)
                     finally:
+                        if (sso is None or sso.status != status):
+                            sso = ServiceStatus(service=s,
+                                                status=status, ts=ts)
+                        else:
+                            sso.ts = ts
+                            sso.count = sso.count + 1
                         self._sink_put(sink_socket, sso)
+                        first_loop = False
                 time.sleep(self.interval)
         except Exception, e:
             msg = ('unhandled exception in %s. Exiting' % self.name)

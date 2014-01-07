@@ -15,35 +15,73 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-from datetime import (datetime, timedelta)
-from django.utils.timezone import utc
+import zmq
+import time
+import sys
+from django.conf import settings
+from django.core.serializers import deserialize
+from django.core.exceptions import ObjectDoesNotExist
+
 from procfs import ProcRetreiver
 from services import ServiceMonitor
 from stap_dispatcher import Stap
-import models
-from django.conf import settings
-from django.core.serializers import deserialize
-from django.db import transaction
-import zmq
+from scheduler.task_dispatcher import TaskDispatcher
+from smart_manager import agents
+from cli.rest_util import api_call
+from smart_manager.models import (CPUMetric, LoadAvg, MemInfo, PoolUsage,
+                                  DiskStat, ShareUsage, ServiceStatus)
+
 import logging
 logger = logging.getLogger(__name__)
-from smart_manager import agents
-from scheduler.task_dispatcher import TaskDispatcher
-from cli.rest_util import api_call
-import time
 
-def process_model_queue(q):
-    cleanup_map = {}
-    max_interval = timedelta(seconds=settings.PROBE_DATA_INTERVAL)
-    new_start = datetime.utcnow().replace(tzinfo=utc) - max_interval
+def truncate_ts_data(max_records=settings.MAX_TS_RECORDS):
+    """
+    cleanup ts tables: CPUMetric, LoadAvg, MemInfo, PoolUsage, DiskStat and
+    ShareUsage, ServiceStatus
+    Discard all records older than last max_records.
+    """
+    ts_models = (CPUMetric, LoadAvg, MemInfo, PoolUsage, DiskStat,
+                 ShareUsage, ServiceStatus)
+    try:
+        for m in ts_models:
+            try:
+                latest_id = m.objects.latest('id').id
+            except ObjectDoesNotExist, e:
+                msg = ('Unable to get latest id for the model: %s. Moving '
+                       'on' % (m.__name__))
+                logger.error(msg)
+                continue
+            m.objects.filter(id__lt=latest_id-max_records).delete()
+    except Exception, e:
+        logger.error('Unable to truncate time series data')
+        logger.exception(e)
+        raise e
 
-    while (not q.empty()):
-        metric = q.get()
-        metric.save()
-        cleanup_map[metric] = True
-    for c in cleanup_map.keys():
-        model = getattr(models, c.__class__.__name__)
-        model.objects.filter(ts__lt=new_start).delete()
+def clean_exit(children, pull_socket=None, context=None):
+    logger.error('clean exiting smd')
+    if (pull_socket is not None):
+        logger.error('closing pull socket')
+        pull_socket.close()
+        logger.error('pull socket closed')
+
+    if (context is not None):
+        logger.error('terminating zmq context')
+        context.term()
+        logger.error('zmq context terminated')
+
+    for p in children:
+        if (not p.is_alive()):
+            logger.error('child process: %s not alive. no need to terminate' %
+                         p.name)
+            continue
+
+        logger.error('terminating the child process: %s' % p.name)
+        p.terminate()
+        logger.error('waiting for child process: %s to exit' % p.name)
+        p.join()
+        logger.error('child process: %s terminated successfully' % p.name)
+    logger.error('smd out!')
+    sys.exit(0)
 
 def main():
     context = zmq.Context()
@@ -59,7 +97,14 @@ def main():
     except Exception, e:
         logger.error('Unable to bootstrap the machine. Moving on..')
         logger.exception(e)
-        pass
+
+    try:
+        truncate_ts_data()
+    except Exception, e:
+        e_msg = ('Unable to do the initial ts data truncation. Aborting...')
+        logger.error(e_msg)
+        logger.exception(e)
+        clean_exit([], pull_socket, context)
 
     live_procs = [ProcRetreiver(), ServiceMonitor(),
                   Stap(settings.TAP_SERVER),
@@ -67,16 +112,17 @@ def main():
     for p in live_procs:
         p.start()
 
+    num_ts_records = 0
     while (True):
         for p in live_procs:
             if (not p.is_alive()):
                 msg = ('%s is dead. exitcode: %d' % (p.name, p.exitcode))
                 logger.error(msg)
-                live_procs.remove(p)
+                clean_exit(live_procs, pull_socket, context)
         if (len(live_procs) == 0):
             logger.error('All child processes have exited. I am returning.')
-            context.term()
-            return -1
+            clean_exit([], pull_socket, context)
+
         try:
             while (True):
                 sink_data = pull_socket.recv_json()
@@ -86,9 +132,21 @@ def main():
                 else:
                     #smart probe, proc, service django models
                     for d in deserialize("json", sink_data):
+                        num_ts_records = num_ts_records + 1
                         d.save()
         except zmq.error.Again:
             pass
         except Exception, e:
-            logger.error('exception while processing sink data')
+            logger.error('exception while processing sink data. Aborting...')
             logger.exception(e)
+            clean_exit(live_procs, pull_socket, context)
+
+        if (num_ts_records > (settings.MAX_TS_RECORDS *
+                              settings.MAX_TS_MULTIPLIER)):
+            try:
+                truncate_ts_data()
+                num_ts_records = 0
+            except Exception, e:
+                logger.error('Error truncating time series data. Aborting...')
+                logger.exception(e)
+                clean_exit(live_procs, pull_socket, context)
