@@ -20,10 +20,8 @@ import re
 import os
 import subprocess
 import shutil
-import socket
 from tempfile import mkstemp
-
-from exceptions import CommandException
+from exceptions import (CommandException, NonBTRFSRootException)
 
 MKDIR = '/bin/mkdir'
 RMDIR = '/bin/rmdir'
@@ -101,7 +99,7 @@ def wipe_disk(disk):
     run_command([DD, 'if=/dev/zero', 'of=%s' % disk, 'bs=512', 'count=1'])
     return run_command([SFDISK, '-R', disk])
 
-def root_disks():
+def root_disk():
     """
     returns the partition(s) used for /. Typically it's sda.
     """
@@ -110,14 +108,17 @@ def root_disks():
             fields = line.split()
             if (fields[1] == '/' and fields[2] == 'btrfs'):
                 return fields[0][5:8]
-    return None
+    msg = ('root filesystem is not BTRFS. During Rockstor installation, '
+           'you must select BTRFS instead of LVM and other options for '
+           'root filesystem. Please re-install Rockstor properly.')
+    raise NonBTRFSRootException(msg)
 
 def scan_disks(min_size):
     """
     min_size is in KB, so it is also number of blocks. Discard any disk with
     num_blocks < min_size
     """
-    roots = root_disks()
+    root = root_disk()
     disks = {}
     with open('/proc/partitions') as pfo:
         for line in pfo.readlines():
@@ -135,7 +136,7 @@ def scan_disks(min_size):
                   is not None):
                 name = disk_fields[3][0:3]
                 if (name in disks):
-                    if (name in roots):
+                    if (name == root):
                         del(disks[name])
                     else:
                         disks[name]['parted'] = True
