@@ -1,0 +1,37 @@
+<!-- appliances -->
+<div class="row-fluid">
+  <div class="span12">
+    <table class="table table-condensed table-bordered table-hover table-striped tablesorter"style="width: 100%">
+      <thead>
+        <tr>
+          <th scope="col" abbr="IP">Appliance IP</th>
+          <th scope="col" abbr="Action">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+      <% appliances.each(function(appliance) { %>
+        <tr>
+          <td>
+            <i class="fa fa-desktop"></i>&nbsp;
+            <% if (appliance.get('current_appliance')) { %>
+              <%= appliance.get('ip') %> 
+            <% } else { %>
+              <a href="https://<%= appliance.get('ip') %>:<%= appliance.get('port') %>" target="_blank"><%= appliance.get('ip') %></a>
+            <% } %>
+          </td>
+          <td>
+            <% if (!appliance.get('current_appliance')) { %>
+              <a class="delete-appliance" id="<%= appliance.get('ip') %>" data-id="<%= appliance.get('id') %>" href="#"><i class="icon-trash"></i></a>
+            <% } %>
+          </td>
+        </tr>
+      <% }); %>
+
+    </table>
+  </div> <!-- span12 -->
+</div> <!-- row-fluid -->
+<a class="btn btn-primary" id="add-appliance" href="#add-appliance">Add Appliance</button>
+<br>
+<div id="new-appliance-container">
+</div>
+
