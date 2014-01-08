@@ -27,7 +27,7 @@
 AddApplianceView = RockstoreLayoutView.extend({
   
   events: {
-    'click #cancel': 'cancel'
+    'click #js-cancel': 'cancel'
   },
 
   initialize: function() {
@@ -73,7 +73,8 @@ AddApplianceView = RockstoreLayoutView.extend({
     return this;
   },
 
-  cancel: function() {
+  cancel: function(event) {
+    event.preventDefault();
     app_router.navigate('appliances', {trigger: true});
   }
 
