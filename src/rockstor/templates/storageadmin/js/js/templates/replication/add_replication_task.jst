@@ -56,6 +56,18 @@
           </div>
         </div>
         <div class="control-group">
+          <label class="control-label" for="port">Replication Data Port<span class="required"> *</span></label>
+          <div class="controls">
+            <input type="text" id="data-port" name="data_port" value="<%= replica_data_port %>" placeholder="Replication Data Port" title="Enter replication data port">
+          </div>
+        </div>
+        <div class="control-group">
+          <label class="control-label" for="port">Replication Meta Port<span class="required"> *</span></label>
+          <div class="controls">
+            <input type="text" id="meta-port" name="meta_port" value="<%= replica_meta_port %>" placeholder="Replication Meta Port" title="Enter replication meta port">
+          </div>
+        </div>
+        <div class="control-group">
           <label class="control-label" for="pool">Target pool name<span class="required"> *</span></label>
           <div class="controls">
             <input type="text" id="pool" name="pool" placeholder="Target pool name" title="Enter target pool name">
