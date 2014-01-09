@@ -29,6 +29,7 @@ from rest_framework.permissions import IsAuthenticated
 from system.osi import (uptime, refresh_nfs_exports, update_check, update_run)
 from fs.btrfs import (is_share_mounted, mount_share)
 from system.ssh import (sftp_mount_map, sftp_mount)
+from system.services import systemctl
 from storageadmin.models import (Share, Disk, NFSExport, SFTP)
 from nfs_helpers import create_nfs_export_input
 from storageadmin.util import handle_exception
@@ -79,6 +80,22 @@ class CommandView(APIView):
                 refresh_nfs_exports(exports)
             except Exception, e:
                 e_msg = ('Unable to export all nfs shares due to a system error')
+                logger.error(e_msg)
+                logger.exception(e)
+                handle_exception(Exception(e_msg), request)
+
+            #bootstrap services
+            try:
+                systemctl('firewalld', 'stop')
+                systemctl('firewalld', 'disable')
+                systemctl('nginx', 'stop')
+                systemctl('nginx', 'disable')
+                systemctl('sendmail', 'stop')
+                systemctl('sendmail', 'disable')
+                systemctl('atd', 'enable')
+                systemctl('atd', 'start')
+            except Exception, e:
+                e_msg = ('Unable to bootstrap services due to a system error')
                 logger.error(e_msg)
                 logger.exception(e)
                 handle_exception(Exception(e_msg), request)
