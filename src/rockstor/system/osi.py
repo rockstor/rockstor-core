@@ -442,7 +442,7 @@ def update_run():
     with open(npath, 'w') as atfo:
         atfo.write('%s stop rockstor\n' % SYSTEMCTL)
         atfo.write('%s -y update\n' % YUM)
-        atfo.write('/bin/rm -f npath\n')
+        atfo.write('/bin/rm -f %s\n' % npath)
     run_command([SYSTEMCTL, 'start', 'atd'])
     out, err, rc = run_command([AT, '-f', npath, 'now + 1 minutes'])
     time.sleep(120)
