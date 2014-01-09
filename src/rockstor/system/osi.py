@@ -21,7 +21,9 @@ import os
 import subprocess
 import shutil
 from tempfile import mkstemp
+import time
 from exceptions import (CommandException, NonBTRFSRootException)
+
 
 MKDIR = '/bin/mkdir'
 RMDIR = '/bin/rmdir'
@@ -44,6 +46,7 @@ IFDOWN = '/sbin/ifdown'
 ROUTE = '/sbin/route'
 SYSTEMCTL = '/usr/bin/systemctl'
 YUM = '/usr/bin/yum'
+AT = '/usr/bin/at'
 
 import logging
 logger = logging.getLogger(__name__)
@@ -435,4 +438,11 @@ def update_check():
     return (version, version, [])
 
 def update_run():
-    return run_command([YUM, '-y', 'update'])
+    fh, npath = mkstemp()
+    with open(npath, 'w') as atfo:
+        atfo.write('%s -y update\n' % YUM)
+        atfo.write('/bin/rm -f npath\n')
+    run_command([SYSTEMCTL, 'start', 'atd'])
+    out, err, rc = run_command([AT, '-f', npath, 'now + 1 minutes'])
+    time.sleep(120)
+    return out, err, rc
