@@ -45,8 +45,9 @@ ShareNFSExports  = RockstoreModuleView.extend({
     this.modify_choices = this.options.modify_choices;
     this.sync_choices = this.options.sync_choices;
     this.appliance_ip = this.options.appliance_ip;
+    var _this = this;
     this.share.on('change', function() {
-      this.collection.reset(this.share.get('nfs_exports'));
+      _this.render; 
     }, this)
   },
 
