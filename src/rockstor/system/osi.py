@@ -440,6 +440,7 @@ def update_check():
 def update_run():
     fh, npath = mkstemp()
     with open(npath, 'w') as atfo:
+        atfo.write('%s stop rockstor\n' % SYSTEMCTL)
         atfo.write('%s -y update\n' % YUM)
         atfo.write('/bin/rm -f npath\n')
     run_command([SYSTEMCTL, 'start', 'atd'])
