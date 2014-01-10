@@ -27,89 +27,138 @@
     <div class="form-box">
       <form id="winbind-form" name="aform">
         <div class="messages"></div>
+        <!-- Winbind Domain -->
         <div class="control-group">
-          <label class="control-label" for="domain">Domain<span class="required"> *</span></label>
+          <label class="control-label" for="domain">Winbind Domain<span class="required"> *</span></label>
           <div class="controls">
             <input type="text" id="domain" name="domain" value="<%= config.domain %>" placeholder="Domain" title="Domain controller to connect to" >
           </div>
         </div>
+
+        <!-- Security model -->
+        <% var securityTypes = ['ads','domain','server','user']; %>
         <div class="control-group">
-          <label class="control-label" for="controllers">Controllers<span class="required"> *</span></label>
+          <label class="control-label" for="security">Security Model<span class="required"> *</span></label>
+          <div class="controls">
+            <select id="security" name="security" title="Security model">
+              <% _.each(securityTypes, function(security, index) { %>
+                <% if (security == config.security) { %>
+                  <option value="<%= security %>" selected="selected">
+                  <%= security %> </option>
+                <% } else { %>
+                  <option value="<%= security %>"><%= security %> </option>
+                <% } %>
+              <% }); %>
+            </select>
+          </div>
+        </div>
+
+        <!-- Winbind ADS Realm -->
+        <div class="control-group">
+          <label class="control-label" for="realm">Winbind ADS Realm<span class="required"> * </span></label>
+          <div class="controls">
+            <% if (config.security == 'ads' || _.isNull(config.security) || _.isUndefined(config.security) ) { %>
+              <input type="text" id="realm" name="realm"
+              value="<%= config.realm %>" placeholder="Realm" title="Winbind ADS Realm">
+            <% } else { %>
+              <input type="text" id="realm" name="realm"
+              disabled="true" value="<%= config.realm %>"
+              placeholder="Winbind ADS Realm" >
+            <% } %>
+          </div>
+        </div>
+        
+        <!-- Winbind Domain Controllers -->
+        <div class="control-group">
+          <label class="control-label" for="controllers">Winbind Domain Controllers<span class="required"> *</span></label>
           <div class="controls">
             <input type="text" id="controllers" name="controllers" value="<%= config.controllers %>" placeholder="Controllers" title="Domain controller to use">
           </div>
         </div>
-	<% var securityTypes = ['user', 'server', 'domain', 'ad']; %>
-	<div class="control-group">
-	  <label class="control-label" for="security">Security<span
-  	  class="required"> *</span></label>
-	  <div class="controls">
-	    <select id="security" name="security" title="Security model">
-	      <% _.each(securityTypes, function(security, index) { %>
-	        <% if (security == config.security) { %>
-		    <option value="<%= security %>" selected="selected">
-		    <%= security %> </option>
-		<% } else { %>
-		  <option value="<%= security %>"><%= security %> </option>
-		<% } %>
-	      <% }); %>
-	    </select>
-	  </div>
-	</div>
-	<div class="control-group">
-	  <label class="control-label" for="realm">Realm<span
-  	  class="required"> * </span></label>
-  	  <div class="controls">
-	    <% if (config.security == 'ad') { %>
-            <input type="text" id="realm" name="realm"
-	    value="<%= config.realm %>" placeholder="Realm" title="ADS Realm">
-  	    <% } else { %>
-            <input type="text" id="realm" name="realm"
-	    disabled="true" value="<%= config.realm %>"
-  	    placeholder="Realm" >
-	    <% } %>
-          </div>
-	</div>
-	<% var templateShells = ['/bin/false', '/bin/sh', '/bin/bash', '/bin/nologin', '/bin/tcsh', '/bin/csh']; %>
+
+        <!-- Template Shell -->
+        <% var templateShells = ['/bin/false', '/bin/sh', '/bin/bash', '/bin/nologin', '/bin/tcsh', '/bin/csh']; %>
         <div class="control-group">
-	  <label class="control-label" for="templateshell">TemplateShell<span
-  	  class="required"> *</span></label>
-	  <div class="controls">
-	  <% if (config.security == 'ad' || config.security == 'domain') { %>
-	    <select id="templateshell" name="templateshell" title="Please select login shell for user">
-	  <% } else { %>
-	    <select id="templateshell" name="templateshell" disabled="true">
-	  <% } %>
-	      <% _.each(templateShells, function(shell, index) { %>
-	        <% if (shell == config.shell) { %>
-		    <option value="<%= shell %>" selected="selected">
-		    <%= shell %> </option>
-		<% } else { %>
-		  <option value="<%= shell %>"><%= shell %> </option>
-		<% } %>
-	      <% }); %>
-	    </select>
-	  </div>
-	</div>
-	<div class="control-group">
+          <label class="control-label" for="templateshell">Template Shell<span class="required"> *</span></label>
+          <div class="controls">
+            <% if (config.security == 'ads' || config.security == 'domain' || _.isNull(config.security) || _.isUndefined(config.security))  { %>
+              <select id="templateshell" name="templateshell" title="Please select login shell for user">
+                <% _.each(templateShells, function(shell, index) { %>
+                  <% if (shell == config.shell) { %>
+                    <option value="<%= shell %>" selected="selected">
+                    <%= shell %> </option>
+                  <% } else { %>
+                    <option value="<%= shell %>"><%= shell %> </option>
+                  <% } %>
+                <% }); %>
+              </select>
+            <% } else { %>
+              <select id="templateshell" name="templateshell" disabled="true">
+                <% _.each(templateShells, function(shell, index) { %>
+                  <% if (shell == config.shell) { %>
+                    <option value="<%= shell %>" selected="selected">
+                    <%= shell %> </option>
+                  <% } else { %>
+                    <option value="<%= shell %>"><%= shell %> </option>
+                  <% } %>
+                <% }); %>
+              </select>
+            <% } %>
+          </div>
+        </div> <!-- control-group -->
+
+        <!-- Offline login -->
+        <div class="control-group">
           <label class="checkbox">
-	    <% if (config.allow_offline) { %>
-            <input type="checkbox" name="allow-offline" id="allow-offline"
-	    checked="true">
-	    <% } else { %>
-	    <input type="checkbox" name="allow-offline" id="allow-offline">
-	    <% } %> Allow Offline login?
+            <% if (config.allow_offline) { %>
+              <input type="checkbox" name="allow-offline" id="allow-offline"
+              checked="true">
+            <% } else { %>
+              <input type="checkbox" name="allow-offline" id="allow-offline">
+            <% } %> Allow Offline login?
           </label>
         </div>
+
+        <!-- Join Domain -->
+        <div class="control-group">
+          <div class="controls">
+            <% if (config.security == 'ads' || config.security == 'domain' || _.isNull(config.security) || _.isUndefined(config.security))  { %>
+              <button type="button" id="join-domain" class="btn btn-primary">Join Domain</button>
+            <% } else { %>
+              <button type="button" id="join-domain" class="btn disabled">Join Domain</button>
+            <% } %>
+          </div>
+        </div>
+        <br>
+        <br>
+        <!-- Submit -->
         <div class="control-group">
           <div class="controls">
             <button id="cancel" class="btn">Cancel</button>
             <button type="Submit" id="create-user" class="btn btn-primary">Submit</button>
           </div>
         </div>
+
       </form>
 
     </div> <!-- form-box -->
   </div> <!-- span8 -->
 </div> <!-- row-fluid -->
+
+
+<div id="join-domain-modal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="joinDomainModalLabel" aria-hidden="true">
+  <!-- Header -->
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+    <h3>Join Domain</h3>
+  </div>
+  <!-- Body -->
+  <div class="modal-body">
+  </div>
+  <!-- Footer -->
+  <div class="modal-footer">
+    <button id="cancel-join" class="btn" data-dismiss="modal">Cancel</button>
+    <button type="Submit" id="join-domain-submit" class="btn btn-primary">Submit</button>
+  </div>
+</div>
 

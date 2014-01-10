@@ -28,6 +28,7 @@ ConfigureServiceView = RockstoreLayoutView.extend({
   events: {
     "click #cancel": "cancel",
     "click #security": "toggleFormFields",
+    "click #join-domain": "showJoinDomainPopup",
     "click #enabletls": "toggleCertUrl",
   },
 
@@ -46,14 +47,14 @@ ConfigureServiceView = RockstoreLayoutView.extend({
         realm: {
           required: {
             depends: function(element) {
-              return (_this.$('#security').val() == 'ad');
+              return (_this.$('#security').val() == 'ads');
             }
           }
         },
         templateshell: {
           required: {
             depends: function(element) {
-              return ((_this.$('#security').val() == 'ad') ||
+              return ((_this.$('#security').val() == 'ads') ||
                       (_this.$('#security').val() == 'domain'));
             }
           }
@@ -132,6 +133,13 @@ ConfigureServiceView = RockstoreLayoutView.extend({
         return false;
       }
     });
+
+    if (this.serviceName == 'winbind') {
+      this.$('#join-domain-modal').modal({
+        show: false
+      });
+    }
+    
     return this;
   },
 
@@ -140,17 +148,16 @@ ConfigureServiceView = RockstoreLayoutView.extend({
   },
 
   toggleFormFields: function() {
-    if (this.$('#security').val() == 'ad') {
-	this.$('#realm').removeAttr('disabled');
+    if (this.$('#security').val() == 'ads') {
+      this.$('#realm').removeAttr('disabled');
     } else {
-        this.$('#realm').attr('disabled', 'true');    	
+      this.$('#realm').attr('disabled', 'true');    	
     }
-
-    if (this.$('#security').val() == 'ad' ||
-        this.$('#security').val() == 'domain') {
-	this.$('#templateshell').removeAttr('disabled');
+    if (this.$('#security').val() == 'ads' 
+        || this.$('#security').val() == 'domain') {
+      this.$('#templateshell').removeAttr('disabled');
     } else {
-	this.$('#templateshell').attr('disabled', 'true');
+      this.$('#templateshell').attr('disabled', 'true');
     }
   },
 
@@ -161,6 +168,10 @@ ConfigureServiceView = RockstoreLayoutView.extend({
     } else {
       this.$('#cert-ph').css('visibility','hidden');
     }
+  },
+
+  showJoinDomainPopup: function() {
+    this.$('#join-domain-modal').modal('show');
   }
 
 });
