@@ -85,17 +85,19 @@ def winbind_input(config, command):
     if (command == 'stop'):
         ac_cmd.extend(['--disablewinbind','--disablewinbindauth'])
     else:
-        ac_cmd.append('--smbsecurity=%s' % config['security'])
-        if (config['allow-offline'] is True):
-            ac_cmd.append('--enablewinbindoffline')
-        ac_cmd.append('--smbservers=%s' % config['controllers'])
         ac_cmd.append('--smbworkgroup=%s' % config['domain'])
-        if (config['security'] == 'ad' or config['security'] == 'domain'):
+        ac_cmd.append('--smbsecurity=%s' % config['security'])
+        if (config['security'] == 'ads'):
+            ac_cmd.append('--smbrealm=%s' % config['realm'])
+        if (config['security'] == 'ads' or config['security'] == 'domain'):
             ac_cmd.append('--winbindtemplateshell=%s' %
                           config['templateshell'])
-        if (config['security'] == 'ad'):
-            ac_cmd.append('--smbrealm=%s' % config['realm'])
-        ac_cmd.extend(['--enablewinbind', '--enablewinbindauth'])
+        ac_cmd.append('--smbservers=%s' % config['controllers'])
+        if (config['allow-offline'] is True):
+            ac_cmd.append('--enablewinbindoffline')
+        else:
+            ac_cmd.append('--disablewinbindoffline')
+        ac_cmd.extend(['--update', '--kickstart', '--enablewinbind'])
     return ac_cmd
 
 def ldap_input(config, command):
