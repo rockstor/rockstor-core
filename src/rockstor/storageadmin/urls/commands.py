@@ -19,9 +19,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from django.conf.urls.defaults import patterns, url
 from storageadmin.views import CommandView
 
+valid_commands = ('uptime|bootstrap|utcnow|update-check|update|'
+                  'join-winbind-domain')
 
 urlpatterns = patterns(
     '',
-    url(r'(?P<command>uptime|bootstrap|utcnow|update-check|update)$', CommandView.as_view(),
+    url(r'(?P<command>%s)$' % valid_commands, CommandView.as_view(),
         name='user-view'),
 )
