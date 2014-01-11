@@ -32,6 +32,7 @@ ServicesView = Backbone.View.extend({
     'click .slider-stop': "stopService",
     'click .slider-start': "startService",
     'click .configure': "configureService",
+    "click #join-domain": "showJoinDomainPopup",
   },
 
   initialize: function() {
@@ -64,7 +65,8 @@ ServicesView = Backbone.View.extend({
     $(this.el).empty();
     
     $(this.el).append(this.template({
-      services: this.collection
+      services: this.collection,
+      adServiceConfig: JSON.parse(this.collection.get('winbind').get('config'))
     }));
     this.$(".ph-pagination").html(this.paginationTemplate({
       collection: this.collection
@@ -82,6 +84,44 @@ ServicesView = Backbone.View.extend({
       slider.dragger.unbind('mousedown');
     });
     this.$('.simple-overlay').overlay({load: false}); 
+    
+    // join domain modal 
+    this.$('#join-domain-modal').modal({
+      show: false
+    });
+
+    this.$('#join-domain-form').validate({
+      onfocusout: false,
+      onkeyup: false,
+      rules: {
+        administrator: 'required',
+        password: 'required'
+      },
+      submitHandler: function() {
+        var button = _this.$('#join-domain-submit');
+        if (buttonDisabled(button)) return false;
+        disableButton(button);
+        var data = JSON.stringify(_this.$('#join-domain-form').getJSON());
+        $.ajax({
+          url: "/api/commands/join-winbind-domain",
+          type: "POST",
+          contentType: 'application/json',
+          dataType: "json",
+          data: data,
+          success: function(data, status, xhr) {
+            enableButton(button);
+            _this.$('#join-domain-modal').modal('hide');
+          },
+          error: function(xhr, status, error) {
+            enableButton(button);
+            var msg = parseXhrError(xhr)
+            _this.$('#join-domain-err').html(msg);
+          }
+        });
+        return false;
+      }
+
+    });
   },
   
   startService: function(event) {
@@ -212,7 +252,11 @@ ServicesView = Backbone.View.extend({
     if (!_.isUndefined(this.intervalId)) {
       window.clearInterval(this.intervalId);
     }
-  }
+  },
+
+  showJoinDomainPopup: function() {
+    this.$('#join-domain-modal').modal('show');
+  },
 
 });
 
