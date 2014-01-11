@@ -160,3 +160,6 @@ def toggle_sftp_service(switch=True):
                 tfo.write(sftp_str)
     move('/tmp/sshd_config', '/etc/ssh/sshd_config')
     return init_service_op('sshd', 'reload')
+
+def ads_joined():
+    return run_command([NET, 'ads', 'testjoin'])
