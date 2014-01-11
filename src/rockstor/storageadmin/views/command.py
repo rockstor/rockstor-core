@@ -29,7 +29,7 @@ from rest_framework.permissions import IsAuthenticated
 from system.osi import (uptime, refresh_nfs_exports, update_check, update_run)
 from fs.btrfs import (is_share_mounted, mount_share)
 from system.ssh import (sftp_mount_map, sftp_mount)
-from system.services import (systemctl, join_winbind_domain)
+from system.services import (systemctl, join_winbind_domain, ads_joined)
 from storageadmin.models import (Share, Disk, NFSExport, SFTP)
 from nfs_helpers import create_nfs_export_input
 from storageadmin.util import handle_exception
@@ -133,6 +133,13 @@ class CommandView(APIView):
                 username = request.DATA['administrator']
                 passwd = request.DATA['password']
                 join_winbind_domain(username, passwd)
+                return Response('Done')
+            except Exception, e:
+                handle_exception(e, request)
+
+        elif (command == 'winbind-domain-status'):
+            try:
+                ads_joined()
                 return Response('Done')
             except Exception, e:
                 handle_exception(e, request)

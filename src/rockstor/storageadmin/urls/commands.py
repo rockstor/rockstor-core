@@ -20,7 +20,7 @@ from django.conf.urls.defaults import patterns, url
 from storageadmin.views import CommandView
 
 valid_commands = ('uptime|bootstrap|utcnow|update-check|update|'
-                  'join-winbind-domain')
+                  'join-winbind-domain|winbind-domain-status')
 
 urlpatterns = patterns(
     '',
