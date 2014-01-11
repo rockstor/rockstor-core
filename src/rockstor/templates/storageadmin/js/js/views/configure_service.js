@@ -152,7 +152,7 @@ ConfigureServiceView = RockstoreLayoutView.extend({
           disableButton(button);
           var data = JSON.stringify(_this.$('#join-domain-form').getJSON());
           $.ajax({
-            url: "/api/commands/joindomain",
+            url: "/api/commands/join-winbind-domain",
             type: "POST",
             contentType: 'application/json',
             dataType: "json",
