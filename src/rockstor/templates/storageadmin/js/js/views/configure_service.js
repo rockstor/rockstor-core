@@ -28,8 +28,8 @@ ConfigureServiceView = RockstoreLayoutView.extend({
   events: {
     "click #cancel": "cancel",
     "click #security": "toggleFormFields",
-    "click #join-domain": "showJoinDomainPopup",
     "click #enabletls": "toggleCertUrl",
+    "click #join-domain": "showJoinDomainPopup",
   },
 
   initialize: function() {
@@ -138,6 +138,40 @@ ConfigureServiceView = RockstoreLayoutView.extend({
       this.$('#join-domain-modal').modal({
         show: false
       });
+
+      this.$('#join-domain-form').validate({
+        onfocusout: false,
+        onkeyup: false,
+        rules: {
+          administrator: 'required',
+          password: 'required'
+        },
+        submitHandler: function() {
+          var button = _this.$('#join-domain-submit');
+          if (buttonDisabled(button)) return false;
+          disableButton(button);
+          var data = JSON.stringify(_this.$('#join-domain-form').getJSON());
+          $.ajax({
+            url: "/api/commands/joindomain",
+            type: "POST",
+            contentType: 'application/json',
+            dataType: "json",
+            data: data,
+            success: function(data, status, xhr) {
+              enableButton(button);
+              _this.$('#join-domain-modal').modal('hide');
+            },
+            error: function(xhr, status, error) {
+              enableButton(button);
+              var msg = parseXhrError(xhr)
+              _this.$('#join-domain-err').html(msg);
+            }
+          });
+          return false;
+
+        }
+
+      });
     }
     
     return this;
@@ -172,7 +206,7 @@ ConfigureServiceView = RockstoreLayoutView.extend({
 
   showJoinDomainPopup: function() {
     this.$('#join-domain-modal').modal('show');
-  }
+  },
 
 });
 
