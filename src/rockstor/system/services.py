@@ -19,9 +19,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import re
 from shutil import move
+import subprocess
 
 from django.conf import settings
 from osi import run_command
+from exceptions import CommandException
 
 SERVICE_BIN = '/sbin/service'
 CHKCONFIG_BIN = '/sbin/chkconfig'
@@ -29,6 +31,7 @@ AUTHCONFIG = '/usr/sbin/authconfig'
 SSHD_CONFIG = '/etc/ssh/sshd_config'
 SYSTEMCTL_BIN = '/usr/bin/systemctl'
 SUPERCTL_BIN = ('%s/bin/supervisorctl' % settings.ROOT_DIR)
+NET = '/usr/bin/net'
 
 def init_service_op(service_name, command, throw=True):
     supported_services = ('nfs', 'smb', 'sshd', 'ypbind', 'rpcbind', 'ntpd',
@@ -97,8 +100,26 @@ def winbind_input(config, command):
             ac_cmd.append('--enablewinbindoffline')
         else:
             ac_cmd.append('--disablewinbindoffline')
-        ac_cmd.extend(['--update', '--kickstart', '--enablewinbind'])
+        ac_cmd.extend(['--kickstart', '--enablewinbind'])
     return ac_cmd
+
+def join_winbind_domain(username, passwd):
+    up = '%s%%%s' % (username, passwd)
+    cmd = [NET, 'ads', 'join', '-U', up, '--request-timeout', '30']
+    out, err, rc = run_command(cmd, throw=False,)
+    if (rc != 0):
+        error = None
+        for e in err:
+            if (re.search('AD: Operations error', e) is not None):
+                error = ('Below error can occur due to DNS issue. Ensure '
+                         'that /etc/resolv.conf on Rockstor is pointing to '
+                         'the right DNS server -- stdout: %s stderr: %s'
+                         % (' '.join(out), ' '.join(err)))
+                break
+        error = ('Below error may be helpful for further troubleshooting --'
+                 ' stdout: %s stderr: %s' % (' '.join(out), ' '.join(err)))
+        raise CommandException(out, error, rc)
+    return (out, err, rc)
 
 def ldap_input(config, command):
     ac_cmd = []
