@@ -18,7 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework.response import Response
 from storageadmin.util import handle_exception
-from system.services import (init_service_op, chkconfig, toggle_auth_service)
+from system.services import (init_service_op, chkconfig, toggle_auth_service,
+                             systemctl)
 from django.db import transaction
 from base_service import BaseServiceView
 from smart_manager.models import Service
@@ -38,6 +39,8 @@ class WinbindServiceView(BaseServiceView):
         if (command == 'config'):
             try:
                 config = request.DATA['config']
+                toggle_auth_service('winbind', 'start', config)
+                logger.info('authconfig executed')
                 self._save_config(service, config)
             except Exception, e:
                 logger.exception(e)
@@ -48,6 +51,9 @@ class WinbindServiceView(BaseServiceView):
             try:
                 toggle_auth_service('winbind', command,
                                     config=self._get_config(service))
+                logger.info('authconfig executed')
+                systemctl('winbind', command)
+                logger.info('winbind altered')
             except Exception, e:
                 logger.exception(e)
                 e_msg = ('Failed to %s winbind service due to system error.' %
