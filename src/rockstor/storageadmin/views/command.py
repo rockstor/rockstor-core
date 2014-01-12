@@ -128,7 +128,7 @@ class CommandView(APIView):
         elif (command == 'join-winbind-domain'):
             try:
                 logger.info('got command')
-                systemctl('winbind', 'start')
+                systemctl('winbind', 'restart')
                 logger.info('started winbind')
                 username = request.DATA['administrator']
                 passwd = request.DATA['password']
