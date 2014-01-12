@@ -109,15 +109,17 @@ def join_winbind_domain(username, passwd):
     out, err, rc = run_command(cmd, throw=False,)
     if (rc != 0):
         error = None
-        for e in err:
+        for e in out + err:
             if (re.search('AD: Operations error', e) is not None):
                 error = ('Below error can occur due to DNS issue. Ensure '
                          'that /etc/resolv.conf on Rockstor is pointing to '
                          'the right DNS server -- stdout: %s stderr: %s'
                          % (' '.join(out), ' '.join(err)))
                 break
-        error = ('Below error may be helpful for further troubleshooting --'
-                 ' stdout: %s stderr: %s' % (' '.join(out), ' '.join(err)))
+        if (error is None):
+            error = ('Below error may be helpful for further '
+                     'troubleshooting -- stdout: %s stderr: %s'
+                     % (' '.join(out), ' '.join(err)))
         raise CommandException(out, error, rc)
     return (out, err, rc)
 
