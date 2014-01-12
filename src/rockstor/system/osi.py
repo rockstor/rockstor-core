@@ -24,7 +24,7 @@ from tempfile import mkstemp
 import time
 from exceptions import (CommandException, NonBTRFSRootException)
 
-
+HOSTS_FILE = '/etc/hosts'
 MKDIR = '/bin/mkdir'
 RMDIR = '/bin/rmdir'
 CHMOD = '/bin/chmod'
@@ -447,3 +447,19 @@ def update_run():
     out, err, rc = run_command([AT, '-f', npath, 'now + 1 minutes'])
     time.sleep(120)
     return out, err, rc
+
+def sethostname(ip, hostname):
+    """
+    edit /etc/hosts file and /etc/hostname
+    """
+    fh, npath = mkstemp()
+    with open(HOSTS_FILE) as hfo, open(npath, 'w') as tfo:
+        for line in hfo.readlines():
+            if (re.match(ip, line) is None):
+                tfo.write(line)
+        tfo.write('%s %s\n' % (ip, hostname))
+    shutil.move(npath, HOSTS_FILE)
+
+    with open('/etc/hostname', 'w') as hnfo:
+        hnfo.write('%s\n' % hostname)
+

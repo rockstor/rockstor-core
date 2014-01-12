@@ -33,7 +33,7 @@ from storageadmin.models import Appliance
 from storageadmin.models import SupportCase
 from storageadmin.util import handle_exception
 from storageadmin.serializers import ApplianceSerializer
-from system.osi import hostid
+from system.osi import (hostid, sethostname)
 from system.util import archive_logs
 import os
 
@@ -80,6 +80,9 @@ class AppliancesView(APIView):
             appliance_uuid = ('%s:%s' % (hostid()[0][0], str(uuid.uuid4())))
             appliance = Appliance(uuid=appliance_uuid, ip=ip,
                                   current_appliance=True)
+            if ('hostname' in request.DATA):
+                appliance.hostname = request.DATA['hostname']
+            sethostname(ip, appliance.hostname)
             appliance.save()
         return Response(ApplianceSerializer(appliance).data)
       except Exception, e:
