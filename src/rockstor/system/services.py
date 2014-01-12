@@ -103,7 +103,14 @@ def winbind_input(config, command):
             ac_cmd.append('--enablewinbindoffline')
         else:
             ac_cmd.append('--disablewinbindoffline')
-        ac_cmd.extend(['--kickstart', '--enablewinbind'])
+        ac_cmd.extend(['--kickstart', '--enablewinbind',
+                       '--winbindtemplatehomedir=/home/%%U',
+                       '--enablewinbindusedefaultdomain',
+                       '--enablelocauthorize',
+                       '--enablepamaccess',
+                       '--disablekrb5',
+                       '--disablekrb5kdcdns',
+                       '--disablekrb5realmdns',])
     return ac_cmd
 
 def join_winbind_domain(username, passwd):
