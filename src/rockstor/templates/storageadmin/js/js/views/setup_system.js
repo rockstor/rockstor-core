@@ -38,7 +38,19 @@ SetupSystemView = Backbone.View.extend({
   },
 
   renderSystemSetup: function() {
+    var _this = this;
     $(this.el).html(this.template({sysinfo: this.sysinfo}));
+    this.$('#set-hostname-form').validate({
+      onfocusout: false,
+      onkeyup: false,
+      rules: {
+        hostname: 'required'
+      },
+      submitHandler: function() {
+        RockStorGlobals.hostname = _this.$('#hostname').val();
+        return false;
+      }
+    });
   }
 
 });
