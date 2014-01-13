@@ -62,10 +62,16 @@ ServicesView = Backbone.View.extend({
   renderServices: function() {
     var _this = this;
     $(this.el).empty();
-    
+    var adConfigStr = this.collection.get('winbind').get('config');
+    if (!_.isNull(adConfigStr)) {
+      this.adServiceConfig = JSON.parse(adConfigStr);
+    }
+    if (_.isNull(this.adServiceConfig) || _.isUndefined(this.adServiceConfig)) {
+      this.adServiceConfig = {};
+    }
     $(this.el).append(this.template({
       services: this.collection,
-      adServiceConfig: JSON.parse(this.collection.get('winbind').get('config'))
+      adServiceConfig: this.adServiceConfig
     }));
     this.$(".ph-pagination").html(this.paginationTemplate({
       collection: this.collection
@@ -124,10 +130,9 @@ ServicesView = Backbone.View.extend({
 
     });
     var adService = this.collection.get('winbind');
-    var adServiceConfig = JSON.parse(this.collection.get('winbind').get('config'));
     if (adService.get('status') && 
-        (adServiceConfig.security == 'ads' || 
-         adServiceConfig.security == 'domain')) {
+        (this.adServiceConfig.security == 'ads' || 
+         this.adServiceConfig.security == 'domain')) {
       this.showJoinDomainStatus();
     }
   },

@@ -11,6 +11,7 @@
             <th scope="col" abbr="Browseable">Browseable</th>
             <th scope="col" abbr="Guest ok">Guest ok</th>
             <th scope="col" abbr="Read only">Read only</th>
+            <th scope="col" abbr="Admin Users">Admin Users</th>
             <th scope="col" abbr="Comments">Comments</th>
             <th scope="col" abbr="Actions">Actions</th>
           </tr>
@@ -22,6 +23,7 @@
               <td><%= sambaShare.get('browsable') %></td>
               <td><%= sambaShare.get('guest_ok') %></td>
               <td><%= sambaShare.get('read_only') %></td>
+              <td><%= sambaShare.get('admin_users') %></td>
               <td><%= sambaShare.get('comments') %></td>
               <td>
                 <a href="#" class="delete-samba-export" data-share="<%= sambaShare.get('share') %>" data-id="<%= sambaShare.id %>"><i class="icon-trash"></i></a>
