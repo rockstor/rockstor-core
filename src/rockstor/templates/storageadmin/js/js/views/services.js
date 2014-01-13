@@ -110,12 +110,14 @@ ServicesView = Backbone.View.extend({
           data: data,
           success: function(data, status, xhr) {
             enableButton(button);
+            _this.$('#join-domain-status').html('Join Ok');
             _this.$('#join-domain-modal').modal('hide');
           },
           error: function(xhr, status, error) {
             enableButton(button);
             var msg = parseXhrError(xhr)
             _this.$('#join-domain-err').html(msg);
+            _this.$('#join-domain-status').html('Join Invalid');
           }
         });
         return false;

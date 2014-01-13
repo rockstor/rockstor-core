@@ -69,7 +69,10 @@ AddSambaExportView = RockstoreLayoutView.extend({
       read_only_choices: this.read_only_choices
     }));
 
-    $('#add-samba-export-form :input').tooltip();
+    this.$('#add-samba-export-form :input').tooltip({
+      html: true,
+      placement: 'right'
+    });
     
     $('#add-samba-export-form').validate({
       onfocusout: false,
@@ -83,7 +86,6 @@ AddSambaExportView = RockstoreLayoutView.extend({
         if (buttonDisabled(button)) return false;
         disableButton(button);
 
-        console.log(JSON.stringify(_this.$('#add-samba-export-form').getJSON()));
         $.ajax({
           url: '/api/samba',
           type: 'POST',
@@ -92,6 +94,7 @@ AddSambaExportView = RockstoreLayoutView.extend({
           data: JSON.stringify(_this.$('#add-samba-export-form').getJSON()),
           success: function() {
             enableButton(button);
+            _this.$('#add-samba-export-form :input').tooltip('hide');
             app_router.navigate('samba-exports', {trigger: true});
           },
           error: function(xhr, status, error) {
@@ -106,6 +109,7 @@ AddSambaExportView = RockstoreLayoutView.extend({
   
   cancel: function(event) {
     event.preventDefault();
+    this.$('#add-samba-export-form :input').tooltip('hide');
     app_router.navigate('samba-exports', {trigger: true});
   }
 

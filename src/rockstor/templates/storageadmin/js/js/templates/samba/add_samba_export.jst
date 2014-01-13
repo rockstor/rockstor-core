@@ -10,7 +10,7 @@
         <div class="control-group">
           <label class="control-label" for="shares">Select one or more shares<span class="required"> *</span></label>
           <div class="controls">
-            <select name="shares" id="share" size="10" multiple>
+            <select name="shares" id="share" size="10" title="Select shares to export" multiple>
               <% _.each(shares, function(share, index) { %>
                 <option value="<%= share.get('name') %>"><%= share.get('name') %></option>
               <% }); %>
@@ -19,9 +19,16 @@
         </div>
 
         <div class="control-group">
-          <label class="control-label" for="browseable">Browseable<span class="required"> *</span></label>
+          <label class="control-label" for="admin_users">Admin users</span></label>
           <div class="controls">
-            <select id="browsable" name="browsable">
+            <input type="text" id="admin_users" name="admin_users" title="Enter a <strong>space separated list of users</strong> who will be granted administrative privileges on the share. <br><strong>This means that they will do all file operations as the super-user (root). You should use this option very carefully, as any user in this list will be able to do anything they like on the share, irrespective of file permissions.</strong>">
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label class="control-label" for="browsable">Browsable<span class="required"> *</span></label>
+          <div class="controls">
+            <select id="browsable" name="browsable" title="Allows share to be displayed in list of machine resources">
               <% _.each(browsable_choices, function(c) { %>
                 <option value="<%= c.value %>"><%= c.name %></option>
               <% }); %>
@@ -32,7 +39,7 @@
         <div class="control-group">
           <label class="control-label" for="guest_ok">Guest Ok<span class="required"> *</span></label>
           <div class="controls">
-            <select id="guest_ok" name="guest_ok">
+            <select id="guest_ok" name="guest_ok" title="Is default guest user access allowed?">
               <% _.each(guest_ok_choices, function(c) { %>
                 <option value="<%= c.value %>"><%= c.name %></option>
               <% }); %>
@@ -43,7 +50,7 @@
         <div class="control-group">
           <label class="control-label" for="read_only">Read only<span class="required"> *</span></label>
           <div class="controls">
-            <select id="read_only" name="read_only">
+            <select id="read_only" name="read_only" title="Is the share read-only or writable?">
               <% _.each(read_only_choices, function(c) { %>
                 <option value="<%= c.value %>"><%= c.name %></option>
               <% }); %>
@@ -54,7 +61,7 @@
         <div class="control-group">
           <label class="control-label" for="comment">Comment</span></label>
           <div class="controls">
-            <input type="text" id="comment" name="comment">
+            <input type="text" id="comment" name="comment" title="Comment string to associate with the new share">
           </div>
         </div>
         
