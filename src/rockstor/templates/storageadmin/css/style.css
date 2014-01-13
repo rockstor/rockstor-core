@@ -770,6 +770,9 @@ hr.module-sep { margin: 0; border: 0; border-top: 1px solid #ddd;
   border: none;
   padding: 0px;
 }
+.alert-small {
+  padding: 4px 12px;
+}
 /***/
 
 /** Global Loading indicator **/

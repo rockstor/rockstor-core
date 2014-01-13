@@ -46,7 +46,6 @@ ServicesView = Backbone.View.extend({
       'reload': 'reloaded'
     }
     this.pollInterval = 5000;
-    this.collection.on('reset', this.renderServices, this);
   },
 
   render: function() {
@@ -110,20 +109,27 @@ ServicesView = Backbone.View.extend({
           data: data,
           success: function(data, status, xhr) {
             enableButton(button);
-            _this.$('#join-domain-status').html('Join Ok');
+            _this.$('#join-domain-status').html('<span class="alert alert-success alert-small">Join Ok</span>');
             _this.$('#join-domain-modal').modal('hide');
           },
           error: function(xhr, status, error) {
             enableButton(button);
             var msg = parseXhrError(xhr)
             _this.$('#join-domain-err').html(msg);
-            _this.$('#join-domain-status').html('Join Invalid');
+            _this.$('#join-domain-status').html('<span class="alert alert-error alert-small">Not Joined</span>');
           }
         });
         return false;
       }
 
     });
+    var adService = this.collection.get('winbind');
+    var adServiceConfig = JSON.parse(this.collection.get('winbind').get('config'));
+    if (adService.get('status') && 
+        (adServiceConfig.security == 'ads' || 
+         adServiceConfig.security == 'domain')) {
+      this.showJoinDomainStatus();
+    }
   },
   
   startService: function(event) {
@@ -259,6 +265,22 @@ ServicesView = Backbone.View.extend({
   showJoinDomainPopup: function() {
     this.$('#join-domain-modal').modal('show');
   },
+
+  showJoinDomainStatus: function() {
+    var _this = this;
+    $.ajax({
+      url: "/api/commands/winbind-domain-status",
+      type: "POST",
+      contentType: 'application/json',
+      dataType: "json",
+      success: function(data, status, xhr) {
+        _this.$('#join-domain-status').html('<span class="alert alert-success alert-small">Join Ok</span>');
+      },
+      error: function(xhr, status, error) {
+        _this.$('#join-domain-status').html('<span class="alert alert-error alert-small">Not Joined</span>');
+      }
+    });
+  }
 
 });
 
