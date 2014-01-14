@@ -42,7 +42,7 @@
                   <% } %>
                   <% if ((service.get('name') == 'winbind')) { %>
                     &nbsp;
-                    <% if ((adServiceConfig.security == 'ads' || adServiceConfig.security == 'domain') && service.get('status'))  { %>
+                    <% if ((adServiceConfig.security == 'ads' || adServiceConfig.security == 'domain'))  { %>
                       <button type="button" id="join-domain" class="btn btn-primary btn-mini">Join Domain</button>
                     <% } else { %>
                       <button type="button" id="join-domain" class="btn btn-mini disabled">Join Domain</button>
