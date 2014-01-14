@@ -267,8 +267,10 @@ ServicesView = Backbone.View.extend({
     }
   },
 
-  showJoinDomainPopup: function() {
-    this.$('#join-domain-modal').modal('show');
+  showJoinDomainPopup: function(event) {
+    if (!$(event.currentTarget).hasClass('disabled')) {
+      this.$('#join-domain-modal').modal('show');
+    }
   },
 
   showJoinDomainStatus: function() {
@@ -279,10 +281,13 @@ ServicesView = Backbone.View.extend({
       contentType: 'application/json',
       dataType: "json",
       success: function(data, status, xhr) {
-        _this.$('#join-domain-status').html('<span class="alert alert-success alert-small">Join Ok</span>');
+        if (data == 'Yes') {
+          _this.$('#join-domain-status').html('<span class="alert alert-success alert-small">Join Ok</span>');
+        } else {
+          _this.$('#join-domain-status').html('<span class="alert alert-error alert-small"><i class="icon-exclamation-sign"></i>&nbsp;Not Joined</span>');
+        }
       },
       error: function(xhr, status, error) {
-        _this.$('#join-domain-status').html('<span class="alert alert-error alert-small">Not Joined</span>');
       }
     });
   }

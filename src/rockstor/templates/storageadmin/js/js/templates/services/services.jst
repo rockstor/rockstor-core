@@ -40,9 +40,9 @@
                   <% if ((service.get('name') == 'nis') || (service.get('name') == 'ntpd') || (service.get('name') == 'winbind') || (service.get('name') == 'ldap')) { %>
                     <a href="#" class="configure" data-service-name="<%= service.get('name') %>"><i class="icon-wrench"></i></a>
                   <% } %>
-                  <% if (service.get('name') == 'winbind') { %>
+                  <% if ((service.get('name') == 'winbind')) { %>
                     &nbsp;
-                    <% if (adServiceConfig.security == 'ads' || adServiceConfig.security == 'domain')  { %>
+                    <% if ((adServiceConfig.security == 'ads' || adServiceConfig.security == 'domain') && service.get('status'))  { %>
                       <button type="button" id="join-domain" class="btn btn-primary btn-mini">Join Domain</button>
                     <% } else { %>
                       <button type="button" id="join-domain" class="btn btn-mini disabled">Join Domain</button>
