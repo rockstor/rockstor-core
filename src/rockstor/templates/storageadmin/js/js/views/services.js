@@ -45,7 +45,7 @@ ServicesView = Backbone.View.extend({
       'restart': 'restarted',
       'reload': 'reloaded'
     }
-    this.pollInterval = 5000;
+    this.updateFreq = 5000;
   },
 
   render: function() {
@@ -55,7 +55,7 @@ ServicesView = Backbone.View.extend({
         _this.renderServices();
       }
     });
-    this.startPolling();
+    this.updateStatus();
     return this;
   },
 
@@ -152,11 +152,11 @@ ServicesView = Backbone.View.extend({
         _this.highlightStartEl(serviceName, true);
         _this.setSliderVal(serviceName, 1); 
         _this.setStatusLoading(serviceName, false);
-        _this.startPolling();
+        _this.updateStatus();
       },
       error: function(xhr, status, error) {
         _this.setStatusError(serviceName, xhr);
-        _this.startPolling();
+        _this.updateStatus();
       }
     });
   },
@@ -176,11 +176,11 @@ ServicesView = Backbone.View.extend({
         _this.highlightStartEl(serviceName, false);
         _this.setSliderVal(serviceName, 0); 
         _this.setStatusLoading(serviceName, false);
-        _this.startPolling();
+        _this.updateStatus();
       },
       error: function(xhr, status, error) {
         _this.setStatusError(serviceName, xhr);
-        _this.startPolling();
+        _this.updateStatus();
       }
     });
   },
@@ -237,33 +237,39 @@ ServicesView = Backbone.View.extend({
     this.stopPolling();
   },
 
-  startPolling: function() {
+  updateStatus: function() {
     var _this = this;
-    this.intervalId = window.setInterval(function() {
-      return function() { 
-        _this.collection.fetch({
-          silent: true,
-          success: function(collection, response, options) {
-            _this.collection.each(function(service) {
-              var serviceName = service.get('name');
-              if (service.get('status')) {
-                _this.highlightStartEl(serviceName, true);
-                _this.setSliderVal(serviceName, 1); 
-              } else {
-                _this.highlightStartEl(serviceName, false);
-                _this.setSliderVal(serviceName, 0); 
-              }
-            }); 
-          } 
+    this.startTime = new Date().getTime();
+    _this.collection.fetch({
+      silent: true,
+      success: function(collection, response, options) {
+        _this.collection.each(function(service) {
+          var serviceName = service.get('name');
+          if (service.get('status')) {
+            _this.highlightStartEl(serviceName, true);
+            _this.setSliderVal(serviceName, 1); 
+          } else {
+            _this.highlightStartEl(serviceName, false);
+            _this.setSliderVal(serviceName, 0); 
+          }
         }); 
-      }
-    }(), this.pollInterval);
+        var currentTime = new Date().getTime();
+        var diff = currentTime - _this.startTime;
+        if (diff > _this.updateFreq) {
+          _this.updateStatus();
+        } else {
+          _this.timeoutId = window.setTimeout( function() { 
+            _this.updateStatus();
+          }, _this.updateFreq - diff);
+        }
+      } 
+    });
   },
 
   stopPolling: function() {
     var _this = this;
-    if (!_.isUndefined(this.intervalId)) {
-      window.clearInterval(this.intervalId);
+    if (!_.isUndefined(this.timeoutId)) {
+      window.clearInterval(this.timeoutId);
     }
   },
 
