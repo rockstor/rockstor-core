@@ -94,6 +94,7 @@ SMBShares  = RockstoreModuleView.extend({
           browsable: _this.$("#browsable").val(),
           guest_ok: _this.$("#guest_ok").val(),  
           read_only: _this.$("#read_only").val(),
+          admin_users: _this.$('#admin_users').val(),
           comment: _this.$("#comment").val()
         };
         _this.smbShare.save(
