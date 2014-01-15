@@ -55,7 +55,7 @@ ServicesView = Backbone.View.extend({
         _this.renderServices();
       }
     });
-    this.updateStatus();
+    this.startPolling();
     return this;
   },
 
@@ -115,14 +115,16 @@ ServicesView = Backbone.View.extend({
           data: data,
           success: function(data, status, xhr) {
             enableButton(button);
-            _this.$('#join-domain-status').html('<span class="alert alert-success alert-small">Join Ok</span>');
+            RockStorGlobals.adJoinStatus = true;
+            _this.showJoinDomainStatus();
             _this.$('#join-domain-modal').modal('hide');
           },
           error: function(xhr, status, error) {
             enableButton(button);
             var msg = parseXhrError(xhr)
             _this.$('#join-domain-err').html(msg);
-            _this.$('#join-domain-status').html('<span class="alert alert-error alert-small">Not Joined</span>');
+            RockStorGlobals.adJoinStatus = false;
+            _this.showJoinDomainStatus();
           }
         });
         return false;
@@ -152,11 +154,11 @@ ServicesView = Backbone.View.extend({
         _this.highlightStartEl(serviceName, true);
         _this.setSliderVal(serviceName, 1); 
         _this.setStatusLoading(serviceName, false);
-        _this.updateStatus();
+        _this.startPolling();
       },
       error: function(xhr, status, error) {
         _this.setStatusError(serviceName, xhr);
-        _this.updateStatus();
+        _this.startPolling();
       }
     });
   },
@@ -176,11 +178,11 @@ ServicesView = Backbone.View.extend({
         _this.highlightStartEl(serviceName, false);
         _this.setSliderVal(serviceName, 0); 
         _this.setStatusLoading(serviceName, false);
-        _this.updateStatus();
+        _this.startPolling();
       },
       error: function(xhr, status, error) {
         _this.setStatusError(serviceName, xhr);
-        _this.updateStatus();
+        _this.startPolling();
       }
     });
   },
@@ -237,9 +239,17 @@ ServicesView = Backbone.View.extend({
     this.stopPolling();
   },
 
+  startPolling: function() {
+    var _this = this;
+    // start after updateFreq
+    this.timeoutId = window.setTimeout(function() {
+      _this.updateStatus();
+    }, this.updateFreq);
+  },
+
   updateStatus: function() {
     var _this = this;
-    this.startTime = new Date().getTime();
+    _this.startTime = new Date().getTime();
     _this.collection.fetch({
       silent: true,
       success: function(collection, response, options) {
@@ -255,14 +265,16 @@ ServicesView = Backbone.View.extend({
         }); 
         var currentTime = new Date().getTime();
         var diff = currentTime - _this.startTime;
+        // if diff > updateFreq, make next call immediately
         if (diff > _this.updateFreq) {
           _this.updateStatus();
         } else {
+          // wait till updateFreq msec has elapsed since startTime
           _this.timeoutId = window.setTimeout( function() { 
             _this.updateStatus();
           }, _this.updateFreq - diff);
         }
-      } 
+      }
     });
   },
 
@@ -280,22 +292,14 @@ ServicesView = Backbone.View.extend({
   },
 
   showJoinDomainStatus: function() {
-    var _this = this;
-    $.ajax({
-      url: "/api/commands/winbind-domain-status",
-      type: "POST",
-      contentType: 'application/json',
-      dataType: "json",
-      success: function(data, status, xhr) {
-        if (data == 'Yes') {
-          _this.$('#join-domain-status').html('<span class="alert alert-success alert-small">Join Ok</span>');
-        } else {
-          _this.$('#join-domain-status').html('<span class="alert alert-error alert-small"><i class="icon-exclamation-sign"></i>&nbsp;Not Joined</span>');
-        }
-      },
-      error: function(xhr, status, error) {
+    if (!_.isUndefined(RockStorGlobals.adJoinStatus) &&
+        !_.isNull(RockStorGlobals.adJoinStatus)) {
+      if (RockStorGlobals.adJoinStatus) {
+        this.$('#join-domain-status').html('<span class="alert alert-success alert-small">Join Ok</span>');
+      } else {
+        this.$('#join-domain-status').html('<span class="alert alert-success alert-small">Not Joined</span>');
       }
-    });
+    }
   }
 
 });
