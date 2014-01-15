@@ -29,7 +29,7 @@ from rest_framework.permissions import IsAuthenticated
 from system.osi import (uptime, refresh_nfs_exports, update_check, update_run)
 from fs.btrfs import (is_share_mounted, mount_share)
 from system.ssh import (sftp_mount_map, sftp_mount)
-from system.services import systemctl
+from system.services import (systemctl, join_winbind_domain, ads_join_status)
 from storageadmin.models import (Share, Disk, NFSExport, SFTP)
 from nfs_helpers import create_nfs_export_input
 from storageadmin.util import handle_exception
@@ -112,7 +112,7 @@ class CommandView(APIView):
             try:
                 return Response(update_check())
             except Exception, e:
-                e_msg = ('Unalbe to check update due to a system error')
+                e_msg = ('Unable to check update due to a system error')
                 logger.exception(e)
                 handle_exception(Exception(e_msg), request)
 
@@ -124,3 +124,32 @@ class CommandView(APIView):
                 e_msg = ('Update failed due to a system error')
                 logger.exception(e)
                 handle_exception(Exception(e_msg), request)
+
+        elif (command == 'join-winbind-domain'):
+            try:
+                systemctl('winbind', 'restart')
+                username = request.DATA['administrator']
+                passwd = request.DATA['password']
+                join_winbind_domain(username, passwd)
+                return Response('Done')
+            except Exception, e:
+                handle_exception(e, request)
+
+        elif (command == 'winbind-domain-status'):
+            msg = 'Yes'
+            try:
+                username = request.DATA['administrator']
+                passwd = request.DATA['password']
+            except Exception, e:
+                handle_exception(e, request)
+
+            try:
+                ads_join_status(username, passwd)
+            except Exception, e:
+                logger.exception(e)
+                msg = ('Domain join check failed. Low level error: %s %s' %
+                       (e.out, e.err))
+            finally:
+                return Response(msg)
+
+

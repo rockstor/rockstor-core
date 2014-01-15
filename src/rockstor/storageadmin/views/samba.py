@@ -56,6 +56,7 @@ class SambaView(GenericView):
             'guest_ok': 'no',
             'read_only': 'no',
             'create_mask': '0755',
+            'admin_users': 'Administrator',
             }
         if ('comment' in request.DATA):
             options['comment'] = request.DATA['comment']
@@ -85,6 +86,8 @@ class SambaView(GenericView):
                 e_msg = ('Invalid choice for create_mask. Possible '
                          'options are: %s' % self.CREATE_MASKS)
                 handle_exception(Exception(e_msg), request)
+        if ('admin_users' in request.DATA):
+            options['admin_users'] = request.DATA['admin_users']
 
         for share in shares:
             if (SambaShare.objects.filter(share=share).exists()):
@@ -100,13 +103,13 @@ class SambaView(GenericView):
                                        browsable=options['browsable'],
                                        read_only=options['read_only'],
                                        guest_ok=options['guest_ok'],
-                                       create_mask=options['create_mask'])
+                                       create_mask=options['create_mask'],
+                                       admin_users=options['admin_users'])
                 smb_share.save()
                 if (not is_share_mounted(share.name)):
                     pool_device = Disk.objects.filter(pool=share.pool)[0].name
                     mount_share(share.subvol_name, pool_device, mnt_pt)
-            refresh_smb_config(list(SambaShare.objects.all()),
-                               settings.SMB_CONF)
+            refresh_smb_config(list(SambaShare.objects.all()))
             restart_samba()
             return Response()
         except RockStorAPIException:
@@ -124,8 +127,7 @@ class SambaView(GenericView):
             handle_exception(Exception(e_msg), request)
 
         try:
-            refresh_smb_config(list(SambaShare.objects.all()),
-                               settings.SMB_CONF)
+            refresh_smb_config(list(SambaShare.objects.all()))
             restart_samba()
             return Response()
         except Exception, e:

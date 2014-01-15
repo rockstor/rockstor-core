@@ -46,14 +46,14 @@ ConfigureServiceView = RockstoreLayoutView.extend({
         realm: {
           required: {
             depends: function(element) {
-              return (_this.$('#security').val() == 'ad');
+              return (_this.$('#security').val() == 'ads');
             }
           }
         },
         templateshell: {
           required: {
             depends: function(element) {
-              return ((_this.$('#security').val() == 'ad') ||
+              return ((_this.$('#security').val() == 'ads') ||
                       (_this.$('#security').val() == 'domain'));
             }
           }
@@ -93,7 +93,37 @@ ConfigureServiceView = RockstoreLayoutView.extend({
     this.$('#nis-form :input').tooltip();
     this.$('#ldap-form :input').tooltip();
     this.$('#ntpd-form :input').tooltip();
-    this.$('#winbind-form :input').tooltip();
+    this.$('#winbind-form #domain').tooltip({
+      html: true,
+      placement: 'right',
+      title: 'Specifies the Windows Active Directory or domain controller to connect to.'
+    });
+    this.$('#winbind-form #security').tooltip({
+      html: true,
+      placement: 'right',
+      title: "<strong>Security Model</strong> — Allows you to select a security model, which configures how clients should respond to Samba. The drop-down list allows you select any of the following:<br> \
+      <ul>\
+      <li><strong>ads</strong> — This mode instructs Samba to act as a domain member in an Active Directory Server (ADS) realm. To operate in this mode, the krb5-server package must be installed, and Kerberos must be configured properly.</li> \
+      <li><strong>domain</strong> — In this mode, Samba will attempt to validate the username/password by authenticating it through a Windows NT Primary or Backup Domain Controller, similar to how a Windows NT Server would.</li> \
+      <li><strong>server</strong> — In this mode, Samba will attempt to validate the username/password by authenticating it through another SMB server (for example, a Windows NT Server). If the attempt fails, the user mode will take effect instead.</li> \
+      <li><strong>user</strong> — This is the default mode. With this level of security, a client must first log in with a valid username and password. Encrypted passwords can also be used in this security mode.</li> \
+      </ul>"
+    });
+    this.$('#winbind-form #realm').tooltip({
+      html: true,
+      placement: 'right',
+      title: 'When the ads Security Model is selected, this allows you to specify the ADS Realm the Samba server should act as a domain member of.'
+    });
+    this.$('#winbind-form #controllers').tooltip({
+      html: true,
+      placement: 'right',
+      title: 'Use this option to specify which domain controller winbind should use.'
+    });
+    this.$('#winbind-form #templateshell').tooltip({
+      html: true,
+      placement: 'right',
+      title: 'When filling out the user information for a Windows NT user, the winbindd daemon uses the value chosen here to to specify the login shell for that user.'
+    });
     
     this.validator = this.$('#' + this.formName).validate({
       onfocusout: false,
@@ -132,6 +162,7 @@ ConfigureServiceView = RockstoreLayoutView.extend({
         return false;
       }
     });
+
     return this;
   },
 
@@ -140,17 +171,16 @@ ConfigureServiceView = RockstoreLayoutView.extend({
   },
 
   toggleFormFields: function() {
-    if (this.$('#security').val() == 'ad') {
-	this.$('#realm').removeAttr('disabled');
+    if (this.$('#security').val() == 'ads') {
+      this.$('#realm').removeAttr('disabled');
     } else {
-        this.$('#realm').attr('disabled', 'true');    	
+      this.$('#realm').attr('disabled', 'true');    	
     }
-
-    if (this.$('#security').val() == 'ad' ||
-        this.$('#security').val() == 'domain') {
-	this.$('#templateshell').removeAttr('disabled');
+    if (this.$('#security').val() == 'ads' 
+        || this.$('#security').val() == 'domain') {
+      this.$('#templateshell').removeAttr('disabled');
     } else {
-	this.$('#templateshell').attr('disabled', 'true');
+      this.$('#templateshell').attr('disabled', 'true');
     }
   },
 
@@ -161,7 +191,8 @@ ConfigureServiceView = RockstoreLayoutView.extend({
     } else {
       this.$('#cert-ph').css('visibility','hidden');
     }
-  }
+  },
+
 
 });
 

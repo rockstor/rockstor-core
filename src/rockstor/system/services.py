@@ -19,9 +19,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import re
 from shutil import move
+import subprocess
 
 from django.conf import settings
 from osi import run_command
+from exceptions import CommandException
 
 SERVICE_BIN = '/sbin/service'
 CHKCONFIG_BIN = '/sbin/chkconfig'
@@ -29,6 +31,7 @@ AUTHCONFIG = '/usr/sbin/authconfig'
 SSHD_CONFIG = '/etc/ssh/sshd_config'
 SYSTEMCTL_BIN = '/usr/bin/systemctl'
 SUPERCTL_BIN = ('%s/bin/supervisorctl' % settings.ROOT_DIR)
+NET = '/usr/bin/net'
 
 def init_service_op(service_name, command, throw=True):
     supported_services = ('nfs', 'smb', 'sshd', 'ypbind', 'rpcbind', 'ntpd',
@@ -78,6 +81,9 @@ def service_status(service_name):
             return out, err, -1
     elif (service_name == 'replication'):
         return superctl(service_name, 'status')
+    elif (service_name == 'smb'):
+        run_command([SYSTEMCTL_BIN, 'status', 'smb'])
+        return run_command([SYSTEMCTL_BIN, 'status', 'nmb'])
     return init_service_op(service_name, 'status', throw=False)
 
 def winbind_input(config, command):
@@ -85,18 +91,47 @@ def winbind_input(config, command):
     if (command == 'stop'):
         ac_cmd.extend(['--disablewinbind','--disablewinbindauth'])
     else:
-        ac_cmd.append('--smbsecurity=%s' % config['security'])
-        if (config['allow-offline'] is True):
-            ac_cmd.append('--enablewinbindoffline')
-        ac_cmd.append('--smbservers=%s' % config['controllers'])
         ac_cmd.append('--smbworkgroup=%s' % config['domain'])
-        if (config['security'] == 'ad' or config['security'] == 'domain'):
+        ac_cmd.append('--smbsecurity=%s' % config['security'])
+        if (config['security'] == 'ads'):
+            ac_cmd.append('--smbrealm=%s' % config['realm'])
+        if (config['security'] == 'ads' or config['security'] == 'domain'):
             ac_cmd.append('--winbindtemplateshell=%s' %
                           config['templateshell'])
-        if (config['security'] == 'ad'):
-            ac_cmd.append('--smbrealm=%s' % config['realm'])
-        ac_cmd.extend(['--enablewinbind', '--enablewinbindauth'])
+        ac_cmd.append('--smbservers=%s' % config['controllers'])
+        if (config['allow-offline'] is True):
+            ac_cmd.append('--enablewinbindoffline')
+        else:
+            ac_cmd.append('--disablewinbindoffline')
+        ac_cmd.extend(['--kickstart', '--enablewinbind',
+                       '--winbindtemplatehomedir=/home/%%U',
+                       '--enablewinbindusedefaultdomain',
+                       '--enablelocauthorize',
+                       '--enablepamaccess',
+                       '--disablekrb5',
+                       '--disablekrb5kdcdns',
+                       '--disablekrb5realmdns',])
     return ac_cmd
+
+def join_winbind_domain(username, passwd):
+    up = '%s%%%s' % (username, passwd)
+    cmd = [NET, 'ads', 'join', '-U', up, '--request-timeout', '30']
+    out, err, rc = run_command(cmd, throw=False,)
+    if (rc != 0):
+        error = None
+        for e in out + err:
+            if (re.search('AD: Operations error', e) is not None):
+                error = ('Below error can occur due to DNS issue. Ensure '
+                         'that /etc/resolv.conf on Rockstor is pointing to '
+                         'the right DNS server -- stdout: %s stderr: %s'
+                         % (' '.join(out), ' '.join(err)))
+                break
+        if (error is None):
+            error = ('Below error may be helpful for further '
+                     'troubleshooting -- stdout: %s stderr: %s'
+                     % (' '.join(out), ' '.join(err)))
+        raise CommandException(out, error, rc)
+    return (out, err, rc)
 
 def ldap_input(config, command):
     ac_cmd = []
@@ -137,3 +172,9 @@ def toggle_sftp_service(switch=True):
                 tfo.write(sftp_str)
     move('/tmp/sshd_config', '/etc/ssh/sshd_config')
     return init_service_op('sshd', 'reload')
+
+def ads_join_status(username, passwd):
+    up = '%s%%%s' % (username, passwd)
+    return run_command([NET, 'ads', 'status', '-U', up, '--request-timeout',
+                        '60'])
+

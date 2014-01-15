@@ -32,6 +32,7 @@ ServicesView = Backbone.View.extend({
     'click .slider-stop': "stopService",
     'click .slider-start': "startService",
     'click .configure': "configureService",
+    "click #join-domain": "showJoinDomainPopup",
   },
 
   initialize: function() {
@@ -44,8 +45,7 @@ ServicesView = Backbone.View.extend({
       'restart': 'restarted',
       'reload': 'reloaded'
     }
-    this.pollInterval = 5000;
-    this.collection.on('reset', this.renderServices, this);
+    this.updateFreq = 5000;
   },
 
   render: function() {
@@ -62,9 +62,16 @@ ServicesView = Backbone.View.extend({
   renderServices: function() {
     var _this = this;
     $(this.el).empty();
-    
+    var adConfigStr = this.collection.get('winbind').get('config');
+    if (!_.isNull(adConfigStr)) {
+      this.adServiceConfig = JSON.parse(adConfigStr);
+    }
+    if (_.isNull(this.adServiceConfig) || _.isUndefined(this.adServiceConfig)) {
+      this.adServiceConfig = {};
+    }
     $(this.el).append(this.template({
-      services: this.collection
+      services: this.collection,
+      adServiceConfig: this.adServiceConfig
     }));
     this.$(".ph-pagination").html(this.paginationTemplate({
       collection: this.collection
@@ -82,6 +89,54 @@ ServicesView = Backbone.View.extend({
       slider.dragger.unbind('mousedown');
     });
     this.$('.simple-overlay').overlay({load: false}); 
+    
+    // join domain modal 
+    this.$('#join-domain-modal').modal({
+      show: false
+    });
+
+    this.$('#join-domain-form').validate({
+      onfocusout: false,
+      onkeyup: false,
+      rules: {
+        administrator: 'required',
+        password: 'required'
+      },
+      submitHandler: function() {
+        var button = _this.$('#join-domain-submit');
+        if (buttonDisabled(button)) return false;
+        disableButton(button);
+        var data = JSON.stringify(_this.$('#join-domain-form').getJSON());
+        $.ajax({
+          url: "/api/commands/join-winbind-domain",
+          type: "POST",
+          contentType: 'application/json',
+          dataType: "json",
+          data: data,
+          success: function(data, status, xhr) {
+            enableButton(button);
+            RockStorGlobals.adJoinStatus = true;
+            _this.showJoinDomainStatus();
+            _this.$('#join-domain-modal').modal('hide');
+          },
+          error: function(xhr, status, error) {
+            enableButton(button);
+            var msg = parseXhrError(xhr)
+            _this.$('#join-domain-err').html(msg);
+            RockStorGlobals.adJoinStatus = false;
+            _this.showJoinDomainStatus();
+          }
+        });
+        return false;
+      }
+
+    });
+    var adService = this.collection.get('winbind');
+    if (adService.get('status') && 
+        (this.adServiceConfig.security == 'ads' || 
+         this.adServiceConfig.security == 'domain')) {
+      this.showJoinDomainStatus();
+    }
   },
   
   startService: function(event) {
@@ -186,31 +241,64 @@ ServicesView = Backbone.View.extend({
 
   startPolling: function() {
     var _this = this;
-    this.intervalId = window.setInterval(function() {
-      return function() { 
-        _this.collection.fetch({
-          silent: true,
-          success: function(collection, response, options) {
-            _this.collection.each(function(service) {
-              var serviceName = service.get('name');
-              if (service.get('status')) {
-                _this.highlightStartEl(serviceName, true);
-                _this.setSliderVal(serviceName, 1); 
-              } else {
-                _this.highlightStartEl(serviceName, false);
-                _this.setSliderVal(serviceName, 0); 
-              }
-            }); 
-          } 
+    // start after updateFreq
+    this.timeoutId = window.setTimeout(function() {
+      _this.updateStatus();
+    }, this.updateFreq);
+  },
+
+  updateStatus: function() {
+    var _this = this;
+    _this.startTime = new Date().getTime();
+    _this.collection.fetch({
+      silent: true,
+      success: function(collection, response, options) {
+        _this.collection.each(function(service) {
+          var serviceName = service.get('name');
+          if (service.get('status')) {
+            _this.highlightStartEl(serviceName, true);
+            _this.setSliderVal(serviceName, 1); 
+          } else {
+            _this.highlightStartEl(serviceName, false);
+            _this.setSliderVal(serviceName, 0); 
+          }
         }); 
+        var currentTime = new Date().getTime();
+        var diff = currentTime - _this.startTime;
+        // if diff > updateFreq, make next call immediately
+        if (diff > _this.updateFreq) {
+          _this.updateStatus();
+        } else {
+          // wait till updateFreq msec has elapsed since startTime
+          _this.timeoutId = window.setTimeout( function() { 
+            _this.updateStatus();
+          }, _this.updateFreq - diff);
+        }
       }
-    }(), this.pollInterval);
+    });
   },
 
   stopPolling: function() {
     var _this = this;
-    if (!_.isUndefined(this.intervalId)) {
-      window.clearInterval(this.intervalId);
+    if (!_.isUndefined(this.timeoutId)) {
+      window.clearInterval(this.timeoutId);
+    }
+  },
+
+  showJoinDomainPopup: function(event) {
+    if (!$(event.currentTarget).hasClass('disabled')) {
+      this.$('#join-domain-modal').modal('show');
+    }
+  },
+
+  showJoinDomainStatus: function() {
+    if (!_.isUndefined(RockStorGlobals.adJoinStatus) &&
+        !_.isNull(RockStorGlobals.adJoinStatus)) {
+      if (RockStorGlobals.adJoinStatus) {
+        this.$('#join-domain-status').html('<span class="alert alert-success alert-small">Join Ok</span>');
+      } else {
+        this.$('#join-domain-status').html('<span class="alert alert-success alert-small">Not Joined</span>');
+      }
     }
   }
 

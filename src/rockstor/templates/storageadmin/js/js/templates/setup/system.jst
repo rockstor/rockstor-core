@@ -23,7 +23,7 @@
 <div class="row-fluid">
   <div class="span12">
     <div class="module-header">
-      <div class="title"><span class="h3">System</span></div>
+      <div class="title"><span class="h3">Set Hostname</span></div>
     </div>
   </div> <!-- span12 -->
 </div> <!-- row-fluid -->
@@ -31,11 +31,21 @@
 <!-- Module Body -->
 <div class="row-fluid">
   <div class="span12">
-    <!-- Content -->
-    <% _.each(_.keys(sysinfo.attributes), function(k) { %>
-      <%= k %>: <%= sysinfo.get(k) %><br>
-    <% }); %>
-  </div>
-</div>
+    <label class="control-label"><span class="required">*</span> indicates required fields</label>
+    <div class="form-box"> 
+      <form name="set-hostname-form" id="set-hostname-form">
+        <div class="messages"></div>
+        <div class="control-group">
+          <label class="control-label" for="hostname">Appliance Hostname<span class="required"> *</span></label>
+          <div class="controls">
+            <input type="text" name="hostname" id="hostname" value="RockStor">
+          </div>
+        </div>
+      </form>
+    </div>
+  </div> <!-- span12 -->
+</div> <!-- row-fluid -->
+<br>
+<br>
 
 

@@ -106,8 +106,7 @@ class ShareSambaView(APIView):
             if (not is_share_mounted(share.name)):
                 pool_device = Disk.objects.filter(pool=share.pool)[0].name
                 mount_share(share.subvol_name, pool_device, mnt_pt)
-            refresh_smb_config(list(SambaShare.objects.all()),
-                               settings.SMB_CONF)
+            refresh_smb_config(list(SambaShare.objects.all()))
             restart_samba()
             samba_serializer = SambaShareSerializer(smb_share)
             return Response(samba_serializer.data)
@@ -125,8 +124,7 @@ class ShareSambaView(APIView):
                 handle_exception(Exception(e_msg), request)
             samba_share = SambaShare.objects.get(share=share)
             samba_share.delete()
-            refresh_smb_config(list(SambaShare.objects.all()),
-                               settings.SMB_CONF)
+            refresh_smb_config(list(SambaShare.objects.all()))
             restart_samba()
             return Response()
         except RockStorAPIException:

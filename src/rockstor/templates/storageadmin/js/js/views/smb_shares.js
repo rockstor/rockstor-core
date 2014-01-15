@@ -48,6 +48,7 @@ SMBShares  = RockstoreModuleView.extend({
 
   render: function() {
     var _this = this;
+    _this.$("#add-smb-form :input").tooltip('hide');
     $(this.el).empty();
     this.smbShare.fetch({
       success: function(model, response, options) {
@@ -75,6 +76,10 @@ SMBShares  = RockstoreModuleView.extend({
       guest_ok_choices: this.guest_ok_choices,
       read_only_choices: this.read_only_choices,
     }));
+    this.$("#add-smb-form :input").tooltip({
+      html: true,
+      placement: 'right',
+    });
     this.$("#add-smb-form").validate({
       onfocusout: false,
       onkeyup: false,
@@ -89,6 +94,7 @@ SMBShares  = RockstoreModuleView.extend({
           browsable: _this.$("#browsable").val(),
           guest_ok: _this.$("#guest_ok").val(),  
           read_only: _this.$("#read_only").val(),
+          admin_users: _this.$('#admin_users').val(),
           comment: _this.$("#comment").val()
         };
         _this.smbShare.save(

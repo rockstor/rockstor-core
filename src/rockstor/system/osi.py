@@ -24,7 +24,7 @@ from tempfile import mkstemp
 import time
 from exceptions import (CommandException, NonBTRFSRootException)
 
-
+HOSTS_FILE = '/etc/hosts'
 MKDIR = '/bin/mkdir'
 RMDIR = '/bin/rmdir'
 CHMOD = '/bin/chmod'
@@ -201,18 +201,34 @@ def refresh_nfs_exports(exports):
             nfs4_mount_teardown(s)
     return run_command([EXPORTFS, '-ra'])
 
-def refresh_smb_config(exports, clean_config):
-    shutil.copyfile(clean_config, SMB_CONFIG)
-    with open(SMB_CONFIG, 'a') as sfo:
-        for e in exports:
-            sfo.write('[%s]\n' % e.share.name)
-            sfo.write('    comment = %s\n' % e.comment)
-            sfo.write('    path = %s\n' % e.path)
-            sfo.write('    browseable = %s\n' % e.browsable)
-            sfo.write('    read only = %s\n' % e.read_only)
-            sfo.write('    create mask = %s\n' % e.create_mask)
-            sfo.write('    guest ok = %s\n' % e.guest_ok)
-    return True
+def rockstor_smb_config(fo, exports):
+    fo.write('####BEGIN: Rockstor SAMBA CONFIG####\n')
+    for e in exports:
+        fo.write('[%s]\n' % e.share.name)
+        fo.write('    comment = %s\n' % e.comment)
+        fo.write('    path = %s\n' % e.path)
+        fo.write('    browseable = %s\n' % e.browsable)
+        fo.write('    read only = %s\n' % e.read_only)
+        fo.write('    create mask = %s\n' % e.create_mask)
+        fo.write('    guest ok = %s\n' % e.guest_ok)
+        fo.write('    admin users = %s\n' % e.admin_users)
+    fo.write('####END: Rockstor SAMBA CONFIG####\n')
+
+def refresh_smb_config(exports):
+    fh, npath = mkstemp()
+    with open(SMB_CONFIG) as sfo, open(npath, 'w') as tfo:
+        rockstor_section = False
+        for line in sfo.readlines():
+            if (re.match('####BEGIN: Rockstor SAMBA CONFIG####', line)
+                is not None):
+                rockstor_section = True
+                rockstor_smb_config(tfo, exports)
+                break
+            else:
+                tfo.write(line)
+        if (rockstor_section is False):
+            rockstor_smb_config(tfo, exports)
+    shutil.move(npath, SMB_CONFIG)
 
 def restart_samba():
     """
@@ -447,3 +463,19 @@ def update_run():
     out, err, rc = run_command([AT, '-f', npath, 'now + 1 minutes'])
     time.sleep(120)
     return out, err, rc
+
+def sethostname(ip, hostname):
+    """
+    edit /etc/hosts file and /etc/hostname
+    """
+    fh, npath = mkstemp()
+    with open(HOSTS_FILE) as hfo, open(npath, 'w') as tfo:
+        for line in hfo.readlines():
+            if (re.match(ip, line) is None):
+                tfo.write(line)
+        tfo.write('%s %s\n' % (ip, hostname))
+    shutil.move(npath, HOSTS_FILE)
+
+    with open('/etc/hostname', 'w') as hnfo:
+        hnfo.write('%s\n' % hostname)
+

@@ -41,6 +41,8 @@ class SambaShare(models.Model):
     guest_ok = models.CharField(max_length=3, choices=BOOLEAN_CHOICES,
                                 default=NO)
     create_mask = models.CharField(max_length=4, default='0755')
+    """space separated list of admin users"""
+    admin_users = models.CharField(max_length=128, default='Administrator')
 
     def share_name(self, *args, **kwargs):
         return self.share.name

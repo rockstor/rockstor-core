@@ -35,7 +35,7 @@ SetupView = RockstoreLayoutView.extend({
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.setup_setup;
-    this.pages = [null, SetupDisksView];
+    this.pages = [null, SetupDisksView, SetupSystemView];
     this.sidebars = [null, "disks"];
     this.current_page = 1;
     this.current_view = null;
@@ -98,7 +98,15 @@ SetupView = RockstoreLayoutView.extend({
   },
   
   save: function() {
-    this.scanNetwork();
+    // hostname is the last page, so check if the form is filled
+    this.current_view.$('#set-hostname-form').submit();
+    if (!_.isUndefined(RockStorGlobals.hostname) &&
+        !_.isNull(RockStorGlobals.hostname)) {
+      var button = this.$('#next-page');
+      if (buttonDisabled(button)) return false;
+      disableButton(button);
+      this.scanNetwork();
+    }
   },
 
   scanNetwork: function() {
@@ -130,6 +138,7 @@ SetupView = RockstoreLayoutView.extend({
 
   saveAppliance: function() {
     this.setIp();
+
     // create current appliance if not created already
     if (this.appliances.length > 0) {
       var current_appliance = this.appliances.find(function(appliance) {
@@ -140,6 +149,7 @@ SetupView = RockstoreLayoutView.extend({
       var new_appliance = new Appliance();
       new_appliance.save(
         {
+          hostname: RockStorGlobals.hostname,
           ip: RockStorGlobals.ip,
           current_appliance: true
         },
