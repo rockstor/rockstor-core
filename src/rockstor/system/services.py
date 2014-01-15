@@ -173,5 +173,8 @@ def toggle_sftp_service(switch=True):
     move('/tmp/sshd_config', '/etc/ssh/sshd_config')
     return init_service_op('sshd', 'reload')
 
-def ads_joined():
-    return run_command([NET, 'ads', 'testjoin'])
+def ads_join_status(username, passwd):
+    up = '%s%%%s' % (username, passwd)
+    return run_command([NET, 'ads', 'status', '-U', up, '--request-timeout',
+                        '60'])
+

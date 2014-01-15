@@ -29,7 +29,7 @@ from rest_framework.permissions import IsAuthenticated
 from system.osi import (uptime, refresh_nfs_exports, update_check, update_run)
 from fs.btrfs import (is_share_mounted, mount_share)
 from system.ssh import (sftp_mount_map, sftp_mount)
-from system.services import (systemctl, join_winbind_domain, ads_joined)
+from system.services import (systemctl, join_winbind_domain, ads_join_status)
 from storageadmin.models import (Share, Disk, NFSExport, SFTP)
 from nfs_helpers import create_nfs_export_input
 from storageadmin.util import handle_exception
@@ -127,9 +127,7 @@ class CommandView(APIView):
 
         elif (command == 'join-winbind-domain'):
             try:
-                logger.info('got command')
                 systemctl('winbind', 'restart')
-                logger.info('started winbind')
                 username = request.DATA['administrator']
                 passwd = request.DATA['password']
                 join_winbind_domain(username, passwd)
@@ -138,8 +136,20 @@ class CommandView(APIView):
                 handle_exception(e, request)
 
         elif (command == 'winbind-domain-status'):
+            msg = 'Yes'
             try:
-                ads_joined()
-                return Response('Done')
+                username = request.DATA['administrator']
+                passwd = request.DATA['password']
             except Exception, e:
                 handle_exception(e, request)
+
+            try:
+                ads_join_status(username, passwd)
+            except Exception, e:
+                logger.exception(e)
+                msg = ('Domain join check failed. Low level error: %s %s' %
+                       (e.out, e.err))
+            finally:
+                return Response(msg)
+
+
