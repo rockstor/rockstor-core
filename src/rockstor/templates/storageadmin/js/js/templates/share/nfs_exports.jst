@@ -47,23 +47,6 @@
   </table>
   <div class="ph-pagination"></div>
 <% } else { %>
-  <table id="nfs-exports-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of nfs exports">
-    <thead>
-      <tr>
-        <th>No.</th>
-        <th>Host</th>
-        <th>Writable</th>
-        <th>Sync</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody id="nfs-exports-table-body">
-      <tr>
-        <td colspan="5">
-          <h4>No nfs exports for this share </h4>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+  <div class="alert"><h4>No nfs exports for this share. To add an NFS export, go to the <a href="#nfs-exports">NFS Exports</a> page.</h4></div>
 <% } %>
 
