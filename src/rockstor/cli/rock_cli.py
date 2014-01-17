@@ -227,7 +227,7 @@ class RockConsole(BaseConsole):
 def main():
     rc = RockConsole()
     if (len(sys.argv) > 1):
-        rc.onecmd(' '.join(sys.argv[2:]))
+        rc.onecmd(' '.join(sys.argv[1:]))
     else:
         rc.cmdloop()
 
