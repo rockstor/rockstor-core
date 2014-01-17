@@ -30,13 +30,14 @@ def api_error(console_func):
     @wraps(console_func)
     def arg_wrapper(a1, a2):
         try:
-            console_func(a1, a2)
+            return console_func(a1, a2)
         except RockStorAPIException, e:
             print ('Operation failed due to the following error returned '
                    'from the server:')
             print ('-----------------------------------------')
             print e.detail
             print ('-----------------------------------------')
+            return -1
     return arg_wrapper
 
 def api_call(url, data=None, calltype='get', headers=None, save_error=True):

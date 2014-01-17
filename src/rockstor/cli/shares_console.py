@@ -189,8 +189,7 @@ class SharesConsole(BaseConsole):
         if (len(input_share) > 0):
             sd_console = ShareDetailConsole(self.prompt, input_share[0])
             if (len(input_share) > 1):
-                sd_console.onecmd(' '.join(input_share[1:]))
-            else:
-                sd_console.cmdloop()
+                return sd_console.onecmd(' '.join(input_share[1:]))
+            return sd_console.cmdloop()
 
 

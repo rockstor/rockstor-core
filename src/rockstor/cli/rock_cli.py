@@ -45,7 +45,6 @@ ASCII_LOGO = """
 class RockConsole(BaseConsole):
 
     def __init__(self, greeting='RockStor'):
-        BaseConsole.__init__(self)
         self.greeting = greeting
         self.prompt = greeting + '>'
         self.intro = ('%s\nWelcome to Rockstor. Smart Powerful Open Storage '
@@ -55,6 +54,8 @@ class RockConsole(BaseConsole):
             readline.read_history_file(self.user_hist_file)
         except:
             pass
+        finally:
+            BaseConsole.__init__(self)
 
     def postloop(self):
         cmd.Cmd.postloop(self)
@@ -102,9 +103,8 @@ class RockConsole(BaseConsole):
         """
         shares_console = SharesConsole(self.greeting)
         if (len(args) == 0):
-            shares_console.cmdloop()
-        else:
-            shares_console.onecmd(args)
+            return shares_console.cmdloop()
+        return shares_console.onecmd(args)
 
     def do_pools(self, args):
         """
@@ -227,7 +227,8 @@ class RockConsole(BaseConsole):
 def main():
     rc = RockConsole()
     if (len(sys.argv) > 1):
-        rc.onecmd(' '.join(sys.argv[1:]))
+        line = ' '.join(sys.argv[1:])
+        return rc.postcmd(rc.onecmd(line), line)
     else:
-        rc.cmdloop()
+        return rc.cmdloop()
 

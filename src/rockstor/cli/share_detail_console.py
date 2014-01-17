@@ -67,7 +67,6 @@ class ShareDetailConsole(BaseConsole):
         input_snap = args.split()
         snap_console = SnapshotConsole(self.greeting, self.share)
         if (len(input_snap) > 0):
-            snap_console.onecmd(' '.join(input_snap))
-        else:
-            snap_console.cmdloop()
+            return snap_console.onecmd(' '.join(input_snap))
+        snap_console.cmdloop()
 
