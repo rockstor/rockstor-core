@@ -18,9 +18,6 @@
  * 
  */
 </script>
-
-<a class="btn btn-primary" href="#" id="add-export" rel="#nfs-export-form"><i class="icon-edit icon-white"></i> Add export</a>
-<br><br>
 <div class="messages"></div>
 <% if (nfsExports.length > 0) { %>
   <table id="nfs-exports-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of nfs exports">
@@ -29,7 +26,6 @@
         <th>Host</th>
         <th>Writable</th>
         <th>Sync</th>
-        <th>Actions</th>
       </tr>
     </thead>
     <tbody id="nfs-exports-table-body">
@@ -38,11 +34,6 @@
           <td><%= nfsExport.get('host_str') %></td>
           <td><%= nfsExport.get('editable') %></td>
           <td><%= nfsExport.get('syncable') %></td>
-          <td>
-            <a href="#" class="edit-nfs-export" data-id="<%= nfsExport.id %>" data-share-name="<%= share.get('name') %>" data-action="edit-nfs-export"><i class="icon-edit"></i></a>
-            &nbsp;
-            <a href="#" class="delete-nfs-export" data-id="<%= nfsExport.id %>" data-share-name="<%= share.get('name') %>" data-hoststr="<%= nfsExport.get('host_str') %>" data-action="delete-nfs-export"><i class="icon-trash"></i></a>
-          </td>
         </tr>
       <% }); %>
     </tbody>
@@ -50,23 +41,6 @@
   </table>
   <div class="ph-pagination"></div>
 <% } else { %>
-  <table id="nfs-exports-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of nfs exports">
-    <thead>
-      <tr>
-        <th>No.</th>
-        <th>Host</th>
-        <th>Writable</th>
-        <th>Sync</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody id="nfs-exports-table-body">
-      <tr>
-        <td colspan="5">
-          <h4>No nfs exports for this share </h4>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+  <div class="alert"><h4>No nfs exports for this share. To add an NFS export, go to the <a href="#nfs-exports">NFS Exports</a> page.</h4></div>
 <% } %>
 

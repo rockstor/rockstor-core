@@ -19,12 +19,7 @@
  */
 </script>
 
-<% if (_.isUndefined(smbShare.id)) { %>
-  <a class="btn btn-primary" href="#" id="add-smb-share"><i class="icon-edit icon-white"></i> Create SMB Share</a>
-<% } else { %>
-  <a class="btn btn-danger" href="#" id="delete-smb-share"><i class="icon-trash icon-white"></i> Delete SMB Share</a>
-<% } %>
-<br><br>
+
 <% if (!_.isUndefined(smbShare.id)) { %>
   <table id="smb-shares-table" summary="SMB Share">
     <tbody id="smb-shares-table-body">
@@ -46,7 +41,7 @@
     </tbody>
   </table>
 <% } else { %>
-  No smb share created 
+  <div class="alert"><h4>No Samba export created for this share.  To add a Samba export, go to the <a href="#samba-exports">Samba</a> page.</div>
   <br/>
   <br/>
 <% } %>
