@@ -26,7 +26,6 @@
         <th>Host</th>
         <th>Writable</th>
         <th>Sync</th>
-        <th>Actions</th>
       </tr>
     </thead>
     <tbody id="nfs-exports-table-body">
@@ -35,11 +34,6 @@
           <td><%= nfsExport.get('host_str') %></td>
           <td><%= nfsExport.get('editable') %></td>
           <td><%= nfsExport.get('syncable') %></td>
-          <td>
-            <a href="#" class="edit-nfs-export" data-id="<%= nfsExport.id %>" data-share-name="<%= share.get('name') %>" data-action="edit-nfs-export"><i class="icon-edit"></i></a>
-            &nbsp;
-            <a href="#" class="delete-nfs-export" data-id="<%= nfsExport.id %>" data-share-name="<%= share.get('name') %>" data-hoststr="<%= nfsExport.get('host_str') %>" data-action="delete-nfs-export"><i class="icon-trash"></i></a>
-          </td>
         </tr>
       <% }); %>
     </tbody>
