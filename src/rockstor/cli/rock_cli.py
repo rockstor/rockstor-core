@@ -227,7 +227,11 @@ class RockConsole(BaseConsole):
 def main():
     rc = RockConsole()
     if (len(sys.argv) > 1):
-        line = ' '.join(sys.argv[1:])
+        if (sys.argv[1] == '-c'):
+            #command is called remotely using ssh
+            line = ' '.join(sys.argv[2:])
+        else:
+            line = ' '.join(sys.argv[1:])
         return rc.postcmd(rc.onecmd(line), line)
     else:
         return rc.cmdloop()
