@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 from base_console import BaseConsole
-from rest_util import (api_call, print_export_info, print_share_info)
-
+from rest_util import (api_error, api_call, print_export_info,
+                       print_share_info)
 
 class SnapshotConsole(BaseConsole):
 
@@ -29,6 +29,7 @@ class SnapshotConsole(BaseConsole):
         self.prompt = prompt + ' snapshots>'
         self.url = ('%sshares/%s/snapshots' % (BaseConsole.url, self.share))
 
+    @api_error
     def do_list(self, args):
         """
         List all snapshots
@@ -36,6 +37,7 @@ class SnapshotConsole(BaseConsole):
         snap_info = api_call(self.url)
         print snap_info
 
+    @api_error
     def do_add(self, args):
         """
         Add a new snapshot.
@@ -46,6 +48,7 @@ class SnapshotConsole(BaseConsole):
         snap_info = api_call(url, data=None, calltype='post')
         print snap_info
 
+    @api_error
     def do_delete(self, args):
         """
         Delete a snapshot.
@@ -56,6 +59,7 @@ class SnapshotConsole(BaseConsole):
         snap_info = api_call(url, data=None, calltype='delete')
         print snap_info
 
+    @api_error
     def do_rollback(self, args):
         """
         Rollback a snapshot.
@@ -66,6 +70,7 @@ class SnapshotConsole(BaseConsole):
         snap_info = api_call(url, data=None, calltype='post')
         print snap_info
 
+    @api_error
     def do_clone(self, args):
         """
         Clone a snapshot into a brand new share
