@@ -16,10 +16,10 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-
+import json
 from base_console import BaseConsole
-from rest_util import (api_call, print_export_info, print_share_info)
-
+from rest_util import (api_error, api_call, print_export_info,
+                       print_share_info)
 
 class SnapshotConsole(BaseConsole):
 
@@ -29,6 +29,7 @@ class SnapshotConsole(BaseConsole):
         self.prompt = prompt + ' snapshots>'
         self.url = ('%sshares/%s/snapshots' % (BaseConsole.url, self.share))
 
+    @api_error
     def do_list(self, args):
         """
         List all snapshots
@@ -36,16 +37,32 @@ class SnapshotConsole(BaseConsole):
         snap_info = api_call(self.url)
         print snap_info
 
+    @api_error
     def do_add(self, args):
         """
         Add a new snapshot.
 
         add <snap_name>
+
+        To add a visible snapshot
+
+        add -v <snap_name>
         """
-        url = ('%s/%s' % (self.url, args))
-        snap_info = api_call(url, data=None, calltype='post')
+        fields = args.split()
+        snap_name = fields[0]
+        data = None
+        headers = None
+        if (len(fields) > 1):
+            if (fields[0] != '-v'):
+                return self.do_help(args)
+            snap_name = fields[1]
+            data = json.dumps({'uvisible': True,})
+            headers = {'content-type': 'application/json',}
+        url = ('%s/%s' % (self.url, snap_name))
+        snap_info = api_call(url, data=data, calltype='post', headers=headers)
         print snap_info
 
+    @api_error
     def do_delete(self, args):
         """
         Delete a snapshot.
@@ -56,6 +73,7 @@ class SnapshotConsole(BaseConsole):
         snap_info = api_call(url, data=None, calltype='delete')
         print snap_info
 
+    @api_error
     def do_rollback(self, args):
         """
         Rollback a snapshot.
@@ -66,6 +84,7 @@ class SnapshotConsole(BaseConsole):
         snap_info = api_call(url, data=None, calltype='post')
         print snap_info
 
+    @api_error
     def do_clone(self, args):
         """
         Clone a snapshot into a brand new share

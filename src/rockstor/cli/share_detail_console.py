@@ -21,7 +21,8 @@ from share_nfs_console import ShareNFSConsole
 from share_smb_console import ShareSMBConsole
 from share_iscsi_console import ShareIscsiConsole
 from snapshot_console import SnapshotConsole
-from rest_util import api_call
+from rest_util import (api_error, api_call)
+from storageadmin.exceptions import RockStorAPIException
 
 
 class ShareDetailConsole(BaseConsole):
@@ -34,6 +35,7 @@ class ShareDetailConsole(BaseConsole):
         self.prompt = ('%s>' % self.greeting)
         self.url = ('%sshares/%s/' % (BaseConsole.url, self.share))
 
+    @api_error
     def do_nfs(self, args):
         """
         nfs operations on the share
@@ -41,6 +43,7 @@ class ShareDetailConsole(BaseConsole):
         sn_console = ShareNFSConsole(self.greeting, self.share)
         sn_console.cmdloop()
 
+    @api_error
     def do_smb(self, args):
         """
         smb operations on the share
@@ -48,6 +51,7 @@ class ShareDetailConsole(BaseConsole):
         ss_console = ShareSMBConsole(self.greeting, self.share)
         ss_console.cmdloop()
 
+    @api_error
     def do_iscsi(self, args):
         """
         iscsi operations on the share
@@ -55,10 +59,14 @@ class ShareDetailConsole(BaseConsole):
         i_console = ShareIscsiConsole(self.greeting, self.share)
         i_console.cmdloop()
 
+    @api_error
     def do_snapshot(self, args):
         """
         snapshot operations on the share
         """
-        s_console = SnapshotConsole(self.greeting, self.share)
-        s_console.cmdloop()
+        input_snap = args.split()
+        snap_console = SnapshotConsole(self.greeting, self.share)
+        if (len(input_snap) > 0):
+            return snap_console.onecmd(' '.join(input_snap))
+        snap_console.cmdloop()
 
