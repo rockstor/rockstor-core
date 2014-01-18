@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-
+import json
 from base_console import BaseConsole
 from rest_util import (api_error, api_call, print_export_info,
                        print_share_info)
@@ -43,9 +43,23 @@ class SnapshotConsole(BaseConsole):
         Add a new snapshot.
 
         add <snap_name>
+
+        To add a visible snapshot
+
+        add -v <snap_name>
         """
-        url = ('%s/%s' % (self.url, args))
-        snap_info = api_call(url, data=None, calltype='post')
+        fields = args.split()
+        snap_name = fields[0]
+        data = None
+        headers = None
+        if (len(fields) > 1):
+            if (fields[0] != '-v'):
+                return self.do_help(args)
+            snap_name = fields[1]
+            data = json.dumps({'uvisible': True,})
+            headers = {'content-type': 'application/json',}
+        url = ('%s/%s' % (self.url, snap_name))
+        snap_info = api_call(url, data=data, calltype='post', headers=headers)
         print snap_info
 
     @api_error
