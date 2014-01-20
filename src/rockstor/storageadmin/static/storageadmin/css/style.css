@@ -261,7 +261,7 @@ a#logo-name { color: #fff; }
 }
 .sidenav .active .icon-chevron-right,
 .sidenav .active a:hover .icon-chevron-right {
-  background-image: url(/img/glyphicons-halflings-white.png);
+  background-image: url(../img/glyphicons-halflings-white.png);
   opacity: 1;
 }
 .sidenav.affix {
@@ -348,7 +348,7 @@ table.tablesorter thead tr th, table.tablesorter tfoot tr th {
 }
 
 table.tablesorter thead tr .header {
-        background-image: url('/img/bg.gif');
+        background-image: url('../img/bg.gif');
         background-repeat: no-repeat;
         background-position: center right;
         cursor: pointer;
@@ -358,10 +358,10 @@ table.tablesorter tbody tr.odd td {
         background-color:#F0F0F6;
 }
 table.tablesorter thead tr .headerSortUp {
-        background-image: url('/img/asc.gif');
+        background-image: url('../img/asc.gif');
 }
 table.tablesorter thead tr .headerSortDown {
-        background-image: url('/img/desc.gif');
+        background-image: url('../img/desc.gif');
 }
 /*
 table.tablesorter thead tr .headerSortDown, table.tablesorter thead tr .headerSortUp {
@@ -389,7 +389,7 @@ background-color: #8dbdd8;
 
 /* close button positioned on upper right corner */
 .simple-overlay .close {
-    background-image:url(/img/close.png);
+    background-image:url(../img/close.png);
     position:absolute;
     right:-15px;
     top:-15px;
@@ -1093,16 +1093,16 @@ table#disk-utilization-table tfoot tr th {
 }
 
 table#disk-utilization-table thead tr .header {
-  background-image: url('/img/bg.gif');
+  background-image: url('../img/bg.gif');
   background-repeat: no-repeat;
   background-position: center right;
   cursor: pointer;
 }
 table#disk-utilization-table thead tr .headerSortUp {
-        background-image: url('/img/asc.gif');
+        background-image: url('../img/asc.gif');
 }
 table#disk-utilization-table thead tr .headerSortDown {
-        background-image: url('/img/desc.gif');
+        background-image: url('../img/desc.gif');
 }
 
 /* nfs client share */
