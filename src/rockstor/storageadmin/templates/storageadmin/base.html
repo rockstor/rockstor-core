@@ -25,11 +25,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RockStor | {% block title %}{% endblock %}</title>
-    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
-    <link href="/static/css/bootstrap-responsive.css" rel="stylesheet">
-    <link href="/static/css/datepicker.css" rel="stylesheet">
-    <link href="/static/css/bootstrap-timepicker.css" rel="stylesheet">
-    <link href="/static/css/style.css" rel="stylesheet">
+    <link href="/static/storageadmin/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/storageadmin/css/bootstrap-responsive.css" rel="stylesheet">
+    <link href="/static/storageadmin/css/datepicker.css" rel="stylesheet">
+    <link href="/static/storageadmin/css/bootstrap-timepicker.css" rel="stylesheet">
+    <link href="/static/storageadmin/css/style.css" rel="stylesheet">
     <!--
     <link href="/css/bootstrap-responsive.css" rel="stylesheet">
     -->
@@ -97,7 +97,7 @@
     <script src="/static/js/lib/humanize.js"></script>
     <script src="/static/js/lib/moment.min.js"></script>
     <script src="/static/js/lib/simple-slider.min.js"></script>
-    <script src="/static/js/application.js"></script>
+    <script src="/static/storageadmin/js/application.js"></script>
   </head>
   <body>
 
@@ -160,9 +160,9 @@
       {% csrf_token %}
     </form>
 
-    <script src="/js/lib/bootstrap.js"></script>
-    <script src="/js/lib/bootstrap-datepicker.js"></script>
-    <script src="/js/lib/bootstrap-timepicker.js"></script>
+    <script src="/static/js/lib/bootstrap.js"></script>
+    <script src="/static/js/lib/bootstrap-datepicker.js"></script>
+    <script src="/static/js/lib/bootstrap-timepicker.js"></script>
     <script type="text/javascript">
       {% if current_appliance %}
       setup_done = true;
