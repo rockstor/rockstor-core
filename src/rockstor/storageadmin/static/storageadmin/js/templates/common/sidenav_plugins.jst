@@ -1,0 +1,12 @@
+<h3>Plugins</h3>
+<ul class="nav">
+  <% if (selected == "plugins") { %>
+    <li><a href="#plugins" class="selected"><i class="icon-gift icon-white"></i> Plugins</a></li>
+  <% } else { %>
+    <li><a href="#plugins"><i class="icon-gift"></i> Plugins</a></li>
+  <% } %>
+  <% _.each(RockStorGlobals.installedPlugins, function(plugin) { %>
+    <li><a href="#<%= plugin %>"><i class="icon-gift"></i> <%= plugin %></a></li>
+
+  <% }); %>
+</ul>

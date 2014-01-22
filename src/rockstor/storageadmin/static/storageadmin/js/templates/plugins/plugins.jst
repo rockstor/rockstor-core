@@ -1,0 +1,52 @@
+<script>
+/*
+ * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ *
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ *
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+</script>
+
+<table id="pools-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of pools">
+  <thead>
+    <tr>
+      <th>Plugin Name</th>
+      <th>Description Name</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Backup</td>
+      <td>Use RockStor as a backup server</td>
+      <td><button data-action="install" data-name="backup" class="btn btn-primary">Install</button></td>  
+    </tr>
+  </tbody>
+</table>
+
+<div id="plugin-install-modal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="pluginInstallModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <h3 id="updateModalLabel">Plugin Install</h3>
+  </div>
+  <div class="modal-body">
+    <h4>Installing Plugin. The page will refresh after the plugin is installed. Please wait... &nbsp;&nbsp; </h4>
+    <br>
+    <div style="text-align: center">
+      <img src="/static/storageadmin/img/ajax-loader-big.gif">
+    </div>
+  </div>
+</div>
+
+

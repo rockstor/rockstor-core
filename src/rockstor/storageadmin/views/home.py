@@ -62,12 +62,19 @@ def home(request):
         pass
     #setup = JSONRenderer().render(SetupSerializer(Setup.objects.all()[0]).data)
     setup = Setup.objects.all()[0]
-
+    if 'installed_plugins' in request.session:
+        if request.session['installed_plugins'] == None:
+            request.session['installed_plugins'] = []
+    else:
+        request.session['installed_plugins'] = []
+    logger.debug('2. installed plugins = %s' % request.session['installed_plugins'])
     context = {
         'request': request,
         'current_appliance': current_appliance,
         'setup_user': setup.setup_user,
-        'page_size': settings.PAGINATION['page_size']
+        'page_size': settings.PAGINATION['page_size'],
+        'installed_plugins': request.session['installed_plugins']
+
     }
     if request.user.is_authenticated():
         return render_to_response('index.html',

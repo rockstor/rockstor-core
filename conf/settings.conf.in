@@ -152,6 +152,7 @@ INSTALLED_APPS = (
     'rest_framework',
     'smart_manager',
     'south',
+    'backup'
 )
 
 STATICFILES_STORAGE = 'pipeline.storage.PipelineCachedStorage'
@@ -237,9 +238,16 @@ PIPELINE_JS = {
             'storageadmin/js/views/sftp.js',
             'storageadmin/js/views/add_sftp_share.js',
             'storageadmin/js/views/version.js',
+            'storageadmin/js/views/plugins.js',
             ),
         'output_filename': 'storageadmin/js/application.js'
         },
+    'backup_plugin': {
+        'source_filenames': (
+            'backup/js/router.js',
+        ),
+        'output_filename': 'backup/js/backup_plugin.js'
+        }
     }
 
 

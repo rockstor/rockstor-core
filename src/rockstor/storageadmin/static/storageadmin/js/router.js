@@ -72,6 +72,7 @@ var AppRouter = Backbone.Router.extend({
     "version": "showVersion",
     "sftp": "showSFTP",
     "add-sftp-share": "addSFTPShare",
+    "plugins": "showPlugins",
     "404": "handle404",
     "500": "handle500",
     "*path": "showHome"
@@ -505,6 +506,14 @@ var AppRouter = Backbone.Router.extend({
     this.renderSidebar("system", "version");
     this.cleanup();
     this.currentLayout = new VersionView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  showPlugins: function() {
+    this.renderSidebar("plugins", "plugins");
+    this.cleanup();
+    this.currentLayout = new PluginsView();
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },
