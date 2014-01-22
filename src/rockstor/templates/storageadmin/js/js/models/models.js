@@ -39,6 +39,16 @@ var DiskCollection = RockStorPaginatedCollection.extend({
   baseUrl: '/api/disks',
 });
 
+var Backup = Backbone.Model.extend({
+  url: function() {
+    return '/api/backup/' + this.get('ip');
+  }
+});
+var BackupCollection = RockStorPaginatedCollection.extend({
+  model: Backup,
+  baseUrl: '/api/backup',
+});
+
 var Pool = Backbone.Model.extend({
   url: function() {
     return '/api/pools/' + this.get('poolName') + '/';

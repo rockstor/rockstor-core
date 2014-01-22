@@ -213,6 +213,8 @@ PIPELINE_JS = {
             'js/views/support_case_detail.js',
             'js/views/add_support_case.js',
             'js/views/support_case_details_layout_view.js',
+            'js/views/backup.js',
+            'js/views/add_backup_policy.js',
             ),
         'output_filename': 'js/application.js'
         },
