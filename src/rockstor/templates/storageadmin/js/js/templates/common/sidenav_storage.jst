@@ -20,6 +20,11 @@
   <% } else { %>
     <li><a href="#replication"><i class="icon-random"></i> Replication</a></li>
   <% } %>
+  <% if (selected == "backup") { %>
+    <li><a href="#backup" class="selected"><i class=" icon-download-alt icon-white"></i> Backup</a></li>
+  <% } else { %>
+    <li><a href="#backup"><i class=" icon-download-alt"></i> Backup</a></li>
+  <% } %>
   <li>
     <div class="subnav">
       <i class="icon-share"></i> File Sharing

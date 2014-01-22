@@ -74,7 +74,10 @@ var AppRouter = Backbone.Router.extend({
     "add-sftp-share": "addSFTPShare",
     "404": "handle404",
     "500": "handle500",
-    "*path": "showHome"
+    "backup": "showBackup",
+    "add_backup_policy": "addBackupPolicy",
+    "*path": "showHome",
+    
   },
 
   before: function (route, param) {
@@ -523,6 +526,23 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').append(this.currentLayout.render().el);
   },
 
+  showBackup: function() {
+    this.renderSidebar("storage", "backup");
+    this.cleanup();
+    this.currentLayout = new BackupView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+   
+  
+  addBackupPolicy: function() {
+    this.renderSidebar("storage", "backup");
+    this.cleanup();
+    this.currentLayout = new AddBackupPolicyView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+  
   cleanup: function() {
     hideMessage();
     RockStorSocket.removeAllListeners();
