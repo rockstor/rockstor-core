@@ -44,7 +44,7 @@ var Backup = Backbone.Model.extend({
     return '/api/backup/' + this.get('ip');
   }
 });
-var BackupCollection = RockStorPaginatedCollection.extend({
+var BackupPolicyCollection = RockStorPaginatedCollection.extend({
   model: Backup,
   baseUrl: '/api/backup',
 });
