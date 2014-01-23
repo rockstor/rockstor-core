@@ -49,30 +49,52 @@ PluginsView = RockstoreLayoutView.extend({
       plugins: this.plugins,                             
       installedPlugins: this.installedPlugins
     }));
+    this.$('#plugin-install-modal').modal({
+      keyboard: false,
+      backdrop: 'static',
+      show: false
+    });
+    this.$('#plugin-key-form').validate({
+      onfocusout: false,
+      onkeyup: false,
+      rules: {
+        activation_key: 'required',
+      },
+      submitHandler: function() {
+        var button = _this.$('#plugin-install-form-submit');
+        if (buttonDisabled(button)) return false;
+        disableButton(button);
+        _this.$('#plugin-install-modal #installing-msg').html('<h4>Installing plugin ' + _this.selectedPluginName + '. The browser window will refresh after the plugin is installed</h4><br><div style="text-align: center"><img src="/static/storageadmin/img/ajax-loader-big.gif"></div>');
+        
+        $.ajax({
+          url: "/api/installed_plugins", 
+          type: "POST",
+          data: {plugin_name: _this.selectedPluginName},
+          dataType: "json",
+          global: false, // dont show global loading indicator and error
+          success: function(data, status, xhr) {
+            _this.$('#plugin-install-modal #installing-msg').empty();
+            _this.$('#plugin-install-modal').modal('hide');
+            _this.reloadWindow();
+          },
+          error: function(xhr, status, error) {
+            _this.$('#plugin-install-modal #installing-msg').empty();
+            var errJson = getXhrErrorJson(xhr);
+            detail = errJson.detail;
+            _this.$('#plugin-install-form .messages').html(detail);
+          }
+        });
+        return false;
+      },
+      
+    });
   },
 
   installPlugin: function(event) {
     var _this = this;
     var button = $(event.currentTarget);
-    if (buttonDisabled(button)) return false;
-    disableButton(button);
+    this.selectedPluginName = button.attr('data-name');
     this.$('#plugin-install-modal').modal('show');
-    var pluginName = button.attr('data-name');
-    $.ajax({
-      url: "/api/installed_plugins", 
-      type: "POST",
-      data: {plugin_name: pluginName},
-      dataType: "json",
-      global: false, // dont show global loading indicator
-      success: function(data, status, xhr) {
-        _this.$('#plugin-install-modal').modal('hide');
-        _this.reloadWindow();
-      },
-      error: function(xhr, status, error) {
-
-      }
-    });
-
   },
 
   reloadWindow: function() {
