@@ -50,9 +50,11 @@ PluginsView = RockstoreLayoutView.extend({
       installedPlugins: this.installedPlugins
     }));
     this.$('#plugin-install-modal').modal({
-      keyboard: false,
-      backdrop: 'static',
       show: false
+    });
+    this.$('#plugin-key-form :input').tooltip({
+      placement: 'right',
+      html: true,
     });
     this.$('#plugin-key-form').validate({
       onfocusout: false,
@@ -74,11 +76,13 @@ PluginsView = RockstoreLayoutView.extend({
           global: false, // dont show global loading indicator and error
           success: function(data, status, xhr) {
             _this.$('#plugin-install-modal #installing-msg').empty();
+            _this.$('#plugin-key-form :input').tooltip('hide')
             _this.$('#plugin-install-modal').modal('hide');
             _this.reloadWindow();
           },
           error: function(xhr, status, error) {
             _this.$('#plugin-install-modal #installing-msg').empty();
+            _this.$('#plugin-key-form :input').tooltip('hide')
             var errJson = getXhrErrorJson(xhr);
             detail = errJson.detail;
             _this.$('#plugin-install-form .messages').html(detail);

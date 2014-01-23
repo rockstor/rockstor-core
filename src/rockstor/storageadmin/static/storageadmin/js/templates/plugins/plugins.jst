@@ -46,6 +46,7 @@
 
 <div id="plugin-install-modal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="pluginInstallModalLabel" aria-hidden="true">
   <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
     <h3 id="updateModalLabel">Plugin Install</h3>
   </div>
   <div class="modal-body">
@@ -54,12 +55,12 @@
       <div class="control-group">
         <label class="control-label" for="activation_key">Activation Key<span class="required"> *</span></label>
         <div class="controls">
-          <input type="text" name="activation_key" id="activation_key">
+          <input type="text" name="activation_key" id="activation_key" title="Activation key for the plugin">
         </div>
       </div>
       <div class="control-group">
         <div class="controls">
-          <a id="cancel" class="btn">Cancel</a>
+          <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
           <input type="Submit" id="plugin-install-form-submit" class="btn btn-primary" value="Submit"></input>
         </div>
       </div>
