@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from smart_manager.models import Service
 from django.conf import settings
 from django.contrib.auth.models import User as DjangoUser
-from storageadmin.models import User, Setup
+from storageadmin.models import User, Setup, Plugin
 from system.users import (get_users, useradd, usermod, userdel, get_epasswd)
 
 def register_services():
@@ -44,7 +44,17 @@ def create_setup():
         s = Setup()
         s.save()
 
+def initialize_plugins():
+    plugins = Plugin.objects.all()
+    if (not Plugin.objects.filter(name='backup').exists()):
+        backup = Plugin(
+                name='backup',
+                css_file_name = 'backup',
+                js_file_name = 'backup')
+        backup.save()
+
 def main():
     create_setup()
     register_services()
+    initialize_plugins()
 

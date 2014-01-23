@@ -6,7 +6,7 @@
     <li><a href="#plugins"><i class="icon-gift"></i> Plugins</a></li>
   <% } %>
   <% _.each(RockStorGlobals.installedPlugins, function(plugin) { %>
-    <li><a href="#<%= plugin %>"><i class="icon-gift"></i> <%= plugin %></a></li>
+    <li><a href="#<%= plugin.plugin_meta.name %>"><i class="icon-gift"></i> <%= plugin.plugin_meta.name %></a></li>
 
   <% }); %>
 </ul>

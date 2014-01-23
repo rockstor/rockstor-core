@@ -20,7 +20,8 @@ from django.conf.urls.defaults import patterns, include, url
 from storageadmin.views import (SetupWizardView, LoginView,
                                 SupportView, DashboardConfigView,
                                 SetupUserView, NFSExportGroupView,
-                                SambaView, SFTPView, PluginView)
+                                SambaView, SFTPView, PluginView, 
+                                InstalledPluginView)
 import os.path
 
 site_media = os.path.join(
@@ -82,6 +83,7 @@ urlpatterns = patterns('',
     # Dashboard config
     url(r'^api/dashboardconfig/$', DashboardConfigView.as_view(), name='dashboardconfig-view'),
     url(r'^api/plugins', PluginView.as_view(), name='plugin-view'),
+    url(r'^api/installed_plugins', InstalledPluginView.as_view(), name='installed-plugin-view'),
 
     (r'^api/sm/services/', include('smart_manager.urls.services')),
     (r'^api/sm/sprobes/', include('smart_manager.urls.sprobes')),

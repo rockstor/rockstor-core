@@ -19,20 +19,22 @@
  */
 </script>
 
-<table id="pools-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of pools">
+<table id="plugins-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of plugins">
   <thead>
     <tr>
       <th>Plugin Name</th>
-      <th>Description Name</th>
+      <th>Description</th>
       <th>Actions</th>
     </tr>
   </thead>
   <tbody>
-    <tr>
-      <td>Backup</td>
-      <td>Use RockStor as a backup server</td>
-      <td><button data-action="install" data-name="backup" class="btn btn-primary">Install</button></td>  
-    </tr>
+    <% plugins.each(function(plugin) { %>
+      <tr>
+        <td><%= plugin.get('name') %></td>
+        <td></td>
+        <td><button data-action="install" data-name="<%= plugin.get('name') %>" class="btn btn-primary">Install</button></td>  
+      </tr>
+    <% }); %>
   </tbody>
 </table>
 

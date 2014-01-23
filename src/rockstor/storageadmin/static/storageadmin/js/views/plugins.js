@@ -32,20 +32,26 @@ PluginsView = RockstoreLayoutView.extend({
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.plugins_plugins;
+    this.plugins = new PluginCollection();
+    this.installedPlugins = new InstalledPluginCollection();
+    this.dependencies.push(this.plugins);
+    this.dependencies.push(this.installedPlugins);
   },
 
   render: function() {
-    this.renderPlugins();
+    this.fetch(this.renderPlugins, this);
     return this;
   },
 
   renderPlugins: function() {
     var _this = this;
-    $(this.el).html(this.template());
+    $(this.el).html(this.template({
+      plugins: this.plugins,                             
+      installedPlugins: this.installedPlugins
+    }));
   },
 
   installPlugin: function(event) {
-    console.log('installPlugin called');
     var _this = this;
     var button = $(event.currentTarget);
     if (buttonDisabled(button)) return false;
@@ -53,7 +59,7 @@ PluginsView = RockstoreLayoutView.extend({
     this.$('#plugin-install-modal').modal('show');
     var pluginName = button.attr('data-name');
     $.ajax({
-      url: "/api/plugins", 
+      url: "/api/installed_plugins", 
       type: "POST",
       data: {plugin_name: pluginName},
       dataType: "json",

@@ -42,3 +42,4 @@ from share_command import ShareCommandView
 from samba import SambaView
 from sftp import SFTPView
 from plugin import PluginView
+from installed_plugin import InstalledPluginView

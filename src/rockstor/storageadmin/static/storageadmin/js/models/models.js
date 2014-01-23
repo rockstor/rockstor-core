@@ -306,3 +306,22 @@ var SFTPCollection = RockStorPaginatedCollection.extend({
   model: SFTP,
   baseUrl: '/api/sftp'
 });
+
+var Plugin = Backbone.Model.extend({
+  urlRoot: '/api/plugins'    
+});
+
+var PluginCollection = RockStorPaginatedCollection.extend({
+  model: Plugin,
+  baseUrl: '/api/plugins'
+});
+
+var InstalledPlugin = Backbone.Model.extend({
+  urlRoot: '/api/installed_plugins'    
+});
+
+var InstalledPluginCollection = RockStorPaginatedCollection.extend({
+  model: InstalledPlugin,
+  baseUrl: '/api/installed_plugins'
+});
+

@@ -31,7 +31,7 @@
     <link href="/static/storageadmin/css/bootstrap-timepicker.css" rel="stylesheet">
     <link href="/static/storageadmin/css/style.css" rel="stylesheet">
     {% for plugin in installed_plugins %}
-    <link href="/static/{{ plugin }}/css/{{ plugin }}.css" rel="stylesheet">
+    <link href="/static/{{ plugin.plugin_meta.name }}/css/{{ plugin.plugin_meta.name }}.css" rel="stylesheet">
     {% endfor %} 
 
     <!--
@@ -103,7 +103,7 @@
     <script src="/static/js/lib/simple-slider.min.js"></script>
     <script src="/static/storageadmin/js/application.js"></script>
     {% for plugin in installed_plugins %}
-    <script src="/static/{{ plugin }}/js/{{ plugin }}_plugin.js"></script>
+    <script src="/static/{{ plugin.plugin_meta.name }}/js/{{ plugin.plugin_meta.name }}_plugin.js"></script>
     {% endfor %} 
   </head>
   <body>
@@ -187,11 +187,7 @@
       RockStorGlobals.setup_user = false;
       {% endif %}
       RockStorGlobals.pageSize = {{ page_size }};
-      RockStorGlobals.installedPlugins = [
-      {% for plugin in installed_plugins %}
-      '{{ plugin }}',
-      {% endfor %}
-      ];
+      RockStorGlobals.installedPlugins = {{ installed_plugins_json|safe }};
 
     </script>
   </body>

@@ -18,20 +18,21 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
+from django.db import transaction
 from generic_view import GenericView
 from storageadmin.util import handle_exception
 from storageadmin.models import (Plugin, InstalledPlugin)
-from storageadmin.serializers import PluginSerializer
+from storageadmin.serializers import InstalledPluginSerializer
 import time
 
 import logging
 logger = logging.getLogger(__name__)
 
-class PluginView(GenericView):
-    serializer_class = PluginSerializer
+class InstalledPluginView(GenericView):
+    serializer_class = InstalledPluginSerializer
 
     def get_queryset(self, *args, **kwargs):
-        return  Plugin.objects.all()
+        return  InstalledPlugin.objects.all()
 
         #if 'available_plugins' in request.session:
         #    if request.session['available_plugins'] == None:
@@ -51,3 +52,18 @@ class PluginView(GenericView):
         #        }
         #return Response(data)
 
+    @transaction.commit_on_success
+    def post(self, request):
+        try:
+            plugin_name = request.DATA['plugin_name']
+            logger.debug('plugin_name is %s' % plugin_name)
+            plugin = Plugin.objects.get(name=plugin_name)
+            if (not InstalledPlugin.objects.filter(plugin_meta=plugin).exists()):
+                installed_plugin = InstalledPlugin(plugin_meta=plugin) 
+                installed_plugin.save()
+
+            time.sleep(10)
+            return Response()
+        except Exception, e:
+            handle_exception(e, request)
+            
