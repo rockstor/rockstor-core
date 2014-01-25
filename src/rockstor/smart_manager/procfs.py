@@ -29,7 +29,7 @@ from django.utils.timezone import utc
 
 from models import (CPUMetric, LoadAvg, MemInfo, PoolUsage, DiskStat,
                     ShareUsage)
-from storageadmin.models import (Disk, Pool, Share)
+from storageadmin.models import (Disk, Pool, Share, Snapshot)
 from fs.btrfs import pool_usage, shares_usage
 from proc.net import network_stats
 
@@ -242,9 +242,12 @@ class ProcRetreiver(Process):
                 #get usage of all shares in this pool
                 pool_device = Disk.objects.filter(pool=p)[0].name
                 share_map = {}
+                snap_map = {}
                 for share in Share.objects.filter(pool=p):
                     share_map[share.qgroup] = share.name
-                usaged = shares_usage(p.name, pool_device, share_map)
+                    for snap in Snapshot.objects.filter(share=share):
+                        snap_map[snap.qgroup] = snap.real_name
+                usaged = shares_usage(p.name, pool_device, share_map, snap_map)
                 for s in usaged.keys():
                     su = None
                     try:
@@ -256,8 +259,13 @@ class ProcRetreiver(Process):
                                  'for share(%s)')
                         logger.error(e_msg)
                         logger.exception(e)
-                    if (su is None or su.usage != usaged[s]):
-                        su = ShareUsage(name=s, usage=usaged[s], ts=ts)
+                    #we check for changed in both referenced and exclusive
+                    #usage because in rare cases it's possible for only one to
+                    #change.
+                    if (su is None or su.r_usage != usaged[s][0] or
+                        su.e_usage != usaged[s][1]):
+                        su = ShareUsage(name=s, r_usage=usaged[s][0],
+                                        e_usage=usaged[s][1], ts=ts)
                     else:
                         su.ts = ts
                         su.count = su.count + 1
