@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.db import models
 from storageadmin.models import Share
+from smart_manager.models import ShareUsage
 
 class Snapshot(models.Model):
     """share which this snapshot belongs to"""
@@ -33,6 +34,20 @@ class Snapshot(models.Model):
     toc = models.DateTimeField(auto_now=True)
     qgroup = models.CharField(max_length=100)
     uvisible = models.BooleanField(default=False)
+
+    def cur_rusage(self, *args, **kwargs):
+        try:
+            su = ShareUsage.objects.filter(name=self.real_name).order_by('-ts')[0]
+            return su.r_usage
+        except:
+            return -1
+
+    def cur_eusage(self, *args, **kwargs):
+        try:
+            su = ShareUsage.objects.filter(name=self.real_name).order_by('-ts')[0]
+            return su.e_usage
+        except:
+            return -1
 
     class Meta:
         unique_together = ('share', 'name',)
