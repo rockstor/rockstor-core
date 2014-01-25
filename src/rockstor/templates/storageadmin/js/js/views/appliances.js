@@ -27,17 +27,14 @@
 AppliancesView = RockstoreLayoutView.extend({
   
   events: {
-    'click #new-appliance': 'newAppliance',
-    'click #add-appliance': 'addAppliance',
     'click .delete-appliance': 'deleteAppliance',
-    'click .select-appliance': 'selectAppliance',
   },
 
   initialize: function() {
     // call initialize of base
     this.constructor.__super__.initialize.apply(this, arguments);
     this.appliances = new ApplianceCollection();
-    this.template = window.JST.common_appliance_select;
+    this.template = window.JST.appliances_appliances;
     this.new_appliance_template = window.JST.common_new_appliance;
     this.dependencies.push(this.appliances); 
   },
@@ -87,14 +84,6 @@ AppliancesView = RockstoreLayoutView.extend({
       }
     );
 
-  },
-
-  selectAppliance: function(event) {
-    event.preventDefault();
-    var tgt = $(event.currentTarget);
-    console.log('selecting ' + tgt.attr('id'));
-    window.location.href = 'https://' + tgt.attr('id');
-    return false;
   },
 
   deleteAppliance: function(event) {

@@ -24,75 +24,61 @@
  * 
  */
 
-
-AddReplicationTaskView = RockstoreLayoutView.extend({
-  events: {
-    "click #js-cancel": "cancel"
-  },
+AddApplianceView = RockstoreLayoutView.extend({
   
+  events: {
+    'click #js-cancel': 'cancel'
+  },
+
   initialize: function() {
+    // call initialize of base
     this.constructor.__super__.initialize.apply(this, arguments);
-    this.template = window.JST.replication_add_replication_task;
-    this.shares = new ShareCollection();
-    this.dependencies.push(this.shares);
-    this.appliances = new ApplianceCollection();
-    this.dependencies.push(this.appliances);
+    this.template = window.JST.appliances_add_appliance;
   },
 
   render: function() {
-    this.fetch(this.renderNewReplicationTask, this);
-    return this;
-  },
-  
-  renderNewReplicationTask: function() {
     var _this = this;
-    $(this.el).html(this.template({
-      shares: this.shares,
-      appliances: this.appliances,
-      replica_data_port: RockStorGlobals.replica_data_port,
-      replica_meta_port: RockStorGlobals.replica_meta_port,
-    }));
-    
-    $('#replication-task-create-form :input').tooltip();
-    
-    $('#replication-task-create-form').validate({
+    $(this.el).html(this.template({appliances: this.appliances}));
+    this.$('#add-appliance-form :input').tooltip();
+    this.$('#add-appliance-form').validate({
       onfocusout: false,
       onkeyup: false,
       rules: {
-        task_name: "required",  
-        pool: "required",
-        frequency: {
-          required: true,
-          number: true
-        }
+        ip: 'required',
+        port: 'required',
+        username: 'required',
+        password: 'required'
       },
       submitHandler: function() {
-        var button = $('#create_replication_task');
+        var button = _this.$('#add-appliance');
         if (buttonDisabled(button)) return false;
         disableButton(button);
+        var data = _this.$('#add-appliance-form').getJSON();
+        data.current_appliance = false;
         $.ajax({
-          url: '/api/sm/replicas/',
+          url: '/api/appliances',
           type: 'POST',
           dataType: 'json',
           contentType: 'application/json',
-          data: JSON.stringify(_this.$('#replication-task-create-form').getJSON()),
+          data: JSON.stringify(data),
           success: function() {
             enableButton(button);
-            app_router.navigate('replication', {trigger: true});
+            app_router.navigate('appliances', {trigger: true});
           },
           error: function(xhr, status, error) {
             enableButton(button);
           }
         });
-        return false;
       }
     });
+    return this;
   },
 
   cancel: function(event) {
     event.preventDefault();
-    app_router.navigate('replication', {trigger: true});
+    app_router.navigate('appliances', {trigger: true});
   }
 
 });
+
 

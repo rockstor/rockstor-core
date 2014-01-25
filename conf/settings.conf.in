@@ -175,6 +175,7 @@ PIPELINE_JS = {
             'js/graph.js',
             'js/models/models.js',
             'js/views/appliances.js',
+            'js/views/add_appliance.js',
             'js/views/disks.js',
             'js/views/disk_detail.js',
             'js/views/pools.js',

@@ -72,6 +72,8 @@ var AppRouter = Backbone.Router.extend({
     "version": "showVersion",
     "sftp": "showSFTP",
     "add-sftp-share": "addSFTPShare",
+    "appliances": "showAppliances",
+    "add-appliance": "addAppliance",
     "404": "handle404",
     "500": "handle500",
     "*path": "showHome"
@@ -509,6 +511,22 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').append(this.currentLayout.render().el);
   },
 
+  showAppliances: function() {
+    this.renderSidebar("system", "appliances");
+    this.cleanup();
+    this.currentLayout = new AppliancesView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  addAppliance: function() {
+    this.renderSidebar("system", "appliances");
+    this.cleanup();
+    this.currentLayout = new AddApplianceView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
   handle404: function() {
     this.cleanup();
     this.currentLayout = new Handle404View();
@@ -547,7 +565,8 @@ $(document).ready(function() {
   Backbone.history.start();
   $('#appliance-name').click(function(event) {
     event.preventDefault();
-    showApplianceList();
+    //showApplianceList();
+    app_router.navigate('appliances', {trigger: true});
   });
  
   // Global ajax error handler 
