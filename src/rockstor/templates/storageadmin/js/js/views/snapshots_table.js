@@ -107,10 +107,11 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
     event.preventDefault();
     var _this = this;
     name = $(event.currentTarget).attr('data-name');
+    esize = $(event.currentTarget).attr('data-size');
     share_name = this.share.get("name");
     var button = $(event.currentTarget);
     if (buttonDisabled(button)) return false;
-    if(confirm("Delete snapshot:  "+ name +"...Are you sure?")){
+    if(confirm("Deleting snapshot("+ name +") deletes "+ esize +" of data permanently. Do you really want to delete it?")){
       disableButton(button);
       $.ajax({
         url: "/api/shares/" + share_name + "/snapshots/" + name,

@@ -43,7 +43,7 @@
 	  <td><%= humanize.filesize(snapshot.get('e_usage')*1024) %></td>
           <td>
             <a class="js-snapshot-clone" href="#" data-name="<%= snapshot.get('name') %>"><i rel="tooltip" title="Clone snapshot" class="icon-book"></i></a>
-            <a href="#" class="js-snapshot-delete" id="delete_snapshot_<%= snapshot.get('name') %>" data-name="<%= snapshot.get('name') %>" data-share-name="<%= share.get('name') %>" data-action="delete" title="Delete snapshot"><i rel="tooltip" title="Delete snapshot" class="icon-trash"></i></a>
+            <a href="#" class="js-snapshot-delete" id="delete_snapshot_<%=snapshot.get('name') %>" data-name="<%= snapshot.get('name') %>" data-size="<%= humanize.filesize(snapshot.get('e_usage')*1024) %>" data-share-name="<%= share.get('name') %>" data-action="delete" title="Delete snapshot"><i rel="tooltip" title="Delete snapshot" class="icon-trash"></i></a>
           </td>
         </tr>
       <% }); %>
