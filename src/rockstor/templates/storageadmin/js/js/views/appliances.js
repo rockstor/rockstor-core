@@ -33,10 +33,12 @@ AppliancesView = RockstoreLayoutView.extend({
   initialize: function() {
     // call initialize of base
     this.constructor.__super__.initialize.apply(this, arguments);
-    this.appliances = new ApplianceCollection();
+    this.collection = new ApplianceCollection();
     this.template = window.JST.appliances_appliances;
+    this.pagination_template = window.JST.common_pagination;
     this.new_appliance_template = window.JST.common_new_appliance;
-    this.dependencies.push(this.appliances); 
+    this.dependencies.push(this.collection); 
+    this.collection.on('reset', this.renderApplianceList, this);
   },
 
   render: function() {
@@ -45,41 +47,14 @@ AppliancesView = RockstoreLayoutView.extend({
   },
   
   renderApplianceList: function() {
-    $(this.el).html(this.template({appliances: this.appliances}));
-    this.appliances.on('reset', this.renderApplianceList, this);
+    $(this.el).html(this.template({collection: this.collection}));
+    this.$(".pagination-ph").html(this.pagination_template({
+      collection: this.collection
+    }));
   },
 
   newAppliance: function() {
     this.$('#new-appliance-container').html(this.new_appliance_template());
-  },
-
-  addAppliance: function(event) {
-    event.preventDefault();
-    var _this = this;
-    var new_appliance = new Appliance();
-    new_appliance.save(
-      {
-        ip: this.$('#ip').val(),
-        username: this.$('#username').val(),
-        password: this.$('#password').val(),
-        current_appliance: false
-      },
-      { 
-        success: function(model, response, options) {
-          _this.$('#new-appliance-container').empty();
-          _this.appliances.fetch();
-        },
-        error: function(model, xhr, options) {
-          var msg = xhr.responseText;
-          try {
-            msg = JSON.parse(msg).detail;
-          } catch(err) {
-          }
-          _this.$('#add-appliance-msg').html(msg);
-        }
-      }
-    );
-
   },
 
   deleteAppliance: function(event) {
@@ -103,4 +78,7 @@ AppliancesView = RockstoreLayoutView.extend({
     });
   }
 });
+
+// Add pagination
+Cocktail.mixin(AppliancesView, PaginationMixin);
 
