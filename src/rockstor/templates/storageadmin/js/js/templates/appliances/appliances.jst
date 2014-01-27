@@ -1,10 +1,12 @@
 <!-- appliances -->
+<h3>RockStor Appliances that are known to this one</h3>
 <div class="row-fluid">
   <div class="span12">
     <table class="table table-condensed table-bordered table-hover table-striped tablesorter"style="width: 100%">
       <thead>
         <tr>
           <th scope="col" abbr="IP">Appliance IP</th>
+          <th scope="col" abbr="IP">Management Port</th>
           <th scope="col" abbr="Action">Actions</th>
         </tr>
       </thead>
@@ -14,11 +16,12 @@
           <td>
             <i class="fa fa-desktop"></i>&nbsp;
             <% if (appliance.get('current_appliance')) { %>
-              <%= appliance.get('ip') %> 
+              <%= appliance.get('ip') %> <span class="required">*</span>
             <% } else { %>
               <a href="https://<%= appliance.get('ip') %>:<%= appliance.get('port') %>" target="_blank"><%= appliance.get('ip') %></a>
             <% } %>
           </td>
+          <td><%= appliance.get('mgmt_port') %></td>
           <td>
             <% if (!appliance.get('current_appliance')) { %>
               <a class="delete-appliance" id="<%= appliance.get('ip') %>" data-id="<%= appliance.get('id') %>" href="#"><i class="icon-trash"></i></a>
@@ -28,8 +31,10 @@
       <% }); %>
 
     </table>
+    ( <span class="required">*</span> - current appliance )
   </div> <!-- span12 -->
 </div> <!-- row-fluid -->
+<br>
 <a class="btn btn-primary" id="add-appliance" href="#add-appliance">Add Appliance</button>
 <br>
 <div id="new-appliance-container">

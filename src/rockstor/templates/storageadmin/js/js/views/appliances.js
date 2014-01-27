@@ -40,7 +40,6 @@ AppliancesView = RockstoreLayoutView.extend({
   },
 
   render: function() {
-    console.log('in appliances.js render');
     this.fetch(this.renderApplianceList, this)
     return this;
   },
@@ -51,14 +50,12 @@ AppliancesView = RockstoreLayoutView.extend({
   },
 
   newAppliance: function() {
-    console.log('add clicked');
     this.$('#new-appliance-container').html(this.new_appliance_template());
   },
 
   addAppliance: function(event) {
     event.preventDefault();
     var _this = this;
-    console.log('submitting form');
     var new_appliance = new Appliance();
     new_appliance.save(
       {
@@ -69,7 +66,6 @@ AppliancesView = RockstoreLayoutView.extend({
       },
       { 
         success: function(model, response, options) {
-          console.log('new appliance added successfully');
           _this.$('#new-appliance-container').empty();
           _this.appliances.fetch();
         },
@@ -95,16 +91,13 @@ AppliancesView = RockstoreLayoutView.extend({
       ip: tgt.attr('id'),
       id: tgt.attr('data-id')
     });
-    console.log(appliance);
     appliance.destroy({
       success: function(model, response, options) {
-        console.log('appliance deleted successfully');
         _this.appliances.fetch();
 
       },
       error: function(model, xhr, options) {
         var msg = xhr.responseText;
-        console.log('error while deleting appliance');
       }
 
     });

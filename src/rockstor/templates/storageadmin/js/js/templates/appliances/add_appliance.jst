@@ -1,4 +1,4 @@
-<h3>Add Appliance</h3>
+<h3>Connect to another Rockstor Appliance</h3>
 <div class="row-fluid">
   <div class="span8">
     <label class="control-label"><span class="required">*</span> indicates required fields</label>
@@ -6,27 +6,27 @@
       <form name="add-appliance-form" id="add-appliance-form">
         <div class="messages"></div>
         <div class="control-group">
-          <label class="control-label" for="ip">Appliance IP/ Hostname<span class="required"> *</span></label>
+          <label class="control-label" for="ip">Appliance IP or Hostname<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" name="ip" id="ip" title="Appliance IP or Hostname">
+            <input type="text" name="ip" id="ip" title="Enter either the appliance ip address or the appliance hostname that is reachable from this appliance">
           </div>
         </div>
         <div class="control-group">
           <label class="control-label" for="port">Management Port<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" name="port" id="port" value="443" title="Management Port">
+            <input type="text" name="mgmt_port" id="mgmt_port" value="443" title="Management Port of the other appliance">
           </div>
         </div>
         <div class="control-group">
           <label class="control-label" for="username">Admin Username<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" name="username" id="username" title="Admin Username">
+            <input type="text" name="username" id="username" title="Admin username for the other appliance">
           </div>
         </div>
         <div class="control-group">
           <label class="control-label" for="password">Admin Password<span class="required"> *</span></label>
           <div class="controls">
-            <input type="password" name="password" id="password" title="Admin Password">
+            <input type="password" name="password" id="password" title="Admin password for the other appliance">
           </div>
           <div class="controls">
             <a id="js-cancel" class="btn" href="#">Cancel</a>
