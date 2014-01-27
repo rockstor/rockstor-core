@@ -65,12 +65,12 @@ AddApplianceView = RockstoreLayoutView.extend({
           contentType: 'application/json',
           data: JSON.stringify(data),
           success: function() {
-            this.$('#add-appliance-form :input').tooltip('hide');
+            _this.$('#add-appliance-form :input').tooltip('hide');
             enableButton(button);
             app_router.navigate('appliances', {trigger: true});
           },
           error: function(xhr, status, error) {
-            this.$('#add-appliance-form :input').tooltip('hide');
+            _this.$('#add-appliance-form :input').tooltip('hide');
             enableButton(button);
           }
         });
