@@ -58,24 +58,28 @@ AppliancesView = RockstoreLayoutView.extend({
   },
 
   deleteAppliance: function(event) {
-    event.preventDefault();
     var _this = this;
-    var tgt = $(event.currentTarget);
+    event.preventDefault();
+    var button = $(event.currentTarget);
+    if (buttonDisabled(button)) return false;
     var appliance = new Appliance();
     appliance.set({
-      ip: tgt.attr('id'),
-      id: tgt.attr('data-id')
+      ip: button.attr('id'),
+      id: button.attr('data-id')
     });
-    appliance.destroy({
-      success: function(model, response, options) {
-        _this.appliances.fetch();
-
-      },
-      error: function(model, xhr, options) {
-        var msg = xhr.responseText;
-      }
-
-    });
+    if(confirm("Delete appliance:  " + appliance.get('ip') + " ...Are you sure?")){
+      disableButton(button);	
+      appliance.destroy({
+        success: function(model, response, options) {
+          enableButton(button);
+          _this.collection.fetch();
+        },
+        error: function(model, xhr, options) {
+          enableButton(button);
+          var msg = xhr.responseText;
+        }
+      });
+    }
   }
 });
 
