@@ -128,9 +128,9 @@ var ServiceCollection = RockStorPaginatedCollection.extend({
 });
 
 var Appliance = Backbone.Model.extend({urlRoot: '/api/appliances'});
-var ApplianceCollection = Backbone.Collection.extend({
+var ApplianceCollection = RockStorPaginatedCollection.extend({
   model: Appliance,
-  url: '/api/appliances'
+  baseUrl: '/api/appliances'
 });
 
 var User = Backbone.Model.extend({
