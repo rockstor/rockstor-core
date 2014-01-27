@@ -88,6 +88,10 @@ class AppliancesView(GenericView):
             ip = request.DATA['ip']
             current_appliance = request.DATA['current_appliance']
             # authenticate if not adding current appliance
+            if (Appliance.objects.filter(ip=ip).exists()):
+                e_msg = ('The appliance with ip = %s already exists and '
+                         'cannot be added again' % ip)
+                handle_exception(Exception(e_msg), request)
             if (current_appliance is False):
                 username = request.DATA['username']
                 password = request.DATA['password']
