@@ -24,6 +24,7 @@ class Appliance(models.Model):
     ip = models.CharField(max_length=4096, unique=True)
     current_appliance = models.BooleanField(default=False)
     hostname = models.CharField(max_length=128, default='Rockstor')
+    mgmt_port = models.IntegerField(default=443)
 
     class Meta:
         app_label = 'storageadmin'
