@@ -38,7 +38,7 @@ AddApplianceView = RockstoreLayoutView.extend({
 
   render: function() {
     var _this = this;
-    $(this.el).html(this.template({appliances: this.appliances}));
+    $(this.el).html(this.template());
     this.$('#add-appliance-form :input').tooltip({
       html: true,
       placement: 'right'
