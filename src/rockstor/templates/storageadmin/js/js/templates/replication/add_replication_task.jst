@@ -49,7 +49,9 @@
           <div class="controls">
             <select id="appliance" name="appliance" title="Select target appliance">
               <% appliances.each(function(appliance, index) { %>
-                <option value="<%= appliance.get('ip') %>"> <%= appliance.get('ip') %> </option>
+                <% if (!appliance.get('current_appliance')) { %>
+                  <option value="<%= appliance.get('ip') %>"> <%= appliance.get('ip') %> </option>
+                <% } %>
               <% }); %> 
 
             </select>
