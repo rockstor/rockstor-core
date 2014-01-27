@@ -1,0 +1,120 @@
+<script>
+/*
+ * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ * 
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ * 
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ */
+</script>
+
+
+<h3>Create Backup Policy</h3>
+<div class="row-fluid">
+  <div class="span8">
+    <label class="control-label"><span class="required">*</span> indicates required fields</label>
+    <div class="form-box">
+      <form id="add-backup-policy-form" name="aform">
+        <div class="messages"> </div>
+
+
+        <!-- Source Server IP -->
+        <div class="control-group">
+          <label class="control-label" for="server_ip">Source Server IP<span class="required"> *</span></label>
+          <div class="controls">
+            <input type="text" name="server_ip" id="server_ip" title="Enter server ip">
+          </div>
+        </div>
+
+        <!-- Export path -->
+        <div class="control-group">
+          <label class="control-label" for="export_path">Export Path<span class="required"> *</span></label>
+          <div class="controls">
+            <input type="text" name="export_path" id="export_path" title="Enter export path">
+          </div>
+        </div>
+        
+        
+        <!-- Destination share -->
+        <div class="control-group">
+          <label class="control-label" for="dest_share">Destination Share<span class="required"> *</span></label>
+          <div class="controls">
+            <input type="text" name="dest_share" id="dest_share" title="Enter destination share">
+          </div>
+        </div>
+        
+        <!-- Notification Level -->
+        <div class="control-group">
+          <label class="control-label" for="notification_level">Notification Level<span class="required"> *</span></label>
+          <div class="controls">
+            <select id="notification_level" name="notification_level">
+              <option>Success</option>
+              <option>Fail</option>
+              <option>Both</option>
+            </select>
+          </div>
+        </div>
+        
+        div class="control-group">
+          <label class="control-label" for="share_size">Size<span class="required"> *</span></label>
+          <div class="controls">
+            <input type="text" name="share_size" id="share_size" title="Enter share size in KB, MB, GB or TB">
+            <select id="size_format" name="size_format">
+              <option>KB</option>
+              <option>MB</option>
+              <option>GB</option>
+              <option>TB</option>
+            </select>
+          </div>
+        </div>
+        
+        
+        <!-- Notification emails -->
+        <div class="control-group">
+          <label class="control-label" for="notification_email">Notification Email(s)<span class="required"> *</span></label>
+          <div class="controls">
+            <input type="text" name="server_ip" id="server_ip" title="Enter notification email(s)">
+          </div>
+        </div>
+        
+        <!-- Start time -->
+        <div class="control-group">
+          <label class="control-label" for="start_time">Start Time<span class="required"> *</span></label>
+          <div class="controls">
+            <input type="text" name="start_time" id="start_time" title="Enter start time">
+          </div>
+        </div>
+        
+        <!-- Frequency -->
+        <div class="control-group">
+          <label class="control-label" for="frequency">Frequency<span class="required"> *</span></label>
+          <div class="controls">
+            <input type="text" name="frequency" id="frequency" title="Enter frequency">
+          </div>
+        </div>
+        
+        <!-- Submit -->
+        <div class="control-group">
+          <div class="controls">
+            <a id="cancel" class="btn">Cancel</a>
+            <input type="Submit" id="create-backup-policy" class="btn btn-primary" value="Submit"></input>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div> <!-- span8 -->
+</div>  <!-- row-fluid -->
+
+

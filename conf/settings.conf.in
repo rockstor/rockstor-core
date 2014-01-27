@@ -245,6 +245,9 @@ PIPELINE_JS = {
     'backup_plugin': {
         'source_filenames': (
             'backup/js/router.js',
+            'backup/js/templates/**/*.jst',
+            'backup/js/views/add_backup_policy.js',
+            'backup/js/views/backup.js',
         ),
         'output_filename': 'backup/js/backup_plugin.js'
         }
