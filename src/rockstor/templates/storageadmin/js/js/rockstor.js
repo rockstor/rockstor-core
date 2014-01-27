@@ -390,7 +390,7 @@ function setApplianceName() {
         appliances.find(function(appliance) {
           return appliance.get('current_appliance') == true; 
         });
-        $('#appliance-name').html('<i class="fa fa-desktop"></i>&nbsp;"Hostname: ' + RockStorGlobals.currentAppliance.get('hostname') + '&nbsp;&nbsp;&nbsp;&nbsp;Mgmt IP: ' + RockStorGlobals.currentAppliance.get('ip')); 
+        $('#appliance-name').html('<i class="fa fa-desktop"></i>&nbsp;Hostname: ' + RockStorGlobals.currentAppliance.get('hostname') + '&nbsp;&nbsp;&nbsp;&nbsp;Mgmt IP: ' + RockStorGlobals.currentAppliance.get('ip')); 
       }
     },
     error: function(request, response) {
