@@ -32,7 +32,7 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
     "click .js-snapshot-clone": "cloneSnapshot",
     "click .js-snapshot-select": "selectSnapshot",
     "click .js-snapshot-select-all": "selectAllSnapshots",
-    "click .js-snapshot-delete-multiple": "deleteMultipleSnapshots"
+    "click #js-snapshot-delete-multiple": "deleteMultipleSnapshots"
   },
 
   initialize: function() {
@@ -163,12 +163,10 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
       var i = _.indexOf(this.selectedSnapshots, name);
       this.selectedSnapshots.splice(i,1);
     }
-    console.log(this.selectedSnapshots);
   },
 
   selectAllSnapshots: function(event) {
     var _this = this;
-    console.log('selectAllSnapshots clicked');
     var checked = $(event.currentTarget).prop('checked');
     if (checked) {
       this.$('.js-snapshot-select').prop('checked', true)
@@ -188,10 +186,22 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
         }
       });
     }
-    console.log(this.selectedSnapshots);
   },
   
   deleteMultipleSnapshots: function(event) {
+    event.preventDefault();
+    if (this.selectedSnapshots.length == 0) {
+      alert('Select at least one snapshot to delete');
+    } else {
+      var confirmMsg = null;
+      if (this.selectedSnapshots.length == 1) {
+        confirmMsg = 'Deleting snapshot ';
+      } else {
+        confirmMsg = 'Deleting snapshots ';
+      }
+      if (confirm(confirmMsg + this.selectedSnapshots.join(',') + '. Are you sure?')) {
+      }
+    }
   },
 
   cancel: function(event) {
