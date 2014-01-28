@@ -30,8 +30,9 @@ BackupView = RockstoreLayoutView.extend({
     // call initialize of base
     this.constructor.__super__.initialize.apply(this, arguments);
     // set template
-    this.template = window.JST.backup_backup;
-    this.paginationTemplate = window.JST.common_pagination;
+    this.template = window.JST.backup;
+    this.policy_table_template = window.JST.policy_table;
+    //this.paginationTemplate = window.JST.common_pagination;
     // add dependencies
     this.collection = new BackupPolicyCollection();
     this.collection.on("reset", this.renderBackups, this);
@@ -51,11 +52,7 @@ BackupView = RockstoreLayoutView.extend({
     this.$("#policy-table-ph").html(this.policy_table_template({
       collection: this.collection
     }));
-    this.$(".pagination-ph").html(this.pagination_template({
-      collection: this.collection
-    }));
-    this.$("#policy-table").tablesorter();
-    this.$('#policy-table-ph-form :input').tooltip();
+    
    
     return this;
   },

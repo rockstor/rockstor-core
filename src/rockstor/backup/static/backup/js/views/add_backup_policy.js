@@ -28,58 +28,29 @@
  * Add Backup Policy View 
  */
 
-AddBackupPolicyView = Backbone.View.extend({
+AddBackupPolicyView = RockstoreLayoutView.extend({
   
-   events: {
-    "click #js-cancel": "cancel"
-    },
-
-
+  
   initialize: function() {
-    this.backup = new BackupPolicyCollection();
+    this.constructor.__super__.initialize.apply(this, arguments);
+    this.template = window.JST.add_backup_policy;
+    this.collection = new BackupPolicyCollection();
   },
+  
   render: function() {
+    this.fetch(this.renderPolicies, this);
+    return this;
+  },
+  
+  renderPolicies: function() {
     $(this.el).empty();
-    this.template = window.JST.backup_add_backup_policy;
     var _this = this;
-    this.backup.fetch({
-      success: function(collection, response) {
-        $(_this.el).append(_this.template({backup: _this.backup}));
-        
-      $('#add-backup-policy-form').validate({
-      onfocusout: false,
-      onkeyup: false,
-      rules: {
-        
-      },
-        submitHandler: function() {
-            var button = _this.$('#create-backup-policy');
-              if (buttonDisabled(button)) return false;
-              disableButton(button);
-              $.ajax({
-                 url: "/api/backup",
-                 type: "PUT",
-                 dataType: "json",
-                 data: {"ip": server_ip, "path": export_path, "share": dest_share,"nlevel":notification_level, "email": notification_email, "stime": start_time},
-                 success: function() {
-                    app_router.navigate('backup', {trigger: true}) 
-                 },
-                 error: function(request, status, error) {
-                   showError(request.responseText);	
-                 },
-               });
-              }
-             }); 
-             } 
-           });
-       return this;
-     },
-
-  cancel: function(event) {
-    event.preventDefault();
-    app_router.navigate('backup', {trigger: true}) 
-  }
+    $(_this.el).append(_this.template({collection: _this.collection}));
+    return this;
+    },
 
 });
 
+// Add pagination
+Cocktail.mixin(AddBackupPolicyView, PaginationMixin);
 
