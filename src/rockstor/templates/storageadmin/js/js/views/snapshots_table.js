@@ -95,12 +95,14 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
           contentType: 'application/json',
           data: JSON.stringify({uvisible: _this.$('#snapshot-visible').prop('checked')}),
           success: function() {
+            _this.$('#add-snapshot-form :input').tooltip('hide');
             enableButton(button);
             _this.collection.fetch({
               success: function() { _this.render(); }
             });
           },
           error: function(xhr, status, error) {
+            _this.$('#add-snapshot-form :input').tooltip('hide');
             enableButton(button);
           }
         });
@@ -124,12 +126,14 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
         type: "DELETE",
         success: function() {
           enableButton(button)
+          _this.$('[rel=tooltip]').tooltip('hide');
           _this.collection.fetch({
             success: function() { _this.render(); }
           });
         },
         error: function(xhr, status, error) {
           enableButton(button)
+          _this.$('[rel=tooltip]').tooltip('hide');
           var msg = parseXhrError(xhr)
           if (_.isObject(msg)) {
             _this.validator.showErrors(msg);
