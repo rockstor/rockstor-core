@@ -19,6 +19,10 @@
  */
 </script>
 
+<div id="ph-share-info">
+  Created on <%= moment(share.get("toc")).format(RS_DATE_FORMAT) %> <br>
+  Pool: <a href="#pools/<%= share.get('pool').name %>"><%= share.get('pool').name %></a> 
+</div>
 <a class="btn btn-primary" href="#" id="js-resize"><i class="icon-edit icon-white"></i> Resize</a>
 <br><br>
 <div class="module-content">

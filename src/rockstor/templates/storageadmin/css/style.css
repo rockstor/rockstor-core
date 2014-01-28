@@ -1392,7 +1392,7 @@ input[type="radio"].selectedRoot {
 
 #sidebar {
 	height: 100%;
-	width: 220px;
+	width: 150px;
 	overflow: hidden;
 	position: absolute;
 	left: 0px;
@@ -1404,7 +1404,7 @@ input[type="radio"].selectedRoot {
 }
 
 #sidebar-inner {
-  padding: 12px 12px 12px 20px;
+  padding: 4px 4px 12px 8px;
 }
 
 .nav > li > a.selected {
@@ -1448,7 +1448,7 @@ input[type="radio"].selectedRoot {
 	height: auto;
 	width: auto;
 	top: 0px;
-	left: 222px;
+	left: 154px;
 	bottom: 0px;
 	right: 0px;
   overflow-y: auto;
@@ -1458,7 +1458,7 @@ input[type="radio"].selectedRoot {
 }
 
 #maincontent {
-  padding: 24px 12px 12px 12px;
+  padding: 4px 12px 12px 12px;
 }
 
 #footer {
@@ -1782,3 +1782,9 @@ input[type="radio"].selectedRoot {
 a i.fa { color: #000; }
 .nav > li > a.selected i.fa { color: #fff; }
 
+#details-header {
+  margin-bottom: 12px;
+  padding: 8px;
+  background: none repeat scroll 0% 0% rgb(238, 238, 238);
+  border-radius: 4px 4px 0px 0px;
+}
