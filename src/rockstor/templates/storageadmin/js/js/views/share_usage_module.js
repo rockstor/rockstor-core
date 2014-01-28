@@ -58,7 +58,7 @@ ShareUsageModule = RockstoreModuleView.extend({
     var barHeight = 50; 
 
     total = parseInt(this.share.get('size')*1024);
-    used = parseInt(this.share.get('usage')*1024);
+    used = parseInt(this.share.get('r_usage')*1024);
     free = total - used;
     var dataSet = [used, free]; 
     var data = [Math.round((used/total)*100), Math.round((free/total)*100)];
@@ -134,7 +134,7 @@ ShareUsageModule = RockstoreModuleView.extend({
     var innerRadius = 0;
     
     total = parseInt(this.share.get('size')*1024);
-    used = parseInt(this.share.get('usage')*1024);
+    used = parseInt(this.share.get('r_usage')*1024);
     free = total - used;
     var dataset = [free, used];
     var dataLabels = ["free", "used"];
