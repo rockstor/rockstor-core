@@ -49,6 +49,8 @@ class Sender(Process):
         self.q = q
         self.snap_name = snap_name
         self.rt = rt
+        self.rt2 = None
+        self.rt2_id = None
         self.ppid = os.getpid()
         self.snap_id = ('%s_%s_%s_%s' %
                         (self.sender_ip, self.replica.pool, self.replica.share,
@@ -83,27 +85,53 @@ class Sender(Process):
                    (self.receiver_ip, self.meta_port))
             self._clean_exit(msg, e)
 
-        #1. create a replica trail
-        url = ('%ssm/replicas/trail/replica/%d' % (self.baseurl,
-                                                   self.replica.id))
-        try:
-            rt2 = api_call(url, data={'snap_name': self.snap_name,},
-                           calltype='post', save_error=False)
-            logger.info('successfully created replica trail: %s' % url)
-        except Exception, e:
-            msg = ('Failed to create replica trail: %s' % url)
-            self._clean_exit(msg, e)
+        if (self.rt is None or self.rt.status == 'succeeded'):
+            #1. create a new replica trail if it's the very first time
+            # of if the last one succeeded
+            url = ('%ssm/replicas/trail/replica/%d' % (self.baseurl,
+                                                       self.replica.id))
+            try:
+                self.rt2 = api_call(url, data={'snap_name': self.snap_name,},
+                                    calltype='post', save_error=False)
+                self.rt2_id = self.rt2['id']
+                logger.info('successfully created replica trail: %s' % url)
+            except Exception, e:
+                msg = ('Failed to create replica trail: %s' % url)
+                self._clean_exit(msg, e)
+        elif (self.rt is not None and self.rt.status == 'pending'):
+            #assume that the last sender bailed for whatever reason and
+            #retry with this sender, but update the same rt object.
+            self.rt2 = self.rt
+            self.rt2_id = self.rt2.id
+        logger.info('rt2 = %s' % self.rt2)
 
-        #2. create a snapshot
+        #2. create a snapshot only if it's not already from a previous
+        #failed attempt.
         sname = self.replica.share
         url = ('%sshares/%s/snapshots/%s' %
                (self.baseurl, sname, self.snap_name))
+        snap_exists = False
         try:
-            api_call(url, data=None, calltype='post', save_error=False)
-            logger.info('created snapshot. url: %s' % url)
+            #do a get and see if the snapshot is already created
+            snap_details = api_call(url, save_error=False)
+            logger.info('previous snapshot found. details: %s'
+                        % snap_details)
+            snap_exists = True
         except Exception, e:
-            msg = ('failed to create snapshot. url: %s' % url)
-            self._clean_exit(msg, e)
+            logger.info('exception while lookup up if snapshot exists at: '
+                        '%s' % url)
+            logger.exception(e)
+
+        if (not snap_exists):
+            logger.info('snapshot must be created at: %s' % url)
+            try:
+                snap_details = api_call(url, data=None, calltype='post',
+                                        save_error=False)
+                logger.info('created snapshot. url: %s. details = %s' %
+                            (url, snap_details))
+            except Exception, e:
+                msg = ('failed to create snapshot. url: %s' % url)
+                self._clean_exit(msg, e)
 
         #let the receiver know that following diff is coming
         logger.info('sending meta_begin')
@@ -180,7 +208,7 @@ class Sender(Process):
             sys.exit(3)
 
         logger.info('fsdata sent, confirmation: %s received' % msg)
-        url = ('%ssm/replicas/trail/%d' % (self.baseurl, rt2['id']))
+        url = ('%ssm/replicas/trail/%d' % (self.baseurl, self.rt2_id))
         end_ts = datetime.utcnow().replace(tzinfo=utc)
         data = {'status': 'succeeded',
                 'kb_sent': self.kb_sent,
