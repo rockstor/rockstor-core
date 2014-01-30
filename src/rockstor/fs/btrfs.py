@@ -182,7 +182,9 @@ def add_snap(pool_name, pool_device, share_name, snap_name,
     snap_full_path = ('%s/%s' % (root_pool_mnt, snap_name))
     if (share_prepend is True):
         snap_full_path = ('%s/%s_%s' % (root_pool_mnt, share_name, snap_name))
-    snap_cmd = [BTRFS, 'subvolume', 'snapshot', share_full_path,
+    #snapshot -r for replication. snapshots must be readonly for btrfs
+    #send/recv to work.
+    snap_cmd = [BTRFS, 'subvolume', 'snapshot', '-r', share_full_path,
                 snap_full_path]
     try:
         run_command(snap_cmd)
