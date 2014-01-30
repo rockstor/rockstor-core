@@ -53,7 +53,9 @@ AddReplicationTaskView = RockstoreLayoutView.extend({
       replica_meta_port: RockStorGlobals.replica_meta_port,
     }));
     
-    $('#replication-task-create-form :input').tooltip();
+    $('#replication-task-create-form :input').tooltip({
+      placement: 'right'
+    });
     
     $('#replication-task-create-form').validate({
       onfocusout: false,

@@ -1143,7 +1143,7 @@ path.link {
 
 /* Form */
 .form-box {
-  padding: 12px;
+  padding: 24px 12px 12px 12px;
   border-radius: 4px;
   background: #eee;
 }
@@ -1384,7 +1384,7 @@ input[type="radio"].selectedRoot {
   position: absolute;
   top: 70px;
   right: 0px;
-  bottom: 20px;
+  bottom: 4px;
   left: 0px;
   overflow: hidden;
   background: rgb(238, 238, 238);

@@ -25,18 +25,18 @@
   <div class="span8">
     <label class="control-label"><span class="required">*</span> indicates required fields</label>
     <div class="form-box">
-      <form id="replication-task-create-form" name="aform">
+      <form class="form-horizontal" id="replication-task-create-form" name="aform">
         <div class="messages"></div>
         <div class="control-group">
           <label class="control-label" for="task_name">Task name<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" id="task_name" name="task_name" placeholder="Task name" title="Enter task name" >
+            <input type="text" id="task_name" name="task_name" placeholder="Task name" title="A unique name for this replication task" >
           </div>
         </div>
         <div class="control-group">
           <label class="control-label" for="share">Share to replicate<span class="required"> *</span></label>
           <div class="controls">
-            <select id="share" name="share" title="Select share to replicate">
+            <select id="share" name="share" title="Source share to replicate">
               <% shares.each(function(share, index) { %>
                 <option value="<%= share.get('name') %>"> <%= share.get('name') %> </option>
               <% }); %>  
@@ -47,7 +47,7 @@
         <div class="control-group">
           <label class="control-label" for="appliance">Target appliance<span class="required"> *</span></label>
           <div class="controls">
-            <select id="appliance" name="appliance" title="Select target appliance">
+            <select id="appliance" name="appliance" title="Destination RockStor appliance">
               <% appliances.each(function(appliance, index) { %>
                 <% if (!appliance.get('current_appliance')) { %>
                   <option value="<%= appliance.get('ip') %>"> <%= appliance.get('ip') %> </option>
@@ -60,25 +60,25 @@
         <div class="control-group">
           <label class="control-label" for="port">Replication Data Port<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" id="data-port" name="data_port" value="<%= replica_data_port %>" placeholder="Replication Data Port" title="Enter replication data port">
+            <input type="text" id="data-port" name="data_port" value="<%= replica_data_port %>" placeholder="Replication Data Port" title="Replication data port on the target appliance. (Default is <%= replica_data_port %>)">
           </div>
         </div>
         <div class="control-group">
           <label class="control-label" for="port">Replication Meta Port<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" id="meta-port" name="meta_port" value="<%= replica_meta_port %>" placeholder="Replication Meta Port" title="Enter replication meta port">
+            <input type="text" id="meta-port" name="meta_port" value="<%= replica_meta_port %>" placeholder="Replication Meta Port" title="Replication meta port on the target appliance. (Default is <%= replica_meta_port %>)">
           </div>
         </div>
         <div class="control-group">
           <label class="control-label" for="pool">Target pool name<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" id="pool" name="pool" placeholder="Target pool name" title="Enter target pool name">
+            <input type="text" id="pool" name="pool" placeholder="Target pool name" title="Target pool name on the target appliance">
           </div>
         </div>
         <div class="control-group">
           <label class="control-label" for="frequency">Frequency in seconds<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" id="frequency" name="frequency" placeholder="Frequency" title="Enter frequency" >
+            <input type="text" id="frequency" name="frequency" placeholder="Frequency" title="Replication frequency in seconds" >
           </div>
         </div>
         <div class="control-group">
