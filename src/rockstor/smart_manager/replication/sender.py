@@ -109,7 +109,13 @@ class Sender(Process):
         logger.info('sending meta_begin')
         meta_push.send_json(self.meta_begin)
         logger.info('meta_begin sent. waiting on get')
-        self.q.get(block=True)
+        try:
+            self.q.get(block=True, timeout=60)
+        except Exception, e:
+            e_msg = ('timed out(60 seconds) waiting for begin_ok from the '
+                     'receiver. ')
+            #@todo: proper rollback
+            sys.exit(3)
         logger.info('get returned')
 
         snap_path = ('%s%s/%s_%s' % (settings.MNT_PT, self.replica.pool,
@@ -165,7 +171,14 @@ class Sender(Process):
                     break
 
         logger.info('send process finished. blocking')
-        msg = self.q.get(block=True)
+        try:
+            msg = self.q.get(block=True, timeout=60)
+        except Exception, e:
+            e_msg = ('Did not get confirmation from the receiver for 60 '
+                     'seconds. timing out')
+            #@todo: proper cleanup
+            sys.exit(3)
+
         logger.info('fsdata sent, confirmation: %s received' % msg)
         url = ('%ssm/replicas/trail/%d' % (self.baseurl, rt2['id']))
         end_ts = datetime.utcnow().replace(tzinfo=utc)
