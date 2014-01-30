@@ -48,8 +48,9 @@ class Receiver(Process):
             recv_sub.RCVTIMEO = 100
             recv_sub.setsockopt(zmq.SUBSCRIBE, str(self.meta['id']))
         except Exception, e:
-            logger.info('could not subscribe for fsdata for meta: %s' %
-                        self.meta)
+            msg = ('Failed to connect to the sender. ip: %s data_port: %s. '
+                   'meta: %s' % (self.meta['ip'], self.data_port, self.meta))
+            logger.error(msg)
             logger.exception(e)
             sys.exit(3)
 
@@ -67,9 +68,10 @@ class Receiver(Process):
         cmd = [BTRFS, 'receive', sub_vol]
         ack = {'msg': 'begin_ok',
                'id': self.meta['id'],}
-        meta_push.send_json(ack)
         rp = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE,
                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        #@todo: do basic rp check
+        meta_push.send_json(ack)
         while True:
             try:
                 recv_data = recv_sub.recv()
@@ -80,7 +82,7 @@ class Receiver(Process):
                 elif (recv_data == 'END_FAIL'):
                     logger.info('END_FAIL received. terminating')
                     rp.terminate()
-                    sys.exit(3)
+                    break
                 rp.stdin.write(recv_data)
                 rp.stdin.flush()
             except zmq.error.Again:
