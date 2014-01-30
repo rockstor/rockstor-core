@@ -30,6 +30,10 @@
 
 AddBackupPolicyView = RockstoreLayoutView.extend({
   
+  events: {
+    "click #js-cancel": "cancel"
+  },
+  
   
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
@@ -48,7 +52,11 @@ AddBackupPolicyView = RockstoreLayoutView.extend({
     $(_this.el).append(_this.template({collection: _this.collection}));
     return this;
     },
-
+    
+  cancel: function(event) {
+    event.preventDefault();
+    app_router.navigate('backup', {trigger: true});
+  }
 });
 
 // Add pagination
