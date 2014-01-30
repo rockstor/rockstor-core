@@ -44,6 +44,8 @@ ReplicationView = RockstoreLayoutView.extend({
     this.replicaTrails = new ReplicaTrailCollection();
     this.replicaTrails.pageSize = RockStorGlobals.maxPageSize;
     this.dependencies.push(this.replicaTrails);
+    this.appliances = new ApplianceCollection();
+    this.dependencies.push(this.appliances);
     this.replicaShareMap = {};
     this.replicaTrailMap = {};
     this.collection.on('reset', this.renderReplicas, this);
@@ -57,7 +59,9 @@ ReplicationView = RockstoreLayoutView.extend({
   renderReplicas: function() {
 
     var _this = this;
-    
+    this.otherAppliances =  this.appliances.filter(function(appliance) {
+      return appliance.get('current_appliance') == false; 
+    });
     // remove existing tooltips
     if (this.$('[rel=tooltip]')) { 
       this.$('[rel=tooltip]').tooltip('hide');
@@ -82,7 +86,8 @@ ReplicationView = RockstoreLayoutView.extend({
       replicationService: this.replicationService,
       replicas: this.collection,
       replicaShareMap: this.replicaShareMap,
-      replicaTrailMap: this.replicaTrailMap
+      replicaTrailMap: this.replicaTrailMap,
+      otherAppliances: this.otherAppliances
     }));
     this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
     this.$(".ph-pagination").html(this.paginationTemplate({

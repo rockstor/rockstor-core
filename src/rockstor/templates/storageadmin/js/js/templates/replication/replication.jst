@@ -19,6 +19,12 @@
  */
 </script>
 
+<% if (otherAppliances.length > 0) { %>
+  <a href="#add_replication_task" class="btn btn-primary">Add Replication Task</a>
+<% } else { %>
+  <div class="alert"><h4>No other RockStor appliances have been connected. At least one other appliance must be connected to setup a replication task. You can connect to an appliance on the <a href=#appliances>Appliances</a> page.</h4></div>
+<% } %>
+
 <% if (!replicationService.get('status')) { %>
   <div class="alert">
     <strong>Warning!</strong> The Replication service is not turned on. You can start it on the <a href="#services">Services</a> page.
@@ -90,8 +96,5 @@
     </div> <!-- span12 -->
   </div> <!-- row-fluid -->
 <% } else { %>
-  <h4>No replication tasks have been created</h4>
+  <div class="alert"><h4>No replication tasks have been created</h4></div>
 <% } %>
-
-<a href="#add_replication_task" class="btn btn-primary">Add Replication Task</a>
-
