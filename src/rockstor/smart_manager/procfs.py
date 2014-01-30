@@ -225,9 +225,8 @@ class ProcRetreiver(Process):
                         pu = None
                 except Exception, e:
                     e_msg = ('Unable to get latest pool usage object for '
-                             'pool(%s)' % p.name)
+                             'pool(%s). A new one will be created.' % p.name)
                     logger.error(e_msg)
-                    logger.exception(e)
                 if (pu is None or pu.usage != usage[1]):
                     pu = PoolUsage(pool=p.name, usage=usage[1], ts=ts)
                 else:
@@ -256,9 +255,9 @@ class ProcRetreiver(Process):
                             su = None
                     except Exception, e:
                         e_msg = ('Unable to get latest share usage object '
-                                 'for share(%s)')
+                                 'for share(%s). A new one will be created.'
+                                 % s)
                         logger.error(e_msg)
-                        logger.exception(e)
                     #we check for changed in both referenced and exclusive
                     #usage because in rare cases it's possible for only one to
                     #change.
