@@ -146,12 +146,22 @@ class ReplicaScheduler(Process):
                                             'incremental sender for snap: '
                                             '%s' % snap_name)
                         elif (rt[0].status == 'pending'):
-                            logger.info('send process ongoing for snap: %s'
-                                        % snap_name)
-                            continue
+                            prev_snap_id = ('%s_%s_%s_%s' % (self.rep_ip,
+                                            r.pool, r.share, rt[0].snap_name))
+                            if (prev_snap_id in self.senders):
+                                logger.info('send process ongoing for snap: '
+                                            '%s' % snap_name)
+                                continue
+                            logger.info('%s not found in senders. '
+                                        'starting a new sender.' %
+                                        prev_snap_id)
+                            snap_name = rt[0].snap_name
+                            sw = Sender(r, self.rep_ip, self.pubq, Queue(),
+                                        snap_name, r.data_port, r.meta_port,
+                                        rt[0])
                         elif (rt[0].status == 'failed'):
                             logger.info('previous backup failed for snap: '
-                                        '%s' % snap_name)
+                                        '%s. moving on.' % snap_name)
                             continue
                         else:
                             logger.info('unknown replica trail status: %s. '
