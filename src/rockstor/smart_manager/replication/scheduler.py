@@ -98,6 +98,7 @@ class ReplicaScheduler(Process):
             try:
                 self.recv_meta = meta_pull.recv_json()
                 snap_id = self.recv_meta['id']
+                logger.info('meta received: %s' % self.recv_meta)
                 if (self.recv_meta['msg'] == 'begin'):
                     logger.info('begin received. meta: %s' % self.recv_meta)
                     rw = Receiver(self.recv_meta, Queue())
@@ -126,15 +127,22 @@ class ReplicaScheduler(Process):
                         snap_name = ('%s_replica_snap' % r.share)
                         if (len(rt) == 0):
                             snap_name = ('%s_1' % snap_name)
+                            logger.info('new sender for snap: %s'
+                                        % snap_name)
                             sw = Sender(r, self.rep_ip, self.pubq, Queue(),
-                                        snap_name)
+                                        snap_name, r.data_port, r.meta_port)
                         elif (rt[0].status == 'succeeded' and
                               (now - rt[0].end_ts).total_seconds() >
                               r.frequency):
                             snap_name = ('%s_%d' % (snap_name, rt[0].id + 1))
+                            logger.info('incremental sender for snap: %s'
+                                        % snap_name)
                             sw = Sender(r, self.rep_ip, self.pubq, Queue(),
-                                        snap_name, rt[0])
+                                        snap_name, r.data_port, r.meta_port,
+                                        rt[0])
                         else:
+                            logger.info('send process ongoing for snap: %s'
+                                        % snap_name)
                             continue
                         snap_id = ('%s_%s_%s_%s' %
                                    (self.rep_ip, r.pool, r.share, snap_name))

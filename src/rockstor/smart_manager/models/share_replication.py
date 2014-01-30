@@ -17,17 +17,21 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.db import models
+from django.conf import settings
 
 
 class Replica(models.Model):
     task_name = models.CharField(max_length=1024)
     share = models.CharField(max_length=4096)
     pool = models.CharField(max_length=4096)
+    """ip from the appliance model of storageadmin"""
     appliance = models.CharField(max_length=4096)
     dpool = models.CharField(max_length=4096)
     dshare = models.CharField(max_length=4096, null=True)
     enabled = models.BooleanField(default=False)
     frequency = models.IntegerField()
+    data_port = models.IntegerField(default=settings.REPLICA_DATA_PORT)
+    meta_port = models.IntegerField(default=settings.REPLICA_META_PORT)
 
     class Meta:
         app_label = 'smart_manager'

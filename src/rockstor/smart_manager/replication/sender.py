@@ -38,11 +38,12 @@ logger = logging.getLogger(__name__)
 class Sender(Process):
     baseurl = 'https://localhost/api/'
 
-    def __init__(self, replica, sender_ip, pub, q, snap_name, rt=None):
+    def __init__(self, replica, sender_ip, pub, q, snap_name, data_port,
+                 meta_port, rt=None):
         self.replica = replica
         self.receiver_ip = self.replica.appliance
-        self.meta_port = settings.REPLICA_META_PORT
-        self.data_port = settings.REPLICA_DATA_PORT
+        self.meta_port = meta_port
+        self.data_port = data_port
         self.sender_ip = sender_ip
         self.pub = pub
         self.q = q
@@ -82,7 +83,18 @@ class Sender(Process):
                    (self.receiver_ip, self.meta_port))
             self._clean_exit(msg, e)
 
-        #1. create a snapshot
+        #1. create a replica trail
+        url = ('%ssm/replicas/trail/replica/%d' % (self.baseurl,
+                                                   self.replica.id))
+        try:
+            rt2 = api_call(url, data={'snap_name': self.snap_name,},
+                           calltype='post', save_error=False)
+            logger.info('successfully created replica trail: %s' % url)
+        except Exception, e:
+            msg = ('Failed to create replica trail: %s' % url)
+            self._clean_exit(msg, e)
+
+        #2. create a snapshot
         sname = self.replica.share
         url = ('%sshares/%s/snapshots/%s' %
                (self.baseurl, sname, self.snap_name))
@@ -94,32 +106,29 @@ class Sender(Process):
             self._clean_exit(msg, e)
 
         #let the receiver know that following diff is coming
+        logger.info('sending meta_begin')
         meta_push.send_json(self.meta_begin)
+        logger.info('meta_begin sent. waiting on get')
         self.q.get(block=True)
-
-
-        url = ('%ssm/replicas/trail/replica/%d' % (self.baseurl,
-                                                   self.replica.id))
-        try:
-            rt2 = api_call(url, data={'snap_name': self.snap_name,},
-                           calltype='post', save_error=False)
-        except Exception, e:
-            msg = ('Failed to create replica trail')
-            self._clean_exit(msg, e)
+        logger.info('get returned')
 
         snap_path = ('%s%s/%s_%s' % (settings.MNT_PT, self.replica.pool,
                                      sname, self.snap_name))
+        logger.info('current snap: %s' % snap_path)
         cmd = [BTRFS, 'send', snap_path]
         if (self.rt is not None):
             prev_snap = ('%s%s/%s_%s' % (settings.MNT_PT, self.replica.pool,
                                          sname, self.rt.snap_name))
+            logger.info('there was a previous snap: %s' % prev_snap)
             cmd = [BTRFS, 'send', '-p', prev_snap, snap_path]
+        logger.info('btrfs send cmd: %s' % cmd)
 
         sp = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE,
                               stderr=subprocess.PIPE)
         fcntl.fcntl(sp.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
         logger.info('send started. snap: %s' % snap_path)
         alive = True
+        fatal_exception = False
         while alive:
             try:
                 if (sp.poll() is not None):
@@ -129,14 +138,22 @@ class Sender(Process):
                 fs_data = sp.stdout.read()
                 self.pub.put('%s%s' % (self.snap_id, fs_data))
                 self.kb_sent = self.kb_sent + len(fs_data)
+                logger.info('send process still alive. kb_sent: %s' %
+                            self.kb_sent)
             except IOError:
                 pass
             except Exception, e:
+                logger.error('exception occured during send')
                 logger.exception(e)
                 if (alive):
+                    logger.info('terminating the send process')
                     sp.terminate()
-                sys.exit(3)
+                logger.info('sender exiting')
+                fatal_exception = True
             finally:
+                if (fatal_exception is True):
+                    #@todo: cleanup/rollback work.
+                    sys.exit(3)
                 if (not alive):
                     if (sp.returncode != 0):
                         self.pub.put('%sEND_FAIL' % self.snap_id)
@@ -147,6 +164,7 @@ class Sender(Process):
                     logger.info('parent exited. aborting.')
                     break
 
+        logger.info('send process finished. blocking')
         msg = self.q.get(block=True)
         logger.info('fsdata sent, confirmation: %s received' % msg)
         url = ('%ssm/replicas/trail/%d' % (self.baseurl, rt2['id']))

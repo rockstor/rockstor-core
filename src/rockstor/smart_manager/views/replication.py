@@ -51,13 +51,16 @@ class ReplicaView(GenericView):
         sname = request.DATA['share']
         share = self._validate_share(sname, request)
         aip = request.DATA['appliance']
-        appliance = self._validate_appliance(aip, request)
+        self._validate_appliance(aip, request)
         dpool = request.DATA['pool']
         frequency = int(request.DATA['frequency'])
         task_name = request.DATA['task_name']
+        data_port = int(request.DATA['data_port'])
+        meta_port = int(request.DATA['meta_port'])
         r = Replica(task_name=task_name, share=sname, appliance=aip,
                     pool=share.pool.name, dpool=dpool, enabled=True,
-                    frequency=frequency)
+                    frequency=frequency, data_port=data_port,
+                    meta_port=meta_port)
         r.save()
         return Response(ReplicaSerializer(r).data)
 
