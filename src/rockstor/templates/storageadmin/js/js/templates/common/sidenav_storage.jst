@@ -15,11 +15,23 @@
   <% } else { %>
     <li><a href="#shares"><i class="icon-folder-open"></i> Shares</a></li>
   <% } %>
-  <% if (selected == "replication") { %>
-    <li><a href="#replication" class="selected"><i class="icon-random icon-white"></i> Replication</a></li>
-  <% } else { %>
-    <li><a href="#replication"><i class="icon-random"></i> Replication</a></li>
-  <% } %>
+  <li>
+    <div class="subnav">
+      <i class="fa fa-exchange"></i> Replication
+      <ul>
+        <% if (selected == "replication") { %>
+          <li><a href="#replication" class="selected"><i class="fa fa-long-arrow-right"></i> Send</a></li>
+        <% } else { %>
+          <li><a href="#replication"><i class="fa fa-long-arrow-right"></i> Send</a></li>
+        <% } %>
+        <% if (selected == "replication-receive") { %>
+          <li><a href="#replication-receive" class="selected"><i class="fa fa-long-arrow-left"></i> Receive</a></li>
+        <% } else { %>
+          <li><a href="#replication-receive"><i class="fa fa-long-arrow-left"></i> Receive</a></li>
+        <% } %>
+      </ul>
+    </div>
+  </li>
   <li>
     <div class="subnav">
       <i class="icon-share"></i> File Sharing

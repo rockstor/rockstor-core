@@ -1430,9 +1430,13 @@ input[type="radio"].selectedRoot {
   list-style: none outside none;
 }
 
+.nav > li > div.subnav ul li a {
+  padding-left: 4px;
+}
+
 .nav > li > div.subnav > ul > li > a:hover {
     text-decoration: none;
-    background-color: rgb(238, 238, 238);
+    /*background-color: rgb(238, 238, 238);*/
 }
 
 .nav > li > a {
@@ -1781,6 +1785,7 @@ input[type="radio"].selectedRoot {
 /* font-awesome styling */
 a i.fa { color: #000; }
 .nav > li > a.selected i.fa { color: #fff; }
+.subnav > ul > li > a.selected i.fa { color: #fff; }
 
 #details-header {
   margin-bottom: 12px;
