@@ -50,17 +50,6 @@ var PoolCollection = RockStorPaginatedCollection.extend({
   baseUrl: '/api/pools'
 });
 
-var Backup = Backbone.Model.extend({
-  url: function() {
-    return '/api/backup/' + this.get('backupName') + '/';
-  }
-});
-
-var BackupPolicyCollection = RockStorPaginatedCollection.extend({
-  model: Backup,
-  baseUrl: '/api/backup'
-});
-
 var SupportCase = Backbone.Model.extend({
 	  url: function() {
 	    return '/api/support/' + this.get('supportCaseId') + '/';
