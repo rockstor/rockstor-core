@@ -49,7 +49,7 @@ class SnapshotView(GenericView):
             handle_exception(Exception(e_msg), self.request)
 
         if ('snap_name' in kwargs):
-            self.paginate_by = None
+            self.paginate_by = 0
             try:
                 return Snapshot.objects.get(share=share,
                                             name=kwargs['snap_name'])
