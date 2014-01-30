@@ -64,7 +64,7 @@
                   <% if (replicaTrailMap[replica.id].length > 0) { %>
                     <% var rt = replicaTrailMap[replica.id][0]; %>
                     <% if (rt.get('status') == 'failed') { %>
-                      <a href="#replication/<%= replica.id %>/trails" class="replica-trail"><i class="icon-warning-sign></i> <%= rt.get('status') %></a>
+                      <a href="#replication/<%= replica.id %>/trails" class="replica-trail"><i class="icon-warning-sign"></i> <%= rt.get('status') %></a>
                     <% } else if (rt.get('status') == 'pending') { %>
                       <a href="#replication/<%= replica.id %>/trails" class="replica-trail"><%= rt.get('status') %></a>
 
