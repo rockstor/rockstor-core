@@ -30,8 +30,8 @@
   <tbody>
     <% plugins.each(function(plugin) { %>
       <tr>
-        <td><%= plugin.get('name') %></td>
-        <td></td>
+        <td><%= plugin.get('display_name') %></td>
+        <td><%= plugin.get('description') %></td>
         <td>
           <% if (installedPlugins.find(function(p) { return p.get('plugin_meta').name == plugin.get('name'); }) == undefined) { %>
             <button data-action="install" data-name="<%= plugin.get('name') %>" class="btn btn-primary">Install</button>

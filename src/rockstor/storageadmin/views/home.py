@@ -69,7 +69,7 @@ def home(request):
         'setup_user': setup.setup_user,
         'page_size': settings.PAGINATION['page_size'],
         'installed_plugins': InstalledPlugin.objects.all(),
-        'installed_plugins_json': json.dumps(InstalledPluginSerializer(InstalledPlugin.objects.all()).data)
+        'installed_plugins_json': JSONRenderer().render(InstalledPluginSerializer(InstalledPlugin.objects.all()).data)
 
     }
     if request.user.is_authenticated():

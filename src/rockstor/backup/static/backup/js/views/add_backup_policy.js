@@ -34,11 +34,11 @@ AddBackupPolicyView = RockstoreLayoutView.extend({
     "click #js-cancel": "cancel"
   },
   
-  
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.add_backup_policy;
-    this.collection = new BackupPolicyCollection();
+    this.shares = new ShareCollection();
+    this.dependencies.push(this.shares);
   },
   
   render: function() {
@@ -49,9 +49,12 @@ AddBackupPolicyView = RockstoreLayoutView.extend({
   renderPolicies: function() {
     $(this.el).empty();
     var _this = this;
-    $(_this.el).append(_this.template({collection: _this.collection}));
+    $(_this.el).append(_this.template({shares: this.shares}));
+    this.$('#add-backup-policy-form :input').tooltip({
+      placement: 'right', html: true
+    });
     return this;
-    },
+  },
     
   cancel: function(event) {
     event.preventDefault();

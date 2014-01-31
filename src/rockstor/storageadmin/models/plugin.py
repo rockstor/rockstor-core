@@ -20,8 +20,10 @@ from django.db import models
 
 class Plugin(models.Model):
     name = models.CharField(max_length=4096, unique=True)
-    css_file_name = models.CharField(max_length=4096, unique=True)  
-    js_file_name = models.CharField(max_length=4096, unique=True)  
+    display_name = models.CharField(max_length=4096, unique=True, default='')
+    description = models.CharField(max_length=4096, unique=False, default='')
+    css_file_name = models.CharField(max_length=4096, unique=False, )  
+    js_file_name = models.CharField(max_length=4096, unique=False)  
     key = models.CharField(max_length=4096, unique=True)  
     
     class Meta:

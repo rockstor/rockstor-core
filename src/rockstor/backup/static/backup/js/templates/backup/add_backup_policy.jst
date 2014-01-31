@@ -25,15 +25,14 @@
   <div class="span8">
     <label class="control-label"><span class="required">*</span> indicates required fields</label>
     <div class="form-box">
-      <form id="add-backup-policy-form" name="aform">
+      <form class="form-horizontal" id="add-backup-policy-form" name="aform">
         <div class="messages"> </div>
-
-
+        
         <!-- Source Server IP -->
         <div class="control-group">
           <label class="control-label" for="server_ip">Source Server IP<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" name="server_ip" id="server_ip" title="Enter server ip">
+            <input type="text" name="server_ip" id="server_ip" title="IP Address of source">
           </div>
         </div>
 
@@ -41,10 +40,9 @@
         <div class="control-group">
           <label class="control-label" for="export_path">Export Path<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" name="export_path" id="export_path" title="Enter export path">
+            <input type="text" name="export_path" id="export_path" title="Source export path">
           </div>
         </div>
-        
         
         <!-- Destination share -->
         <div class="control-group">
@@ -58,7 +56,7 @@
         <div class="control-group">
           <label class="control-label" for="notification_level">Notification Level<span class="required"> *</span></label>
           <div class="controls">
-            <select id="notification_level" name="notification_level">
+            <select id="notification_level" name="notification_level" title="Notify on Success/Failure">
               <option>Success</option>
               <option>Fail</option>
               <option>Both</option>
@@ -66,14 +64,11 @@
           </div>
         </div>
         
-        
-        
-        
         <!-- Notification emails -->
         <div class="control-group">
           <label class="control-label" for="notification_email">Notification Email(s)<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" name="server_ip" id="server_ip" title="Enter notification email(s)">
+            <input type="text" name="server_ip" id="server_ip" title="Comma separated list of email addresses">
           </div>
         </div>
         
@@ -81,7 +76,7 @@
         <div class="control-group">
           <label class="control-label" for="start_time">Start Time<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" name="start_time" id="start_time" title="Enter start time">
+            <input type="text" name="start_time" id="start_time" title="Start time">
           </div>
         </div>
         
@@ -89,10 +84,17 @@
         <div class="control-group">
           <label class="control-label" for="frequency">Frequency in sec<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" name="frequency" id="frequency" title="Enter frequency">
+            <input type="text" name="frequency" id="frequency" title="Frequency in seconds">
           </div>
         </div>
         
+        <div class="control-group">
+          <label class="control-label" for="retention">Number of snapshots<span class="required"> *</span></label>
+          <div class="controls">
+            <input type="text" name="retention" id="retention" title="Number of snapshots to retain">
+          </div>
+        </div>
+
         <!-- Submit -->
         <div class="control-group">
           <div class="controls">

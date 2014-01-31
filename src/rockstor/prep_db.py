@@ -21,6 +21,7 @@ from django.conf import settings
 from django.contrib.auth.models import User as DjangoUser
 from storageadmin.models import User, Setup, Plugin
 from system.users import (get_users, useradd, usermod, userdel, get_epasswd)
+import datetime
 
 def register_services():
     services = {'NFS': 'nfs',
@@ -49,6 +50,8 @@ def initialize_plugins():
     if (not Plugin.objects.filter(name='backup').exists()):
         backup = Plugin(
                 name='backup',
+                display_name='Backup',
+                description='Backup Server functionality',
                 css_file_name = 'backup',
                 js_file_name = 'backup')
         backup.save()
