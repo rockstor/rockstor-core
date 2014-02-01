@@ -56,8 +56,7 @@
                 <% if (r.get('end_ts')) { %>
                   <% var d = moment(r.get('end_ts')).diff(moment(r.get('snapshot_created')))/1000; var rate = (r.get('kb_sent') / d).toFixed(2); %>
                 <% } else { %>
-                  var d = moment().diff(moment(r.get('snapshot_created')))/1000;
-                  var rate = (r.get('kb_sent') / d).toFixed(2);
+                  <% var d = moment().diff(moment(r.get('snapshot_created')))/1000; var rate = (r.get('kb_sent') / d).toFixed(2); %>
                 <% } %>
                 <%= r.get('kb_sent') %> KB at <%= rate %> KB/sec.
               </td>

@@ -306,3 +306,22 @@ var SFTPCollection = RockStorPaginatedCollection.extend({
   model: SFTP,
   baseUrl: '/api/sftp'
 });
+
+var ReplicaReceive = Backbone.Model.extend({
+  urlRoot: "/api/sm/replicareceives"                                   
+});
+
+var ReplicaReceiveCollection = RockStorPaginatedCollection.extend({
+  model: ReplicaReceive,
+  baseUrl: "/api/sm/replicareceives"
+});
+
+var ReplicaReceiveTrail = Backbone.Model.extend({
+  urlRoot: "/api/sm/replicareceivetrail"                                   
+});
+
+var ReplicaReceiveTrailCollection = RockStorPaginatedCollection.extend({
+  model: ReplicaReceiveTrail,
+  baseUrl: "/api/sm/replicareceivetrai"
+});
+

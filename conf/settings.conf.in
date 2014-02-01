@@ -221,6 +221,7 @@ PIPELINE_JS = {
             'js/views/probe_detail.js',
             'js/views/run_probe.js',
             'js/views/replication.js',
+            'js/views/replication_receive.js',
             'js/views/replica_trails.js',
             'js/views/add_replication_task.js',
             'js/views/nfs_exports.js',
