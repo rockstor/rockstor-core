@@ -49,6 +49,11 @@ class ReplicaView(GenericView):
     @transaction.commit_on_success
     def post(self, request):
         sname = request.DATA['share']
+        if (Replica.objects.filter(share=sname).exists()):
+            e_msg = ('Another replication task already exists for this '
+                     'share(%s). Sorry, only 1-1 replication is supported.'
+                     % sname)
+            handle_exception(Exception(e_msg), request)
         share = self._validate_share(sname, request)
         aip = request.DATA['appliance']
         self._validate_appliance(aip, request)
