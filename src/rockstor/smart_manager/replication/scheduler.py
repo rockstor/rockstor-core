@@ -31,6 +31,7 @@ from cli.rest_util import api_call
 import logging
 logger = logging.getLogger(__name__)
 from django.db import DatabaseError
+from util import update_replica_status
 
 class ReplicaScheduler(Process):
 
