@@ -85,7 +85,8 @@ class Sender(Process):
                    (self.receiver_ip, self.meta_port))
             self._clean_exit(msg, e)
 
-        if (self.rt is None or self.rt.status == 'succeeded'):
+        if (self.rt is None or self.rt.status == 'succeeded' or
+            self.rt.status == 'failed'):
             #1. create a new replica trail if it's the very first time
             # of if the last one succeeded
             url = ('%ssm/replicas/trail/replica/%d' % (self.baseurl,

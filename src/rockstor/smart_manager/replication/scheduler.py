@@ -145,6 +145,7 @@ class ReplicaScheduler(Process):
                                 logger.info('its not time yet for '
                                             'incremental sender for snap: '
                                             '%s' % snap_name)
+                                continue
                         elif (rt[0].status == 'pending'):
                             prev_snap_id = ('%s_%s_%s_%s' % (self.rep_ip,
                                             r.pool, r.share, rt[0].snap_name))
@@ -152,17 +153,24 @@ class ReplicaScheduler(Process):
                                 logger.info('send process ongoing for snap: '
                                             '%s' % snap_name)
                                 continue
-                            logger.info('%s not found in senders. '
-                                        'starting a new sender.' %
-                                        prev_snap_id)
+                            logger.info('%s not found in senders. Previous '
+                                        'sender must have Aborted. Marking '
+                                        'it as failed' % prev_snap_id)
+                            msg = ('Sender process Aborted. See logs for '
+                                   'more information')
+                            data = {'status': 'failed',
+                                    'end_ts': now,
+                                    'error': msg,
+                                    'send_failed': now,}
+                            update_replica_status(rt[0].id, data, logger)
+                            continue
+                        elif (rt[0].status == 'failed'):
+                            logger.info('previous backup failed for snap: '
+                                        '%s. Starting a new one.' % snap_name)
                             snap_name = rt[0].snap_name
                             sw = Sender(r, self.rep_ip, self.pubq, Queue(),
                                         snap_name, r.data_port, r.meta_port,
                                         rt[0])
-                        elif (rt[0].status == 'failed'):
-                            logger.info('previous backup failed for snap: '
-                                        '%s. moving on.' % snap_name)
-                            continue
                         else:
                             logger.info('unknown replica trail status: %s. '
                                         'ignoring snap: %s' %
