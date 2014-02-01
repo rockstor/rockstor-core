@@ -60,7 +60,7 @@ class AppliancesView(GenericView):
                 logger.error(r.text)
                 e_msg = ('Authentication to the remote Rockstor '
                          'appliance(%s) failed due to wrong username or '
-                         'password. Try again.')
+                         'password. Try again.' % ip)
                 handle_exception(Exception(e_msg), request)
             if (r.status_code != 200):
                 logger.error(r.text)
