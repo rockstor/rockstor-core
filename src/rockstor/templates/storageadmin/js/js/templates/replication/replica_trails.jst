@@ -28,6 +28,7 @@
         <thead>
           <tr>
             <th scope="col" abbr="ID">ID</th>
+	    <th scope="col" abbr="Snapshot">Snapshot</th>
             <th scope="col" abbr="Start Time">Start Time</th>
             <th scope="col" abbr="Start Time">End Time</th>
             <th scope="col" abbr="Start Time">Status</th>
@@ -39,6 +40,7 @@
           <% replicaTrails.each(function(r) { %>
             <tr>
               <td><%= r.get('id') %></td>
+	      <td><%= r.get('snap_name') %></td>
               <td><%= moment(r.get('snapshot_created')).format(RS_DATE_FORMAT) %></td>
               <td>
                 <% if (r.get('end_ts')) { %>
