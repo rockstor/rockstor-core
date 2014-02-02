@@ -32,6 +32,8 @@ class Replica(models.Model):
     frequency = models.IntegerField()
     data_port = models.IntegerField(default=settings.REPLICA_DATA_PORT)
     meta_port = models.IntegerField(default=settings.REPLICA_META_PORT)
+    """enabled/disabled state change ts"""
+    ts = models.DateTimeField(null=True, db_index=True)
 
     class Meta:
         app_label = 'smart_manager'
