@@ -20,8 +20,6 @@ from multiprocessing import Process
 import os
 import sys
 import logging
-
-from cli.rest_util import api_call
 import zmq
 import subprocess
 import fcntl
@@ -30,14 +28,14 @@ from django.conf import settings
 import time
 from datetime import datetime
 from django.utils.timezone import utc
-from util import (create_replica_trail, update_replica_status)
+from util import (create_replica_trail, update_replica_status, is_snapshot,
+                  create_snapshot)
 
 BTRFS = '/sbin/btrfs'
 logger = logging.getLogger(__name__)
 
 
 class Sender(Process):
-    baseurl = 'https://localhost/api/'
 
     def __init__(self, replica, sender_ip, pub, q, snap_name, data_port,
                  meta_port, rt=None):
@@ -106,30 +104,11 @@ class Sender(Process):
 
         #2. create a snapshot only if it's not already from a previous
         #failed attempt.
-        sname = self.replica.share
-        url = ('%sshares/%s/snapshots/%s' %
-               (self.baseurl, sname, self.snap_name))
-        snap_exists = False
-        try:
-            #do a get and see if the snapshot is already created
-            snap_details = api_call(url, save_error=False)
-            logger.info('previous snapshot found. details: %s'
-                        % snap_details)
-            snap_exists = True
-        except Exception, e:
-            logger.info('exception while lookup up if snapshot exists at: '
-                        '%s' % url)
-            logger.exception(e)
-
-        if (not snap_exists):
-            logger.info('snapshot must be created at: %s' % url)
+        if (not is_snapshot(self.replica.share, self.snap_name, logger)):
             try:
-                snap_details = api_call(url, data=None, calltype='post',
-                                        save_error=False)
-                logger.info('created snapshot. url: %s. details = %s' %
-                            (url, snap_details))
+                create_snapshot(self.replica.share, self.snap_name, logger)
             except Exception, e:
-                msg = ('failed to create snapshot. url: %s' % url)
+                msg = ('failed to create snapshot: %s' % self.snap_name)
                 self._clean_exit(msg, e)
 
         #let the receiver know that following diff is coming
@@ -146,12 +125,13 @@ class Sender(Process):
         logger.info('get returned')
 
         snap_path = ('%s%s/%s_%s' % (settings.MNT_PT, self.replica.pool,
-                                     sname, self.snap_name))
+                                     self.replica.share, self.snap_name))
         logger.info('current snap: %s' % snap_path)
         cmd = [BTRFS, 'send', snap_path]
         if (self.rt is not None):
             prev_snap = ('%s%s/%s_%s' % (settings.MNT_PT, self.replica.pool,
-                                         sname, self.rt.snap_name))
+                                         self.replica.share,
+                                         self.rt.snap_name))
             logger.info('there was a previous snap: %s' % prev_snap)
             cmd = [BTRFS, 'send', '-p', prev_snap, snap_path]
         logger.info('btrfs send cmd: %s' % cmd)
