@@ -172,7 +172,8 @@ class ReplicaScheduler(Process):
                             MAX_ATTEMPTS = 10
                             for rto in rt:
                                 if (rto.status != 'failed' or
-                                    num_tries >= MAX_ATTEMPTS):
+                                    num_tries >= MAX_ATTEMPTS or
+                                    rto.end_ts < r.ts):
                                     break
                                 num_tries = num_tries + 1
                             if (num_tries >= MAX_ATTEMPTS):
@@ -186,9 +187,14 @@ class ReplicaScheduler(Process):
                                         '%s. Starting a new one. Attempt '
                                         '%d/%d.' % (snap_name, num_tries,
                                                       MAX_ATTEMPTS))
+                            prev_rt = None
+                            for rto in rt:
+                                if (rto.status == 'succeeded'):
+                                    prev_rt = rto
+                                    break
                             sw = Sender(r, self.rep_ip, self.pubq, Queue(),
                                         snap_name, r.data_port, r.meta_port,
-                                        rt[0])
+                                        prev_rt)
                         else:
                             logger.info('unknown replica trail status: %s. '
                                         'ignoring snap: %s' %

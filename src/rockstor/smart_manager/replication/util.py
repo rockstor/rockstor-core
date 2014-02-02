@@ -24,3 +24,14 @@ def disable_replica(rid, logger):
     except Exception, e:
         logger.error('Failed to disable replica(%s)' % url)
         raise e
+
+def create_replica_trail(rid, snap_name, logger):
+    url = ('%ssm/replicas/trail/replica/%d' % (BASE_URL, rid))
+    try:
+        rt = api_call(url, data={'snap_name': snap_name,},
+                      calltype='post', save_error=False)
+        logger.info('successfully created replica trail: %s' % url)
+        return rt
+    except Exception, e:
+        logger.error('Failed to create replica trail: %s' % url)
+        raise e

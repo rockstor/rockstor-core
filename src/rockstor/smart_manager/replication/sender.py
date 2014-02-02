@@ -30,6 +30,7 @@ from django.conf import settings
 import time
 from datetime import datetime
 from django.utils.timezone import utc
+from util import (create_replica_trail, update_replica_status)
 
 BTRFS = '/sbin/btrfs'
 logger = logging.getLogger(__name__)
@@ -89,15 +90,12 @@ class Sender(Process):
             self.rt.status == 'failed'):
             #1. create a new replica trail if it's the very first time
             # of if the last one succeeded
-            url = ('%ssm/replicas/trail/replica/%d' % (self.baseurl,
-                                                       self.replica.id))
             try:
-                self.rt2 = api_call(url, data={'snap_name': self.snap_name,},
-                                    calltype='post', save_error=False)
+                self.rt2 = create_replica_trail(self.replica.id,
+                                                self.snap_name, logger)
                 self.rt2_id = self.rt2['id']
-                logger.info('successfully created replica trail: %s' % url)
             except Exception, e:
-                msg = ('Failed to create replica trail: %s' % url)
+                msg = 'foobar'
                 self._clean_exit(msg, e)
         elif (self.rt is not None and self.rt.status == 'pending'):
             #assume that the last sender bailed for whatever reason and
@@ -209,20 +207,19 @@ class Sender(Process):
             sys.exit(3)
 
         logger.info('fsdata sent, confirmation: %s received' % msg)
-        url = ('%ssm/replicas/trail/%d' % (self.baseurl, self.rt2_id))
         end_ts = datetime.utcnow().replace(tzinfo=utc)
         data = {'status': 'succeeded',
                 'kb_sent': self.kb_sent,
                 'end_ts' : end_ts,}
         if (msg == 'receive_error'):
-            msg = ('Error while transferring data to the remote appliance')
+            msg = ('Remote appliance returned a processing error. Check '
+                   'that appliance for more information')
             data['status'] = 'failed'
             data['error'] = msg
             data['send_failed'] = end_ts
         try:
-            api_call(url, data=data, calltype='put', save_error=False)
-            logger.info('replica status updated to %s' % data['status'])
+            update_replica_status(self.rt2_id, data, logger)
         except Exception, e:
-            msg = ('failed to update replica status to send_succeeded')
+            msg = ('foobar')
             #@todo: add retries
             self._clean_exit(msg, e)
