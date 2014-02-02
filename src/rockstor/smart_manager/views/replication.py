@@ -27,6 +27,8 @@ from smart_manager.models import Replica
 from smart_manager.serializers import ReplicaSerializer
 from storageadmin.util import handle_exception
 from generic_view import GenericView
+from datetime import datetime
+from django.utils.timezone import utc
 
 import logging
 logger = logging.getLogger(__name__)
@@ -62,15 +64,17 @@ class ReplicaView(GenericView):
         task_name = request.DATA['task_name']
         data_port = int(request.DATA['data_port'])
         meta_port = int(request.DATA['meta_port'])
+        ts = datetime.utcnow().replace(tzinfo=utc)
         r = Replica(task_name=task_name, share=sname, appliance=aip,
                     pool=share.pool.name, dpool=dpool, enabled=True,
                     frequency=frequency, data_port=data_port,
-                    meta_port=meta_port)
+                    meta_port=meta_port, ts=ts)
         r.save()
         return Response(ReplicaSerializer(r).data)
 
     @transaction.commit_on_success
     def put(self, request, rid):
+        ts = datetime.utcnow().replace(tzinfo=utc)
         try:
             r = Replica.objects.get(id=rid)
         except:
@@ -84,6 +88,7 @@ class ReplicaView(GenericView):
             enabled = True
         logger.info('enabled: %s. type: %s' % (request.DATA, type(enabled)))
         r.enabled = enabled
+        r.ts = ts
         r.save()
         return Response(ReplicaSerializer(r).data)
 
