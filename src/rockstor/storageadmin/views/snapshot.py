@@ -94,7 +94,8 @@ class SnapshotView(GenericView):
         return True
 
     @transaction.commit_on_success
-    def _create(self, share, snap_name, pool_device, request, uvisible):
+    def _create(self, share, snap_name, pool_device, request, uvisible,
+                snap_type):
         if (Snapshot.objects.filter(share=share, name=snap_name).exists()):
             e_msg = ('Snapshot with name: %s already exists for the '
                      'share: %s' % (snap_name, share.name))
@@ -108,7 +109,8 @@ class SnapshotView(GenericView):
             qgroup_id = ('0/%s' % snap_id)
             snap_size = share_usage(share.pool.name, pool_device, qgroup_id)
             s = Snapshot(share=share, name=snap_name, real_name=real_name,
-                         size=snap_size, qgroup=qgroup_id, uvisible=uvisible)
+                         size=snap_size, qgroup=qgroup_id,
+                         uvisible=uvisible, snap_type=snap_type)
             s.save()
             return Response(SnapshotSerializer(s).data)
         except Exception, e:
@@ -125,10 +127,15 @@ class SnapshotView(GenericView):
             if (type(uvisible) != bool):
                 e_msg = ('uvisible must be a boolean, not %s' % type(uvisible))
                 handle_exception(Exception(e_msg), request)
+
+        snap_type = 'admin'
+        if (request.DATA is not None and 'snap_type' in request.DATA):
+            snap_type = request.DATA['snap_type']
+
         pool_device = Disk.objects.filter(pool=share.pool)[0].name
         if (command is None):
             ret = self._create(share, snap_name, pool_device, request,
-                               uvisible=uvisible)
+                               uvisible=uvisible, snap_type=snap_type)
             if (uvisible):
                 try:
                     self._toggle_visibility(share, ret.data['real_name'])
