@@ -40,9 +40,18 @@ DATABASES = {
         'HOST': '',
         'PORT': '',
         },
+    'backup': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': '${django-settings-conf:backupdb}',
+        'USER': '',
+        'PASSWORD': '',
+        'HOST': '',
+        'PORT': '',
+        },
 }
 
-DATABASE_ROUTERS = ['smart_manager.db_router.SmartManagerDBRouter',]
+DATABASE_ROUTERS = ['smart_manager.db_router.SmartManagerDBRouter',
+                 'backup.db_router.BackupDBRouter']
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name

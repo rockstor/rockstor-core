@@ -1143,7 +1143,7 @@ path.link {
 
 /* Form */
 .form-box {
-  padding: 12px;
+  padding: 24px 12px 12px 12px;
   border-radius: 4px;
   background: #eee;
 }
@@ -1384,7 +1384,7 @@ input[type="radio"].selectedRoot {
   position: absolute;
   top: 70px;
   right: 0px;
-  bottom: 20px;
+  bottom: 4px;
   left: 0px;
   overflow: hidden;
   background: rgb(238, 238, 238);
@@ -1392,7 +1392,7 @@ input[type="radio"].selectedRoot {
 
 #sidebar {
 	height: 100%;
-	width: 220px;
+	width: 150px;
 	overflow: hidden;
 	position: absolute;
 	left: 0px;
@@ -1404,7 +1404,7 @@ input[type="radio"].selectedRoot {
 }
 
 #sidebar-inner {
-  padding: 12px 12px 12px 20px;
+  padding: 4px 4px 12px 8px;
 }
 
 .nav > li > a.selected {
@@ -1430,9 +1430,13 @@ input[type="radio"].selectedRoot {
   list-style: none outside none;
 }
 
+.nav > li > div.subnav ul li a {
+  padding-left: 4px;
+}
+
 .nav > li > div.subnav > ul > li > a:hover {
     text-decoration: none;
-    background-color: rgb(238, 238, 238);
+    /*background-color: rgb(238, 238, 238);*/
 }
 
 .nav > li > a {
@@ -1448,7 +1452,7 @@ input[type="radio"].selectedRoot {
 	height: auto;
 	width: auto;
 	top: 0px;
-	left: 222px;
+	left: 154px;
 	bottom: 0px;
 	right: 0px;
   overflow-y: auto;
@@ -1458,7 +1462,7 @@ input[type="radio"].selectedRoot {
 }
 
 #maincontent {
-  padding: 24px 12px 12px 12px;
+  padding: 4px 12px 12px 12px;
 }
 
 #footer {
