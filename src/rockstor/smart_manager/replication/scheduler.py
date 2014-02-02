@@ -31,7 +31,7 @@ from cli.rest_util import api_call
 import logging
 logger = logging.getLogger(__name__)
 from django.db import DatabaseError
-from util import update_replica_status
+from util import (update_replica_status, disable_replica)
 
 class ReplicaScheduler(Process):
 
@@ -166,9 +166,26 @@ class ReplicaScheduler(Process):
                             update_replica_status(rt[0].id, data, logger)
                             continue
                         elif (rt[0].status == 'failed'):
-                            logger.info('previous backup failed for snap: '
-                                        '%s. Starting a new one.' % snap_name)
                             snap_name = rt[0].snap_name
+                            #if num_failed attempts > 10, disable the replica
+                            num_tries = 0
+                            MAX_ATTEMPTS = 10
+                            for rto in rt:
+                                if (rto.status != 'failed' or
+                                    num_tries >= MAX_ATTEMPTS):
+                                    break
+                                num_tries = num_tries + 1
+                            if (num_tries >= MAX_ATTEMPTS):
+                                logger.info('Maximum attempts(%d) reached '
+                                            'for snap: %s. Disabling the '
+                                            'replica.' %
+                                            (MAX_ATTEMPTS, snap_name))
+                                disable_replica(r.id, logger)
+                                continue
+                            logger.info('previous backup failed for snap: '
+                                        '%s. Starting a new one. Attempt '
+                                        '%d/%d.' % (snap_name, num_tries,
+                                                      MAX_ATTEMPTS))
                             sw = Sender(r, self.rep_ip, self.pubq, Queue(),
                                         snap_name, r.data_port, r.meta_port,
                                         rt[0])
