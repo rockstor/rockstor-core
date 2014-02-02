@@ -34,6 +34,8 @@ class Snapshot(models.Model):
     toc = models.DateTimeField(auto_now=True)
     qgroup = models.CharField(max_length=100)
     uvisible = models.BooleanField(default=False)
+    """replication, admin etc.."""
+    snap_type = models.CharField(max_length=64, default='admin')
 
     def cur_rusage(self, *args, **kwargs):
         try:
