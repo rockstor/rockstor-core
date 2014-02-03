@@ -139,7 +139,6 @@ class Sender(Process):
         fcntl.fcntl(sp.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
         logger.debug('send started. snap: %s' % snap_path)
         alive = True
-        fatal_exception = False
         while alive:
             try:
                 if (sp.poll() is not None):
@@ -159,45 +158,51 @@ class Sender(Process):
                     logger.info('Terminating the child send process for '
                                 'snap_name: %s' % self.snap_name)
                     sp.terminate()
-                msg = ('Exception occured while transferring data '
-                       'for snap_name: %s' % self.snap_name)
-                fatal_exception = True
-            finally:
-                if (fatal_exception is True):
+                    msg = ('Exception occured while transferring data '
+                           'for snap_name: %s' % self.snap_name)
                     self._clean_exit(msg, e)
+            finally:
                 if (not alive):
+                    #above if shouldn't be necessary.
+                    #exists for readability.
                     if (sp.returncode != 0):
                         self.pub.put('%sEND_FAIL' % self.snap_id)
                     else:
                         self.pub.put('%sEND_SUCCESS' % self.snap_id)
-                    logger.info('sent END')
+                    logger.debug('sent END for snap_name: %s' %
+                                 self.snap_name)
                 if (os.getppid() != self.ppid):
-                    logger.info('parent exited. aborting.')
-                    break
+                    logger.error('Scheduler exited. Sender for snap_name: '
+                                 '%s cannot go on. Aborting.'
+                                 % self.snap_name)
+                    sys.exit(3)
 
-        logger.info('send process finished. blocking')
+        logger.debug('send process finished. blocking')
         try:
             msg = self.q.get(block=True, timeout=60)
         except Exception, e:
-            e_msg = ('Did not get confirmation from the receiver for 60 '
-                     'seconds. timing out')
-            #@todo: proper cleanup
-            sys.exit(3)
+            #@todo: may not be failure tolerant.
+            msg = ('Timeout occured(60 seconds) while waiting for final '
+                   'send confirmation from the receiver(%s) for snap_name:'
+                   ' %s. Aborting.' % (self.receiver_ip, self.snap_name))
+            self._clean_exit(msg, e)
 
-        logger.info('fsdata sent, confirmation: %s received' % msg)
+        logger.debug('fsdata sent, confirmation: %s received' % msg)
         end_ts = datetime.utcnow().replace(tzinfo=utc)
         data = {'status': 'succeeded',
                 'kb_sent': self.kb_sent,
                 'end_ts' : end_ts,}
         if (msg == 'receive_error'):
-            msg = ('Remote appliance returned a processing error. Check '
-                   'that appliance for more information')
+            msg = ('Receiver(%s) returned a processing error for snap_name:'
+                   ' %s. Check it for more information.'
+                   % (self.receiver_ip, self.snap_name))
             data['status'] = 'failed'
             data['error'] = msg
             data['send_failed'] = end_ts
         try:
             update_replica_status(self.rt2_id, data, logger)
         except Exception, e:
-            msg = ('foobar')
-            #@todo: add retries
+            #@todo: this is not failure tolerant.
+            msg = ('Failed to update final replica status for snap_name: %s'
+                   '. Aborting.' % self.snap_name)
             self._clean_exit(msg, e)
