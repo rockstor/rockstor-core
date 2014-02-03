@@ -79,8 +79,19 @@ var Snapshot = Backbone.Model.extend({
 
 var SnapshotCollection = RockStorPaginatedCollection.extend({
   model: Snapshot,
+  initialize: function(models, options) {
+    this.constructor.__super__.initialize.apply(this, arguments);
+    if (options) {
+      this.snapType = options.snapType;
+    }
+  },
   setUrl: function(shareName) {
     this.baseUrl = '/api/shares/' + shareName + '/snapshots'    
+  },
+  extraParams: function() {
+    var p = this.constructor.__super__.extraParams.apply(this, arguments);
+    p['snap_type'] = this.snapType;
+    return p;
   }
 });
 

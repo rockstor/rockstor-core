@@ -46,7 +46,7 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
 
     // create models
     this.share = new Share({shareName: this.shareName});
-    this.snapshots = new SnapshotCollection();
+    this.snapshots = new SnapshotCollection([],{snapType: 'admin'});
     this.snapshots.setUrl(this.shareName);
 
     this.users = new UserCollection();
