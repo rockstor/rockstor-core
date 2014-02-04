@@ -53,6 +53,39 @@ AddBackupPolicyView = RockstoreLayoutView.extend({
     this.$('#add-backup-policy-form :input').tooltip({
       placement: 'right', html: true
     });
+    this.$('#add-backup-policy-form :input').validate({
+      onfocusout: false,
+      onkeyup: false,
+      rules: {
+        name: 'required',
+        server_ip: 'required',
+        export_path: 'required',
+        dest_share: 'required',
+        notification_level: 'required',
+        start_time: 'required',
+        frequency: 'required',
+        num_retain: 'required'
+      },
+      submitHandler: function() {
+        var button = $('#create-backup-policy');
+        if (buttonDisabled(button)) return false;
+        disableButton(button);
+        $.ajax({
+          url: "/api/plugin/backup",
+          type: "POST",
+          dataType: "json",
+          contentType: 'application/json',
+          data: JSON.stringify(_this.$('#add-backup-policy-form').getJSON()),
+          success: function() {
+            enableButton(button);
+            app_router.navigate('backup', {trigger: true}) 
+          },
+          error: function(xhr, status, error) {
+            enableButton(button);
+          },
+        });
+      }
+    });
     return this;
   },
     

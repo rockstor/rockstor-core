@@ -28,6 +28,14 @@
       <form class="form-horizontal" id="add-backup-policy-form" name="aform">
         <div class="messages"> </div>
         
+        <!-- Name -->
+        <div class="control-group">
+          <label class="control-label" for="name">Backup Policy Name<span class="required"> *</span></label>
+          <div class="controls">
+            <input type="text" name="name" id="name" title="A unique name to identify this backup policy">
+          </div>
+        </div>
+
         <!-- Source Server IP -->
         <div class="control-group">
           <label class="control-label" for="server_ip">Source Server IP<span class="required"> *</span></label>
@@ -46,7 +54,7 @@
         
         <!-- Destination share -->
         <div class="control-group">
-          <label class="control-label" for="dest_share">Destination Share<span class="required"> *</span></label>
+          <label class="control-label" for="dest_share">Destination Share Name<span class="required"> *</span></label>
           <div class="controls">
             <input type="text" name="dest_share" id="dest_share" title="Enter destination share">
           </div>
@@ -66,9 +74,9 @@
         
         <!-- Notification emails -->
         <div class="control-group">
-          <label class="control-label" for="notification_email">Notification Email(s)<span class="required"> *</span></label>
+          <label class="control-label" for="notification_email">Notification Email(s)</label>
           <div class="controls">
-            <input type="text" name="server_ip" id="server_ip" title="Comma separated list of email addresses">
+            <input type="text" name="notification_email" id="notification_email" title="Comma separated list of email addresses">
           </div>
         </div>
         

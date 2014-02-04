@@ -89,6 +89,9 @@ urlpatterns = patterns('',
     (r'^api/sm/sprobes/', include('smart_manager.urls.sprobes')),
     (r'^api/sm/tasks/', include('smart_manager.urls.tasks')),
     (r'^api/sm/replicas/', include('smart_manager.urls.replicas')),
+
+    # Backup Plugin
+    (r'^api/plugin/backup/', include('backup.urls')),
 )
 
 
