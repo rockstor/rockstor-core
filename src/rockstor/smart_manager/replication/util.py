@@ -1,4 +1,5 @@
 
+
 from cli.rest_util import api_call
 
 BASE_URL = 'https://localhost/api/'
@@ -36,6 +37,26 @@ def create_replica_trail(rid, snap_name, logger):
         logger.error('Failed to create replica trail: %s' % url)
         raise e
 
+def create_rshare(data, logger):
+    try:
+        url = ('%s/sm/rshare' % BASE_URL)
+        api_call(url, data=data, calltype='post', save_error=False)
+        return logger.info('ReplicaShare: %s created.' % url)
+    except Exception, e:
+        logger.error('Failed to create ReplicaShare')
+        raise e
+
+def update_receive_trail(rid, data, logger, calltype='put'):
+    url = ('%s/sm/rshare/trail/rshare/%d' % (BASE_URL, rid))
+
+    try:
+        rt = api_call(url, data=data, calltype=calltype, save_error=False)
+        logger.info('successfully created receive trail: %s' % url)
+        return rt
+    except Exception, e:
+        logger.error('Failed to create receive trail: %s' % url)
+        raise e
+
 def is_snapshot(sname, snap_name, logger):
     try:
         #do a get and see if the snapshot is already created
@@ -58,3 +79,21 @@ def create_snapshot(sname, snap_name, logger):
                            (url, snap_details))
     except Exception, e:
         raise e
+
+def create_share(sname, pool, logger):
+    try:
+        url = ('%s/shares/%s' % (BASE_URL, sname))
+        share_info = api_call(url)
+        return logger.debug('Share(%s) already exists. info: %s'
+                            % (sname, share_info))
+    except Exception, e:
+        logger.debug('Share(%s) does not exist' % sname)
+        #@todo: make share size same as pool size
+        #make it default = 2TB = 2147483648KB
+        data = {'pool': pool,
+                'size': 2147483648,
+                'replica': True,}
+        headers = {'content-type': 'application/json',}
+        return api_call(url, data=data, calltype='post', headers=headers)
+
+

@@ -17,7 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf.urls.defaults import patterns, url
-from smart_manager.views import (ReplicaView, ReplicaTrailView)
+from smart_manager.views import (ReplicaView, ReplicaTrailView,
+                                 ReplicaShareView, ReceiveTrailView)
 
 share_regex = r'[A-Za-z]+[A-Za-z0-9_]*'
 
@@ -31,5 +32,11 @@ urlpatterns = patterns('',
     url(r'^trail/replica/(?P<rid>[0-9]+)', ReplicaTrailView.as_view(), name='replica-view'),
     url(r'^trail/(?P<rtid>[0-9]+)', ReplicaTrailView.as_view(),
         name='replica-view'),
+
+    url(r'^rshare$', ReplicaShareView.as_view()),
+    url(r'^rshare/(?P<sname>%s)$' % share_regex, ReplicaShareView.as_view()),
+    url(r'^rtrail$', ReceiveTrailView.as_view()),
+    url(r'^rtrail/rshare/(?P<rid>[0-9]+)', ReceiveTrailView.as_view()),
+    url(r'^rtrail/(?P<rtid>[0-9]+)', ReceiveTrailView.as_view()),
 
 )
