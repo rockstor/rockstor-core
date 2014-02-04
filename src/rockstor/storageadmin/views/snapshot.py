@@ -103,11 +103,15 @@ class SnapshotView(GenericView):
 
         try:
             real_name = ('%s_%s' % (share.name, snap_name))
-            add_snap(share.pool.name, pool_device, share.subvol_name,
-                     real_name, share_prepend=False)
-            snap_id = share_id(share.pool.name, pool_device, real_name)
-            qgroup_id = ('0/%s' % snap_id)
-            snap_size = share_usage(share.pool.name, pool_device, qgroup_id)
+            snap_size = 0
+            qgroup_id = '0/na'
+            if (snap_type != 'receiver'):
+                add_snap(share.pool.name, pool_device, share.subvol_name,
+                         real_name, share_prepend=False)
+                snap_id = share_id(share.pool.name, pool_device, real_name)
+                qgroup_id = ('0/%s' % snap_id)
+                snap_size = share_usage(share.pool.name, pool_device,
+                                        qgroup_id)
             s = Snapshot(share=share, name=snap_name, real_name=real_name,
                          size=snap_size, qgroup=qgroup_id,
                          uvisible=uvisible, snap_type=snap_type)
