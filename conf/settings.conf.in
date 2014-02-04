@@ -248,7 +248,6 @@ PIPELINE_JS = {
             'storageadmin/js/views/add_sftp_share.js',
             'storageadmin/js/views/version.js',
             'storageadmin/js/views/plugins.js',
-            'backup/js/models/models.js',
             ),
         'output_filename': 'storageadmin/js/application.js'
         },
@@ -258,6 +257,7 @@ PIPELINE_JS = {
             'backup/js/templates/**/*.jst',
             'backup/js/views/add_backup_policy.js',
             'backup/js/views/backup.js',
+            'backup/js/models/models.js',
         ),
         'output_filename': 'backup/js/backup_plugin.js'
         }

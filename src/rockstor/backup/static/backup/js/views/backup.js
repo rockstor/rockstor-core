@@ -31,28 +31,29 @@ BackupView = RockstoreLayoutView.extend({
     this.constructor.__super__.initialize.apply(this, arguments);
     // set template
     this.template = window.JST.backup;
-    this.policy_table_template = window.JST.policy_table;
-    //this.paginationTemplate = window.JST.common_pagination;
+    this.policyTableTemplate = window.JST.policy_table;
+    this.paginationTemplate = window.JST.common_pagination;
     // add dependencies
     this.collection = new BackupPolicyCollection();
-    this.collection.on("reset", this.renderBackups, this);
-    
+    this.dependencies.push(this.collection);
   },
 
   render: function() {
-    this.fetch(this.renderBackups, this);
+    this.fetch(this.renderBackupPolicies, this);
     return this;
   },
 
-  renderBackups: function() {
+  renderBackupPolicies: function() {
 
     var _this = this;
     
     $(this.el).html(this.template({ collection: this.collection }));
-    this.$("#policy-table-ph").html(this.policy_table_template({
+    this.$("#policy-table-ph").html(this.policyTableTemplate({
       collection: this.collection
     }));
-    
+    this.$(".pagination-ph").html(this.paginationTemplate({
+      collection: this.collection
+    }));
    
     return this;
   },

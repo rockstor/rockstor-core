@@ -24,14 +24,13 @@
  * 
  */
  
- 
 var Backup = Backbone.Model.extend({
-   urlRoot: "/api/backup" 
+   urlRoot: "/api/plugin/backup" 
   }); 
 
 var BackupPolicyCollection = RockStorPaginatedCollection.extend({
   model: Backup,
-  baseUrl: '/api/backup'
+  baseUrl: '/api/plugin/backup'
   });
   
   
