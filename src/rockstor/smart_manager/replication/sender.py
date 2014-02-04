@@ -62,7 +62,8 @@ class Sender(Process):
                            'snap': self.snap_name,
                            'ip': self.sender_ip,
                            'data_port': self.data_port,
-                           'meta_port': self.meta_port,}
+                           'meta_port': self.meta_port,
+                           'incremental': self.rt is not None,}
         self.meta_end = {'id': self.snap_id,
                          'msg': 'end',}
         self.kb_sent = 0
