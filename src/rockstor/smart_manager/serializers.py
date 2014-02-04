@@ -24,7 +24,8 @@ from smart_manager.models import (CPUMetric, LoadAvg, MemInfo, ServiceStatus,
                                   DiskStat, NetStat,
                                   NFSDShareClientDistribution,
                                   NFSDUidGidDistribution, TaskDefinition, Task,
-                                  Replica, ReplicaTrail)
+                                  Replica, ReplicaTrail, ReplicaShare,
+                                  ReceiveTrail)
 from smart_manager.taplib.probe_config import TapConfig
 
 
@@ -134,3 +135,12 @@ class ReplicaSerializer(serializers.ModelSerializer):
 class ReplicaTrailSerializer(serializers.ModelSerializer):
     class Meta:
         model = ReplicaTrail
+
+class ReplicaShareSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReplicaShare
+
+class ReceiveTrailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReceiveTrail
+
