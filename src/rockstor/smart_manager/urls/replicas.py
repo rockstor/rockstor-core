@@ -20,7 +20,7 @@ from django.conf.urls.defaults import patterns, url
 from smart_manager.views import (ReplicaView, ReplicaTrailView,
                                  ReplicaShareView, ReceiveTrailView)
 
-share_regex = r'[A-Za-z]+[A-Za-z0-9_]*'
+share_regex = r'[A-Za-z]+[A-Za-z0-9_\-.]*'
 
 urlpatterns = patterns('',
     url(r'^$', ReplicaView.as_view(), name='replica-view'),
