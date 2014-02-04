@@ -56,13 +56,21 @@ class ReceiveTrailView(GenericView):
     @transaction.commit_on_success
     def put(self, request, rtid):
         rt = ReceiveTrail.objects.get(id=rtid)
-        new_status = request.DATA['status']
+        if ('snapshot_created' in request.DATA):
+            rt.snapshot_created = request.DATA['snapshot_created']
+        if ('snapshot_failed' in request.DATA):
+            rt.snapshot_failed = request.DATA['snapshot_failed']
+        if ('receive_succeeded' in request.DATA):
+            rt.receive_succeeded = request.DATA['receive_succeeded']
+        if ('receive_failed' in request.DATA):
+            rt.receive_failed = request.DATA['receive_failed']
+        if ('status' in request.DATA):
+            rt.stats = request.DATA['status']
         if ('error' in request.DATA):
             rt.error = request.DATA['error']
         if ('kb_received' in request.DATA):
             rt.kb_received = request.DATA['kb_received']
         if ('end_ts' in request.DATA):
             rt.end_ts = request.DATA['end_ts']
-        rt.status = new_status
         rt.save()
         return Response(ReceiveTrailSerializer(rt).data)
