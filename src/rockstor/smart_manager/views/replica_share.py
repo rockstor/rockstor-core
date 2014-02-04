@@ -39,7 +39,11 @@ class ReplicaShareView(GenericView):
 
     def get_queryset(self, *args, **kwargs):
         if ('sname' in kwargs):
-            return ReplicaShare.objects.filter(share=kwargs['sname'])
+            self.paginate_by = 0
+            try:
+                return ReplicaShare.objects.get(share=kwargs['sname'])
+            except:
+                return []
         return ReplicaShare.objects.filter().order_by('-id')
 
     @transaction.commit_on_success
@@ -52,14 +56,13 @@ class ReplicaShareView(GenericView):
         share = self._validate_share(sname, request)
         aip = request.DATA['appliance']
         self._validate_appliance(aip, request)
-        src_pool = request.DATA['src_pool']
         src_share = request.DATA['src_share']
         data_port = int(request.DATA['data_port'])
         meta_port = int(request.DATA['meta_port'])
         ts = datetime.utcnow().replace(tzinfo=utc)
         r = ReplicaShare(share=sname, appliance=aip,
-                         pool=share.pool.name, src_pool=src_pool,
-                         src_share=src_share, data_port=data_port,
+                         pool=share.pool.name, src_share=src_share,
+                         data_port=data_port,
                          meta_port=meta_port, ts=ts)
         r.save()
         return Response(ReplicaShareSerializer(r).data)
