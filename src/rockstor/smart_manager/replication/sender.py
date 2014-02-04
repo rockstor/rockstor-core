@@ -58,7 +58,7 @@ class Sender(Process):
         self.meta_begin = {'id': self.snap_id,
                            'msg': 'begin',
                            'pool': self.replica.dpool,
-                           'share': self.replica.dshare,
+                           'share': self.replica.share,
                            'snap': self.snap_name,
                            'ip': self.sender_ip,
                            'data_port': self.data_port,
