@@ -92,8 +92,6 @@ class ReceiveTrail(models.Model):
     rshare = models.ForeignKey(ReplicaShare)
     snap_name = models.CharField(max_length=1024)
     kb_received = models.IntegerField(default=0)
-    snapshot_created = models.DateTimeField(null=True)
-    snapshot_failed = models.DateTimeField(null=True)
     receive_pending = models.DateTimeField(null=True)
     receive_succeeded = models.DateTimeField(null=True)
     receive_failed = models.DateTimeField(null=True)
