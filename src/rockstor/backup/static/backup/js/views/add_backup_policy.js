@@ -53,7 +53,9 @@ AddBackupPolicyView = RockstoreLayoutView.extend({
     this.$('#add-backup-policy-form :input').tooltip({
       placement: 'right', html: true
     });
-    this.$('#add-backup-policy-form :input').validate({
+    this.$('#start_date').datepicker();
+    var timePicker = this.$('#start_time').timepicker();
+    this.$('#add-backup-policy-form').validate({
       onfocusout: false,
       onkeyup: false,
       rules: {
@@ -62,6 +64,7 @@ AddBackupPolicyView = RockstoreLayoutView.extend({
         export_path: 'required',
         dest_share: 'required',
         notification_level: 'required',
+        start_date: 'required',
         start_time: 'required',
         frequency: 'required',
         num_retain: 'required'
@@ -70,12 +73,17 @@ AddBackupPolicyView = RockstoreLayoutView.extend({
         var button = $('#create-backup-policy');
         if (buttonDisabled(button)) return false;
         disableButton(button);
+        var data = _this.$('#add-backup-policy-form').getJSON();
+        var ts = moment(data.start_date, 'MM/DD/YYYY');
+        var tmp = _this.$('#start_time').val().split(':')
+        ts.add('h',tmp[0]).add('m', tmp[1]);
+        data.ts = ts.unix();
         $.ajax({
           url: "/api/plugin/backup",
           type: "POST",
           dataType: "json",
           contentType: 'application/json',
-          data: JSON.stringify(_this.$('#add-backup-policy-form').getJSON()),
+          data: JSON.stringify(data),
           success: function() {
             enableButton(button);
             app_router.navigate('backup', {trigger: true}) 
@@ -84,6 +92,7 @@ AddBackupPolicyView = RockstoreLayoutView.extend({
             enableButton(button);
           },
         });
+        return false;
       }
     });
     return this;

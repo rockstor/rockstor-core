@@ -27,6 +27,8 @@ from backup.serializers import BackupPolicySerializer
 from storageadmin.util import handle_exception
 from django.conf import settings
 from generic_view import GenericView
+from datetime import datetime
+from django.utils.timezone import utc
 
 class BackupPolicyView(GenericView):
     serializer_class = BackupPolicySerializer
@@ -48,7 +50,6 @@ class BackupPolicyView(GenericView):
         source_path = request.DATA['source_path']
         dest_share = request.DATA['dest_share']
         notify_email = request.DATA['notify_email']
-        start = int(float(request.DATA['start']))
         frequency = None
         if ('frequency' in request.DATA):
             frequency = int(request.DATA['frequency'])
@@ -56,10 +57,14 @@ class BackupPolicyView(GenericView):
                 frequency = None
             else:
                 frequency = frequency - (frequency % 60)
+        ts = int(float(request.DATA['ts']))
+        ts_dto = datetime.utcfromtimestamp(float(ts)).replace(second=0,
+                                                              microsecond=0,
+                                                              tzinfo=utc)
         num_retain = request.DATA['num_retain']
         bp = BackupPolicy(name=name, source_ip=source_ip, 
                 source_path=source_path, dest_share=dest_share,
-                notify_email=notify_email, start=start,
+                notify_email=notify_email, start=ts,
                 frequency=frequency, num_retain=num_retain)
         bp.save()
         return Response(BackupPolicySerializer(bp).data)

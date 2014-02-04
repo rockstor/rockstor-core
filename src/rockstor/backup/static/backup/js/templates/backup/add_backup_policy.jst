@@ -20,10 +20,10 @@
 </script>
 
 
-<h3>Create Backup Policy</h3>
+<span class="h3">Create Backup Policy</span>&nbsp;&nbsp;
+( <span class="required">*</span> indicates required fields )
 <div class="row-fluid">
   <div class="span8">
-    <label class="control-label"><span class="required">*</span> indicates required fields</label>
     <div class="form-box">
       <form class="form-horizontal" id="add-backup-policy-form" name="aform">
         <div class="messages"> </div>
@@ -38,17 +38,17 @@
 
         <!-- Source Server IP -->
         <div class="control-group">
-          <label class="control-label" for="server_ip">Source Server IP<span class="required"> *</span></label>
+          <label class="control-label" for="source_ip">Source Server IP<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" name="server_ip" id="server_ip" title="IP Address of source">
+            <input type="text" name="source_ip" id="source_ip" title="IP Address of source">
           </div>
         </div>
 
         <!-- Export path -->
         <div class="control-group">
-          <label class="control-label" for="export_path">Export Path<span class="required"> *</span></label>
+          <label class="control-label" for="source_path">Source Export Path<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" name="export_path" id="export_path" title="Source export path">
+            <input type="text" name="source_path" id="source_path" title="Source export path">
           </div>
         </div>
         
@@ -74,17 +74,18 @@
         
         <!-- Notification emails -->
         <div class="control-group">
-          <label class="control-label" for="notification_email">Notification Email(s)</label>
+          <label class="control-label" for="notify_email">Notification Email(s)</label>
           <div class="controls">
-            <input type="text" name="notification_email" id="notification_email" title="Comma separated list of email addresses">
+            <input type="text" name="notify_email" id="notify_email" title="Comma separated list of email addresses">
           </div>
         </div>
         
-        <!-- Start time -->
+        <!-- Start date and time -->
         <div class="control-group">
-          <label class="control-label" for="start_time">Start Time<span class="required"> *</span></label>
-          <div class="controls">
-            <input type="text" name="start_time" id="start_time" title="Start time">
+          <label class="control-label" for="start_date">Start Date (MM/DD/YYYY) and Start Time (hh:mm)</label>
+          <div class="controls controls-row">
+            <input class="span4" type="text" id="start_date" name="start_date" placeholder="Start Date" title="Start date in MM/DD/YYYY format">
+            <input class="span3" type="text" id="start_time" name="start_time" placeholder="Start Time" title="Start time in hh:mm format">
           </div>
         </div>
         
@@ -97,9 +98,9 @@
         </div>
         
         <div class="control-group">
-          <label class="control-label" for="retention">Number of snapshots<span class="required"> *</span></label>
+          <label class="control-label" for="num_retain">Number of snapshots<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" name="retention" id="retention" title="Number of snapshots to retain">
+            <input type="text" name="num_retain" id="num_retain" title="Number of snapshots to retain">
           </div>
         </div>
 
