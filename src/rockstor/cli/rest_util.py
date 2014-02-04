@@ -44,8 +44,12 @@ def api_call(url, data=None, calltype='get', headers=None, save_error=True):
     call = getattr(requests, calltype)
     try:
         if (headers is not None):
-            r = call(url, verify=False, params=auth_params, data=data,
-                     headers=headers)
+            if (headers['content-type'] == 'application/json'):
+                r = call(url, verify=False, params=auth_params,
+                         data=json.dumps(data), headers=headers)
+            else:
+                r = call(url, verify=False, params=auth_params, data=data,
+                         headers=headers)
         else:
             r = call(url, verify=False, params=auth_params, data=data)
     except requests.exceptions.ConnectionError:
