@@ -57,11 +57,15 @@ ReplicaReceiveTrailsView = RockstoreLayoutView.extend({
       replicaShare: this.replicaShare,
       receiveTrails: this.collection
     }));
+    // remove existing tooltips
+    if (this.$('[rel=tooltip]')) { 
+      this.$('[rel=tooltip]').tooltip('hide');
+    }
     this.$(".pagination-ph").html(this.paginationTemplate({
       collection: this.collection
     }));
-    this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
     this.$('#receive-trails-table').tablesorter();
+    this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
   },
 
 });
