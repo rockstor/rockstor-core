@@ -88,7 +88,8 @@ class Sender(Process):
             logger.exception(e)
             try:
                 data = {'status': 'failed',
-                        'error': msg,}
+                        'error': msg,
+                        'end_ts': datetime.utcnow().replace(tzinfo=utc),}
                 update_replica_status(self.rt2_id, data, logger)
             except Exception, e:
                 logger.exception(e)
