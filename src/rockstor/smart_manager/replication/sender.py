@@ -27,6 +27,7 @@ import json
 from django.conf import settings
 import time
 from datetime import datetime
+from contextlib import contextmanager
 from django.utils.timezone import utc
 from util import (create_replica_trail, update_replica_status, is_snapshot,
                   create_snapshot)
@@ -69,57 +70,49 @@ class Sender(Process):
         self.kb_sent = 0
         super(Sender, self).__init__()
 
-    def _clean_exit(self, msg, exception):
-        logger.error(msg)
-        logger.exception(exception)
-        #@todo: ctx.term()
-        sys.exit(3)
+    @contextmanager
+    def _clean_exit_handler(self, msg):
+        try:
+            yield
+        except Exception, e:
+            logger.error(msg)
+            logger.exception(e)
+            sys.exit(3)
 
     def run(self):
-        try:
+        msg = ('Failed to connect to receiver(%s) on meta port'
+               '(%d) for snap_name: %s. Aborting.' %
+               (self.receiver_ip, self.meta_port, self.snap_name))
+        with self._clean_exit_handler(msg):
             ctx = zmq.Context()
             meta_push = ctx.socket(zmq.PUSH)
             meta_push.connect('tcp://%s:%d' % (self.receiver_ip,
                                                self.meta_port))
-        except Exception, e:
-            msg = ('Failed to connect to receiver(%s) on meta port'
-                   '(%d) for snap_name: %s. Aborting.' %
-                   (self.receiver_ip, self.meta_port, self.snap_name))
-            self._clean_exit(msg, e)
 
         #1. create a new replica trail if it's the very first time
         # of if the last one succeeded
-        try:
+        msg = ('Failed to create local replica trail for snap_name:'
+               ' %s. Aborting.' % self.snap_name)
+        with self._clean_exit_handler(msg):
             self.rt2 = create_replica_trail(self.replica.id,
                                             self.snap_name, logger)
             self.rt2_id = self.rt2['id']
-        except Exception, e:
-            msg = ('Failed to create local replica trail for snap_name:'
-                   ' %s. Aborting.' % self.snap_name)
-            self._clean_exit(msg, e)
 
         #2. create a snapshot only if it's not already from a previous
         #failed attempt.
         if (not is_snapshot(self.replica.share, self.snap_name, logger)):
-            try:
+            msg = ('Failed to create snapshot: %s. Aborting.' % self.snap_name)
+            with self._clean_exit_handler(msg):
                 create_snapshot(self.replica.share, self.snap_name, logger)
-            except Exception, e:
-                msg = ('Failed to create snapshot: %s. Aborting.' %
-                       self.snap_name)
-                self._clean_exit(msg, e)
 
         #let the receiver know that following diff is coming
-        logger.info('sending meta_begin')
+        logger.debug('sending meta_begin')
         meta_push.send_json(self.meta_begin)
-        logger.info('meta_begin sent. waiting on get')
-        try:
+        logger.debug('meta_begin sent. waiting on get')
+        msg = ('Timeout occured(60 seconds) while waiting for begin_ok '
+               'from the receiver(%s). Aborting.' % self.receiver_ip)
+        with self._clean_exit_handler(msg):
             self.q.get(block=True, timeout=60)
-        except Exception, e:
-            msg = ('Timeout occured(60 seconds) while waiting for begin_ok '
-                   'from the receiver(%s). Aborting.' % self.receiver_ip)
-            self._clean_exit(msg, e)
-
-        logger.debug('get returned')
 
         snap_path = ('%s%s/%s_%s' % (settings.MNT_PT, self.replica.pool,
                                      self.replica.share, self.snap_name))
@@ -161,7 +154,8 @@ class Sender(Process):
                     sp.terminate()
                     msg = ('Exception occured while transferring data '
                            'for snap_name: %s' % self.snap_name)
-                    self._clean_exit(msg, e)
+                    logger.error(msg)
+                    sys.exit(3)
             finally:
                 if (not alive):
                     #above if shouldn't be necessary.
@@ -179,14 +173,11 @@ class Sender(Process):
                     sys.exit(3)
 
         logger.debug('send process finished. blocking')
-        try:
+        msg = ('Timeout occured(60 seconds) while waiting for final '
+               'send confirmation from the receiver(%s) for snap_name:'
+               ' %s. Aborting.' % (self.receiver_ip, self.snap_name))
+        with self._clean_exit_handler(msg):
             msg = self.q.get(block=True, timeout=60)
-        except Exception, e:
-            #@todo: may not be failure tolerant.
-            msg = ('Timeout occured(60 seconds) while waiting for final '
-                   'send confirmation from the receiver(%s) for snap_name:'
-                   ' %s. Aborting.' % (self.receiver_ip, self.snap_name))
-            self._clean_exit(msg, e)
 
         logger.debug('fsdata sent, confirmation: %s received' % msg)
         end_ts = datetime.utcnow().replace(tzinfo=utc)
@@ -200,10 +191,9 @@ class Sender(Process):
             data['status'] = 'failed'
             data['error'] = msg
             data['send_failed'] = end_ts
-        try:
+
+        msg = ('Failed to update final replica status for snap_name: %s'
+               '. Aborting.' % self.snap_name)
+        with self._clean_exit_handler(msg):
             update_replica_status(self.rt2_id, data, logger)
-        except Exception, e:
-            #@todo: this is not failure tolerant.
-            msg = ('Failed to update final replica status for snap_name: %s'
-                   '. Aborting.' % self.snap_name)
-            self._clean_exit(msg, e)
+

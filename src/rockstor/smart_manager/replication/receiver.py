@@ -52,11 +52,6 @@ class Receiver(Process):
         self.rtid = None
         super(Receiver, self).__init__()
 
-    def _clean_exit(self, msg, exception):
-        logger.error(msg)
-        logger.exception(exception)
-        sys.exit(3)
-
     @contextmanager
     def _clean_exit_handler(self, msg):
         try:
