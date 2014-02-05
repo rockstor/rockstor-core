@@ -82,12 +82,6 @@ class Receiver(Process):
         #@todo: use appliance uuid instead?
         sname = ('%s-%s' % (self.src_share, self.sender_ip))
         if (not self.incremental):
-            try:
-                create_share(sname, self.dest_pool, logger)
-            except Exception, e:
-                msg = ('Failed to verify/create share: %s. meta: %s. '
-                       'Aborting.' % (sname, self.meta))
-                self._clean_exit(msg, e)
 
             try:
                 data = {'share': sname,
@@ -101,6 +95,14 @@ class Receiver(Process):
                        'for share: %s. meta: %s. Aborting.' %
                        (sname, self.meta))
                 self._clean_exit(msg, e)
+
+            try:
+                create_share(sname, self.dest_pool, logger)
+            except Exception, e:
+                msg = ('Failed to verify/create share: %s. meta: %s. '
+                       'Aborting.' % (sname, self.meta))
+                self._clean_exit(msg, e)
+
         else:
             try:
                 self.rid = rshare_id(sname, logger)
