@@ -88,6 +88,10 @@ class Receiver(Process):
         #@todo: use appliance uuid instead?
         sname = ('%s-%s' % (self.src_share, self.sender_ip))
         if (not self.incremental):
+            msg = ('Failed to verify/create share: %s. meta: %s. '
+                   'Aborting.' % (sname, self.meta))
+            with self._clean_exit_handler(msg):
+                create_share(sname, self.dest_pool, logger)
 
             msg = ('Failed to create the replica metadata object '
                    'for share: %s. meta: %s. Aborting.' %
@@ -99,11 +103,6 @@ class Receiver(Process):
                         'data_port': self.data_port,
                         'meta_port': self.meta_port,}
                 self.rid = create_rshare(data, logger)
-
-            msg = ('Failed to verify/create share: %s. meta: %s. '
-                   'Aborting.' % (sname, self.meta))
-            with self._clean_exit_handler(msg):
-                create_share(sname, self.dest_pool, logger)
 
         else:
             msg = ('Failed to retreive the replica metadata object for '

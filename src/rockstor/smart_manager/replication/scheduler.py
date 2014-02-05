@@ -217,5 +217,5 @@ class ReplicaScheduler(Process):
 def main():
     rs = ReplicaScheduler()
     rs.start()
-    logger.info('started replica scheduler')
+    logger.info('Started Replica Scheduler')
     rs.join()
