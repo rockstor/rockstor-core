@@ -193,7 +193,7 @@ class Sender(Process):
         msg = ('Timeout occured(60 seconds) while waiting for final '
                'send confirmation from the receiver(%s) for snap_name:'
                ' %s. Aborting.' % (self.receiver_ip, self.snap_name))
-        with self._clean_exit_handler(msg):
+        with self._update_trail_and_quit(msg):
             msg = self.q.get(block=True, timeout=60)
 
         logger.debug('fsdata sent, confirmation: %s received' % msg)
