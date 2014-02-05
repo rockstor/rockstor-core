@@ -65,7 +65,7 @@ class ReceiveTrailView(GenericView):
         if ('receive_failed' in request.DATA):
             rt.receive_failed = request.DATA['receive_failed']
         if ('status' in request.DATA):
-            rt.stats = request.DATA['status']
+            rt.status = request.DATA['status']
         if ('error' in request.DATA):
             rt.error = request.DATA['error']
         if ('kb_received' in request.DATA):
