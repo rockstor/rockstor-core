@@ -27,6 +27,7 @@ import json
 from datetime import datetime
 from django.utils.timezone import utc
 from django.conf import settings
+from contextlib import contextmanager
 from util import (create_share, create_receive_trail, update_receive_trail,
                   create_snapshot, create_rshare, rshare_id)
 
@@ -56,60 +57,59 @@ class Receiver(Process):
         logger.exception(exception)
         sys.exit(3)
 
+    @contextmanager
+    def _clean_exit_handler(self, msg):
+        try:
+            yield
+        except Exception, e:
+            logger.error(msg)
+            logger.exception(e)
+            sys.exit(3)
+
     def run(self):
         ctx = zmq.Context()
-        try:
+        msg = ('Failed to connect to the sender(%s) on data_port(%s). meta: '
+               '%s. Aborting.' % (self.sender_ip, self.data_port, self.meta))
+        with self._clean_exit_handler(msg):
+            #@todo: add validation
             recv_sub = ctx.socket(zmq.SUB)
             recv_sub.connect('tcp://%s:%d' % (self.sender_ip, self.data_port))
             recv_sub.RCVTIMEO = 100
             recv_sub.setsockopt(zmq.SUBSCRIBE, str(self.meta['id']))
-        except Exception, e:
-            msg = ('Failed to connect to the sender(%s) on '
-                   'data_port(%s). meta: %s. Aborting.'
-                   % (self.sender_ip, self.data_port, self.meta))
-            self._clean_exit(msg, e)
 
-        try:
+        msg = ('Failed to connect to the sender(%s) on '
+               'meta_port(%d). meta: %s. Aborting.' %
+               (self.sender_ip, self.meta_port, self.meta))
+        with self._clean_exit_handler(msg):
             meta_push = ctx.socket(zmq.PUSH)
             meta_push.connect('tcp://%s:%d' % (self.sender_ip,
                                                self.meta_port))
-        except Exception, e:
-            msg = ('Failed to connect to the sender(%s) on '
-                   'meta_port(%d). meta: %s. Aborting.' %
-                   (self.sender_ip, self.meta_port, self.meta))
-            self._clean_exit(msg, e)
 
         #@todo: use appliance uuid instead?
         sname = ('%s-%s' % (self.src_share, self.sender_ip))
         if (not self.incremental):
 
-            try:
+            msg = ('Failed to create the replica metadata object '
+                   'for share: %s. meta: %s. Aborting.' %
+                   (sname, self.meta))
+            with self._clean_exit_handler(msg):
                 data = {'share': sname,
                         'appliance': self.sender_ip,
                         'src_share': self.src_share,
                         'data_port': self.data_port,
                         'meta_port': self.meta_port,}
                 self.rid = create_rshare(data, logger)
-            except Exception, e:
-                msg = ('Failed to create the replica metadata object '
-                       'for share: %s. meta: %s. Aborting.' %
-                       (sname, self.meta))
-                self._clean_exit(msg, e)
 
-            try:
+            msg = ('Failed to verify/create share: %s. meta: %s. '
+                   'Aborting.' % (sname, self.meta))
+            with self._clean_exit_handler(msg):
                 create_share(sname, self.dest_pool, logger)
-            except Exception, e:
-                msg = ('Failed to verify/create share: %s. meta: %s. '
-                       'Aborting.' % (sname, self.meta))
-                self._clean_exit(msg, e)
 
         else:
-            try:
+            msg = ('Failed to retreive the replica metadata object for '
+                   'share: %s. meta: %s. Aboring.' % (sname, self.meta))
+            with self._clean_exit_handler(msg):
                 self.rid = rshare_id(sname, logger)
-            except Exception, e:
-                msg = ('Failed to retreive the replica metadata object for '
-                       'share: %s. meta: %s. Aboring.' % (sname, self.meta))
-                self._clean_exit(msg, e)
 
         sub_vol = ('%s%s/%s' % (settings.MNT_PT, self.meta['pool'],
                                 sname))
@@ -128,22 +128,18 @@ class Receiver(Process):
                 recv_data = recv_data[len(self.meta['id']):]
                 self.kb_received = self.kb_received + len(recv_data)
                 if (self.rtid is None):
-                    try:
+                    msg = ('Failed to create snapshot: %s. Aborting.' %
+                           self.snap_name)
+                    with self._clean_exit_handler(msg):
                         create_snapshot(sname, self.snap_name, logger,
                                         snap_type='receiver')
-                    except Exception, e:
-                        msg = ('Failed to create snapshot: %s. Aborting.' %
-                               self.snap_name)
-                        self._clean_exit(msg, e)
 
                     data = {'snap_name': self.snap_name}
-                    try:
+                    msg = ('Failed to create receive trail for rid: %d'
+                           '. meta: %s' % (self.rid, self.meta))
+                    with self._clean_exit_handler(msg):
                         self.rtid = create_receive_trail(self.rid, data,
                                                          logger)
-                    except Exception, e:
-                        msg = ('Failed to create receive trail for rid: %d'
-                               '. meta: %s' % (self.rid, self.meta))
-                        self._clean_exit(msg, e)
 
                 if (recv_data == 'END_SUCCESS' or recv_data == 'END_FAIL'):
                     ts = datetime.utcnow().replace(tzinfo=utc)
@@ -158,12 +154,11 @@ class Receiver(Process):
                         rp.terminate()
                         data['receive_failed'] = ts
                         data['status'] = 'failed'
-                    try:
-                        update_receive_trail(self.rtid, data, logger)
-                    except Exception, e:
-                        msg = ('Failed to update receive trail for rtid: %d'
+
+                    msg = ('Failed to update receive trail for rtid: %d'
                                '. meta: %s' % (self.rtid, self.meta))
-                        self._clean_exit(msg, e)
+                    with self._clean_exit_handler(msg):
+                        update_receive_trail(self.rtid, data, logger)
                     break
                 rp.stdin.write(recv_data)
                 rp.stdin.flush()
@@ -177,12 +172,11 @@ class Receiver(Process):
                 data['receive_failed'] = datetime.utcnow().replace(tzinfo=utc)
                 data['status'] = 'failed'
                 data['error'] = msg
-                try:
+
+                msg = ('Failed to update receive trail for rtid: %d'
+                       '. meta: %s' % (self.rtid, self.meta))
+                with self._clean_exit_handler(msg):
                     update_receive_trail(self.rtid, data, logger)
-                except Exception, e:
-                    msg = ('Failed to update receive trail for rtid: %d'
-                               '. meta: %s' % (self.rtid, self.meta))
-                    self._clean_exit(msg, e)
                 sys.exit(3)
             finally:
                 if (os.getppid() != self.ppid):
@@ -201,11 +195,9 @@ class Receiver(Process):
             ack['msg'] = 'receive_error'
             data['status'] = 'failed'
 
-        try:
+        msg = ('Failed to update receive trail for rtid: %d. meta: '
+               '%s' % (self.rtid, self.meta))
+        with self._clean_exit_handler(msg):
             update_receive_trail(self.rtid, data, logger)
-        except Exception, e:
-            msg = ('Failed to update receive trail for rtid: %d. meta: '
-                   '%s' % (self.rtid, self.meta))
-            self._clean_exit(msg, e)
 
         meta_push.send_json(ack)
