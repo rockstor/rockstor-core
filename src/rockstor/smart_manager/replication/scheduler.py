@@ -62,7 +62,7 @@ class ReplicaScheduler(Process):
         sleep_time = 0
         while True:
             if (os.getppid() != self.ppid):
-                logger.info('parent exited. aborting.')
+                logger.error('Parent exited. Aborting.')
                 break
             try:
                 self.rep_ip = self._replication_interface()
@@ -73,7 +73,7 @@ class ReplicaScheduler(Process):
                 if (sleep_time % 30 == 0):
                     msg = ('Failed to get replication interface for last %d'
                            ' seconds' % sleep_time)
-                    logger.info('failed to get replication interface')
+                    logger.error(msg)
 
         ctx = zmq.Context()
         #fs diffs are sent via this publisher.
@@ -88,7 +88,7 @@ class ReplicaScheduler(Process):
         total_sleep = 0
         while True:
             if (os.getppid() != self.ppid):
-                logger.info('parent exited. aborting.')
+                logger.error('Parent exited. Aborting.')
                 break
 
             while(not self.pubq.empty()):
@@ -99,9 +99,9 @@ class ReplicaScheduler(Process):
             try:
                 self.recv_meta = meta_pull.recv_json()
                 snap_id = self.recv_meta['id']
-                logger.info('meta received: %s' % self.recv_meta)
+                logger.debug('meta received: %s' % self.recv_meta)
                 if (self.recv_meta['msg'] == 'begin'):
-                    logger.info('begin received. meta: %s' % self.recv_meta)
+                    logger.debug('begin received. meta: %s' % self.recv_meta)
                     rw = Receiver(self.recv_meta, Queue())
                     self.receivers[snap_id] = rw
                     rw.start()
@@ -116,7 +116,7 @@ class ReplicaScheduler(Process):
             self._prune_workers((self.receivers, self.senders))
 
             if (total_sleep >= 60 and len(self.senders) < 50):
-                logger.info('scanning for replicas')
+                logger.debug('scanning for replicas')
 
                 try:
                     for r in Replica.objects.filter(enabled=True):
@@ -128,8 +128,7 @@ class ReplicaScheduler(Process):
                         snap_name = ('%s_replica_snap' % r.share)
                         if (len(rt) == 0):
                             snap_name = ('%s_1' % snap_name)
-                            logger.info('new sender for snap: %s'
-                                        % snap_name)
+                            logger.debug('new sender for snap: %s' % snap_name)
                             sw = Sender(r, self.rep_ip, self.pubq, Queue(),
                                         snap_name, r.data_port, r.meta_port)
                         elif (rt[0].status == 'succeeded'):
@@ -137,13 +136,13 @@ class ReplicaScheduler(Process):
                                          (snap_name, rt[0].id + 1))
                             if ((now - rt[0].end_ts).total_seconds() >
                                 r.frequency):
-                                logger.info('incremental sender for snap: %s'
+                                logger.debug('incremental sender for snap: %s'
                                             % snap_name)
                                 sw = Sender(r, self.rep_ip, self.pubq,
                                             Queue(), snap_name, r.data_port,
                                             r.meta_port, rt[0])
                             else:
-                                logger.info('its not time yet for '
+                                logger.debug('its not time yet for '
                                             'incremental sender for snap: '
                                             '%s' % snap_name)
                                 continue
@@ -151,10 +150,10 @@ class ReplicaScheduler(Process):
                             prev_snap_id = ('%s_%s_%s_%s' % (self.rep_ip,
                                             r.pool, r.share, rt[0].snap_name))
                             if (prev_snap_id in self.senders):
-                                logger.info('send process ongoing for snap: '
+                                logger.debug('send process ongoing for snap: '
                                             '%s' % snap_name)
                                 continue
-                            logger.info('%s not found in senders. Previous '
+                            logger.debug('%s not found in senders. Previous '
                                         'sender must have Aborted. Marking '
                                         'it as failed' % prev_snap_id)
                             msg = ('Sender process Aborted. See logs for '
@@ -196,7 +195,7 @@ class ReplicaScheduler(Process):
                                         snap_name, r.data_port, r.meta_port,
                                         prev_rt)
                         else:
-                            logger.info('unknown replica trail status: %s. '
+                            logger.error('unknown replica trail status: %s. '
                                         'ignoring snap: %s' %
                                         (rt[0].status, snap_name))
                             continue
