@@ -1467,7 +1467,7 @@ input[type="radio"].selectedRoot {
 
 /* Simple slider plugin */
 .slider {
-  width: 25px;
+  width: 300px;
 }
 
 .slider > .dragger {
