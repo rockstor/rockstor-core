@@ -36,12 +36,17 @@ ReplicationReceiveView = RockstoreLayoutView.extend({
     this.paginationTemplate = window.JST.common_pagination;
     this.replicationService = new Service({name: 'replication'});
     this.dependencies.push(this.replicationService);
+    this.collection = new ReplicaShareCollection();
+    this.dependencies.push(this.collection);
+    this.replicaReceiveTrails = new ReceiveTrailCollection();
+    this.dependencies.push(this.replicaReceiveTrails);
     this.replicaReceiveTrailMap = {};
   },
 
   render: function() {
     var _this = this;
     // TODO fetch from backend when api is ready
+    /*
     this.collection  = new ReplicaReceiveCollection([
       { source_task_name: 'task1',  source_appliance: '192.168.1.111', source_share: 'share1', destination_pool: 'reptarget', destination_share: 'share1_replica', last_run: ''},
       { id: 1, source_task_name: 'task2',  source_appliance: '192.168.1.111', source_share: 'share2', destination_pool: 'reptarget', destination_share: 'share2_replica', last_run: ''},
@@ -49,24 +54,25 @@ ReplicationReceiveView = RockstoreLayoutView.extend({
     this.replicaReceiveTrails = new ReplicaReceiveTrailCollection([
       {id: 1, "replicaReceive": 1, "snap_name": "share2_replica_snap_8", "kb_sent": 133, "snapshot_created": "2014-01-30T19:53:33.094Z", "snapshot_failed": null, "send_pending": null, "send_succeeded": null, "send_failed": null, "end_ts": "2014-01-30T19:53:35.150Z", "status": "succeeded", "error": null}
     ]);
-    // Construct map for receive -> trail
-    this.collection.each(function(replicaReceive, index) {
-      var tmp = _this.replicaReceiveTrails.filter(function(replicaReceiveTrail) {
-        return replicaReceiveTrail.get('replicaReceive') == replicaReceive.id;
-      });
-      _this.replicaReceiveTrailMap[replicaReceive.id] = _.sortBy(tmp, function(replicaReceiveTrail) {
-        return moment(replicaReceiveTrail.get('end_ts')).valueOf();
-      }).reverse();
-    });
+   */
     this.fetch(this.renderReceives, this);
     return this;
   },
 
   renderReceives: function() {
     var _this = this;
+    // Construct map for receive -> trail
+    this.collection.each(function(replicaShare, index) {
+      var tmp = _this.replicaReceiveTrails.filter(function(replicaReceiveTrail) {
+        return replicaReceiveTrail.get('rshare') == replicaShare.id;
+      });
+      _this.replicaReceiveTrailMap[replicaShare.id] = _.sortBy(tmp, function(replicaReceiveTrail) {
+        return moment(replicaReceiveTrail.get('end_ts')).valueOf();
+      }).reverse();
+    });
     $(this.el).html(this.template({
       replicationService: this.replicationService,
-      replicaReceives: this.collection,
+      replicaShares: this.collection,
       replicaReceiveTrailMap: this.replicaReceiveTrailMap
     }));
     this.$(".ph-pagination").html(this.paginationTemplate({

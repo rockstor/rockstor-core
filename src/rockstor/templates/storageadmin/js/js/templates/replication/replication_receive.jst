@@ -8,7 +8,7 @@
 <div id="details-header">
   <span class="h3">Replication Receive Tasks on this appliance</span>
 </div>
-<% if (!replicaReceives.isEmpty()) { %>
+<% if (!replicaShares.isEmpty()) { %>
   <div class="row-fluid">
     <div class="span12">
       <div class="messages"></div>
@@ -16,7 +16,6 @@
       <table id="replica-receives-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of replica receives">
         <thead>
           <tr>
-            <th scope="col" abbr="Source Task Name">Source Task name </th>
             <th scope="col" abbr="Source Appliance">Source Appliance </th>
             <th scope="col" abbr="Source Share">Source Share </th>
             <th scope="col" abbr="Destination Pool">Destination Pool</th>
@@ -25,24 +24,23 @@
           </tr>
         </thead>
         <tbody>
-          <% replicaReceives.each(function(r, index) { %>
+          <% replicaShares.each(function(r, index) { %>
             <tr>
-              <td><%= r.get('source_task_name') %></td>
-              <td><a href="https://<%= r.get('source_appliance') %>" target="_blank"><%= r.get('source_appliance') %></a></td>
-              <td><%= r.get('source_share') %></td>
-              <td><a href="#pools/<%= r.get('destination_pool') %>"><%= r.get('destination_pool') %></a></td>
-              <td><a href="#shares/<%= r.get('destination_share') %>"><%= r.get('destination_share') %></a></td>
+              <td><a href="https://<%= r.get('appliance') %>" target="_blank"><%= r.get('appliance') %></a></td>
+              <td><%= r.get('src_share') %></td>
+              <td><a href="#pools/<%= r.get('pool') %>"><%= r.get('pool') %></a></td>
+              <td><%= r.get('share') %></td>
               <td>
                 <% if (replicaReceiveTrailMap[r.id]) { %>
                   <% if (replicaReceiveTrailMap[r.id].length > 0) { %>
                     <% var rrt = replicaReceiveTrailMap[r.id][0]; %>
                     <% if (rrt.get('status') == 'failed') { %>
-                      <a href="#replication_receive/<%= r.id %>/trails" class="replica-trail"><i class="icon-warning-sign"></i> <%= rrt.get('status') %></a>
+                      <a href="#replication-receive/<%= r.id %>/trails" class="replica-trail"><i class="icon-warning-sign"></i> <%= rrt.get('status') %></a>
                     <% } else if (rrt.get('status') == 'pending') { %>
-                      <a href="#replication_receive/<%= r.id %>/trails" class="replica-trail"><%= rrt.get('status') %></a>
+                      <a href="#replication-receive/<%= r.id %>/trails" class="replica-trail"><%= rrt.get('status') %></a>
 
                     <% } else if (rrt.get('status') == 'succeeded') { %>
-                      <a href="#replication_receive/<%= r.id %>/trails" class="replica-trail"><%= moment(rrt.get('end_ts')).fromNow() %></a>
+                      <a href="#replication-receive/<%= r.id %>/trails" class="replica-trail"><%= moment(rrt.get('end_ts')).fromNow() %></a>
                     <% } %>
                   <% } %>
                 <% } %>
