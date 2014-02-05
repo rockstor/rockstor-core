@@ -61,6 +61,7 @@ ReplicaReceiveTrailsView = RockstoreLayoutView.extend({
       collection: this.collection
     }));
     this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
+    this.$('#receive-trails-table').tablesorter();
   },
 
 });

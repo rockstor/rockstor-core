@@ -47,7 +47,13 @@
                   <%= moment(r.get('end_ts')).format(RS_DATE_FORMAT) %>
                 <% } %>
               </td>
-              <td><%= r.get('status') %></td>
+              <td>
+                <% if (r.get('status') != 'failed') { %>
+                  <%= r.get('status') %>
+                <% } else { %>
+                  <i class="fa fa-exclamation-circle" title="<%= r.get('error') %>" rel="tooltip"></i>&nbsp;<%= r.get('status') %>
+                <% } %>
+              </td>
               <td>
                 <% if (r.get('end_ts')) { %>
                   <%= moment(r.get('end_ts')).from(moment(r.get('snapshot_created'))) %>

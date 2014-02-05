@@ -376,7 +376,7 @@ var AppRouter = Backbone.Router.extend({
   },
 
   showReceiveTrails: function(replicaShareId) {
-    this.renderSidebar("storage", "replication");
+    this.renderSidebar("storage", "replication-receive");
     this.cleanup();
     this.currentLayout = new ReplicaReceiveTrailsView({
       replicaShareId: replicaShareId

@@ -67,6 +67,10 @@ ReplicaTrailsView = RockstoreLayoutView.extend({
       replica: this.replica,
       replicaTrails: this.collection
     }));
+    // remove existing tooltips
+    if (this.$('[rel=tooltip]')) { 
+      this.$('[rel=tooltip]').tooltip('hide');
+    }
     this.$(".pagination-ph").html(this.paginationTemplate({
       collection: this.collection
     }));
