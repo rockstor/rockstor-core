@@ -279,6 +279,36 @@ var ReplicaTrailCollection = RockStorPaginatedCollection.extend({
   }
 });
 
+var ReplicaShare = Backbone.Model.extend({
+  urlRoot: '/api/sm/replicas/rshare'
+});
+
+var ReplicaShareCollection = RockStorPaginatedCollection.extend({
+  model: ReplicaShare,
+  baseUrl: '/api/sm/replicas/rshare'
+});
+
+var ReceiveTrail = Backbone.Model.extend({
+  urlRoot: '/api/sm/replicas/rtrail/' + this.replicaShareId
+});
+
+var ReceiveTrailCollection = RockStorPaginatedCollection.extend({
+  model: ReceiveTrail,
+  initialize: function(models, options) {
+    this.constructor.__super__.initialize.apply(this, arguments);
+    if (options) {
+      this.replicaShareId = options.replicaShareId;
+    }
+  },
+  baseUrl: function() {
+    if (this.replicaShareId) {
+      return '/api/sm/replicas/rtrail/rshare/' + this.replicaShareId;
+    } else {
+      return '/api/sm/replicas/rtrail';
+    }
+  }
+});
+
 var TaskDef = Backbone.Model.extend({
   urlRoot: "/api/sm/tasks/"                                   
 });
