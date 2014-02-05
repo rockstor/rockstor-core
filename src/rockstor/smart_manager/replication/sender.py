@@ -191,7 +191,7 @@ class Sender(Process):
         logger.debug('fsdata sent, confirmation: %s received' % msg)
         end_ts = datetime.utcnow().replace(tzinfo=utc)
         data = {'status': 'succeeded',
-                'kb_sent': self.kb_sent,
+                'kb_sent': self.kb_sent / 1024,
                 'end_ts' : end_ts,}
         if (msg == 'receive_error'):
             msg = ('Receiver(%s) returned a processing error for snap_name:'

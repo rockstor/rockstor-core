@@ -145,7 +145,7 @@ class Receiver(Process):
 
                 if (recv_data == 'END_SUCCESS' or recv_data == 'END_FAIL'):
                     ts = datetime.utcnow().replace(tzinfo=utc)
-                    data = {'kb_received': self.kb_received,}
+                    data = {'kb_received': self.kb_received / 1024,}
                     if (recv_data == 'END_SUCCESS'):
                         logger.debug('END_SUCCESS received for meta: %s' %
                                      self.meta)
