@@ -46,6 +46,8 @@ ReplicationView = RockstoreLayoutView.extend({
     this.dependencies.push(this.replicaTrails);
     this.appliances = new ApplianceCollection();
     this.dependencies.push(this.appliances);
+    this.shares = new ShareCollection();
+    this.dependencies.push(this.shares);
     this.replicaShareMap = {};
     this.replicaTrailMap = {};
     this.collection.on('reset', this.renderReplicas, this);
@@ -61,6 +63,11 @@ ReplicationView = RockstoreLayoutView.extend({
     var _this = this;
     this.otherAppliances =  this.appliances.filter(function(appliance) {
       return appliance.get('current_appliance') == false; 
+    });
+    this.freeShares = this.shares.reject(function(share) {
+      return !_.isUndefined(_this.collection.find(function(replica) {
+        return replica.get('share') == share.get('name');
+      })) ;
     });
     // remove existing tooltips
     if (this.$('[rel=tooltip]')) { 
@@ -87,7 +94,9 @@ ReplicationView = RockstoreLayoutView.extend({
       replicas: this.collection,
       replicaShareMap: this.replicaShareMap,
       replicaTrailMap: this.replicaTrailMap,
-      otherAppliances: this.otherAppliances
+      otherAppliances: this.otherAppliances,
+      freeShares: this.freeShares
+
     }));
     this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
     this.$(".ph-pagination").html(this.paginationTemplate({

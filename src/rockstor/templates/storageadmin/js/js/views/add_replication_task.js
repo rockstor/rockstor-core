@@ -37,6 +37,8 @@ AddReplicationTaskView = RockstoreLayoutView.extend({
     this.dependencies.push(this.shares);
     this.appliances = new ApplianceCollection();
     this.dependencies.push(this.appliances);
+    this.replicas = new ReplicaCollection();
+    this.dependencies.push(this.replicas);
   },
 
   render: function() {
@@ -46,8 +48,16 @@ AddReplicationTaskView = RockstoreLayoutView.extend({
   
   renderNewReplicationTask: function() {
     var _this = this;
+    this.freeShares = this.shares.reject(function(share) {
+      return !_.isUndefined(_this.replicas.find(function(replica) {
+        return replica.get('share') == share.get('name');
+      })) ;
+    });
+    console.log(this.replicas);
+    console.log(this.shares);
+    console.log(this.freeShares);
     $(this.el).html(this.template({
-      shares: this.shares,
+      shares: this.freeShares,
       appliances: this.appliances,
       replica_data_port: RockStorGlobals.replica_data_port,
       replica_meta_port: RockStorGlobals.replica_meta_port,

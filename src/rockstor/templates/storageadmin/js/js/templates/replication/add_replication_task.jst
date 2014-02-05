@@ -37,7 +37,7 @@
           <label class="control-label" for="share">Share to replicate<span class="required"> *</span></label>
           <div class="controls">
             <select id="share" name="share" title="Source share to replicate">
-              <% shares.each(function(share, index) { %>
+              <% _.each(shares, function(share, index) { %>
                 <option value="<%= share.get('name') %>"> <%= share.get('name') %> </option>
               <% }); %>  
 
