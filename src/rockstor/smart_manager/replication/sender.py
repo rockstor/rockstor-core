@@ -79,6 +79,22 @@ class Sender(Process):
             logger.exception(e)
             sys.exit(3)
 
+    @contextmanager
+    def _update_trail_and_quit(self, msg):
+        try:
+            yield
+        except Exception, e:
+            logger.error(msg)
+            logger.exception(e)
+            try:
+                data = {'status': 'failed',
+                        'error': msg,}
+                update_replica_status(self.rt2_id, data, logger)
+            except Exception, e:
+                logger.exception(e)
+            finally:
+                sys.exit(3)
+
     def run(self):
         msg = ('Failed to connect to receiver(%s) on meta port'
                '(%d) for snap_name: %s. Aborting.' %
@@ -109,9 +125,10 @@ class Sender(Process):
         logger.debug('sending meta_begin')
         meta_push.send_json(self.meta_begin)
         logger.debug('meta_begin sent. waiting on get')
-        msg = ('Timeout occured(60 seconds) while waiting for begin_ok '
-               'from the receiver(%s). Aborting.' % self.receiver_ip)
-        with self._clean_exit_handler(msg):
+        msg = ('Timeout occured(60 seconds) while waiting for OK '
+               'from the receiver(%s) to start sending data. Aborting.'
+               % self.receiver_ip)
+        with self._update_trail_and_quit(msg):
             self.q.get(block=True, timeout=60)
 
         snap_path = ('%s%s/%s_%s' % (settings.MNT_PT, self.replica.pool,
