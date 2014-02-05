@@ -40,7 +40,7 @@ class ReceiveTrailView(GenericView):
 
         if ('rid' in kwargs):
             replica = ReplicaShare.objects.get(id=kwargs['rid'])
-            return ReceiveTrail.objects.filter(replica=replica).order_by('-id')
+            return ReceiveTrail.objects.filter(rshare=replica).order_by('-id')
         return ReceiveTrail.objects.filter().order_by('-id')
 
     @transaction.commit_on_success
