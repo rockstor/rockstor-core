@@ -68,6 +68,7 @@ class Sender(Process):
         self.meta_end = {'id': self.snap_id,
                          'msg': 'end',}
         self.kb_sent = 0
+        self.ctx = zmq.Context()
         super(Sender, self).__init__()
 
     @contextmanager
@@ -77,7 +78,12 @@ class Sender(Process):
         except Exception, e:
             logger.error(msg)
             logger.exception(e)
-            sys.exit(3)
+            self._sys_exit(3)
+
+    def _sys_exit(self, code, linger=10):
+        self.ctx.destroy(linger=linger)
+        logger.debug('zmq context destroyed. exiting with code: %d' % code)
+        sys.exit(code)
 
     @contextmanager
     def _update_trail_and_quit(self, msg):
@@ -95,7 +101,7 @@ class Sender(Process):
                 logger.error('Exception occured in cleanup handler')
                 logger.exception(e)
             finally:
-                sys.exit(3)
+                self._sys_exit(3)
 
     def _process_q(self):
         ack = self.q.get(block=True, timeout=60)
@@ -110,8 +116,7 @@ class Sender(Process):
                '(%d) for snap_name: %s. Aborting.' %
                (self.receiver_ip, self.meta_port, self.snap_name))
         with self._clean_exit_handler(msg):
-            ctx = zmq.Context()
-            meta_push = ctx.socket(zmq.PUSH)
+            meta_push = self.ctx.socket(zmq.PUSH)
             meta_push.connect('tcp://%s:%d' % (self.receiver_ip,
                                                self.meta_port))
 
@@ -154,7 +159,7 @@ class Sender(Process):
                        'Aborting.' % self.snap_name)
                 with self._clean_exit_handler(msg):
                     update_replica_status(self.rt2_id, data, logger)
-                    sys.exit(0)
+                    self._sys_exit(0)
 
         snap_path = ('%s%s/%s_%s' % (settings.MNT_PT, self.replica.pool,
                                      self.replica.share, self.snap_name))
@@ -182,7 +187,7 @@ class Sender(Process):
             logger.exception(e)
             with self._update_trail_and_quit(msg):
                 self.pub.put('%sEND_FAIL' % self.snap_id)
-            sys.exit(3)
+            self._sys_exit(3)
 
         alive = True
         while alive:
@@ -224,7 +229,7 @@ class Sender(Process):
                 logger.error('Scheduler exited. Sender for snap_name: '
                              '%s cannot go on. Aborting.'
                              % self.snap_name)
-                sys.exit(3)
+                self._sys_exit(3)
 
         logger.debug('send process finished. Blocking for final ack from'
                      ' the receiver')

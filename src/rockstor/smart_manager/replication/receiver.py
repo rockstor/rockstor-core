@@ -51,7 +51,13 @@ class Receiver(Process):
         self.rid = None
         self.rtid = None
         self.meta_push = None
+        self.ctx = zmq.Context()
         super(Receiver, self).__init__()
+
+    def _sys_exit(self, code, linger=10):
+        self.ctx.destroy(linger=linger)
+        logger.debug('zmq context destroyed. exiting with code: %d' % code)
+        sys.exit(code)
 
     @contextmanager
     def _clean_exit_handler(self, msg, ack=False):
@@ -71,16 +77,15 @@ class Receiver(Process):
                            '%s. Aborting' % (err_ack, self.meta))
                     logger.error(msg)
                     logger.exception(e)
-                    sys.exit(3)
-            sys.exit(3)
+                    self._sys_exit(3)
+            self._sys_exit(3)
 
     def run(self):
-        ctx = zmq.Context()
         msg = ('Failed to connect to the sender(%s) on data_port(%s). meta: '
                '%s. Aborting.' % (self.sender_ip, self.data_port, self.meta))
         with self._clean_exit_handler(msg):
             #@todo: add validation
-            recv_sub = ctx.socket(zmq.SUB)
+            recv_sub = self.ctx.socket(zmq.SUB)
             recv_sub.connect('tcp://%s:%d' % (self.sender_ip, self.data_port))
             recv_sub.RCVTIMEO = 100
             recv_sub.setsockopt(zmq.SUBSCRIBE, str(self.meta['id']))
@@ -89,7 +94,7 @@ class Receiver(Process):
                'meta_port(%d). meta: %s. Aborting.' %
                (self.sender_ip, self.meta_port, self.meta))
         with self._clean_exit_handler(msg):
-            self.meta_push = ctx.socket(zmq.PUSH)
+            self.meta_push = self.ctx.socket(zmq.PUSH)
             self.meta_push.connect('tcp://%s:%d' % (self.sender_ip,
                                                self.meta_port))
 
@@ -210,11 +215,11 @@ class Receiver(Process):
                        '. meta: %s' % (self.rtid, self.meta))
                 with self._clean_exit_handler(msg, ack=True):
                     update_receive_trail(self.rtid, data, logger)
-                sys.exit(3)
+                self._sys_exit(3)
             finally:
                 if (os.getppid() != self.ppid):
                     logger.error('parent exited. aborting.')
-                    sys.exit(3)
+                    self._sys_exit(3)
 
         #rfo/stdin should be closed by now. We get here only if the sender
         #dint throw an error or if receiver did not get terminated
@@ -238,3 +243,4 @@ class Receiver(Process):
         with self._clean_exit_handler(msg):
             self.meta_push.send_json(ack)
         logger.debug('final ack sent for meta: %s' % self.meta)
+        self._sys_exit(0)
