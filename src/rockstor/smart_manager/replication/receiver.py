@@ -135,22 +135,24 @@ class Receiver(Process):
                'id': self.meta['id'],}
         self.meta_push.send_json(ack)
         logger.debug('begin_ok sent for meta: %s' % self.meta)
+        recv_timeout_counter = 0
         while True:
             try:
                 recv_data = recv_sub.recv()
                 recv_data = recv_data[len(self.meta['id']):]
+                recv_timeout_counter = 0
                 self.kb_received = self.kb_received + len(recv_data)
                 if (self.rtid is None):
                     msg = ('Failed to create snapshot: %s. Aborting.' %
                            self.snap_name)
-                    with self._clean_exit_handler(msg):
+                    with self._clean_exit_handler(msg, ack=True):
                         create_snapshot(sname, self.snap_name, logger,
                                         snap_type='receiver')
 
                     data = {'snap_name': self.snap_name}
                     msg = ('Failed to create receive trail for rid: %d'
                            '. meta: %s' % (self.rid, self.meta))
-                    with self._clean_exit_handler(msg):
+                    with self._clean_exit_handler(msg, ack=True):
                         self.rtid = create_receive_trail(self.rid, data,
                                                          logger)
 
@@ -170,13 +172,18 @@ class Receiver(Process):
 
                     msg = ('Failed to update receive trail for rtid: %d'
                                '. meta: %s' % (self.rtid, self.meta))
-                    with self._clean_exit_handler(msg):
+                    with self._clean_exit_handler(msg, ack=True):
                         update_receive_trail(self.rtid, data, logger)
                     break
                 rp.stdin.write(recv_data)
                 rp.stdin.flush()
             except zmq.error.Again:
-                pass
+                recv_timeout_counter = recv_timeout_counter + 1
+                if (recv_timeout_counter > 300):
+                    logger.error('Nothing received in the last 30 seconds '
+                                 'from the sender for meta: %s. Aborting.'
+                                 % self.meta)
+                    raise
             except Exception, e:
                 msg = ('Exception occured while receiving fsdata')
                 logger.error(msg)
@@ -188,7 +195,7 @@ class Receiver(Process):
 
                 msg = ('Failed to update receive trail for rtid: %d'
                        '. meta: %s' % (self.rtid, self.meta))
-                with self._clean_exit_handler(msg):
+                with self._clean_exit_handler(msg, ack=True):
                     update_receive_trail(self.rtid, data, logger)
                 sys.exit(3)
             finally:
@@ -210,7 +217,7 @@ class Receiver(Process):
 
         msg = ('Failed to update receive trail for rtid: %d. meta: '
                '%s' % (self.rtid, self.meta))
-        with self._clean_exit_handler(msg):
+        with self._clean_exit_handler(msg, ack=True):
             update_receive_trail(self.rtid, data, logger)
 
         self.meta_push.send_json(ack)
