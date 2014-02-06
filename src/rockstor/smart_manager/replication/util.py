@@ -112,7 +112,6 @@ def is_snapshot(sname, snap_name, logger):
 
 def create_snapshot(sname, snap_name, logger, snap_type='replication'):
     try:
-        #snap_name = snap_name[len(sname)+1:]
         url = ('%sshares/%s/snapshots/%s' % (BASE_URL, sname, snap_name))
         snap_details = api_call(url, data={'snap_type': snap_type,},
                                 calltype='post', save_error=False)
@@ -153,4 +152,3 @@ def create_share(sname, pool, logger):
                             'exist. error: %s' % (sname, e.detail))
     except Exception:
         raise
-

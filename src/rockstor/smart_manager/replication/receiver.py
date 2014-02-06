@@ -121,6 +121,17 @@ class Receiver(Process):
         sub_vol = ('%s%s/%s' % (settings.MNT_PT, self.meta['pool'],
                                 sname))
 
+        snap_fp = ('%s/%s_%s' % (sub_vol, self.snap_name.split('_')[0],
+                                 self.snap_name))
+        logger.info('snap_fp: %s' % snap_fp)
+        msg = ('Snaphost: %s already exists.' % snap_fp)
+        with self._clean_exit_handler(msg):
+            if (os.path.isdir(snap_fp)):
+                ack = {'msg': 'snap_exists',
+                       'id': self.meta['id'],}
+                self.meta_push.send_json(ack)
+                logger.debug(msg)
+
         cmd = [BTRFS, 'receive', sub_vol]
         msg = ('Failed to start the low level btrfs receive command(%s)'
                '. Aborting.' % (cmd))
@@ -226,4 +237,4 @@ class Receiver(Process):
                self.meta)
         with self._clean_exit_handler(msg):
             self.meta_push.send_json(ack)
-        logger.debug('final ack sent')
+        logger.debug('final ack sent for meta: %s' % self.meta)

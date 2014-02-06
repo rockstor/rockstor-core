@@ -144,7 +144,17 @@ class Sender(Process):
                'from the receiver(%s) to start sending data. Aborting.'
                % self.receiver_ip)
         with self._update_trail_and_quit(msg):
-            self._process_q()
+            ack = self._process_q()
+            logger.info('suman ack = %s' % ack)
+            if (ack['msg'] == 'snap_exists'):
+                data = {'status': 'succeeded',
+                        'end_ts': datetime.utcnow().replace(tzinfo=utc),
+                        'error': 'snapshot already exists on the receiver',}
+                msg = ('Failed to update replica status for snap_name: %s. '
+                       'Aborting.' % self.snap_name)
+                with self._clean_exit_handler(msg):
+                    update_replica_status(self.rt2_id, data, logger)
+                    sys.exit(0)
 
         snap_path = ('%s%s/%s_%s' % (settings.MNT_PT, self.replica.pool,
                                      self.replica.share, self.snap_name))
@@ -216,7 +226,8 @@ class Sender(Process):
                              % self.snap_name)
                 sys.exit(3)
 
-        logger.debug('send process finished. blocking')
+        logger.debug('send process finished. Blocking for final ack from'
+                     ' the receiver')
         msg = ('Timeout occured(60 seconds) while waiting for final '
                'send confirmation from the receiver(%s) for snap_name:'
                ' %s. Aborting.' % (self.receiver_ip, self.snap_name))
