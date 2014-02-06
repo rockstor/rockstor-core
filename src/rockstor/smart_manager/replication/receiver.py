@@ -130,11 +130,13 @@ class Receiver(Process):
                                   stderr=subprocess.PIPE)
             logger.debug('Btrfs receive started for snap: %s' % sub_vol)
 
-        #@todo: do basic rp check
-        ack = {'msg': 'begin_ok',
-               'id': self.meta['id'],}
-        self.meta_push.send_json(ack)
-        logger.debug('begin_ok sent for meta: %s' % self.meta)
+        msg = ('Failed to send begin_ok to the sender for meta: %s' %
+               self.meta)
+        with self._clean_exit_handler(msg):
+            ack = {'msg': 'begin_ok',
+                   'id': self.meta['id'],}
+            self.meta_push.send_json(ack)
+            logger.debug('begin_ok sent for meta: %s' % self.meta)
         recv_timeout_counter = 0
         while True:
             try:
@@ -220,4 +222,7 @@ class Receiver(Process):
         with self._clean_exit_handler(msg, ack=True):
             update_receive_trail(self.rtid, data, logger)
 
-        self.meta_push.send_json(ack)
+        msg = ('Failed to send final ack to the sender for meta: %s' %
+               self.meta)
+        with self._clean_exit_handler(msg):
+            self.meta_push.send_json(ack)
