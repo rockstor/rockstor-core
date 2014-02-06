@@ -92,9 +92,18 @@ class Sender(Process):
                         'end_ts': datetime.utcnow().replace(tzinfo=utc),}
                 update_replica_status(self.rt2_id, data, logger)
             except Exception, e:
+                logger.error('Exception occured in cleanup handler')
                 logger.exception(e)
             finally:
                 sys.exit(3)
+
+    def _process_q(self):
+        ack = self.q.get(block=True, timeout=60)
+        if (ack['msg'] == 'error'):
+            error = 'Error on Receiver: %s' % ack['error']
+            with self._update_trail_and_quit(error):
+                raise Exception('got error from receiver')
+        return ack
 
     def run(self):
         msg = ('Failed to connect to receiver(%s) on meta port'
@@ -123,14 +132,19 @@ class Sender(Process):
                 create_snapshot(self.replica.share, self.snap_name, logger)
 
         #let the receiver know that following diff is coming
-        logger.debug('sending meta_begin')
-        meta_push.send_json(self.meta_begin)
-        logger.debug('meta_begin sent. waiting on get')
+        msg = ('Failed to send initial metadata communication to the '
+               'receiver(%s), most likely due to a network error. Aborting.'
+               % self.receiver_ip)
+        with self._update_trail_and_quit(msg):
+            logger.debug('sending meta_begin')
+            meta_push.send_json(self.meta_begin)
+            logger.debug('meta_begin sent. waiting on get')
+
         msg = ('Timeout occured(60 seconds) while waiting for OK '
                'from the receiver(%s) to start sending data. Aborting.'
                % self.receiver_ip)
         with self._update_trail_and_quit(msg):
-            self.q.get(block=True, timeout=60)
+            self._process_q()
 
         snap_path = ('%s%s/%s_%s' % (settings.MNT_PT, self.replica.pool,
                                      self.replica.share, self.snap_name))
@@ -146,10 +160,20 @@ class Sender(Process):
         else:
             logger.info('Sending full replica: %s' % snap_path)
 
-        sp = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE)
-        fcntl.fcntl(sp.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
-        logger.debug('send started. snap: %s' % snap_path)
+        try:
+            sp = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE)
+            fcntl.fcntl(sp.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
+            logger.debug('send started. snap: %s' % snap_path)
+        except Exception, e:
+            msg = ('Failed to start the low level btrfs send '
+                   'command(%s). Aborting' % cmd)
+            logger.error(msg)
+            logger.exception(e)
+            with self._update_trail_and_quit(msg):
+                self.pub.put('%sEND_FAIL' % self.snap_id)
+            sys.exit(3)
+
         alive = True
         while alive:
             try:
@@ -195,9 +219,9 @@ class Sender(Process):
                'send confirmation from the receiver(%s) for snap_name:'
                ' %s. Aborting.' % (self.receiver_ip, self.snap_name))
         with self._update_trail_and_quit(msg):
-            msg = self.q.get(block=True, timeout=60)
+            ack = self._process_q()
 
-        logger.debug('fsdata sent, confirmation: %s received' % msg)
+        logger.debug('fsdata sent, confirmation: %s received' % ack)
         end_ts = datetime.utcnow().replace(tzinfo=utc)
         data = {'status': 'succeeded',
                 'kb_sent': self.kb_sent / 1024,
