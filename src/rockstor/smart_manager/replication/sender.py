@@ -182,37 +182,39 @@ class Sender(Process):
                                  % (sp.returncode, sp.stderr.read()))
                     alive = False
                 fs_data = sp.stdout.read()
+            except IOError:
+                continue
+            except Exception, e:
+                msg = ('Exception occured while reading low level btrfs '
+                       'send data for snap_name: %s. Aborting.' %
+                       self.snap_name)
+                if (alive):
+                    sp.terminate()
+                with self._update_trail_and_quit(msg):
+                    self.pub.put('%sEND_FAIL' % self.snap_id)
+                    raise e
+
+            msg = ('Failed to send fsdata to the receiver for snap_name: '
+                   '%s. Aborting.' % (self.snap_name))
+            with self._update_trail_and_quit(msg):
                 self.pub.put('%s%s' % (self.snap_id, fs_data))
                 self.kb_sent = self.kb_sent + len(fs_data)
                 logger.debug('send process still alive. kb_sent: %s' %
                              self.kb_sent)
-            except IOError:
-                pass
-            except Exception, e:
-                logger.exception(e)
-                if (alive):
-                    logger.info('Terminating the child send process for '
-                                'snap_name: %s' % self.snap_name)
-                    sp.terminate()
-                    msg = ('Exception occured while transferring data '
-                           'for snap_name: %s' % self.snap_name)
-                    logger.error(msg)
-                    sys.exit(3)
-            finally:
+
                 if (not alive):
-                    #above if shouldn't be necessary.
-                    #exists for readability.
                     if (sp.returncode != 0):
                         self.pub.put('%sEND_FAIL' % self.snap_id)
                     else:
                         self.pub.put('%sEND_SUCCESS' % self.snap_id)
-                    logger.debug('sent END for snap_name: %s' %
-                                 self.snap_name)
-                if (os.getppid() != self.ppid):
-                    logger.error('Scheduler exited. Sender for snap_name: '
-                                 '%s cannot go on. Aborting.'
-                                 % self.snap_name)
-                    sys.exit(3)
+                        logger.debug('sent END for snap_name: %s' %
+                                     self.snap_name)
+
+            if (os.getppid() != self.ppid):
+                logger.error('Scheduler exited. Sender for snap_name: '
+                             '%s cannot go on. Aborting.'
+                             % self.snap_name)
+                sys.exit(3)
 
         logger.debug('send process finished. blocking')
         msg = ('Timeout occured(60 seconds) while waiting for final '
@@ -226,7 +228,7 @@ class Sender(Process):
         data = {'status': 'succeeded',
                 'kb_sent': self.kb_sent / 1024,
                 'end_ts' : end_ts,}
-        if (msg == 'receive_error'):
+        if (ack['msg'] == 'receive_error'):
             msg = ('Receiver(%s) returned a processing error for snap_name:'
                    ' %s. Check it for more information.'
                    % (self.receiver_ip, self.snap_name))
