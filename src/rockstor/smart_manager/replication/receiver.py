@@ -50,15 +50,28 @@ class Receiver(Process):
         self.kb_received = 0
         self.rid = None
         self.rtid = None
+        self.meta_push = None
         super(Receiver, self).__init__()
 
     @contextmanager
-    def _clean_exit_handler(self, msg):
+    def _clean_exit_handler(self, msg, ack=False):
         try:
             yield
         except Exception, e:
             logger.error(msg)
             logger.exception(e)
+            if (ack is True):
+                try:
+                    err_ack = {'msg': 'error',
+                               'id': self.meta['id'],
+                               'error': msg,}
+                    self.meta_push.send_json(err_ack)
+                except Exception, e:
+                    msg = ('Failed to send ack: %s to the sender for meta: '
+                           '%s. Aborting' % (err_ack, self.meta))
+                    logger.error(msg)
+                    logger.exception(e)
+                    sys.exit(3)
             sys.exit(3)
 
     def run(self):
@@ -76,8 +89,8 @@ class Receiver(Process):
                'meta_port(%d). meta: %s. Aborting.' %
                (self.sender_ip, self.meta_port, self.meta))
         with self._clean_exit_handler(msg):
-            meta_push = ctx.socket(zmq.PUSH)
-            meta_push.connect('tcp://%s:%d' % (self.sender_ip,
+            self.meta_push = ctx.socket(zmq.PUSH)
+            self.meta_push.connect('tcp://%s:%d' % (self.sender_ip,
                                                self.meta_port))
 
         #@todo: use appliance uuid instead?
@@ -85,13 +98,13 @@ class Receiver(Process):
         if (not self.incremental):
             msg = ('Failed to verify/create share: %s. meta: %s. '
                    'Aborting.' % (sname, self.meta))
-            with self._clean_exit_handler(msg):
+            with self._clean_exit_handler(msg, ack=True):
                 create_share(sname, self.dest_pool, logger)
 
             msg = ('Failed to create the replica metadata object '
                    'for share: %s. meta: %s. Aborting.' %
                    (sname, self.meta))
-            with self._clean_exit_handler(msg):
+            with self._clean_exit_handler(msg, ack=True):
                 data = {'share': sname,
                         'appliance': self.sender_ip,
                         'src_share': self.src_share,
@@ -101,20 +114,26 @@ class Receiver(Process):
 
         else:
             msg = ('Failed to retreive the replica metadata object for '
-                   'share: %s. meta: %s. Aboring.' % (sname, self.meta))
+                   'share: %s. meta: %s. Aborting.' % (sname, self.meta))
             with self._clean_exit_handler(msg):
                 self.rid = rshare_id(sname, logger)
 
         sub_vol = ('%s%s/%s' % (settings.MNT_PT, self.meta['pool'],
                                 sname))
+
         cmd = [BTRFS, 'receive', sub_vol]
-        rp = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE,
-                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        logger.debug('Btrfs receive started for snap: %s' % sub_vol)
+        msg = ('Failed to start the low level btrfs receive command(%s)'
+               '. Aborting.' % (cmd))
+        with self._clean_exit_handler(msg, ack=True):
+            rp = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE,
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE)
+            logger.debug('Btrfs receive started for snap: %s' % sub_vol)
+
         #@todo: do basic rp check
         ack = {'msg': 'begin_ok',
                'id': self.meta['id'],}
-        meta_push.send_json(ack)
+        self.meta_push.send_json(ack)
         logger.debug('begin_ok sent for meta: %s' % self.meta)
         while True:
             try:
@@ -194,4 +213,4 @@ class Receiver(Process):
         with self._clean_exit_handler(msg):
             update_receive_trail(self.rtid, data, logger)
 
-        meta_push.send_json(ack)
+        self.meta_push.send_json(ack)
