@@ -108,11 +108,11 @@ class ReplicaScheduler(Process):
                     rw = Receiver(self.recv_meta, Queue())
                     self.receivers[snap_id] = rw
                     rw.start()
-                elif (self.recv_meta['msg'] == 'begin_ok'):
-                    self.senders[snap_id].q.put('send')
-                elif (self.recv_meta['msg'] == 'receive_ok' or
-                      self.recv_meta['msg'] == 'receive_error'):
-                    self.senders[snap_id].q.put(self.recv_meta['msg'])
+                elif (snap_id not in self.senders):
+                    logger.error('Unknown snap_id(%s) received. Ignoring'
+                                 % snap_id)
+                else:
+                    self.senders[snap_id].q.put(self.recv_meta)
             except zmq.error.Again:
                 pass
 
