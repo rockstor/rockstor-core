@@ -226,3 +226,4 @@ class Receiver(Process):
                self.meta)
         with self._clean_exit_handler(msg):
             self.meta_push.send_json(ack)
+        logger.debug('final ack sent')

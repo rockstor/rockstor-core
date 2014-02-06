@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import re
 from cli.rest_util import api_call
 from storageadmin.exceptions import RockStorAPIException
 
@@ -99,14 +100,19 @@ def is_snapshot(sname, snap_name, logger):
         snap_details = api_call(url, save_error=False)
         logger.info('previous snapshot found. details: %s' % snap_details)
         return True
-    except Exception, e:
+    except RockStorAPIException, e:
+        if (re.match('Invalid api end point', e.detail) is not None):
+            #it's 404.
+            return False
+        raise e
+    except Exception:
         logger.error('exception while looking up if snapshot exists at: '
                     '%s' % url)
-        logger.exception(e)
-        return False
+        raise
 
 def create_snapshot(sname, snap_name, logger, snap_type='replication'):
     try:
+        #snap_name = snap_name[len(sname)+1:]
         url = ('%sshares/%s/snapshots/%s' % (BASE_URL, sname, snap_name))
         snap_details = api_call(url, data={'snap_type': snap_type,},
                                 calltype='post', save_error=False)

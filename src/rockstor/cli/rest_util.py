@@ -57,7 +57,7 @@ def api_call(url, data=None, calltype='get', headers=None, save_error=True):
         return {}
 
     if (r.status_code == 404):
-        msg = ('Invalide api end point: %s' % url)
+        msg = ('Invalid api end point: %s' % url)
         raise RockStorAPIException(detail=msg)
 
     if (r.status_code != 200):
