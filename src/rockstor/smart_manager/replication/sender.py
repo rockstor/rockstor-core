@@ -38,16 +38,18 @@ logger = logging.getLogger(__name__)
 
 class Sender(Process):
 
-    def __init__(self, replica, sender_ip, pub, q, snap_name, data_port,
-                 meta_port, rt=None):
+    def __init__(self, replica, sender_ip, pub, q, snap_name, smeta_port,
+                 sdata_port, rmeta_port, uuid, rt=None):
         self.replica = replica
         self.receiver_ip = self.replica.appliance
-        self.meta_port = meta_port
-        self.data_port = data_port
+        self.smeta_port = smeta_port
+        self.sdata_port = sdata_port
+        self.rmeta_port = rmeta_port
         self.sender_ip = sender_ip
         self.pub = pub
         self.q = q
         self.snap_name = snap_name
+        self.uuid = uuid
         self.rt = rt
         self.rt2 = None
         self.rt2_id = None
@@ -62,9 +64,10 @@ class Sender(Process):
                            'share': self.replica.share,
                            'snap': self.snap_name,
                            'ip': self.sender_ip,
-                           'data_port': self.data_port,
-                           'meta_port': self.meta_port,
-                           'incremental': self.rt is not None,}
+                           'data_port': self.sdata_port,
+                           'meta_port': self.smeta_port,
+                           'incremental': self.rt is not None,
+                           'uuid': self.uuid,}
         self.meta_end = {'id': self.snap_id,
                          'msg': 'end',}
         self.kb_sent = 0
@@ -114,11 +117,11 @@ class Sender(Process):
     def run(self):
         msg = ('Failed to connect to receiver(%s) on meta port'
                '(%d) for snap_name: %s. Aborting.' %
-               (self.receiver_ip, self.meta_port, self.snap_name))
+               (self.receiver_ip, self.rmeta_port, self.snap_name))
         with self._clean_exit_handler(msg):
             meta_push = self.ctx.socket(zmq.PUSH)
             meta_push.connect('tcp://%s:%d' % (self.receiver_ip,
-                                               self.meta_port))
+                                               self.rmeta_port))
 
         #1. create a new replica trail if it's the very first time
         # of if the last one succeeded
@@ -141,7 +144,7 @@ class Sender(Process):
                'receiver(%s), most likely due to a network error. Aborting.'
                % self.receiver_ip)
         with self._update_trail_and_quit(msg):
-            logger.debug('sending meta_begin')
+            logger.debug('sending meta_begin: %s' % self.meta_begin)
             meta_push.send_json(self.meta_begin)
             logger.debug('meta_begin sent. waiting on get')
 

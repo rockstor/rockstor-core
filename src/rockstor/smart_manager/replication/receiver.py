@@ -29,7 +29,7 @@ from django.utils.timezone import utc
 from django.conf import settings
 from contextlib import contextmanager
 from util import (create_share, create_receive_trail, update_receive_trail,
-                  create_snapshot, create_rshare, rshare_id)
+                  create_snapshot, create_rshare, rshare_id, get_sender_ip)
 
 BTRFS = '/sbin/btrfs'
 logger = logging.getLogger(__name__)
@@ -40,11 +40,12 @@ class Receiver(Process):
         self.meta = meta
         self.meta_port = self.meta['meta_port']
         self.data_port = self.meta['data_port']
-        self.sender_ip = self.meta['ip']
+        self.sender_ip = None
         self.src_share = self.meta['share']
         self.dest_pool = self.meta['pool']
         self.incremental = self.meta['incremental']
         self.snap_name = self.meta['snap']
+        self.sender_id = self.meta['uuid']
         self.q = q
         self.ppid = os.getpid()
         self.kb_received = 0
@@ -81,6 +82,12 @@ class Receiver(Process):
             self._sys_exit(3)
 
     def run(self):
+        msg = ('Failed to get the sender ip from the uuid(%s) for meta: %s' %
+               (self.meta['uuid'], self.meta))
+        with self._clean_exit_handler(msg):
+            self.sender_ip = get_sender_ip(self.meta['uuid'], logger)
+        logger.debug('sender ip: %s' % self.sender_ip)
+
         msg = ('Failed to connect to the sender(%s) on data_port(%s). meta: '
                '%s. Aborting.' % (self.sender_ip, self.data_port, self.meta))
         with self._clean_exit_handler(msg):
@@ -95,8 +102,10 @@ class Receiver(Process):
                (self.sender_ip, self.meta_port, self.meta))
         with self._clean_exit_handler(msg):
             self.meta_push = self.ctx.socket(zmq.PUSH)
+            url = ('tcp://%s:%d' % (self.sender_ip, self.meta_port))
+            logger.debug('meta url: %s' % url)
             self.meta_push.connect('tcp://%s:%d' % (self.sender_ip,
-                                               self.meta_port))
+                                                    self.meta_port))
 
         #@todo: use appliance uuid instead?
         sname = ('%s-%s' % (self.src_share, self.sender_ip))

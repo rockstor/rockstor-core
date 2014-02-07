@@ -22,6 +22,17 @@ from storageadmin.exceptions import RockStorAPIException
 
 BASE_URL = 'https://localhost/api/'
 
+def get_sender_ip(uuid, logger):
+    try:
+        url = ('%sappliances' % BASE_URL)
+        ad = api_call(url, save_error=False)
+        logger.debug('ad: %s' % ad)
+        for a in ad['results']:
+            if (a['uuid'] == uuid):
+                return a['ip']
+    except Exception, e:
+        logger.error('Failed to get sender ip address')
+        raise e
 
 def update_replica_status(rid, data, logger):
     try:
@@ -70,6 +81,9 @@ def create_rshare(data, logger):
         rshare = api_call(url, data=data, calltype='post', save_error=False)
         logger.debug('ReplicaShare: %s created.' % rshare)
         return rshare['id']
+    except RockStorAPIException, e:
+        return logger.debug('Failed to create rshare: %s. It may already'
+                            ' exists. error: %s' % (url, e.detail))
     except Exception:
         logger.error('Failed to create Replicashare: %s' % data)
         raise

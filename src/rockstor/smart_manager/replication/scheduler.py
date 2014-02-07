@@ -43,7 +43,13 @@ class ReplicaScheduler(Process):
         self.meta_port = settings.REPLICA_META_PORT
         self.recv_meta = None
         self.pubq = Queue()
+        self.uuid = None
         super(ReplicaScheduler, self).__init__()
+
+    def _my_uuid(self):
+        url = 'https://localhost/api/appliances/1'
+        ad = api_call(url, save_error=False)
+        return ad['uuid']
 
     def _replication_interface(self):
         url = 'https://localhost/api/network'
@@ -69,13 +75,14 @@ class ReplicaScheduler(Process):
                 break
             try:
                 self.rep_ip = self._replication_interface()
+                self.uuid = self._my_uuid()
                 break
             except:
                 time.sleep(1)
                 sleep_time = sleep_time + 1
                 if (sleep_time % 30 == 0):
-                    msg = ('Failed to get replication interface for last %d'
-                           ' seconds' % sleep_time)
+                    msg = ('Failed to get replication interface or uuid for'
+                           ' last %d seconds' % sleep_time)
                     logger.error(msg)
 
         ctx = zmq.Context()
@@ -133,7 +140,9 @@ class ReplicaScheduler(Process):
                             snap_name = ('%s_1' % snap_name)
                             logger.debug('new sender for snap: %s' % snap_name)
                             sw = Sender(r, self.rep_ip, self.pubq, Queue(),
-                                        snap_name, r.data_port, r.meta_port)
+                                        snap_name, self.meta_port,
+                                        self.data_port,
+                                        r.meta_port, self.uuid)
                         elif (rt[0].status == 'succeeded'):
                             snap_name = ('%s_%d' %
                                          (snap_name, rt[0].id + 1))
@@ -142,8 +151,9 @@ class ReplicaScheduler(Process):
                                 logger.debug('incremental sender for snap: %s'
                                             % snap_name)
                                 sw = Sender(r, self.rep_ip, self.pubq,
-                                            Queue(), snap_name, r.data_port,
-                                            r.meta_port, rt[0])
+                                            Queue(), snap_name, self.meta_port,
+                                            self.data_port,
+                                            r.meta_port, self.uuid, rt[0])
                             else:
                                 logger.debug('its not time yet for '
                                             'incremental sender for snap: '
@@ -195,8 +205,9 @@ class ReplicaScheduler(Process):
                                     prev_rt = rto
                                     break
                             sw = Sender(r, self.rep_ip, self.pubq, Queue(),
-                                        snap_name, r.data_port, r.meta_port,
-                                        prev_rt)
+                                        snap_name, self.meta_port,
+                                        self.data_port, r.meta_port,
+                                        self.uuid, prev_rt)
                         else:
                             logger.error('unknown replica trail status: %s. '
                                         'ignoring snap: %s' %
