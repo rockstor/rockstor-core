@@ -28,6 +28,7 @@ from storageadmin.serializers import ApplianceSerializer
 from system.osi import (hostid, sethostname)
 from generic_view import GenericView
 from storageadmin.exceptions import RockStorAPIException
+from cli.rest_util import api_call
 
 import logging
 logger = logging.getLogger(__name__)
@@ -45,6 +46,18 @@ class AppliancesView(GenericView):
             except:
                 return []
         return Appliance.objects.all()
+
+    def _get_remote_appliance(self, request, ip, port, username, password):
+        try:
+            ad = api_call('https://%s:%s/api/appliances/1' % (ip, port))
+            logger.debug('remote appliance: %s' % ad)
+            return ad['uuid']
+        except Exception, e:
+            e_msg = ('Failed to get remote appliance uuid')
+            logger.error(e_msg)
+            logger.exception(e)
+            handle_exception(e_msg, request)
+
 
     def _connect_to_appliance(self, request, url, ip, username, password):
         try:
@@ -110,8 +123,9 @@ class AppliancesView(GenericView):
                 url = ('%s/api/login' % url)
                 self._connect_to_appliance(request, url, ip, username,
                                            password)
-                #@todo: get the other appliance's uuid and hostname
-                appliance = Appliance(uuid=ip, ip=ip, mgmt_port=mgmt_port)
+                ra_uuid = self._get_remote_appliance(request, ip, mgmt_port,
+                                                     username, password)
+                appliance = Appliance(uuid=ra_uuid, ip=ip, mgmt_port=mgmt_port)
                 appliance.save()
             else:
                 appliance_uuid = ('%s:%s' % (hostid()[0][0],
