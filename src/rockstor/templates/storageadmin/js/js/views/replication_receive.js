@@ -39,6 +39,7 @@ ReplicationReceiveView = RockstoreLayoutView.extend({
     this.collection = new ReplicaShareCollection();
     this.dependencies.push(this.collection);
     this.replicaReceiveTrails = new ReceiveTrailCollection();
+    this.replicaReceiveTrails.pageSize = RockStorGlobals.maxPageSize;
     this.dependencies.push(this.replicaReceiveTrails);
     this.replicaReceiveTrailMap = {};
   },
@@ -65,6 +66,9 @@ ReplicationReceiveView = RockstoreLayoutView.extend({
     this.collection.each(function(replicaShare, index) {
       var tmp = _this.replicaReceiveTrails.filter(function(replicaReceiveTrail) {
         return replicaReceiveTrail.get('rshare') == replicaShare.id;
+      });
+      tmp = tmp.filter(function(replicaReceiveTrail) {
+        return replicaReceiveTrail.get('end_ts') != null;
       });
       _this.replicaReceiveTrailMap[replicaShare.id] = _.sortBy(tmp, function(replicaReceiveTrail) {
         return moment(replicaReceiveTrail.get('end_ts')).valueOf();
