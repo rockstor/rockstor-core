@@ -36,10 +36,12 @@ class AppliancesView(GenericView):
     serializer_class = ApplianceSerializer
 
     def get_queryset(self, *args, **kwargs):
-        if ('ip' in kwargs):
+        if ('ip' in kwargs or 'id' in kwargs):
             self.paginate_by = 0
             try:
-                return Appliance.objects.get(ip=kwargs['ip'])
+                if ('ip' in kwargs):
+                    return Appliance.objects.get(ip=kwargs['ip'])
+                return Appliance.objects.get(id=kwargs['id'])
             except:
                 return []
         return Appliance.objects.all()
