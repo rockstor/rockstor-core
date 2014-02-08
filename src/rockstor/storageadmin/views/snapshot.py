@@ -56,6 +56,11 @@ class SnapshotView(GenericView):
             except:
                 return []
 
+        snap_type = self.request.QUERY_PARAMS.get('snap_type', None)
+        if (snap_type is not None):
+            return Snapshot.objects.filter(share=share,
+                                           snap_type=snap_type)
+
         return Snapshot.objects.filter(share=share)
 
     @transaction.commit_on_success
