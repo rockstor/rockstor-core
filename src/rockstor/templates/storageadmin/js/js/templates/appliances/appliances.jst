@@ -18,7 +18,7 @@
             <% if (appliance.get('current_appliance')) { %>
               <%= appliance.get('ip') %> <span class="required">*</span>
             <% } else { %>
-              <a href="https://<%= appliance.get('ip') %>:<%= appliance.get('port') %>" target="_blank"><%= appliance.get('ip') %></a>
+              <a href="https://<%= appliance.get('ip') %>:<%= appliance.get('mgmt_port') %>" target="_blank"><%= appliance.get('ip') %></a>
             <% } %>
           </td>
           <td><%= appliance.get('mgmt_port') %></td>
