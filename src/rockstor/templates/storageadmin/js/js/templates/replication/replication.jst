@@ -52,7 +52,7 @@
             <tr>
               <td><%= replica.get('task_name') %></td>
               <td><%= replica.get('share') %></td>
-              <td><a href="https://<%= replica.get('appliance') %>" target="_blank"><%= replica.get('appliance') %></a></td>
+              <td><%= replica.get('appliance') %></td>
               <td><%= replica.get('dpool') %></td>
               <td><%= moment.duration(replica.get('frequency')*1000).humanize() %></td>
               <td>
