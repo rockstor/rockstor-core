@@ -102,6 +102,7 @@ ReplicationView = RockstoreLayoutView.extend({
     this.$(".ph-pagination").html(this.paginationTemplate({
       collection: this.collection
     }));
+    this.$('#replicas-table').tablesorter();
    
   },
 
