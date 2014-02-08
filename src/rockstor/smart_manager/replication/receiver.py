@@ -202,8 +202,23 @@ class Receiver(Process):
                     with self._clean_exit_handler(msg, ack=True):
                         update_receive_trail(self.rtid, data, logger)
                     break
-                rp.stdin.write(recv_data)
-                rp.stdin.flush()
+                if (rp.poll() is None):
+                    rp.stdin.write(recv_data)
+                    rp.stdin.flush()
+                else:
+                    logger.error('It seems the btrfs receive process died'
+                                 ' unexpectedly.')
+                    out, err = rp.communicate()
+                    logger.debug('btrfs receive out: %s err: %s' % (out, err))
+                    msg = ('Low level system error from btrfs receive '
+                           'command. out: %s err: %s for rtid: %s meta: %s'
+                           % (out, err, self.rtid, self.meta))
+                    with self._clean_exit_handler(msg, ack=True):
+                        data = {'receive_failed': (
+                            datetime.utcnow().replace(tzinfo=utc)),
+                                'status': 'failed',
+                                'error': msg,}
+                        update_receive_trail(self.rtid, data, logger)
             except zmq.error.Again:
                 recv_timeout_counter = recv_timeout_counter + 1
                 if (recv_timeout_counter > 300):
@@ -216,6 +231,9 @@ class Receiver(Process):
                 logger.error(msg)
                 logger.exception(e)
                 rp.terminate()
+                out, err = rp.communicate()
+                logger.debug('rc: %d out: %s err: %s' % (rp.returncode, out,
+                                                         err))
                 data['receive_failed'] = datetime.utcnow().replace(tzinfo=utc)
                 data['status'] = 'failed'
                 data['error'] = msg
