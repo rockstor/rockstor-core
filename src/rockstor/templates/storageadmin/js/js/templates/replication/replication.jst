@@ -43,9 +43,8 @@
             <th scope="col" abbr="Appliance">Destination Appliance</th>
             <th scope="col" abbr="Appliance">Destination Pool</th>
             <th scope="col" abbr="Frequency">Frequency</th>
-            <th scope="col" abbr="Enabled">Enabled</th>
             <th scope="col" abbr="Last">Last backup</th>
-            <th scope="col" abbr="Actions">Actions</th>
+            <th scope="col" abbr="Actions">Enable/Disable</th>
           </tr>
         </thead>
         <tbody>
@@ -56,13 +55,6 @@
               <td><a href="https://<%= replica.get('appliance') %>" target="_blank"><%= replica.get('appliance') %></a></td>
               <td><%= replica.get('dpool') %></td>
               <td><%= moment.duration(replica.get('frequency')*1000).humanize() %></td>
-              <td>
-                <% if (replica.get('enabled')) { %>
-                  <input type="checkbox" disabled="true" checked="true"></input>
-                <% } else { %>
-                  <input type="checkbox" disabled="true"></input>
-                <% } %>
-              </td>
               <td>
                 <% if (replicaTrailMap[replica.id]) { %>
                   <% if (replicaTrailMap[replica.id].length > 0) { %>
@@ -80,11 +72,22 @@
 
               </td>
               <td>
+                
                 <% if (replica.get('enabled')) { %>
-                  <a href="#" class="disable" data-replica-id="<%= replica.id %>"><i class="icon-minus-sign" rel="tooltip" title="Disable"></i></a>
+                  <div class="slider-stop" data-replica-id="<%= replica.id %>">OFF</div>
+                  <div class="slider-ph">
+                    <input type="text" class="replication-status" value="1" data-replica-id="<%= replica.id %>"></input>
+                  </div>
+                  <div class="slider-start on" data-replica-id="<%= replica.id %>">ON</div>
                 <% } else { %>
-                  <a href="#" class="enable" data-replica-id="<%= replica.id %>"><i class="icon-plus-sign" rel="tooltip" title="Enable"></i></a>
+                  <div class="slider-stop" data-replica-id="<%= replica.id %>">OFF</div>
+                  <div class="slider-ph">
+                    <input type="text" class="replication-status" value="0" data-replica-id="<%= replica.id %>"></input>
+                  </div>
+                  <div class="slider-start" data-replica-id="<%= replica.id %>">ON</div>
                 <% } %>
+
+
               </td>
             </tr>
           <% }); %>
