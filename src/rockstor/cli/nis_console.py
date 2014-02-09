@@ -19,7 +19,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from base_console import BaseConsole
 from rest_util import api_call
-import json
 
 
 class NISConsole(BaseConsole):
@@ -38,7 +37,7 @@ class NISConsole(BaseConsole):
         input_data = {'config': {'domain': fields[0],
                                  'server': fields[1],},}
         headers = {'content-type': 'application/json'}
-        nis_info = api_call(url, data=json.dumps(input_data), calltype='post',
+        nis_info = api_call(url, data=input_data, calltype='post',
                             headers=headers)
 
     def do_status(self, args):

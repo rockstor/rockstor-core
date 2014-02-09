@@ -19,7 +19,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from base_console import BaseConsole
 from rest_util import api_call
-import json
 
 
 class NTPConsole(BaseConsole):
@@ -37,7 +36,7 @@ class NTPConsole(BaseConsole):
         fields = args.split()
         input_data = {'config': {'server': fields[0],},}
         headers = {'content-type': 'application/json'}
-        api_call(url, data=json.dumps(input_data), calltype='post',
+        api_call(url, data=input_data, calltype='post',
                  headers=headers)
 
     def do_status(self, args):

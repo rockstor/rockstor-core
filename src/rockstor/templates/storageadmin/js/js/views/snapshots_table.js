@@ -29,7 +29,10 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
     "click #js-snapshot-add": "add",
     "click #js-snapshot-cancel": "cancel",
     "click .js-snapshot-delete": "deleteSnapshot",
-    "click .js-snapshot-clone": "cloneSnapshot"
+    "click .js-snapshot-clone": "cloneSnapshot",
+    "click .js-snapshot-select": "selectSnapshot",
+    "click .js-snapshot-select-all": "selectAllSnapshots",
+    "click #js-snapshot-delete-multiple": "deleteMultipleSnapshots"
   },
 
   initialize: function() {
@@ -41,6 +44,7 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
     this.snapshots = this.options.snapshots;
     this.collection = this.options.snapshots;
     this.collection.on("reset", this.render, this);
+    this.selectedSnapshots = [];
   },
 
   render: function() {
@@ -53,7 +57,9 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
     this.$('[rel=tooltip]').tooltip({ 
       placement: 'bottom'
     });
-    this.$('#snapshots-table').tablesorter();
+    this.$('#snapshots-table').tablesorter({
+      headers: { 0: {sorter: false}}
+    });
     this.$(".pagination-ph").html(this.paginationTemplate({
       collection: this.collection
     }));
@@ -89,12 +95,14 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
           contentType: 'application/json',
           data: JSON.stringify({uvisible: _this.$('#snapshot-visible').prop('checked')}),
           success: function() {
+            _this.$('#add-snapshot-form :input').tooltip('hide');
             enableButton(button);
             _this.collection.fetch({
               success: function() { _this.render(); }
             });
           },
           error: function(xhr, status, error) {
+            _this.$('#add-snapshot-form :input').tooltip('hide');
             enableButton(button);
           }
         });
@@ -107,22 +115,25 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
     event.preventDefault();
     var _this = this;
     name = $(event.currentTarget).attr('data-name');
+    esize = $(event.currentTarget).attr('data-size');
     share_name = this.share.get("name");
     var button = $(event.currentTarget);
     if (buttonDisabled(button)) return false;
-    if(confirm("Delete snapshot:  "+ name +"...Are you sure?")){
+    if(confirm("Deleting snapshot("+ name +") deletes "+ esize +" of data permanently. Do you really want to delete it?")){
       disableButton(button);
       $.ajax({
         url: "/api/shares/" + share_name + "/snapshots/" + name,
         type: "DELETE",
         success: function() {
           enableButton(button)
+          _this.$('[rel=tooltip]').tooltip('hide');
           _this.collection.fetch({
             success: function() { _this.render(); }
           });
         },
         error: function(xhr, status, error) {
           enableButton(button)
+          _this.$('[rel=tooltip]').tooltip('hide');
           var msg = parseXhrError(xhr)
           if (_.isObject(msg)) {
             _this.validator.showErrors(msg);
@@ -144,6 +155,57 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
       name + '/create-clone';
     app_router.navigate(url, {trigger: true});
 
+  },
+
+  selectSnapshot: function(event) {
+    var _this = this;
+    name = $(event.currentTarget).attr('data-name');
+    var checked = $(event.currentTarget).prop('checked');
+    if (checked) {
+      this.selectedSnapshots.push(name);
+    } else {
+      var i = _.indexOf(this.selectedSnapshots, name);
+      this.selectedSnapshots.splice(i,1);
+    }
+  },
+
+  selectAllSnapshots: function(event) {
+    var _this = this;
+    var checked = $(event.currentTarget).prop('checked');
+    if (checked) {
+      this.$('.js-snapshot-select').prop('checked', true)
+      this.$('.js-snapshot-select').each(function(i) {
+        var name = $(this).attr('data-name');
+        if (_.indexOf(_this.selectedSnapshots, name) == -1) {
+          _this.selectedSnapshots.push(name);
+        }
+      });
+    } else {
+      this.$('.js-snapshot-select').prop('checked', false)
+      this.$('.js-snapshot-select').each(function(i) {
+        var name = $(this).attr('data-name');
+        var i = _.indexOf(_this.selectedSnapshots, name);
+        if (i != -1) {
+          _this.selectedSnapshots.splice(i,1);
+        }
+      });
+    }
+  },
+  
+  deleteMultipleSnapshots: function(event) {
+    event.preventDefault();
+    if (this.selectedSnapshots.length == 0) {
+      alert('Select at least one snapshot to delete');
+    } else {
+      var confirmMsg = null;
+      if (this.selectedSnapshots.length == 1) {
+        confirmMsg = 'Deleting snapshot ';
+      } else {
+        confirmMsg = 'Deleting snapshots ';
+      }
+      if (confirm(confirmMsg + this.selectedSnapshots.join(',') + '. Are you sure?')) {
+      }
+    }
   },
 
   cancel: function(event) {

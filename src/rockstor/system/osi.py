@@ -109,7 +109,8 @@ def root_disk():
     with open('/proc/mounts') as fo:
         for line in fo.readlines():
             fields = line.split()
-            if (fields[1] == '/' and fields[2] == 'btrfs'):
+            if (fields[1] == '/' and
+                (fields[2] == 'ext4' or fields[2] == 'btrfs')):
                 return fields[0][5:-1]
     msg = ('root filesystem is not BTRFS. During Rockstor installation, '
            'you must select BTRFS instead of LVM and other options for '

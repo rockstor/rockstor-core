@@ -182,7 +182,9 @@ def add_snap(pool_name, pool_device, share_name, snap_name,
     snap_full_path = ('%s/%s' % (root_pool_mnt, snap_name))
     if (share_prepend is True):
         snap_full_path = ('%s/%s_%s' % (root_pool_mnt, share_name, snap_name))
-    snap_cmd = [BTRFS, 'subvolume', 'snapshot', share_full_path,
+    #snapshot -r for replication. snapshots must be readonly for btrfs
+    #send/recv to work.
+    snap_cmd = [BTRFS, 'subvolume', 'snapshot', '-r', share_full_path,
                 snap_full_path]
     try:
         run_command(snap_cmd)
@@ -247,7 +249,7 @@ def share_usage(pool_name, pool_device, share_id):
                         share_id)
     return usage
 
-def shares_usage(pool_name, pool_device, share_map):
+def shares_usage(pool_name, pool_device, share_map, snap_map):
     #don't mount the pool if at least one share in the map is mounted.
     usage_map = {}
     mnt_pt = None
@@ -259,11 +261,13 @@ def shares_usage(pool_name, pool_device, share_map):
         mnt_pt = mount_root(pool_name, '/dev/' + pool_device)
     cmd = [BTRFS, 'qgroup', 'show', mnt_pt]
     out, err, rc = run_command(cmd)
+    combined_map = dict(share_map, **snap_map)
     for line in out:
         fields = line.split()
-        if (len(fields) > 0 and fields[0] in share_map.keys()):
-            usage = int(fields[-2]) / 1024 # usage in KB
-            usage_map[share_map[fields[0]]] = usage
+        if (len(fields) > 0 and fields[0] in combined_map):
+            r_usage = int(fields[-2]) / 1024 # referenced usage in KB
+            e_usage = int(fields[-1]) / 1024 # exclusive usage in KB
+            usage_map[combined_map[fields[0]]] = (r_usage, e_usage)
     return usage_map
 
 def pool_usage(pool_device):

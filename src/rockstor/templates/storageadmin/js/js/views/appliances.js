@@ -27,98 +27,62 @@
 AppliancesView = RockstoreLayoutView.extend({
   
   events: {
-    'click #new-appliance': 'newAppliance',
-    'click #add-appliance': 'addAppliance',
     'click .delete-appliance': 'deleteAppliance',
-    'click .select-appliance': 'selectAppliance',
   },
 
   initialize: function() {
     // call initialize of base
     this.constructor.__super__.initialize.apply(this, arguments);
-    this.appliances = new ApplianceCollection();
-    this.template = window.JST.common_appliance_select;
+    this.collection = new ApplianceCollection();
+    this.template = window.JST.appliances_appliances;
+    this.pagination_template = window.JST.common_pagination;
     this.new_appliance_template = window.JST.common_new_appliance;
-    this.dependencies.push(this.appliances); 
+    this.dependencies.push(this.collection); 
+    this.collection.on('reset', this.renderApplianceList, this);
   },
 
   render: function() {
-    console.log('in appliances.js render');
     this.fetch(this.renderApplianceList, this)
     return this;
   },
   
   renderApplianceList: function() {
-    $(this.el).html(this.template({appliances: this.appliances}));
-    this.appliances.on('reset', this.renderApplianceList, this);
+    $(this.el).html(this.template({collection: this.collection}));
+    this.$(".pagination-ph").html(this.pagination_template({
+      collection: this.collection
+    }));
   },
 
   newAppliance: function() {
-    console.log('add clicked');
     this.$('#new-appliance-container').html(this.new_appliance_template());
   },
 
-  addAppliance: function(event) {
-    event.preventDefault();
-    var _this = this;
-    console.log('submitting form');
-    var new_appliance = new Appliance();
-    new_appliance.save(
-      {
-        ip: this.$('#ip').val(),
-        username: this.$('#username').val(),
-        password: this.$('#password').val(),
-        current_appliance: false
-      },
-      { 
-        success: function(model, response, options) {
-          console.log('new appliance added successfully');
-          _this.$('#new-appliance-container').empty();
-          _this.appliances.fetch();
-        },
-        error: function(model, xhr, options) {
-          var msg = xhr.responseText;
-          try {
-            msg = JSON.parse(msg).detail;
-          } catch(err) {
-          }
-          _this.$('#add-appliance-msg').html(msg);
-        }
-      }
-    );
-
-  },
-
-  selectAppliance: function(event) {
-    event.preventDefault();
-    var tgt = $(event.currentTarget);
-    console.log('selecting ' + tgt.attr('id'));
-    window.location.href = 'https://' + tgt.attr('id');
-    return false;
-  },
-
   deleteAppliance: function(event) {
-    event.preventDefault();
     var _this = this;
-    var tgt = $(event.currentTarget);
+    event.preventDefault();
+    var button = $(event.currentTarget);
+    if (buttonDisabled(button)) return false;
     var appliance = new Appliance();
     appliance.set({
-      ip: tgt.attr('id'),
-      id: tgt.attr('data-id')
+      ip: button.attr('id'),
+      id: button.attr('data-id')
     });
-    console.log(appliance);
-    appliance.destroy({
-      success: function(model, response, options) {
-        console.log('appliance deleted successfully');
-        _this.appliances.fetch();
-
-      },
-      error: function(model, xhr, options) {
-        var msg = xhr.responseText;
-        console.log('error while deleting appliance');
-      }
-
-    });
+    if(confirm("Delete appliance:  " + appliance.get('ip') + " ...Are you sure?")){
+      disableButton(button);	
+      appliance.destroy({
+        success: function(model, response, options) {
+          enableButton(button);
+          _this.collection.fetch();
+        },
+        error: function(model, xhr, options) {
+          enableButton(button);
+          var msg = xhr.responseText;
+        }
+      });
+    }
   }
 });
+
+// Add pagination
+Cocktail.mixin(AppliancesView, PaginationMixin);
 

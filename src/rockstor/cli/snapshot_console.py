@@ -16,7 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-import json
 from base_console import BaseConsole
 from rest_util import (api_error, api_call, print_export_info,
                        print_share_info)
@@ -56,7 +55,7 @@ class SnapshotConsole(BaseConsole):
             if (fields[0] != '-v'):
                 return self.do_help(args)
             snap_name = fields[1]
-            data = json.dumps({'uvisible': True,})
+            data = {'uvisible': True,}
             headers = {'content-type': 'application/json',}
         url = ('%s/%s' % (self.url, snap_name))
         snap_info = api_call(url, data=data, calltype='post', headers=headers)

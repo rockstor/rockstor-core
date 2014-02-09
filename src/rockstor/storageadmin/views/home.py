@@ -67,7 +67,9 @@ def home(request):
         'request': request,
         'current_appliance': current_appliance,
         'setup_user': setup.setup_user,
-        'page_size': settings.PAGINATION['page_size']
+        'page_size': settings.PAGINATION['page_size'],
+        'replica_data_port': settings.REPLICA_DATA_PORT,
+        'replica_meta_port': settings.REPLICA_META_PORT,
     }
     if request.user.is_authenticated():
         return render_to_response('index.html',

@@ -20,8 +20,6 @@ from multiprocessing import Process
 import os
 import sys
 import logging
-
-from cli.rest_util import api_call
 import zmq
 import subprocess
 import fcntl
@@ -29,25 +27,32 @@ import json
 from django.conf import settings
 import time
 from datetime import datetime
+from contextlib import contextmanager
 from django.utils.timezone import utc
+from util import (create_replica_trail, update_replica_status, is_snapshot,
+                  create_snapshot)
 
 BTRFS = '/sbin/btrfs'
 logger = logging.getLogger(__name__)
 
 
 class Sender(Process):
-    baseurl = 'https://localhost/api/'
 
-    def __init__(self, replica, sender_ip, pub, q, snap_name, rt=None):
+    def __init__(self, replica, sender_ip, pub, q, snap_name, smeta_port,
+                 sdata_port, rmeta_port, uuid, rt=None):
         self.replica = replica
         self.receiver_ip = self.replica.appliance
-        self.meta_port = settings.REPLICA_META_PORT
-        self.data_port = settings.REPLICA_DATA_PORT
+        self.smeta_port = smeta_port
+        self.sdata_port = sdata_port
+        self.rmeta_port = rmeta_port
         self.sender_ip = sender_ip
         self.pub = pub
         self.q = q
         self.snap_name = snap_name
+        self.uuid = uuid
         self.rt = rt
+        self.rt2 = None
+        self.rt2_id = None
         self.ppid = os.getpid()
         self.snap_id = ('%s_%s_%s_%s' %
                         (self.sender_ip, self.replica.pool, self.replica.share,
@@ -56,113 +61,202 @@ class Sender(Process):
         self.meta_begin = {'id': self.snap_id,
                            'msg': 'begin',
                            'pool': self.replica.dpool,
-                           'share': self.replica.dshare,
+                           'share': self.replica.share,
                            'snap': self.snap_name,
                            'ip': self.sender_ip,
-                           'data_port': self.data_port,
-                           'meta_port': self.meta_port,}
+                           'data_port': self.sdata_port,
+                           'meta_port': self.smeta_port,
+                           'incremental': self.rt is not None,
+                           'uuid': self.uuid,}
         self.meta_end = {'id': self.snap_id,
                          'msg': 'end',}
         self.kb_sent = 0
+        self.ctx = zmq.Context()
         super(Sender, self).__init__()
 
-    def _clean_exit(self, msg, exception):
-        logger.info(msg)
-        logger.exception(exception)
-        sys.exit(3)
+    @contextmanager
+    def _clean_exit_handler(self, msg):
+        try:
+            yield
+        except Exception, e:
+            logger.error(msg)
+            logger.exception(e)
+            self._sys_exit(3)
+
+    def _sys_exit(self, code, linger=10):
+        self.ctx.destroy(linger=linger)
+        logger.debug('zmq context destroyed. exiting with code: %d' % code)
+        sys.exit(code)
+
+    @contextmanager
+    def _update_trail_and_quit(self, msg):
+        try:
+            yield
+        except Exception, e:
+            logger.error(msg)
+            logger.exception(e)
+            try:
+                data = {'status': 'failed',
+                        'error': msg,
+                        'end_ts': datetime.utcnow().replace(tzinfo=utc),}
+                update_replica_status(self.rt2_id, data, logger)
+            except Exception, e:
+                logger.error('Exception occured in cleanup handler')
+                logger.exception(e)
+            finally:
+                self._sys_exit(3)
+
+    def _process_q(self):
+        ack = self.q.get(block=True, timeout=60)
+        if (ack['msg'] == 'error'):
+            error = 'Error on Receiver: %s' % ack['error']
+            with self._update_trail_and_quit(error):
+                raise Exception('got error from receiver')
+        return ack
 
     def run(self):
-        try:
-            ctx = zmq.Context()
-            meta_push = ctx.socket(zmq.PUSH)
+        msg = ('Failed to connect to receiver(%s) on meta port'
+               '(%d) for snap_name: %s. Aborting.' %
+               (self.receiver_ip, self.rmeta_port, self.snap_name))
+        with self._clean_exit_handler(msg):
+            meta_push = self.ctx.socket(zmq.PUSH)
             meta_push.connect('tcp://%s:%d' % (self.receiver_ip,
-                                               self.meta_port))
-        except Exception, e:
-            msg = ('could not connect to target(%s:%d)' %
-                   (self.receiver_ip, self.meta_port))
-            self._clean_exit(msg, e)
+                                               self.rmeta_port))
 
-        #1. create a snapshot
-        sname = self.replica.share
-        url = ('%sshares/%s/snapshots/%s' %
-               (self.baseurl, sname, self.snap_name))
-        try:
-            api_call(url, data=None, calltype='post', save_error=False)
-            logger.info('created snapshot. url: %s' % url)
-        except Exception, e:
-            msg = ('failed to create snapshot. url: %s' % url)
-            self._clean_exit(msg, e)
+        #1. create a new replica trail if it's the very first time
+        # of if the last one succeeded
+        msg = ('Failed to create local replica trail for snap_name:'
+               ' %s. Aborting.' % self.snap_name)
+        with self._clean_exit_handler(msg):
+            self.rt2 = create_replica_trail(self.replica.id,
+                                            self.snap_name, logger)
+            self.rt2_id = self.rt2['id']
+
+        #2. create a snapshot only if it's not already from a previous
+        #failed attempt.
+        if (not is_snapshot(self.replica.share, self.snap_name, logger)):
+            msg = ('Failed to create snapshot: %s. Aborting.' % self.snap_name)
+            with self._clean_exit_handler(msg):
+                create_snapshot(self.replica.share, self.snap_name, logger)
 
         #let the receiver know that following diff is coming
-        meta_push.send_json(self.meta_begin)
-        self.q.get(block=True)
+        msg = ('Failed to send initial metadata communication to the '
+               'receiver(%s), most likely due to a network error. Aborting.'
+               % self.receiver_ip)
+        with self._update_trail_and_quit(msg):
+            logger.debug('sending meta_begin: %s' % self.meta_begin)
+            meta_push.send_json(self.meta_begin)
+            logger.debug('meta_begin sent. waiting on get')
 
-
-        url = ('%ssm/replicas/trail/replica/%d' % (self.baseurl,
-                                                   self.replica.id))
-        try:
-            rt2 = api_call(url, data={'snap_name': self.snap_name,},
-                           calltype='post', save_error=False)
-        except Exception, e:
-            msg = ('Failed to create replica trail')
-            self._clean_exit(msg, e)
+        msg = ('Timeout occured(60 seconds) while waiting for OK '
+               'from the receiver(%s) to start sending data. Aborting.'
+               % self.receiver_ip)
+        with self._update_trail_and_quit(msg):
+            ack = self._process_q()
+            logger.info('suman ack = %s' % ack)
+            if (ack['msg'] == 'snap_exists'):
+                data = {'status': 'succeeded',
+                        'end_ts': datetime.utcnow().replace(tzinfo=utc),
+                        'error': 'snapshot already exists on the receiver',}
+                msg = ('Failed to update replica status for snap_name: %s. '
+                       'Aborting.' % self.snap_name)
+                with self._clean_exit_handler(msg):
+                    update_replica_status(self.rt2_id, data, logger)
+                    self._sys_exit(0)
 
         snap_path = ('%s%s/%s_%s' % (settings.MNT_PT, self.replica.pool,
-                                     sname, self.snap_name))
+                                     self.replica.share, self.snap_name))
+        logger.debug('current snap: %s' % snap_path)
         cmd = [BTRFS, 'send', snap_path]
         if (self.rt is not None):
             prev_snap = ('%s%s/%s_%s' % (settings.MNT_PT, self.replica.pool,
-                                         sname, self.rt.snap_name))
+                                         self.replica.share,
+                                         self.rt.snap_name))
+            logger.info('Sending incremental replica between %s -- %s' %
+                        (prev_snap, snap_path))
             cmd = [BTRFS, 'send', '-p', prev_snap, snap_path]
+        else:
+            logger.info('Sending full replica: %s' % snap_path)
 
-        sp = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE)
-        fcntl.fcntl(sp.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
-        logger.info('send started. snap: %s' % snap_path)
+        try:
+            sp = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE)
+            fcntl.fcntl(sp.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
+            logger.debug('send started. snap: %s' % snap_path)
+        except Exception, e:
+            msg = ('Failed to start the low level btrfs send '
+                   'command(%s). Aborting' % cmd)
+            logger.error(msg)
+            logger.exception(e)
+            with self._update_trail_and_quit(msg):
+                self.pub.put('%sEND_FAIL' % self.snap_id)
+            self._sys_exit(3)
+
         alive = True
         while alive:
             try:
                 if (sp.poll() is not None):
-                    logger.info('send process finished. rc: %d. stderr: %s' %
-                                (sp.returncode, sp.stderr.read()))
+                    logger.debug('send process finished. rc: %d. stderr: %s'
+                                 % (sp.returncode, sp.stderr.read()))
                     alive = False
                 fs_data = sp.stdout.read()
-                self.pub.put('%s%s' % (self.snap_id, fs_data))
-                self.kb_sent = self.kb_sent + len(fs_data)
             except IOError:
-                pass
+                continue
             except Exception, e:
-                logger.exception(e)
+                msg = ('Exception occured while reading low level btrfs '
+                       'send data for snap_name: %s. Aborting.' %
+                       self.snap_name)
                 if (alive):
                     sp.terminate()
-                sys.exit(3)
-            finally:
+                with self._update_trail_and_quit(msg):
+                    self.pub.put('%sEND_FAIL' % self.snap_id)
+                    raise e
+
+            msg = ('Failed to send fsdata to the receiver for snap_name: '
+                   '%s. Aborting.' % (self.snap_name))
+            with self._update_trail_and_quit(msg):
+                self.pub.put('%s%s' % (self.snap_id, fs_data))
+                self.kb_sent = self.kb_sent + len(fs_data)
+                logger.debug('send process still alive. kb_sent: %s' %
+                             self.kb_sent)
+
                 if (not alive):
                     if (sp.returncode != 0):
                         self.pub.put('%sEND_FAIL' % self.snap_id)
                     else:
                         self.pub.put('%sEND_SUCCESS' % self.snap_id)
-                    logger.info('sent END')
-                if (os.getppid() != self.ppid):
-                    logger.info('parent exited. aborting.')
-                    break
+                        logger.debug('sent END for snap_name: %s' %
+                                     self.snap_name)
 
-        msg = self.q.get(block=True)
-        logger.info('fsdata sent, confirmation: %s received' % msg)
-        url = ('%ssm/replicas/trail/%d' % (self.baseurl, rt2['id']))
+            if (os.getppid() != self.ppid):
+                logger.error('Scheduler exited. Sender for snap_name: '
+                             '%s cannot go on. Aborting.'
+                             % self.snap_name)
+                self._sys_exit(3)
+
+        logger.debug('send process finished. Blocking for final ack from'
+                     ' the receiver')
+        msg = ('Timeout occured(60 seconds) while waiting for final '
+               'send confirmation from the receiver(%s) for snap_name:'
+               ' %s. Aborting.' % (self.receiver_ip, self.snap_name))
+        with self._update_trail_and_quit(msg):
+            ack = self._process_q()
+
+        logger.debug('fsdata sent, confirmation: %s received' % ack)
         end_ts = datetime.utcnow().replace(tzinfo=utc)
         data = {'status': 'succeeded',
-                'kb_sent': self.kb_sent,
+                'kb_sent': self.kb_sent / 1024,
                 'end_ts' : end_ts,}
-        if (msg == 'receive_error'):
-            msg = ('Error while transferring data to the remote appliance')
+        if (ack['msg'] == 'receive_error'):
+            msg = ('Receiver(%s) returned a processing error for snap_name:'
+                   ' %s. Check it for more information.'
+                   % (self.receiver_ip, self.snap_name))
             data['status'] = 'failed'
             data['error'] = msg
             data['send_failed'] = end_ts
-        try:
-            api_call(url, data=data, calltype='put', save_error=False)
-            logger.info('replica status updated to %s' % data['status'])
-        except Exception, e:
-            msg = ('failed to update replica status to send_succeeded')
-            #@todo: add retries
-            self._clean_exit(msg, e)
+
+        msg = ('Failed to update final replica status for snap_name: %s'
+               '. Aborting.' % self.snap_name)
+        with self._clean_exit_handler(msg):
+            update_replica_status(self.rt2_id, data, logger)
+

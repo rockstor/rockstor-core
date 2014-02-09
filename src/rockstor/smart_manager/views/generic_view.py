@@ -58,6 +58,11 @@ class GenericView(generics.ListCreateAPIView):
 
         return Response(serializer.data)
 
+    def get_allow_empty(self):
+        if (self.paginate_by is None):
+            return True
+        return False
+
     def get_paginate_by(self, foo):
         if (self.paginate_by is not None and self.paginate_by == 0):
             return None

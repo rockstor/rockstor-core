@@ -79,8 +79,19 @@ var Snapshot = Backbone.Model.extend({
 
 var SnapshotCollection = RockStorPaginatedCollection.extend({
   model: Snapshot,
+  initialize: function(models, options) {
+    this.constructor.__super__.initialize.apply(this, arguments);
+    if (options) {
+      this.snapType = options.snapType;
+    }
+  },
   setUrl: function(shareName) {
     this.baseUrl = '/api/shares/' + shareName + '/snapshots'    
+  },
+  extraParams: function() {
+    var p = this.constructor.__super__.extraParams.apply(this, arguments);
+    p['snap_type'] = this.snapType;
+    return p;
   }
 });
 
@@ -128,9 +139,9 @@ var ServiceCollection = RockStorPaginatedCollection.extend({
 });
 
 var Appliance = Backbone.Model.extend({urlRoot: '/api/appliances'});
-var ApplianceCollection = Backbone.Collection.extend({
+var ApplianceCollection = RockStorPaginatedCollection.extend({
   model: Appliance,
-  url: '/api/appliances'
+  baseUrl: '/api/appliances'
 });
 
 var User = Backbone.Model.extend({
@@ -268,6 +279,36 @@ var ReplicaTrailCollection = RockStorPaginatedCollection.extend({
   }
 });
 
+var ReplicaShare = Backbone.Model.extend({
+  urlRoot: '/api/sm/replicas/rshare'
+});
+
+var ReplicaShareCollection = RockStorPaginatedCollection.extend({
+  model: ReplicaShare,
+  baseUrl: '/api/sm/replicas/rshare'
+});
+
+var ReceiveTrail = Backbone.Model.extend({
+  urlRoot: '/api/sm/replicas/rtrail/' + this.replicaShareId
+});
+
+var ReceiveTrailCollection = RockStorPaginatedCollection.extend({
+  model: ReceiveTrail,
+  initialize: function(models, options) {
+    this.constructor.__super__.initialize.apply(this, arguments);
+    if (options) {
+      this.replicaShareId = options.replicaShareId;
+    }
+  },
+  baseUrl: function() {
+    if (this.replicaShareId) {
+      return '/api/sm/replicas/rtrail/rshare/' + this.replicaShareId;
+    } else {
+      return '/api/sm/replicas/rtrail';
+    }
+  }
+});
+
 var TaskDef = Backbone.Model.extend({
   urlRoot: "/api/sm/tasks/"                                   
 });
@@ -306,3 +347,22 @@ var SFTPCollection = RockStorPaginatedCollection.extend({
   model: SFTP,
   baseUrl: '/api/sftp'
 });
+
+var ReplicaReceive = Backbone.Model.extend({
+  urlRoot: "/api/sm/replicareceives"                                   
+});
+
+var ReplicaReceiveCollection = RockStorPaginatedCollection.extend({
+  model: ReplicaReceive,
+  baseUrl: "/api/sm/replicareceives"
+});
+
+var ReplicaReceiveTrail = Backbone.Model.extend({
+  urlRoot: "/api/sm/replicareceivetrail"                                   
+});
+
+var ReplicaReceiveTrailCollection = RockStorPaginatedCollection.extend({
+  model: ReplicaReceiveTrail,
+  baseUrl: "/api/sm/replicareceivetrai"
+});
+

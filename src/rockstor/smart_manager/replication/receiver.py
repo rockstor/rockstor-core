@@ -24,82 +24,250 @@ import zmq
 import subprocess
 import fcntl
 import json
+from datetime import datetime
+from django.utils.timezone import utc
 from django.conf import settings
+from contextlib import contextmanager
+from util import (create_share, create_receive_trail, update_receive_trail,
+                  create_snapshot, create_rshare, rshare_id, get_sender_ip)
 
 BTRFS = '/sbin/btrfs'
 logger = logging.getLogger(__name__)
 
 class Receiver(Process):
-    baseurl = 'https://localhost/api/'
 
     def __init__(self, meta, q):
         self.meta = meta
-        self.meta_port = settings.REPLICA_META_PORT
-        self.data_port = settings.REPLICA_DATA_PORT
+        self.meta_port = self.meta['meta_port']
+        self.data_port = self.meta['data_port']
+        self.sender_ip = None
+        self.src_share = self.meta['share']
+        self.dest_pool = self.meta['pool']
+        self.incremental = self.meta['incremental']
+        self.snap_name = self.meta['snap']
+        self.sender_id = self.meta['uuid']
         self.q = q
         self.ppid = os.getpid()
+        self.kb_received = 0
+        self.rid = None
+        self.rtid = None
+        self.meta_push = None
+        self.ctx = zmq.Context()
         super(Receiver, self).__init__()
 
-    def run(self):
-        ctx = zmq.Context()
+    def _sys_exit(self, code, linger=10):
+        self.ctx.destroy(linger=linger)
+        logger.debug('zmq context destroyed. exiting with code: %d' % code)
+        sys.exit(code)
+
+    @contextmanager
+    def _clean_exit_handler(self, msg, ack=False):
         try:
-            recv_sub = ctx.socket(zmq.SUB)
-            recv_sub.connect('tcp://%s:%d' % (self.meta['ip'], self.data_port))
+            yield
+        except Exception, e:
+            logger.error(msg)
+            logger.exception(e)
+            if (ack is True):
+                try:
+                    err_ack = {'msg': 'error',
+                               'id': self.meta['id'],
+                               'error': msg,}
+                    self.meta_push.send_json(err_ack)
+                except Exception, e:
+                    msg = ('Failed to send ack: %s to the sender for meta: '
+                           '%s. Aborting' % (err_ack, self.meta))
+                    logger.error(msg)
+                    logger.exception(e)
+                    self._sys_exit(3)
+            self._sys_exit(3)
+
+    def run(self):
+        msg = ('Failed to get the sender ip from the uuid(%s) for meta: %s' %
+               (self.meta['uuid'], self.meta))
+        with self._clean_exit_handler(msg):
+            self.sender_ip = get_sender_ip(self.meta['uuid'], logger)
+        logger.debug('sender ip: %s' % self.sender_ip)
+
+        msg = ('Failed to connect to the sender(%s) on data_port(%s). meta: '
+               '%s. Aborting.' % (self.sender_ip, self.data_port, self.meta))
+        with self._clean_exit_handler(msg):
+            #@todo: add validation
+            recv_sub = self.ctx.socket(zmq.SUB)
+            recv_sub.connect('tcp://%s:%d' % (self.sender_ip, self.data_port))
             recv_sub.RCVTIMEO = 100
             recv_sub.setsockopt(zmq.SUBSCRIBE, str(self.meta['id']))
-        except Exception, e:
-            logger.info('could not subscribe for fsdata for meta: %s' %
-                        self.meta)
-            logger.exception(e)
-            sys.exit(3)
 
-        try:
-            meta_push = ctx.socket(zmq.PUSH)
-            meta_push.connect('tcp://%s:%d' % (self.meta['ip'],
-                                               self.meta_port))
-        except Exception, e:
-            logger.info('could not connect to target(%s:%d)' %
-                        (self.meta['ip'], self.meta_port))
-            logger.exception(e)
-            sys.exit(3)
+        msg = ('Failed to connect to the sender(%s) on '
+               'meta_port(%d). meta: %s. Aborting.' %
+               (self.sender_ip, self.meta_port, self.meta))
+        with self._clean_exit_handler(msg):
+            self.meta_push = self.ctx.socket(zmq.PUSH)
+            url = ('tcp://%s:%d' % (self.sender_ip, self.meta_port))
+            logger.debug('meta url: %s' % url)
+            self.meta_push.connect('tcp://%s:%d' % (self.sender_ip,
+                                                    self.meta_port))
 
-        sub_vol = ('%s%s' % (settings.MNT_PT, self.meta['pool']))
+        #@todo: use appliance uuid instead?
+        sname = ('%s-%s' % (self.src_share, self.sender_ip))
+        if (not self.incremental):
+            msg = ('Failed to verify/create share: %s. meta: %s. '
+                   'Aborting.' % (sname, self.meta))
+            with self._clean_exit_handler(msg, ack=True):
+                create_share(sname, self.dest_pool, logger)
+
+            msg = ('Failed to create the replica metadata object '
+                   'for share: %s. meta: %s. Aborting.' %
+                   (sname, self.meta))
+            with self._clean_exit_handler(msg, ack=True):
+                data = {'share': sname,
+                        'appliance': self.sender_ip,
+                        'src_share': self.src_share,
+                        'data_port': self.data_port,
+                        'meta_port': self.meta_port,}
+                self.rid = create_rshare(data, logger)
+
+        else:
+            msg = ('Failed to retreive the replica metadata object for '
+                   'share: %s. meta: %s. Aborting.' % (sname, self.meta))
+            with self._clean_exit_handler(msg):
+                self.rid = rshare_id(sname, logger)
+
+        sub_vol = ('%s%s/%s' % (settings.MNT_PT, self.meta['pool'],
+                                sname))
+
+        snap_fp = ('%s/%s_%s' % (sub_vol, self.snap_name.split('_')[0],
+                                 self.snap_name))
+        logger.info('snap_fp: %s' % snap_fp)
+        msg = ('Snaphost: %s already exists.' % snap_fp)
+        with self._clean_exit_handler(msg):
+            if (os.path.isdir(snap_fp)):
+                ack = {'msg': 'snap_exists',
+                       'id': self.meta['id'],}
+                self.meta_push.send_json(ack)
+                logger.debug(msg)
+
         cmd = [BTRFS, 'receive', sub_vol]
-        ack = {'msg': 'begin_ok',
-               'id': self.meta['id'],}
-        meta_push.send_json(ack)
-        rp = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE,
-                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        msg = ('Failed to start the low level btrfs receive command(%s)'
+               '. Aborting.' % (cmd))
+        with self._clean_exit_handler(msg, ack=True):
+            rp = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE,
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE)
+            logger.debug('Btrfs receive started for snap: %s' % sub_vol)
+
+        msg = ('Failed to send begin_ok to the sender for meta: %s' %
+               self.meta)
+        with self._clean_exit_handler(msg):
+            ack = {'msg': 'begin_ok',
+                   'id': self.meta['id'],}
+            self.meta_push.send_json(ack)
+            logger.debug('begin_ok sent for meta: %s' % self.meta)
+        recv_timeout_counter = 0
         while True:
             try:
                 recv_data = recv_sub.recv()
                 recv_data = recv_data[len(self.meta['id']):]
-                if (recv_data == 'END_SUCCESS'):
-                    logger.info('sentinel received. breaking')
+                recv_timeout_counter = 0
+                self.kb_received = self.kb_received + len(recv_data)
+                if (self.rtid is None):
+                    msg = ('Failed to create snapshot: %s. Aborting.' %
+                           self.snap_name)
+                    with self._clean_exit_handler(msg, ack=True):
+                        create_snapshot(sname, self.snap_name, logger,
+                                        snap_type='receiver')
+
+                    data = {'snap_name': self.snap_name}
+                    msg = ('Failed to create receive trail for rid: %d'
+                           '. meta: %s' % (self.rid, self.meta))
+                    with self._clean_exit_handler(msg, ack=True):
+                        self.rtid = create_receive_trail(self.rid, data,
+                                                         logger)
+
+                if (recv_data == 'END_SUCCESS' or recv_data == 'END_FAIL'):
+                    ts = datetime.utcnow().replace(tzinfo=utc)
+                    data = {'kb_received': self.kb_received / 1024,}
+                    if (recv_data == 'END_SUCCESS'):
+                        logger.debug('END_SUCCESS received for meta: %s' %
+                                     self.meta)
+                        data['receive_succeeded'] = ts
+                    else:
+                        logger.error('END_FAIL received for meta: %s. '
+                                     'Terminating.' % self.meta)
+                        rp.terminate()
+                        data['receive_failed'] = ts
+                        data['status'] = 'failed'
+
+                    msg = ('Failed to update receive trail for rtid: %d'
+                               '. meta: %s' % (self.rtid, self.meta))
+                    with self._clean_exit_handler(msg, ack=True):
+                        update_receive_trail(self.rtid, data, logger)
                     break
-                elif (recv_data == 'END_FAIL'):
-                    logger.info('END_FAIL received. terminating')
-                    rp.terminate()
-                    sys.exit(3)
-                rp.stdin.write(recv_data)
-                rp.stdin.flush()
+                if (rp.poll() is None):
+                    rp.stdin.write(recv_data)
+                    rp.stdin.flush()
+                else:
+                    logger.error('It seems the btrfs receive process died'
+                                 ' unexpectedly.')
+                    out, err = rp.communicate()
+                    logger.debug('btrfs receive out: %s err: %s' % (out, err))
+                    msg = ('Low level system error from btrfs receive '
+                           'command. out: %s err: %s for rtid: %s meta: %s'
+                           % (out, err, self.rtid, self.meta))
+                    with self._clean_exit_handler(msg, ack=True):
+                        data = {'receive_failed': (
+                            datetime.utcnow().replace(tzinfo=utc)),
+                                'status': 'failed',
+                                'error': msg,}
+                        update_receive_trail(self.rtid, data, logger)
             except zmq.error.Again:
-                pass
+                recv_timeout_counter = recv_timeout_counter + 1
+                if (recv_timeout_counter > 300):
+                    logger.error('Nothing received in the last 30 seconds '
+                                 'from the sender for meta: %s. Aborting.'
+                                 % self.meta)
+                    raise
             except Exception, e:
-                logger.info('exception occured while receiving fsdata')
+                msg = ('Exception occured while receiving fsdata')
+                logger.error(msg)
                 logger.exception(e)
                 rp.terminate()
-                sys.exit(3)
+                out, err = rp.communicate()
+                logger.debug('rc: %d out: %s err: %s' % (rp.returncode, out,
+                                                         err))
+                data['receive_failed'] = datetime.utcnow().replace(tzinfo=utc)
+                data['status'] = 'failed'
+                data['error'] = msg
+
+                msg = ('Failed to update receive trail for rtid: %d'
+                       '. meta: %s' % (self.rtid, self.meta))
+                with self._clean_exit_handler(msg, ack=True):
+                    update_receive_trail(self.rtid, data, logger)
+                self._sys_exit(3)
             finally:
                 if (os.getppid() != self.ppid):
-                    logger.info('parent exited. aborting.')
-                    break
-        #rfo/stdin should be closed by now
+                    logger.error('parent exited. aborting.')
+                    self._sys_exit(3)
+
+        #rfo/stdin should be closed by now. We get here only if the sender
+        #dint throw an error or if receiver did not get terminated
         out, err = rp.communicate()
-        logger.info('rc: %d out: %s err: %s' % (rp.returncode, out, err))
+        logger.debug('rc: %d out: %s err: %s' % (rp.returncode, out, err))
         ack = {'msg': 'receive_ok',
                'id': self.meta['id'],}
+        data = {'status': 'succeeded',
+                'end_ts': datetime.utcnow().replace(tzinfo=utc),}
         if (rp.returncode != 0):
             ack['msg'] = 'receive_error'
-        meta_push.send_json(ack)
+            data['status'] = 'failed'
 
+        msg = ('Failed to update receive trail for rtid: %d. meta: '
+               '%s' % (self.rtid, self.meta))
+        with self._clean_exit_handler(msg, ack=True):
+            update_receive_trail(self.rtid, data, logger)
+
+        msg = ('Failed to send final ack to the sender for meta: %s' %
+               self.meta)
+        with self._clean_exit_handler(msg):
+            self.meta_push.send_json(ack)
+        logger.debug('final ack sent for meta: %s' % self.meta)
+        self._sys_exit(0)

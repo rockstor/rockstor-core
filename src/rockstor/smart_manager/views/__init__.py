@@ -42,3 +42,5 @@ from sftp_service import SFTPServiceView
 from tasktypes import TaskTypeView
 from task_scheduler import TaskSchedulerView
 from task_log import TaskLogView
+from replica_share import ReplicaShareView
+from receive_trail import ReceiveTrailView

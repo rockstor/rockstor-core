@@ -17,17 +17,23 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.db import models
+from django.conf import settings
 
 
 class Replica(models.Model):
     task_name = models.CharField(max_length=1024)
     share = models.CharField(max_length=4096)
     pool = models.CharField(max_length=4096)
+    """ip from the appliance model of storageadmin"""
     appliance = models.CharField(max_length=4096)
     dpool = models.CharField(max_length=4096)
     dshare = models.CharField(max_length=4096, null=True)
     enabled = models.BooleanField(default=False)
     frequency = models.IntegerField()
+    data_port = models.IntegerField(default=settings.REPLICA_DATA_PORT)
+    meta_port = models.IntegerField(default=settings.REPLICA_META_PORT)
+    """enabled/disabled state change ts"""
+    ts = models.DateTimeField(null=True, db_index=True)
 
     class Meta:
         app_label = 'smart_manager'
@@ -59,3 +65,45 @@ class ReplicaTrail(models.Model):
 
     class Meta:
         app_label = 'smart_manager'
+
+
+class ReplicaShare(models.Model):
+    share = models.CharField(max_length=4096, unique=True)
+    pool = models.CharField(max_length=4096)
+    """ip from the appliance model of storageadmin"""
+    appliance = models.CharField(max_length=4096)
+    src_share = models.CharField(max_length=4096, null=True)
+    data_port = models.IntegerField(default=settings.REPLICA_DATA_PORT)
+    meta_port = models.IntegerField(default=settings.REPLICA_META_PORT)
+    """enabled/disabled state change ts"""
+    ts = models.DateTimeField(null=True, db_index=True)
+
+    class Meta:
+        app_label = 'smart_manager'
+
+
+class ReceiveTrail(models.Model):
+    """
+    valid paths for the trail
+    1. snapshot_failed (DOA)
+    2. snapshot_created -> send_pending -> send_succeeded (happy path)
+    3. snapshot_created -> send_pending -> send_failed (error)
+    """
+    rshare = models.ForeignKey(ReplicaShare)
+    snap_name = models.CharField(max_length=1024)
+    kb_received = models.IntegerField(default=0)
+    receive_pending = models.DateTimeField(null=True)
+    receive_succeeded = models.DateTimeField(null=True)
+    receive_failed = models.DateTimeField(null=True)
+    end_ts = models.DateTimeField(null=True, db_index=True)
+    STATUS_CHOICES = [
+        ('pending',) * 2,
+        ('succeeded',) * 2,
+        ('failed',) * 2,
+        ]
+    status = models.CharField(max_length=10)
+    error = models.CharField(max_length=4096, null=True)
+
+    class Meta:
+        app_label = 'smart_manager'
+

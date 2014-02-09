@@ -16,7 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-import json
 from base_console import BaseConsole
 from rest_util import (api_error, api_call,)
 
@@ -55,7 +54,7 @@ class SFTPConsole(BaseConsole):
                       'read_only': True,}
         url = BaseConsole.url + 'sftp'
         headers = {'content-type': 'application/json'}
-        sftp_info = api_call(url, data=json.dumps(input_data),
+        sftp_info = api_call(url, data=input_data,
                              headers=headers, calltype='post')
         print sftp_info
 
