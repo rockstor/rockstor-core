@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 class PoolView(GenericView):
     serializer_class = PoolInfoSerializer
-    RAID_LEVELS = ('raid0', 'raid1', 'raid10', 'single',)
+    RAID_LEVELS = ('raid0', 'raid1', 'raid10', 'single', 'raid5', 'raid6')
 
     def get_queryset(self, *args, **kwargs):
         if ('pname' in kwargs):
@@ -87,11 +87,19 @@ class PoolView(GenericView):
                          self.RAID_LEVELS)
                 handle_exception(Exception(e_msg), request)
             if (raid_level in self.RAID_LEVELS[0:2] and len(disks) == 1):
-                e_msg = ('More than one disk is required for the chosen raid '
+                e_msg = ('More than one disk is required for the raid '
                          'level: %s' % raid_level)
                 handle_exception(Exception(e_msg), request)
             if (raid_level == self.RAID_LEVELS[2] and len(disks) < 4):
-                e_msg = ('Four or more disks are required for the chose raid '
+                e_msg = ('Four or more disks are required for the raid '
+                         'level: %s' % raid_level)
+                handle_exception(Exception(e_msg), request)
+            if (raid_level == self.RAID_LEVELS[4] and len(disks) < 2):
+                e_msg = ('Two or more disks are required for the raid '
+                         'level: %s' % raid_level)
+                handle_exception(Exception(e_msg), request)
+            if (raid_level == self.RAID_LEVELS[5] and len(disks) < 3):
+                e_msg = ('Three or more disks are required for the raid '
                          'level: %s' % raid_level)
                 handle_exception(Exception(e_msg), request)
 
