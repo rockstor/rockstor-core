@@ -90,9 +90,16 @@ def mount_root(pool_name, device):
     return root_pool_mnt
 
 def umount_root(root_pool_mnt):
-    umount_cmd = [UMOUNT, '-l', root_pool_mnt]
-    run_command(umount_cmd)
-    rm_tmp_dir(root_pool_mnt)
+    if (os.path.ismount(root_pool_mnt)):
+        run_command([UMOUNT, '-l', root_pool_mnt])
+        for i in range(10):
+            if (not os.path.ismount(root_pool_mnt)):
+                return run_command([RMDIR, root_pool_mnt])
+            time.sleep(1)
+        run_command([UMOUNT, '-f', root_pool_mnt])
+    if (os.path.exists(root_pool_mnt)):
+        return run_command([RMDIR, root_pool_mnt])
+    return True
 
 def add_share(pool_name, pool_device, share_name):
     """
