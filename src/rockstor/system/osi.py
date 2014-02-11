@@ -160,9 +160,14 @@ def nfs4_mount_teardown(export_pt):
     """
     reverse of setup. cleanup when there are no more exports
     """
+    if (os.path.ismount(export_pt)):
+        run_command([UMOUNT, '-l', export_pt])
+        for i in range(10):
+            if (not os.path.ismount(export_pt)):
+                return run_command([RMDIR, export_pt])
+            time.sleep(1)
+        run_command([UMOUNT, '-f', export_pt])
     if (os.path.exists(export_pt)):
-        if (os.path.ismount(export_pt)):
-            run_command([UMOUNT, export_pt])
         return run_command([RMDIR, export_pt])
     return True
 

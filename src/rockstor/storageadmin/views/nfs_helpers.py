@@ -28,7 +28,7 @@ def client_input(export):
                                                        eg.syncable,
                                                        eg.mount_security))}
     if (eg.nohide):
-        ci['option_list'] = ('%s,nohide' % ci['options_list'])
+        ci['option_list'] = ('%s,nohide' % ci['option_list'])
     ci['mnt_pt'] = export.mount.replace(settings.NFS_EXPORT_ROOT,
                                         settings.MNT_PT)
     return ci
@@ -90,6 +90,7 @@ def refresh_wrapper(exports, request, logger):
 def teardown_wrapper(export_pt, request, logger):
     try:
         nfs4_mount_teardown(export_pt)
+        logger.debug('returned from teardown. export: %s' % export_pt)
     except Exception, e:
         e_msg = ('Unable to delete the export(%s) because it is '
                  'in use' % (export_pt))
