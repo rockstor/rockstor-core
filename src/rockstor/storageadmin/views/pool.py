@@ -177,8 +177,9 @@ class PoolView(GenericView):
                 e_msg = ('Pool: %s is not empty. Cannot delete until all '
                          'shares in the pool are deleted' % (pname))
                 handle_exception(Exception(e_msg), request)
-            umount_root('%s%s' % (settings.MNT_PT, pname))
-            remove_pool(pname)
+            pool_path = ('%s%s' % (settings.MNT_PT, pname))
+            remove_pool(pool_path)
+            umount_root(pool_path)
             pool.delete()
             return Response()
         except RockStorAPIException:
