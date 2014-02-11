@@ -22,8 +22,9 @@ system level helper methods to interact with the filesystem
 
 import re
 import time
+import os
 
-from system.osi import (run_command, create_tmp_dir, rm_tmp_dir)
+from system.osi import (run_command, create_tmp_dir)
 from system.exceptions import CommandException
 
 MKFS_BTRFS = '/sbin/mkfs.btrfs'
@@ -177,6 +178,15 @@ def remove_share(pool_name, pool_device, share_name):
     subvol_mnt_pt = root_pool_mnt + '/' + share_name
     delete_cmd = [BTRFS, 'subvolume', 'delete', subvol_mnt_pt]
     run_command(delete_cmd)
+
+def remove_snap(pool_name, pool_device, share_name, snap_name):
+    full_name = ('%s/%s' % (share_name, snap_name))
+    if (is_share_mounted(full_name)):
+        umount_root('%s%s' % (DEFAULT_MNT_DIR, full_name))
+    root_pool_mnt = mount_root(pool_name, pool_device)
+    subvol_mnt_pt = ('%s/%s_%s' % (root_pool_mnt, share_name, snap_name))
+    return run_command([BTRFS, 'subvolume', 'delete', subvol_mnt_pt])
+
 
 def add_snap(pool_name, pool_device, share_name, snap_name,
              share_prepend=True):

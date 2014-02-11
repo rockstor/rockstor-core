@@ -197,7 +197,7 @@ class SnapshotView(GenericView):
             handle_exception(Exception(e_msg), request)
 
         try:
-            remove_share(share.pool.name, pool_device, snapshot.real_name)
+            remove_snap(share.pool.name, pool_device, sname, snap_name)
             snapshot.delete()
             return Response()
         except Exception, e:
