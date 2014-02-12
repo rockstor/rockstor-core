@@ -26,7 +26,7 @@
 
 AddNFSExportView = RockstoreLayoutView.extend({
   events: {
-    "click #js-cancel": "cancel"
+    "click #cancel": "cancel"
   },
 
   initialize: function() {
