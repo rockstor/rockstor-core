@@ -170,23 +170,29 @@ class SnapshotView(GenericView):
         pass
 
     @transaction.commit_on_success
-    def delete(self, request, sname, snap_name):
-        """
-        deletes a snapshot
-        """
+    def _delete_snapshot(self, request, sname, id=None, snap_name=None):
         share = self._validate_share(sname, request)
         try:
-            snapshot = Snapshot.objects.get(share=share, name=snap_name)
+            snapshot = None
+            if (id is not None):
+                snapshot = Snapshot.objects.get(id=id)
+            elif (snap_name is not None):
+                snapshot = Snapshot.objects.get(share=share, name=snap_name)
+            else:
+                return True
         except:
-            e_msg = ('Snapshot with name: %s does not exist' % snap_name)
+            e_msg = ''
+            if (id is not None):
+                e_msg = ('Snapshot with id: %s does not exist' % id)
+            else:
+                e_msg = ('Snapshot with name: %s does not exist' % snap_name)
             handle_exception(Exception(e_msg), request)
 
         pool_device = Disk.objects.filter(pool=share.pool)[0].name
         try:
             if (snapshot.uvisible):
-
-                export_pt = ('%s%s/%s' % (settings.NFS_EXPORT_ROOT,
-                                          share.name, snap_name))
+                export_pt = ('%s%s/%s' % (settings.NFS_EXPORT_ROOT, share.name,
+                                          snapshot.name))
                 teardown_wrapper(export_pt, request, logger)
                 self._toggle_visibility(share, snapshot.real_name, on=False)
         except Exception, e:
@@ -197,7 +203,7 @@ class SnapshotView(GenericView):
             handle_exception(Exception(e_msg), request)
 
         try:
-            remove_snap(share.pool.name, pool_device, sname, snap_name)
+            remove_snap(share.pool.name, pool_device, sname, snapshot.name)
             snapshot.delete()
             return Response()
         except Exception, e:
@@ -206,3 +212,16 @@ class SnapshotView(GenericView):
             logger.error(e_msg)
             logger.exception(e)
             handle_exception(Exception(e_msg), request)
+
+    def delete(self, request, sname, snap_name=None):
+        """
+        deletes a snapshot
+        """
+        if (snap_name is None):
+            snap_qp = self.request.QUERY_PARAMS.get('id', None)
+            if (snap_qp is not None):
+                for si in snap_qp.split(','):
+                    self._delete_snapshot(request, sname, id=si)
+        else:
+            self._delete_snapshot(request, sname, snap_name=snap_name)
+        return Response()
