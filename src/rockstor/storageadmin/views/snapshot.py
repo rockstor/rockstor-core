@@ -101,7 +101,6 @@ class SnapshotView(GenericView):
                 umount_root(export_pt)
                 umount_root(snap_mnt_pt)
         exports = create_nfs_export_input(cur_exports)
-        logger.debug('exports: %s' % exports)
         refresh_nfs_exports(exports)
 
     @transaction.commit_on_success
