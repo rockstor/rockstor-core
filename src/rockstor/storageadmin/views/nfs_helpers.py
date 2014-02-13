@@ -24,9 +24,8 @@ from system.osi import (refresh_nfs_exports, nfs4_mount_teardown)
 def client_input(export):
     eg = export.export_group
     ci = {'client_str': eg.host_str,
-          'option_list': ('%s,%s,%s,no_root_squash' % (eg.editable,
-                                                       eg.syncable,
-                                                       eg.mount_security))}
+          'option_list': ('%s,%s,%s' % (eg.editable, eg.syncable,
+                                        eg.mount_security))}
     if (eg.nohide):
         ci['option_list'] = ('%s,nohide' % ci['option_list'])
     ci['mnt_pt'] = export.mount.replace(settings.NFS_EXPORT_ROOT,
@@ -90,7 +89,6 @@ def refresh_wrapper(exports, request, logger):
 def teardown_wrapper(export_pt, request, logger):
     try:
         nfs4_mount_teardown(export_pt)
-        logger.debug('returned from teardown. export: %s' % export_pt)
     except Exception, e:
         e_msg = ('Unable to delete the export(%s) because it is '
                  'in use' % (export_pt))
