@@ -26,13 +26,13 @@ from django.conf import settings
 from storageadmin.models import (Snapshot, Share, Disk, NFSExport,
                                  NFSExportGroup)
 from fs.btrfs import (add_snap, remove_share, share_id, update_quota,
-                      share_usage, remove_snap, is_share_mounted, mount_share,
-                      umount_root)
+                      share_usage, remove_snap, is_share_mounted,
+                      mount_share, umount_root)
 from system.osi import (refresh_nfs_exports, bind_mount)
 from storageadmin.serializers import SnapshotSerializer
 from storageadmin.util import handle_exception
 from generic_view import GenericView
-from nfs_helpers import (create_nfs_export_input, teardown_wrapper)
+from nfs_helpers import create_nfs_export_input
 from clone_helpers import create_clone
 
 import logging
@@ -204,8 +204,8 @@ class SnapshotView(GenericView):
             try:
                 self._toggle_visibility(share, snapshot.real_name, on=False)
             except Exception, e:
-                e_msg = ('Unable to nfs unexport the snapshot, requirement '
-                         'for deletion. Try again later')
+                e_msg = ('A low level error occured while deleting '
+                         'snapshot(%s). Try again later.')
                 logger.error(e_msg)
                 logger.exception(e)
                 handle_exception(Exception(e_msg), request)

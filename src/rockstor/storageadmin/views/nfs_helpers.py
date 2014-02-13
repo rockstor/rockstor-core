@@ -90,7 +90,6 @@ def refresh_wrapper(exports, request, logger):
 def teardown_wrapper(export_pt, request, logger):
     try:
         nfs4_mount_teardown(export_pt)
-        logger.debug('returned from teardown. export: %s' % export_pt)
     except Exception, e:
         e_msg = ('Unable to delete the export(%s) because it is '
                  'in use' % (export_pt))
