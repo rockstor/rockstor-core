@@ -24,7 +24,8 @@ import re
 import time
 import os
 
-from system.osi import (run_command, create_tmp_dir)
+from system.osi import (run_command, create_tmp_dir, is_share_mounted,
+                        is_mounted)
 from system.exceptions import CommandException
 
 MKFS_BTRFS = '/sbin/mkfs.btrfs'
@@ -35,6 +36,8 @@ DD = '/bin/dd'
 DEFAULT_MNT_DIR = '/mnt2/'
 DF = '/bin/df'
 BTRFS_DEBUG_TREE = '/sbin/btrfs-debug-tree'
+RMDIR = '/bin/rmdir'
+
 
 def add_pool(name, data_raid, meta_raid, disks):
     """
@@ -91,10 +94,10 @@ def mount_root(pool_name, device):
     return root_pool_mnt
 
 def umount_root(root_pool_mnt):
-    if (os.path.ismount(root_pool_mnt)):
+    if (is_mounted(root_pool_mnt)):
         run_command([UMOUNT, '-l', root_pool_mnt])
         for i in range(10):
-            if (not os.path.ismount(root_pool_mnt)):
+            if (not is_mounted(root_pool_mnt)):
                 return run_command([RMDIR, root_pool_mnt])
             time.sleep(1)
         run_command([UMOUNT, '-f', root_pool_mnt])
@@ -118,14 +121,6 @@ def mount_share(share_name, pool_device, mnt_pt):
     create_tmp_dir(mnt_pt)
     mnt_cmd = [MOUNT, '-t', 'btrfs', '-o', subvol_str, pool_device, mnt_pt]
     return run_command(mnt_cmd)
-
-def is_share_mounted(sname, mnt_prefix=DEFAULT_MNT_DIR):
-    mnt_pt = mnt_prefix + sname
-    with open ('/proc/mounts') as pfo:
-        for line in pfo.readlines():
-            if (re.search(' ' + mnt_pt + ' ', line) is not None):
-                return True
-    return False
 
 def subvol_list_helper(mnt_pt):
     """
@@ -210,13 +205,6 @@ def add_snap(pool_name, pool_device, share_name, snap_name,
             #rc == 19 is due to the slow kernel cleanup thread. snapshot gets
             #created just fine. lookup is delayed arbitrarily.
             raise ce
-
-def remove_snap(pool_name, pool_device, share_name, snap_name):
-    """
-    remove a snapshot. same as removing a share
-    """
-    name = ('%s_%s' % (share_name, snap_name))
-    return remove_share(pool_name, pool_device, name)
 
 def rollback_snap(snap_name, sname, subvol_name, pool_name, pool_device):
     """
