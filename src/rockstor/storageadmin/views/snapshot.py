@@ -26,8 +26,9 @@ from django.conf import settings
 from storageadmin.models import (Snapshot, Share, Disk, NFSExport,
                                  NFSExportGroup)
 from fs.btrfs import (add_snap, remove_share, share_id, update_quota,
-                      share_usage, remove_snap)
-from system.osi import refresh_nfs_exports
+                      share_usage, remove_snap, is_share_mounted, mount_share,
+                      umount_root)
+from system.osi import (refresh_nfs_exports, bind_mount)
 from storageadmin.serializers import SnapshotSerializer
 from storageadmin.util import handle_exception
 from generic_view import GenericView
@@ -66,33 +67,42 @@ class SnapshotView(GenericView):
     @transaction.commit_on_success
     def _toggle_visibility(self, share, snap_name, on=True):
         cur_exports = list(NFSExport.objects.all())
-        mnt_pt = ('%s%s/%s' % (settings.MNT_PT, share.pool.name,
-                               snap_name))
-        export_pt = mnt_pt.replace(settings.MNT_PT,
-                                   settings.NFS_EXPORT_ROOT)
+        snap_short_name = snap_name.split('_')[-1]
+        snap_mnt_pt = ('%s%s/.%s' % (settings.MNT_PT, share.name,
+                                     snap_short_name))
+        export_pt = snap_mnt_pt.replace(settings.MNT_PT,
+                                        settings.NFS_EXPORT_ROOT)
         if (on):
-            if (not NFSExport.objects.filter(share=share).exists()):
-                return True
-            se = NFSExport.objects.filter(share=share)[0]
-            export_group = NFSExportGroup(host_str=se.export_group.host_str,
-                                          nohide=True)
-            export_group.save()
-            export = NFSExport(share=share, export_group=export_group,
-                               mount=export_pt)
-            export.full_clean()
-            export.save()
-            cur_exports.append(export)
+            pool_device = Disk.objects.filter(pool=share.pool)[0].name
+            if (not is_share_mounted(share.name)):
+                share_mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
+                mount_share(share.subvol_name, pool_device, share_mnt_pt)
+            mount_share(snap_name, pool_device, snap_mnt_pt)
+
+            if (NFSExport.objects.filter(share=share).exists()):
+                se = NFSExport.objects.filter(share=share)[0]
+                export_group = NFSExportGroup(host_str=se.export_group.host_str,
+                                               nohide=True)
+                export_group.save()
+                export = NFSExport(share=share, export_group=export_group,
+                                   mount=snap_mnt_pt)
+                export.full_clean()
+                export.save()
+                cur_exports.append(export)
         else:
             try:
-                export = NFSExport.objects.get(share=share, mount=export_pt)
+                export = NFSExport.objects.get(share=share, mount=snap_mnt_pt)
                 cur_exports.remove(export)
                 export.export_group.delete()
                 export.delete()
             except Exception, e:
                 logger.exception(e)
+            finally:
+                umount_root(export_pt)
+                umount_root(snap_mnt_pt)
         exports = create_nfs_export_input(cur_exports)
+        logger.debug('exports: %s' % exports)
         refresh_nfs_exports(exports)
-        return True
 
     @transaction.commit_on_success
     def _create(self, share, snap_name, pool_device, request, uvisible,
@@ -145,7 +155,8 @@ class SnapshotView(GenericView):
                 try:
                     self._toggle_visibility(share, ret.data['real_name'])
                 except Exception, e:
-                    msg = ('snapshot created but nfs exporting it failed')
+                    msg = ('Failed to make the Snapshot(%s) visible.' %
+                           snap_name)
                     logger.error(msg)
                     logger.exception(e)
             return ret
@@ -189,18 +200,15 @@ class SnapshotView(GenericView):
             handle_exception(Exception(e_msg), request)
 
         pool_device = Disk.objects.filter(pool=share.pool)[0].name
-        try:
-            if (snapshot.uvisible):
-                export_pt = ('%s%s/%s' % (settings.NFS_EXPORT_ROOT, share.name,
-                                          snapshot.name))
-                teardown_wrapper(export_pt, request, logger)
+        if (snapshot.uvisible):
+            try:
                 self._toggle_visibility(share, snapshot.real_name, on=False)
-        except Exception, e:
-            e_msg = ('Unable to nfs unexport the snapshot, requirement for '
-                     'deletion. Try again later')
-            logger.error(e_msg)
-            logger.exception(e)
-            handle_exception(Exception(e_msg), request)
+            except Exception, e:
+                e_msg = ('Unable to nfs unexport the snapshot, requirement '
+                         'for deletion. Try again later')
+                logger.error(e_msg)
+                logger.exception(e)
+                handle_exception(Exception(e_msg), request)
 
         try:
             remove_snap(share.pool.name, pool_device, sname, snapshot.name)

@@ -39,7 +39,7 @@ def create_nfs_export_input(exports):
         e_list = []
         export_pt = ('%s%s' % (settings.NFS_EXPORT_ROOT, e.share.name))
         if (e.export_group.nohide):
-            snap_name = e.mount.split(e.share.name + '_')[-1]
+            snap_name = e.mount.split('/')[-1]
             export_pt = ('%s/%s' % (export_pt, snap_name))
         if (export_pt in exports_d):
             e_list = exports_d[export_pt]
