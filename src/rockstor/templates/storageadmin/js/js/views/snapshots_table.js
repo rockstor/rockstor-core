@@ -31,7 +31,7 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
     "click .js-snapshot-delete": "deleteSnapshot",
     "click .js-snapshot-clone": "cloneSnapshot",
     "click .js-snapshot-select": "selectSnapshot",
-    "click .js-snapshot-select-all": "selectAllSnapshots",
+    //"click .js-snapshot-select-all": "selectAllSnapshots",
     "click #js-snapshot-delete-multiple": "deleteMultipleSnapshots"
   },
 
@@ -114,9 +114,9 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
   deleteSnapshot: function(event) {
     event.preventDefault();
     var _this = this;
-    name = $(event.currentTarget).attr('data-name');
-    esize = $(event.currentTarget).attr('data-size');
-    share_name = this.share.get("name");
+    var name = $(event.currentTarget).attr('data-name');
+    var esize = $(event.currentTarget).attr('data-size');
+    var share_name = this.share.get("name");
     var button = $(event.currentTarget);
     if (buttonDisabled(button)) return false;
     if(confirm("Deleting snapshot("+ name +") deletes "+ esize +" of data permanently. Do you really want to delete it?")){
@@ -127,19 +127,11 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
         success: function() {
           enableButton(button)
           _this.$('[rel=tooltip]').tooltip('hide');
-          _this.collection.fetch({
-            success: function() { _this.render(); }
-          });
+          _this.collection.fetch();
         },
         error: function(xhr, status, error) {
           enableButton(button)
           _this.$('[rel=tooltip]').tooltip('hide');
-          var msg = parseXhrError(xhr)
-          if (_.isObject(msg)) {
-            _this.validator.showErrors(msg);
-          } else {
-            _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
-          }
         }
       });
     }
@@ -162,9 +154,13 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
     name = $(event.currentTarget).attr('data-name');
     var checked = $(event.currentTarget).prop('checked');
     if (checked) {
-      this.selectedSnapshots.push(name);
+      this.selectedSnapshots.push(this.collection.find(function(snap) {
+        return snap.get('name') == name;
+      }));
     } else {
-      var i = _.indexOf(this.selectedSnapshots, name);
+      var i = _.indexOf(_.map(this.selectedSnapshots, function(snap) {
+        return snap.name;
+      }), name);
       this.selectedSnapshots.splice(i,1);
     }
   },
@@ -176,9 +172,9 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
       this.$('.js-snapshot-select').prop('checked', true)
       this.$('.js-snapshot-select').each(function(i) {
         var name = $(this).attr('data-name');
-        if (_.indexOf(_this.selectedSnapshots, name) == -1) {
-          _this.selectedSnapshots.push(name);
-        }
+        this.selectedSnapshots.push(this.collection.find(function(snap) {
+          return snap.get('name') == name;
+        }));
       });
     } else {
       this.$('.js-snapshot-select').prop('checked', false)
@@ -193,7 +189,11 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
   },
   
   deleteMultipleSnapshots: function(event) {
+    var _this = this;
     event.preventDefault();
+    var button = $(event.currentTarget);
+    if (buttonDisabled(button)) return false;
+    var share_name = this.share.get("name");
     if (this.selectedSnapshots.length == 0) {
       alert('Select at least one snapshot to delete');
     } else {
@@ -203,7 +203,36 @@ SnapshotsTableModule  = RockstoreModuleView.extend({
       } else {
         confirmMsg = 'Deleting snapshots ';
       }
-      if (confirm(confirmMsg + this.selectedSnapshots.join(',') + '. Are you sure?')) {
+      var snapNames = _.reduce(this.selectedSnapshots, function(str, snap) {
+        return str + snap.get('name') + ',';
+      }, '', this);
+      snapNames = snapNames.slice(0, snapNames.length-1);
+      var snapIds = _.reduce(this.selectedSnapshots, function(str, snap) {
+        return str + snap.id + ',';
+      }, '', this);
+      snapIds = snapIds.slice(0, snapIds.length-1);
+      var totalSize = _.reduce(this.selectedSnapshots, function(sum, snap) {
+        return sum + snap.get('e_usage');
+      }, 0, this);
+      var totalSizeStr = humanize.filesize(totalSize*1024);
+      if (confirm(confirmMsg + snapNames + ' deletes ' + totalSizeStr + ' of data. Are you sure?')) {
+        disableButton(button);
+        $.ajax({
+          url: "/api/shares/" + share_name + "/snapshots?id=" + snapIds,
+          type: "DELETE",
+          success: function() {
+            enableButton(button)
+            _this.$('[rel=tooltip]').tooltip('hide');
+            _this.selectedSnapshots = [];
+            _this.collection.fetch();
+          },
+          error: function(xhr, status, error) {
+            enableButton(button)
+            _this.$('[rel=tooltip]').tooltip('hide');
+            _this.selectedSnapshots = [];
+            _this.collection.fetch();
+          }
+        });
       }
     }
   },

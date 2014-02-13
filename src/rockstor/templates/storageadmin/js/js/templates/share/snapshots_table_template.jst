@@ -38,7 +38,7 @@
       <% snapshots.each(function(snapshot, index) { %>
         <tr>
           <td>
-            <input class="js-snapshot-select inline" type="checkbox" name="snapshot-select" data-name="<%= snapshot.get('name') %>" ></input>
+            <input class="js-snapshot-select inline" type="checkbox" name="snapshot-select" data-name="<%= snapshot.get('name') %>" data-id="<%= snapshot.get('id') %>"></input>
           </td>
           <td><i class="icon-camera"></i> <%= snapshot.get('name') %></td>
           <td><%= moment(snapshot.get("toc")).format(RS_DATE_FORMAT) %></td>

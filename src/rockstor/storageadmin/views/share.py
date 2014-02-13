@@ -165,6 +165,13 @@ class ShareView(GenericView):
                 e_msg = ('Share: %s does not exist' % sname)
                 handle_exception(Exception(e_msg), request)
 
+            if (Snapshot.objects.filter(share=share,
+                                        snap_type='replication').exists()):
+                e_msg = ('Share(%s) cannot be deleted as it has replication '
+                         'related snapshots. This Share cannot be deleted' %
+                         sname)
+                handle_exception(Exception(e_msg), request)
+
             if (NFSExport.objects.filter(share=share).exists()):
                 e_msg = ('Share(%s) cannot be deleted as it is exported via '
                          'nfs. Delete nfs exports and try again' % sname)
