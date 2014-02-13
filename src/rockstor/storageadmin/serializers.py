@@ -36,6 +36,9 @@ class PoolInfoSerializer(serializers.ModelSerializer):
         model = Pool
 
 class SnapshotSerializer(serializers.ModelSerializer):
+    r_usage = serializers.IntegerField(source='cur_rusage')
+    e_usage = serializers.IntegerField(source='cur_eusage')
+
     class Meta:
         model = Snapshot
 
@@ -62,7 +65,8 @@ class ShareSerializer(serializers.ModelSerializer):
     snapshots = SnapshotSerializer(source='snapshot_set')
     pool = PoolInfoSerializer(source='pool')
     nfs_exports = NFSExportSerializer(source='nfsexport_set')
-    usage = serializers.IntegerField(source='cur_usage')
+    r_usage = serializers.IntegerField(source='cur_rusage')
+    e_usage = serializers.IntegerField(source='cur_eusage')
 
     class Meta:
         model = Share

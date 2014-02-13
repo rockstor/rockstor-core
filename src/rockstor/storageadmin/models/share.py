@@ -39,10 +39,17 @@ class Share(models.Model):
     subvol_name = models.CharField(max_length=4096)
     replica = models.BooleanField(default=False)
 
-    def cur_usage(self, *args, **kwargs):
+    def cur_rusage(self, *args, **kwargs):
         try:
             su = ShareUsage.objects.filter(name=self.name).order_by('-ts')[0]
-            return su.usage
+            return su.r_usage
+        except:
+            return -1
+
+    def cur_eusage(self, *args, **kwargs):
+        try:
+            su = ShareUsage.objects.filter(name=self.name).order_by('-ts')[0]
+            return su.e_usage
         except:
             return -1
 

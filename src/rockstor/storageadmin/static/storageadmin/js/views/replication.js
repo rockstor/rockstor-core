@@ -26,8 +26,8 @@
 
 ReplicationView = RockstoreLayoutView.extend({
   events: {
-    'click .enable': 'enable',
-    'click .disable': 'disable'
+    'click .slider-start': 'enable',
+    'click .slider-stop': 'disable'
   },
 
   initialize: function() {
@@ -44,6 +44,10 @@ ReplicationView = RockstoreLayoutView.extend({
     this.replicaTrails = new ReplicaTrailCollection();
     this.replicaTrails.pageSize = RockStorGlobals.maxPageSize;
     this.dependencies.push(this.replicaTrails);
+    this.appliances = new ApplianceCollection();
+    this.dependencies.push(this.appliances);
+    this.shares = new ShareCollection();
+    this.dependencies.push(this.shares);
     this.replicaShareMap = {};
     this.replicaTrailMap = {};
     this.collection.on('reset', this.renderReplicas, this);
@@ -57,7 +61,14 @@ ReplicationView = RockstoreLayoutView.extend({
   renderReplicas: function() {
 
     var _this = this;
-    
+    this.otherAppliances =  this.appliances.filter(function(appliance) {
+      return appliance.get('current_appliance') == false; 
+    });
+    this.freeShares = this.shares.reject(function(share) {
+      return !_.isUndefined(_this.collection.find(function(replica) {
+        return replica.get('share') == share.get('name');
+      })) ;
+    });
     // remove existing tooltips
     if (this.$('[rel=tooltip]')) { 
       this.$('[rel=tooltip]').tooltip('hide');
@@ -82,47 +93,54 @@ ReplicationView = RockstoreLayoutView.extend({
       replicationService: this.replicationService,
       replicas: this.collection,
       replicaShareMap: this.replicaShareMap,
-      replicaTrailMap: this.replicaTrailMap
+      replicaTrailMap: this.replicaTrailMap,
+      otherAppliances: this.otherAppliances,
+      freeShares: this.freeShares
+
     }));
     this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
     this.$(".ph-pagination").html(this.paginationTemplate({
       collection: this.collection
     }));
+    this.$('#replicas-table').tablesorter();
+    this.$('input.replication-status').simpleSlider({
+      "theme": "volume",
+      allowedValues: [0,1],
+      snap: true 
+    });
+    this.$('input.replication-status').each(function(i, el) {
+      var slider = $(el).data('slider-object');
+      // disable track and dragger events to disable slider
+      slider.trackEvent = function(e) {};
+      slider.dragger.unbind('mousedown');
+    });
    
   },
 
   enable: function(event) {
     var _this = this;
-    if (event) { event.preventDefault(); }
-    var button = $(event.currentTarget);
-    if (buttonDisabled(button)) return false;
-    disableButton(button); 
     var replicaId = $(event.currentTarget).attr("data-replica-id");
+    if (this.getSliderVal(replicaId).toString() == "1") return; 
     $.ajax({
       url: '/api/sm/replicas/' + replicaId,
       type: 'PUT',
       dataType: 'json',
       data: {enabled: 'True'},
       success: function() {
-        enableButton(button);
         _this.collection.fetch({
           success: function() {
+            console.log('enabled ' + replicaId);
             _this.renderReplicas();
           }
         });
       },
       error: function(xhr, status, error) {
-        enableButton(button);
       }
     });
   },
 
   disable: function(event) {
     var _this = this;
-    if (event) { event.preventDefault(); }
-    var button = $(event.currentTarget);
-    if (buttonDisabled(button)) return false;
-    disableButton(button); 
     var replicaId = $(event.currentTarget).attr("data-replica-id");
     $.ajax({
       url: '/api/sm/replicas/' + replicaId,
@@ -130,9 +148,9 @@ ReplicationView = RockstoreLayoutView.extend({
       dataType: 'json',
       data: {enabled: 'False'},
       success: function() {
-        enableButton(button);
         _this.collection.fetch({
           success: function() {
+            console.log('disabled ' + replicaId);
             _this.renderReplicas();
           }
         });
@@ -141,7 +159,16 @@ ReplicationView = RockstoreLayoutView.extend({
         enableButton(button);
       }
     });
-  }
+  },
+
+  setSliderVal: function(serviceName, val) {
+    this.$('input[data-replica-id="' + serviceName + '"]').simpleSlider('setValue',val);
+  },
+
+  getSliderVal: function(serviceName) {
+    return this.$('input[data-replica-id="' + serviceName + '"]').data('slider-object').value;
+  },
+
 
 });
 

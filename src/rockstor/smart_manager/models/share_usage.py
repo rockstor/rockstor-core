@@ -20,9 +20,12 @@ from django.db import models
 
 
 class ShareUsage(models.Model):
-    """pool usage information as time series"""
+    """share and snapshot usage(KB) information as time series"""
     name = models.CharField(max_length=4096)
-    usage = models.IntegerField(default=0)
+    """referenced/shared usage in KB"""
+    r_usage = models.IntegerField(default=0)
+    """exclusive usage in KB"""
+    e_usage = models.IntegerField(default=0)
     ts = models.DateTimeField(auto_now=True, db_index=True)
     count = models.IntegerField(default=1)
 

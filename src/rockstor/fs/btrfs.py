@@ -22,8 +22,10 @@ system level helper methods to interact with the filesystem
 
 import re
 import time
+import os
 
-from system.osi import (run_command, create_tmp_dir, rm_tmp_dir)
+from system.osi import (run_command, create_tmp_dir, is_share_mounted,
+                        is_mounted)
 from system.exceptions import CommandException
 
 MKFS_BTRFS = '/sbin/mkfs.btrfs'
@@ -34,6 +36,8 @@ DD = '/bin/dd'
 DEFAULT_MNT_DIR = '/mnt2/'
 DF = '/bin/df'
 BTRFS_DEBUG_TREE = '/sbin/btrfs-debug-tree'
+RMDIR = '/bin/rmdir'
+
 
 def add_pool(name, data_raid, meta_raid, disks):
     """
@@ -90,9 +94,16 @@ def mount_root(pool_name, device):
     return root_pool_mnt
 
 def umount_root(root_pool_mnt):
-    umount_cmd = [UMOUNT, '-l', root_pool_mnt]
-    run_command(umount_cmd)
-    rm_tmp_dir(root_pool_mnt)
+    if (is_mounted(root_pool_mnt)):
+        run_command([UMOUNT, '-l', root_pool_mnt])
+        for i in range(10):
+            if (not is_mounted(root_pool_mnt)):
+                return run_command([RMDIR, root_pool_mnt])
+            time.sleep(1)
+        run_command([UMOUNT, '-f', root_pool_mnt])
+    if (os.path.exists(root_pool_mnt)):
+        return run_command([RMDIR, root_pool_mnt])
+    return True
 
 def add_share(pool_name, pool_device, share_name):
     """
@@ -110,14 +121,6 @@ def mount_share(share_name, pool_device, mnt_pt):
     create_tmp_dir(mnt_pt)
     mnt_cmd = [MOUNT, '-t', 'btrfs', '-o', subvol_str, pool_device, mnt_pt]
     return run_command(mnt_cmd)
-
-def is_share_mounted(sname, mnt_prefix=DEFAULT_MNT_DIR):
-    mnt_pt = mnt_prefix + sname
-    with open ('/proc/mounts') as pfo:
-        for line in pfo.readlines():
-            if (re.search(' ' + mnt_pt + ' ', line) is not None):
-                return True
-    return False
 
 def subvol_list_helper(mnt_pt):
     """
@@ -171,6 +174,15 @@ def remove_share(pool_name, pool_device, share_name):
     delete_cmd = [BTRFS, 'subvolume', 'delete', subvol_mnt_pt]
     run_command(delete_cmd)
 
+def remove_snap(pool_name, pool_device, share_name, snap_name):
+    full_name = ('%s/%s' % (share_name, snap_name))
+    if (is_share_mounted(full_name)):
+        umount_root('%s%s' % (DEFAULT_MNT_DIR, full_name))
+    root_pool_mnt = mount_root(pool_name, pool_device)
+    subvol_mnt_pt = ('%s/%s_%s' % (root_pool_mnt, share_name, snap_name))
+    return run_command([BTRFS, 'subvolume', 'delete', subvol_mnt_pt])
+
+
 def add_snap(pool_name, pool_device, share_name, snap_name,
              share_prepend=True):
     """
@@ -182,7 +194,9 @@ def add_snap(pool_name, pool_device, share_name, snap_name,
     snap_full_path = ('%s/%s' % (root_pool_mnt, snap_name))
     if (share_prepend is True):
         snap_full_path = ('%s/%s_%s' % (root_pool_mnt, share_name, snap_name))
-    snap_cmd = [BTRFS, 'subvolume', 'snapshot', share_full_path,
+    #snapshot -r for replication. snapshots must be readonly for btrfs
+    #send/recv to work.
+    snap_cmd = [BTRFS, 'subvolume', 'snapshot', '-r', share_full_path,
                 snap_full_path]
     try:
         run_command(snap_cmd)
@@ -191,13 +205,6 @@ def add_snap(pool_name, pool_device, share_name, snap_name,
             #rc == 19 is due to the slow kernel cleanup thread. snapshot gets
             #created just fine. lookup is delayed arbitrarily.
             raise ce
-
-def remove_snap(pool_name, pool_device, share_name, snap_name):
-    """
-    remove a snapshot. same as removing a share
-    """
-    name = ('%s_%s' % (share_name, snap_name))
-    return remove_share(pool_name, pool_device, name)
 
 def rollback_snap(snap_name, sname, subvol_name, pool_name, pool_device):
     """
@@ -247,7 +254,7 @@ def share_usage(pool_name, pool_device, share_id):
                         share_id)
     return usage
 
-def shares_usage(pool_name, pool_device, share_map):
+def shares_usage(pool_name, pool_device, share_map, snap_map):
     #don't mount the pool if at least one share in the map is mounted.
     usage_map = {}
     mnt_pt = None
@@ -259,11 +266,13 @@ def shares_usage(pool_name, pool_device, share_map):
         mnt_pt = mount_root(pool_name, '/dev/' + pool_device)
     cmd = [BTRFS, 'qgroup', 'show', mnt_pt]
     out, err, rc = run_command(cmd)
+    combined_map = dict(share_map, **snap_map)
     for line in out:
         fields = line.split()
-        if (len(fields) > 0 and fields[0] in share_map.keys()):
-            usage = int(fields[-2]) / 1024 # usage in KB
-            usage_map[share_map[fields[0]]] = usage
+        if (len(fields) > 0 and fields[0] in combined_map):
+            r_usage = int(fields[-2]) / 1024 # referenced usage in KB
+            e_usage = int(fields[-1]) / 1024 # exclusive usage in KB
+            usage_map[combined_map[fields[0]]] = (r_usage, e_usage)
     return usage_map
 
 def pool_usage(pool_device):

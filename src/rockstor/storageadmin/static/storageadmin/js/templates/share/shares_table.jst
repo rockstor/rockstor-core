@@ -15,7 +15,7 @@
           <td><a href="#shares/<%= share.get('name') %>"><i class="icon-folder-open"></i> <%= share.get('name') %></a></td>
           <td><%= humanize.filesize(share.get('size')*1024) %></td>
           <td><%= share.get('pool').name %></td>
-          <td><%= humanize.filesize(share.get('usage')*1024)%></td>
+          <td><%= humanize.filesize(share.get('r_usage')*1024)%></td>
           <td><a id="delete_share_<%= share.get('name') %>" data-name="<%= share.get('name') %>" data-action="delete" data-pool="<%= share.get('pool').name %>" data-size="<%= share.get('size')*1024 %>" ><i class="icon-trash"></i></a></td>
 
         </tr>

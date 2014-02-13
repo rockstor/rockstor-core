@@ -47,6 +47,7 @@ ROUTE = '/sbin/route'
 SYSTEMCTL = '/usr/bin/systemctl'
 YUM = '/usr/bin/yum'
 AT = '/usr/bin/at'
+DEFAULT_MNT_DIR = '/mnt2/'
 
 import logging
 logger = logging.getLogger(__name__)
@@ -109,7 +110,8 @@ def root_disk():
     with open('/proc/mounts') as fo:
         for line in fo.readlines():
             fields = line.split()
-            if (fields[1] == '/' and fields[2] == 'btrfs'):
+            if (fields[1] == '/' and
+                (fields[2] == 'ext4' or fields[2] == 'btrfs')):
                 return fields[0][5:-1]
     msg = ('root filesystem is not BTRFS. During Rockstor installation, '
            'you must select BTRFS instead of LVM and other options for '
@@ -159,10 +161,22 @@ def nfs4_mount_teardown(export_pt):
     """
     reverse of setup. cleanup when there are no more exports
     """
+    if (is_mounted(export_pt)):
+        run_command([UMOUNT, '-l', export_pt])
+        for i in range(10):
+            if (not is_mounted(export_pt)):
+                return run_command([RMDIR, export_pt])
+            time.sleep(1)
+        run_command([UMOUNT, '-f', export_pt])
     if (os.path.exists(export_pt)):
-        if (os.path.ismount(export_pt)):
-            run_command([UMOUNT, export_pt])
         return run_command([RMDIR, export_pt])
+    return True
+
+def bind_mount(mnt_pt, export_pt):
+    if (not is_mounted(export_pt)):
+        run_command([MKDIR, '-p', export_pt])
+        run_command([CHMOD, '-R', '777', export_pt])
+        return run_command([MOUNT, '--bind', mnt_pt, export_pt])
     return True
 
 def refresh_nfs_exports(exports):
@@ -187,10 +201,8 @@ def refresh_nfs_exports(exports):
                     shares.append(e)
                 continue
 
-            if (not os.path.ismount(e)):
-                run_command([MKDIR, '-p', e])
-                run_command([CHMOD, '-R', '777', e])
-                run_command([MOUNT, '--bind', exports[e][0]['mnt_pt'], e])
+            if (not is_mounted(e)):
+                bind_mount(exports[e][0]['mnt_pt'], e)
             client_str = ''
             for c in exports[e]:
                 client_str = ('%s%s(%s) ' % (client_str, c['client_str'],
@@ -479,3 +491,13 @@ def sethostname(ip, hostname):
     with open('/etc/hostname', 'w') as hnfo:
         hnfo.write('%s\n' % hostname)
 
+def is_share_mounted(sname, mnt_prefix=DEFAULT_MNT_DIR):
+    mnt_pt = mnt_prefix + sname
+    return is_mounted(mnt_pt)
+
+def is_mounted(mnt_pt):
+    with open ('/proc/mounts') as pfo:
+        for line in pfo.readlines():
+            if (re.search(' ' + mnt_pt + ' ', line) is not None):
+                return True
+    return False

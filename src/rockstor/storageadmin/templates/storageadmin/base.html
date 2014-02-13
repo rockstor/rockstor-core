@@ -30,10 +30,11 @@
     <link href="/static/storageadmin/css/datepicker.css" rel="stylesheet">
     <link href="/static/storageadmin/css/bootstrap-timepicker.css" rel="stylesheet">
     <link href="/static/storageadmin/css/style.css" rel="stylesheet">
+    <link href="/static/storageadmin/css/font-awesome-4.0.3/css/font-awesome.min.css" rel="stylesheet">
     {% for plugin in installed_plugins %}
     <link href="/static/{{ plugin.plugin_meta.name }}/css/{{ plugin.plugin_meta.name }}.css" rel="stylesheet">
     {% endfor %} 
-
+    
     <!--
     <link href="/css/bootstrap-responsive.css" rel="stylesheet">
     -->
@@ -120,7 +121,6 @@
     </div> <!-- navbar -->
     <div id="appliance-breadcrumb">
       <a id="appliance-name" href="#"></a>
-      &nbsp;&nbsp;
       <div id="appliance-loadavg"></div>
     </div>
 
@@ -187,8 +187,9 @@
       RockStorGlobals.setup_user = false;
       {% endif %}
       RockStorGlobals.pageSize = {{ page_size }};
+      RockStorGlobals.replica_data_port = {{ replica_data_port }};
+      RockStorGlobals.replica_meta_port = {{ replica_meta_port }};
       RockStorGlobals.installedPlugins = {{ installed_plugins_json|safe }};
-
     </script>
   </body>
 </html>

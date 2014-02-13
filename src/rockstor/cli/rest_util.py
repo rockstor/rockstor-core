@@ -44,25 +44,37 @@ def api_call(url, data=None, calltype='get', headers=None, save_error=True):
     call = getattr(requests, calltype)
     try:
         if (headers is not None):
-            r = call(url, verify=False, params=auth_params, data=data,
-                     headers=headers)
+            if (headers['content-type'] == 'application/json'):
+                r = call(url, verify=False, params=auth_params,
+                         data=json.dumps(data), headers=headers)
+            else:
+                r = call(url, verify=False, params=auth_params, data=data,
+                         headers=headers)
         else:
             r = call(url, verify=False, params=auth_params, data=data)
     except requests.exceptions.ConnectionError:
         print('Error connecting to Rockstor. Is it running?')
         return {}
 
+    if (r.status_code == 404):
+        msg = ('Invalid api end point: %s' % url)
+        raise RockStorAPIException(detail=msg)
+
     if (r.status_code != 200):
-        error_d = json.loads(r.text)
-        if ('detail' in error_d):
-            raise RockStorAPIException(detail=error_d['detail'])
-        if (settings.DEBUG is True and save_error is True):
-            cur_time = str(int(time.time()))
-            err_file = '/tmp/err-%s.html' % cur_time
-            with open(err_file, 'w') as efo:
-                for line in r.text.split('\n'):
-                    efo.write('%s\n' % line)
-            print('Error detail is saved at %s' % err_file)
+        try:
+            error_d = json.loads(r.text)
+            if ('detail' in error_d):
+                raise RockStorAPIException(detail=error_d['detail'])
+
+            if (settings.DEBUG is True and save_error is True):
+                cur_time = str(int(time.time()))
+                err_file = '/tmp/err-%s.html' % cur_time
+                with open(err_file, 'w') as efo:
+                    for line in r.text.split('\n'):
+                        efo.write('%s\n' % line)
+                    print('Error detail is saved at %s' % err_file)
+        except ValueError:
+            raise RockStorAPIException(detail='Internal Server Error')
         r.raise_for_status()
 
     try:

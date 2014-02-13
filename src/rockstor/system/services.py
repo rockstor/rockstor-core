@@ -82,8 +82,10 @@ def service_status(service_name):
     elif (service_name == 'replication'):
         return superctl(service_name, 'status')
     elif (service_name == 'smb'):
-        run_command([SYSTEMCTL_BIN, 'status', 'smb'])
-        return run_command([SYSTEMCTL_BIN, 'status', 'nmb'])
+        out, err, rc = run_command([SYSTEMCTL_BIN, 'status', 'smb'], throw=False)
+        if (rc != 0):
+            return out, err, rc
+        return run_command([SYSTEMCTL_BIN, 'status', 'nmb'], throw=False)
     return init_service_op(service_name, 'status', throw=False)
 
 def winbind_input(config, command):

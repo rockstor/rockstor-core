@@ -19,9 +19,8 @@
  */
 </script>
 <div class="share-messages"></div>
-<h3><%= share.get('name') %></h3>
-
-<div id="ph-share-info">
+<div id="details-header">
+  <span class="h3">Share: <%= share.get('name') %></span>
   <div class="pull-right">
     <% if (snapshots.isEmpty()) { %>
       <a id="js-rollback" class="btn btn-primary disabled" title="At least one snapshot must be created to rollback to." href="#shares/<%= share.get('name') %>/rollback"><i class="icon-repeat icon-white"></i> Rollback</a>
@@ -31,33 +30,30 @@
     <a id="js-clone" class="btn btn-primary" href="#shares/<%= share.get('name') %>/create-clone"><i class="icon-book icon-white"></i> Clone</a>
     <button id="js-delete" class="btn btn-danger" type="button" type="button"><i class="icon-trash icon-white"></i> Delete </button>
   </div>
-  Created on <%= moment(share.get("toc")).format(RS_DATE_FORMAT) %> <br>
-  Pool: <a href="#pools/<%= share.get('pool').name %>"><%= share.get('pool').name %></a> 
 </div>
-<br>
 
-<ul class="nav nav-tabs">
+<ul class="css-tabs">
   <li class="active"><a href="#usage" data-toggle="tab">Usage</a></li>
-  <li><a href="#access-control" data-toggle="tab">Access control</a></li>
-  <li><a href="#snapshots" data-toggle="tab">Snapshots</a></li>
-  <li><a href="#nfs" data-toggle="tab">NFS</a></li>
-  <li><a href="#smb" data-toggle="tab">Samba</a></li>
+  <li><a href="#" data-toggle="tab">Access control</a></li>
+  <li><a href="#" data-toggle="tab">Snapshots</a></li>
+  <li><a href="#" data-toggle="tab">NFS</a></li>
+  <li><a href="#" data-toggle="tab">Samba</a></li>
 </ul>
 
-<div class="tab-content">
-  <div class="tab-pane active" id="usage">
+<div class="css-panes">
+  <div class="" id="usage">
     <div id="ph-share-usage"></div>
   </div>
-  <div class="tab-pane" id="access-control">
+  <div class="" id="access-control">
     <div id="ph-access-control"></div>
   </div>
-  <div class="tab-pane" id="snapshots">
+  <div class="" id="snapshots">
     <div id="ph-snapshots"></div> 
   </div>
-  <div class="tab-pane" id="nfs">
+  <div class="" id="nfs">
     <div id="ph-nfs-exports"></div> 
   </div>
-  <div class="tab-pane" id="smb">
+  <div class="" id="smb">
     <div id="ph-smb-shares"></div> 
   </div>
 </div>

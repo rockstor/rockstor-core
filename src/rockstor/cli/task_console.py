@@ -19,7 +19,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from base_console import BaseConsole
 from rest_util import api_call
 import time
-import json
 
 
 class TaskConsole(BaseConsole):
@@ -74,7 +73,7 @@ class TaskConsole(BaseConsole):
                           'frequency': fields[2],}
             print input_data
             headers = {'content-type': 'application/json'}
-            snap_info = api_call(self.baseurl, data=json.dumps(input_data),
+            snap_info = api_call(self.baseurl, data=input_data,
                                  calltype='post', headers=headers)
             print snap_info
         else:
@@ -95,7 +94,7 @@ class TaskConsole(BaseConsole):
                       'frequency': fields[1],}
         print input_data
         headers = {'content-type': 'application/json'}
-        scrub_info = api_call(self.baseurl, data=json.dumps(input_data),
+        scrub_info = api_call(self.baseurl, data=input_data,
                               calltype='post', headers=headers)
         print scrub_info
 

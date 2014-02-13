@@ -58,6 +58,8 @@ var AppRouter = Backbone.Router.extend({
     "probeDetail/:probeName/:probeId": "showProbeDetail",
     "replication": "showReplication",
     "replication/:replicaId/trails": "showReplicaTrails",
+    "replication-receive": "showReplicationReceives",
+    "replication-receive/:replicaShareId/trails": "showReceiveTrails",
     "add_replication_task": "addReplicationTask",
     "nfs-exports": "showNFSExports",
     "add-nfs-export": "addNFSExport",
@@ -73,6 +75,8 @@ var AppRouter = Backbone.Router.extend({
     "sftp": "showSFTP",
     "add-sftp-share": "addSFTPShare",
     "plugins": "showPlugins",
+    "appliances": "showAppliances",
+    "add-appliance": "addAppliance",
     "404": "handle404",
     "500": "handle500",
     "*path": "showHome"
@@ -364,6 +368,24 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').append(this.currentLayout.render().el);
   },
 
+  showReplicationReceives: function() {
+    this.renderSidebar("storage", "replication-receive");
+    this.cleanup();
+    this.currentLayout = new ReplicationReceiveView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  showReceiveTrails: function(replicaShareId) {
+    this.renderSidebar("storage", "replication-receive");
+    this.cleanup();
+    this.currentLayout = new ReplicaReceiveTrailsView({
+      replicaShareId: replicaShareId
+    });
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
   showNFSExports: function() {
     this.renderSidebar('storage', 'nfs-exports');
     this.cleanup();
@@ -518,6 +540,22 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').append(this.currentLayout.render().el);
   },
 
+  showAppliances: function() {
+    this.renderSidebar("system", "appliances");
+    this.cleanup();
+    this.currentLayout = new AppliancesView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  addAppliance: function() {
+    this.renderSidebar("system", "appliances");
+    this.cleanup();
+    this.currentLayout = new AddApplianceView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
   handle404: function() {
     this.cleanup();
     this.currentLayout = new Handle404View();
@@ -556,7 +594,8 @@ $(document).ready(function() {
   Backbone.history.start();
   $('#appliance-name').click(function(event) {
     event.preventDefault();
-    showApplianceList();
+    //showApplianceList();
+    app_router.navigate('appliances', {trigger: true});
   });
  
   // Global ajax error handler 

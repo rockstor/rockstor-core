@@ -127,10 +127,18 @@ class ShareView(GenericView):
                          pool_name)
                 handle_exception(Exception(e_msg), request)
 
+            replica = False
+            if ('replica' in request.DATA):
+                replica = request.DATA['replica']
+                if (type(replica) != bool):
+                    e_msg = ('replica must be a boolean, not %s' %
+                             type(replica))
+                    handle_exception(Exception(e_msg), request)
+
             add_share(pool_name, disk.name, sname)
             qgroup_id = self._update_quota(pool_name, disk.name, sname, size)
             s = Share(pool=pool, qgroup=qgroup_id, name=sname, size=size,
-                      subvol_name=sname)
+                      subvol_name=sname, replica=replica)
             s.save()
             return Response(ShareSerializer(s).data)
         except RockStorAPIException:
@@ -155,6 +163,13 @@ class ShareView(GenericView):
                 share = Share.objects.get(name=sname)
             except:
                 e_msg = ('Share: %s does not exist' % sname)
+                handle_exception(Exception(e_msg), request)
+
+            if (Snapshot.objects.filter(share=share,
+                                        snap_type='replication').exists()):
+                e_msg = ('Share(%s) cannot be deleted as it has replication '
+                         'related snapshots. This Share cannot be deleted' %
+                         sname)
                 handle_exception(Exception(e_msg), request)
 
             if (NFSExport.objects.filter(share=share).exists()):

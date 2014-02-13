@@ -46,7 +46,7 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
 
     // create models
     this.share = new Share({shareName: this.shareName});
-    this.snapshots = new SnapshotCollection();
+    this.snapshots = new SnapshotCollection([],{snapType: 'admin'});
     this.snapshots.setUrl(this.shareName);
 
     this.users = new UserCollection();
@@ -125,7 +125,7 @@ ShareDetailsLayoutView = RockstoreLayoutView.extend({
     this.$('#ph-smb-shares').append(this.subviews['smb-shares'].render().el);
     //this.$('#ph-iscsi-target').append(this.subviews['iscsi-target'].render().el);
     //this.$('#ph-button-bar').append(this.subviews['button-bar'].render().el);
-
+    this.$("ul.css-tabs").tabs("div.css-panes > div");
     this.attachActions();
   },
 

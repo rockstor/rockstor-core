@@ -1787,3 +1787,75 @@ input[type="radio"].selectedRoot {
   height: 300px;
 }
 
+/* font-awesome styling */
+a i.fa { color: #000; }
+.nav > li > a.selected i.fa { color: #fff; }
+.subnav > ul > li > a.selected i.fa { color: #fff; }
+
+#details-header {
+  margin-bottom: 12px;
+  padding: 8px;
+  background: none repeat scroll 0% 0% rgb(238, 238, 238);
+  border-radius: 4px 4px 0px 0px;
+}
+
+/* jquerytools tabs */
+
+/* root element for tabs  */
+ul.css-tabs {
+    margin:0 !important;
+    padding:0;
+    height:30px;
+    border-bottom:1px solid #eee;
+}
+
+/* single tab */
+ul.css-tabs li {
+    float:left;
+    padding:0;
+    margin:0;
+    list-style-type:none;
+}
+
+/* link inside the tab. uses a background image */
+ul.css-tabs a {
+    float:left;
+    display:block;
+    padding:5px 30px;
+    text-decoration:none;
+    border:1px solid #bbb;
+    border-bottom:0px;
+    height:18px;
+    background-color:#ccc;
+    margin-right:2px;
+    position:relative;
+    top:1px;
+    outline:0;
+    border-radius:4px 4px 0 0;
+}
+
+ul.css-tabs a:hover {
+    background-color:#F7F7F7;
+    color:#333;
+}
+
+/* selected tab */
+ul.css-tabs a.current {
+    background-color:#fff;
+    border-bottom:1px solid #fff;
+    color:#000;
+    cursor:default;
+}
+
+
+/* tab pane */
+.css-panes > div {
+    display:none;
+    border:1px solid #bbb;
+    border-width:0 1px 1px 1px;
+    min-height:150px;
+    padding:15px 20px;
+}
+
+
+

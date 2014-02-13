@@ -26,4 +26,9 @@
 <% } else { %>
   <li><a href="#version"><i class="icon-arrow-up"></i> Software Update</span></a></li>
   <% } %>
+  <% if (selected == "appliances") { %>
+    <li><a href="#appliances" class="selected"><i class="fa fa-desktop"></i> Appliances</span></a></li>
+<% } else { %>
+  <li><a href="#appliances"><i class="fa fa-desktop"></i> Appliances</span></a></li>
+  <% } %>
 </ul>
