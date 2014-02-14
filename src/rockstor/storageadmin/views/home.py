@@ -26,13 +26,14 @@ from django.shortcuts import render_to_response
 from django.template.loader import get_template
 from django.contrib.auth import (authenticate, login, logout)
 
-from storageadmin.models import Appliance, Setup
-from storageadmin.serializers import SetupSerializer
+from storageadmin.models import Appliance, Setup, InstalledPlugin
+from storageadmin.serializers import SetupSerializer, InstalledPluginSerializer
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect
 from django.contrib import messages
 from django.conf import settings
 from rest_framework.renderers import JSONRenderer
+import json
 
 import logging
 logger = logging.getLogger(__name__)
@@ -62,12 +63,13 @@ def home(request):
         pass
     #setup = JSONRenderer().render(SetupSerializer(Setup.objects.all()[0]).data)
     setup = Setup.objects.all()[0]
-
     context = {
         'request': request,
         'current_appliance': current_appliance,
         'setup_user': setup.setup_user,
         'page_size': settings.PAGINATION['page_size'],
+        'installed_plugins': InstalledPlugin.objects.all(),
+        'installed_plugins_json': JSONRenderer().render(InstalledPluginSerializer(InstalledPlugin.objects.all()).data),
         'replica_data_port': settings.REPLICA_DATA_PORT,
         'replica_meta_port': settings.REPLICA_META_PORT,
     }

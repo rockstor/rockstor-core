@@ -1,0 +1,24 @@
+<% if (!collection.isEmpty()) { %>
+  <table id="policy-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of pools">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Source IP</th>
+        <th>Source path</th>
+        <th>destination share</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <% collection.each(function(policy) { %>
+      <td><%= policy.get('name') %></td>
+      <td><%= policy.get('source_ip') %></td>
+      <td><%= policy.get('source_path') %></td>
+      <td><%= policy.get('dest_share') %></td>
+      <td></td>
+    <% }); %>
+  </table>
+  <div class="pagination-ph">
+<% } else { %>
+  <div class="alert"><h4>No policies have been created.</h4></div>
+<% } %>
+

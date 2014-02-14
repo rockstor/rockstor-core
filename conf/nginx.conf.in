@@ -61,14 +61,8 @@ http {
 			access_log   off;
 			expires      30d;
 		}
-		location /css  {
-			root ${buildout:directory}/src/rockstor/templates/storageadmin/;
-		}
-		location /js  {
+		location /static  {
 			root ${buildout:directory}/;
-		}
-		location /img  {
-			root ${buildout:directory}/src/rockstor/templates/storageadmin/;
 		}
 		location /logs {
 			root ${buildout:directory}/src/rockstor/;

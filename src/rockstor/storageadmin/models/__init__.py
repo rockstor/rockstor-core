@@ -36,3 +36,5 @@ from user import User
 from scrub import PoolScrub
 from setup import Setup
 from sftp import SFTP
+from plugin import Plugin
+from installed_plugin import InstalledPlugin
