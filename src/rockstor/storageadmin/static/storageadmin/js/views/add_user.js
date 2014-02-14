@@ -80,9 +80,11 @@ AddUserView = RockstoreLayoutView.extend({
           },
           {
             success: function(model, response, options) {
+              _this.$('#user-create-form :input').tooltip('hide');
               app_router.navigate("users", {trigger: true});
             },
             error: function(model, xhr, options) {
+              _this.$('#user-create-form :input').tooltip('hide');
             }
           }
         );
