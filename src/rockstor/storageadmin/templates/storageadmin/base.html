@@ -33,8 +33,8 @@
     <link href="/static/storageadmin/css/font-awesome-4.0.3/css/font-awesome.min.css" rel="stylesheet">
     {% for plugin in installed_plugins %}
     <link href="/static/{{ plugin.plugin_meta.name }}/css/{{ plugin.plugin_meta.name }}.css" rel="stylesheet">
-    {% endfor %} 
-    
+    {% endfor %}
+
     <!--
     <link href="/css/bootstrap-responsive.css" rel="stylesheet">
     -->
@@ -102,10 +102,10 @@
     <script src="/static/js/lib/humanize.js"></script>
     <script src="/static/js/lib/moment.min.js"></script>
     <script src="/static/js/lib/simple-slider.min.js"></script>
-    <script src="/static/storageadmin/js/application.js"></script>
+    <script src="/static/storageadmin/js/storageadmin.js"></script>
     {% for plugin in installed_plugins %}
     <script src="/static/{{ plugin.plugin_meta.name }}/js/{{ plugin.plugin_meta.name }}_plugin.js"></script>
-    {% endfor %} 
+    {% endfor %}
   </head>
   <body>
 

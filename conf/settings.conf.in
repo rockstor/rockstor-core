@@ -51,7 +51,7 @@ DATABASES = {
 }
 
 DATABASE_ROUTERS = ['smart_manager.db_router.SmartManagerDBRouter',
-                 'backup.db_router.BackupDBRouter']
+		    'backup.db_router.BackupDBRouter',]
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -173,7 +173,7 @@ PIPELINE_JS_COMPRESSOR = None
 PIPELINE_DISABLE_WRAPPER = True
 
 PIPELINE_JS = {
-    'application': {
+    'storageadmin': {
         'source_filenames': (
             'storageadmin/js/license.js',
             'storageadmin/js/templates/**/*.jst',
@@ -249,7 +249,7 @@ PIPELINE_JS = {
             'storageadmin/js/views/version.js',
             'storageadmin/js/views/plugins.js',
             ),
-        'output_filename': 'storageadmin/js/application.js'
+        'output_filename': 'storageadmin/js/storageadmin.js'
         },
     'backup_plugin': {
         'source_filenames': (
