@@ -232,6 +232,8 @@ PIPELINE_JS = {
             'storageadmin/js/views/run_probe.js',
             'storageadmin/js/views/replication.js',
             'storageadmin/js/views/replica_trails.js',
+            'storageadmin/js/views/replication_receive.js',
+            'storageadmin/js/views/replica_receive_trails.js',
             'storageadmin/js/views/add_replication_task.js',
             'storageadmin/js/views/nfs_exports.js',
             'storageadmin/js/views/samba.js',
