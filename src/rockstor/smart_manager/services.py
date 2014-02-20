@@ -36,6 +36,8 @@ from django.conf import settings
 from django.core.serializers import serialize
 from datetime import datetime
 from django.utils.timezone import utc
+from django.core.exceptions import ObjectDoesNotExist
+
 
 class ServiceMonitor(Process):
 
@@ -65,11 +67,8 @@ class ServiceMonitor(Process):
                     if (first_loop is not True):
                         try:
                             sso = ServiceStatus.objects.filter(service=s).latest('id')
-                        except Exception, e:
-                            e_msg = ('Error getting the last status object '
-                                     'for  service(%s)' % s.name)
-                            logger.error(e_msg)
-                            logger.exception(e)
+                        except ObjectDoesNotExist:
+                            pass
 
                     status = False
                     try:
