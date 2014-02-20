@@ -16,11 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from django.conf.urls.defaults import patterns, include, url
+from django.conf.urls import patterns, include, url
 from storageadmin.views import (SetupWizardView, LoginView,
                                 SupportView, DashboardConfigView,
                                 SetupUserView, NFSExportGroupView,
-                                SambaView, SFTPView, PluginView, 
+                                SambaView, SFTPView, PluginView,
                                 InstalledPluginView)
 import os.path
 

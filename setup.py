@@ -41,7 +41,7 @@ setup(
         },
 
   install_requires=[
-    'django == 1.4.3',
+    'django == 1.6.2',
     'distribute >= 0.6.35',
     'URLObject == 2.1.1',
     'djangorestframework == 2.1.15',
