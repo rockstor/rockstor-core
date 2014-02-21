@@ -48,6 +48,7 @@ SYSTEMCTL = '/usr/bin/systemctl'
 YUM = '/usr/bin/yum'
 AT = '/usr/bin/at'
 DEFAULT_MNT_DIR = '/mnt2/'
+RPM = '/usr/bin/rpm'
 
 import logging
 logger = logging.getLogger(__name__)
@@ -432,6 +433,14 @@ def update_issue(ipaddr):
     with open('/etc/issue', 'a') as ifo:
         ifo.write(msg)
 
+def current_version():
+    out, err, rc = run_command([RPM, '-qi', 'rockstor'], throw=False)
+    if (rc != 0):
+        return '0.0-0'
+    return ('%s-%s' % (out[1].split(':').strip(),
+                       out[2].split(':').strip()))
+
+    return
 def update_check():
     out, err, rc = run_command([YUM, 'update', 'rockstor', '--changelog',
                                 '--assumeno'], throw=False)

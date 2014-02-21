@@ -26,7 +26,8 @@ from rest_framework.authentication import (BasicAuthentication,
                                            SessionAuthentication)
 from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
-from system.osi import (uptime, refresh_nfs_exports, update_check, update_run)
+from system.osi import (uptime, refresh_nfs_exports, update_check,
+                        update_run, current_version)
 from fs.btrfs import (is_share_mounted, mount_share)
 from system.ssh import (sftp_mount_map, sftp_mount)
 from system.services import (systemctl, join_winbind_domain, ads_join_status)
@@ -48,7 +49,6 @@ class CommandView(APIView):
 
     def post(self, request, command):
         if (command == 'bootstrap'):
-            logger.info('bootstrapping...')
             try:
                 for share in Share.objects.all():
                     if (not is_share_mounted(share.name)):
@@ -122,6 +122,15 @@ class CommandView(APIView):
                 return Response('Done')
             except Exception, e:
                 e_msg = ('Update failed due to a system error')
+                logger.exception(e)
+                handle_exception(Exception(e_msg), request)
+
+        elif (command == 'current-version'):
+            try:
+                return Response(current_version())
+            except Exception, e:
+                e_msg = ('Unable to check current version due to a system'
+                         ' error')
                 logger.exception(e)
                 handle_exception(Exception(e_msg), request)
 
