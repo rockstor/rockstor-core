@@ -73,52 +73,49 @@
   </head>
   <body>
 
-    <div class="navbar navbar-inverse navbar-fixed-top">
-      <div class="navbar-inner">
-        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
-        <div id="logo">
-          <object data="/img/rockstor_logo_website_150x50.svg" width="100px"
-            type="image/svg+xml"></object>
-        </div>
-        <div id="navbar-links"></div>
-      </div> <!-- navbar-inner -->
-    </div> <!-- navbar -->
     <div id="wrapper1">
       <div id="wrapper2">
 
         <div id="logincontent">
           <div class="row-fluid">
-            <div class="span8">
-              <span class="h1">Rockstor</span>
-              <h2>Store Smartly.</h2>
-            </div>
-            <div class="span4">
-              <form id="login_form" name="aform" class="form-horizontal" method="POST" action="/login_submit">
-                <div id="login-box">
-                  {% if messages %}
-                  <div class="alert alert-error">
-                    <ul class="messages">
-                      {% for message in messages %}
-                      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-                      {% endfor %}
-                    </ul>
-                  </div>
-                  {% endif %}
-                  <div class="control-group">
-                    <label>Username</label>
-                    <input type="text" id="username" name="login" placeholder="Username" >
-                  </div>
-                  <div class="control-group">
-                    <label>Password</label>
-                    <input type="password" id="password" name="password" placeholder="Password">
-                  </div>
-                  <div class="control-group">
-                    <button type="submit" id="sign_in" class="btn btn-primary">Sign in</button>
-                  </div>
+            <div class="span12">
+              <div style="margin: auto; width: 50%;">
+                <object data="/static/storageadmin/img/rockstor_logo_website_150x50.svg" width="100px" type="image/svg+xml"></object>
+                <br> 
+                <span class="h1">Rockstor: Store Smartly</span>
+                <form id="login_form" name="aform" method="POST" action="/login_submit">
+                  <div id="login-box">
+                    {% if messages %}
+                    <div class="alert alert-error">
+                      <ul class="messages">
+                        {% for message in messages %}
+                        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                        {% endfor %}
+                      </ul>
+                    </div>
+                    {% endif %}
+                    <div class="control-group">
+                      <label class="control-label" for="username">Username</label>
+                      <div class="controls">
+                        <input type="text" id="username" name="login" placeholder="Username" >
+                      </div>
+                    </div>
+                    <div class="control-group">
+                      <label class="control-label" for="password">Password</label>
+                      <div class="controls">
+                        <input type="password" id="password" name="password" placeholder="Password">
+                      </div>
+                    </div>
+                    <div class="control-group">
+                      <div class="controls">
+                        <button type="submit" id="sign_in" class="btn btn-primary">Sign in</button>
+                      </div>
+                    </div>
 
-                </div>
-                {% csrf_token %}
-              </form>
+                  </div>
+                  {% csrf_token %}
+                </form>
+              </div>
             </div>
           </div>
         </div> <!-- logincontent -->
