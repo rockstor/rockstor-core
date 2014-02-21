@@ -94,7 +94,8 @@ AddShareView = Backbone.View.extend({
                 data: {sname: share_name, "pool": pool_name, "size": size},
                 success: function() {
                   enableButton(button);
-                  app_router.navigate('shares', {trigger: true}) 
+                  _this.$('#add-share-form :input').tooltip('hide');
+                  app_router.navigate('shares', {trigger: true})
                 },
                 error: function(xhr, status, error) {
                   enableButton(button);
@@ -109,7 +110,8 @@ AddShareView = Backbone.View.extend({
 
   cancel: function(event) {
     event.preventDefault();
-    app_router.navigate('shares', {trigger: true}) 
+    _this.$('#add-share-form :input').tooltip('hide');
+    app_router.navigate('shares', {trigger: true})
   }
 
 });
