@@ -79,8 +79,8 @@ class ReplicaScheduler(Process):
             except:
                 msg = ('Failed to get replication interface or uuid. '
                        'Aborting.')
-                logger.error(msg)
-                break
+                return logger.error(msg)
+
 
         ctx = zmq.Context()
         #fs diffs are sent via this publisher.
