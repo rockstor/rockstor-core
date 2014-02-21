@@ -437,8 +437,8 @@ def current_version():
     out, err, rc = run_command([RPM, '-qi', 'rockstor'], throw=False)
     if (rc != 0):
         return '0.0-0'
-    return ('%s-%s' % (out[1].split(':').strip(),
-                       out[2].split(':').strip()))
+    return ('%s-%s' % (out[1].split(':')[-1].strip(),
+                       out[2].split(':')[-1].strip()))
 
     return
 def update_check():
