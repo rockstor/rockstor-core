@@ -79,9 +79,7 @@
         <div id="logincontent">
           <div class="row-fluid">
             <div class="span12">
-              <div style="margin: auto; width: 50%;">
-                <object data="/static/storageadmin/img/rockstor_logo_website_150x50.svg" width="100px" type="image/svg+xml"></object>
-                <br> 
+              <div style="margin: auto; width: 300px;">
                 <span class="h1">Rockstor: Store Smartly</span>
                 <form id="login_form" name="aform" method="POST" action="/login_submit">
                   <div id="login-box">
@@ -109,6 +107,7 @@
                     <div class="control-group">
                       <div class="controls">
                         <button type="submit" id="sign_in" class="btn btn-primary">Sign in</button>
+                        <a href="#" id="forgot-pw" class="btn btn-primary">Forgot password</a>
                       </div>
                     </div>
 
@@ -121,10 +120,23 @@
         </div> <!-- logincontent -->
       </div>
     </div>
+    <div class="simple-overlay" id="forgot-pw-info">
+      <div style="padding: 20px">
+        <h4>To reset your password, login as root to the RockStor appliance, and run '/opt/rockstor/bin/reset-password'.</h4>
+      </div>
+    </div>
 
     <script src="/static/js/lib/bootstrap.js"></script>
     <script src="/static/js/lib/bootstrap-datepicker.js"></script>
     <script src="/static/js/lib/bootstrap-timepicker.js"></script>
+    <script src="/static/js/lib/jquery.tools.min.js"></script>
+    <script>
+      $('#forgot-pw-info').overlay({load: false});
+      $('#forgot-pw').click(function() {
+        console.log('forgot pw clicked');
+        $('#forgot-pw-info').overlay().load();
+      });
+    </script>
   </body>
 </html>
 
