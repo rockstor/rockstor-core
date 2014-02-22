@@ -197,7 +197,7 @@ ServicesView = Backbone.View.extend({
   setStatusLoading: function(serviceName, show) {
     var statusEl = this.$('div.command-status[data-service-name="' + serviceName + '"]')
     if (show) {
-      statusEl.html('<img src="/img/ajax-loader.gif"></img>');
+      statusEl.html('<img src="/static/storageadmin/img/ajax-loader.gif"></img>');
     } else {
       statusEl.empty();
     }
