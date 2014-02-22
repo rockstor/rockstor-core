@@ -30,6 +30,7 @@ from smart_manager import agents
 from cli.rest_util import api_call
 from smart_manager.models import (CPUMetric, LoadAvg, MemInfo, PoolUsage,
                                   DiskStat, ShareUsage, ServiceStatus)
+from django.db import transaction
 
 import logging
 logger = logging.getLogger(__name__)
@@ -131,9 +132,10 @@ def main():
                     cb(sink_data['part_out'], sink_data['rid'], logger)
                 else:
                     #smart probe, proc, service django models
-                    for d in deserialize("json", sink_data):
-                        num_ts_records = num_ts_records + 1
-                        d.save()
+                    with transaction.atomic():
+                        for d in deserialize("json", sink_data):
+                            num_ts_records = num_ts_records + 1
+                            d.save()
         except zmq.error.Again:
             pass
         except Exception, e:
