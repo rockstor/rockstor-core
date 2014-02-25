@@ -27,6 +27,7 @@ from django.core.serializers import serialize
 from django.db import DatabaseError
 from task_worker import TaskWorker
 from django.utils.timezone import utc
+from django.db import transaction
 
 import logging
 logger = logging.getLogger(__name__)
@@ -50,6 +51,7 @@ class TaskDispatcher(Process):
             return True
         return False
 
+    @transaction.atomic(using='smart_manager')
     def run(self):
         context = zmq.Context()
         sink_socket = context.socket(zmq.PUSH)
@@ -73,8 +75,9 @@ class TaskDispatcher(Process):
                     else:
                         to.state = 'error'
                     to.end = datetime.utcnow().replace(tzinfo=utc)
-                    data = serialize("json", (to,))
-                    sink_socket.send_json(data)
+                    #data = serialize("json", (to,))
+                    #sink_socket.send_json(data)
+                    to.save()
                     del(self.workers[w])
 
             try:
@@ -86,8 +89,9 @@ class TaskDispatcher(Process):
                         if (self._schedulable(td, now)):
                             t = Task(task_def=td, state='scheduled',
                                      start=now)
-                            data = serialize("json", (t,))
-                            sink_socket.send_json(data)
+                            #data = serialize("json", (t,))
+                            #sink_socket.send_json(data)
+                            t.save()
                     total_sleep = 0
 
                 for t in Task.objects.filter(state='scheduled'):
@@ -98,13 +102,14 @@ class TaskDispatcher(Process):
 
                     if (worker.is_alive()):
                         t.state = 'running'
-                        data = serialize("json", (t,))
-                        sink_socket.send_json(data)
+                        #data = serialize("json", (t,))
+                        #sink_socket.send_json(data)
                     else:
                         t.state = 'error'
                         t.end = datetime.utcnow().replace(tzinfo=utc)
-                        data = serialize("json", (t,))
-                        sink_socket.send_json(data)
+                        #data = serialize("json", (t,))
+                        #sink_socket.send_json(data)
+                    t.save()
             except DatabaseError, e:
                 e_msg = ('Error getting the list of scheduled tasks. Moving'
                          ' on')

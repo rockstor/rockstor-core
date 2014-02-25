@@ -137,19 +137,20 @@ class UserView(GenericView):
 
             epw = get_epasswd(username)
             logger.debug('epw: %s' % repr(epw))
+            user.delete()
             if (epw is not None):
                 userdel(username)
-            user.delete()
             return Response()
         except RockStorAPIException:
             raise
         except Exception, e:
-            handle_exception(e, request)
+            logger.exception(e)
+            e_msg = ('User deletion is not currently supported.')
+            handle_exception(Exception(e_msg), request)
 
     def _get_user_object(self, request, username):
         try:
-            user = DjangoUser.objects.get(username=username)
-            return user
+            return DjangoUser.objects.get(username=username)
         except:
             e_msg = ('user: %s does not exist' % username)
             logger.debug(e_msg)

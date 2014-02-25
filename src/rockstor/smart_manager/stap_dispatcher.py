@@ -36,6 +36,7 @@ from django.utils.timezone import utc
 from stap_worker import StapWorker
 import logging
 logger = logging.getLogger(__name__)
+from django.db import transaction
 
 class Stap(Process):
 
@@ -59,8 +60,9 @@ class Stap(Process):
                 del(self.workers[w])
 
     def _sink_put(self, sink, ro):
-        data = serialize("json", (ro,))
-        sink.send_json(data)
+        ro.save()
+        #data = serialize("json", (ro,))
+        #sink.send_json(data)
 
     def _get_ro(self, rid, num_tries):
         for i in range(num_tries):

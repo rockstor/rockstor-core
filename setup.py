@@ -51,5 +51,6 @@ setup(
     'requests == 1.1.0',
     'pyzmq == 13.0.0',
     'South == 0.8.4',
+    'psycopg2',
   ]
 )

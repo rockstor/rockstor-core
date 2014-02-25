@@ -26,6 +26,7 @@ import time
 import os
 from datetime import datetime
 from django.utils.timezone import utc
+from django.db import transaction
 
 from models import (CPUMetric, LoadAvg, MemInfo, PoolUsage, DiskStat,
                     ShareUsage)
@@ -49,8 +50,9 @@ class ProcRetreiver(Process):
         super(ProcRetreiver, self).__init__()
 
     def _sink_put(self, sink, ro):
-        data = serialize("json", (ro,))
-        sink.send_json(data)
+        ro.save()
+        #data = serialize("json", (ro,))
+        #sink.send_json(data)
 
     def run(self):
         context = zmq.Context()

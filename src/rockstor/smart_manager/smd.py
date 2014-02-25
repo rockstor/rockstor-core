@@ -107,9 +107,9 @@ def main():
         logger.exception(e)
         clean_exit([], pull_socket, context)
 
-    live_procs = [ProcRetreiver(), ServiceMonitor(),
-                  Stap(settings.TAP_SERVER),
-                  TaskDispatcher(settings.SCHEDULER),]
+    live_procs = [ProcRetreiver(), ServiceMonitor(),]
+                  #Stap(settings.TAP_SERVER),
+                  #TaskDispatcher(settings.SCHEDULER),]
     for p in live_procs:
         p.start()
 
@@ -129,13 +129,13 @@ def main():
                 sink_data = pull_socket.recv_json()
                 if (isinstance(sink_data, dict)): #worker data
                     cb = getattr(agents, sink_data['cb'])
-                    cb(sink_data['part_out'], sink_data['rid'], logger)
+                    #cb(sink_data['part_out'], sink_data['rid'], logger)
                 else:
                     #smart probe, proc, service django models
-                    with transaction.atomic():
-                        for d in deserialize("json", sink_data):
-                            num_ts_records = num_ts_records + 1
-                            d.save()
+                    for d in deserialize("json", sink_data):
+                        logger.debug('model: %s' % d.__class__)
+                        num_ts_records = num_ts_records + 1
+                        #d.save()
         except zmq.error.Again:
             pass
         except Exception, e:

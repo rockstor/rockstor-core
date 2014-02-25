@@ -37,18 +37,19 @@ from django.core.serializers import serialize
 from datetime import datetime
 from django.utils.timezone import utc
 from django.core.exceptions import ObjectDoesNotExist
-
+from django.db import transaction
 
 class ServiceMonitor(Process):
 
     def __init__(self):
         self.ppid = os.getpid()
-        self.interval = 10 #seconds
+        self.interval = 1 #seconds
         super(ServiceMonitor, self).__init__()
 
     def _sink_put(self, sink, ro):
-        data = serialize("json", (ro,))
-        sink.send_json(data)
+        #data = serialize("json", (ro,))
+        #sink.send_json(data)
+        ro.save()
 
     def run(self):
         context = zmq.Context()
