@@ -50,6 +50,6 @@ setup(
     'django-pipeline == 1.2.23',
     'requests == 1.1.0',
     'pyzmq == 13.0.0',
-    'South == 0.7.6',
+    'South == 0.8.4',
   ]
 )
