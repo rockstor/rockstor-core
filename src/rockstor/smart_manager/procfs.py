@@ -31,7 +31,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 
 from smart_manager.models import (CPUMetric, LoadAvg, MemInfo, PoolUsage,
-                                  DiskStat, ShareUsage, NetStat)
+                                  DiskStat, ShareUsage, NetStat, ServiceStatus)
 from storageadmin.models import (Disk, Pool, Share, Snapshot, NetworkInterface)
 from fs.btrfs import pool_usage, shares_usage
 
@@ -52,7 +52,7 @@ class ProcRetreiver(Process):
         ro.save()
         self._num_ts_records = self._num_ts_records + 1
 
-    def truncate_ts_data(self, max_records=settings.MAX_TS_RECORDS):
+    def _truncate_ts_data(self, max_records=settings.MAX_TS_RECORDS):
         """
         cleanup ts tables: CPUMetric, LoadAvg, MemInfo, PoolUsage,
         DiskStat and ShareUsage, ServiceStatus
@@ -83,10 +83,16 @@ class ProcRetreiver(Process):
         cur_net_stats = None
         cur_cpu_stats = {}
         try:
+            self._truncate_ts_data()
             while (True):
                 if (os.getppid() != self.ppid):
                     msg = ('Parent process(smd) exited. I am exiting too.')
                     return logger.error(msg)
+
+                if (self._num_ts_records > (settings.MAX_TS_RECORDS *
+                                            settings.MAX_TS_MULTIPLIER)):
+                    self._truncate_ts_data()
+                    self._num_ts_records = 0
 
                 with transaction.atomic(using='smart_manager'):
                     cur_cpu_stats = self.cpu_stats(cur_cpu_stats)
