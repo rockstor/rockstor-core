@@ -51,7 +51,6 @@ class TaskDispatcher(Process):
             return True
         return False
 
-    @transaction.atomic(using='smart_manager')
     def run(self):
         context = zmq.Context()
         sink_socket = context.socket(zmq.PUSH)
