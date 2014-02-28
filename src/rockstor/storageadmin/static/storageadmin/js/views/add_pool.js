@@ -147,8 +147,8 @@ AddPoolView = Backbone.View.extend({
               data: {"disks": disk_names, "raid_level": raid_level, "pname": pool_name},
               success: function() {
                 enableButton(button);
-                _this.$('#add-pool-form input').tooltip('hide');
-                app_router.navigate('pools', {trigger: true}) 
+                _this.$('#add-pool-form :input').tooltip('hide');
+                app_router.navigate('pools', {trigger: true})
               },
               error: function(xhr, status, error) {
                 enableButton(button);
@@ -166,6 +166,7 @@ AddPoolView = Backbone.View.extend({
 
   cancel: function(event) {
     event.preventDefault();
+    _this.$('#add-pool-form :input').tooltip('hide');
     app_router.navigate('pools', {trigger: true});
   }
 });
