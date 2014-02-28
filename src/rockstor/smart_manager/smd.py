@@ -54,9 +54,9 @@ def main():
         logger.error('Unable to bootstrap the machine. Moving on..')
         logger.exception(e)
 
-    live_procs = [ProcRetreiver(), ServiceMonitor(),]
-                  #Stap(settings.TAP_SERVER),
-                  #TaskDispatcher(settings.SCHEDULER),]
+    live_procs = [ProcRetreiver(), ServiceMonitor(),
+                  Stap(settings.TAP_SERVER),
+                  TaskDispatcher(settings.SCHEDULER),]
     for p in live_procs:
         p.start()
 
@@ -69,3 +69,4 @@ def main():
         if (len(live_procs) == 0):
             logger.error('All child processes have exited. I am returning.')
             clean_exit([])
+        time.sleep(.5)
