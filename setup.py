@@ -24,9 +24,9 @@ VERSION = '1.4.1'
 setup(
   name='rockstor',
   version=VERSION,
-  description='Smart Powerful Storage Solution',
+  description='Store Smartly',
   author='RockStor, Inc.',
-  author_email='help@rockstor.com',
+  author_email='support@rockstor.com',
 
   packages=['storageadmin', 'smart_manager',],
   package_dir={'': 'src/rockstor'},
@@ -38,6 +38,7 @@ setup(
             'replicad = smart_manager.replication.scheduler:main',
             'mgmt_ip = mgmt_ip:main',
             'pwreset = pwreset:main',
+            'backup-plugin = backup.scheduler:main',
             ],
         },
 
@@ -51,6 +52,6 @@ setup(
     'requests == 1.1.0',
     'pyzmq == 13.0.0',
     'South == 0.8.4',
-    'psycopg2',
+    'psycopg2 == 2.5.2',
   ]
 )

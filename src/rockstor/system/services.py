@@ -81,6 +81,8 @@ def service_status(service_name):
             return out, err, -1
     elif (service_name == 'replication'):
         return superctl(service_name, 'status')
+    elif (service_name == 'backup-plugin'):
+        return superctl(service_name, 'status')
     elif (service_name == 'smb'):
         out, err, rc = run_command([SYSTEMCTL_BIN, 'status', 'smb'], throw=False)
         if (rc != 0):
