@@ -69,9 +69,6 @@ class ReplicaScheduler(Process):
 
     def run(self):
         while True:
-            if (os.getppid() != self.ppid):
-                logger.error('Parent exited. Aborting.')
-                break
             try:
                 self.rep_ip = self._replication_interface()
                 self.uuid = self._my_uuid()
@@ -228,5 +225,5 @@ class ReplicaScheduler(Process):
 def main():
     rs = ReplicaScheduler()
     rs.start()
-    logger.info('Started Replica Scheduler')
+    logger.debug('Started Replica Scheduler')
     rs.join()
