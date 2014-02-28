@@ -92,13 +92,21 @@ AddPoolView = Backbone.View.extend({
               err_msg = 'Raid1 requires at least 2 disks to be selected';
               return false;
             }
-
+          } else if (raid_level == 'raid5') {
+            if (n < 2) {
+              err_msg = 'Raid5 requires at least 2 disks to be selected';
+              return false;
+            }
+          } else if (raid_level == 'raid6') {
+            if (n < 3) {
+              err_msg = 'Raid6 requires at least 3 disks to be selected';
+              return false;
+            }
           } else if (raid_level == 'raid10') {
             if (n < 4) {
               err_msg = 'Raid10 requires at least 4 disks to be selected';
               return false;
             }
-
           }
           return true;
         }, raid_err_msg);

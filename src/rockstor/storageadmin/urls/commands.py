@@ -16,11 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from django.conf.urls.defaults import patterns, url
+from django.conf.urls import patterns, url
 from storageadmin.views import CommandView
 
 valid_commands = ('uptime|bootstrap|utcnow|update-check|update|'
-                  'join-winbind-domain|winbind-domain-status')
+                  'current-version|join-winbind-domain|winbind-domain-status')
 
 urlpatterns = patterns(
     '',

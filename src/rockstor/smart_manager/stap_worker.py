@@ -24,7 +24,6 @@ import subprocess
 import fcntl
 
 from django.conf import settings
-from smart_manager.models import SProbe
 from smart_manager.taplib.probe_config import TAP_MAP
 import logging
 logger = logging.getLogger(__name__)

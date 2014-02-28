@@ -40,10 +40,10 @@ DATABASES = {
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     },
     'smart_manager': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': cur_dirname + '/smartdb',
-        'USER': '',
-        'PASSWORD': '',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'smartdb',
+        'USER': 'testuser',
+        'PASSWORD': 'testpw',
         'HOST': '',
         'PORT': '',
         },

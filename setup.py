@@ -37,11 +37,12 @@ setup(
             'prep_db = prep_db:main',
             'replicad = smart_manager.replication.scheduler:main',
             'mgmt_ip = mgmt_ip:main',
+            'pwreset = pwreset:main',
             ],
         },
 
   install_requires=[
-    'django == 1.4.3',
+    'django == 1.6.2',
     'distribute >= 0.6.35',
     'URLObject == 2.1.1',
     'djangorestframework == 2.1.15',
@@ -49,6 +50,7 @@ setup(
     'django-pipeline == 1.2.23',
     'requests == 1.1.0',
     'pyzmq == 13.0.0',
-    'South == 0.7.6',
+    'South == 0.8.4',
+    'psycopg2',
   ]
 )
