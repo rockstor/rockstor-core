@@ -73,6 +73,23 @@ class BackupPluginConsole(BaseConsole):
         print po
 
     @api_error
+    def do_toggle(self, args):
+        """
+        Enable or Disable a backup policy
+
+        toggle policy_id <enable|disable>
+        """
+        fields = args.split()
+        url = ('%s/%s' % (self.url, fields[0]))
+        input_data = {'enabled': True,}
+        if (fields[1] == 'disable'):
+            input_data['enabled'] = False
+        headers = {'content-type': 'application/json'}
+        po = api_call(url, data=input_data, calltype='put',
+                      headers=headers)
+        print po
+
+    @api_error
     def do_trail(self, args):
         """
         Print the trail of a backup policy

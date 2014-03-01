@@ -69,13 +69,24 @@ class BackupPolicyView(GenericView):
         bp.save()
         return Response(BackupPolicySerializer(bp).data)
 
-    @transaction.commit_on_success
-    def delete(self, request, id):
-        if (not BackupPolicy.objects.filter(id=id).exists()):
+    def _validate_policy(self, id, request):
+        try:
+            return BackupPolicy.objects.get(id=id)
+        except:
             e_msg = ('Backup policy(%s) does not exist' % id)
             handle_exception(Exception(e_msg), request)
 
-        bp = BackupPolicy.objects.get(id=id)
+    @transaction.commit_on_success
+    def put(self, request, id):
+        policy = self._validate_policy(id, request)
+        enabled = request.DATA['enabled']
+        policy.enabled = enabled
+        policy.save()
+        return Response(BackupPolicySerializer(policy).data)
+
+    @transaction.commit_on_success
+    def delete(self, request, id):
+        bp = self._validate_policy(id, request)
         bp.delete()
         return Response()
 
