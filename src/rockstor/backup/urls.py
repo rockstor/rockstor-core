@@ -17,11 +17,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf.urls import patterns, url
-from backup.views import (BackupPolicyView)
+from backup.views import (BackupPolicyView, PolicyTrailView)
 
 urlpatterns = patterns(
         '',
         url(r'^$', BackupPolicyView.as_view()),
-        url(r'^/(?P<id>\d+)$', BackupPolicyView.as_view())
+        url(r'^(?P<id>\d+)$', BackupPolicyView.as_view()),
+        url(r'^trail$', PolicyTrailView.as_view()),
+        url(r'^trail/policy/(?P<pid>\d+)$', PolicyTrailView.as_view()),
+        url(r'^trail/(?P<tid>\d+)$', PolicyTrailView.as_view()),
         )
 

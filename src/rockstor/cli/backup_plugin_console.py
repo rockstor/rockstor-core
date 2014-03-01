@@ -72,3 +72,13 @@ class BackupPluginConsole(BaseConsole):
         po = api_call(url, calltype='delete')
         print po
 
+    @api_error
+    def do_trail(self, args):
+        """
+        Print the trail of a backup policy
+
+        trail policy_id
+        """
+        url = ('%s/trail/policy/%s' % (self.url, args))
+        to = api_call(url)
+        print to
