@@ -21,14 +21,22 @@ from django.db import models
 
 class BackupPolicy(models.Model):
     name = models.CharField(max_length=255, unique=True)
-    source_ip = models.CharField(max_length=255, unique=True)
-    source_path = models.CharField(max_length=255, unique=True)
-    dest_share = models.CharField(max_length=255, unique=True)
+    source_ip = models.CharField(max_length=255)
+    source_path = models.CharField(max_length=255)
+    dest_share = models.CharField(max_length=255)
     notify_email = models.CharField(max_length=4096, unique=True)
     start = models.DateTimeField(auto_now=True, db_index=True)
     frequency = models.IntegerField()
     num_retain = models.IntegerField()
+    enabled = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = ('source_ip', 'source_path')
+        app_label = 'backup'
+
+class PolicyTrail(models.Model):
+    policy = models.ForeignKey(BackupPolicy)
+    start = models.DateTimeField(null=True, db_index=True)
 
     class Meta:
         app_label = 'backup'
-
