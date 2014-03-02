@@ -30,12 +30,11 @@ class BackupPolicyView(GenericView):
     serializer_class = BackupPolicySerializer
 
     def get_queryset(self, *args, **kwargs):
-        if ('name' in kwargs):
-            self.paginate_by = 0
-            try:
-                return BackupPolicy.objects.get(name=kwargs['name'])
-            except:
-                return []
+        self.paginate_by = 0
+        try:
+            return BackupPolicy.objects.get(**kwargs)
+        except:
+            return []
         return BackupPolicy.objects.all()
 
     @transaction.commit_on_success
