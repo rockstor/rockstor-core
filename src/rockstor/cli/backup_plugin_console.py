@@ -28,7 +28,7 @@ class BackupPluginConsole(BaseConsole):
         self.parent_prompt = prompt
         self.greeting = ('%s BackupPlugin' % self.parent_prompt)
         self.prompt = ('%s>' % self.greeting)
-        self.url = ('%splugin/backup' % BaseConsole.url)
+        self.url = ('%splugin/backup/' % BaseConsole.url)
 
     @api_error
     def do_add(self, args):
@@ -68,7 +68,7 @@ class BackupPluginConsole(BaseConsole):
 
         delete policy_id
         """
-        url = ('%s/%s' % (self.url, args))
+        url = ('%s%s' % (self.url, args))
         po = api_call(url, calltype='delete')
         print po
 
@@ -80,7 +80,7 @@ class BackupPluginConsole(BaseConsole):
         toggle policy_id <enable|disable>
         """
         fields = args.split()
-        url = ('%s/%s' % (self.url, fields[0]))
+        url = ('%s%s' % (self.url, fields[0]))
         input_data = {'enabled': True,}
         if (fields[1] == 'disable'):
             input_data['enabled'] = False
@@ -96,6 +96,6 @@ class BackupPluginConsole(BaseConsole):
 
         trail policy_id
         """
-        url = ('%s/trail/policy/%s' % (self.url, args))
+        url = ('%strail/policy/%s' % (self.url, args))
         to = api_call(url)
         print to

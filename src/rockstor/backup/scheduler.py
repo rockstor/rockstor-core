@@ -21,15 +21,26 @@ import os
 import time
 from datetime import datetime
 from django.utils.timezone import utc
+from django.conf import settings
+from backup.models import (BackupPolicy, PolicyTrail)
+from backup.util import create_trail
+from backup.worker import BackupPluginWorker
+
 import logging
 logger = logging.getLogger(__name__)
-from backup.models import (BackupPolicy, PolicyTrail)
 
 class BackupPluginScheduler(Process):
 
     def __init__(self):
         self.ppid = os.getpid()
+        self.workers = {}
         super(BackupPluginScheduler, self).__init__()
+
+    def _start_new_worker(self, po, initial=False):
+        tid = create_trail(po.id, logger)
+        worker = BackupPluginWorker(tid, initial=initial)
+        worker.start()
+        self.workers[po.id] = worker
 
     def run(self):
         while True:
@@ -37,18 +48,31 @@ class BackupPluginScheduler(Process):
                 logger.error('Parent exited. Aborting.')
                 break
 
+            for pid,w in self.workers.items():
+                if (w.exitcode is not None):
+                    logger.debug('worker: %d pruned' % pid)
+                    del(self.workers[pid])
+
             for p in BackupPolicy.objects.filter(enabled=True):
                 pt = PolicyTrail.objects.filter(policy=p).order_by('-start')
                 now = datetime.utcnow().replace(second=0, microsecond=0,
                                                 tzinfo=utc)
-                if (len(pt) == 0 or
-                    (now - pt[0].start).total_seconds() > p.frequency):
-                    new_pt = PolicyTrail(policy=p, start=now)
-                    new_pt.save()
+                if (len(pt) == 0):
+                    self._start_new_worker(p, initial=True)
+                elif (p.id in self.workers):
+                    logger.debug('previous execution still in progress. not'
+                                 ' starting a new one.')
+                elif (pt[0].status != 'succeeded'):
+                    logger.debug('previous execution failed. not starting'
+                                 ' a new one.')
+                elif ((now - pt[0].start).total_seconds() < p.frequency):
+                    logger.debug('not time yet for this policy execution.')
+                else:
+                    self._start_new_worker(p)
             time.sleep(1)
 
 def main():
     bs = BackupPluginScheduler()
     bs.start()
-    logger.debug('Started Replica Scheduler')
+    logger.debug('Started Backup Scheduler')
     bs.join()

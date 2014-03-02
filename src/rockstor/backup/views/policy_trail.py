@@ -42,3 +42,28 @@ class PolicyTrailView(GenericView):
             bp = BackupPolicy.objects.get(id=kwargs['pid'])
             return PolicyTrail.objects.filter(policy=bp).order_by('-id')
         return PolicyTrail.objects.filter().order_by('-id')
+
+    @transaction.commit_on_success
+    def post(self, request, pid):
+        policy = BackupPolicy.objects.get(id=pid)
+        now = datetime.utcnow().replace(second=0, microsecond=0, tzinfo=utc)
+        pt = PolicyTrail(policy=policy, status='start', start=now,
+                         status_ts=now)
+        pt.save()
+        return Response(PolicyTrailSerializer(pt).data)
+
+    @transaction.commit_on_success
+    def put(self, request, tid):
+        pt = PolicyTrail.objects.get(id=tid)
+        now = datetime.utcnow().replace(second=0, microsecond=0, tzinfo=utc)
+        pt.status = request.DATA['status']
+        pt.status_ts = now
+        if ('error' in request.DATA):
+            pt.error = request.DATA['error']
+        if ('snap_created' in request.DATA):
+            pt.snap_created = request.DATA['snap_created']
+        if ('sync_started' in request.DATA):
+            pt.sync_started = request.DATA['sync_started']
+        pt.save()
+        return Response(PolicyTrailSerializer(pt).data)
+
