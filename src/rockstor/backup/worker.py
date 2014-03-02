@@ -114,7 +114,7 @@ class BackupPluginWorker(Process):
                                   stderr=subprocess.PIPE)
         while True:
             if (os.getppid() != self.ppid):
-                msg = ('Parent process exited. Aborting')
+                msg = ('Backup plugin scheduler exited. Aborting...')
                 with self._update_trail_and_quit(msg):
                     rp.terminate()
 
@@ -124,4 +124,4 @@ class BackupPluginWorker(Process):
                 with self._update_trail_and_quit(msg, data):
                     logger.debug('sync finished')
                 break
-            logger.debug('rsync still running')
+            time.sleep(1)
