@@ -25,6 +25,7 @@ from django.conf import settings
 from backup.models import (BackupPolicy, PolicyTrail)
 from backup.util import create_trail
 from backup.worker import BackupPluginWorker
+from storageadmin.models import Share
 
 import logging
 logger = logging.getLogger(__name__)
@@ -36,11 +37,25 @@ class BackupPluginScheduler(Process):
         self.workers = {}
         super(BackupPluginScheduler, self).__init__()
 
-    def _start_new_worker(self, po, initial=False):
-        tid = create_trail(po.id, logger)
-        worker = BackupPluginWorker(tid, initial=initial)
+    def _start_new_worker(self, po):
+        try:
+            so = Share.objects.get(name=po.dest_share)
+        except:
+            e_msg = ('cannot start backup task, destination share(%s) '
+                     'does not exist' % (po.dest_share))
+            raise Exception(e_msg)
+
+        try:
+            to = create_trail(po.id, logger)
+            logger.debug('to = %s' % to)
+        except:
+            return logger.error('backup task will not be started for '
+                                'policy(%d) due to error while creating '
+                                'task trail' % po.id)
+        worker = BackupPluginWorker(po, to, so.pool.name)
         worker.start()
         self.workers[po.id] = worker
+
 
     def run(self):
         while True:
@@ -48,6 +63,7 @@ class BackupPluginScheduler(Process):
                 logger.error('Parent exited. Aborting.')
                 break
 
+            logger.debug('workers = %s' % self.workers)
             for pid,w in self.workers.items():
                 if (w.exitcode is not None):
                     logger.debug('worker: %d pruned' % pid)
@@ -58,7 +74,7 @@ class BackupPluginScheduler(Process):
                 now = datetime.utcnow().replace(second=0, microsecond=0,
                                                 tzinfo=utc)
                 if (len(pt) == 0):
-                    self._start_new_worker(p, initial=True)
+                    self._start_new_worker(p)
                 elif (p.id in self.workers):
                     logger.debug('previous execution still in progress. not'
                                  ' starting a new one.')
