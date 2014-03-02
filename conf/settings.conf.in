@@ -312,11 +312,15 @@ LOGGING = {
         'storageadmin': {
             'handlers': ['file'],
             'level': 'DEBUG',
-            },
+        },
         'smart_manager': {
             'handlers': ['file'],
             'level': 'DEBUG',
-            },
+        },
+	'backup': {
+     	    'handlers': ['file'],
+	    'level': 'DEBUG',
+	},
     }
 }
 
