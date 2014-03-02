@@ -23,7 +23,7 @@ from datetime import datetime
 from django.utils.timezone import utc
 from django.conf import settings
 from backup.models import (BackupPolicy, PolicyTrail)
-from backup.util import create_trail
+from backup.util import (create_trail, delete_old_snapshots)
 from backup.worker import BackupPluginWorker
 from storageadmin.models import Share
 
@@ -84,6 +84,8 @@ class BackupPluginScheduler(Process):
                 elif ((now - pt[0].start).total_seconds() < p.frequency):
                     logger.debug('not time yet for this policy execution.')
                 else:
+                    #clean up > num_retain snapshots
+                    delete_old_snapshots(p.dest_share, p.num_retain, logger)
                     self._start_new_worker(p)
             time.sleep(1)
 
