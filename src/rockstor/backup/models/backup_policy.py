@@ -37,6 +37,11 @@ class BackupPolicy(models.Model):
 class PolicyTrail(models.Model):
     policy = models.ForeignKey(BackupPolicy)
     start = models.DateTimeField(null=True, db_index=True)
+    status = models.CharField(max_length=255, default='start')
+    snap_created = models.DateTimeField(null=True)
+    sync_started = models.DateTimeField(null=True)
+    error = models.CharField(null=True, max_length=2048)
+    status_ts = models.DateTimeField(null=True)
 
     class Meta:
         app_label = 'backup'
