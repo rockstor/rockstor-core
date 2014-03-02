@@ -60,10 +60,10 @@ class PolicyTrailView(GenericView):
         pt.status_ts = now
         if ('error' in request.DATA):
             pt.error = request.DATA['error']
-        if ('snap_created' in request.DATA):
-            pt.snap_created = request.DATA['snap_created']
-        if ('sync_started' in request.DATA):
-            pt.sync_started = request.DATA['sync_started']
+        if (pt.status == 'snapshot created'):
+            pt.snap_created = now
+        if (pt.status == 'sync started'):
+            pt.sync_started = now
         pt.save()
         return Response(PolicyTrailSerializer(pt).data)
 
