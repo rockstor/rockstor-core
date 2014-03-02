@@ -78,9 +78,11 @@ class BackupPluginScheduler(Process):
                 elif (p.id in self.workers):
                     logger.debug('previous execution still in progress. not'
                                  ' starting a new one.')
-                elif (pt[0].status != 'succeeded'):
-                    logger.debug('previous execution failed. not starting'
-                                 ' a new one.')
+                elif (pt[0].status != 'succeeded' and
+                      pt[0].status != 'failed'):
+                    logger.debug('previous execution ended in a inconsistent'
+                                 ' state(%s). not starting a new one.' %
+                                 pt[0].status)
                 elif ((now - pt[0].start).total_seconds() < p.frequency):
                     logger.debug('not time yet for this policy execution.')
                 else:
