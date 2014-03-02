@@ -63,7 +63,6 @@ class BackupPluginScheduler(Process):
                 logger.error('Parent exited. Aborting.')
                 break
 
-            logger.debug('workers = %s' % self.workers)
             for pid,w in self.workers.items():
                 if (w.exitcode is not None):
                     logger.debug('worker: %d pruned' % pid)
@@ -86,10 +85,19 @@ class BackupPluginScheduler(Process):
                 elif ((now - pt[0].start).total_seconds() < p.frequency):
                     logger.debug('not time yet for this policy execution.')
                 else:
-                    #clean up > num_retain snapshots
-                    delete_old_snapshots(p.dest_share, p.num_retain, logger)
+                    try:
+                        #clean up > num_retain snapshots
+                        delete_old_snapshots(p.dest_share, p.num_retain,
+                                             logger)
+                    except Exception, e:
+                        e_msg = ('Exception while deleting old snapshot(s) '
+                                 'for share(%s). Backup task will not be '
+                                 'started' % p.dest_share)
+                        logger.error(e_msg)
+                        logger.exception(e)
+                        continue
                     self._start_new_worker(p)
-            time.sleep(1)
+            time.sleep(60)
 
 def main():
     bs = BackupPluginScheduler()
