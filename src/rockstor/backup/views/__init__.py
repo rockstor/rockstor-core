@@ -18,3 +18,4 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from backup_policy import BackupPolicyView
 from policy_trail import PolicyTrailView
+from plugin import PluginView

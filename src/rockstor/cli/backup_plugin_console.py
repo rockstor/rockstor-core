@@ -31,6 +31,27 @@ class BackupPluginConsole(BaseConsole):
         self.url = ('%splugin/backup' % BaseConsole.url)
 
     @api_error
+    def do_status(self, args):
+        return self._plugin_command('status')
+
+    @api_error
+    def do_start(self, args):
+        return self._plugin_command('start')
+
+    @api_error
+    def do_stop(self, args):
+        return self._plugin_command('stop')
+
+    def _plugin_command(self, command):
+        """
+        Current status of the plugin
+
+        status
+        """
+        url = ('%s/plugin/%s' % (self.url, command))
+        print api_call(url, calltype='post')
+
+    @api_error
     def do_add(self, args):
         """
         Add a new backup policy
