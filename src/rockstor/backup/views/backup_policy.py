@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2014 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -30,11 +30,12 @@ class BackupPolicyView(GenericView):
     serializer_class = BackupPolicySerializer
 
     def get_queryset(self, *args, **kwargs):
-        self.paginate_by = 0
-        try:
-            return BackupPolicy.objects.get(**kwargs)
-        except:
-            return []
+        if (len(kwargs) > 0):
+            self.paginate_by = 0
+            try:
+                return BackupPolicy.objects.get(**kwargs)
+            except:
+                return []
         return BackupPolicy.objects.all()
 
     @transaction.commit_on_success
