@@ -23,7 +23,7 @@ from datetime import datetime
 from django.utils.timezone import utc
 from django.conf import settings
 from backup.models import (BackupPolicy, PolicyTrail)
-from backup.util import create_trail
+from backup.util import (create_trail, delete_old_snapshots)
 from backup.worker import BackupPluginWorker
 from storageadmin.models import Share
 
@@ -63,7 +63,6 @@ class BackupPluginScheduler(Process):
                 logger.error('Parent exited. Aborting.')
                 break
 
-            logger.debug('workers = %s' % self.workers)
             for pid,w in self.workers.items():
                 if (w.exitcode is not None):
                     logger.debug('worker: %d pruned' % pid)
@@ -78,14 +77,27 @@ class BackupPluginScheduler(Process):
                 elif (p.id in self.workers):
                     logger.debug('previous execution still in progress. not'
                                  ' starting a new one.')
-                elif (pt[0].status != 'succeeded'):
-                    logger.debug('previous execution failed. not starting'
-                                 ' a new one.')
+                elif (pt[0].status != 'succeeded' and
+                      pt[0].status != 'failed'):
+                    logger.debug('previous execution ended in a inconsistent'
+                                 ' state(%s). not starting a new one.' %
+                                 pt[0].status)
                 elif ((now - pt[0].start).total_seconds() < p.frequency):
                     logger.debug('not time yet for this policy execution.')
                 else:
+                    try:
+                        #clean up > num_retain snapshots
+                        delete_old_snapshots(p.dest_share, p.num_retain,
+                                             logger)
+                    except Exception, e:
+                        e_msg = ('Exception while deleting old snapshot(s) '
+                                 'for share(%s). Backup task will not be '
+                                 'started' % p.dest_share)
+                        logger.error(e_msg)
+                        logger.exception(e)
+                        continue
                     self._start_new_worker(p)
-            time.sleep(1)
+            time.sleep(60)
 
 def main():
     bs = BackupPluginScheduler()

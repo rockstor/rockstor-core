@@ -67,3 +67,15 @@ def create_snapshot(sname, snap_name, logger):
     except Exception:
         raise
 
+def delete_old_snapshots(sname, num_retain, logger):
+    url = ('%sshares/%s/snapshots' % (BASE_URL, sname))
+    snap_details = api_call(url, save_error=False)
+    if (snap_details['count'] > num_retain):
+        extra = snap_details['count'] - num_retain
+        for i in range(extra):
+            if (i >= len(snap_details['results'])):
+                return delete_old_snapshots(sname, num_retain, logger)
+            snap_name = snap_details['results'][i]['name']
+            api_call('%s/%s' % (url, snap_name), calltype='delete',
+                     save_error=False)
+            logger.debug('deleted snap: %s' % snap_name)

@@ -82,15 +82,15 @@ class BackupPluginWorker(Process):
 
     def run(self):
         #0. mount destination share
-        mnt_pt = ('%s/%s' % (settings.MNT_PT, self.dest_share))
+        dest_mnt_pt = ('%s/%s' % (settings.MNT_PT, self.dest_share))
         msg = ('Destination share(%s) not mounted' % self.dest_share)
         with self._update_trail_and_quit(msg):
             if (not is_share_mounted(self.dest_share)):
-                mount_share(self.dest_share, self.dest_pool, mnt_pt)
+                mount_share(self.dest_share, self.dest_pool, dest_mnt_pt)
             if (not is_share_mounted(self.dest_share)):
                 raise Exception(msg)
 
-        #1. if not mounted, mount
+        #1. mount source share
         msg = ('Failed to mount source(%s:%s)' % (self.source_ip,
                                                   self.source_path))
         with self._update_trail_and_quit(msg):
@@ -106,8 +106,7 @@ class BackupPluginWorker(Process):
 
         #3. rsync
         src_mnt = ('/mnt/backup/%s_%s' % (self.source_ip, self.source_path))
-        dest_mnt = ('/mnt2/%s' % self.dest_share)
-        cmd = [RSYNC, '-az', src_mnt, dest_mnt]
+        cmd = [RSYNC, '-az', src_mnt, dest_mnt_pt]
         msg = ('Unable to start sync')
         data = {'status': 'sync started',}
         with self._update_trail_and_quit(msg, data=data):
@@ -115,7 +114,7 @@ class BackupPluginWorker(Process):
                                   stderr=subprocess.PIPE)
         while True:
             if (os.getppid() != self.ppid):
-                msg = ('Parent process exited. Aborting')
+                msg = ('Backup plugin scheduler exited. Aborting...')
                 with self._update_trail_and_quit(msg):
                     rp.terminate()
 
@@ -125,4 +124,4 @@ class BackupPluginWorker(Process):
                 with self._update_trail_and_quit(msg, data):
                     logger.debug('sync finished')
                 break
-            logger.debug('rsync still running')
+            time.sleep(1)
