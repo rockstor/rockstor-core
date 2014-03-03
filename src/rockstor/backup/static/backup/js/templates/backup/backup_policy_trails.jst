@@ -19,7 +19,7 @@
  */
 </script>
 
-<h4>Backup history for <%= policy.get('name') %> </h4>
+<h4>Backup history for <%= policy.get('name') %> ( From <%= policy.get('source_ip') %>:<%= policy.get('source_path') %> to <%= policy.get('dest_share') %> )</h4>
 
 <% if (!backupPolicyTrails.isEmpty()) { %>
   <div class="row-fluid">
@@ -52,7 +52,7 @@
               </td>
               <td>
                 <% if (t.get('status') == 'succeeded') { %>
-                  <%= moment(t.get('status_ts')).from(moment(t.get('start'))) %>
+                  <%= moment(t.get('status_ts')).from(moment(t.get('start')), true) %>
                 <% } else { %>
                 <% } %>
               </td>

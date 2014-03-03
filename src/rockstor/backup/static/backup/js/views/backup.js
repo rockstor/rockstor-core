@@ -31,6 +31,7 @@ BackupView = RockstoreLayoutView.extend({
     this.constructor.__super__.initialize.apply(this, arguments);
     // set template
     this.template = window.JST.backup;
+    this.serviceTemplate = window.JST.backup_service;
     this.policyTableTemplate = window.JST.policy_table;
     this.paginationTemplate = window.JST.common_pagination;
     // add dependencies
@@ -65,10 +66,21 @@ BackupView = RockstoreLayoutView.extend({
       collection: this.collection,
       trailMap: this.trailMap
     }));
-    //this.$(".pagination-ph").html(this.paginationTemplate({
-      //collection: this.collection
-    //}));
-   
+    this.$(".pagination-ph").html(this.paginationTemplate({
+      collection: this.collection
+    }));
+    var jqXhr = $.ajax({
+      url: '/api/plugin/backup/plugin/status',
+      type: 'POST',
+      dataType: 'json'
+    }).done(function(data, status, jqXhr) {
+      _this.$('#service-ph').html(_this.serviceTemplate({status: data}));
+      _this.$('input.service-status').simpleSlider({
+        "theme": "volume",
+        allowedValues: [0,1],
+        snap: true 
+      });
+    })
     return this;
   },
 
