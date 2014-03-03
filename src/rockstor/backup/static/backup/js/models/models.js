@@ -24,13 +24,32 @@
  * 
  */
  
-var Backup = Backbone.Model.extend({
-   urlRoot: "/api/plugin/backup" 
-  }); 
+var BackupPolicy = Backbone.Model.extend({
+  urlRoot: "/api/plugin/backup" 
+}); 
 
 var BackupPolicyCollection = RockStorPaginatedCollection.extend({
-  model: Backup,
+  model: BackupPolicy,
   baseUrl: '/api/plugin/backup'
-  });
-  
-  
+});
+
+var BackupPolicyTrail = Backbone.Model.extend({
+  urlRoot: "/api/plugin/backup/trail" 
+}); 
+
+var BackupPolicyTrailCollection = RockStorPaginatedCollection.extend({
+  model: BackupPolicyTrail,
+  initialize: function(models, options) {
+    this.constructor.__super__.initialize.apply(this, arguments);
+    if (options) {
+      this.trailId = options.trailId;
+    }
+  },
+  baseUrl: function() {
+    if (this.trailId) {
+      return '/api/plugin/backup/trail/' + this.trailId;
+    } else {
+      return '/api/plugin/backup/trail';
+    }
+  }
+});

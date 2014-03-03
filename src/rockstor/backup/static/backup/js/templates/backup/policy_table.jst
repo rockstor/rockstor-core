@@ -6,6 +6,7 @@
         <th>Source IP</th>
         <th>Source path</th>
         <th>destination share</th>
+        <th>Last backup</th>
         <th>Actions</th>
       </tr>
     </thead>
@@ -14,6 +15,20 @@
       <td><%= policy.get('source_ip') %></td>
       <td><%= policy.get('source_path') %></td>
       <td><%= policy.get('dest_share') %></td>
+      <td>
+        <% if (trailMap[policy.id]) { %>
+          <% if (trailMap[policy.id].length > 0) { %>
+            <% var t = trailMap[policy.id][0]; %>
+            <% if (t.get('status') == 'failed') { %>
+              <a href="#backup/<%= policy.id %>/trails" class=""><i class="fa fa-exclamation-circle"></i> <%= t.get('status') %></a>
+            <% } else if (t.get('status') == 'pending') { %>
+              <a href="#backup/<%= policy.id %>/trails" class=""><%= t.get('status') %></a>
+            <% } else if (t.get('status') == 'succeeded') { %>
+              <a href="#backup/<%= policy.id %>/trails" class=""><%= moment(t.get('status_ts')).fromNow() %></a>
+            <% } %>
+          <% } %>
+        <% } %>
+      </td>
       <td></td>
     <% }); %>
   </table>

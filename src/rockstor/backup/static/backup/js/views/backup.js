@@ -36,6 +36,10 @@ BackupView = RockstoreLayoutView.extend({
     // add dependencies
     this.collection = new BackupPolicyCollection();
     this.dependencies.push(this.collection);
+    this.backupPolicyTrails = new BackupPolicyTrailCollection();
+    this.backupPolicyTrails.pageSize = RockStorGlobals.maxPageSize;
+    this.dependencies.push(this.backupPolicyTrails);
+    this.trailMap = {};
   },
 
   render: function() {
@@ -47,13 +51,23 @@ BackupView = RockstoreLayoutView.extend({
 
     var _this = this;
     
+    this.collection.each(function(policy, index) {
+      var tmp = _this.backupPolicyTrails.filter(function(trail) {
+        return trail.get('policy') == policy.id;
+      });
+      _this.trailMap[policy.id] = _.sortBy(tmp, function(trail) {
+        return moment(trail.get('start')).valueOf();
+      }).reverse();
+    });
+    
     $(this.el).html(this.template({ collection: this.collection }));
     this.$("#policy-table-ph").html(this.policyTableTemplate({
-      collection: this.collection
+      collection: this.collection,
+      trailMap: this.trailMap
     }));
-    this.$(".pagination-ph").html(this.paginationTemplate({
-      collection: this.collection
-    }));
+    //this.$(".pagination-ph").html(this.paginationTemplate({
+      //collection: this.collection
+    //}));
    
     return this;
   },
