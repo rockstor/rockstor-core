@@ -53,3 +53,12 @@ var BackupPolicyTrailCollection = RockStorPaginatedCollection.extend({
     }
   }
 });
+
+var BackupPluginStatus = Backbone.Model.extend({
+  url: "/api/plugin/backup/plugin/status",
+  // override fetch to do a post since status is a command
+  fetch: function(options) {
+    options.type = 'POST';
+    this.constructor.__super__.fetch.apply(this, arguments);
+  }
+});

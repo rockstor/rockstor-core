@@ -3,11 +3,21 @@
   <tr>
     <td>Status:&nbsp;&nbsp;&nbsp;</td>
     <td> 
-      <div class="slider-stop" data-service-name="">OFF</div>
-      <div class="slider-ph">
-        <input type="text" class="service-status" value="1" data-service-name=""></input>
-      </div>
-      <div class="slider-start on" data-service-name="">ON</div>
+      <% if (status.get('status')) { %>
+        <div class="slider-stop">OFF</div>
+        <div class="slider-ph">
+          <input type="text" class="service-status" value="1"></input>
+        </div>
+        <div class="slider-start on">ON</div>
+      <% } else { %>
+        <div class="slider-stop">OFF</div>
+        <div class="slider-ph">
+          <input type="text" class="service-status" value="0"></input>
+        </div>
+        <div class="slider-start">ON</div>
+      <% } %>
+      <div class="command-status">&nbsp;</div>
+      <div class="simple-overlay" id="backup-err-popup"><div class="overlay-content"></div></div>
     </td>
   </tr>
 </table>
