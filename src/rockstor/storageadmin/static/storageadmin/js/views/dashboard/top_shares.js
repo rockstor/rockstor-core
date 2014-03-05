@@ -57,10 +57,10 @@ TopSharesWidget = RockStorWidgetView.extend({
   
   setData: function() {
     this.data = this.shares.sortBy(function(s) {
-      return (((s.get('r_usage') + s.get('e_usage'))/s.get('size'))*100);
+      return ((s.get('r_usage')/s.get('size'))*100);
     }).reverse().slice(0,this.numTop);
     this.data.map(function(d) { 
-      d.set({'pUsed': (((d.get('r_usage') + d.get('e_usage'))/d.get('size'))*100)});
+      d.set({'pUsed': ((d.get('r_usage')/d.get('size'))*100)});
     });
   },
 
@@ -83,9 +83,9 @@ TopSharesWidget = RockStorWidgetView.extend({
     .html(function(d) {
       return '<strong>' + d.get('name') + '</strong><br>' + 
         '   <strong>Used:</strong> ' +
-        humanize.filesize((d.get('r_usage') + d.get('e_usage'))*1024) + '<br>' + 
+        humanize.filesize(d.get('r_usage')*1024) + '<br>' + 
         ' <strong>Free:</strong> ' + 
-        humanize.filesize((d.get('size')-d.get('r_usage')-d.get('e_usage'))*1024); 
+        humanize.filesize((d.get('size')-d.get('r_usage'))*1024); 
     })
 
     this.svg = d3.select(this.el).select('#ph-top-shares-graph')
@@ -158,7 +158,7 @@ TopSharesWidget = RockStorWidgetView.extend({
       if (n.length > 15) {
         n = n.slice(0,12) + '...';
       }
-      return n + ' (' + humanize.filesize((d.get('r_usage') + d.get('e_usage'))*1024) + 
+      return n + ' (' + humanize.filesize(d.get('r_usage')*1024) + 
         '/' + humanize.filesize(d.get('size')*1024) + 
         ')' ; 
     })
