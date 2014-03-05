@@ -21,7 +21,6 @@ from django.conf import settings
 from procfs import ProcRetreiver
 from services import ServiceMonitor
 from stap_dispatcher import Stap
-from scheduler.task_dispatcher import TaskDispatcher
 from cli.rest_util import api_call
 
 import logging
@@ -55,8 +54,7 @@ def main():
         logger.exception(e)
 
     live_procs = [ProcRetreiver(), ServiceMonitor(),
-                  Stap(settings.TAP_SERVER),
-                  TaskDispatcher(settings.SCHEDULER),]
+                  Stap(settings.TAP_SERVER),]
     for p in live_procs:
         p.start()
 
