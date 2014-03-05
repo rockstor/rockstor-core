@@ -39,6 +39,7 @@ setup(
             'mgmt_ip = mgmt_ip:main',
             'pwreset = pwreset:main',
             'backup-plugin = backup.scheduler:main',
+            'initrock = initrock:main',
             ],
         },
 
