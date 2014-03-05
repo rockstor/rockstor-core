@@ -21,7 +21,8 @@ from smart_manager.views import (BaseServiceView, NISServiceView,
                                  SambaServiceView, NFSServiceView,
                                  NTPServiceView, WinbindServiceView,
                                  LdapServiceView, SFTPServiceView,
-                                 ReplicationServiceView)
+                                 ReplicationServiceView,
+                                 TaskSchedulerServiceView)
 
 command_regex = ('config|start|stop')
 
@@ -45,4 +46,7 @@ urlpatterns = patterns('',
     url(r'^replication$', ReplicationServiceView.as_view()),
     url(r'^replication/(?P<command>%s)$' % command_regex,
         ReplicationServiceView.as_view()),
+    url(r'^task-scheduler$', TaskSchedulerServiceView.as_view()),
+    url(r'^task-scheduler/(?P<command>%s)$' % command_regex,
+        TaskSchedulerServiceView.as_view()),
 )
