@@ -40,6 +40,7 @@ setup(
             'pwreset = pwreset:main',
             'backup-plugin = backup.scheduler:main',
             'initrock = initrock:main',
+            'task-scheduler = smart_manager.scheduler.task_dispatcher:main',
             ],
         },
 

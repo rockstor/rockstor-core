@@ -31,7 +31,8 @@ def register_services():
                 'AD': 'winbind',
                 'LDAP': 'ldap',
                 'SFTP': 'sftp',
-                'Replication': 'replication',}
+                'Replication': 'replication',
+                'Task Scheduler': 'task-scheduler',}
 
     for s in services.keys():
         if (not Service.objects.filter(display_name=s).exists()):
