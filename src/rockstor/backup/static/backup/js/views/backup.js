@@ -29,6 +29,7 @@ BackupView = RockstoreLayoutView.extend({
   events: {
     'click .slider-stop': "stopService",
     'click .slider-start': "startService",
+    'click .delete-policy': "deletePolicy",
   },
 
   initialize: function() {
@@ -154,21 +155,20 @@ BackupView = RockstoreLayoutView.extend({
     show ? el.html(img) : el.empty();
   },
   
-  deleteBackup: function(event) {
+  deletePolicy: function(event) {
+    event.preventDefault();
     var _this = this;
     var button = $(event.currentTarget);
     if (buttonDisabled(button)) return false;
-    name = button.attr('data-name');
+    var policyId = button.attr('data-policy-id');
     if(confirm("Delete policy ... Are you sure?")){
       disableButton(button);	
       $.ajax({
-        url: "/api/backup/" + ip,
+        url: "/api/plugin/backup/" + policyId,
         type: "DELETE",
         dataType: "json",
-        data: { "ip": ip },
         success: function() {
           _this.render();
-          enableButton(button);
         },
         error: function(xhr, status, error) {
           enableButton(button);
