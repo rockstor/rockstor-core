@@ -181,7 +181,7 @@ stderr_logfile=${supervisord-conf:logdir}/supervisord_%(program_name)s_stderr.lo
 stderr_logfile_maxbytes=1MB   ; max # logfile bytes b4 rotation (default 50MB)
 stderr_logfile_backups=10     ; # of stderr logfile backups (default 10)
 
-; Data Collector
+; Service Collector
 [program:service-monitor]
 environment=DJANGO_SETTINGS_MODULE=settings
 command=${supervisord-conf:sm_cmd} ; the program (relative uses PATH, can take args)
