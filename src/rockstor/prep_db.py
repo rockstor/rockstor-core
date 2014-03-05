@@ -32,7 +32,9 @@ def register_services():
                 'LDAP': 'ldap',
                 'SFTP': 'sftp',
                 'Replication': 'replication',
-                'Backup-plugin': 'backup-plugin',}
+                'Task Scheduler': 'task-scheduler',
+                'Data Collector': 'data-collector',
+                'Service Monitor': 'service-monitor',}
 
     for s in services.keys():
         if (not Service.objects.filter(display_name=s).exists()):
@@ -42,7 +44,6 @@ def register_services():
 def create_setup():
     setup = Setup.objects.all()
     if len(setup) == 0:
-        print "Creating setup"
         s = Setup()
         s.save()
 

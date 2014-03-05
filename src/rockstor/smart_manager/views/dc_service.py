@@ -28,14 +28,14 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class BackupPluginServiceView(BaseServiceView):
+class DataCollectorServiceView(BaseServiceView):
 
     @transaction.commit_on_success
     def post(self, request, command):
         """
         execute a command on the service
         """
-        service = Service.objects.get(name='backup')
+        service = Service.objects.get(name='data-collector')
         if (command == 'config'):
             #nothing to really configure atm. just save the model
             try:
@@ -43,7 +43,7 @@ class BackupPluginServiceView(BaseServiceView):
                 self._save_config(service, config)
             except Exception, e:
                 logger.exception(e)
-                e_msg = ('Backup plugin could not be configured. Try again')
+                e_msg = ('Data Collector could not be configured. Try again')
                 handle_exception(Exception(e_msg), request)
 
         else:
@@ -51,8 +51,8 @@ class BackupPluginServiceView(BaseServiceView):
                 superctl(service.name, command)
             except Exception, e:
                 logger.exception(e)
-                e_msg = ('Failed to %s Backup plugin due to a system error.'
-                         % command)
+                e_msg = ('Failed to %s Data collector due to a system error.' %
+                         command)
                 handle_exception(Exception(e_msg), request)
 
         return Response()

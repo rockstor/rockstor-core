@@ -24,7 +24,7 @@ class BackupPolicy(models.Model):
     source_ip = models.CharField(max_length=255)
     source_path = models.CharField(max_length=255)
     dest_share = models.CharField(max_length=255)
-    notify_email = models.CharField(max_length=4096, unique=True)
+    notify_email = models.CharField(max_length=4096)
     start = models.DateTimeField(auto_now=True, db_index=True)
     frequency = models.IntegerField()
     num_retain = models.IntegerField()

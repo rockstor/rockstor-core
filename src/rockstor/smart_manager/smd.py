@@ -18,10 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import time
 import sys
 from django.conf import settings
-from procfs import ProcRetreiver
-from services import ServiceMonitor
 from stap_dispatcher import Stap
-from scheduler.task_dispatcher import TaskDispatcher
 from cli.rest_util import api_call
 
 import logging
@@ -54,9 +51,7 @@ def main():
         logger.error('Unable to bootstrap the machine. Moving on..')
         logger.exception(e)
 
-    live_procs = [ProcRetreiver(), ServiceMonitor(),
-                  Stap(settings.TAP_SERVER),
-                  TaskDispatcher(settings.SCHEDULER),]
+    live_procs = [Stap(settings.TAP_SERVER),]
     for p in live_procs:
         p.start()
 

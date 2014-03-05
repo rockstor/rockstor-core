@@ -17,7 +17,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from multiprocessing import (Process, Queue)
-import zmq
 import os
 import time
 from datetime import datetime
@@ -52,13 +51,9 @@ class TaskDispatcher(Process):
         return False
 
     def run(self):
-        context = zmq.Context()
-        sink_socket = context.socket(zmq.PUSH)
-        sink_socket.connect('tcp://%s:%d' % settings.SPROBE_SINK)
         total_sleep = 0
         while True:
             if (os.getppid() != self.ppid):
-                logger.info('ppids: %d, %d' % (os.getppid(), self.ppid))
                 for w in self.workers.keys():
                     worker = self.workers[w]
                     if (worker.is_alive()):
@@ -74,8 +69,6 @@ class TaskDispatcher(Process):
                     else:
                         to.state = 'error'
                     to.end = datetime.utcnow().replace(tzinfo=utc)
-                    #data = serialize("json", (to,))
-                    #sink_socket.send_json(data)
                     to.save()
                     del(self.workers[w])
 
@@ -88,8 +81,6 @@ class TaskDispatcher(Process):
                         if (self._schedulable(td, now)):
                             t = Task(task_def=td, state='scheduled',
                                      start=now)
-                            #data = serialize("json", (t,))
-                            #sink_socket.send_json(data)
                             t.save()
                     total_sleep = 0
 
@@ -101,13 +92,9 @@ class TaskDispatcher(Process):
 
                     if (worker.is_alive()):
                         t.state = 'running'
-                        #data = serialize("json", (t,))
-                        #sink_socket.send_json(data)
                     else:
                         t.state = 'error'
                         t.end = datetime.utcnow().replace(tzinfo=utc)
-                        #data = serialize("json", (t,))
-                        #sink_socket.send_json(data)
                     t.save()
             except DatabaseError, e:
                 e_msg = ('Error getting the list of scheduled tasks. Moving'
@@ -118,7 +105,8 @@ class TaskDispatcher(Process):
                 time.sleep(1)
                 total_sleep = total_sleep + 1
 
-        sink_socket.close()
-        context.term()
-        logger.info('terminated context. exiting')
-
+def main():
+    td = TaskDispatcher(settings.SCHEDULER)
+    td.start()
+    logger.debug('Started Task Scheduler')
+    td.join()
