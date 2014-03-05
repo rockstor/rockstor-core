@@ -47,7 +47,7 @@ AddShareView = Backbone.View.extend({
       success: function(collection, response) {
         $(_this.el).append(_this.template({pools: _this.pools, poolName: _this.poolName}));
         
-        $('#add-share-form :input').tooltip();
+        $('#add-share-form :input').tooltip({placement: 'right'});
         
         $('#add-share-form').validate({
             onfocusout: false,
@@ -110,7 +110,7 @@ AddShareView = Backbone.View.extend({
 
   cancel: function(event) {
     event.preventDefault();
-    _this.$('#add-share-form :input').tooltip('hide');
+    this.$('#add-share-form :input').tooltip('hide');
     app_router.navigate('shares', {trigger: true})
   }
 

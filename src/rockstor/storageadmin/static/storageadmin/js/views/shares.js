@@ -55,6 +55,9 @@ SharesView = RockstoreLayoutView.extend({
   },
 
   renderShares: function() {
+    if (this.$('[rel=tooltip]')) { 
+      this.$('[rel=tooltip]').tooltip('hide');
+    }
     if (!this.pools.fetched || !this.collection.fetched) { 
       return false;
     }
@@ -70,6 +73,7 @@ SharesView = RockstoreLayoutView.extend({
       collection: this.collection
     }));
     this.$("#shares-table").tablesorter();
+    this.$('[rel=tooltip]').tooltip({placement: 'bottom'});
   },
 
   deleteShare: function(event) {

@@ -22,7 +22,7 @@
             <% var dNames =  _.reduce(pool.get('disks'), function(s, disk, i, list) { if (i < (list.length-1)) { return s + disk.name + ',';} else { return s + disk.name; } }, ''); %>
             <%= dNames %>
           </td>
-          <td><a id="delete_pool_<%= pool.get('name') %>" data-name="<%= pool.get('name') %>" data-action="delete"><i class="icon-trash"></i></a></td>
+          <td><a id="delete_pool_<%= pool.get('name') %>" data-name="<%= pool.get('name') %>" data-action="delete" rel="tooltip" title="Delete pool"><i class="icon-trash"></i></a></td>
         </tr>
       <% }); %>
     </tbody>
