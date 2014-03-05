@@ -50,7 +50,6 @@ def systemctl(service_name, switch):
     return run_command([SYSTEMCTL_BIN, switch, service_name])
 
 def superctl(service, switch):
-    service = 'rd'
     out, err, rc = run_command([SUPERCTL_BIN, switch, service])
     if (switch == 'status'):
         status = out[0].split()[1]
