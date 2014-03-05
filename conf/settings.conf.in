@@ -262,6 +262,7 @@ PIPELINE_JS = {
             'backup/js/templates/**/*.jst',
             'backup/js/views/add_backup_policy.js',
             'backup/js/views/backup.js',
+            'backup/js/views/backup_trails.js',
             'backup/js/models/models.js',
         ),
         'output_filename': 'backup/js/backup_plugin.js'

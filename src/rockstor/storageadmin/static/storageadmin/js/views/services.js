@@ -195,7 +195,7 @@ ServicesView = Backbone.View.extend({
   },
 
   setStatusLoading: function(serviceName, show) {
-    var statusEl = this.$('div.command-status[data-service-name="' + serviceName + '"]')
+    var statusEl = this.$('div.command-status[data-service-name="' + serviceName + '"]');
     if (show) {
       statusEl.html('<img src="/static/storageadmin/img/ajax-loader.gif"></img>');
     } else {
@@ -204,7 +204,7 @@ ServicesView = Backbone.View.extend({
   },
 
   setStatusError: function(serviceName, xhr) {
-    var statusEl = this.$('div.command-status[data-service-name="' + serviceName + '"]')
+    var statusEl = this.$('div.command-status[data-service-name="' + serviceName + '"]');
     var msg = parseXhrError(xhr)
     // remove any existing error popups
     $('body').find('#' + serviceName + 'err-popup').remove();
