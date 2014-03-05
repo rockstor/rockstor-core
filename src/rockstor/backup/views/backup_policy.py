@@ -62,6 +62,18 @@ class BackupPolicyView(GenericView):
                      ' again' % (dest_share))
             handle_exception(Exception(e_msg), request)
 
+        if (BackupPolicy.objects.filter(name=name).exists()):
+            e_msg = ('Another policy exists with the same name(%s). Choose '
+                     'a different one.' % name)
+            handle_exception(Exception(e_msg), request)
+
+        if (BackupPolicy.objects.filter(source_ip=source_ip,
+                                        source_path=source_path).exists()):
+            e_msg = ('Another policy exists for the same source ip(%s) and'
+                     ' share(%s) combination. Duplicates are not allowed.'
+                     % (source_ip, source_path))
+            handle_exception(Exception(e_msg), request)
+
         bp = BackupPolicy(name=name, source_ip=source_ip,
                           source_path=source_path, dest_share=dest_share,
                           notify_email=notify_email, start=ts,
