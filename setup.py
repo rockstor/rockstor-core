@@ -42,6 +42,7 @@ setup(
             'initrock = initrock:main',
             'task-scheduler = smart_manager.scheduler.task_dispatcher:main',
             'data-collector = smart_manager.data_collector:main',
+            'service-monitor = smart_manager.services:main',
             ],
         },
 

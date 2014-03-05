@@ -18,7 +18,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import time
 import sys
 from django.conf import settings
-from services import ServiceMonitor
 from stap_dispatcher import Stap
 from cli.rest_util import api_call
 
@@ -52,8 +51,7 @@ def main():
         logger.error('Unable to bootstrap the machine. Moving on..')
         logger.exception(e)
 
-    live_procs = [ServiceMonitor(),
-                  Stap(settings.TAP_SERVER),]
+    live_procs = [Stap(settings.TAP_SERVER),]
     for p in live_procs:
         p.start()
 
