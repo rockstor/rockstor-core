@@ -62,7 +62,7 @@ class SnapshotView(GenericView):
             return Snapshot.objects.filter(share=share,
                                            snap_type=snap_type)
 
-        return Snapshot.objects.filter(share=share)
+        return Snapshot.objects.filter(share=share).order_by('id')
 
     @transaction.commit_on_success
     def _toggle_visibility(self, share, snap_name, on=True):

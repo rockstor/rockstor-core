@@ -17,9 +17,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from rest_framework import (serializers, pagination)
-from backup.models import BackupPolicy
+from backup.models import (BackupPolicy, PolicyTrail)
 
 class BackupPolicySerializer(serializers.ModelSerializer):
     class Meta:
         model = BackupPolicy
 
+class PolicyTrailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PolicyTrail

@@ -42,7 +42,6 @@ VersionView = RockstoreLayoutView.extend({
       url: "/api/commands/update-check", 
       type: "POST",
       dataType: "json",
-      global: false, // dont show global loading indicator
       success: function(data, status, xhr) {
         _this.currentVersion = data[0];
         _this.mostRecentVersion = data[1];
