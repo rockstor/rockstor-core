@@ -20,6 +20,8 @@
 </script>
 
 <h4>Backup history for <%= policy.get('name') %> ( From <%= policy.get('source_ip') %>:<%= policy.get('source_path') %> to <%= policy.get('dest_share') %> )</h4>
+<h4>Snapshots retained: <%= policy.get('num_retain') %>&nbsp;&nbsp;&nbsp;&nbsp; Notification email: <%= policy.get('notify_email') %></h4>
+
 
 <% if (!backupPolicyTrails.isEmpty()) { %>
   <div class="row-fluid">
