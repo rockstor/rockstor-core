@@ -111,9 +111,10 @@ AddPoolView = Backbone.View.extend({
           return true;
         }, raid_err_msg);
         
-        this.$('#add-pool-form input').tooltip();
+        this.$('#add-pool-form input').tooltip({placement: 'right'});
         this.$('#raid_level').tooltip({
           html: true,
+          placement: 'right',
           title: "Desired RAID level of the pool<br><strong>Single</strong>: No software raid. (Recommended while using hardware raid).<br><strong>Raid0</strong>, <strong>Raid1</strong>, <strong>Raid10</strong>, <strong>Raid5</strong> and <strong>Raid6</strong> are similar to conventional implementations with key differences.<br>See documentation for more information"
         });
 
@@ -147,8 +148,8 @@ AddPoolView = Backbone.View.extend({
               data: {"disks": disk_names, "raid_level": raid_level, "pname": pool_name},
               success: function() {
                 enableButton(button);
-                _this.$('#add-pool-form input').tooltip('hide');
-                app_router.navigate('pools', {trigger: true}) 
+                _this.$('#add-pool-form :input').tooltip('hide');
+                app_router.navigate('pools', {trigger: true})
               },
               error: function(xhr, status, error) {
                 enableButton(button);
@@ -166,6 +167,7 @@ AddPoolView = Backbone.View.extend({
 
   cancel: function(event) {
     event.preventDefault();
+    this.$('#add-pool-form :input').tooltip('hide');
     app_router.navigate('pools', {trigger: true});
   }
 });
