@@ -56,7 +56,11 @@
         <div class="control-group">
           <label class="control-label" for="dest_share">Destination share Name<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" name="dest_share" id="dest_share" title="Share on this Rockstor appliance where backups are to be saved">
+            <select id="dest_share" name="dest_share" title="Share on this Rockstor appliance where backups are to be saved">
+              <% shares.each(function(s) { %>
+                <option value="<%= s.get('name') %>"><%= s.get('name') %></option>
+              <% }); %>
+            </select>
           </div>
         </div>
 

@@ -48,6 +48,9 @@ BackupView = RockstoreLayoutView.extend({
     this.dependencies.push(this.backupPolicyTrails);
     this.status = new BackupPluginStatus();
     this.dependencies.push(this.status);
+    this.shares = new ShareCollection();
+    this.shares.pageSize = RockStorGlobals.maxPageSize;
+    this.dependencies.push(this.shares);
     this.trailMap = {};
   },
 
@@ -70,6 +73,7 @@ BackupView = RockstoreLayoutView.extend({
     
     $(this.el).html(this.template({ 
       collection: this.collection,
+      shares: this.shares,
       status: this.status
     }));
     this.$("#policy-table-ph").html(this.policyTableTemplate({
