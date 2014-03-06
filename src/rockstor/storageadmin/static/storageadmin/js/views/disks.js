@@ -45,11 +45,11 @@ DisksView = Backbone.View.extend({
   },
   
   renderDisks: function() {
+    // remove existing tooltips
     if (this.$('[rel=tooltip]')) { 
       this.$("[rel=tooltip]").tooltip('hide');
     }
     $(this.el).html(this.template({ collection: this.collection }));
-    // remove existing tooltips
     this.$("#disks-table-ph").html(this.disks_table_template({
       collection: this.collection
     }));
@@ -58,7 +58,7 @@ DisksView = Backbone.View.extend({
     }));
     this.$("#disks-table").tablesorter();
     this.$("[rel=tooltip]").tooltip({ 
-      placement: "bottom",
+      placement: "right",
       container: '#disks-table' 
     });
   },
