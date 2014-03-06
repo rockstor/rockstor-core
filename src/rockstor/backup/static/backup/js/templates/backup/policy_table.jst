@@ -6,7 +6,10 @@
         <th>Name</th>
         <th>Source IP</th>
         <th>Source path</th>
-        <th>destination share</th>
+        <th>Destination share</th>
+        <th>Frequency (secs)</th>
+        <th>Num retained</th>
+        <th>Notification email</th>
         <th>Last backup</th>
         <th>Actions</th>
       </tr>
@@ -16,6 +19,9 @@
       <td><%= policy.get('source_ip') %></td>
       <td><%= policy.get('source_path') %></td>
       <td><%= policy.get('dest_share') %></td>
+      <td><%= policy.get('frequency') %></td>
+      <td><%= policy.get('num_retain') %></td>
+      <td><%= policy.get('notify_email') %></td>
       <td>
         <% if (trailMap[policy.id]) { %>
           <% if (trailMap[policy.id].length > 0) { %>

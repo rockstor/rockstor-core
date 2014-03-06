@@ -40,7 +40,7 @@
         <div class="control-group">
           <label class="control-label" for="source_ip">Source Server IP<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" name="source_ip" id="source_ip" title="IP Address of source">
+            <input type="text" name="source_ip" id="source_ip" title="IP Address of the source.">
           </div>
         </div>
 
@@ -48,15 +48,15 @@
         <div class="control-group">
           <label class="control-label" for="source_path">Source Export Path<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" name="source_path" id="source_path" title="Source export path">
+            <input type="text" name="source_path" id="source_path" title="Export path of the source share">
           </div>
         </div>
         
         <!-- Destination share -->
         <div class="control-group">
-          <label class="control-label" for="dest_share">Destination Share Name<span class="required"> *</span></label>
+          <label class="control-label" for="dest_share">Destination share Name<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" name="dest_share" id="dest_share" title="Enter destination share">
+            <input type="text" name="dest_share" id="dest_share" title="Destination share where backups are done">
           </div>
         </div>
         
@@ -64,10 +64,10 @@
         <div class="control-group">
           <label class="control-label" for="notification_level">Notification Level<span class="required"> *</span></label>
           <div class="controls">
-            <select id="notification_level" name="notification_level" title="Notify on Success/Failure">
+            <select id="notification_level" name="notification_level" title="Notifications can be sent on success, failure or both">
+              <option selected="selected">Both</option>
               <option>Success</option>
               <option>Fail</option>
-              <option>Both</option>
             </select>
           </div>
         </div>
@@ -76,13 +76,13 @@
         <div class="control-group">
           <label class="control-label" for="notify_email">Notification Email(s)</label>
           <div class="controls">
-            <input type="text" name="notify_email" id="notify_email" title="Comma separated list of email addresses">
+            <input type="text" name="notify_email" id="notify_email" title="Comma separated list of email addresses that will be notified on the selected notification level">
           </div>
         </div>
         
         <!-- Start date and time -->
         <div class="control-group">
-          <label class="control-label" for="start_date">Start Date (MM/DD/YYYY) and Start Time (hh:mm)</label>
+          <label class="control-label" for="start_date">Start Date Time </label>
           <div class="controls controls-row">
             <input class="span4" type="text" id="start_date" name="start_date" placeholder="Start Date" title="Start date in MM/DD/YYYY format">
             <input class="span3" type="text" id="start_time" name="start_time" placeholder="Start Time" title="Start time in hh:mm format">
@@ -93,14 +93,14 @@
         <div class="control-group">
           <label class="control-label" for="frequency">Frequency in sec<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" name="frequency" id="frequency" title="Frequency in seconds">
+            <input type="text" name="frequency" id="frequency" title="Frequency of backup in seconds">
           </div>
         </div>
         
         <div class="control-group">
           <label class="control-label" for="num_retain">Number of snapshots<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" name="num_retain" id="num_retain" title="Number of snapshots to retain">
+            <input type="text" name="num_retain" id="num_retain" title="Number of snapshots to retain in the destination share.">
           </div>
         </div>
 
