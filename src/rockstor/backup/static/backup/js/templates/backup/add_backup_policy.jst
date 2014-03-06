@@ -2,32 +2,32 @@
 /*
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
- * 
+ *
  * RockStor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
- * 
+ *
  * RockStor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 </script>
 
 
-<span class="h3">Create Backup Policy</span>&nbsp;&nbsp;
+<span class="h3">Add a new Backup Policy</span>&nbsp;&nbsp;
 ( <span class="required">*</span> indicates required fields )
 <div class="row-fluid">
   <div class="span8">
     <div class="form-box">
       <form class="form-horizontal" id="add-backup-policy-form" name="aform">
         <div class="messages"> </div>
-        
+
         <!-- Name -->
         <div class="control-group">
           <label class="control-label" for="name">Backup Policy Name<span class="required"> *</span></label>
@@ -40,7 +40,7 @@
         <div class="control-group">
           <label class="control-label" for="source_ip">Source Server IP<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" name="source_ip" id="source_ip" title="IP Address of the source.">
+            <input type="text" name="source_ip" id="source_ip" title="IP Address of the NFS Server to pull the backups from.">
           </div>
         </div>
 
@@ -48,18 +48,18 @@
         <div class="control-group">
           <label class="control-label" for="source_path">Source Export Path<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" name="source_path" id="source_path" title="Export path of the source share">
+            <input type="text" name="source_path" id="source_path" title="Export path of the Share on the NFS Server that must be backed up.">
           </div>
         </div>
-        
+
         <!-- Destination share -->
         <div class="control-group">
           <label class="control-label" for="dest_share">Destination share Name<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" name="dest_share" id="dest_share" title="Destination share where backups are done">
+            <input type="text" name="dest_share" id="dest_share" title="Share on this Rockstor appliance where backups are to be saved">
           </div>
         </div>
-        
+
         <!-- Notification Level -->
         <div class="control-group">
           <label class="control-label" for="notification_level">Notification Level<span class="required"> *</span></label>
@@ -71,24 +71,24 @@
             </select>
           </div>
         </div>
-        
+
         <!-- Notification emails -->
         <div class="control-group">
           <label class="control-label" for="notify_email">Notification Email(s)</label>
           <div class="controls">
-            <input type="text" name="notify_email" id="notify_email" title="Comma separated list of email addresses that will be notified on the selected notification level">
+            <input type="text" name="notify_email" id="notify_email" title="Comma separated list of email addresses to be notified">
           </div>
         </div>
-        
+
         <!-- Start date and time -->
         <div class="control-group">
-          <label class="control-label" for="start_date">Start Date Time </label>
+          <label class="control-label" for="start_date">Start Date and Time </label>
           <div class="controls controls-row">
             <input class="span4" type="text" id="start_date" name="start_date" placeholder="Start Date" title="Start date in MM/DD/YYYY format">
             <input class="span3" type="text" id="start_time" name="start_time" placeholder="Start Time" title="Start time in hh:mm format">
           </div>
         </div>
-        
+
         <!-- Frequency -->
         <div class="control-group">
           <label class="control-label" for="frequency">Frequency in sec<span class="required"> *</span></label>
@@ -96,11 +96,11 @@
             <input type="text" name="frequency" id="frequency" title="Frequency of backup in seconds">
           </div>
         </div>
-        
+
         <div class="control-group">
           <label class="control-label" for="num_retain">Number of snapshots<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" name="num_retain" id="num_retain" title="Number of snapshots to retain in the destination share.">
+            <input type="text" name="num_retain" id="num_retain" title="Number of historic snapshots to retain. A snapshot of the Destination Share is taken for each scheduled backup.">
           </div>
         </div>
 
