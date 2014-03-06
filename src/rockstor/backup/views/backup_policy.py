@@ -45,6 +45,7 @@ class BackupPolicyView(GenericView):
         source_path = request.DATA['source_path']
         dest_share = request.DATA['dest_share']
         notify_email = request.DATA['notify_email']
+        notification_level = request.DATA['notification_level']
         frequency = None
         if ('frequency' in request.DATA):
             frequency = int(request.DATA['frequency'])
@@ -77,6 +78,7 @@ class BackupPolicyView(GenericView):
         bp = BackupPolicy(name=name, source_ip=source_ip,
                           source_path=source_path, dest_share=dest_share,
                           notify_email=notify_email, start=ts,
+                          notification_level=notification_level,
                           frequency=frequency, num_retain=num_retain)
         bp.save()
         return Response(BackupPolicySerializer(bp).data)

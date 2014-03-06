@@ -33,6 +33,11 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal('backup', ['PolicyTrail'])
 
+        # Adding field 'BackupPolicy.notification_level'
+        db.add_column(u'backup_backuppolicy', 'notification_level',
+                      self.gf('django.db.models.fields.CharField')(default='Fail', max_length=64),
+                      keep_default=False)
+
         # Adding field 'BackupPolicy.enabled'
         db.add_column(u'backup_backuppolicy', 'enabled',
                       self.gf('django.db.models.fields.BooleanField')(default=True),
@@ -48,6 +53,9 @@ class Migration(SchemaMigration):
 
         # Deleting model 'PolicyTrail'
         db.delete_table(u'backup_policytrail')
+
+        # Deleting field 'BackupPolicy.notification_level'
+        db.delete_column(u'backup_backuppolicy', 'notification_level')
 
         # Deleting field 'BackupPolicy.enabled'
         db.delete_column(u'backup_backuppolicy', 'enabled')
@@ -73,6 +81,7 @@ class Migration(SchemaMigration):
             'frequency': ('django.db.models.fields.IntegerField', [], {}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '255'}),
+            'notification_level': ('django.db.models.fields.CharField', [], {'default': "'Fail'", 'max_length': '64'}),
             'notify_email': ('django.db.models.fields.CharField', [], {'max_length': '4096'}),
             'num_retain': ('django.db.models.fields.IntegerField', [], {}),
             'source_ip': ('django.db.models.fields.CharField', [], {'max_length': '255'}),

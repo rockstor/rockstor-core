@@ -25,6 +25,12 @@ class BackupPolicy(models.Model):
     source_path = models.CharField(max_length=255)
     dest_share = models.CharField(max_length=255)
     notify_email = models.CharField(max_length=4096)
+    NOTIFY_CHOICES = [
+        ('Success',) * 2,
+        ('Fail',) * 2,
+        ('Both',) * 2,
+        ]
+    notification_level = models.CharField(max_length=64, default='Fail')
     start = models.DateTimeField(auto_now=True, db_index=True)
     frequency = models.IntegerField()
     num_retain = models.IntegerField()
