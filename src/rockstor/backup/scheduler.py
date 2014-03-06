@@ -25,7 +25,7 @@ from django.conf import settings
 from backup.models import (BackupPolicy, PolicyTrail)
 from backup.util import (create_trail, delete_old_snapshots)
 from backup.worker import BackupPluginWorker
-from storageadmin.models import Share
+from storageadmin.models import (Share, Disk)
 
 import logging
 logger = logging.getLogger(__name__)
@@ -52,7 +52,8 @@ class BackupPluginScheduler(Process):
             return logger.error('backup task will not be started for '
                                 'policy(%d) due to error while creating '
                                 'task trail' % po.id)
-        worker = BackupPluginWorker(po, to, so.pool.name)
+        pool_device = Disk.objects.filter(pool=so.pool)[0].name
+        worker = BackupPluginWorker(po, to, pool_device)
         worker.start()
         self.workers[po.id] = worker
 
