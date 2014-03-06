@@ -44,3 +44,6 @@ from task_scheduler import TaskSchedulerView
 from task_log import TaskLogView
 from replica_share import ReplicaShareView
 from receive_trail import ReceiveTrailView
+from ts_service import TaskSchedulerServiceView
+from dc_service import DataCollectorServiceView
+from sm_service import ServiceMonitorView

@@ -23,6 +23,8 @@ import os
 DEBUG = ${django-settings-conf:debug}
 TEMPLATE_DEBUG = DEBUG
 
+ALLOWED_HOSTS = [ '*', ]
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
@@ -260,6 +262,7 @@ PIPELINE_JS = {
             'backup/js/templates/**/*.jst',
             'backup/js/views/add_backup_policy.js',
             'backup/js/views/backup.js',
+            'backup/js/views/backup_trails.js',
             'backup/js/models/models.js',
         ),
         'output_filename': 'backup/js/backup_plugin.js'
@@ -310,11 +313,15 @@ LOGGING = {
         'storageadmin': {
             'handlers': ['file'],
             'level': 'DEBUG',
-            },
+        },
         'smart_manager': {
             'handlers': ['file'],
             'level': 'DEBUG',
-            },
+        },
+	'backup': {
+     	    'handlers': ['file'],
+	    'level': 'DEBUG',
+	},
     }
 }
 

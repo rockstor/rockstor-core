@@ -332,3 +332,9 @@ class ProcRetreiver(Process):
                              'for pool: %s' % (p.name))
                 logger.exception(e)
         return now
+
+def main():
+    pr = ProcRetreiver()
+    pr.start()
+    logger.debug('Started Proc Retreiver')
+    pr.join()

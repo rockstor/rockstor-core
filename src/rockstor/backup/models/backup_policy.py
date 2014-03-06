@@ -21,14 +21,33 @@ from django.db import models
 
 class BackupPolicy(models.Model):
     name = models.CharField(max_length=255, unique=True)
-    source_ip = models.CharField(max_length=255, unique=True)
-    source_path = models.CharField(max_length=255, unique=True)
-    dest_share = models.CharField(max_length=255, unique=True)
-    notify_email = models.CharField(max_length=4096, unique=True)
+    source_ip = models.CharField(max_length=255)
+    source_path = models.CharField(max_length=255)
+    dest_share = models.CharField(max_length=255)
+    notify_email = models.CharField(max_length=4096)
+    NOTIFY_CHOICES = [
+        ('Success',) * 2,
+        ('Fail',) * 2,
+        ('Both',) * 2,
+        ]
+    notification_level = models.CharField(max_length=64, default='Fail')
     start = models.DateTimeField(auto_now=True, db_index=True)
     frequency = models.IntegerField()
     num_retain = models.IntegerField()
+    enabled = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = ('source_ip', 'source_path')
+        app_label = 'backup'
+
+class PolicyTrail(models.Model):
+    policy = models.ForeignKey(BackupPolicy)
+    start = models.DateTimeField(null=True, db_index=True)
+    status = models.CharField(max_length=255, default='start')
+    snap_created = models.DateTimeField(null=True)
+    sync_started = models.DateTimeField(null=True)
+    error = models.CharField(null=True, max_length=2048)
+    status_ts = models.DateTimeField(null=True)
 
     class Meta:
         app_label = 'backup'
-
