@@ -1,0 +1,20 @@
+<div class="alert alert-error">
+  <strong><h4>Error!</h4></strong>
+  <br>
+  <div class="global-err-content">
+    <%= detail %>
+  </div>
+</div>
+<br>
+<a class="err-help-toggle" href="#">More...</a>
+<br>
+<br>
+<div class="err-help" style="display: none;">
+  If you need more help on this issue, email us at <a href="mailto:support@rockstor.com" target="_blank">support@rockstor.com</a> with the following information:
+  <ul>
+    <li>The error message: <%= detail %></li>
+    <li>A step by step description of the actions leading up to the error.</li>
+    <li>Download the tarred and zipped server logs by clicking <a href="/logs/error.tgz" target="_blank">here</a>, and attach it to the email.</li>
+  </ul>
+</div> <!-- err-help -->
+

@@ -47,7 +47,6 @@ SetupNetworkView = Backbone.View.extend({
       url: "/api/network", 
       type: "POST",
       dataType: "json",
-      global: false, // dont show global loading indicator
       success: function(data, status, xhr) {
         _this.networkInterfaces.fetch();
       },
