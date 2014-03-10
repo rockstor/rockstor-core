@@ -24,7 +24,7 @@
  * 
  */
 
-ReplicationView = RockstoreLayoutView.extend({
+ReplicationView = RockstorLayoutView.extend({
   events: {
     'click .slider-start': 'enable',
     'click .slider-stop': 'disable'

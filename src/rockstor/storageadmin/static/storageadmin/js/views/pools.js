@@ -28,7 +28,7 @@
  * Pools View
  */
 
-PoolsView = RockstoreLayoutView.extend({
+PoolsView = RockstorLayoutView.extend({
   events: {
     "click a[data-action=delete]": "deletePool"
   },

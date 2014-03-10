@@ -28,7 +28,7 @@
  * Support View
  */
 
-SupportView = RockstoreLayoutView.extend({
+SupportView = RockstorLayoutView.extend({
   initialize: function() {
     // call initialize of base
     this.constructor.__super__.initialize.apply(this, arguments);

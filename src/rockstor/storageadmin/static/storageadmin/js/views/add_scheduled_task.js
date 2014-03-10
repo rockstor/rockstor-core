@@ -25,7 +25,7 @@
  */
 
 
-AddScheduledTaskView = RockstoreLayoutView.extend({
+AddScheduledTaskView = RockstorLayoutView.extend({
   events: {
     "click #js-cancel": "cancel",
     "click #task-type": "renderOptionalFields",

@@ -25,7 +25,7 @@
  */
 
 
-AddReplicationTaskView = RockstoreLayoutView.extend({
+AddReplicationTaskView = RockstorLayoutView.extend({
   events: {
     "click #js-cancel": "cancel"
   },

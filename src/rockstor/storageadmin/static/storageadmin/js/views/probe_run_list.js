@@ -26,7 +26,7 @@
 
 /* Services */
 
-ProbeRunListView = RockstoreLayoutView.extend({
+ProbeRunListView = RockstorLayoutView.extend({
   events: {
     "click #cancel-new-probe": "cancelNewProbe",
     "click .stop-probe": "stopProbe",

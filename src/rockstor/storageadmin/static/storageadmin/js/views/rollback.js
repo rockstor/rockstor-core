@@ -24,7 +24,7 @@
  * 
  */
 
-RollbackView = RockstoreLayoutView.extend({
+RollbackView = RockstorLayoutView.extend({
   events: {
     'click #js-cancel': 'cancel',
     'click #js-confirm-rollback-submit': 'confirmRollback'

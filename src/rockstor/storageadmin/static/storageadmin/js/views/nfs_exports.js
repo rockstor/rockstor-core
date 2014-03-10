@@ -24,7 +24,7 @@
  * 
  */
 
-NFSExportsView  = RockstoreLayoutView.extend({
+NFSExportsView  = RockstorLayoutView.extend({
   events: {
     'click .delete-nfs-export': 'deleteNfsExport'
   },

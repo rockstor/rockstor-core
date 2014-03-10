@@ -24,7 +24,7 @@
  * 
  */
 
-SetupView = RockstoreLayoutView.extend({
+SetupView = RockstorLayoutView.extend({
   tagName: 'div',
   
   events: {

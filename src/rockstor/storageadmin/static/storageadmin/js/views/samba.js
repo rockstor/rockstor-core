@@ -24,7 +24,7 @@
  * 
  */
 
-SambaView  = RockstoreLayoutView.extend({
+SambaView  = RockstorLayoutView.extend({
   events: {
     'click .delete-samba-export' : 'deleteSambaExport'
   },

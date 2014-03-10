@@ -28,7 +28,7 @@
  * View for the homepage/dashboard
  */
 
-var HomeLayoutView = RockstoreLayoutView.extend({
+var HomeLayoutView = RockstorLayoutView.extend({
   events: {
   },
 

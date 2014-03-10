@@ -44,7 +44,7 @@ PaginationMixin = {
   }
 };
 
-RockstoreLayoutView = Backbone.View.extend({
+RockstorLayoutView = Backbone.View.extend({
   tagName: 'div',
   className: 'layout',
   requestCount: 0,
@@ -53,8 +53,21 @@ RockstoreLayoutView = Backbone.View.extend({
     this.subviews = {};
     this.dependencies = [];
   },
-
+  
   fetch: function(callback, context) {
+   
+    var allDependencies = [], i, length;
+    for (i = 0, length = this.dependencies.length; i < length; i += 1) {
+            allDependencies.push(this.dependencies[i].fetch({
+            silent: true,
+              }));
+        };
+    $.when.apply($, allDependencies).done(function () {
+              if (callback) callback.apply(context);
+            });
+  },
+
+/*  fetch: function(callback, context) {
     if (this.dependencies.length == 0) {
       if (callback) callback.apply(context);
     }
@@ -78,7 +91,7 @@ RockstoreLayoutView = Backbone.View.extend({
       });
     });
     return this;
-  },
+  }, */
 });
 
 

@@ -24,7 +24,7 @@
  * 
  */
 
-ShareDetailsLayoutView = RockstoreLayoutView.extend({
+ShareDetailsLayoutView = RockstorLayoutView.extend({
   id: "share-details-container",
   events: {
     "click #js-acl-edit": "editAcl",

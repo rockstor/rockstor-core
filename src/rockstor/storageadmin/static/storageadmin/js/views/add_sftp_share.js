@@ -24,7 +24,7 @@
  * 
  */
 
-AddSFTPShareView = RockstoreLayoutView.extend({
+AddSFTPShareView = RockstorLayoutView.extend({
   events: {
     "click #cancel": "cancel"
   },
