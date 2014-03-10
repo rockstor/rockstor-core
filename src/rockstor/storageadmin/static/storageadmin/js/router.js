@@ -601,10 +601,11 @@ $(document).ready(function() {
   // Global ajax error handler 
   $(document).ajaxError(function(event, jqXhr, ajaxSettings, e) {
     var commonerr_template = window.JST.common_commonerr;
+    var popuperrTemplate = window.JST.common_popuperr;
     var unknownerr_template = window.JST.common_unknownerr;
     var htmlErr = null;
     var resType = jqXhr.getResponseHeader('Content-Type');
-    var detail = '';
+    var detail = jqXhr.responseText;
     var errJson = {};
     if (jqXhr.status != 403) {
       // dont show forbidden errors (for setup screen)
@@ -616,13 +617,29 @@ $(document).ready(function() {
       } else if (jqXhr.status >= 500 && jqXhr.status < 600) {
         detail = 'Unknown internal error doing a ' + ajaxSettings.type + ' to ' + ajaxSettings.url;
       }
-      $("#globalerrmsg").html(commonerr_template({ 
+      if (ajaxSettings.type == 'GET') {
+        $("#globalerrmsg").html(commonerr_template({ 
         jqXhr: jqXhr, 
         detail: detail,
         help: errJson.help,
         ajaxSettings: ajaxSettings
-      }));
+        })); 
+      } else {
+        $('.overlay-content', '#global-err-overlay').html(popuperrTemplate({
+          detail: detail
+        }));
+        $('#global-err-overlay').overlay().load();
+      }
     }
+  });
+
+  $('#global-err-overlay').on('click', '.err-help-toggle', function(event) {
+    if (event) event.preventDefault();
+    var displayed = $('.err-help', '#global-err-overlay').css('display') == 'block'; 
+    var display = displayed ? 'none' : 'block';
+    $('.err-help', '#global-err-overlay').css('display', display);
+    var val = displayed ? 'More...' : 'Close';
+    $('.err-help-toggle', '#global-err-overlay').html(val);
   });
 
   $('#globalerrmsg').on('click', '.err-help-toggle', function(event) {
@@ -646,5 +663,8 @@ $(document).ready(function() {
   // );
   // RockStorSocket.socket.on('sm_data', RockStorSocket.msgHandler);
   
+  // Initialize global error popup 
+  $('#global-err-overlay').overlay({load: false}); 
+
 });
 
