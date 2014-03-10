@@ -16,12 +16,17 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from django.conf.urls.defaults import patterns, url
-from backup.views import (BackupPolicyView)
+from django.conf.urls import patterns, url
+from backup.views import (BackupPolicyView, PolicyTrailView, PluginView)
 
 urlpatterns = patterns(
         '',
         url(r'^$', BackupPolicyView.as_view()),
-        url(r'^/(?P<id>\d+)$', BackupPolicyView.as_view())
+        url(r'^/trail$', PolicyTrailView.as_view()),
+        url(r'^/trail/policy/(?P<pid>\d+)$', PolicyTrailView.as_view()),
+        url(r'^/trail/(?P<tid>\d+)$', PolicyTrailView.as_view()),
+        url(r'^/plugin/(?P<command>start|stop|status)$',
+            PluginView.as_view()),
+        url(r'/(?P<id>\d+)$', BackupPolicyView.as_view()),
         )
 

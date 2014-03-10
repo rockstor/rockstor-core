@@ -92,20 +92,29 @@ AddPoolView = Backbone.View.extend({
               err_msg = 'Raid1 requires at least 2 disks to be selected';
               return false;
             }
-
+          } else if (raid_level == 'raid5') {
+            if (n < 2) {
+              err_msg = 'Raid5 requires at least 2 disks to be selected';
+              return false;
+            }
+          } else if (raid_level == 'raid6') {
+            if (n < 3) {
+              err_msg = 'Raid6 requires at least 3 disks to be selected';
+              return false;
+            }
           } else if (raid_level == 'raid10') {
             if (n < 4) {
               err_msg = 'Raid10 requires at least 4 disks to be selected';
               return false;
             }
-
           }
           return true;
         }, raid_err_msg);
         
-        this.$('#add-pool-form input').tooltip();
+        this.$('#add-pool-form input').tooltip({placement: 'right'});
         this.$('#raid_level').tooltip({
           html: true,
+          placement: 'right',
           title: "Desired RAID level of the pool<br><strong>Single</strong>: No software raid. (Recommended while using hardware raid).<br><strong>Raid0</strong>, <strong>Raid1</strong>, <strong>Raid10</strong>, <strong>Raid5</strong> and <strong>Raid6</strong> are similar to conventional implementations with key differences.<br>See documentation for more information"
         });
 
@@ -142,6 +151,7 @@ AddPoolView = Backbone.View.extend({
              
              jqxhr.done(function() {
                 enableButton(button);
+<<<<<<< HEAD
                 _this.$('#add-pool-form input').tooltip('hide');
                 app_router.navigate('pools', {trigger: true}) 
 			  });
@@ -150,6 +160,16 @@ AddPoolView = Backbone.View.extend({
 			  enableButton(button);
 			  });
 			  
+=======
+                _this.$('#add-pool-form :input').tooltip('hide');
+                app_router.navigate('pools', {trigger: true})
+              },
+              error: function(xhr, status, error) {
+                enableButton(button);
+              },
+            });
+
+>>>>>>> master
           }
         });
 
@@ -161,6 +181,7 @@ AddPoolView = Backbone.View.extend({
 
   cancel: function(event) {
     event.preventDefault();
+    this.$('#add-pool-form :input').tooltip('hide');
     app_router.navigate('pools', {trigger: true});
   }
 });

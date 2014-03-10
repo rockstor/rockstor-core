@@ -29,7 +29,7 @@ class Task(models.Model):
         ('running',) * 2,
         ('finished',) * 2,
         ]
-    state = models.CharField(max_length=7, choices=STATE_CHOICES)
+    state = models.CharField(max_length=64, choices=STATE_CHOICES)
     start = models.DateTimeField(auto_now=True, db_index=True)
     end = models.DateTimeField(null=True, db_index=True)
 

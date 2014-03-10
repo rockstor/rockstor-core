@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2014 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -16,16 +16,12 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-"""
-Disk view, for anything at the disk level
-"""
-
 from rest_framework.response import Response
 from django.db import transaction
+from storageadmin.models import Share
 from backup.models import BackupPolicy
 from backup.serializers import BackupPolicySerializer
 from storageadmin.util import handle_exception
-from django.conf import settings
 from generic_view import GenericView
 from datetime import datetime
 from django.utils.timezone import utc
@@ -34,14 +30,13 @@ class BackupPolicyView(GenericView):
     serializer_class = BackupPolicySerializer
 
     def get_queryset(self, *args, **kwargs):
-        if ('pname' in kwargs):
+        if (len(kwargs) > 0):
             self.paginate_by = 0
             try:
-                return BackupPolicy.objects.get(name=kwargs['pname'])
+                return BackupPolicy.objects.get(**kwargs)
             except:
                 return []
         return BackupPolicy.objects.all()
-
 
     @transaction.commit_on_success
     def post(self, request):
@@ -50,11 +45,12 @@ class BackupPolicyView(GenericView):
         source_path = request.DATA['source_path']
         dest_share = request.DATA['dest_share']
         notify_email = request.DATA['notify_email']
+        notification_level = request.DATA['notification_level']
         frequency = None
         if ('frequency' in request.DATA):
             frequency = int(request.DATA['frequency'])
             if (frequency < 60):
-                frequency = None
+                frequency = 60
             else:
                 frequency = frequency - (frequency % 60)
         ts = int(float(request.DATA['ts']))
@@ -62,11 +58,49 @@ class BackupPolicyView(GenericView):
                                                               microsecond=0,
                                                               tzinfo=utc)
         num_retain = request.DATA['num_retain']
-        bp = BackupPolicy(name=name, source_ip=source_ip, 
-                source_path=source_path, dest_share=dest_share,
-                notify_email=notify_email, start=ts,
-                frequency=frequency, num_retain=num_retain)
+        if (not Share.objects.filter(name=dest_share).exists()):
+            e_msg = ('Destination share(%s) does not exist. Check and try'
+                     ' again' % (dest_share))
+            handle_exception(Exception(e_msg), request)
+
+        if (BackupPolicy.objects.filter(name=name).exists()):
+            e_msg = ('Another policy exists with the same name(%s). Choose '
+                     'a different one.' % name)
+            handle_exception(Exception(e_msg), request)
+
+        if (BackupPolicy.objects.filter(source_ip=source_ip,
+                                        source_path=source_path).exists()):
+            e_msg = ('Another policy exists for the same source ip(%s) and'
+                     ' share(%s) combination. Duplicates are not allowed.'
+                     % (source_ip, source_path))
+            handle_exception(Exception(e_msg), request)
+
+        bp = BackupPolicy(name=name, source_ip=source_ip,
+                          source_path=source_path, dest_share=dest_share,
+                          notify_email=notify_email, start=ts,
+                          notification_level=notification_level,
+                          frequency=frequency, num_retain=num_retain)
         bp.save()
         return Response(BackupPolicySerializer(bp).data)
 
+    def _validate_policy(self, id, request):
+        try:
+            return BackupPolicy.objects.get(id=id)
+        except:
+            e_msg = ('Backup policy(%s) does not exist' % id)
+            handle_exception(Exception(e_msg), request)
+
+    @transaction.commit_on_success
+    def put(self, request, id):
+        policy = self._validate_policy(id, request)
+        enabled = request.DATA['enabled']
+        policy.enabled = enabled
+        policy.save()
+        return Response(BackupPolicySerializer(policy).data)
+
+    @transaction.commit_on_success
+    def delete(self, request, id):
+        bp = self._validate_policy(id, request)
+        bp.delete()
+        return Response()
 

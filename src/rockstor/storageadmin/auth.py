@@ -24,4 +24,7 @@ class DigestAuthentication(BaseAuthentication):
     def authenticate(self, request):
         if ('apikey' in request.QUERY_PARAMS and
             request.QUERY_PARAMS['apikey'] == 'adminapikey'):
-            return (User.objects.all()[0], None)
+            try:
+                return (User.objects.all()[0], None)
+            except:
+                return None

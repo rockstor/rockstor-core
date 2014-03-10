@@ -480,9 +480,23 @@ function getCurrentTimeOnServer() {
 function setVersionCheckTimer() {
   RockStorGlobals.versionCheckTimer = window.setInterval(function() {
     checkVersion();
-  }, 7200000);
-  checkVersion();
+  }, 300000);
+  getCurrentVersion();
   RockStorGlobals.versionCheckTimerStarted = true;
+}
+
+function getCurrentVersion() {
+  $.ajax({
+    url: "/api/commands/current-version", 
+    type: "POST",
+    dataType: "json",
+    global: false, // dont show global loading indicator
+    success: function(data, status, xhr) {
+      $('#version-msg').html('RockStor ' + data);
+    },
+    error: function(xhr, status, error) {
+    }
+  });
 }
 
 function checkVersion() {

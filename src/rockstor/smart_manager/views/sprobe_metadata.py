@@ -23,7 +23,7 @@ from rest_framework.authentication import (BasicAuthentication,
                                            SessionAuthentication,)
 from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
-from renderers import IgnoreClient
+from rest_framework_custom.renderers import IgnoreClient
 from django.conf import settings
 from django.db.models import Count
 from advanced_sprobe import AdvancedSProbeView

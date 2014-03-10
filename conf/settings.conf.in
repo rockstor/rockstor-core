@@ -23,28 +23,30 @@ import os
 DEBUG = ${django-settings-conf:debug}
 TEMPLATE_DEBUG = DEBUG
 
+ALLOWED_HOSTS = [ '*', ]
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': '${django-settings-conf:datastore}',                      # Or path to database file if using sqlite3.
-        'USER': '',                      # Not used with sqlite3.
-        'PASSWORD': '',                  # Not used with sqlite3.
+        'ENGINE': 'django.db.backends.postgresql_psycopg2', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+        'NAME': 'storageadmin',                      # Or path to database file if using sqlite3.
+        'USER': 'rocky',                      # Not used with sqlite3.
+        'PASSWORD': 'rocky',                  # Not used with sqlite3.
         'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     },
     'smart_manager': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': '${django-settings-conf:smartdb}',
-        'USER': '',
-        'PASSWORD': '',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'smartdb',
+        'USER': 'rocky',
+        'PASSWORD': 'rocky',
         'HOST': '',
         'PORT': '',
         },
     'backup': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': '${django-settings-conf:backupdb}',
-        'USER': '',
-        'PASSWORD': '',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'backup',
+        'USER': 'rocky',
+        'PASSWORD': 'rocky',
         'HOST': '',
         'PORT': '',
         },
@@ -232,6 +234,8 @@ PIPELINE_JS = {
             'storageadmin/js/views/run_probe.js',
             'storageadmin/js/views/replication.js',
             'storageadmin/js/views/replica_trails.js',
+            'storageadmin/js/views/replication_receive.js',
+            'storageadmin/js/views/replica_receive_trails.js',
             'storageadmin/js/views/add_replication_task.js',
             'storageadmin/js/views/nfs_exports.js',
             'storageadmin/js/views/samba.js',
@@ -258,6 +262,7 @@ PIPELINE_JS = {
             'backup/js/templates/**/*.jst',
             'backup/js/views/add_backup_policy.js',
             'backup/js/views/backup.js',
+            'backup/js/views/backup_trails.js',
             'backup/js/models/models.js',
         ),
         'output_filename': 'backup/js/backup_plugin.js'
@@ -308,11 +313,15 @@ LOGGING = {
         'storageadmin': {
             'handlers': ['file'],
             'level': 'DEBUG',
-            },
+        },
         'smart_manager': {
             'handlers': ['file'],
             'level': 'DEBUG',
-            },
+        },
+	'backup': {
+     	    'handlers': ['file'],
+	    'level': 'DEBUG',
+	},
     }
 }
 

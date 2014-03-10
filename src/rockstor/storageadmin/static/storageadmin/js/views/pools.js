@@ -56,6 +56,9 @@ PoolsView = RockstoreLayoutView.extend({
 
   renderPools: function() {
     var _this = this;
+    if (this.$('[rel=tooltip]')) { 
+      this.$('[rel=tooltip]').tooltip('hide');
+    }
     
     var freedisks = this.disks.filter(function(disk) { 
       return (disk.get('pool') == null) && !(disk.get('offline')) && 
@@ -72,7 +75,7 @@ PoolsView = RockstoreLayoutView.extend({
       collection: this.collection
     }));
     this.$("#pools-table").tablesorter();
-    this.$('#pool-table-ph-form :input').tooltip();
+    this.$('[rel=tooltip]').tooltip({placement: 'bottom'});
    
     return this;
   },

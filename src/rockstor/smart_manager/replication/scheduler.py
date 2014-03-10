@@ -68,22 +68,16 @@ class ReplicaScheduler(Process):
         return workers
 
     def run(self):
-        sleep_time = 0
         while True:
-            if (os.getppid() != self.ppid):
-                logger.error('Parent exited. Aborting.')
-                break
             try:
                 self.rep_ip = self._replication_interface()
                 self.uuid = self._my_uuid()
                 break
             except:
-                time.sleep(1)
-                sleep_time = sleep_time + 1
-                if (sleep_time % 30 == 0):
-                    msg = ('Failed to get replication interface or uuid for'
-                           ' last %d seconds' % sleep_time)
-                    logger.error(msg)
+                msg = ('Failed to get replication interface or uuid. '
+                       'Aborting.')
+                return logger.error(msg)
+
 
         ctx = zmq.Context()
         #fs diffs are sent via this publisher.
@@ -231,5 +225,5 @@ class ReplicaScheduler(Process):
 def main():
     rs = ReplicaScheduler()
     rs.start()
-    logger.info('Started Replica Scheduler')
+    logger.debug('Started Replica Scheduler')
     rs.join()

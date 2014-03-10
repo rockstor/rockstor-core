@@ -780,6 +780,7 @@ hr.module-sep { margin: 0; border: 0; border-top: 1px solid #ddd;
   position: fixed;
   left: 50%;
   top: 25%;
+  z-index: 999;
 }
 
 /* Dashboard */

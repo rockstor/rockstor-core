@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import datetime
+from south.utils import datetime_utils as datetime
 from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
@@ -9,8 +9,8 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
         # Adding model 'CPUMetric'
-        db.create_table('smart_manager_cpumetric', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+        db.create_table(u'smart_manager_cpumetric', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('name', self.gf('django.db.models.fields.CharField')(max_length=10)),
             ('umode', self.gf('django.db.models.fields.IntegerField')()),
             ('umode_nice', self.gf('django.db.models.fields.IntegerField')()),
@@ -21,9 +21,9 @@ class Migration(SchemaMigration):
         db.send_create_signal('smart_manager', ['CPUMetric'])
 
         # Adding model 'DiskStat'
-        db.create_table('smart_manager_diskstat', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('name', self.gf('django.db.models.fields.CharField')(max_length=3)),
+        db.create_table(u'smart_manager_diskstat', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('name', self.gf('django.db.models.fields.CharField')(max_length=128)),
             ('reads_completed', self.gf('django.db.models.fields.FloatField')()),
             ('reads_merged', self.gf('django.db.models.fields.FloatField')()),
             ('sectors_read', self.gf('django.db.models.fields.FloatField')()),
@@ -40,8 +40,8 @@ class Migration(SchemaMigration):
         db.send_create_signal('smart_manager', ['DiskStat'])
 
         # Adding model 'LoadAvg'
-        db.create_table('smart_manager_loadavg', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+        db.create_table(u'smart_manager_loadavg', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('load_1', self.gf('django.db.models.fields.FloatField')()),
             ('load_5', self.gf('django.db.models.fields.FloatField')()),
             ('load_15', self.gf('django.db.models.fields.FloatField')()),
@@ -54,8 +54,8 @@ class Migration(SchemaMigration):
         db.send_create_signal('smart_manager', ['LoadAvg'])
 
         # Adding model 'MemInfo'
-        db.create_table('smart_manager_meminfo', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+        db.create_table(u'smart_manager_meminfo', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('total', self.gf('django.db.models.fields.IntegerField')()),
             ('free', self.gf('django.db.models.fields.IntegerField')()),
             ('buffers', self.gf('django.db.models.fields.IntegerField')()),
@@ -70,16 +70,16 @@ class Migration(SchemaMigration):
         db.send_create_signal('smart_manager', ['MemInfo'])
 
         # Adding model 'VmStat'
-        db.create_table('smart_manager_vmstat', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+        db.create_table(u'smart_manager_vmstat', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('free_pages', self.gf('django.db.models.fields.IntegerField')()),
             ('ts', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, db_index=True, blank=True)),
         ))
         db.send_create_signal('smart_manager', ['VmStat'])
 
         # Adding model 'Service'
-        db.create_table('smart_manager_service', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+        db.create_table(u'smart_manager_service', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=24)),
             ('display_name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=24)),
             ('config', self.gf('django.db.models.fields.CharField')(max_length=8192, null=True)),
@@ -87,17 +87,18 @@ class Migration(SchemaMigration):
         db.send_create_signal('smart_manager', ['Service'])
 
         # Adding model 'ServiceStatus'
-        db.create_table('smart_manager_servicestatus', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+        db.create_table(u'smart_manager_servicestatus', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('service', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['smart_manager.Service'])),
             ('status', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('count', self.gf('django.db.models.fields.IntegerField')(default=1)),
             ('ts', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, db_index=True, blank=True)),
         ))
         db.send_create_signal('smart_manager', ['ServiceStatus'])
 
         # Adding model 'SProbe'
-        db.create_table('smart_manager_sprobe', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+        db.create_table(u'smart_manager_sprobe', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('name', self.gf('django.db.models.fields.CharField')(max_length=255)),
             ('display_name', self.gf('django.db.models.fields.CharField')(max_length=255, null=True)),
             ('smart', self.gf('django.db.models.fields.BooleanField')(default=False)),
@@ -108,8 +109,8 @@ class Migration(SchemaMigration):
         db.send_create_signal('smart_manager', ['SProbe'])
 
         # Adding model 'NFSDCallDistribution'
-        db.create_table('smart_manager_nfsdcalldistribution', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+        db.create_table(u'smart_manager_nfsdcalldistribution', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('rid', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['smart_manager.SProbe'])),
             ('ts', self.gf('django.db.models.fields.DateTimeField')(db_index=True)),
             ('num_lookup', self.gf('django.db.models.fields.IntegerField')()),
@@ -124,8 +125,8 @@ class Migration(SchemaMigration):
         db.send_create_signal('smart_manager', ['NFSDCallDistribution'])
 
         # Adding model 'NFSDClientDistribution'
-        db.create_table('smart_manager_nfsdclientdistribution', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+        db.create_table(u'smart_manager_nfsdclientdistribution', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('rid', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['smart_manager.SProbe'])),
             ('ts', self.gf('django.db.models.fields.DateTimeField')()),
             ('ip', self.gf('django.db.models.fields.CharField')(max_length=15)),
@@ -141,8 +142,8 @@ class Migration(SchemaMigration):
         db.send_create_signal('smart_manager', ['NFSDClientDistribution'])
 
         # Adding model 'NFSDShareDistribution'
-        db.create_table('smart_manager_nfsdsharedistribution', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+        db.create_table(u'smart_manager_nfsdsharedistribution', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('rid', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['smart_manager.SProbe'])),
             ('ts', self.gf('django.db.models.fields.DateTimeField')(db_index=True)),
             ('share', self.gf('django.db.models.fields.CharField')(max_length=255)),
@@ -158,17 +159,18 @@ class Migration(SchemaMigration):
         db.send_create_signal('smart_manager', ['NFSDShareDistribution'])
 
         # Adding model 'PoolUsage'
-        db.create_table('smart_manager_poolusage', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+        db.create_table(u'smart_manager_poolusage', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('pool', self.gf('django.db.models.fields.CharField')(max_length=4096)),
             ('usage', self.gf('django.db.models.fields.IntegerField')(default=0)),
             ('ts', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, db_index=True, blank=True)),
+            ('count', self.gf('django.db.models.fields.IntegerField')(default=1)),
         ))
         db.send_create_signal('smart_manager', ['PoolUsage'])
 
         # Adding model 'NetStat'
-        db.create_table('smart_manager_netstat', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+        db.create_table(u'smart_manager_netstat', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('device', self.gf('django.db.models.fields.CharField')(max_length=100)),
             ('kb_rx', self.gf('django.db.models.fields.FloatField')()),
             ('packets_rx', self.gf('django.db.models.fields.FloatField')()),
@@ -191,8 +193,8 @@ class Migration(SchemaMigration):
         db.send_create_signal('smart_manager', ['NetStat'])
 
         # Adding model 'NFSDShareClientDistribution'
-        db.create_table('smart_manager_nfsdshareclientdistribution', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+        db.create_table(u'smart_manager_nfsdshareclientdistribution', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('rid', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['smart_manager.SProbe'])),
             ('ts', self.gf('django.db.models.fields.DateTimeField')(db_index=True)),
             ('share', self.gf('django.db.models.fields.CharField')(max_length=255)),
@@ -209,17 +211,19 @@ class Migration(SchemaMigration):
         db.send_create_signal('smart_manager', ['NFSDShareClientDistribution'])
 
         # Adding model 'ShareUsage'
-        db.create_table('smart_manager_shareusage', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+        db.create_table(u'smart_manager_shareusage', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('name', self.gf('django.db.models.fields.CharField')(max_length=4096)),
-            ('usage', self.gf('django.db.models.fields.IntegerField')(default=0)),
+            ('r_usage', self.gf('django.db.models.fields.IntegerField')(default=0)),
+            ('e_usage', self.gf('django.db.models.fields.IntegerField')(default=0)),
             ('ts', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, db_index=True, blank=True)),
+            ('count', self.gf('django.db.models.fields.IntegerField')(default=1)),
         ))
         db.send_create_signal('smart_manager', ['ShareUsage'])
 
         # Adding model 'NFSDUidGidDistribution'
-        db.create_table('smart_manager_nfsduidgiddistribution', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+        db.create_table(u'smart_manager_nfsduidgiddistribution', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('rid', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['smart_manager.SProbe'])),
             ('ts', self.gf('django.db.models.fields.DateTimeField')(db_index=True)),
             ('share', self.gf('django.db.models.fields.CharField')(max_length=255)),
@@ -238,20 +242,21 @@ class Migration(SchemaMigration):
         db.send_create_signal('smart_manager', ['NFSDUidGidDistribution'])
 
         # Adding model 'TaskDefinition'
-        db.create_table('smart_manager_taskdefinition', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('name', self.gf('django.db.models.fields.CharField')(max_length=255)),
+        db.create_table(u'smart_manager_taskdefinition', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=255)),
+            ('task_type', self.gf('django.db.models.fields.CharField')(max_length=100)),
             ('ts', self.gf('django.db.models.fields.DateTimeField')(db_index=True)),
             ('frequency', self.gf('django.db.models.fields.IntegerField')(null=True)),
             ('json_meta', self.gf('django.db.models.fields.CharField')(max_length=8192)),
+            ('enabled', self.gf('django.db.models.fields.BooleanField')(default=True)),
         ))
         db.send_create_signal('smart_manager', ['TaskDefinition'])
 
         # Adding model 'Task'
-        db.create_table('smart_manager_task', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('name', self.gf('django.db.models.fields.CharField')(max_length=255)),
-            ('json_meta', self.gf('django.db.models.fields.CharField')(max_length=8192)),
+        db.create_table(u'smart_manager_task', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('task_def', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['smart_manager.TaskDefinition'])),
             ('state', self.gf('django.db.models.fields.CharField')(max_length=7)),
             ('start', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, db_index=True, blank=True)),
             ('end', self.gf('django.db.models.fields.DateTimeField')(null=True, db_index=True)),
@@ -259,8 +264,8 @@ class Migration(SchemaMigration):
         db.send_create_signal('smart_manager', ['Task'])
 
         # Adding model 'Replica'
-        db.create_table('smart_manager_replica', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+        db.create_table(u'smart_manager_replica', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('task_name', self.gf('django.db.models.fields.CharField')(max_length=1024)),
             ('share', self.gf('django.db.models.fields.CharField')(max_length=4096)),
             ('pool', self.gf('django.db.models.fields.CharField')(max_length=4096)),
@@ -269,12 +274,15 @@ class Migration(SchemaMigration):
             ('dshare', self.gf('django.db.models.fields.CharField')(max_length=4096, null=True)),
             ('enabled', self.gf('django.db.models.fields.BooleanField')(default=False)),
             ('frequency', self.gf('django.db.models.fields.IntegerField')()),
+            ('data_port', self.gf('django.db.models.fields.IntegerField')(default=10002)),
+            ('meta_port', self.gf('django.db.models.fields.IntegerField')(default=10003)),
+            ('ts', self.gf('django.db.models.fields.DateTimeField')(null=True, db_index=True)),
         ))
         db.send_create_signal('smart_manager', ['Replica'])
 
         # Adding model 'ReplicaTrail'
-        db.create_table('smart_manager_replicatrail', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+        db.create_table(u'smart_manager_replicatrail', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('replica', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['smart_manager.Replica'])),
             ('snap_name', self.gf('django.db.models.fields.CharField')(max_length=1024)),
             ('kb_sent', self.gf('django.db.models.fields.IntegerField')(default=0)),
@@ -289,73 +297,107 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal('smart_manager', ['ReplicaTrail'])
 
+        # Adding model 'ReplicaShare'
+        db.create_table(u'smart_manager_replicashare', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('share', self.gf('django.db.models.fields.CharField')(unique=True, max_length=4096)),
+            ('pool', self.gf('django.db.models.fields.CharField')(max_length=4096)),
+            ('appliance', self.gf('django.db.models.fields.CharField')(max_length=4096)),
+            ('src_share', self.gf('django.db.models.fields.CharField')(max_length=4096, null=True)),
+            ('data_port', self.gf('django.db.models.fields.IntegerField')(default=10002)),
+            ('meta_port', self.gf('django.db.models.fields.IntegerField')(default=10003)),
+            ('ts', self.gf('django.db.models.fields.DateTimeField')(null=True, db_index=True)),
+        ))
+        db.send_create_signal('smart_manager', ['ReplicaShare'])
+
+        # Adding model 'ReceiveTrail'
+        db.create_table(u'smart_manager_receivetrail', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('rshare', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['smart_manager.ReplicaShare'])),
+            ('snap_name', self.gf('django.db.models.fields.CharField')(max_length=1024)),
+            ('kb_received', self.gf('django.db.models.fields.IntegerField')(default=0)),
+            ('receive_pending', self.gf('django.db.models.fields.DateTimeField')(null=True)),
+            ('receive_succeeded', self.gf('django.db.models.fields.DateTimeField')(null=True)),
+            ('receive_failed', self.gf('django.db.models.fields.DateTimeField')(null=True)),
+            ('end_ts', self.gf('django.db.models.fields.DateTimeField')(null=True, db_index=True)),
+            ('status', self.gf('django.db.models.fields.CharField')(max_length=10)),
+            ('error', self.gf('django.db.models.fields.CharField')(max_length=4096, null=True)),
+        ))
+        db.send_create_signal('smart_manager', ['ReceiveTrail'])
+
 
     def backwards(self, orm):
         # Deleting model 'CPUMetric'
-        db.delete_table('smart_manager_cpumetric')
+        db.delete_table(u'smart_manager_cpumetric')
 
         # Deleting model 'DiskStat'
-        db.delete_table('smart_manager_diskstat')
+        db.delete_table(u'smart_manager_diskstat')
 
         # Deleting model 'LoadAvg'
-        db.delete_table('smart_manager_loadavg')
+        db.delete_table(u'smart_manager_loadavg')
 
         # Deleting model 'MemInfo'
-        db.delete_table('smart_manager_meminfo')
+        db.delete_table(u'smart_manager_meminfo')
 
         # Deleting model 'VmStat'
-        db.delete_table('smart_manager_vmstat')
+        db.delete_table(u'smart_manager_vmstat')
 
         # Deleting model 'Service'
-        db.delete_table('smart_manager_service')
+        db.delete_table(u'smart_manager_service')
 
         # Deleting model 'ServiceStatus'
-        db.delete_table('smart_manager_servicestatus')
+        db.delete_table(u'smart_manager_servicestatus')
 
         # Deleting model 'SProbe'
-        db.delete_table('smart_manager_sprobe')
+        db.delete_table(u'smart_manager_sprobe')
 
         # Deleting model 'NFSDCallDistribution'
-        db.delete_table('smart_manager_nfsdcalldistribution')
+        db.delete_table(u'smart_manager_nfsdcalldistribution')
 
         # Deleting model 'NFSDClientDistribution'
-        db.delete_table('smart_manager_nfsdclientdistribution')
+        db.delete_table(u'smart_manager_nfsdclientdistribution')
 
         # Deleting model 'NFSDShareDistribution'
-        db.delete_table('smart_manager_nfsdsharedistribution')
+        db.delete_table(u'smart_manager_nfsdsharedistribution')
 
         # Deleting model 'PoolUsage'
-        db.delete_table('smart_manager_poolusage')
+        db.delete_table(u'smart_manager_poolusage')
 
         # Deleting model 'NetStat'
-        db.delete_table('smart_manager_netstat')
+        db.delete_table(u'smart_manager_netstat')
 
         # Deleting model 'NFSDShareClientDistribution'
-        db.delete_table('smart_manager_nfsdshareclientdistribution')
+        db.delete_table(u'smart_manager_nfsdshareclientdistribution')
 
         # Deleting model 'ShareUsage'
-        db.delete_table('smart_manager_shareusage')
+        db.delete_table(u'smart_manager_shareusage')
 
         # Deleting model 'NFSDUidGidDistribution'
-        db.delete_table('smart_manager_nfsduidgiddistribution')
+        db.delete_table(u'smart_manager_nfsduidgiddistribution')
 
         # Deleting model 'TaskDefinition'
-        db.delete_table('smart_manager_taskdefinition')
+        db.delete_table(u'smart_manager_taskdefinition')
 
         # Deleting model 'Task'
-        db.delete_table('smart_manager_task')
+        db.delete_table(u'smart_manager_task')
 
         # Deleting model 'Replica'
-        db.delete_table('smart_manager_replica')
+        db.delete_table(u'smart_manager_replica')
 
         # Deleting model 'ReplicaTrail'
-        db.delete_table('smart_manager_replicatrail')
+        db.delete_table(u'smart_manager_replicatrail')
+
+        # Deleting model 'ReplicaShare'
+        db.delete_table(u'smart_manager_replicashare')
+
+        # Deleting model 'ReceiveTrail'
+        db.delete_table(u'smart_manager_receivetrail')
 
 
     models = {
         'smart_manager.cpumetric': {
             'Meta': {'object_name': 'CPUMetric'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'idle': ('django.db.models.fields.IntegerField', [], {}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '10'}),
             'smode': ('django.db.models.fields.IntegerField', [], {}),
@@ -365,12 +407,12 @@ class Migration(SchemaMigration):
         },
         'smart_manager.diskstat': {
             'Meta': {'object_name': 'DiskStat'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'ios_progress': ('django.db.models.fields.FloatField', [], {}),
             'ms_ios': ('django.db.models.fields.FloatField', [], {}),
             'ms_reading': ('django.db.models.fields.FloatField', [], {}),
             'ms_writing': ('django.db.models.fields.FloatField', [], {}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '3'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
             'reads_completed': ('django.db.models.fields.FloatField', [], {}),
             'reads_merged': ('django.db.models.fields.FloatField', [], {}),
             'sectors_read': ('django.db.models.fields.FloatField', [], {}),
@@ -383,7 +425,7 @@ class Migration(SchemaMigration):
         'smart_manager.loadavg': {
             'Meta': {'object_name': 'LoadAvg'},
             'active_threads': ('django.db.models.fields.IntegerField', [], {}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'idle_seconds': ('django.db.models.fields.IntegerField', [], {}),
             'latest_pid': ('django.db.models.fields.IntegerField', [], {}),
             'load_1': ('django.db.models.fields.FloatField', [], {}),
@@ -399,7 +441,7 @@ class Migration(SchemaMigration):
             'cached': ('django.db.models.fields.IntegerField', [], {}),
             'dirty': ('django.db.models.fields.IntegerField', [], {}),
             'free': ('django.db.models.fields.IntegerField', [], {}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'inactive': ('django.db.models.fields.IntegerField', [], {}),
             'swap_free': ('django.db.models.fields.IntegerField', [], {}),
             'swap_total': ('django.db.models.fields.IntegerField', [], {}),
@@ -420,7 +462,7 @@ class Migration(SchemaMigration):
             'fifo_rx': ('django.db.models.fields.IntegerField', [], {}),
             'fifo_tx': ('django.db.models.fields.IntegerField', [], {}),
             'frame': ('django.db.models.fields.IntegerField', [], {}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'kb_rx': ('django.db.models.fields.FloatField', [], {}),
             'kb_tx': ('django.db.models.fields.FloatField', [], {}),
             'multicast_rx': ('django.db.models.fields.IntegerField', [], {}),
@@ -430,7 +472,7 @@ class Migration(SchemaMigration):
         },
         'smart_manager.nfsdcalldistribution': {
             'Meta': {'object_name': 'NFSDCallDistribution'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'num_commit': ('django.db.models.fields.IntegerField', [], {}),
             'num_create': ('django.db.models.fields.IntegerField', [], {}),
             'num_lookup': ('django.db.models.fields.IntegerField', [], {}),
@@ -444,7 +486,7 @@ class Migration(SchemaMigration):
         },
         'smart_manager.nfsdclientdistribution': {
             'Meta': {'object_name': 'NFSDClientDistribution'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'ip': ('django.db.models.fields.CharField', [], {'max_length': '15'}),
             'num_commit': ('django.db.models.fields.IntegerField', [], {}),
             'num_create': ('django.db.models.fields.IntegerField', [], {}),
@@ -460,7 +502,7 @@ class Migration(SchemaMigration):
         'smart_manager.nfsdshareclientdistribution': {
             'Meta': {'object_name': 'NFSDShareClientDistribution'},
             'client': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'num_commit': ('django.db.models.fields.IntegerField', [], {}),
             'num_create': ('django.db.models.fields.IntegerField', [], {}),
             'num_lookup': ('django.db.models.fields.IntegerField', [], {}),
@@ -475,7 +517,7 @@ class Migration(SchemaMigration):
         },
         'smart_manager.nfsdsharedistribution': {
             'Meta': {'object_name': 'NFSDShareDistribution'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'num_commit': ('django.db.models.fields.IntegerField', [], {}),
             'num_create': ('django.db.models.fields.IntegerField', [], {}),
             'num_lookup': ('django.db.models.fields.IntegerField', [], {}),
@@ -492,7 +534,7 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'NFSDUidGidDistribution'},
             'client': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'gid': ('django.db.models.fields.IntegerField', [], {}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'num_commit': ('django.db.models.fields.IntegerField', [], {}),
             'num_create': ('django.db.models.fields.IntegerField', [], {}),
             'num_lookup': ('django.db.models.fields.IntegerField', [], {}),
@@ -508,28 +550,56 @@ class Migration(SchemaMigration):
         },
         'smart_manager.poolusage': {
             'Meta': {'object_name': 'PoolUsage'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'count': ('django.db.models.fields.IntegerField', [], {'default': '1'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'pool': ('django.db.models.fields.CharField', [], {'max_length': '4096'}),
             'ts': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'db_index': 'True', 'blank': 'True'}),
             'usage': ('django.db.models.fields.IntegerField', [], {'default': '0'})
         },
+        'smart_manager.receivetrail': {
+            'Meta': {'object_name': 'ReceiveTrail'},
+            'end_ts': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'db_index': 'True'}),
+            'error': ('django.db.models.fields.CharField', [], {'max_length': '4096', 'null': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'kb_received': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
+            'receive_failed': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
+            'receive_pending': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
+            'receive_succeeded': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
+            'rshare': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['smart_manager.ReplicaShare']"}),
+            'snap_name': ('django.db.models.fields.CharField', [], {'max_length': '1024'}),
+            'status': ('django.db.models.fields.CharField', [], {'max_length': '10'})
+        },
         'smart_manager.replica': {
             'Meta': {'object_name': 'Replica'},
             'appliance': ('django.db.models.fields.CharField', [], {'max_length': '4096'}),
+            'data_port': ('django.db.models.fields.IntegerField', [], {'default': '10002'}),
             'dpool': ('django.db.models.fields.CharField', [], {'max_length': '4096'}),
             'dshare': ('django.db.models.fields.CharField', [], {'max_length': '4096', 'null': 'True'}),
             'enabled': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'frequency': ('django.db.models.fields.IntegerField', [], {}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'meta_port': ('django.db.models.fields.IntegerField', [], {'default': '10003'}),
             'pool': ('django.db.models.fields.CharField', [], {'max_length': '4096'}),
             'share': ('django.db.models.fields.CharField', [], {'max_length': '4096'}),
-            'task_name': ('django.db.models.fields.CharField', [], {'max_length': '1024'})
+            'task_name': ('django.db.models.fields.CharField', [], {'max_length': '1024'}),
+            'ts': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'db_index': 'True'})
+        },
+        'smart_manager.replicashare': {
+            'Meta': {'object_name': 'ReplicaShare'},
+            'appliance': ('django.db.models.fields.CharField', [], {'max_length': '4096'}),
+            'data_port': ('django.db.models.fields.IntegerField', [], {'default': '10002'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'meta_port': ('django.db.models.fields.IntegerField', [], {'default': '10003'}),
+            'pool': ('django.db.models.fields.CharField', [], {'max_length': '4096'}),
+            'share': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '4096'}),
+            'src_share': ('django.db.models.fields.CharField', [], {'max_length': '4096', 'null': 'True'}),
+            'ts': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'db_index': 'True'})
         },
         'smart_manager.replicatrail': {
             'Meta': {'object_name': 'ReplicaTrail'},
             'end_ts': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'db_index': 'True'}),
             'error': ('django.db.models.fields.CharField', [], {'max_length': '4096', 'null': 'True'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'kb_sent': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
             'replica': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['smart_manager.Replica']"}),
             'send_failed': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
@@ -544,28 +614,31 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'Service'},
             'config': ('django.db.models.fields.CharField', [], {'max_length': '8192', 'null': 'True'}),
             'display_name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '24'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '24'})
         },
         'smart_manager.servicestatus': {
             'Meta': {'object_name': 'ServiceStatus'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'count': ('django.db.models.fields.IntegerField', [], {'default': '1'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'service': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['smart_manager.Service']"}),
             'status': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'ts': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'db_index': 'True', 'blank': 'True'})
         },
         'smart_manager.shareusage': {
             'Meta': {'object_name': 'ShareUsage'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'count': ('django.db.models.fields.IntegerField', [], {'default': '1'}),
+            'e_usage': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '4096'}),
-            'ts': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'db_index': 'True', 'blank': 'True'}),
-            'usage': ('django.db.models.fields.IntegerField', [], {'default': '0'})
+            'r_usage': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
+            'ts': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'db_index': 'True', 'blank': 'True'})
         },
         'smart_manager.sprobe': {
             'Meta': {'object_name': 'SProbe'},
             'display_name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
             'end': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'db_index': 'True'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'smart': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'start': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'db_index': 'True', 'blank': 'True'}),
@@ -574,24 +647,25 @@ class Migration(SchemaMigration):
         'smart_manager.task': {
             'Meta': {'object_name': 'Task'},
             'end': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'db_index': 'True'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'json_meta': ('django.db.models.fields.CharField', [], {'max_length': '8192'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'start': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'db_index': 'True', 'blank': 'True'}),
-            'state': ('django.db.models.fields.CharField', [], {'max_length': '7'})
+            'state': ('django.db.models.fields.CharField', [], {'max_length': '7'}),
+            'task_def': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['smart_manager.TaskDefinition']"})
         },
         'smart_manager.taskdefinition': {
             'Meta': {'object_name': 'TaskDefinition'},
+            'enabled': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'frequency': ('django.db.models.fields.IntegerField', [], {'null': 'True'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'json_meta': ('django.db.models.fields.CharField', [], {'max_length': '8192'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '255'}),
+            'task_type': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'ts': ('django.db.models.fields.DateTimeField', [], {'db_index': 'True'})
         },
         'smart_manager.vmstat': {
             'Meta': {'object_name': 'VmStat'},
             'free_pages': ('django.db.models.fields.IntegerField', [], {}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'ts': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'db_index': 'True', 'blank': 'True'})
         }
     }

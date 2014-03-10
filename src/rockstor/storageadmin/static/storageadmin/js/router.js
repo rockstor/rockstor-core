@@ -605,11 +605,11 @@ $(document).ready(function() {
     var htmlErr = null;
     var resType = jqXhr.getResponseHeader('Content-Type');
     var detail = '';
+    var errJson = {};
     if (jqXhr.status != 403) {
       // dont show forbidden errors (for setup screen)
-      
       if (jqXhr.getResponseHeader('Content-Type').match(/json/)) {
-        var errJson = getXhrErrorJson(jqXhr);
+        errJson = getXhrErrorJson(jqXhr);
         detail = errJson.detail;
       } else if (jqXhr.status >= 400 && jqXhr.status < 500) {
         detail = 'Unknown client error doing a ' + ajaxSettings.type + ' to ' + ajaxSettings.url;

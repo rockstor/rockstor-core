@@ -26,18 +26,17 @@ import time
 import os
 from datetime import datetime
 from django.utils.timezone import utc
+from django.db import transaction
+from django.core.exceptions import ObjectDoesNotExist
+from django.conf import settings
 
-from models import (CPUMetric, LoadAvg, MemInfo, PoolUsage, DiskStat,
-                    ShareUsage)
-from storageadmin.models import (Disk, Pool, Share, Snapshot)
+from smart_manager.models import (CPUMetric, LoadAvg, MemInfo, PoolUsage,
+                                  DiskStat, ShareUsage, NetStat, ServiceStatus)
+from storageadmin.models import (Disk, Pool, Share, Snapshot, NetworkInterface)
 from fs.btrfs import pool_usage, shares_usage
-from proc.net import network_stats
 
 import logging
 logger = logging.getLogger(__name__)
-from django.core.serializers import serialize
-import zmq
-from django.conf import settings
 
 
 class ProcRetreiver(Process):
@@ -46,16 +45,37 @@ class ProcRetreiver(Process):
         #self.q = q
         self.ppid = os.getpid()
         self.sleep_time = 1
+        self._num_ts_records = 0
         super(ProcRetreiver, self).__init__()
 
-    def _sink_put(self, sink, ro):
-        data = serialize("json", (ro,))
-        sink.send_json(data)
+    def _save_wrapper(self, ro):
+        ro.save()
+        self._num_ts_records = self._num_ts_records + 1
+
+    def _truncate_ts_data(self, max_records=settings.MAX_TS_RECORDS):
+        """
+        cleanup ts tables: CPUMetric, LoadAvg, MemInfo, PoolUsage,
+        DiskStat and ShareUsage, ServiceStatus
+        Discard all records older than last max_records.
+        """
+        ts_models = (CPUMetric, LoadAvg, MemInfo, PoolUsage, DiskStat,
+                     ShareUsage, ServiceStatus)
+        try:
+            for m in ts_models:
+                try:
+                    latest_id = m.objects.latest('id').id
+                except ObjectDoesNotExist, e:
+                    msg = ('Unable to get latest id for the model: %s. '
+                           'Moving on' % (m.__name__))
+                    logger.error(msg)
+                    continue
+                m.objects.filter(id__lt=latest_id-max_records).delete()
+        except Exception, e:
+            logger.error('Unable to truncate time series data')
+            logger.exception(e)
+            raise e
 
     def run(self):
-        context = zmq.Context()
-        self.sink_socket = context.socket(zmq.PUSH)
-        self.sink_socket.connect('tcp://%s:%d' % settings.SPROBE_SINK)
         #extract metrics and put in q
         pu_time = time.mktime(time.gmtime())
         loadavg_time = pu_time
@@ -63,19 +83,26 @@ class ProcRetreiver(Process):
         cur_net_stats = None
         cur_cpu_stats = {}
         try:
+            self._truncate_ts_data()
             while (True):
                 if (os.getppid() != self.ppid):
                     msg = ('Parent process(smd) exited. I am exiting too.')
                     return logger.error(msg)
 
-                cur_cpu_stats = self.cpu_stats(cur_cpu_stats)
-                loadavg_time = self.loadavg(loadavg_time)
-                self.meminfo()
-                pu_time = self.pools_usage(pu_time)
-                cur_disk_stats = self.disk_stats(cur_disk_stats,
-                                                 self.sleep_time)
-                cur_net_stats = network_stats(cur_net_stats, self.sleep_time,
-                                              logger, self.sink_socket)
+                if (self._num_ts_records > (settings.MAX_TS_RECORDS *
+                                            settings.MAX_TS_MULTIPLIER)):
+                    self._truncate_ts_data()
+                    self._num_ts_records = 0
+
+                with transaction.atomic(using='smart_manager'):
+                    cur_cpu_stats = self.cpu_stats(cur_cpu_stats)
+                    loadavg_time = self.loadavg(loadavg_time)
+                    self.meminfo()
+                    pu_time = self.pools_usage(pu_time)
+                    cur_disk_stats = self.disk_stats(cur_disk_stats,
+                                                     self.sleep_time)
+                    cur_net_stats = self.network_stats(cur_net_stats,
+                                                       self.sleep_time)
                 time.sleep(self.sleep_time)
         except Exception, e:
             logger.error('unhandled exception in %s. Exiting' % self.name)
@@ -103,7 +130,7 @@ class ProcRetreiver(Process):
                                        smode=fields[3]-prev[3],
                                        idle=fields[4]-prev[4], ts=ts)
                     cur_stats[fields[0]] = fields
-                    self._sink_put(self.sink_socket, cm)
+                    self._save_wrapper(cm)
         return cur_stats
 
     def disk_stats(self, prev_stats, interval):
@@ -148,7 +175,7 @@ class ProcRetreiver(Process):
                                   ms_ios=data[9],
                                   weighted_ios=data[10],
                                   ts=ts)
-                    self._sink_put(self.sink_socket, ds)
+                    self._save_wrapper(ds)
         return cur_stats
 
     def loadavg(self, last_ts):
@@ -167,7 +194,7 @@ class ProcRetreiver(Process):
                          active_threads=thread_fields[0],
                          total_threads=thread_fields[1], latest_pid=fields[4],
                          idle_seconds=idle_seconds, ts=ts)
-            self._sink_put(self.sink_socket, la)
+            self._save_wrapper(la)
         return now
 
     def meminfo(self):
@@ -199,11 +226,42 @@ class ProcRetreiver(Process):
         mi = MemInfo(total=total, free=free, buffers=buffers, cached=cached,
                      swap_total=swap_total, swap_free=swap_free, active=active,
                      inactive=inactive, dirty=dirty, ts=ts)
-        self._sink_put(self.sink_socket, mi)
+        self._save_wrapper(mi)
 
     def vmstat(self):
         stats_file = '/proc/vmstat'
         pass
+
+    def network_stats(self, prev_stats, interval):
+        interfaces = [i.name for i in NetworkInterface.objects.all()]
+        cur_stats = {}
+        with open('/proc/net/dev') as sfo:
+            sfo.readline()
+            sfo.readline()
+            for l in sfo.readlines():
+                fields = l.split()
+                if (fields[0][:-1] not in interfaces):
+                    continue
+                cur_stats[fields[0][:-1]] = fields[1:]
+        ts = datetime.utcnow().replace(tzinfo=utc)
+        if (isinstance(prev_stats, dict)):
+            for interface in cur_stats.keys():
+                if (interface in prev_stats):
+                    data = map(lambda x, y: float(x)/interval if x < y else
+                               (float(x) - float(y))/interval,
+                               cur_stats[interface], prev_stats[interface])
+
+                    ns = NetStat(device=interface, kb_rx=data[0],
+                                 packets_rx=data[1], errs_rx=data[2],
+                                 drop_rx=data[3], fifo_rx=data[4],
+                                 frame=data[5], compressed_rx=data[6],
+                                 multicast_rx=data[7], kb_tx=data[8],
+                                 packets_tx=data[9], errs_tx=data[10],
+                                 drop_tx=data[11], fifo_tx=data[12],
+                                 colls=data[13], carrier=data[14],
+                                 compressed_tx=data[15], ts=ts)
+                    self._save_wrapper(ns)
+        return cur_stats
 
     def pools_usage(self, last_ts):
         """
@@ -232,7 +290,7 @@ class ProcRetreiver(Process):
                 else:
                     pu.ts = ts
                     pu.count = pu.count + 1
-                self._sink_put(self.sink_socket, pu)
+                self._save_wrapper(pu)
             except Exception, e:
                 logger.debug('command exception while getting pool usage '
                              'for: %s' % (p.name))
@@ -268,9 +326,15 @@ class ProcRetreiver(Process):
                     else:
                         su.ts = ts
                         su.count = su.count + 1
-                    self._sink_put(self.sink_socket, su)
+                    self._save_wrapper(su)
             except Exception, e:
                 logger.debug('command exception while getting shares usage '
                              'for pool: %s' % (p.name))
                 logger.exception(e)
         return now
+
+def main():
+    pr = ProcRetreiver()
+    pr.start()
+    logger.debug('Started Proc Retreiver')
+    pr.join()

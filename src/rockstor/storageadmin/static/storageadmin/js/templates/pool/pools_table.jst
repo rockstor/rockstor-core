@@ -6,6 +6,7 @@
         <th>Size</th>
         <th>Used</th>
         <th>Raid</th>
+        <th>Disks</th>
         <th>Actions</th>
       </tr>
     </thead>
@@ -13,10 +14,15 @@
       <% collection.each(function(pool, index) { %>
         <tr>
           <td><a href="#pools/<%= pool.get('name') %>"><i class="icon-list"></i> <%= pool.get('name') %></a></td>
+
           <td><%= humanize.filesize(pool.get('size')*1024) %></td>
           <td><%= humanize.filesize(pool.get('usage')*1024) %></td>
           <td><%= pool.get('raid') %></td>
-          <td><a id="delete_pool_<%= pool.get('name') %>" data-name="<%= pool.get('name') %>" data-action="delete"><i class="icon-trash"></i></a></td>
+          <td>
+            <% var dNames =  _.reduce(pool.get('disks'), function(s, disk, i, list) { if (i < (list.length-1)) { return s + disk.name + ',';} else { return s + disk.name; } }, ''); %>
+            <%= dNames %>
+          </td>
+          <td><a id="delete_pool_<%= pool.get('name') %>" data-name="<%= pool.get('name') %>" data-action="delete" rel="tooltip" title="Delete pool"><i class="icon-trash"></i></a></td>
         </tr>
       <% }); %>
     </tbody>

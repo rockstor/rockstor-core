@@ -24,9 +24,9 @@ VERSION = '1.4.1'
 setup(
   name='rockstor',
   version=VERSION,
-  description='Smart Powerful Storage Solution',
+  description='Store Smartly',
   author='RockStor, Inc.',
-  author_email='help@rockstor.com',
+  author_email='support@rockstor.com',
 
   packages=['storageadmin', 'smart_manager',],
   package_dir={'': 'src/rockstor'},
@@ -37,11 +37,17 @@ setup(
             'prep_db = prep_db:main',
             'replicad = smart_manager.replication.scheduler:main',
             'mgmt_ip = mgmt_ip:main',
+            'pwreset = pwreset:main',
+            'backup-plugin = backup.scheduler:main',
+            'initrock = initrock:main',
+            'task-scheduler = smart_manager.scheduler.task_dispatcher:main',
+            'data-collector = smart_manager.data_collector:main',
+            'service-monitor = smart_manager.services:main',
             ],
         },
 
   install_requires=[
-    'django == 1.4.3',
+    'django == 1.6.2',
     'distribute >= 0.6.35',
     'URLObject == 2.1.1',
     'djangorestframework == 2.1.15',
@@ -49,6 +55,7 @@ setup(
     'django-pipeline == 1.2.23',
     'requests == 1.1.0',
     'pyzmq == 13.0.0',
-    'South == 0.7.6',
+    'South == 0.8.4',
+    'psycopg2 == 2.5.2',
   ]
 )

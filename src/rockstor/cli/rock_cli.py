@@ -33,6 +33,7 @@ from network_console import NetworkConsole
 from users_console import UsersConsole
 from task_console import TaskConsole
 from replication_console import ReplicationConsole
+from backup_plugin_console import BackupPluginConsole
 from rest_util import api_call
 
 
@@ -223,6 +224,16 @@ class RockConsole(BaseConsole):
             rc.cmdloop()
         else:
             rc.onecmd(args)
+
+    def do_backup(self, args):
+        """
+        Backup plugin console
+        """
+        bc = BackupPluginConsole(self.greeting)
+        if (len(args) == 0):
+            bc.cmdloop()
+        else:
+            bc.cmdloop()
 
 def main():
     rc = RockConsole()

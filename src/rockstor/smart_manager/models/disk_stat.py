@@ -21,7 +21,7 @@ from django.db import models
 
 class DiskStat(models.Model):
 
-    name = models.CharField(max_length=3)
+    name = models.CharField(max_length=128)
     reads_completed = models.FloatField()
     reads_merged = models.FloatField()
     sectors_read = models.FloatField()

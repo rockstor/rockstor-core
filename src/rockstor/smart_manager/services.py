@@ -36,22 +36,17 @@ from django.conf import settings
 from django.core.serializers import serialize
 from datetime import datetime
 from django.utils.timezone import utc
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 
 class ServiceMonitor(Process):
 
     def __init__(self):
         self.ppid = os.getpid()
-        self.interval = 10 #seconds
+        self.interval = 1 #seconds
         super(ServiceMonitor, self).__init__()
 
-    def _sink_put(self, sink, ro):
-        data = serialize("json", (ro,))
-        sink.send_json(data)
-
     def run(self):
-        context = zmq.Context()
-        sink_socket = context.socket(zmq.PUSH)
-        sink_socket.connect('tcp://%s:%d' % settings.SPROBE_SINK)
         first_loop = True
         try:
             while (True):
@@ -65,11 +60,8 @@ class ServiceMonitor(Process):
                     if (first_loop is not True):
                         try:
                             sso = ServiceStatus.objects.filter(service=s).latest('id')
-                        except Exception, e:
-                            e_msg = ('Error getting the last status object '
-                                     'for  service(%s)' % s.name)
-                            logger.error(e_msg)
-                            logger.exception(e)
+                        except ObjectDoesNotExist:
+                            pass
 
                     status = False
                     try:
@@ -88,7 +80,7 @@ class ServiceMonitor(Process):
                         else:
                             sso.ts = ts
                             sso.count = sso.count + 1
-                        self._sink_put(sink_socket, sso)
+                        sso.save()
                         first_loop = False
                 time.sleep(self.interval)
         except Exception, e:
@@ -96,3 +88,9 @@ class ServiceMonitor(Process):
             logger.error(msg)
             logger.exception(e)
             raise e
+
+def main():
+    sm = ServiceMonitor()
+    sm.start()
+    logger.debug('Started Service monitor')
+    sm.join()
