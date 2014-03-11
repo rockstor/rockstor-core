@@ -23,11 +23,11 @@ class ShareUsage(models.Model):
     """share and snapshot usage(KB) information as time series"""
     name = models.CharField(max_length=4096)
     """referenced/shared usage in KB"""
-    r_usage = models.IntegerField(default=0)
+    r_usage = models.BigIntegerField(default=0)
     """exclusive usage in KB"""
-    e_usage = models.IntegerField(default=0)
+    e_usage = models.BigIntegerField(default=0)
     ts = models.DateTimeField(auto_now=True, db_index=True)
-    count = models.IntegerField(default=1)
+    count = models.BigIntegerField(default=1)
 
     class Meta:
         app_label = 'smart_manager'
