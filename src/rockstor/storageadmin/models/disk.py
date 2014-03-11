@@ -24,8 +24,8 @@ class Disk(models.Model):
     pool = models.ForeignKey(Pool, null=True, on_delete=models.SET_NULL )
     """typically sda, sdb etc.. max_length = 0 supports 100s of disks"""
     name = models.CharField(max_length=10, unique=True)
-    """total size in GB"""
-    size = models.IntegerField()
+    """total size in KB"""
+    size = models.BigIntegerField(default=0)
     """true if disk went offline"""
     offline = models.BooleanField(default=False)
     """whether the disk is partitioned at the moment. relevent for root disks

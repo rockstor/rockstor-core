@@ -29,8 +29,8 @@ class Snapshot(models.Model):
     real_name = models.CharField(max_length=4096, default='unknownsnap')
     """read-only by default"""
     writable = models.BooleanField(default=False)
-    """size of the snapshot"""
-    size = models.IntegerField(default=0)
+    """size of the snapshot in KB"""
+    size = models.BigIntegerField(default=0)
     toc = models.DateTimeField(auto_now=True)
     qgroup = models.CharField(max_length=100)
     uvisible = models.BooleanField(default=False)
