@@ -47,7 +47,6 @@ PaginationMixin = {
 RockstorLayoutView = Backbone.View.extend({
   tagName: 'div',
   className: 'layout',
-  requestCount: 0,
 
   initialize: function() {
     this.subviews = {};
@@ -55,49 +54,21 @@ RockstorLayoutView = Backbone.View.extend({
   },
   
   fetch: function(callback, context) {
-   
-    var allDependencies = [], i, length;
-    for (i = 0, length = this.dependencies.length; i < length; i += 1) {
-            allDependencies.push(this.dependencies[i].fetch({
-            silent: true,
-              }));
-        };
+    var allDependencies = [];
+    _.each(this.dependencies, function(dep) {
+      allDependencies.push(dep.fetch({silent: true}));
+    });
     $.when.apply($, allDependencies).done(function () {
-              if (callback) callback.apply(context);
-            });
+      if (callback) callback.apply(context);
+    });
   },
 
-/*  fetch: function(callback, context) {
-    if (this.dependencies.length == 0) {
-      if (callback) callback.apply(context);
-    }
-    var _this = this;
-    _.each(this.dependencies, function(dependency) {
-      _this.requestCount += 1;
-      dependency.fetch({
-        silent: true,
-        success: function(request){
-          _this.requestCount -= 1;
-          if (_this.requestCount == 0) {
-            if (callback) callback.apply(context);
-          }
-        },
-        error: function(request, response) {
-          _this.requestCount -= 1;
-          if (_this.requestCount == 0) {
-            if (callback) callback.apply(context);
-          }
-        }
-      });
-    });
-    return this;
-  }, */
 });
 
 
-// RockstoreModuleView
+// RockstorModuleView
 
-RockstoreModuleView = Backbone.View.extend({
+RockstorModuleView = Backbone.View.extend({
   
   tagName: 'div',
   className: 'module',
@@ -109,23 +80,33 @@ RockstoreModuleView = Backbone.View.extend({
   },
 
   fetch: function(callback, context) {
-    if (this.dependencies.length == 0) {
-      if (callback) callback.apply(context);
-    }
-    var _this = this;
-    _.each(this.dependencies, function(dependency) {
-      _this.requestCount += 1;
-      dependency.fetch({
-        success: function(request){
-          _this.requestCount -= 1;
-          if (_this.requestCount == 0) {
-            if (callback) callback.apply(context);
-          }
-        }
-      });
+    var allDependencies = [];
+    _.each(this.dependencies, function(dep) {
+      allDependencies.push(dep.fetch({silent: true}));
     });
-    return this;
+    $.when.apply($, allDependencies).done(function () {
+      if (callback) callback.apply(context);
+    });
   },
+
+  //fetch: function(callback, context) {
+  //  if (this.dependencies.length == 0) {
+  //    if (callback) callback.apply(context);
+  //  }
+  //  var _this = this;
+  //  _.each(this.dependencies, function(dependency) {
+  //    _this.requestCount += 1;
+  //    dependency.fetch({
+  //      success: function(request){
+  //        _this.requestCount -= 1;
+  //        if (_this.requestCount == 0) {
+  //          if (callback) callback.apply(context);
+  //        }
+  //      }
+  //    });
+  //  });
+  //  return this;
+  //},
 
   render: function() {
     $(this.el).html(this.template({ 

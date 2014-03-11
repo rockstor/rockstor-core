@@ -24,7 +24,7 @@
  * 
  */
 
-PoolUsageModule = RockstoreModuleView.extend({
+PoolUsageModule = RockstorModuleView.extend({
    initialize: function() {
     this.template = window.JST.pool_pool_usage_module;
      this.module_name = 'pool-usage';
