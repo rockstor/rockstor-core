@@ -20,8 +20,6 @@ from pool import Pool
 from disk import Disk
 from share import Share
 from snapshot import Snapshot
-from pool_statistic import PoolStatistic
-from share_statistic import ShareStatistic
 from nfs_export_group import NFSExportGroup
 from nfs_export import NFSExport
 from samba_share import SambaShare

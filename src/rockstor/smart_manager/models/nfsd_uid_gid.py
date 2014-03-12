@@ -29,20 +29,20 @@ class NFSDUidGidDistribution(models.Model):
     ts = models.DateTimeField(db_index=True)
     share = models.CharField(max_length=255)
     client = models.CharField(max_length=100)
-    uid = models.IntegerField()
-    gid = models.IntegerField()
-    num_lookup = models.IntegerField()
-    num_read = models.IntegerField()
-    num_write = models.IntegerField()
-    num_create = models.IntegerField()
-    num_commit = models.IntegerField()
-    num_remove = models.IntegerField()
+    uid = models.IntegerField(default=0)
+    gid = models.IntegerField(default=0)
+    num_lookup = models.BigIntegerField(default=0)
+    num_read = models.BigIntegerField(default=0)
+    num_write = models.BigIntegerField(default=0)
+    num_create = models.BigIntegerField(default=0)
+    num_commit = models.BigIntegerField(default=0)
+    num_remove = models.BigIntegerField(default=0)
 
     """
     sums are in KB
     """
-    sum_read = models.IntegerField()
-    sum_write = models.IntegerField()
+    sum_read = models.BigIntegerField(default=0)
+    sum_write = models.BigIntegerField(default=0)
 
     class Meta:
         app_label = 'smart_manager'
