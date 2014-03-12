@@ -394,3 +394,14 @@ ROOT_DIR = '${buildout:depdir}/'
 #starts and they are > MAX_TS_RECORDS.
 MAX_TS_RECORDS = 40000
 MAX_TS_MULTIPLIER = 3
+
+
+#various system binaries used by lower level code.
+COMMANDS = {
+	 'ntpdate': '/usr/sbin/ntpdate',
+	 'systemctl': '/usr/bin/systemctl',
+}
+
+SYSCONFIG = {
+	  'ntp': '/etc/ntp.conf',
+}
