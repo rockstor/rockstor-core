@@ -25,7 +25,6 @@ from django.conf import settings
 from osi import run_command
 from exceptions import CommandException
 
-SERVICE_BIN = '/sbin/service'
 CHKCONFIG_BIN = '/sbin/chkconfig'
 AUTHCONFIG = '/usr/sbin/authconfig'
 SSHD_CONFIG = '/etc/ssh/sshd_config'
@@ -39,9 +38,7 @@ def init_service_op(service_name, command, throw=True):
     if (service_name not in supported_services):
         raise Exception('unknown service: %s' % service_name)
 
-    cmd = [SERVICE_BIN, service_name, command]
-    out, err, rc = run_command(cmd, throw=throw)
-    return out, err, rc
+    return run_command([SYSTEMCTL_BIN, command, service_name])
 
 def chkconfig(service_name, switch):
     return run_command([CHKCONFIG_BIN, service_name, switch])
