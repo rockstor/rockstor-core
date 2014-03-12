@@ -496,6 +496,7 @@ def sethostname(ip, hostname):
                 tfo.write(line)
         tfo.write('%s %s\n' % (ip, hostname))
     shutil.move(npath, HOSTS_FILE)
+    os.chmod(HOSTS_FILE, 0644)
 
     with open('/etc/hostname', 'w') as hnfo:
         hnfo.write('%s\n' % hostname)
