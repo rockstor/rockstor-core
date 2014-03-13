@@ -89,25 +89,6 @@ RockstorModuleView = Backbone.View.extend({
     });
   },
 
-  //fetch: function(callback, context) {
-  //  if (this.dependencies.length == 0) {
-  //    if (callback) callback.apply(context);
-  //  }
-  //  var _this = this;
-  //  _.each(this.dependencies, function(dependency) {
-  //    _this.requestCount += 1;
-  //    dependency.fetch({
-  //      success: function(request){
-  //        _this.requestCount -= 1;
-  //        if (_this.requestCount == 0) {
-  //          if (callback) callback.apply(context);
-  //        }
-  //      }
-  //    });
-  //  });
-  //  return this;
-  //},
-
   render: function() {
     $(this.el).html(this.template({ 
       module_name: this.module_name,
