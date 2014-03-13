@@ -21,7 +21,7 @@ from django.db import models
 
 class VmStat(models.Model):
 
-    free_pages = models.IntegerField()
+    free_pages = models.BigIntegerField(default=0)
     ts = models.DateTimeField(auto_now=True, db_index=True)
 
     class Meta:

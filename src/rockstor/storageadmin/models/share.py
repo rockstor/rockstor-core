@@ -30,8 +30,8 @@ class Share(models.Model):
     name = models.CharField(max_length=4096, unique=True)
     """id of the share. numeric in case of btrfs"""
     uuid = models.CharField(max_length=100, null=True)
-    """total size in GB"""
-    size = models.IntegerField()
+    """total size in KB"""
+    size = models.BigIntegerField(default=0)
     owner = models.CharField(max_length=4096, default='root')
     group = models.CharField(max_length=4096, default='root')
     perms = models.CharField(max_length=9, default='755')

@@ -27,8 +27,8 @@ class PoolScrub(models.Model):
     pid = models.IntegerField()
     start_time = models.DateTimeField(auto_now=True)
     end_time = models.DateTimeField(null=True)
-    kb_scrubbed = models.IntegerField(null=True)
-    errors = models.IntegerField(null=True)
+    kb_scrubbed = models.BigIntegerField(null=True)
+    errors = models.BigIntegerField(null=True)
 
     class Meta:
         app_label = 'storageadmin'

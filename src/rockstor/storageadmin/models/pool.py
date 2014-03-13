@@ -25,8 +25,8 @@ class Pool(models.Model):
     name = models.CharField(max_length=4096, unique=True)
     """uuid given automatically by the client"""
     uuid = models.CharField(max_length=100, null=True)
-    """size of the pool"""
-    size = models.IntegerField(default=0)
+    """size of the pool in KB"""
+    size = models.BigIntegerField(default=0)
     """raid choices"""
     RAID_CHOICES = [
         ('raid0',) * 2,

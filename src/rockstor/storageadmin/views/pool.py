@@ -23,7 +23,7 @@ import re
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.serializers import PoolInfoSerializer
-from storageadmin.models import (Disk, Pool, Share, PoolStatistic)
+from storageadmin.models import (Disk, Pool, Share)
 from fs.btrfs import (add_pool, pool_usage, remove_pool,
                       resize_pool, umount_root)
 from storageadmin.util import handle_exception

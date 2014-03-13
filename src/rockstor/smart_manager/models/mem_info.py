@@ -22,15 +22,15 @@ from django.db import models
 class MemInfo(models.Model):
 
     """all values are in kB"""
-    total = models.IntegerField()
-    free = models.IntegerField()
-    buffers = models.IntegerField()
-    cached = models.IntegerField()
-    swap_total = models.IntegerField()
-    swap_free = models.IntegerField()
-    active = models.IntegerField()
-    inactive = models.IntegerField()
-    dirty = models.IntegerField()
+    total = models.BigIntegerField(default=0)
+    free = models.BigIntegerField(default=0)
+    buffers = models.BigIntegerField(default=0)
+    cached = models.BigIntegerField(default=0)
+    swap_total = models.BigIntegerField(default=0)
+    swap_free = models.BigIntegerField(default=0)
+    active = models.BigIntegerField(default=0)
+    inactive = models.BigIntegerField(default=0)
+    dirty = models.BigIntegerField(default=0)
     ts = models.DateTimeField(auto_now=True, db_index=True)
 
     class Meta:
