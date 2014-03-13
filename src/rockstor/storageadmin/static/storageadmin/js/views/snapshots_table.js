@@ -24,7 +24,7 @@
  * 
  */
 
-SnapshotsTableModule  = RockstoreModuleView.extend({
+SnapshotsTableModule  = RockstorModuleView.extend({
   events: {
     "click #js-snapshot-add": "add",
     "click #js-snapshot-cancel": "cancel",

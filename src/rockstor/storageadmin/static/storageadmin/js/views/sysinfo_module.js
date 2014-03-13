@@ -24,10 +24,9 @@
  * 
  */
 
-SysInfoModule = RockstoreModuleView.extend({
+SysInfoModule = RockstorModuleView.extend({
   
   initialize: function() {
-    logger.debug('in SysInfoModule initialize');
     this.template = window.JST.home_sysinfo;
     this.module_name = 'sysinfo';
   },

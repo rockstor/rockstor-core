@@ -210,7 +210,7 @@ RockStorWidgetView = Backbone.View.extend({
 
 });
 
-RockstoreButtonView = Backbone.View.extend({
+RockstorButtonView = Backbone.View.extend({
   tagName: 'div',
   className: 'button-bar',
 

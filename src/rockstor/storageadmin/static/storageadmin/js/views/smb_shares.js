@@ -24,7 +24,7 @@
  * 
  */
 
-SMBShares  = RockstoreModuleView.extend({
+SMBShares  = RockstorModuleView.extend({
   events: {
     'click #add-smb-share': 'addSmbShare',
     'click #delete-smb-share': 'deleteSmbShare',

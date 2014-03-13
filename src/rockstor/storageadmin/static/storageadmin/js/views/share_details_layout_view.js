@@ -81,7 +81,6 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
     var current_appliance = this.appliances.find(function(appliance) {
       return appliance.get('current_appliance') == true; 
     })
-    //this.subviews['share-info'] = new ShareInfoModule({ model: this.share });
     this.subviews['share-usage'] = new ShareUsageModule({ share: this.share });
     this.subviews['snapshots'] = new SnapshotsTableModule({ 
       snapshots: this.snapshots,
@@ -96,19 +95,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
     this.subviews['smb-shares'] = new SMBShares({ 
       share: this.share,
     });
-    //this.subviews['button-bar'] = new RockstoreButtonView({ 
-      //actions: [
-        //{ name: 'resize', class: 'btn-primary', text: 'Resize', options: {rel: '#resize-share-form'}},
-        //{ name: 'nfs-popup', class: 'btn-primary', text: 'NFS Export', options: {rel: '#nfs-export-form'}},
-        //{ name: 'smb-popup', class: 'btn-primary', text: 'CIFS Export', options: {rel: '#smb-share-form'}},
-        //{ name: 'snapshot-popup', class: 'btn-primary', text: 'Snapshot', options: {rel: '#create-snapshot-form'}},
-      //]
-    //});
-    //this.share.on('change', this.subviews['share-info'].render, this.subviews['share-info']);
     this.share.on('change', this.subviews['share-usage'].render, this.subviews['share-usage']);
-    //this.share.on('change', this.subviews['nfs-exports'].render, this.subviews['nfs-exports']);
-    //this.share.on('change', this.subviews['smb-shares'].render, this.subviews['smb-shares']);
-    //this.snapshots.on('reset', this.subviews['snapshots'].render, this.subviews['snapshots']);
     $(this.el).append(this.template({
       share: this.share,
       snapshots: this.snapshots,
@@ -118,13 +105,10 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
       nsecurity_choices: this.nsecurity_choices,
     }));
     this.renderAcl();
-    //this.$('#ph-share-info').append(this.subviews['share-info'].render().el);
     this.$('#ph-share-usage').append(this.subviews['share-usage'].render().el);
     this.$('#ph-snapshots').append(this.subviews['snapshots'].render().el);
     this.$('#ph-nfs-exports').append(this.subviews['nfs-exports'].render().el);
     this.$('#ph-smb-shares').append(this.subviews['smb-shares'].render().el);
-    //this.$('#ph-iscsi-target').append(this.subviews['iscsi-target'].render().el);
-    //this.$('#ph-button-bar').append(this.subviews['button-bar'].render().el);
     this.$("ul.css-tabs").tabs("div.css-panes > div");
     this.attachActions();
   },
@@ -153,39 +137,6 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
       });
     });
     
-    //this.$('#resize-share').click(function() {
-      //var button = _this.$('#resize-share');
-      //if (buttonDisabled(button)) return false;
-      //disableButton(button);
-      //var size = $('#new-size').val();
-      
-      //var sizeFormat = $('#size_format').val();
-        //if(sizeFormat == 'KB'){
-        //size = size;
-      //}else if(sizeFormat == 'MB'){
-        //size = size*1024;	
-      //}else if(sizeFormat == 'GB'){
-        //size = size*1024*1024;
-      //}else if(sizeFormat == 'TB'){
-        //size = size*1024*1024*1024;
-      //}
-      //$.ajax({
-        //url: "/api/shares/" + _this.share.get('name'),
-        //type: "PUT",
-        //dataType: "json",
-        //data: { "size": size},
-        //success: function() {
-          //enableButton(button);
-          //_this.$('#js-resize').overlay().close();
-          //_this.share.fetch();
-        //},
-        //error: function(request, status, error) {
-          //enableButton(button);
-          //showError(request.responseText);
-        //}
-      //});
-    //});
-
     this.$('#js-delete').click(function() {
       var button = _this.$('#js-delete');
       var name = _this.share.get('name');

@@ -24,7 +24,7 @@
  * 
  */
 
-ShareUsageModule = RockstoreModuleView.extend({
+ShareUsageModule = RockstorModuleView.extend({
   events: {
     "click #js-resize": "edit",
     "click #js-resize-save": "save",
