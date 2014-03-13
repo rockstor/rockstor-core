@@ -27,7 +27,7 @@ import os
 from django.http import Http404
 import logging
 logger = logging.getLogger(__name__)
-from generic_sprobe import GenericSProbeView
+from rest_framework_custom.generic_sprobe import GenericSProbeView
 from django.core.paginator import Paginator
 from smart_manager.taplib.probe_config import TAP_MAP
 

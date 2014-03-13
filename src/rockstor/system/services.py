@@ -38,7 +38,7 @@ def init_service_op(service_name, command, throw=True):
     if (service_name not in supported_services):
         raise Exception('unknown service: %s' % service_name)
 
-    return run_command([SYSTEMCTL_BIN, command, service_name])
+    return run_command([SYSTEMCTL_BIN, command, service_name], throw=throw)
 
 def chkconfig(service_name, switch):
     return run_command([CHKCONFIG_BIN, service_name, switch])
