@@ -24,7 +24,7 @@
  * 
  */
 
-AddApplianceView = RockstoreLayoutView.extend({
+AddApplianceView = RockstorLayoutView.extend({
   
   events: {
     'click #js-cancel': 'cancel'

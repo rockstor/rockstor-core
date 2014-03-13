@@ -28,7 +28,7 @@
  * Support Table view
  */
 
-SupportTableView = RockstoreModuleView.extend({
+SupportTableView = RockstorModuleView.extend({
 	render: function() {
 	    this.template = window.JST.support_support_table_template;
 	    $(this.el).empty();

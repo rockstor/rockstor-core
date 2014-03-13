@@ -24,7 +24,7 @@
  * 
  */
 
-SupportCaseDetailsLayoutView = RockstoreLayoutView.extend({
+SupportCaseDetailsLayoutView = RockstorLayoutView.extend({
 
   initialize: function() {
     // call initialize of base

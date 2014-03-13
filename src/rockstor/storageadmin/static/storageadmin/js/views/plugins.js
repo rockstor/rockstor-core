@@ -24,7 +24,7 @@
  * 
  */
 
-PluginsView = RockstoreLayoutView.extend({
+PluginsView = RockstorLayoutView.extend({
   events: {
     "click button[data-action=install]": "installPlugin"
   },

@@ -24,7 +24,7 @@
  * 
  */
 
-AppliancesView = RockstoreLayoutView.extend({
+AppliancesView = RockstorLayoutView.extend({
   
   events: {
     'click .delete-appliance': 'deleteAppliance',

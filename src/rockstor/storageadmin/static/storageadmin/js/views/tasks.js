@@ -25,7 +25,7 @@
  * 
  */
 
-TasksView = RockstoreLayoutView.extend({
+TasksView = RockstorLayoutView.extend({
   events: {
   },
 

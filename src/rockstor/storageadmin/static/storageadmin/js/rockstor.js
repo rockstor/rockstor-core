@@ -44,47 +44,31 @@ PaginationMixin = {
   }
 };
 
-RockstoreLayoutView = Backbone.View.extend({
+RockstorLayoutView = Backbone.View.extend({
   tagName: 'div',
   className: 'layout',
-  requestCount: 0,
 
   initialize: function() {
     this.subviews = {};
     this.dependencies = [];
   },
-
+  
   fetch: function(callback, context) {
-    if (this.dependencies.length == 0) {
-      if (callback) callback.apply(context);
-    }
-    var _this = this;
-    _.each(this.dependencies, function(dependency) {
-      _this.requestCount += 1;
-      dependency.fetch({
-        silent: true,
-        success: function(request){
-          _this.requestCount -= 1;
-          if (_this.requestCount == 0) {
-            if (callback) callback.apply(context);
-          }
-        },
-        error: function(request, response) {
-          _this.requestCount -= 1;
-          if (_this.requestCount == 0) {
-            if (callback) callback.apply(context);
-          }
-        }
-      });
+    var allDependencies = [];
+    _.each(this.dependencies, function(dep) {
+      allDependencies.push(dep.fetch({silent: true}));
     });
-    return this;
+    $.when.apply($, allDependencies).done(function () {
+      if (callback) callback.apply(context);
+    });
   },
+
 });
 
 
-// RockstoreModuleView
+// RockstorModuleView
 
-RockstoreModuleView = Backbone.View.extend({
+RockstorModuleView = Backbone.View.extend({
   
   tagName: 'div',
   className: 'module',
@@ -96,22 +80,13 @@ RockstoreModuleView = Backbone.View.extend({
   },
 
   fetch: function(callback, context) {
-    if (this.dependencies.length == 0) {
-      if (callback) callback.apply(context);
-    }
-    var _this = this;
-    _.each(this.dependencies, function(dependency) {
-      _this.requestCount += 1;
-      dependency.fetch({
-        success: function(request){
-          _this.requestCount -= 1;
-          if (_this.requestCount == 0) {
-            if (callback) callback.apply(context);
-          }
-        }
-      });
+    var allDependencies = [];
+    _.each(this.dependencies, function(dep) {
+      allDependencies.push(dep.fetch({silent: true}));
     });
-    return this;
+    $.when.apply($, allDependencies).done(function () {
+      if (callback) callback.apply(context);
+    });
   },
 
   render: function() {
@@ -216,7 +191,7 @@ RockStorWidgetView = Backbone.View.extend({
 
 });
 
-RockstoreButtonView = Backbone.View.extend({
+RockstorButtonView = Backbone.View.extend({
   tagName: 'div',
   className: 'button-bar',
 

@@ -26,7 +26,7 @@
 
 /* Services */
 
-ProbeDetailView = RockstoreLayoutView.extend({
+ProbeDetailView = RockstorLayoutView.extend({
   events: {
     "click #stop-probe": "stopProbe",
     "click #download": "downloadProbeData"

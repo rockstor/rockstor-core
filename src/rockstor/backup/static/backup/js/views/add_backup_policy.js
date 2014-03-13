@@ -28,7 +28,7 @@
  * Add Backup Policy View 
  */
 
-AddBackupPolicyView = RockstoreLayoutView.extend({
+AddBackupPolicyView = RockstorLayoutView.extend({
   
   events: {
     "click #js-cancel": "cancel"

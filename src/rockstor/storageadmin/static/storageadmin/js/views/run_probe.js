@@ -28,7 +28,7 @@
  * Add Share View 
  */
 
-RunProbeView = RockstoreModuleView.extend({
+RunProbeView = RockstorModuleView.extend({
   events: {
     "click #js-cancel": "cancel"
   },

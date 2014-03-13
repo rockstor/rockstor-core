@@ -24,7 +24,7 @@
  * 
  */
 
-BackupView = RockstoreLayoutView.extend({
+BackupView = RockstorLayoutView.extend({
   
   events: {
     'click .slider-stop': "stopService",

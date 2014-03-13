@@ -24,7 +24,7 @@
  * 
  */
 
-ScheduledTasksView = RockstoreLayoutView.extend({
+ScheduledTasksView = RockstorLayoutView.extend({
   events: {
     'click .toggle-task': 'toggleEnabled',
     'click a[data-action=delete]': 'deleteTask'

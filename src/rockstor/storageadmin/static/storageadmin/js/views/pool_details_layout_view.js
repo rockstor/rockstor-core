@@ -24,7 +24,7 @@
  * 
  */
 
-PoolDetailsLayoutView = RockstoreLayoutView.extend({
+PoolDetailsLayoutView = RockstorLayoutView.extend({
 
   initialize: function() {
     // call initialize of base

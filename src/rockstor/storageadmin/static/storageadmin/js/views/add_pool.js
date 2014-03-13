@@ -141,24 +141,28 @@ AddPoolView = Backbone.View.extend({
               }
 
             });
-            $.ajax({
+            
+            var jqxhr = $.ajax({
               url: "/api/pools",
               type: "POST",
               dataType: "json",
-              data: {"disks": disk_names, "raid_level": raid_level, "pname": pool_name},
-              success: function() {
+              data: {"disks": disk_names, "raid_level": raid_level, 
+                "pname": pool_name},
+             });
+             
+             jqxhr.done(function() {
                 enableButton(button);
-                _this.$('#add-pool-form :input').tooltip('hide');
-                app_router.navigate('pools', {trigger: true})
-              },
-              error: function(xhr, status, error) {
-                enableButton(button);
-              },
-            });
+
+                _this.$('#add-pool-form input').tooltip('hide');
+                app_router.navigate('pools', {trigger: true}) 
+             });
+
+             jqxhr.fail(function(xhr, status, error) {
+               enableButton(button);
+             });
 
           }
         });
-
 
       }
     });

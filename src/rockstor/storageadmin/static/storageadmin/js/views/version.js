@@ -24,7 +24,7 @@
  * 
  */
 
-VersionView = RockstoreLayoutView.extend({
+VersionView = RockstorLayoutView.extend({
   events: {
     'click #update': 'update'
   },

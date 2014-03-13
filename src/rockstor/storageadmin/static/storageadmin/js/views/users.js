@@ -24,7 +24,7 @@
  * 
  */
 
-UsersView = RockstoreLayoutView.extend({
+UsersView = RockstorLayoutView.extend({
   events: {
     "click .delete-user": "deleteUser",
     "click .edit-user": "editUser"

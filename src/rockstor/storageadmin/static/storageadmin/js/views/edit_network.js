@@ -24,7 +24,7 @@
  * 
  */
 
-EditNetworkView = RockstoreLayoutView.extend({
+EditNetworkView = RockstorLayoutView.extend({
   events: {
     'click #cancel': 'cancel',
     'change #boot_proto': 'changeBootProtocol'

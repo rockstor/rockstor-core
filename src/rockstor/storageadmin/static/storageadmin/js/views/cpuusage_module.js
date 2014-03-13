@@ -24,7 +24,7 @@
  * 
  */
 
-CpuUsageModule = RockstoreModuleView.extend({
+CpuUsageModule = RockstorModuleView.extend({
   
   initialize: function() {
     this.template = window.JST.home_cpuusage;

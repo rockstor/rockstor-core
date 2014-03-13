@@ -24,7 +24,7 @@
  * 
  */
 
-ShareNFSExports  = RockstoreModuleView.extend({
+ShareNFSExports  = RockstorModuleView.extend({
   events: {
     'click #add-export': 'addExport',
     'click #cancel-add-export': 'cancel',

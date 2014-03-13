@@ -24,7 +24,7 @@
  * 
  */
 
-CreateCloneView = RockstoreLayoutView.extend({
+CreateCloneView = RockstorLayoutView.extend({
   events: {
     "click #js-cancel": "cancel"
   },

@@ -24,7 +24,7 @@
  * 
  */
 
-ConfigureServiceView = RockstoreLayoutView.extend({
+ConfigureServiceView = RockstorLayoutView.extend({
   events: {
     "click #cancel": "cancel",
     "click #security": "toggleFormFields",

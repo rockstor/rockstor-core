@@ -24,7 +24,7 @@
  * 
  */
 
-EditNFSExportView = RockstoreLayoutView.extend({
+EditNFSExportView = RockstorLayoutView.extend({
   events: {
       'click #cancel': 'cancel',
   },

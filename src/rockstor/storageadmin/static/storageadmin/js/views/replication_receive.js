@@ -24,7 +24,7 @@
  * 
  */
 
-ReplicationReceiveView = RockstoreLayoutView.extend({
+ReplicationReceiveView = RockstorLayoutView.extend({
   events: {
   },
 

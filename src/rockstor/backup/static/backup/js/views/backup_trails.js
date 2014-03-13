@@ -25,7 +25,7 @@
  * 
  */
 
-BackupPolicyTrailsView = RockstoreLayoutView.extend({
+BackupPolicyTrailsView = RockstorLayoutView.extend({
   events: {
   },
 

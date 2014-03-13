@@ -24,7 +24,7 @@
  * 
  */
 
-AddUserView = RockstoreLayoutView.extend({
+AddUserView = RockstorLayoutView.extend({
   events: {
     "click #cancel": "cancel"
   },

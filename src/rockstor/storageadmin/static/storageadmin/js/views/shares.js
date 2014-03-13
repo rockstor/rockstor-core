@@ -28,7 +28,7 @@
  * Shares View
  */
 
-SharesView = RockstoreLayoutView.extend({
+SharesView = RockstorLayoutView.extend({
   events: {
     "click a[data-action=delete]": "deleteShare"
   },
