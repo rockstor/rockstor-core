@@ -473,10 +473,10 @@
     padding-left: 10px;
     padding-right: 10px;
   }
-  .btn-navbar {
+  .btn-navbar, .navbar .btn-navbar {
     display: block;
   }
-  .nav-collapse {
+  .nav-collapse, .nav-collapse.collapse {
     overflow: hidden;
     height: 0;
   }

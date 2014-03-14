@@ -666,5 +666,20 @@ $(document).ready(function() {
   // Initialize global error popup 
   $('#global-err-overlay').overlay({load: false}); 
 
+  // handle btn navbar toggle ourselves since bootstrap collapse 
+  // seems to conflict with something
+  $('body').on('click.collapse.data-api', '[data-toggle=mycollapse]', function ( e ) { 
+    var $this = $(this), target = $this.attr('data-target');
+    var h = $(target).css('height');
+    if (!($(target).hasClass('in'))) {
+      $(target).addClass('in');
+      $(target).css('height', 'auto');
+    } else {
+      $(target).removeClass('in');
+      $(target).css('height', '0');
+    }
+  });
+    
+
 });
 
