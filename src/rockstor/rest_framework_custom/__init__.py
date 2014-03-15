@@ -17,3 +17,4 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from generic_view import GenericView
+from generic_sprobe import GenericSProbeView
