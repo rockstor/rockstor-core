@@ -25,12 +25,10 @@ from rest_framework.response import Response
 from django.utils.timezone import utc
 from datetime import datetime
 from storageadmin.util import handle_exception
-from generic_view import GenericView
-import logging
-logger = logging.getLogger(__name__)
+import rest_framework_custom as rfc
 
 
-class TaskSchedulerView(GenericView):
+class TaskSchedulerView(rfc.GenericView):
     serializer_class = TaskDefinitionSerializer
     valid_tasks = ('snapshot', 'scrub',)
 
@@ -40,7 +38,6 @@ class TaskSchedulerView(GenericView):
             try:
                 return TaskDefinition.objects.get(id=kwargs['tdid'])
             except:
-                logger.debug('exception')
                 return []
         return TaskDefinition.objects.filter().order_by('-id')
 
