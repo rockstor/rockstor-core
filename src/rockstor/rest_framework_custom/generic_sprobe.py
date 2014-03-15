@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from rest_framework_custom.renderers import IgnoreClient
+from renderers import IgnoreClient
 from django.conf import settings
 from django.db.models import Count
 from generic_view import GenericView
