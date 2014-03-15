@@ -26,13 +26,13 @@ from storageadmin.exceptions import RockStorAPIException
 from fs.btrfs import (mount_share, is_share_mounted, umount_root)
 from system.ssh import (update_sftp_config, sftp_mount_map, sftp_mount)
 from share_helpers import (helper_mount_share, validate_share)
-from generic_view import GenericView
+import rest_framework_custom as rfc
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-class SFTPView(GenericView):
+class SFTPView(rfc.GenericView):
     serializer_class = SFTPSerializer
 
     def get_queryset(self, *args, **kwargs):

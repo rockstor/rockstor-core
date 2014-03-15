@@ -21,7 +21,7 @@ from django.db import transaction
 from storageadmin.util import handle_exception
 from storageadmin.serializers import PoolScrubSerializer
 from storageadmin.models import (Pool, PoolScrub, Disk)
-from generic_view import GenericView
+import rest_framework_custom as rfc
 from fs.btrfs import (scrub_start, scrub_status, is_share_mounted, mount_root)
 from storageadmin.exceptions import RockStorAPIException
 from datetime import timedelta
@@ -29,7 +29,7 @@ from datetime import timedelta
 import logging
 logger = logging.getLogger(__name__)
 
-class PoolScrubView(GenericView):
+class PoolScrubView(rfc.GenericView):
     serializer_class = PoolScrubSerializer
 
     def _validate_pool(self, pname, request):
