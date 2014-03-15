@@ -16,14 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from renderers import IgnoreClient
 from django.conf import settings
 from django.db.models import Count
-from generic_view import GenericView
+import rest_framework_custom as rfc
 
 
-class GenericSProbeView(GenericView):
-    content_negotiation_class = IgnoreClient
+class GenericSProbeView(rfc.GenericView):
+    content_negotiation_class = rfc.IgnoreClient
 
     def get_queryset(self):
         limit = self.request.QUERY_PARAMS.get('limit',
