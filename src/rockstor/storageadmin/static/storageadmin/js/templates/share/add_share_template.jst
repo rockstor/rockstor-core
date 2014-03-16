@@ -51,9 +51,9 @@
                 <% pools.each(function(pool, index) { %>
                   <% if (index >= 0) { %>
                     <% if(poolName != pool.get('name')){ %>
-                      <option value="<%= pool.get('name') %>"> <%= pool.get('name') %> </option>
+                      <option value="<%= pool.get('name') %>"> <%= pool.get('name') %>  (Free space - <%= humanize.filesize((pool.get('size')-pool.get('usage'))*1024) %>) </option>
                     <% }else{ %> 
-                      <option value="<%= pool.get('name') %>" selected="selected"> <%= pool.get('name') %> </option>
+                      <option value="<%= pool.get('name') %>" selected="selected"> <%= pool.get('name') %> (Free space - <%= humanize.filesize((pool.get('size')-pool.get('usage'))*1024) %> </option>
 
                     <% } %>
                   <% } %>
@@ -67,14 +67,11 @@
         <div class="control-group">
           <label class="control-label" for="share_size">Size<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" name="share_size" id="share_size" title="Enter share size in KB, MB, GB or TB">
-            <select id="size_format" name="size_format">
-              <option>KB</option>
-              <option>MB</option>
-              <option>GB</option>
-              <option>TB</option>
-            </select>
-          </div>
+          
+            <span> <input type="text"  name="share_size" id="share_size"  value='' title="Enter share size in GB or TB"> </span>
+            <div id="slider-size" ></div>
+            
+           </div>
         </div>
         <div class="control-group">
           <div class="controls">
