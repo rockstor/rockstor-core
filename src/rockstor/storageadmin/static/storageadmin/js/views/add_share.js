@@ -53,7 +53,8 @@ AddShareView = Backbone.View.extend({
            
         $("#slider-size").simpleSlider({
            range: [0,2049],
-            step: '10'
+            step: '10',
+            value: 0,
        });
 
         $.validator.addMethod('validateShareSize', function(value) {
@@ -75,6 +76,12 @@ AddShareView = Backbone.View.extend({
                 $("#share_size").val(((data.value)/1024).toFixed(2)+"TB");
              }
             });
+        $("#share_size").change(function(){
+        var size = this.value;
+        
+        $("#slider-size").simpleSlider("setValue",parseInt(size));
+        
+        });
         
         $('#add-share-form :input').tooltip({placement: 'right'});
         
