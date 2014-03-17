@@ -18,7 +18,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from smart_manager.models import TaskDefinition
 from smart_manager.serializers import TaskDefinitionSerializer
-from django.conf import settings
 from django.db import transaction
 import json
 from rest_framework.response import Response

@@ -204,9 +204,15 @@ def refresh_nfs_exports(exports):
             if (not is_mounted(e)):
                 bind_mount(exports[e][0]['mnt_pt'], e)
             client_str = ''
+            admin_host = None
             for c in exports[e]:
                 client_str = ('%s%s(%s) ' % (client_str, c['client_str'],
                                              c['option_list']))
+                if ('admin_host' in c):
+                    admin_host = c['admin_host']
+            if (admin_host is not None):
+                client_str = ('%s %s(rw,no_root_squash)' % (client_str,
+                                                            admin_host))
             export_str = ('%s %s\n' % (e, client_str))
             efo.write(export_str)
         for s in shares:
