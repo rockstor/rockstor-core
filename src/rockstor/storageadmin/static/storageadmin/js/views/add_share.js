@@ -78,8 +78,17 @@ AddShareView = Backbone.View.extend({
             });
         $("#share_size").change(function(){
         var size = this.value;
+        var sizeFormat = size.replace(/[^a-z]/gi, ""); 
         
-        $("#slider-size").simpleSlider("setValue",parseInt(size));
+        var size_array = size.split(sizeFormat)
+        var size_value = size_array[0];
+        
+        if(sizeFormat == 'TB' || sizeFormat == 'tb' || sizeFormat == 'Tb'){
+           size_value = size_value*1024;
+           $("#slider-size").simpleSlider("setValue",parseInt(size_value));
+           }else{
+           $("#slider-size").simpleSlider("setValue",parseInt(size));
+           }
         
         });
         
