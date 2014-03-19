@@ -26,15 +26,12 @@ from storageadmin.models import (Share, Appliance)
 from smart_manager.models import Replica
 from smart_manager.serializers import ReplicaSerializer
 from storageadmin.util import handle_exception
-from generic_view import GenericView
 from datetime import datetime
 from django.utils.timezone import utc
-
-import logging
-logger = logging.getLogger(__name__)
+import rest_framework_custom as rfc
 
 
-class ReplicaView(GenericView):
+class ReplicaView(rfc.GenericView):
     serializer_class = ReplicaSerializer
 
     def get_queryset(self, *args, **kwargs):

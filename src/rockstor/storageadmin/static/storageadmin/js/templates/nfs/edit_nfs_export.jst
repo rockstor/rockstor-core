@@ -2,20 +2,20 @@
 /*
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
- * 
+ *
  * RockStor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
- * 
+ *
  * RockStor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 </script>
 
@@ -33,9 +33,9 @@
           <label class="control-label" for="shares">Shares to export<span class="required"> *</span></label>
           <div class="controls">
             <select name="shares" id="shares" size="10" multiple>
-              <% 
+              <%
                 var nShares = _.map(nfsExportGroup.get('exports'),
-                function(e) { return e.share; }); 
+                function(e) { return e.share; });
                 console.log(nShares);
               %>
               <% shares.each(function(share, index) { %>
@@ -58,6 +58,20 @@
           </div>
         </div>
 
+	<!-- admin host -->
+	<div class="control-group">
+	  <label class="control-label" for="trusted_host">Admin
+	Host</span></label>
+	  <div class="controls">
+	    <input type="text" id="admin_host" name="admin_host"
+	title="Hostname or IP of a host to be designated as the admin host. The
+	export will be available for this host with rw and no_root_squash
+	options so that root user can change ownership and permissions of
+	various directories from this host. This is usually preferred in
+	conjunction with NIS.">
+	  </div>
+	</div>
+
         <!-- writable -->
         <div class="control-group">
           <label class="control-label" for="mod_choice">Writable</label>
@@ -73,7 +87,7 @@
             </select>
           </div>
         </div>
-        
+
         <!-- sync -->
         <div class="control-group">
           <label class="control-label" for="sync_choice">Sync</label>
@@ -89,7 +103,7 @@
             </select>
           </div>
         </div>
-        
+
         <!-- Submit -->
         <div class="control-group">
           <div class="controls">

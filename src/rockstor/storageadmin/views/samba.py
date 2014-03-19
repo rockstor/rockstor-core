@@ -23,7 +23,7 @@ from storageadmin.models import (Share, SambaShare, Disk)
 from storageadmin.serializers import SambaShareSerializer
 from storageadmin.util import handle_exception
 from storageadmin.exceptions import RockStorAPIException
-from generic_view import GenericView
+import rest_framework_custom as rfc
 from share_helpers import validate_share
 from system.osi import (refresh_smb_config, restart_samba)
 from fs.btrfs import (mount_share, is_share_mounted, umount_root)
@@ -31,7 +31,7 @@ from fs.btrfs import (mount_share, is_share_mounted, umount_root)
 import logging
 logger = logging.getLogger(__name__)
 
-class SambaView(GenericView):
+class SambaView(rfc.GenericView):
     serializer_class = SambaShareSerializer
     CREATE_MASKS = ('0777', '0755', '0744', '0700',)
 

@@ -26,7 +26,7 @@ from system.osi import (get_mac_addr, config_network_device, restart_network,
                         restart_network_interface, get_default_interface,
                         update_samba_discovery, update_issue)
 from storageadmin.exceptions import RockStorAPIException
-from generic_view import GenericView
+import rest_framework_custom as rfc
 import socket
 from django.conf import settings
 
@@ -34,7 +34,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class NetworkView(GenericView):
+class NetworkView(rfc.GenericView):
     serializer_class = NetworkInterfaceSerializer
 
     def get_queryset(self, *args, **kwargs):

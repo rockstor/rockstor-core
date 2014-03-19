@@ -26,7 +26,7 @@ from storageadmin.serializers import NFSExportGroupSerializer
 from storageadmin.exceptions import RockStorAPIException
 from fs.btrfs import (mount_share, is_share_mounted, umount_root)
 from system.osi import (refresh_nfs_exports, nfs4_mount_teardown)
-from generic_view import GenericView
+import rest_framework_custom as rfc
 from nfs_helpers import (create_nfs_export_input, parse_options,
                          dup_export_check, refresh_wrapper,
                          teardown_wrapper, validate_export_group)
@@ -36,7 +36,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class ShareNFSView(GenericView):
+class ShareNFSView(rfc.GenericView):
     serializer_class = NFSExportGroupSerializer
 
     def get_queryset(self, *args, **kwargs):

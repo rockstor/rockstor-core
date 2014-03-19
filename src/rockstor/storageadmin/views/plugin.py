@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
-from generic_view import GenericView
+import rest_framework_custom as rfc
 from storageadmin.util import handle_exception
 from storageadmin.models import (Plugin, InstalledPlugin)
 from storageadmin.serializers import PluginSerializer
@@ -27,7 +27,7 @@ import time
 import logging
 logger = logging.getLogger(__name__)
 
-class PluginView(GenericView):
+class PluginView(rfc.GenericView):
     serializer_class = PluginSerializer
 
     def get_queryset(self, *args, **kwargs):
@@ -46,7 +46,7 @@ class PluginView(GenericView):
         #    request.session['installed_plugins'] = []
 
         #data = {
-        #        'installed': request.session['installed_plugins'], 
+        #        'installed': request.session['installed_plugins'],
         #        'available': request.session['available_plugins']
         #        }
         #return Response(data)

@@ -16,23 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from rest_framework import generics
-from smart_manager.models import MemInfo
-from smart_manager.serializers import (MemInfoSerializer)
-from rest_framework.authentication import (BasicAuthentication,
-                                           SessionAuthentication,)
-from storageadmin.auth import DigestAuthentication
-from rest_framework.permissions import IsAuthenticated
-from rest_framework_custom.renderers import IgnoreClient
 from django.conf import settings
 from django.db.models import Count
+import rest_framework_custom as rfc
 
 
-class GenericSProbeView(generics.ListCreateAPIView):
-    authentication_classes = (DigestAuthentication, SessionAuthentication,
-                              BasicAuthentication,)
-    permission_classes = (IsAuthenticated,)
-    content_negotiation_class = IgnoreClient
+class GenericSProbeView(rfc.GenericView):
+    content_negotiation_class = rfc.IgnoreClient
 
     def get_queryset(self):
         limit = self.request.QUERY_PARAMS.get('limit',
@@ -60,19 +50,3 @@ class GenericSProbeView(generics.ListCreateAPIView):
                 reverse = False
             return self._sorted_results(sort_col, reverse)
         return self.model_obj.objects.all().order_by('-ts')[0:limit]
-
-    def get_paginate_by(self, foo):
-        download = self.request.QUERY_PARAMS.get('download', None)
-        if (download is not None):
-            return None
-        if (self.paginate_by is not None and self.paginate_by == 0):
-            return None
-        return settings.PAGINATION['page_size']
-
-    def get_allow_empty(self):
-        if (self.paginate_by is None):
-            return True
-        return False
-
-    def post(self, request, *args, **kwargs):
-        pass

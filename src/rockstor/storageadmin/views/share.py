@@ -27,14 +27,14 @@ from storageadmin.serializers import ShareSerializer
 from storageadmin.util import handle_exception
 from storageadmin.exceptions import RockStorAPIException
 from django.conf import settings
-from generic_view import GenericView
+import rest_framework_custom as rfc
 
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-class ShareView(GenericView):
+class ShareView(rfc.GenericView):
     serializer_class = ShareSerializer
 
     def get_queryset(self, *args, **kwargs):

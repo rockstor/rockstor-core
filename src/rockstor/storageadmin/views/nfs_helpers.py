@@ -30,6 +30,8 @@ def client_input(export):
         ci['option_list'] = ('%s,nohide' % ci['option_list'])
     ci['mnt_pt'] = export.mount.replace(settings.NFS_EXPORT_ROOT,
                                         settings.MNT_PT)
+    if (eg.admin_host is not None):
+        ci['admin_host'] = eg.admin_host
     return ci
 
 def create_nfs_export_input(exports):
@@ -59,6 +61,8 @@ def parse_options(request):
         options['editable'] = request.DATA['mod_choice']
     if ('sync_choice' in request.DATA):
         options['syncable'] = request.DATA['sync_choice']
+    if ('admin_host' in request.DATA):
+        options['admin_host'] = request.DATA['admin_host']
     return options
 
 def dup_export_check(share, host_str, request, export_id=None):

@@ -37,8 +37,8 @@ AddNFSExportView = RockstorLayoutView.extend({
     this.shares.pageSize = 1000; 
     this.dependencies.push(this.shares);
     this.modify_choices = [
-      {name: 'ro', value: 'ro'}, 
-      {name: 'rw', value: 'rw'},
+      {name: 'rw', value: 'rw'}, 
+      {name: 'ro', value: 'ro'},
     ];
     this.sync_choices = [
       {name: 'async', value: 'async'},
@@ -73,7 +73,6 @@ AddNFSExportView = RockstorLayoutView.extend({
         var button = $('#create-nfs-export');
         if (buttonDisabled(button)) return false;
         disableButton(button);
-        console.log(JSON.stringify(_this.$('#add-nfs-export-form').getJSON()));
         $.ajax({
           url: '/api/nfs-exports',
           type: 'POST',
