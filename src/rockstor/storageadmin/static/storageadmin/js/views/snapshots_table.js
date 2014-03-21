@@ -215,10 +215,13 @@ SnapshotsTableModule  = RockstorModuleView.extend({
             _this.$('[rel=tooltip]').tooltip('hide');
             // reset selected snapshots
             _this.selectedSnapshots = [];
-            // reset to first page to handle the case of the last page
-            // being deleted
-            _this.collection.goToPage(1); 
-            _this.collection.fetch();
+            // reset to prev page if not on first page
+            // to handle the case of the last page being deleted
+            if (_this.collection.pageInfo().prev) {
+              _this.collection.prevPage();
+            } else {
+              _this.collection.fetch(); 
+            }
           },
           error: function(xhr, status, error) {
             enableButton(button)
