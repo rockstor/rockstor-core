@@ -21,9 +21,10 @@ import rest_framework_custom as rfc
 from smart_manager.models import DiskStat
 from storageadmin.models import Disk
 from smart_manager.serializers import DiskStatSerializer
+from generic_sprobe import GenericSProbeView
 
 
-class DiskStatView(rfc.GenericSProbeView):
+class DiskStatView(GenericSProbeView):
 
     serializer_class = DiskStatSerializer
     model_obj = DiskStat

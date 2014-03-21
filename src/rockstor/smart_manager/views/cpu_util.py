@@ -19,9 +19,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import rest_framework_custom as rfc
 from smart_manager.models import CPUMetric
 from smart_manager.serializers import CPUMetricSerializer
+from generic_sprobe import GenericSProbeView
 
 
-class CPUMetricView(rfc.GenericSProbeView):
+class CPUMetricView(GenericSProbeView):
 
     serializer_class = CPUMetricSerializer
     model_obj = CPUMetric

@@ -19,9 +19,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import rest_framework_custom as rfc
 from smart_manager.models import LoadAvg
 from smart_manager.serializers import LoadAvgSerializer
+from generic_sprobe import GenericSProbeView
 
 
-class LoadAvgView(rfc.GenericSProbeView):
+class LoadAvgView(GenericSProbeView):
 
     serializer_class = LoadAvgSerializer
     model_obj = LoadAvg
