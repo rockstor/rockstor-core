@@ -548,3 +548,33 @@ probeStates = {
   ERROR: 'error',
 };
 
+var RockstorUtil = function() { 
+  var util = { 
+    // maintain selected object list
+    // list is an array of contains models
+
+    // does the list contain a model with attr 'name' with value 'value'
+    listContains: function(list, name, value) {
+      return _.find(list, function(obj) {
+        return obj.get(name) == value;
+      });
+    },
+
+    // add obj from collection with attr 'name' and value 'value' to list
+    addToList: function(list, collection, name, value) {
+      list.push(collection.find(function(obj) {
+        return obj.get(name) == value;
+      }));
+    },
+
+    // remove obj with attr 'name' and value 'value'
+    removeFromList: function(list, name, value) {
+      var i = _.indexOf(_.map(list, function(obj) {
+        return obj.get(name);
+      }), value);
+      list.splice(i,1);
+    }
+  }
+  return util;
+}();
+

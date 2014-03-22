@@ -31,7 +31,7 @@ SnapshotsTableModule  = RockstorModuleView.extend({
     "click .js-snapshot-delete": "deleteSnapshot",
     "click .js-snapshot-clone": "cloneSnapshot",
     "click .js-snapshot-select": "selectSnapshot",
-    //"click .js-snapshot-select-all": "selectAllSnapshots",
+    "click .js-snapshot-select-all": "selectAllSnapshots",
     "click #js-snapshot-delete-multiple": "deleteMultipleSnapshots"
   },
 
@@ -52,6 +52,7 @@ SnapshotsTableModule  = RockstorModuleView.extend({
     $(this.el).empty();
     $(this.el).append(this.template({
       snapshots: this.collection,
+      selectedSnapshots: this.selectedSnapshots,
       share: this.share
     }));
     this.$('[rel=tooltip]').tooltip({ 
@@ -67,7 +68,7 @@ SnapshotsTableModule  = RockstorModuleView.extend({
   },
 
   setShareName: function(shareName) {
-      this.collection.setUrl(shareName);
+    this.collection.setUrl(shareName);
   },
 
   add: function(event) {
@@ -97,9 +98,7 @@ SnapshotsTableModule  = RockstorModuleView.extend({
           success: function() {
             _this.$('#add-snapshot-form :input').tooltip('hide');
             enableButton(button);
-            _this.collection.fetch({
-              success: function() { _this.render(); }
-            });
+            _this.collection.fetch();
           },
           error: function(xhr, status, error) {
             _this.$('#add-snapshot-form :input').tooltip('hide');
@@ -127,6 +126,7 @@ SnapshotsTableModule  = RockstorModuleView.extend({
         success: function() {
           enableButton(button)
           _this.$('[rel=tooltip]').tooltip('hide');
+          _this.selectedSnapshots = [];
           _this.collection.fetch();
         },
         error: function(xhr, status, error) {
@@ -153,39 +153,29 @@ SnapshotsTableModule  = RockstorModuleView.extend({
     var _this = this;
     name = $(event.currentTarget).attr('data-name');
     var checked = $(event.currentTarget).prop('checked');
+    this.selectSnapshotWithName(name, checked);
+  },
+
+  selectSnapshotWithName: function(name, checked) {
     if (checked) {
-      this.selectedSnapshots.push(this.collection.find(function(snap) {
-        return snap.get('name') == name;
-      }));
+      if (!RockstorUtil.listContains(this.selectedSnapshots, 'name', name)) {
+        RockstorUtil.addToList(
+          this.selectedSnapshots, this.collection, 'name', name);
+      }
     } else {
-      var i = _.indexOf(_.map(this.selectedSnapshots, function(snap) {
-        return snap.name;
-      }), name);
-      this.selectedSnapshots.splice(i,1);
+      if (RockstorUtil.listContains(this.selectedSnapshots, 'name', name)) {
+        RockstorUtil.removeFromList(this.selectedSnapshots, 'name', name);
+      }
     }
   },
 
   selectAllSnapshots: function(event) {
     var _this = this;
     var checked = $(event.currentTarget).prop('checked');
-    if (checked) {
-      this.$('.js-snapshot-select').prop('checked', true)
-      this.$('.js-snapshot-select').each(function(i) {
-        var name = $(this).attr('data-name');
-        this.selectedSnapshots.push(this.collection.find(function(snap) {
-          return snap.get('name') == name;
-        }));
-      });
-    } else {
-      this.$('.js-snapshot-select').prop('checked', false)
-      this.$('.js-snapshot-select').each(function(i) {
-        var name = $(this).attr('data-name');
-        var i = _.indexOf(_this.selectedSnapshots, name);
-        if (i != -1) {
-          _this.selectedSnapshots.splice(i,1);
-        }
-      });
-    }
+    this.$('.js-snapshot-select').prop('checked', checked)
+    this.$('.js-snapshot-select').each(function() {
+      _this.selectSnapshotWithName($(this).attr('data-name'), checked);
+    });
   },
   
   deleteMultipleSnapshots: function(event) {
@@ -223,8 +213,15 @@ SnapshotsTableModule  = RockstorModuleView.extend({
           success: function() {
             enableButton(button)
             _this.$('[rel=tooltip]').tooltip('hide');
+            // reset selected snapshots
             _this.selectedSnapshots = [];
-            _this.collection.fetch();
+            // reset to prev page if not on first page
+            // to handle the case of the last page being deleted
+            if (_this.collection.pageInfo().prev) {
+              _this.collection.prevPage();
+            } else {
+              _this.collection.fetch(); 
+            }
           },
           error: function(xhr, status, error) {
             enableButton(button)
@@ -235,6 +232,25 @@ SnapshotsTableModule  = RockstorModuleView.extend({
         });
       }
     }
+  },
+  
+  selectedContains: function(name) {
+    return _.find(this.selectedSnapshots, function(snap) {
+      return snap.get('name') == name;
+    });
+  },
+  
+  addToSelected: function(name) {
+    this.selectedSnapshots.push(this.collection.find(function(snap) {
+      return snap.get('name') == name;
+    }));
+  },
+
+  removeFromSelected: function(name) {
+    var i = _.indexOf(_.map(this.selectedSnapshots, function(snap) {
+      return snap.get('name');
+    }), name);
+    this.selectedSnapshots.splice(i,1);
   },
 
   cancel: function(event) {

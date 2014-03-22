@@ -112,11 +112,18 @@
     <div class="navbar navbar-inverse navbar-fixed-top">
       <div class="navbar-inner">
         <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button class="btn btn-navbar" data-toggle="mycollapse" data-target=".nav-collapse" type="button">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
         <div id="logo">
           <object data="/static/storageadmin/img/rockstor_logo_website_150x50.svg" width="100px"
             type="image/svg+xml"></object>
         </div>
-        <div id="navbar-links"></div>
+        <div class="nav-collapse collapse">
+          <div id="navbar-links"></div>
+        </div>
       </div> <!-- navbar-inner -->
     </div> <!-- navbar -->
     <div id="appliance-breadcrumb">
