@@ -24,69 +24,56 @@
  * 
  */
 
-EditNFSExportView = RockstorLayoutView.extend({
+NFSAdvancedEditView = RockstorLayoutView.extend({
   events: {
-      'click #cancel': 'cancel',
+    "click #cancel": "cancel"
   },
 
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
-    this.template = window.JST.nfs_edit_nfs_export;
+    this.template = window.JST.nfs_advanced_edit;
+    this.collection = new NFSExportGroupCollection();
+    this.dependencies.push(this.collection);
     this.shares = new ShareCollection();
-    this.nfsExportGroupId = this.options.nfsExportGroupId;
-    this.nfsExportGroup = new NFSExportGroup({id: this.nfsExportGroupId});
-    this.dependencies.push(this.nfsExportGroup);
     // dont paginate shares for now
     this.shares.pageSize = 1000; 
     this.dependencies.push(this.shares);
-    this.modify_choices = [
-      {name: 'Writable', value: 'rw'}, 
-      {name: 'Read-only', value: 'ro'},
-    ];
-    this.sync_choices = [
-      {name: 'async', value: 'async'},
-      {name: 'sync', value: 'sync'}, 
-    ];
   },
   
   render: function() {
-    this.fetch(this.renderExportForm, this);
+    this.fetch(this.renderAdvancedEdit, this);
     return this;
   },
 
-  renderExportForm: function() {
+  renderAdvancedEdit: function() {
     var _this = this;
     $(this.el).html(this.template({
       shares: this.shares,
-      nfsExportGroup: this.nfsExportGroup,
-      modify_choices: this.modify_choices,
-      sync_choices: this.sync_choices
+      collection: this.collection
     }));
-    this.$('#shares').chosen(); 
-    this.$('#edit-nfs-export-form').validate({
+    $('#advanced-edit-form').validate({
       onfocusout: false,
       onkeyup: false,
-      rules: {
-        shares: 'required',  
-        host_str: 'required'
-      },
+      
       submitHandler: function() {
-        var button = $('#update-nfs-export');
+        var button = $('#submit-advanced-edit');
         if (buttonDisabled(button)) return false;
         disableButton(button);
         $.ajax({
-          url: '/api/nfs-exports/' + _this.nfsExportGroup.id,
-          type: 'PUT',
+          url: '/api/nfs-exports',
+          type: 'POST',
           dataType: 'json',
           contentType: 'application/json',
-          data: JSON.stringify(_this.$('#edit-nfs-export-form').getJSON()),
+          data: JSON.stringify(_this.$('#advanced-edit-form').getJSON()),
           success: function() {
+            enableButton(button);
             app_router.navigate('nfs-exports', {trigger: true});
           },
           error: function(xhr, status, error) {
             enableButton(button);
           }
         });
+       
         return false;
       }
     });

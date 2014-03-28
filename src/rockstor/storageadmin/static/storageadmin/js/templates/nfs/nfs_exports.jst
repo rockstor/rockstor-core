@@ -49,7 +49,13 @@
 
                 <% }); %>
               </td>
-              <td><%= n.get('editable') %></td>
+              <td>
+                <% if (n.get('editable') == 'rw') { %>
+                  Writable
+                <% } else { %>
+                  Read-only
+                <% } %>
+              </td>
               <td><%= n.get('syncable') %></td>
               <td>
                 <a href="#nfs-exports/edit/<%= n.id %>"><i class="icon-edit"></i></a>
@@ -80,6 +86,7 @@
 </div> <!-- row-fluid --> 
 <br>
 <a href="#add-nfs-export" id="add-nfs-export" class="btn btn-primary"><i class="icon-edit icon-white"></i> Add NFS Export</a>
+<a href="#nfs-advanced-edit" id="nfs-advanced-edit" class="btn btn-primary"><i class="icon-edit icon-white"></i> Advanced Edit</a>
 <!-- end module body -->
 
 

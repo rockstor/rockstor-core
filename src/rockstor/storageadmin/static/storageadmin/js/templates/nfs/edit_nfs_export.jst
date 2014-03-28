@@ -76,15 +76,16 @@
         <div class="control-group">
           <label class="control-label" for="mod_choice">Writable</label>
           <div class="controls">
-            <select id="mod_choice" name="mod_choice">
-              <% _.each(modify_choices, function(c) { %>
+            <% _.each(modify_choices, function(c) { %>
+              <label class="radio inline">
                 <% if (nfsExportGroup.get('editable') == c.value) { %>
-                  <option value="<%= c.value %>" selected="selected"><%= c.name %></option>
+                  <input type="radio" name="mod_choice" value="<%= c.value %>" checked="checked">
                 <% } else { %>
-                  <option value="<%= c.value %>"><%= c.name %></option>
+                  <input type="radio" name="mod_choice" value="<%= c.value %>" >
                 <% } %>
-              <% }); %>
-            </select>
+                <%= c.name %>
+              </label>
+            <% }); %>
           </div>
         </div>
 
@@ -92,15 +93,16 @@
         <div class="control-group">
           <label class="control-label" for="sync_choice">Sync</label>
           <div class="controls">
-            <select id="sync_choice" name="sync_choice">
-              <% _.each(sync_choices, function(c) { %>
+            <% _.each(sync_choices, function(c) { %>
+              <label class="radio inline">
                 <% if (nfsExportGroup.get('syncable') == c.value) { %>
-                  <option value="<%= c.value %>" selected="selected"><%= c.name %></option>
+                  <input type="radio" name="sync_choice" value="<%= c.value %>" checked="checked">
                 <% } else { %>
-                  <option value="<%= c.value %>"><%= c.name %></option>
+                  <input type="radio" name="sync_choice" value="<%= c.value %>" >
                 <% } %>
-              <% }); %>
-            </select>
+                <%= c.name %>
+              </label>
+            <% }); %>
           </div>
         </div>
 

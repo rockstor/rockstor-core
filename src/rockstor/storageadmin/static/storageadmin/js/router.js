@@ -63,6 +63,7 @@ var AppRouter = Backbone.Router.extend({
     "add_replication_task": "addReplicationTask",
     "nfs-exports": "showNFSExports",
     "add-nfs-export": "addNFSExport",
+    "nfs-advanced-edit": "nfsAdvancedEdit",
     "samba-exports": "showSambaExports",
     "add-samba-export": "addSambaExport",
     "nfs-exports/edit/:nfsExportGroupId": "editNFSExport",
@@ -398,6 +399,14 @@ var AppRouter = Backbone.Router.extend({
     this.renderSidebar('storage', 'nfs-exports');
     this.cleanup();
     this.currentLayout = new AddNFSExportView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  nfsAdvancedEdit: function() {
+    this.renderSidebar('storage', 'nfs-exports');
+    this.cleanup();
+    this.currentLayout = new NFSAdvancedEditView();
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },

@@ -240,6 +240,7 @@ PIPELINE_JS = {
             'storageadmin/js/views/add_samba_export.js',
             'storageadmin/js/views/add_nfs_export.js',
             'storageadmin/js/views/edit_nfs_export.js',
+            'storageadmin/js/views/nfs_advanced_edit.js',
             'storageadmin/js/views/networks.js',
             'storageadmin/js/views/edit_network.js',
             'storageadmin/js/views/create_clone.js',
