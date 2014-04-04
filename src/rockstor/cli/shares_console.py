@@ -96,9 +96,12 @@ class SharesConsole(BaseConsole):
                 error = 'Invalid size parameter: %s' % arg_fields[2]
                 return self.help_wrapper(error, 'add')
         size = num * multiplier
-        input_data = {'pool' : arg_fields[1],
+        input_data = {
+		'sname': arg_fields[0],
+		'pool' : arg_fields[1],
                       'size': size,}
-        url = ('%s%s' % (self.url, arg_fields[0]))
+        #url = ('%s/%s' % (self.url, arg_fields[0]))
+	url = self.url
         share_info = api_call(url, data=input_data, calltype='post')
         print_share_info(share_info)
 

@@ -58,9 +58,11 @@ def api_call(url, data=None, calltype='get', headers=None, save_error=True):
 
     if (r.status_code == 404):
         msg = ('Invalid api end point: %s' % url)
+        print msg
         raise RockStorAPIException(detail=msg)
 
     if (r.status_code != 200):
+        print r.text
         try:
             error_d = json.loads(r.text)
             if ('detail' in error_d):
@@ -121,8 +123,9 @@ def print_share_info(share_info):
         print("Name\tSize(KB)\tUsage(KB)\tPool")
         for s in share_info:
             print('%s\t%s\t%s\t%s' %
-                  (s['name'], s['size'], s['usage'], s['pool']['name']))
+                  (s['name'], s['size'], s['r_usage'], s['pool']['name']))
     except Exception, e:
+        print e
         print('Error rendering share info')
 
 def print_disk_info(disk_info):
