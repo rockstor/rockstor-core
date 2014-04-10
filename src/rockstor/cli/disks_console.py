@@ -26,33 +26,38 @@ class DisksConsole(BaseConsole):
 
     def __init__(self, prompt):
         BaseConsole.__init__(self)
-        self.prompt = prompt + ' Disks>'
+        self.prompt = prompt + ' Disks> '
         self.baseurl = ('%sdisks' % BaseConsole.url)
 
     @api_error
     def do_list(self, args):
-        """
-        List brief information about disks in the system.
-
-        Details of all disks:     list
-        Details of a single disk: list <disk_name>
-
-        Parameters:
-        disk_name: If this optional parameter is given, details are printed
-                   for the given disk only.
-
-        Examples:
-        Print information of all disks in the system
-            list
-
-        Print information for the disk sdd
-            list sdd
-        """
         url = self.baseurl
         if (args is not None):
             url = ('%s%s' % (url, args))
         disk_info = api_call(url)
         print_disk_info(disk_info)
+
+    def help_list(self):
+        s = """
+        %(start_c)sDisplay information about disks in the system.%(reset)s
+
+        Details of all disks:     %(start_c)slist%(reset)s
+        Details of a single disk: %(start_c)slist%(reset)s <%(start_u)sdisk_name%(reset)s>
+
+        %(start_c)sParameters%(reset)s
+        %(start_u)sdisk_name%(reset)s    If this optional parameter is given, 
+                     details are printed for the given disk only.
+
+        %(start_c)sExamples%(reset)s
+        Print information of all disks in the system
+            list
+
+        Print information for the disk sdd
+            list sdd
+        """ % { 'start_c': BaseConsole.begin_color, 
+                'start_u': BaseConsole.begin_undescore,
+                'reset' : BaseConsole.reset }
+        print s
 
     @api_error
     def do_scan(self, args):
