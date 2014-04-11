@@ -154,7 +154,7 @@ def print_disks_info(disks_info):
 def print_disk_info(d, header=False):
     try:
         if header:
-            print "%(u)sDisk info:%(e)s\n" % BaseConsole.c_params
+            print "%(u)sDisk info%(e)s\n" % BaseConsole.c_params
             print("Name\tSize\tPool")
         d['size'] = sizeof_fmt(d['size'])
         print('%s%s%s\t%s\t%s' % (BaseConsole.c, d['name'],

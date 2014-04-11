@@ -48,7 +48,7 @@ class DisksConsole(BaseConsole):
         %(c)sDisplay information about disks in the system.%(e)s
 
         Details of all disks:     %(c)slist%(e)s
-        Details of a single disk: %(c)slist%(e)s <%(u)sdisk_name%(e)s>
+        Details of a single disk: %(c)slist%(e)s %(u)sdisk_name%(e)s
 
         %(c)sParameters%(e)s
         %(u)sdisk_name%(e)s    If this optional parameter is given, 
@@ -66,8 +66,9 @@ class DisksConsole(BaseConsole):
     @api_error
     def do_scan(self, args):
         url = ('%s/scan' % self.baseurl)
+        print "%(c)sScanning disks%(e)s" % BaseConsole.c_params
         disk_info = api_call(url, data=None, calltype='post')
-        print_disks_info(disk_info)
+        self.do_list(None)
 
     def help_scan(self):
         s = """
@@ -81,24 +82,31 @@ class DisksConsole(BaseConsole):
 
     @api_error
     def do_delete(self, args):
-        """
-        Delete a offlined disk
-
-        delete disk_name
-        """
         url = ('%s/%s' % (self.baseurl, args))
         api_call(url, calltype='delete')
         print_disks_info(api_call(self.baseurl))
 
+    def help_delete(self):
+        s = """
+        %(c)sDelete an offlined disk%(e)s
+
+        %(c)sdelete%(e)s %(u)sdisk_name%(e)s
+        """ % BaseConsole.c_params
+        print s
+        
     @api_error
     def do_wipe(self, args):
-        """
-        Wipe the partition table of a disk. This is required for
-        used/partitioned disks to be usable by rockstor.
-
-        wipe disk_name
-        """
         url = ('%s/%s/wipe' % (self.baseurl, args))
         api_call(url, calltype='post')
         print_disks_info(api_call(self.baseurl))
+
+    def help_wipe(self):
+        s = """
+        %(c)sWipe the partition table of a disk.%(e)s
+        This is required for used/partitioned disks to be usable by rockstor.
+
+        %(c)swipe%(e)s %(u)sdisk_name%(e)s
+        """ % BaseConsole.c_params
+        print s
+
 
