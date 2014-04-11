@@ -134,13 +134,13 @@ class RockConsole(BaseConsole):
     
     def help_disks(self):
         s = """
-        %(start)sPerform operations on disks.%(reset)s
+        %(c)sPerform operations on disks.%(e)s
         
         Available commands:
-        Go to disks subconsole:    %(start)sdisks%(reset)s
-        Display the list of disks: %(start)sdisks list%(reset)s
-        Scan for new disks:        %(start)sdisks scan%(reset)s
-        """ % { 'start': BaseConsole.begin_color, 'reset': BaseConsole.reset}
+        Go to disks subconsole:    %(c)sdisks%(e)s
+        Display the list of disks: %(c)sdisks list%(e)s
+        Scan for new disks:        %(c)sdisks scan%(e)s
+        """ % BaseConsole.c_params
         print s
 
     def do_services(self, args):

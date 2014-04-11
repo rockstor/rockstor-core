@@ -22,13 +22,17 @@ import readline
 class BaseConsole(cmd.Cmd):
 
     url = 'https://localhost/api/'
+
+    # ansi colors
     ( BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, LIGHT_GRAY, DARK_GRAY,
     BRIGHT_RED, BRIGHT_GREEN, BRIGHT_YELLOW, BRIGHT_BLUE, BRIGHT_MAGENTA,
     BRIGHT_CYAN, WHITE,) = range(16)
-    
-    begin_color = '\x1b[38;5;%dm' % (GREEN)
-    begin_undescore = '\x1b[4m'
-    reset = '\x1b[0m'
+
+    # ansi escape sequences 
+    c = '\x1b[38;5;%dm' % (GREEN) # set color 
+    u = '\x1b[4m' # set underscore
+    e = '\x1b[0m' # end formatting
+    c_params = { 'c': c, 'u': u, 'e' : e }
 
     def __init__(self):
         cmd.Cmd.__init__(self)

@@ -23,6 +23,7 @@ import json
 import settings
 from storageadmin.exceptions import RockStorAPIException
 from functools import wraps
+from base_console import BaseConsole
 
 auth_params = {'apikey': 'adminapikey'}
 
@@ -128,29 +129,39 @@ def print_share_info(share_info):
         print e
         print('Error rendering share info')
 
-def print_disk_info(disk_info):
-    if (disk_info is None or
-        not isinstance(disk_info, dict) or
-        len(disk_info) == 0):
+def print_disks_info(disks_info):
+    if (disks_info is None or
+        not isinstance(disks_info, dict) or
+        len(disks_info) == 0):
         print('There are no disks in the system')
         return
     try:
-        if ('results' not in disk_info):
+        if ('results' not in disks_info):
             #POST is used, don't do anything
-            disk_info = disk_info
-        elif ('count' not in disk_info):
-            disk_info = [disk_info]
+            disks_info = disks_info
+        elif ('count' not in disks_info):
+            disks_info = [disks_info]
         else:
-            disk_info = disk_info['results']
-        print("List of disks in the system")
-        print("--------------------------------------------")
+            disks_info = disks_info['results']
+        print("%sDisks on this Rockstor appliance%s\n" % (BaseConsole.u,
+            BaseConsole.e))
         print("Name\tSize\tPool")
-        for d in disk_info:
-            d['size'] = sizeof_fmt(d['size'])
-            print('%s\t%s\t%s' % (d['name'], d['size'], d['pool']))
+        for d in disks_info:
+            print_disk_info(d)
     except Exception, e:
         print('Error rendering disk info')
 
+def print_disk_info(d, header=False):
+    try:
+        if header:
+            print "%(u)sDisk info:%(e)s\n" % BaseConsole.c_params
+            print("Name\tSize\tPool")
+        d['size'] = sizeof_fmt(d['size'])
+        print('%s%s%s\t%s\t%s' % (BaseConsole.c, d['name'],
+            BaseConsole.e, d['size'], d['pool']))
+    except Exception, e:
+        print e
+        print('Error printing disk info')
 
 def print_export_info(export_info):
     if (export_info is None or
