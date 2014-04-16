@@ -90,3 +90,4 @@ class BaseConsole(cmd.Cmd):
         print('====================================')
         print('Documentation for %s' % args)
         return self.do_help(args)
+

@@ -86,27 +86,38 @@ def api_call(url, data=None, calltype='get', headers=None, save_error=True):
         ret_val = {}
     return ret_val
 
-def print_pool_info(pool_info):
-    if (pool_info is None or
-        not isinstance(pool_info, dict) or
-        len(pool_info) == 0):
-        print('There are no pools in the system')
+def print_pools_info(pools_info):
+    if (pools_info is None or
+        not isinstance(pools_info, dict) or
+        len(pools_info) == 0):
+        print('There are no pools on the appliance.')
         return
     try:
-        if ('count' not in pool_info):
-            pool_info = [pool_info]
+        if ('count' not in pools_info):
+            pools_info = [pools_info]
         else:
-            pool_info = pool_info['results']
-        print("List of pools in the system")
-        print("--------------------------------------")
+            pools_info = pools_info['results']
+        print("%(c)sPools on the appliance\n%(e)s" % BaseConsole.c_params)
         print("Name\tSize\tUsage\tRaid")
-        for p in pool_info:
-            p['size'] = sizeof_fmt(p['size'])
-            p['usage'] = sizeof_fmt(p['usage'])
-            print('%s\t%s\t%s\t%s' %
-                  (p['name'], p['size'], p['usage'], p['raid']))
+        for p in pools_info:
+            print_pool_info(p)
     except Exception, e:
         print('Error rendering pool info')
+
+def print_pool_info(p, header=False):
+    try:
+        if header:
+            print "%(c)sPool info%(e)s\n" % BaseConsole.c_params
+            print("Name\tSize\tUsage\tRaid")
+        p['size'] = sizeof_fmt(p['size'])
+        p['usage'] = sizeof_fmt(p['usage'])
+        print('%s%s%s\t%s\t%s\t%s' % (BaseConsole.c, p['name'], 
+            BaseConsole.e, p['size'], p['usage'], p['raid']))
+    except Exception, e:
+        print e
+        print('Error printing pool info')
+
+        
 
 def print_share_info(share_info):
     if (share_info is None or
@@ -133,7 +144,7 @@ def print_disks_info(disks_info):
     if (disks_info is None or
         not isinstance(disks_info, dict) or
         len(disks_info) == 0):
-        print('There are no disks in the system')
+        print('There are no disks on the appliance.')
         return
     try:
         if ('results' not in disks_info):
@@ -158,7 +169,7 @@ def print_disk_info(d, header=False):
             print("Name\tSize\tPool")
         d['size'] = sizeof_fmt(d['size'])
         print('%s%s%s\t%s\t%s' % (BaseConsole.c, d['name'],
-            BaseConsole.e, d['size'], d['pool']))
+            BaseConsole.e, d['size'], d['pool_name']))
     except Exception, e:
         print e
         print('Error printing disk info')

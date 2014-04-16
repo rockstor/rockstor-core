@@ -45,7 +45,7 @@ class DisksConsole(BaseConsole):
 
     def help_list(self):
         s = """
-        %(c)sDisplay information about disks in the system.%(e)s
+        %(c)sDisplay information about disks on the appliance.%(e)s
 
         Details of all disks:     %(c)slist%(e)s
         Details of a single disk: %(c)slist%(e)s %(u)sdisk_name%(e)s
