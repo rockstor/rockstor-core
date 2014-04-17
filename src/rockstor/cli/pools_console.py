@@ -21,7 +21,8 @@ import json
 
 from base_console import BaseConsole
 from pool_detail_console import PoolDetailConsole
-from rest_util import (api_error, api_call, print_pools_info, print_pool_info)
+from rest_util import (api_error, api_call, print_pools_info, print_pool_info,
+        print_scrub_status)
 
 
 class PoolsConsole(BaseConsole):
@@ -89,18 +90,6 @@ class PoolsConsole(BaseConsole):
 
     @api_error
     def do_delete(self, args):
-        """
-        Delete a pool.
-
-        Delete a pool: delete pool_name
-
-        Parameters:
-        pool_name:    Name of a valid pool to delete.
-
-        Example:
-        To delete a pool named pool0
-            delete pool0
-        """
         if (len(args) == 0):
             return self.help_wrapper('missing pool_name', 'delete')
         url = ('%s/%s' % (self.url, args))
@@ -121,7 +110,6 @@ class PoolsConsole(BaseConsole):
         To delete a pool named pool0
         %(c)sdelete%(e)s pool0
         """ % BaseConsole.c_params
-
 
     @api_error
     def do_console(self, args):
@@ -146,30 +134,43 @@ class PoolsConsole(BaseConsole):
         To perform operations on a pool called mypool inside it's exclusive
         subconsole
         %(c)sconsole%(e)s mypool
-        """
+        """ % BaseConsole.c_params
 
     @api_error
     def do_scrub(self, args):
-        """
-        To scrub a pool:
-
-        scrub pool0
-        """
         if (len(args) == 0):
             return self.help_wrapper('missing pool_name', 'scrub')
         url = ('%s/%s/scrub' % (self.url, args))
         scrub_info = api_call(url, calltype='post')
         print scrub_info
 
-    @api_error
-    def do_scrub_status(self, args):
-        """
-        get scrub status for a pool
+    def help_scrub(self):
+        print """
+        %(c)sScrub a pool%(e)s
 
-        scrub_status pool0
-        """
+        %(c)sUsage%(e)s
+        %(c)sscrub%(e)s %(u)spool_name%(e)s
+
+        %(c)sExample%(e)s
+        %(c)sscrub%(e)s mypool
+        """ % BaseConsole.c_params
+
+    @api_error
+    def do_scrubstatus(self, args):
         if (len(args) == 0):
             return self.help_wrapper('missing pool_name', 'scrub_status')
         url = ('%s/%s/scrub/status' % (self.url, args))
         scrub_info = api_call(url, calltype='post')
-        print scrub_info
+        print_scrub_status(args, scrub_info)
+
+    def help_scrubstatus(self):
+        print """
+        %(c)sGet scrub status for a pool%(e)s
+        
+        %(c)sUsage%(e)s
+        %(c)sscrub_status%(e)s %(u)spool_name%(e)s
+        
+        %(c)sExample%(e)s
+        %(c)sscrub_status%(e)s mypool
+        """ % BaseConsole.c_params
+

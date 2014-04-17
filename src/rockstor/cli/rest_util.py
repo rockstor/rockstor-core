@@ -117,7 +117,21 @@ def print_pool_info(p, header=False):
         print e
         print('Error printing pool info')
 
-        
+def print_scrub_status(pool_name, scrub_info):
+    try:
+        print '%sScrub status for %s%s' % (BaseConsole.c, pool_name,
+                BaseConsole.e);
+        kb_scrubbed = None
+        if ('kb_scrubbed' in scrub_info):
+            kb_scrubbed = scrub_info['kb_scrubbed']
+        status = scrub_info['status']
+        print '%sStatus%s:  %s' % (BaseConsole.c, BaseConsole.e, status)
+        if (status == 'finished'):
+            print '%sKB Scrubbed%s:  %s' % (BaseConsole.c, BaseConsole.e, 
+                    kb_scrubbed)
+    except Exception, e:
+        print e
+        print('Error printing scrub status')
 
 def print_share_info(share_info):
     if (share_info is None or
