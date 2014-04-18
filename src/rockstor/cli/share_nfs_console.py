@@ -23,11 +23,12 @@ from rest_util import (api_call, print_export_info, print_share_info)
 
 class ShareNFSConsole(BaseConsole):
 
-    def __init__(self, prompt, share):
+    def __init__(self, greeting, share):
         BaseConsole.__init__(self)
         self.share = share
-        self.prompt = prompt + ' nfs>'
-        self.url = ('%sshares/%s/nfs/' % (BaseConsole.url, self.share))
+        self.greeting = greeting + ' nfs'
+        self.prompt = self.greeting + '> '
+        self.url = ('%sshares/%s/nfs' % (BaseConsole.url, self.share))
 
     def do_exports(self, args):
         """

@@ -102,7 +102,7 @@ def print_pools_info(pools_info):
         for p in pools_info:
             print_pool_info(p)
     except Exception, e:
-        print('Error rendering pool info')
+        print('Error displaying pool info')
 
 def print_pool_info(p, header=False):
     try:
@@ -115,7 +115,7 @@ def print_pool_info(p, header=False):
             BaseConsole.e, p['size'], p['usage'], p['raid']))
     except Exception, e:
         print e
-        print('Error printing pool info')
+        print('Error displaying pool info')
 
 def print_scrub_status(pool_name, scrub_info):
     try:
@@ -131,28 +131,37 @@ def print_scrub_status(pool_name, scrub_info):
                     kb_scrubbed)
     except Exception, e:
         print e
-        print('Error printing scrub status')
+        print('Error displaying scrub status')
 
-def print_share_info(share_info):
-    if (share_info is None or
-        not isinstance(share_info, dict) or
-        len(share_info) == 0):
+def print_shares_info(shares):
+    if (shares is None or
+        not isinstance(shares, dict) or
+        len(shares) == 0):
         print('There are no shares in the system')
         return
     try:
-        if ('count' not in share_info):
-            share_info = [share_info]
+        if ('count' not in shares):
+            shares = [shares]
         else:
-            share_info = share_info['results']
-        print("List of shares in the system")
-        print("---------------------------------------")
+            shares = shares['results']
+        print("%(c)sShares on the appliance%(e)s\n" % BaseConsole.c_params)
         print("Name\tSize(KB)\tUsage(KB)\tPool")
-        for s in share_info:
-            print('%s\t%s\t%s\t%s' %
-                  (s['name'], s['size'], s['r_usage'], s['pool']['name']))
+        for s in shares:
+            print_share_info(s)
     except Exception, e:
         print e
-        print('Error rendering share info')
+        print('Error displaying share info')
+
+def print_share_info(s, header=False):
+    try:
+        if header:
+            print "%(c)sShare info%(e)s\n" % BaseConsole.c_params
+            print("Name\tSize(KB)\tUsage(KB)\tPool")
+        print('%s\t%s\t%s\t%s' %
+                (s['name'], s['size'], s['r_usage'], s['pool']['name']))
+    except Exception, e:
+        print e
+        print('Error displaying share info')
 
 def print_disks_info(disks_info):
     if (disks_info is None or
@@ -174,7 +183,7 @@ def print_disks_info(disks_info):
         for d in disks_info:
             print_disk_info(d)
     except Exception, e:
-        print('Error rendering disk info')
+        print('Error displaying disk info')
 
 def print_disk_info(d, header=False):
     try:
@@ -186,23 +195,32 @@ def print_disk_info(d, header=False):
             BaseConsole.e, d['size'], d['pool_name']))
     except Exception, e:
         print e
-        print('Error printing disk info')
+        print('Error displaying disk info')
 
 def print_export_info(export_info):
     if (export_info is None or
         not isinstance(export_info, dict) or
         len(export_info) == 0):
-        print('There are no exports for this share')
+        print('%(c)sThere are no exports for this share%(e)s' % 
+                BaseConsole.c_params)
         return
-    export_info = [export_info]
-    print("List of exports for the share")
-    print("----------------------------------------")
-    print("Id\tMount\tClient\tReadable\tSyncable\tEnabled")
-    for e in export_info:
-        print('%s\t%s\t%s\t%s\t%s\t%s' %
-              (e['id'], e['mount'], e['host_str'], e['editable'],
-               e['syncable'], e['enabled']))
-
+    try:
+        if ('count' not in export_info):
+            export_info = [export_info]
+        else:
+            export_info = export_info['results']
+        if (len(export_info) == 0):
+            print('%(c)sThere are no exports for this share%(e)s' % 
+                    BaseConsole.c_params)
+        else:
+            print "%(c)sList of exports for this share%(e)s" % BaseConsole.c_params
+            print("Id\tMount\tClient\tReadable\tSyncable\tEnabled")
+            for e in export_info:
+                print('%s\t%s\t%s\t%s\t%s\t%s' % (e['id'], 
+                    e['mount'], e['host_str'], e['editable'],
+                    e['syncable'], e['enabled']))
+    except Exception, e:
+        print('Error displaying nfs export information')
 
 def sizeof_fmt(num):
     for x in ['K','M','G','T','P','E']:

@@ -29,7 +29,6 @@ class PoolsConsole(BaseConsole):
 
     def __init__(self, prompt):
         BaseConsole.__init__(self)
-        self.pprompt = prompt
         self.prompt = prompt + ' Pools> '
         self.url = ('%spools' % BaseConsole.url)
 
