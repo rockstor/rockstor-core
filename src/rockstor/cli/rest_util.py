@@ -214,12 +214,13 @@ def print_export_info(export_info):
                     BaseConsole.c_params)
         else:
             print "%(c)sList of exports for this share%(e)s" % BaseConsole.c_params
-            print("Id\tMount\tClient\tReadable\tSyncable\tEnabled")
+            print("Id\tMount\tClient\tWritable\tSyncable\tEnabled")
             for e in export_info:
                 print('%s\t%s\t%s\t%s\t%s\t%s' % (e['id'], 
-                    e['mount'], e['host_str'], e['editable'],
+                    e['exports'][0]['mount'], e['host_str'], e['editable'],
                     e['syncable'], e['enabled']))
     except Exception, e:
+        print e
         print('Error displaying nfs export information')
 
 def sizeof_fmt(num):
