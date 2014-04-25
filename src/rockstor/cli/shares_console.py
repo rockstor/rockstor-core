@@ -111,7 +111,7 @@ class SharesConsole(BaseConsole):
         %(c)sadd%(e)s share1234 pool0 20GB
 
         To create a 100 MB share in a valid pool called mypool.
-            add share100 mypool 100
+        %(c)sadd%(e)s share100 mypool 100
         """ % BaseConsole.c_params
 
     def do_resize(self, args):
