@@ -41,7 +41,6 @@ class ShareNFSConsole(BaseConsole):
         arg_fields = args.split()
         input_data = {}
         for f in arg_fields:
-            print f
             if(f[0:2] == '-c'):
                 input_data['host_str'] = f[2:]
             elif(f[0:2] == '-m'):
