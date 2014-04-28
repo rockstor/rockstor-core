@@ -51,11 +51,11 @@ AddShareView = Backbone.View.extend({
           return err_msg;
            }
            
-        $("#slider-size").simpleSlider({
-           range: [0,2049],
-            step: '10',
-            value: 0,
-       });
+     //   $("#slider-size").simpleSlider({
+     //      range: [0,2049],
+     //       step: '10',
+     //       value: 0,
+     //  });
 
         $.validator.addMethod('validateShareSize', function(value) {
         
@@ -68,29 +68,58 @@ AddShareView = Backbone.View.extend({
              return true;
           }, size_err_msg);
 
-        $("#slider-size").bind("slider:changed", function (event, data) {
-           // The currently selected value of the slider
+     //   $("#slider-size").bind("slider:changed", function (event, data) {
+     //       The currently selected value of the slider
+     //       if(data.value < 1024){
+     //       $("#share_size").val((data.value).toFixed(2)+"GB");
+     //       }else{
+     //           $("#share_size").val(((data.value)/1024).toFixed(2)+"TB");
+     //        }
+     //       });
+     //   $("#share_size").change(function(){
+     //   var size = this.value;
+     //   var sizeFormat = size.replace(/[^a-z]/gi, ""); 
+        
+     //   var size_array = size.split(sizeFormat)
+     //   var size_value = size_array[0];
+        
+     //   if(sizeFormat == 'TB' || sizeFormat == 'tb' || sizeFormat == 'Tb'){
+     //      size_value = size_value*1024;
+     //      $("#slider-size").simpleSlider("setValue",parseInt(size_value));
+     //      }else{
+     //      $("#slider-size").simpleSlider("setValue",parseInt(size));
+     //      }
+        
+     //   });
+     
+        
+     
+        $("#Slider1").slider({ from: 1, to: 2048, step: 2, round: 1, dimension: "&nbsp;GB", skin: "round" });
+        
+        $("#Slider1").bind("slider:changed", function (event, data) {
             if(data.value < 1024){
             $("#share_size").val((data.value).toFixed(2)+"GB");
             }else{
                 $("#share_size").val(((data.value)/1024).toFixed(2)+"TB");
              }
             });
-        $("#share_size").change(function(){
-        var size = this.value;
-        var sizeFormat = size.replace(/[^a-z]/gi, ""); 
+            
+              $("#share_size").change(function(){
+          var size = this.value;
+          var sizeFormat = size.replace(/[^a-z]/gi, ""); 
         
-        var size_array = size.split(sizeFormat)
-        var size_value = size_array[0];
+          var size_array = size.split(sizeFormat)
+          var size_value = size_array[0];
         
         if(sizeFormat == 'TB' || sizeFormat == 'tb' || sizeFormat == 'Tb'){
            size_value = size_value*1024;
-           $("#slider-size").simpleSlider("setValue",parseInt(size_value));
+           $("#Slider1").slider("value",parseInt(size_value));
            }else{
-           $("#slider-size").simpleSlider("setValue",parseInt(size));
+           $("#Slider1").slider("value",parseInt(size));
            }
         
         });
+     
         
         $('#add-share-form :input').tooltip({placement: 'right'});
         
