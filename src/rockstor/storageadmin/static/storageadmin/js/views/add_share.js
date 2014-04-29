@@ -94,17 +94,25 @@ AddShareView = Backbone.View.extend({
      
         
      
-        $("#Slider1").slider({ from: 1, to: 2048, step: 2, round: 1, dimension: "&nbsp;GB", skin: "round" });
+        $("#Slider1").slider(
+        { 
+         from: 1,
+         to: 2048, 
+         step: 2, 
+         round: 1, 
+         dimension: "&nbsp;GB", 
+         onstatechange: function(value){
+          if(value<1024)
+          {
+            $("#share_size").val(value+"GB");
+            }else
+            {
+            $("#share_size").val(((value)/1024).toFixed(2)+"TB");
+            }
+          }   
+         });
         
-        $("#Slider1").bind("slider:changed", function (event, data) {
-            if(data.value < 1024){
-            $("#share_size").val((data.value).toFixed(2)+"GB");
-            }else{
-                $("#share_size").val(((data.value)/1024).toFixed(2)+"TB");
-             }
-            });
-            
-              $("#share_size").change(function(){
+          $("#share_size").change(function(){
           var size = this.value;
           var sizeFormat = size.replace(/[^a-z]/gi, ""); 
         
