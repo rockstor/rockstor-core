@@ -26,18 +26,18 @@
   <div class="span8">
     <label class="control-label"><span class="required">*</span> indicates required fields</label>
     <div class="form-box"> 
-      <form name="add-share-form" id="add-share-form">
+      <form name="add-share-form" id="add-share-form" class="form-horizontal">
         <div class="messages"></div>
         <div class="control-group">
           <label class="control-label" for="share_name">Name<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" name="share_name" id="share_name" title="Descriptive name for the share">
+            <input type="text" name="share_name" id="share_name" class="span8" title="Descriptive name for the share">
           </div>
         </div>
         <div class="control-group">
           <label class="control-label" for="pool_name">Pool<span class="required"> *</span></label>
           <div class="controls">
-            <select id="pool_name" name="pool_name" title="Select pool the share should belong to">
+            <select id="pool_name" name="pool_name" class="span8" title="Select pool the share should belong to">
               <% if(poolName == ''){%>
                 <% pools.each(function(pool, index) { %>
                   <% if (index > 0) { %>
@@ -51,9 +51,9 @@
                 <% pools.each(function(pool, index) { %>
                   <% if (index >= 0) { %>
                     <% if(poolName != pool.get('name')){ %>
-                      <option value="<%= pool.get('name') %>"> <%= pool.get('name') %> </option>
+                      <option value="<%= pool.get('name') %>"> <%= pool.get('name') %>  (Free space - <%= humanize.filesize((pool.get('size')-pool.get('usage'))*1024) %>) </option>
                     <% }else{ %> 
-                      <option value="<%= pool.get('name') %>" selected="selected"> <%= pool.get('name') %> </option>
+                      <option value="<%= pool.get('name') %>" selected="selected"> <%= pool.get('name') %> (Free space - <%= humanize.filesize((pool.get('size')-pool.get('usage'))*1024) %> </option>
 
                     <% } %>
                   <% } %>
@@ -63,21 +63,28 @@
             </select>
           </div>
         </div>
-
+        <br>
         <div class="control-group">
           <label class="control-label" for="share_size">Size<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" name="share_size" id="share_size" title="Enter share size in KB, MB, GB or TB">
-            <select id="size_format" name="size_format">
-              <option>KB</option>
-              <option>MB</option>
-              <option>GB</option>
-              <option>TB</option>
-            </select>
+            <div class="row-fluid">
+              <div class="span8"> 
+                <div class="row-fluid">
+                  <div class="span10">
+                    <input id="Slider1" type="slider" value="2" />
+                  </div>
+                  <div class="span2">
+                    <span> <input type="text" style="width:100%" name="share_size" id="share_size"  value='' title="Enter share size in GB or TB. For example, to create a 100 GB share, enter '100 GB'"> </span></br>
+                  </div>
+                </div>
+              </div>
+            </div>  
           </div>
         </div>
+
         <div class="control-group">
           <div class="controls">
+            <br>
             <a id="js-cancel" class="btn">Cancel</a>
             <input type="Submit" id="create_share" class="btn btn-primary" value="Submit"></input>
           </div>
