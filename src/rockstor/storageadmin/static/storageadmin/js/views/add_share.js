@@ -70,9 +70,9 @@ AddShareView = Backbone.View.extend({
           dimension: "&nbsp;GB", 
           onstatechange: function(value){
             if(value < 1024) {
-              $("#share_size").val(value+"GB");
+              $("#share_size").val(value+" GB");
             } else {
-              $("#share_size").val(((value)/1024).toFixed(2)+"TB");
+              $("#share_size").val(((value)/1024).toFixed(2)+" TB");
             }
           }   
         });
