@@ -62,8 +62,7 @@ AddShareView = Backbone.View.extend({
         }, size_err_msg);
 
 
-        $("#Slider1").slider(
-          { 
+        $("#Slider1").slider({ 
           from: 2,
           to: 2048, 
           step: 1, 
