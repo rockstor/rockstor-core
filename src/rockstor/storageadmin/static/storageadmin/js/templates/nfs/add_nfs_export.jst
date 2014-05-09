@@ -42,9 +42,10 @@
 
         <!-- host string -->
         <div class="control-group">
-          <label class="control-label" for="host_str">Host String<span class="required"> *</span></label>
+          <label class="control-label" for="host_str">NFS Clients<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" name="host_str" id="host_str" title="Enter host string">
+            <input type="text" name="host_str" id="host_str"
+	    title="Hosts permitted to NFS mount. There are five broad categories of this input.<br><strong>anonymous:</strong> Just type a single * character and any host will be allowed.<br><strong>single host:</strong> Hostname or a IP address.<br><strong>IP networks:</strong> All hosts of a subnet given by <strong>address/netmask</strong>.<br><strong>wildcards:</strong> Names with wildcard(*, ?) characters for compact notation. for example, *.cs.foo.edu matches all hosts in the domain cs.food.edu.<br><strong>Netgroups:</strong> NIS netgroups given as @group.<br><br>For more details read the manpage for exports.">
           </div>
         </div>
 
@@ -64,7 +65,7 @@
 
         <!-- writable -->
         <div class="control-group">
-          <label class="control-label" for="mod_choice">Writable / Read-only<span class="required"> *</span></label>
+          <label class="control-label" for="mod_choice">Access type<span class="required"> *</span></label>
           <div class="controls">
             <% _.each(modify_choices, function(c) { %>
               <label class="radio inline">
@@ -81,7 +82,7 @@
 
         <!-- sync -->
         <div class="control-group">
-          <label class="control-label" for="sync_choice">Sync / Async<span class="required"> *</span></label>
+          <label class="control-label" for="sync_choice">Response type<span class="required"> *</span></label>
           <div class="controls">
             <% _.each(sync_choices, function(c) { %>
               <label class="radio inline">
@@ -108,5 +109,3 @@
     </div>
   </div> <!-- span8 -->
 </div>  <!-- row-fluid -->
-
-

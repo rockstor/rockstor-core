@@ -17,9 +17,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf import settings
-from storageadmin.models import (Share, NFSExport, NFSExportGroup)
+from storageadmin.models import (NFSExport, NFSExportGroup)
 from storageadmin.util import handle_exception
 from system.osi import (refresh_nfs_exports, nfs4_mount_teardown)
+
 
 def client_input(export):
     eg = export.export_group
@@ -34,6 +35,7 @@ def client_input(export):
         ci['admin_host'] = eg.admin_host
     return ci
 
+
 def create_nfs_export_input(exports):
     exports_d = {}
     for e in exports:
@@ -47,6 +49,7 @@ def create_nfs_export_input(exports):
         e_list.append(client_input(e))
         exports_d[export_pt] = e_list
     return exports_d
+
 
 def parse_options(request):
     options = {
@@ -65,6 +68,7 @@ def parse_options(request):
         options['admin_host'] = request.DATA['admin_host']
     return options
 
+
 def dup_export_check(share, host_str, request, export_id=None):
     for e in NFSExport.objects.filter(share=share):
         if (e.export_group.host_str == host_str):
@@ -74,12 +78,14 @@ def dup_export_check(share, host_str, request, export_id=None):
                      host_str)
             handle_exception(Exception(e_msg), request)
 
+
 def validate_export_group(export_id, request):
     try:
         return NFSExportGroup.objects.get(id=export_id)
     except:
         e_msg = ('NFS export with id: %d does not exist' % export_id)
         handle_exception(Exception(e_msg), request)
+
 
 def refresh_wrapper(exports, request, logger):
     try:
@@ -89,6 +95,7 @@ def refresh_wrapper(exports, request, logger):
                  ' Try again Later')
         logger.exception(e)
         handle_exception(Exception(e_msg), request)
+
 
 def teardown_wrapper(export_pt, request, logger):
     try:
