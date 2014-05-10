@@ -17,9 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf import settings
-from storageadmin.models import (NFSExport, NFSExportGroup)
+from storageadmin.models import (NFSExport, NFSExportGroup, Disk)
 from storageadmin.util import handle_exception
 from system.osi import (refresh_nfs_exports, nfs4_mount_teardown)
+from share_helpers import validate_share
+from fs.btrfs import (mount_share, is_share_mounted)
 
 
 def client_input(export):
@@ -34,6 +36,33 @@ def client_input(export):
     if (eg.admin_host is not None):
         ci['admin_host'] = eg.admin_host
     return ci
+
+
+def create_adv_nfs_export_input(exports, request):
+    exports_d = {}
+    for e in exports:
+        fields = e.split()
+        if (len(fields) < 2):
+            e_msg = ('Invalid exports input -- %s' % e)
+            handle_exception(Exception(e_msg), request)
+        share = fields[0].split('/')[-1]
+        s = validate_share(share, request)
+        mnt_pt = ('%s%s' % (settings.MNT_PT, s.name))
+        if (not is_share_mounted(s.name)):
+            pool_device = Disk.objects.filer(pool=s.pool)[0].name
+            mount_share(s.subvol_name, pool_device, mnt_pt)
+        exports_d[e] = []
+        for f in fields[1:]:
+            cf = f.split('(')
+            if (len(cf) != 2 or cf[1][-1] != ')'):
+                e_msg = ('Invalid exports input -- %s. offending '
+                         'section: %s' % (e, f))
+                handle_exception(Exception(e_msg), request)
+            exports_d[e].append({'client_str': cf[0],
+                                 'option_list': cf[1][:-1],
+                                 'mnt_pt': ('%s%s' %
+                                            (settings.MNT_PT, share))})
+    return exports_d
 
 
 def create_nfs_export_input(exports):

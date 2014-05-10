@@ -43,3 +43,4 @@ from samba import SambaView
 from sftp import SFTPView
 from plugin import PluginView
 from installed_plugin import InstalledPluginView
+from adv_nfs_exports import AdvancedNFSExportView
