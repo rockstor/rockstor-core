@@ -39,7 +39,27 @@ class AdvancedNFSExportView(rfc.GenericView):
                 return AdvancedNFSExport(id=kwargs['export_id'])
             except:
                 return []
-        return AdvancedNFSExport.objects.all()
+
+        conventional_exports = []
+        exports_by_share = {}
+        for e in NFSExport.objects.all():
+            eg = e.export_group
+            export_str = ('%s (%s,%s,%s)' % (eg.host_str, eg.editable,
+                                             eg.syncable, eg.mount_security))
+            if (e.share.name in exports_by_share):
+                exports_by_share[e.share.name] += (' %s' % export_str)
+            else:
+                exports_by_share[e.share.name] = ('%s %s' %
+                                                  (e.mount, export_str))
+        for e in exports_by_share:
+            exports_by_share[e] = ('Normally added -- %s' %
+                                   exports_by_share[e])
+            conventional_exports.append(
+                AdvancedNFSExport(export_str=exports_by_share[e]))
+
+        for ae in AdvancedNFSExport.objects.all():
+            conventional_exports.append(ae)
+        return conventional_exports
 
     @transaction.commit_on_success
     def post(self, request):
