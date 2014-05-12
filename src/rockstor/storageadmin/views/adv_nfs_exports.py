@@ -23,9 +23,7 @@ from storageadmin.util import handle_exception
 from storageadmin.serializers import AdvancedNFSExportSerializer
 from storageadmin.exceptions import RockStorAPIException
 import rest_framework_custom as rfc
-from nfs_helpers import (create_nfs_export_input, parse_options,
-                         dup_export_check, refresh_wrapper,
-                         teardown_wrapper, validate_export_group,
+from nfs_helpers import (create_nfs_export_input, refresh_wrapper,
                          create_adv_nfs_export_input)
 import logging
 logger = logging.getLogger(__name__)
@@ -59,7 +57,6 @@ class AdvancedNFSExportView(rfc.GenericView):
                 cur_entries.append(ce)
             exports_d = create_adv_nfs_export_input(request.DATA['entries'],
                                                     request)
-
             cur_exports = list(NFSExport.objects.all())
             exports = create_nfs_export_input(cur_exports)
             exports.update(exports_d)

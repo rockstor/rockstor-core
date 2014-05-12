@@ -22,6 +22,7 @@ from django.conf import settings
 import logging
 logger = logging.getLogger(__name__)
 
+
 def handle_exception(e, request, e_msg=None):
     """
     if e_msg is provided, exception is raised with that string. This is useful
@@ -37,7 +38,6 @@ def handle_exception(e, request, e_msg=None):
                  (request.path, request.method, request.DATA))
     logger.exception('exception: %s' % e.__str__())
     run_command(['/usr/bin/tar', '-c', '-z', '-f',
-                     settings.ROOT_DIR + 'src/rockstor/logs/error.tgz',
-                     settings.ROOT_DIR + 'var/log'])
+                 settings.ROOT_DIR + 'src/rockstor/logs/error.tgz',
+                 settings.ROOT_DIR + 'var/log'])
     raise RockStorAPIException(detail=e_msg)
-
