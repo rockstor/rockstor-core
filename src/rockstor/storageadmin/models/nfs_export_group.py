@@ -20,9 +20,7 @@ from django.db import models
 from validators import (validate_nfs_host_str, validate_nfs_modify_str,
                         validate_nfs_sync_choice)
 
-"""
-NFS export history
-"""
+
 class NFSExportGroup(models.Model):
     READ_ONLY = "ro"
     READ_WRITE = "rw"
@@ -65,8 +63,5 @@ class NFSExportGroup(models.Model):
     via nis"""
     admin_host = models.CharField(max_length=1024, null=True)
 
-
     class Meta:
         app_label = 'storageadmin'
-
-

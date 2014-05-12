@@ -61,12 +61,12 @@ class BackupPluginConsole(BaseConsole):
         fields = args.split()
         input_data = {'name': fields[0],
                       'source_ip': fields[1],
-                      'source_path' : fields[2],
+                      'source_path': fields[2],
                       'dest_share': fields[3],
                       'notify_email': fields[4],
                       'frequency': fields[5],
                       'num_retain': fields[6],
-                      'ts': time.time() + 120,}
+                      'ts': time.time() + 120, }
         headers = {'content-type': 'application/json'}
         po = api_call(self.url, data=input_data, calltype='post',
                       headers=headers)
@@ -102,7 +102,7 @@ class BackupPluginConsole(BaseConsole):
         """
         fields = args.split()
         url = ('%s/%s' % (self.url, fields[0]))
-        input_data = {'enabled': True,}
+        input_data = {'enabled': True, }
         if (fields[1] == 'disable'):
             input_data['enabled'] = False
         headers = {'content-type': 'application/json'}

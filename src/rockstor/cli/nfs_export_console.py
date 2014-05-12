@@ -34,7 +34,20 @@ class NFSExportConsole(BaseConsole):
 
     @api_error
     def do_add(self, args):
-        exports = ('/export/share1 example.com(rw,no_root_squash)',)
+        """
+        Add advanced nfs export entries. aka edit /etc/exports file directly.
+
+        add exports_line
+
+        parameters:
+        exports_line:    Intended line of /etc/exports.
+                         eg: /exports/share1 example.com(rw,no_root_squash)
+                         for multiple entries, use | as the separator.
+                         eg: /exports/s1 example.com(rw) | /exports/s2 *(ro)
+        """
+        exports = []
+        if (args != ''):
+            exports = args.split('|')
         input_data = {'entries': exports, }
         print api_call(self.baseurl, data=input_data,
                        headers={'content-type': 'application/json'},
