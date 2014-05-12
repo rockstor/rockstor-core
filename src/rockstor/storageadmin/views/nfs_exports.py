@@ -117,6 +117,10 @@ class NFSExportGroupView(rfc.GenericView):
                 export.save()
                 cur_exports.append(export)
             exports = create_nfs_export_input(cur_exports)
+            adv_entries = [e.export_str for e in
+                           AdvancedNFSExport.objects.all()]
+            exports_d = create_adv_nfs_export_input(adv_entries, request)
+            exports.update(exports_d)
             refresh_wrapper(exports, request, logger)
             nfs_serializer = NFSExportGroupSerializer(eg)
             return Response(nfs_serializer.data)
