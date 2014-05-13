@@ -53,7 +53,7 @@ NFSAdvancedEditView = RockstorLayoutView.extend({
       if (s.indexOf(prefix) == 0) {
         ro_str = ro_str + s.substring(n, s.length) + '\n';
       } else {
-        rw_str = rw_str + s;
+        rw_str = rw_str + s + '\n';
       }
     });
     $(this.el).html(this.template({
@@ -69,9 +69,8 @@ NFSAdvancedEditView = RockstorLayoutView.extend({
       submitHandler: function() {
         var button = $('#submit-advanced-edit');
         var nfsText = _this.$('#nfs-text').val();
-	var entries = [];
-	if (nfsText != '') entries = nfsText.split('\n');
-
+        var entries = [];
+        if (!_.isNull(nfsText) && nfsText.trim() != '') entries = nfsText.trim().split('\n');
         if (buttonDisabled(button)) return false;
         disableButton(button);
         $.ajax({
