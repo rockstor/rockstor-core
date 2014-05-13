@@ -384,3 +384,10 @@ var ReplicaReceiveTrailCollection = RockStorPaginatedCollection.extend({
   baseUrl: "/api/sm/replicareceivetrai"
 });
 
+var AdvancedNFSExport = Backbone.Model.extend();
+
+var AdvancedNFSExportCollection = RockStorPaginatedCollection.extend({
+  model: AdvancedNFSExport,
+  baseUrl: "/api/adv-nfs-exports"
+});
+

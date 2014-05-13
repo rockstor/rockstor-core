@@ -32,12 +32,8 @@ NFSAdvancedEditView = RockstorLayoutView.extend({
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.nfs_advanced_edit;
-    this.collection = new NFSExportGroupCollection();
+    this.collection = new AdvancedNFSExportCollection();
     this.dependencies.push(this.collection);
-    this.shares = new ShareCollection();
-    // dont paginate shares for now
-    this.shares.pageSize = 1000; 
-    this.dependencies.push(this.shares);
   },
   
   render: function() {
@@ -47,9 +43,24 @@ NFSAdvancedEditView = RockstorLayoutView.extend({
 
   renderAdvancedEdit: function() {
     var _this = this;
+    var ro_str = '';
+    var rw_str = '';
+
+    this.collection.each(function(nfsExport) {
+      var prefix = "Normally added -- ";
+      var n = prefix.length;
+      var s =nfsExport.get('export_str');
+      if (s.indexOf(prefix) == 0) {
+        ro_str = ro_str + s.substring(n, s.length) + '\n';
+      } else {
+        rw_str = rw_str + s;
+      }
+    });
     $(this.el).html(this.template({
       shares: this.shares,
-      collection: this.collection
+      collection: this.collection,
+      ro_str: ro_str,
+      rw_str: rw_str
     }));
     $('#advanced-edit-form').validate({
       onfocusout: false,
@@ -57,14 +68,17 @@ NFSAdvancedEditView = RockstorLayoutView.extend({
       
       submitHandler: function() {
         var button = $('#submit-advanced-edit');
+        var nfsText = _this.$('#nfs-text').val();
+        var entries = nfsText.split('\n');
+
         if (buttonDisabled(button)) return false;
         disableButton(button);
         $.ajax({
-          url: '/api/nfs-exports',
+          url: '/api/adv-nfs-exports',
           type: 'POST',
           dataType: 'json',
           contentType: 'application/json',
-          data: JSON.stringify(_this.$('#advanced-edit-form').getJSON()),
+          data: JSON.stringify({ entries: entries }),
           success: function() {
             enableButton(button);
             app_router.navigate('nfs-exports', {trigger: true});
