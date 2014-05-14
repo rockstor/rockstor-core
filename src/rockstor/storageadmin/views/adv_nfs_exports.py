@@ -44,8 +44,8 @@ class AdvancedNFSExportView(rfc.GenericView):
         exports_by_share = {}
         for e in NFSExport.objects.all():
             eg = e.export_group
-            export_str = ('%s (%s,%s,%s)' % (eg.host_str, eg.editable,
-                                             eg.syncable, eg.mount_security))
+            export_str = ('%s(%s,%s,%s)' % (eg.host_str, eg.editable,
+                                            eg.syncable, eg.mount_security))
             if (e.share.name in exports_by_share):
                 exports_by_share[e.share.name] += (' %s' % export_str)
             else:
