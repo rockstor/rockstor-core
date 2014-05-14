@@ -16,9 +16,10 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from generic_sprobe import GenericSProbeView
+import rest_framework_custom as rfc
 from smart_manager.models import NetStat
 from smart_manager.serializers import NetStatSerializer
+from generic_sprobe import GenericSProbeView
 
 
 class NetStatView(GenericSProbeView):

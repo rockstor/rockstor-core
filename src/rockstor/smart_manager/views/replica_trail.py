@@ -21,13 +21,11 @@ from django.utils.timezone import utc
 from rest_framework.response import Response
 from smart_manager.models import (Replica, ReplicaTrail)
 from smart_manager.serializers import (ReplicaTrailSerializer)
-from generic_view import GenericView
-import logging
-logger = logging.getLogger(__name__)
 from datetime import datetime
+import rest_framework_custom as rfc
 
 
-class ReplicaTrailView(GenericView):
+class ReplicaTrailView(rfc.GenericView):
     serializer_class = ReplicaTrailSerializer
 
     def get_queryset(self, *args, **kwargs):

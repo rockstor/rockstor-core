@@ -20,9 +20,7 @@ from django.db import models
 from validators import (validate_nfs_host_str, validate_nfs_modify_str,
                         validate_nfs_sync_choice)
 
-"""
-NFS export history
-"""
+
 class NFSExportGroup(models.Model):
     READ_ONLY = "ro"
     READ_WRITE = "rw"
@@ -41,7 +39,7 @@ class NFSExportGroup(models.Model):
         (READ_WRITE, 'rw'),
         )
     editable = models.CharField(max_length=2, choices=MODIFY_CHOICES,
-                                default=READ_ONLY,
+                                default=READ_WRITE,
                                 validators=[validate_nfs_modify_str])
     """mount async by default"""
     SYNC_CHOICES = (
@@ -51,7 +49,7 @@ class NFSExportGroup(models.Model):
     syncable = models.CharField(max_length=5, choices=SYNC_CHOICES,
                                 default=ASYNC,
                                 validators=[validate_nfs_sync_choice])
-    """allow mouting from a >1024 port by default"""
+    """allow mounting from a >1024 port by default"""
     MSECURITY_CHOICES = (
         (SECURE, 'secure'),
         (INSECURE, 'insecure'),
@@ -61,7 +59,9 @@ class NFSExportGroup(models.Model):
     nohide = models.BooleanField(default=False)
     enabled = models.BooleanField(default=True)
 
+    """export to this host with rw, no_root_squash meant of acl administration
+    via nis"""
+    admin_host = models.CharField(max_length=1024, null=True)
+
     class Meta:
         app_label = 'storageadmin'
-
-

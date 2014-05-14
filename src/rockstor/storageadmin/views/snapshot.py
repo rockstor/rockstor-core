@@ -31,7 +31,7 @@ from fs.btrfs import (add_snap, remove_share, share_id, update_quota,
 from system.osi import (refresh_nfs_exports, bind_mount)
 from storageadmin.serializers import SnapshotSerializer
 from storageadmin.util import handle_exception
-from generic_view import GenericView
+import rest_framework_custom as rfc
 from nfs_helpers import create_nfs_export_input
 from clone_helpers import create_clone
 
@@ -39,7 +39,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class SnapshotView(GenericView):
+class SnapshotView(rfc.GenericView):
     serializer_class = SnapshotSerializer
 
     def get_queryset(self, *args, **kwargs):

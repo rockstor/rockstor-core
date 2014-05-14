@@ -19,18 +19,31 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from rest_framework.response import Response
 from storageadmin.util import handle_exception
 from system.services import init_service_op, chkconfig
-from system.osi import set_ntpserver
+from system.osi import run_command
 from django.db import transaction
 from base_service import BaseServiceView
 from smart_manager.models import Service
 from storageadmin.models import Appliance
-import json
+from django.conf import settings
+from contextlib import contextmanager
+from storageadmin.exceptions import RockStorAPIException
+import re
 
 import logging
 logger = logging.getLogger(__name__)
 
 
 class NTPServiceView(BaseServiceView):
+
+    @staticmethod
+    @contextmanager
+    def _handle_exception(request, msg):
+        try:
+            yield
+        except RockStorAPIException:
+            raise
+        except Exception, e:
+            handle_exception(e, request, msg)
 
     @transaction.commit_on_success
     def post(self, request, command):
@@ -39,27 +52,54 @@ class NTPServiceView(BaseServiceView):
         """
         service = Service.objects.get(name='ntpd')
         if (command == 'config'):
-            try:
+            e_msg = ('Invalid input for time servers. It must be '
+                     'comma separated string of hostnames or IPs.')
+            with self._handle_exception(request, e_msg):
                 config = request.DATA['config']
-                init_service_op('ntpd', 'stop')
-                set_ntpserver(config['server'])
-                init_service_op('ntpd', 'start')
+                servers = [s.strip() for s in config['server'].split(',')]
+
+            e_msg = ('Error while saving saving configuration(%s) to the '
+                     'database' % config)
+            with self._handle_exception(request, e_msg):
                 self._save_config(service, config)
-            except Exception, e:
-                logger.exception(e)
-                e_msg = ('NTP could not be configured. Try again')
-                handle_exception(Exception(e_msg), request)
+
+            e_msg = ('Error while validating time servers(%s). Check your '
+                     'input and try again.' % config['server'])
+            with self._handle_exception(request, e_msg):
+                run_command([settings.COMMANDS['systemctl'], 'stop', 'ntpd'])
+                cmd = [settings.COMMANDS['ntpdate']] + servers
+                out, err, rc = run_command(cmd)
+                if (rc != 0):
+                    e_msg = ('Unable to sync time with given servers(%s)' %
+                             config['server'])
+                    handle_exception(Exception(e_msg), request)
+
+            e_msg = ('Error while saving time server(%s) configuration. Try'
+                     ' again' % servers)
+            with self._handle_exception(request, e_msg):
+                self._update_ntp_conf(servers)
+                run_command([settings.COMMANDS['systemctl'], 'restart',
+                             'ntpd'])
         else:
-            try:
-                switch = 'on'
-                if (command == 'stop'):
-                    switch = 'off'
-                chkconfig('ntpd', switch)
-                init_service_op('ntpd', command)
-            except Exception, e:
-                logger.exception(e)
-                e_msg = ('Failed to %s NTP service due to system error.' %
-                         command)
-                handle_exception(Exception(e_msg), request)
+            e_msg = ('Failed to %s NTP service due to system error.' %
+                     command)
+            with self._handle_exception(request, e_msg):
+                run_command([settings.COMMANDS['systemctl'], command, 'ntpd'])
+                if (command == 'start'):
+                    run_command([settings.COMMANDS['systemctl'], 'enable',
+                                 'ntpd'])
 
         return Response()
+
+    @staticmethod
+    def _update_ntp_conf(servers):
+        conf_data = []
+        conf_file = settings.SYSCONFIG['ntp']
+        with open(conf_file) as nfo:
+            conf_data = nfo.readlines()
+        with open(conf_file, 'w') as nfo:
+            for l in conf_data:
+                if (re.match('server ', l) is None):
+                    nfo.write(l)
+            for s in servers:
+                nfo.write('server %s iburst\n' % s)

@@ -22,11 +22,22 @@ from django.conf import settings
 import logging
 logger = logging.getLogger(__name__)
 
-def handle_exception(e, request):
+
+def handle_exception(e, request, e_msg=None):
+    """
+    if e_msg is provided, exception is raised with that string. This is useful
+    for optionally humanizing the message. Otherwise, error from the exception
+    object is used.
+    """
+    if (e_msg is not None):
+        logger.error(e_msg)
+    else:
+        e_msg = e.__str__()
+
     logger.error('request path: %s method: %s data: %s' %
                  (request.path, request.method, request.DATA))
     logger.exception('exception: %s' % e.__str__())
     run_command(['/usr/bin/tar', '-c', '-z', '-f',
-                     settings.ROOT_DIR + 'src/rockstor/logs/error.tgz',
-                     settings.ROOT_DIR + 'var/log'])
-    raise RockStorAPIException(detail=e.__str__())
+                 settings.ROOT_DIR + 'src/rockstor/logs/error.tgz',
+                 settings.ROOT_DIR + 'var/log'])
+    raise RockStorAPIException(detail=e_msg)

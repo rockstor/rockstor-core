@@ -17,10 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from operator import attrgetter
-from generic_sprobe import GenericSProbeView
+import rest_framework_custom as rfc
 from smart_manager.models import DiskStat
 from storageadmin.models import Disk
 from smart_manager.serializers import DiskStatSerializer
+from generic_sprobe import GenericSProbeView
 
 
 class DiskStatView(GenericSProbeView):

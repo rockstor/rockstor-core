@@ -37,8 +37,8 @@ AddNFSExportView = RockstorLayoutView.extend({
     this.shares.pageSize = 1000; 
     this.dependencies.push(this.shares);
     this.modify_choices = [
-      {name: 'ro', value: 'ro'}, 
-      {name: 'rw', value: 'rw'},
+      {name: 'Writable', value: 'rw'}, 
+      {name: 'Read-only', value: 'ro'},
     ];
     this.sync_choices = [
       {name: 'async', value: 'async'},
@@ -58,10 +58,12 @@ AddNFSExportView = RockstorLayoutView.extend({
       modify_choices: this.modify_choices,
       sync_choices: this.sync_choices
     }));
-    
-    $('#add-nfs-export-form :input').tooltip();
-    
-    $('#add-nfs-export-form').validate({
+    this.$('#shares').chosen(); 
+    this.$('#add-nfs-export-form :input').tooltip({placement: 'right'});
+    this.$('#add-nfs-export-form select').tooltip({placement: 'right'});
+
+    this.$('#add-nfs-export-form').validate({
+      ignore: [],
       onfocusout: false,
       onkeyup: false,
       rules: {
@@ -73,7 +75,6 @@ AddNFSExportView = RockstorLayoutView.extend({
         var button = $('#create-nfs-export');
         if (buttonDisabled(button)) return false;
         disableButton(button);
-        console.log(JSON.stringify(_this.$('#add-nfs-export-form').getJSON()));
         $.ajax({
           url: '/api/nfs-exports',
           type: 'POST',
@@ -82,6 +83,8 @@ AddNFSExportView = RockstorLayoutView.extend({
           data: JSON.stringify(_this.$('#add-nfs-export-form').getJSON()),
           success: function() {
             enableButton(button);
+            // Hide tooltips so they dont hang around
+            $('#add-nfs-export-form :input').tooltip('hide');
             app_router.navigate('nfs-exports', {trigger: true});
           },
           error: function(xhr, status, error) {

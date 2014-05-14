@@ -35,6 +35,7 @@ from task_console import TaskConsole
 from replication_console import ReplicationConsole
 from backup_plugin_console import BackupPluginConsole
 from rest_util import api_call
+from nfs_export_console import NFSExportConsole
 
 
 ASCII_LOGO = """
@@ -42,6 +43,7 @@ ASCII_LOGO = """
 |__) /  \ /  ` |__/ /__`  |  /  \ |__)
 |  \ \__/ \__, |  \ .__/  |  \__/ |  \\
 """
+
 
 class RockConsole(BaseConsole):
 
@@ -233,7 +235,15 @@ class RockConsole(BaseConsole):
         if (len(args) == 0):
             bc.cmdloop()
         else:
-            bc.cmdloop()
+            bc.cmdloop(args)
+
+    def do_nfs_exports(self, args):
+        ne = NFSExportConsole(self.greeting)
+        if (len(args) == 0):
+            ne.cmdloop()
+        else:
+            ne.cmdloop(args)
+
 
 def main():
     rc = RockConsole()
@@ -246,4 +256,3 @@ def main():
         return rc.postcmd(rc.onecmd(line), line)
     else:
         return rc.cmdloop()
-

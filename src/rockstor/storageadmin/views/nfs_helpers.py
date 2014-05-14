@@ -17,9 +17,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf import settings
-from storageadmin.models import (Share, NFSExport, NFSExportGroup)
+from storageadmin.models import (NFSExport, NFSExportGroup, Disk)
 from storageadmin.util import handle_exception
 from system.osi import (refresh_nfs_exports, nfs4_mount_teardown)
+from share_helpers import validate_share
+from fs.btrfs import (mount_share, is_share_mounted)
+
 
 def client_input(export):
     eg = export.export_group
@@ -30,7 +33,36 @@ def client_input(export):
         ci['option_list'] = ('%s,nohide' % ci['option_list'])
     ci['mnt_pt'] = export.mount.replace(settings.NFS_EXPORT_ROOT,
                                         settings.MNT_PT)
+    if (eg.admin_host is not None):
+        ci['admin_host'] = eg.admin_host
     return ci
+
+
+def create_adv_nfs_export_input(exports, request):
+    exports_d = {}
+    for e in exports:
+        fields = e.split()
+        if (len(fields) < 2):
+            e_msg = ('Invalid exports input -- %s' % e)
+            handle_exception(Exception(e_msg), request)
+        share = fields[0].split('/')[-1]
+        s = validate_share(share, request)
+        mnt_pt = ('%s%s' % (settings.MNT_PT, s.name))
+        if (not is_share_mounted(s.name)):
+            pool_device = Disk.objects.filter(pool=s.pool)[0].name
+            mount_share(s.subvol_name, pool_device, mnt_pt)
+        exports_d[fields[0]] = []
+        for f in fields[1:]:
+            cf = f.split('(')
+            if (len(cf) != 2 or cf[1][-1] != ')'):
+                e_msg = ('Invalid exports input -- %s. offending '
+                         'section: %s' % (e, f))
+                handle_exception(Exception(e_msg), request)
+            exports_d[fields[0]].append(
+                {'client_str': cf[0], 'option_list': cf[1][:-1],
+                 'mnt_pt': ('%s%s' % (settings.MNT_PT, share))})
+    return exports_d
+
 
 def create_nfs_export_input(exports):
     exports_d = {}
@@ -46,6 +78,7 @@ def create_nfs_export_input(exports):
         exports_d[export_pt] = e_list
     return exports_d
 
+
 def parse_options(request):
     options = {
         'host_str': '*',
@@ -59,7 +92,10 @@ def parse_options(request):
         options['editable'] = request.DATA['mod_choice']
     if ('sync_choice' in request.DATA):
         options['syncable'] = request.DATA['sync_choice']
+    if ('admin_host' in request.DATA):
+        options['admin_host'] = request.DATA['admin_host']
     return options
+
 
 def dup_export_check(share, host_str, request, export_id=None):
     for e in NFSExport.objects.filter(share=share):
@@ -70,12 +106,14 @@ def dup_export_check(share, host_str, request, export_id=None):
                      host_str)
             handle_exception(Exception(e_msg), request)
 
+
 def validate_export_group(export_id, request):
     try:
         return NFSExportGroup.objects.get(id=export_id)
     except:
         e_msg = ('NFS export with id: %d does not exist' % export_id)
         handle_exception(Exception(e_msg), request)
+
 
 def refresh_wrapper(exports, request, logger):
     try:
@@ -85,6 +123,7 @@ def refresh_wrapper(exports, request, logger):
                  ' Try again Later')
         logger.exception(e)
         handle_exception(Exception(e_msg), request)
+
 
 def teardown_wrapper(export_pt, request, logger):
     try:

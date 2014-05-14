@@ -29,13 +29,13 @@ from fs.btrfs import (add_pool, pool_usage, remove_pool,
 from storageadmin.util import handle_exception
 from storageadmin.exceptions import RockStorAPIException
 from django.conf import settings
-from generic_view import GenericView
+import rest_framework_custom as rfc
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-class PoolView(GenericView):
+class PoolView(rfc.GenericView):
     serializer_class = PoolInfoSerializer
     RAID_LEVELS = ('raid0', 'raid1', 'raid10', 'single', 'raid5', 'raid6')
 

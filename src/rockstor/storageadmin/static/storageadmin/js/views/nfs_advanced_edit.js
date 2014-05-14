@@ -24,70 +24,70 @@
  *
  */
 
-EditNFSExportView = RockstorLayoutView.extend({
+NFSAdvancedEditView = RockstorLayoutView.extend({
   events: {
-      'click #cancel': 'cancel',
+    "click #cancel": "cancel"
   },
 
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
-    this.template = window.JST.nfs_edit_nfs_export;
-    this.shares = new ShareCollection();
-    this.nfsExportGroupId = this.options.nfsExportGroupId;
-    this.nfsExportGroup = new NFSExportGroup({id: this.nfsExportGroupId});
-    this.dependencies.push(this.nfsExportGroup);
-    // dont paginate shares for now
-    this.shares.pageSize = 1000;
-    this.dependencies.push(this.shares);
-    this.modify_choices = [
-      {name: 'Writable', value: 'rw'},
-      {name: 'Read-only', value: 'ro'},
-    ];
-    this.sync_choices = [
-      {name: 'async', value: 'async'},
-      {name: 'sync', value: 'sync'},
-    ];
+    this.template = window.JST.nfs_advanced_edit;
+    this.collection = new AdvancedNFSExportCollection();
+    this.dependencies.push(this.collection);
   },
 
   render: function() {
-    this.fetch(this.renderExportForm, this);
+    this.fetch(this.renderAdvancedEdit, this);
     return this;
   },
 
-  renderExportForm: function() {
+  renderAdvancedEdit: function() {
     var _this = this;
+    var ro_str = '';
+    var rw_str = '';
+
+    this.collection.each(function(nfsExport) {
+      var prefix = "Normally added -- ";
+      var n = prefix.length;
+      var s =nfsExport.get('export_str');
+      if (s.indexOf(prefix) == 0) {
+        ro_str = ro_str + s.substring(n, s.length) + '\n';
+      } else {
+        rw_str = rw_str + s + '\n';
+      }
+    });
     $(this.el).html(this.template({
       shares: this.shares,
-      nfsExportGroup: this.nfsExportGroup,
-      modify_choices: this.modify_choices,
-      sync_choices: this.sync_choices
+      collection: this.collection,
+      ro_str: ro_str,
+      rw_str: rw_str
     }));
-    this.$('#shares').chosen();
-    this.$('#edit-nfs-export-form :input').tooltip({placement: 'right'});
-    this.$('#edit-nfs-export-form').validate({
+    $('#advanced-edit-form').validate({
       onfocusout: false,
       onkeyup: false,
-      rules: {
-        shares: 'required',
-        host_str: 'required'
-      },
+
       submitHandler: function() {
-        var button = $('#update-nfs-export');
+        var button = $('#submit-advanced-edit');
+        var nfsText = _this.$('#nfs-text').val();
+        var entries = [];
+        if (!_.isNull(nfsText) && nfsText.trim() != '') entries = nfsText.trim().split('\n');
         if (buttonDisabled(button)) return false;
         disableButton(button);
         $.ajax({
-          url: '/api/nfs-exports/' + _this.nfsExportGroup.id,
-          type: 'PUT',
+          url: '/api/adv-nfs-exports',
+          type: 'POST',
           dataType: 'json',
           contentType: 'application/json',
-          data: JSON.stringify(_this.$('#edit-nfs-export-form').getJSON()),
+          data: JSON.stringify({ entries: entries }),
           success: function() {
+            enableButton(button);
             app_router.navigate('nfs-exports', {trigger: true});
           },
           error: function(xhr, status, error) {
             enableButton(button);
           }
         });
+
         return false;
       }
     });

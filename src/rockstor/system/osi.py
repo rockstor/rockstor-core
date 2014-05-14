@@ -36,7 +36,6 @@ SMB_CONFIG = '/etc/samba/smb.conf'
 SERVICE = '/sbin/service'
 HOSTID = '/usr/bin/hostid'
 IFCONFIG = '/sbin/ifconfig'
-NTPDATE = '/usr/sbin/ntpdate'
 LVS = '/sbin/lvs'
 VGS = '/sbin/vgs'
 DD = '/bin/dd'
@@ -205,9 +204,15 @@ def refresh_nfs_exports(exports):
             if (not is_mounted(e)):
                 bind_mount(exports[e][0]['mnt_pt'], e)
             client_str = ''
+            admin_host = None
             for c in exports[e]:
                 client_str = ('%s%s(%s) ' % (client_str, c['client_str'],
                                              c['option_list']))
+                if ('admin_host' in c):
+                    admin_host = c['admin_host']
+            if (admin_host is not None):
+                client_str = ('%s %s(rw,no_root_squash)' % (client_str,
+                                                            admin_host))
             export_str = ('%s %s\n' % (e, client_str))
             efo.write(export_str)
         for s in shares:
@@ -422,9 +427,6 @@ def set_nameservers(servers):
     with open('/etc/resolv.conf', 'w') as rfo:
         for s in servers:
             rfo.write('nameserver %s\n' % s)
-
-def set_ntpserver(server):
-    return run_command([NTPDATE, server])
 
 def update_issue(ipaddr):
     shutil.copyfile('/etc/issue.rockstor', '/etc/issue')

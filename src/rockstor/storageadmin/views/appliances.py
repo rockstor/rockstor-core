@@ -26,14 +26,14 @@ from storageadmin.models import Appliance
 from storageadmin.util import handle_exception
 from storageadmin.serializers import ApplianceSerializer
 from system.osi import (hostid, sethostname)
-from generic_view import GenericView
+import rest_framework_custom as rfc
 from storageadmin.exceptions import RockStorAPIException
 from cli.rest_util import api_call
 
 import logging
 logger = logging.getLogger(__name__)
 
-class AppliancesView(GenericView):
+class AppliancesView(rfc.GenericView):
     serializer_class = ApplianceSerializer
 
     def get_queryset(self, *args, **kwargs):

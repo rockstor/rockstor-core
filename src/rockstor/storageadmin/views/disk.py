@@ -27,13 +27,13 @@ from system.osi import (scan_disks, wipe_disk)
 from storageadmin.serializers import DiskInfoSerializer
 from storageadmin.util import handle_exception
 from django.conf import settings
-from generic_view import GenericView
+import rest_framework_custom as rfc
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-class DiskView(GenericView):
+class DiskView(rfc.GenericView):
     serializer_class = DiskInfoSerializer
 
     def _validate_disk(self, dname, request):

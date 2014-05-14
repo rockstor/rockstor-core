@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from django.db import transaction
-from generic_view import GenericView
+import rest_framework_custom as rfc
 from storageadmin.util import handle_exception
 from storageadmin.models import (Plugin, InstalledPlugin)
 from storageadmin.serializers import InstalledPluginSerializer
@@ -28,7 +28,7 @@ import time
 import logging
 logger = logging.getLogger(__name__)
 
-class InstalledPluginView(GenericView):
+class InstalledPluginView(rfc.GenericView):
     serializer_class = InstalledPluginSerializer
 
     def get_queryset(self, *args, **kwargs):
@@ -47,7 +47,7 @@ class InstalledPluginView(GenericView):
         #    request.session['installed_plugins'] = []
 
         #data = {
-        #        'installed': request.session['installed_plugins'], 
+        #        'installed': request.session['installed_plugins'],
         #        'available': request.session['available_plugins']
         #        }
         #return Response(data)
@@ -59,11 +59,11 @@ class InstalledPluginView(GenericView):
             logger.debug('plugin_name is %s' % plugin_name)
             plugin = Plugin.objects.get(name=plugin_name)
             if (not InstalledPlugin.objects.filter(plugin_meta=plugin).exists()):
-                installed_plugin = InstalledPlugin(plugin_meta=plugin) 
+                installed_plugin = InstalledPlugin(plugin_meta=plugin)
                 installed_plugin.save()
 
             time.sleep(10)
             return Response()
         except Exception, e:
             handle_exception(e, request)
-            
+

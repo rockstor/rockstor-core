@@ -19,13 +19,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from smart_manager.models import (Service, ServiceStatus)
 from django.conf import settings
 from smart_manager.serializers import ServiceStatusSerializer
-import logging
-logger = logging.getLogger(__name__)
-from advanced_sprobe import AdvancedSProbeView
 import json
+import rest_framework_custom as rfc
 
 
-class BaseServiceView(AdvancedSProbeView):
+class BaseServiceView(rfc.GenericView):
     serializer_class = ServiceStatusSerializer
 
     def get_queryset(self, *args, **kwargs):

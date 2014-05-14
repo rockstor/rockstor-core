@@ -19,23 +19,23 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from rest_framework.response import Response
 from django.db import transaction
 from django.conf import settings
-from storageadmin.models import (Share, SambaShare, NFSExport,
-                                 NFSExportGroup, Disk)
+from storageadmin.models import (NFSExport, NFSExportGroup, Disk,
+                                 AdvancedNFSExport)
 from storageadmin.util import handle_exception
 from storageadmin.serializers import NFSExportGroupSerializer
 from storageadmin.exceptions import RockStorAPIException
-from fs.btrfs import (mount_share, is_share_mounted, umount_root)
-from system.osi import (refresh_nfs_exports, nfs4_mount_teardown)
-from generic_view import GenericView
+from fs.btrfs import (mount_share, is_share_mounted)
+import rest_framework_custom as rfc
 from nfs_helpers import (create_nfs_export_input, parse_options,
                          dup_export_check, refresh_wrapper,
-                         teardown_wrapper, validate_export_group)
+                         teardown_wrapper, validate_export_group,
+                         create_adv_nfs_export_input)
 from share_helpers import validate_share
 import logging
 logger = logging.getLogger(__name__)
 
 
-class NFSExportGroupView(GenericView):
+class NFSExportGroupView(rfc.GenericView):
     serializer_class = NFSExportGroupSerializer
 
     def get_queryset(self, *args, **kwargs):
@@ -73,6 +73,10 @@ class NFSExportGroupView(GenericView):
                 cur_exports.append(export)
 
             exports = create_nfs_export_input(cur_exports)
+            adv_entries = [e.export_str for e in
+                           AdvancedNFSExport.objects.all()]
+            exports_d = create_adv_nfs_export_input(adv_entries, request)
+            exports.update(exports_d)
             refresh_wrapper(exports, request, logger)
             nfs_serializer = NFSExportGroupSerializer(eg)
             return Response(nfs_serializer.data)
@@ -113,6 +117,10 @@ class NFSExportGroupView(GenericView):
                 export.save()
                 cur_exports.append(export)
             exports = create_nfs_export_input(cur_exports)
+            adv_entries = [e.export_str for e in
+                           AdvancedNFSExport.objects.all()]
+            exports_d = create_adv_nfs_export_input(adv_entries, request)
+            exports.update(exports_d)
             refresh_wrapper(exports, request, logger)
             nfs_serializer = NFSExportGroupSerializer(eg)
             return Response(nfs_serializer.data)

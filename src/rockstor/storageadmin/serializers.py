@@ -21,19 +21,25 @@ from storageadmin.models import (Disk, Pool, Share, Snapshot, NFSExport,
                                  SambaShare, IscsiTarget, Appliance,
                                  SupportCase, DashboardConfig,
                                  NetworkInterface, User, PoolScrub, Setup,
-                                 NFSExportGroup, SFTP, Plugin, InstalledPlugin)
+                                 NFSExportGroup, SFTP, Plugin, InstalledPlugin,
+                                 AdvancedNFSExport)
 from django.contrib.auth.models import User as DjangoUser
+
 
 class DiskInfoSerializer(serializers.ModelSerializer):
     pool_name = serializers.CharField(source='pool_name')
+
     class Meta:
         model = Disk
+
 
 class PoolInfoSerializer(serializers.ModelSerializer):
     disks = DiskInfoSerializer(source='disk_set')
     usage = serializers.IntegerField(source='cur_usage')
+
     class Meta:
         model = Pool
+
 
 class SnapshotSerializer(serializers.ModelSerializer):
     r_usage = serializers.IntegerField(source='cur_rusage')
@@ -42,24 +48,38 @@ class SnapshotSerializer(serializers.ModelSerializer):
     class Meta:
         model = Snapshot
 
+
 class NFSExportSerializer(serializers.ModelSerializer):
     share = serializers.CharField(source='share_name')
+
     class Meta:
         model = NFSExport
 
+
 class NFSExportGroupSerializer(serializers.ModelSerializer):
     exports = NFSExportSerializer(source='nfsexport_set')
+
     class Meta:
         model = NFSExportGroup
 
+
+class AdvancedNFSExportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AdvancedNFSExport
+
+
 class SambaShareSerializer(serializers.ModelSerializer):
     share = serializers.CharField(source='share_name')
+
     class Meta:
         model = SambaShare
 
+
 class IscsiSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = IscsiTarget
+
 
 class ShareSerializer(serializers.ModelSerializer):
     snapshots = SnapshotSerializer(source='snapshot_set')
@@ -71,51 +91,64 @@ class ShareSerializer(serializers.ModelSerializer):
     class Meta:
         model = Share
 
+
 class ApplianceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Appliance
+
 
 class SUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
 
+
 class UserSerializer(serializers.ModelSerializer):
     suser = SUserSerializer(source='suser')
+
     class Meta:
         model = DjangoUser
         fields = ('username', 'is_active', 'suser')
+
 
 class SupportSerializer(serializers.ModelSerializer):
     class Meta:
         model = SupportCase
 
+
 class DashboardConfigSerializer(serializers.ModelSerializer):
     class Meta:
         model = DashboardConfig
+
 
 class NetworkInterfaceSerializer(serializers.ModelSerializer):
     class Meta:
         model = NetworkInterface
 
+
 class PoolScrubSerializer(serializers.ModelSerializer):
     class Meta:
         model = PoolScrub
+
 
 class SetupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Setup
 
+
 class SFTPSerializer(serializers.ModelSerializer):
     share = serializers.CharField(source='share_name')
+
     class Meta:
         model = SFTP
+
 
 class PluginSerializer(serializers.ModelSerializer):
     class Meta:
         model = Plugin
 
+
 class InstalledPluginSerializer(serializers.ModelSerializer):
     plugin_meta = PluginSerializer(source='plugin_meta')
+
     class Meta:
         model = InstalledPlugin
-

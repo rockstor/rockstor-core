@@ -17,24 +17,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf import settings
-from django.db import transaction
-from storageadmin.util import handle_exception
-from smart_manager.serializers import (SProbeSerializer, PaginatedSProbe)
 from rest_framework.response import Response
 from rest_framework import generics
-import zmq
-import os
 from django.http import Http404
-import logging
-logger = logging.getLogger(__name__)
-from django.core.paginator import Paginator
 from rest_framework.authentication import (BasicAuthentication,
                                            SessionAuthentication,)
 from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
 
 
-class GenericView(generics.ListAPIView):
+class GenericView(generics.ListCreateAPIView):
     authentication_classes = (DigestAuthentication, SessionAuthentication,
                               BasicAuthentication,)
     permission_classes = (IsAuthenticated,)
@@ -82,3 +74,5 @@ class GenericView(generics.ListAPIView):
             return None
         return settings.PAGINATION['page_size']
 
+    def post(self, request, *args, **kwargs):
+        pass

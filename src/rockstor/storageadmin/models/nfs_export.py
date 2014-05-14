@@ -18,12 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.db import models
 from storageadmin.models import (Share, NFSExportGroup)
-from validators import (validate_nfs_host_str, validate_nfs_modify_str,
-                        validate_nfs_sync_choice)
 
-"""
-NFS export history
-"""
+
 class NFSExport(models.Model):
 
     export_group = models.ForeignKey(NFSExportGroup)

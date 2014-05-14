@@ -23,7 +23,7 @@ from storageadmin.util import handle_exception
 from django.contrib.auth.models import User as DjangoUser
 from storageadmin.serializers import UserSerializer
 from storageadmin.models import User
-from generic_view import GenericView
+import rest_framework_custom as rfc
 from system.users import (useradd, usermod, userdel, get_epasswd, get_users,
                           update_shell, smbpasswd)
 from storageadmin.exceptions import RockStorAPIException
@@ -31,7 +31,7 @@ from storageadmin.exceptions import RockStorAPIException
 import logging
 logger = logging.getLogger(__name__)
 
-class UserView(GenericView):
+class UserView(rfc.GenericView):
     serializer_class = UserSerializer
 
     def get_queryset(self, *args, **kwargs):

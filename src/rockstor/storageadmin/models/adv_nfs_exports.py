@@ -16,5 +16,15 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from generic_view import GenericView
-from renderers import IgnoreClient
+from django.db import models
+
+
+class AdvancedNFSExport(models.Model):
+    """
+    Just literal representation of a line from /etc/exports that is not
+    managed via NFSExportGroup model.
+    """
+    export_str = models.CharField(max_length=4096)
+
+    class Meta:
+        app_label = 'storageadmin'
