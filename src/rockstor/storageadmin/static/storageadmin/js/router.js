@@ -35,6 +35,7 @@ var AppRouter = Backbone.Router.extend({
     "setup": "doSetup",
     "home": "showHome",
     "disks": "showDisks",
+    "diskgrid": "showDiskGrid",
     "pools": "showPools",
     "pools/:poolName": "showPool",
     "add_pool": "addPool",
@@ -154,7 +155,16 @@ var AppRouter = Backbone.Router.extend({
     this.currentLayout = new DisksView();
     $('#maincontent').append(this.currentLayout.render().el);
   },
-  
+
+  showDiskGrid: function() {
+    RockStorSocket.removeAllListeners();
+    this.renderSidebar("system", "diskgrid");
+    $('#maincontent').empty();
+    this.cleanup();
+    this.currentLayout = new DiskGridView();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
   showPools: function() {
     RockStorSocket.removeAllListeners();
     this.renderSidebar("storage", "pools");
