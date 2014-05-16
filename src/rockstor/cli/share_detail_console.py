@@ -27,12 +27,11 @@ from storageadmin.exceptions import RockStorAPIException
 
 class ShareDetailConsole(BaseConsole):
 
-    def __init__(self, prompt, share):
+    def __init__(self, greeting, share):
         BaseConsole.__init__(self)
         self.share = share
-        self.parent_prompt = prompt
-        self.greeting = ('%s %s' % (self.parent_prompt, self.share))
-        self.prompt = ('%s>' % self.greeting)
+        self.greeting = greeting + ' ' + self.share 
+        self.prompt = self.greeting + '> ';
         self.url = ('%sshares/%s/' % (BaseConsole.url, self.share))
 
     @api_error

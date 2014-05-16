@@ -23,11 +23,12 @@ from rest_util import (api_call, print_export_info, print_share_info)
 
 class ShareNFSConsole(BaseConsole):
 
-    def __init__(self, prompt, share):
+    def __init__(self, greeting, share):
         BaseConsole.__init__(self)
         self.share = share
-        self.prompt = prompt + ' nfs>'
-        self.url = ('%sshares/%s/nfs/' % (BaseConsole.url, self.share))
+        self.greeting = greeting + ' nfs'
+        self.prompt = self.greeting + '> '
+        self.url = ('%sshares/%s/nfs' % (BaseConsole.url, self.share))
 
     def do_exports(self, args):
         """
@@ -37,11 +38,6 @@ class ShareNFSConsole(BaseConsole):
         print_export_info(export_info)
 
     def do_add_export(self, args):
-        """
-        To add a new export:
-
-        add_export -chost_str -mmod_choice -ssync_choice
-        """
         arg_fields = args.split()
         input_data = {}
         for f in arg_fields:
@@ -57,6 +53,21 @@ class ShareNFSConsole(BaseConsole):
             return self.do_help(args)
         export_info = api_call(self.url, data=input_data, calltype='post')
         print_export_info(export_info)
+
+    def help_add_export(self):
+        print """
+        %(c)sAdd a new nfs export%(e)s
+        
+        %(c)sUsage%(e)s
+        %(c)sadd_export%(e)s -c%(u)shost_str%(e)s -m%(u)smod_choice%(e)s -s%(u)ssync_choice%(e)s
+        
+        %(c)sParameters%(e)s
+        -c%(u)shost_str%(e)s       Host string
+        -m%(u)smod_choice%(e)s     Specifies whether the share is writable 
+                         or read only. Can be either 'rw' or 'ro'
+        -s%(u)ssync_choice%(e)s    Specifies sync or async, can be either
+                         'sync' or 'async'
+        """ % BaseConsole.c_params
 
     def do_disable_export(self, args):
         """

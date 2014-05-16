@@ -23,6 +23,7 @@ import json
 import settings
 from storageadmin.exceptions import RockStorAPIException
 from functools import wraps
+from base_console import BaseConsole
 
 auth_params = {'apikey': 'adminapikey'}
 
@@ -58,9 +59,11 @@ def api_call(url, data=None, calltype='get', headers=None, save_error=True):
 
     if (r.status_code == 404):
         msg = ('Invalid api end point: %s' % url)
+        print msg
         raise RockStorAPIException(detail=msg)
 
     if (r.status_code != 200):
+        print r.text
         try:
             error_d = json.loads(r.text)
             if ('detail' in error_d):
@@ -83,87 +86,142 @@ def api_call(url, data=None, calltype='get', headers=None, save_error=True):
         ret_val = {}
     return ret_val
 
-def print_pool_info(pool_info):
-    if (pool_info is None or
-        not isinstance(pool_info, dict) or
-        len(pool_info) == 0):
-        print('There are no pools in the system')
+def print_pools_info(pools_info):
+    if (pools_info is None or
+        not isinstance(pools_info, dict) or
+        len(pools_info) == 0):
+        print('There are no pools on the appliance.')
         return
     try:
-        if ('count' not in pool_info):
-            pool_info = [pool_info]
+        if ('count' not in pools_info):
+            pools_info = [pools_info]
         else:
-            pool_info = pool_info['results']
-        print("List of pools in the system")
-        print("--------------------------------------")
+            pools_info = pools_info['results']
+        print("%(c)sPools on the appliance\n%(e)s" % BaseConsole.c_params)
         print("Name\tSize\tUsage\tRaid")
-        for p in pool_info:
-            p['size'] = sizeof_fmt(p['size'])
-            p['usage'] = sizeof_fmt(p['usage'])
-            print('%s\t%s\t%s\t%s' %
-                  (p['name'], p['size'], p['usage'], p['raid']))
+        for p in pools_info:
+            print_pool_info(p)
     except Exception, e:
-        print('Error rendering pool info')
+        print('Error displaying pool info')
 
-def print_share_info(share_info):
-    if (share_info is None or
-        not isinstance(share_info, dict) or
-        len(share_info) == 0):
+def print_pool_info(p, header=False):
+    try:
+        if header:
+            print "%(c)sPool info%(e)s\n" % BaseConsole.c_params
+            print("Name\tSize\tUsage\tRaid")
+        p['size'] = sizeof_fmt(p['size'])
+        p['usage'] = sizeof_fmt(p['usage'])
+        print('%s%s%s\t%s\t%s\t%s' % (BaseConsole.c, p['name'], 
+            BaseConsole.e, p['size'], p['usage'], p['raid']))
+    except Exception, e:
+        print e
+        print('Error displaying pool info')
+
+def print_scrub_status(pool_name, scrub_info):
+    try:
+        print '%sScrub status for %s%s' % (BaseConsole.c, pool_name,
+                BaseConsole.e);
+        kb_scrubbed = None
+        if ('kb_scrubbed' in scrub_info):
+            kb_scrubbed = scrub_info['kb_scrubbed']
+        status = scrub_info['status']
+        print '%sStatus%s:  %s' % (BaseConsole.c, BaseConsole.e, status)
+        if (status == 'finished'):
+            print '%sKB Scrubbed%s:  %s' % (BaseConsole.c, BaseConsole.e, 
+                    kb_scrubbed)
+    except Exception, e:
+        print e
+        print('Error displaying scrub status')
+
+def print_shares_info(shares):
+    if (shares is None or
+        not isinstance(shares, dict) or
+        len(shares) == 0):
         print('There are no shares in the system')
         return
     try:
-        if ('count' not in share_info):
-            share_info = [share_info]
+        if ('count' not in shares):
+            shares = [shares]
         else:
-            share_info = share_info['results']
-        print("List of shares in the system")
-        print("---------------------------------------")
+            shares = shares['results']
+        print("%(c)sShares on the appliance%(e)s\n" % BaseConsole.c_params)
         print("Name\tSize(KB)\tUsage(KB)\tPool")
-        for s in share_info:
-            print('%s\t%s\t%s\t%s' %
-                  (s['name'], s['size'], s['usage'], s['pool']['name']))
+        for s in shares:
+            print_share_info(s)
     except Exception, e:
-        print('Error rendering share info')
+        print e
+        print('Error displaying share info')
 
-def print_disk_info(disk_info):
-    if (disk_info is None or
-        not isinstance(disk_info, dict) or
-        len(disk_info) == 0):
-        print('There are no disks in the system')
+def print_share_info(s, header=False):
+    try:
+        if header:
+            print "%(c)sShare info%(e)s\n" % BaseConsole.c_params
+            print("Name\tSize(KB)\tUsage(KB)\tPool")
+        print('%s\t%s\t%s\t%s' %
+                (s['name'], s['size'], s['r_usage'], s['pool']['name']))
+    except Exception, e:
+        print e
+        print('Error displaying share info')
+
+def print_disks_info(disks_info):
+    if (disks_info is None or
+        not isinstance(disks_info, dict) or
+        len(disks_info) == 0):
+        print('There are no disks on the appliance.')
         return
     try:
-        if ('results' not in disk_info):
+        if ('results' not in disks_info):
             #POST is used, don't do anything
-            disk_info = disk_info
-        elif ('count' not in disk_info):
-            disk_info = [disk_info]
+            disks_info = disks_info
+        elif ('count' not in disks_info):
+            disks_info = [disks_info]
         else:
-            disk_info = disk_info['results']
-        print("List of disks in the system")
-        print("--------------------------------------------")
+            disks_info = disks_info['results']
+        print("%sDisks on this Rockstor appliance%s\n" % (BaseConsole.u,
+            BaseConsole.e))
         print("Name\tSize\tPool")
-        for d in disk_info:
-            d['size'] = sizeof_fmt(d['size'])
-            print('%s\t%s\t%s' % (d['name'], d['size'], d['pool']))
+        for d in disks_info:
+            print_disk_info(d)
     except Exception, e:
-        print('Error rendering disk info')
+        print('Error displaying disk info')
 
+def print_disk_info(d, header=False):
+    try:
+        if header:
+            print "%(u)sDisk info%(e)s\n" % BaseConsole.c_params
+            print("Name\tSize\tPool")
+        d['size'] = sizeof_fmt(d['size'])
+        print('%s%s%s\t%s\t%s' % (BaseConsole.c, d['name'],
+            BaseConsole.e, d['size'], d['pool_name']))
+    except Exception, e:
+        print e
+        print('Error displaying disk info')
 
 def print_export_info(export_info):
     if (export_info is None or
         not isinstance(export_info, dict) or
         len(export_info) == 0):
-        print('There are no exports for this share')
+        print('%(c)sThere are no exports for this share%(e)s' % 
+                BaseConsole.c_params)
         return
-    export_info = [export_info]
-    print("List of exports for the share")
-    print("----------------------------------------")
-    print("Id\tMount\tClient\tReadable\tSyncable\tEnabled")
-    for e in export_info:
-        print('%s\t%s\t%s\t%s\t%s\t%s' %
-              (e['id'], e['mount'], e['host_str'], e['editable'],
-               e['syncable'], e['enabled']))
-
+    try:
+        if ('count' not in export_info):
+            export_info = [export_info]
+        else:
+            export_info = export_info['results']
+        if (len(export_info) == 0):
+            print('%(c)sThere are no exports for this share%(e)s' % 
+                    BaseConsole.c_params)
+        else:
+            print "%(c)sList of exports for this share%(e)s" % BaseConsole.c_params
+            print("Id\tMount\tClient\tWritable\tSyncable\tEnabled")
+            for e in export_info:
+                print('%s\t%s\t%s\t%s\t%s\t%s' % (e['id'], 
+                    e['exports'][0]['mount'], e['host_str'], e['editable'],
+                    e['syncable'], e['enabled']))
+    except Exception, e:
+        print e
+        print('Error displaying nfs export information')
 
 def sizeof_fmt(num):
     for x in ['K','M','G','T','P','E']:

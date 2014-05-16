@@ -18,7 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 from base_console import BaseConsole
-from rest_util import (api_error, api_call, print_disk_info)
+from rest_util import (api_error, api_call, print_disks_info, 
+        print_disk_info)
 from storageadmin.exceptions import RockStorAPIException
 
 
@@ -26,67 +27,86 @@ class DisksConsole(BaseConsole):
 
     def __init__(self, prompt):
         BaseConsole.__init__(self)
-        self.prompt = prompt + ' Disks>'
+        self.prompt = prompt + ' Disks> '
         self.baseurl = ('%sdisks' % BaseConsole.url)
 
     @api_error
     def do_list(self, args):
-        """
-        List brief information about disks in the system.
+        url = self.baseurl
+        if (args):
+            # print info for a single disk
+            url = ('%s/%s' % (url, args))
+            disk_info = api_call(url)
+            print_disk_info(disk_info, True)
+        else: 
+            # print info for all disks
+            disks_info = api_call(url)
+            print_disks_info(disks_info)
 
-        Details of all disks:     list
-        Details of a single disk: list <disk_name>
+    def help_list(self):
+        s = """
+        %(c)sDisplay information about disks on the appliance.%(e)s
 
-        Parameters:
-        disk_name: If this optional parameter is given, details are printed
-                   for the given disk only.
+        Details of all disks:     %(c)slist%(e)s
+        Details of a single disk: %(c)slist%(e)s %(u)sdisk_name%(e)s
 
-        Examples:
+        %(c)sParameters%(e)s
+        %(u)sdisk_name%(e)s    If this optional parameter is given, 
+                     details are printed for the given disk only.
+
+        %(c)sExamples%(e)s
         Print information of all disks in the system
-            list
+            %(c)slist%(e)s
 
         Print information for the disk sdd
-            list sdd
-        """
-        url = self.baseurl
-        if (args is not None):
-            url = ('%s%s' % (url, args))
-        disk_info = api_call(url)
-        print_disk_info(disk_info)
+            %(c)slist sdd%(e)s
+        """ % BaseConsole.c_params 
+        print s
 
     @api_error
     def do_scan(self, args):
-        """
-        Scan the system for any new disks since the last scan.
-
-        Example:
-        Scan the system for any new disks:
-            scan
-        """
         url = ('%s/scan' % self.baseurl)
+        print "%(c)sScanning disks%(e)s" % BaseConsole.c_params
         disk_info = api_call(url, data=None, calltype='post')
-        print_disk_info(disk_info)
+        self.do_list(None)
+
+    def help_scan(self):
+        s = """
+        %(c)sScan the system for any new disks since the last scan.%(e)s
+
+        %(c)sExample:%(e)s
+        Scan the system for any new disks:
+            %(c)sscan%(e)s
+        """ % BaseConsole.c_params
+        print s
 
     @api_error
     def do_delete(self, args):
-        """
-        Delete a offlined disk
-
-        delete disk_name
-        """
         url = ('%s/%s' % (self.baseurl, args))
         api_call(url, calltype='delete')
-        print_disk_info(api_call(self.baseurl))
+        print_disks_info(api_call(self.baseurl))
 
+    def help_delete(self):
+        s = """
+        %(c)sDelete an offlined disk%(e)s
+
+        %(c)sdelete%(e)s %(u)sdisk_name%(e)s
+        """ % BaseConsole.c_params
+        print s
+        
     @api_error
     def do_wipe(self, args):
-        """
-        Wipe the partition table of a disk. This is required for
-        used/partitioned disks to be usable by rockstor.
-
-        wipe disk_name
-        """
         url = ('%s/%s/wipe' % (self.baseurl, args))
         api_call(url, calltype='post')
-        print_disk_info(api_call(self.baseurl))
+        print_disks_info(api_call(self.baseurl))
+
+    def help_wipe(self):
+        s = """
+        %(c)sWipe the partition table of a disk.%(e)s
+        This is required for used/partitioned disks to be usable by rockstor.
+
+        %(c)swipe%(e)s %(u)sdisk_name%(e)s
+        """ % BaseConsole.c_params
+        print s
+
 

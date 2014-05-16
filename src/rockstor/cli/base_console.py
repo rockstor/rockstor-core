@@ -23,17 +23,31 @@ class BaseConsole(cmd.Cmd):
 
     url = 'https://localhost/api/'
 
+    # ansi colors
+    ( BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, LIGHT_GRAY, DARK_GRAY,
+    BRIGHT_RED, BRIGHT_GREEN, BRIGHT_YELLOW, BRIGHT_BLUE, BRIGHT_MAGENTA,
+    BRIGHT_CYAN, WHITE,) = range(16)
+
+    # ansi escape sequences 
+    c = '\x1b[38;5;%dm' % (GREEN) # set color 
+    u = '\x1b[4m' # set underscore
+    e = '\x1b[0m' # end formatting
+    c_params = { 'c': c, 'u': u, 'e' : e }
+
     def __init__(self):
         cmd.Cmd.__init__(self)
 
     def do_exit(self, args):
-        """
-        Exit from this console.
-
-        To exit from this console: exit
-
-        """
         return -1
+
+    def help_exit(self):
+        s = """
+        %(c)sExit from this console%(e)s
+
+        To exit from this console: %(c)sexit%(e)s
+
+        """ % BaseConsole.c_params
+        print s
 
     def do_EOF(self, args):
         print("")
@@ -43,11 +57,14 @@ class BaseConsole(cmd.Cmd):
         cmd.Cmd.preloop(self)
 
     def do_hist(self, args):
-        """
-        History of commands in this session
-        """
         for i in range(readline.get_current_history_length()):
             print readline.get_history_item(i)
+
+    def help_hist(self):
+        s = """
+        %(c)sHistory of commands in this session%(e)s
+        """ % BaseConsole.c_params
+        print s
 
     def do_shell(self, args):
         pass
@@ -69,7 +86,8 @@ class BaseConsole(cmd.Cmd):
         self.do_help(line)
 
     def help_wrapper(self, error, args):
-        print('Error: %s' % error)
+        print('%sError%s: %s' % BaseConsole.c, BaseConsole.e, error)
         print('====================================')
         print('Documentation for %s' % args)
         return self.do_help(args)
+
