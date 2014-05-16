@@ -34,8 +34,12 @@ EditNFSExportView = RockstorLayoutView.extend({
     this.template = window.JST.nfs_edit_nfs_export;
     this.shares = new ShareCollection();
     this.nfsExportGroupId = this.options.nfsExportGroupId;
-    this.nfsExportGroup = new NFSExportGroup({id: this.nfsExportGroupId});
-    this.dependencies.push(this.nfsExportGroup);
+    if(this.nfsExportGroupId > 0) {
+	this.nfsExportGroup = new NFSExportGroup({id: this.nfsExportGroupId});
+	this.dependencies.push(this.nfsExportGroup);
+    } else {
+    	this.nfsExportGroup = new NFSExportGroup();
+    }
     // dont paginate shares for now
     this.shares.pageSize = 1000;
     this.dependencies.push(this.shares);
@@ -75,9 +79,15 @@ EditNFSExportView = RockstorLayoutView.extend({
         var button = $('#update-nfs-export');
         if (buttonDisabled(button)) return false;
         disableButton(button);
+        var submitmethod = 'POST';
+        var posturl = '/api/nfs-exports';
+        if(_this.nfsExportGroupId > 0){
+            submitmethod = 'PUT';
+            posturl += '/'+_this.nfsExportGroupId;
+        }
         $.ajax({
-          url: '/api/nfs-exports/' + _this.nfsExportGroup.id,
-          type: 'PUT',
+          url: posturl,
+          type: submitmethod,
           dataType: 'json',
           contentType: 'application/json',
           data: JSON.stringify(_this.$('#edit-nfs-export-form').getJSON()),
