@@ -19,20 +19,21 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import cmd
 import readline
 
+
 class BaseConsole(cmd.Cmd):
 
     url = 'https://localhost/api/'
 
     # ansi colors
-    ( BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, LIGHT_GRAY, DARK_GRAY,
-    BRIGHT_RED, BRIGHT_GREEN, BRIGHT_YELLOW, BRIGHT_BLUE, BRIGHT_MAGENTA,
-    BRIGHT_CYAN, WHITE,) = range(16)
+    (BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, LIGHT_GRAY, DARK_GRAY,
+     BRIGHT_RED, BRIGHT_GREEN, BRIGHT_YELLOW, BRIGHT_BLUE, BRIGHT_MAGENTA,
+     BRIGHT_CYAN, WHITE,) = range(16)
 
-    # ansi escape sequences 
-    c = '\x1b[38;5;%dm' % (GREEN) # set color 
-    u = '\x1b[4m' # set underscore
-    e = '\x1b[0m' # end formatting
-    c_params = { 'c': c, 'u': u, 'e' : e }
+    # ansi escape sequences
+    c = '\x1b[38;5;%dm' % (GREEN)  # set color
+    u = '\x1b[4m'  # set underscore
+    e = '\x1b[0m'  # end formatting
+    c_params = {'c': c, 'u': u, 'e': e}
 
     def __init__(self):
         cmd.Cmd.__init__(self)
@@ -91,3 +92,31 @@ class BaseConsole(cmd.Cmd):
         print('Documentation for %s' % args)
         return self.do_help(args)
 
+    def print_help(self, synopsis, cmd, args, params, examples):
+        cmd_args = ['%s%s%s' % (BaseConsole.c_params['u'],
+                                a,
+                                BaseConsole.c_params['e'],)
+                    for a in args]
+        cmd_str = ('%s%s%s %s' % (BaseConsole.c_params['c'], cmd,
+                                  BaseConsole.c_params['e'],
+                                  ' '.join(cmd_args)))
+        params_list = ['\t%s%s%s\t%s' % (BaseConsole.c_params['u'],
+                                         p, BaseConsole.c_params['e'],
+                                         params[p])
+                       for p in params]
+        e_list = ['\t%s\n\t%s%s%s %s' % (e, BaseConsole.c_params['c'], cmd,
+                                         BaseConsole.c_params['e'],
+                                         examples[e])
+                  for e in examples]
+        cur_params = {'snps': synopsis,
+                      'cmd': cmd_str,
+                      'params': '\n'.join(params_list),
+                      'examples': '\n'.join(e_list), }
+        cur_params.update(BaseConsole.c_params)
+        print('\t%(c)s%(snps)s%(e)s\n\n'
+              '\t%(cmd)s\n\n'
+              '\tParameters\n'
+              '%(params)s\n\n'
+              '\tExamples\n'
+              '%(examples)s\n'
+              % cur_params)

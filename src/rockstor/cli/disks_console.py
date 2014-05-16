@@ -18,9 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 from base_console import BaseConsole
-from rest_util import (api_error, api_call, print_disks_info, 
-        print_disk_info)
-from storageadmin.exceptions import RockStorAPIException
+from rest_util import (api_error, api_call, print_disks_info,
+                       print_disk_info)
 
 
 class DisksConsole(BaseConsole):
@@ -38,7 +37,7 @@ class DisksConsole(BaseConsole):
             url = ('%s/%s' % (url, args))
             disk_info = api_call(url)
             print_disk_info(disk_info, True)
-        else: 
+        else:
             # print info for all disks
             disks_info = api_call(url)
             print_disks_info(disks_info)
@@ -51,7 +50,7 @@ class DisksConsole(BaseConsole):
         Details of a single disk: %(c)slist%(e)s %(u)sdisk_name%(e)s
 
         %(c)sParameters%(e)s
-        %(u)sdisk_name%(e)s    If this optional parameter is given, 
+        %(u)sdisk_name%(e)s    If this optional parameter is given,
                      details are printed for the given disk only.
 
         %(c)sExamples%(e)s
@@ -60,14 +59,14 @@ class DisksConsole(BaseConsole):
 
         Print information for the disk sdd
             %(c)slist sdd%(e)s
-        """ % BaseConsole.c_params 
+        """ % BaseConsole.c_params
         print s
 
     @api_error
     def do_scan(self, args):
         url = ('%s/scan' % self.baseurl)
         print "%(c)sScanning disks%(e)s" % BaseConsole.c_params
-        disk_info = api_call(url, data=None, calltype='post')
+        api_call(url, data=None, calltype='post')
         self.do_list(None)
 
     def help_scan(self):
@@ -93,7 +92,7 @@ class DisksConsole(BaseConsole):
         %(c)sdelete%(e)s %(u)sdisk_name%(e)s
         """ % BaseConsole.c_params
         print s
-        
+
     @api_error
     def do_wipe(self, args):
         url = ('%s/%s/wipe' % (self.baseurl, args))
@@ -108,5 +107,3 @@ class DisksConsole(BaseConsole):
         %(c)swipe%(e)s %(u)sdisk_name%(e)s
         """ % BaseConsole.c_params
         print s
-
-

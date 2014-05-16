@@ -17,12 +17,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-import json
-
 from base_console import BaseConsole
 from pool_detail_console import PoolDetailConsole
 from rest_util import (api_error, api_call, print_pools_info, print_pool_info,
-        print_scrub_status)
+                       print_scrub_status)
 
 
 class PoolsConsole(BaseConsole):
@@ -50,9 +48,9 @@ class PoolsConsole(BaseConsole):
 
         Details of all pools:     %(c)slist%(e)s
         Details of a single pool: %(c)slist%(e)s %(u)spool_name%(e)s
-        
+
         %(c)sParameters%(e)s
-        %(u)spool_name%(e)s    If this optional parameter is given, 
+        %(u)spool_name%(e)s    If this optional parameter is given,
                      details are printed for the given pool only.
         """ % BaseConsole.c_params
 
@@ -71,21 +69,15 @@ class PoolsConsole(BaseConsole):
         print_pool_info(pool_info)
 
     def help_add(self):
-        print """
-        %(c)sCreate a new pool.%(e)s
-
-        Create a new pool: %(c)sadd%(e)s %(u)spool_name%(e)s %(u)sdisk_list%(e)s %(u)raid_type%(e)s
-
-        %(c)sParameters%(e)s
-        %(u)spool_name%(e)s    Intended name of the pool.
-        %(u)sdisk_list%(e)s    A list of comma-separated(no whitespace) disks. For
-                    example: sdb,sdc.
-        %(u)sraid_type%(e)s    One of the following: single, raid0, raid1 and raid10
-
-        %(c)sExamples%(e)s
-        To create a raid0 pool with two disks(sdb and sdc) called pool0
-        %(c)sadd%(e)s pool0 sdb,sdc raid0
-        """ % BaseConsole.c_params
+        args = ('pool_name', 'disk_list', 'raid_type',)
+        params = {'pool_name': 'Intended name of the pool',
+                  'disk_list': ('A list of comma-separated(no whitespace) '
+                                'disks. For example: sdb,sdc'),
+                  'raid_type': ('One of the following: single, raid0, '
+                                'raid1 and raid10'), }
+        examples = {('Create a raid0 pool with two disks(sdb and sdc) '
+                     'called pool0'): 'pool0 sdb,sdc raid0', }
+        self.print_help('Create a new pool.', 'add', args, params, examples)
 
     @api_error
     def do_delete(self, args):
@@ -93,7 +85,7 @@ class PoolsConsole(BaseConsole):
             return self.help_wrapper('missing pool_name', 'delete')
         url = ('%s/%s' % (self.url, args))
         print "Deleting pool %s" % args[0]
-        pool_info = api_call(url, calltype='delete')
+        api_call(url, calltype='delete')
         print "Pool %s deleted" % args[0]
 
     def help_delete(self):
@@ -165,11 +157,10 @@ class PoolsConsole(BaseConsole):
     def help_scrubstatus(self):
         print """
         %(c)sGet scrub status for a pool%(e)s
-        
+
         %(c)sUsage%(e)s
         %(c)sscrub_status%(e)s %(u)spool_name%(e)s
-        
+
         %(c)sExample%(e)s
         %(c)sscrub_status%(e)s mypool
         """ % BaseConsole.c_params
-
