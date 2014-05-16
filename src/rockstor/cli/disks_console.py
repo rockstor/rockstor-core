@@ -43,41 +43,24 @@ class DisksConsole(BaseConsole):
             print_disks_info(disks_info)
 
     def help_list(self):
-        s = """
-        %(c)sDisplay information about disks on the appliance.%(e)s
-
-        Details of all disks:     %(c)slist%(e)s
-        Details of a single disk: %(c)slist%(e)s %(u)sdisk_name%(e)s
-
-        %(c)sParameters%(e)s
-        %(u)sdisk_name%(e)s    If this optional parameter is given,
-                     details are printed for the given disk only.
-
-        %(c)sExamples%(e)s
-        Print information of all disks in the system
-            %(c)slist%(e)s
-
-        Print information for the disk sdd
-            %(c)slist sdd%(e)s
-        """ % BaseConsole.c_params
-        print s
+        snps = 'Print details of one or all disks in the appliance'
+        args = ('<disk_name>',)
+        params = {'<disk_name>': ('(optional)Print details of the given '
+                                  'disk only'), }
+        examples = {'Print details of all disks in the system': '',
+                    'Print details of the disk named sdd': 'sdd', }
+        self.print_help(snps, 'list', args, params, examples)
 
     @api_error
     def do_scan(self, args):
         url = ('%s/scan' % self.baseurl)
-        print "%(c)sScanning disks%(e)s" % BaseConsole.c_params
         api_call(url, data=None, calltype='post')
         self.do_list(None)
 
     def help_scan(self):
-        s = """
-        %(c)sScan the system for any new disks since the last scan.%(e)s
-
-        %(c)sExample:%(e)s
-        Scan the system for any new disks:
-            %(c)sscan%(e)s
-        """ % BaseConsole.c_params
-        print s
+        snps = 'Scan the system for new disks'
+        examples = {snps: '', }
+        self.print_help(snps, 'scan', examples=examples)
 
     @api_error
     def do_delete(self, args):
@@ -86,12 +69,11 @@ class DisksConsole(BaseConsole):
         print_disks_info(api_call(self.baseurl))
 
     def help_delete(self):
-        s = """
-        %(c)sDelete an offlined disk%(e)s
-
-        %(c)sdelete%(e)s %(u)sdisk_name%(e)s
-        """ % BaseConsole.c_params
-        print s
+        snps = 'Delete an offlined disk'
+        args = ('disk_name',)
+        params = {'disk_name': ('Name of the disk to be deleted. It must '
+                                'already be offlined'), }
+        self.print_help(snps, 'delete', args=args, params=params)
 
     @api_error
     def do_wipe(self, args):
@@ -100,10 +82,6 @@ class DisksConsole(BaseConsole):
         print_disks_info(api_call(self.baseurl))
 
     def help_wipe(self):
-        s = """
-        %(c)sWipe the partition table of a disk.%(e)s
-        This is required for used/partitioned disks to be usable by rockstor.
-
-        %(c)swipe%(e)s %(u)sdisk_name%(e)s
-        """ % BaseConsole.c_params
-        print s
+        snps = 'Wipe the partition table of a disk'
+        params = {'disk_name': "Name of the disk to be wiped of it's data", }
+        self.print_help(snps, 'wipe', args=('disk_name',), params=params)

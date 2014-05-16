@@ -92,7 +92,14 @@ class BaseConsole(cmd.Cmd):
         print('Documentation for %s' % args)
         return self.do_help(args)
 
-    def print_help(self, synopsis, cmd, args, params, examples):
+    def print_help(self, synopsis, cmd, args=[], params={}, examples={}):
+        """
+        @synopsys: One line synopsis of the command
+        @cmd: command name
+        @args: a list of arguments accepted by the command
+        @params: a dictionary of parameter(key) and description(value) pairs
+        @examples: a dictionary of example explanation(key) and invocation(value) pairs
+        """
         cmd_args = ['%s%s%s' % (BaseConsole.c_params['u'],
                                 a,
                                 BaseConsole.c_params['e'],)
@@ -104,19 +111,18 @@ class BaseConsole(cmd.Cmd):
                                          p, BaseConsole.c_params['e'],
                                          params[p])
                        for p in params]
-        e_list = ['\t%s\n\t%s%s%s %s' % (e, BaseConsole.c_params['c'], cmd,
-                                         BaseConsole.c_params['e'],
-                                         examples[e])
+        e_list = ['\t%s\n\t%s%s%s %s\n' % (e, BaseConsole.c_params['c'], cmd,
+                                           BaseConsole.c_params['e'],
+                                           examples[e])
                   for e in examples]
         cur_params = {'snps': synopsis,
                       'cmd': cmd_str,
                       'params': '\n'.join(params_list),
                       'examples': '\n'.join(e_list), }
         cur_params.update(BaseConsole.c_params)
-        print('\t%(c)s%(snps)s%(e)s\n\n'
-              '\t%(cmd)s\n\n'
-              '\tParameters\n'
-              '%(params)s\n\n'
-              '\tExamples\n'
-              '%(examples)s\n'
-              % cur_params)
+        print('\t%(c)s%(snps)s%(e)s\n\n\tInvocation\n\t%(cmd)s\n' %
+              cur_params)
+        if (len(params) > 0):
+            print('\tParameters\n%(params)s\n' % cur_params)
+        if (len(examples) > 0):
+            print('\tExamples\n%(examples)s' % cur_params)
