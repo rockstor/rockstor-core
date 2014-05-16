@@ -51,8 +51,8 @@ class RockConsole(BaseConsole):
         self.user = pwd.getpwuid(os.getuid())[0]
         self.greeting = self.user + '@' + greeting
         self.prompt = self.greeting + '> '
-        self.intro = ('%s\nWelcome to Rockstor. The Smart Open Storage Platform.' \
-                       % ASCII_LOGO)
+        self.intro = ('%s\nWelcome to Rockstor. The Smart Open Storage '
+                      'Platform.' % ASCII_LOGO)
         self.user_hist_file = os.path.expanduser('~') + '/.rcli.hist'
         try:
             readline.read_history_file(self.user_hist_file)
@@ -133,11 +133,11 @@ class RockConsole(BaseConsole):
             disks_console.cmdloop()
         else:
             disks_console.onecmd(args)
-    
+
     def help_disks(self):
         s = """
         %(c)sPerform operations on disks.%(e)s
-        
+
         Available commands:
         Go to disks subconsole:    %(c)sdisks%(e)s
         Display the list of disks: %(c)sdisks list%(e)s
@@ -254,7 +254,7 @@ def main():
     rc = RockConsole()
     if (len(sys.argv) > 1):
         if (sys.argv[1] == '-c'):
-            #command is called remotely using ssh
+            #  command is called remotely using ssh
             line = ' '.join(sys.argv[2:])
         else:
             line = ' '.join(sys.argv[1:])

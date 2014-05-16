@@ -21,11 +21,12 @@ from base_console import BaseConsole
 from share_detail_console import ShareDetailConsole
 from rest_util import (api_call, print_shares_info, print_share_info)
 
+
 class SharesConsole(BaseConsole):
 
     def __init__(self, greeting):
         BaseConsole.__init__(self)
-        self.greeting = greeting + ' Shares';
+        self.greeting = greeting + ' Shares'
         self.prompt = self.greeting + '> '
         self.url = ('%sshares' % BaseConsole.url)
 
@@ -39,10 +40,10 @@ class SharesConsole(BaseConsole):
     def help_list(self):
         print """
         %(c)sDisplay information about shares on the appliance%(e)s
-        
+
         %(c)sUsage%(e)s
         %(c)slist%(e)s [%(u)sshare_name%(e)s]
-        
+
         %(c)sExamples%(e)s
         Display details of all shares:     %(c)slist%(e)s
         Details of a single share: %(c)slist%(e)s myshare
@@ -82,37 +83,26 @@ class SharesConsole(BaseConsole):
                 error = 'Invalid size parameter: %s' % arg_fields[2]
                 return self.help_wrapper(error, 'add')
         size = num * multiplier
-        input_data = {
-		'sname': arg_fields[0],
-		'pool' : arg_fields[1],
-                      'size': size,}
-        #url = ('%s/%s' % (self.url, arg_fields[0]))
-        url = self.url
-        share_info = api_call(url, data=input_data, calltype='post')
+        input_data = {'sname': arg_fields[0],
+                      'pool': arg_fields[1],
+                      'size': size, }
+        share_info = api_call(self.url, data=input_data, calltype='post')
         print_share_info(share_info)
 
     def help_add(self):
-        print """
-        %(c)sCreate a new share%(e)s
-        
-        %(c)sUsage%(e)s
-        %(c)sadd%(e)s %(u)sshare_name%(e)s %(u)spool_name%(e)s %(u)ssize%(e)s
-
-        %(c)sParameters%(e)s
-        %(u)sshare_name%(e)s    Intended name of the share.
-        %(u)spool_name%(e)s     Pool in which to create the share. The pool should
-                      exist in order to create shares.
-        %(u)ssize%(e)s          Intended size of the share. An integer with
-                      an optional suffix(MB, GB, TB, PB). When no suffix is
-                      given, MB is presumed.
-
-        Examples:
-        To create a 20 GB share in a valid pool called pool0.
-        %(c)sadd%(e)s share1234 pool0 20GB
-
-        To create a 100 MB share in a valid pool called mypool.
-        %(c)sadd%(e)s share100 mypool 100
-        """ % BaseConsole.c_params
+        args = ('share_name', 'pool_name', 'size',)
+        params = {'share_name': 'Intended name of the share',
+                  'pool_name': ('Pool in which to create the share. It must '
+                                'already exist'),
+                  'size': ('Intended size of the share. An integer with '
+                           'optional suffix(MB, GB, TB, PB). When no suffix '
+                           'is provided, MB is presumed'), }
+        examples = {'Create a 20GB share in a pool called pool':
+                    'share1234 pool0 20GB',
+                    'Create a 100MB share in a pool called mypool':
+                    'share100 mypool 100', }
+        self.print_help('Create a new share', 'add', args=args, params=params,
+                        examples=examples)
 
     def do_resize(self, args):
         try:
@@ -121,40 +111,29 @@ class SharesConsole(BaseConsole):
             new_size = int(fields[1])
         except:
             return self.do_help(args)
-        input_data = {'size': new_size,}
+        input_data = {'size': new_size, }
         url = ('%s/%s' % (self.url, sname))
         share_info = api_call(url, data=input_data, calltype='put')
         print_share_info(share_info)
 
     def help_resize(self):
-        print """
-        %(c)sResize a share%(e)s
-        
-        %(c)sUsage%(e)s
-        %(c)sresize%(e)s %(u)sshare_name%(e)s %(u)snew_size%(e)s
-
-        %(c)sParameters%(e)s
-        %(u)sshare_name%(e)s    A valid share to resize
-        %(u)snew_size%(e)s      The new size of the share after resize.
-
-        %(c)sExamples%(e)s
-        Resize a share called myshare to 100GB
-        %(c)sresize%(e)s myshare 100GB
-        """ % BaseConsole.c_params
+        args = ('share_name', 'new_size',)
+        params = {'share_name': 'Name of the share to resize',
+                  'new_size': 'Desired new size of the share', }
+        examples = {'Resize a share called myshare to 100GB':
+                    'myshare 100GB', }
+        self.print_help('Resize a share', 'resize', args=args, params=params,
+                        examples=examples)
 
     def do_clone(self, args):
         fields = args.split()
-        input_data = {'name': fields[1],}
+        input_data = {'name': fields[1], }
         url = ('%s/%s/clone' % (self.url, fields[0]))
         print api_call(url, data=input_data, calltype='post')
 
     def help_clone(self):
-        print """
-        %(c)sClone a share%(e)s
-        
-        %(c)sUsage%(e)s
-        %(c)sclone%(e)s %(u)sshare_name%(e)s %(u)sclone_name%(e)s
-        """ % BaseConsole.c_params
+        args = ('share_name', 'clone_name',)
+        self.print_help('Clone a share', 'clone', args=args)
 
     def do_rollback(self, args):
         """
@@ -163,7 +142,7 @@ class SharesConsole(BaseConsole):
         rollback <share_name> <snap_name>
         """
         fields = args.split()
-        input_data = {'name': fields[1],}
+        input_data = {'name': fields[1], }
         url = ('%s/%s/rollback' % (self.url, fields[0]))
         print api_call(url, data=input_data, calltype='post')
 
@@ -176,7 +155,7 @@ class SharesConsole(BaseConsole):
         fields = args.split()
         input_data = {'owner': fields[1],
                       'group': fields[2],
-                      'perms': fields[3],}
+                      'perms': fields[3], }
         url = ('%s%s/acl' % (self.url, fields[0]))
         share_info = api_call(url, data=input_data, calltype='post')
         print_share_info(share_info)
@@ -209,5 +188,3 @@ class SharesConsole(BaseConsole):
             if (len(input_share) > 1):
                 return sd_console.onecmd(' '.join(input_share[1:]))
             return sd_console.cmdloop()
-
-

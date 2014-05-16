@@ -21,8 +21,7 @@ from share_nfs_console import ShareNFSConsole
 from share_smb_console import ShareSMBConsole
 from share_iscsi_console import ShareIscsiConsole
 from snapshot_console import SnapshotConsole
-from rest_util import (api_error, api_call)
-from storageadmin.exceptions import RockStorAPIException
+from rest_util import api_error
 
 
 class ShareDetailConsole(BaseConsole):
@@ -30,8 +29,8 @@ class ShareDetailConsole(BaseConsole):
     def __init__(self, greeting, share):
         BaseConsole.__init__(self)
         self.share = share
-        self.greeting = greeting + ' ' + self.share 
-        self.prompt = self.greeting + '> ';
+        self.greeting = greeting + ' ' + self.share
+        self.prompt = self.greeting + '> '
         self.url = ('%sshares/%s/' % (BaseConsole.url, self.share))
 
     @api_error
@@ -68,4 +67,3 @@ class ShareDetailConsole(BaseConsole):
         if (len(input_snap) > 0):
             return snap_console.onecmd(' '.join(input_snap))
         snap_console.cmdloop()
-

@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 from base_console import BaseConsole
-from rest_util import (api_call, print_export_info, print_share_info)
+from rest_util import (api_call, print_export_info)
 
 
 class ShareNFSConsole(BaseConsole):
@@ -55,19 +55,14 @@ class ShareNFSConsole(BaseConsole):
         print_export_info(export_info)
 
     def help_add_export(self):
-        print """
-        %(c)sAdd a new nfs export%(e)s
-        
-        %(c)sUsage%(e)s
-        %(c)sadd_export%(e)s -c%(u)shost_str%(e)s -m%(u)smod_choice%(e)s -s%(u)ssync_choice%(e)s
-        
-        %(c)sParameters%(e)s
-        -c%(u)shost_str%(e)s       Host string
-        -m%(u)smod_choice%(e)s     Specifies whether the share is writable 
-                         or read only. Can be either 'rw' or 'ro'
-        -s%(u)ssync_choice%(e)s    Specifies sync or async, can be either
-                         'sync' or 'async'
-        """ % BaseConsole.c_params
+        snps = 'Add a new nfs export'
+        args = ('-c host_str', '-m mod_choice', '-s sync_choice',)
+        params = {'host_str': 'Host string',
+                  'mod_choice': ("Specified whether the share is writeable "
+                                 "or readonly. Can be either 'rw' or 'ro'"),
+                  'sync_choice': ("Specifies sync or async, can be either "
+                                  "'sync' or 'async'"), }
+        self.print_help(snps, 'add_export', args=args, params=params)
 
     def do_disable_export(self, args):
         """
@@ -105,6 +100,6 @@ class ShareNFSConsole(BaseConsole):
         except Exception:
             self.do_help(args)
         url = ('%sshares/%s/%s/' % (BaseConsole.url, self.share, switch))
-        input_data = {'id': export_id,}
+        input_data = {'id': export_id, }
         export_info = api_call(url, data=input_data, calltype='put')
         print_export_info(export_info)
