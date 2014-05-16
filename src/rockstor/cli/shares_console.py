@@ -19,7 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from base_console import BaseConsole
 from share_detail_console import ShareDetailConsole
-from rest_util import (api_call, print_shares_info, print_share_info)
+from rest_util import (api_call, print_shares_info, print_share_info,
+                       api_error)
 
 
 class SharesConsole(BaseConsole):
@@ -30,25 +31,24 @@ class SharesConsole(BaseConsole):
         self.prompt = self.greeting + '> '
         self.url = ('%sshares' % BaseConsole.url)
 
+    @api_error
     def do_list(self, args):
         url = self.url
-        if (args is not None):
-            url = ('%s%s' % (self.url, args))
+        if (args):
+            url = ('%s/%s' % (self.url, args))
         shares_info = api_call(url)
         print_shares_info(shares_info)
 
     def help_list(self):
-        print """
-        %(c)sDisplay information about shares on the appliance%(e)s
+        snps = ('Display details of shares on the appliance')
+        args = ('<share_name>',)
+        params = {'<share_name>': '(Optional)Name of a share', }
+        examples = {'Display details of all shares': '',
+                    'Display details of a share called myshare':
+                    'myshare', }
+        self.print_help(snps, 'list', args, params, examples)
 
-        %(c)sUsage%(e)s
-        %(c)slist%(e)s [%(u)sshare_name%(e)s]
-
-        %(c)sExamples%(e)s
-        Display details of all shares:     %(c)slist%(e)s
-        Details of a single share: %(c)slist%(e)s myshare
-        """ % BaseConsole.c_params
-
+    @api_error
     def do_add(self, args):
         arg_fields = args.split()
         if (len(arg_fields) < 3):
@@ -104,6 +104,7 @@ class SharesConsole(BaseConsole):
         self.print_help('Create a new share', 'add', args=args, params=params,
                         examples=examples)
 
+    @api_error
     def do_resize(self, args):
         try:
             fields = args.split()
@@ -125,6 +126,7 @@ class SharesConsole(BaseConsole):
         self.print_help('Resize a share', 'resize', args=args, params=params,
                         examples=examples)
 
+    @api_error
     def do_clone(self, args):
         fields = args.split()
         input_data = {'name': fields[1], }
@@ -135,6 +137,7 @@ class SharesConsole(BaseConsole):
         args = ('share_name', 'clone_name',)
         self.print_help('Clone a share', 'clone', args=args)
 
+    @api_error
     def do_rollback(self, args):
         """
         Rollback a share to the state of one of it's snapshots.
@@ -146,6 +149,7 @@ class SharesConsole(BaseConsole):
         url = ('%s/%s/rollback' % (self.url, fields[0]))
         print api_call(url, data=input_data, calltype='post')
 
+    @api_error
     def do_change_op(self, args):
         """
         To change ownership and permissions
@@ -178,6 +182,7 @@ class SharesConsole(BaseConsole):
         """
         pass
 
+    @api_error
     def do_share(self, args):
         """
         To go to a share console: share share_name
