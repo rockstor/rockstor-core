@@ -43,16 +43,10 @@ class PoolsConsole(BaseConsole):
             print_pools_info(pools_info)
 
     def help_list(self):
-        print """
-        %(c)sDisplay information about pools on the appliance.%(e)s
-
-        Details of all pools:     %(c)slist%(e)s
-        Details of a single pool: %(c)slist%(e)s %(u)spool_name%(e)s
-
-        %(c)sParameters%(e)s
-        %(u)spool_name%(e)s    If this optional parameter is given,
-                     details are printed for the given pool only.
-        """ % BaseConsole.c_params
+        snps = "Display details of the appliance's pools"
+        params = {'<pool_name>': ('(optional)Print details of the given '
+                                  'pool only'), }
+        self.print_help(snps, 'list', args=('<pool_name>',), params=params)
 
     @api_error
     def do_add(self, args):
@@ -89,18 +83,10 @@ class PoolsConsole(BaseConsole):
         print "Pool %s deleted" % args[0]
 
     def help_delete(self):
-        print """
-        %(c)sDelete a pool.%(e)s
-
-        Delete a pool: %(c)sdelete%(e)s %(u)spool_name%(e)s
-
-        %(c)sParameters%(e)s
-        %(u)spool_name%(e)s    Name of a valid pool to delete.
-
-        %(c)sExample%(e)s
-        To delete a pool named pool0
-        %(c)sdelete%(e)s pool0
-        """ % BaseConsole.c_params
+        params = {'pool_name': 'Name of the pool to delete', }
+        examples = {'Delete a pool named pool0': 'pool0', }
+        self.print_help('Delete a pool', 'delete', args=('pool_name',),
+                        params=params, examples=examples)
 
     @api_error
     def do_console(self, args):
@@ -113,19 +99,11 @@ class PoolsConsole(BaseConsole):
             pd_console.onecmd(args)
 
     def help_console(self):
-        print """
-        %(c)sSubconsole for a single pool%(e)s
-
-        To go to a particular pool's exclusive subconsole: %(c)sconsole%(e)s %(u)spool_name%(e)s
-
-        %(c)sParameters%(e)s
-        %(u)spool_name%(e)s    Name of a valid pool.
-
-        %(c)sExample%(e)s
-        To perform operations on a pool called mypool inside it's exclusive
-        subconsole
-        %(c)sconsole%(e)s mypool
-        """ % BaseConsole.c_params
+        snps = 'Subconsole of a single pool'
+        args = ('pool_name',)
+        params = {'pool_name': 'Name of the pool', }
+        examples = {'Go to the console of a pool called mypool': 'mypool', }
+        self.print_help(snps, 'console', args, params, examples)
 
     @api_error
     def do_scrub(self, args):
@@ -136,15 +114,10 @@ class PoolsConsole(BaseConsole):
         print scrub_info
 
     def help_scrub(self):
-        print """
-        %(c)sScrub a pool%(e)s
-
-        %(c)sUsage%(e)s
-        %(c)sscrub%(e)s %(u)spool_name%(e)s
-
-        %(c)sExample%(e)s
-        %(c)sscrub%(e)s mypool
-        """ % BaseConsole.c_params
+        params = {'pool_name': 'Name of the pool to scrub', }
+        examples = {'Scrub a pool called mypool': 'mypool', }
+        self.print_help('Scrub a pool', 'scrub', ('pool_name',), params,
+                        examples)
 
     @api_error
     def do_scrubstatus(self, args):
@@ -155,12 +128,8 @@ class PoolsConsole(BaseConsole):
         print_scrub_status(args, scrub_info)
 
     def help_scrubstatus(self):
-        print """
-        %(c)sGet scrub status for a pool%(e)s
-
-        %(c)sUsage%(e)s
-        %(c)sscrub_status%(e)s %(u)spool_name%(e)s
-
-        %(c)sExample%(e)s
-        %(c)sscrub_status%(e)s mypool
-        """ % BaseConsole.c_params
+        snps = 'Print scrub status of a pool'
+        params = {'pool_name': 'Name of the pool', }
+        examples = {'Print scrub status of a pool mypool': 'mypool', }
+        self.print_help(snps, 'scrubstatus', args=('pool_name',),
+                        params=params, examples=examples)
