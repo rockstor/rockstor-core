@@ -317,11 +317,17 @@ def scrub_status(pool_name, pool_device):
         mult_factor = 1
         if (fields[3][-2:] == 'MB'):
             mult_factor = 1024
+            kb_scrubbed = fields[3][:-2]
+        if (fields[3][-3:] == 'MiB'):
+            mult_factor = 1024
+            kb_scrubbed = fields[3][:-3]
         elif (fields[3][-2:] == 'GB'):
             mult_factor = 1024 ** 2
+            kb_scrubbed = fields[3][:-2]
         elif (fields[3][-2:] == 'TB'):
             mult_factor = 1024 ** 3
-        stats['kb_scrubbed'] = int(float(fields[3][:-2]) * mult_factor)
+            kb_scrubbed = fields[3][:-2]
+        stats['kb_scrubbed'] = int(float(kb_scrubbed) * mult_factor)
         stats['status'] = 'finished'
         return stats
     return {'status': 'unknown',}

@@ -19,50 +19,37 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from base_console import BaseConsole
 from share_detail_console import ShareDetailConsole
-from rest_util import (api_call, print_share_info)
+from rest_util import (api_call, print_shares_info, print_share_info,
+                       api_error)
+
 
 class SharesConsole(BaseConsole):
 
-    def __init__(self, prompt):
+    def __init__(self, greeting):
         BaseConsole.__init__(self)
-        self.pprompt = prompt
-        self.prompt = ('%s Shares>' % self.pprompt)
+        self.greeting = greeting + ' Shares'
+        self.prompt = self.greeting + '> '
         self.url = ('%sshares' % BaseConsole.url)
 
+    @api_error
     def do_list(self, args):
-        """
-        List brief information about shares.
-
-        Details of all shares:     list
-        Details of a single share: list <share_name>
-        """
         url = self.url
-        if (args is not None):
-            url = ('%s%s' % (self.url, args))
-        share_info = api_call(url)
-        print_share_info(share_info)
+        if (args):
+            url = ('%s/%s' % (self.url, args))
+        shares_info = api_call(url)
+        print_shares_info(shares_info)
 
+    def help_list(self):
+        snps = ('Display details of shares on the appliance')
+        args = ('<share_name>',)
+        params = {'<share_name>': '(Optional)Name of a share', }
+        examples = {'Display details of all shares': '',
+                    'Display details of a share called myshare':
+                    'myshare', }
+        self.print_help(snps, 'list', args, params, examples)
+
+    @api_error
     def do_add(self, args):
-        """
-        Create a new share.
-
-        Create a new share: add share_name pool_name size
-
-        Parameters:
-        share_name:    Intended name of the share.
-        pool_name:     Pool in which to create the share. The pool should
-                       exist in order to create shares.
-        size:          Intened size of the share. An integer is expected with
-                       an optional suffix(MB, GB, TB, PB). When no suffix is
-                       given, MB is presumed.
-
-        Examples:
-        To create a 20 GB share in a valid pool called pool0.
-            add share1234 pool0 20GB
-
-        To create a 100 MB share in a valid pool called mypool.
-            add share100 mypool 100
-        """
         arg_fields = args.split()
         if (len(arg_fields) < 3):
             error = ('3 arguments expected. %d given' % len(arg_fields))
@@ -96,48 +83,61 @@ class SharesConsole(BaseConsole):
                 error = 'Invalid size parameter: %s' % arg_fields[2]
                 return self.help_wrapper(error, 'add')
         size = num * multiplier
-        input_data = {'pool' : arg_fields[1],
-                      'size': size,}
-        url = ('%s%s' % (self.url, arg_fields[0]))
-        share_info = api_call(url, data=input_data, calltype='post')
+        input_data = {'sname': arg_fields[0],
+                      'pool': arg_fields[1],
+                      'size': size, }
+        share_info = api_call(self.url, data=input_data, calltype='post')
         print_share_info(share_info)
 
+    def help_add(self):
+        args = ('share_name', 'pool_name', 'size',)
+        params = {'share_name': 'Intended name of the share',
+                  'pool_name': ('Pool in which to create the share. It must '
+                                'already exist'),
+                  'size': ('Intended size of the share. An integer with '
+                           'optional suffix(MB, GB, TB, PB). When no suffix '
+                           'is provided, MB is presumed'), }
+        examples = {'Create a 20GB share in a pool called pool':
+                    'share1234 pool0 20GB',
+                    'Create a 100MB share in a pool called mypool':
+                    'share100 mypool 100', }
+        self.print_help('Create a new share', 'add', args=args, params=params,
+                        examples=examples)
+
+    @api_error
     def do_resize(self, args):
-        """
-        Resize a valid share.
-
-        Resize a valid share: resize share_name new_size
-
-        Parameters:
-        share_name: A valid share to resize
-        new_size:   The new size of the share after resize.
-
-        Examples:
-        Resize a share called myshare to 100GB
-            resize myshare 100GB
-        """
         try:
             fields = args.split()
             sname = fields[0]
             new_size = int(fields[1])
         except:
             return self.do_help(args)
-        input_data = {'size': new_size,}
+        input_data = {'size': new_size, }
         url = ('%s/%s' % (self.url, sname))
         share_info = api_call(url, data=input_data, calltype='put')
         print_share_info(share_info)
 
-    def do_clone(self, args):
-        """
-        Clone a share.
+    def help_resize(self):
+        args = ('share_name', 'new_size',)
+        params = {'share_name': 'Name of the share to resize',
+                  'new_size': 'Desired new size of the share', }
+        examples = {'Resize a share called myshare to 100GB':
+                    'myshare 100GB', }
+        self.print_help('Resize a share', 'resize', args=args, params=params,
+                        examples=examples)
 
-        clone <share_name> <clone_name>
-        """
+    @api_error
+    def do_clone(self, args):
         fields = args.split()
-        input_data = {'name': fields[1],}
+        input_data = {'name': fields[1], }
         url = ('%s/%s/clone' % (self.url, fields[0]))
         print api_call(url, data=input_data, calltype='post')
 
+    def help_clone(self):
+        args = ('share_name', 'clone_name',)
+        self.print_help('Clone a share', 'clone', args=args)
+
+    @api_error
     def do_rollback(self, args):
         """
         Rollback a share to the state of one of it's snapshots.
@@ -145,10 +145,11 @@ class SharesConsole(BaseConsole):
         rollback <share_name> <snap_name>
         """
         fields = args.split()
-        input_data = {'name': fields[1],}
+        input_data = {'name': fields[1], }
         url = ('%s/%s/rollback' % (self.url, fields[0]))
         print api_call(url, data=input_data, calltype='post')
 
+    @api_error
     def do_change_op(self, args):
         """
         To change ownership and permissions
@@ -158,7 +159,7 @@ class SharesConsole(BaseConsole):
         fields = args.split()
         input_data = {'owner': fields[1],
                       'group': fields[2],
-                      'perms': fields[3],}
+                      'perms': fields[3], }
         url = ('%s%s/acl' % (self.url, fields[0]))
         share_info = api_call(url, data=input_data, calltype='post')
         print_share_info(share_info)
@@ -181,15 +182,14 @@ class SharesConsole(BaseConsole):
         """
         pass
 
+    @api_error
     def do_share(self, args):
         """
         To go to a share console: share share_name
         """
         input_share = args.split()
         if (len(input_share) > 0):
-            sd_console = ShareDetailConsole(self.prompt, input_share[0])
+            sd_console = ShareDetailConsole(self.greeting, input_share[0])
             if (len(input_share) > 1):
                 return sd_console.onecmd(' '.join(input_share[1:]))
             return sd_console.cmdloop()
-
-

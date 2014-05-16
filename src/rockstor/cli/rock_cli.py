@@ -15,7 +15,7 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-
+import pwd
 import cmd
 import sys
 import os
@@ -47,11 +47,12 @@ ASCII_LOGO = """
 
 class RockConsole(BaseConsole):
 
-    def __init__(self, greeting='RockStor'):
-        self.greeting = greeting
-        self.prompt = greeting + '>'
-        self.intro = ('%s\nWelcome to Rockstor. Smart Powerful Open Storage '
-                      'Cloud Builders' % ASCII_LOGO)
+    def __init__(self, greeting='Rockstor'):
+        self.user = pwd.getpwuid(os.getuid())[0]
+        self.greeting = self.user + '@' + greeting
+        self.prompt = self.greeting + '> '
+        self.intro = ('%s\nWelcome to Rockstor. The Smart Open Storage '
+                      'Platform.' % ASCII_LOGO)
         self.user_hist_file = os.path.expanduser('~') + '/.rcli.hist'
         try:
             readline.read_history_file(self.user_hist_file)
@@ -127,18 +128,22 @@ class RockConsole(BaseConsole):
             pools_console.onecmd(args)
 
     def do_disks(self, args):
-        """
-        Operations on disks can be done with this command.
-
-        Go to disks subconsole:    disks
-        Dispaly the list of disks: disks list
-        Scan for new disks:        disks scan
-        """
         disks_console = DisksConsole(self.greeting)
         if (len(args) == 0):
             disks_console.cmdloop()
         else:
             disks_console.onecmd(args)
+
+    def help_disks(self):
+        s = """
+        %(c)sPerform operations on disks.%(e)s
+
+        Available commands:
+        Go to disks subconsole:    %(c)sdisks%(e)s
+        Display the list of disks: %(c)sdisks list%(e)s
+        Scan for new disks:        %(c)sdisks scan%(e)s
+        """ % BaseConsole.c_params
+        print s
 
     def do_services(self, args):
         """
@@ -249,7 +254,7 @@ def main():
     rc = RockConsole()
     if (len(sys.argv) > 1):
         if (sys.argv[1] == '-c'):
-            #command is called remotely using ssh
+            #  command is called remotely using ssh
             line = ' '.join(sys.argv[2:])
         else:
             line = ' '.join(sys.argv[1:])
