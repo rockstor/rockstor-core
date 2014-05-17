@@ -20,7 +20,11 @@
 </script>
 
 
+<% if (nfsExportGroup.get('id')>0) { %>
 <h3>Edit NFS export</h3>
+<%} else {%>
+<h3>Add NFS export</h3>
+<%}%>
 <div class="row-fluid">
   <div class="span8">
     <label class="control-label"><span class="required">*</span> indicates required fields</label>
