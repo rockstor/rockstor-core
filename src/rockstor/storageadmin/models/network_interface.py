@@ -17,7 +17,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.db import models
-from django.contrib.auth.models import User
 
 
 class NetworkInterface(models.Model):
@@ -30,6 +29,9 @@ class NetworkInterface(models.Model):
     netmask = models.CharField(max_length=100, null=True)
     ipaddr = models.CharField(max_length=100, null=True)
     itype = models.CharField(max_length=100, default='io')
+    gateway = models.CharField(max_length=100, null=True)
+    dns_servers = models.CharField(max_length=1024, null=True)
+    domain = models.CharField(max_length=1024, null=True)
 
     class Meta:
         app_label = 'storageadmin'
