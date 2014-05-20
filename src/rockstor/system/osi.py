@@ -271,6 +271,7 @@ def hostid():
     """
     return run_command([HOSTID])
 
+
 def restart_network():
     """
     restart network service
@@ -323,8 +324,10 @@ def get_ip_addr(interface):
         return line2.split()[1]
     return '0.0.0.0'
 
+
 def config_network_device(name, mac, boot_proto='dhcp', ipaddr=None,
-                          netmask=None, on_boot='yes', gateway=None):
+                          netmask=None, on_boot='yes', gateway=None,
+                          dns_servers=[], domain=None):
     config_script = ('/etc/sysconfig/network-scripts/ifcfg-%s' % name)
     with open(config_script, 'w') as cfo:
         cfo.write('NAME="%s"\n' % name)
@@ -335,17 +338,24 @@ def config_network_device(name, mac, boot_proto='dhcp', ipaddr=None,
         if (boot_proto == 'static'):
             cfo.write('IPADDR0="%s"\n' % ipaddr)
             cfo.write('NETMASK="%s"\n' % netmask)
-            if (gateway is not None):
-                cfo.write('GATEWAY0="%s"\n' % gateway)
+            cfo.write('GATEWAY0="%s"\n' % gateway)
+            cur = 1
+            for ds in dns_servers:
+                cfo.write('DNS%d="%s"\n' % (cur, ds))
+                cur = cur + 1
+            cfo.write('DOMAIN=%s\n' % domain)
+
 
 def char_strip(line, char='"'):
     if (line[0] == char and line[-1] == char):
         return line[1:-1]
     return line
 
+
 def parse_ifcfg(config_file, config_d):
     try:
         with open(config_file) as cfo:
+            dns_servers = []
             for l in cfo.readlines():
                 if (re.match('BOOTPROTO', l) is not None):
                     config_d['bootproto'] = char_strip(l.strip().split('=')[1])
@@ -359,12 +369,21 @@ def parse_ifcfg(config_file, config_d):
                     config_d['network'] = char_strip(l.strip().split('=')[1])
                 elif (re.match('NAME', l) is not None):
                     config_d['alias'] = char_strip(l.strip().split('=')[1])
+                elif (re.match('GATEWAY', l) is not None):
+                    config_d['gateway'] = char_strip(l.strip().split('=')[1])
+                elif (re.match('DNS', l) is not None):
+                    dns_servers.append(char_strip(l.strip().split('=')[1]))
+                elif (re.match('DOMAIN', l) is not None):
+                    config_d['domain'] = char_strip(l.strip().split('=')[1])
+            if (len(dns_servers) > 0):
+                config_d['dns_servers'] = ','.join(dns_servers)
         if (config_d['bootproto'] == 'dhcp'):
             config_d['ipaddr'] = get_ip_addr(config_d['name'])
     except:
         pass
     finally:
         return config_d
+
 
 def get_net_config_fedora(devices):
 
@@ -377,7 +396,10 @@ def get_net_config_fedora(devices):
                   'onboot': None,
                   'network': None,
                   'netmask': None,
-                  'ipaddr': None,}
+                  'ipaddr': None,
+                  'gateway': None,
+                  'dns_servers': None,
+                  'domain': None, }
         config['mac'] = get_mac_addr(d)
         for f in os.listdir(script_dir):
             if (re.match('ifcfg-', f) is not None and
@@ -386,6 +408,7 @@ def get_net_config_fedora(devices):
                 config = parse_ifcfg(full_path, config)
         config_list.append(config)
     return config_list
+
 
 def get_net_config(device_name):
     config = {'name': device_name,
