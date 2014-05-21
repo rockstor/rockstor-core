@@ -21,13 +21,12 @@ from rest_framework.response import Response
 from storageadmin.models import (NetworkInterface, Appliance)
 from storageadmin.util import handle_exception
 from storageadmin.serializers import NetworkInterfaceSerializer
-from system.osi import (get_mac_addr, config_network_device, restart_network,
-                        network_devices, get_net_config, get_net_config_fedora,
-                        restart_network_interface, get_default_interface,
-                        update_samba_discovery, update_issue)
+from system.osi import (config_network_device, network_devices,
+                        get_net_config_fedora, restart_network_interface,
+                        get_default_interface, update_samba_discovery,
+                        update_issue)
 from storageadmin.exceptions import RockStorAPIException
 import rest_framework_custom as rfc
-import socket
 from django.conf import settings
 
 import logging
@@ -52,15 +51,19 @@ class NetworkView(rfc.GenericView):
         config_list = get_net_config_fedora(network_devices())
         for dconfig in config_list:
             ni = None
-            if (NetworkInterface.objects.filter(name=dconfig['name']).exists()):
+            if (NetworkInterface.objects.filter(
+                    name=dconfig['name']).exists()):
                 ni = NetworkInterface.objects.get(name=dconfig['name'])
                 ni.alias = dconfig['alias']
                 ni.mac = dconfig['mac']
                 ni.boot_proto = dconfig['bootproto']
-                ni.onboot=dconfig['onboot']
-                ni.network=dconfig['network']
-                ni.netmask=dconfig['netmask']
-                ni.ipaddr=dconfig['ipaddr']
+                ni.onboot = dconfig['onboot']
+                ni.network = dconfig['network']
+                ni.netmask = dconfig['netmask']
+                ni.ipaddr = dconfig['ipaddr']
+                ni.gateway = dconfig['gateway']
+                ni.dns_servers = dconfig['dns_servers']
+                ni.domain = dconfig['domain']
             else:
                 ni = NetworkInterface(name=dconfig['name'],
                                       alias=dconfig['alias'],
@@ -69,7 +72,10 @@ class NetworkView(rfc.GenericView):
                                       onboot=dconfig['onboot'],
                                       network=dconfig['network'],
                                       netmask=dconfig['netmask'],
-                                      ipaddr=dconfig['ipaddr'])
+                                      ipaddr=dconfig['ipaddr'],
+                                      gateway=dconfig['gateway'],
+                                      dns_servers=dconfig['dns_servers'],
+                                      domain=dconfig['domain'])
             if (default_if == ni.name):
                 ni.itype = 'management'
                 update_samba_discovery(dconfig['ipaddr'],
@@ -115,8 +121,13 @@ class NetworkView(rfc.GenericView):
                                  'interface: %s' % (ni.ipaddr, i.name))
                         handle_exception(Exception(e_msg), request)
                 netmask = request.DATA['netmask']
+                gateway = request.DATA['gateway']
+                dns_servers = request.DATA['dns_servers'].split(',')
+                domain = request.DATA['domain']
                 config_network_device(ni.alias, ni.mac, boot_proto='static',
-                                      ipaddr=ipaddr, netmask=netmask)
+                                      ipaddr=ipaddr, netmask=netmask,
+                                      gateway=gateway,
+                                      dns_servers=dns_servers, domain=domain)
             else:
                 e_msg = ('Boot protocol must be dhcp or static. not: %s' %
                          boot_proto)
@@ -127,6 +138,9 @@ class NetworkView(rfc.GenericView):
             ni.netmask = dconfig['netmask']
             ni.ipaddr = dconfig['ipaddr']
             ni.itype = itype
+            ni.gateway = dconfig['gateway']
+            ni.dns_servers = dconfig['dns_servers']
+            ni.domain = dconfig['domain']
             ni.save()
             if (itype == 'management'):
                 a = Appliance.objects.get(current_appliance=True)
@@ -152,4 +166,3 @@ class NetworkView(rfc.GenericView):
             return Response()
         except Exception, e:
             handle_exception(e, request)
-

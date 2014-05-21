@@ -20,6 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from base_console import BaseConsole
 from rest_util import (api_error, api_call)
 
+
 class NetworkConsole(BaseConsole):
 
     def __init__(self, prompt):
@@ -55,22 +56,25 @@ class NetworkConsole(BaseConsole):
         config <interface> -d
 
         to configure static ip:
-        config <interface> -s <ip_addr> <netmask>
+        config <interface> -s <ip_addr> <netmask> <gateway> <dns_servers> <domain>
         """
         fields = args.split()
         if (len(fields) < 2):
             return self.do_help(args)
-        url =('%s/%s' % (self.baseurl, fields[0]))
+        url = ('%s/%s' % (self.baseurl, fields[0]))
         if (fields[1] == '-d'):
-            print api_call(url, data={'boot_protocol': 'dhcp',},
+            print api_call(url, data={'boot_protocol': 'dhcp', },
                            calltype='put')
         elif (fields[1] == '-s'):
-            if (len(fields) < 4):
+            if (len(fields) < 7):
                 return self.do_help(args[:2])
             input_data = {'boot_protocol': 'static',
                           'ipaddr': fields[2],
-                          'netmask': fields[3],}
+                          'netmask': fields[3],
+                          'gateway': fields[4],
+                          'dns_servers': fields[5],
+                          'domain': fields[6],
+                          'itype': 'management', }
             print api_call(url, data=input_data, calltype='put')
         else:
             return self.do_help(args)
-

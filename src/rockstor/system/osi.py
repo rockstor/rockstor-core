@@ -49,8 +49,6 @@ AT = '/usr/bin/at'
 DEFAULT_MNT_DIR = '/mnt2/'
 RPM = '/usr/bin/rpm'
 
-import logging
-logger = logging.getLogger(__name__)
 
 class Disk():
 
@@ -66,6 +64,7 @@ class Disk():
                 'free': self.free,
                 'parted': self.parted, }
 
+
 def inplace_replace(of, nf, regex, nl):
     with open(of) as afo, open(nf, 'w') as tfo:
         replaced = [False,] * len(regex)
@@ -80,9 +79,9 @@ def inplace_replace(of, nf, regex, nl):
             if (not ireplace):
                 tfo.write(l)
         for i in range(0, len(replaced)):
-            logger.info('regex: %s nl: %s replaced: %s' % (nf, regex, nl))
             if (not replaced[i]):
                 tfo.write(nl[i])
+
 
 def run_command(cmd, shell=False, stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE, throw=True):
@@ -95,6 +94,7 @@ def run_command(cmd, shell=False, stdout=subprocess.PIPE,
         raise CommandException(out, err, rc)
     return (out, err, rc)
 
+
 def wipe_disk(disk):
     """
     removes partition table on a disk by dd'ing first 512 bytes
@@ -102,6 +102,7 @@ def wipe_disk(disk):
     disk = ('/dev/%s' % disk)
     run_command([DD, 'if=/dev/zero', 'of=%s' % disk, 'bs=512', 'count=1'])
     return run_command([SFDISK, '-R', disk])
+
 
 def root_disk():
     """
@@ -118,6 +119,7 @@ def root_disk():
            'root filesystem. Please re-install Rockstor properly.')
     raise NonBTRFSRootException(msg)
 
+
 def scan_disks(min_size):
     """
     min_size is in KB, so it is also number of blocks. Discard any disk with
@@ -132,7 +134,8 @@ def scan_disks(min_size):
                 continue
             if (re.match('sd[a-z]+$|xvd[a-z]+$', disk_fields[3]) is not None):
                 name = disk_fields[3]
-                num_blocks = int(disk_fields[2]) # each block is 1KB
+                #  each block is 1KB.
+                num_blocks = int(disk_fields[2])
                 if (num_blocks < min_size):
                     continue
                 disk = Disk(name=name, size=num_blocks, free=num_blocks)
@@ -147,15 +150,19 @@ def scan_disks(min_size):
                         disks[name]['parted'] = True
         return disks
 
+
 def uptime():
     with open('/proc/uptime') as ufo:
         return int(float(ufo.readline().split()[0]))
 
+
 def create_tmp_dir(dirname):
     return run_command([MKDIR, '-p', dirname])
 
+
 def rm_tmp_dir(dirname):
     return run_command([RMDIR, dirname])
+
 
 def nfs4_mount_teardown(export_pt):
     """
@@ -172,12 +179,14 @@ def nfs4_mount_teardown(export_pt):
         return run_command([RMDIR, export_pt])
     return True
 
+
 def bind_mount(mnt_pt, export_pt):
     if (not is_mounted(export_pt)):
         run_command([MKDIR, '-p', export_pt])
         run_command([CHMOD, '-R', '777', export_pt])
         return run_command([MOUNT, '--bind', mnt_pt, export_pt])
     return True
+
 
 def refresh_nfs_exports(exports):
     """
@@ -194,7 +203,7 @@ def refresh_nfs_exports(exports):
         shares = []
         for e in exports.keys():
             if (len(exports[e]) == 0):
-                #do share tear down at the end, only snaps here
+                #  do share tear down at the end, only snaps here
                 if (len(e.split('/')) == 4):
                     nfs4_mount_teardown(e)
                 else:
@@ -219,6 +228,7 @@ def refresh_nfs_exports(exports):
             nfs4_mount_teardown(s)
     return run_command([EXPORTFS, '-ra'])
 
+
 def rockstor_smb_config(fo, exports):
     fo.write('####BEGIN: Rockstor SAMBA CONFIG####\n')
     for e in exports:
@@ -231,6 +241,7 @@ def rockstor_smb_config(fo, exports):
         fo.write('    guest ok = %s\n' % e.guest_ok)
         fo.write('    admin users = %s\n' % e.admin_users)
     fo.write('####END: Rockstor SAMBA CONFIG####\n')
+
 
 def refresh_smb_config(exports):
     fh, npath = mkstemp()
@@ -248,12 +259,14 @@ def refresh_smb_config(exports):
             rockstor_smb_config(tfo, exports)
     shutil.move(npath, SMB_CONFIG)
 
+
 def restart_samba():
     """
     call whenever config is updated
     """
     smbd_cmd = [SYSTEMCTL, 'restart', 'smb']
     return run_command(smbd_cmd)
+
 
 def update_samba_discovery(ipaddr, clean_config):
     fo, npath = mkstemp()
@@ -263,13 +276,15 @@ def update_samba_discovery(ipaddr, clean_config):
     inplace_replace(clean_config, npath, (regex,), nl)
     shutil.copy(npath, dest_file)
     run_command([CHMOD, '755', dest_file])
-    return run_command([SYSTEMCTL, 'restart', 'avahi-daemon',])
+    return run_command([SYSTEMCTL, 'restart', 'avahi-daemon', ])
+
 
 def hostid():
     """
     return the hostid of the machine
     """
     return run_command([HOSTID])
+
 
 def restart_network():
     """
@@ -278,12 +293,14 @@ def restart_network():
     cmd = [SERVICE, 'network', 'restart']
     return run_command(cmd)
 
+
 def restart_network_interface(iname):
     """
     ifdown followed by ifup of a ethernet interface
     """
     run_command([IFDOWN, iname])
     return run_command([IFUP, iname])
+
 
 def network_devices():
     """
@@ -294,6 +311,7 @@ def network_devices():
         devices.remove('lo')
     return devices
 
+
 def get_mac_addr(interface):
     """
     return the mac address of the given interface
@@ -301,6 +319,7 @@ def get_mac_addr(interface):
     ifile = ('/sys/class/net/%s/address' % interface)
     with open(ifile) as ifo:
         return ifo.readline().strip()
+
 
 def get_default_interface():
     """
@@ -313,6 +332,7 @@ def get_default_interface():
             return fields[-1]
     return None
 
+
 def get_ip_addr(interface):
     """
     useful when the interface gets ip from a dhcp server
@@ -323,8 +343,10 @@ def get_ip_addr(interface):
         return line2.split()[1]
     return '0.0.0.0'
 
+
 def config_network_device(name, mac, boot_proto='dhcp', ipaddr=None,
-                          netmask=None, on_boot='yes', gateway=None):
+                          netmask=None, on_boot='yes', gateway=None,
+                          dns_servers=[], domain=None):
     config_script = ('/etc/sysconfig/network-scripts/ifcfg-%s' % name)
     with open(config_script, 'w') as cfo:
         cfo.write('NAME="%s"\n' % name)
@@ -335,17 +357,24 @@ def config_network_device(name, mac, boot_proto='dhcp', ipaddr=None,
         if (boot_proto == 'static'):
             cfo.write('IPADDR0="%s"\n' % ipaddr)
             cfo.write('NETMASK="%s"\n' % netmask)
-            if (gateway is not None):
-                cfo.write('GATEWAY0="%s"\n' % gateway)
+            cfo.write('GATEWAY0="%s"\n' % gateway)
+            cur = 1
+            for ds in dns_servers:
+                cfo.write('DNS%d="%s"\n' % (cur, ds))
+                cur = cur + 1
+            cfo.write('DOMAIN=%s\n' % domain)
+
 
 def char_strip(line, char='"'):
     if (line[0] == char and line[-1] == char):
         return line[1:-1]
     return line
 
+
 def parse_ifcfg(config_file, config_d):
     try:
         with open(config_file) as cfo:
+            dns_servers = []
             for l in cfo.readlines():
                 if (re.match('BOOTPROTO', l) is not None):
                     config_d['bootproto'] = char_strip(l.strip().split('=')[1])
@@ -359,12 +388,21 @@ def parse_ifcfg(config_file, config_d):
                     config_d['network'] = char_strip(l.strip().split('=')[1])
                 elif (re.match('NAME', l) is not None):
                     config_d['alias'] = char_strip(l.strip().split('=')[1])
+                elif (re.match('GATEWAY', l) is not None):
+                    config_d['gateway'] = char_strip(l.strip().split('=')[1])
+                elif (re.match('DNS', l) is not None):
+                    dns_servers.append(char_strip(l.strip().split('=')[1]))
+                elif (re.match('DOMAIN', l) is not None):
+                    config_d['domain'] = char_strip(l.strip().split('=')[1])
+            if (len(dns_servers) > 0):
+                config_d['dns_servers'] = ','.join(dns_servers)
         if (config_d['bootproto'] == 'dhcp'):
             config_d['ipaddr'] = get_ip_addr(config_d['name'])
     except:
         pass
     finally:
         return config_d
+
 
 def get_net_config_fedora(devices):
 
@@ -377,7 +415,10 @@ def get_net_config_fedora(devices):
                   'onboot': None,
                   'network': None,
                   'netmask': None,
-                  'ipaddr': None,}
+                  'ipaddr': None,
+                  'gateway': None,
+                  'dns_servers': None,
+                  'domain': None, }
         config['mac'] = get_mac_addr(d)
         for f in os.listdir(script_dir):
             if (re.match('ifcfg-', f) is not None and
@@ -387,13 +428,14 @@ def get_net_config_fedora(devices):
         config_list.append(config)
     return config_list
 
+
 def get_net_config(device_name):
     config = {'name': device_name,
               'bootproto': None,
               'onboot': None,
               'network': None,
               'netmask': None,
-              'ipaddr': None,}
+              'ipaddr': None, }
     config['mac'] = get_mac_addr(device_name)
     try:
         config_script = ('/etc/sysconfig/network-scripts/ifcfg-%s' %
@@ -417,16 +459,19 @@ def get_net_config(device_name):
     finally:
         return config
 
+
 def set_networking(hostname, default_gw):
     with open('/etc/sysconfig/network', 'w') as nfo:
         nfo.write('NETWORKING=yes\n')
         nfo.write('HOSTNAME=%s\n' % hostname)
         nfo.write('GATEWAY=%s\n' % default_gw)
 
+
 def set_nameservers(servers):
     with open('/etc/resolv.conf', 'w') as rfo:
         for s in servers:
             rfo.write('nameserver %s\n' % s)
+
 
 def update_issue(ipaddr):
     shutil.copyfile('/etc/issue.rockstor', '/etc/issue')
@@ -435,6 +480,7 @@ def update_issue(ipaddr):
     with open('/etc/issue', 'a') as ifo:
         ifo.write(msg)
 
+
 def current_version():
     out, err, rc = run_command([RPM, '-qi', 'rockstor'], throw=False)
     if (rc != 0):
@@ -442,14 +488,14 @@ def current_version():
     return ('%s-%s' % (out[1].split(':')[-1].strip(),
                        out[2].split(':')[-1].strip()))
 
-    return
+
 def update_check():
     out, err, rc = run_command([YUM, 'update', 'rockstor', '--changelog',
                                 '--assumeno'], throw=False)
     if (rc == 1):
-        #parse the output for the following information
-        #1. what's the latest update version?
-        #2. what are the updates?
+        #  parse the output for the following information
+        #  1. what's the latest update version?
+        #  2. what are the updates?
         updates = []
         cur_version = None
         version = None
@@ -471,10 +517,11 @@ def update_check():
         if (version is None):
             version = cur_version
         return (cur_version, version, updates)
-    #no update available
+    #  no update available
     out, err, rc = run_command([YUM, 'info', 'installed', 'rockstor'])
     version = ('%s-%s' % (out[4].split(': ')[1], out[5].split(': ')[1]))
     return (version, version, [])
+
 
 def update_run():
     fh, npath = mkstemp()
@@ -486,6 +533,7 @@ def update_run():
     out, err, rc = run_command([AT, '-f', npath, 'now + 1 minutes'])
     time.sleep(120)
     return out, err, rc
+
 
 def sethostname(ip, hostname):
     """
@@ -503,12 +551,14 @@ def sethostname(ip, hostname):
     with open('/etc/hostname', 'w') as hnfo:
         hnfo.write('%s\n' % hostname)
 
+
 def is_share_mounted(sname, mnt_prefix=DEFAULT_MNT_DIR):
     mnt_pt = mnt_prefix + sname
     return is_mounted(mnt_pt)
 
+
 def is_mounted(mnt_pt):
-    with open ('/proc/mounts') as pfo:
+    with open('/proc/mounts') as pfo:
         for line in pfo.readlines():
             if (re.search(' ' + mnt_pt + ' ', line) is not None):
                 return True
