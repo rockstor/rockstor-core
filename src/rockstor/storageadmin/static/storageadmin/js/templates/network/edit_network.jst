@@ -25,7 +25,7 @@
   <div class="span8">
     <label class="control-label"><span class="required">*</span> indicates required fields</label>
     <div class="form-box">
-      <form id="edit-network-form" name="aform">
+      <form class="form-horizontal" id="edit-network-form" name="aform">
         <div class="messages"></div>
         <div class="control-group">
           <label class="control-label" for="boot_proto">Configuration<span class="required"> *</span></label>
@@ -50,7 +50,7 @@
             <% if (network.get('boot_proto') == 'static') { %>
               <input type="text" id="ipaddr" name="ipaddr" value="<%= network.get('ipaddr') %>" placeholder="IP Address" title="Enter IP Address" >
             <% } else { %>
-              <input type="text" id="ipaddr" name="ipaddr" value="<%= network.get('ipaddr') %>" placeholder="IP Address" disabled="disabled"  >
+              <input type="text" id="ipaddr" name="ipaddr" value="<%= network.get('ipaddr') %>" placeholder="IP Address" title="ENter IP Address" disabled="disabled"  >
             <% } %>
           </div>
         </div>
@@ -60,7 +60,37 @@
             <% if (network.get('boot_proto') == 'static') { %>
               <input type="text" id="netmask" name="netmask" value="<%= network.get('netmask') %>" placeholder="Netmask" title="Enter Netmask">
             <% } else { %>
-              <input type="text" id="netmask" name="netmask" value="<%= network.get('netmask') %>" placeholder="Netmask" disabled="disabled" >
+              <input type="text" id="netmask" name="netmask" value="<%= network.get('netmask') %>" placeholder="Netmask" title="Enter Netmak" disabled="disabled" >
+            <% } %>
+          </div>
+        </div>
+        <div class="control-group">
+          <label class="control-label" for="gateway">Gateway<span class="required"> *</span></label>
+          <div class="controls">
+            <% if (network.get('boot_proto') == 'static') { %>
+              <input type="text" id="gateway" name="gateway" value="<%= network.get('gateway') %>" placeholder="Gateway" title="Enter Gateway">
+            <% } else { %>
+              <input type="text" id="gateway" name="gateway" value="<%= network.get('gateway') %>" placeholder="Gateway" title="Enter Gateway" disabled="disabled" >
+            <% } %>
+          </div>
+        </div>
+        <div class="control-group">
+          <label class="control-label" for="domain">Domain<span class="required"> *</span></label>
+          <div class="controls">
+            <% if (network.get('boot_proto') == 'static') { %>
+              <input type="text" id="domain" name="domain" value="<%= network.get('domain') %>" placeholder="Domain" title="Enter Domain">
+            <% } else { %>
+              <input type="text" id="domain" name="domain" value="<%= network.get('domain') %>" placeholder="Domain" title="Enter Domain" disabled="disabled" >
+            <% } %>
+          </div>
+        </div>
+        <div class="control-group">
+          <label class="control-label" for="dns_servers">DNS Servers<span class="required"> *</span></label>
+          <div class="controls">
+            <% if (network.get('boot_proto') == 'static') { %>
+              <input type="text" id="dns_servers" name="dns_servers" value="<%= network.get('dns_servers') %>" placeholder="DNS Servers" title="Enter comma separated list of dns server addresses">
+            <% } else { %>
+              <input type="text" id="dns_servers" name="dns_servers" value="<%= network.get('dns_servers') %>" placeholder="DNS Servers" title="Enter comma separated list of dns server addresses" disabled="disabled" >
             <% } %>
           </div>
         </div>

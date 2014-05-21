@@ -53,7 +53,7 @@ EditNetworkView = RockstorLayoutView.extend({
     var _this = this;
     $(this.el).html(this.template({network: this.network}));
     
-    this.$('#edit-network-form :input').tooltip();
+    this.$('#edit-network-form :input').tooltip({placement: 'right'});
     
     this.validator = this.$("#edit-network-form").validate({
       onfocusout: false,
@@ -92,9 +92,17 @@ EditNetworkView = RockstorLayoutView.extend({
     if (this.$('#boot_proto').val() == 'static') {
       this.$('#ipaddr').removeAttr('disabled');
       this.$('#netmask').removeAttr('disabled');
+      this.$('#gateway').removeAttr('disabled');
+      this.$('#domain').removeAttr('disabled');
+      this.$('#dns_servers').removeAttr('disabled');
+      this.$('#edit-network-form :input').tooltip({placement: 'right'});
     } else {
       this.$('#ipaddr').attr('disabled', 'disabled');
       this.$('#netmask').attr('disabled', 'disabled');
+      this.$('#gateway').attr('disabled', 'disabled');
+      this.$('#domain').attr('disabled', 'disabled');
+      this.$('#dns_servers').attr('disabled', 'disabled');
+      this.$('#edit-network-form :input').tooltip('hide');
     }
 
   },
