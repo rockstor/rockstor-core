@@ -37,17 +37,23 @@ AddShareView = Backbone.View.extend({
     this.pools = new PoolCollection();
     this.pools.pageSize = RockStorGlobals.maxPageSize;
     this.poolName = this.options.poolName;
+    
   },
 
   render: function() {
     $(this.el).empty();
     this.template = window.JST.share_add_share_template;
     var _this = this;
+   
     this.pools.fetch({
       success: function(collection, response) {
         $(_this.el).append(_this.template({pools: _this.pools, poolName: _this.poolName}));
         
         $('#add-share-form :input').tooltip({placement: 'right'});
+        
+         var slider = d3.slider().min(0).max(10).ticks(10).showRange(true).value(6);
+        // Render the slider in the div
+        d3.select('#slider').call(slider);
         
         $('#add-share-form').validate({
             onfocusout: false,
