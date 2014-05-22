@@ -144,6 +144,10 @@ class NFSExportGroupView(rfc.GenericView):
                 e.delete()
             eg.delete()
             exports = create_nfs_export_input(cur_exports)
+            adv_entries = [e.export_str for e in
+                           AdvancedNFSExport.objects.all()]
+            exports_d = create_adv_nfs_export_input(adv_entries, request)
+            exports.update(exports_d)
             refresh_wrapper(exports, request, logger)
             return Response()
         except RockStorAPIException:
