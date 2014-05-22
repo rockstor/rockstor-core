@@ -24,15 +24,14 @@ from rest_framework.response import Response
 from django.db import transaction
 from django.conf import settings
 from storageadmin.models import (Snapshot, Share, Disk, NFSExport,
-                                 NFSExportGroup)
-from fs.btrfs import (add_snap, remove_share, share_id, update_quota,
-                      share_usage, remove_snap, is_share_mounted,
-                      mount_share, umount_root)
-from system.osi import (refresh_nfs_exports, bind_mount)
+                                 NFSExportGroup, AdvancedNFSExport)
+from fs.btrfs import (add_snap, share_id, share_usage, remove_snap,
+                      is_share_mounted, mount_share, umount_root)
+from system.osi import refresh_nfs_exports
 from storageadmin.serializers import SnapshotSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
-from nfs_helpers import create_nfs_export_input
+from nfs_helpers import (create_nfs_export_input, create_adv_nfs_export_input)
 from clone_helpers import create_clone
 
 import logging
@@ -81,8 +80,8 @@ class SnapshotView(rfc.GenericView):
 
             if (NFSExport.objects.filter(share=share).exists()):
                 se = NFSExport.objects.filter(share=share)[0]
-                export_group = NFSExportGroup(host_str=se.export_group.host_str,
-                                               nohide=True)
+                export_group = NFSExportGroup(
+                    host_str=se.export_group.host_str, nohide=True)
                 export_group.save()
                 export = NFSExport(share=share, export_group=export_group,
                                    mount=snap_mnt_pt)
@@ -101,6 +100,9 @@ class SnapshotView(rfc.GenericView):
                 umount_root(export_pt)
                 umount_root(snap_mnt_pt)
         exports = create_nfs_export_input(cur_exports)
+        adv_entries = [x.export_str for x in AdvancedNFSExport.objects.all()]
+        exports_d = create_adv_nfs_export_input(adv_entries, self.request)
+        exports.update(exports_d)
         refresh_nfs_exports(exports)
 
     @transaction.commit_on_success
