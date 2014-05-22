@@ -88,11 +88,16 @@ def parse_options(request):
         }
     if ('host_str' in request.DATA):
         options['host_str'] = request.DATA['host_str']
-    if ('mod_choice' in request.DATA):
+    if ('mod_choice' in request.DATA and
+        (request.DATA['mod_choice'] == 'ro' or
+         request.DATA['mod_choice'] == 'rw')):
         options['editable'] = request.DATA['mod_choice']
-    if ('sync_choice' in request.DATA):
+    if ('sync_choice' in request.DATA and
+        (request.DATA['sync_choice'] == 'sync' or
+         request.DATA['sync_choice'] == 'async')):
         options['syncable'] = request.DATA['sync_choice']
-    if ('admin_host' in request.DATA):
+    if ('admin_host' in request.DATA and
+        len(request.DATA['admin_host']) > 0):
         options['admin_host'] = request.DATA['admin_host']
     return options
 
