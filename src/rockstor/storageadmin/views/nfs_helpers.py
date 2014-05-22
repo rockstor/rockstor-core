@@ -85,6 +85,7 @@ def parse_options(request):
         'editable': 'ro',
         'syncable': 'async',
         'mount_security': 'insecure',
+        'admin_host': None,
         }
     if ('host_str' in request.DATA):
         options['host_str'] = request.DATA['host_str']
