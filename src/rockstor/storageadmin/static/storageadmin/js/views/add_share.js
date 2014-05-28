@@ -61,9 +61,18 @@ AddShareView = Backbone.View.extend({
          var callback = function(slider) {
         // get current slider value
          var value = slider.value();
-         $("#share_size").val((value).toFixed(2)+"GB");
-        }
-        var slider = d3.slider().min(0).max(50).ticks(10).showRange(true).tickFormat(tickFormatter).callback(callback);
+         if(value < 1024)
+          {
+            $("#share_size").val(value.toFixed(2)+"GB");
+            }else
+            {
+            $("#share_size").val(((value)/1024).toFixed(2)+"TB");
+            }
+          }   
+         
+        
+        
+        var slider = d3.slider().min(0).max(1024).ticks(10).showRange(true).tickFormat(tickFormatter).callback(callback);
         d3.select('#slider').call(slider);
         
         $("#share_size").change(function(){
@@ -72,9 +81,14 @@ AddShareView = Backbone.View.extend({
         
           var size_array = size.split(sizeFormat)
           var size_value = size_array[0];
-        
-          slider.setValue(size_value);
-        
+          
+           if(sizeFormat == 'TB' || sizeFormat == 'tb' || sizeFormat == 'Tb'){
+           size_value = size_value*1024;
+           slider.setValue(parseInt(size_value));
+           }else{
+           slider.setValue(parseInt(size));
+           }
+                
         });
         
         $('#add-share-form').validate({
@@ -103,7 +117,6 @@ AddShareView = Backbone.View.extend({
               var share_name = $('#share_name').val();
               var pool_name = $('#pool_name').val();
               var size = $('#share_size').val();
-              alert(size);
               
               $.ajax({
                 url: "/api/shares",
