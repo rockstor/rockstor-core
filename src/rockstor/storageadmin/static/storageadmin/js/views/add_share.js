@@ -54,6 +54,8 @@ AddShareView = Backbone.View.extend({
          var slider = d3.slider().min(0).max(10).ticks(10).showRange(true).value(6);
         // Render the slider in the div
         d3.select('#slider').call(slider);
+        var value = slider.value()
+    
         
         $('#add-share-form').validate({
             onfocusout: false,
