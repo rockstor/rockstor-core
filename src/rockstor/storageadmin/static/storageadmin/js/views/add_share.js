@@ -51,11 +51,28 @@ AddShareView = Backbone.View.extend({
         
         $('#add-share-form :input').tooltip({placement: 'right'});
         
-         var slider = d3.slider().min(0).max(10).ticks(10).showRange(true).value(6);
-        // Render the slider in the div
+        // tick formatter
+        var formatter = d3.format(",.2f");
+        var tickFormatter = function(d) {
+        return formatter(d) + " GB";
+           }
+        
+         
+         var callback = function(slider) {
+        // get current slider value
+         var value = slider.value()
+        // $("#share_size").val(value);
+         alert(value);
+          }
+        var slider = d3.slider().min(0).max(50).ticks(10).showRange(true).tickFormat(tickFormatter).callback(callback);
         d3.select('#slider').call(slider);
-        var value = slider.value()
-    
+        
+        $("#share_size").change(function(){
+          var size = this.value;
+          
+           slider.setValue(size);
+        
+        });
         
         $('#add-share-form').validate({
             onfocusout: false,
