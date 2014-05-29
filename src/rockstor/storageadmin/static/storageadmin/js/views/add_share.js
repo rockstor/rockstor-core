@@ -37,17 +37,59 @@ AddShareView = Backbone.View.extend({
     this.pools = new PoolCollection();
     this.pools.pageSize = RockStorGlobals.maxPageSize;
     this.poolName = this.options.poolName;
+    
   },
 
   render: function() {
     $(this.el).empty();
     this.template = window.JST.share_add_share_template;
     var _this = this;
+   
     this.pools.fetch({
       success: function(collection, response) {
         $(_this.el).append(_this.template({pools: _this.pools, poolName: _this.poolName}));
         
         $('#add-share-form :input').tooltip({placement: 'right'});
+        
+        // tick formatter
+        var formatter = d3.format(",.2f");
+        var tickFormatter = function(d) {
+        return formatter(d) + " GB";
+           }
+        
+         
+         var callback = function(slider) {
+        // get current slider value
+         var value = slider.value();
+         if(value < 1024)
+          {
+            $("#share_size").val(value.toFixed(2)+"GB");
+            }else
+            {
+            $("#share_size").val(((value)/1024).toFixed(2)+"TB");
+            }
+          }   
+         
+        
+        
+        var slider = d3.slider().min(0).max(1024).ticks(10).showRange(true).tickFormat(tickFormatter).callback(callback);
+        d3.select('#slider').call(slider);
+        
+        $("#share_size").change(function(){
+          var size = this.value;
+          var sizeFormat = size.replace(/[^a-z]/gi, ""); 
+        
+          var size_array = size.split(sizeFormat)
+          var size_value = size_array[0];
+          
+           if(sizeFormat == 'TB' || sizeFormat == 'tb' || sizeFormat == 'Tb'){
+           size_value = size_value*1024;
+           slider.setValue(parseInt(size_value));
+           }else{
+           slider.setValue(parseInt(size));
+           }
+                
+        });
         
         $('#add-share-form').validate({
             onfocusout: false,
@@ -56,7 +98,7 @@ AddShareView = Backbone.View.extend({
               share_name: 'required',
               share_size: {
                 required: true,
-                number: true
+                
               },
             },
             errorPlacement: function(error, element) {
@@ -75,18 +117,7 @@ AddShareView = Backbone.View.extend({
               var share_name = $('#share_name').val();
               var pool_name = $('#pool_name').val();
               var size = $('#share_size').val();
-
-              var sizeFormat = $('#size_format').val();
-              if(sizeFormat == 'KB'){
-                size = size;
-              }else if(sizeFormat == 'MB'){
-                size = size*1024;	
-              }else if(sizeFormat == 'GB'){
-                size = size*1024*1024;
-              }else if(sizeFormat == 'TB'){
-                size = size*1024*1024*1024;
-              }
-
+              
               $.ajax({
                 url: "/api/shares",
                 type: "POST",
