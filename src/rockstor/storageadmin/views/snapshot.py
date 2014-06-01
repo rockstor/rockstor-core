@@ -66,7 +66,7 @@ class SnapshotView(rfc.GenericView):
     @transaction.commit_on_success
     def _toggle_visibility(self, share, snap_name, on=True):
         cur_exports = list(NFSExport.objects.all())
-        snap_short_name = snap_name.split('_')[-1]
+        snap_short_name = snap_name.split(share.name)[-1][1:]
         snap_mnt_pt = ('%s%s/.%s' % (settings.MNT_PT, share.name,
                                      snap_short_name))
         export_pt = snap_mnt_pt.replace(settings.MNT_PT,
