@@ -53,10 +53,12 @@ class CommandView(APIView):
                 for share in Share.objects.all():
                     if (not is_share_mounted(share.name)):
                         mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
-                        pool_device = Disk.objects.filter(pool=share.pool)[0].name
+                        pool_device = Disk.objects.filter(
+                            pool=share.pool)[0].name
                         mount_share(share.subvol_name, pool_device, mnt_pt)
             except Exception, e:
-                e_msg = ('Unable to mount all shares during bootstrap.')
+                e_msg = ('Unable to mount a share(%s, %s) during bootstrap.' %
+                         (pool_device, mnt_pt))
                 logger.error(e_msg)
                 logger.exception(e)
                 handle_exception(Exception(e_msg), request)
@@ -79,12 +81,13 @@ class CommandView(APIView):
                 logger.info('export = %s' % exports)
                 refresh_nfs_exports(exports)
             except Exception, e:
-                e_msg = ('Unable to export all nfs shares due to a system error')
+                e_msg = ('Unable to export all nfs shares due to a system'
+                         'error')
                 logger.error(e_msg)
                 logger.exception(e)
                 handle_exception(Exception(e_msg), request)
 
-            #bootstrap services
+            #  bootstrap services
             try:
                 systemctl('firewalld', 'stop')
                 systemctl('firewalld', 'disable')
@@ -160,5 +163,3 @@ class CommandView(APIView):
                        (e.out, e.err))
             finally:
                 return Response(msg)
-
-
