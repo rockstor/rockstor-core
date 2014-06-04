@@ -37,6 +37,7 @@ from storageadmin.util import handle_exception
 from datetime import datetime
 from django.utils.timezone import utc
 from django.conf import settings
+from share_helpers import sftp_snap_toggle
 
 import logging
 logger = logging.getLogger(__name__)
@@ -65,10 +66,10 @@ class CommandView(APIView):
 
             try:
                 mnt_map = sftp_mount_map(settings.SFTP_MNT_ROOT)
-                logger.info('mnt map = %s' % mnt_map)
                 for sftpo in SFTP.objects.all():
                     sftp_mount(sftpo.share, settings.MNT_PT,
                                settings.SFTP_MNT_ROOT, mnt_map, sftpo.editable)
+                    sftp_snap_toggle(sftpo.share)
             except Exception, e:
                 e_msg = ('Unable to export all sftp shares due to a system'
                          ' error')
