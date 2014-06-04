@@ -20,10 +20,13 @@
 
         <!-- Read only -->
         <div class="control-group">
+          <label class="control-label" for="read_only">Access type</label>
           <div class="controls">
-            <label class="checkbox">
-              <input class="checkbox inline" type="checkbox" id="read_only" name="read_only" placeholder="Read only">
-              Read only
+            <label class="radio inline">
+              <input type="radio" name="read_only" value="false" checked="checked"> Writable 
+            </label>
+            <label class="radio inline">
+              <input type="radio" name="read_only" value="true"> Read only
             </label>
           </div>
         </div>

@@ -6,7 +6,7 @@
         <thead>
           <tr>
             <th scope="col" abbr="Host String">Share name</th>
-            <th scope="col" abbr="Read only">Read only</th>
+            <th scope="col" abbr="Access type">Read only</th>
             <th scope="col" abbr="Actions">Actions</th>
           </tr>
         </thead>
@@ -16,8 +16,9 @@
               <td><%= sftpShare.get('share') %></td>
               <td>
                 <% if (sftpShare.get('editable') == 'ro') { %>
-                  <input type="checkbox" checked disabled>
+                  Read only
                 <% } else { %>
+                  Writable
                 <% } %>
               </td>
               <td>
