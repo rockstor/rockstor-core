@@ -50,6 +50,7 @@ def add_pool(name, data_raid, meta_raid, disks):
     enable_quota(name, disks_fp[0])
     return out, err, rc
 
+
 def resize_pool(pool_name, device, dev_list, add=True):
     device = '/dev/' + device
     dev_list = ['/dev/' + d for d in dev_list]
@@ -61,6 +62,7 @@ def resize_pool(pool_name, device, dev_list, add=True):
                   root_mnt_pt]
     out, err, rc = run_command(resize_cmd)
     return out, err, rc
+
 
 def remove_pool(name):
     """
@@ -84,6 +86,7 @@ def remove_pool(name):
     #last command results -- not particularly useful
     return out, err, rc
 
+
 def mount_root(pool_name, device):
     root_pool_mnt = DEFAULT_MNT_DIR + pool_name
     if (is_share_mounted(pool_name)):
@@ -92,6 +95,7 @@ def mount_root(pool_name, device):
     mnt_cmd = [MOUNT, '-t', 'btrfs', device, root_pool_mnt]
     run_command(mnt_cmd)
     return root_pool_mnt
+
 
 def umount_root(root_pool_mnt):
     if (is_mounted(root_pool_mnt)):
@@ -105,6 +109,7 @@ def umount_root(root_pool_mnt):
         return run_command([RMDIR, root_pool_mnt])
     return True
 
+
 def add_share(pool_name, pool_device, share_name):
     """
     share is a subvolume in btrfs.
@@ -115,12 +120,14 @@ def add_share(pool_name, pool_device, share_name):
     sub_vol_cmd = [BTRFS, 'subvolume', 'create', subvol_mnt_pt]
     run_command(sub_vol_cmd)
 
+
 def mount_share(share_name, pool_device, mnt_pt):
     pool_device = '/dev/' + pool_device
     subvol_str = 'subvol=%s' % share_name
     create_tmp_dir(mnt_pt)
     mnt_cmd = [MOUNT, '-t', 'btrfs', '-o', subvol_str, pool_device, mnt_pt]
     return run_command(mnt_cmd)
+
 
 def subvol_list_helper(mnt_pt):
     """
@@ -140,6 +147,7 @@ def subvol_list_helper(mnt_pt):
             if (num_tries > 30):
                 raise ce
 
+
 def share_id(pool_name, pool_device, share_name):
     """
     returns the subvolume id, becomes the share's uuid.
@@ -158,6 +166,7 @@ def share_id(pool_name, pool_device, share_name):
         return subvol_id
     raise Exception('subvolume id for share: %s not found.' % share_name)
 
+
 def remove_share(pool_name, pool_device, share_name):
     """
     umount share if its mounted.
@@ -173,6 +182,7 @@ def remove_share(pool_name, pool_device, share_name):
     subvol_mnt_pt = root_pool_mnt + '/' + share_name
     delete_cmd = [BTRFS, 'subvolume', 'delete', subvol_mnt_pt]
     run_command(delete_cmd)
+
 
 def remove_snap(pool_name, pool_device, share_name, snap_name):
     full_name = ('%s/%s' % (share_name, snap_name))
@@ -206,6 +216,7 @@ def add_snap(pool_name, pool_device, share_name, snap_name,
             #created just fine. lookup is delayed arbitrarily.
             raise ce
 
+
 def rollback_snap(snap_name, sname, subvol_name, pool_name, pool_device):
     """
     1. umount the share
@@ -218,22 +229,27 @@ def rollback_snap(snap_name, sname, subvol_name, pool_name, pool_device):
     mount_share(snap_name, pool_device, mnt_pt)
     remove_share(pool_name, pool_device, subvol_name)
 
+
 def switch_quota(pool_name, device, flag='enable'):
     root_mnt_pt = mount_root(pool_name, device)
     cmd = [BTRFS, 'quota', flag, root_mnt_pt]
     return run_command(cmd)
 
+
 def enable_quota(pool_name, device):
     return switch_quota(pool_name, device)
 
+
 def disable_quota(pool_name, device):
     return switch_quota(pool_name, device, flag='disable')
+
 
 def update_quota(pool_name, pool_device, qgroup, size_bytes):
     pool_device = '/dev/' + pool_device
     root_pool_mnt = mount_root(pool_name, pool_device)
     cmd = [BTRFS, 'qgroup', 'limit', str(size_bytes), qgroup, root_pool_mnt]
     return run_command(cmd)
+
 
 def share_usage(pool_name, pool_device, share_id):
     """
@@ -253,6 +269,7 @@ def share_usage(pool_name, pool_device, share_id):
         raise Exception('usage cannot be determined for share_id: %s' %
                         share_id)
     return usage
+
 
 def shares_usage(pool_name, pool_device, share_map, snap_map):
     #don't mount the pool if at least one share in the map is mounted.
@@ -275,6 +292,7 @@ def shares_usage(pool_name, pool_device, share_map, snap_map):
             usage_map[combined_map[fields[0]]] = (r_usage, e_usage)
     return usage_map
 
+
 def pool_usage(pool_device):
     pool_device = ('/dev/%s' % pool_device)
     cmd = [BTRFS_DEBUG_TREE, '-r', pool_device]
@@ -292,16 +310,20 @@ def pool_usage(pool_device):
                         pool_device)
     return (total, usage)
 
+
 def scrub_start(pool_name, pool_device):
     mnt_pt = mount_root(pool_name, '/dev/' + pool_device)
     out, err, rc = run_command([BTRFS, 'scrub', 'start', mnt_pt])
     return int(out[0].split('(pid=')[1][:-1])
 
+
 def scrub_cancel(mnt_pt):
     pass
 
+
 def scrub_resume(mnt_pt):
     pass
+
 
 def scrub_status(pool_name, pool_device):
     stats = {}
@@ -330,5 +352,4 @@ def scrub_status(pool_name, pool_device):
         stats['kb_scrubbed'] = int(float(kb_scrubbed) * mult_factor)
         stats['status'] = 'finished'
         return stats
-    return {'status': 'unknown',}
-
+    return {'status': 'unknown', }

@@ -26,7 +26,8 @@ from storageadmin.exceptions import RockStorAPIException
 from fs.btrfs import (is_share_mounted, umount_root)
 from system.ssh import (update_sftp_config, sftp_mount_map, sftp_mount,
                         rsync_for_sftp)
-from share_helpers import (helper_mount_share, validate_share)
+from share_helpers import (helper_mount_share, validate_share,
+                           sftp_snap_toggle)
 import rest_framework_custom as rfc
 
 import logging
@@ -56,7 +57,6 @@ class SFTPView(rfc.GenericView):
             editable = 'ro'
         try:
             mnt_map = sftp_mount_map(settings.SFTP_MNT_ROOT)
-            logger.info('mount map: %s' % mnt_map)
             input_list = []
             for share in shares:
                 if (SFTP.objects.filter(share=share).exists()):
@@ -76,6 +76,8 @@ class SFTPView(rfc.GenericView):
                 #  bindmount if not already
                 sftp_mount(share, settings.MNT_PT, settings.SFTP_MNT_ROOT,
                            mnt_map, editable)
+                sftp_snap_toggle(share)
+
                 chroot_loc = ('%s%s' % (settings.SFTP_MNT_ROOT, share.owner))
                 rsync_for_sftp(chroot_loc)
                 input_list.append({'user': share.owner,
@@ -104,7 +106,9 @@ class SFTPView(rfc.GenericView):
         try:
             mnt_prefix = ('%s%s/' % (settings.SFTP_MNT_ROOT,
                                      sftpo.share.owner))
+
             if (is_share_mounted(sftpo.share.name, mnt_prefix)):
+                sftp_snap_toggle(sftpo.share, mount=False)
                 umount_root(('%s%s' % (mnt_prefix, sftpo.share.name)))
                 import shutil
                 shutil.rmtree(mnt_prefix)
@@ -115,7 +119,7 @@ class SFTPView(rfc.GenericView):
                     input_list.append({'user': so.share.owner,
                                        'dir': ('%s%s' %
                                                (settings.SFTP_MNT_ROOT,
-                                                so.share.name)),})
+                                                so.share.name)), })
             update_sftp_config(input_list)
             return Response()
         except RockStorAPIException:
