@@ -60,6 +60,7 @@ AddSFTPShareView = RockstorLayoutView.extend({
     $(this.el).html(this.template({
       shares: this.freeShares,
     }));
+    this.$('#shares').chosen();
     
     $('#add-sftp-share-form :input').tooltip();
     
@@ -67,7 +68,7 @@ AddSFTPShareView = RockstorLayoutView.extend({
       onfocusout: false,
       onkeyup: false,
       rules: {
-        share: 'required',  
+        shares: 'required',  
       },
       
       submitHandler: function() {

@@ -8,11 +8,10 @@
 
         <!-- Shares -->
         <div class="control-group">
-          <label class="control-label" for="shares">Shares to export via sftp<span class="required"> *</span></label>
+          <label class="control-label" for="shares">Shares to export via sftp<span class="required">*</span></label>
           <div class="controls">
-            <select name="shares" id="shares" size="10" multiple>
+            <select name="shares" id="shares" size="10" multiple data-placeholder="Select shares">
               <% _.each(shares, function(share, index) { %>
-                <% console.log(share); %>
                 <option value="<%= share.get('name') %>"><%= share.get('name') %></option>
               <% }); %>
             </select>
