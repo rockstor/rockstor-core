@@ -32,6 +32,7 @@ from storageadmin.serializers import SnapshotSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
 from nfs_helpers import (create_nfs_export_input, create_adv_nfs_export_input)
+from share_helpers import toggle_sftp_visibility
 from clone_helpers import create_clone
 
 import logging
@@ -152,6 +153,7 @@ class SnapshotView(rfc.GenericView):
         if (command is None):
             ret = self._create(share, snap_name, pool_device, request,
                                uvisible=uvisible, snap_type=snap_type)
+
             if (uvisible):
                 try:
                     self._toggle_visibility(share, ret.data['real_name'])
@@ -160,6 +162,15 @@ class SnapshotView(rfc.GenericView):
                            snap_name)
                     logger.error(msg)
                     logger.exception(e)
+
+                try:
+                    toggle_sftp_visibility(share, ret.data['real_name'])
+                except Exception, e:
+                    msg = ('Failed to make the Snapshot(%s) visible for SFTP.'
+                           % snap_name)
+                    logger.error(msg)
+                    logger.exception(e)
+
             return ret
         if (command == 'clone'):
             new_name = request.DATA['name']
@@ -202,11 +213,18 @@ class SnapshotView(rfc.GenericView):
 
         pool_device = Disk.objects.filter(pool=share.pool)[0].name
         if (snapshot.uvisible):
+            e_msg = ('A low level error occured while deleting '
+                     'snapshot(%s). Try again later.' % snapshot.name)
             try:
                 self._toggle_visibility(share, snapshot.real_name, on=False)
             except Exception, e:
-                e_msg = ('A low level error occured while deleting '
-                         'snapshot(%s). Try again later.')
+                logger.error(e_msg)
+                logger.exception(e)
+                handle_exception(Exception(e_msg), request)
+
+            try:
+                toggle_sftp_visibility(share, snapshot.real_name, on=False)
+            except Exception, e:
                 logger.error(e_msg)
                 logger.exception(e)
                 handle_exception(Exception(e_msg), request)
