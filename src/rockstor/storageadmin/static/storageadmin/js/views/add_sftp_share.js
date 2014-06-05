@@ -74,13 +74,20 @@ AddSFTPShareView = RockstorLayoutView.extend({
       submitHandler: function() {
         var button = $('#create-sftp-share');
         if (buttonDisabled(button)) return false;
+        var data = _this.$('#add-sftp-share-form').getJSON();
+        if (data['read_only'] == "false") {
+          delete data['read_only'];
+        } else {
+         data['read_only'] = true;
+        } 
+        console.log(data);
         disableButton(button);
         $.ajax({
           url: '/api/sftp',
           type: 'POST',
           dataType: 'json',
           contentType: 'application/json',
-          data: JSON.stringify(_this.$('#add-sftp-share-form').getJSON()),
+          data: JSON.stringify(data),
           success: function() {
             enableButton(button);
             app_router.navigate('sftp', {trigger: true});
