@@ -37,6 +37,7 @@ AddShareView = Backbone.View.extend({
     this.pools = new PoolCollection();
     this.pools.pageSize = RockStorGlobals.maxPageSize;
     this.poolName = this.options.poolName;
+    this.pool = new Pool({poolName: this.poolName});
     
   },
 
@@ -74,13 +75,13 @@ AddShareView = Backbone.View.extend({
             }
           }   
          var foo = [];
-        for (var i=0;i<2049;i++) {
+        for (var i=0;i<=max_value;i++) {
           foo.push(i);
              }
-        var step_values = ['1','500','1024','15',''];
-         var slider = d3.slider().min(0).max(2048).tickValues([1,500,1024,1536,2048]).stepValues(foo).tickFormat(tickFormatter).callback(callback);
-       // var slider = d3.slider().min(0).max(2048).tickValues([1,500,1024,1536,2048]).stepValues([1,50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1024,1229,1332,1434,1536,1639,1741,1844,1946,2048]).tickFormat(tickFormatter).callback(callback);
-        d3.select('#slider').call(slider);
+               
+          var max_value = (_this.pool.get('size')-_this.pool.get('usage'))*1024;
+          var slider = d3.slider().min(0).max(max_value).tickValues([1,500,1024,1536,2048]).stepValues(foo).tickFormat(tickFormatter).callback(callback);
+          d3.select('#slider').call(slider);
         
         $("#share_size").change(function(){
           var size = this.value;
@@ -130,10 +131,8 @@ AddShareView = Backbone.View.extend({
              
               if(sizeFormat == 'GB' || sizeFormat == 'gb' || sizeFormat == 'Gb'){
               size = size*1024*1024;
-              alert(size);
               }else if(sizeFormat == 'TB' || sizeFormat == 'tb' || sizeFormat == 'Tb'){
               size = size*1024*1024*1024;
-              alert(size);
               }
               
               alert(size);
