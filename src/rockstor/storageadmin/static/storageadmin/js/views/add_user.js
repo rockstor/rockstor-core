@@ -40,7 +40,7 @@ AddUserView = RockstorLayoutView.extend({
     var _this = this;
     $(this.el).html(this.template());
     
-    this.$('#user-create-form :input').tooltip();
+    this.$('#user-create-form :input').tooltip({placement: 'right'});
 
     this.validator = this.$("#user-create-form").validate({
       onfocusout: false,

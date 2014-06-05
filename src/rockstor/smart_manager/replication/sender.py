@@ -23,9 +23,7 @@ import logging
 import zmq
 import subprocess
 import fcntl
-import json
 from django.conf import settings
-import time
 from datetime import datetime
 from contextlib import contextmanager
 from django.utils.timezone import utc
@@ -67,9 +65,9 @@ class Sender(Process):
                            'data_port': self.sdata_port,
                            'meta_port': self.smeta_port,
                            'incremental': self.rt is not None,
-                           'uuid': self.uuid,}
+                           'uuid': self.uuid, }
         self.meta_end = {'id': self.snap_id,
-                         'msg': 'end',}
+                         'msg': 'end', }
         self.kb_sent = 0
         self.ctx = zmq.Context()
         super(Sender, self).__init__()
@@ -98,7 +96,7 @@ class Sender(Process):
             try:
                 data = {'status': 'failed',
                         'error': msg,
-                        'end_ts': datetime.utcnow().replace(tzinfo=utc),}
+                        'end_ts': datetime.utcnow().replace(tzinfo=utc), }
                 update_replica_status(self.rt2_id, data, logger)
             except Exception, e:
                 logger.error('Exception occured in cleanup handler')
@@ -123,7 +121,7 @@ class Sender(Process):
             meta_push.connect('tcp://%s:%d' % (self.receiver_ip,
                                                self.rmeta_port))
 
-        #1. create a new replica trail if it's the very first time
+        #  1. create a new replica trail if it's the very first time
         # of if the last one succeeded
         msg = ('Failed to create local replica trail for snap_name:'
                ' %s. Aborting.' % self.snap_name)
@@ -132,14 +130,14 @@ class Sender(Process):
                                             self.snap_name, logger)
             self.rt2_id = self.rt2['id']
 
-        #2. create a snapshot only if it's not already from a previous
-        #failed attempt.
+        #  2. create a snapshot only if it's not already from a previous
+        #  failed attempt.
         if (not is_snapshot(self.replica.share, self.snap_name, logger)):
             msg = ('Failed to create snapshot: %s. Aborting.' % self.snap_name)
             with self._clean_exit_handler(msg):
                 create_snapshot(self.replica.share, self.snap_name, logger)
 
-        #let the receiver know that following diff is coming
+        #  let the receiver know that following diff is coming
         msg = ('Failed to send initial metadata communication to the '
                'receiver(%s), most likely due to a network error. Aborting.'
                % self.receiver_ip)
@@ -157,7 +155,7 @@ class Sender(Process):
             if (ack['msg'] == 'snap_exists'):
                 data = {'status': 'succeeded',
                         'end_ts': datetime.utcnow().replace(tzinfo=utc),
-                        'error': 'snapshot already exists on the receiver',}
+                        'error': 'snapshot already exists on the receiver', }
                 msg = ('Failed to update replica status for snap_name: %s. '
                        'Aborting.' % self.snap_name)
                 with self._clean_exit_handler(msg):
@@ -246,7 +244,7 @@ class Sender(Process):
         end_ts = datetime.utcnow().replace(tzinfo=utc)
         data = {'status': 'succeeded',
                 'kb_sent': self.kb_sent / 1024,
-                'end_ts' : end_ts,}
+                'end_ts': end_ts, }
         if (ack['msg'] == 'receive_error'):
             msg = ('Receiver(%s) returned a processing error for snap_name:'
                    ' %s. Check it for more information.'
@@ -259,4 +257,3 @@ class Sender(Process):
                '. Aborting.' % self.snap_name)
         with self._clean_exit_handler(msg):
             update_replica_status(self.rt2_id, data, logger)
-

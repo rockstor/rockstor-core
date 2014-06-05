@@ -19,17 +19,18 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from rest_framework.response import Response
 from django.db import transaction
 from django.conf import settings
-from storageadmin.models import (Share, SambaShare, Disk)
+from storageadmin.models import (SambaShare, Disk)
 from storageadmin.serializers import SambaShareSerializer
 from storageadmin.util import handle_exception
 from storageadmin.exceptions import RockStorAPIException
 import rest_framework_custom as rfc
 from share_helpers import validate_share
 from system.osi import (refresh_smb_config, restart_samba)
-from fs.btrfs import (mount_share, is_share_mounted, umount_root)
+from fs.btrfs import (mount_share, is_share_mounted)
 
 import logging
 logger = logging.getLogger(__name__)
+
 
 class SambaView(rfc.GenericView):
     serializer_class = SambaShareSerializer
@@ -133,4 +134,3 @@ class SambaView(rfc.GenericView):
         except Exception, e:
             e_msg = ('System error occured while restarting Samba server')
             handle_exception(Exception(e_msg), request)
-
