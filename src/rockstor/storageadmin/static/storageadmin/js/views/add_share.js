@@ -34,16 +34,19 @@ AddShareView = Backbone.View.extend({
   },
 
   initialize: function() {
+    this.constructor.__super__.initialize.apply(this, arguments);
+    this.template = window.JST.share_add_share_template;
+   
     this.pools = new PoolCollection();
     this.pools.pageSize = RockStorGlobals.maxPageSize;
     this.poolName = this.options.poolName;
-    this.pool = new Pool({poolName: this.poolName});
-    
+    this.dependencies.push(this.pools);
+    this.pools.on("reset", this.render, this);
   },
-
+  
+  
   render: function() {
-    $(this.el).empty();
-    this.template = window.JST.share_add_share_template;
+   
     var _this = this;
    
     this.pools.fetch({
@@ -62,6 +65,9 @@ AddShareView = Backbone.View.extend({
           }
         }
         
+        var maxPoolSize = this.pools.filter(function(pool) { 
+      return (pool.get('size')- pool.get('usage'));
+    });
          
          var callback = function(slider) {
         // get current slider value
@@ -75,12 +81,21 @@ AddShareView = Backbone.View.extend({
             }
           }   
          var foo = [];
-        for (var i=0;i<=max_value;i++) {
+        for (var i=0;i<= maxPoolSize;i++) {
           foo.push(i);
              }
-               
-          var max_value = (_this.pool.get('size')-_this.pool.get('usage'))*1024;
-          var slider = d3.slider().min(0).max(max_value).tickValues([1,500,1024,1536,2048]).stepValues(foo).tickFormat(tickFormatter).callback(callback);
+             
+       var foo2 = [];
+       var step = maxPoolSize/5;
+        for (var i=0;i<=maxPoolSize;i=i+step) {
+          foo2.push(i);
+             }
+             var pool_name = $('#pool_name').val();
+             alert(this.pools);
+            // var selectedPool = _this.pools.find(function(p) { return p.get('name') == poolName; });
+           //  alert(selectedPool);
+             
+          var slider = d3.slider().min(0).max(max_size).tickValues(foo2).stepValues(foo).tickFormat(tickFormatter).callback(callback);
           d3.select('#slider').call(slider);
         
         $("#share_size").change(function(){
@@ -135,7 +150,6 @@ AddShareView = Backbone.View.extend({
               size = size*1024*1024*1024;
               }
               
-              alert(size);
               $.ajax({
                 url: "/api/shares",
                 type: "POST",
