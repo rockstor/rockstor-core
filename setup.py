@@ -57,5 +57,6 @@ setup(
     'pyzmq == 13.0.0',
     'South == 0.8.4',
     'psycopg2 == 2.5.2',
+    'django-oauth-toolkit == 0.7.0',
   ]
 )

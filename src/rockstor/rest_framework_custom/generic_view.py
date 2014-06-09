@@ -24,11 +24,12 @@ from rest_framework.authentication import (BasicAuthentication,
                                            SessionAuthentication,)
 from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
+from oauth2_provider.ext.rest_framework import OAuth2Authentication
 
 
 class GenericView(generics.ListCreateAPIView):
     authentication_classes = (DigestAuthentication, SessionAuthentication,
-                              BasicAuthentication,)
+                              BasicAuthentication, OAuth2Authentication,)
     permission_classes = (IsAuthenticated,)
 
     empty_error = u"Empty list and '%(class_name)s.allow_empty' is False."
