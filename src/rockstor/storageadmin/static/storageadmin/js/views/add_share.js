@@ -28,7 +28,7 @@
  * Add Share View 
  */
 
-AddShareView = Backbone.View.extend({
+AddShareView =  RockstorLayoutView.extend({
   events: {
     "click #js-cancel": "cancel"
   },
@@ -41,17 +41,16 @@ AddShareView = Backbone.View.extend({
     this.pools.pageSize = RockStorGlobals.maxPageSize;
     this.poolName = this.options.poolName;
     this.dependencies.push(this.pools);
-    this.pools.on("reset", this.render, this);
+    
   },
   
-  
-  render: function() {
+   render: function() {
    
-    var _this = this;
-   
+   var _this = this;
     this.pools.fetch({
       success: function(collection, response) {
         $(_this.el).append(_this.template({pools: _this.pools, poolName: _this.poolName}));
+         
         
         $('#add-share-form :input').tooltip({placement: 'right'});
         
@@ -65,10 +64,6 @@ AddShareView = Backbone.View.extend({
           }
         }
         
-        var maxPoolSize = this.pools.filter(function(pool) { 
-      return (pool.get('size')- pool.get('usage'));
-    });
-         
          var callback = function(slider) {
         // get current slider value
          var value = slider.value();
@@ -80,24 +75,36 @@ AddShareView = Backbone.View.extend({
             $("#share_size").val(((value)/1024).toFixed(2)+"TB");
             }
           }   
-         var foo = [];
-        for (var i=0;i<= maxPoolSize;i++) {
+          
+         
+          var slider_poolsize = function(){  
+          var pool_name = $('#pool_name').val();
+          var selectedPool = _this.pools.find(function(p) { return p.get('name') == pool_name; });
+          var maxPoolSize =  (selectedPool.get('size')- selectedPool.get('usage'))/1024;
+          
+          var foo = [];
+          for (var i=0;i<= maxPoolSize;i++) {
           foo.push(i);
              }
              
-       var foo2 = [];
-       var step = maxPoolSize/5;
-        for (var i=0;i<=maxPoolSize;i=i+step) {
-          foo2.push(i);
+          var foo2 = [];
+          var step = maxPoolSize/5;
+          for (var i=0;i<=maxPoolSize;i=i+step) {
+          foo2.push(i); 
              }
-             var pool_name = $('#pool_name').val();
-             alert(this.pools);
-            // var selectedPool = _this.pools.find(function(p) { return p.get('name') == poolName; });
-           //  alert(selectedPool);
-             
-          var slider = d3.slider().min(0).max(max_size).tickValues(foo2).stepValues(foo).tickFormat(tickFormatter).callback(callback);
+          
+          var slider = d3.slider().min(0).max(maxPoolSize).tickValues(foo2).stepValues(foo).tickFormat(tickFormatter).callback(callback);
           d3.select('#slider').call(slider);
-        
+          
+          };
+          
+          slider_poolsize();
+          
+          $('#pool_name').change(function(){
+          slider_poolsize();
+           });
+          
+          
         $("#share_size").change(function(){
           var size = this.value;
           var sizeFormat = size.replace(/[^a-z]/gi, ""); 
