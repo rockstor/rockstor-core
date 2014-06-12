@@ -19,13 +19,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from rest_framework.response import Response
 from django.db import transaction
 from django.conf import settings
-from storageadmin.models import (SFTP, Share, SambaShare)
+from storageadmin.models import SFTP
 from storageadmin.util import handle_exception
 from storageadmin.serializers import SFTPSerializer
 from storageadmin.exceptions import RockStorAPIException
-from fs.btrfs import (mount_share, is_share_mounted, umount_root)
-from system.ssh import (update_sftp_config, sftp_mount_map, sftp_mount)
-from share_helpers import (helper_mount_share, validate_share)
+from fs.btrfs import (is_share_mounted, umount_root)
+from system.ssh import (update_sftp_config, sftp_mount_map, sftp_mount,
+                        rsync_for_sftp)
+from share_helpers import (helper_mount_share, validate_share,
+                           sftp_snap_toggle)
 import rest_framework_custom as rfc
 
 import logging
@@ -55,7 +57,6 @@ class SFTPView(rfc.GenericView):
             editable = 'ro'
         try:
             mnt_map = sftp_mount_map(settings.SFTP_MNT_ROOT)
-            logger.info('mount map: %s' % mnt_map)
             input_list = []
             for share in shares:
                 if (SFTP.objects.filter(share=share).exists()):
@@ -70,20 +71,23 @@ class SFTPView(rfc.GenericView):
             for share in shares:
                 sftpo = SFTP(share=share, editable=editable)
                 sftpo.save()
-                #mount if not already mounted
+                #  mount if not already mounted
                 helper_mount_share(share)
-                #bindmount if not already
+                #  bindmount if not already
                 sftp_mount(share, settings.MNT_PT, settings.SFTP_MNT_ROOT,
                            mnt_map, editable)
+                sftp_snap_toggle(share)
+
+                chroot_loc = ('%s%s' % (settings.SFTP_MNT_ROOT, share.owner))
+                rsync_for_sftp(chroot_loc)
                 input_list.append({'user': share.owner,
-                                   'dir': ('%s%s' % (settings.SFTP_MNT_ROOT,
-                                                     share.owner)),})
+                                   'dir': chroot_loc, })
             for sftpo in SFTP.objects.all():
                 if (sftpo.share not in shares):
                     input_list.append({'user': sftpo.share.owner,
                                        'dir': ('%s%s' %
                                                (settings.SFTP_MNT_ROOT,
-                                                sftpo.share.owner)),})
+                                                sftpo.share.owner)), })
             update_sftp_config(input_list)
             return Response()
         except RockStorAPIException:
@@ -100,9 +104,14 @@ class SFTPView(rfc.GenericView):
             handle_exception(Exception(e_msg), request)
 
         try:
-            mnt_prefix = ('%s%s/' % (settings.SFTP_MNT_ROOT, sftpo.share.owner))
+            mnt_prefix = ('%s%s/' % (settings.SFTP_MNT_ROOT,
+                                     sftpo.share.owner))
+
             if (is_share_mounted(sftpo.share.name, mnt_prefix)):
-                umount_root(('%s%s' % (mnt_prefix,sftpo.share.name)))
+                sftp_snap_toggle(sftpo.share, mount=False)
+                umount_root(('%s%s' % (mnt_prefix, sftpo.share.name)))
+                import shutil
+                shutil.rmtree(mnt_prefix)
             sftpo.delete()
             input_list = []
             for so in SFTP.objects.all():
@@ -110,7 +119,7 @@ class SFTPView(rfc.GenericView):
                     input_list.append({'user': so.share.owner,
                                        'dir': ('%s%s' %
                                                (settings.SFTP_MNT_ROOT,
-                                                so.share.name)),})
+                                                so.share.name)), })
             update_sftp_config(input_list)
             return Response()
         except RockStorAPIException:

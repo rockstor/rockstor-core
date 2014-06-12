@@ -36,7 +36,7 @@
         <div class="control-group">
           <label class="control-label" for="shares">Shares to export<span class="required"> *</span></label>
           <div class="controls">
-            <select name="shares" id="shares" size="10" multiple>
+            <select name="shares" id="shares" size="10" data-placeholder="Select shares to export" multiple>
               <%
                 var nShares = _.map(nfsExportGroup.get('exports'),
                 function(e) { return e.share; });

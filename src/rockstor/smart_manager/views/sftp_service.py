@@ -37,7 +37,7 @@ class SFTPServiceView(BaseServiceView):
         service_name = 'sftp'
         service = Service.objects.get(name=service_name)
         if (command == 'config'):
-            #nothing to really configure atm. just save the model
+            #  nothing to really configure atm. just save the model
             try:
                 config = request.DATA['config']
                 self._save_config(service, config)
