@@ -23,6 +23,7 @@ from storageadmin.views import (SetupWizardView, LoginView,
                                 SambaView, SFTPView, PluginView,
                                 InstalledPluginView, AdvancedNFSExportView)
 import os.path
+import oauth2_provider
 
 site_media = os.path.join(
     os.path.dirname(__file__), 'site_media'
@@ -60,6 +61,7 @@ urlpatterns = patterns('',
                        url(r'^img/(?P<path>.*)$', 'django.views.static.serve',
                            {'document_root': img_doc_root}),
 
+                       url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
                        # Uncomment the next line to enable the admin:
                        url(r'^admin/', include(admin.site.urls)),
 

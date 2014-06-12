@@ -164,6 +164,7 @@ INSTALLED_APPS = (
     'smart_manager',
     'south',
     'backup',
+    'oauth2_provider',
 )
 
 STATICFILES_STORAGE = 'pipeline.storage.PipelineCachedStorage'
