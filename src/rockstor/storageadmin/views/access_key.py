@@ -38,3 +38,19 @@ class AccessKeyView(rfc.GenericView):
                 return []
         return OauthApplication.objects.all()
 
+    @transaction.commit_on_success
+    def post(self, request):
+        try:
+            name = "apiclient"
+            if OauthApplication.objects.filter(name=name).exists()
+                e_msg = ('Share with name: %s already exists.' % sname)
+                raise Exception(e_msg)
+            app = OauthApplication(name=name,
+                    client_type = OauthApplication.CLIENT_CONFIDENTIAL,
+                    authorization_grant_type = OauthApplication\
+                            .GRANT_CLIENT_CREDENTIALS)
+            app.save()
+            return Response(OauthApplicationSerializer(app).data)
+
+        except Exception, e:
+            handle_exception(e, request)
