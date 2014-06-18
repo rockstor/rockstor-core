@@ -22,7 +22,7 @@ from storageadmin.views import (SetupWizardView, LoginView,
                                 SetupUserView, NFSExportGroupView,
                                 SambaView, SFTPView, PluginView,
                                 InstalledPluginView, AdvancedNFSExportView,
-                                AccessKeyView, OauthAppView)
+                                OauthAppView)
 import os.path
 import oauth2_provider
 
@@ -62,10 +62,7 @@ urlpatterns = patterns('',
                        url(r'^img/(?P<path>.*)$', 'django.views.static.serve',
                            {'document_root': img_doc_root}),
 
-                       url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
-                       # Uncomment the next line to enable the admin:
-                       url(r'^admin/', include(admin.site.urls)),
-
+                       url(r'^o/', include('oauth2_provider.urls')),
                        # REST API
                        url(r'^api/login', LoginView.as_view()),
                        (r'^api/appliances',
