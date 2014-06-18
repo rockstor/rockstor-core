@@ -22,9 +22,8 @@ from storageadmin.models import (Disk, Pool, Share, Snapshot, NFSExport,
                                  SupportCase, DashboardConfig,
                                  NetworkInterface, User, PoolScrub, Setup,
                                  NFSExportGroup, SFTP, Plugin, InstalledPlugin,
-                                 AdvancedNFSExport)
+                                 AdvancedNFSExport, OauthApp)
 from django.contrib.auth.models import User as DjangoUser
-from oauth2_provider.models import Application as OauthApplication
 
 
 class DiskInfoSerializer(serializers.ModelSerializer):
@@ -154,6 +153,10 @@ class InstalledPluginSerializer(serializers.ModelSerializer):
     class Meta:
         model = InstalledPlugin
 
-class OauthApplicationSerializer(serializers.ModelSerializer):
+
+class OauthAppSerializer(serializers.ModelSerializer):
+    client_id = serializers.CharField(source='client_id')
+    client_secret = serializers.CharField(source='client_secret')
+
     class Meta:
-        model = OauthApplication
+        model = OauthApp
