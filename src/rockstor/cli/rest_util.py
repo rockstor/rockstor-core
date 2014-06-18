@@ -20,12 +20,38 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import requests
 import time
 import json
+import base64
 import settings
 from storageadmin.exceptions import RockStorAPIException
 from functools import wraps
 from base_console import BaseConsole
 
-auth_params = {'apikey': 'adminapikey'}
+
+API_TOKEN = None
+
+
+def set_token():
+    import os
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
+    from storageadmin.models import OauthApp
+    app = OauthApp.objects.get(name='cliapp')
+    client_id = app.application.client_id
+    client_secret = app.application.client_secret,
+    token_request_data = {
+        'grant_type': 'client_credentials',
+        'client_id': client_id,
+        'client_secret': client_secret,
+    }
+    user_pass = '{0}:{1}'.format(client_id, client_secret)
+    auth_string = base64.b64encode(user_pass.encode('utf-8'))
+    auth_headers = {'HTTP_AUTHORIZATION':
+                    'Basic ' + auth_string.decode("utf-8"), }
+    response = requests.post('https://localhost/o/token/',
+                             data=token_request_data, headers=auth_headers,
+                             verify=False)
+    content = json.loads(response.content.decode("utf-8"))
+    global API_TOKEN
+    API_TOKEN = content['access_token']
 
 
 def api_error(console_func):
@@ -44,17 +70,19 @@ def api_error(console_func):
 
 
 def api_call(url, data=None, calltype='get', headers=None, save_error=True):
+    api_auth_header = {'Authorization': 'Bearer ' + API_TOKEN,
+                       'Content-type': 'application/json'}
     call = getattr(requests, calltype)
     try:
         if (headers is not None):
+            headers.update(api_auth_header)
             if (headers['content-type'] == 'application/json'):
-                r = call(url, verify=False, params=auth_params,
-                         data=json.dumps(data), headers=headers)
-            else:
-                r = call(url, verify=False, params=auth_params, data=data,
+                r = call(url, verify=False, data=json.dumps(data),
                          headers=headers)
+            else:
+                r = call(url, verify=False, data=data, headers=headers)
         else:
-            r = call(url, verify=False, params=auth_params, data=data)
+            r = call(url, verify=False, headers=api_auth_header, data=data)
     except requests.exceptions.ConnectionError:
         print('Error connecting to Rockstor. Is it running?')
         return {}

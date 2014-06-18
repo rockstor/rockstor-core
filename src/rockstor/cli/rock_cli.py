@@ -258,7 +258,11 @@ class RockConsole(BaseConsole):
             ak.cmdloop(args)
 
 
+from rest_util import set_token
+
+
 def main():
+    set_token()
     rc = RockConsole()
     if (len(sys.argv) > 1):
         if (sys.argv[1] == '-c'):
