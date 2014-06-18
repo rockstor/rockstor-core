@@ -22,7 +22,7 @@ from storageadmin.views import (SetupWizardView, LoginView,
                                 SetupUserView, NFSExportGroupView,
                                 SambaView, SFTPView, PluginView,
                                 InstalledPluginView, AdvancedNFSExportView,
-                                AccessKeyView)
+                                AccessKeyView, OauthAppView)
 import os.path
 import oauth2_provider
 
@@ -93,8 +93,9 @@ urlpatterns = patterns('',
                        url(r'^api/plugins', PluginView.as_view()),
                        url(r'^api/installed_plugins',
                            InstalledPluginView.as_view()),
-                       url(r'^api/access_keys$', AccessKeyView.as_view()),
-
+                       url(r'^api/oauth_app$', OauthAppView.as_view()),
+                       url(r'^api/oauth_app/(?P<name>\w+)$',
+                           OauthAppView.as_view()),
                        (r'^api/sm/services/',
                         include('smart_manager.urls.services')),
                        (r'^api/sm/sprobes/',

@@ -31,6 +31,7 @@ from storageadmin.exceptions import RockStorAPIException
 import logging
 logger = logging.getLogger(__name__)
 
+
 class UserView(rfc.GenericView):
     serializer_class = UserSerializer
 
@@ -155,4 +156,3 @@ class UserView(rfc.GenericView):
             e_msg = ('user: %s does not exist' % username)
             logger.debug(e_msg)
             handle_exception(Exception(e_msg), request)
-
