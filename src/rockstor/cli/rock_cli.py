@@ -36,6 +36,7 @@ from replication_console import ReplicationConsole
 from backup_plugin_console import BackupPluginConsole
 from rest_util import api_call
 from nfs_export_console import NFSExportConsole
+from api_keys import APIKeyConsole
 
 
 ASCII_LOGO = """
@@ -248,6 +249,13 @@ class RockConsole(BaseConsole):
             ne.cmdloop()
         else:
             ne.cmdloop(args)
+
+    def do_api_keys(self, args):
+        ak = APIKeyConsole(self.greeting)
+        if (len(args) == 0):
+            ak.cmdloop()
+        else:
+            ak.cmdloop(args)
 
 
 def main():
