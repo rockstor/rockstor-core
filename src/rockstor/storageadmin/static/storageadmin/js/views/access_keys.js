@@ -25,12 +25,16 @@
  */
 
 AccessKeysView = RockstorLayoutView.extend({
+  events: {
+    "click a[data-action=delete]": "deleteAccessKey"
+  },
 
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.access_keys_access_keys;
     this.collection = new AccessKeyCollection();
     this.dependencies.push(this.collection);
+    this.collection.on("reset", this.renderAccessKeys, this);
   },
 
   render: function() {
@@ -42,6 +46,31 @@ AccessKeysView = RockstorLayoutView.extend({
     $(this.el).html(this.template({
       collection: this.collection,
     }));
+  },
+
+  deleteAccessKey: function(event) {
+    var _this = this;
+    var button = $(event.currentTarget);
+    if (buttonDisabled(button)) return false;
+    console.log(button);
+    var name = button.attr('data-name');
+    console.log(name);
+    if(confirm("Delete access key:  " + name + " ...Are you sure?")){
+      disableButton(button);
+      $.ajax({
+        url: "/api/oauth_app/" + name,
+        type: "DELETE",
+        dataType: "json",
+        success: function() {
+          _this.collection.fetch({reset: true});
+          enableButton(button);
+        },
+        error: function(xhr, status, error) {
+          enableButton(button);
+        }
+      });
+    }
+
   }
 
 });

@@ -73,9 +73,8 @@ class OauthAppView(rfc.GenericView):
             handle_exception(e, request)
 
     @transaction.commit_on_success
-    def delete(self, request):
+    def delete(self, request, name):
         try:
-            name = request.DATA['name']
             try:
                 app = OauthApp.objects.get(name=name)
             except:
