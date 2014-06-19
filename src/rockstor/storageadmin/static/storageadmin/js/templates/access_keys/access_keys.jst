@@ -1,6 +1,6 @@
 <script>
 /*
- * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * Copyright (c) 2012-2014 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
  * 
  * RockStor is free software; you can redistribute it and/or modify
@@ -19,6 +19,7 @@
  */
 </script>
 
+<h3>Access Keys</h3>
 <!-- Module Body -->
 <div class="row-fluid">
   <div class="span12">
@@ -26,21 +27,27 @@
     <div class="messages"></div>
     <div id="access-keys-table-ph">
       <% if (!collection.isEmpty()) { %>
-        <table>
+        <table id="access-keys-table" class="table table-condensed table-bordered table-hover table-striped">
+          <tr>
+            <th>Name</th>
+            <th>Access Key ID</th>
+            <th>Secret Access Key</th>
+          </tr>
           <% collection.each(function(c) { %>
             <tr>
-              <td style="white-space: nowrap; vertical-align: top"><strong>Access Key ID&nbsp;&nbsp;</strong></td>
+              <td><%= c.get('name') %></td>
               <td style="vertical-align: top"><%= c.get("client_id") %></td>
-            </tr>
-            <tr>
-              <td style="white-space: nowrap; vertical-align: top"><strong>Secret Access Key&nbsp;&nbsp;</strong></td>
               <td style="vertical-align: top"><%= c.get("client_secret") %></td>
             </tr>
           <% }); %>
         </table>
 
+      <% } else {  %>
+        <h4>No access keys have been created</h4>
       <% } %>
     </div>
+
+    <a href="#add-access-key" id="add-access-key" class="btn btn-primary"><i class="icon-edit icon-white"></i> Add Access Key</a>
     <!-- End Content -->
   </div> <!-- span12 -->
 </div> <!-- row-fluid --> 

@@ -44,5 +44,4 @@ from sftp import SFTPView
 from plugin import PluginView
 from installed_plugin import InstalledPluginView
 from adv_nfs_exports import AdvancedNFSExportView
-from access_key import AccessKeyView
 from oauth_app import OauthAppView

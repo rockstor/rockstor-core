@@ -394,12 +394,12 @@ var AdvancedNFSExportCollection = RockStorPaginatedCollection.extend({
 
 var AccessKey = Backbone.Model.extend({
   url: function() {
-    return '/api/access_keys';
+    return '/api/oauth_app';
   }
 });
 
 var AccessKeyCollection = RockStorPaginatedCollection.extend({
   model: AccessKey,
-  baseUrl: '/api/access_keys'
+  baseUrl: '/api/oauth_app'
 });
 
