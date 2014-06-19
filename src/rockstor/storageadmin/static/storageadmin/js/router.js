@@ -78,6 +78,7 @@ var AppRouter = Backbone.Router.extend({
     "appliances": "showAppliances",
     "add-appliance": "addAppliance",
     "access-keys": "showAccessKeys",
+    "add-access-key": "addAccessKey",
     "404": "handle404",
     "500": "handle500",
     "*path": "showHome"
@@ -558,9 +559,17 @@ var AppRouter = Backbone.Router.extend({
   },
 
   showAccessKeys: function() {
-    this.renderSidebar("system", "appliances");
+    this.renderSidebar("system", "access-keys");
     this.cleanup();
     this.currentLayout = new AccessKeysView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+  
+  addAccessKey: function() {
+    this.renderSidebar("system", "access-keys");
+    this.cleanup();
+    this.currentLayout = new AddAccessKeyView();
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },

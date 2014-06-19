@@ -46,7 +46,7 @@ class OauthAppView(rfc.GenericView):
     def post(self, request):
         try:
             name = request.DATA['name']
-            username = request.DATA['username']
+            username = request.user.username
             if (OauthApp.objects.filter(name=name).exists()):
                 e_msg = ('application with name: %s already exists.' % name)
                 handle_exception(Exception(e_msg), request)
