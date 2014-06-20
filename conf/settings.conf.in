@@ -252,6 +252,7 @@ PIPELINE_JS = {
             'storageadmin/js/views/add_sftp_share.js',
             'storageadmin/js/views/version.js',
             'storageadmin/js/views/plugins.js',
+            
             ),
         'output_filename': 'storageadmin/js/storageadmin.js'
         },
