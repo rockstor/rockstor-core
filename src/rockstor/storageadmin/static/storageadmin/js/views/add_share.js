@@ -75,6 +75,7 @@ AddShareView =  RockstorLayoutView.extend({
         });
 
         $("#share_size").change(function(){
+        _this.renderSlider();
           var size = this.value;
           var sizeFormat = size.replace(/[^a-z]/gi, ""); 
 
@@ -83,12 +84,12 @@ AddShareView =  RockstorLayoutView.extend({
 
           if(sizeFormat == 'TB' || sizeFormat == 'tb' || sizeFormat == 'Tb') {
             size_value = size_value*1024*1024;
-            slider.setValue(parseInt(size)*1024*1024);
+            _this.slider.setValue(parseInt(size)*1024*1024);
           } else if (sizeFormat == 'GB' || sizeFormat == 'gb'
             || sizeFormat == 'Gb') {
-              slider.setValue(parseInt(size)*1024);
+            _this.slider.setValue(parseInt(size)*1024);
           } else {
-              slider.setValue(parseInt(size));
+            _this.slider.setValue(parseInt(size));
           }
         });
 
@@ -161,9 +162,10 @@ AddShareView =  RockstorLayoutView.extend({
     console.log('maxPoolSize is ' + maxPoolSize);
     
     // calculate step values and tick values
-    var tmp = this.genTicksForShareSize(1, parseInt(maxPoolSize/1024));
-    console.log(tmp);
-    // Render slider
+    var tmp = this.genTicksForShareSize(1, parseInt(maxPoolSize));
+     // Render slider
+    console.log('tickVal' + tmp[0]);
+    console.log('stepVal' + tmp[1]);
     this.slider = d3.slider().min(0).max(maxPoolSize).tickValues(tmp[0]).stepValues(tmp[1]).tickFormat(this.tickFormatter).callback(this.sliderCallback);
     d3.select('#slider').call(this.slider);
 
@@ -216,8 +218,9 @@ AddShareView =  RockstorLayoutView.extend({
       tickStep = 200;
     } else if (2000 < range) {
       snapStep = 10;
-      tickStep = 200;
+      tickStep = 500;
     }
+    
     snapValues = d3.range(0, tMax, snapStep);
     snapValues[0] = 1;
     for (var i=0; i<= tMax; i+=tickStep) {
