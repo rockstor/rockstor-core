@@ -32,49 +32,30 @@ ApplianceView = RockstorLayoutView.extend({
   initialize: function() {
     // call initialize of base
     this.constructor.__super__.initialize.apply(this, arguments);
-    this.collection = new DiskCollection();
+    this.diskcollection = new DiskCollection();
     this.template = window.JST.appliances_appliance_view;
-    this.dependencies.push(this.collection); 
-    this.collection.on('reset', this.renderApplianceView, this);
+    this.dependencies.push(this.diskcollection); 
+
+    this.cpucollection = new DiskCollection();
+    this.dependencies.push(this.cpucollection);
+    this.cordscollection = new DiskCollection();
+    this.dependencies.push(this.cordscollection);
+    this.memorycollection = new DiskCollection();
+    this.dependencies.push(this.memorycollection);
+
+    this.diskcollection.on('reset', this.renderApplianceView, this);
   },
 
   render: function() {
     this.fetch(this.renderApplianceView, this)
     return this;
   },
-  
+
   renderApplianceView: function() {
-    $(this.el).html(this.template({collection: this.collection}));
-  },
-
-  newAppliance: function() {
-    this.$('#new-appliance-container').html(this.new_appliance_template());
-  },
-
-  deleteAppliance: function(event) {
-    var _this = this;
-    event.preventDefault();
-    var button = $(event.currentTarget);
-    if (buttonDisabled(button)) return false;
-    var appliance = new Appliance();
-    appliance.set({
-      ip: button.attr('id'),
-      id: button.attr('data-id')
-    });
-    if(confirm("Delete appliance:  " + appliance.get('ip') + " ...Are you sure?")){
-      disableButton(button);	
-      appliance.destroy({
-        success: function(model, response, options) {
-          enableButton(button);
-          _this.collection.fetch();
-        },
-        error: function(model, xhr, options) {
-          enableButton(button);
-          var msg = xhr.responseText;
-        }
-      });
-    }
+    $(this.el).html(this.template({collection: this.diskcollection, cpucollection: this.cpucollection,
+    	cordscollection: this.cordscollection, memorycollection: this.memorycollection}));
   }
+
 });
 
 // Add pagination
