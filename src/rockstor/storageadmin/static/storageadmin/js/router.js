@@ -77,6 +77,7 @@ var AppRouter = Backbone.Router.extend({
     "plugins": "showPlugins",
     "appliances": "showAppliances",
     "add-appliance": "addAppliance",
+    "appliance-view": "showApplianceView",
     "404": "handle404",
     "500": "handle500",
     "*path": "showHome"
@@ -554,6 +555,14 @@ var AppRouter = Backbone.Router.extend({
     this.currentLayout = new AddApplianceView();
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  showApplianceView: function() {
+	    this.renderSidebar("system", "appliance-view");
+	    this.cleanup();
+	    this.currentLayout = new ApplianceView();
+	    $('#maincontent').empty();
+	    $('#maincontent').append(this.currentLayout.render().el);
   },
 
   handle404: function() {

@@ -31,4 +31,9 @@
 <% } else { %>
   <li><a href="#appliances"><i class="fa fa-desktop"></i> Appliances</span></a></li>
   <% } %>
+    <% if (selected == "appliance-view") { %>
+    <li><a href="#appliance-view" class="selected"><i class="fa fa-desktop"></i> Appliance View</span></a></li>
+<% } else { %>
+  <li><a href="#appliance-view"><i class="fa fa-desktop"></i> Appliance View</span></a></li>
+  <% } %>
 </ul>

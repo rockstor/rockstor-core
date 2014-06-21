@@ -1,0 +1,120 @@
+<!-- appliances -->
+<h3>Appliance View</h3>
+<div class="row-fluid">
+<table>
+	<tr>
+	<td valign="left" colspan="3">
+        <svg height="300" width="800">
+            <rect height="270" width="770" style="fill:rgb(148,186,231);stroke-width:1;stroke:rgb(0,0,0)"></rect>
+        <% horOffset=40; verOffset=50; row=0; column=0; poolName=""; poolDiskCount=0;
+        poolStartX=0; poolStartY=0; poolStartRow=0;%>
+        <% collection.each(function(disk, index) { %>
+            <g style="fill:rgb(49,101,156);stroke-width:1;stroke:rgb(0,0,0)">
+            	<rect X="<%=10 + horOffset*column%>" Y="<%=10+verOffset*row%>" height="40" width="25"></rect>
+            	<ellipse cx="<%=22.5 + horOffset*column%>" cy="<%=10+verOffset*row%>" rx="12" ry="4"/>
+            </g>
+            <%
+            tempName = disk.get("pool_name");
+            writePool = false;
+            if(tempName != poolName) {
+                if(poolName == "") {
+                    poolStartX = 5+horOffset*column;
+                    poolStartY = 5+verOffset*row;
+                    poolStartRow = row;
+                } else {
+                    writePool = true;
+                }
+                poolDiskCount += 1;
+                poolName = tempName;
+            } else {
+                if(poolName != "")
+                    poolDiskCount += 1;
+            }
+            %>
+            <%if(writePool) { %>
+                <path d="M<%=poolStartX%>,<%=poolStartY%> l0,50 <%=poolDiskCount*horOffset%>,0 0,-50" style="stroke: #000000; fill:none;" />
+            <%  poolDiskCount = 0;
+                poolStartX = 5+horOffset*column;
+                poolStartY = 5+verOffset*row;
+                poolStartRow = row;
+            } %>
+            <g>
+                <text y="<%=25+verOffset*row%>">
+                <tspan x="<%=10+horOffset*column%>"><%= disk.get('name') %></tspan>
+                <tspan x="<%=10+horOffset*column%>" dy="15" font-size="10px"><%= humanize.filesize(disk.get('size')*1024) %></tspan>
+                </text>
+            <% column = column+1; %>
+            <%
+            if(column==16) {
+                column=0;
+                row = row+1;
+            }
+            %>
+	    </g>
+        <% }); %>
+        </svg>
+	</td>
+	</tr>
+	<tr>
+        <td width="36%">
+	<svg height="300" width="300">
+            <rect height="200" width="250" style="fill:rgb(217,219,86);stroke-width:1;stroke:rgb(0,0,0)"></rect>
+            <% horOffset=40; verOffset=50; row=0; column=0;%>
+            <g style="fill:rgb(117,113,22);stroke-width:1;stroke:rgb(0,0,0)">
+            <% row=0; column=0;%>
+            <% cpucollection.each(function(cpu, index) { %>
+            <rect X="<%=10 + horOffset*column%>" Y="<%=10+verOffset*row%>" height="40" width="25"></rect>
+	        <% column = column+1; %>
+            <%
+            if(column==6) {
+                column=0;
+                row = row+1;
+            }
+            %>
+        <% }); %>
+	        </g>
+        </svg>
+	</td>
+    <td width="32%">
+	<svg height="300" width="250">
+            <rect height="200" width="200" style="fill:rgb(217,219,86);stroke-width:1;stroke:rgb(0,0,0)"></rect>
+            <g style="fill:rgb(117,113,22);stroke-width:1;stroke:rgb(0,0,0)">
+	        <% horOffset=50; verOffset=80; row=0; column=0;%>
+	        <% cordscollection.each(function(cord, index) { %>
+            <rect X="<%=10 + horOffset*column%>" Y="<%=10+verOffset*row%>" height="60" width="35"></rect>
+           	<ellipse cx="<%=28 + horOffset*column%>" cy="<%=10+verOffset*row%>" rx="17" ry="4"/>
+            <ellipse cx="<%=28 + horOffset*column%>" cy="<%=70+verOffset*row%>" rx="17" ry="4"/>
+            <% column = column+1; %>
+            <%
+            if(column==4) {
+                column=0;
+                row = row+1;
+            }
+            %>
+        <% }); %>
+	    </g>
+        </svg>
+	</td>
+    <td width="32%">
+	<svg height="300" width="250">
+            <rect height="200" width="200" style="fill:rgb(217,219,86);stroke-width:1;stroke:rgb(0,0,0)"></rect>
+            <g style="fill:rgb(117,113,22);stroke-width:1;stroke:rgb(0,0,0)">
+	        <% horOffset=60; verOffset=40; row=0; column=0;%>
+	        <% memorycollection.each(function(memory, index) { %>
+            <rect X="<%=10 + horOffset*column%>" Y="<%=10+verOffset*row%>" height="25" width="50"></rect>
+	        <% column = column+1; %>
+            <%
+            if(column==3) {
+                column=0;
+                row = row+1;
+            }
+            %>
+        <% }); %>
+	    </g>
+        </svg>
+	</td>
+
+	</tr>
+	</table>
+</div>
+
