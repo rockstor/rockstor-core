@@ -1,0 +1,64 @@
+<!-- appliances -->
+<h3>Appliance View</h3>
+<div class="row-fluid">
+<table>
+	<tr>
+	<td valign="left" colspan="3">
+        <svg height="300" width="800">
+            <rect height="270" width="770" style="fill:rgb(172,219,232);stroke-width:1;stroke:rgb(0,0,0)"></rect>
+        <% horOffset=40; verOffset=50; row=0; column=0;%>
+        <% collection.each(function(disk, index) { %>
+	    	<path d="M5,5 l75,0 0,50 -75,0 0,-50" style="stroke: #000000; fill:none;" />
+            <g style="fill:rgb(227,223,168);stroke-width:1;stroke:rgb(0,0,0)">
+            	<rect X="<%=10 + horOffset*column%>" Y="<%=10+verOffset*row%>" height="40" width="25"></rect>
+            </g>
+            <g>
+                <text y="<%=25+verOffset*row%>">
+                <tspan x="<%=10+horOffset*column%>"><%= disk.get('name') %></tspan>
+                <tspan x="<%=10+horOffset*column%>" dy="15" font-size="10px"><%= humanize.filesize(disk.get('size')*1024) %></tspan>
+                </text>
+            <% column = column+1; %>
+            <%
+            if(column==16) {
+                column=0;
+                row = row+1;
+            }
+            %>
+	    </g>
+        <% }); %>
+        </svg>
+	</td>
+	</tr>
+	<tr>
+        <td width="36%">
+	<svg height="300" width="300">
+            <rect height="200" width="250" style="fill:rgb(240,170,193);stroke-width:1;stroke:rgb(0,0,0)"></rect>
+            <g style="fill:rgb(224,128,168);stroke-width:1;stroke:rgb(0,0,0)">
+	        <rect X="10" Y="10" height="30" width="40"></rect>
+		<rect X="60" Y="10" height="30" width="40"></rect>
+	    </g>
+        </svg>
+	</td>
+        <td width="32%">
+	<svg height="300" width="250">
+            <rect height="200" width="200" style="fill:rgb(240,170,193);stroke-width:1;stroke:rgb(0,0,0)"></rect>
+            <g style="fill:rgb(224,128,168);stroke-width:1;stroke:rgb(0,0,0)">
+	        <rect X="10" Y="10" height="30" width="40"></rect>
+		<rect X="60" Y="10" height="30" width="40"></rect>
+	    </g>
+        </svg>
+	</td>
+        <td width="32%">
+	<svg height="300" width="250">
+            <rect height="200" width="200" style="fill:rgb(240,170,193);stroke-width:1;stroke:rgb(0,0,0)"></rect>
+            <g style="fill:rgb(224,128,168);stroke-width:1;stroke:rgb(0,0,0)">
+	        <rect X="10" Y="10" height="30" width="40"></rect>
+		<rect X="60" Y="10" height="30" width="40"></rect>
+	    </g>
+        </svg>
+	</td>
+
+	</tr>
+	</table>
+</div>
+
