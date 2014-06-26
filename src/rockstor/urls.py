@@ -21,8 +21,10 @@ from storageadmin.views import (SetupWizardView, LoginView,
                                 DashboardConfigView,
                                 SetupUserView, NFSExportGroupView,
                                 SambaView, SFTPView, PluginView,
-                                InstalledPluginView, AdvancedNFSExportView)
+                                InstalledPluginView, AdvancedNFSExportView,
+                                OauthAppView)
 import os.path
+import oauth2_provider
 
 site_media = os.path.join(
     os.path.dirname(__file__), 'site_media'
@@ -60,9 +62,7 @@ urlpatterns = patterns('',
                        url(r'^img/(?P<path>.*)$', 'django.views.static.serve',
                            {'document_root': img_doc_root}),
 
-                       # Uncomment the next line to enable the admin:
-                       url(r'^admin/', include(admin.site.urls)),
-
+                       url(r'^o/', include('oauth2_provider.urls')),
                        # REST API
                        url(r'^api/login', LoginView.as_view()),
                        (r'^api/appliances',
@@ -90,7 +90,9 @@ urlpatterns = patterns('',
                        url(r'^api/plugins', PluginView.as_view()),
                        url(r'^api/installed_plugins',
                            InstalledPluginView.as_view()),
-
+                       url(r'^api/oauth_app$', OauthAppView.as_view()),
+                       url(r'^api/oauth_app/(?P<name>\w+)$',
+                           OauthAppView.as_view()),
                        (r'^api/sm/services/',
                         include('smart_manager.urls.services')),
                        (r'^api/sm/sprobes/',

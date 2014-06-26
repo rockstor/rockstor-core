@@ -19,9 +19,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from django.db import models
 from storageadmin.models import Pool
 
+
 class Disk(models.Model):
     """Pool can be null for disks that are not part of any pool currently"""
-    pool = models.ForeignKey(Pool, null=True, on_delete=models.SET_NULL )
+    pool = models.ForeignKey(Pool, null=True, on_delete=models.SET_NULL)
     """typically sda, sdb etc.. max_length = 0 supports 100s of disks"""
     name = models.CharField(max_length=10, unique=True)
     """total size in KB"""

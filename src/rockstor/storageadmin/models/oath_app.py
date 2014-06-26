@@ -17,17 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.db import models
+from oauth2_provider.models import Application
+from storageadmin.models import User
 
 
-class Appliance(models.Model):
-    """uuid is hostid-uid"""
-    uuid = models.CharField(max_length=64, unique=True)
-    ip = models.CharField(max_length=4096, unique=True)
-    current_appliance = models.BooleanField(default=False)
-    hostname = models.CharField(max_length=128, default='Rockstor')
-    mgmt_port = models.IntegerField(default=443)
-    client_id = models.CharField(max_length=100, null=True)
-    client_secret = models.CharField(max_length=255, null=True)
+class OauthApp(models.Model):
+    application = models.OneToOneField(Application)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL)
 
     class Meta:
         app_label = 'storageadmin'

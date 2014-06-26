@@ -38,6 +38,7 @@ from datetime import datetime
 from django.utils.timezone import utc
 from django.conf import settings
 from share_helpers import sftp_snap_toggle
+from oauth2_provider.ext.rest_framework import OAuth2Authentication
 
 import logging
 logger = logging.getLogger(__name__)
@@ -45,7 +46,7 @@ logger = logging.getLogger(__name__)
 
 class CommandView(APIView):
     authentication_classes = (DigestAuthentication, SessionAuthentication,
-                              BasicAuthentication,)
+                              BasicAuthentication, OAuth2Authentication,)
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, command):

@@ -22,17 +22,17 @@ import sys
 import logging
 import zmq
 import subprocess
-import fcntl
-import json
 from datetime import datetime
 from django.utils.timezone import utc
 from django.conf import settings
 from contextlib import contextmanager
 from util import (create_share, create_receive_trail, update_receive_trail,
                   create_snapshot, create_rshare, rshare_id, get_sender_ip)
+from cli.rest_util import set_token
 
 BTRFS = '/sbin/btrfs'
 logger = logging.getLogger(__name__)
+
 
 class Receiver(Process):
 
@@ -71,7 +71,7 @@ class Receiver(Process):
                 try:
                     err_ack = {'msg': 'error',
                                'id': self.meta['id'],
-                               'error': msg,}
+                               'error': msg, }
                     self.meta_push.send_json(err_ack)
                 except Exception, e:
                     msg = ('Failed to send ack: %s to the sender for meta: '
@@ -82,6 +82,7 @@ class Receiver(Process):
             self._sys_exit(3)
 
     def run(self):
+        set_token()
         msg = ('Failed to get the sender ip from the uuid(%s) for meta: %s' %
                (self.meta['uuid'], self.meta))
         with self._clean_exit_handler(msg):
@@ -107,8 +108,7 @@ class Receiver(Process):
             self.meta_push.connect('tcp://%s:%d' % (self.sender_ip,
                                                     self.meta_port))
 
-        #@todo: use appliance uuid instead?
-        sname = ('%s-%s' % (self.src_share, self.sender_ip))
+        sname = ('%s-%s-%s' % (self.sender_id, self.sender_ip, self.src_share))
         if (not self.incremental):
             msg = ('Failed to verify/create share: %s. meta: %s. '
                    'Aborting.' % (sname, self.meta))
@@ -123,7 +123,7 @@ class Receiver(Process):
                         'appliance': self.sender_ip,
                         'src_share': self.src_share,
                         'data_port': self.data_port,
-                        'meta_port': self.meta_port,}
+                        'meta_port': self.meta_port, }
                 self.rid = create_rshare(data, logger)
 
         else:
@@ -159,7 +159,7 @@ class Receiver(Process):
                self.meta)
         with self._clean_exit_handler(msg):
             ack = {'msg': 'begin_ok',
-                   'id': self.meta['id'],}
+                   'id': self.meta['id'], }
             self.meta_push.send_json(ack)
             logger.debug('begin_ok sent for meta: %s' % self.meta)
         recv_timeout_counter = 0

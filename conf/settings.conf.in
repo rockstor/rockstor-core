@@ -164,6 +164,7 @@ INSTALLED_APPS = (
     'smart_manager',
     'south',
     'backup',
+    'oauth2_provider',
 )
 
 STATICFILES_STORAGE = 'pipeline.storage.PipelineCachedStorage'
@@ -252,6 +253,8 @@ PIPELINE_JS = {
             'storageadmin/js/views/add_sftp_share.js',
             'storageadmin/js/views/version.js',
             'storageadmin/js/views/plugins.js',
+            'storageadmin/js/views/access_keys.js',
+            'storageadmin/js/views/add_access_key.js',
             ),
         'output_filename': 'storageadmin/js/storageadmin.js'
         },

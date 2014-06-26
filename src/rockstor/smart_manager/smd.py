@@ -19,7 +19,7 @@ import time
 import sys
 from django.conf import settings
 from stap_dispatcher import Stap
-from cli.rest_util import api_call
+from cli.rest_util import (api_call, set_token)
 
 import logging
 logger = logging.getLogger(__name__)
@@ -48,6 +48,7 @@ def main():
     url = 'https://localhost/api/commands/bootstrap'
     time.sleep(10)
     try:
+        set_token()
         api_call(url, calltype='post')
     except Exception, e:
         logger.error('Unable to bootstrap the machine. Moving on..')
