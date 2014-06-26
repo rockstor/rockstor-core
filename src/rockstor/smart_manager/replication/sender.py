@@ -29,6 +29,7 @@ from contextlib import contextmanager
 from django.utils.timezone import utc
 from util import (create_replica_trail, update_replica_status, is_snapshot,
                   create_snapshot)
+from cli.rest_util import set_token
 
 BTRFS = '/sbin/btrfs'
 logger = logging.getLogger(__name__)
@@ -113,6 +114,7 @@ class Sender(Process):
         return ack
 
     def run(self):
+        set_token()
         msg = ('Failed to connect to receiver(%s) on meta port'
                '(%d) for snap_name: %s. Aborting.' %
                (self.receiver_ip, self.rmeta_port, self.snap_name))
