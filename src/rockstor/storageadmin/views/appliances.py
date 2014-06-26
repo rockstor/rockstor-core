@@ -130,7 +130,7 @@ class AppliancesView(rfc.GenericView):
                                       client_secret=client_secret)
                 appliance.save()
             else:
-                appliance_uuid = ('%s:%s' % (hostid()[0][0],
+                appliance_uuid = ('%s-%s' % (hostid()[0][0],
                                              str(uuid.uuid4())))
                 appliance = Appliance(uuid=appliance_uuid, ip=ip,
                                       current_appliance=True)
