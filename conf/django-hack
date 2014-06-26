@@ -25,7 +25,7 @@ sys.path[0:0] = [
   join(base, 'eggs/setuptools-0.7.2-py2.7.egg'),
   join(base, 'eggs/oauthlib-0.6.1-py2.7.egg'),
   join(base, 'eggs/six-1.7.2-py2.7.egg'),
-  join(base, 'eggs/django_braces-1.4.0-py2.7.egg)',
+  join(base, 'eggs/django_braces-1.4.0-py2.7.egg'),
   '/opt/rockstor',
   '/opt/rockstor/src',
   ]
