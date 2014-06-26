@@ -83,6 +83,11 @@ def rshare_id(sname, logger):
 
 def create_rshare(data, logger):
     try:
+        return rshare_id(data['share'], logger)
+    except Exception:
+        pass
+
+    try:
         url = ('%ssm/replicas/rshare' % BASE_URL)
         rshare = api_call(url, data=data, calltype='post', save_error=False)
         logger.debug('ReplicaShare: %s created.' % rshare)
@@ -163,6 +168,9 @@ def is_share(sname, logger):
 
 def create_share(sname, pool, logger):
     try:
+        if (is_share(sname, logger)):
+            return logger.debug('Share(%s) already exists' % sname)
+
         url = ('%sshares' % BASE_URL)
         #  @todo: make share size same as pool size
         #  make it default = 2TB = 2147483648KB
