@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-
+import os
 import requests
 import time
 import json
@@ -30,13 +30,15 @@ from base_console import BaseConsole
 API_TOKEN = None
 
 
-def set_token():
-    import os
-    os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
-    from storageadmin.models import OauthApp
-    app = OauthApp.objects.get(name='cliapp')
-    client_id = app.application.client_id
-    client_secret = app.application.client_secret,
+def set_token(client_id=None, client_secret=None, url=None):
+    if (client_id is None or client_secret is None or url is None):
+        os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
+        from storageadmin.models import OauthApp
+        app = OauthApp.objects.get(name='cliapp')
+        client_id = app.application.client_id
+        client_secret = app.application.client_secret,
+        url = 'https://localhost'
+
     token_request_data = {
         'grant_type': 'client_credentials',
         'client_id': client_id,
@@ -46,7 +48,7 @@ def set_token():
     auth_string = base64.b64encode(user_pass.encode('utf-8'))
     auth_headers = {'HTTP_AUTHORIZATION':
                     'Basic ' + auth_string.decode("utf-8"), }
-    response = requests.post('https://localhost/o/token/',
+    response = requests.post('%s/o/token/' % url,
                              data=token_request_data, headers=auth_headers,
                              verify=False)
     content = json.loads(response.content.decode("utf-8"))
@@ -70,8 +72,9 @@ def api_error(console_func):
 
 
 def api_call(url, data=None, calltype='get', headers=None, save_error=True):
-    api_auth_header = {'Authorization': 'Bearer ' + API_TOKEN,
-                       'Content-type': 'application/json'}
+    if (API_TOKEN is None):
+        set_token()
+    api_auth_header = {'Authorization': 'Bearer ' + API_TOKEN, }
     call = getattr(requests, calltype)
     try:
         if (headers is not None):
@@ -80,8 +83,12 @@ def api_call(url, data=None, calltype='get', headers=None, save_error=True):
                 r = call(url, verify=False, data=json.dumps(data),
                          headers=headers)
             else:
-                r = call(url, verify=False, data=data, headers=headers)
+                r = call(url, verify=False, data=data,
+                         headers=headers)
         else:
+            print ('api auth headers = %s' % api_auth_header)
+            print ('url = %s' % url)
+            print ('data = %s' % data)
             r = call(url, verify=False, headers=api_auth_header, data=data)
     except requests.exceptions.ConnectionError:
         print('Error connecting to Rockstor. Is it running?')
@@ -96,8 +103,8 @@ def api_call(url, data=None, calltype='get', headers=None, save_error=True):
         print r.text
         try:
             error_d = json.loads(r.text)
-            if ('detail' in error_d):
-                raise RockStorAPIException(detail=error_d['detail'])
+            #if ('detail' in error_d):
+            #    raise RockStorAPIException(detail=error_d['detail'])
 
             if (settings.DEBUG is True and save_error is True):
                 cur_time = str(int(time.time()))
