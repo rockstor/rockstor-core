@@ -26,6 +26,7 @@ import sys
 SYSCTL = '/usr/bin/systemctl'
 DJANGO = '/opt/rockstor/bin/django'
 
+
 def main():
     loglevel = logging.INFO
     if (len(sys.argv) > 1 and sys.argv[1] == '-x'):
@@ -46,7 +47,8 @@ def main():
     logging.info('Creating app databases...')
     run_command(['su', '-', 'postgres', '-c', '/usr/bin/createdb smartdb'])
     logging.debug('smartdb created')
-    run_command(['su', '-', 'postgres', '-c', '/usr/bin/createdb storageadmin'])
+    run_command(['su', '-', 'postgres', '-c',
+                 '/usr/bin/createdb storageadmin'])
     logging.debug('storageadmin created')
     run_command(['su', '-', 'postgres', '-c', '/usr/bin/createdb backup'])
     logging.debug('backup created')
@@ -64,11 +66,14 @@ def main():
     run_command(['sudo', '-u', 'postgres', 'psql', 'backup', '-f',
                  '/opt/rockstor/conf/backup.sql.in'])
     logging.debug('backup app database loaded')
-    run_command(['sudo', '-u', 'postgres', 'psql', 'storageadmin', '-c', "select setval('south_migrationhistory_id_seq', (select max(id) from south_migrationhistory))"])
+    run_command(['sudo', '-u', 'postgres', 'psql', 'storageadmin', '-c',
+                 "select setval('south_migrationhistory_id_seq', (select max(id) from south_migrationhistory))"])
     logging.debug('storageadmin migration history copied')
-    run_command(['sudo', '-u', 'postgres', 'psql', 'smartdb', '-c', "select setval('south_migrationhistory_id_seq', (select max(id) from south_migrationhistory))"])
+    run_command(['sudo', '-u', 'postgres', 'psql', 'smartdb', '-c',
+                 "select setval('south_migrationhistory_id_seq', (select max(id) from south_migrationhistory))"])
     logging.debug('smartdb migration history copied')
-    run_command(['sudo', '-u', 'postgres', 'psql', 'backup', '-c', "select setval('south_migrationhistory_id_seq', (select max(id) from south_migrationhistory))"])
+    run_command(['sudo', '-u', 'postgres', 'psql', 'backup', '-c',
+                 "select setval('south_migrationhistory_id_seq', (select max(id) from south_migrationhistory))"])
     logging.debug('backup migration history copied')
     logging.info('Done')
     run_command(['cp', '-f', '/opt/rockstor/conf/postgresql.conf',
@@ -80,6 +85,8 @@ def main():
     run_command([SYSCTL, 'restart', 'postgresql'])
     logging.info('Postgresql restarted')
     logging.info('Running app database migrations...')
+    run_command([DJANGO, 'migrate', 'oauth2_provider', '--database=default',
+                 '--noinput'])
     run_command([DJANGO, 'migrate', 'storageadmin', '--database=default',
                  '--noinput'])
     logging.debug('storageadmin migrated')
@@ -91,7 +98,7 @@ def main():
     logging.debug('backup migrated')
     logging.info('Done')
     logging.info('Running prepdb...')
-    run_command(['/opt/rockstor/bin/prep_db',])
+    run_command(['/opt/rockstor/bin/prep_db', ])
     logging.info('Done')
     shutil.copy('/opt/rockstor/conf/rockstor.service', '/etc/systemd/system/')
     run_command([SYSCTL, 'enable', 'rockstor'])
