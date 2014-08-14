@@ -308,7 +308,7 @@ var AppRouter = Backbone.Router.extend({
   editUser: function(username) {
     this.renderSidebar("system", "users");
     this.cleanup();
-    this.currentLayout = new EditUserView({username: username});
+    this.currentLayout = new AddUserView({username: username});
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },
