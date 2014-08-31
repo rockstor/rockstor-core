@@ -77,6 +77,7 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
   box-shadow: 0px 0px 12px rgb(85, 85, 85);
 }
 .navbar-outer { box-shadow: 0px 0px 12px rgb(85, 85, 85); }
+.navbar-inner { min-height: 60px; }
 
 .navbar-search .search-query {
   padding: 2px 12px;
@@ -90,6 +91,10 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
 .navbar-inverse .nav li.dropdown > .dropdown-toggle .caret {
   border-top-color: #fff;
   border-bottom-color: #fff;
+}
+
+.navbar .nav>li>a {
+  padding: 16px 15px 10px;
 }
 
 /*
@@ -134,6 +139,7 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
 
 /* Logo */
 #logo {
+  height: 51px;
   float: left;
   padding: 1px 20px 1px;
   margin-left: -20px;
@@ -692,7 +698,7 @@ label.error { font-size: 12px; color: #b94a48; }
 
 #appliance-breadcrumb {
   position: fixed;
-  margin-top: 46px;
+  margin-top: 66px;
   right: 0px;
   left: 0px;
   z-index: 999;
@@ -1388,12 +1394,11 @@ input[type="radio"].selectedRoot {
 
 #wrapper2 {
   position: absolute;
-  top: 70px;
+  top: 94px;
   right: 0px;
   bottom: 4px;
   left: 0px;
   overflow: hidden;
-  background: rgb(238, 238, 238);
 }
 
 #sidebar {
