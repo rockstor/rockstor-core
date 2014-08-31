@@ -21,7 +21,7 @@ html { height: 100%; }
 
 body {
   color: rgb(85,85,85);
-  background: #fff;
+  background: #eee;
   height: 100%;
 
 
@@ -71,10 +71,16 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
 
 /* Navbar */
 /*.navbar .container { width: 940px; }*/
-.navbar-fixed-top .navbar-inner { padding-left: 20px; padding-right: 20px; }
+.navbar-fixed-top .navbar-inner { 
+  padding-left: 20px; 
+  padding-right: 20px; 
+  background: #6C7A89;
+  border: none;
+}
 .navbar {
   margin-bottom: 0px;
-  box-shadow: 0px 0px 12px rgb(85, 85, 85);
+  /*box-shadow: 0px 0px 12px rgb(85, 85, 85);*/
+  box-shadow: none;
 }
 .navbar-outer { box-shadow: 0px 0px 12px rgb(85, 85, 85); }
 .navbar-inner { min-height: 60px; }
@@ -86,6 +92,7 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
 
 .navbar-inverse .nav > li > a {
   color: #fff;
+
 }
 
 .navbar-inverse .nav li.dropdown > .dropdown-toggle .caret {
@@ -95,6 +102,8 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
 
 .navbar .nav>li>a {
   padding: 16px 15px 10px;
+  text-transform: uppercase;
+  font-size: 11px;
 }
 
 /*
@@ -688,7 +697,7 @@ label.error { font-size: 12px; color: #b94a48; }
 
 #breadcrumbs h3 { color: #005580; padding: 0; margin: 0;}
 
-#appliance-name { color: #2AA7FA; }
+#appliance-name { color: #fff; }
 
 #appliance-select-content {
   height: 400px;
@@ -698,18 +707,19 @@ label.error { font-size: 12px; color: #b94a48; }
 
 #appliance-breadcrumb {
   position: fixed;
-  margin-top: 66px;
+  margin-top: 60px;
   right: 0px;
   left: 0px;
   z-index: 999;
   padding: 2px 20px 2px 20px;
-  background: #eee;
+  background: #6C7A89;
   border-top: 1px solid #ddd;
   border-bottom: 1px solid #ddd;
 }
 
 #appliance-loadavg {
   float:right;
+  color: #fff;
 }
 
 hr.module-sep { margin: 0; border: 0; border-top: 1px solid #ddd;
