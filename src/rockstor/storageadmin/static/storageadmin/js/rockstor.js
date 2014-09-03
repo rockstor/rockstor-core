@@ -522,8 +522,8 @@ function fetchDependencies(dependencies, callback, context) {
 
 function checkBrowser() {
   var userAgent = navigator.userAgent
-  if (!/firefox/i.test(userAgent)) {
-    $('#browsermsg').html('<div class="alert alert-error"><button type="button" class="close" data-dismiss="alert">&times;</button>The RockStor WebUI is supported only on Firefox. Some features may not work correctly.</div>');
+  if (!/firefox/i.test(userAgent) && !/chrome/i.test(userAgent)) {
+    $('#browsermsg').html('<div class="alert alert-error"><button type="button" class="close" data-dismiss="alert">&times;</button>The RockStor WebUI is supported only on Firefox or Chrome. Some features may not work correctly.</div>');
   }
   RockStorGlobals.browserChecked = true;
 }
