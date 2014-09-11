@@ -23,6 +23,7 @@ from system.osi import run_command
 import logging
 import sys
 import re
+import time
 
 SYSCTL = '/usr/bin/systemctl'
 DJANGO = '/opt/rockstor/bin/django'
@@ -60,10 +61,22 @@ def main():
         loglevel = logging.DEBUG
     logging.basicConfig(format='%(asctime)s: %(message)s', level=loglevel)
     shutil.copyfile('/etc/issue', '/etc/issue.rockstor')
-    update_issue()
+    for i in range(30):
+        try:
+            update_issue()
+            break
+        except Exception, e:
+            logging.info('exception occured while running update_issue. '
+                         'Perhaps rc.local ran before it should have. '
+                         'Trying again after 2 seconds')
+            if (i > 28):
+                logging.info('Waited too long and tried too many times. '
+                             'Quiting.')
+                raise e
+            time.sleep(2)
     if (os.path.isfile(STAMP)):
         return logging.info(
-            'initrock ran successfully before, not running it again.'
+            'initrock ran successfully before, so not running it again.'
             ' Running it again can destroy your Rockstor state. If you know '
             'what you are doing, remove /opt/rockstor/.initrock '
             'and run again.')
