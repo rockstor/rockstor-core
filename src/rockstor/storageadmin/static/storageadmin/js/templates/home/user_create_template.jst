@@ -1,46 +1,56 @@
 
-<h3>Create an admin user </h3>
 
+<h3>Set a hostname and create an Admin user</h3>
 <div class="row-fluid">
   <div class="span8">
 
-    <div class="form-box">
-      <form id="user-create-form" name="aform">
-
+    <form id="user-create-form" name="aform" class="form-horizontal">
+      <div class="form-box">
         <div class="row-fluid">
           <div class="span12">
-              <div class="messages"></div>
-              <div class="control-group">
-                <label class="control-label" for="username">Username</label>
-                <div class="controls">
-                  <input type="text" id="username" name="username" placeholder="Username" required>
-                </div>
-              </div>
-              <div class="control-group">
-                <label class="control-label">Password</label>
-                <div class="controls">
-                  <input type="password" id="password" name="password" placeholder="Password" required>
-                </div>
-              </div>
-              <div class="control-group">
-                <label class="control-label">Confirm Password</label>
-                <div class="controls">
-                  <input type="password" id="password_confirmation" name="password_confirmation" placeholder="Password" required>
-                </div>
-              </div>
-              <div class="control-group">
-                <div class="controls">
-                  <button type="Submit" id="create-user" class="btn btn-primary">Create User</button>
-                </div>
+            <div class="messages"></div>
+            <div class="control-group">
+              <label class="control-label" for="hostnam">Appliance Hostname</label>
+              <div class="controls">
+                <input type="text" id="hostname" name="hostname" placeholder="Hostname" required>
               </div>
             </div>
           </div>
         </div>
+        <br>
+        <div class="row-fluid">
+          <div class="span12">
+            <div class="control-group">
+              <label class="control-label" for="username">Username</label>
+              <div class="controls">
+                <input type="text" id="username" name="username" placeholder="Username" required>
+              </div>
+            </div>
+            <div class="control-group">
+              <label class="control-label">Password</label>
+              <div class="controls">
+                <input type="password" id="password" name="password" placeholder="Password" required>
+              </div>
+            </div>
+            <div class="control-group">
+              <label class="control-label">Confirm Password</label>
+              <div class="controls">
+                <input type="password" id="password_confirmation" name="password_confirmation" placeholder="Password" required>
+              </div>
+            </div>
+            <div class="control-group">
+              <div class="controls">
+                <button type="Submit" id="create-user" class="btn btn-primary">Submit</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      </form>
-    </div>
-  
+    </form>
+  </div>
 
-  </div> <!-- span8 -->
+
+</div> <!-- span8 -->
 </div> <!-- row-fluid -->
 

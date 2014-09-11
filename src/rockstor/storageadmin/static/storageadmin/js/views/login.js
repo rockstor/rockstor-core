@@ -32,6 +32,10 @@ LoginView = Backbone.View.extend({
   initialize: function() {
     this.login_template = window.JST.home_login_template;
     this.user_create_template = window.JST.home_user_create_template;
+    this.networkInterfaces = new NetworkInterfaceCollection();
+    this.networkInterfaces.pageSize = RockStorGlobals.maxPageSize;
+    this.networkInterfaces.on("reset", this.saveAppliance, this);
+    this.appliances = new ApplianceCollection();
   },
 
   render: function() {
@@ -45,6 +49,7 @@ LoginView = Backbone.View.extend({
         rules: {
           username: "required",
           password: "required",
+          hostname: "required",
           password_confirmation: {
             required: "true",
             equalTo: "#password"
@@ -58,6 +63,11 @@ LoginView = Backbone.View.extend({
         submitHandler: function() {
           var username = _this.$("#username").val();
           var password = _this.$("#password").val();
+          RockStorGlobals.hostname = _this.$('#hostname').val();
+          console.log('hostname is ' + RockStorGlobals.hostname);
+            
+          
+
           var setupUserModel = Backbone.Model.extend({
             urlRoot: "/setup_user",
           });
@@ -76,6 +86,8 @@ LoginView = Backbone.View.extend({
               }
             }
           );
+          
+          return false;
         }
       });
     }
@@ -86,9 +98,7 @@ LoginView = Backbone.View.extend({
     if (!_.isUndefined(event) && !_.isNull(event)) {
       event.preventDefault();
     }
-    this.makeLoginRequest(
-      this.$("#username").val(),
-      this.$("#password").val());
+    this.makeLoginRequest(this.$("#username").val(), this.$("#password").val());
   },
   
   makeLoginRequest: function(username, password) {
@@ -102,15 +112,84 @@ LoginView = Backbone.View.extend({
         password: password,
       }, 
       success: function(data, status, xhr) {
-        logged_in = true;
-        refreshNavbar();
-        app_router.navigate('home', {trigger: true}) 
+        _this.scanNetwork();
+        //logged_in = true;
+        //refreshNavbar();
+        //app_router.navigate('home', {trigger: true}) 
       },
       error: function(xhr, status, error) {
         _this.$(".messages").html("<label class=\"error\">Login incorrect!</label>");
       }
     });
-
   },
+  
+  scanNetwork: function() {
+    var _this = this;
+    $.ajax({
+      url: "/api/network", 
+      type: "POST",
+      dataType: "json",
+      success: function(data, status, xhr) {
+        _this.networkInterfaces.fetch();
+      },
+      error: function(xhr, status, error) {
+        logger.debug(error);
+      }
+    });
+  },
+  
+  setIp: function() {
+    var mgmtIface = this.networkInterfaces.find(function(iface) {
+      return iface.get('itype') == 'management';
+    });
+    if (!_.isUndefined(mgmtIface)) {
+      RockStorGlobals.ip = mgmtIface.get("ipaddr");
+    } else {
+      RockStorGlobals.ip = this.networkInterfaces.at(0).get("ipaddr");
+    }
+  },
+  
+  saveAppliance: function() {
+    var _this = this;
+    
+    this.setIp();
+
+    // create current appliance if not created already
+    if (this.appliances.length > 0) {
+      var current_appliance = this.appliances.find(function(appliance) {
+        return appliance.get('current_appliance') == true; 
+      })
+    }
+    if (_.isUndefined(current_appliance)) {
+      var new_appliance = new Appliance();
+      new_appliance.save(
+        {
+          hostname: RockStorGlobals.hostname,
+          ip: RockStorGlobals.ip,
+          current_appliance: true
+        },
+        {
+          success: function(model, response, options) {
+            setup_done = true;
+            _this.goToRoot();
+          },
+          error: function(model, xhr, options) {
+            var msg = xhr.responseText;
+            try {
+              msg = JSON.parse(msg).detail;
+            } catch(err) {
+            }
+            console.log(msg);
+          }
+        }
+      );
+    } else {
+      app_router.navigate('home', {trigger: true});
+    }
+  },
+  
+  goToRoot: function() {
+    window.location.replace("/")
+  }
 
 });
