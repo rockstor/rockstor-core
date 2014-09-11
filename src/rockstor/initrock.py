@@ -22,9 +22,36 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 from system.osi import run_command
 import logging
 import sys
+import re
 
 SYSCTL = '/usr/bin/systemctl'
 DJANGO = '/opt/rockstor/bin/django'
+STAMP = '/opt/rockstor/.initrock'
+
+
+def update_issue():
+    default_if = None
+    ipaddr = None
+    o, e, c = run_command(['/usr/sbin/route'])
+    for i in o:
+        if (re.match('default', i) is not None):
+            default_if = i.split()[-1]
+    if (default_if is not None):
+        o2, e, c = run_command(['/usr/sbin/ifconfig', default_if])
+        for i2 in o2:
+            if (re.match('inet ', i2.strip()) is not None):
+                ipaddr = i2.split()[1]
+    with open('/etc/issue', 'w') as ifo:
+        if (ipaddr is None):
+            ifo.write('The system does not have an ip address.\n\n')
+            ifo.write('Rockstor cannot be configured using the web-ui '
+                      'without an ip address.\n\n')
+            ifo.write('Login as root and configure your network to proceed '
+                      'further.\n')
+        else:
+            ifo.write('\nRockstor is successfully installed.\n\n')
+            ifo.write('You can access the web-ui by pointing your browser to '
+                      'https://%s\n\n' % ipaddr)
 
 
 def main():
@@ -32,6 +59,14 @@ def main():
     if (len(sys.argv) > 1 and sys.argv[1] == '-x'):
         loglevel = logging.DEBUG
     logging.basicConfig(format='%(asctime)s: %(message)s', level=loglevel)
+    shutil.copyfile('/etc/issue', '/etc/issue.rockstor')
+    update_issue()
+    if (os.path.isfile(STAMP)):
+        return logging.info(
+            'initrock ran successfully before, not running it again.'
+            ' Running it again can destroy your Rockstor state. If you know '
+            'what you are doing, remove /opt/rockstor/.initrock '
+            'and run again.')
     logging.info('Please be patient. This script could take a few minutes')
     shutil.copyfile('/opt/rockstor/conf/django-hack',
                     '/opt/rockstor/bin/django')
@@ -54,26 +89,19 @@ def main():
     logging.debug('backup created')
     logging.info('Done')
     logging.info('Initializing app databases...')
-    run_command(['sudo', '-u', 'postgres', 'psql', '-c',
-                 "CREATE ROLE rocky WITH SUPERUSER LOGIN PASSWORD 'rocky'"])
+    run_command(['su', '-', 'postgres', '-c', "psql -c \"CREATE ROLE rocky WITH SUPERUSER LOGIN PASSWORD 'rocky'\""])
     logging.debug('rocky ROLE created')
-    run_command(['sudo', '-u', 'postgres', 'psql', 'storageadmin', '-f',
-                 '/opt/rockstor/conf/storageadmin.sql.in'])
+    run_command(['su', '-', 'postgres', '-c', "psql storageadmin -f /opt/rockstor/conf/storageadmin.sql.in"])
     logging.debug('storageadmin app database loaded')
-    run_command(['sudo', '-u', 'postgres', 'psql', 'smartdb', '-f',
-                 '/opt/rockstor/conf/smartdb.sql.in'])
+    run_command(['su', '-', 'postgres', '-c', "psql smartdb -f /opt/rockstor/conf/smartdb.sql.in"])
     logging.debug('smartdb app database loaded')
-    run_command(['sudo', '-u', 'postgres', 'psql', 'backup', '-f',
-                 '/opt/rockstor/conf/backup.sql.in'])
+    run_command(['su', '-', 'postgres', '-c', "psql backup -f /opt/rockstor/conf/backup.sql.in"])
     logging.debug('backup app database loaded')
-    run_command(['sudo', '-u', 'postgres', 'psql', 'storageadmin', '-c',
-                 "select setval('south_migrationhistory_id_seq', (select max(id) from south_migrationhistory))"])
+    run_command(['su', '-', 'postgres', '-c', "psql storageadmin -c \"select setval('south_migrationhistory_id_seq', (select max(id) from south_migrationhistory))\""])
     logging.debug('storageadmin migration history copied')
-    run_command(['sudo', '-u', 'postgres', 'psql', 'smartdb', '-c',
-                 "select setval('south_migrationhistory_id_seq', (select max(id) from south_migrationhistory))"])
+    run_command(['su', '-', 'postgres', '-c', "psql smartdb -c \"select setval('south_migrationhistory_id_seq', (select max(id) from south_migrationhistory))\""])
     logging.debug('smartdb migration history copied')
-    run_command(['sudo', '-u', 'postgres', 'psql', 'backup', '-c',
-                 "select setval('south_migrationhistory_id_seq', (select max(id) from south_migrationhistory))"])
+    run_command(['su', '-', 'postgres', '-c', "psql backup -c \"select setval('south_migrationhistory_id_seq', (select max(id) from south_migrationhistory))\""])
     logging.debug('backup migration history copied')
     logging.info('Done')
     run_command(['cp', '-f', '/opt/rockstor/conf/postgresql.conf',
@@ -107,6 +135,7 @@ def main():
     logging.info('Shutting down firewall...')
     run_command([SYSCTL, 'stop', 'firewalld'])
     run_command([SYSCTL, 'disable', 'firewalld'])
+    run_command(['touch', STAMP])
     logging.info('Done')
     logging.info('All set. Go to the web-ui now and start using Rockstor!')
 
