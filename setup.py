@@ -58,6 +58,7 @@ setup(
         'South == 0.8.4',
         'psycopg2 == 2.5.2',
         'django-oauth-toolkit == 0.7.0',
+        'six == 1.7.3',
     ]
 
 )
