@@ -26,26 +26,44 @@ SSHD_CONFIG = '/etc/ssh/sshd_config'
 MKDIR = '/bin/mkdir'
 MOUNT = '/bin/mount'
 USERMOD = '/usr/sbin/usermod'
+SSHD_HEADER = '###BEGIN: Rockstor SFTP CONFIG. DO NOT EDIT BELOW THIS LINE###'
+SFTP_STR = 'Subsystem\tsftp\tinternal-sftp'
 
 
-def update_sftp_config(input_list):
+def update_sftp_config(input_map):
     """
-    input list is a list of dictionaries. sample dictionary:
-    {'user': 'rocky',
-     'dir': '/mnt3/rocky',}
-
+    input map is a dictionary of user,directory pairs
     """
     fo, npath = mkstemp()
     with open(SSHD_CONFIG) as sfo, open(npath, 'w') as tfo:
         for line in sfo.readlines():
-            if (re.match('####BEGIN: Rockstor SFTP CONFIG####', line) is not
-                None):
+            if (re.match(SSHD_HEADER, line) is None):
                 tfo.write(line)
-                for entry in input_list:
-                    tfo.write('Match User %s\n' % entry['user'])
-                    tfo.write('\tChrootDirectory %s\n' % entry['dir'])
-                tfo.write('####END: Rockstor SFTP CONFIG####\n')
+            else:
                 break
+        tfo.write('%s\n' % SSHD_HEADER)
+        for user in input_map:
+            tfo.write('Match User %s\n' % user)
+            tfo.write('\tChrootDirectory %s\n' % input_map[user])
+
+    move(npath, SSHD_CONFIG)
+    return systemctl('sshd', 'reload')
+
+
+def toggle_sftp_service(switch=True):
+    fo, npath = mkstemp()
+    written = False
+    with open(SSHD_CONFIG) as sfo, open(npath, 'w') as tfo:
+        for line in sfo.readlines():
+            if (re.match(SFTP_STR, line) is not None):
+                if (switch):
+                    tfo.write('%s\n' % SFTP_STR)
+                    written = True
+            elif (re.match(SSHD_HEADER, line) is not None):
+                if (switch and not written):
+                    tfo.write('%s\n' % SFTP_STR)
+                    written = True
+                tfo.write(line)
             else:
                 tfo.write(line)
     move(npath, SSHD_CONFIG)
