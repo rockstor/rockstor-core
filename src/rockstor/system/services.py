@@ -18,7 +18,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 import re
-from shutil import move
 from django.conf import settings
 from osi import run_command
 from exceptions import CommandException
@@ -75,8 +74,8 @@ def service_status(service_name):
         with open(SSHD_CONFIG) as sfo:
             for line in sfo.readlines():
                 if (re.match("Subsystem\tsftp\tinternal-sftp", line) is not
-                None):
-                        return out, err, rc
+                    None):
+                    return out, err, rc
             return out, err, -1
     elif (service_name == 'replication' or
           service_name == 'task-scheduler' or
@@ -156,30 +155,6 @@ def toggle_auth_service(service, command, config=None):
     else:
         return None
     return run_command(ac_cmd)
-
-
-def toggle_sftp_service(switch=True):
-    written = False
-    sftp_str = ("Subsystem\tsftp\tinternal-sftp\n")
-    with open(SSHD_CONFIG) as sfo:
-        with open('/tmp/sshd_config', 'w') as tfo:
-            for line in sfo.readlines():
-                if (re.match('Subsystem', line) is not None):
-                    if (switch):
-                        tfo.write(sftp_str)
-                        written = True
-                elif (re.match('####BEGIN: Rockstor SFTP CONFIG####', line)
-                      is not None):
-                    if (switch):
-                        tfo.write(sftp_str)
-                        written = True
-                    tfo.write(line)
-                else:
-                    tfo.write(line)
-            if (switch is True and written is False):
-                tfo.write(sftp_str)
-    move('/tmp/sshd_config', '/etc/ssh/sshd_config')
-    return init_service_op('sshd', 'reload')
 
 
 def ads_join_status(username, passwd):
