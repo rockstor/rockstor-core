@@ -88,7 +88,8 @@ class UserView(rfc.GenericView):
             smbpasswd(username, password)
             if (public_key is not None):
                 add_ssh_key(username, public_key)
-            suser = User(username=username, uid=uid, gid=uid, user=auser)
+            suser = User(username=username, uid=uid, gid=uid, user=auser,
+                         public_key=public_key)
             suser.save()
 
             return Response(UserSerializer(auser).data)
