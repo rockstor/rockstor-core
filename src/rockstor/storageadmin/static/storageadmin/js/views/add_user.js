@@ -78,6 +78,7 @@ AddUserView = RockstorLayoutView.extend({
         var username = _this.$("#username").val();
         var password = _this.$("#password").val();
         var is_active = _this.$("#is_active").prop("checked"); 
+        var public_key = _this.$("#public_key").val();
         if(_this.username != null && _this.user != null){
             var user = new User({username: _this.username});
         	if (!_.isEmpty(password)) {
@@ -85,6 +86,7 @@ AddUserView = RockstorLayoutView.extend({
               } else {
                 user.unset('password');
               }
+              user.set({public_key: public_key});
               user.set({is_active: is_active});
               user.save(null, {
                 success: function(model, response, options) {
@@ -105,7 +107,8 @@ AddUserView = RockstorLayoutView.extend({
 	          {
 	            username: username,
 	            password: password,
-	            is_active: is_active
+	            is_active: is_active,
+	            public_key: public_key
 	          },
 	          {
 	            success: function(model, response, options) {
