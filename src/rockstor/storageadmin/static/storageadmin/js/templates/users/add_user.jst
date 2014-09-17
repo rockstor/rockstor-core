@@ -72,8 +72,12 @@
         <div class="control-group">
         <label class="control-label">Add SSH key(optional)</label>
           <div class="controls">
-           <textarea name="public_key" id="public_key" />
-           </div>   
+             <% if ((username != null) && (user.get("suser").public_key) != null) { %>
+             <textarea rows="1" cols="50" id="public_key" name="public_key"> <%= user.get("suser").public_key %> </textarea>
+             <% } else { %>
+             <textarea id="public_key" name="public_key" /> 
+             <% } %>
+          </div>   
         </div>
         <div class="control-group">
           <div class="controls">
