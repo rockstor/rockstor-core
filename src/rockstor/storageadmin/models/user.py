@@ -27,6 +27,7 @@ class User(models.Model):
     username = models.CharField(max_length=4096, unique=True, default='')
     uid = models.IntegerField(default=settings.START_UID)
     gid = models.IntegerField(default=settings.START_UID)
+    public_key = models.CharField(max_length=4096, null=True)
 
     class Meta:
         app_label = 'storageadmin'
