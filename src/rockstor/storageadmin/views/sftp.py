@@ -29,6 +29,8 @@ from system.ssh import (update_sftp_config, sftp_mount_map, sftp_mount,
 from share_helpers import (helper_mount_share, validate_share,
                            sftp_snap_toggle)
 import rest_framework_custom as rfc
+import shutil
+import os
 
 import logging
 logger = logging.getLogger(__name__)
@@ -57,7 +59,7 @@ class SFTPView(rfc.GenericView):
             editable = 'ro'
         try:
             mnt_map = sftp_mount_map(settings.SFTP_MNT_ROOT)
-            input_list = []
+            input_map = {}
             for share in shares:
                 if (SFTP.objects.filter(share=share).exists()):
                     e_msg = ('Share(%s) is already exported via SFTP' %
@@ -80,15 +82,12 @@ class SFTPView(rfc.GenericView):
 
                 chroot_loc = ('%s%s' % (settings.SFTP_MNT_ROOT, share.owner))
                 rsync_for_sftp(chroot_loc)
-                input_list.append({'user': share.owner,
-                                   'dir': chroot_loc, })
+                input_map[share.owner] = chroot_loc
             for sftpo in SFTP.objects.all():
                 if (sftpo.share not in shares):
-                    input_list.append({'user': sftpo.share.owner,
-                                       'dir': ('%s%s' %
-                                               (settings.SFTP_MNT_ROOT,
-                                                sftpo.share.owner)), })
-            update_sftp_config(input_list)
+                    input_map[sftpo.share.owner] = (
+                        '%s%s' % (settings.SFTP_MNT_ROOT, sftpo.share.owner))
+            update_sftp_config(input_map)
             return Response()
         except RockStorAPIException:
             raise
@@ -109,18 +108,17 @@ class SFTPView(rfc.GenericView):
 
             if (is_share_mounted(sftpo.share.name, mnt_prefix)):
                 sftp_snap_toggle(sftpo.share, mount=False)
-                umount_root(('%s%s' % (mnt_prefix, sftpo.share.name)))
-                import shutil
-                shutil.rmtree(mnt_prefix)
+                mnt_pt = ('%s%s' % (mnt_prefix, sftpo.share.name))
+                umount_root(mnt_pt)
+                if (os.path.isdir(mnt_pt)):
+                    shutil.rmtree(mnt_pt)
             sftpo.delete()
-            input_list = []
+            input_map = {}
             for so in SFTP.objects.all():
                 if (so.id != sftpo.id):
-                    input_list.append({'user': so.share.owner,
-                                       'dir': ('%s%s' %
-                                               (settings.SFTP_MNT_ROOT,
-                                                so.share.name)), })
-            update_sftp_config(input_list)
+                    input_map[so.share.owner] = (
+                        '%s%s' % (settings.SFTP_MNT_ROOT, so.share.owner))
+            update_sftp_config(input_map)
             return Response()
         except RockStorAPIException:
             raise

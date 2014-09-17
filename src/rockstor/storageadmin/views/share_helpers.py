@@ -53,7 +53,7 @@ def sftp_snap_toggle(share, mount=True):
             umount_root(mnt_pt)
 
 
-def toggle_sftp_visibility(self, share, snap_name, on=True):
+def toggle_sftp_visibility(share, snap_name, on=True):
     if (not SFTP.objects.filter(share=share).exists()):
         return
 
