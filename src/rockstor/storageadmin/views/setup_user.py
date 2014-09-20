@@ -16,20 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-import re
-from rest_framework.views import APIView
-from rest_framework.response import Response
 from django.db import transaction
-from storageadmin.util import handle_exception
-from django.contrib.auth.models import User as DjangoUser
-from storageadmin.serializers import UserSerializer
-from storageadmin.models import User, Setup
-from system.users import (useradd, usermod, userdel, get_epasswd)
-from django.conf import settings
+from storageadmin.models import User, Setup, OauthApp
 from storageadmin.views import UserView
+from oauth2_provider.models import Application as OauthApplication
 
-import logging
-logger = logging.getLogger(__name__)
 
 class SetupUserView(UserView):
 
@@ -41,7 +32,21 @@ class SetupUserView(UserView):
         setup = Setup.objects.all()[0]
         setup.setup_user = True
         setup.save()
-        return super(SetupUserView, self).post(request)
+
+        # Create user
+        res = super(SetupUserView, self).post(request)
+        # Create cliapp id and secret for oauth
+        name = 'cliapp'
+        user = User.objects.get(username=request.DATA['username'])
+        client_type = OauthApplication.CLIENT_CONFIDENTIAL
+        auth_grant_type = OauthApplication.GRANT_CLIENT_CREDENTIALS
+        app = OauthApplication(name=name, client_type=client_type,
+                               authorization_grant_type=auth_grant_type,
+                               user=user.user)
+        app.save()
+        oauth_app = OauthApp(name=name, application=app, user=user)
+        oauth_app.save()
+        return res
 
     def put(self, request, username):
         pass

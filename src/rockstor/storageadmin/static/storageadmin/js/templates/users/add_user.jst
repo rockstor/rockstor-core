@@ -18,26 +18,41 @@
   * 
   */
 </script>
-
+<% if (username == null) { %>
 <h3>Create User</h3>
-
+<%} else {%>
+<h3>Edit User</h3>
+<%}%>
 <div class="row-fluid">
   <div class="span8">
     <label class="control-label"><span class="required">*</span> indicates required fields</label>
     <div class="form-box">
-      <form id="user-create-form" name="aform">
+      <form id="user-create-form" name="aform" class="form-horizontal">
 
         <div class="messages"></div>
         <div class="control-group">
-          <label class="control-label" for="username">Username<span class="required"> *</span></label>
+          <label class="control-label" for="username">Username
+          <% if (username == null) { %>
+          <span class="required"> *</span>
+          <% } %>
+          </label>
           <div class="controls">
-            <input type="text" id="username" name="username" placeholder="Username" title="Enter User Name" >
+          <% if (username != null) { %>
+            <label class="control-label" style="text-align:left"><%=username%></label>
+            <input type="hidden" id="username" name="username" value="<%=username%>">
+          <% } else { %>
+            <input type="text" id="username" name="username" placeholder="Username" title="Enter User Name">
+          <% } %>
           </div>
         </div>
         <div class="control-group">
           <div class="controls">
             <label class="checkbox">
-              <input class="checkbox inline" type="checkbox" id="is_active" name="is_active" placeholder="Admin" >
+            <% if (user != null && user.get('is_active')) { %>
+                <input class="checkbox inline" type="checkbox" id="is_active" name="is_active" placeholder="Admin" checked="true">
+              <% } else { %>
+                <input class="checkbox inline" type="checkbox" id="is_active" name="is_active" placeholder="Admin">
+              <% } %>
               Allow this user to login to RockStor Web UI?
             </label>
           </div>
@@ -53,6 +68,16 @@
           <div class="controls">
             <input type="password" id="password_confirmation" name="password_confirmation" placeholder="Password">
           </div>
+        </div>
+        <div class="control-group">
+        <label class="control-label">Add SSH key(optional)</label>
+          <div class="controls">
+             <% if ((username != null) && (user.get("suser").public_key) != null) { %>
+             <textarea rows="1" cols="50" id="public_key" name="public_key"> <%= user.get("suser").public_key %> </textarea>
+             <% } else { %>
+             <textarea id="public_key" name="public_key" /> 
+             <% } %>
+          </div>   
         </div>
         <div class="control-group">
           <div class="controls">

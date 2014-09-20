@@ -22,15 +22,15 @@ from setuptools import setup
 VERSION = '1.4.1'
 
 setup(
-  name='rockstor',
-  version=VERSION,
-  description='Store Smartly',
-  author='RockStor, Inc.',
-  author_email='support@rockstor.com',
+    name='rockstor',
+    version=VERSION,
+    description='Store Smartly',
+    author='RockStor, Inc.',
+    author_email='support@rockstor.com',
 
-  packages=['storageadmin', 'smart_manager',],
-  package_dir={'': 'src/rockstor'},
-  entry_points={
+    packages=['storageadmin', 'smart_manager', ],
+    package_dir={'': 'src/rockstor'},
+    entry_points={
         'console_scripts': [
             'sm = smart_manager.smd:main',
             'rcli = cli.rock_cli:main',
@@ -43,19 +43,22 @@ setup(
             'task-scheduler = smart_manager.scheduler.task_dispatcher:main',
             'data-collector = smart_manager.data_collector:main',
             'service-monitor = smart_manager.services:main',
-            ],
-        },
+        ],
+    },
 
-  install_requires=[
-    'django == 1.6.2',
-    'distribute >= 0.6.35',
-    'URLObject == 2.1.1',
-    'djangorestframework == 2.1.15',
-    'pytz',
-    'django-pipeline == 1.2.23',
-    'requests == 1.1.0',
-    'pyzmq == 13.0.0',
-    'South == 0.8.4',
-    'psycopg2 == 2.5.2',
-  ]
+    install_requires=[
+        'django == 1.6.2',
+        'distribute >= 0.6.35',
+        'URLObject == 2.1.1',
+        'djangorestframework == 2.1.15',
+        'pytz == 2014.3',
+        'django-pipeline == 1.2.23',
+        'requests == 1.1.0',
+        'pyzmq == 13.0.0',
+        'South == 0.8.4',
+        'psycopg2 == 2.5.2',
+        'django-oauth-toolkit == 0.7.0',
+        'six == 1.7.3',
+    ]
+
 )

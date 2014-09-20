@@ -25,11 +25,12 @@ from storageadmin.serializers import UserSerializer
 from storageadmin.models import User
 import rest_framework_custom as rfc
 from system.users import (useradd, usermod, userdel, get_epasswd, get_users,
-                          update_shell, smbpasswd)
+                          update_shell, smbpasswd, add_ssh_key)
 from storageadmin.exceptions import RockStorAPIException
 
 import logging
 logger = logging.getLogger(__name__)
+
 
 class UserView(rfc.GenericView):
     serializer_class = UserSerializer
@@ -49,6 +50,7 @@ class UserView(rfc.GenericView):
             username = request.DATA['username']
             password = request.DATA['password']
             is_active = request.DATA['is_active']
+            public_key = request.DATA['public_key']
 
             # Check that a django user with the same name does not exist
             if (DjangoUser.objects.filter(username=username).exists() or
@@ -84,7 +86,10 @@ class UserView(rfc.GenericView):
             useradd(username, uid, shell)
             usermod(username, password)
             smbpasswd(username, password)
-            suser = User(username=username, uid=uid, gid=uid, user=auser)
+            if (public_key is not None):
+                add_ssh_key(username, public_key)
+            suser = User(username=username, uid=uid, gid=uid, user=auser,
+                         public_key=public_key)
             suser.save()
 
             return Response(UserSerializer(auser).data)
@@ -95,7 +100,7 @@ class UserView(rfc.GenericView):
 
     @transaction.commit_on_success
     def put(self, request, username):
-        user = self._get_user_object(request, username)
+        suser = self._get_user_object(request, username)
         try:
             # if password is present in input data, change password
             if ('password' in request.DATA):
@@ -103,25 +108,30 @@ class UserView(rfc.GenericView):
                 password = request.DATA['password']
                 usermod(username, password)
                 smbpasswd(username, password)
-                user.set_password(password)
-                user.save()
+                suser.user.set_password(password)
+                suser.user.save()
             # check if admin attribute has changed
             if ('is_active' in request.DATA):
                 is_active = request.DATA['is_active']
                 # put is through bacbone model save so is_active comes in
                 # as a boolean
-                if is_active != user.is_active:
+                if is_active != suser.user.is_active:
                     if request.user.username == username:
                         e_msg = ('Cannot modify admin attribute of the '
                                  'currently logged in user')
                         handle_exception(Exception(e_msg), request)
-                    user.is_active = is_active
+                    suser.user.is_active = is_active
                     shell = settings.DEFAULT_SHELL
                     if (is_active is True):
                         shell = settings.ADMIN_SHELL
                     update_shell(username, shell)
-                    user.save()
-            return Response(UserSerializer(user).data)
+                    suser.user.save()
+                    suser.save()
+            if ('public_key' in request.DATA):
+                add_ssh_key(username, request.DATA['public_key'])
+                suser.public_key = request.DATA['public_key']
+                suser.save()
+            return Response(UserSerializer(suser.user).data)
         except RockStorAPIException:
             raise
         except Exception, e:
@@ -136,7 +146,6 @@ class UserView(rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
 
             epw = get_epasswd(username)
-            logger.debug('epw: %s' % repr(epw))
             user.delete()
             if (epw is not None):
                 userdel(username)
@@ -150,9 +159,8 @@ class UserView(rfc.GenericView):
 
     def _get_user_object(self, request, username):
         try:
-            return DjangoUser.objects.get(username=username)
+            return User.objects.get(username=username)
         except:
             e_msg = ('user: %s does not exist' % username)
             logger.debug(e_msg)
             handle_exception(Exception(e_msg), request)
-

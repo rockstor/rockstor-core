@@ -17,12 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf import settings
-from storageadmin.models import (Share, Disk)
-from fs.btrfs import (mount_share, is_share_mounted)
+from storageadmin.models import (Share, Disk, Snapshot, SFTP)
+from fs.btrfs import (mount_share, is_share_mounted, is_mounted, umount_root)
 from storageadmin.util import handle_exception
 
 import logging
 logger = logging.getLogger(__name__)
+
 
 def helper_mount_share(share, mnt_pt=None):
     if (not is_share_mounted(share.name)):
@@ -31,9 +32,37 @@ def helper_mount_share(share, mnt_pt=None):
             mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
         mount_share(share.subvol_name, pool_device, mnt_pt)
 
+
 def validate_share(sname, request):
     try:
         return Share.objects.get(name=sname)
     except:
         e_msg = ('Share with name: %s does not exist' % sname)
         handle_exception(Exception(e_msg), request)
+
+
+def sftp_snap_toggle(share, mount=True):
+    pool_device = Disk.objects.filter(pool=share.pool)[0].name
+    for snap in Snapshot.objects.filter(share=share, uvisible=True):
+        mnt_pt = ('%s/%s/%s/.%s' % (settings.SFTP_MNT_ROOT,
+                                    share.owner, share.name,
+                                    snap.name))
+        if (mount and not is_mounted(mnt_pt)):
+            mount_share(snap.real_name, pool_device, mnt_pt)
+        elif (is_mounted(mnt_pt) and not mount):
+            umount_root(mnt_pt)
+
+
+def toggle_sftp_visibility(share, snap_name, on=True):
+    if (not SFTP.objects.filter(share=share).exists()):
+        return
+
+    snap_short_name = snap_name.split(share.name)[-1][1:]
+    mnt_pt = ('%s/%s/%s/.%s' % (settings.SFTP_MNT_ROOT, share.owner,
+                                share.name, snap_short_name))
+    if (on):
+        if (not is_mounted(mnt_pt)):
+            pool_device = Disk.objects.filter(pool=share.pool)[0].name
+            mount_share(snap_name, pool_device, mnt_pt)
+    else:
+        umount_root(mnt_pt)

@@ -16,7 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-import re
 import requests
 import json
 import uuid
@@ -28,10 +27,11 @@ from storageadmin.serializers import ApplianceSerializer
 from system.osi import (hostid, sethostname)
 import rest_framework_custom as rfc
 from storageadmin.exceptions import RockStorAPIException
-from cli.rest_util import api_call
+from cli.rest_util import (api_call, set_token)
 
 import logging
 logger = logging.getLogger(__name__)
+
 
 class AppliancesView(rfc.GenericView):
     serializer_class = ApplianceSerializer
@@ -47,29 +47,32 @@ class AppliancesView(rfc.GenericView):
                 return []
         return Appliance.objects.all()
 
-    def _get_remote_appliance(self, request, ip, port, username, password):
+    def _get_remote_appliance(self, request, ip, port, client_id,
+                              client_secret):
         try:
-            ad = api_call('https://%s:%s/api/appliances/1' % (ip, port))
+            base_url = ('https://%s:%s' % (ip, port))
+            set_token(client_id=client_id, client_secret=client_secret,
+                      url=base_url)
+            ad = api_call('%s/api/appliances/1' % base_url)
             logger.debug('remote appliance: %s' % ad)
             return ad['uuid']
+        except RockStorAPIException:
+            raise
         except Exception, e:
             e_msg = ('Failed to get remote appliance uuid')
             logger.error(e_msg)
             logger.exception(e)
             handle_exception(e_msg, request)
 
-
     def _connect_to_appliance(self, request, url, ip, username, password):
         try:
-            logger.info('calling post')
             r = requests.post(
                 url,
-                headers = {'content-type': 'application/json'},
+                headers={'content-type': 'application/json'},
                 verify=False,
-                data = json.dumps({'username': username,
-                                   'password': password}),
+                data=json.dumps({'username': username,
+                                 'password': password}),
                 timeout=30.0)
-            logger.error('finished post')
             if (r.status_code == 401):
                 #login incorrect
                 logger.error(r.text)
@@ -80,7 +83,7 @@ class AppliancesView(rfc.GenericView):
             if (r.status_code != 200):
                 logger.error(r.text)
                 e_msg = ('Could not establish connection with the remote '
-                       'Rockstor appliance(%s)')
+                         'Rockstor appliance(%s)')
                 handle_exception(e_msg, request)
         except requests.exceptions.ConnectionError, e:
             logger.exception(e)
@@ -108,8 +111,8 @@ class AppliancesView(rfc.GenericView):
                          'cannot be added again' % ip)
                 handle_exception(Exception(e_msg), request)
             if (current_appliance is False):
-                username = request.DATA['username']
-                password = request.DATA['password']
+                client_id = request.DATA['client_id']
+                client_secret = request.DATA['client_secret']
                 try:
                     mgmt_port = int(request.DATA['mgmt_port'])
                 except Exception, e:
@@ -120,15 +123,14 @@ class AppliancesView(rfc.GenericView):
                 url = ('https://%s' % ip)
                 if (mgmt_port != 443):
                     url = ('%s:%s' % (url, mgmt_port))
-                url = ('%s/api/login' % url)
-                self._connect_to_appliance(request, url, ip, username,
-                                           password)
                 ra_uuid = self._get_remote_appliance(request, ip, mgmt_port,
-                                                     username, password)
-                appliance = Appliance(uuid=ra_uuid, ip=ip, mgmt_port=mgmt_port)
+                                                     client_id, client_secret)
+                appliance = Appliance(uuid=ra_uuid, ip=ip, mgmt_port=mgmt_port,
+                                      client_id=client_id,
+                                      client_secret=client_secret)
                 appliance.save()
             else:
-                appliance_uuid = ('%s:%s' % (hostid()[0][0],
+                appliance_uuid = ('%s-%s' % (hostid()[0][0],
                                              str(uuid.uuid4())))
                 appliance = Appliance(uuid=appliance_uuid, ip=ip,
                                       current_appliance=True)
@@ -157,7 +159,3 @@ class AppliancesView(rfc.GenericView):
             logger.exception(e)
             e_msg = ('Delete failed for appliance with id = %d' % id)
             handle_exception(e, request)
-
-
-
-

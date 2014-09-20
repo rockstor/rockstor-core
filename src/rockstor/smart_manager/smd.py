@@ -19,10 +19,11 @@ import time
 import sys
 from django.conf import settings
 from stap_dispatcher import Stap
-from cli.rest_util import api_call
+from cli.rest_util import (api_call, set_token)
 
 import logging
 logger = logging.getLogger(__name__)
+
 
 def clean_exit(children):
     logger.error('clean exiting smd')
@@ -41,17 +42,19 @@ def clean_exit(children):
     logger.error('smd out!')
     sys.exit(0)
 
+
 def main():
-    #bootstrap the machine. success of quit
+    #  bootstrap the machine. success of quit
     url = 'https://localhost/api/commands/bootstrap'
     time.sleep(10)
     try:
+        set_token()
         api_call(url, calltype='post')
     except Exception, e:
         logger.error('Unable to bootstrap the machine. Moving on..')
         logger.exception(e)
 
-    live_procs = [Stap(settings.TAP_SERVER),]
+    live_procs = [Stap(settings.TAP_SERVER), ]
     for p in live_procs:
         p.start()
 

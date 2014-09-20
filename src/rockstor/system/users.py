@@ -20,6 +20,8 @@ from exceptions import CommandException
 from osi import run_command
 import subprocess
 import re
+import os
+import shutil
 
 import logging
 logger = logging.getLogger(__name__)
@@ -31,6 +33,8 @@ USERDEL = '/usr/sbin/userdel'
 PASSWD = '/usr/bin/passwd'
 USERMOD = '/usr/sbin/usermod'
 SMBPASSWD = '/usr/bin/smbpasswd'
+CHOWN = '/usr/bin/chown'
+
 
 def get_users(min_uid=5000, uname=None):
     users = {}
@@ -41,13 +45,15 @@ def get_users(min_uid=5000, uname=None):
                 continue
             if (uname is not None):
                 if (uname == fields[0]):
-                    return {fields[0]: fields[2:],}
+                    return {fields[0]: fields[2:], }
             else:
                 users[fields[0]] = fields[2:]
     return users
 
+
 def userdel(uname):
     return run_command([USERDEL, '-r', uname])
+
 
 def get_epasswd(username):
     with open('/etc/shadow') as sfo:
@@ -57,20 +63,22 @@ def get_epasswd(username):
                 return fields[1]
     return None
 
+
 def usermod(username, passwd):
     cmd = [PASSWD, '--stdin', username]
     p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+                         stderr=subprocess.PIPE, stdin=subprocess.PIPE)
     out, err = p.communicate(input=passwd)
     rc = p.returncode
     if (rc != 0):
         raise CommandException(out, err, rc)
     return (out, err, rc)
 
+
 def smbpasswd(username, passwd):
     cmd = [SMBPASSWD, '-s', '-a', username]
     p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+                         stderr=subprocess.PIPE, stdin=subprocess.PIPE)
     pstr = ('%s\n%s\n' % (passwd, passwd))
     out, err = p.communicate(input=pstr)
     rc = p.returncode
@@ -78,9 +86,22 @@ def smbpasswd(username, passwd):
         raise CommandException(out, err, rc)
     return (out, err, rc)
 
+
 def update_shell(username, shell):
     return run_command([USERMOD, '-s', shell, username])
+
 
 def useradd(username, uid, shell):
     return run_command([USERADD, '-s', shell, '-m', '-u', str(uid),
                         username])
+
+
+def add_ssh_key(username, key):
+    SSH_DIR = '/home/%s/.ssh' % username
+    AUTH_KEYS = '%s/authorized_keys' % SSH_DIR
+    if (not os.path.isdir(SSH_DIR)):
+        os.mkdir(SSH_DIR)
+    with open(AUTH_KEYS, 'w') as afo:
+        afo.write('%s\n' % key)
+    os.chmod(AUTH_KEYS, 0600)
+    run_command([CHOWN, '%s:%s' % (username, username), AUTH_KEYS])

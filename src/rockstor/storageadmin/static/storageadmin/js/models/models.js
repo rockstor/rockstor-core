@@ -391,3 +391,15 @@ var AdvancedNFSExportCollection = RockStorPaginatedCollection.extend({
   baseUrl: "/api/adv-nfs-exports"
 });
 
+
+var AccessKey = Backbone.Model.extend({
+  url: function() {
+    return '/api/oauth_app';
+  }
+});
+
+var AccessKeyCollection = RockStorPaginatedCollection.extend({
+  model: AccessKey,
+  baseUrl: '/api/oauth_app'
+});
+

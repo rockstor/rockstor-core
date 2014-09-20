@@ -18,9 +18,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 import re
-from shutil import move
-import subprocess
-
 from django.conf import settings
 from osi import run_command
 from exceptions import CommandException
@@ -32,6 +29,7 @@ SYSTEMCTL_BIN = '/usr/bin/systemctl'
 SUPERCTL_BIN = ('%s/bin/supervisorctl' % settings.ROOT_DIR)
 NET = '/usr/bin/net'
 
+
 def init_service_op(service_name, command, throw=True):
     supported_services = ('nfs', 'smb', 'sshd', 'ypbind', 'rpcbind', 'ntpd',
                           'winbind', 'nslcd',)
@@ -40,11 +38,14 @@ def init_service_op(service_name, command, throw=True):
 
     return run_command([SYSTEMCTL_BIN, command, service_name], throw=throw)
 
+
 def chkconfig(service_name, switch):
     return run_command([CHKCONFIG_BIN, service_name, switch])
 
+
 def systemctl(service_name, switch):
     return run_command([SYSTEMCTL_BIN, switch, service_name])
+
 
 def superctl(service, switch):
     out, err, rc = run_command([SUPERCTL_BIN, switch, service])
@@ -53,6 +54,7 @@ def superctl(service, switch):
         if (status != 'RUNNING'):
             rc = 1
     return out, err, rc
+
 
 def service_status(service_name):
     if (service_name == 'nis' or service_name == 'nfs'):
@@ -72,8 +74,8 @@ def service_status(service_name):
         with open(SSHD_CONFIG) as sfo:
             for line in sfo.readlines():
                 if (re.match("Subsystem\tsftp\tinternal-sftp", line) is not
-                None):
-                        return out, err, rc
+                    None):
+                    return out, err, rc
             return out, err, -1
     elif (service_name == 'replication' or
           service_name == 'task-scheduler' or
@@ -81,16 +83,18 @@ def service_status(service_name):
           service_name == 'service-monitor'):
         return superctl(service_name, 'status')
     elif (service_name == 'smb'):
-        out, err, rc = run_command([SYSTEMCTL_BIN, 'status', 'smb'], throw=False)
+        out, err, rc = run_command([SYSTEMCTL_BIN, 'status', 'smb'],
+                                   throw=False)
         if (rc != 0):
             return out, err, rc
         return run_command([SYSTEMCTL_BIN, 'status', 'nmb'], throw=False)
     return init_service_op(service_name, 'status', throw=False)
 
+
 def winbind_input(config, command):
     ac_cmd = []
     if (command == 'stop'):
-        ac_cmd.extend(['--disablewinbind','--disablewinbindauth'])
+        ac_cmd.extend(['--disablewinbind', '--disablewinbindauth'])
     else:
         ac_cmd.append('--smbworkgroup=%s' % config['domain'])
         ac_cmd.append('--smbsecurity=%s' % config['security'])
@@ -111,8 +115,9 @@ def winbind_input(config, command):
                        '--enablepamaccess',
                        '--disablekrb5',
                        '--disablekrb5kdcdns',
-                       '--disablekrb5realmdns',])
+                       '--disablekrb5realmdns', ])
     return ac_cmd
+
 
 def join_winbind_domain(username, passwd):
     up = '%s%%%s' % (username, passwd)
@@ -125,6 +130,7 @@ def join_winbind_domain(username, passwd):
                  % (' '.join(out), ' '.join(err)))
         raise CommandException(out, error, rc)
     return (out, err, rc)
+
 
 def ldap_input(config, command):
     ac_cmd = []
@@ -139,8 +145,9 @@ def ldap_input(config, command):
             ac_cmd.append('--ldaploadcacert=%s' % config['cert'])
     return ac_cmd
 
+
 def toggle_auth_service(service, command, config=None):
-    ac_cmd = [AUTHCONFIG, '--update',]
+    ac_cmd = [AUTHCONFIG, '--update', ]
     if (service == 'winbind'):
         ac_cmd.extend(winbind_input(config, command))
     elif (service == 'ldap'):
@@ -149,25 +156,8 @@ def toggle_auth_service(service, command, config=None):
         return None
     return run_command(ac_cmd)
 
-def toggle_sftp_service(switch=True):
-    written = False
-    sftp_str = ("Subsystem\tsftp\tinternal-sftp\n")
-    with open(SSHD_CONFIG) as sfo:
-        with open('/tmp/sshd_config', 'w') as tfo:
-            for line in sfo.readlines():
-                if (re.match('Subsystem', line) is not None):
-                    if (switch == True):
-                        tfo.write(sftp_str)
-                        written = True
-                else:
-                    tfo.write(line)
-            if (switch is True and written is False):
-                tfo.write(sftp_str)
-    move('/tmp/sshd_config', '/etc/ssh/sshd_config')
-    return init_service_op('sshd', 'reload')
 
 def ads_join_status(username, passwd):
     up = '%s%%%s' % (username, passwd)
     return run_command([NET, 'ads', 'status', '-U', up, '--request-timeout',
                         '60'])
-

@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.db import models
+from oauth2_provider.models import Application
+from storageadmin.models import User
 
 
-class Setup(models.Model):
-    setup_user = models.BooleanField(default=False)
-    setup_system = models.BooleanField(default=False)
-    setup_disks = models.BooleanField(default=False)
-    setup_network = models.BooleanField(default=False)
+class OauthApp(models.Model):
+    application = models.OneToOneField(Application)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL)
 
     class Meta:
         app_label = 'storageadmin'

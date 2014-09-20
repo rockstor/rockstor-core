@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework.response import Response
 from storageadmin.util import handle_exception
-from system.services import toggle_sftp_service
+from system.ssh import toggle_sftp_service
 from django.db import transaction
 from base_service import BaseServiceView
 from smart_manager.models import Service
@@ -37,7 +37,7 @@ class SFTPServiceView(BaseServiceView):
         service_name = 'sftp'
         service = Service.objects.get(name=service_name)
         if (command == 'config'):
-            #nothing to really configure atm. just save the model
+            #  nothing to really configure atm. just save the model
             try:
                 config = request.DATA['config']
                 self._save_config(service, config)

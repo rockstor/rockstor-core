@@ -6,11 +6,23 @@
   <% } else { %>
     <li><a href="#services"><i class="icon-cog"></i> Services</span></a></li>
   <% } %>
-  <% if (selected == "users") { %>
-    <li><a href="#users" class="selected"><i class="icon-user"></i> Users</span></a></li>
-<% } else { %>
-  <li><a href="#users"><i class="icon-user"></i> Users</span></a></li>
-  <% } %>
+  <li>
+    <div class="subnav">
+      <i class="icon-user"></i> Users
+      <ul>
+        <% if (selected == "users") { %>
+          <li><a href="#users" class="selected"><i class="icon-user"></i> Users</span></a></li>
+        <% } else { %>
+          <li><a href="#users"><i class="icon-user"></i> Users</span></a></li>
+        <% } %>
+        <% if (selected == "access-keys") { %>
+          <li><a href="#access-keys" class="selected"><i class="icon-lock"></i> Access Keys</span></a></li>
+        <% } else { %>
+          <li><a href="#access-keys"><i class="icon-lock"></i> Access Keys</span></a></li>
+        <% } %>
+      </ul>
+    </div>
+  </li>
   <% if (selected == "network") { %>
     <li><a href="#network" class="selected"><i class="icon-signal"></i> Network Interfaces</span></a></li>
 <% } else { %>

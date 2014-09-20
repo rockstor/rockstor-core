@@ -20,12 +20,14 @@ from django.db import models
 from django.contrib.auth.models import User as DjangoUser
 from django.conf import settings
 
+
 class User(models.Model):
-    user = models.OneToOneField(DjangoUser, null=True, 
-            related_name = 'suser')
+    user = models.OneToOneField(DjangoUser, null=True,
+                                related_name='suser')
     username = models.CharField(max_length=4096, unique=True, default='')
     uid = models.IntegerField(default=settings.START_UID)
     gid = models.IntegerField(default=settings.START_UID)
+    public_key = models.CharField(max_length=4096, null=True)
 
     class Meta:
         app_label = 'storageadmin'

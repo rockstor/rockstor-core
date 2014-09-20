@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.db import models
 
+
 class Appliance(models.Model):
     """uuid is hostid-uid"""
     uuid = models.CharField(max_length=64, unique=True)
@@ -25,6 +26,8 @@ class Appliance(models.Model):
     current_appliance = models.BooleanField(default=False)
     hostname = models.CharField(max_length=128, default='Rockstor')
     mgmt_port = models.IntegerField(default=443)
+    client_id = models.CharField(max_length=100, null=True)
+    client_secret = models.CharField(max_length=255, null=True)
 
     class Meta:
         app_label = 'storageadmin'

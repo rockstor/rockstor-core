@@ -83,7 +83,6 @@ class ReplicaView(rfc.GenericView):
             enabled = False
         else:
             enabled = True
-        logger.info('enabled: %s. type: %s' % (request.DATA, type(enabled)))
         r.enabled = enabled
         r.ts = ts
         r.save()
@@ -102,4 +101,3 @@ class ReplicaView(rfc.GenericView):
         except:
             e_msg = ('Appliance with ip: %s is not recognized.' % ip)
             handle_exception(Exception(e_msg), request)
-

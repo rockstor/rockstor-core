@@ -77,7 +77,8 @@ var AppRouter = Backbone.Router.extend({
     "plugins": "showPlugins",
     "appliances": "showAppliances",
     "add-appliance": "addAppliance",
-    "appliance-view": "showApplianceView",
+    "access-keys": "showAccessKeys",
+    "add-access-key": "addAccessKey",
     "404": "handle404",
     "500": "handle500",
     "*path": "showHome"
@@ -307,7 +308,7 @@ var AppRouter = Backbone.Router.extend({
   editUser: function(username) {
     this.renderSidebar("system", "users");
     this.cleanup();
-    this.currentLayout = new EditUserView({username: username});
+    this.currentLayout = new AddUserView({username: username});
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },
@@ -557,12 +558,20 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').append(this.currentLayout.render().el);
   },
 
-  showApplianceView: function() {
-	    this.renderSidebar("system", "appliance-view");
-	    this.cleanup();
-	    this.currentLayout = new ApplianceView();
-	    $('#maincontent').empty();
-	    $('#maincontent').append(this.currentLayout.render().el);
+  showAccessKeys: function() {
+    this.renderSidebar("system", "access-keys");
+    this.cleanup();
+    this.currentLayout = new AccessKeysView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+  
+  addAccessKey: function() {
+    this.renderSidebar("system", "access-keys");
+    this.cleanup();
+    this.currentLayout = new AddAccessKeyView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
   },
 
   handle404: function() {

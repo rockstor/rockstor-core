@@ -19,38 +19,56 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import re
 from shutil import move
 from tempfile import mkstemp
-
 from services import systemctl
-from fs.btrfs import (mount_share, is_share_mounted)
 from system.osi import run_command
 
 SSHD_CONFIG = '/etc/ssh/sshd_config'
 MKDIR = '/bin/mkdir'
 MOUNT = '/bin/mount'
+USERMOD = '/usr/sbin/usermod'
+SSHD_HEADER = '###BEGIN: Rockstor SFTP CONFIG. DO NOT EDIT BELOW THIS LINE###'
+SFTP_STR = 'Subsystem\tsftp\tinternal-sftp'
 
-def update_sftp_config(input_list):
+
+def update_sftp_config(input_map):
     """
-    input list is a list of dictionaries. sample dictionary:
-    {'user': 'rocky',
-     'dir': '/mnt3/rocky',}
-
+    input map is a dictionary of user,directory pairs
     """
     fo, npath = mkstemp()
     with open(SSHD_CONFIG) as sfo, open(npath, 'w') as tfo:
         for line in sfo.readlines():
-            if (re.match('####BEGIN: Rockstor SFTP CONFIG####', line) is not
-                None):
+            if (re.match(SSHD_HEADER, line) is None):
                 tfo.write(line)
-                for entry in input_list:
-                    tfo.write('Match User %s\n' % entry['user'])
-                    tfo.write('\tChrootDirectory %s\n' % entry['dir'])
-                    tfo.write('\tForceCommand internal-sftp\n\n')
-                tfo.write('####END: Rockstor SFTP CONFIG####\n')
+            else:
                 break
+        tfo.write('%s\n' % SSHD_HEADER)
+        for user in input_map:
+            tfo.write('Match User %s\n' % user)
+            tfo.write('\tChrootDirectory %s\n' % input_map[user])
+
+    move(npath, SSHD_CONFIG)
+    return systemctl('sshd', 'reload')
+
+
+def toggle_sftp_service(switch=True):
+    fo, npath = mkstemp()
+    written = False
+    with open(SSHD_CONFIG) as sfo, open(npath, 'w') as tfo:
+        for line in sfo.readlines():
+            if (re.match(SFTP_STR, line) is not None):
+                if (switch):
+                    tfo.write('%s\n' % SFTP_STR)
+                    written = True
+            elif (re.match(SSHD_HEADER, line) is not None):
+                if (switch and not written):
+                    tfo.write('%s\n' % SFTP_STR)
+                    written = True
+                tfo.write(line)
             else:
                 tfo.write(line)
     move(npath, SSHD_CONFIG)
     return systemctl('sshd', 'reload')
+
 
 def sftp_mount_map(mnt_prefix):
     mnt_map = {}
@@ -63,8 +81,9 @@ def sftp_mount_map(mnt_prefix):
                 mnt_map[sname] = editable
     return mnt_map
 
+
 def sftp_mount(share, mnt_prefix, sftp_mnt_prefix, mnt_map, editable='rw'):
-    #don't mount if already mounted
+    #  don't mount if already mounted
     sftp_mnt_pt = ('%s%s/%s' % (sftp_mnt_prefix, share.owner, share.name))
     share_mnt_pt = ('%s%s' % (mnt_prefix, share.name))
     if (share.name in mnt_map):
@@ -78,3 +97,20 @@ def sftp_mount(share, mnt_prefix, sftp_mnt_prefix, mnt_map, editable='rw'):
         if (editable == 'ro'):
             run_command([MOUNT, '-o', 'remount,%s,bind' % editable,
                          share_mnt_pt, sftp_mnt_pt])
+
+
+def rsync_for_sftp(chroot_loc):
+    user = chroot_loc.split('/')[-1]
+    run_command([MKDIR, '-p', ('%s/bin' % chroot_loc)])
+    run_command([MKDIR, '-p', ('%s/usr/bin' % chroot_loc)])
+    run_command([MKDIR, '-p', ('%s/lib64' % chroot_loc)])
+
+    import shutil
+    shutil.copy('/bin/bash', ('%s/bin' % chroot_loc))
+    shutil.copy('/usr/bin/rsync', ('%s/usr/bin' % chroot_loc))
+    libs = ('ld-linux-x86-64.so.2', 'libacl.so.1', 'libattr.so.1',
+            'libc.so.6', 'libdl.so.2', 'libpopt.so.0', 'libtinfo.so.5',)
+    for l in libs:
+        shutil.copy('/lib64/%s' % l,
+                    ('%s/lib64' % chroot_loc))
+    run_command([USERMOD, '-s', '/bin/bash', user])

@@ -34,13 +34,26 @@ AddUserView = RockstorLayoutView.extend({
     this.constructor.__super__.initialize.apply(this, arguments);
     // set template
     this.template = window.JST.users_add_user;
+    this.username = this.options.username;
+    this.user = new User({username: this.username});
+    this.dependencies.push(this.user);
   },
 
   render: function() {
+    this.fetch(this.renderExportForm, this);
+    return this;
+  },
+
+  renderExportForm: function() {
     var _this = this;
-    $(this.el).html(this.template());
-    
-    this.$('#user-create-form :input').tooltip();
+    //$(this.el).html(this.template());
+    $(this.el).html(this.template({
+        username: this.username,
+        user: this.user
+
+      }));
+
+    this.$('#user-create-form :input').tooltip({placement: 'right'});
 
     this.validator = this.$("#user-create-form").validate({
       onfocusout: false,
@@ -65,30 +78,49 @@ AddUserView = RockstorLayoutView.extend({
         var username = _this.$("#username").val();
         var password = _this.$("#password").val();
         var is_active = _this.$("#is_active").prop("checked"); 
-        // create a dummy user model class that does not have idAttribute 
-        // = username, so backbone will treat is as a new object,
-        // ie isNew will return true
-        var tmpUserModel = Backbone.Model.extend({ 
-          urlRoot: "/api/users/"
-        });
-        var user = new tmpUserModel()
-        user.save(
-          {
-            username: username,
-            password: password,
-            is_active: is_active
-          },
-          {
-            success: function(model, response, options) {
-              _this.$('#user-create-form :input').tooltip('hide');
-              app_router.navigate("users", {trigger: true});
-            },
-            error: function(model, xhr, options) {
-              _this.$('#user-create-form :input').tooltip('hide');
-            }
-          }
-        );
-        
+        var public_key = _this.$("#public_key").val();
+        if(_this.username != null && _this.user != null){
+            var user = new User({username: _this.username});
+        	if (!_.isEmpty(password)) {
+                user.set({password: password});
+              } else {
+                user.unset('password');
+              }
+              user.set({public_key: public_key});
+              user.set({is_active: is_active});
+              user.save(null, {
+                success: function(model, response, options) {
+                  app_router.navigate("users", {trigger: true});
+                },
+                error: function(model, xhr, options) {
+                }
+              });
+        } else {
+            // create a dummy user model class that does not have idAttribute 
+            // = username, so backbone will treat is as a new object,
+            // ie isNew will return true
+            var tmpUserModel = Backbone.Model.extend({ 
+                urlRoot: "/api/users/"
+              });
+	        var user = new tmpUserModel()
+	        user.save(
+	          {
+	            username: username,
+	            password: password,
+	            is_active: is_active,
+	            public_key: public_key
+	          },
+	          {
+	            success: function(model, response, options) {
+	              _this.$('#user-create-form :input').tooltip('hide');
+	              app_router.navigate("users", {trigger: true});
+	            },
+	            error: function(model, xhr, options) {
+	              _this.$('#user-create-form :input').tooltip('hide');
+	            }
+	          }
+	        );
+        }
         return false;
       }
     });
