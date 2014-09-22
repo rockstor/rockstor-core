@@ -26,38 +26,39 @@
         </div>
 
         <div class="control-group">
-          <label class="control-label" for="browsable">Browsable<span class="required"> *</span></label>
+          <label class="control-label" for="browsable">Browsable</label>
           <div class="controls">
-            <select id="browsable" name="browsable" title="Allows share to be displayed in list of machine resources">
               <% _.each(browsable_choices, function(c) { %>
-                <option value="<%= c.value %>"><%= c.name %></option>
+                <label class="radio inline">
+                <input type="radio" name="browsable" value="<%= c.value %>" > <%= c.name %>
+               </label>
               <% }); %>
-            </select>
-          </div>
+           </div>
         </div>
 
         <div class="control-group">
-          <label class="control-label" for="guest_ok">Guest Ok<span class="required"> *</span></label>
+          <label class="control-label" for="guest_ok">Guest Ok</label>
           <div class="controls">
-            <select id="guest_ok" name="guest_ok" title="Is default guest user access allowed?">
               <% _.each(guest_ok_choices, function(c) { %>
-                <option value="<%= c.value %>"><%= c.name %></option>
+               <label class="radio inline">
+                <input type="radio" name="guest_ok" value="<%= c.value %>" > <%= c.name %>
+               </label>
               <% }); %>
-            </select>
           </div>
         </div>
         
+        <!-- Read Only -->
         <div class="control-group">
-          <label class="control-label" for="read_only">Read only<span class="required"> *</span></label>
+          <label class="control-label" for="read_only">Read only</label>
           <div class="controls">
-            <select id="read_only" name="read_only" title="Is the share read-only or writable?">
-              <% _.each(read_only_choices, function(c) { %>
-                <option value="<%= c.value %>"><%= c.name %></option>
-              <% }); %>
-            </select>
+            <% _.each(read_only_choices, function(c) { %>
+              <label class="radio inline">
+                <input type="radio" name="read_only" value="<%= c.value %>" > <%= c.name %>
+              </label>
+            <% }); %>
           </div>
         </div>
-
+        
         <div class="control-group">
           <label class="control-label" for="comment">Comment</span></label>
           <div class="controls">
