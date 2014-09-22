@@ -42,7 +42,6 @@ logger = logging.getLogger(__name__)
 class ProcRetreiver(Process):
 
     def __init__(self):
-        #self.q = q
         self.ppid = os.getpid()
         self.sleep_time = 1
         self._num_ts_records = 0
@@ -76,7 +75,7 @@ class ProcRetreiver(Process):
             raise e
 
     def run(self):
-        #extract metrics and put in q
+        #  extract metrics and put in q
         pu_time = time.mktime(time.gmtime())
         loadavg_time = pu_time
         cur_disk_stats = None
@@ -152,8 +151,8 @@ class ProcRetreiver(Process):
                     data = []
                     for i in range(1, len(prev)):
                         if (i == 9):
-                            #special case for pending ios
-                            #just take average
+                            #  special case for pending ios
+                            #  just take average
                             avg_ios = (float(cur[i]) + float(prev[i]))/2
                             data.append(avg_ios)
                             continue
@@ -221,7 +220,7 @@ class ProcRetreiver(Process):
                     inactive = int(l.split()[1])
                 elif (re.match('Dirty:', l) is not None):
                     dirty = int(l.split()[1])
-                    break # no need to look at lines after dirty.
+                    break  # no need to look at lines after dirty.
         ts = datetime.utcnow().replace(tzinfo=utc)
         mi = MemInfo(total=total, free=free, buffers=buffers, cached=cached,
                      swap_total=swap_total, swap_free=swap_free, active=active,
@@ -267,7 +266,7 @@ class ProcRetreiver(Process):
         """
         This info is not from proc atm, but will eventually be.
         """
-        #collect usage only if the data is more than 30 seconds old
+        #  collect usage only if the data is more than 30 seconds old
         now = time.mktime(time.gmtime())
         if (now - last_ts < 30):
             return last_ts
@@ -296,7 +295,7 @@ class ProcRetreiver(Process):
                              'for: %s' % (p.name))
                 logger.exception(e)
             try:
-                #get usage of all shares in this pool
+                #  get usage of all shares in this pool
                 pool_device = Disk.objects.filter(pool=p)[0].name
                 share_map = {}
                 snap_map = {}
@@ -316,9 +315,9 @@ class ProcRetreiver(Process):
                                  'for share(%s). A new one will be created.'
                                  % s)
                         logger.error(e_msg)
-                    #we check for changed in both referenced and exclusive
-                    #usage because in rare cases it's possible for only one to
-                    #change.
+                    #  we check for changed in both referenced and exclusive
+                    #  usage because in rare cases it's possible for only one
+                    #  to change.
                     if (su is None or su.r_usage != usaged[s][0] or
                         su.e_usage != usaged[s][1]):
                         su = ShareUsage(name=s, r_usage=usaged[s][0],
@@ -332,6 +331,7 @@ class ProcRetreiver(Process):
                              'for pool: %s' % (p.name))
                 logger.exception(e)
         return now
+
 
 def main():
     pr = ProcRetreiver()

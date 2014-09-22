@@ -353,3 +353,7 @@ def scrub_status(pool_name, pool_device):
         stats['status'] = 'finished'
         return stats
     return {'status': 'unknown', }
+
+
+def device_scan():
+    return run_command([BTRFS, 'device', 'scan'])

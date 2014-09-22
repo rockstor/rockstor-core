@@ -28,9 +28,10 @@ from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
 from system.osi import (uptime, refresh_nfs_exports, update_check,
                         update_run, current_version)
-from fs.btrfs import (is_share_mounted, mount_share)
+from fs.btrfs import (mount_share, device_scan)
 from system.ssh import (sftp_mount_map, sftp_mount)
 from system.services import (systemctl, join_winbind_domain, ads_join_status)
+from system.osi import is_share_mounted
 from storageadmin.models import (Share, Disk, NFSExport, SFTP)
 from nfs_helpers import create_nfs_export_input
 from storageadmin.util import handle_exception
@@ -52,6 +53,15 @@ class CommandView(APIView):
     def post(self, request, command):
         if (command == 'bootstrap'):
             try:
+                device_scan()
+            except Exception, e:
+                e_msg = ('Unabled to scan disk drives on the system.')
+                logger.error(e_msg)
+                logger.exception(e)
+                handle_exception(Exception(e_msg), request)
+
+            try:
+                device_scan()
                 for share in Share.objects.all():
                     if (not is_share_mounted(share.name)):
                         mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
@@ -95,8 +105,6 @@ class CommandView(APIView):
                 systemctl('firewalld', 'disable')
                 systemctl('nginx', 'stop')
                 systemctl('nginx', 'disable')
-                systemctl('sendmail', 'stop')
-                systemctl('sendmail', 'disable')
                 systemctl('atd', 'enable')
                 systemctl('atd', 'start')
             except Exception, e:
