@@ -20,6 +20,25 @@
 </script>
 <% var widget_categories = ['Storage', 'Compute', 'Network']; %>
 <div class="form-box">
+  <h4>Metric Collection</h4>
+  <% if (service.get('status')) { %>
+    <div class="slider-stop" data-service-name="<%= service.get('name') %>">OFF</div>
+    <div class="slider-ph" data-original-title="Data Collector service switch">
+      <input type="text" class="service-status" value="1" data-service-name="<%= service.get('name') %>"
+      data-original-title="Data Collector service switch"></input>
+    </div>
+    <div class="slider-start on" data-service-name="<%= service.get('name') %>">ON</div>
+  <% } else { %>
+    <div class="slider-stop" data-service-name="<%= service.get('name') %>">OFF</div>
+    <div class="slider-ph" data-original-title="Data Collector service switch">
+      <input type="text" class="service-status" value="0" data-service-name="<%= service.get('name') %>"
+      data-original-title="Data Collector service switch"></input>
+    </div>
+    <div class="slider-start" data-service-name="<%= service.get('name') %>">ON</div>
+  <% } %>
+  <div class="command-status" data-service-name="<%= service.get('name') %>">&nbsp;</div>
+  <div class="simple-overlay" id="<%= service.get('name') %>-err-popup"><div class="overlay-content"></div></div>
+  <br/>
   <h4>Widgets</h4>
   <% _.each(widget_categories, function(category) { %>
     <strong><%= category %></strong><br>
