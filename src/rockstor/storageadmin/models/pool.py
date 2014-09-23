@@ -39,10 +39,17 @@ class Pool(models.Model):
     raid = models.CharField(max_length=10, choices=RAID_CHOICES)
     toc = models.DateTimeField(auto_now=True)
 
-    def cur_usage(self, *args, **kwargs):
+    def cur_free(self, *args, **kwargs):
         try:
             pu = PoolUsage.objects.filter(pool=self.name).order_by('-ts')[0]
-            return pu.usage
+            return pu.free
+        except:
+            return -1
+
+    def cur_reclaimable(self, *args, **kwargs):
+        try:
+            pu = PoolUsage.objects.filter(pool=self.name).order_by('-ts')[0]
+            return pu.reclaimable
         except:
             return -1
 
