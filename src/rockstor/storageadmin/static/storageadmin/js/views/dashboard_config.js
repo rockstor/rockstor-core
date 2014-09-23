@@ -37,7 +37,7 @@ DashboardConfigView = Backbone.View.extend({
     this.serviceName = 'data-collector';
     this.service = new Service({name: this.serviceName});
     this.parentView = this.options.parentView;
-    this.updateFreq = 5000;
+    this.updateFreq = 30000;
   },
 
   render: function() {
@@ -47,6 +47,7 @@ DashboardConfigView = Backbone.View.extend({
         _this.renderPage();
       }
     });
+    this.startPolling();
     return this;
   },
 	  
@@ -216,7 +217,12 @@ DashboardConfigView = Backbone.View.extend({
     } else {
       cbox.removeAttr("checked");
     }
+  },
+
+  cleanup: function() {
+    this.stopPolling();
   }
+
 });
 
 
