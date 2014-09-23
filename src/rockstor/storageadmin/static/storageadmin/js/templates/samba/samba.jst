@@ -4,7 +4,7 @@
     <div class="messages"></div>
     <!-- Content -->
     <% if (collection.length > 0) { %>
-      <table id="samba-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of samba exports">
+      <table id="samba-exports-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of samba exports">
         <thead>
           <tr>
             <th scope="col" abbr="Share name">Share</th>
@@ -33,7 +33,15 @@
         </tbody>
       </table>
     <% } else { %>
-      <h4>No samba exports have been created</h4>
+      <table id="samba-exports-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of samba exports">
+        <tbody>
+          <tr>
+            <td colspan="5">
+              <h4>No samba exports have been created</h4>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     <% } %>
     <% if (freeShares.length > 0) { %>
       <a href="#add-samba-export" id="add-samba-export" class="btn btn-primary"><i class="icon-edit icon-white"></i> Add Samba Export</a>
