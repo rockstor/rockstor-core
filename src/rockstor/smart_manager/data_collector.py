@@ -272,28 +272,8 @@ class ProcRetreiver(Process):
             return last_ts
         ts = datetime.utcnow().replace(tzinfo=utc)
         for p in Pool.objects.all():
+            total_reclaimable = 0
             arb_disk = Disk.objects.filter(pool=p)[0].name
-            try:
-                usage = pool_usage(arb_disk)
-                pu = None
-                try:
-                    pu = PoolUsage.objects.filter(pool=p.name).latest('id')
-                    if ((ts - pu.ts).total_seconds() > 90):
-                        pu = None
-                except Exception, e:
-                    e_msg = ('Unable to get latest pool usage object for '
-                             'pool(%s). A new one will be created.' % p.name)
-                    logger.error(e_msg)
-                if (pu is None or pu.usage != usage[1]):
-                    pu = PoolUsage(pool=p.name, usage=usage[1], ts=ts)
-                else:
-                    pu.ts = ts
-                    pu.count = pu.count + 1
-                self._save_wrapper(pu)
-            except Exception, e:
-                logger.debug('command exception while getting pool usage '
-                             'for: %s' % (p.name))
-                logger.exception(e)
             try:
                 #  get usage of all shares in this pool
                 pool_device = Disk.objects.filter(pool=p)[0].name
@@ -303,8 +283,16 @@ class ProcRetreiver(Process):
                     share_map[share.qgroup] = share.name
                     for snap in Snapshot.objects.filter(share=share):
                         snap_map[snap.qgroup] = snap.real_name
+                logger.debug('share_map: %s snap_map: %s' % (share_map, snap_map))
                 usaged = shares_usage(p.name, pool_device, share_map, snap_map)
                 for s in usaged.keys():
+                    try:
+                        total_reclaimable += (
+                            Share.objects.get(name=s).size - usaged[s][1])
+                    except:
+                        total_reclaimable += (
+                            Snapshot.objects.get(real_name=s).size -
+                            usaged[s][1])
                     su = None
                     try:
                         su = ShareUsage.objects.filter(name=s).latest('id')
@@ -329,6 +317,31 @@ class ProcRetreiver(Process):
             except Exception, e:
                 logger.debug('command exception while getting shares usage '
                              'for pool: %s' % (p.name))
+                logger.exception(e)
+            try:
+                usage = pool_usage(arb_disk)
+                total_free = p.size - usage[1]  # free + reclaimable
+                pu = None
+                try:
+                    pu = PoolUsage.objects.filter(pool=p.name).latest('id')
+                    if ((ts - pu.ts).total_seconds() > 90):
+                        pu = None
+                except Exception, e:
+                    e_msg = ('Unable to get latest pool usage object for '
+                             'pool(%s). A new one will be created.' % p.name)
+                    logger.error(e_msg)
+                if (pu is None or
+                    p.size - (pu.free + pu.reclaimable) != usage[1]):
+                    pu = PoolUsage(pool=p.name,
+                                   free=total_free-total_reclaimable,
+                                   reclaimable=total_reclaimable, ts=ts)
+                else:
+                    pu.ts = ts
+                    pu.count = pu.count + 1
+                self._save_wrapper(pu)
+            except Exception, e:
+                logger.debug('command exception while getting pool usage '
+                             'for: %s' % (p.name))
                 logger.exception(e)
         return now
 
