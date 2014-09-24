@@ -155,7 +155,7 @@ ConfigureServiceView = RockstorLayoutView.extend({
             if (_.isObject(msg)) {
               _this.validator.showErrors(msg);
             } else {
-              _this.$(".messages").html("<label class=\"error\">" + msg + "</label>");
+              _this.$(".messages").html(this.errTemplate({msg: msg}));
             }
           }
         });
