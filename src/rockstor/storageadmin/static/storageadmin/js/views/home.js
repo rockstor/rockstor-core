@@ -228,6 +228,7 @@ var HomeLayoutView = RockstorLayoutView.extend({
         widget.cleanup();
       }
     });
+    this.dashboardConfigView.cleanup();
   },
 
 });

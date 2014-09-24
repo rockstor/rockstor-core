@@ -68,7 +68,7 @@ AddSambaExportView = RockstorLayoutView.extend({
       guest_ok_choices: this.guest_ok_choices,
       read_only_choices: this.read_only_choices
     }));
-
+    this.$('#shares').chosen();
     this.$('#add-samba-export-form :input').tooltip({
       html: true,
       placement: 'right'
