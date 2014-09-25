@@ -18,10 +18,15 @@
           </div>
         </div>
 
+        <!-- Admin Users  -->
         <div class="control-group">
-          <label class="control-label" for="admin_users">Admin users</span></label>
+          <label class="control-label" for="shares">Admin users<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" id="admin_users" name="admin_users" title="Enter a <strong>space separated list of users</strong> who will be granted administrative privileges on the share. <br><strong>This means that they will do all file operations as the super-user (root). You should use this option very carefully, as any user in this list will be able to do anything they like on the share, irrespective of file permissions.</strong>">
+            <select name="shares" id="shares" size="10" data-placeholder="Select admin user" multiple>
+              <% _.each(shares, function(share, index) { %>
+                <option value="<%= share.get('admin_users') %>"><%= share.get('admin_users') %></option>
+              <% }); %>
+            </select>
           </div>
         </div>
 
