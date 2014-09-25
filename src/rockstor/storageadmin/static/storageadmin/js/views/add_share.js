@@ -34,9 +34,23 @@ AddShareView = Backbone.View.extend({
   },
 
   initialize: function() {
+    var _this = this;
     this.pools = new PoolCollection();
     this.pools.pageSize = RockStorGlobals.maxPageSize;
     this.poolName = this.options.poolName;
+    this.tickFormatter = function(d) {
+      var formatter = d3.format(",.0f");
+      if (d > 1024) {
+        return formatter(d/(1024)) + " TB";
+      } else {
+        return formatter(d) + " GB";
+      }
+    }
+    this.slider = null;
+    this.sliderCallback = function(slider) {
+      var value = slider.value();
+      _this.$('#share_size').val(_this.tickFormatter(value));
+    }
   },
 
   render: function() {
@@ -46,7 +60,31 @@ AddShareView = Backbone.View.extend({
     this.pools.fetch({
       success: function(collection, response) {
         $(_this.el).append(_this.template({pools: _this.pools, poolName: _this.poolName}));
-        
+
+        _this.renderSlider(); 
+        _this.$('#pool_name').change(function(){
+          _this.renderSlider();
+        });
+      
+
+        _this.$("#share_size").change(function(){
+          var size = this.value;
+          var sizeFormat = size.replace(/[^a-z]/gi, ""); 
+
+          var size_array = size.split(sizeFormat)
+          var size_value = size_array[0];
+
+          if(sizeFormat == 'TB' || sizeFormat == 'tb' || sizeFormat == 'Tb') {
+            size_value = size_value*1024;
+            _this.slider.setValue(parseInt(size)*1024);
+          } else if (sizeFormat == 'GB' || sizeFormat == 'gb'
+            || sizeFormat == 'Gb') {
+              _this.slider.setValue(parseInt(size));
+            } else {
+              _this.slider.setValue(parseInt(size));
+            }
+        });
+
         $('#add-share-form :input').tooltip({placement: 'right'});
         
         $('#add-share-form').validate({
@@ -106,6 +144,20 @@ AddShareView = Backbone.View.extend({
       }
     });
     return this;
+  },
+
+  renderSlider: function() {
+    var pool_name = this.$('#pool_name').val();
+    var selectedPool = this.pools.find(function(p) { return p.get('name') == pool_name; });
+    var max = (selectedPool.get('free') + selectedPool.get('reclaimable')) / (1024*1024);
+    var min = 0;
+    var ticks = 3;
+    var value = 1;
+    var section = selectedPool.get('free')/(1024*1024);
+    
+    this.$('#slider').empty();
+    this.slider = d3.slider2().min(min).max(max).ticks(ticks).tickFormat(this.tickFormatter).value(value).section(section).callback(this.sliderCallback);
+    d3.select('#slider').call(this.slider);
   },
 
   cancel: function(event) {

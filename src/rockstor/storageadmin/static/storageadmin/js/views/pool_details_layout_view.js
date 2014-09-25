@@ -37,7 +37,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     this.dependencies.push(this.pool);
     this.disks = new DiskCollection();
     this.disks.pageSize = RockStorGlobals.maxPageSize;
-    this.statusPollInterval = 1000;
+    this.statusPollInterval = 5000;
   },
 
   events: {
