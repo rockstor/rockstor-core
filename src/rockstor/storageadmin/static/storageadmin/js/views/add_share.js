@@ -77,12 +77,11 @@ AddShareView = Backbone.View.extend({
           if(sizeFormat == 'TB' || sizeFormat == 'tb' || sizeFormat == 'Tb') {
             size_value = size_value*1024;
             _this.slider.setValue(parseInt(size)*1024);
-          } else if (sizeFormat == 'GB' || sizeFormat == 'gb'
-            || sizeFormat == 'Gb') {
-              _this.slider.setValue(parseInt(size));
-            } else {
-              _this.slider.setValue(parseInt(size));
-            }
+          } else if (sizeFormat == 'GB' || sizeFormat == 'gb' || sizeFormat == 'Gb') {
+            _this.slider.setValue(parseInt(size));
+          } else {
+            _this.slider.setValue(parseInt(size));
+          }
         });
 
         $('#add-share-form :input').tooltip({placement: 'right'});
@@ -94,16 +93,7 @@ AddShareView = Backbone.View.extend({
               share_name: 'required',
               share_size: {
                 required: true,
-                number: true
               },
-            },
-            errorPlacement: function(error, element) {
-              if (element.attr("name") == "share_size") {
-                // insert error for share size after the size format field.
-                error.insertAfter("#size_format");
-              } else {
-                error.insertAfter(element);
-              }
             },
             
             submitHandler: function() {
@@ -113,23 +103,23 @@ AddShareView = Backbone.View.extend({
               var share_name = $('#share_name').val();
               var pool_name = $('#pool_name').val();
               var size = $('#share_size').val();
+              var sizeFormat = size.replace(/[^a-z]/gi, ""); 
+              var size_array = size.split(sizeFormat)
+              var size_value = size_array[0];
 
-              var sizeFormat = $('#size_format').val();
-              if(sizeFormat == 'KB'){
-                size = size;
-              }else if(sizeFormat == 'MB'){
-                size = size*1024;	
-              }else if(sizeFormat == 'GB'){
-                size = size*1024*1024;
-              }else if(sizeFormat == 'TB'){
-                size = size*1024*1024*1024;
+              if(sizeFormat == 'TB' || sizeFormat == 'tb' || sizeFormat == 'Tb') {
+                size_value = size_value*1024*1024*1024;
+              } else if (sizeFormat == 'GB' || sizeFormat == 'gb' || sizeFormat == 'Gb') {
+                size_value = size_value*1024*1024;
+              } else {
+                size_value = size_value*1024*1024;
               }
 
               $.ajax({
                 url: "/api/shares",
                 type: "POST",
                 dataType: "json",
-                data: {sname: share_name, "pool": pool_name, "size": size},
+                data: {sname: share_name, "pool": pool_name, "size": size_value},
                 success: function() {
                   enableButton(button);
                   _this.$('#add-share-form :input').tooltip('hide');
