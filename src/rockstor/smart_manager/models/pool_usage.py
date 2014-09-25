@@ -22,10 +22,10 @@ from django.db import models
 class PoolUsage(models.Model):
     """pool usage information as time series"""
     pool = models.CharField(max_length=4096)
-    usage = models.BigIntegerField(default=0)
+    free = models.BigIntegerField(default=0)
+    reclaimable = models.BigIntegerField(default=0)
     ts = models.DateTimeField(auto_now=True, db_index=True)
     count = models.BigIntegerField(default=1)
 
     class Meta:
         app_label = 'smart_manager'
-

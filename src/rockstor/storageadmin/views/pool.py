@@ -37,7 +37,23 @@ logger = logging.getLogger(__name__)
 
 class PoolView(rfc.GenericView):
     serializer_class = PoolInfoSerializer
-    RAID_LEVELS = ('raid0', 'raid1', 'raid10', 'single', 'raid5', 'raid6')
+    RAID_LEVELS = ('single', 'raid0', 'raid1', 'raid10', 'raid5', 'raid6')
+
+    def _pool_size(self, disks, raid_level):
+        disk_size = None
+        for d in disks:
+            size = Disk.objects.get(name=d).size
+            if (disk_size is None or disk_size > size):
+                disk_size = size
+
+        if (raid_level == self.RAID_LEVELS[0]):
+            return disk_size * len(disks)
+        if (raid_level in self.RAID_LEVELS[1:3]):
+            return disk_size * (len(disks) / 2)
+        if (raid_level == self.RAID_LEVELS[4]):
+            return disk_size * (len(disks) - 1)
+        if (raid_level == self.RAID_LEVELS[5]):
+            return disk_size * (len(disks) - 2)
 
     def get_queryset(self, *args, **kwargs):
         if ('pname' in kwargs):
@@ -86,27 +102,35 @@ class PoolView(rfc.GenericView):
                 e_msg = ('Unsupported raid level. use one of: %s' %
                          self.RAID_LEVELS)
                 handle_exception(Exception(e_msg), request)
-            if (raid_level in self.RAID_LEVELS[0:2] and len(disks) == 1):
+            if (raid_level == self.RAID_LEVELS[1] and len(disks) == 1):
                 e_msg = ('More than one disk is required for the raid '
                          'level: %s' % raid_level)
                 handle_exception(Exception(e_msg), request)
-            if (raid_level == self.RAID_LEVELS[2] and len(disks) < 4):
-                e_msg = ('Four or more disks are required for the raid '
-                         'level: %s' % raid_level)
+            if (raid_level == self.RAID_LEVELS[2] and len(disks) != 2):
+                e_msg = ('Two disks are required for the raid level: %s' %
+                         raid_level)
                 handle_exception(Exception(e_msg), request)
-            if (raid_level == self.RAID_LEVELS[4] and len(disks) < 2):
-                e_msg = ('Two or more disks are required for the raid '
-                         'level: %s' % raid_level)
-                handle_exception(Exception(e_msg), request)
-            if (raid_level == self.RAID_LEVELS[5] and len(disks) < 3):
+            if (raid_level == self.RAID_LEVELS[3]):
+                if (len(disks) < 4):
+                    e_msg = ('A minimum of Four drives are required for the '
+                             'raid level: %s' % raid_level)
+                    handle_exception(Exception(e_msg), request)
+                elif (len(disks) % 2 != 0):
+                    e_msg = ('Even number of drives are required for the '
+                             'raid level: %s' % raid_level)
+                    handle_exception(Exception(e_msg), request)
+            if (raid_level == self.RAID_LEVELS[4] and len(disks) < 3):
                 e_msg = ('Three or more disks are required for the raid '
                          'level: %s' % raid_level)
                 handle_exception(Exception(e_msg), request)
+            if (raid_level == self.RAID_LEVELS[5] and len(disks) < 4):
+                e_msg = ('Four or more disks are required for the raid '
+                         'level: %s' % raid_level)
+                handle_exception(Exception(e_msg), request)
 
-            p = Pool(name=pname, raid=raid_level)
+            pool_size = self._pool_size(disks, raid_level)
+            p = Pool(name=pname, raid=raid_level, size=pool_size)
             add_pool(pname, raid_level, raid_level, disks)
-            usage = pool_usage(disks[0])
-            p.size = usage[0]
             p.save()
             p.disk_set.add(*[Disk.objects.get(name=d) for d in disks])
             return Response(PoolInfoSerializer(p).data)
@@ -140,7 +164,7 @@ class PoolView(rfc.GenericView):
                     d_o = Disk.objects.get(name=d)
                     if (d_o.pool is not None):
                         msg = ('disk %s already part of pool %s' %
-                            (d, d_o.pool.name))
+                               (d, d_o.pool.name))
                         raise Exception(msg)
                     d_o.pool = pool
                     d_o.save()
@@ -152,7 +176,8 @@ class PoolView(rfc.GenericView):
                 for d in disks:
                     d_o = Disk.objects.get(name=d)
                     if (d_o.pool != pool):
-                        msg = ('disk %s not part of pool %s' % (d, d_o.pool.name))
+                        msg = ('disk %s not part of pool %s' %
+                               (d, d_o.pool.name))
                         raise Exception(msg)
                     d_o.pool = None
                     d_o.save()
@@ -186,4 +211,3 @@ class PoolView(rfc.GenericView):
             raise
         except Exception, e:
             handle_exception(e, request)
-

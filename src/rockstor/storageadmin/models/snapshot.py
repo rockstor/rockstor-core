@@ -20,6 +20,7 @@ from django.db import models
 from storageadmin.models import Share
 from smart_manager.models import ShareUsage
 
+
 class Snapshot(models.Model):
     """share which this snapshot belongs to"""
     share = models.ForeignKey(Share)

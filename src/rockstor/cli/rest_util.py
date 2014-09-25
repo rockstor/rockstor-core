@@ -136,7 +136,7 @@ def print_pools_info(pools_info):
         else:
             pools_info = pools_info['results']
         print("%(c)sPools on the appliance\n%(e)s" % BaseConsole.c_params)
-        print("Name\tSize\tUsage\tRaid")
+        print("Name\tSize\tFree\tReclaimable\tRaid")
         for p in pools_info:
             print_pool_info(p)
     except Exception, e:
@@ -147,12 +147,13 @@ def print_pool_info(p, header=False):
     try:
         if header:
             print "%(c)sPool info%(e)s\n" % BaseConsole.c_params
-            print("Name\tSize\tUsage\tRaid")
+            print("Name\tSize\tFree\tReclaimable\tRaid")
         p['size'] = sizeof_fmt(p['size'])
-        p['usage'] = sizeof_fmt(p['usage'])
-        print('%s%s%s\t%s\t%s\t%s' % (BaseConsole.c, p['name'],
-                                      BaseConsole.e, p['size'], p['usage'],
-                                      p['raid']))
+        p['free'] = sizeof_fmt(p['free'])
+        p['reclaimable'] = sizeof_fmt(p['reclaimable'])
+        print('%s%s%s\t%s\t%s\t%s\t%s' % (BaseConsole.c, p['name'],
+                                          BaseConsole.e, p['size'], p['free'],
+                                          p['reclaimable'], p['raid']))
     except Exception, e:
         print e
         print('Error displaying pool info')
