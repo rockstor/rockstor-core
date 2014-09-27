@@ -44,14 +44,14 @@ class Pool(models.Model):
             pu = PoolUsage.objects.filter(pool=self.name).order_by('-ts')[0]
             return pu.free
         except:
-            return -1
+            return self.size
 
     def cur_reclaimable(self, *args, **kwargs):
         try:
             pu = PoolUsage.objects.filter(pool=self.name).order_by('-ts')[0]
             return pu.reclaimable
         except:
-            return -1
+            return 0
 
     class Meta:
         app_label = 'storageadmin'
