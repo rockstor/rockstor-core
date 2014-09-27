@@ -30,6 +30,7 @@ from storageadmin.util import handle_exception
 from storageadmin.exceptions import RockStorAPIException
 from django.conf import settings
 import rest_framework_custom as rfc
+from contextlib import contextmanager
 
 import logging
 logger = logging.getLogger(__name__)
@@ -39,6 +40,19 @@ class PoolView(rfc.GenericView):
     serializer_class = PoolInfoSerializer
     RAID_LEVELS = ('single', 'raid0', 'raid1', 'raid10', 'raid5', 'raid6')
 
+    @staticmethod
+    @contextmanager
+    def _handle_exception(request, msg=None):
+        try:
+            yield
+        except RockStorAPIException:
+            raise
+        except Exception, e:
+            if (msg is None):
+                msg = ('An unhandled low level exception occured while '
+                       'processing the request.')
+            handle_exception(e, request, msg)
+
     def _pool_size(self, disks, raid_level):
         disk_size = None
         for d in disks:
@@ -47,8 +61,10 @@ class PoolView(rfc.GenericView):
                 disk_size = size
 
         if (raid_level == self.RAID_LEVELS[0]):
+            return disk_size
+        if (raid_level == self.RAID_LEVELS[1]):
             return disk_size * len(disks)
-        if (raid_level in self.RAID_LEVELS[1:3]):
+        if (raid_level in self.RAID_LEVELS[2:4]):
             return disk_size * (len(disks) / 2)
         if (raid_level == self.RAID_LEVELS[4]):
             return disk_size * (len(disks) - 1)
@@ -78,7 +94,7 @@ class PoolView(rfc.GenericView):
         """
         input is a list of disks, raid_level and name of the pool.
         """
-        try:
+        with self._handle_exception(request):
             disks = request.DATA['disks'].split(',')
             pname = request.DATA['pname']
             if (re.match('%s$' % settings.POOL_REGEX, pname) is None):
@@ -102,13 +118,17 @@ class PoolView(rfc.GenericView):
                 e_msg = ('Unsupported raid level. use one of: %s' %
                          self.RAID_LEVELS)
                 handle_exception(Exception(e_msg), request)
+            if (raid_level == self.RAID_LEVELS[0] and len(disks) != 1):
+                e_msg = ('Exactly one disk is required for the raid level: '
+                         '%s' % raid_level)
+                handle_exception(Exception(e_msg), request)
             if (raid_level == self.RAID_LEVELS[1] and len(disks) == 1):
                 e_msg = ('More than one disk is required for the raid '
                          'level: %s' % raid_level)
                 handle_exception(Exception(e_msg), request)
             if (raid_level == self.RAID_LEVELS[2] and len(disks) != 2):
-                e_msg = ('Two disks are required for the raid level: %s' %
-                         raid_level)
+                e_msg = ('Exactly two disks are required for the raid level: '
+                         '%s' % raid_level)
                 handle_exception(Exception(e_msg), request)
             if (raid_level == self.RAID_LEVELS[3]):
                 if (len(disks) < 4):
@@ -134,10 +154,6 @@ class PoolView(rfc.GenericView):
             p.save()
             p.disk_set.add(*[Disk.objects.get(name=d) for d in disks])
             return Response(PoolInfoSerializer(p).data)
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)
 
     @transaction.commit_on_success
     def put(self, request, pname, command):
