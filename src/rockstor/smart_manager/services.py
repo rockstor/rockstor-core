@@ -31,25 +31,25 @@ from models import (Service, ServiceStatus)
 from system.services import service_status
 import logging
 logger = logging.getLogger(__name__)
-import zmq
-from django.conf import settings
-from django.core.serializers import serialize
 from datetime import datetime
 from django.utils.timezone import utc
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction
+from django.db import OperationalError
+
 
 class ServiceMonitor(Process):
 
     def __init__(self):
         self.ppid = os.getpid()
-        self.interval = 1 #seconds
+        self.interval = 1  # seconds
         super(ServiceMonitor, self).__init__()
 
     def run(self):
         first_loop = True
-        try:
-            while (True):
+        op_err_count = 0
+        op_err_sleep = 5
+        while (True):
+            try:
                 if (os.getppid() != self.ppid):
                     msg = ('Parent process(smd) exited. I am exiting too.')
                     return logger.error(msg)
@@ -59,7 +59,8 @@ class ServiceMonitor(Process):
                     sso = None
                     if (first_loop is not True):
                         try:
-                            sso = ServiceStatus.objects.filter(service=s).latest('id')
+                            sso = ServiceStatus.objects.filter(
+                                service=s).latest('id')
                         except ObjectDoesNotExist:
                             pass
 
@@ -83,11 +84,21 @@ class ServiceMonitor(Process):
                         sso.save()
                         first_loop = False
                 time.sleep(self.interval)
-        except Exception, e:
-            msg = ('unhandled exception in %s. Exiting' % self.name)
-            logger.error(msg)
-            logger.exception(e)
-            raise e
+            except OperationalError, e:
+                logger.exception(e)
+                if (op_err_count > 24):  # 2 minute total wait
+                    logger.debug('Waited for %d seconds. DB still not ready. '
+                                 'Giving up' % (op_err_count * op_err_sleep))
+                    break
+                logger.debug('Will wait for %d seconds and try again'
+                             % op_err_sleep)
+                time.sleep(5)
+            except Exception, e:
+                msg = ('unhandled exception in %s. Exiting' % self.name)
+                logger.error(msg)
+                logger.exception(e)
+                raise e
+
 
 def main():
     sm = ServiceMonitor()
