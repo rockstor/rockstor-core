@@ -51,8 +51,8 @@ http {
 		listen 443 default_server;
                 server_name "~^(?<myhost>.+)$";
 		ssl on;
-		ssl_certificate ${buildout:depdir}/certs/rockstor.cert.cert;
- 		ssl_certificate_key ${buildout:depdir}/certs/rockstor.cert.key;
+		ssl_certificate ${buildout:depdir}/certs/rockstor.cert;
+ 		ssl_certificate_key ${buildout:depdir}/certs/rockstor.key;
 
 		location /site_media  {
 			root /media/; # Notice this is the /media folder that we create above
