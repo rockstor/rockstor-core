@@ -139,15 +139,24 @@ AddShareView = Backbone.View.extend({
   renderSlider: function() {
     var pool_name = this.$('#pool_name').val();
     var selectedPool = this.pools.find(function(p) { return p.get('name') == pool_name; });
-    var max = (selectedPool.get('free') + selectedPool.get('reclaimable')) / (1024*1024);
+    //var max = (selectedPool.get('free') + selectedPool.get('reclaimable')) / (1024*1024);
     var min = 0;
     var ticks = 3;
     var value = 1;
-    var section = selectedPool.get('free')/(1024*1024);
+    var max = parseInt(selectedPool.get('size')/(1024*1024)); 
+    var reclaimable = parseInt(selectedPool.get('reclaimable')/(1024*1024));
+    var free = parseInt(selectedPool.get('free')/(1024*1024));
+    var used = max-free-reclaimable;
+    console.log(max);
+    console.log(reclaimable);
+    console.log(free);
     
     this.$('#slider').empty();
-    this.slider = d3.slider2().min(min).max(max).ticks(ticks).tickFormat(this.tickFormatter).value(value).section(section).callback(this.sliderCallback);
+    this.slider = d3.slider2().min(min).max(max).ticks(ticks).tickFormat(this.tickFormatter).value(value).reclaimable(reclaimable).used(used).callback(this.sliderCallback);
     d3.select('#slider').call(this.slider);
+    this.$('#legend-free-num').html('(' + free + ' GB)');
+    this.$('#legend-reclaimable-num').html('(' + reclaimable + ' GB)');
+    this.$('#legend-used-num').html('(' + used + ' GB)');
   },
 
   cancel: function(event) {

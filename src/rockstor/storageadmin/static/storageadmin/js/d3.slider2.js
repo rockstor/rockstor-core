@@ -3,12 +3,13 @@ d3.slider2 = function module() {
 
   var div, min = 0, max = 100, svg, svgGroup, value, classPrefix, axis, 
   height=40, rect,
-  rectHeight = 6,
+  rectHeight = 12,
   tickSize = 6,
-  margin = {top: 25, right: 25, bottom: 15, left: 25}, 
+  margin = {top: 25, right: 25, bottom: 15, left: 15}, 
   ticks = 0, tickValues, scale, tickFormat, dragger, width, 
   range = false,
-  section = -1,
+  reclaimable = -1,
+  used = -1,
   callbackFn, stepValues, focus;
 
   function slider(selection) {
@@ -37,13 +38,37 @@ d3.slider2 = function module() {
       .attr("width", width)
       .attr("height", rectHeight);
      
-      // Range rect 
-      if (section > -1) {
+      if (reclaimable > -1) {
         svg.append("rect")
-        .attr("class", "d3slider-rect-section")
-        .attr("width", scale(max-section))
+        .attr("class", "d3slider-rect-reclaimable")
+        .attr("width", scale(reclaimable))
         .attr("height", rectHeight)
-        .attr("transform", "translate(" + scale(section) + ",0)");
+        .attr("transform", "translate(" + scale(max-used-reclaimable) + ",0)");
+
+        svg.append("text")
+        .attr("x", 0)
+        .attr("y", -15)
+        .attr("text-anchor", "middle")
+        .attr("transform", "translate(" + scale(max-used-reclaimable) + ",0)")
+        .attr("class", "draggertext")
+        .text(tickFormat(max-used-reclaimable));
+
+      }
+      
+      if (used > -1) {
+        svg.append("rect")
+        .attr("class", "d3slider-rect-used")
+        .attr("width", scale(used))
+        .attr("height", rectHeight)
+        .attr("transform", "translate(" + scale(max-used) + ",0)");
+        
+        svg.append("text")
+        .attr("x", 0)
+        .attr("y", -15)
+        .attr("text-anchor", "middle")
+        .attr("transform", "translate(" + scale(max-used) + ",0)")
+        .attr("class", "draggertext")
+        .text(tickFormat(max-used-reclaimable));
       }
 
       if (range) {
@@ -105,20 +130,19 @@ d3.slider2 = function module() {
       .attr("class", "draggertext")
       .text(displayValue);
 
-      //dragger.append("circle")
-      //.attr("class", "dragger-outer")
-      //.attr("r", 10)
-      //.attr("transform", function(d) {
-        //return "translate(0,6)";
-      //});
+      dragger.append("circle")
+      .attr("class", "dragger-outer")
+      .attr("r", 10)
+      .attr("transform", function(d) {
+      return "translate(0,6)";
+      });
       
       dragger.append("circle")
       .attr("class", "dragger-inner")
-      .attr("r", 6)
+      .attr("r", 8)
       .attr("transform", function(d) {
-        return "translate(0,3)";
+        return "translate(0,6)";
       });
-
 
       // Enable dragger drag 
       var dragBehaviour = d3.behavior.drag();
@@ -149,7 +173,12 @@ d3.slider2 = function module() {
 
   slider.move = function(pos) {
     var l,u;
+    var maxVal = max-used;
     var newValue = scale.invert(pos - margin.left);
+    if (newValue > maxVal) {
+      newValue = maxVal;
+    }
+
     // find tick values that are closest to newValue
     // lower bound
     if (stepValues != undefined) {
@@ -256,9 +285,15 @@ d3.slider2 = function module() {
     return slider;
   } 
   
-  slider.section = function(_) {
-    if (!arguments.length) return section;
-    section = _;
+  slider.reclaimable = function(_) {
+    if (!arguments.length) return reclaimable;
+    reclaimable = _;
+    return slider;
+  } 
+  
+  slider.used = function(_) {
+    if (!arguments.length) return used;
+    used = _;
     return slider;
   } 
 

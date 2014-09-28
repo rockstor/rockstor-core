@@ -23,10 +23,10 @@
 <h3>Create Share</h3>
 
 <div class="row-fluid">
-  <div class="span8">
+  <div class="span12">
     <label class="control-label"><span class="required">*</span> indicates required fields</label>
     <div class="form-box"> 
-      <form name="add-share-form" id="add-share-form">
+      <form class="form-horizontal" name="add-share-form" id="add-share-form">
         <div class="messages"></div>
         <div class="control-group">
           <label class="control-label" for="share_name">Name<span class="required"> *</span></label>
@@ -67,8 +67,17 @@
         <div class="control-group">
           <label class="control-label" for="share_size">Size<span class="required"> *</span></label>
           <div class="controls">
-            <div id="slider" style="width: 300px; float: left;"></div>
-            <input type="text" class="span2" name="share_size" id="share_size" title="Enter share size in GB or TB">
+            <div id="slider" style="width: 400px; float: left;"></div>
+            <input type="text" style="margin-top: 16px;" class="span2" name="share_size" id="share_size" title="Enter share size in GB or TB">
+          </div>
+        </div>
+        <div class="control-group">
+          <div class="controls slider-legend">
+            <div style="width: 15px; height: 15px; float: left" class="slider-legend-free"></div> <div>&nbsp;<span id="legend-free-num"></span>&nbsp;Space that is completely free and unprovisioned</div>
+            <br>
+            <div style="width: 15px; height: 15px; float: left" class="slider-legend-reclaimable"></div> <div>&nbsp;<span id="legend-reclaimable-num"></span>Space that is provisioned for other shares, but currently free</div>
+            <br>
+            <div style="width: 15px; height: 15px; float: left" class="slider-legend-used"> </div><div>&nbsp;<span id="legend-used-num"></span>Space that is provisioned for other shares and is in use</div>
           </div>
         </div>
         <div class="control-group">
