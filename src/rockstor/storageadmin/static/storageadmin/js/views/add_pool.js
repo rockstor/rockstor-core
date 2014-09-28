@@ -111,7 +111,22 @@ AddPoolView = Backbone.View.extend({
           return true;
         }, raid_err_msg);
         
+        this.$("#disks-table").tablesorter({
+         headers: { 
+            // assign the first column (we start counting zero) 
+            0: { 
+                // disable it by setting the property sorter to false 
+                sorter: false 
+            }, 
+            // assign the third column (we start counting zero) 
+            3: { 
+                // disable it by setting the property sorter to false 
+                sorter: false 
+            }
+         }    
+        });
         this.$('#add-pool-form input').tooltip({placement: 'right'});
+        
         this.$('#raid_level').tooltip({
           html: true,
           placement: 'right',

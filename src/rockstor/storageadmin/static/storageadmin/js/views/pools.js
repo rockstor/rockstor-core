@@ -74,7 +74,15 @@ PoolsView = RockstorLayoutView.extend({
     this.$(".pagination-ph").html(this.pagination_template({
       collection: this.collection
     }));
-    this.$("#pools-table").tablesorter();
+    this.$("#pools-table").tablesorter({
+       headers: { 
+            // assign the fifth column (we start counting zero) 
+            5: { 
+                // disable it by setting the property sorter to false 
+                sorter: false 
+            }
+         }    
+    });
     this.$('[rel=tooltip]').tooltip({placement: 'bottom'});
    
     return this;
