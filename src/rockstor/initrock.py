@@ -28,6 +28,7 @@ import time
 SYSCTL = '/usr/bin/systemctl'
 DJANGO = '/opt/rockstor/bin/django'
 STAMP = '/opt/rockstor/.initrock'
+OPENSSL = '/usr/bin/openssl'
 
 
 def update_issue():
@@ -74,6 +75,33 @@ def main():
                              'Quiting.')
                 raise e
             time.sleep(2)
+    cert_loc = '/opt/rockstor/certs/'
+    if (os.path.isdir(cert_loc)):
+        if (not os.path.isfile('%s/rockstor.cert' % cert_loc) or
+            not os.path.isfile('%s/rockstor.key' % cert_loc)):
+            shutil.rmtree(cert_loc)
+
+    if (not os.path.isdir(cert_loc)):
+        os.mkdir(cert_loc)
+        dn = ("/C=US/ST=Rockstor user's state/L=Rockstor user's "
+              "city/O=Rockstor user/OU=Rockstor dept/CN=rockstor.user")
+        logging.info('Creating openssl cert...')
+        run_command([OPENSSL, 'req', '-nodes', '-newkey', 'rsa:2048',
+                     '-keyout', '%s/first.key' % cert_loc, '-out',
+                     '%s/rockstor.csr' % cert_loc, '-subj', dn])
+        logging.debug('openssl cert created')
+        logging.info('Creating rockstor key...')
+        run_command([OPENSSL, 'rsa', '-in', '%s/first.key' % cert_loc, '-out',
+                     '%s/rockstor.key' % cert_loc])
+        logging.debug('rockstor key created')
+        logging.info('Singing cert with rockstor key...')
+        run_command([OPENSSL, 'x509', '-in', '%s/rockstor.csr' % cert_loc,
+                     '-out', '%s/rockstor.cert' % cert_loc, '-req', '-signkey',
+                     '%s/rockstor.key' % cert_loc, '-days', '3650'])
+        logging.debug('cert signed.')
+        logging.info('restarting nginx...')
+        run_command(['/opt/rockstor/bin/supervisorctl', 'restart', 'nginx'])
+
     if (os.path.isfile(STAMP)):
         return logging.info(
             'initrock ran successfully before, so not running it again.'
