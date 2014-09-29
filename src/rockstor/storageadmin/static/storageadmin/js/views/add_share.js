@@ -71,18 +71,21 @@ AddShareView = Backbone.View.extend({
         _this.$('#share_size').val(_this.tickFormatter(1));
         _this.$("#share_size").change(function(){
           var size = this.value;
+          var size_value = size;
+          
           var sizeFormat = size.replace(/[^a-z]/gi, ""); 
-
-          var size_array = size.split(sizeFormat)
-          var size_value = size_array[0];
+          if (sizeFormat != '') { 
+            var size_array = size.split(sizeFormat)
+            size_value = size_array[0];
+          }
 
           if(sizeFormat == 'TB' || sizeFormat == 'tb' || sizeFormat == 'Tb') {
             size_value = size_value*1024;
-            _this.slider.setValue((size)*1024);
+            _this.slider.setValue((size_value)*1024);
           } else if (sizeFormat == 'GB' || sizeFormat == 'gb' || sizeFormat == 'Gb') {
-            _this.slider.setValue((size));
+            _this.slider.setValue((size_value));
           } else {
-            _this.slider.setValue((size));
+            _this.slider.setValue((size_value));
           }
         });
 
