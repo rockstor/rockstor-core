@@ -5,7 +5,7 @@ d3.slider2 = function module() {
   height=40, rect,
   rectHeight = 12,
   tickSize = 6,
-  margin = {top: 25, right: 25, bottom: 15, left: 15}, 
+  margin = {top: 25, right: 25, bottom: 15, left: 20}, 
   ticks = 0, tickValues, scale, tickFormat, dragger, width, 
   range = false,
   reclaimable = -1,
@@ -19,8 +19,7 @@ d3.slider2 = function module() {
                                                 + margin.right);
 
       value = value || min; 
-      scale = d3.scale.linear().domain([min, max]).range([0, width])
-      .clamp(true);
+      scale = d3.scale.linear().domain([min, max]).range([0, width]).clamp(true);
       
       // SVG 
       svg = div.append("svg")
@@ -68,7 +67,7 @@ d3.slider2 = function module() {
         .attr("text-anchor", "middle")
         .attr("transform", "translate(" + scale(max-used) + ",0)")
         .attr("class", "draggertext")
-        .text(tickFormat(max-used-reclaimable));
+        .text(tickFormat(max-used));
       }
 
       if (range) {
@@ -173,10 +172,14 @@ d3.slider2 = function module() {
 
   slider.move = function(pos) {
     var l,u;
+    var minVal = 0;
     var maxVal = max-used;
     var newValue = scale.invert(pos - margin.left);
     if (newValue > maxVal) {
       newValue = maxVal;
+    }
+    if (newValue < minVal) {
+      newValue = minVal;
     }
 
     // find tick values that are closest to newValue

@@ -39,7 +39,7 @@ AddShareView = Backbone.View.extend({
     this.pools.pageSize = RockStorGlobals.maxPageSize;
     this.poolName = this.options.poolName;
     this.tickFormatter = function(d) {
-      var formatter = d3.format(",.0f");
+      var formatter = d3.format(",.1f");
       if (d > 1024) {
         return formatter(d/(1024)) + " TB";
       } else {
@@ -64,9 +64,11 @@ AddShareView = Backbone.View.extend({
         _this.renderSlider(); 
         _this.$('#pool_name').change(function(){
           _this.renderSlider();
+          _this.$('#share_size').val(_this.tickFormatter(1));
         });
       
 
+        _this.$('#share_size').val(_this.tickFormatter(1));
         _this.$("#share_size").change(function(){
           var size = this.value;
           var sizeFormat = size.replace(/[^a-z]/gi, ""); 
@@ -76,11 +78,11 @@ AddShareView = Backbone.View.extend({
 
           if(sizeFormat == 'TB' || sizeFormat == 'tb' || sizeFormat == 'Tb') {
             size_value = size_value*1024;
-            _this.slider.setValue(parseInt(size)*1024);
+            _this.slider.setValue((size)*1024);
           } else if (sizeFormat == 'GB' || sizeFormat == 'gb' || sizeFormat == 'Gb') {
-            _this.slider.setValue(parseInt(size));
+            _this.slider.setValue((size));
           } else {
-            _this.slider.setValue(parseInt(size));
+            _this.slider.setValue((size));
           }
         });
 
@@ -143,13 +145,13 @@ AddShareView = Backbone.View.extend({
     var min = 0;
     var ticks = 3;
     var value = 1;
-    var max = parseInt(selectedPool.get('size')/(1024*1024)); 
-    var reclaimable = parseInt(selectedPool.get('reclaimable')/(1024*1024));
-    var free = parseInt(selectedPool.get('free')/(1024*1024));
-    var used = max-free-reclaimable;
-    console.log(max);
-    console.log(reclaimable);
-    console.log(free);
+    var gb = 1024*1024;
+    var max = Math.round(selectedPool.get('size')/gb);
+    var reclaimable = (selectedPool.get('reclaimable')/gb).toFixed(1);
+    var free = (selectedPool.get('free')/gb).toFixed(1);
+    var used = ((selectedPool.get('size') - 
+                        selectedPool.get('reclaimable') -
+                        selectedPool.get('free')) / gb).toFixed(1);
     
     this.$('#slider').empty();
     this.slider = d3.slider2().min(min).max(max).ticks(ticks).tickFormat(this.tickFormatter).value(value).reclaimable(reclaimable).used(used).callback(this.sliderCallback);
