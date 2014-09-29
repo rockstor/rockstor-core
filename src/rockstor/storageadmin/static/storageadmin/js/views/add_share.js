@@ -34,9 +34,23 @@ AddShareView = Backbone.View.extend({
   },
 
   initialize: function() {
+    var _this = this;
     this.pools = new PoolCollection();
     this.pools.pageSize = RockStorGlobals.maxPageSize;
     this.poolName = this.options.poolName;
+    this.tickFormatter = function(d) {
+      var formatter = d3.format(",.1f");
+      if (d > 1024) {
+        return formatter(d/(1024)) + " TB";
+      } else {
+        return formatter(d) + " GB";
+      }
+    }
+    this.slider = null;
+    this.sliderCallback = function(slider) {
+      var value = slider.value();
+      _this.$('#share_size').val(_this.tickFormatter(value));
+    }
   },
 
   render: function() {
@@ -46,7 +60,35 @@ AddShareView = Backbone.View.extend({
     this.pools.fetch({
       success: function(collection, response) {
         $(_this.el).append(_this.template({pools: _this.pools, poolName: _this.poolName}));
-        
+
+        _this.renderSlider(); 
+        _this.$('#pool_name').change(function(){
+          _this.renderSlider();
+          _this.$('#share_size').val(_this.tickFormatter(1));
+        });
+      
+
+        _this.$('#share_size').val(_this.tickFormatter(1));
+        _this.$("#share_size").change(function(){
+          var size = this.value;
+          var size_value = size;
+          
+          var sizeFormat = size.replace(/[^a-z]/gi, ""); 
+          if (sizeFormat != '') { 
+            var size_array = size.split(sizeFormat)
+            size_value = size_array[0];
+          }
+
+          if(sizeFormat == 'TB' || sizeFormat == 'tb' || sizeFormat == 'Tb') {
+            size_value = size_value*1024;
+            _this.slider.setValue((size_value)*1024);
+          } else if (sizeFormat == 'GB' || sizeFormat == 'gb' || sizeFormat == 'Gb') {
+            _this.slider.setValue((size_value));
+          } else {
+            _this.slider.setValue((size_value));
+          }
+        });
+
         $('#add-share-form :input').tooltip({placement: 'right'});
         
         $('#add-share-form').validate({
@@ -56,16 +98,7 @@ AddShareView = Backbone.View.extend({
               share_name: 'required',
               share_size: {
                 required: true,
-                number: true
               },
-            },
-            errorPlacement: function(error, element) {
-              if (element.attr("name") == "share_size") {
-                // insert error for share size after the size format field.
-                error.insertAfter("#size_format");
-              } else {
-                error.insertAfter(element);
-              }
             },
             
             submitHandler: function() {
@@ -75,23 +108,23 @@ AddShareView = Backbone.View.extend({
               var share_name = $('#share_name').val();
               var pool_name = $('#pool_name').val();
               var size = $('#share_size').val();
+              var sizeFormat = size.replace(/[^a-z]/gi, ""); 
+              var size_array = size.split(sizeFormat)
+              var size_value = size_array[0];
 
-              var sizeFormat = $('#size_format').val();
-              if(sizeFormat == 'KB'){
-                size = size;
-              }else if(sizeFormat == 'MB'){
-                size = size*1024;	
-              }else if(sizeFormat == 'GB'){
-                size = size*1024*1024;
-              }else if(sizeFormat == 'TB'){
-                size = size*1024*1024*1024;
+              if(sizeFormat == 'TB' || sizeFormat == 'tb' || sizeFormat == 'Tb') {
+                size_value = size_value*1024*1024*1024;
+              } else if (sizeFormat == 'GB' || sizeFormat == 'gb' || sizeFormat == 'Gb') {
+                size_value = size_value*1024*1024;
+              } else {
+                size_value = size_value*1024*1024;
               }
 
               $.ajax({
                 url: "/api/shares",
                 type: "POST",
                 dataType: "json",
-                data: {sname: share_name, "pool": pool_name, "size": size},
+                data: {sname: share_name, "pool": pool_name, "size": size_value},
                 success: function() {
                   enableButton(button);
                   _this.$('#add-share-form :input').tooltip('hide');
@@ -106,6 +139,29 @@ AddShareView = Backbone.View.extend({
       }
     });
     return this;
+  },
+
+  renderSlider: function() {
+    var pool_name = this.$('#pool_name').val();
+    var selectedPool = this.pools.find(function(p) { return p.get('name') == pool_name; });
+    //var max = (selectedPool.get('free') + selectedPool.get('reclaimable')) / (1024*1024);
+    var min = 0;
+    var ticks = 3;
+    var value = 1;
+    var gb = 1024*1024;
+    var max = Math.round(selectedPool.get('size')/gb);
+    var reclaimable = (selectedPool.get('reclaimable')/gb).toFixed(1);
+    var free = (selectedPool.get('free')/gb).toFixed(1);
+    var used = ((selectedPool.get('size') - 
+                        selectedPool.get('reclaimable') -
+                        selectedPool.get('free')) / gb).toFixed(1);
+    
+    this.$('#slider').empty();
+    this.slider = d3.slider2().min(min).max(max).ticks(ticks).tickFormat(this.tickFormatter).value(value).reclaimable(reclaimable).used(used).callback(this.sliderCallback);
+    d3.select('#slider').call(this.slider);
+    this.$('#legend-free-num').html('(' + free + ' GB)');
+    this.$('#legend-reclaimable-num').html('(' + reclaimable + ' GB)');
+    this.$('#legend-used-num').html('(' + used + ' GB)');
   },
 
   cancel: function(event) {

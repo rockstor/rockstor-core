@@ -50,7 +50,7 @@ class UserView(rfc.GenericView):
             username = request.DATA['username']
             password = request.DATA['password']
             is_active = request.DATA['is_active']
-            public_key = request.DATA['public_key']
+            public_key = request.DATA.get('public_key', None)
 
             # Check that a django user with the same name does not exist
             if (DjangoUser.objects.filter(username=username).exists() or

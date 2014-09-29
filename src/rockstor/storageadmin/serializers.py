@@ -35,7 +35,8 @@ class DiskInfoSerializer(serializers.ModelSerializer):
 
 class PoolInfoSerializer(serializers.ModelSerializer):
     disks = DiskInfoSerializer(source='disk_set')
-    usage = serializers.IntegerField(source='cur_usage')
+    free = serializers.IntegerField(source='cur_free')
+    reclaimable = serializers.IntegerField(source='cur_reclaimable')
 
     class Meta:
         model = Pool

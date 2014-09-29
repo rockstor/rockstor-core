@@ -48,8 +48,8 @@ PoolUsageModule = RockstorModuleView.extend({
     var innerRadius = 0;
     
     total = parseInt(this.model.get('size')*1024);
-    used = parseInt(this.model.get('usage')*1024);
-    free = total - used;
+    used = parseInt((this.model.get('size') - this.model.get('reclaimable') - this.model.get('free'))*1024);
+    free = this.model.get('free')*1024;
 
     var dataset = [free, used]
     var dataLabels = ['free', 'used']
