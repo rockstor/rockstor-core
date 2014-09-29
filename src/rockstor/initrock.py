@@ -76,6 +76,11 @@ def main():
                 raise e
             time.sleep(2)
     cert_loc = '/opt/rockstor/certs/'
+    if (os.path.isdir(cert_loc)):
+        if (not os.path.isfile('%s/rockstor.cert' % cert_loc) or
+            not os.path.isfile('%s/rockstor.key' % cert_loc)):
+            shutil.rmtree(cert_loc)
+
     if (not os.path.isdir(cert_loc)):
         os.mkdir(cert_loc)
         dn = ("/C=US/ST=Rockstor user's state/L=Rockstor user's "
