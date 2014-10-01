@@ -34,6 +34,7 @@ VersionView = RockstorLayoutView.extend({
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.update_version_info;
     this.paginationTemplate = window.JST.common_pagination;
+    this.timeLeft = 300;
   },
 
   render: function() {
@@ -73,6 +74,7 @@ VersionView = RockstorLayoutView.extend({
     if (buttonDisabled(btn)) return false;
     disableButton(btn);
     this.$('#update-modal').modal('show');
+    this.startForceRefreshTimer();
     $.ajax({
       url: "/api/commands/update", 
       type: "POST",
@@ -96,8 +98,6 @@ VersionView = RockstorLayoutView.extend({
         dataType: "json",
         global: false, // dont show global loading indicator
         success: function(data, status, xhr) {
-          window.clearInterval(_this.isUpTimer);
-          _this.$('#update-modal').modal('hide');
           _this.reloadWindow();
         },
         error: function(xhr, status, error) {
@@ -106,9 +106,43 @@ VersionView = RockstorLayoutView.extend({
       });
     }, 5000);
   },
+ 
+  // countdown timeLeft seconds and then force a window reload 
+  startForceRefreshTimer: function() {
+    var _this = this;
+    this.forceRefreshTimer = window.setInterval(function() {
+      _this.timeLeft = _this.timeLeft - 1;
+      _this.showTimeRemaining();
+      if (_this.timeLeft <= 0) {
+        _this.reloadWindow();
+      }
+    }, 1000);
+  },
+
+  showTimeRemaining: function() {
+    mins = Math.floor(this.timeLeft/60);
+    sec = this.timeLeft - (mins*60);
+    sec = sec >=10 ? '' + sec : '0' + sec
+    this.$('#time-left').html(mins + ':' + sec)
+    if (mins <= 1 && !this.userMsgDisplayed) {
+      this.displayUserMsg();
+      this.userMsgDisplayed = true;
+    }
+  },
 
   reloadWindow: function() {
+    this.clearTimers();
+    this.$('#update-modal').modal('hide');
     location.reload(true);
+  },
+
+  clearTimers: function() {
+    window.clearInterval(this.isUpTimer);
+    window.clearInterval(this.forceRefreshTimer);
+  },
+
+  displayUserMsg: function() {
+    this.$('#user-msg').show('highlight', null, 1000);
   }
 
 });
