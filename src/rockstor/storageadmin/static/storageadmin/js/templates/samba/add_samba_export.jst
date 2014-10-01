@@ -20,11 +20,11 @@
 
         <!-- Admin Users  -->
         <div class="control-group">
-          <label class="control-label" for="shares">Admin users<span class="required"> *</span></label>
+          <label class="control-label" for="users">Admin users<span class="required"> *</span></label>
           <div class="controls">
-            <select name="shares" id="shares" size="10" data-placeholder="Select admin user" multiple>
-              <% _.each(shares, function(share, index) { %>
-                <option value="<%= share.get('admin_users') %>"><%= share.get('admin_users') %></option>
+            <select name="users" id="users" size="10" data-placeholder="Select admin user" multiple>
+              <% users.each(function(user, index) { %>
+               <option value="<%= user.get("username") %>"><%= user.get("username") %></option>
               <% }); %>
             </select>
           </div>
@@ -35,7 +35,11 @@
           <div class="controls">
               <% _.each(browsable_choices, function(c) { %>
                 <label class="radio inline">
+                <% if(c.value == 'yes'){ %>
+                  <input type="radio" name="browsable" value="<%= c.value %>" checked> <%= c.name %> 
+                <%  }else{ %>
                   <input type="radio" name="browsable" value="<%= c.value %>" > <%= c.name %>
+                <%  } %>
                 </label>
               <% }); %>
           </div>
@@ -46,7 +50,11 @@
           <div class="controls">
              <% _.each(guest_ok_choices, function(c) { %>
                 <label class="radio inline">
+               <% if(c.value == 'no'){ %>
+                  <input type="radio" name="guest_ok" value="<%= c.value %>" checked> <%= c.name %> 
+                <%  }else{ %>
                   <input type="radio" name="guest_ok" value="<%= c.value %>" > <%= c.name %>
+                <%  } %>
                 </label>
               <% }); %>
           </div>
@@ -57,8 +65,12 @@
           <div class="controls">
              <% _.each(read_only_choices, function(c) { %>
                 <label class="radio inline">
+                <% if(c.value == 'yes'){ %>
+                  <input type="radio" name="read_only" value="<%= c.value %>" checked> <%= c.name %> 
+                 <% }else{ %>
                   <input type="radio" name="read_only" value="<%= c.value %>" > <%= c.name %>
-                </label>
+                 <% } %>
+                 </label>
               <% }); %>
            </div>
         </div>

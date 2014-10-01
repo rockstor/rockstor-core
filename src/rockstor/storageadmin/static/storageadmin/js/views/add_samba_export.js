@@ -33,9 +33,11 @@ AddSambaExportView = RockstorLayoutView.extend({
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.samba_add_samba_export;
     this.shares = new ShareCollection();
+    this.users = new UserCollection();
     // dont paginate shares for now
     this.shares.pageSize = 1000; 
     this.dependencies.push(this.shares);
+    this.dependencies.push(this.users);
     this.sambaShares = new SambaCollection();
     this.dependencies.push(this.sambaShares);
 
@@ -64,11 +66,15 @@ AddSambaExportView = RockstorLayoutView.extend({
     }, this);
     $(this.el).html(this.template({
       shares: this.freeShares,
+      users: this.users,
       browsable_choices: this.browsable_choices,
       guest_ok_choices: this.guest_ok_choices,
       read_only_choices: this.read_only_choices
+     
     }));
     this.$('#shares').chosen();
+    this.$('#users').chosen();
+    
     this.$('#add-samba-export-form :input').tooltip({
       html: true,
       placement: 'right'
