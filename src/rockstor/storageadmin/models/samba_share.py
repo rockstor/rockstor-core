@@ -19,9 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from django.db import models
 from storageadmin.models import Share
 
-"""
-Samba share history
-"""
+
 class SambaShare(models.Model):
     YES = 'yes'
     NO = 'no'

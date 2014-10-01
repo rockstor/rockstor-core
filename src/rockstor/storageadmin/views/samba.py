@@ -59,8 +59,7 @@ class SambaView(rfc.GenericView):
             'create_mask': '0755',
             'admin_users': 'Administrator',
             }
-        if ('comment' in request.DATA):
-            options['comment'] = request.DATA['comment']
+        options['comment'] = request.DATA.get('comment', options['comment'])
         if ('browsable' in request.DATA):
             if (request.DATA['browsable'] != 'yes' and
                 request.DATA['browsable'] != 'no'):
@@ -112,19 +111,34 @@ class SambaView(rfc.GenericView):
                     mount_share(share.subvol_name, pool_device, mnt_pt)
             refresh_smb_config(list(SambaShare.objects.all()))
             restart_samba()
-            return Response()
+            return Response(SambaShareSerializer(smb_share).data)
         except RockStorAPIException:
             raise
         except Exception, e:
             handle_exception(e, request)
 
     @transaction.commit_on_success
-    def delete(self, request, id):
+    def put(self, request, smb_id):
+        with self._handle_exception(request):
+            smbo = SambaShare.objects.get(id=smb_id)
+            smbo.comment = request.DATA.get('comment', smbo.comment)
+            smbo.browsable = request.DATA.get('comment', smbo.browsable)
+            smbo.read_only = request.DATA.get('read_only', smbo.read_only)
+            smbo.guest_ok = request.DATA.get('guest_ok', smbo.guest_ok)
+            smbo.admin_users = request.DATA.get('admin_users',
+                                                smbo.admin_users)
+            smbo.save()
+            refresh_smb_config(list(SambaShare.objects.all()))
+            restart_samba()
+            return Response(SambaShareSerializer(smbo).data)
+
+    @transaction.commit_on_success
+    def delete(self, request, smb_id):
         try:
-            smbo = SambaShare.objects.get(id=id)
+            smbo = SambaShare.objects.get(id=smb_id)
             smbo.delete()
         except:
-            e_msg = ('Samba export for the id(%s) does not exist' % id)
+            e_msg = ('Samba export for the id(%s) does not exist' % smb_id)
             handle_exception(Exception(e_msg), request)
 
         try:
@@ -132,5 +146,6 @@ class SambaView(rfc.GenericView):
             restart_samba()
             return Response()
         except Exception, e:
+            logger.exception(e)
             e_msg = ('System error occured while restarting Samba server')
             handle_exception(Exception(e_msg), request)
