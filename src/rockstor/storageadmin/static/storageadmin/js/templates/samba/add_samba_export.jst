@@ -20,9 +20,9 @@
 
         <!-- Admin Users  -->
         <div class="control-group">
-          <label class="control-label" for="users">Admin users<span class="required"> *</span></label>
+          <label class="control-label" for="admin_users">Admin users<span class="required"> *</span></label>
           <div class="controls">
-            <select name="users" id="users" size="10" data-placeholder="Select admin user" multiple>
+            <select name="admin_users" id="admin_users" size="10" data-placeholder="Select admin user" multiple>
               <% users.each(function(user, index) { %>
                <option value="<%= user.get("username") %>"><%= user.get("username") %></option>
               <% }); %>
