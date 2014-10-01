@@ -25,6 +25,9 @@ from rest_framework.authentication import (BasicAuthentication,
 from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
 from oauth2_provider.ext.rest_framework import OAuth2Authentication
+from contextlib import contextmanager
+from storageadmin.util import handle_exception
+from storageadmin.exceptions import RockStorAPIException
 
 
 class GenericView(generics.ListCreateAPIView):
@@ -77,3 +80,16 @@ class GenericView(generics.ListCreateAPIView):
 
     def post(self, request, *args, **kwargs):
         pass
+
+    @staticmethod
+    @contextmanager
+    def _handle_exception(request, msg=None):
+        try:
+            yield
+        except RockStorAPIException:
+            raise
+        except Exception, e:
+            if (msg is None):
+                msg = ('An unhandled low level exception occured while '
+                       'processing the request.')
+            handle_exception(e, request, msg)
