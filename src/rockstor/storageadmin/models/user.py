@@ -28,6 +28,8 @@ class User(models.Model):
     uid = models.IntegerField(default=settings.START_UID)
     gid = models.IntegerField(default=settings.START_UID)
     public_key = models.CharField(max_length=4096, null=True)
+    smb_shares = models.ManyToManyField('SambaShare', null=True,
+                                        related_name='admin_users')
 
     class Meta:
         app_label = 'storageadmin'
