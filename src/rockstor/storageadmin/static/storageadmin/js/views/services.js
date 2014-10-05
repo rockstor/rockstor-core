@@ -46,6 +46,7 @@ ServicesView = Backbone.View.extend({
       'reload': 'reloaded'
     }
     this.updateFreq = 5000;
+    this.smTs = null; // current timestamp of sm service
   },
 
   render: function() {
@@ -312,11 +313,18 @@ ServicesView = Backbone.View.extend({
 
   displaySmWarning: function() {
     var smService = this.collection.find(function(s) { return s.get('name') == 'service-monitor'; });
-    if (smService.get('status')) {
-      this.$('#sm-warning').hide();
-    } else {
-      this.$('#sm-warning').show();
+    var ts = new Date(smService.get('ts')).getTime();
+    if (this.smTs != null && ts != null) {
+      if (ts == this.smTs) {
+        // timestamp of service monitor status has not changed from the last
+        // time, it must not be running
+        this.setSliderVal('service-monitor', 0); 
+        this.$('#sm-warning').show();
+      } else {
+        this.$('#sm-warning').hide();
+      }
     }
+    this.smTs = ts;
   }
 
 });
