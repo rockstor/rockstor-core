@@ -38,6 +38,7 @@ SambaView  = RockstorLayoutView.extend({
     this.dependencies.push(this.collection);
     this.shares = new ShareCollection();
     this.dependencies.push(this.shares);
+   
   },
 
   render: function() {

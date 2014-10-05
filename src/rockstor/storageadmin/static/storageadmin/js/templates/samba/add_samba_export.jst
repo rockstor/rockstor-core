@@ -1,4 +1,8 @@
+<% if (sambaShareId!=null) { %>
+<h3>Edit Samba export</h3>
+<%} else {%>
 <h3>Add Samba export</h3>
+<%}%>
 <div class="row-fluid">
   <div class="span8">
     <label class="control-label"><span class="required">*</span> indicates required fields</label>
@@ -11,9 +15,13 @@
           <label class="control-label" for="shares">Shares to export<span class="required"> *</span></label>
           <div class="controls">
             <select name="shares" id="shares" size="10" data-placeholder="Select shares to export" multiple>
-              <% _.each(shares, function(share, index) { %>
-                <option value="<%= share.get('name') %>"><%= share.get('name') %></option>
-              <% }); %>
+            <% if (sambaShareId!=null) {  %>
+            <option value="<%= smbShare.get('share')%>" selected="selected"> <%= smbShare.get('share') %></option>
+            <% } %>
+            <% _.each(shares, function(share, index) { %>
+                      <option value="<%= share.get('name') %>" > <%= share.get('name') %></option>
+                <% }); %>
+         
             </select>
           </div>
         </div>
@@ -23,9 +31,21 @@
           <label class="control-label" for="admin_users">Admin users<span class="required"> *</span></label>
           <div class="controls">
             <select name="admin_users" id="admin_users" size="10" data-placeholder="Select admin user" multiple>
-              <% users.each(function(user, index) { %>
-               <option value="<%= user.get("username") %>"><%= user.get("username") %></option>
-              <% }); %>
+              
+              <% users.each(function(user, index) { 
+                  if (sambaShareId!=null) {  
+                   for(i=0; i< smbShare.get('admin_users').length; i++){
+                      if(smbShare.get('admin_users')[i].username == user.get("username")){ %>
+                         <option value="<%= user.get("username") %>" selected="selected"><%= user.get("username") %></option>
+                     <% } else{ %>
+                         <option value="<%= user.get("username") %>"><%= user.get("username") %></option>
+              
+                     <% } } %>
+              
+                     <% }else{ %>
+                        <option value="<%= user.get("username") %>"><%= user.get("username") %></option>
+              
+                     <% }}); %>
             </select>
           </div>
         </div>
