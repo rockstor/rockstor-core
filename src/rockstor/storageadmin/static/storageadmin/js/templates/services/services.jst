@@ -23,6 +23,34 @@
 <div id="messages"></div>
 <div class="row-fluid">
   <div class="span12">
+    <div id="details-header">
+      <table>
+        <tr>
+          <td><span class="h3">Service Monitor&nbsp;&nbsp;&nbsp;</span></td>
+          <td>
+            <% if (sm.get('status')) { %>
+              <div class="slider-stop" data-service-name="<%= sm.get('name') %>">OFF</div>
+              <div class="slider-ph">
+                <input type="text" class="service-status" value="1" data-service-name="<%= sm.get('name') %>"></input>
+              </div>
+              <div class="slider-start on" data-service-name="<%= sm.get('name') %>">ON</div>
+            <% } else { %>
+              <div class="slider-stop" data-service-name="<%= sm.get('name') %>">OFF</div>
+              <div class="slider-ph">
+                <input type="text" class="service-status" value="0" data-service-name="<%= sm.get('name') %>"></input>
+              </div>
+              <div class="slider-start" data-service-name="<%= sm.get('name') %>">ON</div>
+            <% } %>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <div id="sm-warning" class="alert" style="display:none">
+      <strong>Warning! Service Monitor is not running</strong> The Service Monitor service is not running. The status of the services listed below may be out of date. Please start the service monitor to get the latest service status.
+    </div>
+
+    <br>
+    <br>
     <div id="services-list">
       <div id="service">
         <table id="services-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" width="100%">
@@ -34,45 +62,47 @@
           </thead>
           <tbody>
             <% services.each(function(service) { %>
-              <tr id="<%= service.get('name') %>">
-                <td>
-                  <%= service.get('display_name') %>&nbsp;
-                  <% if ((service.get('name') == 'nis') || (service.get('name') == 'ntpd') || (service.get('name') == 'winbind') || (service.get('name') == 'ldap')) { %>
-                    <a href="#" class="configure" data-service-name="<%= service.get('name') %>"><i class="icon-wrench"></i></a>
-                  <% } %>
-                  <% if ((service.get('name') == 'winbind')) { %>
-                    &nbsp;
-                    <% if ((adServiceConfig.security == 'ads' || adServiceConfig.security == 'domain'))  { %>
-                      <button type="button" id="join-domain" class="btn btn-primary btn-mini">Join Domain</button>
-                    <% } else { %>
-                      <button type="button" id="join-domain" class="btn btn-mini disabled">Join Domain</button>
+              <% if (service.get('name') != 'service-monitor') { %>
+                <tr id="<%= service.get('name') %>">
+                  <td>
+                    <%= service.get('display_name') %>&nbsp;
+                    <% if ((service.get('name') == 'nis') || (service.get('name') == 'ntpd') || (service.get('name') == 'winbind') || (service.get('name') == 'ldap')) { %>
+                      <a href="#" class="configure" data-service-name="<%= service.get('name') %>"><i class="icon-wrench"></i></a>
                     <% } %>
-                    &nbsp;&nbsp;
-                    <span id="join-domain-status"></span>
-                  <% } %>
-                </td>
-                <td id="<%= service.get('name') %>-status">
-                  <% if (service.get('status')) { %>
-                    <div class="slider-stop" data-service-name="<%= service.get('name') %>">OFF</div>
-                    <div class="slider-ph">
-                      <input type="text" class="service-status" value="1" data-service-name="<%= service.get('name') %>"></input>
-                    </div>
-                    <div class="slider-start on" data-service-name="<%= service.get('name') %>">ON</div>
-                  <% } else { %>
-                    <div class="slider-stop" data-service-name="<%= service.get('name') %>">OFF</div>
-                    <div class="slider-ph">
-                      <input type="text" class="service-status" value="0" data-service-name="<%= service.get('name') %>"></input>
-                    </div>
-                    <div class="slider-start" data-service-name="<%= service.get('name') %>">ON</div>
-                  <% } %>
-                  <div class="command-status" data-service-name="<%= service.get('name') %>">&nbsp;</div>
-                  <div class="simple-overlay" id="<%= service.get('name') %>-err-popup"><div class="overlay-content"></div></div>
-                </td>
-                <!--
-                <td><a href="#" class="configure" data-service-name="<%= service.get('name') %>"><i class="icon-wrench"></i></a></td>
-                -->
+                    <% if ((service.get('name') == 'winbind')) { %>
+                      &nbsp;
+                      <% if ((adServiceConfig.security == 'ads' || adServiceConfig.security == 'domain'))  { %>
+                        <button type="button" id="join-domain" class="btn btn-primary btn-mini">Join Domain</button>
+                      <% } else { %>
+                        <button type="button" id="join-domain" class="btn btn-mini disabled">Join Domain</button>
+                      <% } %>
+                      &nbsp;&nbsp;
+                      <span id="join-domain-status"></span>
+                    <% } %>
+                  </td>
+                  <td id="<%= service.get('name') %>-status">
+                    <% if (service.get('status')) { %>
+                      <div class="slider-stop" data-service-name="<%= service.get('name') %>">OFF</div>
+                      <div class="slider-ph">
+                        <input type="text" class="service-status" value="1" data-service-name="<%= service.get('name') %>"></input>
+                      </div>
+                      <div class="slider-start on" data-service-name="<%= service.get('name') %>">ON</div>
+                    <% } else { %>
+                      <div class="slider-stop" data-service-name="<%= service.get('name') %>">OFF</div>
+                      <div class="slider-ph">
+                        <input type="text" class="service-status" value="0" data-service-name="<%= service.get('name') %>"></input>
+                      </div>
+                      <div class="slider-start" data-service-name="<%= service.get('name') %>">ON</div>
+                    <% } %>
+                    <div class="command-status" data-service-name="<%= service.get('name') %>">&nbsp;</div>
+                    <div class="simple-overlay" id="<%= service.get('name') %>-err-popup"><div class="overlay-content"></div></div>
+                  </td>
+                  <!--
+                  <td><a href="#" class="configure" data-service-name="<%= service.get('name') %>"><i class="icon-wrench"></i></a></td>
+                  -->
 
-              </tr>
+                </tr>
+              <% } %>
             <% }); %>
           </tbody>
         </table>

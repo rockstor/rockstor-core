@@ -7,8 +7,8 @@
 ; Note: shell expansion ("~" or "$HOME") is not supported.  Environment
 ; variables can be expanded using this syntax: "%(ENV_HOME)s".
 
-[inet_http_server]         ; inet (TCP) server disabled by default
-port=${supervisord-conf:host}:${supervisord-conf:port} ; (ip_address:port specifier, *:port for all iface)
+[unix_http_server]
+file=/var/run/supervisor.sock
 
 [supervisord]
 logfile=${supervisord-conf:logfile} ; (main log file;default $CWD/supervisord.log)
@@ -27,7 +27,7 @@ minprocs=200                 ; (min. avail process descriptors;default 200)
 supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
 
 [supervisorctl]
-serverurl=http://${supervisord-conf:host}:${supervisord-conf:port} ; use an http:// url to specify an inet socket
+serverurl=unix:///var/run/supervisor.sock
 
 ; Programs
 

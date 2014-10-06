@@ -46,6 +46,7 @@ ServicesView = Backbone.View.extend({
       'reload': 'reloaded'
     }
     this.updateFreq = 5000;
+    this.smTs = null; // current timestamp of sm service
   },
 
   render: function() {
@@ -69,9 +70,12 @@ ServicesView = Backbone.View.extend({
     if (_.isNull(this.adServiceConfig) || _.isUndefined(this.adServiceConfig)) {
       this.adServiceConfig = {};
     }
+    // find service-monitor service
+    var smService = this.collection.find(function(s) { return s.get('name') == 'service-monitor'; });
     $(this.el).append(this.template({
       services: this.collection,
-      adServiceConfig: this.adServiceConfig
+      adServiceConfig: this.adServiceConfig,
+      sm: smService
     }));
     this.$(".ph-pagination").html(this.paginationTemplate({
       collection: this.collection
@@ -137,6 +141,7 @@ ServicesView = Backbone.View.extend({
          this.adServiceConfig.security == 'domain')) {
       this.showJoinDomainStatus();
     }
+    this.displaySmWarning();
   },
   
   startService: function(event) {
@@ -154,10 +159,12 @@ ServicesView = Backbone.View.extend({
         _this.highlightStartEl(serviceName, true);
         _this.setSliderVal(serviceName, 1); 
         _this.setStatusLoading(serviceName, false);
+        _this.displaySmWarning();
         _this.startPolling();
       },
       error: function(xhr, status, error) {
         _this.setStatusError(serviceName, xhr);
+        _this.displaySmWarning();
         _this.startPolling();
       }
     });
@@ -166,6 +173,7 @@ ServicesView = Backbone.View.extend({
   stopService: function(event) {
     var _this = this;
     var serviceName = $(event.currentTarget).data('service-name'); 
+    if (serviceName == 'service-monitor') return;
     // if already stopped, return
     if (this.getSliderVal(serviceName).toString() == "0") return; 
     this.stopPolling();
@@ -274,6 +282,7 @@ ServicesView = Backbone.View.extend({
             _this.updateStatus();
           }, _this.updateFreq - diff);
         }
+        _this.displaySmWarning();
       }
     });
   },
@@ -300,6 +309,22 @@ ServicesView = Backbone.View.extend({
         this.$('#join-domain-status').html('<span class="alert alert-success alert-small">Not Joined</span>');
       }
     }
+  },
+
+  displaySmWarning: function() {
+    var smService = this.collection.find(function(s) { return s.get('name') == 'service-monitor'; });
+    var ts = new Date(smService.get('ts')).getTime();
+    if (this.smTs != null && ts != null) {
+      if (ts == this.smTs) {
+        // timestamp of service monitor status has not changed from the last
+        // time, it must not be running
+        this.setSliderVal('service-monitor', 0); 
+        this.$('#sm-warning').show();
+      } else {
+        this.$('#sm-warning').hide();
+      }
+    }
+    this.smTs = ts;
   }
 
 });
