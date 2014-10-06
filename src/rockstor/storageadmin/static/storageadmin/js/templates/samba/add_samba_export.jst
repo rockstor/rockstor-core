@@ -28,12 +28,12 @@
 
         <!-- Admin Users  -->
         <div class="control-group">
-          <label class="control-label" for="admin_users">Admin users<span class="required"> *</span></label>
+          <label class="control-label" for="admin_users">Admin users</label>
           <div class="controls">
             <select name="admin_users" id="admin_users" size="10" data-placeholder="Select admin user" multiple>
               
               <% users.each(function(user, index) { 
-                  if (sambaShareId!=null) {  
+                  if (sambaShareId!=null && smbShare.get('admin_users').length>0) {  
                    for(i=0; i< smbShare.get('admin_users').length; i++){
                       if(smbShare.get('admin_users')[i].username == user.get("username")){ %>
                          <option value="<%= user.get("username") %>" selected="selected"><%= user.get("username") %></option>
@@ -96,7 +96,7 @@
         </div>
 
         <div class="control-group">
-          <label class="control-label" for="comment">Comment</span></label>
+          <label class="control-label" for="comment">Comment</label>
           <div class="controls">
             <input type="text" id="comment" name="comment" title="Comment string to associate with the new share">
           </div>
