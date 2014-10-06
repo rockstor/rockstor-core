@@ -33,10 +33,13 @@ AddSambaExportView = RockstorLayoutView.extend({
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.samba_add_samba_export;
     this.shares = new ShareCollection();
-    // dont paginate shares for now
+    this.users = new UserCollection();
+     // dont paginate shares for now
     this.shares.pageSize = 1000; 
     this.dependencies.push(this.shares);
-    this.sambaShares = new SambaCollection();
+    this.dependencies.push(this.users);
+    this.sambaShareId = this.options.sambaShareId;
+    this.sambaShares = new SambaCollection({sambaShareId: this.sambaShareId});
     this.dependencies.push(this.sambaShares);
 
     this.yes_no_choices = [
@@ -62,13 +65,33 @@ AddSambaExportView = RockstorLayoutView.extend({
       });
       return !_.isUndefined(s);
     }, this);
+    
+    this.sShares = this.shares.reject(function(share) {
+      s = this.sambaShares.find(function(sambaShare) {
+        return (sambaShare.get('share') != share.get('name'));
+      });
+      return !_.isUndefined(s);
+    }, this);
+    
+    if(this.sambaShareId != null){
+      this.sShares = this.sambaShares.get(this.sambaShareId);
+      }else{
+      this.sShares = null;
+      }
+   
     $(this.el).html(this.template({
       shares: this.freeShares,
+      smbShare: this.sShares,
+      users: this.users,
+      sambaShareId: this.sambaShareId,
       browsable_choices: this.browsable_choices,
       guest_ok_choices: this.guest_ok_choices,
       read_only_choices: this.read_only_choices
+     
     }));
     this.$('#shares').chosen();
+    this.$('#admin_users').chosen();
+    
     this.$('#add-samba-export-form :input').tooltip({
       html: true,
       placement: 'right'
@@ -85,10 +108,15 @@ AddSambaExportView = RockstorLayoutView.extend({
         var button = $('#create-samba-export');
         if (buttonDisabled(button)) return false;
         disableButton(button);
-
+        var submitmethod = 'POST';
+        var posturl = '/api/samba';
+        if(_this.sambaShareId != null){
+            submitmethod = 'PUT';
+            posturl += '/'+_this.sambaShareId;
+          }
         $.ajax({
-          url: '/api/samba',
-          type: 'POST',
+          url: posturl,
+          type: submitmethod,
           dataType: 'json',
           contentType: 'application/json',
           data: JSON.stringify(_this.$('#add-samba-export-form').getJSON()),

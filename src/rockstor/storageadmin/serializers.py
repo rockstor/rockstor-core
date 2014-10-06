@@ -69,8 +69,22 @@ class AdvancedNFSExportSerializer(serializers.ModelSerializer):
         model = AdvancedNFSExport
 
 
+class SUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+
+
+class UserSerializer(serializers.ModelSerializer):
+    suser = SUserSerializer(source='suser')
+
+    class Meta:
+        model = DjangoUser
+        fields = ('username', 'is_active', 'suser')
+
+
 class SambaShareSerializer(serializers.ModelSerializer):
     share = serializers.CharField(source='share_name')
+    admin_users = SUserSerializer(source='admin_users')
 
     class Meta:
         model = SambaShare
@@ -96,19 +110,6 @@ class ShareSerializer(serializers.ModelSerializer):
 class ApplianceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Appliance
-
-
-class SUserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-
-
-class UserSerializer(serializers.ModelSerializer):
-    suser = SUserSerializer(source='suser')
-
-    class Meta:
-        model = DjangoUser
-        fields = ('username', 'is_active', 'suser')
 
 
 class SupportSerializer(serializers.ModelSerializer):

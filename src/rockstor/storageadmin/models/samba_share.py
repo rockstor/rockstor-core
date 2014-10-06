@@ -17,11 +17,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.db import models
-from storageadmin.models import Share
+from user import User
 
-"""
-Samba share history
-"""
+
 class SambaShare(models.Model):
     YES = 'yes'
     NO = 'no'
@@ -41,8 +39,9 @@ class SambaShare(models.Model):
     guest_ok = models.CharField(max_length=3, choices=BOOLEAN_CHOICES,
                                 default=NO)
     create_mask = models.CharField(max_length=4, default='0755')
-    """space separated list of admin users"""
-    admin_users = models.CharField(max_length=128, default='Administrator')
+
+    def admin_users(self):
+        return User.objects.filter(smb_share=self)
 
     def share_name(self, *args, **kwargs):
         return self.share.name

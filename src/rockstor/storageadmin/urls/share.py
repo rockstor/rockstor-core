@@ -44,7 +44,7 @@ urlpatterns = patterns(
     url(r'^/(?P<sname>%s)/snapshots$' % share_regex,
         SnapshotView.as_view(), name='snapshot-view'),
     url(r'^/(?P<sname>%s)/snapshots/(?P<snap_name>%s)$' % (share_regex,
-                                                          snap_regex),
+                                                           snap_regex),
         SnapshotView.as_view(), name='snapshot-view'),
     url(r'^/(?P<sname>%s)/snapshots/(?P<snap_name>%s)/(?P<command>%s)$' %
         (share_regex, snap_regex, snap_command), SnapshotView.as_view()),

@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from rest_framework.response import Response
 from django.db import transaction
 from django.conf import settings
-from storageadmin.models import (SambaShare, Disk)
+from storageadmin.models import (SambaShare, Disk, User)
 from storageadmin.serializers import SambaShareSerializer
 from storageadmin.util import handle_exception
 from storageadmin.exceptions import RockStorAPIException
@@ -57,10 +57,9 @@ class SambaView(rfc.GenericView):
             'guest_ok': 'no',
             'read_only': 'no',
             'create_mask': '0755',
-            'admin_users': 'Administrator',
+            'admin_users': '',
             }
-        if ('comment' in request.DATA):
-            options['comment'] = request.DATA['comment']
+        options['comment'] = request.DATA.get('comment', options['comment'])
         if ('browsable' in request.DATA):
             if (request.DATA['browsable'] != 'yes' and
                 request.DATA['browsable'] != 'no'):
@@ -87,8 +86,6 @@ class SambaView(rfc.GenericView):
                 e_msg = ('Invalid choice for create_mask. Possible '
                          'options are: %s' % self.CREATE_MASKS)
                 handle_exception(Exception(e_msg), request)
-        if ('admin_users' in request.DATA):
-            options['admin_users'] = request.DATA['admin_users']
 
         for share in shares:
             if (SambaShare.objects.filter(share=share).exists()):
@@ -104,27 +101,57 @@ class SambaView(rfc.GenericView):
                                        browsable=options['browsable'],
                                        read_only=options['read_only'],
                                        guest_ok=options['guest_ok'],
-                                       create_mask=options['create_mask'],
-                                       admin_users=options['admin_users'])
+                                       create_mask=options['create_mask'])
                 smb_share.save()
                 if (not is_share_mounted(share.name)):
                     pool_device = Disk.objects.filter(pool=share.pool)[0].name
                     mount_share(share.subvol_name, pool_device, mnt_pt)
+
+                admin_users = request.DATA.get('admin_users', None)
+                if (admin_users is None):
+                    admin_users = []
+                for au in admin_users:
+                    auo = User.objects.get(username=au)
+                    auo.smb_shares.add(smb_share)
             refresh_smb_config(list(SambaShare.objects.all()))
             restart_samba()
-            return Response()
+            return Response(SambaShareSerializer(smb_share).data)
         except RockStorAPIException:
             raise
         except Exception, e:
             handle_exception(e, request)
 
     @transaction.commit_on_success
-    def delete(self, request, id):
+    def put(self, request, smb_id):
+        with self._handle_exception(request):
+            smbo = SambaShare.objects.get(id=smb_id)
+            smbo.comment = request.DATA.get('comment', smbo.comment)
+            smbo.browsable = request.DATA.get('browsable', smbo.browsable)
+            smbo.read_only = request.DATA.get('read_only', smbo.read_only)
+            smbo.guest_ok = request.DATA.get('guest_ok', smbo.guest_ok)
+            admin_users = request.DATA.get('admin_users', None)
+            if (admin_users is None):
+                admin_users = []
+            for uo in User.objects.filter(smb_shares=smbo):
+                if (uo.username not in admin_users):
+                    uo.smb_shares.remove(smbo)
+            for u in admin_users:
+                if (not User.objects.filter(username=u,
+                                            smb_shares=smbo).exists()):
+                    auo = User.objects.get(username=u)
+                    auo.smb_shares.add(smbo)
+            smbo.save()
+            refresh_smb_config(list(SambaShare.objects.all()))
+            restart_samba()
+            return Response(SambaShareSerializer(smbo).data)
+
+    @transaction.commit_on_success
+    def delete(self, request, smb_id):
         try:
-            smbo = SambaShare.objects.get(id=id)
+            smbo = SambaShare.objects.get(id=smb_id)
             smbo.delete()
         except:
-            e_msg = ('Samba export for the id(%s) does not exist' % id)
+            e_msg = ('Samba export for the id(%s) does not exist' % smb_id)
             handle_exception(Exception(e_msg), request)
 
         try:
@@ -132,5 +159,6 @@ class SambaView(rfc.GenericView):
             restart_samba()
             return Response()
         except Exception, e:
+            logger.exception(e)
             e_msg = ('System error occured while restarting Samba server')
             handle_exception(Exception(e_msg), request)

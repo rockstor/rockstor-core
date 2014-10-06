@@ -1,4 +1,8 @@
+<% if (sambaShareId!=null) { %>
+<h3>Edit Samba export</h3>
+<%} else {%>
 <h3>Add Samba export</h3>
+<%}%>
 <div class="row-fluid">
   <div class="span8">
     <label class="control-label"><span class="required">*</span> indicates required fields</label>
@@ -11,17 +15,38 @@
           <label class="control-label" for="shares">Shares to export<span class="required"> *</span></label>
           <div class="controls">
             <select name="shares" id="shares" size="10" data-placeholder="Select shares to export" multiple>
-              <% _.each(shares, function(share, index) { %>
-                <option value="<%= share.get('name') %>"><%= share.get('name') %></option>
-              <% }); %>
+            <% if (sambaShareId!=null) {  %>
+            <option value="<%= smbShare.get('share')%>" selected="selected"> <%= smbShare.get('share') %></option>
+            <% } %>
+            <% _.each(shares, function(share, index) { %>
+                      <option value="<%= share.get('name') %>" > <%= share.get('name') %></option>
+                <% }); %>
+         
             </select>
           </div>
         </div>
 
+        <!-- Admin Users  -->
         <div class="control-group">
-          <label class="control-label" for="admin_users">Admin users</span></label>
+          <label class="control-label" for="admin_users">Admin users</label>
           <div class="controls">
-            <input type="text" id="admin_users" name="admin_users" title="Enter a <strong>space separated list of users</strong> who will be granted administrative privileges on the share. <br><strong>This means that they will do all file operations as the super-user (root). You should use this option very carefully, as any user in this list will be able to do anything they like on the share, irrespective of file permissions.</strong>">
+            <select name="admin_users" id="admin_users" size="10" title="(optional) list of users who will be granted super-user privileges for all file operations." data-placeholder="Select admin user(s)" multiple>
+              
+              <% users.each(function(user, index) { 
+                  if (sambaShareId!=null && smbShare.get('admin_users').length>0) {  
+                   for(i=0; i< smbShare.get('admin_users').length; i++){
+                      if(smbShare.get('admin_users')[i].username == user.get("username")){ %>
+                         <option value="<%= user.get("username") %>" selected="selected"><%= user.get("username") %></option>
+                     <% } else{ %>
+                         <option value="<%= user.get("username") %>"><%= user.get("username") %></option>
+              
+                     <% } } %>
+              
+                     <% }else{ %>
+                        <option value="<%= user.get("username") %>"><%= user.get("username") %></option>
+              
+                     <% }}); %>
+            </select>
           </div>
         </div>
 
@@ -30,7 +55,20 @@
           <div class="controls">
               <% _.each(browsable_choices, function(c) { %>
                 <label class="radio inline">
-                  <input type="radio" name="browsable" value="<%= c.value %>" > <%= c.name %>
+                 <% if (sambaShareId!=null){ %>
+                    <% if(c.value == smbShare.get("browsable")){ %>
+                        <input type="radio" name="browsable" value="<%= c.value %>" checked> <%= c.name %> 
+                    <% }else{ %>
+                        <input type="radio" name="browsable" value="<%= c.value %>" > <%= c.name %>
+                    <% } %>
+                 <% }else { %>       
+                
+                   <% if(c.value == 'yes'){ %>
+                      <input type="radio" name="browsable" value="<%= c.value %>" checked> <%= c.name %> 
+                   <%  }else{ %>
+                      <input type="radio" name="browsable" value="<%= c.value %>" > <%= c.name %>
+                <%  } %>
+               <% } %>
                 </label>
               <% }); %>
           </div>
@@ -39,9 +77,22 @@
         <div class="control-group">
           <label class="control-label" for="guest_ok">Guest Ok<span class="required"> *</span></label>
           <div class="controls">
-             <% _.each(guest_ok_choices, function(c) { %>
+              <% _.each(guest_ok_choices, function(c) { %>
                 <label class="radio inline">
-                  <input type="radio" name="guest_ok" value="<%= c.value %>" > <%= c.name %>
+                 <% if (sambaShareId!=null){ %>
+                    <% if(c.value == smbShare.get("guest_ok")){ %>
+                        <input type="radio" name="guest_ok" value="<%= c.value %>" checked> <%= c.name %> 
+                    <% }else{ %>
+                        <input type="radio" name="guest_ok" value="<%= c.value %>" > <%= c.name %>
+                    <% } %>
+                 <% }else { %>       
+                
+                   <% if(c.value == 'no'){ %>
+                      <input type="radio" name="guest_ok" value="<%= c.value %>" checked> <%= c.name %> 
+                   <%  }else{ %>
+                      <input type="radio" name="guest_ok" value="<%= c.value %>" > <%= c.name %>
+                <%  } %>
+               <% } %>
                 </label>
               <% }); %>
           </div>
@@ -52,14 +103,27 @@
           <div class="controls">
              <% _.each(read_only_choices, function(c) { %>
                 <label class="radio inline">
-                  <input type="radio" name="read_only" value="<%= c.value %>" > <%= c.name %>
-                </label>
+                <% if (sambaShareId!=null){ %>
+                    <% if(c.value == smbShare.get("read_only")){ %>
+                        <input type="radio" name="read_only" value="<%= c.value %>" checked> <%= c.name %> 
+                    <% }else{ %>
+                        <input type="radio" name="read_only" value="<%= c.value %>" > <%= c.name %>
+                    <% } %>
+                 <% }else { %>       
+                
+                   <% if(c.value == 'yes'){ %>
+                      <input type="radio" name="read_only" value="<%= c.value %>" checked> <%= c.name %> 
+                   <%  }else{ %>
+                      <input type="radio" name="read_only" value="<%= c.value %>" > <%= c.name %>
+                <%  } %>
+               <% } %>
+              </label>
               <% }); %>
            </div>
         </div>
 
         <div class="control-group">
-          <label class="control-label" for="comment">Comment</span></label>
+          <label class="control-label" for="comment">Comment</label>
           <div class="controls">
             <input type="text" id="comment" name="comment" title="Comment string to associate with the new share">
           </div>
