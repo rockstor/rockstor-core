@@ -65,7 +65,7 @@ var AppRouter = Backbone.Router.extend({
     "nfs-advanced-edit": "nfsAdvancedEdit",
     "samba-exports": "showSambaExports",
     "add-samba-export": "addSambaExport",
-    "samba-exports/edit/:sambaShareId": "editSambaExport",
+    "samba/edit/:sambaShareId": "editSambaExport",
     "nfs-exports/edit/:nfsExportGroupId": "editNFSExport",
     "network": "showNetworks",
     "network/:name/edit": "editNetwork",
