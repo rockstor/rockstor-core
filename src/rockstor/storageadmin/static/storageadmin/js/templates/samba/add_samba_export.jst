@@ -30,7 +30,7 @@
         <div class="control-group">
           <label class="control-label" for="admin_users">Admin users</label>
           <div class="controls">
-            <select name="admin_users" id="admin_users" size="10" data-placeholder="Select admin user" multiple>
+            <select name="admin_users" id="admin_users" size="10" title="(optional) list of users who will be granted super-user privileges for all file operations." data-placeholder="Select admin user(s)" multiple>
               
               <% users.each(function(user, index) { 
                   if (sambaShareId!=null && smbShare.get('admin_users').length>0) {  
@@ -55,11 +55,20 @@
           <div class="controls">
               <% _.each(browsable_choices, function(c) { %>
                 <label class="radio inline">
-                <% if(c.value == 'yes'){ %>
-                  <input type="radio" name="browsable" value="<%= c.value %>" checked> <%= c.name %> 
-                <%  }else{ %>
-                  <input type="radio" name="browsable" value="<%= c.value %>" > <%= c.name %>
+                 <% if (sambaShareId!=null){ %>
+                    <% if(c.value == smbShare.get("browsable")){ %>
+                        <input type="radio" name="browsable" value="<%= c.value %>" checked> <%= c.name %> 
+                    <% }else{ %>
+                        <input type="radio" name="browsable" value="<%= c.value %>" > <%= c.name %>
+                    <% } %>
+                 <% }else { %>       
+                
+                   <% if(c.value == 'yes'){ %>
+                      <input type="radio" name="browsable" value="<%= c.value %>" checked> <%= c.name %> 
+                   <%  }else{ %>
+                      <input type="radio" name="browsable" value="<%= c.value %>" > <%= c.name %>
                 <%  } %>
+               <% } %>
                 </label>
               <% }); %>
           </div>
@@ -68,13 +77,22 @@
         <div class="control-group">
           <label class="control-label" for="guest_ok">Guest Ok<span class="required"> *</span></label>
           <div class="controls">
-             <% _.each(guest_ok_choices, function(c) { %>
+              <% _.each(guest_ok_choices, function(c) { %>
                 <label class="radio inline">
-               <% if(c.value == 'no'){ %>
-                  <input type="radio" name="guest_ok" value="<%= c.value %>" checked> <%= c.name %> 
-                <%  }else{ %>
-                  <input type="radio" name="guest_ok" value="<%= c.value %>" > <%= c.name %>
+                 <% if (sambaShareId!=null){ %>
+                    <% if(c.value == smbShare.get("guest_ok")){ %>
+                        <input type="radio" name="guest_ok" value="<%= c.value %>" checked> <%= c.name %> 
+                    <% }else{ %>
+                        <input type="radio" name="guest_ok" value="<%= c.value %>" > <%= c.name %>
+                    <% } %>
+                 <% }else { %>       
+                
+                   <% if(c.value == 'no'){ %>
+                      <input type="radio" name="guest_ok" value="<%= c.value %>" checked> <%= c.name %> 
+                   <%  }else{ %>
+                      <input type="radio" name="guest_ok" value="<%= c.value %>" > <%= c.name %>
                 <%  } %>
+               <% } %>
                 </label>
               <% }); %>
           </div>
@@ -85,12 +103,21 @@
           <div class="controls">
              <% _.each(read_only_choices, function(c) { %>
                 <label class="radio inline">
-                <% if(c.value == 'yes'){ %>
-                  <input type="radio" name="read_only" value="<%= c.value %>" checked> <%= c.name %> 
-                 <% }else{ %>
-                  <input type="radio" name="read_only" value="<%= c.value %>" > <%= c.name %>
-                 <% } %>
-                 </label>
+                <% if (sambaShareId!=null){ %>
+                    <% if(c.value == smbShare.get("read_only")){ %>
+                        <input type="radio" name="read_only" value="<%= c.value %>" checked> <%= c.name %> 
+                    <% }else{ %>
+                        <input type="radio" name="read_only" value="<%= c.value %>" > <%= c.name %>
+                    <% } %>
+                 <% }else { %>       
+                
+                   <% if(c.value == 'yes'){ %>
+                      <input type="radio" name="read_only" value="<%= c.value %>" checked> <%= c.name %> 
+                   <%  }else{ %>
+                      <input type="radio" name="read_only" value="<%= c.value %>" > <%= c.name %>
+                <%  } %>
+               <% } %>
+              </label>
               <% }); %>
            </div>
         </div>
