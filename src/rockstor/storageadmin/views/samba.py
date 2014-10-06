@@ -126,18 +126,18 @@ class SambaView(rfc.GenericView):
         with self._handle_exception(request):
             smbo = SambaShare.objects.get(id=smb_id)
             smbo.comment = request.DATA.get('comment', smbo.comment)
-            smbo.browsable = request.DATA.get('comment', smbo.browsable)
+            smbo.browsable = request.DATA.get('browsable', smbo.browsable)
             smbo.read_only = request.DATA.get('read_only', smbo.read_only)
             smbo.guest_ok = request.DATA.get('guest_ok', smbo.guest_ok)
             admin_users = request.DATA.get('admin_users', None)
             if (admin_users is None):
                 admin_users = []
-            for uo in User.objects.filter(smb_share=smbo):
+            for uo in User.objects.filter(smb_shares=smbo):
                 if (uo.username not in admin_users):
-                    uo.smb_shares.delete(smbo)
+                    uo.smb_shares.remove(smbo)
             for u in admin_users:
                 if (not User.objects.filter(username=u,
-                                            smb_share=smbo).exists()):
+                                            smb_shares=smbo).exists()):
                     auo = User.objects.get(username=u)
                     auo.smb_shares.add(smbo)
             smbo.save()
