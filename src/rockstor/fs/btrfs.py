@@ -83,6 +83,11 @@ def resize_pool(pool_name, device, dev_list, add=True):
     return out, err, rc
 
 
+def btrfs_wipe_disk(disk):
+    dd_cmd = [DD, 'if=/dev/zero', 'of=%s' % disk, 'bs=1024', 'count=100']
+    return run_command(dd_cmd)
+
+
 def remove_pool(name):
     """
     just remove from database? mark it deleted? may be give a purge option that
@@ -99,9 +104,7 @@ def remove_pool(name):
     for line in out:
         if (re.search('/dev/sd', line) is not None):
             disk = line.split()[-1]
-            dd_cmd = [DD, 'if=/dev/zero', 'of=%s' % disk, 'bs=1024',
-                      'count=100']
-            out, err, rc = run_command(dd_cmd)
+            out, err, rc = btrfs_wipe_disk(disk)
     #last command results -- not particularly useful
     return out, err, rc
 
