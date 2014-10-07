@@ -26,7 +26,8 @@ import os
 
 from system.osi import (run_command, create_tmp_dir, is_share_mounted,
                         is_mounted)
-from system.exceptions import CommandException
+from system.exceptions import (CommandException, NonBTRFSRootException)
+
 
 MKFS_BTRFS = '/sbin/mkfs.btrfs'
 BTRFS = '/sbin/btrfs'
@@ -37,6 +38,24 @@ DEFAULT_MNT_DIR = '/mnt2/'
 DF = '/bin/df'
 BTRFS_DEBUG_TREE = '/sbin/btrfs-debug-tree'
 RMDIR = '/bin/rmdir'
+SFDISK = '/sbin/sfdisk'
+
+
+class Disk():
+
+    def __init__(self, name, size, free, parted=False, uuid=None):
+        self.name = name
+        self.size = size
+        self.free = free
+        self.parted = parted
+        self.btrfs_uuid = uuid
+
+    def __repr__(self):
+        return {'name': self.name,
+                'size': self.size,
+                'free': self.free,
+                'parted': self.parted,
+                'btrfs_uuid': self.btrfs_uuid, }
 
 
 def add_pool(name, data_raid, meta_raid, disks):
@@ -357,3 +376,84 @@ def scrub_status(pool_name, pool_device):
 
 def device_scan():
     return run_command([BTRFS, 'device', 'scan'])
+
+
+def btrfs_uuid(disk):
+    """return uuid of a btrfs filesystem"""
+    o, e, rc = run_command([BTRFS, 'filesystem', 'show', '/dev/%s' % disk])
+    return o[0].split()[3]
+
+
+def scan_btrfs_fs():
+    o, e, rc = run_command([BTRFS, 'filesystem', 'show'])
+    fs_map = {}
+    cur_uuid = None
+    for l in o:
+        l = l.strip()
+        if (re.match('Label: ', l) is not None):
+            cur_uuid = l.split()[3]
+        elif (re.match('devid', l) is not None):
+            device = l.split()[-1].split('/')[-1]
+            fs_map[device] = cur_uuid
+    return fs_map
+
+
+def root_disk():
+    """
+    returns the partition(s) used for /. Typically it's sda.
+    """
+    with open('/proc/mounts') as fo:
+        for line in fo.readlines():
+            fields = line.split()
+            if (fields[1] == '/' and
+                (fields[2] == 'ext4' or fields[2] == 'btrfs')):
+                return fields[0][5:-1]
+    msg = ('root filesystem is not BTRFS. During Rockstor installation, '
+           'you must select BTRFS instead of LVM and other options for '
+           'root filesystem. Please re-install Rockstor properly.')
+    raise NonBTRFSRootException(msg)
+
+
+def scan_disks(min_size):
+    """
+    min_size is in KB, so it is also number of blocks. Discard any disk with
+    num_blocks < min_size
+    """
+    root = root_disk()
+    disks = {}
+    fs_map = scan_btrfs_fs()
+    with open('/proc/partitions') as pfo:
+        for line in pfo.readlines():
+            disk_fields = line.split()
+            if (len(disk_fields) != 4):
+                continue
+            if (re.match('sd[a-z]+$|xvd[a-z]+$', disk_fields[3]) is not None):
+                name = disk_fields[3]
+                #  each block is 1KB.
+                num_blocks = int(disk_fields[2])
+                if (num_blocks < min_size):
+                    continue
+                uuid = None
+                if (name in fs_map):
+                    uuid = fs_map[name]
+                disk = Disk(name=name, size=num_blocks, free=num_blocks,
+                            uuid=uuid)
+                disks[name] = disk.__repr__()
+            elif (re.match('sd[a-z]+[0-9]+$|xvd[a-z]+[0-9]+$', disk_fields[3])
+                  is not None):
+                name = disk_fields[3][0:-1]
+                if (name in disks):
+                    if (name == root):
+                        del(disks[name])
+                    else:
+                        disks[name]['parted'] = True
+    return disks
+
+
+def wipe_disk(disk):
+    """
+    removes partition table on a disk by dd'ing first 512 bytes
+    """
+    disk = ('/dev/%s' % disk)
+    run_command([DD, 'if=/dev/zero', 'of=%s' % disk, 'bs=512', 'count=1'])
+    return run_command([SFDISK, '-R', disk])
