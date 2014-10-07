@@ -23,7 +23,7 @@ Disk view, for anything at the disk level
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import Disk
-from system.osi import (scan_disks, wipe_disk)
+from fs.btrfs import (scan_disks, wipe_disk)
 from storageadmin.serializers import DiskInfoSerializer
 from storageadmin.util import handle_exception
 from django.conf import settings
@@ -58,12 +58,15 @@ class DiskView(rfc.GenericView):
         for k,v in disks.items():
             if (Disk.objects.filter(name=v['name']).exists()):
                 d = Disk.objects.get(name=v['name'])
-                if (d.size != v['size'] or d.parted != v['parted']):
+                if (d.size != v['size'] or d.parted != v['parted'] or
+                    d.btrfs_uuid != v['btrfs_uuid']):
                     d.size = v['size']
                     d.parted = v['parted']
+                    d.btrfs_uuid = v['btrfs_uuid']
                     d.save()
                 continue
-            new_disk = Disk(name=v['name'], size=v['size'], parted=v['parted'])
+            new_disk = Disk(name=v['name'], size=v['size'], parted=v['parted'],
+                            btrfs_uuid=v['btrfs_uuid'])
             new_disk.save()
         for d in Disk.objects.all():
             if (d.name not in disks.keys()):
@@ -99,8 +102,6 @@ class DiskView(rfc.GenericView):
         e_msg = ('Unknown command: %s. Only valid commands are scan, wipe' %
                  command)
         handle_exception(Exception(e_msg), request)
-
-
 
     @transaction.commit_on_success
     def delete(self, request, dname):
