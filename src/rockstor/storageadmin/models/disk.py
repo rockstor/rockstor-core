@@ -32,6 +32,8 @@ class Disk(models.Model):
     """whether the disk is partitioned at the moment. relevent for root disks
     and such that may not be part of any pool but need to be in the model"""
     parted = models.BooleanField()
+    """previously created btrfs filesystem on the disk"""
+    btrfs_uuid = models.CharField(max_length=1024, null=True)
 
     def pool_name(self, *args, **kwargs):
         try:
