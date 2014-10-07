@@ -170,6 +170,14 @@ def subvol_list_helper(mnt_pt):
                 raise ce
 
 
+def snapshot_list(mnt_pt):
+    o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-s', mnt_pt])
+    snaps = []
+    for s in o:
+        snaps.append(s.split()[-1])
+    return snaps
+
+
 def share_id(pool_name, pool_device, share_name):
     """
     returns the subvolume id, becomes the share's uuid.
