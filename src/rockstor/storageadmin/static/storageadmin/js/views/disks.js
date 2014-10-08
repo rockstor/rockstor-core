@@ -28,7 +28,8 @@ DisksView = Backbone.View.extend({
   events: {
     "click #setup": "setupDisks",
     'click .wipe': 'wipeDisk',
-    'click .delete': 'deleteDisk'
+    'click .delete': 'deleteDisk',
+    'click .btrfs_wipe': 'btrfsWipeDisk'
   },
 
   initialize: function() {
@@ -85,6 +86,27 @@ DisksView = Backbone.View.extend({
     if (confirm('Wipe disk ' + diskName + ' ... Are you sure?')) {
       $.ajax({
         url: '/api/disks/' + diskName + '/wipe',
+        type: 'POST',
+        success: function(data, status, xhr) {
+          _this.render();
+        },
+        error: function(xhr, status, error) {
+          enableButton(button);
+        }
+      });
+    }
+  },
+  
+  btrfsWipeDisk: function(event) {
+    var _this = this;
+    if (event) event.preventDefault();
+    var button = $(event.currentTarget);
+    if (buttonDisabled(button)) return false;
+    disableButton(button);
+    var diskName = button.data('disk-name');
+    if (confirm('Btrfs wipe disk ' + diskName + ' ... Are you sure?')) {
+      $.ajax({
+        url: '/api/disks/' + diskName + '/btrfs_wipe',
         type: 'POST',
         success: function(data, status, xhr) {
           _this.render();
