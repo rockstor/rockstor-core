@@ -23,7 +23,7 @@ Disk view, for anything at the disk level
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import Disk
-from fs.btrfs import (scan_disks, wipe_disk)
+from fs.btrfs import (scan_disks, wipe_disk, btrfs_wipe_disk)
 from storageadmin.serializers import DiskInfoSerializer
 from storageadmin.util import handle_exception
 from django.conf import settings
@@ -90,12 +90,28 @@ class DiskView(rfc.GenericView):
         disk.save()
         return Response(DiskInfoSerializer(disk).data)
 
+    @transaction.commit_on_success
+    def _btrfs_wipe(self, dname, request):
+        disk = self._validate_disk(dname, request)
+        try:
+            btrfs_wipe_disk('/dev/%s' % disk.name)
+        except Exception, e:
+            logger.exception(e)
+            e_msg = ('Failed to wipe btrfs metadata due to a system error.')
+            handle_exception(Exception(e_msg))
+
+        disk.btrfs_uuid = None
+        disk.save()
+        return Response(DiskInfoSerializer(disk).data)
+
     def post(self, request, command, dname=None):
         try:
             if (command == 'scan'):
                 return self._scan()
             if (command == 'wipe'):
                 return self._wipe(dname, request)
+            if (command == 'btrfs_wipe'):
+                return self._btrfs_wipe(dname, request)
         except Exception, e:
             handle_exception(e, request)
 
