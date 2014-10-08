@@ -199,7 +199,8 @@ def refresh_nfs_exports(exports):
 
     if 'clients' is an empty list, then unmount and cleanup.
     """
-    with open('/etc/exports', 'w') as efo:
+    fo, npath = mkstemp()
+    with open(npath, 'w') as efo:
         shares = []
         for e in exports.keys():
             if (len(exports[e]) == 0):
@@ -215,17 +216,22 @@ def refresh_nfs_exports(exports):
             client_str = ''
             admin_host = None
             for c in exports[e]:
+                run_command([EXPORTFS, '-i', '-o', c['option_list'],
+                             '%s:%s' % (c['client_str'], e)])
                 client_str = ('%s%s(%s) ' % (client_str, c['client_str'],
                                              c['option_list']))
                 if ('admin_host' in c):
                     admin_host = c['admin_host']
             if (admin_host is not None):
+                run_command([EXPORTFS, '-i', '-o', 'rw,no_root_squash',
+                             '%s:%s' % (admin_host, e)])
                 client_str = ('%s %s(rw,no_root_squash)' % (client_str,
                                                             admin_host))
             export_str = ('%s %s\n' % (e, client_str))
             efo.write(export_str)
         for s in shares:
             nfs4_mount_teardown(s)
+    shutil.move(npath, '/etc/exports')
     return run_command([EXPORTFS, '-ra'])
 
 
