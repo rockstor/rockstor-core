@@ -395,6 +395,18 @@ def btrfs_uuid(disk):
     return o[0].split()[3]
 
 
+def btrfs_label(disk):
+    o, e, rc = run_command([BTRFS, 'filesystem', 'label', '/dev/%s' % disk])
+    return o[0]
+
+
+def btrfs_importable(disk):
+    o, e, rc = run_command([BTRFS, 'check', '/dev/%s' % disk], throw=False)
+    if (rc == 0):
+        return True
+    return False
+
+
 def scan_btrfs_fs():
     o, e, rc = run_command([BTRFS, 'filesystem', 'show'])
     fs_map = {}
