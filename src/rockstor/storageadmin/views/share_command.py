@@ -22,14 +22,10 @@ view for anything at the share level
 
 from rest_framework.response import Response
 from django.db import transaction
-from storageadmin.models import (Share, Snapshot, Disk, Pool, Snapshot,
-                                 NFSExport, SambaShare)
-from fs.btrfs import (add_snap, share_id, update_quota, mount_share,
-                      rollback_snap)
-from storageadmin.serializers import (ShareSerializer, SnapshotSerializer)
+from storageadmin.models import (Share, Snapshot, Disk, NFSExport, SambaShare)
+from fs.btrfs import (update_quota, rollback_snap)
+from storageadmin.serializers import ShareSerializer
 from storageadmin.util import handle_exception
-from storageadmin.exceptions import RockStorAPIException
-from django.conf import settings
 import rest_framework_custom as rfc
 from clone_helpers import create_clone
 
@@ -72,7 +68,7 @@ class ShareCommandView(rfc.GenericView):
                 e_msg = ('Share with name: %s already exists.' % new_name)
                 handle_exception(Exception(e_msg), request)
             pool_device = Disk.objects.filter(pool=share.pool)[0].name
-            return create_clone(share, new_name, pool_device, request)
+            return create_clone(share, new_name, request, logger)
 
         elif (command == 'rollback'):
             snap_name = request.DATA['name']
@@ -107,4 +103,3 @@ class ShareCommandView(rfc.GenericView):
             except Exception, e:
                 logger.exception(e)
                 handle_exception(e, request)
-
