@@ -58,7 +58,7 @@ class SnapshotView(rfc.GenericView):
                 return []
 
         snap_type = self.request.QUERY_PARAMS.get('snap_type', None)
-        if (snap_type is not None):
+        if (snap_type is not None and snap_type != ''):
             return Snapshot.objects.filter(share=share,
                                            snap_type=snap_type)
 
@@ -108,7 +108,7 @@ class SnapshotView(rfc.GenericView):
 
     @transaction.commit_on_success
     def _create(self, share, snap_name, pool_device, request, uvisible,
-                snap_type):
+                snap_type, readonly):
         if (Snapshot.objects.filter(share=share, name=snap_name).exists()):
             e_msg = ('Snapshot with name: %s already exists for the '
                      'share: %s' % (snap_name, share.name))
@@ -120,14 +120,15 @@ class SnapshotView(rfc.GenericView):
             qgroup_id = '0/na'
             if (snap_type != 'receiver'):
                 add_snap(share.pool.name, pool_device, share.subvol_name,
-                         real_name, share_prepend=False)
+                         real_name, share_prepend=False, readonly=readonly)
                 snap_id = share_id(share.pool.name, pool_device, real_name)
                 qgroup_id = ('0/%s' % snap_id)
                 snap_size = share_usage(share.pool.name, pool_device,
                                         qgroup_id)
             s = Snapshot(share=share, name=snap_name, real_name=real_name,
                          size=snap_size, qgroup=qgroup_id,
-                         uvisible=uvisible, snap_type=snap_type)
+                         uvisible=uvisible, snap_type=snap_type,
+                         writable=not readonly)
             s.save()
             return Response(SnapshotSerializer(s).data)
         except Exception, e:
@@ -138,21 +139,18 @@ class SnapshotView(rfc.GenericView):
 
     def post(self, request, sname, snap_name, command=None):
         share = self._validate_share(sname, request)
-        uvisible = False
-        if (request.DATA is not None and 'uvisible' in request.DATA):
-            uvisible = request.DATA['uvisible']
-            if (type(uvisible) != bool):
-                e_msg = ('uvisible must be a boolean, not %s' % type(uvisible))
-                handle_exception(Exception(e_msg), request)
+        uvisible = request.DATA.get('uvisible', False)
+        if (type(uvisible) != bool):
+            e_msg = ('uvisible must be a boolean, not %s' % type(uvisible))
+            handle_exception(Exception(e_msg), request)
 
-        snap_type = 'admin'
-        if (request.DATA is not None and 'snap_type' in request.DATA):
-            snap_type = request.DATA['snap_type']
-
+        snap_type = request.DATA.get('snap_type', 'admin')
+        readonly = request.DATA.get('readonly', True)
         pool_device = Disk.objects.filter(pool=share.pool)[0].name
         if (command is None):
             ret = self._create(share, snap_name, pool_device, request,
-                               uvisible=uvisible, snap_type=snap_type)
+                               uvisible=uvisible, snap_type=snap_type,
+                               readonly=readonly)
 
             if (uvisible):
                 try:
@@ -174,7 +172,9 @@ class SnapshotView(rfc.GenericView):
             return ret
         if (command == 'clone'):
             new_name = request.DATA['name']
-            return create_clone(share, new_name, request, logger)
+            snapshot = Snapshot.objects.get(share=share, name=snap_name)
+            return create_clone(share, new_name, request, logger,
+                                snapshot=snapshot)
         e_msg = ('Unknown command: %s' % command)
         handle_exception(Exception(e_msg), request)
 
