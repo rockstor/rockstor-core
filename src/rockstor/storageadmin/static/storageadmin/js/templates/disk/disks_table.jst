@@ -16,7 +16,9 @@
             <% } else if (disk.get('parted')) { %>
               <a href="#" class="wipe" data-disk-name="<%= disk.get('name') %>" title="Disk is unusable because it has partitions. Click to wipe the disk" rel="tooltip"><i class="icon-cog"></i></a>
             <% } else if (disk.get('btrfs_uuid') && _.isNull(disk.get("pool_name"))) { %>
-              <a href="#" class="btrfs_wipe" data-disk-name="<%= disk.get('name') %>" title="Import this disk" rel="tooltip"><i class="icon-circle-arrow-down"></i></a>
+              <a href="#" class="btrfs_wipe" data-disk-name="<%= disk.get('name') %>" title="Wipe the disk" rel="tooltip"><i class="icon-thumbs-down"></i></a> &nbsp
+              <a href="#" class="btrfs_import" data-disk-name="<%= disk.get('name') %>" title="Import this disk" rel="tooltip"><i class="icon-circle-arrow-down"></i></a>
+              
             <% } %>  
               
           </td>
