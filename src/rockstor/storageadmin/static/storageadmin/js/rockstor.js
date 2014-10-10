@@ -116,6 +116,7 @@ RockStorWidgetView = Backbone.View.extend({
     this.name = this.options.name;
     this.displayName = this.options.displayName;
     this.parentView = this.options.parentView;
+    this.dependencies = [];
   },
   
   render: function() {
@@ -187,7 +188,17 @@ RockStorWidgetView = Backbone.View.extend({
 
   cleanup: function() {
     logger.debug("In RockStorWidgetView close");
-  }
+  },
+
+  fetch: function(callback, context) {
+    var allDependencies = [];
+    _.each(this.dependencies, function(dep) {
+      allDependencies.push(dep.fetch({silent: true}));
+    });
+    $.when.apply($, allDependencies).done(function () {
+      if (callback) callback.apply(context);
+    });
+  },
 
 });
 
