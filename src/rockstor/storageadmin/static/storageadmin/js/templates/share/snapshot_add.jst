@@ -36,14 +36,14 @@
         </div>  
           
         <div class="control-group">
-          <label class="control-label" for="snapshot-writable">Writable<span class="required"> *</span></label>
+          <label class="control-label" for=writable">Writable<span class="required"> *</span></label>
           <div class="controls">
              <% _.each(modify_choices, function(c) { %>
                 <label class="radio inline">
                    <% if(c.value == 'no'){ %>
-                      <input type="radio" name="snapshot-writable"  value="<%= false %>" checked> <%= c.name %> 
+                      <input type="radio" name="writable" value="<%= false %>" checked> <%= c.name %> 
                    <%  }else{ %>
-                      <input type="radio" name="snapshot-writable"  value="<%= true %>" > <%= c.name %>
+                      <input type="radio" name="writable" value="<%= true %>" > <%= c.name %>
                 <%  } %>
                </label>
               <% }); %>

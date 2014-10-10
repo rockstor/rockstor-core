@@ -100,7 +100,7 @@ SnapshotsTableModule  = RockstorModuleView.extend({
           type: "POST",
           dataType: "json",
           contentType: 'application/json',
-         // data: JSON.stringify({uvisible: _this.$('#snapshot-visible').prop('checked'),writable: _this.$('#read_only').prop("selected")}),
+          //data: JSON.stringify({uvisible: _this.$('#snapshot-visible').prop('checked')}),
           data: JSON.stringify(_this.$('#add-snapshot-form').getJSON()),
           success: function() {
             _this.$('#add-snapshot-form :input').tooltip('hide');
