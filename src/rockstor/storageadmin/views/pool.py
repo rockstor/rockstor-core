@@ -25,7 +25,7 @@ from django.db import transaction
 from storageadmin.serializers import PoolInfoSerializer
 from storageadmin.models import (Disk, Pool, Share)
 from fs.btrfs import (add_pool, pool_usage, remove_pool,
-                      resize_pool, umount_root)
+                      resize_pool, umount_root, btrfs_uuid)
 from storageadmin.util import handle_exception
 from storageadmin.exceptions import RockStorAPIException
 from django.conf import settings
@@ -149,8 +149,10 @@ class PoolView(rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
 
             pool_size = self._pool_size(disks, raid_level)
-            p = Pool(name=pname, raid=raid_level, size=pool_size)
             add_pool(pname, raid_level, raid_level, disks)
+            pool_uuid = btrfs_uuid(disks[0])
+            p = Pool(name=pname, raid=raid_level, size=pool_size,
+                     uuid=pool_uuid)
             p.save()
             p.disk_set.add(*[Disk.objects.get(name=d) for d in disks])
             return Response(PoolInfoSerializer(p).data)

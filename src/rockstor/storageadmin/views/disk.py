@@ -23,7 +23,7 @@ Disk view, for anything at the disk level
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import Disk
-from system.osi import (scan_disks, wipe_disk)
+from fs.btrfs import (scan_disks, wipe_disk, btrfs_wipe_disk)
 from storageadmin.serializers import DiskInfoSerializer
 from storageadmin.util import handle_exception
 from django.conf import settings
@@ -58,12 +58,15 @@ class DiskView(rfc.GenericView):
         for k,v in disks.items():
             if (Disk.objects.filter(name=v['name']).exists()):
                 d = Disk.objects.get(name=v['name'])
-                if (d.size != v['size'] or d.parted != v['parted']):
+                if (d.size != v['size'] or d.parted != v['parted'] or
+                    d.btrfs_uuid != v['btrfs_uuid']):
                     d.size = v['size']
                     d.parted = v['parted']
+                    d.btrfs_uuid = v['btrfs_uuid']
                     d.save()
                 continue
-            new_disk = Disk(name=v['name'], size=v['size'], parted=v['parted'])
+            new_disk = Disk(name=v['name'], size=v['size'], parted=v['parted'],
+                            btrfs_uuid=v['btrfs_uuid'])
             new_disk.save()
         for d in Disk.objects.all():
             if (d.name not in disks.keys()):
@@ -81,26 +84,45 @@ class DiskView(rfc.GenericView):
         except Exception, e:
             logger.exception(e)
             e_msg = ('Failed to wipe the disk due to a system error.')
-            handle_exception(Exception(e_msg))
+            handle_exception(Exception(e_msg), request)
 
         disk.parted = False
         disk.save()
         return Response(DiskInfoSerializer(disk).data)
 
-    def post(self, request, command, dname=None):
+    @transaction.commit_on_success
+    def _btrfs_wipe(self, dname, request):
+        disk = self._validate_disk(dname, request)
         try:
-            if (command == 'scan'):
-                return self._scan()
-            if (command == 'wipe'):
-                return self._wipe(dname, request)
+            btrfs_wipe_disk('/dev/%s' % disk.name)
         except Exception, e:
-            handle_exception(e, request)
+            logger.exception(e)
+            e_msg = ('Failed to wipe btrfs metadata due to a system error.')
+            handle_exception(Exception(e_msg), request)
+
+        disk.btrfs_uuid = None
+        disk.save()
+        return Response(DiskInfoSerializer(disk).data)
+
+    def _btrfs_disk_import(sself, dname, request):
+        """stub method for now"""
+        e_msg = ('Failed to import any pools, shares and snapshots that '
+                 'may be on the disk: %s. Import or backup manually' % dname)
+        handle_exception(Exception(e_msg), request)
+
+    def post(self, request, command, dname=None):
+        if (command == 'scan'):
+            return self._scan()
+        if (command == 'wipe'):
+            return self._wipe(dname, request)
+        if (command == 'btrfs-wipe'):
+            return self._btrfs_wipe(dname, request)
+        if (command == 'btrfs-disk-import'):
+            return self._btrfs_disk_import(dname, request)
 
         e_msg = ('Unknown command: %s. Only valid commands are scan, wipe' %
                  command)
         handle_exception(Exception(e_msg), request)
-
-
 
     @transaction.commit_on_success
     def delete(self, request, dname):
