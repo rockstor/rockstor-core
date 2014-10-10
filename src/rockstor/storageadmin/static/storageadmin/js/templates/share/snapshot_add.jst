@@ -25,16 +25,18 @@
   <div class="span8">
     <label class="control-label"><span class="required">*</span> indicates required fields</label>
     <div class="form-box"> 
-      <form name="add-snapshot-form" id="add-snapshot-form">
+      <form name="add-snapshot-form" id="add-snapshot-form" class="form-horizontal">
         <div class="messages"></div>
+         
         <div class="control-group">
           <label class="control-label" for="snapshot-name">Name<span class="required"> *</span></label>
           <div class="controls">
             <input type="text" name="snapshot-name" id="snapshot-name" title="A descriptive name for the snapshot">
-          </div>
+          </div> 
+        </div>  
           
         <div class="control-group">
-          <label class="control-label" for="read_only">Writable<span class="required"> *</span></label>
+          <label class="control-label" for="snapshot-writable">Writable<span class="required"> *</span></label>
           <div class="controls">
              <% _.each(modify_choices, function(c) { %>
                 <label class="radio inline">
@@ -47,19 +49,21 @@
               <% }); %>
            </div>
         </div>
-          
-        </div>
-        <div class="control-group">
-          <label class="checkbox">
+       
+       <div class="control-group">
+          <label class="control-label" for="snapshot-visible"> </label>
+          <div class="controls">
             <input type="checkbox" name="snapshot-visible" id="snapshot-visible" title="Snapshots can be visible or hidden"> Visible to user?
-          </label>
+          </div>
         </div>
+        
         <div class="control-group">
           <div class="controls">
             <a class="btn" href="#" id="js-snapshot-cancel"> Cancel</a>
             <input type="Submit" class="btn btn-primary" value="Submit" id="js-snapshot-save"></input>
           </div>
         </div>
+        
       </form>
     </div>
   </div>
