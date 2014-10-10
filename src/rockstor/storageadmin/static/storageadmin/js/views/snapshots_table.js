@@ -1,27 +1,27 @@
 /*
  *
- * @licstart  The following is the entire license notice for the 
+ * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
- * 
+ *
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
- * 
+ *
  * RockStor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
- * 
+ *
  * RockStor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * @licend  The above is the entire license notice
  * for the JavaScript code in this page.
- * 
+ *
  */
 
 SnapshotsTableModule  = RockstorModuleView.extend({
@@ -47,7 +47,7 @@ SnapshotsTableModule  = RockstorModuleView.extend({
     this.selectedSnapshots = [];
     this.modify_choices = [
       {name: 'yes', value: 'yes'},
-      {name: 'no', value: 'no'}, 
+      {name: 'no', value: 'no'},
     ];
   },
 
@@ -59,7 +59,7 @@ SnapshotsTableModule  = RockstorModuleView.extend({
       selectedSnapshots: this.selectedSnapshots,
       share: this.share,
     }));
-    this.$('[rel=tooltip]').tooltip({ 
+    this.$('[rel=tooltip]').tooltip({
       placement: 'bottom'
     });
     this.$('#snapshots-table').tablesorter({
@@ -82,7 +82,7 @@ SnapshotsTableModule  = RockstorModuleView.extend({
       snapshots: this.collection,
       share: this.share,
       modify_choices: this.modify_choices
-   
+
     }));
     this.$('#add-snapshot-form :input').tooltip();
     this.validator = this.$('#add-snapshot-form').validate({
@@ -100,7 +100,6 @@ SnapshotsTableModule  = RockstorModuleView.extend({
           type: "POST",
           dataType: "json",
           contentType: 'application/json',
-          //data: JSON.stringify({uvisible: _this.$('#snapshot-visible').prop('checked')}),
           data: JSON.stringify(_this.$('#add-snapshot-form').getJSON()),
           success: function() {
             _this.$('#add-snapshot-form :input').tooltip('hide');
@@ -146,7 +145,7 @@ SnapshotsTableModule  = RockstorModuleView.extend({
 
   cloneSnapshot: function(event) {
     if (event) event.preventDefault();
-    // Remove current tooltips to prevent them hanging around 
+    // Remove current tooltips to prevent them hanging around
     // even after new page has loaded.
     this.$('[rel=tooltip]').tooltip('hide');
     var name = $(event.currentTarget).attr('data-name');
@@ -184,7 +183,7 @@ SnapshotsTableModule  = RockstorModuleView.extend({
       _this.selectSnapshotWithName($(this).attr('data-name'), checked);
     });
   },
-  
+
   deleteMultipleSnapshots: function(event) {
     var _this = this;
     event.preventDefault();
@@ -227,7 +226,7 @@ SnapshotsTableModule  = RockstorModuleView.extend({
             if (_this.collection.pageInfo().prev) {
               _this.collection.prevPage();
             } else {
-              _this.collection.fetch(); 
+              _this.collection.fetch();
             }
           },
           error: function(xhr, status, error) {
@@ -240,13 +239,13 @@ SnapshotsTableModule  = RockstorModuleView.extend({
       }
     }
   },
-  
+
   selectedContains: function(name) {
     return _.find(this.selectedSnapshots, function(snap) {
       return snap.get('name') == name;
     });
   },
-  
+
   addToSelected: function(name) {
     this.selectedSnapshots.push(this.collection.find(function(snap) {
       return snap.get('name') == name;
@@ -269,4 +268,3 @@ SnapshotsTableModule  = RockstorModuleView.extend({
 
 // Add pagination
 Cocktail.mixin(SnapshotsTableModule, PaginationMixin);
-
