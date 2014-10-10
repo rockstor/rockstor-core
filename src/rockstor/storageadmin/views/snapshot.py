@@ -145,7 +145,13 @@ class SnapshotView(rfc.GenericView):
             handle_exception(Exception(e_msg), request)
 
         snap_type = request.DATA.get('snap_type', 'admin')
-        writable = request.DATA.get('writable', True)
+        writable = request.DATA.get('writable', 'rw')
+        if (writable == 'rw'):
+            writable = True
+        else:
+            writable = False
+        logger.debug('DATA = %s' % request.DATA)
+        logger.debug('writable input value = %s' % writable)
         pool_device = Disk.objects.filter(pool=share.pool)[0].name
         if (command is None):
             ret = self._create(share, snap_name, pool_device, request,
