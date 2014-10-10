@@ -40,16 +40,17 @@
           <div class="controls">
              <% _.each(modify_choices, function(c) { %>
                 <label class="radio inline">
-                   <% if(c.value == 'no'){ %>
-                      <input type="radio" name="writable" value="<%= false %>" checked> <%= c.name %> 
+                   <% if(c.value == 'yes'){ %>
+                      <input type="radio" name="writable" value="rw" title="Snapshot is writable" checked> <%= c.name %> 
                    <%  }else{ %>
-                      <input type="radio" name="writable" value="<%= true %>" > <%= c.name %>
+                      <input type="radio" name="writable" value="ro" title="Snapshot is read-only" > <%= c.name %>
                 <%  } %>
                </label>
               <% }); %>
            </div>
         </div>
-       
+        
+             
        <div class="control-group">
           <label class="control-label" for="snapshot-visible"> </label>
           <div class="controls">
