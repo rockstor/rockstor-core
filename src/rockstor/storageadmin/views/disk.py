@@ -84,7 +84,7 @@ class DiskView(rfc.GenericView):
         except Exception, e:
             logger.exception(e)
             e_msg = ('Failed to wipe the disk due to a system error.')
-            handle_exception(Exception(e_msg))
+            handle_exception(Exception(e_msg), request)
 
         disk.parted = False
         disk.save()
@@ -98,22 +98,27 @@ class DiskView(rfc.GenericView):
         except Exception, e:
             logger.exception(e)
             e_msg = ('Failed to wipe btrfs metadata due to a system error.')
-            handle_exception(Exception(e_msg))
+            handle_exception(Exception(e_msg), request)
 
         disk.btrfs_uuid = None
         disk.save()
         return Response(DiskInfoSerializer(disk).data)
 
+    def _btrfs_disk_import(sself, dname, request):
+        """stub method for now"""
+        e_msg = ('Failed to import any pools, shares and snapshots that '
+                 'may be on the disk: %s. Import or backup manually' % dname)
+        handle_exception(Exception(e_msg), request)
+
     def post(self, request, command, dname=None):
-        try:
-            if (command == 'scan'):
-                return self._scan()
-            if (command == 'wipe'):
-                return self._wipe(dname, request)
-            if (command == 'btrfs_wipe'):
-                return self._btrfs_wipe(dname, request)
-        except Exception, e:
-            handle_exception(e, request)
+        if (command == 'scan'):
+            return self._scan()
+        if (command == 'wipe'):
+            return self._wipe(dname, request)
+        if (command == 'btrfs-wipe'):
+            return self._btrfs_wipe(dname, request)
+        if (command == 'btrfs-disk-import'):
+            return self._btrfs_disk_import(dname, request)
 
         e_msg = ('Unknown command: %s. Only valid commands are scan, wipe' %
                  command)
