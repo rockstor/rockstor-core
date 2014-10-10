@@ -29,8 +29,9 @@
         <th>Name</th>
         <th>Created on</th>
         <th>Visible to user</th>
+        <th>Writable</th>
         <th>Total Size</th>
-	      <th>Exclusive Size</th>
+	    <th>Exclusive Size</th>
         <th>Actions</th>
       </tr>
     </thead>
@@ -51,6 +52,13 @@
               Visible
             <% } else { %>
               Hidden
+            <% } %>
+          </td>
+          <td>
+            <% if (snapshot.get("writable")) { %>
+              Yes
+            <% } else { %>
+              No
             <% } %>
           </td>
           <td><%= humanize.filesize(snapshot.get('r_usage')*1024) %></td>

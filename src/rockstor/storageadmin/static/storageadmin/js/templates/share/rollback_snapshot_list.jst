@@ -1,4 +1,5 @@
 <% if (!snapshots.isEmpty()) { %>
+
   <table id="snapshots-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of snapshots">
     <thead>
       <tr>
@@ -10,22 +11,24 @@
     </thead>
     <tbody>
       <% snapshots.each(function(snapshot, index) { %>
+       <% if(snapshot.get("writable")){ %>
         <tr>
           <td><input type="radio" name="snapshot" value="<%= snapshot.get('name') %>"></td>
           <td><i class="icon-camera"></i> <%= snapshot.get('name') %></td>
           <td><%= moment(snapshot.get("toc")).format(RS_DATE_FORMAT) %></td>
           <td><%= humanize.filesize(snapshot.get('size')*1024) %></td>
         </tr>
+        <% } %>
       <% }); %>
     </tbody>
   </table>
   <div class="pagination-ph"></div>
-<% } else { %>
+<% }else { %>
   <table id="snapshots-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of snapshots">
     <tbody>
       <tr>
         <td colspan="4">
-          <h4>No snapshots have been created</h4>
+          <h4>No snapshots have been created </h4>
         </td>
       </tr>
     </tbody>

@@ -45,11 +45,10 @@ SnapshotsTableModule  = RockstorModuleView.extend({
     this.collection = this.options.snapshots;
     this.collection.on("reset", this.render, this);
     this.selectedSnapshots = [];
-    this.yes_no_choices = [
+    this.modify_choices = [
       {name: 'yes', value: 'yes'},
       {name: 'no', value: 'no'}, 
     ];
-    this.read_only_choices = this.yes_no_choices;
   },
 
   render: function() {
@@ -82,7 +81,7 @@ SnapshotsTableModule  = RockstorModuleView.extend({
     $(this.el).html(this.addTemplate({
       snapshots: this.collection,
       share: this.share,
-      read_only_choices: this.read_only_choices
+      modify_choices: this.modify_choices
    
     }));
     this.$('#add-snapshot-form :input').tooltip();
@@ -101,8 +100,8 @@ SnapshotsTableModule  = RockstorModuleView.extend({
           type: "POST",
           dataType: "json",
           contentType: 'application/json',
-          data: JSON.stringify({uvisible: _this.$('#snapshot-visible').prop('checked'),readonly: _this.$('#read_only').prop('selected')}),
-         // data: JSON.stringify(_this.$('#add-snapshot-form').getJSON()),
+         // data: JSON.stringify({uvisible: _this.$('#snapshot-visible').prop('checked'),writable: _this.$('#read_only').prop("selected")}),
+          data: JSON.stringify(_this.$('#add-snapshot-form').getJSON()),
           success: function() {
             _this.$('#add-snapshot-form :input').tooltip('hide');
             enableButton(button);
