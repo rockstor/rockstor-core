@@ -32,6 +32,22 @@
           <div class="controls">
             <input type="text" name="snapshot-name" id="snapshot-name" title="A descriptive name for the snapshot">
           </div>
+          
+        <div class="control-group">
+          <label class="control-label" for="read_only">Read only<span class="required"> *</span></label>
+          <div class="controls">
+             <% _.each(read_only_choices, function(c) { %>
+                <label class="radio inline">
+                   <% if(c.value == 'no'){ %>
+                      <input type="radio" name="read_only" id="read_only" value="<%= c.value %>" checked> <%= c.name %> 
+                   <%  }else{ %>
+                      <input type="radio" name="read_only" id="read_only" value="<%= c.value %>" > <%= c.name %>
+                <%  } %>
+               </label>
+              <% }); %>
+           </div>
+        </div>
+          
         </div>
         <div class="control-group">
           <label class="checkbox">
