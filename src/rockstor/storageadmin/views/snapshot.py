@@ -108,7 +108,7 @@ class SnapshotView(rfc.GenericView):
 
     @transaction.commit_on_success
     def _create(self, share, snap_name, pool_device, request, uvisible,
-                snap_type, readonly):
+                snap_type, writable):
         if (Snapshot.objects.filter(share=share, name=snap_name).exists()):
             e_msg = ('Snapshot with name: %s already exists for the '
                      'share: %s' % (snap_name, share.name))
@@ -120,7 +120,7 @@ class SnapshotView(rfc.GenericView):
             qgroup_id = '0/na'
             if (snap_type != 'receiver'):
                 add_snap(share.pool.name, pool_device, share.subvol_name,
-                         real_name, share_prepend=False, readonly=readonly)
+                         real_name, share_prepend=False, readonly=not writable)
                 snap_id = share_id(share.pool.name, pool_device, real_name)
                 qgroup_id = ('0/%s' % snap_id)
                 snap_size = share_usage(share.pool.name, pool_device,
@@ -128,7 +128,7 @@ class SnapshotView(rfc.GenericView):
             s = Snapshot(share=share, name=snap_name, real_name=real_name,
                          size=snap_size, qgroup=qgroup_id,
                          uvisible=uvisible, snap_type=snap_type,
-                         writable=not readonly)
+                         writable=writable)
             s.save()
             return Response(SnapshotSerializer(s).data)
         except Exception, e:
@@ -145,12 +145,12 @@ class SnapshotView(rfc.GenericView):
             handle_exception(Exception(e_msg), request)
 
         snap_type = request.DATA.get('snap_type', 'admin')
-        readonly = request.DATA.get('readonly', True)
+        writable = request.DATA.get('writable', True)
         pool_device = Disk.objects.filter(pool=share.pool)[0].name
         if (command is None):
             ret = self._create(share, snap_name, pool_device, request,
                                uvisible=uvisible, snap_type=snap_type,
-                               readonly=readonly)
+                               writable=writable)
 
             if (uvisible):
                 try:
