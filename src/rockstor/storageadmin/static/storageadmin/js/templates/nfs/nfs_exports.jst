@@ -38,7 +38,7 @@
               <div class="slider-ph">
                 <input type="text" class="service-status" value="0" data-service-name="<%= service.get('name') %>"></input>
               </div>
-              <div class="slider-start" data-service-name="<%= service.get('name') %>">ON</div>    
+              <div class="slider-start" data-service-name="<%= service.get('name') %>">ON</div>
             <% } %>
             <div class="command-status" data-service-name="<%= service.get('name') %>">&nbsp;</div>
           </td>
@@ -46,7 +46,7 @@
       </table>
     </div>
     <div id="nfs-warning" class="alert" style="display:none">
-    	<strong>Warning! NFS Service is not running</strong>. Please start the NFS Service.
+    	<strong>Warning! NFS Service is not running</strong>. Clients won't be able to mount unless NFS is running.
     </div>
     <br>
     <div class="messages"></div>
