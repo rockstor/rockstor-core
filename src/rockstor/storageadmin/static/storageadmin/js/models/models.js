@@ -42,6 +42,9 @@ var DiskCollection = RockStorPaginatedCollection.extend({
 var Pool = Backbone.Model.extend({
   url: function() {
     return '/api/pools/' + this.get('poolName') + '/';
+  },
+  sizeGB: function() {
+    return this.get('size') / (1024*1024);
   }
 });
 
