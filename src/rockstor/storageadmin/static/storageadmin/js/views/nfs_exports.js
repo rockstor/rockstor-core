@@ -26,9 +26,11 @@
 
 NFSExportsView  = RockstorLayoutView.extend({
   events: {
-    'click .delete-nfs-export': 'deleteNfsExport'
+        'click .slider-stop': "stopService",
+        'click .slider-start': "startService",
+        'click .delete-nfs-export': 'deleteNfsExport'
   },
-    
+
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.nfs_nfs_exports;
@@ -38,7 +40,11 @@ NFSExportsView  = RockstorLayoutView.extend({
     this.dependencies.push(this.collection);
     this.appliances = new ApplianceCollection();
     this.dependencies.push(this.appliances);
-    this.collection.on('reset', this.renderNFSExportGroups, this);  
+    this.serviceName = 'nfs';
+    this.service = new Service({name: this.serviceName});
+    this.dependencies.push(this.service);
+    this.updateFreq = 5000;
+    this.collection.on('reset', this.renderNFSExportGroups, this);
   },
 
   render: function() {
@@ -53,12 +59,27 @@ NFSExportsView  = RockstorLayoutView.extend({
     });
     $(this.el).html(this.template({
       nfsExportGroups: this.collection,
+      service: this.service,
       currentAppliance: currentAppliance
     }));
+
     this.$(".ph-pagination").html(this.paginationTemplate({
       collection: this.collection
     }));
 
+    this.$('input.service-status').simpleSlider({
+      "theme": "volume",
+      allowedValues: [0,1],
+      snap: true 
+    });
+
+    this.$('input.service-status').each(function(i, el) {
+      var slider = $(el).data('slider-object');
+      // disable track and dragger events to disable slider
+      slider.trackEvent = function(e) {};
+      slider.dragger.unbind('mousedown');
+    });
+    this.displayNFSWarning(this.serviceName);
   },
 
   deleteNfsExport: function(event) {
@@ -67,25 +88,170 @@ NFSExportsView  = RockstorLayoutView.extend({
     var button = $(event.currentTarget);
     if (buttonDisabled(button)) return false;
     if(confirm("Delete nfs-export... Are you sure? ")){
-    disableButton(button)
-    var id = $(event.currentTarget).data('id');
+      disableButton(button);
+      var id = $(event.currentTarget).data('id');
+      $.ajax({
+        url: '/api/nfs-exports/' + id,
+        type: 'DELETE',
+        dataType: 'json',
+        contentType: 'application/json',
+        success: function() {
+          _this.render();
+        },
+        error: function(xhr, status, error) {
+          enableButton(button);
+        }
+      });
+    }
+  },
+
+  startService: function(event) {
+    var _this = this;
+    var serviceName = this.serviceName; 
+    // if already started, return
+    if (this.getSliderVal(serviceName).toString() == "1") return; 
+    this.stopPolling();
+    this.setStatusLoading(serviceName, true);
     $.ajax({
-      url: '/api/nfs-exports/' + id,
-      type: 'DELETE',
-      dataType: 'json',
-      contentType: 'application/json',
-      success: function() {
-        _this.render();
+      url: "/api/sm/services/nfs/start",
+      type: "POST",
+      dataType: "json",
+      success: function(data, status, xhr) {
+        _this.highlightStartEl(serviceName, true);
+        _this.setSliderVal(serviceName, 1); 
+        _this.setStatusLoading(serviceName, false);
+        _this.startPolling();
+        _this.displayNFSWarning(serviceName);
       },
       error: function(xhr, status, error) {
-        enableButton(button);
+        _this.setStatusError(serviceName, xhr);
+        _this.startPolling();
       }
     });
+  },
+
+  stopService: function(event) {
+    var _this = this;
+    var serviceName = $(event.currentTarget).data('service-name'); 
+    // if already stopped, return
+    if (this.getSliderVal(serviceName).toString() == "0") return; 
+    this.stopPolling();
+    this.setStatusLoading(serviceName, true);
+    $.ajax({
+      url: "/api/sm/services/nfs/stop",
+      type: "POST",
+      dataType: "json",
+      success: function(data, status, xhr) {
+        _this.highlightStartEl(serviceName, false);
+        _this.setSliderVal(serviceName, 0); 
+        _this.setStatusLoading(serviceName, false);
+        _this.startPolling();
+        _this.displayNFSWarning(serviceName);
+      },
+      error: function(xhr, status, error) {
+        _this.setStatusError(serviceName, xhr);
+        _this.startPolling();
+      }
+    });
+  },
+
+  highlightStartEl: function(serviceName, on) {
+    var startEl = this.$('div.slider-start[data-service-name="'+serviceName+'"]');
+    if (on) {
+      startEl.addClass('on');
+    } else {
+      startEl.removeClass('on');
     }
-  }
+  },
+
+  setStatusLoading: function(serviceName, show) {
+    var statusEl = this.$('div.command-status[data-service-name="'+serviceName+'"]');
+    if (show) {
+      statusEl.html('<img src="/static/storageadmin/img/ajax-loader.gif"></img>');
+    } else {
+      statusEl.empty();
+    }
+  },
+
+  startPolling: function() {
+    var _this = this;
+    // start after updateFreq
+    this.timeoutId = window.setTimeout(function() {
+      _this.updateStatus();
+    }, this.updateFreq);
+  },
+
+  updateStatus: function() {
+    var _this = this;
+    _this.startTime = new Date().getTime();
+    _this.service.fetch({
+      silent: true,
+      success: function(service, response, options) {
+        var serviceName = service.get('name');
+        if (service.get('status')) {
+          _this.highlightStartEl(serviceName, true);
+          _this.setSliderVal(serviceName, 1); 
+        } else {
+          _this.highlightStartEl(serviceName, false);
+          _this.setSliderVal(serviceName, 0); 
+        }
+        var currentTime = new Date().getTime();
+        var diff = currentTime - _this.startTime;
+        // if diff > updateFreq, make next call immediately
+        if (diff > _this.updateFreq) {
+          _this.updateStatus();
+        } else {
+          // wait till updateFreq msec has elapsed since startTime
+          _this.timeoutId = window.setTimeout( function() { 
+            _this.updateStatus();
+          }, _this.updateFreq - diff);
+        }
+      }
+    });
+  },
+
+  stopPolling: function() {
+    if (!_.isUndefined(this.timeoutId)) {
+      window.clearInterval(this.timeoutId);
+    }
+  },
+
+  setStatusError: function(serviceName, xhr) {
+    var statusEl = this.$('div.command-status[data-service-name="' + serviceName + '"]');
+    var msg = parseXhrError(xhr);
+    // remove any existing error popups
+    $('body').find('#' + serviceName + 'err-popup').remove();
+    // add icon and popup
+    statusEl.empty();
+    var icon = $('<i>').addClass('icon-exclamation-sign').attr('rel', '#' + serviceName + '-err-popup');
+    statusEl.append(icon);
+    var errPopup = this.$('#' + serviceName + '-err-popup');
+    var errPopupContent = this.$('#' + serviceName + '-err-popup > div');
+    errPopupContent.html(msg);
+    statusEl.click(function(){ errPopup.overlay().load(); });
+  },
+
+  setSliderVal: function(serviceName, val) {
+    this.$('input[data-service-name='+serviceName+']').simpleSlider('setValue',val);
+  },
+
+  getSliderVal: function(serviceName) {
+    return this.$('input[data-service-name='+serviceName+']').data('slider-object').value;
+  },
+	  
+  displayNFSWarning: function(serviceName) {
+    if (this.getSliderVal(serviceName).toString() == "0") {
+      this.$('#nfs-warning').show();
+    } else {
+      this.$('#nfs-warning').hide();
+    }
+  },
+
+  cleanup: function() {
+    this.stopPolling();
+  }	  
 
 });
 
 // Add pagination
 Cocktail.mixin(NFSExportsView, PaginationMixin);
-
