@@ -187,11 +187,14 @@ def refresh_smb_config(exports):
     shutil.move(npath, SMB_CONFIG)
 
 
-def restart_samba():
+def restart_samba(hard=False):
     """
     call whenever config is updated
     """
-    smbd_cmd = [SYSTEMCTL, 'restart', 'smb']
+    mode = 'reload'
+    if (hard):
+        mode = 'restart'
+    smbd_cmd = [SYSTEMCTL, mode, 'smb']
     return run_command(smbd_cmd)
 
 
