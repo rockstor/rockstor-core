@@ -60,7 +60,7 @@
               </thead>
               <tbody>
                 <% disks.each(function(disk, index) { %>
-                  <% if (_.isNull(disk.get('pool')) && !disk.get('parted') && !disk.get('offline')) { %>
+                  <% if (_.isNull(disk.get('pool')) && !disk.get('parted') && !disk.get('offline') && _.isNull(disk.get('btrfs_uuid'))) { %>
                     <tr>
                       <td><%= index+1 %></td>
                       <td><%= disk.get('name') %></td>
@@ -85,4 +85,3 @@
     </div> <!-- form-box -->
   </div> <!-- span8 -->
 </div> <!-- row-fluid -->
-
