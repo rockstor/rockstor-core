@@ -2,20 +2,20 @@
 /*
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
- * 
+ *
  * RockStor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
- * 
+ *
  * RockStor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 </script>
 <div class="share-messages"></div>
@@ -23,7 +23,7 @@
   <span class="h3">Share: <%= share.get('name') %></span>
   <div class="pull-right">
     <% if (snapshots.isEmpty()) { %>
-      <a id="js-rollback" class="btn btn-primary disabled" title="At least one snapshot must be created to rollback to." href="#shares/<%= share.get('name') %>/rollback"><i class="icon-repeat icon-white"></i> Rollback</a>
+      <a id="js-rollback" class="btn btn-primary disabled" title="At least one writable snapshot must exist to rollback to." href="#shares/<%= share.get('name') %>/rollback"><i class="icon-repeat icon-white"></i> Rollback</a>
     <% } else { %>
       <a id="js-rollback" class="btn btn-primary" href="#shares/<%= share.get('name') %>/rollback"><i class="icon-repeat icon-white"></i> Rollback</a>
     <% } %>
@@ -48,13 +48,13 @@
     <div id="ph-access-control"></div>
   </div>
   <div class="" id="snapshots">
-    <div id="ph-snapshots"></div> 
+    <div id="ph-snapshots"></div>
   </div>
   <div class="" id="nfs">
-    <div id="ph-nfs-exports"></div> 
+    <div id="ph-nfs-exports"></div>
   </div>
   <div class="" id="smb">
-    <div id="ph-smb-shares"></div> 
+    <div id="ph-smb-shares"></div>
   </div>
 </div>
 
@@ -69,4 +69,3 @@
   </div>
 </div>
 -->
-
