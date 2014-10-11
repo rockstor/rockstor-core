@@ -25,7 +25,8 @@ class CommandException(Exception):
         self.rc = rc
 
     def __str__(self):
-        return repr(self.err)
+        return repr(' '.join(self.out + self.err))
+
 
 class NonBTRFSRootException(Exception):
 
@@ -34,4 +35,3 @@ class NonBTRFSRootException(Exception):
 
     def __str__(self):
         return repr(self.err)
-

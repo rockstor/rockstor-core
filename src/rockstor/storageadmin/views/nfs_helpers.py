@@ -125,8 +125,9 @@ def refresh_wrapper(exports, request, logger):
     try:
         refresh_nfs_exports(exports)
     except Exception, e:
-        e_msg = ('Unable to delete the export because it is in use.'
-                 ' Try again Later')
+        e_msg = ('A lower level error occured while refreshing NFS exports. '
+                 'Error: %s. This could be due to invalid input. '
+                 'If so, correct your input and try again.' % e)
         logger.exception(e)
         handle_exception(Exception(e_msg), request)
 
