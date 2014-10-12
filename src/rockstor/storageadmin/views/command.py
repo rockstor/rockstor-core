@@ -175,6 +175,7 @@ class CommandView(APIView):
                 return Response(msg)
 
         elif (command == 'shutdown'):
+            msg = ('The system will be shutdown after 1 minute')
             try:
                 system_shutdown()
             except Exception, e:
@@ -182,6 +183,8 @@ class CommandView(APIView):
                        'error')
                 logger.exception(e)
                 handle_exception(Exception(msg), request)
+            finally:
+                return Response(msg)
 
         elif (command == 'reboot'):
             try:

@@ -495,8 +495,8 @@ def is_mounted(mnt_pt):
 
 
 def system_shutdown():
-    return run_command([SHUTDOWN, '-h', 'now'])
+    return run_command([SHUTDOWN, '-h'])
 
 
 def system_reboot():
-    return run_command([SHUTDOWN, '-r', 'now'])
+    return run_command([SHUTDOWN, '-r'])
