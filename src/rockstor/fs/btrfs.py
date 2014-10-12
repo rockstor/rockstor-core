@@ -57,7 +57,6 @@ class Disk():
                 'parted': self.parted,
                 'btrfs_uuid': self.btrfs_uuid, }
 
-
 def add_pool(name, data_raid, meta_raid, disks):
     """
     pool is a btrfs filesystem.
@@ -224,7 +223,7 @@ def remove_snap(pool_name, pool_device, share_name, snap_name):
 
 
 def add_snap(pool_name, pool_device, share_name, snap_name,
-             share_prepend=True):
+             share_prepend=True, readonly=True):
     """
     create a snapshot
     """
@@ -236,8 +235,10 @@ def add_snap(pool_name, pool_device, share_name, snap_name,
         snap_full_path = ('%s/%s_%s' % (root_pool_mnt, share_name, snap_name))
     #snapshot -r for replication. snapshots must be readonly for btrfs
     #send/recv to work.
-    snap_cmd = [BTRFS, 'subvolume', 'snapshot', '-r', share_full_path,
+    snap_cmd = [BTRFS, 'subvolume', 'snapshot', share_full_path,
                 snap_full_path]
+    if (readonly):
+        snap_cmd.insert(3, '-r')
     try:
         run_command(snap_cmd)
     except CommandException, ce:

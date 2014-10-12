@@ -165,6 +165,9 @@ def refresh_nfs_exports(exports):
 def rockstor_smb_config(fo, exports):
     fo.write('####BEGIN: Rockstor SAMBA CONFIG####\n')
     for e in exports:
+        admin_users = ''
+        for au in e.admin_users.all():
+            admin_users = '%s%s ' % (admin_users, au.username)
         fo.write('[%s]\n' % e.share.name)
         fo.write('    comment = %s\n' % e.comment)
         fo.write('    path = %s\n' % e.path)
@@ -172,7 +175,8 @@ def rockstor_smb_config(fo, exports):
         fo.write('    read only = %s\n' % e.read_only)
         fo.write('    create mask = %s\n' % e.create_mask)
         fo.write('    guest ok = %s\n' % e.guest_ok)
-        fo.write('    admin users = %s\n' % e.admin_users)
+        if (len(admin_users) > 0):
+            fo.write('    admin users = %s\n' % admin_users)
     fo.write('####END: Rockstor SAMBA CONFIG####\n')
 
 
@@ -193,11 +197,14 @@ def refresh_smb_config(exports):
     shutil.move(npath, SMB_CONFIG)
 
 
-def restart_samba():
+def restart_samba(hard=False):
     """
     call whenever config is updated
     """
-    smbd_cmd = [SYSTEMCTL, 'restart', 'smb']
+    mode = 'reload'
+    if (hard):
+        mode = 'restart'
+    smbd_cmd = [SYSTEMCTL, mode, 'smb']
     return run_command(smbd_cmd)
 
 

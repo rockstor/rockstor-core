@@ -1,27 +1,27 @@
 /*
  *
- * @licstart  The following is the entire license notice for the 
+ * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
- * 
+ *
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
- * 
+ *
  * RockStor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
- * 
+ *
  * RockStor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * @licend  The above is the entire license notice
  * for the JavaScript code in this page.
- * 
+ *
  */
 
 ShareDetailsLayoutView = RockstorLayoutView.extend({
@@ -58,16 +58,16 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
     //this.dependencies.push(this.iscsi_target);
     this.dependencies.push(this.appliances);
     this.modify_choices = [
-      {name: 'ro', value: 'ro'}, 
+      {name: 'ro', value: 'ro'},
       {name: 'rw', value: 'rw'},
     ];
     this.sync_choices = [
       {name: 'async', value: 'async'},
-      {name: 'sync', value: 'sync'}, 
+      {name: 'sync', value: 'sync'},
     ];
     this.nsecurity_choices = [
       {name: 'secure', value: 'secure'},
-      {name: 'insecure', value: 'insecure'}, 
+      {name: 'insecure', value: 'insecure'},
     ];
 
   },
@@ -76,23 +76,23 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
     this.fetch(this.renderSubViews, this);
     return this;
   },
-  
+
   renderSubViews: function() {
     var current_appliance = this.appliances.find(function(appliance) {
-      return appliance.get('current_appliance') == true; 
+      return appliance.get('current_appliance') == true;
     })
     this.subviews['share-usage'] = new ShareUsageModule({ share: this.share });
-    this.subviews['snapshots'] = new SnapshotsTableModule({ 
+    this.subviews['snapshots'] = new SnapshotsTableModule({
       snapshots: this.snapshots,
       share: this.share
     });
-    this.subviews['nfs-exports'] = new ShareNFSExports({ 
+    this.subviews['nfs-exports'] = new ShareNFSExports({
       share: this.share,
       modify_choices: this.modify_choices,
       sync_choices: this.sync_choices,
       appliance_ip: current_appliance.get('ip'),
     });
-    this.subviews['smb-shares'] = new SMBShares({ 
+    this.subviews['smb-shares'] = new SMBShares({
       share: this.share,
     });
     this.share.on('change', this.subviews['share-usage'].render, this.subviews['share-usage']);
@@ -100,8 +100,8 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
       share: this.share,
       snapshots: this.snapshots,
       permStr: this.parsePermStr(this.share.get("perms")),
-      modify_choices: this.modify_choices, 
-      sync_choices: this.sync_choices, 
+      modify_choices: this.modify_choices,
+      sync_choices: this.sync_choices,
       nsecurity_choices: this.nsecurity_choices,
     }));
     this.renderAcl();
@@ -136,7 +136,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
         showError('error while creating snapshot');
       });
     });
-    
+
     this.$('#js-delete').click(function() {
       var button = _this.$('#js-delete');
       var name = _this.share.get('name');
@@ -149,7 +149,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
         dataType: "json",
         success: function() {
           enableButton(button);
-          app_router.navigate('shares', {trigger: true}) 
+          app_router.navigate('shares', {trigger: true})
         },
         error: function(xhr, status, error) {
           enableButton(button);
@@ -159,7 +159,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
     });
 
   },
-  
+
   renderAcl: function() {
     this.$("#ph-access-control").html(this.shareAclTemplate({
       share: this.share,
@@ -224,7 +224,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
     }
     return p;
   },
-  
+
   createPermStr: function() {
     var perms = [];
     this.$("input[name='perms[]']:checked").each(function() {
@@ -237,7 +237,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
       var t = "";
       _.each(ps, function(p) {
         var s = u + "-" + p;
-        t = t + (perms.indexOf(s) != -1 ? "1" : "0"); 
+        t = t + (perms.indexOf(s) != -1 ? "1" : "0");
       });
       permStr = permStr + parseInt(t,2);
     });
