@@ -57,7 +57,27 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     this.fetch(this.renderViz, this);
     return this;
   },
- 
+
+  renderTitle: function() {
+    this.svgTitle = d3.select(this.el).select('#ph-metrics-title')
+    .append('svg')
+    .attr('width', this.graphWidth)
+    .attr('height', 20);
+    
+    this.svgTitle.append('text')
+    .attr('x', this.diskColOffset)
+    .attr('y', 10)
+    .style("text-anchor", "start")
+    .text('Disks')
+    
+    this.svgTitle.append('text')
+    .attr('x', this.diskColOffset + this.diskWidth + this.poolColOffset + this.poolRectOffset - 1)
+    .attr('y', 10)
+    .style("text-anchor", "start")
+    .text('Pools')
+
+  },
+
    
   renderViz: function() {
     // sort disks and shares by pool
@@ -94,19 +114,11 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     .attr('width', this.graphWidth)
     .attr('height', this.graphHeight);
     
+    this.renderTitle(); 
     this.renderMetrics();
     this.renderLegend();
-    //this.renderTopShares();
   },
 
-  //setData: function() {
-    //this.data = this.shares.sortBy(function(s) {
-      //return ((s.get('r_usage')/s.get('size'))*100);
-    //}).reverse().slice(0,this.numTop);
-    //this.data.map(function(d) { 
-      //d.set({'pUsed': ((d.get('r_usage')/d.get('size'))*100)});
-    //});
-  //},
 
   setGraphDimensions: function() {
     this.graphWidth = this.maximized ? 500 : 250;
@@ -121,132 +133,6 @@ StorageMetricsWidget = RockStorWidgetView.extend({
 
   },
 
-  //renderTopShares: function() {
-    //var _this = this;
-
-    //// Get top shares by % used
-    //var tip = d3.tip()
-    //.attr('class', 'd3-tip')
-    //.offset([-10, 0])
-    //.html(function(d) {
-      //return '<strong>' + d.get('name') + '</strong><br>' + 
-        //'   <strong>Used:</strong> ' +
-        //humanize.filesize(d.get('r_usage')*1024) + '<br>' + 
-        //' <strong>Free:</strong> ' + 
-        //humanize.filesize((d.get('size')-d.get('r_usage'))*1024); 
-    //})
-
-    //this.svg = d3.select(this.el).select('#ph-top-shares-graph')
-    //.append('svg')
-    //.attr('class', 'top-shares')
-    //.attr('width', this.graphWidth)
-    //.attr('height', this.graphHeight);
-    
-    //this.svg.call(tip);
-
-    //// Header 
-    //var titleRow = this.svg.append('g')
-    //.attr('class','.title-row');
-    
-    //titleRow.append("text")  
-    //.attr('class', 'title')
-    //.attr('x', 0)
-    //.attr('y', this.textOffset)
-    //.style("text-anchor", "start")
-    //.text('Top ' + this.data.length + ' shares sorted by % used')
-
-    //// Data rows
-    //var dataRow = this.svg.selectAll('g.data-row')
-    //.data(this.data)
-    //.enter().append('g')
-    //.attr('class', 'data-row')
-    //.attr("transform", function(d, i) { 
-      //return "translate(0," + ((i+1) * _this.rowHeight) + ")"; 
-    //});
-    
-    //// % Used text 
-    //dataRow.append("text")  
-    //.attr('class', 'usedpc')
-    //.attr('x', 45)
-    //.attr('y', this.textOffset)
-    //.style("text-anchor", "end")
-    //.text(function(d) { return d.get('pUsed').toFixed(2) + '%' });
-   
-    //// % Unused bar 
-    //dataRow.append('rect')
-    //.attr('class', 'bar unused')
-    ////.attr('x', function(d) { return 50 + _this.x(d.get('pUsed'));})
-    //.attr('x', 50)
-    //.attr('y', 0)
-    //.attr('rx', 4)
-    //.attr('ry', 4)
-    //.attr('width', _this.barWidth)
-    ////.attr('width', function(d) { return _this.barWidth - _this.x(d.get('pUsed')); })
-    //.attr('height', this.barHeight - 2);
-    
-    //// % Used bar 
-    //dataRow.append('rect')
-    //.attr('class', 'bar used')
-    //.attr('x', 50)
-    //.attr('y', 0)
-    //.attr('rx', 4)
-    //.attr('ry', 4)
-    //.attr('width', function(d) { return _this.x(d.get('pUsed')); })
-    //.attr('height', this.barHeight - 2);
-    
-    //// Share Name
-    //dataRow.append("text")  
-    //.attr('class', 'share-name')
-    //.attr('x', 45 + this.barWidth)
-    //.attr('y', this.textOffset)
-    //.style("text-anchor", "end")
-    //.text(function(d) { 
-      //var n = d.get('name');
-      //// truncate name to 15 chars
-      //if (n.length > 15) {
-        //n = n.slice(0,12) + '...';
-      //}
-      //return n + ' (' + humanize.filesize(d.get('r_usage')*1024) + 
-        //'/' + humanize.filesize(d.get('size')*1024) + 
-        //')' ; 
-    //})
-    //.on('mouseover', tip.show)
-    //.on('mouseout', tip.hide);
-    
-    //// Legend
-    //var legend = this.svg.append('g')
-    //.attr('class', 'legend')
-    //.attr("transform", function(d, i) { 
-      //return "translate(0," + ((_this.data.length + 1) * _this.rowHeight) + ")"; 
-    //});
-
-    //legend.append('rect')
-    //.attr('x', 50)
-    //.attr('y', 10)
-    //.attr('width', 10)
-    //.attr('height', 10)
-    //.attr('class', 'bar used');
-    
-    //legend.append('text')
-    //.attr('x', 50 + 10 + 2)
-    //.attr('y', 20)
-    //.style("text-anchor", "start")
-    //.text('Used');
-
-    //legend.append('rect')
-    //.attr('x', 50 + 50)
-    //.attr('y', 10)
-    //.attr('width', 10)
-    //.attr('height', 10)
-    //.attr('class', 'bar unused');
-
-    //legend.append('text')
-    //.attr('x', 50 + 50 + 10 + 2)
-    //.attr('y', 20)
-    //.style("text-anchor", "start")
-    //.text('Free');
-
-  //},
 
   renderMetrics: function() {
     var _this = this;
