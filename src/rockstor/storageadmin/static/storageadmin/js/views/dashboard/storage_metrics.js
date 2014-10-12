@@ -136,6 +136,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
 
   renderMetrics: function() {
     var _this = this;
+    var links = [];
    
     // Disks 
     var disksColumn = this.svg.append('g').attr('class', 'disks-column');
@@ -179,19 +180,35 @@ StorageMetricsWidget = RockStorWidgetView.extend({
       return d.get('size')/(1024*1024) + ' GB';
     });
 
+    diskRects.each(function(d,i) {
+      var pool = d.get('pool');
+      console.log('pool');
+      if (pool != null) {
+        if (links[pool] == null) {
+          links[pool] = [];
+        }
+        links[pool].push({'source': {
+          x: _this.diskColOffset + _this.diskWidth,
+          y: ((_this.graphHeight/_this.disks.length)*i) +
+            (_this.graphHeight/_this.disks.length)/2 
+        }});
+      }
+    });
+    console.log(links);
+
     // Pools
     var poolsColumn = this.svg.append('g').attr('class', 'pools-column')
     .attr("transform", function(d, i) { 
       var x = _this.diskColOffset + _this.diskWidth + _this.poolColOffset;
       return "translate(" + x + ",0)";
     });
-
+  
     var poolRects = poolsColumn.selectAll('g.pool-rect')
     .data(_this.pools)
     .enter()
     .append('rect')
     .attr('class', function(d,i) {
-      return 'pool-rect';
+      return 'pool-rect pool-rect-used';
     })
     .attr('x', _this.poolRectOffset)
     .attr('y', function(d, i) { 
@@ -202,9 +219,31 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     })
     .attr('width', _this.poolWidth)
     .attr('height', function(d, i) { 
-      return _this.y(d.sizeGB()) - 2;
-    })
-   
+      //return _this.y(d.sizeGB()) - 2;
+      return _this.y(d.sizeGB())-2;
+    });
+
+    // Used space for pool 
+    //poolRects.append('rect')
+    //.attr('class', function(d,i) {
+      //return 'pool-rect pool-rect-used';
+    //})
+    //.attr('x', _this.poolRectOffset)
+    //.attr('y', function(d, i) { 
+      //// sum heights of all pools before this one
+      //var tmp = _.reduce(_this.pools, function(sum, pool, j) {
+        //return j < i ?  sum +=  _this.y(pool.sizeGB()) : sum;
+      //}, 0, _this);
+      //// y is height of previous pools + height of used for current pool
+      //tmp = tmp + _this.y(d.freeGB());
+      //return tmp;
+    //})
+    //.attr('width', _this.poolWidth)
+    //.attr('height', function(d, i) { 
+      ////return _this.y(d.sizeGB()) - 2;
+      //return _this.y(d.usedGB());
+    //})
+
      
     var poolsText = poolsColumn.selectAll('g.pool-text')
     .data(_this.pools)
@@ -243,7 +282,35 @@ StorageMetricsWidget = RockStorWidgetView.extend({
       return d.sizeGB() + ' GB';
     });
     
-    
+    console.log(poolRects); 
+    poolRects.each(function(d,i) {
+      var tmp = _.reduce(_this.pools, function(sum, pool, j) {
+        return j < i ?  sum +=  _this.y(pool.sizeGB()) : sum;
+      }, 0, _this);
+      console.log(d.get('id'));
+      _.each(links[d.get('id')], function(d1) {
+        d1['target'] = {
+          x: _this.diskColOffset + _this.diskWidth + _this.poolColOffset + _this.poolRectOffset,
+          y: tmp + _this.y(d.sizeGB()/2)
+        }
+      });
+    });
+    console.log(links);
+  
+    // Disk - pool connectors
+    //var diagonal = d3.svg.diagonal()
+    var diagonal = d3.svg.diagonal()
+    .source(function(d) { return {"x":d.source.y, "y":d.source.x}; })            
+    .target(function(d) { return {"x":d.target.y, "y":d.target.x}; })
+    .projection(function(d) { return [d.y, d.x]; });
+
+    links = _.flatten(_.values(links));
+    console.log(links);
+    var link = this.svg.selectAll(".metric-link")
+    .data(links)
+    .enter().append("path")
+    .attr("class", "metric-link")
+    .attr("d", diagonal); 
   },
 
   renderLegend: function() {
