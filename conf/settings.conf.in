@@ -255,6 +255,7 @@ PIPELINE_JS = {
             'storageadmin/js/views/plugins.js',
             'storageadmin/js/views/access_keys.js',
             'storageadmin/js/views/add_access_key.js',
+            'storageadmin/js/views/shutdown.js',
             'storageadmin/js/d3.slider2.js',
             ),
         'output_filename': 'storageadmin/js/storageadmin.js'

@@ -21,6 +21,30 @@
   </ul>
   <ul class="nav pull-right">
     <li><a href="#version" id="version-msg"></a></li>
-    <li><a id="logout_user" href="/logout_user">Logout</a></li>
+    <li class="dropdown">
+      <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+        <i class="fa fa-power-off fa-lg"></i>
+      </a>
+      <ul class="dropdown-menu">
+        <li><a id="logout_user" href="/logout_user">Logout</a></li>
+        <li><a id="shutdown" href="#shutdown-view">Shutdown</a></li>
+        <li><a id="reboot" href="/reboot">Reboot</a></li>
+     </ul>
+    </li>
+    
   </ul>
 <% } %>
+
+<div id="update-modal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="updateModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <h3 id="updateModalLabel">Shutdown</h3>
+  </div>
+  <div class="modal-body">
+    <h4>RockStor is shutting down. Please wait... &nbsp;&nbsp; </h4>
+    <br>
+    <div style="text-align: center">
+      <img src="/static/storageadmin/img/ajax-loader-big.gif">
+      <div id="time-left"></div>
+    </div>
+    </div>
+</div>
