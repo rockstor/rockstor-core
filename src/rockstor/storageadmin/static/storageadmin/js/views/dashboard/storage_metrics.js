@@ -42,7 +42,8 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     this.dependencies.push(this.pools);
     this.dependencies.push(this.shares);
     // Metrics 
-    this.rawStorageCapacity = 0; // raw storage capacity in GB
+    this.raw = 0; // raw storage capacity in GB
+    this.usable = 0; // usable storage capacity in GB
   },
 
   render: function() {
@@ -88,7 +89,13 @@ StorageMetricsWidget = RockStorWidgetView.extend({
       sum += disk.get('size');
       return sum;
     }, 0);
-    this.rawStorageCapacity = Math.round(sum / (1024*1024));
+    this.raw = Math.round(sum / (1024*1024));
+    sum = this.pools.reduce(function(sum, pool) {
+      sum += pool.get('size');
+      return sum;
+    }, 0);
+    this.usable = Math.round(sum/(1024*1024));
+    
     var diskProvisioned = this.disks.reduce(function(sum, disk) {
       sum = disk.get('pool') != null ? sum + disk.get('size') : sum;
       return sum;
@@ -101,10 +108,11 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     this.diskFree = diskFree/(1024*1024);
     this.setGraphDimensions();
     console.log(this.graphHeight);
-    this.y = d3.scale.linear().domain([0,this.rawStorageCapacity]).range([0, this.graphHeight]);
+    this.y = d3.scale.linear().domain([0,this.raw]).range([0, this.graphHeight]);
     console.log(this.disks);
     console.log(this.pools);
     console.log(this.shares);
+    this.poolsColYOffset = this.y((this.raw - this.usable)/2);
 
     //this.setData();
     this.$('#ph-metrics-viz').empty();
@@ -200,7 +208,8 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     var poolsColumn = this.svg.append('g').attr('class', 'pools-column')
     .attr("transform", function(d, i) { 
       var x = _this.diskColOffset + _this.diskWidth + _this.poolColOffset;
-      return "translate(" + x + ",0)";
+      var y = _this.poolsColYOffset;
+      return "translate(" + x + "," + y + ")";
     });
   
     var poolRects = poolsColumn.selectAll('g.pool-rect')
@@ -291,7 +300,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
       _.each(links[d.get('id')], function(d1) {
         d1['target'] = {
           x: _this.diskColOffset + _this.diskWidth + _this.poolColOffset + _this.poolRectOffset,
-          y: tmp + _this.y(d.sizeGB()/2)
+          y: tmp + _this.y(d.sizeGB()/2) + _this.poolsColYOffset
         }
       });
     });
@@ -315,7 +324,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
 
   renderLegend: function() {
     this.$('#ph-metrics-legend').empty();
-    var html = 'Raw Storage capacity: ' + this.rawStorageCapacity + ' GB';
+    var html = 'Raw Storage capacity: ' + this.raw + ' GB';
     html += '<br>';
     html += '<div style="float: left; width: 10px; height: 10px;" class="legend-disk-used"></div>' +
       '&nbsp;'+
@@ -327,7 +336,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
       '<div style="float: left">' +  
       'Free: ' + this.diskFree + ' GB'; 
       '</div>';
-    var dataset = [this.rawStorageCapacity, this.diskProvisioned, this.diskFree]
+    var dataset = [this.raw, this.diskProvisioned, this.diskFree]
     var dataLabels = ['Raw Storage Capacity', 'Provisioned', 'Unprovisioned']
      
     this.legendSvg = d3.select(this.el).select('#ph-metrics-legend')
