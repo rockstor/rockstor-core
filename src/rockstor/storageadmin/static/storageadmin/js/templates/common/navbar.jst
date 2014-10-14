@@ -37,7 +37,7 @@
 
 <div id="shutdown-modal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="updateModalLabel" aria-hidden="true">
   <div class="modal-header">
-    <h3 id="updateModalLabel">Shutdown</h3>
+    <h3 id="shutdownModalLabel">Shutdown</h3>
   </div>
   <div class="modal-body">
     <h4 id="message" >RockStor is shutting down. Please wait... &nbsp;&nbsp; </h4>
@@ -48,5 +48,21 @@
     </div>
     <div id="user-msg" style="display: none"><h4> Rockstor is still shutting down.  </h4> </div>
     <div id="user-msg2" style="display: none"><h4> Rockstor is now shutdown.</h4></div>
+    </div>
+</div>
+
+<div id="reboot-modal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="updateModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <h3 id="rebootModalLabel">Reboot</h3>
+  </div>
+  <div class="modal-body">
+    <h4 id="reboot-message" >Rockstor is rebooting. Please wait... &nbsp;&nbsp; </h4>
+    <br>
+    <div style="text-align: center">
+      <img id="reboot-timer" src="/static/storageadmin/img/ajax-loader-big.gif">
+      <div id="reboot-time-left"></div>
+    </div>
+    <div id="reboot-user-msg" style="display: none"><h4> Rockstor is still rebooting. Please wait..  </h4> </div>
+    <div id="reboot-user-msg2" style="display: none"><h4> Rockstor is now up.</h4></div>
     </div>
 </div>

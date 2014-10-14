@@ -55,10 +55,7 @@ ShutdownView = RockstorLayoutView.extend({
        
      }
      });
-     }else{
-      location.reload(history.go(-1));
-    }
-    
+     }
     return this;
   },
   
