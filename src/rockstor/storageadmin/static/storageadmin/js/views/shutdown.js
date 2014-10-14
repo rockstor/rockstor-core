@@ -31,7 +31,7 @@ ShutdownView = RockstorLayoutView.extend({
     this.constructor.__super__.initialize.apply(this, arguments);
    this.template = window.JST.common_navbar;
     this.paginationTemplate = window.JST.common_pagination;
-    this.timeLeft = 60;
+    this.timeLeft = 300;
   },
 
  render: function() {
@@ -39,7 +39,7 @@ ShutdownView = RockstorLayoutView.extend({
     
     if (confirm('Are you sure you want to Shutdown?')) {
      $('#update-modal').modal('show');
-        
+      this.startForceRefreshTimer();  
      
      $.ajax({
         url: "/api/commands/shutdown", 
@@ -47,9 +47,10 @@ ShutdownView = RockstorLayoutView.extend({
         dataType: "json",
         global: false, // dont show global loading indicator
         success: function(data, status, xhr) {
-        _this.startForceRefreshTimer();
+        _this.checkIfUp();
       },
       error: function(xhr, status, error) {
+       _this.checkIfUp();
      // var msg = xhr.responseText;
        
      }
@@ -60,21 +61,69 @@ ShutdownView = RockstorLayoutView.extend({
     
     return this;
   },
- 
- 
-   // countdown timeLeft seconds and then force a window reload 
+  
+ checkIfUp: function() {
+    var _this = this;
+    this.isUpTimer = window.setInterval(function() {
+      $.ajax({
+        url: "/api/sm/sprobes/loadavg?limit=1&format=json", 
+        type: "GET",
+        dataType: "json",
+        global: false, // dont show global loading indicator
+        success: function(data, status, xhr) {
+         // _this.reloadWindow();
+        },
+        error: function(xhr, status, error) {
+        $('#message').remove();
+        $('#timer').removeAttr('src');
+        $('#time-left').remove();
+        _this.displayUserMsg2();
+        }
+      });
+    }, 5000);
+  },
+  
+  // countdown timeLeft seconds and then force a window reload 
   startForceRefreshTimer: function() {
     var _this = this;
     this.forceRefreshTimer = window.setInterval(function() {
       _this.timeLeft = _this.timeLeft - 1;
+      _this.showTimeRemaining();
       if (_this.timeLeft <= 0) {
-        location.reload(true);
+        _this.reloadWindow();
       }
-      
     }, 1000);
   },
 
+  showTimeRemaining: function() {
+    mins = Math.floor(this.timeLeft/60);
+    sec = this.timeLeft - (mins*60);
+    sec = sec >=10 ? '' + sec : '0' + sec
+    $('#time-left').html(mins + ':' + sec)
+    if (mins <= 1 && !this.userMsgDisplayed) {
+      this.displayUserMsg();
+      this.userMsgDisplayed = true;
+    }
+  },
+  
+  reloadWindow: function() {
+    this.clearTimers();
+    
+  },
 
+  clearTimers: function() {
+    window.clearInterval(this.isUpTimer);
+    window.clearInterval(this.forceRefreshTimer);
+  },
+    
+displayUserMsg: function() {
+    $('#time-left').remove();
+    $('#user-msg').show('highlight', null, 1000);
+  },
+
+displayUserMsg2: function() {
+    $('#user-msg2').show('highlight', null, 1000);
+  }
   
 });
 
