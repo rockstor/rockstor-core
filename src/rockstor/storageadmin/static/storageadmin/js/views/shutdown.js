@@ -31,26 +31,28 @@ ShutdownView = RockstorLayoutView.extend({
     this.constructor.__super__.initialize.apply(this, arguments);
    this.template = window.JST.common_navbar;
     this.paginationTemplate = window.JST.common_pagination;
-    this.timeLeft = 30;
+    this.timeLeft = 60;
   },
 
  render: function() {
     var _this = this;
     
     if (confirm('Are you sure you want to Shutdown?')) {
-     _this.$('#update-modal').modal('show');
-     this.startForceRefreshTimer();
+     $('#update-modal').modal('show');
+        
+     
      $.ajax({
         url: "/api/commands/shutdown", 
         type: "POST",
         dataType: "json",
         global: false, // dont show global loading indicator
         success: function(data, status, xhr) {
-        _this.checkIfUp();
+        _this.startForceRefreshTimer();
       },
       error: function(xhr, status, error) {
-        _this.checkIfUp();
-      }
+     // var msg = xhr.responseText;
+       
+     }
      });
      }else{
       location.reload(history.go(-1));
@@ -60,48 +62,19 @@ ShutdownView = RockstorLayoutView.extend({
   },
  
  
-  checkIfUp: function() {
-    var _this = this;
-    this.isUpTimer = window.setInterval(function() {
-      $.ajax({
-        url: "/api/sm/sprobes/loadavg?limit=1&format=json", 
-        type: "GET",
-        dataType: "json",
-        global: false, // dont show global loading indicator
-        success: function(data, status, xhr) {
-        
-        },
-        error: function(xhr, status, error) {
-        }
-      });
-    }, 5000);
-  },
- 
- // countdown timeLeft seconds and then force a window reload 
+   // countdown timeLeft seconds and then force a window reload 
   startForceRefreshTimer: function() {
     var _this = this;
     this.forceRefreshTimer = window.setInterval(function() {
       _this.timeLeft = _this.timeLeft - 1;
-      _this.showTimeRemaining();
+      if (_this.timeLeft <= 0) {
+        location.reload(true);
+      }
       
     }, 1000);
   },
 
-  showTimeRemaining: function() {
-    mins = Math.floor(this.timeLeft/60);
-    sec = this.timeLeft - (mins*60);
-    sec = sec >=10 ? '' + sec : '0' + sec
-    this.$('#time-left').html(mins + ':' + sec)
-    if (mins <= 1 && !this.userMsgDisplayed) {
-      this.displayUserMsg();
-      this.userMsgDisplayed = true;
-    }
-  },
-  
-  displayUserMsg: function() {
-    this.$('#user-msg').show('highlight', null, 1000);
-  }
- 
+
   
 });
 
