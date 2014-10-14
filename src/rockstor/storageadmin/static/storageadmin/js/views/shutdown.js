@@ -38,7 +38,7 @@ ShutdownView = RockstorLayoutView.extend({
     var _this = this;
     
     if (confirm('Are you sure you want to Shutdown?')) {
-     $('#update-modal').modal('show');
+     $('#shutdown-modal').modal('show');
       this.startForceRefreshTimer();  
      
      $.ajax({
