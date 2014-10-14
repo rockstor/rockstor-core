@@ -1803,6 +1803,12 @@ input[type="radio"].selectedRoot {
   height: 300px;
 }
 
+/* Rockstor shutdown modal dialog */
+#shutdown-modal {
+  margin-left: -380px;
+  height: 300px;
+}
+
 /* font-awesome styling */
 a i.fa { color: #000; }
 .nav > li > a.selected i.fa { color: #fff; }
