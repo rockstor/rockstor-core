@@ -187,9 +187,12 @@ class CommandView(APIView):
                 return Response(msg)
 
         elif (command == 'reboot'):
+            msg = ('The system will reboot after 1 minute')
             try:
                 system_reboot()
             except Exception, e:
                 msg = ('Failed to reboot the system due to a low level error')
                 logger.exception(e)
                 handle_exception(Exception(msg), request)
+            finally:
+                return Response(msg)
