@@ -1816,6 +1816,7 @@ input[type="radio"].selectedRoot {
   top: 30%;
   margin-left: -380px;
   height: 300px;
+  position:fixed;
 }
 
 /* font-awesome styling */

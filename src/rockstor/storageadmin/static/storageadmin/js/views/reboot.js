@@ -38,6 +38,12 @@ RebootView = RockstorLayoutView.extend({
  render: function() {
     var _this = this;
     
+    $('#reboot-modal').modal({
+      keyboard: false,
+      backdrop: 'static',
+      show: false
+    });
+    
     if (confirm('Are you sure you want to Reboot?')) {
      $('#reboot-modal').modal('show');
      this.startForceRefreshTimer();  
