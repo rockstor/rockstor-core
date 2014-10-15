@@ -1805,12 +1805,15 @@ input[type="radio"].selectedRoot {
 
 /* Rockstor shutdown modal dialog */
 #shutdown-modal {
+  top: 30%;
   margin-left: -380px;
   height: 300px;
+  position:fixed;
 }
 
 /* Rockstor reboot modal dialog */
 #reboot-modal {
+  top: 30%;
   margin-left: -380px;
   height: 300px;
 }
