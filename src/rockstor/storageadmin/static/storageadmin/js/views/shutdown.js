@@ -1,31 +1,31 @@
 /*
  *
- * @licstart  The following is the entire license notice for the 
+ * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
- * 
+ *
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
- * 
+ *
  * RockStor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
- * 
+ *
  * RockStor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * @licend  The above is the entire license notice
  * for the JavaScript code in this page.
- * 
+ *
  */
 
 ShutdownView = RockstorLayoutView.extend({
-  
+
   initialize: function() {
     // call initialize of base
     this.constructor.__super__.initialize.apply(this, arguments);
@@ -41,12 +41,12 @@ ShutdownView = RockstorLayoutView.extend({
       backdrop: 'static',
       show: false
     });
-    if (confirm('Are you sure you want to Shutdown?')) {
+    if (confirm('Are you sure you want to Shutdown the system? All network access will be lost. Click OK to continue or Cancel to go back.')) {
      $('#shutdown-modal').modal('show');
-      this.startForceRefreshTimer();  
-     
+      this.startForceRefreshTimer();
+
      $.ajax({
-        url: "/api/commands/shutdown", 
+        url: "/api/commands/shutdown",
         type: "POST",
         dataType: "json",
         global: false, // dont show global loading indicator
@@ -55,21 +55,19 @@ ShutdownView = RockstorLayoutView.extend({
       },
       error: function(xhr, status, error) {
        _this.checkIfUp();
-     // var msg = xhr.responseText;
-       
-     }
-     });
-     }else{
-      location.reload(history.go(-1));
       }
+     });
+     } else {
+      location.reload(history.go(-1));
+     }
     return this;
   },
-  
+
  checkIfUp: function() {
     var _this = this;
     this.isUpTimer = window.setInterval(function() {
       $.ajax({
-        url: "/api/sm/sprobes/loadavg?limit=1&format=json", 
+        url: "/api/sm/sprobes/loadavg?limit=1&format=json",
         type: "GET",
         dataType: "json",
         global: false, // dont show global loading indicator
@@ -82,8 +80,8 @@ ShutdownView = RockstorLayoutView.extend({
       });
     }, 5000);
   },
-  
-  // countdown timeLeft seconds and then force a window reload 
+
+  // countdown timeLeft seconds and then force a window reload
   startForceRefreshTimer: function() {
     var _this = this;
     this.forceRefreshTimer = window.setInterval(function() {
@@ -105,17 +103,17 @@ ShutdownView = RockstorLayoutView.extend({
       this.userMsgDisplayed = true;
     }
   },
-  
+
   reloadWindow: function() {
     this.clearTimers();
-    
+
   },
 
   clearTimers: function() {
     window.clearInterval(this.isUpTimer);
     window.clearInterval(this.forceRefreshTimer);
   },
-    
+
 displayUserMsg: function() {
     $('#time-left').remove();
     $('#user-msg').show('highlight', null, 1000);
@@ -128,8 +126,5 @@ displayUserMsg2: function() {
     $('#user-msg').remove();
     $('#user-msg2').show('highlight', null, 1000);
   }
-  
+
 });
-
-
-
