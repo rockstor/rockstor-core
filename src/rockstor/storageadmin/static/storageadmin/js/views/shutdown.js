@@ -71,10 +71,7 @@ ShutdownView = RockstorLayoutView.extend({
          // _this.reloadWindow();
         },
         error: function(xhr, status, error) {
-        $('#message').remove();
-        $('#timer').removeAttr('src');
-        $('#time-left').remove();
-        _this.displayUserMsg2();
+         _this.displayUserMsg2();
         }
       });
     }, 5000);
@@ -119,6 +116,10 @@ displayUserMsg: function() {
   },
 
 displayUserMsg2: function() {
+    $('#message').remove();
+    $('#timer').removeAttr('src');
+    $('#time-left').remove();
+    $('#user-msg').remove();
     $('#user-msg2').show('highlight', null, 1000);
   }
   
