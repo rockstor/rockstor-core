@@ -72,6 +72,8 @@ var AppRouter = Backbone.Router.extend({
     "scheduled-tasks": "showScheduledTasks",
     "scheduled-tasks/:taskId/log": "showTasks",
     "add-scheduled-task": "addScheduledTask",
+    "shutdown": "showShutdownView",
+    "reboot": "showReboot",
     "version": "showVersion",
     "sftp": "showSFTP",
     "add-sftp-share": "addSFTPShare",
@@ -543,6 +545,18 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },
+  
+  showShutdownView: function() {
+    this.cleanup();
+    this.currentLayout = new ShutdownView();
+   $('#maincontent').append(this.currentLayout.render().el);
+   },
+   
+   showReboot: function() {
+    this.cleanup();
+    this.currentLayout = new RebootView();
+    $('#maincontent').append(this.currentLayout.render().el);
+   },
 
   showPlugins: function() {
     this.renderSidebar("plugins", "plugins");

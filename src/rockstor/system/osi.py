@@ -46,6 +46,7 @@ YUM = '/usr/bin/yum'
 AT = '/usr/bin/at'
 DEFAULT_MNT_DIR = '/mnt2/'
 RPM = '/usr/bin/rpm'
+SHUTDOWN = '/usr/sbin/shutdown'
 
 
 def inplace_replace(of, nf, regex, nl):
@@ -504,3 +505,11 @@ def is_mounted(mnt_pt):
             if (re.search(' ' + mnt_pt + ' ', line) is not None):
                 return True
     return False
+
+
+def system_shutdown():
+    return run_command([SHUTDOWN, '-h'])
+
+
+def system_reboot():
+    return run_command([SHUTDOWN, '-r'])
