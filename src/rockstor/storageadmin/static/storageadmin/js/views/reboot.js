@@ -34,22 +34,11 @@ RebootView = RockstorLayoutView.extend({
     this.timeLeft = 600;
     this.rebootStatus = false;
     this.isStopped=false;
-    this.isStarted=false;
-    this.isReloaded = false;
- },
+    },
 
  render: function() {
     var _this = this;
-    if(_this.isStopped && !_this.isStarted){
-    _this.checkIfUp();
-    return;
-    
-    }
-    if(_this.isStopped && _this.isStarted){
-    return this;
-    }
-    
-     if (confirm('Are you sure you want to Reboot?')) {
+    if (confirm('Are you sure you want to Reboot?')) {
      $('#reboot-modal').modal('show');
      this.startForceRefreshTimer();  
      
@@ -72,7 +61,6 @@ RebootView = RockstorLayoutView.extend({
   
  checkIfUp: function() {
     var _this = this;
-    
     this.isUpTimer = window.setInterval(function() {
       $.ajax({
         url: "/api/sm/sprobes/loadavg?limit=1&format=json", 
@@ -80,24 +68,17 @@ RebootView = RockstorLayoutView.extend({
         dataType: "json",
         global: false, // dont show global loading indicator
         success: function(data, status, xhr) {
-       // alert('in success _this.isStopped='+_this.isStopped);
-        if(_this.isStopped && !_this.isStarted){
-        _this.reloadWindow();
-        _this.isStarted=true;
-        }
-        else if(_this.isStopped && _this.isStarted){
+        if(_this.isStopped){
          $('#reboot-message').remove();
          $('#reboot-timer').removeAttr('src');
          $('#reboot-time-left').remove();
-        _this.displayUserMsg2();
+         _this.displayUserMsg2();
+         $('#reboot-modal').modal('hide');
         
         }
         },
         error: function(xhr, status, error) {
-         
         _this.isStopped=true;
-      // alert('in error _this.isStopped='+_this.isStopped);
-        
         }
       });
     }, 5000);
@@ -112,7 +93,8 @@ RebootView = RockstorLayoutView.extend({
       _this.timeLeft = _this.timeLeft - 1;
       _this.showTimeRemaining();
       if (_this.timeLeft <= 0) {
-        _this.reloadWindow();
+       // _this.reloadWindow();
+        
       }
     }, 1000);
   },
