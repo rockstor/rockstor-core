@@ -32,12 +32,12 @@ RebootView = RockstorLayoutView.extend({
    this.template = window.JST.common_navbar;
     this.paginationTemplate = window.JST.common_pagination;
     this.timeLeft = 600;
-    this.rebootStatus = false;
     this.isStopped=false;
     },
 
  render: function() {
     var _this = this;
+    
     if (confirm('Are you sure you want to Reboot?')) {
      $('#reboot-modal').modal('show');
      this.startForceRefreshTimer();  
@@ -68,14 +68,11 @@ RebootView = RockstorLayoutView.extend({
         dataType: "json",
         global: false, // dont show global loading indicator
         success: function(data, status, xhr) {
-        if(_this.isStopped){
-         $('#reboot-message').remove();
-         $('#reboot-timer').removeAttr('src');
-         $('#reboot-time-left').remove();
-         _this.displayUserMsg2();
-         $('#reboot-modal').modal('hide');
+         if(_this.isStopped){
+            _this.displayUserMsg2();
+            location.reload(history.go(-1));    
+           }
         
-        }
         },
         error: function(xhr, status, error) {
         _this.isStopped=true;
@@ -93,7 +90,7 @@ RebootView = RockstorLayoutView.extend({
       _this.timeLeft = _this.timeLeft - 1;
       _this.showTimeRemaining();
       if (_this.timeLeft <= 0) {
-       // _this.reloadWindow();
+        _this.reloadWindow();
         
       }
     }, 1000);
@@ -112,8 +109,8 @@ RebootView = RockstorLayoutView.extend({
   
   reloadWindow: function() {
     this.clearTimers();
-    this.$('#reboot-modal').modal('hide');
-    location.reload(true);
+    $('#reboot-modal').modal('hide');
+    location.reload(history.go(-1));
   },
 
   clearTimers: function() {
@@ -127,6 +124,9 @@ displayUserMsg: function() {
   },
 
 displayUserMsg2: function() {
+    $('#reboot-message').remove();
+    $('#reboot-timer').removeAttr('src');
+    $('#reboot-time-left').remove();
     $('#reboot-user-msg2').show('highlight', null, 1000);
   }
   
