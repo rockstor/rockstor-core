@@ -141,6 +141,21 @@ class SambaView(rfc.GenericView):
                     auo = User.objects.get(username=u)
                     auo.smb_shares.add(smbo)
             smbo.save()
+            for smb_o in SambaShare.objects.all():
+                if (not is_share_mounted(smb_o.share.name)):
+                    pool_device = Disk.objects.filter(
+                        pool=smb_o.share.pool)[0].name
+                    mnt_pt = ('%s%s' % (settings.MNT_PT, smb_o.share.name))
+                    try:
+                        mount_share(smb_o.share.subvol_name, pool_device,
+                                    mnt_pt)
+                    except Exception, e:
+                        logger.exception(e)
+                        if (smb_o.id == smbo.id):
+                            e_msg = ('Failed to mount share(%s) due to a low '
+                                     'level error.' % smb_o.share.name)
+                            handle_exception(Exception(e_msg), request)
+
             refresh_smb_config(list(SambaShare.objects.all()))
             restart_samba()
             return Response(SambaShareSerializer(smbo).data)
