@@ -41,9 +41,15 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     this.dependencies.push(this.disks);
     this.dependencies.push(this.pools);
     this.dependencies.push(this.shares);
+    // svg 
+    this.svgEl = '#ph-metrics-viz';
     // Metrics 
     this.raw = 0; // raw storage capacity in GB
-    this.usable = 0; // usable storage capacity in GB
+    this.allocated = 0; 
+    this.free = 0; 
+    this.poolCapacity = 0; 
+    this.usage = 0; 
+    this.margin = {top: 20, right: 20, bottom: 40, left: 30};
   },
 
   render: function() {
@@ -55,341 +61,118 @@ StorageMetricsWidget = RockStorWidgetView.extend({
       displayName: this.displayName,
       maximized: this.maximized
     }));
-    this.fetch(this.renderViz, this);
+    this.fetch(function() {
+      console.log(_this.disks);
+      console.log(_this.pools);
+      console.log(_this.shares);
+      _this.setData();
+      _this.setDimensions();
+      _this.setupSvg();
+      _this.renderMetrics();
+    }, this);
     return this;
   },
 
-  renderTitle: function() {
-    this.svgTitle = d3.select(this.el).select('#ph-metrics-title')
-    .append('svg')
-    .attr('width', this.graphWidth)
-    .attr('height', 20);
-    
-    this.svgTitle.append('text')
-    .attr('x', this.diskColOffset)
-    .attr('y', 10)
-    .style("text-anchor", "start")
-    .text('Disks')
-    
-    this.svgTitle.append('text')
-    .attr('x', this.diskColOffset + this.diskWidth + this.poolColOffset + this.poolRectOffset - 1)
-    .attr('y', 10)
-    .style("text-anchor", "start")
-    .text('Pools')
-
-  },
-
-   
-  renderViz: function() {
-    // sort disks and shares by pool
-    this.disks = this.disks.sortBy(function(disk) { return -disk.get('pool'); }, this);
-    this.pools = this.pools.sortBy(function(pool) { return -pool.id }, this);
-    this.shares = this.shares.sortBy(function(share) { return -share.get('pool').id }, this);
-    var sum = this.disks.reduce(function(sum, disk) {
+  setData: function() {
+    var gb = 1024*1024;
+    this.raw = this.disks.reduce(function(sum, disk) {
       sum += disk.get('size');
       return sum;
-    }, 0);
-    this.raw = Math.round(sum / (1024*1024));
-    sum = this.pools.reduce(function(sum, pool) {
-      sum += pool.get('size');
-      return sum;
-    }, 0);
-    this.usable = Math.round(sum/(1024*1024));
-    
-    var diskProvisioned = this.disks.reduce(function(sum, disk) {
+    }, 0)/gb;
+    this.allocated = this.disks.reduce(function(sum, disk) {
       sum = disk.get('pool') != null ? sum + disk.get('size') : sum;
       return sum;
-    }, 0);
-    this.diskProvisioned = diskProvisioned/(1024*1024);
-    var diskFree = this.disks.reduce(function(sum, disk) {
-      sum = disk.get('pool') == null ? sum + disk.get('size') : sum;
+    }, 0)/gb;
+    this.free = this.raw - this.allocated
+    this.poolCapacity = this.pools.reduce(function(sum, pool) {
+      sum += pool.get('size');
       return sum;
-    }, 0);
-    this.diskFree = diskFree/(1024*1024);
-    this.setGraphDimensions();
-    console.log(this.graphHeight);
-    this.y = d3.scale.linear().domain([0,this.raw]).range([0, this.graphHeight]);
-    console.log(this.disks);
-    console.log(this.pools);
-    console.log(this.shares);
-    this.poolsColYOffset = this.y((this.raw - this.usable)/2);
+    }, 0)/gb;
+    this.used = this.shares.reduce(function(sum, share) {
+      sum += share.get('r_usage');
+      return sum;
+    }, 0)/gb;
+    this.data = [
+      {name: 'used', label: 'Usage', value: this.used},
+      {name: 'pool', label: 'Pool Capacity', value: this.poolCapacity}, 
+      {name: 'raw', label: 'Raw Storage Capacity', value: this.raw}
+    ];
 
-    //this.setData();
-    this.$('#ph-metrics-viz').empty();
-    this.svg = d3.select(this.el).select('#ph-metrics-viz')
+  },
+  
+  setDimensions: function() {
+    //this.graphWidth = this.maximized ? 500 : 250;
+    //this.graphHeight = this.maximized ? 300 : 150;
+    this.barPadding = this.maximized ? 40 : 20;
+    this.barWidth = this.maximized ? 400 : 200
+    if (this.maximized) {
+      this.width = 500 - this.margin.left - this.margin.right;
+      this.height = 500 - this.margin.top - this.margin.bottom;
+    } else {
+      this.width = 250 - this.margin.left - this.margin.right;
+      this.height = 250 - this.margin.top - this.margin.bottom;
+    }
+    this.x = d3.scale.linear().domain([0,this.raw]).range([0, this.width]);
+    this.y = d3.scale.linear().domain([0, this.data.length]).range([0, this.height]);
+    this.barHeight = (this.height / this.data.length ) - 4;
+  },
+  
+  setupSvg: function() {
+    this.$(this.svgEl).empty();
+    this.svg = d3.select(this.el).select(this.svgEl)
     .append('svg')
     .attr('class', 'metrics')
-    .attr('width', this.graphWidth)
-    .attr('height', this.graphHeight);
-    
-    this.renderTitle(); 
-    this.renderMetrics();
-    this.renderLegend();
+    .attr('width', this.width + this.margin.left + this.margin.right)
+    .attr('height', this.height + this.margin.top + this.margin.bottom);
+    this.svgG = this.svg.append("g")
+    .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
   },
-
-
-  setGraphDimensions: function() {
-    this.graphWidth = this.maximized ? 500 : 250;
-    this.graphHeight = this.maximized ? 300 : 150;
-    this.diskWidth = this.maximized ? 40 : 20;
-    this.diskTextOffset = 2;
-    this.diskColOffset = 35;
-    this.poolWidth = this.maximized ? 40 : 20;
-    this.poolTextOffset = 2;
-    this.poolColOffset = 30;
-    this.poolRectOffset = 35;
-
-  },
-
 
   renderMetrics: function() {
     var _this = this;
-    var links = [];
    
-    // Disks 
-    var disksColumn = this.svg.append('g').attr('class', 'disks-column');
-    
-    var diskRects = disksColumn.selectAll('g.disk-rect')
-    .data(_this.disks)
+    this.xAxis = d3.svg.axis().scale(this.x).orient('bottom').ticks(5);
+
+    this.svgG.append("g")	
+    .attr("class", "metrics-axis")
+    .attr("transform", "translate(0," + _this.height + ")")
+    .call(this.xAxis)
+
+    this.svgG.selectAll('metrics-rect')
+    .data(this.data)
     .enter()
     .append('rect')
-    .attr('class', function(d,i) {
-      return (d.get('pool') == null ? 'disk-rect disk-rect-free' : 'disk-rect disk-rect-used')
+    .attr('class', function(d) {
+      return d.name;
     })
-    .attr('x', _this.diskColOffset)
-    .attr('y', function(d, i) { 
-      return (_this.graphHeight/_this.disks.length)*i; 
+    .attr('x',0)
+    .attr('y', function(d,i) {
+      //return _this.y(i) + _this.barHeight/2 + _this.barPadding;
+      return _this.y(i);
     })
-    .attr('width', _this.diskWidth)
-    .attr('height', (_this.graphHeight/_this.disks.length)-2);
+    .attr('width', function(d) { return _this.x(d.value); })
+    .attr('height', function() { return _this.barHeight; });
+    //.attr('height', this.barHeight)
 
-    var disksText = disksColumn.selectAll('g.disk-text')
-    .data(_this.disks)
-    .enter();
-    
-    disksText.append('text')
-    .attr('x', 2)
-    .attr('y', function(d, i) { 
-      var unit = _this.graphHeight / _this.disks.length;
-      return (unit*i) + unit/2;
-    })
-    .style("text-anchor", "start")
-    .text(function(d,i) {
-      return d.get('name');
-    });
-    disksText.append('text')
-    .attr('x', _this.diskTextOffset)
-    .attr('y', function(d, i) { 
-      var unit = _this.graphHeight / _this.disks.length;
-      return (unit*i) + unit/2 + 12;
-    })
-    .style("text-anchor", "start")
-    .text(function(d,i) {
-      return d.get('size')/(1024*1024) + ' GB';
-    });
-
-    diskRects.each(function(d,i) {
-      var pool = d.get('pool');
-      console.log('pool');
-      if (pool != null) {
-        if (links[pool] == null) {
-          links[pool] = [];
-        }
-        links[pool].push({'source': {
-          x: _this.diskColOffset + _this.diskWidth,
-          y: ((_this.graphHeight/_this.disks.length)*i) +
-            (_this.graphHeight/_this.disks.length)/2 
-        }});
-      }
-    });
-    console.log(links);
-
-    // Pools
-    var poolsColumn = this.svg.append('g').attr('class', 'pools-column')
-    .attr("transform", function(d, i) { 
-      var x = _this.diskColOffset + _this.diskWidth + _this.poolColOffset;
-      var y = _this.poolsColYOffset;
-      return "translate(" + x + "," + y + ")";
-    });
-  
-    var poolRects = poolsColumn.selectAll('g.pool-rect')
-    .data(_this.pools)
-    .enter()
-    .append('rect')
-    .attr('class', function(d,i) {
-      return 'pool-rect pool-rect-used';
-    })
-    .attr('x', _this.poolRectOffset)
-    .attr('y', function(d, i) { 
-      // sum heights of all pools before this one
-      return _.reduce(_this.pools, function(sum, pool, j) {
-        return j < i ?  sum +=  _this.y(pool.sizeGB()) : sum;
-      }, 0, _this);
-    })
-    .attr('width', _this.poolWidth)
-    .attr('height', function(d, i) { 
-      //return _this.y(d.sizeGB()) - 2;
-      return _this.y(d.sizeGB())-2;
-    });
-
-    // Used space for pool 
-    //poolRects.append('rect')
-    //.attr('class', function(d,i) {
-      //return 'pool-rect pool-rect-used';
+    //this.svgG.selectAll('g.metrics-raw')
+    //.data([this.raw])
+    //.enter()
+    //.append('g')
+    //.attr('transform', function(d,i) {
+      //return "translate(0," + 2*_this.barHeight + ")"; 
     //})
-    //.attr('x', _this.poolRectOffset)
-    //.attr('y', function(d, i) { 
-      //// sum heights of all pools before this one
-      //var tmp = _.reduce(_this.pools, function(sum, pool, j) {
-        //return j < i ?  sum +=  _this.y(pool.sizeGB()) : sum;
-      //}, 0, _this);
-      //// y is height of previous pools + height of used for current pool
-      //tmp = tmp + _this.y(d.freeGB());
-      //return tmp;
-    //})
-    //.attr('width', _this.poolWidth)
-    //.attr('height', function(d, i) { 
-      ////return _this.y(d.sizeGB()) - 2;
-      //return _this.y(d.usedGB());
-    //})
-
-     
-    var poolsText = poolsColumn.selectAll('g.pool-text')
-    .data(_this.pools)
-    .enter();
-    
-    poolsText.append('text')
-    .attr('x', _this.poolRectOffset-1)
-    .attr('y', function(d, i) { 
-      // sum heights of all pools before this one
-      var ht = _.reduce(_this.pools, function(sum, pool, j) {
-        return j < i ?  sum +=  _this.y(pool.sizeGB()) : sum;
-      }, 0, _this);
-      // move text to middle of current pool rect
-      ht += _this.y(d.sizeGB())/2;
-      console.log(ht);
-      return ht;
-    })
-    .style("text-anchor", "end")
-    .text(function(d,i) {
-      return d.get('name');
-    });
-
-    poolsText.append('text')
-    .attr('x', _this.poolRectOffset-1)
-    .attr('y', function(d, i) { 
-      var ht = _.reduce(_this.pools, function(sum, pool, j) {
-        return j < i ?  sum +=  _this.y(pool.sizeGB()) : sum;
-      }, 0, _this);
-      // move text to middle of current pool rect
-      ht += _this.y(d.sizeGB())/2;
-      ht += 12; // offset for pool name
-      return ht;
-    })
-    .style("text-anchor", "end")
-    .text(function(d,i) {
-      return d.sizeGB() + ' GB';
-    });
-    
-    console.log(poolRects); 
-    poolRects.each(function(d,i) {
-      var tmp = _.reduce(_this.pools, function(sum, pool, j) {
-        return j < i ?  sum +=  _this.y(pool.sizeGB()) : sum;
-      }, 0, _this);
-      console.log(d.get('id'));
-      _.each(links[d.get('id')], function(d1) {
-        d1['target'] = {
-          x: _this.diskColOffset + _this.diskWidth + _this.poolColOffset + _this.poolRectOffset,
-          y: tmp + _this.y(d.sizeGB()/2) + _this.poolsColYOffset
-        }
-      });
-    });
-    console.log(links);
-  
-    // Disk - pool connectors
-    //var diagonal = d3.svg.diagonal()
-    var diagonal = d3.svg.diagonal()
-    .source(function(d) { return {"x":d.source.y, "y":d.source.x}; })            
-    .target(function(d) { return {"x":d.target.y, "y":d.target.x}; })
-    .projection(function(d) { return [d.y, d.x]; });
-
-    links = _.flatten(_.values(links));
-    console.log(links);
-    var link = this.svg.selectAll(".metric-link")
-    .data(links)
-    .enter().append("path")
-    .attr("class", "metric-link")
-    .attr("d", diagonal); 
-  },
-
-  renderLegend: function() {
-    this.$('#ph-metrics-legend').empty();
-    var html = 'Raw Storage capacity: ' + this.raw + ' GB';
-    html += '<br>';
-    html += '<div style="float: left; width: 10px; height: 10px;" class="legend-disk-used"></div>' +
-      '&nbsp;'+
-      '<div style="float: left">' +  
-      'Provisioned: ' + this.diskProvisioned + ' GB' + 
-      '</div>' + 
-      '&nbsp;'+
-      '<div style="float: left; width: 10px; height: 10px;" class="legend-disk-free"></div>' +
-      '<div style="float: left">' +  
-      'Free: ' + this.diskFree + ' GB'; 
-      '</div>';
-    var dataset = [this.raw, this.diskProvisioned, this.diskFree]
-    var dataLabels = ['Raw Storage Capacity', 'Provisioned', 'Unprovisioned']
-     
-    this.legendSvg = d3.select(this.el).select('#ph-metrics-legend')
-    .append('svg')
-    .attr('width', this.graphWidth)
-    .attr('height', 100);
-
-    var labels = this.legendSvg.selectAll("g.labels")
-    .data(dataLabels)
-    .enter()
-    .append("g")
-    .attr("transform", function(d,i) {
-      return "translate(0," + (5 + i*20)+ ")";
-    });
-
-    labels.append("rect")
-    .attr("width", function(d,i){
-      return i == 0 ? 0 : 13;
-    })
-    .attr("height", function(d,i) {
-      return i == 0 ? 0 : 13;
-    })
-    .attr("class", function(d,i) {
-      if (i==1) {
-        return 'disk-rect-used';
-      } else {
-        return 'disk-rect-free';
-      }
-         
-    });
-    
-    labels.append("text")
-    .attr("text-anchor", "left")
-    .attr("transform", function(d,i) {
-      if (i==0) {
-        return "translate(0,13)";
-      } else {
-        return "translate(16,13)";
-      }
-    })
-    .text(function(d,i) {
-      return d + ' ' + dataset[i] + ' GB';
-    });
-
-    //this.$('#ph-metrics-legend').html(html);
+    //.append('rect')
+    //.attr('class', 'metrics-raw')
+    //.attr('x', 0)
+    //.attr('y', 0)
+    //.attr('width', this.x(this.raw))
+    //.attr('height', this.barHeight)
 
   },
 
-  
   resize: function(event) {
     this.constructor.__super__.resize.apply(this, arguments);
     this.setGraphDimensions();
-    //this.renderTopShares();
   }
 
 });
@@ -398,7 +181,7 @@ RockStorWidgets.widgetDefs.push({
     name: 'storage_metrics', 
     displayName: 'Storage Metrics', 
     view: 'StorageMetricsWidget',
-    description: 'Display top shares by usage',
+    description: 'Display capacity and usage',
     defaultWidget: true,
     rows: 1,
     cols: 5,
