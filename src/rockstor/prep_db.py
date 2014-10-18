@@ -17,29 +17,29 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from smart_manager.models import Service
-from django.conf import settings
-from django.contrib.auth.models import User as DjangoUser
-from storageadmin.models import User, Setup, Plugin
-from system.users import (get_users, useradd, usermod, userdel, get_epasswd)
-import datetime
+from storageadmin.models import Setup, Plugin
+
 
 def register_services():
-    services = {'NFS': 'nfs',
-                'Samba': 'smb',
-                'NIS': 'nis',
-                'NTP': 'ntpd',
-                'AD': 'winbind',
-                'LDAP': 'ldap',
-                'SFTP': 'sftp',
-                'Replication': 'replication',
-                'Task Scheduler': 'task-scheduler',
-                'Data Collector': 'data-collector',
-                'Service Monitor': 'service-monitor',}
+    services = {
+        'AFP': 'netatalk',
+        'NFS': 'nfs',
+        'Samba': 'smb',
+        'NIS': 'nis',
+        'NTP': 'ntpd',
+        'AD': 'winbind',
+        'LDAP': 'ldap',
+        'SFTP': 'sftp',
+        'Replication': 'replication',
+        'Task Scheduler': 'task-scheduler',
+        'Data Collector': 'data-collector',
+        'Service Monitor': 'service-monitor', }
 
     for s in services.keys():
         if (not Service.objects.filter(display_name=s).exists()):
             s_o = Service(display_name=s, name=services[s])
             s_o.save()
+
 
 def create_setup():
     setup = Setup.objects.all()
@@ -47,19 +47,19 @@ def create_setup():
         s = Setup()
         s.save()
 
+
 def initialize_plugins():
-    plugins = Plugin.objects.all()
     if (not Plugin.objects.filter(name='backup').exists()):
         backup = Plugin(
-                name='backup',
-                display_name='Backup',
-                description='Backup Server functionality',
-                css_file_name = 'backup',
-                js_file_name = 'backup')
+            name='backup',
+            display_name='Backup',
+            description='Backup Server functionality',
+            css_file_name='backup',
+            js_file_name='backup')
         backup.save()
+
 
 def main():
     create_setup()
     register_services()
     initialize_plugins()
-
