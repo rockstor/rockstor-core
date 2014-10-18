@@ -2,9 +2,13 @@
   <table id="disks-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of disks">
     <thead>
       <tr>
-        <th scope="col" abbr="Name">Disk Name</th>
+        <th scope="col" abbr="Name">Name</th>
+	<th scope="col" abbr="Serial">Serial</th>
         <th scope="col" abbr="Capacity">Capacity</th>
         <th scope="col" abbr="Pool">Pool</th>
+	<th scope="col" abbr="Model">Model</th>
+	<th scope="col" abbr="Transport">Transport</th>
+	<th scope="col" abbr="Vendor">Vendor</th>
       </tr>
     </thead>
     <tbody>
@@ -22,6 +26,7 @@
             <% } %>
 
           </td>
+	  <td><%= disk.get('serial') %></td>
           <td><%= humanize.filesize(disk.get('size')*1024) %></td>
           <td>
             <% if (!_.isNull(disk.get("pool_name"))) { %>
@@ -30,6 +35,9 @@
               </a>
             <% } %>
           </td>
+	  <td><%= disk.get('model') %></td>
+	  <td><%= disk.get('transport') %></td>
+	  <td><%= disk.get('vendor') %></td>
         </tr>
       <% }); %>
     </tbody>
