@@ -161,3 +161,11 @@ def ads_join_status(username, passwd):
     up = '%s%%%s' % (username, passwd)
     return run_command([NET, 'ads', 'status', '-U', up, '--request-timeout',
                         '60'])
+
+
+def restart_netatalk():
+    pass
+
+
+def refresh_afp_config(afpl):
+    pass
