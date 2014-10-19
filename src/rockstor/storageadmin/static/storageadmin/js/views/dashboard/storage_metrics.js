@@ -75,27 +75,28 @@ StorageMetricsWidget = RockStorWidgetView.extend({
 
   setData: function() {
     var gb = 1024*1024;
-    this.raw = this.disks.reduce(function(sum, disk) {
+    this.raw = (this.disks.reduce(function(sum, disk) {
       sum += disk.get('size');
       return sum;
-    }, 0)/gb;
-    this.allocated = this.disks.reduce(function(sum, disk) {
+    }, 0)).toFixed(2);
+    this.allocated = (this.disks.reduce(function(sum, disk) {
       sum = disk.get('pool') != null ? sum + disk.get('size') : sum;
       return sum;
-    }, 0)/gb;
+    }, 0)).toFixed(2);
     this.free = this.raw - this.allocated
-    this.poolCapacity = this.pools.reduce(function(sum, pool) {
+    this.poolCapacity = (this.pools.reduce(function(sum, pool) {
       sum += pool.get('size');
       return sum;
-    }, 0)/gb;
-    this.used = this.shares.reduce(function(sum, share) {
+    }, 0)).toFixed(2);
+    this.used = (this.shares.reduce(function(sum, share) {
       sum += share.get('r_usage');
       return sum;
-    }, 0)/gb;
+    }, 0)).toFixed(2);
+    this.pctUsed = ((this.used/this.raw).toFixed(2)) * 100;
     this.data = [
       {name: 'used', label: 'Usage', value: this.used},
       {name: 'pool', label: 'Pool Capacity', value: this.poolCapacity}, 
-      {name: 'raw', label: 'Raw Storage Capacity', value: this.raw}
+      {name: 'raw', label: 'Raw Capacity', value: this.raw}
     ];
 
   },
@@ -114,7 +115,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     }
     this.x = d3.scale.linear().domain([0,this.raw]).range([0, this.width]);
     this.y = d3.scale.linear().domain([0, this.data.length]).range([0, this.height]);
-    this.barHeight = (this.height / this.data.length ) - 4;
+    this.barHeight = (this.height / this.data.length );
   },
   
   setupSvg: function() {
@@ -130,14 +131,20 @@ StorageMetricsWidget = RockStorWidgetView.extend({
 
   renderMetrics: function() {
     var _this = this;
-   
-    this.xAxis = d3.svg.axis().scale(this.x).orient('bottom').ticks(5);
+    
+    // tickValues(this.x.domain()) sets tick values at beginning and end of the scale
+    this.xAxis = d3.svg.axis().scale(this.x).orient('bottom').tickValues(_this.x.domain()).tickFormat(function(d) {
+      return humanize.filesize(d*1024);
+    });
+    this.yAxis = d3.svg.axis().scale(this.y).orient('left').ticks(0);
 
     this.svgG.append("g")	
     .attr("class", "metrics-axis")
     .attr("transform", "translate(0," + _this.height + ")")
     .call(this.xAxis)
+    
 
+    // render used, pools, and raw capacity
     this.svgG.selectAll('metrics-rect')
     .data(this.data)
     .enter()
@@ -152,21 +159,52 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     })
     .attr('width', function(d) { return _this.x(d.value); })
     .attr('height', function() { return _this.barHeight; });
-    //.attr('height', this.barHeight)
 
-    //this.svgG.selectAll('g.metrics-raw')
-    //.data([this.raw])
-    //.enter()
-    //.append('g')
-    //.attr('transform', function(d,i) {
-      //return "translate(0," + 2*_this.barHeight + ")"; 
-    //})
-    //.append('rect')
-    //.attr('class', 'metrics-raw')
-    //.attr('x', 0)
-    //.attr('y', 0)
-    //.attr('width', this.x(this.raw))
-    //.attr('height', this.barHeight)
+    // allocated 
+    this.svgG
+    .append('rect')
+    .attr('class', function(d) {
+      return 'allocated';
+    })
+    .attr('x',0)
+    .attr('y', _this.y(2))
+    .attr('width', function(d) { return _this.x(_this.allocated); })
+    .attr('height', function() { return _this.barHeight; });
+   
+    // text labels 
+    this.svgG.selectAll('metrics-large-text')
+    .data(this.data)
+    .enter()
+    .append('text')
+    .attr("class", "metrics-large-text")
+    .attr('x', 5)
+    .attr('y', function(d,i) {
+      return _this.y(i) + _this.barHeight/4;
+    })
+    .style("text-anchor", "left")
+    .text(function(d,i) {
+      if (d.name == 'used') {
+        return d.label + ' ' + humanize.filesize(d.value*1024) + ' (' +
+          _this.pctUsed + '%)';
+      } else {
+        return d.label + ' ' + humanize.filesize(d.value*1024);
+      }
+    });
+
+    // small text label for raw
+    this.svgG
+    .append('text')
+    .attr("class", "metrics-small-text")
+    .attr('x', 5)
+    .attr('y', this.y(2) + _this.barHeight/4 + 16) // y of raw + 16px for large label above it
+    .style("text-anchor", "left")
+    .text(function(d,i) {
+      return _this.disks.length + ' x ' + humanize.filesize(_this.disks.at(0).get('size')*1024) + ' disks';
+    });
+
+    this.svgG.append("g")	
+    .attr("class", "metrics-axis")
+    .call(this.yAxis)
 
   },
 
