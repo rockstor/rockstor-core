@@ -191,7 +191,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
       }
     });
 
-    // small text label for raw
+    // disks and legend text label for raw
     this.svgG
     .append('text')
     .attr("class", "metrics-small-text")
@@ -201,7 +201,49 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     .text(function(d,i) {
       return _this.disks.length + ' x ' + humanize.filesize(_this.disks.at(0).get('size')*1024) + ' disks';
     });
+    
+    this.gRaw = this.svgG.append('g')
+    .attr('class', 'metrics-raw-legend')
+    .attr("transform", function(d,i) {
+      var yOffset = _this.y(2) + (_this.barHeight/4) + 16 + 12;
+      console.log(yOffset);
+      return "translate(4, " + yOffset + ")"; // y of previous + 12px 
+    });
 
+    var labelText = ['Allocated', 'Free'];
+    var colors = [
+      {fill: '#C3C8C9', stroke: '#555555'},
+      {fill: '#FFFFFF', stroke: "#C3C8C9"}, 
+    ];
+   
+    var labels = this.gRaw.append("g");
+    
+    labels.append("rect")
+    .attr("width", 13)
+    .attr("height", 13)
+    .attr("fill", colors[0].fill)
+    .attr("stroke", colors[0].stroke);
+
+    labels.append("text")
+    .attr("text-anchor", "left")
+    .attr("class", "legend")
+    .attr("transform", "translate(16,13)")
+    .text(labelText[0]); 
+    
+    labels.append("rect")
+    .attr("width", 13)
+    .attr("height", 13)
+    .attr("transform", "translate(100,0)")
+    .attr("fill", colors[1].fill)
+    .attr("stroke", colors[1].stroke);
+
+    labels.append("text")
+    .attr("text-anchor", "left")
+    .attr("class", "legend")
+    .attr("transform", "translate(116,13)")
+    .text(labelText[1]); 
+    
+    // draw y axis last so that it is above all rects
     this.svgG.append("g")	
     .attr("class", "metrics-axis")
     .call(this.yAxis)
