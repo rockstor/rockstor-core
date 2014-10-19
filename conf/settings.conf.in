@@ -251,6 +251,8 @@ PIPELINE_JS = {
             'storageadmin/js/views/rollback.js',
             'storageadmin/js/views/sftp.js',
             'storageadmin/js/views/add_sftp_share.js',
+            'storageadmin/js/views/afp.js',
+            'storageadmin/js/views/add_afp_share.js',
             'storageadmin/js/views/version.js',
             'storageadmin/js/views/plugins.js',
             'storageadmin/js/views/access_keys.js',

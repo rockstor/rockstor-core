@@ -358,6 +358,17 @@ var SFTPCollection = RockStorPaginatedCollection.extend({
   baseUrl: '/api/sftp'
 });
 
+
+var AFP = Backbone.Model.extend({
+  urlRoot: '/api/afp'    
+});
+
+var AFPCollection = RockStorPaginatedCollection.extend({
+  model: AFP,
+  baseUrl: '/api/afp'
+});
+
+
 var Plugin = Backbone.Model.extend({
   urlRoot: '/api/plugins'    
 });

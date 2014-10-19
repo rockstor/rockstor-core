@@ -77,6 +77,8 @@ var AppRouter = Backbone.Router.extend({
     "version": "showVersion",
     "sftp": "showSFTP",
     "add-sftp-share": "addSFTPShare",
+    "afp": "showAFP",
+    "add-afp-share": "addAFPShare",
     "plugins": "showPlugins",
     "appliances": "showAppliances",
     "add-appliance": "addAppliance",
@@ -534,6 +536,22 @@ var AppRouter = Backbone.Router.extend({
     this.renderSidebar('storage', 'sftp');
     this.cleanup();
     this.currentLayout = new AddSFTPShareView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+  
+   showAFP: function() {
+    this.renderSidebar('storage', 'afp');
+    this.cleanup();
+    this.currentLayout = new AFPView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  addAFPShare: function() {
+    this.renderSidebar('storage', 'afp');
+    this.cleanup();
+    this.currentLayout = new AddAFPShareView();
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },
