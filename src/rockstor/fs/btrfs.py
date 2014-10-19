@@ -495,3 +495,21 @@ def scan_disks(min_size):
 def wipe_disk(disk):
     disk = ('/dev/%s' % disk)
     return run_command([WIPEFS, '-a', disk])
+
+
+def blink_disk(disk, total_exec, read, sleep):
+    import subprocess
+    import time
+    import signal
+    DD_CMD = [DD, 'if=/dev/%s' % disk, 'of=/dev/null', 'bs=512',
+              'conv=noerror']
+    p = subprocess.Popen(DD_CMD, shell=False, stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE)
+    total_elapsed_time = 0
+    while (total_elapsed_time < total_exec):
+        time.sleep(read)
+        p.send_signal(signal.SIGSTOP)
+        time.sleep(sleep)
+        total_elapsed_time += read + sleep
+        p.send_signal(signal.SIGCONT)
+    p.terminate()
