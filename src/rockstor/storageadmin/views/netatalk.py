@@ -52,7 +52,7 @@ class NetatalkView(rfc.GenericView):
             e_msg = ('Must provide share names')
             handle_exception(Exception(e_msg), request)
 
-        shares = [validate_share(s, request) for s in request.DATA['share']]
+        shares = [validate_share(s, request) for s in request.DATA['shares']]
         description = request.DATA.get('description', '')
         if (description == ''):
             description = self.def_description
