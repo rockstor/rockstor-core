@@ -49,7 +49,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     this.free = 0; 
     this.poolCapacity = 0; 
     this.usage = 0; 
-    this.margin = {top: 20, right: 20, bottom: 40, left: 30};
+    this.margin = {top: 20, right: 40, bottom: 40, left: 30};
   },
 
   render: function() {
@@ -213,7 +213,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     var labelText = ['Allocated', 'Free'];
     var colors = [
       {fill: '#C3C8C9', stroke: '#555555'},
-      {fill: '#FFFFFF', stroke: "#C3C8C9"}, 
+      {fill: '#FFFFFF', stroke: "#555555"}, 
     ];
    
     var labels = this.gRaw.append("g");
@@ -226,7 +226,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
 
     labels.append("text")
     .attr("text-anchor", "left")
-    .attr("class", "legend")
+    .attr("class", "metrics-small-text")
     .attr("transform", "translate(16,13)")
     .text(labelText[0]); 
     
@@ -239,7 +239,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
 
     labels.append("text")
     .attr("text-anchor", "left")
-    .attr("class", "legend")
+    .attr("class", "metrics-small-text")
     .attr("transform", "translate(116,13)")
     .text(labelText[1]); 
     
