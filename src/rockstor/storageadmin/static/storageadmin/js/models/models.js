@@ -360,12 +360,12 @@ var SFTPCollection = RockStorPaginatedCollection.extend({
 
 
 var AFP = Backbone.Model.extend({
-  urlRoot: '/api/afp'    
+  urlRoot: '/api/netatalk'    
 });
 
 var AFPCollection = RockStorPaginatedCollection.extend({
   model: AFP,
-  baseUrl: '/api/afp'
+  baseUrl: '/api/netatalk'
 });
 
 

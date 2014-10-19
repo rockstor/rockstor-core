@@ -36,12 +36,14 @@ AddAFPShareView = RockstorLayoutView.extend({
     // dont paginate shares for now
     this.shares.pageSize = 1000; 
     this.dependencies.push(this.shares);
-    //this.afpShares = new AFPCollection();
-  //  this.dependencies.push(this.afpShares);
-    this.modify_choices = [
-      {name: 'ro', value: 'ro'}, 
-      {name: 'rw', value: 'rw'},
+    this.afpShareId = this.options.afpShareId;
+    this.afpShares = new AFPCollection();
+    this.dependencies.push(this.afpShares);
+     this.yes_no_choices = [
+      {name: 'yes', value: 'yes'},
+      {name: 'no', value: 'no'}, 
     ];
+    this.time_machine_choices = this.yes_no_choices;
   },
   
   render: function() {
@@ -51,18 +53,31 @@ AddAFPShareView = RockstorLayoutView.extend({
 
   renderAFPForm: function() {
     var _this = this;
-    //this.freeShares = this.shares.reject(function(share) {
-     // s = this.sftpShares.find(function(afpShare) {
-     //   return (afpShare.get('share') == share.get('name'));
-    //  });
-    //  return !_.isUndefined(s);
-   // }, this);
+    this.freeShares = this.shares.reject(function(share) {
+      s = this.afpShares.find(function(afpShare) {
+        return (afpShare.get('share') == share.get('name'));
+      });
+      return !_.isUndefined(s);
+    }, this);
+    
+     if(this.afpShareId != null){
+      this.aShares = this.afpShares.get(this.afpShareId);
+      }else{
+      this.aShares = null;
+      }
+    
     $(this.el).html(this.template({
-      shares: this.shares,
+      shares: this.freeShares,
+      afpShare: this.aShares,
+      afpShareId: this.afpShareId,
+      time_machine_choices: this.time_machine_choices,
     }));
     this.$('#shares').chosen();
     
-    $('#add-afp-share-form :input').tooltip();
+    $('#add-afp-share-form :input').tooltip({
+     html: true,
+     placement: 'right'
+    });
     
     $('#add-afp-share-form').validate({
       onfocusout: false,
@@ -72,31 +87,30 @@ AddAFPShareView = RockstorLayoutView.extend({
       },
       
       submitHandler: function() {
-        var button = $('#create-afp-share');
+        var button = $('#create-afp-export');
         if (buttonDisabled(button)) return false;
-        var data = _this.$('#add-afp-share-form').getJSON();
-        if (data['read_only'] == "false") {
-          delete data['read_only'];
-        } else {
-         data['read_only'] = true;
-        } 
-        console.log(data);
         disableButton(button);
-        $.ajax({
-          url: '/api/afp',
-          type: 'POST',
+        var submitmethod = 'POST';
+        var posturl = '/api/netatalk';
+        if(_this.afpShareId != null){
+            submitmethod = 'PUT';
+            posturl += '/'+_this.afpShareId;
+          }
+         $.ajax({
+          url: posturl,
+          type: submitmethod,
           dataType: 'json',
           contentType: 'application/json',
-          data: JSON.stringify(data),
+          data: JSON.stringify(_this.$('#add-afp-share-form').getJSON()),
           success: function() {
             enableButton(button);
+            _this.$('#add-afp-share-form :input').tooltip('hide');
             app_router.navigate('afp', {trigger: true});
           },
           error: function(xhr, status, error) {
             enableButton(button);
           }
         });
-       
         return false;
       }
     });
@@ -104,6 +118,7 @@ AddAFPShareView = RockstorLayoutView.extend({
   
   cancel: function(event) {
     event.preventDefault();
+    this.$('#add-afp-share-form :input').tooltip('hide');
     app_router.navigate('afp', {trigger: true});
   }
 

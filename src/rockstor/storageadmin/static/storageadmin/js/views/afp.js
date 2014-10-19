@@ -34,8 +34,8 @@ AFPView  = RockstorLayoutView.extend({
     this.template = window.JST.afp_afp;
     this.paginationTemplate = window.JST.common_pagination;
     this.module_name = 'afp';
-    //this.collection = new AFPCollection();
-   // this.dependencies.push(this.collection);
+    this.collection = new AFPCollection();
+    this.dependencies.push(this.collection);
     this.shares = new ShareCollection();
     // dont paginate shares for now
     this.shares.pageSize = 1000; 
@@ -49,19 +49,19 @@ AFPView  = RockstorLayoutView.extend({
   },
   
   renderAFP: function() {
-   // this.freeShares = this.shares.reject(function(share) {
-   //   s = this.collection.find(function(afpShare) {
-    //    return (afpShare.get('share') == share.get('name'));
-    //  });
-    //  return !_.isUndefined(s);
-   // }, this);
+    this.freeShares = this.shares.reject(function(share) {
+      s = this.collection.find(function(afpShare) {
+        return (afpShare.get('share') == share.get('name'));
+      });
+      return !_.isUndefined(s);
+    }, this);
     $(this.el).html(this.template({
-   //   afp: this.collection,
-   //   freeShares: this.freeShares
+      collection: this.collection,
+      freeShares: this.freeShares
     }));
-   // this.$(".ph-pagination").html(this.paginationTemplate({
-   //   collection: this.collection
-   // }));
+    this.$(".ph-pagination").html(this.paginationTemplate({
+      collection: this.collection
+    }));
   },
 
   deleteAFP: function(event) {
@@ -74,7 +74,7 @@ AFPView  = RockstorLayoutView.extend({
       var id = $(event.currentTarget).data('id');
       
       $.ajax({
-        url: '/api/afp/' + id,
+        url: '/api/netatalk/' + id,
         type: 'DELETE',
         dataType: 'json',
         contentType: 'application/json',

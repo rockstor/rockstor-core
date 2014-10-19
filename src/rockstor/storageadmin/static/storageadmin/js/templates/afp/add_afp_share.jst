@@ -1,4 +1,8 @@
-<h3>Add AFP Share</h3>
+<% if (afpShareId!=null) { %>
+<h3>Edit afp export</h3>
+<%} else {%>
+<h3>Add afp export</h3>
+<%}%>
 <div class="row-fluid">
   <div class="span8">
     <label class="control-label"><span class="required">*</span> indicates required fields</label>
@@ -11,6 +15,9 @@
           <label class="control-label" for="shares">Shares to export via afp<span class="required">*</span></label>
           <div class="controls">
             <select name="shares" id="shares" size="10" multiple data-placeholder="Select shares">
+            <% if (afpShareId!=null) {  %>
+            <option value="<%= afpShare.get('share')%>" selected="selected"> <%= afpShare.get('share') %></option>
+            <% } %>
               <% _.each(shares, function(share, index) { %>
                 <option value="<%= share.get('name') %>"><%= share.get('name') %></option>
               <% }); %>
@@ -18,16 +25,28 @@
           </div>
         </div>
 
-        <!-- Read only -->
+        <!-- Time Machine -->
+        
         <div class="control-group">
-          <label class="control-label" for="read_only">Access type</label>
+          <label class="control-label" for="time_machine">Time Machine<span class="required"> *</span></label>
           <div class="controls">
-            <label class="radio inline">
-              <input type="radio" name="read_only" value="false" checked="checked"> Writable 
-            </label>
-            <label class="radio inline">
-              <input type="radio" name="read_only" value="true"> Read only
-            </label>
+              <% _.each(time_machine_choices, function(c) { %>
+                <label class="radio inline">
+                <% if (afpShareId!=null){ %>
+                    <% if(c.value == afpShare.get("time_machine")){ %>
+                        <input type="radio" name="time_machine" value="<%= c.value %>" checked> <%= c.name %> 
+                    <% }else{ %>
+                        <input type="radio" name="time_machine" value="<%= c.value %>" > <%= c.name %>
+                    <% } %>
+                 <% }else { %>     
+                   <% if(c.value == 'yes'){ %>
+                      <input type="radio" name="time_machine" value="<%= c.value %>" title="select time machine" checked> <%= c.name %> 
+                   <%  }else{ %>
+                      <input type="radio" name="time_machine" value="<%= c.value %>" title="select time machine" > <%= c.name %>
+                <%  } %>
+                 <%  } %>
+                </label>
+              <% }); %>
           </div>
         </div>
 
