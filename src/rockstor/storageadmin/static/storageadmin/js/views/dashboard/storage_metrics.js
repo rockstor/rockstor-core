@@ -233,14 +233,14 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     labels.append("rect")
     .attr("width", 13)
     .attr("height", 13)
-    .attr("transform", "translate(100,0)")
+    .attr("transform", "translate(80,0)")
     .attr("fill", colors[1].fill)
     .attr("stroke", colors[1].stroke);
 
     labels.append("text")
     .attr("text-anchor", "left")
     .attr("class", "metrics-small-text")
-    .attr("transform", "translate(116,13)")
+    .attr("transform", "translate(96,13)")
     .text(labelText[1]); 
     
     // draw y axis last so that it is above all rects
