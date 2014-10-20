@@ -38,10 +38,20 @@
           <td><%= humanize.filesize(disk.get('size')*1024) %></td>
           <td><%= disk.get('parted') %></td>
           <td>
-            <input type="checkbox" name="<%= disk.get('name') %>" id="<%= disk.get('name') %>" value="<%= disk.get('name') %>">
+            <input type="checkbox" name="<%= disk.get('name') %>" id="<%= disk.get('name') %>" value="<%= disk.get('name')%>" class="disknew">
           </td>
         </tr>
-      <% } %>
+      <% } else if (_.isEqual(disk.get('pool_name'), poolName)) { %>
+        <tr>
+          <td><%= index+1 %></td>
+          <td><%= disk.get('name') %></td>
+          <td><%= humanize.filesize(disk.get('size')*1024) %></td>
+          <td><%= disk.get('parted') %></td>
+          <td>
+            <input checked type="checkbox" name="<%= disk.get('name') %>" id="<%= disk.get('name') %>" value="<%= disk.get('name')%>" class="diskadded">
+          </td>
+        </tr>
+      <% }%>
     <% }); %>
   </tbody>
 </table>
