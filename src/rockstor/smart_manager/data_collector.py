@@ -283,7 +283,6 @@ class ProcRetreiver(Process):
                     share_map[share.qgroup] = share.name
                     for snap in Snapshot.objects.filter(share=share):
                         snap_map[snap.qgroup] = snap.real_name
-                logger.debug('share_map: %s snap_map: %s' % (share_map, snap_map))
                 usaged = shares_usage(p.name, pool_device, share_map, snap_map)
                 for s in usaged.keys():
                     try:

@@ -109,8 +109,16 @@ class PoolView(rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
 
             for d in disks:
-                if (not Disk.objects.filter(name=d).exists()):
+                try:
+                    do = Disk.objects.get(name=d)
+                except:
                     e_msg = ('Unknown disk: %s' % d)
+                    handle_exception(Exception(e_msg), request)
+
+                if (do.btrfs_uuid is not None):
+                    e_msg = ('Another BTRFS filesystem exists on this '
+                             'disk(%s). Erase the disk and try again.'
+                             % d)
                     handle_exception(Exception(e_msg), request)
 
             raid_level = request.DATA['raid_level']

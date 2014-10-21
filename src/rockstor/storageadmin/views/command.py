@@ -31,7 +31,7 @@ from system.osi import (uptime, refresh_nfs_exports, update_check,
 from fs.btrfs import (mount_share, device_scan)
 from system.ssh import (sftp_mount_map, sftp_mount)
 from system.services import (systemctl, join_winbind_domain, ads_join_status)
-from system.osi import is_share_mounted
+from system.osi import (is_share_mounted, system_shutdown, system_reboot)
 from storageadmin.models import (Share, Disk, NFSExport, SFTP)
 from nfs_helpers import create_nfs_export_input
 from storageadmin.util import handle_exception
@@ -171,5 +171,28 @@ class CommandView(APIView):
                 logger.exception(e)
                 msg = ('Domain join check failed. Low level error: %s %s' %
                        (e.out, e.err))
+            finally:
+                return Response(msg)
+
+        elif (command == 'shutdown'):
+            msg = ('The system will be shutdown after 1 minute')
+            try:
+                system_shutdown()
+            except Exception, e:
+                msg = ('Failed to shutdown the system due to a low level '
+                       'error')
+                logger.exception(e)
+                handle_exception(Exception(msg), request)
+            finally:
+                return Response(msg)
+
+        elif (command == 'reboot'):
+            msg = ('The system will reboot after 1 minute')
+            try:
+                system_reboot()
+            except Exception, e:
+                msg = ('Failed to reboot the system due to a low level error')
+                logger.exception(e)
+                handle_exception(Exception(msg), request)
             finally:
                 return Response(msg)

@@ -46,6 +46,7 @@ YUM = '/usr/bin/yum'
 AT = '/usr/bin/at'
 DEFAULT_MNT_DIR = '/mnt2/'
 RPM = '/usr/bin/rpm'
+SHUTDOWN = '/usr/sbin/shutdown'
 
 
 def inplace_replace(of, nf, regex, nl):
@@ -126,7 +127,8 @@ def refresh_nfs_exports(exports):
 
     if 'clients' is an empty list, then unmount and cleanup.
     """
-    with open('/etc/exports', 'w') as efo:
+    fo, npath = mkstemp()
+    with open(npath, 'w') as efo:
         shares = []
         for e in exports.keys():
             if (len(exports[e]) == 0):
@@ -142,23 +144,31 @@ def refresh_nfs_exports(exports):
             client_str = ''
             admin_host = None
             for c in exports[e]:
+                run_command([EXPORTFS, '-i', '-o', c['option_list'],
+                             '%s:%s' % (c['client_str'], e)])
                 client_str = ('%s%s(%s) ' % (client_str, c['client_str'],
                                              c['option_list']))
                 if ('admin_host' in c):
                     admin_host = c['admin_host']
             if (admin_host is not None):
+                run_command([EXPORTFS, '-i', '-o', 'rw,no_root_squash',
+                             '%s:%s' % (admin_host, e)])
                 client_str = ('%s %s(rw,no_root_squash)' % (client_str,
                                                             admin_host))
             export_str = ('%s %s\n' % (e, client_str))
             efo.write(export_str)
         for s in shares:
             nfs4_mount_teardown(s)
+    shutil.move(npath, '/etc/exports')
     return run_command([EXPORTFS, '-ra'])
 
 
 def rockstor_smb_config(fo, exports):
     fo.write('####BEGIN: Rockstor SAMBA CONFIG####\n')
     for e in exports:
+        admin_users = ''
+        for au in e.admin_users.all():
+            admin_users = '%s%s ' % (admin_users, au.username)
         fo.write('[%s]\n' % e.share.name)
         fo.write('    comment = %s\n' % e.comment)
         fo.write('    path = %s\n' % e.path)
@@ -166,7 +176,8 @@ def rockstor_smb_config(fo, exports):
         fo.write('    read only = %s\n' % e.read_only)
         fo.write('    create mask = %s\n' % e.create_mask)
         fo.write('    guest ok = %s\n' % e.guest_ok)
-        fo.write('    admin users = %s\n' % e.admin_users)
+        if (len(admin_users) > 0):
+            fo.write('    admin users = %s\n' % admin_users)
     fo.write('####END: Rockstor SAMBA CONFIG####\n')
 
 
@@ -187,11 +198,14 @@ def refresh_smb_config(exports):
     shutil.move(npath, SMB_CONFIG)
 
 
-def restart_samba():
+def restart_samba(hard=False):
     """
     call whenever config is updated
     """
-    smbd_cmd = [SYSTEMCTL, 'restart', 'smb']
+    mode = 'reload'
+    if (hard):
+        mode = 'restart'
+    smbd_cmd = [SYSTEMCTL, mode, 'smb']
     return run_command(smbd_cmd)
 
 
@@ -491,3 +505,11 @@ def is_mounted(mnt_pt):
             if (re.search(' ' + mnt_pt + ' ', line) is not None):
                 return True
     return False
+
+
+def system_shutdown():
+    return run_command([SHUTDOWN, '-h'])
+
+
+def system_reboot():
+    return run_command([SHUTDOWN, '-r'])

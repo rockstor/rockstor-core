@@ -136,7 +136,15 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     this.xAxis = d3.svg.axis().scale(this.x).orient('bottom').tickValues(_this.x.domain()).tickFormat(function(d) {
       return humanize.filesize(d*1024);
     });
-    this.yAxis = d3.svg.axis().scale(this.y).orient('left').ticks(0);
+    this.yAxis = d3.svg.axis().scale(this.y).orient('left').tickValues([0,1,2]).tickFormat(function(d) {
+      if (d==0) {
+        return 'Usage';
+      } else if (d==1) {
+        return 'Pools';
+      } else if (d==2) {
+        return 'Disks'
+      }
+    });
 
     this.svgG.append("g")	
     .attr("class", "metrics-axis")
@@ -158,7 +166,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
       return _this.y(i);
     })
     .attr('width', function(d) { return _this.x(d.value); })
-    .attr('height', function() { return _this.barHeight; });
+    .attr('height', function() { return _this.barHeight-4; });
 
     // allocated 
     this.svgG
@@ -169,7 +177,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     .attr('x',0)
     .attr('y', _this.y(2))
     .attr('width', function(d) { return _this.x(_this.allocated); })
-    .attr('height', function() { return _this.barHeight; });
+    .attr('height', function() { return _this.barHeight-4; });
    
     // text labels 
     this.svgG.selectAll('metrics-large-text')
@@ -247,6 +255,13 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     this.svgG.append("g")	
     .attr("class", "metrics-axis")
     .call(this.yAxis)
+    .selectAll("text")	
+    .style("text-anchor", "end")
+    .attr("transform", function(d) {
+      return "rotate(-90)";
+    })
+    .attr("dx", "-.8em")
+    .attr("dy", "-.30em");
 
   },
 
@@ -259,7 +274,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
 
 RockStorWidgets.widgetDefs.push({ 
     name: 'storage_metrics', 
-    displayName: 'Storage Metrics', 
+    displayName: 'Total Capacity, Allocation and Usage', 
     view: 'StorageMetricsWidget',
     description: 'Display capacity and usage',
     defaultWidget: true,
