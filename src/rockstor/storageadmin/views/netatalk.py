@@ -24,7 +24,7 @@ from storageadmin.util import handle_exception
 from storageadmin.serializers import NetatalkShareSerializer
 from storageadmin.exceptions import RockStorAPIException
 from fs.btrfs import (mount_share, is_share_mounted)
-from system.services import (restart_netatalk, refresh_afp_config)
+from system.services import (systemctl, refresh_afp_config)
 import rest_framework_custom as rfc
 from share_helpers import validate_share
 
@@ -70,39 +70,65 @@ class NetatalkView(rfc.GenericView):
 
         try:
             for share in shares:
+                mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
                 cur_description = '%s %s' % (share.name, description)
                 if (len(shares) == 1 and description != self.def_description):
                     cur_description = description
-                afpo = NetatalkShare(share=share, description=cur_description,
+                afpo = NetatalkShare(share=share, path=mnt_pt,
+                                     description=cur_description,
                                      time_machine=time_machine)
                 afpo.save()
-
-                mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
                 if (not is_share_mounted(share.name)):
                     pool_device = Disk.objects.filter(pool=share.pool)[0].name
                     mount_share(share.subvol_name, pool_device, mnt_pt)
             refresh_afp_config(list(NetatalkShare.objects.all()))
-            restart_netatalk()
+            systemctl('netatalk', 'reload')
             return Response()
         except RockStorAPIException:
             raise
         except Exception, e:
             handle_exception(e, request)
 
-    @transaction.commit_on_success
-    def delete(self, request, afp_id):
+    def _validate_afp_id(self, request, afp_id):
         try:
-            afpo = NetatalkShare.objects.get(id=afp_id)
-            afpo.delete()
+            return NetatalkShare.objects.get(id=afp_id)
         except:
-            e_msg = ('AFP config for the id(%s) does not exist' % id)
+            e_msg = ('AFP export for the id(%s) does not exist' % afp_id)
             handle_exception(Exception(e_msg), request)
 
+    def _validate_input(self, request):
+        time_machine = request.DATA.get('time_machine', 'yes')
+        if (time_machine != 'yes' and time_machine != 'no'):
+            e_msg = ('time_machine must be yes or now. not %s' %
+                     time_machine)
+            handle_exception(Exception(e_msg), request)
+        return time_machine
+
+    def _refresh_and_reload(self, request):
         try:
             refresh_afp_config(list(NetatalkShare.objects.all()))
-            restart_netatalk()
-            return Response()
+            return systemctl('netatalk', 'reload')
         except Exception, e:
             logger.exception(e)
-            e_msg = ('System error occured while restarting Netatalk server')
+            e_msg = ('System error occured while reloading Netatalk server')
             handle_exception(Exception(e_msg), request)
+
+    @transaction.commit_on_success
+    def put(self, request, afp_id):
+        afpo = self._validate_afp_id(request, afp_id)
+        afpo.time_machine = self._validate_input(request)
+        afpo.save()
+        self._refresh_and_reload(request)
+        return Response(NetatalkShareSerializer(afpo).data)
+
+    @transaction.commit_on_success
+    def delete(self, request, afp_id):
+        afpo = self._validate_afp_id(request, afp_id)
+        try:
+            afpo.delete()
+        except:
+            e_msg = ('Failed to delete AFP config for id(%s).' % afp_id)
+            handle_exception(Exception(e_msg), request)
+
+        self._refresh_and_reload(request)
+        return Response()
