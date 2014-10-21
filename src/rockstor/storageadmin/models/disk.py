@@ -34,6 +34,10 @@ class Disk(models.Model):
     parted = models.BooleanField()
     """previously created btrfs filesystem on the disk"""
     btrfs_uuid = models.CharField(max_length=1024, null=True)
+    model = models.CharField(max_length=1024, null=True)
+    serial = models.CharField(max_length=1024, null=True)
+    transport = models.CharField(max_length=1024, null=True)
+    vendor = models.CharField(max_length=1024, null=True)
 
     def pool_name(self, *args, **kwargs):
         try:
