@@ -105,6 +105,10 @@ class DiskView(rfc.GenericView):
                  'may be on the disk: %s. Import or backup manually' % dname)
         handle_exception(Exception(e_msg), request)
 
+    def _blink_drive(self, dname, request):
+        disk = self._validate_disk(dname, request)
+        return Response()
+
     def post(self, request, command, dname=None):
         if (command == 'scan'):
             return self._scan()
@@ -114,6 +118,8 @@ class DiskView(rfc.GenericView):
             return self._wipe(dname, request)
         if (command == 'btrfs-disk-import'):
             return self._btrfs_disk_import(dname, request)
+        if (command == 'blink-drive'):
+            return self._blink_drive(dname, request)
 
         e_msg = ('Unknown command: %s. Only valid commands are scan, wipe' %
                  command)
