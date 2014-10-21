@@ -26,7 +26,7 @@
         </div>
 
         <!-- Time Machine -->
-        
+
         <div class="control-group">
           <label class="control-label" for="time_machine">Time Machine<span class="required"> *</span></label>
           <div class="controls">
@@ -34,15 +34,15 @@
                 <label class="radio inline">
                 <% if (afpShareId!=null){ %>
                     <% if(c.value == afpShare.get("time_machine")){ %>
-                        <input type="radio" name="time_machine" value="<%= c.value %>" checked> <%= c.name %> 
+                        <input type="radio" name="time_machine" value="<%= c.value %>" title="Enable Time Machine support for this Share to backup Macs." checked> <%= c.name %>
                     <% }else{ %>
-                        <input type="radio" name="time_machine" value="<%= c.value %>" > <%= c.name %>
+                        <input type="radio" name="time_machine" value="<%= c.value %>" title="Don't enable Time Machine support for this Share." > <%= c.name %>
                     <% } %>
-                 <% }else { %>     
+                 <% }else { %>
                    <% if(c.value == 'yes'){ %>
-                      <input type="radio" name="time_machine" value="<%= c.value %>" title="select time machine" checked> <%= c.name %> 
+                      <input type="radio" name="time_machine" value="<%= c.value %>" title="Enable Time Machine support for this Share to backup Macs" checked> <%= c.name %>
                    <%  }else{ %>
-                      <input type="radio" name="time_machine" value="<%= c.value %>" title="select time machine" > <%= c.name %>
+                      <input type="radio" name="time_machine" value="<%= c.value %>" title="Don't enable Time Machine support for this Share." > <%= c.name %>
                 <%  } %>
                  <%  } %>
                 </label>
@@ -62,5 +62,3 @@
     </div>
   </div> <!-- span8 -->
 </div>  <!-- row-fluid -->
-
-

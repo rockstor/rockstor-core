@@ -1,34 +1,34 @@
 /*
  *
- * @licstart  The following is the entire license notice for the 
+ * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
- * 
+ *
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
- * 
+ *
  * RockStor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
- * 
+ *
  * RockStor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * @licend  The above is the entire license notice
  * for the JavaScript code in this page.
- * 
+ *
  */
 
 AFPView  = RockstorLayoutView.extend({
   events: {
     'click .delete-afp-share': 'deleteAFP'
   },
-    
+
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.afp_afp;
@@ -38,7 +38,7 @@ AFPView  = RockstorLayoutView.extend({
     this.dependencies.push(this.collection);
     this.shares = new ShareCollection();
     // dont paginate shares for now
-    this.shares.pageSize = 1000; 
+    this.shares.pageSize = 1000;
     this.dependencies.push(this.shares);
   },
 
@@ -47,7 +47,7 @@ AFPView  = RockstorLayoutView.extend({
     this.fetch(this.renderAFP, this);
     return this;
   },
-  
+
   renderAFP: function() {
     this.freeShares = this.shares.reject(function(share) {
       s = this.collection.find(function(afpShare) {
@@ -69,10 +69,10 @@ AFPView  = RockstorLayoutView.extend({
     if (event) event.preventDefault();
     var button = $(event.currentTarget);
     if (buttonDisabled(button)) return false;
-    if(confirm("Delete afp entry ... Are you sure? ")){
+    if(confirm("Are you sure you want to stop exporting this share via AFP?")){
       disableButton(button)
       var id = $(event.currentTarget).data('id');
-      
+
       $.ajax({
         url: '/api/netatalk/' + id,
         type: 'DELETE',
@@ -85,7 +85,7 @@ AFPView  = RockstorLayoutView.extend({
           enableButton(button);
         }
       });
-      
+
     }
   }
 
@@ -93,5 +93,3 @@ AFPView  = RockstorLayoutView.extend({
 
 // Add pagination
 //Cocktail.mixin(AFPView, PaginationMixin);
-
-
