@@ -21,6 +21,9 @@ import re
 from django.conf import settings
 from osi import run_command
 from exceptions import CommandException
+import shutil
+from tempfile import mkstemp
+
 
 CHKCONFIG_BIN = '/sbin/chkconfig'
 AUTHCONFIG = '/usr/sbin/authconfig'
@@ -28,6 +31,7 @@ SSHD_CONFIG = '/etc/ssh/sshd_config'
 SYSTEMCTL_BIN = '/usr/bin/systemctl'
 SUPERCTL_BIN = ('%s/bin/supervisorctl' % settings.ROOT_DIR)
 NET = '/usr/bin/net'
+AFP_CONFIG = '/etc/afp.conf'
 
 
 def init_service_op(service_name, command, throw=True):
@@ -163,9 +167,29 @@ def ads_join_status(username, passwd):
                         '60'])
 
 
-def restart_netatalk():
-    pass
+def rockstor_afp_config(fo, afpl):
+    fo.write('####BEGIN: Rockstor AFP CONFIG####\n')
+    for c in afpl:
+        vol_size = int(c.vol_size() / 1024)
+        fo.write('[%s]\n' % c.description)
+        fo.write('  path = %s\n' % c.path)
+        fo.write('  time machine = %s\n' % c.time_machine)
+        fo.write('  vol size limit = %d\n\n' % vol_size)
+    fo.write('####END: Rockstor AFP CONFIG####\n')
 
 
 def refresh_afp_config(afpl):
-    pass
+    fo, npath = mkstemp()
+    with open(AFP_CONFIG) as afo, open(npath, 'w') as tfo:
+        rockstor_section = False
+        for line in afo.readlines():
+            if (re.match('####BEGIN: Rockstor AFP CONFIG####', line)
+                is not None):
+                rockstor_section = True
+                rockstor_afp_config(tfo, afpl)
+                break
+            else:
+                tfo.write(line)
+        if (rockstor_section is False):
+            rockstor_afp_config(tfo, afpl)
+    shutil.move(npath, AFP_CONFIG)
