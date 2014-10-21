@@ -1,0 +1,56 @@
+
+<h3>Add Disks</h3>
+<div class="row-fluid">
+  <div class="span8">
+    <label class="control-label"><span class="required">*</span> indicates required fields</label>
+    <div class="form-box">
+      <form id="add-disk-form" name="aform" class="form-horizontal">
+        <div class="messages"></div>
+
+        <!-- disks -->
+        <div class="control-group">
+          <label class="control-label" for="disks">Selected disk<span class="required"> *</span></label>
+          <div class="controls">
+            <%= diskName %> &nbsp; Serial no: 
+          </div>
+        </div>
+
+       <!-- Total Time -->
+        <div class="control-group">
+          <label class="control-label" for="total_time">Total time<span class="required"> *</span></label>
+          <div class="controls">
+            <input type="text" name="total_time" id="total_time" title="Enter Total time">
+          </div>
+        </div>
+        
+        <!-- Blink Time -->
+        <div class="control-group">
+          <label class="control-label" for="blink_time">Blink Time<span class="required"> *</span></label>
+          <div class="controls">
+            <input type="text" name="blink_time" id="blink_time" title="Enter Blink Time">
+          </div>
+        </div>
+        
+        <!-- Sleep Time -->
+        <div class="control-group">
+          <label class="control-label" for="sleep_time">Sleep Time<span class="required"> *</span></label>
+          <div class="controls">
+            <input type="text" name="sleep_time" id="frequency" title="Enter Sleep Time">
+          </div>
+        </div>
+
+         
+        <div class="control-group">
+          <div class="controls">
+            <a id="cancel" class="btn">Cancel</a>
+            <input type="Submit" id="add-disks" class="btn btn-primary" value="Submit"></input>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+        
+

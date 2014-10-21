@@ -30,7 +30,7 @@ DisksView = Backbone.View.extend({
     'click .wipe': 'wipeDisk',
     'click .delete': 'deleteDisk',
     'click .btrfs_wipe': 'btrfsWipeDisk',
-    'click .btrfs_import': 'btrfsImportDisk'
+    'click .btrfs_import': 'btrfsImportDisk',
   },
 
   initialize: function() {
@@ -97,7 +97,6 @@ DisksView = Backbone.View.extend({
       });
     }
   },
-
   btrfsWipeDisk: function(event) {
     var _this = this;
     if (event) event.preventDefault();
