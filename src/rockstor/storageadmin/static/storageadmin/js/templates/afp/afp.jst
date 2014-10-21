@@ -1,0 +1,46 @@
+<!-- Module Body -->
+<div class="row-fluid">
+  <div class="span12">
+    <div class="messages"></div>
+    <!-- Content -->
+    <% if (collection.length > 0) { %>
+      <table id="afp-exports-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of samba exports">
+        <thead>
+          <tr>
+            <th scope="col" abbr="Share name">Share</th>
+            <th scope="col" abbr="Time Machine">Time Machine</th>
+            <th scope="col" abbr="Actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% collection.each(function(afpShare) { %>
+            <tr>
+              <td><%= afpShare.get('share') %></td>
+              <td><%= afpShare.get('time_machine') %></td>
+              <td>
+	      <a href="#afp/edit/<%= afpShare.id %>"><i class="icon-pencil"></i></a>
+	      &nbsp;
+                <a href="#" class="delete-afp-share" data-share="<%= afpShare.get('share') %>" data-id="<%= afpShare.id %>"><i class="icon-trash"></i></a>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    <% } else { %>
+      <table id="afp-exports-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of samba exports">
+        <tbody>
+          <tr>
+            <td colspan="5">
+              <h4>No afp exports have been created</h4>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    <% } %>
+    <% if (freeShares.length > 0) { %>
+      <a href="#add-afp-share" id="add-afp-share" class="btn btn-primary"><i class="icon-edit icon-white"></i> Add afp Export</a>
+    <% } else { %>
+      <a href="#add-afp-share" id="add-afp-share" class="btn btn-primary disabled" title="No shares available to export through afp"><i class="icon-edit icon-white"></i> Add afp Export</a>
+    <% } %>
+  </div>
+</div>

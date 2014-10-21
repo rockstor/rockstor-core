@@ -51,6 +51,7 @@ http {
 		listen 443 default_server;
                 server_name "~^(?<myhost>.+)$";
 		ssl on;
+		ssl_protocols TLSv1.2 TLSv1.1 TLSv1;
 		ssl_certificate ${buildout:directory}/certs/rockstor.cert;
  		ssl_certificate_key ${buildout:directory}/certs/rockstor.key;
 

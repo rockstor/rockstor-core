@@ -18,12 +18,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework.response import Response
 from storageadmin.util import handle_exception
-from system.services import init_service_op, chkconfig
+from system.services import systemctl
 from system.osi import run_command
 from django.db import transaction
 from base_service import BaseServiceView
 from smart_manager.models import Service
-from storageadmin.models import Appliance
 from django.conf import settings
 from contextlib import contextmanager
 from storageadmin.exceptions import RockStorAPIException
@@ -66,7 +65,7 @@ class NTPServiceView(BaseServiceView):
             e_msg = ('Error while validating time servers(%s). Check your '
                      'input and try again.' % config['server'])
             with self._handle_exception(request, e_msg):
-                run_command([settings.COMMANDS['systemctl'], 'stop', 'ntpd'])
+                self._switch_ntpd('stop')
                 cmd = [settings.COMMANDS['ntpdate']] + servers
                 out, err, rc = run_command(cmd)
                 if (rc != 0):
@@ -78,18 +77,22 @@ class NTPServiceView(BaseServiceView):
                      ' again' % servers)
             with self._handle_exception(request, e_msg):
                 self._update_ntp_conf(servers)
-                run_command([settings.COMMANDS['systemctl'], 'restart',
-                             'ntpd'])
+                self._switch_ntpd('start')
         else:
             e_msg = ('Failed to %s NTP service due to system error.' %
                      command)
             with self._handle_exception(request, e_msg):
-                run_command([settings.COMMANDS['systemctl'], command, 'ntpd'])
-                if (command == 'start'):
-                    run_command([settings.COMMANDS['systemctl'], 'enable',
-                                 'ntpd'])
-
+                self._switch_ntpd(command)
         return Response()
+
+    @staticmethod
+    def _switch_ntpd(switch):
+        if (switch == 'start'):
+            systemctl('ntpd', 'enable')
+            systemctl('ntpd', 'start')
+        else:
+            systemctl('ntpd', 'disable')
+            systemctl('ntpd', 'stop')
 
     @staticmethod
     def _update_ntp_conf(servers):

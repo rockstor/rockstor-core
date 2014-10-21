@@ -1,27 +1,27 @@
 /*
  *
- * @licstart  The following is the entire license notice for the 
+ * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
- * 
+ *
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
- * 
+ *
  * RockStor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
- * 
+ *
  * RockStor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * @licend  The above is the entire license notice
  * for the JavaScript code in this page.
- * 
+ *
  */
 
 // routes
@@ -77,6 +77,9 @@ var AppRouter = Backbone.Router.extend({
     "version": "showVersion",
     "sftp": "showSFTP",
     "add-sftp-share": "addSFTPShare",
+    "afp": "showAFP",
+    "add-afp-share": "addAFPShare",
+    "afp/edit/:afpShareId": "editAFPShare",
     "plugins": "showPlugins",
     "appliances": "showAppliances",
     "add-appliance": "addAppliance",
@@ -100,7 +103,7 @@ var AppRouter = Backbone.Router.extend({
       } else if (route == "setup" && setup_done) {
         app_router.navigate('home', {trigger: true});
         return false;
-      } 
+      }
     }
     if (RockStorGlobals.currentAppliance == null) {
       setApplianceName();
@@ -120,7 +123,7 @@ var AppRouter = Backbone.Router.extend({
     if (!RockStorGlobals.versionCheckTimerStarted) {
       setVersionCheckTimer();
     }
-    
+
   },
 
   loginPage: function() {
@@ -149,7 +152,7 @@ var AppRouter = Backbone.Router.extend({
     this.currentLayout = new HomeLayoutView();
     $('#maincontent').append(this.currentLayout.render().el);
   },
-  
+
   showDisks: function() {
     RockStorSocket.removeAllListeners();
     this.renderSidebar("storage", "disks");
@@ -158,7 +161,7 @@ var AppRouter = Backbone.Router.extend({
     this.currentLayout = new DisksView();
     $('#maincontent').append(this.currentLayout.render().el);
   },
-  
+
   showPools: function() {
     RockStorSocket.removeAllListeners();
     this.renderSidebar("storage", "pools");
@@ -187,9 +190,9 @@ var AppRouter = Backbone.Router.extend({
     });
     $('#maincontent').append(this.currentLayout.render().el);
   },
-  
+
   //Support
-  
+
   showSupport: function() {
     RockStorSocket.removeAllListeners();
     this.renderSidebar("support", "support");
@@ -220,7 +223,7 @@ var AppRouter = Backbone.Router.extend({
 
 
   //shares
-  
+
   showShares: function() {
     RockStorSocket.removeAllListeners();
     this.renderSidebar("storage", "shares");
@@ -232,27 +235,27 @@ var AppRouter = Backbone.Router.extend({
   showSnaps: function(shareName) {
     var snapshotsTableView = new SnapshotsTableView({
       model: new Share({shareName: shareName})
-    });  
+    });
   },
-  
+
   showSnap: function(shareName, snapName) {
     var snapshotsTableView = new SnapshotsTableView({
       model: new Share({shareName: shareName})
-    });  
+    });
   },
-  
+
   addShare: function(poolName) {
     RockStorSocket.removeAllListeners();
     this.renderSidebar("storage", "shares");
 		$('#maincontent').empty();
     this.cleanup();
-    if (_.isUndefined(poolName)){ 
+    if (_.isUndefined(poolName)){
     	   	this.currentLayout = new AddShareView();
 		} else {
 			this.currentLayout = new AddShareView({ poolName: poolName });
 		}
 		$('#maincontent').append(this.currentLayout.render().el);
-    
+
   },
 
   showShare: function(shareName) {
@@ -263,7 +266,7 @@ var AppRouter = Backbone.Router.extend({
 
     this.renderSidebar("storage", "shares");
     var shareDetailsLayoutView = new ShareDetailsLayoutView({
-      shareName: shareName 
+      shareName: shareName
     });
 
     $('#maincontent').empty();
@@ -291,7 +294,7 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },
-  
+
   showUsers: function() {
     this.renderSidebar("system", "users");
     this.cleanup();
@@ -307,7 +310,7 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },
-  
+
   editUser: function(username) {
     this.renderSidebar("system", "users");
     this.cleanup();
@@ -315,7 +318,7 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },
-  
+
   showProbeRunList: function() {
     this.renderSidebar("analytics", "probe_runs");
     this.cleanup();
@@ -323,7 +326,7 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },
-  
+
   runProbe: function() {
     this.renderSidebar("analytics", "run_probe");
     this.cleanup();
@@ -411,12 +414,12 @@ var AppRouter = Backbone.Router.extend({
     this.renderSidebar('storage', 'nfs-exports');
     this.cleanup();
     this.currentLayout = new EditNFSExportView({
-      nfsExportGroupId: nfsExportGroupId 
+      nfsExportGroupId: nfsExportGroupId
     });
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },
-  
+
   showNetworks: function() {
     RockStorSocket.removeAllListeners();
     this.renderSidebar("system", "network");
@@ -434,7 +437,7 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },
-  
+
   createCloneFromShare: function(shareName) {
     RockStorSocket.removeAllListeners();
     this.renderSidebar("storage", "shares");
@@ -478,7 +481,7 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },
-  
+
   addScheduledTask: function() {
     this.renderSidebar('system', 'scheduled-tasks');
     this.cleanup();
@@ -496,7 +499,7 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },
-  
+
   showSambaExports: function() {
     this.renderSidebar('storage', 'samba');
     this.cleanup();
@@ -504,7 +507,7 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },
-  
+
   addSambaExport: function() {
     this.renderSidebar('storage', 'samba');
     this.cleanup();
@@ -520,8 +523,8 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },
-  
-    
+
+
   showSFTP: function() {
     this.renderSidebar('storage', 'sftp');
     this.cleanup();
@@ -538,6 +541,30 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').append(this.currentLayout.render().el);
   },
 
+   showAFP: function() {
+    this.renderSidebar('storage', 'afp');
+    this.cleanup();
+    this.currentLayout = new AFPView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  addAFPShare: function() {
+    this.renderSidebar('storage', 'afp');
+    this.cleanup();
+    this.currentLayout = new AddAFPShareView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  editAFPShare: function(afpShareId) {
+    this.renderSidebar('storage', 'afp');
+    this.cleanup();
+    this.currentLayout = new AddAFPShareView({afpShareId: afpShareId});
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
   showVersion: function() {
     this.renderSidebar("system", "version");
     this.cleanup();
@@ -545,13 +572,13 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },
-  
+
   showShutdownView: function() {
     this.cleanup();
     this.currentLayout = new ShutdownView();
    $('#maincontent').append(this.currentLayout.render().el);
    },
-   
+
    showReboot: function() {
     this.cleanup();
     this.currentLayout = new RebootView();
@@ -589,7 +616,7 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },
-  
+
   addAccessKey: function() {
     this.renderSidebar("system", "access-keys");
     this.cleanup();
@@ -621,7 +648,7 @@ var AppRouter = Backbone.Router.extend({
       }
     }
   }
-  
+
 });
 
 // Initiate the router
@@ -639,8 +666,8 @@ $(document).ready(function() {
     //showApplianceList();
     app_router.navigate('appliances', {trigger: true});
   });
- 
-  // Global ajax error handler 
+
+  // Global ajax error handler
   $(document).ajaxError(function(event, jqXhr, ajaxSettings, e) {
     var commonerr_template = window.JST.common_commonerr;
     var popuperrTemplate = window.JST.common_popuperr;
@@ -660,12 +687,12 @@ $(document).ready(function() {
         detail = 'Unknown internal error doing a ' + ajaxSettings.type + ' to ' + ajaxSettings.url;
       }
       if (ajaxSettings.type == 'GET') {
-        $("#globalerrmsg").html(commonerr_template({ 
-        jqXhr: jqXhr, 
+        $("#globalerrmsg").html(commonerr_template({
+        jqXhr: jqXhr,
         detail: detail,
         help: errJson.help,
         ajaxSettings: ajaxSettings
-        })); 
+        }));
       } else {
         $('.overlay-content', '#global-err-overlay').html(popuperrTemplate({
           detail: detail
@@ -677,7 +704,7 @@ $(document).ready(function() {
 
   $('#global-err-overlay').on('click', '.err-help-toggle', function(event) {
     if (event) event.preventDefault();
-    var displayed = $('.err-help', '#global-err-overlay').css('display') == 'block'; 
+    var displayed = $('.err-help', '#global-err-overlay').css('display') == 'block';
     var display = displayed ? 'none' : 'block';
     $('.err-help', '#global-err-overlay').css('display', display);
     var val = displayed ? 'More...' : 'Close';
@@ -686,7 +713,7 @@ $(document).ready(function() {
 
   $('#globalerrmsg').on('click', '.err-help-toggle', function(event) {
     if (event) event.preventDefault();
-    var displayed = $('.err-help').css('display') == 'block'; 
+    var displayed = $('.err-help').css('display') == 'block';
     var display = displayed ? 'none' : 'block';
     $('.err-help').css('display', display);
     var val = displayed ? 'More...' : 'Close';
@@ -700,17 +727,17 @@ $(document).ready(function() {
 
   // Initialize websocket connection
   // logger.debug('connecting to websocket');
-  // RockStorSocket.socket = io.connect('https://' + document.location.host + ':' + NGINX_WEBSOCKET_PORT, 
+  // RockStorSocket.socket = io.connect('https://' + document.location.host + ':' + NGINX_WEBSOCKET_PORT,
     // {secure: true}
   // );
   // RockStorSocket.socket.on('sm_data', RockStorSocket.msgHandler);
-  
-  // Initialize global error popup 
-  $('#global-err-overlay').overlay({load: false}); 
 
-  // handle btn navbar toggle ourselves since bootstrap collapse 
+  // Initialize global error popup
+  $('#global-err-overlay').overlay({load: false});
+
+  // handle btn navbar toggle ourselves since bootstrap collapse
   // seems to conflict with something
-  $('body').on('click.collapse.data-api', '[data-toggle=mycollapse]', function ( e ) { 
+  $('body').on('click.collapse.data-api', '[data-toggle=mycollapse]', function ( e ) {
     var $this = $(this), target = $this.attr('data-target');
     var h = $(target).css('height');
     if (!($(target).hasClass('in'))) {
@@ -721,7 +748,6 @@ $(document).ready(function() {
       $(target).css('height', '0');
     }
   });
-    
+
 
 });
-

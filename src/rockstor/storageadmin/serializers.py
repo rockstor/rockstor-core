@@ -22,7 +22,7 @@ from storageadmin.models import (Disk, Pool, Share, Snapshot, NFSExport,
                                  SupportCase, DashboardConfig,
                                  NetworkInterface, User, PoolScrub, Setup,
                                  NFSExportGroup, SFTP, Plugin, InstalledPlugin,
-                                 AdvancedNFSExport, OauthApp)
+                                 AdvancedNFSExport, OauthApp, NetatalkShare)
 from django.contrib.auth.models import User as DjangoUser
 
 
@@ -162,3 +162,10 @@ class OauthAppSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OauthApp
+
+
+class NetatalkShareSerializer(serializers.ModelSerializer):
+    share = serializers.CharField(source='share_name')
+
+    class Meta:
+        model = NetatalkShare
