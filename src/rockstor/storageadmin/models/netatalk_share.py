@@ -37,5 +37,8 @@ class NetatalkShare(models.Model):
     def share_name(self, *args, **kwargs):
         return self.share.name
 
+    def vol_size(self, *args, **kwargs):
+        return self.share.size
+
     class Meta:
         app_label = 'storageadmin'
