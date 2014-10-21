@@ -22,7 +22,7 @@ from storageadmin.views import (SetupWizardView, LoginView,
                                 SetupUserView, NFSExportGroupView,
                                 SambaView, SFTPView, PluginView,
                                 InstalledPluginView, AdvancedNFSExportView,
-                                OauthAppView)
+                                OauthAppView, NetatalkView)
 import os.path
 import oauth2_provider
 
@@ -85,6 +85,9 @@ urlpatterns = patterns('',
                            SambaView.as_view()),
                        url(r'^api/sftp$', SFTPView.as_view()),
                        url(r'^api/sftp/(?P<id>\d+)$', SFTPView.as_view()),
+                       url(r'^api/netatalk$', NetatalkView.as_view()),
+                       url(r'^api/netatalk/(?P<afp_id>\d+)$',
+                           NetatalkView.as_view()),
                        # Dashboard config
                        url(r'^api/dashboardconfig/$',
                            DashboardConfigView.as_view()),

@@ -358,6 +358,17 @@ var SFTPCollection = RockStorPaginatedCollection.extend({
   baseUrl: '/api/sftp'
 });
 
+
+var AFP = Backbone.Model.extend({
+  urlRoot: '/api/netatalk'    
+});
+
+var AFPCollection = RockStorPaginatedCollection.extend({
+  model: AFP,
+  baseUrl: '/api/netatalk'
+});
+
+
 var Plugin = Backbone.Model.extend({
   urlRoot: '/api/plugins'    
 });
