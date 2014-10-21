@@ -23,7 +23,7 @@ Disk view, for anything at the disk level
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (Disk, Pool)
-from fs.btrfs import (scan_disks, wipe_disk)
+from fs.btrfs import (scan_disks, wipe_disk, blink_disk)
 from storageadmin.serializers import DiskInfoSerializer
 from storageadmin.util import handle_exception
 from django.conf import settings
@@ -56,27 +56,35 @@ class DiskView(rfc.GenericView):
     def _scan(self):
         disks = scan_disks(settings.MIN_DISK_SIZE)
         for d in disks:
+            dob = None
             if (Disk.objects.filter(serial=d.serial).exists()):
-                do = Disk.objects.get(serial=d.serial)
-                do.size = d.size
-                do.parted = d.parted
-                do.name = d.name
-                do.offline = False
-                if (do.btrfs_uuid != d.btrfs_uuid):
-                    try:
-                        pool = Pool.objects.get(uuid=d.btrfs_uuid)
-                    except:
-                        pool = None
-                    finally:
-                        do.pool = pool
-                        do.btrfs_uuid = d.btrfs_uuid
-                do.save()
+                dob = Disk.objects.get(serial=d.serial)
+                dob.name = d.name
+            elif (Disk.objects.filter(name=d.name).exists()):
+                dob = Disk.objects.get(name=d.name)
+                dob.serial = d.serial
             else:
                 new_disk = Disk(name=d.name, size=d.size, parted=d.parted,
                                 btrfs_uuid=d.btrfs_uuid, model=d.model,
                                 serial=d.serial, transport=d.transport,
                                 vendor=d.vendor)
                 new_disk.save()
+            if (dob is not None):
+                dob.size = d.size
+                dob.parted = d.parted
+                dob.offline = False
+                dob.model = d.model
+                dob.transport = d.transport
+                dob.vendor = d.vendor
+                if (dob.btrfs_uuid != d.btrfs_uuid):
+                    try:
+                        pool = Pool.objects.get(uuid=d.btrfs_uuid)
+                    except:
+                        pool = None
+                    finally:
+                        dob.pool = pool
+                        dob.btrfs_uuid = d.btrfs_uuid
+                dob.save()
         for do in Disk.objects.all():
             if (do.name not in [d.name for d in disks]):
                 do.offline = True
@@ -107,6 +115,10 @@ class DiskView(rfc.GenericView):
 
     def _blink_drive(self, dname, request):
         disk = self._validate_disk(dname, request)
+        total_time = request.DATA.get('total_time', 90)
+        blink_time = request.DATA.get('blink_time', 15)
+        sleep_time = request.DATA.get('sleep_time', 5)
+        blink_disk(disk.name, total_time, blink_time, sleep_time)
         return Response()
 
     def post(self, request, command, dname=None):
