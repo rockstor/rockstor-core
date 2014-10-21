@@ -38,3 +38,4 @@ from plugin import Plugin
 from installed_plugin import InstalledPlugin
 from adv_nfs_exports import AdvancedNFSExport
 from oauth_app import OauthApp
+from netatalk_share import NetatalkShare
