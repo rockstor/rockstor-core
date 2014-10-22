@@ -35,7 +35,7 @@ var AppRouter = Backbone.Router.extend({
     "setup": "doSetup",
     "home": "showHome",
     "disks": "showDisks",
-    "disks/add/:diskName": "addBlinkDrive",
+    "disks/blink/:diskName": "blinkDrive",
     "pools": "showPools",
     "pools/:poolName": "showPool",
     "add_pool": "addPool",
@@ -163,10 +163,10 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').append(this.currentLayout.render().el);
   },
 
-  addBlinkDrive: function(diskName) {
+  blinkDrive: function(diskName) {
     this.renderSidebar('storage', 'disks');
     this.cleanup();
-    this.currentLayout = new AddDiskView({diskName: diskName});
+    this.currentLayout = new BlinkDiskView({diskName: diskName});
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },
