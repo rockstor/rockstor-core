@@ -276,7 +276,10 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     //});
 
     this.gDisk = this.svgLegend.append('g')
-    .attr('class', 'metrics-disk-legend');
+    .attr('class', 'metrics-disk-legend')
+    .attr("transform", function(d,i) {
+      return "translate(" + _this.margin.left + ",0)"
+    });
 
     var diskLabelData = [
       {label: 'Disks - provisioned (' + humanize.filesize(this.provisioned*1024) + ')', fill: '#91BFF2'},
