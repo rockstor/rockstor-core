@@ -49,7 +49,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     this.free = 0; 
     this.poolCapacity = 0; 
     this.usage = 0; 
-    this.margin = {top: 20, right: 40, bottom: 40, left: 30};
+    this.margin = {top: 5, right: 40, bottom: 100, left: 30};
   },
 
   render: function() {
@@ -75,29 +75,47 @@ StorageMetricsWidget = RockStorWidgetView.extend({
 
   setData: function() {
     var gb = 1024*1024;
-    this.raw = (this.disks.reduce(function(sum, disk) {
+    this.raw = this.disks.reduce(function(sum, disk) {
       sum += disk.get('size');
       return sum;
-    }, 0)).toFixed(2);
-    this.allocated = (this.disks.reduce(function(sum, disk) {
+    }, 0);
+    this.provisioned = this.disks.reduce(function(sum, disk) {
       sum = disk.get('pool') != null ? sum + disk.get('size') : sum;
       return sum;
-    }, 0)).toFixed(2);
-    this.free = this.raw - this.allocated
-    this.poolCapacity = (this.pools.reduce(function(sum, pool) {
+    }, 0);
+    this.free = this.raw - this.provisioned
+
+    this.pool = this.pools.reduce(function(sum, pool) {
       sum += pool.get('size');
       return sum;
-    }, 0)).toFixed(2);
-    this.used = (this.shares.reduce(function(sum, share) {
+    }, 0);
+    
+    this.share = this.shares.reduce(function(sum, share) {
+      sum += share.get('size');
+      return sum;
+    }, 0);
+    this.usage = this.shares.reduce(function(sum, share) {
       sum += share.get('r_usage');
       return sum;
-    }, 0)).toFixed(2);
-    this.pctUsed = ((this.used/this.raw).toFixed(2)) * 100;
+    }, 0);
+    this.pctUsed = parseFloat(((this.usage/this.raw).toFixed(0)) * 100);
+    
     this.data = [
-      {name: 'used', label: 'Usage', value: this.used},
+      {name: 'used', label: 'Usage', value: this.usage},
       {name: 'pool', label: 'Pool Capacity', value: this.poolCapacity}, 
       {name: 'raw', label: 'Raw Capacity', value: this.raw}
     ];
+
+    this.data1 = [
+      { name: 'share', label: 'Share Capacity', value: this.share},
+      { name: 'pool-provisioned', label: 'Provisioned', value: this.provisioned },
+      { name: 'raw', label: 'Raw Capacity', value: this.raw },
+    ]
+    this.data2 = [
+      { name: 'usage', label: 'Usage', value: this.usage},
+      { name: 'pool', label: 'Pool Capacity', value: this.pool },
+      { name: 'provisioned', label: 'Provisioned', value: this.provisioned },
+    ]
 
   },
   
@@ -138,7 +156,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     });
     this.yAxis = d3.svg.axis().scale(this.y).orient('left').tickValues([0,1,2]).tickFormat(function(d) {
       if (d==0) {
-        return 'Usage';
+        return 'Shares';
       } else if (d==1) {
         return 'Pools';
       } else if (d==2) {
@@ -151,10 +169,9 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     .attr("transform", "translate(0," + _this.height + ")")
     .call(this.xAxis)
     
-
-    // render used, pools, and raw capacity
-    this.svgG.selectAll('metrics-rect')
-    .data(this.data)
+    // render data1
+    this.svgG.selectAll('metrics-rect1')
+    .data(this.data1)
     .enter()
     .append('rect')
     .attr('class', function(d) {
@@ -168,48 +185,86 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     .attr('width', function(d) { return _this.x(d.value); })
     .attr('height', function() { return _this.barHeight-4; });
 
-    // allocated 
-    this.svgG
+    // render data2
+    this.svgG.selectAll('metrics-rect2')
+    .data(this.data2)
+    .enter()
     .append('rect')
     .attr('class', function(d) {
-      return 'allocated';
+      return d.name;
     })
     .attr('x',0)
-    .attr('y', _this.y(2))
-    .attr('width', function(d) { return _this.x(_this.allocated); })
+    .attr('y', function(d,i) {
+      //return _this.y(i) + _this.barHeight/2 + _this.barPadding;
+      return _this.y(i);
+    })
+    .attr('width', function(d) { return _this.x(d.value); })
     .attr('height', function() { return _this.barHeight-4; });
+    
+    // allocated 
+    //this.svgG
+    //.append('rect')
+    //.attr('class', function(d) {
+      //return 'allocated';
+    //})
+    //.attr('x',0)
+    //.attr('y', _this.y(2))
+    //.attr('width', function(d) { return _this.x(_this.allocated); })
+    //.attr('height', function() { return _this.barHeight-4; });
    
     // text labels 
-    this.svgG.selectAll('metrics-large-text')
-    .data(this.data)
+    this.svgG.selectAll('metrics-text-data1')
+    .data(this.data1)
     .enter()
     .append('text')
-    .attr("class", "metrics-large-text")
-    .attr('x', 5)
-    .attr('y', function(d,i) {
-      return _this.y(i) + _this.barHeight/4;
+    .attr("class", "metrics-text-data1")
+    .attr('x', function(d){ 
+      var xOff = _this.x(d.value) - 4;
+      return (xOff > 0 ? xOff : 0);
     })
-    .style("text-anchor", "left")
+    .attr('y', function(d,i) {
+      return _this.y(i) + 12;
+    })
+    .style('text-anchor', function(d) {
+      var xOff = _this.x(d.value) - 4;
+      return (xOff > 30 ?  'end' : 'start');
+    })
     .text(function(d,i) {
-      if (d.name == 'used') {
-        return d.label + ' ' + humanize.filesize(d.value*1024) + ' (' +
-          _this.pctUsed + '%)';
-      } else {
-        return d.label + ' ' + humanize.filesize(d.value*1024);
-      }
+      return humanize.filesize(d.value*1024);
     });
 
-    // disks and legend text label for raw
-    this.svgG
+    // text labels 
+    this.svgG.selectAll('metrics-text-data2')
+    .data(this.data2)
+    .enter()
     .append('text')
-    .attr("class", "metrics-small-text")
-    .attr('x', 5)
-    .attr('y', this.y(2) + _this.barHeight/4 + 16) // y of raw + 16px for large label above it
-    .style("text-anchor", "left")
+    .attr("class", "metrics-text-data1")
+    .attr('x', function(d){ 
+      var xOff = _this.x(d.value) - 4;
+      return (xOff > 0 ? xOff : 0);
+    })
+    .attr('y', function(d,i) {
+      return _this.y(i) + _this.barHeight - 12;
+    })
+    .style('text-anchor', function(d) {
+      var xOff = _this.x(d.value) - 4;
+      return (xOff > 30 ?  'end' : 'start');
+    })
     .text(function(d,i) {
-      return _this.disks.length + ' x ' + humanize.filesize(_this.disks.at(0).get('size')*1024) + ' disks';
+      return humanize.filesize(d.value*1024);
     });
-    
+    // disks and legend text label for raw
+    //this.svgG
+    //.append('text')
+    //.attr("class", "metrics-small-text")
+    //.attr('x', 5)
+    //.attr('y', this.y(2) + _this.barHeight/4 + 16) // y of raw + 16px for large label above it
+    //.style("text-anchor", "left")
+    //.text(function(d,i) {
+      //return _this.disks.length + ' x ' + humanize.filesize(_this.disks.at(0).get('size')*1024) + ' disks';
+    //});
+
+    /*    
     this.gRaw = this.svgG.append('g')
     .attr('class', 'metrics-raw-legend')
     .attr("transform", function(d,i) {
@@ -218,7 +273,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
       return "translate(4, " + yOffset + ")"; // y of previous + 12px 
     });
 
-    var labelText = ['Allocated', 'Free'];
+    var labelText = ['Provisioned', 'Free'];
     var colors = [
       {fill: '#C3C8C9', stroke: '#555555'},
       {fill: '#FFFFFF', stroke: "#555555"}, 
@@ -250,7 +305,8 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     .attr("class", "metrics-small-text")
     .attr("transform", "translate(96,13)")
     .text(labelText[1]); 
-    
+    */
+
     // draw y axis last so that it is above all rects
     this.svgG.append("g")	
     .attr("class", "metrics-axis")
@@ -260,7 +316,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     .attr("transform", function(d) {
       return "rotate(-90)";
     })
-    .attr("dx", "-.8em")
+    .attr("dx", "-.6em")
     .attr("dy", "-.30em");
 
   },
