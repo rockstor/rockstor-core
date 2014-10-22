@@ -43,13 +43,14 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     this.dependencies.push(this.shares);
     // svg 
     this.svgEl = '#ph-metrics-viz';
+    this.svgLegendEl = '#ph-metrics-legend';
     // Metrics 
     this.raw = 0; // raw storage capacity in GB
     this.allocated = 0; 
     this.free = 0; 
     this.poolCapacity = 0; 
     this.usage = 0; 
-    this.margin = {top: 5, right: 40, bottom: 100, left: 30};
+    this.margin = {top: 0, right: 40, bottom: 20, left: 30};
   },
 
   render: function() {
@@ -89,7 +90,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
       sum += pool.get('size');
       return sum;
     }, 0);
-    
+    this.raidOverhead = this.provisioned - this.pool; 
     this.share = this.shares.reduce(function(sum, share) {
       sum += share.get('size');
       return sum;
@@ -129,7 +130,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
       this.height = 500 - this.margin.top - this.margin.bottom;
     } else {
       this.width = 250 - this.margin.left - this.margin.right;
-      this.height = 250 - this.margin.top - this.margin.bottom;
+      this.height = 160 - this.margin.top - this.margin.bottom;
     }
     this.x = d3.scale.linear().domain([0,this.raw]).range([0, this.width]);
     this.y = d3.scale.linear().domain([0, this.data.length]).range([0, this.height]);
@@ -137,6 +138,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
   },
   
   setupSvg: function() {
+    // svg for viz
     this.$(this.svgEl).empty();
     this.svg = d3.select(this.el).select(this.svgEl)
     .append('svg')
@@ -145,6 +147,14 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     .attr('height', this.height + this.margin.top + this.margin.bottom);
     this.svgG = this.svg.append("g")
     .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
+    
+    // svg for legend
+    this.$(this.svgLegendEl).empty();
+    this.svgLegend = d3.select(this.el).select(this.svgLegendEl)
+    .append('svg')
+    .attr('class', 'metrics-legend')
+    .attr('width', this.width + this.margin.left + this.margin.right)
+    .attr('height', 80);
   },
 
   renderMetrics: function() {
@@ -253,8 +263,9 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     .text(function(d,i) {
       return humanize.filesize(d.value*1024);
     });
-    // disks and legend text label for raw
-    //this.svgG
+    
+    // legend 
+    //this.svgGLegend
     //.append('text')
     //.attr("class", "metrics-small-text")
     //.attr('x', 5)
@@ -264,35 +275,41 @@ StorageMetricsWidget = RockStorWidgetView.extend({
       //return _this.disks.length + ' x ' + humanize.filesize(_this.disks.at(0).get('size')*1024) + ' disks';
     //});
 
-    /*    
-    this.gRaw = this.svgG.append('g')
-    .attr('class', 'metrics-raw-legend')
+    this.gDisk = this.svgLegend.append('g')
+    .attr('class', 'metrics-disk-legend');
+
+    var diskLabelData = [
+      {label: 'Disks - provisioned (' + humanize.filesize(this.provisioned*1024) + ')', fill: '#91BFF2'},
+      {label: 'Disks - free (' + humanize.filesize(this.free*1024) + ')', fill: '#E4EDF7'},
+      {label: 'Pool Capacity (' + humanize.filesize(this.pool*1024) + ')', fill: '#0BD6E3'},
+      {label: 'Pool Raid overhead  (' + humanize.filesize(this.raidOverhead*1024) + ')', fill: '#B0F1F5'},
+      {label: 'Share Capacity (' + humanize.filesize(this.shares*1024) + ')', fill: '#FAE8CA'},
+      {label: 'Usage (' + humanize.filesize(this.raidOverhead*1024) + ')', fill: '#FAC670'},
+    ]
+   
+    var diskLabels = this.gDisk.selectAll('legend-disk')
+    .data(diskLabelData)
+    .enter();
+
+    var diskLabelG = diskLabels.append('g')
     .attr("transform", function(d,i) {
-      var yOffset = _this.y(2) + (_this.barHeight/4) + 16 + 12;
-      console.log(yOffset);
-      return "translate(4, " + yOffset + ")"; // y of previous + 12px 
+      return "translate(0, " + (i*12) + ")"
     });
 
-    var labelText = ['Provisioned', 'Free'];
-    var colors = [
-      {fill: '#C3C8C9', stroke: '#555555'},
-      {fill: '#FFFFFF', stroke: "#555555"}, 
-    ];
-   
-    var labels = this.gRaw.append("g");
-    
-    labels.append("rect")
+    diskLabelG.append("rect")
     .attr("width", 13)
     .attr("height", 13)
-    .attr("fill", colors[0].fill)
-    .attr("stroke", colors[0].stroke);
+    .attr("fill", function(d) { return d.fill;})
 
-    labels.append("text")
+    diskLabelG.append("text")
     .attr("text-anchor", "left")
-    .attr("class", "metrics-small-text")
-    .attr("transform", "translate(16,13)")
-    .text(labelText[0]); 
-    
+    .attr("class", "metrics-legend-text")
+    .attr("transform", function(d,i) {
+      return "translate(16,13)"
+    })
+    .text(function(d) { return d.label;}); 
+   
+    /* 
     labels.append("rect")
     .attr("width", 13)
     .attr("height", 13)
@@ -316,7 +333,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     .attr("transform", function(d) {
       return "rotate(-90)";
     })
-    .attr("dx", "-.6em")
+    .attr("dx", "-.4em")
     .attr("dy", "-.30em");
 
   },
