@@ -170,8 +170,8 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },
-  
-  
+
+
   showPools: function() {
     RockStorSocket.removeAllListeners();
     this.renderSidebar("storage", "pools");
