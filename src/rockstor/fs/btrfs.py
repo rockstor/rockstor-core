@@ -46,26 +46,6 @@ import collections
 Disk = collections.namedtuple('Disk', 'name model serial size '
                               'transport vendor hctl type parted btrfs_uuid')
 
-"""
-class Disk():
-
-    def __init__(self, name, size, free, parted=False, uuid=None):
-        self.name = name
-        self.size = size
-        self.free = free
-        self.parted = parted
-        self.btrfs_uuid = uuid
-        self.model = model
-        self.serial = serial
-
-    def __repr__(self):
-        return {'name': self.name,
-                'size': self.size,
-                'free': self.free,
-                'parted': self.parted,
-                'btrfs_uuid': self.btrfs_uuid, }
-"""
-
 
 def add_pool(name, data_raid, meta_raid, disks):
     """
@@ -507,6 +487,8 @@ def blink_disk(disk, total_exec, read, sleep):
                          stderr=subprocess.PIPE)
     total_elapsed_time = 0
     while (total_elapsed_time < total_exec):
+        if (p.poll() is not None):
+            return
         time.sleep(read)
         p.send_signal(signal.SIGSTOP)
         time.sleep(sleep)
