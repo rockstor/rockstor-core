@@ -240,7 +240,8 @@ StorageMetricsWidget = RockStorWidgetView.extend({
       return (xOff > 30 ?  'end' : 'start');
     })
     .text(function(d,i) {
-      return humanize.filesize(d.value*1024);
+      //return humanize.filesize(d.value*1024);
+      return humanize.filesize((_this.data1[i].value-_this.data2[i].value)*1024);
     });
 
     // text labels 
@@ -250,15 +251,17 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     .append('text')
     .attr("class", "metrics-text-data1")
     .attr('x', function(d){ 
-      var xOff = _this.x(d.value) - 4;
-      return (xOff > 0 ? xOff : 0);
+      //var xOff = _this.x(d.value) - 4;
+      //return (xOff > 0 ? xOff : 0);
+      return 4;
     })
     .attr('y', function(d,i) {
       return _this.y(i) + _this.barHeight - 12;
     })
     .style('text-anchor', function(d) {
-      var xOff = _this.x(d.value) - 4;
-      return (xOff > 30 ?  'end' : 'start');
+      //var xOff = _this.x(d.value) - 4;
+      //return (xOff > 30 ?  'end' : 'start');
+      return 'start';
     })
     .text(function(d,i) {
       return humanize.filesize(d.value*1024);
@@ -276,19 +279,25 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     //});
 
     this.gDisk = this.svgLegend.append('g')
-    .attr('class', 'metrics-disk-legend')
-    .attr("transform", function(d,i) {
-      return "translate(" + _this.margin.left + ",0)"
-    });
+    .attr('class', 'metrics-disk-legend');
+    //.attr("transform", function(d,i) {
+      //return "translate(" + _this.margin.left + ",0)"
+    //});
 
     var diskLabelData = [
-      {label: 'Disks - provisioned (' + humanize.filesize(this.provisioned*1024) + ')', fill: '#91BFF2'},
-      {label: 'Disks - free (' + humanize.filesize(this.free*1024) + ')', fill: '#E4EDF7'},
-      {label: 'Pool Capacity (' + humanize.filesize(this.pool*1024) + ')', fill: '#0BD6E3'},
-      {label: 'Pool Raid overhead  (' + humanize.filesize(this.raidOverhead*1024) + ')', fill: '#B0F1F5'},
-      {label: 'Share Capacity (' + humanize.filesize(this.shares*1024) + ')', fill: '#FAE8CA'},
-      {label: 'Usage (' + humanize.filesize(this.raidOverhead*1024) + ')', fill: '#FAC670'},
-    ]
+      {label: 'Provisioned', fill: '#91BFF2'},
+      {label: 'Free', fill: '#E4EDF7'},
+    ];
+
+    var poolLabelData = [
+      {label: 'Capacity', fill: '#0BD6E3'},
+      {label: 'Raid overhead', fill: '#B0F1F5'},
+    ];
+
+    var shareLabelData = [
+      {label: 'Capacity', fill: '#FAE8CA'},
+      {label: 'Usage', fill: '#FAC670'},
+    ];
    
     var diskLabels = this.gDisk.selectAll('legend-disk')
     .data(diskLabelData)
@@ -296,7 +305,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
 
     var diskLabelG = diskLabels.append('g')
     .attr("transform", function(d,i) {
-      return "translate(0, " + (i*12) + ")"
+      return "translate(0, " + (i*14) + ")"
     });
 
     diskLabelG.append("rect")
@@ -308,10 +317,55 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     .attr("text-anchor", "left")
     .attr("class", "metrics-legend-text")
     .attr("transform", function(d,i) {
-      return "translate(16,13)"
+      return "translate(16,12)"
     })
     .text(function(d) { return d.label;}); 
    
+    var poolLabels = this.gDisk.selectAll('legend-pool')
+    .data(poolLabelData)
+    .enter();
+
+    var poolLabelG = poolLabels.append('g')
+    .attr("transform", function(d,i) {
+      return "translate(75, " + (i*14) + ")"
+    });
+
+    poolLabelG.append("rect")
+    .attr("width", 13)
+    .attr("height", 13)
+    .attr("fill", function(d) { return d.fill;})
+
+    poolLabelG.append("text")
+    .attr("text-anchor", "left")
+    .attr("class", "metrics-legend-text")
+    .attr("transform", function(d,i) {
+      return "translate(16,12)"
+    })
+    .text(function(d) { return d.label;}); 
+
+    var shareLabels = this.gDisk.selectAll('legend-share')
+    .data(shareLabelData)
+    .enter();
+
+    var shareLabelG = shareLabels.append('g')
+    .attr("transform", function(d,i) {
+      return "translate(160, " + (i*14) + ")"
+    });
+
+    shareLabelG.append("rect")
+    .attr("width", 13)
+    .attr("height", 13)
+    .attr("fill", function(d) { return d.fill;})
+
+    shareLabelG.append("text")
+    .attr("text-anchor", "left")
+    .attr("class", "metrics-legend-text")
+    .attr("transform", function(d,i) {
+      return "translate(16,12)"
+    })
+    .text(function(d) { return d.label;}); 
+
+
     /* 
     labels.append("rect")
     .attr("width", 13)
