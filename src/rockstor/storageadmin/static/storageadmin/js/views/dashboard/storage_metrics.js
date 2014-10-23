@@ -108,7 +108,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     ];
 
     this.data1 = [
-      { name: 'share', label: 'Share Capacity', value: this.share},
+      { name: 'share', label: 'Share Capacity', value: this.share },
       { name: 'pool-provisioned', label: 'Provisioned', value: this.provisioned },
       { name: 'raw', label: 'Raw Capacity', value: this.raw },
     ]
@@ -130,11 +130,11 @@ StorageMetricsWidget = RockStorWidgetView.extend({
       this.height = 500 - this.margin.top - this.margin.bottom;
     } else {
       this.width = 250 - this.margin.left - this.margin.right;
-      this.height = 160 - this.margin.top - this.margin.bottom;
+      this.height = 190 - this.margin.top - this.margin.bottom;
     }
     this.x = d3.scale.linear().domain([0,this.raw]).range([0, this.width]);
-    this.y = d3.scale.linear().domain([0, this.data.length]).range([0, this.height]);
-    this.barHeight = (this.height / this.data.length );
+    this.y = d3.scale.linear().domain([0, this.data1.length]).range([0, this.height]);
+    this.barHeight = (this.height / this.data1.length );
   },
   
   setupSvg: function() {
@@ -241,7 +241,9 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     })
     .text(function(d,i) {
       //return humanize.filesize(d.value*1024);
-      return humanize.filesize((_this.data1[i].value-_this.data2[i].value)*1024);
+      var tmp = d.value - _this.data2[i].value;
+      var pct = (tmp/d.value) * 100;
+      return humanize.filesize(tmp*1024);
     });
 
     // text labels 
@@ -264,7 +266,8 @@ StorageMetricsWidget = RockStorWidgetView.extend({
       return 'start';
     })
     .text(function(d,i) {
-      return humanize.filesize(d.value*1024);
+      var pct = (d.value/_this.data1[i].value)*100;
+      return humanize.filesize(d.value*1024) + ' (' + pct.toFixed() + '%)';
     });
     
     // legend 
@@ -296,7 +299,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
 
     var shareLabelData = [
       {label: 'Capacity', fill: '#FAE8CA'},
-      {label: 'Usage', fill: '#FAC670'},
+      {label: 'Used', fill: '#FAC670'},
     ];
    
     var diskLabels = this.gDisk.selectAll('legend-disk')
