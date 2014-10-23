@@ -190,6 +190,7 @@ PIPELINE_JS = {
             'storageadmin/js/views/appliances.js',
             'storageadmin/js/views/add_appliance.js',
             'storageadmin/js/views/disks.js',
+            'storageadmin/js/views/blink_disks.js',
             'storageadmin/js/views/disk_detail.js',
             'storageadmin/js/views/pools.js',
             'storageadmin/js/views/pool_details_layout_view.js',

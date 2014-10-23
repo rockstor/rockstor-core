@@ -2,16 +2,20 @@
   <table id="disks-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of disks">
     <thead>
       <tr>
-        <th scope="col" abbr="Name">Disk Name</th>
+        <th scope="col" abbr="Name">Name</th>
+	<th scope="col" abbr="Serial">Serial</th>
         <th scope="col" abbr="Capacity">Capacity</th>
         <th scope="col" abbr="Pool">Pool</th>
+	<th scope="col" abbr="Model">Model</th>
+	<th scope="col" abbr="Transport">Transport</th>
+	<th scope="col" abbr="Vendor">Vendor</th>
       </tr>
     </thead>
     <tbody>
       <% collection.each(function(disk, index) { %>
         <tr>
           <td><i class="icon-hdd"></i> <%= disk.get('name') %>&nbsp;
-            <% if (disk.get('offline')) { %>
+             <% if (disk.get('offline')) { %>
               <a href="#" class="delete" data-disk-name="<%= disk.get('name') %>" title="Disk is unusable because it is offline. Click to delete it from the system" rel="tooltip"><i class="icon-trash"></i></a>
             <% } else if (disk.get('parted')) { %>
               <a href="#" class="wipe" data-disk-name="<%= disk.get('name') %>" title="Disk is unusable because it has partitions. Click to wipe the disk" rel="tooltip"><i class="icon-cog"></i></a>
@@ -22,6 +26,8 @@
             <% } %>
 
           </td>
+	  <td><%= disk.get('serial') %>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#disks/blink/<%= disk.get('name') %>" title="A tool to physically identify the hard drive with this serial number" rel="tooltip"><i class="fa fa-lightbulb-o fa-lg"></i></a>&nbsp;
+           </td>
           <td><%= humanize.filesize(disk.get('size')*1024) %></td>
           <td>
             <% if (!_.isNull(disk.get("pool_name"))) { %>
@@ -30,6 +36,9 @@
               </a>
             <% } %>
           </td>
+	  <td><%= disk.get('model') %></td>
+	  <td><%= disk.get('transport') %></td>
+	  <td><%= disk.get('vendor') %></td>
         </tr>
       <% }); %>
     </tbody>
