@@ -160,6 +160,10 @@ DisksView = Backbone.View.extend({
     }
   },
 
+  cleanup: function() {
+      this.$("[rel='tooltip']").tooltip('hide');
+  },
+
 });
 
 // Add pagination
