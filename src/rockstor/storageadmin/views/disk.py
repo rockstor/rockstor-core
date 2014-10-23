@@ -115,9 +115,9 @@ class DiskView(rfc.GenericView):
 
     def _blink_drive(self, dname, request):
         disk = self._validate_disk(dname, request)
-        total_time = request.DATA.get('total_time', 90)
-        blink_time = request.DATA.get('blink_time', 15)
-        sleep_time = request.DATA.get('sleep_time', 5)
+        total_time = int(request.DATA.get('total_time', 90))
+        blink_time = int(request.DATA.get('blink_time', 15))
+        sleep_time = int(request.DATA.get('sleep_time', 5))
         blink_disk(disk.name, total_time, blink_time, sleep_time)
         return Response()
 
