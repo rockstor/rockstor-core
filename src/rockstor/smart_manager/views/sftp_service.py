@@ -54,6 +54,6 @@ class SFTPServiceView(BaseServiceView):
                     toggle_sftp_service(switch=False)
             except Exception, e:
                 logger.exception(e)
-                e_msg = ('Failed to %s samba due to a system error.')
+                e_msg = ('Failed to %s SFTP due to a system error.' % command)
                 handle_exception(Exception(e_msg), request)
         return Response()

@@ -27,6 +27,7 @@ MKDIR = '/bin/mkdir'
 MOUNT = '/bin/mount'
 USERMOD = '/usr/sbin/usermod'
 SSHD_HEADER = '###BEGIN: Rockstor SFTP CONFIG. DO NOT EDIT BELOW THIS LINE###'
+SFTP_REGEX = 'Subsystem\s+sftp'
 SFTP_STR = 'Subsystem\tsftp\tinternal-sftp'
 
 
@@ -55,8 +56,8 @@ def toggle_sftp_service(switch=True):
     written = False
     with open(SSHD_CONFIG) as sfo, open(npath, 'w') as tfo:
         for line in sfo.readlines():
-            if (re.match(SFTP_STR, line) is not None):
-                if (switch):
+            if (re.match(SFTP_REGEX, line) is not None):
+                if (switch and not written):
                     tfo.write('%s\n' % SFTP_STR)
                     written = True
             elif (re.match(SSHD_HEADER, line) is not None):
