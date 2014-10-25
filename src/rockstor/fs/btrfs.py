@@ -44,7 +44,8 @@ WIPEFS = '/usr/sbin/wipefs'
 
 import collections
 Disk = collections.namedtuple('Disk', 'name model serial size '
-                              'transport vendor hctl type parted btrfs_uuid')
+                              'transport vendor hctl type fstype '
+                              'label btrfs_uuid parted')
 
 
 def add_pool(name, data_raid, meta_raid, disks):
@@ -398,20 +399,6 @@ def btrfs_importable(disk):
     return False
 
 
-def scan_btrfs_fs():
-    o, e, rc = run_command([BTRFS, 'filesystem', 'show'])
-    fs_map = {}
-    cur_uuid = None
-    for l in o:
-        l = l.strip()
-        if (re.match('Label: ', l) is not None):
-            cur_uuid = l.split()[3]
-        elif (re.match('devid', l) is not None):
-            device = l.split()[-1].split('/')[-1]
-            fs_map[device] = cur_uuid
-    return fs_map
-
-
 def root_disk():
     """
     returns the partition(s) used for /. Typically it's sda.
@@ -430,9 +417,8 @@ def root_disk():
 
 def scan_disks(min_size):
     root = root_disk()
-    fs_map = scan_btrfs_fs()
     cmd = ['/usr/bin/lsblk', '-P', '-o',
-           'NAME,MODEL,SERIAL,SIZE,TRAN,VENDOR,HCTL,TYPE']
+           'NAME,MODEL,SERIAL,SIZE,TRAN,VENDOR,HCTL,TYPE,FSTYPE,LABEL,UUID']
     o, e, rc = run_command(cmd)
     dnames = {}
     disks = []
@@ -444,18 +430,15 @@ def scan_disks(min_size):
         for f in fields:
             sf = f.split('=')
             dfields.append(sf[1].strip('"').strip())
-        if (dfields[-1] == 'rom'):
+        print('dfields = %s' % dfields)
+        if (dfields[7] == 'rom'):
             continue
-        elif (dfields[-1] == 'part'):
+        elif (dfields[7] == 'part'):
             for dname in dnames.keys():
                 if (re.match(dname, dfields[0]) is not None):
                     dnames[dname][8] = True
         elif (dfields[0] != root):
             dfields.append(False) # part = False by default
-            if (dfields[0] in fs_map):
-                dfields.append(fs_map[dfields[0]])
-            else:
-                dfields.append(None)
             # convert size into KB
             size_str = dfields[3]
             if (size_str[-1] == 'G'):
