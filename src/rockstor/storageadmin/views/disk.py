@@ -76,14 +76,9 @@ class DiskView(rfc.GenericView):
                 dob.model = d.model
                 dob.transport = d.transport
                 dob.vendor = d.vendor
-                if (dob.btrfs_uuid != d.btrfs_uuid):
-                    try:
-                        pool = Pool.objects.get(uuid=d.btrfs_uuid)
-                    except:
-                        pool = None
-                    finally:
-                        dob.pool = pool
-                        dob.btrfs_uuid = d.btrfs_uuid
+                dob.btrfs_uuid = d.btrfs_uuid
+                if (Pool.objects.filter(name=d.label).exists()):
+                    dob.pool = Pool.objects.get(name=d.label)
                 dob.save()
         for do in Disk.objects.all():
             if (do.name not in [d.name for d in disks]):

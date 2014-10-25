@@ -23,11 +23,12 @@ Login api. logs the user in, returns error if incorrect login .
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from django.contrib.auth import (authenticate, login, logout)
+from django.contrib.auth import (authenticate, login)
 from storageadmin.util import handle_exception
 
 import logging
 logger = logging.getLogger(__name__)
+
 
 class LoginView(APIView):
     def post(self, request):
@@ -37,10 +38,8 @@ class LoginView(APIView):
             user = authenticate(username=username, password=password)
             if (user is not None and user.is_active):
                 login(request, user)
-                logger.debug('logged in from api')
                 return Response({'msg': 'logged in'})
             else:
-                return Response(status = status.HTTP_401_UNAUTHORIZED)
+                return Response(status=status.HTTP_401_UNAUTHORIZED)
         except Exception, e:
             handle_exception(e, request)
-
