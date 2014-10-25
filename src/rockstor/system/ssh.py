@@ -48,7 +48,10 @@ def update_sftp_config(input_map):
             tfo.write('\tChrootDirectory %s\n' % input_map[user])
 
     move(npath, SSHD_CONFIG)
-    return systemctl('sshd', 'reload')
+    try:
+        systemctl('sshd', 'reload')
+    except:
+        return systemctl('sshd', 'restart')
 
 
 def toggle_sftp_service(switch=True):
@@ -68,7 +71,10 @@ def toggle_sftp_service(switch=True):
             else:
                 tfo.write(line)
     move(npath, SSHD_CONFIG)
-    return systemctl('sshd', 'reload')
+    try:
+        systemctl('sshd', 'reload')
+    except:
+        return systemctl('sshd', 'restart')
 
 
 def sftp_mount_map(mnt_prefix):
