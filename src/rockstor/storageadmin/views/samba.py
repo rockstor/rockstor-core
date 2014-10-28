@@ -35,6 +35,14 @@ logger = logging.getLogger(__name__)
 class SambaView(rfc.GenericView):
     serializer_class = SambaShareSerializer
     CREATE_MASKS = ('0777', '0755', '0744', '0700',)
+    DEF_OPTS = {
+        'comment': 'samba export',
+        'browsable': 'yes',
+        'guest_ok': 'no',
+        'read_only': 'no',
+        'create_mask': '0755',
+    }
+    BOOL_OPTS = ('yes', 'no',)
 
     def get_queryset(self, *args, **kwargs):
         if ('id' in kwargs):
@@ -45,63 +53,63 @@ class SambaView(rfc.GenericView):
                 return []
         return SambaShare.objects.all()
 
+    def _validate_input(self, request, smbo=None):
+        options = {}
+        def_opts = self.DEF_OPTS
+        if (smbo is not None):
+            def_opts = self.DEF_OPTS.copy()
+            def_opts['comment'] = smbo.comment
+            def_opts['browsable'] = smbo.browsable
+            def_opts['guest_ok'] = smbo.guest_ok
+            def_opts['read_only'] = smbo.read_only
+            def_opts['create_mask'] = smbo.create_mask
+
+        options['comment'] = request.DATA.get('comment', def_opts['comment'])
+        options['browsable'] = request.DATA.get('browsable',
+                                                def_opts['browsable'])
+        if (options['browsable'] not in self.BOOL_OPTS):
+            e_msg = ('Invalid choice for browsable. Possible '
+                     'choices are yes or no.')
+            handle_exception(Exception(e_msg), request)
+        options['guest_ok'] = request.DATA.get('guest_ok',
+                                               def_opts['guest_ok'])
+        if (options['guest_ok'] not in self.BOOL_OPTS):
+            e_msg = ('Invalid choice for guest_ok. Possible '
+                     'options are yes or no.')
+            handle_exception(Exception(e_msg), request)
+        options['read_only'] = request.DATA.get('read_only',
+                                                def_opts['read_only'])
+        if (options['read_only'] not in self.BOOL_OPTS):
+            e_msg = ('Invalid choice for read_only. Possible '
+                     'options are yes or no.')
+            handle_exception(Exception(e_msg), request)
+        options['create_mask'] = request.DATA.get('create_mask',
+                                                  def_opts['create_mask'])
+        if (options['create_mask'] not in self.CREATE_MASKS):
+            e_msg = ('Invalid choice for create_mask. Possible '
+                     'options are: %s' % self.CREATE_MASKS)
+            handle_exception(Exception(e_msg), request)
+        return options
+
     @transaction.commit_on_success
     def post(self, request):
         if ('shares' not in request.DATA):
             e_msg = ('Must provide share names')
             handle_exception(Exception(e_msg), request)
         shares = [validate_share(s, request) for s in request.DATA['shares']]
-        options = {
-            'comment': 'samba export',
-            'browsable': 'yes',
-            'guest_ok': 'no',
-            'read_only': 'no',
-            'create_mask': '0755',
-            'admin_users': '',
-            }
-        options['comment'] = request.DATA.get('comment', options['comment'])
-        if ('browsable' in request.DATA):
-            if (request.DATA['browsable'] != 'yes' and
-                request.DATA['browsable'] != 'no'):
-                e_msg = ('Invalid choice for browsable. Possible '
-                         'choices are yes or no.')
-                handle_exception(Exception(e_msg), request)
-            options['browsable'] = request.DATA['browsable']
-        if ('guest_ok' in request.DATA):
-            if (request.DATA['guest_ok'] != 'yes' and
-                request.DATA['guest_ok'] != 'no'):
-                e_msg = ('Invalid choice for guest_ok. Possible '
-                         'options are yes or no.')
-                handle_exception(Exception(e_msg), request)
-                options['guest_ok'] = request.DATA['guest_ok']
-        if ('read_only' in request.DATA):
-            if (request.DATA['read_only'] != 'yes' and
-                request.DATA['read_only'] != 'no'):
-                e_msg = ('Invalid choice for read_only. Possible '
-                         'options are yes or no.')
-                handle_exception(Exception(e_msg), request)
-            options['read_only'] = request.DATA['read_only']
-        if ('create_mask' in request.DATA):
-            if (request.DATA['create_mask'] not in self.CREATE_MASKS):
-                e_msg = ('Invalid choice for create_mask. Possible '
-                         'options are: %s' % self.CREATE_MASKS)
-                handle_exception(Exception(e_msg), request)
-
+        options = self._validate_input(request)
         for share in shares:
             if (SambaShare.objects.filter(share=share).exists()):
                 e_msg = ('Share(%s) is already exported via Samba' %
                          share.name)
                 handle_exception(Exception(e_msg), request)
-
         try:
+            logger.debug('options = %s' % options)
             for share in shares:
                 mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
-                smb_share = SambaShare(share=share, path=mnt_pt,
-                                       comment=options['comment'],
-                                       browsable=options['browsable'],
-                                       read_only=options['read_only'],
-                                       guest_ok=options['guest_ok'],
-                                       create_mask=options['create_mask'])
+                options['share'] = share
+                options['path'] = mnt_pt
+                smb_share = SambaShare(**options)
                 smb_share.save()
                 if (not is_share_mounted(share.name)):
                     pool_device = Disk.objects.filter(pool=share.pool)[0].name
@@ -125,10 +133,8 @@ class SambaView(rfc.GenericView):
     def put(self, request, smb_id):
         with self._handle_exception(request):
             smbo = SambaShare.objects.get(id=smb_id)
-            smbo.comment = request.DATA.get('comment', smbo.comment)
-            smbo.browsable = request.DATA.get('browsable', smbo.browsable)
-            smbo.read_only = request.DATA.get('read_only', smbo.read_only)
-            smbo.guest_ok = request.DATA.get('guest_ok', smbo.guest_ok)
+            options = self._validate_input(request)
+            smbo.__dict__.update(**options)
             admin_users = request.DATA.get('admin_users', None)
             if (admin_users is None):
                 admin_users = []
