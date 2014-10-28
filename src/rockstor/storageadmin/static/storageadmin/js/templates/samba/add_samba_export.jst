@@ -17,10 +17,10 @@
             <select name="shares" id="shares" size="10" data-placeholder="Select shares to export" multiple>
             <% if (sambaShareId!=null) {  %>
             <option value="<%= smbShare.get('share')%>" selected="selected"> <%= smbShare.get('share') %></option>
-            <% } %>
+            <% }else{ %>
             <% _.each(shares, function(share, index) { %>
                       <option value="<%= share.get('name') %>" > <%= share.get('name') %></option>
-                <% }); %>
+                <% }); } %>
          
             </select>
           </div>
