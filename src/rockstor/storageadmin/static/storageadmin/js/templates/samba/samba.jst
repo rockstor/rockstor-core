@@ -12,7 +12,7 @@
             <th scope="col" abbr="Guest ok">Guest ok</th>
             <th scope="col" abbr="Read only">Read only</th>
             <th scope="col" abbr="Admin Users">Admin Users</th>
-            <th scope="col" abbr="Comments">Comments</th>
+            <th scope="col" abbr="Comments">Comment</th>
             <th scope="col" abbr="Actions">Actions</th>
           </tr>
         </thead>
@@ -25,9 +25,13 @@
               <td><%= sambaShare.get('read_only') %></td>
               <td>
 	      <% var userNames = _.reduce(sambaShare.get('admin_users'), function(s, user, i, list) { if (i < (list.length-1)) { return s + user.username + ',';} else { return s + user.username; } }, ''); %>
+	      <% if(userNames.length != 0){ %>
 	      <%= userNames %>
+	      <% }else {%>
+	      &nbsp;--
+	      <% } %>
 	      </td>
-              <td><%= sambaShare.get('comments') %></td>
+              <td><%= sambaShare.get('comment') %></td>
               <td>
 	      <a href="#samba/edit/<%= sambaShare.id %>"><i class="icon-pencil"></i></a>
 	      &nbsp;

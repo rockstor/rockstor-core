@@ -96,7 +96,7 @@ AddSambaExportView = RockstorLayoutView.extend({
       html: true,
       placement: 'right'
     });
-    
+   
     $('#add-samba-export-form').validate({
       onfocusout: false,
       onkeyup: false,
