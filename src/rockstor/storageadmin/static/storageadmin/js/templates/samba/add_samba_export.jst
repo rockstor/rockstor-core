@@ -1,8 +1,8 @@
 <% if (sambaShareId!=null) { %>
-<h3>Edit Samba export</h3>
-<%} else {%>
+  <h3>Edit Samba export for <%= smbShare.get('share') %></h3>
+<% } else {%>
 <h3>Add Samba export</h3>
-<%}%>
+<% } %>
 <div class="row-fluid">
   <div class="span8">
     <label class="control-label"><span class="required">*</span> indicates required fields</label>
@@ -12,17 +12,19 @@
 
         <!-- Shares -->
         <div class="control-group">
-          <label class="control-label" for="shares">Shares to export<span class="required"> *</span></label>
+          <% if (sambaShareId == null) {  %>
+            <label class="control-label" for="shares">Shares to export<span class="required"> *</span></label>
+          <% } %>
           <div class="controls">
+            <% if (sambaShareId == null) {  %>
             <select name="shares" id="shares" size="10" data-placeholder="Select shares to export" multiple>
-            <% if (sambaShareId!=null) {  %>
-            <option value="<%= smbShare.get('share')%>" selected="selected"> <%= smbShare.get('share') %></option>
-            <% }else{ %>
             <% _.each(shares, function(share, index) { %>
-                      <option value="<%= share.get('name') %>" > <%= share.get('name') %></option>
-                <% }); } %>
-         
+              <option value="<%= share.get('name') %>" > <%= share.get('name') %></option>
+            <% }); %>
             </select>
+          <% } else { %>
+            <h4>Edit Samba Export for share: <strong><%= smbShare.get('share') %></strong></h4>
+          <% } %>
           </div>
         </div>
 
