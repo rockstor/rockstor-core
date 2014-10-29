@@ -6,6 +6,7 @@ from django.db import models
 
 
 class Migration(SchemaMigration):
+    depends_on = (('oauth2_provider', '0001_initial'),)
 
     def forwards(self, orm):
         # Adding model 'OauthApp'
