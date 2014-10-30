@@ -344,3 +344,5 @@ COMMANDS = {
 SYSCONFIG = {
 	  'ntp': '/etc/ntp.conf',
 }
+
+SOUTH_TESTS_MIGRATE = False

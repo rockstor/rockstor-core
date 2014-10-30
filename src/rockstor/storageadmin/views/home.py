@@ -65,7 +65,8 @@ def home(request):
         'page_size': settings.PAGINATION['page_size'],
         'installed_plugins': InstalledPlugin.objects.all(),
         'installed_plugins_json': JSONRenderer().render(
-            InstalledPluginSerializer(InstalledPlugin.objects.all()).data),
+            InstalledPluginSerializer(InstalledPlugin.objects.all(),
+                                      many=True).data),
         'replica_data_port': settings.REPLICA_DATA_PORT,
         'replica_meta_port': settings.REPLICA_META_PORT,
     }
