@@ -103,3 +103,45 @@ class SambaTests(APITestCase):
         response = self.client.post(self.BASE_URL, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['admin_users']), 0)
+
+    def test_samba_5(self):
+        """
+        non existant admin user
+        """
+        self.assertEqual(1, 2)
+
+    def test_samba_6(self):
+        """
+        non existant share
+        """
+        self.assertEqual(1, 2)
+
+    def test_samba_7(self):
+        """
+        happy path, multiple shares
+        """
+        self.assertEqual(1, 2)
+
+    def test_samba_8(self):
+        """
+        add export while samba service is off
+        """
+        self.assertEqual(1, 2)
+
+    def test_samba_9(self):
+        """
+        delete export while samba service is off
+        """
+        self.assertEqual(1, 2)
+
+    def test_samba_10(self):
+        """
+        happy path, export edit
+        """
+        self.assertEqual(1, 2)
+
+    def test_samba_11(self):
+        """
+        export edit while samba service is off
+        """
+        self.assertEqual(1, 2)
