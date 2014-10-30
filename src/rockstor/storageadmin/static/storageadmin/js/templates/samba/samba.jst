@@ -1,6 +1,33 @@
 <!-- Module Body -->
 <div class="row-fluid">
   <div class="span12">
+    <div id="details-header">
+      <table>
+        <tr>
+          <td><span class="h3">Samba Service&nbsp;&nbsp;&nbsp;</span></td>
+          <td>
+            <% if (service.get('status')) { %>
+              <div class="slider-stop" data-service-name="<%= service.get('name') %>">OFF</div>
+              <div class="slider-ph">
+                <input type="text" class="service-status" value="1" data-service-name="<%= service.get('name') %>"></input>
+              </div>
+              <div class="slider-start on" data-service-name="<%= service.get('name') %>">ON</div>
+            <% } else { %>
+              <div class="slider-stop" data-service-name="<%= service.get('name') %>">OFF</div>
+              <div class="slider-ph">
+                <input type="text" class="service-status" value="0" data-service-name="<%= service.get('name') %>"></input>
+              </div>
+              <div class="slider-start" data-service-name="<%= service.get('name') %>">ON</div>
+            <% } %>
+            <div class="command-status" data-service-name="<%= service.get('name') %>">&nbsp;</div>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <div id="samba-warning" class="alert" style="display:none">
+    	<strong>Warning! Samba Service is not running</strong>. Clients won't be able to mount unless Samba is running.
+    </div>
+    <br>
     <div class="messages"></div>
     <!-- Content -->
     <% if (collection.length > 0) { %>
