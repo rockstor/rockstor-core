@@ -19,10 +19,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework import status
 from rest_framework.test import APITestCase
+from system.services import systemctl
 
 
 class SambaTests(APITestCase):
-    fixtures = ['storageadmin.json']
+    fixtures = ['samba.json']
     BASE_URL = '/api/samba'
     data = {'shares': ('share1', ),
             'comment': 'samba export',
@@ -49,6 +50,10 @@ class SambaTests(APITestCase):
     def session_login(self):
         self.client.login(username='admin', password='admin')
 
+    def switch_samba(self, switch):
+        systemctl('smb', switch)
+        systemctl('nmb', switch)
+
     def test_samba_0(self):
         """
         unauthorized api access
@@ -61,10 +66,10 @@ class SambaTests(APITestCase):
         happy path with vanilla self.data
         """
         self.session_login()
-
-        response = self.client.post(self.BASE_URL, data=self.data,
-                                    format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.switch_samba('start')
+        response = self.client.post(self.BASE_URL, data=self.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         msg=response.data)
         self.assertEqual(response.data, self.exp_response)
 
     def test_samba_2(self):
@@ -77,8 +82,7 @@ class SambaTests(APITestCase):
         data['browsable'] = 'no'
         data['guest_ok'] = 'no'
         data['read_only'] = 'no'
-        response = self.client.post(self.BASE_URL, data=data,
-                                    format='json')
+        response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['browsable'], 'no')
         self.assertEqual(response.data['guest_ok'], 'no')
@@ -88,7 +92,13 @@ class SambaTests(APITestCase):
         """
         happy path, multiple admin users
         """
-        self.assertEqual(1, 2)
+        data = self.data.copy()
+        data['admin_users'] = ('smbuser', 'user1', 'user2', 'user3',)
+        self.session_login()
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         msg=response.data)
+        self.assertEqual(len(response.data['admin_users']), 4)
 
     def test_samba_4(self):
         """
@@ -100,7 +110,7 @@ class SambaTests(APITestCase):
                 'guest_ok': 'yes',
                 'read_only': 'yes', }
         self.session_login()
-        response = self.client.post(self.BASE_URL, data=data, format='json')
+        response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['admin_users']), 0)
 
@@ -108,40 +118,118 @@ class SambaTests(APITestCase):
         """
         non existant admin user
         """
-        self.assertEqual(1, 2)
+        data = self.data.copy()
+        data['admin_users'] = ('suman',)
+        self.session_login()
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg=response.data)
+        self.assertEqual(response.data['detail'],
+                         'User matching query does not exist.')
 
     def test_samba_6(self):
         """
         non existant share
         """
-        self.assertEqual(1, 2)
+        data = self.data.copy()
+        data['shares'] = ('share10',)
+        self.session_login()
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg=response.data)
+        self.assertEqual(response.data['detail'],
+                         'Share with name: share10 does not exist')
 
     def test_samba_7(self):
         """
         happy path, multiple shares
         """
-        self.assertEqual(1, 2)
+        data = self.data.copy()
+        data['shares'] = ('share1', 'share2', 'share3',)
+        self.session_login()
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         msg=response.data)
+        self.assertTrue(response.data['share'] in data['shares'])
 
     def test_samba_8(self):
         """
         add export while samba service is off
         """
-        self.assertEqual(1, 2)
+        self.session_login()
+        self.switch_samba('stop')
+        response = self.client.post(self.BASE_URL, data=self.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         msg=response.data)
+
+    def test_samba_8_1(self):
+        """
+        delete export, happy path
+        """
+        self.session_login()
+        self.switch_samba('start')
+        self._create_and_delete()
+
+    def _create_and_delete(self):
+        response = self.client.post(self.BASE_URL, data=self.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         msg=response.data)
+        smb_id = response.data['id']
+        response2 = self.client.delete('%s/%d' % (self.BASE_URL, smb_id))
+        self.assertEqual(response2.status_code, status.HTTP_200_OK,
+                         msg=response2.data)
 
     def test_samba_9(self):
         """
         delete export while samba service is off
         """
-        self.assertEqual(1, 2)
+        self.session_login()
+        self.switch_samba('stop')
+        self._create_and_delete()
+
+    def create_and_update(self):
+        self.session_login()
+        response = self.client.post(self.BASE_URL, data=self.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         msg=response.data)
+        smb_id = response.data['id']
+        data = self.data.copy()
+        data['browsable'] = 'no'
+        data['guest_ok'] = 'no'
+        data['read_only'] = 'no'
+        response2 = self.client.put('%s/%d' % (self.BASE_URL, smb_id),
+                                    data=data)
+        self.assertEqual(response2.status_code, status.HTTP_200_OK,
+                         msg=response.data)
+        self.assertEqual(response2.data['browsable'], 'no', msg=response2.data)
+        self.assertEqual(response2.data['guest_ok'], 'no', msg=response2.data)
+        self.assertEqual(response2.data['read_only'], 'no', msg=response2.data)
 
     def test_samba_10(self):
         """
-        happy path, export edit
+        export edit happy path
         """
-        self.assertEqual(1, 2)
+        self.switch_samba('start')
+        self.create_and_update()
 
     def test_samba_11(self):
         """
         export edit while samba service is off
         """
-        self.assertEqual(1, 2)
+        self.switch_samba('stop')
+        self.create_and_update()
+
+    def test_samba_12(self):
+        """
+        export edit on an non-existant export
+        """
+        self.session_login()
+        response = self.client.put('%s/%d' % (self.BASE_URL, 10000),
+                                   data=self.data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg=response.data)
+        self.assertEqual(response.data['detail'],
+                         'Samba export for the id(10000) does not exist')
