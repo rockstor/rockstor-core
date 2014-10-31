@@ -17,8 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf.urls import patterns, url
-from smart_manager.views import (SmartManagerView, SProbeView,
-                                 MemInfoView, NetStatView,
+from smart_manager.views import (SProbeView, MemInfoView, NetStatView,
                                  DiskStatView, NFSDistribView,
                                  NFSDClientDistribView, NFSDShareDistribView,
                                  NFSDShareClientDistribView, CPUMetricView,

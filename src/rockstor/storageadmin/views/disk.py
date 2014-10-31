@@ -84,7 +84,7 @@ class DiskView(rfc.GenericView):
             if (do.name not in [d.name for d in disks]):
                 do.offline = True
                 do.save()
-        ds = DiskInfoSerializer(Disk.objects.all())
+        ds = DiskInfoSerializer(Disk.objects.all(), many=True)
         return Response(ds.data)
 
     @transaction.commit_on_success
