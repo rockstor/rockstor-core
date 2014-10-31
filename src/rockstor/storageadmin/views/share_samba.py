@@ -18,17 +18,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.authentication import (BasicAuthentication,
-                                           SessionAuthentication)
 from django.db import transaction
 from django.conf import settings
-from storageadmin.auth import DigestAuthentication
-from storageadmin.models import (Share, SambaShare, NFSExport, Disk)
+from storageadmin.models import (Share, SambaShare, Disk)
 from storageadmin.util import handle_exception
 from storageadmin.serializers import SambaShareSerializer
 from storageadmin.exceptions import RockStorAPIException
-from fs.btrfs import (mount_share, is_share_mounted, umount_root)
-from system.osi import (refresh_smb_config, restart_samba)
+from fs.btrfs import (mount_share, is_share_mounted)
+from system.samba import (refresh_smb_config, restart_samba)
 
 import logging
 logger = logging.getLogger(__name__)
