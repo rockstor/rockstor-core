@@ -35,6 +35,7 @@ var AppRouter = Backbone.Router.extend({
     "setup": "doSetup",
     "home": "showHome",
     "disks": "showDisks",
+    "disks/blink/:diskName": "blinkDrive",
     "pools": "showPools",
     "pools/:poolName": "showPool",
     "add_pool": "addPool",
@@ -161,6 +162,15 @@ var AppRouter = Backbone.Router.extend({
     this.currentLayout = new DisksView();
     $('#maincontent').append(this.currentLayout.render().el);
   },
+
+  blinkDrive: function(diskName) {
+    this.renderSidebar('storage', 'disks');
+    this.cleanup();
+    this.currentLayout = new BlinkDiskView({diskName: diskName});
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
 
   showPools: function() {
     RockStorSocket.removeAllListeners();

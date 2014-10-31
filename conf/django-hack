@@ -20,7 +20,7 @@ sys.path[0:0] = [
   join(base, 'eggs/requests-1.1.0-py2.7.egg'),
   join(base, 'eggs/django_pipeline-1.2.23-py2.7.egg'),
   join(base, 'eggs/pytz-2014.3-py2.7.egg'),
-  join(base, 'eggs/djangorestframework-2.1.15-py2.7.egg'),
+  join(base, 'eggs/djangorestframework-2.4.3-py2.7.egg'),
   join(base, 'eggs/URLObject-2.1.1-py2.7.egg'),
   join(base, 'eggs/distribute-0.7.3-py2.7.egg'),
   join(base, 'eggs/setuptools-0.7.2-py2.7.egg'),

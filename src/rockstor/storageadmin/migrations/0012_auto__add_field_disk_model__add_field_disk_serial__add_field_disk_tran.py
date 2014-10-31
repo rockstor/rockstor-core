@@ -6,22 +6,41 @@ from django.db import models
 
 
 class Migration(SchemaMigration):
-    depends_on = (('oauth2_provider', '0001_initial'),)
 
     def forwards(self, orm):
-        # Adding model 'OauthApp'
-        db.create_table(u'storageadmin_oauthapp', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('application', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['oauth2_provider.Application'], unique=True)),
-            ('name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=128)),
-            ('user', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['storageadmin.User'])),
-        ))
-        db.send_create_signal('storageadmin', ['OauthApp'])
+        # Adding field 'Disk.model'
+        db.add_column(u'storageadmin_disk', 'model',
+                      self.gf('django.db.models.fields.CharField')(max_length=1024, null=True),
+                      keep_default=False)
+
+        # Adding field 'Disk.serial'
+        db.add_column(u'storageadmin_disk', 'serial',
+                      self.gf('django.db.models.fields.CharField')(max_length=1024, null=True),
+                      keep_default=False)
+
+        # Adding field 'Disk.transport'
+        db.add_column(u'storageadmin_disk', 'transport',
+                      self.gf('django.db.models.fields.CharField')(max_length=1024, null=True),
+                      keep_default=False)
+
+        # Adding field 'Disk.vendor'
+        db.add_column(u'storageadmin_disk', 'vendor',
+                      self.gf('django.db.models.fields.CharField')(max_length=1024, null=True),
+                      keep_default=False)
 
 
     def backwards(self, orm):
-        # Deleting model 'OauthApp'
-        db.delete_table(u'storageadmin_oauthapp')
+        # Deleting field 'Disk.model'
+        db.delete_column(u'storageadmin_disk', 'model')
+
+        # Deleting field 'Disk.serial'
+        db.delete_column(u'storageadmin_disk', 'serial')
+
+        # Deleting field 'Disk.transport'
+        db.delete_column(u'storageadmin_disk', 'transport')
+
+        # Deleting field 'Disk.vendor'
+        db.delete_column(u'storageadmin_disk', 'vendor')
 
 
     models = {
@@ -64,8 +83,8 @@ class Migration(SchemaMigration):
         u'oauth2_provider.application': {
             'Meta': {'object_name': 'Application'},
             'authorization_grant_type': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
-            'client_id': ('django.db.models.fields.CharField', [], {'default': "u'oNk@X2hsZ1ecEjrbB4z653w4;1BUp_ZXgGFS.mMR'", 'unique': 'True', 'max_length': '100'}),
-            'client_secret': ('django.db.models.fields.CharField', [], {'default': "u'c:VfJLUVtjCC@ey@ulv1A:?D8_AD.pamv0P56JetPyt.?cgUPm@H6:1wkgJ!fj1OYFxqbzo.fwIusYB2;?gJugiePmmJQMUUlqV!Ea;MqdxKMIj:?wP4yEuWd4zjSgW2'", 'max_length': '255', 'blank': 'True'}),
+            'client_id': ('django.db.models.fields.CharField', [], {'default': "u'gRxwvi=kykbYPxLhyXfKFJeu7iAbwsvD!nFBuM.x'", 'unique': 'True', 'max_length': '100'}),
+            'client_secret': ('django.db.models.fields.CharField', [], {'default': "u'DLppNMRkMC8fXN7SXu1N07oRRXPrWur?OWO0CXE5b3H3T1GmApBq0ojV7henqgvpDQ_fGZzdRy=ks6RZwC=K_3i_6Xlo186eXFF;U13KKaWnhdVAjwQts_e.qOx4lQlj'", 'max_length': '255', 'blank': 'True'}),
             'client_type': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
@@ -85,6 +104,8 @@ class Migration(SchemaMigration):
         },
         'storageadmin.appliance': {
             'Meta': {'object_name': 'Appliance'},
+            'client_id': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True'}),
+            'client_secret': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
             'current_appliance': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'hostname': ('django.db.models.fields.CharField', [], {'default': "'Rockstor'", 'max_length': '128'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -100,12 +121,17 @@ class Migration(SchemaMigration):
         },
         'storageadmin.disk': {
             'Meta': {'object_name': 'Disk'},
+            'btrfs_uuid': ('django.db.models.fields.CharField', [], {'max_length': '1024', 'null': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'model': ('django.db.models.fields.CharField', [], {'max_length': '1024', 'null': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '10'}),
             'offline': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'parted': ('django.db.models.fields.BooleanField', [], {}),
             'pool': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storageadmin.Pool']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
-            'size': ('django.db.models.fields.BigIntegerField', [], {'default': '0'})
+            'serial': ('django.db.models.fields.CharField', [], {'max_length': '1024', 'null': 'True'}),
+            'size': ('django.db.models.fields.BigIntegerField', [], {'default': '0'}),
+            'transport': ('django.db.models.fields.CharField', [], {'max_length': '1024', 'null': 'True'}),
+            'vendor': ('django.db.models.fields.CharField', [], {'max_length': '1024', 'null': 'True'})
         },
         'storageadmin.installedplugin': {
             'Meta': {'object_name': 'InstalledPlugin'},
@@ -121,6 +147,14 @@ class Migration(SchemaMigration):
             'share': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storageadmin.Share']"}),
             'tid': ('django.db.models.fields.IntegerField', [], {'unique': 'True'}),
             'tname': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '128'})
+        },
+        'storageadmin.netatalkshare': {
+            'Meta': {'object_name': 'NetatalkShare'},
+            'description': ('django.db.models.fields.CharField', [], {'default': "'afp on rockstor'", 'max_length': '1024'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'path': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '4096'}),
+            'share': ('django.db.models.fields.related.OneToOneField', [], {'related_name': "'netatalkshare'", 'unique': 'True', 'to': "orm['storageadmin.Share']"}),
+            'time_machine': ('django.db.models.fields.CharField', [], {'default': "'yes'", 'max_length': '3'})
         },
         'storageadmin.networkinterface': {
             'Meta': {'object_name': 'NetworkInterface'},
@@ -202,7 +236,6 @@ class Migration(SchemaMigration):
         },
         'storageadmin.sambashare': {
             'Meta': {'object_name': 'SambaShare'},
-            'admin_users': ('django.db.models.fields.CharField', [], {'default': "'Administrator'", 'max_length': '128'}),
             'browsable': ('django.db.models.fields.CharField', [], {'default': "'yes'", 'max_length': '3'}),
             'comment': ('django.db.models.fields.CharField', [], {'default': "'foo bar'", 'max_length': '100'}),
             'create_mask': ('django.db.models.fields.CharField', [], {'default': "'0755'", 'max_length': '4'}),
@@ -266,6 +299,8 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'User'},
             'gid': ('django.db.models.fields.IntegerField', [], {'default': '5000'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'public_key': ('django.db.models.fields.CharField', [], {'max_length': '4096', 'null': 'True'}),
+            'smb_shares': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'related_name': "'admin_users'", 'null': 'True', 'to': "orm['storageadmin.SambaShare']"}),
             'uid': ('django.db.models.fields.IntegerField', [], {'default': '5000'}),
             'user': ('django.db.models.fields.related.OneToOneField', [], {'related_name': "'suser'", 'unique': 'True', 'null': 'True', 'to': u"orm['auth.User']"}),
             'username': ('django.db.models.fields.CharField', [], {'default': "''", 'unique': 'True', 'max_length': '4096'})

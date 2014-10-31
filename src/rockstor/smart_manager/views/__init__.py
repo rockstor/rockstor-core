@@ -15,7 +15,6 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-from sm import SmartManagerView
 from sprobes import SProbeView
 from mem_info import MemInfoView
 from net_stat import NetStatView

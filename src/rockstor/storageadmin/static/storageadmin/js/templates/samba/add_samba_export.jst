@@ -1,8 +1,8 @@
 <% if (sambaShareId!=null) { %>
-<h3>Edit Samba export</h3>
-<%} else {%>
+  <h3>Edit Samba export for <%= smbShare.get('share') %></h3>
+<% } else {%>
 <h3>Add Samba export</h3>
-<%}%>
+<% } %>
 <div class="row-fluid">
   <div class="span8">
     <label class="control-label"><span class="required">*</span> indicates required fields</label>
@@ -12,17 +12,19 @@
 
         <!-- Shares -->
         <div class="control-group">
-          <label class="control-label" for="shares">Shares to export<span class="required"> *</span></label>
+          <% if (sambaShareId == null) {  %>
+            <label class="control-label" for="shares">Shares to export<span class="required"> *</span></label>
+          <% } %>
           <div class="controls">
+            <% if (sambaShareId == null) {  %>
             <select name="shares" id="shares" size="10" data-placeholder="Select shares to export" multiple>
-            <% if (sambaShareId!=null) {  %>
-            <option value="<%= smbShare.get('share')%>" selected="selected"> <%= smbShare.get('share') %></option>
-            <% } %>
             <% _.each(shares, function(share, index) { %>
-                      <option value="<%= share.get('name') %>" > <%= share.get('name') %></option>
-                <% }); %>
-         
+              <option value="<%= share.get('name') %>" > <%= share.get('name') %></option>
+            <% }); %>
             </select>
+          <% } else { %>
+            <h4>Edit Samba Export for share: <strong><%= smbShare.get('share') %></strong></h4>
+          <% } %>
           </div>
         </div>
 
@@ -77,9 +79,9 @@
         <div class="control-group">
           <label class="control-label" for="guest_ok">Guest Ok<span class="required"> *</span></label>
           <div class="controls">
-              <% _.each(guest_ok_choices, function(c) { %>
+             <% _.each(guest_ok_choices, function(c) { %>
                 <label class="radio inline">
-                 <% if (sambaShareId!=null){ %>
+                <% if (sambaShareId!=null){ %>
                     <% if(c.value == smbShare.get("guest_ok")){ %>
                         <input type="radio" name="guest_ok" value="<%= c.value %>" checked> <%= c.name %> 
                     <% }else{ %>
@@ -93,9 +95,9 @@
                       <input type="radio" name="guest_ok" value="<%= c.value %>" > <%= c.name %>
                 <%  } %>
                <% } %>
-                </label>
+              </label>
               <% }); %>
-          </div>
+           </div>
         </div>
         
         <div class="control-group">
@@ -125,7 +127,7 @@
         <div class="control-group">
           <label class="control-label" for="comment">Comment</label>
           <div class="controls">
-            <input type="text" id="comment" name="comment" title="Comment string to associate with the new share">
+            <input type="text" id="comment" name="comment" value="Samba-Export" title="Comment string to associate with the new share">
           </div>
         </div>
         

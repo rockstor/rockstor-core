@@ -39,23 +39,14 @@ DF = '/bin/df'
 BTRFS_DEBUG_TREE = '/sbin/btrfs-debug-tree'
 RMDIR = '/bin/rmdir'
 SFDISK = '/sbin/sfdisk'
+WIPEFS = '/usr/sbin/wipefs'
 
 
-class Disk():
+import collections
+Disk = collections.namedtuple('Disk', 'name model serial size '
+                              'transport vendor hctl type fstype '
+                              'label btrfs_uuid parted')
 
-    def __init__(self, name, size, free, parted=False, uuid=None):
-        self.name = name
-        self.size = size
-        self.free = free
-        self.parted = parted
-        self.btrfs_uuid = uuid
-
-    def __repr__(self):
-        return {'name': self.name,
-                'size': self.size,
-                'free': self.free,
-                'parted': self.parted,
-                'btrfs_uuid': self.btrfs_uuid, }
 
 def add_pool(name, data_raid, meta_raid, disks):
     """
@@ -408,20 +399,6 @@ def btrfs_importable(disk):
     return False
 
 
-def scan_btrfs_fs():
-    o, e, rc = run_command([BTRFS, 'filesystem', 'show'])
-    fs_map = {}
-    cur_uuid = None
-    for l in o:
-        l = l.strip()
-        if (re.match('Label: ', l) is not None):
-            cur_uuid = l.split()[3]
-        elif (re.match('devid', l) is not None):
-            device = l.split()[-1].split('/')[-1]
-            fs_map[device] = cur_uuid
-    return fs_map
-
-
 def root_disk():
     """
     returns the partition(s) used for /. Typically it's sda.
@@ -439,45 +416,64 @@ def root_disk():
 
 
 def scan_disks(min_size):
-    """
-    min_size is in KB, so it is also number of blocks. Discard any disk with
-    num_blocks < min_size
-    """
     root = root_disk()
-    disks = {}
-    fs_map = scan_btrfs_fs()
-    with open('/proc/partitions') as pfo:
-        for line in pfo.readlines():
-            disk_fields = line.split()
-            if (len(disk_fields) != 4):
+    cmd = ['/usr/bin/lsblk', '-P', '-o',
+           'NAME,MODEL,SERIAL,SIZE,TRAN,VENDOR,HCTL,TYPE,FSTYPE,LABEL,UUID']
+    o, e, rc = run_command(cmd)
+    dnames = {}
+    disks = []
+    for l in o:
+        if (re.search('=', l) is None):
+            continue
+        dfields = []
+        fields = l.split('" ')
+        for f in fields:
+            sf = f.split('=')
+            dfields.append(sf[1].strip('"').strip())
+        if (dfields[7] == 'rom'):
+            continue
+        elif (dfields[7] == 'part'):
+            for dname in dnames.keys():
+                if (re.match(dname, dfields[0]) is not None):
+                    dnames[dname][8] = True
+        elif (dfields[0] != root):
+            dfields.append(False) # part = False by default
+            # convert size into KB
+            size_str = dfields[3]
+            if (size_str[-1] == 'G'):
+                dfields[3] = int(float(size_str[:-1]) * 1024 * 1024)
+            elif (size_str[-1] == 'T'):
+                dfields[3] = int(float(size_str[:-1]) * 1024 * 1024 * 1024)
+            else:
                 continue
-            if (re.match('sd[a-z]+$|xvd[a-z]+$', disk_fields[3]) is not None):
-                name = disk_fields[3]
-                #  each block is 1KB.
-                num_blocks = int(disk_fields[2])
-                if (num_blocks < min_size):
-                    continue
-                uuid = None
-                if (name in fs_map):
-                    uuid = fs_map[name]
-                disk = Disk(name=name, size=num_blocks, free=num_blocks,
-                            uuid=uuid)
-                disks[name] = disk.__repr__()
-            elif (re.match('sd[a-z]+[0-9]+$|xvd[a-z]+[0-9]+$', disk_fields[3])
-                  is not None):
-                name = disk_fields[3][0:-1]
-                if (name in disks):
-                    if (name == root):
-                        del(disks[name])
-                    else:
-                        disks[name]['parted'] = True
+            if (dfields[3] < min_size):
+                continue
+            dnames[dfields[0]] = dfields
+    for d in dnames.keys():
+        disks.append(Disk(*dnames[d]))
     return disks
 
 
 def wipe_disk(disk):
-    """
-    removes partition table on a disk by dd'ing first 512 bytes
-    """
     disk = ('/dev/%s' % disk)
-    run_command([DD, 'if=/dev/zero', 'of=%s' % disk, 'bs=512', 'count=1'])
-    return run_command([SFDISK, '-R', disk])
+    return run_command([WIPEFS, '-a', disk])
+
+
+def blink_disk(disk, total_exec, read, sleep):
+    import subprocess
+    import time
+    import signal
+    DD_CMD = [DD, 'if=/dev/%s' % disk, 'of=/dev/null', 'bs=512',
+              'conv=noerror']
+    p = subprocess.Popen(DD_CMD, shell=False, stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE)
+    total_elapsed_time = 0
+    while (total_elapsed_time < total_exec):
+        if (p.poll() is not None):
+            return
+        time.sleep(read)
+        p.send_signal(signal.SIGSTOP)
+        time.sleep(sleep)
+        total_elapsed_time += read + sleep
+        p.send_signal(signal.SIGCONT)
+    p.terminate()
