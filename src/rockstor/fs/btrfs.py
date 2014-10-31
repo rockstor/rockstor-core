@@ -430,7 +430,6 @@ def scan_disks(min_size):
         for f in fields:
             sf = f.split('=')
             dfields.append(sf[1].strip('"').strip())
-        print('dfields = %s' % dfields)
         if (dfields[7] == 'rom'):
             continue
         elif (dfields[7] == 'part'):

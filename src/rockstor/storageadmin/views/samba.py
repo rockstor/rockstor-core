@@ -25,7 +25,7 @@ from storageadmin.util import handle_exception
 from storageadmin.exceptions import RockStorAPIException
 import rest_framework_custom as rfc
 from share_helpers import validate_share
-from system.osi import (refresh_smb_config, restart_samba)
+from system.samba import (refresh_smb_config, status, restart_samba)
 from fs.btrfs import (mount_share, is_share_mounted)
 
 import logging
@@ -91,6 +91,11 @@ class SambaView(rfc.GenericView):
             handle_exception(Exception(e_msg), request)
         return options
 
+    def _restart_samba(self):
+        out = status()
+        if (out[2] == 0):
+            restart_samba()
+
     @transaction.commit_on_success
     def post(self, request):
         if ('shares' not in request.DATA):
@@ -104,7 +109,6 @@ class SambaView(rfc.GenericView):
                          share.name)
                 handle_exception(Exception(e_msg), request)
         try:
-            logger.debug('options = %s' % options)
             for share in shares:
                 mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
                 options['share'] = share
@@ -122,7 +126,7 @@ class SambaView(rfc.GenericView):
                     auo = User.objects.get(username=au)
                     auo.smb_shares.add(smb_share)
             refresh_smb_config(list(SambaShare.objects.all()))
-            restart_samba()
+            self._restart_samba()
             return Response(SambaShareSerializer(smb_share).data)
         except RockStorAPIException:
             raise
@@ -132,7 +136,12 @@ class SambaView(rfc.GenericView):
     @transaction.commit_on_success
     def put(self, request, smb_id):
         with self._handle_exception(request):
-            smbo = SambaShare.objects.get(id=smb_id)
+            try:
+                smbo = SambaShare.objects.get(id=smb_id)
+            except:
+                e_msg = ('Samba export for the id(%s) does not exist' % smb_id)
+                handle_exception(Exception(e_msg), request)
+
             options = self._validate_input(request)
             smbo.__dict__.update(**options)
             admin_users = request.DATA.get('admin_users', None)
@@ -163,7 +172,7 @@ class SambaView(rfc.GenericView):
                             handle_exception(Exception(e_msg), request)
 
             refresh_smb_config(list(SambaShare.objects.all()))
-            restart_samba()
+            self._restart_samba()
             return Response(SambaShareSerializer(smbo).data)
 
     @transaction.commit_on_success
@@ -177,7 +186,7 @@ class SambaView(rfc.GenericView):
 
         try:
             refresh_smb_config(list(SambaShare.objects.all()))
-            restart_samba()
+            self._restart_samba()
             return Response()
         except Exception, e:
             logger.exception(e)
