@@ -206,7 +206,7 @@ class PoolView(rfc.GenericView):
                 if (pool.raid == 'raid0' or pool.raid == 'raid1' or
                     pool.raid == 'raid10' or pool.raid == 'single'):
                     e_msg = ('Removing drives from this(%s) raid '
-                             'configuration is not supported')
+                             'configuration is not supported' % pool.raid)
                     handle_exception(Exception(e_msg), request)
                 if (pool.raid == 'raid5' and len(disks) < 3):
                     e_msg = ('Resize not possible because a minimum of 3 '
