@@ -67,8 +67,9 @@ def resize_pool(pool_name, device, dev_list, add=True):
     resize_flag = 'add'
     if (not add):
         resize_flag = 'delete'
-    resize_cmd = [BTRFS, 'device', resize_flag, ' '.join(dev_list),
-                  root_mnt_pt]
+    resize_cmd = [BTRFS, 'device', resize_flag, '-f', ]
+    resize_cmd.extend(dev_list)
+    resize_cmd.append(root_mnt_pt)
     out, err, rc = run_command(resize_cmd)
     return out, err, rc
 
@@ -448,6 +449,9 @@ def scan_disks(min_size):
                 continue
             if (dfields[3] < min_size):
                 continue
+            for i in range(0, len(dfields)):
+                if (dfields[i] == ''):
+                    dfields[i] = None
             dnames[dfields[0]] = dfields
     for d in dnames.keys():
         disks.append(Disk(*dnames[d]))
