@@ -349,4 +349,6 @@ SOUTH_TESTS_MIGRATE = False
 
 REST_FRAMEWORK = {
 	       'TEST_REQUEST_DEFAULT_FORMAT': 'json',
+	       'PAGINATE_BY_PARAM': 'page_size',
+	       'MAX_PAGINATE_BY': 10000,
 }
