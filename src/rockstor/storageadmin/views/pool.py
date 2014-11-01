@@ -95,7 +95,8 @@ class PoolView(rfc.GenericView):
         input is a list of disks, raid_level and name of the pool.
         """
         with self._handle_exception(request):
-            disks = request.DATA['disks'].split(',')
+            disks = [self._validate_disk(d, request) for d in
+                     request.DATA.get('disks')]
             pname = request.DATA['pname']
             if (re.match('%s$' % settings.POOL_REGEX, pname) is None):
                 e_msg = ('Pool name must start with a letter(a-z) and can'
@@ -109,16 +110,10 @@ class PoolView(rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
 
             for d in disks:
-                try:
-                    do = Disk.objects.get(name=d)
-                except:
-                    e_msg = ('Unknown disk: %s' % d)
-                    handle_exception(Exception(e_msg), request)
-
-                if (do.btrfs_uuid is not None):
+                if (d.btrfs_uuid is not None):
                     e_msg = ('Another BTRFS filesystem exists on this '
                              'disk(%s). Erase the disk and try again.'
-                             % d)
+                             % d.name)
                     handle_exception(Exception(e_msg), request)
 
             raid_level = request.DATA['raid_level']
@@ -156,14 +151,22 @@ class PoolView(rfc.GenericView):
                          'level: %s' % raid_level)
                 handle_exception(Exception(e_msg), request)
 
-            pool_size = self._pool_size(disks, raid_level)
-            add_pool(pname, raid_level, raid_level, disks)
-            pool_uuid = btrfs_uuid(disks[0])
+            dnames = [d.name for d in disks]
+            pool_size = self._pool_size(dnames, raid_level)
+            add_pool(pname, raid_level, raid_level, dnames)
+            pool_uuid = btrfs_uuid(dnames[0])
             p = Pool(name=pname, raid=raid_level, size=pool_size,
                      uuid=pool_uuid)
             p.save()
-            p.disk_set.add(*[Disk.objects.get(name=d) for d in disks])
+            p.disk_set.add(*disks)
             return Response(PoolInfoSerializer(p).data)
+
+    def _validate_disk(self, d, request):
+        try:
+            return Disk.objects.get(name=d)
+        except:
+            e_msg = ('Disk(%s) does not exist' % d)
+            handle_exception(Exception(e_msg), request)
 
     @transaction.commit_on_success
     def put(self, request, pname, command):
@@ -174,41 +177,53 @@ class PoolView(rfc.GenericView):
                   'remove' - remove a list of disks and hence shrink the pool
         """
         try:
-            if (not Pool.objects.filter(name=pname).exists()):
-                msg = ('pool: %s does not exist' % pname)
-                raise Exception(msg)
+            try:
+                pool = Pool.objects.get(name=pname)
+            except:
+                e_msg = ('pool: %s does not exist' % pname)
+                handle_exception(Exception(e_msg), request)
 
-            disks = request.DATA['disks'].split(',')
+            disks = [self._validate_disk(d, request) for d in
+                     request.DATA.get('disks')]
             if (len(disks) == 0):
                 msg = ('list of disks in the input is empty')
                 raise Exception(msg)
+            dnames = [d.name for d in disks]
 
-            pool = Pool.objects.get(name=pname)
+            for d in disks:
+                if (d.pool is not None and d.pool != pool):
+                    e_msg = ('Disk(%s) belongs to another pool(%s)' %
+                             (d.name, d.pool.name))
+                    handle_exception(Exception(e_msg), request)
+
             mount_disk = Disk.objects.filter(pool=pool)[0].name
             if (command == 'add'):
-                for d in disks:
-                    d_o = Disk.objects.get(name=d)
-                    if (d_o.pool is not None):
-                        msg = ('disk %s already part of pool %s' %
-                               (d, d_o.pool.name))
-                        raise Exception(msg)
+                for d_o in disks:
                     d_o.pool = pool
                     d_o.save()
-                resize_pool(pool.name, mount_disk, disks)
+                resize_pool(pool.name, mount_disk, dnames)
             elif (command == 'remove'):
-                if (len(Disk.objects.filter(pool=pool)) == 1):
-                    msg = ('pool %s had only one disk. use delete command instead')
-                    raise Exception(msg)
+                if (pool.raid == 'raid0' or pool.raid == 'raid1' or
+                    pool.raid == 'raid10' or pool.raid == 'single'):
+                    e_msg = ('Removing drives from this(%s) raid '
+                             'configuration is not supported')
+                    handle_exception(Exception(e_msg), request)
+                if (pool.raid == 'raid5' and len(disks) < 3):
+                    e_msg = ('Resize not possible because a minimum of 3 '
+                             'drives is required for this(%s) '
+                             'raid configuration.' % pool.raid)
+                    handle_exception(Exception(e_msg), request)
+                if (pool.raid == 'raid6' and len(disks) < 4):
+                    e_msg = ('Resize not possible because a minimum of 4 '
+                             'drives is required for this(%s) raid '
+                             'configuration' % pool.raid)
+                    handle_exception(Exception(e_msg), request)
                 for d in disks:
                     d_o = Disk.objects.get(name=d)
-                    if (d_o.pool != pool):
-                        msg = ('disk %s not part of pool %s' %
-                               (d, d_o.pool.name))
-                        raise Exception(msg)
                     d_o.pool = None
                     d_o.save()
                 mount_disk = Disk.objects.filter(pool=pool)[0].name
-                resize_pool(pool.name, mount_disk, disks, add=False)
+                resize_pool(pool.name, mount_disk, dnames, add=False)
             else:
                 msg = ('unknown command: %s' % command)
                 raise Exception(msg)
@@ -216,7 +231,8 @@ class PoolView(rfc.GenericView):
             pool.size = usage[0]
             pool.save()
             return Response(PoolInfoSerializer(pool).data)
-
+        except RockStorAPIException:
+            raise
         except Exception, e:
             handle_exception(e, request)
 
