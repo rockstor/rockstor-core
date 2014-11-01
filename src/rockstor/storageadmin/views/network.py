@@ -86,7 +86,7 @@ class NetworkView(rfc.GenericView):
                     logger.error('Unable to update /etc/issue')
             ni.save()
         devices = NetworkInterface.objects.all()
-        serializer = NetworkInterfaceSerializer(devices)
+        serializer = NetworkInterfaceSerializer(devices, many=True)
         return Response(serializer.data)
 
     def _restart_wrapper(self, ni, request):

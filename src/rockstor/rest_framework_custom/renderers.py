@@ -20,8 +20,7 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.negotiation import DefaultContentNegotiation
 from rest_framework.utils import encoders
 from django.http.multipartparser import parse_header
-from django.utils import simplejson as json
-from rest_framework.settings import api_settings
+import json
 from rest_framework.utils.mediatypes import (order_by_precedence,
                                              media_type_matches)
 from rest_framework.utils.mediatypes import _MediaType
