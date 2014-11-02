@@ -17,9 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf.urls import patterns, include, url
-from storageadmin.views import (SetupWizardView, LoginView,
-                                DashboardConfigView,
-                                SetupUserView, NFSExportGroupView,
+from storageadmin.views import (SetupUserView, LoginView,
+                                DashboardConfigView, NFSExportGroupView,
                                 SambaView, SFTPView, PluginView,
                                 InstalledPluginView, AdvancedNFSExportView,
                                 OauthAppView, NetatalkView)
@@ -50,7 +49,6 @@ urlpatterns = patterns('',
                            'storageadmin.views.login_submit'),
                        url(r'^logout_user$', 'storageadmin.views.logout_user'),
                        url(r'^home$', 'storageadmin.views.home', name='home'),
-                       url(r'^setupwizard$', SetupWizardView.as_view()),
                        url(r'^setup_user$', SetupUserView.as_view()),
                        url(r'^site_media/(?P<path>.*)$',
                            'django.views.static.serve',
