@@ -74,32 +74,6 @@ def resize_pool(pool_name, device, dev_list, add=True):
     return out, err, rc
 
 
-def btrfs_wipe_disk(disk):
-    dd_cmd = [DD, 'if=/dev/zero', 'of=%s' % disk, 'bs=1024', 'count=100']
-    return run_command(dd_cmd)
-
-
-def remove_pool(name):
-    """
-    just remove from database? mark it deleted? may be give a purge option that
-    will do some dd type thing to the disks?
-
-    for now -- just wipe out the pool. this is possible by dd'ing first 100KB
-    of each disk in the pool.
-
-    @todo: when btrfs return values are fixed, revisit. filesystem show for now
-    returns success even if pool doesn't exist.
-    """
-    cmd = [BTRFS, 'filesystem', 'show', name]
-    out, err, rc = run_command(cmd)
-    for line in out:
-        if (re.search('/dev/sd', line) is not None):
-            disk = line.split()[-1]
-            out, err, rc = btrfs_wipe_disk(disk)
-    #last command results -- not particularly useful
-    return out, err, rc
-
-
 def mount_root(pool_name, device):
     root_pool_mnt = DEFAULT_MNT_DIR + pool_name
     if (is_share_mounted(pool_name)):
