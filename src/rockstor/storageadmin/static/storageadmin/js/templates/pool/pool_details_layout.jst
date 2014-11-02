@@ -22,7 +22,7 @@
 <div class="messages"></div>
 <!-- page heading -->
 <h3><%= pool.get('name') %></h3>
-   
+
   <div id="ph-pool-info">
   <div class="pull-right">
       <button id="resize-pool-popup" rel="#resize-pool-form" class="btn btn-primary" type="button"><i class="icon-edit icon-white"></i> Resize</button>
@@ -30,32 +30,32 @@
       <button id="delete-pool" class="btn btn-danger" type="button"><i
       class="icon-trash icon-white"></i> Delete</button>
       <span id="ph-scrub-button"</span>
-  </div> 
-  
   </div>
-  
+
+  </div>
+
   <ul class="nav nav-tabs">
   <li class="active"><a href="#usage" data-toggle="tab">Usage</a></li>
   </ul>
-  
+
   <div class="tab-content">
    <div class="tab-pane active" id="usage">
     <div id="ph-pool-usage"></div>
   </div>
-  
+
 
 
 <div class="simple-overlay" id="resize-pool-form">
   <div class="span6 well">
-    <h4>Resize Pool</h4>
+    <h4>Resize Pool(<%= pool.get('name') %>)</h4>
     <div id="alert-msg"></div></br>
-    Select disks to add<br/>
+    Select new disk(s) to add to the pool or Unselect disk(s) to remove from the pool.<br>
+    You cannot add and remove disks simultaneously.<br>
+    If you do so, new disks will be added but no disks will be removed.<br>
+    After resizing a pool, it must be rebalanced manually. Auto rebalance is not supported yet.<br/>
     <div id="disks-to-add"></div>
 
     <br/>
     <button id="resize-pool" class="btn btn-primary">Submit</button>
   </div>
 </div>
-
-
-
