@@ -67,7 +67,7 @@ def resize_pool(pool_name, device, dev_list, add=True):
     resize_flag = 'add'
     if (not add):
         resize_flag = 'delete'
-    resize_cmd = [BTRFS, 'device', resize_flag, '-f', ]
+    resize_cmd = [BTRFS, 'device', resize_flag, ]
     resize_cmd.extend(dev_list)
     resize_cmd.append(root_mnt_pt)
     out, err, rc = run_command(resize_cmd)
