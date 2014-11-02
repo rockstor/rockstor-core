@@ -94,65 +94,61 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     this.$('#resize-pool-popup').click(function() {
       _this.disks.fetch({
         success: function(collection, response) {
-            _this.$('#disks-to-add').html(_this.select_disks_template({disks: _this.disks,
-								       poolName: _this.poolName}));
-            _this.$('#alert-msg').empty();
-            _this.$('#resize-pool').click(function() {
-		var disk_names = [];
-		var err_msg = "Please select atleast one disk";
-		var n = $(".disknew:checked").length;
-		var m = $(".diskadded:unchecked").length;
-		if(n > 0){
-		    $(".disknew:checked").each(function(i) {
-			if (i < n) {
-			    disk_names.push($(this).val());
-			}
-		    });
-		    $.ajax({
-			url: '/api/pools/'+_this.pool.get('name')+'/add',
-			type: 'PUT',
-			dataType: 'json',
-			contentType: 'application/json',
-			data: JSON.stringify({"disks": disk_names}),
-			success: function() {
-			    _this.$('#resize-pool-form').overlay().close();
-			    _this.pool.fetch();
-			},
-			error: function(request, status, error) {
-            		    _this.$('#alert-msg').html("<font color='red'>"+request.responseText+"</font>");
-			}
-		    });
-		} else if(m > 0) {
-		    $(".diskadded:unchecked").each(function(i) {
-			if (i < m) {
-			    disk_names.push($(this).val());
-			}
-		    });
-		    $.ajax({
-			url: '/api/pools/'+_this.pool.get('name')+'/remove',
-			type: 'PUT',
-			dataType: 'json',
-			contentType: 'application/json',
-			data: JSON.stringify({"disks": disk_names}),
-			success: function() {
-			    _this.$('#resize-pool-form').overlay().close();
-			    _this.pool.fetch();
-			},
-			error: function(request, status, error) {
-            		    _this.$('#alert-msg').html("<font color='red'>"+request.responseText+"</font>");
-			}
-		    });
-		} else if(n <= 0) {
-		    _this.$('#alert-msg').html("<font color='red'>"+err_msg+"</font>");
-		}
-            });
-            $('#resize-pool-form').overlay().load();
-
+          _this.$('#disks-to-add').html(_this.select_disks_template({disks: _this.disks, poolName: _this.poolName}));
+          _this.$('#alert-msg').empty();
+          $('#resize-pool-form').overlay().load();
         }});
     });
-      _this.$('#resize-pool-form').overlay({ load: false });
-
-
+    this.$('#resize-pool').click(function() {
+      var disk_names = [];
+      var err_msg = "Please select atleast one disk";
+      var n = _this.$(".disknew:checked").length;
+      var m = _this.$(".diskadded:unchecked").length;
+      if(n > 0){
+        _this.$(".disknew:checked").each(function(i) {
+          if (i < n) {
+            disk_names.push($(this).val());
+          }
+        });
+        $.ajax({
+          url: '/api/pools/'+_this.pool.get('name')+'/add',
+          type: 'PUT',
+          dataType: 'json',
+          contentType: 'application/json',
+          data: JSON.stringify({"disks": disk_names}),
+          success: function() {
+            _this.$('#resize-pool-form').overlay().close();
+            _this.pool.fetch();
+          },
+          error: function(request, status, error) {
+            _this.$('#alert-msg').html("<font color='red'>"+request.responseText+"</font>");
+          }
+        });
+      } else if(m > 0) {
+        _this.$(".diskadded:unchecked").each(function(i) {
+          if (i < m) {
+            disk_names.push($(this).val());
+          }
+        });
+        $.ajax({
+          url: '/api/pools/'+_this.pool.get('name')+'/remove',
+          type: 'PUT',
+          dataType: 'json',
+          contentType: 'application/json',
+          data: JSON.stringify({"disks": disk_names}),
+          success: function() {
+            _this.$('#resize-pool-form').overlay().close();
+            _this.pool.fetch();
+          },
+          error: function(request, status, error) {
+            _this.$('#alert-msg').html("<font color='red'>"+request.responseText+"</font>");
+          }
+        });
+      } else if(n <= 0) {
+        _this.$('#alert-msg').html("<font color='red'>"+err_msg+"</font>");
+      }
+    });
+    this.$('#resize-pool-form').overlay({ load: false });
   },
 
   deletePool: function() {
