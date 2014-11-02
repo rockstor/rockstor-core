@@ -24,8 +24,8 @@ from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.serializers import PoolInfoSerializer
 from storageadmin.models import (Disk, Pool, Share)
-from fs.btrfs import (add_pool, pool_usage, remove_pool,
-                      resize_pool, umount_root, btrfs_uuid)
+from fs.btrfs import (add_pool, pool_usage, resize_pool, umount_root,
+                      btrfs_uuid)
 from storageadmin.util import handle_exception
 from storageadmin.exceptions import RockStorAPIException
 from django.conf import settings
@@ -203,25 +203,26 @@ class PoolView(rfc.GenericView):
                     d_o.save()
                 resize_pool(pool.name, mount_disk, dnames)
             elif (command == 'remove'):
+                remaining_disks = Disk.objects.filter(pool=pool).count() - len(disks)
+                logger.debug('remaining disks = %d' % remaining_disks)
                 if (pool.raid == 'raid0' or pool.raid == 'raid1' or
                     pool.raid == 'raid10' or pool.raid == 'single'):
                     e_msg = ('Removing drives from this(%s) raid '
                              'configuration is not supported' % pool.raid)
                     handle_exception(Exception(e_msg), request)
-                if (pool.raid == 'raid5' and len(disks) < 3):
+                if (pool.raid == 'raid5' and remaining_disks < 3):
                     e_msg = ('Resize not possible because a minimum of 3 '
                              'drives is required for this(%s) '
                              'raid configuration.' % pool.raid)
                     handle_exception(Exception(e_msg), request)
-                if (pool.raid == 'raid6' and len(disks) < 4):
+                if (pool.raid == 'raid6' and remaining_disks < 4):
                     e_msg = ('Resize not possible because a minimum of 4 '
                              'drives is required for this(%s) raid '
                              'configuration' % pool.raid)
                     handle_exception(Exception(e_msg), request)
                 for d in disks:
-                    d_o = Disk.objects.get(name=d)
-                    d_o.pool = None
-                    d_o.save()
+                    d.pool = None
+                    d.save()
                 mount_disk = Disk.objects.filter(pool=pool)[0].name
                 resize_pool(pool.name, mount_disk, dnames, add=False)
             else:
@@ -245,7 +246,6 @@ class PoolView(rfc.GenericView):
                          'shares in the pool are deleted' % (pname))
                 handle_exception(Exception(e_msg), request)
             pool_path = ('%s%s' % (settings.MNT_PT, pname))
-            remove_pool(pool_path)
             umount_root(pool_path)
             pool.delete()
             return Response()
