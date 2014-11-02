@@ -66,8 +66,6 @@ LoginView = Backbone.View.extend({
           RockStorGlobals.hostname = _this.$('#hostname').val();
           console.log('hostname is ' + RockStorGlobals.hostname);
             
-          
-
           var setupUserModel = Backbone.Model.extend({
             urlRoot: "/setup_user",
           });
@@ -171,7 +169,7 @@ LoginView = Backbone.View.extend({
         {
           success: function(model, response, options) {
             setup_done = true;
-            _this.goToRoot();
+            _this.scanDisks();
           },
           error: function(model, xhr, options) {
             var msg = xhr.responseText;
@@ -188,8 +186,19 @@ LoginView = Backbone.View.extend({
     }
   },
   
+  scanDisks: function() {
+    var _this = this;
+    $.ajax({
+      url: "/api/disks/scan",
+      type: "POST"
+    }).done(function() {
+      _this.goToRoot();
+    });
+  },
+
   goToRoot: function() {
     window.location.replace("/")
-  }
+  },
+  
 
 });
