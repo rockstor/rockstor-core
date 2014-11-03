@@ -35,14 +35,16 @@ AddPoolView = Backbone.View.extend({
 
   initialize: function() {
     this.disks = new DiskCollection();
+    this.template = window.JST.pool_add_pool_template;
+   
     // dont paginate disk selection table for now
+    this.pagination_template = window.JST.common_pagination;
     this.disks.pageSize = RockStorGlobals.maxPageSize;
 
   },
 
   render: function() {
     $(this.el).empty();
-    this.template = window.JST.pool_add_pool_template;
     var _this = this;
     this.disks.fetch({
       success: function(collection, response) {
@@ -110,7 +112,8 @@ AddPoolView = Backbone.View.extend({
           }
           return true;
         }, raid_err_msg);
-
+        
+        
         this.$("#disks-table").tablesorter({
          headers: {
             // assign the first column (we start counting zero)
@@ -125,6 +128,12 @@ AddPoolView = Backbone.View.extend({
             }
          }
         });
+        
+        _this.$(".pagination-ph").html(_this.pagination_template({
+        collection: _this.disks
+       }));
+        
+        
         this.$('#add-pool-form input').tooltip({placement: 'right'});
 
         this.$('#raid_level').tooltip({
@@ -189,3 +198,6 @@ AddPoolView = Backbone.View.extend({
     app_router.navigate('pools', {trigger: true});
   }
 });
+
+// Add pagination
+Cocktail.mixin(AddPoolView, PaginationMixin);
