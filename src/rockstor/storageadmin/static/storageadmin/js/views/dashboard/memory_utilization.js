@@ -35,9 +35,8 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
     this.end = null;
     this.emptyData = {"id": 0, "total": 0, "free": 0, "buffers": 0, "cached": 0, "swap_total": 0, "swap_free": 0, "active": 0, "inactive": 0, "dirty": 0, "ts": "2013-07-17T00:00:16.109Z"};
     this.dataBuffer = [];
-    this.dataLength = 300;
     this.currentTs = null;
-    this.colors = ["#04BA44", "#C95351"];
+    this.colors = ["#ff9896", "#ffbb78", "#aec7e8", "#98df8a"];
     //for (i=0; i<this.dataLength; i++) {
     //  this.dataBuffer.push(emptyData);
     //}
@@ -72,10 +71,13 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
         shadowSize: 0	// Drawing is faster without shadows
 			},
       legend : { 
-        container: "#mem-legend", 
+        backgroundColor: null,
+        backgroundOpacity: 0,
+        //container: "#mem-legend", 
         noColumns: 1,
-        margin: [10,0],
-        labelBoxBorderColor: "#fff"
+        //margin: [10,0],
+        //labelBoxBorderColor: "#fff",
+        position: "ne"
 
       },
       tooltip: true,
@@ -83,52 +85,56 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
         content: "%s (%y.2%)" 
       }
     };
-    // Start and end timestamps for api call
-    this.windowLength = 300000;
-    this.t2 = RockStorGlobals.currentTimeOnServer.getTime()-30000;
-    //this.t2 = new Date('2013-12-03T17:18:06.312Z').getTime();
-    this.t1 = this.t2 - this.windowLength;
   },
   
   render: function() {
     // call render of base
     this.constructor.__super__.render.apply(this, arguments);
+    this.graphInterval = 300000; // interval of time that the graph displays
+    this.timeOffset = 30000; // get data 5 sec behind current time
+    this.dataSize = 300;
+    // Start and end timestamps for api call
+    this.t2 = RockStorGlobals.currentTimeOnServer.getTime()-this.timeOffset;
+    this.t1 = this.t2 - this.graphInterval;
+    var t1Str = moment(this.t1).toISOString();
+    var t2Str = moment(this.t2).toISOString();
+    
     $(this.el).html(this.template({ 
       module_name: this.module_name,
       displayName: this.displayName,
     }));
-    var _this = this;
-    var t1Str = moment(_this.t1).toISOString();
-    var t2Str = moment(_this.t2).toISOString();
-    var pageSizeStr = '&page_size=' + RockStorGlobals.maxPageSize;
-    $.ajax({
-      url: '/api/sm/sprobes/meminfo/?format=json' + pageSizeStr + '&t1=' +
-        t1Str + '&t2=' + t2Str, 
-      type: "GET",
-      dataType: "json",
-      global: false, // dont show global loading indicator
-      success: function(data, status, xhr) {
-        // fill dataBuffer
-        _.each(data.results, function(d) {
-          _this.dataBuffer.push(d);
-        });
-        //if (_this.dataBuffer.length > _this.dataLength) {
-          //_this.dataBuffer.splice(0,
-          //_this.dataBuffer.length - _this.dataLength);
-        //}
+    this.initial = true;
+    this.getData(this); 
+    //var _this = this;
+    //var pageSizeStr = '&page_size=' + RockStorGlobals.maxPageSize;
+    //$.ajax({
+    //  url: '/api/sm/sprobes/meminfo/?format=json' + pageSizeStr + '&t1=' +
+    //    t1Str + '&t2=' + t2Str, 
+    //  type: "GET",
+    //  dataType: "json",
+    //  global: false, // dont show global loading indicator
+    //  success: function(data, status, xhr) {
+    //    // fill dataBuffer
+    //    _.each(data.results, function(d) {
+    //      _this.dataBuffer.push(d);
+    //    });
+    //    //if (_this.dataBuffer.length > _this.dataLength) {
+    //      //_this.dataBuffer.splice(0,
+    //      //_this.dataBuffer.length - _this.dataLength);
+    //    //}
 
-        if (_this.dataBuffer.length > 0) { 
-          while (new Date(_this.dataBuffer[0].ts).getTime() < _this.t2-(_this.windowLength )) {
-            _this.dataBuffer.shift();
-          }
-        } 
-        _this.getData(_this); 
-      },
-      error: function(xhr, status, error) {
-        logger.debug(error);
-      }
+    //    //if (_this.dataBuffer.length > 0) { 
+    //      //while (new Date(_this.dataBuffer[0].ts).getTime() < _this.t2-(_this.windowLength )) {
+    //        //_this.dataBuffer.shift();
+    //      //}
+    //    //} 
+    //    _this.getData(_this); 
+    //  },
+    //  error: function(xhr, status, error) {
+    //    logger.debug(error);
+    //  }
 
-    });
+    //});
     return this;
   },
 
@@ -139,30 +145,47 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
     _this.startTime = new Date().getTime(); 
     var t1Str = moment(_this.t1).toISOString();
     var t2Str = moment(_this.t2).toISOString();
+
+    var url = "/api/sm/sprobes/meminfo/?format=json";
+    if (this.initial) {
+      url = url + '&page_size=' + this.dataSize;
+      initial = false;
+    } else {
+      url = url + '&page_size=' + 1; 
+    }
+
     _this.jqXhr = $.ajax({
-      url: "/api/sm/sprobes/meminfo/?format=json&t1=" + 
-        t1Str + "&t2=" + t2Str, 
+      //url: "/api/sm/sprobes/meminfo/?format=json&t1=" + 
+      //  t1Str + "&t2=" + t2Str, 
+      url: url,
       type: "GET",
       dataType: "json",
       global: false, // dont show global loading indicator
       success: function(data, status, xhr) {
+        data.results.reverse(); 
         _.each(data.results, function(d) {
           _this.dataBuffer.push(d);
         });
-        if (_this.dataBuffer.length > _this.dataLength) {
-          _this.dataBuffer.splice(0,
-          _this.dataBuffer.length - _this.dataLength);
-        }
-        
-        // remove data outside window
-        if (_this.dataBuffer.length > 0) {
-          while (new Date(_this.dataBuffer[0].ts).getTime() < _this.t2 - _this.windowLength) {
+        if (_this.dataBuffer.length > 0) { 
+          var max_ts = (new Date(_this.dataBuffer[_this.dataBuffer.length-1].ts)).getTime();
+          while (new Date(_this.dataBuffer[0].ts).getTime() < (max_ts - _this.graphInterval)) {
             _this.dataBuffer.shift();
           }
-        }
+        } 
+        //if (_this.dataBuffer.length > _this.dataLength) {
+        //  _this.dataBuffer.splice(0, _this.dataBuffer.length - _this.dataLength);
+        //}
+        
+        //// remove data outside window
+        //if (_this.dataBuffer.length > 0) {
+          //while (new Date(_this.dataBuffer[0].ts).getTime() < _this.t2 - _this.windowLength) {
+            //_this.dataBuffer.shift();
+          //}
+        //}
         _this.update(_this.dataBuffer);
-        // Check time interval from beginning of last call
-        // and call getData or setTimeout accordingly
+         //Check time interval from beginning of last call
+         //and call getData or setTimeout accordingly
+        
         var currentTime = new Date().getTime();
         var diff = currentTime - _this.startTime;
         if (diff > _this.updateFreq) {
@@ -185,21 +208,24 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
           }, _this.updateFreq - diff)
         }
       },
-      error: function(xhr, status, error) {
+      err: function(xhr, status, error) {
         logger.debug(error);
       }
 
     });
+   
 
   },
 
   update: function(dataBuffer) {
     var newData = this.modifyData(dataBuffer);
     this.$('#mem-util-chart').empty();
+    var max_ts = (new Date(this.dataBuffer[this.dataBuffer.length-1].ts)).getTime();
+
     this.graphOptions.xaxis = {
       mode: 'time',
-      min: this.t2 - this.windowLength,
-      max: this.t2,
+      min: max_ts - this.graphInterval,
+      max: max_ts,
       timezone: 'browser'
     }
     $.plot(this.$("#mem-util-chart"), newData, this.graphOptions);
@@ -223,6 +249,8 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
     var new_data = [];
     var free = [];
     var used = [];
+    var buffers = [];
+    var cached = [];
     if (dataBuffer.length > 0) {
       this.totalMem = dataBuffer[dataBuffer.length-1].total;
       this.currentTs = dataBuffer[dataBuffer.length-1].ts;
@@ -234,12 +262,16 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
       //}
       _.each(dataBuffer, function(d,i) {
         free.push([(new Date(d.ts)).getTime(), (d["free"]/_this.totalMem)*100]);
-        used.push([(new Date(d.ts)).getTime(), ((d["total"] - d["free"])/_this.totalMem)*100]);
+        cached.push([(new Date(d.ts)).getTime(), (d["cached"]/_this.totalMem)*100]);
+        buffers.push([(new Date(d.ts)).getTime(), (d["buffers"]/_this.totalMem)*100]);
+        used.push([(new Date(d.ts)).getTime(), ((d["total"] - d['cached'] - d['buffers'] - d["free"])/_this.totalMem)*100]);
       });
     }
   
-    //new_data.push({"label": "free", "data": free, "color": this.colors[0]});
-    new_data.push({"label": "used", "data": used, "color": this.colors[1]});
+    new_data.push({"label": "used", "data": used, "color": this.colors[0]});
+    new_data.push({"label": "cached", "data": cached, "color": this.colors[1]});
+    new_data.push({"label": "buffers", "data": buffers, "color": this.colors[2]});
+    new_data.push({"label": "free", "data": free, "color": this.colors[3]});
     return new_data;
   },
 
