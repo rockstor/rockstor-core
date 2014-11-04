@@ -34,21 +34,27 @@ AddPoolView = Backbone.View.extend({
   },
 
   initialize: function() {
-    this.disks = new DiskCollection();
+  
     this.template = window.JST.pool_add_pool_template;
    
     // dont paginate disk selection table for now
     this.pagination_template = window.JST.common_pagination;
-    this.disks.pageSize = RockStorGlobals.maxPageSize;
-
+    this.collection = new DiskCollection();
+    // this.disks.pageSize = RockStorGlobals.maxPageSize;
+    this.collection.on("reset", this.renderDisks, this);
   },
 
   render: function() {
+    this.collection.fetch();
+    return this;
+  },
+
+  renderDisks: function() {
     $(this.el).empty();
     var _this = this;
-    this.disks.fetch({
-      success: function(collection, response) {
-        $(_this.el).append(_this.template({disks: _this.disks}));
+    //this.disks.fetch({
+      //success: function(collection, response) {
+        $(_this.el).append(_this.template({disks: _this.collection}));
         var err_msg = 'Incorrect number of disks';
         var raid_err_msg = function() {
           return err_msg;
@@ -130,7 +136,7 @@ AddPoolView = Backbone.View.extend({
         });
         
         _this.$(".pagination-ph").html(_this.pagination_template({
-        collection: _this.disks
+        collection: this.collection
        }));
         
         
@@ -185,10 +191,9 @@ AddPoolView = Backbone.View.extend({
              });
 
           }
+
         });
 
-      }
-    });
     return this;
   },
 
