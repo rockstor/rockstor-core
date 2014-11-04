@@ -67,35 +67,10 @@ def resize_pool(pool_name, device, dev_list, add=True):
     resize_flag = 'add'
     if (not add):
         resize_flag = 'delete'
-    resize_cmd = [BTRFS, 'device', resize_flag, ' '.join(dev_list),
-                  root_mnt_pt]
+    resize_cmd = [BTRFS, 'device', resize_flag, ]
+    resize_cmd.extend(dev_list)
+    resize_cmd.append(root_mnt_pt)
     out, err, rc = run_command(resize_cmd)
-    return out, err, rc
-
-
-def btrfs_wipe_disk(disk):
-    dd_cmd = [DD, 'if=/dev/zero', 'of=%s' % disk, 'bs=1024', 'count=100']
-    return run_command(dd_cmd)
-
-
-def remove_pool(name):
-    """
-    just remove from database? mark it deleted? may be give a purge option that
-    will do some dd type thing to the disks?
-
-    for now -- just wipe out the pool. this is possible by dd'ing first 100KB
-    of each disk in the pool.
-
-    @todo: when btrfs return values are fixed, revisit. filesystem show for now
-    returns success even if pool doesn't exist.
-    """
-    cmd = [BTRFS, 'filesystem', 'show', name]
-    out, err, rc = run_command(cmd)
-    for line in out:
-        if (re.search('/dev/sd', line) is not None):
-            disk = line.split()[-1]
-            out, err, rc = btrfs_wipe_disk(disk)
-    #last command results -- not particularly useful
     return out, err, rc
 
 
@@ -448,6 +423,9 @@ def scan_disks(min_size):
                 continue
             if (dfields[3] < min_size):
                 continue
+            for i in range(0, len(dfields)):
+                if (dfields[i] == ''):
+                    dfields[i] = None
             dnames[dfields[0]] = dfields
     for d in dnames.keys():
         disks.append(Disk(*dnames[d]))

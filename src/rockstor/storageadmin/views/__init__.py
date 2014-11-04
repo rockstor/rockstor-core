@@ -24,7 +24,6 @@ from pool import PoolView
 from disk import DiskView
 from command import CommandView
 from service import ServiceView
-from setupwizard import SetupWizardView
 from share_iscsi import ShareIscsiView
 from appliances import AppliancesView
 from login import LoginView
