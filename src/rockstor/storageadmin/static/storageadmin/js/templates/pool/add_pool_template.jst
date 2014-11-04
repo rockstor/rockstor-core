@@ -59,9 +59,8 @@
                 </tr>
               </thead>
               <tbody>
-                <% disks.each(function(disk, index) { %>
-                  <% if (_.isNull(disk.get('pool')) && !disk.get('parted') && !disk.get('offline') && _.isNull(disk.get('btrfs_uuid'))) { %>
-                    <tr>
+                <% _.each(disks,function(disk, index) { %>
+                     <tr>
                       <td><%= index+1 %></td>
                       <td><%= disk.get('name') %></td>
                       <td><%= humanize.filesize(disk.get('size')*1024) %></td>
@@ -69,8 +68,7 @@
                         <input type="checkbox" class="disk" name="<%= disk.get('name') %>" id="<%= disk.get('name') %>" value="<%= disk.get('name') %>" title="select disk">
                       </td>
                     </tr>
-                  <% } %>
-                <% }); %>
+                  <% }); %>
               </tbody>
             </table>
            <div class="pagination-ph"> </div>

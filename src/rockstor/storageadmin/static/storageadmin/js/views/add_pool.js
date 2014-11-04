@@ -40,6 +40,8 @@ AddPoolView = Backbone.View.extend({
     // dont paginate disk selection table for now
     this.pagination_template = window.JST.common_pagination;
     this.collection = new DiskCollection();
+    this.filteredCollection = new DiskCollection();
+    this.collection.pageSize = 10;
     // this.disks.pageSize = RockStorGlobals.maxPageSize;
     this.collection.on("reset", this.renderDisks, this);
   },
@@ -50,11 +52,25 @@ AddPoolView = Backbone.View.extend({
   },
 
   renderDisks: function() {
-    $(this.el).empty();
-    var _this = this;
-    //this.disks.fetch({
-      //success: function(collection, response) {
-        $(_this.el).append(_this.template({disks: _this.collection}));
+       $(this.el).empty();
+        var _this = this;
+        
+       // this.disksRejected = this.collection.reject(function(disk) { 
+       //     return  _.isNull(disk.get('pool')) && !disk.get('parted') && !disk.get('offline') && _.isNull(disk.get('btrfs_uuid'));
+       //   });
+        
+        this.disksFiltered = this.collection.filter(function(disk) { 
+            return  _.isNull(disk.get('pool')) && !disk.get('parted') && !disk.get('offline') && _.isNull(disk.get('btrfs_uuid'));
+          });
+        this.disks = _.sortBy(this.disksFiltered, function(disk){
+        	return disk.id;
+        	
+        });
+        
+          $(_this.el).append(_this.template({
+        	disks: this.disks
+        }));
+        
         var err_msg = 'Incorrect number of disks';
         var raid_err_msg = function() {
           return err_msg;
@@ -62,7 +78,7 @@ AddPoolView = Backbone.View.extend({
 
         $.validator.addMethod('validatePoolName', function(value) {
           var pool_name = $('#pool_name').val();
-
+            
           if (pool_name == "") {
             err_msg = 'Please enter pool name';
             return false;
@@ -110,7 +126,8 @@ AddPoolView = Backbone.View.extend({
               err_msg = 'Raid6 requires at least 3 disks to be selected';
               return false;
             }
-          } else if (raid_level == 'raid10') {
+          } else if (raid_level == 'raid10') { 
+        	  
             if (n < 4) {
               err_msg = 'Raid10 requires at least 4 disks to be selected';
               return false;
@@ -119,6 +136,9 @@ AddPoolView = Backbone.View.extend({
           return true;
         }, raid_err_msg);
         
+        _this.$(".pagination-ph").html(_this.pagination_template({
+           collection: this.collection
+          }));
         
         this.$("#disks-table").tablesorter({
          headers: {
@@ -135,12 +155,7 @@ AddPoolView = Backbone.View.extend({
          }
         });
         
-        _this.$(".pagination-ph").html(_this.pagination_template({
-        collection: this.collection
-       }));
-        
-        
-        this.$('#add-pool-form input').tooltip({placement: 'right'});
+         this.$('#add-pool-form input').tooltip({placement: 'right'});
 
         this.$('#raid_level').tooltip({
           html: true,
