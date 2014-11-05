@@ -37,9 +37,6 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
     this.dataBuffer = [];
     this.currentTs = null;
     this.colors = ["#ff9896", "#ffbb78", "#aec7e8", "#98df8a"];
-    //for (i=0; i<this.dataLength; i++) {
-    //  this.dataBuffer.push(emptyData);
-    //}
     this.totalMem = 0;
     this.graphOptions = { 
       grid : { 
@@ -73,12 +70,11 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
       legend : { 
         backgroundColor: null,
         backgroundOpacity: 0,
-        //container: "#mem-legend", 
         noColumns: 1,
         //margin: [10,0],
-        //labelBoxBorderColor: "#fff",
-        position: "ne"
-
+        labelBoxBorderColor: "#000000",
+        position: "ne",
+        sorted: 'reverse'
       },
       tooltip: true,
       tooltipOpts: {
@@ -105,36 +101,6 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
     }));
     this.initial = true;
     this.getData(this); 
-    //var _this = this;
-    //var pageSizeStr = '&page_size=' + RockStorGlobals.maxPageSize;
-    //$.ajax({
-    //  url: '/api/sm/sprobes/meminfo/?format=json' + pageSizeStr + '&t1=' +
-    //    t1Str + '&t2=' + t2Str, 
-    //  type: "GET",
-    //  dataType: "json",
-    //  global: false, // dont show global loading indicator
-    //  success: function(data, status, xhr) {
-    //    // fill dataBuffer
-    //    _.each(data.results, function(d) {
-    //      _this.dataBuffer.push(d);
-    //    });
-    //    //if (_this.dataBuffer.length > _this.dataLength) {
-    //      //_this.dataBuffer.splice(0,
-    //      //_this.dataBuffer.length - _this.dataLength);
-    //    //}
-
-    //    //if (_this.dataBuffer.length > 0) { 
-    //      //while (new Date(_this.dataBuffer[0].ts).getTime() < _this.t2-(_this.windowLength )) {
-    //        //_this.dataBuffer.shift();
-    //      //}
-    //    //} 
-    //    _this.getData(_this); 
-    //  },
-    //  error: function(xhr, status, error) {
-    //    logger.debug(error);
-    //  }
-
-    //});
     return this;
   },
 
@@ -149,7 +115,7 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
     var url = "/api/sm/sprobes/meminfo/?format=json";
     if (this.initial) {
       url = url + '&page_size=' + this.dataSize;
-      initial = false;
+      this.initial = false;
     } else {
       url = url + '&page_size=' + 1; 
     }
@@ -166,22 +132,13 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
         _.each(data.results, function(d) {
           _this.dataBuffer.push(d);
         });
+        // remove old data
         if (_this.dataBuffer.length > 0) { 
           var max_ts = (new Date(_this.dataBuffer[_this.dataBuffer.length-1].ts)).getTime();
           while (new Date(_this.dataBuffer[0].ts).getTime() < (max_ts - _this.graphInterval)) {
             _this.dataBuffer.shift();
           }
         } 
-        //if (_this.dataBuffer.length > _this.dataLength) {
-        //  _this.dataBuffer.splice(0, _this.dataBuffer.length - _this.dataLength);
-        //}
-        
-        //// remove data outside window
-        //if (_this.dataBuffer.length > 0) {
-          //while (new Date(_this.dataBuffer[0].ts).getTime() < _this.t2 - _this.windowLength) {
-            //_this.dataBuffer.shift();
-          //}
-        //}
         _this.update(_this.dataBuffer);
          //Check time interval from beginning of last call
          //and call getData or setTimeout accordingly
