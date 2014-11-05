@@ -41,34 +41,41 @@ AddPoolView = Backbone.View.extend({
     this.pagination_template = window.JST.common_pagination;
     this.collection = new DiskCollection();
     this.filteredCollection = new DiskCollection();
-    this.collection.pageSize = 10;
+    this.collection.pageSize = 5;
     // this.disks.pageSize = RockStorGlobals.maxPageSize;
     this.collection.on("reset", this.renderDisks, this);
   },
 
   render: function() {
-    this.collection.fetch();
+	  var _this = this;
+    this.collection.fetch().done(function(){ // i am proceeding after i finish the fetch!
+        var filterType = _.filter(_this.collection.models,function(disk){
+            return _.isNull(disk.get('pool')) && !disk.get('parted') && !disk.get('offline') && _.isNull(disk.get('btrfs_uuid'));
+        })
+        _this.collection.reset(filterType);
+            
+    });
+    console.log("in render"+_this.collection);
     return this;
   },
 
   renderDisks: function() {
        $(this.el).empty();
         var _this = this;
-        
-       // this.disksRejected = this.collection.reject(function(disk) { 
-       //     return  _.isNull(disk.get('pool')) && !disk.get('parted') && !disk.get('offline') && _.isNull(disk.get('btrfs_uuid'));
-       //   });
-        
-        this.disksFiltered = this.collection.filter(function(disk) { 
-            return  _.isNull(disk.get('pool')) && !disk.get('parted') && !disk.get('offline') && _.isNull(disk.get('btrfs_uuid'));
-          });
-        this.disks = _.sortBy(this.disksFiltered, function(disk){
-        	return disk.id;
-        	
-        });
-        
+               // this.disksRejected = this.collection.reject(function(disk) { 
+               //     return  _.isNull(disk.get('pool')) && !disk.get('parted') && !disk.get('offline') && _.isNull(disk.get('btrfs_uuid'));
+               //   });
+                
+              // this.disksFiltered = this.collection.filter(function(disk) { 
+                //    return  _.isNull(disk.get('pool')) && !disk.get('parted') && !disk.get('offline') && _.isNull(disk.get('btrfs_uuid'));
+                //  });
+               // this.disks = _.sortBy(this.disksFiltered, function(disk){
+                //	return disk.id;
+                	
+             // });
+        console.log(this.collection);
           $(_this.el).append(_this.template({
-        	disks: this.disks
+        	disks: this.collection
         }));
         
         var err_msg = 'Incorrect number of disks';
@@ -137,7 +144,7 @@ AddPoolView = Backbone.View.extend({
         }, raid_err_msg);
         
         _this.$(".pagination-ph").html(_this.pagination_template({
-           collection: this.collection
+          collection: this.collection
           }));
         
         this.$("#disks-table").tablesorter({
