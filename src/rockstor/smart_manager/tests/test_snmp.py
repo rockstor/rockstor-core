@@ -39,8 +39,6 @@ class SNMPTests(APITestCase):
         """
         config happy path
         """
-        from smart_manager.models import Service
-        print ('service count = %d' % Service.objects.count())
         config = {'syslocation': 'Rockstor Labs',
                   'syscontact': 'rocky@rockstor.com',
                   'rocommunity': 'public',
@@ -59,4 +57,75 @@ class SNMPTests(APITestCase):
         response = self.client.post('%s/config' % self.BASE_URL)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg=response.data)
+                         msg=response.content)
+
+    def test_snmp_2(self):
+        """
+        config without syslocation
+        """
+        config = {'syscontact': 'rocky@rockstor.com',
+                  'rocommunity': 'public',
+                  'aux': (), }
+        data = {'config': config, }
+        self.session_login()
+        response = self.client.post('%s/config' % self.BASE_URL, data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg=response.content)
+
+    def test_snmp_3(self):
+        """
+        config without syscontact
+        """
+        config = {'syslocation': 'Rockstor Labs',
+                  'rocommunity': 'public',
+                  'aux': (), }
+        self.session_login()
+        response = self.client.post('%s/config' % self.BASE_URL,
+                                    data={'config': config, })
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg=response.content)
+
+    def test_snmp_4(self):
+        """
+        config without rocommunity
+        """
+        config = {'syslocation': 'Rockstor Labs',
+                  'syscontact': 'rocky@rockstor.com',
+                  'aux': (), }
+        self.session_login()
+        response = self.client.post('%s/config' % self.BASE_URL,
+                                    data={'config': config, })
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg=response.content)
+
+    def test_snmp_5(self):
+        """
+        config without aux
+        """
+        config = {'syslocation': 'Rockstor Labs',
+                  'syscontact': 'rocky@rockstor.com',
+                  'rocommunity': 'public', }
+        self.session_login()
+        response = self.client.post('%s/config' % self.BASE_URL,
+                                    data={'config': config, })
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg=response.content)
+
+    def test_snmp_6(self):
+        """
+        config with wrong aux type
+        """
+        config = {'syslocation': 'Rockstor Labs',
+                  'syscontact': 'rocky@rockstor.com',
+                  'rocommunity': 'public',
+                  'aux': 'foo', }
+        self.session_login()
+        response = self.client.post('%s/config' % self.BASE_URL,
+                                    data={'config': config, })
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg=response.content)
