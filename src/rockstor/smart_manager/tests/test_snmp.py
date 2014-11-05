@@ -129,3 +129,15 @@ class SNMPTests(APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR,
                          msg=response.content)
+
+    def test_snmp_7(self):
+        """
+        start/stop tests
+        """
+        self.session_login()
+        response = self.client.post('%s/start' % self.BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         msg=response.content)
+        response2 = self.client.post('%s/stop' % self.BASE_URL)
+        self.assertEqual(response2.status_code, status.HTTP_200_OK,
+                         msg=response.content)
