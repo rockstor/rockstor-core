@@ -107,7 +107,7 @@ ServicesView = Backbone.View.extend({
         password: 'required'
       },
       submitHandler: function() {
-        var button = _this.$('#join-domain-submit');
+    	  var button = _this.$('#join-domain-submit');
         if (buttonDisabled(button)) return false;
         disableButton(button);
         var data = JSON.stringify(_this.$('#join-domain-form').getJSON());

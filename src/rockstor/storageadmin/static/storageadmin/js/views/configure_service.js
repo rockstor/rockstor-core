@@ -138,7 +138,17 @@ ConfigureServiceView = RockstorLayoutView.extend({
         var button = _this.$('#submit');
         if (buttonDisabled(button)) return false;
         disableButton(button);
+        if(_this.formName == 'snmpd-form')
+        {
+        var optionsText = _this.$('#options').val();
+        var entries = [];
+        if (!_.isNull(optionsText) && optionsText.trim() != '') entries = optionsText.trim().split('\n');
+        var params = (_this.$('#' + _this.formName).getJSON());
+        params.aux = entries;
+        var data = JSON.stringify({config: params});
+        }else{
         var data = JSON.stringify({config: _this.$('#' + _this.formName).getJSON()});
+        }
         $.ajax({
           url: "/api/sm/services/" + _this.serviceName + "/config",
           type: "POST",
@@ -151,6 +161,8 @@ ConfigureServiceView = RockstorLayoutView.extend({
           },
           error: function(xhr, status, error) {
             enableButton(button);
+            var msg = parseXhrError(xhr.responseText);
+          _this.$(".messages").html(this.errTemplate({msg: msg}));
             var msg = parseXhrError(xhr)
             if (_.isObject(msg)) {
               _this.validator.showErrors(msg);
