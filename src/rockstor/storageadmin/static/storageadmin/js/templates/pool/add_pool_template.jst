@@ -59,7 +59,7 @@
                 </tr>
               </thead>
               <tbody>
-                <% _.each(disks,function(disk, index) { %>
+                <% disks.each(function(disk, index) { %>
                      <tr>
                       <td><%= index+1 %></td>
                       <td><%= disk.get('name') %></td>

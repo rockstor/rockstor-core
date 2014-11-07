@@ -41,27 +41,41 @@ AddPoolView = Backbone.View.extend({
     this.pagination_template = window.JST.common_pagination;
     this.collection = new DiskCollection();
     this.filteredCollection = new DiskCollection();
-    this.collection.pageSize = 5;
-    // this.disks.pageSize = RockStorGlobals.maxPageSize;
+//    this.collection.pageSize =3;
+  //  this.collection.comparator='id';
+    this.collection.comparator = function(model) {
+        return model.id;
+    }
+
     this.collection.on("reset", this.renderDisks, this);
   },
 
   render: function() {
 	  var _this = this;
-    this.collection.fetch().done(function(){ // i am proceeding after i finish the fetch!
-        var filterType = _.filter(_this.collection.models,function(disk){
-            return _.isNull(disk.get('pool')) && !disk.get('parted') && !disk.get('offline') && _.isNull(disk.get('btrfs_uuid'));
-        })
-        _this.collection.reset(filterType);
-            
-    });
-    console.log("in render"+_this.collection);
-    return this;
+    this.collection.fetch();//.done(function(){ // i am proceeding after i finish the fetch!
+       // var filterType = _.filter(_this.collection.models,function(disk){
+    //	console.log("total no of  disks before filter"+_this.collection.length);
+    //	 this.filteredCollection = _.reject(_this.collection.models,function(disk){
+    //        return _.isNull(disk.get('pool')) && !disk.get('parted') && !disk.get('offline') && _.isNull(disk.get('btrfs_uuid'));
+     //   })
+    //   _this.collection.remove(this.filteredCollection);
+     //    console.log("total no of  disks"+_this.collection.length);
+  //  });
+    	
+    
+     return this;
   },
 
   renderDisks: function() {
        $(this.el).empty();
         var _this = this;
+        console.log("in renderDisks "+this.collection.length);
+        this.filteredCollection = _.reject(this.collection.models,function(disk){
+            return _.isNull(disk.get('pool')) && !disk.get('parted') && !disk.get('offline') && _.isNull(disk.get('btrfs_uuid'));
+        });
+       this.collection.remove(this.filteredCollection);
+      // this.collection.sort();
+       console.log("in renderDisks after filter "+this.filteredCollection.length);
                // this.disksRejected = this.collection.reject(function(disk) { 
                //     return  _.isNull(disk.get('pool')) && !disk.get('parted') && !disk.get('offline') && _.isNull(disk.get('btrfs_uuid'));
                //   });
@@ -73,8 +87,7 @@ AddPoolView = Backbone.View.extend({
                 //	return disk.id;
                 	
              // });
-        console.log(this.collection);
-          $(_this.el).append(_this.template({
+         $(_this.el).append(_this.template({
         	disks: this.collection
         }));
         
@@ -143,9 +156,9 @@ AddPoolView = Backbone.View.extend({
           return true;
         }, raid_err_msg);
         
-        _this.$(".pagination-ph").html(_this.pagination_template({
-          collection: this.collection
-          }));
+     //   _this.$(".pagination-ph").html(_this.pagination_template({
+    //      collection: this.collection
+   //       }));
         
         this.$("#disks-table").tablesorter({
          headers: {
