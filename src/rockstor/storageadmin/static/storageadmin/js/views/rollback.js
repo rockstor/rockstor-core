@@ -68,6 +68,8 @@ RollbackView = RockstorLayoutView.extend({
         var button = _this.$('#rollback-share');
         var snapName = _this.$('input:radio[name=snapshot]:checked').val(); 
         // set snap name in confirm dialog
+        if(_.isUndefined(snapName))
+        	return false;
         _this.$('#confirm-snap-name').html(snapName);
         // show confirm dialog
         _this.$('#confirm-rollback').modal();
@@ -91,6 +93,7 @@ RollbackView = RockstorLayoutView.extend({
     var button = this.$('#js-confirm-rollback-submit');
     if (buttonDisabled(button)) return false;
     var snapName = this.$('input:radio[name=snapshot]:checked').val(); 
+    console.log("Selected snapshot: " + snapName);
     $.ajax({
       url: '/api/shares/' + _this.share.get('name') + '/rollback',
       type: "POST",
