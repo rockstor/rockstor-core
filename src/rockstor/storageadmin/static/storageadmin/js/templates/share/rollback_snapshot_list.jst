@@ -1,5 +1,11 @@
+<% foundWritableSnapshot = false; %>
 <% if (!snapshots.isEmpty()) { %>
 
+      <% snapshots.each(function(snapshot, index) { %>
+        <% if(snapshot.get("writable")) { %>
+        <% if (!foundWritableSnapshot) {
+       	        foundWritableSnapshot = true;
+        %>
   <table id="snapshots-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of snapshots">
     <thead>
       <tr>
@@ -9,9 +15,8 @@
         <th>Size</th>
       </tr>
     </thead>
+    <%}%>
     <tbody>
-      <% snapshots.each(function(snapshot, index) { %>
-       <% if(snapshot.get("writable")){ %>
         <tr>
           <td><input type="radio" name="snapshot" value="<%= snapshot.get('name') %>"></td>
           <td><i class="icon-camera"></i> <%= snapshot.get('name') %></td>
@@ -23,7 +28,7 @@
     </tbody>
   </table>
   <div class="pagination-ph"></div>
-<% }else { %>
+<% } if(!foundWritableSnapshot) { %>
   <table id="snapshots-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of snapshots">
     <tbody>
       <tr>
