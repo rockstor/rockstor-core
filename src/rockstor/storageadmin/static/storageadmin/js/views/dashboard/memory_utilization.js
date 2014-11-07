@@ -96,7 +96,7 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
   },
   
   setDimensions: function() {
-    this.margin = {top: 0, right: 40, bottom: 20, left: 30};
+    this.margin = {top: 20, right: 40, bottom: 20, left: 50};
     if (this.maximized) {
       this.width = 500 - this.margin.left - this.margin.right;
       this.height = 500 - this.margin.top - this.margin.bottom;
@@ -107,14 +107,43 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
   },
   
   setupSvg: function(svgEl) {
+    var _this = this;
     this.$(svgEl).empty();
     this.svg = d3.select(this.el).select(svgEl)
     .append('svg')
     .attr('class', 'metrics')
     .attr('width', this.width + this.margin.left + this.margin.right)
-    .attr('height', this.height + this.margin.top + this.margin.bottom);
-    this.svgG = this.svg.append("g")
+    .attr('height', this.height + this.margin.top + this.margin.bottom)
+    .append("g")
     .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
+
+    this.parseDate = d3.time.format("%y-%b-%d").parse; 
+    this.formatPercent = d3.format(".0%");
+
+    this.x = d3.time.scale().range([0, this.width]);
+
+    this.y = d3.scale.linear().range([this.height, 0]);
+
+    this.color = d3.scale.category20();
+    this.color.domain(['used','cached','buffers','free'])
+
+    this.xAxis = d3.svg.axis()
+    .scale(this.x)
+    .orient("bottom");
+
+    this.yAxis = d3.svg.axis()
+    .scale(this.y)
+    .orient("left")
+    .tickFormat(this.formatPercent);
+
+    this.area = d3.svg.area()
+    .x(function(d) { return _this.x(d.date); })
+    .y0(function(d) { return _this.y(d.y0); })
+    .y1(function(d) { return _this.y(d.y0 + d.y); });
+
+    this.stack = d3.layout.stack()
+    .values(function(d) { return d.values; });
+
   },
 
   update: function() {
@@ -132,12 +161,13 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
       success: function(data, status, xhr) {
         data.results.reverse();
         _.each(data.results, function(d) {
+          d.date = new Date(d.ts);
+          d.used = d.total - d.cached - d.buffers - d.free;
           _this.dataBuffer.push(d);
-          var used = d.total - d.cached - d.buffers - d.free;
-          _this.used.values.push({ts: d.ts, y: used/d.total});
-          _this.cached.values.push({ts: d.ts, y: d.cached/d.total});
-          _this.buffers.values.push({ts: d.ts, y: d.buffers/d.total});
-          _this.free.values.push({ts: d.ts, y: d.free/d.total});
+          _this.used.values.push({date: d.date, y: d.used/d.total});
+          _this.cached.values.push({date: d.date, y: d.cached/d.total});
+          _this.buffers.values.push({date: d.date, y: d.buffers/d.total});
+          _this.free.values.push({date: d.date, y: d.free/d.total});
         });
         // remove data outside window
         var max_ts = new Date(_this.dataBuffer[_this.dataBuffer.length-1].ts).getTime();
@@ -153,6 +183,30 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
         } 
         console.log(_this.dataBuffer);
         console.log(_this.used);
+        console.log(_this.cached);
+
+        _this.x.domain(d3.extent(_this.used.values, function(d) { return d.date; }));
+        var utilTypes = _this.stack(_this.layers);
+        var utilType = _this.svg.selectAll('.utilType')
+        .data(utilTypes)
+        .enter()
+        .append('g')
+        .attr('class', '.utilType')
+
+        utilType.append('path')
+        .attr("class", "area")
+        .attr("d", function(d) { return _this.area(d.values); })
+        .style("fill", function(d) { return _this.color(d.name); });
+       
+        _this.svg.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + _this.height + ")")
+        .call(_this.xAxis);
+
+        _this.svg.append("g")
+        .attr("class", "y axis")
+        .call(_this.yAxis); 
+
       },
       error: function(xhr, status, error) {
         logger.debug(error);
