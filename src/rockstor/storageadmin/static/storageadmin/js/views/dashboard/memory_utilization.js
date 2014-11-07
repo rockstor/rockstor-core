@@ -96,7 +96,7 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
   },
   
   setDimensions: function() {
-    this.margin = {top: 20, right: 40, bottom: 20, left: 50};
+    this.margin = {top: 20, right: 10, bottom: 20, left: 30};
     if (this.maximized) {
       this.width = 500 - this.margin.left - this.margin.right;
       this.height = 500 - this.margin.top - this.margin.bottom;
