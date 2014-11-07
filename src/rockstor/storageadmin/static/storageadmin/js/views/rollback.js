@@ -93,7 +93,6 @@ RollbackView = RockstorLayoutView.extend({
     var button = this.$('#js-confirm-rollback-submit');
     if (buttonDisabled(button)) return false;
     var snapName = this.$('input:radio[name=snapshot]:checked').val(); 
-    console.log("Selected snapshot: " + snapName);
     $.ajax({
       url: '/api/shares/' + _this.share.get('name') + '/rollback',
       type: "POST",
