@@ -21,9 +21,16 @@
 <div class="share-messages"></div>
 <div id="details-header">
   <span class="h3">Share: <%= share.get('name') %></span>
+  <% foundWritableSnapshot = false;
+    snapshots.each(function(snapshot, index) {
+      if(snapshot.get("writable")) {
+        foundWritableSnapshot = true;
+      }
+    });
+  %>
   <div class="pull-right">
-    <% if (snapshots.isEmpty()) { %>
-      <a id="js-rollback" class="btn btn-primary disabled" title="At least one writable snapshot must exist to rollback to." href="#shares/<%= share.get('name') %>/rollback"><i class="icon-repeat icon-white"></i> Rollback</a>
+    <% if (snapshots.isEmpty() || !foundWritableSnapshot) { %>
+      <a id="js-rollback" class="btn btn-primary disabled" title="At least one writable snapshot must exist to rollback to."><i class="icon-repeat icon-white"></i> Rollback</a>
     <% } else { %>
       <a id="js-rollback" class="btn btn-primary" href="#shares/<%= share.get('name') %>/rollback"><i class="icon-repeat icon-white"></i> Rollback</a>
     <% } %>
