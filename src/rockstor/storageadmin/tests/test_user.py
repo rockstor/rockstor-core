@@ -170,3 +170,43 @@ class UserTests(APITestCase):
                          msg=response.content)
         self.assertEqual(response.data['detail'],
                          'Delete of restricted user(root) is not supported.')
+
+    def test_user_8(self):
+        """
+        change user password, public key
+        """
+        pub_key = ('ssh-dss AAAAB3NzaC1kc3MAAACBAIo+KNTMOS6H9slesrwgSsqp+hxJU'
+                   'DxTT3uy5/LLBDPHRxUz+OR5jcbk/CvgbZsDE3Q7iAIlN8w2bM/L/CG4Aw'
+                   'T90f4vFf783QJK9gRxqZmgrPb7Ey88EIeb7UN3+nhc754IEl28y82Rqnq'
+                   '/gtQveSB3aQIWdEIdw17ToLsN5dDPAAAAFQDQ+005d8pBpJSuwH5T7n/x'
+                   'hI6s5wAAAIBJP0okYMbFrYWBfPJvi+WsLHw1tqRerX7bteVmN4IcIlDDt'
+                   'STaQV7DOAl5B+iMPciRGaixtParUPk8oTew/MY1rECfIBs5wt+3hns4XD'
+                   'csrXDTNyFDx9qYDtI3Fxt0+2f8k58Ym622Pqq1TZ09IBX7hEZH2EB0dUv'
+                   'xsUOf/4cUNAAAAIEAh3IpPoHWodVQpCalZ0AJXub9hJtOWWke4v4l8JL5'
+                   'w5hNlJwUmAPGuJHZq5GC511hg/7r9PqOk3KnSVp9Jsya6DrtJAxr/8JjA'
+                   'd0fqQjDsWXQRLONgcMfH24ciuFLyIWgDprTWmEWekyFF68vEwd4Jpnd4C'
+                   'iDbZjxc44xBnlbPEI= suman@Learnix')
+        data = {'username': 'rocky',
+                'public_key': pub_key,
+                'shell': '/bin/bash',
+                'password': 'wisdom',
+                'email': 'rocky@rockstor.com',
+                'admin': True, }
+        self.client.login(username='admin', password='admin')
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         msg=response.content)
+        data['password'] = 'wisdom123'
+        response3 = self.client.put('%s/rocky' % self.BASE_URL, data=data)
+        self.assertEqual(response3.status_code, status.HTTP_200_OK,
+                         msg=response.content)
+        data['public_key'] = 'foobar'
+        response4 = self.client.put('%s/rocky' % self.BASE_URL, data=data)
+        self.assertEqual(response4.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg=response.content)
+        self.assertEqual(response4.data['detail'], 'Public key is invalid')
+        response2 = self.client.delete('%s/rocky' % self.BASE_URL)
+        self.assertEqual(response2.status_code,
+                         status.HTTP_200_OK,
+                         msg=response2.content)
