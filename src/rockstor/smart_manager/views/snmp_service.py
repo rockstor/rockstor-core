@@ -63,15 +63,13 @@ class SNMPServiceView(BaseServiceView):
                 if (type(config) != dict):
                     e_msg = ('config dictionary is required input')
                     handle_exception(Exception(e_msg), request)
-                if ('syslocation' not in config):
-                    e_msg = ('syslocation is missing in config: %s' % config)
-                    handle_exception(Exception(e_msg), request)
-                if ('syscontact' not in config):
-                    e_msg = ('syscontact is missing in config; %s' % config)
-                    handle_exception(Exception(e_msg), request)
-                if ('rocommunity' not in config):
-                    e_msg = ('rocommunity is missing in config: %s' % config)
-                    handle_exception(Exception(e_msg), request)
+                for option in ('syslocation', 'syscontact', 'rocommunity',):
+                    if (option not in config):
+                        e_msg = ('%s is missing in config' % option)
+                        handle_exception(Exception(e_msg), request)
+                    if (config[option] is None or config[option] == ''):
+                        e_msg = ('%s cannot be empty' % option)
+                        handle_exception(Exception(e_msg), request)
                 if ('aux' not in config):
                     e_msg = ('aux is missing in config: %s' % config)
                     handle_exception(Exception(e_msg), request)
@@ -80,7 +78,6 @@ class SNMPServiceView(BaseServiceView):
                     handle_exception(Exception(e_msg), request)
 
                 configure_snmp(config)
-                logger.debug('config = %s' % config)
                 self._save_config(service, config)
             else:
                 self._switch_snmp(command)
