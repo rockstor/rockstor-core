@@ -21,6 +21,7 @@ from django.db import models
 
 class Group(models.Model):
     gid = models.IntegerField(unique=True)
+    groupname = models.CharField(max_length=1024, null=True)
 
     class Meta:
         app_label = 'storageadmin'

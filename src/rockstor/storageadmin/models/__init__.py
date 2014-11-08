@@ -30,6 +30,7 @@ from appliance import Appliance
 from support_case import SupportCase
 from dashboard_config import DashboardConfig
 from network_interface import NetworkInterface
+from group import Group
 from user import User
 from scrub import PoolScrub
 from setup import Setup
