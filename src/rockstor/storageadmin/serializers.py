@@ -72,6 +72,7 @@ class AdvancedNFSExportSerializer(serializers.ModelSerializer):
 class SUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
+        fields = ('username', 'uid', 'gid', 'user', 'public_key', 'admin')
 
 
 class UserSerializer(serializers.ModelSerializer):
