@@ -29,7 +29,9 @@ logger = logging.getLogger(__name__)
 PW_FILE = '/etc/passwd'
 GROUP_FILE = '/etc/group'
 USERADD = '/usr/sbin/useradd'
+GROUPADD = '/usr/sbin/groupadd'
 USERDEL = '/usr/sbin/userdel'
+GROUPDEL = '/usr/sbin/groupdel'
 PASSWD = '/usr/bin/passwd'
 USERMOD = '/usr/sbin/usermod'
 SMBPASSWD = '/usr/bin/smbpasswd'
@@ -51,6 +53,15 @@ def get_users(min_uid=5000, uname=None):
     return users
 
 
+def get_groups():
+    groups = {}
+    with open(GROUP_FILE) as gfo:
+        for l in gfo.readlines():
+            fields = l.strip().split(':')
+            groups[fields[0]] = fields[2]
+    return groups
+
+
 def userdel(uname):
     try:
         pwd.getpwnam(uname)
@@ -59,6 +70,14 @@ def userdel(uname):
         return
 
     return run_command([USERDEL, '-r', uname])
+
+
+def groupdel(groupname):
+    try:
+        return run_command([GROUPDEL, groupname])
+    except CommandException, e:
+        if (e.rc != 6):
+            raise e
 
 
 def get_epasswd(username):
@@ -105,6 +124,14 @@ def useradd(username, shell, uid=None, gid=None):
     if (gid is not None):
         cmd.insert(-1, '-g')
         cmd.insert(-1, str(gid))
+    return run_command(cmd)
+
+
+def groupadd(groupname, gid=None):
+    cmd = ([GROUPADD, groupname])
+    if (gid is not None):
+        cmd.insert(-1, '-g')
+        cmd.insert(-1, gid)
     return run_command(cmd)
 
 
