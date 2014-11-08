@@ -149,67 +149,79 @@ class UserView(rfc.GenericView):
 
     @transaction.commit_on_success
     def put(self, request, username):
-        suser = self._get_user_object(request, username)
-        try:
-            # if password is present in input data, change password
-            if ('password' in request.DATA):
-                # change password
-                password = request.DATA['password']
-                usermod(username, password)
-                smbpasswd(username, password)
-                suser.user.set_password(password)
-                suser.user.save()
-            # check if admin attribute has changed
-            if ('is_active' in request.DATA):
-                is_active = request.DATA['is_active']
-                # put is through bacbone model save so is_active comes in
-                # as a boolean
-                if is_active != suser.user.is_active:
-                    if request.user.username == username:
-                        e_msg = ('Cannot modify admin attribute of the '
-                                 'currently logged in user')
-                        handle_exception(Exception(e_msg), request)
-                    suser.user.is_active = is_active
-                    shell = settings.DEFAULT_SHELL
-                    if (is_active is True):
-                        shell = settings.ADMIN_SHELL
-                    update_shell(username, shell)
-                    suser.user.save()
-                    suser.save()
-            if ('public_key' in request.DATA):
-                add_ssh_key(username, request.DATA['public_key'])
-                suser.public_key = request.DATA['public_key']
-                suser.save()
-            return Response(UserSerializer(suser.user).data)
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)
+        if (username in self.exclude_list):
+            if (username != 'root'):
+                e_msg = ('Editing restricted user(%s) is not supported.' %
+                         username)
+                handle_exception(Exception(e_msg), request)
+
+        new_pw = request.DATA.get('password', None)
+        public_key = self._validate_public_key(request)
+        if (new_pw is None):
+            e_msg = ('Password is required')
+            handle_exception(Exception(e_msg), request)
+
+        if (DjangoUser.objects.filter(username=username).exists()):
+            du = DjangoUser.objects.get(username=username)
+            du.set_password(new_pw)
+            du.save()
+
+        if (User.objects.filter(username=username).exists()):
+            u = User.objects.get(username=username)
+            u.public_key = public_key
+            u.save()
+
+        sysusers = self._combined_users()
+        suser = None
+        for u in sysusers:
+            if (u.username == username):
+                suser = u
+                usermod(username, new_pw)
+                smbpasswd(username, new_pw)
+                if (public_key is not None):
+                    add_ssh_key(username, public_key)
+                break
+        if (suser is None):
+            e_msg = ('User(%s) does not exist' % username)
+            handle_exception(Exception(e_msg), request)
+
+        return Response(SUserSerializer(suser.user).data)
 
     @transaction.commit_on_success
     def delete(self, request, username):
-        user = self._get_user_object(request, username)
-        try:
-            if request.user.username == username:
-                e_msg = ('Cannot delete the currently logged in user')
+        if request.user.username == username:
+            e_msg = ('Cannot delete the currently logged in user')
+            handle_exception(Exception(e_msg), request)
+
+        if (username in self.exclude_list):
+            e_msg = ('Delete of restricted user(%s) is not supported.' %
+                     username)
+            handle_exception(Exception(e_msg), request)
+
+        if (DjangoUser.objects.filter(username=username).exists()):
+            du = DjangoUser.objects.get(username=username)
+            du.delete()
+
+        if (User.objects.filter(username=username).exists()):
+            u = User.objects.get(username=username)
+            u.delete()
+        else:
+            sysusers = self._combined_users()
+            found = False
+            for u in sysusers:
+                if (u.username == username):
+                    found = True
+                    break
+            if (found is False):
+                e_msg = ('User(%s) does not exist' % username)
                 handle_exception(Exception(e_msg), request)
 
-            epw = get_epasswd(username)
-            user.delete()
-            if (epw is not None):
-                userdel(username)
-            return Response()
-        except RockStorAPIException:
-            raise
+        try:
+            userdel(username)
         except Exception, e:
             logger.exception(e)
-            e_msg = ('User deletion is not currently supported.')
+            e_msg = ('A low level error occured while deleting the user: %s' %
+                     username)
             handle_exception(Exception(e_msg), request)
 
-    def _get_user_object(self, request, username):
-        try:
-            return User.objects.get(username=username)
-        except:
-            e_msg = ('user: %s does not exist' % username)
-            logger.debug(e_msg)
-            handle_exception(Exception(e_msg), request)
+        return Response()
