@@ -45,3 +45,4 @@ from installed_plugin import InstalledPluginView
 from adv_nfs_exports import AdvancedNFSExportView
 from oauth_app import OauthAppView
 from netatalk import NetatalkView
+from group import GroupView
