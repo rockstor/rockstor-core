@@ -25,7 +25,7 @@ from storageadmin.serializers import SUserSerializer
 from storageadmin.models import User
 import rest_framework_custom as rfc
 from system.users import (useradd, usermod, userdel, get_users,
-                          update_shell, smbpasswd, add_ssh_key)
+                          smbpasswd, add_ssh_key)
 from storageadmin.exceptions import RockStorAPIException
 import pwd
 from system.ssh import is_pub_key
@@ -71,7 +71,7 @@ class UserView(rfc.GenericView):
             e_msg = ('Password must be a valid string')
             handle_exception(Exception(e_msg), request)
         input_fields['password'] = password
-        admin = request.DATA.get('admin', False)
+        admin = request.DATA.get('admin', True)
         if (type(admin) != bool):
             e_msg = ('Admin(user type) must be a boolean')
             handle_exception(Exception(e_msg), request)

@@ -20,6 +20,7 @@ from django.db import transaction
 from storageadmin.models import User, Setup, OauthApp
 from storageadmin.views import UserView
 from oauth2_provider.models import Application as OauthApplication
+from django.contrib.auth.models import User as DjangoUser
 
 
 class SetupUserView(UserView):
@@ -38,11 +39,12 @@ class SetupUserView(UserView):
         # Create cliapp id and secret for oauth
         name = 'cliapp'
         user = User.objects.get(username=request.DATA['username'])
+        duser = DjangoUser.objects.get(username=request.DATA['username'])
         client_type = OauthApplication.CLIENT_CONFIDENTIAL
         auth_grant_type = OauthApplication.GRANT_CLIENT_CREDENTIALS
         app = OauthApplication(name=name, client_type=client_type,
                                authorization_grant_type=auth_grant_type,
-                               user=user.user)
+                               user=duser)
         app.save()
         oauth_app = OauthApp(name=name, application=app, user=user)
         oauth_app.save()
