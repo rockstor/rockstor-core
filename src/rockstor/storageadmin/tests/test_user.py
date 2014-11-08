@@ -71,41 +71,102 @@ class UserTests(APITestCase):
                          msg=response.content)
         response2 = self.client.delete('%s/rocky' % self.BASE_URL)
         self.assertEqual(response2.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         status.HTTP_200_OK,
                          msg=response2.content)
-
-    def test_user_x(self):
-        """
-        invalid username
-        """
-        pass
-
-    def test_user_x(self):
-        """
-        invalid shell
-        """
-        pass
-
-    def test_user_x(self):
-        """
-        user in User model but deleted manually in the system
-        """
-        pass
-
-    def test_user_x(self):
-        """
-        invalid public key
-        """
-        pass
 
     def test_user_2(self):
         """
-        add user invalid inputs
+        invalid username
         """
-        pass
+        self.client.login(username='admin', password='admin')
+        data = {'username': 'root',
+                'shell': '/bin/bash',
+                'password': 'wisdom',
+                'email': 'rocky@rockstor.com',
+                'admin': True, }
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg=response.content)
+        self.assertEqual(response.data['detail'],
+                         'user: root already exists. Please choose a '
+                         'different username')
 
     def test_user_3(self):
         """
-        delete user happy path
+        invalid shell
         """
-        pass
+        self.client.login(username='admin', password='admin')
+        data = {'username': 'root',
+                'shell': '/bin/customshell',
+                'password': 'wisdom',
+                'email': 'rocky@rockstor.com',
+                'admin': True, }
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg=response.content)
+        msg = ("shell(/bin/customshell) is not valid. Valid shells are "
+               "('/opt/rock-dep/bin/rcli', '/bin/bash', '/sbin/nologin')")
+        self.assertEqual(response.data['detail'], msg)
+
+    def test_user_4(self):
+        """
+        user in User model but deleted manually in the system
+        """
+        data = {'username': 'rocky',
+                'shell': '/bin/bash',
+                'password': 'wisdom',
+                'email': 'rocky@rockstor.com',
+                'admin': True, }
+        self.client.login(username='admin', password='admin')
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         msg=response.content)
+        from system.users import userdel
+        userdel(data['username'])
+        response2 = self.client.delete('%s/rocky' % self.BASE_URL)
+        self.assertEqual(response2.status_code,
+                         status.HTTP_200_OK,
+                         msg=response2.content)
+
+    def test_user_5(self):
+        """
+        invalid public key
+        """
+        self.client.login(username='admin', password='admin')
+        data = {'username': 'root',
+                'public_key': 'foobar',
+                'shell': '/bin/bash',
+                'password': 'wisdom',
+                'email': 'rocky@rockstor.com',
+                'admin': True, }
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg=response.content)
+        self.assertEqual(response.data['detail'], 'Public key is invalid')
+
+    def test_user_6(self):
+        """
+        delete user that doesn't exist
+        """
+        self.client.login(username='admin', password='admin')
+        response = self.client.delete('%s/foobaruser' % self.BASE_URL)
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg=response.content)
+        self.assertEqual(response.data['detail'],
+                         'User(foobaruser) does not exist')
+
+    def test_user_7(self):
+        """
+        delete a prohibited user
+        """
+        self.client.login(username='admin', password='admin')
+        response = self.client.delete('%s/root' % self.BASE_URL)
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg=response.content)
+        self.assertEqual(response.data['detail'],
+                         'Delete of restricted user(root) is not supported.')
