@@ -41,8 +41,9 @@ ConfigureServiceView = RockstorLayoutView.extend({
     this.rules = {
       ntpd: { server: 'required' },
       nis: { domain: 'required', server: 'required' },
+      snmpd: { syslocation: 'required', syscontact: 'required', rocommunity: 'required'},
       winbind: {domain: 'required', controllers: 'required', 
-        security: 'required', 
+      security: 'required', 
         realm: {
           required: {
             depends: function(element) {
@@ -91,6 +92,7 @@ ConfigureServiceView = RockstorLayoutView.extend({
     $(this.el).html(this.template({service: this.service, config: configObj}));
 
     this.$('#nis-form :input').tooltip();
+    this.$('#snmpd-form :input').tooltip();
     this.$('#ldap-form :input').tooltip();
     this.$('#ntpd-form :input').tooltip();
     this.$('#winbind-form #domain').tooltip({
@@ -162,14 +164,8 @@ ConfigureServiceView = RockstorLayoutView.extend({
           error: function(xhr, status, error) {
             enableButton(button);
             var msg = parseXhrError(xhr.responseText);
-          _this.$(".messages").html(this.errTemplate({msg: msg}));
-            var msg = parseXhrError(xhr)
-            if (_.isObject(msg)) {
-              _this.validator.showErrors(msg);
-            } else {
-              _this.$(".messages").html(this.errTemplate({msg: msg}));
-            }
-          }
+            _this.$(".messages").html(this.errTemplate({msg: msg}));
+             }
         });
         return false;
       }
