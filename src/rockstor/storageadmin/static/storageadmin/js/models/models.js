@@ -1,27 +1,27 @@
 /*
  *
- * @licstart  The following is the entire license notice for the 
+ * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
- * 
+ *
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
- * 
+ *
  * RockStor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
- * 
+ *
  * RockStor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * @licend  The above is the entire license notice
  * for the JavaScript code in this page.
- * 
+ *
  */
 
 // Models and Collections
@@ -69,7 +69,7 @@ var SupportCaseCollection = Backbone.Collection.extend({
 	  model: SupportCase,
 	  url: '/api/support'
 });
-	
+
 var Share = Backbone.Model.extend({
   url: function() {
     return '/api/shares/' + this.get('shareName');
@@ -83,7 +83,7 @@ var ShareCollection = RockStorPaginatedCollection.extend({
 
 var Snapshot = Backbone.Model.extend({
   url: function() {
-    return '/api/shares/' + this.get('shareName') + '/' + this.get('snapName');			} 
+    return '/api/shares/' + this.get('shareName') + '/' + this.get('snapName');			}
 });
 
 var SnapshotCollection = RockStorPaginatedCollection.extend({
@@ -95,7 +95,7 @@ var SnapshotCollection = RockStorPaginatedCollection.extend({
     }
   },
   setUrl: function(shareName) {
-    this.baseUrl = '/api/shares/' + shareName + '/snapshots'    
+    this.baseUrl = '/api/shares/' + shareName + '/snapshots'
   },
   extraParams: function() {
     var p = this.constructor.__super__.extraParams.apply(this, arguments);
@@ -113,12 +113,12 @@ var NFSExport = Backbone.Model.extend();
 var NFSExportCollection = RockStorPaginatedCollection.extend({
   model: NFSExport,
   setUrl: function(shareName) {
-    this.baseUrl = '/api/shares/' + shareName + '/nfs'    
+    this.baseUrl = '/api/shares/' + shareName + '/nfs'
   }
 });
 
 var NFSExportGroup = Backbone.Model.extend({
-  urlRoot: '/api/nfs-exports'    
+  urlRoot: '/api/nfs-exports'
 });
 
 var NFSExportGroupCollection = RockStorPaginatedCollection.extend({
@@ -126,17 +126,17 @@ var NFSExportGroupCollection = RockStorPaginatedCollection.extend({
   baseUrl: '/api/nfs-exports'
 });
 
-var SMBShare = Backbone.Model.extend({ 
+var SMBShare = Backbone.Model.extend({
   url: function() {
-      return '/api/shares/' + this.get('shareName') + '/samba'    
+      return '/api/shares/' + this.get('shareName') + '/samba'
   },
-  
+
 });
 
 var SMBShareCollection = Backbone.Collection.extend({
 
   model: SMBShare
-  
+
   });
 
 
@@ -146,7 +146,7 @@ var SambaCollection = RockStorPaginatedCollection.extend({
   idAttribute: 'sambaShareId'
 });
 
-  
+
 var Service = Backbone.Model.extend({
   idAttribute: "name",
   urlRoot: "/api/sm/services"
@@ -164,29 +164,29 @@ var ApplianceCollection = RockStorPaginatedCollection.extend({
 });
 
 var User = Backbone.Model.extend({
-  urlRoot: '/api/users/',
+  urlRoot: '/api/users',
   idAttribute: 'username'
 });
 
 var UserCollection = RockStorPaginatedCollection.extend({
   model: User,
-  baseUrl: '/api/users/'
+  baseUrl: '/api/users'
 });
 
-var ISCSITarget = Backbone.Model.extend({ 
+var ISCSITarget = Backbone.Model.extend({
   url: function() {
-      return '/api/shares/' + this.get('shareName') + '/iscsi/'    
+      return '/api/shares/' + this.get('shareName') + '/iscsi/'
   }
 });
 
-var DashboardConfig = Backbone.Model.extend({ 
+var DashboardConfig = Backbone.Model.extend({
   url: '/api/dashboardconfig/',
   setConfig: function(wConfigs) {
     var tmp = [];
     _.each(wConfigs, function(wConfig) {
       tmp.push({
-        name: wConfig.name, 
-        position: wConfig.position, 
+        name: wConfig.name,
+        position: wConfig.position,
         maximized: wConfig.maximized
       });
     });
@@ -194,9 +194,9 @@ var DashboardConfig = Backbone.Model.extend({
   },
 
   getConfig: function() {
-    if (!_.isUndefined(this.get('widgets')) && 
+    if (!_.isUndefined(this.get('widgets')) &&
         !_.isNull(this.get('widgets'))) {
-      return JSON.parse(this.get('widgets')); 
+      return JSON.parse(this.get('widgets'));
     } else {
       this.setConfig(RockStorWidgets.defaultWidgets());
       return JSON.parse(this.get("widgets"));
@@ -251,9 +251,9 @@ var ProbeRun = Backbone.Model.extend({
     return '/api/sm/sprobes/' + this.get('name') + '/' + this.id + '/data?format=json';
   },
   downloadUrl: function() {
-    return "/api/sm/sprobes/" + this.get("name") + "/" + this.id 
-    + "/data" + "?" 
-    + "t1="+this.get("start") + "&t2=" + this.get("end") 
+    return "/api/sm/sprobes/" + this.get("name") + "/" + this.id
+    + "/data" + "?"
+    + "t1="+this.get("start") + "&t2=" + this.get("end")
     + "&download=true";
   },
 });
@@ -270,7 +270,7 @@ var ProbeTemplateCollection = Backbone.Collection.extend({
 });
 
 var Replica = Backbone.Model.extend({
-  urlRoot: "/api/sm/replicas"                                   
+  urlRoot: "/api/sm/replicas"
 });
 var ReplicaCollection = RockStorPaginatedCollection.extend({
   model: Replica,
@@ -329,7 +329,7 @@ var ReceiveTrailCollection = RockStorPaginatedCollection.extend({
 });
 
 var TaskDef = Backbone.Model.extend({
-  urlRoot: "/api/sm/tasks/"                                   
+  urlRoot: "/api/sm/tasks/"
 });
 
 var TaskDefCollection = RockStorPaginatedCollection.extend({
@@ -338,7 +338,7 @@ var TaskDefCollection = RockStorPaginatedCollection.extend({
 });
 
 var Task = Backbone.Model.extend({
-  urlRoot: "/api/sm/tasks/log"                                   
+  urlRoot: "/api/sm/tasks/log"
 });
 
 var TaskCollection = RockStorPaginatedCollection.extend({
@@ -359,7 +359,7 @@ var TaskCollection = RockStorPaginatedCollection.extend({
 });
 
 var SFTP = Backbone.Model.extend({
-  urlRoot: '/api/sftp'    
+  urlRoot: '/api/sftp'
 });
 
 var SFTPCollection = RockStorPaginatedCollection.extend({
@@ -369,7 +369,7 @@ var SFTPCollection = RockStorPaginatedCollection.extend({
 
 
 var AFP = Backbone.Model.extend({
-  urlRoot: '/api/netatalk'    
+  urlRoot: '/api/netatalk'
 });
 
 var AFPCollection = RockStorPaginatedCollection.extend({
@@ -379,7 +379,7 @@ var AFPCollection = RockStorPaginatedCollection.extend({
 
 
 var Plugin = Backbone.Model.extend({
-  urlRoot: '/api/plugins'    
+  urlRoot: '/api/plugins'
 });
 
 var PluginCollection = RockStorPaginatedCollection.extend({
@@ -388,7 +388,7 @@ var PluginCollection = RockStorPaginatedCollection.extend({
 });
 
 var InstalledPlugin = Backbone.Model.extend({
-  urlRoot: '/api/installed_plugins'    
+  urlRoot: '/api/installed_plugins'
 });
 
 var InstalledPluginCollection = RockStorPaginatedCollection.extend({
@@ -397,7 +397,7 @@ var InstalledPluginCollection = RockStorPaginatedCollection.extend({
 });
 
 var ReplicaReceive = Backbone.Model.extend({
-  urlRoot: "/api/sm/replicareceives"                                   
+  urlRoot: "/api/sm/replicareceives"
 });
 
 var ReplicaReceiveCollection = RockStorPaginatedCollection.extend({
@@ -406,7 +406,7 @@ var ReplicaReceiveCollection = RockStorPaginatedCollection.extend({
 });
 
 var ReplicaReceiveTrail = Backbone.Model.extend({
-  urlRoot: "/api/sm/replicareceivetrail"                                   
+  urlRoot: "/api/sm/replicareceivetrail"
 });
 
 var ReplicaReceiveTrailCollection = RockStorPaginatedCollection.extend({
@@ -432,4 +432,3 @@ var AccessKeyCollection = RockStorPaginatedCollection.extend({
   model: AccessKey,
   baseUrl: '/api/oauth_app'
 });
-
