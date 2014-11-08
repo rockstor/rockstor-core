@@ -41,7 +41,7 @@ ConfigureServiceView = RockstorLayoutView.extend({
     this.rules = {
       ntpd: { server: 'required' },
       nis: { domain: 'required', server: 'required' },
-      snmpd: { syslocation: 'required', syscontact: 'required', rocommunity: 'required'},
+      snmpd: { syslocation: 'required', syscontact: 'required',rocommunity: 'required'},
       winbind: {domain: 'required', controllers: 'required', 
       security: 'required', 
         realm: {
@@ -91,10 +91,22 @@ ConfigureServiceView = RockstorLayoutView.extend({
     }
     $(this.el).html(this.template({service: this.service, config: configObj}));
 
-    this.$('#nis-form :input').tooltip();
-    this.$('#snmpd-form :input').tooltip();
-    this.$('#ldap-form :input').tooltip();
-    this.$('#ntpd-form :input').tooltip();
+    this.$('#nis-form :input').tooltip({
+    	html: true,
+        placement: 'right',
+    });
+    this.$('#snmpd-form :input').tooltip({
+        html: true,
+        placement: 'right',	
+    });
+    this.$('#ldap-form :input').tooltip({
+    	html: true,
+        placement: 'right',
+    });
+    this.$('#ntpd-form :input').tooltip({
+    	html: true,
+        placement: 'right',
+    });
     this.$('#winbind-form #domain').tooltip({
       html: true,
       placement: 'right',
@@ -151,27 +163,28 @@ ConfigureServiceView = RockstorLayoutView.extend({
         }else{
         var data = JSON.stringify({config: _this.$('#' + _this.formName).getJSON()});
         }
-        $.ajax({
+        
+        var jqxhr = $.ajax({
           url: "/api/sm/services/" + _this.serviceName + "/config",
           type: "POST",
           contentType: 'application/json',
           dataType: "json",
           data: data,
-          success: function(data, status, xhr) {
-            enableButton(button);
-            app_router.navigate("services", {trigger: true});
-          },
-          error: function(xhr, status, error) {
-            enableButton(button);
-            var msg = parseXhrError(xhr.responseText);
-            _this.$(".messages").html(this.errTemplate({msg: msg}));
-             }
         });
-        return false;
-      }
-    });
-
-    return this;
+        
+        jqxhr.done(function() {
+        	enableButton(button);
+            app_router.navigate("services", {trigger: true});
+         });
+        
+        jqxhr.fail(function(xhr, status, error) {
+            enableButton(button);
+          });
+             	
+              }
+        });
+       
+      return this;
   },
 
   cancel: function() {
