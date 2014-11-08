@@ -1,27 +1,27 @@
 /*
  *
- * @licstart  The following is the entire license notice for the 
+ * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
- * 
+ *
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
- * 
+ *
  * RockStor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
- * 
+ *
  * RockStor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * @licend  The above is the entire license notice
  * for the JavaScript code in this page.
- * 
+ *
  */
 
 AddUserView = RockstorLayoutView.extend({
@@ -71,14 +71,17 @@ AddUserView = RockstorLayoutView.extend({
           equalTo: "The passwords do not match"
         }
       },
-      
-     
-      
+
+
+
       submitHandler: function() {
         var username = _this.$("#username").val();
         var password = _this.$("#password").val();
-        var is_active = _this.$("#is_active").prop("checked"); 
+        var admin = _this.$("#admin").prop("checked");
         var public_key = _this.$("#public_key").val();
+	if (_.isEmpty(public_key)) {
+	    public_key = null;
+	}
         if(_this.username != null && _this.user != null){
             var user = new User({username: _this.username});
         	if (!_.isEmpty(password)) {
@@ -86,8 +89,12 @@ AddUserView = RockstorLayoutView.extend({
               } else {
                 user.unset('password');
               }
-              user.set({public_key: public_key});
-              user.set({is_active: is_active});
+	    if (!_.isEmpty(public_key)) {
+		user.set({public_key: public_key});
+	    } else {
+		user.unset('public_key');
+	    }
+              user.set({admin: admin});
               user.save(null, {
                 success: function(model, response, options) {
                   app_router.navigate("users", {trigger: true});
@@ -96,18 +103,18 @@ AddUserView = RockstorLayoutView.extend({
                 }
               });
         } else {
-            // create a dummy user model class that does not have idAttribute 
+            // create a dummy user model class that does not have idAttribute
             // = username, so backbone will treat is as a new object,
             // ie isNew will return true
-            var tmpUserModel = Backbone.Model.extend({ 
-                urlRoot: "/api/users/"
+            var tmpUserModel = Backbone.Model.extend({
+                urlRoot: "/api/users"
               });
 	        var user = new tmpUserModel()
 	        user.save(
 	          {
 	            username: username,
 	            password: password,
-	            is_active: is_active,
+	            admin: admin,
 	            public_key: public_key
 	          },
 	          {
@@ -132,4 +139,3 @@ AddUserView = RockstorLayoutView.extend({
   }
 
 });
-

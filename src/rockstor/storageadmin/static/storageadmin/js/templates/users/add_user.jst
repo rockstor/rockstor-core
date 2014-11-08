@@ -2,20 +2,20 @@
   /*
   * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
   * This file is part of RockStor.
-  * 
+  *
   * RockStor is free software; you can redistribute it and/or modify
   * it under the terms of the GNU General Public License as published
   * by the Free Software Foundation; either version 2 of the License,
   * or (at your option) any later version.
-  * 
+  *
   * RockStor is distributed in the hope that it will be useful, but
   * WITHOUT ANY WARRANTY; without even the implied warranty of
   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
   * General Public License for more details.
-  * 
+  *
   * You should have received a copy of the GNU General Public License
   * along with this program. If not, see <http://www.gnu.org/licenses/>.
-  * 
+  *
   */
 </script>
 <% if (username == null) { %>
@@ -48,10 +48,10 @@
         <div class="control-group">
           <div class="controls">
             <label class="checkbox">
-            <% if (user != null && user.get('is_active')) { %>
-                <input class="checkbox inline" type="checkbox" id="is_active" name="is_active" placeholder="Admin" checked="true">
+            <% if (user != null && user.get('admin')) { %>
+                <input class="checkbox inline" type="checkbox" id="admin" name="admin" placeholder="Admin" checked="true">
               <% } else { %>
-                <input class="checkbox inline" type="checkbox" id="is_active" name="is_active" placeholder="Admin">
+                <input class="checkbox inline" type="checkbox" id="admin" name="admin" placeholder="Admin">
               <% } %>
               Allow this user to login to RockStor Web UI?
             </label>
@@ -72,12 +72,12 @@
         <div class="control-group">
         <label class="control-label">Add SSH key(optional)</label>
           <div class="controls">
-             <% if ((username != null) && (user.get("suser").public_key) != null) { %>
+             <% if ((username != null) && (user.get("public_key") != null)) { %>
              <textarea rows="1" cols="50" id="public_key" name="public_key"> <%= user.get("suser").public_key %> </textarea>
              <% } else { %>
-             <textarea id="public_key" name="public_key" /> 
+             <textarea id="public_key" name="public_key" />
              <% } %>
-          </div>   
+          </div>
         </div>
         <div class="control-group">
           <div class="controls">
