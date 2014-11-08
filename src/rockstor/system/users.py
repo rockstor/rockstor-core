@@ -21,7 +21,7 @@ from osi import run_command
 import subprocess
 import re
 import os
-import shutil
+import pwd
 
 import logging
 logger = logging.getLogger(__name__)
@@ -52,6 +52,12 @@ def get_users(min_uid=5000, uname=None):
 
 
 def userdel(uname):
+    try:
+        pwd.getpwnam(uname)
+    except KeyError:
+        # user doesn't exist
+        return
+
     return run_command([USERDEL, '-r', uname])
 
 
@@ -91,9 +97,15 @@ def update_shell(username, shell):
     return run_command([USERMOD, '-s', shell, username])
 
 
-def useradd(username, uid, shell):
-    return run_command([USERADD, '-s', shell, '-m', '-u', str(uid),
-                        username])
+def useradd(username, shell, uid=None, gid=None):
+    cmd = [USERADD, '-s', shell, '-m', username]
+    if (uid is not None):
+        cmd.insert(-1, '-u')
+        cmd.insert(-1, str(uid))
+    if (gid is not None):
+        cmd.insert(-1, '-g')
+        cmd.insert(-1, str(gid))
+    return run_command(cmd)
 
 
 def add_ssh_key(username, key):
