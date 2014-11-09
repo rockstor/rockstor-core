@@ -47,3 +47,4 @@ from ts_service import TaskSchedulerServiceView
 from dc_service import DataCollectorServiceView
 from sm_service import ServiceMonitorView
 from afp_service import AFPServiceView
+from snmp_service import SNMPServiceView
