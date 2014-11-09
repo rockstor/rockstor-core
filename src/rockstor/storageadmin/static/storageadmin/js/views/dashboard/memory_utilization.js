@@ -30,10 +30,10 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.dashboard_widgets_memory_utilization;
-    this.updateFreq = 1000;
+    this.updateFreq = 5000;
     this.dataBuffer = [];
-    this.dataLength = 300;
-    this.windowLength = 300000;
+    this.dataLength = 10;
+    this.windowLength = 10000;
     this.currentTs = null;
     this.colors = ["#04BA44", "#C95351"];
     //this.emptyData = {"id": 0, "total": 0, "free": 0, "buffers": 0, "cached": 0, "swap_total": 0, "swap_free": 0, "active": 0, "inactive": 0, "dirty": 0, "ts": "2013-07-17T00:00:16.109Z"};
@@ -117,6 +117,12 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
     .append("g")
     .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
 
+    this.svg.append("defs").append("clipPath")
+    .attr("id", "clip")
+    .append("rect")
+    .attr("width", this.width)
+    .attr("height", this.height);
+
     this.parseDate = d3.time.format("%y-%b-%d").parse; 
     this.formatPercent = d3.format(".0%");
 
@@ -148,7 +154,7 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
 
   update: function() {
     var _this = this;
-    var pageSizeStr = '&page_size=1';
+    var pageSizeStr = '&page_size=5';
     if (this.initial) {
       pageSizeStr = '&page_size=' + this.dataLength;
       this.initial = false;
@@ -159,46 +165,23 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
       dataType: "json",
       global: false, // dont show global loading indicator
       success: function(data, status, xhr) {
-        data.results.reverse();
-        _.each(data.results, function(d) {
-          d.date = new Date(d.ts);
-          d.used = d.total - d.cached - d.buffers - d.free;
-          _this.dataBuffer.push(d);
-          _this.used.values.push({date: d.date, y: d.used/d.total});
-          _this.cached.values.push({date: d.date, y: d.cached/d.total});
-          _this.buffers.values.push({date: d.date, y: d.buffers/d.total});
-          _this.free.values.push({date: d.date, y: d.free/d.total});
-        });
-        // remove data outside window
-        var max_ts = new Date(_this.dataBuffer[_this.dataBuffer.length-1].ts).getTime();
-        var min_ts = max_ts - this.windowLength;
-        if (_this.dataBuffer.length > 0) { 
-          while (new Date(_this.dataBuffer[0].ts).getTime() < min_ts) {
-            _this.dataBuffer.shift();
-            _this.used.values.shift();
-            _this.cached.values.shift();
-            _this.buffers.values.shift();
-            _this.free.values.shift();
-          }
-        } 
-        console.log(_this.dataBuffer);
-        console.log(_this.used);
-        console.log(_this.cached);
-
-        _this.x.domain(d3.extent(_this.used.values, function(d) { return d.date; }));
+        _this.modifyData(data);
+        _this.truncateData();
+        _this.x.domain(d3.extent(_this.used.values, function(d) { return new Date(d.date).getTime(); }));
         var utilTypes = _this.stack(_this.layers);
         var utilType = _this.svg.selectAll('.utilType')
         .data(utilTypes)
         .enter()
         .append('g')
+        .attr("clip-path", "url(#clip)")
         .attr('class', '.utilType')
 
-        utilType.append('path')
+        _this.path = utilType.append('path')
         .attr("class", "area")
         .attr("d", function(d) { return _this.area(d.values); })
         .style("fill", function(d) { return _this.color(d.name); });
        
-        _this.svg.append("g")
+        _this.xAxisG = _this.svg.append("g")
         .attr("class", "x axis")
         .attr("transform", "translate(0," + _this.height + ")")
         .call(_this.xAxis);
@@ -206,14 +189,94 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
         _this.svg.append("g")
         .attr("class", "y axis")
         .call(_this.yAxis); 
-
+        
+        _this.tick(_this);
       },
       error: function(xhr, status, error) {
         logger.debug(error);
       }
     });
   },
+  
+  tick: function(ctx) {
+    console.log('tick')
+    var _this = ctx;
+    var pageSizeStr = '&page_size=5';
+    $.ajax({
+      url: '/api/sm/sprobes/meminfo/?format=json' + pageSizeStr, 
+      type: "GET",
+      dataType: "json",
+      global: false, // dont show global loading indicator
+      success: function(data, status, xhr) {
+        _this.modifyData(data);
+        _this.stack(_this.layers);
+        var min_ts = new Date(_this.dataBuffer[0].ts).getTime(); 
+        var max_ts = new Date(_this.dataBuffer[_this.dataBuffer.length-1].ts).getTime()-5000;
+        _this.x.domain([min_ts, max_ts]);
 
+        //_this.path.attr("d", function(d) { return _this.area(d.values); })
+        //.attr('transform', null);
+        _this.svg.selectAll('.area')
+        .attr("d", function(d) { return _this.area(d.values); })
+        .attr('transform', null);
+       
+        _this.xAxisG.transition()
+        .duration(5000)
+        .ease('linear')
+        .call(_this.xAxis);
+  
+        // slide the area left
+        var new_pos = _this.x(min_ts-5000);
+        console.log(new_pos);
+        
+        _this.path.transition()
+        .duration(5000)
+        .ease("linear")
+        .attr("transform", "translate(" + new_pos + ")");
+
+        _this.truncateData(data);
+
+        setTimeout( function() {
+          _this.tick(_this)
+        }, _this.updateFreq);
+      },
+      error: function(xhr, status, error) {
+        logger.debug(error);
+      }
+    });
+
+  },
+
+  modifyData: function(data) {
+    var _this = this;
+    data.results.reverse();
+    _.each(data.results, function(d) {
+      d.date = new Date(d.ts);
+      d.used = d.total - d.cached - d.buffers - d.free;
+      _this.dataBuffer.push(d);
+      _this.used.values.push({date: d.date, y: d.used/d.total});
+      _this.cached.values.push({date: d.date, y: d.cached/d.total});
+      _this.buffers.values.push({date: d.date, y: d.buffers/d.total});
+      _this.free.values.push({date: d.date, y: d.free/d.total});
+    });
+  },
+  
+  truncateData: function() {
+    // remove data outside window
+    var max_ts = new Date(this.dataBuffer[this.dataBuffer.length-1].ts).getTime();
+    var min_ts = max_ts - this.windowLength;
+    if (this.dataBuffer.length > 0) { 
+      while (new Date(this.dataBuffer[0].ts).getTime() < new Date(min_ts)) {
+        this.dataBuffer.shift();
+        this.used.values.shift();
+        this.cached.values.shift();
+        this.buffers.values.shift();
+        this.free.values.shift();
+      }
+    } 
+    console.log(this.used.values.length);
+
+  },
 
   download: function(event) {
     if (!_.isUndefined(event) && !_.isNull(event)) {
