@@ -173,6 +173,16 @@ var UserCollection = RockStorPaginatedCollection.extend({
   baseUrl: '/api/users'
 });
 
+var Group = Backbone.Model.extend({
+  urlRoot: '/api/groups',
+  idAttribute: 'groupname'
+});
+
+var GroupCollection = RockStorPaginatedCollection.extend({
+  model: Group,
+  baseUrl: '/api/groups'
+});
+
 var ISCSITarget = Backbone.Model.extend({
   url: function() {
       return '/api/shares/' + this.get('shareName') + '/iscsi/'
