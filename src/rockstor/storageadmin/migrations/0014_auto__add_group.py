@@ -13,6 +13,7 @@ class Migration(SchemaMigration):
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('gid', self.gf('django.db.models.fields.IntegerField')(unique=True)),
             ('groupname', self.gf('django.db.models.fields.CharField')(max_length=1024, null=True)),
+            ('admin', self.gf('django.db.models.fields.BooleanField')(default=False)),
         ))
         db.send_create_signal('storageadmin', ['Group'])
 
@@ -62,8 +63,8 @@ class Migration(SchemaMigration):
         u'oauth2_provider.application': {
             'Meta': {'object_name': 'Application'},
             'authorization_grant_type': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
-            'client_id': ('django.db.models.fields.CharField', [], {'default': "u'VE84MFmONtl1KEf8fcpSkG4=LceLsAO_=1jGoSHU'", 'unique': 'True', 'max_length': '100'}),
-            'client_secret': ('django.db.models.fields.CharField', [], {'default': "u'3;VgAvO!0Ay=fx34vLW3f6tQz!Rr3=72bD@5C1@@H@8.Wm1jSVQrEDBRnC2vzD:cbIyDgl8wzZgB;8Yvq_6yqIVou!NqQD6Tys8;EucgdG5_ShpefBo6Pu;6XeBtLZ8j'", 'max_length': '255', 'blank': 'True'}),
+            'client_id': ('django.db.models.fields.CharField', [], {'default': "u'4I.gGb97i!rR1kY3cC=_990hf0suCh5YHRw7PmvP'", 'unique': 'True', 'max_length': '100'}),
+            'client_secret': ('django.db.models.fields.CharField', [], {'default': "u'6E;F=J4l9k;?T3aWn;_4sIAm@7gi4z=IYe-d4SMGOvWEN:eQexWu!pQec2KZ3aV5!7grsPI.@BQdn4=K1Fo8T9Spqp;YesQ=yr;CcUE78RTtCyaxh9or8U7.sjt;@9Bb'", 'max_length': '255', 'blank': 'True'}),
             'client_type': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
@@ -114,6 +115,7 @@ class Migration(SchemaMigration):
         },
         'storageadmin.group': {
             'Meta': {'object_name': 'Group'},
+            'admin': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'gid': ('django.db.models.fields.IntegerField', [], {'unique': 'True'}),
             'groupname': ('django.db.models.fields.CharField', [], {'max_length': '1024', 'null': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
