@@ -27,7 +27,6 @@ import grp
 import logging
 logger = logging.getLogger(__name__)
 
-PW_FILE = '/etc/passwd'
 USERADD = '/usr/sbin/useradd'
 GROUPADD = '/usr/sbin/groupadd'
 USERDEL = '/usr/sbin/userdel'
@@ -40,16 +39,8 @@ CHOWN = '/usr/bin/chown'
 
 def get_users(min_uid=5000, uname=None):
     users = {}
-    with open(PW_FILE) as pfo:
-        for l in pfo.readlines():
-            fields = l.strip().split(':')
-            if (int(fields[2]) < min_uid):
-                continue
-            if (uname is not None):
-                if (uname == fields[0]):
-                    return {fields[0]: fields[2:], }
-            else:
-                users[fields[0]] = fields[2:]
+    for u in pwd.getpwall():
+        users[u.pw_name] = (u.pw_uid, u.pw_gid,)
     return users
 
 

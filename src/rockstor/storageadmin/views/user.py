@@ -55,8 +55,8 @@ class UserView(rfc.GenericView):
         for u in sys_users.keys():
             if (User.objects.filter(username=u).exists()):
                 continue
-            users.append(User(username=u, uid=int(sys_users[u][0]),
-                              gid=int(sys_users[u][1]), admin=False))
+            users.append(User(username=u, uid=sys_users[u][0],
+                              gid=sys_users[u][1], admin=False))
         return users
 
     def _validate_input(self, request):
