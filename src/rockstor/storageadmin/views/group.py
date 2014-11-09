@@ -104,9 +104,6 @@ class GroupView(rfc.GenericView):
         try:
             groupdel(groupname)
         except Exception, e:
-            logger.exception(e)
-            e_msg = ('A low level error occured while deleting the group: %s' %
-                     groupname)
-            handle_exception(Exception(e_msg), request)
+            handle_exception(e, request)
 
         return Response()
