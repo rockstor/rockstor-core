@@ -57,6 +57,10 @@ class GroupView(rfc.GenericView):
             e_msg = ('Groupname must be a valid string')
             handle_exception(Exception(e_msg), request)
         gid = request.DATA.get('gid', None)
+        admin = request.DATA.get('admin', True)
+        if (type(admin) != bool):
+            e_msg = ('Admin(group type) must be a boolean')
+            handle_exception(Exception(e_msg), request)
 
         for g in combined_groups():
             if (g.groupname == groupname):
@@ -72,7 +76,7 @@ class GroupView(rfc.GenericView):
         grp_entries = grp.getgrnam(groupname)
         gid = grp_entries[2]
         logger.debug('groupname = %s gid = %d' % (groupname, gid))
-        group = Group(gid=gid, groupname=groupname)
+        group = Group(gid=gid, groupname=groupname, admin=admin)
         group.save()
 
         return Response(GroupSerializer(group).data)

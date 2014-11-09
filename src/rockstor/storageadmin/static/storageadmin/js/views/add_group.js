@@ -54,37 +54,37 @@ AddGroupView = RockstorLayoutView.extend({
 
     this.$('#group-create-form :input').tooltip({placement: 'right'});
 
-    this.validator = this.$("#group-create-form").validate({ //#start validator
+    this.validator = this.$("#group-create-form").validate({
 	onfocusout: false,
 	onkeyup: false,
 	rules: {
             groupname: "required",
         },
 
-	submitHandler: function() { //start submitHandler
+	submitHandler: function() {
             var groupname = _this.$("#groupname").val();
-            if(_this.groupname != null && _this.group != null) { //start if 1
+	    var admin = _this.$("#admin").prop("checked");
+            if(_this.groupname != null && _this.group != null) {
 		var group = new Group({groupname: _this.groupname});
-		group.save(null, { //start group.save
+		group.set({admin: admin});
+		group.save(null, {
                     success: function(model, response, options) {
 			app_router.navigate("groups", {trigger: true});
                     },
                     error: function(model, xhr, options) {
                     }
-		}); //end group.save
-	    } else { //end if 1, #start else 1
-		// create a dummy user model class that does not have idAttribute
-		// = username, so backbone will treat is as a new object,
-		// ie isNew will return true
+		});
+	    } else {
 		var tmpGroupModel = Backbone.Model.extend({
                     urlRoot: "/api/groups"
 		});
 		var group = new tmpGroupModel();
-		group.save( //#start group.save2
+		group.save(
 	            {
 			groupname: groupname,
+			admin: admin,
 	            },
-	            { //#start second arg
+	            {
 			success: function(model, response, options) {
 			    _this.$('#group-create-form :input').tooltip('hide');
 			    app_router.navigate("groups", {trigger: true});
@@ -92,9 +92,9 @@ AddGroupView = RockstorLayoutView.extend({
 			error: function(model, xhr, options) {
 			    _this.$('#group-create-form :input').tooltip('hide');
 			}
-	            } //#end second arg
-		); //#end group.save2
-            } //# end else 1
+	            }
+		);
+            }
 	    return false;
 	    },
     });
