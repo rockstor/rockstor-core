@@ -60,9 +60,9 @@ GroupsView = RockstorLayoutView.extend({
     event.preventDefault();
     var _this = this;
     var groupname = $(event.currentTarget).attr('data-groupname');
-    if(confirm("Delete group:  "+ username +". Are you sure?")){
+    if(confirm("Delete group:  "+ groupname +". Are you sure?")){
       $.ajax({
-        url: "/api/groups/"+username,
+        url: "/api/groups/"+groupname,
         type: "DELETE",
         dataType: "json",
         success: function() {
@@ -82,7 +82,7 @@ GroupsView = RockstorLayoutView.extend({
       this.$('[rel=tooltip]').tooltip('hide');
     }
     var groupname = $(event.currentTarget).attr('data-groupname');
-    app_router.navigate('groups/' + username + '/edit', {trigger: true});
+    app_router.navigate('groups/' + groupname + '/edit', {trigger: true});
   }
 
 });
