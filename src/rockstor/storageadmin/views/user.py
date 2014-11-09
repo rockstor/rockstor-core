@@ -22,13 +22,14 @@ from django.conf import settings
 from storageadmin.util import handle_exception
 from django.contrib.auth.models import User as DjangoUser
 from storageadmin.serializers import SUserSerializer
-from storageadmin.models import User
+from storageadmin.models import (User, Group)
 import rest_framework_custom as rfc
-from system.users import (useradd, usermod, userdel, get_users,
+from system.users import (useradd, usermod, userdel,
                           smbpasswd, add_ssh_key)
 from storageadmin.exceptions import RockStorAPIException
 import pwd
 from system.ssh import is_pub_key
+from ug_helpers import (combined_users, combined_groups)
 import logging
 logger = logging.getLogger(__name__)
 
@@ -47,17 +48,7 @@ class UserView(rfc.GenericView):
                 return User.objects.get(username=kwargs['username'])
             except:
                 return []
-        return self._combined_users()
-
-    def _combined_users(self):
-        users = list(User.objects.all())
-        sys_users = get_users(min_uid=0)
-        for u in sys_users.keys():
-            if (User.objects.filter(username=u).exists()):
-                continue
-            users.append(User(username=u, uid=sys_users[u][0],
-                              gid=sys_users[u][1], admin=False))
-        return users
+        return combined_users()
 
     def _validate_input(self, request):
         input_fields = {}
@@ -111,7 +102,7 @@ class UserView(rfc.GenericView):
             if (DjangoUser.objects.filter(
                     username=invar['username']).exists()):
                 handle_exception(Exception(e_msg), request)
-            users = self._combined_users()
+            users = combined_users()
             for u in users:
                 if (u.username == invar['username']):
                     handle_exception(Exception(e_msg), request)
@@ -119,7 +110,7 @@ class UserView(rfc.GenericView):
                     e_msg = ('uid: %d already exists.' % invar['uid'])
                     handle_exception(Exception(e_msg), request)
                 if (u.gid == invar['gid']):
-                    e_msg = ('gic: %d already exists.' % invar['gid'])
+                    e_msg = ('gid: %d already exists.' % invar['gid'])
                     handle_exception(Exception(e_msg), request)
 
             if (invar['admin']):
@@ -139,6 +130,17 @@ class UserView(rfc.GenericView):
             if (invar['public_key'] is not None):
                 add_ssh_key(invar['username'], invar['public_key'])
             del(invar['password'])
+            admin_group = None
+            for g in combined_groups():
+                if (g.gid == invar['gid'] and g.admin):
+                    admin_group = g
+                    break
+            if (invar['admin'] and admin_group is None):
+                admin_group = Group(gid=invar['gid'],
+                                    groupname=invar['username'],
+                                    admin=True)
+                admin_group.save()
+            invar['group'] = admin_group
             suser = User(**invar)
             suser.save()
             return Response(SUserSerializer(suser).data)
@@ -202,11 +204,13 @@ class UserView(rfc.GenericView):
             du = DjangoUser.objects.get(username=username)
             du.delete()
 
+        gid = None
         if (User.objects.filter(username=username).exists()):
             u = User.objects.get(username=username)
+            gid = u.gid
             u.delete()
         else:
-            sysusers = self._combined_users()
+            sysusers = combined_users()
             found = False
             for u in sysusers:
                 if (u.username == username):
@@ -215,6 +219,11 @@ class UserView(rfc.GenericView):
             if (found is False):
                 e_msg = ('User(%s) does not exist' % username)
                 handle_exception(Exception(e_msg), request)
+
+        for g in combined_groups():
+            if (g.gid == gid and g.admin and
+                not User.objects.filter(gid=gid).exists()):
+                g.delete()
 
         try:
             userdel(username)

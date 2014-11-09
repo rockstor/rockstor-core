@@ -22,8 +22,9 @@ from storageadmin.util import handle_exception
 from storageadmin.serializers import GroupSerializer
 from storageadmin.models import Group
 import rest_framework_custom as rfc
-from system.users import (get_groups, groupadd, groupdel)
+from system.users import (groupadd, groupdel)
 import grp
+from ug_helpers import combined_groups
 import logging
 logger = logging.getLogger(__name__)
 
@@ -47,16 +48,7 @@ class GroupView(rfc.GenericView):
                 return Group.objects.get(username=kwargs['groupname'])
             except:
                 return []
-        return self._combined_groups()
-
-    def _combined_groups(self):
-        groups = list(Group.objects.all())
-        sys_groups = get_groups()
-        for g in sys_groups.keys():
-            if (Group.objects.filter(groupname=g).exists()):
-                continue
-            groups.append(Group(groupname=g, gid=sys_groups[g]))
-        return groups
+        return combined_groups()
 
     @transaction.commit_on_success
     def post(self, request):
@@ -66,8 +58,7 @@ class GroupView(rfc.GenericView):
             handle_exception(Exception(e_msg), request)
         gid = request.DATA.get('gid', None)
 
-        groups = self._combined_groups()
-        for g in groups:
+        for g in combined_groups():
             if (g.groupname == groupname):
                 e_msg = ('Group(%s) already exists. Choose a different one' %
                          g.groupname)
@@ -101,9 +92,8 @@ class GroupView(rfc.GenericView):
             g = Group.objects.get(groupname=groupname)
             g.delete()
         else:
-            sys_groups = self._combined_groups()
             found = False
-            for g in sys_groups:
+            for g in combined_groups():
                 if (g.groupname == groupname):
                     found = True
                     break
