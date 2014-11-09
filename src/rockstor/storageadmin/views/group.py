@@ -55,7 +55,7 @@ class GroupView(rfc.GenericView):
         for g in sys_groups.keys():
             if (Group.objects.filter(groupname=g).exists()):
                 continue
-            groups.append(Group(groupname=g, gid=int(sys_groups[g][0])))
+            groups.append(Group(groupname=g, gid=sys_groups[g]))
         return groups
 
     @transaction.commit_on_success

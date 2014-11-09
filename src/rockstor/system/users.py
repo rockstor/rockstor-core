@@ -22,12 +22,12 @@ import subprocess
 import re
 import os
 import pwd
+import grp
 
 import logging
 logger = logging.getLogger(__name__)
 
 PW_FILE = '/etc/passwd'
-GROUP_FILE = '/etc/group'
 USERADD = '/usr/sbin/useradd'
 GROUPADD = '/usr/sbin/groupadd'
 USERDEL = '/usr/sbin/userdel'
@@ -55,10 +55,8 @@ def get_users(min_uid=5000, uname=None):
 
 def get_groups():
     groups = {}
-    with open(GROUP_FILE) as gfo:
-        for l in gfo.readlines():
-            fields = l.strip().split(':')
-            groups[fields[0]] = fields[2]
+    for g in grp.getgrall():
+        groups[g.gr_name] = g.gr_gid
     return groups
 
 
