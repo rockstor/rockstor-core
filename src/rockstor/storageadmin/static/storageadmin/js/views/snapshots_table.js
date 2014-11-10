@@ -49,6 +49,7 @@ SnapshotsTableModule  = RockstorModuleView.extend({
       {name: 'yes', value: 'yes'},
       {name: 'no', value: 'no'},
     ];
+    this.parentView = this.options.parentView;
   },
 
   render: function() {
@@ -104,7 +105,11 @@ SnapshotsTableModule  = RockstorModuleView.extend({
           success: function() {
             _this.$('#add-snapshot-form :input').tooltip('hide');
             enableButton(button);
-            _this.collection.fetch();
+            _this.collection.fetch({
+              success: function(collection, response, options) {
+                _this.parentView.trigger('snapshotsModified');
+              }                
+            });
           },
           error: function(xhr, status, error) {
             _this.$('#add-snapshot-form :input').tooltip('hide');
@@ -133,7 +138,11 @@ SnapshotsTableModule  = RockstorModuleView.extend({
           enableButton(button)
           _this.$('[rel=tooltip]').tooltip('hide');
           _this.selectedSnapshots = [];
-          _this.collection.fetch();
+          _this.collection.fetch({
+            success: function(collection, response, options) {
+              _this.parentView.trigger('snapshotsModified');
+            }                
+          });
         },
         error: function(xhr, status, error) {
           enableButton(button)
@@ -226,7 +235,11 @@ SnapshotsTableModule  = RockstorModuleView.extend({
             if (_this.collection.pageInfo().prev) {
               _this.collection.prevPage();
             } else {
-              _this.collection.fetch();
+              _this.collection.fetch({
+                success: function(collection, response, options) {
+                  _this.parentView.trigger('snapshotsModified');
+                }                
+              });
             }
           },
           error: function(xhr, status, error) {
