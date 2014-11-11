@@ -58,7 +58,7 @@ class GroupTests(APITestCase):
                          status.HTTP_200_OK,
                          msg=response2.content)
 
-    def test_user_2(self):
+    def test_group_2(self):
         """
         invalid username
         """
@@ -71,7 +71,45 @@ class GroupTests(APITestCase):
         self.assertEqual(response.data['detail'],
                          'Group(root) already exists. Choose a different one')
 
-    def test_user_3(self):
+    def test_group_2_1(self):
+        """
+        invalid regex tests
+        """
+        self.client.login(username='admin', password='admin')
+        invalid_groupnames = ('rocky.rocky', '1234group', '-1234',
+                              'rocky$')
+        for g in invalid_groupnames:
+            response = self.client.post(self.BASE_URL, data={'groupname': g, })
+            self.assertEqual(response.status_code,
+                             status.HTTP_500_INTERNAL_SERVER_ERROR,
+                             msg=response.content)
+            self.assertEqual(response.data['detail'],
+                             'Groupname is invalid. It must confirm to the '
+                             'regex: [A-Za-z][-a-zA-Z0-9_]*$')
+
+    def test_group_2_2(self):
+        """
+        31 character groupname
+        """
+        self.client.login(username='admin', password='admin')
+        data = {'groupname': 'r' * 30, }
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         msg=response.content)
+        response2 = self.client.delete('%s/%s' %
+                                       (self.BASE_URL, data['groupname']))
+        self.assertEqual(response2.status_code,
+                         status.HTTP_200_OK,
+                         msg=response2.content)
+        data['groupname'] = 'r' * 31
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg=response.content)
+        self.assertEqual(response.data['detail'],
+                         'Groupname cannot be more than 30 characters long')
+
+    def test_group_3(self):
         """
         invalid gid
         """
@@ -85,7 +123,7 @@ class GroupTests(APITestCase):
         self.assertEqual(response.data['detail'],
                          'GID(0) already exists. Choose a different one')
 
-    def test_user_4(self):
+    def test_group_4(self):
         """
         group in db but deleted manually in the system
         """
@@ -101,7 +139,7 @@ class GroupTests(APITestCase):
                          status.HTTP_200_OK,
                          msg=response2.content)
 
-    def test_user_6(self):
+    def test_group_6(self):
         """
         delete group that doesn't exist
         """
@@ -113,7 +151,7 @@ class GroupTests(APITestCase):
         self.assertEqual(response.data['detail'],
                          'Group(foobargroup) does not exist')
 
-    def test_user_7(self):
+    def test_group_7(self):
         """
         delete a restricted group
         """

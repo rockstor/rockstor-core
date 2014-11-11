@@ -76,7 +76,7 @@ class UserTests(APITestCase):
 
     def test_user_2(self):
         """
-        invalid username
+        add an existing user
         """
         self.client.login(username='admin', password='admin')
         data = {'username': 'root',
@@ -91,6 +91,55 @@ class UserTests(APITestCase):
         self.assertEqual(response.data['detail'],
                          'user: root already exists. Please choose a '
                          'different username')
+
+    def test_user_2_1(self):
+        """
+        invalid regex tests
+        """
+        self.client.login(username='admin', password='admin')
+        data = {'username': '1234user',
+                'shell': '/bin/bash',
+                'password': 'wisdom',
+                'email': 'rocky@rockstor.com',
+                'admin': True, }
+        invalid_usernames = ('rocky.rocky', '1234user', '-1234',
+                             'rocky$')
+        for u in invalid_usernames:
+            data['username'] = u
+            response = self.client.post(self.BASE_URL, data=data)
+            self.assertEqual(response.status_code,
+                             status.HTTP_500_INTERNAL_SERVER_ERROR,
+                             msg=response.content)
+            self.assertEqual(response.data['detail'],
+                             'Username is invalid. It must confirm to the '
+                             'regex: [A-Za-z][-a-zA-Z0-9_]*$')
+
+    def test_user_2_2(self):
+        """
+        31 character username
+        """
+        self.client.login(username='admin', password='admin')
+        data = {'username': 'r' * 30,
+                'shell': '/bin/bash',
+                'password': 'wisdom',
+                'email': 'rocky@rockstor.com',
+                'admin': True, }
+        self.client.login(username='admin', password='admin')
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         msg=response.content)
+        response2 = self.client.delete('%s/%s' %
+                                       (self.BASE_URL, data['username']))
+        self.assertEqual(response2.status_code,
+                         status.HTTP_200_OK,
+                         msg=response2.content)
+        data['username'] = 'r' * 31
+        response3 = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response3.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg=response3.content)
+        self.assertEqual(response3.data['detail'],
+                         'Username cannot be more than 30 characters long')
 
     def test_user_3(self):
         """
