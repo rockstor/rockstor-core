@@ -18,11 +18,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.conf.urls import patterns, url
 from storageadmin.views import GroupView
+from django.conf import settings
 
 
 urlpatterns = patterns(
     '',
     # User configuration
     url(r'^$', GroupView.as_view()),
-    url(r'(?P<groupname>[A-Za-z]+[A-Za-z0-9]*)$', GroupView.as_view()),
+    url(r'(?P<groupname>%s)$' % settings.USERNAME_REGEX, GroupView.as_view()),
 )

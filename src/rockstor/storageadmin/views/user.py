@@ -31,6 +31,7 @@ import pwd
 from system.ssh import is_pub_key
 from ug_helpers import (combined_users, combined_groups)
 import logging
+import re
 logger = logging.getLogger(__name__)
 
 
@@ -53,8 +54,13 @@ class UserView(rfc.GenericView):
     def _validate_input(self, request):
         input_fields = {}
         username = request.DATA.get('username', None)
-        if (username is None or username == ''):
-            e_msg = ('Username must be a valid string')
+        if (username is None or
+            re.match(settings.USERNAME_REGEX, username) is None):
+            e_msg = ('Username is invalid. It must confirm to the regex: %s' %
+                     (settings.USERNAME_REGEX))
+            handle_exception(Exception(e_msg), request)
+        if (len(username) > 30):
+            e_msg = ('Username cannot be more than 30 characters long')
             handle_exception(Exception(e_msg), request)
         input_fields['username'] = username
         password = request.DATA.get('password', None)
@@ -173,7 +179,7 @@ class UserView(rfc.GenericView):
             u.public_key = public_key
             u.save()
 
-        sysusers = self._combined_users()
+        sysusers = combined_users()
         suser = None
         for u in sysusers:
             if (u.username == username):

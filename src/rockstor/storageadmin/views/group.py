@@ -26,6 +26,8 @@ from system.users import (groupadd, groupdel)
 import grp
 from ug_helpers import combined_groups
 import logging
+import re
+from django.conf import settings
 logger = logging.getLogger(__name__)
 
 
@@ -53,8 +55,13 @@ class GroupView(rfc.GenericView):
     @transaction.commit_on_success
     def post(self, request):
         groupname = request.DATA.get('groupname', None)
-        if (groupname is None or groupname == ''):
-            e_msg = ('Groupname must be a valid string')
+        if (groupname is None or
+            re.match(settings.USERNAME_REGEX, groupname) is None):
+            e_msg = ('Groupname is invalid. It must confirm to the regex: %s' %
+                     (settings.USERNAME_REGEX))
+            handle_exception(Exception(e_msg), request)
+        if (len(groupname) > 30):
+            e_msg = ('Groupname cannot be more than 30 characters long')
             handle_exception(Exception(e_msg), request)
         gid = request.DATA.get('gid', None)
         admin = request.DATA.get('admin', True)

@@ -18,12 +18,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.conf.urls import patterns, url
 from storageadmin.views import UserView
+from django.conf import settings
 
 
 urlpatterns = patterns(
     '',
     # User configuration
-    url(r'^$', UserView.as_view(), name='user-view'),
-    url(r'(?P<username>[A-Za-z]+[A-Za-z0-9]*)$', UserView.as_view(),
-        name='user-view'),
+    url(r'^$', UserView.as_view()),
+    url(r'(?P<username>%s)$' % settings.USERNAME_REGEX, UserView.as_view()),
 )
