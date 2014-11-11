@@ -38,6 +38,7 @@ AddUserView = RockstorLayoutView.extend({
     this.user = new User({username: this.username});
     this.dependencies.push(this.user);
     this.groups = new GroupCollection();
+    this.groups.pageSize = RockStorGlobals.maxPageSize;
     this.dependencies.push(this.groups);
   },
 
@@ -57,6 +58,7 @@ AddUserView = RockstorLayoutView.extend({
       }));
 
     this.$('#user-create-form :input').tooltip({placement: 'right'});
+    this.$('#group').chosen();
 
     this.validator = this.$("#user-create-form").validate({
       onfocusout: false,
