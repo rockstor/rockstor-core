@@ -87,7 +87,7 @@ class UserView(rfc.GenericView):
         input_fields['homedir'] = request.DATA.get(
             'homedir', '/home/%s' % username)
         input_fields['uid'] = request.DATA.get('uid', None)
-        input_fields['gid'] = request.DATA.get('gid', None)
+        input_fields['group'] = request.DATA.get('group', None)
         input_fields['public_key'] = self._validate_public_key(request)
         return input_fields
 
@@ -101,6 +101,7 @@ class UserView(rfc.GenericView):
     def post(self, request):
         try:
             invar = self._validate_input(request)
+            logger.debug('input = %s' % invar)
 
             # Check that a django user with the same name does not exist
             e_msg = ('user: %s already exists. Please choose a different'
@@ -115,9 +116,14 @@ class UserView(rfc.GenericView):
                 if (u.uid == invar['uid']):
                     e_msg = ('uid: %d already exists.' % invar['uid'])
                     handle_exception(Exception(e_msg), request)
-                if (u.gid == invar['gid']):
-                    e_msg = ('gid: %d already exists.' % invar['gid'])
-                    handle_exception(Exception(e_msg), request)
+
+            groups = combined_groups()
+            invar['gid'] = None
+            if (invar['group'] is not None):
+                for g in groups:
+                    if (g.groupname == invar['group']):
+                        invar['gid'] = g.gid
+                        break
 
             if (invar['admin']):
                 # Create Django user
@@ -136,6 +142,7 @@ class UserView(rfc.GenericView):
             if (invar['public_key'] is not None):
                 add_ssh_key(invar['username'], invar['public_key'])
             del(invar['password'])
+            del(invar['group'])
             admin_group = None
             for g in combined_groups():
                 if (g.gid == invar['gid'] and g.admin):

@@ -85,7 +85,11 @@ AddUserView = RockstorLayoutView.extend({
 	if (_.isEmpty(public_key)) {
 	    public_key = null;
 	}
-        if(_this.username != null && _this.user != null){
+	var group = _this.$("#group").val();
+        if (group == 'Create a new one') {
+	    group = null
+	}
+	if(_this.username != null && _this.user != null){
             var user = new User({username: _this.username});
         	if (!_.isEmpty(password)) {
                 user.set({password: password});
@@ -97,10 +101,11 @@ AddUserView = RockstorLayoutView.extend({
 	    } else {
 		user.unset('public_key');
 	    }
-              user.set({admin: admin});
-              user.save(null, {
+            user.set({admin: admin});
+	    user.set({group: group});
+            user.save(null, {
                 success: function(model, response, options) {
-                  app_router.navigate("users", {trigger: true});
+                    app_router.navigate("users", {trigger: true});
                 },
                 error: function(model, xhr, options) {
                 }
@@ -118,7 +123,8 @@ AddUserView = RockstorLayoutView.extend({
 	            username: username,
 	            password: password,
 	            admin: admin,
-	            public_key: public_key
+	            public_key: public_key,
+		    group: group,
 	          },
 	          {
 	            success: function(model, response, options) {
