@@ -37,6 +37,8 @@ AddUserView = RockstorLayoutView.extend({
     this.username = this.options.username;
     this.user = new User({username: this.username});
     this.dependencies.push(this.user);
+    this.groups = new GroupCollection();
+    this.dependencies.push(this.groups);
   },
 
   render: function() {
@@ -49,7 +51,8 @@ AddUserView = RockstorLayoutView.extend({
     //$(this.el).html(this.template());
     $(this.el).html(this.template({
         username: this.username,
-        user: this.user
+        user: this.user,
+	groups: this.groups
 
       }));
 
