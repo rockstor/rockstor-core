@@ -30,10 +30,10 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.dashboard_widgets_memory_utilization;
-    this.updateFreq = 5000;
+    this.updateFreq = 1000;
     this.dataBuffer = [];
-    this.dataLength = 10;
-    this.windowLength = 10000;
+    this.dataLength = 60;
+    this.windowLength = 60000;
     this.currentTs = null;
     this.colors = ["#04BA44", "#C95351"];
     //this.emptyData = {"id": 0, "total": 0, "free": 0, "buffers": 0, "cached": 0, "swap_total": 0, "swap_free": 0, "active": 0, "inactive": 0, "dirty": 0, "ts": "2013-07-17T00:00:16.109Z"};
@@ -96,7 +96,7 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
   },
   
   setDimensions: function() {
-    this.margin = {top: 20, right: 10, bottom: 20, left: 30};
+    this.margin = {top: 20, right: 10, bottom: 20, left: 40};
     if (this.maximized) {
       this.width = 500 - this.margin.left - this.margin.right;
       this.height = 500 - this.margin.top - this.margin.bottom;
@@ -135,11 +135,13 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
 
     this.xAxis = d3.svg.axis()
     .scale(this.x)
-    .orient("bottom");
+    .orient("bottom")
+    .ticks(5);
 
     this.yAxis = d3.svg.axis()
     .scale(this.y)
     .orient("left")
+    .ticks(5)
     .tickFormat(this.formatPercent);
 
     this.area = d3.svg.area()
@@ -154,7 +156,7 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
 
   update: function() {
     var _this = this;
-    var pageSizeStr = '&page_size=5';
+    var pageSizeStr = '&page_size=1';
     if (this.initial) {
       pageSizeStr = '&page_size=' + this.dataLength;
       this.initial = false;
@@ -201,7 +203,7 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
   tick: function(ctx) {
     console.log('tick')
     var _this = ctx;
-    var pageSizeStr = '&page_size=5';
+    var pageSizeStr = '&page_size=1';
     $.ajax({
       url: '/api/sm/sprobes/meminfo/?format=json' + pageSizeStr, 
       type: "GET",
@@ -211,29 +213,31 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
         _this.modifyData(data);
         _this.stack(_this.layers);
         var min_ts = new Date(_this.dataBuffer[0].ts).getTime(); 
-        var max_ts = new Date(_this.dataBuffer[_this.dataBuffer.length-1].ts).getTime()-5000;
+        var max_ts = new Date(_this.dataBuffer[_this.dataBuffer.length-1].ts).getTime()-_this.updateFreq;
         _this.x.domain([min_ts, max_ts]);
-
-        //_this.path.attr("d", function(d) { return _this.area(d.values); })
-        //.attr('transform', null);
+        
+        console.log('transforming area to null');
         _this.svg.selectAll('.area')
         .attr("d", function(d) { return _this.area(d.values); })
         .attr('transform', null);
        
         _this.xAxisG.transition()
-        .duration(5000)
+        .duration(_this.updateFreq)
         .ease('linear')
         .call(_this.xAxis);
   
         // slide the area left
-        var new_pos = _this.x(min_ts-5000);
+        var new_pos = _this.x(min_ts-_this.updateFreq);
         console.log(new_pos);
         
-        _this.path.transition()
-        .duration(5000)
+        console.log('transforming area to new pos');
+        _this.path
+        .transition()
+        .duration(_this.updateFreq)
         .ease("linear")
         .attr("transform", "translate(" + new_pos + ")");
-
+        
+        // remove data outside window
         _this.truncateData(data);
 
         setTimeout( function() {
@@ -274,7 +278,6 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
         this.free.values.shift();
       }
     } 
-    console.log(this.used.values.length);
 
   },
 
