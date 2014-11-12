@@ -71,9 +71,12 @@ class AdvancedNFSExportSerializer(serializers.ModelSerializer):
 
 
 class SUserSerializer(serializers.ModelSerializer):
+    groupname = serializers.CharField(source='groupname')
+
     class Meta:
         model = User
-        fields = ('username', 'uid', 'gid', 'user', 'public_key', 'admin')
+        fields = ('username', 'uid', 'gid', 'user', 'public_key', 'admin',
+                  'group', 'groupname')
 
 
 class GroupSerializer(serializers.ModelSerializer):

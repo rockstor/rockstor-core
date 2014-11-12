@@ -37,5 +37,10 @@ class User(models.Model):
     admin = models.BooleanField(default=True)
     group = models.ForeignKey(Group, null=True)
 
+    def groupname(self, *args, **kwargs):
+        if (self.group is not None):
+            return self.group.groupname
+        return None
+
     class Meta:
         app_label = 'storageadmin'
