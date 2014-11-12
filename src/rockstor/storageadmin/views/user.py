@@ -131,6 +131,7 @@ class UserView(rfc.GenericView):
                                                        None, invar['password'])
                 auser.is_active = True
                 auser.save()
+                invar['user'] = auser
 
             useradd(invar['username'], invar['shell'], uid=invar['uid'],
                     gid=invar['gid'])
@@ -142,18 +143,18 @@ class UserView(rfc.GenericView):
             if (invar['public_key'] is not None):
                 add_ssh_key(invar['username'], invar['public_key'])
             del(invar['password'])
-            del(invar['group'])
             admin_group = None
             for g in combined_groups():
                 if (g.gid == invar['gid'] and g.admin):
                     admin_group = g
                     break
-            if (invar['admin'] and admin_group is None):
+            if (admin_group is None):
                 admin_group = Group(gid=invar['gid'],
                                     groupname=invar['username'],
                                     admin=True)
                 admin_group.save()
             invar['group'] = admin_group
+            invar['admin'] = True
             suser = User(**invar)
             suser.save()
             return Response(SUserSerializer(suser).data)
@@ -213,13 +214,11 @@ class UserView(rfc.GenericView):
                      username)
             handle_exception(Exception(e_msg), request)
 
-        if (DjangoUser.objects.filter(username=username).exists()):
-            du = DjangoUser.objects.get(username=username)
-            du.delete()
-
         gid = None
         if (User.objects.filter(username=username).exists()):
             u = User.objects.get(username=username)
+            if (u.user is not None):
+                u.user.delete()
             gid = u.gid
             u.delete()
         else:
