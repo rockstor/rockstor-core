@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2014 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -16,14 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from django.conf.urls import patterns, url
-from storageadmin.views import UserView
-from django.conf import settings
+from django.db import models
 
 
-urlpatterns = patterns(
-    '',
-    # User configuration
-    url(r'^$', UserView.as_view()),
-    url(r'(?P<username>%s)$' % settings.USERNAME_REGEX, UserView.as_view()),
-)
+class Group(models.Model):
+    gid = models.IntegerField(unique=True)
+    groupname = models.CharField(max_length=1024, null=True)
+    admin = models.BooleanField(default=False)
+
+    class Meta:
+        app_label = 'storageadmin'

@@ -54,6 +54,9 @@ var AppRouter = Backbone.Router.extend({
     "users": "showUsers",
     "users/:username/edit": "editUser",
     "add-user": "addUser",
+    "groups": "showGroups",
+    "groups/:groupname/edit": "editGroup",
+    "add-group": "addGroup",
     "analytics": "showProbeRunList",
     "run_probe": "runProbe",
     "probeDetail/:probeName/:probeId": "showProbeDetail",
@@ -325,6 +328,30 @@ var AppRouter = Backbone.Router.extend({
     this.renderSidebar("system", "users");
     this.cleanup();
     this.currentLayout = new AddUserView({username: username});
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  showGroups: function() {
+    this.renderSidebar("system", "groups");
+    this.cleanup();
+    this.currentLayout = new GroupsView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  addGroup: function() {
+    this.renderSidebar("system", "groups");
+    this.cleanup();
+    this.currentLayout = new AddGroupView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  editGroup: function() {
+    this.renderSidebar("system", "groups");
+    this.cleanup();
+    this.currentLayout = new AddGroupView({groupname: groupname});
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },

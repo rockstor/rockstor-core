@@ -16,20 +16,14 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.authentication import (BasicAuthentication,
-                                           SessionAuthentication)
-from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
 from django.conf import settings
-from storageadmin.auth import DigestAuthentication
-from storageadmin.models import (Share, SambaShare, NFSExport, Disk)
+from storageadmin.models import (Share, Disk)
 from storageadmin.util import handle_exception
 from storageadmin.serializers import ShareSerializer
 from storageadmin.exceptions import RockStorAPIException
 from fs.btrfs import (mount_share, is_share_mounted, umount_root)
-from system.osi import refresh_nfs_exports
 from storageadmin.views import ShareView
 from system.acl import (chown, chmod)
 
@@ -47,22 +41,16 @@ class ShareACLView(ShareView):
                 'owner': 'root',
                 'group': 'root',
                 'perms': '755',
-                'orecursive': False,
-                'precursive': False,
+                'orecursive': True,
+                'precursive': True,
                 }
-            if ('owner' in request.DATA):
-                options['owner'] = request.DATA['owner']
-            if ('group' in request.DATA):
-                options['group'] = request.DATA['group']
-            else:
-                options['group'] = options['owner']
-            if ('orecursive' in request.DATA):
-                options['orecursive'] = True
-            if ('perms' in request.DATA):
-                options['perms'] = request.DATA['perms']
-            if ('precursive' in request.DATA):
-                options['precursive'] = True
-
+            options['owner'] = request.DATA.get('owner', options['owner'])
+            options['group'] = request.DATA.get('group', options['group'])
+            options['perms'] = request.DATA.get('perms', options['perms'])
+            options['orecursive'] = request.DATA.get('orecursive',
+                                                     options['orecursive'])
+            options['precursive'] = request.DATA.get('precursive',
+                                                     options['precursive'])
             share.owner = options['owner']
             share.group = options['group']
             share.perms = options['perms']
@@ -87,4 +75,3 @@ class ShareACLView(ShareView):
 
     def delete(self, request, sname):
         pass
-

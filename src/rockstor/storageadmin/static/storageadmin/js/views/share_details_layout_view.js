@@ -52,10 +52,13 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 
     this.users = new UserCollection();
     this.users.pageSize = RockStorGlobals.maxPageSize;
+    this.groups = new GroupCollection();
+    this.groups.pageSize = RockStorGlobals.maxPageSize;
     // add dependencies
     this.dependencies.push(this.share);
     this.dependencies.push(this.snapshots);
     this.dependencies.push(this.users);
+    this.dependencies.push(this.groups);
     //this.dependencies.push(this.iscsi_target);
     this.dependencies.push(this.appliances);
     this.modify_choices = [
@@ -189,7 +192,8 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
     this.$("#ph-access-control").html(this.shareAclEditTemplate({
       share: this.share,
       permStr: this.parsePermStr(this.share.get("perms")),
-      users: this.users
+      users: this.users,
+      groups: this.groups,
     }));
   },
 
@@ -202,6 +206,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
     var permStr = this.createPermStr();
     var data = {
       owner: this.$("#share-owner").val(),
+      group: this.$("#share-group").val(),
       perms: permStr
     }
     $.ajax({
