@@ -35,7 +35,6 @@ AddUserView = RockstorLayoutView.extend({
     // set template
     this.template = window.JST.users_add_user;
     this.username = this.options.username;
-    console.log(this.username);
     if (!_.isUndefined(this.username)) {
       this.user = new User({username: this.username});
       this.dependencies.push(this.user);
@@ -158,7 +157,7 @@ AddUserView = RockstorLayoutView.extend({
     return this;
   },
 
-  cancel: function() {
+  cancel: function(event) {
     event.preventDefault();
     app_router.navigate("users", {trigger: true});
   }
