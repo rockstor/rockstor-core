@@ -61,13 +61,21 @@
           </div>
         </div>
         <div class="control-group">
-          <label class="control-label">Password<span class="required"> *</span></label>
+	  <% if (username == null) { %>
+            <label class="control-label">Password<span class="required"> *</span></label>
+	  <% } else { %>
+	    <label class="control-label">Password<span class="required"></span></label>
+	  <% } %>
           <div class="controls">
             <input type="password" id="password" name="password" placeholder="Password">
           </div>
         </div>
         <div class="control-group">
-          <label class="control-label">Confirm Password<span class="required"> *</span></label>
+	  <% if (username == null) { %>
+            <label class="control-label">Confirm Password<span class="required"> *</span></label>
+	  <% } else { %>
+	    <label class="control-label">Confirm Password<span class="required"></span></label>
+	  <% } %>
           <div class="controls">
             <input type="password" id="password_confirmation" name="password_confirmation" placeholder="Password">
           </div>
@@ -84,7 +92,7 @@
         </div>
 	<% shells = ['/bin/bash', '/sbin/nologin']; %>
 	<div class="control-group">
-	  <label class="control-label" for="shell">Login shell<span class="required"> *</span></label>
+	  <label class="control-label" for="shell">Login shell<span class="required"></span></label>
 	  <div class="controls">
 	    <select id="shell" name="shell">
         <% _.each(shells, function(s, index) { %>
