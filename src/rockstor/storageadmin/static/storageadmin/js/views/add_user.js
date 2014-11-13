@@ -35,6 +35,7 @@ AddUserView = RockstorLayoutView.extend({
     // set template
     this.template = window.JST.users_add_user;
     this.username = this.options.username;
+    console.log(this.username);
     if (!_.isUndefined(this.username)) {
       this.user = new User({username: this.username});
       this.dependencies.push(this.user);
@@ -69,9 +70,20 @@ AddUserView = RockstorLayoutView.extend({
       onkeyup: false,
       rules: {
         username: "required",
-        password: "required",
+        password: {
+          required: {
+            depends: function(element) {
+              console.log('in depends');
+              return _this.username == null || _this.username == undefined;
+            }
+          }
+        },
         password_confirmation: {
-          required: "true",
+          required: {
+            depends: function(element) {
+              return _this.username == null || _this.username == undefined;
+            }
+          },
           equalTo: "#password"
         }
       },
@@ -94,7 +106,7 @@ AddUserView = RockstorLayoutView.extend({
         if (group == 'Create a new one') {
           group = null
         }
-        if(_this.username != null){
+        if(_this.username != null && _this.username != undefined){
           if (!_.isEmpty(password)) {
             _this.user.set({password: password});
           } else {
