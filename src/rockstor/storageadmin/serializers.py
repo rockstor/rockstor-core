@@ -76,7 +76,7 @@ class SUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('username', 'uid', 'gid', 'user', 'public_key', 'admin',
-                  'group', 'groupname')
+                  'group', 'groupname', 'shell',)
 
 
 class GroupSerializer(serializers.ModelSerializer):

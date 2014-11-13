@@ -20,6 +20,7 @@ from django.db import models
 from django.contrib.auth.models import User as DjangoUser
 from django.conf import settings
 from storageadmin.models import Group
+import grp
 
 
 class User(models.Model):
@@ -40,6 +41,8 @@ class User(models.Model):
     def groupname(self, *args, **kwargs):
         if (self.group is not None):
             return self.group.groupname
+        if (self.gid is not None):
+            return grp.getgrgid(self.gid).gr_name
         return None
 
     class Meta:
