@@ -87,8 +87,12 @@
 	  <label class="control-label" for="shell">Login shell<span class="required"> *</span></label>
 	  <div class="controls">
 	    <select id="shell" name="shell">
-	      <% _.each(shells, function(s, index) { %>
-          <option value="<%= s %>"><%= s %> </option>
+        <% _.each(shells, function(s, index) { %>
+          <% if (user.get('shell') == s) { %>
+            <option value="<%= s %>" selected="selected"><%= s %> </option>
+          <% } else { %>
+            <option value="<%= s %>"><%= s %> </option>
+          <% } %>
 	      <% }); %>
 	    </select>
 	  </div>
