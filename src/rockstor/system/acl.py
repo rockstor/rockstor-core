@@ -20,10 +20,10 @@ from osi import run_command
 
 CHOWN = '/bin/chown'
 CHMOD = '/bin/chmod'
-LS = '/bin/ls'
+
 
 def chown(share, owner, group=None, recursive=False):
-    cmd = [CHOWN,]
+    cmd = [CHOWN, ]
     if (recursive is True):
         cmd.append('-R')
     if (group is not None):
@@ -33,7 +33,7 @@ def chown(share, owner, group=None, recursive=False):
 
 
 def chmod(share, perm_bits, recursive=False):
-    cmd = [CHMOD,]
+    cmd = [CHMOD, ]
     if (recursive is True):
         cmd.append('-R')
     cmd.extend([perm_bits, share])
