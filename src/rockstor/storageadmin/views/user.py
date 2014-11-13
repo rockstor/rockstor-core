@@ -25,7 +25,7 @@ from storageadmin.serializers import SUserSerializer
 from storageadmin.models import (User, Group)
 import rest_framework_custom as rfc
 from system.users import (useradd, usermod, userdel,
-                          smbpasswd, add_ssh_key)
+                          smbpasswd, add_ssh_key, update_shell)
 from storageadmin.exceptions import RockStorAPIException
 import pwd
 from system.ssh import is_pub_key
@@ -119,10 +119,12 @@ class UserView(rfc.GenericView):
 
             groups = combined_groups()
             invar['gid'] = None
+            admin_group = None
             if (invar['group'] is not None):
                 for g in groups:
                     if (g.groupname == invar['group']):
                         invar['gid'] = g.gid
+                        admin_group = g
                         break
 
             if (invar['admin']):
@@ -143,17 +145,13 @@ class UserView(rfc.GenericView):
             if (invar['public_key'] is not None):
                 add_ssh_key(invar['username'], invar['public_key'])
             del(invar['password'])
-            admin_group = None
-            for g in combined_groups():
-                if (g.gid == invar['gid'] and g.admin):
-                    admin_group = g
-                    break
+            invar['group'] = None
             if (admin_group is None):
                 admin_group = Group(gid=invar['gid'],
                                     groupname=invar['username'],
                                     admin=True)
                 admin_group.save()
-            invar['group'] = admin_group
+                invar['group'] = admin_group
             invar['admin'] = True
             suser = User(**invar)
             suser.save()
@@ -170,8 +168,9 @@ class UserView(rfc.GenericView):
                 e_msg = ('Editing restricted user(%s) is not supported.' %
                          username)
                 handle_exception(Exception(e_msg), request)
-
+        email = request.DATA.get('email', None)
         new_pw = request.DATA.get('password', None)
+        shell = request.DATA.get('shell', None)
         public_key = self._validate_public_key(request)
         if (new_pw is None):
             e_msg = ('Password is required')
@@ -185,6 +184,10 @@ class UserView(rfc.GenericView):
         if (User.objects.filter(username=username).exists()):
             u = User.objects.get(username=username)
             u.public_key = public_key
+            if (email is not None and email != ''):
+                u.email = email
+            if (shell is not None and shell != u.shell):
+                u.shell = shell
             u.save()
 
         sysusers = combined_users()
@@ -193,6 +196,9 @@ class UserView(rfc.GenericView):
             if (u.username == username):
                 suser = u
                 usermod(username, new_pw)
+                logger.debug('username: %s shell: %s' % (username, shell))
+                if (shell is not None):
+                    update_shell(username, shell)
                 smbpasswd(username, new_pw)
                 if (public_key is not None):
                     add_ssh_key(username, public_key)
