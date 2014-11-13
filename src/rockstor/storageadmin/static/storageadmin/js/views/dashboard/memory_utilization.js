@@ -96,13 +96,13 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
   },
   
   setDimensions: function() {
-    this.margin = {top: 20, right: 10, bottom: 20, left: 40};
+    this.margin = {top: 5, right: 20, bottom: 20, left: 30};
     if (this.maximized) {
       this.width = 500 - this.margin.left - this.margin.right;
-      this.height = 500 - this.margin.top - this.margin.bottom;
+      this.height = 240 - this.margin.top - this.margin.bottom;
     } else {
       this.width = 250 - this.margin.left - this.margin.right;
-      this.height = 190 - this.margin.top - this.margin.bottom;
+      this.height = 120 - this.margin.top - this.margin.bottom;
     }
   },
   
@@ -124,11 +124,12 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
     .attr("height", this.height);
 
     this.parseDate = d3.time.format("%y-%b-%d").parse; 
-    this.formatPercent = d3.format(".0%");
-
+    //this.formatPercent = d3.format(".0%");
+    this.formatPercent = function(d) { return (d*100) + ''; }
     this.x = d3.time.scale().range([0, this.width]);
 
     this.y = d3.scale.linear().range([this.height, 0]);
+    this.y.domain = [0, 100];
 
     this.color = d3.scale.category20();
     this.color.domain(['used','cached','buffers','free'])
@@ -141,7 +142,7 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
     this.yAxis = d3.svg.axis()
     .scale(this.y)
     .orient("left")
-    .ticks(5)
+    .ticks(3)
     .tickFormat(this.formatPercent);
 
     this.area = d3.svg.area()
@@ -182,7 +183,17 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
         .attr("class", "area")
         .attr("d", function(d) { return _this.area(d.values); })
         .style("fill", function(d) { return _this.color(d.name); });
-       
+      
+        var textData = _this.layers.map(function(d) { return {name: d.name, value: d.values[d.values.length -1]}; });
+        _this.utilValue = _this.svg.selectAll(".utilValue")
+        .data(textData)
+        .enter()
+        .append("text")
+        .attr("class", "utilValue")
+        .attr("transform", function(d, i) { return "translate(" + _this.x(d.value.date) + "," + (20*i+1) + ")";})
+        .attr("x", -6)
+        .text(function(d) { return d.name; })
+
         _this.xAxisG = _this.svg.append("g")
         .attr("class", "x axis")
         .attr("transform", "translate(0," + _this.height + ")")
@@ -239,6 +250,12 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
         
         // remove data outside window
         _this.truncateData(data);
+        
+        // update value text label
+        var textData = _this.layers.map(function(d) { return {name: d.name, value: d.values[d.values.length -1]}; });
+        _this.svg.selectAll(".utilValue") 
+        .data(textData)
+        .text(function(d) { return d.name + " " + d3.format(".0%")(d.value.y); })
 
         setTimeout( function() {
           _this.tick(_this)
