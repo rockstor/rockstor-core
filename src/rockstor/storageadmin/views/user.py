@@ -172,17 +172,29 @@ class UserView(rfc.GenericView):
         new_pw = request.DATA.get('password', None)
         shell = request.DATA.get('shell', None)
         public_key = self._validate_public_key(request)
-        if (new_pw is None):
-            e_msg = ('Password is required')
-            handle_exception(Exception(e_msg), request)
-
-        if (DjangoUser.objects.filter(username=username).exists()):
-            du = DjangoUser.objects.get(username=username)
-            du.set_password(new_pw)
-            du.save()
-
+        admin = request.DATA.get('admin', False)
         if (User.objects.filter(username=username).exists()):
             u = User.objects.get(username=username)
+            if (admin is True):
+                if (u.user is None):
+                    if (new_pw is None):
+                        e_msg = ('password reset is required to enable admin '
+                                 'access. please provide a new password')
+                        handle_exception(Exception(e_msg), request)
+                    auser = DjangoUser.objects.create_user(username,
+                                                           None, new_pw)
+                    auser.is_active = True
+                    auser.save()
+                    u.user = auser
+                    u.save()
+                elif (new_pw is not None):
+                    u.user.set_password(new_pw)
+                    u.user.save()
+            elif (u.user is not None):
+                auser = u.user
+                u.user = None
+                auser.delete()
+
             u.public_key = public_key
             if (email is not None and email != ''):
                 u.email = email
@@ -195,11 +207,11 @@ class UserView(rfc.GenericView):
         for u in sysusers:
             if (u.username == username):
                 suser = u
-                usermod(username, new_pw)
-                logger.debug('username: %s shell: %s' % (username, shell))
+                if (new_pw is not None):
+                    usermod(username, new_pw)
+                    smbpasswd(username, new_pw)
                 if (shell is not None):
                     update_shell(username, shell)
-                smbpasswd(username, new_pw)
                 if (public_key is not None):
                     add_ssh_key(username, public_key)
                 break
@@ -207,7 +219,7 @@ class UserView(rfc.GenericView):
             e_msg = ('User(%s) does not exist' % username)
             handle_exception(Exception(e_msg), request)
 
-        return Response(SUserSerializer(suser.user).data)
+        return Response(SUserSerializer(suser).data)
 
     @transaction.commit_on_success
     def delete(self, request, username):
