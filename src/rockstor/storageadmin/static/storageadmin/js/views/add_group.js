@@ -63,10 +63,8 @@ AddGroupView = RockstorLayoutView.extend({
 
 	submitHandler: function() {
             var groupname = _this.$("#groupname").val();
-	    var admin = _this.$("#admin").prop("checked");
             if(_this.groupname != null && _this.group != null) {
 		var group = new Group({groupname: _this.groupname});
-		group.set({admin: admin});
 		group.save(null, {
                     success: function(model, response, options) {
 			app_router.navigate("groups", {trigger: true});
@@ -82,7 +80,6 @@ AddGroupView = RockstorLayoutView.extend({
 		group.save(
 	            {
 			groupname: groupname,
-			admin: admin,
 	            },
 	            {
 			success: function(model, response, options) {
