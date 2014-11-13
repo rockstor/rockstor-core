@@ -55,6 +55,7 @@ class GroupView(rfc.GenericView):
     @transaction.commit_on_success
     def post(self, request):
         groupname = request.DATA.get('groupname', None)
+        gid = request.DATA.get('gid', None)
         if (groupname is None or
             re.match(settings.USERNAME_REGEX, groupname) is None):
             e_msg = ('Groupname is invalid. It must confirm to the regex: %s' %
@@ -62,11 +63,6 @@ class GroupView(rfc.GenericView):
             handle_exception(Exception(e_msg), request)
         if (len(groupname) > 30):
             e_msg = ('Groupname cannot be more than 30 characters long')
-            handle_exception(Exception(e_msg), request)
-        gid = request.DATA.get('gid', None)
-        admin = request.DATA.get('admin', True)
-        if (type(admin) != bool):
-            e_msg = ('Admin(group type) must be a boolean')
             handle_exception(Exception(e_msg), request)
 
         for g in combined_groups():
@@ -82,8 +78,7 @@ class GroupView(rfc.GenericView):
         groupadd(groupname, gid)
         grp_entries = grp.getgrnam(groupname)
         gid = grp_entries[2]
-        logger.debug('groupname = %s gid = %d' % (groupname, gid))
-        group = Group(gid=gid, groupname=groupname, admin=admin)
+        group = Group(gid=gid, groupname=groupname, admin=True)
         group.save()
 
         return Response(GroupSerializer(group).data)
