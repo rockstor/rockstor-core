@@ -13,7 +13,14 @@
   </tr>
   <tr>
     <td>Group</td>
-    <td><%= share.get("group") %></td>
+    <td>
+      <select id="share-group">
+        <% groups.each(function(group) { %>
+	  <option value="<%= group.get('groupname') %>"><%= group.get('groupname') %></option>
+	<% }); %>
+      </select>
+    </td>
+    <!-- <td><%= share.get("group") %></td> -->
   </tr>
   <tr>
     <td>
@@ -107,5 +114,3 @@
 </table>
 <a class="btn" href="#" id="js-acl-cancel"> Cancel</a>
 <a class="btn btn-primary" href="#" id="js-acl-save"> Save</a>
-
-

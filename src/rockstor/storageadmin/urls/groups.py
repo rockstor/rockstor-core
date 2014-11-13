@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2014 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf.urls import patterns, url
-from storageadmin.views import UserView
+from storageadmin.views import GroupView
 from django.conf import settings
 
 
 urlpatterns = patterns(
     '',
     # User configuration
-    url(r'^$', UserView.as_view()),
-    url(r'(?P<username>%s)$' % settings.USERNAME_REGEX, UserView.as_view()),
+    url(r'^$', GroupView.as_view()),
+    url(r'(?P<groupname>%s)$' % settings.USERNAME_REGEX, GroupView.as_view()),
 )

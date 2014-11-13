@@ -2,83 +2,136 @@
   /*
   * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
   * This file is part of RockStor.
-  * 
+  *
   * RockStor is free software; you can redistribute it and/or modify
   * it under the terms of the GNU General Public License as published
   * by the Free Software Foundation; either version 2 of the License,
   * or (at your option) any later version.
-  * 
+  *
   * RockStor is distributed in the hope that it will be useful, but
   * WITHOUT ANY WARRANTY; without even the implied warranty of
   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
   * General Public License for more details.
-  * 
+  *
   * You should have received a copy of the GNU General Public License
   * along with this program. If not, see <http://www.gnu.org/licenses/>.
-  * 
+  *
   */
 </script>
 <% if (username == null) { %>
-<h3>Create User</h3>
+<h3>Create a new user</h3>
 <%} else {%>
 <h3>Edit User</h3>
 <%}%>
 <div class="row-fluid">
   <div class="span8">
-    <label class="control-label"><span class="required">*</span> indicates required fields</label>
     <div class="form-box">
       <form id="user-create-form" name="aform" class="form-horizontal">
 
         <div class="messages"></div>
         <div class="control-group">
-          <label class="control-label" for="username">Username
+	  <% if (username != null) { %>
+          <label class="control-label" for="username">Username (UID)
+	  <% } else { %>
+	  <label class="control-label" for="username">Username
+	  <% } %>
           <% if (username == null) { %>
           <span class="required"> *</span>
           <% } %>
           </label>
           <div class="controls">
           <% if (username != null) { %>
-            <label class="control-label" style="text-align:left"><%=username%></label>
+            <label class="control-label" style="text-align:left"><%=username%>        (<%=user.get('uid')%>)</label>
             <input type="hidden" id="username" name="username" value="<%=username%>">
           <% } else { %>
-            <input type="text" id="username" name="username" placeholder="Username" title="Enter User Name">
+            <input type="text" id="username" name="username" placeholder="Username" title="Username must start with a letter and can contain letters, numbers, - and _ characters. It cannot exceed 30 characters in length.">
           <% } %>
           </div>
         </div>
         <div class="control-group">
           <div class="controls">
             <label class="checkbox">
-            <% if (user != null && user.get('is_active')) { %>
-                <input class="checkbox inline" type="checkbox" id="is_active" name="is_active" placeholder="Admin" checked="true">
+            <% if (user != null && user.get('user')) { %>
+                <input class="checkbox inline" type="checkbox" id="admin" name="admin" placeholder="Admin" checked="true">
               <% } else { %>
-                <input class="checkbox inline" type="checkbox" id="is_active" name="is_active" placeholder="Admin">
+                <input class="checkbox inline" type="checkbox" id="admin" name="admin" placeholder="Admin">
               <% } %>
               Allow this user to login to RockStor Web UI?
             </label>
           </div>
         </div>
         <div class="control-group">
-          <label class="control-label">Password<span class="required"> *</span></label>
+	  <% if (username == null) { %>
+            <label class="control-label">Password<span class="required"> *</span></label>
+	  <% } else { %>
+	    <label class="control-label">Password<span class="required"></span></label>
+	  <% } %>
           <div class="controls">
             <input type="password" id="password" name="password" placeholder="Password">
           </div>
         </div>
         <div class="control-group">
-          <label class="control-label">Confirm Password<span class="required"> *</span></label>
+	  <% if (username == null) { %>
+            <label class="control-label">Confirm Password<span class="required"> *</span></label>
+	  <% } else { %>
+	    <label class="control-label">Confirm Password<span class="required"></span></label>
+	  <% } %>
           <div class="controls">
             <input type="password" id="password_confirmation" name="password_confirmation" placeholder="Password">
           </div>
         </div>
         <div class="control-group">
-        <label class="control-label">Add SSH key(optional)</label>
+        <label class="control-label">Public key</label>
           <div class="controls">
-             <% if ((username != null) && (user.get("suser").public_key) != null) { %>
-             <textarea rows="1" cols="50" id="public_key" name="public_key"> <%= user.get("suser").public_key %> </textarea>
+             <% if ((username != null) && (user.get("public_key") != null)) { %>
+             <textarea rows="1" cols="50" id="public_key" name="public_key"> <%= user.get("public_key") %> </textarea>
              <% } else { %>
-             <textarea id="public_key" name="public_key" /> 
+             <textarea id="public_key" name="public_key" />
              <% } %>
-          </div>   
+          </div>
         </div>
+	<% shells = ['/bin/bash', '/sbin/nologin']; %>
+	<div class="control-group">
+	  <label class="control-label" for="shell">Login shell<span class="required"></span></label>
+	  <div class="controls">
+	    <select id="shell" name="shell">
+        <% _.each(shells, function(s, index) { %>
+          <% if (user.get('shell') == s) { %>
+            <option value="<%= s %>" selected="selected"><%= s %> </option>
+          <% } else { %>
+            <option value="<%= s %>"><%= s %> </option>
+          <% } %>
+	      <% }); %>
+	    </select>
+	  </div>
+	</div>
+	<% if (username == null) { %>
+	<div class="control-group">
+	<label class="control-label">UID</label>
+	  <div class="controls">
+	    <input type="text" id="uid" name="uid" placeholder="Create a new one" title="Enter a custom uid here or one will be autogenerated">
+	  </div>
+	</div>
+	<% } %>
+	<% if (username == null) { %>
+	<div class="control-group">
+	<label class="control-label">Group</label>
+	  <div class="controls">
+	    <select name="group" id="group" title="Select a primary group from the list of one will be autogenerated" data-placeholder="Autogenerate">
+	    <option value="Autogenerate" selected="selected">Create a new one</option>
+      <% groups.each(function(group, index) { %>
+          <option value="<%= group.get('groupname') %>"><%= group.get('groupname') %></option>
+	    <% }); %>
+	    </select>
+	  </div>
+	</div>
+        <% } %>
+	<div class="control-group">
+	<label class="control-label">Email</label>
+	  <div class="controls">
+	    <input type="text" id="email" name="email" title="Enter an email address to associate with the user">
+	  </div>
+	</div>
         <div class="control-group">
           <div class="controls">
             <button id="cancel" class="btn">Cancel</button>

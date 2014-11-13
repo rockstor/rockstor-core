@@ -21,6 +21,7 @@ from shutil import move
 from tempfile import mkstemp
 from services import systemctl
 from system.osi import run_command
+import os
 
 SSHD_CONFIG = '/etc/ssh/sshd_config'
 MKDIR = '/bin/mkdir'
@@ -121,3 +122,17 @@ def rsync_for_sftp(chroot_loc):
         shutil.copy('/lib64/%s' % l,
                     ('%s/lib64' % chroot_loc))
     run_command([USERMOD, '-s', '/bin/bash', user])
+
+
+def is_pub_key(key):
+    fo, npath = mkstemp()
+    with open(npath, 'w') as tfo:
+        tfo.write(key)
+    try:
+        run_command(['ssh-keygen', '-l', '-f', npath])
+    except:
+        return False
+    finally:
+        os.remove(npath)
+
+    return True
