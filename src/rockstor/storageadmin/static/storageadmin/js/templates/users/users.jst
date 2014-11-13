@@ -33,6 +33,7 @@
 	  <th scope="col" abbr="Admin">Admin access</th>
           <th scope="col" abbr="UID">UID</th>
           <th scope="col" abbr="Group">Group</th>
+	  <th scope="col" abbr="Shell">Shell</th>
           <th scope="col" abbr="Actions">Actions</th>
         </tr>
       </thead>
@@ -42,17 +43,18 @@
            <tr>
 	    <td><i class="icon-user"></i> <%= user.get("username") %></td>
 	    <td>
-	      <% if (user.get("user")) { %>
+	      <% if (user.get('user')) { %>
                 Yes
               <% } else { %>
 	        No
               <% } %>
             </td>
-            <td><%= user.get("uid") %></td>
+            <td><%= user.get('uid') %></td>
 	    <td>
 	      <% if (user.get('groupname')) { %>
 	        <%= user.get('groupname') %>
 	      <% } %>
+	    <td><%= user.get('shell') %></td>
             <td>
               <a href="#" class="edit-user" data-username="<%= user.get('username') %>" rel="tooltip" title="Edit user"><i class="icon-pencil"></i></a>
               &nbsp;
