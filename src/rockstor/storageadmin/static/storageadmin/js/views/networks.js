@@ -40,12 +40,11 @@ NetworksView = Backbone.View.extend({
     this.collection.fetch();
     return this;
   },
- 
- 
+
+
   renderNetworks: function() {
     var _this = this;
     $(this.el).empty();
-    this.scanNetwork();
     $(this.el).append(this.template({
       networks: this.collection
     }));
@@ -53,24 +52,8 @@ NetworksView = Backbone.View.extend({
       collection: this.collection
     }));
   },
- 
-  scanNetwork: function() {
-        var _this = this;
-        $.ajax({
-          url: "/api/network",
-          type: "POST",
-          dataType: "json",
-          success: function(data, status, xhr) {
-             _this.collection.fetch();
-          },
-          error: function(xhr, status, error) {
-            logger.debug(error);
-          }
-        });
-      },
- 
+
 });
 
 // Add pagination
 Cocktail.mixin(NetworksView, PaginationMixin);
-

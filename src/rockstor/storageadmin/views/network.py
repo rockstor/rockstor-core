@@ -37,6 +37,7 @@ class NetworkView(rfc.GenericView):
     serializer_class = NetworkInterfaceSerializer
 
     def get_queryset(self, *args, **kwargs):
+        self._net_scan()
         if ('iname' in kwargs):
             self.paginate_by = 0
             try:
@@ -46,7 +47,7 @@ class NetworkView(rfc.GenericView):
         return NetworkInterface.objects.all()
 
     @transaction.commit_on_success
-    def post(self, request):
+    def _net_scan(self):
         default_if = get_default_interface()
         config_list = get_net_config_fedora(network_devices())
         for dconfig in config_list:
@@ -88,6 +89,9 @@ class NetworkView(rfc.GenericView):
         devices = NetworkInterface.objects.all()
         serializer = NetworkInterfaceSerializer(devices, many=True)
         return Response(serializer.data)
+
+    def post(self, request):
+        return self._net_scan()
 
     def _restart_wrapper(self, ni, request):
         try:
