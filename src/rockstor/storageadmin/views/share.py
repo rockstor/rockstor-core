@@ -19,10 +19,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import re
 from rest_framework.response import Response
 from django.db import transaction
-from storageadmin.models import (Share, Snapshot, Disk, Pool, Snapshot,
+from storageadmin.models import (Share, Disk, Pool, Snapshot,
                                  NFSExport, SambaShare, SFTP)
 from fs.btrfs import (add_share, remove_share, share_id, update_quota,
-                      share_usage, is_share_mounted)
+                      share_usage)
 from storageadmin.serializers import ShareSerializer
 from storageadmin.util import handle_exception
 from storageadmin.exceptions import RockStorAPIException
