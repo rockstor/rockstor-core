@@ -30,7 +30,8 @@
 
 AddPoolView = Backbone.View.extend({
   events: {
-    "click #js-cancel": "cancel"
+    "click #js-cancel": "cancel",
+    'click [type="checkbox"]': 'clicked'
   },
 
   initialize: function() {
@@ -40,57 +41,35 @@ AddPoolView = Backbone.View.extend({
     // dont paginate disk selection table for now
     this.pagination_template = window.JST.common_pagination;
     this.collection = new DiskCollection();
+ //   this.collection.pageSize =3;
     this.filteredCollection = new DiskCollection();
-//    this.collection.pageSize =3;
-  //  this.collection.comparator='id';
-    this.collection.comparator = function(model) {
-        return model.id;
-    }
-
     this.collection.on("reset", this.renderDisks, this);
   },
 
   render: function() {
-	  var _this = this;
-    this.collection.fetch();//.done(function(){ // i am proceeding after i finish the fetch!
-       // var filterType = _.filter(_this.collection.models,function(disk){
-    //	console.log("total no of  disks before filter"+_this.collection.length);
-    //	 this.filteredCollection = _.reject(_this.collection.models,function(disk){
-    //        return _.isNull(disk.get('pool')) && !disk.get('parted') && !disk.get('offline') && _.isNull(disk.get('btrfs_uuid'));
-     //   })
-    //   _this.collection.remove(this.filteredCollection);
-     //    console.log("total no of  disks"+_this.collection.length);
-  //  });
-    	
-    
-     return this;
+	    this.collection.fetch();
+       return this;
   },
 
   renderDisks: function() {
        $(this.el).empty();
         var _this = this;
-        console.log("in renderDisks "+this.collection.length);
-        this.filteredCollection = _.reject(this.collection.models,function(disk){
+         this.filteredCollection = _.reject(this.collection.models,function(disk){
             return _.isNull(disk.get('pool')) && !disk.get('parted') && !disk.get('offline') && _.isNull(disk.get('btrfs_uuid'));
         });
+     
        this.collection.remove(this.filteredCollection);
-      // this.collection.sort();
-       console.log("in renderDisks after filter "+this.filteredCollection.length);
-               // this.disksRejected = this.collection.reject(function(disk) { 
-               //     return  _.isNull(disk.get('pool')) && !disk.get('parted') && !disk.get('offline') && _.isNull(disk.get('btrfs_uuid'));
-               //   });
-                
-              // this.disksFiltered = this.collection.filter(function(disk) { 
-                //    return  _.isNull(disk.get('pool')) && !disk.get('parted') && !disk.get('offline') && _.isNull(disk.get('btrfs_uuid'));
-                //  });
-               // this.disks = _.sortBy(this.disksFiltered, function(disk){
-                //	return disk.id;
-                	
-             // });
-         $(_this.el).append(_this.template({
+       $(_this.el).append(_this.template({
         	disks: this.collection
         }));
         
+      // var sortByIdCollection = this.collection.sortBy(function(disk){
+    	//   return disk.get('id');
+       //});
+       
+       //sortByIdCollection.forEach(function(disk){
+    //  });
+       
         var err_msg = 'Incorrect number of disks';
         var raid_err_msg = function() {
           return err_msg;
@@ -156,9 +135,9 @@ AddPoolView = Backbone.View.extend({
           return true;
         }, raid_err_msg);
         
-     //   _this.$(".pagination-ph").html(_this.pagination_template({
-    //      collection: this.collection
-   //       }));
+      //  _this.$(".pagination-ph").html(_this.pagination_template({
+      //    collection: this.collection
+      //   }));
         
         this.$("#disks-table").tablesorter({
          headers: {
@@ -236,6 +215,26 @@ AddPoolView = Backbone.View.extend({
     event.preventDefault();
     this.$('#add-pool-form :input').tooltip('hide');
     app_router.navigate('pools', {trigger: true});
+  },
+  
+  clicked: function (event) {
+	  
+	  var _this = this;
+	 	   var tableStyle=" <div class="+"'control-group'"+"> <label class="+"'control-label'"+" >Selected disks</label><div class='controls'>";
+	  var disktableHtml = tableStyle+"<table class= 'table table-condensed table-bordered  table-striped share-table tablesorter '"+"><thead><tr><th>No.</th><th>Disk Name</th><th>Capacity</th></tr></thead><tbody>";
+      var n = $("input:checked.disk").length;
+      $("input:checked.disk").each(function(index) {
+         	   var capacity =  humanize.filesize(_this.collection.get(this.id).get('size')*1024);
+        	disktableHtml = disktableHtml+"<tr><td>"+(index+1)+"</td><td>"+$(this).val()+"</td><td>"+capacity+"</td></tr>";
+         });
+      
+      disktableHtml = disktableHtml+"</tbody></table></div></div>";
+        if(n>0){
+    	  $("#SelectedDisksTable").html(disktableHtml);
+      }else{
+    	  $("#SelectedDisksTable").empty();
+      }
+   
   }
 });
 
