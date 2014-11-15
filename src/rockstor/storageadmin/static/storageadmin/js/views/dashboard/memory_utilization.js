@@ -35,7 +35,6 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
     this.dataLength = 60;
     this.windowLength = 60000;
     this.currentTs = null;
-    this.colors = ["#04BA44", "#C95351"];
     //this.emptyData = {"id": 0, "total": 0, "free": 0, "buffers": 0, "cached": 0, "swap_total": 0, "swap_free": 0, "active": 0, "inactive": 0, "dirty": 0, "ts": "2013-07-17T00:00:16.109Z"};
     this.t2 = RockStorGlobals.currentTimeOnServer.getTime()-30000;
     //this.t2 = new Date('2013-12-03T17:18:06.312Z').getTime();
@@ -100,9 +99,13 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
     if (this.maximized) {
       this.width = 500 - this.margin.left - this.margin.right;
       this.height = 240 - this.margin.top - this.margin.bottom;
+      this.swapWidth = 500 - this.margin.left - this.margin.right;
+      this.swapHeight = 100 - this.margin.top - this.margin.bottom;
     } else {
       this.width = 250 - this.margin.left - this.margin.right;
       this.height = 120 - this.margin.top - this.margin.bottom;
+      this.swapWidth = 250 - this.margin.left - this.margin.right;
+      this.swapHeight = 50 - this.margin.top - this.margin.bottom;
     }
   },
   
@@ -111,7 +114,6 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
     this.$(svgEl).empty();
     this.svg = d3.select(this.el).select(svgEl)
     .append('svg')
-    .attr('class', 'metrics')
     .attr('width', this.width + this.margin.left + this.margin.right)
     .attr('height', this.height + this.margin.top + this.margin.bottom)
     .append("g")
@@ -131,9 +133,9 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
     this.y = d3.scale.linear().range([this.height, 0]);
     this.y.domain = [0, 100];
 
-    this.color = d3.scale.category20();
-    this.color.domain(['used','cached','buffers','free'])
-
+    //this.color = d3.scale.category20();
+    //this.color.domain(['used','cached','buffers','free'])
+    this.color = { used: '#fb6a4a', cached: '#fcbba1', buffers: '#7bccc4', free: '#ccebc5' };
     this.xAxis = d3.svg.axis()
     .scale(this.x)
     .orient("bottom")
@@ -152,6 +154,15 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
 
     this.stack = d3.layout.stack()
     .values(function(d) { return d.values; });
+
+    this.swapSvg = d3.select(this.el).select('#swap-util-chart')
+    .append('svg')
+    .attr('width', this.swapWidth + this.margin.left + this.margin.right)
+    .attr('height', this.swapHeight + this.margin.top + this.margin.bottom)
+    .append("g")
+    .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
+
+        
 
   },
 
@@ -182,18 +193,31 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
         _this.path = utilType.append('path')
         .attr("class", "area")
         .attr("d", function(d) { return _this.area(d.values); })
-        .style("fill", function(d) { return _this.color(d.name); });
+        .style("fill", function(d) { return _this.color[d.name]; });
       
-        var textData = _this.layers.map(function(d) { return {name: d.name, value: d.values[d.values.length -1]}; });
-        _this.utilValue = _this.svg.selectAll(".utilValue")
+        var textData = _this.layers.map(function(d) { return {name: d.name, value: d.values[d.values.length -1]}; }).reverse();
+        
+        _this.utilValues = _this.svg.selectAll(".utilValue")
         .data(textData)
         .enter()
-        .append("text")
-        .attr("class", "utilValue")
-        .attr("transform", function(d, i) { return "translate(" + _this.x(d.value.date) + "," + (20*i+1) + ")";})
-        .attr("x", -6)
-        .text(function(d) { return d.name; })
+        .append('g')
+        .attr('class', 'utilValue')
+        .attr("transform", function(d, i) { return "translate(" + _this.width + "," + (20*(i+1)) + ")";})
 
+        _this.utilValues.append('rect')
+        .attr('class', 'utilValueColor')
+        .attr('x', -20)
+        .attr('y', -10)
+        .attr('width', 10)
+        .attr('height', 10)
+        .attr('fill', function(d) { return _this.color[d.name];})
+        .attr('stroke', '#000')
+        
+        _this.utilValues.append("text")
+        .attr("class", "utilValueText")
+        .attr("x", -26)
+        .text(function(d) { return d.name + " " + d3.format(".0%")(d.value.y); })
+        
         _this.xAxisG = _this.svg.append("g")
         .attr("class", "x axis")
         .attr("transform", "translate(0," + _this.height + ")")
@@ -202,6 +226,34 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
         _this.svg.append("g")
         .attr("class", "y axis")
         .call(_this.yAxis); 
+        
+        // Swap Usage  
+        _this.swapX = d3.scale.linear().range([0,_this.swapWidth]).domain([0,_this.swapTotal]);
+        _this.swapXAxis = d3.svg.axis()
+        .scale(_this.swapX)
+        .orient("bottom")
+        .ticks(3)
+        .tickFormat(function(d) { return humanize.filesize(d*1024); });
+
+        _this.swapXAxisG = _this.swapSvg.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + _this.swapHeight + ")")
+        .call(_this.swapXAxis);
+
+        _this.swapSvg.append('rect')
+        .attr('class', 'swapRect')
+        .attr('x', 0)
+        .attr('y', 0)
+        .attr('width', _this.swapX(_this.swapUsage))
+        .attr('height', _this.swapHeight-2)
+        .attr('fill', function(d) { return '#D0D8DB';})
+        .attr('stroke', '#aaa');
+
+        _this.swapSvg.append('text')
+        .attr('class', 'swapText')
+        .attr('x', 2)
+        .attr('y', _this.swapHeight/2 - 2)
+        .text(humanize.filesize(_this.swapUsage*1024) + ' (' + d3.format(".0%")(_this.swapUsagePc/100) + ')');
         
         _this.tick(_this);
       },
@@ -212,7 +264,6 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
   },
   
   tick: function(ctx) {
-    console.log('tick')
     var _this = ctx;
     var pageSizeStr = '&page_size=1';
     $.ajax({
@@ -227,7 +278,6 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
         var max_ts = new Date(_this.dataBuffer[_this.dataBuffer.length-1].ts).getTime()-_this.updateFreq;
         _this.x.domain([min_ts, max_ts]);
         
-        console.log('transforming area to null');
         _this.svg.selectAll('.area')
         .attr("d", function(d) { return _this.area(d.values); })
         .attr('transform', null);
@@ -239,11 +289,8 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
   
         // slide the area left
         var new_pos = _this.x(min_ts-_this.updateFreq);
-        console.log(new_pos);
         
-        console.log('transforming area to new pos');
-        _this.path
-        .transition()
+        _this.path.transition()
         .duration(_this.updateFreq)
         .ease("linear")
         .attr("transform", "translate(" + new_pos + ")");
@@ -251,11 +298,19 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
         // remove data outside window
         _this.truncateData(data);
         
-        // update value text label
-        var textData = _this.layers.map(function(d) { return {name: d.name, value: d.values[d.values.length -1]}; });
-        _this.svg.selectAll(".utilValue") 
+        //update value text label
+        var textData = _this.layers.map(function(d) { return {name: d.name, value: d.values[d.values.length -1]}; }).reverse();
+        
+        _this.svg.selectAll(".utilValueText") 
         .data(textData)
         .text(function(d) { return d.name + " " + d3.format(".0%")(d.value.y); })
+
+        // Swap Usage  
+        _this.swapSvg.selectAll('.swapRect')
+        .attr('width', _this.swapX(_this.swapUsage));
+        
+        _this.swapSvg.selectAll('.swapText')
+        .text(humanize.filesize(_this.swapUsage*1024) + ' (' + d3.format(".0%")(_this.swapUsagePc/100) + ')');
 
         setTimeout( function() {
           _this.tick(_this)
@@ -280,6 +335,10 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
       _this.buffers.values.push({date: d.date, y: d.buffers/d.total});
       _this.free.values.push({date: d.date, y: d.free/d.total});
     });
+    _this.swapFree = data.results[data.results.length - 1].swap_free;
+    _this.swapTotal = data.results[data.results.length - 1].swap_total;
+    _this.swapUsagePc = ((_this.swapTotal - _this.swapFree)/_this.swapTotal) * 100;
+    _this.swapUsage = _this.swapTotal - _this.swapFree;
   },
   
   truncateData: function() {
