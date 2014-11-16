@@ -279,8 +279,8 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
         _this.x.domain([min_ts, max_ts]);
         
         _this.svg.selectAll('.area')
-        .attr("d", function(d) { return _this.area(d.values); })
-        .attr('transform', null);
+        .attr("d", function(d) { return _this.area(d.values); });
+        //.attr('transform', null);
        
         _this.xAxisG.transition()
         .duration(_this.updateFreq)
@@ -312,7 +312,7 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
         _this.swapSvg.selectAll('.swapText')
         .text(humanize.filesize(_this.swapUsage*1024) + ' (' + d3.format(".0%")(_this.swapUsagePc/100) + ')');
 
-        setTimeout( function() {
+        _this.timeoutId = setTimeout( function() {
           _this.tick(_this)
         }, _this.updateFreq);
       },
@@ -370,7 +370,28 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
   },
 
   cleanup: function() {
-    // TODO implement
+    if (this.timeoutId) {
+      clearTimeout(this.timeoutId);
+    }
+  },
+
+  resize: function() {
+    this.constructor.__super__.resize.apply(this, arguments);
+    if (this.maximized) {
+      this.width = 500 - this.margin.left - this.margin.right;
+      this.height = 240 - this.margin.top - this.margin.bottom;
+      this.swapWidth = 500 - this.margin.left - this.margin.right;
+      this.swapHeight = 100 - this.margin.top - this.margin.bottom;
+    } else {
+      this.width = 250 - this.margin.left - this.margin.right;
+      this.height = 120 - this.margin.top - this.margin.bottom;
+      this.swapWidth = 250 - this.margin.left - this.margin.right;
+      this.swapHeight = 50 - this.margin.top - this.margin.bottom;
+    }
+    this.$('#mem-util-chart').empty();
+    this.$('#swap-util-chart').empty();
+    this.displayMemoryUtilization('#mem-util-chart');
+
   }
 
 });
