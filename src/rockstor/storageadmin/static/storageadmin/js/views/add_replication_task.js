@@ -53,10 +53,7 @@ AddReplicationTaskView = RockstorLayoutView.extend({
         return replica.get('share') == share.get('name');
       })) ;
     });
-    console.log(this.replicas);
-    console.log(this.shares);
-    console.log(this.freeShares);
-    $(this.el).html(this.template({
+     $(this.el).html(this.template({
       shares: this.freeShares,
       appliances: this.appliances,
       replica_data_port: RockStorGlobals.replica_data_port,

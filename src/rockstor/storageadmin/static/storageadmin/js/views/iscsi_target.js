@@ -41,8 +41,7 @@ var ISCSITargetView = Backbone.View.extend({
   },
 
   render: function() {
-    console.log('in iscsi_target - renderIscsi');
-    $(this.el).empty();
+   $(this.el).empty();
     $(this.el).append(this.template({
       share: this.share,
       iscsi_target: this.iscsi_target
@@ -70,8 +69,7 @@ var ISCSITargetView = Backbone.View.extend({
     event.preventDefault();
     var _this = this;
     data = this.$('#iscsi-row').getJSON();
-    console.log(data);
-    this.iscsi_target.save(
+   this.iscsi_target.save(
       data,
       {
         success: function(model, response, options) {
@@ -90,7 +88,6 @@ var ISCSITargetView = Backbone.View.extend({
     if (!this.iscsi_target.isNew()) {
       this.iscsi_target.destroy({
         success: function(model, response, options) {
-          console.log('destroyed iscsi_target successfully')
           _this.iscsi_target = new ISCSITarget({shareName: this.share.get('shareName')});
           _this.render();
         },

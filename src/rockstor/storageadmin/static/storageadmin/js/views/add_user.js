@@ -72,7 +72,6 @@ AddUserView = RockstorLayoutView.extend({
         password: {
           required: {
             depends: function(element) {
-              console.log('in depends');
               return _this.username == null || _this.username == undefined;
             }
           }

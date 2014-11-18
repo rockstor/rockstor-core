@@ -61,7 +61,6 @@ SMBShares  = RockstorModuleView.extend({
         }));
       },
       error: function(model, response, options) {
-        console.log(response);
       }
     });
     return this;

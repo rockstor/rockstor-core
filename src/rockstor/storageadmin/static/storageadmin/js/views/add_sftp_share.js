@@ -80,7 +80,6 @@ AddSFTPShareView = RockstorLayoutView.extend({
         } else {
          data['read_only'] = true;
         } 
-        console.log(data);
         disableButton(button);
         $.ajax({
           url: '/api/sftp',

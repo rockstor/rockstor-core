@@ -39,8 +39,7 @@ SysInfoModule = RockstorModuleView.extend({
     var _this = this;
     RockStorSocket.addListener(function(load_avg) {
       if (load_avg.length > 0) {
-        console.log('updating load avg');
-        console.log(load_avg[load_avg.length-1].load_1);
+         //  console.log(load_avg[load_avg.length-1].load_1);
         _this.$('#load-avg').html(load_avg[load_avg.length-1].load_1);
       }
     }, this, 'load_avg');

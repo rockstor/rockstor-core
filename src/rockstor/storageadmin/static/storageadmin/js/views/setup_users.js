@@ -46,8 +46,7 @@ SetupUsersView = Backbone.View.extend({
   },
 
   render: function() {
-    console.log('in setup_users render');
-    this.users = new UserCollection();
+     this.users = new UserCollection();
     var _this = this;
     this.users.fetch({
       success: function(collection, response, options) {
@@ -55,14 +54,12 @@ SetupUsersView = Backbone.View.extend({
         _this.users.on('reset', _this.renderUsers, _this);
       },
       error: function(collection, xhr, options) {
-        console.log('Could not fetch users in setup_users');
-      }
+       }
     });
     return this;
   },
 
   renderUsers: function() {
-    console.log('in setup_users renderUsers');
     $(this.el).html(this.template({users: this.users}));
   },
 
@@ -90,8 +87,7 @@ SetupUsersView = Backbone.View.extend({
   },
 
   deleteUser: function(event) {
-    console.log('deleteUser clicked');
-    event.preventDefault();
+     event.preventDefault();
     var _this = this;
     var tgt = $(event.currentTarget);
     var user = new User({ 
@@ -99,22 +95,18 @@ SetupUsersView = Backbone.View.extend({
     });
     user.destroy({
       success: function(model, response, options) {
-        console.log('user deleted successfully');
-        _this.users.fetch();
+         _this.users.fetch();
       },
       error: function(model, xhr, options) {
         var msg = xhr.responseText;
-        console.log('error while deleting user');
-        console.log(msg);
-      }
+       }
 
     });
 
   },
 
   saveNewUser: function() {
-    console.log('add-user clicked');
-    var new_user = new User();
+   var new_user = new User();
     username = this.$('#username').val();
     password = this.$('#password').val();
     password_confirmation = this.$('#password_confirmation').val();
@@ -127,8 +119,7 @@ SetupUsersView = Backbone.View.extend({
       }, 
       {
         success: function(model, response, options) {
-          console.log('new user created successfully');
-          //_this.$('#new-user-container').empty();
+           //_this.$('#new-user-container').empty();
           _this.users.fetch();
 
         },
@@ -162,14 +153,11 @@ SetupUsersView = Backbone.View.extend({
       { password: password } , 
       {
         success: function(model, response, options) {
-          console.log('user updated successfully');
           _this.users.fetch();
         },
         error: function(model, xhr, options) {
           var msg = xhr.responseText;
-          console.log('error while updating user');
-          console.log(msg);
-        }
+          }
 
       });
   }

@@ -31,7 +31,7 @@ logger = function() {
   var obj = {};
   obj.log = function(msg, log_level) {
     if (_.indexOf(LOG_LEVELS[log_level]) >= _.indexOf(LOG_LEVELS[ROCKSTOR_LOG_LEVEL])) {
-      console.log(msg);
+     // console.log(msg);
     }
   }
   _.each(LOG_LEVELS, function(level) {
