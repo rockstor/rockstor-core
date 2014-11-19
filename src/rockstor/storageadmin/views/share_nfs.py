@@ -53,7 +53,7 @@ class ShareNFSView(rfc.GenericView):
 
     @transaction.commit_on_success
     def post(self, request, sname):
-        try:
+        with self._handle_exception(request):
             share = validate_share(sname, request)
             options = parse_options(request)
             dup_export_check(share, options['host_str'], request)
@@ -74,14 +74,10 @@ class ShareNFSView(rfc.GenericView):
             refresh_wrapper(exports, request, logger)
             nfs_serializer = NFSExportGroupSerializer(eg)
             return Response(nfs_serializer.data)
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)
 
     @transaction.commit_on_success
     def put(self, request, sname, export_id):
-        try:
+        with self._handle_exception(request):
             share = validate_share(sname, request)
             eg = validate_export_group(export_id, request)
             options = parse_options(request)
@@ -94,14 +90,10 @@ class ShareNFSView(rfc.GenericView):
             refresh_wrapper(exports, request, logger)
             nfs_serializer = NFSExportGroupSerializer(eg)
             return Response(nfs_serializer.data)
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)
 
     @transaction.commit_on_success
     def delete(self, request, sname, export_id):
-        try:
+        with self._handle_exception(request):
             share = validate_share(sname, request)
             eg = validate_export_group(export_id, request)
             cur_exports = list(NFSExport.objects.all())
@@ -123,7 +115,3 @@ class ShareNFSView(rfc.GenericView):
                 eg.delete()
             refresh_wrapper(exports, request, logger)
             return Response()
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)
