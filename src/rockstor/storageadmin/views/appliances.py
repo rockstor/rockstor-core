@@ -26,7 +26,6 @@ from storageadmin.util import handle_exception
 from storageadmin.serializers import ApplianceSerializer
 from system.osi import (hostid, sethostname)
 import rest_framework_custom as rfc
-from storageadmin.exceptions import RockStorAPIException
 from cli.rest_util import (api_call, set_token)
 
 import logging
@@ -58,7 +57,7 @@ class AppliancesView(rfc.GenericView):
             return ad['uuid']
 
     def _connect_to_appliance(self, request, url, ip, username, password):
-        with self._handle_exception(request):
+        try:
             r = requests.post(
                 url,
                 headers={'content-type': 'application/json'},
