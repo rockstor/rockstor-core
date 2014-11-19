@@ -19,13 +19,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from rest_framework.response import Response
 from django.db import transaction
 from django.conf import settings
-from storageadmin.models import (Share, SambaShare, NFSExport,
-                                 NFSExportGroup, Disk)
-from storageadmin.util import handle_exception
+from storageadmin.models import (NFSExport, NFSExportGroup, Disk)
 from storageadmin.serializers import NFSExportGroupSerializer
-from storageadmin.exceptions import RockStorAPIException
-from fs.btrfs import (mount_share, is_share_mounted, umount_root)
-from system.osi import (refresh_nfs_exports, nfs4_mount_teardown)
+from fs.btrfs import (mount_share, is_share_mounted)
 import rest_framework_custom as rfc
 from nfs_helpers import (create_nfs_export_input, parse_options,
                          dup_export_check, refresh_wrapper,
