@@ -25,7 +25,6 @@ from system.osi import (config_network_device, network_devices,
                         get_net_config_fedora, restart_network_interface,
                         get_default_interface, update_issue)
 from system.samba import update_samba_discovery
-from storageadmin.exceptions import RockStorAPIException
 import rest_framework_custom as rfc
 from django.conf import settings
 
@@ -91,7 +90,8 @@ class NetworkView(rfc.GenericView):
         return Response(serializer.data)
 
     def post(self, request):
-        return self._net_scan()
+        with self._handle_exception(request):
+            return self._net_scan()
 
     def _restart_wrapper(self, ni, request):
         try:
@@ -104,7 +104,7 @@ class NetworkView(rfc.GenericView):
 
     @transaction.commit_on_success
     def put(self, request, iname):
-        try:
+        with self._handle_exception(request):
             if (not NetworkInterface.objects.filter(name=iname).exists()):
                 e_msg = ('Interface with name: %s does not exist.' % iname)
                 handle_exception(Exception(e_msg), request)
@@ -156,17 +156,11 @@ class NetworkView(rfc.GenericView):
                 except:
                     logger.error('Unable to update /etc/issue')
             return Response(NetworkInterfaceSerializer(ni).data)
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)
 
     @transaction.commit_on_success
     def delete(self, request, iname):
-        try:
+        with self._handle_exception(request):
             if (NetworkInterface.objects.filter(name=iname).exists()):
                 i = NetworkInterface.objects.get(name=iname)
                 i.delete()
             return Response()
-        except Exception, e:
-            handle_exception(e, request)
