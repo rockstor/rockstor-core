@@ -68,7 +68,6 @@ ShareNFSExports  = RockstorModuleView.extend({
   renderNfsExports: function() {
     var _this = this;
     $(this.el).empty();
-    console.log(this.collection);
     $(this.el).append(this.template({
       share: this.share,
       nfsExports: this.collection,

@@ -144,7 +144,6 @@ ProbeRunListView = RockstorLayoutView.extend({
                 _this.renderTable();
               },
               error: function(collection, response, options) {
-                console.log("error while fetching probe runs");
               }
             });
           } 

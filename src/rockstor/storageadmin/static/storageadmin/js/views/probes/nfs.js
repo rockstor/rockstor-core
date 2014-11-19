@@ -170,8 +170,7 @@ NfsView = Backbone.View.extend({
         }
       },
       error: function(request, status, error) {
-        console.log(error);
-      }
+       }
     });
   },
 
@@ -239,10 +238,7 @@ NfsView = Backbone.View.extend({
   timeTickFormatter: function(dataLength, updateInterval) {
     var t = updateInterval/1000;
     var n = dataLength * t;
-    console.log("t = " + t);
-    console.log("n = " + n);
-    return function(val, axis) {
-      console.log("val = " + val);
+     return function(val, axis) {
       return ((n/60) - (parseInt((val*t)/60))).toString() + ' m';
     };
   },

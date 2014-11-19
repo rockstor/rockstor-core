@@ -129,7 +129,6 @@ ReplicationView = RockstorLayoutView.extend({
       success: function() {
         _this.collection.fetch({
           success: function() {
-            console.log('enabled ' + replicaId);
             _this.renderReplicas();
           }
         });
@@ -150,8 +149,7 @@ ReplicationView = RockstorLayoutView.extend({
       success: function() {
         _this.collection.fetch({
           success: function() {
-            console.log('disabled ' + replicaId);
-            _this.renderReplicas();
+           _this.renderReplicas();
           }
         });
       },

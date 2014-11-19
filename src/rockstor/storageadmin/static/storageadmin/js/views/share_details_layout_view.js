@@ -120,7 +120,6 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
   },
   
   renderRollbackBtn: function() {
-    console.log('renderRollbackBtn called');
     var foundWritableSnapshot = false;
     if (!_.isUndefined(this.snapshots.find(function(s) { return s.get('writable') == true;}))) {
       foundWritableSnapshot = true;
