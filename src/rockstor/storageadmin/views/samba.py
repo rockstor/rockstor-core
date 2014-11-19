@@ -22,7 +22,6 @@ from django.conf import settings
 from storageadmin.models import (SambaShare, Disk, User)
 from storageadmin.serializers import SambaShareSerializer
 from storageadmin.util import handle_exception
-from storageadmin.exceptions import RockStorAPIException
 import rest_framework_custom as rfc
 from share_helpers import validate_share
 from system.samba import (refresh_smb_config, status, restart_samba)
@@ -108,7 +107,7 @@ class SambaView(rfc.GenericView):
                 e_msg = ('Share(%s) is already exported via Samba' %
                          share.name)
                 handle_exception(Exception(e_msg), request)
-        try:
+        with self._handle_exception(request):
             for share in shares:
                 mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
                 options['share'] = share
@@ -128,10 +127,6 @@ class SambaView(rfc.GenericView):
             refresh_smb_config(list(SambaShare.objects.all()))
             self._restart_samba()
             return Response(SambaShareSerializer(smb_share).data)
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)
 
     @transaction.commit_on_success
     def put(self, request, smb_id):
@@ -184,11 +179,7 @@ class SambaView(rfc.GenericView):
             e_msg = ('Samba export for the id(%s) does not exist' % smb_id)
             handle_exception(Exception(e_msg), request)
 
-        try:
+        with self._handle_exception(request):
             refresh_smb_config(list(SambaShare.objects.all()))
             self._restart_samba()
             return Response()
-        except Exception, e:
-            logger.exception(e)
-            e_msg = ('System error occured while restarting Samba server')
-            handle_exception(Exception(e_msg), request)
