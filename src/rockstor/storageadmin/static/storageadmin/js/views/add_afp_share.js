@@ -83,9 +83,12 @@ AddAFPShareView = RockstorLayoutView.extend({
       onfocusout: false,
       onkeyup: false,
       rules: {
-        shares: 'required',
-      },
-
+         shares:{
+    	chosen:true
+    }
+     
+    },
+        
       submitHandler: function() {
         var button = $('#create-afp-export');
         if (buttonDisabled(button)) return false;
