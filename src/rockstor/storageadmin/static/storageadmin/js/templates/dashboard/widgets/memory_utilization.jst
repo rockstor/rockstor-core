@@ -2,7 +2,9 @@
 <div class="row-fluid">
   <div class="span12">
     <div class="widget-header">
-      <div class="title"><span class="h4"><%= displayName %></span></div>
+      <div class="title">
+        <span class="h4"><%= displayName %></span>
+      </div>
       <div class="gear">
         <a class="download-widget" href="#"><i class="icon-download-alt"></i></a>
         <a class="resize-widget" href="#"><i class="icon-resize-full"></i></a>
@@ -15,23 +17,10 @@
 <!-- Module Body -->
 <!-- Content -->
 <div class="widget-content">
-  <div id="mem-util-chart" style="float: left; width: 70%; height: 60%"></div>
-  <div id="mem-legend" style="float: left;"></div>
-  <div class="clear"></div>
-  <div id="mem-values" style="float: left; font-size: smaller;">
-    <table>
-      <tr>
-        <td>Total memory: <span id="mem-total"></span></td>
-        <td>Used: <span id="mem-used"></span></td>
-        <td>Free: <span id="mem-free"></span></td>
-      </tr>
-      <tr>
-        <td>Total swap: <span id="mem-totalswap"></span></td>
-        <td>Used: <span id="mem-usedswap"></span></td>
-        <td>Free: <span id="mem-freeswap"></span></td>
-      </tr>
-    </table>
-  </div>
+  <div id="mem-util-title">Memory Usage (%)</div>
+  <div id="mem-util-chart"></div>
+  <div id="swap-util-title">Swap Usage</div>
+  <div id="swap-util-chart"></div>
 </div>
 <!-- End Content -->
 <!-- end module body -->

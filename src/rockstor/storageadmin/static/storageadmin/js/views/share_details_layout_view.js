@@ -38,6 +38,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
     this.constructor.__super__.initialize.apply(this, arguments);
     this.shareName = this.options.shareName;
     this.template = window.JST.share_share_details_layout;
+    this.rollback_btn_template = window.JST.share_share_details_rollback_btn;
     this.shareAclTemplate = window.JST.share_share_acl;
     this.shareAclEditTemplate = window.JST.share_share_acl_edit;
     //this.iscsi_target = new ISCSITarget({shareName: this.shareName});
@@ -51,10 +52,13 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 
     this.users = new UserCollection();
     this.users.pageSize = RockStorGlobals.maxPageSize;
+    this.groups = new GroupCollection();
+    this.groups.pageSize = RockStorGlobals.maxPageSize;
     // add dependencies
     this.dependencies.push(this.share);
     this.dependencies.push(this.snapshots);
     this.dependencies.push(this.users);
+    this.dependencies.push(this.groups);
     //this.dependencies.push(this.iscsi_target);
     this.dependencies.push(this.appliances);
     this.modify_choices = [
@@ -69,7 +73,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
       {name: 'secure', value: 'secure'},
       {name: 'insecure', value: 'insecure'},
     ];
-
+    this.on('snapshotsModified', this.renderRollbackBtn, this);
   },
 
   render: function() {
@@ -84,7 +88,8 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
     this.subviews['share-usage'] = new ShareUsageModule({ share: this.share });
     this.subviews['snapshots'] = new SnapshotsTableModule({
       snapshots: this.snapshots,
-      share: this.share
+      share: this.share,
+      parentView: this
     });
     this.subviews['nfs-exports'] = new ShareNFSExports({
       share: this.share,
@@ -104,6 +109,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
       sync_choices: this.sync_choices,
       nsecurity_choices: this.nsecurity_choices,
     }));
+    this.renderRollbackBtn();
     this.renderAcl();
     this.$('#ph-share-usage').append(this.subviews['share-usage'].render().el);
     this.$('#ph-snapshots').append(this.subviews['snapshots'].render().el);
@@ -111,6 +117,20 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
     this.$('#ph-smb-shares').append(this.subviews['smb-shares'].render().el);
     this.$("ul.css-tabs").tabs("div.css-panes > div");
     this.attachActions();
+  },
+  
+  renderRollbackBtn: function() {
+    console.log('renderRollbackBtn called');
+    var foundWritableSnapshot = false;
+    if (!_.isUndefined(this.snapshots.find(function(s) { return s.get('writable') == true;}))) {
+      foundWritableSnapshot = true;
+    }
+    this.$('#rollback-btn-ph').html(this.rollback_btn_template({
+      foundWritableSnapshot: foundWritableSnapshot,
+      snapshots: this.snapshots,
+      share: this.share
+    }));
+
   },
 
   attachActions: function() {
@@ -172,7 +192,8 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
     this.$("#ph-access-control").html(this.shareAclEditTemplate({
       share: this.share,
       permStr: this.parsePermStr(this.share.get("perms")),
-      users: this.users
+      users: this.users,
+      groups: this.groups,
     }));
   },
 
@@ -185,6 +206,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
     var permStr = this.createPermStr();
     var data = {
       owner: this.$("#share-owner").val(),
+      group: this.$("#share-group").val(),
       perms: permStr
     }
     $.ajax({

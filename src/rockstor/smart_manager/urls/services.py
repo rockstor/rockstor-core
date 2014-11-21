@@ -23,8 +23,8 @@ from smart_manager.views import (BaseServiceView, NISServiceView,
                                  LdapServiceView, SFTPServiceView,
                                  ReplicationServiceView,
                                  TaskSchedulerServiceView,
-                                 DataCollectorServiceView,
-                                 ServiceMonitorView, AFPServiceView)
+                                 DataCollectorServiceView, ServiceMonitorView,
+                                 AFPServiceView, SNMPServiceView)
 
 command_regex = ('config|start|stop')
 
@@ -47,6 +47,7 @@ urlpatterns = patterns('',
         WinbindServiceView.as_view()),
     url(r'^ldap$', LdapServiceView.as_view()),
     url(r'^ldap/(?P<command>%s)$' % command_regex, LdapServiceView.as_view()),
+    url(r'^sftp$', SFTPServiceView.as_view()),
     url(r'^sftp/(?P<command>%s)$' % command_regex, SFTPServiceView.as_view()),
     url(r'^replication$', ReplicationServiceView.as_view()),
     url(r'^replication/(?P<command>%s)$' % command_regex,
@@ -60,4 +61,6 @@ urlpatterns = patterns('',
     url(r'^service-monitor$', ServiceMonitorView.as_view()),
     url(r'^service-monitor/(?P<command>%s)$' % command_regex,
         ServiceMonitorView.as_view()),
+    url(r'^snmpd$', SNMPServiceView.as_view()),
+    url(r'^snmpd/(?P<command>%s)$' % command_regex, SNMPServiceView.as_view()),
 )

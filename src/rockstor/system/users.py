@@ -21,15 +21,16 @@ from osi import run_command
 import subprocess
 import re
 import os
-import shutil
+import pwd
+import grp
 
 import logging
 logger = logging.getLogger(__name__)
 
-PW_FILE = '/etc/passwd'
-GROUP_FILE = '/etc/group'
 USERADD = '/usr/sbin/useradd'
+GROUPADD = '/usr/sbin/groupadd'
 USERDEL = '/usr/sbin/userdel'
+GROUPDEL = '/usr/sbin/groupdel'
 PASSWD = '/usr/bin/passwd'
 USERMOD = '/usr/sbin/usermod'
 SMBPASSWD = '/usr/bin/smbpasswd'
@@ -38,21 +39,34 @@ CHOWN = '/usr/bin/chown'
 
 def get_users(min_uid=5000, uname=None):
     users = {}
-    with open(PW_FILE) as pfo:
-        for l in pfo.readlines():
-            fields = l.strip().split(':')
-            if (int(fields[2]) < min_uid):
-                continue
-            if (uname is not None):
-                if (uname == fields[0]):
-                    return {fields[0]: fields[2:], }
-            else:
-                users[fields[0]] = fields[2:]
+    for u in pwd.getpwall():
+        users[u.pw_name] = (u.pw_uid, u.pw_gid,)
     return users
 
 
+def get_groups():
+    groups = {}
+    for g in grp.getgrall():
+        groups[g.gr_name] = g.gr_gid
+    return groups
+
+
 def userdel(uname):
+    try:
+        pwd.getpwnam(uname)
+    except KeyError:
+        # user doesn't exist
+        return
+
     return run_command([USERDEL, '-r', uname])
+
+
+def groupdel(groupname):
+    try:
+        return run_command([GROUPDEL, groupname])
+    except CommandException, e:
+        if (e.rc != 6):
+            raise e
 
 
 def get_epasswd(username):
@@ -91,9 +105,23 @@ def update_shell(username, shell):
     return run_command([USERMOD, '-s', shell, username])
 
 
-def useradd(username, uid, shell):
-    return run_command([USERADD, '-s', shell, '-m', '-u', str(uid),
-                        username])
+def useradd(username, shell, uid=None, gid=None):
+    cmd = [USERADD, '-s', shell, '-m', username]
+    if (uid is not None):
+        cmd.insert(-1, '-u')
+        cmd.insert(-1, str(uid))
+    if (gid is not None):
+        cmd.insert(-1, '-g')
+        cmd.insert(-1, str(gid))
+    return run_command(cmd)
+
+
+def groupadd(groupname, gid=None):
+    cmd = ([GROUPADD, groupname])
+    if (gid is not None):
+        cmd.insert(-1, '-g')
+        cmd.insert(-1, gid)
+    return run_command(cmd)
 
 
 def add_ssh_key(username, key):

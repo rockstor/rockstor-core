@@ -33,7 +33,8 @@ def register_services():
         'Replication': 'replication',
         'Task Scheduler': 'task-scheduler',
         'Data Collector': 'data-collector',
-        'Service Monitor': 'service-monitor', }
+        'Service Monitor': 'service-monitor',
+        'SNMP': 'snmpd', }
 
     for s in services.keys():
         if (not Service.objects.filter(display_name=s).exists()):

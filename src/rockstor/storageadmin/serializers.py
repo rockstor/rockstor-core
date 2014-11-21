@@ -22,7 +22,8 @@ from storageadmin.models import (Disk, Pool, Share, Snapshot, NFSExport,
                                  SupportCase, DashboardConfig,
                                  NetworkInterface, User, PoolScrub, Setup,
                                  NFSExportGroup, SFTP, Plugin, InstalledPlugin,
-                                 AdvancedNFSExport, OauthApp, NetatalkShare)
+                                 AdvancedNFSExport, OauthApp, NetatalkShare,
+                                 Group)
 from django.contrib.auth.models import User as DjangoUser
 
 
@@ -70,8 +71,18 @@ class AdvancedNFSExportSerializer(serializers.ModelSerializer):
 
 
 class SUserSerializer(serializers.ModelSerializer):
+    groupname = serializers.CharField(source='groupname')
+
     class Meta:
         model = User
+        fields = ('username', 'uid', 'gid', 'user', 'public_key', 'admin',
+                  'group', 'groupname', 'shell',)
+
+
+class GroupSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Group
 
 
 class UserSerializer(serializers.ModelSerializer):
