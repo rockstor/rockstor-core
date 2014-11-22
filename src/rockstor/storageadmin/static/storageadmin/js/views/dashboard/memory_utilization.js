@@ -31,11 +31,9 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.dashboard_widgets_memory_utilization;
     this.updateFreq = 1000;
-    this.dataBuffer = [];
     this.dataLength = 60;
     this.windowLength = 60000;
     this.currentTs = null;
-    //this.emptyData = {"id": 0, "total": 0, "free": 0, "buffers": 0, "cached": 0, "swap_total": 0, "swap_free": 0, "active": 0, "inactive": 0, "dirty": 0, "ts": "2013-07-17T00:00:16.109Z"};
     this.t2 = RockStorGlobals.currentTimeOnServer.getTime()-30000;
     //this.t2 = new Date('2013-12-03T17:18:06.312Z').getTime();
     this.t1 = this.t2 - this.windowLength;
@@ -83,6 +81,7 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
   },
 
   displayMemoryUtilization: function(svgEl) {
+    this.dataBuffer = [];
     this.used = { name: 'used', values: [] };
     this.cached = { name: 'cached', values: [] };
     this.buffers = { name: 'buffers', values: [] };
@@ -329,11 +328,13 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
     _.each(data.results, function(d) {
       d.date = new Date(d.ts);
       d.used = d.total - d.cached - d.buffers - d.free;
-      _this.dataBuffer.push(d);
-      _this.used.values.push({date: d.date, y: d.used/d.total});
-      _this.cached.values.push({date: d.date, y: d.cached/d.total});
-      _this.buffers.values.push({date: d.date, y: d.buffers/d.total});
-      _this.free.values.push({date: d.date, y: d.free/d.total});
+      if (_this.dataBuffer.length == 0 || (d.ts != _this.dataBuffer[_this.dataBuffer.length - 1].ts)) {
+        _this.dataBuffer.push(d);
+        _this.used.values.push({date: d.date, y: d.used/d.total});
+        _this.cached.values.push({date: d.date, y: d.cached/d.total});
+        _this.buffers.values.push({date: d.date, y: d.buffers/d.total});
+        _this.free.values.push({date: d.date, y: d.free/d.total});
+      }
     });
     _this.swapFree = data.results[data.results.length - 1].swap_free;
     _this.swapTotal = data.results[data.results.length - 1].swap_total;
@@ -354,7 +355,6 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
         this.free.values.shift();
       }
     } 
-
   },
 
   download: function(event) {
@@ -390,6 +390,7 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
     }
     this.$('#mem-util-chart').empty();
     this.$('#swap-util-chart').empty();
+    this.dataBuffer = [];
     this.displayMemoryUtilization('#mem-util-chart');
 
   }

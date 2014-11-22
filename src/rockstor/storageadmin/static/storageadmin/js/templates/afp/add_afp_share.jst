@@ -5,7 +5,7 @@
 <%}%>
 <div class="row-fluid">
   <div class="span8">
-    <label class="control-label"><span class="required">*</span> indicates required fields</label>
+    <label class="control-label"></label>
     <div class="form-box">
       <form id="add-afp-share-form" name="aform" class="form-horizontal">
         <div class="messages"></div>
@@ -14,7 +14,7 @@
         <div class="control-group">
           <label class="control-label" for="shares">Shares to export via afp<span class="required">*</span></label>
           <div class="controls">
-            <select name="shares" id="shares" size="10" multiple data-placeholder="Select shares">
+            <select name="shares" id="shares" size="10" class='required' multiple data-placeholder="Select shares" >
             <% if (afpShareId!=null) {  %>
             <option value="<%= afpShare.get('share')%>" selected="selected"> <%= afpShare.get('share') %></option>
             <% } %>
