@@ -63,11 +63,7 @@ class ShareCommandView(rfc.GenericView):
             handle_exception(Exception(e_msg), request)
 
         if (command == 'clone'):
-            new_name = request.DATA['name']
-            if (Share.objects.filter(name=new_name).exists()):
-                e_msg = ('Share with name: %s already exists.' % new_name)
-                handle_exception(Exception(e_msg), request)
-            pool_device = Disk.objects.filter(pool=share.pool)[0].name
+            new_name = request.DATA.get('name', '')
             return create_clone(share, new_name, request, logger)
 
         elif (command == 'rollback'):
