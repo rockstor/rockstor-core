@@ -70,11 +70,17 @@ ConfigureServiceView = RockstorLayoutView.extend({
             }
           }
         }
+      },
+      docker:{
+    	  rootshare: 'required'
       }
     }
     this.formName = this.serviceName + '-form';
     this.service = new Service({name: this.serviceName});
     this.dependencies.push(this.service);
+    this.shares = new ShareCollection();
+    this.dependencies.push(this.shares);
+ 
   },
 
   render: function() {
@@ -89,7 +95,7 @@ ConfigureServiceView = RockstorLayoutView.extend({
     if (config != null) {
       configObj = JSON.parse(this.service.get('config'));
     }
-    $(this.el).html(this.template({service: this.service, config: configObj}));
+    $(this.el).html(this.template({service: this.service, config: configObj, shares: this.shares}));
 
     this.$('#nis-form :input').tooltip({
     	html: true,
@@ -106,6 +112,11 @@ ConfigureServiceView = RockstorLayoutView.extend({
     this.$('#ntpd-form :input').tooltip({
     	html: true,
         placement: 'right',
+    });
+    this.$('#docker-form #root_share').tooltip({
+    	html: true,
+        placement: 'right',
+        title: 'Please select root share.'
     });
     this.$('#winbind-form #domain').tooltip({
       html: true,
