@@ -18,24 +18,62 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework.response import Response
 from storageadmin.util import handle_exception
-from system.services import init_service_op, systemctl
-from system.nis import configure_nis
+from system.services import systemctl
 from django.db import transaction
 from base_service import BaseServiceView
 from smart_manager.models import Service
+from django.conf import settings
+from storageadmin.models import (Share, Disk)
+from fs.btrfs import (mount_share, is_share_mounted)
+import re
+import shutil
 
 import logging
 logger = logging.getLogger(__name__)
 
 
 class DockerServiceView(BaseServiceView):
+    name = 'docker'
 
+    def _validate_root(self, request, root):
+        try:
+            return Share.objects.get(name=root)
+        except Exception, e:
+            logger.exception(e)
+            e_msg = ('Share(%s) does not exist' % root)
+            handle_exception(Exception(e_msg), request)
+
+    @transaction.commit_on_success
     def post(self, request, command):
-        service = Service.objects.get(name='docker')
+        service = Service.objects.get(name=self.name)
+
         if (command == 'config'):
-            pass
+            config = request.DATA.get('config', None)
+            root_share = config['root_share']
+            self._validate_root(request, root_share)
+            self._save_config(service, config)
+
         elif (command == 'start'):
-            pass
+            config = self._get_config(service)
+            share = self._validate_root(request, config['root_share'])
+            mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
+            if (not is_share_mounted(share.name)):
+                pool_device = Disk.objects.filter(pool=share.pool)[0].name
+                mount_share(share.subvol_name, pool_device, mnt_pt)
+
+            inf = ('%s/docker.service' % (settings.CONFROOT))
+            outf = '/etc/systemd/system/docker.service'
+            with open(inf) as ino, open(outf, 'w') as outo:
+                for l in ino.readlines():
+                    if (re.match('ExecStart=', l) is not None):
+                        outo.write('%s%s\n' % (l, share.name))
+                    else:
+                        outo.write(l)
+            socket_file = ('%s/docker.socket' % (settings.CONFROOT))
+            shutil.copy(socket_file, '/etc/systemd/system/docker.socket')
+            systemctl(self.name, 'enable')
+            systemctl(self.name, 'start')
         elif (command == 'stop'):
-            pass
+            systemctl(self.name, 'stop')
+            systemctl(self.name, 'disable')
         return Response()
