@@ -37,45 +37,35 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     this.dependencies.push(this.pool);
     this.disks = new DiskCollection();
     this.disks.pageSize = RockStorGlobals.maxPageSize;
-    this.statusPollInterval = 5000;
   },
 
   events: {
     'click #delete-pool': 'deletePool',
     'click #scrub-pool-start': 'scrubPoolStart',
-    'click #scrub-pool-stop': 'scrubPoolStop',
+    'click #scrub-pool-refresh': 'scrubPoolRefresh',
   },
 
   render: function() {
+    this.getScrubStatus();
     this.fetch(this.renderSubViews, this);
-    this.pollScrubStatus();
     return this;
   },
 
-  pollScrubStatus: function() {
-    var _this = this;
-    _this.statusIntervalId = window.setInterval(function() {
-      return function() {
-        $.ajax({
-	  url: '/api/pools/' + _this.pool.get('name') + '/scrub/status',
-          type: 'POST',
-          success: function(data, textStatus, jqXHR) {
-            var scrubStatus = 'finished';
-            var scrubPercent = 100
-            if (data != null) {
-              scrubStatus = data.status;
-              scrubPercent = data.kb_scrubbed;
-	    }
-            _this.$('#ph-scrub-button').html(_this.scrubTemplate({status: scrubStatus,
-								  percent: scrubPercent}));
-          },
-          error: function(xhr, status, error) {
-            var buttons = _this.$('.scrub_button');
-            disableButton(buttons);
-	  }
-	});
-      };
-    }(), this.statusPollInterval);
+  getScrubStatus: function() {
+    this.scrubStatus = 'finished';
+    this.scrubPercent = 100;
+    $.ajax({
+      url: '/api/pools/' + this.pool.get('poolName') + '/scrub/status',
+      type: 'POST',
+      success: function(data, textStatus, jqXHR) {
+        if (data != null) {
+            this.scrubStatus = data.status;
+            this.scrubPercent = data.kb_scrubbed;
+        }
+      },
+      error: function(xhr, status, error) {
+      }
+    });
   },
 
   renderSubViews: function() {
@@ -86,6 +76,8 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     this.pool.on('change', this.subviews['pool-usage'].render, this.subviews['pool-usage']);
     this.$('#ph-pool-info').append(this.subviews['pool-info'].render().el);
     this.$('#ph-pool-usage').append(this.subviews['pool-usage'].render().el);
+    this.$('#ph-scrub-button').html(this.scrubTemplate({status: this.scrubStatus,
+		  percent: this.scrubPercent}));
     this.attachActions();
   },
 
@@ -152,7 +144,6 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
   },
 
   deletePool: function() {
-    var _this = this;
     var button = this.$('#delete-pool');
     if (buttonDisabled(button)) return false;
     if(confirm("Delete pool: "+ this.pool.get('name') + "... Are you sure?")){
@@ -173,13 +164,15 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
   },
 
   scrubPoolStart: function() {
-    var _this = this;
-    var button = this.$('#scrub-pool-start');
-    if (buttonDisabled(button)) return false;
-    disableButton(button);
     $.ajax({
-      url: '/api/pools/'+_this.pool.get('name')+'/scrub',
+      url: '/api/pools/'+this.pool.get('name')+'/scrub',
       type: 'POST',
+      success: function() {
+        this.scrubStatus = 'started';
+        this.scrubPercent = 0;
+        this.$('#ph-scrub-button').html(this.scrubTemplate({status: this.scrubStatus,
+            percent: this.scrubPercent}));
+      },
       error: function(jqXHR) {
       }
     });
@@ -191,7 +184,10 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     }
   },
 
-  scrubPoolStop: function() {
+  scrubPoolRefresh: function() {
+    this.getScrubStatus();
+    this.$('#ph-scrub-button').html(this.scrubTemplate({status: this.scrubStatus,
+        percent: this.scrubPercent}));
   },
 
 });
