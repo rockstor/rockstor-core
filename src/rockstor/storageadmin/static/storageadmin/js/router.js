@@ -85,6 +85,8 @@ var AppRouter = Backbone.Router.extend({
     "add-afp-share": "addAFPShare",
     "afp/edit/:afpShareId": "editAFPShare",
     "plugins": "showPlugins",
+    "rockons": "showRockons",
+    "diy": "showDiy",
     "appliances": "showAppliances",
     "add-appliance": "addAppliance",
     "access-keys": "showAccessKeys",
@@ -630,6 +632,22 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').append(this.currentLayout.render().el);
   },
 
+  showRockons: function() {
+	    this.renderSidebar("rockons", "rockons");
+	    this.cleanup();
+	    this.currentLayout = new RockonsView();
+	    $('#maincontent').empty();
+	    $('#maincontent').append(this.currentLayout.render().el);
+	  },
+	  
+	showDiy: function() {
+		    this.renderSidebar("rockons", "diy");
+		    this.cleanup();
+		    this.currentLayout = new DiyView();
+		    $('#maincontent').empty();
+		    $('#maincontent').append(this.currentLayout.render().el);
+		  },
+		  
   showAppliances: function() {
     this.renderSidebar("system", "appliances");
     this.cleanup();
