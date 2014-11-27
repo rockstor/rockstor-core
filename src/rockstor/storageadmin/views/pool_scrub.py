@@ -72,8 +72,18 @@ class PoolScrubView(rfc.GenericView):
             if ((PoolScrub.objects.filter(pool=pool,
                                           status__regex=r'(started|running)')
                  .exists())):
-                e_msg = ('Active scrub exists for the pool: %s' % pname)
-                handle_exception(Exception(e_msg), request)
+                force = request.DATA.get('force', False)
+                if (force):
+                    p = PoolScrub.objects.filter(
+                        pool=pool,
+                        status__regex=r'(started|running)').order_by('-id')[0]
+                    p.status = 'terminated'
+                    p.save()
+                else:
+                    e_msg = ('A Scrub process is already running for '
+                             'pool(%s). If you really want to kill it '
+                             'and start a new scrub, use force option' % pname)
+                    handle_exception(Exception(e_msg), request)
 
             scrub_pid = scrub_start(pname, disk.name)
             ps = PoolScrub(pool=pool, pid=scrub_pid)
