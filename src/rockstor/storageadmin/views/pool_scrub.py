@@ -29,6 +29,7 @@ from datetime import timedelta
 import logging
 logger = logging.getLogger(__name__)
 
+
 class PoolScrubView(rfc.GenericView):
     serializer_class = PoolScrubSerializer
 
@@ -59,14 +60,13 @@ class PoolScrubView(rfc.GenericView):
                     return Response()
                 if (ps.status == 'started' or ps.status == 'running'):
                     cur_status = scrub_status(pname, disk.name)
-                    ps.status = cur_status['status']
                     if (cur_status['status'] == 'finished'):
                         duration = int(cur_status['duration'])
-                        ps.end_time = (ps.start_time +
-                                       timedelta(seconds=duration))
-                        ps.kb_scrubbed = cur_status['kb_scrubbed']
-                        ps.errors = cur_status['errors']
-                        ps.save()
+                        cur_status['end_time'] = (ps.start_time +
+                                                  timedelta(seconds=duration))
+                        del(cur_status['duration'])
+                    PoolScrub.objects.filter(id=ps.id).update(**cur_status)
+
                 return Response(PoolScrubSerializer(ps).data)
 
             if ((PoolScrub.objects.filter(pool=pool,
