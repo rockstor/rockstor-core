@@ -16,11 +16,12 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-import re
 from osi import run_command
 import collections
 Image = collections.namedtuple('Image', 'repository tag image_id created '
                                'virt_size')
+Container = collections.namedtuple('Container', 'container_id image command '
+                                   'created status ports name')
 
 DOCKER = '/usr/bin/docker'
 
@@ -28,15 +29,21 @@ DOCKER = '/usr/bin/docker'
 def image_list():
     images = []
     o, e, rc = run_command([DOCKER, 'images', ])
-    for l in o[:-1]:
-        if (re.match('REPOSITORY', l) is not None):
-            continue
-        cur_disk = Image(l[0:20].strip(), l[20:40].strip(),
-                         l[40:60].strip(), l[60:80].strip(),
-                         l[80:].strip())
-        images.append(cur_disk)
+    for l in o[1:-1]:
+        cur_image = Image(l[0:20].strip(), l[20:40].strip(),
+                          l[40:60].strip(), l[60:80].strip(),
+                          l[80:].strip())
+        images.append(cur_image)
     return images
 
 
 def container_list():
-    pass
+    containers = []
+    o, e, rc = run_command([DOCKER, 'ps', '-a', ])
+    for l in o[1:-1]:
+        cur_con = Container(l[0:20].strip(), l[20:40].strip(),
+                            l[40:60].strip(), l[60:80].strip(),
+                            l[80:100].strip(), l[100:120].strip(),
+                            l[120:].strip())
+        containers.append(cur_con)
+    return containers

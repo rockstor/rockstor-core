@@ -18,13 +18,22 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import rest_framework_custom as rfc
 from storageadmin.serializers import DockerContainerSerializer
+from system.docker import container_list
+from storageadmin.models import DockerContainer
 
 
 class DockerContainerView(rfc.GenericView):
     serializer_class = DockerContainerSerializer
 
     def get_queryset(self, *args, **kwargs):
-        pass
+        containers = []
+        for con in container_list():
+            cc = DockerContainer(container_id=con.container_id,
+                                 image=con.image, command=con.command,
+                                 created=con.created, status=con.status,
+                                 ports=con.ports, name=con.name)
+            containers.append(cc)
+        return containers
 
     def post(self, request):
         pass

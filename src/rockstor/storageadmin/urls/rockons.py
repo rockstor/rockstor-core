@@ -17,10 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf.urls import patterns, url
-from storageadmin.views import DockerImageView
+from storageadmin.views import (DockerImageView, DockerContainerView)
 
 
 urlpatterns = patterns(
     '',
     url(r'^/docker/images$', DockerImageView.as_view(),),
+    url(r'^/docker/containers$', DockerContainerView.as_view(),),
     )

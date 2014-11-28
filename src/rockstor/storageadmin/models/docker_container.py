@@ -17,12 +17,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.db import models
-from storageadmin.models import DockerImage
 
 
 class DockerContainer(models.Model):
-    name = models.CharField(max_length=1024, unique=True)
-    image = models.ForeignKey(DockerImage)
+    container_id = models.CharField(max_length=1024, null=True)
+    image = models.CharField(max_length=1024, null=True)
+    command = models.CharField(max_length=1024, null=True)
+    created = models.CharField(max_length=1024, null=True)
+    status = models.CharField(max_length=1024, null=True)
+    ports = models.CharField(max_length=1024, null=True)
+    name = models.CharField(max_length=1024, null=True)
 
     class Meta:
         app_label = 'storageadmin'
