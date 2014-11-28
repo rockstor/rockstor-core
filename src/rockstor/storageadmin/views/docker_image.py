@@ -18,13 +18,21 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import rest_framework_custom as rfc
 from storageadmin.serializers import DockerImageSerializer
+from system.docker import image_list
+from storageadmin.models import DockerImage
 
 
 class DockerImageView(rfc.GenericView):
     serializer_class = DockerImageSerializer
 
     def get_queryset(self, *args, **kwargs):
-        pass
+        images = []
+        for image in image_list():
+            ci = DockerImage(repository=image.repository,
+                             tag=image.tag, image_id=image.image_id,
+                             virt_size=image.virt_size)
+            images.append(ci)
+        return images
 
     def post(self, request):
         pass

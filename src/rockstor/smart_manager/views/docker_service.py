@@ -66,7 +66,7 @@ class DockerServiceView(BaseServiceView):
             with open(inf) as ino, open(outf, 'w') as outo:
                 for l in ino.readlines():
                     if (re.match('ExecStart=', l) is not None):
-                        outo.write('%s%s\n' % (l, share.name))
+                        outo.write('%s%s\n' % (l.strip(), share.name))
                     else:
                         outo.write(l)
             socket_file = ('%s/docker.socket' % (settings.CONFROOT))

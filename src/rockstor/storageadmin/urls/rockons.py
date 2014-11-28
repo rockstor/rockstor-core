@@ -16,14 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from django.db import models
+from django.conf.urls import patterns, url
+from storageadmin.views import DockerImageView
 
 
-class DockerImage(models.Model):
-    repository = models.CharField(max_length=4096, null=True)
-    tag = models.CharField(max_length=4096, null=True)
-    image_id = models.CharField(max_length=1024, null=True)
-    virt_size = models.IntegerField(default=0)
-
-    class Meta:
-        app_label = 'storageadmin'
+urlpatterns = patterns(
+    '',
+    url(r'^/docker/images$', DockerImageView.as_view(),),
+    )

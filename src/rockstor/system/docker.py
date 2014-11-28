@@ -16,14 +16,27 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from django.db import models
+import re
+from osi import run_command
+import collections
+Image = collections.namedtuple('Image', 'repository tag image_id created '
+                               'virt_size')
+
+DOCKER = '/usr/bin/docker'
 
 
-class DockerImage(models.Model):
-    repository = models.CharField(max_length=4096, null=True)
-    tag = models.CharField(max_length=4096, null=True)
-    image_id = models.CharField(max_length=1024, null=True)
-    virt_size = models.IntegerField(default=0)
+def image_list():
+    images = []
+    o, e, rc = run_command([DOCKER, 'images', ])
+    for l in o[:-1]:
+        if (re.match('REPOSITORY', l) is not None):
+            continue
+        cur_disk = Image(l[0:20].strip(), l[20:40].strip(),
+                         l[40:60].strip(), l[60:80].strip(),
+                         l[80:].strip())
+        images.append(cur_disk)
+    return images
 
-    class Meta:
-        app_label = 'storageadmin'
+
+def container_list():
+    pass
