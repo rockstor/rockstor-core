@@ -323,33 +323,26 @@ def scrub_resume(mnt_pt):
 
 
 def scrub_status(pool_name, pool_device):
-    stats = {}
+    stats = {'status': 'unknown', }
     mnt_pt = mount_root(pool_name, '/dev/' + pool_device)
-    out, err, rc = run_command([BTRFS, 'scrub', 'status', mnt_pt])
-    if (len(out) > 2):
-        if (out[1].strip() == 'no stats available'):
+    out, err, rc = run_command([BTRFS, 'scrub', 'status', '-R', mnt_pt])
+    if (len(out) > 1):
+        if (re.search('running', out[1]) is not None):
             stats['status'] = 'running'
+        elif (re.search('finished', out[1]) is not None):
+            stats['status'] = 'finished'
+            stats['duration'] = int(out[1].split()[-2])
+        else:
             return stats
-        stats['duration'] = out[1].strip().split()[-2]
-        fields = out[2].strip().split()
-        stats['errors'] = fields[-2]
-        mult_factor = 1
-        if (fields[3][-2:] == 'MB'):
-            mult_factor = 1024
-            kb_scrubbed = fields[3][:-2]
-        if (fields[3][-3:] == 'MiB'):
-            mult_factor = 1024
-            kb_scrubbed = fields[3][:-3]
-        elif (fields[3][-2:] == 'GB'):
-            mult_factor = 1024 ** 2
-            kb_scrubbed = fields[3][:-2]
-        elif (fields[3][-2:] == 'TB'):
-            mult_factor = 1024 ** 3
-            kb_scrubbed = fields[3][:-2]
-        stats['kb_scrubbed'] = int(float(kb_scrubbed) * mult_factor)
-        stats['status'] = 'finished'
+    else:
         return stats
-    return {'status': 'unknown', }
+    for l in out[2:-1]:
+        fields = l.strip().split(': ')
+        if (fields[0] == 'data_bytes_scrubbed'):
+            stats['kb_scrubbed'] = int(fields[1]) / 1024
+        else:
+            stats[fields[0]] = int(fields[1])
+    return stats
 
 
 def device_scan():
