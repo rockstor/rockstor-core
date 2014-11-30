@@ -104,8 +104,7 @@ NfsShareClientView = Backbone.View.extend({
         }
       },
       error: function(request, status, error) {
-        console.log(error);
-      }
+     }
     });
   },
 

@@ -63,6 +63,7 @@ AddSFTPShareView = RockstorLayoutView.extend({
     this.$('#shares').chosen();
     
     $('#add-sftp-share-form :input').tooltip();
+    $.validator.setDefaults({ ignore: ":hidden:not(select)" });
     
     $('#add-sftp-share-form').validate({
       onfocusout: false,
@@ -80,7 +81,6 @@ AddSFTPShareView = RockstorLayoutView.extend({
         } else {
          data['read_only'] = true;
         } 
-        console.log(data);
         disableButton(button);
         $.ajax({
           url: '/api/sftp',

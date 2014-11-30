@@ -63,7 +63,6 @@ NfsShareClientDistribView = Backbone.View.extend({
 
     this.$(".selectedAttr").click(function() {
       var val = $(this).val();
-      console.log(val + " clicked");
       if ($(this).is(':checked')) {
         if (_this.selAttrs.indexOf(val) == -1) {
           _this.selAttrs.push(val);
@@ -74,21 +73,18 @@ NfsShareClientDistribView = Backbone.View.extend({
           _this.selAttrs.splice(i, 1);
         }
       }
-      console.log(_this.selAttrs);
-      _this.$("#selectedAttrs").html(_this.selAttrs.join(","));
+        _this.$("#selectedAttrs").html(_this.selAttrs.join(","));
     });
 
     this.$("input:radio[name=selectedRoot]").click(function() {
       var value = $(this).val();
-      console.log("root  = " + value);
-      if (value == "Clients") {
+       if (value == "Clients") {
         _this.$("#selectedRootName").html("Clients");
         _this.$("#selectedChildName").html("Shares");
       } else {
         _this.$("#selectedRootName").html("Shares");
         _this.$("#selectedChildName").html("Clients");
       }
-      console.log("setting treeType to " + _this.treeType);
       _this.treeType = $(this).attr("data-treetype");
     });
     
@@ -169,7 +165,6 @@ NfsShareClientDistribView = Backbone.View.extend({
       this.ts, 
       this.updateInterval
     );
-    console.log("dataUrl is " + dataUrl); 
     // update current timestamp by updateInterval
     this.ts = this.getDateAfter(this.ts, this.updateInterval*1000);
     // get data and render every updateInterval seconds
@@ -189,7 +184,6 @@ NfsShareClientDistribView = Backbone.View.extend({
           _this.renderViz();
         },
         error: function(request, status, error) {
-          console.log(error);
         }
       });
     }, this.updateInterval);

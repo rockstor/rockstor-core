@@ -68,6 +68,9 @@ EditNFSExportView = RockstorLayoutView.extend({
     }));
     this.$('#shares').chosen();
     this.$('#edit-nfs-export-form :input').tooltip({placement: 'right'});
+    
+    $.validator.setDefaults({ ignore: ":hidden:not(select)" });
+    
     this.$('#edit-nfs-export-form').validate({
       onfocusout: false,
       onkeyup: false,

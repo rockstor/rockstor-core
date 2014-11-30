@@ -23,7 +23,7 @@
 
 <div class="row-fluid">
   <div class="span8">
-    <label class="control-label"><span class="required">*</span> indicates required fields</label>
+    <label class="control-label"></label>
     <div class="form-box">
       <form name="add-pool-form" id="add-pool-form" class="form-horizontal">
         <div class="messages"></div>
@@ -46,9 +46,11 @@
             </select>
           </div>
         </div>
+          <div id="SelectedDisksTable"> </div>
         <div class="control-group">
           <label class="control-label" for="disks">Select disks<span class="required"> *</span></label>
           <div class="controls">
+          
             <table id="disks-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of disks">
               <thead>
                 <tr>
@@ -60,19 +62,18 @@
               </thead>
               <tbody>
                 <% disks.each(function(disk, index) { %>
-                  <% if (_.isNull(disk.get('pool')) && !disk.get('parted') && !disk.get('offline') && _.isNull(disk.get('btrfs_uuid'))) { %>
-                    <tr>
+                     <tr>
                       <td><%= index+1 %></td>
                       <td><%= disk.get('name') %></td>
                       <td><%= humanize.filesize(disk.get('size')*1024) %></td>
                       <td>
-                        <input type="checkbox" class="disk" name="<%= disk.get('name') %>" id="<%= disk.get('name') %>" value="<%= disk.get('name') %>" title="select disk">
+                        <input type="checkbox" class="disk" name="<%= disk.get('name') %>" id="<%= disk.get('id') %>" value="<%= disk.get('name') %>" >
                       </td>
                     </tr>
-                  <% } %>
-                <% }); %>
+                  <% }); %>
               </tbody>
             </table>
+           <div class="pagination-ph"> </div>
           </div>
         </div>
         <div class="control-group">

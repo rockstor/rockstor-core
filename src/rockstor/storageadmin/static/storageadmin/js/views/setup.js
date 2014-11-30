@@ -165,7 +165,6 @@ SetupView = RockstorLayoutView.extend({
               msg = JSON.parse(msg).detail;
             } catch(err) {
             }
-            console.log(msg);
           }
         }
       );

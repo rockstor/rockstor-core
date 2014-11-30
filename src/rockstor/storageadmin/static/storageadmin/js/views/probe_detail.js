@@ -110,9 +110,7 @@ ProbeDetailView = RockstorLayoutView.extend({
     });
     if (tmp) {
       var viewName = tmp.view;
-      console.log("probe viz view name is ");
-      console.log(viewName);
-
+      
       this.probeVizClass = window[viewName];
 
     } else {
@@ -158,9 +156,6 @@ ProbeDetailView = RockstorLayoutView.extend({
     } else {
       // user is loading this page after the probe has completed.
       if (this.probeVizClass) {
-        console.log("rendering probe viz");
-        console.log(this.probeRun.get("start"));
-        console.log(this.probeRun.get("end"));
         this.probeVizView = new this.probeVizClass({
           probe: this.probeRun
         });

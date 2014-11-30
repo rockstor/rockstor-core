@@ -52,10 +52,8 @@ AccessKeysView = RockstorLayoutView.extend({
     var _this = this;
     var button = $(event.currentTarget);
     if (buttonDisabled(button)) return false;
-    console.log(button);
     var name = button.attr('data-name');
-    console.log(name);
-    if(confirm("Delete access key:  " + name + " ...Are you sure?")){
+     if(confirm("Delete access key:  " + name + " ...Are you sure?")){
       disableButton(button);
       $.ajax({
         url: "/api/oauth_app/" + name,

@@ -63,10 +63,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
       maximized: this.maximized
     }));
     this.fetch(function() {
-      console.log(_this.disks);
-      console.log(_this.pools);
-      console.log(_this.shares);
-      _this.setData();
+        _this.setData();
       _this.setDimensions();
       _this.setupSvg();
       _this.renderMetrics();

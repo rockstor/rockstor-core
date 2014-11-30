@@ -64,7 +64,6 @@ LoginView = Backbone.View.extend({
           var username = _this.$("#username").val();
           var password = _this.$("#password").val();
           RockStorGlobals.hostname = _this.$('#hostname').val();
-          console.log('hostname is ' + RockStorGlobals.hostname);
             
           var setupUserModel = Backbone.Model.extend({
             urlRoot: "/setup_user",
@@ -177,7 +176,6 @@ LoginView = Backbone.View.extend({
               msg = JSON.parse(msg).detail;
             } catch(err) {
             }
-            console.log(msg);
           }
         }
       );
