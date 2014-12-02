@@ -5,9 +5,21 @@
 <% } else { %>
 <li><a href="#rockons"> Rock-ons</a></li>
 <% } %>
-<% if (selected == "diy") { %>
-<li><a href="#diy" class="selected">Diy</a></li>
-<% } else { %>
-<li><a href="#diy">Diy</a></li>
-<% } %>
+<li>
+<div class="subnav">
+<i class="fa fa-puzzle-piece"></i> Diy
+  <ul>
+    <% if (selected == "images") { %>
+      <li><a href="#images" class="selected"> images</a></li>
+    <% } else { %>
+    <li><a href="#images" > images</a></li>
+    <% } %>
+    <% if (selected == "containers") { %>
+      <li><a href="#containers" class="selected"> containers</a></li>
+    <% } else { %>
+    <li><a href="#containers" > containers</a></li>
+    <% } %>
+  </ul>
+</div>
+</li>
 </ul>

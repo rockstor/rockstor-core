@@ -24,23 +24,26 @@
  * 
  */
 
-DiyView = RockstorLayoutView.extend({
+ContainersView = RockstorLayoutView.extend({
   
 
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
-    this.template = window.JST.rockons_diy;
+    this.template = window.JST.rockons_containers;
+    this.collection = new ContainerCollection();
+    this.dependencies.push(this.collection);
+    this.collection.on("reset", this.renderContainers, this);
    
   },
 
   render: function() {
-    this.fetch(this.renderRockons, this);
+    this.collection.fetch();
     return this;
   },
 
-  renderRockons: function() {
+  renderContainers: function() {
 	    var _this = this;
-	    $(this.el).html(this.template());
+	    $(this.el).html(this.template({collection: this.collection}));
   },
 
   

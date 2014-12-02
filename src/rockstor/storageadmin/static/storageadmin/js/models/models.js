@@ -81,6 +81,28 @@ var ShareCollection = RockStorPaginatedCollection.extend({
   baseUrl: '/api/shares'
 });
 
+var Image = Backbone.Model.extend({
+	  url: function() {
+	    return '/api/rockons/' ;
+	  }
+	});
+
+var ImageCollection = RockStorPaginatedCollection.extend({
+	model: Image,
+  baseUrl: '/api/rockons/docker/images'
+});
+
+var Container = Backbone.Model.extend({
+	  url: function() {
+	    return '/api/rockons/' ;
+	  }
+	});
+
+var ContainerCollection = RockStorPaginatedCollection.extend({
+	model: Image,
+baseUrl: '/api/rockons/docker/containers'
+});
+
 var Snapshot = Backbone.Model.extend({
   url: function() {
     return '/api/shares/' + this.get('shareName') + '/' + this.get('snapName');			}

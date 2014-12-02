@@ -1,0 +1,25 @@
+<% if (!collection.isEmpty()) { %>
+  <table id="images-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of containers">
+    <thead>
+      <tr>
+        <th scope="col" abbr="Image">Image</th>
+	   <th scope="col" abbr="Command">Command</th>
+	   <th scope="col" abbr="Created">Created</th>
+	   <th scope="col" abbr="Status">status</th>
+       </tr>
+    </thead>
+    <tbody>
+      <% collection.each(function(image, index) { %>
+        <tr>
+          <td><%= image.get('image') %> </td>
+	      <td><%= image.get('command') %> </td>
+	      <td><%= image.get('created') %> </td>
+	      <td><%= image.get('status') %> </td>
+         </tr>
+      <% }); %>
+    </tbody>
+  </table>
+   </div>
+<% } else { %>
+  <h4>No images ..</h4>
+<% } %>
