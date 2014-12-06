@@ -37,6 +37,7 @@ class GenericView(generics.ListCreateAPIView):
 
     empty_error = u"Empty list and '%(class_name)s.allow_empty' is False."
     #overriding parent method to pass *args and **kwargs down to get_queryset
+
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset(*args, **kwargs)
         self.object_list = self.filter_queryset(queryset)
@@ -89,7 +90,4 @@ class GenericView(generics.ListCreateAPIView):
         except RockStorAPIException:
             raise
         except Exception, e:
-            if (msg is None):
-                msg = ('An unhandled low level exception occured while '
-                       'processing the request.')
             handle_exception(e, request, msg)

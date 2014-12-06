@@ -16,10 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-"""
-Oauth2 Access keys
-"""
-
 from rest_framework.response import Response
 from django.db import transaction
 from oauth2_provider.models import Application as OauthApplication
@@ -44,7 +40,7 @@ class OauthAppView(rfc.GenericView):
 
     @transaction.commit_on_success
     def post(self, request):
-        try:
+        with self._handle_exception(request):
             name = request.DATA['name']
             username = request.user.username
             if (OauthApp.objects.filter(name=name).exists()):
@@ -67,14 +63,9 @@ class OauthAppView(rfc.GenericView):
             oauth_app.save()
             return Response(OauthAppSerializer(oauth_app).data)
 
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)
-
     @transaction.commit_on_success
     def delete(self, request, name):
-        try:
+        with self._handle_exception(request):
             try:
                 app = OauthApp.objects.get(name=name)
             except:
@@ -84,7 +75,3 @@ class OauthAppView(rfc.GenericView):
             app.application.delete()
             app.delete()
             return Response()
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)

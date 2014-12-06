@@ -211,7 +211,7 @@ def get_default_interface():
     out, err, rc = run_command([ROUTE])
     for line in out:
         fields = line.split()
-        if (fields[0] == 'default'):
+        if (len(fields) > 0 and fields[0] == 'default'):
             return fields[-1]
     return None
 
@@ -289,7 +289,7 @@ def parse_ifcfg(config_file, config_d):
 
 def get_net_config_fedora(devices):
 
-    config_list = []
+    config_d = {}
     script_dir = ('/etc/sysconfig/network-scripts/')
     for d in devices:
         config = {'name': d,
@@ -303,44 +303,9 @@ def get_net_config_fedora(devices):
                   'dns_servers': None,
                   'domain': None, }
         config['mac'] = get_mac_addr(d)
-        for f in os.listdir(script_dir):
-            if (re.match('ifcfg-', f) is not None and
-                f != 'ifcfg-lo'):
-                full_path = ('%s/%s' % (script_dir, f))
-                config = parse_ifcfg(full_path, config)
-        config_list.append(config)
-    return config_list
-
-
-def get_net_config(device_name):
-    config = {'name': device_name,
-              'bootproto': None,
-              'onboot': None,
-              'network': None,
-              'netmask': None,
-              'ipaddr': None, }
-    config['mac'] = get_mac_addr(device_name)
-    try:
-        config_script = ('/etc/sysconfig/network-scripts/ifcfg-%s' %
-                         device_name)
-        with open(config_script) as cfo:
-            for l in cfo.readlines():
-                if (re.match('BOOTPROTO', l) is not None):
-                    config['bootproto'] = char_strip(l.strip().split('=')[1])
-                elif (re.match('ONBOOT', l) is not None):
-                    config['onboot'] = char_strip(l.strip().split('=')[1])
-                elif (re.match('IPADDR', l) is not None):
-                    config['ipaddr'] = char_strip(l.strip().split('=')[1])
-                elif (re.match('NETMASK', l) is not None):
-                    config['netmask'] = char_strip(l.strip().split('=')[1])
-                elif (re.match('NETWORK', l) is not None):
-                    config['network'] = char_strip(l.strip().split('=')[1])
-        if (config['bootproto'] == 'dhcp'):
-            config['ipaddr'] = get_ip_addr(device_name)
-    except:
-        pass
-    finally:
-        return config
+        config = parse_ifcfg('%s/ifcfg-%s' % (script_dir, d), config)
+        config_d[d] = config
+    return config_d
 
 
 def set_networking(hostname, default_gw):
