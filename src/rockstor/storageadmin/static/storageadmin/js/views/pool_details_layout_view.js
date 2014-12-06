@@ -32,7 +32,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     this.poolName = this.options.poolName;
     this.template = window.JST.pool_pool_details_layout;
     this.select_disks_template = window.JST.disk_select_disks_template;
-    this.scrubTemplate = window.JST.pool_pool_scrub;
+    this.pool_scrubs_list_template = window.JST.pool_pool_scrubs_list_template;
     this.pool = new Pool({poolName: this.poolName});
     this.dependencies.push(this.pool);
     this.disks = new DiskCollection();
@@ -40,9 +40,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
   },
 
   events: {
-    'click #delete-pool': 'deletePool',
-    'click #scrub-pool-start': 'scrubPoolStart',
-    'click #scrub-pool-refresh': 'scrubPoolRefresh',
+    'click #delete-pool': 'deletePool'
   },
 
   render: function() {
@@ -76,8 +74,6 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     this.pool.on('change', this.subviews['pool-usage'].render, this.subviews['pool-usage']);
     this.$('#ph-pool-info').append(this.subviews['pool-info'].render().el);
     this.$('#ph-pool-usage').append(this.subviews['pool-usage'].render().el);
-    this.$('#ph-scrub-button').html(this.scrubTemplate({status: this.scrubStatus,
-		  percent: this.scrubPercent}));
     this.attachActions();
   },
 
@@ -141,6 +137,45 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
       }
     });
     this.$('#resize-pool-form').overlay({ load: false });
+    
+    this.$('#pool-scrub-popup').click(function() {
+    	$.ajax({
+            url: '/api/pools/'+_this.pool.get('name')+'/scrub',
+            type: 'GET',
+            dataType: 'json',
+            contentType: 'application/json',
+            success: function(data, textStatus, jqXHR) {
+                console.log("scrub data: " + JSON.stringify(data));
+            	//var scrubData = JSON.parse(data);
+            	_this.$('#pool_scrub_list').html(_this.pool_scrubs_list_template({scrubs: data.results}));
+                _this.$('#alert-msg').empty();
+                $('#pool-scrub-form').overlay().load();
+            },
+            error: function(request, status, error) {
+              _this.$('#alert-msg').html("<font color='red'>"+request.responseText+"</font>");
+            }
+          });
+      });
+    this.$('#start-scrub').click(function() {
+    	var n = _this.$("#forcescrub:checked").val();
+    	var postdata = '';
+    	if(n == 'on') {
+    		postdata = '{"force": "true"}';
+    	}
+		console.log("force scrub: " + postdata);
+    	  $.ajax({
+    	      url: '/api/pools/'+_this.pool.get('name')+'/scrub',
+    	      type: 'POST',
+    	      data: postdata,
+    	      success: function() {
+    	        _this.$('#pool-scrub-form').overlay().close();
+    	      },
+    	      error: function(jqXHR) {
+    	        _this.$('#alert-msg').html("<font color='red'>"+jqXHR+"</font>");
+    	      }
+    	  });
+      });
+      this.$('#pool-scrub-form').overlay({ load: false });
   },
 
   deletePool: function() {
@@ -163,31 +198,9 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     }
   },
 
-  scrubPoolStart: function() {
-    $.ajax({
-      url: '/api/pools/'+this.pool.get('name')+'/scrub',
-      type: 'POST',
-      success: function() {
-        this.scrubStatus = 'started';
-        this.scrubPercent = 0;
-        this.$('#ph-scrub-button').html(this.scrubTemplate({status: this.scrubStatus,
-            percent: this.scrubPercent}));
-      },
-      error: function(jqXHR) {
-      }
-    });
-  },
-
   cleanup: function() {
     if (!_.isUndefined(this.statusIntervalId)) {
 	window.clearInterval(this.statusIntervalId);
     }
-  },
-
-  scrubPoolRefresh: function() {
-    this.getScrubStatus();
-    this.$('#ph-scrub-button').html(this.scrubTemplate({status: this.scrubStatus,
-        percent: this.scrubPercent}));
-  },
-
+  }
 });

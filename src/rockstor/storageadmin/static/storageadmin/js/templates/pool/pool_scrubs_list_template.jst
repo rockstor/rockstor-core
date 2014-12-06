@@ -1,0 +1,49 @@
+<script>
+/*
+ * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ * 
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ * 
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ */
+</script>
+
+<table id="scrubs-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of scrubs">
+  <thead>
+    <tr>
+      <th>Scrub Id</th>
+      <th>Status</th>
+      <th>Start Time</th>
+      <th>End Time</th>
+      <th>Data Scrubbed (kb)</th>
+    </tr>
+    <% _.each(scrubs, function(scrub) { %>
+    <tr>
+      <td><%= scrub.id %></td>
+      <td><%= scrub.status %></td>
+	  <td><%= scrub.start_time %></td>
+	  <td><%= scrub.end_time %></td>
+	  <td><%= scrub.kb_scrubbed %></td>
+    </tr>
+    <% }); %>
+  </thead>
+</table>
+  <table>
+    <tr>
+      <td width="10%">
+        <input type="checkbox" name="forcescrub" id="forcescrub">
+      </td>
+      <td width="90%">Force scrub start</td>
+    </tr>
+</table>
