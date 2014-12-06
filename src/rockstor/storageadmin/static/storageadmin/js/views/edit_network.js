@@ -59,8 +59,41 @@ EditNetworkView = RockstorLayoutView.extend({
       onfocusout: false,
       onkeyup: false,
       rules: {
-      },
-      messages: {
+        ipaddr: {
+          required: {
+            depends: function(element) {
+              return (_this.$('#boot_proto').val() == 'static')
+            }
+          }
+        },
+        netmask: {
+          required: {
+            depends: function(element) {
+              return (_this.$('#boot_proto').val() == 'static')
+            }
+          }
+        },
+        gateway: {
+          required: {
+            depends: function(element) {
+              return (_this.$('#boot_proto').val() == 'static')
+            }
+          }
+        },
+        domain: {
+          required: {
+            depends: function(element) {
+              return (_this.$('#boot_proto').val() == 'static')
+            }
+          }
+        },
+        dns_servers: {
+          required: {
+            depends: function(element) {
+              return (_this.$('#boot_proto').val() == 'static')
+            }
+          }
+        },
       },
       
       submitHandler: function() {
