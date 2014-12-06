@@ -36,20 +36,20 @@ class NetworkView(rfc.GenericView):
     serializer_class = NetworkInterfaceSerializer
 
     def get_queryset(self, *args, **kwargs):
-        self._net_scan()
         if ('iname' in kwargs):
             self.paginate_by = 0
             try:
                 return NetworkInterface.objects.get(name=kwargs['iname'])
             except:
                 return []
+        self._net_scan()
         return NetworkInterface.objects.all()
 
     @transaction.commit_on_success
     def _net_scan(self):
         default_if = get_default_interface()
-        config_list = get_net_config_fedora(network_devices())
-        for dconfig in config_list:
+        config_d = get_net_config_fedora(network_devices())
+        for dconfig in config_d.values():
             ni = None
             if (NetworkInterface.objects.filter(
                     name=dconfig['name']).exists()):
@@ -85,7 +85,14 @@ class NetworkView(rfc.GenericView):
                 except:
                     logger.error('Unable to update /etc/issue')
             ni.save()
-        devices = NetworkInterface.objects.all()
+        devices = []
+        for ni in NetworkInterface.objects.all():
+            if (ni.name not in config_d):
+                logger.debug('network interface(%s) does not exist in the '
+                             'system anymore. Removing from db' % (ni.name))
+                ni.delete()
+            else:
+                devices.append(ni)
         serializer = NetworkInterfaceSerializer(devices, many=True)
         return Response(serializer.data)
 
@@ -98,15 +105,15 @@ class NetworkView(rfc.GenericView):
             restart_network_interface(ni.name)
         except Exception, e:
             logger.exception(e)
-            e_msg = ('Failed to configure network interface: %s due'
-                     ' to a system error')
+            e_msg = ('Failed to configure network interface(%s) due'
+                     ' to a system error' % ni.name)
             handle_exception(Exception(e_msg), request)
 
     @transaction.commit_on_success
     def put(self, request, iname):
         with self._handle_exception(request):
             if (not NetworkInterface.objects.filter(name=iname).exists()):
-                e_msg = ('Interface with name: %s does not exist.' % iname)
+                e_msg = ('Netowrk interface(%s) does not exist.' % iname)
                 handle_exception(Exception(e_msg), request)
             ni = NetworkInterface.objects.get(name=iname)
 
@@ -137,7 +144,7 @@ class NetworkView(rfc.GenericView):
                          boot_proto)
                 handle_exception(Exception(e_msg), request)
             self._restart_wrapper(ni, request)
-            dconfig = get_net_config_fedora([ni.name])[0]
+            dconfig = get_net_config_fedora([ni.name])[ni.name]
             ni.boot_proto = dconfig['bootproto']
             ni.netmask = dconfig['netmask']
             ni.ipaddr = dconfig['ipaddr']

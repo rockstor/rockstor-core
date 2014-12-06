@@ -289,7 +289,7 @@ def parse_ifcfg(config_file, config_d):
 
 def get_net_config_fedora(devices):
 
-    config_list = []
+    config_d = {}
     script_dir = ('/etc/sysconfig/network-scripts/')
     for d in devices:
         config = {'name': d,
@@ -303,13 +303,9 @@ def get_net_config_fedora(devices):
                   'dns_servers': None,
                   'domain': None, }
         config['mac'] = get_mac_addr(d)
-        for f in os.listdir(script_dir):
-            if (re.match('ifcfg-', f) is not None and
-                f != 'ifcfg-lo'):
-                full_path = ('%s/%s' % (script_dir, f))
-                config = parse_ifcfg(full_path, config)
-        config_list.append(config)
-    return config_list
+        config = parse_ifcfg('%s/ifcfg-%s' % (script_dir, d), config)
+        config_d[d] = config
+    return config_d
 
 
 def get_net_config(device_name):
