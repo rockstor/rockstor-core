@@ -45,7 +45,8 @@ class DiskView(rfc.GenericView):
 
     def get_queryset(self, *args, **kwargs):
         #do rescan on get.
-        self._scan()
+        with self._handle_exception(self.request):
+            self._scan()
         if ('dname' in kwargs):
             self.paginate_by = 0
             try:

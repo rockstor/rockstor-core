@@ -430,6 +430,10 @@ def scan_disks(min_size):
             for i in range(0, len(dfields)):
                 if (dfields[i] == ''):
                     dfields[i] = None
+            if (dfields[0] in dnames):
+                raise Exception('Two disk drives found with the same name: '
+                                '%s. Rockstor does not support this '
+                                'configuration.' % dfields[0])
             dnames[dfields[0]] = dfields
     for d in dnames.keys():
         disks.append(Disk(*dnames[d]))
