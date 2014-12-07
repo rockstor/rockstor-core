@@ -21,8 +21,15 @@
 
 <h3>Configure network interface <%= network.get('name') %></h3>
 
+
 <div class="row-fluid">
   <div class="span8">
+    <% if (network.get('itype') == 'management') { %>
+      <div class="alert alert-error">
+        <h4>Warning! You are editing the Rockstor administration interface.</h4>
+        You will lose connectivity to the old ip address and must access the web-ui at the new ip address.
+      </div>
+    <% } %>
     <label class="control-label"><span class="required">*</span> indicates required fields</label>
     <div class="form-box">
       <form class="form-horizontal" id="edit-network-form" name="aform">
