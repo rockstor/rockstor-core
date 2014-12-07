@@ -221,9 +221,12 @@ def get_ip_addr(interface):
     useful when the interface gets ip from a dhcp server
     """
     out, err, rc = run_command([IFCONFIG, interface])
-    line2 = out[1].strip()
-    if (re.match('inet ', line2) is not None):
-        return line2.split()[1]
+    if (len(out) > 1):
+        line2 = out[1].strip()
+        if (re.match('inet ', line2) is not None):
+            fields = line2.split()
+            if (len(fields) > 1):
+                return line2.split()[1]
     return '0.0.0.0'
 
 
@@ -279,11 +282,11 @@ def parse_ifcfg(config_file, config_d):
                     config_d['domain'] = char_strip(l.strip().split('=')[1])
             if (len(dns_servers) > 0):
                 config_d['dns_servers'] = ','.join(dns_servers)
-        if (config_d['bootproto'] == 'dhcp'):
-            config_d['ipaddr'] = get_ip_addr(config_d['name'])
     except:
         pass
     finally:
+        if (config_d['bootproto'] != 'static'):
+            config_d['ipaddr'] = get_ip_addr(config_d['name'])
         return config_d
 
 
