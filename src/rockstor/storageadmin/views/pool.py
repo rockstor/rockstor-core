@@ -27,10 +27,8 @@ from storageadmin.models import (Disk, Pool, Share)
 from fs.btrfs import (add_pool, pool_usage, resize_pool, umount_root,
                       btrfs_uuid)
 from storageadmin.util import handle_exception
-from storageadmin.exceptions import RockStorAPIException
 from django.conf import settings
 import rest_framework_custom as rfc
-from contextlib import contextmanager
 
 import logging
 logger = logging.getLogger(__name__)
@@ -39,19 +37,6 @@ logger = logging.getLogger(__name__)
 class PoolView(rfc.GenericView):
     serializer_class = PoolInfoSerializer
     RAID_LEVELS = ('single', 'raid0', 'raid1', 'raid10', 'raid5', 'raid6')
-
-    @staticmethod
-    @contextmanager
-    def _handle_exception(request, msg=None):
-        try:
-            yield
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            if (msg is None):
-                msg = ('An unhandled low level exception occured while '
-                       'processing the request.')
-            handle_exception(e, request, msg)
 
     def _pool_size(self, disks, raid_level):
         disk_size = None
@@ -176,7 +161,7 @@ class PoolView(rfc.GenericView):
         @command: 'add' - add a list of disks and hence expand the pool
                   'remove' - remove a list of disks and hence shrink the pool
         """
-        try:
+        with self._handle_exception(request):
             try:
                 pool = Pool.objects.get(name=pname)
             except:
@@ -232,14 +217,10 @@ class PoolView(rfc.GenericView):
             pool.size = usage[0]
             pool.save()
             return Response(PoolInfoSerializer(pool).data)
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)
 
     @transaction.commit_on_success
     def delete(self, request, pname):
-        try:
+        with self._handle_exception(request):
             pool = Pool.objects.get(name=pname)
             if (Share.objects.filter(pool=pool).exists()):
                 e_msg = ('Pool: %s is not empty. Cannot delete until all '
@@ -249,7 +230,3 @@ class PoolView(rfc.GenericView):
             umount_root(pool_path)
             pool.delete()
             return Response()
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)

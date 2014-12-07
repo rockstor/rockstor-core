@@ -119,20 +119,21 @@ class DiskView(rfc.GenericView):
         return Response()
 
     def post(self, request, command, dname=None):
-        if (command == 'scan'):
-            return self._scan()
-        if (command == 'wipe'):
-            return self._wipe(dname, request)
-        if (command == 'btrfs-wipe'):
-            return self._wipe(dname, request)
-        if (command == 'btrfs-disk-import'):
-            return self._btrfs_disk_import(dname, request)
-        if (command == 'blink-drive'):
-            return self._blink_drive(dname, request)
+        with self._handle_exception(request):
+            if (command == 'scan'):
+                return self._scan()
+            if (command == 'wipe'):
+                return self._wipe(dname, request)
+            if (command == 'btrfs-wipe'):
+                return self._wipe(dname, request)
+            if (command == 'btrfs-disk-import'):
+                return self._btrfs_disk_import(dname, request)
+            if (command == 'blink-drive'):
+                return self._blink_drive(dname, request)
 
-        e_msg = ('Unknown command: %s. Only valid commands are scan, wipe' %
-                 command)
-        handle_exception(Exception(e_msg), request)
+            e_msg = ('Unknown command: %s. Only valid commands are scan, '
+                     'wipe' % command)
+            handle_exception(Exception(e_msg), request)
 
     @transaction.commit_on_success
     def delete(self, request, dname):

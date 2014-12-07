@@ -211,7 +211,7 @@ def get_default_interface():
     out, err, rc = run_command([ROUTE])
     for line in out:
         fields = line.split()
-        if (fields[0] == 'default'):
+        if (len(fields) > 0 and fields[0] == 'default'):
             return fields[-1]
     return None
 
@@ -221,9 +221,12 @@ def get_ip_addr(interface):
     useful when the interface gets ip from a dhcp server
     """
     out, err, rc = run_command([IFCONFIG, interface])
-    line2 = out[1].strip()
-    if (re.match('inet ', line2) is not None):
-        return line2.split()[1]
+    if (len(out) > 1):
+        line2 = out[1].strip()
+        if (re.match('inet ', line2) is not None):
+            fields = line2.split()
+            if (len(fields) > 1):
+                return line2.split()[1]
     return '0.0.0.0'
 
 
@@ -279,17 +282,17 @@ def parse_ifcfg(config_file, config_d):
                     config_d['domain'] = char_strip(l.strip().split('=')[1])
             if (len(dns_servers) > 0):
                 config_d['dns_servers'] = ','.join(dns_servers)
-        if (config_d['bootproto'] == 'dhcp'):
-            config_d['ipaddr'] = get_ip_addr(config_d['name'])
     except:
         pass
     finally:
+        if (config_d['bootproto'] != 'static'):
+            config_d['ipaddr'] = get_ip_addr(config_d['name'])
         return config_d
 
 
 def get_net_config_fedora(devices):
 
-    config_list = []
+    config_d = {}
     script_dir = ('/etc/sysconfig/network-scripts/')
     for d in devices:
         config = {'name': d,
@@ -303,44 +306,9 @@ def get_net_config_fedora(devices):
                   'dns_servers': None,
                   'domain': None, }
         config['mac'] = get_mac_addr(d)
-        for f in os.listdir(script_dir):
-            if (re.match('ifcfg-', f) is not None and
-                f != 'ifcfg-lo'):
-                full_path = ('%s/%s' % (script_dir, f))
-                config = parse_ifcfg(full_path, config)
-        config_list.append(config)
-    return config_list
-
-
-def get_net_config(device_name):
-    config = {'name': device_name,
-              'bootproto': None,
-              'onboot': None,
-              'network': None,
-              'netmask': None,
-              'ipaddr': None, }
-    config['mac'] = get_mac_addr(device_name)
-    try:
-        config_script = ('/etc/sysconfig/network-scripts/ifcfg-%s' %
-                         device_name)
-        with open(config_script) as cfo:
-            for l in cfo.readlines():
-                if (re.match('BOOTPROTO', l) is not None):
-                    config['bootproto'] = char_strip(l.strip().split('=')[1])
-                elif (re.match('ONBOOT', l) is not None):
-                    config['onboot'] = char_strip(l.strip().split('=')[1])
-                elif (re.match('IPADDR', l) is not None):
-                    config['ipaddr'] = char_strip(l.strip().split('=')[1])
-                elif (re.match('NETMASK', l) is not None):
-                    config['netmask'] = char_strip(l.strip().split('=')[1])
-                elif (re.match('NETWORK', l) is not None):
-                    config['network'] = char_strip(l.strip().split('=')[1])
-        if (config['bootproto'] == 'dhcp'):
-            config['ipaddr'] = get_ip_addr(device_name)
-    except:
-        pass
-    finally:
-        return config
+        config = parse_ifcfg('%s/ifcfg-%s' % (script_dir, d), config)
+        config_d[d] = config
+    return config_d
 
 
 def set_networking(hostname, default_gw):

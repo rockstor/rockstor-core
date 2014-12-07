@@ -25,7 +25,6 @@ from fs.btrfs import (add_share, remove_share, share_id, update_quota,
                       share_usage)
 from storageadmin.serializers import ShareSerializer
 from storageadmin.util import handle_exception
-from storageadmin.exceptions import RockStorAPIException
 from django.conf import settings
 import rest_framework_custom as rfc
 
@@ -61,14 +60,14 @@ class ShareView(rfc.GenericView):
             e_msg = ('Share size should atleast be %dKB. Given size is %dKB'
                      % (settings.MIN_SHARE_SIZE, size))
         elif (size > settings.MAX_SHARE_SIZE):
-            e_msg = ('Share size cannot be more than %dKB. Given size is %dKB' %
-                     (settings.MAX_SHARE_SIZE, size))
+            e_msg = ('Share size cannot be more than %dKB. Given size '
+                     'is %dKB' % (settings.MAX_SHARE_SIZE, size))
         if (e_msg is not None):
             handle_exception(Exception(e_msg), request)
 
     @transaction.commit_on_success
     def put(self, request, sname):
-        try:
+        with self._handle_exception(request):
             if (not Share.objects.filter(name=sname).exists()):
                 e_msg = ('Share with name: %s does not exist' % sname)
                 handle_exception(Exception(e_msg), request)
@@ -89,14 +88,10 @@ class ShareView(rfc.GenericView):
             share.size = new_size
             share.save()
             return Response(ShareSerializer(share).data)
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)
 
     @transaction.commit_on_success
     def post(self, request):
-        try:
+        with self._handle_exception(request):
             sname = request.DATA['sname']
             if (re.match('%s$' % settings.SHARE_REGEX, sname) is None):
                 e_msg = ('Share name must start with a letter(a-z) and can'
@@ -110,7 +105,7 @@ class ShareView(rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
 
             pool_name = request.DATA['pool']
-            size = int(request.DATA['size']) #in KB
+            size = int(request.DATA['size'])  # in KB
             self._validate_share_size(request, size)
             pool = None
             try:
@@ -141,10 +136,6 @@ class ShareView(rfc.GenericView):
                       subvol_name=sname, replica=replica)
             s.save()
             return Response(ShareSerializer(s).data)
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)
 
     def _update_quota(self, pool_name, disk_name, share_name, size):
         sid = share_id(pool_name, disk_name, share_name)
@@ -158,7 +149,7 @@ class ShareView(rfc.GenericView):
         For now, we delete all snapshots, if any of the share and delete the
         share itself.
         """
-        try:
+        with self._handle_exception(request):
             try:
                 share = Share.objects.get(name=sname)
             except:
@@ -203,7 +194,3 @@ class ShareView(rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
             share.delete()
             return Response()
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)
