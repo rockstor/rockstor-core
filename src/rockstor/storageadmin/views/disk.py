@@ -52,7 +52,7 @@ class DiskView(rfc.GenericView):
                 return Disk.objects.get(name=kwargs['dname'])
             except:
                 return []
-        return Disk.objects.all()
+        return Disk.objects.all().order_by('name')
 
     @transaction.commit_on_success
     def _scan(self):
@@ -86,7 +86,7 @@ class DiskView(rfc.GenericView):
             if (do.name not in [d.name for d in disks]):
                 do.offline = True
                 do.save()
-        ds = DiskInfoSerializer(Disk.objects.all(), many=True)
+        ds = DiskInfoSerializer(Disk.objects.all().order_by('name'), many=True)
         return Response(ds.data)
 
     @transaction.commit_on_success
