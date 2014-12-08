@@ -16,10 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-"""
-view for anything at the share level
-"""
-
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (Share, Snapshot, Disk, NFSExport, SambaShare)

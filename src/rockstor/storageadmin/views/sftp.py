@@ -22,7 +22,6 @@ from django.conf import settings
 from storageadmin.models import SFTP
 from storageadmin.util import handle_exception
 from storageadmin.serializers import SFTPSerializer
-from storageadmin.exceptions import RockStorAPIException
 from fs.btrfs import (is_share_mounted, umount_root)
 from system.ssh import (update_sftp_config, sftp_mount_map, sftp_mount,
                         rsync_for_sftp)
@@ -50,14 +49,16 @@ class SFTPView(rfc.GenericView):
 
     @transaction.commit_on_success
     def post(self, request):
-        if ('shares' not in request.DATA):
-            e_msg = ('Must provide share names')
-            handle_exception(Exception(e_msg), request)
-        shares = [validate_share(s, request) for s in request.DATA['shares']]
-        editable = 'rw'
-        if ('read_only' in request.DATA and request.DATA['read_only'] is True):
-            editable = 'ro'
-        try:
+        with self._handle_exception(request):
+            if ('shares' not in request.DATA):
+                e_msg = ('Must provide share names')
+                handle_exception(Exception(e_msg), request)
+            shares = [validate_share(s, request) for s in request.DATA['shares']]
+            editable = 'rw'
+            if ('read_only' in request.DATA and
+                request.DATA['read_only'] is True):
+                editable = 'ro'
+
             mnt_map = sftp_mount_map(settings.SFTP_MNT_ROOT)
             input_map = {}
             for share in shares:
@@ -89,20 +90,16 @@ class SFTPView(rfc.GenericView):
                         '%s%s' % (settings.SFTP_MNT_ROOT, sftpo.share.owner))
             update_sftp_config(input_map)
             return Response()
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)
 
     @transaction.commit_on_success
     def delete(self, request, id):
-        try:
-            sftpo = SFTP.objects.get(id=id)
-        except:
-            e_msg = ('SFTP config for the id(%s) does not exist' % id)
-            handle_exception(Exception(e_msg), request)
+        with self._handle_exception(request):
+            try:
+                sftpo = SFTP.objects.get(id=id)
+            except:
+                e_msg = ('SFTP config for the id(%s) does not exist' % id)
+                handle_exception(Exception(e_msg), request)
 
-        try:
             mnt_prefix = ('%s%s/' % (settings.SFTP_MNT_ROOT,
                                      sftpo.share.owner))
 
@@ -120,7 +117,3 @@ class SFTPView(rfc.GenericView):
                         '%s%s' % (settings.SFTP_MNT_ROOT, so.share.owner))
             update_sftp_config(input_map)
             return Response()
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)

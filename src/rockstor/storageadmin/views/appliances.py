@@ -26,7 +26,6 @@ from storageadmin.util import handle_exception
 from storageadmin.serializers import ApplianceSerializer
 from system.osi import (hostid, sethostname)
 import rest_framework_custom as rfc
-from storageadmin.exceptions import RockStorAPIException
 from cli.rest_util import (api_call, set_token)
 
 import logging
@@ -49,20 +48,13 @@ class AppliancesView(rfc.GenericView):
 
     def _get_remote_appliance(self, request, ip, port, client_id,
                               client_secret):
-        try:
+        with self._handle_exception(request):
             base_url = ('https://%s:%s' % (ip, port))
             set_token(client_id=client_id, client_secret=client_secret,
                       url=base_url)
             ad = api_call('%s/api/appliances/1' % base_url)
             logger.debug('remote appliance: %s' % ad)
             return ad['uuid']
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            e_msg = ('Failed to get remote appliance uuid')
-            logger.error(e_msg)
-            logger.exception(e)
-            handle_exception(e_msg, request)
 
     def _connect_to_appliance(self, request, url, ip, username, password):
         try:
@@ -95,14 +87,10 @@ class AppliancesView(rfc.GenericView):
             e_msg = ('Timeout occured while connecting to the remote '
                      'Rockstor appliance(%s). Try again later.' % ip)
             handle_exception(Exception(e_msg), request)
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)
 
     @transaction.commit_on_success
     def post(self, request):
-        try:
+        with self._handle_exception(request):
             ip = request.DATA['ip']
             current_appliance = request.DATA['current_appliance']
             # authenticate if not adding current appliance
@@ -139,10 +127,6 @@ class AppliancesView(rfc.GenericView):
                 appliance.save()
                 sethostname(ip, appliance.hostname)
             return Response(ApplianceSerializer(appliance).data)
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)
 
     def delete(self, request, id):
         try:

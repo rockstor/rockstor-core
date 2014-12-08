@@ -23,7 +23,6 @@ from django.conf import settings
 from storageadmin.models import (Share, SambaShare, Disk)
 from storageadmin.util import handle_exception
 from storageadmin.serializers import SambaShareSerializer
-from storageadmin.exceptions import RockStorAPIException
 from fs.btrfs import (mount_share, is_share_mounted)
 from system.samba import (refresh_smb_config, restart_samba)
 
@@ -49,7 +48,7 @@ class ShareSambaView(APIView):
 
     @transaction.commit_on_success
     def post(self, request, sname):
-        try:
+        with self._handle_exception(request):
             share = Share.objects.get(name=sname)
             try:
                 samba_o = SambaShare.objects.get(share=share)
@@ -107,14 +106,10 @@ class ShareSambaView(APIView):
             restart_samba()
             samba_serializer = SambaShareSerializer(smb_share)
             return Response(samba_serializer.data)
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)
 
     @transaction.commit_on_success
     def delete(self, request, sname):
-        try:
+        with self._handle_exception(request):
             share = Share.objects.get(name=sname)
             if (not SambaShare.objects.filter(share=share).exists()):
                 e_msg = ('Share is not exported via Samba. Nothing to delete')
@@ -124,7 +119,3 @@ class ShareSambaView(APIView):
             refresh_smb_config(list(SambaShare.objects.all()))
             restart_samba()
             return Response()
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)
