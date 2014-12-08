@@ -29,21 +29,23 @@
       <a href="#add_share?poolName=<%= pool.get('name') %>" id="add_share" class="btn btn-primary"><i class="icon-edit icon-white"></i> Add Share</a>
       <button id="delete-pool" class="btn btn-danger" type="button"><i
       class="icon-trash icon-white"></i> Delete</button>
-      <button id="pool-scrub-popup" rel="#pool-scrub-form" class="btn btn-primary" type="button"><i class="icon-edit icon-white"></i>Pool Scrub</button>
   </div>
 
   </div>
 
   <ul class="nav nav-tabs">
-  <li class="active"><a href="#usage" data-toggle="tab">Usage</a></li>
+    <li class="active"><a href="#usage" data-toggle="tab">Usage</a></li>
+    <li><a href="#poolscrubs" data-toggle="tab">Scrubs</a></li>
   </ul>
 
   <div class="tab-content">
    <div class="tab-pane active" id="usage">
     <div id="ph-pool-usage"></div>
+   </div>
+   <div class="tab-pane" id="poolscrubs">
+    <div id="ph-pool-scrubs"></div>
+   </div>
   </div>
-
-
 
 <div class="simple-overlay" id="resize-pool-form">
   <div class="span6 well">
