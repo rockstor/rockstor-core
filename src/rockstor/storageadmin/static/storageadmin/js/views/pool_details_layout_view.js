@@ -32,9 +32,14 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     this.poolName = this.options.poolName;
     this.template = window.JST.pool_pool_details_layout;
     this.select_disks_template = window.JST.disk_select_disks_template;
-    this.pool_scrubs_list_template = window.JST.pool_pool_scrubs_list_template;
     this.pool = new Pool({poolName: this.poolName});
+    // create poolscrub models
+    this.poolscrubs = new PoolscrubCollection([],{snapType: 'admin'});
+    this.poolscrubs.pageSize = 5;
+    this.poolscrubs.setUrl(this.poolName);
+
     this.dependencies.push(this.pool);
+    this.dependencies.push(this.poolscrubs);
     this.disks = new DiskCollection();
     this.disks.pageSize = RockStorGlobals.maxPageSize;
   },
@@ -44,36 +49,25 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
   },
 
   render: function() {
-    this.getScrubStatus();
     this.fetch(this.renderSubViews, this);
     return this;
-  },
-
-  getScrubStatus: function() {
-    this.scrubStatus = 'finished';
-    this.scrubPercent = 100;
-    $.ajax({
-      url: '/api/pools/' + this.pool.get('poolName') + '/scrub/status',
-      type: 'POST',
-      success: function(data, textStatus, jqXHR) {
-        if (data != null) {
-            this.scrubStatus = data.status;
-            this.scrubPercent = data.kb_scrubbed;
-        }
-      },
-      error: function(xhr, status, error) {
-      }
-    });
   },
 
   renderSubViews: function() {
     $(this.el).append(this.template({pool: this.pool}));
     this.subviews['pool-info'] = new PoolInfoModule({ model: this.pool });
     this.subviews['pool-usage'] = new PoolUsageModule({ model: this.pool });
+    this.subviews['pool-scrubs'] = new PoolScrubTableModule({
+    	poolscrubs: this.poolscrubs,
+        pool: this.pool,
+        parentView: this
+    });
     this.pool.on('change', this.subviews['pool-info'].render, this.subviews['pool-info']);
     this.pool.on('change', this.subviews['pool-usage'].render, this.subviews['pool-usage']);
+    this.poolscrubs.on('change', this.subviews['pool-scrubs'].render, this.subviews['pool-scrubs']);
     this.$('#ph-pool-info').append(this.subviews['pool-info'].render().el);
     this.$('#ph-pool-usage').append(this.subviews['pool-usage'].render().el);
+    this.$('#ph-pool-scrubs').append(this.subviews['pool-scrubs'].render().el);
     this.attachActions();
   },
 
@@ -137,45 +131,6 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
       }
     });
     this.$('#resize-pool-form').overlay({ load: false });
-    
-    this.$('#pool-scrub-popup').click(function() {
-    	$.ajax({
-            url: '/api/pools/'+_this.pool.get('name')+'/scrub',
-            type: 'GET',
-            dataType: 'json',
-            contentType: 'application/json',
-            success: function(data, textStatus, jqXHR) {
-                console.log("scrub data: " + JSON.stringify(data));
-            	//var scrubData = JSON.parse(data);
-            	_this.$('#pool_scrub_list').html(_this.pool_scrubs_list_template({scrubs: data.results}));
-                _this.$('#alert-msg').empty();
-                $('#pool-scrub-form').overlay().load();
-            },
-            error: function(request, status, error) {
-              _this.$('#alert-msg').html("<font color='red'>"+request.responseText+"</font>");
-            }
-          });
-      });
-    this.$('#start-scrub').click(function() {
-    	var n = _this.$("#forcescrub:checked").val();
-    	var postdata = '';
-    	if(n == 'on') {
-    		postdata = '{"force": "true"}';
-    	}
-		console.log("force scrub: " + postdata);
-    	  $.ajax({
-    	      url: '/api/pools/'+_this.pool.get('name')+'/scrub',
-    	      type: 'POST',
-    	      data: postdata,
-    	      success: function() {
-    	        _this.$('#pool-scrub-form').overlay().close();
-    	      },
-    	      error: function(jqXHR) {
-    	        _this.$('#alert-msg').html("<font color='red'>"+jqXHR+"</font>");
-    	      }
-    	  });
-      });
-      this.$('#pool-scrub-form').overlay({ load: false });
   },
 
   deletePool: function() {
