@@ -23,7 +23,8 @@ system level helper methods to interact with the filesystem
 import re
 import time
 import os
-
+import subprocess
+import signal
 from system.osi import (run_command, create_tmp_dir, is_share_mounted,
                         is_mounted)
 from system.exceptions import (CommandException, NonBTRFSRootException)
@@ -308,18 +309,12 @@ def pool_usage(pool_device):
     return (total, usage)
 
 
-def scrub_start(pool_name, pool_device):
+def scrub_start(pool_name, pool_device, force=False):
+    from pool_scrub import PoolScrub
     mnt_pt = mount_root(pool_name, '/dev/' + pool_device)
-    out, err, rc = run_command([BTRFS, 'scrub', 'start', mnt_pt])
-    return int(out[0].split('(pid=')[1][:-1])
-
-
-def scrub_cancel(mnt_pt):
-    pass
-
-
-def scrub_resume(mnt_pt):
-    pass
+    p = PoolScrub(mnt_pt)
+    p.start()
+    return p.pid
 
 
 def scrub_status(pool_name, pool_device):
@@ -431,9 +426,6 @@ def wipe_disk(disk):
 
 
 def blink_disk(disk, total_exec, read, sleep):
-    import subprocess
-    import time
-    import signal
     DD_CMD = [DD, 'if=/dev/%s' % disk, 'of=/dev/null', 'bs=512',
               'conv=noerror']
     p = subprocess.Popen(DD_CMD, shell=False, stdout=subprocess.PIPE,
