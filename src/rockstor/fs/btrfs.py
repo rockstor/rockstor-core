@@ -397,6 +397,7 @@ def scan_disks(min_size):
     o, e, rc = run_command(cmd)
     dnames = {}
     disks = []
+    serials = []
     for l in o:
         if (re.search('=', l) is None):
             continue
@@ -412,7 +413,7 @@ def scan_disks(min_size):
                 if (re.match(dname, dfields[0]) is not None):
                     dnames[dname][8] = True
         elif (dfields[0] != root):
-            dfields.append(False) # part = False by default
+            dfields.append(False)  # part = False by default
             # convert size into KB
             size_str = dfields[3]
             if (size_str[-1] == 'G'):
@@ -423,9 +424,16 @@ def scan_disks(min_size):
                 continue
             if (dfields[3] < min_size):
                 continue
+            if (dfields[2] == '' or (dfields[2] in serials)):
+                dfields[2] = dfields[0]
+            serials.append(dfields[2])
             for i in range(0, len(dfields)):
                 if (dfields[i] == ''):
                     dfields[i] = None
+            if (dfields[0] in dnames):
+                raise Exception('Two disk drives found with the same name: '
+                                '%s. Rockstor does not support this '
+                                'configuration.' % dfields[0])
             dnames[dfields[0]] = dfields
     for d in dnames.keys():
         disks.append(Disk(*dnames[d]))
