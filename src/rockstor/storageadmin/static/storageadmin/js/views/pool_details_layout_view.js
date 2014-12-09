@@ -68,6 +68,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     this.$('#ph-pool-info').append(this.subviews['pool-info'].render().el);
     this.$('#ph-pool-usage').append(this.subviews['pool-usage'].render().el);
     this.$('#ph-pool-scrubs').append(this.subviews['pool-scrubs'].render().el);
+    this.$("ul.css-tabs").tabs("div.css-panes > div");
     this.attachActions();
   },
 
