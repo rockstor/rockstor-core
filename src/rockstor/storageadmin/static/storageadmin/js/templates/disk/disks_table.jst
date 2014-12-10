@@ -26,10 +26,19 @@
             <% } %>
 
           </td>
-	  <td><%= disk.get('serial') %>
-	  <% if (disk.get('serial')) { %>
-	  &nbsp;&nbsp;&nbsp;&nbsp;<a href="#disks/blink/<%= disk.get('name') %>" title="A tool to physically identify the hard drive with this serial number" rel="tooltip"><i class="fa fa-lightbulb-o fa-lg"></i></a>&nbsp;
-           <% } %>
+	  <td>
+	   <% if (disk.get('serial') == null || disk.get('serial') == '' || disk.get('serial') == disk.get('name')) { %>
+	      <div class="alert alert-error">
+       	      <h4>Warning! Disk serial number or UUID is not legitimate or unique.</h4>
+       	      Disk names may change unfavorably upon reboot, errors and replacement resulting in data loss. This error is caused by the source of these disks such as your Hypervisor or SAN. Please ensure that disks are provided with unique serial numbers before proceeding futher
+     	      </div>
+	    <% } else { %>
+	    <%= disk.get('serial') %>
+	    <% if (disk.get('serial')) { %>
+	    &nbsp;&nbsp;&nbsp;&nbsp;<a href="#disks/blink/<%= disk.get('name') %>" title="A tool to physically identify the hard drive with this serial number" rel="tooltip"><i class="fa fa-lightbulb-o fa-lg"></i></a>&nbsp;
+            <% } %>
+	    <% } %>
+
 	   </td>
           <td><%= humanize.filesize(disk.get('size')*1024) %></td>
           <td>

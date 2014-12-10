@@ -22,12 +22,12 @@ from storageadmin.util import handle_exception
 from storageadmin.serializers import PoolScrubSerializer
 from storageadmin.models import (Pool, PoolScrub, Disk)
 import rest_framework_custom as rfc
-from fs.btrfs import (scrub_start, scrub_status, is_share_mounted, mount_root)
-from storageadmin.exceptions import RockStorAPIException
+from fs.btrfs import (scrub_start, scrub_status)
 from datetime import timedelta
 
 import logging
 logger = logging.getLogger(__name__)
+
 
 class PoolScrubView(rfc.GenericView):
     serializer_class = PoolScrubSerializer
@@ -40,8 +40,27 @@ class PoolScrubView(rfc.GenericView):
             handle_exception(Exception(e_msg), request)
 
     def get_queryset(self, *args, **kwargs):
-        pool = self._validate_pool(kwargs['pname'], self.request)
-        return PoolScrub.objects.filter(pool=pool).order_by('-id')
+        with self._handle_exception(self.request):
+            pool = self._validate_pool(kwargs['pname'], self.request)
+            disk = Disk.objects.filter(pool=pool)[0]
+            self._scrub_status(pool, disk)
+            return PoolScrub.objects.filter(pool=pool).order_by('-id')
+
+    @transaction.commit_on_success
+    def _scrub_status(self, pool, disk):
+        try:
+            ps = PoolScrub.objects.filter(pool=pool).order_by('-id')[0]
+        except:
+            return Response()
+        if (ps.status == 'started' or ps.status == 'running'):
+            cur_status = scrub_status(pool.name, disk.name)
+            if (cur_status['status'] == 'finished'):
+                duration = int(cur_status['duration'])
+                cur_status['end_time'] = (ps.start_time +
+                                          timedelta(seconds=duration))
+                del(cur_status['duration'])
+            PoolScrub.objects.filter(id=ps.id).update(**cur_status)
+        return ps
 
     @transaction.commit_on_success
     def post(self, request, pname, command=None):
@@ -50,36 +69,28 @@ class PoolScrubView(rfc.GenericView):
             e_msg = ('Unknown scrub command: %s' % command)
             handle_exception(Exception(e_msg), request)
 
-        try:
+        with self._handle_exception(request):
             disk = Disk.objects.filter(pool=pool)[0]
+            ps = self._scrub_status(pool, disk)
             if (command == 'status'):
-                try:
-                    ps = PoolScrub.objects.filter(pool=pool).order_by('-id')[0]
-                except:
-                    return Response()
-                if (ps.status == 'started' or ps.status == 'running'):
-                    cur_status = scrub_status(pname, disk.name)
-                    ps.status = cur_status['status']
-                    if (cur_status['status'] == 'finished'):
-                        duration = int(cur_status['duration'])
-                        ps.end_time = (ps.start_time +
-                                       timedelta(seconds=duration))
-                        ps.kb_scrubbed = cur_status['kb_scrubbed']
-                        ps.errors = cur_status['errors']
-                        ps.save()
                 return Response(PoolScrubSerializer(ps).data)
-
+            force = request.DATA.get('force', False)
             if ((PoolScrub.objects.filter(pool=pool,
                                           status__regex=r'(started|running)')
                  .exists())):
-                e_msg = ('Active scrub exists for the pool: %s' % pname)
-                handle_exception(Exception(e_msg), request)
+                if (force):
+                    p = PoolScrub.objects.filter(
+                        pool=pool,
+                        status__regex=r'(started|running)').order_by('-id')[0]
+                    p.status = 'terminated'
+                    p.save()
+                else:
+                    e_msg = ('A Scrub process is already running for '
+                             'pool(%s). If you really want to kill it '
+                             'and start a new scrub, use force option' % pname)
+                    handle_exception(Exception(e_msg), request)
 
-            scrub_pid = scrub_start(pname, disk.name)
+            scrub_pid = scrub_start(pname, disk.name, force=force)
             ps = PoolScrub(pool=pool, pid=scrub_pid)
             ps.save()
             return Response(PoolScrubSerializer(ps).data)
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)

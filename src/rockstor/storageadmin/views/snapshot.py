@@ -150,8 +150,6 @@ class SnapshotView(rfc.GenericView):
             writable = True
         else:
             writable = False
-        logger.debug('DATA = %s' % request.DATA)
-        logger.debug('writable input value = %s' % writable)
         pool_device = Disk.objects.filter(pool=share.pool)[0].name
         if (command is None):
             ret = self._create(share, snap_name, pool_device, request,

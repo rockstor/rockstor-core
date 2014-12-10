@@ -23,7 +23,8 @@ system level helper methods to interact with the filesystem
 import re
 import time
 import os
-
+import subprocess
+import signal
 from system.osi import (run_command, create_tmp_dir, is_share_mounted,
                         is_mounted)
 from system.exceptions import (CommandException, NonBTRFSRootException)
@@ -308,48 +309,35 @@ def pool_usage(pool_device):
     return (total, usage)
 
 
-def scrub_start(pool_name, pool_device):
+def scrub_start(pool_name, pool_device, force=False):
+    from pool_scrub import PoolScrub
     mnt_pt = mount_root(pool_name, '/dev/' + pool_device)
-    out, err, rc = run_command([BTRFS, 'scrub', 'start', mnt_pt])
-    return int(out[0].split('(pid=')[1][:-1])
-
-
-def scrub_cancel(mnt_pt):
-    pass
-
-
-def scrub_resume(mnt_pt):
-    pass
+    p = PoolScrub(mnt_pt)
+    p.start()
+    return p.pid
 
 
 def scrub_status(pool_name, pool_device):
-    stats = {}
+    stats = {'status': 'unknown', }
     mnt_pt = mount_root(pool_name, '/dev/' + pool_device)
-    out, err, rc = run_command([BTRFS, 'scrub', 'status', mnt_pt])
-    if (len(out) > 2):
-        if (out[1].strip() == 'no stats available'):
+    out, err, rc = run_command([BTRFS, 'scrub', 'status', '-R', mnt_pt])
+    if (len(out) > 1):
+        if (re.search('running', out[1]) is not None):
             stats['status'] = 'running'
+        elif (re.search('finished', out[1]) is not None):
+            stats['status'] = 'finished'
+            stats['duration'] = int(out[1].split()[-2])
+        else:
             return stats
-        stats['duration'] = out[1].strip().split()[-2]
-        fields = out[2].strip().split()
-        stats['errors'] = fields[-2]
-        mult_factor = 1
-        if (fields[3][-2:] == 'MB'):
-            mult_factor = 1024
-            kb_scrubbed = fields[3][:-2]
-        if (fields[3][-3:] == 'MiB'):
-            mult_factor = 1024
-            kb_scrubbed = fields[3][:-3]
-        elif (fields[3][-2:] == 'GB'):
-            mult_factor = 1024 ** 2
-            kb_scrubbed = fields[3][:-2]
-        elif (fields[3][-2:] == 'TB'):
-            mult_factor = 1024 ** 3
-            kb_scrubbed = fields[3][:-2]
-        stats['kb_scrubbed'] = int(float(kb_scrubbed) * mult_factor)
-        stats['status'] = 'finished'
+    else:
         return stats
-    return {'status': 'unknown', }
+    for l in out[2:-1]:
+        fields = l.strip().split(': ')
+        if (fields[0] == 'data_bytes_scrubbed'):
+            stats['kb_scrubbed'] = int(fields[1]) / 1024
+        else:
+            stats[fields[0]] = int(fields[1])
+    return stats
 
 
 def device_scan():
@@ -397,6 +385,7 @@ def scan_disks(min_size):
     o, e, rc = run_command(cmd)
     dnames = {}
     disks = []
+    serials = []
     for l in o:
         if (re.search('=', l) is None):
             continue
@@ -412,7 +401,7 @@ def scan_disks(min_size):
                 if (re.match(dname, dfields[0]) is not None):
                     dnames[dname][8] = True
         elif (dfields[0] != root):
-            dfields.append(False) # part = False by default
+            dfields.append(False)  # part = False by default
             # convert size into KB
             size_str = dfields[3]
             if (size_str[-1] == 'G'):
@@ -423,9 +412,16 @@ def scan_disks(min_size):
                 continue
             if (dfields[3] < min_size):
                 continue
+            if (dfields[2] == '' or (dfields[2] in serials)):
+                dfields[2] = dfields[0]
+            serials.append(dfields[2])
             for i in range(0, len(dfields)):
                 if (dfields[i] == ''):
                     dfields[i] = None
+            if (dfields[0] in dnames):
+                raise Exception('Two disk drives found with the same name: '
+                                '%s. Rockstor does not support this '
+                                'configuration.' % dfields[0])
             dnames[dfields[0]] = dfields
     for d in dnames.keys():
         disks.append(Disk(*dnames[d]))
@@ -438,9 +434,6 @@ def wipe_disk(disk):
 
 
 def blink_disk(disk, total_exec, read, sleep):
-    import subprocess
-    import time
-    import signal
     DD_CMD = [DD, 'if=/dev/%s' % disk, 'of=/dev/null', 'bs=512',
               'conv=noerror']
     p = subprocess.Popen(DD_CMD, shell=False, stdout=subprocess.PIPE,
