@@ -19,11 +19,11 @@
  */
 </script>
 
-<h4>Task history for <%= taskDef.get('name') %> &nbsp;  
+<h4>Task history for <%= taskDef.get('name') %> &nbsp;
 (<% if (taskDef.get('task_type') == 'snapshot') { %>
-  Share <%= JSON.parse(taskDef.get('json_meta')).share %> <%= taskDef.get('task_type') %>
-<% } else { %> 
-  Pool <%= JSON.parse(taskDef.get('json_meta')).pool %> <%= taskDef.get('task_type') %>
+  Snapshot of Share[<%= JSON.parse(taskDef.get('json_meta')).share %>]
+<% } else { %>
+  Scrub of Pool[<%= JSON.parse(taskDef.get('json_meta')).pool %>]
 <% } %>)
 </h4>
 <% if (!tasks.isEmpty()) { %>
@@ -65,4 +65,3 @@
     </div>
   </div>
 <% } %>
-
