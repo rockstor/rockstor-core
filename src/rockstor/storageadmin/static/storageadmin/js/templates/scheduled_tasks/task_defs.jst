@@ -54,7 +54,7 @@
           <tr>
             <th scope="col" abbr="Task name">Task name</th>
             <th scope="col" abbr="Task type">Type</th>
-            <th scope="col" abbr="Start date/time">Start date/time</th>
+            <th scope="col" abbr="Start date and time">Start date and time</th>
             <th scope="col" abbr="Task type">Frequency (sec)</th>
             <th scope="col" abbr="Task type">Enabled</th>
             <th scope="col" abbr="Last">Last run</th>
@@ -86,7 +86,7 @@
                 <% if (taskMap[t.id]) { %>
                   <% if (taskMap[t.id].length > 0) { %>
                     <% var task = taskMap[t.id][0]; %>
-                    <% if (task.get('state') != 'scheduled' || task.get('state') != 'pending' || task.get('state') != 'finished') { %>
+                    <% if (task.get('state') != 'scheduled' && task.get('state') != 'pending' && task.get('state') != 'running' && task.get('state') != 'finished') { %>
                       <a href="#scheduled-tasks/<%= t.id %>/log" class="task-log"><i class="icon-warning-sign"></i> <%= task.get('state') %></a>
                     <% } else if (task.get('state') == 'pending' || task.get('state') == 'scheduled') { %>
                       <a href="#scheduled-tasks/<%= t.id %>/log" class="task-log"><%= task.get('state') %></a>

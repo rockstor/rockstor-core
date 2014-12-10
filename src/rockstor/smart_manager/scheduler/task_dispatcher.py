@@ -44,7 +44,6 @@ class TaskDispatcher(Process):
         if (Task.objects.filter(task_def=td).exists()):
             last_task = Task.objects.filter(task_def=td).order_by('-id')[0]
             if ((now - last_task.start).total_seconds() > td.frequency):
-                logger.debug('enough time passed since last one')
                 return True
         elif (now > td.ts):
             return True
@@ -84,6 +83,18 @@ class TaskDispatcher(Process):
                             t.save()
                             if (t.state == 'running'):
                                 running_tasks[t.id] = True
+                    elif (t.task_def.task_type == 'snapshot'):
+                        name = ('%s_%d' % (meta['prefix'], int(time.time())))
+                        url = ('%sshares/%s/snapshots/%s' %
+                               (baseurl, meta['share'], name))
+                        try:
+                            api_call(url, data=None, calltype='post')
+                            t.state = 'finished'
+                        except:
+                            t.state = 'error'
+                        finally:
+                            t.end = datetime.utcnow().replace(tzinfo=utc)
+                            t.save()
 
                 for t in Task.objects.filter(
                         state__regex=r'(started|running)'):
