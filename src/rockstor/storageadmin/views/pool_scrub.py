@@ -54,7 +54,6 @@ class PoolScrubView(rfc.GenericView):
             return Response()
         if (ps.status == 'started' or ps.status == 'running'):
             cur_status = scrub_status(pool.name, disk.name)
-            logger.debug('cur status = %s' % cur_status)
             if (cur_status['status'] == 'finished'):
                 duration = int(cur_status['duration'])
                 cur_status['end_time'] = (ps.start_time +
@@ -72,8 +71,8 @@ class PoolScrubView(rfc.GenericView):
 
         with self._handle_exception(request):
             disk = Disk.objects.filter(pool=pool)[0]
+            ps = self._scrub_status(pool, disk)
             if (command == 'status'):
-                ps = self._scrub_status(pool, disk)
                 return Response(PoolScrubSerializer(ps).data)
             force = request.DATA.get('force', False)
             if ((PoolScrub.objects.filter(pool=pool,
@@ -92,7 +91,6 @@ class PoolScrubView(rfc.GenericView):
                     handle_exception(Exception(e_msg), request)
 
             scrub_pid = scrub_start(pname, disk.name, force=force)
-            logger.debug('scrub pid = %s' % scrub_pid)
             ps = PoolScrub(pool=pool, pid=scrub_pid)
             ps.save()
             return Response(PoolScrubSerializer(ps).data)

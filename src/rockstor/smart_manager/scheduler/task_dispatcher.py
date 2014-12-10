@@ -16,20 +16,19 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from multiprocessing import (Process, Queue)
+from multiprocessing import Process
 import os
 import time
 from datetime import datetime
 from smart_manager.models import (Task, TaskDefinition)
 from django.conf import settings
-from django.core.serializers import serialize
-from django.db import DatabaseError
-from task_worker import TaskWorker
 from django.utils.timezone import utc
-from django.db import transaction
+from cli.rest_util import api_call
+import json
 
 import logging
 logger = logging.getLogger(__name__)
+
 
 class TaskDispatcher(Process):
 
@@ -42,68 +41,82 @@ class TaskDispatcher(Process):
     def _schedulable(self, td, now):
         if (td.ts > now):
             return False
-        if (td.ts == now):
-            logger.info('Event: %s is now' % td.name)
-            return True
-        delta = (now - td.ts).total_seconds()
-        if (delta % td.frequency == 0):
+        if (Task.objects.filter(task_def=td).exists()):
+            last_task = Task.objects.filter(task_def=td).order_by('-id')[0]
+            if ((now - last_task.start).total_seconds() > td.frequency):
+                logger.debug('enough time passed since last one')
+                return True
+        elif (now > td.ts):
             return True
         return False
 
     def run(self):
-        total_sleep = 0
+        running_tasks = {}
+        baseurl = 'https://localhost/api/'
         while True:
             if (os.getppid() != self.ppid):
-                for w in self.workers.keys():
-                    worker = self.workers[w]
-                    if (worker.is_alive()):
-                        #@todo: signal worker to cleanup and exit.
-                        worker.task['queue'].put('stop')
                 break
-
-            for w in self.workers.keys():
-                if (not self.workers[w].is_alive()):
-                    to = Task.objects.get(id=w)
-                    if (self.workers[w].exitcode == 0):
-                        to.state = 'finished'
-                    else:
-                        to.state = 'error'
-                    to.end = datetime.utcnow().replace(tzinfo=utc)
-                    to.save()
-                    del(self.workers[w])
-
             try:
-                if (total_sleep >= 60):
-                    for td in TaskDefinition.objects.filter(enabled=True):
-                        now = datetime.utcnow().replace(second=0,
-                                                        microsecond=0,
-                                                        tzinfo=utc)
-                        if (self._schedulable(td, now)):
+                for td in TaskDefinition.objects.filter(enabled=True):
+                    now = datetime.utcnow().replace(second=0,
+                                                    microsecond=0,
+                                                    tzinfo=utc)
+                    if (self._schedulable(td, now)):
+                        if (Task.objects.filter(
+                                task_def=td,
+                                state__regex=r'(scheduled|started|running)').exists()):
+                            logger.debug('there is already a task scheduled or running for this definition')
+                        else:
                             t = Task(task_def=td, state='scheduled',
                                      start=now)
                             t.save()
-                    total_sleep = 0
 
                 for t in Task.objects.filter(state='scheduled'):
-                    worker = TaskWorker(t)
-                    self.workers[t.id] = worker
-                    worker.daemon = True
-                    worker.start()
+                    meta = json.loads(t.task_def.json_meta)
+                    if (t.task_def.task_type == 'scrub'):
+                        url = ('%spools/%s/scrub' % (baseurl, meta['pool']))
+                        try:
+                            api_call(url, data=None, calltype='post')
+                            t.state = 'running'
+                        except:
+                            t.state = 'error'
+                        finally:
+                            t.save()
+                            if (t.state == 'running'):
+                                running_tasks[t.id] = True
 
-                    if (worker.is_alive()):
-                        t.state = 'running'
-                    else:
+                for t in Task.objects.filter(
+                        state__regex=r'(started|running)'):
+                    meta = json.loads(t.task_def.json_meta)
+                    if (t.id not in running_tasks):
+                        logger.debug('Task(%d) is not in running tasks. '
+                                     'marking as error' % t.id)
                         t.state = 'error'
                         t.end = datetime.utcnow().replace(tzinfo=utc)
-                    t.save()
-            except DatabaseError, e:
+                        t.save()
+                    else:
+                        if (t.task_def.task_type == 'scrub'):
+                            url = ('%spools/%s/scrub/status' %
+                                   (baseurl, meta['pool']))
+                            try:
+                                status = api_call(url, data=None,
+                                                  calltype='post')
+                                t.state = status['status']
+                            except:
+                                t.state = 'error'
+                            if (t.state == 'finished' or t.state == 'error'):
+                                t.end = datetime.utcnow().replace(tzinfo=utc)
+                                del(running_tasks[t.id])
+                            t.save()
+
+            except Exception, e:
                 e_msg = ('Error getting the list of scheduled tasks. Moving'
                          ' on')
                 logger.error(e_msg)
                 logger.exception(e)
             finally:
-                time.sleep(1)
-                total_sleep = total_sleep + 1
+                time.sleep(60)
+
 
 def main():
     td = TaskDispatcher(settings.SCHEDULER)
