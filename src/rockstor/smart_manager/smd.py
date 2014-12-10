@@ -45,11 +45,13 @@ def clean_exit(children):
 
 def main():
     #  bootstrap the machine. success of quit
-    url = 'https://localhost/api/commands/bootstrap'
+    bootstrap_url = 'https://localhost/api/commands/bootstrap'
+    diskscan_url = 'https://localhsot/api/disks/scan'
     time.sleep(10)
     try:
         set_token()
-        api_call(url, calltype='post')
+        api_call(diskscan_url, calltype='post')
+        api_call(bootstrap_url, calltype='post')
     except Exception, e:
         logger.error('Unable to bootstrap the machine. Moving on..')
         logger.exception(e)

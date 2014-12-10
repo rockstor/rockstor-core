@@ -40,15 +40,17 @@ class PoolView(rfc.GenericView):
 
     def _pool_size(self, disks, raid_level):
         disk_size = None
+        total_size = 0
         for d in disks:
             size = Disk.objects.get(name=d).size
+            total_size = total_size + size
             if (disk_size is None or disk_size > size):
                 disk_size = size
 
         if (raid_level == self.RAID_LEVELS[0]):
             return disk_size
         if (raid_level == self.RAID_LEVELS[1]):
-            return disk_size * len(disks)
+            return total_size
         if (raid_level in self.RAID_LEVELS[2:4]):
             return disk_size * (len(disks) / 2)
         if (raid_level == self.RAID_LEVELS[4]):
