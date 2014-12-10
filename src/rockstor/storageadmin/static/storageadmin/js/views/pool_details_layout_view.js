@@ -32,60 +32,43 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     this.poolName = this.options.poolName;
     this.template = window.JST.pool_pool_details_layout;
     this.select_disks_template = window.JST.disk_select_disks_template;
-    this.scrubTemplate = window.JST.pool_pool_scrub;
     this.pool = new Pool({poolName: this.poolName});
+    // create poolscrub models
+    this.poolscrubs = new PoolscrubCollection([],{snapType: 'admin'});
+    this.poolscrubs.pageSize = 5;
+    this.poolscrubs.setUrl(this.poolName);
+
     this.dependencies.push(this.pool);
+    this.dependencies.push(this.poolscrubs);
     this.disks = new DiskCollection();
     this.disks.pageSize = RockStorGlobals.maxPageSize;
-    this.statusPollInterval = 5000;
   },
 
   events: {
-    'click #delete-pool': 'deletePool',
-    'click #scrub-pool-start': 'scrubPoolStart',
-    'click #scrub-pool-stop': 'scrubPoolStop',
+    'click #delete-pool': 'deletePool'
   },
 
   render: function() {
     this.fetch(this.renderSubViews, this);
-    this.pollScrubStatus();
     return this;
-  },
-
-  pollScrubStatus: function() {
-    var _this = this;
-    _this.statusIntervalId = window.setInterval(function() {
-      return function() {
-        $.ajax({
-	  url: '/api/pools/' + _this.pool.get('name') + '/scrub/status',
-          type: 'POST',
-          success: function(data, textStatus, jqXHR) {
-            var scrubStatus = 'finished';
-            var scrubPercent = 100
-            if (data != null) {
-              scrubStatus = data.status;
-              scrubPercent = data.kb_scrubbed;
-	    }
-            _this.$('#ph-scrub-button').html(_this.scrubTemplate({status: scrubStatus,
-								  percent: scrubPercent}));
-          },
-          error: function(xhr, status, error) {
-            var buttons = _this.$('.scrub_button');
-            disableButton(buttons);
-	  }
-	});
-      };
-    }(), this.statusPollInterval);
   },
 
   renderSubViews: function() {
     $(this.el).append(this.template({pool: this.pool}));
     this.subviews['pool-info'] = new PoolInfoModule({ model: this.pool });
     this.subviews['pool-usage'] = new PoolUsageModule({ model: this.pool });
+    this.subviews['pool-scrubs'] = new PoolScrubTableModule({
+    	poolscrubs: this.poolscrubs,
+        pool: this.pool,
+        parentView: this
+    });
     this.pool.on('change', this.subviews['pool-info'].render, this.subviews['pool-info']);
     this.pool.on('change', this.subviews['pool-usage'].render, this.subviews['pool-usage']);
+    this.poolscrubs.on('change', this.subviews['pool-scrubs'].render, this.subviews['pool-scrubs']);
     this.$('#ph-pool-info').append(this.subviews['pool-info'].render().el);
     this.$('#ph-pool-usage').append(this.subviews['pool-usage'].render().el);
+    this.$('#ph-pool-scrubs').append(this.subviews['pool-scrubs'].render().el);
+    this.$("ul.css-tabs").tabs("div.css-panes > div");
     this.attachActions();
   },
 
@@ -152,7 +135,6 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
   },
 
   deletePool: function() {
-    var _this = this;
     var button = this.$('#delete-pool');
     if (buttonDisabled(button)) return false;
     if(confirm("Delete pool: "+ this.pool.get('name') + "... Are you sure?")){
@@ -172,26 +154,9 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     }
   },
 
-  scrubPoolStart: function() {
-    var _this = this;
-    var button = this.$('#scrub-pool-start');
-    if (buttonDisabled(button)) return false;
-    disableButton(button);
-    $.ajax({
-      url: '/api/pools/'+_this.pool.get('name')+'/scrub',
-      type: 'POST',
-      error: function(jqXHR) {
-      }
-    });
-  },
-
   cleanup: function() {
     if (!_.isUndefined(this.statusIntervalId)) {
 	window.clearInterval(this.statusIntervalId);
     }
-  },
-
-  scrubPoolStop: function() {
-  },
-
+  }
 });
