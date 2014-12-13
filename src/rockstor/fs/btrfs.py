@@ -107,12 +107,12 @@ def umount_root(root_pool_mnt):
     return True
 
 
-def add_share(pool_name, pool_device, share_name):
+def add_share(pool, pool_device, share_name):
     """
     share is a subvolume in btrfs.
     """
     pool_device = '/dev/' + pool_device
-    root_pool_mnt = mount_root(pool_name, pool_device)
+    root_pool_mnt = mount_root(pool, pool_device)
     subvol_mnt_pt = root_pool_mnt + '/' + share_name
     sub_vol_cmd = [BTRFS, 'subvolume', 'create', subvol_mnt_pt]
     run_command(sub_vol_cmd)

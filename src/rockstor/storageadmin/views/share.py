@@ -130,7 +130,7 @@ class ShareView(rfc.GenericView):
                              type(replica))
                     handle_exception(Exception(e_msg), request)
 
-            add_share(pool_name, disk.name, sname)
+            add_share(pool, disk.name, sname)
             qgroup_id = self._update_quota(pool_name, disk.name, sname, size)
             s = Share(pool=pool, qgroup=qgroup_id, name=sname, size=size,
                       subvol_name=sname, replica=replica)
