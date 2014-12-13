@@ -183,28 +183,28 @@ def remove_share(pool, pool_device, share_name):
         mnt_pt = ('%s%s' % (DEFAULT_MNT_DIR, share_name))
         umount_root(mnt_pt)
     pool_device = '/dev/' + pool_device
-    root_pool_mnt = mount_root(pool_name, pool_device)
+    root_pool_mnt = mount_root(pool, pool_device)
     subvol_mnt_pt = root_pool_mnt + '/' + share_name
     delete_cmd = [BTRFS, 'subvolume', 'delete', subvol_mnt_pt]
     run_command(delete_cmd)
 
 
-def remove_snap(pool_name, pool_device, share_name, snap_name):
+def remove_snap(pool, pool_device, share_name, snap_name):
     full_name = ('%s/%s' % (share_name, snap_name))
     if (is_share_mounted(full_name)):
         umount_root('%s%s' % (DEFAULT_MNT_DIR, full_name))
-    root_pool_mnt = mount_root(pool_name, pool_device)
+    root_pool_mnt = mount_root(pool, pool_device)
     subvol_mnt_pt = ('%s/%s_%s' % (root_pool_mnt, share_name, snap_name))
     return run_command([BTRFS, 'subvolume', 'delete', subvol_mnt_pt])
 
 
-def add_snap(pool_name, pool_device, share_name, snap_name,
+def add_snap(pool, pool_device, share_name, snap_name,
              share_prepend=True, readonly=True):
     """
     create a snapshot
     """
     pool_device = '/dev/' + pool_device
-    root_pool_mnt = mount_root(pool_name, pool_device)
+    root_pool_mnt = mount_root(pool, pool_device)
     share_full_path = root_pool_mnt + '/' + share_name
     snap_full_path = ('%s/%s' % (root_pool_mnt, snap_name))
     if (share_prepend is True):
@@ -278,7 +278,7 @@ def share_usage(pool, pool_device, share_id):
     return usage
 
 
-def shares_usage(pool_name, pool_device, share_map, snap_map):
+def shares_usage(pool, pool_device, share_map, snap_map):
     #don't mount the pool if at least one share in the map is mounted.
     usage_map = {}
     mnt_pt = None
@@ -287,7 +287,7 @@ def shares_usage(pool_name, pool_device, share_map, snap_map):
             mnt_pt = ('%s%s' % (DEFAULT_MNT_DIR, share_map[s]))
             break
     if (mnt_pt is None):
-        mnt_pt = mount_root(pool_name, '/dev/' + pool_device)
+        mnt_pt = mount_root(pool, '/dev/' + pool_device)
     cmd = [BTRFS, 'qgroup', 'show', mnt_pt]
     out, err, rc = run_command(cmd)
     combined_map = dict(share_map, **snap_map)

@@ -46,7 +46,7 @@ def create_clone(share, new_name, request, logger, snapshot=None):
         share_name = share.subvol_name
         if (snapshot is not None):
             share_name = snapshot.real_name
-        add_snap(share.pool.name, pool_device, share_name,
+        add_snap(share.pool, pool_device, share_name,
                  new_name, share_prepend=False, readonly=False)
         snap_id = share_id(share.pool.name, pool_device, new_name)
         qgroup_id = ('0/%s' % snap_id)
