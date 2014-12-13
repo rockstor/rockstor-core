@@ -153,14 +153,14 @@ def snapshot_list(mnt_pt):
     return snaps
 
 
-def share_id(pool_name, pool_device, share_name):
+def share_id(pool, pool_device, share_name):
     """
     returns the subvolume id, becomes the share's uuid.
     @todo: this should be part of add_share -- btrfs create should atomically
     return the id
     """
     pool_device = '/dev/' + pool_device
-    root_pool_mnt = mount_root(pool_name, pool_device)
+    root_pool_mnt = mount_root(pool, pool_device)
     out, err, rc = subvol_list_helper(root_pool_mnt)
     subvol_id = None
     for line in out:
@@ -172,7 +172,7 @@ def share_id(pool_name, pool_device, share_name):
     raise Exception('subvolume id for share: %s not found.' % share_name)
 
 
-def remove_share(pool_name, pool_device, share_name):
+def remove_share(pool, pool_device, share_name):
     """
     umount share if its mounted.
     mount root pool
@@ -251,19 +251,19 @@ def disable_quota(pool_name, device):
     return switch_quota(pool_name, device, flag='disable')
 
 
-def update_quota(pool_name, pool_device, qgroup, size_bytes):
+def update_quota(pool, pool_device, qgroup, size_bytes):
     pool_device = '/dev/' + pool_device
-    root_pool_mnt = mount_root(pool_name, pool_device)
+    root_pool_mnt = mount_root(pool, pool_device)
     cmd = [BTRFS, 'qgroup', 'limit', str(size_bytes), qgroup, root_pool_mnt]
     return run_command(cmd)
 
 
-def share_usage(pool_name, pool_device, share_id):
+def share_usage(pool, pool_device, share_id):
     """
     for now, exclusive byte count
     """
     pool_device = '/dev/' + pool_device
-    root_pool_mnt = mount_root(pool_name, pool_device)
+    root_pool_mnt = mount_root(pool, pool_device)
     cmd = [BTRFS, 'qgroup', 'show', root_pool_mnt]
     out, err, rc = run_command(cmd)
     usage = None
