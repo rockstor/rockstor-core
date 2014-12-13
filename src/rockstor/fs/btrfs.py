@@ -49,15 +49,16 @@ Disk = collections.namedtuple('Disk', 'name model serial size '
                               'label btrfs_uuid parted')
 
 
-def add_pool(name, data_raid, meta_raid, disks):
+def add_pool(pool, disks):
     """
     pool is a btrfs filesystem.
     """
     disks_fp = ['/dev/' + d for d in disks]
-    cmd = [MKFS_BTRFS, '-f', '-d', data_raid, '-m', meta_raid, '-L', name]
+    cmd = [MKFS_BTRFS, '-f', '-d', pool.raid, '-m', pool.raid, '-L',
+           pool.name, ]
     cmd.extend(disks_fp)
     out, err, rc = run_command(cmd)
-    enable_quota(name, disks_fp[0])
+    enable_quota(pool, disks_fp[0])
     return out, err, rc
 
 
@@ -75,12 +76,20 @@ def resize_pool(pool_name, device, dev_list, add=True):
     return out, err, rc
 
 
-def mount_root(pool_name, device):
-    root_pool_mnt = DEFAULT_MNT_DIR + pool_name
-    if (is_share_mounted(pool_name)):
+def mount_root(pool, device):
+    root_pool_mnt = DEFAULT_MNT_DIR + pool.name
+    if (is_share_mounted(pool.name)):
         return root_pool_mnt
     create_tmp_dir(root_pool_mnt)
-    mnt_cmd = [MOUNT, '-t', 'btrfs', device, root_pool_mnt]
+    mnt_cmd = [MOUNT, '-t', 'btrfs', device, root_pool_mnt, ]
+    mnt_options = ''
+    if (pool.mnt_options is not None):
+        mnt_options = pool.mnt_options
+    if (pool.compression is not None):
+        if(re.search('compress', mnt_options) is None):
+            mnt_options = ('%s,compress=%s' % (mnt_options, pool.compression))
+    if (len(mnt_options) > 0):
+        mnt_cmd.extend(['-o', mnt_options])
     run_command(mnt_cmd)
     return root_pool_mnt
 
@@ -228,14 +237,14 @@ def rollback_snap(snap_name, sname, subvol_name, pool_name, pool_device):
     remove_share(pool_name, pool_device, subvol_name)
 
 
-def switch_quota(pool_name, device, flag='enable'):
-    root_mnt_pt = mount_root(pool_name, device)
+def switch_quota(pool, device, flag='enable'):
+    root_mnt_pt = mount_root(pool, device)
     cmd = [BTRFS, 'quota', flag, root_mnt_pt]
     return run_command(cmd)
 
 
-def enable_quota(pool_name, device):
-    return switch_quota(pool_name, device)
+def enable_quota(pool, device):
+    return switch_quota(pool, device)
 
 
 def disable_quota(pool_name, device):

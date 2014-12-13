@@ -25,7 +25,7 @@ from django.db import transaction
 from storageadmin.serializers import PoolInfoSerializer
 from storageadmin.models import (Disk, Pool, Share)
 from fs.btrfs import (add_pool, pool_usage, resize_pool, umount_root,
-                      btrfs_uuid)
+                      btrfs_uuid, mount_root)
 from storageadmin.util import handle_exception
 from django.conf import settings
 import rest_framework_custom as rfc
@@ -37,6 +37,7 @@ logger = logging.getLogger(__name__)
 class PoolView(rfc.GenericView):
     serializer_class = PoolInfoSerializer
     RAID_LEVELS = ('single', 'raid0', 'raid1', 'raid10', 'raid5', 'raid6')
+    COMPRESSION_TYPES = ('zlib', 'lzo',)
 
     def _pool_size(self, disks, raid_level):
         disk_size = None
@@ -75,6 +76,54 @@ class PoolView(rfc.GenericView):
             return sorted(Pool.objects.all(), key=lambda u: u.cur_usage(),
                           reverse=reverse)
         return Pool.objects.all()
+
+    def _validate_mnt_options(self, request):
+        mnt_options = request.DATA.get('mnt_options', None)
+        if (mnt_options is None):
+            return mnt_options
+        allowed_options = {
+            'alloc_start': int,
+            'autodefrag': None,
+            'clear_cache': None,
+            'commit': int,
+            'compress-force': self.COMPRESSION_TYPES,
+            'discard': None,
+            'fatal_errors': None,
+            'inode_cache': None,
+            'max_inline': int,
+            'metadata_ratio': int,
+            'noacl': None,
+            'nodatacow': None,
+            'nodatasum': None,
+            'nospace_cache': None,
+            'space_cache': None,
+            'ssd': None,
+            'ssd_spread': None,
+            'thread_pool': int,
+        }
+        o_fields = mnt_options.split(',')
+        for o in o_fields:
+            v = None
+            if (re.search('=', o) is not None):
+                o, v = o.split('=')
+            if (o not in allowed_options):
+                e_msg = ('mount option(%s) not allowed. Make sure there are '
+                         'no whitespaces in the input. Allowed options: %s' %
+                         (o, allowed_options.keys()))
+                handle_exception(Exception(e_msg), request)
+            if (o == 'compress-force' and
+                v not in allowed_options['compress-force']):
+                e_msg = ('compress-force is only allowed with %s' %
+                         (self.COMPRESSION_TYPES))
+                handle_exception(Exception(e_msg), request)
+            if (type(allowed_options[o]) is int):
+                try:
+                    int(v)
+                except:
+                    e_msg = ('Value for mount option(%s) must be an integer' %
+                             (o))
+                    handle_exception(Exception(e_msg), request)
+        return mnt_options
 
     @transaction.commit_on_success
     def post(self, request):
@@ -138,14 +187,23 @@ class PoolView(rfc.GenericView):
                          'level: %s' % raid_level)
                 handle_exception(Exception(e_msg), request)
 
+            compression = request.DATA.get('compression', None)
+            if (compression is not None and
+                compression not in self.COMPRESSION_TYPES):
+                e_msg = ('Unsupported compression algorithm(%s). Use one of '
+                         '%s' % (compression, self.COMPRESSION_TYPES))
+                handle_exception(Exception(e_msg), request)
+
+            mnt_options = self._validate_mnt_options(request)
             dnames = [d.name for d in disks]
             pool_size = self._pool_size(dnames, raid_level)
-            add_pool(pname, raid_level, raid_level, dnames)
-            pool_uuid = btrfs_uuid(dnames[0])
             p = Pool(name=pname, raid=raid_level, size=pool_size,
-                     uuid=pool_uuid)
+                     compression=compression, mnt_options=mnt_options)
+            add_pool(p, dnames)
+            p.uuid = btrfs_uuid(dnames[0])
             p.save()
             p.disk_set.add(*disks)
+            mount_root(p, dnames[0])
             return Response(PoolInfoSerializer(p).data)
 
     def _validate_disk(self, d, request):
