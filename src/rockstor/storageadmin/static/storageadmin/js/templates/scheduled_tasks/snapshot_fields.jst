@@ -1,15 +1,20 @@
 <div class="control-group">
   <div class="controls controls-row">
-    <label class="control-label span4" for="share">Share to replicate<span class="required"> *</span></label>
-    <label class="control-label span4" for="predix">Snapshot Prefix<span class="required"> *</span></label>
+    <label class="control-label span4" for="share">Share<span class="required"> *</span></label>
+    <label class="control-label span4" for="prefix">Snapshot prefix<span class="required"> *</span></label>
   </div>
   <div class="controls controls-row">
     <select class="span4" id="share" name="meta.share">
       <% shares.each(function(share, index) { %>
         <option value="<%= share.get('name') %>"> <%= share.get('name') %> </option>
-      <% }); %> 
+      <% }); %>
     </select>
-    <input class="span4" type="text" id="prefix" name="meta.prefix" placeholder="Prefix" title="Snapshot will be named with this prefix">
+    <input class="span4" type="text" id="prefix" name="meta.prefix" placeholder="Prefix" title="Snapshot will be named with this prefix. The format is prefix_MMDDYYYYHHMMSS">
+  </div>
+  <div class="controls controls-row">
+     <label class="control-label snap4" for="max_count">Maximum count<span class="required"> *</span></label>
+  </div>
+  <div class="controls controls-row">
+     <input class="span4" type="text" id="max_count" name="meta.max_count" placeholder="Maximum count" title="Older snapshots beyond this number and created by this task will be deleted">
   </div>
 </div>
-
