@@ -21,6 +21,7 @@ import os
 import time
 from datetime import datetime
 from smart_manager.models import (Task, TaskDefinition)
+from storageadmin.models import (Share, Snapshot)
 from django.conf import settings
 from django.utils.timezone import utc
 from cli.rest_util import api_call
@@ -84,17 +85,40 @@ class TaskDispatcher(Process):
                             if (t.state == 'running'):
                                 running_tasks[t.id] = True
                     elif (t.task_def.task_type == 'snapshot'):
-                        name = ('%s_%d' % (meta['prefix'], int(time.time())))
+                        stype = 'task_scheduler'
+                        name = ('%s_%s' %
+                                (meta['prefix'],
+                                 datetime.utcnow().replace(
+                                     tzinfo=utc).strftime('%m%d%Y%H%M%S')))
                         url = ('%sshares/%s/snapshots/%s' %
                                (baseurl, meta['share'], name))
                         try:
-                            api_call(url, data=None, calltype='post')
+                            api_call(url, data={'snap_type': stype},
+                                     calltype='post')
                             t.state = 'finished'
                         except:
                             t.state = 'error'
                         finally:
                             t.end = datetime.utcnow().replace(tzinfo=utc)
                             t.save()
+                        max_count = 5
+                        if ('max_count' in meta):
+                            max_count = int(meta['max_count'])
+                        share = Share.objects.get(name=meta['share'])
+                        prefix = ('%s_' % meta['prefix'])
+                        snapshots = Snapshot.objects.filter(
+                            share=share, snap_type=stype,
+                            name__startswith=prefix).order_by('-id')
+                        if (len(snapshots) > max_count):
+                            for snap in snapshots[max_count:]:
+                                url = ('%s/shares/%s/snapshots/%s' %
+                                       (baseurl, meta['share'], snap.name))
+                                try:
+                                    api_call(url, data=None, calltype='delete')
+                                except Exception, e:
+                                    logger.error('Failed to delete old '
+                                                 'snapshot(%s)' % snap.name)
+                                    logger.exception(e)
 
                 for t in Task.objects.filter(
                         state__regex=r'(started|running)'):
