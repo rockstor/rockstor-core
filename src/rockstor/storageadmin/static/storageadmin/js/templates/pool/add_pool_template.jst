@@ -46,11 +46,27 @@
             </select>
           </div>
         </div>
+	<div class="control-group">
+          <label class="control-label" for="compression">Compression</label>
+          <div class="controls">
+            <select id="compression" name="compression">
+              <option value="no">Dont enable compression</option>
+              <option value="zlib">zlib</option>
+              <option value="lzo">lzo</option>
+            </select>
+          </div>
+        </div>
+	<div class="control-group">
+          <label class="control-label" for="mnt_options">Mount options</label>
+          <div class="controls">
+            <input type="text" name="mnt_options" id="mnt_options" title="This is for <strong>Advanced users</strong> to provide specific BTRFS mount options.<br>Type them as a commma separated string of options without any spaces.<br> Allowed options are <strong>alloc_start, autodefrag, clear_cache, commit, compress-force, discard, fatal_errors, inode_cache, max_inline, metadata_ratio, noacl, nodatacow, nodatasum, nospace_cache, space_cache, ssd, ssd_spread, thread_pool</strong>">
+          </div>
+        </div>
           <div id="SelectedDisksTable"> </div>
         <div class="control-group">
           <label class="control-label" for="disks">Select disks<span class="required"> *</span></label>
           <div class="controls">
-          
+
             <table id="disks-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of disks">
               <thead>
                 <tr>
