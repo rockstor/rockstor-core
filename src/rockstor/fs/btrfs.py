@@ -62,10 +62,10 @@ def add_pool(pool, disks):
     return out, err, rc
 
 
-def resize_pool(pool_name, device, dev_list, add=True):
+def resize_pool(pool, device, dev_list, add=True):
     device = '/dev/' + device
     dev_list = ['/dev/' + d for d in dev_list]
-    root_mnt_pt = mount_root(pool_name, device)
+    root_mnt_pt = mount_root(pool, device)
     resize_flag = 'add'
     if (not add):
         resize_flag = 'delete'
@@ -318,17 +318,17 @@ def pool_usage(pool_device):
     return (total, usage)
 
 
-def scrub_start(pool_name, pool_device, force=False):
+def scrub_start(pool, pool_device, force=False):
     from pool_scrub import PoolScrub
-    mnt_pt = mount_root(pool_name, '/dev/' + pool_device)
+    mnt_pt = mount_root(pool, '/dev/' + pool_device)
     p = PoolScrub(mnt_pt)
     p.start()
     return p.pid
 
 
-def scrub_status(pool_name, pool_device):
+def scrub_status(pool, pool_device):
     stats = {'status': 'unknown', }
-    mnt_pt = mount_root(pool_name, '/dev/' + pool_device)
+    mnt_pt = mount_root(pool, '/dev/' + pool_device)
     out, err, rc = run_command([BTRFS, 'scrub', 'status', '-R', mnt_pt])
     if (len(out) > 1):
         if (re.search('running', out[1]) is not None):

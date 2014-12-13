@@ -246,7 +246,7 @@ class PoolView(rfc.GenericView):
                 for d_o in disks:
                     d_o.pool = pool
                     d_o.save()
-                resize_pool(pool.name, mount_disk, dnames)
+                resize_pool(pool, mount_disk, dnames)
             elif (command == 'remove'):
                 remaining_disks = Disk.objects.filter(pool=pool).count() - len(disks)
                 logger.debug('remaining disks = %d' % remaining_disks)
@@ -269,7 +269,7 @@ class PoolView(rfc.GenericView):
                     d.pool = None
                     d.save()
                 mount_disk = Disk.objects.filter(pool=pool)[0].name
-                resize_pool(pool.name, mount_disk, dnames, add=False)
+                resize_pool(pool, mount_disk, dnames, add=False)
             else:
                 msg = ('unknown command: %s' % command)
                 raise Exception(msg)
