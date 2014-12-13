@@ -2,20 +2,20 @@
 /*
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
- * 
+ *
  * RockStor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
- * 
+ *
  * RockStor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 </script>
 
@@ -37,7 +37,7 @@
             <select class="span4" id="task-type" name="task_type">
               <% _.each(taskTypes, function(taskType, index) { %>
                 <option value="<%= taskType %>"> <%= taskType %> </option>
-              <% }); %> 
+              <% }); %>
             </select>
           </div>
         </div>
@@ -53,9 +53,9 @@
           </div>
         </div>
         <div class="control-group">
-          <label class="control-label" for="frequency">Task Frequency (in seconds)<span class="required"> *</span></label>
+          <label class="control-label" for="frequency">Task Frequency (in minutes)<span class="required"> *</span></label>
           <div class="controls">
-            <input class="span4" type="text" id="frequency" name="frequency" placeholder="Frequency" title="How often should this task run?">
+            <input class="span4" type="text" id="frequency" name="frequency" placeholder="Frequency" title="How often should this task run(in minutes)?">
           </div>
         </div>
         <div class="control-group">
@@ -72,9 +72,7 @@
           </div>
         </div>
       </form>
-    
+
     </div> <!-- form-box -->
   </div> <!-- span8 -->
 </div> <!-- row-fluid -->
-
-

@@ -44,7 +44,7 @@ class TaskDispatcher(Process):
             return False
         if (Task.objects.filter(task_def=td).exists()):
             last_task = Task.objects.filter(task_def=td).order_by('-id')[0]
-            if ((now - last_task.start).total_seconds() > td.frequency):
+            if ((now - last_task.start).total_seconds() > (td.frequency * 60)):
                 return True
         elif (now > td.ts):
             return True
@@ -101,9 +101,8 @@ class TaskDispatcher(Process):
                         finally:
                             t.end = datetime.utcnow().replace(tzinfo=utc)
                             t.save()
-                        max_count = 5
-                        if ('max_count' in meta):
-                            max_count = int(meta['max_count'])
+
+                        max_count = int(float(meta['max_count']))
                         share = Share.objects.get(name=meta['share'])
                         prefix = ('%s_' % meta['prefix'])
                         snapshots = Snapshot.objects.filter(

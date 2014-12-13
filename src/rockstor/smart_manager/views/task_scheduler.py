@@ -56,11 +56,9 @@ class TaskSchedulerView(rfc.GenericView):
 
             frequency = None
             if ('frequency' in request.DATA):
-                frequency = int(request.DATA['frequency'])
-                if (frequency < 60):
-                    frequency = 60
-                else:
-                    frequency = frequency - (frequency % 60)
+                frequency = int(float(request.DATA['frequency']))
+                if (frequency < 1):
+                    frequency = 1
             json_meta = json.dumps(request.DATA['meta'])
 
             ts = int(float(request.DATA['ts']))
