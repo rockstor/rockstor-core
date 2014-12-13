@@ -42,29 +42,34 @@ class TaskSchedulerView(rfc.GenericView):
 
     @transaction.commit_on_success
     def post(self, request):
-        name = request.DATA['name']
-        task_type = request.DATA['task_type']
-        if (task_type not in self.valid_tasks):
-            e_msg = ('Unknown task type: %s cannot be scheduled' % name)
-            handle_exception(Exception(e_msg), request)
+        with self._handle_exception(request):
+            name = request.DATA['name']
+            if (TaskDefinition.objects.filter(name=name).exists()):
+                msg = ('Another task exists with the same name(%s). Choose '
+                       'a different name' % name)
+                handle_exception(Exception(msg), request)
 
-        frequency = None
-        if ('frequency' in request.DATA):
-            frequency = int(request.DATA['frequency'])
-            if (frequency < 60):
-                frequency = None
-            else:
-                frequency = frequency - (frequency % 60)
-        json_meta = json.dumps(request.DATA['meta'])
+            task_type = request.DATA['task_type']
+            if (task_type not in self.valid_tasks):
+                e_msg = ('Unknown task type: %s cannot be scheduled' % name)
+                handle_exception(Exception(e_msg), request)
 
-        ts = int(float(request.DATA['ts']))
-        ts_dto = datetime.utcfromtimestamp(float(ts)).replace(second=0,
-                                                              microsecond=0,
-                                                              tzinfo=utc)
-        td = TaskDefinition(name=name, task_type=task_type, ts=ts_dto,
-                            frequency=frequency, json_meta=json_meta)
-        td.save()
-        return Response(TaskDefinitionSerializer(td).data)
+            frequency = None
+            if ('frequency' in request.DATA):
+                frequency = int(request.DATA['frequency'])
+                if (frequency < 60):
+                    frequency = 60
+                else:
+                    frequency = frequency - (frequency % 60)
+            json_meta = json.dumps(request.DATA['meta'])
+
+            ts = int(float(request.DATA['ts']))
+            ts_dto = datetime.utcfromtimestamp(
+                float(ts)).replace(second=0, microsecond=0, tzinfo=utc)
+            td = TaskDefinition(name=name, task_type=task_type, ts=ts_dto,
+                                frequency=frequency, json_meta=json_meta)
+            td.save()
+            return Response(TaskDefinitionSerializer(td).data)
 
     def _task_def(self, request, tdid):
         try:
