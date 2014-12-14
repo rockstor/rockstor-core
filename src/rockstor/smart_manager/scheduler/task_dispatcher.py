@@ -50,6 +50,26 @@ class TaskDispatcher(Process):
             return True
         return False
 
+    def _validate_snap_meta(self, meta):
+        if (type(meta) != dict):
+            raise Exception('meta must be a dictionary, not %s' % type(meta))
+        if ('prefix' not in meta):
+            raise Exception('prefix missing from meta. %s' % meta)
+        if ('share' not in meta):
+            raise Exception('share missing from meta. %s' % meta)
+        if (not Share.objects.filter(name=meta['share']).exists()):
+            raise Exception('Non-existent Share(%s) in meta. %s' %
+                            (meta['share'], meta))
+        if ('max_count' not in meta):
+            raise Exception('max_count missing from meta. %s' % meta)
+        try:
+            max_count = int(float(meta['max_count']))
+        except:
+            raise Exception('max_count is not an integer. %s' % meta)
+        if (max_count < 1):
+            raise Exception('max_count must atleast be 1, not %d' % max_count)
+        return meta
+
     def run(self):
         running_tasks = {}
         baseurl = 'https://localhost/api/'
@@ -86,18 +106,20 @@ class TaskDispatcher(Process):
                                 running_tasks[t.id] = True
                     elif (t.task_def.task_type == 'snapshot'):
                         stype = 'task_scheduler'
-                        name = ('%s_%s' %
-                                (meta['prefix'],
-                                 datetime.utcnow().replace(
-                                     tzinfo=utc).strftime('%m%d%Y%H%M%S')))
-                        url = ('%sshares/%s/snapshots/%s' %
-                               (baseurl, meta['share'], name))
                         try:
+                            self._validate_snap_meta(meta)
+                            name = ('%s_%s' %
+                                    (meta['prefix'],
+                                     datetime.utcnow().replace(
+                                         tzinfo=utc).strftime('%m%d%Y%H%M%S')))
+                            url = ('%sshares/%s/snapshots/%s' %
+                                   (baseurl, meta['share'], name))
                             api_call(url, data={'snap_type': stype},
                                      calltype='post')
                             t.state = 'finished'
-                        except:
+                        except Exception, e:
                             t.state = 'error'
+                            logger.exception(e)
                         finally:
                             t.end = datetime.utcnow().replace(tzinfo=utc)
                             t.save()
@@ -149,6 +171,7 @@ class TaskDispatcher(Process):
                 logger.error(e_msg)
                 logger.exception(e)
             finally:
+                logger.debug('sleeping another 60')
                 time.sleep(60)
 
 

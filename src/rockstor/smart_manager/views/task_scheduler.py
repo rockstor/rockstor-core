@@ -40,16 +40,23 @@ class TaskSchedulerView(rfc.GenericView):
                 return []
         return TaskDefinition.objects.filter().order_by('-id')
 
-    def _validate_frequency(self, request):
+    def _validate_input(self, request):
+        frequency = None
+        meta = {}
         try:
             frequency = int(float(request.DATA.get('frequency')))
             if (frequency < 1):
                 frequency = 1
-            return frequency
         except:
             e_msg = ('frequency is in minutes and hence must be a positive '
                      'integer')
             handle_exception(Exception(e_msg), request)
+
+        meta = request.DATA.get('meta', {})
+        if (type(meta) != dict):
+            e_msg = ('meta must be a dictionary, not %s' % type(meta))
+            handle_exception(Exception(e_msg), request)
+        return frequency, meta
 
     @transaction.commit_on_success
     def post(self, request):
@@ -65,8 +72,8 @@ class TaskSchedulerView(rfc.GenericView):
                 e_msg = ('Unknown task type: %s cannot be scheduled' % name)
                 handle_exception(Exception(e_msg), request)
 
-            frequency = self._validate_frequency(request)
-            json_meta = json.dumps(request.DATA['meta'])
+            frequency, meta = self._validate_input(request)
+            json_meta = json.dumps(meta)
 
             ts = int(float(request.DATA['ts']))
             ts_dto = datetime.utcfromtimestamp(
@@ -92,8 +99,11 @@ class TaskSchedulerView(rfc.GenericView):
                 e_msg = ('enabled flag must be a boolean and not %s' %
                          type(enabled))
                 handle_exception(Exception(e_msg), request)
-            tdo.frequency = self._validate_frequency(request)
-            tdo.json_meta = json.dumps(request.DATA['meta'])
+            tdo.enabled = enabled
+            tdo.frequency, new_meta = self._validate_input(request)
+            meta = json.loads(tdo.json_meta)
+            meta.update(new_meta)
+            tdo.json_meta = json.dumps(meta)
             tdo.save()
             return Response(TaskDefinitionSerializer(tdo).data)
 
