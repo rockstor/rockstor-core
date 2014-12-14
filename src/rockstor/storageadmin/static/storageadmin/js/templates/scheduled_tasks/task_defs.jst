@@ -99,7 +99,10 @@
 
               </td>
               <td>
+	        <a href="#edit-scheduled-task/<%= t.get('id') %>" <i class= "icon-pencil" rel="rooltip" title="Edit"></i></a>
+		&nbsp;
                 <a href="#" data-task-name="<%= t.get('name') %>" data-task-id="<%= t.id %>" data-action="delete"><i class="icon-trash" rel="tooltip" title="Delete"></i></a>
+
               </td>
             </tr>
           <% }); %>

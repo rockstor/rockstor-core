@@ -40,6 +40,17 @@ class TaskSchedulerView(rfc.GenericView):
                 return []
         return TaskDefinition.objects.filter().order_by('-id')
 
+    def _validate_frequency(self, request):
+        try:
+            frequency = int(float(request.DATA.get('frequency')))
+            if (frequency < 1):
+                frequency = 1
+            return frequency
+        except:
+            e_msg = ('frequency is in minutes and hence must be a positive '
+                     'integer')
+            handle_exception(Exception(e_msg), request)
+
     @transaction.commit_on_success
     def post(self, request):
         with self._handle_exception(request):
@@ -54,11 +65,7 @@ class TaskSchedulerView(rfc.GenericView):
                 e_msg = ('Unknown task type: %s cannot be scheduled' % name)
                 handle_exception(Exception(e_msg), request)
 
-            frequency = None
-            if ('frequency' in request.DATA):
-                frequency = int(float(request.DATA['frequency']))
-                if (frequency < 1):
-                    frequency = 1
+            frequency = self._validate_frequency(request)
             json_meta = json.dumps(request.DATA['meta'])
 
             ts = int(float(request.DATA['ts']))
@@ -78,11 +85,17 @@ class TaskSchedulerView(rfc.GenericView):
 
     @transaction.commit_on_success
     def put(self, request, tdid):
-        tdo = self._task_def(request, tdid)
-        enabled = request.DATA['enabled']
-        tdo.enabled = enabled
-        tdo.save()
-        return Response(TaskDefinitionSerializer(tdo).data)
+        with self._handle_exception(request):
+            tdo = self._task_def(request, tdid)
+            enabled = request.DATA.get('enabled', True)
+            if (type(enabled) != bool):
+                e_msg = ('enabled flag must be a boolean and not %s' %
+                         type(enabled))
+                handle_exception(Exception(e_msg), request)
+            tdo.frequency = self._validate_frequency(request)
+            tdo.json_meta = json.dumps(request.DATA['meta'])
+            tdo.save()
+            return Response(TaskDefinitionSerializer(tdo).data)
 
     @transaction.commit_on_success
     def delete(self, request, tdid):
