@@ -363,7 +363,37 @@ var ReceiveTrailCollection = RockStorPaginatedCollection.extend({
 });
 
 var TaskDef = Backbone.Model.extend({
-  urlRoot: "/api/sm/tasks/"
+  urlRoot: "/api/sm/tasks/",
+  max_count: function() {
+    if (this.get('json_meta') != null) {
+      return JSON.parse(this.get('json_meta')).max_count;
+    } else {
+      return 0;
+    }
+  },
+  share: function() {
+    if (this.get('json_meta') != null) {
+      return JSON.parse(this.get('json_meta')).share;
+    } else {
+      return '';
+    }
+  },
+  prefix: function() {
+    if (this.get('json_meta') != null) {
+      return JSON.parse(this.get('json_meta')).prefix;
+    } else {
+      return '';
+    }
+  },
+  pool: function() {
+    if (this.get('json_meta') != null) {
+      return JSON.parse(this.get('json_meta')).pool;
+    } else {
+      return '';
+    }
+  },
+
+
 });
 
 var TaskDefCollection = RockStorPaginatedCollection.extend({

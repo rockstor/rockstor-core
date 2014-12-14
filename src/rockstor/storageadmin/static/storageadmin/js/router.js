@@ -76,6 +76,7 @@ var AppRouter = Backbone.Router.extend({
     "scheduled-tasks": "showScheduledTasks",
     "scheduled-tasks/:taskId/log": "showTasks",
     "add-scheduled-task": "addScheduledTask",
+    "edit-scheduled-task/:taskDefId": "editScheduledTask",
     "shutdown": "showShutdownView",
     "reboot": "showReboot",
     "version": "showVersion",
@@ -523,6 +524,14 @@ var AppRouter = Backbone.Router.extend({
     this.renderSidebar('system', 'scheduled-tasks');
     this.cleanup();
     this.currentLayout = new AddScheduledTaskView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+  
+  editScheduledTask: function(taskDefId) {
+    this.renderSidebar('system', 'scheduled-tasks');
+    this.cleanup();
+    this.currentLayout = new AddScheduledTaskView({taskDefId: taskDefId});
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },

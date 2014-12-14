@@ -86,9 +86,6 @@ def api_call(url, data=None, calltype='get', headers=None, save_error=True):
                 r = call(url, verify=False, data=data,
                          headers=headers)
         else:
-            print ('api auth headers = %s' % api_auth_header)
-            print ('url = %s' % url)
-            print ('data = %s' % data)
             r = call(url, verify=False, headers=api_auth_header, data=data)
     except requests.exceptions.ConnectionError:
         print('Error connecting to Rockstor. Is it running?')

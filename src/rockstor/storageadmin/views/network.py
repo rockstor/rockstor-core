@@ -26,7 +26,6 @@ from system.osi import (config_network_device, network_devices,
                         get_default_interface, update_issue)
 from system.samba import update_samba_discovery
 import rest_framework_custom as rfc
-from django.conf import settings
 
 import logging
 logger = logging.getLogger(__name__)
@@ -42,7 +41,10 @@ class NetworkView(rfc.GenericView):
                 return NetworkInterface.objects.get(name=kwargs['iname'])
             except:
                 return []
-        self._net_scan()
+        with self._handle_exception(self.request):
+            self._net_scan()
+            #to be deprecated soon
+            update_samba_discovery()
         return NetworkInterface.objects.all()
 
     @transaction.commit_on_success
@@ -78,8 +80,6 @@ class NetworkView(rfc.GenericView):
                                       domain=dconfig['domain'])
             if (default_if == ni.name):
                 ni.itype = 'management'
-                update_samba_discovery(dconfig['ipaddr'],
-                                       settings.AVAHI_SMB_CONF)
                 try:
                     update_issue(dconfig['ipaddr'])
                 except:
@@ -157,7 +157,6 @@ class NetworkView(rfc.GenericView):
                 a = Appliance.objects.get(current_appliance=True)
                 a.ip = ni.ipaddr
                 a.save()
-                update_samba_discovery(ni.ipaddr, settings.AVAHI_SMB_CONF)
                 try:
                     update_issue(ni.ipaddr)
                 except:

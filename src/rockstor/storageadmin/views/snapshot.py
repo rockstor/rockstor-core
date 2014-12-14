@@ -59,10 +59,10 @@ class SnapshotView(rfc.GenericView):
 
         snap_type = self.request.QUERY_PARAMS.get('snap_type', None)
         if (snap_type is not None and snap_type != ''):
-            return Snapshot.objects.filter(share=share,
-                                           snap_type=snap_type)
+            return Snapshot.objects.filter(
+                share=share, snap_type=snap_type).order_by('-id')
 
-        return Snapshot.objects.filter(share=share).order_by('id')
+        return Snapshot.objects.filter(share=share).order_by('-id')
 
     @transaction.commit_on_success
     def _toggle_visibility(self, share, snap_name, on=True):

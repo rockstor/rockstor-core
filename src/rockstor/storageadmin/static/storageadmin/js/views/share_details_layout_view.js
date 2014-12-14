@@ -47,7 +47,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 
     // create models
     this.share = new Share({shareName: this.shareName});
-    this.snapshots = new SnapshotCollection([],{snapType: 'admin'});
+    this.snapshots = new SnapshotCollection([]);
     this.snapshots.setUrl(this.shareName);
 
     this.users = new UserCollection();
@@ -118,7 +118,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
     this.$("ul.css-tabs").tabs("div.css-panes > div");
     this.attachActions();
   },
-  
+
   renderRollbackBtn: function() {
     var foundWritableSnapshot = false;
     if (!_.isUndefined(this.snapshots.find(function(s) { return s.get('writable') == true;}))) {
