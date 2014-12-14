@@ -28,7 +28,7 @@
 AddScheduledTaskView = RockstorLayoutView.extend({
   events: {
     "click #js-cancel": "cancel",
-    "click #task-type": "renderOptionalFields",
+    "change #task-type": "renderOptionalFields",
   },
 
   initialize: function() {
@@ -40,6 +40,11 @@ AddScheduledTaskView = RockstorLayoutView.extend({
     this.pools = new PoolCollection();
     this.dependencies.push(this.shares);
     this.dependencies.push(this.pools);
+    this.taskDefId = this.options.taskDefId;
+    if (!_.isUndefined(this.taskDefId) && !_.isNull(this.taskDefId)) {
+      this.taskDef = new TaskDef({id: this.taskDefId});
+      this.dependencies.push(this.taskDef);
+    }
   },
 
   render: function() {
@@ -52,7 +57,9 @@ AddScheduledTaskView = RockstorLayoutView.extend({
     $(this.el).html(this.template({
       shares: this.shares,
       pools: this.pools,
-      taskTypes: ['snapshot', 'scrub']
+      taskTypes: ['snapshot', 'scrub'],
+      taskDef: this.taskDef,
+      taskDefId: this.taskDefId
     }));
     this.renderOptionalFields();
     this.$('#start_date').datepicker();
@@ -67,7 +74,8 @@ AddScheduledTaskView = RockstorLayoutView.extend({
         start_date: 'required',
         frequency: {
           required: true,
-          number: true
+          number: true,
+          min: 1
         },
         share: {
           required: {
@@ -83,15 +91,16 @@ AddScheduledTaskView = RockstorLayoutView.extend({
             }
           }
         },
-	max_count: {
-	  number: true,
-	  required: {
-	    depends: function(element) {
-	      return (_this.$('#task-type').val() == 'snapshot');
-	    },
+        'meta.max_count': {
+          number: true,
+          min: 1,
+          required: {
+            depends: function(element) {
+              return (_this.$('#task-type').val() == 'snapshot');
+            },
 
-	  }
-	},
+          }
+        },
         pool: {
           required: {
             depends: function(element) {
@@ -105,14 +114,20 @@ AddScheduledTaskView = RockstorLayoutView.extend({
         if (buttonDisabled(button)) return false;
         disableButton(button);
         var data = _this.$('#scheduled-task-create-form').getJSON();
-        var ts = moment(data.start_date, 'MM/DD/YYYY');
-        var tmp = _this.$('#start_time').val().split(':')
-        ts.add('h',tmp[0]).add('m', tmp[1]);
-        data.ts = ts.unix();
-
+        if (_this.taskDefId == null) {
+          var ts = moment(data.start_date, 'MM/DD/YYYY');
+          var tmp = _this.$('#start_time').val().split(':')
+          ts.add('h',tmp[0]).add('m', tmp[1]);
+          data.ts = ts.unix();
+          var url = '/api/sm/tasks/';
+          var req_type='POST';
+        } else {
+          var url = '/api/sm/tasks/' + _this.taskDefId;
+          var req_type='PUT';
+        }
         $.ajax({
-          url: '/api/sm/tasks/',
-          type: 'POST',
+          url: url,
+          type: req_type,
           dataType: 'json',
           contentType: 'application/json',
           data: JSON.stringify(data),
@@ -124,21 +139,29 @@ AddScheduledTaskView = RockstorLayoutView.extend({
             enableButton(button);
           }
         });
-
         return false;
       }
     });
   },
 
   renderOptionalFields: function() {
-    var taskType = this.$('#task-type').val();
+    var taskType = null;
+    if (this.taskDefId == null) {
+      taskType = this.$('#task-type').val();
+    } else {
+      taskType = this.taskDef.get('task_type')
+    }
     if (taskType == 'snapshot') {
       this.$('#optional-fields').html(this.snapshotFieldsTemplate({
         shares: this.shares,
+        taskDef: this.taskDef,
+        taskDefId: this.taskDefId
       }));
     } else {
       this.$('#optional-fields').html(this.scrubFieldsTemplate({
         pools: this.pools,
+        taskDef: this.taskDef,
+        taskDefId: this.taskDefId
       }));
     }
     // Reattach tooltips
