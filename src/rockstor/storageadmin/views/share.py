@@ -77,9 +77,9 @@ class ShareView(rfc.GenericView):
             self._validate_share_size(request, new_size)
 
             disk = Disk.objects.filter(pool=share.pool)[0]
-            qgroup_id = self._update_quota(share.pool.name, disk.name,
+            qgroup_id = self._update_quota(share.pool, disk.name,
                                            share.subvol_name, new_size)
-            cur_usage = share_usage(share.pool.name, disk.name, qgroup_id)
+            cur_usage = share_usage(share.pool, disk.name, qgroup_id)
             if (new_size < cur_usage):
                 e_msg = ('Unable to resize because requested new size(%dKB) '
                          'is less than current usage(%dKB) of the share.' %
@@ -130,17 +130,17 @@ class ShareView(rfc.GenericView):
                              type(replica))
                     handle_exception(Exception(e_msg), request)
 
-            add_share(pool_name, disk.name, sname)
-            qgroup_id = self._update_quota(pool_name, disk.name, sname, size)
+            add_share(pool, disk.name, sname)
+            qgroup_id = self._update_quota(pool, disk.name, sname, size)
             s = Share(pool=pool, qgroup=qgroup_id, name=sname, size=size,
                       subvol_name=sname, replica=replica)
             s.save()
             return Response(ShareSerializer(s).data)
 
-    def _update_quota(self, pool_name, disk_name, share_name, size):
-        sid = share_id(pool_name, disk_name, share_name)
+    def _update_quota(self, pool, disk_name, share_name, size):
+        sid = share_id(pool, disk_name, share_name)
         qgroup_id = '0/' + sid
-        update_quota(pool_name, disk_name, qgroup_id, size * 1024)
+        update_quota(pool, disk_name, qgroup_id, size * 1024)
         return qgroup_id
 
     @transaction.commit_on_success
@@ -188,7 +188,7 @@ class ShareView(rfc.GenericView):
                      ' Try again later. You can also manually unmount it with'
                      ' command: /usr/bin/umount /mnt2/%s' % (sname, sname))
             try:
-                remove_share(share.pool.name, pool_device, share.subvol_name)
+                remove_share(share.pool, pool_device, share.subvol_name)
             except Exception, e:
                 logger.exception(e)
                 handle_exception(Exception(e_msg), request)

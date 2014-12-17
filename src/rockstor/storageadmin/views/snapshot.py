@@ -119,11 +119,11 @@ class SnapshotView(rfc.GenericView):
             snap_size = 0
             qgroup_id = '0/na'
             if (snap_type != 'receiver'):
-                add_snap(share.pool.name, pool_device, share.subvol_name,
+                add_snap(share.pool, pool_device, share.subvol_name,
                          real_name, share_prepend=False, readonly=not writable)
-                snap_id = share_id(share.pool.name, pool_device, real_name)
+                snap_id = share_id(share.pool, pool_device, real_name)
                 qgroup_id = ('0/%s' % snap_id)
-                snap_size = share_usage(share.pool.name, pool_device,
+                snap_size = share_usage(share.pool, pool_device,
                                         qgroup_id)
             s = Snapshot(share=share, name=snap_name, real_name=real_name,
                          size=snap_size, qgroup=qgroup_id,
@@ -234,7 +234,7 @@ class SnapshotView(rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
 
         try:
-            remove_snap(share.pool.name, pool_device, sname, snapshot.name)
+            remove_snap(share.pool, pool_device, sname, snapshot.name)
             snapshot.delete()
             return Response()
         except Exception, e:
