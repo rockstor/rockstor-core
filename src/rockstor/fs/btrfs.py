@@ -107,6 +107,12 @@ def umount_root(root_pool_mnt):
     return True
 
 
+def remount(mnt_pt, mnt_options):
+    if (is_mounted(mnt_pt)):
+        run_command([MOUNT, '-o', 'remount,%s' % mnt_options, mnt_pt])
+    return True
+
+
 def add_share(pool, pool_device, share_name):
     """
     share is a subvolume in btrfs.
