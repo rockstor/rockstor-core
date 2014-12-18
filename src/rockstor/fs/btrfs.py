@@ -114,8 +114,12 @@ def add_share(pool, pool_device, share_name):
     pool_device = '/dev/' + pool_device
     root_pool_mnt = mount_root(pool, pool_device)
     subvol_mnt_pt = root_pool_mnt + '/' + share_name
+    show_cmd = [BTRFS, 'subvolume', 'show', subvol_mnt_pt]
+    o, e, rc = run_command(show_cmd, throw=False)
+    if (rc == 0):
+        return o, e, rc
     sub_vol_cmd = [BTRFS, 'subvolume', 'create', subvol_mnt_pt]
-    run_command(sub_vol_cmd)
+    return run_command(sub_vol_cmd)
 
 
 def mount_share(share_name, pool_device, mnt_pt):
@@ -457,3 +461,9 @@ def blink_disk(disk, total_exec, read, sleep):
         total_elapsed_time += read + sleep
         p.send_signal(signal.SIGCONT)
     p.terminate()
+
+
+def set_property(mnt_pt, name, val):
+    if (is_mounted(mnt_pt)):
+        cmd = [BTRFS, 'property', 'set', mnt_pt, name, val]
+        return run_command(cmd)

@@ -19,12 +19,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (Share, Snapshot, Disk, NFSExport, SambaShare)
-from fs.btrfs import (update_quota, rollback_snap)
+from fs.btrfs import (update_quota, rollback_snap, set_property, mount_share)
 from storageadmin.serializers import ShareSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
 from clone_helpers import create_clone
-
+from django.conf import settings
+from system.osi import is_share_mounted
 import logging
 logger = logging.getLogger(__name__)
 
@@ -95,3 +96,24 @@ class ShareCommandView(rfc.GenericView):
             except Exception, e:
                 logger.exception(e)
                 handle_exception(e, request)
+
+        elif (command == 'compress'):
+            algo = request.DATA.get('compress', None)
+            if (algo is None):
+                e_msg = ('Compression algorithm must be specified. Valid '
+                         'options are: %s' % settings.COMPRESSION_TYPES)
+                handle_exception(Exception(e_msg), request)
+            if (algo not in settings.COMPRESSION_TYPES):
+                e_msg = ('Compression algorithm(%s) is invalid. Valid '
+                         'options are: %s' % settings.COMPRESSION_TYPES)
+                handle_exception(Exception(e_msg), request)
+            mnt_pt = '%s%s' % (settings.MNT_PT, share.name)
+            if (not is_share_mounted(share.name)):
+                disk = Disk.objects.filer(pool=share.pool)[0].name
+                mount_share(share.name, disk, mnt_pt)
+            if (algo == 'no'):
+                algo = ''
+            share.compression_algo = algo
+            share.save()
+            set_property(mnt_pt, 'compression', algo)
+            return Response()

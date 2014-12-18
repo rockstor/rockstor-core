@@ -22,7 +22,8 @@ from django.db import transaction
 from storageadmin.models import (Share, Disk, Pool, Snapshot,
                                  NFSExport, SambaShare, SFTP)
 from fs.btrfs import (add_share, remove_share, share_id, update_quota,
-                      share_usage)
+                      share_usage, set_property, mount_share)
+from system.osi import is_share_mounted
 from storageadmin.serializers import ShareSerializer
 from storageadmin.util import handle_exception
 from django.conf import settings
@@ -65,6 +66,14 @@ class ShareView(rfc.GenericView):
         if (e_msg is not None):
             handle_exception(Exception(e_msg), request)
 
+    def _validate_compression(self, request):
+        compression = request.DATA.get('compression', 'no')
+        if (compression not in settings.COMPRESSION_TYPES):
+            e_msg = ('Unsupported compression algorithm(%s). Use one of '
+                     '%s' % (compression, settings.COMPRESSION_TYPES))
+            handle_exception(Exception(e_msg), request)
+        return compression
+
     @transaction.commit_on_success
     def put(self, request, sname):
         with self._handle_exception(request):
@@ -93,6 +102,9 @@ class ShareView(rfc.GenericView):
     def post(self, request):
         with self._handle_exception(request):
             sname = request.DATA['sname']
+            pool_name = request.DATA['pool']
+            compression = self._validate_compression(request)
+            size = int(request.DATA['size'])  # in KB
             if (re.match('%s$' % settings.SHARE_REGEX, sname) is None):
                 e_msg = ('Share name must start with a letter(a-z) and can'
                          ' be followed by any of the following characters: '
@@ -104,8 +116,6 @@ class ShareView(rfc.GenericView):
                 e_msg = ('Share with name: %s already exists.' % sname)
                 handle_exception(Exception(e_msg), request)
 
-            pool_name = request.DATA['pool']
-            size = int(request.DATA['size'])  # in KB
             self._validate_share_size(request, size)
             pool = None
             try:
@@ -129,11 +139,17 @@ class ShareView(rfc.GenericView):
                     e_msg = ('replica must be a boolean, not %s' %
                              type(replica))
                     handle_exception(Exception(e_msg), request)
-
             add_share(pool, disk.name, sname)
             qgroup_id = self._update_quota(pool, disk.name, sname, size)
+            mnt_pt = '%s%s' % (settings.MNT_PT, sname)
+            if (not is_share_mounted(sname)):
+                disk = Disk.objects.filter(pool=pool)[0].name
+                mount_share(sname, disk, mnt_pt)
+            if (compression != 'no'):
+                set_property(mnt_pt, 'compression', compression)
             s = Share(pool=pool, qgroup=qgroup_id, name=sname, size=size,
-                      subvol_name=sname, replica=replica)
+                      subvol_name=sname, replica=replica,
+                      compression_algo=compression)
             s.save()
             return Response(ShareSerializer(s).data)
 
