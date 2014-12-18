@@ -32,6 +32,8 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     this.poolName = this.options.poolName;
     this.template = window.JST.pool_pool_details_layout;
     this.select_disks_template = window.JST.disk_select_disks_template;
+    this.compression_info_template = window.JST.pool_compression_info;
+    this.compression_info_edit_template = window.JST.pool_compression_info_edit;
     this.pool = new Pool({poolName: this.poolName});
     // create poolscrub models
     this.poolscrubs = new PoolscrubCollection([],{snapType: 'admin'});
@@ -45,7 +47,9 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
   },
 
   events: {
-    'click #delete-pool': 'deletePool'
+    'click #delete-pool': 'deletePool',
+    "click #js-edit-compression": "editCompression",
+    "click #js-edit-compression-cancel": "editCompressionCancel"
   },
 
   render: function() {
@@ -65,9 +69,10 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     this.pool.on('change', this.subviews['pool-info'].render, this.subviews['pool-info']);
     this.pool.on('change', this.subviews['pool-usage'].render, this.subviews['pool-usage']);
     this.poolscrubs.on('change', this.subviews['pool-scrubs'].render, this.subviews['pool-scrubs']);
-    this.$('#ph-pool-info').append(this.subviews['pool-info'].render().el);
+    this.$('#ph-pool-info').html(this.subviews['pool-info'].render().el);
     this.$('#ph-pool-usage').append(this.subviews['pool-usage'].render().el);
     this.$('#ph-pool-scrubs').append(this.subviews['pool-scrubs'].render().el);
+    this.$('#ph-compression-info').html(this.compression_info_template({pool: this.pool}));
     this.$("ul.css-tabs").tabs("div.css-panes > div");
     this.attachActions();
   },
@@ -152,6 +157,17 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
         }
       });
     }
+  },
+  
+  editCompression: function(event) {
+    console.log('editCompression');
+    event.preventDefault();
+    this.$('#ph-compression-info').html(this.compression_info_edit_template({pool: this.pool}));
+  },
+  editCompressionCancel: function() {
+    console.log('editCompressionCancel');
+    event.preventDefault();
+    this.$('#ph-compression-info').html(this.compression_info_template({pool: this.pool}));
   },
 
   cleanup: function() {

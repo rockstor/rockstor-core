@@ -1,0 +1,15 @@
+<table>
+  <tr><td>Compression:</td><td><%= pool.get('compression') %></td></tr>
+  <tr>
+    <td>Mount options:</td>
+    <td>
+      <% if (_.isUndefined(pool.get('mnt_options')) || _.isNull(pool.get('mnt_options'))) { %>
+        None
+      <% } else { %>
+        <%= pool.get('mnt_options') %>
+      <% } %>
+    </td>
+  </tr>
+</table>
+<a id="js-edit-compression" class="btn btn-primary" href="#">Edit</a>
+
