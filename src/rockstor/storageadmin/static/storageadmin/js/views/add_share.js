@@ -89,13 +89,13 @@ AddShareView = Backbone.View.extend({
           }
         });
 
-        $('#add-share-form :input').tooltip({placement: 'right'});
+        $('#add-share-form input').tooltip({placement: 'right'});
 
-	this.$('#compression').tooltip({
-	    html: true,
-	    placement: 'right',
-	    title: "Choose a compression algorithm for this Share. By default, parent pool's compression algorithm is inherited.<br> If you like to set pool wide compression, don't choose anything here. If you want finer control of this particular Share's compression algorithm, you can set it here.<br><strong>zlib: </strong>slower but higher compression ratio.<br><strong>lzo: </strong>faster compression/decompression, but compression ratio lower than zlib"
-	});
+        _this.$('#compression').tooltip({
+          html: true,
+          placement: 'right',
+          title: "Choose a compression algorithm for this Share. By default, parent pool's compression algorithm is inherited.<br> If you like to set pool wide compression, don't choose anything here. If you want finer control of this particular Share's compression algorithm, you can set it here.<br><strong>zlib: </strong>slower but higher compression ratio.<br><strong>lzo: </strong>faster compression/decompression, but compression ratio lower than zlib"
+        });
 
         $('#add-share-form').validate({
             onfocusout: false,
