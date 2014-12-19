@@ -30,6 +30,7 @@ RockonsView = RockstorLayoutView.extend({
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.rockons_rockons;
+    
    
   },
 
@@ -40,8 +41,17 @@ RockonsView = RockstorLayoutView.extend({
 
   renderRockons: function() {
 	    var _this = this;
-	    $(this.el).html(this.template());  
-	  
+	    // render template
+	    $(this.el).empty();
+	    $(this.el).append(this.template());
+
+	    this.dockerServiceView = new DockerServiceView({
+	      parentView: this,
+	      dockerService: this.dockerService
+	    });
+	    
+	    $('#docker-service-ph').append(this.dockerServiceView.render().el);
+	    
   },
 
   
