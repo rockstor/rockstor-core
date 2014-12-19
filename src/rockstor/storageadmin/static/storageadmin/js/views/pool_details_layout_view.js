@@ -44,12 +44,14 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     this.dependencies.push(this.poolscrubs);
     this.disks = new DiskCollection();
     this.disks.pageSize = RockStorGlobals.maxPageSize;
+    this.cOpts = {'no': 'Dont enable compression', 'zlib': 'zlib', 'lzo': 'lzo'};
   },
 
   events: {
     'click #delete-pool': 'deletePool',
     "click #js-edit-compression": "editCompression",
-    "click #js-edit-compression-cancel": "editCompressionCancel"
+    "click #js-edit-compression-cancel": "editCompressionCancel",
+    "click #js-submit-compression": "updateCompression",
   },
 
   render: function() {
@@ -58,7 +60,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
   },
 
   renderSubViews: function() {
-    $(this.el).append(this.template({pool: this.pool}));
+    $(this.el).html(this.template({pool: this.pool}));
     this.subviews['pool-info'] = new PoolInfoModule({ model: this.pool });
     this.subviews['pool-usage'] = new PoolUsageModule({ model: this.pool });
     this.subviews['pool-scrubs'] = new PoolScrubTableModule({
@@ -70,8 +72,8 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     this.pool.on('change', this.subviews['pool-usage'].render, this.subviews['pool-usage']);
     this.poolscrubs.on('change', this.subviews['pool-scrubs'].render, this.subviews['pool-scrubs']);
     this.$('#ph-pool-info').html(this.subviews['pool-info'].render().el);
-    this.$('#ph-pool-usage').append(this.subviews['pool-usage'].render().el);
-    this.$('#ph-pool-scrubs').append(this.subviews['pool-scrubs'].render().el);
+    this.$('#ph-pool-usage').html(this.subviews['pool-usage'].render().el);
+    this.$('#ph-pool-scrubs').html(this.subviews['pool-scrubs'].render().el);
     this.$('#ph-compression-info').html(this.compression_info_template({pool: this.pool}));
     this.$("ul.css-tabs").tabs("div.css-panes > div");
     this.attachActions();
@@ -162,12 +164,43 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
   editCompression: function(event) {
     console.log('editCompression');
     event.preventDefault();
-    this.$('#ph-compression-info').html(this.compression_info_edit_template({pool: this.pool}));
+    this.$('#ph-compression-info').html(this.compression_info_edit_template({
+      pool: this.pool,
+      cOpts: this.cOpts
+    }));
   },
   editCompressionCancel: function() {
     console.log('editCompressionCancel');
     event.preventDefault();
     this.$('#ph-compression-info').html(this.compression_info_template({pool: this.pool}));
+  },
+
+  updateCompression: function(event) {
+    var _this = this;
+    console.log('updateCompression');
+    event.preventDefault();
+    var button = this.$('#js-submit-compression');
+    if (buttonDisabled(button)) return false;
+    disableButton(button);
+    $.ajax({
+      url: "/api/pools/" + this.pool.get('name') + '/remount',
+      type: "PUT",
+      dataType: "json",
+      data: { 
+        "compression": this.$('#compression').val(),  
+        "mnt_options": this.$('#mnt_options').val(),  
+      },
+      success: function() {
+        _this.pool.fetch({
+          success: function(collection, response, options) {
+            _this.renderSubViews();
+          }                
+        });
+      },
+      error: function(xhr, status, error) {
+        enableButton(button);
+      }
+    });
   },
 
   cleanup: function() {

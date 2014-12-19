@@ -6,7 +6,7 @@
   <tr>
     <td>Mount options:</td>
     <td>
-      <% if (_.isUndefined(pool.get('mnt_options')) || _.isNull(pool.get('mnt_options'))) { %>
+      <% if (_.isUndefined(pool.get('mnt_options')) || _.isNull(pool.get('mnt_options')) || _.isEmpty(pool.get('mnt_options'))) { %>
         <strong>None</strong>
       <% } else { %>
         <strong><%= pool.get('mnt_options') %></strong>
