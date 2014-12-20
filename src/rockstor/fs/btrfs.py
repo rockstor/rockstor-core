@@ -113,6 +113,15 @@ def remount(mnt_pt, mnt_options):
     return True
 
 
+def is_subvol(mnt_pt):
+    show_cmd = [BTRFS, 'subvolume', 'show', mnt_pt]
+    o, e, rc = run_command(show_cmd, throw=False)
+    if (rc == 0):
+        print('subvol %s is valid' % mnt_pt)
+        return True
+    return False
+
+
 def add_share(pool, pool_device, share_name):
     """
     share is a subvolume in btrfs.
@@ -124,8 +133,10 @@ def add_share(pool, pool_device, share_name):
     o, e, rc = run_command(show_cmd, throw=False)
     if (rc == 0):
         return o, e, rc
-    sub_vol_cmd = [BTRFS, 'subvolume', 'create', subvol_mnt_pt]
-    return run_command(sub_vol_cmd)
+    if (not is_subvol(subvol_mnt_pt)):
+        sub_vol_cmd = [BTRFS, 'subvolume', 'create', subvol_mnt_pt]
+        return run_command(sub_vol_cmd)
+    return True
 
 
 def mount_share(share_name, pool_device, mnt_pt):
@@ -199,39 +210,75 @@ def remove_share(pool, pool_device, share_name):
     run_command(delete_cmd)
 
 
-def remove_snap(pool, pool_device, share_name, snap_name):
+def remove_snap_old(pool, pool_device, share_name, snap_name):
     full_name = ('%s/%s' % (share_name, snap_name))
     if (is_share_mounted(full_name)):
         umount_root('%s%s' % (DEFAULT_MNT_DIR, full_name))
     root_pool_mnt = mount_root(pool, pool_device)
     subvol_mnt_pt = ('%s/%s_%s' % (root_pool_mnt, share_name, snap_name))
-    return run_command([BTRFS, 'subvolume', 'delete', subvol_mnt_pt])
+    if (is_subvol(subvol_mnt_pt)):
+        return run_command([BTRFS, 'subvolume', 'delete', subvol_mnt_pt])
+    return True
 
 
-def add_snap(pool, pool_device, share_name, snap_name,
-             share_prepend=True, readonly=True):
-    """
-    create a snapshot
-    """
-    pool_device = '/dev/' + pool_device
-    root_pool_mnt = mount_root(pool, pool_device)
-    share_full_path = root_pool_mnt + '/' + share_name
-    snap_full_path = ('%s/%s' % (root_pool_mnt, snap_name))
-    if (share_prepend is True):
-        snap_full_path = ('%s/%s_%s' % (root_pool_mnt, share_name, snap_name))
-    #snapshot -r for replication. snapshots must be readonly for btrfs
-    #send/recv to work.
-    snap_cmd = [BTRFS, 'subvolume', 'snapshot', share_full_path,
-                snap_full_path]
+def remove_snap(pool, pool_device, share_name, snap_name):
+    root_mnt = mount_root(pool, pool_device)
+    print('root_mnt = %s' % root_mnt)
+    snap_path = ('%s/.snapshots/%s/%s' %
+                 (root_mnt, share_name, snap_name))
+    print('snap_path = %s' % snap_path)
+    if (not os.path.exists(snap_path)):
+        print('calling old snap_path')
+        return remove_snap_old(pool, pool_device, share_name, snap_name)
+    if (is_mounted(snap_path)):
+        print('snap_path %s mounted' % snap_path)
+        umount_root(snap_path)
+    if (is_subvol(snap_path)):
+        print('subvol %s exists' % snap_path)
+        return run_command([BTRFS, 'subvolume', 'delete', snap_path])
+    return True
+
+
+def add_snap_helper(orig, snap, readonly=False):
+    cmd = [BTRFS, 'subvolume', 'snapshot', orig, snap]
     if (readonly):
-        snap_cmd.insert(3, '-r')
+        cmd.insert(3, '-r')
     try:
-        run_command(snap_cmd)
+        return run_command(cmd)
     except CommandException, ce:
         if (ce.rc != 19):
             #rc == 19 is due to the slow kernel cleanup thread. snapshot gets
             #created just fine. lookup is delayed arbitrarily.
             raise ce
+
+
+def add_clone(pool, pool_device, share, clone, snapshot=None):
+    """
+    clones either a share or a snapshot
+    """
+    pool_device = ('/dev/%s' % pool_device)
+    pool_mnt = mount_root(pool, pool_device)
+    orig_path = pool_mnt
+    if (snapshot is not None):
+        orig_path = ('%s/.snapshots/%s/%s' %
+                     (orig_path, share, snapshot))
+    else:
+        orig_path = ('%s/%s' % (orig_path, share))
+    clone_path = ('%s/%s' % (pool_mnt, clone))
+    return add_snap_helper(orig_path, clone_path)
+
+
+def add_snap(pool, pool_device, share_name, snap_name, readonly=True):
+    """
+    create a snapshot
+    """
+    pool_device = '/dev/' + pool_device
+    root_pool_mnt = mount_root(pool, pool_device)
+    share_full_path = ('%s/%s' % (root_pool_mnt, share_name))
+    snap_dir = ('%s/.snapshots/%s' % (root_pool_mnt, share_name))
+    create_tmp_dir(snap_dir)
+    snap_full_path = ('%s/%s' % (snap_dir, snap_name))
+    return add_snap_helper(share_full_path, snap_full_path)
 
 
 def rollback_snap(snap_name, sname, subvol_name, pool_name, pool_device):

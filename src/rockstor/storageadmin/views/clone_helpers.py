@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from storageadmin.models import (Share, Disk, Snapshot)
 from storageadmin.util import handle_exception
-from fs.btrfs import (add_snap, share_id, update_quota)
+from fs.btrfs import (add_clone, share_id, update_quota)
 from rest_framework.response import Response
 from storageadmin.serializers import ShareSerializer
 import re
@@ -44,10 +44,10 @@ def create_clone(share, new_name, request, logger, snapshot=None):
 
     try:
         share_name = share.subvol_name
+        snap = None
         if (snapshot is not None):
-            share_name = snapshot.real_name
-        add_snap(share.pool, pool_device, share_name,
-                 new_name, share_prepend=False, readonly=False)
+            snap = snapshot.real_name
+        add_clone(share.pool, pool_device, share_name, new_name, snapshot=snap)
         snap_id = share_id(share.pool, pool_device, new_name)
         qgroup_id = ('0/%s' % snap_id)
         update_quota(share.pool, pool_device, qgroup_id,
