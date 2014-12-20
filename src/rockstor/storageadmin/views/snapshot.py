@@ -138,49 +138,50 @@ class SnapshotView(rfc.GenericView):
             handle_exception(Exception(e_msg), request)
 
     def post(self, request, sname, snap_name, command=None):
-        share = self._validate_share(sname, request)
-        uvisible = request.DATA.get('uvisible', False)
-        if (type(uvisible) != bool):
-            e_msg = ('uvisible must be a boolean, not %s' % type(uvisible))
+        with self._handle_exception(request):
+            share = self._validate_share(sname, request)
+            uvisible = request.DATA.get('uvisible', False)
+            if (type(uvisible) != bool):
+                e_msg = ('uvisible must be a boolean, not %s' % type(uvisible))
+                handle_exception(Exception(e_msg), request)
+
+            snap_type = request.DATA.get('snap_type', 'admin')
+            writable = request.DATA.get('writable', 'rw')
+            if (writable == 'rw'):
+                writable = True
+            else:
+                writable = False
+            pool_device = Disk.objects.filter(pool=share.pool)[0].name
+            if (command is None):
+                ret = self._create(share, snap_name, pool_device, request,
+                                   uvisible=uvisible, snap_type=snap_type,
+                                   writable=writable)
+
+                if (uvisible):
+                    try:
+                        self._toggle_visibility(share, ret.data['real_name'])
+                    except Exception, e:
+                        msg = ('Failed to make the Snapshot(%s) visible.' %
+                               snap_name)
+                        logger.error(msg)
+                        logger.exception(e)
+
+                    try:
+                        toggle_sftp_visibility(share, ret.data['real_name'])
+                    except Exception, e:
+                        msg = ('Failed to make the Snapshot(%s) visible for '
+                               'SFTP.' % snap_name)
+                        logger.error(msg)
+                        logger.exception(e)
+
+                return ret
+            if (command == 'clone'):
+                new_name = request.DATA.get('name', None)
+                snapshot = Snapshot.objects.get(share=share, name=snap_name)
+                return create_clone(share, new_name, request, logger,
+                                    snapshot=snapshot)
+            e_msg = ('Unknown command: %s' % command)
             handle_exception(Exception(e_msg), request)
-
-        snap_type = request.DATA.get('snap_type', 'admin')
-        writable = request.DATA.get('writable', 'rw')
-        if (writable == 'rw'):
-            writable = True
-        else:
-            writable = False
-        pool_device = Disk.objects.filter(pool=share.pool)[0].name
-        if (command is None):
-            ret = self._create(share, snap_name, pool_device, request,
-                               uvisible=uvisible, snap_type=snap_type,
-                               writable=writable)
-
-            if (uvisible):
-                try:
-                    self._toggle_visibility(share, ret.data['real_name'])
-                except Exception, e:
-                    msg = ('Failed to make the Snapshot(%s) visible.' %
-                           snap_name)
-                    logger.error(msg)
-                    logger.exception(e)
-
-                try:
-                    toggle_sftp_visibility(share, ret.data['real_name'])
-                except Exception, e:
-                    msg = ('Failed to make the Snapshot(%s) visible for SFTP.'
-                           % snap_name)
-                    logger.error(msg)
-                    logger.exception(e)
-
-            return ret
-        if (command == 'clone'):
-            new_name = request.DATA['name']
-            snapshot = Snapshot.objects.get(share=share, name=snap_name)
-            return create_clone(share, new_name, request, logger,
-                                snapshot=snapshot)
-        e_msg = ('Unknown command: %s' % command)
-        handle_exception(Exception(e_msg), request)
 
     def _validate_share(self, sname, request):
         try:
@@ -248,11 +249,12 @@ class SnapshotView(rfc.GenericView):
         """
         deletes a snapshot
         """
-        if (snap_name is None):
-            snap_qp = self.request.QUERY_PARAMS.get('id', None)
-            if (snap_qp is not None):
-                for si in snap_qp.split(','):
-                    self._delete_snapshot(request, sname, id=si)
-        else:
-            self._delete_snapshot(request, sname, snap_name=snap_name)
-        return Response()
+        with self._handle_exception(request):
+            if (snap_name is None):
+                snap_qp = self.request.QUERY_PARAMS.get('id', None)
+                if (snap_qp is not None):
+                    for si in snap_qp.split(','):
+                        self._delete_snapshot(request, sname, id=si)
+            else:
+                self._delete_snapshot(request, sname, snap_name=snap_name)
+            return Response()
