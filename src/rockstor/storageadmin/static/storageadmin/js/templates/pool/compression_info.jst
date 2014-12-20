@@ -1,10 +1,10 @@
 <table>
   <tr>
-    <td>Compression:</td>
+    <td>Compression Algorithm:</td>
     <td><strong><%= pool.get('compression') %></strong></td>
   </tr>
   <tr>
-    <td>Mount options:</td>
+    <td>Extra mount options:</td>
     <td>
       <% if (_.isUndefined(pool.get('mnt_options')) || _.isNull(pool.get('mnt_options')) || _.isEmpty(pool.get('mnt_options'))) { %>
         <strong>None</strong>
@@ -15,4 +15,3 @@
   </tr>
 </table>
 <a id="js-edit-compression" class="btn btn-primary" href="#">Edit</a>
-

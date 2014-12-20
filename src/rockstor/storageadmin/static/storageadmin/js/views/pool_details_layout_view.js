@@ -160,7 +160,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
       });
     }
   },
-  
+
   editCompression: function(event) {
     console.log('editCompression');
     event.preventDefault();
@@ -186,15 +186,15 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
       url: "/api/pools/" + this.pool.get('name') + '/remount',
       type: "PUT",
       dataType: "json",
-      data: { 
-        "compression": this.$('#compression').val(),  
-        "mnt_options": this.$('#mnt_options').val(),  
+      data: {
+        "compression": this.$('#compression').val(),
+        "mnt_options": this.$('#mnt_options').val(),
       },
       success: function() {
         _this.pool.fetch({
           success: function(collection, response, options) {
             _this.renderSubViews();
-          }                
+          }
         });
       },
       error: function(xhr, status, error) {
