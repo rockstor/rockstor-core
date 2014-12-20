@@ -26,7 +26,7 @@ from django.conf import settings
 from storageadmin.models import (Snapshot, Share, Disk, NFSExport,
                                  NFSExportGroup, AdvancedNFSExport)
 from fs.btrfs import (add_snap, share_id, share_usage, remove_snap,
-                      is_share_mounted, mount_share, umount_root)
+                      umount_root, mount_snap)
 from system.osi import refresh_nfs_exports
 from storageadmin.serializers import SnapshotSerializer
 from storageadmin.util import handle_exception
@@ -67,17 +67,12 @@ class SnapshotView(rfc.GenericView):
     @transaction.commit_on_success
     def _toggle_visibility(self, share, snap_name, on=True):
         cur_exports = list(NFSExport.objects.all())
-        snap_short_name = snap_name.split(share.name)[-1][1:]
-        snap_mnt_pt = ('%s%s/.%s' % (settings.MNT_PT, share.name,
-                                     snap_short_name))
+        snap_mnt_pt = ('%s%s/.%s' % (settings.MNT_PT, share.name, snap_name))
         export_pt = snap_mnt_pt.replace(settings.MNT_PT,
                                         settings.NFS_EXPORT_ROOT)
         if (on):
             pool_device = Disk.objects.filter(pool=share.pool)[0].name
-            if (not is_share_mounted(share.name)):
-                share_mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
-                mount_share(share.subvol_name, pool_device, share_mnt_pt)
-            mount_share(snap_name, pool_device, snap_mnt_pt)
+            mount_snap(share.name, snap_name, share.pool.name, pool_device)
 
             if (NFSExport.objects.filter(share=share).exists()):
                 se = NFSExport.objects.filter(share=share)[0]

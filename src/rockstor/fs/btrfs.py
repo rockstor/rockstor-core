@@ -122,6 +122,17 @@ def is_subvol(mnt_pt):
     return False
 
 
+def subvol_info(mnt_pt):
+    info = {}
+    o, e, rc = run_command([BTRFS, 'subvolume', 'show', mnt_pt], throw=False)
+    if (rc == 0):
+        for i in o:
+            fields = i.strip().split(':')
+            if (len(fields) > 1):
+                info[fields[0].strip()] = fields[1].strip()
+    return info
+
+
 def add_share(pool, pool_device, share_name):
     """
     share is a subvolume in btrfs.
@@ -140,11 +151,28 @@ def add_share(pool, pool_device, share_name):
 
 
 def mount_share(share_name, pool_device, mnt_pt):
+    if (is_mounted(mnt_pt)):
+        return
     pool_device = '/dev/' + pool_device
     subvol_str = 'subvol=%s' % share_name
     create_tmp_dir(mnt_pt)
     mnt_cmd = [MOUNT, '-t', 'btrfs', '-o', subvol_str, pool_device, mnt_pt]
     return run_command(mnt_cmd)
+
+
+def mount_snap(share_name, snap_name, pool_name, pool_device, snap_mnt=None):
+    pool_device = ('/dev/%s' % pool_device)
+    share_path = ('%s%s' % (DEFAULT_MNT_DIR, share_name))
+    rel_snap_path = ('.snapshots/%s/%s' % (share_name, snap_name))
+    snap_path = ('%s%s/%s' %
+                 (DEFAULT_MNT_DIR, pool_name, rel_snap_path))
+    if (snap_mnt is None):
+        snap_mnt = ('%s/.%s' % (share_path, snap_name))
+    mount_share(share_name, pool_device[5:], share_path)
+    if (is_subvol(snap_path)):
+        create_tmp_dir(snap_mnt)
+        return run_command([MOUNT, '-o', 'subvol=%s' % rel_snap_path,
+                            pool_device, snap_mnt])
 
 
 def subvol_list_helper(mnt_pt):

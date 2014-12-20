@@ -19,6 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from django.db import models
 from storageadmin.models import Share
 
+
 class SFTP(models.Model):
     READ_ONLY = "ro"
     READ_WRITE = "rw"
@@ -33,8 +34,6 @@ class SFTP(models.Model):
 
     def share_name(self, *args, **kwargs):
         return self.share.name
-    
+
     class Meta:
         app_label = 'storageadmin'
-
-
