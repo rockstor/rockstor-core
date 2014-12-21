@@ -45,6 +45,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     this.disks = new DiskCollection();
     this.disks.pageSize = RockStorGlobals.maxPageSize;
     this.cOpts = {'no': 'Dont enable compression', 'zlib': 'zlib', 'lzo': 'lzo'};
+    this.cView = this.options.cView;
   },
 
   events: {
@@ -74,7 +75,15 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     this.$('#ph-pool-info').html(this.subviews['pool-info'].render().el);
     this.$('#ph-pool-usage').html(this.subviews['pool-usage'].render().el);
     this.$('#ph-pool-scrubs').html(this.subviews['pool-scrubs'].render().el);
-    this.$('#ph-compression-info').html(this.compression_info_template({pool: this.pool}));
+    if (!_.isUndefined(this.cView) && this.cView == 'edit') {
+      this.$('#ph-compression-info').html(this.compression_info_edit_template({
+        pool: this.pool, 
+        cOpts: this.cOpts
+      }));
+      this.showCompressionTooltips();
+    } else {
+      this.$('#ph-compression-info').html(this.compression_info_template({pool: this.pool}));
+    }
     this.$("ul.css-tabs").tabs("div.css-panes > div");
     this.attachActions();
   },
@@ -168,10 +177,13 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
       pool: this.pool,
       cOpts: this.cOpts
     }));
+    this.showCompressionTooltips();
   },
-  editCompressionCancel: function() {
+  
+  editCompressionCancel: function(event) {
     console.log('editCompressionCancel');
     event.preventDefault();
+    this.hideCompressionTooltips();
     this.$('#ph-compression-info').html(this.compression_info_template({pool: this.pool}));
   },
 
@@ -191,8 +203,10 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
         "mnt_options": this.$('#mnt_options').val(),
       },
       success: function() {
+        _this.hideCompressionTooltips();
         _this.pool.fetch({
           success: function(collection, response, options) {
+            _this.cView = 'view';
             _this.renderSubViews();
           }
         });
@@ -201,6 +215,20 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
         enableButton(button);
       }
     });
+  },
+  
+  showCompressionTooltips: function() {
+    this.$('#ph-compression-info #compression').tooltip({
+      html: true,
+      placement: 'top',
+      title: "Choose a compression algorithm for this pool. You can toggle it later"
+    });
+    this.$('#ph-compression-info #mnt_options').tooltip({ placement: 'top' });
+  },
+
+  hideCompressionTooltips: function() {
+    this.$('#ph-compression-info #compression').tooltip('hide');
+    this.$('#ph-compression-info #mnt_options').tooltip('hide');
   },
 
   cleanup: function() {
