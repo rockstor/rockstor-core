@@ -22,15 +22,8 @@
 <!-- Content -->
 <div class="module-content">
   <h3>Details</h3>
-  <table>
-    <tr>
-      <td>Created on: </td>
-      <td><strong><%= moment(model.get("toc")).format(RS_DATE_FORMAT) %></strong></td>
-    </tr>
-    <tr>
-      <td>Raid Configuration: </td>
-      <td><strong><%= model.get('raid') %></strong></td>
-    </tr>
-  </table>
+  Created on <strong><%= moment(model.get("toc")).format(RS_DATE_FORMAT) %></strong>
+  <br>
+  Raid Configuration: <strong><%= model.get('raid') %></strong>
 </div> <!-- module-content -->
  
