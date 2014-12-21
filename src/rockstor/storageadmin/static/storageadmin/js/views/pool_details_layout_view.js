@@ -85,6 +85,10 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
       this.$('#ph-compression-info').html(this.compression_info_template({pool: this.pool}));
     }
     this.$("ul.css-tabs").tabs("div.css-panes > div");
+    if (!_.isUndefined(this.cView) && this.cView == 'edit') {
+      console.log(this.$('#ph-compression-info').offset().top);
+      $('#content').scrollTop(this.$('#ph-compression-info').offset().top);
+    }
     this.attachActions();
   },
 
