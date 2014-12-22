@@ -3,7 +3,7 @@
   <br>
   <h3>A new update is available!</h3>
   <span class="h3">RockStor <%= mostRecentVersion %></span>&nbsp;&nbsp;&nbsp;&nbsp;
-  <a id="update" class="btn btn-primary" title="Update">Update</a>
+  <!-- <a id="update" class="btn btn-primary" title="Update">Update</a> -->
   <br>
   <br>
   <h4>Here are the changes with this update</h4>
@@ -12,6 +12,29 @@
       <li><h4><%= item %></h4></li>
     <% }); %>
   </ul>
+  <div class="row-fluid">
+    <div class="span6">
+      <div class="alert alert-success" id="contrib-alert">
+        Rockstor is brought to you by the efforts of .....<br>
+        Would you like to donate? <br>
+        <label class="radio inline">
+          <input type="radio" name="contrib" id="contrib20" value="20" checked>$20
+        </label>
+        <label class="radio inline">
+          <input type="radio" name="contrib" id="contrib30" value="30">$30
+        </label>
+        <label class="radio inline">
+          <input type="radio" name="contrib" id="contrib-custom" value="custom">Custom
+        </label>
+        &nbsp;<input class="span4" id="custom-amount" name="custom-amount" placeholder="Enter amount" style="display: none">
+        <br>
+        <br>
+        <a id="donateYes" class="btn btn-primary" title="Update">Yes, I'll support Rockstor</a>
+      </div>
+    </div>
+  </div>
+  <a id="donateNo" class="btn" title="Update">No, just update </a>
+  </p>
 <% } else { %>
   <p>Rockstor is up-to-date. If you've updated recently, you may need to reload the browser manually for the latest UI changes to appear. Reload with Ctrl + Shift + R on Firefox and Chrome.</p>
 <% } %>
@@ -30,3 +53,17 @@
     <div id="user-msg" style="display: none">The Rockstor update is still going on. if the page does not automatically refresh after a few minutes, please try manually refreshing after some time.</div>
   </div>
 </div>
+
+<form id="contrib-form" action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank"i style="display:none">
+  <input type="hidden" name="cmd" value="_xclick" />
+  <input type="hidden" name="business" value="WUDA5UNJXDCZ8" />
+  <input type="hidden" name="currency_code" value="USD" />
+  <input type="hidden" name="item_name" value="Support Rockstor development" />
+  <input type="hidden" name="amount" value="10" />
+  <input type="hidden" name="cn" value="Note to Rockstor developers" />
+  <input type="hidden" name="no_shipping" value="1" />
+  <!--
+  <input type="image" class="btn btn-primary" role="button" value="Support Rockstor" />
+  -->
+</form>
+

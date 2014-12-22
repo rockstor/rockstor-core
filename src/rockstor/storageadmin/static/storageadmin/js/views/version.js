@@ -26,7 +26,9 @@
 
 VersionView = RockstorLayoutView.extend({
   events: {
-    'click #update': 'update'
+    'click #update': 'update',
+    'click #donateYes': 'donateYes',
+    'click #donateNo': 'donateNo'
   },
 
   initialize: function() {
@@ -56,6 +58,7 @@ VersionView = RockstorLayoutView.extend({
   },
 
   renderVersionInfo: function() {
+    var _this = this;
     $(this.el).html(this.template({
       currentVersion: this.currentVersion,
       mostRecentVersion: this.mostRecentVersion,
@@ -66,13 +69,37 @@ VersionView = RockstorLayoutView.extend({
       backdrop: 'static',
       show: false
     });
+    // Show or hide custom contrib textfield
+    this.$('#contrib-custom').click(function(e) {
+      _this.$('#custom-amount').css('display', 'inline'); 
+    });
+    this.$('#contrib20').click(function(e) {
+      _this.$('#custom-amount').css('display', 'none'); 
+    });
+    this.$('#contrib30').click(function(e) {
+      _this.$('#custom-amount').css('display', 'none'); 
+    });
+  },
+
+  donateYes: function() {
+    contrib = this.$('input[type="radio"][name="contrib"]:checked').val();
+    if (contrib=='custom') {
+      contrib = $('#custom-amount').val();
+    } 
+    if (_.isNull(contrib) || _.isEmpty(contrib)) {
+      contrib = 20; // set contrib to default value if no custom amount 
+    }
+    console.log(contrib);
+    this.$('input[name="amount"]').val(contrib);
+    this.$('#contrib-form').submit()
+    this.update();
+  },
+
+  donateNo: function() {
+    this.update();
   },
 
   update: function() {
-    var _this = this;
-    var btn = this.$('#update');
-    if (buttonDisabled(btn)) return false;
-    disableButton(btn);
     this.$('#update-modal').modal('show');
     this.startForceRefreshTimer();
     $.ajax({
