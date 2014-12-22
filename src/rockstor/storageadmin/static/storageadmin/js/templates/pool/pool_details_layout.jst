@@ -33,23 +33,28 @@
   <ul class="css-tabs">
     <li class="active"><a href="#details" data-toggle="tab">DETAILS</a></li>
     <li><a href="#poolscrubs" data-toggle="tab">SCRUB HISTORY</a></li>
+    <li><a href="#disks" data-toggle="tab">DISKS</a></li>
   </ul>
 
   <div class="css-panes">
     <div id="details">
+      <div class="tab-section">
       <div class="row-fluid">
-        <div class="span12">
-          <div class="tab-section">
+        <div class="span6">
             <div id="ph-pool-info"></div>
-          </div>
         </div> <!-- span6 -->
+        <div class="span6">
+            <h3>Compression and extra mount options</h3>
+            <div id="ph-compression-info"></div>
+        </div> <!-- span6 -->
+      </div>
       </div>
       <div class="row-fluid">
         <div class="span12">
           <div class="tab-section">
             <div id="ph-pool-usage"></div>
           </div>
-        </div> <!-- span6 -->
+        </div> <!-- span12 -->
       </div> <!-- row-fluid -->
       <div class="row-fluid">
         <div class="span12">
@@ -75,18 +80,11 @@
           </div> <!-- tab-section -->
         </div> <!-- span6 -->
       </div>
-      <div class="row-fluid">
-        <div class="span12">
-          <div class="tab-section">
-            <h3>Compression and mount options</h3>
-            <div id="ph-compression-info"> 
-            </div>
-          </div>
-        </div>
-      </div> <!-- row -->
     </div>
     <div id="poolscrubs">
       <div id="ph-pool-scrubs"></div>
+    </div>
+    <div id="disks">
     </div>
   </div>
 

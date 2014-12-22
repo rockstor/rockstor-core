@@ -77,7 +77,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     this.$('#ph-pool-scrubs').html(this.subviews['pool-scrubs'].render().el);
     if (!_.isUndefined(this.cView) && this.cView == 'edit') {
       this.$('#ph-compression-info').html(this.compression_info_edit_template({
-        pool: this.pool, 
+        pool: this.pool,
         cOpts: this.cOpts
       }));
       this.showCompressionTooltips();
@@ -86,8 +86,8 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     }
     this.$("ul.css-tabs").tabs("div.css-panes > div");
     if (!_.isUndefined(this.cView) && this.cView == 'edit') {
-      console.log(this.$('#ph-compression-info').offset().top);
-      $('#content').scrollTop(this.$('#ph-compression-info').offset().top);
+      //console.log(this.$('#ph-compression-info').offset().top);
+      //$('#content').scrollTop(this.$('#ph-compression-info').offset().top);
     }
     this.attachActions();
   },
@@ -183,7 +183,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     }));
     this.showCompressionTooltips();
   },
-  
+
   editCompressionCancel: function(event) {
     console.log('editCompressionCancel');
     event.preventDefault();
@@ -220,7 +220,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
       }
     });
   },
-  
+
   showCompressionTooltips: function() {
     this.$('#ph-compression-info #compression').tooltip({
       html: true,
