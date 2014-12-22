@@ -47,6 +47,7 @@ var AppRouter = Backbone.Router.extend({
     "shares/:shareName/create-clone": "createCloneFromShare",
     "shares/:shareName/snapshots/:snapName/create-clone": "createCloneFromSnapshot",
     "shares/:shareName/rollback": "rollbackShare",
+    "shares/:shareName/?cView=:cView": "showShare",
     "services": "showServices",
     "services/:serviceName/edit": "configureService",
     "support":"showSupport",
@@ -274,25 +275,22 @@ var AppRouter = Backbone.Router.extend({
 
   },
 
-  showShare: function(shareName) {
+  showShare: function(shareName, cView) {
     RockStorSocket.removeAllListeners();
-    //var shareDetailView = new ShareDetailView({
-      //model: new Share({shareName: shareName})
-    //});
-
     this.renderSidebar("storage", "shares");
-    var shareDetailsLayoutView = new ShareDetailsLayoutView({
-      shareName: shareName
-    });
-
     $('#maincontent').empty();
-    //$('#maincontent').append(shareDetailView.render().el);
-    $('#maincontent').append(shareDetailsLayoutView.render().el);
-
+    this.cleanup();
+    this.currentLayout = new ShareDetailsLayoutView({
+      shareName: shareName,
+      cView: cView,
+    });
+    $('#maincontent').append(this.currentLayout.render().el);
   },
+
   deleteShare: function(shareName) {
 
   },
+
   showServices: function() {
     RockStorSocket.removeAllListeners();
     this.renderSidebar("system", "services");
@@ -529,7 +527,7 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },
-  
+
   editScheduledTask: function(taskDefId) {
     this.renderSidebar('system', 'scheduled-tasks');
     this.cleanup();
