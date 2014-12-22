@@ -1,7 +1,13 @@
 <table>
   <tr>
-    <td>Compression Algorithm:</td>
-    <td><strong><%= pool.get('compression') %></strong></td>
+    <td>Compression algorithm:</td>
+    <td>
+    <% if (pool.get('compression') == 'no') { %>
+      <strong>None</strong>
+    <% } else { %>
+      <strong><%= pool.get('compression') %></strong>
+    <% } %>
+    </td>
   </tr>
   <tr>
     <td>Extra mount options:</td>
