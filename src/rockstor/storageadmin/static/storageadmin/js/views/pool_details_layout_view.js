@@ -175,7 +175,6 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
   },
 
   editCompression: function(event) {
-    console.log('editCompression');
     event.preventDefault();
     this.$('#ph-compression-info').html(this.compression_info_edit_template({
       pool: this.pool,
@@ -185,7 +184,6 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
   },
 
   editCompressionCancel: function(event) {
-    console.log('editCompressionCancel');
     event.preventDefault();
     this.hideCompressionTooltips();
     this.$('#ph-compression-info').html(this.compression_info_template({pool: this.pool}));
@@ -193,7 +191,6 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 
   updateCompression: function(event) {
     var _this = this;
-    console.log('updateCompression');
     event.preventDefault();
     var button = this.$('#js-submit-compression');
     if (buttonDisabled(button)) return false;
