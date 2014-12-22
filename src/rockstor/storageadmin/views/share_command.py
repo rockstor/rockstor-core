@@ -115,9 +115,9 @@ class ShareCommandView(rfc.GenericView):
                 if (not is_share_mounted(share.name)):
                     disk = Disk.objects.filer(pool=share.pool)[0].name
                     mount_share(share.name, disk, mnt_pt)
-                if (algo == 'no'):
-                    algo = ''
                 share.compression_algo = algo
                 share.save()
+                if (algo == 'no'):
+                    algo = ''
                 set_property(mnt_pt, 'compression', algo)
-                return Response()
+                return Response(ShareSerializer(share).data)
