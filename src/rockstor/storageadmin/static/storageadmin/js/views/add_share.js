@@ -130,11 +130,13 @@ AddShareView = Backbone.View.extend({
                 size_value = size_value*1024*1024;
               }
 
+	      console.log('compression = ' + compression);
               $.ajax({
                 url: "/api/shares",
                 type: "POST",
                 dataType: "json",
-                data: {sname: share_name, "pool": pool_name, "size": size_value, "compression": compression, },
+		contentType: 'application/json',
+                data: JSON.stringify({sname: share_name, "pool": pool_name, "size": size_value, "compression": compression, }),
                 success: function() {
                   enableButton(button);
                   _this.$('#add-share-form :input').tooltip('hide');

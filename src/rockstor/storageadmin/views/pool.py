@@ -128,6 +128,8 @@ class PoolView(rfc.GenericView):
 
     def _validate_compression(self, request):
         compression = request.DATA.get('compression', 'no')
+        if (compression is None):
+            compression = 'no'
         if (compression not in settings.COMPRESSION_TYPES):
             e_msg = ('Unsupported compression algorithm(%s). Use one of '
                      '%s' % (compression, settings.COMPRESSION_TYPES))
