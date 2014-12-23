@@ -1,0 +1,19 @@
+<form name="add-share-form" id="add-share-form" class="form-horizontal">
+  <div class="control-group">
+    <label class="control-label" for="compression">Compression algorithm</label>
+    <div class="controls">
+      <select id="compression" name="compression">
+        <% _.each(_.keys(cOpts), function(c) { %>
+          <% if (share.get('compression_algo') == c) { %>
+            <option value=<%= c %> selected="selected"><%= cOpts[c] %></option>
+          <% } else { %>
+            <option value=<%= c %>><%= cOpts[c] %></option>
+          <% } %>
+        <% }); %>
+      </select>
+    </div>
+  </div>
+  <a id="js-submit-compression" class="btn btn-primary" href="#">Submit</a>
+    &nbsp;
+  <a id="js-edit-compression-cancel" class="btn" href="#">Cancel</a>
+</form>

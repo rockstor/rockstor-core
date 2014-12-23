@@ -1,0 +1,13 @@
+<table>
+  <tr>
+    <td>Compression algorithm: </td>
+    <td>
+    <% if (_.isNull(share.get('compression_algo')) || share.get('compression_algo') == 'no') { %>
+      <strong>None</strong>
+    <% } else { %>
+      <strong><%= share.get('compression_algo') %></strong>
+    <% } %>
+    </td>
+  </tr>
+</table>
+<a id="js-edit-compression" class="btn btn-primary" href="#">Edit</a>
