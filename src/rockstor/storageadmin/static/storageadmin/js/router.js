@@ -124,6 +124,9 @@ var AppRouter = Backbone.Router.extend({
     if (!RockStorGlobals.browserChecked) {
       checkBrowser();
     }
+    if (!RockStorGlobals.kernel) {
+      fetchKernelInfo();
+    }
 
     // set a timer to get current rockstor version and checkif there is an
     // update available

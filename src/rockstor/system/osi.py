@@ -83,6 +83,18 @@ def uptime():
         return int(float(ufo.readline().split()[0]))
 
 
+def kernel_info(supported_version):
+    uname = os.uname()
+    if (uname[2] != supported_version):
+        msg = ('You are running an unsupported kernel(%s). The '
+               'supported kernel(%s) should already be installed and boot by '
+               'default. A simple reboot should fix '
+               'this problem. If you continue using the present kernel, '
+               'certain features like compression may not work' %
+               (uname[2], supported_version))
+        raise Exception(msg)
+
+
 def create_tmp_dir(dirname):
     return run_command([MKDIR, '-p', dirname])
 

@@ -1,27 +1,27 @@
 /*
  *
- * @licstart  The following is the entire license notice for the 
+ * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
- * 
+ *
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
- * 
+ *
  * RockStor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
- * 
+ *
  * RockStor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * @licend  The above is the entire license notice
  * for the JavaScript code in this page.
- * 
+ *
  */
 
 PaginationMixin = {
@@ -52,7 +52,7 @@ RockstorLayoutView = Backbone.View.extend({
     this.subviews = {};
     this.dependencies = [];
   },
-  
+
   fetch: function(callback, context) {
     var allDependencies = [];
     _.each(this.dependencies, function(dep) {
@@ -69,7 +69,7 @@ RockstorLayoutView = Backbone.View.extend({
 // RockstorModuleView
 
 RockstorModuleView = Backbone.View.extend({
-  
+
   tagName: 'div',
   className: 'module',
   requestCount: 0,
@@ -90,12 +90,12 @@ RockstorModuleView = Backbone.View.extend({
   },
 
   render: function() {
-    $(this.el).html(this.template({ 
+    $(this.el).html(this.template({
       module_name: this.module_name,
       model: this.model,
       collection: this.collection
     }));
-    
+
     return this;
   }
 });
@@ -103,7 +103,7 @@ RockstorModuleView = Backbone.View.extend({
 RockStorWidgetView = Backbone.View.extend({
   tagName: 'div',
   className: 'widget',
-  
+
   events: {
     'click .configure-widget': 'configure',
     'click .resize-widget': 'resize',
@@ -118,24 +118,24 @@ RockStorWidgetView = Backbone.View.extend({
     this.parentView = this.options.parentView;
     this.dependencies = [];
   },
-  
+
   render: function() {
     $(this.el).attr('id', this.name + '_widget');
   },
-  
+
   configure: function(event) {
     if (!_.isUndefined(event) && !_.isNull(event)) {
       event.preventDefault();
     }
   },
-  
+
   resize: function(event) {
     if (!_.isUndefined(event) && !_.isNull(event)) {
       event.preventDefault();
     }
-    var c = $(this.el).closest('div.widgets-container'); 
+    var c = $(this.el).closest('div.widgets-container');
     var w = $(this.el).closest('div.widget-ph'); // current widget
-    var widgetDef = RockStorWidgets.findByName(this.name);  
+    var widgetDef = RockStorWidgets.findByName(this.name);
     if (!this.maximized) {
       // Maximizing
       // Remember current position
@@ -154,7 +154,7 @@ RockStorWidgetView = Backbone.View.extend({
       w.attr('data-ss-colspan',widgetDef.cols);
       w.attr('data-ss-rowspan',widgetDef.rows);
       // find current list item at original index
-      if (_.isNull(this.originalPosition) || 
+      if (_.isNull(this.originalPosition) ||
           _.isUndefined(this.originalPosition)) {
         this.originalPosition = 0;
       }
@@ -172,14 +172,14 @@ RockStorWidgetView = Backbone.View.extend({
     c.trigger('ss-rearrange');
     this.parentView.saveWidgetConfiguration();
   },
-  
+
   close: function(event) {
     if (!_.isUndefined(event) && !_.isNull(event)) {
       event.preventDefault();
     }
     this.parentView.removeWidget(this.name, this);
   },
-  
+
   download: function(event) {
     if (!_.isUndefined(event) && !_.isNull(event)) {
       event.preventDefault();
@@ -212,7 +212,7 @@ RockstorButtonView = Backbone.View.extend({
     this.template = window.JST.common_button_bar;
 
   },
-  
+
   render: function() {
     $(this.el).append(this.template({actions: this.actions}));
     this.attachActions();
@@ -337,7 +337,7 @@ function buttonDisabled(button) {
 function refreshNavbar() {
   var navbarTemplate = window.JST.common_navbar;
   $("#navbar-links").html(navbarTemplate({
-    logged_in: logged_in  
+    logged_in: logged_in
   }));
   $('.dropdown-toggle').dropdown();
 
@@ -372,11 +372,11 @@ function setApplianceName() {
   appliances.fetch({
     success: function(request) {
       if (appliances.length > 0) {
-        RockStorGlobals.currentAppliance = 
+        RockStorGlobals.currentAppliance =
         appliances.find(function(appliance) {
-          return appliance.get('current_appliance') == true; 
+          return appliance.get('current_appliance') == true;
         });
-        $('#appliance-name').html('<i class="fa fa-desktop"></i>&nbsp;Hostname: ' + RockStorGlobals.currentAppliance.get('hostname') + '&nbsp;&nbsp;&nbsp;&nbsp;Mgmt IP: ' + RockStorGlobals.currentAppliance.get('ip')); 
+        $('#appliance-name').html('<i class="fa fa-desktop"></i>&nbsp;Hostname: ' + RockStorGlobals.currentAppliance.get('hostname') + '&nbsp;&nbsp;&nbsp;&nbsp;Mgmt IP: ' + RockStorGlobals.currentAppliance.get('ip'));
       }
     },
     error: function(request, response) {
@@ -396,7 +396,7 @@ function updateLoadAvg() {
 
 function fetchLoadAvg() {
   $.ajax({
-    url: "/api/sm/sprobes/loadavg?limit=1&format=json", 
+    url: "/api/sm/sprobes/loadavg?limit=1&format=json",
     type: "GET",
     dataType: "json",
     global: false, // dont show global loading indicator
@@ -406,6 +406,22 @@ function fetchLoadAvg() {
     error: function(xhr, status, error) {
     }
   });
+}
+
+function fetchKernelInfo() {
+  $.ajax({
+    url: '/api/commands/kernel',
+    type: 'POST',
+    dataType: 'json',
+    global: false,
+    success: function(data, status, xhr) {
+	RockStorGlobals.kernel = true;
+    },
+    error: function(xhr, status, error) {
+	msg = JSON.parse(xhr.responseText).detail;
+	$('#browsermsg').html('<div class="alert alert-error"><button type="button" class="close" data-dismiss="alert">&times;</button>' + msg + '</div>');
+    }
+ });
 }
 
 function displayLoadAvg(data) {
@@ -425,7 +441,7 @@ function displayLoadAvg(data) {
     str += yrs + ' years, ';
   }
   if (days == 1) {
-    str += days + ' day, '; 
+    str += days + ' day, ';
   } else if (days > 1) {
     str += days + ' days, ';
   }
@@ -434,10 +450,10 @@ function displayLoadAvg(data) {
   }
   str += hrs + ':';
   if (mins < 10) {
-    str += '0';  
+    str += '0';
   }
   str += mins;
-  str += ' &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Load: ' + load_1 + ', ' + load_5 + ', ' + load_15;  
+  str += ' &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Load: ' + load_1 + ', ' + load_5 + ', ' + load_15;
   $('#appliance-loadavg').html(str);
 }
 
@@ -451,7 +467,7 @@ function fetchServerTime() {
 
 function getCurrentTimeOnServer() {
   $.ajax({
-    url: "/api/commands/utcnow", 
+    url: "/api/commands/utcnow",
     type: "POST",
     dataType: "json",
     global: false, // dont show global loading indicator
@@ -473,7 +489,7 @@ function setVersionCheckTimer() {
 
 function getCurrentVersion() {
   $.ajax({
-    url: "/api/commands/current-version", 
+    url: "/api/commands/current-version",
     type: "POST",
     dataType: "json",
     global: false, // dont show global loading indicator
@@ -487,7 +503,7 @@ function getCurrentVersion() {
 
 function checkVersion() {
   $.ajax({
-    url: "/api/commands/update-check", 
+    url: "/api/commands/update-check",
     type: "POST",
     dataType: "json",
     global: false, // dont show global loading indicator
@@ -553,14 +569,14 @@ var RS_DATE_FORMAT = 'MMMM Do YYYY, h:mm:ss a';
 
 // Constants
 probeStates = {
-  STOPPED: 'stopped', 
+  STOPPED: 'stopped',
   CREATED: 'created',
-  RUNNING: 'running', 
+  RUNNING: 'running',
   ERROR: 'error',
 };
 
-var RockstorUtil = function() { 
-  var util = { 
+var RockstorUtil = function() {
+  var util = {
     // maintain selected object list
     // list is an array of contains models
 
@@ -588,4 +604,3 @@ var RockstorUtil = function() {
   }
   return util;
 }();
-
