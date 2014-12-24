@@ -92,9 +92,10 @@ var AppRouter = Backbone.Router.extend({
     "add-appliance": "addAppliance",
     "access-keys": "showAccessKeys",
     "add-access-key": "addAccessKey",
+    "navdonate": "showDonate",
     "404": "handle404",
     "500": "handle500",
-    "*path": "showHome"
+    "*path": "showHome",
   },
 
   before: function (route, param) {
@@ -633,6 +634,12 @@ var AppRouter = Backbone.Router.extend({
     this.currentLayout = new RebootView();
     $('#maincontent').append(this.currentLayout.render().el);
    },
+
+  showDonate: function() {
+    this.cleanup();
+    this.currentLayout = new DonateView();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
 
   showPlugins: function() {
     this.renderSidebar("plugins", "plugins");
