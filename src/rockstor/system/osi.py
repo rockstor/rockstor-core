@@ -390,7 +390,7 @@ def update_run():
     fh, npath = mkstemp()
     with open(npath, 'w') as atfo:
         atfo.write('%s stop rockstor\n' % SYSTEMCTL)
-        atfo.write('%s -y update\n' % YUM)
+        atfo.write('%s --setopt=timeout=600 -y update\n' % YUM)
         atfo.write('%s start rockstor\n' % SYSTEMCTL)
         atfo.write('/bin/rm -f %s\n' % npath)
     run_command([SYSTEMCTL, 'start', 'atd'])
