@@ -1,5 +1,5 @@
 <h3>You are currently running RockStor <%= currentVersion %></h3>
-<% if (currentVersion != mostRecentVersion) { %>
+<% if (currentVersion == mostRecentVersion) { %>
   <br>
   <h3>A new update is available!</h3>
   <span class="h3">RockStor <%= mostRecentVersion %></span>&nbsp;&nbsp;&nbsp;&nbsp;
@@ -15,16 +15,21 @@
   <div class="row-fluid">
     <div class="span6">
       <div class="alert alert-success" id="contrib-alert">
-        Rockstor is brought to you by the efforts of .....<br>
-        Would you like to donate? <br>
+      <h4>We are happy to make this update available to you.<br>Will you help support Rockstor development with a generous donation?<br><br></h4>
+	<label class="radio inline">
+	  <input type="radio" name="contrib" id="contrib10" value="10" checked>$10
+	</label>
         <label class="radio inline">
-          <input type="radio" name="contrib" id="contrib20" value="20" checked>$20
+          <input type="radio" name="contrib" id="contrib20" value="20">$20
         </label>
         <label class="radio inline">
           <input type="radio" name="contrib" id="contrib30" value="30">$30
         </label>
+	<label class="radio inline">
+	  <input type="radio" name="contrib" id="contrib50" value="50">$50
+	</label>
         <label class="radio inline">
-          <input type="radio" name="contrib" id="contrib-custom" value="custom">Custom
+          <input type="radio" name="contrib" id="contrib-custom" value="custom">Other
         </label>
         &nbsp;<input class="span4" id="custom-amount" name="custom-amount" placeholder="Enter amount" style="display: none">
         <br>
@@ -62,8 +67,4 @@
   <input type="hidden" name="amount" value="10" />
   <input type="hidden" name="cn" value="Note to Rockstor developers" />
   <input type="hidden" name="no_shipping" value="1" />
-  <!--
-  <input type="image" class="btn btn-primary" role="button" value="Support Rockstor" />
-  -->
 </form>
-
