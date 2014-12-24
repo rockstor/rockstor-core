@@ -103,7 +103,7 @@ def main():
         run_command(['/opt/rockstor/bin/supervisorctl', 'restart', 'nginx'])
 
     try:
-        def_kernel = '"Rockstor (3.17.1-1.el7.elrepo.x86_64) 3 (Core)"'
+        def_kernel = 'Rockstor (3.17.1-1.el7.elrepo.x86_64) 3 (Core)'
         run_command(['/usr/sbin/grub2-set-default', def_kernel])
     except Exception, e:
         logging.exception(e)
