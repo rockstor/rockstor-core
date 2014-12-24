@@ -32,6 +32,8 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     this.poolName = this.options.poolName;
     this.template = window.JST.pool_pool_details_layout;
     this.select_disks_template = window.JST.disk_select_disks_template;
+    this.compression_info_template = window.JST.pool_compression_info;
+    this.compression_info_edit_template = window.JST.pool_compression_info_edit;
     this.pool = new Pool({poolName: this.poolName});
     // create poolscrub models
     this.poolscrubs = new PoolscrubCollection([],{snapType: 'admin'});
@@ -42,10 +44,15 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     this.dependencies.push(this.poolscrubs);
     this.disks = new DiskCollection();
     this.disks.pageSize = RockStorGlobals.maxPageSize;
+    this.cOpts = {'no': 'Dont enable compression', 'zlib': 'zlib', 'lzo': 'lzo'};
+    this.cView = this.options.cView;
   },
 
   events: {
-    'click #delete-pool': 'deletePool'
+    'click #delete-pool': 'deletePool',
+    "click #js-edit-compression": "editCompression",
+    "click #js-edit-compression-cancel": "editCompressionCancel",
+    "click #js-submit-compression": "updateCompression",
   },
 
   render: function() {
@@ -54,7 +61,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
   },
 
   renderSubViews: function() {
-    $(this.el).append(this.template({pool: this.pool}));
+    $(this.el).html(this.template({pool: this.pool}));
     this.subviews['pool-info'] = new PoolInfoModule({ model: this.pool });
     this.subviews['pool-usage'] = new PoolUsageModule({ model: this.pool });
     this.subviews['pool-scrubs'] = new PoolScrubTableModule({
@@ -65,10 +72,23 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     this.pool.on('change', this.subviews['pool-info'].render, this.subviews['pool-info']);
     this.pool.on('change', this.subviews['pool-usage'].render, this.subviews['pool-usage']);
     this.poolscrubs.on('change', this.subviews['pool-scrubs'].render, this.subviews['pool-scrubs']);
-    this.$('#ph-pool-info').append(this.subviews['pool-info'].render().el);
-    this.$('#ph-pool-usage').append(this.subviews['pool-usage'].render().el);
-    this.$('#ph-pool-scrubs').append(this.subviews['pool-scrubs'].render().el);
+    this.$('#ph-pool-info').html(this.subviews['pool-info'].render().el);
+    this.$('#ph-pool-usage').html(this.subviews['pool-usage'].render().el);
+    this.$('#ph-pool-scrubs').html(this.subviews['pool-scrubs'].render().el);
+    if (!_.isUndefined(this.cView) && this.cView == 'edit') {
+      this.$('#ph-compression-info').html(this.compression_info_edit_template({
+        pool: this.pool,
+        cOpts: this.cOpts
+      }));
+      this.showCompressionTooltips();
+    } else {
+      this.$('#ph-compression-info').html(this.compression_info_template({pool: this.pool}));
+    }
     this.$("ul.css-tabs").tabs("div.css-panes > div");
+    if (!_.isUndefined(this.cView) && this.cView == 'edit') {
+      //console.log(this.$('#ph-compression-info').offset().top);
+      //$('#content').scrollTop(this.$('#ph-compression-info').offset().top);
+    }
     this.attachActions();
   },
 
@@ -152,6 +172,64 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
         }
       });
     }
+  },
+
+  editCompression: function(event) {
+    event.preventDefault();
+    this.$('#ph-compression-info').html(this.compression_info_edit_template({
+      pool: this.pool,
+      cOpts: this.cOpts
+    }));
+    this.showCompressionTooltips();
+  },
+
+  editCompressionCancel: function(event) {
+    event.preventDefault();
+    this.hideCompressionTooltips();
+    this.$('#ph-compression-info').html(this.compression_info_template({pool: this.pool}));
+  },
+
+  updateCompression: function(event) {
+    var _this = this;
+    event.preventDefault();
+    var button = this.$('#js-submit-compression');
+    if (buttonDisabled(button)) return false;
+    disableButton(button);
+    $.ajax({
+      url: "/api/pools/" + this.pool.get('name') + '/remount',
+      type: "PUT",
+      dataType: "json",
+      data: {
+        "compression": this.$('#compression').val(),
+        "mnt_options": this.$('#mnt_options').val(),
+      },
+      success: function() {
+        _this.hideCompressionTooltips();
+        _this.pool.fetch({
+          success: function(collection, response, options) {
+            _this.cView = 'view';
+            _this.renderSubViews();
+          }
+        });
+      },
+      error: function(xhr, status, error) {
+        enableButton(button);
+      }
+    });
+  },
+
+  showCompressionTooltips: function() {
+    this.$('#ph-compression-info #compression').tooltip({
+      html: true,
+      placement: 'top',
+      title: "Choose a compression algorithm for this Pool.<br><strong>zlib: </strong>slower but higher compression ratio.<br><strong>lzo: </strong>faster compression/decompression, but ratio smaller than zlib.<br>Enabling compression at the pool level applies to all Shares carved out of this Pool.<br>Don't enable compression here if you like to have finer control at the Share level.<br>You can change the algorithm, disable or enable it later, if necessary."
+    });
+    this.$('#ph-compression-info #mnt_options').tooltip({ placement: 'top' });
+  },
+
+  hideCompressionTooltips: function() {
+    this.$('#ph-compression-info #compression').tooltip('hide');
+    this.$('#ph-compression-info #mnt_options').tooltip('hide');
   },
 
   cleanup: function() {

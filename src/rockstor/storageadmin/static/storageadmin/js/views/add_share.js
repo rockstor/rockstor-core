@@ -89,7 +89,13 @@ AddShareView = Backbone.View.extend({
           }
         });
 
-        $('#add-share-form :input').tooltip({placement: 'right'});
+        $('#add-share-form input').tooltip({placement: 'right'});
+
+        _this.$('#compression').tooltip({
+          html: true,
+          placement: 'right',
+          title: "Choose a compression algorithm for this Share. By default, parent pool's compression algorithm is applied.<br> If you like to set pool wide compression, don't choose anything here. If you want finer control of this particular Share's compression algorithm, you can set it here.<br><strong>zlib: </strong>slower but higher compression ratio.<br><strong>lzo: </strong>faster compression/decompression, but compression ratio lower than zlib"
+        });
 
         $('#add-share-form').validate({
             onfocusout: false,
@@ -107,6 +113,10 @@ AddShareView = Backbone.View.extend({
               disableButton(button);
               var share_name = $('#share_name').val();
               var pool_name = $('#pool_name').val();
+	      var compression = $('#compression').val();
+	      if (compression == 'no') {
+		  compression = null;
+	      }
               var size = $('#share_size').val();
               var sizeFormat = size.replace(/[^a-z]/gi, "");
               var size_array = size.split(sizeFormat)
@@ -120,11 +130,13 @@ AddShareView = Backbone.View.extend({
                 size_value = size_value*1024*1024;
               }
 
+	      console.log('compression = ' + compression);
               $.ajax({
                 url: "/api/shares",
                 type: "POST",
                 dataType: "json",
-                data: {sname: share_name, "pool": pool_name, "size": size_value},
+		contentType: 'application/json',
+                data: JSON.stringify({sname: share_name, "pool": pool_name, "size": size_value, "compression": compression, }),
                 success: function() {
                   enableButton(button);
                   _this.$('#add-share-form :input').tooltip('hide');

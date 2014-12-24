@@ -102,6 +102,13 @@ def main():
         logging.info('restarting nginx...')
         run_command(['/opt/rockstor/bin/supervisorctl', 'restart', 'nginx'])
 
+    try:
+        def_kernel = '"Rockstor (3.17.1-1.el7.elrepo.x86_64) 3 (Core)"'
+        run_command(['/usr/sbin/grub2-set-default', def_kernel])
+    except Exception, e:
+        logging.exception(e)
+        logging.error('unable to set default kernel')
+
     if (os.path.isfile(STAMP)):
         return logging.info(
             'initrock ran successfully before, so not running it again.'

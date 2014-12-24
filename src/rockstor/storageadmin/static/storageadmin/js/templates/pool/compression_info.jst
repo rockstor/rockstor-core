@@ -1,0 +1,23 @@
+<table>
+  <tr>
+    <td>Compression algorithm: </td>
+    <td>
+    <% if (pool.get('compression') == 'no') { %>
+      <strong>None</strong>
+    <% } else { %>
+      <strong><%= pool.get('compression') %></strong>
+    <% } %>
+    </td>
+  </tr>
+  <tr>
+    <td>Extra mount options:</td>
+    <td>
+      <% if (_.isUndefined(pool.get('mnt_options')) || _.isNull(pool.get('mnt_options')) || _.isEmpty(pool.get('mnt_options'))) { %>
+        <strong>None</strong>
+      <% } else { %>
+        <strong><%= pool.get('mnt_options') %></strong>
+      <% } %>
+    </td>
+  </tr>
+</table>
+<a id="js-edit-compression" class="btn btn-primary" href="#">Edit</a>

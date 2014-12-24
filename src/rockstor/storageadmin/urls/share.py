@@ -25,7 +25,7 @@ from django.conf import settings
 share_regex = settings.SHARE_REGEX
 snap_regex = share_regex
 snap_command = 'clone'
-share_command = 'rollback|clone'
+share_command = 'rollback|clone|compress'
 
 urlpatterns = patterns(
     '',

@@ -27,7 +27,7 @@ from rest_framework.authentication import (BasicAuthentication,
 from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
 from system.osi import (uptime, refresh_nfs_exports, update_check,
-                        update_run, current_version)
+                        update_run, current_version, kernel_info)
 from fs.btrfs import (mount_share, device_scan)
 from system.ssh import (sftp_mount_map, sftp_mount)
 from system.services import (systemctl, join_winbind_domain, ads_join_status)
@@ -120,6 +120,12 @@ class CommandView(APIView):
 
         elif (command == 'uptime'):
             return Response(uptime())
+
+        elif (command == 'kernel'):
+            try:
+                return Response(kernel_info(settings.SUPPORTED_KERNEL_VERSION))
+            except Exception, e:
+                handle_exception(e, request)
 
         elif (command == 'update-check'):
             try:

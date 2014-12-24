@@ -19,13 +19,11 @@
  */
 </script>
 
-  <!-- Content -->
-    <div class="module-content">
-      Created on <%= moment(model.get("toc")).format(RS_DATE_FORMAT) %><br>
-      Disks: 
-      <% _.each(model.get('disks'), function(disk, i) { %>
-        <%= disk.name %>
-        <% if (i < model.get('disks').length-1) { %>, <% } %>
-      <% }); %>
-    </div> <!-- module-content -->
+<!-- Content -->
+<div class="module-content">
+  <h3>Details</h3>
+  Created on <strong><%= moment(model.get("toc")).format(RS_DATE_FORMAT) %></strong>
+  <br>
+  Raid Configuration: <strong><%= model.get('raid') %></strong>
+</div> <!-- module-content -->
  

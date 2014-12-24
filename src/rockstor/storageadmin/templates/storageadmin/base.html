@@ -178,8 +178,44 @@
       <div id="appliance-select-content"></div>
     </div>
 
+    <div id="donate-modal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="donate-modal-label" aria-hidden="true">
+      <div class="modal-header">
+        <h3 id="donate-modal-label">We really appreciate your generous donation. Choose an amount and click Donate. Thank you!</h3>
+        <br>
+      </div>
+      <div class="modal-body">
+      <label class="radio inline">
+        <input type="radio" name="contrib" id="contrib10" value="10" checked>$10
+      </label>
+      <label class="radio inline">
+        <input type="radio" name="contrib" class="contrib-other" id="contrib20" value="20">$20
+      </label>
+      <label class="radio inline">
+        <input type="radio" name="contrib" class="contrib-other" id="contrib30" value="30">$30
+      </label>
+      <label class="radio inline">
+        <input type="radio" name="contrib" class="contrib-other" id="contrib50" value="50">$50
+      </label>
+      <label class="radio inline">
+        <input type="radio" name="contrib" id="contrib-custom" value="custom">Other
+      </label>
+      &nbsp;<input class="span2" id="custom-amount" name="custom-amount" placeholder="Enter amount" style="display: none">
+      <br><br>
+      <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+      <a id="donateYes" class="btn btn-primary" title="Donate">Donate</a>
+      </div>
+    </div>
     <form name="dummy-form" action="/login" method="post">
       {% csrf_token %}
+    </form>
+    <form id="contrib-form" action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank"i style="display:none">
+      <input type="hidden" name="cmd" value="_xclick" />
+      <input type="hidden" name="business" value="WUDA5UNJXDCZ8" />
+      <input type="hidden" name="currency_code" value="USD" />
+      <input type="hidden" name="item_name" value="Support Rockstor development" />
+      <input type="hidden" name="amount" value="10" />
+      <input type="hidden" name="cn" value="Note to Rockstor developers" />
+      <input type="hidden" name="no_shipping" value="1" />
     </form>
 
     <script src="/static/js/lib/bootstrap.js"></script>

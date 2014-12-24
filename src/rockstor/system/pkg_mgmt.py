@@ -23,4 +23,4 @@ YUM = '/usr/bin/yum'
 
 
 def install_pkg(name):
-    return run_command([YUM, '-y', 'install', name])
+    return run_command([YUM, '--setopt=timeout=600', '-y', 'install', name])

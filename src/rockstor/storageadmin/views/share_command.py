@@ -19,12 +19,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (Share, Snapshot, Disk, NFSExport, SambaShare)
-from fs.btrfs import (update_quota, rollback_snap)
+from fs.btrfs import (update_quota, rollback_snap, set_property, mount_share)
 from storageadmin.serializers import ShareSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
 from clone_helpers import create_clone
-
+from django.conf import settings
+from system.osi import is_share_mounted
 import logging
 logger = logging.getLogger(__name__)
 
@@ -50,38 +51,45 @@ class ShareCommandView(rfc.GenericView):
                           reverse=reverse)
         return Share.objects.all()
 
-    @transaction.commit_on_success
-    def post(self, request, sname, command):
+    def _validate_share(self, request, sname):
         try:
-            share = Share.objects.get(name=sname)
+            return Share.objects.get(name=sname)
         except:
-            e_msg = ('Share: %s does not exist' % sname)
+            e_msg = ('Share(%s) does not exist' % sname)
             handle_exception(Exception(e_msg), request)
 
-        if (command == 'clone'):
-            new_name = request.DATA.get('name', '')
-            return create_clone(share, new_name, request, logger)
+    def _validate_snapshot(self, request, share):
+        try:
+            snap_name = request.DATA.get('name', '')
+            return Snapshot.objects.get(share=share, name=snap_name)
+        except:
+            e_msg = ('Snapshot(%s) does not exist for this Share(%s)' %
+                     (snap_name, share.name))
+            handle_exception(Exception(e_msg), request)
 
-        elif (command == 'rollback'):
-            snap_name = request.DATA['name']
-            try:
-                snap = Snapshot.objects.get(share=share, name=snap_name)
-            except:
-                e_msg = ('Snapshot with name: %s does not exist for the '
-                         'share: %s' % (snap_name, share.name))
-                handle_exception(Exception(e_msg), request)
+    @transaction.commit_on_success
+    def post(self, request, sname, command):
+        with self._handle_exception(request):
+            share = self._validate_share(request, sname)
 
-            if (NFSExport.objects.filter(share=share).exists()):
-                e_msg = ('Share: %s cannot be rolled back as it is exported '
-                         'via nfs. Delete nfs exports and try again' % sname)
-                handle_exception(Exception(e_msg), request)
+            if (command == 'clone'):
+                new_name = request.DATA.get('name', '')
+                return create_clone(share, new_name, request, logger)
 
-            if (SambaShare.objects.filter(share=share).exists()):
-                e_msg = ('Share: %s cannot be rolled back as it is shared '
-                         ' via Samba. Unshare and try again' % sname)
-                handle_exception(Exception(e_msg), request)
+            if (command == 'rollback'):
+                snap = self._validate_snapshot(request, share)
 
-            try:
+                if (NFSExport.objects.filter(share=share).exists()):
+                    e_msg = ('Share(%s) cannot be rolled back as it is '
+                             'exported via nfs. Delete nfs exports and '
+                             'try again' % sname)
+                    handle_exception(Exception(e_msg), request)
+
+                if (SambaShare.objects.filter(share=share).exists()):
+                    e_msg = ('Share(%s) cannot be rolled back as it is shared'
+                             ' via Samba. Unshare and try again' % sname)
+                    handle_exception(Exception(e_msg), request)
+
                 pool_device = Disk.objects.filter(pool=share.pool)[0].name
                 rollback_snap(snap.real_name, share.name, share.subvol_name,
                               share.pool.name, pool_device)
@@ -92,6 +100,24 @@ class ShareCommandView(rfc.GenericView):
                 share.save()
                 snap.delete()
                 return Response()
-            except Exception, e:
-                logger.exception(e)
-                handle_exception(e, request)
+
+            if (command == 'compress'):
+                algo = request.DATA.get('compress', None)
+                if (algo is None):
+                    e_msg = ('Compression algorithm must be specified. Valid '
+                             'options are: %s' % settings.COMPRESSION_TYPES)
+                    handle_exception(Exception(e_msg), request)
+                if (algo not in settings.COMPRESSION_TYPES):
+                    e_msg = ('Compression algorithm(%s) is invalid. Valid '
+                             'options are: %s' % settings.COMPRESSION_TYPES)
+                    handle_exception(Exception(e_msg), request)
+                mnt_pt = '%s%s' % (settings.MNT_PT, share.name)
+                if (not is_share_mounted(share.name)):
+                    disk = Disk.objects.filer(pool=share.pool)[0].name
+                    mount_share(share.name, disk, mnt_pt)
+                share.compression_algo = algo
+                share.save()
+                if (algo == 'no'):
+                    algo = ''
+                set_property(mnt_pt, 'compression', algo)
+                return Response(ShareSerializer(share).data)

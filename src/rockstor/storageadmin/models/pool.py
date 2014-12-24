@@ -38,6 +38,8 @@ class Pool(models.Model):
     """raid type"""
     raid = models.CharField(max_length=10, choices=RAID_CHOICES)
     toc = models.DateTimeField(auto_now=True)
+    compression = models.CharField(max_length=256, null=True)
+    mnt_options = models.CharField(max_length=4096, null=True)
 
     def cur_free(self, *args, **kwargs):
         try:

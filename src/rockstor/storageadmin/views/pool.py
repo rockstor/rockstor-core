@@ -25,7 +25,7 @@ from django.db import transaction
 from storageadmin.serializers import PoolInfoSerializer
 from storageadmin.models import (Disk, Pool, Share)
 from fs.btrfs import (add_pool, pool_usage, resize_pool, umount_root,
-                      btrfs_uuid)
+                      btrfs_uuid, mount_root, remount)
 from storageadmin.util import handle_exception
 from django.conf import settings
 import rest_framework_custom as rfc
@@ -75,6 +75,66 @@ class PoolView(rfc.GenericView):
             return sorted(Pool.objects.all(), key=lambda u: u.cur_usage(),
                           reverse=reverse)
         return Pool.objects.all()
+
+    def _validate_mnt_options(self, request):
+        mnt_options = request.DATA.get('mnt_options', None)
+        if (mnt_options is None):
+            return ''
+        allowed_options = {
+            'alloc_start': int,
+            'autodefrag': None,
+            'clear_cache': None,
+            'commit': int,
+            'compress-force': settings.COMPRESSION_TYPES,
+            'discard': None,
+            'fatal_errors': None,
+            'inode_cache': None,
+            'max_inline': int,
+            'metadata_ratio': int,
+            'noacl': None,
+            'nodatacow': None,
+            'nodatasum': None,
+            'nospace_cache': None,
+            'space_cache': None,
+            'ssd': None,
+            'ssd_spread': None,
+            'thread_pool': int,
+            'noatime': None,
+            '': None,
+        }
+        o_fields = mnt_options.split(',')
+        for o in o_fields:
+            v = None
+            if (re.search('=', o) is not None):
+                o, v = o.split('=')
+            if (o not in allowed_options):
+                e_msg = ('mount option(%s) not allowed. Make sure there are '
+                         'no whitespaces in the input. Allowed options: %s' %
+                         (o, allowed_options.keys()))
+                handle_exception(Exception(e_msg), request)
+            if (o == 'compress-force' and
+                v not in allowed_options['compress-force']):
+                e_msg = ('compress-force is only allowed with %s' %
+                         (settings.COMPRESSION_TYPES))
+                handle_exception(Exception(e_msg), request)
+            if (type(allowed_options[o]) is int):
+                try:
+                    int(v)
+                except:
+                    e_msg = ('Value for mount option(%s) must be an integer' %
+                             (o))
+                    handle_exception(Exception(e_msg), request)
+        return mnt_options
+
+    def _validate_compression(self, request):
+        compression = request.DATA.get('compression', 'no')
+        if (compression is None):
+            compression = 'no'
+        if (compression not in settings.COMPRESSION_TYPES):
+            e_msg = ('Unsupported compression algorithm(%s). Use one of '
+                     '%s' % (compression, settings.COMPRESSION_TYPES))
+            handle_exception(Exception(e_msg), request)
+        return compression
 
     @transaction.commit_on_success
     def post(self, request):
@@ -138,14 +198,17 @@ class PoolView(rfc.GenericView):
                          'level: %s' % raid_level)
                 handle_exception(Exception(e_msg), request)
 
+            compression = self._validate_compression(request)
+            mnt_options = self._validate_mnt_options(request)
             dnames = [d.name for d in disks]
             pool_size = self._pool_size(dnames, raid_level)
-            add_pool(pname, raid_level, raid_level, dnames)
-            pool_uuid = btrfs_uuid(dnames[0])
             p = Pool(name=pname, raid=raid_level, size=pool_size,
-                     uuid=pool_uuid)
+                     compression=compression, mnt_options=mnt_options)
+            add_pool(p, dnames)
+            p.uuid = btrfs_uuid(dnames[0])
             p.save()
             p.disk_set.add(*disks)
+            mount_root(p, dnames[0])
             return Response(PoolInfoSerializer(p).data)
 
     def _validate_disk(self, d, request):
@@ -154,6 +217,63 @@ class PoolView(rfc.GenericView):
         except:
             e_msg = ('Disk(%s) does not exist' % d)
             handle_exception(Exception(e_msg), request)
+
+    def _remount(self, request, pool):
+        compression = self._validate_compression(request)
+        mnt_options = self._validate_mnt_options(request)
+        if ((compression == pool.compression and
+             mnt_options == pool.mnt_options)):
+            return Response()
+
+        with transaction.commit_on_success():
+            pool.compression = compression
+            pool.mnt_options = mnt_options
+            pool.save()
+
+        if (re.search('noatime', mnt_options) is None):
+            mnt_options = ('%s,relatime,atime' % mnt_options)
+
+        if (re.search('compress-force', mnt_options) is None):
+            mnt_options = ('%s,compress=%s' % (mnt_options, compression))
+
+        with open('/proc/mounts') as mfo:
+            mount_map = {}
+            for l in mfo.readlines():
+                share_name = None
+                if (re.search(
+                        '%s|%s' % (settings.NFS_EXPORT_ROOT, settings.MNT_PT),
+                        l) is not None):
+                    share_name = l.split()[1].split('/')[2]
+                elif (re.search(settings.SFTP_MNT_ROOT, l) is not None):
+                    share_name = l.split()[1].split('/')[3]
+                else:
+                    continue
+                if (share_name not in mount_map):
+                    mount_map[share_name] = [l.split()[1], ]
+                else:
+                    mount_map[share_name].append(l.split()[1])
+        failed_remounts = []
+        try:
+            pool_mnt = '/mnt2/%s' % pool.name
+            remount(pool_mnt, mnt_options)
+        except:
+            failed_remounts.append(pool_mnt)
+        for share in mount_map.keys():
+            if (Share.objects.filter(pool=pool, name=share).exists()):
+                for m in mount_map[share]:
+                    try:
+                        remount(m, mnt_options)
+                    except Exception, e:
+                        logger.exception(e)
+                        failed_remounts.append(m)
+        if (len(failed_remounts) > 0):
+            e_msg = ('Failed to remount the following mounts.\n %s\n '
+                     'Try again or do the following as root(may cause '
+                     'downtime):\n 1. systemctl stop rockstor\n'
+                     '2. unmount manually\n3. systemctl start rockstor\n.' %
+                     failed_remounts)
+            handle_exception(Exception(e_msg), request)
+        return Response(PoolInfoSerializer(pool).data)
 
     @transaction.commit_on_success
     def put(self, request, pname, command):
@@ -169,6 +289,9 @@ class PoolView(rfc.GenericView):
             except:
                 e_msg = ('pool: %s does not exist' % pname)
                 handle_exception(Exception(e_msg), request)
+
+            if (command == 'remount'):
+                return self._remount(request, pool)
 
             disks = [self._validate_disk(d, request) for d in
                      request.DATA.get('disks')]
@@ -188,10 +311,9 @@ class PoolView(rfc.GenericView):
                 for d_o in disks:
                     d_o.pool = pool
                     d_o.save()
-                resize_pool(pool.name, mount_disk, dnames)
+                resize_pool(pool, mount_disk, dnames)
             elif (command == 'remove'):
                 remaining_disks = Disk.objects.filter(pool=pool).count() - len(disks)
-                logger.debug('remaining disks = %d' % remaining_disks)
                 if (pool.raid == 'raid0' or pool.raid == 'raid1' or
                     pool.raid == 'raid10' or pool.raid == 'single'):
                     e_msg = ('Removing drives from this(%s) raid '
@@ -211,7 +333,7 @@ class PoolView(rfc.GenericView):
                     d.pool = None
                     d.save()
                 mount_disk = Disk.objects.filter(pool=pool)[0].name
-                resize_pool(pool.name, mount_disk, dnames, add=False)
+                resize_pool(pool, mount_disk, dnames, add=False)
             else:
                 msg = ('unknown command: %s' % command)
                 raise Exception(msg)

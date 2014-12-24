@@ -53,7 +53,7 @@ class PoolScrubView(rfc.GenericView):
         except:
             return Response()
         if (ps.status == 'started' or ps.status == 'running'):
-            cur_status = scrub_status(pool.name, disk.name)
+            cur_status = scrub_status(pool, disk.name)
             if (cur_status['status'] == 'finished'):
                 duration = int(cur_status['duration'])
                 cur_status['end_time'] = (ps.start_time +
@@ -90,7 +90,7 @@ class PoolScrubView(rfc.GenericView):
                              'and start a new scrub, use force option' % pname)
                     handle_exception(Exception(e_msg), request)
 
-            scrub_pid = scrub_start(pname, disk.name, force=force)
+            scrub_pid = scrub_start(pool, disk.name, force=force)
             ps = PoolScrub(pool=pool, pid=scrub_pid)
             ps.save()
             return Response(PoolScrubSerializer(ps).data)
