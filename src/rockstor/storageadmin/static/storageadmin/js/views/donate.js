@@ -40,6 +40,7 @@ DonateView = RockstorLayoutView.extend({
 
   render: function() {
     $('#donate-modal').modal('show');
+    return this;
   },
 
   donate: function() {
