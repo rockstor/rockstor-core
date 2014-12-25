@@ -87,10 +87,10 @@ def kernel_info(supported_version):
     uname = os.uname()
     if (uname[2] != supported_version):
         msg = ('You are running an unsupported kernel(%s). The '
-               'supported kernel(%s) should already be installed and boot by '
-               'default. A simple reboot should fix '
-               'this problem. If you continue using the present kernel, '
-               'certain features like compression may not work' %
+               'supported kernel(%s) should already be installed. You may '
+               'need to Reboot once or twice to make the supported kernel '
+               'default and automatically boot. If you continue using the '
+               'present kernel, some features may not work properly.' %
                (uname[2], supported_version))
         raise Exception(msg)
 
