@@ -46,6 +46,7 @@ AT = '/usr/bin/at'
 DEFAULT_MNT_DIR = '/mnt2/'
 RPM = '/usr/bin/rpm'
 SHUTDOWN = '/usr/sbin/shutdown'
+GRUBBY = '/usr/sbin/grubby'
 
 
 def inplace_replace(of, nf, regex, nl):
@@ -83,16 +84,28 @@ def uptime():
         return int(float(ufo.readline().split()[0]))
 
 
+def def_kernel():
+    kernel = None
+    o, e, rc = run_command([GRUBBY, '--default-kernel'], throw=False)
+    if (len(o) > 0):
+        k_fields = o[0].split('/boot/vmlinuz-')
+        if (len(k_fields) == 2):
+            kernel = k_fields[1]
+    return kernel
+
+
 def kernel_info(supported_version):
     uname = os.uname()
     if (uname[2] != supported_version):
-        msg = ('You are running an unsupported kernel(%s). The '
-               'supported kernel(%s) should already be installed. You may '
-               'need to Reboot once or twice to make the supported kernel '
-               'default and automatically boot. If you continue using the '
-               'present kernel, some features may not work properly.' %
-               (uname[2], supported_version))
-        raise Exception(msg)
+        e_msg = ('You are running an unsupported kernel(%s). Some features '
+                 'may not work properly.' % uname[2])
+        cur_kernel = def_kernel()
+        if ((cur_kernel is not None and
+             cur_kernel == supported_version)):
+            e_msg = ('%s Please reboot and the system will '
+                     'automatically boot using the supported kernel(%s)' %
+                     (e_msg, supported_version))
+        raise Exception(e_msg)
 
 
 def create_tmp_dir(dirname):

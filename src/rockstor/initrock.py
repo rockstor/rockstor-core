@@ -61,24 +61,24 @@ def update_issue():
 
 def set_def_kernel(logger, version=settings.SUPPORTED_KERNEL_VERSION):
     supported_kernel_path = ('/boot/vmlinuz-%s' % version)
+    if (not os.path.isfile(supported_kernel_path)):
+        return logger.error('Supported kernel(%s) does not exist' %
+                            supported_kernel_path)
     try:
         o, e, rc = run_command([GRUBBY, '--default-kernel'])
         if (o[0] == supported_kernel_path):
-            logging.info('Supported kernel(%s) is already the default' %
-                         supported_kernel_path)
-            return
+            return logging.info('Supported kernel(%s) is already the default' %
+                                supported_kernel_path)
     except Exception, e:
         logger.error('Exception while listing the default kernel')
-        logger.exception(e)
-        return
+        return logger.exception(e)
 
     try:
         run_command([GRUBBY, '--set-default=%s' % supported_kernel_path])
-        logger.info('Default kernel set to %s' % supported_kernel_path)
-        return
+        return logger.info('Default kernel set to %s' % supported_kernel_path)
     except Exception, e:
         logger.error('Exception while setting kernel(%s) as default' % version)
-        logger.exception(e)
+        return logger.exception(e)
 
 
 def main():
