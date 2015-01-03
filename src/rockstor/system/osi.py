@@ -106,6 +106,7 @@ def kernel_info(supported_version):
                      'automatically boot using the supported kernel(%s)' %
                      (e_msg, supported_version))
         raise Exception(e_msg)
+    return uname[2]
 
 
 def create_tmp_dir(dirname):
