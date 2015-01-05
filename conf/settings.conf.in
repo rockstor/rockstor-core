@@ -354,4 +354,4 @@ REST_FRAMEWORK = {
 
 COMPRESSION_TYPES = ('lzo', 'zlib', 'no',)
 
-SUPPORTED_KERNEL_VERSION = '3.17.1-1.el7.elrepo.x86_64'
+SUPPORTED_KERNEL_VERSION = ${django-settings-conf:kernel}

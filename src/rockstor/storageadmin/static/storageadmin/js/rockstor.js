@@ -415,7 +415,7 @@ function fetchKernelInfo() {
     dataType: 'json',
     global: false,
     success: function(data, status, xhr) {
-	RockStorGlobals.kernel = true;
+	RockStorGlobals.kernel = data;
     },
     error: function(xhr, status, error) {
 	msg = JSON.parse(xhr.responseText).detail;
@@ -435,6 +435,9 @@ function displayLoadAvg(data) {
   var days = Math.round(n / (60*60*24)) % 365;
   var yrs = Math.round(n / (60*60*24*365));
   var str = 'Uptime: ';
+  if (RockStorGlobals.kernel) {
+      str = 'Linux: ' + RockStorGlobals.kernel + ' &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + str;
+  }
   if (yrs == 1) {
     str += yrs + ' year, ';
   } else if (yrs > 1) {
@@ -562,7 +565,8 @@ RockStorGlobals = {
   currentAppliance: null,
   maxPageSize: 5000,
   browserChecked: false,
-  versionCheckTimerStarted: false
+  versionCheckTimerStarted: false,
+  kernel: null,
 }
 
 var RS_DATE_FORMAT = 'MMMM Do YYYY, h:mm:ss a';
