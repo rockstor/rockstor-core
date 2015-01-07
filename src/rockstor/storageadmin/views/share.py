@@ -143,16 +143,16 @@ class ShareView(rfc.GenericView):
                     handle_exception(Exception(e_msg), request)
             add_share(pool, disk.name, sname)
             qgroup_id = self._update_quota(pool, disk.name, sname, size)
-            mnt_pt = '%s%s' % (settings.MNT_PT, sname)
-            if (not is_share_mounted(sname)):
-                disk = Disk.objects.filter(pool=pool)[0].name
-                mount_share(sname, disk, mnt_pt)
-            if (compression != 'no'):
-                set_property(mnt_pt, 'compression', compression)
             s = Share(pool=pool, qgroup=qgroup_id, name=sname, size=size,
                       subvol_name=sname, replica=replica,
                       compression_algo=compression)
             s.save()
+            mnt_pt = '%s%s' % (settings.MNT_PT, sname)
+            if (not is_share_mounted(sname)):
+                disk = Disk.objects.filter(pool=pool)[0].name
+                mount_share(s, disk, mnt_pt)
+            if (compression != 'no'):
+                set_property(mnt_pt, 'compression', compression)
             return Response(ShareSerializer(s).data)
 
     def _update_quota(self, pool, disk_name, share_name, size):

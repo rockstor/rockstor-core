@@ -116,7 +116,7 @@ class SambaView(rfc.GenericView):
                 smb_share.save()
                 if (not is_share_mounted(share.name)):
                     pool_device = Disk.objects.filter(pool=share.pool)[0].name
-                    mount_share(share.subvol_name, pool_device, mnt_pt)
+                    mount_share(share, pool_device, mnt_pt)
 
                 admin_users = request.DATA.get('admin_users', None)
                 if (admin_users is None):
@@ -157,8 +157,7 @@ class SambaView(rfc.GenericView):
                         pool=smb_o.share.pool)[0].name
                     mnt_pt = ('%s%s' % (settings.MNT_PT, smb_o.share.name))
                     try:
-                        mount_share(smb_o.share.subvol_name, pool_device,
-                                    mnt_pt)
+                        mount_share(smb_o.share, pool_device, mnt_pt)
                     except Exception, e:
                         logger.exception(e)
                         if (smb_o.id == smbo.id):

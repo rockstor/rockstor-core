@@ -50,7 +50,7 @@ def create_adv_nfs_export_input(exports, request):
         mnt_pt = ('%s%s' % (settings.MNT_PT, s.name))
         if (not is_share_mounted(s.name)):
             pool_device = Disk.objects.filter(pool=s.pool)[0].name
-            mount_share(s.subvol_name, pool_device, mnt_pt)
+            mount_share(s, pool_device, mnt_pt)
         exports_d[fields[0]] = []
         for f in fields[1:]:
             cf = f.split('(')
