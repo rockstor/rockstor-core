@@ -31,7 +31,7 @@ def helper_mount_share(share, mnt_pt=None):
         pool_device = Disk.objects.filter(pool=share.pool)[0].name
         if(mnt_pt is None):
             mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
-        mount_share(share.subvol_name, pool_device, mnt_pt)
+        mount_share(share, pool_device, mnt_pt)
 
 
 def validate_share(sname, request):
@@ -49,8 +49,7 @@ def sftp_snap_toggle(share, mount=True):
                                     share.owner, share.name,
                                     snap.name))
         if (mount and not is_mounted(mnt_pt)):
-            mount_snap(share.name, snap.name, share.pool.name, pool_device,
-                       mnt_pt)
+            mount_snap(share, snap.name, pool_device, mnt_pt)
         elif (is_mounted(mnt_pt) and not mount):
             umount_root(mnt_pt)
 
@@ -64,7 +63,6 @@ def toggle_sftp_visibility(share, snap_name, on=True):
     if (on):
         if (not is_mounted(mnt_pt)):
             pool_device = Disk.objects.filter(pool=share.pool)[0].name
-            mount_snap(share.name, snap_name, share.pool.name, pool_device,
-                       mnt_pt)
+            mount_snap(share, snap_name, pool_device, mnt_pt)
     else:
         umount_root(mnt_pt)

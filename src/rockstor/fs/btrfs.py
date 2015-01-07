@@ -25,6 +25,7 @@ import time
 import os
 import subprocess
 import signal
+import shutil
 from system.osi import (run_command, create_tmp_dir, is_share_mounted,
                         is_mounted)
 from system.exceptions import (CommandException, NonBTRFSRootException)
@@ -117,7 +118,6 @@ def is_subvol(mnt_pt):
     show_cmd = [BTRFS, 'subvolume', 'show', mnt_pt]
     o, e, rc = run_command(show_cmd, throw=False)
     if (rc == 0):
-        print('subvol %s is valid' % mnt_pt)
         return True
     return False
 
@@ -150,7 +150,7 @@ def add_share(pool, pool_device, share_name):
     return True
 
 
-def mount_share(share_name, pool_device, mnt_pt):
+def mount_share2(share_name, pool_device, mnt_pt):
     if (is_mounted(mnt_pt)):
         return
     pool_device = '/dev/' + pool_device
@@ -160,15 +160,26 @@ def mount_share(share_name, pool_device, mnt_pt):
     return run_command(mnt_cmd)
 
 
-def mount_snap(share_name, snap_name, pool_name, pool_device, snap_mnt=None):
+def mount_share(share, pool_device, mnt_pt):
+    if (is_mounted(mnt_pt)):
+        return
     pool_device = ('/dev/%s' % pool_device)
-    share_path = ('%s%s' % (DEFAULT_MNT_DIR, share_name))
-    rel_snap_path = ('.snapshots/%s/%s' % (share_name, snap_name))
+    mount_root(share.pool, pool_device)
+    subvol_str = 'subvol=%s' % share.subvol_name
+    create_tmp_dir(mnt_pt)
+    mnt_cmd = [MOUNT, '-t', 'btrfs', '-o', subvol_str, pool_device, mnt_pt]
+    return run_command(mnt_cmd)
+
+
+def mount_snap(share, snap_name, pool_device, snap_mnt=None):
+    pool_device = ('/dev/%s' % pool_device)
+    share_path = ('%s%s' % (DEFAULT_MNT_DIR, share.name))
+    rel_snap_path = ('.snapshots/%s/%s' % (share.name, snap_name))
     snap_path = ('%s%s/%s' %
-                 (DEFAULT_MNT_DIR, pool_name, rel_snap_path))
+                 (DEFAULT_MNT_DIR, share.pool.name, rel_snap_path))
     if (snap_mnt is None):
         snap_mnt = ('%s/.%s' % (share_path, snap_name))
-    mount_share(share_name, pool_device[5:], share_path)
+    mount_share(share, pool_device[5:], share_path)
     if (is_subvol(snap_path)):
         create_tmp_dir(snap_mnt)
         return run_command([MOUNT, '-o', 'subvol=%s' % rel_snap_path,
@@ -234,6 +245,8 @@ def remove_share(pool, pool_device, share_name):
     pool_device = '/dev/' + pool_device
     root_pool_mnt = mount_root(pool, pool_device)
     subvol_mnt_pt = root_pool_mnt + '/' + share_name
+    if (not is_subvol(subvol_mnt_pt)):
+        return
     delete_cmd = [BTRFS, 'subvolume', 'delete', subvol_mnt_pt]
     run_command(delete_cmd)
 
@@ -309,17 +322,28 @@ def add_snap(pool, pool_device, share_name, snap_name, readonly=True):
     return add_snap_helper(share_full_path, snap_full_path)
 
 
-def rollback_snap(snap_name, sname, subvol_name, pool_name, pool_device):
+def rollback_snap(snap_name, sname, subvol_name, pool, pool_device):
     """
-    1. umount the share
-    2. mount the snap as the share
-    3. remove the share
+    1. validate destination snapshot and umount the share
+    2. remove the share
+    3. move the snapshot to share location and mount it.
     """
     mnt_pt = ('%s%s' % (DEFAULT_MNT_DIR, sname))
+    snap_fp = ('%s/%s/.snapshots/%s/%s' % (DEFAULT_MNT_DIR, pool.name, sname,
+                                           snap_name))
+    if (not is_subvol(snap_fp)):
+        raise Exception('Snapshot(%s) does not exist. Rollback is not '
+                        'possible' % snap_fp)
+    dpath = '/dev/%s' % pool_device
+    mount_root(pool, dpath)
     if (is_share_mounted(sname)):
         umount_root(mnt_pt)
-    mount_share(snap_name, pool_device, mnt_pt)
-    remove_share(pool_name, pool_device, subvol_name)
+    remove_share(pool, pool_device, subvol_name)
+    shutil.move(snap_fp, '%s/%s/%s' % (DEFAULT_MNT_DIR, pool.name, sname))
+    create_tmp_dir(mnt_pt)
+    subvol_str = 'subvol=%s' % sname
+    mnt_cmd = [MOUNT, '-t', 'btrfs', '-o', subvol_str, dpath, mnt_pt]
+    run_command(mnt_cmd)
 
 
 def switch_quota(pool, device, flag='enable'):
@@ -481,42 +505,70 @@ def scan_disks(min_size):
     disks = []
     serials = []
     for l in o:
-        if (re.search('=', l) is None):
+        if (re.match('NAME', l) is None):
             continue
-        dfields = []
-        fields = l.split('" ')
-        for f in fields:
-            sf = f.split('=')
-            dfields.append(sf[1].strip('"').strip())
-        if (dfields[7] == 'rom'):
+        dmap = {}
+        cur_name = ''
+        cur_val = ''
+        name_iter = True
+        val_iter = False
+        sl = l.strip()
+        i = 0
+        while i < len(sl):
+            if (name_iter and sl[i] == '=' and sl[i+1] == '"'):
+                name_iter = False
+                val_iter = True
+                i = i + 2
+            elif (val_iter and sl[i] == '"' and
+                  (i == (len(sl)-1) or sl[i+1] == ' ')):
+                val_iter = False
+                name_iter = True
+                i = i + 2
+                dmap[cur_name.strip()] = cur_val.strip()
+                cur_name = ''
+                cur_val = ''
+            elif (name_iter):
+                cur_name = cur_name + sl[i]
+                i = i + 1
+            elif (val_iter):
+                cur_val = cur_val + sl[i]
+                i = i + 1
+            else:
+                raise Exception('Failed to parse lsblk output: %s' % sl)
+        if (dmap['TYPE'] == 'rom'):
             continue
-        elif (dfields[7] == 'part'):
+        elif (dmap['TYPE'] == 'part'):
             for dname in dnames.keys():
-                if (re.match(dname, dfields[0]) is not None):
+                if (re.match(dname, dmap['NAME']) is not None):
                     dnames[dname][8] = True
-        elif (dfields[0] != root):
-            dfields.append(False)  # part = False by default
+        elif (dmap['NAME'] != root):
+            dmap['parted'] = False  # part = False by default
             # convert size into KB
-            size_str = dfields[3]
+            size_str = dmap['SIZE']
             if (size_str[-1] == 'G'):
-                dfields[3] = int(float(size_str[:-1]) * 1024 * 1024)
+                dmap['SIZE'] = int(float(size_str[:-1]) * 1024 * 1024)
             elif (size_str[-1] == 'T'):
-                dfields[3] = int(float(size_str[:-1]) * 1024 * 1024 * 1024)
+                dmap['SIZE'] = int(float(size_str[:-1]) * 1024 * 1024 * 1024)
             else:
                 continue
-            if (dfields[3] < min_size):
+            if (dmap['SIZE'] < min_size):
                 continue
-            if (dfields[2] == '' or (dfields[2] in serials)):
-                dfields[2] = dfields[0]
-            serials.append(dfields[2])
-            for i in range(0, len(dfields)):
-                if (dfields[i] == ''):
-                    dfields[i] = None
-            if (dfields[0] in dnames):
+            if (dmap['SERIAL'] == '' or (dmap['SERIAL'] in serials)):
+                dmap['SERIAL'] = dmap['NAME']
+            serials.append(dmap['SERIAL'])
+            for k in dmap.keys():
+                if (dmap[k] == ''):
+                    dmap[k] = None
+            if (dmap['NAME'] in dnames):
                 raise Exception('Two disk drives found with the same name: '
                                 '%s. Rockstor does not support this '
-                                'configuration.' % dfields[0])
-            dnames[dfields[0]] = dfields
+                                'configuration.' % dmap['NAME'])
+            dnames[dmap['NAME']] = [dmap['NAME'], dmap['MODEL'],
+                                    dmap['SERIAL'], dmap['SIZE'],
+                                    dmap['TRAN'], dmap['VENDOR'],
+                                    dmap['HCTL'], dmap['TYPE'],
+                                    dmap['FSTYPE'], dmap['LABEL'],
+                                    dmap['UUID'], dmap['parted']]
     for d in dnames.keys():
         disks.append(Disk(*dnames[d]))
     return disks

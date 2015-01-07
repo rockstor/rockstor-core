@@ -28,11 +28,11 @@ from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
 from system.osi import (uptime, refresh_nfs_exports, update_check,
                         update_run, current_version, kernel_info)
-from fs.btrfs import (mount_share, device_scan)
+from fs.btrfs import (mount_share, device_scan, mount_root)
 from system.ssh import (sftp_mount_map, sftp_mount)
 from system.services import (systemctl, join_winbind_domain, ads_join_status)
 from system.osi import (is_share_mounted, system_shutdown, system_reboot)
-from storageadmin.models import (Share, Disk, NFSExport, SFTP)
+from storageadmin.models import (Share, Disk, NFSExport, SFTP, Pool)
 from nfs_helpers import create_nfs_export_input
 from storageadmin.util import handle_exception
 from datetime import datetime
@@ -61,13 +61,22 @@ class CommandView(APIView):
                 handle_exception(Exception(e_msg), request)
 
             try:
-                device_scan()
+                for pool in Pool.objects.all():
+                    disk = Disk.objects.filter(pool=pool)[0].name
+                    mount_root(pool, '/dev/%s' % disk)
+            except Exception, e:
+                e_msg = ('Unable to mount a pool(%s) during bootstrap.'
+                         % pool.name)
+                logger.exception(e)
+                handle_exception(Exception(e_msg), request)
+
+            try:
                 for share in Share.objects.all():
                     if (not is_share_mounted(share.name)):
                         mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
                         pool_device = Disk.objects.filter(
                             pool=share.pool)[0].name
-                        mount_share(share.subvol_name, pool_device, mnt_pt)
+                        mount_share(share, pool_device, mnt_pt)
             except Exception, e:
                 e_msg = ('Unable to mount a share(%s, %s) during bootstrap.' %
                          (pool_device, mnt_pt))

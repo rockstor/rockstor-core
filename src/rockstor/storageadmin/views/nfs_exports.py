@@ -65,7 +65,7 @@ class NFSExportGroupView(rfc.GenericView):
                 export_pt = ('%s%s' % (settings.NFS_EXPORT_ROOT, s.name))
                 if (not is_share_mounted(s.name)):
                     pool_device = Disk.objects.filter(pool=s.pool)[0].name
-                    mount_share(s.subvol_name, pool_device, mnt_pt)
+                    mount_share(s, pool_device, mnt_pt)
                 export = NFSExport(export_group=eg, share=s, mount=export_pt)
                 export.full_clean()
                 export.save()
@@ -106,7 +106,7 @@ class NFSExportGroupView(rfc.GenericView):
                 export_pt = ('%s%s' % (settings.NFS_EXPORT_ROOT, s.name))
                 if (not is_share_mounted(s.name)):
                     pool_device = Disk.objects.filter(pool=s.pool)[0].name
-                    mount_share(s.subvol_name, pool_device, mnt_pt)
+                    mount_share(s, pool_device, mnt_pt)
                 export = NFSExport(export_group=eg, share=s, mount=export_pt)
                 export.full_clean()
                 export.save()

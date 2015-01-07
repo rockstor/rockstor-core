@@ -92,9 +92,8 @@ class ShareCommandView(rfc.GenericView):
 
                 pool_device = Disk.objects.filter(pool=share.pool)[0].name
                 rollback_snap(snap.real_name, share.name, share.subvol_name,
-                              share.pool.name, pool_device)
-                share.subvol_name = snap.real_name
-                update_quota(share.pool.name, pool_device, snap.qgroup,
+                              share.pool, pool_device)
+                update_quota(share.pool, pool_device, snap.qgroup,
                              share.size * 1024)
                 share.qgroup = snap.qgroup
                 share.save()
@@ -113,8 +112,8 @@ class ShareCommandView(rfc.GenericView):
                     handle_exception(Exception(e_msg), request)
                 mnt_pt = '%s%s' % (settings.MNT_PT, share.name)
                 if (not is_share_mounted(share.name)):
-                    disk = Disk.objects.filer(pool=share.pool)[0].name
-                    mount_share(share.name, disk, mnt_pt)
+                    disk = Disk.objects.filter(pool=share.pool)[0].name
+                    mount_share(share, disk, mnt_pt)
                 share.compression_algo = algo
                 share.save()
                 if (algo == 'no'):

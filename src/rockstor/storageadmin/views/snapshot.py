@@ -72,7 +72,7 @@ class SnapshotView(rfc.GenericView):
                                         settings.NFS_EXPORT_ROOT)
         if (on):
             pool_device = Disk.objects.filter(pool=share.pool)[0].name
-            mount_snap(share.name, snap_name, share.pool.name, pool_device)
+            mount_snap(share, snap_name, pool_device)
 
             if (NFSExport.objects.filter(share=share).exists()):
                 se = NFSExport.objects.filter(share=share)[0]
