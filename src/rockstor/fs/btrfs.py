@@ -150,7 +150,7 @@ def add_share(pool, pool_device, share_name):
     return True
 
 
-def mount_share(share_name, pool_device, mnt_pt):
+def mount_share2(share_name, pool_device, mnt_pt):
     if (is_mounted(mnt_pt)):
         return
     pool_device = '/dev/' + pool_device
@@ -160,15 +160,26 @@ def mount_share(share_name, pool_device, mnt_pt):
     return run_command(mnt_cmd)
 
 
-def mount_snap(share_name, snap_name, pool_name, pool_device, snap_mnt=None):
+def mount_share(share, pool_device, mnt_pt):
+    if (is_mounted(mnt_pt)):
+        return
     pool_device = ('/dev/%s' % pool_device)
-    share_path = ('%s%s' % (DEFAULT_MNT_DIR, share_name))
-    rel_snap_path = ('.snapshots/%s/%s' % (share_name, snap_name))
+    mount_root(share.pool, pool_device)
+    subvol_str = 'subvol=%s' % share.subvol_name
+    create_tmp_dir(mnt_pt)
+    mnt_cmd = [MOUNT, '-t', 'btrfs', '-o', subvol_str, pool_device, mnt_pt]
+    return run_command(mnt_cmd)
+
+
+def mount_snap(share, snap_name, pool_device, snap_mnt=None):
+    pool_device = ('/dev/%s' % pool_device)
+    share_path = ('%s%s' % (DEFAULT_MNT_DIR, share.name))
+    rel_snap_path = ('.snapshots/%s/%s' % (share.name, snap_name))
     snap_path = ('%s%s/%s' %
-                 (DEFAULT_MNT_DIR, pool_name, rel_snap_path))
+                 (DEFAULT_MNT_DIR, share.pool.name, rel_snap_path))
     if (snap_mnt is None):
         snap_mnt = ('%s/.%s' % (share_path, snap_name))
-    mount_share(share_name, pool_device[5:], share_path)
+    mount_share(share, pool_device[5:], share_path)
     if (is_subvol(snap_path)):
         create_tmp_dir(snap_mnt)
         return run_command([MOUNT, '-o', 'subvol=%s' % rel_snap_path,
