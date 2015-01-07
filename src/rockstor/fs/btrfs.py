@@ -25,6 +25,7 @@ import time
 import os
 import subprocess
 import signal
+import shutil
 from system.osi import (run_command, create_tmp_dir, is_share_mounted,
                         is_mounted)
 from system.exceptions import (CommandException, NonBTRFSRootException)
@@ -117,7 +118,6 @@ def is_subvol(mnt_pt):
     show_cmd = [BTRFS, 'subvolume', 'show', mnt_pt]
     o, e, rc = run_command(show_cmd, throw=False)
     if (rc == 0):
-        print('subvol %s is valid' % mnt_pt)
         return True
     return False
 
@@ -234,6 +234,8 @@ def remove_share(pool, pool_device, share_name):
     pool_device = '/dev/' + pool_device
     root_pool_mnt = mount_root(pool, pool_device)
     subvol_mnt_pt = root_pool_mnt + '/' + share_name
+    if (not is_subvol(subvol_mnt_pt)):
+        return
     delete_cmd = [BTRFS, 'subvolume', 'delete', subvol_mnt_pt]
     run_command(delete_cmd)
 
@@ -309,17 +311,28 @@ def add_snap(pool, pool_device, share_name, snap_name, readonly=True):
     return add_snap_helper(share_full_path, snap_full_path)
 
 
-def rollback_snap(snap_name, sname, subvol_name, pool_name, pool_device):
+def rollback_snap(snap_name, sname, subvol_name, pool, pool_device):
     """
-    1. umount the share
-    2. mount the snap as the share
-    3. remove the share
+    1. validate destination snapshot and umount the share
+    2. remove the share
+    3. move the snapshot to share location and mount it.
     """
     mnt_pt = ('%s%s' % (DEFAULT_MNT_DIR, sname))
+    snap_fp = ('%s/%s/.snapshots/%s/%s' % (DEFAULT_MNT_DIR, pool.name, sname,
+                                           snap_name))
+    if (not is_subvol(snap_fp)):
+        raise Exception('Snapshot(%s) does not exist. Rollback is not '
+                        'possible' % snap_fp)
+    dpath = '/dev/%s' % pool_device
+    mount_root(pool, dpath)
     if (is_share_mounted(sname)):
         umount_root(mnt_pt)
-    mount_share(snap_name, pool_device, mnt_pt)
-    remove_share(pool_name, pool_device, subvol_name)
+    remove_share(pool, pool_device, subvol_name)
+    shutil.move(snap_fp, '%s/%s/%s' % (DEFAULT_MNT_DIR, pool.name, sname))
+    create_tmp_dir(mnt_pt)
+    subvol_str = 'subvol=%s' % sname
+    mnt_cmd = [MOUNT, '-t', 'btrfs', '-o', subvol_str, dpath, mnt_pt]
+    run_command(mnt_cmd)
 
 
 def switch_quota(pool, device, flag='enable'):
