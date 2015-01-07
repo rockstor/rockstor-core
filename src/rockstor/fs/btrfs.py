@@ -481,42 +481,70 @@ def scan_disks(min_size):
     disks = []
     serials = []
     for l in o:
-        if (re.search('=', l) is None):
+        if (re.match('NAME', l) is None):
             continue
-        dfields = []
-        fields = l.split('" ')
-        for f in fields:
-            sf = f.split('=')
-            dfields.append(sf[1].strip('"').strip())
-        if (dfields[7] == 'rom'):
+        dmap = {}
+        cur_name = ''
+        cur_val = ''
+        name_iter = True
+        val_iter = False
+        sl = l.strip()
+        i = 0
+        while i < len(sl):
+            if (name_iter and sl[i] == '=' and sl[i+1] == '"'):
+                name_iter = False
+                val_iter = True
+                i = i + 2
+            elif (val_iter and sl[i] == '"' and
+                  (i == (len(sl)-1) or sl[i+1] == ' ')):
+                val_iter = False
+                name_iter = True
+                i = i + 2
+                dmap[cur_name.strip()] = cur_val.strip()
+                cur_name = ''
+                cur_val = ''
+            elif (name_iter):
+                cur_name = cur_name + sl[i]
+                i = i + 1
+            elif (val_iter):
+                cur_val = cur_val + sl[i]
+                i = i + 1
+            else:
+                raise Exception('Failed to parse lsblk output: %s' % sl)
+        if (dmap['TYPE'] == 'rom'):
             continue
-        elif (dfields[7] == 'part'):
+        elif (dmap['TYPE'] == 'part'):
             for dname in dnames.keys():
-                if (re.match(dname, dfields[0]) is not None):
+                if (re.match(dname, dmap['NAME']) is not None):
                     dnames[dname][8] = True
-        elif (dfields[0] != root):
-            dfields.append(False)  # part = False by default
+        elif (dmap['NAME'] != root):
+            dmap['parted'] = False  # part = False by default
             # convert size into KB
-            size_str = dfields[3]
+            size_str = dmap['SIZE']
             if (size_str[-1] == 'G'):
-                dfields[3] = int(float(size_str[:-1]) * 1024 * 1024)
+                dmap['SIZE'] = int(float(size_str[:-1]) * 1024 * 1024)
             elif (size_str[-1] == 'T'):
-                dfields[3] = int(float(size_str[:-1]) * 1024 * 1024 * 1024)
+                dmap['SIZE'] = int(float(size_str[:-1]) * 1024 * 1024 * 1024)
             else:
                 continue
-            if (dfields[3] < min_size):
+            if (dmap['SIZE'] < min_size):
                 continue
-            if (dfields[2] == '' or (dfields[2] in serials)):
-                dfields[2] = dfields[0]
-            serials.append(dfields[2])
-            for i in range(0, len(dfields)):
-                if (dfields[i] == ''):
-                    dfields[i] = None
-            if (dfields[0] in dnames):
+            if (dmap['SERIAL'] == '' or (dmap['SERIAL'] in serials)):
+                dmap['SERIAL'] = dmap['NAME']
+            serials.append(dmap['SERIAL'])
+            for k in dmap.keys():
+                if (dmap[k] == ''):
+                    dmap[k] = None
+            if (dmap['NAME'] in dnames):
                 raise Exception('Two disk drives found with the same name: '
                                 '%s. Rockstor does not support this '
-                                'configuration.' % dfields[0])
-            dnames[dfields[0]] = dfields
+                                'configuration.' % dmap['NAME'])
+            dnames[dmap['NAME']] = [dmap['NAME'], dmap['MODEL'],
+                                    dmap['SERIAL'], dmap['SIZE'],
+                                    dmap['TRAN'], dmap['VENDOR'],
+                                    dmap['HCTL'], dmap['TYPE'],
+                                    dmap['FSTYPE'], dmap['LABEL'],
+                                    dmap['UUID'], dmap['parted']]
     for d in dnames.keys():
         disks.append(Disk(*dnames[d]))
     return disks
