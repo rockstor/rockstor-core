@@ -150,16 +150,6 @@ def add_share(pool, pool_device, share_name):
     return True
 
 
-def mount_share2(share_name, pool_device, mnt_pt):
-    if (is_mounted(mnt_pt)):
-        return
-    pool_device = '/dev/' + pool_device
-    subvol_str = 'subvol=%s' % share_name
-    create_tmp_dir(mnt_pt)
-    mnt_cmd = [MOUNT, '-t', 'btrfs', '-o', subvol_str, pool_device, mnt_pt]
-    return run_command(mnt_cmd)
-
-
 def mount_share(share, pool_device, mnt_pt):
     if (is_mounted(mnt_pt)):
         return
@@ -264,18 +254,13 @@ def remove_snap_old(pool, pool_device, share_name, snap_name):
 
 def remove_snap(pool, pool_device, share_name, snap_name):
     root_mnt = mount_root(pool, pool_device)
-    print('root_mnt = %s' % root_mnt)
     snap_path = ('%s/.snapshots/%s/%s' %
                  (root_mnt, share_name, snap_name))
-    print('snap_path = %s' % snap_path)
     if (not os.path.exists(snap_path)):
-        print('calling old snap_path')
         return remove_snap_old(pool, pool_device, share_name, snap_name)
     if (is_mounted(snap_path)):
-        print('snap_path %s mounted' % snap_path)
         umount_root(snap_path)
     if (is_subvol(snap_path)):
-        print('subvol %s exists' % snap_path)
         return run_command([BTRFS, 'subvolume', 'delete', snap_path])
     return True
 

@@ -130,6 +130,12 @@
                 <input class="span2" type="text" id="max_count" name="meta.max_count" value="<%= taskDef.max_count() %>" title="Older snapshots beyond this number and created by this task will be deleted">
               </div>
             </div>
+	    <div class="control-group">
+	      <label class="control-label" for="visible">Make snapshots visible</label>
+	      <div class="controls">
+	        <input class="checkbox" type="checkbox" checked="true" id="visible" name="meta.visible" title="Make snapshots visible to the end user">
+	      </div>
+	    </div>
           <% } %>
           <div class="control-group">
             <label class="control-label" for="frequency">Task Frequency (in minutes)<span class="required"> *</span></label>
@@ -141,9 +147,9 @@
             <label class="control-label" for="enabled">Enable this task?</label>
             <div class="controls">
               <% if (taskDef.get('enabled')) { %>
-                <input class="checkbox" type="checkbox" checked="true" id="enabled" name="enabled" title="Disabled tasks will be created but not run till they are enabled"> 
+                <input class="checkbox" type="checkbox" checked="true" id="enabled" name="enabled" title="Disabled tasks will be created but not run till they are enabled">
               <% } else { %>
-                <input class="checkbox" type="checkbox" id="enabled" name="enabled" title="Disabled tasks will be created but not run till they are enabled"> 
+                <input class="checkbox" type="checkbox" id="enabled" name="enabled" title="Disabled tasks will be created but not run till they are enabled">
               <% } %>
             </div>
           </div>
