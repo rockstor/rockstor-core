@@ -68,6 +68,8 @@ class TaskDispatcher(Process):
             raise Exception('max_count is not an integer. %s' % meta)
         if (max_count < 1):
             raise Exception('max_count must atleast be 1, not %d' % max_count)
+        if ('visible' not in meta or type(meta['visible']) != bool):
+            meta['visible'] = False
         return meta
 
     def run(self):
@@ -111,11 +113,15 @@ class TaskDispatcher(Process):
                             name = ('%s_%s' %
                                     (meta['prefix'],
                                      datetime.utcnow().replace(
-                                         tzinfo=utc).strftime('%m%d%Y%H%M%S')))
+                                         tzinfo=utc).strftime(
+                                             settings.SNAP_TS_FORMAT)))
                             url = ('%sshares/%s/snapshots/%s' %
                                    (baseurl, meta['share'], name))
-                            api_call(url, data={'snap_type': stype},
-                                     calltype='post')
+                            data = {'snap_type': stype,
+                                    'uvisible': meta['visible'], }
+                            headers = {'content-type': 'application/json'}
+                            api_call(url, data=data, calltype='post',
+                                     headers=headers)
                             t.state = 'finished'
                         except Exception, e:
                             t.state = 'error'
@@ -171,7 +177,6 @@ class TaskDispatcher(Process):
                 logger.error(e_msg)
                 logger.exception(e)
             finally:
-                logger.debug('sleeping another 60')
                 time.sleep(60)
 
 
