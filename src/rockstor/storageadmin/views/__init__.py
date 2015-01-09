@@ -27,7 +27,6 @@ from share_iscsi import ShareIscsiView
 from appliances import AppliancesView
 from login import LoginView
 from user import UserView
-from share_samba import ShareSambaView
 from support import SupportView
 from dashboardconfig import DashboardConfigView
 from share_nfs import ShareNFSView
