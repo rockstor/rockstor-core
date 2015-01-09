@@ -29,6 +29,8 @@ import shutil
 from system.osi import (run_command, create_tmp_dir, is_share_mounted,
                         is_mounted)
 from system.exceptions import (CommandException, NonBTRFSRootException)
+from pool_scrub import PoolScrub
+from pool_balance import PoolBalance
 
 
 MKFS_BTRFS = '/sbin/mkfs.btrfs'
@@ -413,7 +415,6 @@ def pool_usage(pool_device):
 
 
 def scrub_start(pool, pool_device, force=False):
-    from pool_scrub import PoolScrub
     mnt_pt = mount_root(pool, '/dev/' + pool_device)
     p = PoolScrub(mnt_pt)
     p.start()
@@ -440,6 +441,33 @@ def scrub_status(pool, pool_device):
             stats['kb_scrubbed'] = int(fields[1]) / 1024
         else:
             stats[fields[0]] = int(fields[1])
+    return stats
+
+
+def balance_start(pool, pool_device):
+    mnt_pt = mount_root(pool, ('/dev/%s' % pool_device))
+    b = PoolBalance(mnt_pt)
+    b.start()
+    return b.pid
+
+
+def balance_status(pool, pool_device):
+    stats = {'status': 'unknown', }
+    mnt_pt = mount_root(pool, ('/dev/%s' % pool_device))
+    out, err, rc = run_command([BTRFS, 'balance', 'status', mnt_pt])
+    if (len(out) > 0):
+        if (re.match('Balance', out[0]) is not None):
+            stats['status'] = 'running'
+            if ((len(out) > 1 and
+                 re.search('chunks balanced', out[1]) is not None)):
+                percent_left = out[1].split()[-2][:-1]
+                try:
+                    percent_left = int(percent_left)
+                    stats['progress'] = 100 - percent_left
+                except:
+                    pass
+        elif (re.match('No balance', out[0]) is not None):
+            stats['status'] = 'finished'
     return stats
 
 
