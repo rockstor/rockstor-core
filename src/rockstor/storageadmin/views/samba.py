@@ -22,7 +22,6 @@ from django.conf import settings
 from storageadmin.models import (SambaShare, Disk, User)
 from storageadmin.serializers import SambaShareSerializer
 from storageadmin.util import handle_exception
-from storageadmin.exceptions import RockStorAPIException
 import rest_framework_custom as rfc
 from share_helpers import validate_share
 from system.samba import (refresh_smb_config, status, restart_samba)
@@ -108,7 +107,7 @@ class SambaView(rfc.GenericView):
                 e_msg = ('Share(%s) is already exported via Samba' %
                          share.name)
                 handle_exception(Exception(e_msg), request)
-        try:
+        with self._handle_exception(request):
             for share in shares:
                 mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
                 options['share'] = share
@@ -117,7 +116,7 @@ class SambaView(rfc.GenericView):
                 smb_share.save()
                 if (not is_share_mounted(share.name)):
                     pool_device = Disk.objects.filter(pool=share.pool)[0].name
-                    mount_share(share.subvol_name, pool_device, mnt_pt)
+                    mount_share(share, pool_device, mnt_pt)
 
                 admin_users = request.DATA.get('admin_users', None)
                 if (admin_users is None):
@@ -128,10 +127,6 @@ class SambaView(rfc.GenericView):
             refresh_smb_config(list(SambaShare.objects.all()))
             self._restart_samba()
             return Response(SambaShareSerializer(smb_share).data)
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)
 
     @transaction.commit_on_success
     def put(self, request, smb_id):
@@ -162,8 +157,7 @@ class SambaView(rfc.GenericView):
                         pool=smb_o.share.pool)[0].name
                     mnt_pt = ('%s%s' % (settings.MNT_PT, smb_o.share.name))
                     try:
-                        mount_share(smb_o.share.subvol_name, pool_device,
-                                    mnt_pt)
+                        mount_share(smb_o.share, pool_device, mnt_pt)
                     except Exception, e:
                         logger.exception(e)
                         if (smb_o.id == smbo.id):
@@ -184,11 +178,7 @@ class SambaView(rfc.GenericView):
             e_msg = ('Samba export for the id(%s) does not exist' % smb_id)
             handle_exception(Exception(e_msg), request)
 
-        try:
+        with self._handle_exception(request):
             refresh_smb_config(list(SambaShare.objects.all()))
             self._restart_samba()
             return Response()
-        except Exception, e:
-            logger.exception(e)
-            e_msg = ('System error occured while restarting Samba server')
-            handle_exception(Exception(e_msg), request)

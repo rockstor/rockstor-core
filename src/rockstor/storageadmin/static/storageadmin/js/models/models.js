@@ -126,6 +126,30 @@ var SnapshotCollection = RockStorPaginatedCollection.extend({
   }
 });
 
+var Poolscrub = Backbone.Model.extend({
+  url: function() {
+    return '/api/pools/' + this.get('poolName') + '/scrub';
+  }
+});
+
+var PoolscrubCollection = RockStorPaginatedCollection.extend({
+  model: Poolscrub,
+  initialize: function(models, options) {
+    this.constructor.__super__.initialize.apply(this, arguments);
+    if (options) {
+      this.snapType = options.snapType;
+    }
+  },
+  setUrl: function(poolName) {
+    this.baseUrl = '/api/pools/' + poolName + '/scrub';
+  },
+  extraParams: function() {
+    var p = this.constructor.__super__.extraParams.apply(this, arguments);
+    p['snap_type'] = this.snapType;
+    return p;
+  }
+});
+
 var SysInfo = Backbone.Model.extend({
   url: "/api/tools/sysinfo"
 });
@@ -361,7 +385,37 @@ var ReceiveTrailCollection = RockStorPaginatedCollection.extend({
 });
 
 var TaskDef = Backbone.Model.extend({
-  urlRoot: "/api/sm/tasks/"
+  urlRoot: "/api/sm/tasks/",
+  max_count: function() {
+    if (this.get('json_meta') != null) {
+      return JSON.parse(this.get('json_meta')).max_count;
+    } else {
+      return 0;
+    }
+  },
+  share: function() {
+    if (this.get('json_meta') != null) {
+      return JSON.parse(this.get('json_meta')).share;
+    } else {
+      return '';
+    }
+  },
+  prefix: function() {
+    if (this.get('json_meta') != null) {
+      return JSON.parse(this.get('json_meta')).prefix;
+    } else {
+      return '';
+    }
+  },
+  pool: function() {
+    if (this.get('json_meta') != null) {
+      return JSON.parse(this.get('json_meta')).pool;
+    } else {
+      return '';
+    }
+  },
+
+
 });
 
 var TaskDefCollection = RockStorPaginatedCollection.extend({

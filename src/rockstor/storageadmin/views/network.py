@@ -25,9 +25,7 @@ from system.osi import (config_network_device, network_devices,
                         get_net_config_fedora, restart_network_interface,
                         get_default_interface, update_issue)
 from system.samba import update_samba_discovery
-from storageadmin.exceptions import RockStorAPIException
 import rest_framework_custom as rfc
-from django.conf import settings
 
 import logging
 logger = logging.getLogger(__name__)
@@ -43,13 +41,17 @@ class NetworkView(rfc.GenericView):
                 return NetworkInterface.objects.get(name=kwargs['iname'])
             except:
                 return []
+        with self._handle_exception(self.request):
+            self._net_scan()
+            #to be deprecated soon
+            update_samba_discovery()
         return NetworkInterface.objects.all()
 
     @transaction.commit_on_success
-    def post(self, request):
+    def _net_scan(self):
         default_if = get_default_interface()
-        config_list = get_net_config_fedora(network_devices())
-        for dconfig in config_list:
+        config_d = get_net_config_fedora(network_devices())
+        for dconfig in config_d.values():
             ni = None
             if (NetworkInterface.objects.filter(
                     name=dconfig['name']).exists()):
@@ -78,31 +80,40 @@ class NetworkView(rfc.GenericView):
                                       domain=dconfig['domain'])
             if (default_if == ni.name):
                 ni.itype = 'management'
-                update_samba_discovery(dconfig['ipaddr'],
-                                       settings.AVAHI_SMB_CONF)
                 try:
                     update_issue(dconfig['ipaddr'])
                 except:
                     logger.error('Unable to update /etc/issue')
             ni.save()
-        devices = NetworkInterface.objects.all()
+        devices = []
+        for ni in NetworkInterface.objects.all():
+            if (ni.name not in config_d):
+                logger.debug('network interface(%s) does not exist in the '
+                             'system anymore. Removing from db' % (ni.name))
+                ni.delete()
+            else:
+                devices.append(ni)
         serializer = NetworkInterfaceSerializer(devices, many=True)
         return Response(serializer.data)
+
+    def post(self, request):
+        with self._handle_exception(request):
+            return self._net_scan()
 
     def _restart_wrapper(self, ni, request):
         try:
             restart_network_interface(ni.name)
         except Exception, e:
             logger.exception(e)
-            e_msg = ('Failed to configure network interface: %s due'
-                     ' to a system error')
+            e_msg = ('Failed to configure network interface(%s) due'
+                     ' to a system error' % ni.name)
             handle_exception(Exception(e_msg), request)
 
     @transaction.commit_on_success
     def put(self, request, iname):
-        try:
+        with self._handle_exception(request):
             if (not NetworkInterface.objects.filter(name=iname).exists()):
-                e_msg = ('Interface with name: %s does not exist.' % iname)
+                e_msg = ('Netowrk interface(%s) does not exist.' % iname)
                 handle_exception(Exception(e_msg), request)
             ni = NetworkInterface.objects.get(name=iname)
 
@@ -133,7 +144,7 @@ class NetworkView(rfc.GenericView):
                          boot_proto)
                 handle_exception(Exception(e_msg), request)
             self._restart_wrapper(ni, request)
-            dconfig = get_net_config_fedora([ni.name])[0]
+            dconfig = get_net_config_fedora([ni.name])[ni.name]
             ni.boot_proto = dconfig['bootproto']
             ni.netmask = dconfig['netmask']
             ni.ipaddr = dconfig['ipaddr']
@@ -146,23 +157,16 @@ class NetworkView(rfc.GenericView):
                 a = Appliance.objects.get(current_appliance=True)
                 a.ip = ni.ipaddr
                 a.save()
-                update_samba_discovery(ni.ipaddr, settings.AVAHI_SMB_CONF)
                 try:
                     update_issue(ni.ipaddr)
                 except:
                     logger.error('Unable to update /etc/issue')
             return Response(NetworkInterfaceSerializer(ni).data)
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)
 
     @transaction.commit_on_success
     def delete(self, request, iname):
-        try:
+        with self._handle_exception(request):
             if (NetworkInterface.objects.filter(name=iname).exists()):
                 i = NetworkInterface.objects.get(name=iname)
                 i.delete()
             return Response()
-        except Exception, e:
-            handle_exception(e, request)

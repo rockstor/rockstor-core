@@ -21,8 +21,8 @@
 
 <!-- Buttons -->
       <% if (status == 'running' || status == 'started') { %>
-      	<button id="scrub-pool-stop" class="btn btn-primary scrub-button"
-	type="button"><i class="icon-cog icon-white"></i> Stop scrub</button>
+      	<button id="scrub-pool-refresh" class="btn btn-primary scrub-button"
+	type="button"><i class="icon-refresh icon-white"></i> Scrub <%=percent%>% done</button>
       <% } else { %>
       	<button id="scrub-pool-start" class="btn btn-primary scrub-button" type="button"><i
       	class="icon-cog icon-white"></i> Start scrub</button>

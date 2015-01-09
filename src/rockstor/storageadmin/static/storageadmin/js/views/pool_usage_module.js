@@ -43,7 +43,7 @@ PoolUsageModule = RockstorModuleView.extend({
   renderGraph: function() {
     // Pie chart
     var w = 350; //width
-    var h = 250; //height
+    var h = 130; //height
     var outerRadius = 50;
     var innerRadius = 0;
     

@@ -59,14 +59,49 @@ EditNetworkView = RockstorLayoutView.extend({
       onfocusout: false,
       onkeyup: false,
       rules: {
-      },
-      messages: {
+        ipaddr: {
+          required: {
+            depends: function(element) {
+              return (_this.$('#boot_proto').val() == 'static')
+            }
+          }
+        },
+        netmask: {
+          required: {
+            depends: function(element) {
+              return (_this.$('#boot_proto').val() == 'static')
+            }
+          }
+        },
+        gateway: {
+          required: {
+            depends: function(element) {
+              return (_this.$('#boot_proto').val() == 'static')
+            }
+          }
+        },
+        domain: {
+          required: {
+            depends: function(element) {
+              return (_this.$('#boot_proto').val() == 'static')
+            }
+          }
+        },
+        dns_servers: {
+          required: {
+            depends: function(element) {
+              return (_this.$('#boot_proto').val() == 'static')
+            }
+          }
+        },
       },
       
       submitHandler: function() {
         var button = _this.$('#submit');
         if (buttonDisabled(button)) return false;
         disableButton(button);
+        var cancelButton = _this.$('#cancel');
+        disableButton(cancelButton);
         var network = new NetworkInterface({name: _this.name});
         var data = _this.$('#edit-network-form').getJSON();
         if (_this.$("#itype").prop("checked")) {
@@ -81,6 +116,7 @@ EditNetworkView = RockstorLayoutView.extend({
           },
           error: function(model, xhr, options) {
             enableButton(button);
+            enableButton(cancelButton);
           }
         });
         return false;  
@@ -108,6 +144,7 @@ EditNetworkView = RockstorLayoutView.extend({
   },
   
   cancel: function() {
+    event.preventDefault();
     app_router.navigate("network", {trigger: true});
   }
 

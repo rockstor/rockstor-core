@@ -38,6 +38,7 @@ class Share(models.Model):
     toc = models.DateTimeField(auto_now=True)
     subvol_name = models.CharField(max_length=4096)
     replica = models.BooleanField(default=False)
+    compression_algo = models.CharField(max_length=1024, null=True)
 
     def cur_rusage(self, *args, **kwargs):
         try:

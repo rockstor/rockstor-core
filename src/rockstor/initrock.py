@@ -24,11 +24,14 @@ import logging
 import sys
 import re
 import time
+from django.conf import settings
+
 
 SYSCTL = '/usr/bin/systemctl'
 DJANGO = '/opt/rockstor/bin/django'
 STAMP = '/opt/rockstor/.initrock'
 OPENSSL = '/usr/bin/openssl'
+GRUBBY = '/usr/sbin/grubby'
 
 
 def update_issue():
@@ -56,11 +59,34 @@ def update_issue():
                       'https://%s\n\n' % ipaddr)
 
 
+def set_def_kernel(logger, version=settings.SUPPORTED_KERNEL_VERSION):
+    supported_kernel_path = ('/boot/vmlinuz-%s' % version)
+    if (not os.path.isfile(supported_kernel_path)):
+        return logger.error('Supported kernel(%s) does not exist' %
+                            supported_kernel_path)
+    try:
+        o, e, rc = run_command([GRUBBY, '--default-kernel'])
+        if (o[0] == supported_kernel_path):
+            return logging.info('Supported kernel(%s) is already the default' %
+                                supported_kernel_path)
+    except Exception, e:
+        logger.error('Exception while listing the default kernel')
+        return logger.exception(e)
+
+    try:
+        run_command([GRUBBY, '--set-default=%s' % supported_kernel_path])
+        return logger.info('Default kernel set to %s' % supported_kernel_path)
+    except Exception, e:
+        logger.error('Exception while setting kernel(%s) as default' % version)
+        return logger.exception(e)
+
+
 def main():
     loglevel = logging.INFO
     if (len(sys.argv) > 1 and sys.argv[1] == '-x'):
         loglevel = logging.DEBUG
     logging.basicConfig(format='%(asctime)s: %(message)s', level=loglevel)
+    set_def_kernel(logging)
     shutil.copyfile('/etc/issue', '/etc/issue.rockstor')
     for i in range(30):
         try:

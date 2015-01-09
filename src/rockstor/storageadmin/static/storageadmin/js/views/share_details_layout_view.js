@@ -31,6 +31,9 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
     "click #js-acl-save": "saveAcl",
     "click #js-acl-cancel": "cancelAcl",
     "click input[name='perms[]']": "showPermStr",
+    "click #js-edit-compression": "editCompression",
+    "click #js-edit-compression-cancel": "editCompressionCancel",
+    "click #js-submit-compression": "updateCompression",
   },
 
   initialize: function() {
@@ -41,13 +44,14 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
     this.rollback_btn_template = window.JST.share_share_details_rollback_btn;
     this.shareAclTemplate = window.JST.share_share_acl;
     this.shareAclEditTemplate = window.JST.share_share_acl_edit;
-    //this.iscsi_target = new ISCSITarget({shareName: this.shareName});
+    this.compression_info_template = window.JST.share_compression_info;
+    this.compression_info_edit_template = window.JST.share_compression_info_edit;
     this.appliances = new ApplianceCollection();
     this.appliances.pageSize = RockStorGlobals.maxPageSize;
 
     // create models
     this.share = new Share({shareName: this.shareName});
-    this.snapshots = new SnapshotCollection([],{snapType: 'admin'});
+    this.snapshots = new SnapshotCollection([]);
     this.snapshots.setUrl(this.shareName);
 
     this.users = new UserCollection();
@@ -74,6 +78,8 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
       {name: 'insecure', value: 'insecure'},
     ];
     this.on('snapshotsModified', this.renderRollbackBtn, this);
+    this.cOpts = {'no': 'Dont enable compression', 'zlib': 'zlib', 'lzo': 'lzo'};
+    this.cView = this.options.cView;
   },
 
   render: function() {
@@ -101,7 +107,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
       share: this.share,
     });
     this.share.on('change', this.subviews['share-usage'].render, this.subviews['share-usage']);
-    $(this.el).append(this.template({
+    $(this.el).html(this.template({
       share: this.share,
       snapshots: this.snapshots,
       permStr: this.parsePermStr(this.share.get("perms")),
@@ -111,14 +117,23 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
     }));
     this.renderRollbackBtn();
     this.renderAcl();
-    this.$('#ph-share-usage').append(this.subviews['share-usage'].render().el);
-    this.$('#ph-snapshots').append(this.subviews['snapshots'].render().el);
-    this.$('#ph-nfs-exports').append(this.subviews['nfs-exports'].render().el);
-    this.$('#ph-smb-shares').append(this.subviews['smb-shares'].render().el);
+    this.$('#ph-share-usage').html(this.subviews['share-usage'].render().el);
+    this.$('#ph-snapshots').html(this.subviews['snapshots'].render().el);
+    this.$('#ph-nfs-exports').html(this.subviews['nfs-exports'].render().el);
+    this.$('#ph-smb-shares').html(this.subviews['smb-shares'].render().el);
+    if (!_.isUndefined(this.cView) && this.cView == 'edit') {
+      this.$('#ph-compression-info').html(this.compression_info_edit_template({
+	share: this.share,
+	cOpts: this.cOpts
+      }));
+      this.showCompressionTooltips();
+    } else {
+      this.$('#ph-compression-info').html(this.compression_info_template({share: this.share}));
+    }
     this.$("ul.css-tabs").tabs("div.css-panes > div");
     this.attachActions();
   },
-  
+
   renderRollbackBtn: function() {
     var foundWritableSnapshot = false;
     if (!_.isUndefined(this.snapshots.find(function(s) { return s.get('writable') == true;}))) {
@@ -267,6 +282,61 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 
   showPermStr: function() {
     this.$("#permStrEdit").html(this.createPermStr());
+  },
+
+  showCompressionTooltips: function() {
+    this.$('#ph-compression-info #compression').tooltip({
+      html: true,
+      placement: 'top',
+      title: "Choose a compression algorithm for this Share. By default, parent pool's compression algorithm is applied.<br> If you like to set pool wide compression, don't choose anything here. If you want finer control of this particular Share's compression algorithm, you can set it here.<br><strong>zlib: </strong>slower but higher compression ratio.<br><strong>lzo: </strong>faster compression/decompression, but compression ratio is lover than zlib"
+    });
+  },
+
+  hideCompressionTooltips: function() {
+    this.$('#ph-compression-info #compression').tooltip('hide');
+  },
+
+  editCompression: function(event) {
+    event.preventDefault();
+    this.$('#ph-compression-info').html(this.compression_info_edit_template({
+      share: this.share,
+      cOpts: this.cOpts
+    }));
+    this.showCompressionTooltips();
+  },
+
+  editCompressionCancel: function(event) {
+    event.preventDefault();
+    this.hideCompressionTooltips();
+    this.$('#ph-compression-info').html(this.compression_info_template({share: this.share}));
+  },
+
+  updateCompression: function(event) {
+    var _this = this;
+    event.preventDefault();
+    var button = this.$('#js-submit-compression');
+    if (buttonDisabled(button)) return false;
+    disableButton(button);
+    $.ajax({
+      url: "/api/shares/" + this.share.get('name') + '/compress',
+      type: "POST",
+      dataType: "json",
+      data: {
+        "compress": this.$('#compression').val(),
+      },
+      success: function() {
+        _this.hideCompressionTooltips();
+        _this.share.fetch({
+          success: function(collection, response, options) {
+            _this.cView = 'view';
+            _this.renderSubViews();
+          }
+        });
+      },
+      error: function(xhr, status, error) {
+        enableButton(button);
+      }
+    });
   },
 
 });

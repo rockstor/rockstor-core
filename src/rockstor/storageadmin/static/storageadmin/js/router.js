@@ -38,6 +38,7 @@ var AppRouter = Backbone.Router.extend({
     "disks/blink/:diskName": "blinkDrive",
     "pools": "showPools",
     "pools/:poolName": "showPool",
+    "pools/:poolName/?cView=:cView": "showPool",
     "add_pool": "addPool",
     "shares": "showShares",
     "add_share?poolName=:poolName": "addShare",
@@ -46,6 +47,7 @@ var AppRouter = Backbone.Router.extend({
     "shares/:shareName/create-clone": "createCloneFromShare",
     "shares/:shareName/snapshots/:snapName/create-clone": "createCloneFromSnapshot",
     "shares/:shareName/rollback": "rollbackShare",
+    "shares/:shareName/?cView=:cView": "showShare",
     "services": "showServices",
     "services/:serviceName/edit": "configureService",
     "support":"showSupport",
@@ -76,6 +78,7 @@ var AppRouter = Backbone.Router.extend({
     "scheduled-tasks": "showScheduledTasks",
     "scheduled-tasks/:taskId/log": "showTasks",
     "add-scheduled-task": "addScheduledTask",
+    "edit-scheduled-task/:taskDefId": "editScheduledTask",
     "shutdown": "showShutdownView",
     "reboot": "showReboot",
     "version": "showVersion",
@@ -94,7 +97,7 @@ var AppRouter = Backbone.Router.extend({
     "add-access-key": "addAccessKey",
     "404": "handle404",
     "500": "handle500",
-    "*path": "showHome"
+    "*path": "showHome",
   },
 
   before: function (route, param) {
@@ -123,6 +126,9 @@ var AppRouter = Backbone.Router.extend({
     }
     if (!RockStorGlobals.browserChecked) {
       checkBrowser();
+    }
+    if (!RockStorGlobals.kernel) {
+      fetchKernelInfo();
     }
 
     // set a timer to get current rockstor version and checkif there is an
@@ -196,13 +202,14 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').append(this.currentLayout.render().el);
   },
 
-  showPool: function(poolName) {
+  showPool: function(poolName, cView) {
     RockStorSocket.removeAllListeners();
     this.renderSidebar("storage", "pools");
     $('#maincontent').empty();
     this.cleanup();
     this.currentLayout = new PoolDetailsLayoutView({
-      poolName: poolName
+      poolName: poolName,
+      cView: cView
     });
     $('#maincontent').append(this.currentLayout.render().el);
   },
@@ -274,25 +281,22 @@ var AppRouter = Backbone.Router.extend({
 
   },
 
-  showShare: function(shareName) {
+  showShare: function(shareName, cView) {
     RockStorSocket.removeAllListeners();
-    //var shareDetailView = new ShareDetailView({
-      //model: new Share({shareName: shareName})
-    //});
-
     this.renderSidebar("storage", "shares");
-    var shareDetailsLayoutView = new ShareDetailsLayoutView({
-      shareName: shareName
-    });
-
     $('#maincontent').empty();
-    //$('#maincontent').append(shareDetailView.render().el);
-    $('#maincontent').append(shareDetailsLayoutView.render().el);
-
+    this.cleanup();
+    this.currentLayout = new ShareDetailsLayoutView({
+      shareName: shareName,
+      cView: cView,
+    });
+    $('#maincontent').append(this.currentLayout.render().el);
   },
+
   deleteShare: function(shareName) {
 
   },
+
   showServices: function() {
     RockStorSocket.removeAllListeners();
     this.renderSidebar("system", "services");
@@ -526,6 +530,14 @@ var AppRouter = Backbone.Router.extend({
     this.renderSidebar('system', 'scheduled-tasks');
     this.cleanup();
     this.currentLayout = new AddScheduledTaskView();
+    $('#maincontent').empty();
+    $('#maincontent').append(this.currentLayout.render().el);
+  },
+
+  editScheduledTask: function(taskDefId) {
+    this.renderSidebar('system', 'scheduled-tasks');
+    this.cleanup();
+    this.currentLayout = new AddScheduledTaskView({taskDefId: taskDefId});
     $('#maincontent').empty();
     $('#maincontent').append(this.currentLayout.render().el);
   },
@@ -813,5 +825,33 @@ $(document).ready(function() {
     }
   });
 
+  // donate button handler
+  $('#donate_nav').click(function(event) {
+    if (event) {
+      event.preventDefault();
+    }
+    $('#donate-modal').modal('show');
+  }); 
+
+  $('#donate-modal #contrib-custom').click(function(e) {
+    $('#donate-modal #custom-amount').css('display', 'inline');
+  });
+  $('#donate-modal .contrib-other').click(function(e) {
+    $('#donate-modal #custom-amount').css('display', 'none');
+  });
+  
+  $('#donate-modal #donateYes').click(function(event) {
+    console.log('donate yes clicked');
+    contrib = $('#donate-modal input[type="radio"][name="contrib"]:checked').val();
+    if (contrib=='custom') {
+      contrib = $('#custom-amount').val();
+    }
+    if (_.isNull(contrib) || _.isEmpty(contrib) || isNaN(contrib)) {
+      contrib = 0; // set contrib to 0, let user input the number on paypal
+    }
+    $('#contrib-form input[name="amount"]').val(contrib);
+    $('#contrib-form').submit()
+    $('#donate-modal').modal('hide');
+  });
 
 });

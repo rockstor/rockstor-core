@@ -45,14 +45,15 @@ class DiskView(rfc.GenericView):
 
     def get_queryset(self, *args, **kwargs):
         #do rescan on get.
-        self._scan()
+        with self._handle_exception(self.request):
+            self._scan()
         if ('dname' in kwargs):
             self.paginate_by = 0
             try:
                 return Disk.objects.get(name=kwargs['dname'])
             except:
                 return []
-        return Disk.objects.all()
+        return Disk.objects.all().order_by('name')
 
     @transaction.commit_on_success
     def _scan(self):
@@ -86,7 +87,7 @@ class DiskView(rfc.GenericView):
             if (do.name not in [d.name for d in disks]):
                 do.offline = True
                 do.save()
-        ds = DiskInfoSerializer(Disk.objects.all(), many=True)
+        ds = DiskInfoSerializer(Disk.objects.all().order_by('name'), many=True)
         return Response(ds.data)
 
     @transaction.commit_on_success
@@ -119,20 +120,21 @@ class DiskView(rfc.GenericView):
         return Response()
 
     def post(self, request, command, dname=None):
-        if (command == 'scan'):
-            return self._scan()
-        if (command == 'wipe'):
-            return self._wipe(dname, request)
-        if (command == 'btrfs-wipe'):
-            return self._wipe(dname, request)
-        if (command == 'btrfs-disk-import'):
-            return self._btrfs_disk_import(dname, request)
-        if (command == 'blink-drive'):
-            return self._blink_drive(dname, request)
+        with self._handle_exception(request):
+            if (command == 'scan'):
+                return self._scan()
+            if (command == 'wipe'):
+                return self._wipe(dname, request)
+            if (command == 'btrfs-wipe'):
+                return self._wipe(dname, request)
+            if (command == 'btrfs-disk-import'):
+                return self._btrfs_disk_import(dname, request)
+            if (command == 'blink-drive'):
+                return self._blink_drive(dname, request)
 
-        e_msg = ('Unknown command: %s. Only valid commands are scan, wipe' %
-                 command)
-        handle_exception(Exception(e_msg), request)
+            e_msg = ('Unknown command: %s. Only valid commands are scan, '
+                     'wipe' % command)
+            handle_exception(Exception(e_msg), request)
 
     @transaction.commit_on_success
     def delete(self, request, dname):

@@ -3,7 +3,7 @@
   <br>
   <h3>A new update is available!</h3>
   <span class="h3">RockStor <%= mostRecentVersion %></span>&nbsp;&nbsp;&nbsp;&nbsp;
-  <a id="update" class="btn btn-primary" title="Update">Update</a>
+  <!-- <a id="update" class="btn btn-primary" title="Update">Update</a> -->
   <br>
   <br>
   <h4>Here are the changes with this update</h4>
@@ -12,8 +12,36 @@
       <li><h4><%= item %></h4></li>
     <% }); %>
   </ul>
+  <div class="row-fluid">
+    <div class="span6">
+      <div class="alert alert-success" id="contrib-alert">
+      <h4>We are happy to make this update available to you.<br>Will you help support Rockstor development with a generous donation?<br><br></h4>
+	<label class="radio inline">
+	  <input type="radio" name="contrib" id="contrib10" value="10" checked>$10
+	</label>
+        <label class="radio inline">
+          <input type="radio" name="contrib" id="contrib20" value="20">$20
+        </label>
+        <label class="radio inline">
+          <input type="radio" name="contrib" id="contrib30" value="30">$30
+        </label>
+	<label class="radio inline">
+	  <input type="radio" name="contrib" id="contrib50" value="50">$50
+	</label>
+        <label class="radio inline">
+          <input type="radio" name="contrib" id="contrib-custom" value="custom">Other
+        </label>
+        &nbsp;<input class="span4" id="custom-amount" name="custom-amount" placeholder="Enter amount" style="display: none">
+        <br>
+        <br>
+        <a id="donateYes" class="btn btn-primary" title="Update">Yes, I'll support Rockstor</a>
+      </div>
+    </div>
+  </div>
+  <a id="donateNo" class="btn" title="Update">No, just update </a>
+  </p>
 <% } else { %>
-  <p>You are running the latest version of RockStor.</p>
+  <p>Rockstor is up-to-date. If you've updated recently, you may need to reload the browser manually for the latest UI changes to appear. Reload with Ctrl + Shift + R on Firefox and Chrome.</p>
 <% } %>
 
 <div id="update-modal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="updateModalLabel" aria-hidden="true">
@@ -31,4 +59,12 @@
   </div>
 </div>
 
-
+<form id="contrib-form" action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank"i style="display:none">
+  <input type="hidden" name="cmd" value="_xclick" />
+  <input type="hidden" name="business" value="WUDA5UNJXDCZ8" />
+  <input type="hidden" name="currency_code" value="USD" />
+  <input type="hidden" name="item_name" value="Support Rockstor development" />
+  <input type="hidden" name="amount" value="10" />
+  <input type="hidden" name="cn" value="Note to Rockstor developers" />
+  <input type="hidden" name="no_shipping" value="1" />
+</form>

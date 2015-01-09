@@ -91,14 +91,10 @@ def restart_samba(hard=False):
     return run_command(smbd_cmd)
 
 
-def update_samba_discovery(ipaddr, clean_config):
-    fo, npath = mkstemp()
-    dest_file = '/etc/avahi/services/smb.service'
-    regex = (' <name replace-wildcards="yes">')
-    nl = (' <name replace-wildcards="yes">RockStor@%s</name>\n' % ipaddr,)
-    inplace_replace(clean_config, npath, (regex,), nl)
-    shutil.copy(npath, dest_file)
-    run_command([CHMOD, '755', dest_file])
+def update_samba_discovery():
+    avahi_smb_config = '/etc/avahi/services/smb.service'
+    if (os.path.isfile(avahi_smb_config)):
+        os.remove(avahi_smb_config)
     return run_command([SYSTEMCTL, 'restart', 'avahi-daemon', ])
 
 

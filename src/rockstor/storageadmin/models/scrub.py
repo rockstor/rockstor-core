@@ -28,7 +28,20 @@ class PoolScrub(models.Model):
     start_time = models.DateTimeField(auto_now=True)
     end_time = models.DateTimeField(null=True)
     kb_scrubbed = models.BigIntegerField(null=True)
-    errors = models.BigIntegerField(null=True)
+    data_extents_scrubbed = models.BigIntegerField(default=0)
+    tree_extents_scrubbed = models.BigIntegerField(default=0)
+    tree_bytes_scrubbed = models.BigIntegerField(default=0)
+    read_errors = models.IntegerField(default=0)
+    csum_errors = models.IntegerField(default=0)
+    verify_errors = models.IntegerField(default=0)
+    no_csum = models.IntegerField(default=0)
+    csum_discards = models.IntegerField(default=0)
+    super_errors = models.IntegerField(default=0)
+    malloc_errors = models.IntegerField(default=0)
+    uncorrectable_errors = models.IntegerField(default=0)
+    unverified_errors = models.IntegerField(default=0)
+    corrected_errors = models.IntegerField(default=0)
+    last_physical = models.BigIntegerField(default=0)
 
     class Meta:
         app_label = 'storageadmin'

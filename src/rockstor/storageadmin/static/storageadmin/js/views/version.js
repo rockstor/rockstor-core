@@ -1,32 +1,34 @@
 /*
  *
- * @licstart  The following is the entire license notice for the 
+ * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
- * 
+ *
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
- * 
+ *
  * RockStor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
- * 
+ *
  * RockStor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * @licend  The above is the entire license notice
  * for the JavaScript code in this page.
- * 
+ *
  */
 
 VersionView = RockstorLayoutView.extend({
   events: {
-    'click #update': 'update'
+    'click #update': 'update',
+    'click #donateYes': 'donateYes',
+    'click #donateNo': 'donateNo'
   },
 
   initialize: function() {
@@ -40,7 +42,7 @@ VersionView = RockstorLayoutView.extend({
   render: function() {
     var _this = this;
     $.ajax({
-      url: "/api/commands/update-check", 
+      url: "/api/commands/update-check",
       type: "POST",
       dataType: "json",
       success: function(data, status, xhr) {
@@ -56,27 +58,51 @@ VersionView = RockstorLayoutView.extend({
   },
 
   renderVersionInfo: function() {
+    var _this = this;
     $(this.el).html(this.template({
       currentVersion: this.currentVersion,
       mostRecentVersion: this.mostRecentVersion,
-      changeList: this.changeList    
+      changeList: this.changeList
     }));
     this.$('#update-modal').modal({
       keyboard: false,
       backdrop: 'static',
       show: false
     });
+    // Show or hide custom contrib textfield
+    this.$('#contrib-custom').click(function(e) {
+      _this.$('#custom-amount').css('display', 'inline');
+    });
+    this.$('#contrib20').click(function(e) {
+      _this.$('#custom-amount').css('display', 'none');
+    });
+    this.$('#contrib30').click(function(e) {
+      _this.$('#custom-amount').css('display', 'none');
+    });
+  },
+
+  donateYes: function() {
+    contrib = this.$('input[type="radio"][name="contrib"]:checked').val();
+    if (contrib=='custom') {
+      contrib = $('#custom-amount').val();
+    }
+    if (_.isNull(contrib) || _.isEmpty(contrib) || isNaN(contrib)) {
+      contrib = 0; // set contrib to 0, let user input the number on paypal
+    }
+    this.$('input[name="amount"]').val(contrib);
+    this.$('#contrib-form').submit()
+    this.update();
+  },
+
+  donateNo: function() {
+    this.update();
   },
 
   update: function() {
-    var _this = this;
-    var btn = this.$('#update');
-    if (buttonDisabled(btn)) return false;
-    disableButton(btn);
     this.$('#update-modal').modal('show');
     this.startForceRefreshTimer();
     $.ajax({
-      url: "/api/commands/update", 
+      url: "/api/commands/update",
       type: "POST",
       dataType: "json",
       global: false, // dont show global loading indicator
@@ -93,7 +119,7 @@ VersionView = RockstorLayoutView.extend({
     var _this = this;
     this.isUpTimer = window.setInterval(function() {
       $.ajax({
-        url: "/api/sm/sprobes/loadavg?limit=1&format=json", 
+        url: "/api/sm/sprobes/loadavg?limit=1&format=json",
         type: "GET",
         dataType: "json",
         global: false, // dont show global loading indicator
@@ -106,8 +132,8 @@ VersionView = RockstorLayoutView.extend({
       });
     }, 5000);
   },
- 
-  // countdown timeLeft seconds and then force a window reload 
+
+  // countdown timeLeft seconds and then force a window reload
   startForceRefreshTimer: function() {
     var _this = this;
     this.forceRefreshTimer = window.setInterval(function() {
@@ -146,6 +172,3 @@ VersionView = RockstorLayoutView.extend({
   }
 
 });
-
-
-

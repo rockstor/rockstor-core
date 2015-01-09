@@ -276,7 +276,6 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 )
 
 SMB_CONF = '${django-settings-conf:smb_conf}'
-AVAHI_SMB_CONF = '${django-settings-conf:avahi_smb_conf}'
 MNT_PT = '/mnt2/'
 NFS_EXPORT_ROOT = '/export/'
 SFTP_MNT_ROOT = '/mnt3/'
@@ -354,3 +353,8 @@ REST_FRAMEWORK = {
 }
 
 CONFROOT = '${buildout:depdir}/conf'
+COMPRESSION_TYPES = ('lzo', 'zlib', 'no',)
+
+SUPPORTED_KERNEL_VERSION = ${django-settings-conf:kernel}
+
+SNAP_TS_FORMAT = '%Y%m%d%H%M%S'

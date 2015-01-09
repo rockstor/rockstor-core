@@ -23,7 +23,6 @@ from storageadmin.models import (NFSExport, NFSExportGroup, Disk,
                                  AdvancedNFSExport)
 from storageadmin.util import handle_exception
 from storageadmin.serializers import NFSExportGroupSerializer
-from storageadmin.exceptions import RockStorAPIException
 from fs.btrfs import (mount_share, is_share_mounted)
 import rest_framework_custom as rfc
 from nfs_helpers import (create_nfs_export_input, parse_options,
@@ -49,11 +48,11 @@ class NFSExportGroupView(rfc.GenericView):
 
     @transaction.commit_on_success
     def post(self, request):
-        if ('shares' not in request.DATA):
-            e_msg = ('Cannot export without specifying shares')
-            handle_exception(Exception(e_msg), request)
-        shares = [validate_share(s, request) for s in request.DATA['shares']]
-        try:
+        with self._handle_exception(request):
+            if ('shares' not in request.DATA):
+                e_msg = ('Cannot export without specifying shares')
+                handle_exception(Exception(e_msg), request)
+            shares = [validate_share(s, request) for s in request.DATA['shares']]
             options = parse_options(request)
             for s in shares:
                 dup_export_check(s, options['host_str'], request)
@@ -66,7 +65,7 @@ class NFSExportGroupView(rfc.GenericView):
                 export_pt = ('%s%s' % (settings.NFS_EXPORT_ROOT, s.name))
                 if (not is_share_mounted(s.name)):
                     pool_device = Disk.objects.filter(pool=s.pool)[0].name
-                    mount_share(s.subvol_name, pool_device, mnt_pt)
+                    mount_share(s, pool_device, mnt_pt)
                 export = NFSExport(export_group=eg, share=s, mount=export_pt)
                 export.full_clean()
                 export.save()
@@ -80,18 +79,14 @@ class NFSExportGroupView(rfc.GenericView):
             refresh_wrapper(exports, request, logger)
             nfs_serializer = NFSExportGroupSerializer(eg)
             return Response(nfs_serializer.data)
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)
 
     @transaction.commit_on_success
     def put(self, request, export_id):
-        if ('shares' not in request.DATA):
-            e_msg = ('Cannot export without specifying shares')
-            handle_exception(Exception(e_msg), request)
-        shares = [validate_share(s, request) for s in request.DATA['shares']]
-        try:
+        with self._handle_exception(request):
+            if ('shares' not in request.DATA):
+                e_msg = ('Cannot export without specifying shares')
+                handle_exception(Exception(e_msg), request)
+            shares = [validate_share(s, request) for s in request.DATA['shares']]
             eg = validate_export_group(export_id, request)
             options = parse_options(request)
             for s in shares:
@@ -111,7 +106,7 @@ class NFSExportGroupView(rfc.GenericView):
                 export_pt = ('%s%s' % (settings.NFS_EXPORT_ROOT, s.name))
                 if (not is_share_mounted(s.name)):
                     pool_device = Disk.objects.filter(pool=s.pool)[0].name
-                    mount_share(s.subvol_name, pool_device, mnt_pt)
+                    mount_share(s, pool_device, mnt_pt)
                 export = NFSExport(export_group=eg, share=s, mount=export_pt)
                 export.full_clean()
                 export.save()
@@ -124,14 +119,10 @@ class NFSExportGroupView(rfc.GenericView):
             refresh_wrapper(exports, request, logger)
             nfs_serializer = NFSExportGroupSerializer(eg)
             return Response(nfs_serializer.data)
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)
 
     @transaction.commit_on_success
     def delete(self, request, export_id):
-        try:
+        with self._handle_exception(request):
             eg = validate_export_group(export_id, request)
             cur_exports = list(NFSExport.objects.all())
             for e in NFSExport.objects.filter(export_group=eg):
@@ -150,7 +141,3 @@ class NFSExportGroupView(rfc.GenericView):
             exports.update(exports_d)
             refresh_wrapper(exports, request, logger)
             return Response()
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)

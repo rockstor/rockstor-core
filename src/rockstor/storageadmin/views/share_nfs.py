@@ -19,13 +19,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from rest_framework.response import Response
 from django.db import transaction
 from django.conf import settings
-from storageadmin.models import (Share, SambaShare, NFSExport,
-                                 NFSExportGroup, Disk)
-from storageadmin.util import handle_exception
+from storageadmin.models import (NFSExport, NFSExportGroup, Disk)
 from storageadmin.serializers import NFSExportGroupSerializer
-from storageadmin.exceptions import RockStorAPIException
-from fs.btrfs import (mount_share, is_share_mounted, umount_root)
-from system.osi import (refresh_nfs_exports, nfs4_mount_teardown)
+from fs.btrfs import (mount_share, is_share_mounted)
 import rest_framework_custom as rfc
 from nfs_helpers import (create_nfs_export_input, parse_options,
                          dup_export_check, refresh_wrapper,
@@ -53,7 +49,7 @@ class ShareNFSView(rfc.GenericView):
 
     @transaction.commit_on_success
     def post(self, request, sname):
-        try:
+        with self._handle_exception(request):
             share = validate_share(sname, request)
             options = parse_options(request)
             dup_export_check(share, options['host_str'], request)
@@ -64,7 +60,7 @@ class ShareNFSView(rfc.GenericView):
             export_pt = ('%s%s' % (settings.NFS_EXPORT_ROOT, share.name))
             if (not is_share_mounted(share.name)):
                 pool_device = Disk.objects.filter(pool=share.pool)[0].name
-                mount_share(share.subvol_name, pool_device, mnt_pt)
+                mount_share(share, pool_device, mnt_pt)
             export = NFSExport(export_group=eg, share=share, mount=export_pt)
             export.full_clean()
             export.save()
@@ -74,14 +70,10 @@ class ShareNFSView(rfc.GenericView):
             refresh_wrapper(exports, request, logger)
             nfs_serializer = NFSExportGroupSerializer(eg)
             return Response(nfs_serializer.data)
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)
 
     @transaction.commit_on_success
     def put(self, request, sname, export_id):
-        try:
+        with self._handle_exception(request):
             share = validate_share(sname, request)
             eg = validate_export_group(export_id, request)
             options = parse_options(request)
@@ -94,14 +86,10 @@ class ShareNFSView(rfc.GenericView):
             refresh_wrapper(exports, request, logger)
             nfs_serializer = NFSExportGroupSerializer(eg)
             return Response(nfs_serializer.data)
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)
 
     @transaction.commit_on_success
     def delete(self, request, sname, export_id):
-        try:
+        with self._handle_exception(request):
             share = validate_share(sname, request)
             eg = validate_export_group(export_id, request)
             cur_exports = list(NFSExport.objects.all())
@@ -123,7 +111,3 @@ class ShareNFSView(rfc.GenericView):
                 eg.delete()
             refresh_wrapper(exports, request, logger)
             return Response()
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)

@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2014 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -16,11 +16,20 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from osi import run_command
+from multiprocessing import Process
+import subprocess
 
 
-YUM = '/usr/bin/yum'
+class PoolScrub(Process):
 
+    def __init__(self, mnt_pt, force=False):
+        self.mnt_pt = mnt_pt
+        self.force = force
+        super(PoolScrub, self).__init__()
 
-def install_pkg(name):
-    return run_command([YUM, '--setopt=timeout=600', '-y', 'install', name])
+    def run(self):
+        cmd = ['btrfs', 'scrub', 'start', '-B', self.mnt_pt]
+        if (self.force):
+            cmd.insert(3, '-f')
+        sp = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE)

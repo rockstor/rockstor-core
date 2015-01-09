@@ -1,0 +1,60 @@
+<script>
+/*
+ * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ *
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ *
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+</script>
+<div class="messages"></div>
+<div class="row-fluid">
+  <a class="btn btn-primary" href="#" id="js-poolscrub-start"><i class="icon-edit icon-white"></i>Start a new scrub</a> or you can schedule a periodic scrub by clicking <a href="#add-scheduled-task">here.</a>
+</div>
+<br>
+<% if (!poolscrubs.isEmpty()) { %>
+  <table id="poolscrubs-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of poolscrubs">
+    <thead>
+      <tr>
+        <th>Id</th>
+        <th>Status</th>
+        <th>Start Time</th>
+        <th>End Time</th>
+        <th>Data Scrubbed</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% poolscrubs.each(function(poolscrub, index) { %>
+        <tr>
+          <td><%= poolscrub.get('id') %></td>
+          <td><%= poolscrub.get('status') %></td>
+          <td>
+	  <% if (poolscrub.get('start_time')) { %>
+	     <%= moment(poolscrub.get('start_time')).format(RS_DATE_FORMAT) %>
+	  <% } %>
+	  </td>
+          <td>
+	  <% if (poolscrub.get('end_time')) { %>
+	     <%= moment(poolscrub.get('end_time')).format(RS_DATE_FORMAT) %>
+	  <% } %>
+	  </td>
+          <td><%= humanize.filesize(poolscrub.get('kb_scrubbed')*1024) %></td>
+        </tr>
+	  <% }); %>
+    </tbody>
+  </table>
+<div class="pagination-ph"></div>
+<% } else { %>
+  <div class="alert"><h4>There are no scrubs to display</h4></div>
+<% } %>

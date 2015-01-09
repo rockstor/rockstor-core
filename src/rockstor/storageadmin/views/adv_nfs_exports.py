@@ -21,7 +21,6 @@ from django.db import transaction
 from storageadmin.models import (NFSExport, AdvancedNFSExport)
 from storageadmin.util import handle_exception
 from storageadmin.serializers import AdvancedNFSExportSerializer
-from storageadmin.exceptions import RockStorAPIException
 import rest_framework_custom as rfc
 from nfs_helpers import (create_nfs_export_input, refresh_wrapper,
                          create_adv_nfs_export_input)
@@ -63,11 +62,11 @@ class AdvancedNFSExportView(rfc.GenericView):
 
     @transaction.commit_on_success
     def post(self, request):
-        if ('entries' not in request.DATA):
-            e_msg = ('Cannot export without specifying entries')
-            handle_exception(Exception(e_msg), request)
+        with self._handle_exception(request):
+            if ('entries' not in request.DATA):
+                e_msg = ('Cannot export without specifying entries')
+                handle_exception(Exception(e_msg), request)
 
-        try:
             AdvancedNFSExport.objects.all().delete()
             cur_entries = []
             for e in request.DATA['entries']:
@@ -83,7 +82,3 @@ class AdvancedNFSExportView(rfc.GenericView):
             refresh_wrapper(exports, request, logger)
             nfs_serializer = AdvancedNFSExportSerializer(cur_entries)
             return Response(nfs_serializer.data)
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)

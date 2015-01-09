@@ -19,20 +19,26 @@
  */
 </script>
 
-<!-- Header -->
-
+<h3>Start a new Scrub</h3>
 <div class="row-fluid">
   <div class="span12">
-    <div class="module-header">
-      <div class="title"><span class="h3">Usage</span></div>
-    </div>
-  </div>
-</div>
-
-<div class="row-fluid">
-  <div class="span12">
-    <div class="module-content">
-      <div id="chart"></div>
-    </div> <!-- module-content -->
-  </div> <!-- span12 -->
+    <label class="control-label"></label>
+    <div class="form-box">
+      <form class="form-horizontal" name="pool-scrub-form" id="pool-scrub-form">
+        <div class="messages"></div>
+        <div class="control-group">
+          <div class="controls">
+            <input type="checkbox" name="forcescrub" id="forcescrub" title="force start a new scrub even if there is one running">
+            Force (start a new scrub even if there is one running)
+          </div>
+        </div>
+        <div class="control-group">
+          <div class="controls">
+            <a id="js-poolscrub-cancel" class="btn">Cancel</a>
+            <input type="Submit" id="start_scrub" class="btn btn-primary" value="Start"></input>
+          </div>
+        </div>
+      </form>
+    </div> <!-- form-box -->
+  </div> <!-- span8 -->
 </div> <!-- row-fluid -->
