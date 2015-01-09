@@ -43,7 +43,15 @@ ImagesView = RockstorLayoutView.extend({
 
   renderImages: function() {
 	    var _this = this;
-	    $(this.el).html(this.template({collection: this.collection}));
+	    $(this.el).empty();
+	    $(this.el).append(this.template({collection: this.collection}));
+	  
+	    this.dockerServiceView = new DockerServiceView({
+		      parentView: this,
+		      dockerService: this.dockerService
+		    });
+		    
+		$('#docker-service-ph').append(this.dockerServiceView.render().el);
   },
 
   
