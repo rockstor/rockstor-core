@@ -40,6 +40,7 @@ class SambaView(rfc.GenericView):
         'guest_ok': 'no',
         'read_only': 'no',
         'create_mask': '0755',
+        'custom_config': None,
     }
     BOOL_OPTS = ('yes', 'no',)
 
@@ -62,10 +63,17 @@ class SambaView(rfc.GenericView):
             def_opts['guest_ok'] = smbo.guest_ok
             def_opts['read_only'] = smbo.read_only
             def_opts['create_mask'] = smbo.create_mask
+            def_opts['custom_config'] = smbo.custom_config
 
         options['comment'] = request.DATA.get('comment', def_opts['comment'])
         options['browsable'] = request.DATA.get('browsable',
                                                 def_opts['browsable'])
+        options['custom_config'] = request.DATA.get('custom_config',
+                                                    def_opts['custom_config'])
+        if ((type(options['custom_config']) != str or
+             not options['custom_config'].strip())):
+            e_msg = ('custom config must be a non empty string')
+            handle_exception(Exception(e_msg), request)
         if (options['browsable'] not in self.BOOL_OPTS):
             e_msg = ('Invalid choice for browsable. Possible '
                      'choices are yes or no.')

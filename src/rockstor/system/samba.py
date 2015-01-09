@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from osi import (run_command, inplace_replace)
+from osi import run_command
 from services import service_status
 import shutil
 from tempfile import mkstemp
@@ -52,6 +52,10 @@ def rockstor_smb_config(fo, exports):
         fo.write('    guest ok = %s\n' % e.guest_ok)
         if (len(admin_users) > 0):
             fo.write('    admin users = %s\n' % admin_users)
+        if (e.custom_config is not None):
+            for c in e.custom_config.split('\n'):
+                if (c.strip()):
+                    fo.write('    %s\n' % c)
     fo.write('####END: Rockstor SAMBA CONFIG####\n')
 
 
