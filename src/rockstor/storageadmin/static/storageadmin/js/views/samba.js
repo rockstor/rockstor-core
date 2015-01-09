@@ -92,9 +92,9 @@ SambaView  = RockstorLayoutView.extend({
     if (buttonDisabled(button)) return false;
     if(confirm("Delete samba export... Are you sure? ")){
     disableButton(button)
-    var share = $(event.currentTarget).data('share');
+    var id = $(event.currentTarget).data('id');
     $.ajax({
-      url: '/api/shares/' + share + '/samba',
+      url: '/api/samba/' + id,
       type: 'DELETE',
       dataType: 'json',
       contentType: 'application/json',
