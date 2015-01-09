@@ -23,7 +23,7 @@ from storageadmin.models import (Disk, Pool, Share, Snapshot, NFSExport,
                                  NetworkInterface, User, PoolScrub, Setup,
                                  NFSExportGroup, SFTP, Plugin, InstalledPlugin,
                                  AdvancedNFSExport, OauthApp, NetatalkShare,
-                                 Group)
+                                 Group, PoolBalance)
 from django.contrib.auth.models import User as DjangoUser
 
 
@@ -141,6 +141,11 @@ class NetworkInterfaceSerializer(serializers.ModelSerializer):
 class PoolScrubSerializer(serializers.ModelSerializer):
     class Meta:
         model = PoolScrub
+
+
+class PoolBalanceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PoolBalance
 
 
 class SetupSerializer(serializers.ModelSerializer):
