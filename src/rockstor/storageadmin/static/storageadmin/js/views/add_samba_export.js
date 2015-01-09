@@ -75,7 +75,7 @@ AddSambaExportView = RockstorLayoutView.extend({
     
     if(this.sambaShareId != null){
       this.sShares = this.sambaShares.get(this.sambaShareId);
-      }else{
+         }else{
       this.sShares = null;
       }
    
@@ -110,7 +110,10 @@ AddSambaExportView = RockstorLayoutView.extend({
       
       submitHandler: function() {
         var button = $('#create-samba-export');
-        if (buttonDisabled(button)) return false;
+        var custom_config = _this.$('#custom_config').val();
+        var entries = [];
+        if (!_.isNull(custom_config) && custom_config.trim() != '') entries = custom_config.trim().split('\n');
+       if (buttonDisabled(button)) return false;
         disableButton(button);
         var submitmethod = 'POST';
         var posturl = '/api/samba';
@@ -118,12 +121,14 @@ AddSambaExportView = RockstorLayoutView.extend({
             submitmethod = 'PUT';
             posturl += '/'+_this.sambaShareId;
           }
-        $.ajax({
+        var data = _this.$('#add-samba-export-form').getJSON();
+        data.custom_config = entries;
+       $.ajax({
           url: posturl,
           type: submitmethod,
           dataType: 'json',
           contentType: 'application/json',
-          data: JSON.stringify(_this.$('#add-samba-export-form').getJSON()),
+          data: JSON.stringify(data),
           success: function() {
             enableButton(button);
             _this.$('#add-samba-export-form :input').tooltip('hide');
