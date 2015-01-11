@@ -43,7 +43,7 @@ class PoolBalanceView(rfc.GenericView):
         with self._handle_exception(self.request):
             pool = self._validate_pool(kwargs['pname'], self.request)
             disk = Disk.objects.filter(pool=pool)[0]
-            self._scrub_status(pool, disk)
+            self._balance_status(pool, disk)
             return PoolBalance.objects.filter(pool=pool).order_by('-id')
 
     @transaction.commit_on_success
@@ -71,7 +71,7 @@ class PoolBalanceView(rfc.GenericView):
 
         with self._handle_exception(request):
             disk = Disk.objects.filter(pool=pool)[0]
-            ps = self._scrub_status(pool, disk)
+            ps = self._balance_status(pool, disk)
             if (command == 'status'):
                 return Response(PoolBalanceSerializer(ps).data)
             force = request.DATA.get('force', False)

@@ -39,9 +39,14 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     this.poolscrubs = new PoolscrubCollection([],{snapType: 'admin'});
     this.poolscrubs.pageSize = 5;
     this.poolscrubs.setUrl(this.poolName);
+    // create pool re-balance models
+    this.poolrebalances = new PoolRebalanceCollection([],{snapType: 'admin'});
+    this.poolrebalances.pageSize = 5;
+    this.poolrebalances.setUrl(this.poolName);
 
     this.dependencies.push(this.pool);
     this.dependencies.push(this.poolscrubs);
+    this.dependencies.push(this.poolrebalances);
     this.disks = new DiskCollection();
     this.disks.pageSize = RockStorGlobals.maxPageSize;
     this.cOpts = {'no': 'Dont enable compression', 'zlib': 'zlib', 'lzo': 'lzo'};
@@ -69,12 +74,18 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
         pool: this.pool,
         parentView: this
     });
+    this.subviews['pool-rebalances'] = new PoolRebalanceTableModule({
+    	poolrebalances: this.poolrebalances,
+        pool: this.pool,
+        parentView: this
+    });
     this.pool.on('change', this.subviews['pool-info'].render, this.subviews['pool-info']);
     this.pool.on('change', this.subviews['pool-usage'].render, this.subviews['pool-usage']);
     this.poolscrubs.on('change', this.subviews['pool-scrubs'].render, this.subviews['pool-scrubs']);
     this.$('#ph-pool-info').html(this.subviews['pool-info'].render().el);
     this.$('#ph-pool-usage').html(this.subviews['pool-usage'].render().el);
     this.$('#ph-pool-scrubs').html(this.subviews['pool-scrubs'].render().el);
+    this.$('#ph-pool-rebalances').html(this.subviews['pool-rebalances'].render().el);
     if (!_.isUndefined(this.cView) && this.cView == 'edit') {
       this.$('#ph-compression-info').html(this.compression_info_edit_template({
         pool: this.pool,
