@@ -31,6 +31,7 @@ from network_interface import NetworkInterface
 from group import Group
 from user import User
 from samba_share import SambaShare
+from samba_custom import SambaCustomConfig
 from posix_acls import PosixACLs
 from scrub import PoolScrub
 from setup import Setup

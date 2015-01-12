@@ -8,15 +8,18 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding field 'SambaShare.custom_config'
-        db.add_column(u'storageadmin_sambashare', 'custom_config',
-                      self.gf('django.db.models.fields.CharField')(max_length=8192, null=True),
-                      keep_default=False)
+        # Adding model 'SambaCustomConfig'
+        db.create_table(u'storageadmin_sambacustomconfig', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('smb_share', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['storageadmin.SambaShare'])),
+            ('custom_config', self.gf('django.db.models.fields.CharField')(max_length=1024, null=True)),
+        ))
+        db.send_create_signal('storageadmin', ['SambaCustomConfig'])
 
 
     def backwards(self, orm):
-        # Deleting field 'SambaShare.custom_config'
-        db.delete_column(u'storageadmin_sambashare', 'custom_config')
+        # Deleting model 'SambaCustomConfig'
+        db.delete_table(u'storageadmin_sambacustomconfig')
 
 
     models = {
@@ -59,8 +62,8 @@ class Migration(SchemaMigration):
         u'oauth2_provider.application': {
             'Meta': {'object_name': 'Application'},
             'authorization_grant_type': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
-            'client_id': ('django.db.models.fields.CharField', [], {'default': "u'q.;4T=i_iFKk8M5Kry7J1CAr.oIN57C8;t1FwINV'", 'unique': 'True', 'max_length': '100'}),
-            'client_secret': ('django.db.models.fields.CharField', [], {'default': "u'ShQh8L=ft83UzlF5H.OEE36zo0kHDWcnXO?N.j9hwxIoh0!HB!0i2wR@C9kfwAE?!gHEID-CP.:FyK78-mS90PWVCsqmLpbV2Jng1SllCy?;sJbFeK2us5mi.B_0vois'", 'max_length': '255', 'blank': 'True'}),
+            'client_id': ('django.db.models.fields.CharField', [], {'default': "u'dEUStoc9kYu81FzIhd.81p2I;sCSv3HEwkua7Nyk'", 'unique': 'True', 'max_length': '100'}),
+            'client_secret': ('django.db.models.fields.CharField', [], {'default': "u'dufahNC4p13-WPGekrT1HBtZFD:;IZy;Pcbqmk9_8lkQOgnOpNObrrLgea:hDu;lB.VZz870pTs!q87o6sNx-7ExhYF3a9DxiM0DxeXzr1S-:q.K.UdXAr=edPaooQm-'", 'max_length': '255', 'blank': 'True'}),
             'client_type': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
@@ -232,12 +235,17 @@ class Migration(SchemaMigration):
             'perms': ('django.db.models.fields.CharField', [], {'max_length': '3'}),
             'smb_share': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storageadmin.SambaShare']"})
         },
+        'storageadmin.sambacustomconfig': {
+            'Meta': {'object_name': 'SambaCustomConfig'},
+            'custom_config': ('django.db.models.fields.CharField', [], {'max_length': '1024', 'null': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'smb_share': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storageadmin.SambaShare']"})
+        },
         'storageadmin.sambashare': {
             'Meta': {'object_name': 'SambaShare'},
             'browsable': ('django.db.models.fields.CharField', [], {'default': "'yes'", 'max_length': '3'}),
             'comment': ('django.db.models.fields.CharField', [], {'default': "'foo bar'", 'max_length': '100'}),
             'create_mask': ('django.db.models.fields.CharField', [], {'default': "'0755'", 'max_length': '4'}),
-            'custom_config': ('django.db.models.fields.CharField', [], {'max_length': '8192', 'null': 'True'}),
             'guest_ok': ('django.db.models.fields.CharField', [], {'default': "'no'", 'max_length': '3'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'path': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '4096'}),

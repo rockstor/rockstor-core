@@ -39,7 +39,6 @@ class SambaShare(models.Model):
     guest_ok = models.CharField(max_length=3, choices=BOOLEAN_CHOICES,
                                 default=NO)
     create_mask = models.CharField(max_length=4, default='0755')
-    custom_config = models.CharField(max_length=8192, null=True)
 
     def admin_users(self):
         return User.objects.filter(smb_share=self)
