@@ -151,6 +151,8 @@ class SambaView(rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
 
             options = self._validate_input(request)
+            custom_config = options['custom_config']
+            del(options['custom_config'])
             smbo.__dict__.update(**options)
             admin_users = request.DATA.get('admin_users', None)
             if (admin_users is None):
@@ -164,6 +166,14 @@ class SambaView(rfc.GenericView):
                     auo = User.objects.get(username=u)
                     auo.smb_shares.add(smbo)
             smbo.save()
+            for cco in SambaCustomConfig.objects.filter(smb_share=smbo):
+                if (cco.custom_config not in custom_config):
+                    cco.delete()
+                else:
+                    custom_config.remove(cco.custom_config)
+            for cc in custom_config:
+                cco = SambaCustomConfig(smb_share=smbo, custom_config=cc)
+                cco.save()
             for smb_o in SambaShare.objects.all():
                 if (not is_share_mounted(smb_o.share.name)):
                     pool_device = Disk.objects.filter(
@@ -186,6 +196,7 @@ class SambaView(rfc.GenericView):
     def delete(self, request, smb_id):
         try:
             smbo = SambaShare.objects.get(id=smb_id)
+            SambaCustomConfig.objects.filter(smb_share=smbo).delete()
             smbo.delete()
         except:
             e_msg = ('Samba export for the id(%s) does not exist' % smb_id)
