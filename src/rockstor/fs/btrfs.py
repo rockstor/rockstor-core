@@ -444,7 +444,7 @@ def scrub_status(pool, pool_device):
     return stats
 
 
-def balance_start(pool, pool_device):
+def balance_start(pool, pool_device, force=False):
     mnt_pt = mount_root(pool, ('/dev/%s' % pool_device))
     b = PoolBalance(mnt_pt)
     b.start()

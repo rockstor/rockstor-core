@@ -20,11 +20,11 @@
 </script>
 <div class="messages"></div>
 <div class="row-fluid">
-  <a class="btn btn-primary" href="#" id="js-poolrebalance-start"><i class="icon-edit icon-white"></i>Start a new rebalance</a>
+  <a class="btn btn-primary" href="#" id="js-poolrebalance-start"><i class="icon-edit icon-white"></i>Start a new balance</a>
 </div>
 <br>
 <% if (!poolrebalances.isEmpty()) { %>
-  <table id="poolrebalances-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of poolrebalances">
+  <table id="poolrebalances-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of pool balances">
     <thead>
       <tr>
         <th>Id</th>
@@ -56,5 +56,5 @@
   </table>
 <div class="pagination-ph"></div>
 <% } else { %>
-  <div class="alert"><h4>There are no rebalances to display</h4></div>
+  <div class="alert"><h4>There are no balances to display</h4></div>
 <% } %>
