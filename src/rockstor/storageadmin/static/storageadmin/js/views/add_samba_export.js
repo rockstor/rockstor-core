@@ -79,10 +79,17 @@ AddSambaExportView = RockstorLayoutView.extend({
       this.sShares = null;
       }
    
+    var configList = '';
+    var config = this.sShares.get('custom_config');
+    for(i=0;i<config.length;i++){
+    configList = configList+config[i].custom_config+'\n';     	
+    }
+     
     $(this.el).html(this.template({
       shares: this.freeShares,
       smbShare: this.sShares,
       users: this.users,
+      configList: configList,
       sambaShareId: this.sambaShareId,
       browsable_choices: this.browsable_choices,
       guest_ok_choices: this.guest_ok_choices,

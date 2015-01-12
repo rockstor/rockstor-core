@@ -134,7 +134,11 @@
         <div class="control-group">
           <label class="control-label" for="custom_config">Custom configuration </label>
           <div class="controls">
+          <% if (sambaShareId!=null){ %>
+           <textarea id="custom_config" name="custom_config" rows="10" columns="40" class="span10" title="You can provide custom parameters here. These lines will be added to the section of each Share selected above in smb.conf"><%= configList %></textarea>
+           <% }else { %>
            <textarea id="custom_config" name="custom_config" rows="10" columns="40" class="span10" title="You can provide custom parameters here. These lines will be added to the section of each Share selected above in smb.conf"></textarea>
+              <%  } %>
         </div>
 
       </div>
