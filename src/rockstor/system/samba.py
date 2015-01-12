@@ -22,6 +22,7 @@ import shutil
 from tempfile import mkstemp
 import re
 import os
+from storageadmin.models import SambaCustomConfig
 
 TESTPARM = '/usr/bin/testparm'
 SMB_CONFIG = '/etc/samba/smb.conf'
@@ -52,10 +53,9 @@ def rockstor_smb_config(fo, exports):
         fo.write('    guest ok = %s\n' % e.guest_ok)
         if (len(admin_users) > 0):
             fo.write('    admin users = %s\n' % admin_users)
-        if (e.custom_config is not None):
-            for c in e.custom_config.split('\n'):
-                if (c.strip()):
-                    fo.write('    %s\n' % c)
+        for cco in SambaCustomConfig.objects.filter(smb_share=e):
+            if (cco.custom_config.strip()):
+                    fo.write('    %s\n' % cco.custom_config)
     fo.write('####END: Rockstor SAMBA CONFIG####\n')
 
 
