@@ -454,7 +454,8 @@ def balance_start(pool, pool_device, force=False):
 def balance_status(pool, pool_device):
     stats = {'status': 'unknown', }
     mnt_pt = mount_root(pool, ('/dev/%s' % pool_device))
-    out, err, rc = run_command([BTRFS, 'balance', 'status', mnt_pt])
+    out, err, rc = run_command([BTRFS, 'balance', 'status', mnt_pt],
+                               throw=False)
     if (len(out) > 0):
         if (re.match('Balance', out[0]) is not None):
             stats['status'] = 'running'
@@ -463,11 +464,12 @@ def balance_status(pool, pool_device):
                 percent_left = out[1].split()[-2][:-1]
                 try:
                     percent_left = int(percent_left)
-                    stats['progress'] = 100 - percent_left
+                    stats['percent_done'] = 100 - percent_left
                 except:
                     pass
         elif (re.match('No balance', out[0]) is not None):
             stats['status'] = 'finished'
+            stats['percent_done'] = 100
     return stats
 
 

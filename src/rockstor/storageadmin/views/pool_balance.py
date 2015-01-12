@@ -23,7 +23,6 @@ from storageadmin.serializers import PoolBalanceSerializer
 from storageadmin.models import (Pool, PoolBalance, Disk)
 import rest_framework_custom as rfc
 from fs.btrfs import (balance_start, balance_status)
-from datetime import timedelta
 
 import logging
 logger = logging.getLogger(__name__)
@@ -54,11 +53,6 @@ class PoolBalanceView(rfc.GenericView):
             return Response()
         if (ps.status == 'started' or ps.status == 'running'):
             cur_status = balance_status(pool, disk.name)
-            if (cur_status['status'] == 'finished'):
-                duration = int(cur_status['duration'])
-                cur_status['end_time'] = (ps.start_time +
-                                          timedelta(seconds=duration))
-                del(cur_status['duration'])
             PoolBalance.objects.filter(id=ps.id).update(**cur_status)
         return ps
 
