@@ -16,12 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from osi import (run_command, inplace_replace)
+from osi import run_command
 from services import service_status
 import shutil
 from tempfile import mkstemp
 import re
 import os
+from storageadmin.models import SambaCustomConfig
 
 TESTPARM = '/usr/bin/testparm'
 SMB_CONFIG = '/etc/samba/smb.conf'
@@ -52,6 +53,9 @@ def rockstor_smb_config(fo, exports):
         fo.write('    guest ok = %s\n' % e.guest_ok)
         if (len(admin_users) > 0):
             fo.write('    admin users = %s\n' % admin_users)
+        for cco in SambaCustomConfig.objects.filter(smb_share=e):
+            if (cco.custom_config.strip()):
+                    fo.write('    %s\n' % cco.custom_config)
     fo.write('####END: Rockstor SAMBA CONFIG####\n')
 
 
