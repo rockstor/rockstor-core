@@ -62,8 +62,8 @@ class Migration(SchemaMigration):
         u'oauth2_provider.application': {
             'Meta': {'object_name': 'Application'},
             'authorization_grant_type': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
-            'client_id': ('django.db.models.fields.CharField', [], {'default': "u'dEUStoc9kYu81FzIhd.81p2I;sCSv3HEwkua7Nyk'", 'unique': 'True', 'max_length': '100'}),
-            'client_secret': ('django.db.models.fields.CharField', [], {'default': "u'dufahNC4p13-WPGekrT1HBtZFD:;IZy;Pcbqmk9_8lkQOgnOpNObrrLgea:hDu;lB.VZz870pTs!q87o6sNx-7ExhYF3a9DxiM0DxeXzr1S-:q.K.UdXAr=edPaooQm-'", 'max_length': '255', 'blank': 'True'}),
+            'client_id': ('django.db.models.fields.CharField', [], {'default': "u'n68H@My-MG8wqyMbohD0YFCabo?9HXejOi89lHP7'", 'unique': 'True', 'max_length': '100'}),
+            'client_secret': ('django.db.models.fields.CharField', [], {'default': "u'HPYXaLvrnj7d6shKq-eJcM_AEI_5ph06zubCYg8=Fm?Kd!E3tYuX3JHFdT!Sr3?tuX@aesht.QS-DB66a?OGOxILcL=xkk;uJsl.Wc:dK_P@qeo!=;nQrXX8s28UA1_D'", 'max_length': '255', 'blank': 'True'}),
             'client_type': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
@@ -203,6 +203,16 @@ class Migration(SchemaMigration):
             'size': ('django.db.models.fields.BigIntegerField', [], {'default': '0'}),
             'toc': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'uuid': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True'})
+        },
+        'storageadmin.poolbalance': {
+            'Meta': {'object_name': 'PoolBalance'},
+            'end_time': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'percent_done': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
+            'pid': ('django.db.models.fields.IntegerField', [], {}),
+            'pool': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storageadmin.Pool']"}),
+            'start_time': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
+            'status': ('django.db.models.fields.CharField', [], {'default': "'started'", 'max_length': '10'})
         },
         'storageadmin.poolscrub': {
             'Meta': {'object_name': 'PoolScrub'},
