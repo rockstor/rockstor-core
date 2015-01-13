@@ -32,7 +32,8 @@
 
   <ul class="css-tabs">
     <li class="active"><a href="#details" data-toggle="tab">Overview</a></li>
-    <li><a href="#poolscrubs" data-toggle="tab">Scrub history</a></li>
+    <li><a href="#poolscrubs" data-toggle="tab">Scrubs</a></li>
+    <li><a href="#poolrebalances" data-toggle="tab">Balances</a></li>
   </ul>
 
   <div class="css-panes">
@@ -83,6 +84,9 @@
     <div id="poolscrubs">
       <div id="ph-pool-scrubs"></div>
     </div>
+    <div id="poolrebalances">
+      <div id="ph-pool-rebalances"></div>
+    </div>
   </div>
 
 <div class="simple-overlay" id="resize-pool-form">
@@ -92,7 +96,7 @@
     Select new disk(s) to add to the pool or Unselect disk(s) to remove from the pool.<br>
     You cannot add and remove disks simultaneously.<br>
     If you do so, new disks will be added but no disks will be removed.<br>
-    After resizing a pool, it must be rebalanced manually. Auto rebalance is not supported yet.<br/>
+    After resizing a pool, it must be balanced manually. Auto balance is not supported yet.<br/>
     <div id="disks-to-add"></div>
 
     <br/>
