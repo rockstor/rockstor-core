@@ -55,6 +55,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 
   events: {
     'click #delete-pool': 'deletePool',
+    "click #js-resize-pool": "resizePool",
     "click #js-edit-compression": "editCompression",
     "click #js-edit-compression-cancel": "editCompressionCancel",
     "click #js-submit-compression": "updateCompression",
@@ -184,7 +185,17 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
       });
     }
   },
-
+  
+  resizePool: function(event) {
+    event.preventDefault();
+    this.disks.fetch({
+        success: function(collection, response) {
+          this.$('#ph-resize-pool-info').html(this.select_disks_template({
+        	  disks: this.disks, 
+        	  poolName: this.poolName
+        	  }));
+         }});
+  },
   editCompression: function(event) {
     event.preventDefault();
     this.$('#ph-compression-info').html(this.compression_info_edit_template({
