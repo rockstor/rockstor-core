@@ -17,9 +17,9 @@
         <tr>
           <td><a href="#pools/<%= pool.get('name') %>"><i class="icon-list"></i> <%= pool.get('name') %></a></td>
 
-          <td><%= humanize.filesize(pool.get('size')*1024) %><a href="#pools/<%= pool.get('name') %>"><i class="icon-pencil"></i></a></td>
+          <td><%= humanize.filesize(pool.get('size')*1024) %><a href="#pools/<%= pool.get('name') %>/?cView=resize"><i class="icon-pencil"></i></a></td>
           <td><%= humanize.filesize((pool.get('size')-pool.get('reclaimable')-pool.get('free'))*1024) %></td>
-	  <td><%= pool.get('raid') %><a href="#pools/<%= pool.get('name') %>"><i class="icon-pencil"></i></a></td>
+	  <td><%= pool.get('raid') %><a href="#pools/<%= pool.get('name') %>/?cView=resize"><i class="icon-pencil"></i></a></td>
 	  <td>
 	  <% if (pool.get('compression') == 'no' || _.isNull(pool.get('compression')) || _.isUndefined(pool.get('compression')) ) { %>
 	  Off

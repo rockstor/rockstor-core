@@ -28,8 +28,9 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 
   initialize: function() {
     // call initialize of base
-    this.constructor.__super__.initialize.apply(this, arguments);
+	 this.constructor.__super__.initialize.apply(this, arguments);
     this.poolName = this.options.poolName;
+    this.cView = this.options.cView;
     this.template = window.JST.pool_pool_details_layout;
     this.select_disks_template = window.JST.disk_select_disks_template;
     this.resize_pool_edit_template = window.JST.pool_resize_pool_edit;
@@ -52,7 +53,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     this.disks = new DiskCollection();
     this.disks.pageSize = RockStorGlobals.maxPageSize;
     this.cOpts = {'no': 'Dont enable compression', 'zlib': 'zlib', 'lzo': 'lzo'};
-    this.cView = this.options.cView;
+   
   },
 
   events: {
@@ -91,8 +92,8 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     this.$('#ph-pool-usage').html(this.subviews['pool-usage'].render().el);
     this.$('#ph-pool-scrubs').html(this.subviews['pool-scrubs'].render().el);
     this.$('#ph-pool-rebalances').html(this.subviews['pool-rebalances'].render().el);
-    this.$('#ph-resize-pool-info').html(this.resize_pool_info_template({pool: this.pool}));
-   if (!_.isUndefined(this.cView) && this.cView == 'edit') {
+  
+    if (!_.isUndefined(this.cView) && this.cView == 'edit') {
       this.$('#ph-compression-info').html(this.compression_info_edit_template({
         pool: this.pool,
         cOpts: this.cOpts
@@ -101,77 +102,20 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     } else {
       this.$('#ph-compression-info').html(this.compression_info_template({pool: this.pool}));
     }
+   
+   if (!_.isUndefined(this.cView) && this.cView == 'resize') {
+	     var _this = this;
+	    _this.disks.fetch({
+	        success: function(collection, response) {
+	          _this.$('#ph-resize-pool-info').html(_this.resize_pool_edit_template({disks: _this.disks, poolName: _this.poolName}));
+	            }});
+	    } else {
+	    	 this.$('#ph-resize-pool-info').html(this.resize_pool_info_template({pool: this.pool}));
+	    }
     this.$("ul.css-tabs").tabs("div.css-panes > div");
-    if (!_.isUndefined(this.cView) && this.cView == 'edit') {
-      //console.log(this.$('#ph-compression-info').offset().top);
-      //$('#content').scrollTop(this.$('#ph-compression-info').offset().top);
-    }
-    this.attachActions();
-  },
+   },
 
-  attachActions: function() {
-    var _this = this;
-    this.$('#resize-pool-popup').click(function() {
-      _this.disks.fetch({
-        success: function(collection, response) {
-          _this.$('#disks-to-add').html(_this.select_disks_template({disks: _this.disks, poolName: _this.poolName}));
-          _this.$('#alert-msg').empty();
-          $('#resize-pool-form').overlay().load();
-        }});
-    });
-    this.$('#resize-pool').click(function() {
-      var disk_names = [];
-      var err_msg = "Please select atleast one disk";
-      var n = _this.$(".disknew:checked").length;
-      var m = _this.$(".diskadded:unchecked").length;
-      if(n > 0){
-        _this.$(".disknew:checked").each(function(i) {
-          if (i < n) {
-            disk_names.push($(this).val());
-          }
-        });
-        $.ajax({
-          url: '/api/pools/'+_this.pool.get('name')+'/add',
-          type: 'PUT',
-          dataType: 'json',
-          contentType: 'application/json',
-          data: JSON.stringify({"disks": disk_names}),
-          success: function() {
-            _this.$('#resize-pool-form').overlay().close();
-            _this.pool.fetch();
-          },
-          error: function(request, status, error) {
-            _this.$('#alert-msg').html("<font color='red'>"+request.responseText+"</font>");
-          }
-        });
-      } else if(m > 0) {
-        _this.$(".diskadded:unchecked").each(function(i) {
-          if (i < m) {
-            disk_names.push($(this).val());
-          }
-        });
-        $.ajax({
-          url: '/api/pools/'+_this.pool.get('name')+'/remove',
-          type: 'PUT',
-          dataType: 'json',
-          contentType: 'application/json',
-          data: JSON.stringify({"disks": disk_names}),
-          success: function() {
-            _this.$('#resize-pool-form').overlay().close();
-            _this.pool.fetch();
-          },
-          error: function(request, status, error) {
-            _this.$('#alert-msg').html("<font color='red'>"+request.responseText+"</font>");
-          }
-        });
-      } else if(n <= 0) {
-        _this.$('#alert-msg').html("<font color='red'>"+err_msg+"</font>");
-      }
-    });
-    this.$('#resize-pool-form').overlay({ load: false });
-  },
-
-  deletePool: function() {
+   deletePool: function() {
     var button = this.$('#delete-pool');
     if (buttonDisabled(button)) return false;
     if(confirm("Delete pool: "+ this.pool.get('name') + "... Are you sure?")){
@@ -227,6 +171,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
           success: function() {
         	
           _this.pool.fetch();
+          _this.cView = 'view';
           _this.renderSubViews();
           },
           error: function(request, status, error) {
@@ -247,6 +192,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
           data: JSON.stringify({"disks": disk_names}),
           success: function() {
             _this.pool.fetch();
+            _this.cView = 'view';
             _this.renderSubViews();
           },
           error: function(request, status, error) {
