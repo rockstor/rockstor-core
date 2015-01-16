@@ -102,8 +102,9 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     } else {
       this.$('#ph-compression-info').html(this.compression_info_template({pool: this.pool}));
     }
-   
+      
    if (!_.isUndefined(this.cView) && this.cView == 'resize') {
+	   
 	     var _this = this;
 	    _this.disks.fetch({
 	        success: function(collection, response) {
@@ -169,10 +170,12 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
           contentType: 'application/json',
           data: JSON.stringify({"disks": disk_names}),
           success: function() {
-        	
-          _this.pool.fetch();
-          _this.cView = 'view';
-          _this.renderSubViews();
+        	  _this.pool.fetch({
+                  success: function(collection, response, options) {
+                    _this.cView = 'view';
+                    _this.render();
+                  }
+                });
           },
           error: function(request, status, error) {
             _this.$('#alert-msg').html("<font color='red'>"+request.responseText+"</font>");
@@ -191,9 +194,13 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
           contentType: 'application/json',
           data: JSON.stringify({"disks": disk_names}),
           success: function() {
-            _this.pool.fetch();
-            _this.cView = 'view';
-            _this.renderSubViews();
+        	  _this.pool.fetch({
+                  success: function(collection, response, options) {
+                    _this.cView = 'view';
+                    _this.render();
+                  }
+                });
+           
           },
           error: function(request, status, error) {
             _this.$('#alert-msg').html("<font color='red'>"+request.responseText+"</font>");
