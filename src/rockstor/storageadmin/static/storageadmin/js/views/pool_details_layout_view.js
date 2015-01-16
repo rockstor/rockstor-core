@@ -108,7 +108,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 	     var _this = this;
 	    _this.disks.fetch({
 	        success: function(collection, response) {
-	          _this.$('#ph-resize-pool-info').html(_this.resize_pool_edit_template({disks: _this.disks, poolName: _this.poolName}));
+	          _this.$('#ph-resize-pool-info').html(_this.resize_pool_edit_template({disks: _this.disks, poolName: _this.poolName, pool:_this.pool }));
 	            }});
 	    } else {
 	    	 this.$('#ph-resize-pool-info').html(this.resize_pool_info_template({pool: this.pool}));
@@ -141,7 +141,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     event.preventDefault();
     _this.disks.fetch({
         success: function(collection, response) {
-          _this.$('#ph-resize-pool-info').html(_this.resize_pool_edit_template({disks: _this.disks, poolName: _this.poolName}));
+          _this.$('#ph-resize-pool-info').html(_this.resize_pool_edit_template({disks: _this.disks, poolName: _this.poolName, pool:_this.pool}));
             }});
        
   },
@@ -153,6 +153,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 	    if(confirm(" Are you sure to Resize the pool?")){
 	    disableButton(button);
 	  var _this = this;
+	  var raid_level = $('#raid_level').val();
 	  var disk_names = [];
       var err_msg = "Please select atleast one disk";
       var n = _this.$(".disknew:checked").length;
@@ -168,14 +169,28 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
           type: 'PUT',
           dataType: 'json',
           contentType: 'application/json',
-          data: JSON.stringify({"disks": disk_names}),
+          data: JSON.stringify({"disks": disk_names, "raid_level": raid_level}),
           success: function() {
-        	  _this.pool.fetch({
-                  success: function(collection, response, options) {
-                    _this.cView = 'view';
-                    _this.render();
-                  }
-                });
+        	// make an other balance call here
+        	 var postdata = '{"force": "true"}';
+        	  $.ajax({
+          	      url: '/api/pools/'+_this.pool.get('name')+'/balance',
+          	      type: 'POST',
+          	      data: postdata,
+          	      success: function() {
+                    alert("Balancing is taking place");
+                    _this.pool.fetch({
+                        success: function(collection, response, options) {
+                          _this.cView = 'view';
+                          _this.render();
+                        }
+                      });
+          	      },
+          	      error: function(jqXHR) {
+          	    	alert("Balancing is failed");
+          	      }
+          	  });
+        	 
           },
           error: function(request, status, error) {
             _this.$('#alert-msg').html("<font color='red'>"+request.responseText+"</font>");
