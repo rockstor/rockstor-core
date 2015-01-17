@@ -53,7 +53,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     this.disks = new DiskCollection();
     this.disks.pageSize = RockStorGlobals.maxPageSize;
     this.cOpts = {'no': 'Dont enable compression', 'zlib': 'zlib', 'lzo': 'lzo'};
-   
+
   },
 
   events: {
@@ -92,7 +92,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     this.$('#ph-pool-usage').html(this.subviews['pool-usage'].render().el);
     this.$('#ph-pool-scrubs').html(this.subviews['pool-scrubs'].render().el);
     this.$('#ph-pool-rebalances').html(this.subviews['pool-rebalances'].render().el);
-  
+
     if (!_.isUndefined(this.cView) && this.cView == 'edit') {
       this.$('#ph-compression-info').html(this.compression_info_edit_template({
         pool: this.pool,
@@ -102,9 +102,9 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     } else {
       this.$('#ph-compression-info').html(this.compression_info_template({pool: this.pool}));
     }
-      
+
    if (!_.isUndefined(this.cView) && this.cView == 'resize') {
-	   
+
 	     var _this = this;
 	    _this.disks.fetch({
 	        success: function(collection, response) {
@@ -135,7 +135,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
       });
     }
   },
-  
+
   resizePool: function(event) {
 	 var _this = this;
     event.preventDefault();
@@ -143,9 +143,9 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
         success: function(collection, response) {
           _this.$('#ph-resize-pool-info').html(_this.resize_pool_edit_template({disks: _this.disks, poolName: _this.poolName, pool:_this.pool}));
             }});
-       
+
   },
-  
+
   resizePoolSubmit: function(event) {
 	    event.preventDefault();
 	    var button = this.$('#js-submit-resize');
@@ -171,27 +171,14 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
           contentType: 'application/json',
           data: JSON.stringify({"disks": disk_names, "raid_level": raid_level}),
           success: function() {
-        	// make an other balance call here
-        	 var postdata = '{"force": "true"}';
-        	  $.ajax({
-          	      url: '/api/pools/'+_this.pool.get('name')+'/balance',
-          	      type: 'POST',
-          	      data: postdata,
-          	      success: function() {
-                    alert("Balancing is taking place");
-                    _this.pool.fetch({
-                        success: function(collection, response, options) {
-                          _this.cView = 'view';
-                          _this.render();
-                        }
-                      });
-          	      },
-          	      error: function(jqXHR) {
-          	    	alert("Balancing is failed");
-          	      }
-          	  });
-        	 
-          },
+	      alert('Balance is taking place');
+	      _this.pool.fetch({
+		  success: function(collection, response, options) {
+		      _this.cView = 'view';
+		      _this.render();
+		  }
+	      });
+	  },
           error: function(request, status, error) {
             _this.$('#alert-msg').html("<font color='red'>"+request.responseText+"</font>");
           }
@@ -215,7 +202,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
                     _this.render();
                   }
                 });
-           
+
           },
           error: function(request, status, error) {
             _this.$('#alert-msg').html("<font color='red'>"+request.responseText+"</font>");
@@ -227,13 +214,13 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
   }
      // this.$('#ph-resize-pool-info').html(this.resize_pool_info_template({pool: this.pool}));
 		  },
-  
+
  resizePoolCancel: function(event) {
 	    event.preventDefault();
 	//    this.hideCompressionTooltips();
 	    this.$('#ph-resize-pool-info').html(this.resize_pool_info_template({pool: this.pool}));
 	  },
-	  
+
   editCompression: function(event) {
     event.preventDefault();
     this.$('#ph-compression-info').html(this.compression_info_edit_template({

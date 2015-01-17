@@ -23,9 +23,9 @@ import re
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.serializers import PoolInfoSerializer
-from storageadmin.models import (Disk, Pool, Share)
+from storageadmin.models import (Disk, Pool, Share, PoolBalance)
 from fs.btrfs import (add_pool, pool_usage, resize_pool, umount_root,
-                      btrfs_uuid, mount_root, remount)
+                      btrfs_uuid, mount_root, remount, balance_start)
 from storageadmin.util import handle_exception
 from django.conf import settings
 import rest_framework_custom as rfc
@@ -37,6 +37,15 @@ logger = logging.getLogger(__name__)
 class PoolView(rfc.GenericView):
     serializer_class = PoolInfoSerializer
     RAID_LEVELS = ('single', 'raid0', 'raid1', 'raid10', 'raid5', 'raid6')
+    ADD_THRESHOLD = .3  # min free/total ratio to allow a device addition
+    SUPPORTED_MIGRATIONS = {
+        'single': ('single', 'raid0', 'raid1', 'raid10',),
+        'raid0': ('raid0', 'raid1', 'raid10',),
+        'raid1': ('raid1', 'raid10',),
+        'raid10': ('raid10',),
+        'raid5': ('raid5',),
+        'raid6': ('raid6',),
+        }
 
     def _pool_size(self, disks, raid_level):
         disk_size = None
@@ -308,10 +317,63 @@ class PoolView(rfc.GenericView):
 
             mount_disk = Disk.objects.filter(pool=pool)[0].name
             if (command == 'add'):
+                new_raid = request.DATA.get('raid_level', pool.raid)
+                if (new_raid not in self.SUPPORTED_MIGRATIONS[pool.raid]):
+                    e_msg = ('Pool migration from %s to %s is not supported.'
+                             % (pool.raid, new_raid))
+                    handle_exception(Exception(e_msg), request)
+
+                if (PoolBalance.objects.filter(
+                        pool=pool,
+                        status__regex=r'(started|running)').exists()):
+                    e_msg = ('A Balance process is already running for this '
+                             'pool(%s). Resize is not supported during a '
+                             'balance process.' % pool.name)
+                    handle_exception(Exception(e_msg), request)
+
+                usage = pool_usage('/%s/%s' % (settings.MNT_PT, pool.name))
+                free_percent = (usage[2]/usage[0]) * 100
+                threshold_percent = self.ADD_THRESHOLD * 100
+                if (free_percent < threshold_percent):
+                    e_msg = ('Resize is only supported if there is at least '
+                             '%d percent free space available. But currently '
+                             'only %d percent is free. Remove some data and '
+                             'try again.' % (free_percent, threshold_percent))
+                    handle_exception(Exception(e_msg), request)
+
+                num_new_disks = len(disks)
+                num_total_disks = (Disk.objects.filter(pool=pool).count() +
+                                   num_new_disks)
+                if (((pool.raid == 'raid10' or new_raid == 'raid10') and
+                     (num_total_disks % 2 != 0))):
+                    e_msg = ('raid10 requires an even number of '
+                             'drives. Total provided = %d' %
+                             len(disks))
+                    handle_exception(Exception(e_msg), request)
+
+                if (new_raid != pool.raid):
+                    if (((pool.raid in ('single', 'raid0')) and
+                         new_raid in ('raid1', 'raid10'))):
+                        cur_num_disks = num_total_disks - num_new_disks
+                        if (num_new_disks < cur_num_disks):
+                            e_msg = ('For single/raid0 to raid1/raid10 '
+                                     'conversion, at least as many as present '
+                                     'number of disks must be added. %d '
+                                     'disks are provided, but at least %d are '
+                                     'required.' % (num_new_disks,
+                                                    cur_num_disks))
+                            handle_exception(Exception(e_msg), request)
+
+                resize_pool(pool, mount_disk, dnames)
+                balance_pid = balance_start(pool, mount_disk, convert=new_raid)
+                ps = PoolBalance(pool=pool, pid=balance_pid)
+                ps.save()
+
+                pool.raid = new_raid
                 for d_o in disks:
                     d_o.pool = pool
                     d_o.save()
-                resize_pool(pool, mount_disk, dnames)
+
             elif (command == 'remove'):
                 remaining_disks = Disk.objects.filter(pool=pool).count() - len(disks)
                 if (pool.raid == 'raid0' or pool.raid == 'raid1' or
