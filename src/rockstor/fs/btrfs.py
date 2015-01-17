@@ -449,9 +449,11 @@ def scrub_status(pool, pool_device):
     return stats
 
 
-def balance_start(pool, pool_device, force=False):
+def balance_start(pool, pool_device, force=False, convert=None):
     mnt_pt = mount_root(pool, ('/dev/%s' % pool_device))
-    b = PoolBalance(mnt_pt)
+    if (convert is not None and convert == pool.raid):
+        convert = None
+    b = PoolBalance(mnt_pt, convert=convert)
     b.start()
     return b.pid
 
