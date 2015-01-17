@@ -337,7 +337,7 @@ class PoolView(rfc.GenericView):
             else:
                 msg = ('unknown command: %s' % command)
                 raise Exception(msg)
-            usage = pool_usage(mount_disk)
+            usage = pool_usage('/%s/%s' % (settings.MNT_PT, pool.name))
             pool.size = usage[0]
             pool.save()
             return Response(PoolInfoSerializer(pool).data)
