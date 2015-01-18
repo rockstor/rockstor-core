@@ -4,7 +4,7 @@
       <tr>
         <th>Name</th>
         <th>Size</th>
-        <th>Used</th>
+        <th>Usage</th>
         <th>Raid</th>
 	<th>Compression</th>
 	<th>Extra mount options</th>
@@ -23,7 +23,7 @@
             <a href="#pools/<%= pool.get('name') %>/?cView=resize"><i class="fa fa-pencil-square-o"></i>
             </a>
           </td>
-          <td><%= humanize.filesize((pool.get('size')-pool.get('reclaimable')-pool.get('free'))*1024) %></td>
+          <td><%= humanize.filesize((pool.get('size')-pool.get('reclaimable')-pool.get('free'))*1024) %><big>(<%= (((pool.get('size')-pool.get('reclaimable')-pool.get('free'))/pool.get('size')) * 100).toFixed(2) %> %)</big></td>
 	  <td><%= pool.get('raid') %>&nbsp;<a href="#pools/<%= pool.get('name') %>/?cView=resize"><i class="fa fa-pencil-square-o"></i></a></td>
 	  <td>
 	  <% if (pool.get('compression') == 'no' || _.isNull(pool.get('compression')) || _.isUndefined(pool.get('compression')) ) { %>

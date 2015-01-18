@@ -106,6 +106,8 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 
     if (!_.isUndefined(this.cView) && this.cView == 'resize') {
       this.$('#ph-resize-pool-info').html(this.resize_pool_edit_template({disks: this.disks, poolName: this.poolName, pool:this.pool }));
+
+      this.showResizeTooltips();
     } else {
       this.$('#ph-resize-pool-info').html(this.resize_pool_info_template({pool: this.pool}));
     }
@@ -142,36 +144,39 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     _this.disks.fetch({
         success: function(collection, response) {
           _this.$('#ph-resize-pool-info').html(_this.resize_pool_edit_template({disks: _this.disks, poolName: _this.poolName, pool:_this.pool}));
+	  _this.showResizeTooltips();
             }});
 
   },
 
   resizePoolSubmit: function(event) {
-	    event.preventDefault();
-	    var button = this.$('#js-submit-resize');
-	    if (buttonDisabled(button)) return false;
-	    if(confirm(" Are you sure to Resize the pool?")){
-	    disableButton(button);
+      event.preventDefault();
+      var button = this.$('#js-submit-resize');
+      if (buttonDisabled(button)) return false;
+      if(confirm(" Are you sure about Resizing this pool?")){
+	  disableButton(button);
 	  var _this = this;
 	  var raid_level = $('#raid_level').val();
 	  var disk_names = [];
-      var err_msg = "Please select atleast one disk";
-      var n = _this.$(".disknew:checked").length;
-      var m = _this.$(".diskadded:unchecked").length;
-      if(n > 0){
-        _this.$(".disknew:checked").each(function(i) {
-          if (i < n) {
-            disk_names.push($(this).val());
-          }
-        });
-        $.ajax({
+	  var err_msg = "Please select atleast one disk";
+	  var n = _this.$(".disknew:checked").length;
+	  var m = _this.$(".diskadded:unchecked").length;
+	  if(n > 0){
+              _this.$(".disknew:checked").each(function(i) {
+		  if (i < n) {
+		      disk_names.push($(this).val());
+		  }
+              });
+      $.ajax({
           url: '/api/pools/'+_this.pool.get('name')+'/add',
           type: 'PUT',
           dataType: 'json',
           contentType: 'application/json',
           data: JSON.stringify({"disks": disk_names, "raid_level": raid_level}),
           success: function() {
-	      alert('Balance is taking place');
+	      _this.hideResizeTooltips();
+	      var msg = ('A balance process is kicked off to redistribute data. It could take a while. You can check the status in the Balances tab. Its finish marks the success of resize.');
+	      alert(msg);
 	      _this.pool.fetch({
 		  success: function(collection, response, options) {
 		      _this.cView = 'view';
@@ -216,10 +221,10 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 		  },
 
  resizePoolCancel: function(event) {
-	    event.preventDefault();
-	//    this.hideCompressionTooltips();
-	    this.$('#ph-resize-pool-info').html(this.resize_pool_info_template({pool: this.pool}));
-	  },
+     event.preventDefault();
+     this.hideResizeTooltips();
+     this.$('#ph-resize-pool-info').html(this.resize_pool_info_template({pool: this.pool}));
+ },
 
   editCompression: function(event) {
     event.preventDefault();
@@ -277,6 +282,18 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
   hideCompressionTooltips: function() {
     this.$('#ph-compression-info #compression').tooltip('hide');
     this.$('#ph-compression-info #mnt_options').tooltip('hide');
+  },
+
+  showResizeTooltips: function() {
+    this.$('#ph-resize-pool-info #raid_level').tooltip({
+      html: true,
+      placement: 'top',
+      title: "You can transition raid level of this pool to change it's redundancy profile.",
+      });
+  },
+
+  hideResizeTooltips: function() {
+    this.$('#ph-resize-pool-info #raid_level').tooltip('hide');
   },
 
   cleanup: function() {
