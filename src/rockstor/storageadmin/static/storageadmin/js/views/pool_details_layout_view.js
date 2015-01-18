@@ -52,6 +52,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     this.dependencies.push(this.poolrebalances);
     this.disks = new DiskCollection();
     this.disks.pageSize = RockStorGlobals.maxPageSize;
+    this.dependencies.push(this.disks);
     this.cOpts = {'no': 'Dont enable compression', 'zlib': 'zlib', 'lzo': 'lzo'};
 
   },
@@ -76,14 +77,14 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     this.subviews['pool-info'] = new PoolInfoModule({ model: this.pool });
     this.subviews['pool-usage'] = new PoolUsageModule({ model: this.pool });
     this.subviews['pool-scrubs'] = new PoolScrubTableModule({
-    	poolscrubs: this.poolscrubs,
-        pool: this.pool,
-        parentView: this
+      poolscrubs: this.poolscrubs,
+      pool: this.pool,
+      parentView: this
     });
     this.subviews['pool-rebalances'] = new PoolRebalanceTableModule({
-    	poolrebalances: this.poolrebalances,
-        pool: this.pool,
-        parentView: this
+      poolrebalances: this.poolrebalances,
+      pool: this.pool,
+      parentView: this
     });
     this.pool.on('change', this.subviews['pool-info'].render, this.subviews['pool-info']);
     this.pool.on('change', this.subviews['pool-usage'].render, this.subviews['pool-usage']);
@@ -103,18 +104,17 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
       this.$('#ph-compression-info').html(this.compression_info_template({pool: this.pool}));
     }
 
-   if (!_.isUndefined(this.cView) && this.cView == 'resize') {
-
-	     var _this = this;
-	    _this.disks.fetch({
-	        success: function(collection, response) {
-	          _this.$('#ph-resize-pool-info').html(_this.resize_pool_edit_template({disks: _this.disks, poolName: _this.poolName, pool:_this.pool }));
-	            }});
-	    } else {
-	    	 this.$('#ph-resize-pool-info').html(this.resize_pool_info_template({pool: this.pool}));
-	    }
+    if (!_.isUndefined(this.cView) && this.cView == 'resize') {
+      this.$('#ph-resize-pool-info').html(this.resize_pool_edit_template({disks: this.disks, poolName: this.poolName, pool:this.pool }));
+    } else {
+      this.$('#ph-resize-pool-info').html(this.resize_pool_info_template({pool: this.pool}));
+    }
     this.$("ul.css-tabs").tabs("div.css-panes > div");
-   },
+    if (!_.isUndefined(this.cView) && this.cView == 'resize') {
+      // scroll to resize section
+      $('#content').scrollTop($('#ph-resize-pool-info').offset().top);
+    }
+  },
 
    deletePool: function() {
     var button = this.$('#delete-pool');
