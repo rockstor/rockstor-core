@@ -22,7 +22,7 @@ import subprocess
 
 class PoolBalance(Process):
 
-    def __init__(self, mnt_pt, force=False, convert=None):
+    def __init__(self, mnt_pt, force=True, convert=None):
         self.mnt_pt = mnt_pt
         self.force = force
         self.convert = convert

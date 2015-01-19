@@ -309,13 +309,6 @@ class PoolView(rfc.GenericView):
                 e_msg = ('List of disks in the input cannot be empty.')
                 handle_exception(Exception(e_msg), request)
             dnames = [d.name for d in disks]
-
-            for d in disks:
-                if (d.pool is not None and d.pool != pool):
-                    e_msg = ('Disk(%s) belongs to another pool(%s)' %
-                             (d.name, d.pool.name))
-                    handle_exception(Exception(e_msg), request)
-
             mount_disk = Disk.objects.filter(pool=pool)[0].name
             new_raid = request.DATA.get('raid_level', pool.raid)
             num_total_disks = (Disk.objects.filter(pool=pool).count() +
@@ -324,6 +317,18 @@ class PoolView(rfc.GenericView):
             free_percent = (usage[2]/usage[0]) * 100
             threshold_percent = self.ADD_THRESHOLD * 100
             if (command == 'add'):
+                for d in disks:
+                    if (d.pool is not None):
+                        e_msg = ('Disk(%s) cannot be added to this Pool(%s) '
+                                 'because it belongs to another pool(%s)' %
+                                 (d.name, pool.name, d.pool.name))
+                        handle_exception(Exception(e_msg), request)
+                    if (d.btrfs_uuid is not None):
+                        e_msg = ('Disk(%s) has a BTRFS filesystem from the '
+                                 'past. If you really like to add it, wipe it '
+                                 'from the Storage -> Disks screen of the '
+                                 'web-ui' % d.name)
+                        handle_exception(Exception(e_msg), request)
                 if (new_raid not in self.SUPPORTED_MIGRATIONS[pool.raid]):
                     e_msg = ('Pool migration from %s to %s is not supported.'
                              % (pool.raid, new_raid))
