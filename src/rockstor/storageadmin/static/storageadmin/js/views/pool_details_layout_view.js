@@ -175,7 +175,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
           data: JSON.stringify({"disks": disk_names, "raid_level": raid_level}),
           success: function() {
 	      _this.hideResizeTooltips();
-	      var msg = ('A balance process is kicked off to redistribute data. It could take a while. You can check the status in the Balances tab. Its finish marks the success of resize.');
+	      var msg = ('Resize is initiated. A balance process is kicked off to redistribute data. It could take a while. You can check the status in the Balances tab. Its finish marks the success of resize.');
 	      alert(msg);
 	      _this.pool.fetch({
 		  success: function(collection, response, options) {
@@ -185,7 +185,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 	      });
 	  },
           error: function(request, status, error) {
-            _this.$('#alert-msg').html("<font color='red'>"+request.responseText+"</font>");
+	      enableButton(button);
           }
         });
       } else if(m > 0) {
@@ -210,15 +210,16 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 
           },
           error: function(request, status, error) {
-            _this.$('#alert-msg').html("<font color='red'>"+request.responseText+"</font>");
+	      enableButton(button);
           }
         });
       } else if(n <= 0) {
         _this.$('#alert-msg').html("<font color='red'>"+err_msg+"</font>");
+	enableButton(button);
       }
   }
-     // this.$('#ph-resize-pool-info').html(this.resize_pool_info_template({pool: this.pool}));
-		  },
+
+  },
 
  resizePoolCancel: function(event) {
      event.preventDefault();
