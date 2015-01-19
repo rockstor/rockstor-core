@@ -384,6 +384,12 @@ class PoolView(rfc.GenericView):
                     e_msg = ('Raid configuration cannot be changed while '
                              'removing disks')
                     handle_exception(Exception(e_msg), request)
+                for d in disks:
+                    if (d.pool is None or d.pool != pool):
+                        e_msg = ('Disk(%s) cannot be removed because it does '
+                                 'not belong to this Pool(%s)' %
+                                 (d.name, pool.name))
+                        handle_exception(Exception(e_msg), request)
                 remaining_disks = (Disk.objects.filter(pool=pool).count() -
                                    num_new_disks)
                 if (pool.raid in ('raid0', 'single',)):
