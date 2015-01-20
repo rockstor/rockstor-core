@@ -47,26 +47,6 @@ class PoolView(rfc.GenericView):
         'raid6': ('raid6',),
         }
 
-    def _pool_size(self, disks, raid_level):
-        disk_size = None
-        total_size = 0
-        for d in disks:
-            size = Disk.objects.get(name=d).size
-            total_size = total_size + size
-            if (disk_size is None or disk_size > size):
-                disk_size = size
-
-        if (raid_level == self.RAID_LEVELS[0]):
-            return disk_size
-        if (raid_level == self.RAID_LEVELS[1]):
-            return total_size
-        if (raid_level in self.RAID_LEVELS[2:4]):
-            return disk_size * (len(disks) / 2)
-        if (raid_level == self.RAID_LEVELS[4]):
-            return disk_size * (len(disks) - 1)
-        if (raid_level == self.RAID_LEVELS[5]):
-            return disk_size * (len(disks) - 2)
-
     def get_queryset(self, *args, **kwargs):
         if ('pname' in kwargs):
             self.paginate_by = 0
@@ -121,8 +101,8 @@ class PoolView(rfc.GenericView):
                          'no whitespaces in the input. Allowed options: %s' %
                          (o, allowed_options.keys()))
                 handle_exception(Exception(e_msg), request)
-            if (o == 'compress-force' and
-                v not in allowed_options['compress-force']):
+            if ((o == 'compress-force' and
+                 v not in allowed_options['compress-force'])):
                 e_msg = ('compress-force is only allowed with %s' %
                          (settings.COMPRESSION_TYPES))
                 handle_exception(Exception(e_msg), request)
@@ -177,16 +157,12 @@ class PoolView(rfc.GenericView):
                 e_msg = ('Unsupported raid level. use one of: %s' %
                          self.RAID_LEVELS)
                 handle_exception(Exception(e_msg), request)
-            if (raid_level == self.RAID_LEVELS[0] and len(disks) != 1):
-                e_msg = ('Exactly one disk is required for the raid level: '
-                         '%s' % raid_level)
-                handle_exception(Exception(e_msg), request)
             if (raid_level == self.RAID_LEVELS[1] and len(disks) == 1):
                 e_msg = ('More than one disk is required for the raid '
                          'level: %s' % raid_level)
                 handle_exception(Exception(e_msg), request)
-            if (raid_level == self.RAID_LEVELS[2] and len(disks) != 2):
-                e_msg = ('Exactly two disks are required for the raid level: '
+            if (raid_level == self.RAID_LEVELS[2] and len(disks) < 2):
+                e_msg = ('At least two disks are required for the raid level: '
                          '%s' % raid_level)
                 handle_exception(Exception(e_msg), request)
             if (raid_level == self.RAID_LEVELS[3]):
@@ -210,14 +186,13 @@ class PoolView(rfc.GenericView):
             compression = self._validate_compression(request)
             mnt_options = self._validate_mnt_options(request)
             dnames = [d.name for d in disks]
-            pool_size = self._pool_size(dnames, raid_level)
-            p = Pool(name=pname, raid=raid_level, size=pool_size,
-                     compression=compression, mnt_options=mnt_options)
+            p = Pool(name=pname, raid=raid_level, compression=compression,
+                     mnt_options=mnt_options)
             add_pool(p, dnames)
+            p.size = pool_usage(mount_root(p, dnames[0]))[0]
             p.uuid = btrfs_uuid(dnames[0])
-            p.save()
             p.disk_set.add(*disks)
-            mount_root(p, dnames[0])
+            p.save()
             return Response(PoolInfoSerializer(p).data)
 
     def _validate_disk(self, d, request):
