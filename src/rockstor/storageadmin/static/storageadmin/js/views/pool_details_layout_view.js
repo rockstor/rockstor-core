@@ -161,6 +161,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 	  var err_msg = "Please select atleast one disk";
 	  var n = _this.$(".disknew:checked").length;
 	  var m = _this.$(".diskadded:unchecked").length;
+	  var resize_msg = ('Resize is initiated. A balance process is kicked off to redistribute data. It could take a while. You can check the status in the Balances tab. Its finish marks the success of resize.');
 	  if(n > 0){
               _this.$(".disknew:checked").each(function(i) {
 		  if (i < n) {
@@ -175,8 +176,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
           data: JSON.stringify({"disks": disk_names, "raid_level": raid_level}),
           success: function() {
 	      _this.hideResizeTooltips();
-	      var msg = ('Resize is initiated. A balance process is kicked off to redistribute data. It could take a while. You can check the status in the Balances tab. Its finish marks the success of resize.');
-	      alert(msg);
+	      alert(resize_msg);
 	      _this.pool.fetch({
 		  success: function(collection, response, options) {
 		      _this.cView = 'view';
@@ -199,14 +199,16 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
           type: 'PUT',
           dataType: 'json',
           contentType: 'application/json',
-          data: JSON.stringify({"disks": disk_names}),
+          data: JSON.stringify({"disks": disk_names, "raid_level": raid_level}),
           success: function() {
-        	  _this.pool.fetch({
+	      _this.hideResizeTooltips();
+	      alert(resize_msg);
+              _this.pool.fetch({
                   success: function(collection, response, options) {
-                    _this.cView = 'view';
-                    _this.render();
+                      _this.cView = 'view';
+                      _this.render();
                   }
-                });
+              });
 
           },
           error: function(request, status, error) {
