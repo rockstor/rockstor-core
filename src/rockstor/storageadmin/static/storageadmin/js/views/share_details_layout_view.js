@@ -103,9 +103,6 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
       sync_choices: this.sync_choices,
       appliance_ip: current_appliance.get('ip'),
     });
-    this.subviews['smb-shares'] = new SMBShares({
-      share: this.share,
-    });
     this.share.on('change', this.subviews['share-usage'].render, this.subviews['share-usage']);
     $(this.el).html(this.template({
       share: this.share,
@@ -120,7 +117,6 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
     this.$('#ph-share-usage').html(this.subviews['share-usage'].render().el);
     this.$('#ph-snapshots').html(this.subviews['snapshots'].render().el);
     this.$('#ph-nfs-exports').html(this.subviews['nfs-exports'].render().el);
-    this.$('#ph-smb-shares').html(this.subviews['smb-shares'].render().el);
     if (!_.isUndefined(this.cView) && this.cView == 'edit') {
       this.$('#ph-compression-info').html(this.compression_info_edit_template({
 	share: this.share,

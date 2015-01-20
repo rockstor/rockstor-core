@@ -202,8 +202,9 @@ class ShareView(rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
 
             pool_device = Disk.objects.filter(pool=share.pool)[0].name
-            e_msg = ('Share(%s) is still mounted and cannot be deleted.'
-                     ' Try again later. You can also manually unmount it with'
+            e_msg = ('Share(%s) is still mounted and cannot be deleted. '
+                     'Trying again usually succeeds. But if it does not, '
+                     'you can manually unmount it with'
                      ' command: /usr/bin/umount /mnt2/%s' % (sname, sname))
             try:
                 remove_share(share.pool, pool_device, share.subvol_name)

@@ -65,18 +65,35 @@ def add_pool(pool, disks):
     return out, err, rc
 
 
+def cur_devices(mnt_pt):
+    devices = []
+    o, e, rc = run_command([BTRFS, 'fi', 'show', mnt_pt])
+    for l in o:
+        l = l.strip()
+        if (re.match('devid ', l) is not None):
+            devices.append(l.split()[-1])
+    return devices
+
+
 def resize_pool(pool, device, dev_list, add=True):
     device = '/dev/' + device
     dev_list = ['/dev/' + d for d in dev_list]
     root_mnt_pt = mount_root(pool, device)
+    cur_dev = cur_devices(root_mnt_pt)
     resize_flag = 'add'
     if (not add):
         resize_flag = 'delete'
     resize_cmd = [BTRFS, 'device', resize_flag, ]
-    resize_cmd.extend(dev_list)
+    resize = False
+    for d in dev_list:
+        if (((resize_flag == 'add' and (d not in cur_dev)) or
+             (resize_flag == 'delete' and (d in cur_dev)))):
+            resize = True
+            resize_cmd.append(d)
+    if (not resize):
+        return
     resize_cmd.append(root_mnt_pt)
-    out, err, rc = run_command(resize_cmd)
-    return out, err, rc
+    return run_command(resize_cmd)
 
 
 def mount_root(pool, device):
@@ -366,7 +383,7 @@ def share_usage(pool, pool_device, share_id):
     for line in out:
         fields = line.split()
         if (fields[0] == share_id):
-            usage = int(fields[-2]) / 1024 # usage in KB
+            usage = int(fields[-2]) / 1024  # usage in KB
             break
     if (usage is None):
         raise Exception('usage cannot be determined for share_id: %s' %
@@ -375,7 +392,7 @@ def share_usage(pool, pool_device, share_id):
 
 
 def shares_usage(pool, pool_device, share_map, snap_map):
-    #don't mount the pool if at least one share in the map is mounted.
+    # don't mount the pool if at least one share in the map is mounted.
     usage_map = {}
     mnt_pt = None
     for s in share_map.keys():
@@ -396,22 +413,26 @@ def shares_usage(pool, pool_device, share_map, snap_map):
     return usage_map
 
 
-def pool_usage(pool_device):
-    pool_device = ('/dev/%s' % pool_device)
-    cmd = [BTRFS_DEBUG_TREE, '-r', pool_device]
+def pool_usage(mnt_pt):
+    cmd = [BTRFS, 'fi', 'usage', '-b', mnt_pt]
+    total = 0
+    inuse = 0
+    free = 0
+    data_ratio = 1
     out, err, rc = run_command(cmd)
-    total = None
-    usage = None
-    for line in out:
-        if (re.match('total bytes ', line) is not None):
-            total = int(line.split()[2]) / 1024 # in KB
-        if (re.match('bytes used ', line) is not None):
-            usage = int(line.split()[2]) / 1024 # in KB
-            break #usage line is right after total line.
-    if (usage is None or total is None):
-        raise Exception('usage not available for pool device: %s' %
-                        pool_device)
-    return (total, usage)
+    for o in out:
+        o = o.strip()
+        if (re.match('Device size:', o) is not None):
+            total = int(o.split()[2]) / 1024
+        elif (re.match('Used:', o) is not None):
+            inuse = int(o.split()[1]) / 1024
+        elif (re.match('Free ', o) is not None):
+            free = int(o.split()[2]) / 1024
+        elif (re.match('Data ratio:', o) is not None):
+            data_ratio = float(o.split()[2])
+    total = total / data_ratio
+    inuse = inuse / data_ratio
+    return (total, inuse, free)
 
 
 def scrub_start(pool, pool_device, force=False):
@@ -444,9 +465,11 @@ def scrub_status(pool, pool_device):
     return stats
 
 
-def balance_start(pool, pool_device, force=False):
+def balance_start(pool, pool_device, force=False, convert=None):
     mnt_pt = mount_root(pool, ('/dev/%s' % pool_device))
-    b = PoolBalance(mnt_pt)
+    if (convert is not None and convert == pool.raid):
+        convert = None
+    b = PoolBalance(mnt_pt, convert=convert)
     b.start()
     return b.pid
 

@@ -22,14 +22,18 @@ import subprocess
 
 class PoolBalance(Process):
 
-    def __init__(self, mnt_pt, force=False):
+    def __init__(self, mnt_pt, force=True, convert=None):
         self.mnt_pt = mnt_pt
         self.force = force
+        self.convert = convert
         super(PoolBalance, self).__init__()
 
     def run(self):
         cmd = ['btrfs', 'balance', 'start', self.mnt_pt]
         if (self.force):
             cmd.insert(3, '-f')
+        if (self.convert is not None):
+            cmd.insert(3, '-dconvert=%s' % self.convert)
+            cmd.insert(3, '-mconvert=%s' % self.convert)
         self.sp = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)

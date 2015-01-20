@@ -59,24 +59,10 @@
       <div class="row-fluid">
         <div class="span12">
           <div class="tab-section">
-            <h3>Disks</h3>
-            <table id="pool-disk-table" class="table table-condensed table-bordered table-hover">
-              <thead>
-                <tr>
-                  <th scope="col" abbr="Name">Name</th>
-                  <th scope="col" abbr="Capacity">Capacity</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% _.each(pool.get('disks'), function(disk, i) { %>
-                  <tr>
-                    <td><%= disk.name %></td>
-                    <td><%= humanize.filesize(disk.size*1024) %></td>
-                  </tr>
-                <% }); %>
-              </tbody>
-            </table>
-            <button id="resize-pool-popup" rel="#resize-pool-form" class="btn btn-primary" type="button"><i class="icon-edit icon-white"></i> Resize Pool</button>
+           
+            <div id="ph-resize-pool-info"></div>
+      <!--   <button id="resize-pool-popup" rel="#resize-pool-form" class="btn btn-primary" type="button"><i class="icon-edit icon-white"></i> Resize Pool</button> -->  
+           
           </div> <!-- tab-section -->
         </div> <!-- span12 -->
       </div> <!-- row-fluid -->

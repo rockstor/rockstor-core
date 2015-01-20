@@ -23,9 +23,9 @@ import re
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.serializers import PoolInfoSerializer
-from storageadmin.models import (Disk, Pool, Share)
+from storageadmin.models import (Disk, Pool, Share, PoolBalance)
 from fs.btrfs import (add_pool, pool_usage, resize_pool, umount_root,
-                      btrfs_uuid, mount_root, remount)
+                      btrfs_uuid, mount_root, remount, balance_start)
 from storageadmin.util import handle_exception
 from django.conf import settings
 import rest_framework_custom as rfc
@@ -37,26 +37,15 @@ logger = logging.getLogger(__name__)
 class PoolView(rfc.GenericView):
     serializer_class = PoolInfoSerializer
     RAID_LEVELS = ('single', 'raid0', 'raid1', 'raid10', 'raid5', 'raid6')
-
-    def _pool_size(self, disks, raid_level):
-        disk_size = None
-        total_size = 0
-        for d in disks:
-            size = Disk.objects.get(name=d).size
-            total_size = total_size + size
-            if (disk_size is None or disk_size > size):
-                disk_size = size
-
-        if (raid_level == self.RAID_LEVELS[0]):
-            return disk_size
-        if (raid_level == self.RAID_LEVELS[1]):
-            return total_size
-        if (raid_level in self.RAID_LEVELS[2:4]):
-            return disk_size * (len(disks) / 2)
-        if (raid_level == self.RAID_LEVELS[4]):
-            return disk_size * (len(disks) - 1)
-        if (raid_level == self.RAID_LEVELS[5]):
-            return disk_size * (len(disks) - 2)
+    ADD_THRESHOLD = .3  # min free/total ratio to allow a device addition
+    SUPPORTED_MIGRATIONS = {
+        'single': ('single', 'raid0', 'raid1', 'raid10',),
+        'raid0': ('raid0', 'raid1', 'raid10',),
+        'raid1': ('raid1', 'raid10',),
+        'raid10': ('raid10',),
+        'raid5': ('raid5',),
+        'raid6': ('raid6',),
+        }
 
     def get_queryset(self, *args, **kwargs):
         if ('pname' in kwargs):
@@ -112,8 +101,8 @@ class PoolView(rfc.GenericView):
                          'no whitespaces in the input. Allowed options: %s' %
                          (o, allowed_options.keys()))
                 handle_exception(Exception(e_msg), request)
-            if (o == 'compress-force' and
-                v not in allowed_options['compress-force']):
+            if ((o == 'compress-force' and
+                 v not in allowed_options['compress-force'])):
                 e_msg = ('compress-force is only allowed with %s' %
                          (settings.COMPRESSION_TYPES))
                 handle_exception(Exception(e_msg), request)
@@ -168,16 +157,12 @@ class PoolView(rfc.GenericView):
                 e_msg = ('Unsupported raid level. use one of: %s' %
                          self.RAID_LEVELS)
                 handle_exception(Exception(e_msg), request)
-            if (raid_level == self.RAID_LEVELS[0] and len(disks) != 1):
-                e_msg = ('Exactly one disk is required for the raid level: '
-                         '%s' % raid_level)
-                handle_exception(Exception(e_msg), request)
             if (raid_level == self.RAID_LEVELS[1] and len(disks) == 1):
                 e_msg = ('More than one disk is required for the raid '
                          'level: %s' % raid_level)
                 handle_exception(Exception(e_msg), request)
-            if (raid_level == self.RAID_LEVELS[2] and len(disks) != 2):
-                e_msg = ('Exactly two disks are required for the raid level: '
+            if (raid_level == self.RAID_LEVELS[2] and len(disks) < 2):
+                e_msg = ('At least two disks are required for the raid level: '
                          '%s' % raid_level)
                 handle_exception(Exception(e_msg), request)
             if (raid_level == self.RAID_LEVELS[3]):
@@ -201,14 +186,13 @@ class PoolView(rfc.GenericView):
             compression = self._validate_compression(request)
             mnt_options = self._validate_mnt_options(request)
             dnames = [d.name for d in disks]
-            pool_size = self._pool_size(dnames, raid_level)
-            p = Pool(name=pname, raid=raid_level, size=pool_size,
-                     compression=compression, mnt_options=mnt_options)
+            p = Pool(name=pname, raid=raid_level, compression=compression,
+                     mnt_options=mnt_options)
             add_pool(p, dnames)
+            p.size = pool_usage(mount_root(p, dnames[0]))[0]
             p.uuid = btrfs_uuid(dnames[0])
-            p.save()
             p.disk_set.add(*disks)
-            mount_root(p, dnames[0])
+            p.save()
             return Response(PoolInfoSerializer(p).data)
 
     def _validate_disk(self, d, request):
@@ -287,7 +271,7 @@ class PoolView(rfc.GenericView):
             try:
                 pool = Pool.objects.get(name=pname)
             except:
-                e_msg = ('pool: %s does not exist' % pname)
+                e_msg = ('Pool(%s) does not exist.' % pname)
                 handle_exception(Exception(e_msg), request)
 
             if (command == 'remount'):
@@ -295,49 +279,150 @@ class PoolView(rfc.GenericView):
 
             disks = [self._validate_disk(d, request) for d in
                      request.DATA.get('disks')]
-            if (len(disks) == 0):
-                msg = ('list of disks in the input is empty')
-                raise Exception(msg)
+            num_new_disks = len(disks)
+            if (num_new_disks == 0):
+                e_msg = ('List of disks in the input cannot be empty.')
+                handle_exception(Exception(e_msg), request)
             dnames = [d.name for d in disks]
-
-            for d in disks:
-                if (d.pool is not None and d.pool != pool):
-                    e_msg = ('Disk(%s) belongs to another pool(%s)' %
-                             (d.name, d.pool.name))
+            mount_disk = Disk.objects.filter(pool=pool)[0].name
+            new_raid = request.DATA.get('raid_level', pool.raid)
+            num_total_disks = (Disk.objects.filter(pool=pool).count() +
+                               num_new_disks)
+            usage = pool_usage('/%s/%s' % (settings.MNT_PT, pool.name))
+            free_percent = (usage[2]/usage[0]) * 100
+            threshold_percent = self.ADD_THRESHOLD * 100
+            if (command == 'add'):
+                for d in disks:
+                    if (d.pool is not None):
+                        e_msg = ('Disk(%s) cannot be added to this Pool(%s) '
+                                 'because it belongs to another pool(%s)' %
+                                 (d.name, pool.name, d.pool.name))
+                        handle_exception(Exception(e_msg), request)
+                    if (d.btrfs_uuid is not None):
+                        e_msg = ('Disk(%s) has a BTRFS filesystem from the '
+                                 'past. If you really like to add it, wipe it '
+                                 'from the Storage -> Disks screen of the '
+                                 'web-ui' % d.name)
+                        handle_exception(Exception(e_msg), request)
+                if (new_raid not in self.SUPPORTED_MIGRATIONS[pool.raid]):
+                    e_msg = ('Pool migration from %s to %s is not supported.'
+                             % (pool.raid, new_raid))
                     handle_exception(Exception(e_msg), request)
 
-            mount_disk = Disk.objects.filter(pool=pool)[0].name
-            if (command == 'add'):
+                if (PoolBalance.objects.filter(
+                        pool=pool,
+                        status__regex=r'(started|running)').exists()):
+                    e_msg = ('A Balance process is already running for this '
+                             'pool(%s). Resize is not supported during a '
+                             'balance process.' % pool.name)
+                    handle_exception(Exception(e_msg), request)
+
+                if (free_percent < threshold_percent):
+                    e_msg = ('Resize is only supported when there is at least '
+                             '%d percent free space available. But currently '
+                             'only %d percent is free. Remove some data and '
+                             'try again.' % (threshold_percent, free_percent))
+                    handle_exception(Exception(e_msg), request)
+
+                if (((pool.raid == 'raid10' or new_raid == 'raid10') and
+                     (num_total_disks % 2 != 0))):
+                    e_msg = ('raid10 requires an even number of '
+                             'drives. Total provided = %d' %
+                             num_new_disks)
+                    handle_exception(Exception(e_msg), request)
+
+                if (new_raid != pool.raid):
+                    if (((pool.raid in ('single', 'raid0')) and
+                         new_raid in ('raid1', 'raid10'))):
+                        cur_num_disks = num_total_disks - num_new_disks
+                        if (num_new_disks < cur_num_disks):
+                            e_msg = ('For single/raid0 to raid1/raid10 '
+                                     'conversion, at least as many as present '
+                                     'number of disks must be added. %d '
+                                     'disks are provided, but at least %d are '
+                                     'required.' % (num_new_disks,
+                                                    cur_num_disks))
+                            handle_exception(Exception(e_msg), request)
+
+                resize_pool(pool, mount_disk, dnames)
+                balance_pid = balance_start(pool, mount_disk, convert=new_raid)
+                ps = PoolBalance(pool=pool, pid=balance_pid)
+                ps.save()
+
+                pool.raid = new_raid
                 for d_o in disks:
                     d_o.pool = pool
                     d_o.save()
-                resize_pool(pool, mount_disk, dnames)
+
             elif (command == 'remove'):
-                remaining_disks = Disk.objects.filter(pool=pool).count() - len(disks)
-                if (pool.raid == 'raid0' or pool.raid == 'raid1' or
-                    pool.raid == 'raid10' or pool.raid == 'single'):
-                    e_msg = ('Removing drives from this(%s) raid '
-                             'configuration is not supported' % pool.raid)
+                if (new_raid != pool.raid):
+                    e_msg = ('Raid configuration cannot be changed while '
+                             'removing disks')
                     handle_exception(Exception(e_msg), request)
-                if (pool.raid == 'raid5' and remaining_disks < 3):
-                    e_msg = ('Resize not possible because a minimum of 3 '
-                             'drives is required for this(%s) '
-                             'raid configuration.' % pool.raid)
+                for d in disks:
+                    if (d.pool is None or d.pool != pool):
+                        e_msg = ('Disk(%s) cannot be removed because it does '
+                                 'not belong to this Pool(%s)' %
+                                 (d.name, pool.name))
+                        handle_exception(Exception(e_msg), request)
+                remaining_disks = (Disk.objects.filter(pool=pool).count() -
+                                   num_new_disks)
+                if (pool.raid in ('raid0', 'single',)):
+                    e_msg = ('Disks cannot be removed from a pool with this '
+                             'raid(%s) configuration' % pool.raid)
                     handle_exception(Exception(e_msg), request)
-                if (pool.raid == 'raid6' and remaining_disks < 4):
-                    e_msg = ('Resize not possible because a minimum of 4 '
-                             'drives is required for this(%s) raid '
-                             'configuration' % pool.raid)
+
+                if (pool.raid in ('raid5', 'raid6',)):
+                    e_msg = ('Disk removal is not supported for pools with '
+                             'raid5/6 configuration')
                     handle_exception(Exception(e_msg), request)
+
+                if (pool.raid == 'raid10'):
+                    if (num_new_disks != 2):
+                        e_msg = ('Only two disks can be removed at once from '
+                                 'this pool because of its raid '
+                                 'configuration(%s)' % pool.raid)
+                        handle_exception(Exception(e_msg), request)
+                    elif (remaining_disks < 4):
+                        e_msg = ('Disks cannot be removed from this pool '
+                                 'because its raid configuration(%s) '
+                                 'requires a minimum of 4 disks' % pool.raid)
+                        handle_exception(Exception(e_msg), request)
+
+                elif (pool.raid == 'raid1'):
+                    if (num_new_disks != 1):
+                        e_msg = ('Only one disk can be removed at once from '
+                                 'this pool because of its raid '
+                                 'configuration(%s)' % pool.raid)
+                        handle_exception(Exception(e_msg), request)
+                    elif (remaining_disks < 2):
+                        e_msg = ('Disks cannot be removed from this pool '
+                                 'because its raid configuration(%s) '
+                                 'requires a minimum of 2 disks' % pool.raid)
+                        handle_exception(Exception(e_msg), request)
+
+                threshold_percent = 100 - threshold_percent
+                if (free_percent < threshold_percent):
+                    e_msg = ('Removing disks is only supported when there is '
+                             'at least %d percent free space available. But '
+                             'currently only %d percent is free. Remove some '
+                             'data and try again.' %
+                             (threshold_percent, free_percent))
+                    handle_exception(Exception(e_msg), request)
+
+                resize_pool(pool, mount_disk, dnames, add=False)
+                balance_pid = balance_start(pool, mount_disk)
+                ps = PoolBalance(pool=pool, pid=balance_pid)
+                ps.save()
+
                 for d in disks:
                     d.pool = None
                     d.save()
-                mount_disk = Disk.objects.filter(pool=pool)[0].name
-                resize_pool(pool, mount_disk, dnames, add=False)
+
             else:
-                msg = ('unknown command: %s' % command)
-                raise Exception(msg)
-            usage = pool_usage(mount_disk)
+                e_msg = ('command(%s) is not supported.' % command)
+                handle_exception(Exception(e_msg), request)
+            usage = pool_usage('/%s/%s' % (settings.MNT_PT, pool.name))
             pool.size = usage[0]
             pool.save()
             return Response(PoolInfoSerializer(pool).data)
@@ -347,8 +432,8 @@ class PoolView(rfc.GenericView):
         with self._handle_exception(request):
             pool = Pool.objects.get(name=pname)
             if (Share.objects.filter(pool=pool).exists()):
-                e_msg = ('Pool: %s is not empty. Cannot delete until all '
-                         'shares in the pool are deleted' % (pname))
+                e_msg = ('Pool(%s) is not empty. Delete is not allowed until '
+                         'all shares in the pool are deleted' % (pname))
                 handle_exception(Exception(e_msg), request)
             pool_path = ('%s%s' % (settings.MNT_PT, pname))
             umount_root(pool_path)

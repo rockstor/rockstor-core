@@ -4,7 +4,7 @@
       <tr>
         <th>Name</th>
         <th>Size</th>
-        <th>Used</th>
+        <th>Usage</th>
         <th>Raid</th>
 	<th>Compression</th>
 	<th>Extra mount options</th>
@@ -17,18 +17,23 @@
         <tr>
           <td><a href="#pools/<%= pool.get('name') %>"><i class="icon-list"></i> <%= pool.get('name') %></a></td>
 
-          <td><%= humanize.filesize(pool.get('size')*1024) %></td>
-          <td><%= humanize.filesize((pool.get('size')-pool.get('reclaimable')-pool.get('free'))*1024) %></td>
-	  <td><%= pool.get('raid') %></td>
+          <td>
+            <%= humanize.filesize(pool.get('size')*1024) %>
+            &nbsp;
+            <a href="#pools/<%= pool.get('name') %>/?cView=resize"><i class="fa fa-pencil-square-o"></i>
+            </a>
+          </td>
+          <td><%= humanize.filesize((pool.get('size')-pool.get('reclaimable')-pool.get('free'))*1024) %><big>(<%= (((pool.get('size')-pool.get('reclaimable')-pool.get('free'))/pool.get('size')) * 100).toFixed(2) %> %)</big></td>
+	  <td><%= pool.get('raid') %>&nbsp;<a href="#pools/<%= pool.get('name') %>/?cView=resize"><i class="fa fa-pencil-square-o"></i></a></td>
 	  <td>
 	  <% if (pool.get('compression') == 'no' || _.isNull(pool.get('compression')) || _.isUndefined(pool.get('compression')) ) { %>
 	  Off
 	  <% } else { %>
 	  On (Algorithm: <strong><%= pool.get('compression') %></strong>)
 	  <% } %>
-    &nbsp;&nbsp;<a href="#pools/<%= pool.get('name') %>/?cView=edit"><i class="icon-pencil"></i></a>
+    &nbsp;<a href="#pools/<%= pool.get('name') %>/?cView=edit"><i class="fa fa-pencil-square-o"></i></a>
 	  </td>
-	  <td><%= pool.get('mnt_options') %>&nbsp;&nbsp;<a href="#pools/<%= pool.get('name') %>/?cView=edit"><i class="icon-pencil"></i></a></td>
+	  <td><%= pool.get('mnt_options') %>&nbsp;<a href="#pools/<%= pool.get('name') %>/?cView=edit"><i class="fa fa-pencil-square-o"></i></a></td>
           <td>
             <% var dNames =  _.reduce(pool.get('disks'), function(s, disk, i, list) { if (i < (list.length-1)) { return s + disk.name + ',';} else { return s + disk.name; } }, ''); %>
             <%= dNames %>

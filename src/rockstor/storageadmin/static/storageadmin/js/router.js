@@ -39,7 +39,7 @@ var AppRouter = Backbone.Router.extend({
     "pools": "showPools",
     "pools/:poolName": "showPool",
     "pools/:poolName/?cView=:cView": "showPool",
-    "add_pool": "addPool",
+     "add_pool": "addPool",
     "shares": "showShares",
     "add_share?poolName=:poolName": "addShare",
     "add_share": "addShare",
@@ -206,8 +206,8 @@ var AppRouter = Backbone.Router.extend({
     this.cleanup();
     this.currentLayout = new PoolDetailsLayoutView({
       poolName: poolName,
-      cView: cView
-    });
+      cView: cView,
+     });
     $('#maincontent').append(this.currentLayout.render().el);
   },
 
