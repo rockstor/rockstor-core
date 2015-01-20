@@ -402,15 +402,6 @@ class PoolView(rfc.GenericView):
                              'raid5/6 configuration')
                     handle_exception(Exception(e_msg), request)
 
-                threshold_percent = 100 - threshold_percent
-                if (free_percent < threshold_percent):
-                    e_msg = ('Removing disks is only supported when there is '
-                             'at least %d percent free space available. But '
-                             'currently only %d percent is free. Remove some '
-                             'data and try again.' %
-                             (threshold_percent, free_percent))
-                    handle_exception(Exception(e_msg), request)
-
                 if (pool.raid == 'raid10'):
                     if (num_new_disks != 2):
                         e_msg = ('Only two disks can be removed at once from '
@@ -434,6 +425,15 @@ class PoolView(rfc.GenericView):
                                  'because its raid configuration(%s) '
                                  'requires a minimum of 2 disks' % pool.raid)
                         handle_exception(Exception(e_msg), request)
+
+                threshold_percent = 100 - threshold_percent
+                if (free_percent < threshold_percent):
+                    e_msg = ('Removing disks is only supported when there is '
+                             'at least %d percent free space available. But '
+                             'currently only %d percent is free. Remove some '
+                             'data and try again.' %
+                             (threshold_percent, free_percent))
+                    handle_exception(Exception(e_msg), request)
 
                 resize_pool(pool, mount_disk, dnames, add=False)
                 balance_pid = balance_start(pool, mount_disk)

@@ -65,18 +65,35 @@ def add_pool(pool, disks):
     return out, err, rc
 
 
+def cur_devices(mnt_pt):
+    devices = []
+    o, e, rc = run_command([BTRFS, 'fi', 'show', mnt_pt])
+    for l in o:
+        l = l.strip()
+        if (re.match('devid ', l) is not None):
+            devices.append(l.split()[-1])
+    return devices
+
+
 def resize_pool(pool, device, dev_list, add=True):
     device = '/dev/' + device
     dev_list = ['/dev/' + d for d in dev_list]
     root_mnt_pt = mount_root(pool, device)
+    cur_dev = cur_devices(root_mnt_pt)
     resize_flag = 'add'
     if (not add):
         resize_flag = 'delete'
     resize_cmd = [BTRFS, 'device', resize_flag, ]
-    resize_cmd.extend(dev_list)
+    resize = False
+    for d in dev_list:
+        if (((resize_flag == 'add' and (d not in cur_dev)) or
+             (resize_flag == 'delete' and (d in cur_dev)))):
+            resize = True
+            resize_cmd.append(d)
+    if (not resize):
+        return
     resize_cmd.append(root_mnt_pt)
-    out, err, rc = run_command(resize_cmd)
-    return out, err, rc
+    return run_command(resize_cmd)
 
 
 def mount_root(pool, device):
@@ -405,7 +422,6 @@ def pool_usage(mnt_pt):
     out, err, rc = run_command(cmd)
     for o in out:
         o = o.strip()
-        print('o = %s' % o)
         if (re.match('Device size:', o) is not None):
             total = int(o.split()[2]) / 1024
         elif (re.match('Used:', o) is not None):
