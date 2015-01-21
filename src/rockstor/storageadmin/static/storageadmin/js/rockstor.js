@@ -335,10 +335,26 @@ function buttonDisabled(button) {
 }
 
 function refreshNavbar() {
+  var users =  new UserCollection();
+  var currentUser;
+  users.fetch({
+    success: function(request) {
+      console.log(users.length);
+	   if (users.length > 0) {
+	     currentUser =  users.find(function(user) {
+	     return user.get('is_active') == true; // return user.get('admin') == true; but there can be two users with admin right.. 
+	     console.log(currentUser);
+	    });
+	   }
+	},
+	    error: function(request, response) {
+	    }
+	  });
   var navbarTemplate = window.JST.common_navbar;
-  $("#navbar-links").html(navbarTemplate({
-    logged_in: logged_in
-  }));
+    $("#navbar-links").html(navbarTemplate({
+    logged_in: logged_in,
+    username: currentUser
+   }));
   $('.dropdown-toggle').dropdown();
 
 }
