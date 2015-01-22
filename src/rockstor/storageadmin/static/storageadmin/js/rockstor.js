@@ -334,27 +334,25 @@ function buttonDisabled(button) {
   }
 }
 
+
 function refreshNavbar() {
-  var users =  new UserCollection();
-  var currentUser;
-  users.fetch({
-    success: function(request) {
-      console.log(users.length);
-	   if (users.length > 0) {
-	     currentUser =  users.find(function(user) {
-	     return user.get('is_active') == true; // return user.get('admin') == true; but there can be two users with admin right.. 
-	     console.log(currentUser);
-	    });
+	$.ajax({
+	    url: "/api/commands/currentuser",
+	    type: "POST",
+	    dataType: "json",
+	    global: false, // dont show global loading indicator
+	    success: function(data, status, xhr) {
+	    var currentUser= data;
+	    $('#user-name').html("Hello,  "+currentUser);
+	   },
+	   error: function(xhr, status, error) {
+		$('#user-name').html("Hello, <b> Admin! </b>");   
 	   }
-	},
-	    error: function(request, response) {
-	    }
-	  });
-  var navbarTemplate = window.JST.common_navbar;
+	 });	
+ var navbarTemplate = window.JST.common_navbar;
     $("#navbar-links").html(navbarTemplate({
     logged_in: logged_in,
-    username: currentUser
-   }));
+     }));
   $('.dropdown-toggle').dropdown();
 
 }
