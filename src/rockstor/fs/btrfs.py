@@ -313,7 +313,7 @@ def add_clone(pool, pool_device, share, clone, snapshot=None):
     return add_snap_helper(orig_path, clone_path)
 
 
-def add_snap(pool, pool_device, share_name, snap_name, readonly=True):
+def add_snap(pool, pool_device, share_name, snap_name, readonly=False):
     """
     create a snapshot
     """
@@ -323,7 +323,7 @@ def add_snap(pool, pool_device, share_name, snap_name, readonly=True):
     snap_dir = ('%s/.snapshots/%s' % (root_pool_mnt, share_name))
     create_tmp_dir(snap_dir)
     snap_full_path = ('%s/%s' % (snap_dir, snap_name))
-    return add_snap_helper(share_full_path, snap_full_path)
+    return add_snap_helper(share_full_path, snap_full_path, readonly)
 
 
 def rollback_snap(snap_name, sname, subvol_name, pool, pool_device):
