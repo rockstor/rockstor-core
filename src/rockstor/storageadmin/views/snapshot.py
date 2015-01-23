@@ -114,8 +114,11 @@ class SnapshotView(rfc.GenericView):
             snap_size = 0
             qgroup_id = '0/na'
             if (snap_type != 'receiver'):
+                readonly = False
+                if (snap_type == 'replication'):
+                    readonly = True
                 add_snap(share.pool, pool_device, share.subvol_name,
-                         real_name, readonly=False)
+                         real_name, readonly=readonly)
                 snap_id = share_id(share.pool, pool_device, real_name)
                 qgroup_id = ('0/%s' % snap_id)
                 snap_size = share_usage(share.pool, pool_device,

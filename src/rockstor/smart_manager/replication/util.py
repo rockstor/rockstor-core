@@ -50,7 +50,7 @@ def update_replica_status(rid, data, logger):
 
 def disable_replica(rid, logger):
     try:
-        url = ('%s/sm/replicas/%d' % (BASE_URL, rid))
+        url = ('%ssm/replicas/%d' % (BASE_URL, rid))
         api_call(url, data={'enabled': False, }, calltype='put',
                  save_error=False)
         return logger.info('Replica(%s) is disabled' % url)
@@ -101,7 +101,7 @@ def create_rshare(data, logger):
 
 
 def create_receive_trail(rid, data, logger):
-    url = ('%s/sm/replicas/rtrail/rshare/%d' % (BASE_URL, rid))
+    url = ('%ssm/replicas/rtrail/rshare/%d' % (BASE_URL, rid))
     try:
         rt = api_call(url, data=data, calltype='post', save_error=False)
         logger.debug('Created receive trail: %s' % rt)
@@ -112,7 +112,7 @@ def create_receive_trail(rid, data, logger):
 
 
 def update_receive_trail(rtid, data, logger):
-    url = ('%s/sm/replicas/rtrail/%d' % (BASE_URL, rtid))
+    url = ('%ssm/replicas/rtrail/%d' % (BASE_URL, rtid))
     try:
         rt = api_call(url, data=data, calltype='put', save_error=False)
         return logger.debug('Updated receive trail: %s' % rt)
@@ -155,7 +155,7 @@ def create_snapshot(sname, snap_name, logger, snap_type='replication'):
 
 def is_share(sname, logger):
     try:
-        url = ('%s/shares/%s' % (BASE_URL, sname))
+        url = ('%sshares/%s' % (BASE_URL, sname))
         share_details = api_call(url, save_error=False)
         logger.debug('Share exists: %s' % share_details)
         return True
