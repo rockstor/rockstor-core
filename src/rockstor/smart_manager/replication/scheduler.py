@@ -130,7 +130,7 @@ class ReplicaScheduler(Process):
                                                         microsecond=0,
                                                         tzinfo=utc)
                         sw = None
-                        snap_name = ('%s_replica_snap' % r.share)
+                        snap_name = 'replication_snapshot'
                         if (len(rt) == 0):
                             snap_name = ('%s_1' % snap_name)
                             logger.debug('new sender for snap: %s' % snap_name)

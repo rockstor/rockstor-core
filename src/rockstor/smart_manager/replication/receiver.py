@@ -134,15 +134,13 @@ class Receiver(Process):
 
         sub_vol = ('%s%s/%s' % (settings.MNT_PT, self.meta['pool'],
                                 sname))
-
-        snap_fp = ('%s/%s_%s' % (sub_vol, self.snap_name.split('_')[0],
-                                 self.snap_name))
+        snap_fp = ('%s/%s' % (sub_vol, self.snap_name))
         logger.info('snap_fp: %s' % snap_fp)
         msg = ('Snaphost: %s already exists.' % snap_fp)
         with self._clean_exit_handler(msg):
             if (os.path.isdir(snap_fp)):
                 ack = {'msg': 'snap_exists',
-                       'id': self.meta['id'],}
+                       'id': self.meta['id'], }
                 self.meta_push.send_json(ack)
                 logger.debug(msg)
 
@@ -172,9 +170,11 @@ class Receiver(Process):
                 if (self.rtid is None):
                     msg = ('Failed to create snapshot: %s. Aborting.' %
                            self.snap_name)
+                    # create a snapshot only if it's not already from a previous failed attempt
                     with self._clean_exit_handler(msg, ack=True):
-                        create_snapshot(sname, self.snap_name, logger,
-                                        snap_type='receiver')
+                        if (not is_snapshot(sname, self.snap_name, logger)):
+                            create_snapshot(sname, self.snap_name, logger,
+                                            snap_type='receiver')
 
                     data = {'snap_name': self.snap_name}
                     msg = ('Failed to create receive trail for rid: %d'
@@ -185,7 +185,7 @@ class Receiver(Process):
 
                 if (recv_data == 'END_SUCCESS' or recv_data == 'END_FAIL'):
                     ts = datetime.utcnow().replace(tzinfo=utc)
-                    data = {'kb_received': self.kb_received / 1024,}
+                    data = {'kb_received': self.kb_received / 1024, }
                     if (recv_data == 'END_SUCCESS'):
                         logger.debug('END_SUCCESS received for meta: %s' %
                                      self.meta)
@@ -250,12 +250,17 @@ class Receiver(Process):
 
         #rfo/stdin should be closed by now. We get here only if the sender
         #dint throw an error or if receiver did not get terminated
-        out, err = rp.communicate()
-        logger.debug('rc: %d out: %s err: %s' % (rp.returncode, out, err))
+        try:
+            out, err = rp.communicate()
+            logger.debug('rc: %d out: %s err: %s' % (rp.returncode, out, err))
+        except Exception, e:
+            logger.debug('Exception while terminating receive. Probably already terminated.')
+            logger.exception(e)
+
         ack = {'msg': 'receive_ok',
-               'id': self.meta['id'],}
+               'id': self.meta['id'], }
         data = {'status': 'succeeded',
-                'end_ts': datetime.utcnow().replace(tzinfo=utc),}
+                'end_ts': datetime.utcnow().replace(tzinfo=utc), }
         if (rp.returncode != 0):
             ack['msg'] = 'receive_error'
             data['status'] = 'failed'
