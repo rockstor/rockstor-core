@@ -130,17 +130,19 @@ class ReplicaScheduler(Process):
                                                         microsecond=0,
                                                         tzinfo=utc)
                         sw = None
-                        snap_name = 'replication_snapshot'
-                        if (len(rt) == 0):
+                        snap_name = 'replication'
+                        rt2 = ReplicaTrail.objects.filter().order_by('-id')
+                        if (len(rt2) != 0):
+                            snap_name = ('%s_%d' % (snap_name, rt2[0].id + 1))
+                        else:
                             snap_name = ('%s_1' % snap_name)
+                        if (len(rt) == 0):
                             logger.debug('new sender for snap: %s' % snap_name)
                             sw = Sender(r, self.rep_ip, self.pubq, Queue(),
                                         snap_name, self.meta_port,
                                         self.data_port,
                                         r.meta_port, self.uuid)
                         elif (rt[0].status == 'succeeded'):
-                            snap_name = ('%s_%d' %
-                                         (snap_name, rt[0].id + 1))
                             if ((now - rt[0].end_ts).total_seconds() >
                                 r.frequency):
                                 logger.debug('incremental sender for snap: %s'
