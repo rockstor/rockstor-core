@@ -28,8 +28,9 @@ from datetime import datetime
 from contextlib import contextmanager
 from django.utils.timezone import utc
 from util import (create_replica_trail, update_replica_status, is_snapshot,
-                  create_snapshot)
+                  create_snapshot, delete_snapshot)
 from cli.rest_util import set_token
+from fs.btrfs import get_oldest_snap
 
 BTRFS = '/sbin/btrfs'
 logger = logging.getLogger(__name__)
@@ -254,6 +255,19 @@ class Sender(Process):
             data['status'] = 'failed'
             data['error'] = msg
             data['send_failed'] = end_ts
+        else:
+            share_path = ('%s%s/.snapshots/%s' %
+                          (settings.MNT_PT, self.replica.pool,
+                           self.replica.share))
+            logger.debug('share_path = %s' % share_path)
+            oldest_snap = get_oldest_snap(share_path, 3)
+            logger.debug('oldest snap = %s' % oldest_snap)
+            if ((oldest_snap is not None and
+                 is_snapshot(self.replica.share, oldest_snap, logger))):
+                msg = ('Failed to delete snapshot: %s. Aborting.' %
+                       oldest_snap)
+                with self._clean_exit_handler(msg):
+                    delete_snapshot(self.replica.share, oldest_snap, logger)
 
         msg = ('Failed to update final replica status for snap_name: %s'
                '. Aborting.' % self.snap_name)

@@ -153,6 +153,18 @@ def create_snapshot(sname, snap_name, logger, snap_type='replication'):
         raise
 
 
+def delete_snapshot(sname, snap_name, logger):
+    try:
+        url = ('%sshares/%s/snapshots/%s' % (BASE_URL, sname, snap_name))
+        api_call(url, calltype='delete', save_error=False)
+        return logger.debug('deleted snapshot. url: %s' % url)
+    except RockStorAPIException, e:
+        return logger.debug('Failed to delete snapshot: %s. error: %s' %
+                            (snap_name, e.detail))
+    except Exception:
+        raise
+
+
 def is_share(sname, logger):
     try:
         url = ('%sshares/%s' % (BASE_URL, sname))
