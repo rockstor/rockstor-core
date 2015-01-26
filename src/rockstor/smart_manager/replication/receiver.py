@@ -28,7 +28,7 @@ from django.conf import settings
 from contextlib import contextmanager
 from util import (create_share, create_receive_trail, update_receive_trail,
                   create_snapshot, create_rshare, rshare_id, get_sender_ip,
-                  is_snapshot)
+                  is_snapshot, delete_snapshot)
 from cli.rest_util import set_token
 from fs.btrfs import (get_oldest_snap, remove_share, set_property, is_subvol)
 from system.osi import run_command
@@ -199,9 +199,9 @@ class Receiver(Process):
                                      self.meta)
                         data['receive_succeeded'] = ts
                         #delete the share, move the oldest snap to share
-                        snap_path = get_oldest_snap(sub_vol, 3)
-                        if (snap_path is not None):
-                            snap_path = ('%s/%s' % (sub_vol, snap_path))
+                        oldest_snap = get_oldest_snap(sub_vol, 3)
+                        if (oldest_snap is not None):
+                            snap_path = ('%s/%s' % (sub_vol, oldest_snap))
                             pool = Pool.objects.get(name=self.dest_pool)
                             pool_device = Disk.objects.filter(pool=pool)[0].name
                             remove_share(pool, pool_device, sname)
@@ -217,6 +217,8 @@ class Receiver(Process):
                                          (snap_path, share_path))
                             shutil.move(snap_path, share_path)
                             set_property(share_path, 'ro', 'true', mount=False)
+                            if (is_snapshot(sname, oldest_snap, logger)):
+                                delete_snapshot(sname, oldest_snap, logger)
                     else:
                         logger.error('END_FAIL received for meta: %s. '
                                      'Terminating.' % self.meta)
