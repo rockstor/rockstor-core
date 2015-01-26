@@ -27,8 +27,14 @@ from django.utils.timezone import utc
 from django.conf import settings
 from contextlib import contextmanager
 from util import (create_share, create_receive_trail, update_receive_trail,
-                  create_snapshot, create_rshare, rshare_id, get_sender_ip)
+                  create_snapshot, create_rshare, rshare_id, get_sender_ip,
+                  is_snapshot)
 from cli.rest_util import set_token
+from fs.btrfs import (get_oldest_snap, remove_share, set_property, is_subvol)
+from system.osi import run_command
+from storageadmin.models import (Disk, Pool)
+import shutil
+
 
 BTRFS = '/sbin/btrfs'
 logger = logging.getLogger(__name__)
@@ -132,8 +138,10 @@ class Receiver(Process):
             with self._clean_exit_handler(msg):
                 self.rid = rshare_id(sname, logger)
 
-        sub_vol = ('%s%s/%s' % (settings.MNT_PT, self.meta['pool'],
-                                sname))
+        sub_vol = ('%s%s/.snapshots/%s' % (settings.MNT_PT, self.meta['pool'],
+                                           sname))
+        if (not is_subvol(sub_vol)):
+            run_command([BTRFS, 'subvolume', 'create', sub_vol])
         snap_fp = ('%s/%s' % (sub_vol, self.snap_name))
         logger.info('snap_fp: %s' % snap_fp)
         msg = ('Snaphost: %s already exists.' % snap_fp)
@@ -190,6 +198,25 @@ class Receiver(Process):
                         logger.debug('END_SUCCESS received for meta: %s' %
                                      self.meta)
                         data['receive_succeeded'] = ts
+                        #delete the share, move the oldest snap to share
+                        snap_path = get_oldest_snap(sub_vol, 3)
+                        if (snap_path is not None):
+                            snap_path = ('%s/%s' % (sub_vol, snap_path))
+                            pool = Pool.objects.get(name=self.dest_pool)
+                            pool_device = Disk.objects.filter(pool=pool)[0].name
+                            remove_share(pool, pool_device, sname)
+                            logger.debug('setting property ro to false for %s' % snap_path)
+                            set_property(snap_path, 'ro', 'false', mount=False)
+                            logger.debug('property set')
+                            share_path = ('%s%s/%s' %
+                                          (settings.MNT_PT, self.dest_pool,
+                                           sname))
+                            run_command(['/usr/bin/rm', '-rf', share_path],
+                                        throw=False)
+                            logger.debug('snap_path = %s share_path = %s' %
+                                         (snap_path, share_path))
+                            shutil.move(snap_path, share_path)
+                            set_property(share_path, 'ro', 'true', mount=False)
                     else:
                         logger.error('END_FAIL received for meta: %s. '
                                      'Terminating.' % self.meta)
@@ -198,7 +225,7 @@ class Receiver(Process):
                         data['status'] = 'failed'
 
                     msg = ('Failed to update receive trail for rtid: %d'
-                               '. meta: %s' % (self.rtid, self.meta))
+                           '. meta: %s' % (self.rtid, self.meta))
                     with self._clean_exit_handler(msg, ack=True):
                         update_receive_trail(self.rtid, data, logger)
                     break

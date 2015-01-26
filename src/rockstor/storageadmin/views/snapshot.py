@@ -114,11 +114,10 @@ class SnapshotView(rfc.GenericView):
             snap_size = 0
             qgroup_id = '0/na'
             if (snap_type != 'receiver'):
-                readonly = False
                 if (snap_type == 'replication'):
-                    readonly = True
+                    writable = False
                 add_snap(share.pool, pool_device, share.subvol_name,
-                         real_name, readonly=readonly)
+                         real_name, readonly=not writable)
                 snap_id = share_id(share.pool, pool_device, real_name)
                 qgroup_id = ('0/%s' % snap_id)
                 snap_size = share_usage(share.pool, pool_device,
@@ -145,10 +144,7 @@ class SnapshotView(rfc.GenericView):
 
             snap_type = request.DATA.get('snap_type', 'admin')
             writable = request.DATA.get('writable', 'rw')
-            if (writable == 'rw'):
-                writable = True
-            else:
-                writable = False
+            writable = True if (writable == 'rw') else False
             pool_device = Disk.objects.filter(pool=share.pool)[0].name
             if (command is None):
                 ret = self._create(share, snap_name, pool_device, request,

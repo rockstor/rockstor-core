@@ -153,7 +153,7 @@ class Sender(Process):
                % self.receiver_ip)
         with self._update_trail_and_quit(msg):
             ack = self._process_q()
-            logger.info('suman ack = %s' % ack)
+            logger.info('ack = %s' % ack)
             if (ack['msg'] == 'snap_exists'):
                 data = {'status': 'succeeded',
                         'end_ts': datetime.utcnow().replace(tzinfo=utc),
@@ -164,14 +164,14 @@ class Sender(Process):
                     update_replica_status(self.rt2_id, data, logger)
                     self._sys_exit(0)
 
-        snap_path = ('%s%s/%s_%s' % (settings.MNT_PT, self.replica.pool,
-                                     self.replica.share, self.snap_name))
+        snap_path = ('%s%s/.snapshots/%s/%s' % (settings.MNT_PT, self.replica.pool,
+                                                self.replica.share, self.snap_name))
         logger.debug('current snap: %s' % snap_path)
         cmd = [BTRFS, 'send', snap_path]
         if (self.rt is not None):
-            prev_snap = ('%s%s/%s_%s' % (settings.MNT_PT, self.replica.pool,
-                                         self.replica.share,
-                                         self.rt.snap_name))
+            prev_snap = ('%s%s/.snapshots/%s/%s' % (settings.MNT_PT, self.replica.pool,
+                                                    self.replica.share,
+                                                    self.rt.snap_name))
             logger.info('Sending incremental replica between %s -- %s' %
                         (prev_snap, snap_path))
             cmd = [BTRFS, 'send', '-p', prev_snap, snap_path]
