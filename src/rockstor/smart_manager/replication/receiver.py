@@ -114,7 +114,7 @@ class Receiver(Process):
             self.meta_push.connect('tcp://%s:%d' % (self.sender_ip,
                                                     self.meta_port))
 
-        sname = ('%s-%s-%s' % (self.sender_id, self.sender_ip, self.src_share))
+        sname = ('%s_%s' % (self.sender_id, self.src_share))
         if (not self.incremental):
             msg = ('Failed to verify/create share: %s. meta: %s. '
                    'Aborting.' % (sname, self.meta))

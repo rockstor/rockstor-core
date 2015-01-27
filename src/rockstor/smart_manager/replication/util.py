@@ -187,7 +187,6 @@ def create_share(sname, pool, logger):
         #  @todo: make share size same as pool size
         #  make it default = 2TB = 2147483648KB
         data = {'pool': pool,
-                'size': 2147483648,
                 'replica': True,
                 'sname': sname, }
         headers = {'content-type': 'application/json', }
