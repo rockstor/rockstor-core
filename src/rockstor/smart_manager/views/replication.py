@@ -58,14 +58,7 @@ class ReplicaView(rfc.GenericView):
             aip = request.DATA.get('appliance')
             self._validate_appliance(aip, request)
             dpool = request.DATA.get('pool')
-            try:
-                frequency = int(request.DATA.get('frequency', 1))
-                if (frequency < 1):
-                    frequency = 1
-            except:
-                e_msg = ('frequency must be a positive number')
-                handle_exception(Exception(e_msg), request)
-
+            frequency = self._validate_frequency(request)
             task_name = request.DATA.get('task_name')
             try:
                 data_port = int(request.DATA.get('data_port'))
@@ -93,6 +86,7 @@ class ReplicaView(rfc.GenericView):
                 e_msg = ('Replica(%s) does not exist' % rid)
                 handle_exception(Exception(e_msg), request)
 
+            r.frequency = self._validate_frequency(request, r.frequency)
             enabled = request.DATA.get('enabled', r.enabled)
             if (type(enabled) != bool):
                 e_msg = ('enabled switch must be a boolean, not %s' %
@@ -123,6 +117,16 @@ class ReplicaView(rfc.GenericView):
             e_msg = ('Valid port numbers are between 1-65535')
             handle_exception(Exception(e_msg), request)
         return port
+
+    def _validate_frequency(self, request, default=1):
+        e_msg = ('frequency must be a positive integer')
+        try:
+            frequency = int(request.DATA.get('frequency', default))
+        except:
+            handle_exception(Exception(e_msg), request)
+        if (frequency < 1):
+            handle_exception(Exception(e_msg), request)
+        return frequency
 
     def delete(self, request, rid):
         with self._handle_exception(request):
