@@ -27,8 +27,8 @@ from django.conf import settings
 from datetime import datetime
 from contextlib import contextmanager
 from django.utils.timezone import utc
-from util import (create_replica_trail, update_replica_status, is_snapshot,
-                  create_snapshot, delete_snapshot)
+from util import (create_replica_trail, update_replica_status, create_snapshot,
+                  delete_snapshot)
 from cli.rest_util import set_token
 from fs.btrfs import get_oldest_snap
 
@@ -135,10 +135,9 @@ class Sender(Process):
 
         #  2. create a snapshot only if it's not already from a previous
         #  failed attempt.
-        if (not is_snapshot(self.replica.share, self.snap_name, logger)):
-            msg = ('Failed to create snapshot: %s. Aborting.' % self.snap_name)
-            with self._clean_exit_handler(msg):
-                create_snapshot(self.replica.share, self.snap_name, logger)
+        msg = ('Failed to create snapshot: %s. Aborting.' % self.snap_name)
+        with self._clean_exit_handler(msg):
+            create_snapshot(self.replica.share, self.snap_name, logger)
 
         #  let the receiver know that following diff is coming
         msg = ('Failed to send initial metadata communication to the '
@@ -262,8 +261,7 @@ class Sender(Process):
             logger.debug('share_path = %s' % share_path)
             oldest_snap = get_oldest_snap(share_path, 3)
             logger.debug('oldest snap = %s' % oldest_snap)
-            if ((oldest_snap is not None and
-                 is_snapshot(self.replica.share, oldest_snap, logger))):
+            if (oldest_snap is not None):
                 msg = ('Failed to delete snapshot: %s. Aborting.' %
                        oldest_snap)
                 with self._clean_exit_handler(msg):
