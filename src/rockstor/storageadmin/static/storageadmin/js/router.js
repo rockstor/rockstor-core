@@ -63,6 +63,7 @@ var AppRouter = Backbone.Router.extend({
     "run_probe": "runProbe",
     "probeDetail/:probeName/:probeId": "showProbeDetail",
     "replication": "showReplication",
+    "edit-replication-task/:replicaId": "editReplicationTask",
     "replication/:replicaId/trails": "showReplicaTrails",
     "replication-receive": "showReplicationReceives",
     "replication-receive/:replicaShareId/trails": "showReceiveTrails",
@@ -399,6 +400,14 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').append(this.currentLayout.render().el);
   },
 
+  editReplicationTask: function(replicaId) {
+	    this.renderSidebar('storage', 'replication');
+	    this.cleanup();
+	    this.currentLayout = new AddReplicationTaskView({replicaId: replicaId});
+	    $('#maincontent').empty();
+	    $('#maincontent').append(this.currentLayout.render().el);
+	  },
+  
   showReplicaTrails: function(replicaId) {
     this.renderSidebar("storage", "replication");
     this.cleanup();
