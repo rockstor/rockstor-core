@@ -170,20 +170,13 @@ def is_share(sname, logger):
 
 def create_share(sname, pool, logger):
     try:
-        if (is_share(sname, logger)):
-            return logger.debug('Share(%s) already exists' % sname)
-
         url = ('%sshares' % BASE_URL)
-        #  @todo: make share size same as pool size
-        #  make it default = 2TB = 2147483648KB
         data = {'pool': pool,
                 'replica': True,
                 'sname': sname, }
         headers = {'content-type': 'application/json', }
-        res = api_call(url, data=data, calltype='post', headers=headers)
-        return logger.debug('Created share: %s' % res)
+        return api_call(url, data=data, calltype='post', headers=headers)
     except RockStorAPIException, e:
-        return logger.debug('Failed to create share: %s. It may already '
-                            'exist. error: %s' % (sname, e.detail))
-    except Exception:
-        raise
+        if (e.detail == 'Share(%s) already exists.' % sname):
+            return logger.debug(e.detail)
+        raise e
