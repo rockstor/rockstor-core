@@ -136,27 +136,23 @@ def is_snapshot(sname, snap_name, logger):
 def create_snapshot(sname, snap_name, logger, snap_type='replication'):
     try:
         url = ('%sshares/%s/snapshots/%s' % (BASE_URL, sname, snap_name))
-        snap_details = api_call(url, data={'snap_type': snap_type, },
-                                calltype='post', save_error=False)
-        return logger.debug('created snapshot. url: %s. details = %s' %
-                            (url, snap_details))
+        return api_call(url, data={'snap_type': snap_type, }, calltype='post',
+                        save_error=False)
     except RockStorAPIException, e:
-        return logger.debug('Failed to create snapshot: %s. It may already '
-                            'exist. error: %s' % (url, e.detail))
-    except Exception:
-        raise
+        if (e.detail == ('Snapshot(%s) already exists for the Share(%s).' %
+                         (snap_name, sname))):
+            return logger.debug(e.detail)
+        raise e
 
 
 def delete_snapshot(sname, snap_name, logger):
     try:
         url = ('%sshares/%s/snapshots/%s' % (BASE_URL, sname, snap_name))
-        api_call(url, calltype='delete', save_error=False)
-        return logger.debug('deleted snapshot. url: %s' % url)
+        return api_call(url, calltype='delete', save_error=False)
     except RockStorAPIException, e:
-        return logger.debug('Failed to delete snapshot: %s. error: %s' %
-                            (snap_name, e.detail))
-    except Exception:
-        raise
+        if (e.detail == 'Snapshot(%s) does not exist.' % snap_name):
+            return logger.debug(e.detail)
+        raise e
 
 
 def is_share(sname, logger):
