@@ -83,21 +83,15 @@ def rshare_id(sname, logger):
 
 def create_rshare(data, logger):
     try:
-        return rshare_id(data['share'], logger)
-    except Exception:
-        pass
-
-    try:
         url = ('%ssm/replicas/rshare' % BASE_URL)
         rshare = api_call(url, data=data, calltype='post', save_error=False)
         logger.debug('ReplicaShare: %s created.' % rshare)
         return rshare['id']
     except RockStorAPIException, e:
-        return logger.debug('Failed to create rshare: %s. It may already'
-                            ' exists. error: %s' % (url, e.detail))
-    except Exception:
-        logger.error('Failed to create Replicashare: %s' % data)
-        raise
+        if (e.detail == 'Replicashare(%s) already exists.' % data['share']):
+            logger.debug(e.detail)
+            return rshare_id(data['share'], logger)
+        raise e
 
 
 def create_receive_trail(rid, data, logger):
