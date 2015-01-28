@@ -23,7 +23,7 @@ View for things at snapshot level
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (Share, Appliance)
-from smart_manager.models import Replica
+from smart_manager.models import (Replica, ReplicaTrail)
 from smart_manager.serializers import ReplicaSerializer
 from storageadmin.util import handle_exception
 from datetime import datetime
@@ -50,7 +50,7 @@ class ReplicaView(rfc.GenericView):
         sname = request.DATA['share']
         if (Replica.objects.filter(share=sname).exists()):
             e_msg = ('Another replication task already exists for this '
-                     'share(%s). Sorry, only 1-1 replication is supported.'
+                     'share(%s). Only 1-1 replication is supported currently.'
                      % sname)
             handle_exception(Exception(e_msg), request)
         share = self._validate_share(sname, request)
@@ -75,7 +75,7 @@ class ReplicaView(rfc.GenericView):
         try:
             r = Replica.objects.get(id=rid)
         except:
-            e_msg = ('Replica with id: %s does not exist' % rid)
+            e_msg = ('Replica(%s) does not exist' % rid)
             handle_exception(Exception(e_msg), request)
 
         enabled = request.DATA['enabled']
@@ -101,3 +101,20 @@ class ReplicaView(rfc.GenericView):
         except:
             e_msg = ('Appliance with ip: %s is not recognized.' % ip)
             handle_exception(Exception(e_msg), request)
+
+    def delete(self, request, rid):
+        with self._handle_exception(request):
+            try:
+                r = Replica.objects.get(id=rid)
+            except:
+                e_msg = ('Replica(%s) does not exist' % rid)
+                handle_exception(Exception(e_msg), request)
+
+            if (r.enabled is True):
+                e_msg = ('Replica(%s) is still enabled. Disable it and '
+                         'retry.' % rid)
+                handle_exception(Exception(e_msg), request)
+
+            ReplicaTrail.objects.filter(replica=r).delete()
+            r.delete()
+            return Response()
