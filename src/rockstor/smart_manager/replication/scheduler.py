@@ -143,8 +143,8 @@ class ReplicaScheduler(Process):
                                         self.data_port,
                                         r.meta_port, self.uuid)
                         elif (rt[0].status == 'succeeded'):
-                            if ((now - rt[0].end_ts).total_seconds() >
-                                r.frequency):
+                            if (((now - rt[0].end_ts).total_seconds() >
+                                 (r.frequency * 60))):
                                 logger.debug('incremental sender for snap: %s'
                                              % snap_name)
                                 sw = Sender(r, self.rep_ip, self.pubq,

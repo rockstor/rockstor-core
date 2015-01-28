@@ -47,27 +47,42 @@ class ReplicaView(rfc.GenericView):
 
     @transaction.commit_on_success
     def post(self, request):
-        sname = request.DATA['share']
-        if (Replica.objects.filter(share=sname).exists()):
-            e_msg = ('Another replication task already exists for this '
-                     'share(%s). Only 1-1 replication is supported currently.'
-                     % sname)
-            handle_exception(Exception(e_msg), request)
-        share = self._validate_share(sname, request)
-        aip = request.DATA['appliance']
-        self._validate_appliance(aip, request)
-        dpool = request.DATA['pool']
-        frequency = int(request.DATA['frequency'])
-        task_name = request.DATA['task_name']
-        data_port = int(request.DATA['data_port'])
-        meta_port = int(request.DATA['meta_port'])
-        ts = datetime.utcnow().replace(tzinfo=utc)
-        r = Replica(task_name=task_name, share=sname, appliance=aip,
-                    pool=share.pool.name, dpool=dpool, enabled=True,
-                    frequency=frequency, data_port=data_port,
-                    meta_port=meta_port, ts=ts)
-        r.save()
-        return Response(ReplicaSerializer(r).data)
+        with self._handle_exception(request):
+            sname = request.DATA.get('share')
+            if (Replica.objects.filter(share=sname).exists()):
+                e_msg = ('Another replication task already exists for this '
+                         'share(%s). Only 1-1 replication is supported '
+                         'currently.' % sname)
+                handle_exception(Exception(e_msg), request)
+            share = self._validate_share(sname, request)
+            aip = request.DATA.get('appliance')
+            self._validate_appliance(aip, request)
+            dpool = request.DATA.get('pool')
+            try:
+                frequency = int(request.DATA.get('frequency', 1))
+                if (frequency < 1):
+                    frequency = 1
+            except:
+                e_msg = ('frequency must be a positive number')
+                handle_exception(Exception(e_msg), request)
+
+            task_name = request.DATA.get('task_name')
+            try:
+                data_port = int(request.DATA.get('data_port'))
+                meta_port = int(request.DATA.get('meta_port'))
+            except:
+                e_msg = ('data and meta ports must be valid port '
+                         'numbers(1-65535).')
+                handle_exception(Exception(e_msg), request)
+            data_port = self._validate_port(data_port, request)
+            meta_port = self._validate_port(meta_port, request)
+            ts = datetime.utcnow().replace(tzinfo=utc)
+            r = Replica(task_name=task_name, share=sname, appliance=aip,
+                        pool=share.pool.name, dpool=dpool, enabled=True,
+                        frequency=frequency, data_port=data_port,
+                        meta_port=meta_port, ts=ts)
+            r.save()
+            return Response(ReplicaSerializer(r).data)
 
     @transaction.commit_on_success
     def put(self, request, rid):
@@ -102,6 +117,12 @@ class ReplicaView(rfc.GenericView):
         except:
             e_msg = ('Appliance with ip: %s is not recognized.' % ip)
             handle_exception(Exception(e_msg), request)
+
+    def _validate_port(self, port, request):
+        if (port < 1 or port > 65535):
+            e_msg = ('Valid port numbers are between 1-65535')
+            handle_exception(Exception(e_msg), request)
+        return port
 
     def delete(self, request, rid):
         with self._handle_exception(request):
