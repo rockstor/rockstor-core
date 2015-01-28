@@ -26,6 +26,7 @@
 
 ReplicationView = RockstorLayoutView.extend({
   events: {
+	'click a[data-action=delete]': 'deleteTask',
     'click .slider-start': 'enable',
     'click .slider-stop': 'disable'
   },
@@ -158,6 +159,33 @@ ReplicationView = RockstorLayoutView.extend({
       }
     });
   },
+  
+  deleteTask: function(event) {
+	    var _this = this;
+	    if (event) { event.preventDefault(); }
+	    var button = $(event.currentTarget);
+	    if (buttonDisabled(button)) return false;
+	    var rTaskId = $(event.currentTarget).attr("data-task-id");
+	    var rTaskName = $(event.currentTarget).attr("data-task-name");
+	    if(confirm("Delete Replication task:  " + rTaskName + ". Are you sure?")){
+	      $.ajax({
+	        url: '/api/sm/replicas/' + rTaskId,
+	        type: "DELETE",
+	        dataType: "json",
+	        success: function() {
+	          enableButton(button);
+	          _this.collection.fetch({
+	            success: function() {
+	              _this.renderReplicas();
+	            }
+	          });
+	        },
+	        error: function(xhr, status, error) {
+	          enableButton(button);
+	        }
+	      });
+	    }
+	  },
 
   setSliderVal: function(serviceName, val) {
     this.$('input[data-replica-id="' + serviceName + '"]').simpleSlider('setValue',val);
