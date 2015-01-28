@@ -71,22 +71,23 @@ class ReplicaView(rfc.GenericView):
 
     @transaction.commit_on_success
     def put(self, request, rid):
-        ts = datetime.utcnow().replace(tzinfo=utc)
-        try:
-            r = Replica.objects.get(id=rid)
-        except:
-            e_msg = ('Replica(%s) does not exist' % rid)
-            handle_exception(Exception(e_msg), request)
+        with self._handle_exception(request):
+            try:
+                r = Replica.objects.get(id=rid)
+            except:
+                e_msg = ('Replica(%s) does not exist' % rid)
+                handle_exception(Exception(e_msg), request)
 
-        enabled = request.DATA['enabled']
-        if (enabled == 'False'):
-            enabled = False
-        else:
-            enabled = True
-        r.enabled = enabled
-        r.ts = ts
-        r.save()
-        return Response(ReplicaSerializer(r).data)
+            enabled = request.DATA.get('enabled', r.enabled)
+            if (type(enabled) != bool):
+                e_msg = ('enabled switch must be a boolean, not %s' %
+                         type(enabled))
+                handle_exception(Exception(e_msg), request)
+            r.enabled = enabled
+            ts = datetime.utcnow().replace(tzinfo=utc)
+            r.ts = ts
+            r.save()
+            return Response(ReplicaSerializer(r).data)
 
     def _validate_share(self, sname, request):
         try:
