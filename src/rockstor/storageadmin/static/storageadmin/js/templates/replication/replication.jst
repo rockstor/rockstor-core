@@ -50,7 +50,7 @@
         <tbody>
           <% replicas.each(function(replica, index) { %>
             <tr>
-              <td><%= replica.get('task_name') %></td>
+              <td><%= replica.get('task_name') %><a href="#" data-task-name="<%= replica.get('task_name') %>" data-task-id="<%= replica.id %>" data-action="delete"><i class="icon-trash" rel="tooltip" title="Delete"></i></a></td>
               <td><%= replica.get('share') %></td>
               <td><%= replica.get('appliance') %></td>
               <td><%= replica.get('dpool') %></td>
