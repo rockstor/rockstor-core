@@ -84,7 +84,7 @@ class ShareView(rfc.GenericView):
     def put(self, request, sname):
         with self._handle_exception(request):
             if (not Share.objects.filter(name=sname).exists()):
-                e_msg = ('Share with name: %s does not exist' % sname)
+                e_msg = ('Share(%s) does not exist.' % sname)
                 handle_exception(Exception(e_msg), request)
 
             share = Share.objects.get(name=sname)
@@ -109,7 +109,7 @@ class ShareView(rfc.GenericView):
             try:
                 pool = Pool.objects.get(name=pool_name)
             except:
-                e_msg = ('Pool with name: %s does not exist.' % pool_name)
+                e_msg = ('Pool(%s) does not exist.' % pool_name)
                 handle_exception(Exception(e_msg), request)
             compression = self._validate_compression(request)
             size = self._validate_share_size(request, pool)
@@ -123,13 +123,13 @@ class ShareView(rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
 
             if (Share.objects.filter(name=sname).exists()):
-                e_msg = ('Share with name: %s already exists.' % sname)
+                e_msg = ('Share(%s) already exists.' % sname)
                 handle_exception(Exception(e_msg), request)
 
             try:
                 disk = Disk.objects.filter(pool=pool)[0]
             except:
-                e_msg = ('Pool with name: %s does not have any disks in it.' %
+                e_msg = ('Pool(%s) does not have any disks in it.' %
                          pool_name)
                 handle_exception(Exception(e_msg), request)
 
@@ -170,7 +170,7 @@ class ShareView(rfc.GenericView):
             try:
                 share = Share.objects.get(name=sname)
             except:
-                e_msg = ('Share: %s does not exist' % sname)
+                e_msg = ('Share(%s) does not exist.' % sname)
                 handle_exception(Exception(e_msg), request)
 
             if (Snapshot.objects.filter(share=share,
