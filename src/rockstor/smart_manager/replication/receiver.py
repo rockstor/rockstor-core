@@ -28,7 +28,7 @@ from django.conf import settings
 from contextlib import contextmanager
 from util import (create_share, create_receive_trail, update_receive_trail,
                   create_snapshot, create_rshare, rshare_id, get_sender_ip,
-                  is_snapshot, delete_snapshot)
+                  delete_snapshot)
 from cli.rest_util import set_token
 from fs.btrfs import (get_oldest_snap, remove_share, set_property, is_subvol)
 from system.osi import run_command
@@ -141,12 +141,15 @@ class Receiver(Process):
         sub_vol = ('%s%s/.snapshots/%s' % (settings.MNT_PT, self.meta['pool'],
                                            sname))
         if (not is_subvol(sub_vol)):
-            run_command([BTRFS, 'subvolume', 'create', sub_vol])
+            msg = ('Failed to create parent subvolume %s' % sub_vol)
+            with self._clean_exit_handler(msg, ack=True):
+                run_command([BTRFS, 'subvolume', 'create', sub_vol])
+
         snap_fp = ('%s/%s' % (sub_vol, self.snap_name))
         logger.info('snap_fp: %s' % snap_fp)
         msg = ('Snaphost: %s already exists.' % snap_fp)
         with self._clean_exit_handler(msg):
-            if (os.path.isdir(snap_fp)):
+            if (is_subvol(snap_fp)):
                 ack = {'msg': 'snap_exists',
                        'id': self.meta['id'], }
                 self.meta_push.send_json(ack)
@@ -180,9 +183,8 @@ class Receiver(Process):
                            self.snap_name)
                     # create a snapshot only if it's not already from a previous failed attempt
                     with self._clean_exit_handler(msg, ack=True):
-                        if (not is_snapshot(sname, self.snap_name, logger)):
-                            create_snapshot(sname, self.snap_name, logger,
-                                            snap_type='receiver')
+                        create_snapshot(sname, self.snap_name, logger,
+                                        snap_type='receiver')
 
                     data = {'snap_name': self.snap_name}
                     msg = ('Failed to create receive trail for rid: %d'
@@ -202,23 +204,27 @@ class Receiver(Process):
                         oldest_snap = get_oldest_snap(sub_vol, 3)
                         if (oldest_snap is not None):
                             snap_path = ('%s/%s' % (sub_vol, oldest_snap))
-                            pool = Pool.objects.get(name=self.dest_pool)
-                            pool_device = Disk.objects.filter(pool=pool)[0].name
-                            remove_share(pool, pool_device, sname)
-                            logger.debug('setting property ro to false for %s' % snap_path)
-                            set_property(snap_path, 'ro', 'false', mount=False)
-                            logger.debug('property set')
                             share_path = ('%s%s/%s' %
                                           (settings.MNT_PT, self.dest_pool,
                                            sname))
-                            run_command(['/usr/bin/rm', '-rf', share_path],
-                                        throw=False)
-                            logger.debug('snap_path = %s share_path = %s' %
-                                         (snap_path, share_path))
-                            shutil.move(snap_path, share_path)
-                            set_property(share_path, 'ro', 'true', mount=False)
-                            if (is_snapshot(sname, oldest_snap, logger)):
+                            msg = ('Failed to promote the oldest Snapshot(%s) '
+                                   'to Share(%s)' % (snap_path, share_path))
+                            try:
+                                pool = Pool.objects.get(name=self.dest_pool)
+                                pool_device = Disk.objects.filter(
+                                    pool=pool)[0].name
+                                remove_share(pool, pool_device, sname)
+                                set_property(snap_path, 'ro', 'false',
+                                             mount=False)
+                                run_command(['/usr/bin/rm', '-rf', share_path],
+                                            throw=False)
+                                shutil.move(snap_path, share_path)
+                                set_property(share_path, 'ro', 'true',
+                                             mount=False)
                                 delete_snapshot(sname, oldest_snap, logger)
+                            except Exception, e:
+                                logger.error(msg)
+                                logger.exception(msg)
                     else:
                         logger.error('END_FAIL received for meta: %s. '
                                      'Terminating.' % self.meta)
@@ -232,8 +238,11 @@ class Receiver(Process):
                         update_receive_trail(self.rtid, data, logger)
                     break
                 if (rp.poll() is None):
+                    logger.debug('receive still running')
                     rp.stdin.write(recv_data)
+                    logger.debug('wrote recv_data')
                     rp.stdin.flush()
+                    logger.debug('flushed recv_data')
                 else:
                     logger.error('It seems the btrfs receive process died'
                                  ' unexpectedly.')
@@ -243,15 +252,15 @@ class Receiver(Process):
                            'command. out: %s err: %s for rtid: %s meta: %s'
                            % (out, err, self.rtid, self.meta))
                     with self._clean_exit_handler(msg, ack=True):
-                        data = {'receive_failed': (
-                            datetime.utcnow().replace(tzinfo=utc)),
+                        ts = datetime.utcnow().replace(tzinfo=utc)
+                        data = {'receive_failed': ts,
                                 'status': 'failed',
-                                'error': msg,}
+                                'error': msg, }
                         update_receive_trail(self.rtid, data, logger)
             except zmq.error.Again:
                 recv_timeout_counter = recv_timeout_counter + 1
-                if (recv_timeout_counter > 300):
-                    logger.error('Nothing received in the last 30 seconds '
+                if (recv_timeout_counter > 600):
+                    logger.error('Nothing received in the last 60 seconds '
                                  'from the sender for meta: %s. Aborting.'
                                  % self.meta)
                     raise
@@ -283,7 +292,8 @@ class Receiver(Process):
             out, err = rp.communicate()
             logger.debug('rc: %d out: %s err: %s' % (rp.returncode, out, err))
         except Exception, e:
-            logger.debug('Exception while terminating receive. Probably already terminated.')
+            logger.debug('Exception while terminating receive. Probably '
+                         'already terminated.')
             logger.exception(e)
 
         ack = {'msg': 'receive_ok',
