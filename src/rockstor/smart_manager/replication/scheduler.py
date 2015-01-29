@@ -21,7 +21,7 @@ import zmq
 import os
 import time
 from datetime import datetime
-from smart_manager.models import (Replica, ReplicaTrail)
+from smart_manager.models import (Replica, ReplicaTrail, ReplicaShare)
 from django.conf import settings
 from sender import Sender
 from receiver import Receiver
@@ -30,7 +30,7 @@ from cli.rest_util import (api_call, set_token)
 import logging
 logger = logging.getLogger(__name__)
 from django.db import DatabaseError
-from util import (update_replica_status, disable_replica)
+from util import (update_replica_status, disable_replica, prune_receive_trail)
 
 
 class ReplicaScheduler(Process):
@@ -45,6 +45,7 @@ class ReplicaScheduler(Process):
         self.recv_meta = None
         self.pubq = Queue()
         self.uuid = None
+        self.prune_time = int(time.time())
         set_token()
         super(ReplicaScheduler, self).__init__()
 
@@ -119,6 +120,12 @@ class ReplicaScheduler(Process):
                 pass
 
             self._prune_workers((self.receivers, self.senders))
+
+            if (int(time.time()) - self.prune_time > 3600):
+                self.prune_time = int(time.time())
+                for rs in ReplicaShare.objects.all():
+                    prune_receive_trail(rs.id, logger)
+                    logger.debug('pruned receive trail for rshare(%d)' % rs.id)
 
             if (total_sleep >= 60 and len(self.senders) < 50):
                 logger.debug('scanning for replicas')

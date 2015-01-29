@@ -116,6 +116,16 @@ def update_receive_trail(rtid, data, logger):
         raise
 
 
+def prune_receive_trail(rid, logger):
+    url = ('%ssm/replicas/rtrail/rshare/%d' % (BASE_URL, rid))
+    try:
+        data = {'days': 7, }
+        return api_call(url, data=data, calltype='delete', save_error=False)
+    except Exception, e:
+        logger.debug('Failed to prune receive trail for rshare(%s)' % rid)
+        logger.exception(e)
+
+
 def is_snapshot(sname, snap_name, logger):
     try:
         #  do a get and see if the snapshot is already created
