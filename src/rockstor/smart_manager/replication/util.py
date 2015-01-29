@@ -51,8 +51,9 @@ def update_replica_status(rid, data, logger):
 def disable_replica(rid, logger):
     try:
         url = ('%ssm/replicas/%d' % (BASE_URL, rid))
+        headers = {'content-type': 'application/json', }
         api_call(url, data={'enabled': False, }, calltype='put',
-                 save_error=False)
+                 save_error=False, headers=headers)
         return logger.info('Replica(%s) is disabled' % url)
     except Exception, e:
         logger.error('Failed to disable replica(%s)' % url)
