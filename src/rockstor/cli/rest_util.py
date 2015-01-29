@@ -30,7 +30,7 @@ from base_console import BaseConsole
 API_TOKEN = None
 
 
-def set_token(client_id=None, client_secret=None, url=None):
+def set_token(client_id=None, client_secret=None, url=None, logger=None):
     if (client_id is None or client_secret is None or url is None):
         os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
         from storageadmin.models import OauthApp
@@ -51,9 +51,16 @@ def set_token(client_id=None, client_secret=None, url=None):
     response = requests.post('%s/o/token/' % url,
                              data=token_request_data, headers=auth_headers,
                              verify=False)
-    content = json.loads(response.content.decode("utf-8"))
-    global API_TOKEN
-    API_TOKEN = content['access_token']
+    try:
+        content = json.loads(response.content.decode("utf-8"))
+        global API_TOKEN
+        API_TOKEN = content['access_token']
+    except Exception, e:
+        if (logger is not None):
+            logger.exception(e)
+        msg = ('Exception while setting access_token for url(%s). Make sure '
+               'credentials are correct.' % url)
+        raise Exception(msg)
 
 
 def api_error(console_func):
