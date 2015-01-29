@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 class Sender(Process):
 
     def __init__(self, replica, sender_ip, pub, q, snap_name, smeta_port,
-                 sdata_port, rmeta_port, uuid, rt=None):
+                 sdata_port, rmeta_port, uuid, snap_id, rt=None):
         self.replica = replica
         self.receiver_ip = self.replica.appliance
         self.smeta_port = smeta_port
@@ -54,10 +54,7 @@ class Sender(Process):
         self.rt2 = None
         self.rt2_id = None
         self.ppid = os.getpid()
-        self.snap_id = ('%s_%s_%s_%s' %
-                        (self.sender_ip, self.replica.pool, self.replica.share,
-                         self.snap_name))
-        self.snap_id = str(self.snap_id)
+        self.snap_id = str(snap_id)  # must be ascii for zmq
         self.meta_begin = {'id': self.snap_id,
                            'msg': 'begin',
                            'pool': self.replica.dpool,

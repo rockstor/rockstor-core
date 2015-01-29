@@ -137,21 +137,23 @@ class ReplicaScheduler(Process):
                             snap_name = ('%s_%d' % (snap_name, rt2[0].id + 1))
                         else:
                             snap_name = ('%s_1' % snap_name)
+                        snap_id = ('%s_%s_%s_%s' %
+                                   (self.uuid, r.pool, r.share, snap_name))
                         if (len(rt) == 0):
                             logger.debug('new sender for snap: %s' % snap_name)
                             sw = Sender(r, self.rep_ip, self.pubq, Queue(),
                                         snap_name, self.meta_port,
-                                        self.data_port,
-                                        r.meta_port, self.uuid)
+                                        self.data_port, r.meta_port, self.uuid,
+                                        snap_id)
                         elif (rt[0].status == 'succeeded'):
                             if (((now - rt[0].end_ts).total_seconds() >
                                  (r.frequency * 60))):
                                 logger.debug('incremental sender for snap: %s'
                                              % snap_name)
-                                sw = Sender(r, self.rep_ip, self.pubq,
-                                            Queue(), snap_name, self.meta_port,
-                                            self.data_port,
-                                            r.meta_port, self.uuid, rt[0])
+                                sw = Sender(r, self.rep_ip, self.pubq, Queue(),
+                                            snap_name, self.meta_port,
+                                            self.data_port, r.meta_port,
+                                            self.uuid, snap_id, rt[0])
                             else:
                                 logger.debug('its not time yet for '
                                              'incremental sender for snap: '
@@ -204,14 +206,12 @@ class ReplicaScheduler(Process):
                             sw = Sender(r, self.rep_ip, self.pubq, Queue(),
                                         snap_name, self.meta_port,
                                         self.data_port, r.meta_port,
-                                        self.uuid, prev_rt)
+                                        self.uuid, snap_id, prev_rt)
                         else:
                             logger.error('unknown replica trail status: %s. '
                                          'ignoring snap: %s' %
                                          (rt[0].status, snap_name))
                             continue
-                        snap_id = ('%s_%s_%s_%s' %
-                                   (self.rep_ip, r.pool, r.share, snap_name))
                         self.senders[snap_id] = sw
                         sw.daemon = True
                         sw.start()
