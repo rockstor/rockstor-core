@@ -41,6 +41,7 @@ class ReplicaScheduler(Process):
         self.receivers = {}
         self.data_port = settings.REPLICA_DATA_PORT
         self.meta_port = settings.REPLICA_META_PORT
+        self.MAX_ATTEMPTS = settings.MAX_REPLICA_SEND_ATTEMPTS
         self.recv_meta = None
         self.pubq = Queue()
         self.uuid = None
@@ -178,24 +179,23 @@ class ReplicaScheduler(Process):
                             snap_name = rt[0].snap_name
                             #  if num_failed attempts > 10, disable the replica
                             num_tries = 0
-                            MAX_ATTEMPTS = 10
                             for rto in rt:
                                 if (rto.status != 'failed' or
-                                    num_tries >= MAX_ATTEMPTS or
+                                    num_tries >= self.MAX_ATTEMPTS or
                                     rto.end_ts < r.ts):
                                     break
                                 num_tries = num_tries + 1
-                            if (num_tries >= MAX_ATTEMPTS):
+                            if (num_tries >= self.MAX_ATTEMPTS):
                                 logger.info('Maximum attempts(%d) reached '
                                             'for snap: %s. Disabling the '
                                             'replica.' %
-                                            (MAX_ATTEMPTS, snap_name))
+                                            (self.MAX_ATTEMPTS, snap_name))
                                 disable_replica(r.id, logger)
                                 continue
                             logger.info('previous backup failed for snap: '
                                         '%s. Starting a new one. Attempt '
                                         '%d/%d.' % (snap_name, num_tries,
-                                                    MAX_ATTEMPTS))
+                                                    self.MAX_ATTEMPTS))
                             prev_rt = None
                             for rto in rt:
                                 if (rto.status == 'succeeded'):
