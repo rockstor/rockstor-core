@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 
 class Receiver(Process):
 
-    def __init__(self, meta, q):
+    def __init__(self, meta):
         self.meta = meta
         self.meta_port = self.meta['meta_port']
         self.data_port = self.meta['data_port']
@@ -52,7 +52,6 @@ class Receiver(Process):
         self.incremental = self.meta['incremental']
         self.snap_name = self.meta['snap']
         self.sender_id = self.meta['uuid']
-        self.q = q
         self.ppid = os.getpid()
         self.kb_received = 0
         self.rid = None

@@ -107,7 +107,7 @@ class ReplicaScheduler(Process):
                 logger.debug('meta received: %s' % self.recv_meta)
                 if (self.recv_meta['msg'] == 'begin'):
                     logger.debug('begin received. meta: %s' % self.recv_meta)
-                    rw = Receiver(self.recv_meta, Queue())
+                    rw = Receiver(self.recv_meta)
                     self.receivers[snap_id] = rw
                     rw.start()
                 elif (snap_id not in self.senders):
