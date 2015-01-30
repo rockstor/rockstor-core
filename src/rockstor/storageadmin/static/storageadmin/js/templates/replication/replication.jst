@@ -21,92 +21,92 @@
 
 
 <% if (!replicationService.get('status')) { %>
-  <div class="alert">
-    <strong>Warning!</strong> The Replication service is not turned on. You can start it on the <a href="#services">Services</a> page.
-  </div>
+<div class="alert">
+<strong>Warning!</strong> The Replication service is not turned on. You can start it on the <a href="#services">Services</a> page.
+</div>
 <% } %>
 
 <div class="messages"></div>
 <div id="details-header">
-  <span class="h3">Replication Send Tasks on this appliance</span>
+<span class="h3">Replication Send Tasks on this appliance</span>
 </div>
 <% if (!replicas.isEmpty()) { %>
-  <div class="row-fluid">
-    <div class="span12">
-      <div class="messages"></div>
-      <!-- Content -->
-      <table id="replicas-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of replicas">
-        <thead>
-          <tr>
-            <th scope="col" abbr="Share">Task name </th>
-            <th scope="col" abbr="Share">Source (Share) </th>
-            <th scope="col" abbr="Appliance">Destination Appliance</th>
-            <th scope="col" abbr="Appliance">Destination Pool</th>
-            <th scope="col" abbr="Frequency">Frequency</th>
-            <th scope="col" abbr="Last">Last backup</th>
-            <th scope="col" abbr="Actions">Enable/Disable</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% replicas.each(function(replica, index) { %>
-            <tr>
-              <td><%= replica.get('task_name') %></td>
-              <td><%= replica.get('share') %></td>
-              <td><%= replica.get('appliance') %></td>
-              <td><%= replica.get('dpool') %></td>
-              <td><%= moment.duration(replica.get('frequency')*1000).humanize() %></td>
-              <td>
-                <% if (replicaTrailMap[replica.id]) { %>
-                  <% if (replicaTrailMap[replica.id].length > 0) { %>
-                    <% var rt = replicaTrailMap[replica.id][0]; %>
-                    <% if (rt.get('status') == 'failed') { %>
-                      <a href="#replication/<%= replica.id %>/trails" class="replica-trail"><i class="fa fa-exclamation-circle"></i> <%= rt.get('status') %></a>
-                    <% } else if (rt.get('status') == 'pending') { %>
-                      <a href="#replication/<%= replica.id %>/trails" class="replica-trail"><%= rt.get('status') %></a>
+<div class="row-fluid">
+<div class="span12">
+<div class="messages"></div>
+<!-- Content -->
+<table id="replicas-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of replicas">
+<thead>
+<tr>
+<th scope="col" abbr="Share">Task name </th>
+<th scope="col" abbr="Share">Source (Share) </th>
+<th scope="col" abbr="Appliance">Destination Appliance</th>
+<th scope="col" abbr="Appliance">Destination Pool</th>
+<th scope="col" abbr="Frequency">Frequency</th>
+<th scope="col" abbr="Last">Last backup</th>
+<th scope="col" abbr="Actions">Enable/Disable</th>
+</tr>
+</thead>
+<tbody>
+<% replicas.each(function(replica, index) { %>
+<tr>
+<td><a href="#edit-replication-task/<%= replica.id %>"><%= replica.get('task_name') %></a>&nbsp;<a href="#" data-task-name="<%= replica.get('task_name') %>" data-task-id="<%= replica.id %>" data-action="delete"><i class="icon-trash" rel="tooltip" title="Delete"></i></a></td>
+<td><%= replica.get('share') %></td>
+<td><%= replica.get('appliance') %></td>
+<td><%= replica.get('dpool') %></td>
+<td><%= moment.duration(replica.get('frequency')*1000).humanize() %></td>
+<td>
+<% if (replicaTrailMap[replica.id]) { %>
+<% if (replicaTrailMap[replica.id].length > 0) { %>
+<% var rt = replicaTrailMap[replica.id][0]; %>
+<% if (rt.get('status') == 'failed') { %>
+<a href="#replication/<%= replica.id %>/trails" class="replica-trail"><i class="fa fa-exclamation-circle"></i> <%= rt.get('status') %></a>
+<% } else if (rt.get('status') == 'pending') { %>
+<a href="#replication/<%= replica.id %>/trails" class="replica-trail"><%= rt.get('status') %></a>
 
-                    <% } else if (rt.get('status') == 'succeeded') { %>
-                      <a href="#replication/<%= replica.id %>/trails" class="replica-trail"><%= moment(rt.get('end_ts')).fromNow() %></a>
-                    <% } %>
-                  <% } %>
-                <% } %>
+<% } else if (rt.get('status') == 'succeeded') { %>
+<a href="#replication/<%= replica.id %>/trails" class="replica-trail"><%= moment(rt.get('end_ts')).fromNow() %></a>
+<% } %>
+<% } %>
+<% } %>
 
-              </td>
-              <td>
-                
-                <% if (replica.get('enabled')) { %>
-                  <div class="slider-stop" data-replica-id="<%= replica.id %>">OFF</div>
-                  <div class="slider-ph">
-                    <input type="text" class="replication-status" value="1" data-replica-id="<%= replica.id %>"></input>
-                  </div>
-                  <div class="slider-start on" data-replica-id="<%= replica.id %>">ON</div>
-                <% } else { %>
-                  <div class="slider-stop" data-replica-id="<%= replica.id %>">OFF</div>
-                  <div class="slider-ph">
-                    <input type="text" class="replication-status" value="0" data-replica-id="<%= replica.id %>"></input>
-                  </div>
-                  <div class="slider-start" data-replica-id="<%= replica.id %>">ON</div>
-                <% } %>
+</td>
+<td>
 
-
-              </td>
-            </tr>
-          <% }); %>
-        </tbody>
-      </table>
-      <div class="ph-pagination"></div>
-    </div> <!-- span12 -->
-  </div> <!-- row-fluid -->
+<% if (replica.get('enabled')) { %>
+<div class="slider-stop" data-replica-id="<%= replica.id %>">OFF</div>
+<div class="slider-ph">
+<input type="text" class="replication-status" value="1" data-replica-id="<%= replica.id %>"></input>
+</div>
+<div class="slider-start on" data-replica-id="<%= replica.id %>">ON</div>
 <% } else { %>
-  <div class="alert"><h4>No replication tasks have been created</h4></div>
+<div class="slider-stop" data-replica-id="<%= replica.id %>">OFF</div>
+<div class="slider-ph">
+<input type="text" class="replication-status" value="0" data-replica-id="<%= replica.id %>"></input>
+</div>
+<div class="slider-start" data-replica-id="<%= replica.id %>">ON</div>
+<% } %>
+
+
+</td>
+</tr>
+<% }); %>
+</tbody>
+</table>
+<div class="ph-pagination"></div>
+</div> <!-- span12 -->
+</div> <!-- row-fluid -->
+<% } else { %>
+<div class="alert"><h4>No replication tasks have been created</h4></div>
 <% } %>
 
 <% if (otherAppliances.length > 0 && freeShares.length > 0) { %>
-  <a href="#add_replication_task" class="btn btn-primary">Add Replication Task</a>
+<a href="#add_replication_task" class="btn btn-primary">Add Replication Task</a>
 <% } else { %>
-  <% if (otherAppliances.length == 0) { %>
-    <div class="alert"><h4>No other RockStor appliances have been connected. At least one other appliance must be connected to setup a replication task. You can connect to an appliance on the <a href=#appliances>Appliances</a> page.</h4></div>
-  <% } %>
-  <% if (freeShares.length == 0) { %>
-    <div class="alert"><h4>All existing shares have replication tasks setup. Create a new share to setup a new replication task.</h4>
-  <% } %>
+<% if (otherAppliances.length == 0) { %>
+<div class="alert"><h4>No other RockStor appliances have been connected. At least one other appliance must be connected to setup a replication task. You can connect to an appliance on the <a href=#appliances>Appliances</a> page.</h4></div>
+<% } %>
+<% if (freeShares.length == 0) { %>
+<div class="alert"><h4>All existing shares have replication tasks setup. Create a new share to setup a new replication task.</h4>
+<% } %>
 <% } %>

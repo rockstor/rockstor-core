@@ -55,16 +55,20 @@ class ShareView(rfc.GenericView):
                           reverse=reverse)
         return Share.objects.all()
 
-    def _validate_share_size(self, request, size):
-        e_msg = None
+    def _validate_share_size(self, request, pool):
+        size = request.DATA.get('size', pool.size)
+        try:
+            size = int(size)
+        except:
+            handle_exception(Exception('Share size must be an integer'),
+                             request)
         if (size < settings.MIN_SHARE_SIZE):
             e_msg = ('Share size should atleast be %dKB. Given size is %dKB'
                      % (settings.MIN_SHARE_SIZE, size))
-        elif (size > settings.MAX_SHARE_SIZE):
-            e_msg = ('Share size cannot be more than %dKB. Given size '
-                     'is %dKB' % (settings.MAX_SHARE_SIZE, size))
-        if (e_msg is not None):
             handle_exception(Exception(e_msg), request)
+        if (size > pool.size):
+            return pool.size
+        return size
 
     def _validate_compression(self, request):
         compression = request.DATA.get('compression', 'no')
@@ -80,13 +84,11 @@ class ShareView(rfc.GenericView):
     def put(self, request, sname):
         with self._handle_exception(request):
             if (not Share.objects.filter(name=sname).exists()):
-                e_msg = ('Share with name: %s does not exist' % sname)
+                e_msg = ('Share(%s) does not exist.' % sname)
                 handle_exception(Exception(e_msg), request)
 
             share = Share.objects.get(name=sname)
-            new_size = int(request.DATA['size'])
-            self._validate_share_size(request, new_size)
-
+            new_size = self._validate_share_size(request, share.pool)
             disk = Disk.objects.filter(pool=share.pool)[0]
             qgroup_id = self._update_quota(share.pool, disk.name,
                                            share.subvol_name, new_size)
@@ -103,34 +105,31 @@ class ShareView(rfc.GenericView):
     @transaction.commit_on_success
     def post(self, request):
         with self._handle_exception(request):
-            sname = request.DATA['sname']
-            pool_name = request.DATA['pool']
+            pool_name = request.DATA.get('pool', None)
+            try:
+                pool = Pool.objects.get(name=pool_name)
+            except:
+                e_msg = ('Pool(%s) does not exist.' % pool_name)
+                handle_exception(Exception(e_msg), request)
             compression = self._validate_compression(request)
-            size = int(request.DATA['size'])  # in KB
-            if (re.match('%s$' % settings.SHARE_REGEX, sname) is None):
-                e_msg = ('Share name must start with a letter(a-z) and can'
-                         ' be followed by any of the following characters: '
+            size = self._validate_share_size(request, pool)
+            sname = request.DATA.get('sname', None)
+            if ((sname is None or
+                 re.match('%s$' % settings.SHARE_REGEX, sname) is None)):
+                e_msg = ('Share name must start with a letter(a-z) and can '
+                         'be followed by any of the following characters: '
                          'letter(a-z), digits(0-9), hyphen(-), underscore'
                          '(_) or a period(.).')
                 handle_exception(Exception(e_msg), request)
 
             if (Share.objects.filter(name=sname).exists()):
-                e_msg = ('Share with name: %s already exists.' % sname)
+                e_msg = ('Share(%s) already exists.' % sname)
                 handle_exception(Exception(e_msg), request)
 
-            self._validate_share_size(request, size)
-            pool = None
-            try:
-                pool = Pool.objects.get(name=pool_name)
-            except:
-                e_msg = ('Pool with name: %s does not exist.' % pool_name)
-                handle_exception(Exception(e_msg), request)
-
-            disk = None
             try:
                 disk = Disk.objects.filter(pool=pool)[0]
             except:
-                e_msg = ('Pool with name: %s does not have any disks in it.' %
+                e_msg = ('Pool(%s) does not have any disks in it.' %
                          pool_name)
                 handle_exception(Exception(e_msg), request)
 
@@ -171,14 +170,13 @@ class ShareView(rfc.GenericView):
             try:
                 share = Share.objects.get(name=sname)
             except:
-                e_msg = ('Share: %s does not exist' % sname)
+                e_msg = ('Share(%s) does not exist.' % sname)
                 handle_exception(Exception(e_msg), request)
 
             if (Snapshot.objects.filter(share=share,
                                         snap_type='replication').exists()):
                 e_msg = ('Share(%s) cannot be deleted as it has replication '
-                         'related snapshots. This Share cannot be deleted' %
-                         sname)
+                         'related snapshots.' % sname)
                 handle_exception(Exception(e_msg), request)
 
             if (NFSExport.objects.filter(share=share).exists()):

@@ -5,6 +5,7 @@
     <table class="table table-condensed table-bordered table-hover table-striped tablesorter"style="width: 100%">
       <thead>
         <tr>
+          <th scope="col" abbr="ID">Appliance ID</th>
           <th scope="col" abbr="IP">Appliance IP</th>
           <th scope="col" abbr="IP">Management Port</th>
           <th scope="col" abbr="Action">Actions</th>
@@ -13,6 +14,7 @@
       <tbody>
       <% collection.each(function(appliance) { %>
         <tr>
+        <td><%= appliance.get('uuid') %></td>
           <td>
             <i class="fa fa-desktop"></i>&nbsp;
             <% if (appliance.get('current_appliance')) { %>

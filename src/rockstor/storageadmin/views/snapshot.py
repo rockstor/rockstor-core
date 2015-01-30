@@ -105,8 +105,8 @@ class SnapshotView(rfc.GenericView):
     def _create(self, share, snap_name, pool_device, request, uvisible,
                 snap_type, writable):
         if (Snapshot.objects.filter(share=share, name=snap_name).exists()):
-            e_msg = ('Snapshot with name: %s already exists for the '
-                     'share: %s' % (snap_name, share.name))
+            e_msg = ('Snapshot(%s) already exists for the Share(%s).' %
+                     (snap_name, share.name))
             handle_exception(Exception(e_msg), request)
 
         try:
@@ -114,8 +114,10 @@ class SnapshotView(rfc.GenericView):
             snap_size = 0
             qgroup_id = '0/na'
             if (snap_type != 'receiver'):
+                if (snap_type == 'replication'):
+                    writable = False
                 add_snap(share.pool, pool_device, share.subvol_name,
-                         real_name, readonly=False)
+                         real_name, readonly=not writable)
                 snap_id = share_id(share.pool, pool_device, real_name)
                 qgroup_id = ('0/%s' % snap_id)
                 snap_size = share_usage(share.pool, pool_device,
@@ -142,10 +144,7 @@ class SnapshotView(rfc.GenericView):
 
             snap_type = request.DATA.get('snap_type', 'admin')
             writable = request.DATA.get('writable', 'rw')
-            if (writable == 'rw'):
-                writable = True
-            else:
-                writable = False
+            writable = True if (writable == 'rw') else False
             pool_device = Disk.objects.filter(pool=share.pool)[0].name
             if (command is None):
                 ret = self._create(share, snap_name, pool_device, request,
@@ -206,9 +205,9 @@ class SnapshotView(rfc.GenericView):
         except:
             e_msg = ''
             if (id is not None):
-                e_msg = ('Snapshot with id: %s does not exist' % id)
+                e_msg = ('Snapshot(%s) does not exist.' % id)
             else:
-                e_msg = ('Snapshot with name: %s does not exist' % snap_name)
+                e_msg = ('Snapshot(%s) does not exist.' % snap_name)
             handle_exception(Exception(e_msg), request)
 
         pool_device = Disk.objects.filter(pool=share.pool)[0].name

@@ -50,9 +50,10 @@ def update_replica_status(rid, data, logger):
 
 def disable_replica(rid, logger):
     try:
-        url = ('%s/sm/replicas/%d' % (BASE_URL, rid))
+        url = ('%ssm/replicas/%d' % (BASE_URL, rid))
+        headers = {'content-type': 'application/json', }
         api_call(url, data={'enabled': False, }, calltype='put',
-                 save_error=False)
+                 save_error=False, headers=headers)
         return logger.info('Replica(%s) is disabled' % url)
     except Exception, e:
         logger.error('Failed to disable replica(%s)' % url)
@@ -83,25 +84,19 @@ def rshare_id(sname, logger):
 
 def create_rshare(data, logger):
     try:
-        return rshare_id(data['share'], logger)
-    except Exception:
-        pass
-
-    try:
         url = ('%ssm/replicas/rshare' % BASE_URL)
         rshare = api_call(url, data=data, calltype='post', save_error=False)
         logger.debug('ReplicaShare: %s created.' % rshare)
         return rshare['id']
     except RockStorAPIException, e:
-        return logger.debug('Failed to create rshare: %s. It may already'
-                            ' exists. error: %s' % (url, e.detail))
-    except Exception:
-        logger.error('Failed to create Replicashare: %s' % data)
-        raise
+        if (e.detail == 'Replicashare(%s) already exists.' % data['share']):
+            logger.debug(e.detail)
+            return rshare_id(data['share'], logger)
+        raise e
 
 
 def create_receive_trail(rid, data, logger):
-    url = ('%s/sm/replicas/rtrail/rshare/%d' % (BASE_URL, rid))
+    url = ('%ssm/replicas/rtrail/rshare/%d' % (BASE_URL, rid))
     try:
         rt = api_call(url, data=data, calltype='post', save_error=False)
         logger.debug('Created receive trail: %s' % rt)
@@ -112,13 +107,23 @@ def create_receive_trail(rid, data, logger):
 
 
 def update_receive_trail(rtid, data, logger):
-    url = ('%s/sm/replicas/rtrail/%d' % (BASE_URL, rtid))
+    url = ('%ssm/replicas/rtrail/%d' % (BASE_URL, rtid))
     try:
         rt = api_call(url, data=data, calltype='put', save_error=False)
         return logger.debug('Updated receive trail: %s' % rt)
     except Exception:
         logger.error('Failed to update receive trail: %s' % url)
         raise
+
+
+def prune_receive_trail(rid, logger):
+    url = ('%ssm/replicas/rtrail/rshare/%d' % (BASE_URL, rid))
+    try:
+        data = {'days': 7, }
+        return api_call(url, data=data, calltype='delete', save_error=False)
+    except Exception, e:
+        logger.debug('Failed to prune receive trail for rshare(%s)' % rid)
+        logger.exception(e)
 
 
 def is_snapshot(sname, snap_name, logger):
@@ -142,20 +147,28 @@ def is_snapshot(sname, snap_name, logger):
 def create_snapshot(sname, snap_name, logger, snap_type='replication'):
     try:
         url = ('%sshares/%s/snapshots/%s' % (BASE_URL, sname, snap_name))
-        snap_details = api_call(url, data={'snap_type': snap_type, },
-                                calltype='post', save_error=False)
-        return logger.debug('created snapshot. url: %s. details = %s' %
-                            (url, snap_details))
+        return api_call(url, data={'snap_type': snap_type, }, calltype='post',
+                        save_error=False)
     except RockStorAPIException, e:
-        return logger.debug('Failed to create snapshot: %s. It may already '
-                            'exist. error: %s' % (url, e.detail))
-    except Exception:
-        raise
+        if (e.detail == ('Snapshot(%s) already exists for the Share(%s).' %
+                         (snap_name, sname))):
+            return logger.debug(e.detail)
+        raise e
+
+
+def delete_snapshot(sname, snap_name, logger):
+    try:
+        url = ('%sshares/%s/snapshots/%s' % (BASE_URL, sname, snap_name))
+        return api_call(url, calltype='delete', save_error=False)
+    except RockStorAPIException, e:
+        if (e.detail == 'Snapshot(%s) does not exist.' % snap_name):
+            return logger.debug(e.detail)
+        raise e
 
 
 def is_share(sname, logger):
     try:
-        url = ('%s/shares/%s' % (BASE_URL, sname))
+        url = ('%sshares/%s' % (BASE_URL, sname))
         share_details = api_call(url, save_error=False)
         logger.debug('Share exists: %s' % share_details)
         return True
@@ -168,21 +181,13 @@ def is_share(sname, logger):
 
 def create_share(sname, pool, logger):
     try:
-        if (is_share(sname, logger)):
-            return logger.debug('Share(%s) already exists' % sname)
-
         url = ('%sshares' % BASE_URL)
-        #  @todo: make share size same as pool size
-        #  make it default = 2TB = 2147483648KB
         data = {'pool': pool,
-                'size': 2147483648,
                 'replica': True,
                 'sname': sname, }
         headers = {'content-type': 'application/json', }
-        res = api_call(url, data=data, calltype='post', headers=headers)
-        return logger.debug('Created share: %s' % res)
+        return api_call(url, data=data, calltype='post', headers=headers)
     except RockStorAPIException, e:
-        return logger.debug('Failed to create share: %s. It may already '
-                            'exist. error: %s' % (sname, e.detail))
-    except Exception:
-        raise
+        if (e.detail == 'Share(%s) already exists.' % sname):
+            return logger.debug(e.detail)
+        raise e

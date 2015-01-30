@@ -27,9 +27,10 @@ from django.conf import settings
 from datetime import datetime
 from contextlib import contextmanager
 from django.utils.timezone import utc
-from util import (create_replica_trail, update_replica_status, is_snapshot,
-                  create_snapshot)
+from util import (create_replica_trail, update_replica_status, create_snapshot,
+                  delete_snapshot)
 from cli.rest_util import set_token
+from fs.btrfs import get_oldest_snap
 
 BTRFS = '/sbin/btrfs'
 logger = logging.getLogger(__name__)
@@ -38,7 +39,7 @@ logger = logging.getLogger(__name__)
 class Sender(Process):
 
     def __init__(self, replica, sender_ip, pub, q, snap_name, smeta_port,
-                 sdata_port, rmeta_port, uuid, rt=None):
+                 sdata_port, rmeta_port, uuid, snap_id, rt=None):
         self.replica = replica
         self.receiver_ip = self.replica.appliance
         self.smeta_port = smeta_port
@@ -53,10 +54,7 @@ class Sender(Process):
         self.rt2 = None
         self.rt2_id = None
         self.ppid = os.getpid()
-        self.snap_id = ('%s_%s_%s_%s' %
-                        (self.sender_ip, self.replica.pool, self.replica.share,
-                         self.snap_name))
-        self.snap_id = str(self.snap_id)
+        self.snap_id = str(snap_id)  # must be ascii for zmq
         self.meta_begin = {'id': self.snap_id,
                            'msg': 'begin',
                            'pool': self.replica.dpool,
@@ -134,10 +132,9 @@ class Sender(Process):
 
         #  2. create a snapshot only if it's not already from a previous
         #  failed attempt.
-        if (not is_snapshot(self.replica.share, self.snap_name, logger)):
-            msg = ('Failed to create snapshot: %s. Aborting.' % self.snap_name)
-            with self._clean_exit_handler(msg):
-                create_snapshot(self.replica.share, self.snap_name, logger)
+        msg = ('Failed to create snapshot: %s. Aborting.' % self.snap_name)
+        with self._clean_exit_handler(msg):
+            create_snapshot(self.replica.share, self.snap_name, logger)
 
         #  let the receiver know that following diff is coming
         msg = ('Failed to send initial metadata communication to the '
@@ -153,7 +150,7 @@ class Sender(Process):
                % self.receiver_ip)
         with self._update_trail_and_quit(msg):
             ack = self._process_q()
-            logger.info('suman ack = %s' % ack)
+            logger.info('ack = %s' % ack)
             if (ack['msg'] == 'snap_exists'):
                 data = {'status': 'succeeded',
                         'end_ts': datetime.utcnow().replace(tzinfo=utc),
@@ -164,14 +161,15 @@ class Sender(Process):
                     update_replica_status(self.rt2_id, data, logger)
                     self._sys_exit(0)
 
-        snap_path = ('%s%s/%s_%s' % (settings.MNT_PT, self.replica.pool,
-                                     self.replica.share, self.snap_name))
+        snap_path = ('%s%s/.snapshots/%s/%s' %
+                     (settings.MNT_PT, self.replica.pool, self.replica.share,
+                      self.snap_name))
         logger.debug('current snap: %s' % snap_path)
         cmd = [BTRFS, 'send', snap_path]
         if (self.rt is not None):
-            prev_snap = ('%s%s/%s_%s' % (settings.MNT_PT, self.replica.pool,
-                                         self.replica.share,
-                                         self.rt.snap_name))
+            prev_snap = ('%s%s/.snapshots/%s/%s' %
+                         (settings.MNT_PT, self.replica.pool,
+                          self.replica.share, self.rt.snap_name))
             logger.info('Sending incremental replica between %s -- %s' %
                         (prev_snap, snap_path))
             cmd = [BTRFS, 'send', '-p', prev_snap, snap_path]
@@ -193,7 +191,16 @@ class Sender(Process):
             self._sys_exit(3)
 
         alive = True
+        credit = 10
+        check_credit = True
         while alive:
+            if (check_credit is True and credit == 0):
+                ack = self.q.get(block=True, timeout=600)
+                logger.debug('ack received = %s' % ack)
+                if (ack['msg'] == 'send_more'):
+                    credit = 10
+                logger.debug('send process still alive. kb_sent: %d' %
+                             int(self.kb_sent/1024))
             try:
                 if (sp.poll() is not None):
                     logger.debug('send process finished. rc: %d. stderr: %s'
@@ -217,10 +224,10 @@ class Sender(Process):
             with self._update_trail_and_quit(msg):
                 self.pub.put('%s%s' % (self.snap_id, fs_data))
                 self.kb_sent = self.kb_sent + len(fs_data)
-                logger.debug('send process still alive. kb_sent: %s' %
-                             self.kb_sent)
+                credit = credit - 1
 
                 if (not alive):
+                    check_credit = False
                     if (sp.returncode != 0):
                         self.pub.put('%sEND_FAIL' % self.snap_id)
                     else:
@@ -254,6 +261,18 @@ class Sender(Process):
             data['status'] = 'failed'
             data['error'] = msg
             data['send_failed'] = end_ts
+        else:
+            share_path = ('%s%s/.snapshots/%s' %
+                          (settings.MNT_PT, self.replica.pool,
+                           self.replica.share))
+            logger.debug('share_path = %s' % share_path)
+            oldest_snap = get_oldest_snap(share_path, 3)
+            logger.debug('oldest snap = %s' % oldest_snap)
+            if (oldest_snap is not None):
+                msg = ('Failed to delete snapshot: %s. Aborting.' %
+                       oldest_snap)
+                with self._clean_exit_handler(msg):
+                    delete_snapshot(self.replica.share, oldest_snap, logger)
 
         msg = ('Failed to update final replica status for snap_name: %s'
                '. Aborting.' % self.snap_name)

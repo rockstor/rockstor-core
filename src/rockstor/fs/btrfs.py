@@ -313,7 +313,7 @@ def add_clone(pool, pool_device, share, clone, snapshot=None):
     return add_snap_helper(orig_path, clone_path)
 
 
-def add_snap(pool, pool_device, share_name, snap_name, readonly=True):
+def add_snap(pool, pool_device, share_name, snap_name, readonly=False):
     """
     create a snapshot
     """
@@ -323,7 +323,7 @@ def add_snap(pool, pool_device, share_name, snap_name, readonly=True):
     snap_dir = ('%s/.snapshots/%s' % (root_pool_mnt, share_name))
     create_tmp_dir(snap_dir)
     snap_full_path = ('%s/%s' % (snap_dir, snap_name))
-    return add_snap_helper(share_full_path, snap_full_path)
+    return add_snap_helper(share_full_path, snap_full_path, readonly)
 
 
 def rollback_snap(snap_name, sname, subvol_name, pool, pool_device):
@@ -634,7 +634,25 @@ def blink_disk(disk, total_exec, read, sleep):
     p.terminate()
 
 
-def set_property(mnt_pt, name, val):
-    if (is_mounted(mnt_pt)):
+def set_property(mnt_pt, name, val, mount=True):
+    if (mount is not True or is_mounted(mnt_pt)):
         cmd = [BTRFS, 'property', 'set', mnt_pt, name, val]
         return run_command(cmd)
+
+
+def get_oldest_snap(subvol_path, num_retain):
+    share_name = subvol_path.split('/')[-1]
+    cmd = [BTRFS, 'subvol', 'list', '-o', subvol_path]
+    o, e, rc = run_command(cmd)
+    snaps = {}
+    for l in o:
+        fields = l.split()
+        if (len(fields) > 0 and re.search(share_name, fields[-1]) is not None):
+            snap_fields = fields[-1].split('/')
+            if (snap_fields[-1] == share_name):
+                continue
+            snaps[int(fields[1])] = snap_fields[-1]
+    snap_ids = sorted(snaps.keys())
+    if (len(snap_ids) >= num_retain):
+        return snaps[snap_ids[0]]
+    return None
