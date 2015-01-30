@@ -171,10 +171,20 @@ class Receiver(Process):
             self.meta_push.send_json(ack)
             logger.debug('begin_ok sent for meta: %s' % self.meta)
         recv_timeout_counter = 0
+        credit = 10
+        check_credit = True
         while True:
+            if (check_credit is True and credit == 0):
+                ack = {'msg': 'send_more',
+                       'id': self.meta['id'], }
+                self.meta_push.send_json(ack)
+                credit = 10
+                logger.debug('kb received = %d' % int(self.kb_received / 1024))
+
             try:
                 recv_data = recv_sub.recv()
                 recv_data = recv_data[len(self.meta['id']):]
+                credit = credit - 1
                 recv_timeout_counter = 0
                 self.kb_received = self.kb_received + len(recv_data)
                 if (self.rtid is None):
@@ -193,6 +203,7 @@ class Receiver(Process):
                                                          logger)
 
                 if (recv_data == 'END_SUCCESS' or recv_data == 'END_FAIL'):
+                    check_credit = False
                     ts = datetime.utcnow().replace(tzinfo=utc)
                     data = {'kb_received': self.kb_received / 1024, }
                     if (recv_data == 'END_SUCCESS'):
@@ -237,11 +248,8 @@ class Receiver(Process):
                         update_receive_trail(self.rtid, data, logger)
                     break
                 if (rp.poll() is None):
-                    logger.debug('receive still running')
                     rp.stdin.write(recv_data)
-                    logger.debug('wrote recv_data')
                     rp.stdin.flush()
-                    logger.debug('flushed recv_data')
                 else:
                     logger.error('It seems the btrfs receive process died'
                                  ' unexpectedly.')

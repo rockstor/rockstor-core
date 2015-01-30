@@ -161,14 +161,15 @@ class Sender(Process):
                     update_replica_status(self.rt2_id, data, logger)
                     self._sys_exit(0)
 
-        snap_path = ('%s%s/.snapshots/%s/%s' % (settings.MNT_PT, self.replica.pool,
-                                                self.replica.share, self.snap_name))
+        snap_path = ('%s%s/.snapshots/%s/%s' %
+                     (settings.MNT_PT, self.replica.pool, self.replica.share,
+                      self.snap_name))
         logger.debug('current snap: %s' % snap_path)
         cmd = [BTRFS, 'send', snap_path]
         if (self.rt is not None):
-            prev_snap = ('%s%s/.snapshots/%s/%s' % (settings.MNT_PT, self.replica.pool,
-                                                    self.replica.share,
-                                                    self.rt.snap_name))
+            prev_snap = ('%s%s/.snapshots/%s/%s' %
+                         (settings.MNT_PT, self.replica.pool,
+                          self.replica.share, self.rt.snap_name))
             logger.info('Sending incremental replica between %s -- %s' %
                         (prev_snap, snap_path))
             cmd = [BTRFS, 'send', '-p', prev_snap, snap_path]
@@ -190,7 +191,16 @@ class Sender(Process):
             self._sys_exit(3)
 
         alive = True
+        credit = 10
+        check_credit = True
         while alive:
+            if (check_credit is True and credit == 0):
+                ack = self.q.get(block=True, timeout=600)
+                logger.debug('ack received = %s' % ack)
+                if (ack['msg'] == 'send_more'):
+                    credit = 10
+                logger.debug('send process still alive. kb_sent: %d' %
+                             int(self.kb_sent/1024))
             try:
                 if (sp.poll() is not None):
                     logger.debug('send process finished. rc: %d. stderr: %s'
@@ -214,10 +224,10 @@ class Sender(Process):
             with self._update_trail_and_quit(msg):
                 self.pub.put('%s%s' % (self.snap_id, fs_data))
                 self.kb_sent = self.kb_sent + len(fs_data)
-                logger.debug('send process still alive. kb_sent: %s' %
-                             self.kb_sent)
+                credit = credit - 1
 
                 if (not alive):
+                    check_credit = False
                     if (sp.returncode != 0):
                         self.pub.put('%sEND_FAIL' % self.snap_id)
                     else:

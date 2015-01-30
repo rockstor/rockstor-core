@@ -167,7 +167,7 @@ class ReplicaScheduler(Process):
                                              '%s' % snap_name)
                                 continue
                         elif (rt[0].status == 'pending'):
-                            prev_snap_id = ('%s_%s_%s_%s' % (self.rep_ip,
+                            prev_snap_id = ('%s_%s_%s_%s' % (self.uuid,
                                             r.pool, r.share, rt[0].snap_name))
                             if (prev_snap_id in self.senders):
                                 logger.debug('send process ongoing for snap: '
