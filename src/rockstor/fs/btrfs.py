@@ -419,10 +419,20 @@ def pool_usage(mnt_pt):
     inuse = 0
     free = 0
     data_ratio = 1
+    raid56 = False
+    parity = 1
+    disks = set()
     out, err, rc = run_command(cmd)
     for o in out:
         o = o.strip()
-        if (re.match('Device size:', o) is not None):
+        if (re.match('WARNING: RAID56', o) is not None):
+            raid56 = True
+        elif (raid56 is True and re.match('/dev/', o) is not None):
+            disks.add(os.split()[0])
+        elif (raid56 is True and re.match('Data,RAID', o) is not None):
+            if (o[5:10] == 'RAID6'):
+                parity = 2
+        elif (re.match('Device size:', o) is not None):
             total = int(o.split()[2]) / 1024
         elif (re.match('Used:', o) is not None):
             inuse = int(o.split()[1]) / 1024
@@ -430,8 +440,17 @@ def pool_usage(mnt_pt):
             free = int(o.split()[2]) / 1024
         elif (re.match('Data ratio:', o) is not None):
             data_ratio = float(o.split()[2])
-    total = total / data_ratio
-    inuse = inuse / data_ratio
+            if (data_ratio < 0.01):
+                data_ratio = 0.01
+    if (raid56 is True):
+        num_disks = len(disks)
+        if (num_disks > 0):
+            per_disk = total / num_disks
+            total = (num_disks - parity) * per_disk
+        free = total - inuse
+    else:
+        total = total / data_ratio
+        inuse = inuse / data_ratio
     return (total, inuse, free)
 
 
