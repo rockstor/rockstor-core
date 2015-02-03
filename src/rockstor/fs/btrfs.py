@@ -414,6 +414,8 @@ def shares_usage(pool, pool_device, share_map, snap_map):
 
 
 def pool_usage(mnt_pt):
+    #  @todo: remove temporary raid5/6 custom logic once fi usage
+    #  supports raid5/6.
     cmd = [BTRFS, 'fi', 'usage', '-b', mnt_pt]
     total = 0
     inuse = 0
@@ -423,12 +425,15 @@ def pool_usage(mnt_pt):
     parity = 1
     disks = set()
     out, err, rc = run_command(cmd)
+    for e in err:
+        e = e.strip()
+        if (re.match('WARNING: RAID56', e) is not None):
+            raid56 = True
+
     for o in out:
         o = o.strip()
-        if (re.match('WARNING: RAID56', o) is not None):
-            raid56 = True
-        elif (raid56 is True and re.match('/dev/', o) is not None):
-            disks.add(os.split()[0])
+        if (raid56 is True and re.match('/dev/', o) is not None):
+            disks.add(o.split()[0])
         elif (raid56 is True and re.match('Data,RAID', o) is not None):
             if (o[5:10] == 'RAID6'):
                 parity = 2
