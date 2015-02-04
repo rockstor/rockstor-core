@@ -29,6 +29,8 @@ from storageadmin.util import handle_exception
 from datetime import datetime
 from django.utils.timezone import utc
 import rest_framework_custom as rfc
+import logging
+logger = logging.getLogger(__name__)
 
 
 class ReplicaView(rfc.GenericView):
@@ -43,6 +45,15 @@ class ReplicaView(rfc.GenericView):
                 return Replica.objects.get(id=kwargs['rid'])
             except:
                 return []
+        status = self.request.QUERY_PARAMS.get('status', None)
+        if (status is not None):
+            enabled = None
+            if (status == 'enabled'):
+                enabled = True
+            elif (status == 'disabled'):
+                enabled = False
+            if (enabled is not None):
+                return Replica.objects.filter(enabled=enabled)
         return Replica.objects.filter().order_by('-id')
 
     @transaction.commit_on_success

@@ -30,7 +30,8 @@ from cli.rest_util import (api_call, set_token)
 import logging
 logger = logging.getLogger(__name__)
 from django.db import DatabaseError
-from util import (update_replica_status, disable_replica, prune_receive_trail)
+from util import (update_replica_status, disable_replica, prune_receive_trail,
+                  get_replicas, get_replica_trail)
 
 
 class ReplicaScheduler(Process):
@@ -129,9 +130,8 @@ class ReplicaScheduler(Process):
             if (total_sleep >= 60 and len(self.senders) < 50):
 
                 try:
-                    for r in Replica.objects.filter(enabled=True):
-                        rt = ReplicaTrail.objects.filter(
-                            replica=r).order_by('-snapshot_created')
+                    for r in get_replicas(logger):
+                        rt = get_replica_trail(r.id, logger)
                         now = datetime.utcnow().replace(second=0,
                                                         microsecond=0,
                                                         tzinfo=utc)

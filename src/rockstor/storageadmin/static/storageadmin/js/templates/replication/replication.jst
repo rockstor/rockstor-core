@@ -54,7 +54,7 @@
 <td><%= replica.get('share') %></td>
 <td><%= replica.get('appliance') %></td>
 <td><%= replica.get('dpool') %></td>
-<td><%= moment.duration(replica.get('frequency')*1000).humanize() %></td>
+<td><%= moment.duration(replica.get('frequency')*60000).humanize() %></td>
 <td>
 <% if (replicaTrailMap[replica.id]) { %>
 <% if (replicaTrailMap[replica.id].length > 0) { %>

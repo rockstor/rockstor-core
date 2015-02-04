@@ -38,6 +38,10 @@ class ReplicaTrailView(rfc.GenericView):
 
         if ('rid' in kwargs):
             replica = Replica.objects.get(id=kwargs['rid'])
+            if ('limit' in self.request.QUERY_PARAMS):
+                limit = int(self.request.QUERY_PARAMS.get('limit', 2))
+                return ReplicaTrail.objects.filter(
+                    replica=replica).order_by('-id')[0:limit]
             return ReplicaTrail.objects.filter(replica=replica).order_by('-id')
         return ReplicaTrail.objects.filter().order_by('-id')
 

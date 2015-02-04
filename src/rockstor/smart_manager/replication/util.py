@@ -17,10 +17,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import re
+from datetime import datetime
+from django.utils.timezone import utc
 from cli.rest_util import api_call
 from storageadmin.exceptions import RockStorAPIException
 
 BASE_URL = 'https://localhost/api/'
+
+
+class Bunch(object):
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
 
 
 def get_sender_ip(uuid, logger):
@@ -38,12 +45,36 @@ def get_sender_ip(uuid, logger):
 def update_replica_status(rid, data, logger):
     try:
         url = ('%ssm/replicas/trail/%d' % (BASE_URL, rid))
-        api_call(url, data=data, calltype='put', save_error=False)
-        return logger.info('replica(%s) status updated to %s' %
-                           (url, data['status']))
+        return api_call(url, data=data, calltype='put', save_error=False)
     except Exception, e:
         logger.error('Failed to update replica(%s) status to: %s'
                      % (url, data['status']))
+        raise e
+
+
+def convert_ts(ts):
+    if (ts is not None):
+        return datetime.strptime(
+            ts, '%Y-%m-%dT%H:%M:%S.%fZ').replace(tzinfo=utc)
+
+
+def get_replicas(logger, enabled=True):
+    try:
+        query_str = 'page_size=1000'
+        if (enabled is True):
+            query_str = ('%s&status=enabled' % query_str)
+        else:
+            query_str = ('%s&status=disabled' % query_str)
+        url = ('%ssm/replicas?%s' % (BASE_URL, query_str))
+        replicas = api_call(url, save_error=False)
+        logger.debug('replicas = %s' % replicas)
+        r = []
+        for replica in replicas['results']:
+            replica['ts'] = convert_ts(replica['ts'])
+            r.append(Bunch(**replica))
+        return r
+    except Exception, e:
+        logger.exception(e)
         raise e
 
 
@@ -51,9 +82,8 @@ def disable_replica(rid, logger):
     try:
         url = ('%ssm/replicas/%d' % (BASE_URL, rid))
         headers = {'content-type': 'application/json', }
-        api_call(url, data={'enabled': False, }, calltype='put',
-                 save_error=False, headers=headers)
-        return logger.info('Replica(%s) is disabled' % url)
+        return api_call(url, data={'enabled': False, }, calltype='put',
+                        save_error=False, headers=headers)
     except Exception, e:
         logger.error('Failed to disable replica(%s)' % url)
         raise e
@@ -64,10 +94,29 @@ def create_replica_trail(rid, snap_name, logger):
     try:
         rt = api_call(url, data={'snap_name': snap_name, },
                       calltype='post', save_error=False)
-        logger.debug('Created replica trail: %s' % url)
         return rt
     except Exception, e:
         logger.error('Failed to create replica trail: %s' % url)
+        raise e
+
+
+def get_replica_trail(rid, logger, limit=2):
+    url = ('%ssm/replicas/trail/replica/%d?limit=%d' % (BASE_URL, rid, limit))
+    try:
+        rt = api_call(url, save_error=False)
+        logger.debug('replica trail = %s' % rt)
+        res = []
+        for r in rt['results']:
+            r['snapshot_created'] = convert_ts(r['snapshot_created'])
+            r['snapshot_failed'] = convert_ts(r['snapshot_failed'])
+            r['send_pending'] = convert_ts(r['send_pending'])
+            r['send_succeeded'] = convert_ts(r['send_succeeded'])
+            r['send_failed'] = convert_ts(r['send_failed'])
+            r['end_ts'] = convert_ts(r['end_ts'])
+            res.append(Bunch(**r))
+        return res
+    except Exception, e:
+        logger.exception(e)
         raise e
 
 
@@ -75,7 +124,6 @@ def rshare_id(sname, logger):
     try:
         url = ('%ssm/replicas/rshare/%s' % (BASE_URL, sname))
         rshare = api_call(url, save_error=False)
-        logger.debug('rshare exists: %s' % rshare)
         return rshare['id']
     except Exception:
         raise
