@@ -27,7 +27,6 @@ def get_sender_ip(uuid, logger):
     try:
         url = ('%sappliances' % BASE_URL)
         ad = api_call(url, save_error=False)
-        logger.debug('ad: %s' % ad)
         for a in ad['results']:
             if (a['uuid'] == uuid):
                 return a['ip']
@@ -86,7 +85,6 @@ def create_rshare(data, logger):
     try:
         url = ('%ssm/replicas/rshare' % BASE_URL)
         rshare = api_call(url, data=data, calltype='post', save_error=False)
-        logger.debug('ReplicaShare: %s created.' % rshare)
         return rshare['id']
     except RockStorAPIException, e:
         if (e.detail == 'Replicashare(%s) already exists.' % data['share']):
@@ -99,18 +97,15 @@ def create_receive_trail(rid, data, logger):
     url = ('%ssm/replicas/rtrail/rshare/%d' % (BASE_URL, rid))
     try:
         rt = api_call(url, data=data, calltype='post', save_error=False)
-        logger.debug('Created receive trail: %s' % rt)
         return rt['id']
     except Exception:
-        logger.error('Failed to create receive trail: %s' % url)
         raise
 
 
 def update_receive_trail(rtid, data, logger):
     url = ('%ssm/replicas/rtrail/%d' % (BASE_URL, rtid))
     try:
-        rt = api_call(url, data=data, calltype='put', save_error=False)
-        return logger.debug('Updated receive trail: %s' % rt)
+        return api_call(url, data=data, calltype='put', save_error=False)
     except Exception:
         logger.error('Failed to update receive trail: %s' % url)
         raise
@@ -130,8 +125,7 @@ def is_snapshot(sname, snap_name, logger):
     try:
         #  do a get and see if the snapshot is already created
         url = ('%sshares/%s/snapshots/%s' % (BASE_URL, sname, snap_name))
-        snap_details = api_call(url, save_error=False)
-        logger.info('previous snapshot found. details: %s' % snap_details)
+        api_call(url, save_error=False)
         return True
     except RockStorAPIException, e:
         if (re.match('Invalid api end point', e.detail) is not None):
@@ -169,8 +163,7 @@ def delete_snapshot(sname, snap_name, logger):
 def is_share(sname, logger):
     try:
         url = ('%sshares/%s' % (BASE_URL, sname))
-        share_details = api_call(url, save_error=False)
-        logger.debug('Share exists: %s' % share_details)
+        api_call(url, save_error=False)
         return True
     except Exception, e:
         logger.error('Exception while looking up if share exists at: %s'

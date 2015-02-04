@@ -125,10 +125,8 @@ class ReplicaScheduler(Process):
                 self.prune_time = int(time.time())
                 for rs in ReplicaShare.objects.all():
                     prune_receive_trail(rs.id, logger)
-                    logger.debug('pruned receive trail for rshare(%d)' % rs.id)
 
             if (total_sleep >= 60 and len(self.senders) < 50):
-                logger.debug('scanning for replicas')
 
                 try:
                     for r in Replica.objects.filter(enabled=True):
@@ -147,7 +145,7 @@ class ReplicaScheduler(Process):
                         snap_id = ('%s_%s_%s_%s' %
                                    (self.uuid, r.pool, r.share, snap_name))
                         if (len(rt) == 0):
-                            logger.debug('new sender for snap: %s' % snap_name)
+                            logger.debug('new sender for snap: %s' % snap_id)
                             sw = Sender(r, self.rep_ip, self.pubq, Queue(),
                                         snap_name, self.meta_port,
                                         self.data_port, r.meta_port, self.uuid,
@@ -156,22 +154,19 @@ class ReplicaScheduler(Process):
                             if (((now - rt[0].end_ts).total_seconds() >
                                  (r.frequency * 60))):
                                 logger.debug('incremental sender for snap: %s'
-                                             % snap_name)
+                                             % snap_id)
                                 sw = Sender(r, self.rep_ip, self.pubq, Queue(),
                                             snap_name, self.meta_port,
                                             self.data_port, r.meta_port,
                                             self.uuid, snap_id, rt[0])
                             else:
-                                logger.debug('its not time yet for '
-                                             'incremental sender for snap: '
-                                             '%s' % snap_name)
                                 continue
                         elif (rt[0].status == 'pending'):
                             prev_snap_id = ('%s_%s_%s_%s' % (self.uuid,
                                             r.pool, r.share, rt[0].snap_name))
                             if (prev_snap_id in self.senders):
                                 logger.debug('send process ongoing for snap: '
-                                             '%s' % snap_name)
+                                             '%s' % snap_id)
                                 continue
                             logger.debug('%s not found in senders. Previous '
                                          'sender must have Aborted. Marking '
@@ -198,12 +193,12 @@ class ReplicaScheduler(Process):
                                 logger.info('Maximum attempts(%d) reached '
                                             'for snap: %s. Disabling the '
                                             'replica.' %
-                                            (self.MAX_ATTEMPTS, snap_name))
+                                            (self.MAX_ATTEMPTS, snap_id))
                                 disable_replica(r.id, logger)
                                 continue
                             logger.info('previous backup failed for snap: '
                                         '%s. Starting a new one. Attempt '
-                                        '%d/%d.' % (snap_name, num_tries,
+                                        '%d/%d.' % (snap_id, num_tries,
                                                     self.MAX_ATTEMPTS))
                             prev_rt = None
                             for rto in rt:
@@ -217,7 +212,7 @@ class ReplicaScheduler(Process):
                         else:
                             logger.error('unknown replica trail status: %s. '
                                          'ignoring snap: %s' %
-                                         (rt[0].status, snap_name))
+                                         (rt[0].status, snap_id))
                             continue
                         self.senders[snap_id] = sw
                         sw.daemon = True

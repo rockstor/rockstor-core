@@ -82,7 +82,6 @@ class Sender(Process):
 
     def _sys_exit(self, code, linger=10):
         self.ctx.destroy(linger=linger)
-        logger.debug('zmq context destroyed. exiting with code: %d' % code)
         sys.exit(code)
 
     @contextmanager
@@ -141,16 +140,13 @@ class Sender(Process):
                'receiver(%s), most likely due to a network error. Aborting.'
                % self.receiver_ip)
         with self._update_trail_and_quit(msg):
-            logger.debug('sending meta_begin: %s' % self.meta_begin)
             meta_push.send_json(self.meta_begin)
-            logger.debug('meta_begin sent. waiting on get')
 
         msg = ('Timeout occured(60 seconds) while waiting for OK '
                'from the receiver(%s) to start sending data. Aborting.'
                % self.receiver_ip)
         with self._update_trail_and_quit(msg):
             ack = self._process_q()
-            logger.info('ack = %s' % ack)
             if (ack['msg'] == 'snap_exists'):
                 data = {'status': 'succeeded',
                         'end_ts': datetime.utcnow().replace(tzinfo=utc),
@@ -164,7 +160,6 @@ class Sender(Process):
         snap_path = ('%s%s/.snapshots/%s/%s' %
                      (settings.MNT_PT, self.replica.pool, self.replica.share,
                       self.snap_name))
-        logger.debug('current snap: %s' % snap_path)
         cmd = [BTRFS, 'send', snap_path]
         if (self.rt is not None):
             prev_snap = ('%s%s/.snapshots/%s/%s' %
@@ -180,7 +175,6 @@ class Sender(Process):
             sp = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE,
                                   stderr=subprocess.PIPE)
             fcntl.fcntl(sp.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
-            logger.debug('send started. snap: %s' % snap_path)
         except Exception, e:
             msg = ('Failed to start the low level btrfs send '
                    'command(%s). Aborting' % cmd)
@@ -232,8 +226,6 @@ class Sender(Process):
                         self.pub.put('%sEND_FAIL' % self.snap_id)
                     else:
                         self.pub.put('%sEND_SUCCESS' % self.snap_id)
-                        logger.debug('sent END for snap_name: %s' %
-                                     self.snap_name)
 
             if (os.getppid() != self.ppid):
                 logger.error('Scheduler exited. Sender for snap_name: '
@@ -241,15 +233,12 @@ class Sender(Process):
                              % self.snap_name)
                 self._sys_exit(3)
 
-        logger.debug('send process finished. Blocking for final ack from'
-                     ' the receiver')
         msg = ('Timeout occured(60 seconds) while waiting for final '
                'send confirmation from the receiver(%s) for snap_name:'
                ' %s. Aborting.' % (self.receiver_ip, self.snap_name))
         with self._update_trail_and_quit(msg):
             ack = self._process_q()
 
-        logger.debug('fsdata sent, confirmation: %s received' % ack)
         end_ts = datetime.utcnow().replace(tzinfo=utc)
         data = {'status': 'succeeded',
                 'kb_sent': self.kb_sent / 1024,
@@ -265,9 +254,7 @@ class Sender(Process):
             share_path = ('%s%s/.snapshots/%s' %
                           (settings.MNT_PT, self.replica.pool,
                            self.replica.share))
-            logger.debug('share_path = %s' % share_path)
             oldest_snap = get_oldest_snap(share_path, 3)
-            logger.debug('oldest snap = %s' % oldest_snap)
             if (oldest_snap is not None):
                 msg = ('Failed to delete snapshot: %s. Aborting.' %
                        oldest_snap)
