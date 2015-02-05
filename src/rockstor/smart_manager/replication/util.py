@@ -67,7 +67,6 @@ def get_replicas(logger, enabled=True):
             query_str = ('%s&status=disabled' % query_str)
         url = ('%ssm/replicas?%s' % (BASE_URL, query_str))
         replicas = api_call(url, save_error=False)
-        logger.debug('replicas = %s' % replicas)
         r = []
         for replica in replicas['results']:
             replica['ts'] = convert_ts(replica['ts'])
@@ -104,7 +103,6 @@ def get_replica_trail(rid, logger, limit=2):
     url = ('%ssm/replicas/trail/replica/%d?limit=%d' % (BASE_URL, rid, limit))
     try:
         rt = api_call(url, save_error=False)
-        logger.debug('replica trail = %s' % rt)
         res = []
         for r in rt['results']:
             r['snapshot_created'] = convert_ts(r['snapshot_created'])
@@ -227,7 +225,8 @@ def create_share(sname, pool, logger):
                 'replica': True,
                 'sname': sname, }
         headers = {'content-type': 'application/json', }
-        return api_call(url, data=data, calltype='post', headers=headers)
+        return api_call(url, data=data, calltype='post', headers=headers,
+                        save_error=False)
     except RockStorAPIException, e:
         if (e.detail == 'Share(%s) already exists.' % sname):
             return logger.debug(e.detail)

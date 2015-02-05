@@ -104,6 +104,10 @@ class Sender(Process):
 
     def _process_q(self):
         ack = self.q.get(block=True, timeout=60)
+        if (ack['msg'] == 'send_more'):
+            #  excess credit messages from receiver at that end
+            return self._process_q()
+
         if (ack['msg'] == 'error'):
             error = 'Error on Receiver: %s' % ack['error']
             with self._update_trail_and_quit(error):
@@ -185,36 +189,36 @@ class Sender(Process):
             self._sys_exit(3)
 
         alive = True
-        credit = 10
+        credit = settings.DEFAULT_SEND_CREDIT
         check_credit = True
         while alive:
-            if (check_credit is True and credit == 0):
+            if (check_credit is True and credit < 1):
                 ack = self.q.get(block=True, timeout=600)
-                logger.debug('ack received = %s' % ack)
                 if (ack['msg'] == 'send_more'):
-                    credit = 10
-                logger.debug('send process still alive. kb_sent: %d' %
-                             int(self.kb_sent/1024))
+                    credit = ack['credit']
+                logger.debug('send process alive for %s. KB sent: %d' %
+                             (self.snap_id, int(self.kb_sent/1024)))
             try:
                 if (sp.poll() is not None):
-                    logger.debug('send process finished. rc: %d. stderr: %s'
-                                 % (sp.returncode, sp.stderr.read()))
+                    logger.debug('send process finished for %s. rc: %d. '
+                                 'stderr: %s' % (self.snap_id,
+                                                 sp.returncode,
+                                                 sp.stderr.read()))
                     alive = False
                 fs_data = sp.stdout.read()
             except IOError:
                 continue
             except Exception, e:
                 msg = ('Exception occured while reading low level btrfs '
-                       'send data for snap_name: %s. Aborting.' %
-                       self.snap_name)
+                       'send data for %s. Aborting.' % self.snap_id)
                 if (alive):
                     sp.terminate()
                 with self._update_trail_and_quit(msg):
                     self.pub.put('%sEND_FAIL' % self.snap_id)
                     raise e
 
-            msg = ('Failed to send fsdata to the receiver for snap_name: '
-                   '%s. Aborting.' % (self.snap_name))
+            msg = ('Failed to send fsdata to the receiver for %s. Aborting.' %
+                   (self.snap_id))
             with self._update_trail_and_quit(msg):
                 self.pub.put('%s%s' % (self.snap_id, fs_data))
                 self.kb_sent = self.kb_sent + len(fs_data)
@@ -228,9 +232,8 @@ class Sender(Process):
                         self.pub.put('%sEND_SUCCESS' % self.snap_id)
 
             if (os.getppid() != self.ppid):
-                logger.error('Scheduler exited. Sender for snap_name: '
-                             '%s cannot go on. Aborting.'
-                             % self.snap_name)
+                logger.error('Scheduler exited. Sender for %s cannot go on. '
+                             'Aborting.' % self.snap_name)
                 self._sys_exit(3)
 
         msg = ('Timeout occured(60 seconds) while waiting for final '
@@ -244,9 +247,9 @@ class Sender(Process):
                 'kb_sent': self.kb_sent / 1024,
                 'end_ts': end_ts, }
         if (ack['msg'] == 'receive_error'):
-            msg = ('Receiver(%s) returned a processing error for snap_name:'
+            msg = ('Receiver(%s) returned a processing error for '
                    ' %s. Check it for more information.'
-                   % (self.receiver_ip, self.snap_name))
+                   % (self.receiver_ip, self.snap_id))
             data['status'] = 'failed'
             data['error'] = msg
             data['send_failed'] = end_ts
@@ -261,7 +264,7 @@ class Sender(Process):
                 with self._clean_exit_handler(msg):
                     delete_snapshot(self.replica.share, oldest_snap, logger)
 
-        msg = ('Failed to update final replica status for snap_name: %s'
-               '. Aborting.' % self.snap_name)
+        msg = ('Failed to update final replica status for %s'
+               '. Aborting.' % self.snap_id)
         with self._clean_exit_handler(msg):
             update_replica_status(self.rt2_id, data, logger)

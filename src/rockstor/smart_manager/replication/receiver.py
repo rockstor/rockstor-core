@@ -106,7 +106,6 @@ class Receiver(Process):
                (self.sender_ip, self.meta_port, self.meta))
         with self._clean_exit_handler(msg):
             self.meta_push = self.ctx.socket(zmq.PUSH)
-            url = ('tcp://%s:%d' % (self.sender_ip, self.meta_port))
             self.meta_push.connect('tcp://%s:%d' % (self.sender_ip,
                                                     self.meta_port))
 
@@ -163,15 +162,17 @@ class Receiver(Process):
                    'id': self.meta['id'], }
             self.meta_push.send_json(ack)
         recv_timeout_counter = 0
-        credit = 10
+        credit = settings.DEFAULT_SEND_CREDIT
         check_credit = True
         while True:
-            if (check_credit is True and credit == 0):
+            if (check_credit is True and credit < 5):
                 ack = {'msg': 'send_more',
-                       'id': self.meta['id'], }
+                       'id': self.meta['id'],
+                       'credit': settings.DEFAULT_SEND_CREDIT, }
                 self.meta_push.send_json(ack)
-                credit = 10
-                logger.debug('kb received = %d' % int(self.kb_received / 1024))
+                credit = credit + settings.DEFAULT_SEND_CREDIT
+                logger.debug('KB received for %s = %d' %
+                             (sname, int(self.kb_received / 1024)))
 
             try:
                 recv_data = recv_sub.recv()

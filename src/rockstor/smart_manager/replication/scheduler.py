@@ -21,7 +21,7 @@ import zmq
 import os
 import time
 from datetime import datetime
-from smart_manager.models import (Replica, ReplicaTrail, ReplicaShare)
+from smart_manager.models import (ReplicaTrail, ReplicaShare)
 from django.conf import settings
 from sender import Sender
 from receiver import Receiver
@@ -58,10 +58,8 @@ class ReplicaScheduler(Process):
     def _replication_interface(self):
         url = 'https://localhost/api/network'
         interfaces = api_call(url, save_error=False)
-        logger.info('interfaces: %s' % interfaces)
         mgmt_iface = [x for x in interfaces['results']
                       if x['itype'] == 'management'][0]
-        logger.info('mgmt_iface: %s' % mgmt_iface)
         return mgmt_iface['ipaddr']
 
     def _prune_workers(self, workers):
@@ -103,22 +101,23 @@ class ReplicaScheduler(Process):
                 rep_pub.send(msg)
 
             #  check for any recv's coming
-            try:
-                self.recv_meta = meta_pull.recv_json()
-                snap_id = self.recv_meta['id']
-                logger.debug('meta received: %s' % self.recv_meta)
-                if (self.recv_meta['msg'] == 'begin'):
-                    logger.debug('begin received. meta: %s' % self.recv_meta)
-                    rw = Receiver(self.recv_meta)
-                    self.receivers[snap_id] = rw
-                    rw.start()
-                elif (snap_id not in self.senders):
-                    logger.error('Unknown snap_id(%s) received. Ignoring'
-                                 % snap_id)
-                else:
-                    self.senders[snap_id].q.put(self.recv_meta)
-            except zmq.error.Again:
-                pass
+            num_msgs = 0
+            while (num_msgs < 1000):
+                try:
+                    self.recv_meta = meta_pull.recv_json()
+                    num_msgs = num_msgs + 1
+                    snap_id = self.recv_meta['id']
+                    if (self.recv_meta['msg'] == 'begin'):
+                        rw = Receiver(self.recv_meta)
+                        self.receivers[snap_id] = rw
+                        rw.start()
+                    elif (snap_id not in self.senders):
+                        logger.error('Unknown snap_id(%s) received. Ignoring'
+                                     % snap_id)
+                    else:
+                        self.senders[snap_id].q.put(self.recv_meta)
+                except zmq.error.Again:
+                    break
 
             self._prune_workers((self.receivers, self.senders))
 
