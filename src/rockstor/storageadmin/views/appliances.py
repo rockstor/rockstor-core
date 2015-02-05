@@ -27,6 +27,7 @@ from storageadmin.serializers import ApplianceSerializer
 from system.osi import (hostid, sethostname)
 import rest_framework_custom as rfc
 from cli.rest_util import (api_call, set_token)
+from smart_manager.models import Replica
 
 import logging
 logger = logging.getLogger(__name__)
@@ -50,11 +51,23 @@ class AppliancesView(rfc.GenericView):
                               client_secret):
         with self._handle_exception(request):
             base_url = ('https://%s:%s' % (ip, port))
-            set_token(client_id=client_id, client_secret=client_secret,
-                      url=base_url)
-            ad = api_call('%s/api/appliances/1' % base_url)
-            logger.debug('remote appliance: %s' % ad)
-            return ad['uuid']
+            try:
+                set_token(client_id=client_id, client_secret=client_secret,
+                          url=base_url)
+            except Exception, e:
+                e_msg = ('Failed to authenticate on remote appliance. Verify '
+                         'port number, id and secret are correct and try '
+                         'again.')
+                handle_exception(Exception(e_msg), request)
+            try:
+                ad = api_call('%s/api/appliances/1' % base_url,
+                              save_error=False)
+                return ad['uuid']
+            except Exception, e:
+                logger.exception(e)
+                e_msg = ('Failed to get remote appliance information. Verify '
+                         'all inputs and try again.')
+                handle_exception(Exception(e_msg), request)
 
     def _connect_to_appliance(self, request, url, ip, username, password):
         try:
@@ -69,8 +82,8 @@ class AppliancesView(rfc.GenericView):
                 #login incorrect
                 logger.error(r.text)
                 e_msg = ('Authentication to the remote Rockstor '
-                         'appliance(%s) failed due to wrong username or '
-                         'password. Try again.' % ip)
+                         'appliance(%s) failed due to wrong id or '
+                         'secret. Try again.' % ip)
                 handle_exception(Exception(e_msg), request)
             if (r.status_code != 200):
                 logger.error(r.text)
@@ -99,13 +112,17 @@ class AppliancesView(rfc.GenericView):
                          'cannot be added again' % ip)
                 handle_exception(Exception(e_msg), request)
             if (current_appliance is False):
-                client_id = request.DATA['client_id']
-                client_secret = request.DATA['client_secret']
+                client_id = request.DATA.get('client_id', None)
+                if (client_id is None):
+                    raise Exception('ID is required')
+                client_secret = request.DATA.get('client_secret', None)
+                if (client_secret is None):
+                    raise Exception('Secret is required')
                 try:
                     mgmt_port = int(request.DATA['mgmt_port'])
                 except Exception, e:
                     logger.exception(e)
-                    e_msg = ('Invalid managemetn port(%s) supplied. Try '
+                    e_msg = ('Invalid management port(%s) supplied. Try '
                              'again' % request.DATA['mgmt_port'])
                     handle_exception(Exception(e_msg), request)
                 url = ('https://%s' % ip)
@@ -133,7 +150,13 @@ class AppliancesView(rfc.GenericView):
             appliance = Appliance.objects.get(pk=id)
         except Exception, e:
             logger.exception(e)
-            e_msg = ('Appliance with id = %d does not exist' % id)
+            e_msg = ('Appliance(%d) does not exist' % id)
+            handle_exception(Exception(e_msg), request)
+
+        if (Replica.objects.filter(appliance=appliance.uuid).exists()):
+            e_msg = ('Appliance cannot be deleted because there are '
+                     'replication tasks defined for it. If you are sure, '
+                     'delete them and try again')
             handle_exception(Exception(e_msg), request)
 
         try:

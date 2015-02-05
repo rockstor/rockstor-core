@@ -1599,6 +1599,9 @@ input[type="radio"].selectedRoot {
 [class^=slider-volume] { display: inline-block; }
 .slider-stop { float: left; cursor: pointer; vertical-align: top; }
 .slider-start { float: left; cursor: pointer; vertical-align: top; }
+.slider1-stop { float: left; cursor: pointer; vertical-align: top; }
+.slider1-start { float: left; cursor: pointer; vertical-align: top; }
+.slider1-start.on { color: #05B529; }
 .slider-start.on { color: #05B529; }
 .slider-ph { margin-left: 4px; margin-right: 4px; float: left; }
 

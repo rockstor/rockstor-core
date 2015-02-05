@@ -62,7 +62,6 @@ class Receiver(Process):
 
     def _sys_exit(self, code, linger=10):
         self.ctx.destroy(linger=linger)
-        logger.debug('zmq context destroyed. exiting with code: %d' % code)
         sys.exit(code)
 
     @contextmanager
@@ -92,7 +91,6 @@ class Receiver(Process):
                (self.meta['uuid'], self.meta))
         with self._clean_exit_handler(msg):
             self.sender_ip = get_sender_ip(self.meta['uuid'], logger)
-        logger.debug('sender ip: %s' % self.sender_ip)
 
         msg = ('Failed to connect to the sender(%s) on data_port(%s). meta: '
                '%s. Aborting.' % (self.sender_ip, self.data_port, self.meta))
@@ -108,8 +106,6 @@ class Receiver(Process):
                (self.sender_ip, self.meta_port, self.meta))
         with self._clean_exit_handler(msg):
             self.meta_push = self.ctx.socket(zmq.PUSH)
-            url = ('tcp://%s:%d' % (self.sender_ip, self.meta_port))
-            logger.debug('meta url: %s' % url)
             self.meta_push.connect('tcp://%s:%d' % (self.sender_ip,
                                                     self.meta_port))
 
@@ -145,14 +141,11 @@ class Receiver(Process):
                 run_command([BTRFS, 'subvolume', 'create', sub_vol])
 
         snap_fp = ('%s/%s' % (sub_vol, self.snap_name))
-        logger.info('snap_fp: %s' % snap_fp)
-        msg = ('Snaphost: %s already exists.' % snap_fp)
         with self._clean_exit_handler(msg):
             if (is_subvol(snap_fp)):
                 ack = {'msg': 'snap_exists',
                        'id': self.meta['id'], }
                 self.meta_push.send_json(ack)
-                logger.debug(msg)
 
         cmd = [BTRFS, 'receive', sub_vol]
         msg = ('Failed to start the low level btrfs receive command(%s)'
@@ -161,7 +154,6 @@ class Receiver(Process):
             rp = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE,
                                   stdout=subprocess.PIPE,
                                   stderr=subprocess.PIPE)
-            logger.debug('Btrfs receive started for snap: %s' % sub_vol)
 
         msg = ('Failed to send begin_ok to the sender for meta: %s' %
                self.meta)
@@ -169,17 +161,18 @@ class Receiver(Process):
             ack = {'msg': 'begin_ok',
                    'id': self.meta['id'], }
             self.meta_push.send_json(ack)
-            logger.debug('begin_ok sent for meta: %s' % self.meta)
         recv_timeout_counter = 0
-        credit = 10
+        credit = settings.DEFAULT_SEND_CREDIT
         check_credit = True
         while True:
-            if (check_credit is True and credit == 0):
+            if (check_credit is True and credit < 5):
                 ack = {'msg': 'send_more',
-                       'id': self.meta['id'], }
+                       'id': self.meta['id'],
+                       'credit': settings.DEFAULT_SEND_CREDIT, }
                 self.meta_push.send_json(ack)
-                credit = 10
-                logger.debug('kb received = %d' % int(self.kb_received / 1024))
+                credit = credit + settings.DEFAULT_SEND_CREDIT
+                logger.debug('%d KB received for %s' %
+                             (int(self.kb_received / 1024), sname))
 
             try:
                 recv_data = recv_sub.recv()
@@ -207,8 +200,6 @@ class Receiver(Process):
                     ts = datetime.utcnow().replace(tzinfo=utc)
                     data = {'kb_received': self.kb_received / 1024, }
                     if (recv_data == 'END_SUCCESS'):
-                        logger.debug('END_SUCCESS received for meta: %s' %
-                                     self.meta)
                         data['receive_succeeded'] = ts
                         #delete the share, move the oldest snap to share
                         oldest_snap = get_oldest_snap(sub_vol, 3)
@@ -254,7 +245,6 @@ class Receiver(Process):
                     logger.error('It seems the btrfs receive process died'
                                  ' unexpectedly.')
                     out, err = rp.communicate()
-                    logger.debug('btrfs receive out: %s err: %s' % (out, err))
                     msg = ('Low level system error from btrfs receive '
                            'command. out: %s err: %s for rtid: %s meta: %s'
                            % (out, err, self.rtid, self.meta))
@@ -277,8 +267,6 @@ class Receiver(Process):
                 logger.exception(e)
                 rp.terminate()
                 out, err = rp.communicate()
-                logger.debug('rc: %d out: %s err: %s' % (rp.returncode, out,
-                                                         err))
                 data['receive_failed'] = datetime.utcnow().replace(tzinfo=utc)
                 data['status'] = 'failed'
                 data['error'] = msg
@@ -297,7 +285,6 @@ class Receiver(Process):
         #dint throw an error or if receiver did not get terminated
         try:
             out, err = rp.communicate()
-            logger.debug('rc: %d out: %s err: %s' % (rp.returncode, out, err))
         except Exception, e:
             logger.debug('Exception while terminating receive. Probably '
                          'already terminated.')
@@ -319,6 +306,6 @@ class Receiver(Process):
         msg = ('Failed to send final ack to the sender for meta: %s' %
                self.meta)
         with self._clean_exit_handler(msg):
+            logger.debug('Receive finished for %s. ack = %s' % (sname, ack))
             self.meta_push.send_json(ack)
-        logger.debug('final ack sent for meta: %s' % self.meta)
         self._sys_exit(0)

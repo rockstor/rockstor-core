@@ -29,6 +29,8 @@ from storageadmin.util import handle_exception
 from datetime import datetime
 from django.utils.timezone import utc
 import rest_framework_custom as rfc
+import logging
+logger = logging.getLogger(__name__)
 
 
 class ReplicaView(rfc.GenericView):
@@ -43,6 +45,15 @@ class ReplicaView(rfc.GenericView):
                 return Replica.objects.get(id=kwargs['rid'])
             except:
                 return []
+        status = self.request.QUERY_PARAMS.get('status', None)
+        if (status is not None):
+            enabled = None
+            if (status == 'enabled'):
+                enabled = True
+            elif (status == 'disabled'):
+                enabled = False
+            if (enabled is not None):
+                return Replica.objects.filter(enabled=enabled)
         return Replica.objects.filter().order_by('-id')
 
     @transaction.commit_on_success
@@ -55,8 +66,7 @@ class ReplicaView(rfc.GenericView):
                          'currently.' % sname)
                 handle_exception(Exception(e_msg), request)
             share = self._validate_share(sname, request)
-            aip = request.DATA.get('appliance')
-            self._validate_appliance(aip, request)
+            appliance = self._validate_appliance(request)
             dpool = request.DATA.get('pool')
             frequency = self._validate_frequency(request)
             task_name = request.DATA.get('task_name')
@@ -70,10 +80,10 @@ class ReplicaView(rfc.GenericView):
             data_port = self._validate_port(data_port, request)
             meta_port = self._validate_port(meta_port, request)
             ts = datetime.utcnow().replace(tzinfo=utc)
-            r = Replica(task_name=task_name, share=sname, appliance=aip,
-                        pool=share.pool.name, dpool=dpool, enabled=True,
-                        frequency=frequency, data_port=data_port,
-                        meta_port=meta_port, ts=ts)
+            r = Replica(task_name=task_name, share=sname,
+                        appliance=appliance.uuid, pool=share.pool.name,
+                        dpool=dpool, enabled=True, frequency=frequency,
+                        data_port=data_port, meta_port=meta_port, ts=ts)
             r.save()
             return Response(ReplicaSerializer(r).data)
 
@@ -105,11 +115,12 @@ class ReplicaView(rfc.GenericView):
             e_msg = ('Share: %s does not exist' % sname)
             handle_exception(Exception(e_msg), request)
 
-    def _validate_appliance(self, ip, request):
+    def _validate_appliance(self, request):
         try:
+            ip = request.DATA.get('appliance', None)
             return Appliance.objects.get(ip=ip)
         except:
-            e_msg = ('Appliance with ip: %s is not recognized.' % ip)
+            e_msg = ('Appliance with ip(%s) is not recognized.' % ip)
             handle_exception(Exception(e_msg), request)
 
     def _validate_port(self, port, request):
