@@ -31,6 +31,7 @@ from util import (create_replica_trail, update_replica_status, create_snapshot,
                   delete_snapshot)
 from cli.rest_util import set_token
 from fs.btrfs import get_oldest_snap
+from storageadmin.models import Appliance
 
 BTRFS = '/sbin/btrfs'
 logger = logging.getLogger(__name__)
@@ -41,7 +42,7 @@ class Sender(Process):
     def __init__(self, replica, sender_ip, pub, q, snap_name, smeta_port,
                  sdata_port, rmeta_port, uuid, snap_id, rt=None):
         self.replica = replica
-        self.receiver_ip = self.replica.appliance
+        self.receiver_ip = self._get_receiver_ip(self.replica)
         self.smeta_port = smeta_port
         self.sdata_port = sdata_port
         self.rmeta_port = rmeta_port
@@ -70,6 +71,16 @@ class Sender(Process):
         self.kb_sent = 0
         self.ctx = zmq.Context()
         super(Sender, self).__init__()
+
+    def _get_receiver_ip(self, replica):
+        try:
+            appliance = Appliance.objects.get(uuid=replica.appliance)
+            return appliance.ip
+        except Exception, e:
+            logger.exception(e)
+            msg = ('Failed to get receiver ip. Is the receiver '
+                   'appliance added?')
+            raise Exception(msg)
 
     @contextmanager
     def _clean_exit_handler(self, msg):
