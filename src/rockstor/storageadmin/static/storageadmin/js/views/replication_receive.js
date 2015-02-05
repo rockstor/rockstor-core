@@ -27,7 +27,8 @@
 ReplicationReceiveView = RockstorLayoutView.extend({
 	events: {
 	'click .slider-stop': "stopService",
-	'click .slider-start': "startService"
+	'click .slider-start': "startService",
+	'click a[data-action=delete]': 'deleteReceivedTask',
 },
 
 initialize: function() {
@@ -103,6 +104,34 @@ renderReceives: function() {
 	this.displayReplicationWarning(this.serviceName);
 
 },
+
+deleteReceivedTask: function(event) {
+	var _this = this;
+	if (event) { event.preventDefault(); }
+	var button = $(event.currentTarget);
+	if (buttonDisabled(button)) return false;
+	var rId = $(event.currentTarget).attr("data-rshare-id");
+	var rShare = $(event.currentTarget).attr("data-rshare-name");
+	if(confirm("Delete Received Replication task:  " + rShare + ". Are you sure?")){
+		$.ajax({
+			url: '/api/sm/replicas/' + rId,
+			type: "DELETE",
+			dataType: "json",
+			success: function() {
+			enableButton(button);
+			_this.collection.fetch({
+				success: function() {
+				_this.renderReplicas();
+			}
+			});
+		},
+		error: function(xhr, status, error) {
+			enableButton(button);
+		}
+		});
+	}
+},
+
 startService: function(event) {
 	var _this = this;
 	var serviceName = this.serviceName; 

@@ -71,7 +71,7 @@
 <tbody>
 <% replicaShares.each(function(r, index) { %>
 <tr>
-<td><%= r.get('appliance') %></td>
+<td><%= r.get('appliance') %>&nbsp;<a href="#" data-rshare-name="<%= r.get('share') %>" data-rshare-id="<%= r.id %>" data-action="delete"><i class="icon-trash" rel="tooltip" title="Delete"></i></a></td>
 <td><%= r.get('src_share') %></td>
 <td><a href="#pools/<%= r.get('pool') %>"><%= r.get('pool') %></a></td>
 <td><%= r.get('share') %></td>
