@@ -171,8 +171,8 @@ class Receiver(Process):
                        'credit': settings.DEFAULT_SEND_CREDIT, }
                 self.meta_push.send_json(ack)
                 credit = credit + settings.DEFAULT_SEND_CREDIT
-                logger.debug('KB received for %s = %d' %
-                             (sname, int(self.kb_received / 1024)))
+                logger.debug('%d KB received for %s' %
+                             (int(self.kb_received / 1024), sname))
 
             try:
                 recv_data = recv_sub.recv()
@@ -306,5 +306,6 @@ class Receiver(Process):
         msg = ('Failed to send final ack to the sender for meta: %s' %
                self.meta)
         with self._clean_exit_handler(msg):
+            logger.debug('Receive finished for %s. ack = %s' % (sname, ack))
             self.meta_push.send_json(ack)
         self._sys_exit(0)

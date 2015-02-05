@@ -114,7 +114,7 @@ class Sender(Process):
                 self._sys_exit(3)
 
     def _process_q(self):
-        ack = self.q.get(block=True, timeout=60)
+        ack = self.q.get(block=True, timeout=300)
         if (ack['msg'] == 'send_more'):
             #  excess credit messages from receiver at that end
             return self._process_q()
@@ -207,7 +207,7 @@ class Sender(Process):
                 ack = self.q.get(block=True, timeout=600)
                 if (ack['msg'] == 'send_more'):
                     credit = ack['credit']
-                logger.debug('send process alive for %s. KB sent: %d' %
+                logger.debug('send process alive for %s. %d KB sent.' %
                              (self.snap_id, int(self.kb_sent/1024)))
             try:
                 if (sp.poll() is not None):

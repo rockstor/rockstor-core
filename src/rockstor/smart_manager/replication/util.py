@@ -54,8 +54,11 @@ def update_replica_status(rid, data, logger):
 
 def convert_ts(ts):
     if (ts is not None):
+        tformat = '%Y-%m-%dT%H:%M:%SZ'
+        if (len(ts) > 20):
+            tformat = '%Y-%m-%dT%H:%M:%S.%fZ'
         return datetime.strptime(
-            ts, '%Y-%m-%dT%H:%M:%S.%fZ').replace(tzinfo=utc)
+            ts, tformat).replace(tzinfo=utc)
 
 
 def get_replicas(logger, enabled=True):
