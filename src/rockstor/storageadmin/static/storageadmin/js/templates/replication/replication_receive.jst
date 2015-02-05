@@ -46,7 +46,7 @@
 
 
 <div id="replication-warning" class="alert" style="display:none">
-<strong>Warning!</strong> The Replication service is not turned on. You can start it on the <a href="#services">Services</a> page.
+<strong>Warning! The Replication service is not turned on.</strong>
 </div>
 
 <div class="messages"></div>
@@ -61,6 +61,7 @@
 <table id="replica-receives-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of replica receives">
 <thead>
 <tr>
+<th scope="col" abbr="Received Task ID">Received Task ID </th>
 <th scope="col" abbr="Source Appliance">Source Appliance </th>
 <th scope="col" abbr="Source Share">Source Share </th>
 <th scope="col" abbr="Destination Pool">Destination Pool</th>
@@ -71,7 +72,8 @@
 <tbody>
 <% replicaShares.each(function(r, index) { %>
 <tr>
-<td><%= r.get('appliance') %>&nbsp;<a href="#" data-rshare-name="<%= r.get('share') %>" data-rshare-id="<%= r.id %>" data-action="delete"><i class="icon-trash" rel="tooltip" title="Delete"></i></a></td>
+<td><%= r.id %>&nbsp;<a href="#" data-rshare-name="<%= r.get('share') %>" data-rshare-id="<%= r.id %>" data-action="delete"><i class="icon-trash" rel="tooltip" title="Delete"></i></a></td>
+<td><%= r.get('appliance') %></td>
 <td><%= r.get('src_share') %></td>
 <td><a href="#pools/<%= r.get('pool') %>"><%= r.get('pool') %></a></td>
 <td><%= r.get('share') %></td>
