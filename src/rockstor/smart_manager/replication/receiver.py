@@ -29,7 +29,6 @@ from contextlib import contextmanager
 from util import (create_share, create_receive_trail, update_receive_trail,
                   create_snapshot, create_rshare, rshare_id, get_sender_ip,
                   delete_snapshot)
-from cli.rest_util import set_token
 from fs.btrfs import (get_oldest_snap, remove_share, set_property, is_subvol)
 from system.osi import run_command
 from storageadmin.models import (Disk, Pool)
@@ -60,7 +59,7 @@ class Receiver(Process):
         self.ctx = zmq.Context()
         super(Receiver, self).__init__()
 
-    def _sys_exit(self, code, linger=10):
+    def _sys_exit(self, code, linger=6000):
         self.ctx.destroy(linger=linger)
         sys.exit(code)
 
@@ -86,7 +85,6 @@ class Receiver(Process):
             self._sys_exit(3)
 
     def run(self):
-        set_token()
         msg = ('Failed to get the sender ip from the uuid(%s) for meta: %s' %
                (self.meta['uuid'], self.meta))
         with self._clean_exit_handler(msg):
