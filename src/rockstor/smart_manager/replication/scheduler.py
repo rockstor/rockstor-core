@@ -26,7 +26,7 @@ from django.conf import settings
 from sender import Sender
 from receiver import Receiver
 from django.utils.timezone import utc
-from cli.rest_util import (api_call, set_token)
+from cli.rest_util import api_call
 import logging
 logger = logging.getLogger(__name__)
 from django.db import DatabaseError
@@ -47,7 +47,6 @@ class ReplicaScheduler(Process):
         self.pubq = Queue()
         self.uuid = None
         self.prune_time = int(time.time())
-        set_token()
         super(ReplicaScheduler, self).__init__()
 
     def _my_uuid(self):

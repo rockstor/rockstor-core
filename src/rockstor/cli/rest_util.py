@@ -25,7 +25,7 @@ import settings
 from storageadmin.exceptions import RockStorAPIException
 from functools import wraps
 from base_console import BaseConsole
-
+from storageadmin.models import OauthApp
 
 API_TOKEN = None
 
@@ -33,10 +33,9 @@ API_TOKEN = None
 def set_token(client_id=None, client_secret=None, url=None, logger=None):
     if (client_id is None or client_secret is None or url is None):
         os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
-        from storageadmin.models import OauthApp
         app = OauthApp.objects.get(name='cliapp')
-        client_id = app.application.client_id
-        client_secret = app.application.client_secret,
+        client_id = app.client_id()
+        client_secret = app.client_secret()
         url = 'https://localhost'
 
     token_request_data = {
@@ -55,6 +54,7 @@ def set_token(client_id=None, client_secret=None, url=None, logger=None):
         content = json.loads(response.content.decode("utf-8"))
         global API_TOKEN
         API_TOKEN = content['access_token']
+        return API_TOKEN
     except Exception, e:
         if (logger is not None):
             logger.exception(e)
@@ -113,6 +113,10 @@ def api_call(url, data=None, calltype='get', headers=None, save_error=True):
                         efo.write('%s\n' % line)
                     print('Error detail is saved at %s' % err_file)
             if ('detail' in error_d):
+                if (error_d['detail'] == 'Authentication credentials were not provided.'):
+                    set_token()
+                    return api_call(url, data=data, calltype=calltype,
+                                    headers=headers, save_error=save_error)
                 raise RockStorAPIException(detail=error_d['detail'])
         except ValueError:
             raise RockStorAPIException(detail='Internal Server Error')

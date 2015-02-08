@@ -29,7 +29,6 @@ from contextlib import contextmanager
 from django.utils.timezone import utc
 from util import (create_replica_trail, update_replica_status, create_snapshot,
                   delete_snapshot)
-from cli.rest_util import set_token
 from fs.btrfs import get_oldest_snap
 from storageadmin.models import Appliance
 
@@ -91,7 +90,7 @@ class Sender(Process):
             logger.exception(e)
             self._sys_exit(3)
 
-    def _sys_exit(self, code, linger=10):
+    def _sys_exit(self, code, linger=6000):
         self.ctx.destroy(linger=linger)
         sys.exit(code)
 
@@ -114,7 +113,7 @@ class Sender(Process):
                 self._sys_exit(3)
 
     def _process_q(self):
-        ack = self.q.get(block=True, timeout=300)
+        ack = self.q.get(block=True, timeout=600)
         if (ack['msg'] == 'send_more'):
             #  excess credit messages from receiver at that end
             return self._process_q()
@@ -126,7 +125,6 @@ class Sender(Process):
         return ack
 
     def run(self):
-        set_token()
         msg = ('Failed to connect to receiver(%s) on meta port'
                '(%d) for snap_name: %s. Aborting.' %
                (self.receiver_ip, self.rmeta_port, self.snap_name))
