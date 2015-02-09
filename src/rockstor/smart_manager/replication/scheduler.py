@@ -21,7 +21,7 @@ import zmq
 import os
 import time
 from datetime import datetime
-from smart_manager.models import (ReplicaTrail, ReplicaShare)
+from smart_manager.models import (ReplicaTrail, ReplicaShare, Replica)
 from django.conf import settings
 from sender import Sender
 from receiver import Receiver
@@ -31,7 +31,7 @@ import logging
 logger = logging.getLogger(__name__)
 from django.db import DatabaseError
 from util import (update_replica_status, disable_replica, prune_receive_trail,
-                  get_replicas, get_replica_trail)
+                  get_replicas, get_replica_trail, prune_replica_trail)
 
 
 class ReplicaScheduler(Process):
@@ -124,6 +124,8 @@ class ReplicaScheduler(Process):
                 self.prune_time = int(time.time())
                 for rs in ReplicaShare.objects.all():
                     prune_receive_trail(rs.id, logger)
+                for r in Replica.objects.all():
+                    prune_replica_trail(r.id, logger)
 
             if (total_sleep >= 60 and len(self.senders) < 50):
 

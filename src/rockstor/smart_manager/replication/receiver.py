@@ -258,7 +258,7 @@ class Receiver(Process):
                     logger.error('Nothing received in the last 60 seconds '
                                  'from the sender for meta: %s. Aborting.'
                                  % self.meta)
-                    raise
+                    self._sys_exit(3)
             except Exception, e:
                 msg = ('Exception occured while receiving fsdata')
                 logger.error(msg)

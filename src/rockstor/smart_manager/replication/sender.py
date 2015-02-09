@@ -242,12 +242,12 @@ class Sender(Process):
 
             if (os.getppid() != self.ppid):
                 logger.error('Scheduler exited. Sender for %s cannot go on. '
-                             'Aborting.' % self.snap_name)
+                             'Aborting.' % self.snap_id)
                 self._sys_exit(3)
 
         msg = ('Timeout occured(60 seconds) while waiting for final '
-               'send confirmation from the receiver(%s) for snap_name:'
-               ' %s. Aborting.' % (self.receiver_ip, self.snap_name))
+               'send confirmation from the receiver(%s) for %s. Aborting.'
+               % (self.receiver_ip, self.snap_id))
         with self._update_trail_and_quit(msg):
             ack = self._process_q()
 

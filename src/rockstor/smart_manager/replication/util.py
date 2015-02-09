@@ -160,14 +160,23 @@ def update_receive_trail(rtid, data, logger):
         raise
 
 
-def prune_receive_trail(rid, logger):
-    url = ('%ssm/replicas/rtrail/rshare/%d' % (BASE_URL, rid))
+def prune_trail(url, logger, days=7):
     try:
-        data = {'days': 7, }
+        data = {'days': days, }
         return api_call(url, data=data, calltype='delete', save_error=False)
     except Exception, e:
-        logger.debug('Failed to prune receive trail for rshare(%s)' % rid)
+        logger.debug('Failed to prune trail for url(%s)' % url)
         logger.exception(e)
+
+
+def prune_receive_trail(rid, logger):
+    url = ('%ssm/replicas/rtrail/rshare/%d' % (BASE_URL, rid))
+    return prune_trail(url, logger)
+
+
+def prune_replica_trail(rid, logger):
+    url = ('%ssm/replicas/trail/replica/%d' % (BASE_URL, rid))
+    return prune_trail(url, logger)
 
 
 def is_snapshot(sname, snap_name, logger):
