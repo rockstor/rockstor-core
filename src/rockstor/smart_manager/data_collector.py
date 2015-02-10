@@ -288,9 +288,7 @@ class ProcRetreiver(Process):
                         total_reclaimable += (
                             Share.objects.get(name=s).size - usaged[s][1])
                     except:
-                        total_reclaimable += (
-                            Snapshot.objects.get(real_name=s).size -
-                            usaged[s][1])
+                        pass
                     su = None
                     try:
                         su = ShareUsage.objects.filter(name=s).latest('id')

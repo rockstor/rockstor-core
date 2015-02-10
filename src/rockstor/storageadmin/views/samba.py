@@ -69,7 +69,6 @@ class SambaView(rfc.GenericView):
                                                 def_opts['browsable'])
 
         options['custom_config'] = request.DATA.get('custom_config', [])
-        logger.debug('custom_config = %s' % options['custom_config'])
         if (type(options['custom_config']) != list):
             e_msg = ('custom config must be a list of strings')
             handle_exception(Exception(e_msg), request)

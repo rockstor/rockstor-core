@@ -313,7 +313,7 @@ def add_clone(pool, pool_device, share, clone, snapshot=None):
     return add_snap_helper(orig_path, clone_path)
 
 
-def add_snap(pool, pool_device, share_name, snap_name, readonly=True):
+def add_snap(pool, pool_device, share_name, snap_name, readonly=False):
     """
     create a snapshot
     """
@@ -323,7 +323,7 @@ def add_snap(pool, pool_device, share_name, snap_name, readonly=True):
     snap_dir = ('%s/.snapshots/%s' % (root_pool_mnt, share_name))
     create_tmp_dir(snap_dir)
     snap_full_path = ('%s/%s' % (snap_dir, snap_name))
-    return add_snap_helper(share_full_path, snap_full_path)
+    return add_snap_helper(share_full_path, snap_full_path, readonly)
 
 
 def rollback_snap(snap_name, sname, subvol_name, pool, pool_device):
@@ -414,15 +414,30 @@ def shares_usage(pool, pool_device, share_map, snap_map):
 
 
 def pool_usage(mnt_pt):
+    #  @todo: remove temporary raid5/6 custom logic once fi usage
+    #  supports raid5/6.
     cmd = [BTRFS, 'fi', 'usage', '-b', mnt_pt]
     total = 0
     inuse = 0
     free = 0
     data_ratio = 1
+    raid56 = False
+    parity = 1
+    disks = set()
     out, err, rc = run_command(cmd)
+    for e in err:
+        e = e.strip()
+        if (re.match('WARNING: RAID56', e) is not None):
+            raid56 = True
+
     for o in out:
         o = o.strip()
-        if (re.match('Device size:', o) is not None):
+        if (raid56 is True and re.match('/dev/', o) is not None):
+            disks.add(o.split()[0])
+        elif (raid56 is True and re.match('Data,RAID', o) is not None):
+            if (o[5:10] == 'RAID6'):
+                parity = 2
+        elif (re.match('Device size:', o) is not None):
             total = int(o.split()[2]) / 1024
         elif (re.match('Used:', o) is not None):
             inuse = int(o.split()[1]) / 1024
@@ -430,8 +445,17 @@ def pool_usage(mnt_pt):
             free = int(o.split()[2]) / 1024
         elif (re.match('Data ratio:', o) is not None):
             data_ratio = float(o.split()[2])
-    total = total / data_ratio
-    inuse = inuse / data_ratio
+            if (data_ratio < 0.01):
+                data_ratio = 0.01
+    if (raid56 is True):
+        num_disks = len(disks)
+        if (num_disks > 0):
+            per_disk = total / num_disks
+            total = (num_disks - parity) * per_disk
+        free = total - inuse
+    else:
+        total = total / data_ratio
+        inuse = inuse / data_ratio
     return (total, inuse, free)
 
 
@@ -634,7 +658,25 @@ def blink_disk(disk, total_exec, read, sleep):
     p.terminate()
 
 
-def set_property(mnt_pt, name, val):
-    if (is_mounted(mnt_pt)):
+def set_property(mnt_pt, name, val, mount=True):
+    if (mount is not True or is_mounted(mnt_pt)):
         cmd = [BTRFS, 'property', 'set', mnt_pt, name, val]
         return run_command(cmd)
+
+
+def get_oldest_snap(subvol_path, num_retain):
+    share_name = subvol_path.split('/')[-1]
+    cmd = [BTRFS, 'subvol', 'list', '-o', subvol_path]
+    o, e, rc = run_command(cmd)
+    snaps = {}
+    for l in o:
+        fields = l.split()
+        if (len(fields) > 0 and re.search(share_name, fields[-1]) is not None):
+            snap_fields = fields[-1].split('/')
+            if (snap_fields[-1] == share_name):
+                continue
+            snaps[int(fields[1])] = snap_fields[-1]
+    snap_ids = sorted(snaps.keys())
+    if (len(snap_ids) >= num_retain):
+        return snaps[snap_ids[0]]
+    return None

@@ -21,8 +21,9 @@ from django.utils.timezone import utc
 from rest_framework.response import Response
 from smart_manager.models import (ReplicaShare, ReceiveTrail)
 from smart_manager.serializers import (ReceiveTrailSerializer)
-from datetime import datetime
+from datetime import (datetime, timedelta)
 import rest_framework_custom as rfc
+
 
 class ReceiveTrailView(rfc.GenericView):
     serializer_class = ReceiveTrailSerializer
@@ -42,32 +43,38 @@ class ReceiveTrailView(rfc.GenericView):
 
     @transaction.commit_on_success
     def post(self, request, rid):
-        rs = ReplicaShare.objects.get(id=rid)
-        snap_name = request.DATA['snap_name']
-        ts = datetime.utcnow().replace(tzinfo=utc)
-        rt = ReceiveTrail(rshare=rs, snap_name=snap_name,
-                          status='pending', receive_pending=ts)
-        rt.save()
-        return Response(ReceiveTrailSerializer(rt).data)
+        with self._handle_exception(request):
+            rs = ReplicaShare.objects.get(id=rid)
+            ts = datetime.utcnow().replace(tzinfo=utc)
+            snap_name = request.DATA.get('snap_name')
+            rt = ReceiveTrail(rshare=rs, snap_name=snap_name,
+                              status='pending', receive_pending=ts)
+            rt.save()
+            return Response(ReceiveTrailSerializer(rt).data)
 
     @transaction.commit_on_success
     def put(self, request, rtid):
-        rt = ReceiveTrail.objects.get(id=rtid)
-        if ('snapshot_created' in request.DATA):
-            rt.snapshot_created = request.DATA['snapshot_created']
-        if ('snapshot_failed' in request.DATA):
-            rt.snapshot_failed = request.DATA['snapshot_failed']
-        if ('receive_succeeded' in request.DATA):
-            rt.receive_succeeded = request.DATA['receive_succeeded']
-        if ('receive_failed' in request.DATA):
-            rt.receive_failed = request.DATA['receive_failed']
-        if ('status' in request.DATA):
-            rt.status = request.DATA['status']
-        if ('error' in request.DATA):
-            rt.error = request.DATA['error']
-        if ('kb_received' in request.DATA):
-            rt.kb_received = request.DATA['kb_received']
-        if ('end_ts' in request.DATA):
-            rt.end_ts = request.DATA['end_ts']
-        rt.save()
-        return Response(ReceiveTrailSerializer(rt).data)
+        with self._handle_exception(request):
+            rt = ReceiveTrail.objects.get(id=rtid)
+            rt.receive_succeeded = request.DATA.get('receive_succeeded',
+                                                    rt.receive_succeeded)
+            rt.receive_failed = request.DATA.get('receive_failed',
+                                                 rt.receive_failed)
+            rt.status = request.DATA.get('status', rt.status)
+            rt.error = request.DATA.get('error', rt.error)
+            rt.kb_received = request.DATA.get('kb_received', rt.kb_received)
+            rt.end_ts = request.DATA.get('end_ts', rt.end_ts)
+            rt.save()
+            return Response(ReceiveTrailSerializer(rt).data)
+
+    @transaction.commit_on_success
+    def delete(self, request, rid):
+        with self._handle_exception(request):
+            days = int(request.DATA.get('days', 30))
+            rs = ReplicaShare.objects.get(id=rid)
+            ts = datetime.utcnow().replace(tzinfo=utc)
+            ts0 = ts - timedelta(days=days)
+            if (ReceiveTrail.objects.filter(rshare=rs).count() > 100):
+                ReceiveTrail.objects.filter(
+                    rshare=rs, end_ts__lt=ts0).delete()
+            return Response()

@@ -2,94 +2,156 @@
 /*
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
- * 
+ *
  * RockStor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
- * 
+ *
  * RockStor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 </script>
 
-
+<% if (replicaId == null) { %>
 <h3>Add a new replication task</h3>
 <div class="row-fluid">
-  <div class="span8">
-    <label class="control-label"></label>
-    <div class="form-box">
-      <form class="form-horizontal" id="replication-task-create-form" name="aform">
-        <div class="messages"></div>
-        <div class="control-group">
-          <label class="control-label" for="task_name">Task name<span class="required"> *</span></label>
-          <div class="controls">
-            <input type="text" id="task_name" name="task_name" placeholder="Task name" title="A unique name for this replication task" >
-          </div>
-        </div>
-        <div class="control-group">
-          <label class="control-label" for="share">Share to replicate<span class="required"> *</span></label>
-          <div class="controls">
-            <select id="share" name="share" title="Source share to replicate">
-              <% _.each(shares, function(share, index) { %>
-                <option value="<%= share.get('name') %>"> <%= share.get('name') %> </option>
-              <% }); %>  
+<div class="span8">
+<label class="control-label"></label>
+<div class="form-box">
+<form class="form-horizontal" id="replication-task-create-form" name="aform">
+<div class="messages"></div>
+<div class="control-group">
+<label class="control-label" for="task_name">Task name<span class="required"> *</span></label>
+<div class="controls">
+<input type="text" id="task_name" name="task_name" placeholder="Task name" title="A unique name for this replication task" >
+</div>
+</div>
+<div class="control-group">
+<label class="control-label" for="share">Share to replicate<span class="required"> *</span></label>
+<div class="controls">
+<select id="share" name="share" title="Share to replicate">
+<% _.each(shares, function(share, index) { %>
+<option value="<%= share.get('name') %>"> <%= share.get('name') %> </option>
+<% }); %>
 
-            </select>
-          </div>
-        </div>
-        <div class="control-group">
-          <label class="control-label" for="appliance">Target appliance<span class="required"> *</span></label>
-          <div class="controls">
-            <select id="appliance" name="appliance" title="Destination RockStor appliance">
-              <% appliances.each(function(appliance, index) { %>
-                <% if (!appliance.get('current_appliance')) { %>
-                  <option value="<%= appliance.get('ip') %>"> <%= appliance.get('ip') %> </option>
-                <% } %>
-              <% }); %> 
+</select>
+</div>
+</div>
+<div class="control-group">
+<label class="control-label" for="appliance">Target appliance<span class="required"> *</span></label>
+<div class="controls">
+<select id="appliance" name="appliance" title="Share will be replicated to this remote Rockstor appliance.">
+<% appliances.each(function(appliance, index) { %>
+<% if (!appliance.get('current_appliance')) { %>
+<option value="<%= appliance.get('ip') %>"> <%= appliance.get('ip') %> </option>
+<% } %>
+<% }); %>
 
-            </select>
-          </div>
-        </div>
-        <div class="control-group">
-          <label class="control-label" for="port">Replication Data Port<span class="required"> *</span></label>
-          <div class="controls">
-            <input type="text" id="data-port" name="data_port" value="<%= replica_data_port %>" placeholder="Replication Data Port" title="Replication data port on the target appliance. (Default is <%= replica_data_port %>)">
-          </div>
-        </div>
-        <div class="control-group">
-          <label class="control-label" for="port">Replication Meta Port<span class="required"> *</span></label>
-          <div class="controls">
-            <input type="text" id="meta-port" name="meta_port" value="<%= replica_meta_port %>" placeholder="Replication Meta Port" title="Replication meta port on the target appliance. (Default is <%= replica_meta_port %>)">
-          </div>
-        </div>
-        <div class="control-group">
-          <label class="control-label" for="pool">Target pool name<span class="required"> *</span></label>
-          <div class="controls">
-            <input type="text" id="pool" name="pool" placeholder="Target pool name" title="Target pool name on the target appliance">
-          </div>
-        </div>
-        <div class="control-group">
-          <label class="control-label" for="frequency">Frequency in seconds<span class="required"> *</span></label>
-          <div class="controls">
-            <input type="text" id="frequency" name="frequency" placeholder="Frequency" title="Replication frequency in seconds" >
-          </div>
-        </div>
-        <div class="control-group">
-          <div class="controls">
-            <a id="js-cancel" class="btn">Cancel</a>
-            <input type="Submit" id="create_replication_task" class="btn btn-primary" value="Submit"></input>
-          </div>
-        </div>
-      </form>
-    
-    </div> <!-- form-box -->
-  </div> <!-- span8 -->
+</select>
+</div>
+</div>
+<div class="control-group">
+<label class="control-label" for="port">Replication Data Port<span class="required"> *</span></label>
+<div class="controls">
+<input type="text" id="data-port" name="data_port" value="<%= replica_data_port %>" placeholder="Replication Data Port" title="Replication data port on the target appliance. (Default is <%= replica_data_port %>)">
+</div>
+</div>
+<div class="control-group">
+<label class="control-label" for="port">Replication Meta Port<span class="required"> *</span></label>
+<div class="controls">
+<input type="text" id="meta-port" name="meta_port" value="<%= replica_meta_port %>" placeholder="Replication Meta Port" title="Replication meta port on the target appliance. (Default is <%= replica_meta_port %>)">
+</div>
+</div>
+<div class="control-group">
+<label class="control-label" for="pool">Target pool<span class="required"> *</span></label>
+<div class="controls">
+<input type="text" id="pool" name="pool" placeholder="Target pool name" title="Name of a Pool(must already exists) on the remote appliance. Selected Share will be replicated inside this pool.">
+</div>
+</div>
+<div class="control-group">
+<label class="control-label" for="frequency">Replication frequency<span class="required"> *</span></label>
+<div class="controls">
+<input type="text" id="frequency" name="frequency" placeholder="Frequency in minutes" title="Replication frequency in minutes." >
+</div>
+</div>
+<div class="control-group">
+<div class="controls">
+<a id="js-cancel" class="btn">Cancel</a>
+<input type="Submit" id="create_replication_task" class="btn btn-primary" value="Submit"></input>
+</div>
+</div>
+</form>
+
+</div> <!-- form-box -->
+</div> <!-- span8 -->
+</div> <!-- row-fluid -->
+<% } else { %>
+<h3>Edit Replication  task</h3>
+<div class="row-fluid">
+<div class="span8">
+<label class="control-label"></label>
+<div class="form-box">
+<form class="form-horizontal" id="replication-task-create-form" name="aform">
+<div class="messages"></div>
+<div class="control-group">
+<label class="control-label" for="task_name">Task name:</label>
+<div class="controls">
+<label class="control-label" style="text-align: left"><%= replica.get('task_name') %></label>
+</div>
+</div>
+<div class="control-group">
+<label class="control-label" for="share">Share to replicate:</label>
+<div class="controls">
+<label class="control-label" style="text-align: left"><%= replica.get('share') %></label>
+</div>
+</div>
+<div class="control-group">
+<label class="control-label" for="appliance">Target appliance:</label>
+<div class="controls">
+<label class="control-label" style="text-align: left"><%= replica.get('appliance') %></label>
+</div>
+</div>
+<div class="control-group">
+<label class="control-label" for="port">Replication Data Port:</label>
+<div class="controls">
+<label class="control-label" style="text-align: left"><%= replica.get('data_port') %></label>
+</div>
+</div>
+<div class="control-group">
+<label class="control-label" for="port">Replication Meta Port:</label>
+<div class="controls">
+<label class="control-label" style="text-align: left"><%= replica.get('meta_port') %></label>
+</div>
+</div>
+<div class="control-group">
+<label class="control-label" for="pool">Target pool name:</label>
+<div class="controls">
+<label class="control-label" style="text-align: left"><%= replica.get('dpool') %></label>
+</div>
+</div>
+<div class="control-group">
+<label class="control-label" for="frequency">Frequency in minutes:<span class="required"> *</span></label>
+<div class="controls">
+<input type="text" id="frequency" name="frequency" value="<%= replica.get('frequency')%> "  title="Replication frequency in minutes" >
+</div>
+</div>
+<div class="control-group">
+<div class="controls">
+<a id="js-cancel" class="btn">Cancel</a>
+<input type="Submit" id="create_replication_task" class="btn btn-primary" value="Submit"></input>
+</div>
+</div>
+</form>
+
+</div> <!-- form-box -->
+</div> <!-- span8 -->
 </div> <!-- row-fluid -->
 
+<% } %>

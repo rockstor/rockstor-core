@@ -21,16 +21,17 @@ import zmq
 import os
 import time
 from datetime import datetime
-from smart_manager.models import (Replica, ReplicaTrail)
+from smart_manager.models import (ReplicaTrail, ReplicaShare, Replica)
 from django.conf import settings
 from sender import Sender
 from receiver import Receiver
 from django.utils.timezone import utc
-from cli.rest_util import (api_call, set_token)
+from cli.rest_util import api_call
 import logging
 logger = logging.getLogger(__name__)
 from django.db import DatabaseError
-from util import (update_replica_status, disable_replica)
+from util import (update_replica_status, disable_replica, prune_receive_trail,
+                  get_replicas, get_replica_trail, prune_replica_trail)
 
 
 class ReplicaScheduler(Process):
@@ -41,10 +42,11 @@ class ReplicaScheduler(Process):
         self.receivers = {}
         self.data_port = settings.REPLICA_DATA_PORT
         self.meta_port = settings.REPLICA_META_PORT
+        self.MAX_ATTEMPTS = settings.MAX_REPLICA_SEND_ATTEMPTS
         self.recv_meta = None
         self.pubq = Queue()
         self.uuid = None
-        set_token()
+        self.prune_time = int(time.time())
         super(ReplicaScheduler, self).__init__()
 
     def _my_uuid(self):
@@ -55,10 +57,8 @@ class ReplicaScheduler(Process):
     def _replication_interface(self):
         url = 'https://localhost/api/network'
         interfaces = api_call(url, save_error=False)
-        logger.info('interfaces: %s' % interfaces)
         mgmt_iface = [x for x in interfaces['results']
                       if x['itype'] == 'management'][0]
-        logger.info('mgmt_iface: %s' % mgmt_iface)
         return mgmt_iface['ipaddr']
 
     def _prune_workers(self, workers):
@@ -100,66 +100,73 @@ class ReplicaScheduler(Process):
                 rep_pub.send(msg)
 
             #  check for any recv's coming
-            try:
-                self.recv_meta = meta_pull.recv_json()
-                snap_id = self.recv_meta['id']
-                logger.debug('meta received: %s' % self.recv_meta)
-                if (self.recv_meta['msg'] == 'begin'):
-                    logger.debug('begin received. meta: %s' % self.recv_meta)
-                    rw = Receiver(self.recv_meta, Queue())
-                    self.receivers[snap_id] = rw
-                    rw.start()
-                elif (snap_id not in self.senders):
-                    logger.error('Unknown snap_id(%s) received. Ignoring'
-                                 % snap_id)
-                else:
-                    self.senders[snap_id].q.put(self.recv_meta)
-            except zmq.error.Again:
-                pass
+            num_msgs = 0
+            while (num_msgs < 1000):
+                try:
+                    self.recv_meta = meta_pull.recv_json()
+                    num_msgs = num_msgs + 1
+                    snap_id = self.recv_meta['id']
+                    if (self.recv_meta['msg'] == 'begin'):
+                        rw = Receiver(self.recv_meta)
+                        self.receivers[snap_id] = rw
+                        rw.start()
+                    elif (snap_id not in self.senders):
+                        logger.error('Unknown snap_id(%s) received. Ignoring'
+                                     % snap_id)
+                    else:
+                        self.senders[snap_id].q.put(self.recv_meta)
+                except zmq.error.Again:
+                    break
 
             self._prune_workers((self.receivers, self.senders))
 
+            if (int(time.time()) - self.prune_time > 3600):
+                self.prune_time = int(time.time())
+                for rs in ReplicaShare.objects.all():
+                    prune_receive_trail(rs.id, logger)
+                for r in Replica.objects.all():
+                    prune_replica_trail(r.id, logger)
+
             if (total_sleep >= 60 and len(self.senders) < 50):
-                logger.debug('scanning for replicas')
 
                 try:
-                    for r in Replica.objects.filter(enabled=True):
-                        rt = ReplicaTrail.objects.filter(
-                            replica=r).order_by('-snapshot_created')
+                    for r in get_replicas(logger):
+                        rt = get_replica_trail(r.id, logger)
                         now = datetime.utcnow().replace(second=0,
                                                         microsecond=0,
                                                         tzinfo=utc)
                         sw = None
-                        snap_name = ('%s_replica_snap' % r.share)
-                        if (len(rt) == 0):
+                        snap_name = 'replication'
+                        rt2 = ReplicaTrail.objects.filter().order_by('-id')
+                        if (len(rt2) != 0):
+                            snap_name = ('%s_%d' % (snap_name, rt2[0].id + 1))
+                        else:
                             snap_name = ('%s_1' % snap_name)
-                            logger.debug('new sender for snap: %s' % snap_name)
+                        snap_id = ('%s_%s_%s_%s' %
+                                   (self.uuid, r.pool, r.share, snap_name))
+                        if (len(rt) == 0):
+                            logger.debug('new sender for snap: %s' % snap_id)
                             sw = Sender(r, self.rep_ip, self.pubq, Queue(),
                                         snap_name, self.meta_port,
-                                        self.data_port,
-                                        r.meta_port, self.uuid)
+                                        self.data_port, r.meta_port, self.uuid,
+                                        snap_id)
                         elif (rt[0].status == 'succeeded'):
-                            snap_name = ('%s_%d' %
-                                         (snap_name, rt[0].id + 1))
-                            if ((now - rt[0].end_ts).total_seconds() >
-                                r.frequency):
+                            if (((now - rt[0].end_ts).total_seconds() >
+                                 (r.frequency * 60))):
                                 logger.debug('incremental sender for snap: %s'
-                                             % snap_name)
-                                sw = Sender(r, self.rep_ip, self.pubq,
-                                            Queue(), snap_name, self.meta_port,
-                                            self.data_port,
-                                            r.meta_port, self.uuid, rt[0])
+                                             % snap_id)
+                                sw = Sender(r, self.rep_ip, self.pubq, Queue(),
+                                            snap_name, self.meta_port,
+                                            self.data_port, r.meta_port,
+                                            self.uuid, snap_id, rt[0])
                             else:
-                                logger.debug('its not time yet for '
-                                             'incremental sender for snap: '
-                                             '%s' % snap_name)
                                 continue
                         elif (rt[0].status == 'pending'):
-                            prev_snap_id = ('%s_%s_%s_%s' % (self.rep_ip,
+                            prev_snap_id = ('%s_%s_%s_%s' % (self.uuid,
                                             r.pool, r.share, rt[0].snap_name))
                             if (prev_snap_id in self.senders):
                                 logger.debug('send process ongoing for snap: '
-                                             '%s' % snap_name)
+                                             '%s' % snap_id)
                                 continue
                             logger.debug('%s not found in senders. Previous '
                                          'sender must have Aborted. Marking '
@@ -176,24 +183,23 @@ class ReplicaScheduler(Process):
                             snap_name = rt[0].snap_name
                             #  if num_failed attempts > 10, disable the replica
                             num_tries = 0
-                            MAX_ATTEMPTS = 10
                             for rto in rt:
                                 if (rto.status != 'failed' or
-                                    num_tries >= MAX_ATTEMPTS or
+                                    num_tries >= self.MAX_ATTEMPTS or
                                     rto.end_ts < r.ts):
                                     break
                                 num_tries = num_tries + 1
-                            if (num_tries >= MAX_ATTEMPTS):
+                            if (num_tries >= self.MAX_ATTEMPTS):
                                 logger.info('Maximum attempts(%d) reached '
                                             'for snap: %s. Disabling the '
                                             'replica.' %
-                                            (MAX_ATTEMPTS, snap_name))
+                                            (self.MAX_ATTEMPTS, snap_id))
                                 disable_replica(r.id, logger)
                                 continue
                             logger.info('previous backup failed for snap: '
                                         '%s. Starting a new one. Attempt '
-                                        '%d/%d.' % (snap_name, num_tries,
-                                                    MAX_ATTEMPTS))
+                                        '%d/%d.' % (snap_id, num_tries,
+                                                    self.MAX_ATTEMPTS))
                             prev_rt = None
                             for rto in rt:
                                 if (rto.status == 'succeeded'):
@@ -202,14 +208,12 @@ class ReplicaScheduler(Process):
                             sw = Sender(r, self.rep_ip, self.pubq, Queue(),
                                         snap_name, self.meta_port,
                                         self.data_port, r.meta_port,
-                                        self.uuid, prev_rt)
+                                        self.uuid, snap_id, prev_rt)
                         else:
                             logger.error('unknown replica trail status: %s. '
                                          'ignoring snap: %s' %
-                                         (rt[0].status, snap_name))
+                                         (rt[0].status, snap_id))
                             continue
-                        snap_id = ('%s_%s_%s_%s' %
-                                   (self.rep_ip, r.pool, r.share, snap_name))
                         self.senders[snap_id] = sw
                         sw.daemon = True
                         sw.start()

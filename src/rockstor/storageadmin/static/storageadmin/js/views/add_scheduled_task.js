@@ -26,160 +26,160 @@
 
 
 AddScheduledTaskView = RockstorLayoutView.extend({
-  events: {
-    "click #js-cancel": "cancel",
-    "change #task-type": "renderOptionalFields",
-  },
+	events: {
+	"click #js-cancel": "cancel",
+	"change #task-type": "renderOptionalFields",
+},
 
-  initialize: function() {
-    this.constructor.__super__.initialize.apply(this, arguments);
-    this.template = window.JST.scheduled_tasks_add_task;
-    this.snapshotFieldsTemplate = window.JST.scheduled_tasks_snapshot_fields;
-    this.scrubFieldsTemplate = window.JST.scheduled_tasks_scrub_fields;
-    this.shares = new ShareCollection();
-    this.pools = new PoolCollection();
-    this.dependencies.push(this.shares);
-    this.dependencies.push(this.pools);
-    this.taskDefId = this.options.taskDefId;
-    if (!_.isUndefined(this.taskDefId) && !_.isNull(this.taskDefId)) {
-      this.taskDef = new TaskDef({id: this.taskDefId});
-      this.dependencies.push(this.taskDef);
-    }
-  },
+initialize: function() {
+	this.constructor.__super__.initialize.apply(this, arguments);
+	this.template = window.JST.scheduled_tasks_add_task;
+	this.snapshotFieldsTemplate = window.JST.scheduled_tasks_snapshot_fields;
+	this.scrubFieldsTemplate = window.JST.scheduled_tasks_scrub_fields;
+	this.shares = new ShareCollection();
+	this.pools = new PoolCollection();
+	this.dependencies.push(this.shares);
+	this.dependencies.push(this.pools);
+	this.taskDefId = this.options.taskDefId;
+	if (!_.isUndefined(this.taskDefId) && !_.isNull(this.taskDefId)) {
+		this.taskDef = new TaskDef({id: this.taskDefId});
+		this.dependencies.push(this.taskDef);
+	}
+},
 
-  render: function() {
-    this.fetch(this.renderNewScheduledTask, this);
-    return this;
-  },
+render: function() {
+	this.fetch(this.renderNewScheduledTask, this);
+	return this;
+},
 
-  renderNewScheduledTask: function() {
-    var _this = this;
-    $(this.el).html(this.template({
-      shares: this.shares,
-      pools: this.pools,
-      taskTypes: ['snapshot', 'scrub'],
-      taskDef: this.taskDef,
-      taskDefId: this.taskDefId
-    }));
-    this.renderOptionalFields();
-    this.$('#start_date').datepicker();
-    var timePicker = this.$('#start_time').timepicker({
-      showMeridian: false
-    });
-    this.validator = $('#scheduled-task-create-form').validate({
-      onfocusout: false,
-      onkeyup: false,
-      rules: {
-        name: 'required',
-        start_date: 'required',
-        frequency: {
-          required: true,
-          number: true,
-          min: 1
-        },
-        share: {
-          required: {
-            depends: function(element) {
-              return (_this.$('#task-type').val() == 'snapshot');
-            }
-          }
-        },
-        prefix: {
-          required: {
-            depends: function(element) {
-              return (_this.$('#task-type').val() == 'snapshot');
-            }
-          }
-        },
-        'meta.max_count': {
-          number: true,
-          min: 1,
-          required: {
-            depends: function(element) {
-              return (_this.$('#task-type').val() == 'snapshot');
-            },
-
-          }
-        },
-	'meta.visible': {
-	  required: {
-	    depends: function(element) {
-	      return (_this.$('#task-type').val() == 'snapshot');
-	    },
-	  }
+renderNewScheduledTask: function() {
+	var _this = this;
+	$(this.el).html(this.template({
+		shares: this.shares,
+		pools: this.pools,
+		taskTypes: ['snapshot', 'scrub'],
+		taskDef: this.taskDef,
+		taskDefId: this.taskDefId
+	}));
+	this.renderOptionalFields();
+	this.$('#start_date').datepicker();
+	var timePicker = this.$('#start_time').timepicker({
+		showMeridian: false
+	});
+	this.validator = $('#scheduled-task-create-form').validate({
+		onfocusout: false,
+		onkeyup: false,
+		rules: {
+		name: 'required',
+		start_date: 'required',
+		frequency: {
+		required: true,
+		number: true,
+		min: 1
 	},
-        pool: {
-          required: {
-            depends: function(element) {
-              return (_this.$('#task-type').val() == 'scrub');
-            }
-          }
-        }
-      },
-      submitHandler: function() {
-        var button = $('#create-scheduled-task');
-        if (buttonDisabled(button)) return false;
-        disableButton(button);
-        var data = _this.$('#scheduled-task-create-form').getJSON();
-        if (_this.taskDefId == null) {
-          var ts = moment(data.start_date, 'MM/DD/YYYY');
-          var tmp = _this.$('#start_time').val().split(':')
-          ts.add('h',tmp[0]).add('m', tmp[1]);
-          data.ts = ts.unix();
-          var url = '/api/sm/tasks/';
-          var req_type='POST';
-        } else {
-          var url = '/api/sm/tasks/' + _this.taskDefId;
-          var req_type='PUT';
-        }
-        $.ajax({
-          url: url,
-          type: req_type,
-          dataType: 'json',
-          contentType: 'application/json',
-          data: JSON.stringify(data),
-          success: function() {
-            enableButton(button);
-            app_router.navigate('scheduled-tasks', {trigger: true});
-          },
-          error: function(xhr, status, error) {
-            enableButton(button);
-          }
-        });
-        return false;
-      }
-    });
-  },
+	share: {
+		required: {
+		depends: function(element) {
+		return (_this.$('#task-type').val() == 'snapshot');
+	}
+	}
+	},
+	prefix: {
+		required: {
+		depends: function(element) {
+		return (_this.$('#task-type').val() == 'snapshot');
+	}
+	}
+	},
+	'meta.max_count': {
+		number: true,
+		min: 1,
+		required: {
+		depends: function(element) {
+		return (_this.$('#task-type').val() == 'snapshot');
+	},
 
-  renderOptionalFields: function() {
-    var taskType = null;
-    if (this.taskDefId == null) {
-      taskType = this.$('#task-type').val();
-    } else {
-      taskType = this.taskDef.get('task_type')
-    }
-    if (taskType == 'snapshot') {
-      this.$('#optional-fields').html(this.snapshotFieldsTemplate({
-        shares: this.shares,
-        taskDef: this.taskDef,
-        taskDefId: this.taskDefId
-      }));
-    } else {
-      this.$('#optional-fields').html(this.scrubFieldsTemplate({
-        pools: this.pools,
-        taskDef: this.taskDef,
-        taskDefId: this.taskDefId
-      }));
-    }
-    // Reattach tooltips
-    this.$('#scheduled-task-create-form :input').tooltip({
-      placement: 'right'
-    });
-  },
+	}
+	},
+	'meta.visible': {
+		required: {
+		depends: function(element) {
+		return (_this.$('#task-type').val() == 'snapshot');
+	},
+	}
+	},
+	pool: {
+		required: {
+		depends: function(element) {
+		return (_this.$('#task-type').val() == 'scrub');
+	}
+	}
+	}
+	},
+	submitHandler: function() {
+		var button = $('#create-scheduled-task');
+		if (buttonDisabled(button)) return false;
+		disableButton(button);
+		var data = _this.$('#scheduled-task-create-form').getJSON();
+		if (_this.taskDefId == null) {
+			var ts = moment(data.start_date, 'MM/DD/YYYY');
+			var tmp = _this.$('#start_time').val().split(':')
+					ts.add('h',tmp[0]).add('m', tmp[1]);
+			data.ts = ts.unix();
+			var url = '/api/sm/tasks/';
+			var req_type='POST';
+		} else {
+			var url = '/api/sm/tasks/' + _this.taskDefId;
+			var req_type='PUT';
+		}
+		$.ajax({
+			url: url,
+			type: req_type,
+			dataType: 'json',
+			contentType: 'application/json',
+			data: JSON.stringify(data),
+			success: function() {
+			enableButton(button);
+			app_router.navigate('scheduled-tasks', {trigger: true});
+		},
+		error: function(xhr, status, error) {
+			enableButton(button);
+		}
+		});
+		return false;
+	}
+	});
+},
 
-  cancel: function(event) {
-    event.preventDefault();
-    app_router.navigate('scheduled-tasks', {trigger: true});
-  }
+renderOptionalFields: function() {
+	var taskType = null;
+	if (this.taskDefId == null) {
+		taskType = this.$('#task-type').val();
+	} else {
+		taskType = this.taskDef.get('task_type')
+	}
+	if (taskType == 'snapshot') {
+		this.$('#optional-fields').html(this.snapshotFieldsTemplate({
+			shares: this.shares,
+			taskDef: this.taskDef,
+			taskDefId: this.taskDefId
+		}));
+	} else {
+		this.$('#optional-fields').html(this.scrubFieldsTemplate({
+			pools: this.pools,
+			taskDef: this.taskDef,
+			taskDefId: this.taskDefId
+		}));
+	}
+	// Reattach tooltips
+	this.$('#scheduled-task-create-form :input').tooltip({
+		placement: 'right'
+	});
+},
+
+cancel: function(event) {
+	event.preventDefault();
+	app_router.navigate('scheduled-tasks', {trigger: true});
+}
 
 });
