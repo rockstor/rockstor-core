@@ -78,6 +78,7 @@ RunProbeView = RockstorModuleView.extend({
 
   cancel: function() {
     app_router.navigate('#analytics', {trigger: true});
+
   } 
 
 });
