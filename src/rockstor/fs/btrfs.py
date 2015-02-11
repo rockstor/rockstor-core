@@ -101,12 +101,15 @@ def mount_root(pool, device):
     if (is_share_mounted(pool.name)):
         return root_pool_mnt
     create_tmp_dir(root_pool_mnt)
-    mnt_cmd = [MOUNT, '-t', 'btrfs', device, root_pool_mnt, ]
+    mnt_device = '/dev/disk/by-label/%s' % pool.name
+    if (not os.path.exists(mnt_device)):
+        mnt_device = device
+    mnt_cmd = [MOUNT, mnt_device, root_pool_mnt, ]
     mnt_options = ''
     if (pool.mnt_options is not None):
         mnt_options = pool.mnt_options
     if (pool.compression is not None):
-        if(re.search('compress', mnt_options) is None):
+        if (re.search('compress', mnt_options) is None):
             mnt_options = ('%s,compress=%s' % (mnt_options, pool.compression))
     if (len(mnt_options) > 0):
         mnt_cmd.extend(['-o', mnt_options])
