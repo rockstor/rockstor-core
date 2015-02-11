@@ -26,6 +26,7 @@
 
 /* Services */
 
+
 ProbeRunListView = RockstorLayoutView.extend({
 	events: {
 	"click #cancel-new-probe": "cancelNewProbe",
@@ -75,8 +76,10 @@ renderProbeList: function() {
 		probeTemplates: this.probeTemplates
 
 	}));
-	
+	if(!RockStorGlobals.showAnalyticsModal){
 	$('#analytics-modal').modal('show'); 
+	RockStorGlobals.showAnalyticsModal = true;
+	}
 	this.renderTable();
 	this.$(".ph-pagination").html(this.paginationTemplate({
 		collection: this.collection
