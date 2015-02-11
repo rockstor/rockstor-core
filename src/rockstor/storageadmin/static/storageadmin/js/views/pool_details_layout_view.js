@@ -117,7 +117,8 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
       $('#content').scrollTop($('#ph-resize-pool-info').offset().top);
     }
 
-    $('#pool-resize-raid-modal').modal({show: false});
+    //$('#pool-resize-raid-modal').modal({show: false});
+    $('#pool-resize-raid-overlay').overlay({load: false});
 
   },
 
@@ -143,12 +144,19 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 
   resizePool: function(event) {
     event.preventDefault();
-    var wizardView = new PoolResizeWizardView({model: new Backbone.Model()});
+    var wizardView = new PoolResizeWizardView({
+      model: new Backbone.Model({ pool: this.pool }),
+      parent: this
+    });
     //var wizardView = new WizardView({model: new Backbone.Model()});
     
-    wizardView.setPages([PoolResizeChoice, PoolRemoveDisk]);
-    $('#pool-resize-raid-modal-contents').html(wizardView.render().el);
-    $('#pool-resize-raid-modal').modal('show');
+    //wizardView.setPages([PoolResizeChoice, PoolRemoveDisk]);
+    //$('#pool-resize-raid-modal-contents').html(wizardView.render().el);
+    //$('#pool-resize-raid-modal').modal('show');
+
+    $('.overlay-content', '#pool-resize-raid-overlay').html(wizardView.render().el);
+    $('#pool-resize-raid-overlay').overlay().load();
+
     /*
     var _this = this;
     event.preventDefault();

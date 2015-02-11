@@ -644,6 +644,8 @@ WizardView = Backbone.View.extend({
     this.evAgg = _.extend({}, Backbone.Events);
     this.evAgg.bind('nextPage', this.nextPage, this);
     this.evAgg.bind('prevPage', this.prevPage, this);
+    this.parent = this.options.parent;
+    console.log(this.parent);
   },
 
   setPages: function(pages) {
@@ -657,7 +659,6 @@ WizardView = Backbone.View.extend({
   },
 
   nextPage: function() {
-    console.log('in nextPage');
     var _this = this;
     var promise = !_.isNull(this.currentPage) ? 
       this.currentPage.save() :
@@ -672,7 +673,6 @@ WizardView = Backbone.View.extend({
 
   incrementPageNum: function() {
     this.currentPageNum = this.currentPageNum + 1;
-    console.log('in incrementPageNum - currentPageNum = ' + this.currentPageNum);
   },
 
   decrementPageNum: function() {
@@ -706,6 +706,7 @@ WizardView = Backbone.View.extend({
 
   renderCurrentPage: function() {
     this.$(this.contentEl).html(this.currentPage.render().el);
+    this.modifyButtonText();
   },
 
   prevPage: function() {
