@@ -25,93 +25,93 @@
  */
 
 PoolScrubTableModule  = RockstorModuleView.extend({
-  events: {
-    "click #js-poolscrub-start": "start",
-    "click #js-poolscrub-cancel": "cancel"
-  },
+	events: {
+	"click #js-poolscrub-start": "start",
+	"click #js-poolscrub-cancel": "cancel"
+},
 
-  initialize: function() {
-    this.template = window.JST.pool_poolscrub_table_template;
-    this.paginationTemplate = window.JST.common_pagination;
-    this.startScrubTemplate = window.JST.pool_poolscrub_start_template;
-    this.module_name = 'poolscrubs';
-    this.pool = this.options.pool;
-    this.poolscrubs = this.options.poolscrubs;
-    this.collection = this.options.poolscrubs;
-    this.collection.on("reset", this.render, this);
-    this.parentView = this.options.parentView;
-  },
+initialize: function() {
+	this.template = window.JST.pool_poolscrub_table_template;
+	this.paginationTemplate = window.JST.common_pagination;
+	this.startScrubTemplate = window.JST.pool_poolscrub_start_template;
+	this.module_name = 'poolscrubs';
+	this.pool = this.options.pool;
+	this.poolscrubs = this.options.poolscrubs;
+	this.collection = this.options.poolscrubs;
+	this.collection.on("reset", this.render, this);
+	this.parentView = this.options.parentView;
+},
 
-  render: function() {
-    var _this = this;
-    $(this.el).empty();
-    $(this.el).append(this.template({
-      poolscrubs: this.collection,
-      pool: this.pool,
-    }));
-    this.$('[rel=tooltip]').tooltip({
-      placement: 'bottom'
-    });
-    this.$('#poolscrubs-table').tablesorter({
-      headers: { 0: {sorter: false}}
-    });
-    this.$(".pagination-ph").html(this.paginationTemplate({
-      collection: this.collection
-    }));
-    return this;
-  },
+render: function() {
+	var _this = this;
+	$(this.el).empty();
+	$(this.el).append(this.template({
+		poolscrubs: this.collection,
+		pool: this.pool,
+	}));
+	this.$('[rel=tooltip]').tooltip({
+		placement: 'bottom'
+	});
+	this.$('#poolscrubs-table').tablesorter({
+		headers: { 0: {sorter: false}}
+	});
+	this.$(".pagination-ph").html(this.paginationTemplate({
+		collection: this.collection
+	}));
+	return this;
+},
 
-  setPoolName: function(poolName) {
-    this.collection.setUrl(poolName);
-  },
+setPoolName: function(poolName) {
+	this.collection.setUrl(poolName);
+},
 
-  start: function(event) {
-    var _this = this;
-    event.preventDefault();
-    $(this.el).html(this.startScrubTemplate({
-      pool: this.pool,
-    }));
-    
-    this.validator = this.$('#pool-scrub-form').validate({
-        onfocusout: false,
-        onkeyup: false,
-        rules: {
-        },
-        submitHandler: function() {
-          var button = _this.$('#start_scrub');
-          if (buttonDisabled(button)) return false;
-          disableButton(button);
-          var n = _this.$("#forcescrub:checked").val();
-      	  var postdata = '';
-      	  if(n == 'on') {
-      	    postdata = '{"force": "true"}';
-      	  }
-      	  $.ajax({
-      	      url: '/api/pools/'+_this.pool.get('name')+'/scrub',
-      	      type: 'POST',
-      	      data: postdata,
-      	      success: function() {
-                  _this.$('#pool-scrub-form :input').tooltip('hide');
-                  enableButton(button);
-                  _this.collection.fetch({
-                      success: function(collection, response, options) {
-                      }                
-                  });
-      	      },
-      	      error: function(jqXHR) {
-                  _this.$('#pool-scrub-form :input').tooltip('hide');
-                  enableButton(button);
-      	      }
-      	  });
-          return false;
-        }
-      });
-  },
+start: function(event) {
+	var _this = this;
+	event.preventDefault();
+	$(this.el).html(this.startScrubTemplate({
+		pool: this.pool,
+	}));
 
-  cancel: function(event) {
-    event.preventDefault();
-    this.render();
-  },
+	this.validator = this.$('#pool-scrub-form').validate({
+		onfocusout: false,
+		onkeyup: false,
+		rules: {
+	},
+	submitHandler: function() {
+		var button = _this.$('#start_scrub');
+		if (buttonDisabled(button)) return false;
+		disableButton(button);
+		var n = _this.$("#forcescrub:checked").val();
+		var postdata = '';
+		if(n == 'on') {
+			postdata = '{"force": "true"}';
+		}
+		$.ajax({
+			url: '/api/pools/'+_this.pool.get('name')+'/scrub',
+			type: 'POST',
+			data: postdata,
+			success: function() {
+			_this.$('#pool-scrub-form :input').tooltip('hide');
+			enableButton(button);
+			_this.collection.fetch({
+				success: function(collection, response, options) {
+			}                
+			});
+		},
+		error: function(jqXHR) {
+			_this.$('#pool-scrub-form :input').tooltip('hide');
+			enableButton(button);
+		}
+		});
+		return false;
+	}
+	});
+},
+
+cancel: function(event) {
+	event.preventDefault();
+	this.render();
+},
 
 });
 

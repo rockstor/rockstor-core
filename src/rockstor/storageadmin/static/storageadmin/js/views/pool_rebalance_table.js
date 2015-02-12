@@ -25,93 +25,93 @@
  */
 
 PoolRebalanceTableModule  = RockstorModuleView.extend({
-  events: {
-    "click #js-poolrebalance-start": "start",
-    "click #js-poolrebalance-cancel": "cancel"
-  },
+	events: {
+	"click #js-poolrebalance-start": "start",
+	"click #js-poolrebalance-cancel": "cancel"
+},
 
-  initialize: function() {
-    this.template = window.JST.pool_poolrebalance_table_template;
-    this.paginationTemplate = window.JST.common_pagination;
-    this.startRebalanceTemplate = window.JST.pool_poolrebalance_start_template;
-    this.module_name = 'poolrebalances';
-    this.pool = this.options.pool;
-    this.poolrebalances = this.options.poolrebalances;
-    this.collection = this.options.poolrebalances;
-    this.collection.on("reset", this.render, this);
-    this.parentView = this.options.parentView;
-  },
+initialize: function() {
+	this.template = window.JST.pool_poolrebalance_table_template;
+	this.paginationTemplate = window.JST.common_pagination;
+	this.startRebalanceTemplate = window.JST.pool_poolrebalance_start_template;
+	this.module_name = 'poolrebalances';
+	this.pool = this.options.pool;
+	this.poolrebalances = this.options.poolrebalances;
+	this.collection = this.options.poolrebalances;
+	this.collection.on("reset", this.render, this);
+	this.parentView = this.options.parentView;
+},
 
-  render: function() {
-    var _this = this;
-    $(this.el).empty();
-    $(this.el).append(this.template({
-      poolrebalances: this.collection,
-      pool: this.pool,
-    }));
-    this.$('[rel=tooltip]').tooltip({
-      placement: 'bottom'
-    });
-    this.$('#poolrebalances-table').tablesorter({
-      headers: { 0: {sorter: false}}
-    });
-    this.$(".pagination-ph").html(this.paginationTemplate({
-      collection: this.collection
-    }));
-    return this;
-  },
+render: function() {
+	var _this = this;
+	$(this.el).empty();
+	$(this.el).append(this.template({
+		poolrebalances: this.collection,
+		pool: this.pool,
+	}));
+	this.$('[rel=tooltip]').tooltip({
+		placement: 'bottom'
+	});
+	this.$('#poolrebalances-table').tablesorter({
+		headers: { 0: {sorter: false}}
+	});
+	this.$(".pagination-ph").html(this.paginationTemplate({
+		collection: this.collection
+	}));
+	return this;
+},
 
-  setPoolName: function(poolName) {
-    this.collection.setUrl(poolName);
-  },
+setPoolName: function(poolName) {
+	this.collection.setUrl(poolName);
+},
 
-  start: function(event) {
-    var _this = this;
-    event.preventDefault();
-    $(this.el).html(this.startRebalanceTemplate({
-      pool: this.pool,
-    }));
-    
-    this.validator = this.$('#pool-rebalance-form').validate({
-        onfocusout: false,
-        onkeyup: false,
-        rules: {
-        },
-        submitHandler: function() {
-          var button = _this.$('#start_rebalance');
-          if (buttonDisabled(button)) return false;
-          disableButton(button);
-          var n = _this.$("#forcebalance:checked").val();
-      	  var postdata = '';
-      	  if(n == 'on') {
-      	    postdata = '{"force": "true"}';
-      	  }
-      	  $.ajax({
-      	      url: '/api/pools/'+_this.pool.get('name')+'/balance',
-      	      type: 'POST',
-      	      data: postdata,
-      	      success: function() {
-                  _this.$('#pool-rebalance-form :input').tooltip('hide');
-                  enableButton(button);
-                  _this.collection.fetch({
-                      success: function(collection, response, options) {
-                      }                
-                  });
-      	      },
-      	      error: function(jqXHR) {
-                  _this.$('#pool-rebalance-form :input').tooltip('hide');
-                  enableButton(button);
-      	      }
-      	  });
-          return false;
-        }
-      });
-  },
+start: function(event) {
+	var _this = this;
+	event.preventDefault();
+	$(this.el).html(this.startRebalanceTemplate({
+		pool: this.pool,
+	}));
 
-  cancel: function(event) {
-    event.preventDefault();
-    this.render();
-  },
+	this.validator = this.$('#pool-rebalance-form').validate({
+		onfocusout: false,
+		onkeyup: false,
+		rules: {
+	},
+	submitHandler: function() {
+		var button = _this.$('#start_rebalance');
+		if (buttonDisabled(button)) return false;
+		disableButton(button);
+		var n = _this.$("#forcebalance:checked").val();
+		var postdata = '';
+		if(n == 'on') {
+			postdata = '{"force": "true"}';
+		}
+		$.ajax({
+			url: '/api/pools/'+_this.pool.get('name')+'/balance',
+			type: 'POST',
+			data: postdata,
+			success: function() {
+			_this.$('#pool-rebalance-form :input').tooltip('hide');
+			enableButton(button);
+			_this.collection.fetch({
+				success: function(collection, response, options) {
+			}                
+			});
+		},
+		error: function(jqXHR) {
+			_this.$('#pool-rebalance-form :input').tooltip('hide');
+			enableButton(button);
+		}
+		});
+		return false;
+	}
+	});
+},
+
+cancel: function(event) {
+	event.preventDefault();
+	this.render();
+},
 
 });
 
