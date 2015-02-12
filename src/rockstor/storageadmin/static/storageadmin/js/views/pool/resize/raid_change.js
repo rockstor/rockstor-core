@@ -1,19 +1,19 @@
-PoolAddDisks = RockstorWizardPage.extend({
+PoolRaidChange = RockstorWizardPage.extend({
 
   initialize: function() {
     this.disks = new DiskCollection();
-    this.template = window.JST.pool_resize_add_disks;
+    this.template = window.JST.pool_resize_raid_change;
     this.disks_template = window.JST.common_disks_table;
     RockstorWizardPage.prototype.initialize.apply(this, arguments);
     this.disks.on('reset', this.renderDisks, this);
   },
   
   render: function() {
-    RockstorWizardPage.prototype.render.apply(this, arguments);
+    $(this.el).html(this.template({pool: this.model.get('pool')}));
     this.disks.fetch();
     return this;
   },
-
+  
   renderDisks: function() {
     var disks = this.disks.reject(function(disk) {
       return disk.get('pool_name') == this.model.get('pool').get('name');
@@ -22,7 +22,7 @@ PoolAddDisks = RockstorWizardPage.extend({
   },
   
   save: function() {
-    var _this = this;
+    var raidLevel = this.$('#raid-level').val();
     var checked = this.$(".diskname:checked").length;
     var diskNames = [];
     this.$(".diskname:checked").each(function(i) {
@@ -35,13 +35,13 @@ PoolAddDisks = RockstorWizardPage.extend({
       contentType: 'application/json',
       data: JSON.stringify({
         'disks': diskNames, 
-        'raid_level': this.model.get('pool').get('raid')
+        'raid_level': raidLevel
       }),
       success: function() { },
       error: function(request, status, error) {
+        console.log(error);
       }
     });
   }
+
 });
-
-

@@ -1,9 +1,8 @@
-If you would like to change raid level of the pool, select a different one below.
-<br>
-Current raid level: <%= pool.get('raid') %>
-<br>
+
+<h3>Change pool raid level</h3>
+<strong>Current raid level: <%= pool.get('raid') %></strong>
+
 Select a new raid level:
-<br>
 <% var levels = ['single', 'raid0', 'raid1', 'raid10', 'raid5', 'raid6']; %>
 <div class="controls">
   <select id="raid-level" name="raid-level">
@@ -15,3 +14,6 @@ Select a new raid level:
     <% }); %>
   </select>
 </div>
+<div class="alert alert-warning">You need to add disks while changing raid level</div>
+
+<div id="ph-disks-table"></div>

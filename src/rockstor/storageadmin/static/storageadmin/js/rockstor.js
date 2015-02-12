@@ -645,7 +645,6 @@ WizardView = Backbone.View.extend({
     this.evAgg.bind('nextPage', this.nextPage, this);
     this.evAgg.bind('prevPage', this.prevPage, this);
     this.parent = this.options.parent;
-    console.log(this.parent);
   },
 
   setPages: function(pages) {

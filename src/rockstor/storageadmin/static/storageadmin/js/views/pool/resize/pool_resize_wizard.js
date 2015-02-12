@@ -1,8 +1,6 @@
 PoolResizeWizardView = WizardView.extend({
     
   setCurrentPage: function() {
-    console.log('in setCurrentPage');
-    console.log(this.currentPageNum);
     switch(this.currentPageNum) {
       case 0:
         this.currentPage = new PoolResizeChoice({
@@ -25,6 +23,11 @@ PoolResizeWizardView = WizardView.extend({
             evAgg: this.evAgg
           });
         } else if (this.model.get('resize-choice') == 'raid') {
+          this.currentPage = new PoolRaidChange({
+            model: this.model,
+            parent: this,
+            evAgg: this.evAgg
+          });
         }
         break;
       case 2:
@@ -44,12 +47,16 @@ PoolResizeWizardView = WizardView.extend({
 
   lastPage: function() {
     var last = false;
-    console.log('in lastPage');
-    console.log(this.currentPageNum);
     switch(this.currentPageNum) {
       case 0:
         break;
       case 1:
+        if (this.model.get('resize-choice') == 'add') {
+          last = true;
+        }
+        if (this.model.get('resize-choice') == 'raid') {
+          last = true;
+        }
         break;
       case 2:
         if (this.model.get('resize-choice') == 'remove') {
@@ -79,8 +86,7 @@ PoolResizeWizardView = WizardView.extend({
   },
 
   finish: function() {
-    console.log('finish in resize wizard');
-    console.log(this.parent);
+    console.log('in PoolResizeWizardView - finish');
     this.parent.$('#pool-resize-raid-overlay').overlay().close();
     this.parent.render();
   },

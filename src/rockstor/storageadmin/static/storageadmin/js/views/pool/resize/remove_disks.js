@@ -1,7 +1,6 @@
 PoolRemoveDisks = RockstorWizardPage.extend({
   
   initialize: function() {
-    console.log('PoolRemoveDisks initialize');
     this.disks = new DiskCollection();
     this.template = window.JST.pool_resize_remove_disks;
     this.disks_template = window.JST.common_disks_table;
@@ -29,7 +28,6 @@ PoolRemoveDisks = RockstorWizardPage.extend({
     this.$(".diskname:checked").each(function(i) {
       diskNames.push($(this).val());
     });
-    console.log(diskNames);
     return $.ajax({
       url: '/api/pools/' + this.model.get('pool').get('name')+'/remove',
       type: 'PUT',
@@ -41,7 +39,6 @@ PoolRemoveDisks = RockstorWizardPage.extend({
       }),
       success: function() { },
       error: function(request, status, error) {
-        console.log(error);
       }
     });
   }
