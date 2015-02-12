@@ -683,7 +683,7 @@ label.error { font-size: 12px; color: #b94a48; }
 
 /* Modal */
 .modal {
-  position: absolute;
+  /*position: absolute;*/
 }
 
 .modal.fade {

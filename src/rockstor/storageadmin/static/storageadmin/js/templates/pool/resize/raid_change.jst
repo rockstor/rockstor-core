@@ -1,0 +1,19 @@
+
+<h3>Change pool raid level</h3>
+<strong>Current raid level: <%= pool.get('raid') %></strong>
+
+Select a new raid level:
+<% var levels = ['single', 'raid0', 'raid1', 'raid10', 'raid5', 'raid6']; %>
+<div class="controls">
+  <select id="raid-level" name="raid-level">
+    <option value="">Select a new raid level</option>
+    <% _.each(levels, function(level) { %>
+      <% if (pool.get('raid') != level) { %>
+        <option value="<%= level %>"><%= level %></option>
+      <% } %>
+    <% }); %>
+  </select>
+</div>
+<div class="alert alert-warning">You need to add disks while changing raid level</div>
+
+<div id="ph-disks-table"></div>

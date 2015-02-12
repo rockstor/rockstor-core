@@ -608,3 +608,135 @@ var RockstorUtil = function() {
   }
   return util;
 }();
+
+RockstorWizardPage = Backbone.View.extend({
+
+  initialize: function() {
+    this.evAgg = this.options.evAgg;
+    this.parent = this.options.parent;
+  },
+
+  render: function() {
+    $(this.el).html(this.template());
+    return this;
+  },
+
+  save: function() {
+    return $.Deferred().resolve();
+  }
+
+});
+
+WizardView = Backbone.View.extend({
+  tagName: 'div',
+  
+  events: {
+    'click #next-page': 'nextPage',
+    'click #prev-page': 'prevPage',
+  },
+
+  initialize: function() {
+    this.template = window.JST.wizard_wizard;
+    this.pages = null;
+    this.currentPage = null;
+    this.currentPageNum = -1;
+    this.contentEl = '#ph-wizard-contents';
+    this.evAgg = _.extend({}, Backbone.Events);
+    this.evAgg.bind('nextPage', this.nextPage, this);
+    this.evAgg.bind('prevPage', this.prevPage, this);
+    this.parent = this.options.parent;
+  },
+
+  setPages: function(pages) {
+    this.pages = pages;
+  },
+
+  render: function() {
+    $(this.el).html(this.template());
+    this.nextPage();
+    return this;
+  },
+
+  nextPage: function() {
+    var _this = this;
+    var promise = !_.isNull(this.currentPage) ? 
+      this.currentPage.save() :
+      $.Deferred().resolve();
+    promise.done(function(result, status, jqXHR) {
+      _this.incrementPage();
+    });
+    promise.fail(function(jqXHR, status, error) {
+      // console.log(error);
+    });
+  },
+
+  incrementPageNum: function() {
+    this.currentPageNum = this.currentPageNum + 1;
+  },
+
+  decrementPageNum: function() {
+    this.currentPageNum = this.currentPageNum - 1;
+  },
+
+  incrementPage: function() {
+    if (!this.lastPage()) {
+      this.incrementPageNum();
+      this.setCurrentPage();
+      this.renderCurrentPage();
+    } else {
+      this.finish();
+    }
+  },
+  
+  decrementPage: function() {
+    if (!this.firstPage()) {
+      this.decrementPageNum();
+      this.setCurrentPage();
+      this.renderCurrentPage();
+    } 
+  },
+
+  setCurrentPage: function() {
+    this.currentPage = new this.pages[this.currentPageNum]({
+      model: this.model,
+      evAgg: this.evAgg
+    });
+  },
+
+  renderCurrentPage: function() {
+    this.$(this.contentEl).html(this.currentPage.render().el);
+    this.modifyButtonText();
+  },
+
+  prevPage: function() {
+    if (this.currentPageNum > 1) {
+      this.currentPage.save()
+      this.currentPageNum = this.currentPageNum - 1;
+      this.renderCurrentPage();
+    }
+  },
+
+  modifyButtonText: function() {
+    if (this.lastPage()) {
+      this.$('#next-page').html('Finish');
+    } else {
+      this.$('#next-page').html('Next');
+    }
+  },
+  
+  firstPage: function() {
+    return (this.currentPageNum == 0);
+  },
+
+  lastPage: function() {
+    return (this.currentPageNum == (this.pages.length - 1));
+  },
+  
+  finish: function() {
+    console.log('finish');
+  },
+
+
+});
+
+

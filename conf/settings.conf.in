@@ -191,6 +191,7 @@ PIPELINE_JS = {
             'storageadmin/js/socket_listen.js',
             'storageadmin/js/models/models.js',
             'storageadmin/js/views/*.js',
+            'storageadmin/js/views/pool/**/*.js',
             'storageadmin/js/views/dashboard/*.js',
             ),
         'output_filename': 'storageadmin/js/storageadmin.js'

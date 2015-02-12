@@ -1,0 +1,25 @@
+<table id="disks-select-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of disks">
+  <thead>
+    <tr>
+      <th>No.</th>
+      <th>Name</th>
+      <th>Size</th>
+      <th>In use</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% _.each(disks, function(disk, index) { %>
+      <tr>
+        <td><%= index+1 %></td>
+        <td><%= disk.get('name') %></td>
+        <td><%= humanize.filesize(disk.get('size')*1024) %></td>
+        <td><%= disk.get('parted') %></td>
+        <td>
+          <input type="checkbox" name="<%= disk.get('name') %>" id="<%= disk.get('name') %>" value="<%= disk.get('name')%>" class="diskname">
+        </td>
+      </tr>
+    <% }); %>
+  </tbody>
+</table>
+
