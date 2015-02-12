@@ -60,12 +60,12 @@ class DiskView(rfc.GenericView):
         disks = scan_disks(settings.MIN_DISK_SIZE)
         for d in disks:
             dob = None
-            if (Disk.objects.filter(serial=d.serial).exists()):
-                dob = Disk.objects.get(serial=d.serial)
-                dob.name = d.name
-            elif (Disk.objects.filter(name=d.name).exists()):
+            if (Disk.objects.filter(name=d.name).exists()):
                 dob = Disk.objects.get(name=d.name)
                 dob.serial = d.serial
+            elif (Disk.objects.filter(serial=d.serial).exists()):
+                dob = Disk.objects.get(serial=d.serial)
+                dob.name = d.name
             else:
                 new_disk = Disk(name=d.name, size=d.size, parted=d.parted,
                                 btrfs_uuid=d.btrfs_uuid, model=d.model,

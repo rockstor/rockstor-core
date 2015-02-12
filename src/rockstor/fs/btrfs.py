@@ -39,10 +39,7 @@ MOUNT = '/bin/mount'
 UMOUNT = '/bin/umount'
 DD = '/bin/dd'
 DEFAULT_MNT_DIR = '/mnt2/'
-DF = '/bin/df'
-BTRFS_DEBUG_TREE = '/sbin/btrfs-debug-tree'
 RMDIR = '/bin/rmdir'
-SFDISK = '/sbin/sfdisk'
 WIPEFS = '/usr/sbin/wipefs'
 
 
