@@ -104,13 +104,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
       this.$('#ph-compression-info').html(this.compression_info_template({pool: this.pool}));
     }
 
-    if (!_.isUndefined(this.cView) && this.cView == 'resize') {
-      this.$('#ph-resize-pool-info').html(this.resize_pool_edit_template({disks: this.disks, poolName: this.poolName, pool:this.pool }));
-
-      this.showResizeTooltips();
-    } else {
-      this.$('#ph-resize-pool-info').html(this.resize_pool_info_template({pool: this.pool}));
-    }
+    this.$('#ph-resize-pool-info').html(this.resize_pool_info_template({pool: this.pool}));
     this.$("ul.css-tabs").tabs("div.css-panes > div");
     if (!_.isUndefined(this.cView) && this.cView == 'resize') {
       // scroll to resize section
@@ -148,25 +142,8 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
       model: new Backbone.Model({ pool: this.pool }),
       parent: this
     });
-    //var wizardView = new WizardView({model: new Backbone.Model()});
-    
-    //wizardView.setPages([PoolResizeChoice, PoolRemoveDisk]);
-    //$('#pool-resize-raid-modal-contents').html(wizardView.render().el);
-    //$('#pool-resize-raid-modal').modal('show');
-
     $('.overlay-content', '#pool-resize-raid-overlay').html(wizardView.render().el);
     $('#pool-resize-raid-overlay').overlay().load();
-
-    /*
-    var _this = this;
-    event.preventDefault();
-    _this.disks.fetch({
-      success: function(collection, response) {
-        _this.$('#ph-resize-pool-info').html(_this.resize_pool_edit_template({disks: _this.disks, poolName: _this.poolName, pool:_this.pool}));
-        _this.showResizeTooltips();
-        _this.attachModalActions();
-      }});
-    */
   },
 
   resizePoolSubmit: function(event) {
