@@ -46,6 +46,7 @@ class PoolView(rfc.GenericView):
         'raid5': ('raid5',),
         'raid6': ('raid6',),
         }
+    ROOT_POOL = 'rockstor_rockstor'
 
     def get_queryset(self, *args, **kwargs):
         if ('pname' in kwargs):
@@ -268,6 +269,10 @@ class PoolView(rfc.GenericView):
                   'remove' - remove a list of disks and hence shrink the pool
         """
         with self._handle_exception(request):
+            if (pname == self.ROOT_POOL):
+                e_msg = ('Edit operations are not allowed on this Pool(%s) '
+                         'as it contains the operating system.' % pname)
+                handle_exception(Exception(e_msg), request)
             try:
                 pool = Pool.objects.get(name=pname)
             except:
@@ -430,6 +435,10 @@ class PoolView(rfc.GenericView):
     @transaction.commit_on_success
     def delete(self, request, pname):
         with self._handle_exception(request):
+            if (pname == self.ROOT_POOL):
+                e_msg = ('Deletion of Pool(%s) is not allowed as it contains '
+                         'the operating system.' % pname)
+                handle_exception(Exception(e_msg), request)
             pool = Pool.objects.get(name=pname)
             if (Share.objects.filter(pool=pool).exists()):
                 e_msg = ('Pool(%s) is not empty. Delete is not allowed until '
