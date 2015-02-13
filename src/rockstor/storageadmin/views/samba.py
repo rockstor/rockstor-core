@@ -33,13 +33,11 @@ logger = logging.getLogger(__name__)
 
 class SambaView(rfc.GenericView):
     serializer_class = SambaShareSerializer
-    CREATE_MASKS = ('0777', '0755', '0744', '0700',)
     DEF_OPTS = {
         'comment': 'samba export',
         'browsable': 'yes',
         'guest_ok': 'no',
         'read_only': 'no',
-        'create_mask': '0755',
         'custom_config': None,
     }
     BOOL_OPTS = ('yes', 'no',)
@@ -62,7 +60,6 @@ class SambaView(rfc.GenericView):
             def_opts['browsable'] = smbo.browsable
             def_opts['guest_ok'] = smbo.guest_ok
             def_opts['read_only'] = smbo.read_only
-            def_opts['create_mask'] = smbo.create_mask
 
         options['comment'] = request.DATA.get('comment', def_opts['comment'])
         options['browsable'] = request.DATA.get('browsable',
@@ -87,12 +84,6 @@ class SambaView(rfc.GenericView):
         if (options['read_only'] not in self.BOOL_OPTS):
             e_msg = ('Invalid choice for read_only. Possible '
                      'options are yes or no.')
-            handle_exception(Exception(e_msg), request)
-        options['create_mask'] = request.DATA.get('create_mask',
-                                                  def_opts['create_mask'])
-        if (options['create_mask'] not in self.CREATE_MASKS):
-            e_msg = ('Invalid choice for create_mask. Possible '
-                     'options are: %s' % self.CREATE_MASKS)
             handle_exception(Exception(e_msg), request)
         return options
 
