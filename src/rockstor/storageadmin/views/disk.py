@@ -82,10 +82,7 @@ class DiskView(rfc.GenericView):
             if (Pool.objects.filter(name=d.label).exists()):
                 dob.pool = Pool.objects.get(name=d.label)
             if (dob.pool is None and d.root is True):
-                p = Pool(name='rockstor_rockstor', raid='single')
-                p.size = pool_usage(mount_root(p, d.name))[0]
-                enable_quota(p, '/dev/%s' % d.name)
-                p.uuid = btrfs_uuid(d.name)
+                p = self._create_root_pool(d)
                 p.disk_set.add(dob)
                 p.save()
                 dob.pool = p
@@ -96,6 +93,13 @@ class DiskView(rfc.GenericView):
                 do.save()
         ds = DiskInfoSerializer(Disk.objects.all().order_by('name'), many=True)
         return Response(ds.data)
+
+    def _create_root_pool(self, d):
+        p = Pool(name=settings.ROOT_POOL, raid='single')
+        p.size = pool_usage(mount_root(p, d.name))[0]
+        enable_quota(p, '/dev/%s' % d.name)
+        p.uuid = btrfs_uuid(d.name)
+        return p
 
     @transaction.commit_on_success
     def _wipe(self, dname, request):
