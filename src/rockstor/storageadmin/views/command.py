@@ -211,3 +211,6 @@ class CommandView(APIView):
                 handle_exception(Exception(msg), request)
             finally:
                 return Response(msg)
+
+        elif (command == 'current-user'):
+            return Response(request.user.username)

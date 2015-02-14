@@ -15,8 +15,12 @@
     <tbody>
       <% collection.each(function(pool, index) { %>
         <tr>
-          <td><a href="#pools/<%= pool.get('name') %>"><i class="icon-list"></i> <%= pool.get('name') %></a></td>
-
+          <td>
+	    <a href="#pools/<%= pool.get('name') %>"><i class="icon-list"></i> <%= pool.get('name') %></a>
+	    <% if (pool.get('name') == 'rockstor_rockstor') { %>
+	       <i class="fa fa-exclamation-circle" title="This Pool is created during install and contains the OS. You can create Shares in it like in any other pool on the system. However, operations like resize, compression and deletion are not allowed." rel="tooltip"></i>
+	    <% } %>
+	  </td>
           <td>
             <%= humanize.filesize(pool.get('size')*1024) %>
             &nbsp;
