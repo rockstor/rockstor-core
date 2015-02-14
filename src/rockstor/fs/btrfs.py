@@ -46,7 +46,7 @@ WIPEFS = '/usr/sbin/wipefs'
 import collections
 Disk = collections.namedtuple('Disk', 'name model serial size '
                               'transport vendor hctl type fstype '
-                              'label btrfs_uuid parted')
+                              'label btrfs_uuid parted root')
 
 
 def add_pool(pool, disks):
@@ -566,6 +566,7 @@ def scan_disks(min_size):
     dnames = {}
     disks = []
     serials = []
+    root_serial = None
     for l in o:
         if (re.match('NAME', l) is None):
             continue
@@ -599,12 +600,24 @@ def scan_disks(min_size):
                 raise Exception('Failed to parse lsblk output: %s' % sl)
         if (dmap['TYPE'] == 'rom'):
             continue
-        elif (dmap['TYPE'] == 'part'):
+        if (dmap['NAME'] == root):
+            root_serial = dmap['SERIAL']
+        if (dmap['TYPE'] == 'part'):
             for dname in dnames.keys():
                 if (re.match(dname, dmap['NAME']) is not None):
                     dnames[dname][8] = True
-        elif (dmap['NAME'] != root):
+        if (((dmap['NAME'] != root and dmap['TYPE'] != 'part') or
+             (dmap['TYPE'] == 'part' and dmap['FSTYPE'] == 'btrfs'))):
             dmap['parted'] = False  # part = False by default
+            dmap['root'] = False
+            if (dmap['TYPE'] == 'part' and dmap['FSTYPE'] == 'btrfs'):
+                #  btrfs partition for root(rockstor_rockstor) pool
+                if (re.match(root, dmap['NAME']) is not None):
+                    dmap['SERIAL'] = root_serial
+                    dmap['root'] = True
+                else:
+                    #  ignore btrfs partitions that are not for rootfs.
+                    continue
             # convert size into KB
             size_str = dmap['SIZE']
             if (size_str[-1] == 'G'):
@@ -630,7 +643,8 @@ def scan_disks(min_size):
                                     dmap['TRAN'], dmap['VENDOR'],
                                     dmap['HCTL'], dmap['TYPE'],
                                     dmap['FSTYPE'], dmap['LABEL'],
-                                    dmap['UUID'], dmap['parted']]
+                                    dmap['UUID'], dmap['parted'],
+                                    dmap['root'], ]
     for d in dnames.keys():
         disks.append(Disk(*dnames[d]))
     return disks
