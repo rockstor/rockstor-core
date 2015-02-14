@@ -337,22 +337,24 @@ function buttonDisabled(button) {
 
 function refreshNavbar() {
 	$.ajax({
-		url: "/api/commands/currentuser",
+		url: "api/commands/current-user",
 		type: "POST",
 		dataType: "json",
 		global: false, // dont show global loading indicator
 		success: function(data, status, xhr) {
 		var currentUser= data;
-		$('#user-name').html("Hello,  "+currentUser);
+		$('#user-name').css({textTransform: 'none'});
+		$('#user-name').html(currentUser+' ');
 	},
 	error: function(xhr, status, error) {
-		$('#user-name').html("Hello, <b> Admin! </b>");   
+	//	$('#user-name').html("Hello, <b> Admin! </b>");   
 	}
 	});
 
 	var navbarTemplate = window.JST.common_navbar;
 	$("#navbar-links").html(navbarTemplate({
 		logged_in: logged_in, 
+		
 	}));
 
 	$('.dropdown-toggle').dropdown();
