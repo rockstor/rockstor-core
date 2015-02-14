@@ -27,6 +27,12 @@
   <button id="delete-pool" class="btn btn-danger" type="button"><i class="icon-trash icon-white"></i> Delete</button>
 </div>
 <span class="h2"><%= pool.get('name') %></span>
+<% if (pool.get('name') == 'rockstor_rockstor') { %>
+   <br>
+   <div class="alert alert-error">
+     <h4>Warning! This Pool is created during install and contains the OS. You can create Shares in it like in any other pool on the system. However, operations like resize, compression and deletion are not allowed.</h4>
+   </div>
+<% } %>
 <br>
 <br>
 
@@ -59,10 +65,10 @@
       <div class="row-fluid">
         <div class="span12">
           <div class="tab-section">
-           
+
             <div id="ph-resize-pool-info"></div>
-      <!--   <button id="resize-pool-popup" rel="#resize-pool-form" class="btn btn-primary" type="button"><i class="icon-edit icon-white"></i> Resize Pool</button> -->  
-           
+      <!--   <button id="resize-pool-popup" rel="#resize-pool-form" class="btn btn-primary" type="button"><i class="icon-edit icon-white"></i> Resize Pool</button> -->
+
           </div> <!-- tab-section -->
         </div> <!-- span12 -->
       </div> <!-- row-fluid -->
