@@ -49,7 +49,6 @@ def rockstor_smb_config(fo, exports):
         fo.write('    path = %s\n' % e.path)
         fo.write('    browseable = %s\n' % e.browsable)
         fo.write('    read only = %s\n' % e.read_only)
-        fo.write('    create mask = %s\n' % e.create_mask)
         fo.write('    guest ok = %s\n' % e.guest_ok)
         if (len(admin_users) > 0):
             fo.write('    admin users = %s\n' % admin_users)
