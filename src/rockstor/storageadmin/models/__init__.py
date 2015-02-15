@@ -31,6 +31,7 @@ from network_interface import NetworkInterface
 from group import Group
 from user import User
 from samba_share import SambaShare
+from samba_custom import SambaCustomConfig
 from posix_acls import PosixACLs
 from scrub import PoolScrub
 from setup import Setup
@@ -42,3 +43,4 @@ from oauth_app import OauthApp
 from netatalk_share import NetatalkShare
 from docker_image import DockerImage
 from docker_container import DockerContainer
+from pool_balance import PoolBalance

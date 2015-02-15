@@ -21,7 +21,7 @@ from django.utils.timezone import utc
 from rest_framework.response import Response
 from smart_manager.models import (Replica, ReplicaTrail)
 from smart_manager.serializers import (ReplicaTrailSerializer)
-from datetime import datetime
+from datetime import (datetime, timedelta)
 import rest_framework_custom as rfc
 
 
@@ -38,6 +38,10 @@ class ReplicaTrailView(rfc.GenericView):
 
         if ('rid' in kwargs):
             replica = Replica.objects.get(id=kwargs['rid'])
+            if ('limit' in self.request.QUERY_PARAMS):
+                limit = int(self.request.QUERY_PARAMS.get('limit', 2))
+                return ReplicaTrail.objects.filter(
+                    replica=replica).order_by('-id')[0:limit]
             return ReplicaTrail.objects.filter(replica=replica).order_by('-id')
         return ReplicaTrail.objects.filter().order_by('-id')
 
@@ -64,3 +68,15 @@ class ReplicaTrailView(rfc.GenericView):
         rt.status = new_status
         rt.save()
         return Response(ReplicaTrailSerializer(rt).data)
+
+    @transaction.commit_on_success
+    def delete(self, request, rid):
+        with self._handle_exception(request):
+            days = int(request.DATA.get('days', 30))
+            replica = Replica.objects.get(id=rid)
+            ts = datetime.utcnow().replace(tzinfo=utc)
+            ts0 = ts - timedelta(days=days)
+            if (ReplicaTrail.objects.filter(replica=replica).count() > 100):
+                ReplicaTrail.objects.filter(replica=replica,
+                                            end_ts__lt=ts0).delete()
+            return Response()

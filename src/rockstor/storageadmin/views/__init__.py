@@ -46,3 +46,4 @@ from netatalk import NetatalkView
 from group import GroupView
 from docker_image import DockerImageView
 from docker_container import DockerContainerView
+from pool_balance import PoolBalanceView

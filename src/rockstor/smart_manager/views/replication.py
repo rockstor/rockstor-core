@@ -23,12 +23,14 @@ View for things at snapshot level
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (Share, Appliance)
-from smart_manager.models import Replica
+from smart_manager.models import (Replica, ReplicaTrail)
 from smart_manager.serializers import ReplicaSerializer
 from storageadmin.util import handle_exception
 from datetime import datetime
 from django.utils.timezone import utc
 import rest_framework_custom as rfc
+import logging
+logger = logging.getLogger(__name__)
 
 
 class ReplicaView(rfc.GenericView):
@@ -43,50 +45,68 @@ class ReplicaView(rfc.GenericView):
                 return Replica.objects.get(id=kwargs['rid'])
             except:
                 return []
+        status = self.request.QUERY_PARAMS.get('status', None)
+        if (status is not None):
+            enabled = None
+            if (status == 'enabled'):
+                enabled = True
+            elif (status == 'disabled'):
+                enabled = False
+            if (enabled is not None):
+                return Replica.objects.filter(enabled=enabled)
         return Replica.objects.filter().order_by('-id')
 
     @transaction.commit_on_success
     def post(self, request):
-        sname = request.DATA['share']
-        if (Replica.objects.filter(share=sname).exists()):
-            e_msg = ('Another replication task already exists for this '
-                     'share(%s). Sorry, only 1-1 replication is supported.'
-                     % sname)
-            handle_exception(Exception(e_msg), request)
-        share = self._validate_share(sname, request)
-        aip = request.DATA['appliance']
-        self._validate_appliance(aip, request)
-        dpool = request.DATA['pool']
-        frequency = int(request.DATA['frequency'])
-        task_name = request.DATA['task_name']
-        data_port = int(request.DATA['data_port'])
-        meta_port = int(request.DATA['meta_port'])
-        ts = datetime.utcnow().replace(tzinfo=utc)
-        r = Replica(task_name=task_name, share=sname, appliance=aip,
-                    pool=share.pool.name, dpool=dpool, enabled=True,
-                    frequency=frequency, data_port=data_port,
-                    meta_port=meta_port, ts=ts)
-        r.save()
-        return Response(ReplicaSerializer(r).data)
+        with self._handle_exception(request):
+            sname = request.DATA.get('share')
+            if (Replica.objects.filter(share=sname).exists()):
+                e_msg = ('Another replication task already exists for this '
+                         'share(%s). Only 1-1 replication is supported '
+                         'currently.' % sname)
+                handle_exception(Exception(e_msg), request)
+            share = self._validate_share(sname, request)
+            appliance = self._validate_appliance(request)
+            dpool = request.DATA.get('pool')
+            frequency = self._validate_frequency(request)
+            task_name = request.DATA.get('task_name')
+            try:
+                data_port = int(request.DATA.get('data_port'))
+                meta_port = int(request.DATA.get('meta_port'))
+            except:
+                e_msg = ('data and meta ports must be valid port '
+                         'numbers(1-65535).')
+                handle_exception(Exception(e_msg), request)
+            data_port = self._validate_port(data_port, request)
+            meta_port = self._validate_port(meta_port, request)
+            ts = datetime.utcnow().replace(tzinfo=utc)
+            r = Replica(task_name=task_name, share=sname,
+                        appliance=appliance.uuid, pool=share.pool.name,
+                        dpool=dpool, enabled=True, frequency=frequency,
+                        data_port=data_port, meta_port=meta_port, ts=ts)
+            r.save()
+            return Response(ReplicaSerializer(r).data)
 
     @transaction.commit_on_success
     def put(self, request, rid):
-        ts = datetime.utcnow().replace(tzinfo=utc)
-        try:
-            r = Replica.objects.get(id=rid)
-        except:
-            e_msg = ('Replica with id: %s does not exist' % rid)
-            handle_exception(Exception(e_msg), request)
+        with self._handle_exception(request):
+            try:
+                r = Replica.objects.get(id=rid)
+            except:
+                e_msg = ('Replica(%s) does not exist' % rid)
+                handle_exception(Exception(e_msg), request)
 
-        enabled = request.DATA['enabled']
-        if (enabled == 'False'):
-            enabled = False
-        else:
-            enabled = True
-        r.enabled = enabled
-        r.ts = ts
-        r.save()
-        return Response(ReplicaSerializer(r).data)
+            r.frequency = self._validate_frequency(request, r.frequency)
+            enabled = request.DATA.get('enabled', r.enabled)
+            if (type(enabled) != bool):
+                e_msg = ('enabled switch must be a boolean, not %s' %
+                         type(enabled))
+                handle_exception(Exception(e_msg), request)
+            r.enabled = enabled
+            ts = datetime.utcnow().replace(tzinfo=utc)
+            r.ts = ts
+            r.save()
+            return Response(ReplicaSerializer(r).data)
 
     def _validate_share(self, sname, request):
         try:
@@ -95,9 +115,43 @@ class ReplicaView(rfc.GenericView):
             e_msg = ('Share: %s does not exist' % sname)
             handle_exception(Exception(e_msg), request)
 
-    def _validate_appliance(self, ip, request):
+    def _validate_appliance(self, request):
         try:
+            ip = request.DATA.get('appliance', None)
             return Appliance.objects.get(ip=ip)
         except:
-            e_msg = ('Appliance with ip: %s is not recognized.' % ip)
+            e_msg = ('Appliance with ip(%s) is not recognized.' % ip)
             handle_exception(Exception(e_msg), request)
+
+    def _validate_port(self, port, request):
+        if (port < 1 or port > 65535):
+            e_msg = ('Valid port numbers are between 1-65535')
+            handle_exception(Exception(e_msg), request)
+        return port
+
+    def _validate_frequency(self, request, default=1):
+        e_msg = ('frequency must be a positive integer')
+        try:
+            frequency = int(request.DATA.get('frequency', default))
+        except:
+            handle_exception(Exception(e_msg), request)
+        if (frequency < 1):
+            handle_exception(Exception(e_msg), request)
+        return frequency
+
+    def delete(self, request, rid):
+        with self._handle_exception(request):
+            try:
+                r = Replica.objects.get(id=rid)
+            except:
+                e_msg = ('Replica(%s) does not exist' % rid)
+                handle_exception(Exception(e_msg), request)
+
+            if (r.enabled is True):
+                e_msg = ('Replica(%s) is still enabled. Disable it and '
+                         'retry.' % rid)
+                handle_exception(Exception(e_msg), request)
+
+            ReplicaTrail.objects.filter(replica=r).delete()
+            r.delete()
+            return Response()

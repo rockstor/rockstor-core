@@ -273,7 +273,6 @@ class ProcRetreiver(Process):
         ts = datetime.utcnow().replace(tzinfo=utc)
         for p in Pool.objects.all():
             total_reclaimable = 0
-            arb_disk = Disk.objects.filter(pool=p)[0].name
             try:
                 #  get usage of all shares in this pool
                 pool_device = Disk.objects.filter(pool=p)[0].name
@@ -289,9 +288,7 @@ class ProcRetreiver(Process):
                         total_reclaimable += (
                             Share.objects.get(name=s).size - usaged[s][1])
                     except:
-                        total_reclaimable += (
-                            Snapshot.objects.get(real_name=s).size -
-                            usaged[s][1])
+                        pass
                     su = None
                     try:
                         su = ShareUsage.objects.filter(name=s).latest('id')
@@ -305,8 +302,8 @@ class ProcRetreiver(Process):
                     #  we check for changed in both referenced and exclusive
                     #  usage because in rare cases it's possible for only one
                     #  to change.
-                    if (su is None or su.r_usage != usaged[s][0] or
-                        su.e_usage != usaged[s][1]):
+                    if ((su is None or su.r_usage != usaged[s][0] or
+                         su.e_usage != usaged[s][1])):
                         su = ShareUsage(name=s, r_usage=usaged[s][0],
                                         e_usage=usaged[s][1], ts=ts)
                     else:
@@ -318,8 +315,8 @@ class ProcRetreiver(Process):
                              'for pool: %s' % (p.name))
                 logger.exception(e)
             try:
-                usage = pool_usage(arb_disk)
-                total_free = p.size - usage[1]  # free + reclaimable
+                usage = pool_usage('/%s/%s' % (settings.MNT_PT, p.name))
+                total_free = usage[2]  # free + reclaimable
                 pu = None
                 try:
                     pu = PoolUsage.objects.filter(pool=p.name).latest('id')
@@ -329,8 +326,8 @@ class ProcRetreiver(Process):
                     e_msg = ('Unable to get latest pool usage object for '
                              'pool(%s). A new one will be created.' % p.name)
                     logger.error(e_msg)
-                if (pu is None or
-                    p.size - (pu.free + pu.reclaimable) != usage[1]):
+                if ((pu is None or
+                     p.size - (pu.free + pu.reclaimable) != usage[1])):
                     pu = PoolUsage(pool=p.name,
                                    free=total_free-total_reclaimable,
                                    reclaimable=total_reclaimable, ts=ts)

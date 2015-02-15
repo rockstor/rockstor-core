@@ -16,15 +16,18 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from django.conf.urls import patterns, url
-from storageadmin.views import CommandView
+from django.db import models
+from storageadmin.models import Pool
 
-valid_commands = ('uptime|bootstrap|utcnow|update-check|update|'
-                  'current-version|join-winbind-domain|winbind-domain-status'
-                  '|shutdown|reboot|kernel|current-user')
 
-urlpatterns = patterns(
-    '',
-    url(r'(?P<command>%s)$' % valid_commands, CommandView.as_view(),
-        name='user-view'),
-)
+class PoolBalance(models.Model):
+
+    pool = models.ForeignKey(Pool)
+    status = models.CharField(max_length=10, default='started')
+    pid = models.IntegerField()
+    start_time = models.DateTimeField(auto_now=True)
+    end_time = models.DateTimeField(null=True)
+    percent_done = models.IntegerField(default=0)
+
+    class Meta:
+        app_label = 'storageadmin'

@@ -16,15 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from django.conf.urls import patterns, url
-from storageadmin.views import CommandView
+from django.db import models
+from storageadmin.models import SambaShare
 
-valid_commands = ('uptime|bootstrap|utcnow|update-check|update|'
-                  'current-version|join-winbind-domain|winbind-domain-status'
-                  '|shutdown|reboot|kernel|current-user')
 
-urlpatterns = patterns(
-    '',
-    url(r'(?P<command>%s)$' % valid_commands, CommandView.as_view(),
-        name='user-view'),
-)
+class SambaCustomConfig(models.Model):
+    smb_share = models.ForeignKey(SambaShare)
+    custom_config = models.CharField(max_length=1024, null=True)
+
+    class Meta:
+        app_label = 'storageadmin'

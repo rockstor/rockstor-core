@@ -2,22 +2,43 @@
 /*
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
- * 
+ *
  * RockStor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
- * 
+ *
  * RockStor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 </script>
+
+
+  <h4>Resize Pool(<%= poolName %>). You can add or remove disks and change raid configuration of your pool.</h4>
+  <div id="alert-msg"></div>
+  <div class="control-group">
+  <label class="control-label" for="raid_level">Raid configuration</label>
+  <div class="controls">
+    <select id="raid_level" name="raid_level">
+     <option value="<%= pool.get('raid') %>" selected="selected"> <%= pool.get('raid') %> </option>
+      <option value="single">Single</option>
+      <option value="raid0">Raid0</option>
+      <option value="raid1">Raid1</option>
+      <option value="raid10">Raid10</option>
+      <option value="raid5">Raid5</option>
+      <option value="raid6">Raid6</option>
+    </select>
+  </div>
+</div>
+
+  Select new disk(s) to add to the pool or Unselect disk(s) to remove from the pool.<br>
+  You cannot add and remove disks at once. If you do so, new disks will be added but unselected disks will not be removed.</br>
 
 <table id="disks-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of disks">
   <thead>
@@ -55,4 +76,6 @@
     <% }); %>
   </tbody>
 </table>
-
+<a id="js-submit-resize" class="btn btn-primary" href="#">Submit</a>
+&nbsp;
+<a id="js-resize-cancel" class="btn" href="#">Cancel</a>

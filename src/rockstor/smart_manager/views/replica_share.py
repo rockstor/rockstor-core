@@ -23,7 +23,7 @@ View for things at snapshot level
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (Share, Appliance)
-from smart_manager.models import ReplicaShare
+from smart_manager.models import (ReplicaShare, ReceiveTrail)
 from smart_manager.serializers import ReplicaShareSerializer
 from storageadmin.util import handle_exception
 from datetime import datetime
@@ -81,3 +81,20 @@ class ReplicaShareView(rfc.GenericView):
             e_msg = ('Appliance with ip: %s is not recognized.' % ip)
             handle_exception(Exception(e_msg), request)
 
+    @transaction.commit_on_success
+    def delete(self, request, rid):
+        with self._handle_exception(request):
+            try:
+                rs = ReplicaShare.objects.get(id=rid)
+            except:
+                e_msg = ('ReplicaShare(%d) does not exist.' % rid)
+                handle_exception(Exception(e_msg), request)
+
+            if (Share.objects.filter(name=rs.share).exists()):
+                e_msg = ('Share(%s) linked to this receive exists. If you are '
+                         'sure, delete it and try again.' % rs.share)
+                handle_exception(Exception(e_msg), request)
+
+            ReceiveTrail.objects.filter(rshare=rs).delete()
+            rs.delete()
+            return Response()

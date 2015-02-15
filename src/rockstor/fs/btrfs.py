@@ -29,6 +29,8 @@ import shutil
 from system.osi import (run_command, create_tmp_dir, is_share_mounted,
                         is_mounted)
 from system.exceptions import (CommandException, NonBTRFSRootException)
+from pool_scrub import PoolScrub
+from pool_balance import PoolBalance
 
 
 MKFS_BTRFS = '/sbin/mkfs.btrfs'
@@ -37,17 +39,14 @@ MOUNT = '/bin/mount'
 UMOUNT = '/bin/umount'
 DD = '/bin/dd'
 DEFAULT_MNT_DIR = '/mnt2/'
-DF = '/bin/df'
-BTRFS_DEBUG_TREE = '/sbin/btrfs-debug-tree'
 RMDIR = '/bin/rmdir'
-SFDISK = '/sbin/sfdisk'
 WIPEFS = '/usr/sbin/wipefs'
 
 
 import collections
 Disk = collections.namedtuple('Disk', 'name model serial size '
                               'transport vendor hctl type fstype '
-                              'label btrfs_uuid parted')
+                              'label btrfs_uuid parted root')
 
 
 def add_pool(pool, disks):
@@ -63,18 +62,35 @@ def add_pool(pool, disks):
     return out, err, rc
 
 
+def cur_devices(mnt_pt):
+    devices = []
+    o, e, rc = run_command([BTRFS, 'fi', 'show', mnt_pt])
+    for l in o:
+        l = l.strip()
+        if (re.match('devid ', l) is not None):
+            devices.append(l.split()[-1])
+    return devices
+
+
 def resize_pool(pool, device, dev_list, add=True):
     device = '/dev/' + device
     dev_list = ['/dev/' + d for d in dev_list]
     root_mnt_pt = mount_root(pool, device)
+    cur_dev = cur_devices(root_mnt_pt)
     resize_flag = 'add'
     if (not add):
         resize_flag = 'delete'
     resize_cmd = [BTRFS, 'device', resize_flag, ]
-    resize_cmd.extend(dev_list)
+    resize = False
+    for d in dev_list:
+        if (((resize_flag == 'add' and (d not in cur_dev)) or
+             (resize_flag == 'delete' and (d in cur_dev)))):
+            resize = True
+            resize_cmd.append(d)
+    if (not resize):
+        return
     resize_cmd.append(root_mnt_pt)
-    out, err, rc = run_command(resize_cmd)
-    return out, err, rc
+    return run_command(resize_cmd)
 
 
 def mount_root(pool, device):
@@ -82,12 +98,15 @@ def mount_root(pool, device):
     if (is_share_mounted(pool.name)):
         return root_pool_mnt
     create_tmp_dir(root_pool_mnt)
-    mnt_cmd = [MOUNT, '-t', 'btrfs', device, root_pool_mnt, ]
+    mnt_device = '/dev/disk/by-label/%s' % pool.name
+    if (not os.path.exists(mnt_device)):
+        mnt_device = device
+    mnt_cmd = [MOUNT, mnt_device, root_pool_mnt, ]
     mnt_options = ''
     if (pool.mnt_options is not None):
         mnt_options = pool.mnt_options
     if (pool.compression is not None):
-        if(re.search('compress', mnt_options) is None):
+        if (re.search('compress', mnt_options) is None):
             mnt_options = ('%s,compress=%s' % (mnt_options, pool.compression))
     if (len(mnt_options) > 0):
         mnt_cmd.extend(['-o', mnt_options])
@@ -294,7 +313,7 @@ def add_clone(pool, pool_device, share, clone, snapshot=None):
     return add_snap_helper(orig_path, clone_path)
 
 
-def add_snap(pool, pool_device, share_name, snap_name, readonly=True):
+def add_snap(pool, pool_device, share_name, snap_name, readonly=False):
     """
     create a snapshot
     """
@@ -304,7 +323,7 @@ def add_snap(pool, pool_device, share_name, snap_name, readonly=True):
     snap_dir = ('%s/.snapshots/%s' % (root_pool_mnt, share_name))
     create_tmp_dir(snap_dir)
     snap_full_path = ('%s/%s' % (snap_dir, snap_name))
-    return add_snap_helper(share_full_path, snap_full_path)
+    return add_snap_helper(share_full_path, snap_full_path, readonly)
 
 
 def rollback_snap(snap_name, sname, subvol_name, pool, pool_device):
@@ -364,7 +383,7 @@ def share_usage(pool, pool_device, share_id):
     for line in out:
         fields = line.split()
         if (fields[0] == share_id):
-            usage = int(fields[-2]) / 1024 # usage in KB
+            usage = int(fields[-2]) / 1024  # usage in KB
             break
     if (usage is None):
         raise Exception('usage cannot be determined for share_id: %s' %
@@ -373,7 +392,7 @@ def share_usage(pool, pool_device, share_id):
 
 
 def shares_usage(pool, pool_device, share_map, snap_map):
-    #don't mount the pool if at least one share in the map is mounted.
+    # don't mount the pool if at least one share in the map is mounted.
     usage_map = {}
     mnt_pt = None
     for s in share_map.keys():
@@ -394,26 +413,53 @@ def shares_usage(pool, pool_device, share_map, snap_map):
     return usage_map
 
 
-def pool_usage(pool_device):
-    pool_device = ('/dev/%s' % pool_device)
-    cmd = [BTRFS_DEBUG_TREE, '-r', pool_device]
+def pool_usage(mnt_pt):
+    #  @todo: remove temporary raid5/6 custom logic once fi usage
+    #  supports raid5/6.
+    cmd = [BTRFS, 'fi', 'usage', '-b', mnt_pt]
+    total = 0
+    inuse = 0
+    free = 0
+    data_ratio = 1
+    raid56 = False
+    parity = 1
+    disks = set()
     out, err, rc = run_command(cmd)
-    total = None
-    usage = None
-    for line in out:
-        if (re.match('total bytes ', line) is not None):
-            total = int(line.split()[2]) / 1024 # in KB
-        if (re.match('bytes used ', line) is not None):
-            usage = int(line.split()[2]) / 1024 # in KB
-            break #usage line is right after total line.
-    if (usage is None or total is None):
-        raise Exception('usage not available for pool device: %s' %
-                        pool_device)
-    return (total, usage)
+    for e in err:
+        e = e.strip()
+        if (re.match('WARNING: RAID56', e) is not None):
+            raid56 = True
+
+    for o in out:
+        o = o.strip()
+        if (raid56 is True and re.match('/dev/', o) is not None):
+            disks.add(o.split()[0])
+        elif (raid56 is True and re.match('Data,RAID', o) is not None):
+            if (o[5:10] == 'RAID6'):
+                parity = 2
+        elif (re.match('Device size:', o) is not None):
+            total = int(o.split()[2]) / 1024
+        elif (re.match('Used:', o) is not None):
+            inuse = int(o.split()[1]) / 1024
+        elif (re.match('Free ', o) is not None):
+            free = int(o.split()[2]) / 1024
+        elif (re.match('Data ratio:', o) is not None):
+            data_ratio = float(o.split()[2])
+            if (data_ratio < 0.01):
+                data_ratio = 0.01
+    if (raid56 is True):
+        num_disks = len(disks)
+        if (num_disks > 0):
+            per_disk = total / num_disks
+            total = (num_disks - parity) * per_disk
+        free = total - inuse
+    else:
+        total = total / data_ratio
+        inuse = inuse / data_ratio
+    return (total, inuse, free)
 
 
 def scrub_start(pool, pool_device, force=False):
-    from pool_scrub import PoolScrub
     mnt_pt = mount_root(pool, '/dev/' + pool_device)
     p = PoolScrub(mnt_pt)
     p.start()
@@ -440,6 +486,37 @@ def scrub_status(pool, pool_device):
             stats['kb_scrubbed'] = int(fields[1]) / 1024
         else:
             stats[fields[0]] = int(fields[1])
+    return stats
+
+
+def balance_start(pool, pool_device, force=False, convert=None):
+    mnt_pt = mount_root(pool, ('/dev/%s' % pool_device))
+    if (convert is not None and convert == pool.raid):
+        convert = None
+    b = PoolBalance(mnt_pt, convert=convert)
+    b.start()
+    return b.pid
+
+
+def balance_status(pool, pool_device):
+    stats = {'status': 'unknown', }
+    mnt_pt = mount_root(pool, ('/dev/%s' % pool_device))
+    out, err, rc = run_command([BTRFS, 'balance', 'status', mnt_pt],
+                               throw=False)
+    if (len(out) > 0):
+        if (re.match('Balance', out[0]) is not None):
+            stats['status'] = 'running'
+            if ((len(out) > 1 and
+                 re.search('chunks balanced', out[1]) is not None)):
+                percent_left = out[1].split()[-2][:-1]
+                try:
+                    percent_left = int(percent_left)
+                    stats['percent_done'] = 100 - percent_left
+                except:
+                    pass
+        elif (re.match('No balance', out[0]) is not None):
+            stats['status'] = 'finished'
+            stats['percent_done'] = 100
     return stats
 
 
@@ -489,6 +566,7 @@ def scan_disks(min_size):
     dnames = {}
     disks = []
     serials = []
+    root_serial = None
     for l in o:
         if (re.match('NAME', l) is None):
             continue
@@ -522,12 +600,24 @@ def scan_disks(min_size):
                 raise Exception('Failed to parse lsblk output: %s' % sl)
         if (dmap['TYPE'] == 'rom'):
             continue
-        elif (dmap['TYPE'] == 'part'):
+        if (dmap['NAME'] == root):
+            root_serial = dmap['SERIAL']
+        if (dmap['TYPE'] == 'part'):
             for dname in dnames.keys():
                 if (re.match(dname, dmap['NAME']) is not None):
                     dnames[dname][8] = True
-        elif (dmap['NAME'] != root):
+        if (((dmap['NAME'] != root and dmap['TYPE'] != 'part') or
+             (dmap['TYPE'] == 'part' and dmap['FSTYPE'] == 'btrfs'))):
             dmap['parted'] = False  # part = False by default
+            dmap['root'] = False
+            if (dmap['TYPE'] == 'part' and dmap['FSTYPE'] == 'btrfs'):
+                #  btrfs partition for root(rockstor_rockstor) pool
+                if (re.match(root, dmap['NAME']) is not None):
+                    dmap['SERIAL'] = root_serial
+                    dmap['root'] = True
+                else:
+                    #  ignore btrfs partitions that are not for rootfs.
+                    continue
             # convert size into KB
             size_str = dmap['SIZE']
             if (size_str[-1] == 'G'):
@@ -553,7 +643,8 @@ def scan_disks(min_size):
                                     dmap['TRAN'], dmap['VENDOR'],
                                     dmap['HCTL'], dmap['TYPE'],
                                     dmap['FSTYPE'], dmap['LABEL'],
-                                    dmap['UUID'], dmap['parted']]
+                                    dmap['UUID'], dmap['parted'],
+                                    dmap['root'], ]
     for d in dnames.keys():
         disks.append(Disk(*dnames[d]))
     return disks
@@ -581,7 +672,25 @@ def blink_disk(disk, total_exec, read, sleep):
     p.terminate()
 
 
-def set_property(mnt_pt, name, val):
-    if (is_mounted(mnt_pt)):
+def set_property(mnt_pt, name, val, mount=True):
+    if (mount is not True or is_mounted(mnt_pt)):
         cmd = [BTRFS, 'property', 'set', mnt_pt, name, val]
         return run_command(cmd)
+
+
+def get_oldest_snap(subvol_path, num_retain):
+    share_name = subvol_path.split('/')[-1]
+    cmd = [BTRFS, 'subvol', 'list', '-o', subvol_path]
+    o, e, rc = run_command(cmd)
+    snaps = {}
+    for l in o:
+        fields = l.split()
+        if (len(fields) > 0 and re.search(share_name, fields[-1]) is not None):
+            snap_fields = fields[-1].split('/')
+            if (snap_fields[-1] == share_name):
+                continue
+            snaps[int(fields[1])] = snap_fields[-1]
+    snap_ids = sorted(snaps.keys())
+    if (len(snap_ids) >= num_retain):
+        return snaps[snap_ids[0]]
+    return None

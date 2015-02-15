@@ -23,7 +23,6 @@ from storageadmin.views import (SetupUserView, LoginView,
                                 InstalledPluginView, AdvancedNFSExportView,
                                 OauthAppView, NetatalkView)
 import os.path
-import oauth2_provider
 
 site_media = os.path.join(
     os.path.dirname(__file__), 'site_media'
@@ -60,7 +59,8 @@ urlpatterns = patterns('',
                        url(r'^img/(?P<path>.*)$', 'django.views.static.serve',
                            {'document_root': img_doc_root}),
 
-                       url(r'^o/', include('oauth2_provider.urls')),
+                       url(r'^o/', include('oauth2_provider.urls',
+                                           namespace='oauth2_provider',)),
                        # REST API
                        url(r'^api/login', LoginView.as_view()),
                        (r'^api/appliances',

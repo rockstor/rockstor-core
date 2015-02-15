@@ -23,7 +23,8 @@ from storageadmin.models import (Disk, Pool, Share, Snapshot, NFSExport,
                                  NetworkInterface, User, PoolScrub, Setup,
                                  NFSExportGroup, SFTP, Plugin, InstalledPlugin,
                                  AdvancedNFSExport, OauthApp, NetatalkShare,
-                                 Group, DockerImage, DockerContainer)
+                                 Group, DockerImage, DockerContainer,
+                                 PoolBalance, SambaCustomConfig)
 from django.contrib.auth.models import User as DjangoUser
 
 
@@ -93,9 +94,16 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('username', 'is_active', 'suser')
 
 
+class SambaCustomConfigSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = SambaCustomConfig
+
+
 class SambaShareSerializer(serializers.ModelSerializer):
     share = serializers.CharField(source='share_name')
     admin_users = SUserSerializer(source='admin_users')
+    custom_config = SambaCustomConfigSerializer(source='sambacustomconfig_set')
 
     class Meta:
         model = SambaShare
@@ -141,6 +149,11 @@ class NetworkInterfaceSerializer(serializers.ModelSerializer):
 class PoolScrubSerializer(serializers.ModelSerializer):
     class Meta:
         model = PoolScrub
+
+
+class PoolBalanceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PoolBalance
 
 
 class SetupSerializer(serializers.ModelSerializer):

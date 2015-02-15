@@ -150,6 +150,30 @@ var PoolscrubCollection = RockStorPaginatedCollection.extend({
   }
 });
 
+var PoolRebalance = Backbone.Model.extend({
+  url: function() {
+    return '/api/pools/' + this.get('poolName') + '/balance';
+  }
+});
+
+var PoolRebalanceCollection = RockStorPaginatedCollection.extend({
+  model: PoolRebalance,
+  initialize: function(models, options) {
+    this.constructor.__super__.initialize.apply(this, arguments);
+    if (options) {
+      this.snapType = options.snapType;
+    }
+  },
+  setUrl: function(poolName) {
+    this.baseUrl = '/api/pools/' + poolName + '/balance';
+  },
+  extraParams: function() {
+    var p = this.constructor.__super__.extraParams.apply(this, arguments);
+    p['snap_type'] = this.snapType;
+    return p;
+  }
+});
+
 var SysInfo = Backbone.Model.extend({
   url: "/api/tools/sysinfo"
 });

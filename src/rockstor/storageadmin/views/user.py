@@ -101,8 +101,6 @@ class UserView(rfc.GenericView):
     def post(self, request):
         try:
             invar = self._validate_input(request)
-            logger.debug('input = %s' % invar)
-
             # Check that a django user with the same name does not exist
             e_msg = ('user: %s already exists. Please choose a different'
                      ' username' % invar['username'])

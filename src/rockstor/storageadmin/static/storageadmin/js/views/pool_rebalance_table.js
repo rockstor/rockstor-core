@@ -24,20 +24,20 @@
  *
  */
 
-PoolScrubTableModule  = RockstorModuleView.extend({
+PoolRebalanceTableModule  = RockstorModuleView.extend({
 	events: {
-	"click #js-poolscrub-start": "start",
-	"click #js-poolscrub-cancel": "cancel"
+	"click #js-poolrebalance-start": "start",
+	"click #js-poolrebalance-cancel": "cancel"
 },
 
 initialize: function() {
-	this.template = window.JST.pool_poolscrub_table_template;
+	this.template = window.JST.pool_poolrebalance_table_template;
 	this.paginationTemplate = window.JST.common_pagination;
-	this.startScrubTemplate = window.JST.pool_poolscrub_start_template;
-	this.module_name = 'poolscrubs';
+	this.startRebalanceTemplate = window.JST.pool_poolrebalance_start_template;
+	this.module_name = 'poolrebalances';
 	this.pool = this.options.pool;
-	this.poolscrubs = this.options.poolscrubs;
-	this.collection = this.options.poolscrubs;
+	this.poolrebalances = this.options.poolrebalances;
+	this.collection = this.options.poolrebalances;
 	this.collection.on("reset", this.render, this);
 	this.parentView = this.options.parentView;
 },
@@ -46,13 +46,13 @@ render: function() {
 	var _this = this;
 	$(this.el).empty();
 	$(this.el).append(this.template({
-		poolscrubs: this.collection,
+		poolrebalances: this.collection,
 		pool: this.pool,
 	}));
 	this.$('[rel=tooltip]').tooltip({
 		placement: 'bottom'
 	});
-	this.$('#poolscrubs-table').tablesorter({
+	this.$('#poolrebalances-table').tablesorter({
 		headers: { 0: {sorter: false}}
 	});
 	this.$(".pagination-ph").html(this.paginationTemplate({
@@ -68,30 +68,30 @@ setPoolName: function(poolName) {
 start: function(event) {
 	var _this = this;
 	event.preventDefault();
-	$(this.el).html(this.startScrubTemplate({
+	$(this.el).html(this.startRebalanceTemplate({
 		pool: this.pool,
 	}));
 
-	this.validator = this.$('#pool-scrub-form').validate({
+	this.validator = this.$('#pool-rebalance-form').validate({
 		onfocusout: false,
 		onkeyup: false,
 		rules: {
 	},
 	submitHandler: function() {
-		var button = _this.$('#start_scrub');
+		var button = _this.$('#start_rebalance');
 		if (buttonDisabled(button)) return false;
 		disableButton(button);
-		var n = _this.$("#forcescrub:checked").val();
+		var n = _this.$("#forcebalance:checked").val();
 		var postdata = '';
 		if(n == 'on') {
 			postdata = '{"force": "true"}';
 		}
 		$.ajax({
-			url: '/api/pools/'+_this.pool.get('name')+'/scrub',
+			url: '/api/pools/'+_this.pool.get('name')+'/balance',
 			type: 'POST',
 			data: postdata,
 			success: function() {
-			_this.$('#pool-scrub-form :input').tooltip('hide');
+			_this.$('#pool-rebalance-form :input').tooltip('hide');
 			enableButton(button);
 			_this.collection.fetch({
 				success: function(collection, response, options) {
@@ -99,7 +99,7 @@ start: function(event) {
 			});
 		},
 		error: function(jqXHR) {
-			_this.$('#pool-scrub-form :input').tooltip('hide');
+			_this.$('#pool-rebalance-form :input').tooltip('hide');
 			enableButton(button);
 		}
 		});
@@ -116,4 +116,4 @@ cancel: function(event) {
 });
 
 //Add pagination
-Cocktail.mixin(PoolScrubTableModule, PaginationMixin);
+Cocktail.mixin(PoolRebalanceTableModule, PaginationMixin);

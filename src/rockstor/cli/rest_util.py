@@ -25,18 +25,17 @@ import settings
 from storageadmin.exceptions import RockStorAPIException
 from functools import wraps
 from base_console import BaseConsole
-
+from storageadmin.models import OauthApp
 
 API_TOKEN = None
 
 
-def set_token(client_id=None, client_secret=None, url=None):
+def set_token(client_id=None, client_secret=None, url=None, logger=None):
     if (client_id is None or client_secret is None or url is None):
         os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
-        from storageadmin.models import OauthApp
         app = OauthApp.objects.get(name='cliapp')
-        client_id = app.application.client_id
-        client_secret = app.application.client_secret,
+        client_id = app.client_id()
+        client_secret = app.client_secret()
         url = 'https://localhost'
 
     token_request_data = {
@@ -51,9 +50,17 @@ def set_token(client_id=None, client_secret=None, url=None):
     response = requests.post('%s/o/token/' % url,
                              data=token_request_data, headers=auth_headers,
                              verify=False)
-    content = json.loads(response.content.decode("utf-8"))
-    global API_TOKEN
-    API_TOKEN = content['access_token']
+    try:
+        content = json.loads(response.content.decode("utf-8"))
+        global API_TOKEN
+        API_TOKEN = content['access_token']
+        return API_TOKEN
+    except Exception, e:
+        if (logger is not None):
+            logger.exception(e)
+        msg = ('Exception while setting access_token for url(%s). Make sure '
+               'credentials are correct.' % url)
+        raise Exception(msg)
 
 
 def api_error(console_func):
@@ -93,16 +100,11 @@ def api_call(url, data=None, calltype='get', headers=None, save_error=True):
 
     if (r.status_code == 404):
         msg = ('Invalid api end point: %s' % url)
-        print msg
         raise RockStorAPIException(detail=msg)
 
     if (r.status_code != 200):
-        print r.text
         try:
             error_d = json.loads(r.text)
-            #if ('detail' in error_d):
-            #    raise RockStorAPIException(detail=error_d['detail'])
-
             if (settings.DEBUG is True and save_error is True):
                 cur_time = str(int(time.time()))
                 err_file = '/tmp/err-%s.html' % cur_time
@@ -110,6 +112,12 @@ def api_call(url, data=None, calltype='get', headers=None, save_error=True):
                     for line in r.text.split('\n'):
                         efo.write('%s\n' % line)
                     print('Error detail is saved at %s' % err_file)
+            if ('detail' in error_d):
+                if (error_d['detail'] == 'Authentication credentials were not provided.'):
+                    set_token()
+                    return api_call(url, data=data, calltype=calltype,
+                                    headers=headers, save_error=save_error)
+                raise RockStorAPIException(detail=error_d['detail'])
         except ValueError:
             raise RockStorAPIException(detail='Internal Server Error')
         r.raise_for_status()

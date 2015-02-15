@@ -27,12 +27,19 @@
   <button id="delete-pool" class="btn btn-danger" type="button"><i class="icon-trash icon-white"></i> Delete</button>
 </div>
 <span class="h2"><%= pool.get('name') %></span>
+<% if (pool.get('name') == 'rockstor_rockstor') { %>
+   <br>
+   <div class="alert alert-error">
+     <h4>Warning! This Pool is created during install and contains the OS. You can create Shares in it like in any other pool on the system. However, operations like resize, compression and deletion are not allowed.</h4>
+   </div>
+<% } %>
 <br>
 <br>
 
   <ul class="css-tabs">
     <li class="active"><a href="#details" data-toggle="tab">Overview</a></li>
-    <li><a href="#poolscrubs" data-toggle="tab">Scrub history</a></li>
+    <li><a href="#poolscrubs" data-toggle="tab">Scrubs</a></li>
+    <li><a href="#poolrebalances" data-toggle="tab">Balances</a></li>
   </ul>
 
   <div class="css-panes">
@@ -58,30 +65,19 @@
       <div class="row-fluid">
         <div class="span12">
           <div class="tab-section">
-            <h3>Disks</h3>
-            <table id="pool-disk-table" class="table table-condensed table-bordered table-hover">
-              <thead>
-                <tr>
-                  <th scope="col" abbr="Name">Name</th>
-                  <th scope="col" abbr="Capacity">Capacity</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% _.each(pool.get('disks'), function(disk, i) { %>
-                  <tr>
-                    <td><%= disk.name %></td>
-                    <td><%= humanize.filesize(disk.size*1024) %></td>
-                  </tr>
-                <% }); %>
-              </tbody>
-            </table>
-            <button id="resize-pool-popup" rel="#resize-pool-form" class="btn btn-primary" type="button"><i class="icon-edit icon-white"></i> Resize Pool</button>
+
+            <div id="ph-resize-pool-info"></div>
+      <!--   <button id="resize-pool-popup" rel="#resize-pool-form" class="btn btn-primary" type="button"><i class="icon-edit icon-white"></i> Resize Pool</button> -->
+
           </div> <!-- tab-section -->
         </div> <!-- span12 -->
       </div> <!-- row-fluid -->
     </div>
     <div id="poolscrubs">
       <div id="ph-pool-scrubs"></div>
+    </div>
+    <div id="poolrebalances">
+      <div id="ph-pool-rebalances"></div>
     </div>
   </div>
 
@@ -92,7 +88,7 @@
     Select new disk(s) to add to the pool or Unselect disk(s) to remove from the pool.<br>
     You cannot add and remove disks simultaneously.<br>
     If you do so, new disks will be added but no disks will be removed.<br>
-    After resizing a pool, it must be rebalanced manually. Auto rebalance is not supported yet.<br/>
+    After resizing a pool, it must be balanced manually. Auto balance is not supported yet.<br/>
     <div id="disks-to-add"></div>
 
     <br/>

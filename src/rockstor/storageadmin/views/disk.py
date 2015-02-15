@@ -23,7 +23,8 @@ Disk view, for anything at the disk level
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (Disk, Pool)
-from fs.btrfs import (scan_disks, wipe_disk, blink_disk)
+from fs.btrfs import (scan_disks, wipe_disk, blink_disk, enable_quota,
+                      btrfs_uuid, pool_usage, mount_root)
 from storageadmin.serializers import DiskInfoSerializer
 from storageadmin.util import handle_exception
 from django.conf import settings
@@ -60,35 +61,45 @@ class DiskView(rfc.GenericView):
         disks = scan_disks(settings.MIN_DISK_SIZE)
         for d in disks:
             dob = None
-            if (Disk.objects.filter(serial=d.serial).exists()):
-                dob = Disk.objects.get(serial=d.serial)
-                dob.name = d.name
-            elif (Disk.objects.filter(name=d.name).exists()):
+            if (Disk.objects.filter(name=d.name).exists()):
                 dob = Disk.objects.get(name=d.name)
                 dob.serial = d.serial
+            elif (Disk.objects.filter(serial=d.serial).exists()):
+                dob = Disk.objects.get(serial=d.serial)
+                dob.name = d.name
             else:
-                new_disk = Disk(name=d.name, size=d.size, parted=d.parted,
-                                btrfs_uuid=d.btrfs_uuid, model=d.model,
-                                serial=d.serial, transport=d.transport,
-                                vendor=d.vendor)
-                new_disk.save()
-            if (dob is not None):
-                dob.size = d.size
-                dob.parted = d.parted
-                dob.offline = False
-                dob.model = d.model
-                dob.transport = d.transport
-                dob.vendor = d.vendor
-                dob.btrfs_uuid = d.btrfs_uuid
-                if (Pool.objects.filter(name=d.label).exists()):
-                    dob.pool = Pool.objects.get(name=d.label)
-                dob.save()
+                dob = Disk(name=d.name, size=d.size, parted=d.parted,
+                           btrfs_uuid=d.btrfs_uuid, model=d.model,
+                           serial=d.serial, transport=d.transport,
+                           vendor=d.vendor)
+            dob.size = d.size
+            dob.parted = d.parted
+            dob.offline = False
+            dob.model = d.model
+            dob.transport = d.transport
+            dob.vendor = d.vendor
+            dob.btrfs_uuid = d.btrfs_uuid
+            if (Pool.objects.filter(name=d.label).exists()):
+                dob.pool = Pool.objects.get(name=d.label)
+            if (dob.pool is None and d.root is True):
+                p = self._create_root_pool(d)
+                p.disk_set.add(dob)
+                p.save()
+                dob.pool = p
+            dob.save()
         for do in Disk.objects.all():
             if (do.name not in [d.name for d in disks]):
                 do.offline = True
                 do.save()
         ds = DiskInfoSerializer(Disk.objects.all().order_by('name'), many=True)
         return Response(ds.data)
+
+    def _create_root_pool(self, d):
+        p = Pool(name=settings.ROOT_POOL, raid='single')
+        p.size = pool_usage(mount_root(p, d.name))[0]
+        enable_quota(p, '/dev/%s' % d.name)
+        p.uuid = btrfs_uuid(d.name)
+        return p
 
     @transaction.commit_on_success
     def _wipe(self, dname, request):
