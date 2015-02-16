@@ -52,14 +52,31 @@ UpdateCertificateView = RockstorLayoutView.extend({
       onfocusout: false,
       onkeyup: false,
       submitHandler: function() {
-        _.each(this.$('form').serializeArray(), function(input){
-            values[ input.name ] = input.value;
+    	  var button = $('#update-certificate');
+          if (buttonDisabled(button)) return false;
+          disableButton(button);
+    	  var certificateName = $('#certificatename').val();
+    	  var certificate = $('#certificate').val();
+    	  var privatekey = $('#privatekey').val();
+    	  var certData = JSON.stringify({"certificatename": certificateName,
+			    "certificate": certificate, "privatekey": privatekey});
+    	  console.log("certificate data: "+data);
+          var jqxhr = $.ajax({
+              url: '/api/certificate',
+              type: 'POST',
+              dataType: 'json',
+	          contentType: 'application/json',
+              data: certData
           });
-        var tempCertificate = new Certificate();
-        tempCertificate.save(values, { iframe: true,
-                                    files: this.$('form :file'),
-                                    data: values });
-        return false;
+          jqxhr.done(function() {
+              enableButton(button);
+              _this.$('#update-certificate-form input').tooltip('hide');
+           });
+
+           jqxhr.fail(function(xhr, status, error) {
+             enableButton(button);
+           });
+          return false;
       }
     });
     return this;

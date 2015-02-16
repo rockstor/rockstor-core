@@ -21,7 +21,7 @@ from storageadmin.views import (SetupUserView, LoginView,
                                 DashboardConfigView, NFSExportGroupView,
                                 SambaView, SFTPView, PluginView,
                                 InstalledPluginView, AdvancedNFSExportView,
-                                OauthAppView, NetatalkView)
+                                OauthAppView, NetatalkView, TLSCertificateView)
 import os.path
 import oauth2_provider
 
@@ -106,4 +106,8 @@ urlpatterns = patterns('',
                         include('smart_manager.urls.replicas')),
 
                        # Backup Plugin
-                       (r'^api/plugin/backup', include('backup.urls')),)
+                       (r'^api/plugin/backup', include('backup.urls')),
+                       
+                       # Certificate URL
+                       (r'^api/certificate', TLSCertificateView.as_view()),)
+                       

@@ -26,7 +26,7 @@
       <form id="update-certificate-form" name="aform" class="form-horizontal" enctype="multipart/form-data" method="post">
         <div class="messages"></div>
         <div class="control-group">
-	 	 <label class="control-label" for="username">Certificate Name
+	 	 <label class="control-label" for="certificatename">Certificate Name
           <span class="required"> *</span>
        	 </label>
          <div class="controls">
@@ -34,14 +34,26 @@
          </div>
         </div>
         <div class="control-group">
-		<label class="control-label">File</label>
-	  	<div class="controls">
-	    	<input type="file" id="file" name="file" title="Certificate file">
-	  	</div>
-		</div>
+	 	 <label class="control-label" for="certificate">Certificate
+          <span class="required"> *</span>
+       	 </label>
+         <div class="controls">
+            <textarea id="certificate" name="certificate" rows="15" cols="80" 
+            placeholder="certificate" title="certificate." style="width: 400px;"></textarea>
+         </div>
+        </div>
+        <div class="control-group">
+	 	 <label class="control-label" for="privatekey">Private Key
+          <span class="required"> *</span>
+       	 </label>
+         <div class="controls">
+            <textarea id="privatekey" name="privatekey" rows="15" cols="80" 
+            placeholder="privatekey" title="privatekey" style="width: 400px;"></textarea>
+         </div>
+        </div>
         <div class="control-group">
           <div class="controls">
-            <button type="Submit" id="create-user" class="btn btn-primary">Submit</button>
+            <button type="Submit" id="update-certificate" class="btn btn-primary">Submit</button>
           </div>
         </div>
       </form>
