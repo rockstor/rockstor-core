@@ -520,3 +520,7 @@ var AccessKeyCollection = RockStorPaginatedCollection.extend({
   model: AccessKey,
   baseUrl: '/api/oauth_app'
 });
+
+var Certificate = Backbone.Model.extend({
+  urlRoot: '/api/certificate',
+});

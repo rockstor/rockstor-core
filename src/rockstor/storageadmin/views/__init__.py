@@ -45,3 +45,4 @@ from oauth_app import OauthAppView
 from netatalk import NetatalkView
 from group import GroupView
 from pool_balance import PoolBalanceView
+from tls_certificate import TLSCertificateView

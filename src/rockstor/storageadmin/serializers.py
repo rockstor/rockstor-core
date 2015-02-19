@@ -23,7 +23,8 @@ from storageadmin.models import (Disk, Pool, Share, Snapshot, NFSExport,
                                  NetworkInterface, User, PoolScrub, Setup,
                                  NFSExportGroup, SFTP, Plugin, InstalledPlugin,
                                  AdvancedNFSExport, OauthApp, NetatalkShare,
-                                 Group, PoolBalance, SambaCustomConfig)
+                                 Group, PoolBalance, SambaCustomConfig,
+                                 TLSCertificate)
 from django.contrib.auth.models import User as DjangoUser
 
 
@@ -192,3 +193,9 @@ class NetatalkShareSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = NetatalkShare
+
+class TLSCertificateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = TLSCertificate
+        
