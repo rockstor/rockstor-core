@@ -21,8 +21,8 @@ from django.db import models
 
 class TLSCertificate(models.Model):
     name = models.CharField(max_length=1024, unique=True)
-    certificate = models.CharField(max_length=1024, null=True)
-    key = models.CharField(max_length=1024, null=True)
+    certificate = models.CharField(max_length=2048, null=True)
+    key = models.CharField(max_length=2048, null=True)
 
     class Meta:
         app_label = 'storageadmin'

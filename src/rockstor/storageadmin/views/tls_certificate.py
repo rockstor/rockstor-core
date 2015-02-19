@@ -18,14 +18,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework.response import Response
 from django.db import transaction
-from django.conf import settings
-from storageadmin.models import (SambaShare, TLSCertificate, User, SambaCustomConfig)
+from storageadmin.models import TLSCertificate
 from storageadmin.serializers import TLSCertificateSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
-from share_helpers import validate_share
-from system.samba import (refresh_smb_config, status, restart_samba)
-from fs.btrfs import (mount_share, is_share_mounted)
 
 import logging
 logger = logging.getLogger(__name__)
@@ -35,9 +31,18 @@ class TLSCertificateView(rfc.GenericView):
     serializer_class = TLSCertificateSerializer
 
     def get_queryset(self, *args, **kwargs):
-        return []
-
+        return TLSCertificate.objects.all()
 
     @transaction.commit_on_success
     def post(self, request):
-            return Response()
+        with self._handle_exception(request):
+            name = request.DATA.get('name')
+            cert = request.DATA.get('cert')
+            key = request.DATA.get('key')
+            if (TLSCertificate.objects.filter(name=name).exists()):
+                e_msg = ('Another certificate with the name(%s) already '
+                         'exists.' % name)
+                handle_exception(Exception(e_msg))
+        co = TLSCertificate(name=name, cert=cert, key=key)
+        co.save()
+        return Response(TLSCertificateSerializer(co).data)
