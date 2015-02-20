@@ -202,3 +202,24 @@ stdout_logfile_backups=10     ; # of stdout logfile backups (default 10)
 stderr_logfile=${supervisord-conf:logdir}/supervisord_%(program_name)s_stderr.log        ; stderr log path, NONE for none; default AUTO
 stderr_logfile_maxbytes=1MB   ; max # logfile bytes b4 rotation (default 50MB)
 stderr_logfile_backups=10     ; # of stderr logfile backups (default 10)
+
+; Job dispatcher
+[program:job-handler]
+environment=DJANGO_SETTINGS_MODULE=settings
+command=${supervisord-conf:jh_cmd}
+process_name=%(program_name)s
+numprocs=1
+priority=200
+autostart=false
+autorestart=unexpected
+startsecs=2
+startretries=3
+exitcodes=0,2
+stopsignal=TERM
+stopwaitsecs=5
+stdout_logfile=${supervisord-conf:logdir}/supervisord_%(program_name)s_stdout.log
+stdout_logfile_maxbytes=1MB
+stdout_logfile_backups=10
+stderr_logfile=${supervisord-conf:logdir}/supervisord_%(program_name)s_stderr.log
+stderr_logfile_maxbytes=1MB
+stderr_logfile_backups=10
