@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2014 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -16,14 +16,10 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from django.conf.urls import patterns, url
-from storageadmin.views import RockOnView
+from system.osi import run_command
+
+DOCKER = '/usr/bin/docker'
 
 
-urlpatterns = patterns(
-    '',
-    url(r'^$', RockOnView.as_view(), ),
-    url(r'^/(?P<command>update)$', RockOnView.as_view(), ),
-    url(r'^/(?P<rid>\d+)/(?P<command>install|start|stop)$',
-        RockOnView.as_view(), ),
-    )
+def docker_status():
+    return 'running'

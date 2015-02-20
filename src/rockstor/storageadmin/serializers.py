@@ -23,8 +23,7 @@ from storageadmin.models import (Disk, Pool, Share, Snapshot, NFSExport,
                                  NetworkInterface, User, PoolScrub, Setup,
                                  NFSExportGroup, SFTP, Plugin, InstalledPlugin,
                                  AdvancedNFSExport, OauthApp, NetatalkShare,
-                                 Group, DockerImage, DockerContainer,
-                                 PoolBalance, SambaCustomConfig)
+                                 Group, PoolBalance, SambaCustomConfig, RockOn)
 from django.contrib.auth.models import User as DjangoUser
 
 
@@ -195,13 +194,7 @@ class NetatalkShareSerializer(serializers.ModelSerializer):
         model = NetatalkShare
 
 
-class DockerImageSerializer(serializers.ModelSerializer):
+class RockOnSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = DockerImage
-
-
-class DockerContainerSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = DockerContainer
+        model = RockOn

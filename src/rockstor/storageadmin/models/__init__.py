@@ -41,6 +41,6 @@ from installed_plugin import InstalledPlugin
 from adv_nfs_exports import AdvancedNFSExport
 from oauth_app import OauthApp
 from netatalk_share import NetatalkShare
-from docker_image import DockerImage
-from docker_container import DockerContainer
 from pool_balance import PoolBalance
+from rockon import (RockOn, DImage, DContainer, Port, Volume,
+                    ContainerOption)
