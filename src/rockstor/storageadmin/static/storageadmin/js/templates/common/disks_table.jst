@@ -16,7 +16,7 @@
         <td><%= humanize.filesize(disk.get('size')*1024) %></td>
         <td><%= disk.get('parted') %></td>
         <td>
-          <input type="checkbox" name="<%= disk.get('name') %>" id="<%= disk.get('name') %>" value="<%= disk.get('name')%>" class="diskname">
+          <input type="checkbox" name="diskname" id="<%= disk.get('name') %>" value="<%= disk.get('name')%>" class="diskname">
         </td>
       </tr>
     <% }); %>

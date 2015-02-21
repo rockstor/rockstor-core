@@ -15,33 +15,46 @@ PoolRaidChange = RockstorWizardPage.extend({
   },
   
   renderDisks: function() {
-    var disks = this.disks.reject(function(disk) {
-      return disk.get('pool_name') == this.model.get('pool').get('name');
+    var _this = this;
+    var disks = this.disks.filter(function(disk) {
+      return disk.available();
     }, this);
     this.$('#ph-disks-table').html(this.disks_template({disks: disks}));
+    this.$('#raid-change-form').validate({
+      rules: {
+        'raid-level': {
+          required: true
+        },
+        'disknamehidden': {
+          required: function(el) {
+            console.log('in disknamehidden required');
+            console.log(_this.$(".diskname:checked").length);
+            return _this.$(".diskname:checked").length > 0;
+          }
+        }
+      },
+      messages: {
+        'disknamehidden': 'Please select at least one disk'
+      }
+    });
   },
   
   save: function() {
-    var raidLevel = this.$('#raid-level').val();
-    var checked = this.$(".diskname:checked").length;
-    var diskNames = [];
-    this.$(".diskname:checked").each(function(i) {
-      diskNames.push($(this).val());
-    });
-    return $.ajax({
-      url: '/api/pools/' + this.model.get('pool').get('name')+'/add',
-      type: 'PUT',
-      dataType: 'json',
-      contentType: 'application/json',
-      data: JSON.stringify({
-        'disks': diskNames, 
-        'raid_level': raidLevel
-      }),
-      success: function() { },
-      error: function(request, status, error) {
-        console.log(error);
-      }
-    });
+    var valid = $('#raid-change-form').valid();
+    console.log(valid);
+    if (valid) {
+      var raidLevel = this.$('#raid-level').val();
+      var checked = this.$(".diskname:checked").length;
+      var diskNames = [];
+      this.$(".diskname:checked").each(function(i) {
+        diskNames.push($(this).val());
+      });
+      this.model.set('raidLevel', raidLevel);
+      this.model.set('diskNames', diskNames);
+      return $.Deferred().resolve();
+    } else {
+      return $.Deferred().reject();
+    }
   }
 
 });

@@ -28,6 +28,9 @@ PoolRemoveDisks = RockstorWizardPage.extend({
     this.$(".diskname:checked").each(function(i) {
       diskNames.push($(this).val());
     });
+    this.model.set('diskNames', diskNames);
+    return $.Deferred().resolve();
+    /*
     return $.ajax({
       url: '/api/pools/' + this.model.get('pool').get('name')+'/remove',
       type: 'PUT',
@@ -41,6 +44,7 @@ PoolRemoveDisks = RockstorWizardPage.extend({
       error: function(request, status, error) {
       }
     });
+   */
   }
 
 });
