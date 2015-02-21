@@ -18,6 +18,7 @@ PoolResizeWizardView = WizardView.extend({
         } else if (choice == 'remove') {
           this.pages[1] = PoolRemoveDisks;
           this.pages[2] = PoolResizeSummary;
+          this.pages[3] = PoolRemoveDisksComplete;
         } else if (choice == 'raid') {
           this.pages[1] = PoolRaidChange;
           this.pages[2] = PoolResizeSummary;
@@ -44,8 +45,10 @@ PoolResizeWizardView = WizardView.extend({
         this.$('#ph-wizard-buttons').show();
         break;
     }
-    if (this.lastPage()) {
+    if (this.pages[this.currentPageNum] == PoolResizeSummary) {
       this.$('#next-page').html('Resize');
+    } else if (this.lastPage()) {
+      this.$('#next-page').html('Finish');
     } else {
       this.$('#next-page').html('Next');
     }
