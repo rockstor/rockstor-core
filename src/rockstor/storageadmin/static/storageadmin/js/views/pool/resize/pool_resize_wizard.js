@@ -1,72 +1,38 @@
 PoolResizeWizardView = WizardView.extend({
+  initialize: function() {
+    WizardView.prototype.initialize.apply(this, arguments);
+    this.pages = [];
+  },
     
   setCurrentPage: function() {
-    switch(this.currentPageNum) {
-      case 0:
-        this.currentPage = new PoolResizeChoice({
-          model: this.model,
-          parent: this,
-          evAgg: this.evAgg
-        });
-        break;
-      case 1:
-        if (this.model.get('resize-choice') == 'add') {
-          this.currentPage = new PoolAddDisks({
-            model: this.model,
-            parent: this,
-            evAgg: this.evAgg
-          });
-        } else if (this.model.get('resize-choice') == 'remove') {
-          this.currentPage = new PoolRemoveDisks({
-            model: this.model,
-            parent: this,
-            evAgg: this.evAgg
-          });
-        } else if (this.model.get('resize-choice') == 'raid') {
-          this.currentPage = new PoolRaidChange({
-            model: this.model,
-            parent: this,
-            evAgg: this.evAgg
-          });
+    var choice = this.model.get('choice');
+    var page = null;
+    if (_.isUndefined(this.pages[this.currentPageNum]) ||
+        _.isNull(this.pages[this.currentPageNum])) {
+      if (_.isUndefined(choice)) {
+        this.pages[0] = PoolResizeChoice;
+      } else if (choice == 'add') {
+          this.pages[1] = PoolAddDisksRaid;
+          this.pages[2] = PoolAddDisks;
+          this.pages[3] = PoolResizeSummary;
+        } else if (choice == 'remove') {
+          this.pages[1] = PoolRemoveDisks;
+          this.pages[2] = PoolResizeSummary;
+        } else if (choice == 'raid') {
+          this.pages[1] = PoolRaidChange;
+          this.pages[2] = PoolResizeSummary;
         }
-        break;
-      case 2:
-        if (this.model.get('resize-choice') == 'add') {
-          // add success msg
-        } else if (this.model.get('resize-choice') == 'remove') {
-          this.currentPage = new PoolRemoveDisksComplete({
-            model: this.model,
-            parent: this,
-            evAgg: this.evAgg
-          });
-        } else if (this.model.get('resize-choice') == 'raid') {
-        }
-        break;
     }
+    this.currentPage = new this.pages[this.currentPageNum]({
+      model: this.model,
+      parent: this,
+      evAgg: this.evAgg
+    });
   },
 
   lastPage: function() {
-    var last = false;
-    switch(this.currentPageNum) {
-      case 0:
-        break;
-      case 1:
-        if (this.model.get('resize-choice') == 'add') {
-          last = true;
-        }
-        if (this.model.get('resize-choice') == 'raid') {
-          last = true;
-        }
-        break;
-      case 2:
-        if (this.model.get('resize-choice') == 'remove') {
-          last = true;
-        }
-        break;
-      default: 
-        break;
-    }
-    return last;
+    return ((this.pages.length > 1) 
+            && ((this.pages.length-1) == this.currentPageNum));
   },
 
   modifyButtonText: function() {
@@ -79,14 +45,13 @@ PoolResizeWizardView = WizardView.extend({
         break;
     }
     if (this.lastPage()) {
-      this.$('#next-page').html('Finish');
+      this.$('#next-page').html('Resize');
     } else {
       this.$('#next-page').html('Next');
     }
   },
 
   finish: function() {
-    console.log('in PoolResizeWizardView - finish');
     this.parent.$('#pool-resize-raid-overlay').overlay().close();
     this.parent.render();
   },

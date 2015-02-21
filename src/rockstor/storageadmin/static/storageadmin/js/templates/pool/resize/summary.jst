@@ -1,0 +1,19 @@
+<h4>The following changes will be applied to pool <%= model.get('pool').get('name') %></h4>
+<% if (model.get('choice') == 'add') { %>
+  <% if (model.get('raidChange')) { %>
+    The RAID level will be changed to <strong><%= model.get('raidLevel') %></strong>
+  <% } %>
+  <br>
+  The following disks will be added: 
+  <strong><%= model.get('diskNames').join(',') %></strong>
+<% } else if (model.get('choice') == 'remove') { %>
+  The following disks will be removed:
+  <strong><%= model.get('diskNames').join(',') %></strong>
+<% } else if (model.get('choice') == 'raid') { %>
+  The RAID level will be changed to <strong><%= model.get('raidLevel') %></strong>
+  <br>
+  The following disks will be added: <strong><%= model.get('diskNames').join(',') %></strong>
+  <br>
+<% } %>
+
+

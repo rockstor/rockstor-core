@@ -617,7 +617,9 @@ RockstorWizardPage = Backbone.View.extend({
   },
 
   render: function() {
-    $(this.el).html(this.template());
+    $(this.el).html(this.template({
+      model: this.model
+    }));
     return this;
   },
 
@@ -645,6 +647,7 @@ WizardView = Backbone.View.extend({
     this.evAgg.bind('nextPage', this.nextPage, this);
     this.evAgg.bind('prevPage', this.prevPage, this);
     this.parent = this.options.parent;
+    this.title = this.options.title;
   },
 
   setPages: function(pages) {
@@ -652,7 +655,10 @@ WizardView = Backbone.View.extend({
   },
 
   render: function() {
-    $(this.el).html(this.template());
+    $(this.el).html(this.template({
+      title: this.title,
+      model: this.model
+    }));
     this.nextPage();
     return this;
   },
@@ -690,6 +696,7 @@ WizardView = Backbone.View.extend({
   
   decrementPage: function() {
     if (!this.firstPage()) {
+      this.pages[this.currentPageNum] = null;
       this.decrementPageNum();
       this.setCurrentPage();
       this.renderCurrentPage();
@@ -709,11 +716,7 @@ WizardView = Backbone.View.extend({
   },
 
   prevPage: function() {
-    if (this.currentPageNum > 1) {
-      this.currentPage.save()
-      this.currentPageNum = this.currentPageNum - 1;
-      this.renderCurrentPage();
-    }
+    this.decrementPage();
   },
 
   modifyButtonText: function() {

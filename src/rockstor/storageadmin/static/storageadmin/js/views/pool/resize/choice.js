@@ -12,19 +12,19 @@ PoolResizeChoice = RockstorWizardPage.extend({
   },
   
   changeRaid: function() {
-    this.model.set('resize-choice', 'raid');
+    this.model.set('choice', 'raid');
     this.evAgg.trigger('nextPage');
     return false;
   },
 
   addDisks: function() {
-    this.model.set('resize-choice', 'add');
+    this.model.set('choice', 'add');
     this.evAgg.trigger('nextPage');
     return false;
   },
 
   removeDisks: function() {
-    this.model.set('resize-choice', 'remove');
+    this.model.set('choice', 'remove');
     this.parent.nextPage();
     return false;
   },

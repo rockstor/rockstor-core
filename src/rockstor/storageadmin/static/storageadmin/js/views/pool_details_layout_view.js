@@ -140,6 +140,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     event.preventDefault();
     var wizardView = new PoolResizeWizardView({
       model: new Backbone.Model({ pool: this.pool }),
+      title: 'Resize Pool / Change RAID level for ' + this.pool.get('name'),
       parent: this
     });
     $('.overlay-content', '#pool-resize-raid-overlay').html(wizardView.render().el);

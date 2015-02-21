@@ -15,8 +15,8 @@ PoolAddDisks = RockstorWizardPage.extend({
   },
 
   renderDisks: function() {
-    var disks = this.disks.reject(function(disk) {
-      return disk.get('pool_name') == this.model.get('pool').get('name');
+    var disks = this.disks.filter(function(disk) {
+      return disk.available();
     }, this);
     this.$('#ph-disks-table').html(this.disks_template({disks: disks}));
   },
@@ -28,19 +28,11 @@ PoolAddDisks = RockstorWizardPage.extend({
     this.$(".diskname:checked").each(function(i) {
       diskNames.push($(this).val());
     });
-    return $.ajax({
-      url: '/api/pools/' + this.model.get('pool').get('name')+'/add',
-      type: 'PUT',
-      dataType: 'json',
-      contentType: 'application/json',
-      data: JSON.stringify({
-        'disks': diskNames, 
-        'raid_level': this.model.get('pool').get('raid')
-      }),
-      success: function() { },
-      error: function(request, status, error) {
-      }
-    });
+    this.model.set('diskNames', diskNames);
+    if (this.model.get('raidChange')) {
+      this.model.set('raidLevel', this.$('#raid-level').val());
+    }
+    return $.Deferred().resolve();
   }
 });
 
