@@ -23,14 +23,14 @@
   <div class="span8">
     <label class="control-label"></label>
     <div class="form-box">
-      <form id="update-certificate-form" name="aform" class="form-horizontal" enctype="multipart/form-data" method="post">
+      <form id="update-certificate-form" name="update-certificate-form" class="form-horizontal">
         <div class="messages"></div>
         <div class="control-group">
 	 	 <label class="control-label" for="certificatename">Certificate Name
           <span class="required"> *</span>
        	 </label>
          <div class="controls">
-       		<input type="text" id="certificatename" name="certificatename" placeholder="certificatename" title="Name of the certificate.">
+       		<input type="text" class="valid" id="certificatename" name="certificatename" title="Name of the certificate.">
          </div>
         </div>
         <div class="control-group">
@@ -38,8 +38,13 @@
           <span class="required"> *</span>
        	 </label>
          <div class="controls">
-            <textarea id="certificate" name="certificate" rows="15" cols="80" 
-            placeholder="certificate" title="certificate." style="width: 400px;"></textarea>
+            <textarea class="valid" id="certificate" name="certificate" rows="15" cols="80" style="width: 450px;"
+            placeholder="-----BEGIN CERTIFICATE-----
+MIIDXTCCAkWgAwIBAgIJAJC1HiIAZAiIMA0GCSqGSIb3DQEBBQUAMEU
+BAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnR
+.... .... .... .... .... .... .... .... .... .... ....
+-----END CERTIFICATE-----"
+ title="Content of the certificate starting with '-----BEGIN CERTIFICATE-----' and ending with  '-----END CERTIFICATE-----' notes. Always copy the certificate with the header and footer notes."></textarea>
          </div>
         </div>
         <div class="control-group">
@@ -47,8 +52,13 @@
           <span class="required"> *</span>
        	 </label>
          <div class="controls">
-            <textarea id="privatekey" name="privatekey" rows="15" cols="80" 
-            placeholder="privatekey" title="privatekey" style="width: 400px;"></textarea>
+            <textarea class="valid" id="privatekey" name="privatekey" rows="15" cols="80" style="width: 450px;"
+            placeholder="-----BEGIN ENCRYPTED PRIVATE KEY-----
+MIIFDjBABgkqhkiG9w0BBQ0wMzAbBgkqhkiG9w0BBQwwDgQIS2qgprFqPxECAggA
+9g73NQbtqZwI+9X5OhpSg/2ALxlCCjbqvzgSu8gfFZ4yo+Xd8VucZDmDSpzZGDod
+A .... .... ..... .... .... .... .... .... .... .... .... .... 
+GEs=
+-----END ENCRYPTED PRIVATE KEY-----" title="Content of the private key starting with '-----BEGIN ENCRYPTED PRIVATE KEY-----' and ending with  '-----END ENCRYPTED PRIVATE KEY-----' notes. Always copy the private key with the header and footer notes."></textarea>
          </div>
         </div>
         <div class="control-group">

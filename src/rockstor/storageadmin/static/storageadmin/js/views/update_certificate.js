@@ -51,6 +51,11 @@ UpdateCertificateView = RockstorLayoutView.extend({
     this.validator = this.$("#update-certificate-form").validate({
       onfocusout: false,
       onkeyup: false,
+      rules: {
+    	certificatename: 'required',
+    	certificate: 'required',
+    	privatekey: 'required'
+      },
       submitHandler: function() {
     	  var button = $('#update-certificate');
           if (buttonDisabled(button)) return false;
@@ -58,25 +63,26 @@ UpdateCertificateView = RockstorLayoutView.extend({
     	  var certificateName = $('#certificatename').val();
     	  var certificate = $('#certificate').val();
     	  var privatekey = $('#privatekey').val();
-    	  var certData = JSON.stringify({"certificatename": certificateName,
-			    "certificate": certificate, "privatekey": privatekey});
+    	  var certData = JSON.stringify({"name": certificateName,
+			    "cert": certificate, "key": privatekey});
     	  console.log("certificate data: "+data);
           var jqxhr = $.ajax({
               url: '/api/certificate',
               type: 'POST',
               dataType: 'json',
 	          contentType: 'application/json',
-              data: certData
+              data: certData,
+              success: function() {
+                  enableButton(button);
+                  _this.$('#update-certificate-form :input').tooltip('hide');
+                  alert("Certificate updated successfully.");
+              },
+              error: function(xhr, status, error) {
+                  enableButton(button);
+                  var msg = parseXhrError(xhr.responseText);
+                  _this.$(".messages").html(this.errTemplate({msg: msg}));
+              },
           });
-          jqxhr.done(function() {
-              enableButton(button);
-              _this.$('#update-certificate-form input').tooltip('hide');
-           });
-
-           jqxhr.fail(function(xhr, status, error) {
-             enableButton(button);
-           });
-          return false;
       }
     });
     return this;
