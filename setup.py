@@ -43,7 +43,7 @@ setup(
             'task-scheduler = smart_manager.scheduler.task_dispatcher:main',
             'data-collector = smart_manager.data_collector:main',
             'service-monitor = smart_manager.services:main',
-            'job-dispatcher = smart_manager.async.dispatcher:main',
+            'job-dispatcher = smart_manager.asyncjobs.job_dispatcher:main',
         ],
     },
 
@@ -60,6 +60,7 @@ setup(
         'psycopg2 == 2.5.2',
         'django-oauth-toolkit == 0.7.0',
         'six == 1.7.3',
+        'django-ztask',
     ]
 
 )

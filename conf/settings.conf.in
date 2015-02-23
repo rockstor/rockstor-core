@@ -165,6 +165,7 @@ INSTALLED_APPS = (
     'south',
     'backup',
     'oauth2_provider',
+    'django_ztask',
 )
 
 STATICFILES_STORAGE = 'pipeline.storage.PipelineCachedStorage'
