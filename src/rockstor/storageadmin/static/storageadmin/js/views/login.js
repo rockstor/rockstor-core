@@ -36,6 +36,7 @@ LoginView = Backbone.View.extend({
     this.networkInterfaces.pageSize = RockStorGlobals.maxPageSize;
     this.networkInterfaces.on("reset", this.saveAppliance, this);
     this.appliances = new ApplianceCollection();
+    version_update = false;
   },
 
   render: function() {
@@ -77,8 +78,31 @@ LoginView = Backbone.View.extend({
             },
             {
               success: function(model, response, options) {
-                _this.makeLoginRequest(username, password);
-              },
+            	console.log("in success");
+                $('#update-version-modal').modal({
+               		keyboard: false,
+               		backdrop: 'static',
+               		show: false
+               	});
+               	$('#update-version-modal').modal('show'); 
+                $('#update-version-modal #updateYes').click(function(event) {
+                	console.log("in click");
+                    console.log('update yes clicked');
+                      version_update = true;
+                     	$('#update-version-modal').modal('hide'); 
+              //      _this.makeLoginRequest(username, password);
+            //logged_in = true;
+            //refreshNavbar();
+            //app_router.navigate('home', {trigger: true}) 
+              
+              });
+               $('#update-version-modal').on('hide.bs.modal', function () {
+              	console.log('modal close event called');
+                	_this.makeLoginRequest(username, password);
+                	});
+               
+             
+               },
               error: function(model, xhr, options) {
               }
             }
@@ -109,10 +133,8 @@ LoginView = Backbone.View.extend({
         password: password,
       }, 
       success: function(data, status, xhr) {
-        _this.scanNetwork();
-        //logged_in = true;
-        //refreshNavbar();
-        //app_router.navigate('home', {trigger: true}) 
+    	  _this.scanNetwork();
+     
       },
       error: function(xhr, status, error) {
         _this.$(".messages").html("<label class=\"error\">Login incorrect!</label>");
@@ -169,7 +191,7 @@ LoginView = Backbone.View.extend({
           success: function(model, response, options) {
             setup_done = true;
             _this.scanDisks();
-          },
+         },
           error: function(model, xhr, options) {
             var msg = xhr.responseText;
             try {
@@ -180,13 +202,13 @@ LoginView = Backbone.View.extend({
         }
       );
     } else {
-      app_router.navigate('home', {trigger: true});
+    	app_router.navigate('home', {trigger: true}) ;
     }
   },
   
   scanDisks: function() {
     var _this = this;
-    $.ajax({
+     $.ajax({
       url: "/api/disks/scan",
       type: "POST"
     }).done(function() {
@@ -195,7 +217,13 @@ LoginView = Backbone.View.extend({
   },
 
   goToRoot: function() {
-    window.location.replace("/")
+    if(version_update){ 
+    	console.log('in goto root function');
+    	console.log(version_update);
+    	 window.location.replace('/version');
+    }else{
+    	 window.location.replace("/");
+    }
   },
   
 
