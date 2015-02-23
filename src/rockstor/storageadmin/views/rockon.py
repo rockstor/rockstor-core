@@ -19,13 +19,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (RockOn, DImage, DContainer, Port, Volume,
-                                 ContainerOption, Share)
+                                 ContainerOption)
 from storageadmin.serializers import RockOnSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
-from system.rockon import docker_status
-
-
+from rockon_helpers import docker_status
 import logging
 logger = logging.getLogger(__name__)
 
@@ -42,57 +40,12 @@ class RockOnView(rfc.GenericView):
             return Response()
 
     @transaction.commit_on_success
-    def post(self, request, command=None, rid=None):
+    def post(self, request, command=None):
         with self._handle_exception(request):
             if (docker_status() != 'running'):
                 e_msg = ('Rock-on service is not running. Start it and try '
                          'again')
                 handle_exception(Exception(e_msg))
-
-            if (rid is not None):
-                try:
-                    rockon = RockOn.objects.get(id=rid)
-                except:
-                    e_msg = ('Rock-on(%d) does not exist' % rid)
-                    handle_exception(Exception(e_msg), request)
-                if (command == 'install'):
-                    containers = DContainer.objects.filter(rockon=rockon)
-                    for co in containers:
-                        volumes = Volume.objects.filter(container=co)
-                        share_map = request.DATA.get('shares')
-                        for s in share_map.keys():
-                            if (not Share.objects.filter(name=s).exists()):
-                                e_msg = ('Invalid Share(%s).' % s)
-                                handle_exception(Exception(e_msg), request)
-                            so = Share.objects.get(name=s)
-                            vo = Volume.objects.get(container=co,
-                                                    dest_dir=share_map[s])
-                            vo.share = so
-                            vo.save()
-                    rockon.state = 'installed'
-                    rockon.save()
-                    return Response(RockOnSerializer(rockon).data)
-
-                elif (rockon.state != 'installed'):
-                    e_msg = ('Rock-on is not installed. Install it and '
-                             'try again')
-                    handle_exception(Exception(e_msg), request)
-                elif (command == 'start'):
-                    rockon.status = 'running'
-                    rockon.save()
-                    return Response(RockOnSerializer(rockon).data)
-                elif (command == 'stop'):
-                    rockon.status = 'stopped'
-                    rockon.save()
-                    return Response(RockOnSerializer(rockon).data)
-                elif (command == 'uninstall'):
-                    if (rockon.status != 'stopped'):
-                        e_msg = ('Rock-on(%d) must be stopped before it can '
-                                 'be uninstalled. Stop it and try again' %
-                                 rid)
-                        handle_exception(Exception(e_msg), request)
-                    rockon.status = 'available'
-                    rockon.save()
 
             if (command == 'update'):
                 rockons = self._get_available()
