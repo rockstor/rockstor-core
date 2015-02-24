@@ -65,7 +65,6 @@ UpdateCertificateView = RockstorLayoutView.extend({
     	  var privatekey = $('#privatekey').val();
     	  var certData = JSON.stringify({"name": certificateName,
 			    "cert": certificate, "key": privatekey});
-    	  console.log("certificate data: "+data);
           var jqxhr = $.ajax({
               url: '/api/certificate',
               type: 'POST',
@@ -80,7 +79,7 @@ UpdateCertificateView = RockstorLayoutView.extend({
               error: function(xhr, status, error) {
                   enableButton(button);
                   var msg = parseXhrError(xhr.responseText);
-                  _this.$(".messages").html(this.errTemplate({msg: msg}));
+                  _this.$(".messages").html(msg);
               },
           });
       }
