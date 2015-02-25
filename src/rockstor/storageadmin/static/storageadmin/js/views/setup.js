@@ -136,6 +136,7 @@ SetupView = RockstorLayoutView.extend({
   },
 
   saveAppliance: function() {
+	  console.log('inside setup save appliance');
     this.setIp();
 
     // create current appliance if not created already
@@ -145,6 +146,7 @@ SetupView = RockstorLayoutView.extend({
       })
     }
     if (_.isUndefined(current_appliance)) {
+    	
       var new_appliance = new Appliance();
       new_appliance.save(
         {
@@ -156,7 +158,7 @@ SetupView = RockstorLayoutView.extend({
           success: function(model, response, options) {
             setup_done = true;
             //app_router.navigate('home', {trigger: true});
-
+         
             window.location.replace("/")
           },
           error: function(model, xhr, options) {

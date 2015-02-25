@@ -106,10 +106,10 @@ var AppRouter = Backbone.Router.extend({
       }
     } else {
       if (route != "setup" && !setup_done) {
-        app_router.navigate('setup', {trigger: true});
-        return false;
+    	  app_router.navigate('setup', {trigger: true});
+    	return false;
       } else if (route == "setup" && setup_done) {
-        app_router.navigate('home', {trigger: true});
+    	  app_router.navigate('home', {trigger: true});
         return false;
       }
     }
@@ -137,6 +137,7 @@ var AppRouter = Backbone.Router.extend({
 
   },
 
+ 
   loginPage: function() {
     RockStorSocket.removeAllListeners();
     this.renderSidebar("setup", "user");
