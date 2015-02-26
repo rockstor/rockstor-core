@@ -20,6 +20,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Extracting data from procfs
 """
 
+from gevent import monkey
+monkey.patch_all()
+import gevent
+import psutil
+from socketio import socketio_manage
+from socketio.server import SocketIOServer
+from socketio.namespace import BaseNamespace
+from socketio.mixins import BroadcastMixin
+
 import re
 from multiprocessing import Process
 import time
@@ -37,6 +46,7 @@ from fs.btrfs import pool_usage, shares_usage
 
 import logging
 logger = logging.getLogger(__name__)
+
 
 
 class ProcRetreiver(Process):
@@ -342,7 +352,52 @@ class ProcRetreiver(Process):
         return now
 
 
+class Application(object):
+    def __init__(self):
+        self.buffer = []
+
+    def __call__(self, environ, start_response):
+        path = environ['PATH_INFO'].strip('/') or 'index.html'
+        logger.debug('path = %s' % path)
+        logger.debug('cwd = %s' % os.getcwd())
+        if (path == 'db2'):
+            path = 'index.html'
+
+        if path.startswith('static/') or path == 'index.html':
+            try:
+                data = open(path).read()
+            except Exception:
+                return not_found(start_response)
+
+            if path.endswith(".js"):
+                content_type = "text/javascript"
+            elif path.endswith(".css"):
+                content_type = "text/css"
+            elif path.endswith(".swf"):
+                content_type = "application/x-shockwave-flash"
+            else:
+                content_type = "text/html"
+
+            start_response('200 OK', [('Content-Type', content_type)])
+            return [data]
+
+        if path.startswith("socket.io"):
+            socketio_manage(environ, {'/cpu': CPUNamespace})
+        else:
+            return not_found(start_response)
+
+
+def not_found(start_response):
+    start_response('404 Not Found', [])
+    return ['<h1>Not Found</h1>']
+
+
 def main():
+    #logger.debug('Listening on port http://0.0.0.0:8080 and on port 10843 (flash policy server)')
+    #SocketIOServer(('0.0.0.0', 8080), Application(),
+    #               resource="socket.io", policy_server=True,
+    #               policy_listener=('0.0.0.0', 10843)).serve_forever()
+    #logger.debug('starting proc retreiver')
     pr = ProcRetreiver()
     pr.start()
     logger.debug('Started Proc Retreiver')

@@ -53,7 +53,7 @@ def main():
     try:
         set_token()
         api_call(diskscan_url, calltype='post')
-        api_call(netscan_url, calltype='get')
+        #api_call(netscan_url, calltype='get')
         api_call(bootstrap_url, calltype='post')
     except Exception, e:
         logger.error('Unable to bootstrap the machine. Moving on..')

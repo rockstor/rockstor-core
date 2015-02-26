@@ -229,6 +229,7 @@ class ReplicaScheduler(Process):
 
 
 def main():
+    logger.debug('starting replica scheduler')
     rs = ReplicaScheduler()
     rs.start()
     logger.debug('Started Replica Scheduler')
