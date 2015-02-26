@@ -2,7 +2,32 @@ PoolResizeSummary = RockstorWizardPage.extend({
 
   initialize: function() {
     this.template = window.JST.pool_resize_summary;
+    var choice = this.model.get('choice');
+    var raidLevel = null;
+    var poolDisks = _.map(this.model.get('pool').get('disks'), function(disk) {
+      return disk.name;
+    })
+    if (choice == 'add') {
+      this.newRaidLevel = this.model.get('raidChange') ?  this.model.get('raidLevel') :
+        this.model.get('pool').get('raid');
+      this.newDisks = _.union(poolDisks, this.model.get('diskNames'));
+    } else if (choice == 'remove') {
+      this.newRaidLevel = this.model.get('pool').get('raid');
+      this.newDisks = _.difference(poolDisks, this.model.get('diskNames'));
+    } else if (choice == 'raid') {
+      this.newRaidLevel = this.model.get('raidLevel');
+      this.newDisks = _.union(poolDisks, this.model.get('diskNames'));
+    }
     RockstorWizardPage.prototype.initialize.apply(this, arguments);
+  },
+  
+  render: function() {
+    $(this.el).html(this.template({
+      model: this.model,
+      newRaidLevel: this.newRaidLevel,
+      newDisks: this.newDisks
+    }));
+    return this;
   },
 
   save: function() {
