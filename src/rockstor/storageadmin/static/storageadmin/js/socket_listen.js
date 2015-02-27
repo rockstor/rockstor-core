@@ -38,8 +38,6 @@ RockStorSocket.removeAllListeners = function() {
 }
 
 RockStorSocket.msgHandler = function(data) {
-  console.log('msg received');
-  //console.log(data);
   _.each(_.keys(RockStorSocket.handlerMap), function(key) {
     if (!_.isNull(data.key) && !_.isUndefined(data.key)) {
       var obj = RockStorSocket.handlerMap[key];
