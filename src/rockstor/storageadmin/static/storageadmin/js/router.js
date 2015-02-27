@@ -785,13 +785,8 @@ $(document).ready(function() {
   });
 
   // Initialize websocket connection
-  //RockStorSocket.socket = io.connect('https://' + document.location.host + '/db2/', {secure: true});
-  RockStorSocket.socket = io.connect('/cpu', {secure: true});
-  console.log('connected to socketserver');
-  //RockStorSocket.socket.on('cpu_data', function(msg) {
-  //    console.log('message received');
-  //});
-  RockStorSocket.socket.on('cpu_data', RockStorSocket.msgHandler);
+  RockStorSocket.socket = io.connect('/dashboard', {secure: true});
+  RockStorSocket.socket.on('sm_data', RockStorSocket.msgHandler);
 
   // Initialize global error popup
   $('#global-err-overlay').overlay({load: false});
