@@ -33,6 +33,7 @@ class DashboardNamespace(BaseNamespace, BroadcastMixin):
             while (self.send_cpu):
                 global cpu_stats
                 self.emit('sm_data', {'key': 'cpu_data', 'data': cpu_stats})
+                del cpu_stats[:]
                 gevent.sleep(1)
         self.spawn(sendcpu)
 
@@ -81,22 +82,21 @@ def not_found(start_response):
 def get_cpu_stats():
     global cpu_stats
     while True:
-        cpu_stats = []
         vals = psutil.cpu_times_percent(percpu=True)
         ts = datetime.utcnow().replace(tzinfo=utc)
         for i in range(len(vals)):
             name = 'cpu%d' % i
             v = vals[i]
-            #cm = CPUMetric(name=name, umode=v.user, umode_nice=v.nice,
-            #               smode=v.system, idle=v.idle, ts=ts)
-            #cm.save()
-            str_time = ts.strftime('2015-07-26T20:07:13Z')
+            cm = CPUMetric(name=name, umode=v.user, umode_nice=v.nice,
+                           smode=v.system, idle=v.idle, ts=ts)
+            cm.save()
+            str_time = ts.strftime('%Y-%m-%dT%H:%M:%SZ')
             cpu_stats.append({'name': name, 'umode': v.user,
                               'umode_nice': v.nice, 'smode': v.system,
                               'idle': v.idle, 'ts': str_time, })
-            #cpu_stats.append({'name': name, 'umode': cm.umode,
-            #                  'umode_nice': cm.umode_nice, 'smode': cm.smode,
-            #                  'idle': cm.idle, 'ts': str_time, })
+            cpu_stats.append({'name': name, 'umode': cm.umode,
+                              'umode_nice': cm.umode_nice, 'smode': cm.smode,
+                              'idle': cm.idle, 'ts': str_time, })
         gevent.sleep(1)
 
 
