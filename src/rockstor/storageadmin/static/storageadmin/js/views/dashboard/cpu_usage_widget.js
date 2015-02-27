@@ -179,29 +179,22 @@ CpuUsageWidget = RockStorWidgetView.extend({
       maximized: this.maximized
     }));
 
-    console.log('adding listener');
     RockStorSocket.addListener(this.cpuDataListener, this, 'cpu_data');
-    console.log('asking for data');
     RockStorSocket.socket.emit('sendcpu', {});
 
-    //this.getData(this);
     return this;
   },
 
   cpuDataListener: function(data) {
       var _this = this;
-      console.log('received cpu widget data');
-      console.log(data);
       _this.cpuData.push.apply(_this.cpuData, _this.getAvgCpuUsge(data));
 
       _this.displayIndividualCpuUsage(data);
 
       if (!_this.graphRendered) {
-      	  console.log('graph is not rendered');
           _this.renderGraph(data);
           _this.graphRendered = true;
       } else {
-      	  console.log('updating graph');
           _this.updateGraph(data);
       }
 
@@ -231,77 +224,6 @@ CpuUsageWidget = RockStorWidgetView.extend({
           }, _this.updateFreq - diff);
       }
 
-  },
-
-  getData: function(context) {
-    var _this = context;
-
-    _this.startTime = new Date().getTime();
-    // if t2 is more than 10 sec behind current time
-    // update t2 and t1
-    //if (RockStorGlobals.currentTimeOnServer - _this.t2 > 20000) {
-    //  _this.t2 = RockStorGlobals.currentTimeOnServer-5000;
-    //  _this.t1 = _this.t2 - _this.windowLength;
-    //}
-    var t1Str = moment(_this.t1).toISOString();
-    var t2Str = moment(_this.t2).toISOString();
-    var pageSizeStr = '&page_size=' + RockStorGlobals.maxPageSize;
-    _this.jqXhr = $.ajax({
-      url: '/api/sm/sprobes/cpumetric/?format=json' + pageSizeStr + '&t1=' +
-        t1Str + '&t2=' + t2Str,
-      type: "GET",
-      dataType: "json",
-      global: false, // dont show global loading indicator
-      success: function(data, status, xhr) {
-        data = data.results;
-        if (data.length > 0) {
-          _this.cpuData.push.apply(_this.cpuData, _this.getAvgCpuUsge(data));
-        }
-
-        _this.displayIndividualCpuUsage(data);
-        if (!_this.graphRendered) {
-          _this.renderGraph(data);
-          _this.graphRendered = true;
-        } else {
-          _this.updateGraph(data);
-        }
-
-        if (_this.cpuData.length > 0) {
-          while (new Date(_this.cpuData[0].ts).getTime() < _this.t2-(_this.windowLength + _this.updateFreq)) {
-            _this.cpuData.shift();
-          }
-        }
-
-        // call getData immediately to fetch the next set of  data,
-        // or set a timer
-        // depending on how much time has elapsed since the
-        // start of the ajax call.
-        var currentTime = new Date().getTime();
-        var diff = currentTime - _this.startTime;
-        if (diff > _this.updateFreq) {
-          if (_this.cpuData.length > 0) {
-            _this.t1 = new Date(_this.cpuData[_this.cpuData.length-1].ts).getTime();
-          } else {
-            _this.t1 = _this.t1 + diff;
-          }
-          _this.t2 = _this.t2 + diff;
-          _this.getData(_this);
-        } else {
-          _this.timeoutId = window.setTimeout( function() {
-            if (_this.cpuData.length > 0) {
-              _this.t1 = new Date(_this.cpuData[_this.cpuData.length-1].ts).getTime();
-            } else {
-              _this.t1 = _this.t1 + _this.updateFreq;
-            }
-            _this.t2 = _this.t2 + _this.updateFreq;
-            _this.getData(_this);
-          }, _this.updateFreq - diff);
-        }
-      },
-      error: function(xhr, status, error) {
-        logger.debug(error);
-      }
-    });
   },
 
   cleanup: function() {
@@ -409,7 +331,6 @@ CpuUsageWidget = RockStorWidgetView.extend({
   },
 
   renderGraph: function(data) {
-    console.log(this.cpuData)
     this.$('#cpuusage-avg').empty();
     //data = this.getAvgCpuUsge(data);
     //this.cpuData = data;
@@ -514,7 +435,6 @@ CpuUsageWidget = RockStorWidgetView.extend({
   },
 
   updateGraph: function(data) {
-    console.log('in update graph');
     var _this = this;
 
     //var now = new Date(data[data.length-1].ts).getTime();
@@ -598,10 +518,8 @@ CpuUsageWidget = RockStorWidgetView.extend({
           return d.idle + sum;
         }, 0);
         var avg = s / ds.length;
-	console.log('cpu avg = ' + avg);
         return {idle: avg, ts: key};
       } else {
-	console.log('returning idle = 0');
         return {idle: 0, ts: key};
       }
     });
