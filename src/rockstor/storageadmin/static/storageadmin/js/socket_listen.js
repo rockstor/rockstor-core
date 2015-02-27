@@ -39,16 +39,11 @@ RockStorSocket.removeAllListeners = function() {
 
 RockStorSocket.msgHandler = function(data) {
   console.log('msg received');
-  console.log('cpu percent = ' + data.point);
-  //console.log('msg received');
-  //console.log(data[0].idle)
   //console.log(data);
-  //msg_data = JSON.parse(data);
-  //console.log('msg_data = ' + msg_data);
   _.each(_.keys(RockStorSocket.handlerMap), function(key) {
-    if (!_.isNull(msg_data[key]) && !_.isUndefined(msg_data[key])) {
+    if (!_.isNull(data.key) && !_.isUndefined(data.key)) {
       var obj = RockStorSocket.handlerMap[key];
-      obj.fn.call(obj.fn_this, msg_data[key]);
+      obj.fn.call(obj.fn_this, data.data);
     }
   });
 }
