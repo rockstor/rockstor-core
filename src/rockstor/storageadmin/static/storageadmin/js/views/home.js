@@ -1,27 +1,27 @@
 /*
  *
- * @licstart  The following is the entire license notice for the 
+ * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
- * 
+ *
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
- * 
+ *
  * RockStor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
- * 
+ *
  * RockStor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * @licend  The above is the entire license notice
  * for the JavaScript code in this page.
- * 
+ *
  */
 
 /*
@@ -43,7 +43,7 @@ var HomeLayoutView = RockstorLayoutView.extend({
     // add dependencies
     this.dependencies.push(this.appliances);
     this.dependencies.push(this.dashboardconfig);
-    
+
     this.selectedWidgetNames = [];
     this.widgetViews = []; // widgets add themselves here so that their cleanup routines can be called from this view's cleanup
     this.on("widgetClicked", this.widgetClicked, this);
@@ -73,7 +73,7 @@ var HomeLayoutView = RockstorLayoutView.extend({
   renderWidgets: function() {
     var _this = this;
     this.widgetsContainer.empty();
-    
+
     var selectedWidgets = this.dashboardconfig.getConfig();
     this.widgetViews.length = 0;
     // Add widgets to ul (widgetsContainer);
@@ -90,8 +90,8 @@ var HomeLayoutView = RockstorLayoutView.extend({
       paddingY: 5,
       handle: 'div.widget-header'
     });
-     
-    // set handler for drop event, when a widget is moved around and 
+
+    // set handler for drop event, when a widget is moved around and
     // the drop completes.
     this.widgetsContainer.on('ss-drop-complete', function(e, selected) {
       _this.saveWidgetConfiguration();
@@ -105,10 +105,10 @@ var HomeLayoutView = RockstorLayoutView.extend({
 
   addWidget: function(widget, container, widgetViews) {
     var div = null;
-    var widgetDef = RockStorWidgets.findByName(widget.name);  
+    var widgetDef = RockStorWidgets.findByName(widget.name);
     var viewName = widgetDef.view;
     if (!_.isUndefined(window[viewName] && !_.isNull(window[viewName]))) {
-      // Create widget view 
+      // Create widget view
       var view = new window[viewName]({
         displayName: widgetDef.displayName,
         name: widget.name,
@@ -116,7 +116,7 @@ var HomeLayoutView = RockstorLayoutView.extend({
         parentView: this,
         maximized: widget.maximized
       });
-      
+
       // create shapeshift div for widget and render
       div = $("<div>");
       div.attr('class','widget-ph');
@@ -132,14 +132,14 @@ var HomeLayoutView = RockstorLayoutView.extend({
       var position_div = $('<div class="position"></div>');
       div.append(position_div);
       position_div.append(view.render().el);
-      
+
       // Add widget view to widget list
       widgetViews.push(view);
     }
   },
 
   findWidgetView: function(name) {
-    var i=0, found=false; 
+    var i=0, found=false;
     for (i=0; i<this.widgetViews.length; i++) {
       if (this.widgetViews[i].name == name) {
         return [this.widgetViews[i], i];
@@ -156,20 +156,20 @@ var HomeLayoutView = RockstorLayoutView.extend({
     // remove view shapeshift div
     var ssDiv = $(this.el).find('div[data-widget-name="' + name + '"]');
     ssDiv.remove();
-    
+
     // remove view from widget list
     this.widgetViews = _.reject(this.widgetViews, function(view) {
-      return view.name == name; 
+      return view.name == name;
     });
 
     // trigger ss rearrange
     this.widgetsContainer.trigger("ss-rearrange");
-    
+
     // uncheck widget in widget selection list
-    this.dashboardConfigView.setCheckbox(name, false); 
+    this.dashboardConfigView.setCheckbox(name, false);
 
     // save new widget configuration
-    this.saveWidgetConfiguration(); 
+    this.saveWidgetConfiguration();
   },
 
   saveWidgetConfiguration: function() {
@@ -183,8 +183,8 @@ var HomeLayoutView = RockstorLayoutView.extend({
         return w.name == name;
       });
       tmp.push({
-        name: name, 
-        position: index, 
+        name: name,
+        position: index,
         maximized: widget.maximized
       });
     });
@@ -203,7 +203,7 @@ var HomeLayoutView = RockstorLayoutView.extend({
       }
     });
   },
-  
+
   widgetClicked: function(name, selected) {
     if (selected) {
       this.addWidgetByName(name);
@@ -214,6 +214,7 @@ var HomeLayoutView = RockstorLayoutView.extend({
       });
       this.saveWidgetConfiguration();
     } else {
+      RockStorSocket.socket.emit('stopcpu', {});
       var tmp = this.findWidgetView(name);
       var view = tmp[0];
       if (view) {
@@ -232,4 +233,3 @@ var HomeLayoutView = RockstorLayoutView.extend({
   },
 
 });
-
