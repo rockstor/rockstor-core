@@ -36,7 +36,7 @@ initialize: function() {
 	this.networkInterfaces.pageSize = RockStorGlobals.maxPageSize;
 	this.networkInterfaces.on("reset", this.saveAppliance, this);
 	this.appliances = new ApplianceCollection();
-	show_version_update = false;
+	
 },
 
 render: function() {
@@ -78,27 +78,7 @@ render: function() {
 					},
 					{
 						success: function(model, response, options) {
-						console.log("in success");
-						$('#update-version-modal').modal({
-							keyboard: false,
-							backdrop: 'static',
-							show: false
-						});
-						$('#update-version-modal').modal('show'); 
-						$('#update-version-modal #updateYes').click(function(event) {
-							show_version_update = true;
-							$('#update-version-modal').modal('hide'); 
-							_this.makeLoginRequest(username, password);
-							//logged_in = true;
-							//refreshNavbar();
-							//app_router.navigate('home', {trigger: true}) 
-
-						});
-						$('#update-version-modal').on('hide.bs.modal', function () {
-							_this.makeLoginRequest(username, password);
-						});
-
-
+		             	_this.makeLoginRequest(username, password);
 					},
 					error: function(model, xhr, options) {
 					}
@@ -187,8 +167,6 @@ saveAppliance: function() {
 				{
 					success: function(model, response, options) {
 					setup_done = true;
-					console.log('inside success'+new_appliance.get('current_appliance'));
-					console.log('In success of save applaince');
 					_this.scanDisks();
 				},
 				error: function(model, xhr, options) {
@@ -216,10 +194,7 @@ scanDisks: function() {
 },
 
 goToRoot: function() {
-	if(show_version_update){ 
-		window.location.replace("/#version");
-	}else{
 		window.location.replace("/");
-	}
+
 },
 });

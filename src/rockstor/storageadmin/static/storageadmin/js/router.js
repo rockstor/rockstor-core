@@ -113,6 +113,7 @@ var AppRouter = Backbone.Router.extend({
         return false;
       }
     }
+      
     if (RockStorGlobals.currentAppliance == null) {
       setApplianceName();
     }
@@ -163,7 +164,7 @@ var AppRouter = Backbone.Router.extend({
     this.cleanup();
     this.currentLayout = new HomeLayoutView();
     $('#maincontent').append(this.currentLayout.render().el);
-  },
+ },
 
   showDisks: function() {
     RockStorSocket.removeAllListeners();
@@ -172,6 +173,7 @@ var AppRouter = Backbone.Router.extend({
     this.cleanup();
     this.currentLayout = new DisksView();
     $('#maincontent').append(this.currentLayout.render().el);
+
   },
 
   blinkDrive: function(diskName) {
