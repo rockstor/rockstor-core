@@ -1,0 +1,24 @@
+<div id="breadcrumb">
+  <div>Select</div>
+  <div>Change RAID level?</div>
+</div>
+<br>
+<h4>Current RAID level of <%= model.get('pool').get('name') %> is <%= model.get('pool').get('raid') %></h4>
+<div class="alert alert-warning">
+  <h4>
+    Note! You cannot change RAID level alone without adding disks. If you would like to change the RAID level of <%= model.get('pool').get('name') %>, consider doing it now while adding disks.
+  </h4>
+</div>
+<h4>Would you like to change RAID level of this pool also?</h4>
+<form class="form" id="raid-change-form">
+  <div class="control-group">
+    <div class="controls">
+      <label class="radio inline">
+        <input type="radio" name="raidChange" value="no" checked="checked">No
+      </label>
+      <label class="radio inline">
+        <input type="radio" name="raidChange" value="yes">Yes
+      </label>
+    </div>
+  </div>
+</form>

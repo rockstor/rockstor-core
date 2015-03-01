@@ -191,6 +191,7 @@ PIPELINE_JS = {
             'storageadmin/js/socket_listen.js',
             'storageadmin/js/models/models.js',
             'storageadmin/js/views/*.js',
+            'storageadmin/js/views/pool/**/*.js',
             'storageadmin/js/views/dashboard/*.js',
             ),
         'output_filename': 'storageadmin/js/storageadmin.js'
@@ -359,5 +360,4 @@ COMPRESSION_TYPES = ('lzo', 'zlib', 'no',)
 SUPPORTED_KERNEL_VERSION = ${django-settings-conf:kernel}
 
 SNAP_TS_FORMAT = '%Y%m%d%H%M%S'
-
 ROOT_POOL = 'rockstor_rockstor'

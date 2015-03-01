@@ -1,0 +1,25 @@
+<div id="breadcrumb">
+  <div>Select</div>
+  <div>Change RAID level?</div>
+  <div>Select disks to add</div>
+</div>
+<br>
+<form id="add-disks-form">
+  <% if (model.get('raidChange')) { %>
+    <h4>Select a new raid level</h4>
+    <% var levels = ['single', 'raid0', 'raid1', 'raid10', 'raid5', 'raid6']; %>
+    <div class="controls">
+      <select id="raid-level" name="raid-level" title="Select a new raid level for the pool">
+        <option value="">Select a new raid level</option>
+        <% _.each(levels, function(level) { %>
+          <% if (model.get('pool').get('raid') != level) { %>
+            <option value="<%= level %>"><%= level %></option>
+          <% } %>
+        <% }); %>
+      </select>
+    </div>
+  <% } %>
+  <h4>Select disks to add</h4>
+  <div id="ph-disks-table"></div>
+</form>
+
