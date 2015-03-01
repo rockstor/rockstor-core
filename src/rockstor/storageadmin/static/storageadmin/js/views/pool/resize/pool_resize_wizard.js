@@ -15,6 +15,7 @@ PoolResizeWizardView = WizardView.extend({
           this.pages[1] = PoolAddDisksRaid;
           this.pages[2] = PoolAddDisks;
           this.pages[3] = PoolResizeSummary;
+          this.pages[4] = PoolRemoveDisksComplete;
         } else if (choice == 'remove') {
           this.pages[1] = PoolRemoveDisks;
           this.pages[2] = PoolResizeSummary;
@@ -22,6 +23,7 @@ PoolResizeWizardView = WizardView.extend({
         } else if (choice == 'raid') {
           this.pages[1] = PoolRaidChange;
           this.pages[2] = PoolResizeSummary;
+          this.pages[3] = PoolRemoveDisksComplete;
         }
     }
     this.currentPage = new this.pages[this.currentPageNum]({

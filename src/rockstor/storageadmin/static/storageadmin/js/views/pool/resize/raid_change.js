@@ -9,7 +9,7 @@ PoolRaidChange = RockstorWizardPage.extend({
   },
   
   render: function() {
-    $(this.el).html(this.template({pool: this.model.get('pool')}));
+    $(this.el).html(this.template({model: this.model}));
     this.disks.fetch();
     return this;
   },
@@ -34,6 +34,7 @@ PoolRaidChange = RockstorWizardPage.extend({
         }
       },
       messages: {
+        'raid-level': 'Please select a RAID level',
         'disknamehidden': 'Please select at least one disk'
       }
     });
