@@ -6,7 +6,7 @@
 <h4>Current RAID level of <%= model.get('pool').get('name') %> is <%= model.get('pool').get('raid') %></h4>
 <div class="alert alert-warning">
   <h4>
-    Note! You cannot change RAID level later without adding disks at that time. If you would like to change the RAID level of <%= model.get('pool').get('name') %> along with adding disks, please select Yes below.
+    Note! You cannot change RAID level alone without adding disks. If you would like to change the RAID level of <%= model.get('pool').get('name') %>, consider doing it now while adding disks.
   </h4>
 </div>
 <h4>Would you like to change RAID level of this pool also?</h4>
@@ -22,4 +22,3 @@
     </div>
   </div>
 </form>
-

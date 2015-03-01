@@ -15,8 +15,8 @@
 <table class="table table-bordered">
   <tr>
     <th></th>
-    <th>Current</th>
-    <th>New</th>
+    <th>Right now</th>
+    <th>After resize</th>
   </tr>
   <tr>
     <td>RAID Level</td>
@@ -24,9 +24,8 @@
     <td><strong><%= newRaidLevel %></strong></td>
   </tr>
   <tr>
-    <td>Disk configuration</td>
+    <td>Disk set</td>
     <td><%= _.map(model.get('pool').get('disks'), function(disk) { return disk.name; }).join(',') %></td>
     <td><strong><%= newDisks %></strong></td>
   </tr>
 </table>
-
