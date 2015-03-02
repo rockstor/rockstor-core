@@ -35,6 +35,7 @@ VersionView = RockstorLayoutView.extend({
     // call initialize of base
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.update_version_info;
+
     this.paginationTemplate = window.JST.common_pagination;
     this.timeLeft = 300;
   },

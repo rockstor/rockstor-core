@@ -50,8 +50,10 @@ var HomeLayoutView = RockstorLayoutView.extend({
   },
 
   render: function() {
+	  
     this.fetch(this.renderSubViews, this);
     return this;
+	  
   },
 
   renderSubViews: function() {
@@ -59,7 +61,25 @@ var HomeLayoutView = RockstorLayoutView.extend({
     // render template
     $(this.el).empty();
     $(this.el).append(this.template());
-    this.widgetsContainer = this.$('.widgets-container');
+    $('#update-version-modal').modal({
+		keyboard: false,
+		backdrop: 'static',
+		show: false
+	});
+    
+    console.log(RockStorGlobals.show_version_update);
+  	  if(!RockStorGlobals.show_version_update){
+		  console.log('inside rockstor global validation');
+	  
+		$('#update-version-modal').modal('show'); 
+		RockStorGlobals.show_version_update = true;
+  	  }
+		$('#update-version-modal #updateYes').click(function(event) {
+	    $('#update-version-modal').modal('hide'); 
+			app_router.navigate('version', {trigger: true}) ;
+			
+		});
+   this.widgetsContainer = this.$('.widgets-container');
     // render dashboard widgets
     this.renderWidgets();
 
