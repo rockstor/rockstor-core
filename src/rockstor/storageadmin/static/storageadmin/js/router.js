@@ -407,7 +407,7 @@ var AppRouter = Backbone.Router.extend({
 	    $('#maincontent').empty();
 	    $('#maincontent').append(this.currentLayout.render().el);
 	  },
-  
+
   showReplicaTrails: function(replicaId) {
     this.renderSidebar("storage", "replication");
     this.cleanup();
@@ -651,6 +651,7 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').append(this.currentLayout.render().el);
   },
 
+
   showAppliances: function() {
     this.renderSidebar("system", "appliances");
     this.cleanup();
@@ -784,11 +785,8 @@ $(document).ready(function() {
   });
 
   // Initialize websocket connection
-  // logger.debug('connecting to websocket');
-  // RockStorSocket.socket = io.connect('https://' + document.location.host + ':' + NGINX_WEBSOCKET_PORT,
-    // {secure: true}
-  // );
-  // RockStorSocket.socket.on('sm_data', RockStorSocket.msgHandler);
+  RockStorSocket.socket = io.connect('/dashboard', {secure: true});
+  RockStorSocket.socket.on('sm_data', RockStorSocket.msgHandler);
 
   // Initialize global error popup
   $('#global-err-overlay').overlay({load: false});
@@ -813,7 +811,7 @@ $(document).ready(function() {
       event.preventDefault();
     }
     $('#donate-modal').modal('show');
-  }); 
+  });
 
   $('#donate-modal #contrib-custom').click(function(e) {
     $('#donate-modal #custom-amount').css('display', 'inline');
@@ -821,7 +819,7 @@ $(document).ready(function() {
   $('#donate-modal .contrib-other').click(function(e) {
     $('#donate-modal #custom-amount').css('display', 'none');
   });
-  
+
   $('#donate-modal #donateYes').click(function(event) {
     console.log('donate yes clicked');
     contrib = $('#donate-modal input[type="radio"][name="contrib"]:checked').val();

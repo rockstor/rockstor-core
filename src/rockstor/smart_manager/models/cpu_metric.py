@@ -22,10 +22,10 @@ from django.db import models
 class CPUMetric(models.Model):
 
     name = models.CharField(max_length=10)
-    umode = models.IntegerField()
-    umode_nice = models.IntegerField()
-    smode = models.IntegerField()
-    idle = models.IntegerField()
+    umode = models.FloatField()
+    umode_nice = models.FloatField()
+    smode = models.FloatField()
+    idle = models.FloatField()
     ts = models.DateTimeField(auto_now=True, db_index=True)
 
     class Meta:

@@ -1,27 +1,27 @@
 /*
  *
- * @licstart  The following is the entire license notice for the 
+ * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
- * 
+ *
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
- * 
+ *
  * RockStor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
- * 
+ *
  * RockStor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * @licend  The above is the entire license notice
  * for the JavaScript code in this page.
- * 
+ *
  */
 
 LoginView = Backbone.View.extend({
@@ -41,6 +41,7 @@ LoginView = Backbone.View.extend({
   render: function() {
     var _this = this;
     if (RockStorGlobals.setup_user) {
+      console.log('already setup');
     } else {
       $(this.el).append(this.user_create_template());
       this.validator = this.$("#user-create-form").validate({
@@ -64,7 +65,7 @@ LoginView = Backbone.View.extend({
           var username = _this.$("#username").val();
           var password = _this.$("#password").val();
           RockStorGlobals.hostname = _this.$('#hostname').val();
-            
+
           var setupUserModel = Backbone.Model.extend({
             urlRoot: "/setup_user",
           });
@@ -83,7 +84,7 @@ LoginView = Backbone.View.extend({
               }
             }
           );
-          
+
           return false;
         }
       });
@@ -95,9 +96,9 @@ LoginView = Backbone.View.extend({
     if (!_.isUndefined(event) && !_.isNull(event)) {
       event.preventDefault();
     }
-    this.makeLoginRequest(this.$("#username").val(), this.$("#password").val());
+    //this.makeLoginRequest(this.$("#username").val(), this.$("#password").val());
   },
-  
+
   makeLoginRequest: function(username, password) {
     var _this = this;
     $.ajax({
@@ -107,26 +108,27 @@ LoginView = Backbone.View.extend({
       data: {
         username: username,
         password: password,
-      }, 
+      },
       success: function(data, status, xhr) {
         _this.scanNetwork();
         //logged_in = true;
         //refreshNavbar();
-        //app_router.navigate('home', {trigger: true}) 
+        //app_router.navigate('home', {trigger: true})
       },
       error: function(xhr, status, error) {
         _this.$(".messages").html("<label class=\"error\">Login incorrect!</label>");
       }
     });
   },
-  
+
   scanNetwork: function() {
     var _this = this;
     $.ajax({
-      url: "/api/network", 
+      url: "/api/network",
       type: "POST",
       dataType: "json",
       success: function(data, status, xhr) {
+	console.log('in scanNetwork');
         _this.networkInterfaces.fetch();
       },
       error: function(xhr, status, error) {
@@ -134,7 +136,7 @@ LoginView = Backbone.View.extend({
       }
     });
   },
-  
+
   setIp: function() {
     var mgmtIface = this.networkInterfaces.find(function(iface) {
       return iface.get('itype') == 'management';
@@ -145,16 +147,18 @@ LoginView = Backbone.View.extend({
       RockStorGlobals.ip = this.networkInterfaces.at(0).get("ipaddr");
     }
   },
-  
+
   saveAppliance: function() {
     var _this = this;
-    
+
+    console.log('in saveAppliance');
     this.setIp();
 
     // create current appliance if not created already
     if (this.appliances.length > 0) {
+      console.log('appliance length is more than 0');
       var current_appliance = this.appliances.find(function(appliance) {
-        return appliance.get('current_appliance') == true; 
+        return appliance.get('current_appliance') == true;
       })
     }
     if (_.isUndefined(current_appliance)) {
@@ -180,10 +184,11 @@ LoginView = Backbone.View.extend({
         }
       );
     } else {
-      app_router.navigate('home', {trigger: true});
+      console.log('calling app router version');
+      app_router.navigate('version', {trigger: true});
     }
   },
-  
+
   scanDisks: function() {
     var _this = this;
     $.ajax({
@@ -197,6 +202,6 @@ LoginView = Backbone.View.extend({
   goToRoot: function() {
     window.location.replace("/")
   },
-  
+
 
 });
