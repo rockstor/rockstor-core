@@ -542,3 +542,12 @@ var AccessKeyCollection = RockStorPaginatedCollection.extend({
   model: AccessKey,
   baseUrl: '/api/oauth_app'
 });
+
+var RockOn = Backbone.Model.extend({
+    urlRoot: '/api/rockons'
+});
+
+var RockOnCollection = RockStorPaginatedCollection.extend({
+    model: RockOn,
+    baseUrl: '/api/rockons'
+});
