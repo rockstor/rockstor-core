@@ -61,23 +61,23 @@ var HomeLayoutView = RockstorLayoutView.extend({
     // render template
     $(this.el).empty();
     $(this.el).append(this.template());
-    $('#update-version-modal').modal({
-		keyboard: false,
-		backdrop: 'static',
-		show: false
-	});
+   
    	var _this = this;
   		$.ajax({
   			url: "/setup_user",
   			type: "GET",
   			dataType: "json",
   		   success: function(data, status, xhr) {
-  			if(data.new_setup)
+  			if(data.new_setup){
   			$.ajax({
   	  			url: "/setup_user",
   	  			type: "PUT",
   	  			dataType: "json",
   	  		     success: function(data, status, xhr) {
+  				 $('#update-version-modal').modal({
+  					keyboard: false,
+  					show: false
+  				});
   				 $('#update-version-modal').modal('show'); 
   					
   	  		},
@@ -85,6 +85,7 @@ var HomeLayoutView = RockstorLayoutView.extend({
   	  			
   	  		}
   	  		});
+  		}
   		},
   		error: function(xhr, status, error) {
   			
