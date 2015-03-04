@@ -18,4 +18,42 @@
  *
  */
 </script>
-<h4>Rock-Ons</h4>
+
+<div class="messages"></div>
+
+<ul class="css-tabs">
+  <li class="active"><a href="#all" data-toggle="tab">All</a></li>
+  <li><a href="#installed" data-toggle="tab">Installed</a></li>
+</ul>
+
+
+<div class="css-panes">
+  <div id="all">
+
+    <% rockons.each(function(rockon, index) { %>
+    <div class="tab-section">
+      <div class="row-fluid">
+	<div class="span12">
+	  <h4>Rock-on name: <%= rockon.get('name') %></h4>
+	  <% if (rockon.get('state') == 'available') { %>
+	  <button id="install-rockon" class="btn btn-primary">Install</button>
+	  <% } else { %>
+	  <button id="uninstall-rockon" class="btn btn-primary">Uninstall</button>
+	  <% } %>
+	</div>
+      </div>
+    </div>
+    <% }); %>
+  </div>
+
+
+  <div id="installed">
+    <div class="tab-section">
+      <div class="row-fluid">
+	<div class="span12">
+	  <h4>Installed Rockons</h4>
+	</div>
+      </div>
+    </div>
+  </div>
+</div>
