@@ -18,8 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework.response import Response
 from django.db import transaction
-from storageadmin.models import (RockOn, DImage, DContainer, Port, Volume,
-                                 ContainerOption, Share)
+from storageadmin.models import (RockOn, DContainer, Volume, Share)
 from storageadmin.serializers import RockOnSerializer
 import rest_framework_custom as rfc
 from storageadmin.util import handle_exception
@@ -54,7 +53,7 @@ class RockOnIdView(rfc.GenericView):
                 containers = DContainer.objects.filter(rockon=rockon)
                 for co in containers:
                     share_map = request.DATA.get('shares')
-                    share_map = {'ovconfig': '/etc/openvpn', }
+                    share_map = {}
                     logger.debug('share map = %s' % share_map)
                     for s in share_map.keys():
                         if (not Share.objects.filter(name=s).exists()):

@@ -42,10 +42,10 @@ class RockOnView(rfc.GenericView):
     @transaction.commit_on_success
     def post(self, request, command=None):
         with self._handle_exception(request):
-            if (docker_status() != 'running'):
+            if (not docker_status()):
                 e_msg = ('Rock-on service is not running. Start it and try '
                          'again')
-                handle_exception(Exception(e_msg))
+                handle_exception(Exception(e_msg), request)
 
             if (command == 'update'):
                 rockons = self._get_available()
