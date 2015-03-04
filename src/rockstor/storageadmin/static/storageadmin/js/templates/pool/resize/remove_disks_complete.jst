@@ -1,0 +1,18 @@
+<div id="breadcrumb">
+  <div>Select</div>
+  <% if (model.get('choice') == 'add') { %>
+    <div>Change RAID level?</div>
+    <div>Select disks to add</div>
+  <% } else if (model.get('choice') == 'remove') { %>
+    <div>Select disks to remove</div>
+  <% } else if (model.get('choice') == 'raid') { %>
+    <div>Select RAID level and add disks</div>
+  <% } %>
+  <div>Summary</div>
+  <div>Complete</div>
+</div>
+<br>
+<div class="alert alert-success">
+  <h4>Resize is initiated. A balance process is kicked off to redistribute data. It could take a while. You can check the status in the Balances tab. Its finish marks the success of resize.</h4>
+</div>
+

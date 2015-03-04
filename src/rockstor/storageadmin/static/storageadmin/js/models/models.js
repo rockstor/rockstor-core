@@ -32,6 +32,9 @@ var Setup = Backbone.Model.extend({
 var Disk = Backbone.Model.extend({
   url: function() {
     return '/api/disks/' + this.get('diskName');
+  },
+  available: function() {
+    return _.isNull(this.get('pool')) && !this.get('parted') && !this.get('offline') && _.isNull(this.get('btrfs_uuid'));
   }
 });
 var DiskCollection = RockStorPaginatedCollection.extend({
