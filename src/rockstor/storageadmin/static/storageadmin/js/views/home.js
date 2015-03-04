@@ -66,14 +66,30 @@ var HomeLayoutView = RockstorLayoutView.extend({
 		backdrop: 'static',
 		show: false
 	});
-    
-    console.log(RockStorGlobals.show_version_update);
-  	  if(!RockStorGlobals.show_version_update){
-		  console.log('inside rockstor global validation');
-	  
-		$('#update-version-modal').modal('show'); 
-		RockStorGlobals.show_version_update = true;
-  	  }
+   	var _this = this;
+  		$.ajax({
+  			url: "/setup_user",
+  			type: "GET",
+  			dataType: "json",
+  		   success: function(data, status, xhr) {
+  			if(data.new_setup)
+  			$.ajax({
+  	  			url: "/setup_user",
+  	  			type: "PUT",
+  	  			dataType: "json",
+  	  		     success: function(data, status, xhr) {
+  				 $('#update-version-modal').modal('show'); 
+  					
+  	  		},
+  	  		error: function(xhr, status, error) {
+  	  			
+  	  		}
+  	  		});
+  		},
+  		error: function(xhr, status, error) {
+  			
+  		}
+  		});
 		$('#update-version-modal #updateYes').click(function(event) {
 	    $('#update-version-modal').modal('hide'); 
 			app_router.navigate('version', {trigger: true}) ;
