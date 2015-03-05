@@ -21,6 +21,7 @@ from storageadmin.models import User, Setup, OauthApp
 from storageadmin.views import UserView
 from oauth2_provider.models import Application as OauthApplication
 from django.contrib.auth.models import User as DjangoUser
+from rest_framework.response import Response
 
 
 class SetupUserView(UserView):
@@ -50,8 +51,15 @@ class SetupUserView(UserView):
         oauth_app.save()
         return res
 
-    def put(self, request, username):
-        pass
+    def get(self, request):
+        setup = Setup.objects.all()[0]
+        return Response({'new_setup': not setup.setup_system, })
+
+    def put(self, request):
+        setup = Setup.objects.all()[0]
+        setup.setup_system = True
+        setup.save()
+        return Response({'new_setup': not setup.setup_system, })
 
     def delete(self, request, username):
         pass

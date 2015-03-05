@@ -106,13 +106,14 @@ var AppRouter = Backbone.Router.extend({
       }
     } else {
       if (route != "setup" && !setup_done) {
-        app_router.navigate('setup', {trigger: true});
-        return false;
+    	  app_router.navigate('setup', {trigger: true});
+    	return false;
       } else if (route == "setup" && setup_done) {
-        app_router.navigate('home', {trigger: true});
+    	  app_router.navigate('home', {trigger: true});
         return false;
       }
     }
+      
     if (RockStorGlobals.currentAppliance == null) {
       setApplianceName();
     }
@@ -137,6 +138,7 @@ var AppRouter = Backbone.Router.extend({
 
   },
 
+ 
   loginPage: function() {
     RockStorSocket.removeAllListeners();
     this.renderSidebar("setup", "user");
@@ -162,7 +164,7 @@ var AppRouter = Backbone.Router.extend({
     this.cleanup();
     this.currentLayout = new HomeLayoutView();
     $('#maincontent').append(this.currentLayout.render().el);
-  },
+ },
 
   showDisks: function() {
     RockStorSocket.removeAllListeners();
@@ -171,6 +173,7 @@ var AppRouter = Backbone.Router.extend({
     this.cleanup();
     this.currentLayout = new DisksView();
     $('#maincontent').append(this.currentLayout.render().el);
+
   },
 
   blinkDrive: function(diskName) {
