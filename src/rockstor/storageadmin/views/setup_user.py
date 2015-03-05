@@ -57,7 +57,7 @@ class SetupUserView(UserView):
 
     def put(self, request):
         setup = Setup.objects.all()[0]
-        setup.system_setup = True
+        setup.setup_system = True
         setup.save()
         return Response({'new_setup': not setup.setup_system, })
 
