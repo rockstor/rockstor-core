@@ -40,6 +40,7 @@ from django.utils.timezone import utc
 from django.conf import settings
 from share_helpers import sftp_snap_toggle
 from oauth2_provider.ext.rest_framework import OAuth2Authentication
+from system.pkg_mgmt import install_pkg
 
 import logging
 logger = logging.getLogger(__name__)
@@ -214,3 +215,36 @@ class CommandView(APIView):
 
         elif (command == 'current-user'):
             return Response(request.user.username)
+
+        elif (command == 'auto-update-status'):
+            status = True
+            try:
+                systemctl('yum-cron', 'status')
+            except:
+                status = False
+            finally:
+                return Response({'enabled': status, })
+
+        elif (command == 'enable-auto-update'):
+            try:
+                install_pkg('yum-cron')
+                systemctl('yum-cron', 'enable')
+                systemctl('yum-cron', 'start')
+            except Exception, e:
+                msg = ('Failed to enable auto update due to a low level error')
+                logger.exception(e)
+                handle_exception(Exception(msg), request)
+            finally:
+                return Response({'enabled': True, })
+
+        elif (command == 'disable-auto-update'):
+            try:
+                systemctl('yum-cron', 'stop')
+                systemctl('yum-cron', 'disable')
+            except Exception, e:
+                msg = ('Failed to disable auto update due to a low level '
+                       'error')
+                logger.exception(e)
+                handle_exception(Exception(msg), request)
+            finally:
+                return Response({'enabled': False, })
