@@ -26,25 +26,39 @@
 
 UpdateCertificateView = RockstorLayoutView.extend({
   events: {
+	  "click #update-certificate" : "renderCertificateForm",
+	  "click #cancel": "cancel"
   },
 
   initialize: function() {
     // call initialize of base
     this.constructor.__super__.initialize.apply(this, arguments);
-    // set template
-    this.template = window.JST.setup_update_certificate;
+    this.updatetemplate = window.JST.setup_update_certificate;
+    this.template = window.JST.setup_certificate_desc;
     this.certificate = new Certificate();
     this.dependencies.push(this.certificate);
   },
 
   render: function() {
-    this.fetch(this.renderCertificateForm, this);
+	var _this = this;
+    this.fetch(this.renderCertificate, this);
     return this;
+  },
+
+  renderCertificate: function() {
+	  var cname = this.certificate.get("name");
+	  $(this.el).html(this.template({"name": cname}));
+  },
+
+  cancel: function(event) {
+	  $(this.el).empty();
+	  var cname = this.certificate.get("name");
+	  $(this.el).html(this.template({"name": cname}));
   },
 
   renderCertificateForm: function() {
     var _this = this;
-    $(this.el).html(this.template());
+    $(this.el).html(this.updatetemplate());
     this.$('#update-certificate-form :input').tooltip({placement: 'right'});
     this.$('#group').chosen();
 
@@ -57,7 +71,7 @@ UpdateCertificateView = RockstorLayoutView.extend({
     	privatekey: 'required'
       },
       submitHandler: function() {
-    	  var button = $('#update-certificate');
+    	  var button = $('#save-certificate');
           if (buttonDisabled(button)) return false;
           disableButton(button);
     	  var certificateName = $('#certificatename').val();
@@ -65,7 +79,7 @@ UpdateCertificateView = RockstorLayoutView.extend({
     	  var privatekey = $('#privatekey').val();
     	  var certData = JSON.stringify({"name": certificateName,
 			    "cert": certificate, "key": privatekey});
-          var jqxhr = $.ajax({
+          $.ajax({
               url: '/api/certificate',
               type: 'POST',
               dataType: 'json',
@@ -74,11 +88,14 @@ UpdateCertificateView = RockstorLayoutView.extend({
               success: function() {
                   enableButton(button);
                   _this.$('#update-certificate-form :input').tooltip('hide');
+                  this.certificate.set({"name": certificateName});
                   alert("Certificate updated successfully.");
+                  renderCertificate();
               },
               error: function(xhr, status, error) {
                   enableButton(button);
                   var msg = parseXhrError(xhr.responseText);
+                  renderCertificate();
                   _this.$(".messages").html(msg);
               },
           });
