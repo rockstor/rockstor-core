@@ -21,7 +21,8 @@ from storageadmin.views import CommandView
 
 valid_commands = ('uptime|bootstrap|utcnow|update-check|update|'
                   'current-version|join-winbind-domain|winbind-domain-status'
-                  '|shutdown|reboot|kernel|current-user')
+                  '|shutdown|reboot|kernel|current-user|auto-update-status'
+                  '|enable-auto-update|disable-auto-update')
 
 urlpatterns = patterns(
     '',
