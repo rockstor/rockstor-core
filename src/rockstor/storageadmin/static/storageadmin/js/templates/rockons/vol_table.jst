@@ -1,0 +1,18 @@
+<table id="vol-select-table" class="table table-condensed" summary="list of volumes">
+  <thead>
+    <tr>
+      <th>No.</th>
+      <th>Share</th>
+      <th>Dest dir</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% _.each(volumes, function(volume, index) { %>
+    <tr>
+      <td><%= index+1 %></td>
+      <td><%= volume.get('share') %></td>
+      <td><%= volume.get('dest_dir') %></td>
+    </tr>
+    <% }); %>
+  </tbody>
+</table>

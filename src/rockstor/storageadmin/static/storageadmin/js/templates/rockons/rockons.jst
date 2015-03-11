@@ -34,11 +34,12 @@
     <div class="tab-section">
       <div class="row-fluid">
 	<div class="span12">
-	  <h4>Rock-on name: <%= rockon.get('name') %></h4>
+	  <h3><%= rockon.get('name') %></h3>
+	  <p><%= rockon.get('description') %></p>
 	  <% if (rockon.get('state') == 'available') { %>
-	  <button id="install-rockon" class="btn btn-primary">Install</button>
+	  <a id="js-install-rockon" class="btn btn-primary pull-right" href="#" data-name="<%= rockon.get('id') %>">Install</a><br>
 	  <% } else { %>
-	  <button id="uninstall-rockon" class="btn btn-primary">Uninstall</button>
+	  <button id="uninstall-rockon" class="btn btn-primary pull-right" data-name="<%= rockon.get('name') %>">Uninstall</button>
 	  <% } %>
 	</div>
       </div>
@@ -55,5 +56,17 @@
 	</div>
       </div>
     </div>
+  </div>
+</div>
+
+
+<div class="simple-overlay" id="install-rockon-overlay">
+  <div class="overlay-content"></div>
+</div>
+
+<div id="install-rockon-modal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <div id="install-rockon-modal-contents"></div>
   </div>
 </div>
