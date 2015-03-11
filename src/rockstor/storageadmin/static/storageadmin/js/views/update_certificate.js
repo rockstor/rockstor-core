@@ -88,14 +88,14 @@ UpdateCertificateView = RockstorLayoutView.extend({
               success: function() {
                   enableButton(button);
                   _this.$('#update-certificate-form :input').tooltip('hide');
-                  this.certificate.set({"name": certificateName});
+                  _this.certificate.set({"name": certificateName});
                   alert("Certificate updated successfully.");
-                  renderCertificate();
+                  _this.renderCertificate();
               },
               error: function(xhr, status, error) {
                   enableButton(button);
+                  _this.$('#update-certificate-form :input').tooltip('hide');
                   var msg = parseXhrError(xhr.responseText);
-                  renderCertificate();
                   _this.$(".messages").html(msg);
               },
           });

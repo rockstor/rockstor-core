@@ -31,6 +31,12 @@ class TLSCertificateView(rfc.GenericView):
     serializer_class = TLSCertificateSerializer
 
     def get_queryset(self, *args, **kwargs):
+        if ('id' in kwargs):
+            self.paginate_by = 0
+            try:
+                return TLSCertificate.objects.get(id=kwargs['id'])
+            except:
+                return []
         return TLSCertificate.objects.all()
 
     @transaction.commit_on_success
@@ -42,7 +48,7 @@ class TLSCertificateView(rfc.GenericView):
             if (TLSCertificate.objects.filter(name=name).exists()):
                 e_msg = ('Another certificate with the name(%s) already '
                          'exists.' % name)
-                handle_exception(Exception(e_msg))
-        co = TLSCertificate(name=name, cert=cert, key=key)
+                handle_exception(Exception(e_msg), request)
+        co = TLSCertificate(name=name, certificate=cert, key=key)
         co.save()
         return Response(TLSCertificateSerializer(co).data)
