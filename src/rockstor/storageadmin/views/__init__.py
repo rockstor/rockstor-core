@@ -47,3 +47,4 @@ from group import GroupView
 from pool_balance import PoolBalanceView
 from rockon import RockOnView
 from rockon_id import RockOnIdView
+from rockon_volume import RockOnVolumeView

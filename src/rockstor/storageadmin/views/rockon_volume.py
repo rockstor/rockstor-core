@@ -1,0 +1,36 @@
+"""
+Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+This file is part of RockStor.
+
+RockStor is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published
+by the Free Software Foundation; either version 2 of the License,
+or (at your option) any later version.
+
+RockStor is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+"""
+
+from storageadmin.models import (RockOn, DContainer, Volume,)
+from storageadmin.serializers import RockOnVolumeSerializer
+import rest_framework_custom as rfc
+from storageadmin.util import handle_exception
+
+
+class RockOnVolumeView(rfc.GenericView):
+    serializer_class = RockOnVolumeSerializer
+
+    def get_queryset(self, *args, **kwargs):
+        try:
+            rockon = RockOn.objects.get(id=kwargs['rid'])
+        except:
+            e_msg = ('Rockon(%s) does not exist' % kwargs['rid'])
+            handle_exception(Exception(e_msg), self.request)
+
+        containers = DContainer.objects.filter(rockon=rockon)
+        return Volume.objects.filter(container__in=containers)
