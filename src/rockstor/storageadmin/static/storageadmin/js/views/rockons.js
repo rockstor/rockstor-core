@@ -35,6 +35,10 @@ RockonsView = RockstorLayoutView.extend({
 
     },
 
+    events: {
+	'click #js-install-rockon': 'installRockon',
+    },
+
     render: function() {
 	this.fetch(this.renderRockons, this);
 	return this;
@@ -54,8 +58,120 @@ RockonsView = RockstorLayoutView.extend({
 	$('#docker-service-ph').append(this.dockerServiceView.render().el);
 	console.log('rockons');
 	console.log(this.rockons);
+	$('#rockon-install-verlay').overlay({load: false});
 	this.$("ul.css-tabs").tabs("div.css-panes > div");
     },
 
+    installRockon: function(event) {
+	var _this = this;
+	event.preventDefault();
+	var button = $(event.currentTarget);
+	var rockon_id = button.attr('data-name');
+	var rockon_o = _this.rockons.get(rockon_id);
+	var wizardView = new RockonInstallWizardView({
+	    model: new Backbone.Model({ rockon: rockon_o }),
+	    title: 'Install this awesome Rockon',
+	    parent: this
+	});
+	$('.overlay-content', '#install-rockon-overlay').html(wizardView.render().el);
+	$('#install-rockon-overlay').overlay().load();
+    }
 
+});
+
+
+RockonInstallWizardView = WizardView.extend({
+    initialize: function() {
+	WizardView.prototype.initialize.apply(this, arguments);
+	this.pages = [];
+	this.rockon = this.model.get('rockon');
+    },
+
+    setCurrentPage: function() {
+	this.pages[0] = RockonShareChoice;
+	this.pages[1] = RockonPortChoice;
+	this.pages[2] = RockonCustomChoice;
+	this.pages[3] = RockonInstallSummary;
+	this.pages[4] = RockonInstallComplete;
+
+	this.currentPage = new this.pages[this.currentPageNum]({
+	    model: this.model,
+	    parent: this,
+	    evAgg: this.evAgg
+	});
+    },
+
+    lastPage: function() {
+	return ((this.pages.length > 1)
+		&& ((this.pages.length-1) == this.currentPageNum));
+    },
+
+    modifyButtonText: function() {
+	switch(this.currentPageNum) {
+	    default:
+	    this.$('#ph-wizard-buttons').show();
+	    break;
+	}
+	this.$('#next-page').html('Next');
+    },
+
+    finish: function() {
+	this.parent.$('#install-rockon-overlay').overlay().close();
+	this.parent.render();
+    }
+
+});
+
+RockonShareChoice = RockstorWizardPage.extend({
+    initialize: function() {
+	this.template = window.JST.rockons_install_choice;
+	this.vol_template = window.JST.rockons_vol_table;
+	this.rockon = this.model.get('rockon');
+	this.volumes = new RockOnVolumeCollection(null, {rid: this.rockon.id});
+	this.disks = new DiskCollection();
+	RockstorWizardPage.prototype.initialize.apply(this, arguments);
+	this.volumes.on('reset', this.renderVolumes, this);
+    },
+
+    render: function() {
+	RockstorWizardPage.prototype.render.apply(this, arguments);
+	this.volumes.fetch();
+	console.log('volumes length = ' + this.volumes.length);
+	return this;
+    },
+
+    renderVolumes: function() {
+	var volumes = this.volumes.filter(function(volume) {
+	    return volume;
+	}, this);
+	this.$('#ph-vols-table').html(this.vol_template({volumes: volumes}));
+    }
+});
+
+RockonPortChoice = RockstorWizardPage.extend({
+    initialize: function() {
+	this.template = window.JST.rockons_port_choice;
+	RockstorWizardPage.prototype.initialize.apply(this, arguments);
+    }
+});
+
+RockonCustomChoice = RockstorWizardPage.extend({
+    initialize: function() {
+	this.template = window.JST.rockons_custom_choice;
+	RockstorWizardPage.prototype.initialize.apply(this, arguments);
+    }
+});
+
+RockonInstallSummary = RockstorWizardPage.extend({
+    initialize: function() {
+	this.template = window.JST.rockons_install_summary;
+	RockstorWizardPage.prototype.initialize.apply(this, arguments);
+    }
+});
+
+RockonInstallComplete = RockstorWizardPage.extend({
+    initialize: function() {
+	this.template = window.JST.rockons_install_complete;
+	RockstorWizardPage.prototype.initialize.apply(this, arguments);
+    }
 });
