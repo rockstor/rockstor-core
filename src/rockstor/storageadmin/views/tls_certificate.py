@@ -31,12 +31,6 @@ class TLSCertificateView(rfc.GenericView):
     serializer_class = TLSCertificateSerializer
 
     def get_queryset(self, *args, **kwargs):
-        if ('id' in kwargs):
-            self.paginate_by = 0
-            try:
-                return TLSCertificate.objects.get(id=kwargs['id'])
-            except:
-                return []
         return TLSCertificate.objects.all()
 
     @transaction.commit_on_success

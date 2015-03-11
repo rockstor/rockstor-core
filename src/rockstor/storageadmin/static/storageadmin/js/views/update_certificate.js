@@ -36,7 +36,8 @@ UpdateCertificateView = RockstorLayoutView.extend({
     this.updatetemplate = window.JST.setup_update_certificate;
     this.template = window.JST.setup_certificate_desc;
     this.certificate = new Certificate();
-    this.dependencies.push(this.certificate);
+    this.certificates = new Certificate();
+    this.dependencies.push(this.certificates);
   },
 
   render: function() {
@@ -46,6 +47,8 @@ UpdateCertificateView = RockstorLayoutView.extend({
   },
 
   renderCertificate: function() {
+	  var cert = _.first(this.certificates.get("results"));
+	  this.certificate.set(cert);
 	  var cname = this.certificate.get("name");
 	  $(this.el).html(this.template({"name": cname}));
   },
