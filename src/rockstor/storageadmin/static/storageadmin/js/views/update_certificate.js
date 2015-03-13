@@ -49,6 +49,10 @@ UpdateCertificateView = RockstorLayoutView.extend({
   renderCertificate: function() {
 	  var cert = _.first(this.certificates.get("results"));
 	  this.certificate.set(cert);
+	  this.renderCertificateDescription();
+  },
+
+  renderCertificateDescription: function() {
 	  var cname = this.certificate.get("name");
 	  $(this.el).html(this.template({"name": cname}));
   },
@@ -93,7 +97,7 @@ UpdateCertificateView = RockstorLayoutView.extend({
                   _this.$('#update-certificate-form :input').tooltip('hide');
                   _this.certificate.set({"name": certificateName});
                   alert("Certificate updated successfully.");
-                  _this.renderCertificate();
+                  _this.renderCertificateDescription();
               },
               error: function(xhr, status, error) {
                   enableButton(button);
