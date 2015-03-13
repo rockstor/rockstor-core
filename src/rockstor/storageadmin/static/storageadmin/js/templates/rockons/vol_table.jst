@@ -1,18 +1,23 @@
-<table id="vol-select-table" class="table table-condensed" summary="list of volumes">
-  <thead>
-    <tr>
-      <th>No.</th>
-      <th>Share</th>
-      <th>Dest dir</th>
-    </tr>
-  </thead>
-  <tbody>
-    <% _.each(volumes, function(volume, index) { %>
-    <tr>
-      <td><%= index+1 %></td>
-      <td><%= volume.get('share') %></td>
-      <td><%= volume.get('dest_dir') %></td>
-    </tr>
-    <% }); %>
-  </tbody>
-</table>
+<div class="row-fluid">
+  <div class="span8">
+    <label class="control-label"></label>
+    <div class="form-box">
+      <form id="vol-select-form" name="aform" class="form-horizontal">
+	<div class="messages"></div>
+	<div class="control-group">
+	  <% _.each(volumes, function(volume, index) { %>
+	  <label class="control-label" for="shares">Share(<%= volume.get('dest_dir')%>)<span class="required"> *</span></label>
+	  <div class="controls">
+	    <select name="shares" id="shares" data-placeholder="Select shares to export">
+	      <% _.each(shares, function(share, index) { %>
+	      <option value="<%= share.get('name') %>"><%= share.get('name') %></option>
+	      <% }); %>
+	    </select>
+	  </div>
+	  <% }); %>
+	</div>
+
+      </form>
+    </div>
+  </div>
+</div>

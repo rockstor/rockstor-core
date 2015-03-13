@@ -108,11 +108,13 @@ RockonInstallWizardView = WizardView.extend({
 
     modifyButtonText: function() {
 	switch(this.currentPageNum) {
+	    case 0:
+	    this.$('#next-page').html('Next');
+	    break;
 	    default:
 	    this.$('#ph-wizard-buttons').show();
 	    break;
 	}
-	this.$('#next-page').html('Next');
     },
 
     finish: function() {
@@ -128,15 +130,16 @@ RockonShareChoice = RockstorWizardPage.extend({
 	this.vol_template = window.JST.rockons_vol_table;
 	this.rockon = this.model.get('rockon');
 	this.volumes = new RockOnVolumeCollection(null, {rid: this.rockon.id});
-	this.disks = new DiskCollection();
+	this.shares = new ShareCollection();
 	RockstorWizardPage.prototype.initialize.apply(this, arguments);
 	this.volumes.on('reset', this.renderVolumes, this);
+	this.shares.on('reset', this.renderVolumes, this);
     },
 
     render: function() {
 	RockstorWizardPage.prototype.render.apply(this, arguments);
 	this.volumes.fetch();
-	console.log('volumes length = ' + this.volumes.length);
+	this.shares.fetch();
 	return this;
     },
 
@@ -144,14 +147,34 @@ RockonShareChoice = RockstorWizardPage.extend({
 	var volumes = this.volumes.filter(function(volume) {
 	    return volume;
 	}, this);
-	this.$('#ph-vols-table').html(this.vol_template({volumes: volumes}));
+	var shares = this.shares.filter(function(share) {
+	    return share;
+	}, this);
+	this.$('#ph-vols-table').html(this.vol_template({volumes: volumes, shares: shares}));
     }
 });
 
 RockonPortChoice = RockstorWizardPage.extend({
     initialize: function() {
 	this.template = window.JST.rockons_port_choice;
+	this.port_template = window.JST.rockons_ports_form;
+	this.rockon = this.model.get('rockon');
+	this.ports = new RockOnPortCollection(null, {rid: this.rockon.id});
 	RockstorWizardPage.prototype.initialize.apply(this, arguments);
+	this.ports.on('reset', this.renderPorts, this);
+    },
+
+    render: function() {
+    	RockstorWizardPage.prototype.render.apply(this, arguments);
+	this.ports.fetch();
+    	return this;
+    },
+
+    renderPorts: function() {
+	var ports = this.ports.filter(function(port) {
+	    return port;
+	}, this);
+    	this.$('#ph-ports-form').html(this.port_template({ports: this.ports}));
     }
 });
 

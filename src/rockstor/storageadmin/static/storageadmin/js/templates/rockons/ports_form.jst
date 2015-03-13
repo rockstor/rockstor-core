@@ -1,0 +1,25 @@
+<div class="row-fluid">
+  <div class="span8">
+    <label class="control-label"></label>
+
+    <div class="form-box">
+      <form id="port-select-form" name="aform" class="form-horizontal">
+
+	<div class="messages"></div>
+
+	<div class="control-group">
+	  <% _.each(ports, function(port, index) { %>
+	  <label class="control-label" for="ports">Port(<%= port.get('containerp')%>)<span class="required"> *</span></label>
+
+	  <div class="controls">
+	    <input type="text" id="port" name="comment" value="port" title="host port to map to the destination port">
+	  </div>
+	  <% }); %>
+	</div>
+
+      </form>
+    </div>
+
+  </div>
+
+</div>
