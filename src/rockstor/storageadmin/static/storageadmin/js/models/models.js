@@ -554,3 +554,45 @@ var RockOnCollection = RockStorPaginatedCollection.extend({
     model: RockOn,
     baseUrl: '/api/rockons'
 });
+
+var RockOnVolume = Backbone.Model.extend({
+    urlRoot: '/api/rockons/volumes/' + this.rid
+});
+
+var RockOnVolumeCollection = RockStorPaginatedCollection.extend({
+    model: RockOnVolume,
+    initialize: function(models, options) {
+	this.constructor.__super__.initialize.apply(this, arguments);
+	if (options) {
+	    this.rid = options.rid;
+	}
+    },
+    baseUrl: function() {
+	if (this.rid) {
+	    return '/api/rockons/volumes/' + this.rid;
+	} else {
+	    return '/api/rockons/volumes';
+	}
+    }
+});
+
+var RockOnPort = Backbone.Model.extend({
+    urlRoot: '/api/rockon/ports/' + this.rid
+});
+
+var RockOnPortCollection = RockStorPaginatedCollection.extend({
+    model: RockOnPort,
+    initialize: function(models, options) {
+	this.constructor.__super__.initialize.apply(this, arguments);
+	if (options) {
+	    this.rid = options.rid;
+	}
+    },
+    baseUrl: function() {
+	if (this.rid) {
+	    return '/api/rockons/ports/' + this.rid;
+	} else {
+	    return '/api/rockons/ports';
+	}
+    }
+});
