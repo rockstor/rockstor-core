@@ -46,19 +46,16 @@ RockonsView = RockstorLayoutView.extend({
 
     renderRockons: function() {
 	var _this = this;
-	// render template
-	//$(this.el).empty();
-	//$(this.el).append(this.template());
 	$(this.el).html(this.template({rockons: this.rockons}));
-	this.dockerServiceView = new DockerServiceView({
-	    parentView: this,
-	    dockerService: this.dockerService
-	});
+	if (!this.dockerServiceView) {
+	    this.dockerServiceView = new DockerServiceView({
+		parentView: this,
+		dockerService: this.dockerService
+	    });
+	}
 
 	$('#docker-service-ph').append(this.dockerServiceView.render().el);
-	console.log('rockons');
-	console.log(this.rockons);
-	$('#rockon-install-verlay').overlay({load: false});
+	$('#install-rockon-overlay').overlay({load: false});
 	this.$("ul.css-tabs").tabs("div.css-panes > div");
     },
 
