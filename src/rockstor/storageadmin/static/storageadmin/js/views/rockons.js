@@ -104,15 +104,24 @@ RockonInstallWizardView = WizardView.extend({
     },
 
     modifyButtonText: function() {
-	switch(this.currentPageNum) {
-	    case 0:
-	    this.$('#next-page').html('Next');
+    	switch(this.currentPageNum) {
+    	case 0:
+	    this.$('#prev-page').hide();
+    	    break;
+	case 3:
+	    this.$('#next-page').html('Submit');
 	    break;
-	    default:
-	    this.$('#ph-wizard-buttons').show();
-	    break;
+    	default:
+	    this.$('#prev-page').show();
+    	    this.$('#ph-wizard-buttons').show();
+    	    break;
+    	}
+    	if (this.lastPage()) {
+	    this.$('#prev-page').hide();
+	    this.$('#next-page').html('Close');
 	}
     },
+
 
     finish: function() {
 	this.parent.$('#install-rockon-overlay').overlay().close();
@@ -171,7 +180,7 @@ RockonPortChoice = RockstorWizardPage.extend({
 	var ports = this.ports.filter(function(port) {
 	    return port;
 	}, this);
-    	this.$('#ph-ports-form').html(this.port_template({ports: this.ports}));
+    	this.$('#ph-ports-form').html(this.port_template({ports: ports}));
     }
 });
 
