@@ -37,6 +37,7 @@ RockonsView = RockstorLayoutView.extend({
 
     events: {
 	'click #js-install-rockon': 'installRockon',
+	'click #js-uninstall-rockon': 'uninstallRockon'
     },
 
     render: function() {
@@ -72,6 +73,30 @@ RockonsView = RockstorLayoutView.extend({
 	});
 	$('.overlay-content', '#install-rockon-overlay').html(wizardView.render().el);
 	$('#install-rockon-overlay').overlay().load();
+    },
+
+    uninstallRockon: function(event) {
+	var _this = this;
+	event.preventDefault();
+	var button = $(event.currentTarget);
+	if (buttonDisabled(button)) return false;
+	var rockon_id = button.attr('data-name');
+	var rockon_o = _this.rockons.get(rockon_id);
+	if (confirm("Are you sure you want to uninstall this Rockon(" + rockon_o.get('name') + ")?")) {
+	    disableButton(button);
+	    $.ajax({
+		url: '/api/rockons/' + rockon_id + '/uninstall',
+		type: 'POST',
+		dataType: 'json',
+		success: function() {
+		    _this.render();
+		    enableButton(button);
+		},
+		error: function(xhr, status, error) {
+		    enableButton(button);
+		}
+	    });
+	}
     }
 
 });
@@ -201,6 +226,35 @@ RockonInstallSummary = RockstorWizardPage.extend({
 RockonInstallComplete = RockstorWizardPage.extend({
     initialize: function() {
 	this.template = window.JST.rockons_install_complete;
+	this.rockon = this.model.get('rockon');
+	// this.ports = this.model.get('ports');
+	// this.volumes = this.model.get('volumes');
 	RockstorWizardPage.prototype.initialize.apply(this, arguments);
+    },
+
+    render: function() {
+	$(this.el).html(this.template({
+	    model: this.model,
+	    // ports: this.ports,
+	    // volumes: this.volumes
+	}));
+	return this;
+    },
+
+    save: function() {
+	var _this = this;
+	return $.ajax({
+	    url: '/api/rockons/' + this.rockon.id + '/install',
+	    type: 'POST',
+	    dataType: 'json',
+	    contentType: 'application/json',
+	    // data: JSON.stringify({
+	    // 	'ports': this.model.get('ports')
+	    // }),
+	    success: function() {
+		console.log('rockon install success');
+	    },
+	    error: function(request, status, error) { }
+	});
     }
 });

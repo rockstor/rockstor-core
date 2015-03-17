@@ -347,14 +347,14 @@ function refreshNavbar() {
 		$('#user-name').html(currentUser+' ');
 	},
 	error: function(xhr, status, error) {
-	//	$('#user-name').html("Hello, <b> Admin! </b>");   
+	//	$('#user-name').html("Hello, <b> Admin! </b>");
 	}
 	});
 
 	var navbarTemplate = window.JST.common_navbar;
 	$("#navbar-links").html(navbarTemplate({
-		logged_in: logged_in, 
-		
+		logged_in: logged_in,
+
 	}));
 
 	$('.dropdown-toggle').dropdown();
@@ -649,7 +649,7 @@ RockstorWizardPage = Backbone.View.extend({
 
 WizardView = Backbone.View.extend({
   tagName: 'div',
-  
+
   events: {
     'click #next-page': 'nextPage',
     'click #prev-page': 'prevPage',
@@ -683,14 +683,14 @@ WizardView = Backbone.View.extend({
 
   nextPage: function() {
     var _this = this;
-    var promise = !_.isNull(this.currentPage) ? 
+    var promise = !_.isNull(this.currentPage) ?
       this.currentPage.save() :
       $.Deferred().resolve();
     promise.done(function(result, status, jqXHR) {
       _this.incrementPage();
     });
     promise.fail(function(jqXHR, status, error) {
-      // console.log(error);
+	console.log(error);
     });
   },
 
@@ -711,14 +711,14 @@ WizardView = Backbone.View.extend({
       this.finish();
     }
   },
-  
+
   decrementPage: function() {
     if (!this.firstPage()) {
       this.pages[this.currentPageNum] = null;
       this.decrementPageNum();
       this.setCurrentPage();
       this.renderCurrentPage();
-    } 
+    }
   },
 
   setCurrentPage: function() {
@@ -744,7 +744,7 @@ WizardView = Backbone.View.extend({
       this.$('#next-page').html('Next');
     }
   },
-  
+
   firstPage: function() {
     return (this.currentPageNum == 0);
   },
@@ -752,12 +752,10 @@ WizardView = Backbone.View.extend({
   lastPage: function() {
     return (this.currentPageNum == (this.pages.length - 1));
   },
-  
+
   finish: function() {
     console.log('finish');
   },
 
 
 });
-
-

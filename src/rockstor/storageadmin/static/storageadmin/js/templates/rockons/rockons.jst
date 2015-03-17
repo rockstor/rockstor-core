@@ -22,40 +22,49 @@
 <div class="messages"></div>
 
 <ul class="css-tabs">
-  <li class="active"><a href="#all" data-toggle="tab">All</a></li>
+  <li class="active"><a href="#all" data-toggle="tab">Available</a></li>
   <li><a href="#installed" data-toggle="tab">Installed</a></li>
 </ul>
 
 
 <div class="css-panes">
-  <div id="all">
+  <div id="available">
 
     <% rockons.each(function(rockon, index) { %>
-    <div class="tab-section">
-      <div class="row-fluid">
-	<div class="span12">
-	  <h3><%= rockon.get('name') %></h3>
-	  <p><%= rockon.get('description') %></p>
-	  <% if (rockon.get('state') == 'available') { %>
-	  <a id="js-install-rockon" class="btn btn-primary pull-right" href="#" data-name="<%= rockon.get('id') %>">Install</a><br>
-	  <% } else { %>
-	  <button id="uninstall-rockon" class="btn btn-primary pull-right" data-name="<%= rockon.get('name') %>">Uninstall</button>
-	  <% } %>
+      <% if (rockon.get('state') == 'available') { %>
+      <div class="tab-section">
+	<div class="row-fluid">
+	  <div class="span12">
+	    <h3><%= rockon.get('name') %></h3>
+	    <p><%= rockon.get('description') %></p>
+	    <a id="js-install-rockon" class="btn btn-primary pull-right" href="#" data-name="<%= rockon.get('id') %>">Install</a>
+	  </div>
 	</div>
       </div>
-    </div>
+      <% } %>
     <% }); %>
   </div>
 
 
   <div id="installed">
-    <div class="tab-section">
-      <div class="row-fluid">
-	<div class="span12">
-	  <h4>Installed Rockons</h4>
+
+    <% rockons.each(function(rockon, index) { %>
+      <% if (rockon.get('state') != 'available') { %>
+      <div class="tab-section">
+	<div class="row-fluid">
+	  <div class="span12">
+	    <h3><%= rockon.get('name') %></h3>
+	    <p><%= rockon.get('description') %></p>
+	    <% if (rockon.get('state') == 'installed') { %>
+	      <a id="js-uninstall-rockon" class="btn btn-danger pull-right" data-name="<%= rockon.get('id') %>">Uninstall</a>
+	    <% } else { %>
+	      <a id="js-uninstall-rockon" class="btn btn-danger pull-right disabled" title="Rockon cannot be uninstalled because it is in a transition state(<%= rockon.get('state') %>)">Uninstall</a>
+	    <% } %>
+	  </div>
 	</div>
       </div>
-    </div>
+      <% } %>
+    <% }); %>
   </div>
 </div>
 
