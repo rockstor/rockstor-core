@@ -58,7 +58,7 @@
 	    <% if (rockon.get('state') == 'installed') { %>
 	      <a id="js-uninstall-rockon" class="btn btn-danger pull-right" data-name="<%= rockon.get('id') %>">Uninstall</a>
 	    <% } else { %>
-	      <a id="js-uninstall-rockon" class="btn btn-danger pull-right disabled" title="Rockon cannot be uninstalled because it is in a transition state(<%= rockon.get('state') %>)">Uninstall</a>
+	      <a id="js-uninstall-rockon" class="btn btn-primary pull-right disabled" title="Rockon cannot be uninstalled because it is in a transition state(<%= rockon.get('state') %>)">Uninstall</a>
 	    <% } %>
 	  </div>
 	</div>

@@ -8,7 +8,7 @@
 	  <% _.each(volumes, function(volume, index) { %>
 	  <label class="control-label" for="shares">Share(<%= volume.get('dest_dir')%>)<span class="required"> *</span></label>
 	  <div class="controls">
-	    <select name="shares" id="shares" data-placeholder="Select shares to export">
+	    <select name="<%= volume.id %>" id="<%= volume.id %>" data-placeholder="Select shares to export">
 	      <% _.each(shares, function(share, index) { %>
 	      <option value="<%= share.get('name') %>"><%= share.get('name') %></option>
 	      <% }); %>
