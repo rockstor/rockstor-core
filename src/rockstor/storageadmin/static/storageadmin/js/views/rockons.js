@@ -182,6 +182,16 @@ RockonShareChoice = RockstorWizardPage.extend({
 	    return share;
 	}, this);
 	this.$('#ph-vols-table').html(this.vol_template({volumes: volumes, shares: shares}));
+    },
+
+    save: function() {
+	var share_map = {};
+	var volumes = this.volumes.filter(function(volume) {
+	    share_map[this.$('#' + volume.id).val()] = volume.get('dest_dir');
+	    return volume;
+	}, this);
+	this.model.set('share_map', share_map);
+	return $.Deferred().resolve();
     }
 });
 
@@ -206,6 +216,16 @@ RockonPortChoice = RockstorWizardPage.extend({
 	    return port;
 	}, this);
     	this.$('#ph-ports-form').html(this.port_template({ports: ports}));
+    },
+
+    save: function() {
+	var port_map = {};
+	var cports = this.ports.filter(function(port) {
+	    port_map[this.$('#' + port.id).val()] = port.get('containerp');
+	    return port;
+	}, this);
+	this.model.set('port_map', port_map);
+	return $.Deferred().resolve();
     }
 });
 
@@ -227,16 +247,16 @@ RockonInstallComplete = RockstorWizardPage.extend({
     initialize: function() {
 	this.template = window.JST.rockons_install_complete;
 	this.rockon = this.model.get('rockon');
-	// this.ports = this.model.get('ports');
-	// this.volumes = this.model.get('volumes');
+	this.port_map = this.model.get('port_map');
+	this.volume_map = this.model.get('volume_map');
 	RockstorWizardPage.prototype.initialize.apply(this, arguments);
     },
 
     render: function() {
 	$(this.el).html(this.template({
 	    model: this.model,
-	    // ports: this.ports,
-	    // volumes: this.volumes
+	    port_map: this.port_map,
+	    volume_map: this.volume_map
 	}));
 	return this;
     },
@@ -248,9 +268,10 @@ RockonInstallComplete = RockstorWizardPage.extend({
 	    type: 'POST',
 	    dataType: 'json',
 	    contentType: 'application/json',
-	    // data: JSON.stringify({
-	    // 	'ports': this.model.get('ports')
-	    // }),
+	    data: JSON.stringify({
+		'ports': this.model.get('port_map'),
+		'shares': this.model.get('share_map')
+	    }),
 	    success: function() {
 		console.log('rockon install success');
 	    },
