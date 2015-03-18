@@ -44,12 +44,12 @@ class SnapshotView(rfc.GenericView):
 
     def get_queryset(self, *args, **kwargs):
         try:
-            share = Share.objects.get(name=kwargs['sname'])
+            share = Share.objects.get(name=self.kwargs['sname'])
         except:
-            e_msg = ('Share with name: %s does not exist' % kwargs['sname'])
+            e_msg = ('Share with name: %s does not exist' % self.kwargs['sname'])
             handle_exception(Exception(e_msg), self.request)
 
-        if ('snap_name' in kwargs):
+        if ('snap_name' in self.kwargs):
             self.paginate_by = 0
             try:
                 return Snapshot.objects.get(share=share,

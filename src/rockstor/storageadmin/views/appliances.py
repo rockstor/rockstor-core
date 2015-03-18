@@ -35,14 +35,15 @@ logger = logging.getLogger(__name__)
 
 class AppliancesView(rfc.GenericView):
     serializer_class = ApplianceSerializer
+    paginate_by = 0
 
     def get_queryset(self, *args, **kwargs):
-        if ('ip' in kwargs or 'id' in kwargs):
-            self.paginate_by = 0
+        if ('ip' in self.kwargs or 'id' in self.kwargs):
+            paginate_by = 0
             try:
-                if ('ip' in kwargs):
-                    return Appliance.objects.get(ip=kwargs['ip'])
-                return Appliance.objects.get(id=kwargs['id'])
+                if ('ip' in self.kwargs):
+                    return Appliance.objects.get(ip=self.kwargs['ip'])
+                return Appliance.objects.get(id=self.kwargs['id'])
             except:
                 return []
         return Appliance.objects.all()
@@ -101,8 +102,8 @@ class AppliancesView(rfc.GenericView):
                      'Rockstor appliance(%s). Try again later.' % ip)
             handle_exception(Exception(e_msg), request)
 
-    @transaction.commit_on_success
-    def post(self, request):
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
         with self._handle_exception(request):
             ip = request.DATA['ip']
             current_appliance = request.DATA['current_appliance']

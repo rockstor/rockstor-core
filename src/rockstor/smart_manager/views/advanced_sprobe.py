@@ -20,7 +20,7 @@ from smart_manager.models import SProbe
 from django.conf import settings
 from django.db import transaction
 from storageadmin.util import handle_exception
-from smart_manager.serializers import (SProbeSerializer, PaginatedSProbe)
+from smart_manager.serializers import SProbeSerializer
 from rest_framework.response import Response
 import zmq
 import os

@@ -25,7 +25,7 @@ from smart_manager.models import (CPUMetric, LoadAvg, MemInfo, ServiceStatus,
                                   NFSDShareClientDistribution,
                                   NFSDUidGidDistribution, TaskDefinition, Task,
                                   Replica, ReplicaTrail, ReplicaShare,
-                                  ReceiveTrail)
+                                  ReceiveTrail, Service)
 from smart_manager.taplib.probe_config import TapConfig
 
 
@@ -34,10 +34,10 @@ class CPUMetricSerializer(serializers.ModelSerializer):
         model = CPUMetric
 
 class LoadAvgSerializer(serializers.ModelSerializer):
-    uptime = serializers.IntegerField(source='uptime')
 
     class Meta:
         model = LoadAvg
+        fields = ('uptime',)
 
 class MemInfoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -47,29 +47,36 @@ class DiskStatSerializer(serializers.ModelSerializer):
     class Meta:
         model = DiskStat
 
-class PaginatedDiskStat(pagination.PaginationSerializer):
-    class Meta:
-        object_serializer_class = DiskStatSerializer
+#class PaginatedDiskStat(pagination.PaginationSerializer):
+#   class Meta:
+#       object_serializer_class = DiskStatSerializer
 
 class NetStatSerializer(serializers.ModelSerializer):
     class Meta:
         model = NetStat
 
+
+class ServiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Service
+
+
 class ServiceStatusSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source='service.name')
-    display_name = serializers.CharField(source='service.display_name')
-    config = serializers.CharField(source='service.config')
+    # service = ServiceSerializer(many=True, read_only=True)
+    # display_name = serializers.SlugRelatedField(slug_field='service.display_name', read_only=True)
+    # config = serializers.SlugRelatedField(slug_field='service.config', read_only=True)
 
     class Meta:
         model = ServiceStatus
+        # fields = ('service', 'service.display_name', 'service.config')
 
 class SProbeSerializer(serializers.ModelSerializer):
     class Meta:
         model = SProbe
 
-class PaginatedSProbe(pagination.PaginationSerializer):
-    class Meta:
-        object_serializer_class = SProbeSerializer
+#class PaginatedSProbe(pagination.PaginationSerializer):
+#    class Meta:
+#       object_serializer_class = SProbeSerializer
 
 class NFSDCallDistributionSerializer(serializers.ModelSerializer):
     class Meta:

@@ -15,6 +15,11 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
+from oauth2_provider.ext.rest_framework import OAuth2Authentication
+from rest_framework import generics
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+from rest_framework.permissions import IsAuthenticated
+from storageadmin.auth import DigestAuthentication
 
 """
 Pool view. for all things at pool level
@@ -34,8 +39,11 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class PoolView(rfc.GenericView):
+class PoolView(generics.ListCreateAPIView):
     serializer_class = PoolInfoSerializer
+    authentication_classes = (DigestAuthentication, SessionAuthentication,
+                              BasicAuthentication, OAuth2Authentication,)
+    permission_classes = (IsAuthenticated,)
     RAID_LEVELS = ('single', 'raid0', 'raid1', 'raid10', 'raid5', 'raid6')
     ADD_THRESHOLD = .3  # min free/total ratio to allow a device addition
     SUPPORTED_MIGRATIONS = {

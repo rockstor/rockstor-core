@@ -15,6 +15,8 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
+from contextlib import contextmanager
+from storageadmin.exceptions import RockStorAPIException
 
 """
 Disk view, for anything at the disk level
@@ -56,7 +58,7 @@ class DiskView(rfc.GenericView):
                 return []
         return Disk.objects.all().order_by('name')
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def _scan(self):
         disks = scan_disks(settings.MIN_DISK_SIZE)
         for d in disks:
@@ -101,7 +103,7 @@ class DiskView(rfc.GenericView):
         p.uuid = btrfs_uuid(d.name)
         return p
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def _wipe(self, dname, request):
         disk = self._validate_disk(dname, request)
         try:
@@ -147,7 +149,7 @@ class DiskView(rfc.GenericView):
                      'wipe' % command)
             handle_exception(Exception(e_msg), request)
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def delete(self, request, dname):
         try:
             disk = Disk.objects.get(name=dname)
@@ -166,3 +168,13 @@ class DiskView(rfc.GenericView):
             e_msg = ('Could not remove disk(%s) due to system error' % dname)
             logger.exception(e)
             handle_exception(Exception(e_msg), request)
+
+    @staticmethod
+    @contextmanager
+    def _handle_exception(request, msg=None):
+        try:
+            yield
+        except RockStorAPIException:
+            raise
+        except Exception, e:
+            handle_exception(e, request, msg)

@@ -28,19 +28,20 @@ from django.contrib.auth.models import User as DjangoUser
 
 
 class DiskInfoSerializer(serializers.ModelSerializer):
-    pool_name = serializers.CharField(source='pool_name')
 
     class Meta:
         model = Disk
+        fields = ('name', 'size', 'offline', 'parted', 'btrfs_uuid', 'model', 'serial', 'transport',
+                    'vendor', 'pool_name')
 
 
 class PoolInfoSerializer(serializers.ModelSerializer):
-    disks = DiskInfoSerializer(source='disk_set')
-    free = serializers.IntegerField(source='cur_free')
-    reclaimable = serializers.IntegerField(source='cur_reclaimable')
+    # disks = DiskInfoSerializer('disk_set')
 
     class Meta:
         model = Pool
+        fields = ('name', 'uuid', 'size', 'raid', 'toc', 'compression', 'mnt_options', 'cur_reclaimable',
+                    'cur_free')
 
 
 class SnapshotSerializer(serializers.ModelSerializer):
@@ -71,12 +72,12 @@ class AdvancedNFSExportSerializer(serializers.ModelSerializer):
 
 
 class SUserSerializer(serializers.ModelSerializer):
-    groupname = serializers.CharField(source='groupname')
+    group = serializers.SlugRelatedField(slug_field='groupname', read_only=True)
 
     class Meta:
         model = User
         fields = ('username', 'uid', 'gid', 'user', 'public_key', 'admin',
-                  'group', 'groupname', 'shell',)
+                  'group', 'shell',)
 
 
 class GroupSerializer(serializers.ModelSerializer):
@@ -115,14 +116,14 @@ class IscsiSerializer(serializers.ModelSerializer):
 
 
 class ShareSerializer(serializers.ModelSerializer):
-    snapshots = SnapshotSerializer(source='snapshot_set')
-    pool = PoolInfoSerializer(source='pool')
-    nfs_exports = NFSExportSerializer(source='nfsexport_set')
-    r_usage = serializers.IntegerField(source='cur_rusage')
-    e_usage = serializers.IntegerField(source='cur_eusage')
+    # snapshots = SnapshotSerializer(Snapshot.objects.all())
+    # pool = PoolInfoSerializer(data=Pool.objects.all())
+    # nfs_exports = NFSExportSerializer(data=NFSExport.objects.all())
 
     class Meta:
         model = Share
+        fields = ('pool', 'qgroup', 'name', 'uuid', 'size', 'owner', 'group', 'perms', 'toc', 'subvol_name',
+                    'replica', 'compression_algo', 'cur_rusage', 'cur_eusage')
 
 
 class ApplianceSerializer(serializers.ModelSerializer):

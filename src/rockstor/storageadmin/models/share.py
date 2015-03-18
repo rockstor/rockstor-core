@@ -40,6 +40,7 @@ class Share(models.Model):
     replica = models.BooleanField(default=False)
     compression_algo = models.CharField(max_length=1024, null=True)
 
+    @property
     def cur_rusage(self, *args, **kwargs):
         try:
             su = ShareUsage.objects.filter(name=self.name).order_by('-ts')[0]
@@ -47,6 +48,7 @@ class Share(models.Model):
         except:
             return -1
 
+    @property
     def cur_eusage(self, *args, **kwargs):
         try:
             su = ShareUsage.objects.filter(name=self.name).order_by('-ts')[0]
