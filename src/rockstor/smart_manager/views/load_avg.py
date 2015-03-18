@@ -16,13 +16,14 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+from rest_framework import generics
 import rest_framework_custom as rfc
 from smart_manager.models import LoadAvg
 from smart_manager.serializers import LoadAvgSerializer
 from generic_sprobe import GenericSProbeView
 
 
-class LoadAvgView(GenericSProbeView):
-
+class LoadAvgView(generics.ListAPIView):
+    paginate_by = 0
     serializer_class = LoadAvgSerializer
-    model_obj = LoadAvg
+    queryset = LoadAvg.objects.all()

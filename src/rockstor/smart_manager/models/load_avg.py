@@ -30,6 +30,7 @@ class LoadAvg(models.Model):
     idle_seconds = models.IntegerField()
     ts = models.DateTimeField(auto_now=True, db_index=True)
 
+    @property
     def uptime(self, *args, **kwargs):
         with open('/proc/uptime') as ufo:
             return int(float(ufo.readline().split()[0]))

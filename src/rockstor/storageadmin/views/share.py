@@ -17,8 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import re
+from oauth2_provider.ext.rest_framework import OAuth2Authentication
+from rest_framework import generics
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db import transaction
+from storageadmin.auth import DigestAuthentication
 from storageadmin.models import (Share, Disk, Pool, Snapshot,
                                  NFSExport, SambaShare, SFTP)
 from fs.btrfs import (add_share, remove_share, share_id, update_quota,
@@ -80,7 +85,7 @@ class ShareView(rfc.GenericView):
             handle_exception(Exception(e_msg), request)
         return compression
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def put(self, request, sname):
         with self._handle_exception(request):
             if (not Share.objects.filter(name=sname).exists()):
@@ -102,7 +107,7 @@ class ShareView(rfc.GenericView):
             share.save()
             return Response(ShareSerializer(share).data)
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request):
         with self._handle_exception(request):
             pool_name = request.DATA.get('pool', None)
@@ -165,7 +170,7 @@ class ShareView(rfc.GenericView):
         update_quota(pool, disk_name, qgroup_id, size * 1024)
         return qgroup_id
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def delete(self, request, sname):
         """
         For now, we delete all snapshots, if any of the share and delete the
@@ -215,4 +220,3 @@ class ShareView(rfc.GenericView):
                 logger.exception(e)
                 handle_exception(Exception(e_msg), request)
             share.delete()
-            return Response()

@@ -15,6 +15,7 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
+from rest_framework import status
 
 from rest_framework.response import Response
 from storageadmin.util import handle_exception
@@ -30,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 class DataCollectorServiceView(BaseServiceView):
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request, command):
         """
         execute a command on the service
@@ -55,4 +56,4 @@ class DataCollectorServiceView(BaseServiceView):
                          command)
                 handle_exception(Exception(e_msg), request)
 
-        return Response()
+        return service
