@@ -22,13 +22,13 @@
 <div class="messages"></div>
 
 <ul class="css-tabs">
-  <li class="active"><a href="#all" data-toggle="tab">Available</a></li>
-  <li><a href="#installed" data-toggle="tab">Installed</a></li>
+  <li class="active"><a href="#js-rockons-available" data-toggle="tab">Available</a></li>
+  <li><a id="js-rockons-installed" href="#js-rockons-installed" data-toggle="tab">Installed</a></li>
 </ul>
 
 
 <div class="css-panes">
-  <div id="available">
+  <div id="js-rockons-available">
 
     <% rockons.each(function(rockon, index) { %>
       <% if (rockon.get('state') == 'available') { %>
@@ -46,7 +46,7 @@
   </div>
 
 
-  <div id="installed">
+  <div id="js-rockons-installed">
 
     <% rockons.each(function(rockon, index) { %>
       <% if (rockon.get('state') != 'available') { %>

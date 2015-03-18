@@ -37,7 +37,8 @@ RockonsView = RockstorLayoutView.extend({
 
     events: {
 	'click #js-install-rockon': 'installRockon',
-	'click #js-uninstall-rockon': 'uninstallRockon'
+	'click #js-uninstall-rockon': 'uninstallRockon',
+	'click #js-rockons-installed': 'installedRockons'
     },
 
     render: function() {
@@ -58,6 +59,8 @@ RockonsView = RockstorLayoutView.extend({
 	$('#docker-service-ph').append(this.dockerServiceView.render().el);
 	$('#install-rockon-overlay').overlay({load: false});
 	this.$("ul.css-tabs").tabs("div.css-panes > div");
+	// var active = this.$("ul.css-tabs").tabs("option", "active");
+	// console.log('active', active);
     },
 
     installRockon: function(event) {
@@ -97,6 +100,11 @@ RockonsView = RockstorLayoutView.extend({
 		}
 	    });
 	}
+    },
+
+    installedRockons: function(event) {
+	console.log('installed rockons fetched');
+	//this.rockons.fetch();
     }
 
 });
@@ -107,15 +115,28 @@ RockonInstallWizardView = WizardView.extend({
 	WizardView.prototype.initialize.apply(this, arguments);
 	this.pages = [];
 	this.rockon = this.model.get('rockon');
+	this.volumes = new RockOnVolumeCollection(null, {rid: this.rockon.id});
+	this.ports = new RockOnVolumeCollection(null, {rid: this.rockon.id});
+	this.custom_config = new RockOnCustomConfigCollection(null, {rid: this.rockon.id});
+	this.volumes.fetch();
+	console.log('volumes', this.volumes);
+	this.ports.fetch();
+	console.log('ports', this.ports);
+	this.custom_config.fetch();
+	console.log('custom config', this.custom_config);
+	if (this.volumes.length > 0) {
+	    this.pages.push(RockonShareChoice);
+	}
+	if (this.ports.length > 0) {
+	    this.pages.push(RockonPortChoice);
+	}
+	if (this.custom_config.length > 0) {
+	    this.pages.push(RockonCustomChoice);
+	}
+	this.pages.push.apply(this.pages, [RockonInstallSummary, RockonInstallComplete]);
     },
 
     setCurrentPage: function() {
-	this.pages[0] = RockonShareChoice;
-	this.pages[1] = RockonPortChoice;
-	this.pages[2] = RockonCustomChoice;
-	this.pages[3] = RockonInstallSummary;
-	this.pages[4] = RockonInstallComplete;
-
 	this.currentPage = new this.pages[this.currentPageNum]({
 	    model: this.model,
 	    parent: this,
@@ -123,30 +144,24 @@ RockonInstallWizardView = WizardView.extend({
 	});
     },
 
+    modifyButtonText: function() {
+    	if (this.currentPageNum == (this.pages.length - 2)) {
+    	    this.$('#next-page').html('Submit');
+    	} else if (this.currentPageNum == (this.pages.length - 1)) {
+    	    this.$('#prev-page').hide();
+    	    this.$('#next-page').html('Close');
+    	} else if (this.currentPageNum == 0) {
+	    this.$('#prev-page').hide();
+	} else {
+    	    this.$('#prev-page').show();
+    	    this.$('#ph-wizard-buttons').show();
+    	}
+    },
+
     lastPage: function() {
 	return ((this.pages.length > 1)
 		&& ((this.pages.length-1) == this.currentPageNum));
     },
-
-    modifyButtonText: function() {
-    	switch(this.currentPageNum) {
-    	case 0:
-	    this.$('#prev-page').hide();
-    	    break;
-	case 3:
-	    this.$('#next-page').html('Submit');
-	    break;
-    	default:
-	    this.$('#prev-page').show();
-    	    this.$('#ph-wizard-buttons').show();
-    	    break;
-    	}
-    	if (this.lastPage()) {
-	    this.$('#prev-page').hide();
-	    this.$('#next-page').html('Close');
-	}
-    },
-
 
     finish: function() {
 	this.parent.$('#install-rockon-overlay').overlay().close();

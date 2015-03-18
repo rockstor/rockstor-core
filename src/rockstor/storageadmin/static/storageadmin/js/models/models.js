@@ -596,3 +596,24 @@ var RockOnPortCollection = RockStorPaginatedCollection.extend({
 	}
     }
 });
+
+var RockOnCustomConfig = Backbone.Model.extend({
+    urlRoot: '/api/rockon/customconfig/' + this.rid
+});
+
+var RockOnCustomConfigCollection = RockStorPaginatedCollection.extend({
+    model: RockOnCustomConfig,
+    initialize: function(models, options) {
+	this.constructor.__super__.initialize.apply(this, arguments);
+	if (options) {
+	    this.rid = options.rid;
+	}
+    },
+    baseUrl: function() {
+	if (this.rid) {
+	    return '/api/rockons/customconfig/' + this.rid;
+	} else {
+	    return '/api/rockons/customconfig';
+	}
+    }
+});
