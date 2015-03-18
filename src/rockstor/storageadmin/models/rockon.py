@@ -22,6 +22,7 @@ from storageadmin.models import Share
 
 class RockOn(models.Model):
     name = models.CharField(max_length=1024)
+    description = models.CharField(max_length=2048)
     version = models.CharField(max_length=32)
     STATE = [
         ('available',) * 2,
@@ -87,6 +88,16 @@ class ContainerOption(models.Model):
     container = models.ForeignKey(DContainer)
     name = models.CharField(max_length=1024)
     val = models.CharField(max_length=1024)
+
+    class Meta:
+        app_label = 'storageadmin'
+
+
+class CustomConfig(models.Model):
+    rockon = models.ForeignKey(RockOn)
+    key = models.CharField(max_length=1024)
+    val = models.CharField(max_length=1024)
+    description = models.CharField(max_length=2048)
 
     class Meta:
         app_label = 'storageadmin'
