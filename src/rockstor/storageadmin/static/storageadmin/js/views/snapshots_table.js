@@ -85,12 +85,33 @@ add: function(event) {
 		modify_choices: this.modify_choices
 
 	}));
+	
+    var err_msg = '';
+    var name_err_msg = function() {
+      return err_msg;
+    }
+
+    $.validator.addMethod('validateSnapshotName', function(value) {
+        var snapshot_name = $('#snapshot-name').val();
+         if (snapshot_name == "") {
+         err_msg = 'Please enter snapshot name';
+          return false;
+        }
+        else
+           if(/^[A-Za-z][A-Za-z0-9_.-]*$/.test(snapshot_name) == false){
+            err_msg = 'Snapshot name must be an alphanumeric starting with an alphabet';
+              return false;
+            }
+
+            return true;
+      }, name_err_msg);
+    
 	this.$('#add-snapshot-form :input').tooltip();
 	this.validator = this.$('#add-snapshot-form').validate({
 		onfocusout: false,
 		onkeyup: false,
 		rules: {
-		'snapshot-name': 'required',
+		'snapshot-name': 'validateSnapshotName',
 	},
 	submitHandler: function() {
 		var button = _this.$('#js-snapshot-save');
