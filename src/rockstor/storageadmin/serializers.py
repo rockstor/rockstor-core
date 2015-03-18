@@ -24,7 +24,7 @@ from storageadmin.models import (Disk, Pool, Share, Snapshot, NFSExport,
                                  NFSExportGroup, SFTP, Plugin, InstalledPlugin,
                                  AdvancedNFSExport, OauthApp, NetatalkShare,
                                  Group, PoolBalance, SambaCustomConfig, RockOn,
-                                 Volume)
+                                 Volume, Port, CustomConfig)
 from django.contrib.auth.models import User as DjangoUser
 
 
@@ -205,3 +205,15 @@ class RockOnVolumeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Volume
+
+
+class RockOnPortSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Port
+
+
+class RockOnCustomConfigSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = CustomConfig

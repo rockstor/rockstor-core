@@ -18,13 +18,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.conf.urls import patterns, url
 from storageadmin.views import (RockOnView, RockOnIdView, RockOnVolumeView,
-                                RockOnPortView)
+                                RockOnPortView, RockOnCustomConfigView)
 
 urlpatterns = patterns(
     '',
     url(r'^$', RockOnView.as_view(), ),
     url(r'^/volumes/(?P<rid>\d+)$', RockOnVolumeView.as_view(), ),
     url(r'^/ports/(?P<rid>\d+)$', RockOnPortView.as_view(), ),
+    url(r'^/customconfig/(?P<rid>\d+)$', RockOnCustomConfigView.as_view(), ),
     url(r'^/(?P<command>update)$', RockOnView.as_view(), ),
     url(r'^/(?P<rid>\d+)$', RockOnIdView.as_view(), ),
     url(r'^/(?P<rid>\d+)/(?P<command>install|uninstall|start|stop|state_update|status_update)$',
