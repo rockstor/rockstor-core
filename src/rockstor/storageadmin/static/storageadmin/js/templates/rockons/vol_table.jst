@@ -5,11 +5,11 @@
       <form id="vol-select-form" name="aform" class="form-horizontal">
 	<div class="messages"></div>
 	<div class="control-group">
-	  <% _.each(volumes, function(volume, index) { %>
+	  <% volumes.each(function(volume, index) { %>
 	  <label class="control-label" for="shares">Share(<%= volume.get('dest_dir')%>)<span class="required"> *</span></label>
 	  <div class="controls">
 	    <select name="<%= volume.id %>" id="<%= volume.id %>" data-placeholder="Select shares to export">
-	      <% _.each(shares, function(share, index) { %>
+	      <% shares.each(function(share, index) { %>
 	      <option value="<%= share.get('name') %>"><%= share.get('name') %></option>
 	      <% }); %>
 	    </select>

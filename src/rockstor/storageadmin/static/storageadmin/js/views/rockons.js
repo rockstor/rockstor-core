@@ -116,14 +116,44 @@ RockonInstallWizardView = WizardView.extend({
 	this.pages = [];
 	this.rockon = this.model.get('rockon');
 	this.volumes = new RockOnVolumeCollection(null, {rid: this.rockon.id});
-	this.ports = new RockOnVolumeCollection(null, {rid: this.rockon.id});
+	this.ports = new RockOnPortCollection(null, {rid: this.rockon.id});
 	this.custom_config = new RockOnCustomConfigCollection(null, {rid: this.rockon.id});
-	this.volumes.fetch();
-	console.log('volumes', this.volumes);
-	this.ports.fetch();
-	console.log('ports', this.ports);
-	this.custom_config.fetch();
-	console.log('custom config', this.custom_config);
+    },
+
+    fetchVolumes: function() {
+	var _this = this;
+	this.volumes.fetch({
+	    success: function () {
+		_this.model.set('volumes', _this.volumes);
+		_this.fetchPorts();
+	    }
+	});
+    },
+
+    fetchPorts: function() {
+	var _this = this;
+	this.ports.fetch({
+	    success: function() {
+		_this.fetchCustomConfig();
+	    }
+	});
+    },
+
+    fetchCustomConfig: function() {
+	var _this = this;
+	this.custom_config.fetch({
+	    success: function() {
+		_this.addPages();
+	    }
+	});
+    },
+
+    render: function() {
+	this.fetchVolumes();
+	return this;
+    },
+
+    addPages: function() {
 	if (this.volumes.length > 0) {
 	    this.pages.push(RockonShareChoice);
 	}
@@ -134,6 +164,8 @@ RockonInstallWizardView = WizardView.extend({
 	    this.pages.push(RockonCustomChoice);
 	}
 	this.pages.push.apply(this.pages, [RockonInstallSummary, RockonInstallComplete]);
+	WizardView.prototype.render.apply(this, arguments);
+    	return this;
     },
 
     setCurrentPage: function() {
@@ -154,6 +186,7 @@ RockonInstallWizardView = WizardView.extend({
 	    this.$('#prev-page').hide();
 	} else {
     	    this.$('#prev-page').show();
+	    this.$('#next-page').html('Next');
     	    this.$('#ph-wizard-buttons').show();
     	}
     },
@@ -175,28 +208,20 @@ RockonShareChoice = RockstorWizardPage.extend({
 	this.template = window.JST.rockons_install_choice;
 	this.vol_template = window.JST.rockons_vol_table;
 	this.rockon = this.model.get('rockon');
-	this.volumes = new RockOnVolumeCollection(null, {rid: this.rockon.id});
+	this.volumes = this.model.get('volumes');
 	this.shares = new ShareCollection();
 	RockstorWizardPage.prototype.initialize.apply(this, arguments);
-	this.volumes.on('reset', this.renderVolumes, this);
 	this.shares.on('reset', this.renderVolumes, this);
     },
 
     render: function() {
 	RockstorWizardPage.prototype.render.apply(this, arguments);
-	this.volumes.fetch();
 	this.shares.fetch();
 	return this;
     },
 
     renderVolumes: function() {
-	var volumes = this.volumes.filter(function(volume) {
-	    return volume;
-	}, this);
-	var shares = this.shares.filter(function(share) {
-	    return share;
-	}, this);
-	this.$('#ph-vols-table').html(this.vol_template({volumes: volumes, shares: shares}));
+	this.$('#ph-vols-table').html(this.vol_template({volumes: this.volumes, shares: this.shares}));
     },
 
     save: function() {
