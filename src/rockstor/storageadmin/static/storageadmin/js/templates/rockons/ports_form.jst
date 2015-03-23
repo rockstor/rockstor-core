@@ -8,7 +8,7 @@
 	<div class="messages"></div>
 
 	<div class="control-group">
-	  <% _.each(ports, function(port, index) { %>
+	  <% ports.each(function(port, index) { %>
 	  <label class="control-label" for="ports">Port(<%= port.get('containerp')%>)<span class="required"> *</span></label>
 
 	  <div class="controls">
