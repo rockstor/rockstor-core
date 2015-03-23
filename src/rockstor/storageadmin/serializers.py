@@ -31,167 +31,167 @@ from django.contrib.auth.models import User as DjangoUser
 
 class DiskInfoSerializer(serializers.ModelSerializer):
 
-    class Meta:
-        model = Disk
-        fields = ('name', 'size', 'offline', 'parted', 'btrfs_uuid', 'model', 'serial', 'transport',
-                    'vendor', 'pool_name')
+	class Meta:
+		model = Disk
+		fields = ('name', 'size', 'offline', 'parted', 'btrfs_uuid', 'model', 'serial', 'transport',
+					'vendor', 'pool_name')
 
 
 class PoolInfoSerializer(serializers.ModelSerializer):
-    # disks = DiskInfoSerializer('disk_set')
+	# disks = DiskInfoSerializer('disk_set')
 
-    class Meta:
-        model = Pool
-        fields = ('name', 'uuid', 'size', 'raid', 'toc', 'compression', 'mnt_options', 'cur_reclaimable',
-                    'cur_free')
+	class Meta:
+		model = Pool
+		fields = ('name', 'uuid', 'size', 'raid', 'toc', 'compression', 'mnt_options', 'cur_reclaimable',
+					'cur_free')
 
 
 class SnapshotSerializer(serializers.ModelSerializer):
     r_usage = serializers.IntegerField(source='cur_rusage')
     e_usage = serializers.IntegerField(source='cur_eusage')
 
-    class Meta:
-        model = Snapshot
+	class Meta:
+		model = Snapshot
 
 
 class NFSExportSerializer(serializers.ModelSerializer):
-    share = serializers.CharField(source='share_name')
+	share = serializers.CharField(source='share_name')
 
-    class Meta:
-        model = NFSExport
+	class Meta:
+		model = NFSExport
 
 
 class NFSExportGroupSerializer(serializers.ModelSerializer):
-    exports = NFSExportSerializer(source='nfsexport_set')
+	exports = NFSExportSerializer(source='nfsexport_set')
 
-    class Meta:
-        model = NFSExportGroup
+	class Meta:
+		model = NFSExportGroup
 
 
 class AdvancedNFSExportSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = AdvancedNFSExport
+	class Meta:
+		model = AdvancedNFSExport
 
 
 class SUserSerializer(serializers.ModelSerializer):
-    group = serializers.SlugRelatedField(slug_field='groupname', read_only=True)
+	group = serializers.SlugRelatedField(slug_field='groupname', read_only=True)
 
-    class Meta:
-        model = User
-        fields = ('username', 'uid', 'gid', 'user', 'public_key', 'admin',
-                  'group', 'shell',)
+	class Meta:
+		model = User
+		fields = ('username', 'uid', 'gid', 'user', 'public_key', 'admin',
+				  'group', 'shell',)
 
 
 class GroupSerializer(serializers.ModelSerializer):
 
-    class Meta:
-        model = Group
+	class Meta:
+		model = Group
 
 
 class UserSerializer(serializers.ModelSerializer):
-    suser = SUserSerializer(source='suser')
+	suser = SUserSerializer(source='suser')
 
-    class Meta:
-        model = DjangoUser
-        fields = ('username', 'is_active', 'suser')
+	class Meta:
+		model = DjangoUser
+		fields = ('username', 'is_active', 'suser')
 
 
 class SambaCustomConfigSerializer(serializers.ModelSerializer):
 
-    class Meta:
-        model = SambaCustomConfig
+	class Meta:
+		model = SambaCustomConfig
 
 
 class SambaShareSerializer(serializers.ModelSerializer):
-    share = serializers.CharField(source='share_name')
-    admin_users = SUserSerializer(source='admin_users')
-    custom_config = SambaCustomConfigSerializer(source='sambacustomconfig_set')
+	share = serializers.CharField(source='share_name')
+	admin_users = SUserSerializer(source='admin_users')
+	custom_config = SambaCustomConfigSerializer(source='sambacustomconfig_set')
 
-    class Meta:
-        model = SambaShare
+	class Meta:
+		model = SambaShare
 
 
 class IscsiSerializer(serializers.ModelSerializer):
 
-    class Meta:
-        model = IscsiTarget
+	class Meta:
+		model = IscsiTarget
 
 
 class ShareSerializer(serializers.ModelSerializer):
-    # snapshots = SnapshotSerializer(Snapshot.objects.all())
-    # pool = PoolInfoSerializer(data=Pool.objects.all())
-    # nfs_exports = NFSExportSerializer(data=NFSExport.objects.all())
+	snapshots = SnapshotSerializer
+	# pool = PoolInfoSerializer(data=Pool.objects.all())
+	# nfs_exports = NFSExportSerializer(data=NFSExport.objects.all())
 
-    class Meta:
-        model = Share
-        fields = ('pool', 'qgroup', 'name', 'uuid', 'size', 'owner', 'group', 'perms', 'toc', 'subvol_name',
-                    'replica', 'compression_algo', 'cur_rusage', 'cur_eusage')
+	class Meta:
+		model = Share
+		fields = ('pool', 'qgroup', 'name', 'uuid', 'size', 'owner', 'group', 'perms', 'toc', 'subvol_name',
+					'replica', 'compression_algo', 'cur_rusage', 'cur_eusage', 'snapshots')
 
 
 class ApplianceSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Appliance
+	class Meta:
+		model = Appliance
 
 
 class SupportSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SupportCase
+	class Meta:
+		model = SupportCase
 
 
 class DashboardConfigSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = DashboardConfig
+	class Meta:
+		model = DashboardConfig
 
 
 class NetworkInterfaceSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = NetworkInterface
+	class Meta:
+		model = NetworkInterface
 
 
 class PoolScrubSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PoolScrub
+	class Meta:
+		model = PoolScrub
 
 
 class PoolBalanceSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PoolBalance
+	class Meta:
+		model = PoolBalance
 
 
 class SetupSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Setup
+	class Meta:
+		model = Setup
 
 
 class SFTPSerializer(serializers.ModelSerializer):
-    share = serializers.CharField(source='share_name')
+	share = serializers.CharField(source='share_name')
 
-    class Meta:
-        model = SFTP
+	class Meta:
+		model = SFTP
 
 
 class PluginSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Plugin
+	class Meta:
+		model = Plugin
 
 
 class InstalledPluginSerializer(serializers.ModelSerializer):
-    plugin_meta = PluginSerializer(source='plugin_meta')
+	plugin_meta = PluginSerializer(source='plugin_meta')
 
-    class Meta:
-        model = InstalledPlugin
+	class Meta:
+		model = InstalledPlugin
 
 
 class OauthAppSerializer(serializers.ModelSerializer):
-    client_id = serializers.CharField(source='client_id')
-    client_secret = serializers.CharField(source='client_secret')
+	client_id = serializers.CharField(source='client_id')
+	client_secret = serializers.CharField(source='client_secret')
 
     class Meta:
         model = OauthApp
 
 
 class NetatalkShareSerializer(serializers.ModelSerializer):
-    share = serializers.CharField(source='share_name')
+	share = serializers.CharField(source='share_name')
 
     class Meta:
         model = NetatalkShare

@@ -351,9 +351,9 @@ SYSCONFIG = {
 SOUTH_TESTS_MIGRATE = False
 
 REST_FRAMEWORK = {
-	       'TEST_REQUEST_DEFAULT_FORMAT': 'json',
-	       'PAGINATE_BY_PARAM': 'page_size',
-	       'MAX_PAGINATE_BY': 10000,
+		'TEST_REQUEST_DEFAULT_FORMAT': 'json',
+		'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+		'PAGE_SIZE': 1000,
 }
 
 CONFROOT = '${buildout:depdir}/conf'
