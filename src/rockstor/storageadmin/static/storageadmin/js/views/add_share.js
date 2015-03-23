@@ -74,8 +74,8 @@ AddShareView = Backbone.View.extend({
             }
             else
                if(/^[A-Za-z][A-Za-z0-9_.-]*$/.test(share_name) == false){
-                err_msg = 'Share name must be an alphanumeric starting with an alphabet';
-                  return false;
+            	 err_msg = 'Please enter a valid share name ';
+                 return false;
                 }
 
                 return true;

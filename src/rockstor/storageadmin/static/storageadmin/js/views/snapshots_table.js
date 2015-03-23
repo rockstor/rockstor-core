@@ -97,13 +97,13 @@ add: function(event) {
          err_msg = 'Please enter snapshot name';
           return false;
         }
-        else
-           if(/^[A-Za-z][A-Za-z0-9_.-]*$/.test(snapshot_name) == false){
-            err_msg = 'Snapshot name must be an alphanumeric starting with an alphabet';
-              return false;
-            }
-
+         else
+             if(/^[A-Za-z][A-Za-z0-9_.-]*$/.test(snapshot_name) == false){
+          	 err_msg = 'Please enter a valid snapshot name.';
+               return false;
+              }        
             return true;
+            
       }, name_err_msg);
     
 	this.$('#add-snapshot-form :input').tooltip();
