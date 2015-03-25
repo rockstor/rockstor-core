@@ -32,7 +32,7 @@ RockonsView = RockstorLayoutView.extend({
 	this.template = window.JST.rockons_rockons;
 	this.rockons = new RockOnCollection({});
 	this.dependencies.push(this.rockons);
-
+	this.updateFreq = 15000;
     },
 
     events: {
@@ -133,12 +133,16 @@ RockonsView = RockstorLayoutView.extend({
 	var _this = this;
 	var rockon_id = this.getRockonId(event);
 	if (this.getSliderVal(rockon_id).toString() == "1") { return; }
+	console.log('before call', this.rockon);
+	this.stopPolling();
 	$.ajax({
 	    url: '/api/rockons/' + rockon_id + '/start',
 	    type: 'POST',
 	    dataType: 'json',
 	    success: function(data, status, xhr) {
+		console.log('after call', this.rockon);
 		_this.setSliderVal(rockon_id, 1);
+		_this.updateStatus();
 	    },
 	    error: function(data, status, xhr) {
 		console.log('error while starting rockon');
@@ -150,12 +154,14 @@ RockonsView = RockstorLayoutView.extend({
 	var _this = this;
 	var rockon_id = this.getRockonId(event);
 	if (this.getSliderVal(rockon_id).toString() == "0") { return; }
+	this.stopPolling();
 	$.ajax({
 	    url: '/api/rockons/' + rockon_id + '/stop',
 	    type: 'POST',
 	    dataType: 'json',
 	    success: function(data, status, xhr) {
 		_this.setSliderVal(rockon_id, 0);
+		_this.updateStatus();
 	    },
 	    error: function(data, status, xhr) {
 		console.log('error while stopping rockon');
@@ -163,9 +169,51 @@ RockonsView = RockstorLayoutView.extend({
 	});
     },
 
+    pendingOps: function() {
+	var pending = this.rockons.find(function(rockon) {
+	    if ((rockon.get('status').search('pending') != -1) || (rockon.get('state').search('pending') != -1)) {
+		return true;
+	    }
+	});
+	if (pending) { return true; }
+	return false;
+    },
+
+    updateStatus: function() {
+	console.log('in update status');
+	var _this = this;
+	_this.startTime = new Date().getTime();
+	_this.rockons.fetch({
+	    silent: true,
+	    success: function(data, response, options) {
+		_this.renderRockons();
+		if (_this.pendingOps()) {
+		    var ct = new Date().getTime();
+		    var diff = ct - _this.startTime;
+		    if (diff > _this.updateFreq) {
+			_this.updateStatus();
+		    } else {
+			_this.timeoutId = window.setTimeout( function() {
+			    _this.updateStatus();
+			}, _this.updateFreq - diff);
+		    }
+		} else {
+		    _this.stopPolling();
+		}
+	    }
+	});
+    },
+
+    stopPolling: function() {
+	if (!_.isUndefined(this.timeoutId)) {
+	    window.clearInterval(this.timeoutId);
+	}
+    },
+
     installedRockons: function(event) {
-	console.log('installed rockons fetched');
-	//this.rockons.fetch();
+	if (this.pendingOps()) {
+	    this.updateStatus();
+	}
     }
 
 });
