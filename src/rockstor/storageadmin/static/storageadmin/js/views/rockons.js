@@ -44,7 +44,9 @@ RockonsView = RockstorLayoutView.extend({
     },
 
     render: function() {
-	this.fetch(this.renderRockons, this);
+	//this.fetch(this.renderRockons, this);
+	this.rockons.fetch();
+	this.updateStatus();
 	return this;
     },
 
@@ -374,13 +376,15 @@ RockonPortChoice = RockstorWizardPage.extend({
 RockonCustomChoice = RockstorWizardPage.extend({
     initialize: function() {
 	this.template = window.JST.rockons_custom_choice;
+	this.cc_template = window.JST.rockons_cc_form;
 	this.custom_config = this.model.get('custom_config');
 	RockstorWizardPage.prototype.initialize.apply(this, arguments);
     },
 
     render: function() {
 	RockstorWizardPage.prototype.render.apply(this, arguments);
-	this.$('#ph-cc-form').html(this.template({cc: this.custom_config}));
+	console.log('cc', this.custom_config);
+	this.$('#ph-cc-form').html(this.cc_template({cc: this.custom_config}));
 	return this;
     },
 
@@ -416,7 +420,8 @@ RockonInstallComplete = RockstorWizardPage.extend({
 	this.template = window.JST.rockons_install_complete;
 	this.rockon = this.model.get('rockon');
 	this.port_map = this.model.get('port_map');
-	this.volume_map = this.model.get('volume_map');
+	this.share_map = this.model.get('share_map');
+	this.cc_map = this.model.get('cc_map');
 	RockstorWizardPage.prototype.initialize.apply(this, arguments);
     },
 
@@ -424,7 +429,7 @@ RockonInstallComplete = RockstorWizardPage.extend({
 	$(this.el).html(this.template({
 	    model: this.model,
 	    port_map: this.port_map,
-	    volume_map: this.volume_map
+	    share_map: this.share_map
 	}));
 	return this;
     },
@@ -437,8 +442,9 @@ RockonInstallComplete = RockstorWizardPage.extend({
 	    dataType: 'json',
 	    contentType: 'application/json',
 	    data: JSON.stringify({
-		'ports': this.model.get('port_map'),
-		'shares': this.model.get('share_map')
+		'ports': this.port_map,
+		'shares': this.share_map,
+		'cc': this.cc_map
 	    }),
 	    success: function() {
 		console.log('rockon install success');
