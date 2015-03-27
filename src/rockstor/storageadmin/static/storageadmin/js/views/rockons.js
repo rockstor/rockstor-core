@@ -338,9 +338,9 @@ RockonShareChoice = RockstorWizardPage.extend({
     },
 
     save: function() {
-	var share_map = {};
+	var share_map = new Map();
 	var volumes = this.volumes.filter(function(volume) {
-	    share_map[this.$('#' + volume.id).val()] = volume.get('dest_dir');
+	    share_map.set(this.$('#' + volume.id).val(), volume);
 	    return volume;
 	}, this);
 	this.model.set('share_map', share_map);
@@ -383,7 +383,6 @@ RockonCustomChoice = RockstorWizardPage.extend({
 
     render: function() {
 	RockstorWizardPage.prototype.render.apply(this, arguments);
-	console.log('cc', this.custom_config);
 	this.$('#ph-cc-form').html(this.cc_template({cc: this.custom_config}));
 	return this;
     },
@@ -402,15 +401,23 @@ RockonCustomChoice = RockstorWizardPage.extend({
 RockonInstallSummary = RockstorWizardPage.extend({
     initialize: function() {
 	this.template = window.JST.rockons_install_summary;
+	this.table_template = window.JST.rockons_summary_table;
 	this.share_map = this.model.get('share_map');
 	this.port_map = this.model.get('port_map');
 	this.cc_map = this.model.get('cc_map');
+	this.ports = this.model.get('ports');
+	this.cc = this.model.get('custom_config');
 	RockstorWizardPage.prototype.initialize.apply(this, arguments);
     },
 
     render: function() {
 	RockstorWizardPage.prototype.render.apply(this, arguments);
-	this.$('#ph-summary-table').html(this.template({share_map: this.share_map, port_map: this.port_map, cc_map: this.cc_map}));
+	this.test_map = new Map();
+	for (var i = 0; i < 25; i++) {
+	    this.test_map.set(i, i);
+	}
+	console.log('test_map', this.test_map);
+	this.$('#ph-summary-table').html(this.table_template({share_map: this.share_map, port_map: this.port_map, cc_map: this.cc_map, ports: this.ports, cc: this.cc, test_map: this.test_map}));
 	return this;
     }
 });
