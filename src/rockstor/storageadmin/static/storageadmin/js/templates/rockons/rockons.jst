@@ -24,7 +24,8 @@
 <div class="pull-right">
   <a id="js-update-rockons" class="btn btn-primary pull-right" href="#" title="Check for new Rock-ons"><i class="icon-refresh icon-white"></i> Update</a>
 </div>
-<br>
+<span class="h2">Rock-ons</span>
+<br><br>
 
 <ul class="css-tabs">
   <li class="active"><a href="#js-rockons-installed" data-toggle="tab">Installed</a></li>
@@ -41,27 +42,30 @@
       <% installed += 1; %>
       <div id="js-rockons-installed" class="tab-section">
 	<div class="row-fluid">
-	  <div class="span12">
+	  <div class="span6">
 	    <h3><%= rockon.get('name') %></h3>
 	    <p><%= rockon.get('description') %></p>
-	    <% if (rockon.get('state') == 'installed') { %>
 	    <h3>Status: <%= rockon.get('status') %></h3>
-	      <% if (rockon.get('status') == 'started') { %>
-	        <div class="slider-stop" data-rockon-id="<%= rockon.get('id') %>">OFF</div>
-		<div class="slider-ph">
+	  </div>
+	  <div class="span3"></div>
+	  <div class="span3">
+	    <% if (rockon.get('state') == 'installed') { %>
+	      <div class="slider-stop" data-rockon-id="<%= rockon.get('id') %>">OFF</div>
+	      <div class="slider-ph">
+		<% if (rockon.get('status') == 'started') { %>
 		  <input type="text" class="service-status" value="1" data-rockon-id="<%= rockon.get('id') %>"></input>
-		</div>
-		<div class="slider-start on" data-rockon-id="<%= rockon.get('id') %>">ON</div>
-	      <% } else { %>
-	        <div class="slider-stop" data-rockon-id="<%= rockon.get('id') %>">OFF</div>
-		<div class="slider-ph">
+		<% } else { %>
 		  <input type="text" class="service-status" value="0" data-rockon-id="<%= rockon.get('id') %>"></input>
-		</div>
-		<div class="slider-start" data-rockon-id="<%= rockon.get('id') %>">ON</div>
-	      <% } %>
-	      <a id="js-uninstall-rockon" class="btn btn-danger pull-right" data-name="<%= rockon.get('id') %>">Uninstall</a>
+		<% } %>
+	      </div>
+	      <div class="slider-start on" data-rockon-id="<%= rockon.get('id') %>">ON</div>
+	      <br><br>
+	      <a id="js-uninstall-rockon" class="btn btn-danger" data-name="<%= rockon.get('id') %>">Uninstall</a>
 	    <% } else { %>
-	      <a id="js-uninstall-rockon" class="btn btn-primary pull-right disabled" title="Rockon cannot be uninstalled because it is in a transition state(<%= rockon.get('state') %>)">Uninstall</a>
+	      <% if (rockon.get('state') == 'pending_install') { %>
+	        <h3>Installation in progress...</h3>
+	      <% } %>
+	      <a id="js-uninstall-rockon" class="btn btn-primary disabled" title="Rockon cannot be uninstalled because it is in a transition state(<%= rockon.get('state') %>)">Uninstall</a>
 	    <% } %>
 	  </div>
 	</div>
@@ -72,7 +76,7 @@
       <div class="tab-section">
 	<div class="row-fluid">
 	  <div class="span12">
-	    <h3>Nothing installed yet.</h3>
+	    <h3>There are no Rock-ons installed currently.</h3>
 	  </div>
 	</div>
       </div>
@@ -80,7 +84,6 @@
   </div>
 
   <div id="js-rockons-available">
-
     <% rockons.each(function(rockon, index) { %>
       <% if (rockon.get('state') == 'available' || rockon.get('state') == 'install_failed') { %>
       <div class="tab-section">
