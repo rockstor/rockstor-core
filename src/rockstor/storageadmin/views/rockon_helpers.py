@@ -20,7 +20,8 @@ from system.osi import run_command
 from django_ztask.decorators import task
 from cli.rest_util import api_call
 from system.services import service_status
-from storageadmin.models import RockOn
+from storageadmin.models import (RockOn, DContainer, DVolume, DPort,
+                                 DCustomConfig)
 
 DOCKER = '/usr/bin/docker'
 ROCKON_URL = 'https://localhost/api/rockons'
@@ -41,8 +42,7 @@ def start(rid):
     new_status = 'started'
     try:
         rockon = RockOn.objects.get(id=rid)
-        if (rockon.name == 'Plex'):
-            run_command([DOCKER, 'start', 'rockplex'])
+        run_command([DOCKER, 'start', rockon.name])
     except:
         new_status = 'start_failed'
     finally:
@@ -56,8 +56,7 @@ def stop(rid):
     new_status = 'stopped'
     try:
         rockon = RockOn.objects.get(id=rid)
-        if (rockon.name == 'Plex'):
-            run_command([DOCKER, 'stop', 'rockplex'])
+        run_command([DOCKER, 'stop', rockon.name])
     except:
         new_status = 'stop_failed'
     finally:
@@ -72,7 +71,7 @@ def install(rid):
     try:
         rockon = RockOn.objects.get(id=rid)
         if (rockon.name == 'Plex'):
-            plex_install({'/mnt2/plex_config': '/config', })
+            plex_install(rockon)
     except Exception, e:
         logger.debug('exception while installing the rockon')
         logger.exception(e)
@@ -89,7 +88,7 @@ def uninstall(rid):
     try:
         rockon = RockOn.objects.get(id=rid)
         if (rockon.name == 'Plex'):
-            run_command([DOCKER, 'rm', 'rockplex'])
+            run_command([DOCKER, 'rm', rockon.name, ])
     except:
         new_state = 'error'
     finally:
@@ -98,20 +97,27 @@ def uninstall(rid):
                         save_error=False)
 
 
-def plex_install(vol_map):
-    pull_cmd = [DOCKER, 'pull', 'timhaak/plex', ]
-    run_command(pull_cmd)
-    cmd = [DOCKER, 'run', '-d', '--name', 'rockplex', '--net="host"', ]
+def plex_install(rockon):
+    cmd = [DOCKER, 'run', '-d', '--name', rockon.name, '--net="host"', ]
     config_share = None
-    for v in vol_map:
-        if (vol_map[v] == '/config'):
-            config_share = v
-        cmd.extend(['-v', '%s:%s' % (v, vol_map[v]), ])
-    cmd.extend(['-p', '32400:32400', 'timhaak/plex', ])
+    for c in DContainer.objects.filter(rockon=rockon):
+        image = c.dimage.name
+        run_command([DOCKER, 'pull', image, ])
+        for v in DVolume.objects.filter(container=c):
+            share_mnt = '/mnt2/%s' % v.share.name
+            if (v.dest_dir == '/config'):
+                config_share = share_mnt
+            cmd.extend(['-v', '%s:%s' % (share_mnt, v.dest_dir), ])
+        for p in DPort.objects.filter(container=c):
+            cmd.extend(['-p', '%d:%d' % (p.hostp, p.containerp), ])
+        cmd.append(image)
+    logger.debug('cmd = %s' % cmd)
     run_command(cmd)
-    run_command([DOCKER, 'stop', 'rockplex', ])
+    run_command([DOCKER, 'stop', rockon.name, ])
     pref_file = ('%s/Library/Application Support/Plex Media Server/'
                  'Preferences.xml' % config_share)
+    cco = DCustomConfig.objects.get(rockon=rockon)
+    logger.debug('network val %s' % cco.val)
     import re
     from tempfile import mkstemp
     from shutil import move
@@ -120,8 +126,8 @@ def plex_install(vol_map):
         for l in pfo.readlines():
             nl = l
             if (re.match('<Preferences ', l) is not None):
-                nl = ('%s allowedNetworks="192.168.56.0/255.255.255.0"/>' %
-                      l[:-3])
+                nl = ('%s allowedNetworks="%s"/>' %
+                      (l[:-3], cco.val))
             tfo.write('%s\n' % nl)
     return move(npath, pref_file)
 

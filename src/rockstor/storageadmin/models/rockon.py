@@ -35,6 +35,7 @@ class RockOn(models.Model):
         ('error',) * 2,
     ]
     status = models.CharField(max_length=32, choices=STATUS)
+    link = models.CharField(max_length=1024, null=True)
 
     class Meta:
         app_label = 'storageadmin'
@@ -59,7 +60,7 @@ class DContainer(models.Model):
         app_label = 'storageadmin'
 
 
-class Port(models.Model):
+class DPort(models.Model):
     hostp = models.IntegerField(unique=True)
     containerp = models.IntegerField()
     container = models.ForeignKey(DContainer)
@@ -74,7 +75,7 @@ class Port(models.Model):
         app_label = 'storageadmin'
 
 
-class Volume(models.Model):
+class DVolume(models.Model):
     container = models.ForeignKey(DContainer)
     share = models.ForeignKey(Share, null=True)
     dest_dir = models.CharField(max_length=1024)
@@ -93,11 +94,12 @@ class ContainerOption(models.Model):
         app_label = 'storageadmin'
 
 
-class CustomConfig(models.Model):
+class DCustomConfig(models.Model):
     rockon = models.ForeignKey(RockOn)
     key = models.CharField(max_length=1024)
-    val = models.CharField(max_length=1024)
-    description = models.CharField(max_length=2048)
+    val = models.CharField(max_length=1024, null=True)
+    description = models.CharField(max_length=2048, null=True)
 
     class Meta:
+        unique_together = ('rockon', 'key',)
         app_label = 'storageadmin'

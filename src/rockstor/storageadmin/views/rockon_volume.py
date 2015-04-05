@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from storageadmin.models import (RockOn, DContainer, Volume,)
+from storageadmin.models import (RockOn, DContainer, DVolume,)
 from storageadmin.serializers import RockOnVolumeSerializer
 import rest_framework_custom as rfc
 from storageadmin.util import handle_exception
@@ -33,4 +33,4 @@ class RockOnVolumeView(rfc.GenericView):
             handle_exception(Exception(e_msg), self.request)
 
         containers = DContainer.objects.filter(rockon=rockon)
-        return Volume.objects.filter(container__in=containers)
+        return DVolume.objects.filter(container__in=containers)

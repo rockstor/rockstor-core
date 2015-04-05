@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from storageadmin.models import (RockOn, DContainer, Port,)
+from storageadmin.models import (RockOn, DContainer, DPort,)
 from storageadmin.serializers import RockOnPortSerializer
 import rest_framework_custom as rfc
 from storageadmin.util import handle_exception
@@ -33,4 +33,4 @@ class RockOnPortView(rfc.GenericView):
             handle_exception(Exception(e_msg), self.request)
 
         containers = DContainer.objects.filter(rockon=rockon)
-        return Port.objects.filter(container__in=containers)
+        return DPort.objects.filter(container__in=containers)

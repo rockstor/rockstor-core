@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from storageadmin.models import (RockOn, CustomConfig)
+from storageadmin.models import (RockOn, DCustomConfig)
 from storageadmin.serializers import RockOnCustomConfigSerializer
 import rest_framework_custom as rfc
 from storageadmin.util import handle_exception
@@ -32,4 +32,4 @@ class RockOnCustomConfigView(rfc.GenericView):
             e_msg = ('Rockon(%s) does not exist' % kwargs['rid'])
             handle_exception(Exception(e_msg), self.request)
 
-        return CustomConfig.objects.filter(rockon=rockon)
+        return DCustomConfig.objects.filter(rockon=rockon)
