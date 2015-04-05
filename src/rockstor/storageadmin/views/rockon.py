@@ -16,10 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import requests
 from rest_framework.response import Response
 from django.db import transaction
-from storageadmin.models import (RockOn, DImage, DContainer, Port, Volume,
-                                 ContainerOption)
+from storageadmin.models import (RockOn, DImage, DContainer, DPort, DVolume,
+                                 ContainerOption, DCustomConfig)
 from storageadmin.serializers import RockOnSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
@@ -48,15 +49,17 @@ class RockOnView(rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
 
             if (command == 'update'):
-                rockons = self._get_available()
+                rockons = self._get_available(request)
                 for r in rockons.keys():
                     name = r
                     ro = None
                     if (RockOn.objects.filter(name=name).exists()):
                         ro = RockOn.objects.get(name=name)
                     else:
-                        ro = RockOn(name=name, version='1.0',
-                                    state='available', status='stopped')
+                        ro = RockOn(name=name,
+                                    description=rockons[r]['description'],
+                                    version='1.0', state='available',
+                                    status='stopped')
                     ro.save()
                     containers = rockons[r]['containers']
                     for c in containers.keys():
@@ -80,19 +83,19 @@ class RockOnView(rfc.GenericView):
                         ports = containers[c]['ports']
                         for p in ports.keys():
                             po = None
-                            if (Port.objects.filter(hostp=p).exists()):
-                                po = Port.objects.get(hostp=p)
+                            if (DPort.objects.filter(hostp=p).exists()):
+                                po = DPort.objects.get(hostp=p)
                                 po.container = co
                                 po.protocol = ports[p]
                             else:
-                                po = Port(hostp=p, containerp=p,
-                                          container=co, protocol=ports[p])
+                                po = DPort(hostp=p, containerp=p,
+                                           container=co, protocol=ports[p])
                             po.save()
                         volumes = containers[c]['volumes']
                         for v in volumes:
-                            if (not Volume.objects.filter(
+                            if (not DVolume.objects.filter(
                                     dest_dir=v, container=co).exists()):
-                                vo = Volume(container=co, dest_dir=v)
+                                vo = DVolume(container=co, dest_dir=v)
                                 vo.save()
                         options = containers[c]['opts']
                         for o in options.keys():
@@ -101,13 +104,31 @@ class RockOnView(rfc.GenericView):
                                 oo = ContainerOption(container=co, name=o,
                                                      val=options[o])
                                 oo.save()
+                    logger.debug('rockon %s' % rockons[r])
+                    if ('custom_config' in rockons[r]):
+                        cc_d = rockons[r]['custom_config']
+                        logger.debug('custom_config = %s' % cc_d)
+                        for k in cc_d:
+                            cco, created = DCustomConfig.objects.get_or_create(
+                                rockon=ro, key=k,
+                                defaults={'description': cc_d[k]})
+                            if (not created):
+                                cco.description = cc_d[k]
+                            cco.save()
+                    if ('app_link' in rockons[r]):
+                        app_link = rockons[r]['app_link']
+                        logger.debug('link stub %s' % app_link)
+                        ro.link = app_link
+                        ro.save()
             return Response()
 
-    def _get_available(self):
-        import requests
-        r = requests.get('http://rockstor.com/rockons.json')
-        rockons = r.json()
-        return rockons
+    def _get_available(self, request):
+        msg = ('Network error while checking for updates. '
+               'Please try again later.')
+        with self._handle_exception(request, msg=msg):
+            r = requests.get('http://rockstor.com/rockons.json')
+            rockons = r.json()
+            return rockons
 
     @transaction.commit_on_success
     def delete(self, request, sname):

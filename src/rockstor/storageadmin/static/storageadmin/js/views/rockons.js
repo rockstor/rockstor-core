@@ -40,7 +40,8 @@ RockonsView = RockstorLayoutView.extend({
 	'click #js-uninstall-rockon': 'uninstallRockon',
 	'click #js-rockons-installed': 'installedRockons',
 	'click .slider-stop': 'stopRockon',
-	'click .slider-start': 'startRockon'
+	'click .slider-start': 'startRockon',
+	'click #js-update-rockons': 'updateRockons'
     },
 
     render: function() {
@@ -87,7 +88,7 @@ RockonsView = RockstorLayoutView.extend({
 	var rockon_o = _this.rockons.get(rockon_id);
 	var wizardView = new RockonInstallWizardView({
 	    model: new Backbone.Model({ rockon: rockon_o }),
-	    title: 'Install this awesome Rockon',
+	    title: 'Rock-on install wizard [' + rockon_o.get('name') + ']',
 	    parent: this
 	});
 	$('.overlay-content', '#install-rockon-overlay').html(wizardView.render().el);
@@ -116,6 +117,26 @@ RockonsView = RockstorLayoutView.extend({
 		}
 	    });
 	}
+    },
+
+    updateRockons: function(event) {
+	var _this = this;
+	event.preventDefault();
+	var button = $(event.currentTarget);
+	if (buttonDisabled(button)) return false;
+	disableButton(button);
+	$.ajax({
+	    url: '/api/rockons/update',
+	    type: 'POST',
+	    dataType: 'json',
+	    success: function() {
+		_this.render();
+		enableButton(button);
+	    },
+	    error: function(xhr, status, error) {
+		enableButton(button);
+	    }
+	});
     },
 
     getRockonId: function(event) {
