@@ -8,15 +8,115 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding field 'RockOn.description'
-        db.add_column(u'storageadmin_rockon', 'description',
-                      self.gf('django.db.models.fields.CharField')(default='rockon description', max_length=2048),
-                      keep_default=False)
+        # Adding model 'DVolume'
+        db.create_table(u'storageadmin_dvolume', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('container', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['storageadmin.DContainer'])),
+            ('share', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['storageadmin.Share'], null=True)),
+            ('dest_dir', self.gf('django.db.models.fields.CharField')(max_length=1024)),
+        ))
+        db.send_create_signal('storageadmin', ['DVolume'])
+
+        # Adding unique constraint on 'DVolume', fields ['container', 'dest_dir']
+        db.create_unique(u'storageadmin_dvolume', ['container_id', 'dest_dir'])
+
+        # Adding model 'DImage'
+        db.create_table(u'storageadmin_dimage', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('name', self.gf('django.db.models.fields.CharField')(max_length=1024)),
+            ('tag', self.gf('django.db.models.fields.CharField')(max_length=1024)),
+            ('repo', self.gf('django.db.models.fields.CharField')(max_length=1024)),
+        ))
+        db.send_create_signal('storageadmin', ['DImage'])
+
+        # Adding model 'ContainerOption'
+        db.create_table(u'storageadmin_containeroption', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('container', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['storageadmin.DContainer'])),
+            ('name', self.gf('django.db.models.fields.CharField')(max_length=1024)),
+            ('val', self.gf('django.db.models.fields.CharField')(max_length=1024)),
+        ))
+        db.send_create_signal('storageadmin', ['ContainerOption'])
+
+        # Adding model 'DPort'
+        db.create_table(u'storageadmin_dport', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('hostp', self.gf('django.db.models.fields.IntegerField')(unique=True)),
+            ('containerp', self.gf('django.db.models.fields.IntegerField')()),
+            ('container', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['storageadmin.DContainer'])),
+            ('protocol', self.gf('django.db.models.fields.CharField')(max_length=32, null=True)),
+        ))
+        db.send_create_signal('storageadmin', ['DPort'])
+
+        # Adding unique constraint on 'DPort', fields ['container', 'containerp']
+        db.create_unique(u'storageadmin_dport', ['container_id', 'containerp'])
+
+        # Adding model 'RockOn'
+        db.create_table(u'storageadmin_rockon', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('name', self.gf('django.db.models.fields.CharField')(max_length=1024)),
+            ('description', self.gf('django.db.models.fields.CharField')(max_length=2048)),
+            ('version', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('state', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('status', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('link', self.gf('django.db.models.fields.CharField')(max_length=1024, null=True)),
+        ))
+        db.send_create_signal('storageadmin', ['RockOn'])
+
+        # Adding model 'DContainer'
+        db.create_table(u'storageadmin_dcontainer', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('rockon', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['storageadmin.RockOn'])),
+            ('dimage', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['storageadmin.DImage'])),
+            ('name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=1024)),
+            ('link', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['storageadmin.DContainer'], null=True)),
+        ))
+        db.send_create_signal('storageadmin', ['DContainer'])
+
+        # Adding model 'DCustomConfig'
+        db.create_table(u'storageadmin_dcustomconfig', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('rockon', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['storageadmin.RockOn'])),
+            ('key', self.gf('django.db.models.fields.CharField')(max_length=1024)),
+            ('val', self.gf('django.db.models.fields.CharField')(max_length=1024, null=True)),
+            ('description', self.gf('django.db.models.fields.CharField')(max_length=2048, null=True)),
+        ))
+        db.send_create_signal('storageadmin', ['DCustomConfig'])
+
+        # Adding unique constraint on 'DCustomConfig', fields ['rockon', 'key']
+        db.create_unique(u'storageadmin_dcustomconfig', ['rockon_id', 'key'])
 
 
     def backwards(self, orm):
-        # Deleting field 'RockOn.description'
-        db.delete_column(u'storageadmin_rockon', 'description')
+        # Removing unique constraint on 'DCustomConfig', fields ['rockon', 'key']
+        db.delete_unique(u'storageadmin_dcustomconfig', ['rockon_id', 'key'])
+
+        # Removing unique constraint on 'DPort', fields ['container', 'containerp']
+        db.delete_unique(u'storageadmin_dport', ['container_id', 'containerp'])
+
+        # Removing unique constraint on 'DVolume', fields ['container', 'dest_dir']
+        db.delete_unique(u'storageadmin_dvolume', ['container_id', 'dest_dir'])
+
+        # Deleting model 'DVolume'
+        db.delete_table(u'storageadmin_dvolume')
+
+        # Deleting model 'DImage'
+        db.delete_table(u'storageadmin_dimage')
+
+        # Deleting model 'ContainerOption'
+        db.delete_table(u'storageadmin_containeroption')
+
+        # Deleting model 'DPort'
+        db.delete_table(u'storageadmin_dport')
+
+        # Deleting model 'RockOn'
+        db.delete_table(u'storageadmin_rockon')
+
+        # Deleting model 'DContainer'
+        db.delete_table(u'storageadmin_dcontainer')
+
+        # Deleting model 'DCustomConfig'
+        db.delete_table(u'storageadmin_dcustomconfig')
 
 
     models = {
@@ -59,8 +159,8 @@ class Migration(SchemaMigration):
         u'oauth2_provider.application': {
             'Meta': {'object_name': 'Application'},
             'authorization_grant_type': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
-            'client_id': ('django.db.models.fields.CharField', [], {'default': "u'FYportf4XWMaseCvTgtNN@5_ooE;KI5dskHYB3yE'", 'unique': 'True', 'max_length': '100'}),
-            'client_secret': ('django.db.models.fields.CharField', [], {'default': "u'!4K76v0r697949AVQilqph:LD8tV32S!uEvWbE-@iKp9Eml3Sd.QWRC6JPqdgr9gEvGEWnK;U_tTKly=RQm.9=.mQgY:6ih62oPBWGZ?sU4MorNY==Ha7qYhv_8Pf3Lf'", 'max_length': '255', 'blank': 'True'}),
+            'client_id': ('django.db.models.fields.CharField', [], {'default': "u'c.IDw34CbNP1h!kO;1kxfbbl16SjHdIYqFO1@8n!'", 'unique': 'True', 'max_length': '100'}),
+            'client_secret': ('django.db.models.fields.CharField', [], {'default': "u'S0Bc2nfu0=BYwt1ElPoGxwCV!sAJ5:Zmu0xHW:p3BXmEF4UEzwWOLFZBrrKE1WaQ_mdPErrjk:0Wz.XCnqjuQhueM=9fFWF38r3spX4D4anZ3cp7J_RPbmSg5Lcnkgb:'", 'max_length': '255', 'blank': 'True'}),
             'client_type': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
@@ -110,6 +210,14 @@ class Migration(SchemaMigration):
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '1024'}),
             'rockon': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storageadmin.RockOn']"})
         },
+        'storageadmin.dcustomconfig': {
+            'Meta': {'unique_together': "(('rockon', 'key'),)", 'object_name': 'DCustomConfig'},
+            'description': ('django.db.models.fields.CharField', [], {'max_length': '2048', 'null': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'key': ('django.db.models.fields.CharField', [], {'max_length': '1024'}),
+            'rockon': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storageadmin.RockOn']"}),
+            'val': ('django.db.models.fields.CharField', [], {'max_length': '1024', 'null': 'True'})
+        },
         'storageadmin.dimage': {
             'Meta': {'object_name': 'DImage'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -130,6 +238,21 @@ class Migration(SchemaMigration):
             'size': ('django.db.models.fields.BigIntegerField', [], {'default': '0'}),
             'transport': ('django.db.models.fields.CharField', [], {'max_length': '1024', 'null': 'True'}),
             'vendor': ('django.db.models.fields.CharField', [], {'max_length': '1024', 'null': 'True'})
+        },
+        'storageadmin.dport': {
+            'Meta': {'unique_together': "(('container', 'containerp'),)", 'object_name': 'DPort'},
+            'container': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storageadmin.DContainer']"}),
+            'containerp': ('django.db.models.fields.IntegerField', [], {}),
+            'hostp': ('django.db.models.fields.IntegerField', [], {'unique': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'protocol': ('django.db.models.fields.CharField', [], {'max_length': '32', 'null': 'True'})
+        },
+        'storageadmin.dvolume': {
+            'Meta': {'unique_together': "(('container', 'dest_dir'),)", 'object_name': 'DVolume'},
+            'container': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storageadmin.DContainer']"}),
+            'dest_dir': ('django.db.models.fields.CharField', [], {'max_length': '1024'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'share': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storageadmin.Share']", 'null': 'True'})
         },
         'storageadmin.group': {
             'Meta': {'object_name': 'Group'},
@@ -257,14 +380,6 @@ class Migration(SchemaMigration):
             'unverified_errors': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
             'verify_errors': ('django.db.models.fields.IntegerField', [], {'default': '0'})
         },
-        'storageadmin.port': {
-            'Meta': {'unique_together': "(('container', 'containerp'),)", 'object_name': 'Port'},
-            'container': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storageadmin.DContainer']"}),
-            'containerp': ('django.db.models.fields.IntegerField', [], {}),
-            'hostp': ('django.db.models.fields.IntegerField', [], {'unique': 'True'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'protocol': ('django.db.models.fields.CharField', [], {'max_length': '32', 'null': 'True'})
-        },
         'storageadmin.posixacls': {
             'Meta': {'object_name': 'PosixACLs'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -276,6 +391,7 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'RockOn'},
             'description': ('django.db.models.fields.CharField', [], {'max_length': '2048'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'link': ('django.db.models.fields.CharField', [], {'max_length': '1024', 'null': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '1024'}),
             'state': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
             'status': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
@@ -362,13 +478,6 @@ class Migration(SchemaMigration):
             'uid': ('django.db.models.fields.IntegerField', [], {'default': '5000'}),
             'user': ('django.db.models.fields.related.OneToOneField', [], {'related_name': "'suser'", 'unique': 'True', 'null': 'True', 'to': u"orm['auth.User']"}),
             'username': ('django.db.models.fields.CharField', [], {'default': "''", 'unique': 'True', 'max_length': '4096'})
-        },
-        'storageadmin.volume': {
-            'Meta': {'unique_together': "(('container', 'dest_dir'),)", 'object_name': 'Volume'},
-            'container': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storageadmin.DContainer']"}),
-            'dest_dir': ('django.db.models.fields.CharField', [], {'max_length': '1024'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'share': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storageadmin.Share']", 'null': 'True'})
         }
     }
 
