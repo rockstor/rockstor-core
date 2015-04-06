@@ -359,9 +359,9 @@ RockonShareChoice = RockstorWizardPage.extend({
     },
 
     save: function() {
-	var share_map = new Map();
+	var share_map = {};
 	var volumes = this.volumes.filter(function(volume) {
-	    share_map.set(this.$('#' + volume.id).val(), volume);
+	    share_map[this.$('#' + volume.id).val()] = volume.get('dest_dir');
 	    return volume;
 	}, this);
 	this.model.set('share_map', share_map);
@@ -433,12 +433,7 @@ RockonInstallSummary = RockstorWizardPage.extend({
 
     render: function() {
 	RockstorWizardPage.prototype.render.apply(this, arguments);
-	this.test_map = new Map();
-	for (var i = 0; i < 25; i++) {
-	    this.test_map.set(i, i);
-	}
-	console.log('test_map', this.test_map);
-	this.$('#ph-summary-table').html(this.table_template({share_map: this.share_map, port_map: this.port_map, cc_map: this.cc_map, ports: this.ports, cc: this.cc, test_map: this.test_map}));
+	this.$('#ph-summary-table').html(this.table_template({share_map: this.share_map, port_map: this.port_map, cc_map: this.cc_map, ports: this.ports, cc: this.cc}));
 	return this;
     }
 });

@@ -1,31 +1,29 @@
-<table class="table table-bordered">
+<table class="table table-condensed table-bordered table-hover table-striped tablesorter">
+<thead>
   <tr>
     <th>Resource type</th>
     <th>Name/Value</th>
-    <th>More info</th>
   </tr>
+</thead>
 
   <% share_map.forEach(function(volume, share) { %>
     <tr>
-      <th>Share</th>
-      <td><%= share %></td>
-      <td><%= volume.get('dest_dir') %></td>
+      <td>Share</td>
+      <td><%= share %>&nbsp;&nbsp<i class="fa fa-exclamation-circle" title="<%= volume.get('dest_dir') %>" rel="tooltip"></i></td>
     </tr>
   <% }); %>
 
   <% ports.each(function(port, index) { %>
     <tr>
-      <th>Port</th>
-      <td><%= port.get('hostp') %></td>
-      <td><%= port.get('hostp') %></td>
+      <td>Port</td>
+      <td><%= port.get('hostp') %>&nbsp;&nbsp<i class="fa fa-exclamation-circle" title="<%= port.get('hostp') %>" rel="tooltip"></i></td>
     </tr>
   <% }); %>
 
   <% cc.each(function(cci, index) { %>
     <tr>
-      <th>Custom</th>
-      <td><%= cci.get('val') %></td>
-      <td><%= cci.get('description') %></td>
+      <td>Custom</td>
+      <td><%= cci.get('val') %>&nbsp;&nbsp<i class="fa fa-exclamation-circle" title="<%= cci.get('description') %>" rel="tooltip"></i></td>
     </tr>
   <% }); %>
-</table>
+</tablthead>
