@@ -54,7 +54,13 @@ class DockerServiceView(BaseServiceView):
             self._save_config(service, config)
 
         elif (command == 'start'):
-            config = self._get_config(service)
+            try:
+                config = self._get_config(service)
+            except:
+                e_msg = ('Cannot start without configuration. '
+                         'Please configure(System->Services) and try again.')
+                handle_exception(Exception(e_msg), request)
+
             share = self._validate_root(request, config['root_share'])
             mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
             if (not is_share_mounted(share.name)):
@@ -66,7 +72,7 @@ class DockerServiceView(BaseServiceView):
             with open(inf) as ino, open(outf, 'w') as outo:
                 for l in ino.readlines():
                     if (re.match('ExecStart=', l) is not None):
-                        outo.write('%s%s\n' % (l.strip(), share.name))
+                        outo.write('%s %s\n' % (l.strip(), mnt_pt))
                     else:
                         outo.write(l)
             socket_file = ('%s/docker.socket' % (settings.CONFROOT))
