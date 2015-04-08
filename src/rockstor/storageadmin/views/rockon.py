@@ -114,6 +114,13 @@ class RockOnView(rfc.GenericView):
                                 defaults={'description': cc_d[k]})
                             if (not created):
                                 cco.description = cc_d[k]
+                            if (k == 'iprange' and ro.name == 'Plex'):
+                                from storageadmin.models import NetworkInterface
+                                try:
+                                    ni = NetworkInterface.objects.filter(itype='management')[0]
+                                    cco.val = ('%s/255.255.255.0' % ni.ipaddr)
+                                except:
+                                    pass
                             cco.save()
                     if ('app_link' in rockons[r]):
                         app_link = rockons[r]['app_link']
