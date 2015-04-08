@@ -36,6 +36,7 @@ class RockOn(models.Model):
     ]
     status = models.CharField(max_length=32, choices=STATUS)
     link = models.CharField(max_length=1024, null=True)
+    website = models.CharField(max_length=2048, null=True)
 
     class Meta:
         app_label = 'storageadmin'
@@ -79,6 +80,13 @@ class DVolume(models.Model):
     container = models.ForeignKey(DContainer)
     share = models.ForeignKey(Share, null=True)
     dest_dir = models.CharField(max_length=1024)
+    uservol = models.BooleanField(default=False)
+
+    @property
+    def share_name(self):
+        if (self.share is not None):
+            return self.share.name
+        return None
 
     class Meta:
         unique_together = ('container', 'dest_dir',)
