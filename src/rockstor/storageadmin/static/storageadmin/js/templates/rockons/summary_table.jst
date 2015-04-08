@@ -6,12 +6,12 @@
   </tr>
 </thead>
 
-  <% share_map.forEach(function(volume, share) { %>
+  <% for (s in share_map) { %>
     <tr>
       <td>Share</td>
-      <td><%= share %>&nbsp;&nbsp<i class="fa fa-exclamation-circle" title="<%= volume.get('dest_dir') %>" rel="tooltip"></i></td>
+      <td><%= s %>&nbsp;&nbsp<i class="fa fa-exclamation-circle" title="<%= share_map[s] %>" rel="tooltip"></i></td>
     </tr>
-  <% }); %>
+  <% } %>
 
   <% ports.each(function(port, index) { %>
     <tr>

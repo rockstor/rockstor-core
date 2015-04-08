@@ -202,6 +202,7 @@ class RockOnSerializer(serializers.ModelSerializer):
 
 
 class RockOnVolumeSerializer(serializers.ModelSerializer):
+    share_name = serializers.CharField(source='share_name')
 
     class Meta:
         model = DVolume

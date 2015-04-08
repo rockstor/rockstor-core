@@ -9,7 +9,7 @@
 	  <% cc.each(function(cci, index) { %>
 	    <label class="control-label" for="cc"><%= cci.get('key')%><span class="required"> *</span></label>
 	    <div class="controls">
-	      <input type="text" id="<%= cci.id %>" value="<%= cci.get('val')%>" title="<%= cci.get('description') %>">
+	      <input type="text" id="<%= cci.id %>" value="<%= cci.get('val')%>">
 	      &nbsp;&nbsp<i class="fa fa-exclamation-circle" title="<%= cci.get('description') %>" rel="tooltip"></i>
 	    </div>
 	  <% }); %>
