@@ -18,7 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework.response import Response
 from django.db import transaction
-from storageadmin.models import (RockOn, DContainer, DVolume, Share, DPort)
+from storageadmin.models import (RockOn, DContainer, DVolume, Share, DPort,
+                                 DCustomConfig)
 from storageadmin.serializers import RockOnSerializer
 import rest_framework_custom as rfc
 from storageadmin.util import handle_exception
@@ -68,11 +69,11 @@ class RockOnIdView(rfc.GenericView):
                         vo.share = so
                         vo.save()
                     for p in port_map.keys():
-                        if (not DPort.objects.filter(containerp=p).exists()):
-                            e_msg = ('Invalid Port(%s).' % p)
+                        if (not DPort.objects.filter(containerp=port_map[p]).exists()):
+                            e_msg = ('Invalid Port(%s).' % port_map[p])
                             handle_exception(Exception(e_msg), request)
-                        po = DPort.objects.get(containerp=p)
-                        po.hostp = port_map[p]
+                        po = DPort.objects.get(containerp=port_map[p])
+                        po.hostp = p
                         po.save()
                         link_crumbs = []
                         if (rockon.link is not None):
@@ -84,6 +85,13 @@ class RockOnIdView(rfc.GenericView):
                             rockon.link = ('%s/%s' %
                                            (rockon.link,
                                             ('/').join(link_crumbs)))
+                    for c in cc_map.keys():
+                        if (not DCustomConfig.objects.filter(rockon=rockon, key=cc_map[c]).exists()):
+                            e_msg = ('Invalid custom config key(%s)' % c)
+                            handle_exception(Exception(e_msg), request)
+                        cco = DCustomConfig.objects.get(rockon=rockon, key=cc_map[c])
+                        cco.val = c
+                        cco.save()
                 install.async(rockon.id)
                 rockon.state = 'pending_install'
                 rockon.save()
@@ -125,8 +133,12 @@ class RockOnIdView(rfc.GenericView):
                         if (DVolume.objects.filter(container=co, dest_dir=share_map[s]).exists()):
                             e_msg = ('Directory(%s) is already mapped for this Rock-on' % share_map[s])
                             handle_exception(Exception(e_msg), request)
-                        do = DVolume(container=co, share=so, dest_dir=share_map[s])
+                        do = DVolume(container=co, share=so, uservol=True, dest_dir=share_map[s])
                         do.save()
+                rockon.state = 'pending_update'
+                rockon.save()
+                uninstall.async(rockon.id)
+                install.async(rockon.id)
             elif (command == 'stop'):
                 stop.async(rockon.id)
                 rockon.status = 'stop_pending'

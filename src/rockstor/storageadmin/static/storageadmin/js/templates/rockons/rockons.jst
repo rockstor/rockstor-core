@@ -63,7 +63,7 @@
 	      <a id="js-rockon-settings" href="#" class="settings" data-rockon-id="<%= rockon.get('id') %>"><i class="icon-wrench"></i></a>
 	      <br><br>
 	      <% if (rockon.get('link')) { %>
-	        <% var ui_link = window.location.origin + rockon.get('link'); %>
+	        <% var ui_link = "http://" + window.location.host + rockon.get('link'); %>
 	        <a href="<%= ui_link %>" target="_blank" class="btn btn-primary">Open</a>
 	      <% } %>
 	      <a id="js-uninstall-rockon" class="btn btn-danger" data-name="<%= rockon.get('id') %>">Uninstall</a>
@@ -109,7 +109,7 @@
       <div class="tab-section">
 	<div class="row-fluid">
 	  <div class="span12">
-	    <h3>Click the Update button to check for new Rock-ons.</h3>
+	    <h3>Click on Update button to check for new Rock-ons.</h3>
 	  </div>
 	</div>
       </div>

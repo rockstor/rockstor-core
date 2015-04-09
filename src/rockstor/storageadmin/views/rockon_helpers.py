@@ -116,6 +116,7 @@ def plex_install(rockon):
     run_command([DOCKER, 'stop', rockon.name, ])
     pref_file = ('%s/Library/Application Support/Plex Media Server/'
                  'Preferences.xml' % config_share)
+    logger.debug('pref file: %s' % pref_file)
     cco = DCustomConfig.objects.get(rockon=rockon)
     logger.debug('network val %s' % cco.val)
     import re
@@ -125,7 +126,8 @@ def plex_install(rockon):
     with open(pref_file) as pfo, open(npath, 'w') as tfo:
         for l in pfo.readlines():
             nl = l
-            if (re.match('<Preferences ', l) is not None):
+            if (re.match('<Preferences ', l) is not None and
+                re.match('allowedNetworks', l) is None):
                 nl = ('%s allowedNetworks="%s"/>' %
                       (l[:-3], cco.val))
             tfo.write('%s\n' % nl)

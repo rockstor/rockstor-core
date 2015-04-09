@@ -13,17 +13,17 @@
     </tr>
   <% } %>
 
-  <% ports.each(function(port, index) { %>
+  <% for (p in port_map) { %>
     <tr>
       <td>Port</td>
-      <td><%= port.get('hostp') %>&nbsp;&nbsp<i class="fa fa-exclamation-circle" title="<%= port.get('hostp') %>" rel="tooltip"></i></td>
+      <td><%= p %>&nbsp;&nbsp<i class="fa fa-exclamation-circle" title="<%= port_map[p] %>" rel="tooltip"></i></td>
     </tr>
-  <% }); %>
+  <% } %>
 
-  <% cc.each(function(cci, index) { %>
+  <% for (c in cc_map) { %>
     <tr>
       <td>Custom</td>
-      <td><%= cci.get('val') %>&nbsp;&nbsp<i class="fa fa-exclamation-circle" title="<%= cci.get('description') %>" rel="tooltip"></i></td>
+      <td><%= c %>&nbsp;&nbsp<i class="fa fa-exclamation-circle" title="<%= cc_map[c] %>" rel="tooltip"></i></td>
     </tr>
-  <% }); %>
+  <% } %>
 </tablthead>
