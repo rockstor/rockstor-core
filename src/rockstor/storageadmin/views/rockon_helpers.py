@@ -83,8 +83,7 @@ def install(rid):
 
 
 @task()
-def uninstall(rid):
-    new_state = 'available'
+def uninstall(rid, new_state='available'):
     try:
         rockon = RockOn.objects.get(id=rid)
         if (rockon.name == 'Plex'):

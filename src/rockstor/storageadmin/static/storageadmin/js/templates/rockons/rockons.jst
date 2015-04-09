@@ -38,7 +38,7 @@
   <div>
     <% var installed = 0; %>
     <% rockons.each(function(rockon, index) { %>
-      <% if (rockon.get('state') == 'installed' || rockon.get('state') == 'pending_install') { %>
+      <% if (rockon.get('state') == 'installed' || rockon.get('state').match('pending')) { %>
       <% installed += 1; %>
       <div id="js-rockons-installed" class="tab-section">
 	<div class="row-fluid">
@@ -50,7 +50,7 @@
 	  </div>
 	  <div class="span3"></div>
 	  <div class="span3">
-	    <% if (rockon.get('state') == 'installed') { %>
+	    <% if (rockon.get('state') == 'installed' && !rockon.get('status').match('pending')) { %>
 	      <div class="slider-stop" data-rockon-id="<%= rockon.get('id') %>">OFF</div>
 	      <div class="slider-ph">
 		<% if (rockon.get('status') == 'started') { %>
@@ -68,8 +68,8 @@
 	      <% } %>
 	      <a id="js-uninstall-rockon" class="btn btn-danger" data-name="<%= rockon.get('id') %>">Uninstall</a>
 	    <% } else { %>
-	      <% if (rockon.get('state') == 'pending_install') { %>
-	        <h3>Installation in progress...</h3>
+	      <% if (rockon.get('state').match('pending') || rockon.get('status').match('pending')) { %>
+	        <p>Rockon is in transition state(<%= rockon.get('state') %>/<%= rockon.get('status') %>). Please wait...</p>
 	      <% } %>
 	      <a id="js-uninstall-rockon" class="btn btn-primary disabled" title="Rockon cannot be uninstalled because it is in a transition state(<%= rockon.get('state') %>)">Uninstall</a>
 	    <% } %>

@@ -75,16 +75,10 @@ class RockOnIdView(rfc.GenericView):
                         po = DPort.objects.get(containerp=port_map[p])
                         po.hostp = p
                         po.save()
-                        link_crumbs = []
-                        if (rockon.link is not None):
-                            link_crumbs = rockon.link.split('/')
-                        if (len(link_crumbs[0]) > 0 and link_crumbs[0] == ':'):
-                            link_crumbs = link_crumbs[1:]
-                        rockon.link = (':%s' % po.hostp)
-                        if (len(link_crumbs) > 0):
-                            rockon.link = ('%s/%s' %
-                                           (rockon.link,
-                                            ('/').join(link_crumbs)))
+                        if (rockon.link is not None and
+                            len(rockon.link) > 0 and
+                            rockon.link[0] != ':'):
+                            rockon.link = (':%s/%s' % (po.hostp, rockon.link))
                     for c in cc_map.keys():
                         if (not DCustomConfig.objects.filter(rockon=rockon, key=cc_map[c]).exists()):
                             e_msg = ('Invalid custom config key(%s)' % c)
@@ -137,7 +131,7 @@ class RockOnIdView(rfc.GenericView):
                         do.save()
                 rockon.state = 'pending_update'
                 rockon.save()
-                uninstall.async(rockon.id)
+                uninstall.async(rockon.id, new_state='pending_install')
                 install.async(rockon.id)
             elif (command == 'stop'):
                 stop.async(rockon.id)
