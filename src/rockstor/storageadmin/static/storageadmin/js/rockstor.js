@@ -714,7 +714,6 @@ WizardView = Backbone.View.extend({
 
   decrementPage: function() {
     if (!this.firstPage()) {
-      this.pages[this.currentPageNum] = null;
       this.decrementPageNum();
       this.setCurrentPage();
       this.renderCurrentPage();
