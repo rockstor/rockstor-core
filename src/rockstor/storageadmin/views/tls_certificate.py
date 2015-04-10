@@ -22,9 +22,15 @@ from storageadmin.models import TLSCertificate
 from storageadmin.serializers import TLSCertificateSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
-
+from system.osi import run_command
+from shutil import move
+from tempfile import mkstemp
+from django.conf import settings
+from system.services import superctl
 import logging
 logger = logging.getLogger(__name__)
+
+OPENSSL = '/usr/bin/openssl'
 
 
 class TLSCertificateView(rfc.GenericView):
@@ -43,6 +49,34 @@ class TLSCertificateView(rfc.GenericView):
                 e_msg = ('Another certificate with the name(%s) already '
                          'exists.' % name)
                 handle_exception(Exception(e_msg), request)
-        co = TLSCertificate(name=name, certificate=cert, key=key)
-        co.save()
-        return Response(TLSCertificateSerializer(co).data)
+            fo, kpath = mkstemp()
+            fo, cpath = mkstemp()
+            with open(kpath, 'w') as kfo, open(cpath, 'w') as cfo:
+                kfo.write(key)
+                cfo.write(cert)
+            try:
+                o, e, rc = run_command([OPENSSL, 'rsa', '-noout', '-modulus',
+                                        '-in', kpath])
+            except Exception, e:
+                logger.exception(e)
+                e_msg = ('RSA key modulus could not be verified for the given '
+                         'Private Key. Check and try again')
+                handle_exception(Exception(e_msg), request)
+            try:
+                o2, e, rc = run_command([OPENSSL, 'x509', '-noout',
+                                         '-modulus', '-in', cpath])
+            except Exception, e:
+                logger.exception(e)
+                e_msg = ('RSA key modulus could not be verified for the given '
+                         'Certificate. Check and try again')
+                handle_exception(Exception(e_msg), request)
+            if (o[0] != o2[0]):
+                e_msg = ('Given Certificate and the Private Key do not match. '
+                         'Check and try again')
+                handle_exception(Exception(e_msg), request)
+            move(kpath, '%s/rockstor.cert' % settings.CERTDIR)
+            move(cpath, '%s/rockstor.key' % settings.CERTDIR)
+            superctl('nginx', 'restart')
+            co = TLSCertificate(name=name, certificate=cert, key=key)
+            co.save()
+            return Response(TLSCertificateSerializer(co).data)
