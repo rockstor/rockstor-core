@@ -74,8 +74,8 @@ class TLSCertificateView(rfc.GenericView):
                 e_msg = ('Given Certificate and the Private Key do not match. '
                          'Check and try again')
                 handle_exception(Exception(e_msg), request)
-            move(kpath, '%s/rockstor.cert' % settings.CERTDIR)
-            move(cpath, '%s/rockstor.key' % settings.CERTDIR)
+            move(cpath, '%s/rockstor.cert' % settings.CERTDIR)
+            move(kpath, '%s/rockstor.key' % settings.CERTDIR)
             superctl('nginx', 'restart')
             co = TLSCertificate(name=name, certificate=cert, key=key)
             co.save()
