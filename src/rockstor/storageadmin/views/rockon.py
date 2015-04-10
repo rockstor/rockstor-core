@@ -104,10 +104,8 @@ class RockOnView(rfc.GenericView):
                                 oo = ContainerOption(container=co, name=o,
                                                      val=options[o])
                                 oo.save()
-                    logger.debug('rockon %s' % rockons[r])
                     if ('custom_config' in rockons[r]):
                         cc_d = rockons[r]['custom_config']
-                        logger.debug('custom_config = %s' % cc_d)
                         for k in cc_d:
                             cco, created = DCustomConfig.objects.get_or_create(
                                 rockon=ro, key=k,
@@ -124,9 +122,10 @@ class RockOnView(rfc.GenericView):
                             cco.save()
                     if ('app_link' in rockons[r]):
                         app_link = rockons[r]['app_link']
-                        logger.debug('link stub %s' % app_link)
                         ro.link = app_link
-                        ro.save()
+                    if ('website' in rockons[r]):
+                        ro.website = rockons[r]['website']
+                    ro.save()
             return Response()
 
     def _get_available(self, request):
