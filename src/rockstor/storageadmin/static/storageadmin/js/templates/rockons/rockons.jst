@@ -1,0 +1,130 @@
+<script>
+/*
+ * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ *
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ *
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+</script>
+
+<div class="messages"></div>
+
+<div class="pull-right">
+  <a id="js-update-rockons" class="btn btn-primary pull-right" href="#" title="Check for new Rock-ons"><i class="icon-refresh icon-white"></i> Update</a>
+</div>
+<span class="h2">Rock-ons</span>
+<br><br>
+
+<ul class="css-tabs">
+  <li class="active"><a href="#js-rockons-installed" data-toggle="tab">Installed</a></li>
+  <li><a href="#js-rockons-available" data-toggle="tab">All</a></li>
+</ul>
+
+
+<div class="css-panes">
+
+  <div>
+    <% var installed = 0; %>
+    <% rockons.each(function(rockon, index) { %>
+      <% if (rockon.get('state') == 'installed' || rockon.get('state').match('pending')) { %>
+      <% installed += 1; %>
+      <div id="js-rockons-installed" class="tab-section">
+	<div class="row-fluid">
+	  <div class="span6">
+	    <a href="<%= rockon.get('website') %>" target="_blank"><h3><u><%= rockon.get('name') %></u></h3></a>
+	    <p><%= rockon.get('description') %></p>
+	    <h4>Current status: <%= rockon.get('status') %></h4>
+
+	  </div>
+	  <div class="span3"></div>
+	  <div class="span3">
+	    <% if (rockon.get('state') == 'installed' && !rockon.get('status').match('pending')) { %>
+	      <div class="slider-stop" data-rockon-id="<%= rockon.get('id') %>">OFF</div>
+	      <div class="slider-ph">
+		<% if (rockon.get('status') == 'started') { %>
+		  <input type="text" class="service-status" value="1" data-rockon-id="<%= rockon.get('id') %>"></input>
+		<% } else { %>
+		  <input type="text" class="service-status" value="0" data-rockon-id="<%= rockon.get('id') %>"></input>
+		<% } %>
+	      </div>
+	      <div class="slider-start on" data-rockon-id="<%= rockon.get('id') %>">ON</div>&nbsp;&nbsp
+	      <a id="js-rockon-settings" href="#" class="settings" data-rockon-id="<%= rockon.get('id') %>"><i class="icon-wrench"></i></a>
+	      <br><br>
+	      <% if (rockon.get('link')) { %>
+	        <% var ui_link = "http://" + window.location.host + rockon.get('link'); %>
+	        <a href="<%= ui_link %>" target="_blank" class="btn btn-primary">Open</a>
+	      <% } %>
+	      <a id="js-uninstall-rockon" class="btn btn-danger" data-name="<%= rockon.get('id') %>">Uninstall</a>
+	    <% } else { %>
+	      <% if (rockon.get('state').match('pending') || rockon.get('status').match('pending')) { %>
+	        <p>Rockon is in transition state(<%= rockon.get('state') %>/<%= rockon.get('status') %>). Please wait...</p>
+	      <% } %>
+	      <a id="js-uninstall-rockon" class="btn btn-primary disabled" title="Rockon cannot be uninstalled because it is in a transition state(<%= rockon.get('state') %>)">Uninstall</a>
+	    <% } %>
+	  </div>
+	</div>
+      </div>
+      <% } %>
+    <% }); %>
+    <% if (installed == 0) { %>
+      <div class="tab-section">
+	<div class="row-fluid">
+	  <div class="span12">
+	    <h3>There are no Rock-ons installed currently.</h3>
+	  </div>
+	</div>
+      </div>
+    <% } %>
+  </div>
+
+  <div id="js-rockons-available">
+    <% var all = 0; %>
+    <% rockons.each(function(rockon, index) { %>
+      <% if (rockon.get('state') == 'available' || rockon.get('state') == 'install_failed') { %>
+      <% all += 1; %>
+      <div class="tab-section">
+	<div class="row-fluid">
+	  <div class="span12">
+	    <a href="<%= rockon.get('website') %>" target="_blank"><h3><%= rockon.get('name') %></h3></a>
+	    <p><%= rockon.get('description') %></p>
+	    <a id="js-install-rockon" class="btn btn-primary pull-right" href="#" data-name="<%= rockon.get('id') %>">Install</a>
+	  </div>
+	</div>
+      </div>
+      <% } %>
+    <% }); %>
+    <% if (all == 0) { %>
+      <div class="tab-section">
+	<div class="row-fluid">
+	  <div class="span12">
+	    <h3>Click on Update button to check for new Rock-ons.</h3>
+	  </div>
+	</div>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+
+<div class="simple-overlay" id="install-rockon-overlay">
+  <div class="overlay-content"></div>
+</div>
+
+<div id="install-rockon-modal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <div id="install-rockon-modal-contents"></div>
+  </div>
+</div>

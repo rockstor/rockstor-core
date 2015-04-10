@@ -107,7 +107,14 @@ urlpatterns = patterns('',
 
                        # Backup Plugin
                        (r'^api/plugin/backup', include('backup.urls')),
+<<<<<<< HEAD
                        
                        # Certificate URL
                        (r'^api/certificate', TLSCertificateView.as_view()),)
                        
+=======
+
+                       # Docker
+                       (r'^api/rockons',
+                        include('storageadmin.urls.rockons')),)
+>>>>>>> issue#542_rockons

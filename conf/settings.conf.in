@@ -165,6 +165,7 @@ INSTALLED_APPS = (
     'south',
     'backup',
     'oauth2_provider',
+    'django_ztask',
 )
 
 STATICFILES_STORAGE = 'pipeline.storage.PipelineCachedStorage'
@@ -191,6 +192,7 @@ PIPELINE_JS = {
             'storageadmin/js/socket_listen.js',
             'storageadmin/js/models/models.js',
             'storageadmin/js/views/*.js',
+            'storageadmin/js/views/pool/**/*.js',
             'storageadmin/js/views/dashboard/*.js',
             ),
         'output_filename': 'storageadmin/js/storageadmin.js'
@@ -354,10 +356,10 @@ REST_FRAMEWORK = {
 	       'MAX_PAGINATE_BY': 10000,
 }
 
+CONFROOT = '${buildout:depdir}/conf'
 COMPRESSION_TYPES = ('lzo', 'zlib', 'no',)
 
 SUPPORTED_KERNEL_VERSION = ${django-settings-conf:kernel}
 
 SNAP_TS_FORMAT = '%Y%m%d%H%M%S'
-
 ROOT_POOL = 'rockstor_rockstor'

@@ -1,0 +1,37 @@
+<br>
+<table class="table table-condensed table-bordered table-hover table-striped tablesorter">
+<thead>
+  <tr>
+    <th>Resource type</th>
+    <th>Name/Value</th>
+  </tr>
+</thead>
+
+  <% volumes.each(function(volume, index) { %>
+    <tr>
+      <td>Share</td>
+      <td><%= volume.get('share_name') %>&nbsp;&nbsp(<%= volume.get('dest_dir') %>)</td>
+    </tr>
+  <% }); %>
+
+  <% for (share in new_volumes) { %>
+    <tr>
+      <td><i>Share</i></td>
+      <td><i><%= share %>&nbsp;&nbsp(<%= new_volumes[share] %>)</i></td>
+    </tr>
+  <% } %>
+
+  <% ports.each(function(port, index) { %>
+    <tr>
+      <td>Port</td>
+      <td><%= port.get('hostp') %>&nbsp;&nbsp(<%= port.get('containerp') %>)</td>
+    </tr>
+  <% }); %>
+
+  <% cc.each(function(cci, index) { %>
+    <tr>
+      <td>Custom</td>
+      <td><%= cci.get('val') %>&nbsp;&nbsp(<%= cci.get('key') %>)&nbsp;&nbsp<i class="fa fa-exclamation-circle" title="<%= cci.get('description') %>" rel="tooltip"></i></td>
+    </tr>
+  <% }); %>
+</tablthead>

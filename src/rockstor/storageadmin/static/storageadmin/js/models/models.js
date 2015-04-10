@@ -32,6 +32,9 @@ var Setup = Backbone.Model.extend({
 var Disk = Backbone.Model.extend({
   url: function() {
     return '/api/disks/' + this.get('diskName');
+  },
+  available: function() {
+    return _.isNull(this.get('pool')) && !this.get('parted') && !this.get('offline') && _.isNull(this.get('btrfs_uuid'));
   }
 });
 var DiskCollection = RockStorPaginatedCollection.extend({
@@ -79,6 +82,28 @@ var Share = Backbone.Model.extend({
 var ShareCollection = RockStorPaginatedCollection.extend({
   model: Share,
   baseUrl: '/api/shares'
+});
+
+var Image = Backbone.Model.extend({
+	  url: function() {
+	    return '/api/rockons/' ;
+	  }
+	});
+
+var ImageCollection = RockStorPaginatedCollection.extend({
+	model: Image,
+  baseUrl: '/api/rockons/docker/images'
+});
+
+var Container = Backbone.Model.extend({
+	  url: function() {
+	    return '/api/rockons/' ;
+	  }
+	});
+
+var ContainerCollection = RockStorPaginatedCollection.extend({
+	model: Image,
+baseUrl: '/api/rockons/docker/containers'
 });
 
 var Snapshot = Backbone.Model.extend({
@@ -523,4 +548,76 @@ var AccessKeyCollection = RockStorPaginatedCollection.extend({
 
 var Certificate = Backbone.Model.extend({
   urlRoot: '/api/certificate',
+});
+
+var RockOn = Backbone.Model.extend({
+    urlRoot: '/api/rockons'
+});
+
+var RockOnCollection = RockStorPaginatedCollection.extend({
+    model: RockOn,
+    baseUrl: '/api/rockons'
+});
+
+var RockOnVolume = Backbone.Model.extend({
+    urlRoot: '/api/rockons/volumes/' + this.rid
+});
+
+var RockOnVolumeCollection = RockStorPaginatedCollection.extend({
+    model: RockOnVolume,
+    initialize: function(models, options) {
+	this.constructor.__super__.initialize.apply(this, arguments);
+	if (options) {
+	    this.rid = options.rid;
+	}
+    },
+    baseUrl: function() {
+	if (this.rid) {
+	    return '/api/rockons/volumes/' + this.rid;
+	} else {
+	    return '/api/rockons/volumes';
+	}
+    }
+});
+
+var RockOnPort = Backbone.Model.extend({
+    urlRoot: '/api/rockon/ports/' + this.rid
+});
+
+var RockOnPortCollection = RockStorPaginatedCollection.extend({
+    model: RockOnPort,
+    initialize: function(models, options) {
+	this.constructor.__super__.initialize.apply(this, arguments);
+	if (options) {
+	    this.rid = options.rid;
+	}
+    },
+    baseUrl: function() {
+	if (this.rid) {
+	    return '/api/rockons/ports/' + this.rid;
+	} else {
+	    return '/api/rockons/ports';
+	}
+    }
+});
+
+var RockOnCustomConfig = Backbone.Model.extend({
+    urlRoot: '/api/rockon/customconfig/' + this.rid
+});
+
+var RockOnCustomConfigCollection = RockStorPaginatedCollection.extend({
+    model: RockOnCustomConfig,
+    initialize: function(models, options) {
+	this.constructor.__super__.initialize.apply(this, arguments);
+	if (options) {
+	    this.rid = options.rid;
+	}
+    },
+    baseUrl: function() {
+	if (this.rid) {
+	    return '/api/rockons/customconfig/' + this.rid;
+	} else {
+	    return '/api/rockons/customconfig';
+	}
+    }
 });

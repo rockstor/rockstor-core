@@ -90,6 +90,9 @@ var AppRouter = Backbone.Router.extend({
     "add-afp-share": "addAFPShare",
     "afp/edit/:afpShareId": "editAFPShare",
     "plugins": "showPlugins",
+    "rockons": "showRockons",
+    "images": "showImages",
+    "containers": "showContainers",
     "appliances": "showAppliances",
     "add-appliance": "addAppliance",
     "access-keys": "showAccessKeys",
@@ -107,13 +110,14 @@ var AppRouter = Backbone.Router.extend({
       }
     } else {
       if (route != "setup" && !setup_done) {
-        app_router.navigate('setup', {trigger: true});
-        return false;
+    	  app_router.navigate('setup', {trigger: true});
+    	return false;
       } else if (route == "setup" && setup_done) {
-        app_router.navigate('home', {trigger: true});
+    	  app_router.navigate('home', {trigger: true});
         return false;
       }
     }
+      
     if (RockStorGlobals.currentAppliance == null) {
       setApplianceName();
     }
@@ -138,6 +142,7 @@ var AppRouter = Backbone.Router.extend({
 
   },
 
+ 
   loginPage: function() {
     RockStorSocket.removeAllListeners();
     this.renderSidebar("setup", "user");
@@ -163,7 +168,7 @@ var AppRouter = Backbone.Router.extend({
     this.cleanup();
     this.currentLayout = new HomeLayoutView();
     $('#maincontent').append(this.currentLayout.render().el);
-  },
+ },
 
   showDisks: function() {
     RockStorSocket.removeAllListeners();
@@ -172,6 +177,7 @@ var AppRouter = Backbone.Router.extend({
     this.cleanup();
     this.currentLayout = new DisksView();
     $('#maincontent').append(this.currentLayout.render().el);
+
   },
 
   blinkDrive: function(diskName) {
@@ -660,6 +666,30 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').append(this.currentLayout.render().el);
   },
 
+  showRockons: function() {
+	    this.renderSidebar("rockons", "rockons");
+	    this.cleanup();
+	    this.currentLayout = new RockonsView();
+	    $('#maincontent').empty();
+	    $('#maincontent').append(this.currentLayout.render().el);
+	  },
+	  
+	  showImages: function() {
+		    this.renderSidebar("rockons", "images");
+		    this.cleanup();
+		    this.currentLayout = new ImagesView();
+		    $('#maincontent').empty();
+		    $('#maincontent').append(this.currentLayout.render().el);
+		  },
+		  
+		  showContainers: function() {
+			    this.renderSidebar("rockons", "containers");
+			    this.cleanup();
+			    this.currentLayout = new ContainersView();
+			    $('#maincontent').empty();
+			    $('#maincontent').append(this.currentLayout.render().el);
+			  },	  
+		  
   showAppliances: function() {
     this.renderSidebar("system", "appliances");
     this.cleanup();

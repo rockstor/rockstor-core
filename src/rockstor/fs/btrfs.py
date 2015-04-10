@@ -101,6 +101,8 @@ def mount_root(pool, device):
     mnt_device = '/dev/disk/by-label/%s' % pool.name
     if (not os.path.exists(mnt_device)):
         mnt_device = device
+        if (re.match('/dev/', device) is None):
+            mnt_device = ('/dev/%s' % mnt_device)
     mnt_cmd = [MOUNT, mnt_device, root_pool_mnt, ]
     mnt_options = ''
     if (pool.mnt_options is not None):

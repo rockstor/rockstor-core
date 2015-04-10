@@ -240,11 +240,11 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
     } 
     
     if (this.maximized) { 
-      this.$("#data-rec").html(humanize.filesize(currentData["kb_rx"]*1024));
+      this.$("#data-rec").html(humanize.filesize(currentData["kb_rx"]));
       this.$("#packets-rec").html(currentData["packets_rx"]);  
       this.$("#errors-rec").html(currentData["errs_rx"]);
       this.$("#drop-rec").html(currentData["drop_rx"]);
-      this.$("#data-sent").html(humanize.filesize(currentData["kb_tx"]*1024));
+      this.$("#data-sent").html(humanize.filesize(currentData["kb_tx"]));
       this.$("#packets-sent").html(currentData["packets_tx"]);  
       this.$("#errors-sent").html(currentData["errs_tx"]);
       this.$("#drop-sent").html(currentData["drop_tx"]);
@@ -297,7 +297,7 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
   },
 
   valueTickFormatter: function(val, axis) {
-    return humanize.filesize(val*1024, 1024, 2);
+    return humanize.filesize(val, 1024, 2);
   },
 
   timeTickFormatter: function(dataLength) {

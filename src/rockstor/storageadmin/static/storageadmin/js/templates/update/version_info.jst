@@ -41,7 +41,15 @@
   <a id="donateNo" class="btn" title="Update">No, just update </a>
   </p>
 <% } else { %>
-  <p>Rockstor is up-to-date. If you've updated recently, you may need to reload the browser manually for the latest UI changes to appear. Reload with Ctrl + Shift + R on Firefox and Chrome.</p>
+  <p>Rockstor is up-to-date. If you've updated recently, reload the browser<b>(Ctrl+Shift+R)</b> for latest UI changes.</p><br>
+
+  <% if (autoUpdateEnabled) { %>
+  <p>Rockstor is configured to check for updates once a day and automatically update itself. If you so choose, you can disable auto update.</p>
+  <a id="disableAuto" class="btn btn-primary" title="Disable Auto Update">Disable auto update</a>
+  <% } else { %>
+  <p>Rockstor can be configured to check for updates once a day and automatically update itself. We recommend you enable auto update.</p>
+  <a id="enableAuto" class="btn btn-primary" title="Enable Auto Update">Enable auto update</a>
+  <% } %>
 <% } %>
 
 <div id="update-modal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="updateModalLabel" aria-hidden="true">

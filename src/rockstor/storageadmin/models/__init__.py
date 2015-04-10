@@ -43,3 +43,5 @@ from oauth_app import OauthApp
 from netatalk_share import NetatalkShare
 from pool_balance import PoolBalance
 from tls_certificate import TLSCertificate
+from rockon import (RockOn, DImage, DContainer, DPort, DVolume,
+                    ContainerOption, DCustomConfig)
