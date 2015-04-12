@@ -77,6 +77,8 @@ RockonsView = RockstorLayoutView.extend({
 	$('#docker-service-ph').append(this.dockerServiceView.render().el);
 	$('#install-rockon-overlay').overlay({load: false});
 	this.$("ul.css-tabs").tabs("div.css-panes > div");
+	this.$("ul.css-tabs").data("tabs").click(1); // activate second tab
+
 	// var active = this.$("ul.css-tabs").tabs("option", "active");
 	// console.log('active', active);
     },
@@ -393,19 +395,41 @@ RockonPortChoice = RockstorWizardPage.extend({
     },
 
     render: function() {
-    	RockstorWizardPage.prototype.render.apply(this, arguments);
-	this.$('#ph-ports-form').html(this.port_template({ports: this.ports}));
-    	return this;
+      RockstorWizardPage.prototype.render.apply(this, arguments);
+      this.$('#ph-ports-form').html(this.port_template({ports: this.ports}));
+
+      // Add form validation
+      this.portForm = this.$('#port-select-form');
+      var rules = {};
+      var messages = {};
+      this.ports.each(function(port) {
+        rules[port.id] = "required";
+        messages[port.id] = "Please enter a Rockon port to assign";
+      })
+      this.validator = this.portForm.validate({
+        rules: rules,
+        messages: messages
+      }); 
+
+      return this;
     },
 
     save: function() {
-	var port_map = {};
-	var cports = this.ports.filter(function(port) {
-	    port_map[this.$('#' + port.id).val()] = port.get('containerp');
-	    return port;
-	}, this);
-	this.model.set('port_map', port_map);
-	return $.Deferred().resolve();
+      
+      // Validate the form
+      if (!this.portForm.valid()) {
+        this.validator.showErrors();
+        // return rejected promise so that the wizard doesn't proceed to the next page.
+        return $.Deferred().reject();
+      }
+      
+      var port_map = {};
+      var cports = this.ports.filter(function(port) {
+        port_map[this.$('#' + port.id).val()] = port.get('containerp');
+        return port;
+      }, this);
+      this.model.set('port_map', port_map);
+      return $.Deferred().resolve();
     }
 });
 
