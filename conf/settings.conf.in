@@ -165,6 +165,7 @@ INSTALLED_APPS = (
     'south',
     'backup',
     'oauth2_provider',
+    'django_ztask',
 )
 
 STATICFILES_STORAGE = 'pipeline.storage.PipelineCachedStorage'
@@ -355,6 +356,7 @@ REST_FRAMEWORK = {
 	       'MAX_PAGINATE_BY': 10000,
 }
 
+CONFROOT = '${buildout:depdir}/conf'
 COMPRESSION_TYPES = ('lzo', 'zlib', 'no',)
 
 SUPPORTED_KERNEL_VERSION = ${django-settings-conf:kernel}

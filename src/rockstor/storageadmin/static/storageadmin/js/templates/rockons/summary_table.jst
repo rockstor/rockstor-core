@@ -1,0 +1,29 @@
+<table class="table table-condensed table-bordered table-hover table-striped tablesorter">
+<thead>
+  <tr>
+    <th>Resource type</th>
+    <th>Name/Value</th>
+  </tr>
+</thead>
+
+  <% for (s in share_map) { %>
+    <tr>
+      <td>Share</td>
+      <td><%= s %>&nbsp;&nbsp<i class="fa fa-exclamation-circle" title="<%= share_map[s] %>" rel="tooltip"></i></td>
+    </tr>
+  <% } %>
+
+  <% for (p in port_map) { %>
+    <tr>
+      <td>Port</td>
+      <td><%= p %>&nbsp;&nbsp<i class="fa fa-exclamation-circle" title="<%= port_map[p] %>" rel="tooltip"></i></td>
+    </tr>
+  <% } %>
+
+  <% for (c in cc_map) { %>
+    <tr>
+      <td>Custom</td>
+      <td><%= c %>&nbsp;&nbsp<i class="fa fa-exclamation-circle" title="<%= cc_map[c] %>" rel="tooltip"></i></td>
+    </tr>
+  <% } %>
+</tablthead>

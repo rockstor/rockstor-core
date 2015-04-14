@@ -34,7 +34,8 @@ def register_services():
         'Task Scheduler': 'task-scheduler',
         'Data Collector': 'data-collector',
         'Service Monitor': 'service-monitor',
-        'SNMP': 'snmpd', }
+        'SNMP': 'snmpd',
+        'Rock-on': 'docker', }
 
     for s in services.keys():
         if (not Service.objects.filter(display_name=s).exists()):

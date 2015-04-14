@@ -1,0 +1,20 @@
+<div class="row-fluid">
+  <div class="span8">
+    <label class="control-label"></label>
+
+    <div class="form-box">
+      <form id="custom-choice-form" name="aform" class="form-horizontal">
+	<div class="messages"></div>
+	<div class="control-group">
+	  <% cc.each(function(cci, index) { %>
+	    <label class="control-label" for="cc"><%= cci.get('key')%><span class="required"> *</span></label>
+	    <div class="controls">
+	      <input type="text" id="<%= cci.id %>" name="<%= cci.id %>" value="<%= cci.get('val')%>">
+	      &nbsp;&nbsp<i class="fa fa-exclamation-circle" title="<%= cci.get('description') %>" rel="tooltip"></i>
+	    </div>
+	  <% }); %>
+	</div>
+      </form>
+    </div>
+  </div>
+</div>

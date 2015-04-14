@@ -106,4 +106,8 @@ urlpatterns = patterns('',
                         include('smart_manager.urls.replicas')),
 
                        # Backup Plugin
-                       (r'^api/plugin/backup', include('backup.urls')),)
+                       (r'^api/plugin/backup', include('backup.urls')),
+
+                       # Docker
+                       (r'^api/rockons',
+                        include('storageadmin.urls.rockons')),)

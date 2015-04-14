@@ -1,27 +1,27 @@
 /*
  *
- * @licstart  The following is the entire license notice for the 
+ * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
- * 
+ *
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
- * 
+ *
  * RockStor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
- * 
+ *
  * RockStor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * @licend  The above is the entire license notice
  * for the JavaScript code in this page.
- * 
+ *
  */
 
 ConfigureServiceView = RockstorLayoutView.extend({
@@ -42,8 +42,8 @@ ConfigureServiceView = RockstorLayoutView.extend({
       ntpd: { server: 'required' },
       nis: { domain: 'required', server: 'required' },
       snmpd: { syslocation: 'required', syscontact: 'required',rocommunity: 'required'},
-      winbind: {domain: 'required', controllers: 'required', 
-      security: 'required', 
+      winbind: {domain: 'required', controllers: 'required',
+      security: 'required',
         realm: {
           required: {
             depends: function(element) {
@@ -66,15 +66,21 @@ ConfigureServiceView = RockstorLayoutView.extend({
         cert: {
           required: {
             depends: function(element) {
-              return _this.$('#enabletls').prop('checked'); 
+              return _this.$('#enabletls').prop('checked');
             }
           }
         }
+      },
+      docker:{
+    	  rootshare: 'required'
       }
     }
     this.formName = this.serviceName + '-form';
     this.service = new Service({name: this.serviceName});
     this.dependencies.push(this.service);
+    this.shares = new ShareCollection();
+    this.dependencies.push(this.shares);
+
   },
 
   render: function() {
@@ -89,7 +95,7 @@ ConfigureServiceView = RockstorLayoutView.extend({
     if (config != null) {
       configObj = JSON.parse(this.service.get('config'));
     }
-    $(this.el).html(this.template({service: this.service, config: configObj}));
+    $(this.el).html(this.template({service: this.service, config: configObj, shares: this.shares}));
 
     this.$('#nis-form :input').tooltip({
     	html: true,
@@ -97,7 +103,7 @@ ConfigureServiceView = RockstorLayoutView.extend({
     });
     this.$('#snmpd-form :input').tooltip({
         html: true,
-        placement: 'right',	
+        placement: 'right',
     });
     this.$('#ldap-form :input').tooltip({
     	html: true,
@@ -106,6 +112,11 @@ ConfigureServiceView = RockstorLayoutView.extend({
     this.$('#ntpd-form :input').tooltip({
     	html: true,
         placement: 'right',
+    });
+    this.$('#docker-form #root_share').tooltip({
+    	html: true,
+        placement: 'right',
+        title: 'Share for all Docker and Rock-on bits. A dedicated and exclusive Share is highly recommended.'
     });
     this.$('#winbind-form #domain').tooltip({
       html: true,
@@ -138,7 +149,7 @@ ConfigureServiceView = RockstorLayoutView.extend({
       placement: 'right',
       title: 'When filling out the user information for a Windows NT user, the winbindd daemon uses the value chosen here to to specify the login shell for that user.'
     });
-    
+
     this.validator = this.$('#' + this.formName).validate({
       onfocusout: false,
       onkeyup: false,
@@ -163,7 +174,7 @@ ConfigureServiceView = RockstorLayoutView.extend({
         }else{
         var data = JSON.stringify({config: _this.$('#' + _this.formName).getJSON()});
         }
-        
+
         var jqxhr = $.ajax({
           url: "/api/sm/services/" + _this.serviceName + "/config",
           type: "POST",
@@ -171,19 +182,19 @@ ConfigureServiceView = RockstorLayoutView.extend({
           dataType: "json",
           data: data,
         });
-        
+
         jqxhr.done(function() {
         	enableButton(button);
             app_router.navigate("services", {trigger: true});
          });
-        
+
         jqxhr.fail(function(xhr, status, error) {
             enableButton(button);
           });
-             	
+
               }
         });
-       
+
       return this;
   },
 
@@ -195,9 +206,9 @@ ConfigureServiceView = RockstorLayoutView.extend({
     if (this.$('#security').val() == 'ads') {
       this.$('#realm').removeAttr('disabled');
     } else {
-      this.$('#realm').attr('disabled', 'true');    	
+      this.$('#realm').attr('disabled', 'true');
     }
-    if (this.$('#security').val() == 'ads' 
+    if (this.$('#security').val() == 'ads'
         || this.$('#security').val() == 'domain') {
       this.$('#templateshell').removeAttr('disabled');
     } else {
@@ -216,5 +227,3 @@ ConfigureServiceView = RockstorLayoutView.extend({
 
 
 });
-
-

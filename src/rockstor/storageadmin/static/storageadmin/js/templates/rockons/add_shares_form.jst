@@ -1,0 +1,29 @@
+<div class="row-fluid">
+  <div class="span8">
+    <label class="control-label"></label>
+    <div class="form-box">
+      <form id="vol-select-form" name="aform" class="form-horizontal">
+	<div class="messages"></div>
+	<% if (shares.length == 0) { %>
+	  <h3>There are no Shares left to add. Create a new one and try again.</h3>
+	<% } else { %>
+	<div class="control-group">
+	  <label class="control-label" for="shares">Share<span class="required"> *</span></label>
+	  <div class="controls">
+	    <select name="share" id="share" data-placeholder="Select shares to export">
+	      <% _.each(shares, function(share) { %>
+	      <option value="<%= share.get('name') %>"><%= share.get('name') %></option>
+	      <% }); %>
+	    </select>
+	  </div>
+	  <br>
+	  <label class="control-label" for="volumes">Rock-on directory<span class="required"> *</span></label>
+	  <div class="controls">
+	    <input type="text" id="volume" name="volume" title="Absolute path of the directory to make this Share visible inside the Rock-on. Eg: /data/media">
+	  </div>
+	</div>
+	<% } %>
+      </form>
+    </div>
+  </div>
+</div>
