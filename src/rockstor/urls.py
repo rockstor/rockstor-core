@@ -21,7 +21,7 @@ from storageadmin.views import (SetupUserView, LoginView,
                                 DashboardConfigView, NFSExportGroupView,
                                 SambaView, SFTPView, PluginView,
                                 InstalledPluginView, AdvancedNFSExportView,
-                                OauthAppView, NetatalkView)
+                                OauthAppView, NetatalkView, TLSCertificateView)
 import os.path
 
 site_media = os.path.join(
@@ -107,7 +107,7 @@ urlpatterns = patterns('',
 
                        # Backup Plugin
                        (r'^api/plugin/backup', include('backup.urls')),
-
-                       # Docker
+                       # Certificate URL
+                       (r'^api/certificate', TLSCertificateView.as_view()),
                        (r'^api/rockons',
                         include('storageadmin.urls.rockons')),)
