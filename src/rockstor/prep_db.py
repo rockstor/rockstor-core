@@ -35,7 +35,7 @@ def register_services():
         'Data Collector': 'data-collector',
         'Service Monitor': 'service-monitor',
         'SNMP': 'snmpd',
-        'Docker': 'docker', }
+        'Rock-on': 'docker', }
 
     for s in services.keys():
         if (not Service.objects.filter(display_name=s).exists()):
