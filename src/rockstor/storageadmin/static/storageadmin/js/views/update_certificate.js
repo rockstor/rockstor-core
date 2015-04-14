@@ -96,6 +96,8 @@ UpdateCertificateView = RockstorLayoutView.extend({
                   enableButton(button);
                   _this.$('#update-certificate-form :input').tooltip('hide');
                   _this.certificate.set({"name": certificateName});
+		  alert('Certificate update successfully. It will take effect now.');
+		  location.reload();
                   _this.renderCertificateDescription();
               },
               error: function(xhr, status, error) {

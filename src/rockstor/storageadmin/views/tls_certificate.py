@@ -45,10 +45,12 @@ class TLSCertificateView(rfc.GenericView):
             name = request.DATA.get('name')
             cert = request.DATA.get('cert')
             key = request.DATA.get('key')
-            if (TLSCertificate.objects.filter(name=name).exists()):
-                e_msg = ('Another certificate with the name(%s) already '
-                         'exists.' % name)
-                handle_exception(Exception(e_msg), request)
+            TLSCertificate.objects.filter().exclude(name=name).delete()
+            co, created = TLSCertificate.objects.get_or_create(name=name, defaults={'certificate': cert, 'key': key})
+            if (not created):
+                co.certificate = cert
+                co.key = key
+                co.save()
             fo, kpath = mkstemp()
             fo, cpath = mkstemp()
             with open(kpath, 'w') as kfo, open(cpath, 'w') as cfo:
@@ -77,6 +79,4 @@ class TLSCertificateView(rfc.GenericView):
             move(cpath, '%s/rockstor.cert' % settings.CERTDIR)
             move(kpath, '%s/rockstor.key' % settings.CERTDIR)
             superctl('nginx', 'restart')
-            co = TLSCertificate(name=name, certificate=cert, key=key)
-            co.save()
             return Response(TLSCertificateSerializer(co).data)
