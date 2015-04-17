@@ -61,6 +61,26 @@ AddShareView = Backbone.View.extend({
       success: function(collection, response) {
         $(_this.el).append(_this.template({pools: _this.pools, poolName: _this.poolName}));
 
+        var err_msg = '';
+        var name_err_msg = function() {
+          return err_msg;
+        }
+
+        $.validator.addMethod('validateShareName', function(value) {
+            var share_name = $('#share_name').val();
+            if (share_name == "") {
+             err_msg = 'Please enter share name';
+              return false;
+            }
+            else
+               if(/^[A-Za-z][A-Za-z0-9_.-]*$/.test(share_name) == false){
+            	 err_msg = 'Please enter a valid share name ';
+                 return false;
+                }
+
+                return true;
+          }, name_err_msg);
+
         _this.renderSlider();
         _this.$('#pool_name').change(function(){
           _this.renderSlider();
@@ -88,7 +108,9 @@ AddShareView = Backbone.View.extend({
             _this.slider.setValue((size_value));
           }
         });
-
+        
+      
+        
         $('#add-share-form input').tooltip({placement: 'right'});
 
         _this.$('#compression').tooltip({
@@ -101,7 +123,7 @@ AddShareView = Backbone.View.extend({
             onfocusout: false,
             onkeyup: false,
             rules: {
-              share_name: 'required',
+              share_name: "validateShareName",
               share_size: {
                 required: true,
               },
