@@ -60,7 +60,7 @@ setup(
         'psycopg2 == 2.5.2',
         'django-oauth-toolkit == 0.7.0',
         'six == 1.7.3',
-        'django-ztask',
+        'django-ztask == 0.1.5',
     ]
 
 )
