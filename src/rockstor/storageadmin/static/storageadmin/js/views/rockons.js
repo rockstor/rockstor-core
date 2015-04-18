@@ -601,6 +601,9 @@ RockonSettingsWizardView = WizardView.extend({
 	if (this.currentPageNum == 0) {
 	    this.$('#prev-page').hide();
 	    this.$('#next-page').html('Add a Share');
+	    if (this.volumes.length == 0) {
+		this.$('#next-page').hide();
+	    }
 	} else if (this.currentPageNum == (this.pages.length - 2)) {
 	    this.$('#prev-page').html('Add a Share');
     	    this.$('#next-page').html('Submit');
@@ -691,13 +694,13 @@ RockonSettingsSummary = RockstorWizardPage.extend({
 
     render: function() {
 	RockstorWizardPage.prototype.render.apply(this, arguments);
-	console.log('in render', this.model.get('shares'));
 	this.$('#ph-settings-summary-table').html(this.sub_template({
 	    model: this.model,
 	    volumes: this.model.get('volumes'),
 	    new_volumes: this.model.get('shares'),
 	    ports: this.model.get('ports'),
-	    cc: this.model.get('custom_config')
+	    cc: this.model.get('custom_config'),
+	    rockon: this.model.get('rockon')
 	}));
 	return this;
     }

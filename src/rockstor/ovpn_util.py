@@ -37,5 +37,3 @@ def client_retrieve():
     if (rc == 0):
         print('client configuration is saved at %s. It can be used by your vpn '
               'client software to connect.' % outfile)
-    else:
-        sys.exit('Failed to retrieve the configuration')
