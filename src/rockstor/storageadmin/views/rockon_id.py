@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import time
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (RockOn, DContainer, DVolume, Share, DPort,
@@ -24,6 +25,7 @@ from storageadmin.serializers import RockOnSerializer
 import rest_framework_custom as rfc
 from storageadmin.util import handle_exception
 from rockon_helpers import (docker_status, start, stop, install, uninstall)
+from system.services import superctl
 
 import logging
 logger = logging.getLogger(__name__)
@@ -50,12 +52,28 @@ class RockOnIdView(rfc.GenericView):
                 e_msg = ('Rock-on(%d) does not exist' % rid)
                 handle_exception(Exception(e_msg), request)
 
+            try:
+                dname = 'ztask-daemon'
+                e_msg = ('ztask daemon is not running and could not be started')
+                o, e, rc = superctl(dname, 'status')
+                if (rc == 1):
+                    superctl(dname, 'restart')
+                    time.sleep(5)
+            except Exception, e:
+                logger.exception(e)
+                handle_exception(Exception(e_msg), request)
+            finally:
+                if (rc == 1):
+                    o, e, rc = superctl(dname, 'status')
+                    if (rc == 1):
+                        handle_exception(Exception(e_msg), request)
+
             if (command == 'install'):
-                share_map = request.DATA.get('shares')
+                share_map = request.DATA.get('shares', {})
                 logger.debug('share map = %s' % share_map)
-                port_map = request.DATA.get('ports')
+                port_map = request.DATA.get('ports', {})
                 logger.debug('port map = %s' % port_map)
-                cc_map = request.DATA.get('cc')
+                cc_map = request.DATA.get('cc', {})
                 logger.debug('cc map = %s' % cc_map)
                 containers = DContainer.objects.filter(rockon=rockon)
                 for co in containers:

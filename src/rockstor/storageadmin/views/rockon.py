@@ -24,7 +24,7 @@ from storageadmin.models import (RockOn, DImage, DContainer, DPort, DVolume,
 from storageadmin.serializers import RockOnSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
-from rockon_helpers import docker_status
+from rockon_helpers import (docker_status, rockon_status)
 import logging
 logger = logging.getLogger(__name__)
 
@@ -33,6 +33,9 @@ class RockOnView(rfc.GenericView):
     serializer_class = RockOnSerializer
 
     def get_queryset(self, *args, **kwargs):
+        for ro in RockOn.objects.all():
+            ro.status = rockon_status(ro.name)
+            ro.save()
         return RockOn.objects.all()
 
     @transaction.commit_on_success
@@ -55,6 +58,7 @@ class RockOnView(rfc.GenericView):
                     ro = None
                     if (RockOn.objects.filter(name=name).exists()):
                         ro = RockOn.objects.get(name=name)
+                        ro.description = rockons[r]['description']
                     else:
                         ro = RockOn(name=name,
                                     description=rockons[r]['description'],
@@ -80,30 +84,39 @@ class RockOnView(rfc.GenericView):
                             co = DContainer(rockon=ro, dimage=io, name=c)
                         co.save()
 
-                        ports = containers[c]['ports']
-                        for p in ports.keys():
-                            po = None
-                            if (DPort.objects.filter(hostp=p).exists()):
-                                po = DPort.objects.get(hostp=p)
-                                po.container = co
-                                po.protocol = ports[p]
-                            else:
-                                po = DPort(hostp=p, containerp=p,
-                                           container=co, protocol=ports[p])
-                            po.save()
-                        volumes = containers[c]['volumes']
-                        for v in volumes:
-                            if (not DVolume.objects.filter(
-                                    dest_dir=v, container=co).exists()):
-                                vo = DVolume(container=co, dest_dir=v)
-                                vo.save()
-                        options = containers[c]['opts']
-                        for o in options.keys():
-                            if (not ContainerOption.objects.filter(
-                                    container=co, name=options[o]).exists()):
-                                oo = ContainerOption(container=co, name=o,
-                                                     val=options[o])
-                                oo.save()
+                        if ('ports' in containers[c]):
+                            ports = containers[c]['ports']
+                            for p in ports.keys():
+                                po = None
+                                if (DPort.objects.filter(hostp=p).exists()):
+                                    po = DPort.objects.get(hostp=p)
+                                    po.container = co
+                                    po.protocol = ports[p]
+                                else:
+                                    po = DPort(hostp=p, containerp=p,
+                                               container=co, protocol=ports[p])
+                                po.save()
+
+                        if ('volumes' in containers[c]):
+                            volumes = containers[c]['volumes']
+                            for v in volumes:
+                                if (not DVolume.objects.filter(
+                                        dest_dir=v, container=co).exists()):
+                                    vo = DVolume(container=co, dest_dir=v)
+                                    vo.save()
+                            for vo in DVolume.objects.filter(container=co):
+                                if (vo.dest_dir not in volumes):
+                                    vo.delete()
+
+                        if ('opts' in containers[c]):
+                            options = containers[c]['opts']
+                            for o in options.keys():
+                                if (not ContainerOption.objects.filter(
+                                        container=co, name=options[o]).exists()):
+                                    oo = ContainerOption(container=co, name=o,
+                                                         val=options[o])
+                                    oo.save()
+
                     if ('custom_config' in rockons[r]):
                         cc_d = rockons[r]['custom_config']
                         for k in cc_d:

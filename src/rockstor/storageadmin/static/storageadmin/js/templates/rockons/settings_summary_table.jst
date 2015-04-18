@@ -34,4 +34,22 @@
       <td><%= cci.get('val') %>&nbsp;&nbsp(<%= cci.get('key') %>)&nbsp;&nbsp<i class="fa fa-exclamation-circle" title="<%= cci.get('description') %>" rel="tooltip"></i></td>
     </tr>
   <% }); %>
-</tablthead>
+</table>
+<% if (rockon.get('name') == "OpenVPN" ) { %>
+  <h3>Additional steps are required by this Rockon.</h3>
+  <p>The following steps require you to open a terminal(eg: ssh) and execute commands as the root user.</p>
+  <h4><u>Initialize PKI</u></h4>
+  <p>This is required only once. Execute the following command as root</p>
+  <code>/opt/rockstor/bin/ovpn-initpki</code>
+  <br>
+  <h4><u>Generate a client certificate</u></h4>
+  <p>Generate a client certificate(one per client) without a passphrase by executing the following command as root.</p>
+  <code>/opt/rockstor/bin/ovpn-client-gen</code>
+  <br>
+  <h4><u>Retrieve client configuration</u></h4>
+  <p>
+    For each of your clients, retrieve the configuration by executing the
+    following command as root. The resulting .ovpn file can be used to connect.
+  </p>
+  <code>/opt/rockstor/bin/ovpn-client-print</code>
+<% } %>

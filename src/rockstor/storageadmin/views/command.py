@@ -193,6 +193,7 @@ class CommandView(APIView):
         elif (command == 'shutdown'):
             msg = ('The system will be shutdown after 1 minute')
             try:
+                request.session.flush()
                 system_shutdown()
             except Exception, e:
                 msg = ('Failed to shutdown the system due to a low level '
@@ -205,6 +206,7 @@ class CommandView(APIView):
         elif (command == 'reboot'):
             msg = ('The system will reboot after 1 minute')
             try:
+                request.session.flush()
                 system_reboot()
             except Exception, e:
                 msg = ('Failed to reboot the system due to a low level error')
