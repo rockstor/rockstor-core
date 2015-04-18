@@ -37,6 +37,20 @@ def docker_status():
     return True
 
 
+def rockon_status(name):
+    try:
+        o, e, rc = run_command([DOCKER, 'inspect', '-f', '{{.State.Running}}', name])
+        if (len(o) > 0):
+            if (o[0] == 'true'):
+                return 'started'
+            else:
+                return 'stopped'
+        return 'error'
+    except Exception, e:
+        logger.exception(e)
+        return 'error'
+
+
 @task()
 def start(rid):
     new_status = 'started'

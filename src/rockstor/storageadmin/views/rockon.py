@@ -24,7 +24,7 @@ from storageadmin.models import (RockOn, DImage, DContainer, DPort, DVolume,
 from storageadmin.serializers import RockOnSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
-from rockon_helpers import docker_status
+from rockon_helpers import (docker_status, rockon_status)
 import logging
 logger = logging.getLogger(__name__)
 
@@ -33,6 +33,9 @@ class RockOnView(rfc.GenericView):
     serializer_class = RockOnSerializer
 
     def get_queryset(self, *args, **kwargs):
+        for ro in RockOn.objects.all():
+            ro.status = rockon_status(ro.name)
+            ro.save()
         return RockOn.objects.all()
 
     @transaction.commit_on_success
