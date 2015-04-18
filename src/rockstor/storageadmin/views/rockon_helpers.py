@@ -72,6 +72,8 @@ def install(rid):
         rockon = RockOn.objects.get(id=rid)
         if (rockon.name == 'Plex'):
             plex_install(rockon)
+        elif (rockon.name == 'OpenVPN'):
+            ovpn_install(rockon)
     except Exception, e:
         logger.debug('exception while installing the rockon')
         logger.exception(e)
@@ -88,6 +90,9 @@ def uninstall(rid, new_state='available'):
         rockon = RockOn.objects.get(id=rid)
         if (rockon.name == 'Plex'):
             run_command([DOCKER, 'rm', rockon.name, ])
+        if (rockon.name == 'OpenVPN'):
+            run_command([DOCKER, 'rm', rockon.name])
+            run_command([DOCKER, 'rm', 'ovpn-data'])
     except:
         new_state = 'error'
     finally:
@@ -133,13 +138,30 @@ def plex_install(rockon):
     return move(npath, pref_file)
 
 
-def ovpn_bootstrap():
+def ovpn_install(rockon):
+    cco = DCustomConfig.objects.get(rockon=rockon)
+    for c in DContainer.objects.filter(rockon=rockon):
+        image = c.dimage.name
+        run_command([DOCKER, 'pull', image, ])
+    oc = DContainer.objects.get(rockon=rockon, name='openvpn')
+    po = DPort.objects.get(container=oc)
+    data_container = 'ovpn-data'
+    image = 'kylemanna/openvpn'
+    logger.debug('server name = %s' % cco.val)
     #volume container
-    volc_cmd = [DOCKER, 'run', '--name', 'ovpn-data', '-v', '/etc/openvpn',
+    volc_cmd = [DOCKER, 'run', '--name', data_container, '-v', '/etc/openvpn',
                 'busybox', ]
     run_command(volc_cmd)
+    logger.debug('volume container initialized')
     #initialize vol container data
-    dinit_cmd = [DOCKER, 'run', '--volumes-from', 'ovpn-data', '--rm',
-                 'kylemanna/openvpn', 'ovpn_genconfig', '-u',
-                 'udp://localhost', ]
+    dinit_cmd = [DOCKER, 'run', '--volumes-from', data_container, '--rm',
+                 image, 'ovpn_genconfig', '-u', 'udp://%s' % cco.val, ]
     run_command(dinit_cmd)
+    #logger.debug('volume container initialized 2')
+    #dinit2_cmd = [DOCKER, 'run', '--volumes-from', data_container, '--rm', '-it', image, 'ovpn_initpki', ]
+    #run_command(dinit2_cmd)
+    logger.debug('volume container initialized 3')
+    server_cmd = [DOCKER, 'run', '--volumes-from', data_container, '-d', '--name', rockon.name,
+                  '-p', '%s:%s/udp' % (po.hostp, po.containerp), '--cap-add=NET_ADMIN', image]
+    run_command(server_cmd)
+    run_command([DOCKER, 'stop', rockon.name])
