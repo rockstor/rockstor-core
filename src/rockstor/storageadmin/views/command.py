@@ -40,6 +40,7 @@ from django.utils.timezone import utc
 from django.conf import settings
 from share_helpers import sftp_snap_toggle
 from oauth2_provider.ext.rest_framework import OAuth2Authentication
+from system.pkg_mgmt import install_pkg
 
 import logging
 logger = logging.getLogger(__name__)
@@ -192,6 +193,7 @@ class CommandView(APIView):
         elif (command == 'shutdown'):
             msg = ('The system will be shutdown after 1 minute')
             try:
+                request.session.flush()
                 system_shutdown()
             except Exception, e:
                 msg = ('Failed to shutdown the system due to a low level '
@@ -204,6 +206,7 @@ class CommandView(APIView):
         elif (command == 'reboot'):
             msg = ('The system will reboot after 1 minute')
             try:
+                request.session.flush()
                 system_reboot()
             except Exception, e:
                 msg = ('Failed to reboot the system due to a low level error')

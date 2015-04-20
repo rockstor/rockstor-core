@@ -89,7 +89,7 @@ AddPoolView = Backbone.View.extend({
             }
             else
               if(/^[A-Za-z][A-Za-z0-9_.-]*$/.test(pool_name) == false){
-                err_msg = 'Pool name must be an alphanumeric starting with an alphabet';
+                err_msg = 'Please enter a valid pool name';
                 return false;
               }
 

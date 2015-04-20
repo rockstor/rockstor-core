@@ -66,7 +66,7 @@
                 <tr id="<%= service.get('name') %>">
                   <td>
                     <%= service.get('display_name') %>&nbsp;
-                    <% if ((service.get('name') == 'nis') || (service.get('name') == 'ntpd') || (service.get('name') == 'winbind') || (service.get('name') == 'ldap')|| (service.get('name') == 'snmpd')) { %>
+                    <% if ((service.get('name') == 'nis') || (service.get('name') == 'ntpd') || (service.get('name') == 'winbind') || (service.get('name') == 'ldap')|| (service.get('name') == 'snmpd')|| (service.get('name') == 'docker')) { %>
                       <a href="#" class="configure" data-service-name="<%= service.get('name') %>"><i class="icon-wrench"></i></a>
                     <% } %>
                     <% if ((service.get('name') == 'winbind')) { %>
