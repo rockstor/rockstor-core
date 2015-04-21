@@ -17,10 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf.urls import patterns, url
+from django.conf import settings
 from smart_manager.views import (ReplicaView, ReplicaTrailView,
                                  ReplicaShareView, ReceiveTrailView)
 
-share_regex = r'[A-Za-z]+[A-Za-z0-9_\-.]*'
+share_regex = settings.SHARE_REGEX
 
 urlpatterns = patterns('',
     url(r'^$', ReplicaView.as_view(), name='replica-view'),
