@@ -23,32 +23,6 @@
 <div id="messages"></div>
 <div class="row-fluid">
   <div class="span12">
-    <div id="details-header">
-      <table>
-        <tr>
-          <td><span class="h3">Service Monitor&nbsp;&nbsp;&nbsp;</span></td>
-          <td>
-            <% if (sm.get('status')) { %>
-              <div class="slider-stop" data-service-name="<%= sm.get('name') %>">OFF</div>
-              <div class="slider-ph">
-                <input type="text" class="service-status" value="1" data-service-name="<%= sm.get('name') %>"></input>
-              </div>
-              <div class="slider-start on" data-service-name="<%= sm.get('name') %>">ON</div>
-            <% } else { %>
-              <div class="slider-stop" data-service-name="<%= sm.get('name') %>">OFF</div>
-              <div class="slider-ph">
-                <input type="text" class="service-status" value="0" data-service-name="<%= sm.get('name') %>"></input>
-              </div>
-              <div class="slider-start" data-service-name="<%= sm.get('name') %>">ON</div>
-            <% } %>
-          </td>
-        </tr>
-      </table>
-    </div>
-    <div id="sm-warning" class="alert" style="display:none">
-      <strong>Warning! Service Monitor is not running</strong> The Service Monitor service is not running. The status of the services listed below may be out of date. Please start the service monitor to get the latest service status.
-    </div>
-
     <br>
     <br>
     <div id="services-list">
@@ -131,7 +105,7 @@
       <strong>Winbind Domain Controllers</strong>: <%= adServiceConfig.controllers %><br>
       <strong>Template Shell</strong>: <%= adServiceConfig.templateshell %><br>
       <strong>Allow Offline Login</strong>: <%= adServiceConfig.allow_offline %><br>
-      
+
     </div>
     <form id="join-domain-form" name="join-domain-form">
       <div class="control-group">
@@ -155,4 +129,3 @@
     </form>
   </div>
 </div>
-
