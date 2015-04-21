@@ -1,33 +1,33 @@
 /*
  *
- * @licstart  The following is the entire license notice for the 
+ * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
- * 
+ *
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
- * 
+ *
  * RockStor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
- * 
+ *
  * RockStor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * @licend  The above is the entire license notice
  * for the JavaScript code in this page.
- * 
+ *
  */
 
 /* Services */
 
 ServicesView = Backbone.View.extend({
-  
+
   events: {
     'click .slider-stop': "stopService",
     'click .slider-start': "startService",
@@ -71,11 +71,9 @@ ServicesView = Backbone.View.extend({
       this.adServiceConfig = {};
     }
     // find service-monitor service
-    var smService = this.collection.find(function(s) { return s.get('name') == 'service-monitor'; });
     $(this.el).append(this.template({
       services: this.collection,
-      adServiceConfig: this.adServiceConfig,
-      sm: smService
+      adServiceConfig: this.adServiceConfig
     }));
     this.$(".ph-pagination").html(this.paginationTemplate({
       collection: this.collection
@@ -83,18 +81,18 @@ ServicesView = Backbone.View.extend({
     this.$('input.service-status').simpleSlider({
       "theme": "volume",
       allowedValues: [0,1],
-      snap: true 
+      snap: true
     });
-    
+
     this.$('input.service-status').each(function(i, el) {
       var slider = $(el).data('slider-object');
       // disable track and dragger events to disable slider
       slider.trackEvent = function(e) {};
       slider.dragger.unbind('mousedown');
     });
-    this.$('.simple-overlay').overlay({load: false}); 
-    
-    // join domain modal 
+    this.$('.simple-overlay').overlay({load: false});
+
+    // join domain modal
     this.$('#join-domain-modal').modal({
       show: false
     });
@@ -136,19 +134,18 @@ ServicesView = Backbone.View.extend({
 
     });
     var adService = this.collection.get('winbind');
-    if (adService.get('status') && 
-        (this.adServiceConfig.security == 'ads' || 
+    if (adService.get('status') &&
+        (this.adServiceConfig.security == 'ads' ||
          this.adServiceConfig.security == 'domain')) {
       this.showJoinDomainStatus();
     }
-    this.displaySmWarning();
   },
-  
+
   startService: function(event) {
     var _this = this;
-    var serviceName = $(event.currentTarget).data('service-name'); 
+    var serviceName = $(event.currentTarget).data('service-name');
     // if already started, return
-    if (this.getSliderVal(serviceName).toString() == "1") return; 
+    if (this.getSliderVal(serviceName).toString() == "1") return;
     this.stopPolling();
     this.setStatusLoading(serviceName, true);
     $.ajax({
@@ -157,14 +154,12 @@ ServicesView = Backbone.View.extend({
       dataType: "json",
       success: function(data, status, xhr) {
         _this.highlightStartEl(serviceName, true);
-        _this.setSliderVal(serviceName, 1); 
+        _this.setSliderVal(serviceName, 1);
         _this.setStatusLoading(serviceName, false);
-        _this.displaySmWarning();
         _this.startPolling();
       },
       error: function(xhr, status, error) {
         _this.setStatusError(serviceName, xhr);
-        _this.displaySmWarning();
         _this.startPolling();
       }
     });
@@ -172,10 +167,10 @@ ServicesView = Backbone.View.extend({
 
   stopService: function(event) {
     var _this = this;
-    var serviceName = $(event.currentTarget).data('service-name'); 
+    var serviceName = $(event.currentTarget).data('service-name');
     if (serviceName == 'service-monitor') return;
     // if already stopped, return
-    if (this.getSliderVal(serviceName).toString() == "0") return; 
+    if (this.getSliderVal(serviceName).toString() == "0") return;
     this.stopPolling();
     this.setStatusLoading(serviceName, true);
     $.ajax({
@@ -184,7 +179,7 @@ ServicesView = Backbone.View.extend({
       dataType: "json",
       success: function(data, status, xhr) {
         _this.highlightStartEl(serviceName, false);
-        _this.setSliderVal(serviceName, 0); 
+        _this.setSliderVal(serviceName, 0);
         _this.setStatusLoading(serviceName, false);
         _this.startPolling();
       },
@@ -198,7 +193,7 @@ ServicesView = Backbone.View.extend({
   configureService: function(event) {
     event.preventDefault();
     var _this = this;
-    var serviceName = $(event.currentTarget).data('service-name'); 
+    var serviceName = $(event.currentTarget).data('service-name');
     app_router.navigate('services/' + serviceName + '/edit', {trigger: true});
   },
 
@@ -265,12 +260,12 @@ ServicesView = Backbone.View.extend({
           var serviceName = service.get('name');
           if (service.get('status')) {
             _this.highlightStartEl(serviceName, true);
-            _this.setSliderVal(serviceName, 1); 
+            _this.setSliderVal(serviceName, 1);
           } else {
             _this.highlightStartEl(serviceName, false);
-            _this.setSliderVal(serviceName, 0); 
+            _this.setSliderVal(serviceName, 0);
           }
-        }); 
+        });
         var currentTime = new Date().getTime();
         var diff = currentTime - _this.startTime;
         // if diff > updateFreq, make next call immediately
@@ -278,11 +273,10 @@ ServicesView = Backbone.View.extend({
           _this.updateStatus();
         } else {
           // wait till updateFreq msec has elapsed since startTime
-          _this.timeoutId = window.setTimeout( function() { 
+          _this.timeoutId = window.setTimeout( function() {
             _this.updateStatus();
           }, _this.updateFreq - diff);
         }
-        _this.displaySmWarning();
       }
     });
   },
@@ -309,26 +303,9 @@ ServicesView = Backbone.View.extend({
         this.$('#join-domain-status').html('<span class="alert alert-success alert-small">Not Joined</span>');
       }
     }
-  },
-
-  displaySmWarning: function() {
-    var smService = this.collection.find(function(s) { return s.get('name') == 'service-monitor'; });
-    var ts = new Date(smService.get('ts')).getTime();
-    if (this.smTs != null && ts != null) {
-      if (ts == this.smTs) {
-        // timestamp of service monitor status has not changed from the last
-        // time, it must not be running
-        this.setSliderVal('service-monitor', 0); 
-        this.$('#sm-warning').show();
-      } else {
-        this.$('#sm-warning').hide();
-      }
-    }
-    this.smTs = ts;
   }
 
 });
 
 // Add pagination
 Cocktail.mixin(ServicesView, PaginationMixin);
-

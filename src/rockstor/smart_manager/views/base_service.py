@@ -21,27 +21,34 @@ from django.conf import settings
 from smart_manager.serializers import ServiceStatusSerializer
 import json
 import rest_framework_custom as rfc
+from system.services import service_status
+from django.db import transaction
+from django.utils.timezone import utc
+from datetime import datetime
+
+import logging
+logger = logging.getLogger(__name__)
 
 
 class BaseServiceView(rfc.GenericView):
     serializer_class = ServiceStatusSerializer
 
+    @transaction.commit_on_success
     def get_queryset(self, *args, **kwargs):
 
-        limit = self.request.QUERY_PARAMS.get('limit',
-                                              settings.PAGINATION['max_limit'])
-        limit = int(limit)
-        url_fields = self.request.path.strip('/').split('/')
-        if (len(url_fields) < 4):
-            sos = []
-            for s in Service.objects.all():
-                if (ServiceStatus.objects.filter(service=s).exists()):
-                    so = ServiceStatus.objects.filter(service=s).order_by('-ts')[0]
-                    sos.append(so)
-            return sos
-        s = Service.objects.get(name=url_fields[3])
-        self.paginate_by = 0
-        return ServiceStatus.objects.filter(service=s).order_by('-ts')[0]
+        with self._handle_exception(self.request):
+            limit = self.request.QUERY_PARAMS.get('limit',
+                                                  settings.PAGINATION['max_limit'])
+            limit = int(limit)
+            url_fields = self.request.path.strip('/').split('/')
+            if (len(url_fields) < 4):
+                sos = []
+                for s in Service.objects.all():
+                    sos.append(self._get_or_create_sso(s))
+                return sos
+            s = Service.objects.get(name=url_fields[3])
+            self.paginate_by = 0
+            return self._get_or_create_sso(s)
 
     def _save_config(self, service, config):
         service.config = json.dumps(config)
@@ -50,3 +57,27 @@ class BaseServiceView(rfc.GenericView):
     def _get_config(self, service):
         return json.loads(service.config)
 
+    def _get_or_create_sso(self, service):
+        ts = datetime.utcnow().replace(tzinfo=utc)
+        so = None
+        if (ServiceStatus.objects.filter(service=service).exists()):
+            so = ServiceStatus.objects.filter(service=service).order_by('-ts')[0]
+        else:
+            so = ServiceStatus(service=service, count=0)
+        so.status = self._get_status(service)
+        so.count += 1
+        so.ts = ts
+        so.save()
+        return so
+
+    def _get_status(self, service):
+        try:
+            o, e, rc = service_status(service.name)
+            if (rc == 0):
+                return True
+            return False
+        except Exception, e:
+            msg = ('Exception while querying status of service: %s' % service.name)
+            logger.error(msg)
+            logger.exception(e)
+            return False
