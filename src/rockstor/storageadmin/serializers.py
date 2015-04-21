@@ -113,99 +113,94 @@ class IscsiSerializer(serializers.ModelSerializer):
         model = IscsiTarget
 
 
-class SnapshotSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Snapshot
-
-
 class ShareSerializer(serializers.ModelSerializer):
-    snapshots = SnapshotSerializer()
-    # pool = PoolInfoSerializer(data=Pool.objects.all())
-    # nfs_exports = NFSExportSerializer(data=NFSExport.objects.all())
+	snapshots = SnapshotSerializer
+	# pool = PoolInfoSerializer(data=Pool.objects.all())
+	# nfs_exports = NFSExportSerializer(data=NFSExport.objects.all())
 
-    class Meta:
-        model = Share
-        fields = ('pool', 'qgroup', 'name', 'uuid', 'size', 'owner',
-                  'group', 'perms', 'toc', 'subvol_name', 'replica',
-                  'compression_algo', 'snapshots')
+	class Meta:
+		model = Share
+		fields = ('pool', 'qgroup', 'name', 'uuid', 'size', 'owner', 'group', 'perms', 'toc', 'subvol_name',
+					'replica', 'compression_algo', 'cur_rusage', 'cur_eusage', 'snapshots')
 
 
 class ApplianceSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Appliance
+	class Meta:
+		model = Appliance
 
 
 class SupportSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SupportCase
+	class Meta:
+		model = SupportCase
 
 
 class DashboardConfigSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = DashboardConfig
+	class Meta:
+		model = DashboardConfig
 
 
 class NetworkInterfaceSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = NetworkInterface
+	class Meta:
+		model = NetworkInterface
 
 
 class PoolScrubSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PoolScrub
+	class Meta:
+		model = PoolScrub
 
 
 class PoolBalanceSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PoolBalance
+	class Meta:
+		model = PoolBalance
 
 
 class SetupSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Setup
+	class Meta:
+		model = Setup
 
 
 class SFTPSerializer(serializers.ModelSerializer):
-    share = serializers.CharField(source='share_name')
+	share = serializers.CharField(source='share_name')
 
-    class Meta:
-        model = SFTP
+	class Meta:
+		model = SFTP
 
 
 class PluginSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Plugin
+	class Meta:
+		model = Plugin
 
 
 class InstalledPluginSerializer(serializers.ModelSerializer):
-    plugin_meta = PluginSerializer(source='plugin_meta')
+	plugin_meta = PluginSerializer(source='plugin_meta')
 
-    class Meta:
-        model = InstalledPlugin
+	class Meta:
+		model = InstalledPlugin
 
 
 class OauthAppSerializer(serializers.ModelSerializer):
-    client_id = serializers.CharField(source='client_id')
-    client_secret = serializers.CharField(source='client_secret')
+	client_id = serializers.CharField(source='client_id')
+	client_secret = serializers.CharField(source='client_secret')
 
-    class Meta:
-        model = OauthApp
+	class Meta:
+		model = OauthApp
 
 
 class NetatalkShareSerializer(serializers.ModelSerializer):
-    share = serializers.CharField(source='share_name')
-    
+	share = serializers.CharField(source='share_name')
+
     class Meta:
         model = NetatalkShare
 
 
 class TLSCertificateSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = TLSCertificate
 
 
 class RockOnSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = RockOn
 
@@ -223,5 +218,6 @@ class RockOnPortSerializer(serializers.ModelSerializer):
 
 
 class RockOnCustomConfigSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = DCustomConfig
