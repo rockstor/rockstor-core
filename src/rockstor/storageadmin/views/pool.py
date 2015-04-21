@@ -135,14 +135,19 @@ class PoolView(rfc.GenericView):
                      request.DATA.get('disks')]
             pname = request.DATA['pname']
             if (re.match('%s$' % settings.POOL_REGEX, pname) is None):
-                e_msg = ('Pool name must start with a letter(a-z) and can'
-                         ' be followed by any of the following characters: '
-                         'letter(a-z), digits(0-9), hyphen(-), underscore'
-                         '(_) or a period(.).')
+                e_msg = ('Pool name must start with a alphanumeric(a-z0-9) '
+                         'character and can be followed by any of the '
+                         'following characters: letter(a-z), digits(0-9), '
+                         'hyphen(-), underscore(_) or a period(.).')
                 handle_exception(Exception(e_msg), request)
 
             if (Pool.objects.filter(name=pname).exists()):
-                e_msg = ('Pool with name: %s already exists.' % pname)
+                e_msg = ('Pool(%s) already exists. Choose a different name' % pname)
+                handle_exception(Exception(e_msg), request)
+
+            if (Share.objects.filter(name=pname).exists()):
+                e_msg = ('A Share with this name(%s) exists. Pool and Share names '
+                         'must be distinct. Choose a different name' % pname)
                 handle_exception(Exception(e_msg), request)
 
             for d in disks:

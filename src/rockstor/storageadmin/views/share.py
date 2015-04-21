@@ -116,14 +116,19 @@ class ShareView(rfc.GenericView):
             sname = request.DATA.get('sname', None)
             if ((sname is None or
                  re.match('%s$' % settings.SHARE_REGEX, sname) is None)):
-                e_msg = ('Share name must start with a letter(a-z) and can '
-                         'be followed by any of the following characters: '
-                         'letter(a-z), digits(0-9), hyphen(-), underscore'
-                         '(_) or a period(.).')
+                e_msg = ('Share name must start with a alphanumeric(a-z0-9) '
+                         'character and can be followed by any of the '
+                         'following characters: letter(a-z), digits(0-9), '
+                         'hyphen(-), underscore (_) or a period(.).')
                 handle_exception(Exception(e_msg), request)
 
             if (Share.objects.filter(name=sname).exists()):
-                e_msg = ('Share(%s) already exists.' % sname)
+                e_msg = ('Share(%s) already exists. Choose a different name' % sname)
+                handle_exception(Exception(e_msg), request)
+
+            if (Pool.objects.filter(name=sname).exists()):
+                e_msg = ('A Pool with this name(%s) exists. Share and Pool names '
+                         'must be distinct. Choose a different name' % sname)
                 handle_exception(Exception(e_msg), request)
 
             try:
