@@ -312,11 +312,6 @@ enough for all practical purposes and also is the max allowed in btrfs.
 MIN_SHARE_SIZE = 100
 MAX_SHARE_SIZE = 18014398509481984L
 
-PAGINATION = {
-	   'page_size': 15,
-	   'max_limit': 10000,
-}
-
 START_UID = 5000
 END_UID = 6000
 VALID_SHELLS = ('${buildout:depdir}/bin/rcli', '/bin/bash', '/sbin/nologin',)
@@ -351,9 +346,9 @@ SYSCONFIG = {
 SOUTH_TESTS_MIGRATE = False
 
 REST_FRAMEWORK = {
-		'TEST_REQUEST_DEFAULT_FORMAT': 'json',
-		'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-		'PAGE_SIZE': 1000,
+
+		'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+		'PAGE_SIZE': 15,
 }
 
 CONFROOT = '${buildout:depdir}/conf'

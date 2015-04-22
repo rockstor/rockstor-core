@@ -22,39 +22,39 @@ from smart_manager.models import ShareUsage
 
 
 class Share(models.Model):
-    """pool that this share is part of"""
-    pool = models.ForeignKey(Pool)
-    """quota group this share is part of"""
-    qgroup = models.CharField(max_length=100)
-    """name of the share, kind of like id"""
-    name = models.CharField(max_length=4096, unique=True)
-    """id of the share. numeric in case of btrfs"""
-    uuid = models.CharField(max_length=100, null=True)
-    """total size in KB"""
-    size = models.BigIntegerField(default=0)
-    owner = models.CharField(max_length=4096, default='root')
-    group = models.CharField(max_length=4096, default='root')
-    perms = models.CharField(max_length=9, default='755')
-    toc = models.DateTimeField(auto_now=True)
-    subvol_name = models.CharField(max_length=4096)
-    replica = models.BooleanField(default=False)
-    compression_algo = models.CharField(max_length=1024, null=True)
+	"""pool that this share is part of"""
+	pool = models.ForeignKey(Pool)
+	"""quota group this share is part of"""
+	qgroup = models.CharField(max_length=100)
+	"""name of the share, kind of like id"""
+	name = models.CharField(max_length=4096, unique=True)
+	"""id of the share. numeric in case of btrfs"""
+	uuid = models.CharField(max_length=100, null=True)
+	"""total size in KB"""
+	size = models.BigIntegerField(default=0)
+	owner = models.CharField(max_length=4096, default='root')
+	group = models.CharField(max_length=4096, default='root')
+	perms = models.CharField(max_length=9, default='755')
+	toc = models.DateTimeField(auto_now=True)
+	subvol_name = models.CharField(max_length=4096)
+	replica = models.BooleanField(default=False)
+	compression_algo = models.CharField(max_length=1024, null=True)
 
-    @property
-    def cur_rusage(self, *args, **kwargs):
-        try:
-            su = ShareUsage.objects.filter(name=self.name).order_by('-ts')[0]
-            return su.r_usage
-        except:
-            return -1
+	@property
+	def cur_rusage(self, *args, **kwargs):
+		try:
+		        su = ShareUsage.objects.filter(name=self.name).order_by('-ts')[0]
+			return su.r_usage
+		except:
+			return -1
 
-    @property
-    def cur_eusage(self, *args, **kwargs):
-        try:
-            su = ShareUsage.objects.filter(name=self.name).order_by('-ts')[0]
-            return su.e_usage
-        except:
-            return -1
+	@property
+	def cur_eusage(self, *args, **kwargs):
+		try:
+			su = ShareUsage.objects.filter(name=self.name).order_by('-ts')[0]
+			return su.e_usage
+		except:
+			return -1
 
 	@property
 	def snapshots(self, *args, **kwargs):

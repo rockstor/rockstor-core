@@ -41,8 +41,8 @@ class PoolInfoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Pool
-        fields = ('name', 'uuid', 'size', 'raid', 'toc', 'compression', 'mnt_options', 'cur_reclaimable',
-                  'cur_free')
+        fields = ('name', 'uuid', 'size', 'raid', 'toc', 'compression',
+                  'mnt_options', 'cur_reclaimable', 'cur_free')
 
 
 class SnapshotSerializer(serializers.ModelSerializer):
@@ -114,20 +114,21 @@ class IscsiSerializer(serializers.ModelSerializer):
 
 
 class ShareSerializer(serializers.ModelSerializer):
-	snapshots = SnapshotSerializer
-	# pool = PoolInfoSerializer(data=Pool.objects.all())
-	# nfs_exports = NFSExportSerializer(data=NFSExport.objects.all())
+    snapshots = SnapshotSerializer
+    #  = PoolInfoSerializer(data=Pool.objects.all())
+    # nfs_exports = NFSExportSerializer(data=NFSExport.objects.all())
 
-	class Meta:
-		model = Share
-		fields = ('pool', 'qgroup', 'name', 'uuid', 'size', 'owner', 'group', 'perms', 'toc', 'subvol_name',
-					'replica', 'compression_algo', 'cur_rusage', 'cur_eusage', 'snapshots')
+    class Meta:
+	model = Share
+	fields = ('pool', 'qgroup', 'name', 'uuid', 'size', 'owner', 'group',
+                  'perms', 'toc', 'subvol_name', 'replica',
+                  'compression_algo', 'cur_rusage', 'cur_eusage',
+                  'snapshots')
 
 
 class ApplianceSerializer(serializers.ModelSerializer):
-	class Meta:
+        class Meta:
 		model = Appliance
-
 
 class SupportSerializer(serializers.ModelSerializer):
 	class Meta:
@@ -167,30 +168,31 @@ class SFTPSerializer(serializers.ModelSerializer):
 
 
 class PluginSerializer(serializers.ModelSerializer):
-	class Meta:
-		model = Plugin
+    
+    class Meta:
+	model = Plugin
 
 
 class InstalledPluginSerializer(serializers.ModelSerializer):
-	plugin_meta = PluginSerializer(source='plugin_meta')
+    plugin_meta = PluginSerializer(source='plugin_meta')
 
-	class Meta:
-		model = InstalledPlugin
+    class Meta:
+	model = InstalledPlugin
 
 
 class OauthAppSerializer(serializers.ModelSerializer):
-	client_id = serializers.CharField(source='client_id')
-	client_secret = serializers.CharField(source='client_secret')
+    client_id = serializers.CharField(source='client_id')
+    client_secret = serializers.CharField(source='client_secret')
 
-	class Meta:
+    class Meta:
 		model = OauthApp
 
 
 class NetatalkShareSerializer(serializers.ModelSerializer):
-	share = serializers.CharField(source='share_name')
+    share = serializers.CharField(source='share_name')
 
     class Meta:
-        model = NetatalkShare
+            model = NetatalkShare
 
 
 class TLSCertificateSerializer(serializers.ModelSerializer):

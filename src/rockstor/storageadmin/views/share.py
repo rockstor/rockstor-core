@@ -17,13 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import re
-from oauth2_provider.ext.rest_framework import OAuth2Authentication
-from rest_framework import generics
-from rest_framework.authentication import SessionAuthentication, BasicAuthentication
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db import transaction
-from storageadmin.auth import DigestAuthentication
 from storageadmin.models import (Share, Disk, Pool, Snapshot,
                                  NFSExport, SambaShare, SFTP)
 from fs.btrfs import (add_share, remove_share, share_id, update_quota,
