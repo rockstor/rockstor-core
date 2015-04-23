@@ -15,6 +15,12 @@
   <% } else { %>
     <li><a href="#shares"><i class="icon-folder-open"></i> Shares</a></li>
   <% } %>
+  <% if (selected == "snapshots") { %>
+  <li><a href="#snapshots" class="selected"><i class="icon-camera  icon-white"></i> Snapshots</a></li>
+<% } else { %>
+  <li><a href="#snapshots">  <i class="icon-camera"></i> Snapshots</a></li>
+<% } %>
+ 
   <li>
     <div class="subnav">
       <i class="fa fa-exchange"></i> Replication
