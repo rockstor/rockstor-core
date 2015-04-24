@@ -41,14 +41,13 @@ initialize: function() {
 	this.paginationTemplate = window.JST.common_pagination;
 	this.addTemplate = window.JST.share_snapshot_add_template;
 	this.module_name = 'snapshots';
-	this.share = this.options.share;
+	//this.share = this.options.share;
 	this.snapshots = this.options.snapshots;
-    this.collection = new SnapshotCollection();
-    this.collection.setUrl('PrivateShare');
-	this.collection.on("reset", this.renderSnapshots, this);
+    this.collection = new SnapshotsCollection();
+   //this.collection.on("reset", this.renderSnapshots, this);
     this.shares = new ShareCollection();
     this.dependencies.push(this.shares);
-    
+    this.dependencies.push(this.collection);
     this.selectedSnapshots = [];
 	this.modify_choices = [
 	                       {name: 'yes', value: 'yes'},
@@ -64,7 +63,7 @@ render: function() {
 
 
   renderSnapshots: function() {
-	  console.log('shares'+this.shares.length);
+	  console.log('shares'+this.collection.length);
 	var _this = this;
 	$(this.el).empty();
 		
