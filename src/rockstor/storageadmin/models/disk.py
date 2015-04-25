@@ -38,6 +38,8 @@ class Disk(models.Model):
     serial = models.CharField(max_length=1024, null=True)
     transport = models.CharField(max_length=1024, null=True)
     vendor = models.CharField(max_length=1024, null=True)
+    smart_available = models.BooleanField(default=False)
+    smart_enabled = models.BooleanField(default=False)
 
     @property
     def pool_name(self, *args, **kwargs):

@@ -101,7 +101,8 @@ class DiskListView(rfc.GenericView):
 class DiskDetailView(rfc.GenericView):
     serializer_class = DiskInfoSerializer
 
-    def _validate_disk(self, dname, request):
+    @staticmethod
+    def _validate_disk(dname, request):
         try:
             return Disk.objects.get(name=dname)
         except:
@@ -147,9 +148,13 @@ class DiskDetailView(rfc.GenericView):
                 return self._btrfs_disk_import(dname, request)
             if (command == 'blink-drive'):
                 return self._blink_drive(dname, request)
+            if (command == 'enable-smart'):
+                return self._toggle_smart(dname, request, enable=True)
+            if (command == 'disable-smart'):
+                return self._toggle_smart(dname, request)
 
         e_msg = ('Unsupported command(%s). Valid commands are wipe, btrfs-wipe,'
-                 ' btrfs-disk-import, blink-drive' % command)
+                 ' btrfs-disk-import, blink-drive, enable-smart, disable-smart' % command)
         handle_exception(Exception(e_msg), request)
 
     @transaction.atomic
@@ -173,8 +178,21 @@ class DiskDetailView(rfc.GenericView):
                  'may be on the disk: %s. Import or backup manually' % dname)
         handle_exception(Exception(e_msg), request)
 
-    def _blink_drive(self, dname, request):
-        disk = self._validate_disk(dname, request)
+    @classmethod
+    @transaction.atomic
+    def _toggle_smart(cls, dname, request, enable=False):
+        disk = cls._validate_disk(dname, request)
+        if (not disk.smart_available):
+            e_msg = ('S.M.A.R.T support is not available on this Disk(%s)' % dname)
+            handle_exception(Exception(e_msg), request)
+        smart.toggle_smart(disk.name, enable)
+        disk.smart_enabled = enable
+        disk.save()
+        return Response(DiskInfoSerializer(disk).data)
+
+    @classmethod
+    def _blink_drive(cls, dname, request):
+        disk = cls._validate_disk(dname, request)
         total_time = int(request.data.get('total_time', 90))
         blink_time = int(request.data.get('blink_time', 15))
         sleep_time = int(request.data.get('sleep_time', 5))
