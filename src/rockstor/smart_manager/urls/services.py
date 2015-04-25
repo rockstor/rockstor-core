@@ -25,7 +25,7 @@ from smart_manager.views import (BaseServiceView, NISServiceView,
                                  TaskSchedulerServiceView,
                                  DataCollectorServiceView, ServiceMonitorView,
                                  AFPServiceView, SNMPServiceView,
-                                 DockerServiceView)
+                                 DockerServiceView, SMARTDServiceView)
 
 command_regex = ('config|start|stop')
 
@@ -67,4 +67,7 @@ urlpatterns = patterns('',
     url(r'^docker$', DockerServiceView.as_view()),
     url(r'^docker/(?P<command>%s)$' % command_regex,
         DockerServiceView.as_view()),
+    url(r'^smartd$', SMARTDServiceView.as_view()),
+    url(r'^smartd/(?P<command>%s)$' % command_regex,
+        SMARTDServiceView.as_view()),
 )
