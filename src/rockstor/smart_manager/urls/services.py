@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf.urls import patterns, url
-from smart_manager.views import (NISServiceView,
+from smart_manager.views import (NISServiceView, BaseServiceView,
                                  SambaServiceView, NFSServiceView,
                                  NTPServiceView, WinbindServiceView,
                                  LdapServiceView, SFTPServiceView,
@@ -25,7 +25,7 @@ from smart_manager.views import (NISServiceView,
                                  TaskSchedulerServiceView,
                                  DataCollectorServiceView, ServiceMonitorView,
                                  AFPServiceView, SNMPServiceView,
-                                 DockerServiceView, BaseServiceView)
+                                 DockerServiceView, SMARTDServiceView)
 command_regex = ('config|start|stop')
 
 urlpatterns = patterns('',
@@ -66,4 +66,7 @@ urlpatterns = patterns('',
     url(r'^docker$', DockerServiceView.as_view()),
     url(r'^docker/(?P<command>%s)$' % command_regex,
         DockerServiceView.as_view()),
+    url(r'^smartd$', SMARTDServiceView.as_view()),
+    url(r'^smartd/(?P<command>%s)$' % command_regex,
+        SMARTDServiceView.as_view()),
 )
