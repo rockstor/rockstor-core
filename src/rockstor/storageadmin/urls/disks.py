@@ -26,6 +26,6 @@ urlpatterns = patterns(
     url(r'^$', DiskView.as_view()),
     url(r'^/(?P<command>scan)$', DiskView.as_view()),
     url(r'^/(?P<dname>%s)$' % disk_regex, DiskView.as_view()),
-    url(r'^/(?P<dname>%s)/(?P<command>wipe|btrfs-wipe|btrfs-disk-import|blink-drive)$' %
+    url(r'^/(?P<dname>%s)/(?P<command>wipe|btrfs-wipe|btrfs-disk-import|blink-drive|enable-smart|disable-smart)$' %
         disk_regex, DiskView.as_view()),
 )
