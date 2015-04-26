@@ -283,6 +283,8 @@ class PoolView(rfc.GenericView):
 
             disks = [self._validate_disk(d, request) for d in
                      request.DATA.get('disks')]
+            #for d in request.DATA.get('disks'):
+            #    disks.append(self._validate(d, request))
             num_new_disks = len(disks)
             if (num_new_disks == 0):
                 e_msg = ('List of disks in the input cannot be empty.')
