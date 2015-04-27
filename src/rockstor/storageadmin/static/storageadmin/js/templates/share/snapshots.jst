@@ -34,6 +34,7 @@
         </th>
         <th>Name</th>
         <th>Created on</th>
+        <th>Share</th>
         <th>Visibility to user</th>
         <th>Writable</th>
         <th>Total Size</th>
@@ -53,6 +54,12 @@
           </td>
           <td><i class="icon-camera"></i> <%= snapshot.get('name') %></td>
           <td><%= moment(snapshot.get("toc")).format(RS_DATE_FORMAT) %></td>
+          <% shares.each( function(share, index) { %>
+        <%  if(snapshot.get('share')== share.get('id')){  %>
+          <td><%= share.get('name') %></td>
+            <%     } %>
+          <% }); %>
+         
           <td>
             <% if (snapshot.get("uvisible")) { %>
               Visible

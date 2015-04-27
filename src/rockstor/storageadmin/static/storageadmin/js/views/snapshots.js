@@ -71,6 +71,7 @@ render: function() {
 		snapshots: this.collection,
 		selectedSnapshots: this.selectedSnapshots,
 		share: this.share,
+		shares: this.shares,
 		}));
 	this.$('[rel=tooltip]').tooltip({
 		placement: 'bottom'
@@ -129,10 +130,13 @@ add: function(event) {
 	},
 	submitHandler: function() {
 		var button = _this.$('#js-snapshot-save');
+		var shareNames = $("#shares").val();
+		console.log(shareNames);
 		if (buttonDisabled(button)) return false;
 		disableButton(button);
+		for (i = 0; i < shareNames.length; i++){
 		$.ajax({
-		    url: "/api/shares/" + _this.share.get('name') + "/snapshots/" + _this.$('#snapshot-name').val(),
+		    url: "/api/shares/" + shareNames[i]+ "/snapshots/" + _this.$('#snapshot-name').val(),
 			type: "POST",
 			dataType: "json",
 			contentType: 'application/json',
@@ -142,8 +146,7 @@ add: function(event) {
 			enableButton(button);
 			_this.collection.fetch({
 				success: function(collection, response, options) {
-				_this.parentView.trigger('snapshotsModified');
-			}                
+				}                
 			});
 		},
 		error: function(xhr, status, error) {
@@ -151,6 +154,7 @@ add: function(event) {
 			enableButton(button);
 		}
 		});
+		}
 		return false;
 	}
 	});
