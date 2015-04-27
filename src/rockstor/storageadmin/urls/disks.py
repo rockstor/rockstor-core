@@ -17,13 +17,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf.urls import patterns, url
-from storageadmin.views import DiskView
+from storageadmin.views import (DiskView, DiskSMARTView)
 
 disk_regex = '[A-Za-z]+[A-Za-z0-9]*'
 
 urlpatterns = patterns(
     '',
     url(r'^$', DiskView.as_view()),
+    url(r'^/smart/(?P<command>info)/(?P<dname>%s)$' % disk_regex, DiskSMARTView.as_view()),
     url(r'^/(?P<command>scan)$', DiskView.as_view()),
     url(r'^/(?P<dname>%s)$' % disk_regex, DiskView.as_view()),
     url(r'^/(?P<dname>%s)/(?P<command>wipe|btrfs-wipe|btrfs-disk-import|blink-drive|enable-smart|disable-smart)$' %
