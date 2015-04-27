@@ -347,8 +347,9 @@ SOUTH_TESTS_MIGRATE = False
 
 REST_FRAMEWORK = {
 
-		'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-		'PAGE_SIZE': 15,
+	'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+	'PAGE_SIZE': 15,
+	'MAX_LIMIT': 10000,
 }
 
 CONFROOT = '${buildout:depdir}/conf'

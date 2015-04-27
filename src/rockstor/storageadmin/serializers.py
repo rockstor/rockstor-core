@@ -30,10 +30,10 @@ from django.contrib.auth.models import User as DjangoUser
 
 
 class DiskInfoSerializer(serializers.ModelSerializer):
+    pool_name = serializers.CharField(read_only=True)
+
     class Meta:
         model = Disk
-        fields = ('name', 'size', 'offline', 'parted', 'btrfs_uuid', 'model', 'serial', 'transport',
-                  'vendor', 'pool_name')
 
 
 class PoolInfoSerializer(serializers.ModelSerializer):

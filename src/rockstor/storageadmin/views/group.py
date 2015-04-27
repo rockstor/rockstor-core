@@ -44,10 +44,10 @@ class GroupView(rfc.GenericView):
                     'usbmuxd')
 
     def get_queryset(self, *args, **kwargs):
-        if ('groupname' in kwargs):
+        if ('groupname' in self.kwargs):
             self.paginate_by = 0
             try:
-                return Group.objects.get(username=kwargs['groupname'])
+                return Group.objects.filter(username=self.kwargs['groupname'])
             except:
                 return []
         return combined_groups()

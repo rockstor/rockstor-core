@@ -62,42 +62,50 @@ class ServiceSerializer(serializers.ModelSerializer):
 
 
 class ServiceStatusSerializer(serializers.ModelSerializer):
-    # service = ServiceSerializer(many=True, read_only=True)
-    # display_name = serializers.SlugRelatedField(slug_field='service.display_name', read_only=True)
-    # config = serializers.SlugRelatedField(slug_field='service.config', read_only=True)
+    service = ServiceSerializer(read_only=True)
+    # display_name = serializers.SlugRelatedField(
+    #     slug_field='service.display_name', read_only=True)
+    # config = serializers.SlugRelatedField(slug_field='service.config', read_only=True)  
 
     class Meta:
         model = ServiceStatus
-        # fields = ('service', 'service.display_name', 'service.config')
+        fields = ('service', 'status', 'count', 'ts')
 
 class SProbeSerializer(serializers.ModelSerializer):
     class Meta:
         model = SProbe
 
+        
 #class PaginatedSProbe(pagination.PaginationSerializer):
 #    class Meta:
 #       object_serializer_class = SProbeSerializer
+
 
 class NFSDCallDistributionSerializer(serializers.ModelSerializer):
     class Meta:
         model = NFSDCallDistribution
 
+        
 class NFSDClientDistributionSerializer(serializers.ModelSerializer):
     class Meta:
         model = NFSDClientDistribution
 
+        
 class NFSDShareDistributionSerializer(serializers.ModelSerializer):
     class Meta:
         model = NFSDShareDistribution
 
+        
 class NFSDShareClientDistributionSerializer(serializers.ModelSerializer):
     class Meta:
         model = NFSDShareClientDistribution
 
+        
 class NFSDUidGidDistributionSerializer(serializers.ModelSerializer):
     class Meta:
         model = NFSDUidGidDistribution
 
+        
 class SProbeConfigSerializer(serializers.Serializer):
     uuid = serializers.CharField(max_length=100)
     sdetail = serializers.CharField(max_length=4096)
@@ -109,13 +117,16 @@ class SProbeConfigSerializer(serializers.Serializer):
             return instance
         return TapConfig(**attrs)
 
+
 class TaskDefinitionSerializer(serializers.ModelSerializer):
     class Meta:
         model = TaskDefinition
 
+        
 class TaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
+
 
 class TaskType(object):
 
@@ -123,6 +134,7 @@ class TaskType(object):
         self.name = name
         self.detail = detail
 
+        
 class TaskTypeSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255)
     detail = serializers.CharField(max_length=255)

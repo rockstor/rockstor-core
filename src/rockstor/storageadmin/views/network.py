@@ -35,13 +35,13 @@ class NetworkView(rfc.GenericView):
     serializer_class = NetworkInterfaceSerializer
 
     def get_queryset(self, *args, **kwargs):
-        if ('iname' in kwargs):
+        if ('iname' in self.kwargs):
             self.paginate_by = 0
             try:
-                return NetworkInterface.objects.get(name=kwargs['iname'])
+                return NetworkInterface.objects.filter(name=self.kwargs['iname'])
             except:
                 return []
-        with self._handle_exception(self.request):
+
             self._net_scan()
             #to be deprecated soon
             update_samba_discovery()
