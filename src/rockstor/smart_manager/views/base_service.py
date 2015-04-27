@@ -28,7 +28,7 @@ class BaseServiceView(rfc.GenericView):
 
     def get_queryset(self, *args, **kwargs):
 
-        limit = self.request.QUERY_PARAMS.get('limit',
+        limit = self.request.query_params.get('limit',
                                         settings.REST_FRAMEWORK['MAX_LIMIT'])
         limit = int(limit)
         url_fields = self.request.path.strip('/').split('/')
