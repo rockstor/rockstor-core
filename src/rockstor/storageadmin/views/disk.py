@@ -51,7 +51,7 @@ class DiskView(rfc.GenericView):
         with self._handle_exception(self.request):
             self._scan()
         if ('dname' in kwargs):
-            self.paginate_by = 0
+            self.paginate_by_param = None
             try:
                 return Disk.objects.get(name=kwargs['dname'])
             except:

@@ -38,10 +38,10 @@ class ShareView(rfc.GenericView):
     serializer_class = ShareSerializer
 
     def get_queryset(self, *args, **kwargs):
-        if ('sname' in kwargs):
+        if ('sname' in self.kwargs):
             self.paginate_by = 0
             try:
-                return Share.objects.get(name=kwargs['sname'])
+                return Share.objects.filter(name=self.kwargs['sname'])
             except:
                 return []
         sort_col = self.request.QUERY_PARAMS.get('sortby', None)

@@ -15,15 +15,13 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-from rest_framework import status
 
-from rest_framework.response import Response
 from storageadmin.util import handle_exception
 from system.services import superctl
 from django.db import transaction
 from base_service import BaseServiceView
 from smart_manager.models import Service
-from django.conf import settings
+
 
 import logging
 logger = logging.getLogger(__name__)
@@ -40,7 +38,7 @@ class DataCollectorServiceView(BaseServiceView):
         if (command == 'config'):
             #nothing to really configure atm. just save the model
             try:
-                config = request.DATA['config']
+                config = request.data['config']
                 self._save_config(service, config)
             except Exception, e:
                 logger.exception(e)

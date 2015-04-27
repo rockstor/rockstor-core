@@ -134,7 +134,7 @@ class TaskType(object):
         self.name = name
         self.detail = detail
 
-        
+
 class TaskTypeSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255)
     detail = serializers.CharField(max_length=255)

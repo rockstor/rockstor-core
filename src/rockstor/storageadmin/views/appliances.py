@@ -35,15 +35,14 @@ logger = logging.getLogger(__name__)
 
 class AppliancesView(rfc.GenericView):
     serializer_class = ApplianceSerializer
-    paginate_by = 0
 
     def get_queryset(self, *args, **kwargs):
         if ('ip' in self.kwargs or 'id' in self.kwargs):
-            paginate_by = 0
+            self.paginate_by = 0
             try:
                 if ('ip' in self.kwargs):
-                    return Appliance.objects.get(ip=self.kwargs['ip'])
-                return Appliance.objects.get(id=self.kwargs['id'])
+                    return Appliance.objects.filter(ip=self.kwargs['ip'])
+                return Appliance.objects.filter(id=self.kwargs['id'])
             except:
                 return []
         return Appliance.objects.all()
