@@ -44,7 +44,6 @@ initialize: function() {
 	//this.share = this.options.share;
 	this.snapshots = this.options.snapshots;
     this.collection = new SnapshotsCollection();
-   //this.collection.on("reset", this.renderSnapshots, this);
     this.shares = new ShareCollection();
     this.dependencies.push(this.shares);
     this.dependencies.push(this.collection);
@@ -54,6 +53,8 @@ initialize: function() {
 	                       {name: 'no', value: 'no'},
 	                       ];
 	this.parentView = this.options.parentView;
+	this.collection.on("reset", this.renderSnapshots, this);
+	  
 },
 
 render: function() {
@@ -66,7 +67,7 @@ render: function() {
 	  console.log('shares'+this.collection.length);
 	var _this = this;
 	$(this.el).empty();
-		
+		    
 	$(this.el).append(this.template({
 		snapshots: this.collection,
 		selectedSnapshots: this.selectedSnapshots,
@@ -164,24 +165,21 @@ deleteSnapshot: function(event) {
 	event.preventDefault();
 	var _this = this;
 	var name = $(event.currentTarget).attr('data-name');
+	var shareName = $(event.currentTarget).attr('data-share-name');
 	var esize = $(event.currentTarget).attr('data-size');
-	var share_name = this.share.get("name");
 	var button = $(event.currentTarget);
 	if (buttonDisabled(button)) return false;
 	if(confirm("Deleting snapshot("+ name +") deletes "+ esize +" of data permanently. Do you really want to delete it?")){
 		disableButton(button);
 		$.ajax({
-			url: "/api/shares/" + share_name + "/snapshots/" + name,
+			url: "/api/shares/" + shareName + "/snapshots/" + name,
 			type: "DELETE",
 			success: function() {
 			enableButton(button)
 			_this.$('[rel=tooltip]').tooltip('hide');
 			_this.selectedSnapshots = [];
-			_this.collection.fetch({
-				success: function(collection, response, options) {
-				_this.parentView.trigger('snapshotsModified');
-			}                
-			});
+			_this.collection.fetch({reset: true});
+			
 		},
 		error: function(xhr, status, error) {
 			enableButton(button)
@@ -237,7 +235,7 @@ deleteMultipleSnapshots: function(event) {
 	event.preventDefault();
 	var button = $(event.currentTarget);
 	if (buttonDisabled(button)) return false;
-	var share_name = this.share.get("name");
+	var share_name;
 	if (this.selectedSnapshots.length == 0) {
 		alert('Select at least one snapshot to delete');
 	} else {
@@ -250,6 +248,17 @@ deleteMultipleSnapshots: function(event) {
 		var snapNames = _.reduce(this.selectedSnapshots, function(str, snap) {
 			return str + snap.get('name') + ',';
 		}, '', this);
+		
+		var snapShares = this.shares.filter(function(share) {
+		      s = this.selectedSnapshots.find(function(sSnap) {
+		        return (sSnap.get('share') == share.get('id'));
+		        console.log(s);
+		      });
+		      return !_.isUndefined(s);
+		    }, this);
+		 
+		 console.log('selected shares'+snapShares.length );
+	
 		snapNames = snapNames.slice(0, snapNames.length-1);
 		var snapIds = _.reduce(this.selectedSnapshots, function(str, snap) {
 			return str + snap.id + ',';
@@ -276,7 +285,7 @@ deleteMultipleSnapshots: function(event) {
 				} else {
 					_this.collection.fetch({
 						success: function(collection, response, options) {
-						_this.parentView.trigger('snapshotsModified');
+						//_this.parentView.trigger('snapshotsModified');
 					}                
 					});
 				}
