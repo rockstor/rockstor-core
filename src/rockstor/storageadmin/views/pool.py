@@ -15,11 +15,6 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-from oauth2_provider.ext.rest_framework import OAuth2Authentication
-from rest_framework import generics
-from rest_framework.authentication import SessionAuthentication, BasicAuthentication
-from rest_framework.permissions import IsAuthenticated
-from storageadmin.auth import DigestAuthentication
 
 """
 Pool view. for all things at pool level
@@ -39,11 +34,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class PoolView(generics.ListCreateAPIView):
+class PoolView(rfc.GenericView):
     serializer_class = PoolInfoSerializer
-    authentication_classes = (DigestAuthentication, SessionAuthentication,
-                              BasicAuthentication, OAuth2Authentication,)
-    permission_classes = (IsAuthenticated,)
     RAID_LEVELS = ('single', 'raid0', 'raid1', 'raid10', 'raid5', 'raid6')
     ADD_THRESHOLD = .3  # min free/total ratio to allow a device addition
     SUPPORTED_MIGRATIONS = {
@@ -56,13 +48,13 @@ class PoolView(generics.ListCreateAPIView):
         }
 
     def get_queryset(self, *args, **kwargs):
-        if ('pname' in kwargs):
+        if ('pname' in self.kwargs):
             self.paginate_by = 0
             try:
-                return Pool.objects.get(name=kwargs['pname'])
+                return Pool.objects.filter(name=self.kwargs['pname'])
             except:
                 return []
-        sort_col = self.request.QUERY_PARAMS.get('sortby', None)
+        sort_col = self.request.query_params.get('sortby', None)
         if (sort_col is not None and sort_col == 'usage'):
             reverse = self.request.QUERY_PARAMS.get('reverse', 'no')
             if (reverse == 'yes'):
