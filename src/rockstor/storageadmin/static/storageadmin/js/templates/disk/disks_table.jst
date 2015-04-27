@@ -14,7 +14,7 @@
     <tbody>
       <% collection.each(function(disk, index) { %>
         <tr>
-          <td><i class="icon-hdd"></i> <%= disk.get('name') %>&nbsp;
+          <td><a href="#disks/<%= disk.get('name') %>"><i class="icon-hdd"></i> <%= disk.get('name') %></a>&nbsp;
              <% if (disk.get('offline')) { %>
               <a href="#" class="delete" data-disk-name="<%= disk.get('name') %>" title="Disk is unusable because it is offline. Click to delete it from the system" rel="tooltip"><i class="icon-trash"></i></a>
             <% } else if (disk.get('parted')) { %>
