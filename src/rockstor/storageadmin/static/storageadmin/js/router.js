@@ -36,10 +36,11 @@ var AppRouter = Backbone.Router.extend({
     "home": "showHome",
     "disks": "showDisks",
     "disks/blink/:diskName": "blinkDrive",
+    "disks/:diskName": "showDisk",
     "pools": "showPools",
     "pools/:poolName": "showPool",
     "pools/:poolName/?cView=:cView": "showPool",
-     "add_pool": "addPool",
+    "add_pool": "addPool",
     "shares": "showShares",
     "add_share?poolName=:poolName": "addShare",
     "add_share": "addShare",
@@ -117,7 +118,7 @@ var AppRouter = Backbone.Router.extend({
         return false;
       }
     }
-      
+
     if (RockStorGlobals.currentAppliance == null) {
       setApplianceName();
     }
@@ -142,7 +143,7 @@ var AppRouter = Backbone.Router.extend({
 
   },
 
- 
+
   loginPage: function() {
     RockStorSocket.removeAllListeners();
     this.renderSidebar("setup", "user");
@@ -188,6 +189,16 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').append(this.currentLayout.render().el);
   },
 
+  showDisk: function(diskName) {
+      RockStorSocket.removeAllListeners();
+      this.renderSidebar("storage", "disks");
+      $('#maincontent').empty();
+      this.cleanup();
+      this.currentLayout = new DiskDetailsLayoutView({
+	  diskName: diskName
+      });
+      $('#maincontent').append(this.currentLayout.render().el);
+  },
 
   showPools: function() {
     RockStorSocket.removeAllListeners();
@@ -414,7 +425,7 @@ var AppRouter = Backbone.Router.extend({
 	    $('#maincontent').empty();
 	    $('#maincontent').append(this.currentLayout.render().el);
 	  },
-  
+
   showReplicaTrails: function(replicaId) {
     this.renderSidebar("storage", "replication");
     this.cleanup();
@@ -673,7 +684,7 @@ var AppRouter = Backbone.Router.extend({
 	    $('#maincontent').empty();
 	    $('#maincontent').append(this.currentLayout.render().el);
 	  },
-	  
+
 	  showImages: function() {
 		    this.renderSidebar("rockons", "images");
 		    this.cleanup();
@@ -681,15 +692,15 @@ var AppRouter = Backbone.Router.extend({
 		    $('#maincontent').empty();
 		    $('#maincontent').append(this.currentLayout.render().el);
 		  },
-		  
+
 		  showContainers: function() {
 			    this.renderSidebar("rockons", "containers");
 			    this.cleanup();
 			    this.currentLayout = new ContainersView();
 			    $('#maincontent').empty();
 			    $('#maincontent').append(this.currentLayout.render().el);
-			  },	  
-		  
+			  },
+
   showAppliances: function() {
     this.renderSidebar("system", "appliances");
     this.cleanup();
@@ -852,7 +863,7 @@ $(document).ready(function() {
       event.preventDefault();
     }
     $('#donate-modal').modal('show');
-  }); 
+  });
 
   $('#donate-modal #contrib-custom').click(function(e) {
     $('#donate-modal #custom-amount').css('display', 'inline');
@@ -860,7 +871,7 @@ $(document).ready(function() {
   $('#donate-modal .contrib-other').click(function(e) {
     $('#donate-modal #custom-amount').css('display', 'none');
   });
-  
+
   $('#donate-modal #donateYes').click(function(event) {
     console.log('donate yes clicked');
     contrib = $('#donate-modal input[type="radio"][name="contrib"]:checked').val();
