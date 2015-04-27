@@ -25,7 +25,8 @@ from storageadmin.models import (Disk, Pool, Share, Snapshot, NFSExport,
                                  AdvancedNFSExport, OauthApp, NetatalkShare,
                                  Group, PoolBalance, SambaCustomConfig,
                                  TLSCertificate, RockOn, DVolume, DPort,
-                                 DCustomConfig)
+                                 DCustomConfig, SMARTAttribute,
+                                 SMARTCapability, SMARTInfo)
 from django.contrib.auth.models import User as DjangoUser
 
 
@@ -220,3 +221,20 @@ class RockOnCustomConfigSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DCustomConfig
+
+class SMARTCapabilitySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = SMARTCapability
+
+class SMARTAttributeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = SMARTAttribute
+
+class SMARTInfoSerializer(serializers.ModelSerializer):
+    capabilities = SMARTCapabilitySerializer(source='capabilities')
+    attributes = SMARTAttributeSerializer(source='attributes')
+
+    class Meta:
+        model = SMARTInfo
