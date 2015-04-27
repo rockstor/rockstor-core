@@ -28,25 +28,33 @@ from storageadmin.serializers import ShareSerializer
 from storageadmin.util import handle_exception
 from django.conf import settings
 import rest_framework_custom as rfc
-
+from rest_framework import generics
 
 import logging
 logger = logging.getLogger(__name__)
+
+
+class DetailShareView(generics.RetrieveAPIView):
+    serializer_class = ShareSerializer
+
+    def get(self, *args, **kwargs):
+        if 'sname' in self.kwargs:
+            self.paginate_by = 0
+            try:
+                data = Share.objects.get(name=self.kwargs['sname'])
+                serialized_data = ShareSerializer(data)
+                return Response(serialized_data.data)
+            except:
+                return []
 
 
 class ShareView(rfc.GenericView):
     serializer_class = ShareSerializer
 
     def get_queryset(self, *args, **kwargs):
-        if ('sname' in self.kwargs):
-            self.paginate_by = 0
-            try:
-                return Share.objects.filter(name=self.kwargs['sname'])
-            except:
-                return []
-        sort_col = self.request.QUERY_PARAMS.get('sortby', None)
+        sort_col = self.request.query_params.get('sortby', None)
         if (sort_col is not None and sort_col == 'usage'):
-            reverse = self.request.QUERY_PARAMS.get('reverse', 'no')
+            reverse = self.request.query_params.get('reverse', 'no')
             if (reverse == 'yes'):
                 reverse = True
             else:
@@ -56,7 +64,7 @@ class ShareView(rfc.GenericView):
         return Share.objects.all()
 
     def _validate_share_size(self, request, pool):
-        size = request.DATA.get('size', pool.size)
+        size = request.data.get('size', pool.size)
         try:
             size = int(size)
         except:
@@ -71,7 +79,7 @@ class ShareView(rfc.GenericView):
         return size
 
     def _validate_compression(self, request):
-        compression = request.DATA.get('compression', 'no')
+        compression = request.data.get('compression', 'no')
         if (compression is None):
             compression = 'no'
         if (compression not in settings.COMPRESSION_TYPES):

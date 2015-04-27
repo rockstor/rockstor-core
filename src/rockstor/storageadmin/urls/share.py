@@ -19,7 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from django.conf.urls import patterns, url
 from storageadmin.views import (ShareView, ShareNFSView,
                                 ShareACLView, SnapshotView, ShareIscsiView,
-                                ShareCommandView)
+                                ShareCommandView,)
+from storageadmin.views.share import DetailShareView
 from django.conf import settings
 
 share_regex = settings.SHARE_REGEX

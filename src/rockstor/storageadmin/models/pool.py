@@ -42,7 +42,7 @@ class Pool(models.Model):
     mnt_options = models.CharField(max_length=4096, null=True)
 
     @property
-    def cur_free(self, *args, **kwargs):
+    def free(self, *args, **kwargs):
         try:
             pu = PoolUsage.objects.filter(pool=self.name).order_by('-ts')[0]
             return pu.free
@@ -50,7 +50,7 @@ class Pool(models.Model):
             return self.size
 
     @property
-    def cur_reclaimable(self, *args, **kwargs):
+    def reclaimable(self, *args, **kwargs):
         try:
             pu = PoolUsage.objects.filter(pool=self.name).order_by('-ts')[0]
             return pu.reclaimable
