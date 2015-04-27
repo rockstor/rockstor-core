@@ -19,8 +19,9 @@
  */
 </script>
 <div class="messages"></div>
-<div class="pull-left">
+<div class="pull-right">
 <a class="btn btn-primary" href="#" id="js-snapshot-add"><i class="icon-edit icon-white"></i> Create snapshot</a>
+<a class="btn btn-primary" href="#scheduled-tasks" ><i class="icon-edit icon-white"></i> Schedule snapshot</a>
 </div>
 </br>
 </br>
@@ -56,7 +57,7 @@
           <td><%= moment(snapshot.get("toc")).format(RS_DATE_FORMAT) %></td>
           <% shares.each( function(share, index) { %>
         <%  if(snapshot.get('share')== share.get('id')){  %>
-          <td><%= share.get('name') %></td>
+          <td><a href="#shares/<%= share.get('name') %>"> <%= share.get('name') %></a></td>
             <%     } %>
           <% }); %>
          

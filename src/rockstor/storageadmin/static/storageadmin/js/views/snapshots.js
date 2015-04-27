@@ -245,21 +245,21 @@ deleteMultipleSnapshots: function(event) {
 		} else {
 			confirmMsg = 'Deleting snapshots ';
 		}
-		var snapNames = _.reduce(this.selectedSnapshots, function(str, snap) {
-			return str + snap.get('name') + ',';
-		}, '', this);
 		
 		var snapShares = this.shares.filter(function(share) {
 		      s = this.selectedSnapshots.find(function(sSnap) {
 		        return (sSnap.get('share') == share.get('id'));
-		        console.log(s);
-		      });
+		     });
 		      return !_.isUndefined(s);
 		    }, this);
 		 
-		 console.log('selected shares'+snapShares.length );
-	
-		snapNames = snapNames.slice(0, snapNames.length-1);
+		
+		var snapNames = _.reduce(this.selectedSnapshots, function(str, snap) {
+			return str + snap.get('name') + ',';
+		}, '', this);
+		
+		
+	   snapNames = snapNames.slice(0, snapNames.length-1);
 		var snapIds = _.reduce(this.selectedSnapshots, function(str, snap) {
 			return str + snap.id + ',';
 		}, '', this);
