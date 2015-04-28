@@ -31,9 +31,22 @@ from storageadmin.serializers import DiskInfoSerializer
 from storageadmin.util import handle_exception
 from django.conf import settings
 import rest_framework_custom as rfc
-
+from rest_framework.generics import RetrieveAPIView
 import logging
 logger = logging.getLogger(__name__)
+
+
+class DiskDetailView(RetrieveAPIView, rfc.GenericView):
+    """Return a single Disk object"""
+    def get(self, *args, **kwargs):
+        if 'dname' in self.kwargs:
+            self.paginate_by_param = None
+            try:
+                data = Disk.objects.get(name=self.kwargs['dname'])
+                serialized_data = DiskInfoSerializer(data)
+                return Response(serialized_data.data)
+            except:
+                return []
 
 
 class DiskView(rfc.GenericView):
@@ -50,7 +63,7 @@ class DiskView(rfc.GenericView):
         #do rescan on get.
         with self._handle_exception(self.request):
             self._scan()
-        if ('dname' in kwargs):
+        if ('dname' in self.kwargs):
             self.paginate_by_param = None
             try:
                 return Disk.objects.get(name=kwargs['dname'])

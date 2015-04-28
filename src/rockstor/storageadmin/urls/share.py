@@ -31,7 +31,7 @@ share_command = 'rollback|clone|compress'
 urlpatterns = patterns(
     '',
     url(r'^$', ShareView.as_view(), name='share-view'),
-    url(r'^/(?P<sname>%s)$' % share_regex, ShareView.as_view(),
+    url(r'^/(?P<sname>%s)$' % share_regex, DetailShareView.as_view(),
         name='share-view'),
 
     url(r'^/(?P<sname>%s)/nfs$' % share_regex, ShareNFSView.as_view(),

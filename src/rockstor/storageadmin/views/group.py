@@ -26,36 +26,35 @@ from system.users import (groupadd, groupdel)
 import grp
 from ug_helpers import combined_groups
 import logging
-import re
+from rest_framework.generics import RetrieveAPIView
 from django.conf import settings
 logger = logging.getLogger(__name__)
 
 
+class GroupDetailView(RetrieveAPIView, rfc.GenericView):
+    serializer_class = GroupSerializer
+
+    def get(self, *args, **kwargs):
+        if 'groupname' in self.kwargs:
+                try:
+                    data = Group.objects.get(username=self.kwargs['groupname'])
+                    serialized_data = GroupSerializer(data)
+                    return Response(serialized_data.data)
+                except:
+                    # Render and empty list if no matches
+                    return Response([])
+
+
 class GroupView(rfc.GenericView):
     serializer_class = GroupSerializer
-    exclude_list = ('root', 'bin', 'daemon', 'sys', 'adm', 'tty', 'disk',
-                    'lp', 'mem', 'kmem', 'wheel', 'cdrom', 'mail', 'man',
-                    'dialout', 'floppy', 'games', 'tape', 'video', 'ftp',
-                    'lock', 'audio', 'nobody', 'users', 'utmp', 'utempter',
-                    'ssh_keys', 'systemd-journal', 'dbus', 'rpc', 'polkitd',
-                    'avahi', 'avahi-autoipd', 'wbpriv', 'rpcuser', 'nfsnobody',
-                    'postgres', 'ntp', 'dip', 'stapusr', 'stapsys', 'stapdev',
-                    'nginx', 'postdrop', 'postfix', 'sshd', 'chrony',
-                    'usbmuxd')
 
     def get_queryset(self, *args, **kwargs):
-        if ('groupname' in self.kwargs):
-            self.paginate_by = 0
-            try:
-                return Group.objects.filter(username=self.kwargs['groupname'])
-            except:
-                return []
         return combined_groups()
 
     @transaction.commit_on_success
     def post(self, request):
-        groupname = request.DATA.get('groupname', None)
-        gid = request.DATA.get('gid', None)
+        groupname = request.data.get('groupname', None)
+        gid = request.data.get('gid', None)
         if (groupname is None or
             re.match(settings.USERNAME_REGEX, groupname) is None):
             e_msg = ('Groupname is invalid. It must confirm to the regex: %s' %

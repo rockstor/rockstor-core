@@ -28,18 +28,17 @@ from storageadmin.serializers import ShareSerializer
 from storageadmin.util import handle_exception
 from django.conf import settings
 import rest_framework_custom as rfc
-from rest_framework import generics
+from rest_framework.generics import RetrieveAPIView
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-class DetailShareView(generics.RetrieveAPIView):
+class DetailShareView(RetrieveAPIView):
     serializer_class = ShareSerializer
 
     def get(self, *args, **kwargs):
         if 'sname' in self.kwargs:
-            self.paginate_by = 0
             try:
                 data = Share.objects.get(name=self.kwargs['sname'])
                 serialized_data = ShareSerializer(data)

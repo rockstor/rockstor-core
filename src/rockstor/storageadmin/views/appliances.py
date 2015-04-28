@@ -28,23 +28,32 @@ from system.osi import (hostid, sethostname)
 import rest_framework_custom as rfc
 from cli.rest_util import (api_call, set_token)
 from smart_manager.models import Replica
+from rest_framework.generics import RetrieveAPIView
 
 import logging
 logger = logging.getLogger(__name__)
+
+
+class ApplianceDetailView(RetrieveAPIView, rfc.GenericView):
+    """Get a single instance of appliance w/ authentication (mixin w/ rfc)"""
+    serializer_class = ApplianceSerializer
+
+    def get(self, *args, **kwargs):
+        if 'ip' in self.kwargs or 'id' in self.kwargs:
+            try:
+                if 'ip' in self.kwargs:
+                    data = Appliance.objects.get(ip=self.kwargs['ip'])
+                data = Appliance.objects.get(id=self.kwargs['id'])
+                serialized_data = ApplianceSerializer(data)
+                return Response(serialized_data.data)
+            except:
+                return []
 
 
 class AppliancesView(rfc.GenericView):
     serializer_class = ApplianceSerializer
 
     def get_queryset(self, *args, **kwargs):
-        if ('ip' in self.kwargs or 'id' in self.kwargs):
-            self.paginate_by = 0
-            try:
-                if ('ip' in self.kwargs):
-                    return Appliance.objects.filter(ip=self.kwargs['ip'])
-                return Appliance.objects.filter(id=self.kwargs['id'])
-            except:
-                return []
         return Appliance.objects.all()
 
     def _get_remote_appliance(self, request, ip, port, client_id,
