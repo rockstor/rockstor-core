@@ -35,11 +35,17 @@ class PoolTests(APITestCase):
         response = self.client.get(self.BASE_URL)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    # patches for put
+    @mock.patch('storageadmin.views.pool.resize_pool')
+    @mock.patch('storageadmin.views.pool.balance_start')
+    # patches for post
     @mock.patch('storageadmin.views.pool.mount_root')
     @mock.patch('storageadmin.views.pool.add_pool')
     @mock.patch('storageadmin.views.pool.pool_usage')
     @mock.patch('storageadmin.views.pool.btrfs_uuid')
-    def test_pools_raid0_crud(self, mock_btrfs_uuid, mock_pool_usage, mock_add_pool, mock_mount_root):
+    def test_pools_raid0_crud(self, mock_btrfs_uuid, mock_pool_usage, mock_add_pool,
+                              mock_mount_root, mock_balance_start, mock_resize_pool):
+    # def test_pools_raid0_crud(self):
         """
         raid0 CRUD api tests
         """
@@ -48,23 +54,32 @@ class PoolTests(APITestCase):
                 'pname': 'raid0pool',
                 'raid_level': 'raid0', }
 
-        #create
+        # post mocks
         mock_btrfs_uuid.return_value = 'bar'
-        mock_pool_usage.return_value = (0, 0, 0)
+        mock_pool_usage.return_value = (100, 10, 90)
         mock_add_pool.return_value = True
         mock_mount_root.return_value = 'foo'
+
+        #create
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
         self.assertEqual(response.data['name'], 'raid0pool')
         self.assertEqual(response.data['raid'], 'raid0')
-        # self.assertEqual(len(response.data['disks']), 2)
+        # TODO confirm with Suman this is correct
+        # disk assert was failing... list is 'empty'... post function was not adding disks to the pool (atleast not saving them)... appears they WERE added but then dropped it on DB call
+        # not sure what is supposed to add the disks to the pool.. "p.disk_set.add(*disks)" line 195?
+        # solution: assigned disks to the pool & saved each disk
+        # sure that one of the mocked methods doesen't handle this?
+        self.assertEqual(len(response.data['disks']), 2)
 
-    #     #add disks
-    #     data2 = {'disks': ('sdd', 'sde',), }
-    #     data2 = {'disks': (), }
-    #     response2 = self.client.put('%s/raid0pool/add' % self.BASE_URL, data=data2)
-    #     self.assertEqual(response2.status_code, status.HTTP_200_OK, msg=response2.data)
-    #     self.assertEqual(len(response2.data['disks']), 4)
+        #add disks
+        # data2 = {'disks': ('sdd', 'sde',), }
+        # # data2 = {'disks': (), }
+        # mock_balance_start.return_value = 1
+        # response2 = self.client.put('%s/raid0pool/add' % self.BASE_URL, data=data2)
+        # self.assertEqual(response2.status_code, status.HTTP_200_OK, msg=response2.data)
+        # self.assertEqual(len(response2.data['disks']), 4)
+
     #     #remove disk
     #     data3 = {'disk': ('sde',), }
     #     response3 = self.client.put('%s/raid0pool/remove' % self.BASE_URL,
