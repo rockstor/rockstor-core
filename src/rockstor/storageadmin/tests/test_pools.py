@@ -59,6 +59,8 @@ class PoolTests(APITestCase):
         mock_pool_usage.return_value = (100, 10, 90)
         mock_add_pool.return_value = True
         mock_mount_root.return_value = 'foo'
+        # put mock
+        mock_balance_start.return_value = 1
 
         #create (test post)
         response = self.client.post(self.BASE_URL, data=data)
@@ -78,7 +80,6 @@ class PoolTests(APITestCase):
         # TODO.. worth testing for exception raises? e.g. empty disks
         # data2 = {'disks': (), }
 
-        mock_balance_start.return_value = 1
         response2 = self.client.put('%s/raid0pool/add' % self.BASE_URL, data=data2)
         self.assertEqual(response2.status_code, status.HTTP_200_OK, msg=response2.data)
         self.assertEqual(len(response2.data['disks']), 4)
@@ -110,14 +111,14 @@ class PoolTests(APITestCase):
     def test_pool_disk_requirements(self):
         # TODO add aditional disk checks for all raid levels
         """
-        raid0 & raid 1 with one disk
+        Raise exceptions when raid level does not meet disk requirements
         """
         self.session_login()
-
-        # raid0 check
         data = {'disks': ('sdb',),
                 'pname': 'raid0pool',
                 'raid_level': 'raid0', }
+
+        # raid0 check
         e_msg = ('More than one disk is required for the raid level: raid0')
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
@@ -129,55 +130,81 @@ class PoolTests(APITestCase):
         response2 = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response2.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response2.data)
         self.assertEqual(response2.data['detail'], e_msg)
+        
+        # raid5 check
+        data['raid_level'] = 'raid5'
+        e_msg = ('Three or more disks are required for the raid level: raid5')
+        response4 = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response4.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response4.data)
+        self.assertEqual(response4.data['detail'], e_msg)
 
+        # raid6 check
+        data['raid_level'] = 'raid6'
+        e_msg = ('Four or more disks are required for the raid level: raid6')
+        response5 = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response5.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response5.data)
+        self.assertEqual(response5.data['detail'], e_msg)
 
+        # raid10 check
+        data['raid_level'] = 'raid10'
+        e_msg = ('A minimum of Four drives are required for the raid level: raid10')
+        response3 = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response3.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response3.data)
+        self.assertEqual(response3.data['detail'], e_msg)
+
+        data['disks'] = ('sdb', 'sdc', 'sdd', 'sde', 'sdf',)
+        e_msg = ('Even number of drives are required for the raid level: raid10')
+        response3 = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response3.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response3.data)
+        self.assertEqual(response3.data['detail'], e_msg)
+
+    # patches for put
+    @mock.patch('storageadmin.views.pool.resize_pool')
+    @mock.patch('storageadmin.views.pool.balance_start')
     # patches for post
     @mock.patch('storageadmin.views.pool.mount_root')
     @mock.patch('storageadmin.views.pool.add_pool')
     @mock.patch('storageadmin.views.pool.pool_usage')
     @mock.patch('storageadmin.views.pool.btrfs_uuid')
     # TODO organize tests by API call (i.e. all posts together?)
-    def test_pools_2(self, mock_btrfs_uuid, mock_pool_usage, mock_add_pool, mock_mount_root):
+    def test_pools_raid1_crud(self, mock_btrfs_uuid, mock_pool_usage, mock_add_pool,
+                              mock_mount_root, mock_balance_start, mock_resize_pool):
         """
-        raid1 with < 2 disks
+        raid1 CRUD api tests
         """
         # post mocks
         mock_btrfs_uuid.return_value = 'bar'
         mock_pool_usage.return_value = (100, 10, 90)
         mock_add_pool.return_value = True
         mock_mount_root.return_value = 'foo'
-
-        # test 1 disk fails
+        
         self.session_login()
         data = {'disks': ('sdb', 'sdc',),
                 'pname': 'raid1pool',
                 'raid_level': 'raid1', }
 
-        # test 2 disks pass
-        response2 = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response2.status_code, status.HTTP_200_OK, msg=response2.data)
-        self.assertEqual(response2.data['name'], 'raid1pool')
-        self.assertEqual(response2.data['raid'], 'raid1')
-        self.assertEqual(len(response2.data['disks']), 2)
+        # create
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
+        self.assertEqual(response.data['name'], 'raid1pool')
+        self.assertEqual(response.data['raid'], 'raid1')
+        self.assertEqual(len(response.data['disks']), 2)
 
         #add disks
-        # data2 = {'disks': ('sdd', 'sde',), }
-        # response2 = self.client.put('%s/raid1pool/add' % self.BASE_URL,
-        #                             data=data2)
-        # self.assertEqual(response2.status_code, status.HTTP_200_OK,
-        #                  msg=response2.data)
-        # self.assertEqual(len(response2.data['disks']), 4)
-        # #remove disk
-        # data3 = {'disk': ('sde',), }
-        # response3 = self.client.put('%s/raid1pool/remove' % self.BASE_URL,
-        #                             data=data3)
-        # self.assertEqual(response3.status_code,
-        #                  status.HTTP_500_INTERNAL_SERVER_ERROR,
-        #                  msg=response3.data)
-        # #delete
-        # response4 = self.client.delete('%s/raid1pool' % self.BASE_URL)
-        # self.assertEqual(response4.status_code, status.HTTP_200_OK,
-        #                  msg=response4.data)
+        mock_balance_start.return_value = 1
+        data2 = {'disks': ('sdd', 'sde',), }
+        response2 = self.client.put('%s/raid1pool/add' % self.BASE_URL, data=data2)
+        self.assertEqual(response2.status_code, status.HTTP_200_OK, msg=response2.data)
+        self.assertEqual(len(response2.data['disks']), 4)
+
+        #remove disk
+        data3 = {'disk': ('sde',), }
+        response3 = self.client.put('%s/raid1pool/remove' % self.BASE_URL, data=data3)
+        self.assertEqual(response3.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response3.data)
+
+        #delete
+        response4 = self.client.delete('%s/raid1pool' % self.BASE_URL)
+        self.assertEqual(response4.status_code, status.HTTP_200_OK, msg=response4.data)
 
     # def _test_pools_3(self):
     #     """
