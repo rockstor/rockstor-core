@@ -36,11 +36,11 @@ class ShareNFSView(rfc.GenericView):
     serializer_class = NFSExportGroupSerializer
 
     def get_queryset(self, *args, **kwargs):
-        share = validate_share(kwargs['sname'], self.request)
-        if ('export_id' in kwargs):
+        share = validate_share(self.kwargs['sname'], self.request)
+        if ('export_id' in self.kwargs):
             self.paginate_by = 0
             try:
-                return NFSExportGroup.objects.get(id=kwargs['export_id'])
+                return NFSExportGroup.objects.get(id=self.kwargs['export_id'])
             except:
                 return []
         exports = NFSExport.objects.filter(share=share)

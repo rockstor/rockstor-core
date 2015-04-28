@@ -104,26 +104,26 @@ class AppliancesView(rfc.GenericView):
     @transaction.atomic
     def post(self, request, *args, **kwargs):
         with self._handle_exception(request):
-            ip = request.DATA['ip']
-            current_appliance = request.DATA['current_appliance']
+            ip = request.data['ip']
+            current_appliance = request.data['current_appliance']
             # authenticate if not adding current appliance
             if (Appliance.objects.filter(ip=ip).exists()):
                 e_msg = ('The appliance with ip = %s already exists and '
                          'cannot be added again' % ip)
                 handle_exception(Exception(e_msg), request)
             if (current_appliance is False):
-                client_id = request.DATA.get('client_id', None)
+                client_id = request.data.get('client_id', None)
                 if (client_id is None):
                     raise Exception('ID is required')
-                client_secret = request.DATA.get('client_secret', None)
+                client_secret = request.data.get('client_secret', None)
                 if (client_secret is None):
                     raise Exception('Secret is required')
                 try:
-                    mgmt_port = int(request.DATA['mgmt_port'])
+                    mgmt_port = int(request.data['mgmt_port'])
                 except Exception, e:
                     logger.exception(e)
                     e_msg = ('Invalid management port(%s) supplied. Try '
-                             'again' % request.DATA['mgmt_port'])
+                             'again' % request.data['mgmt_port'])
                     handle_exception(Exception(e_msg), request)
                 url = ('https://%s' % ip)
                 if (mgmt_port != 443):
@@ -139,8 +139,8 @@ class AppliancesView(rfc.GenericView):
                                              str(uuid.uuid4())))
                 appliance = Appliance(uuid=appliance_uuid, ip=ip,
                                       current_appliance=True)
-                if ('hostname' in request.DATA):
-                    appliance.hostname = request.DATA['hostname']
+                if ('hostname' in request.data):
+                    appliance.hostname = request.data['hostname']
                 appliance.save()
                 sethostname(ip, appliance.hostname)
             return Response(ApplianceSerializer(appliance).data)
