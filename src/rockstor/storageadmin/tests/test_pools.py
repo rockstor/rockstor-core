@@ -106,20 +106,30 @@ class PoolTests(APITestCase):
         # print dir(response5.data)
         # self.assertEqual(len(response5.data['results'][0]['disks']), 1)
 
-    def test_pool_1_1(self):
+
+    def test_pool_disk_requirements(self):
+        # TODO add aditional disk checks for all raid levels
         """
-        raid0 with one disk
+        raid0 & raid 1 with one disk
         """
         self.session_login()
+
+        # raid0 check
         data = {'disks': ('sdb',),
                 'pname': 'raid0pool',
                 'raid_level': 'raid0', }
+        e_msg = ('More than one disk is required for the raid level: raid0')
         response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg=response.data)
-        self.assertEqual(response.data['detail'], 'More than one disk is '
-                         'required for the raid level: raid0')
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+        self.assertEqual(response.data['detail'], e_msg)
+
+        # raid1 check
+        data['raid_level'] = 'raid1'
+        e_msg = ('At least two disks are required for the raid level: raid1')
+        response2 = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response2.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response2.data)
+        self.assertEqual(response2.data['detail'], e_msg)
+
 
     # patches for post
     @mock.patch('storageadmin.views.pool.mount_root')
@@ -129,7 +139,7 @@ class PoolTests(APITestCase):
     # TODO organize tests by API call (i.e. all posts together?)
     def test_pools_2(self, mock_btrfs_uuid, mock_pool_usage, mock_add_pool, mock_mount_root):
         """
-        raid1 with num disks check. must be >= 2
+        raid1 with < 2 disks
         """
         # post mocks
         mock_btrfs_uuid.return_value = 'bar'
@@ -139,58 +149,36 @@ class PoolTests(APITestCase):
 
         # test 1 disk fails
         self.session_login()
-        data = {'disks': ('sdb',),
+        data = {'disks': ('sdb', 'sdc',),
                 'pname': 'raid1pool',
                 'raid_level': 'raid1', }
-        e_msg = ('At least two disks are required for the raid level: raid1')
-        response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg=response.data)
-        self.assertEqual(response.data['detail'], e_msg)
 
         # test 2 disks pass
-        data['disks'] = ('sdb', 'sdc',)
         response2 = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response2.status_code, status.HTTP_200_OK, msg=response2.data)
         self.assertEqual(response2.data['name'], 'raid1pool')
         self.assertEqual(response2.data['raid'], 'raid1')
         self.assertEqual(len(response2.data['disks']), 2)
 
+        #add disks
+        # data2 = {'disks': ('sdd', 'sde',), }
+        # response2 = self.client.put('%s/raid1pool/add' % self.BASE_URL,
+        #                             data=data2)
+        # self.assertEqual(response2.status_code, status.HTTP_200_OK,
+        #                  msg=response2.data)
+        # self.assertEqual(len(response2.data['disks']), 4)
+        # #remove disk
+        # data3 = {'disk': ('sde',), }
+        # response3 = self.client.put('%s/raid1pool/remove' % self.BASE_URL,
+        #                             data=data3)
+        # self.assertEqual(response3.status_code,
+        #                  status.HTTP_500_INTERNAL_SERVER_ERROR,
+        #                  msg=response3.data)
+        # #delete
+        # response4 = self.client.delete('%s/raid1pool' % self.BASE_URL)
+        # self.assertEqual(response4.status_code, status.HTTP_200_OK,
+        #                  msg=response4.data)
 
-    # def test_pools_2_1(self):
-    #     """
-    #     raid1 tests
-    #     """
-    #     self.session_login()
-    #     data = {'disks': ('sdb', 'sdc',),
-    #             'pname': 'raid1pool',
-    #             'raid_level': 'raid1', }
-    #
-    #     #create
-    #     response = self.client.post(self.BASE_URL, data=data)
-    #     self.assertEqual(response.status_code, status.HTTP_200_OK,
-    #                      msg=response.data)
-    #     self.assertEqual(response.data['name'], 'raid1pool')
-    #     #add disks
-    #     data2 = {'disks': ('sdd', 'sde',), }
-    #     response2 = self.client.put('%s/raid1pool/add' % self.BASE_URL,
-    #                                 data=data2)
-    #     self.assertEqual(response2.status_code, status.HTTP_200_OK,
-    #                      msg=response2.data)
-    #     self.assertEqual(len(response2.data['disks']), 4)
-    #     #remove disk
-    #     data3 = {'disk': ('sde',), }
-    #     response3 = self.client.put('%s/raid1pool/remove' % self.BASE_URL,
-    #                                 data=data3)
-    #     self.assertEqual(response3.status_code,
-    #                      status.HTTP_500_INTERNAL_SERVER_ERROR,
-    #                      msg=response3.data)
-    #     #delete
-    #     response4 = self.client.delete('%s/raid1pool' % self.BASE_URL)
-    #     self.assertEqual(response4.status_code, status.HTTP_200_OK,
-    #                      msg=response4.data)
-    #
     # def _test_pools_3(self):
     #     """
     #     raid10 tests
