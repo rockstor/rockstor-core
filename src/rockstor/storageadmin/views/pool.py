@@ -292,29 +292,16 @@ class PoolView(rfc.GenericView):
             #    disks.append(self._validate(d, request))
             num_new_disks = len(disks)
             if (num_new_disks == 0):
-                e_msg = ('List of disks in the in cannot be empty.')
+                e_msg = ('List of disks in the input cannot be empty.')
                 handle_exception(Exception(e_msg), request)
             dnames = [d.name for d in disks]
-            # TODO disks empty in this pool...[0] out of range??
-            # suman -- does this even matter? we mock everything this variable is used in
-            print len(Disk.objects.filter(pool=pool))
             mount_disk = Disk.objects.filter(pool=pool)[0].name
-            print "new raid"
             new_raid = request.DATA.get('raid_level', pool.raid)
-            print "num total"
             num_total_disks = (Disk.objects.filter(pool=pool).count() +
                                num_new_disks)
-            print "pre pool usage"
             usage = pool_usage('/%s/%s' % (settings.MNT_PT, pool.name))
-            print usage
-            print usage[2]
-            print usage[0]
-            print (usage[2] / usage[0]) * 100
-            # todo usage integers not being grabbed
-            free_percent = (usage[2]/usage[0]) * 100
-            print free_percent
+            free_percent = (usage[2]* 100)/usage[0]
             threshold_percent = self.ADD_THRESHOLD * 100
-            print threshold_percent
             if (command == 'add'):
                 for d in disks:
                     if (d.pool is not None):
@@ -367,11 +354,8 @@ class PoolView(rfc.GenericView):
                                      'required.' % (num_new_disks,
                                                     cur_num_disks))
                             handle_exception(Exception(e_msg), request)
-                print "1"
                 resize_pool(pool, mount_disk, dnames)
-                print "2"
                 balance_pid = balance_start(pool, mount_disk, convert=new_raid)
-                print "3"
                 ps = PoolBalance(pool=pool, pid=balance_pid)
                 ps.save()
 
