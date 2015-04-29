@@ -122,8 +122,7 @@ add: function(event) {
 		return true;
 
 	}, name_err_msg);
-
-	this.$('#add-snapshot-form :input').tooltip();
+	this.$('#add-snapshot-form :input').tooltip({placement: 'right'});
 	this.validator = this.$('#add-snapshot-form').validate({
 		onfocusout: false,
 		onkeyup: false,
