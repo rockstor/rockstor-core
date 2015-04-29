@@ -21,7 +21,8 @@ from storageadmin.views import (SetupUserView, LoginView,
                                 DashboardConfigView, NFSExportGroupView,
                                 SambaView, SFTPView, PluginView,
                                 InstalledPluginView, AdvancedNFSExportView,
-                                OauthAppView, NetatalkView, TLSCertificateView)
+                                OauthAppView, NetatalkView, TLSCertificateView,
+                                SnapshotView)
 import os.path
 
 site_media = os.path.join(
@@ -71,6 +72,7 @@ urlpatterns = patterns('',
                        (r'^api/network', include('storageadmin.urls.network')),
                        (r'^api/pools', include('storageadmin.urls.pools')),
                        (r'^api/shares', include('storageadmin.urls.share')),
+                       (r'^api/snapshots', SnapshotView.as_view()),
                        (r'^api/users', include('storageadmin.urls.users')),
                        (r'^api/groups', include('storageadmin.urls.groups')),
                        (r'^api/support', include('storageadmin.urls.support')),

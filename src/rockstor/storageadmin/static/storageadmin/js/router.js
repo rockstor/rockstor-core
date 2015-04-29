@@ -48,6 +48,7 @@ var AppRouter = Backbone.Router.extend({
     "shares/:shareName/snapshots/:snapName/create-clone": "createCloneFromSnapshot",
     "shares/:shareName/rollback": "rollbackShare",
     "shares/:shareName/?cView=:cView": "showShare",
+    "snapshots": "showSnapshots",
     "services": "showServices",
     "services/:serviceName/edit": "configureService",
     "support":"showSupport",
@@ -260,6 +261,7 @@ var AppRouter = Backbone.Router.extend({
     this.currentLayout = new SharesView();
     $('#maincontent').append(this.currentLayout.render().el);
   },
+  
   showSnaps: function(shareName) {
     var snapshotsTableView = new SnapshotsTableView({
       model: new Share({shareName: shareName})
@@ -301,7 +303,16 @@ var AppRouter = Backbone.Router.extend({
   deleteShare: function(shareName) {
 
   },
-
+  
+  showSnapshots: function() {
+	    RockStorSocket.removeAllListeners();
+	    this.renderSidebar("storage", "snapshots");
+	    $('#maincontent').empty();
+	    this.cleanup();
+	    this.currentLayout = new SnapshotsView();
+	    $('#maincontent').append(this.currentLayout.render().el);
+	  },
+  
   showServices: function() {
     RockStorSocket.removeAllListeners();
     this.renderSidebar("system", "services");
