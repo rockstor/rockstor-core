@@ -451,6 +451,8 @@ class PoolView(rfc.GenericView):
                          'all shares in the pool are deleted' % (pname))
                 handle_exception(Exception(e_msg), request)
             pool_path = ('%s%s' % (settings.MNT_PT, pname))
+            # print "delete:"
+            # print pool_path
             umount_root(pool_path)
             pool.delete()
             return Response()

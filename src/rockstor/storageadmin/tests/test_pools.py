@@ -36,6 +36,8 @@ class PoolTests(APITestCase):
         response = self.client.get(self.BASE_URL)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    # patches for delete
+    @mock.patch('storageadmin.views.pool.umount_root')
     # patches for put
     @mock.patch('storageadmin.views.pool.resize_pool')
     @mock.patch('storageadmin.views.pool.balance_start')
@@ -45,7 +47,7 @@ class PoolTests(APITestCase):
     @mock.patch('storageadmin.views.pool.pool_usage')
     @mock.patch('storageadmin.views.pool.btrfs_uuid')
     def test_pools_raid0_crud(self, mock_btrfs_uuid, mock_pool_usage, mock_add_pool,
-                              mock_mount_root, mock_balance_start, mock_resize_pool):
+                              mock_mount_root, mock_balance_start, mock_resize_pool, mock_umount_root):
         """
         raid0 CRUD api tests
         """
@@ -61,12 +63,15 @@ class PoolTests(APITestCase):
         mock_mount_root.return_value = 'foo'
         # put mock
         mock_balance_start.return_value = 1
+        # delete mock
+        mock_balance_start.return_value = True
 
         #create (test post)
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
         self.assertEqual(response.data['name'], 'raid0pool')
         self.assertEqual(response.data['raid'], 'raid0')
+        mock_btrfs_uuid.assert_called_with('sdb')
         # TODO confirm with Suman this is correct... post should save disks?
         # disk assert was failing... list is 'empty'... post function was not adding disks to the pool (atleast not saving them)... appears they WERE added but then dropped it on DB call
         # not sure what is supposed to add the disks to the pool.. "p.disk_set.add(*disks)" line 195?
@@ -77,7 +82,7 @@ class PoolTests(APITestCase):
         # add disks (test put)
         data2 = {'disks': ('sdd', 'sde',), }
 
-        # TODO.. worth testing for exception raises? e.g. empty disks
+        # TODO.. worth testing for exception raises? e.g. empty disks. Front end catch... deprioritize
         # data2 = {'disks': (), }
 
         response2 = self.client.put('%s/raid0pool/add' % self.BASE_URL, data=data2)
@@ -96,6 +101,7 @@ class PoolTests(APITestCase):
         #delete
         response4 = self.client.delete('%s/raid0pool' % self.BASE_URL)
         self.assertEqual(response4.status_code, status.HTTP_200_OK, msg=response4.data)
+        mock_umount_root.assert_called_with('/mnt2/raid0pool')
         # TODO benefit to checking object is actually deleted? Or is that considered testing django ORM?
         # self.assertRaises(Exception, Pool.objects.get(name='raid0pool'))
         # self.assertRaises(DoesNotExist, Pool.objects.get(name='raid0pool'))
@@ -109,9 +115,8 @@ class PoolTests(APITestCase):
 
 
     def test_pool_disk_requirements(self):
-        # TODO add aditional disk checks for all raid levels
         """
-        Raise exceptions when raid level does not meet disk requirements
+        Raise exceptions when pool does not meet disk requirements for given raid level
         """
         self.session_login()
         data = {'disks': ('sdb',),
@@ -158,6 +163,8 @@ class PoolTests(APITestCase):
         self.assertEqual(response3.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response3.data)
         self.assertEqual(response3.data['detail'], e_msg)
 
+    # patches for delete
+    @mock.patch('storageadmin.views.pool.umount_root')
     # patches for put
     @mock.patch('storageadmin.views.pool.resize_pool')
     @mock.patch('storageadmin.views.pool.balance_start')
@@ -168,7 +175,7 @@ class PoolTests(APITestCase):
     @mock.patch('storageadmin.views.pool.btrfs_uuid')
     # TODO organize tests by API call (i.e. all posts together?)
     def test_pools_raid1_crud(self, mock_btrfs_uuid, mock_pool_usage, mock_add_pool,
-                              mock_mount_root, mock_balance_start, mock_resize_pool):
+                              mock_mount_root, mock_balance_start, mock_resize_pool, mock_umount_root):
         """
         raid1 CRUD api tests
         """
@@ -203,8 +210,10 @@ class PoolTests(APITestCase):
         self.assertEqual(response3.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response3.data)
 
         #delete
+        mock_umount_root.return_value = True
         response4 = self.client.delete('%s/raid1pool' % self.BASE_URL)
         self.assertEqual(response4.status_code, status.HTTP_200_OK, msg=response4.data)
+        mock_umount_root.assert_called_with('/mnt2/raid1pool')
 
     # def _test_pools_3(self):
     #     """
