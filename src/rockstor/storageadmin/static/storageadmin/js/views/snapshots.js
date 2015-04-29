@@ -129,6 +129,7 @@ add: function(event) {
 		onkeyup: false,
 		rules: {
 		'snapshot-name': 'validateSnapshotName',
+		shares: 'required',
 	},
 	submitHandler: function() {
 		var button = _this.$('#js-snapshot-save');
