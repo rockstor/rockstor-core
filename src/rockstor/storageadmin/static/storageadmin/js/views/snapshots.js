@@ -43,37 +43,39 @@ initialize: function() {
 	this.module_name = 'snapshots';
 	//this.share = this.options.share;
 	this.snapshots = this.options.snapshots;
-    this.collection = new SnapshotsCollection();
-    this.shares = new ShareCollection();
-    this.dependencies.push(this.shares);
-    this.dependencies.push(this.collection);
-    this.selectedSnapshots = [];
+	this.collection = new SnapshotsCollection();
+	this.shares = new ShareCollection();
+	this.dependencies.push(this.shares);
+	this.dependencies.push(this.collection);
+	this.selectedSnapshots = [];
+	this.replicaShareMap = {};
+	this.snapShares = [];
+
 	this.modify_choices = [
 	                       {name: 'yes', value: 'yes'},
 	                       {name: 'no', value: 'no'},
 	                       ];
 	this.parentView = this.options.parentView;
 	this.collection.on("reset", this.renderSnapshots, this);
-	  
+
 },
 
 render: function() {
-    this.fetch(this.renderSnapshots, this);
-    return this;
-  },
+	this.fetch(this.renderSnapshots, this);
+	return this;
+},
 
 
-  renderSnapshots: function() {
-	  console.log('shares'+this.collection.length);
+renderSnapshots: function() {
 	var _this = this;
 	$(this.el).empty();
-		    
+
 	$(this.el).append(this.template({
 		snapshots: this.collection,
 		selectedSnapshots: this.selectedSnapshots,
 		share: this.share,
 		shares: this.shares,
-		}));
+	}));
 	this.$('[rel=tooltip]').tooltip({
 		placement: 'bottom'
 	});
@@ -91,7 +93,6 @@ setShareName: function(shareName) {
 },
 
 add: function(event) {
-	console.log('In add event'+this.shares.length);
 	var _this = this;
 	event.preventDefault();
 	$(this.el).html(this.addTemplate({
@@ -102,26 +103,26 @@ add: function(event) {
 
 	}));
 	this.$('#shares').chosen();
-    var err_msg = '';
-    var name_err_msg = function() {
-      return err_msg;
-    }
+	var err_msg = '';
+	var name_err_msg = function() {
+		return err_msg;
+	}
 
-    $.validator.addMethod('validateSnapshotName', function(value) {
-        var snapshot_name = $('#snapshot-name').val();
-         if (snapshot_name == "") {
-         err_msg = 'Please enter snapshot name';
-          return false;
-        }
-         else
-             if(/^[A-Za-z][A-Za-z0-9_.-]*$/.test(snapshot_name) == false){
-          	 err_msg = 'Please enter a valid snapshot name.';
-               return false;
-              }        
-            return true;
-            
-      }, name_err_msg);
-    
+	$.validator.addMethod('validateSnapshotName', function(value) {
+		var snapshot_name = $('#snapshot-name').val();
+		if (snapshot_name == "") {
+			err_msg = 'Please enter snapshot name';
+			return false;
+		}
+		else
+			if(/^[A-Za-z][A-Za-z0-9_.-]*$/.test(snapshot_name) == false){
+				err_msg = 'Please enter a valid snapshot name.';
+				return false;
+			}        
+		return true;
+
+	}, name_err_msg);
+
 	this.$('#add-snapshot-form :input').tooltip();
 	this.validator = this.$('#add-snapshot-form').validate({
 		onfocusout: false,
@@ -131,13 +132,11 @@ add: function(event) {
 	},
 	submitHandler: function() {
 		var button = _this.$('#js-snapshot-save');
-		var shareNames = $("#shares").val();
-		console.log(shareNames);
+		var shareName = $("#shares").val();
 		if (buttonDisabled(button)) return false;
 		disableButton(button);
-		for (i = 0; i < shareNames.length; i++){
 		$.ajax({
-		    url: "/api/shares/" + shareNames[i]+ "/snapshots/" + _this.$('#snapshot-name').val(),
+			url: "/api/shares/" + shareName+ "/snapshots/" + _this.$('#snapshot-name').val(),
 			type: "POST",
 			dataType: "json",
 			contentType: 'application/json',
@@ -147,7 +146,7 @@ add: function(event) {
 			enableButton(button);
 			_this.collection.fetch({
 				success: function(collection, response, options) {
-				}                
+			}                
 			});
 		},
 		error: function(xhr, status, error) {
@@ -155,7 +154,7 @@ add: function(event) {
 			enableButton(button);
 		}
 		});
-		}
+
 		return false;
 	}
 	});
@@ -179,7 +178,7 @@ deleteSnapshot: function(event) {
 			_this.$('[rel=tooltip]').tooltip('hide');
 			_this.selectedSnapshots = [];
 			_this.collection.fetch({reset: true});
-			
+
 		},
 		error: function(xhr, status, error) {
 			enableButton(button)
@@ -221,6 +220,7 @@ selectSnapshotWithName: function(name, checked) {
 	}
 },
 
+
 selectAllSnapshots: function(event) {
 	var _this = this;
 	var checked = $(event.currentTarget).prop('checked');
@@ -235,7 +235,6 @@ deleteMultipleSnapshots: function(event) {
 	event.preventDefault();
 	var button = $(event.currentTarget);
 	if (buttonDisabled(button)) return false;
-	var share_name;
 	if (this.selectedSnapshots.length == 0) {
 		alert('Select at least one snapshot to delete');
 	} else {
@@ -245,30 +244,40 @@ deleteMultipleSnapshots: function(event) {
 		} else {
 			confirmMsg = 'Deleting snapshots ';
 		}
-		
-		var snapShares = this.shares.filter(function(share) {
-		      s = this.selectedSnapshots.find(function(sSnap) {
-		        return (sSnap.get('share') == share.get('id'));
-		     });
-		      return !_.isUndefined(s);
-		    }, this);
-		 
-		
-		var snapNames = _.reduce(this.selectedSnapshots, function(str, snap) {
-			return str + snap.get('name') + ',';
-		}, '', this);
-		
-		
-	   snapNames = snapNames.slice(0, snapNames.length-1);
-		var snapIds = _.reduce(this.selectedSnapshots, function(str, snap) {
-			return str + snap.id + ',';
-		}, '', this);
-		snapIds = snapIds.slice(0, snapIds.length-1);
-		var totalSize = _.reduce(this.selectedSnapshots, function(sum, snap) {
-			return sum + snap.get('e_usage');
-		}, 0, this);
-		var totalSizeStr = humanize.filesize(totalSize*1024);
-		if (confirm(confirmMsg + snapNames + ' deletes ' + totalSizeStr + ' of data. Are you sure?')) {
+		var mapOfSelectedSnapshots = _.groupBy(this.selectedSnapshots, function(snap) {
+			return snap.get('share');
+		});
+
+		disableButton(button);
+		if(confirm(confirmMsg)){
+			_.each(this.selectedSnapshots, function(s) {
+				var name = s.get('name');
+
+				_this.shares.each(function(share, index) {
+					if(s.get('share')== share.get('id')){ 
+						var shareName = share.get('name');
+						$.ajax({
+							url: "/api/shares/" + shareName + "/snapshots/" + name,
+							type: "DELETE",
+							success: function() {
+							enableButton(button)
+							_this.$('[rel=tooltip]').tooltip('hide');
+							_this.selectedSnapshots = [];
+							_this.collection.fetch({reset: true});
+
+						},
+						error: function(xhr, status, error) {
+							enableButton(button)
+							_this.$('[rel=tooltip]').tooltip('hide');
+						}
+						});
+
+					}
+				});
+			});
+		}
+
+		/*		if (confirm(confirmMsg  + ' deletes ' + totalSizeStr + ' of data. Are you sure?')) {
 			disableButton(button);
 			$.ajax({
 				url: "/api/shares/" + share_name + "/snapshots?id=" + snapIds,
@@ -297,7 +306,7 @@ deleteMultipleSnapshots: function(event) {
 				_this.collection.fetch();
 			}
 			});
-		}
+		}*/
 	}
 },
 

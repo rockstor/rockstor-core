@@ -40,7 +40,7 @@
         <div class="control-group">
          <label class="control-label" for="shares">Select Shares<span class="required"> *</span></label>
          <div class="controls">
-         <select name="shares" id="shares" size="10" data-placeholder="Select shares">
+         <select name="shares" id="shares" size="10" data-placeholder="Select shares" >
          <% shares.each( function(share, index) { %>
          <option value="<%= share.get('name') %>" > <%= share.get('name') %></option>
        <% }); %>
