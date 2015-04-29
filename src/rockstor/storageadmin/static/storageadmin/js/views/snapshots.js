@@ -41,7 +41,6 @@ initialize: function() {
 	this.paginationTemplate = window.JST.common_pagination;
 	this.addTemplate = window.JST.share_snapshot_add_template;
 	this.module_name = 'snapshots';
-	//this.share = this.options.share;
 	this.snapshots = this.options.snapshots;
 	this.collection = new SnapshotsCollection();
 	this.shares = new ShareCollection();
@@ -120,8 +119,8 @@ add: function(event) {
 				return false;
 			}        
 		return true;
-
 	}, name_err_msg);
+	
 	this.$('#add-snapshot-form :input').tooltip({placement: 'right'});
 	this.validator = this.$('#add-snapshot-form').validate({
 		onfocusout: false,
@@ -202,20 +201,20 @@ cloneSnapshot: function(event) {
 
 selectSnapshot: function(event) {
 	var _this = this;
-	name = $(event.currentTarget).attr('data-name');
+	id = $(event.currentTarget).attr('data-id');
 	var checked = $(event.currentTarget).prop('checked');
-	this.selectSnapshotWithName(name, checked);
+	this.selectSnapshotWithId(id, checked);
 },
 
-selectSnapshotWithName: function(name, checked) {
+selectSnapshotWithId: function(id, checked) {
 	if (checked) {
-		if (!RockstorUtil.listContains(this.selectedSnapshots, 'name', name)) {
+		if (!RockstorUtil.listContains(this.selectedSnapshots, 'id', id)) {
 			RockstorUtil.addToList(
-					this.selectedSnapshots, this.collection, 'name', name);
+					this.selectedSnapshots, this.collection, 'id', id);
 		}
 	} else {
-		if (RockstorUtil.listContains(this.selectedSnapshots, 'name', name)) {
-			RockstorUtil.removeFromList(this.selectedSnapshots, 'name', name);
+		if (RockstorUtil.listContains(this.selectedSnapshots, 'id', id)) {
+			RockstorUtil.removeFromList(this.selectedSnapshots, 'id', id);
 		}
 	}
 },
@@ -226,7 +225,7 @@ selectAllSnapshots: function(event) {
 	var checked = $(event.currentTarget).prop('checked');
 	this.$('.js-snapshot-select').prop('checked', checked)
 	this.$('.js-snapshot-select').each(function() {
-		_this.selectSnapshotWithName($(this).attr('data-name'), checked);
+		_this.selectSnapshotWithId($(this).attr('data-id'), checked);
 	});
 },
 
@@ -244,12 +243,25 @@ deleteMultipleSnapshots: function(event) {
 		} else {
 			confirmMsg = 'Deleting snapshots ';
 		}
-		var mapOfSelectedSnapshots = _.groupBy(this.selectedSnapshots, function(snap) {
-			return snap.get('share');
-		});
+		var snapNames = _.reduce(this.selectedSnapshots, function(str, snap) {
+			return str + snap.get('name') + ',';
+		}, '', this);
+		snapNames = snapNames.slice(0, snapNames.length-1);
 
-		disableButton(button);
-		if(confirm(confirmMsg)){
+		var snapIds = _.reduce(this.selectedSnapshots, function(str, snap) {
+			return str + snap.id + ',';
+		}, '', this);
+		snapIds = snapIds.slice(0, snapIds.length-1);
+
+		var totalSize = _.reduce(this.selectedSnapshots, function(sum, snap) {
+			return sum + snap.get('e_usage');
+		}, 0, this);
+
+		var totalSizeStr = humanize.filesize(totalSize*1024);
+
+		if (confirm(confirmMsg + snapNames + ' deletes ' + totalSizeStr + ' of data. Are you sure?')) {
+			disableButton(button);
+
 			_.each(this.selectedSnapshots, function(s) {
 				var name = s.get('name');
 
@@ -277,36 +289,6 @@ deleteMultipleSnapshots: function(event) {
 			});
 		}
 
-		/*		if (confirm(confirmMsg  + ' deletes ' + totalSizeStr + ' of data. Are you sure?')) {
-			disableButton(button);
-			$.ajax({
-				url: "/api/shares/" + share_name + "/snapshots?id=" + snapIds,
-				type: "DELETE",
-				success: function() {
-				enableButton(button)
-				_this.$('[rel=tooltip]').tooltip('hide');
-				// reset selected snapshots
-				_this.selectedSnapshots = [];
-				// reset to prev page if not on first page
-				// to handle the case of the last page being deleted
-				if (_this.collection.pageInfo().prev) {
-					_this.collection.prevPage();
-				} else {
-					_this.collection.fetch({
-						success: function(collection, response, options) {
-						//_this.parentView.trigger('snapshotsModified');
-					}                
-					});
-				}
-			},
-			error: function(xhr, status, error) {
-				enableButton(button)
-				_this.$('[rel=tooltip]').tooltip('hide');
-				_this.selectedSnapshots = [];
-				_this.collection.fetch();
-			}
-			});
-		}*/
 	}
 },
 
