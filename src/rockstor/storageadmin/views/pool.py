@@ -159,6 +159,8 @@ class PoolView(rfc.GenericView):
                          self.RAID_LEVELS)
                 handle_exception(Exception(e_msg), request)
             # todo can we consolidate these checks(and tests)? raid0 and raid1 both need > 1 disk
+            # if ((raid_level == self.RAID_LEVELS[1] and len(disks) < 2) or
+            # (raid_level == self.RAID_LEVELS[2] and len(disks) < 2)):
             if (raid_level == self.RAID_LEVELS[1] and len(disks) == 1):
                 e_msg = ('More than one disk is required for the raid '
                          'level: %s' % raid_level)
@@ -195,7 +197,7 @@ class PoolView(rfc.GenericView):
             p.uuid = btrfs_uuid(dnames[0])
             p.disk_set.add(*disks)
             p.save()
-            # added save disks (TODO check w/ Suman)
+            # added save disks. TODO look into p.disk_set.add(*disks) functionality, does not save disks in test environment
             for d in disks:
                 d.pool = p
                 d.save()
