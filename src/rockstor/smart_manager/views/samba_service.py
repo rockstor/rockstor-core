@@ -62,7 +62,7 @@ class SambaServiceView(BaseServiceView):
                 systemctl('nmb', command)
             except Exception, e:
                 logger.exception(e)
-                e_msg = ('Failed to %s samba due to a system error.')
+                e_msg = ('Failed to %s samba due to a system error.' % command)
                 handle_exception(Exception(e_msg), request)
 
         return Response()

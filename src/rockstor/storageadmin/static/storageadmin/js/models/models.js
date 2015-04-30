@@ -135,6 +135,17 @@ var SnapshotCollection = RockStorPaginatedCollection.extend({
   }
 });
 
+var Snapshots = Backbone.Model.extend({
+	  urlRoot: '/api/snapshots'
+	});
+
+	var SnapshotsCollection = RockStorPaginatedCollection.extend({
+	  model: Snapshots,
+	  baseUrl: '/api/snapshots'
+	});
+
+
+
 var Poolscrub = Backbone.Model.extend({
   url: function() {
     return '/api/pools/' + this.get('poolName') + '/scrub';
