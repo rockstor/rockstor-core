@@ -34,8 +34,10 @@ class RockOnView(rfc.GenericView):
 
     def get_queryset(self, *args, **kwargs):
         for ro in RockOn.objects.all():
-            ro.status = rockon_status(ro.name)
-            ro.save()
+            if (ro.state == 'installed'):
+                #update current running status of installed rockons.
+                ro.status = rockon_status(ro.name)
+                ro.save()
         return RockOn.objects.all()
 
     @transaction.commit_on_success

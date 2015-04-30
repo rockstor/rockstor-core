@@ -46,7 +46,10 @@ class SnapshotView(rfc.GenericView):
         try:
             share = Share.objects.get(name=self.kwargs['sname'])
         except:
-            e_msg = ('Share with name: %s does not exist' % self.kwargs['sname'])
+            if ('sname' not in kwargs):
+                return Snapshot.objects.filter().order_by('-id')
+
+            e_msg = ('Share with name: %s does not exist' % kwargs['sname'])
             handle_exception(Exception(e_msg), self.request)
 
         if ('snap_name' in self.kwargs):
