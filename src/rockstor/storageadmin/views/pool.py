@@ -197,7 +197,7 @@ class PoolView(rfc.GenericView):
             p.uuid = btrfs_uuid(dnames[0])
             p.disk_set.add(*disks)
             p.save()
-            # added save disks. TODO look into p.disk_set.add(*disks) functionality, does not save disks in test environment
+            # added for loop to save disks. appears p.disk_set.add(*disks) was not saving disks in test environment
             for d in disks:
                 d.pool = p
                 d.save()

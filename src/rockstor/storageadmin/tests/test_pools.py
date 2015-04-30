@@ -31,9 +31,7 @@ class PoolCRUDTests(APITestCase):
 
     def setUp(self):
         self.client.login(username='admin', password='admin')
-        self.data = {'disks': ('sdb', 'sdc', 'sdd', 'sde',),
-                    'pname': 'raid0pool',
-                    'raid_level': 'raid0', }
+
         # post mocks
         self.patch_mount_root = patch('storageadmin.views.pool.mount_root')
         self.mock_mount_root = self.patch_mount_root.start()
@@ -66,19 +64,39 @@ class PoolCRUDTests(APITestCase):
         self.mock_umount_root.return_value = True
 
     def tearDown(self):
-        # self.patch_mount_root.stop()
-        # self.patch_add_pool.stop()
-        # self.patch_pool_usage.stop()
-        # self.patch_btrfs_uuid.stop()
         patch.stopall()
 
+    # TODO will have to execute outside of setup
+    # def test_pools_auth(self):
+    #     """
+    #     unauthorized api access
+    #     """
+    #     response = self.client.get(self.BASE_URL)
+    #     self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
     def test_pool_raid0_crud(self):
-        # create pool
+        """
+        raid0 post, put & delete api requests
+        """
+        self.data = {'disks': ('sdb',),
+                    'pname': 'raid0pool',
+                    'raid_level': 'raid0', }
+
+        # create pool with 1 disk
+        e_msg = ('More than one disk is required for the raid level: raid0')
+        response = self.client.post(self.BASE_URL, data=self.data)
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+        self.assertEqual(response.data['detail'], e_msg)
+
+        # create pool with 4 disks
+        self.data['disks'] = ('sdb', 'sdc', 'sdd', 'sde',)
         response = self.client.post(self.BASE_URL, data=self.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
         self.assertEqual(response.data['name'], 'raid0pool')
         self.assertEqual(response.data['raid'], 'raid0')
         self.mock_btrfs_uuid.assert_called_with('sdb')
+        # disk length assert was failing... list is 'empty'... post function was not adding disks to the pool (atleast not saving them)... appears they WERE added but then dropped it on DB call
+        # solution: assigned disks to the pool & saved each disk
         self.assertEqual(len(response.data['disks']), 4)
 
         # add disks
@@ -100,12 +118,29 @@ class PoolCRUDTests(APITestCase):
         # TODO benefit to checking object is actually deleted? Or is that considered testing django ORM?
         self.assertRaises(Exception, Pool.objects.get, name='raid0pool')
 
+#         # todo test get?
+#         # response5 = self.client.get(self.BASE_URL)
+#         # self.assertEqual(response5.status_code, status.HTTP_200_OK, msg=response5.data)
+#         # print response5.data
+#         # print dir(response5.data)
+#         # self.assertEqual(len(response5.data['results'][0]['disks']), 1)
 
     def test_pool_raid1_crud(self):
-        self.data['raid_level'] = 'raid1'
-        self.data['pname'] = 'raid1pool'
+        """
+        raid1 post, put & delete api requests
+        """
+        self.data = {'disks': ('sdb',),
+                    'pname': 'raid1pool',
+                    'raid_level': 'raid1', }
 
-        # create pool
+        # create pool with 1 disk
+        e_msg = ('At least two disks are required for the raid level: raid1')
+        response = self.client.post(self.BASE_URL, data=self.data)
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+        self.assertEqual(response.data['detail'], e_msg)
+
+        # create pool with 4 disks
+        self.data['disks'] = ('sdb', 'sdc', 'sdd', 'sde',)
         response = self.client.post(self.BASE_URL, data=self.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
         self.assertEqual(response.data['name'], 'raid1pool')
@@ -137,6 +172,68 @@ class PoolCRUDTests(APITestCase):
         self.mock_umount_root.assert_called_with('/mnt2/raid1pool')
 
 
+    def test_pool_raid10_crud(self):
+        """
+        raid0 post, put & delete api requests
+        """
+        self.data = {'disks': ('sdb',),
+                    'pname': 'raid10pool',
+                    'raid_level': 'raid10', }
+
+        # create pool with 1 disk
+        e_msg = ('A minimum of Four drives are required for the raid level: raid10')
+        response = self.client.post(self.BASE_URL, data=self.data)
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+        self.assertEqual(response.data['detail'], e_msg)
+        
+        # create pool with odd disks
+        self.data['disks'] = ('sdb', 'sdc', 'sdd', 'sde', 'sdf',)
+        e_msg = ('Even number of drives are required for the raid level: raid10')
+        response = self.client.post(self.BASE_URL, data=self.data)
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+        self.assertEqual(response.data['detail'], e_msg)        
+
+        # create pool with 4 disks
+        self.data['disks'] = ('sdb', 'sdc', 'sdd', 'sde',)
+        response = self.client.post(self.BASE_URL, data=self.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
+        self.assertEqual(response.data['name'], 'raid10pool')
+        self.assertEqual(response.data['raid'], 'raid10')
+        self.mock_btrfs_uuid.assert_called_with('sdb')
+        self.assertEqual(len(response.data['disks']), 4)
+
+        # add 1 disk
+        data2 = {'disks': ('sdf',), }
+        response1 = self.client.put('%s/raid10pool/add' % self.BASE_URL, data=data2)
+        self.assertEqual(response1.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response1.data)
+        e_msg = ('raid10 requires an even number of drives. Total provided = 1')
+        self.assertEqual(response1.data['detail'], e_msg)
+
+        # add 2 disks
+        data2 = {'disks': ('sdf', 'sdg',), }
+        response2 = self.client.put('%s/raid10pool/add' % self.BASE_URL, data=data2)
+        self.assertEqual(response2.status_code, status.HTTP_200_OK, msg=response2.data)
+        self.assertEqual(len(response2.data['disks']), 6)
+
+        # remove 2 disks
+        response3 = self.client.put('%s/raid10pool/remove' % self.BASE_URL, data=data2)
+        self.assertEqual(response3.status_code, status.HTTP_200_OK, msg=response3.data)
+        self.assertEqual(len(response3.data['disks']), 4)
+
+        # remove 1 disk
+        data3 = {'disks': ('sde',), }
+        response4 = self.client.put('%s/raid10pool/remove' % self.BASE_URL, data=data3)
+        self.assertEqual(response4.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response4.data)
+        e_msg = ('Only two disks can be removed at once from this pool because of its raid configuration(raid10)')
+        self.assertEqual(response4.data['detail'], e_msg)        
+
+        # delete pool
+        response5 = self.client.delete('%s/raid10pool' % self.BASE_URL)
+        self.assertEqual(response5.status_code, status.HTTP_200_OK, msg=response5.data)
+        self.mock_umount_root.assert_called_with('/mnt2/raid10pool')
+
+
+
 # class PoolTests(APITestCase):
 #     fixtures = ['fix1.json']
 #     BASE_URL = '/api/pools'
@@ -150,90 +247,9 @@ class PoolCRUDTests(APITestCase):
 #         """
 #         response = self.client.get(self.BASE_URL)
 #         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
 #
-#     # patches for delete
-#     @mock.patch('storageadmin.views.pool.umount_root')
-#     # patches for put
-#     @mock.patch('storageadmin.views.pool.resize_pool')
-#     @mock.patch('storageadmin.views.pool.balance_start')
-#     # patches for post
-#     @mock.patch('storageadmin.views.pool.mount_root')
-#     @mock.patch('storageadmin.views.pool.add_pool')
-#     @mock.patch('storageadmin.views.pool.pool_usage')
-#     @mock.patch('storageadmin.views.pool.btrfs_uuid')
-#     def test_pools_raid0_crud(self, mock_btrfs_uuid, mock_pool_usage, mock_add_pool,
-#                               mock_mount_root, mock_balance_start, mock_resize_pool, mock_umount_root):
-#         """
-#         raid0 CRUD api tests
-#         """
-#         self.session_login()
-#         data = {'disks': ('sdb', 'sdc',),
-#                 'pname': 'raid0pool',
-#                 'raid_level': 'raid0', }
-#
-#         # post mocks
-#         mock_btrfs_uuid.return_value = 'bar'
-#         mock_pool_usage.return_value = (100, 10, 90)
-#         mock_add_pool.return_value = True
-#         mock_mount_root.return_value = 'foo'
-#         # put mock
-#         mock_balance_start.return_value = 1
-#         # delete mock
-#         mock_umount_root.return_value = True
-#
-#         #create (test post)
-#         response = self.client.post(self.BASE_URL, data=data)
-#         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
-#         self.assertEqual(response.data['name'], 'raid0pool')
-#         self.assertEqual(response.data['raid'], 'raid0')
-#         mock_btrfs_uuid.assert_called_with('sdb')
-#         # TODO confirm with Suman this is correct... post should save disks?
-#         # disk assert was failing... list is 'empty'... post function was not adding disks to the pool (atleast not saving them)... appears they WERE added but then dropped it on DB call
-#         # not sure what is supposed to add the disks to the pool.. "p.disk_set.add(*disks)" line 195?
-#         # solution: assigned disks to the pool & saved each disk
-#         # sure that one of the mocked methods doesen't handle this?
-#         self.assertEqual(len(response.data['disks']), 2)
-#
-#         # add 2 disks (test put)
-#         data2 = {'disks': ('sdd', 'sde',), }
-#         response2 = self.client.put('%s/raid0pool/add' % self.BASE_URL, data=data2)
-#         self.assertEqual(response2.status_code, status.HTTP_200_OK, msg=response2.data)
-#         self.assertEqual(len(response2.data['disks']), 4)
-#
-#         # TODO.. worth testing for exception raises? e.g. empty disks. Front end catch... deprioritize
-#         # TODO suman - why this doesn't raise an exception / assertion error?
-#         # self.assertRaises(Exception, self.client.put, ('%s/raid0pool/add' % self.BASE_URL), data=data2)
-#
-#         # add 0 disks (test exception catch)
-#         data3 = {'disks': (), }
-#         response3 = self.client.put('%s/raid0pool/add' % self.BASE_URL, data=data3)
-#         self.assertEqual(response3.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response3.data)
-#         e_msg = ('List of disks in the input cannot be empty.')
-#         self.assertEqual(response3.data['detail'], e_msg)
-#
-#         #remove disk (test put)
-#         # TODO check why this should return a 500 error? Can't remove just one disk.
-#         data4 = {'disk': ('sde',), }
-#         response4 = self.client.put('%s/raid0pool/remove' % self.BASE_URL, data=data4)
-#         self.assertEqual(response4.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response4.data)
-#         # self.assertEqual(len(response3.data['disks']), 3)
-#         # print response3.data
-#         # print dir(response3.data)
-#
-#         #delete
-#         response4 = self.client.delete('%s/raid0pool' % self.BASE_URL)
-#         self.assertEqual(response4.status_code, status.HTTP_200_OK, msg=response4.data)
-#         mock_umount_root.assert_called_with('/mnt2/raid0pool')
-#         # TODO benefit to checking object is actually deleted? Or is that considered testing django ORM?
-#         # self.assertRaises(Exception, Pool.objects.get(name='raid0pool'))
-#         # self.assertRaises(DoesNotExist, Pool.objects.get(name='raid0pool'))
-#
-#         # todo test get?
-#         # response5 = self.client.get(self.BASE_URL)
-#         # self.assertEqual(response5.status_code, status.HTTP_200_OK, msg=response5.data)
-#         # print response5.data
-#         # print dir(response5.data)
-#         # self.assertEqual(len(response5.data['results'][0]['disks']), 1)
+
 #
 #
 #     def test_pool_disk_requirements(self):
