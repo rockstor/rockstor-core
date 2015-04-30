@@ -17,9 +17,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from storageadmin.models import (Appliance, Disk, Group, NetworkInterface,
-                                 )
+                                 Pool, Share,)
 from storageadmin.serializers import (ApplianceSerializer, DiskInfoSerializer,
-                                      GroupSerializer, NetworkInterfaceSerializer)
+                                      GroupSerializer, NetworkInterfaceSerializer,
+                                      PoolInfoSerializer, ShareSerializer)
 import rest_framework_custom as rfc
 from rest_framework.response import Response
 
@@ -77,3 +78,27 @@ class NetworkDetailView(rfc.GenericView):
             return Response(serialized_data.data)
         except:
             return Response({})
+
+
+class PoolDetailView(rfc.GenericView):
+    serializer_class = PoolInfoSerializer
+
+    def get(self, *args, **kwargs):
+        try:
+            data = Pool.objects.get(name=self.kwargs['pname'])
+            serialized_data = PoolInfoSerializer(data)
+            return Response(serialized_data.data)
+        except:
+            return Response({})
+
+
+class DetailShareView(rfc.GenericView):
+    serializer_class = ShareSerializer
+
+    def get(self, *args, **kwargs):
+            try:
+                data = Share.objects.get(name=self.kwargs['sname'])
+                serialized_data = ShareSerializer(data)
+                return Response(serialized_data.data)
+            except:
+                return []

@@ -46,8 +46,8 @@ class PoolInfoSerializer(serializers.ModelSerializer):
 
 
 class SnapshotSerializer(serializers.ModelSerializer):
-    r_usage = serializers.IntegerField()
-    e_usage = serializers.IntegerField()
+    cur_rusage = serializers.IntegerField()
+    cur_eusage = serializers.IntegerField()
 
     class Meta:
         model = Snapshot
@@ -114,21 +114,18 @@ class IscsiSerializer(serializers.ModelSerializer):
 
 
 class ShareSerializer(serializers.ModelSerializer):
-    snapshots = SnapshotSerializer
-    #  = PoolInfoSerializer(data=Pool.objects.all())
-    # nfs_exports = NFSExportSerializer(data=NFSExport.objects.all())
+    snapshots = SnapshotSerializer(many=True, source='snapshot_set')
+    pool = PoolInfoSerializer()
+    nfs_exports = NFSExportSerializer(many=True, source='nfsexport_set')
 
     class Meta:
 	model = Share
-	fields = ('pool', 'qgroup', 'name', 'uuid', 'size', 'owner', 'group',
-                  'perms', 'toc', 'subvol_name', 'replica',
-                  'compression_algo', 'cur_rusage', 'cur_eusage',
-                  'snapshots')
 
 
 class ApplianceSerializer(serializers.ModelSerializer):
         class Meta:
 		model = Appliance
+
 
 class SupportSerializer(serializers.ModelSerializer):
 	class Meta:

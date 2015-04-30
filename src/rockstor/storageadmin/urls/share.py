@@ -20,7 +20,7 @@ from django.conf.urls import patterns, url
 from storageadmin.views import (ShareView, ShareNFSView,
                                 ShareACLView, SnapshotView, ShareIscsiView,
                                 ShareCommandView,)
-from storageadmin.views.share import DetailShareView
+from storageadmin.views.detail_views import DetailShareView
 from django.conf import settings
 
 share_regex = settings.SHARE_REGEX

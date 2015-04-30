@@ -63,13 +63,13 @@ class AdvancedNFSExportView(rfc.GenericView):
     @transaction.commit_on_success
     def post(self, request):
         with self._handle_exception(request):
-            if ('entries' not in request.DATA):
+            if ('entries' not in request.data):
                 e_msg = ('Cannot export without specifying entries')
                 handle_exception(Exception(e_msg), request)
 
             AdvancedNFSExport.objects.all().delete()
             cur_entries = []
-            for e in request.DATA['entries']:
+            for e in request.data.get('entries'):
                 logger.debug('adv export entry -- %s' % e)
                 ce = AdvancedNFSExport(export_str=e)
                 ce.save()

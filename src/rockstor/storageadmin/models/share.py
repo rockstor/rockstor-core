@@ -56,10 +56,5 @@ class Share(models.Model):
 		except:
 			return -1
 
-	@property
-	def snapshots(self, *args, **kwargs):
-		return Snapshot.objects.filter(share=self)
-
-
 	class Meta:
 		app_label = 'storageadmin'

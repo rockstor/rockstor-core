@@ -28,23 +28,8 @@ from storageadmin.serializers import ShareSerializer
 from storageadmin.util import handle_exception
 from django.conf import settings
 import rest_framework_custom as rfc
-from rest_framework.generics import RetrieveAPIView
-
 import logging
 logger = logging.getLogger(__name__)
-
-
-class DetailShareView(RetrieveAPIView):
-    serializer_class = ShareSerializer
-
-    def get(self, *args, **kwargs):
-        if 'sname' in self.kwargs:
-            try:
-                data = Share.objects.get(name=self.kwargs['sname'])
-                serialized_data = ShareSerializer(data)
-                return Response(serialized_data.data)
-            except:
-                return []
 
 
 class ShareView(rfc.GenericView):
@@ -112,7 +97,7 @@ class ShareView(rfc.GenericView):
     @transaction.atomic
     def post(self, request):
         with self._handle_exception(request):
-            pool_name = request.DATA.get('pool', None)
+            pool_name = request.data.get('pool', None)
             try:
                 pool = Pool.objects.get(name=pool_name)
             except:
@@ -120,7 +105,7 @@ class ShareView(rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
             compression = self._validate_compression(request)
             size = self._validate_share_size(request, pool)
-            sname = request.DATA.get('sname', None)
+            sname = request.data.get('sname', None)
             if ((sname is None or
                  re.match('%s$' % settings.SHARE_REGEX, sname) is None)):
                 e_msg = ('Share name must start with a alphanumeric(a-z0-9) '

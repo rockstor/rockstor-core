@@ -48,15 +48,9 @@ class PoolView(rfc.GenericView):
         }
 
     def get_queryset(self, *args, **kwargs):
-        if ('pname' in self.kwargs):
-            self.paginate_by = 0
-            try:
-                return Pool.objects.filter(name=self.kwargs['pname'])
-            except:
-                return []
         sort_col = self.request.query_params.get('sortby', None)
         if (sort_col is not None and sort_col == 'usage'):
-            reverse = self.request.QUERY_PARAMS.get('reverse', 'no')
+            reverse = self.request.query_params.get('reverse', 'no')
             if (reverse == 'yes'):
                 reverse = True
             else:
