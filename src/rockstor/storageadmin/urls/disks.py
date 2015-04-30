@@ -18,7 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.conf.urls import patterns, url
 from storageadmin.views import DiskView
-from storageadmin.views.disk import DiskDetailView
+from storageadmin.views.detail_views import DiskDetailView
+
 
 disk_regex = '[A-Za-z]+[A-Za-z0-9]*'
 

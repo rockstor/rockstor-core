@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.conf.urls import patterns, url
 from storageadmin.views import GroupView
-from storageadmin.views.group import GroupDetailView
+from storageadmin.views.detail_views import GroupDetailView
 from django.conf import settings
 
 

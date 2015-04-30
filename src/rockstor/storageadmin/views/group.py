@@ -26,23 +26,8 @@ from system.users import (groupadd, groupdel)
 import grp
 from ug_helpers import combined_groups
 import logging
-from rest_framework.generics import RetrieveAPIView
 from django.conf import settings
 logger = logging.getLogger(__name__)
-
-
-class GroupDetailView(RetrieveAPIView, rfc.GenericView):
-    serializer_class = GroupSerializer
-
-    def get(self, *args, **kwargs):
-        if 'groupname' in self.kwargs:
-                try:
-                    data = Group.objects.get(username=self.kwargs['groupname'])
-                    serialized_data = GroupSerializer(data)
-                    return Response(serialized_data.data)
-                except:
-                    # Render and empty list if no matches
-                    return Response([])
 
 
 class GroupView(rfc.GenericView):
