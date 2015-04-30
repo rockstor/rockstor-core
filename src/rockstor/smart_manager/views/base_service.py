@@ -21,6 +21,7 @@ from django.conf import settings
 from smart_manager.serializers import ServiceStatusSerializer
 import json
 import rest_framework_custom as rfc
+from rest_framework.response import Response
 from system.services import service_status
 from django.db import transaction
 from django.utils.timezone import utc
@@ -34,11 +35,11 @@ class BaseServiceView(rfc.GenericView):
     serializer_class = ServiceStatusSerializer
 
     @transaction.commit_on_success
-    def get_queryset(self, *args, **kwargs):
+    def get(self, *args, **kwargs):
 
         with self._handle_exception(self.request):
-            limit = self.request.QUERY_PARAMS.get('limit',
-                                                  settings.PAGINATION['max_limit'])
+            limit = self.request.query_params.get('limit',
+                                                  settings.REST_FRAMEWORK['MAX_LIMIT'])
             limit = int(limit)
             url_fields = self.request.path.strip('/').split('/')
             if (len(url_fields) < 4):
@@ -48,7 +49,8 @@ class BaseServiceView(rfc.GenericView):
                 return sos
             s = Service.objects.get(name=url_fields[3])
             self.paginate_by = 0
-            return self._get_or_create_sso(s)
+            serialized_data = ServiceStatusSerializer(self._get_or_create_sso(s))
+            return Response(serialized_data.data)
 
     def _save_config(self, service, config):
         service.config = json.dumps(config)

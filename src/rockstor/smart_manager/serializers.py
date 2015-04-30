@@ -62,14 +62,13 @@ class ServiceSerializer(serializers.ModelSerializer):
 
 
 class ServiceStatusSerializer(serializers.ModelSerializer):
-    service = ServiceSerializer(read_only=True)
-    # display_name = serializers.SlugRelatedField(
-    #     slug_field='service.display_name', read_only=True)
-    # config = serializers.SlugRelatedField(slug_field='service.config', read_only=True)  
+    name = serializers.CharField()
+    display_name = serializers.CharField()
+    config = serializers.CharField()
 
     class Meta:
         model = ServiceStatus
-        fields = ('service', 'status', 'count', 'ts')
+
 
 class SProbeSerializer(serializers.ModelSerializer):
     class Meta:

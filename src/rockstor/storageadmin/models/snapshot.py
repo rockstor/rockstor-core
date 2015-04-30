@@ -37,7 +37,7 @@ class Snapshot(models.Model):
 	"""replication, admin etc.."""
 	snap_type = models.CharField(max_length=64, default='admin')
 
-	@property
+        @property
 	def cur_rusage(self, *args, **kwargs):
 		try:
 			su = ShareUsage.objects.filter(name=self.real_name).order_by('-ts')[0]
@@ -45,7 +45,7 @@ class Snapshot(models.Model):
 		except:
 			return -1
 
-	@property
+        @property
 	def cur_eusage(self, *args, **kwargs):
 		try:
 			su = ShareUsage.objects.filter(name=self.real_name).order_by('-ts')[0]
