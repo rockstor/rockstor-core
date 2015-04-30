@@ -34,7 +34,6 @@ class CPUMetricSerializer(serializers.ModelSerializer):
         model = CPUMetric
 
 class LoadAvgSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = LoadAvg
         fields = ('uptime',)
@@ -47,9 +46,6 @@ class DiskStatSerializer(serializers.ModelSerializer):
     class Meta:
         model = DiskStat
 
-#class PaginatedDiskStat(pagination.PaginationSerializer):
-#   class Meta:
-#       object_serializer_class = DiskStatSerializer
 
 class NetStatSerializer(serializers.ModelSerializer):
     class Meta:
@@ -74,10 +70,11 @@ class SProbeSerializer(serializers.ModelSerializer):
     class Meta:
         model = SProbe
 
-        
-#class PaginatedSProbe(pagination.PaginationSerializer):
-#    class Meta:
-#       object_serializer_class = SProbeSerializer
+
+# TODO: Do we need this class anymore? Only used in advanced_sprobe
+class PaginatedSProbe(pagination.PageNumberPagination):
+    class Meta:
+        object_serializer_class = SProbeSerializer
 
 
 class NFSDCallDistributionSerializer(serializers.ModelSerializer):
