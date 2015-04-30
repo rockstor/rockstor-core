@@ -117,10 +117,10 @@ add: function(event) {
 			if(/^[A-Za-z][A-Za-z0-9_.-]*$/.test(snapshot_name) == false){
 				err_msg = 'Please enter a valid snapshot name.';
 				return false;
-			}        
+			}
 		return true;
 	}, name_err_msg);
-	
+
 	this.$('#add-snapshot-form :input').tooltip({placement: 'right'});
 	this.validator = this.$('#add-snapshot-form').validate({
 		onfocusout: false,
@@ -145,7 +145,7 @@ add: function(event) {
 			enableButton(button);
 			_this.collection.fetch({
 				success: function(collection, response, options) {
-			}                
+			}
 			});
 		},
 		error: function(xhr, status, error) {
@@ -266,7 +266,7 @@ deleteMultipleSnapshots: function(event) {
 				var name = s.get('name');
 
 				_this.shares.each(function(share, index) {
-					if(s.get('share')== share.get('id')){ 
+					if(s.get('share')== share.get('id')){
 						var shareName = share.get('name');
 						$.ajax({
 							url: "/api/shares/" + shareName + "/snapshots/" + name,
@@ -319,4 +319,4 @@ cancel: function(event) {
 });
 
 // Add pagination
-Cocktail.mixin(SnapshotsTableModule, PaginationMixin);
+Cocktail.mixin(SnapshotsView, PaginationMixin);

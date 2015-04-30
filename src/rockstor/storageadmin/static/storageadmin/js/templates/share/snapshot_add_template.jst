@@ -40,14 +40,14 @@
         <div class="control-group">
          <label class="control-label" for="shares">Select Shares<span class="required"> *</span></label>
          <div class="controls">
-         <select name="shares" id="shares" size="10" data-placeholder="Select share" title="Select share the snapshot should belong to">
+         <select name="shares" id="shares" size="10" data-placeholder="Select share" title="Select the Share to snapshot">
          <% shares.each( function(share, index) { %>
          <option value="<%= share.get('name') %>" > <%= share.get('name') %></option>
        <% }); %>
          </select>
          </div>
         </div>
-        
+
         <div class="control-group">
           <label class="control-label" for=writable">Writable<span class="required"> *</span></label>
           <div class="controls">
