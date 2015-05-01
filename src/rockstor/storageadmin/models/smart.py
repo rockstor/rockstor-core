@@ -44,6 +44,24 @@ class SMARTAttribute(models.Model):
     class Meta:
         app_label = 'storageadmin'
 
+class SMARTErrorLog(models.Model):
+    info = models.ForeignKey('SMARTInfo')
+    line = models.CharField(max_length=128)
+
+    class Meta:
+        app_label = 'storageadmin'
+
+class SMARTErrorLogSummary(models.Model):
+    info = models.ForeignKey('SMARTInfo')
+    error_num = models.IntegerField()
+    lifetime_hours = models.IntegerField()
+    state = models.CharField(max_length=64)
+    etype = models.CharField(max_length=256)
+    details = models.CharField(max_length=1024)
+
+    class Meta:
+        app_label = 'storageadmin'
+
 class SMARTInfo(models.Model):
     disk = models.ForeignKey(Disk)
     toc = models.DateTimeField(auto_now=True)
@@ -57,14 +75,11 @@ class SMARTInfo(models.Model):
     def attributes(self):
         return SMARTAttribute.objects.filter(info=self)
 
-class SMARTErrorLog(models.Model):
-    disk = models.ForeignKey(Disk)
-    error_num = models.IntegerField()
-    lifetime_hours = models.IntegerField()
-    state = models.CharField(max_length=64)
-    etype = models.CharField(max_length=256)
-    details = models.CharField(max_length=1024)
-    toc = models.DateTimeField(auto_now=True)
+    def errorlog(self):
+        return SMARTErrorLog.objects.filter(info=self).order_by('id')
+
+    def errorlogsummary(self):
+        return SMARTErrorLogSummary.objects.filter(info=self).order_by('id')
 
 class SMARTTestLog(models.Model):
     disk = models.ForeignKey(Disk)
