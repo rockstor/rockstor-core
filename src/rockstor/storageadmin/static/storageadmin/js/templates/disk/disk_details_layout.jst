@@ -30,17 +30,32 @@
   <li class="active"><a href="#smartidentity" data-toggle="tab">Identity</a></li>
   <li><a href="#smartattributes" data-toggle="tab">Attributes</a></li>
   <li><a href="#smartcapabilities" data-toggle="tab">Capabilities</a></li>
+  <li><a href="#smarterrorlogs" data-toggle="tab">Error Logs</a></li>
 </ul>
 
 <div class="css-panes">
 
   <div id="smartidentity">
-    <div class="tab-section">
-      <div class="row-fluid">
-        <div class="span12">
-          <div id="ph-pool-info"></div>
-        </div>
-      </div>
+    <div class="row-fluid">
+      <% if (smartinfo.get('identity')) { %>
+        <% var identity = smartinfo.get('identity'); %>
+        <strong>Model Family: </strong><%= identity.model_family %><br>
+	<strong>Device Model: </strong><%= identity.device_model %><br>
+	<strong>Serial Number: </strong><%= identity.serial_number %><br>
+	<strong>World Wide Name: </strong><%= identity.world_wide_name %><br>
+	<strong>Firmware Version: </strong><%= identity.firmware_version %><br>
+	<strong>Capacity: </strong><%= identity.capacity %><br>
+	<strong>Sector Size: </strong><%= identity.sector_size %><br>
+	<strong>Rotation Rate: </strong><%= identity.rotation_rate %><br>
+	<strong>In Smartctl Database: </strong><%= identity.in_smartdb %><br>
+	<strong>ATA Version: </strong><%= identity.ata_version %><br>
+	<strong>SATA Version: </strong><%= identity.sata_version %><br>
+	<strong>Scanned on: </strong><%= identity.scanned_on %><br>
+	<strong>SMART Supported: </strong><%= identity.supported %><br>
+	<strong>SMART Enabled: </strong><%= identity.enabled %><br>
+	<strong>Smartctl Version: </strong><%= identity.version %><br>
+	<strong>Overall Health Self-Assessment Test: </strong><%= identity.assessment %>
+      <% } %>
     </div>
   </div>
 
@@ -81,7 +96,64 @@
 	</table>
       </div>
   </div>
-  <div id="poolrebalances">
-    <div id="ph-pool-rebalances"></div>
+
+  <div id="smartcapabilities">
+    <div class="row-fluid">
+      <table id="smartcapabilites-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" summary="Table of S.M.A.R.T capabilities">
+	<thead>
+	  <tr>
+	    <th>Id</th>
+	    <th>Name</th>
+	    <th>Flag</th>
+	    <th>Capabilities</th>
+	  </tr>
+	</thead>
+	<tbody>
+	  <% smartinfo.get('capabilities').forEach(function(capability) { %>
+	    <tr>
+	      <td><%= capability.id %></td>
+	      <td><%= capability.name %></td>
+	      <td><%= capability.flag %></td>
+	      <td><%= capability.capabilities %></td>
+	    </tr>
+	  <% }); %>
+	</tbody>
+      </table>
+    </div>
+  </div>
+  <div id="smarterrorlogs">
+    <div class="row-fluid">
+      <% if (smartinfo.get('errorlogsummary').length == 0) { %>
+        <h3>There are no errors.</h3>
+      <% } else { %>
+        <p><%= smartinfo.get('errorlog')[0].line %></p>
+	<p><%= smartinfo.get('errorlog')[1].line %></p>
+      <table id="smarterrorlogsummary-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" summary="Table to S.M.A.R.T error log summary">
+	<thead>
+	  <tr>
+	    <th>Error #</th>
+	    <th>Lifetime hours</th>
+	    <th>State</th>
+	    <th>Type</th>
+	    <th>Details</th>
+	  </tr>
+	</thead>
+	<tbody>
+	  <% smartinfo.get('errorlogsummary').forEach(function(summary) { %>
+	    <tr>
+	      <td><%= summary.error_num %></td>
+	      <td><%= summary.lifetime_hours %></td>
+	      <td><%= summary.state %></td>
+	      <td><%= summary.etype %></td>
+	      <td><%= summary.details %></td>
+	    </tr>
+	  <% }); %>
+	</tbody>
+      </table>
+      <% smartinfo.get('errorlog').forEach(function(log) { %>
+        <%= log.line %><br>
+      <% }); %>
+      <% } %>
+    </div>
   </div>
 </div>
