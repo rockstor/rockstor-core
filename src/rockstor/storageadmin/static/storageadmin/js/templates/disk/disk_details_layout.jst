@@ -22,7 +22,10 @@
 <div class="messages"></div>
 <!-- page heading -->
 
-<span class="h2"><%= disk.get('name') %></span>
+<div class="pull-right">
+  <button id="smartinfo" class="btn btn-primary" title="Refresh for latest information"><i class="icon-refresh icon-white"></i>Refresh</button>
+</div>
+<span class="h2">S.M.A.R.T details for <strong><%= disk.get('name') %></strong></span>
 <br>
 <br>
 
