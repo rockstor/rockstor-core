@@ -23,7 +23,8 @@ Disk view, for anything at the disk level
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (Disk, SMARTInfo, SMARTAttribute,
-                                 SMARTCapability)
+                                 SMARTCapability, SMARTErrorLog,
+                                 SMARTErrorLogSummary, SMARTIdentity)
 from fs.btrfs import (scan_disks, wipe_disk, blink_disk, enable_quota,
                       btrfs_uuid, pool_usage, mount_root)
 from storageadmin.serializers import SMARTInfoSerializer
@@ -73,10 +74,11 @@ class DiskSMARTView(rfc.GenericView):
         attributes = smart.extended_info(disk.name)
         capabilities = smart.capabilities(disk.name)
         logger.debug('capabilities = %s' % capabilities)
+        e_summary, e_lines = smart.error_logs(disk.name)
+        smartid = smart.info(disk.name)
         ts = datetime.utcnow().replace(tzinfo=utc)
         si = SMARTInfo(disk=disk, toc=ts)
         si.save()
-        sas = []
         for k in attributes:
             t = attributes[k]
             sa = SMARTAttribute(info=si, aid=t[0], name=t[1], flag=t[2],
@@ -84,11 +86,23 @@ class DiskSMARTView(rfc.GenericView):
                                 atype=t[6], updated=t[7], failed=t[8],
                                 raw_value=t[9])
             sa.save()
-            sas.append(sa)
         for c in capabilities:
             t = capabilities[c]
-            sc = SMARTCapability(info=si, name=c, flag=t[0], capabilities=t[1])
-            sc.save()
+            SMARTCapability(info=si, name=c, flag=t[0], capabilities=t[1]).save()
+        for enum in sorted(e_summary.keys(), reverse=True):
+            l = e_summary[enum]
+            SMARTErrorLogSummary(info=si, error_num=enum, lifetime_hours=l[0],
+                                 state=l[1], etype=l[2], details=l[3]).save()
+        for l in e_lines:
+            SMARTErrorLog(info=si, line=l).save()
+        SMARTIdentity(info=si, model_family=smartid[0], device_model=smartid[1],
+                      serial_number=smartid[2], world_wide_name=smartid[3],
+                      firmware_version=smartid[4], capacity=smartid[5],
+                      sector_size=smartid[6], rotation_rate=smartid[7],
+                      in_smartdb=smartid[8], ata_version=smartid[9],
+                      sata_version=smartid[10], scanned_on=smartid[11],
+                      supported=smartid[12], enabled=smartid[13],
+                      version=smartid[14], assessment=smartid[15]).save()
         return Response(SMARTInfoSerializer(si).data)
 
     def post(self, request, dname, command):

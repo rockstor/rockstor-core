@@ -27,7 +27,7 @@ from storageadmin.models import (Disk, Pool, Share, Snapshot, NFSExport,
                                  TLSCertificate, RockOn, DVolume, DPort,
                                  DCustomConfig, SMARTAttribute,
                                  SMARTCapability, SMARTInfo, SMARTErrorLog,
-                                 SMARTErrorLogSummary)
+                                 SMARTErrorLogSummary, SMARTIdentity)
 from django.contrib.auth.models import User as DjangoUser
 
 
@@ -248,11 +248,17 @@ class SMARTErrorLogSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = SMARTErrorLogSummary
 
+class SMARTIdentitySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = SMARTIdentity
+
 class SMARTInfoSerializer(serializers.ModelSerializer):
     capabilities = SMARTCapabilitySerializer(source='capabilities')
     attributes = SMARTAttributeSerializer(source='attributes')
     errorlog = SMARTErrorLogSerializer(source='errorlog')
     errorlogsummary = SMARTErrorLogSummarySerializer(source='errorlogsummary')
+    identity = SMARTIdentitySerializer(source='identity')
 
     class Meta:
         model = SMARTInfo
