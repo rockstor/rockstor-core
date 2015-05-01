@@ -1,0 +1,346 @@
+[
+{
+    "pk": 1, 
+    "model": "storageadmin.pool", 
+    "fields": {
+        "raid": "single", 
+        "compression": null, 
+        "uuid": "b71dd067-abd9-48ca-8e48-67c7c5cb17de", 
+        "name": "rockstor_rockstor", 
+        "mnt_options": null, 
+        "toc": "2015-04-11T00:31:29.550Z", 
+        "size": 8924160
+    }
+},
+{
+    "pk": 1, 
+    "model": "storageadmin.disk", 
+    "fields": {
+        "parted": false, 
+        "btrfs_uuid": "b71dd067-abd9-48ca-8e48-67c7c5cb17de", 
+        "vendor": null, 
+        "name": "sda3", 
+        "transport": null, 
+        "serial": "VBb419f409-272c21e5", 
+        "offline": false, 
+        "model": null, 
+        "pool": 1, 
+        "size": 8912896
+    }
+},
+{
+    "pk": 2, 
+    "model": "storageadmin.disk", 
+    "fields": {
+        "parted": false, 
+        "btrfs_uuid": null, 
+        "vendor": "ATA", 
+        "name": "sdd", 
+        "transport": "sata", 
+        "serial": "VB67bfc575-ab18a890", 
+        "offline": false, 
+        "model": "VBOX HARDDISK", 
+        "pool": null, 
+        "size": 2097152
+    }
+},
+{
+    "pk": 3, 
+    "model": "storageadmin.disk", 
+    "fields": {
+        "parted": false, 
+        "btrfs_uuid": null, 
+        "vendor": "ATA", 
+        "name": "sde", 
+        "transport": "sata", 
+        "serial": "VB0eafe163-da86c231", 
+        "offline": false, 
+        "model": "VBOX HARDDISK", 
+        "pool": null, 
+        "size": 2097152
+    }
+},
+{
+    "pk": 4, 
+    "model": "storageadmin.disk", 
+    "fields": {
+        "parted": false, 
+        "btrfs_uuid": null, 
+        "vendor": "ATA", 
+        "name": "sdf", 
+        "transport": "sata", 
+        "serial": "VBd248f2c3-17bc5c15", 
+        "offline": false, 
+        "model": "VBOX HARDDISK", 
+        "pool": null, 
+        "size": 2097152
+    }
+},
+{
+    "pk": 5, 
+    "model": "storageadmin.disk", 
+    "fields": {
+        "parted": false, 
+        "btrfs_uuid": null, 
+        "vendor": "ATA", 
+        "name": "sdg", 
+        "transport": "sata", 
+        "serial": "VB7df78814-ce80a66a", 
+        "offline": false, 
+        "model": "VBOX HARDDISK", 
+        "pool": null, 
+        "size": 2097152
+    }
+},
+{
+    "pk": 6, 
+    "model": "storageadmin.disk", 
+    "fields": {
+        "parted": false, 
+        "btrfs_uuid": null, 
+        "vendor": "ATA", 
+        "name": "sdb", 
+        "transport": "sata", 
+        "serial": "VB54c02a3e-20f3e60d", 
+        "offline": false, 
+        "model": "VBOX HARDDISK", 
+        "pool": null, 
+        "size": 2097152
+    }
+},
+{
+    "pk": 7, 
+    "model": "storageadmin.disk", 
+    "fields": {
+        "parted": false, 
+        "btrfs_uuid": null, 
+        "vendor": "ATA", 
+        "name": "sdc", 
+        "transport": "sata", 
+        "serial": "VB7e3f80a2-4e8f1895", 
+        "offline": false, 
+        "model": "VBOX HARDDISK", 
+        "pool": null, 
+        "size": 2097152
+    }
+},
+{
+    "pk": 8, 
+    "model": "storageadmin.disk", 
+    "fields": {
+        "parted": false, 
+        "btrfs_uuid": null, 
+        "vendor": "ATA", 
+        "name": "sdh", 
+        "transport": "sata", 
+        "serial": "VB13c0af5e-a6cae993", 
+        "offline": false, 
+        "model": "VBOX HARDDISK", 
+        "pool": null, 
+        "size": 2097152
+    }
+},
+{
+    "pk": 1, 
+    "model": "storageadmin.appliance", 
+    "fields": {
+        "current_appliance": true, 
+        "uuid": "00000000-49b47174-a706-408b-9705-67d7837957fc", 
+        "mgmt_port": 443, 
+        "ip": "10.0.3.15", 
+        "hostname": "samstor", 
+        "client_id": null, 
+        "client_secret": null
+    }
+},
+{
+    "pk": 1, 
+    "model": "storageadmin.networkinterface", 
+    "fields": {
+        "domain": null, 
+        "dns_servers": null, 
+        "itype": "io", 
+        "name": "enp0s3", 
+        "boot_proto": "dhcp", 
+        "ipaddr": "192.168.56.101", 
+        "netmask": null, 
+        "gateway": null, 
+        "alias": "enp0s3", 
+        "mac": "08:00:27:60:02:fe", 
+        "onboot": "yes", 
+        "network": null
+    }
+},
+{
+    "pk": 2, 
+    "model": "storageadmin.networkinterface", 
+    "fields": {
+        "domain": null, 
+        "dns_servers": null, 
+        "itype": "management", 
+        "name": "enp0s8", 
+        "boot_proto": "dhcp", 
+        "ipaddr": "10.0.3.15", 
+        "netmask": null, 
+        "gateway": null, 
+        "alias": "enp0s8", 
+        "mac": "08:00:27:78:87:a1", 
+        "onboot": "yes", 
+        "network": null
+    }
+},
+{
+    "pk": 1, 
+    "model": "storageadmin.group", 
+    "fields": {
+        "admin": true, 
+        "groupname": "admin", 
+        "gid": 1000
+    }
+},
+{
+    "pk": 1, 
+    "model": "storageadmin.setup", 
+    "fields": {
+        "setup_network": false, 
+        "setup_user": true, 
+        "setup_disks": false, 
+        "setup_system": false
+    }
+},
+{
+    "pk": 1, 
+    "model": "storageadmin.plugin", 
+    "fields": {
+        "display_name": "Backup", 
+        "css_file_name": "backup", 
+        "description": "Backup Server functionality", 
+        "js_file_name": "backup", 
+        "key": "", 
+        "name": "backup"
+    }
+},
+{
+    "pk": 1, 
+    "model": "storageadmin.oauthapp", 
+    "fields": {
+        "application": 1, 
+        "name": "cliapp", 
+        "user": 1
+    }
+},
+{
+    "pk": 1, 
+    "model": "auth.user", 
+    "fields": {
+        "username": "admin", 
+        "first_name": "", 
+        "last_name": "", 
+        "is_active": true, 
+        "is_superuser": false, 
+        "is_staff": false, 
+        "last_login": "2015-04-14T22:52:29.150Z", 
+        "groups": [], 
+        "user_permissions": [], 
+        "password": "pbkdf2_sha256$12000$SASVGnn5cODt$lNTuxr3oplfien8/o+DVAe0zyEU3qOahTJHBfXZOqjM=", 
+        "email": "", 
+        "date_joined": "2015-04-11T00:31:26.386Z"
+    }
+},
+{
+    "pk": 1, 
+    "model": "oauth2_provider.application", 
+    "fields": {
+        "redirect_uris": "", 
+        "name": "cliapp", 
+        "client_type": "confidential", 
+        "user": [
+            "admin"
+        ], 
+        "client_id": "6Lv79UfY7_0iCV@XX_rU492nd79XVNkCbc?7C@aQ", 
+        "client_secret": "n2vA@Wi-at7-p-@.44GHIV;uIS_i_wHDo!BuQpkuZqvBo?9qbOY_H4BtADsyhG!ipZ0aOt21R7_JqQ=yCmhQf84XUaRBNiNh8ox4HT40z:31f0aQPnGcB5lQor3BN5..", 
+        "authorization_grant_type": "client-credentials"
+    }
+},
+{
+    "pk": 1, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "HdMCCfEbFuoe26A5p7hWbdbkzkrjaO", 
+        "expires": "2015-04-15T08:28:58.811Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 2, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "1P7uBlbu5862mrqNtnjBI0RO1ylZCl", 
+        "expires": "2015-04-15T08:29:10.392Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 3, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "fKvXXMs2AOzcDw6YS9tGTB25NtYSP8", 
+        "expires": "2015-04-15T08:52:07.506Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 4, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "KLmAS7189YeIc5rDglwgZmHdsFVkeu", 
+        "expires": "2015-04-15T08:52:19.013Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 1, 
+    "model": "storageadmin.user", 
+    "fields": {
+        "username": "admin", 
+        "public_key": null, 
+        "shell": "/bin/bash", 
+        "group": 1, 
+        "uid": 1000, 
+        "admin": true, 
+        "gid": 1000, 
+        "user": [
+            "admin"
+        ], 
+        "smb_shares": [], 
+        "email": null, 
+        "homedir": "/home/admin"
+    }
+},
+{
+    "pk": 1, 
+    "model": "storageadmin.dashboardconfig", 
+    "fields": {
+        "widgets": "[]", 
+        "user": [
+            "admin"
+        ]
+    }
+}
+]

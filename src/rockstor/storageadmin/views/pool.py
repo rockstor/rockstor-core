@@ -157,11 +157,15 @@ class PoolView(rfc.GenericView):
                              % d.name)
                     handle_exception(Exception(e_msg), request)
 
+            #raid level checks
             raid_level = request.DATA['raid_level']
             if (raid_level not in self.RAID_LEVELS):
                 e_msg = ('Unsupported raid level. use one of: %s' %
                          self.RAID_LEVELS)
                 handle_exception(Exception(e_msg), request)
+            # todo can we consolidate these checks(and tests)? raid0 and raid1 both need > 1 disk
+            # if ((raid_level == self.RAID_LEVELS[1] and len(disks) < 2) or
+            # (raid_level == self.RAID_LEVELS[2] and len(disks) < 2)):
             if (raid_level == self.RAID_LEVELS[1] and len(disks) == 1):
                 e_msg = ('More than one disk is required for the raid '
                          'level: %s' % raid_level)
@@ -198,6 +202,10 @@ class PoolView(rfc.GenericView):
             p.uuid = btrfs_uuid(dnames[0])
             p.disk_set.add(*disks)
             p.save()
+            # added for loop to save disks. appears p.disk_set.add(*disks) was not saving disks in test environment
+            for d in disks:
+                d.pool = p
+                d.save()
             return Response(PoolInfoSerializer(p).data)
 
     def _validate_disk(self, d, request):
@@ -288,6 +296,8 @@ class PoolView(rfc.GenericView):
 
             disks = [self._validate_disk(d, request) for d in
                      request.DATA.get('disks')]
+            #for d in request.DATA.get('disks'):
+            #    disks.append(self._validate(d, request))
             num_new_disks = len(disks)
             if (num_new_disks == 0):
                 e_msg = ('List of disks in the input cannot be empty.')
@@ -298,7 +308,7 @@ class PoolView(rfc.GenericView):
             num_total_disks = (Disk.objects.filter(pool=pool).count() +
                                num_new_disks)
             usage = pool_usage('/%s/%s' % (settings.MNT_PT, pool.name))
-            free_percent = (usage[2]/usage[0]) * 100
+            free_percent = (usage[2]* 100)/usage[0]
             threshold_percent = self.ADD_THRESHOLD * 100
             if (command == 'add'):
                 for d in disks:
@@ -352,7 +362,6 @@ class PoolView(rfc.GenericView):
                                      'required.' % (num_new_disks,
                                                     cur_num_disks))
                             handle_exception(Exception(e_msg), request)
-
                 resize_pool(pool, mount_disk, dnames)
                 balance_pid = balance_start(pool, mount_disk, convert=new_raid)
                 ps = PoolBalance(pool=pool, pid=balance_pid)
@@ -449,6 +458,8 @@ class PoolView(rfc.GenericView):
                          'all shares in the pool are deleted' % (pname))
                 handle_exception(Exception(e_msg), request)
             pool_path = ('%s%s' % (settings.MNT_PT, pname))
+            # print "delete:"
+            # print pool_path
             umount_root(pool_path)
             pool.delete()
             return Response()

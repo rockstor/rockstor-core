@@ -63,6 +63,7 @@ setup(
         'django-oauth-toolkit == 0.7.0',
         'six == 1.7.3',
         'django-ztask == 0.1.5',
+        'mock == 1.0.1',
     ]
 
 )
