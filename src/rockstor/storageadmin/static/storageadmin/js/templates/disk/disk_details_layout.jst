@@ -39,26 +39,83 @@
     <div class="row-fluid">
       <% if (smartinfo.get('identity')) { %>
         <% var identity = smartinfo.get('identity'); %>
-        <strong>Model Family: </strong><%= identity.model_family %><br>
-	<strong>Device Model: </strong><%= identity.device_model %><br>
-	<strong>Serial Number: </strong><%= identity.serial_number %><br>
-	<strong>World Wide Name: </strong><%= identity.world_wide_name %><br>
-	<strong>Firmware Version: </strong><%= identity.firmware_version %><br>
-	<strong>Capacity: </strong><%= identity.capacity %><br>
-	<strong>Sector Size: </strong><%= identity.sector_size %><br>
-	<strong>Rotation Rate: </strong><%= identity.rotation_rate %><br>
-	<strong>In Smartctl Database: </strong><%= identity.in_smartdb %><br>
-	<strong>ATA Version: </strong><%= identity.ata_version %><br>
-	<strong>SATA Version: </strong><%= identity.sata_version %><br>
-	<strong>Scanned on: </strong><%= identity.scanned_on %><br>
-	<strong>SMART Supported: </strong><%= identity.supported %><br>
-	<strong>SMART Enabled: </strong><%= identity.enabled %><br>
-	<strong>Smartctl Version: </strong><%= identity.version %><br>
-	<strong>Overall Health Self-Assessment Test: </strong><%= identity.assessment %>
+	<table id="smartidentity-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" summary="List of S.M.A.R.T identity attributes">
+      <thead>
+	<tr>
+	  <th>Attribute</th>
+	  <th>Value</th>
+	</tr>
+      </thead>
+      <tbody>
+	<tr>
+	  <td><strong>Model Family</strong></td>
+	  <td><%= identity.model_family %></td>
+	</tr>
+	<tr>
+	  <td><strong>Device Model</strong></td>
+	  <td><%= identity.device_model %></td>
+	</tr>
+	<tr>
+	  <td><strong>Serial Number</strong></td>
+	  <td><%= identity.serial_number %></td>
+	</tr>
+	<tr>
+	  <td><strong>World Wide Name</strong></td>
+	  <td><%= identity.world_wide_name %></td>
+	</tr>
+	<tr>
+	  <td><strong>Firmware Version</strong></td>
+	  <td><%= identity.firmware_version %></td>
+	</tr>
+	<tr>
+	  <td><strong>Capacity</strong></td>
+	  <td><%= identity.capacity %></td>
+	</tr>
+	<tr>
+	  <td><strong>Sector Size</strong></td>
+	  <td><%= identity.sector_size %></td>
+	</tr>
+	<tr>
+	  <td><strong>Rotation Rate</strong></td>
+	  <td><%= identity.rotation_rate %></td>
+	</tr>
+	<tr>
+	  <td><strong>In Smartctl Database</strong></td>
+	  <td><%= identity.in_smartdb %></td>
+	</tr>
+	<tr>
+	  <td><strong>ATA Version</strong></td>
+	  <td><%= identity.ata_version %></td>
+	</tr>
+	<tr>
+	  <td><strong>SATA Version</strong></td>
+	  <td><%= identity.sata_version %></td>
+	</tr>
+	<tr>
+	  <td><strong>Scanned on</strong></td>
+	  <td><%= identity.scanned_on %></td>
+	</tr>
+	<tr>
+	  <td><strong>SMART Supported</strong></td>
+	  <td><%= identity.supported %></td>
+	</tr>
+	<tr>
+	  <td><strong>SMART Enabled</strong></td>
+	  <td><%= identity.enabled %></td>
+	</tr>
+	<tr>
+	  <td><strong>Smartctl Version</strong></td>
+	  <td><%= identity.version %></td>
+	</tr>
+	<tr>
+	  <td><strong>Overall Health Self-Assessment Test</strong></td>
+	  <td><%= identity.assessment %></td>
+	</tr>
+      </tbody>
+      </table>
       <% } %>
     </div>
   </div>
-
 
   <div id="smartattributes">
       <div class="row-fluid">
