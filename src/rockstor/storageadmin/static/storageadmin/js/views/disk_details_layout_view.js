@@ -37,6 +37,10 @@ DiskDetailsLayoutView = RockstorLayoutView.extend({
 	this.dependencies.push(this.smartinfo);
     },
 
+    events: {
+	'click #smartinfo': 'refreshInfo'
+    },
+
     render: function() {
 	this.fetch(this.renderSubViews, this);
 	return this;
@@ -46,5 +50,23 @@ DiskDetailsLayoutView = RockstorLayoutView.extend({
 	console.log('smartinfo', this.smartinfo);
 	$(this.el).html(this.template({disk: this.disk, smartinfo: this.smartinfo}));
 	this.$("ul.css-tabs").tabs("div.css-panes > div");
+    },
+
+    refreshInfo: function(event) {
+	var _this = this;
+	var button = $(event.currentTarget);
+	if (buttonDisabled(button)) return false;
+	disableButton(button);
+	console.log('refreshing');
+	$.ajax({
+	    url: '/api/disks/smart/info/' + _this.diskName,
+	    type: 'POST',
+	    success: function(data, status, xhr) {
+		_this.render();
+	    },
+	    error: function(xhr, status, error) {
+		enableButton(button);
+	    }
+	});
     }
 });
