@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf.urls import patterns, url
-from smart_manager.views import (BaseServiceView, NISServiceView,
+from smart_manager.views import (NISServiceView,
                                  SambaServiceView, NFSServiceView,
                                  NTPServiceView, WinbindServiceView,
                                  LdapServiceView, SFTPServiceView,
@@ -26,12 +26,12 @@ from smart_manager.views import (BaseServiceView, NISServiceView,
                                  DataCollectorServiceView, ServiceMonitorView,
                                  AFPServiceView, SNMPServiceView,
                                  DockerServiceView)
-
+from smart_manager.views.base_list_service import BaseServiceListView
 command_regex = ('config|start|stop')
 
 urlpatterns = patterns('',
     # Services
-    url(r'^$', BaseServiceView.as_view()),
+    url(r'^$', BaseServiceListView.as_view()),
     url(r'^netatalk$', AFPServiceView.as_view()),
     url(r'^netatalk/(?P<command>%s)$' % command_regex,
         AFPServiceView.as_view()),
