@@ -43,7 +43,7 @@ class ReplicaShareDetailView(rfc.GenericView):
             serialized_data = ReplicaShareSerializer(data)
             return Response(serialized_data.data)
         except:
-            return Response({})
+            return Response()
 
 
 class ReplicaTrailDetailView(rfc.GenericView):
@@ -54,7 +54,7 @@ class ReplicaTrailDetailView(rfc.GenericView):
             try:
                 return ReplicaTrail.objects.get(id=self.kwargs['rtid'])
             except:
-                return Response({})
+                return Response()
 
 
 class ReplicaDetailView(rfc.GenericView):
@@ -67,26 +67,20 @@ class ReplicaDetailView(rfc.GenericView):
                 serialized_data = ReplicaSerializer(data)
                 return Response(serialized_data.data)
             except:
-                return Response({})
+                return Response()
         elif ('rid' in self.kwargs):
             try:
                 data = Replica.objects.get(id=self.kwargs['rid'])
                 serialized_data = ReplicaSerializer(data)
                 return Response(serialized_data.data)
             except:
-                return Response({})
+                return Response()
 
 
 class ReceiveTrailDetailView(rfc.GenericView):
     serializer_class = ReceiveTrailSerializer
 
-    def get(self, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         if ('rtid' in self.kwargs):
-            try:
+            with self._handle_exception(request):
                 return ReceiveTrail.objects.get(id=self.kwargs['rtid'])
-            except:
-                return []
-
-        if ('rid' in self.kwargs):
-            replica = ReplicaShare.objects.get(id=self.kwargs['rid'])
-            return ReceiveTrail.objects.filter(rshare=replica).order_by('-id')

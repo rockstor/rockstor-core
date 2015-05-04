@@ -29,13 +29,6 @@ class ReceiveTrailView(rfc.GenericView):
     serializer_class = ReceiveTrailSerializer
 
     def get_queryset(self, *args, **kwargs):
-        if ('rtid' in kwargs):
-            self.pagninate_by = 0
-            try:
-                return ReceiveTrail.objects.get(id=kwargs['rtid'])
-            except:
-                return []
-
         if ('rid' in kwargs):
             replica = ReplicaShare.objects.get(id=kwargs['rid'])
             return ReceiveTrail.objects.filter(rshare=replica).order_by('-id')

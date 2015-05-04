@@ -46,6 +46,7 @@ class ReplicaView(rfc.GenericView):
                 enabled = False
             if (enabled is not None):
                 return Replica.objects.filter(enabled=enabled)
+
         return Replica.objects.filter().order_by('-id')
 
     @transaction.commit_on_success
