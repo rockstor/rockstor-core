@@ -72,9 +72,52 @@ class PoolTests(APITestCase):
     #     response = self.client.get(self.BASE_URL)
     #     self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_name_regex(self):
+        """
+        Pool name must start with a alphanumeric(a-z0-9) ' 'character and can be
+        followed by any of the ' 'following characters: letter(a-z),
+        digits(0-9), ' 'hyphen(-), underscore(_) or a period(.).'
+        1. Test a few valid regexes (eg: pool1, Mypool, 123, etc..)
+        2. Test a few invalid regexes (eg: -pool1, .pool etc..)
+        """
+        self.asertEqual(1, 2)
+
+    def test_compression(self):
+        """
+        Compression is agnostic to name, raid and number of disks. So no need to
+        test it with different types of pools.
+        1. Create a pool with zlib compression
+        2. Create a pool with lzo compression
+        3. disable zlib, enable zlib
+        4. disable lzo, enable lzo
+        """
+        self.assertEqual(1, 2)
+
+    def test_mount_options(self):
+        """
+        Mount options are agnostic to other parameters as in compression.
+        1. test an invalid option (see allowed_options in the pool.py(view))
+        2. test all valid options
+        3. test compress-force option
+        """
+        self.assertEqual(1, 2)
+
+    def test_single_crud(self):
+
+        """
+        test pool crud ops with 'single' raid config. single can be used to create a pool
+        with any number of drives.
+        1. create a pool with 0 disks
+        2. create a pool with 1 disk
+        3. create a pool with 2 disks
+        """
+        self.assertEqueal(1, 2)
+
     def test_pool_raid0_crud(self):
         """
         raid0 post, put & delete api requests
+        1. Add a pool with a single disk.
+        2.
         """
         data = {'disks': ('sdb',),
                 'pname': 'raid0pool',
