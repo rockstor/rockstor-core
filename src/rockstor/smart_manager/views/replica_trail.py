@@ -29,17 +29,10 @@ class ReplicaTrailView(rfc.GenericView):
     serializer_class = ReplicaTrailSerializer
 
     def get_queryset(self, *args, **kwargs):
-        if ('rtid' in kwargs):
-            self.pagninate_by = 0
-            try:
-                return ReplicaTrail.objects.get(id=kwargs['rtid'])
-            except:
-                return []
-
-        if ('rid' in kwargs):
-            replica = Replica.objects.get(id=kwargs['rid'])
-            if ('limit' in self.request.QUERY_PARAMS):
-                limit = int(self.request.QUERY_PARAMS.get('limit', 2))
+        if ('rid' in self.kwargs):
+            replica = Replica.objects.get(id=self.kwargs['rid'])
+            if ('limit' in self.request.query_params):
+                limit = int(self.request.query_params.get('limit', 2))
                 return ReplicaTrail.objects.filter(
                     replica=replica).order_by('-id')[0:limit]
             return ReplicaTrail.objects.filter(replica=replica).order_by('-id')

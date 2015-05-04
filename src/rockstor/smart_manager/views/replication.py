@@ -37,15 +37,7 @@ class ReplicaView(rfc.GenericView):
     serializer_class = ReplicaSerializer
 
     def get_queryset(self, *args, **kwargs):
-        if ('sname' in kwargs):
-            return Replica.objects.filter(share=kwargs['sname'])
-        if ('rid' in kwargs):
-            self.paginate_by = 0
-            try:
-                return Replica.objects.get(id=kwargs['rid'])
-            except:
-                return []
-        status = self.request.QUERY_PARAMS.get('status', None)
+        status = self.request.query_params.get('status', None)
         if (status is not None):
             enabled = None
             if (status == 'enabled'):

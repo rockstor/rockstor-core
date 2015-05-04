@@ -35,15 +35,6 @@ class ReplicaShareView(rfc.GenericView):
     serializer_class = ReplicaShareSerializer
 
     def get_queryset(self, *args, **kwargs):
-        if ('sname' in kwargs or 'rid' in kwargs):
-            self.paginate_by = 0
-            try:
-                if ('sname' in kwargs):
-                    return ReplicaShare.objects.get(share=kwargs['sname'])
-                return ReplicaShare.objects.get(id=kwargs['rid'])
-            except:
-                return []
-
         return ReplicaShare.objects.filter().order_by('-id')
 
     @transaction.commit_on_success
