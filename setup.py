@@ -64,6 +64,7 @@ setup(
         'six == 1.7.3',
         'django-ztask == 0.1.5',
         'mock == 1.0.1',
+        'coverage'
     ]
 
 )
