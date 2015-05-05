@@ -24,7 +24,8 @@ from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (Disk, SMARTInfo, SMARTAttribute,
                                  SMARTCapability, SMARTErrorLog,
-                                 SMARTErrorLogSummary, SMARTIdentity)
+                                 SMARTErrorLogSummary, SMARTTestLog,
+                                 SMARTTestLogDetail, SMARTIdentity)
 from fs.btrfs import (scan_disks, wipe_disk, blink_disk, enable_quota,
                       btrfs_uuid, pool_usage, mount_root)
 from storageadmin.serializers import SMARTInfoSerializer
@@ -76,6 +77,7 @@ class DiskSMARTView(rfc.GenericView):
         logger.debug('capabilities = %s' % capabilities)
         e_summary, e_lines = smart.error_logs(disk.name)
         smartid = smart.info(disk.name)
+        test_d, log_lines = smart.test_logs(disk.name)
         ts = datetime.utcnow().replace(tzinfo=utc)
         si = SMARTInfo(disk=disk, toc=ts)
         si.save()
@@ -95,6 +97,14 @@ class DiskSMARTView(rfc.GenericView):
                                  state=l[1], etype=l[2], details=l[3]).save()
         for l in e_lines:
             SMARTErrorLog(info=si, line=l).save()
+        for tnum in sorted(test_d.keys()):
+            t = test_d[tnum]
+            SMARTTestLog(info=si, test_num=tnum, description=t[0], status=t[1],
+                         pct_completed=t[2], lifetime_hours=t[3],
+                         lba_of_first_error=t[4]).save()
+        for l in log_lines:
+            SMARTTestLogDetail(info=si, line=l).save()
+
         SMARTIdentity(info=si, model_family=smartid[0], device_model=smartid[1],
                       serial_number=smartid[2], world_wide_name=smartid[3],
                       firmware_version=smartid[4], capacity=smartid[5],
@@ -110,6 +120,9 @@ class DiskSMARTView(rfc.GenericView):
             disk = self._validate_disk(dname, request)
             if (command == 'info'):
                 return self._info(disk)
+            elif (command == 'test'):
+                return self._run_test(disk)
+
             e_msg = ('Unknown command: %s. Only valid commands are scan, '
                      'wipe' % command)
             handle_exception(Exception(e_msg), request)

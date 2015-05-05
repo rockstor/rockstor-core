@@ -62,6 +62,25 @@ class SMARTErrorLogSummary(models.Model):
     class Meta:
         app_label = 'storageadmin'
 
+class SMARTTestLog(models.Model):
+    info = models.ForeignKey('SMARTInfo')
+    test_num = models.IntegerField()
+    description = models.CharField(max_length=64)
+    status = models.CharField(max_length=256)
+    pct_completed = models.IntegerField()
+    lifetime_hours = models.IntegerField()
+    lba_of_first_error = models.CharField(max_length=1024)
+
+    class Meta:
+        app_label = 'storageadmin'
+
+class SMARTTestLogDetail(models.Model):
+    info = models.ForeignKey('SMARTInfo')
+    line = models.CharField(max_length=128)
+
+    class Meta:
+        app_label = 'storageadmin'
+
 class SMARTIdentity(models.Model):
     info = models.ForeignKey('SMARTInfo')
     CHOICES = [
@@ -125,11 +144,8 @@ class SMARTInfo(models.Model):
             return SMARTIdentity.objects.get(info=self)
         return None
 
-class SMARTTestLog(models.Model):
-    disk = models.ForeignKey(Disk)
-    test_num = models.IntegerField()
-    ttype = models.CharField(max_length=64)
-    status = models.CharField(max_length=256)
-    pct_completed = models.IntegerField()
-    lifetime_hours = models.IntegerField()
-    lba_of_first_error = models.CharField(max_length=1024)
+    def testlog(self):
+        return SMARTTestLog.objects.filter(info=self).order_by('id')
+
+    def testlogdetail(self):
+        return SMARTTestLogDetail.objects.filter(info=self).order_by('id')
