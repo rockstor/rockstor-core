@@ -25,7 +25,7 @@ from base_service import BaseServiceView
 from contextlib import contextmanager
 from storageadmin.exceptions import RockStorAPIException
 import os
-from system.snmp import configure_snmp
+from system import smart
 from smart_manager.models import Service
 
 
@@ -51,10 +51,15 @@ class SMARTDServiceView(BaseServiceView):
             if (command == 'config'):
                 service = Service.objects.get(name=self.service_name)
                 config = request.DATA.get('config', {})
-                if (type(config) != dict):
-                    e_msg = ('config dictionary is required input')
-                    handle_exception(Exception(e_msg), request)
+                logger.debug('config = %s' % config)
                 self._save_config(service, config)
+                if ('smartd_config' in config):
+                    config = config['smartd_config']
+                else:
+                    config = ''
+                smart.update_config(config)
+                systemctl(self.service_name, 'enable')
+                systemctl(self.service_name, 'restart')
             else:
                 self._switch(command)
         return Response()
