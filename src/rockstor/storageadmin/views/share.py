@@ -131,8 +131,8 @@ class ShareView(rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
 
             replica = False
-            if ('replica' in request.DATA):
-                replica = request.DATA['replica']
+            if ('replica' in request.data):
+                replica = request.data['replica']
                 if (type(replica) != bool):
                     e_msg = ('replica must be a boolean, not %s' %
                              type(replica))

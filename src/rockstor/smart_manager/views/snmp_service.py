@@ -59,7 +59,7 @@ class SNMPServiceView(BaseServiceView):
                 install_pkg('net-snmp')
             if (command == 'config'):
                 service = Service.objects.get(name=self.service_name)
-                config = request.DATA.get('config', {})
+                config = request.data.get('config', {})
                 if (type(config) != dict):
                     e_msg = ('config dictionary is required input')
                     handle_exception(Exception(e_msg), request)

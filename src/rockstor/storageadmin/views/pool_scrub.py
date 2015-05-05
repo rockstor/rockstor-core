@@ -74,7 +74,7 @@ class PoolScrubView(rfc.GenericView):
             ps = self._scrub_status(pool, disk)
             if (command == 'status'):
                 return Response(PoolScrubSerializer(ps).data)
-            force = request.DATA.get('force', False)
+            force = request.data.get('force', False)
             if ((PoolScrub.objects.filter(pool=pool,
                                           status__regex=r'(started|running)')
                  .exists())):

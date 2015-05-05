@@ -87,19 +87,19 @@ def parse_options(request):
         'mount_security': 'insecure',
         'admin_host': None,
         }
-    if ('host_str' in request.DATA):
-        options['host_str'] = request.DATA['host_str']
-    if ('mod_choice' in request.DATA and
-        (request.DATA['mod_choice'] == 'ro' or
-         request.DATA['mod_choice'] == 'rw')):
-        options['editable'] = request.DATA['mod_choice']
-    if ('sync_choice' in request.DATA and
-        (request.DATA['sync_choice'] == 'sync' or
-         request.DATA['sync_choice'] == 'async')):
-        options['syncable'] = request.DATA['sync_choice']
-    if ('admin_host' in request.DATA and
-        len(request.DATA['admin_host']) > 0):
-        options['admin_host'] = request.DATA['admin_host']
+    if ('host_str' in request.data):
+        options['host_str'] = request.data['host_str']
+    if ('mod_choice' in request.data and
+        (request.data['mod_choice'] == 'ro' or
+         request.data['mod_choice'] == 'rw')):
+        options['editable'] = request.data['mod_choice']
+    if ('sync_choice' in request.data and
+        (request.data['sync_choice'] == 'sync' or
+         request.data['sync_choice'] == 'async')):
+        options['syncable'] = request.data['sync_choice']
+    if ('admin_host' in request.data and
+        len(request.data['admin_host']) > 0):
+        options['admin_host'] = request.data['admin_host']
     return options
 
 

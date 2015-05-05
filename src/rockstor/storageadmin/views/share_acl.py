@@ -44,12 +44,12 @@ class ShareACLView(ShareView):
                 'orecursive': True,
                 'precursive': True,
                 }
-            options['owner'] = request.DATA.get('owner', options['owner'])
-            options['group'] = request.DATA.get('group', options['group'])
-            options['perms'] = request.DATA.get('perms', options['perms'])
-            options['orecursive'] = request.DATA.get('orecursive',
+            options['owner'] = request.data.get('owner', options['owner'])
+            options['group'] = request.data.get('group', options['group'])
+            options['perms'] = request.data.get('perms', options['perms'])
+            options['orecursive'] = request.data.get('orecursive',
                                                      options['orecursive'])
-            options['precursive'] = request.DATA.get('precursive',
+            options['precursive'] = request.data.get('precursive',
                                                      options['precursive'])
             share.owner = options['owner']
             share.group = options['group']

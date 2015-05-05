@@ -60,7 +60,7 @@ class ShareCommandView(rfc.GenericView):
 
     def _validate_snapshot(self, request, share):
         try:
-            snap_name = request.DATA.get('name', '')
+            snap_name = request.data.get('name', '')
             return Snapshot.objects.get(share=share, name=snap_name)
         except:
             e_msg = ('Snapshot(%s) does not exist for this Share(%s)' %
@@ -73,7 +73,7 @@ class ShareCommandView(rfc.GenericView):
             share = self._validate_share(request, sname)
 
             if (command == 'clone'):
-                new_name = request.DATA.get('name', '')
+                new_name = request.data.get('name', '')
                 return create_clone(share, new_name, request, logger)
 
             if (command == 'rollback'):
@@ -101,7 +101,7 @@ class ShareCommandView(rfc.GenericView):
                 return Response()
 
             if (command == 'compress'):
-                algo = request.DATA.get('compress', None)
+                algo = request.data.get('compress', None)
                 if (algo is None):
                     e_msg = ('Compression algorithm must be specified. Valid '
                              'options are: %s' % settings.COMPRESSION_TYPES)

@@ -68,7 +68,7 @@ class PoolBalanceView(rfc.GenericView):
             ps = self._balance_status(pool, disk)
             if (command == 'status'):
                 return Response(PoolBalanceSerializer(ps).data)
-            force = request.DATA.get('force', False)
+            force = request.data.get('force', False)
             if ((PoolBalance.objects.filter(pool=pool,
                                             status__regex=r'(started|running)')
                  .exists())):

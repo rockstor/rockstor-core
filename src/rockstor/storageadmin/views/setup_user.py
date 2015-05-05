@@ -39,8 +39,8 @@ class SetupUserView(UserView):
         res = super(SetupUserView, self).post(request)
         # Create cliapp id and secret for oauth
         name = 'cliapp'
-        user = User.objects.get(username=request.DATA['username'])
-        duser = DjangoUser.objects.get(username=request.DATA['username'])
+        user = User.objects.get(username=request.data['username'])
+        duser = DjangoUser.objects.get(username=request.data['username'])
         client_type = OauthApplication.CLIENT_CONFIDENTIAL
         auth_grant_type = OauthApplication.GRANT_CLIENT_CREDENTIALS
         app = OauthApplication(name=name, client_type=client_type,

@@ -60,7 +60,7 @@ class PoolView(rfc.GenericView):
         return Pool.objects.all()
 
     def _validate_mnt_options(self, request):
-        mnt_options = request.DATA.get('mnt_options', None)
+        mnt_options = request.data.get('mnt_options', None)
         if (mnt_options is None):
             return ''
         allowed_options = {
@@ -110,7 +110,7 @@ class PoolView(rfc.GenericView):
         return mnt_options
 
     def _validate_compression(self, request):
-        compression = request.DATA.get('compression', 'no')
+        compression = request.data.get('compression', 'no')
         if (compression is None):
             compression = 'no'
         if (compression not in settings.COMPRESSION_TYPES):
@@ -126,8 +126,8 @@ class PoolView(rfc.GenericView):
         """
         with self._handle_exception(request):
             disks = [self._validate_disk(d, request) for d in
-                     request.DATA.get('disks')]
-            pname = request.DATA['pname']
+                     request.data.get('disks')]
+            pname = request.data['pname']
             if (re.match('%s$' % settings.POOL_REGEX, pname) is None):
                 e_msg = ('Pool name must start with a alphanumeric(a-z0-9) '
                          'character and can be followed by any of the '
@@ -151,7 +151,7 @@ class PoolView(rfc.GenericView):
                              % d.name)
                     handle_exception(Exception(e_msg), request)
 
-            raid_level = request.DATA['raid_level']
+            raid_level = request.data['raid_level']
             if (raid_level not in self.RAID_LEVELS):
                 e_msg = ('Unsupported raid level. use one of: %s' %
                          self.RAID_LEVELS)
@@ -281,14 +281,14 @@ class PoolView(rfc.GenericView):
                 return self._remount(request, pool)
 
             disks = [self._validate_disk(d, request) for d in
-                     request.DATA.get('disks')]
+                     request.data.get('disks')]
             num_new_disks = len(disks)
             if (num_new_disks == 0):
                 e_msg = ('List of disks in the input cannot be empty.')
                 handle_exception(Exception(e_msg), request)
             dnames = [d.name for d in disks]
             mount_disk = Disk.objects.filter(pool=pool)[0].name
-            new_raid = request.DATA.get('raid_level', pool.raid)
+            new_raid = request.data.get('raid_level', pool.raid)
             num_total_disks = (Disk.objects.filter(pool=pool).count() +
                                num_new_disks)
             usage = pool_usage('/%s/%s' % (settings.MNT_PT, pool.name))

@@ -48,16 +48,16 @@ class NetatalkView(rfc.GenericView):
 
     @transaction.commit_on_success
     def post(self, request):
-        if ('shares' not in request.DATA):
+        if ('shares' not in request.data):
             e_msg = ('Must provide share names')
             handle_exception(Exception(e_msg), request)
 
-        shares = [validate_share(s, request) for s in request.DATA['shares']]
-        description = request.DATA.get('description', '')
+        shares = [validate_share(s, request) for s in request.data['shares']]
+        description = request.data.get('description', '')
         if (description == ''):
             description = self.def_description
 
-        time_machine = request.DATA.get('time_machine', 'yes')
+        time_machine = request.data.get('time_machine', 'yes')
         if (time_machine != 'yes' and time_machine != 'no'):
             e_msg = ('time_machine must be yes or now. not %s' %
                      time_machine)
@@ -97,7 +97,7 @@ class NetatalkView(rfc.GenericView):
             handle_exception(Exception(e_msg), request)
 
     def _validate_input(self, request):
-        time_machine = request.DATA.get('time_machine', 'yes')
+        time_machine = request.data.get('time_machine', 'yes')
         if (time_machine != 'yes' and time_machine != 'no'):
             e_msg = ('time_machine must be yes or now. not %s' %
                      time_machine)

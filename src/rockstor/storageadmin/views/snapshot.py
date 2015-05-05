@@ -140,13 +140,13 @@ class SnapshotView(rfc.GenericView):
     def post(self, request, sname, snap_name, command=None):
         with self._handle_exception(request):
             share = self._validate_share(sname, request)
-            uvisible = request.DATA.get('uvisible', False)
+            uvisible = request.data.get('uvisible', False)
             if (type(uvisible) != bool):
                 e_msg = ('uvisible must be a boolean, not %s' % type(uvisible))
                 handle_exception(Exception(e_msg), request)
 
-            snap_type = request.DATA.get('snap_type', 'admin')
-            writable = request.DATA.get('writable', 'rw')
+            snap_type = request.data.get('snap_type', 'admin')
+            writable = request.data.get('writable', 'rw')
             writable = True if (writable == 'rw') else False
             pool_device = Disk.objects.filter(pool=share.pool)[0].name
             if (command is None):
@@ -173,7 +173,7 @@ class SnapshotView(rfc.GenericView):
 
                 return ret
             if (command == 'clone'):
-                new_name = request.DATA.get('name', None)
+                new_name = request.data.get('name', None)
                 snapshot = Snapshot.objects.get(share=share, name=snap_name)
                 return create_clone(share, new_name, request, logger,
                                     snapshot=snapshot)

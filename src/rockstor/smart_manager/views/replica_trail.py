@@ -41,7 +41,7 @@ class ReplicaTrailView(rfc.GenericView):
     @transaction.commit_on_success
     def post(self, request, rid):
         replica = Replica.objects.get(id=rid)
-        snap_name = request.DATA['snap_name']
+        snap_name = request.data['snap_name']
         ts = datetime.utcnow().replace(tzinfo=utc)
         rt = ReplicaTrail(replica=replica, snap_name=snap_name,
                           status='pending', snapshot_created=ts)
@@ -51,13 +51,13 @@ class ReplicaTrailView(rfc.GenericView):
     @transaction.commit_on_success
     def put(self, request, rtid):
         rt = ReplicaTrail.objects.get(id=rtid)
-        new_status = request.DATA['status']
-        if ('error' in request.DATA):
-            rt.error = request.DATA['error']
-        if ('kb_sent' in request.DATA):
-            rt.kb_sent = request.DATA['kb_sent']
-        if ('end_ts' in request.DATA):
-            rt.end_ts = request.DATA['end_ts']
+        new_status = request.data['status']
+        if ('error' in request.data):
+            rt.error = request.data['error']
+        if ('kb_sent' in request.data):
+            rt.kb_sent = request.data['kb_sent']
+        if ('end_ts' in request.data):
+            rt.end_ts = request.data['end_ts']
         rt.status = new_status
         rt.save()
         return Response(ReplicaTrailSerializer(rt).data)
@@ -65,7 +65,7 @@ class ReplicaTrailView(rfc.GenericView):
     @transaction.commit_on_success
     def delete(self, request, rid):
         with self._handle_exception(request):
-            days = int(request.DATA.get('days', 30))
+            days = int(request.data.get('days', 30))
             replica = Replica.objects.get(id=rid)
             ts = datetime.utcnow().replace(tzinfo=utc)
             ts0 = ts - timedelta(days=days)

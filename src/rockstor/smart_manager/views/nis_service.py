@@ -38,7 +38,7 @@ class NISServiceView(BaseServiceView):
         service = Service.objects.get(name='nis')
         if (command == 'config'):
             try:
-                config = request.DATA['config']
+                config = request.data['config']
                 configure_nis(config['domain'], config['server'])
                 self._save_config(service, config)
             except Exception, e:

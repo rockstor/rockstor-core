@@ -48,7 +48,7 @@ class DockerServiceView(BaseServiceView):
         service = Service.objects.get(name=self.name)
 
         if (command == 'config'):
-            config = request.DATA.get('config', None)
+            config = request.data.get('config', None)
             root_share = config['root_share']
             self._validate_root(request, root_share)
             self._save_config(service, config)

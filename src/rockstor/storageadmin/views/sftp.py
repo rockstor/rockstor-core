@@ -50,13 +50,13 @@ class SFTPView(rfc.GenericView):
     @transaction.commit_on_success
     def post(self, request):
         with self._handle_exception(request):
-            if ('shares' not in request.DATA):
+            if ('shares' not in request.data):
                 e_msg = ('Must provide share names')
                 handle_exception(Exception(e_msg), request)
-            shares = [validate_share(s, request) for s in request.DATA['shares']]
+            shares = [validate_share(s, request) for s in request.data['shares']]
             editable = 'rw'
-            if ('read_only' in request.DATA and
-                request.DATA['read_only'] is True):
+            if ('read_only' in request.data and
+                request.data['read_only'] is True):
                 editable = 'ro'
 
             mnt_map = sftp_mount_map(settings.SFTP_MNT_ROOT)

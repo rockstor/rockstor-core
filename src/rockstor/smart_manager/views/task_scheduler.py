@@ -44,7 +44,7 @@ class TaskSchedulerView(rfc.GenericView):
         frequency = None
         meta = {}
         try:
-            frequency = int(float(request.DATA.get('frequency')))
+            frequency = int(float(request.data.get('frequency')))
             if (frequency < 1):
                 frequency = 1
         except:
@@ -52,7 +52,7 @@ class TaskSchedulerView(rfc.GenericView):
                      'integer')
             handle_exception(Exception(e_msg), request)
 
-        meta = request.DATA.get('meta', {})
+        meta = request.data.get('meta', {})
         if (type(meta) != dict):
             e_msg = ('meta must be a dictionary, not %s' % type(meta))
             handle_exception(Exception(e_msg), request)
@@ -61,13 +61,13 @@ class TaskSchedulerView(rfc.GenericView):
     @transaction.commit_on_success
     def post(self, request):
         with self._handle_exception(request):
-            name = request.DATA['name']
+            name = request.data['name']
             if (TaskDefinition.objects.filter(name=name).exists()):
                 msg = ('Another task exists with the same name(%s). Choose '
                        'a different name' % name)
                 handle_exception(Exception(msg), request)
 
-            task_type = request.DATA['task_type']
+            task_type = request.data['task_type']
             if (task_type not in self.valid_tasks):
                 e_msg = ('Unknown task type: %s cannot be scheduled' % name)
                 handle_exception(Exception(e_msg), request)
@@ -75,7 +75,7 @@ class TaskSchedulerView(rfc.GenericView):
             frequency, meta = self._validate_input(request)
             json_meta = json.dumps(meta)
 
-            ts = int(float(request.DATA['ts']))
+            ts = int(float(request.data['ts']))
             ts_dto = datetime.utcfromtimestamp(
                 float(ts)).replace(second=0, microsecond=0, tzinfo=utc)
             td = TaskDefinition(name=name, task_type=task_type, ts=ts_dto,
@@ -94,7 +94,7 @@ class TaskSchedulerView(rfc.GenericView):
     def put(self, request, tdid):
         with self._handle_exception(request):
             tdo = self._task_def(request, tdid)
-            enabled = request.DATA.get('enabled', True)
+            enabled = request.data.get('enabled', True)
             if (type(enabled) != bool):
                 e_msg = ('enabled flag must be a boolean and not %s' %
                          type(enabled))

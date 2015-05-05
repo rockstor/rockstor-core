@@ -53,7 +53,7 @@ class UserView(rfc.GenericView):
 
     def _validate_input(self, request):
         input_fields = {}
-        username = request.DATA.get('username', None)
+        username = request.data.get('username', None)
         if (username is None or
             re.match(settings.USERNAME_REGEX, username) is None):
             e_msg = ('Username is invalid. It must confirm to the regex: %s' %
@@ -63,36 +63,36 @@ class UserView(rfc.GenericView):
             e_msg = ('Username cannot be more than 30 characters long')
             handle_exception(Exception(e_msg), request)
         input_fields['username'] = username
-        password = request.DATA.get('password', None)
+        password = request.data.get('password', None)
         if (password is None or password == ''):
             e_msg = ('Password must be a valid string')
             handle_exception(Exception(e_msg), request)
         input_fields['password'] = password
-        admin = request.DATA.get('admin', True)
+        admin = request.data.get('admin', True)
         if (type(admin) != bool):
             e_msg = ('Admin(user type) must be a boolean')
             handle_exception(Exception(e_msg), request)
         input_fields['admin'] = admin
-        shell = request.DATA.get('shell', '/bin/bash')
+        shell = request.data.get('shell', '/bin/bash')
         if (shell not in settings.VALID_SHELLS):
             e_msg = ('shell(%s) is not valid. Valid shells are %s' %
                      (shell, settings.VALID_SHELLS))
             handle_exception(Exception(e_msg), request)
         input_fields['shell'] = shell
-        email = request.DATA.get('email', None)
+        email = request.data.get('email', None)
         if (email is not None and type(email) != unicode):
             e_msg = ('Email must be a valid string. not: %s' % type(email))
             handle_exception(Exception(e_msg), request)
         input_fields['email'] = email
-        input_fields['homedir'] = request.DATA.get(
+        input_fields['homedir'] = request.data.get(
             'homedir', '/home/%s' % username)
-        input_fields['uid'] = request.DATA.get('uid', None)
-        input_fields['group'] = request.DATA.get('group', None)
+        input_fields['uid'] = request.data.get('uid', None)
+        input_fields['group'] = request.data.get('group', None)
         input_fields['public_key'] = self._validate_public_key(request)
         return input_fields
 
     def _validate_public_key(self, request):
-        public_key = request.DATA.get('public_key', None)
+        public_key = request.data.get('public_key', None)
         if (public_key is not None and not is_pub_key(public_key)):
             e_msg = ('Public key is invalid')
             handle_exception(Exception(e_msg), request)
@@ -166,11 +166,11 @@ class UserView(rfc.GenericView):
                 e_msg = ('Editing restricted user(%s) is not supported.' %
                          username)
                 handle_exception(Exception(e_msg), request)
-        email = request.DATA.get('email', None)
-        new_pw = request.DATA.get('password', None)
-        shell = request.DATA.get('shell', None)
+        email = request.data.get('email', None)
+        new_pw = request.data.get('password', None)
+        shell = request.data.get('shell', None)
         public_key = self._validate_public_key(request)
-        admin = request.DATA.get('admin', False)
+        admin = request.data.get('admin', False)
         if (User.objects.filter(username=username).exists()):
             u = User.objects.get(username=username)
             if (admin is True):

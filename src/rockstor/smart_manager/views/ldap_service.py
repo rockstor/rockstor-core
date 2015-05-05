@@ -37,7 +37,7 @@ class LdapServiceView(BaseServiceView):
         service = Service.objects.get(name='ldap')
         if (command == 'config'):
             try:
-                config = request.DATA['config']
+                config = request.data['config']
                 self._save_config(service, config)
             except Exception, e:
                 logger.exception(e)

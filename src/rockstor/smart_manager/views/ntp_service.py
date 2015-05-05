@@ -54,7 +54,7 @@ class NTPServiceView(BaseServiceView):
             e_msg = ('Invalid input for time servers. It must be '
                      'comma separated string of hostnames or IPs.')
             with self._handle_exception(request, e_msg):
-                config = request.DATA['config']
+                config = request.data['config']
                 servers = [s.strip() for s in config['server'].split(',')]
 
             e_msg = ('Error while saving saving configuration(%s) to the '

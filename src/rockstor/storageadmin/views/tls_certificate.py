@@ -42,9 +42,9 @@ class TLSCertificateView(rfc.GenericView):
     @transaction.commit_on_success
     def post(self, request):
         with self._handle_exception(request):
-            name = request.DATA.get('name')
-            cert = request.DATA.get('cert')
-            key = request.DATA.get('key')
+            name = request.data.get('name')
+            cert = request.data.get('cert')
+            key = request.data.get('key')
             TLSCertificate.objects.filter().exclude(name=name).delete()
             co, created = TLSCertificate.objects.get_or_create(name=name, defaults={'certificate': cert, 'key': key})
             if (not created):

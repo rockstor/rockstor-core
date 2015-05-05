@@ -52,7 +52,7 @@ class ReplicaView(rfc.GenericView):
     @transaction.commit_on_success
     def post(self, request):
         with self._handle_exception(request):
-            sname = request.DATA.get('share')
+            sname = request.data.get('share')
             if (Replica.objects.filter(share=sname).exists()):
                 e_msg = ('Another replication task already exists for this '
                          'share(%s). Only 1-1 replication is supported '
@@ -60,12 +60,12 @@ class ReplicaView(rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
             share = self._validate_share(sname, request)
             appliance = self._validate_appliance(request)
-            dpool = request.DATA.get('pool')
+            dpool = request.data.get('pool')
             frequency = self._validate_frequency(request)
-            task_name = request.DATA.get('task_name')
+            task_name = request.data.get('task_name')
             try:
-                data_port = int(request.DATA.get('data_port'))
-                meta_port = int(request.DATA.get('meta_port'))
+                data_port = int(request.data.get('data_port'))
+                meta_port = int(request.data.get('meta_port'))
             except:
                 e_msg = ('data and meta ports must be valid port '
                          'numbers(1-65535).')
@@ -90,7 +90,7 @@ class ReplicaView(rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
 
             r.frequency = self._validate_frequency(request, r.frequency)
-            enabled = request.DATA.get('enabled', r.enabled)
+            enabled = request.data.get('enabled', r.enabled)
             if (type(enabled) != bool):
                 e_msg = ('enabled switch must be a boolean, not %s' %
                          type(enabled))
@@ -110,7 +110,7 @@ class ReplicaView(rfc.GenericView):
 
     def _validate_appliance(self, request):
         try:
-            ip = request.DATA.get('appliance', None)
+            ip = request.data.get('appliance', None)
             return Appliance.objects.get(ip=ip)
         except:
             e_msg = ('Appliance with ip(%s) is not recognized.' % ip)
@@ -125,7 +125,7 @@ class ReplicaView(rfc.GenericView):
     def _validate_frequency(self, request, default=1):
         e_msg = ('frequency must be a positive integer')
         try:
-            frequency = int(request.DATA.get('frequency', default))
+            frequency = int(request.data.get('frequency', default))
         except:
             handle_exception(Exception(e_msg), request)
         if (frequency < 1):

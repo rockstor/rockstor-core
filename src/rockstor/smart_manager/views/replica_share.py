@@ -39,17 +39,17 @@ class ReplicaShareView(rfc.GenericView):
 
     @transaction.commit_on_success
     def post(self, request):
-        sname = request.DATA['share']
+        sname = request.data['share']
         if (ReplicaShare.objects.filter(share=sname).exists()):
             e_msg = ('Replicashare(%s) already exists.' % sname)
             handle_exception(Exception(e_msg), request)
 
         share = self._validate_share(sname, request)
-        aip = request.DATA['appliance']
+        aip = request.data['appliance']
         self._validate_appliance(aip, request)
-        src_share = request.DATA['src_share']
-        data_port = int(request.DATA['data_port'])
-        meta_port = int(request.DATA['meta_port'])
+        src_share = request.data['src_share']
+        data_port = int(request.data['data_port'])
+        meta_port = int(request.data['meta_port'])
         ts = datetime.utcnow().replace(tzinfo=utc)
         r = ReplicaShare(share=sname, appliance=aip,
                          pool=share.pool.name, src_share=src_share,

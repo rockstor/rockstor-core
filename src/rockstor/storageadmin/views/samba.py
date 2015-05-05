@@ -61,11 +61,11 @@ class SambaView(rfc.GenericView):
             def_opts['guest_ok'] = smbo.guest_ok
             def_opts['read_only'] = smbo.read_only
 
-        options['comment'] = request.DATA.get('comment', def_opts['comment'])
-        options['browsable'] = request.DATA.get('browsable',
+        options['comment'] = request.dataq.get('comment', def_opts['comment'])
+        options['browsable'] = request.data.get('browsable',
                                                 def_opts['browsable'])
 
-        options['custom_config'] = request.DATA.get('custom_config', [])
+        options['custom_config'] = request.data.get('custom_config', [])
         if (type(options['custom_config']) != list):
             e_msg = ('custom config must be a list of strings')
             handle_exception(Exception(e_msg), request)
@@ -73,13 +73,13 @@ class SambaView(rfc.GenericView):
             e_msg = ('Invalid choice for browsable. Possible '
                      'choices are yes or no.')
             handle_exception(Exception(e_msg), request)
-        options['guest_ok'] = request.DATA.get('guest_ok',
+        options['guest_ok'] = request.data.get('guest_ok',
                                                def_opts['guest_ok'])
         if (options['guest_ok'] not in self.BOOL_OPTS):
             e_msg = ('Invalid choice for guest_ok. Possible '
                      'options are yes or no.')
             handle_exception(Exception(e_msg), request)
-        options['read_only'] = request.DATA.get('read_only',
+        options['read_only'] = request.data.get('read_only',
                                                 def_opts['read_only'])
         if (options['read_only'] not in self.BOOL_OPTS):
             e_msg = ('Invalid choice for read_only. Possible '
@@ -94,10 +94,10 @@ class SambaView(rfc.GenericView):
 
     @transaction.commit_on_success
     def post(self, request):
-        if ('shares' not in request.DATA):
+        if ('shares' not in request.data):
             e_msg = ('Must provide share names')
             handle_exception(Exception(e_msg), request)
-        shares = [validate_share(s, request) for s in request.DATA['shares']]
+        shares = [validate_share(s, request) for s in request.data['shares']]
         options = self._validate_input(request)
         custom_config = options['custom_config']
         del(options['custom_config'])
@@ -121,7 +121,7 @@ class SambaView(rfc.GenericView):
                     pool_device = Disk.objects.filter(pool=share.pool)[0].name
                     mount_share(share, pool_device, mnt_pt)
 
-                admin_users = request.DATA.get('admin_users', None)
+                admin_users = request.data.get('admin_users', None)
                 if (admin_users is None):
                     admin_users = []
                 for au in admin_users:
@@ -144,7 +144,7 @@ class SambaView(rfc.GenericView):
             custom_config = options['custom_config']
             del(options['custom_config'])
             smbo.__dict__.update(**options)
-            admin_users = request.DATA.get('admin_users', None)
+            admin_users = request.data.get('admin_users', None)
             if (admin_users is None):
                 admin_users = []
             for uo in User.objects.filter(smb_shares=smbo):

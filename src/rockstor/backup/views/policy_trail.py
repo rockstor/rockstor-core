@@ -56,10 +56,10 @@ class PolicyTrailView(GenericView):
     def put(self, request, tid):
         pt = PolicyTrail.objects.get(id=tid)
         now = datetime.utcnow().replace(second=0, microsecond=0, tzinfo=utc)
-        pt.status = request.DATA['status']
+        pt.status = request.data['status']
         pt.status_ts = now
-        if ('error' in request.DATA):
-            pt.error = request.DATA['error']
+        if ('error' in request.data):
+            pt.error = request.data['error']
         if (pt.status == 'snapshot created'):
             pt.snap_created = now
         if (pt.status == 'sync started'):

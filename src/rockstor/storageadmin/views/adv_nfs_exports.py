@@ -74,7 +74,7 @@ class AdvancedNFSExportView(rfc.GenericView):
                 ce = AdvancedNFSExport(export_str=e)
                 ce.save()
                 cur_entries.append(ce)
-            exports_d = create_adv_nfs_export_input(request.DATA['entries'],
+            exports_d = create_adv_nfs_export_input(request.data['entries'],
                                                     request)
             cur_exports = list(NFSExport.objects.all())
             exports = create_nfs_export_input(cur_exports)

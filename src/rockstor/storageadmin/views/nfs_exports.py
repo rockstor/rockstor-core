@@ -49,10 +49,10 @@ class NFSExportGroupView(rfc.GenericView):
     @transaction.commit_on_success
     def post(self, request):
         with self._handle_exception(request):
-            if ('shares' not in request.DATA):
+            if ('shares' not in request.data):
                 e_msg = ('Cannot export without specifying shares')
                 handle_exception(Exception(e_msg), request)
-            shares = [validate_share(s, request) for s in request.DATA['shares']]
+            shares = [validate_share(s, request) for s in request.data['shares']]
             options = parse_options(request)
             for s in shares:
                 dup_export_check(s, options['host_str'], request)
@@ -83,10 +83,10 @@ class NFSExportGroupView(rfc.GenericView):
     @transaction.commit_on_success
     def put(self, request, export_id):
         with self._handle_exception(request):
-            if ('shares' not in request.DATA):
+            if ('shares' not in request.data):
                 e_msg = ('Cannot export without specifying shares')
                 handle_exception(Exception(e_msg), request)
-            shares = [validate_share(s, request) for s in request.DATA['shares']]
+            shares = [validate_share(s, request) for s in request.data['shares']]
             eg = validate_export_group(export_id, request)
             options = parse_options(request)
             for s in shares:

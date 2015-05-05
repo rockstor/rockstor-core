@@ -166,8 +166,8 @@ class CommandView(APIView):
         elif (command == 'join-winbind-domain'):
             try:
                 systemctl('winbind', 'restart')
-                username = request.DATA['administrator']
-                passwd = request.DATA['password']
+                username = request.data['administrator']
+                passwd = request.data['password']
                 join_winbind_domain(username, passwd)
                 return Response('Done')
             except Exception, e:
@@ -176,8 +176,8 @@ class CommandView(APIView):
         elif (command == 'winbind-domain-status'):
             msg = 'Yes'
             try:
-                username = request.DATA['administrator']
-                passwd = request.DATA['password']
+                username = request.data['administrator']
+                passwd = request.data['password']
             except Exception, e:
                 handle_exception(e, request)
 

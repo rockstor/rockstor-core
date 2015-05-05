@@ -111,24 +111,24 @@ class NetworkView(rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
             ni = NetworkInterface.objects.get(name=iname)
 
-            itype = request.DATA['itype']
+            itype = request.data['itype']
             if (itype != 'management'):
                 itype = 'io'
-            boot_proto = request.DATA['boot_protocol']
+            boot_proto = request.data['boot_protocol']
             ni.onboot = 'yes'
             if (boot_proto == 'dhcp'):
                 config_network_device(ni.alias, ni.mac)
             elif (boot_proto == 'static'):
-                ipaddr = request.DATA['ipaddr']
+                ipaddr = request.data['ipaddr']
                 for i in NetworkInterface.objects.filter(ipaddr=ipaddr):
                     if (i.id != ni.id):
                         e_msg = ('IP: %s already in use by another '
                                  'interface: %s' % (ni.ipaddr, i.name))
                         handle_exception(Exception(e_msg), request)
-                netmask = request.DATA['netmask']
-                gateway = request.DATA['gateway']
-                dns_servers = request.DATA['dns_servers'].split(',')
-                domain = request.DATA['domain']
+                netmask = request.data['netmask']
+                gateway = request.data['gateway']
+                dns_servers = request.data['dns_servers'].split(',')
+                domain = request.data['domain']
                 config_network_device(ni.alias, ni.mac, boot_proto='static',
                                       ipaddr=ipaddr, netmask=netmask,
                                       gateway=gateway,

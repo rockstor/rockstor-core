@@ -37,7 +37,7 @@ class WinbindServiceView(BaseServiceView):
         service = Service.objects.get(name='winbind')
         if (command == 'config'):
             try:
-                config = request.DATA['config']
+                config = request.data['config']
                 toggle_auth_service('winbind', 'start', config)
                 logger.info('authconfig executed')
                 self._save_config(service, config)
