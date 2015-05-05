@@ -23,6 +23,11 @@ from storageadmin.serializers import (ApplianceSerializer, DiskInfoSerializer,
                                       PoolInfoSerializer, ShareSerializer)
 import rest_framework_custom as rfc
 from rest_framework.response import Response
+from rest_framework import generics
+from storageadmin.util import handle_exception
+from fs.btrfs import share_usage, share_id, update_quota
+from django.db import transaction
+from django.conf import settings
 
 
 class ApplianceDetailView(rfc.GenericView):
@@ -91,13 +96,56 @@ class PoolDetailView(rfc.GenericView):
             return Response()
 
 
-class DetailShareView(rfc.GenericView):
+class DetailShareView(rfc.GenericView, generics.UpdateAPIView):
     serializer_class = ShareSerializer
 
     def get(self, *args, **kwargs):
-            try:
-                data = Share.objects.get(name=self.kwargs['sname'])
-                serialized_data = ShareSerializer(data)
-                return Response(serialized_data.data)
-            except:
-                return []
+        try:
+            data = Share.objects.get(name=self.kwargs['sname'])
+            serialized_data = ShareSerializer(data)
+            return Response(serialized_data.data)
+        except:
+            return Response()
+
+    def _validate_share_size(self, request, pool):
+        size = request.data.get('size', pool.size)
+        try:
+            size = int(size)
+        except:
+            handle_exception(Exception('Share size must be an integer'),
+                             request)
+        if (size < settings.MIN_SHARE_SIZE):
+            e_msg = ('Share size should atleast be %dKB. Given size is %dKB'
+                     % (settings.MIN_SHARE_SIZE, size))
+            handle_exception(Exception(e_msg), request)
+        if (size > pool.size):
+            return pool.size
+        return size
+
+    def _update_quota(self, pool, disk_name, share_name, size):
+        sid = share_id(pool, disk_name, share_name)
+        qgroup_id = '0/' + sid
+        update_quota(pool, disk_name, qgroup_id, size * 1024)
+        return qgroup_id
+
+    @transaction.atomic
+    def put(self, request, sname):
+        with self._handle_exception(request):
+            if (not Share.objects.filter(name=sname).exists()):
+                e_msg = ('Share(%s) does not exist.' % sname)
+                handle_exception(Exception(e_msg), request)
+
+            share = Share.objects.get(name=sname)
+            new_size = self._validate_share_size(request, share.pool)
+            disk = Disk.objects.filter(pool=share.pool)[0]
+            qgroup_id = self._update_quota(share.pool, disk.name,
+                                           share.subvol_name, new_size)
+            cur_usage = share_usage(share.pool, disk.name, qgroup_id)
+            if (new_size < cur_usage):
+                e_msg = ('Unable to resize because requested new size(%dKB) '
+                         'is less than current usage(%dKB) of the share.' %
+                         (new_size, cur_usage))
+                handle_exception(Exception(e_msg), request)
+            share.size = new_size
+            share.save()
+            return Response(ShareSerializer(share).data)

@@ -73,28 +73,6 @@ class ShareView(rfc.GenericView):
         return compression
 
     @transaction.atomic
-    def put(self, request, sname):
-        with self._handle_exception(request):
-            if (not Share.objects.filter(name=sname).exists()):
-                e_msg = ('Share(%s) does not exist.' % sname)
-                handle_exception(Exception(e_msg), request)
-
-            share = Share.objects.get(name=sname)
-            new_size = self._validate_share_size(request, share.pool)
-            disk = Disk.objects.filter(pool=share.pool)[0]
-            qgroup_id = self._update_quota(share.pool, disk.name,
-                                           share.subvol_name, new_size)
-            cur_usage = share_usage(share.pool, disk.name, qgroup_id)
-            if (new_size < cur_usage):
-                e_msg = ('Unable to resize because requested new size(%dKB) '
-                         'is less than current usage(%dKB) of the share.' %
-                         (new_size, cur_usage))
-                handle_exception(Exception(e_msg), request)
-            share.size = new_size
-            share.save()
-            return Response(ShareSerializer(share).data)
-
-    @transaction.atomic
     def post(self, request):
         with self._handle_exception(request):
             pool_name = request.data.get('pool', None)
