@@ -39,10 +39,10 @@ class SFTPView(rfc.GenericView):
     serializer_class = SFTPSerializer
 
     def get_queryset(self, *args, **kwargs):
-        if ('id' in kwargs):
+        if ('id' in self.kwargs):
             self.paginate_by = 0
             try:
-                return SFTP.objects.get(id=kwargs['id'])
+                return SFTP.objects.get(id=self.kwargs['id'])
             except:
                 return []
         return SFTP.objects.all()

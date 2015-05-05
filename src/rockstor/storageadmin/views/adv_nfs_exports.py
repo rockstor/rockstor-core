@@ -32,10 +32,10 @@ class AdvancedNFSExportView(rfc.GenericView):
     serializer_class = AdvancedNFSExportSerializer
 
     def get_queryset(self, *args, **kwargs):
-        if ('export_id' in kwargs):
+        if ('export_id' in self.kwargs):
             self.paginate_by = 0
             try:
-                return AdvancedNFSExport(id=kwargs['export_id'])
+                return AdvancedNFSExport(id=self.kwargs['export_id'])
             except:
                 return []
 

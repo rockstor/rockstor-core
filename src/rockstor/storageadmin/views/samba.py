@@ -43,10 +43,10 @@ class SambaView(rfc.GenericView):
     BOOL_OPTS = ('yes', 'no',)
 
     def get_queryset(self, *args, **kwargs):
-        if ('id' in kwargs):
+        if ('id' in self.kwargs):
             self.paginate_by = 0
             try:
-                return SambaShare.objects.get(id=kwargs['id'])
+                return SambaShare.objects.get(id=self.kwargs['id'])
             except:
                 return []
         return SambaShare.objects.all()

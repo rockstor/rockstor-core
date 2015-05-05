@@ -38,10 +38,10 @@ class NFSExportGroupView(rfc.GenericView):
     serializer_class = NFSExportGroupSerializer
 
     def get_queryset(self, *args, **kwargs):
-        if ('export_id' in kwargs):
+        if ('export_id' in self.kwargs):
             self.paginate_by = 0
             try:
-                return NFSExportGroup.objects.get(id=kwargs['export_id'])
+                return NFSExportGroup.objects.get(id=self.kwargs['export_id'])
             except:
                 return []
         return NFSExportGroup.objects.filter(nohide=False)

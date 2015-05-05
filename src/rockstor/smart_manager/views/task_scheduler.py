@@ -32,10 +32,10 @@ class TaskSchedulerView(rfc.GenericView):
     valid_tasks = ('snapshot', 'scrub',)
 
     def get_queryset(self, *args, **kwargs):
-        if ('tdid' in kwargs):
+        if ('tdid' in self.kwargs):
             self.paginate_by = 0
             try:
-                return TaskDefinition.objects.get(id=kwargs['tdid'])
+                return TaskDefinition.objects.get(id=self.kwargs['tdid'])
             except:
                 return []
         return TaskDefinition.objects.filter().order_by('-id')

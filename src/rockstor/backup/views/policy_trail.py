@@ -31,15 +31,15 @@ class PolicyTrailView(GenericView):
     serializer_class = PolicyTrailSerializer
 
     def get_queryset(self, *args, **kwargs):
-        if ('tid' in kwargs):
+        if ('tid' in self.kwargs):
             self.pagninate_by = 0
             try:
-                return PolicyTrail.objects.get(id=kwargs['tid'])
+                return PolicyTrail.objects.get(id=self.kwargs['tid'])
             except:
                 return []
 
-        if ('pid' in kwargs):
-            bp = BackupPolicy.objects.get(id=kwargs['pid'])
+        if ('pid' in self.kwargs):
+            bp = BackupPolicy.objects.get(id=self.kwargs['pid'])
             return PolicyTrail.objects.filter(policy=bp).order_by('-id')
         return PolicyTrail.objects.filter().order_by('-id')
 

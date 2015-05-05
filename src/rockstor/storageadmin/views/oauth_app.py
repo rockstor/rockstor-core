@@ -30,10 +30,10 @@ class OauthAppView(rfc.GenericView):
     serializer_class = OauthAppSerializer
 
     def get_queryset(self, *args, **kwargs):
-        if ('name' in kwargs):
+        if ('name' in self.kwargs):
             self.paginate_by = 0
             try:
-                return OauthApp.objects.get(name=kwargs['name'])
+                return OauthApp.objects.get(name=self.kwargs['name'])
             except:
                 return []
         return OauthApp.objects.all()

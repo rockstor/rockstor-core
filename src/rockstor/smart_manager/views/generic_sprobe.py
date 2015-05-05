@@ -25,7 +25,7 @@ class GenericSProbeView(rfc.GenericView):
     content_negotiation_class = rfc.IgnoreClient
 
     def get_queryset(self):
-        limit = self.request.QUERY_PARAMS.get('limit',
+        limit = self.request.query_params.get('limit',
                                               settings.REST_FRAMEWORK['MAX_LIMIT'])
         limit = int(limit)
         t1 = self.request.query_params.get('t1', None)

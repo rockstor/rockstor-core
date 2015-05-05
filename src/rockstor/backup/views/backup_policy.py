@@ -30,7 +30,7 @@ class BackupPolicyView(GenericView):
     serializer_class = BackupPolicySerializer
 
     def get_queryset(self, *args, **kwargs):
-        if (len(kwargs) > 0):
+        if (len(self.kwargs) > 0):
             self.paginate_by = 0
             try:
                 return BackupPolicy.objects.get(**kwargs)

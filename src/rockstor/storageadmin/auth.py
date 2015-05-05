@@ -22,8 +22,8 @@ from django.contrib.auth.models import User
 class DigestAuthentication(BaseAuthentication):
 
     def authenticate(self, request):
-        if ('apikey' in request.QUERY_PARAMS and
-            request.QUERY_PARAMS['apikey'] == 'adminapikey'):
+        if ('apikey' in request.query_params and
+            request.query_params['apikey'] == 'adminapikey'):
             try:
                 return (User.objects.all()[0], None)
             except:

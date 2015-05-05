@@ -30,7 +30,7 @@ from smart_manager.serializers import (ReplicaShareSerializer,
 import rest_framework_custom as rfc
 from rest_framework.response import Response
 
-
+# Replicas
 class ReplicaShareDetailView(rfc.GenericView):
     serializer_class = ReplicaShareSerializer
 
@@ -84,3 +84,6 @@ class ReceiveTrailDetailView(rfc.GenericView):
         if ('rtid' in self.kwargs):
             with self._handle_exception(request):
                 return ReceiveTrail.objects.get(id=self.kwargs['rtid'])
+
+
+# Services

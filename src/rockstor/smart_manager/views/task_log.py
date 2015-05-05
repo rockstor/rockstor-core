@@ -35,14 +35,14 @@ class TaskLogView(AdvancedSProbeView):
     valid_tasks = ('snapshot', 'scrub',)
 
     def get_queryset(self, *args, **kwargs):
-        if ('tid' in kwargs):
+        if ('tid' in self.kwargs):
             self.paginate_by = 0
             try:
-                return Task.objects.get(id=kwargs['tid'])
+                return Task.objects.get(id=self.kwargs['tid'])
             except:
                 return []
-        if ('tdid' in kwargs):
-            td = TaskDefinition.objects.get(id=kwargs['tdid'])
+        if ('tdid' in self.kwargs):
+            td = TaskDefinition.objects.get(id=self.kwargs['tdid'])
             return Task.objects.filter(task_def=td).order_by('-id')
         return Task.objects.filter().order_by('-id')
 

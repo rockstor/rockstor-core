@@ -34,15 +34,15 @@ class ShareCommandView(rfc.GenericView):
     serializer_class = ShareSerializer
 
     def get_queryset(self, *args, **kwargs):
-        if ('sname' in kwargs):
+        if ('sname' in self.kwargs):
             self.paginate_by = 0
             try:
-                return Share.objects.get(name=kwargs['sname'])
+                return Share.objects.get(name=self.kwargs['sname'])
             except:
                 return []
-        sort_col = self.request.QUERY_PARAMS.get('sortby', None)
+        sort_col = self.request.query_params.get('sortby', None)
         if (sort_col is not None and sort_col == 'usage'):
-            reverse = self.request.QUERY_PARAMS.get('reverse', 'no')
+            reverse = self.request.query_params.get('reverse', 'no')
             if (reverse == 'yes'):
                 reverse = True
             else:

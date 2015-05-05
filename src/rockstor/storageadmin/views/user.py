@@ -43,10 +43,10 @@ class UserView(rfc.GenericView):
                     'postgres', 'ntp', 'nginx', 'postfix', 'sshd', )
 
     def get_queryset(self, *args, **kwargs):
-        if ('username' in kwargs):
+        if ('username' in self.kwargs):
             self.paginate_by = 0
             try:
-                return User.objects.get(username=kwargs['username'])
+                return User.objects.get(username=self.kwargs['username'])
             except:
                 return []
         return combined_users()

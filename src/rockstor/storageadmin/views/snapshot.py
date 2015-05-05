@@ -46,21 +46,21 @@ class SnapshotView(rfc.GenericView):
         try:
             share = Share.objects.get(name=self.kwargs['sname'])
         except:
-            if ('sname' not in kwargs):
+            if ('sname' not in self.kwargs):
                 return Snapshot.objects.filter().order_by('-id')
 
-            e_msg = ('Share with name: %s does not exist' % kwargs['sname'])
+            e_msg = ('Share with name: %s does not exist' % self.kwargs['sname'])
             handle_exception(Exception(e_msg), self.request)
 
         if ('snap_name' in self.kwargs):
             self.paginate_by = 0
             try:
                 return Snapshot.objects.get(share=share,
-                                            name=kwargs['snap_name'])
+                                            name=self.kwargs['snap_name'])
             except:
                 return []
 
-        snap_type = self.request.QUERY_PARAMS.get('snap_type', None)
+        snap_type = self.request.query_params.get('snap_type', None)
         if (snap_type is not None and snap_type != ''):
             return Snapshot.objects.filter(
                 share=share, snap_type=snap_type).order_by('-id')
@@ -248,7 +248,7 @@ class SnapshotView(rfc.GenericView):
         """
         with self._handle_exception(request):
             if (snap_name is None):
-                snap_qp = self.request.QUERY_PARAMS.get('id', None)
+                snap_qp = self.request.query_params.get('id', None)
                 if (snap_qp is not None):
                     for si in snap_qp.split(','):
                         self._delete_snapshot(request, sname, id=si)

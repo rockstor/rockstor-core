@@ -34,16 +34,16 @@ class AdvancedSProbeView(rfc.GenericView):
     content_negotiation_class = rfc.IgnoreClient
 
     def get_queryset(self, *args, **kwargs):
-
+        self.page_size = None
         pname = self.request.path.split('/')[4]
-        limit = self.request.QUERY_PARAMS.get('limit',
-                                              settings.PAGINATION['max_limit'])
+        limit = self.request.query_params.get('limit',
+                                              settings.REST_FRAMEWORK['MAX_LIMIT'])
         limit = int(limit)
-        t1 = self.request.QUERY_PARAMS.get('t1', None)
-        t2 = self.request.QUERY_PARAMS.get('t2', None)
+        t1 = self.request.query_params.get('t1', None)
+        t2 = self.request.query_params.get('t2', None)
         pid = None
-        if ('pid' in kwargs):
-            pid = kwargs['pid']
+        if ('pid' in self.kwargs):
+            pid = self.kwargs['pid']
         if (pid is None):
             self.serializer_class = SProbeSerializer
             try:
@@ -53,8 +53,8 @@ class AdvancedSProbeView(rfc.GenericView):
                 handle_exception(Exception(e_msg), self.request)
 
         command = None
-        if ('command' in kwargs):
-            command = kwargs['command']
+        if ('command' in self.kwargs):
+            command = self.kwargs['command']
         if (command is None):
             self.serializer_class = SProbeSerializer
             self.paginate_by = None
