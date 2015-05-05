@@ -95,6 +95,8 @@ ConfigureServiceView = RockstorLayoutView.extend({
     if (config != null) {
       configObj = JSON.parse(this.service.get('config'));
     }
+      console.log('configobj', configObj);
+      console.log('smartd_config', configObj.smartd_config);
     $(this.el).html(this.template({service: this.service, config: configObj, shares: this.shares}));
 
     this.$('#nis-form :input').tooltip({
@@ -149,6 +151,15 @@ ConfigureServiceView = RockstorLayoutView.extend({
       placement: 'right',
       title: 'When filling out the user information for a Windows NT user, the winbindd daemon uses the value chosen here to to specify the login shell for that user.'
     });
+      this.$('#smartd-form #smartd_config').tooltip({
+	  html: true,
+	  placement: 'right',
+	  title: 'Following are a few example directives. For complete information, read smard.conf manpage.<br> \
+To monitor all possible errors on all disks: <br> <strong>DEVICESCAN -a</strong> <br> \
+To monitor /dev/sdb and /dev/sdc but ignore other devices: <br> <strong>/dev/sdb -a</strong> <br> <strong>/dev/sdc -a</strong> <br> \
+To email potential problems: <br> <strong>DEVICESCAN -m user@example.com</strong> <br> \
+To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br>'
+      });
 
     this.validator = this.$('#' + this.formName).validate({
       onfocusout: false,
