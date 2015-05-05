@@ -38,10 +38,10 @@ class NetatalkView(rfc.GenericView):
     def_description = 'on Rockstor'
 
     def get_queryset(self, *args, **kwargs):
-        if ('id' in kwargs):
+        if ('id' in self.kwargs):
             self.paginate_by = 0
             try:
-                return NetatalkShare.objects.get(id=kwargs['id'])
+                return NetatalkShare.objects.get(id=self.kwargs['id'])
             except:
                 return []
         return NetatalkShare.objects.all()

@@ -178,8 +178,8 @@ class InstalledPluginSerializer(serializers.ModelSerializer):
 
 
 class OauthAppSerializer(serializers.ModelSerializer):
-    client_id = serializers.CharField(source='client_id')
-    client_secret = serializers.CharField(source='client_secret')
+    client_id = serializers.CharField()
+    client_secret = serializers.CharField()
 
     class Meta:
 		model = OauthApp

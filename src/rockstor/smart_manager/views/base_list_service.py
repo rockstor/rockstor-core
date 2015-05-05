@@ -29,23 +29,21 @@ from datetime import datetime
 from service_mixin import ServiceMixin
 import logging
 logger = logging.getLogger(__name__)
+# TODO: BaseService2View should be a 'list' endpoint
 
 
-class BaseServiceView(ServiceMixin, rfc.GenericView):
+class BaseServiceListView(ServiceMixin, rfc.GenericView):
     serializer_class = ServiceStatusSerializer
 
     @transaction.commit_on_success
-    def get(self, request, *args, **kwargs):
-        with self._handle_exception(self.request, msg=None):
+    def get_queryset(self, *args, **kwargs):
+        with self._handle_exception(self.request):
+            limit = self.request.query_params.get('limit',
+                                                  settings.REST_FRAMEWORK['MAX_LIMIT'])
+            limit = int(limit)
             url_fields = self.request.path.strip('/').split('/')
-            s = Service.objects.get(name=url_fields[3])
-            self.paginate_by = 0
-            serialized_data = ServiceStatusSerializer(self._get_or_create_sso(s))
-            return Response(serialized_data.data)
-
-    def _save_config(self, service, config):
-        service.config = json.dumps(config)
-        return service.save()
-
-    def _get_config(self, service):
-        return json.loads(service.config)
+            if (len(url_fields) < 4):
+                sos = []
+                for s in Service.objects.all():
+                    sos.append(self._get_or_create_sso(s))
+                return sos

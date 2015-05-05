@@ -41,7 +41,7 @@ class SProbeMetadataView(AdvancedSProbeView):
                 return []
 
         limit = self.request.QUERY_PARAMS.get('limit',
-                                              settings.PAGINATION['max_limit'])
+                                              settings.REST_FRAMEWORK['MAX_LIMIT'])
         limit = int(limit)
         start_t1 = self.request.QUERY_PARAMS.get('start_t1', None)
         start_t2 = self.request.QUERY_PARAMS.get('start_t2', None)
