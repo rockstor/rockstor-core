@@ -30,7 +30,9 @@ DisksView = Backbone.View.extend({
     'click .wipe': 'wipeDisk',
     'click .delete': 'deleteDisk',
     'click .btrfs_wipe': 'btrfsWipeDisk',
-    'click .btrfs_import': 'btrfsImportDisk',
+      'click .btrfs_import': 'btrfsImportDisk',
+      'click .slider-stop': 'smartOff',
+      'click .slider-start': 'smartOn'
   },
 
   initialize: function() {
@@ -55,6 +57,18 @@ DisksView = Backbone.View.extend({
     this.$("#disks-table-ph").html(this.disks_table_template({
       collection: this.collection
     }));
+
+      this.$('input.smart-status').simpleSlider({
+	  "theme": "volume",
+	  allowedValues: [0,1],
+	  snap: true
+      });
+
+      this.$('input.smart-status').each(function(i, el) {
+	  var slider = $(el).data('slider-object');
+	  slider.trackEvent = function(e) {};
+	  slider.dragger.unbind('mousedown');
+      });
     this.$(".pagination-ph").html(this.pagination_template({
       collection: this.collection
     }));
@@ -163,6 +177,45 @@ DisksView = Backbone.View.extend({
   cleanup: function() {
       this.$("[rel='tooltip']").tooltip('hide');
   },
+
+    getDiskName: function(event) {
+	var slider = $(event.currentTarget);
+	return slider.attr('data-disk-name');
+    },
+
+    getSliderVal: function(name) {
+	return this.$('input[data-disk-name='+name+']').data('slider-object').value;
+    },
+
+    setSliderVal: function(name, val) {
+	this.$('input[data-disk-name='+name+']').simpleSlider('setValue', val);
+    },
+
+    smartOff: function(event) {
+	var _this = this;
+	var disk_name = this.getDiskName(event);
+	if (this.getSliderVal(disk_name).toString() == "0") { return; }
+	$.ajax({
+	    url: '/api/disks/' + disk_name + '/disable-smart',
+	    type: 'POST',
+	    success: function(data, status, xhr) {
+		_this.render();
+	    }
+	});
+    },
+
+    smartOn: function(event) {
+	var _this = this;
+	var disk_name = this.getDiskName(event);
+	if (this.getSliderVal(disk_name).toString() == "1") { return; }
+	$.ajax({
+	    url: '/api/disks/' + disk_name + '/enable-smart',
+	    type: 'POST',
+	    success: function(data, status, xhr) {
+		_this.render();
+	    }
+	});
+    },
 
 });
 

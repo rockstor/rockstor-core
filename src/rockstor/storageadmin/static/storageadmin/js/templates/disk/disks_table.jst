@@ -9,6 +9,7 @@
 	<th scope="col" abbr="Model">Model</th>
 	<th scope="col" abbr="Transport">Transport</th>
 	<th scope="col" abbr="Vendor">Vendor</th>
+	<th scope="col" abbr="Smart">S.M.A.R.T</th>
       </tr>
     </thead>
     <tbody>
@@ -51,6 +52,21 @@
 	  <td><%= disk.get('model') %></td>
 	  <td><%= disk.get('transport') %></td>
 	  <td><%= disk.get('vendor') %></td>
+	  <% if (!disk.get('smart_available')) { %>
+	  <td>Not supported</td>
+	  <% } else { %>
+	  <td>
+	    <div class="slider-stop" data-disk-name="<%= disk.get('name') %>">OFF</div>
+	    <div class="slider-ph">
+	      <% if (disk.get('smart_enabled')) { %>
+	      <input type="text" class="smart-status" value="1" data-disk-name="<%= disk.get('name') %>"></input>
+	      <% } else { %>
+	      <input type="text" class="smart-status" value="0" data-disk-name="<%= disk.get('name') %>"></input>
+	      <% } %>
+	    </div>
+	    <div class="slider-start on" data-disk-name="<%= disk.get('name') %>">ON</div>
+	  </td>
+	  <% } %>
         </tr>
       <% }); %>
     </tbody>
