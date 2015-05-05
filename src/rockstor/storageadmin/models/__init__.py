@@ -46,4 +46,5 @@ from tls_certificate import TLSCertificate
 from rockon import (RockOn, DImage, DContainer, DPort, DVolume,
                     ContainerOption, DCustomConfig)
 from smart import (SMARTAttribute, SMARTCapability, SMARTErrorLog,
-                   SMARTErrorLogSummary, SMARTIdentity, SMARTInfo)
+                   SMARTErrorLogSummary, SMARTTestLog, SMARTTestLogDetail,
+                   SMARTIdentity, SMARTInfo)

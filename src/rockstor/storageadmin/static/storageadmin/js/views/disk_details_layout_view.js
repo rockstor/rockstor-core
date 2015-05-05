@@ -35,10 +35,12 @@ DiskDetailsLayoutView = RockstorLayoutView.extend({
 	this.smartinfo = new SmartInfo({diskName: this.diskName});
 	this.dependencies.push(this.disk);
 	this.dependencies.push(this.smartinfo);
+	this.active_tab = 0;
     },
 
     events: {
-	'click #smartinfo': 'refreshInfo'
+	'click #smartinfo': 'refreshInfo',
+	'click #test-start': 'startTest'
     },
 
     render: function() {
@@ -48,8 +50,22 @@ DiskDetailsLayoutView = RockstorLayoutView.extend({
 
     renderSubViews: function() {
 	console.log('smartinfo', this.smartinfo);
-	$(this.el).html(this.template({disk: this.disk, smartinfo: this.smartinfo}));
+	var capabilities = this.smartinfo.get('capabilities');
+	var test_capabilities = {};
+	capabilities.forEach(function(c) {
+	    if ((c.name == 'Short self-test routine recommended polling time') ||
+		(c.name == 'Extended self-test routine recommended polling time') ||
+		(c.name == 'Conveyance self-test routine recommended polling time')) {
+		var p = c.name.indexOf("routine");
+		var short_name = c.name.substring(0, p);
+		test_capabilities[short_name] = c.capabilities;
+	    }
+	});
+	console.log('test capabilities', test_capabilities);
+	$(this.el).html(this.template({disk: this.disk, smartinfo: this.smartinfo, tests: test_capabilities}));
 	this.$("ul.css-tabs").tabs("div.css-panes > div");
+	this.$("ul.css-tabs").data("tabs").click(this.active_tab);
+	this.active_tab = 0;
     },
 
     refreshInfo: function(event) {
@@ -63,6 +79,25 @@ DiskDetailsLayoutView = RockstorLayoutView.extend({
 	    type: 'POST',
 	    success: function(data, status, xhr) {
 		_this.render();
+	    },
+	    error: function(xhr, status, error) {
+		enableButton(button);
+	    }
+	});
+    },
+
+    startTest: function(event) {
+	var _this = this;
+	var button = $(event.currentTarget);
+	if (buttonDisabled(button)) return false;
+	disableButton(button);
+	console.log('test started');
+	$.ajax({
+	    url: '/api/disks/smart/info/' + _this.diskName,
+	    type: 'POST',
+	    success: function(data, status, xhr) {
+		_this.render();
+		_this.active_tab = 4;
 	    },
 	    error: function(xhr, status, error) {
 		enableButton(button);

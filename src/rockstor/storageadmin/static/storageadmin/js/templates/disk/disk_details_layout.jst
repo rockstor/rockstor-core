@@ -34,6 +34,8 @@
   <li><a href="#smartattributes" data-toggle="tab">Attributes</a></li>
   <li><a href="#smartcapabilities" data-toggle="tab">Capabilities</a></li>
   <li><a href="#smarterrorlogs" data-toggle="tab">Error Logs</a></li>
+  <li><a href="#smarttestlogs" data-toggle="tab">Self-Test Logs</a></li>
+  <li><a href="#smarttests" data-toggle="tab">Perform Tests</a></li>
 </ul>
 
 <div class="css-panes">
@@ -188,7 +190,7 @@
       <% } else { %>
         <p><%= smartinfo.get('errorlog')[0].line %></p>
 	<p><%= smartinfo.get('errorlog')[1].line %></p>
-      <table id="smarterrorlogsummary-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" summary="Table to S.M.A.R.T error log summary">
+      <table id="smarterrorlogsummary-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" summary="Table of S.M.A.R.T error log summary">
 	<thead>
 	  <tr>
 	    <th>Error #</th>
@@ -214,6 +216,79 @@
         <%= log.line %><br>
       <% }); %>
       <% } %>
+    </div>
+  </div>
+
+  <div id="smarttestlogs">
+    <div class="row-fluid">
+      <% if (smartinfo.get('testlog').length == 0) { %>
+      <h3>There are no Self-Test logs.</h3>
+      <% } else { %>
+      <p>Number of entries in the log: <%= smartinfo.get('testlog').length %></p>
+      <table id="smarttestlog-table" class="table table-condenced table-bordered table-hover table-striped tablesorter" summary="Table of S.M.A.R.T test log">
+	<thead>
+	  <tr>
+	    <th>Test #</th>
+	    <th>Type</th>
+	    <th>Status</th>
+	    <th>% Completed</th>
+	    <th>Lifetime hours</th>
+	    <th>LBA of the first error</th>
+	  </tr>
+	</thead>
+	<tbody>
+	  <% smartinfo.get('testlog').forEach(function(log) { %>
+	  <tr>
+	    <td><%= log.test_num %></td>
+	    <td><%= log.description %></td>
+	    <td><%= log.status %></td>
+	    <td><%= log.pct_completed %></td>
+	    <td><%= log.lifetime_hours %></td>
+	    <td><%= log.lba_of_first_error %></td>
+	  </tr>
+	  <% }); %>
+	</tbody>
+      </table>
+      <% smartinfo.get('testlogdetail').forEach(function(detail) { %>
+      <%= detail.line %><br>
+      <% }); %>
+      <% } %>
+    </div>
+  </div>
+
+  <div id="smarttests">
+    <div class="row-fluid">
+      <p>
+	Self-tests are built-in tests within the drive designed to recognize
+	drive fault conditions. All self-tests are safe to user data. The tests
+	can be performed during normal system operation, but will take longer
+	to complete if the drive is not idle. You will not be able to access
+	the drive's SMART data while a test is in progress.
+      </p>
+      <div class="span8">
+	<label class="control-label"></label>
+	<div class="form-box">
+	  <form class="form-horizontal" name="run-test-form" id="run-test-form">
+	    <div class="messages"></div>
+	    <div class="control-group">
+	      <label class="control-label" for="test_type">Test Type </label>
+	      <div class="controls">
+		<select id="test_name" name="test_name" title="select the test you want to run">
+		  <% for (t in tests) { %>
+		  <option value="<%= t %>"><%= t %>    (Estimated duration: <%= tests[t] %>)</option>
+		  <% } %>
+		</select>
+	      </div>
+	    </div>
+
+	    <div class="control-group">
+	      <div class="controls">
+		<button id="test-start" class="btn btn-primary" title="Start the test">Start Test</button>
+	      </div>
+	    </div>
+	  </form>
+	</div>
+      </div>
     </div>
   </div>
 </div>
