@@ -38,7 +38,7 @@ class ApplianceDetailView(rfc.GenericView):
                 serialized_data = ApplianceSerializer(data)
                 return Response(serialized_data.data)
             except:
-                return Response({})
+                return Response()
 
 
 class DiskDetailView(rfc.GenericView):
@@ -51,21 +51,20 @@ class DiskDetailView(rfc.GenericView):
                 serialized_data = DiskInfoSerializer(data)
                 return Response(serialized_data.data)
             except:
-                return Response({})
+                return Response()
 
 
 class GroupDetailView(rfc.GenericView):
     serializer_class = GroupSerializer
 
     def get(self, *args, **kwargs):
-        if 'groupname' in self.kwargs:
-                try:
-                    data = Group.objects.get(username=self.kwargs['groupname'])
-                    serialized_data = GroupSerializer(data)
-                    return Response(serialized_data.data)
-                except:
-                    # Render and empty list if no matches
-                    return Response({})
+        try:
+            data = Group.objects.get(username=self.kwargs['groupname'])
+            serialized_data = GroupSerializer(data)
+            return Response(serialized_data.data)
+        except:
+            # Render no response if no matches
+            return Response()
 
 
 class NetworkDetailView(rfc.GenericView):
@@ -77,7 +76,7 @@ class NetworkDetailView(rfc.GenericView):
             serialized_data = NetworkInterfaceSerializer(data)
             return Response(serialized_data.data)
         except:
-            return Response({})
+            return Response()
 
 
 class PoolDetailView(rfc.GenericView):
@@ -89,7 +88,7 @@ class PoolDetailView(rfc.GenericView):
             serialized_data = PoolInfoSerializer(data)
             return Response(serialized_data.data)
         except:
-            return Response({})
+            return Response()
 
 
 class DetailShareView(rfc.GenericView):

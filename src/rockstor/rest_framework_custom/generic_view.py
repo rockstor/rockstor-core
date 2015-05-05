@@ -26,8 +26,8 @@ from contextlib import contextmanager
 from storageadmin.util import handle_exception
 from storageadmin.exceptions import RockStorAPIException
 
-
-class GenericView(generics.ListCreateAPIView):
+# TODO: Only allow put, and patch where necessary. This works right now
+class GenericView(generics.ListCreateAPIView, generics.UpdateAPIView):
     authentication_classes = (DigestAuthentication, SessionAuthentication,
                               BasicAuthentication, OAuth2Authentication,)
     permission_classes = (IsAuthenticated,)

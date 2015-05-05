@@ -117,6 +117,8 @@ class ShareSerializer(serializers.ModelSerializer):
     snapshots = SnapshotSerializer(many=True, source='snapshot_set')
     pool = PoolInfoSerializer()
     nfs_exports = NFSExportSerializer(many=True, source='nfsexport_set')
+    r_usage = serializers.IntegerField(source='cur_rusage')
+    e_usage = serializers.IntegerField(source='cur_eusage')
 
     class Meta:
 	model = Share
