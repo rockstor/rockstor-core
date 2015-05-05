@@ -20,6 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Disk view, for anything at the disk level
 """
 
+import re
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (Disk, SMARTInfo, SMARTAttribute,
@@ -121,7 +122,17 @@ class DiskSMARTView(rfc.GenericView):
             if (command == 'info'):
                 return self._info(disk)
             elif (command == 'test'):
-                return self._run_test(disk)
+                test_type = request.DATA.get('test_type')
+                if (re.search('short', test_type, re.IGNORECASE) is not None):
+                    test_type = 'short'
+                elif (re.search('extended', test_type, re.IGNORECASE) is not None):
+                    test_type = 'long'
+                elif (re.search('conveyance', test_type, re.IGNORECASE) is not None):
+                    test_type = 'conveyance'
+                else:
+                    raise Exception('Unsupported Self-Test: %s' % test_type)
+                smart.run_test(disk.name, test_type)
+                return self._info(disk)
 
             e_msg = ('Unknown command: %s. Only valid commands are scan, '
                      'wipe' % command)

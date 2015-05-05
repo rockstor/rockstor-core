@@ -52,6 +52,7 @@ DiskDetailsLayoutView = RockstorLayoutView.extend({
 	console.log('smartinfo', this.smartinfo);
 	var capabilities = this.smartinfo.get('capabilities');
 	var test_capabilities = {};
+	var running_test = null;
 	capabilities.forEach(function(c) {
 	    if ((c.name == 'Short self-test routine recommended polling time') ||
 		(c.name == 'Extended self-test routine recommended polling time') ||
@@ -59,10 +60,12 @@ DiskDetailsLayoutView = RockstorLayoutView.extend({
 		var p = c.name.indexOf("routine");
 		var short_name = c.name.substring(0, p);
 		test_capabilities[short_name] = c.capabilities;
+	    } else if (c.name == 'Self-test execution status' && c.flag != 0) {
+		running_test = c.capabilities;
 	    }
 	});
-	console.log('test capabilities', test_capabilities);
-	$(this.el).html(this.template({disk: this.disk, smartinfo: this.smartinfo, tests: test_capabilities}));
+	$(this.el).html(this.template({disk: this.disk, smartinfo: this.smartinfo, tests: test_capabilities,
+				       running_test: running_test}));
 	this.$("ul.css-tabs").tabs("div.css-panes > div");
 	this.$("ul.css-tabs").data("tabs").click(this.active_tab);
 	this.active_tab = 0;
@@ -91,13 +94,16 @@ DiskDetailsLayoutView = RockstorLayoutView.extend({
 	var button = $(event.currentTarget);
 	if (buttonDisabled(button)) return false;
 	disableButton(button);
-	console.log('test started');
+	var test_type = $('#test_name').val();
+	console.log('test type', test_type);
 	$.ajax({
-	    url: '/api/disks/smart/info/' + _this.diskName,
+	    url: '/api/disks/smart/test/' + _this.diskName,
 	    type: 'POST',
+	    dataType: 'json',
+	    data: {'test_type': test_type},
 	    success: function(data, status, xhr) {
 		_this.render();
-		_this.active_tab = 4;
+		_this.active_tab = 5;
 	    },
 	    error: function(xhr, status, error) {
 		enableButton(button);

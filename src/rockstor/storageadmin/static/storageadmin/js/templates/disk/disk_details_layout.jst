@@ -271,6 +271,7 @@
 	  <form class="form-horizontal" name="run-test-form" id="run-test-form">
 	    <div class="messages"></div>
 	    <div class="control-group">
+	      <% if (!running_test) { %>
 	      <label class="control-label" for="test_type">Test Type </label>
 	      <div class="controls">
 		<select id="test_name" name="test_name" title="select the test you want to run">
@@ -286,9 +287,17 @@
 		<button id="test-start" class="btn btn-primary" title="Start the test">Start Test</button>
 	      </div>
 	    </div>
+	    <% } else { %>
+	    <div class="control-group">
+	      <h4><%= running_test %></h4>
+	      <p>Wait until this test finishes to start a new one. Refresh for an update.</p>
+	    </div>
+	    <% } %>
 	  </form>
 	</div>
       </div>
+
+
     </div>
   </div>
 </div>
