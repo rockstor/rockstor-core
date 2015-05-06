@@ -40,6 +40,8 @@ urlpatterns = patterns(
     url(r'^/(?P<sname>%s)/nfs/(?P<export_id>[0-9]+)$' % share_regex,
         ShareNFSDetailView.as_view(), name='nfs-view'),
 
+    #Individual snapshots don't have detailed representation in the web-ui. So
+    #thre is no need for SnapshotDetailView.
     url(r'^/(?P<sname>%s)/snapshots$' % share_regex,
         SnapshotView.as_view(), name='snapshot-view'),
     url(r'^/(?P<sname>%s)/snapshots/(?P<snap_name>%s)$' % (share_regex,
