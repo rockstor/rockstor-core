@@ -22,8 +22,7 @@ from snapshot import SnapshotView
 from share import ListShareView
 from pool import PoolListView
 from pool import PoolDetailView
-from disk import DiskListView
-from disk import DiskDetailView
+from disk import (DiskListView, DiskDetailView)
 from command import CommandView
 from share_iscsi import ShareIscsiView
 from appliances import ApplianceListView

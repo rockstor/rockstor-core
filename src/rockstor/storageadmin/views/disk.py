@@ -38,18 +38,11 @@ logger = logging.getLogger(__name__)
 class DiskListView(rfc.GenericView):
     serializer_class = DiskInfoSerializer
 
-    def _validate_disk(self, dname, request):
-        try:
-            return Disk.objects.get(name=dname)
-        except:
-            e_msg = ('Disk: %s does not exist' % dname)
-            handle_exception(Exception(e_msg), request)
-
     def get_queryset(self, *args, **kwargs):
         #do rescan on get.
         with self._handle_exception(self.request):
             self._scan()
-        return Disk.objects.all().order_by('name')
+            return Disk.objects.all().order_by('name')
 
     @transaction.atomic
     def _scan(self):
@@ -96,65 +89,24 @@ class DiskListView(rfc.GenericView):
         p.uuid = btrfs_uuid(d.name)
         return p
 
-    @transaction.atomic
-    def _wipe(self, dname, request):
-        disk = self._validate_disk(dname, request)
-        try:
-            wipe_disk(disk.name)
-        except Exception, e:
-            logger.exception(e)
-            e_msg = ('Failed to wipe the disk due to a system error.')
-            handle_exception(Exception(e_msg), request)
-
-        disk.parted = False
-        disk.btrfs_uuid = None
-        disk.save()
-        return Response(DiskInfoSerializer(disk).data)
-
-    def _btrfs_disk_import(self, dname, request):
-        """stub method for now"""
-        e_msg = ('Failed to import any pools, shares and snapshots that '
-                 'may be on the disk: %s. Import or backup manually' % dname)
-        handle_exception(Exception(e_msg), request)
-
-    def _blink_drive(self, dname, request):
-        disk = self._validate_disk(dname, request)
-        total_time = int(request.data.get('total_time', 90))
-        blink_time = int(request.data.get('blink_time', 15))
-        sleep_time = int(request.data.get('sleep_time', 5))
-        blink_disk(disk.name, total_time, blink_time, sleep_time)
-        return Response()
-
     def post(self, request, command, dname=None):
         with self._handle_exception(request):
             if (command == 'scan'):
                 return self._scan()
-            if (command == 'wipe'):
-                return self._wipe(dname, request)
-            if (command == 'btrfs-wipe'):
-                return self._wipe(dname, request)
-            if (command == 'btrfs-disk-import'):
-                return self._btrfs_disk_import(dname, request)
-            if (command == 'blink-drive'):
-                return self._blink_drive(dname, request)
 
-            e_msg = ('Unknown command: %s. Only valid commands are scan, '
-                     'wipe' % command)
-            handle_exception(Exception(e_msg), request)
-
-    @staticmethod
-    @contextmanager
-    def _handle_exception(request, msg=None):
-        try:
-            yield
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request, msg)
+        e_msg = ('Unsupported command(%s).' % command)
+        handle_exception(Exception(e_msg), request)
 
 
 class DiskDetailView(rfc.GenericView):
     serializer_class = DiskInfoSerializer
+
+    def _validate_disk(self, dname, request):
+        try:
+            return Disk.objects.get(name=dname)
+        except:
+            e_msg = ('Disk(%s) does not exist' % dname)
+            handle_exception(Exception(e_msg), request)
 
     def get(self, *args, **kwargs):
         if 'dname' in self.kwargs:
@@ -184,3 +136,47 @@ class DiskDetailView(rfc.GenericView):
             e_msg = ('Could not remove disk(%s) due to system error' % dname)
             logger.exception(e)
             handle_exception(Exception(e_msg), request)
+
+    def post(self, request, command, dname):
+        with self._handle_exception(request):
+            if (command == 'wipe'):
+                return self._wipe(dname, request)
+            if (command == 'btrfs-wipe'):
+                return self._wipe(dname, request)
+            if (command == 'btrfs-disk-import'):
+                return self._btrfs_disk_import(dname, request)
+            if (command == 'blink-drive'):
+                return self._blink_drive(dname, request)
+
+        e_msg = ('Unsupported command(%s). Valid commands are wipe, btrfs-wipe,'
+                 ' btrfs-disk-import, blink-drive' % command)
+        handle_exception(Exception(e_msg), request)
+
+    @transaction.atomic
+    def _wipe(self, dname, request):
+        disk = self._validate_disk(dname, request)
+        try:
+            wipe_disk(disk.name)
+        except Exception, e:
+            logger.exception(e)
+            e_msg = ('Failed to wipe the disk due to a system error.')
+            handle_exception(Exception(e_msg), request)
+
+        disk.parted = False
+        disk.btrfs_uuid = None
+        disk.save()
+        return Response(DiskInfoSerializer(disk).data)
+
+    def _btrfs_disk_import(self, dname, request):
+        """stub method for now"""
+        e_msg = ('Failed to import any pools, shares and snapshots that '
+                 'may be on the disk: %s. Import or backup manually' % dname)
+        handle_exception(Exception(e_msg), request)
+
+    def _blink_drive(self, dname, request):
+        disk = self._validate_disk(dname, request)
+        total_time = int(request.data.get('total_time', 90))
+        blink_time = int(request.data.get('blink_time', 15))
+        sleep_time = int(request.data.get('sleep_time', 5))
+        blink_disk(disk.name, total_time, blink_time, sleep_time)
+        return Response()
