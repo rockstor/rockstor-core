@@ -31,11 +31,12 @@ logger = logging.getLogger(__name__)
 class PoolBalanceView(rfc.GenericView):
     serializer_class = PoolBalanceSerializer
 
-    def _validate_pool(self, pname, request):
+    @staticmethod
+    def _validate_pool(pname, request):
         try:
             return Pool.objects.get(name=pname)
         except:
-            e_msg = ('Pool: %s does not exist' % pname)
+            e_msg = ('Pool(%s) does not exist' % pname)
             handle_exception(Exception(e_msg), request)
 
     def get_queryset(self, *args, **kwargs):
@@ -45,8 +46,9 @@ class PoolBalanceView(rfc.GenericView):
             self._balance_status(pool, disk)
             return PoolBalance.objects.filter(pool=pool).order_by('-id')
 
-    @transaction.commit_on_success
-    def _balance_status(self, pool, disk):
+    @staticmethod
+    @transaction.atomic
+    def _balance_status(pool, disk):
         try:
             ps = PoolBalance.objects.filter(pool=pool).order_by('-id')[0]
         except:
@@ -56,7 +58,7 @@ class PoolBalanceView(rfc.GenericView):
             PoolBalance.objects.filter(id=ps.id).update(**cur_status)
         return ps
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request, pname, command=None):
         pool = self._validate_pool(pname, request)
         if (command is not None and command != 'status'):
