@@ -163,13 +163,7 @@ class PoolView(rfc.GenericView):
                 e_msg = ('Unsupported raid level. use one of: %s' %
                          self.RAID_LEVELS)
                 handle_exception(Exception(e_msg), request)
-            # todo can we consolidate these checks(and tests)? raid0 and raid1 both need > 1 disk
-            # if (raid_level in self.RAID_LEVELS[1:3] and len(disks) == 1):
-            if (raid_level == self.RAID_LEVELS[1] and len(disks) == 1):
-                e_msg = ('More than one disk is required for the raid '
-                         'level: %s' % raid_level)
-                handle_exception(Exception(e_msg), request)
-            if (raid_level == self.RAID_LEVELS[2] and len(disks) < 2):
+            if (raid_level in self.RAID_LEVELS[1:3] and len(disks) == 1):
                 e_msg = ('At least two disks are required for the raid level: '
                          '%s' % raid_level)
                 handle_exception(Exception(e_msg), request)
