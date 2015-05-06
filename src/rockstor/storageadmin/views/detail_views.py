@@ -17,17 +17,26 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from storageadmin.models import (Appliance, Disk, Group, NetworkInterface,
-                                 Pool, Share,)
+                                 Pool, Share, NFSExport, NFSExportGroup,
+                                 )
 from storageadmin.serializers import (ApplianceSerializer, DiskInfoSerializer,
                                       GroupSerializer, NetworkInterfaceSerializer,
-                                      PoolInfoSerializer, ShareSerializer)
+                                      PoolInfoSerializer, ShareSerializer,
+                                      NFSExportGroupSerializer)
+from nfs_helpers import (create_nfs_export_input, parse_options,
+                         dup_export_check, refresh_wrapper,
+                         validate_export_group, teardown_wrapper)
+from share_helpers import validate_share
+
 import rest_framework_custom as rfc
 from rest_framework.response import Response
-from rest_framework import generics
+from rest_framework.generics import UpdateAPIView
 from storageadmin.util import handle_exception
 from fs.btrfs import share_usage, share_id, update_quota
 from django.db import transaction
 from django.conf import settings
+import logging
+logger = logging.getLogger(__name__)
 
 
 class ApplianceDetailView(rfc.GenericView):
@@ -96,7 +105,7 @@ class PoolDetailView(rfc.GenericView):
             return Response()
 
 
-class DetailShareView(rfc.GenericView, generics.UpdateAPIView):
+class DetailShareView(rfc.GenericView, UpdateAPIView):
     serializer_class = ShareSerializer
 
     def get(self, *args, **kwargs):
@@ -149,3 +158,55 @@ class DetailShareView(rfc.GenericView, generics.UpdateAPIView):
             share.size = new_size
             share.save()
             return Response(ShareSerializer(share).data)
+
+
+class DetailShareNFSView(rfc.GenericView, UpdateAPIView):
+
+    def get(self, *args, **kwargs):
+        if ('export_id' in self.kwargs):
+            self.paginate_by = 0
+            try:
+                return NFSExportGroup.objects.get(id=self.kwargs['export_id'])
+            except:
+                return Response()
+
+    @transaction.commit_on_success
+    def put(self, request, sname, export_id):
+        with self._handle_exception(request):
+            share = validate_share(sname, request)
+            eg = validate_export_group(export_id, request)
+            options = parse_options(request)
+            dup_export_check(share, options['host_str'], request,
+                             export_id=int(export_id))
+            NFSExportGroup.objects.filter(id=export_id).update(**options)
+            NFSExportGroup.objects.filter(id=export_id)[0].save()
+            cur_exports = list(NFSExport.objects.all())
+            exports = create_nfs_export_input(cur_exports)
+            refresh_wrapper(exports, request, logger)
+            nfs_serializer = NFSExportGroupSerializer(eg)
+            return Response(nfs_serializer.data)
+
+    @transaction.commit_on_success
+    def delete(self, request, sname, export_id):
+        with self._handle_exception(request):
+            share = validate_share(sname, request)
+            eg = validate_export_group(export_id, request)
+            cur_exports = list(NFSExport.objects.all())
+            export = NFSExport.objects.get(export_group=eg, share=share)
+            for e in NFSExport.objects.filter(share=share):
+                if (e.export_group.host_str == eg.host_str):
+                    export_pt = ('%s%s' % (settings.NFS_EXPORT_ROOT,
+                                           share.name))
+                    if (e.export_group.nohide):
+                        snap_name = e.mount.split(e.share.name + '_')[-1]
+                        export_pt = ('%s%s/%s' % (settings.NFS_EXPORT_ROOT,
+                                                  e.share.name, snap_name))
+                    teardown_wrapper(export_pt, request, logger)
+                    cur_exports.remove(e)
+            exports = create_nfs_export_input(cur_exports)
+            export.delete()
+            if (NFSExport.objects.filter(export_group=eg).count() == 0):
+                #delete only when this is the only share in the group
+                eg.delete()
+            refresh_wrapper(exports, request, logger)
+            return Response()

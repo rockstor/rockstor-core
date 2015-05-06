@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from home import (login_page, login_submit, logout_user, home)
 from snapshot import SnapshotView
-from share import ShareView
+from share import ListShareView
 from pool import PoolView
 from disk import DiskView
 from command import CommandView
@@ -29,7 +29,7 @@ from login import LoginView
 from user import UserView
 from support import SupportView
 from dashboardconfig import DashboardConfigView
-from share_nfs import ShareNFSView
+from share_nfs import ListShareNFSView
 from network import NetworkView
 from pool_scrub import PoolScrubView
 from setup_user import SetupUserView

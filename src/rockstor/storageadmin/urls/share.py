@@ -17,10 +17,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf.urls import patterns, url
-from storageadmin.views import (ShareView, ShareNFSView,
+from storageadmin.views import (ListShareView, ListShareNFSView,
                                 ShareACLView, SnapshotView, ShareIscsiView,
                                 ShareCommandView,)
-from storageadmin.views.detail_views import DetailShareView
+from storageadmin.views.detail_views import (DetailShareView, DetailShareView,
+                                             DetailShareNFSView)
+
 from django.conf import settings
 
 share_regex = settings.SHARE_REGEX
@@ -30,14 +32,14 @@ share_command = 'rollback|clone|compress'
 
 urlpatterns = patterns(
     '',
-    url(r'^$', ShareView.as_view(), name='share-view'),
+    url(r'^$', ListShareView.as_view(), name='share-view'),
     url(r'^/(?P<sname>%s)$' % share_regex, DetailShareView.as_view(),
         name='share-view'),
 
-    url(r'^/(?P<sname>%s)/nfs$' % share_regex, ShareNFSView.as_view(),
+    url(r'^/(?P<sname>%s)/nfs$' % share_regex, ListShareNFSView.as_view(),
         name='nfs-view'),
     url(r'^/(?P<sname>%s)/nfs/(?P<export_id>[0-9]+)$' % share_regex,
-        ShareNFSView.as_view(), name='nfs-view'),
+        DetailShareNFSView.as_view(), name='nfs-view'),
 
     url(r'^/(?P<sname>%s)/snapshots$' % share_regex,
         SnapshotView.as_view(), name='snapshot-view'),

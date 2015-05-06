@@ -32,7 +32,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class ShareView(rfc.GenericView):
+class ListShareView(rfc.GenericView):
     serializer_class = ShareSerializer
 
     def get_queryset(self, *args, **kwargs):

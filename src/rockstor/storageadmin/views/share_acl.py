@@ -24,14 +24,14 @@ from storageadmin.util import handle_exception
 from storageadmin.serializers import ShareSerializer
 from storageadmin.exceptions import RockStorAPIException
 from fs.btrfs import (mount_share, is_share_mounted, umount_root)
-from storageadmin.views import ShareView
+from storageadmin.views import ListShareView
 from system.acl import (chown, chmod)
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-class ShareACLView(ShareView):
+class ShareACLView(ListShareView):
 
     @transaction.commit_on_success
     def post(self, request, sname):
