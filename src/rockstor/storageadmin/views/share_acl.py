@@ -24,18 +24,15 @@ from storageadmin.util import handle_exception
 from storageadmin.serializers import ShareSerializer
 from storageadmin.exceptions import RockStorAPIException
 from fs.btrfs import (mount_share, is_share_mounted, umount_root)
-from storageadmin.views import ListShareView
+from storageadmin.views import ShareListView
 from system.acl import (chown, chmod)
 
-import logging
-logger = logging.getLogger(__name__)
 
+class ShareACLView(ShareListView):
 
-class ShareACLView(ListShareView):
-
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request, sname):
-        try:
+        with self._handle_exception(request):
             share = Share.objects.get(name=sname)
             options = {
                 'owner': 'root',
@@ -68,10 +65,3 @@ class ShareACLView(ListShareView):
             if (force_mount is True):
                 umount_root(mnt_pt)
             return Response(ShareSerializer(share).data)
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)
-
-    def delete(self, request, sname):
-        pass
