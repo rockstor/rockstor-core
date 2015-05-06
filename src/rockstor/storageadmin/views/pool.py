@@ -35,6 +35,17 @@ logger = logging.getLogger(__name__)
 
 
 class PoolMixin(object):
+    serializer_class = PoolInfoSerializer
+    RAID_LEVELS = ('single', 'raid0', 'raid1', 'raid10', 'raid5', 'raid6')
+    ADD_THRESHOLD = .3  # min free/total ratio to allow a device addition
+    SUPPORTED_MIGRATIONS = {
+        'single': ('single', 'raid0', 'raid1', 'raid10',),
+        'raid0': ('raid0', 'raid1', 'raid10',),
+        'raid1': ('raid1', 'raid10',),
+        'raid10': ('raid10',),
+        'raid5': ('raid5',),
+        'raid6': ('raid6',),
+        }
 
     @staticmethod
     def _validate_disk(d, request):
@@ -44,9 +55,72 @@ class PoolMixin(object):
             e_msg = ('Disk(%s) does not exist' % d)
             handle_exception(Exception(e_msg), request)
 
-    def _remount(self, request, pool):
-        compression = self._validate_compression(request)
-        mnt_options = self._validate_mnt_options(request)
+    @staticmethod
+    def _validate_compression(request):
+        compression = request.data.get('compression', 'no')
+        if (compression is None):
+            compression = 'no'
+        if (compression not in settings.COMPRESSION_TYPES):
+            e_msg = ('Unsupported compression algorithm(%s). Use one of '
+                     '%s' % (compression, settings.COMPRESSION_TYPES))
+            handle_exception(Exception(e_msg), request)
+        return compression
+
+    @staticmethod
+    def _validate_mnt_options(request):
+        mnt_options = request.data.get('mnt_options', None)
+        if (mnt_options is None):
+            return ''
+        allowed_options = {
+            'alloc_start': int,
+            'autodefrag': None,
+            'clear_cache': None,
+            'commit': int,
+            'compress-force': settings.COMPRESSION_TYPES,
+            'discard': None,
+            'fatal_errors': None,
+            'inode_cache': None,
+            'max_inline': int,
+            'metadata_ratio': int,
+            'noacl': None,
+            'nodatacow': None,
+            'nodatasum': None,
+            'nospace_cache': None,
+            'space_cache': None,
+            'ssd': None,
+            'ssd_spread': None,
+            'thread_pool': int,
+            'noatime': None,
+            '': None,
+        }
+        o_fields = mnt_options.split(',')
+        for o in o_fields:
+            v = None
+            if (re.search('=', o) is not None):
+                o, v = o.split('=')
+            if (o not in allowed_options):
+                e_msg = ('mount option(%s) not allowed. Make sure there are '
+                         'no whitespaces in the input. Allowed options: %s' %
+                         (o, allowed_options.keys()))
+                handle_exception(Exception(e_msg), request)
+            if ((o == 'compress-force' and
+                 v not in allowed_options['compress-force'])):
+                e_msg = ('compress-force is only allowed with %s' %
+                         (settings.COMPRESSION_TYPES))
+                handle_exception(Exception(e_msg), request)
+            if (type(allowed_options[o]) is int):
+                try:
+                    int(v)
+                except:
+                    e_msg = ('Value for mount option(%s) must be an integer' %
+                             (o))
+                    handle_exception(Exception(e_msg), request)
+        return mnt_options
+
+    @classmethod
+    def _remount(cls, request, pool):
+        compression = cls._validate_compression(request)
+        mnt_options = cls._validate_mnt_options(request)
         if ((compression == pool.compression and
              mnt_options == pool.mnt_options)):
             return Response()
@@ -103,18 +177,6 @@ class PoolMixin(object):
 
 
 class PoolListView(PoolMixin, rfc.GenericView):
-    serializer_class = PoolInfoSerializer
-    RAID_LEVELS = ('single', 'raid0', 'raid1', 'raid10', 'raid5', 'raid6')
-    ADD_THRESHOLD = .3  # min free/total ratio to allow a device addition
-    SUPPORTED_MIGRATIONS = {
-        'single': ('single', 'raid0', 'raid1', 'raid10',),
-        'raid0': ('raid0', 'raid1', 'raid10',),
-        'raid1': ('raid1', 'raid10',),
-        'raid10': ('raid10',),
-        'raid5': ('raid5',),
-        'raid6': ('raid6',),
-        }
-
     def get_queryset(self, *args, **kwargs):
         sort_col = self.request.query_params.get('sortby', None)
         if (sort_col is not None and sort_col == 'usage'):
@@ -127,69 +189,7 @@ class PoolListView(PoolMixin, rfc.GenericView):
                           reverse=reverse)
         return Pool.objects.all()
 
-    @staticmethod
-    def _validate_mnt_options(request):
-        mnt_options = request.data.get('mnt_options', None)
-        if (mnt_options is None):
-            return ''
-        allowed_options = {
-            'alloc_start': int,
-            'autodefrag': None,
-            'clear_cache': None,
-            'commit': int,
-            'compress-force': settings.COMPRESSION_TYPES,
-            'discard': None,
-            'fatal_errors': None,
-            'inode_cache': None,
-            'max_inline': int,
-            'metadata_ratio': int,
-            'noacl': None,
-            'nodatacow': None,
-            'nodatasum': None,
-            'nospace_cache': None,
-            'space_cache': None,
-            'ssd': None,
-            'ssd_spread': None,
-            'thread_pool': int,
-            'noatime': None,
-            '': None,
-        }
-        o_fields = mnt_options.split(',')
-        for o in o_fields:
-            v = None
-            if (re.search('=', o) is not None):
-                o, v = o.split('=')
-            if (o not in allowed_options):
-                e_msg = ('mount option(%s) not allowed. Make sure there are '
-                         'no whitespaces in the input. Allowed options: %s' %
-                         (o, allowed_options.keys()))
-                handle_exception(Exception(e_msg), request)
-            if ((o == 'compress-force' and
-                 v not in allowed_options['compress-force'])):
-                e_msg = ('compress-force is only allowed with %s' %
-                         (settings.COMPRESSION_TYPES))
-                handle_exception(Exception(e_msg), request)
-            if (type(allowed_options[o]) is int):
-                try:
-                    int(v)
-                except:
-                    e_msg = ('Value for mount option(%s) must be an integer' %
-                             (o))
-                    handle_exception(Exception(e_msg), request)
-        return mnt_options
-
-    @staticmethod
-    def _validate_compression(request):
-        compression = request.data.get('compression', 'no')
-        if (compression is None):
-            compression = 'no'
-        if (compression not in settings.COMPRESSION_TYPES):
-            e_msg = ('Unsupported compression algorithm(%s). Use one of '
-                     '%s' % (compression, settings.COMPRESSION_TYPES))
-            handle_exception(Exception(e_msg), request)
-        return compression
-
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request):
         """
         input is a list of disks, raid_level and name of the pool.
@@ -266,8 +266,6 @@ class PoolListView(PoolMixin, rfc.GenericView):
 
 
 class PoolDetailView(PoolMixin, rfc.GenericView):
-    serializer_class = PoolInfoSerializer
-
     def get(self, *args, **kwargs):
         try:
             data = Pool.objects.get(name=self.kwargs['pname'])
@@ -448,7 +446,7 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
             pool.save()
             return Response(PoolInfoSerializer(pool).data)
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def delete(self, request, pname):
         with self._handle_exception(request):
             if (pname == settings.ROOT_POOL):
