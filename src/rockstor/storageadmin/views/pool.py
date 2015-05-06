@@ -36,7 +36,8 @@ logger = logging.getLogger(__name__)
 
 class PoolMixin(object):
 
-    def _validate_disk(self, d, request):
+    @staticmethod
+    def _validate_disk(d, request):
         try:
             return Disk.objects.get(name=d)
         except:
@@ -50,7 +51,7 @@ class PoolMixin(object):
              mnt_options == pool.mnt_options)):
             return Response()
 
-        with transaction.commit_on_success():
+        with transaction.atomic():
             pool.compression = compression
             pool.mnt_options = mnt_options
             pool.save()
@@ -101,7 +102,7 @@ class PoolMixin(object):
         return Response(PoolInfoSerializer(pool).data)
 
 
-class PoolListView(rfc.GenericView, PoolMixin):
+class PoolListView(PoolMixin, rfc.GenericView):
     serializer_class = PoolInfoSerializer
     RAID_LEVELS = ('single', 'raid0', 'raid1', 'raid10', 'raid5', 'raid6')
     ADD_THRESHOLD = .3  # min free/total ratio to allow a device addition
@@ -126,7 +127,8 @@ class PoolListView(rfc.GenericView, PoolMixin):
                           reverse=reverse)
         return Pool.objects.all()
 
-    def _validate_mnt_options(self, request):
+    @staticmethod
+    def _validate_mnt_options(request):
         mnt_options = request.data.get('mnt_options', None)
         if (mnt_options is None):
             return ''
@@ -176,7 +178,8 @@ class PoolListView(rfc.GenericView, PoolMixin):
                     handle_exception(Exception(e_msg), request)
         return mnt_options
 
-    def _validate_compression(self, request):
+    @staticmethod
+    def _validate_compression(request):
         compression = request.data.get('compression', 'no')
         if (compression is None):
             compression = 'no'
@@ -262,7 +265,7 @@ class PoolListView(rfc.GenericView, PoolMixin):
             return Response(PoolInfoSerializer(p).data)
 
 
-class PoolDetailView(rfc.GenericView, PoolMixin):
+class PoolDetailView(PoolMixin, rfc.GenericView):
     serializer_class = PoolInfoSerializer
 
     def get(self, *args, **kwargs):
@@ -273,7 +276,7 @@ class PoolDetailView(rfc.GenericView, PoolMixin):
         except:
             return Response()
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def put(self, request, pname, command):
         """
         resize a pool.
@@ -446,9 +449,7 @@ class PoolDetailView(rfc.GenericView, PoolMixin):
             return Response(PoolInfoSerializer(pool).data)
 
     @transaction.commit_on_success
-    # Added the command argument here after trying the DELETE button and
-    # getting a Django debug page complaining about its absence
-    def delete(self, request, pname, command):
+    def delete(self, request, pname):
         with self._handle_exception(request):
             if (pname == settings.ROOT_POOL):
                 e_msg = ('Deletion of Pool(%s) is not allowed as it contains '
