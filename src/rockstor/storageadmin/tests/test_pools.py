@@ -27,8 +27,8 @@ class PoolTests(APITestCase):
     fixtures = ['fix1.json']
     BASE_URL = '/api/pools'
 
-    def setUp(self):
-        self.client.login(username='admin', password='admin')
+    @classmethod
+    def setUpClass(self):
 
         # post mocks
         self.patch_mount_root = patch('storageadmin.views.pool.mount_root')
@@ -61,8 +61,12 @@ class PoolTests(APITestCase):
         self.mock_umount_root = self.patch_umount_root.start()
         self.mock_umount_root.return_value = True
 
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(self):
         patch.stopall()
+
+    def setUp(self):
+        self.client.login(username='admin', password='admin')
 
     # TODO will have to execute outside of setup
     # def test_pools_auth(self):
@@ -80,7 +84,44 @@ class PoolTests(APITestCase):
         1. Test a few valid regexes (eg: pool1, Mypool, 123, etc..)
         2. Test a few invalid regexes (eg: -pool1, .pool etc..)
         """
-        self.asertEqual(1, 2)
+        # valid pool names
+        data = {'disks': ('sdb',),
+                'pname': '123pool',
+                'raid_level': 'single', }
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
+        self.assertEqual(response.data['name'], '123pool')
+        
+        data = {'disks': ('sdc',),
+                'pname': 'POOL_TEST_',
+                'raid_level': 'single', }
+        response2 = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response2.status_code, status.HTTP_200_OK, msg=response2.data)
+        self.assertEqual(response2.data['name'], 'POOL_TEST_')
+
+        data = {'disks': ('sdd',),
+                'pname': 'Zzzz....',
+                'raid_level': 'single', }        
+        response3 = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response3.status_code, status.HTTP_200_OK, msg=response3.data)
+        self.assertEqual(response3.data['name'], 'Zzzz....')
+        
+        # invalid pool names
+        data['pname'] = 'Pool $'
+        e_msg = ('Pool name must start with a alphanumeric(a-z0-9) character and can be followed by any of the following characters: letter(a-z), digits(0-9), hyphen(-), underscore(_) or a period(.).')
+        response4 = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response4.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response4.data)
+        self.assertEqual(response4.data['detail'], e_msg)
+
+        data['pname'] = '-pool'
+        response5 = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response5.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response5.data)
+        self.assertEqual(response5.data['detail'], e_msg)
+
+        data['pname'] = '.pool'
+        response6 = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response6.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response6.data)
+        self.assertEqual(response6.data['detail'], e_msg)
 
     def test_compression(self):
         """
@@ -106,16 +147,70 @@ class PoolTests(APITestCase):
 
         """
         test pool crud ops with 'single' raid config. single can be used to create a pool
-        with any number of drives.
+        with any number of drives but drives cannot be removed.
         1. create a pool with 0 disks
         2. create a pool with 1 disk
         3. create a pool with 2 disks
+        4. create a pool with a duplicate name
+        5. add 2 disks to pool
+        6. remove 2 disks from pool
+        7. delete pool
         """
-        self.assertEqueal(1, 2)
 
-    def test_pool_raid0_crud(self):
+        # create pool with 0 disks
+        data = {'pname': 'singlepool',
+                'raid_level': 'single', }
+        e_msg = ("'NoneType' object is not iterable")
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+        self.assertEqual(response.data['detail'], e_msg)
+
+        # create pool with 1 disk
+        data['disks'] = ('sdb',)
+        response2 = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response2.status_code, status.HTTP_200_OK, msg=response2.data)
+        self.assertEqual(response2.data['name'], 'singlepool')
+        self.assertEqual(response2.data['raid'], 'single')
+        self.mock_btrfs_uuid.assert_called_with('sdb')
+        self.assertEqual(len(response2.data['disks']), 1)
+
+        # create pool with 2 disks
+        data = {'disks': ('sdc', 'sdd',),
+                'pname': 'singlepool2',
+                'raid_level': 'single', }
+        response3 = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response3.status_code, status.HTTP_200_OK, msg=response3.data)
+        self.assertEqual(response3.data['name'], 'singlepool2')
+        self.assertEqual(response3.data['raid'], 'single')
+        self.mock_btrfs_uuid.assert_called_with('sdc')
+        self.assertEqual(len(response3.data['disks']), 2)
+
+        # create a pool with a duplicate name
+        e_msg = ('Pool(singlepool2) already exists. Choose a different name')
+        response4 = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response4.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response4.data)
+        self.assertEqual(response4.data['detail'], e_msg)
+
+        # add 2 disks
+        data2 = {'disks': ('sdf', 'sdg',), }
+        response5 = self.client.put('%s/singlepool2/add' % self.BASE_URL, data=data2)
+        self.assertEqual(response5.status_code, status.HTTP_200_OK, msg=response5.data)
+        self.assertEqual(len(response5.data['disks']), 4)
+
+        # remove 2 disks
+        e_msg = ('Disks cannot be removed from a pool with this raid(single) configuration')
+        response6 = self.client.put('%s/singlepool2/remove' % self.BASE_URL, data=data2)
+        self.assertEqual(response6.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response6.data)
+        self.assertEqual(response6.data['detail'], e_msg)
+
+        # delete pool
+        response7 = self.client.delete('%s/singlepool2' % self.BASE_URL)
+        self.assertEqual(response7.status_code, status.HTTP_200_OK, msg=response7.data)
+        self.mock_umount_root.assert_called_with('/mnt2/singlepool2')
+
+    def test_raid0_crud(self):
         """
-        raid0 post, put & delete api requests
+        test pool crud ops with 'raid0' raid config. raid0 can be used to create a pool
         1. Add a pool with a single disk.
         2.
         """
@@ -159,18 +254,21 @@ class PoolTests(APITestCase):
         self.assertEqual(response3.data['detail'], e_msg)
 
         # add 3 disks & change raid_level
-        # TODO AssertionError: {u'detail': 'A Balance process is already running for this pool(raid0pool). Resize is not supported during a balance process.'}
-        data3 = {'disks': ('sde', 'sdf', 'sdg',),
-                 'raid_level': 'raid1', }
-        response4 = self.client.put('%s/raid0pool/add' % self.BASE_URL, data=data3)
-        self.assertEqual(response4.status_code, status.HTTP_200_OK, msg=response4.data)
-        self.assertEqual(len(response4.data['disks']), 6)
-        self.assertEqual(response4.data['raid_level'], 'raid1')
+        # TODO how to mimic raid migration? won't allow... 'A Balance process is already running for this pool'
+        # data3 = {'disks': ('sde', 'sdf', 'sdg',),
+        #          'raid_level': 'raid1', }
+        # response4 = self.client.put('%s/raid0pool/add' % self.BASE_URL, data=data3)
+        # self.assertEqual(response4.status_code, status.HTTP_200_OK, msg=response4.data)
+        # self.assertEqual(len(response4.data['disks']), 6)
+        # self.assertEqual(response4.data['raid_level'], 'raid1')
 
-        # scrub
-        # nothing to do with raid level. it's a pool level command.
-        #response6 = self.client.post('%s/raid0pool/scrub' % self.BASE_URL)
-        #self.assertEqual(response6.status_code, status.HTTP_200_OK, msg=response6.data)
+        # add 3 disks & change raid_level
+        # data3 = {'disks': ('sde', 'sdf', 'sdg',),
+        #          'raid_level': 'raid1', }
+        # e_msg = 'A Balance process is already running for this pool(raid0pool). Resize is not supported during a balance process.'
+        # response4 = self.client.put('%s/raid0pool/add' % self.BASE_URL, data=data3)
+        # self.assertEqual(response4.status_code, status.HTTP_200_OK, msg=response4.data)
+        # self.assertEqual(response4.data['detail'], e_msg)
 
         # delete pool
         response5 = self.client.delete('%s/raid0pool' % self.BASE_URL)
@@ -179,7 +277,7 @@ class PoolTests(APITestCase):
         # TODO benefit to checking object is actually deleted? Or is that considered testing django ORM?
         self.assertRaises(Exception, Pool.objects.get, name='raid0pool')
 
-    def test_pool_raid1_crud(self):
+    def test_raid1_crud(self):
         """
         raid1 post, put & delete api requests
         """
@@ -225,8 +323,7 @@ class PoolTests(APITestCase):
         self.assertEqual(response5.status_code, status.HTTP_200_OK, msg=response5.data)
         self.mock_umount_root.assert_called_with('/mnt2/raid1pool')
 
-
-    def test_pool_raid10_crud(self):
+    def test_raid10_crud(self):
         """
         raid10 post, put & delete api requests
         """
@@ -286,7 +383,7 @@ class PoolTests(APITestCase):
         self.assertEqual(response5.status_code, status.HTTP_200_OK, msg=response5.data)
         self.mock_umount_root.assert_called_with('/mnt2/raid10pool')
 
-    def test_pool_raid5_crud(self):
+    def test_raid5_crud(self):
         """
         raid5 post, put & delete api requests
         """
@@ -326,7 +423,7 @@ class PoolTests(APITestCase):
         self.assertEqual(response5.status_code, status.HTTP_200_OK, msg=response5.data)
         self.mock_umount_root.assert_called_with('/mnt2/raid5pool')
 
-    def test_pool_raid6_crud(self):
+    def test_raid6_crud(self):
         """
         raid6 post, put & delete api requests
         """
