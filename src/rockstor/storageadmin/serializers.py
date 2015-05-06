@@ -61,7 +61,7 @@ class NFSExportSerializer(serializers.ModelSerializer):
 
 
 class NFSExportGroupSerializer(serializers.ModelSerializer):
-    exports = NFSExportSerializer(source='nfsexport_set')
+    exports = NFSExportSerializer(many=True, source='nfsexport_set')
 
     class Meta:
         model = NFSExportGroup
@@ -167,7 +167,7 @@ class SFTPSerializer(serializers.ModelSerializer):
 
 
 class PluginSerializer(serializers.ModelSerializer):
-    
+
     class Meta:
 	model = Plugin
 
