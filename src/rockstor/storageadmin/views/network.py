@@ -31,7 +31,18 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class NetworkView(rfc.GenericView):
+class NetworkMixin(object):
+    def _restart_wrapper(self, ni, request):
+            try:
+                restart_network_interface(ni.name)
+            except Exception, e:
+                logger.exception(e)
+                e_msg = ('Failed to configure network interface(%s) due'
+                         ' to a system error' % ni.name)
+                handle_exception(Exception(e_msg), request)
+
+
+class NetworkListView(rfc.GenericView, NetworkMixin):
     serializer_class = NetworkInterfaceSerializer
 
     def get_queryset(self, *args, **kwargs):
@@ -94,14 +105,25 @@ class NetworkView(rfc.GenericView):
         with self._handle_exception(request):
             return self._net_scan()
 
-    def _restart_wrapper(self, ni, request):
+
+class NetworkDetailView(rfc.GenericView, NetworkMixin):
+    serializer_class = NetworkInterfaceSerializer
+
+    def get(self, *args, **kwargs):
         try:
-            restart_network_interface(ni.name)
-        except Exception, e:
-            logger.exception(e)
-            e_msg = ('Failed to configure network interface(%s) due'
-                     ' to a system error' % ni.name)
-            handle_exception(Exception(e_msg), request)
+            data = NetworkInterface.objects.get(name=self.kwargs['iname'])
+            serialized_data = NetworkInterfaceSerializer(data)
+            return Response(serialized_data.data)
+        except:
+            return Response()
+
+    @transaction.commit_on_success
+    def delete(self, request, iname):
+        with self._handle_exception(request):
+            if (NetworkInterface.objects.filter(name=iname).exists()):
+                i = NetworkInterface.objects.get(name=iname)
+                i.delete()
+            return Response()
 
     @transaction.commit_on_success
     def put(self, request, iname):
@@ -156,11 +178,3 @@ class NetworkView(rfc.GenericView):
                 except:
                     logger.error('Unable to update /etc/issue')
             return Response(NetworkInterfaceSerializer(ni).data)
-
-    @transaction.commit_on_success
-    def delete(self, request, iname):
-        with self._handle_exception(request):
-            if (NetworkInterface.objects.filter(name=iname).exists()):
-                i = NetworkInterface.objects.get(name=iname)
-                i.delete()
-            return Response()

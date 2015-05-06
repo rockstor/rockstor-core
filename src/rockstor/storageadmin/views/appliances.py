@@ -35,7 +35,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class AppliancesView(rfc.GenericView):
+class ApplianceListView(rfc.GenericView):
     serializer_class = ApplianceSerializer
 
     def get_queryset(self, *args, **kwargs):
@@ -138,6 +138,22 @@ class AppliancesView(rfc.GenericView):
                 appliance.save()
                 sethostname(ip, appliance.hostname)
             return Response(ApplianceSerializer(appliance).data)
+
+
+class ApplianceDetailView(rfc.GenericView):
+    serializer_class = ApplianceSerializer
+
+    def get(self, *args, **kwargs):
+        if 'ip' in self.kwargs or 'id' in self.kwargs:
+            try:
+                if 'ip' in self.kwargs:
+                    data = Appliance.objects.get(ip=self.kwargs['ip'])
+                else:
+                    data = Appliance.objects.get(id=self.kwargs['id'])
+                serialized_data = ApplianceSerializer(data)
+                return Response(serialized_data.data)
+            except:
+                return Response()
 
     def delete(self, request, id):
         try:

@@ -30,7 +30,7 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 
-class GroupView(rfc.GenericView):
+class GroupListView(rfc.GenericView):
     serializer_class = GroupSerializer
 
     def get_queryset(self, *args, **kwargs):
@@ -66,6 +66,19 @@ class GroupView(rfc.GenericView):
         group.save()
 
         return Response(GroupSerializer(group).data)
+
+
+class GroupDetailView(rfc.GenericView):
+    serializer_class = GroupSerializer
+
+    def get(self, *args, **kwargs):
+        try:
+            data = Group.objects.get(username=self.kwargs['groupname'])
+            serialized_data = GroupSerializer(data)
+            return Response(serialized_data.data)
+        except:
+            # Render no response if no matches
+            return Response()
 
     def put(self, request, groupname):
         e_msg = ('group edit is not supported')

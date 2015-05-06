@@ -34,7 +34,74 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class PoolView(rfc.GenericView):
+class PoolMixin(object):
+
+    def _validate_disk(self, d, request):
+        try:
+            return Disk.objects.get(name=d)
+        except:
+            e_msg = ('Disk(%s) does not exist' % d)
+            handle_exception(Exception(e_msg), request)
+
+    def _remount(self, request, pool):
+        compression = self._validate_compression(request)
+        mnt_options = self._validate_mnt_options(request)
+        if ((compression == pool.compression and
+             mnt_options == pool.mnt_options)):
+            return Response()
+
+        with transaction.commit_on_success():
+            pool.compression = compression
+            pool.mnt_options = mnt_options
+            pool.save()
+
+        if (re.search('noatime', mnt_options) is None):
+            mnt_options = ('%s,relatime,atime' % mnt_options)
+
+        if (re.search('compress-force', mnt_options) is None):
+            mnt_options = ('%s,compress=%s' % (mnt_options, compression))
+
+        with open('/proc/mounts') as mfo:
+            mount_map = {}
+            for l in mfo.readlines():
+                share_name = None
+                if (re.search(
+                        '%s|%s' % (settings.NFS_EXPORT_ROOT, settings.MNT_PT),
+                        l) is not None):
+                    share_name = l.split()[1].split('/')[2]
+                elif (re.search(settings.SFTP_MNT_ROOT, l) is not None):
+                    share_name = l.split()[1].split('/')[3]
+                else:
+                    continue
+                if (share_name not in mount_map):
+                    mount_map[share_name] = [l.split()[1], ]
+                else:
+                    mount_map[share_name].append(l.split()[1])
+        failed_remounts = []
+        try:
+            pool_mnt = '/mnt2/%s' % pool.name
+            remount(pool_mnt, mnt_options)
+        except:
+            failed_remounts.append(pool_mnt)
+        for share in mount_map.keys():
+            if (Share.objects.filter(pool=pool, name=share).exists()):
+                for m in mount_map[share]:
+                    try:
+                        remount(m, mnt_options)
+                    except Exception, e:
+                        logger.exception(e)
+                        failed_remounts.append(m)
+        if (len(failed_remounts) > 0):
+            e_msg = ('Failed to remount the following mounts.\n %s\n '
+                     'Try again or do the following as root(may cause '
+                     'downtime):\n 1. systemctl stop rockstor\n'
+                     '2. unmount manually\n3. systemctl start rockstor\n.' %
+                     failed_remounts)
+            handle_exception(Exception(e_msg), request)
+        return Response(PoolInfoSerializer(pool).data)
+
+
+class PoolListView(rfc.GenericView, PoolMixin):
     serializer_class = PoolInfoSerializer
     RAID_LEVELS = ('single', 'raid0', 'raid1', 'raid10', 'raid5', 'raid6')
     ADD_THRESHOLD = .3  # min free/total ratio to allow a device addition
@@ -194,69 +261,17 @@ class PoolView(rfc.GenericView):
             p.save()
             return Response(PoolInfoSerializer(p).data)
 
-    def _validate_disk(self, d, request):
-        try:
-            return Disk.objects.get(name=d)
-        except:
-            e_msg = ('Disk(%s) does not exist' % d)
-            handle_exception(Exception(e_msg), request)
 
-    def _remount(self, request, pool):
-        compression = self._validate_compression(request)
-        mnt_options = self._validate_mnt_options(request)
-        if ((compression == pool.compression and
-             mnt_options == pool.mnt_options)):
+class PoolDetailView(rfc.GenericView, PoolMixin):
+    serializer_class = PoolInfoSerializer
+
+    def get(self, *args, **kwargs):
+        try:
+            data = Pool.objects.get(name=self.kwargs['pname'])
+            serialized_data = PoolInfoSerializer(data)
+            return Response(serialized_data.data)
+        except:
             return Response()
-
-        with transaction.commit_on_success():
-            pool.compression = compression
-            pool.mnt_options = mnt_options
-            pool.save()
-
-        if (re.search('noatime', mnt_options) is None):
-            mnt_options = ('%s,relatime,atime' % mnt_options)
-
-        if (re.search('compress-force', mnt_options) is None):
-            mnt_options = ('%s,compress=%s' % (mnt_options, compression))
-
-        with open('/proc/mounts') as mfo:
-            mount_map = {}
-            for l in mfo.readlines():
-                share_name = None
-                if (re.search(
-                        '%s|%s' % (settings.NFS_EXPORT_ROOT, settings.MNT_PT),
-                        l) is not None):
-                    share_name = l.split()[1].split('/')[2]
-                elif (re.search(settings.SFTP_MNT_ROOT, l) is not None):
-                    share_name = l.split()[1].split('/')[3]
-                else:
-                    continue
-                if (share_name not in mount_map):
-                    mount_map[share_name] = [l.split()[1], ]
-                else:
-                    mount_map[share_name].append(l.split()[1])
-        failed_remounts = []
-        try:
-            pool_mnt = '/mnt2/%s' % pool.name
-            remount(pool_mnt, mnt_options)
-        except:
-            failed_remounts.append(pool_mnt)
-        for share in mount_map.keys():
-            if (Share.objects.filter(pool=pool, name=share).exists()):
-                for m in mount_map[share]:
-                    try:
-                        remount(m, mnt_options)
-                    except Exception, e:
-                        logger.exception(e)
-                        failed_remounts.append(m)
-        if (len(failed_remounts) > 0):
-            e_msg = ('Failed to remount the following mounts.\n %s\n '
-                     'Try again or do the following as root(may cause '
-                     'downtime):\n 1. systemctl stop rockstor\n'
-                     '2. unmount manually\n3. systemctl start rockstor\n.' %
-                     failed_remounts)
-            handle_exception(Exception(e_msg), request)
-        return Response(PoolInfoSerializer(pool).data)
 
     @transaction.commit_on_success
     def put(self, request, pname, command):
@@ -431,7 +446,9 @@ class PoolView(rfc.GenericView):
             return Response(PoolInfoSerializer(pool).data)
 
     @transaction.commit_on_success
-    def delete(self, request, pname):
+    # Added the command argument here after trying the DELETE button and
+    # getting a Django debug page complaining about its absence
+    def delete(self, request, pname, command):
         with self._handle_exception(request):
             if (pname == settings.ROOT_POOL):
                 e_msg = ('Deletion of Pool(%s) is not allowed as it contains '

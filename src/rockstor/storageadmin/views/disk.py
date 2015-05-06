@@ -35,7 +35,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class DiskView(rfc.GenericView):
+class DiskListView(rfc.GenericView):
     serializer_class = DiskInfoSerializer
 
     def _validate_disk(self, dname, request):
@@ -142,6 +142,29 @@ class DiskView(rfc.GenericView):
                      'wipe' % command)
             handle_exception(Exception(e_msg), request)
 
+    @staticmethod
+    @contextmanager
+    def _handle_exception(request, msg=None):
+        try:
+            yield
+        except RockStorAPIException:
+            raise
+        except Exception, e:
+            handle_exception(e, request, msg)
+
+
+class DiskDetailView(rfc.GenericView):
+    serializer_class = DiskInfoSerializer
+
+    def get(self, *args, **kwargs):
+        if 'dname' in self.kwargs:
+            try:
+                data = Disk.objects.get(name=self.kwargs['dname'])
+                serialized_data = DiskInfoSerializer(data)
+                return Response(serialized_data.data)
+            except:
+                return Response()
+
     @transaction.atomic
     def delete(self, request, dname):
         try:
@@ -161,13 +184,3 @@ class DiskView(rfc.GenericView):
             e_msg = ('Could not remove disk(%s) due to system error' % dname)
             logger.exception(e)
             handle_exception(Exception(e_msg), request)
-
-    @staticmethod
-    @contextmanager
-    def _handle_exception(request, msg=None):
-        try:
-            yield
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request, msg)
