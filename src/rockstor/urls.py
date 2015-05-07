@@ -20,10 +20,10 @@ from django.conf.urls import patterns, include, url
 from storageadmin.views import (SetupUserView, LoginView, DashboardConfigView,
                                 NFSExportGroupListView,
                                 NFSExportGroupDetailView, SambaListView,
-                                SambaDetailView, SFTPView, PluginView,
-                                InstalledPluginView, AdvancedNFSExportView,
-                                OauthAppView, NetatalkView, TLSCertificateView,
-                                SnapshotView)
+                                SambaDetailView, SFTPListView, SFTPDetailView,
+                                PluginView, InstalledPluginView,
+                                AdvancedNFSExportView, OauthAppView,
+                                NetatalkView, TLSCertificateView, SnapshotView)
 import os.path
 
 site_media = os.path.join(
@@ -85,8 +85,8 @@ urlpatterns = patterns('',
                        url(r'^api/samba$', SambaListView.as_view()),
                        url(r'^api/samba/(?P<smb_id>\d+)$',
                            SambaDetailView.as_view()),
-                       url(r'^api/sftp$', SFTPView.as_view()),
-                       url(r'^api/sftp/(?P<id>\d+)$', SFTPView.as_view()),
+                       url(r'^api/sftp$', SFTPListView.as_view()),
+                       url(r'^api/sftp/(?P<id>\d+)$', SFTPDetailView.as_view()),
                        url(r'^api/netatalk$', NetatalkView.as_view()),
                        url(r'^api/netatalk/(?P<afp_id>\d+)$',
                            NetatalkView.as_view()),

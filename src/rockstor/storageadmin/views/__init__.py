@@ -39,7 +39,7 @@ from share_acl import ShareACLView
 from nfs_exports import (NFSExportGroupListView, NFSExportGroupDetailView)
 from share_command import ShareCommandView
 from samba import (SambaListView, SambaDetailView)
-from sftp import SFTPView
+from sftp import (SFTPListView, SFTPDetailView)
 from plugin import PluginView
 from installed_plugin import InstalledPluginView
 from adv_nfs_exports import AdvancedNFSExportView

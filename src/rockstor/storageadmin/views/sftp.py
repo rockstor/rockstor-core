@@ -35,19 +35,13 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class SFTPView(rfc.GenericView):
+class SFTPListView(rfc.GenericView):
     serializer_class = SFTPSerializer
 
     def get_queryset(self, *args, **kwargs):
-        if ('id' in self.kwargs):
-            self.paginate_by = 0
-            try:
-                return SFTP.objects.get(id=self.kwargs['id'])
-            except:
-                return []
         return SFTP.objects.all()
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request):
         with self._handle_exception(request):
             if ('shares' not in request.data):
@@ -91,7 +85,18 @@ class SFTPView(rfc.GenericView):
             update_sftp_config(input_map)
             return Response()
 
-    @transaction.commit_on_success
+
+class SFTPDetailView(rfc.GenericView):
+
+    def get(self, *args, **kwargs):
+        try:
+            data = SFTP.objects.get(id=self.kwargs['id'])
+            serialized_data = SFTPSerializer(data)
+            return Response(serialized_data.data)
+        except:
+            return Response()
+
+    @transaction.atomic
     def delete(self, request, id):
         with self._handle_exception(request):
             try:
