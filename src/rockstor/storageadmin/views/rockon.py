@@ -40,12 +40,12 @@ class RockOnView(rfc.GenericView):
                 ro.save()
         return RockOn.objects.all()
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def put(self, request):
         with self._handle_exception(request):
             return Response()
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request, command=None):
         with self._handle_exception(request):
             if (not docker_status()):
@@ -151,7 +151,7 @@ class RockOnView(rfc.GenericView):
             rockons = r.json()
             return rockons
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def delete(self, request, sname):
         with self._handle_exception(request):
             return Response()

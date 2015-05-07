@@ -37,7 +37,7 @@ class RockOnIdView(rfc.GenericView):
     def get_queryset(self, *args, **kwargs):
         return RockOn.objects.all()
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request, rid, command):
         with self._handle_exception(request):
 

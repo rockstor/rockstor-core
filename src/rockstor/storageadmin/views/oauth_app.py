@@ -38,7 +38,7 @@ class OauthAppView(rfc.GenericView):
                 return []
         return OauthApp.objects.all()
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request):
         with self._handle_exception(request):
             name = request.data['name']
@@ -63,7 +63,7 @@ class OauthAppView(rfc.GenericView):
             oauth_app.save()
             return Response(OauthAppSerializer(oauth_app).data)
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def delete(self, request, name):
         with self._handle_exception(request):
             try:

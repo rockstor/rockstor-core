@@ -32,7 +32,9 @@ logger = logging.getLogger(__name__)
 
 
 class NetworkMixin(object):
-    def _restart_wrapper(self, ni, request):
+
+    @staticmethod
+    def _restart_wrapper(ni, request):
             try:
                 restart_network_interface(ni.name)
             except Exception, e:
@@ -52,8 +54,9 @@ class NetworkListView(rfc.GenericView, NetworkMixin):
             update_samba_discovery()
         return NetworkInterface.objects.all()
 
-    @transaction.commit_on_success
-    def _net_scan(self):
+    @staticmethod
+    @transaction.atomic
+    def _net_scan():
         default_if = get_default_interface()
         config_d = get_net_config_fedora(network_devices())
         for dconfig in config_d.values():
@@ -117,7 +120,7 @@ class NetworkDetailView(rfc.GenericView, NetworkMixin):
         except:
             return Response()
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def delete(self, request, iname):
         with self._handle_exception(request):
             if (NetworkInterface.objects.filter(name=iname).exists()):
@@ -125,7 +128,7 @@ class NetworkDetailView(rfc.GenericView, NetworkMixin):
                 i.delete()
             return Response()
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def put(self, request, iname):
         with self._handle_exception(request):
             if (not NetworkInterface.objects.filter(name=iname).exists()):

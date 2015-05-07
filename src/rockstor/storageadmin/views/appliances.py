@@ -155,6 +155,7 @@ class ApplianceDetailView(rfc.GenericView):
             except:
                 return Response()
 
+    @transaction.atomic
     def delete(self, request, id):
         try:
             appliance = Appliance.objects.get(pk=id)

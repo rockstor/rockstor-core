@@ -25,8 +25,7 @@ from pool import (PoolListView, PoolDetailView)
 from disk import (DiskListView, DiskDetailView)
 from command import CommandView
 from share_iscsi import ShareIscsiView
-from appliances import ApplianceListView
-from appliances import ApplianceDetailView
+from appliances import (ApplianceListView, ApplianceDetailView)
 from login import LoginView
 from user import (UserListView, UserDetailView)
 from support import SupportView
