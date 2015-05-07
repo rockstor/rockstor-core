@@ -23,7 +23,8 @@ from storageadmin.views import (SetupUserView, LoginView, DashboardConfigView,
                                 SambaDetailView, SFTPListView, SFTPDetailView,
                                 PluginView, InstalledPluginView,
                                 AdvancedNFSExportView, OauthAppView,
-                                NetatalkView, TLSCertificateView, SnapshotView)
+                                NetatalkListView, NetatalkDetailView,
+                                TLSCertificateView, SnapshotView)
 import os.path
 
 site_media = os.path.join(
@@ -87,9 +88,9 @@ urlpatterns = patterns('',
                            SambaDetailView.as_view()),
                        url(r'^api/sftp$', SFTPListView.as_view()),
                        url(r'^api/sftp/(?P<id>\d+)$', SFTPDetailView.as_view()),
-                       url(r'^api/netatalk$', NetatalkView.as_view()),
+                       url(r'^api/netatalk$', NetatalkListView.as_view()),
                        url(r'^api/netatalk/(?P<afp_id>\d+)$',
-                           NetatalkView.as_view()),
+                           NetatalkDetailView.as_view()),
                        # Dashboard config
                        url(r'^api/dashboardconfig/$',
                            DashboardConfigView.as_view()),

@@ -28,7 +28,7 @@ from share_iscsi import ShareIscsiView
 from appliances import ApplianceListView
 from appliances import ApplianceDetailView
 from login import LoginView
-from user import UserView
+from user import (UserListView, UserDetailView)
 from support import SupportView
 from dashboardconfig import DashboardConfigView
 from network import NetworkListView
@@ -44,9 +44,8 @@ from plugin import PluginView
 from installed_plugin import InstalledPluginView
 from adv_nfs_exports import AdvancedNFSExportView
 from oauth_app import OauthAppView
-from netatalk import NetatalkView
-from group import GroupListView
-from group import GroupDetailView
+from netatalk import (NetatalkListView, NetatalkDetailView)
+from group import (GroupListView, GroupDetailView)
 from pool_balance import PoolBalanceView
 from tls_certificate import TLSCertificateView
 from rockon import RockOnView
