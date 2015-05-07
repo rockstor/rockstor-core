@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import re
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.util import handle_exception
@@ -69,7 +70,15 @@ class GroupListView(rfc.GenericView):
 
 
 class GroupDetailView(rfc.GenericView):
-    serializer_class = GroupSerializer
+    exclude_list = ('root', 'bin', 'daemon', 'sys', 'adm', 'tty', 'disk',
+                    'lp', 'mem', 'kmem', 'wheel', 'cdrom', 'mail', 'man',
+                    'dialout', 'floppy', 'games', 'tape', 'video', 'ftp',
+                    'lock', 'audio', 'nobody', 'users', 'utmp', 'utempter',
+                    'ssh_keys', 'systemd-journal', 'dbus', 'rpc', 'polkitd',
+                    'avahi', 'avahi-autoipd', 'wbpriv', 'rpcuser', 'nfsnobody',
+                    'postgres', 'ntp', 'dip', 'stapusr', 'stapsys', 'stapdev',
+                    'nginx', 'postdrop', 'postfix', 'sshd', 'chrony',
+                    'usbmuxd')
 
     def get(self, *args, **kwargs):
         try:
