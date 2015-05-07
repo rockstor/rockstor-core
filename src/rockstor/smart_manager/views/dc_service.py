@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from storageadmin.util import handle_exception
 from system.services import superctl
 from django.db import transaction
-from base_service import BaseServiceView
+from base_service import BaseServiceDetailView
 from smart_manager.models import Service
 
 
@@ -27,7 +27,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class DataCollectorServiceView(BaseServiceView):
+class DataCollectorServiceView(BaseServiceDetailView):
 
     @transaction.atomic
     def post(self, request, command):
