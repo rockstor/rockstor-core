@@ -76,6 +76,13 @@ class PoolTests(APITestCase):
     #     response = self.client.get(self.BASE_URL)
     #     self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_get(self):
+        """
+        get on the base url.
+        """
+        response1 = self.client.get(self.BASE_URL)
+        self.assertEqual(response1.status_code, status.HTTP_200_OK, msg=response1.data)
+
     def test_name_regex(self):
         """
         Pool name must start with a alphanumeric(a-z0-9) ' 'character and can be
@@ -123,16 +130,79 @@ class PoolTests(APITestCase):
         self.assertEqual(response6.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response6.data)
         self.assertEqual(response6.data['detail'], e_msg)
 
+    # TODO
+    # Traceback (most recent call last):
+    #   File "/opt/rock-dep/src/rockstor/storageadmin/tests/test_pools.py", line 129, in test_get_empty_pool_set
+    #     self.assertEqual(response1.status_code, status.HTTP_200_OK, msg=response1.data)
+    # AssertionError: {u'detail': u'Not found'}
+    # def test_get_empty_pool_set(self):
+    #     e_msg = ('Not found')
+    #     response1 = self.client.get('%s/raid0pool' % self.BASE_URL)
+    #     self.assertEqual(response1.status_code, status.HTTP_200_OK, msg=response1.data)
+    #     self.assertEqual(response1.data['detail'], e_msg)
+
+    # looks like remount tests compression & mount options (validates)
     def test_compression(self):
         """
         Compression is agnostic to name, raid and number of disks. So no need to
         test it with different types of pools.
         1. Create a pool with zlib compression
         2. Create a pool with lzo compression
-        3. disable zlib, enable zlib
-        4. disable lzo, enable lzo
+        3. change compression from zlib to lzo
+        4. change compression from lzo to zlib
+        5. disable zlib, enable zlib
+        6. disable lzo, enable lzo
         """
-        self.assertEqual(1, 2)
+        # create pool with zlib compression
+        data = {'disks': ('sdc', 'sdd',),
+                'pname': 'singlepool',
+                'raid_level': 'single',
+                'compression': 'zlib'}
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
+        self.assertEqual(response.data['compression'], 'zlib')
+        
+        # create pool with zlib compression
+        data2 = {'disks': ('sde', 'sdf',),
+                'pname': 'singlepool2',
+                'raid_level': 'single',
+                'compression': 'lzo'}
+        response2 = self.client.post(self.BASE_URL, data=data2)
+        self.assertEqual(response2.status_code, status.HTTP_200_OK, msg=response2.data)
+        self.assertEqual(response2.data['compression'], 'lzo')
+        
+        # change compression from zlib to lzo
+        data3 = {'compression': 'lzo'}
+        response3 = self.client.put('%s/singlepool/remount' % self.BASE_URL, data=data3)
+        self.assertEqual(response3.status_code, status.HTTP_200_OK, msg=response3.data)
+        self.assertEqual(response3.data['compression'], 'lzo')
+        
+        # change compression from lzo to zlib
+        data4 = {'compression': 'zlib'}
+        response4 = self.client.put('%s/singlepool2/remount' % self.BASE_URL, data=data4)
+        self.assertEqual(response4.status_code, status.HTTP_200_OK, msg=response4.data)
+        self.assertEqual(response4.data['compression'], 'zlib')
+
+        # disable zlib compression
+        data5 = {'compression': 'no'}
+        response5 = self.client.put('%s/singlepool2/remount' % self.BASE_URL, data=data5)
+        self.assertEqual(response5.status_code, status.HTTP_200_OK, msg=response5.data)
+        self.assertEqual(response5.data['compression'], 'no')
+
+        # enable zlib compression
+        response6 = self.client.put('%s/singlepool2/remount' % self.BASE_URL, data=data4)
+        self.assertEqual(response6.status_code, status.HTTP_200_OK, msg=response6.data)
+        self.assertEqual(response6.data['compression'], 'zlib')
+
+        # disable lzo compression
+        response7 = self.client.put('%s/singlepool/remount' % self.BASE_URL, data=data5)
+        self.assertEqual(response7.status_code, status.HTTP_200_OK, msg=response7.data)
+        self.assertEqual(response7.data['compression'], 'no')
+
+        # enable lzo compression
+        response8 = self.client.put('%s/singlepool/remount' % self.BASE_URL, data=data3)
+        self.assertEqual(response8.status_code, status.HTTP_200_OK, msg=response8.data)
+        self.assertEqual(response8.data['compression'], 'lzo')
 
     def test_mount_options(self):
         """
@@ -142,6 +212,17 @@ class PoolTests(APITestCase):
         3. test compress-force option
         """
         self.assertEqual(1, 2)
+
+    # same as testing compression?
+    def test_remount(self):
+        """
+        Mount options are agnostic to other parameters as in compression.
+        1. test an invalid option (see allowed_options in the pool.py(view))
+        2. test all valid options
+        3. test compress-force option
+        """
+        self.assertEqual(1, 2)
+
 
     def test_single_crud(self):
 
@@ -462,10 +543,3 @@ class PoolTests(APITestCase):
         response5 = self.client.delete('%s/raid6pool' % self.BASE_URL)
         self.assertEqual(response5.status_code, status.HTTP_200_OK, msg=response5.data)
         self.mock_umount_root.assert_called_with('/mnt2/raid6pool')
-
-    def test_get(self):
-        """
-        get on the base url.
-        """
-        response1 = self.client.get(self.BASE_URL)
-        self.assertEqual(response1.status_code, status.HTTP_200_OK, msg=response1.data)
