@@ -31,7 +31,7 @@ from django.utils.timezone import utc
 import rest_framework_custom as rfc
 
 
-class ReplicaShareView(rfc.GenericView):
+class ReplicaShareListView(rfc.GenericView):
     serializer_class = ReplicaShareSerializer
 
     def get_queryset(self, *args, **kwargs):
@@ -71,6 +71,21 @@ class ReplicaShareView(rfc.GenericView):
         except:
             e_msg = ('Appliance with ip: %s is not recognized.' % ip)
             handle_exception(Exception(e_msg), request)
+
+
+class ReplicaShareDetailView(rfc.GenericView):
+    serializer_class = ReplicaShareSerializer
+
+    def get(self, *args, **kwargs):
+        try:
+            if ('sname' in self.kwargs):
+                data = ReplicaShare.objects.get(share=self.kwargs['sname'])
+            else:
+                data = ReplicaShare.objects.get(id=self.kwargs['rid'])
+            serialized_data = ReplicaShareSerializer(data)
+            return Response(serialized_data.data)
+        except:
+            return Response()
 
     @transaction.commit_on_success
     def delete(self, request, rid):

@@ -31,8 +31,8 @@ from base_service import BaseServiceView
 from nis_service import NISServiceView
 from samba_service import SambaServiceView
 from nfs_service import NFSServiceView
-from replication import ReplicaView
-from replica_trail import ReplicaTrailView
+from replication import (ReplicaListView, ReplicaDetailView)
+from replica_trail import (ReplicaTrailListView, ReplicaTrailDetailView)
 from replication_service import ReplicationServiceView
 from ntp_service import NTPServiceView
 from winbind_service import WinbindServiceView
@@ -41,8 +41,8 @@ from sftp_service import SFTPServiceView
 from tasktypes import TaskTypeView
 from task_scheduler import TaskSchedulerView
 from task_log import TaskLogView
-from replica_share import ReplicaShareView
-from receive_trail import ReceiveTrailView
+from replica_share import (ReplicaShareListView, ReplicaShareDetailView)
+from receive_trail import (ReceiveTrailListView, ReceiveTrailDetailView)
 from ts_service import TaskSchedulerServiceView
 from dc_service import DataCollectorServiceView
 from sm_service import ServiceMonitorView
