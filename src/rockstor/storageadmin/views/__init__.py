@@ -28,7 +28,7 @@ from share_iscsi import ShareIscsiView
 from appliances import ApplianceListView
 from appliances import ApplianceDetailView
 from login import LoginView
-from user import UserView
+from user import (UserListView, UserDetailView)
 from support import SupportView
 from dashboardconfig import DashboardConfigView
 from network import NetworkListView
