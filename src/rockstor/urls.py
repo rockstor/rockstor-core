@@ -19,10 +19,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from django.conf.urls import patterns, include, url
 from storageadmin.views import (SetupUserView, LoginView, DashboardConfigView,
                                 NFSExportGroupListView,
-                                NFSExportGroupDetailView, SambaView, SFTPView,
-                                PluginView, InstalledPluginView,
-                                AdvancedNFSExportView, OauthAppView,
-                                NetatalkView, TLSCertificateView, SnapshotView)
+                                NFSExportGroupDetailView, SambaListView,
+                                SambaDetailView, SFTPView, PluginView,
+                                InstalledPluginView, AdvancedNFSExportView,
+                                OauthAppView, NetatalkView, TLSCertificateView,
+                                SnapshotView)
 import os.path
 
 site_media = os.path.join(
@@ -81,9 +82,9 @@ urlpatterns = patterns('',
                            NFSExportGroupDetailView.as_view()),
                        url(r'^api/adv-nfs-exports$',
                            AdvancedNFSExportView.as_view()),
-                       url(r'^api/samba$', SambaView.as_view()),
+                       url(r'^api/samba$', SambaListView.as_view()),
                        url(r'^api/samba/(?P<smb_id>\d+)$',
-                           SambaView.as_view()),
+                           SambaDetailView.as_view()),
                        url(r'^api/sftp$', SFTPView.as_view()),
                        url(r'^api/sftp/(?P<id>\d+)$', SFTPView.as_view()),
                        url(r'^api/netatalk$', NetatalkView.as_view()),

@@ -77,8 +77,6 @@ class SUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('username', 'uid', 'gid', 'user', 'public_key', 'admin',
-                  'group', 'groupname', 'shell',)
 
 
 class GroupSerializer(serializers.ModelSerializer):
@@ -101,8 +99,8 @@ class SambaCustomConfigSerializer(serializers.ModelSerializer):
 
 class SambaShareSerializer(serializers.ModelSerializer):
     share = serializers.CharField(source='share_name')
-    admin_users = SUserSerializer(source='admin_users')
-    custom_config = SambaCustomConfigSerializer(source='sambacustomconfig_set')
+    admin_users = SUserSerializer(many=True)
+    custom_config = SambaCustomConfigSerializer(many=True, source='sambacustomconfig_set')
 
     class Meta:
         model = SambaShare
