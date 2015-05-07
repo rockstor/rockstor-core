@@ -61,7 +61,7 @@ class NFSExportSerializer(serializers.ModelSerializer):
 
 
 class NFSExportGroupSerializer(serializers.ModelSerializer):
-    exports = NFSExportSerializer(source='nfsexport_set')
+    exports = NFSExportSerializer(many=True, source='nfsexport_set')
 
     class Meta:
         model = NFSExportGroup
@@ -77,8 +77,6 @@ class SUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('username', 'uid', 'gid', 'user', 'public_key', 'admin',
-                  'group', 'groupname', 'shell',)
 
 
 class GroupSerializer(serializers.ModelSerializer):
@@ -101,8 +99,8 @@ class SambaCustomConfigSerializer(serializers.ModelSerializer):
 
 class SambaShareSerializer(serializers.ModelSerializer):
     share = serializers.CharField(source='share_name')
-    admin_users = SUserSerializer(source='admin_users')
-    custom_config = SambaCustomConfigSerializer(source='sambacustomconfig_set')
+    admin_users = SUserSerializer(many=True)
+    custom_config = SambaCustomConfigSerializer(many=True, source='sambacustomconfig_set')
 
     class Meta:
         model = SambaShare
@@ -167,7 +165,7 @@ class SFTPSerializer(serializers.ModelSerializer):
 
 
 class PluginSerializer(serializers.ModelSerializer):
-    
+
     class Meta:
 	model = Plugin
 

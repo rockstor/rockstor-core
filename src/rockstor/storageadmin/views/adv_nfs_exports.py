@@ -32,13 +32,6 @@ class AdvancedNFSExportView(rfc.GenericView):
     serializer_class = AdvancedNFSExportSerializer
 
     def get_queryset(self, *args, **kwargs):
-        if ('export_id' in self.kwargs):
-            self.paginate_by = 0
-            try:
-                return AdvancedNFSExport(id=self.kwargs['export_id'])
-            except:
-                return []
-
         conventional_exports = []
         exports_by_share = {}
         for e in NFSExport.objects.all():
@@ -60,7 +53,7 @@ class AdvancedNFSExportView(rfc.GenericView):
             conventional_exports.append(ae)
         return conventional_exports
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request):
         with self._handle_exception(request):
             if ('entries' not in request.data):

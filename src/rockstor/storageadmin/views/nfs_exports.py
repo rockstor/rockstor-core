@@ -34,19 +34,13 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class NFSExportGroupView(rfc.GenericView):
+class NFSExportGroupListView(rfc.GenericView):
     serializer_class = NFSExportGroupSerializer
 
     def get_queryset(self, *args, **kwargs):
-        if ('export_id' in self.kwargs):
-            self.paginate_by = 0
-            try:
-                return NFSExportGroup.objects.get(id=self.kwargs['export_id'])
-            except:
-                return []
         return NFSExportGroup.objects.filter(nohide=False)
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request):
         with self._handle_exception(request):
             if ('shares' not in request.data):
@@ -80,7 +74,42 @@ class NFSExportGroupView(rfc.GenericView):
             nfs_serializer = NFSExportGroupSerializer(eg)
             return Response(nfs_serializer.data)
 
-    @transaction.commit_on_success
+
+class NFSExportGroupDetailView(rfc.GenericView):
+    serializer_class = NFSExportGroupSerializer
+
+    def get(self, *args, **kwargs):
+        try:
+            data = NFSExportGroup.objects.get(id=self.kwargs['export_id'])
+            serialized_data = NFSExportGroupSerializer(data)
+            return Response(serialized_data.data)
+        except:
+            return Response()
+
+
+    @transaction.atomic
+    def delete(self, request, export_id):
+        with self._handle_exception(request):
+            eg = validate_export_group(export_id, request)
+            cur_exports = list(NFSExport.objects.all())
+            for e in NFSExport.objects.filter(export_group=eg):
+                export_pt = ('%s%s' % (settings.NFS_EXPORT_ROOT, e.share.name))
+                if (e.export_group.nohide):
+                    snap_name = e.mount.split(e.share.name + '_')[-1]
+                    export_pt = ('%s/%s' % (export_pt, snap_name))
+                teardown_wrapper(export_pt, request, logger)
+                cur_exports.remove(e)
+                e.delete()
+            eg.delete()
+            exports = create_nfs_export_input(cur_exports)
+            adv_entries = [e.export_str for e in
+                           AdvancedNFSExport.objects.all()]
+            exports_d = create_adv_nfs_export_input(adv_entries, request)
+            exports.update(exports_d)
+            refresh_wrapper(exports, request, logger)
+            return Response()
+
+    @transaction.atomic
     def put(self, request, export_id):
         with self._handle_exception(request):
             if ('shares' not in request.data):
@@ -119,25 +148,3 @@ class NFSExportGroupView(rfc.GenericView):
             refresh_wrapper(exports, request, logger)
             nfs_serializer = NFSExportGroupSerializer(eg)
             return Response(nfs_serializer.data)
-
-    @transaction.commit_on_success
-    def delete(self, request, export_id):
-        with self._handle_exception(request):
-            eg = validate_export_group(export_id, request)
-            cur_exports = list(NFSExport.objects.all())
-            for e in NFSExport.objects.filter(export_group=eg):
-                export_pt = ('%s%s' % (settings.NFS_EXPORT_ROOT, e.share.name))
-                if (e.export_group.nohide):
-                    snap_name = e.mount.split(e.share.name + '_')[-1]
-                    export_pt = ('%s/%s' % (export_pt, snap_name))
-                teardown_wrapper(export_pt, request, logger)
-                cur_exports.remove(e)
-                e.delete()
-            eg.delete()
-            exports = create_nfs_export_input(cur_exports)
-            adv_entries = [e.export_str for e in
-                           AdvancedNFSExport.objects.all()]
-            exports_d = create_adv_nfs_export_input(adv_entries, request)
-            exports.update(exports_d)
-            refresh_wrapper(exports, request, logger)
-            return Response()
