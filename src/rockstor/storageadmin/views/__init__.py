@@ -44,9 +44,8 @@ from plugin import PluginView
 from installed_plugin import InstalledPluginView
 from adv_nfs_exports import AdvancedNFSExportView
 from oauth_app import OauthAppView
-from netatalk import NetatalkView
-from group import GroupListView
-from group import GroupDetailView
+from netatalk import (NetatalkListView, NetatalkDetailView)
+from group import (GroupListView, GroupDetailView)
 from pool_balance import PoolBalanceView
 from tls_certificate import TLSCertificateView
 from rockon import RockOnView
