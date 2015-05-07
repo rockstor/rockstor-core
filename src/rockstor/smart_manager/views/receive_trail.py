@@ -52,7 +52,9 @@ class ReceiveTrailDetailView(rfc.GenericView):
     def get(self, request, *args, **kwargs):
         if ('rtid' in self.kwargs):
             with self._handle_exception(request):
-                return ReceiveTrail.objects.get(id=self.kwargs['rtid'])
+                data = ReceiveTrail.objects.get(id=self.kwargs['rtid'])
+                serialized_data = ReceiveTrailSerializer(data)
+                return Response(serialized_data.data)
 
     @transaction.commit_on_success
     def put(self, request, rtid):

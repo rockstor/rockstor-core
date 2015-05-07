@@ -55,7 +55,9 @@ class ReplicaTrailDetailView(rfc.GenericView):
     def get(self, *args, **kwargs):
         if ('rtid' in self.kwargs):
             try:
-                return ReplicaTrail.objects.get(id=self.kwargs['rtid'])
+                data = ReplicaTrail.objects.get(id=self.kwargs['rtid'])
+                serialized_data = ReplicaTrailSerializer(data)
+                return Response(serialized_data.data)
             except:
                 return Response()
 

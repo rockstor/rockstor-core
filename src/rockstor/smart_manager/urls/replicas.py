@@ -40,7 +40,6 @@ urlpatterns = patterns('',
     url(r'^rshare/(?P<rid>[0-9]+)', ReplicaShareDetailView.as_view()),
     url(r'^rtrail$', ReceiveTrailListView.as_view()),
     url(r'^rtrail/rshare/(?P<rid>[0-9]+)', ReceiveTrailListView.as_view()),
-    # Should this be rtid or rid? Delete expects rtid
     url(r'^rtrail/(?P<rtid>[0-9]+)', ReceiveTrailDetailView.as_view()),
 
 )

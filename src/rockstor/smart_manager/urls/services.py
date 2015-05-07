@@ -25,8 +25,7 @@ from smart_manager.views import (NISServiceView,
                                  TaskSchedulerServiceView,
                                  DataCollectorServiceView, ServiceMonitorView,
                                  AFPServiceView, SNMPServiceView,
-                                 DockerServiceView)
-from smart_manager.views.base_list_service import BaseServiceListView
+                                 DockerServiceView, BaseServiceListView)
 command_regex = ('config|start|stop')
 
 urlpatterns = patterns('',
