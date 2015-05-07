@@ -39,7 +39,7 @@ class TLSCertificateView(rfc.GenericView):
     def get_queryset(self, *args, **kwargs):
         return TLSCertificate.objects.all()
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request):
         with self._handle_exception(request):
             name = request.data.get('name')
