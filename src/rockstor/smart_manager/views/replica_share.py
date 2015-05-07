@@ -37,7 +37,7 @@ class ReplicaShareListView(rfc.GenericView):
     def get_queryset(self, *args, **kwargs):
         return ReplicaShare.objects.filter().order_by('-id')
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request):
         sname = request.data['share']
         if (ReplicaShare.objects.filter(share=sname).exists()):
@@ -58,14 +58,16 @@ class ReplicaShareListView(rfc.GenericView):
         r.save()
         return Response(ReplicaShareSerializer(r).data)
 
-    def _validate_share(self, sname, request):
+    @staticmethod
+    def _validate_share(sname, request):
         try:
             return Share.objects.get(name=sname)
         except:
             e_msg = ('Share: %s does not exist' % sname)
             handle_exception(Exception(e_msg), request)
 
-    def _validate_appliance(self, ip, request):
+    @staticmethod
+    def _validate_appliance(ip, request):
         try:
             return Appliance.objects.get(ip=ip)
         except:
@@ -87,7 +89,7 @@ class ReplicaShareDetailView(rfc.GenericView):
         except:
             return Response()
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def delete(self, request, rid):
         with self._handle_exception(request):
             try:

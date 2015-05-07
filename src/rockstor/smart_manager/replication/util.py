@@ -42,10 +42,10 @@ def get_sender_ip(uuid, logger):
         raise e
 
 
-def update_replica_status(rid, data, logger):
+def update_replica_status(rtid, data, logger):
     try:
-        url = ('%ssm/replicas/trail/%d' % (BASE_URL, rid))
-        return api_call(url, data=data, calltype='put', save_error=False)
+        url = ('%ssm/replicas/trail/%d' % (BASE_URL, rtid))
+        return api_call(url, data=data, calltype='put')
     except Exception, e:
         logger.error('Failed to update replica(%s) status to: %s'
                      % (url, data['status']))

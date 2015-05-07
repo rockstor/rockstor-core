@@ -81,27 +81,27 @@ class NFSDCallDistributionSerializer(serializers.ModelSerializer):
     class Meta:
         model = NFSDCallDistribution
 
-        
+
 class NFSDClientDistributionSerializer(serializers.ModelSerializer):
     class Meta:
         model = NFSDClientDistribution
 
-        
+
 class NFSDShareDistributionSerializer(serializers.ModelSerializer):
     class Meta:
         model = NFSDShareDistribution
 
-        
+
 class NFSDShareClientDistributionSerializer(serializers.ModelSerializer):
     class Meta:
         model = NFSDShareClientDistribution
 
-        
+
 class NFSDUidGidDistributionSerializer(serializers.ModelSerializer):
     class Meta:
         model = NFSDUidGidDistribution
 
-        
+
 class SProbeConfigSerializer(serializers.Serializer):
     uuid = serializers.CharField(max_length=100)
     sdetail = serializers.CharField(max_length=4096)
@@ -118,7 +118,7 @@ class TaskDefinitionSerializer(serializers.ModelSerializer):
     class Meta:
         model = TaskDefinition
 
-        
+
 class TaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
@@ -148,6 +148,7 @@ class ReplicaSerializer(serializers.ModelSerializer):
         model = Replica
 
 class ReplicaTrailSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = ReplicaTrail
 
@@ -158,4 +159,3 @@ class ReplicaShareSerializer(serializers.ModelSerializer):
 class ReceiveTrailSerializer(serializers.ModelSerializer):
     class Meta:
         model = ReceiveTrail
-

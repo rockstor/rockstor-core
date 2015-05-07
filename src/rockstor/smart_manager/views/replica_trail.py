@@ -20,9 +20,10 @@ from django.db import transaction
 from django.utils.timezone import utc
 from rest_framework.response import Response
 from smart_manager.models import (Replica, ReplicaTrail)
-from smart_manager.serializers import (ReplicaTrailSerializer)
+from smart_manager.serializers import ReplicaTrailSerializer
 from datetime import (datetime, timedelta)
 import rest_framework_custom as rfc
+from django.conf import settings
 
 
 class ReplicaTrailListView(rfc.GenericView):
@@ -38,7 +39,7 @@ class ReplicaTrailListView(rfc.GenericView):
             return ReplicaTrail.objects.filter(replica=replica).order_by('-id')
         return ReplicaTrail.objects.filter().order_by('-id')
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request, rid):
         replica = Replica.objects.get(id=rid)
         snap_name = request.data['snap_name']
@@ -47,6 +48,18 @@ class ReplicaTrailListView(rfc.GenericView):
                           status='pending', snapshot_created=ts)
         rt.save()
         return Response(ReplicaTrailSerializer(rt).data)
+
+    @transaction.atomic
+    def delete(self, request, rid):
+        with self._handle_exception(request):
+            days = int(request.data.get('days', 30))
+            replica = Replica.objects.get(id=rid)
+            ts = datetime.utcnow().replace(tzinfo=utc)
+            ts0 = ts - timedelta(days=days)
+            if (ReplicaTrail.objects.filter(replica=replica).count() > 100):
+                ReplicaTrail.objects.filter(replica=replica,
+                                            end_ts__lt=ts0).delete()
+            return Response()
 
 
 class ReplicaTrailDetailView(rfc.GenericView):
@@ -61,28 +74,17 @@ class ReplicaTrailDetailView(rfc.GenericView):
             except:
                 return Response()
 
-    @transaction.commit_on_success
-    def put(self, request, rid):
-        rt = ReplicaTrail.objects.get(id=rid)
-        new_status = request.data['status']
-        if ('error' in request.data):
-            rt.error = request.data['error']
-        if ('kb_sent' in request.data):
-            rt.kb_sent = request.data['kb_sent']
-        if ('end_ts' in request.data):
-            rt.end_ts = request.data['end_ts']
-        rt.status = new_status
-        rt.save()
-        return Response(ReplicaTrailSerializer(rt).data)
-
-    @transaction.commit_on_success
-    def delete(self, request, rid):
+    @transaction.atomic
+    def put(self, request, rtid):
         with self._handle_exception(request):
-            days = int(request.data.get('days', 30))
-            replica = Replica.objects.get(id=rid)
-            ts = datetime.utcnow().replace(tzinfo=utc)
-            ts0 = ts - timedelta(days=days)
-            if (ReplicaTrail.objects.filter(replica=replica).count() > 100):
-                ReplicaTrail.objects.filter(replica=replica,
-                                            end_ts__lt=ts0).delete()
-            return Response()
+            rt = ReplicaTrail.objects.get(id=rtid)
+            new_status = request.data['status']
+            if ('error' in request.data):
+                rt.error = request.data['error']
+            if ('kb_sent' in request.data):
+                rt.kb_sent = request.data['kb_sent']
+            if ('end_ts' in request.data):
+                rt.end_ts = datetime.strptime(request.data['end_ts'], settings.SNAP_TS_FORMAT).replace(tzinfo=utc)
+            rt.status = new_status
+            rt.save()
+            return Response(ReplicaTrailSerializer(rt).data)
