@@ -25,7 +25,7 @@ from datetime import (datetime, timedelta)
 import rest_framework_custom as rfc
 
 
-class ReceiveTrailView(rfc.GenericView):
+class ReceiveTrailListView(rfc.GenericView):
     serializer_class = ReceiveTrailSerializer
 
     def get_queryset(self, *args, **kwargs):
@@ -44,6 +44,15 @@ class ReceiveTrailView(rfc.GenericView):
                               status='pending', receive_pending=ts)
             rt.save()
             return Response(ReceiveTrailSerializer(rt).data)
+
+
+class ReceiveTrailDetailView(rfc.GenericView):
+    serializer_class = ReceiveTrailSerializer
+
+    def get(self, request, *args, **kwargs):
+        if ('rtid' in self.kwargs):
+            with self._handle_exception(request):
+                return ReceiveTrail.objects.get(id=self.kwargs['rtid'])
 
     @transaction.commit_on_success
     def put(self, request, rtid):

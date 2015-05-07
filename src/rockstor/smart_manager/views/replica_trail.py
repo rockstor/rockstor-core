@@ -25,7 +25,7 @@ from datetime import (datetime, timedelta)
 import rest_framework_custom as rfc
 
 
-class ReplicaTrailView(rfc.GenericView):
+class ReplicaTrailListView(rfc.GenericView):
     serializer_class = ReplicaTrailSerializer
 
     def get_queryset(self, *args, **kwargs):
@@ -48,9 +48,20 @@ class ReplicaTrailView(rfc.GenericView):
         rt.save()
         return Response(ReplicaTrailSerializer(rt).data)
 
+
+class ReplicaTrailDetailView(rfc.GenericView):
+    serializer_class = ReplicaTrailSerializer
+
+    def get(self, *args, **kwargs):
+        if ('rtid' in self.kwargs):
+            try:
+                return ReplicaTrail.objects.get(id=self.kwargs['rtid'])
+            except:
+                return Response()
+
     @transaction.commit_on_success
-    def put(self, request, rtid):
-        rt = ReplicaTrail.objects.get(id=rtid)
+    def put(self, request, rid):
+        rt = ReplicaTrail.objects.get(id=rid)
         new_status = request.data['status']
         if ('error' in request.data):
             rt.error = request.data['error']

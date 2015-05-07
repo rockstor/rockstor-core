@@ -18,31 +18,29 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.conf.urls import patterns, url
 from django.conf import settings
-from smart_manager.views import (ReplicaView, ReplicaTrailView,
-                                 ReplicaShareView, ReceiveTrailView)
-from smart_manager.views.detail_views import (ReplicaShareDetailView,
-                                              ReplicaTrailDetailView,
-                                              ReplicaDetailView,
-                                              ReceiveTrailDetailView,)
-
+from smart_manager.views import (ReplicaListView, ReplicaTrailListView,
+                                 ReplicaShareListView, ReplicaShareDetailView,
+                                 ReceiveTrailListView, ReceiveTrailDetailView,
+                                 ReplicaTrailDetailView, ReplicaDetailView)
 share_regex = settings.SHARE_REGEX
 
 urlpatterns = patterns('',
-    url(r'^$', ReplicaView.as_view(), name='replica-view'),
+    url(r'^$', ReplicaListView.as_view(), name='replica-view'),
     url(r'^(?P<rid>[0-9]+)$', ReplicaDetailView.as_view(), name='replica-view'),
     url(r'^share/(?P<sname>%s)$' % share_regex, ReplicaDetailView.as_view(),
         name='replica-view'),
 
-    url(r'^trail$', ReplicaTrailView.as_view(), name='replica-view'),
-    url(r'^trail/replica/(?P<rid>[0-9]+)', ReplicaTrailView.as_view(), name='replica-view'),
+    url(r'^trail$', ReplicaTrailListView.as_view(), name='replica-view'),
+    url(r'^trail/replica/(?P<rid>[0-9]+)', ReplicaTrailDetailView.as_view(), name='replica-view'),
     url(r'^trail/(?P<rtid>[0-9]+)', ReplicaTrailDetailView.as_view(),
         name='replica-view'),
 
-    url(r'^rshare$', ReplicaShareView.as_view()),
+    url(r'^rshare$', ReplicaShareListView.as_view()),
     url(r'^rshare/(?P<sname>%s)$' % share_regex, ReplicaShareDetailView.as_view()),
     url(r'^rshare/(?P<rid>[0-9]+)', ReplicaShareDetailView.as_view()),
-    url(r'^rtrail$', ReceiveTrailView.as_view()),
-    url(r'^rtrail/rshare/(?P<rid>[0-9]+)', ReceiveTrailView.as_view()),
+    url(r'^rtrail$', ReceiveTrailListView.as_view()),
+    url(r'^rtrail/rshare/(?P<rid>[0-9]+)', ReceiveTrailListView.as_view()),
+    # Should this be rtid or rid? Delete expects rtid
     url(r'^rtrail/(?P<rtid>[0-9]+)', ReceiveTrailDetailView.as_view()),
 
 )
