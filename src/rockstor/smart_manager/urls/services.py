@@ -25,12 +25,12 @@ from smart_manager.views import (NISServiceView,
                                  TaskSchedulerServiceView,
                                  DataCollectorServiceView, ServiceMonitorView,
                                  AFPServiceView, SNMPServiceView,
-                                 DockerServiceView, BaseServiceListView)
+                                 DockerServiceView, BaseServiceView)
 command_regex = ('config|start|stop')
 
 urlpatterns = patterns('',
     # Services
-    url(r'^$', BaseServiceListView.as_view()),
+    url(r'^$', BaseServiceView.as_view()),
     url(r'^netatalk$', AFPServiceView.as_view()),
     url(r'^netatalk/(?P<command>%s)$' % command_regex,
         AFPServiceView.as_view()),

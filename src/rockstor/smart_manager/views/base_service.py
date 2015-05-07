@@ -65,7 +65,7 @@ class ServiceMixin(object):
             return False
 
 
-class BaseServiceListView(ServiceMixin, rfc.GenericView):
+class BaseServiceView(ServiceMixin, rfc.GenericView):
     serializer_class = ServiceStatusSerializer
 
     @transaction.commit_on_success
@@ -93,10 +93,3 @@ class BaseServiceView(ServiceMixin, rfc.GenericView):
             self.paginate_by = 0
             serialized_data = ServiceStatusSerializer(self._get_or_create_sso(s))
             return Response(serialized_data.data)
-
-    def _save_config(self, service, config):
-        service.config = json.dumps(config)
-        return service.save()
-
-    def _get_config(self, service):
-        return json.loads(service.config)

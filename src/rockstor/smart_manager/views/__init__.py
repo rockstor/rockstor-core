@@ -27,7 +27,7 @@ from cpu_util import CPUMetricView
 from nfs_uid_gid import NFSDUidGidDistributionView
 from load_avg import LoadAvgView
 from sprobe_metadata import SProbeMetadataView
-from base_service import BaseServiceView
+from base_service import (BaseServiceView, BaseServiceDetailView)
 from nis_service import NISServiceView
 from samba_service import SambaServiceView
 from nfs_service import NFSServiceView
@@ -39,7 +39,7 @@ from winbind_service import WinbindServiceView
 from ldap_service import LdapServiceView
 from sftp_service import SFTPServiceView
 from tasktypes import TaskTypeView
-from task_scheduler import TaskSchedulerView
+from task_scheduler import (TaskSchedulerListView, TaskSchedulerDetailView)
 from task_log import TaskLogView
 from replica_share import (ReplicaShareListView, ReplicaShareDetailView)
 from receive_trail import (ReceiveTrailListView, ReceiveTrailDetailView)

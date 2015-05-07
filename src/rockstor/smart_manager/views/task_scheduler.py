@@ -27,20 +27,11 @@ from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
 
 
-class TaskSchedulerView(rfc.GenericView):
-    serializer_class = TaskDefinitionSerializer
+class TaskSchedulerMixin(object):
     valid_tasks = ('snapshot', 'scrub',)
 
-    def get_queryset(self, *args, **kwargs):
-        if ('tdid' in self.kwargs):
-            self.paginate_by = 0
-            try:
-                return TaskDefinition.objects.get(id=self.kwargs['tdid'])
-            except:
-                return []
-        return TaskDefinition.objects.filter().order_by('-id')
-
-    def _validate_input(self, request):
+    @staticmethod
+    def _validate_input(request):
         frequency = None
         meta = {}
         try:
@@ -58,7 +49,28 @@ class TaskSchedulerView(rfc.GenericView):
             handle_exception(Exception(e_msg), request)
         return frequency, meta
 
-    @transaction.commit_on_success
+    @staticmethod
+    def _task_def(request, tdid):
+        try:
+            return TaskDefinition.objects.get(id=tdid)
+        except:
+            e_msg = ('Event with id: %s does not exist' % tdid)
+            handle_exception(Exception(e_msg), request)
+
+
+class TaskSchedulerListView(TaskSchedulerMixin, rfc.GenericView):
+    serializer_class = TaskDefinitionSerializer
+
+    def get_queryset(self, *args, **kwargs):
+        if ('tdid' in self.kwargs):
+            self.paginate_by = 0
+            try:
+                return TaskDefinition.objects.get(id=self.kwargs['tdid'])
+            except:
+                return []
+        return TaskDefinition.objects.filter().order_by('-id')
+
+    @transaction.atomic
     def post(self, request):
         with self._handle_exception(request):
             name = request.data['name']
@@ -83,14 +95,11 @@ class TaskSchedulerView(rfc.GenericView):
             td.save()
             return Response(TaskDefinitionSerializer(td).data)
 
-    def _task_def(self, request, tdid):
-        try:
-            return TaskDefinition.objects.get(id=tdid)
-        except:
-            e_msg = ('Event with id: %s does not exist' % tdid)
-            handle_exception(Exception(e_msg), request)
 
-    @transaction.commit_on_success
+class TaskSchedulerDetailView(TaskSchedulerMixin, rfc.GenericView):
+    serializer_class = TaskDefinitionSerializer
+
+    @transaction.atomic
     def put(self, request, tdid):
         with self._handle_exception(request):
             tdo = self._task_def(request, tdid)
@@ -107,7 +116,7 @@ class TaskSchedulerView(rfc.GenericView):
             tdo.save()
             return Response(TaskDefinitionSerializer(tdo).data)
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def delete(self, request, tdid):
         tdo = self._task_def(request, tdid)
         tdo.delete()
