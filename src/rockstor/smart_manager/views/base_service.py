@@ -82,9 +82,9 @@ class BaseServiceView(ServiceMixin, rfc.GenericView):
                 return sos
 
 
-class BaseServiceView(ServiceMixin, rfc.GenericView):
+class BaseServiceDetailView(ServiceMixin, rfc.GenericView):
     serializer_class = ServiceStatusSerializer
-
+    
     @transaction.atomic
     def get(self, request, *args, **kwargs):
         with self._handle_exception(self.request, msg=None):
