@@ -40,7 +40,7 @@ class NFSServiceView(BaseServiceView):
         if (command == 'config'):
             #nothing to really configure atm. just save the model
             try:
-                config = request.DATA['config']
+                config = request.data['config']
                 self._save_config(service, config)
             except Exception, e:
                 logger.exception(e)

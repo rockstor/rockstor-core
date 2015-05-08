@@ -28,35 +28,22 @@ from storageadmin.serializers import ShareSerializer
 from storageadmin.util import handle_exception
 from django.conf import settings
 import rest_framework_custom as rfc
-
-
 import logging
 logger = logging.getLogger(__name__)
 
 
-class ShareView(rfc.GenericView):
-    serializer_class = ShareSerializer
+class ShareMixin(object):
 
-    def get_queryset(self, *args, **kwargs):
-        if ('sname' in kwargs):
-            self.paginate_by = 0
-            try:
-                return Share.objects.get(name=kwargs['sname'])
-            except:
-                return []
-        sort_col = self.request.QUERY_PARAMS.get('sortby', None)
-        if (sort_col is not None and sort_col == 'usage'):
-            reverse = self.request.QUERY_PARAMS.get('reverse', 'no')
-            if (reverse == 'yes'):
-                reverse = True
-            else:
-                reverse = False
-            return sorted(Share.objects.all(), key=lambda u: u.cur_usage(),
-                          reverse=reverse)
-        return Share.objects.all()
+    @staticmethod
+    def _update_quota(pool, disk_name, share_name, size):
+        sid = share_id(pool, disk_name, share_name)
+        qgroup_id = '0/' + sid
+        update_quota(pool, disk_name, qgroup_id, size * 1024)
+        return qgroup_id
 
-    def _validate_share_size(self, request, pool):
-        size = request.DATA.get('size', pool.size)
+    @staticmethod
+    def _validate_share_size(request, pool):
+        size = request.data.get('size', pool.size)
         try:
             size = int(size)
         except:
@@ -70,8 +57,25 @@ class ShareView(rfc.GenericView):
             return pool.size
         return size
 
-    def _validate_compression(self, request):
-        compression = request.DATA.get('compression', 'no')
+
+class ShareListView(ShareMixin, rfc.GenericView):
+    serializer_class = ShareSerializer
+
+    def get_queryset(self, *args, **kwargs):
+        sort_col = self.request.query_params.get('sortby', None)
+        if (sort_col is not None and sort_col == 'usage'):
+            reverse = self.request.query_params.get('reverse', 'no')
+            if (reverse == 'yes'):
+                reverse = True
+            else:
+                reverse = False
+            return sorted(Share.objects.all(), key=lambda u: u.cur_usage(),
+                          reverse=reverse)
+        return Share.objects.all()
+
+    @staticmethod
+    def _validate_compression(request):
+        compression = request.data.get('compression', 'no')
         if (compression is None):
             compression = 'no'
         if (compression not in settings.COMPRESSION_TYPES):
@@ -80,32 +84,10 @@ class ShareView(rfc.GenericView):
             handle_exception(Exception(e_msg), request)
         return compression
 
-    @transaction.commit_on_success
-    def put(self, request, sname):
-        with self._handle_exception(request):
-            if (not Share.objects.filter(name=sname).exists()):
-                e_msg = ('Share(%s) does not exist.' % sname)
-                handle_exception(Exception(e_msg), request)
-
-            share = Share.objects.get(name=sname)
-            new_size = self._validate_share_size(request, share.pool)
-            disk = Disk.objects.filter(pool=share.pool)[0]
-            qgroup_id = self._update_quota(share.pool, disk.name,
-                                           share.subvol_name, new_size)
-            cur_usage = share_usage(share.pool, disk.name, qgroup_id)
-            if (new_size < cur_usage):
-                e_msg = ('Unable to resize because requested new size(%dKB) '
-                         'is less than current usage(%dKB) of the share.' %
-                         (new_size, cur_usage))
-                handle_exception(Exception(e_msg), request)
-            share.size = new_size
-            share.save()
-            return Response(ShareSerializer(share).data)
-
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request):
         with self._handle_exception(request):
-            pool_name = request.DATA.get('pool', None)
+            pool_name = request.data.get('pool', None)
             try:
                 pool = Pool.objects.get(name=pool_name)
             except:
@@ -113,7 +95,7 @@ class ShareView(rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
             compression = self._validate_compression(request)
             size = self._validate_share_size(request, pool)
-            sname = request.DATA.get('sname', None)
+            sname = request.data.get('sname', None)
             if ((sname is None or
                  re.match('%s$' % settings.SHARE_REGEX, sname) is None)):
                 e_msg = ('Share name must start with a alphanumeric(a-z0-9) '
@@ -139,8 +121,8 @@ class ShareView(rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
 
             replica = False
-            if ('replica' in request.DATA):
-                replica = request.DATA['replica']
+            if ('replica' in request.data):
+                replica = request.data['replica']
                 if (type(replica) != bool):
                     e_msg = ('replica must be a boolean, not %s' %
                              type(replica))
@@ -159,13 +141,41 @@ class ShareView(rfc.GenericView):
                 set_property(mnt_pt, 'compression', compression)
             return Response(ShareSerializer(s).data)
 
-    def _update_quota(self, pool, disk_name, share_name, size):
-        sid = share_id(pool, disk_name, share_name)
-        qgroup_id = '0/' + sid
-        update_quota(pool, disk_name, qgroup_id, size * 1024)
-        return qgroup_id
 
-    @transaction.commit_on_success
+class ShareDetailView(ShareMixin, rfc.GenericView):
+    serializer_class = ShareSerializer
+
+    def get(self, *args, **kwargs):
+        try:
+            data = Share.objects.get(name=self.kwargs['sname'])
+            serialized_data = ShareSerializer(data)
+            return Response(serialized_data.data)
+        except:
+            return Response()
+
+    @transaction.atomic
+    def put(self, request, sname):
+        with self._handle_exception(request):
+            if (not Share.objects.filter(name=sname).exists()):
+                e_msg = ('Share(%s) does not exist.' % sname)
+                handle_exception(Exception(e_msg), request)
+
+            share = Share.objects.get(name=sname)
+            new_size = self._validate_share_size(request, share.pool)
+            disk = Disk.objects.filter(pool=share.pool)[0]
+            qgroup_id = self._update_quota(share.pool, disk.name,
+                                           share.subvol_name, new_size)
+            cur_usage = share_usage(share.pool, disk.name, qgroup_id)
+            if (new_size < cur_usage):
+                e_msg = ('Unable to resize because requested new size(%dKB) '
+                         'is less than current usage(%dKB) of the share.' %
+                         (new_size, cur_usage))
+                handle_exception(Exception(e_msg), request)
+            share.size = new_size
+            share.save()
+            return Response(ShareSerializer(share).data)
+
+    @transaction.atomic
     def delete(self, request, sname):
         """
         For now, we delete all snapshots, if any of the share and delete the

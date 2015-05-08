@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf.urls import patterns, url
-from storageadmin.views import UserView
+from storageadmin.views import (UserListView, UserDetailView)
 from django.conf import settings
 
 
 urlpatterns = patterns(
     '',
     # User configuration
-    url(r'^$', UserView.as_view()),
-    url(r'(?P<username>%s)$' % settings.USERNAME_REGEX, UserView.as_view()),
+    url(r'^$', UserListView.as_view()),
+    url(r'(?P<username>%s)$' % settings.USERNAME_REGEX, UserDetailView.as_view()),
 )

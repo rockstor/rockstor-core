@@ -53,7 +53,7 @@ setup(
         'django == 1.6.2',
         'distribute >= 0.6.35',
         'URLObject == 2.1.1',
-        'djangorestframework == 2.4.3',
+        'djangorestframework == 3.1.1',
         'pytz == 2014.3',
         'django-pipeline == 1.2.23',
         'requests == 1.1.0',

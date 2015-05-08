@@ -27,24 +27,15 @@ from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
 
 
-class TaskSchedulerView(rfc.GenericView):
-    serializer_class = TaskDefinitionSerializer
+class TaskSchedulerMixin(object):
     valid_tasks = ('snapshot', 'scrub',)
 
-    def get_queryset(self, *args, **kwargs):
-        if ('tdid' in kwargs):
-            self.paginate_by = 0
-            try:
-                return TaskDefinition.objects.get(id=kwargs['tdid'])
-            except:
-                return []
-        return TaskDefinition.objects.filter().order_by('-id')
-
-    def _validate_input(self, request):
+    @staticmethod
+    def _validate_input(request):
         frequency = None
         meta = {}
         try:
-            frequency = int(float(request.DATA.get('frequency')))
+            frequency = int(float(request.data.get('frequency')))
             if (frequency < 1):
                 frequency = 1
         except:
@@ -52,22 +43,43 @@ class TaskSchedulerView(rfc.GenericView):
                      'integer')
             handle_exception(Exception(e_msg), request)
 
-        meta = request.DATA.get('meta', {})
+        meta = request.data.get('meta', {})
         if (type(meta) != dict):
             e_msg = ('meta must be a dictionary, not %s' % type(meta))
             handle_exception(Exception(e_msg), request)
         return frequency, meta
 
-    @transaction.commit_on_success
+    @staticmethod
+    def _task_def(request, tdid):
+        try:
+            return TaskDefinition.objects.get(id=tdid)
+        except:
+            e_msg = ('Event with id: %s does not exist' % tdid)
+            handle_exception(Exception(e_msg), request)
+
+
+class TaskSchedulerListView(TaskSchedulerMixin, rfc.GenericView):
+    serializer_class = TaskDefinitionSerializer
+
+    def get_queryset(self, *args, **kwargs):
+        if ('tdid' in self.kwargs):
+            self.paginate_by = 0
+            try:
+                return TaskDefinition.objects.get(id=self.kwargs['tdid'])
+            except:
+                return []
+        return TaskDefinition.objects.filter().order_by('-id')
+
+    @transaction.atomic
     def post(self, request):
         with self._handle_exception(request):
-            name = request.DATA['name']
+            name = request.data['name']
             if (TaskDefinition.objects.filter(name=name).exists()):
                 msg = ('Another task exists with the same name(%s). Choose '
                        'a different name' % name)
                 handle_exception(Exception(msg), request)
 
-            task_type = request.DATA['task_type']
+            task_type = request.data['task_type']
             if (task_type not in self.valid_tasks):
                 e_msg = ('Unknown task type: %s cannot be scheduled' % name)
                 handle_exception(Exception(e_msg), request)
@@ -75,7 +87,7 @@ class TaskSchedulerView(rfc.GenericView):
             frequency, meta = self._validate_input(request)
             json_meta = json.dumps(meta)
 
-            ts = int(float(request.DATA['ts']))
+            ts = int(float(request.data['ts']))
             ts_dto = datetime.utcfromtimestamp(
                 float(ts)).replace(second=0, microsecond=0, tzinfo=utc)
             td = TaskDefinition(name=name, task_type=task_type, ts=ts_dto,
@@ -83,18 +95,15 @@ class TaskSchedulerView(rfc.GenericView):
             td.save()
             return Response(TaskDefinitionSerializer(td).data)
 
-    def _task_def(self, request, tdid):
-        try:
-            return TaskDefinition.objects.get(id=tdid)
-        except:
-            e_msg = ('Event with id: %s does not exist' % tdid)
-            handle_exception(Exception(e_msg), request)
 
-    @transaction.commit_on_success
+class TaskSchedulerDetailView(TaskSchedulerMixin, rfc.GenericView):
+    serializer_class = TaskDefinitionSerializer
+
+    @transaction.atomic
     def put(self, request, tdid):
         with self._handle_exception(request):
             tdo = self._task_def(request, tdid)
-            enabled = request.DATA.get('enabled', True)
+            enabled = request.data.get('enabled', True)
             if (type(enabled) != bool):
                 e_msg = ('enabled flag must be a boolean and not %s' %
                          type(enabled))
@@ -107,7 +116,7 @@ class TaskSchedulerView(rfc.GenericView):
             tdo.save()
             return Response(TaskDefinitionSerializer(tdo).data)
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def delete(self, request, tdid):
         tdo = self._task_def(request, tdid)
         tdo.delete()

@@ -30,18 +30,18 @@ class OauthAppView(rfc.GenericView):
     serializer_class = OauthAppSerializer
 
     def get_queryset(self, *args, **kwargs):
-        if ('name' in kwargs):
+        if ('name' in self.kwargs):
             self.paginate_by = 0
             try:
-                return OauthApp.objects.get(name=kwargs['name'])
+                return OauthApp.objects.get(name=self.kwargs['name'])
             except:
                 return []
         return OauthApp.objects.all()
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request):
         with self._handle_exception(request):
-            name = request.DATA['name']
+            name = request.data['name']
             username = request.user.username
             if (OauthApp.objects.filter(name=name).exists()):
                 e_msg = ('application with name: %s already exists.' % name)
@@ -63,7 +63,7 @@ class OauthAppView(rfc.GenericView):
             oauth_app.save()
             return Response(OauthAppSerializer(oauth_app).data)
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def delete(self, request, name):
         with self._handle_exception(request):
             try:

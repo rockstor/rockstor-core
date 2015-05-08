@@ -65,11 +65,11 @@ class ShareIscsiView(APIView):
                 'dev_name': 'iscsi.img',
                 'dev_size': 10,
                 }
-            if ('tname' in request.DATA):
-                options['tname'] = request.DATA['tname']
-            if ('tid' in request.DATA):
+            if ('tname' in request.data):
+                options['tname'] = request.data['tname']
+            if ('tid' in request.data):
                 try:
-                    options['tid'] = int(request.DATA['tid'])
+                    options['tid'] = int(request.data['tid'])
                 except:
                     raise Exception('tid must be an integer')
 

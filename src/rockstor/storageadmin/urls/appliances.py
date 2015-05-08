@@ -17,11 +17,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf.urls import patterns, url
-from storageadmin.views import AppliancesView
-
+from storageadmin.views import (ApplianceListView, ApplianceDetailView)
 
 urlpatterns = patterns(
     '',
-    url(r'^$', AppliancesView.as_view()),
-    url(r'^/(?P<id>\d+)$', AppliancesView.as_view())
-    )
+    url(r'^$', ApplianceListView.as_view()),
+    url(r'^/(?P<id>\d+)$', ApplianceDetailView.as_view())
+)

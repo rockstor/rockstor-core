@@ -62,7 +62,7 @@ def home(request):
         'request': request,
         'current_appliance': current_appliance,
         'setup_user': setup.setup_user,
-        'page_size': settings.PAGINATION['page_size'],
+        'page_size': settings.REST_FRAMEWORK['PAGE_SIZE'],
         'installed_plugins': InstalledPlugin.objects.all(),
         'installed_plugins_json': JSONRenderer().render(
             InstalledPluginSerializer(InstalledPlugin.objects.all(),

@@ -174,7 +174,7 @@ class ReplicaScheduler(Process):
                             msg = ('Sender process Aborted. See logs for '
                                    'more information')
                             data = {'status': 'failed',
-                                    'end_ts': now,
+                                    'end_ts': now.strftime(settings.SNAP_TS_FORMAT),
                                     'error': msg,
                                     'send_failed': now, }
                             update_replica_status(rt[0].id, data, logger)

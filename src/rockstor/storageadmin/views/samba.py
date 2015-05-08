@@ -30,8 +30,7 @@ from fs.btrfs import (mount_share, is_share_mounted)
 import logging
 logger = logging.getLogger(__name__)
 
-
-class SambaView(rfc.GenericView):
+class SambaMixin(object):
     serializer_class = SambaShareSerializer
     DEF_OPTS = {
         'comment': 'samba export',
@@ -42,18 +41,16 @@ class SambaView(rfc.GenericView):
     }
     BOOL_OPTS = ('yes', 'no',)
 
-    def get_queryset(self, *args, **kwargs):
-        if ('id' in kwargs):
-            self.paginate_by = 0
-            try:
-                return SambaShare.objects.get(id=kwargs['id'])
-            except:
-                return []
-        return SambaShare.objects.all()
+    @staticmethod
+    def _restart_samba():
+        out = status()
+        if (out[2] == 0):
+            restart_samba()
 
-    def _validate_input(self, request, smbo=None):
+    @classmethod
+    def _validate_input(cls, request, smbo=None):
         options = {}
-        def_opts = self.DEF_OPTS
+        def_opts = cls.DEF_OPTS
         if (smbo is not None):
             def_opts = self.DEF_OPTS.copy()
             def_opts['comment'] = smbo.comment
@@ -61,43 +58,49 @@ class SambaView(rfc.GenericView):
             def_opts['guest_ok'] = smbo.guest_ok
             def_opts['read_only'] = smbo.read_only
 
-        options['comment'] = request.DATA.get('comment', def_opts['comment'])
-        options['browsable'] = request.DATA.get('browsable',
+        options['comment'] = request.data.get('comment', def_opts['comment'])
+        options['browsable'] = request.data.get('browsable',
                                                 def_opts['browsable'])
 
-        options['custom_config'] = request.DATA.get('custom_config', [])
+        options['custom_config'] = request.data.get('custom_config', [])
         if (type(options['custom_config']) != list):
             e_msg = ('custom config must be a list of strings')
             handle_exception(Exception(e_msg), request)
-        if (options['browsable'] not in self.BOOL_OPTS):
+        if (options['browsable'] not in cls.BOOL_OPTS):
             e_msg = ('Invalid choice for browsable. Possible '
                      'choices are yes or no.')
             handle_exception(Exception(e_msg), request)
-        options['guest_ok'] = request.DATA.get('guest_ok',
+        options['guest_ok'] = request.data.get('guest_ok',
                                                def_opts['guest_ok'])
-        if (options['guest_ok'] not in self.BOOL_OPTS):
+        if (options['guest_ok'] not in cls.BOOL_OPTS):
             e_msg = ('Invalid choice for guest_ok. Possible '
                      'options are yes or no.')
             handle_exception(Exception(e_msg), request)
-        options['read_only'] = request.DATA.get('read_only',
+        options['read_only'] = request.data.get('read_only',
                                                 def_opts['read_only'])
-        if (options['read_only'] not in self.BOOL_OPTS):
+        if (options['read_only'] not in cls.BOOL_OPTS):
             e_msg = ('Invalid choice for read_only. Possible '
                      'options are yes or no.')
             handle_exception(Exception(e_msg), request)
         return options
 
-    def _restart_samba(self):
-        out = status()
-        if (out[2] == 0):
-            restart_samba()
 
-    @transaction.commit_on_success
+class SambaListView(SambaMixin, rfc.GenericView):
+    def get_queryset(self, *args, **kwargs):
+        if ('id' in self.kwargs):
+            self.paginate_by = 0
+            try:
+                return SambaShare.objects.get(id=self.kwargs['id'])
+            except:
+                return []
+        return SambaShare.objects.all()
+
+    @transaction.atomic
     def post(self, request):
-        if ('shares' not in request.DATA):
+        if ('shares' not in request.data):
             e_msg = ('Must provide share names')
             handle_exception(Exception(e_msg), request)
-        shares = [validate_share(s, request) for s in request.DATA['shares']]
+        shares = [validate_share(s, request) for s in request.data['shares']]
         options = self._validate_input(request)
         custom_config = options['custom_config']
         del(options['custom_config'])
@@ -121,7 +124,7 @@ class SambaView(rfc.GenericView):
                     pool_device = Disk.objects.filter(pool=share.pool)[0].name
                     mount_share(share, pool_device, mnt_pt)
 
-                admin_users = request.DATA.get('admin_users', None)
+                admin_users = request.data.get('admin_users', None)
                 if (admin_users is None):
                     admin_users = []
                 for au in admin_users:
@@ -131,7 +134,32 @@ class SambaView(rfc.GenericView):
             self._restart_samba()
             return Response(SambaShareSerializer(smb_share).data)
 
-    @transaction.commit_on_success
+
+class SambaDetailView(SambaMixin, rfc.GenericView):
+    def get(self, *args, **kwargs):
+        try:
+            data = SambaShare.objects.get(id=self.kwargs['id'])
+            serialized_data = SamabShareSerializer(data)
+            return Response(serialized_data.data)
+        except:
+            return Response()
+
+    @transaction.atomic
+    def delete(self, request, smb_id):
+        try:
+            smbo = SambaShare.objects.get(id=smb_id)
+            SambaCustomConfig.objects.filter(smb_share=smbo).delete()
+            smbo.delete()
+        except:
+            e_msg = ('Samba export for the id(%s) does not exist' % smb_id)
+            handle_exception(Exception(e_msg), request)
+
+        with self._handle_exception(request):
+            refresh_smb_config(list(SambaShare.objects.all()))
+            self._restart_samba()
+            return Response()
+
+    @transaction.atomic
     def put(self, request, smb_id):
         with self._handle_exception(request):
             try:
@@ -144,7 +172,7 @@ class SambaView(rfc.GenericView):
             custom_config = options['custom_config']
             del(options['custom_config'])
             smbo.__dict__.update(**options)
-            admin_users = request.DATA.get('admin_users', None)
+            admin_users = request.data.get('admin_users', None)
             if (admin_users is None):
                 admin_users = []
             for uo in User.objects.filter(smb_shares=smbo):
@@ -181,18 +209,3 @@ class SambaView(rfc.GenericView):
             refresh_smb_config(list(SambaShare.objects.all()))
             self._restart_samba()
             return Response(SambaShareSerializer(smbo).data)
-
-    @transaction.commit_on_success
-    def delete(self, request, smb_id):
-        try:
-            smbo = SambaShare.objects.get(id=smb_id)
-            SambaCustomConfig.objects.filter(smb_share=smbo).delete()
-            smbo.delete()
-        except:
-            e_msg = ('Samba export for the id(%s) does not exist' % smb_id)
-            handle_exception(Exception(e_msg), request)
-
-        with self._handle_exception(request):
-            refresh_smb_config(list(SambaShare.objects.all()))
-            self._restart_samba()
-            return Response()

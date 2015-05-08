@@ -21,7 +21,7 @@ from storageadmin.util import handle_exception
 from system.services import systemctl
 from system.pkg_mgmt import install_pkg
 from django.db import transaction
-from base_service import BaseServiceView
+from base_service import BaseServiceDetailView
 from contextlib import contextmanager
 from storageadmin.exceptions import RockStorAPIException
 import os
@@ -33,7 +33,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class SNMPServiceView(BaseServiceView):
+class SNMPServiceView(BaseServiceDetailView):
 
     service_name = 'snmpd'
 
@@ -59,7 +59,7 @@ class SNMPServiceView(BaseServiceView):
                 install_pkg('net-snmp')
             if (command == 'config'):
                 service = Service.objects.get(name=self.service_name)
-                config = request.DATA.get('config', {})
+                config = request.data.get('config', {})
                 if (type(config) != dict):
                     e_msg = ('config dictionary is required input')
                     handle_exception(Exception(e_msg), request)

@@ -39,6 +39,7 @@ class Disk(models.Model):
     transport = models.CharField(max_length=1024, null=True)
     vendor = models.CharField(max_length=1024, null=True)
 
+    @property
     def pool_name(self, *args, **kwargs):
         try:
             return self.pool.name

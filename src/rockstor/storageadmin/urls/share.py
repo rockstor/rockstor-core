@@ -17,9 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf.urls import patterns, url
-from storageadmin.views import (ShareView, ShareNFSView,
+from storageadmin.views import (ShareListView, ShareDetailView,
+                                ShareNFSListView, ShareNFSDetailView,
                                 ShareACLView, SnapshotView, ShareIscsiView,
-                                ShareCommandView)
+                                ShareCommandView,)
+
 from django.conf import settings
 
 share_regex = settings.SHARE_REGEX
@@ -29,15 +31,17 @@ share_command = 'rollback|clone|compress'
 
 urlpatterns = patterns(
     '',
-    url(r'^$', ShareView.as_view(), name='share-view'),
-    url(r'^/(?P<sname>%s)$' % share_regex, ShareView.as_view(),
+    url(r'^$', ShareListView.as_view(), name='share-view'),
+    url(r'^/(?P<sname>%s)$' % share_regex, ShareDetailView.as_view(),
         name='share-view'),
 
-    url(r'^/(?P<sname>%s)/nfs$' % share_regex, ShareNFSView.as_view(),
+    url(r'^/(?P<sname>%s)/nfs$' % share_regex, ShareNFSListView.as_view(),
         name='nfs-view'),
     url(r'^/(?P<sname>%s)/nfs/(?P<export_id>[0-9]+)$' % share_regex,
-        ShareNFSView.as_view(), name='nfs-view'),
+        ShareNFSDetailView.as_view(), name='nfs-view'),
 
+    #Individual snapshots don't have detailed representation in the web-ui. So
+    #thre is no need for SnapshotDetailView.
     url(r'^/(?P<sname>%s)/snapshots$' % share_regex,
         SnapshotView.as_view(), name='snapshot-view'),
     url(r'^/(?P<sname>%s)/snapshots/(?P<snap_name>%s)$' % (share_regex,

@@ -41,7 +41,7 @@ class PoolScrubView(rfc.GenericView):
 
     def get_queryset(self, *args, **kwargs):
         with self._handle_exception(self.request):
-            pool = self._validate_pool(kwargs['pname'], self.request)
+            pool = self._validate_pool(self.kwargs['pname'], self.request)
             disk = Disk.objects.filter(pool=pool)[0]
             self._scrub_status(pool, disk)
             return PoolScrub.objects.filter(pool=pool).order_by('-id')
@@ -74,7 +74,7 @@ class PoolScrubView(rfc.GenericView):
             ps = self._scrub_status(pool, disk)
             if (command == 'status'):
                 return Response(PoolScrubSerializer(ps).data)
-            force = request.DATA.get('force', False)
+            force = request.data.get('force', False)
             if ((PoolScrub.objects.filter(pool=pool,
                                           status__regex=r'(started|running)')
                  .exists())):

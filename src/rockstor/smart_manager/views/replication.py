@@ -33,19 +33,24 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class ReplicaView(rfc.GenericView):
+class ReplicaMixin(object):
     serializer_class = ReplicaSerializer
 
+    def _validate_frequency(self, request, default=1):
+        e_msg = ('frequency must be a positive integer')
+        try:
+            frequency = int(request.data.get('frequency', default))
+        except:
+            handle_exception(Exception(e_msg), request)
+        if (frequency < 1):
+            handle_exception(Exception(e_msg), request)
+        return frequency
+
+
+class ReplicaListView(ReplicaMixin, rfc.GenericView):
+
     def get_queryset(self, *args, **kwargs):
-        if ('sname' in kwargs):
-            return Replica.objects.filter(share=kwargs['sname'])
-        if ('rid' in kwargs):
-            self.paginate_by = 0
-            try:
-                return Replica.objects.get(id=kwargs['rid'])
-            except:
-                return []
-        status = self.request.QUERY_PARAMS.get('status', None)
+        status = self.request.query_params.get('status', None)
         if (status is not None):
             enabled = None
             if (status == 'enabled'):
@@ -56,10 +61,10 @@ class ReplicaView(rfc.GenericView):
                 return Replica.objects.filter(enabled=enabled)
         return Replica.objects.filter().order_by('-id')
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request):
         with self._handle_exception(request):
-            sname = request.DATA.get('share')
+            sname = request.data.get('share')
             if (Replica.objects.filter(share=sname).exists()):
                 e_msg = ('Another replication task already exists for this '
                          'share(%s). Only 1-1 replication is supported '
@@ -67,12 +72,12 @@ class ReplicaView(rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
             share = self._validate_share(sname, request)
             appliance = self._validate_appliance(request)
-            dpool = request.DATA.get('pool')
+            dpool = request.data.get('pool')
             frequency = self._validate_frequency(request)
-            task_name = request.DATA.get('task_name')
+            task_name = request.data.get('task_name')
             try:
-                data_port = int(request.DATA.get('data_port'))
-                meta_port = int(request.DATA.get('meta_port'))
+                data_port = int(request.data.get('data_port'))
+                meta_port = int(request.data.get('meta_port'))
             except:
                 e_msg = ('data and meta ports must be valid port '
                          'numbers(1-65535).')
@@ -87,27 +92,6 @@ class ReplicaView(rfc.GenericView):
             r.save()
             return Response(ReplicaSerializer(r).data)
 
-    @transaction.commit_on_success
-    def put(self, request, rid):
-        with self._handle_exception(request):
-            try:
-                r = Replica.objects.get(id=rid)
-            except:
-                e_msg = ('Replica(%s) does not exist' % rid)
-                handle_exception(Exception(e_msg), request)
-
-            r.frequency = self._validate_frequency(request, r.frequency)
-            enabled = request.DATA.get('enabled', r.enabled)
-            if (type(enabled) != bool):
-                e_msg = ('enabled switch must be a boolean, not %s' %
-                         type(enabled))
-                handle_exception(Exception(e_msg), request)
-            r.enabled = enabled
-            ts = datetime.utcnow().replace(tzinfo=utc)
-            r.ts = ts
-            r.save()
-            return Response(ReplicaSerializer(r).data)
-
     def _validate_share(self, sname, request):
         try:
             return Share.objects.get(name=sname)
@@ -117,7 +101,7 @@ class ReplicaView(rfc.GenericView):
 
     def _validate_appliance(self, request):
         try:
-            ip = request.DATA.get('appliance', None)
+            ip = request.data.get('appliance', None)
             return Appliance.objects.get(ip=ip)
         except:
             e_msg = ('Appliance with ip(%s) is not recognized.' % ip)
@@ -129,15 +113,32 @@ class ReplicaView(rfc.GenericView):
             handle_exception(Exception(e_msg), request)
         return port
 
-    def _validate_frequency(self, request, default=1):
-        e_msg = ('frequency must be a positive integer')
-        try:
-            frequency = int(request.DATA.get('frequency', default))
-        except:
-            handle_exception(Exception(e_msg), request)
-        if (frequency < 1):
-            handle_exception(Exception(e_msg), request)
-        return frequency
+
+class ReplicaDetailView(ReplicaMixin, rfc.GenericView):
+    serializer_class = ReplicaSerializer
+    # Queryset added to view DRF page but not necessary for deletion
+    queryset = Replica.objects.all()
+
+    @transaction.atomic
+    def put(self, request, rid):
+        with self._handle_exception(request):
+            try:
+                r = Replica.objects.get(id=rid)
+            except:
+                e_msg = ('Replica(%s) does not exist' % rid)
+                handle_exception(Exception(e_msg), request)
+
+            r.frequency = self._validate_frequency(request, r.frequency)
+            enabled = request.data.get('enabled', r.enabled)
+            if (type(enabled) != bool):
+                e_msg = ('enabled switch must be a boolean, not %s' %
+                         type(enabled))
+                handle_exception(Exception(e_msg), request)
+            r.enabled = enabled
+            ts = datetime.utcnow().replace(tzinfo=utc)
+            r.ts = ts
+            r.save()
+            return Response(ReplicaSerializer(r).data)
 
     def delete(self, request, rid):
         with self._handle_exception(request):

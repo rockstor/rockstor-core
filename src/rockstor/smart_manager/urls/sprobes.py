@@ -22,7 +22,7 @@ from smart_manager.views import (SProbeView, MemInfoView, NetStatView,
                                  NFSDClientDistribView, NFSDShareDistribView,
                                  NFSDShareClientDistribView, CPUMetricView,
                                  NFSDUidGidDistributionView, LoadAvgView,
-                                 SProbeMetadataView)
+                                 SProbeMetadataView, SProbeMetadataDetailView,)
 
 
 urlpatterns = patterns('',
@@ -30,7 +30,7 @@ urlpatterns = patterns('',
     # Smart probes
     url(r'^$', SProbeView.as_view(), name='probe-view'),
     url(r'^metadata$', SProbeMetadataView.as_view(), name='probe-view'),
-    url(r'^metadata/(?P<pid>[0-9]+)$', SProbeMetadataView.as_view(),
+    url(r'^metadata/(?P<pid>[0-9]+)$', SProbeMetadataDetailView.as_view(),
         name='probe-view'),
 
     # Generic smart probes

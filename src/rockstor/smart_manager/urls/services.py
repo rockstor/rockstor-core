@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf.urls import patterns, url
-from smart_manager.views import (BaseServiceView, NISServiceView,
+from smart_manager.views import (NISServiceView,
                                  SambaServiceView, NFSServiceView,
                                  NTPServiceView, WinbindServiceView,
                                  LdapServiceView, SFTPServiceView,
@@ -25,8 +25,7 @@ from smart_manager.views import (BaseServiceView, NISServiceView,
                                  TaskSchedulerServiceView,
                                  DataCollectorServiceView, ServiceMonitorView,
                                  AFPServiceView, SNMPServiceView,
-                                 DockerServiceView)
-
+                                 DockerServiceView, BaseServiceView)
 command_regex = ('config|start|stop')
 
 urlpatterns = patterns('',

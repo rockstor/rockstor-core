@@ -20,38 +20,39 @@ from rest_framework.response import Response
 from storageadmin.util import handle_exception
 from system.services import (init_service_op, chkconfig, toggle_auth_service)
 from django.db import transaction
-from base_service import BaseServiceView
+from base_service import BaseServiceDetailView
 from smart_manager.models import Service
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-class LdapServiceView(BaseServiceView):
+class LdapServiceView(BaseServiceDetailView):
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request, command):
         """
         execute a command on the service
         """
-        service = Service.objects.get(name='ldap')
-        if (command == 'config'):
-            try:
-                config = request.DATA['config']
-                self._save_config(service, config)
-            except Exception, e:
-                logger.exception(e)
-                e_msg = ('Ldap could not be configured. Try again')
-                handle_exception(Exception(e_msg), request)
+        with self._handle_exception(request):
+            service = Service.objects.get(name='ldap')
+            if (command == 'config'):
+                try:
+                    config = request.data['config']
+                    self._save_config(service, config)
+                except Exception, e:
+                    logger.exception(e)
+                    e_msg = ('Ldap could not be configured. Try again')
+                    handle_exception(Exception(e_msg), request)
 
-        else:
-            try:
-                toggle_auth_service('ldap', command,
-                                    config=self._get_config(service))
-            except Exception, e:
-                logger.exception(e)
-                e_msg = ('Failed to %s ldap service due to system error.' %
-                         command)
-                handle_exception(Exception(e_msg), request)
+            else:
+                try:
+                    toggle_auth_service('ldap', command,
+                                        config=self._get_config(service))
+                except Exception, e:
+                    logger.exception(e)
+                    e_msg = ('Failed to %s ldap service due to system error.' %
+                             command)
+                    handle_exception(Exception(e_msg), request)
 
-        return Response()
+            return Response()

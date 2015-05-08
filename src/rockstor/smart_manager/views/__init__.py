@@ -26,23 +26,23 @@ from nfs_share_client_distrib import NFSDShareClientDistribView
 from cpu_util import CPUMetricView
 from nfs_uid_gid import NFSDUidGidDistributionView
 from load_avg import LoadAvgView
-from sprobe_metadata import SProbeMetadataView
-from base_service import BaseServiceView
+from sprobe_metadata import (SProbeMetadataView, SProbeMetadataDetailView)
+from base_service import (BaseServiceView, BaseServiceDetailView)
 from nis_service import NISServiceView
 from samba_service import SambaServiceView
 from nfs_service import NFSServiceView
-from replication import ReplicaView
-from replica_trail import ReplicaTrailView
+from replication import (ReplicaListView, ReplicaDetailView)
+from replica_trail import (ReplicaTrailListView, ReplicaTrailDetailView)
 from replication_service import ReplicationServiceView
 from ntp_service import NTPServiceView
 from winbind_service import WinbindServiceView
 from ldap_service import LdapServiceView
 from sftp_service import SFTPServiceView
 from tasktypes import TaskTypeView
-from task_scheduler import TaskSchedulerView
+from task_scheduler import (TaskSchedulerListView, TaskSchedulerDetailView)
 from task_log import TaskLogView
-from replica_share import ReplicaShareView
-from receive_trail import ReceiveTrailView
+from replica_share import (ReplicaShareListView, ReplicaShareDetailView)
+from receive_trail import (ReceiveTrailListView, ReceiveTrailDetailView)
 from ts_service import TaskSchedulerServiceView
 from dc_service import DataCollectorServiceView
 from sm_service import ServiceMonitorView

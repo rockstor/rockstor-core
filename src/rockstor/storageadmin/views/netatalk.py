@@ -33,31 +33,82 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class NetatalkView(rfc.GenericView):
+class NetatalkDetailView(rfc.GenericView):
+    def get(self, *args, **kwargs):
+        try:
+            data = NetatalkShare.objects.get(id=self.kwargs['id'])
+            serialized_data = NetatalkShareSerializer(data)
+            return Response(serialized_data.data)
+        except:
+            return Response()
+
+    @transaction.atomic
+    def put(self, request, afp_id):
+        afpo = self._validate_afp_id(request, afp_id)
+        afpo.time_machine = self._validate_input(request)
+        afpo.save()
+        self._refresh_and_reload(request)
+        return Response(NetatalkShareSerializer(afpo).data)
+
+    @transaction.atomic
+    def delete(self, request, afp_id):
+        afpo = self._validate_afp_id(request, afp_id)
+        try:
+            afpo.delete()
+        except:
+            e_msg = ('Failed to delete AFP config for id(%s).' % afp_id)
+            handle_exception(Exception(e_msg), request)
+
+        self._refresh_and_reload(request)
+        return Response()
+
+    @staticmethod
+    def _validate_afp_id(request, afp_id):
+        try:
+            return NetatalkShare.objects.get(id=afp_id)
+        except:
+            e_msg = ('AFP export for the id(%s) does not exist' % afp_id)
+            handle_exception(Exception(e_msg), request)
+
+    @staticmethod
+    def _validate_input(request):
+        time_machine = request.data.get('time_machine', 'yes')
+        if (time_machine != 'yes' and time_machine != 'no'):
+            e_msg = ('time_machine must be yes or now. not %s' %
+                     time_machine)
+            handle_exception(Exception(e_msg), request)
+        return time_machine
+
+    @staticmethod
+    def _refresh_and_reload(request):
+        try:
+            refresh_afp_config(list(NetatalkShare.objects.all()))
+            return systemctl('netatalk', 'reload')
+        except Exception, e:
+            logger.exception(e)
+            e_msg = ('System error occured while reloading Netatalk server')
+            handle_exception(Exception(e_msg), request)
+
+
+class NetatalkListView(rfc.GenericView):
     serializer_class = NetatalkShareSerializer
     def_description = 'on Rockstor'
 
     def get_queryset(self, *args, **kwargs):
-        if ('id' in kwargs):
-            self.paginate_by = 0
-            try:
-                return NetatalkShare.objects.get(id=kwargs['id'])
-            except:
-                return []
         return NetatalkShare.objects.all()
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request):
-        if ('shares' not in request.DATA):
+        if ('shares' not in request.data):
             e_msg = ('Must provide share names')
             handle_exception(Exception(e_msg), request)
 
-        shares = [validate_share(s, request) for s in request.DATA['shares']]
-        description = request.DATA.get('description', '')
+        shares = [validate_share(s, request) for s in request.data['shares']]
+        description = request.data.get('description', '')
         if (description == ''):
             description = self.def_description
 
-        time_machine = request.DATA.get('time_machine', 'yes')
+        time_machine = request.data.get('time_machine', 'yes')
         if (time_machine != 'yes' and time_machine != 'no'):
             e_msg = ('time_machine must be yes or now. not %s' %
                      time_machine)
@@ -88,47 +139,3 @@ class NetatalkView(rfc.GenericView):
             raise
         except Exception, e:
             handle_exception(e, request)
-
-    def _validate_afp_id(self, request, afp_id):
-        try:
-            return NetatalkShare.objects.get(id=afp_id)
-        except:
-            e_msg = ('AFP export for the id(%s) does not exist' % afp_id)
-            handle_exception(Exception(e_msg), request)
-
-    def _validate_input(self, request):
-        time_machine = request.DATA.get('time_machine', 'yes')
-        if (time_machine != 'yes' and time_machine != 'no'):
-            e_msg = ('time_machine must be yes or now. not %s' %
-                     time_machine)
-            handle_exception(Exception(e_msg), request)
-        return time_machine
-
-    def _refresh_and_reload(self, request):
-        try:
-            refresh_afp_config(list(NetatalkShare.objects.all()))
-            return systemctl('netatalk', 'reload')
-        except Exception, e:
-            logger.exception(e)
-            e_msg = ('System error occured while reloading Netatalk server')
-            handle_exception(Exception(e_msg), request)
-
-    @transaction.commit_on_success
-    def put(self, request, afp_id):
-        afpo = self._validate_afp_id(request, afp_id)
-        afpo.time_machine = self._validate_input(request)
-        afpo.save()
-        self._refresh_and_reload(request)
-        return Response(NetatalkShareSerializer(afpo).data)
-
-    @transaction.commit_on_success
-    def delete(self, request, afp_id):
-        afpo = self._validate_afp_id(request, afp_id)
-        try:
-            afpo.delete()
-        except:
-            e_msg = ('Failed to delete AFP config for id(%s).' % afp_id)
-            handle_exception(Exception(e_msg), request)
-
-        self._refresh_and_reload(request)
-        return Response()

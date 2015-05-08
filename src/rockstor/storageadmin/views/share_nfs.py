@@ -32,17 +32,11 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class ShareNFSView(rfc.GenericView):
+class ShareNFSListView(rfc.GenericView):
     serializer_class = NFSExportGroupSerializer
 
     def get_queryset(self, *args, **kwargs):
-        share = validate_share(kwargs['sname'], self.request)
-        if ('export_id' in kwargs):
-            self.paginate_by = 0
-            try:
-                return NFSExportGroup.objects.get(id=kwargs['export_id'])
-            except:
-                return []
+        share = validate_share(self.kwargs['sname'], self.request)
         exports = NFSExport.objects.filter(share=share)
         ids = [e.export_group.id for e in exports]
         return NFSExportGroup.objects.filter(nohide=False, id__in=ids)
@@ -71,7 +65,19 @@ class ShareNFSView(rfc.GenericView):
             nfs_serializer = NFSExportGroupSerializer(eg)
             return Response(nfs_serializer.data)
 
-    @transaction.commit_on_success
+
+class ShareNFSDetailView(rfc.GenericView):
+    serializer_class = NFSExportGroupSerializer
+
+    def get(self, *args, **kwargs):
+        if ('export_id' in self.kwargs):
+            self.paginate_by = 0
+            try:
+                return NFSExportGroup.objects.get(id=self.kwargs['export_id'])
+            except:
+                return Response()
+
+    @transaction.atomic
     def put(self, request, sname, export_id):
         with self._handle_exception(request):
             share = validate_share(sname, request)
@@ -87,7 +93,7 @@ class ShareNFSView(rfc.GenericView):
             nfs_serializer = NFSExportGroupSerializer(eg)
             return Response(nfs_serializer.data)
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def delete(self, request, sname, export_id):
         with self._handle_exception(request):
             share = validate_share(sname, request)

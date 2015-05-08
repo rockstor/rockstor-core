@@ -35,28 +35,22 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class SFTPView(rfc.GenericView):
+class SFTPListView(rfc.GenericView):
     serializer_class = SFTPSerializer
 
     def get_queryset(self, *args, **kwargs):
-        if ('id' in kwargs):
-            self.paginate_by = 0
-            try:
-                return SFTP.objects.get(id=kwargs['id'])
-            except:
-                return []
         return SFTP.objects.all()
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request):
         with self._handle_exception(request):
-            if ('shares' not in request.DATA):
+            if ('shares' not in request.data):
                 e_msg = ('Must provide share names')
                 handle_exception(Exception(e_msg), request)
-            shares = [validate_share(s, request) for s in request.DATA['shares']]
+            shares = [validate_share(s, request) for s in request.data['shares']]
             editable = 'rw'
-            if ('read_only' in request.DATA and
-                request.DATA['read_only'] is True):
+            if ('read_only' in request.data and
+                request.data['read_only'] is True):
                 editable = 'ro'
 
             mnt_map = sftp_mount_map(settings.SFTP_MNT_ROOT)
@@ -91,7 +85,18 @@ class SFTPView(rfc.GenericView):
             update_sftp_config(input_map)
             return Response()
 
-    @transaction.commit_on_success
+
+class SFTPDetailView(rfc.GenericView):
+
+    def get(self, *args, **kwargs):
+        try:
+            data = SFTP.objects.get(id=self.kwargs['id'])
+            serialized_data = SFTPSerializer(data)
+            return Response(serialized_data.data)
+        except:
+            return Response()
+
+    @transaction.atomic
     def delete(self, request, id):
         with self._handle_exception(request):
             try:

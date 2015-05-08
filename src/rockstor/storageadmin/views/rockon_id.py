@@ -37,7 +37,7 @@ class RockOnIdView(rfc.GenericView):
     def get_queryset(self, *args, **kwargs):
         return RockOn.objects.all()
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request, rid, command):
         with self._handle_exception(request):
 
@@ -69,11 +69,11 @@ class RockOnIdView(rfc.GenericView):
                         handle_exception(Exception(e_msg), request)
 
             if (command == 'install'):
-                share_map = request.DATA.get('shares', {})
+                share_map = request.data.get('shares', {})
                 logger.debug('share map = %s' % share_map)
-                port_map = request.DATA.get('ports', {})
+                port_map = request.data.get('ports', {})
                 logger.debug('port map = %s' % port_map)
-                cc_map = request.DATA.get('cc', {})
+                cc_map = request.data.get('cc', {})
                 logger.debug('cc map = %s' % cc_map)
                 containers = DContainer.objects.filter(rockon=rockon)
                 for co in containers:
@@ -132,7 +132,7 @@ class RockOnIdView(rfc.GenericView):
                              'be uninstalled. Stop it and try again' %
                              rid)
                     handle_exception(Exception(e_msg), request)
-                share_map = request.DATA.get('shares')
+                share_map = request.data.get('shares')
                 for co in DContainer.objects.filter(rockon=rockon):
                     for s in share_map.keys():
                         if (not Share.objects.filter(name=s).exists()):
@@ -160,11 +160,11 @@ class RockOnIdView(rfc.GenericView):
                 rockon.status = 'start_pending'
                 rockon.save()
             elif (command == 'state_update'):
-                state = request.DATA.get('new_state')
+                state = request.data.get('new_state')
                 rockon.state = state
                 rockon.save()
             elif (command == 'status_update'):
-                status = request.DATA.get('new_status')
+                status = request.data.get('new_status')
                 rockon.status = status
                 rockon.save()
             return Response(RockOnSerializer(rockon).data)

@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import re
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.util import handle_exception
@@ -26,36 +27,20 @@ from system.users import (groupadd, groupdel)
 import grp
 from ug_helpers import combined_groups
 import logging
-import re
 from django.conf import settings
 logger = logging.getLogger(__name__)
 
 
-class GroupView(rfc.GenericView):
+class GroupListView(rfc.GenericView):
     serializer_class = GroupSerializer
-    exclude_list = ('root', 'bin', 'daemon', 'sys', 'adm', 'tty', 'disk',
-                    'lp', 'mem', 'kmem', 'wheel', 'cdrom', 'mail', 'man',
-                    'dialout', 'floppy', 'games', 'tape', 'video', 'ftp',
-                    'lock', 'audio', 'nobody', 'users', 'utmp', 'utempter',
-                    'ssh_keys', 'systemd-journal', 'dbus', 'rpc', 'polkitd',
-                    'avahi', 'avahi-autoipd', 'wbpriv', 'rpcuser', 'nfsnobody',
-                    'postgres', 'ntp', 'dip', 'stapusr', 'stapsys', 'stapdev',
-                    'nginx', 'postdrop', 'postfix', 'sshd', 'chrony',
-                    'usbmuxd')
 
     def get_queryset(self, *args, **kwargs):
-        if ('groupname' in kwargs):
-            self.paginate_by = 0
-            try:
-                return Group.objects.get(username=kwargs['groupname'])
-            except:
-                return []
         return combined_groups()
 
     @transaction.commit_on_success
     def post(self, request):
-        groupname = request.DATA.get('groupname', None)
-        gid = request.DATA.get('gid', None)
+        groupname = request.data.get('groupname', None)
+        gid = request.data.get('gid', None)
         if (groupname is None or
             re.match(settings.USERNAME_REGEX, groupname) is None):
             e_msg = ('Groupname is invalid. It must confirm to the regex: %s' %
@@ -82,6 +67,27 @@ class GroupView(rfc.GenericView):
         group.save()
 
         return Response(GroupSerializer(group).data)
+
+
+class GroupDetailView(rfc.GenericView):
+    exclude_list = ('root', 'bin', 'daemon', 'sys', 'adm', 'tty', 'disk',
+                    'lp', 'mem', 'kmem', 'wheel', 'cdrom', 'mail', 'man',
+                    'dialout', 'floppy', 'games', 'tape', 'video', 'ftp',
+                    'lock', 'audio', 'nobody', 'users', 'utmp', 'utempter',
+                    'ssh_keys', 'systemd-journal', 'dbus', 'rpc', 'polkitd',
+                    'avahi', 'avahi-autoipd', 'wbpriv', 'rpcuser', 'nfsnobody',
+                    'postgres', 'ntp', 'dip', 'stapusr', 'stapsys', 'stapdev',
+                    'nginx', 'postdrop', 'postfix', 'sshd', 'chrony',
+                    'usbmuxd')
+
+    def get(self, *args, **kwargs):
+        try:
+            data = Group.objects.get(username=self.kwargs['groupname'])
+            serialized_data = GroupSerializer(data)
+            return Response(serialized_data.data)
+        except:
+            # Render no response if no matches
+            return Response()
 
     def put(self, request, groupname):
         e_msg = ('group edit is not supported')

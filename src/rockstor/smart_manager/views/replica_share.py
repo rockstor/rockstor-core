@@ -31,34 +31,25 @@ from django.utils.timezone import utc
 import rest_framework_custom as rfc
 
 
-class ReplicaShareView(rfc.GenericView):
+class ReplicaShareListView(rfc.GenericView):
     serializer_class = ReplicaShareSerializer
 
     def get_queryset(self, *args, **kwargs):
-        if ('sname' in kwargs or 'rid' in kwargs):
-            self.paginate_by = 0
-            try:
-                if ('sname' in kwargs):
-                    return ReplicaShare.objects.get(share=kwargs['sname'])
-                return ReplicaShare.objects.get(id=kwargs['rid'])
-            except:
-                return []
-
         return ReplicaShare.objects.filter().order_by('-id')
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request):
-        sname = request.DATA['share']
+        sname = request.data['share']
         if (ReplicaShare.objects.filter(share=sname).exists()):
             e_msg = ('Replicashare(%s) already exists.' % sname)
             handle_exception(Exception(e_msg), request)
 
         share = self._validate_share(sname, request)
-        aip = request.DATA['appliance']
+        aip = request.data['appliance']
         self._validate_appliance(aip, request)
-        src_share = request.DATA['src_share']
-        data_port = int(request.DATA['data_port'])
-        meta_port = int(request.DATA['meta_port'])
+        src_share = request.data['src_share']
+        data_port = int(request.data['data_port'])
+        meta_port = int(request.data['meta_port'])
         ts = datetime.utcnow().replace(tzinfo=utc)
         r = ReplicaShare(share=sname, appliance=aip,
                          pool=share.pool.name, src_share=src_share,
@@ -67,21 +58,38 @@ class ReplicaShareView(rfc.GenericView):
         r.save()
         return Response(ReplicaShareSerializer(r).data)
 
-    def _validate_share(self, sname, request):
+    @staticmethod
+    def _validate_share(sname, request):
         try:
             return Share.objects.get(name=sname)
         except:
             e_msg = ('Share: %s does not exist' % sname)
             handle_exception(Exception(e_msg), request)
 
-    def _validate_appliance(self, ip, request):
+    @staticmethod
+    def _validate_appliance(ip, request):
         try:
             return Appliance.objects.get(ip=ip)
         except:
             e_msg = ('Appliance with ip: %s is not recognized.' % ip)
             handle_exception(Exception(e_msg), request)
 
-    @transaction.commit_on_success
+
+class ReplicaShareDetailView(rfc.GenericView):
+    serializer_class = ReplicaShareSerializer
+
+    def get(self, *args, **kwargs):
+        try:
+            if ('sname' in self.kwargs):
+                data = ReplicaShare.objects.get(share=self.kwargs['sname'])
+            else:
+                data = ReplicaShare.objects.get(id=self.kwargs['rid'])
+            serialized_data = ReplicaShareSerializer(data)
+            return Response(serialized_data.data)
+        except:
+            return Response()
+
+    @transaction.atomic
     def delete(self, request, rid):
         with self._handle_exception(request):
             try:

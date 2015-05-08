@@ -24,27 +24,21 @@ from django.db import transaction
 from storageadmin.models import Appliance
 from storageadmin.util import handle_exception
 from storageadmin.serializers import ApplianceSerializer
+
 from system.osi import (hostid, sethostname)
 import rest_framework_custom as rfc
 from cli.rest_util import (api_call, set_token)
 from smart_manager.models import Replica
 
+
 import logging
 logger = logging.getLogger(__name__)
 
 
-class AppliancesView(rfc.GenericView):
+class ApplianceListView(rfc.GenericView):
     serializer_class = ApplianceSerializer
 
     def get_queryset(self, *args, **kwargs):
-        if ('ip' in kwargs or 'id' in kwargs):
-            self.paginate_by = 0
-            try:
-                if ('ip' in kwargs):
-                    return Appliance.objects.get(ip=kwargs['ip'])
-                return Appliance.objects.get(id=kwargs['id'])
-            except:
-                return []
         return Appliance.objects.all()
 
     def _get_remote_appliance(self, request, ip, port, client_id,
@@ -101,29 +95,29 @@ class AppliancesView(rfc.GenericView):
                      'Rockstor appliance(%s). Try again later.' % ip)
             handle_exception(Exception(e_msg), request)
 
-    @transaction.commit_on_success
-    def post(self, request):
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
         with self._handle_exception(request):
-            ip = request.DATA['ip']
-            current_appliance = request.DATA['current_appliance']
+            ip = request.data['ip']
+            current_appliance = request.data['current_appliance']
             # authenticate if not adding current appliance
             if (Appliance.objects.filter(ip=ip).exists()):
                 e_msg = ('The appliance with ip = %s already exists and '
                          'cannot be added again' % ip)
                 handle_exception(Exception(e_msg), request)
             if (current_appliance is False):
-                client_id = request.DATA.get('client_id', None)
+                client_id = request.data.get('client_id', None)
                 if (client_id is None):
                     raise Exception('ID is required')
-                client_secret = request.DATA.get('client_secret', None)
+                client_secret = request.data.get('client_secret', None)
                 if (client_secret is None):
                     raise Exception('Secret is required')
                 try:
-                    mgmt_port = int(request.DATA['mgmt_port'])
+                    mgmt_port = int(request.data['mgmt_port'])
                 except Exception, e:
                     logger.exception(e)
                     e_msg = ('Invalid management port(%s) supplied. Try '
-                             'again' % request.DATA['mgmt_port'])
+                             'again' % request.data['mgmt_port'])
                     handle_exception(Exception(e_msg), request)
                 url = ('https://%s' % ip)
                 if (mgmt_port != 443):
@@ -139,12 +133,29 @@ class AppliancesView(rfc.GenericView):
                                              str(uuid.uuid4())))
                 appliance = Appliance(uuid=appliance_uuid, ip=ip,
                                       current_appliance=True)
-                if ('hostname' in request.DATA):
-                    appliance.hostname = request.DATA['hostname']
+                if ('hostname' in request.data):
+                    appliance.hostname = request.data['hostname']
                 appliance.save()
                 sethostname(ip, appliance.hostname)
             return Response(ApplianceSerializer(appliance).data)
 
+
+class ApplianceDetailView(rfc.GenericView):
+    serializer_class = ApplianceSerializer
+
+    def get(self, *args, **kwargs):
+        if 'ip' in self.kwargs or 'id' in self.kwargs:
+            try:
+                if 'ip' in self.kwargs:
+                    data = Appliance.objects.get(ip=self.kwargs['ip'])
+                else:
+                    data = Appliance.objects.get(id=self.kwargs['id'])
+                serialized_data = ApplianceSerializer(data)
+                return Response(serialized_data.data)
+            except:
+                return Response()
+
+    @transaction.atomic
     def delete(self, request, id):
         try:
             appliance = Appliance.objects.get(pk=id)

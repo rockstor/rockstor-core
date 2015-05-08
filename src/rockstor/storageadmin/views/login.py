@@ -33,8 +33,8 @@ logger = logging.getLogger(__name__)
 class LoginView(APIView):
     def post(self, request):
         try:
-            username = request.DATA['username']
-            password = request.DATA['password']
+            username = request.data['username']
+            password = request.data['password']
             user = authenticate(username=username, password=password)
             if (user is not None and user.is_active):
                 login(request, user)
