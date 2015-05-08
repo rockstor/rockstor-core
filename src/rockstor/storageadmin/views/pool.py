@@ -104,18 +104,9 @@ class PoolView(rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
             if ((o == 'compress-force' and
                  v not in allowed_options['compress-force'])):
-                # print "compression-force error"
-                # print 'allowed key value options:', allowed_options['compress-force']
-                # print 'key value:', v
-                # TODO e_msg is not raised
-                e_msg = ('compress-force is only allowed with %s' %
-                         (settings.COMPRESSION_TYPES))
+                e_msg = ('compress-force is only allowed with {}'.format(settings.COMPRESSION_TYPES))
                 handle_exception(Exception(e_msg), request)
-            # print 'allowed_options[o]:', allowed_options[o]
-            # print 'type(allowed_options[o]):', type(allowed_options[o])
-            # print 'type(allowed_options[o]) is int', type(allowed_options[o]) is int
-            # TODO confirm this is correct change... conditional wasn't catching
-            # if (type(allowed_options[o]) is int):
+            # changed conditional from "if (type(allowed_options[o]) is int):"... was checking for type type
             if (allowed_options[o] is int):
                 # print "int check true"
                 try:
@@ -173,8 +164,7 @@ class PoolView(rfc.GenericView):
             #raid level checks
             raid_level = request.DATA['raid_level']
             if (raid_level not in self.RAID_LEVELS):
-                e_msg = ('Unsupported raid level. use one of: %s' %
-                         self.RAID_LEVELS)
+                e_msg = ('Unsupported raid level. use one of: {}'.format(self.RAID_LEVELS))
                 handle_exception(Exception(e_msg), request)
             if (raid_level in self.RAID_LEVELS[1:3] and len(disks) == 1):
                 e_msg = ('At least two disks are required for the raid level: '

@@ -66,6 +66,11 @@ class PoolTests(APITestCase):
         self.mock_remount = self.patch_remount.start()
         self.mock_remount.return_value = True
 
+        # error handling run_command mocks
+        self.patch_run_command = patch('storageadmin.util.run_command')
+        self.mock_run_command = self.patch_run_command.start()
+        self.mock_run_command.return_value = True
+
     @classmethod
     def tearDownClass(self):
         patch.stopall()
@@ -88,14 +93,37 @@ class PoolTests(APITestCase):
         response1 = self.client.get(self.BASE_URL)
         self.assertEqual(response1.status_code, status.HTTP_200_OK, msg=response1.data)
 
-    def test_get_empty_set(self):
+    def test_invalid_operations(self):
         """
-        get a pool that doesn't exist
+        invalid pool operations
+        1. attempt to create a pool with invalid raid level
+        2. attempt to edit root pool
         """
+        data = {'disks': ('sdc', 'sdd',),
+                'pname': 'singlepool2',
+                'raid_level': 'derp', }
+        e_msg = ("Unsupported raid level. use one of: ('single', 'raid0', 'raid1', 'raid10', 'raid5', 'raid6')")
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+        self.assertEqual(response.data['detail'], e_msg)
+
+        # attempt to add disk to root pool
+        data2 = {'disks': ('sdc', 'sdd',)}
+        e_msg = ('Edit operations are not allowed on this Pool(rockstor_rockstor) as it contains the operating system.')
+        response2 = self.client.put('%s/rockstor_rockstor/add' % self.BASE_URL, data=data2)
+        self.assertEqual(response2.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response2.data)
+        self.assertEqual(response2.data['detail'], e_msg)
+
+        # get a pool that doesn't exist
         e_msg = ('Not found')
         response1 = self.client.get('%s/raid0pool' % self.BASE_URL)
         self.assertEqual(response1.status_code, status.HTTP_404_NOT_FOUND, msg=response1.data)
         self.assertEqual(response1.data['detail'], e_msg)
+        
+        # edit a pool that doesn't exist
+        response2 = self.client.put('%s/raid0pool/add' % self.BASE_URL, data=data2)
+        self.assertEqual(response2.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response2.data)
+        self.assertEqual(response2.data['detail'], e_msg)
 
     def test_name_regex(self):
         """
@@ -148,23 +176,31 @@ class PoolTests(APITestCase):
         """
         Compression is agnostic to name, raid and number of disks. So no need to
         test it with different types of pools. Every post & remount calls this.
-        1. Create a pool with zlib compression
-        2. Create a pool with lzo compression
-        3. change compression from zlib to lzo
-        4. change compression from lzo to zlib
-        5. disable zlib, enable zlib
-        6. disable lzo, enable lzo
+        1. Create a pool with invalid compression
+        2. Create a pool with zlib compression
+        3. Create a pool with lzo compression
+        4. change compression from zlib to lzo
+        5. change compression from lzo to zlib
+        6. disable zlib, enable zlib
+        7. disable lzo, enable lzo
         """
-        # create pool with zlib compression
+        # create pool with invalid compression
         data = {'disks': ('sdc', 'sdd',),
                 'pname': 'singlepool',
                 'raid_level': 'single',
-                'compression': 'zlib'}
+                'compression': 'derp'}
+        e_msg = ("Unsupported compression algorithm(derp). Use one of ('lzo', 'zlib', 'no')")
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+        self.assertEqual(response.data['detail'], e_msg)
+
+        # create pool with zlib compression
+        data['compression'] = 'zlib'
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
         self.assertEqual(response.data['compression'], 'zlib')
         
-        # create pool with zlib compression
+        # create pool with lzo compression
         data2 = {'disks': ('sde', 'sdf',),
                 'pname': 'singlepool2',
                 'raid_level': 'single',
@@ -274,9 +310,7 @@ class PoolTests(APITestCase):
 
         # test invalid compress-force
         data2 = {'mnt_options': 'compress-force=1'}
-        # TODO e_msg should be:
-        # e_msg = ("compress-force is only allowed with ('lzo', 'zlib', 'no')")
-        e_msg = ('not all arguments converted during string formatting')
+        e_msg = ("compress-force is only allowed with ('lzo', 'zlib', 'no')")
         response3 = self.client.put('%s/singleton/remount' % self.BASE_URL, data=data2)
         self.assertEqual(response3.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response3.data)
         self.assertEqual(response3.data['detail'], e_msg)
@@ -291,8 +325,9 @@ class PoolTests(APITestCase):
         3. create a pool with 2 disks
         4. create a pool with a duplicate name
         5. add 2 disks to pool
-        6. remove 2 disks from pool
-        7. delete pool
+        6. attempt to add a disk that doesn't exist
+        7. remove 2 disks from pool
+        8. delete pool
         """
 
         # create pool with 0 disks
@@ -334,6 +369,13 @@ class PoolTests(APITestCase):
         response5 = self.client.put('%s/singlepool2/add' % self.BASE_URL, data=data2)
         self.assertEqual(response5.status_code, status.HTTP_200_OK, msg=response5.data)
         self.assertEqual(len(response5.data['disks']), 4)
+
+        # attempt to add disk that does not exist
+        data3 = {'disks': ('derp'), }
+        e_msg = ('Disk(d) does not exist')
+        response5 = self.client.put('%s/singlepool2/add' % self.BASE_URL, data=data3)
+        self.assertEqual(response5.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response5.data)
+        self.assertEqual(response5.data['detail'], e_msg)
 
         # remove 2 disks
         e_msg = ('Disks cannot be removed from a pool with this raid(single) configuration')
@@ -383,6 +425,13 @@ class PoolTests(APITestCase):
         response1 = self.client.get('%s/raid0pool' % self.BASE_URL)
         self.assertEqual(response1.status_code, status.HTTP_200_OK, msg=response1.data)
         self.assertEqual(response.data['name'], 'raid0pool')
+
+        # get pool queryset, sort by usage
+        # TODO
+        # AttributeError: 'Pool' object has no attribute 'cur_usage'
+        # response1 = self.client.get('%s?sortby=usage' % self.BASE_URL)
+        # self.assertEqual(response1.status_code, status.HTTP_200_OK, msg=response1.data)
+        # self.assertEqual(response.data, 'raid0pool')
 
         # add 1 disk
         data2 = {'disks': ('sdd',)}
@@ -543,7 +592,7 @@ class PoolTests(APITestCase):
     def test_raid5_crud(self):
         """
         test pool crud ops with 'raid5' raid config. raid5 can be used to create a pool
-        with atleast 3 disks & disks cannot be removed
+        with at least 3 disks & disks cannot be removed
         1. attempt to create a pool with 1 disk
         2. create a pool with 4 disks
         3. add 2 disks to pool
@@ -588,8 +637,8 @@ class PoolTests(APITestCase):
 
     def test_raid6_crud(self):
         """
-        test pool crud ops with 'raid5' raid config. raid5 can be used to create a pool
-        with atleast 4 disks & disks cannot be removed
+        test pool crud ops with 'raid6' raid config. raid6 can be used to create a pool
+        with at least 4 disks & disks cannot be removed
         1. attempt to create a pool with 1 disk
         2. create a pool with 4 disks
         3. add 2 disks to pool
