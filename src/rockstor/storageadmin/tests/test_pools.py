@@ -73,13 +73,13 @@ class PoolTests(APITestCase):
     def setUp(self):
         self.client.login(username='admin', password='admin')
 
-    # TODO will have to execute outside of setup
-    # def test_pools_auth(self):
-    #     """
-    #     unauthorized api access
-    #     """
-    #     response = self.client.get(self.BASE_URL)
-    #     self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+    def test_auth(self):
+        """
+        unauthorized api access
+        """
+        self.client.logout()
+        response = self.client.get(self.BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_get(self):
         """
@@ -87,6 +87,15 @@ class PoolTests(APITestCase):
         """
         response1 = self.client.get(self.BASE_URL)
         self.assertEqual(response1.status_code, status.HTTP_200_OK, msg=response1.data)
+
+    def test_get_empty_set(self):
+        """
+        get a pool that doesn't exist
+        """
+        e_msg = ('Not found')
+        response1 = self.client.get('%s/raid0pool' % self.BASE_URL)
+        self.assertEqual(response1.status_code, status.HTTP_404_NOT_FOUND, msg=response1.data)
+        self.assertEqual(response1.data['detail'], e_msg)
 
     def test_name_regex(self):
         """
@@ -134,17 +143,6 @@ class PoolTests(APITestCase):
         response6 = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response6.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response6.data)
         self.assertEqual(response6.data['detail'], e_msg)
-
-    # TODO
-    # Traceback (most recent call last):
-    #   File "/opt/rock-dep/src/rockstor/storageadmin/tests/test_pools.py", line 129, in test_get_empty_pool_set
-    #     self.assertEqual(response1.status_code, status.HTTP_200_OK, msg=response1.data)
-    # AssertionError: {u'detail': u'Not found'}
-    # def test_get_empty_pool_set(self):
-    #     e_msg = ('Not found')
-    #     response1 = self.client.get('%s/raid0pool' % self.BASE_URL)
-    #     self.assertEqual(response1.status_code, status.HTTP_200_OK, msg=response1.data)
-    #     self.assertEqual(response1.data['detail'], e_msg)
 
     def test_compression(self):
         """
@@ -208,10 +206,10 @@ class PoolTests(APITestCase):
         self.assertEqual(response8.status_code, status.HTTP_200_OK, msg=response8.data)
         self.assertEqual(response8.data['compression'], 'lzo')
 
-    # every post & every remount calls this
     def test_mount_options(self):
         """
         Mount options are agnostic to other parameters as in compression.
+        Mount validations are called every post & remount operation
         1. test invalid options (see allowed_options in the pool.py(view))
         2. test all valid options
         3. test compress-force options
@@ -351,8 +349,14 @@ class PoolTests(APITestCase):
     def test_raid0_crud(self):
         """
         test pool crud ops with 'raid0' raid config. raid0 can be used to create a pool
-        1. Add a pool with a single disk.
-        2.
+        with atleast 2 disks & disks cannot be removed
+        1. attempt to create a pool with 1 disk
+        2. create a pool with 2 disks
+        3. get pool
+        4. add disk to pool
+        5. add disks & change riad config
+        6. attempt remove disk from pool
+        7. delete pool
         """
         data = {'disks': ('sdb',),
                 'pname': 'raid0pool',
@@ -376,7 +380,6 @@ class PoolTests(APITestCase):
         self.assertEqual(len(response.data['disks']), 2)
 
         # get pool
-        # TODO suman -- bother with get?
         response1 = self.client.get('%s/raid0pool' % self.BASE_URL)
         self.assertEqual(response1.status_code, status.HTTP_200_OK, msg=response1.data)
         self.assertEqual(response.data['name'], 'raid0pool')
@@ -403,23 +406,28 @@ class PoolTests(APITestCase):
         # self.assertEqual(response4.data['raid_level'], 'raid1')
 
         # add 3 disks & change raid_level
-        # data3 = {'disks': ('sde', 'sdf', 'sdg',),
-        #          'raid_level': 'raid1', }
-        # e_msg = 'A Balance process is already running for this pool(raid0pool). Resize is not supported during a balance process.'
-        # response4 = self.client.put('%s/raid0pool/add' % self.BASE_URL, data=data3)
-        # self.assertEqual(response4.status_code, status.HTTP_200_OK, msg=response4.data)
-        # self.assertEqual(response4.data['detail'], e_msg)
+        data3 = {'disks': ('sde', 'sdf', 'sdg',),
+                 'raid_level': 'raid1', }
+        e_msg = 'A Balance process is already running for this pool(raid0pool). Resize is not supported during a balance process.'
+        response4 = self.client.put('%s/raid0pool/add' % self.BASE_URL, data=data3)
+        self.assertEqual(response4.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response4.data)
+        self.assertEqual(response4.data['detail'], e_msg)
 
         # delete pool
         response5 = self.client.delete('%s/raid0pool' % self.BASE_URL)
         self.assertEqual(response5.status_code, status.HTTP_200_OK, msg=response5.data)
         self.mock_umount_root.assert_called_with('/mnt2/raid0pool')
-        # TODO benefit to checking object is actually deleted? Or is that considered testing django ORM?
-        self.assertRaises(Exception, Pool.objects.get, name='raid0pool')
 
     def test_raid1_crud(self):
         """
-        raid1 post, put & delete api requests
+        test pool crud ops with 'raid1' raid config. raid1 can be used to create a pool
+        with atleast 2 disks & disks can be removed 1 at a time
+        1. attempt to create a pool with 1 disk
+        2. create a pool with 4 disks
+        3. add 2 disks to pool
+        4. attempt to remove 2 disks from pool
+        5. remove 1 disk from pool
+        6. delete pool
         """
         data = {'disks': ('sdb',),
                 'pname': 'raid1pool',
@@ -465,7 +473,16 @@ class PoolTests(APITestCase):
 
     def test_raid10_crud(self):
         """
-        raid10 post, put & delete api requests
+        test pool crud ops with 'raid10' raid config. raid10 can be used to create a pool
+        with atleast 4 disks & must have an even number of disks.
+        1. attempt to create a pool with 1 disk
+        2. attempt to create a pool with 5 disks
+        3. create a pool with 4 disks
+        4. attempt to add 1 disk
+        5. add 2 disks to pool
+        6. remove 2 disks
+        7. attempt to remove 1 disk from pool
+        8. delete pool
         """
         data = {'disks': ('sdb',),
                 'pname': 'raid10pool',
@@ -525,7 +542,13 @@ class PoolTests(APITestCase):
 
     def test_raid5_crud(self):
         """
-        raid5 post, put & delete api requests
+        test pool crud ops with 'raid5' raid config. raid5 can be used to create a pool
+        with atleast 3 disks & disks cannot be removed
+        1. attempt to create a pool with 1 disk
+        2. create a pool with 4 disks
+        3. add 2 disks to pool
+        4. attempt to remove 2 disks
+        5. delete pool
         """
         data = {'disks': ('sdb',),
                 'pname': 'raid5pool',
@@ -565,7 +588,13 @@ class PoolTests(APITestCase):
 
     def test_raid6_crud(self):
         """
-        raid6 post, put & delete api requests
+        test pool crud ops with 'raid5' raid config. raid5 can be used to create a pool
+        with atleast 4 disks & disks cannot be removed
+        1. attempt to create a pool with 1 disk
+        2. create a pool with 4 disks
+        3. add 2 disks to pool
+        4. attempt to remove 2 disks
+        5. delete pool
         """
         data = {'disks': ('sdb',),
                 'pname': 'raid6pool',
