@@ -104,7 +104,7 @@ class Sender(Process):
             try:
                 data = {'status': 'failed',
                         'error': msg,
-                        'end_ts': datetime.utcnow().replace(tzinfo=utc), }
+                        'end_ts': datetime.utcnow().replace(tzinfo=utc).strftime(settings.SNAP_TS_FORMAT), }
                 update_replica_status(self.rt2_id, data, logger)
             except Exception, e:
                 logger.error('Exception occured in cleanup handler')
@@ -162,7 +162,7 @@ class Sender(Process):
             ack = self._process_q()
             if (ack['msg'] == 'snap_exists'):
                 data = {'status': 'succeeded',
-                        'end_ts': datetime.utcnow().replace(tzinfo=utc),
+                        'end_ts': datetime.utcnow().replace(tzinfo=utc).strftime(settings.SNAP_TS_FORMAT),
                         'error': 'snapshot already exists on the receiver', }
                 msg = ('Failed to update replica status for snap_name: %s. '
                        'Aborting.' % self.snap_name)
@@ -251,7 +251,7 @@ class Sender(Process):
         with self._update_trail_and_quit(msg):
             ack = self._process_q()
 
-        end_ts = datetime.utcnow().replace(tzinfo=utc)
+        end_ts = datetime.utcnow().replace(tzinfo=utc).strftime(settings.SNAP_TS_FORMAT)
         data = {'status': 'succeeded',
                 'kb_sent': self.kb_sent / 1024,
                 'end_ts': end_ts, }

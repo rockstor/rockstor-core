@@ -20,7 +20,7 @@ from rest_framework.response import Response
 from storageadmin.util import handle_exception
 from system.services import superctl
 from django.db import transaction
-from base_service import BaseServiceView
+from base_service import BaseServiceDetailView
 from smart_manager.models import Service
 from django.conf import settings
 
@@ -28,9 +28,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class ReplicationServiceView(BaseServiceView):
+class ReplicationServiceView(BaseServiceDetailView):
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request, command):
         """
         execute a command on the service

@@ -31,7 +31,7 @@ urlpatterns = patterns('',
         name='replica-view'),
 
     url(r'^trail$', ReplicaTrailListView.as_view(), name='replica-view'),
-    url(r'^trail/replica/(?P<rid>[0-9]+)', ReplicaTrailDetailView.as_view(), name='replica-view'),
+    url(r'^trail/replica/(?P<rid>[0-9]+)', ReplicaTrailListView.as_view(), name='replica-view'),
     url(r'^trail/(?P<rtid>[0-9]+)', ReplicaTrailDetailView.as_view(),
         name='replica-view'),
 

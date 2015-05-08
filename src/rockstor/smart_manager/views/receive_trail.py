@@ -34,7 +34,7 @@ class ReceiveTrailListView(rfc.GenericView):
             return ReceiveTrail.objects.filter(rshare=replica).order_by('-id')
         return ReceiveTrail.objects.filter().order_by('-id')
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request, rid):
         with self._handle_exception(request):
             rs = ReplicaShare.objects.get(id=rid)
@@ -45,6 +45,17 @@ class ReceiveTrailListView(rfc.GenericView):
             rt.save()
             return Response(ReceiveTrailSerializer(rt).data)
 
+    @transaction.atomic
+    def delete(self, request, rid):
+        with self._handle_exception(request):
+            days = int(request.data.get('days', 30))
+            rs = ReplicaShare.objects.get(id=rid)
+            ts = datetime.utcnow().replace(tzinfo=utc)
+            ts0 = ts - timedelta(days=days)
+            if (ReceiveTrail.objects.filter(rshare=rs).count() > 100):
+                ReceiveTrail.objects.filter(
+                    rshare=rs, end_ts__lt=ts0).delete()
+            return Response()
 
 class ReceiveTrailDetailView(rfc.GenericView):
     serializer_class = ReceiveTrailSerializer
@@ -56,7 +67,7 @@ class ReceiveTrailDetailView(rfc.GenericView):
                 serialized_data = ReceiveTrailSerializer(data)
                 return Response(serialized_data.data)
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def put(self, request, rtid):
         with self._handle_exception(request):
             rt = ReceiveTrail.objects.get(id=rtid)
@@ -70,15 +81,3 @@ class ReceiveTrailDetailView(rfc.GenericView):
             rt.end_ts = request.data.get('end_ts', rt.end_ts)
             rt.save()
             return Response(ReceiveTrailSerializer(rt).data)
-
-    @transaction.commit_on_success
-    def delete(self, request, rid):
-        with self._handle_exception(request):
-            days = int(request.data.get('days', 30))
-            rs = ReplicaShare.objects.get(id=rid)
-            ts = datetime.utcnow().replace(tzinfo=utc)
-            ts0 = ts - timedelta(days=days)
-            if (ReceiveTrail.objects.filter(rshare=rs).count() > 100):
-                ReceiveTrail.objects.filter(
-                    rshare=rs, end_ts__lt=ts0).delete()
-            return Response()

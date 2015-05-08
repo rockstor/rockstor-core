@@ -20,16 +20,16 @@ from rest_framework.response import Response
 from storageadmin.util import handle_exception
 from system.services import (toggle_auth_service, systemctl)
 from django.db import transaction
-from base_service import BaseServiceView
+from base_service import BaseServiceDetailView
 from smart_manager.models import Service
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-class WinbindServiceView(BaseServiceView):
+class WinbindServiceView(BaseServiceDetailView):
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request, command):
         """
         execute a command on the service
