@@ -29,8 +29,6 @@ class DiskStatView(GenericSProbeView):
     model_obj = DiskStat
 
     def _sorted_results(self, sort_col, reverse):
-        # Unused disk names
-        disk_names = [d.name for d in Disk.objects.all()]
         qs = []
         for d in Disk.objects.all():
             qs.append(self.model_obj.objects.filter(**{'name__exact':
