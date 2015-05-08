@@ -16,16 +16,10 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from rest_framework import generics
 from smart_manager.models import SProbe
 from smart_manager.serializers import SProbeSerializer
-from rest_framework.authentication import (BasicAuthentication,
-                                           SessionAuthentication,)
-from storageadmin.auth import DigestAuthentication
-from rest_framework.permissions import IsAuthenticated
-from rest_framework_custom.renderers import IgnoreClient
+from rest_framework.response import Response
 from django.conf import settings
-from django.db.models import Count
 from advanced_sprobe import AdvancedSProbeView
 
 
@@ -33,12 +27,6 @@ class SProbeMetadataView(AdvancedSProbeView):
     serializer_class = SProbeSerializer
 
     def get_queryset(self, *args, **kwargs):
-        if ('pid' in self.kwargs):
-            self.paginate_by = 0
-            try:
-                return SProbe.objects.get(id=kwargs['pid'])
-            except:
-                return []
 
         limit = self.request.query_params.get('limit',
                                               settings.REST_FRAMEWORK['MAX_LIMIT'])
@@ -75,3 +63,16 @@ class SProbeMetadataView(AdvancedSProbeView):
 
     def post(self, request, *args, **kwargs):
         pass
+
+
+class SProbeMetadataDetailView(AdvancedSProbeView):
+    serializer_class = SProbeSerializer
+
+    def get(self, *args, **kwargs):
+        if ('pid' in self.kwargs):
+            try:
+                data = SProbe.objects.get(id=kwargs['pid'])
+                serialized_data = SProbeSerializer(data)
+                return Response(serialized_data.data)
+            except:
+                return Response()

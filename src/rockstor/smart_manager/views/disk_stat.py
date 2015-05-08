@@ -17,7 +17,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from operator import attrgetter
-import rest_framework_custom as rfc
 from smart_manager.models import DiskStat
 from storageadmin.models import Disk
 from smart_manager.serializers import DiskStatSerializer
@@ -30,6 +29,7 @@ class DiskStatView(GenericSProbeView):
     model_obj = DiskStat
 
     def _sorted_results(self, sort_col, reverse):
+        # Unused disk names
         disk_names = [d.name for d in Disk.objects.all()]
         qs = []
         for d in Disk.objects.all():

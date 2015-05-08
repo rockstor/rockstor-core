@@ -26,7 +26,7 @@ from nfs_share_client_distrib import NFSDShareClientDistribView
 from cpu_util import CPUMetricView
 from nfs_uid_gid import NFSDUidGidDistributionView
 from load_avg import LoadAvgView
-from sprobe_metadata import SProbeMetadataView
+from sprobe_metadata import (SProbeMetadataView, SProbeMetadataDetailView)
 from base_service import (BaseServiceView, BaseServiceDetailView)
 from nis_service import NISServiceView
 from samba_service import SambaServiceView
