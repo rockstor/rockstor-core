@@ -43,7 +43,7 @@ class DockerServiceView(BaseServiceDetailView):
             e_msg = ('Share(%s) does not exist' % root)
             handle_exception(Exception(e_msg), request)
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request, command):
         service = Service.objects.get(name=self.name)
 

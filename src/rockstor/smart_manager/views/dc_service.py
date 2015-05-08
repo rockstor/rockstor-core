@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+from rest_framework.response import Response
 from storageadmin.util import handle_exception
 from system.services import superctl
 from django.db import transaction
@@ -54,4 +55,4 @@ class DataCollectorServiceView(BaseServiceDetailView):
                          command)
                 handle_exception(Exception(e_msg), request)
 
-        return service
+        return Response()
