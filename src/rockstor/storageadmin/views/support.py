@@ -67,13 +67,13 @@ class SupportView(APIView):
             if (caseid is None):
 
                 future_id = len(SupportCase.objects.all()) + 1
-                case_type = request.DATA['type']
+                case_type = request.data['type']
                 if (case_type not in self.CASE_TYPES):
                     e_msg = ('Unsupported case type: %s. Possible choices: %s'
                              % (case_type, self.CASE_TYPES))
                     handle_exception(Exception(e_msg), request)
 
-                notes = request.DATA['notes']
+                notes = request.data['notes']
                 log_loc = settings.SUPPORT['log_loc']
                 archive_name = ('%s-%d.tgz' % (os.path.dirname(log_loc),
                                                future_id))
@@ -94,7 +94,7 @@ class SupportView(APIView):
                 if (not SupportCase.objects.filter(id=caseid).exists()):
                     e_msg = ('Support case: %s does not exist' % caseid)
                     handle_exception(Exception(e_msg), request)
-                new_status = request.DATA['status']
+                new_status = request.data['status']
                 if (new_status not in self.CASE_STATUS):
                     e_msg = ('Unknown case status. It should be one of: %s' %
                              self.CASE_STATUS)

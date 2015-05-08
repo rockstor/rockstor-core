@@ -36,5 +36,21 @@ class ServiceStatus(models.Model):
     count = models.BigIntegerField(default=1)
     ts = models.DateTimeField(auto_now=True, db_index=True)
 
+    @property
+    def config(self, *args, **kwargs):
+        return self.service.config
+
+    @property
+    def name(self, *args, **kwargs):
+        return self.service.name
+
+    @property
+    def config(self, *args, **kwargs):
+        return self.service.config
+
+    @property
+    def display_name(self, *args, **kwargs):
+        return self.service.display_name
+
     class Meta:
         app_label = 'smart_manager'

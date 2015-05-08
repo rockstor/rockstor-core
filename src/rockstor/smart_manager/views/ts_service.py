@@ -20,15 +20,16 @@ from rest_framework.response import Response
 from storageadmin.util import handle_exception
 from system.services import superctl
 from django.db import transaction
-from base_service import BaseServiceView
+from base_service import (BaseServiceView, BaseServiceDetailView)
 from smart_manager.models import Service
+from task_scheduler import TaskSchedulerDetailView
 from django.conf import settings
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-class TaskSchedulerServiceView(BaseServiceView):
+class TaskSchedulerServiceView(BaseServiceDetailView):
 
     @transaction.commit_on_success
     def post(self, request, command):
@@ -39,7 +40,7 @@ class TaskSchedulerServiceView(BaseServiceView):
         if (command == 'config'):
             #nothing to really configure atm. just save the model
             try:
-                config = request.DATA['config']
+                config = request.data['config']
                 self._save_config(service, config)
             except Exception, e:
                 logger.exception(e)
@@ -56,3 +57,4 @@ class TaskSchedulerServiceView(BaseServiceView):
                 handle_exception(Exception(e_msg), request)
 
         return Response()
+

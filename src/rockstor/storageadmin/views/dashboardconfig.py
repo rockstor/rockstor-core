@@ -52,7 +52,7 @@ class DashboardConfigView(APIView):
     def post(self, request):
         try:
             current_user = request.user
-            widgets = request.DATA['widgets']
+            widgets = request.data['widgets']
             dcs = DashboardConfig.objects.filter(user__pk=current_user.id)
             if len(dcs) > 0:
                 dc = dcs[0]
@@ -68,7 +68,7 @@ class DashboardConfigView(APIView):
     def put(self, request):
         try:
             current_user = request.user
-            widgets = request.DATA['widgets']
+            widgets = request.data['widgets']
             dcs = DashboardConfig.objects.filter(user__pk=current_user.id)
             if len(dcs) > 0:
                 dc = dcs[0]

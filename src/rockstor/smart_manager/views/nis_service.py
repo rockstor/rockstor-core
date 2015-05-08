@@ -21,44 +21,45 @@ from storageadmin.util import handle_exception
 from system.services import init_service_op, chkconfig
 from system.nis import configure_nis
 from django.db import transaction
-from base_service import BaseServiceView
+from base_service import BaseServiceDetailView
 from smart_manager.models import Service
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-class NISServiceView(BaseServiceView):
+class NISServiceView(BaseServiceDetailView):
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request, command):
         """
         execute a command on the service
         """
-        service = Service.objects.get(name='nis')
-        if (command == 'config'):
-            try:
-                config = request.DATA['config']
-                configure_nis(config['domain'], config['server'])
-                self._save_config(service, config)
-            except Exception, e:
-                logger.exception(e)
-                e_msg = ('NIS could not be configured. Try again')
-                handle_exception(Exception(e_msg), request)
+        with self._handle_exception(request):
+            service = Service.objects.get(name='nis')
+            if (command == 'config'):
+                try:
+                    config = request.data['config']
+                    configure_nis(config['domain'], config['server'])
+                    self._save_config(service, config)
+                except Exception, e:
+                    logger.exception(e)
+                    e_msg = ('NIS could not be configured. Try again')
+                    handle_exception(Exception(e_msg), request)
 
-        else:
-            try:
-                if (command == 'stop'):
-                    chkconfig('ypbind', 'off')
-                else:
-                    chkconfig('ypbind', 'on')
-                    chkconfig('rpcbind', 'on')
-                    init_service_op('rpcbind', command)
-                init_service_op('ypbind', command)
-            except Exception, e:
-                logger.exception(e)
-                e_msg = ('Failed to %s NIS service due to system error.' %
-                         command)
-                handle_exception(Exception(e_msg), request)
+            else:
+                try:
+                    if (command == 'stop'):
+                        chkconfig('ypbind', 'off')
+                    else:
+                        chkconfig('ypbind', 'on')
+                        chkconfig('rpcbind', 'on')
+                        init_service_op('rpcbind', command)
+                    init_service_op('ypbind', command)
+                except Exception, e:
+                    logger.exception(e)
+                    e_msg = ('Failed to %s NIS service due to system error.' %
+                             command)
+                    handle_exception(Exception(e_msg), request)
 
-        return Response()
+            return Response()

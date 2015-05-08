@@ -41,14 +41,16 @@ class Pool(models.Model):
     compression = models.CharField(max_length=256, null=True)
     mnt_options = models.CharField(max_length=4096, null=True)
 
-    def cur_free(self, *args, **kwargs):
+    @property
+    def free(self, *args, **kwargs):
         try:
             pu = PoolUsage.objects.filter(pool=self.name).order_by('-ts')[0]
             return pu.free
         except:
             return self.size
 
-    def cur_reclaimable(self, *args, **kwargs):
+    @property
+    def reclaimable(self, *args, **kwargs):
         try:
             pu = PoolUsage.objects.filter(pool=self.name).order_by('-ts')[0]
             return pu.reclaimable

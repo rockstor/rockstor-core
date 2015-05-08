@@ -35,25 +35,16 @@ import re
 logger = logging.getLogger(__name__)
 
 
-class UserView(rfc.GenericView):
-    serializer_class = SUserSerializer
+class UserMixin(object):
     exclude_list = ('root', 'nobody', 'bin', 'daemon', 'adm', 'sync',
                     'shutdown', 'halt', 'mail', 'operator', 'dbus', 'rpc',
                     'avahi', 'avahi-autoipd', 'rpcuser', 'nfsnobody',
                     'postgres', 'ntp', 'nginx', 'postfix', 'sshd', )
 
-    def get_queryset(self, *args, **kwargs):
-        if ('username' in kwargs):
-            self.paginate_by = 0
-            try:
-                return User.objects.get(username=kwargs['username'])
-            except:
-                return []
-        return combined_users()
-
-    def _validate_input(self, request):
+    @classmethod
+    def _validate_input(cls, request):
         input_fields = {}
-        username = request.DATA.get('username', None)
+        username = request.data.get('username', None)
         if (username is None or
             re.match(settings.USERNAME_REGEX, username) is None):
             e_msg = ('Username is invalid. It must confirm to the regex: %s' %
@@ -63,43 +54,57 @@ class UserView(rfc.GenericView):
             e_msg = ('Username cannot be more than 30 characters long')
             handle_exception(Exception(e_msg), request)
         input_fields['username'] = username
-        password = request.DATA.get('password', None)
+        password = request.data.get('password', None)
         if (password is None or password == ''):
             e_msg = ('Password must be a valid string')
             handle_exception(Exception(e_msg), request)
         input_fields['password'] = password
-        admin = request.DATA.get('admin', True)
+        admin = request.data.get('admin', True)
         if (type(admin) != bool):
             e_msg = ('Admin(user type) must be a boolean')
             handle_exception(Exception(e_msg), request)
         input_fields['admin'] = admin
-        shell = request.DATA.get('shell', '/bin/bash')
+        shell = request.data.get('shell', '/bin/bash')
         if (shell not in settings.VALID_SHELLS):
             e_msg = ('shell(%s) is not valid. Valid shells are %s' %
                      (shell, settings.VALID_SHELLS))
             handle_exception(Exception(e_msg), request)
         input_fields['shell'] = shell
-        email = request.DATA.get('email', None)
+        email = request.data.get('email', None)
         if (email is not None and type(email) != unicode):
             e_msg = ('Email must be a valid string. not: %s' % type(email))
             handle_exception(Exception(e_msg), request)
         input_fields['email'] = email
-        input_fields['homedir'] = request.DATA.get(
+        input_fields['homedir'] = request.data.get(
             'homedir', '/home/%s' % username)
-        input_fields['uid'] = request.DATA.get('uid', None)
-        input_fields['group'] = request.DATA.get('group', None)
-        input_fields['public_key'] = self._validate_public_key(request)
+        input_fields['uid'] = request.data.get('uid', None)
+        input_fields['group'] = request.data.get('group', None)
+        input_fields['public_key'] = cls._validate_public_key(request)
         return input_fields
 
-    def _validate_public_key(self, request):
-        public_key = request.DATA.get('public_key', None)
+    @staticmethod
+    def _validate_public_key(request):
+        public_key = request.data.get('public_key', None)
         if (public_key is not None and not is_pub_key(public_key)):
             e_msg = ('Public key is invalid')
             handle_exception(Exception(e_msg), request)
 
-    @transaction.commit_on_success
+
+class UserListView(UserMixin, rfc.GenericView):
+    serializer_class = SUserSerializer
+
+    def get_queryset(self, *args, **kwargs):
+        if ('username' in self.kwargs):
+            self.paginate_by = 0
+            try:
+                return User.objects.get(username=self.kwargs['username'])
+            except:
+                return []
+        return combined_users()
+
+    @transaction.atomic
     def post(self, request):
-        try:
+        with self._handle_exception(request):
             invar = self._validate_input(request)
             # Check that a django user with the same name does not exist
             e_msg = ('user: %s already exists. Please choose a different'
@@ -154,111 +159,119 @@ class UserView(rfc.GenericView):
             suser = User(**invar)
             suser.save()
             return Response(SUserSerializer(suser).data)
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request)
 
-    @transaction.commit_on_success
+
+class UserDetailView(UserMixin, rfc.GenericView):
+    def get(self, *args, **kwargs):
+        try:
+            data = User.objects.get(username=self.kwargs['username'])
+            serialized_data = SUserSerializer(data)
+            return Response(serialized_data.data)
+        except:
+            return Response()
+
+    @transaction.atomic
     def put(self, request, username):
-        if (username in self.exclude_list):
-            if (username != 'root'):
-                e_msg = ('Editing restricted user(%s) is not supported.' %
-                         username)
-                handle_exception(Exception(e_msg), request)
-        email = request.DATA.get('email', None)
-        new_pw = request.DATA.get('password', None)
-        shell = request.DATA.get('shell', None)
-        public_key = self._validate_public_key(request)
-        admin = request.DATA.get('admin', False)
-        if (User.objects.filter(username=username).exists()):
-            u = User.objects.get(username=username)
-            if (admin is True):
-                if (u.user is None):
-                    if (new_pw is None):
-                        e_msg = ('password reset is required to enable admin '
-                                 'access. please provide a new password')
-                        handle_exception(Exception(e_msg), request)
-                    auser = DjangoUser.objects.create_user(username,
-                                                           None, new_pw)
-                    auser.is_active = True
-                    auser.save()
-                    u.user = auser
-                    u.save()
-                elif (new_pw is not None):
-                    u.user.set_password(new_pw)
-                    u.user.save()
-            elif (u.user is not None):
-                auser = u.user
-                u.user = None
-                auser.delete()
+        with self._handle_exception(request):
+            if (username in self.exclude_list):
+                if (username != 'root'):
+                    e_msg = ('Editing restricted user(%s) is not supported.' %
+                             username)
+                    handle_exception(Exception(e_msg), request)
+            email = request.data.get('email', None)
+            new_pw = request.data.get('password', None)
+            shell = request.data.get('shell', None)
+            public_key = self._validate_public_key(request)
+            admin = request.data.get('admin', False)
+            if (User.objects.filter(username=username).exists()):
+                u = User.objects.get(username=username)
+                if (admin is True):
+                    if (u.user is None):
+                        if (new_pw is None):
+                            e_msg = ('password reset is required to enable admin '
+                                     'access. please provide a new password')
+                            handle_exception(Exception(e_msg), request)
+                        auser = DjangoUser.objects.create_user(username,
+                                                               None, new_pw)
+                        auser.is_active = True
+                        auser.save()
+                        u.user = auser
+                        u.save()
+                    elif (new_pw is not None):
+                        u.user.set_password(new_pw)
+                        u.user.save()
+                elif (u.user is not None):
+                    auser = u.user
+                    u.user = None
+                    auser.delete()
 
-            u.public_key = public_key
-            if (email is not None and email != ''):
-                u.email = email
-            if (shell is not None and shell != u.shell):
-                u.shell = shell
-            u.save()
+                u.public_key = public_key
+                if (email is not None and email != ''):
+                    u.email = email
+                if (shell is not None and shell != u.shell):
+                    u.shell = shell
+                u.save()
 
-        sysusers = combined_users()
-        suser = None
-        for u in sysusers:
-            if (u.username == username):
-                suser = u
-                if (new_pw is not None):
-                    usermod(username, new_pw)
-                    smbpasswd(username, new_pw)
-                if (shell is not None):
-                    update_shell(username, shell)
-                if (public_key is not None):
-                    add_ssh_key(username, public_key)
-                break
-        if (suser is None):
-            e_msg = ('User(%s) does not exist' % username)
-            handle_exception(Exception(e_msg), request)
-
-        return Response(SUserSerializer(suser).data)
-
-    @transaction.commit_on_success
-    def delete(self, request, username):
-        if request.user.username == username:
-            e_msg = ('Cannot delete the currently logged in user')
-            handle_exception(Exception(e_msg), request)
-
-        if (username in self.exclude_list):
-            e_msg = ('Delete of restricted user(%s) is not supported.' %
-                     username)
-            handle_exception(Exception(e_msg), request)
-
-        gid = None
-        if (User.objects.filter(username=username).exists()):
-            u = User.objects.get(username=username)
-            if (u.user is not None):
-                u.user.delete()
-            gid = u.gid
-            u.delete()
-        else:
             sysusers = combined_users()
-            found = False
+            suser = None
             for u in sysusers:
                 if (u.username == username):
-                    found = True
+                    suser = u
+                    if (new_pw is not None):
+                        usermod(username, new_pw)
+                        smbpasswd(username, new_pw)
+                    if (shell is not None):
+                        update_shell(username, shell)
+                    if (public_key is not None):
+                        add_ssh_key(username, public_key)
                     break
-            if (found is False):
+            if (suser is None):
                 e_msg = ('User(%s) does not exist' % username)
                 handle_exception(Exception(e_msg), request)
 
-        for g in combined_groups():
-            if (g.gid == gid and g.admin and
-                not User.objects.filter(gid=gid).exists()):
-                g.delete()
+            return Response(SUserSerializer(suser).data)
 
-        try:
-            userdel(username)
-        except Exception, e:
-            logger.exception(e)
-            e_msg = ('A low level error occured while deleting the user: %s' %
-                     username)
-            handle_exception(Exception(e_msg), request)
+    @transaction.atomic
+    def delete(self, request, username):
+        with self._handle_exception(request):
+            if request.user.username == username:
+                e_msg = ('Cannot delete the currently logged in user')
+                handle_exception(Exception(e_msg), request)
 
-        return Response()
+            if (username in self.exclude_list):
+                e_msg = ('Delete of restricted user(%s) is not supported.' %
+                         username)
+                handle_exception(Exception(e_msg), request)
+
+            gid = None
+            if (User.objects.filter(username=username).exists()):
+                u = User.objects.get(username=username)
+                if (u.user is not None):
+                    u.user.delete()
+                gid = u.gid
+                u.delete()
+            else:
+                sysusers = combined_users()
+                found = False
+                for u in sysusers:
+                    if (u.username == username):
+                        found = True
+                        break
+                if (found is False):
+                    e_msg = ('User(%s) does not exist' % username)
+                    handle_exception(Exception(e_msg), request)
+
+            for g in combined_groups():
+                if (g.gid == gid and g.admin and
+                    not User.objects.filter(gid=gid).exists()):
+                    g.delete()
+
+            try:
+                userdel(username)
+            except Exception, e:
+                logger.exception(e)
+                e_msg = ('A low level error occured while deleting the user: %s' %
+                         username)
+                handle_exception(Exception(e_msg), request)
+
+            return Response()

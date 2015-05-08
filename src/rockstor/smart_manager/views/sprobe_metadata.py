@@ -16,16 +16,10 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from rest_framework import generics
 from smart_manager.models import SProbe
 from smart_manager.serializers import SProbeSerializer
-from rest_framework.authentication import (BasicAuthentication,
-                                           SessionAuthentication,)
-from storageadmin.auth import DigestAuthentication
-from rest_framework.permissions import IsAuthenticated
-from rest_framework_custom.renderers import IgnoreClient
+from rest_framework.response import Response
 from django.conf import settings
-from django.db.models import Count
 from advanced_sprobe import AdvancedSProbeView
 
 
@@ -33,23 +27,17 @@ class SProbeMetadataView(AdvancedSProbeView):
     serializer_class = SProbeSerializer
 
     def get_queryset(self, *args, **kwargs):
-        if ('pid' in kwargs):
-            self.paginate_by = 0
-            try:
-                return SProbe.objects.get(id=kwargs['pid'])
-            except:
-                return []
 
-        limit = self.request.QUERY_PARAMS.get('limit',
-                                              settings.PAGINATION['max_limit'])
+        limit = self.request.query_params.get('limit',
+                                              settings.REST_FRAMEWORK['MAX_LIMIT'])
         limit = int(limit)
-        start_t1 = self.request.QUERY_PARAMS.get('start_t1', None)
-        start_t2 = self.request.QUERY_PARAMS.get('start_t2', None)
-        end_t1 = self.request.QUERY_PARAMS.get('end_t1', None)
-        end_t2 = self.request.QUERY_PARAMS.get('end_t2', None)
-        name_regex = self.request.QUERY_PARAMS.get('name_regex', None)
-        name_exact = self.request.QUERY_PARAMS.get('name', None)
-        state = self.request.QUERY_PARAMS.get('state', None)
+        start_t1 = self.request.query_params.get('start_t1', None)
+        start_t2 = self.request.query_params.get('start_t2', None)
+        end_t1 = self.request.query_params.get('end_t1', None)
+        end_t2 = self.request.query_params.get('end_t2', None)
+        name_regex = self.request.query_params.get('name_regex', None)
+        name_exact = self.request.query_params.get('name', None)
+        state = self.request.query_params.get('state', None)
         filter_params = {}
         if (name_regex is not None):
             filter_params['name__regex'] = name_regex
@@ -66,7 +54,7 @@ class SProbeMetadataView(AdvancedSProbeView):
         return SProbe.objects.filter(**filter_params).order_by('-start')[0:limit]
 
     def get_paginate_by(self, foo):
-        download = self.request.QUERY_PARAMS.get('download', None)
+        download = self.request.query_params.get('download', None)
         if (download is not None):
             return None
         if (self.paginate_by is not None and self.paginate_by == 0):
@@ -75,3 +63,16 @@ class SProbeMetadataView(AdvancedSProbeView):
 
     def post(self, request, *args, **kwargs):
         pass
+
+
+class SProbeMetadataDetailView(AdvancedSProbeView):
+    serializer_class = SProbeSerializer
+
+    def get(self, *args, **kwargs):
+        if ('pid' in self.kwargs):
+            try:
+                data = SProbe.objects.get(id=kwargs['pid'])
+                serialized_data = SProbeSerializer(data)
+                return Response(serialized_data.data)
+            except:
+                return Response()

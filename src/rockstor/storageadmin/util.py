@@ -35,7 +35,7 @@ def handle_exception(e, request, e_msg=None):
         e_msg = e.__str__()
 
     logger.error('request path: %s method: %s data: %s' %
-                 (request.path, request.method, request.DATA))
+                 (request.path, request.method, request.data))
     logger.exception('exception: %s' % e.__str__())
     run_command(['/usr/bin/tar', '-c', '-z', '-f',
                  settings.ROOT_DIR + 'src/rockstor/logs/error.tgz',

@@ -28,6 +28,7 @@ class NFSExport(models.Model):
     """mount point of the share"""
     mount = models.CharField(max_length=4096)
 
+    @property
     def share_name(self, *args, **kwargs):
         return self.share.name
 

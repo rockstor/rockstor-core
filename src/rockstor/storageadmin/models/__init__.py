@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from pool import Pool
 from disk import Disk
-from share import Share
 from snapshot import Snapshot
+from share import Share
 from nfs_export_group import NFSExportGroup
 from nfs_export import NFSExport
 from iscsi_target import IscsiTarget

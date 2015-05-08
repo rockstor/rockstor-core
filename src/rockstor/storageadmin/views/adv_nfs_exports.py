@@ -32,13 +32,6 @@ class AdvancedNFSExportView(rfc.GenericView):
     serializer_class = AdvancedNFSExportSerializer
 
     def get_queryset(self, *args, **kwargs):
-        if ('export_id' in kwargs):
-            self.paginate_by = 0
-            try:
-                return AdvancedNFSExport(id=kwargs['export_id'])
-            except:
-                return []
-
         conventional_exports = []
         exports_by_share = {}
         for e in NFSExport.objects.all():
@@ -60,21 +53,21 @@ class AdvancedNFSExportView(rfc.GenericView):
             conventional_exports.append(ae)
         return conventional_exports
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request):
         with self._handle_exception(request):
-            if ('entries' not in request.DATA):
+            if ('entries' not in request.data):
                 e_msg = ('Cannot export without specifying entries')
                 handle_exception(Exception(e_msg), request)
 
             AdvancedNFSExport.objects.all().delete()
             cur_entries = []
-            for e in request.DATA['entries']:
+            for e in request.data.get('entries'):
                 logger.debug('adv export entry -- %s' % e)
                 ce = AdvancedNFSExport(export_str=e)
                 ce.save()
                 cur_entries.append(ce)
-            exports_d = create_adv_nfs_export_input(request.DATA['entries'],
+            exports_d = create_adv_nfs_export_input(request.data['entries'],
                                                     request)
             cur_exports = list(NFSExport.objects.all())
             exports = create_nfs_export_input(cur_exports)

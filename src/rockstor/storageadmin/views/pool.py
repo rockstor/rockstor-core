@@ -34,7 +34,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class PoolView(rfc.GenericView):
+class PoolMixin(object):
     serializer_class = PoolInfoSerializer
     RAID_LEVELS = ('single', 'raid0', 'raid1', 'raid10', 'raid5', 'raid6')
     ADD_THRESHOLD = .3  # min free/total ratio to allow a device addition
@@ -47,26 +47,28 @@ class PoolView(rfc.GenericView):
         'raid6': ('raid6',),
         }
 
-    def get_queryset(self, *args, **kwargs):
-        if ('pname' in kwargs):
-            self.paginate_by = 0
-            try:
-                return Pool.objects.get(name=kwargs['pname'])
-            except:
-                return []
-        sort_col = self.request.QUERY_PARAMS.get('sortby', None)
-        if (sort_col is not None and sort_col == 'usage'):
-            reverse = self.request.QUERY_PARAMS.get('reverse', 'no')
-            if (reverse == 'yes'):
-                reverse = True
-            else:
-                reverse = False
-            return sorted(Pool.objects.all(), key=lambda u: u.cur_usage(),
-                          reverse=reverse)
-        return Pool.objects.all()
+    @staticmethod
+    def _validate_disk(d, request):
+        try:
+            return Disk.objects.get(name=d)
+        except:
+            e_msg = ('Disk(%s) does not exist' % d)
+            handle_exception(Exception(e_msg), request)
 
-    def _validate_mnt_options(self, request):
-        mnt_options = request.DATA.get('mnt_options', None)
+    @staticmethod
+    def _validate_compression(request):
+        compression = request.data.get('compression', 'no')
+        if (compression is None):
+            compression = 'no'
+        if (compression not in settings.COMPRESSION_TYPES):
+            e_msg = ('Unsupported compression algorithm(%s). Use one of '
+                     '%s' % (compression, settings.COMPRESSION_TYPES))
+            handle_exception(Exception(e_msg), request)
+        return compression
+
+    @staticmethod
+    def _validate_mnt_options(request):
+        mnt_options = request.data.get('mnt_options', None)
         if (mnt_options is None):
             return ''
         allowed_options = {
@@ -93,7 +95,6 @@ class PoolView(rfc.GenericView):
         }
         o_fields = mnt_options.split(',')
         for o in o_fields:
-            # print 'o', o
             v = None
             if (re.search('=', o) is not None):
                 o, v = o.split('=')
@@ -104,122 +105,27 @@ class PoolView(rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
             if ((o == 'compress-force' and
                  v not in allowed_options['compress-force'])):
-                e_msg = ('compress-force is only allowed with {}'.format(settings.COMPRESSION_TYPES))
+                e_msg = ('compress-force is only allowed with %s' %
+                         (settings.COMPRESSION_TYPES))
                 handle_exception(Exception(e_msg), request)
-            # changed conditional from "if (type(allowed_options[o]) is int):"... was checking for type type
-            if (allowed_options[o] is int):
-                # print "int check true"
+            if (type(allowed_options[o]) is int):
                 try:
                     int(v)
                 except:
                     e_msg = ('Value for mount option(%s) must be an integer' %
                              (o))
                     handle_exception(Exception(e_msg), request)
-            # print 'v',v
-        # print 'mnt_options:', mnt_options
         return mnt_options
 
-    def _validate_compression(self, request):
-        compression = request.DATA.get('compression', 'no')
-        if (compression is None):
-            compression = 'no'
-        if (compression not in settings.COMPRESSION_TYPES):
-            e_msg = ('Unsupported compression algorithm(%s). Use one of '
-                     '%s' % (compression, settings.COMPRESSION_TYPES))
-            handle_exception(Exception(e_msg), request)
-        return compression
-
-    @transaction.commit_on_success
-    def post(self, request):
-        """
-        input is a list of disks, raid_level and name of the pool.
-        """
-        with self._handle_exception(request):
-            disks = [self._validate_disk(d, request) for d in
-                     request.DATA.get('disks')]
-            pname = request.DATA['pname']
-            if (re.match('%s$' % settings.POOL_REGEX, pname) is None):
-                e_msg = ('Pool name must start with a alphanumeric(a-z0-9) '
-                         'character and can be followed by any of the '
-                         'following characters: letter(a-z), digits(0-9), '
-                         'hyphen(-), underscore(_) or a period(.).')
-                handle_exception(Exception(e_msg), request)
-
-            if (Pool.objects.filter(name=pname).exists()):
-                e_msg = ('Pool(%s) already exists. Choose a different name' % pname)
-                handle_exception(Exception(e_msg), request)
-
-            if (Share.objects.filter(name=pname).exists()):
-                e_msg = ('A Share with this name(%s) exists. Pool and Share names '
-                         'must be distinct. Choose a different name' % pname)
-                handle_exception(Exception(e_msg), request)
-
-            for d in disks:
-                if (d.btrfs_uuid is not None):
-                    e_msg = ('Another BTRFS filesystem exists on this '
-                             'disk(%s). Erase the disk and try again.'
-                             % d.name)
-                    handle_exception(Exception(e_msg), request)
-
-            #raid level checks
-            raid_level = request.DATA['raid_level']
-            if (raid_level not in self.RAID_LEVELS):
-                e_msg = ('Unsupported raid level. use one of: {}'.format(self.RAID_LEVELS))
-                handle_exception(Exception(e_msg), request)
-            if (raid_level in self.RAID_LEVELS[1:3] and len(disks) == 1):
-                e_msg = ('At least two disks are required for the raid level: '
-                         '%s' % raid_level)
-                handle_exception(Exception(e_msg), request)
-            if (raid_level == self.RAID_LEVELS[3]):
-                if (len(disks) < 4):
-                    e_msg = ('A minimum of Four drives are required for the '
-                             'raid level: %s' % raid_level)
-                    handle_exception(Exception(e_msg), request)
-                elif (len(disks) % 2 != 0):
-                    e_msg = ('Even number of drives are required for the '
-                             'raid level: %s' % raid_level)
-                    handle_exception(Exception(e_msg), request)
-            if (raid_level == self.RAID_LEVELS[4] and len(disks) < 3):
-                e_msg = ('Three or more disks are required for the raid '
-                         'level: %s' % raid_level)
-                handle_exception(Exception(e_msg), request)
-            if (raid_level == self.RAID_LEVELS[5] and len(disks) < 4):
-                e_msg = ('Four or more disks are required for the raid '
-                         'level: %s' % raid_level)
-                handle_exception(Exception(e_msg), request)
-
-            compression = self._validate_compression(request)
-            mnt_options = self._validate_mnt_options(request)
-            dnames = [d.name for d in disks]
-            p = Pool(name=pname, raid=raid_level, compression=compression,
-                     mnt_options=mnt_options)
-            # print 'pool name & mnt options', p['name'], p['mnt_options']
-            add_pool(p, dnames)
-            p.size = pool_usage(mount_root(p, dnames[0]))[0]
-            p.uuid = btrfs_uuid(dnames[0])
-            p.disk_set.add(*disks)
-            p.save()
-            # added for loop to save disks. appears p.disk_set.add(*disks) was not saving disks in test environment
-            for d in disks:
-                d.pool = p
-                d.save()
-            return Response(PoolInfoSerializer(p).data)
-
-    def _validate_disk(self, d, request):
-        try:
-            return Disk.objects.get(name=d)
-        except:
-            e_msg = ('Disk(%s) does not exist' % d)
-            handle_exception(Exception(e_msg), request)
-
-    def _remount(self, request, pool):
-        compression = self._validate_compression(request)
-        mnt_options = self._validate_mnt_options(request)
+    @classmethod
+    def _remount(cls, request, pool):
+        compression = cls._validate_compression(request)
+        mnt_options = cls._validate_mnt_options(request)
         if ((compression == pool.compression and
              mnt_options == pool.mnt_options)):
             return Response()
 
-        with transaction.commit_on_success():
+        with transaction.atomic():
             pool.compression = compression
             pool.mnt_options = mnt_options
             pool.save()
@@ -269,7 +175,106 @@ class PoolView(rfc.GenericView):
             handle_exception(Exception(e_msg), request)
         return Response(PoolInfoSerializer(pool).data)
 
-    @transaction.commit_on_success
+
+class PoolListView(PoolMixin, rfc.GenericView):
+    def get_queryset(self, *args, **kwargs):
+        sort_col = self.request.query_params.get('sortby', None)
+        if (sort_col is not None and sort_col == 'usage'):
+            reverse = self.request.query_params.get('reverse', 'no')
+            if (reverse == 'yes'):
+                reverse = True
+            else:
+                reverse = False
+            return sorted(Pool.objects.all(), key=lambda u: u.cur_usage(),
+                          reverse=reverse)
+        return Pool.objects.all()
+
+    @transaction.atomic
+    def post(self, request):
+        """
+        input is a list of disks, raid_level and name of the pool.
+        """
+        with self._handle_exception(request):
+            disks = [self._validate_disk(d, request) for d in
+                     request.data.get('disks')]
+            pname = request.data['pname']
+            if (re.match('%s$' % settings.POOL_REGEX, pname) is None):
+                e_msg = ('Pool name must start with a alphanumeric(a-z0-9) '
+                         'character and can be followed by any of the '
+                         'following characters: letter(a-z), digits(0-9), '
+                         'hyphen(-), underscore(_) or a period(.).')
+                handle_exception(Exception(e_msg), request)
+
+            if (Pool.objects.filter(name=pname).exists()):
+                e_msg = ('Pool(%s) already exists. Choose a different name' % pname)
+                handle_exception(Exception(e_msg), request)
+
+            if (Share.objects.filter(name=pname).exists()):
+                e_msg = ('A Share with this name(%s) exists. Pool and Share names '
+                         'must be distinct. Choose a different name' % pname)
+                handle_exception(Exception(e_msg), request)
+
+            for d in disks:
+                if (d.btrfs_uuid is not None):
+                    e_msg = ('Another BTRFS filesystem exists on this '
+                             'disk(%s). Erase the disk and try again.'
+                             % d.name)
+                    handle_exception(Exception(e_msg), request)
+
+            raid_level = request.data['raid_level']
+            if (raid_level not in self.RAID_LEVELS):
+                e_msg = ('Unsupported raid level. use one of: %s' %
+                         self.RAID_LEVELS)
+                handle_exception(Exception(e_msg), request)
+            if (raid_level == self.RAID_LEVELS[1] and len(disks) == 1):
+                e_msg = ('More than one disk is required for the raid '
+                         'level: %s' % raid_level)
+                handle_exception(Exception(e_msg), request)
+            if (raid_level == self.RAID_LEVELS[2] and len(disks) < 2):
+                e_msg = ('At least two disks are required for the raid level: '
+                         '%s' % raid_level)
+                handle_exception(Exception(e_msg), request)
+            if (raid_level == self.RAID_LEVELS[3]):
+                if (len(disks) < 4):
+                    e_msg = ('A minimum of Four drives are required for the '
+                             'raid level: %s' % raid_level)
+                    handle_exception(Exception(e_msg), request)
+                elif (len(disks) % 2 != 0):
+                    e_msg = ('Even number of drives are required for the '
+                             'raid level: %s' % raid_level)
+                    handle_exception(Exception(e_msg), request)
+            if (raid_level == self.RAID_LEVELS[4] and len(disks) < 3):
+                e_msg = ('Three or more disks are required for the raid '
+                         'level: %s' % raid_level)
+                handle_exception(Exception(e_msg), request)
+            if (raid_level == self.RAID_LEVELS[5] and len(disks) < 4):
+                e_msg = ('Four or more disks are required for the raid '
+                         'level: %s' % raid_level)
+                handle_exception(Exception(e_msg), request)
+
+            compression = self._validate_compression(request)
+            mnt_options = self._validate_mnt_options(request)
+            dnames = [d.name for d in disks]
+            p = Pool(name=pname, raid=raid_level, compression=compression,
+                     mnt_options=mnt_options)
+            add_pool(p, dnames)
+            p.size = pool_usage(mount_root(p, dnames[0]))[0]
+            p.uuid = btrfs_uuid(dnames[0])
+            p.disk_set.add(*disks)
+            p.save()
+            return Response(PoolInfoSerializer(p).data)
+
+
+class PoolDetailView(PoolMixin, rfc.GenericView):
+    def get(self, *args, **kwargs):
+        try:
+            data = Pool.objects.get(name=self.kwargs['pname'])
+            serialized_data = PoolInfoSerializer(data)
+            return Response(serialized_data.data)
+        except:
+            return Response()
+
+    @transaction.atomic
     def put(self, request, pname, command):
         """
         resize a pool.
@@ -292,20 +297,18 @@ class PoolView(rfc.GenericView):
                 return self._remount(request, pool)
 
             disks = [self._validate_disk(d, request) for d in
-                     request.DATA.get('disks')]
-            #for d in request.DATA.get('disks'):
-            #    disks.append(self._validate(d, request))
+                     request.data.get('disks')]
             num_new_disks = len(disks)
             if (num_new_disks == 0):
                 e_msg = ('List of disks in the input cannot be empty.')
                 handle_exception(Exception(e_msg), request)
             dnames = [d.name for d in disks]
             mount_disk = Disk.objects.filter(pool=pool)[0].name
-            new_raid = request.DATA.get('raid_level', pool.raid)
+            new_raid = request.data.get('raid_level', pool.raid)
             num_total_disks = (Disk.objects.filter(pool=pool).count() +
                                num_new_disks)
             usage = pool_usage('/%s/%s' % (settings.MNT_PT, pool.name))
-            free_percent = (usage[2]* 100)/usage[0]
+            free_percent = (usage[2]/usage[0]) * 100
             threshold_percent = self.ADD_THRESHOLD * 100
             if (command == 'add'):
                 for d in disks:
@@ -359,6 +362,7 @@ class PoolView(rfc.GenericView):
                                      'required.' % (num_new_disks,
                                                     cur_num_disks))
                             handle_exception(Exception(e_msg), request)
+
                 resize_pool(pool, mount_disk, dnames)
                 balance_pid = balance_start(pool, mount_disk, convert=new_raid)
                 ps = PoolBalance(pool=pool, pid=balance_pid)
@@ -442,7 +446,7 @@ class PoolView(rfc.GenericView):
             pool.save()
             return Response(PoolInfoSerializer(pool).data)
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def delete(self, request, pname):
         with self._handle_exception(request):
             if (pname == settings.ROOT_POOL):
@@ -455,8 +459,6 @@ class PoolView(rfc.GenericView):
                          'all shares in the pool are deleted' % (pname))
                 handle_exception(Exception(e_msg), request)
             pool_path = ('%s%s' % (settings.MNT_PT, pname))
-            # print "delete:"
-            # print pool_path
             umount_root(pool_path)
             pool.delete()
             return Response()

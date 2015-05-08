@@ -27,9 +27,9 @@ class RockOnCustomConfigView(rfc.GenericView):
 
     def get_queryset(self, *args, **kwargs):
         try:
-            rockon = RockOn.objects.get(id=kwargs['rid'])
+            rockon = RockOn.objects.get(id=self.kwargs['rid'])
         except:
-            e_msg = ('Rockon(%s) does not exist' % kwargs['rid'])
+            e_msg = ('Rockon(%s) does not exist' % self.kwargs['rid'])
             handle_exception(Exception(e_msg), self.request)
 
         return DCustomConfig.objects.filter(rockon=rockon)

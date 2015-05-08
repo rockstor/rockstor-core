@@ -55,7 +55,7 @@ class InstalledPluginView(rfc.GenericView):
     @transaction.commit_on_success
     def post(self, request):
         try:
-            plugin_name = request.DATA['plugin_name']
+            plugin_name = request.data['plugin_name']
             logger.debug('plugin_name is %s' % plugin_name)
             plugin = Plugin.objects.get(name=plugin_name)
             if (not InstalledPlugin.objects.filter(plugin_meta=plugin).exists()):

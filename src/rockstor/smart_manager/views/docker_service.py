@@ -20,7 +20,7 @@ from rest_framework.response import Response
 from storageadmin.util import handle_exception
 from system.services import systemctl
 from django.db import transaction
-from base_service import BaseServiceView
+from base_service import BaseServiceDetailView
 from smart_manager.models import Service
 from django.conf import settings
 from storageadmin.models import (Share, Disk)
@@ -32,7 +32,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class DockerServiceView(BaseServiceView):
+class DockerServiceView(BaseServiceDetailView):
     name = 'docker'
 
     def _validate_root(self, request, root):
@@ -43,12 +43,12 @@ class DockerServiceView(BaseServiceView):
             e_msg = ('Share(%s) does not exist' % root)
             handle_exception(Exception(e_msg), request)
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request, command):
         service = Service.objects.get(name=self.name)
 
         if (command == 'config'):
-            config = request.DATA.get('config', None)
+            config = request.data.get('config', None)
             root_share = config['root_share']
             self._validate_root(request, root_share)
             self._save_config(service, config)

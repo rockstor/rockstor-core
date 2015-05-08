@@ -44,30 +44,30 @@ class SnapshotView(rfc.GenericView):
 
     def get_queryset(self, *args, **kwargs):
         try:
-            share = Share.objects.get(name=kwargs['sname'])
+            share = Share.objects.get(name=self.kwargs['sname'])
         except:
-            if ('sname' not in kwargs):
+            if ('sname' not in self.kwargs):
                 return Snapshot.objects.filter().order_by('-id')
 
-            e_msg = ('Share with name: %s does not exist' % kwargs['sname'])
+            e_msg = ('Share with name: %s does not exist' % self.kwargs['sname'])
             handle_exception(Exception(e_msg), self.request)
 
-        if ('snap_name' in kwargs):
+        if ('snap_name' in self.kwargs):
             self.paginate_by = 0
             try:
                 return Snapshot.objects.get(share=share,
-                                            name=kwargs['snap_name'])
+                                            name=self.kwargs['snap_name'])
             except:
                 return []
 
-        snap_type = self.request.QUERY_PARAMS.get('snap_type', None)
+        snap_type = self.request.query_params.get('snap_type', None)
         if (snap_type is not None and snap_type != ''):
             return Snapshot.objects.filter(
                 share=share, snap_type=snap_type).order_by('-id')
 
         return Snapshot.objects.filter(share=share).order_by('-id')
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def _toggle_visibility(self, share, snap_name, on=True):
         cur_exports = list(NFSExport.objects.all())
         snap_mnt_pt = ('%s%s/.%s' % (settings.MNT_PT, share.name, snap_name))
@@ -104,7 +104,7 @@ class SnapshotView(rfc.GenericView):
         exports.update(exports_d)
         refresh_nfs_exports(exports)
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def _create(self, share, snap_name, pool_device, request, uvisible,
                 snap_type, writable):
         if (Snapshot.objects.filter(share=share, name=snap_name).exists()):
@@ -112,41 +112,35 @@ class SnapshotView(rfc.GenericView):
                      (snap_name, share.name))
             handle_exception(Exception(e_msg), request)
 
-        try:
-            real_name = snap_name
-            snap_size = 0
-            qgroup_id = '0/na'
-            if (snap_type != 'receiver'):
-                if (snap_type == 'replication'):
-                    writable = False
-                add_snap(share.pool, pool_device, share.subvol_name,
-                         real_name, readonly=not writable)
-                snap_id = share_id(share.pool, pool_device, real_name)
-                qgroup_id = ('0/%s' % snap_id)
-                snap_size = share_usage(share.pool, pool_device,
-                                        qgroup_id)
-            s = Snapshot(share=share, name=snap_name, real_name=real_name,
-                         size=snap_size, qgroup=qgroup_id,
-                         uvisible=uvisible, snap_type=snap_type,
-                         writable=writable)
-            s.save()
-            return Response(SnapshotSerializer(s).data)
-        except Exception, e:
-            e_msg = ('Failed to create snapshot due to a system error.')
-            logger.error(e_msg)
-            logger.exception(e)
-            handle_exception(Exception(e_msg), request)
+        real_name = snap_name
+        snap_size = 0
+        qgroup_id = '0/na'
+        if (snap_type != 'receiver'):
+            if (snap_type == 'replication'):
+                writable = False
+            add_snap(share.pool, pool_device, share.subvol_name,
+                     real_name, readonly=not writable)
+            snap_id = share_id(share.pool, pool_device, real_name)
+            qgroup_id = ('0/%s' % snap_id)
+            snap_size = share_usage(share.pool, pool_device,
+                                    qgroup_id)
+        s = Snapshot(share=share, name=snap_name, real_name=real_name,
+                     size=snap_size, qgroup=qgroup_id,
+                     uvisible=uvisible, snap_type=snap_type,
+                     writable=writable)
+        s.save()
+        return Response(SnapshotSerializer(s).data)
 
     def post(self, request, sname, snap_name, command=None):
         with self._handle_exception(request):
             share = self._validate_share(sname, request)
-            uvisible = request.DATA.get('uvisible', False)
+            uvisible = request.data.get('uvisible', False)
             if (type(uvisible) != bool):
                 e_msg = ('uvisible must be a boolean, not %s' % type(uvisible))
                 handle_exception(Exception(e_msg), request)
 
-            snap_type = request.DATA.get('snap_type', 'admin')
-            writable = request.DATA.get('writable', 'rw')
+            snap_type = request.data.get('snap_type', 'admin')
+            writable = request.data.get('writable', 'rw')
             writable = True if (writable == 'rw') else False
             pool_device = Disk.objects.filter(pool=share.pool)[0].name
             if (command is None):
@@ -173,28 +167,22 @@ class SnapshotView(rfc.GenericView):
 
                 return ret
             if (command == 'clone'):
-                new_name = request.DATA.get('name', None)
+                new_name = request.data.get('name', None)
                 snapshot = Snapshot.objects.get(share=share, name=snap_name)
                 return create_clone(share, new_name, request, logger,
                                     snapshot=snapshot)
             e_msg = ('Unknown command: %s' % command)
             handle_exception(Exception(e_msg), request)
 
-    def _validate_share(self, sname, request):
+    @staticmethod
+    def _validate_share(sname, request):
         try:
             return Share.objects.get(name=sname)
         except:
             e_msg = ('Share: %s does not exist' % sname)
             handle_exception(Exception(e_msg), request)
 
-    @transaction.commit_on_success
-    def put(self, request):
-        """
-        to make a snapshot writable etc..
-        """
-        pass
-
-    @transaction.commit_on_success
+    @transaction.atomic
     def _delete_snapshot(self, request, sname, id=None, snap_name=None):
         share = self._validate_share(sname, request)
         try:
@@ -215,32 +203,12 @@ class SnapshotView(rfc.GenericView):
 
         pool_device = Disk.objects.filter(pool=share.pool)[0].name
         if (snapshot.uvisible):
-            e_msg = ('A low level error occured while deleting '
-                     'snapshot(%s). Try again later.' % snapshot.name)
-            try:
-                self._toggle_visibility(share, snapshot.real_name, on=False)
-            except Exception, e:
-                logger.error(e_msg)
-                logger.exception(e)
-                handle_exception(Exception(e_msg), request)
+            self._toggle_visibility(share, snapshot.real_name, on=False)
+            toggle_sftp_visibility(share, snapshot.real_name, on=False)
 
-            try:
-                toggle_sftp_visibility(share, snapshot.real_name, on=False)
-            except Exception, e:
-                logger.error(e_msg)
-                logger.exception(e)
-                handle_exception(Exception(e_msg), request)
-
-        try:
-            remove_snap(share.pool, pool_device, sname, snapshot.name)
-            snapshot.delete()
-            return Response()
-        except Exception, e:
-            e_msg = ('Unable to delete snapshot due to a system error. Try '
-                     'again later.')
-            logger.error(e_msg)
-            logger.exception(e)
-            handle_exception(Exception(e_msg), request)
+        remove_snap(share.pool, pool_device, sname, snapshot.name)
+        snapshot.delete()
+        return Response()
 
     def delete(self, request, sname, snap_name=None):
         """
@@ -248,7 +216,7 @@ class SnapshotView(rfc.GenericView):
         """
         with self._handle_exception(request):
             if (snap_name is None):
-                snap_qp = self.request.QUERY_PARAMS.get('id', None)
+                snap_qp = self.request.query_params.get('id', None)
                 if (snap_qp is not None):
                     for si in snap_qp.split(','):
                         self._delete_snapshot(request, sname, id=si)

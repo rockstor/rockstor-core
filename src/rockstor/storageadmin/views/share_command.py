@@ -34,15 +34,15 @@ class ShareCommandView(rfc.GenericView):
     serializer_class = ShareSerializer
 
     def get_queryset(self, *args, **kwargs):
-        if ('sname' in kwargs):
+        if ('sname' in self.kwargs):
             self.paginate_by = 0
             try:
-                return Share.objects.get(name=kwargs['sname'])
+                return Share.objects.get(name=self.kwargs['sname'])
             except:
                 return []
-        sort_col = self.request.QUERY_PARAMS.get('sortby', None)
+        sort_col = self.request.query_params.get('sortby', None)
         if (sort_col is not None and sort_col == 'usage'):
-            reverse = self.request.QUERY_PARAMS.get('reverse', 'no')
+            reverse = self.request.query_params.get('reverse', 'no')
             if (reverse == 'yes'):
                 reverse = True
             else:
@@ -60,7 +60,7 @@ class ShareCommandView(rfc.GenericView):
 
     def _validate_snapshot(self, request, share):
         try:
-            snap_name = request.DATA.get('name', '')
+            snap_name = request.data.get('name', '')
             return Snapshot.objects.get(share=share, name=snap_name)
         except:
             e_msg = ('Snapshot(%s) does not exist for this Share(%s)' %
@@ -73,7 +73,7 @@ class ShareCommandView(rfc.GenericView):
             share = self._validate_share(request, sname)
 
             if (command == 'clone'):
-                new_name = request.DATA.get('name', '')
+                new_name = request.data.get('name', '')
                 return create_clone(share, new_name, request, logger)
 
             if (command == 'rollback'):
@@ -101,7 +101,7 @@ class ShareCommandView(rfc.GenericView):
                 return Response()
 
             if (command == 'compress'):
-                algo = request.DATA.get('compress', None)
+                algo = request.data.get('compress', None)
                 if (algo is None):
                     e_msg = ('Compression algorithm must be specified. Valid '
                              'options are: %s' % settings.COMPRESSION_TYPES)

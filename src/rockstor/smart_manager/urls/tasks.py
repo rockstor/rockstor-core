@@ -17,11 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf.urls import patterns, url
-from smart_manager.views import (TaskSchedulerView, TaskLogView, TaskTypeView)
+from smart_manager.views import (TaskSchedulerListView,
+                                 TaskLogView, TaskTypeView,
+                                 TaskSchedulerDetailView)
 
 urlpatterns = patterns('',
-    url(r'^$', TaskSchedulerView.as_view(),),
-    url(r'^(?P<tdid>[0-9]+)$', TaskSchedulerView.as_view(),),
+    url(r'^$', TaskSchedulerListView.as_view(),),
+    url(r'^(?P<tdid>[0-9]+)$', TaskSchedulerDetailView.as_view(),),
 
     url(r'^log$', TaskLogView.as_view(),),
     url(r'^log/taskdef/(?P<tdid>[0-9]+)', TaskLogView.as_view(),),

@@ -30,7 +30,7 @@ class BackupPolicyView(GenericView):
     serializer_class = BackupPolicySerializer
 
     def get_queryset(self, *args, **kwargs):
-        if (len(kwargs) > 0):
+        if (len(self.kwargs) > 0):
             self.paginate_by = 0
             try:
                 return BackupPolicy.objects.get(**kwargs)
@@ -40,24 +40,24 @@ class BackupPolicyView(GenericView):
 
     @transaction.commit_on_success
     def post(self, request):
-        name = request.DATA['name']
-        source_ip = request.DATA['source_ip']
-        source_path = request.DATA['source_path']
-        dest_share = request.DATA['dest_share']
-        notify_email = request.DATA['notify_email']
-        notification_level = request.DATA['notification_level']
+        name = request.data['name']
+        source_ip = request.data['source_ip']
+        source_path = request.data['source_path']
+        dest_share = request.data['dest_share']
+        notify_email = request.data['notify_email']
+        notification_level = request.data['notification_level']
         frequency = None
-        if ('frequency' in request.DATA):
-            frequency = int(request.DATA['frequency'])
+        if ('frequency' in request.data):
+            frequency = int(request.data['frequency'])
             if (frequency < 60):
                 frequency = 60
             else:
                 frequency = frequency - (frequency % 60)
-        ts = int(float(request.DATA['ts']))
+        ts = int(float(request.data['ts']))
         ts_dto = datetime.utcfromtimestamp(float(ts)).replace(second=0,
                                                               microsecond=0,
                                                               tzinfo=utc)
-        num_retain = request.DATA['num_retain']
+        num_retain = request.data['num_retain']
         if (not Share.objects.filter(name=dest_share).exists()):
             e_msg = ('Destination share(%s) does not exist. Check and try'
                      ' again' % (dest_share))
@@ -93,7 +93,7 @@ class BackupPolicyView(GenericView):
     @transaction.commit_on_success
     def put(self, request, id):
         policy = self._validate_policy(id, request)
-        enabled = request.DATA['enabled']
+        enabled = request.data['enabled']
         policy.enabled = enabled
         policy.save()
         return Response(BackupPolicySerializer(policy).data)

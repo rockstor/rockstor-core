@@ -25,12 +25,12 @@ class GenericSProbeView(rfc.GenericView):
     content_negotiation_class = rfc.IgnoreClient
 
     def get_queryset(self):
-        limit = self.request.QUERY_PARAMS.get('limit',
-                                              settings.PAGINATION['max_limit'])
+        limit = self.request.query_params.get('limit',
+                                              settings.REST_FRAMEWORK['MAX_LIMIT'])
         limit = int(limit)
-        t1 = self.request.QUERY_PARAMS.get('t1', None)
-        t2 = self.request.QUERY_PARAMS.get('t2', None)
-        group_field = self.request.QUERY_PARAMS.get('group', None)
+        t1 = self.request.query_params.get('t1', None)
+        t2 = self.request.query_params.get('t2', None)
+        group_field = self.request.query_params.get('group', None)
         if (group_field is not None):
             qs = []
             distinct_fields = self.model_obj.objects.values(group_field).annotate(c=Count(group_field))
@@ -41,9 +41,9 @@ class GenericSProbeView(rfc.GenericView):
         if (t1 is not None and t2 is not None):
             return self.model_obj.objects.filter(ts__gt=t1, ts__lte=t2)
 
-        sort_col = self.request.QUERY_PARAMS.get('sortby', None)
+        sort_col = self.request.query_params.get('sortby', None)
         if (sort_col is not None):
-            reverse = self.request.QUERY_PARAMS.get('reverse', 'no')
+            reverse = self.request.query_params.get('reverse', 'no')
             if (reverse == 'yes'):
                 reverse = True
             else:

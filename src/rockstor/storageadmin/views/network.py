@@ -31,24 +31,32 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class NetworkView(rfc.GenericView):
+class NetworkMixin(object):
+
+    @staticmethod
+    def _restart_wrapper(ni, request):
+            try:
+                restart_network_interface(ni.name)
+            except Exception, e:
+                logger.exception(e)
+                e_msg = ('Failed to configure network interface(%s) due'
+                         ' to a system error' % ni.name)
+                handle_exception(Exception(e_msg), request)
+
+
+class NetworkListView(rfc.GenericView, NetworkMixin):
     serializer_class = NetworkInterfaceSerializer
 
     def get_queryset(self, *args, **kwargs):
-        if ('iname' in kwargs):
-            self.paginate_by = 0
-            try:
-                return NetworkInterface.objects.get(name=kwargs['iname'])
-            except:
-                return []
         with self._handle_exception(self.request):
             self._net_scan()
             #to be deprecated soon
             update_samba_discovery()
         return NetworkInterface.objects.all()
 
-    @transaction.commit_on_success
-    def _net_scan(self):
+    @staticmethod
+    @transaction.atomic
+    def _net_scan():
         default_if = get_default_interface()
         config_d = get_net_config_fedora(network_devices())
         for dconfig in config_d.values():
@@ -100,16 +108,27 @@ class NetworkView(rfc.GenericView):
         with self._handle_exception(request):
             return self._net_scan()
 
-    def _restart_wrapper(self, ni, request):
-        try:
-            restart_network_interface(ni.name)
-        except Exception, e:
-            logger.exception(e)
-            e_msg = ('Failed to configure network interface(%s) due'
-                     ' to a system error' % ni.name)
-            handle_exception(Exception(e_msg), request)
 
-    @transaction.commit_on_success
+class NetworkDetailView(rfc.GenericView, NetworkMixin):
+    serializer_class = NetworkInterfaceSerializer
+
+    def get(self, *args, **kwargs):
+        try:
+            data = NetworkInterface.objects.get(name=self.kwargs['iname'])
+            serialized_data = NetworkInterfaceSerializer(data)
+            return Response(serialized_data.data)
+        except:
+            return Response()
+
+    @transaction.atomic
+    def delete(self, request, iname):
+        with self._handle_exception(request):
+            if (NetworkInterface.objects.filter(name=iname).exists()):
+                i = NetworkInterface.objects.get(name=iname)
+                i.delete()
+            return Response()
+
+    @transaction.atomic
     def put(self, request, iname):
         with self._handle_exception(request):
             if (not NetworkInterface.objects.filter(name=iname).exists()):
@@ -117,24 +136,24 @@ class NetworkView(rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
             ni = NetworkInterface.objects.get(name=iname)
 
-            itype = request.DATA['itype']
+            itype = request.data['itype']
             if (itype != 'management'):
                 itype = 'io'
-            boot_proto = request.DATA['boot_protocol']
+            boot_proto = request.data['boot_protocol']
             ni.onboot = 'yes'
             if (boot_proto == 'dhcp'):
                 config_network_device(ni.alias, ni.mac)
             elif (boot_proto == 'static'):
-                ipaddr = request.DATA['ipaddr']
+                ipaddr = request.data['ipaddr']
                 for i in NetworkInterface.objects.filter(ipaddr=ipaddr):
                     if (i.id != ni.id):
                         e_msg = ('IP: %s already in use by another '
                                  'interface: %s' % (ni.ipaddr, i.name))
                         handle_exception(Exception(e_msg), request)
-                netmask = request.DATA['netmask']
-                gateway = request.DATA['gateway']
-                dns_servers = request.DATA['dns_servers'].split(',')
-                domain = request.DATA['domain']
+                netmask = request.data['netmask']
+                gateway = request.data['gateway']
+                dns_servers = request.data['dns_servers'].split(',')
+                domain = request.data['domain']
                 config_network_device(ni.alias, ni.mac, boot_proto='static',
                                       ipaddr=ipaddr, netmask=netmask,
                                       gateway=gateway,
@@ -162,11 +181,3 @@ class NetworkView(rfc.GenericView):
                 except:
                     logger.error('Unable to update /etc/issue')
             return Response(NetworkInterfaceSerializer(ni).data)
-
-    @transaction.commit_on_success
-    def delete(self, request, iname):
-        with self._handle_exception(request):
-            if (NetworkInterface.objects.filter(name=iname).exists()):
-                i = NetworkInterface.objects.get(name=iname)
-                i.delete()
-            return Response()

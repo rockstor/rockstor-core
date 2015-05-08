@@ -21,30 +21,18 @@ from storageadmin.util import handle_exception
 from system.services import systemctl
 from system.osi import run_command
 from django.db import transaction
-from base_service import BaseServiceView
+from base_service import BaseServiceDetailView
 from smart_manager.models import Service
 from django.conf import settings
-from contextlib import contextmanager
-from storageadmin.exceptions import RockStorAPIException
 import re
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-class NTPServiceView(BaseServiceView):
+class NTPServiceView(BaseServiceDetailView):
 
-    @staticmethod
-    @contextmanager
-    def _handle_exception(request, msg):
-        try:
-            yield
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request, msg)
-
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request, command):
         """
         execute a command on the service
@@ -54,7 +42,7 @@ class NTPServiceView(BaseServiceView):
             e_msg = ('Invalid input for time servers. It must be '
                      'comma separated string of hostnames or IPs.')
             with self._handle_exception(request, e_msg):
-                config = request.DATA['config']
+                config = request.data['config']
                 servers = [s.strip() for s in config['server'].split(',')]
 
             e_msg = ('Error while saving saving configuration(%s) to the '

@@ -17,13 +17,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf.urls import patterns, url
-from storageadmin.views import GroupView
+from storageadmin.views import GroupListView, GroupDetailView
 from django.conf import settings
 
 
 urlpatterns = patterns(
     '',
     # User configuration
-    url(r'^$', GroupView.as_view()),
-    url(r'(?P<groupname>%s)$' % settings.USERNAME_REGEX, GroupView.as_view()),
+    url(r'^$', GroupListView.as_view()),
+    url(r'/(?P<groupname>%s)$' % settings.USERNAME_REGEX,
+        GroupDetailView.as_view()),
 )

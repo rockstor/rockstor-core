@@ -16,25 +16,17 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from rest_framework.views import APIView
-from rest_framework import generics
-from rest_framework.response import Response
-from rest_framework.authentication import (BasicAuthentication,
-                                           SessionAuthentication,)
-from storageadmin.auth import DigestAuthentication
-from rest_framework.permissions import IsAuthenticated
-from smart_manager.serializers import SProbeConfigSerializer
 from smart_manager.taplib.probe_config import (TapConfig, TAP_MAP)
+import rest_framework_custom as rfc
+from smart_manager.serializers import SProbeConfigSerializer
 
 
-class SProbeView(generics.ListAPIView):
-    authentication_classes = (DigestAuthentication, SessionAuthentication,
-                              BasicAuthentication,)
-    permission_classes = (IsAuthenticated,)
+class SProbeView(rfc.GenericView):
     serializer_class = SProbeConfigSerializer
 
     def get_queryset(self):
         config_list = []
+        self.paginate_by = 0
         for pid in TAP_MAP.keys():
             config_list.append(TapConfig(uuid=pid,
                                          location=TAP_MAP[pid]['location'],

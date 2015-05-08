@@ -25,7 +25,7 @@ from smart_manager.models import (CPUMetric, LoadAvg, MemInfo, ServiceStatus,
                                   NFSDShareClientDistribution,
                                   NFSDUidGidDistribution, TaskDefinition, Task,
                                   Replica, ReplicaTrail, ReplicaShare,
-                                  ReceiveTrail)
+                                  ReceiveTrail, Service)
 from smart_manager.taplib.probe_config import TapConfig
 
 
@@ -34,10 +34,9 @@ class CPUMetricSerializer(serializers.ModelSerializer):
         model = CPUMetric
 
 class LoadAvgSerializer(serializers.ModelSerializer):
-    uptime = serializers.IntegerField(source='uptime')
-
     class Meta:
         model = LoadAvg
+        fields = ('uptime',)
 
 class MemInfoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -47,49 +46,61 @@ class DiskStatSerializer(serializers.ModelSerializer):
     class Meta:
         model = DiskStat
 
-class PaginatedDiskStat(pagination.PaginationSerializer):
-    class Meta:
-        object_serializer_class = DiskStatSerializer
 
 class NetStatSerializer(serializers.ModelSerializer):
     class Meta:
         model = NetStat
 
+
+class ServiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Service
+
+
 class ServiceStatusSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source='service.name')
-    display_name = serializers.CharField(source='service.display_name')
-    config = serializers.CharField(source='service.config')
+    name = serializers.CharField()
+    display_name = serializers.CharField()
+    config = serializers.CharField()
 
     class Meta:
         model = ServiceStatus
+
 
 class SProbeSerializer(serializers.ModelSerializer):
     class Meta:
         model = SProbe
 
-class PaginatedSProbe(pagination.PaginationSerializer):
+
+# TODO: Do we need this class anymore? Only used in advanced_sprobe
+class PaginatedSProbe(pagination.PageNumberPagination):
     class Meta:
         object_serializer_class = SProbeSerializer
+
 
 class NFSDCallDistributionSerializer(serializers.ModelSerializer):
     class Meta:
         model = NFSDCallDistribution
 
+
 class NFSDClientDistributionSerializer(serializers.ModelSerializer):
     class Meta:
         model = NFSDClientDistribution
+
 
 class NFSDShareDistributionSerializer(serializers.ModelSerializer):
     class Meta:
         model = NFSDShareDistribution
 
+
 class NFSDShareClientDistributionSerializer(serializers.ModelSerializer):
     class Meta:
         model = NFSDShareClientDistribution
 
+
 class NFSDUidGidDistributionSerializer(serializers.ModelSerializer):
     class Meta:
         model = NFSDUidGidDistribution
+
 
 class SProbeConfigSerializer(serializers.Serializer):
     uuid = serializers.CharField(max_length=100)
@@ -102,19 +113,23 @@ class SProbeConfigSerializer(serializers.Serializer):
             return instance
         return TapConfig(**attrs)
 
+
 class TaskDefinitionSerializer(serializers.ModelSerializer):
     class Meta:
         model = TaskDefinition
 
+
 class TaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
+
 
 class TaskType(object):
 
     def __init__(self, name, detail):
         self.name = name
         self.detail = detail
+
 
 class TaskTypeSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255)
@@ -133,6 +148,7 @@ class ReplicaSerializer(serializers.ModelSerializer):
         model = Replica
 
 class ReplicaTrailSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = ReplicaTrail
 
@@ -143,4 +159,3 @@ class ReplicaShareSerializer(serializers.ModelSerializer):
 class ReceiveTrailSerializer(serializers.ModelSerializer):
     class Meta:
         model = ReceiveTrail
-

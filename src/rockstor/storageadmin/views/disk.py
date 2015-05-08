@@ -15,6 +15,8 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
+from contextlib import contextmanager
+from storageadmin.exceptions import RockStorAPIException
 
 """
 Disk view, for anything at the disk level
@@ -29,34 +31,20 @@ from storageadmin.serializers import DiskInfoSerializer
 from storageadmin.util import handle_exception
 from django.conf import settings
 import rest_framework_custom as rfc
-
 import logging
 logger = logging.getLogger(__name__)
 
 
-class DiskView(rfc.GenericView):
+class DiskListView(rfc.GenericView):
     serializer_class = DiskInfoSerializer
-
-    def _validate_disk(self, dname, request):
-        try:
-            return Disk.objects.get(name=dname)
-        except:
-            e_msg = ('Disk: %s does not exist' % dname)
-            handle_exception(Exception(e_msg), request)
 
     def get_queryset(self, *args, **kwargs):
         #do rescan on get.
         with self._handle_exception(self.request):
             self._scan()
-        if ('dname' in kwargs):
-            self.paginate_by = 0
-            try:
-                return Disk.objects.get(name=kwargs['dname'])
-            except:
-                return []
-        return Disk.objects.all().order_by('name')
+            return Disk.objects.all().order_by('name')
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def _scan(self):
         disks = scan_disks(settings.MIN_DISK_SIZE)
         for d in disks:
@@ -101,7 +89,70 @@ class DiskView(rfc.GenericView):
         p.uuid = btrfs_uuid(d.name)
         return p
 
-    @transaction.commit_on_success
+    def post(self, request, command, dname=None):
+        with self._handle_exception(request):
+            if (command == 'scan'):
+                return self._scan()
+
+        e_msg = ('Unsupported command(%s).' % command)
+        handle_exception(Exception(e_msg), request)
+
+
+class DiskDetailView(rfc.GenericView):
+    serializer_class = DiskInfoSerializer
+
+    def _validate_disk(self, dname, request):
+        try:
+            return Disk.objects.get(name=dname)
+        except:
+            e_msg = ('Disk(%s) does not exist' % dname)
+            handle_exception(Exception(e_msg), request)
+
+    def get(self, *args, **kwargs):
+        if 'dname' in self.kwargs:
+            try:
+                data = Disk.objects.get(name=self.kwargs['dname'])
+                serialized_data = DiskInfoSerializer(data)
+                return Response(serialized_data.data)
+            except:
+                return Response()
+
+    @transaction.atomic
+    def delete(self, request, dname):
+        try:
+            disk = Disk.objects.get(name=dname)
+        except:
+            e_msg = ('Disk: %s does not exist' % dname)
+            handle_exception(Exception(e_msg), request)
+
+        if (disk.offline is not True):
+            e_msg = ('Disk: %s is not offline. Cannot delete' % dname)
+            handle_exception(Exception(e_msg), request)
+
+        try:
+            disk.delete()
+            return Response()
+        except Exception, e:
+            e_msg = ('Could not remove disk(%s) due to system error' % dname)
+            logger.exception(e)
+            handle_exception(Exception(e_msg), request)
+
+    def post(self, request, command, dname):
+        with self._handle_exception(request):
+            if (command == 'wipe'):
+                return self._wipe(dname, request)
+            if (command == 'btrfs-wipe'):
+                return self._wipe(dname, request)
+            if (command == 'btrfs-disk-import'):
+                return self._btrfs_disk_import(dname, request)
+            if (command == 'blink-drive'):
+                return self._blink_drive(dname, request)
+
+        e_msg = ('Unsupported command(%s). Valid commands are wipe, btrfs-wipe,'
+                 ' btrfs-disk-import, blink-drive' % command)
+        handle_exception(Exception(e_msg), request)
+
+    @transaction.atomic
     def _wipe(self, dname, request):
         disk = self._validate_disk(dname, request)
         try:
@@ -124,45 +175,8 @@ class DiskView(rfc.GenericView):
 
     def _blink_drive(self, dname, request):
         disk = self._validate_disk(dname, request)
-        total_time = int(request.DATA.get('total_time', 90))
-        blink_time = int(request.DATA.get('blink_time', 15))
-        sleep_time = int(request.DATA.get('sleep_time', 5))
+        total_time = int(request.data.get('total_time', 90))
+        blink_time = int(request.data.get('blink_time', 15))
+        sleep_time = int(request.data.get('sleep_time', 5))
         blink_disk(disk.name, total_time, blink_time, sleep_time)
         return Response()
-
-    def post(self, request, command, dname=None):
-        with self._handle_exception(request):
-            if (command == 'scan'):
-                return self._scan()
-            if (command == 'wipe'):
-                return self._wipe(dname, request)
-            if (command == 'btrfs-wipe'):
-                return self._wipe(dname, request)
-            if (command == 'btrfs-disk-import'):
-                return self._btrfs_disk_import(dname, request)
-            if (command == 'blink-drive'):
-                return self._blink_drive(dname, request)
-
-            e_msg = ('Unknown command: %s. Only valid commands are scan, '
-                     'wipe' % command)
-            handle_exception(Exception(e_msg), request)
-
-    @transaction.commit_on_success
-    def delete(self, request, dname):
-        try:
-            disk = Disk.objects.get(name=dname)
-        except:
-            e_msg = ('Disk: %s does not exist' % dname)
-            handle_exception(Exception(e_msg), request)
-
-        if (disk.offline is not True):
-            e_msg = ('Disk: %s is not offline. Cannot delete' % dname)
-            handle_exception(Exception(e_msg), request)
-
-        try:
-            disk.delete()
-            return Response()
-        except Exception, e:
-            e_msg = ('Could not remove disk(%s) due to system error' % dname)
-            logger.exception(e)
-            handle_exception(Exception(e_msg), request)
