@@ -61,6 +61,11 @@ class PoolTests(APITestCase):
         self.mock_umount_root = self.patch_umount_root.start()
         self.mock_umount_root.return_value = True
 
+        # remount mocks
+        self.patch_remount = patch('storageadmin.views.pool.remount')
+        self.mock_remount = self.patch_remount.start()
+        self.mock_remount.return_value = True
+
     @classmethod
     def tearDownClass(self):
         patch.stopall()
@@ -141,11 +146,10 @@ class PoolTests(APITestCase):
     #     self.assertEqual(response1.status_code, status.HTTP_200_OK, msg=response1.data)
     #     self.assertEqual(response1.data['detail'], e_msg)
 
-    # looks like remount tests compression & mount options (validates)
     def test_compression(self):
         """
         Compression is agnostic to name, raid and number of disks. So no need to
-        test it with different types of pools.
+        test it with different types of pools. Every post & remount calls this.
         1. Create a pool with zlib compression
         2. Create a pool with lzo compression
         3. change compression from zlib to lzo
@@ -204,25 +208,80 @@ class PoolTests(APITestCase):
         self.assertEqual(response8.status_code, status.HTTP_200_OK, msg=response8.data)
         self.assertEqual(response8.data['compression'], 'lzo')
 
+    # every post & every remount calls this
     def test_mount_options(self):
         """
         Mount options are agnostic to other parameters as in compression.
-        1. test an invalid option (see allowed_options in the pool.py(view))
+        1. test invalid options (see allowed_options in the pool.py(view))
         2. test all valid options
-        3. test compress-force option
+        3. test compress-force options
+        4. test invalid compress-force
         """
-        self.assertEqual(1, 2)
+        # test invalid mount options
+        data = {'disks': ('sde', 'sdf',),
+                'pname': 'singleton',
+                'raid_level': 'single',
+                'compression': 'zlib',
+                'mnt_options': 'alloc_star'}
+        e_msg = ("mount option(alloc_star) not allowed. Make sure there are no whitespaces in the input. Allowed options: ['fatal_errors', '', 'thread_pool', 'max_inline', 'ssd_spread', 'clear_cache', 'inode_cache', 'nodatacow', 'noatime', 'nodatasum', 'alloc_start', 'noacl', 'compress-force', 'space_cache', 'ssd', 'discard', 'commit', 'autodefrag', 'metadata_ratio', 'nospace_cache']")
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+        self.assertEqual(response.data['detail'], e_msg)
 
-    # same as testing compression?
-    def test_remount(self):
-        """
-        Mount options are agnostic to other parameters as in compression.
-        1. test an invalid option (see allowed_options in the pool.py(view))
-        2. test all valid options
-        3. test compress-force option
-        """
-        self.assertEqual(1, 2)
+        data['mnt_options'] = 'alloc_start'
+        e_msg = ('Value for mount option(alloc_start) must be an integer')
+        response2 = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response2.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response2.data)
+        self.assertEqual(response2.data['detail'], e_msg)
 
+        data['mnt_options'] = 'alloc_start=derp'
+        response3 = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response3.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response3.data)
+        self.assertEqual(response3.data['detail'], e_msg)
+
+        # test all valid mount options
+        data['mnt_options'] = 'fatal_errors'
+        response3 = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response3.status_code, status.HTTP_200_OK, msg=response3.data)
+        self.assertEqual(response3.data['mnt_options'], 'fatal_errors')
+
+        valid_mnt_options = 'fatal_errors,thread_pool=1,max_inline=2,ssd_spread,clear_cache,inode_cache,nodatacow,noatime,nodatasum,alloc_start=3,noacl,space_cache,ssd,discard,commit=4,autodefrag,metadata_ratio=5,nospace_cache'
+        data2 = {'mnt_options': valid_mnt_options}
+        response3 = self.client.put('%s/singleton/remount' % self.BASE_URL, data=data2)
+        self.assertEqual(response3.status_code, status.HTTP_200_OK, msg=response3.data)
+        self.assertEqual(response3.data['mnt_options'], valid_mnt_options)
+
+        # test compress-force options
+        data2 = {'mnt_options': 'compress-force=no'}
+        response3 = self.client.put('%s/singleton/remount' % self.BASE_URL, data=data2)
+        self.assertEqual(response3.status_code, status.HTTP_200_OK, msg=response3.data)
+        self.assertEqual(response3.data['mnt_options'], 'compress-force=no')
+        self.assertEqual(response3.data['compression'], 'no')
+
+        data2 = {'mnt_options': 'compress-force=zlib'}
+        response3 = self.client.put('%s/singleton/remount' % self.BASE_URL, data=data2)
+        self.assertEqual(response3.status_code, status.HTTP_200_OK, msg=response3.data)
+        self.assertEqual(response3.data['mnt_options'], 'compress-force=zlib')
+        # TODO should be:
+        # self.assertEqual(response3.data['compression'], 'zlib')
+        self.assertEqual(response3.data['compression'], 'no')
+
+        data2 = {'mnt_options': 'compress-force=lzo'}
+        response3 = self.client.put('%s/singleton/remount' % self.BASE_URL, data=data2)
+        self.assertEqual(response3.status_code, status.HTTP_200_OK, msg=response3.data)
+        self.assertEqual(response3.data['mnt_options'], 'compress-force=lzo')
+        # TODO should be:
+        # self.assertEqual(response3.data['compression'], 'lzo')
+        self.assertEqual(response3.data['compression'], 'no')
+
+        # test invalid compress-force
+        data2 = {'mnt_options': 'compress-force=1'}
+        # TODO e_msg should be:
+        # e_msg = ("compress-force is only allowed with ('lzo', 'zlib', 'no')")
+        e_msg = ('not all arguments converted during string formatting')
+        response3 = self.client.put('%s/singleton/remount' % self.BASE_URL, data=data2)
+        self.assertEqual(response3.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response3.data)
+        self.assertEqual(response3.data['detail'], e_msg)
 
     def test_single_crud(self):
 

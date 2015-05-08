@@ -93,6 +93,7 @@ class PoolView(rfc.GenericView):
         }
         o_fields = mnt_options.split(',')
         for o in o_fields:
+            # print 'o', o
             v = None
             if (re.search('=', o) is not None):
                 o, v = o.split('=')
@@ -103,16 +104,28 @@ class PoolView(rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
             if ((o == 'compress-force' and
                  v not in allowed_options['compress-force'])):
+                # print "compression-force error"
+                # print 'allowed key value options:', allowed_options['compress-force']
+                # print 'key value:', v
+                # TODO e_msg is not raised
                 e_msg = ('compress-force is only allowed with %s' %
                          (settings.COMPRESSION_TYPES))
                 handle_exception(Exception(e_msg), request)
-            if (type(allowed_options[o]) is int):
+            # print 'allowed_options[o]:', allowed_options[o]
+            # print 'type(allowed_options[o]):', type(allowed_options[o])
+            # print 'type(allowed_options[o]) is int', type(allowed_options[o]) is int
+            # TODO confirm this is correct change... conditional wasn't catching
+            # if (type(allowed_options[o]) is int):
+            if (allowed_options[o] is int):
+                # print "int check true"
                 try:
                     int(v)
                 except:
                     e_msg = ('Value for mount option(%s) must be an integer' %
                              (o))
                     handle_exception(Exception(e_msg), request)
+            # print 'v',v
+        # print 'mnt_options:', mnt_options
         return mnt_options
 
     def _validate_compression(self, request):
@@ -190,6 +203,7 @@ class PoolView(rfc.GenericView):
             dnames = [d.name for d in disks]
             p = Pool(name=pname, raid=raid_level, compression=compression,
                      mnt_options=mnt_options)
+            # print 'pool name & mnt options', p['name'], p['mnt_options']
             add_pool(p, dnames)
             p.size = pool_usage(mount_root(p, dnames[0]))[0]
             p.uuid = btrfs_uuid(dnames[0])
