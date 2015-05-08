@@ -119,8 +119,9 @@ class PoolTests(APITestCase):
         response1 = self.client.get('%s/raid0pool' % self.BASE_URL)
         self.assertEqual(response1.status_code, status.HTTP_404_NOT_FOUND, msg=response1.data)
         self.assertEqual(response1.data['detail'], e_msg)
-        
+
         # edit a pool that doesn't exist
+        e_msg = ('Pool(raid0pool) does not exist.')
         response2 = self.client.put('%s/raid0pool/add' % self.BASE_URL, data=data2)
         self.assertEqual(response2.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response2.data)
         self.assertEqual(response2.data['detail'], e_msg)
@@ -278,6 +279,7 @@ class PoolTests(APITestCase):
         response3 = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response3.status_code, status.HTTP_200_OK, msg=response3.data)
         self.assertEqual(response3.data['mnt_options'], 'fatal_errors')
+        self.assertEqual(response3.data['compression'], 'zlib')
 
         valid_mnt_options = 'fatal_errors,thread_pool=1,max_inline=2,ssd_spread,clear_cache,inode_cache,nodatacow,noatime,nodatasum,alloc_start=3,noacl,space_cache,ssd,discard,commit=4,autodefrag,metadata_ratio=5,nospace_cache'
         data2 = {'mnt_options': valid_mnt_options}
@@ -286,27 +288,24 @@ class PoolTests(APITestCase):
         self.assertEqual(response3.data['mnt_options'], valid_mnt_options)
 
         # test compress-force options
+        # not including compression in request... _validate_compression sets it to 'no' despite pool having a compression value
         data2 = {'mnt_options': 'compress-force=no'}
         response3 = self.client.put('%s/singleton/remount' % self.BASE_URL, data=data2)
         self.assertEqual(response3.status_code, status.HTTP_200_OK, msg=response3.data)
         self.assertEqual(response3.data['mnt_options'], 'compress-force=no')
-        self.assertEqual(response3.data['compression'], 'no')
+        self.assertEqual(response3.data['compression'], 'zlib')
 
         data2 = {'mnt_options': 'compress-force=zlib'}
         response3 = self.client.put('%s/singleton/remount' % self.BASE_URL, data=data2)
         self.assertEqual(response3.status_code, status.HTTP_200_OK, msg=response3.data)
         self.assertEqual(response3.data['mnt_options'], 'compress-force=zlib')
-        # TODO should be:
-        # self.assertEqual(response3.data['compression'], 'zlib')
-        self.assertEqual(response3.data['compression'], 'no')
+        self.assertEqual(response3.data['compression'], 'zlib')
 
         data2 = {'mnt_options': 'compress-force=lzo'}
         response3 = self.client.put('%s/singleton/remount' % self.BASE_URL, data=data2)
         self.assertEqual(response3.status_code, status.HTTP_200_OK, msg=response3.data)
         self.assertEqual(response3.data['mnt_options'], 'compress-force=lzo')
-        # TODO should be:
-        # self.assertEqual(response3.data['compression'], 'lzo')
-        self.assertEqual(response3.data['compression'], 'no')
+        self.assertEqual(response3.data['compression'], 'zlib')
 
         # test invalid compress-force
         data2 = {'mnt_options': 'compress-force=1'}
