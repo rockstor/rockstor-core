@@ -138,21 +138,21 @@ class PoolTests(APITestCase):
         data = {'disks': ('sdb',),
                 'pname': '123pool',
                 'raid_level': 'single', }
-        response = self.client.post(self.BASE_URL, data=data)
+        response = self.client.post(self.BASE_URL, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
         self.assertEqual(response.data['name'], '123pool')
         
         data = {'disks': ('sdc',),
                 'pname': 'POOL_TEST_',
                 'raid_level': 'single', }
-        response2 = self.client.post(self.BASE_URL, data=data)
+        response2 = self.client.post(self.BASE_URL, data=data, format='json')
         self.assertEqual(response2.status_code, status.HTTP_200_OK, msg=response2.data)
         self.assertEqual(response2.data['name'], 'POOL_TEST_')
 
         data = {'disks': ('sdd',),
                 'pname': 'Zzzz....',
                 'raid_level': 'single', }        
-        response3 = self.client.post(self.BASE_URL, data=data)
+        response3 = self.client.post(self.BASE_URL, data=data, format='json')
         self.assertEqual(response3.status_code, status.HTTP_200_OK, msg=response3.data)
         self.assertEqual(response3.data['name'], 'Zzzz....')
         
@@ -446,6 +446,7 @@ class PoolTests(APITestCase):
 
         # add 3 disks & change raid_level
         # TODO how to mimic raid migration? won't allow... 'A Balance process is already running for this pool'
+        # seperate migration in diff
         # data3 = {'disks': ('sde', 'sdf', 'sdg',),
         #          'raid_level': 'raid1', }
         # response4 = self.client.put('%s/raid0pool/add' % self.BASE_URL, data=data3)

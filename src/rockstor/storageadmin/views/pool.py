@@ -108,7 +108,8 @@ class PoolMixin(object):
                 e_msg = ('compress-force is only allowed with %s' %
                          (settings.COMPRESSION_TYPES))
                 handle_exception(Exception(e_msg), request)
-            if (type(allowed_options[o]) is int):
+            # changed conditional from "if (type(allowed_options[o]) is int):"... was checking for type type
+            if (allowed_options[o] is int):
                 try:
                     int(v)
                 except:
