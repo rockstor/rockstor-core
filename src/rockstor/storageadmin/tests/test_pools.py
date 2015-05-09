@@ -350,6 +350,7 @@ class PoolTests(APITestCase):
         self.assertEqual(response3.data['detail'], e_msg)
 
     def test_single_crud(self):
+        # TODO add 0 disks
 
         """
         test pool crud ops with 'single' raid config. single can be used to create a pool
@@ -498,67 +499,6 @@ class PoolTests(APITestCase):
         response5 = self.client.delete('%s/raid0pool' % self.BASE_URL)
         self.assertEqual(response5.status_code, status.HTTP_200_OK, msg=response5.data)
         self.mock_umount_root.assert_called_with('/mnt2/raid0pool')
-
-    def test_raid_migration(self):
-        """
-        test raid migration from 'raid0' to 'raid1' raid config.
-        must be at least as many new disks as current disks
-        1. create a pool with 2 disks
-        2. attempt to add 1 disk & change raid
-        3. add 3 disks & change raid
-        """
-        # create 'raid0' pool with 2 disks
-        data = {'disks': ('sdb', 'sdc',),
-                'pname': 'raid0pool',
-                'raid_level': 'raid0', }
-        response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
-        self.assertEqual(response.data['name'], 'raid0pool')
-        self.assertEqual(response.data['raid'], 'raid0')
-        self.mock_btrfs_uuid.assert_called_with('sdb')
-        self.assertEqual(len(response.data['disks']), 2)
-
-        # add 1 disk & change raid_level
-        data3 = {'disks': ('sdd',),
-                 'raid_level': 'raid1', }
-        e_msg = ('For single/raid0 to raid1/raid10 conversion, at least as '
-                 'many as present number of disks must be added. 1 disks are '
-                 'provided, but at least 2 are required.')
-        response4 = self.client.put('%s/raid0pool/add' % self.BASE_URL, data=data3)
-        self.assertEqual(response4.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response4.data)
-        self.assertEqual(response4.data['detail'], e_msg)
-
-        # add 3 disks & change raid_level
-        data3 = {'disks': ('sdd', 'sde',),
-                 'raid_level': 'raid1', }
-        response4 = self.client.put('%s/raid0pool/add' % self.BASE_URL, data=data3)
-        self.assertEqual(response4.status_code, status.HTTP_200_OK, msg=response4.data)
-        self.assertEqual(len(response4.data['disks']), 4)
-        # self.assertEqual(response4.__dict__, 'raid1')
-        # TODO Suman -- key becomes 'raid' vs. 'raid_level'?
-        self.assertEqual(response4.data['raid'], 'raid1')
-
-        # create 'raid1' pool with 2 disks
-        data = {'disks': ('sdf', 'sdg',),
-                'pname': 'raid1pool',
-                'raid_level': 'raid1', }
-        response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
-        self.assertEqual(response.data['name'], 'raid1pool')
-        self.assertEqual(response.data['raid'], 'raid1')
-        self.mock_btrfs_uuid.assert_called_with('sdf')
-        self.assertEqual(len(response.data['disks']), 2)
-
-        # migrate 'raid1' to 'raid0'
-        # data3 = {'raid_level': 'raid0'}
-        data['raid_level'] = 'raid0'
-        response4 = self.client.put('%s/raid0pool/add' % self.BASE_URL, data=data)
-        self.assertEqual(response4.__dict__, 'raid0')
-        self.assertEqual(response4.status_code, status.HTTP_200_OK, msg=response4.data)
-        self.assertEqual(len(response4.data['disks']), 2)
-        self.assertEqual(response4.data['raid'], 'raid0')
-
 
     def test_raid1_crud(self):
         """
@@ -786,3 +726,62 @@ class PoolTests(APITestCase):
         response5 = self.client.delete('%s/raid6pool' % self.BASE_URL)
         self.assertEqual(response5.status_code, status.HTTP_200_OK, msg=response5.data)
         self.mock_umount_root.assert_called_with('/mnt2/raid6pool')
+
+    def test_raid_migration(self):
+        """
+        test raid migrations in put add command
+        1. create 'raid0' pool with 2 disks
+        2. invalid migration (attempt to add < current disks & change raid)
+        3. valid migration (add > current disks & change raid)
+        4. create 'raid1' pool with 2 disks
+        5. invalid migration ('raid1' to 'raid0')
+        """
+        # create 'raid0' pool with 2 disks
+        data = {'disks': ('sdb', 'sdc',),
+                'pname': 'raid0pool',
+                'raid_level': 'raid0', }
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
+        self.assertEqual(response.data['name'], 'raid0pool')
+        self.assertEqual(response.data['raid'], 'raid0')
+        self.mock_btrfs_uuid.assert_called_with('sdb')
+        self.assertEqual(len(response.data['disks']), 2)
+
+        # add 1 disk & change raid_level
+        data2 = {'disks': ('sdd',),
+                 'raid_level': 'raid1', }
+        e_msg = ('For single/raid0 to raid1/raid10 conversion, at least as '
+                 'many as present number of disks must be added. 1 disks are '
+                 'provided, but at least 2 are required.')
+        response4 = self.client.put('%s/raid0pool/add' % self.BASE_URL, data=data2)
+        self.assertEqual(response4.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response4.data)
+        self.assertEqual(response4.data['detail'], e_msg)
+
+        # add 3 disks & change raid_level
+        data3 = {'disks': ('sdd', 'sde',),
+                 'raid_level': 'raid1', }
+        response4 = self.client.put('%s/raid0pool/add' % self.BASE_URL, data=data3)
+        self.assertEqual(response4.status_code, status.HTTP_200_OK, msg=response4.data)
+        self.assertEqual(len(response4.data['disks']), 4)
+        self.assertEqual(response4.data['raid'], 'raid1')
+
+        # create 'raid1' pool with 2 disks
+        data4 = {'disks': ('sdf', 'sdg',),
+                'pname': 'raid1pool',
+                'raid_level': 'raid1', }
+        response = self.client.post(self.BASE_URL, data=data4)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
+        self.assertEqual(response.data['name'], 'raid1pool')
+        self.assertEqual(response.data['raid'], 'raid1')
+        self.mock_btrfs_uuid.assert_called_with('sdf')
+        self.assertEqual(len(response.data['disks']), 2)
+
+        # migrate 'raid1' to 'raid0'
+        data5 = {'disks': ('sdh',),
+                 'raid_level': 'raid0', }
+        e_msg = ('Pool migration from raid1 to raid0 is not supported.')
+        response4 = self.client.put('%s/raid1pool/add' % self.BASE_URL, data=data5)
+        self.assertEqual(response4.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response4.data)
+        self.assertEqual(response4.data['detail'], e_msg)
