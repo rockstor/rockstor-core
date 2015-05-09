@@ -105,9 +105,10 @@ class PoolMixin(object):
                 handle_exception(Exception(e_msg), request)
             if ((o == 'compress-force' and
                  v not in allowed_options['compress-force'])):
-                e_msg = ('compress-force is only allowed with {}'.format(settings.COMPRESSION_TYPES))
+                e_msg = ('compress-force is only allowed with {}'
+                         .format(settings.COMPRESSION_TYPES))
                 handle_exception(Exception(e_msg), request)
-            # changed conditional from "if (type(allowed_options[o]) is int):"... was checking for type type
+            # changed conditional from "if (type(allowed_options[o]) is int):"
             if (allowed_options[o] is int):
                 try:
                     int(v)
@@ -258,7 +259,8 @@ class PoolListView(PoolMixin, rfc.GenericView):
             p.uuid = btrfs_uuid(dnames[0])
             p.disk_set.add(*disks)
             p.save()
-            # added for loop to save disks. appears p.disk_set.add(*disks) was not saving disks in test environment
+            # added for loop to save disks
+            # appears p.disk_set.add(*disks) was not saving disks in test environment
             for d in disks:
                 d.pool = p
                 d.save()
