@@ -93,7 +93,7 @@ class PoolTests(APITestCase):
         response1 = self.client.get(self.BASE_URL)
         self.assertEqual(response1.status_code, status.HTTP_200_OK, msg=response1.data)
 
-    def test_invalid_operations(self):
+    def test_invalid_api_requests(self):
         """
         invalid pool operations
         1. attempt to create a pool with invalid raid level
@@ -116,16 +116,21 @@ class PoolTests(APITestCase):
 
         # get a pool that doesn't exist
         e_msg = ('Not found')
-        response1 = self.client.get('%s/raid0pool' % self.BASE_URL)
-        self.assertEqual(response1.status_code, status.HTTP_404_NOT_FOUND, msg=response1.data)
-        self.assertEqual(response1.data['detail'], e_msg)
+        response3 = self.client.get('%s/raid0pool' % self.BASE_URL)
+        self.assertEqual(response3.status_code, status.HTTP_404_NOT_FOUND, msg=response3.data)
+        self.assertEqual(response3.data['detail'], e_msg)
 
         # edit a pool that doesn't exist
         e_msg = ('Pool(raid0pool) does not exist.')
-        response2 = self.client.put('%s/raid0pool/add' % self.BASE_URL, data=data2)
-        self.assertEqual(response2.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response2.data)
-        self.assertEqual(response2.data['detail'], e_msg)
+        response4 = self.client.put('%s/raid0pool/add' % self.BASE_URL, data=data2)
+        self.assertEqual(response4.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response4.data)
+        self.assertEqual(response4.data['detail'], e_msg)
 
+        # delete a pool that doesn't exist
+        response5 = self.client.delete('%s/raid0pool' % self.BASE_URL)
+        self.assertEqual(response5.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response5.data)
+        self.assertEqual(response5.data['detail'], e_msg)
+        
     def test_name_regex(self):
         """
         Pool name must start with a alphanumeric(a-z0-9) ' 'character and can be
@@ -138,21 +143,21 @@ class PoolTests(APITestCase):
         data = {'disks': ('sdb',),
                 'pname': '123pool',
                 'raid_level': 'single', }
-        response = self.client.post(self.BASE_URL, data=data, format='json')
+        response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
         self.assertEqual(response.data['name'], '123pool')
         
         data = {'disks': ('sdc',),
                 'pname': 'POOL_TEST_',
                 'raid_level': 'single', }
-        response2 = self.client.post(self.BASE_URL, data=data, format='json')
+        response2 = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response2.status_code, status.HTTP_200_OK, msg=response2.data)
         self.assertEqual(response2.data['name'], 'POOL_TEST_')
 
         data = {'disks': ('sdd',),
                 'pname': 'Zzzz....',
                 'raid_level': 'single', }        
-        response3 = self.client.post(self.BASE_URL, data=data, format='json')
+        response3 = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response3.status_code, status.HTTP_200_OK, msg=response3.data)
         self.assertEqual(response3.data['name'], 'Zzzz....')
         

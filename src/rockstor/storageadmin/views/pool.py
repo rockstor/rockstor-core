@@ -105,8 +105,7 @@ class PoolMixin(object):
                 handle_exception(Exception(e_msg), request)
             if ((o == 'compress-force' and
                  v not in allowed_options['compress-force'])):
-                e_msg = ('compress-force is only allowed with %s' %
-                         (settings.COMPRESSION_TYPES))
+                e_msg = ('compress-force is only allowed with {}'.format(settings.COMPRESSION_TYPES))
                 handle_exception(Exception(e_msg), request)
             # changed conditional from "if (type(allowed_options[o]) is int):"... was checking for type type
             if (allowed_options[o] is int):
@@ -224,8 +223,7 @@ class PoolListView(PoolMixin, rfc.GenericView):
 
             raid_level = request.data['raid_level']
             if (raid_level not in self.RAID_LEVELS):
-                e_msg = ('Unsupported raid level. use one of: %s' %
-                         self.RAID_LEVELS)
+                e_msg = ('Unsupported raid level. use one of: {}'.format(self.RAID_LEVELS))
                 handle_exception(Exception(e_msg), request)
             # consolidated raid0 & raid 1 disk check
             if (raid_level in self.RAID_LEVELS[1:3] and len(disks) == 1):
@@ -310,7 +308,8 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
             num_total_disks = (Disk.objects.filter(pool=pool).count() +
                                num_new_disks)
             usage = pool_usage('/%s/%s' % (settings.MNT_PT, pool.name))
-            free_percent = (usage[2]/usage[0]) * 100
+            # free_percent = (usage[2]/usage[0]) * 100
+            free_percent = (usage[2]* 100)/usage[0]
             threshold_percent = self.ADD_THRESHOLD * 100
             if (command == 'add'):
                 for d in disks:
@@ -455,7 +454,11 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                 e_msg = ('Deletion of Pool(%s) is not allowed as it contains '
                          'the operating system.' % pname)
                 handle_exception(Exception(e_msg), request)
-            pool = Pool.objects.get(name=pname)
+            try:
+                pool = Pool.objects.get(name=pname)
+            except:
+                e_msg = ('Pool(%s) does not exist.' % pname)
+                handle_exception(Exception(e_msg), request)
             if (Share.objects.filter(pool=pool).exists()):
                 e_msg = ('Pool(%s) is not empty. Delete is not allowed until '
                          'all shares in the pool are deleted' % (pname))
