@@ -352,9 +352,6 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                              'drives. Total provided = %d' %
                              num_new_disks)
                     handle_exception(Exception(e_msg), request)
-                print 'pool:', pool
-                print 'pool raid:', pool.raid
-                print 'new raid:', new_raid
                 if (new_raid != pool.raid):
                     if (((pool.raid in ('single', 'raid0')) and
                          new_raid in ('raid1', 'raid10'))):

@@ -99,6 +99,7 @@ class PoolTests(APITestCase):
         1. attempt to create a pool with invalid raid level
         2. attempt to edit root pool
         """
+        # create pool with invalid raid level
         data = {'disks': ('sdc', 'sdd',),
                 'pname': 'singlepool2',
                 'raid_level': 'derp', }
@@ -108,15 +109,6 @@ class PoolTests(APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
         self.assertEqual(response.data['detail'], e_msg)
-
-        # attempt to add disk to root pool
-        data2 = {'disks': ('sdc', 'sdd',)}
-        e_msg = ('Edit operations are not allowed on this '
-                 'Pool(rockstor_rockstor) as it contains the operating system.')
-        response2 = self.client.put('%s/rockstor_rockstor/add' % self.BASE_URL, data=data2)
-        self.assertEqual(response2.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response2.data)
-        self.assertEqual(response2.data['detail'], e_msg)
 
         # get a pool that doesn't exist
         e_msg = ('Not found')
@@ -134,6 +126,23 @@ class PoolTests(APITestCase):
 
         # delete a pool that doesn't exist
         response5 = self.client.delete('%s/raid0pool' % self.BASE_URL)
+        self.assertEqual(response5.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response5.data)
+        self.assertEqual(response5.data['detail'], e_msg)
+
+        # attempt to add disk to root pool
+        data2 = {'disks': ('sdc', 'sdd',)}
+        e_msg = ('Edit operations are not allowed on this '
+                 'Pool(rockstor_rockstor) as it contains the operating system.')
+        response2 = self.client.put('%s/rockstor_rockstor/add' % self.BASE_URL, data=data2)
+        self.assertEqual(response2.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response2.data)
+        self.assertEqual(response2.data['detail'], e_msg)
+
+        # attempt to delete root pool
+        e_msg = ('Deletion of Pool(rockstor_rockstor) is not allowed as it '
+                 'contains the operating system.')
+        response5 = self.client.delete('%s/rockstor_rockstor' % self.BASE_URL)
         self.assertEqual(response5.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response5.data)
         self.assertEqual(response5.data['detail'], e_msg)
@@ -350,8 +359,6 @@ class PoolTests(APITestCase):
         self.assertEqual(response3.data['detail'], e_msg)
 
     def test_single_crud(self):
-        # TODO add 0 disks
-
         """
         test pool crud ops with 'single' raid config. single can be used to create a pool
         with any number of drives but drives cannot be removed.
@@ -359,10 +366,12 @@ class PoolTests(APITestCase):
         2. create a pool with 1 disk
         3. create a pool with 2 disks
         4. create a pool with a duplicate name
-        5. add 2 disks to pool
-        6. attempt to add a disk that doesn't exist
-        7. remove 2 disks from pool
-        8. delete pool
+        5. add 0 disks
+        6. add 2 disks to pool
+        7. invalid put command
+        8. attempt to add a disk that doesn't exist
+        9. remove 2 disks from pool
+        10. delete pool
         """
 
         # create pool with 0 disks
@@ -401,11 +410,25 @@ class PoolTests(APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response4.data)
         self.assertEqual(response4.data['detail'], e_msg)
 
+        # add 0 disks
+        data2 = {'disks': (), }
+        e_msg = ('List of disks in the input cannot be empty.')
+        response5 = self.client.put('%s/singlepool2/add' % self.BASE_URL, data=data2)
+        self.assertEqual(response5.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response5.data)
+        self.assertEqual(response5.data['detail'], e_msg)
+
         # add 2 disks
         data2 = {'disks': ('sdf', 'sdg',), }
         response5 = self.client.put('%s/singlepool2/add' % self.BASE_URL, data=data2)
         self.assertEqual(response5.status_code, status.HTTP_200_OK, msg=response5.data)
         self.assertEqual(len(response5.data['disks']), 4)
+
+        # invalid put command
+        e_msg = ('command(derp) is not supported.')
+        response5 = self.client.put('%s/singlepool2/derp' % self.BASE_URL, data=data2)
+        self.assertEqual(response5.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response5.data)
+        self.assertEqual(response5.data['detail'], e_msg)
 
         # attempt to add disk that does not exist
         data3 = {'disks': ('derp'), }
@@ -415,17 +438,34 @@ class PoolTests(APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response5.data)
         self.assertEqual(response5.data['detail'], e_msg)
 
-        # remove 2 disks
-        e_msg = ('Disks cannot be removed from a pool with this '
-                 'raid(single) configuration')
-        response6 = self.client.put('%s/singlepool2/remove' % self.BASE_URL, data=data2)
+        # add a disk that already belongs to a pool
+        data4 = {'disks': ('sdc',)}
+        e_msg  = ('Disk(sdc) cannot be added to this Pool(singlepool) '
+                 'because it belongs to another pool(singlepool2)')
+        response6 = self.client.put('%s/singlepool/add' % self.BASE_URL, data=data4)
         self.assertEqual(response6.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response6.data)
         self.assertEqual(response6.data['detail'], e_msg)
 
+        # remove disk that doesn't belong to pool
+        e_msg = ('Disk(sdf) cannot be removed because it does not belong to '
+                 'this Pool(singlepool)')
+        response7 = self.client.put('%s/singlepool/remove' % self.BASE_URL, data=data2)
+        self.assertEqual(response7.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response7.data)
+        self.assertEqual(response7.data['detail'], e_msg)
+
+        # remove 2 disks
+        e_msg = ('Disks cannot be removed from a pool with this '
+                 'raid(single) configuration')
+        response8 = self.client.put('%s/singlepool2/remove' % self.BASE_URL, data=data2)
+        self.assertEqual(response8.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response8.data)
+        self.assertEqual(response8.data['detail'], e_msg)
+
         # delete pool
-        response7 = self.client.delete('%s/singlepool2' % self.BASE_URL)
-        self.assertEqual(response7.status_code, status.HTTP_200_OK, msg=response7.data)
+        response9 = self.client.delete('%s/singlepool2' % self.BASE_URL)
+        self.assertEqual(response9.status_code, status.HTTP_200_OK, msg=response9.data)
         self.mock_umount_root.assert_called_with('/mnt2/singlepool2')
 
     def test_raid0_crud(self):
@@ -465,13 +505,6 @@ class PoolTests(APITestCase):
         response1 = self.client.get('%s/raid0pool' % self.BASE_URL)
         self.assertEqual(response1.status_code, status.HTTP_200_OK, msg=response1.data)
         self.assertEqual(response.data['name'], 'raid0pool')
-
-        # get pool queryset, sort by usage
-        # TODO
-        # AttributeError: 'Pool' object has no attribute 'cur_usage'
-        # response1 = self.client.get('%s?sortby=usage' % self.BASE_URL)
-        # self.assertEqual(response1.status_code, status.HTTP_200_OK, msg=response1.data)
-        # self.assertEqual(response.data, 'raid0pool')
 
         # add 1 disk
         data2 = {'disks': ('sdd',)}
@@ -625,6 +658,15 @@ class PoolTests(APITestCase):
                  'of its raid configuration(raid10)')
         self.assertEqual(response4.data['detail'], e_msg)
 
+        # remove 2 disks
+        data3 = {'disks': ('sde', 'sdd'), }
+        e_msg = ('Disks cannot be removed from this pool because its raid '
+                 'configuration(raid10) requires a minimum of 4 disks')
+        response4 = self.client.put('%s/raid10pool/remove' % self.BASE_URL, data=data3)
+        self.assertEqual(response4.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response4.data)
+        self.assertEqual(response4.data['detail'], e_msg)
+
         # delete pool
         response5 = self.client.delete('%s/raid10pool' % self.BASE_URL)
         self.assertEqual(response5.status_code, status.HTTP_200_OK, msg=response5.data)
@@ -754,6 +796,15 @@ class PoolTests(APITestCase):
                  'many as present number of disks must be added. 1 disks are '
                  'provided, but at least 2 are required.')
         response4 = self.client.put('%s/raid0pool/add' % self.BASE_URL, data=data2)
+        self.assertEqual(response4.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response4.data)
+        self.assertEqual(response4.data['detail'], e_msg)
+
+        # remove 1 disk & change raid_level
+        data2 = {'disks': ('sdc',),
+                 'raid_level': 'raid1', }
+        e_msg = ('Raid configuration cannot be changed while removing disks')
+        response4 = self.client.put('%s/raid0pool/remove' % self.BASE_URL, data=data2)
         self.assertEqual(response4.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response4.data)
         self.assertEqual(response4.data['detail'], e_msg)
