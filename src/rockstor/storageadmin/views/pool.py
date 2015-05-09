@@ -260,6 +260,10 @@ class PoolListView(PoolMixin, rfc.GenericView):
             p.uuid = btrfs_uuid(dnames[0])
             p.disk_set.add(*disks)
             p.save()
+            # added for loop to save disks. appears p.disk_set.add(*disks) was not saving disks in test environment
+            for d in disks:
+                d.pool = p
+                d.save()
             return Response(PoolInfoSerializer(p).data)
 
 

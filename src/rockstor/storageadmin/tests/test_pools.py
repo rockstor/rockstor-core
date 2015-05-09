@@ -612,6 +612,7 @@ class PoolTests(APITestCase):
         # create pool with 4 disks
         data['disks'] = ('sdb', 'sdc', 'sdd', 'sde',)
         response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.data, 'yo')
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
         self.assertEqual(response.data['name'], 'raid5pool')
         self.assertEqual(response.data['raid'], 'raid5')
