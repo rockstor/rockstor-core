@@ -150,7 +150,7 @@ class PoolTests(APITestCase):
         self.assertEqual(response5.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response5.data)
         self.assertEqual(response5.data['detail'], e_msg)
-        
+
     def test_name_regex(self):
         """
         Pool name must start with a alphanumeric(a-z0-9) ' 'character and can be
@@ -158,50 +158,34 @@ class PoolTests(APITestCase):
         digits(0-9), ' 'hyphen(-), underscore(_) or a period(.).'
         1. Test a few valid regexes (eg: pool1, Mypool, 123, etc..)
         2. Test a few invalid regexes (eg: -pool1, .pool etc..)
+        3. Empty string for pool name
+        4. max length(255 character) for pool name
+        5. max length + 1 for pool name
         """
         # valid pool names
         data = {'disks': ('sdb',),
-                'pname': '123pool',
                 'raid_level': 'single', }
-        response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
-        self.assertEqual(response.data['name'], '123pool')
-        
-        data = {'disks': ('sdc',),
-                'pname': 'POOL_TEST_',
-                'raid_level': 'single', }
-        response2 = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response2.status_code, status.HTTP_200_OK, msg=response2.data)
-        self.assertEqual(response2.data['name'], 'POOL_TEST_')
+        valid_names = ('123pool', 'POOL_TEST', 'Zzzz...', '1234', 'mypool',
+                       'P' + 'o' * 253 + 'l',)
+        for pname in valid_names:
+            data['pname'] = pname
+            response = self.client.post(self.BASE_URL, data=data)
+            self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
+            self.assertEqual(response.data['name'], pname)
 
-        data = {'disks': ('sdd',),
-                'pname': 'Zzzz....',
-                'raid_level': 'single', }        
-        response3 = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response3.status_code, status.HTTP_200_OK, msg=response3.data)
-        self.assertEqual(response3.data['name'], 'Zzzz....')
-        
         # invalid pool names
-        data['pname'] = 'Pool $'
         e_msg = ('Pool name must start with a alphanumeric(a-z0-9) character '
                  'and can be followed by any of the following characters: '
                  'letter(a-z), digits(0-9), hyphen(-), underscore(_) or a period(.).')
-        response4 = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response4.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response4.data)
-        self.assertEqual(response4.data['detail'], e_msg)
+        invalid_pool_names = ('Pool $', '-pool', '.pool', '', ' ',
+                              'P' + 'o' * 254 + 'l',)
+        for pname in invalid_pool_names:
+            data['pname'] = pname
+            response = self.client.post(self.BASE_URL, data=data)
+            self.assertEqual(response.status_code,
+                             status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+            self.assertEqual(response.data['detail'], e_msg)
 
-        data['pname'] = '-pool'
-        response5 = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response5.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response5.data)
-        self.assertEqual(response5.data['detail'], e_msg)
-
-        data['pname'] = '.pool'
-        response6 = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response6.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response6.data)
-        self.assertEqual(response6.data['detail'], e_msg)
 
     def test_compression(self):
         """
@@ -232,7 +216,7 @@ class PoolTests(APITestCase):
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
         self.assertEqual(response.data['compression'], 'zlib')
-        
+
         # create pool with lzo compression
         data2 = {'disks': ('sde', 'sdf',),
                 'pname': 'singlepool2',
@@ -241,13 +225,13 @@ class PoolTests(APITestCase):
         response2 = self.client.post(self.BASE_URL, data=data2)
         self.assertEqual(response2.status_code, status.HTTP_200_OK, msg=response2.data)
         self.assertEqual(response2.data['compression'], 'lzo')
-        
+
         # change compression from zlib to lzo
         data3 = {'compression': 'lzo'}
         response3 = self.client.put('%s/singlepool/remount' % self.BASE_URL, data=data3)
         self.assertEqual(response3.status_code, status.HTTP_200_OK, msg=response3.data)
         self.assertEqual(response3.data['compression'], 'lzo')
-        
+
         # change compression from lzo to zlib
         data4 = {'compression': 'zlib'}
         response4 = self.client.put('%s/singlepool2/remount' % self.BASE_URL, data=data4)
