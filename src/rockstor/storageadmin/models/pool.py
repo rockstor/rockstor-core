@@ -27,16 +27,7 @@ class Pool(models.Model):
     uuid = models.CharField(max_length=100, null=True)
     """size of the pool in KB"""
     size = models.BigIntegerField(default=0)
-    """raid choices"""
-    RAID_CHOICES = [
-        ('raid0',) * 2,
-        ('raid1',) * 2,
-        ('raid10',) * 2,
-        ('dup',) * 2,
-        ('single',) * 2,
-        ]
-    """raid type"""
-    raid = models.CharField(max_length=10, choices=RAID_CHOICES)
+    raid = models.CharField(max_length=10)
     toc = models.DateTimeField(auto_now=True)
     compression = models.CharField(max_length=256, null=True)
     mnt_options = models.CharField(max_length=4096, null=True)
