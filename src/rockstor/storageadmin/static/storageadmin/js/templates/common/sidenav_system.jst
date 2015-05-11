@@ -53,4 +53,10 @@
 <% } else { %>
   <li><a href="#update-certificate"><i class="fa fa-desktop"></i> Update Certificate</span></a></li>
   <% } %>
+  <% if (selected == "email") { %>
+  <li><a href="#email" class="selected"><i class="fa fa-envelope"></i>Email</span></a></li>
+<% } else { %>
+<li><a href="#email"><i class="fa fa-envelope"></i> Email</span></a></li>
+<% } %>
 </ul>
+

@@ -1,0 +1,95 @@
+<script>
+  /*
+  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+  * This file is part of RockStor.
+  *
+  * RockStor is free software; you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published
+  * by the Free Software Foundation; either version 2 of the License,
+  * or (at your option) any later version.
+  *
+  * RockStor is distributed in the hope that it will be useful, but
+  * WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  * General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License
+  * along with this program. If not, see <http://www.gnu.org/licenses/>.
+  *
+  */
+</script>
+<h3>Configure Email</h3>
+<div class="row-fluid">
+  <div class="span8">
+    <label class="control-label"></label>
+    <div class="form-box">
+      <form id="email-form" name="email-form" class="form-horizontal">
+        <div class="messages"></div>
+        
+        <div class="control-group">
+        <label class="control-label">Name: </label>
+        <div class="controls">
+          <input type="text" name="name"  placeholder="Enter Name" title="Enter name">
+        </div>
+        </div>
+        
+        <div class="control-group">
+        <label class="control-label">Email Id </label>
+        <div class="controls">
+          <input type="email" name="email_id"  placeholder="Enter Email address" title="Email id">
+        </div>
+        </div>
+      
+        <div class="control-group">
+        <label class="control-label">SMTP Server: </label>
+        <div class="controls">
+          <input type="text" name="smtpName"  placeholder="Enter SMTP server" title="SMTP server">
+        </div>
+        </div>
+        
+        <div class="control-group">
+        <label class="control-label">Username: </label>
+        <div class="controls">
+          <input type="text" name="uname"  placeholder="Enter Username">
+        </div>
+        </div>
+        
+        <div class="control-group">
+        <label class="control-label">Password:</label>
+        <div class="controls">
+          <input type="password"  name="pwd" placeholder="Enter Password">
+        </div>
+        </div>
+        
+        <div class="control-group">
+        <label class="control-label">Port: </label>
+        <div class="controls">
+        
+        <select id='port'>
+         <option value="25">25</option>
+         <option value="465" selected>465</option>
+         <option value="587">587</option>
+        </select> 
+    
+        </div>
+        </div>
+        
+        <div class="control-group">
+        <div class="controls">
+        <label class="radio inline">
+        <input type="radio" name="secured_connection" value="Secured connection using SSL" checked> Secured connection using SSL <br>
+        <input type="radio" name="secured_connection" value="Secured connection using TSL" > Secured connection using TSL
+        </label>
+        </div>
+        </div>
+        
+        <div class="control-group">
+          <div class="controls">
+            <button type="Submit" id="add_email" class="btn btn-primary">Add Email</button>
+            <button id="cancel" class="btn btn-primary">Cancel</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
