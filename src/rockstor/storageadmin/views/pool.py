@@ -105,10 +105,11 @@ class PoolMixin(object):
                 handle_exception(Exception(e_msg), request)
             if ((o == 'compress-force' and
                  v not in allowed_options['compress-force'])):
-                e_msg = ('compress-force is only allowed with %s' %
-                         (settings.COMPRESSION_TYPES))
+                e_msg = ('compress-force is only allowed with {}'
+                         .format(settings.COMPRESSION_TYPES))
                 handle_exception(Exception(e_msg), request)
-            if (type(allowed_options[o]) is int):
+            # changed conditional from "if (type(allowed_options[o]) is int):"
+            if (allowed_options[o] is int):
                 try:
                     int(v)
                 except:
@@ -223,14 +224,10 @@ class PoolListView(PoolMixin, rfc.GenericView):
 
             raid_level = request.data['raid_level']
             if (raid_level not in self.RAID_LEVELS):
-                e_msg = ('Unsupported raid level. use one of: %s' %
-                         self.RAID_LEVELS)
+                e_msg = ('Unsupported raid level. use one of: {}'.format(self.RAID_LEVELS))
                 handle_exception(Exception(e_msg), request)
-            if (raid_level == self.RAID_LEVELS[1] and len(disks) == 1):
-                e_msg = ('More than one disk is required for the raid '
-                         'level: %s' % raid_level)
-                handle_exception(Exception(e_msg), request)
-            if (raid_level == self.RAID_LEVELS[2] and len(disks) < 2):
+            # consolidated raid0 & raid 1 disk check
+            if (raid_level in self.RAID_LEVELS[1:3] and len(disks) == 1):
                 e_msg = ('At least two disks are required for the raid level: '
                          '%s' % raid_level)
                 handle_exception(Exception(e_msg), request)
@@ -262,6 +259,11 @@ class PoolListView(PoolMixin, rfc.GenericView):
             p.uuid = btrfs_uuid(dnames[0])
             p.disk_set.add(*disks)
             p.save()
+            # added for loop to save disks
+            # appears p.disk_set.add(*disks) was not saving disks in test environment
+            for d in disks:
+                d.pool = p
+                d.save()
             return Response(PoolInfoSerializer(p).data)
 
 
@@ -308,7 +310,8 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
             num_total_disks = (Disk.objects.filter(pool=pool).count() +
                                num_new_disks)
             usage = pool_usage('/%s/%s' % (settings.MNT_PT, pool.name))
-            free_percent = (usage[2]/usage[0]) * 100
+            # free_percent = (usage[2]/usage[0]) * 100
+            free_percent = (usage[2]* 100)/usage[0]
             threshold_percent = self.ADD_THRESHOLD * 100
             if (command == 'add'):
                 for d in disks:
@@ -349,7 +352,6 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                              'drives. Total provided = %d' %
                              num_new_disks)
                     handle_exception(Exception(e_msg), request)
-
                 if (new_raid != pool.raid):
                     if (((pool.raid in ('single', 'raid0')) and
                          new_raid in ('raid1', 'raid10'))):
@@ -453,7 +455,11 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                 e_msg = ('Deletion of Pool(%s) is not allowed as it contains '
                          'the operating system.' % pname)
                 handle_exception(Exception(e_msg), request)
-            pool = Pool.objects.get(name=pname)
+            try:
+                pool = Pool.objects.get(name=pname)
+            except:
+                e_msg = ('Pool(%s) does not exist.' % pname)
+                handle_exception(Exception(e_msg), request)
             if (Share.objects.filter(pool=pool).exists()):
                 e_msg = ('Pool(%s) is not empty. Delete is not allowed until '
                          'all shares in the pool are deleted' % (pname))
