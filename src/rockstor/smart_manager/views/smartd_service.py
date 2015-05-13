@@ -35,7 +35,6 @@ SMART = '/usr/sbin/smartctl'
 
 
 class SMARTDServiceView(BaseServiceDetailView):
-
     service_name = 'smartd'
 
     @transaction.commit_on_success

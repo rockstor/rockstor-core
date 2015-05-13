@@ -49,7 +49,6 @@ DiskDetailsLayoutView = RockstorLayoutView.extend({
     },
 
     renderSubViews: function() {
-	console.log('smartinfo', this.smartinfo);
 	var capabilities = this.smartinfo.get('capabilities') || [];
 	var test_capabilities = {};
 	var running_test = null;
@@ -83,7 +82,6 @@ DiskDetailsLayoutView = RockstorLayoutView.extend({
 	    allowedValues: [0,1],
 	    snap: true
 	});
-
 	this.$("ul.css-tabs").tabs("div.css-panes > div");
 	this.$("ul.css-tabs").data("tabs").click(this.active_tab);
 	this.active_tab = 0;

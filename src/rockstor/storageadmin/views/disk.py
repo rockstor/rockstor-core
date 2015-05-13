@@ -31,6 +31,7 @@ from storageadmin.serializers import DiskInfoSerializer
 from storageadmin.util import handle_exception
 from django.conf import settings
 import rest_framework_custom as rfc
+from system import smart
 import logging
 logger = logging.getLogger(__name__)
 
@@ -78,7 +79,9 @@ class DiskListView(rfc.GenericView):
         for do in Disk.objects.all():
             if (do.name not in [d.name for d in disks]):
                 do.offline = True
-                do.save()
+            else:
+                do.smart_available, do.smart_enabled = smart.available(do.name)
+            do.save()
         ds = DiskInfoSerializer(Disk.objects.all().order_by('name'), many=True)
         return Response(ds.data)
 

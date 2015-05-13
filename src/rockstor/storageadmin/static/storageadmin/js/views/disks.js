@@ -217,6 +217,45 @@ DisksView = Backbone.View.extend({
 	});
     },
 
+    getDiskName: function(event) {
+	var slider = $(event.currentTarget);
+	return slider.attr('data-disk-name');
+    },
+
+    getSliderVal: function(name) {
+	return this.$('input[data-disk-name='+name+']').data('slider-object').value;
+    },
+
+    setSliderVal: function(name, val) {
+	this.$('input[data-disk-name='+name+']').simpleSlider('setValue', val);
+    },
+
+    smartOff: function(event) {
+	var _this = this;
+	var disk_name = this.getDiskName(event);
+	if (this.getSliderVal(disk_name).toString() == "0") { return; }
+	$.ajax({
+	    url: '/api/disks/' + disk_name + '/disable-smart',
+	    type: 'POST',
+	    success: function(data, status, xhr) {
+		_this.render();
+	    }
+	});
+    },
+
+    smartOn: function(event) {
+	var _this = this;
+	var disk_name = this.getDiskName(event);
+	if (this.getSliderVal(disk_name).toString() == "1") { return; }
+	$.ajax({
+	    url: '/api/disks/' + disk_name + '/enable-smart',
+	    type: 'POST',
+	    success: function(data, status, xhr) {
+		_this.render();
+	    }
+	});
+    },
+
 });
 
 // Add pagination
