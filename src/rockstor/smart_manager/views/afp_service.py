@@ -21,7 +21,7 @@ from storageadmin.util import handle_exception
 from system.services import systemctl
 from system.pkg_mgmt import install_pkg
 from django.db import transaction
-from base_service import BaseServiceView
+from base_service import BaseServiceDetailView
 from contextlib import contextmanager
 from storageadmin.exceptions import RockStorAPIException
 import os
@@ -30,7 +30,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class AFPServiceView(BaseServiceView):
+class AFPServiceView(BaseServiceDetailView):
 
     service_name = 'netatalk'
 
