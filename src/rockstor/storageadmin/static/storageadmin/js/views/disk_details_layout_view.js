@@ -50,7 +50,7 @@ DiskDetailsLayoutView = RockstorLayoutView.extend({
 
     renderSubViews: function() {
 	console.log('smartinfo', this.smartinfo);
-	var capabilities = this.smartinfo.get('capabilities');
+	var capabilities = this.smartinfo.get('capabilities') || [];
 	var test_capabilities = {};
 	var running_test = null;
 	capabilities.forEach(function(c) {
@@ -64,8 +64,26 @@ DiskDetailsLayoutView = RockstorLayoutView.extend({
 		running_test = c.capabilities;
 	    }
 	});
-	$(this.el).html(this.template({disk: this.disk, smartinfo: this.smartinfo, tests: test_capabilities,
+	var attributes = this.smartinfo.get('attributes') || [];
+	var errorlogsummary = this.smartinfo.get('errorlogsummary') || [];
+	var errorlog = this.smartinfo.get('errorlog') || [];
+	var testlog = this.smartinfo.get('testlog') || [];
+	var testlogdetail = this.smartinfo.get('testlogdetail') || [];
+	console.log('attributes ', attributes);
+	$(this.el).html(this.template({disk: this.disk, attributes: attributes,
+				       capabilities: capabilities,
+				       errorlogsummary: errorlogsummary,
+				       errorlog: errorlog,
+				       testlog: testlog,
+				       testlogdetail: testlogdetail,
+				       smartinfo: this.smartinfo, tests: test_capabilities,
 				       running_test: running_test}));
+	this.$('input.smart-status').simpleSlider({
+	    "theme": "volume",
+	    allowedValues: [0,1],
+	    snap: true
+	});
+
 	this.$("ul.css-tabs").tabs("div.css-panes > div");
 	this.$("ul.css-tabs").data("tabs").click(this.active_tab);
 	this.active_tab = 0;

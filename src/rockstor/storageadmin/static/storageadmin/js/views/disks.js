@@ -25,158 +25,158 @@
  */
 
 DisksView = Backbone.View.extend({
-  events: {
-    "click #setup": "setupDisks",
-    'click .wipe': 'wipeDisk',
-    'click .delete': 'deleteDisk',
-    'click .btrfs_wipe': 'btrfsWipeDisk',
-      'click .btrfs_import': 'btrfsImportDisk',
-      'click .slider-stop': 'smartOff',
-      'click .slider-start': 'smartOn'
-  },
+    events: {
+	"click #setup": "setupDisks",
+	'click .wipe': 'wipeDisk',
+	'click .delete': 'deleteDisk',
+	'click .btrfs_wipe': 'btrfsWipeDisk',
+	'click .btrfs_import': 'btrfsImportDisk',
+	'click .slider-stop': 'smartOff',
+	'click .slider-start': 'smartOn'
+    },
 
-  initialize: function() {
-    this.template = window.JST.disk_disks;
-    this.disks_table_template = window.JST.disk_disks_table;
-    this.pagination_template = window.JST.common_pagination;
-    this.collection = new DiskCollection;
-    this.collection.on("reset", this.renderDisks, this);
-  },
+    initialize: function() {
+	this.template = window.JST.disk_disks;
+	this.disks_table_template = window.JST.disk_disks_table;
+	this.pagination_template = window.JST.common_pagination;
+	this.collection = new DiskCollection;
+	this.collection.on("reset", this.renderDisks, this);
+    },
 
-  render: function() {
-    this.collection.fetch();
-    return this;
-  },
+    render: function() {
+	this.collection.fetch();
+	return this;
+    },
 
-  renderDisks: function() {
-    // remove existing tooltips
-    if (this.$('[rel=tooltip]')) {
-      this.$("[rel=tooltip]").tooltip('hide');
-    }
-    $(this.el).html(this.template({ collection: this.collection }));
-    this.$("#disks-table-ph").html(this.disks_table_template({
-      collection: this.collection
-    }));
+    renderDisks: function() {
+	// remove existing tooltips
+	if (this.$('[rel=tooltip]')) {
+	    this.$("[rel=tooltip]").tooltip('hide');
+	}
+	$(this.el).html(this.template({ collection: this.collection }));
+	this.$("#disks-table-ph").html(this.disks_table_template({
+	    collection: this.collection
+	}));
 
-      this.$('input.smart-status').simpleSlider({
-	  "theme": "volume",
-	  allowedValues: [0,1],
-	  snap: true
-      });
+	this.$('input.smart-status').simpleSlider({
+	    "theme": "volume",
+	    allowedValues: [0,1],
+	    snap: true
+	});
 
-      this.$('input.smart-status').each(function(i, el) {
-	  var slider = $(el).data('slider-object');
-	  slider.trackEvent = function(e) {};
-	  slider.dragger.unbind('mousedown');
-      });
-    this.$(".pagination-ph").html(this.pagination_template({
-      collection: this.collection
-    }));
-    this.$("#disks-table").tablesorter();
-    this.$("[rel=tooltip]").tooltip({
-      placement: "right",
-      container: '#disks-table'
-    });
-  },
+	this.$('input.smart-status').each(function(i, el) {
+	    var slider = $(el).data('slider-object');
+	    slider.trackEvent = function(e) {};
+	    slider.dragger.unbind('mousedown');
+	});
+	this.$(".pagination-ph").html(this.pagination_template({
+	    collection: this.collection
+	}));
+	this.$("#disks-table").tablesorter();
+	this.$("[rel=tooltip]").tooltip({
+	    placement: "right",
+	    container: '#disks-table'
+	});
+    },
 
-  setupDisks: function() {
-    var _this = this;
-    $.ajax({
-      url: "/api/disks/scan",
-      type: "POST"
-    }).done(function() {
-      // reset the current page
-      _this.collection.page = 1;
-      _this.collection.fetch();
-    });
-  },
+    setupDisks: function() {
+	var _this = this;
+	$.ajax({
+	    url: "/api/disks/scan",
+	    type: "POST"
+	}).done(function() {
+	    // reset the current page
+	    _this.collection.page = 1;
+	    _this.collection.fetch();
+	});
+    },
 
-  wipeDisk: function(event) {
-    var _this = this;
-    if (event) event.preventDefault();
-    var button = $(event.currentTarget);
-    if (buttonDisabled(button)) return false;
-    disableButton(button);
-    var diskName = button.data('disk-name');
-    if (confirm('Are you usre you want to erase the partition table on the disk ' + diskName + '?')) {
-      $.ajax({
-        url: '/api/disks/' + diskName + '/wipe',
-        type: 'POST',
-        success: function(data, status, xhr) {
-          _this.render();
-        },
-        error: function(xhr, status, error) {
-          enableButton(button);
-        }
-      });
-    }
-  },
-  btrfsWipeDisk: function(event) {
-    var _this = this;
-    if (event) event.preventDefault();
-    var button = $(event.currentTarget);
-    if (buttonDisabled(button)) return false;
-    disableButton(button);
-    var diskName = button.data('disk-name');
-    if (confirm('Are you sure you want to erase BTRFS filesystem(s) on the disk ' + diskName + '?')) {
-      $.ajax({
-        url: '/api/disks/' + diskName + '/btrfs-wipe',
-        type: 'POST',
-        success: function(data, status, xhr) {
-          _this.render();
-        },
-        error: function(xhr, status, error) {
-          enableButton(button);
-        }
-      });
-    }
-  },
+    wipeDisk: function(event) {
+	var _this = this;
+	if (event) event.preventDefault();
+	var button = $(event.currentTarget);
+	if (buttonDisabled(button)) return false;
+	disableButton(button);
+	var diskName = button.data('disk-name');
+	if (confirm('Are you usre you want to erase the partition table on the disk ' + diskName + '?')) {
+	    $.ajax({
+		url: '/api/disks/' + diskName + '/wipe',
+		type: 'POST',
+		success: function(data, status, xhr) {
+		    _this.render();
+		},
+		error: function(xhr, status, error) {
+		    enableButton(button);
+		}
+	    });
+	}
+    },
+    btrfsWipeDisk: function(event) {
+	var _this = this;
+	if (event) event.preventDefault();
+	var button = $(event.currentTarget);
+	if (buttonDisabled(button)) return false;
+	disableButton(button);
+	var diskName = button.data('disk-name');
+	if (confirm('Are you sure you want to erase BTRFS filesystem(s) on the disk ' + diskName + '?')) {
+	    $.ajax({
+		url: '/api/disks/' + diskName + '/btrfs-wipe',
+		type: 'POST',
+		success: function(data, status, xhr) {
+		    _this.render();
+		},
+		error: function(xhr, status, error) {
+		    enableButton(button);
+		}
+	    });
+	}
+    },
 
-  btrfsImportDisk: function(event) {
-    var _this = this;
-    if (event) event.preventDefault();
-    var button = $(event.currentTarget);
-    if (buttonDisabled(button)) return false;
-    disableButton(button);
-    var diskName = button.data('disk-name');
-    if (confirm('Are you sure you want to automatically import pools, shares and snapshots that may be on the disk ' + diskName + '?')) {
-      $.ajax({
-        url: '/api/disks/' + diskName + '/btrfs-disk-import',
-        type: 'POST',
-        success: function(data, status, xhr) {
-          _this.render();
-        },
-        error: function(xhr, status, error) {
-          enableButton(button);
-        }
-      });
-    }
-  },
+    btrfsImportDisk: function(event) {
+	var _this = this;
+	if (event) event.preventDefault();
+	var button = $(event.currentTarget);
+	if (buttonDisabled(button)) return false;
+	disableButton(button);
+	var diskName = button.data('disk-name');
+	if (confirm('Are you sure you want to automatically import pools, shares and snapshots that may be on the disk ' + diskName + '?')) {
+	    $.ajax({
+		url: '/api/disks/' + diskName + '/btrfs-disk-import',
+		type: 'POST',
+		success: function(data, status, xhr) {
+		    _this.render();
+		},
+		error: function(xhr, status, error) {
+		    enableButton(button);
+		}
+	    });
+	}
+    },
 
-  deleteDisk: function(event) {
-    var _this = this;
-    if (event) event.preventDefault();
-    var button = $(event.currentTarget);
-    if (buttonDisabled(button)) return false;
-    disableButton(button);
-    var diskName = button.data('disk-name');
-    if (confirm('Are you sure you want to delete the disk ' + diskName + '?')) {
-      $.ajax({
-        url: '/api/disks/' + diskName,
-        type: 'DELETE',
-        success: function(data, status, xhr) {
-          _this.render();
-        },
-        error: function(xhr, status, error) {
-          enableButton(button);
-        }
-      });
-    }
-  },
+    deleteDisk: function(event) {
+	var _this = this;
+	if (event) event.preventDefault();
+	var button = $(event.currentTarget);
+	if (buttonDisabled(button)) return false;
+	disableButton(button);
+	var diskName = button.data('disk-name');
+	if (confirm('Are you sure you want to delete the disk ' + diskName + '?')) {
+	    $.ajax({
+		url: '/api/disks/' + diskName,
+		type: 'DELETE',
+		success: function(data, status, xhr) {
+		    _this.render();
+		},
+		error: function(xhr, status, error) {
+		    enableButton(button);
+		}
+	    });
+	}
+    },
 
-  cleanup: function() {
-      this.$("[rel='tooltip']").tooltip('hide');
-  },
+    cleanup: function() {
+	this.$("[rel='tooltip']").tooltip('hide');
+    },
 
     getDiskName: function(event) {
 	var slider = $(event.currentTarget);

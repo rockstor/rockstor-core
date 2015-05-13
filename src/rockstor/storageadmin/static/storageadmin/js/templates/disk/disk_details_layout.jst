@@ -22,10 +22,20 @@
 <div class="messages"></div>
 <!-- page heading -->
 
+<% if (!disk.get('smart_available')) { %>
+<div class="alert alert-error">
+  <h4>S.M.A.R.T support is not available for this disk (<%= disk.get('name')%>)</h4>
+</div>
+<% } else if (!disk.get('smart_enabled')) { %>
+<div class="alert alert-warning">
+  <h4>Warning! S.M.A.R.T support is not enabled for this disk (<%= disk.get('name') %>).<br>If available, You can enable it in the Storage screen.</h4>
+</div>
+<% } else { %>
 <div class="pull-right">
-  <button id="smartinfo" class="btn btn-primary" title="Refresh for latest information"><i class="icon-refresh icon-white"></i>Refresh</button>
+  <button id="smartinfo" class="btn btn-primary pull-right" title="Refresh for latest information"><i class="icon-refresh icon-white"></i>Refresh</button>
 </div>
 <span class="h2">S.M.A.R.T details for <strong><%= disk.get('name') %></strong></span>
+<% } %>
 <br>
 <br>
 
@@ -140,7 +150,7 @@
 	    </tr>
 	  </thead>
 	  <tbody>
-	    <% smartinfo.get('attributes').forEach(function(attribute) { %>
+	    <% attributes.forEach(function(attribute) { %>
 	      <tr>
 		<td><%= attribute.aid %></td>
 		<td><%= attribute.name %></td>
@@ -171,7 +181,7 @@
 	  </tr>
 	</thead>
 	<tbody>
-	  <% smartinfo.get('capabilities').forEach(function(capability) { %>
+	  <% capabilities.forEach(function(capability) { %>
 	    <tr>
 	      <td><%= capability.id %></td>
 	      <td><%= capability.name %></td>
@@ -185,11 +195,11 @@
   </div>
   <div id="smarterrorlogs">
     <div class="row-fluid">
-      <% if (smartinfo.get('errorlogsummary').length == 0) { %>
+      <% if (errorlogsummary.length == 0) { %>
         <h3>There are no errors.</h3>
       <% } else { %>
-        <p><%= smartinfo.get('errorlog')[0].line %></p>
-	<p><%= smartinfo.get('errorlog')[1].line %></p>
+        <p><%= errorlog[0].line %></p>
+	<p><%= errorlog[1].line %></p>
       <table id="smarterrorlogsummary-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" summary="Table of S.M.A.R.T error log summary">
 	<thead>
 	  <tr>
@@ -201,7 +211,7 @@
 	  </tr>
 	</thead>
 	<tbody>
-	  <% smartinfo.get('errorlogsummary').forEach(function(summary) { %>
+	  <% errorlogsummary.forEach(function(summary) { %>
 	    <tr>
 	      <td><%= summary.error_num %></td>
 	      <td><%= summary.lifetime_hours %></td>
@@ -212,7 +222,7 @@
 	  <% }); %>
 	</tbody>
       </table>
-      <% smartinfo.get('errorlog').forEach(function(log) { %>
+      <% errorlog.forEach(function(log) { %>
         <%= log.line %><br>
       <% }); %>
       <% } %>
@@ -221,7 +231,7 @@
 
   <div id="smarttestlogs">
     <div class="row-fluid">
-      <% if (smartinfo.get('testlog').length == 0) { %>
+      <% if (testlog.length == 0) { %>
       <h3>There are no Self-Test logs.</h3>
       <% } else { %>
       <p>Number of entries in the log: <%= smartinfo.get('testlog').length %></p>
@@ -237,7 +247,7 @@
 	  </tr>
 	</thead>
 	<tbody>
-	  <% smartinfo.get('testlog').forEach(function(log) { %>
+	  <% testlog.forEach(function(log) { %>
 	  <tr>
 	    <td><%= log.test_num %></td>
 	    <td><%= log.description %></td>
@@ -249,7 +259,7 @@
 	  <% }); %>
 	</tbody>
       </table>
-      <% smartinfo.get('testlogdetail').forEach(function(detail) { %>
+      <% testlogdetail.forEach(function(detail) { %>
       <%= detail.line %><br>
       <% }); %>
       <% } %>
@@ -258,6 +268,11 @@
 
   <div id="smarttests">
     <div class="row-fluid">
+      <% if (!disk.get('smart_available') || !disk.get('smart_enabled')) { %>
+      <div class="alert alert-error">
+	<h4>Tests cannot be run because S.M.A.R.T support is either unavailable or disabled</h4>
+      </div>
+      <% } else { %>
       <p>
 	Self-tests are built-in tests within the drive designed to recognize
 	drive fault conditions. All self-tests are safe to user data. The tests
@@ -296,7 +311,7 @@
 	  </form>
 	</div>
       </div>
-
+      <% } %>
 
     </div>
   </div>
