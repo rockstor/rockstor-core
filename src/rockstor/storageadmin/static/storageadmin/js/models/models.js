@@ -57,6 +57,12 @@ var Pool = Backbone.Model.extend({
   }
 });
 
+var SmartInfo = Backbone.Model.extend({
+    url: function() {
+	return '/api/disks/smart/info/' + this.get('diskName');
+    }
+});
+
 var PoolCollection = RockStorPaginatedCollection.extend({
   model: Pool,
   baseUrl: '/api/pools'

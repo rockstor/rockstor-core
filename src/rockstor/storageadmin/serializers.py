@@ -25,7 +25,10 @@ from storageadmin.models import (Disk, Pool, Share, Snapshot, NFSExport,
                                  AdvancedNFSExport, OauthApp, NetatalkShare,
                                  Group, PoolBalance, SambaCustomConfig,
                                  TLSCertificate, RockOn, DVolume, DPort,
-                                 DCustomConfig)
+                                 DCustomConfig, SMARTAttribute,
+                                 SMARTCapability, SMARTInfo, SMARTErrorLog,
+                                 SMARTErrorLogSummary, SMARTTestLog,
+                                 SMARTTestLogDetail, SMARTIdentity)
 from django.contrib.auth.models import User as DjangoUser
 
 
@@ -220,3 +223,50 @@ class RockOnCustomConfigSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DCustomConfig
+
+class SMARTCapabilitySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = SMARTCapability
+
+class SMARTAttributeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = SMARTAttribute
+
+class SMARTErrorLogSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = SMARTErrorLog
+
+class SMARTErrorLogSummarySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = SMARTErrorLogSummary
+
+class SMARTTestLogSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = SMARTTestLog
+
+class SMARTTestLogDetailSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = SMARTTestLogDetail
+
+class SMARTIdentitySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = SMARTIdentity
+
+class SMARTInfoSerializer(serializers.ModelSerializer):
+    capabilities = SMARTCapabilitySerializer(source='capabilities')
+    attributes = SMARTAttributeSerializer(source='attributes')
+    errorlog = SMARTErrorLogSerializer(source='errorlog')
+    errorlogsummary = SMARTErrorLogSummarySerializer(source='errorlogsummary')
+    identity = SMARTIdentitySerializer(source='identity')
+    testlog = SMARTTestLogSerializer(source='testlog')
+    testlogdetail = SMARTTestLogDetailSerializer(source='testlogdetail')
+
+    class Meta:
+        model = SMARTInfo

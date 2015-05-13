@@ -37,7 +37,7 @@ AFP_CONFIG = '/etc/afp.conf'
 
 def init_service_op(service_name, command, throw=True):
     supported_services = ('nfs', 'smb', 'sshd', 'ypbind', 'rpcbind', 'ntpd',
-                          'winbind', 'nslcd', 'netatalk', 'snmpd', 'docker')
+                          'winbind', 'nslcd', 'netatalk', 'snmpd', 'docker', 'smartd')
     if (service_name not in supported_services):
         raise Exception('unknown service: %s' % service_name)
 

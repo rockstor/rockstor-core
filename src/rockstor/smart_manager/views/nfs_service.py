@@ -21,14 +21,14 @@ from storageadmin.util import handle_exception
 from system.services import init_service_op, systemctl
 from system.nis import configure_nis
 from django.db import transaction
-from base_service import BaseServiceView
+from base_service import BaseServiceDetailView
 from smart_manager.models import Service
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-class NFSServiceView(BaseServiceView):
+class NFSServiceView(BaseServiceDetailView):
 
     @transaction.commit_on_success
     def post(self, request, command):

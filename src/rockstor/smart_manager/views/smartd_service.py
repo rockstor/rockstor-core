@@ -25,42 +25,46 @@ from base_service import BaseServiceDetailView
 from contextlib import contextmanager
 from storageadmin.exceptions import RockStorAPIException
 import os
+from system import smart
+from smart_manager.models import Service
+
 
 import logging
 logger = logging.getLogger(__name__)
+SMART = '/usr/sbin/smartctl'
 
 
-class AFPServiceView(BaseServiceDetailView):
-
-    service_name = 'netatalk'
-
-    @staticmethod
-    @contextmanager
-    def _handle_exception(request, msg):
-        try:
-            yield
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request, msg)
+class SMARTDServiceView(BaseServiceDetailView):
+    service_name = 'smartd'
 
     @transaction.commit_on_success
     def post(self, request, command):
         """
         execute a command on the service
         """
-        e_msg = ('Failed to %s AFP service due to system error.' %
+        e_msg = ('Failed to %s S.M.A.R.T service due to system error.' %
                  command)
         with self._handle_exception(request, e_msg):
-            if (command == 'start'):
-                if (not os.path.exists('/usr/sbin/afpd')):
-                    install_pkg(self.service_name)
-            self._switch_afpd(command)
-
+            if (not os.path.exists(SMART)):
+                install_pkg('smartmontools')
+            if (command == 'config'):
+                service = Service.objects.get(name=self.service_name)
+                config = request.DATA.get('config', {})
+                logger.debug('config = %s' % config)
+                self._save_config(service, config)
+                if ('smartd_config' in config):
+                    config = config['smartd_config']
+                else:
+                    config = ''
+                smart.update_config(config)
+                systemctl(self.service_name, 'enable')
+                systemctl(self.service_name, 'restart')
+            else:
+                self._switch(command)
         return Response()
 
     @classmethod
-    def _switch_afpd(cls, switch):
+    def _switch(cls, switch):
         if (switch == 'start'):
             systemctl(cls.service_name, 'enable')
             systemctl(cls.service_name, 'start')

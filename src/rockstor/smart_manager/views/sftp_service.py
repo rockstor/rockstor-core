@@ -20,14 +20,14 @@ from rest_framework.response import Response
 from storageadmin.util import handle_exception
 from system.ssh import toggle_sftp_service
 from django.db import transaction
-from base_service import BaseServiceView
+from base_service import BaseServiceDetailView
 from smart_manager.models import Service
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-class SFTPServiceView(BaseServiceView):
+class SFTPServiceView(BaseServiceDetailView):
 
     @transaction.commit_on_success
     def post(self, request, command):

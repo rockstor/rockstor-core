@@ -1,0 +1,317 @@
+<script>
+/*
+ * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ *
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ *
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+</script>
+
+<div class="messages"></div>
+<!-- page heading -->
+
+<% if (!disk.get('smart_available')) { %>
+<div class="alert alert-error">
+  <h4>S.M.A.R.T support is not available for this disk (<%= disk.get('name')%>)</h4>
+</div>
+<% } else if (!disk.get('smart_enabled')) { %>
+<div class="alert alert-warning">
+  <h4>Warning! S.M.A.R.T support is not enabled for this disk (<%= disk.get('name') %>).<br>If available, You can enable it in the Storage screen.</h4>
+</div>
+<% } else { %>
+<div class="pull-right">
+  <button id="smartinfo" class="btn btn-primary pull-right" title="Refresh for latest information"><i class="icon-refresh icon-white"></i>Refresh</button>
+</div>
+<span class="h2">S.M.A.R.T details for <strong><%= disk.get('name') %></strong></span>
+<% } %>
+<br>
+<br>
+
+<ul class="css-tabs">
+  <li class="active"><a href="#smartidentity" data-toggle="tab">Identity</a></li>
+  <li><a href="#smartattributes" data-toggle="tab">Attributes</a></li>
+  <li><a href="#smartcapabilities" data-toggle="tab">Capabilities</a></li>
+  <li><a href="#smarterrorlogs" data-toggle="tab">Error Logs</a></li>
+  <li><a href="#smarttestlogs" data-toggle="tab">Self-Test Logs</a></li>
+  <li><a href="#smarttests" data-toggle="tab">Perform Tests</a></li>
+</ul>
+
+<div class="css-panes">
+
+  <div id="smartidentity">
+    <div class="row-fluid">
+      <% if (smartinfo.get('identity')) { %>
+        <% var identity = smartinfo.get('identity'); %>
+	<table id="smartidentity-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" summary="List of S.M.A.R.T identity attributes">
+      <thead>
+	<tr>
+	  <th>Attribute</th>
+	  <th>Value</th>
+	</tr>
+      </thead>
+      <tbody>
+	<tr>
+	  <td><strong>Model Family</strong></td>
+	  <td><%= identity.model_family %></td>
+	</tr>
+	<tr>
+	  <td><strong>Device Model</strong></td>
+	  <td><%= identity.device_model %></td>
+	</tr>
+	<tr>
+	  <td><strong>Serial Number</strong></td>
+	  <td><%= identity.serial_number %></td>
+	</tr>
+	<tr>
+	  <td><strong>World Wide Name</strong></td>
+	  <td><%= identity.world_wide_name %></td>
+	</tr>
+	<tr>
+	  <td><strong>Firmware Version</strong></td>
+	  <td><%= identity.firmware_version %></td>
+	</tr>
+	<tr>
+	  <td><strong>Capacity</strong></td>
+	  <td><%= identity.capacity %></td>
+	</tr>
+	<tr>
+	  <td><strong>Sector Size</strong></td>
+	  <td><%= identity.sector_size %></td>
+	</tr>
+	<tr>
+	  <td><strong>Rotation Rate</strong></td>
+	  <td><%= identity.rotation_rate %></td>
+	</tr>
+	<tr>
+	  <td><strong>In Smartctl Database</strong></td>
+	  <td><%= identity.in_smartdb %></td>
+	</tr>
+	<tr>
+	  <td><strong>ATA Version</strong></td>
+	  <td><%= identity.ata_version %></td>
+	</tr>
+	<tr>
+	  <td><strong>SATA Version</strong></td>
+	  <td><%= identity.sata_version %></td>
+	</tr>
+	<tr>
+	  <td><strong>Scanned on</strong></td>
+	  <td><%= identity.scanned_on %></td>
+	</tr>
+	<tr>
+	  <td><strong>SMART Supported</strong></td>
+	  <td><%= identity.supported %></td>
+	</tr>
+	<tr>
+	  <td><strong>SMART Enabled</strong></td>
+	  <td><%= identity.enabled %></td>
+	</tr>
+	<tr>
+	  <td><strong>Smartctl Version</strong></td>
+	  <td><%= identity.version %></td>
+	</tr>
+	<tr>
+	  <td><strong>Overall Health Self-Assessment Test</strong></td>
+	  <td><%= identity.assessment %></td>
+	</tr>
+      </tbody>
+      </table>
+      <% } %>
+    </div>
+  </div>
+
+  <div id="smartattributes">
+      <div class="row-fluid">
+	<table id="smartattributes-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" summary="List of S.M.A.R.T attributes">
+	  <thead>
+	    <tr>
+	      <th>Id</th>
+	      <th>Name</th>
+	      <th>Failed</th>
+	      <th>Norm-ed Value</th>
+	      <th>Worst</th>
+	      <th>Threshold</th>
+	      <th>Raw Value</th>
+	      <th>Type</th>
+	      <th>Updated</th>
+	      <th>Flag</th>
+	    </tr>
+	  </thead>
+	  <tbody>
+	    <% attributes.forEach(function(attribute) { %>
+	      <tr>
+		<td><%= attribute.aid %></td>
+		<td><%= attribute.name %></td>
+		<td><%= attribute.failed %></td>
+		<td><%= attribute.normed_value %></td>
+		<td><%= attribute.worst %></td>
+		<td><%= attribute.threshold %></td>
+		<td><%= attribute.raw_value %></td>
+		<td><%= attribute.atype %></td>
+		<td><%= attribute.updated %></td>
+		<td><%= attribute.flag %></td>
+	      </tr>
+	    <% }); %>
+	  </tbody>
+	</table>
+      </div>
+  </div>
+
+  <div id="smartcapabilities">
+    <div class="row-fluid">
+      <table id="smartcapabilites-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" summary="Table of S.M.A.R.T capabilities">
+	<thead>
+	  <tr>
+	    <th>Id</th>
+	    <th>Name</th>
+	    <th>Flag</th>
+	    <th>Capabilities</th>
+	  </tr>
+	</thead>
+	<tbody>
+	  <% capabilities.forEach(function(capability) { %>
+	    <tr>
+	      <td><%= capability.id %></td>
+	      <td><%= capability.name %></td>
+	      <td><%= capability.flag %></td>
+	      <td><%= capability.capabilities %></td>
+	    </tr>
+	  <% }); %>
+	</tbody>
+      </table>
+    </div>
+  </div>
+  <div id="smarterrorlogs">
+    <div class="row-fluid">
+      <% if (errorlogsummary.length == 0) { %>
+        <h3>There are no errors.</h3>
+      <% } else { %>
+        <p><%= errorlog[0].line %></p>
+	<p><%= errorlog[1].line %></p>
+      <table id="smarterrorlogsummary-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" summary="Table of S.M.A.R.T error log summary">
+	<thead>
+	  <tr>
+	    <th>Error #</th>
+	    <th>Lifetime hours</th>
+	    <th>State</th>
+	    <th>Type</th>
+	    <th>Details</th>
+	  </tr>
+	</thead>
+	<tbody>
+	  <% errorlogsummary.forEach(function(summary) { %>
+	    <tr>
+	      <td><%= summary.error_num %></td>
+	      <td><%= summary.lifetime_hours %></td>
+	      <td><%= summary.state %></td>
+	      <td><%= summary.etype %></td>
+	      <td><%= summary.details %></td>
+	    </tr>
+	  <% }); %>
+	</tbody>
+      </table>
+      <% errorlog.forEach(function(log) { %>
+        <%= log.line %><br>
+      <% }); %>
+      <% } %>
+    </div>
+  </div>
+
+  <div id="smarttestlogs">
+    <div class="row-fluid">
+      <% if (testlog.length == 0) { %>
+      <h3>There are no Self-Test logs.</h3>
+      <% } else { %>
+      <p>Number of entries in the log: <%= smartinfo.get('testlog').length %></p>
+      <table id="smarttestlog-table" class="table table-condenced table-bordered table-hover table-striped tablesorter" summary="Table of S.M.A.R.T test log">
+	<thead>
+	  <tr>
+	    <th>Test #</th>
+	    <th>Type</th>
+	    <th>Status</th>
+	    <th>% Completed</th>
+	    <th>Lifetime hours</th>
+	    <th>LBA of the first error</th>
+	  </tr>
+	</thead>
+	<tbody>
+	  <% testlog.forEach(function(log) { %>
+	  <tr>
+	    <td><%= log.test_num %></td>
+	    <td><%= log.description %></td>
+	    <td><%= log.status %></td>
+	    <td><%= log.pct_completed %></td>
+	    <td><%= log.lifetime_hours %></td>
+	    <td><%= log.lba_of_first_error %></td>
+	  </tr>
+	  <% }); %>
+	</tbody>
+      </table>
+      <% testlogdetail.forEach(function(detail) { %>
+      <%= detail.line %><br>
+      <% }); %>
+      <% } %>
+    </div>
+  </div>
+
+  <div id="smarttests">
+    <div class="row-fluid">
+      <% if (!disk.get('smart_available') || !disk.get('smart_enabled')) { %>
+      <div class="alert alert-error">
+	<h4>Tests cannot be run because S.M.A.R.T support is either unavailable or disabled</h4>
+      </div>
+      <% } else { %>
+      <p>
+	Self-tests are built-in tests within the drive designed to recognize
+	drive fault conditions. All self-tests are safe to user data. The tests
+	can be performed during normal system operation, but will take longer
+	to complete if the drive is not idle. You will not be able to access
+	the drive's SMART data while a test is in progress.
+      </p>
+      <div class="span8">
+	<label class="control-label"></label>
+	<div class="form-box">
+	  <form class="form-horizontal" name="run-test-form" id="run-test-form">
+	    <div class="messages"></div>
+	    <div class="control-group">
+	      <% if (!running_test) { %>
+	      <label class="control-label" for="test_type">Test Type </label>
+	      <div class="controls">
+		<select id="test_name" name="test_name" title="select the test you want to run">
+		  <% for (t in tests) { %>
+		  <option value="<%= t %>"><%= t %>    (Estimated duration: <%= tests[t] %>)</option>
+		  <% } %>
+		</select>
+	      </div>
+	    </div>
+
+	    <div class="control-group">
+	      <div class="controls">
+		<button id="test-start" class="btn btn-primary" title="Start the test">Start Test</button>
+	      </div>
+	    </div>
+	    <% } else { %>
+	    <div class="control-group">
+	      <h4><%= running_test %></h4>
+	      <p>Wait until this test finishes to start a new one. Refresh for an update.</p>
+	    </div>
+	    <% } %>
+	  </form>
+	</div>
+      </div>
+      <% } %>
+    </div>
+  </div>
+</div>

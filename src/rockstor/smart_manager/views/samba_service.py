@@ -21,14 +21,14 @@ from storageadmin.util import handle_exception
 from system.services import systemctl
 from system.nis import configure_nis
 from django.db import transaction
-from base_service import BaseServiceView
+from base_service import BaseServiceDetailView
 from smart_manager.models import Service
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-class SambaServiceView(BaseServiceView):
+class SambaServiceView(BaseServiceDetailView):
 
     @transaction.commit_on_success
     def post(self, request, command):
