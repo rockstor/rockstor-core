@@ -26,19 +26,29 @@
 
 EmailView = RockstorLayoutView.extend({
 	events: {
+	"click #Add-email-address" : "renderEmailForm",
 	 "click #cancel": "cancel",
 	
 },
 initialize: function() {
-	this.template = window.JST.email_email;
-		
+	this.template = window.JST.email_email_setup;
+	 this.updatetemplate = window.JST.email_email;
 },
 
 render: function() {
-	var _this = this;
+    this.fetch(this.renderEmail, this);
+    return this;
+  },
+  
+  renderEmail: function() {
 	 $(this.el).html(this.template());
+  },
+  
+renderEmailForm: function() {
+	var _this = this;
+	 $(this.el).html(this.updatetemplate());
 	 
-    _this.$('#port').change(function(){
+    this.$('#port').change(function(){
     	if(this.value == 465){
     		$('input:radio[name=secured_connection]')[0].checked = true;
     		
@@ -48,33 +58,43 @@ render: function() {
      }); 
 	
     this.$('#email-form input').tooltip({placement: 'right'});
-    
-    submitHandler: function() {
-        var button = $('#add_email');
-        if (buttonDisabled(button)) return false;
-        disableButton(button);
-        var data = _this.$('#email-form').getJSON();
 
-        var jqxhr = $.ajax({
-        url: '/api/email',
-        type: 'POST',
-        dataType: 'json',
-        contentType: 'application/json',
-        data: JSON.stringify(data),
-        });
-        jqxhr.done(function() {
-          enableButton(button);
-          _this.$('#email-form input').tooltip('hide');
-          app_router.navigate('email', {trigger: true})
-         });
+    this.validator = this.$('#email-form').validate({
+    	 onfocusout: false,
+         onkeyup: false,
+         rules: {
+           name: 'required',
+           email_id: 'required',
+           smtpName: 'required',
+           username: 'required',
+         },
 
-         jqxhr.fail(function(xhr, status, error) {
-           enableButton(button);
-         });
-
-      }
-    
-	return this;
+         submitHandler: function() {
+           console.log('inside submit handler');
+           var button = $('#add-email');
+           disableButton(button);
+           var submitmethod = 'POST';
+           var posturl = '/api/email';
+           var data = _this.$('#email-form').getJSON();
+           $.ajax({
+             url: posturl,
+             type: submitmethod,
+             dataType: 'json',
+             contentType: 'application/json',
+             data: JSON.stringify(data),
+             success: function() {
+               enableButton(button);
+               _this.$('#email-form :input').tooltip('hide');
+               app_router.navigate('email', {trigger: true});
+             },
+             error: function(xhr, status, error) {
+               enableButton(button);
+             }
+           });
+    	
+        return false;
+      }	
+    });    
 },
 
 cancel: function(event) {
