@@ -373,6 +373,19 @@ def update_quota(pool, pool_device, qgroup, size_bytes):
     return run_command(cmd)
 
 
+def convert_to_KiB(size):
+    SMAP = {'KiB': 1,
+            'MiB': 1024,
+            'GiB': 1024 * 1024,
+            'TiB': 1024 * 1024 * 1024,
+            'PiB': 1024 * 1024 * 1024 * 1024, }
+    suffix = size[-3:]
+    num = size[:-3]
+    if (suffix not in SMAP):
+        raise Exception('Unknown suffix(%s) while converting to KiB' % suffix)
+    return int(float(num) * SMAP[suffix])
+
+
 def share_usage(pool, pool_device, share_id):
     """
     for now, exclusive byte count
@@ -385,7 +398,7 @@ def share_usage(pool, pool_device, share_id):
     for line in out:
         fields = line.split()
         if (fields[0] == share_id):
-            usage = int(fields[-2]) / 1024  # usage in KB
+            usage = convert_to_KiB(fields[-2])
             break
     if (usage is None):
         raise Exception('usage cannot be determined for share_id: %s' %
@@ -409,8 +422,8 @@ def shares_usage(pool, pool_device, share_map, snap_map):
     for line in out:
         fields = line.split()
         if (len(fields) > 0 and fields[0] in combined_map):
-            r_usage = int(fields[-2]) / 1024 # referenced usage in KB
-            e_usage = int(fields[-1]) / 1024 # exclusive usage in KB
+            r_usage = convert_to_KiB(fields[-2])
+            e_usage = convert_to_KiB(fields[-1])
             usage_map[combined_map[fields[0]]] = (r_usage, e_usage)
     return usage_map
 
