@@ -68,6 +68,9 @@ class DiskListView(rfc.GenericView):
             dob.transport = d.transport
             dob.vendor = d.vendor
             dob.btrfs_uuid = d.btrfs_uuid
+            if (d.fstype is not None and d.fstype != 'btrfs'):
+                dob.btrfs_uuid = None
+                dob.parted = True
             if (Pool.objects.filter(name=d.label).exists()):
                 dob.pool = Pool.objects.get(name=d.label)
             if (dob.pool is None and d.root is True):
@@ -80,7 +83,12 @@ class DiskListView(rfc.GenericView):
             if (do.name not in [d.name for d in disks]):
                 do.offline = True
             else:
-                do.smart_available, do.smart_enabled = smart.available(do.name)
+                try:
+                    # for non ata/sata drives
+                    do.smart_available, do.smart_enabled = smart.available(do.name)
+                except Exception, e:
+                    logger.exception(e)
+                    do.smart_available = do.smart_enabled = False
             do.save()
         ds = DiskInfoSerializer(Disk.objects.all().order_by('name'), many=True)
         return Response(ds.data)
@@ -163,13 +171,7 @@ class DiskDetailView(rfc.GenericView):
     @transaction.atomic
     def _wipe(self, dname, request):
         disk = self._validate_disk(dname, request)
-        try:
-            wipe_disk(disk.name)
-        except Exception, e:
-            logger.exception(e)
-            e_msg = ('Failed to wipe the disk due to a system error.')
-            handle_exception(Exception(e_msg), request)
-
+        wipe_disk(disk.name)
         disk.parted = False
         disk.btrfs_uuid = None
         disk.save()

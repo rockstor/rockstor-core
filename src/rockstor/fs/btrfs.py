@@ -620,7 +620,7 @@ def scan_disks(min_size):
         if (dmap['TYPE'] == 'part'):
             for dname in dnames.keys():
                 if (re.match(dname, dmap['NAME']) is not None):
-                    dnames[dname][8] = True
+                    dnames[dname][11] = True
         if (((dmap['NAME'] != root and dmap['TYPE'] != 'part') or
              (dmap['TYPE'] == 'part' and dmap['FSTYPE'] == 'btrfs'))):
             dmap['parted'] = False  # part = False by default
@@ -649,10 +649,6 @@ def scan_disks(min_size):
             for k in dmap.keys():
                 if (dmap[k] == ''):
                     dmap[k] = None
-            if (dmap['NAME'] in dnames):
-                raise Exception('Two disk drives found with the same name: '
-                                '%s. Rockstor does not support this '
-                                'configuration.' % dmap['NAME'])
             dnames[dmap['NAME']] = [dmap['NAME'], dmap['MODEL'],
                                     dmap['SERIAL'], dmap['SIZE'],
                                     dmap['TRAN'], dmap['VENDOR'],
