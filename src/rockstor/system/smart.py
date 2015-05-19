@@ -61,7 +61,7 @@ def extended_info(device):
     return attributes
 
 def capabilities(device):
-    o, e, rc = run_command([SMART, '-c', device])
+    o, e, rc = run_command([SMART, '-c', '/dev/%s' % device])
     cap_d = {}
     for i in range(len(o)):
         if (re.match('=== START OF READ SMART DATA SECTION ===', o[i]) is not None):
@@ -90,7 +90,7 @@ def capabilities(device):
     return cap_d
 
 def error_logs(device):
-    o, e, rc = run_command([SMART, '-l', 'error', device])
+    o, e, rc = run_command([SMART, '-l', 'error', '/dev/%s' % device])
     ecode_map = {
         'ABRT' : 'Command ABoRTed',
         'AMNF' : 'Address Mark Not Found',
@@ -140,7 +140,7 @@ def error_logs(device):
     return (summary, log_l)
 
 def test_logs(device):
-    o, e, rc = run_command([SMART, '-l', 'selftest', '-l', 'selective', device])
+    o, e, rc = run_command([SMART, '-l', 'selftest', '-l', 'selective', '/dev/%s' % device])
     test_d = {}
     log_l = []
     for i in range(len(o)):
