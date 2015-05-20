@@ -614,14 +614,6 @@ class PoolTests(APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
         self.assertEqual(response.data['detail'], e_msg)
 
-        # create pool with odd disks
-        data['disks'] = ('sdb', 'sdc', 'sdd', 'sde', 'sdf',)
-        e_msg = ('Even number of drives are required for the raid level: raid10')
-        response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
-        self.assertEqual(response.data['detail'], e_msg)
-
         # create pool with 4 disks
         data['disks'] = ('sdb', 'sdc', 'sdd', 'sde',)
         response = self.client.post(self.BASE_URL, data=data)
