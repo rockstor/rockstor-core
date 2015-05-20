@@ -240,12 +240,12 @@ class PoolListView(PoolMixin, rfc.GenericView):
                     e_msg = ('Even number of drives are required for the '
                              'raid level: %s' % raid_level)
                     handle_exception(Exception(e_msg), request)
-            if (raid_level == self.RAID_LEVELS[4] and len(disks) < 3):
-                e_msg = ('Three or more disks are required for the raid '
+            if (raid_level == self.RAID_LEVELS[4] and len(disks) < 2):
+                e_msg = ('Two or more disks are required for the raid '
                          'level: %s' % raid_level)
                 handle_exception(Exception(e_msg), request)
-            if (raid_level == self.RAID_LEVELS[5] and len(disks) < 4):
-                e_msg = ('Four or more disks are required for the raid '
+            if (raid_level == self.RAID_LEVELS[5] and len(disks) < 3):
+                e_msg = ('Three or more disks are required for the raid '
                          'level: %s' % raid_level)
                 handle_exception(Exception(e_msg), request)
 

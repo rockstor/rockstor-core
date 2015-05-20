@@ -688,7 +688,7 @@ class PoolTests(APITestCase):
                 'raid_level': 'raid5', }
 
         # create pool with 1 disk
-        e_msg = ('Three or more disks are required for the raid level: raid5')
+        e_msg = ('Two or more disks are required for the raid level: raid5')
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
@@ -736,7 +736,7 @@ class PoolTests(APITestCase):
                 'raid_level': 'raid6', }
 
         # create pool with 1 disk
-        e_msg = ('Four or more disks are required for the raid level: raid6')
+        e_msg = ('Three or more disks are required for the raid level: raid6')
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
