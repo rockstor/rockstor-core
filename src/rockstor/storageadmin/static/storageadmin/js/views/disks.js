@@ -98,7 +98,7 @@ DisksView = Backbone.View.extend({
 	if (buttonDisabled(button)) return false;
 	disableButton(button);
 	var diskName = button.data('disk-name');
-	if (confirm('Are you usre you want to completely delete all data on the disk ' + diskName + '?')) {
+	if (confirm('Are you sure you want to completely delete all data on the disk ' + diskName + '?')) {
 	    $.ajax({
 		url: '/api/disks/' + diskName + '/wipe',
 		type: 'POST',
