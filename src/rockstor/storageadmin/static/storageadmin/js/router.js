@@ -82,7 +82,8 @@ var AppRouter = Backbone.Router.extend({
     "add-scheduled-task": "addScheduledTask",
     "edit-scheduled-task/:taskDefId": "editScheduledTask",
     "update-certificate": "updateCertificate",
-    "email": "email",
+    "email": "showEmail",
+    "email/:emailID/edit": "editEmail",
     "shutdown": "showShutdownView",
     "reboot": "showReboot",
     "version": "showVersion",
@@ -575,14 +576,22 @@ var AppRouter = Backbone.Router.extend({
     $('#maincontent').append(this.currentLayout.render().el);
   },
 
-  email: function() {
+  showEmail: function() {
 	    this.renderSidebar('system', 'email');
 	    this.cleanup();
 	    this.currentLayout = new EmailView();
 	    $('#maincontent').empty();
 	    $('#maincontent').append(this.currentLayout.render().el);
-	  },
-  
+  },
+	  
+  editEmail: function(emailID) {
+        this.renderSidebar("system", "email");
+	    this.cleanup();
+		this.currentLayout = new EmailView({emailID: emailID});
+		$('#maincontent').empty();
+		$('#maincontent').append(this.currentLayout.render().el);
+  },  
+	  
   showTasks: function(taskDefId) {
     this.renderSidebar("system", "scheduled-tasks");
     this.cleanup();

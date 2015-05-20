@@ -27,12 +27,18 @@
 EmailView = RockstorLayoutView.extend({
 	events: {
 	"click #Add-email-address" : "renderEmailForm",
-	 "click #cancel": "cancel",
+	"click #cancel": "cancel",
+	"click .delete-email": "deleteEmail",
+	"click .edit-email": "editEmail"
 	
 },
 initialize: function() {
 	this.template = window.JST.email_email_setup;
-	 this.updatetemplate = window.JST.email_email;
+	this.updatetemplate = window.JST.email_email;
+	this.emailID= this.options.emailID;
+	this.emailAccount = new EmailAccount();
+//	this.dependencies.push(this.emailAccount);
+	this.portChoices = [25,465,587];
 },
 
 render: function() {
@@ -41,14 +47,20 @@ render: function() {
   },
   
   renderEmail: function() {
-	 $(this.el).html(this.template());
+	 $(this.el).html(this.template({
+	//	 email: this.emailAccount,
+		 emailID: this.emailID,		 
+	 }));
   },
   
 renderEmailForm: function() {
 	var _this = this;
-	 $(this.el).html(this.updatetemplate());
-	 
-    this.$('#port').change(function(){
+	 $(this.el).html(this.updatetemplate({
+			 email: this.emailAccount,
+			 emailID: this.emailID,
+			 portChoices: this.portChoices
+     }));
+	 this.$('#port').change(function(){
     	if(this.value == 465){
     		$('input:radio[name=secured_connection]')[0].checked = true;
     		
@@ -97,8 +109,44 @@ renderEmailForm: function() {
     });    
 },
 
-cancel: function(event) {
+deleteEmail: function(event) {
     event.preventDefault();
+    var _this = this;
+    var email_id = $(event.currentTarget).attr('data-email');
+    if(confirm("Delete configured Email Account :  "+ email_id +". Are you sure?")){
+      $.ajax({
+        url: "/api/email/"+email_id,
+        type: "DELETE",
+        dataType: "json",
+        success: function() {
+    	  _this.renderEmail();
+        },
+        error: function(xhr, status, error) {
+        }
+      });
+    } else {
+      return false;
+    }
+  },
+
+  editEmail: function(event) {
+    if (event) event.preventDefault();
+    if (this.$('[rel=tooltip]')) { 
+      this.$('[rel=tooltip]').tooltip('hide');
+    }
+    _this.renderEmailForm();
+   
+    //var email_id = $(event.currentTarget).attr('data-email');
+    //app_router.navigate('email/' + email_id + '/edit', {trigger: true});
+  },
+
+cancel: function(event) {
+	$(this.el).empty();
+	$(this.el).html(this.template({
+		email: this.emailAccount,
+		emailID: this.emailID
+		}));
+    //event.preventDefault();
   
   },
   

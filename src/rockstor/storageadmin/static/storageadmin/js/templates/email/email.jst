@@ -18,7 +18,12 @@
   *
   */
 </script>
-<h3>Configure Email</h3>
+<%  if(emailID!=null) {  %>
+<h3> Edit Configure Email</h3>
+<%  }else {  %>
+<h3> Configured Email</h3>
+<%  }  %>
+
 <div class="row-fluid">
   <div class="span8">
     <label class="control-label"></label>
@@ -29,29 +34,45 @@
         <div class="control-group">
         <label class="control-label">Name: </label>
         <div class="controls">
-          <input type="text" id="name" name="name"  placeholder="Enter Name" title="Enter name">
-        </div>
+        <%  if(emailID!=null) {  %>
+          <input type="text" id="name" name="name" value="<%= email.get('name') %>" >
+          <%  }else{ %>
+          <input type="text" id="name" name="name"  placeholder="Enter Name" >
+          <% }  %>
+       </div>
         </div>
         
         <div class="control-group">
         <label class="control-label">Email Id </label>
         <div class="controls">
-          <input type="email" id= "email_id"  name="email_id"  placeholder="Enter Email address" title="Email id">
+        <%  if(emailID!=null) {  %>
+          <input type="email" id= "email_id"  name="email_id" value="<%= email.get('email_id')%>" >
+        <%  }else{ %>
+        <input type="email" id="email_id" name="email_id"  placeholder="Enter your Email ID" >
+        <% }  %>
         </div>
         </div>
       
         <div class="control-group">
         <label class="control-label">SMTP Server: </label>
         <div class="controls">
-          <input type="text" name="smtpName"  id="smtpName" placeholder="Enter SMTP server" title="SMTP server">
+        <%  if(emailID!=null) {  %>
+        <input type="text" id= "smtp_server"  name="smtp_server" value="<%= email.get('smtp_server') %>" >
+        <%  }else{ %>
+        <input type="text" id="smtp_server" name="smtp_server"  placeholder="Enter your Email ID" >
+        <% }  %>
         </div>
         </div>
         
         <div class="control-group">
         <label class="control-label">Username: </label>
         <div class="controls">
-          <input type="text" name="username" id="username" placeholder="Enter Username">
-        </div>
+        <%  if(emailID!=null) {  %>
+        <input type="text" id="username" name="username" value="<%= email.get('username')%>" >
+        <%  }else{ %>
+        <input type="text" id="username" name="username"  placeholder="Enter Name" >
+        <% }  %>
+         </div>
         </div>
         
         <div class="control-group">
@@ -64,21 +85,32 @@
         <div class="control-group">
         <label class="control-label">Port: </label>
         <div class="controls">
-        
         <select id='port'>
-         <option value="25">25</option>
-         <option value="465" selected>465</option>
-         <option value="587">587</option>
-        </select> 
-    
+        <% if (emailID!=null) {
+            for(i=0; i< portChoices.length; i++){
+               if(portChoices[i] == email.get("port")){ %>
+                  <option value= <%= portChoices[i] %> selected="selected"> <%= portChoices[i] %> </option>
+              <% } else{ %>
+                  <option value= <%= portChoices[i] %> > <%= portChoices[i] %> </option>
+              <% } } %>
+
+              <% }else{ 
+              for(i=0; i< portChoices.length; i++){
+                  if(portChoices[i] == 465){ %>
+                     <option value=<%= portChoices[i] %>  selected="selected"><%= portChoices[i] %> </option>
+                 <% } else{ %>
+                     <option value=<%= portChoices[i] %> > <%= portChoices[i] %></option>
+                 <% } } } %>
+                 
+         </select>        
         </div>
         </div>
         
         <div class="control-group">
         <div class="controls">
         <label class="radio inline">
-        <input type="radio" name="secured_connection" value="Secured connection using SSL" checked> Secured connection using SSL <br>
-        <input type="radio" name="secured_connection" value="Secured connection using TSL" > Secured connection using TSL
+        <input type="radio" name="secured_connection" value="SSL" checked> Secured connection using SSL <br>
+        <input type="radio" name="secured_connection" value="TSL" > Secured connection using TSL
         </label>
         </div>
         </div>

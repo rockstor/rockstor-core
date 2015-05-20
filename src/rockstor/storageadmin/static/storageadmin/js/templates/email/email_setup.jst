@@ -22,11 +22,34 @@
   <div class="span8">
     <label class="control-label"></label>
         <div class="messages">
-        Send mail as : your_email_id@xxxx.com
-        </div>
-        <br>
+        <% if (_.isEmpty(emailID)) { %>
+        <h3>Configure Email Account</h3>
         <div class="controls">
       	<button type="Submit" id="Add-email-address" class="btn btn-primary">Add email address you own</button>
+        <%} else { %>
+        <h3> Configured Email Account </h3>
+        <table id="email-table" class="table table-condensed table-bordered table-hover table-striped share-table " >
+          <thead>
+            <tr>
+              <th scope="col" abbr="Email">Email ID</th>
+              <th scope="col" abbr="Actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><%= email.get('email_id') %></td>
+              <td>
+                <a href="#" class="edit-email" data-uname="<%= email.get('username') %>" rel="tooltip" title="Edit email"><i class="icon-pencil"></i></a>
+                 &nbsp;
+                 <a href="#" class="delete-email" data-uname="<%= email.get('username') %>" rel="tooltip" title="Delete email"><i class="icon-trash"></i></a>
+               </td>
+              </tr>
+          </tbody>
+        </table>
+        <%} %>
+       
+        </div>
+        
         </div>
   </div>
 </div>

@@ -561,6 +561,10 @@ var Certificate = Backbone.Model.extend({
   urlRoot: '/api/certificate',
 });
 
+var EmailAccount = Backbone.Model.extend({
+	urlRoot: '/api/email',
+});
+
 var RockOn = Backbone.Model.extend({
     urlRoot: '/api/rockons'
 });
