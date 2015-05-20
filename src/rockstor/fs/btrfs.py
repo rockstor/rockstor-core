@@ -566,7 +566,8 @@ def root_disk():
             fields = line.split()
             if (fields[1] == '/' and
                 (fields[2] == 'ext4' or fields[2] == 'btrfs')):
-                return fields[0][5:-1]
+                disk = os.path.realpath(fields[0])
+                return disk[5:-1]
     msg = ('root filesystem is not BTRFS. During Rockstor installation, '
            'you must select BTRFS instead of LVM and other options for '
            'root filesystem. Please re-install Rockstor properly.')

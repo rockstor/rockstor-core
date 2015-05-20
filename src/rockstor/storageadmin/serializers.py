@@ -260,13 +260,13 @@ class SMARTIdentitySerializer(serializers.ModelSerializer):
         model = SMARTIdentity
 
 class SMARTInfoSerializer(serializers.ModelSerializer):
-    capabilities = SMARTCapabilitySerializer(source='capabilities')
-    attributes = SMARTAttributeSerializer(source='attributes')
-    errorlog = SMARTErrorLogSerializer(source='errorlog')
-    errorlogsummary = SMARTErrorLogSummarySerializer(source='errorlogsummary')
-    identity = SMARTIdentitySerializer(source='identity')
-    testlog = SMARTTestLogSerializer(source='testlog')
-    testlogdetail = SMARTTestLogDetailSerializer(source='testlogdetail')
+    capabilities = SMARTCapabilitySerializer()
+    attributes = SMARTAttributeSerializer()
+    errorlog = SMARTErrorLogSerializer()
+    errorlogsummary = SMARTErrorLogSummarySerializer()
+    identity = SMARTIdentitySerializer()
+    testlog = SMARTTestLogSerializer()
+    testlogdetail = SMARTTestLogDetailSerializer()
 
     class Meta:
         model = SMARTInfo
