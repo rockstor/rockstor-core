@@ -24,17 +24,8 @@ class RockOn(models.Model):
     name = models.CharField(max_length=1024)
     description = models.CharField(max_length=2048)
     version = models.CharField(max_length=32)
-    STATE = [
-        ('available',) * 2,
-        ('installed',) * 2,
-    ]
-    state = models.CharField(max_length=32, choices=STATE)
-    STATUS = [
-        ('stopped',) * 2,
-        ('running',) * 2,
-        ('error',) * 2,
-    ]
-    status = models.CharField(max_length=32, choices=STATUS)
+    state = models.CharField(max_length=32)
+    status = models.CharField(max_length=32)
     link = models.CharField(max_length=1024, null=True)
     website = models.CharField(max_length=2048, null=True)
 
