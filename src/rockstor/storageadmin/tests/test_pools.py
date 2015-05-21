@@ -78,6 +78,9 @@ class PoolTests(APITestCase):
     def setUp(self):
         self.client.login(username='admin', password='admin')
 
+    def tearDown(self):
+        self.client.logout()
+
     def test_auth(self):
         """
         unauthorized api access
