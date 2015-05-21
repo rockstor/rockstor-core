@@ -374,14 +374,17 @@ def update_quota(pool, pool_device, qgroup, size_bytes):
 
 
 def convert_to_KiB(size):
-    SMAP = {'KiB': 1,
-            'MiB': 1024,
-            'GiB': 1024 * 1024,
-            'TiB': 1024 * 1024 * 1024,
-            'PiB': 1024 * 1024 * 1024 * 1024, }
+    SMAP = {
+        'KiB': 1,
+        'MiB': 1024,
+        'GiB': 1024 * 1024,
+        'TiB': 1024 * 1024 * 1024,
+        'PiB': 1024 * 1024 * 1024 * 1024, }
     suffix = size[-3:]
     num = size[:-3]
     if (suffix not in SMAP):
+        if (size[-1] == 'B'):
+            return 0
         raise Exception('Unknown suffix(%s) while converting to KiB' % suffix)
     return int(float(num) * SMAP[suffix])
 
