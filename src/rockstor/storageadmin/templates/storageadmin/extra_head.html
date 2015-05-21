@@ -1,0 +1,137 @@
+{% load staticfiles %}
+
+<!-- License -->
+<script src='{% static "storageadmin/js/license.js" %}'></script>
+
+<!-- Universal holds all of the temmplate strings -->
+<script src="{% static 'storageadmin/js/templates/universal.js' %}"></script>
+
+
+<!---------- Scripts ---------->
+<script src='{% static "storageadmin/js/rockstor.js" %}'></script>
+<script src='{% static "storageadmin/js/rockstor_widgets.js" %}'></script>
+<script src='{% static "storageadmin/js/rockstor_logger.js" %}'></script>
+<script src='{% static "storageadmin/js/paginated_collection.js" %}'></script>
+<script src='{% static "storageadmin/js/router.js" %}'></script>
+<script src='{% static "storageadmin/js/graph.js" %}'></script>
+<script src='{% static "storageadmin/js/d3.slider2.js" %}'></script>
+<script src='{% static "storageadmin/js/socket_listen.js" %}'></script>
+<script src='{% static "storageadmin/js/models/models.js" %}'></script>
+
+<!----------  Views ---------->
+<script src='{% static "storageadmin/js/views/access_keys.js" %}'></script>
+<script src='{% static "storageadmin/js/views/add_access_key.js" %}'></script>
+<script src='{% static "storageadmin/js/views/add_afp_share.js" %}'></script>
+<script src='{% static "storageadmin/js/views/add_appliance.js" %}'></script>
+<script src='{% static "storageadmin/js/views/add_group.js" %}'></script>
+<script src='{% static "storageadmin/js/views/add_pool.js" %}'></script>
+<script src='{% static "storageadmin/js/views/add_replication_task.js" %}'></script>
+<script src='{% static "storageadmin/js/views/add_samba_export.js" %}'></script>
+<script src='{% static "storageadmin/js/views/add_scheduled_task.js" %}'></script>
+<script src='{% static "storageadmin/js/views/add_sftp_share.js" %}'></script>
+<script src='{% static "storageadmin/js/views/add_share.js" %}'></script>
+<script src='{% static "storageadmin/js/views/add_support_case.js" %}'></script>
+<script src='{% static "storageadmin/js/views/add_user.js" %}'></script>
+<script src='{% static "storageadmin/js/views/afp.js" %}'></script>
+<script src='{% static "storageadmin/js/views/appliances.js" %}'></script>
+<script src='{% static "storageadmin/js/views/blink_disks.js" %}'></script>
+<script src='{% static "storageadmin/js/views/configure_service.js" %}'></script>
+<script src='{% static "storageadmin/js/views/containers.js" %}'></script>
+<script src='{% static "storageadmin/js/views/cpuusage_module.js" %}'></script>
+<script src='{% static "storageadmin/js/views/create_clone.js" %}'></script>
+
+<!-- Views > Dashboard -->
+<script src='{% static "storageadmin/js/views/dashboard/cpu_usage_widget.js" %}'></script>
+<script src='{% static "storageadmin/js/views/dashboard/disk_utilization.js" %}'></script>
+<script src='{% static "storageadmin/js/views/dashboard/memory_utilization.js" %}'></script>
+<script src='{% static "storageadmin/js/views/dashboard/network_utilization.js" %}'></script>
+<script src='{% static "storageadmin/js/views/dashboard/storage_metrics.js" %}'></script>
+<script src='{% static "storageadmin/js/views/dashboard/top_shares.js" %}'></script>
+<script src='{% static "storageadmin/js/views/dashboard/widget_listeners.js" %}'></script>
+
+
+<script src='{% static "storageadmin/js/views/dashboard_config.js" %}'></script>
+<script src='{% static "storageadmin/js/views/disks.js" %}'></script>
+<script src='{% static "storageadmin/js/views/docker_service.js" %}'></script>
+<script src='{% static "storageadmin/js/views/edit_network.js" %}'></script>
+<script src='{% static "storageadmin/js/views/edit_nfs_export.js" %}'></script>
+<script src='{% static "storageadmin/js/views/groups.js" %}'></script>
+<script src='{% static "storageadmin/js/views/home.js" %}'></script>
+<script src='{% static "storageadmin/js/views/images.js" %}'></script>
+<script src='{% static "storageadmin/js/views/iscsi_target.js" %}'></script>
+<script src='{% static "storageadmin/js/views/login.js" %}'></script>
+<script src='{% static "storageadmin/js/views/networks.js" %}'></script>
+<script src='{% static "storageadmin/js/views/networks.js" %}'></script>
+<script src='{% static "storageadmin/js/views/nfs_advanced_edit.js" %}'></script>
+<script src='{% static "storageadmin/js/views/nfs_exports.js" %}'></script>
+<script src='{% static "storageadmin/js/views/plugins.js" %}'></script>
+
+<!-- Views > pool > resize-->
+<script src='{% static "storageadmin/js/views/pool/resize/add_disks.js" %}'></script>
+<script src='{% static "storageadmin/js/views/pool/resize/add_disks_raid.js" %}'></script>
+<script src='{% static "storageadmin/js/views/pool/resize/choice.js" %}'></script>
+<script src='{% static "storageadmin/js/views/pool/resize/pool_resize_wizard.js" %}'></script>
+<script src='{% static "storageadmin/js/views/pool/resize/raid_change.js" %}'></script>
+<script src='{% static "storageadmin/js/views/pool/resize/remove_disks.js" %}'></script>
+<script src='{% static "storageadmin/js/views/pool/resize/remove_disks_complete.js" %}'></script>
+<script src='{% static "storageadmin/js/views/pool/resize/summary.js" %}'></script>
+<!---->
+
+<script src='{% static "storageadmin/js/views/pool_details_layout_view.js" %}'></script>
+<script src='{% static "storageadmin/js/views/pool_info_module.js" %}'></script>
+<script src='{% static "storageadmin/js/views/pool_rebalance_table.js" %}'></script>
+<script src='{% static "storageadmin/js/views/pool_scrub_table.js" %}'></script>
+<script src='{% static "storageadmin/js/views/pool_usage_module.js" %}'></script>
+<script src='{% static "storageadmin/js/views/pools.js" %}'></script>
+<script src='{% static "storageadmin/js/views/probe_detail.js" %}'></script>
+<script src='{% static "storageadmin/js/views/probe_run_list.js" %}'></script>
+
+
+
+
+
+<!-- Views > probes -->
+<script src='{% static "storageadmin/js/views/probes/nfs.js" %}'></script>
+<script src='{% static "storageadmin/js/views/probes/nfs_client_distrib.js" %}'></script>
+<script src='{% static "storageadmin/js/views/probes/nfs_distrib.js" %}'></script>
+<script src='{% static "storageadmin/js/views/probes/nfs_share_client.js" %}'></script>
+<script src='{% static "storageadmin/js/views/probes/nfs_share_client_distrib.js" %}'></script>
+<script src='{% static "storageadmin/js/views/probes/nfs_share_client_user.js" %}'></script>
+<script src='{% static "storageadmin/js/views/probes/nfs_share_distrib.js" %}'></script>
+<!---->
+
+<script src='{% static "storageadmin/js/views/reboot.js" %}'></script>
+<script src='{% static "storageadmin/js/views/replica_receive_trails.js" %}'></script>
+<script src='{% static "storageadmin/js/views/replica_trails.js" %}'></script>
+<script src='{% static "storageadmin/js/views/replication.js" %}'></script>
+<script src='{% static "storageadmin/js/views/replication_receive.js" %}'></script>
+<script src='{% static "storageadmin/js/views/rockons.js" %}'></script>
+<script src='{% static "storageadmin/js/views/rollback.js" %}'></script>
+<script src='{% static "storageadmin/js/views/run_probe.js" %}'></script>
+<script src='{% static "storageadmin/js/views/samba.js" %}'></script>
+<script src='{% static "storageadmin/js/views/scheduled_tasks.js" %}'></script>
+<script src='{% static "storageadmin/js/views/services.js" %}'></script>
+<script src='{% static "storageadmin/js/views/setup.js" %}'></script>
+<script src='{% static "storageadmin/js/views/setup_disks.js" %}'></script>
+<script src='{% static "storageadmin/js/views/setup_network.js" %}'></script>
+<script src='{% static "storageadmin/js/views/setup_system.js" %}'></script>
+<script src='{% static "storageadmin/js/views/setup_users.js" %}'></script>
+<script src='{% static "storageadmin/js/views/sftp.js" %}'></script>
+<script src='{% static "storageadmin/js/views/share_details_layout_view.js" %}'></script>
+<script src='{% static "storageadmin/js/views/share_nfs_exports.js" %}'></script>
+<script src='{% static "storageadmin/js/views/share_usage_module.js" %}'></script>
+<script src='{% static "storageadmin/js/views/shares.js" %}'></script>
+<script src='{% static "storageadmin/js/views/shutdown.js" %}'></script>
+<script src='{% static "storageadmin/js/views/smb_shares.js" %}'></script>
+<script src='{% static "storageadmin/js/views/snapshots.js" %}'></script>
+<script src='{% static "storageadmin/js/views/snapshots_table.js" %}'></script>
+<script src='{% static "storageadmin/js/views/support.js" %}'></script>
+<script src='{% static "storageadmin/js/views/support_case_detail.js" %}'></script>
+<script src='{% static "storageadmin/js/views/support_case_details_layout_view.js" %}'></script>
+<script src='{% static "storageadmin/js/views/support_table.js" %}'></script>
+<script src='{% static "storageadmin/js/views/sysinfo_module.js" %}'></script>
+<script src='{% static "storageadmin/js/views/tasks.js" %}'></script>
+<script src='{% static "storageadmin/js/views/update_certificate.js" %}'></script>
+<script src='{% static "storageadmin/js/views/users.js" %}'></script>
+<script src='{% static "storageadmin/js/views/users.js" %}'></script>
+<script src='{% static "storageadmin/js/views/version.js" %}'></script>

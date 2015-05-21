@@ -1,3 +1,4 @@
+{% load staticfiles %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -25,7 +26,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RockStor | {% block title %}{% endblock %}</title>
-    <link href="/static/storageadmin/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{% static '/static/storageadmin/css/bootstrap.min.css' %}" rel="stylesheet">
     <link href="/static/storageadmin/css/bootstrap-responsive.css" rel="stylesheet">
     <link href="/static/storageadmin/css/datepicker.css" rel="stylesheet">
     <link href="/static/storageadmin/css/bootstrap-timepicker.css" rel="stylesheet">
@@ -72,7 +73,7 @@
 
     </script>
 
-    <script src="/static/js/lib/json2.js"></script>
+    <script src="{% static 'js/lib/json2.js' %}"></script>
     <script src="/static/js/lib/jquery-1.9.1.min.js"></script>
     <script src="/static/js/lib/jquery-migrate-1.2.1.min.js"></script>
     <script src="/static/js/lib/jquery-ui.min.js"></script>
@@ -103,7 +104,7 @@
     <script src="/static/js/lib/moment.min.js"></script>
     <script src="/static/js/lib/simple-slider.min.js"></script>
     <script src="/static/js/lib/chosen.jquery.js"></script>
-    <script src="/static/storageadmin/js/storageadmin.js"></script>
+    {% include 'extra_head.html' %}
     {% for plugin in installed_plugins %}
     <script src="/static/{{ plugin.plugin_meta.name }}/js/{{ plugin.plugin_meta.name }}_plugin.js"></script>
     {% endfor %}
@@ -119,7 +120,7 @@
           <span class="icon-bar"></span>
         </button>
         <div id="logo">
-          <object data="/static/storageadmin/img/rockstor_webui_logo.svg" width="100px"
+          <!-- <object data="/static/storageadmin/img/rockstor_webui_logo.svg" width="100px" -->
             type="image/svg+xml"></object>
         </div>
         <div class="nav-collapse collapse">
