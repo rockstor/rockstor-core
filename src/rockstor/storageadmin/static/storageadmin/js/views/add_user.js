@@ -96,10 +96,15 @@ AddUserView = RockstorLayoutView.extend({
         var password = _this.$("#password").val();
         var admin = _this.$("#admin").prop("checked");
         var shell = _this.$("#shell").val();
+              
         var public_key = _this.$("#public_key").val();
         if (_.isEmpty(public_key)) {
           public_key = null;
         }
+        var uid = _this.$("#uid").val();
+        if (_.isEmpty(uid)) {
+        	uid = null;
+          }
         var group = _this.$("#group").val();
         if (group == 'Create a new one') {
           group = null
@@ -115,6 +120,7 @@ AddUserView = RockstorLayoutView.extend({
           } else {
             _this.user.unset('public_key');
           }
+         
           _this.user.set({admin: admin});
           _this.user.set({group: group});
           _this.user.set({shell: shell});
@@ -126,7 +132,7 @@ AddUserView = RockstorLayoutView.extend({
             }
           });
         } else {
-          // create a dummy user model class that does not have idAttribute
+           // create a dummy user model class that does not have idAttribute
           // = username, so backbone will treat is as a new object,
           // ie isNew will return true
           var tmpUserModel = Backbone.Model.extend({
@@ -139,6 +145,7 @@ AddUserView = RockstorLayoutView.extend({
             admin: admin,
             group: group,
             shell: shell,
+            uid: uid,
             public_key: public_key
           }, {
             success: function(model, response, options) {

@@ -42,40 +42,31 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class DiskSMARTView(rfc.GenericView):
+class DiskSMARTDetailView(rfc.GenericView):
     serializer_class = SMARTInfoSerializer
 
-    def _validate_disk(self, dname, request):
+    @staticmethod
+    def _validate_disk(dname, request):
         try:
             return Disk.objects.get(name=dname)
         except:
             e_msg = ('Disk: %s does not exist' % dname)
             handle_exception(Exception(e_msg), request)
 
-    def get_queryset(self, *args, **kwargs):
-        #do rescan on get.
+    def get(self, *args, **kwargs):
         with self._handle_exception(self.request):
-            if ('dname' in kwargs):
-                self.paginate_by = 0
-                disk = self._validate_disk(kwargs['dname'], self.request)
-                try:
-                    return SMARTInfo.objects.filter(disk=disk).order_by('-toc')[0]
-                except:
-                    return []
-                distinct_fields = SMARTAttribute.objects.values('name').annotate(c=Count('name'))
-                qs = []
-                for d in distinct_fields:
-                    qs.append(SMARTAttribute.objects.filter(**{'name': d['name'], 'disk': disk}).order_by('-toc')[0])
-                return qs
-            #return SMARTAttribute.objects.filter()
-            return SMARTInfo.objects.filter().order_by('-toc')
+            disk = self._validate_disk(kwargs['dname'], self.request)
+            try:
+                sinfo = SMARTInfo.objects.filter(disk=disk).order_by('-toc')[0]
+                return Response(SMARTInfoSerializer(sinfo).data)
+            except:
+                return Response()
 
-    @transaction.commit_on_success
-    def _info(self, disk):
-        #fetch info from smartctl -a /dev/dname
+    @staticmethod
+    @transaction.atomic
+    def _info(disk):
         attributes = smart.extended_info(disk.name)
         capabilities = smart.capabilities(disk.name)
-        logger.debug('capabilities = %s' % capabilities)
         e_summary, e_lines = smart.error_logs(disk.name)
         smartid = smart.info(disk.name)
         test_d, log_lines = smart.test_logs(disk.name)
