@@ -24,21 +24,62 @@ logger = logging.getLogger(__name__)
 
 
 def combined_users():
-    users = list(User.objects.all())
+    users = []
     sys_users = get_users(min_uid=0)
-    for u in sys_users.keys():
-        if (User.objects.filter(username=u).exists()):
-            continue
-        users.append(User(username=u, uid=sys_users[u][0],
-                          gid=sys_users[u][1], admin=False))
+    uname_list = sys_users.keys()
+    for u in uname_list:
+        try:
+            uo = User.objects.get(username=u)
+            uo.uid = sys_users[u][0]
+            uo.gid = sys_users[u][1]
+            gname = get_groups(uo.gid).keys()[0]
+            create = True
+            if (uo.group is not None):
+                if (uo.group.gid == uo.gid or uo.group.groupname == gname):
+                    uo.group.groupname = gname
+                    uo.group.gid = uo.gid
+                    uo.group.save()
+                    create = False
+            if (create):
+                try:
+                    go = Group.objects.get(groupname=gname)
+                    go.gid = uo.gid
+                    go.save()
+                    uo.group = go
+                except DoesNotExist:
+                    try:
+                        go = Group.objects.get(gid=uo.gid)
+                        go.groupname = gname
+                        go.save()
+                        uo.group = go
+                    except DoesNotExist:
+                        go = Group(groupname=gname, gid=uo.gid)
+                        go.save()
+                        uo.group = go
+            uo.save()
+            users.append(uo)
+        except User.DoesNotExist:
+            users.append(User(username=u, uid=sys_users[u][0],
+                              gid=sys_users[u][1], admin=False))
+    for u in User.objects.all():
+        if (u.username not in uname_list):
+            users.append(u)
     return users
 
 
 def combined_groups():
-    groups = list(Group.objects.all())
+    groups = []
     sys_groups = get_groups()
-    for g in sys_groups.keys():
-        if (Group.objects.filter(groupname=g).exists()):
-            continue
-        groups.append(Group(groupname=g, gid=sys_groups[g]))
+    gname_list = sys_groups.keys()
+    for g in gname_list:
+        try:
+            go = Group.objects.get(groupname=g)
+            go.gid = sys_groups[g]
+            go.save()
+            groups.append(go)
+        except Group.DoesNotExist:
+            groups.append(Group(groupname=g, gid=sys_groups[g]))
+    for g in Group.objects.all():
+        if (g.groupname not in gname_list):
+            groups.append(g)
     return groups

@@ -44,10 +44,15 @@ def get_users(min_uid=5000, uname=None):
     return users
 
 
-def get_groups():
+def get_groups(*gids):
     groups = {}
-    for g in grp.getgrall():
-        groups[g.gr_name] = g.gr_gid
+    if (len(gids) > 0):
+        for g in gids:
+            entry = grp.getgrgid(g)
+            groups[entry.gr_name] = entry.gr_gid
+    else:
+        for g in grp.getgrall():
+            groups[g.gr_name] = g.gr_gid
     return groups
 
 
