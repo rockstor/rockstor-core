@@ -89,7 +89,7 @@ class PoolTests(APITestCase):
         response = self.client.get(self.BASE_URL)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_get(self):
+    def test_get_base(self):
         """
         get on the base url.
         """
