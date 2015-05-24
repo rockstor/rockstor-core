@@ -101,7 +101,7 @@ class ShareListView(ShareMixin, rfc.GenericView):
                 e_msg = ('Share name must start with a alphanumeric(a-z0-9) '
                          'character and can be followed by any of the '
                          'following characters: letter(a-z), digits(0-9), '
-                         'hyphen(-), underscore (_) or a period(.).')
+                         'hyphen(-), underscore(_) or a period(.).')
                 handle_exception(Exception(e_msg), request)
 
             if (Share.objects.filter(name=sname).exists()):

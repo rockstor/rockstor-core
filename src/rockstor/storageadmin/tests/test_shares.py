@@ -63,6 +63,9 @@ class ShareTests(APITestCase):
         self.mock_set_property.return_value = True
 
         # put mocks
+        self.patch_share_usage = patch('storageadmin.views.share.share_usage')
+        self.mock_share_usage = self.patch_share_usage.start()
+        self.mock_share_usage.return_value = 500
 
         # delete mocks
 
@@ -92,15 +95,140 @@ class ShareTests(APITestCase):
         self.assertEqual(response1.status_code, status.HTTP_200_OK, msg=response1.data)
 
     def test_name_regex(self):
-        self.assertEqual(1,2)
+        """
+        Share name must start with a alphanumeric(a-z0-9) ' 'character and can be
+        followed by any of the ' 'following characters: letter(a-z),
+        digits(0-9), ' 'hyphen(-), underscore(_) or a period(.).'
+        1. Test a few valid regexes (eg: share1, Myshare, 123, etc..)
+        2. Test a few invalid regexes (eg: -share1, .share etc..)
+        3. Empty string for share name
+        4. max length(255 character) for share name
+        5. max length + 1 for share name
+        """
+        # valid share names
+        data = {'pool': 'rockstor_rockstor', 'size': 1000}
+        valid_names = ('123share', 'SHARE_TEST', 'Zzzz...', '1234', 'myshare',
+                       'Sha' + 'r' * 250 + 'e',)
+        for sname in valid_names:
+            data['sname'] = sname
+            response = self.client.post(self.BASE_URL, data=data)
+            self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
+            self.assertEqual(response.data['name'], sname)
+
+        # invalid pool names
+        e_msg = ('Share name must start with a alphanumeric(a-z0-9) character '
+                 'and can be followed by any of the following characters: '
+                 'letter(a-z), digits(0-9), hyphen(-), underscore(_) or a period(.).')
+        invalid_names = ('Share $', '-share', '.share', '', ' ',
+                              'Sh' + 'a' * 254 + 're',)
+        for sname in invalid_names:
+            data['sname'] = sname
+            response = self.client.post(self.BASE_URL, data=data)
+            self.assertEqual(response.status_code,
+                             status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+            self.assertEqual(response.data['detail'], e_msg)
 
     def test_invalid_api_requests(self):
+        """
+        invalid pool api operations
+        1. create a pool with invalid raid level
+        2. get a pool that doesn't exist
+        3. edit a pool that doesn't exist
+        4. delete a pool that doesn't exist
+        5. edit root pool
+        6. delete root pool
+        """
         self.assertEqual(1,2)
+        # create pool with invalid raid level
+
+        # get a pool that doesn't exist
+
+        # edit a pool that doesn't exist
+
+        # delete a pool that doesn't exist
+
+        # attempt to add disk to root pool
+
+        # attempt to delete root pool
 
     def test_compression(self):
-        self.assertEqual(1,2)
+        """
+        Compression is agnostic to name, raid and number of disks. So no need to
+        test it with different types of pools. Every post & remount calls this.
+        1. Create a pool with invalid compression
+        2. Create a pool with zlib compression
+        3. Create a pool with lzo compression
+        4. change compression from zlib to lzo
+        5. change compression from lzo to zlib
+        6. disable zlib, enable zlib
+        7. disable lzo, enable lzo
+        """
+
         # diff compressions on creation
         # edit compression post creation... this is a POST w/ compress command in URL
+
+        # create share with invalid compression
+        data = {'sname': 'rootshare', 'pool': 'rockstor_rockstor',
+                'size': 100, 'compression': 'derp'}
+        e_msg = ("Unsupported compression algorithm(derp). "
+                 "Use one of ('lzo', 'zlib', 'no')")
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+        self.assertEqual(response.data['detail'], e_msg)
+
+        # create share with zlib compression
+        data['compression'] = 'zlib'
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
+        # self.assertEqual(response.data, 'derp')
+        self.assertEqual(response.data['compression_algo'], 'zlib')
+
+        # create share with lzo compression
+        data2 = {'sname': 'share2', 'pool': 'rockstor_rockstor',
+                'size': 100, 'compression': 'lzo'}
+        response2 = self.client.post(self.BASE_URL, data=data2)
+        self.assertEqual(response2.status_code, status.HTTP_200_OK, msg=response2.data)
+        self.assertEqual(response2.data['compression_algo'], 'lzo')
+
+        # change compression from zlib to lzo
+
+        # TODO suman - why post vs. put?
+        # TODO suman - same deal, doesn't work if we only send over compression data
+        data3 = {'compression': 'lzo'}
+        # data3 = {'sname': 'rootshare', 'pool': 'rockstor_rockstor',
+        #         'size': 100, 'compression': 'lzo'}
+        # data3 = {'group': u'root', 'name': u'rootshare', 'perms': u'755', 'r_usage': -1, 'e_usage': -1, 'snapshots': [], 'compression_algo': u'lzo', 'owner': u'root', 'replica': False, 'qgroup': u'0/derp', 'toc': u'2015-05-24T06:08:50.406267Z', 'subvol_name': u'rootshare', 'size': 100, 'nfs_exports': [], u'id': 1, 'pool': OrderedDict([(u'id', 1), ('disks', [OrderedDict([(u'id', 1), ('pool_name', u'rockstor_rockstor'), ('name', u'sda3'), ('size', 8912896), ('offline', False), ('parted', False), ('btrfs_uuid', u'b71dd067-abd9-48ca-8e48-67c7c5cb17de'), ('model', None), ('serial', u'VBb419f409-272c21e5'), ('transport', None), ('vendor', None), ('smart_available', False), ('smart_enabled', False), ('pool', 1)])]), ('free', 8924160), ('reclaimable', 0), ('name', u'rockstor_rockstor'), ('uuid', u'b71dd067-abd9-48ca-8e48-67c7c5cb17de'), ('size', 8924160), ('raid', u'single'), ('toc', u'2015-04-11T00:31:29.550000Z'), ('compression', None), ('mnt_options', None)]), 'uuid': None}
+        response3 = self.client.post('%s/rootshare/compress' % self.BASE_URL, data=data3)
+        self.assertEqual(response3.status_code, status.HTTP_200_OK, msg=response3.data)
+        self.assertEqual(response3.data['compression_algo'], 'lzo')
+
+        # # change compression from lzo to zlib
+        # data4 = {'compression': 'zlib'}
+        # response4 = self.client.put('%s/singlepool2/remount' % self.BASE_URL, data=data4)
+        # self.assertEqual(response4.status_code, status.HTTP_200_OK, msg=response4.data)
+        # self.assertEqual(response4.data['compression'], 'zlib')
+        #
+        # # disable zlib compression
+        # data5 = {'compression': 'no'}
+        # response5 = self.client.put('%s/singlepool2/remount' % self.BASE_URL, data=data5)
+        # self.assertEqual(response5.status_code, status.HTTP_200_OK, msg=response5.data)
+        # self.assertEqual(response5.data['compression'], 'no')
+        #
+        # # enable zlib compression
+        # response6 = self.client.put('%s/singlepool2/remount' % self.BASE_URL, data=data4)
+        # self.assertEqual(response6.status_code, status.HTTP_200_OK, msg=response6.data)
+        # self.assertEqual(response6.data['compression'], 'zlib')
+        #
+        # # disable lzo compression
+        # response7 = self.client.put('%s/singlepool/remount' % self.BASE_URL, data=data5)
+        # self.assertEqual(response7.status_code, status.HTTP_200_OK, msg=response7.data)
+        # self.assertEqual(response7.data['compression'], 'no')
+        #
+        # # enable lzo compression
+        # response8 = self.client.put('%s/singlepool/remount' % self.BASE_URL, data=data3)
+        # self.assertEqual(response8.status_code, status.HTTP_200_OK, msg=response8.data)
+        # self.assertEqual(response8.data['compression'], 'lzo')
 
     def test_create_share(self):
         # will need to create a pool first (or use root pool)
@@ -128,8 +256,8 @@ class ShareTests(APITestCase):
         self.assertEqual(response3.data['detail'], e_msg2)
 
         # create a share with invalid size (too small)
-        data2 = {'sname': 'too_small', 'pool': 'rockstor_rockstor', 'size': 0}
-        e_msg3 = ('Share size should atleast be 100KB. Given size is 0KB')
+        data2 = {'sname': 'too_small', 'pool': 'rockstor_rockstor', 'size': 1}
+        e_msg3 = ('Share size should atleast be 100KB. Given size is 1KB')
         response4 = self.client.post(self.BASE_URL, data=data2)
         self.assertEqual(response4.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response4.data)
@@ -169,13 +297,54 @@ class ShareTests(APITestCase):
 
         # test replica command
 
+    def test_resize_share(self):
+
+        #create new share
+        data = {'sname': 'rootshare', 'pool': 'rockstor_rockstor', 'size': 100}
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
+        self.assertEqual(response.data['name'], 'rootshare')
+
+        # resize a share
+        # data2 = {'sname': 'rootshare', 'pool': 'rockstor_rockstor', 'size': 1000}
+        data2 = {'size': 1000}
+        response2 = self.client.put('%s/rootshare' % self.BASE_URL, data=data2)
+        self.assertEqual(response2.status_code, status.HTTP_200_OK, msg=response2.data)
+        self.assertEqual(response2.data['size'], 1000)
+
+        # resize a share that doesn't exist
+        data3 = {'sname': 'invalid', 'size': 1500}
+        response3 = self.client.put('%s/invalid' % self.BASE_URL, data=data3)
+        self.assertEqual(response3.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response3.data)
+        e_msg = ('Share(invalid) does not exist.')
+        self.assertEqual(response3.data['detail'], e_msg)
+
+        # resize to below current share usage value
+        data3 = {'size': 400}
+        response3 = self.client.put('%s/rootshare' % self.BASE_URL, data=data3)
+        self.assertEqual(response3.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response3.data)
+        e_msg = ('Unable to resize because requested new size(400KB) is less '
+                 'than current usage(500KB) of the share.')
+        self.assertEqual(response3.data['detail'], e_msg)
+
+        # resize below 100KB
+        self.mock_share_usage.return_value = 50
+        data3 = {'size': 99}
+        response3 = self.client.put('%s/rootshare' % self.BASE_URL, data=data3)
+        self.assertEqual(response3.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response3.data)
+        e_msg = ('Share size should atleast be 100KB. Given size is 99KB')
+        self.assertEqual(response3.data['detail'], e_msg)
+
     def test_delete_share(self):
         self.assertEqual(1,2)
+        # data = {'sname': 'rootshare', 'pool': 'rockstor_rockstor', 'size': 100}
+        # response = self.client.post(self.BASE_URL, data=data)
+        # self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
+        # self.assertEqual(response.data['name'], 'rootshare')
 
-    def test_resize_share(self):
-        self.assertEqual(1,2)
-        # PUT operation
-        # test valid / invalid sizes
-        # appears to accept invalid high size & reassigns max available
+
 
 
