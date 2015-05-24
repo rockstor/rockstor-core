@@ -38,11 +38,8 @@ class ShareTests(APITestCase):
     @classmethod
     def setUpClass(self):
 
-    # static mocks
-    # update quota -- return true
-    # share id -- ?
-
-    # get mocks
+        # static mocks
+        # get mocks
 
         # post mocks
         self.patch_add_share = patch('storageadmin.views.share.add_share')
@@ -65,9 +62,9 @@ class ShareTests(APITestCase):
         self.mock_set_property = self.patch_set_property.start()
         self.mock_set_property.return_value = True
 
-    # put mocks
+        # put mocks
 
-    # delete mocks
+        # delete mocks
 
     @classmethod
     def tearDownClass(self):
@@ -133,37 +130,44 @@ class ShareTests(APITestCase):
         # create a share with invalid size (too small)
         data2 = {'sname': 'too_small', 'pool': 'rockstor_rockstor', 'size': 0}
         e_msg3 = ('Share size should atleast be 100KB. Given size is 0KB')
-        response3 = self.client.post(self.BASE_URL, data=data2)
-        self.assertEqual(response3.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response3.data)
-        self.assertEqual(response3.data['detail'], e_msg3)
-
-        # create a share with invalid size (non integer)
-        data2['size'] = 'non int'
-        e_msg3 = ('Share size must be an integer')
         response4 = self.client.post(self.BASE_URL, data=data2)
         self.assertEqual(response4.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response4.data)
         self.assertEqual(response4.data['detail'], e_msg3)
-        # TODO find out how it converts GB vs TB
+
+        # create a share with invalid size (non integer)
+        data2['size'] = 'non int'
+        e_msg4 = ('Share size must be an integer')
+        response5 = self.client.post(self.BASE_URL, data=data2)
+        self.assertEqual(response5.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response5.data)
+        self.assertEqual(response5.data['detail'], e_msg4)
+        # TODO find out how it GB vs TB conversion works
             # Share size should atleast be 100KB
-            # Accepted formats: GB & TB... try KB
             # what is size converted to? request for 1GB is 1048576. response
                 # 1GB = 1048576
                 # 4GB = 4194304
 
-        # test share with invalid name
-            # share with that name already exists
-            # pool with that name already exists
+        # test shares with invalid name
+        # pool with that name already exists
+        data3 = {'sname': 'rockstor_rockstor', 'pool': 'rockstor_rockstor', 'size': 1048576}
+        e_msg5 = ('A Pool with this name(rockstor_rockstor) exists. Share and Pool names must be distinct. Choose a different name')
+        response6 = self.client.post(self.BASE_URL, data=data3)
+        self.assertEqual(response6.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response6.data)
+        self.assertEqual(response6.data['detail'], e_msg5)
+
+        # share with that name already exists
+        data3['sname'] = 'rootshare'
+        e_msg6 = ('Share(rootshare) already exists. Choose a different name')
+        response7 = self.client.post(self.BASE_URL, data=data3)
+        self.assertEqual(response7.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response7.data)
+        self.assertEqual(response7.data['detail'], e_msg6)        
 
         # test share with a pool that has no disks
 
-        # test replica?
-
-
-
-
-        # compression here? or seperate method?
+        # test replica command
 
     def test_delete_share(self):
         self.assertEqual(1,2)
