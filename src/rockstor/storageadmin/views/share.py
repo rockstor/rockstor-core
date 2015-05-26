@@ -185,7 +185,7 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
             try:
                 share = Share.objects.get(name=sname)
             except:
-                {}
+                e_msg = ('Share(%s) does not exist.' % sname)
                 handle_exception(Exception(e_msg), request)
 
             if (Snapshot.objects.filter(share=share,
