@@ -22,7 +22,10 @@ import mock
 from mock import patch
 
 from storageadmin.models import Pool
+from storageadmin.tests.test_api import RockstorAPITests
 
+
+# class PoolTests(APITestCase, RockstorAPITests):
 class PoolTests(APITestCase):
     fixtures = ['fix1.json']
     BASE_URL = '/api/pools'
