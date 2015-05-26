@@ -1,3 +1,5 @@
+from storageadmin.tests.test_api import RockstorAPITests
+
 __author__ = 'samrichards'
 
 """
@@ -30,7 +32,7 @@ from storageadmin.models import Pool
 # 2. overlapping mocks for pools & shares? place in parent class
 # 3.
 
-
+# class ShareTests(APITestCase, RockstorAPITests):
 class ShareTests(APITestCase):
     fixtures = ['fix1.json']
     BASE_URL = '/api/shares'
@@ -68,6 +70,11 @@ class ShareTests(APITestCase):
         self.patch_remove_share = patch('storageadmin.views.share.remove_share')
         self.mock_remove_share = self.patch_remove_share.start()
         self.mock_remove_share.return_value = 'foo'
+
+        # error handling run_command mocks
+        self.patch_run_command = patch('storageadmin.util.run_command')
+        self.mock_run_command = self.patch_run_command.start()
+        self.mock_run_command.return_value = True
 
     @classmethod
     def tearDownClass(self):
