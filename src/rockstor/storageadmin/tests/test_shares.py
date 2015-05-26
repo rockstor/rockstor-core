@@ -88,7 +88,7 @@ class ShareTests(APITestCase):
 
     def test_auth(self):
         """
-        unauthorized api access
+        Test unauthorized api access
         """
         self.client.logout()
         response = self.client.get(self.BASE_URL)
@@ -96,7 +96,9 @@ class ShareTests(APITestCase):
 
     def test_get(self):
         """
-        get on the base url.
+        Test GET request
+        1. Get base URL
+        2. Get nonexistant share
         """
         response = self.client.get(self.BASE_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
@@ -139,88 +141,15 @@ class ShareTests(APITestCase):
                              status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
             self.assertEqual(response.data['detail'], e_msg)
 
-    def test_compression(self):
-        """
-        Compression is agnostic to name, raid and number of disks. So no need to
-        test it with different types of pools. Every post & remount calls this.
-        1. Create a pool with invalid compression
-        2. Create a pool with zlib compression
-        3. Create a pool with lzo compression
-        4. change compression from zlib to lzo
-        5. change compression from lzo to zlib
-        6. disable zlib, enable zlib
-        7. disable lzo, enable lzo
-        """
-
-        # diff compressions on creation
-        # edit compression post creation... this is a POST w/ compress command in URL
-
-        # create share with invalid compression
-        data = {'sname': 'rootshare', 'pool': 'rockstor_rockstor',
-                'size': 100, 'compression': 'derp'}
-        e_msg = ("Unsupported compression algorithm(derp). "
-                 "Use one of ('lzo', 'zlib', 'no')")
-        response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
-        self.assertEqual(response.data['detail'], e_msg)
-
-        # create share with zlib compression
-        data['compression'] = 'zlib'
-        response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
-        # self.assertEqual(response.data, 'derp')
-        self.assertEqual(response.data['compression_algo'], 'zlib')
-
-        # create share with lzo compression
-        data2 = {'sname': 'share2', 'pool': 'rockstor_rockstor',
-                'size': 100, 'compression': 'lzo'}
-        response2 = self.client.post(self.BASE_URL, data=data2)
-        self.assertEqual(response2.status_code, status.HTTP_200_OK, msg=response2.data)
-        self.assertEqual(response2.data['compression_algo'], 'lzo')
-
-        # change compression from zlib to lzo
-        # TODO suman - same deal, doesn't work if we only send over compression data
-        data3 = {'compression': 'lzo'}
-        # data3 = {'sname': 'rootshare', 'pool': 'rockstor_rockstor',
-        #         'size': 100, 'compression': 'lzo'}
-        # data3 = {'group': u'root', 'name': u'rootshare', 'perms': u'755', 'r_usage': -1, 'e_usage': -1, 'snapshots': [], 'compression_algo': u'lzo', 'owner': u'root', 'replica': False, 'qgroup': u'0/derp', 'toc': u'2015-05-24T06:08:50.406267Z', 'subvol_name': u'rootshare', 'size': 100, 'nfs_exports': [], u'id': 1, 'pool': OrderedDict([(u'id', 1), ('disks', [OrderedDict([(u'id', 1), ('pool_name', u'rockstor_rockstor'), ('name', u'sda3'), ('size', 8912896), ('offline', False), ('parted', False), ('btrfs_uuid', u'b71dd067-abd9-48ca-8e48-67c7c5cb17de'), ('model', None), ('serial', u'VBb419f409-272c21e5'), ('transport', None), ('vendor', None), ('smart_available', False), ('smart_enabled', False), ('pool', 1)])]), ('free', 8924160), ('reclaimable', 0), ('name', u'rockstor_rockstor'), ('uuid', u'b71dd067-abd9-48ca-8e48-67c7c5cb17de'), ('size', 8924160), ('raid', u'single'), ('toc', u'2015-04-11T00:31:29.550000Z'), ('compression', None), ('mnt_options', None)]), 'uuid': None}
-        # TODO should be PUT not POST
-        # response3 = self.client.post('%s/rootshare/compress' % self.BASE_URL, data=data3)
-        # TODO suman -- need "compress" command? currently doesn't allow PUTs
-        response3 = self.client.put('%s/rootshare' % self.BASE_URL, data=data3)
-        self.assertEqual(response3.status_code, status.HTTP_200_OK, msg=response3.data)
-        self.assertEqual(response3.data['compression_algo'], 'lzo')
-
-        # change compression from lzo to zlib
-        data4 = {'compression': 'zlib'}
-        response4 = self.client.put('%s/share2' % self.BASE_URL, data=data4)
-        self.assertEqual(response4.status_code, status.HTTP_200_OK, msg=response4.data)
-        self.assertEqual(response4.data['compression_algo'], 'zlib')
-
-        # disable zlib compression
-        data5 = {'compression': 'no'}
-        response5 = self.client.put('%s/share2' % self.BASE_URL, data=data5)
-        self.assertEqual(response5.status_code, status.HTTP_200_OK, msg=response5.data)
-        self.assertEqual(response5.data['compression_algo'], 'no')
-
-        # enable zlib compression
-        response6 = self.client.put('%s/share2' % self.BASE_URL, data=data4)
-        self.assertEqual(response6.status_code, status.HTTP_200_OK, msg=response6.data)
-        self.assertEqual(response6.data['compression_algo'], 'zlib')
-
-        # disable lzo compression
-        response7 = self.client.put('%s/rootshare' % self.BASE_URL, data=data5)
-        self.assertEqual(response7.status_code, status.HTTP_200_OK, msg=response7.data)
-        self.assertEqual(response7.data['compression_algo'], 'no')
-
-        # enable lzo compression
-        response8 = self.client.put('%s/rootshare' % self.BASE_URL, data=data3)
-        self.assertEqual(response8.status_code, status.HTTP_200_OK, msg=response8.data)
-        self.assertEqual(response8.data['compression_algo'], 'lzo')
-
     def test_create(self):
-
+        """
+        Test POST request to create shares
+        1. Create share on a nonexistent pool
+        2. Create share on root pool
+        3. Create share with invalid compression
+        4. Create shares with invalid sizes
+        5. Create shares with duplicate names
+        """
         # create a share on a pool that does not exist
         data = {'sname': 'rootshare', 'pool': 'does_not_exist', 'size': 1048576}
         e_msg = ('Pool(does_not_exist) does not exist.')
@@ -280,6 +209,14 @@ class ShareTests(APITestCase):
         # test replica command
 
     def test_resize(self):
+        """
+        Test PUT request to update size of share
+        1. Create valid share
+        2. Valid resize
+        3. Resize nonexistent share
+        4. Resize share below current usage value
+        5. Resize share below minimum 100KB
+        """
 
         #create new share
         data = {'sname': 'rootshare', 'pool': 'rockstor_rockstor', 'size': 100}
@@ -320,7 +257,88 @@ class ShareTests(APITestCase):
         e_msg = ('Share size should atleast be 100KB. Given size is 99KB')
         self.assertEqual(response3.data['detail'], e_msg)
 
+    def test_compression(self):
+        """
+        Test PUT request to update share compression_algo
+        1. Create a share with invalid compression
+        2. Create a share with zlib compression
+        3. Create a share with lzo compression
+        4. change compression from zlib to lzo
+        5. change compression from lzo to zlib
+        6. disable zlib, enable zlib
+        7. disable lzo, enable lzo
+        """
+
+        # create share with invalid compression
+        data = {'sname': 'rootshare', 'pool': 'rockstor_rockstor',
+                'size': 100, 'compression': 'derp'}
+        e_msg = ("Unsupported compression algorithm(derp). "
+                 "Use one of ('lzo', 'zlib', 'no')")
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+        self.assertEqual(response.data['detail'], e_msg)
+
+        # create share with zlib compression
+        data['compression'] = 'zlib'
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
+        # self.assertEqual(response.data, 'derp')
+        self.assertEqual(response.data['compression_algo'], 'zlib')
+
+        # create share with lzo compression
+        data2 = {'sname': 'share2', 'pool': 'rockstor_rockstor',
+                'size': 100, 'compression': 'lzo'}
+        response2 = self.client.post(self.BASE_URL, data=data2)
+        self.assertEqual(response2.status_code, status.HTTP_200_OK, msg=response2.data)
+        self.assertEqual(response2.data['compression_algo'], 'lzo')
+
+        # change compression from zlib to lzo
+        data3 = {'compression': 'lzo'}
+        # data3 = {'sname': 'rootshare', 'pool': 'rockstor_rockstor',
+        #         'size': 100, 'compression': 'lzo'}
+        # data3 = {'group': u'root', 'name': u'rootshare', 'perms': u'755', 'r_usage': -1, 'e_usage': -1, 'snapshots': [], 'compression_algo': u'lzo', 'owner': u'root', 'replica': False, 'qgroup': u'0/derp', 'toc': u'2015-05-24T06:08:50.406267Z', 'subvol_name': u'rootshare', 'size': 100, 'nfs_exports': [], u'id': 1, 'pool': OrderedDict([(u'id', 1), ('disks', [OrderedDict([(u'id', 1), ('pool_name', u'rockstor_rockstor'), ('name', u'sda3'), ('size', 8912896), ('offline', False), ('parted', False), ('btrfs_uuid', u'b71dd067-abd9-48ca-8e48-67c7c5cb17de'), ('model', None), ('serial', u'VBb419f409-272c21e5'), ('transport', None), ('vendor', None), ('smart_available', False), ('smart_enabled', False), ('pool', 1)])]), ('free', 8924160), ('reclaimable', 0), ('name', u'rockstor_rockstor'), ('uuid', u'b71dd067-abd9-48ca-8e48-67c7c5cb17de'), ('size', 8924160), ('raid', u'single'), ('toc', u'2015-04-11T00:31:29.550000Z'), ('compression', None), ('mnt_options', None)]), 'uuid': None}
+        # TODO should be PUT not POST
+        # response3 = self.client.post('%s/rootshare/compress' % self.BASE_URL, data=data3)
+        # TODO suman -- need "compress" command? currently doesn't allow PUTs
+        response3 = self.client.put('%s/rootshare' % self.BASE_URL, data=data3)
+        self.assertEqual(response3.status_code, status.HTTP_200_OK, msg=response3.data)
+        self.assertEqual(response3.data['compression_algo'], 'lzo')
+
+        # change compression from lzo to zlib
+        data4 = {'compression': 'zlib'}
+        response4 = self.client.put('%s/share2' % self.BASE_URL, data=data4)
+        self.assertEqual(response4.status_code, status.HTTP_200_OK, msg=response4.data)
+        self.assertEqual(response4.data['compression_algo'], 'zlib')
+
+        # disable zlib compression
+        data5 = {'compression': 'no'}
+        response5 = self.client.put('%s/share2' % self.BASE_URL, data=data5)
+        self.assertEqual(response5.status_code, status.HTTP_200_OK, msg=response5.data)
+        self.assertEqual(response5.data['compression_algo'], 'no')
+
+        # enable zlib compression
+        response6 = self.client.put('%s/share2' % self.BASE_URL, data=data4)
+        self.assertEqual(response6.status_code, status.HTTP_200_OK, msg=response6.data)
+        self.assertEqual(response6.data['compression_algo'], 'zlib')
+
+        # disable lzo compression
+        response7 = self.client.put('%s/rootshare' % self.BASE_URL, data=data5)
+        self.assertEqual(response7.status_code, status.HTTP_200_OK, msg=response7.data)
+        self.assertEqual(response7.data['compression_algo'], 'no')
+
+        # enable lzo compression
+        response8 = self.client.put('%s/rootshare' % self.BASE_URL, data=data3)
+        self.assertEqual(response8.status_code, status.HTTP_200_OK, msg=response8.data)
+        self.assertEqual(response8.data['compression_algo'], 'lzo')
+
     def test_delete(self):
+        """
+        Test DELETE request on share
+        1. Create valid share
+        2. Delete share
+        3. Delete nonexistent share
+        """
 
         # create share
         data = {'sname': 'rootshare', 'pool': 'rockstor_rockstor', 'size': 100}
