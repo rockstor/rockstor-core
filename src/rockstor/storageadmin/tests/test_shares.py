@@ -174,42 +174,43 @@ class ShareTests(APITestCase):
 
         # change compression from zlib to lzo
         # TODO suman - same deal, doesn't work if we only send over compression data
-        # data3 = {'compression': 'lzo'}
-        data3 = {'sname': 'rootshare', 'pool': 'rockstor_rockstor',
-                'size': 100, 'compression': 'lzo'}
+        data3 = {'compression': 'lzo'}
+        # data3 = {'sname': 'rootshare', 'pool': 'rockstor_rockstor',
+        #         'size': 100, 'compression': 'lzo'}
         # data3 = {'group': u'root', 'name': u'rootshare', 'perms': u'755', 'r_usage': -1, 'e_usage': -1, 'snapshots': [], 'compression_algo': u'lzo', 'owner': u'root', 'replica': False, 'qgroup': u'0/derp', 'toc': u'2015-05-24T06:08:50.406267Z', 'subvol_name': u'rootshare', 'size': 100, 'nfs_exports': [], u'id': 1, 'pool': OrderedDict([(u'id', 1), ('disks', [OrderedDict([(u'id', 1), ('pool_name', u'rockstor_rockstor'), ('name', u'sda3'), ('size', 8912896), ('offline', False), ('parted', False), ('btrfs_uuid', u'b71dd067-abd9-48ca-8e48-67c7c5cb17de'), ('model', None), ('serial', u'VBb419f409-272c21e5'), ('transport', None), ('vendor', None), ('smart_available', False), ('smart_enabled', False), ('pool', 1)])]), ('free', 8924160), ('reclaimable', 0), ('name', u'rockstor_rockstor'), ('uuid', u'b71dd067-abd9-48ca-8e48-67c7c5cb17de'), ('size', 8924160), ('raid', u'single'), ('toc', u'2015-04-11T00:31:29.550000Z'), ('compression', None), ('mnt_options', None)]), 'uuid': None}
         # TODO should be PUT not POST
-        response3 = self.client.post('%s/rootshare/compress' % self.BASE_URL, data=data3)
-        # response3 = self.client.put('%s/rootshare/compress' % self.BASE_URL, data=data3)
+        # response3 = self.client.post('%s/rootshare/compress' % self.BASE_URL, data=data3)
+        # TODO suman -- need "compress" command? currently doesn't allow PUTs
+        response3 = self.client.put('%s/rootshare' % self.BASE_URL, data=data3)
         self.assertEqual(response3.status_code, status.HTTP_200_OK, msg=response3.data)
         self.assertEqual(response3.data['compression_algo'], 'lzo')
 
-        # # change compression from lzo to zlib
-        # data4 = {'compression': 'zlib'}
-        # response4 = self.client.put('%s/singlepool2/remount' % self.BASE_URL, data=data4)
-        # self.assertEqual(response4.status_code, status.HTTP_200_OK, msg=response4.data)
-        # self.assertEqual(response4.data['compression'], 'zlib')
-        #
-        # # disable zlib compression
-        # data5 = {'compression': 'no'}
-        # response5 = self.client.put('%s/singlepool2/remount' % self.BASE_URL, data=data5)
-        # self.assertEqual(response5.status_code, status.HTTP_200_OK, msg=response5.data)
-        # self.assertEqual(response5.data['compression'], 'no')
-        #
-        # # enable zlib compression
-        # response6 = self.client.put('%s/singlepool2/remount' % self.BASE_URL, data=data4)
-        # self.assertEqual(response6.status_code, status.HTTP_200_OK, msg=response6.data)
-        # self.assertEqual(response6.data['compression'], 'zlib')
-        #
-        # # disable lzo compression
-        # response7 = self.client.put('%s/singlepool/remount' % self.BASE_URL, data=data5)
-        # self.assertEqual(response7.status_code, status.HTTP_200_OK, msg=response7.data)
-        # self.assertEqual(response7.data['compression'], 'no')
-        #
-        # # enable lzo compression
-        # response8 = self.client.put('%s/singlepool/remount' % self.BASE_URL, data=data3)
-        # self.assertEqual(response8.status_code, status.HTTP_200_OK, msg=response8.data)
-        # self.assertEqual(response8.data['compression'], 'lzo')
+        # change compression from lzo to zlib
+        data4 = {'compression': 'zlib'}
+        response4 = self.client.put('%s/share2' % self.BASE_URL, data=data4)
+        self.assertEqual(response4.status_code, status.HTTP_200_OK, msg=response4.data)
+        self.assertEqual(response4.data['compression_algo'], 'zlib')
+
+        # disable zlib compression
+        data5 = {'compression': 'no'}
+        response5 = self.client.put('%s/share2' % self.BASE_URL, data=data5)
+        self.assertEqual(response5.status_code, status.HTTP_200_OK, msg=response5.data)
+        self.assertEqual(response5.data['compression_algo'], 'no')
+
+        # enable zlib compression
+        response6 = self.client.put('%s/share2' % self.BASE_URL, data=data4)
+        self.assertEqual(response6.status_code, status.HTTP_200_OK, msg=response6.data)
+        self.assertEqual(response6.data['compression_algo'], 'zlib')
+
+        # disable lzo compression
+        response7 = self.client.put('%s/rootshare' % self.BASE_URL, data=data5)
+        self.assertEqual(response7.status_code, status.HTTP_200_OK, msg=response7.data)
+        self.assertEqual(response7.data['compression_algo'], 'no')
+
+        # enable lzo compression
+        response8 = self.client.put('%s/rootshare' % self.BASE_URL, data=data3)
+        self.assertEqual(response8.status_code, status.HTTP_200_OK, msg=response8.data)
+        self.assertEqual(response8.data['compression_algo'], 'lzo')
 
     def test_create(self):
 
