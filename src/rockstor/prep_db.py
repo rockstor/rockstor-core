@@ -51,18 +51,6 @@ def create_setup():
         s.save()
 
 
-def initialize_plugins():
-    if (not Plugin.objects.filter(name='backup').exists()):
-        backup = Plugin(
-            name='backup',
-            display_name='Backup',
-            description='Backup Server functionality',
-            css_file_name='backup',
-            js_file_name='backup')
-        backup.save()
-
-
 def main():
     create_setup()
     register_services()
-    initialize_plugins()
