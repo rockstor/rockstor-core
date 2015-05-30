@@ -32,7 +32,7 @@ SSHD_CONFIG = '/etc/ssh/sshd_config'
 SYSTEMCTL_BIN = '/usr/bin/systemctl'
 SUPERCTL_BIN = ('%s/bin/supervisorctl' % settings.ROOT_DIR)
 NET = '/usr/bin/net'
-AFP_CONFIG = '/etc/afp.conf'
+AFP_CONFIG = '/etc/netatalk/afp.conf'
 
 
 def init_service_op(service_name, command, throw=True):
