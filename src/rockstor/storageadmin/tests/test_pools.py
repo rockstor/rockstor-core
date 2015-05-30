@@ -22,11 +22,10 @@ import mock
 from mock import patch
 
 from storageadmin.models import Pool
-from storageadmin.tests.test_api import RockstorAPITests
+from storageadmin.tests.test_api import APITestMixin
 
 
-# class PoolTests(APITestCase, RockstorAPITests):
-class PoolTests(APITestCase):
+class PoolTests(APITestMixin, APITestCase):
     fixtures = ['fix1.json']
     BASE_URL = '/api/pools'
 
@@ -78,19 +77,19 @@ class PoolTests(APITestCase):
     def tearDownClass(self):
         patch.stopall()
 
-    def setUp(self):
-        self.client.login(username='admin', password='admin')
-
-    def tearDown(self):
-        self.client.logout()
-
-    def test_auth(self):
-        """
-        unauthorized api access
-        """
-        self.client.logout()
-        response = self.client.get(self.BASE_URL)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+    # def setUp(self):
+    #     self.client.login(username='admin', password='admin')
+    #
+    # def tearDown(self):
+    #     self.client.logout()
+    #
+    # def test_auth(self):
+    #     """
+    #     unauthorized api access
+    #     """
+    #     self.client.logout()
+    #     response = self.client.get(self.BASE_URL)
+    #     self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_get_base(self):
         """
