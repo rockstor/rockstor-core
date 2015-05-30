@@ -1,5 +1,3 @@
-from storageadmin.tests.test_api import RockstorAPITests
-
 __author__ = 'samrichards'
 
 """
@@ -24,88 +22,87 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 import mock
 from mock import patch
+from storageadmin.tests.test_api import APITestMixin
 
-from storageadmin.models import Pool
-
-# TODO inheritance structure... tests/test_api.py
-# 1. determine all mocks needed for share views
-# 2. overlapping mocks for pools & shares? place in parent class
-# 3.
-
-# class ShareTests(APITestCase, RockstorAPITests):
-class ShareTests(APITestCase):
+class ShareTests(APITestMixin, APITestCase):
     fixtures = ['fix1.json']
     BASE_URL = '/api/shares'
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
+        super(ShareTests, cls).setUpClass()
 
         # post mocks
-        self.patch_add_share = patch('storageadmin.views.share.add_share')
-        self.mock_add_share = self.patch_add_share.start()
-        self.mock_add_share.return_value = True
+        cls.patch_add_share = patch('storageadmin.views.share.add_share')
+        cls.mock_add_share = cls.patch_add_share.start()
+        cls.mock_add_share.return_value = True
 
-        self.patch_share_id = patch('storageadmin.views.share.share_id')
-        self.mock_share_id = self.patch_share_id.start()
-        self.mock_share_id.return_value = 'derp'
+        cls.patch_share_id = patch('storageadmin.views.share.share_id')
+        cls.mock_share_id = cls.patch_share_id.start()
+        cls.mock_share_id.return_value = 'derp'
 
-        self.patch_update_quota = patch('storageadmin.views.share.update_quota')
-        self.mock_update_quota = self.patch_update_quota.start()
-        self.mock_update_quota.return_value = True
+        cls.patch_update_quota = patch('storageadmin.views.share.update_quota')
+        cls.mock_update_quota = cls.patch_update_quota.start()
+        cls.mock_update_quota.return_value = True
 
-        self.patch_is_share_mounted = patch('storageadmin.views.share.is_share_mounted')
-        self.mock_is_share_mounted = self.patch_is_share_mounted.start()
-        self.mock_is_share_mounted.return_value = True
+        cls.patch_is_share_mounted = patch('storageadmin.views.share.is_share_mounted')
+        cls.mock_is_share_mounted = cls.patch_is_share_mounted.start()
+        cls.mock_is_share_mounted.return_value = True
 
-        self.patch_set_property = patch('storageadmin.views.share.set_property')
-        self.mock_set_property = self.patch_set_property.start()
-        self.mock_set_property.return_value = True
+        cls.patch_set_property = patch('storageadmin.views.share.set_property')
+        cls.mock_set_property = cls.patch_set_property.start()
+        cls.mock_set_property.return_value = True
 
         # put mocks
-        self.patch_share_usage = patch('storageadmin.views.share.share_usage')
-        self.mock_share_usage = self.patch_share_usage.start()
-        self.mock_share_usage.return_value = 500
+        cls.patch_share_usage = patch('storageadmin.views.share.share_usage')
+        cls.mock_share_usage = cls.patch_share_usage.start()
+        cls.mock_share_usage.return_value = 500
 
         # delete mocks
-        self.patch_remove_share = patch('storageadmin.views.share.remove_share')
-        self.mock_remove_share = self.patch_remove_share.start()
-        self.mock_remove_share.return_value = 'foo'
+        cls.patch_remove_share = patch('storageadmin.views.share.remove_share')
+        cls.mock_remove_share = cls.patch_remove_share.start()
+        cls.mock_remove_share.return_value = 'foo'
 
         # error handling run_command mocks
-        self.patch_run_command = patch('storageadmin.util.run_command')
-        self.mock_run_command = self.patch_run_command.start()
-        self.mock_run_command.return_value = True
+        # cls.patch_run_command = patch('storageadmin.util.run_command')
+        # cls.mock_run_command = cls.patch_run_command.start()
+        # cls.mock_run_command.return_value = True
 
     @classmethod
-    def tearDownClass(self):
-        patch.stopall()
+    def tearDownClass(cls):
+        super(ShareTests, cls).tearDownClass()
+        # patch.stopall()
 
-    def setUp(self):
-        self.client.login(username='admin', password='admin')
+    # def setUp(self):
+        # self.client.login(username='admin', password='admin')
+        # super(ShareTests, self).setUp()
+        # APITestMixin.setUp()
 
-    def tearDown(self):
-        self.client.logout()
+    # def tearDown(self):
+        # self.client.logout()
+        # super(ShareTests, self).tearDown()
+        # APITestMixin.tearDown()
 
-    def test_auth(self):
-        """
-        Test unauthorized api access
-        """
-        self.client.logout()
-        response = self.client.get(self.BASE_URL)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+    # def test_auth(self):
+    #     """
+    #     Test unauthorized api access
+    #     """
+    #     self.client.logout()
+    #     response = self.client.get(self.BASE_URL)
+    #     self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_get(self):
-        """
-        Test GET request
-        1. Get base URL
-        2. Get nonexistant share
-        """
-        response = self.client.get(self.BASE_URL)
-        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
-
-        # get share that doesn't exist
-        response1 = self.client.get('%s/invalid' % self.BASE_URL)
-        self.assertEqual(response1.status_code, status.HTTP_404_NOT_FOUND, msg=response1.data)
+    # def test_get(self):
+    #     """
+    #     Test GET request
+    #     1. Get base URL
+    #     2. Get nonexistant share
+    #     """
+    #     response = self.client.get(self.BASE_URL)
+    #     self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
+    #
+    #     # get share that doesn't exist
+    #     response1 = self.client.get('%s/invalid' % self.BASE_URL)
+    #     self.assertEqual(response1.status_code, status.HTTP_404_NOT_FOUND, msg=response1.data)
 
     def test_name_regex(self):
         """
