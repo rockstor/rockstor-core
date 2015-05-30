@@ -51,6 +51,11 @@ def rockon_status(name):
         return 'error'
 
 
+def rm_container(name):
+    o, e, rc = run_command([DOCKER, 'rm', name], throw=False)
+    return logger.debug('Attempted to remove a container(%s). out: %s '
+                        'err: %s rc: %s.' %  (name, o, e, rc))
+
 @task()
 def start(rid):
     new_status = 'started'
@@ -102,12 +107,12 @@ def install(rid):
 def uninstall(rid, new_state='available'):
     try:
         rockon = RockOn.objects.get(id=rid)
-        if (rockon.name == 'Plex'):
-            run_command([DOCKER, 'rm', rockon.name, ])
+        rm_container(rockon.name)
         if (rockon.name == 'OpenVPN'):
-            run_command([DOCKER, 'rm', rockon.name])
-            run_command([DOCKER, 'rm', 'ovpn-data'])
-    except:
+            rm_container('ovpn-data')
+    except Exception, e:
+        logger.debug('exception while uninstalling rockon')
+        logger.exception(e)
         new_state = 'error'
     finally:
         url = ('%s/%d/state_update' % (ROCKON_URL, rid))
@@ -117,11 +122,7 @@ def uninstall(rid, new_state='available'):
 
 def plex_install(rockon):
     # to make install idempotent, remove the container that may exist from a previous attempt
-    rm_cmd = [DOCKER, 'rm', rockon.name]
-    o, e, rc = run_command(rm_cmd, throw=False)
-    logger.debug('Attempted to remove container by the same name before '
-                 'install. cmd: %s out: %s err: %s rc: %s.' %
-                 (rm_cmd, o, e, rc))
+    rm_container(rockon.name)
     cmd = [DOCKER, 'run', '-d', '--name', rockon.name, '--net="host"', ]
     config_share = None
     for c in DContainer.objects.filter(rockon=rockon):
