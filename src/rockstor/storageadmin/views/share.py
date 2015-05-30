@@ -28,6 +28,9 @@ from storageadmin.serializers import ShareSerializer
 from storageadmin.util import handle_exception
 from django.conf import settings
 import rest_framework_custom as rfc
+import json
+from smart_manager.models import Service
+
 import logging
 logger = logging.getLogger(__name__)
 
@@ -178,6 +181,24 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
             share.save()
             return Response(ShareSerializer(share).data)
 
+    @staticmethod
+    def _rockon_check(request, sname):
+        try:
+            s = Service.objects.get(name='docker')
+            config = json.loads(s.config)
+        except Exception, e:
+            return logger.exception(e)
+
+        if ('root_share' in config):
+            if (config['root_share'] == sname):
+                e_msg = ('Share(%s) cannot be deleted because it is in use '
+                         'by Rock-on service. If you really need to delete '
+                         'it, (1)turn the service off, (2)change its '
+                         'configuration to use a different Share and then '
+                         '(3)try deleting this Share(%s) again.' %
+                         (sname, sname))
+                handle_exception(Exception(e_msg), request)
+
     @transaction.atomic
     def delete(self, request, sname):
         """
@@ -216,6 +237,8 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
                 e_msg = ('Share(%s) cannot be deleted as it is exported via '
                          'SFTP. Delete SFTP export and try again' % sname)
                 handle_exception(Exception(e_msg), request)
+
+            self._rockon_check(request, sname)
 
             pool_device = Disk.objects.filter(pool=share.pool)[0].name
             e_msg = ('Share(%s) is still mounted and cannot be deleted. '
