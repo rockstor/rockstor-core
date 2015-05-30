@@ -33,6 +33,7 @@ RockonsView = RockstorLayoutView.extend({
 	this.rockons = new RockOnCollection({});
 	this.dependencies.push(this.rockons);
 	this.updateFreq = 15000;
+	this.defTab = 0;
     },
 
     events: {
@@ -46,7 +47,6 @@ RockonsView = RockstorLayoutView.extend({
     },
 
     render: function() {
-	//this.fetch(this.renderRockons, this);
 	this.rockons.fetch();
 	this.updateStatus();
 	return this;
@@ -77,7 +77,7 @@ RockonsView = RockstorLayoutView.extend({
 	$('#docker-service-ph').append(this.dockerServiceView.render().el);
 	$('#install-rockon-overlay').overlay({load: false});
 	this.$("ul.css-tabs").tabs("div.css-panes > div");
-	//this.$("ul.css-tabs").data("tabs").click(1); // activate second tab
+	this.$("ul.css-tabs").data("tabs").click(this.defTab);
     },
 
     installRockon: function(event) {
@@ -130,6 +130,7 @@ RockonsView = RockstorLayoutView.extend({
 	    type: 'POST',
 	    dataType: 'json',
 	    success: function() {
+		_this.defTab = 1;
 		_this.render();
 		enableButton(button);
 	    },
