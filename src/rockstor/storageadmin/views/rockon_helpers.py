@@ -116,6 +116,12 @@ def uninstall(rid, new_state='available'):
 
 
 def plex_install(rockon):
+    # to make install idempotent, remove the container that may exist from a previous attempt
+    rm_cmd = [DOCKER, 'rm', rockon.name]
+    o, e, rc = run_command(rm_cmd, throw=False)
+    logger.debug('Attempted to remove container by the same name before '
+                 'install. cmd: %s out: %s err: %s rc: %s.' %
+                 (rm_cmd, o, e, rc))
     cmd = [DOCKER, 'run', '-d', '--name', rockon.name, '--net="host"', ]
     config_share = None
     for c in DContainer.objects.filter(rockon=rockon):
