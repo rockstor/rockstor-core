@@ -29,6 +29,7 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 	events: {
 	"click #js-cancel": "cancel",
 	"change #task-type": "renderOptionalFields",
+	"ready": "renderCron",
 },
 
 initialize: function() {
@@ -41,6 +42,7 @@ initialize: function() {
 	this.dependencies.push(this.shares);
 	this.dependencies.push(this.pools);
 	this.taskDefId = this.options.taskDefId;
+	this.frequency = "42 4 * * 6";
 	if (!_.isUndefined(this.taskDefId) && !_.isNull(this.taskDefId)) {
 		this.taskDef = new TaskDef({id: this.taskDefId});
 		this.dependencies.push(this.taskDef);
@@ -59,7 +61,9 @@ renderNewScheduledTask: function() {
 		pools: this.pools,
 		taskTypes: ['snapshot', 'scrub'],
 		taskDef: this.taskDef,
-		taskDefId: this.taskDefId
+		taskDefId: this.taskDefId,
+		defaultFrequency: "42 3 * * 5",
+		frequency: this.frequency
 	}));
 	this.renderOptionalFields();
 	this.$('#start_date').datepicker();
@@ -73,16 +77,14 @@ renderNewScheduledTask: function() {
 		name: 'required',
 		start_date: 'required',
 		frequency: {
-		required: true,
-		number: true,
-		min: 1
-	},
-	share: {
-		required: {
-		depends: function(element) {
-		return (_this.$('#task-type').val() == 'snapshot');
-	}
-	}
+		  required: true,
+	    },
+	    share: {
+		  required: {
+		  depends: function(element) {
+		    return (_this.$('#task-type').val() == 'snapshot');
+	      }
+	    }
 	},
 	prefix: {
 		required: {
@@ -132,6 +134,7 @@ renderNewScheduledTask: function() {
 			var url = '/api/sm/tasks/' + _this.taskDefId;
 			var req_type='PUT';
 		}
+		console.log("data: " + JSON.stringify(data));
 		$.ajax({
 			url: url,
 			type: req_type,
@@ -156,7 +159,7 @@ renderOptionalFields: function() {
 	if (this.taskDefId == null) {
 		taskType = this.$('#task-type').val();
 	} else {
-		taskType = this.taskDef.get('task_type')
+		taskType = this.taskDef.get('task_type');
 	}
 	if (taskType == 'snapshot') {
 		this.$('#optional-fields').html(this.snapshotFieldsTemplate({
@@ -177,7 +180,19 @@ renderOptionalFields: function() {
 	});
 },
 
+renderCron: function(event) {
+	console.log("in renderCron");
+	event.preventDefault();
+	this.$('#example1').cron({
+        initial: "42 3 * * 5",
+        onChange: function() {
+            $('#example1-val').text($(this).cron("value"));
+        }
+    });
+},
+
 cancel: function(event) {
+	console.log("in cancel");
 	event.preventDefault();
 	app_router.navigate('scheduled-tasks', {trigger: true});
 }

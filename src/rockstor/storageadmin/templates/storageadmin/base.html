@@ -31,6 +31,7 @@
     <link href="/static/storageadmin/css/bootstrap-timepicker.css" rel="stylesheet">
     <link href="/static/storageadmin/css/style.css" rel="stylesheet">
     <link href="/static/storageadmin/css/font-awesome-4.0.3/css/font-awesome.min.css" rel="stylesheet">
+    <link href="/static/storageadmin/css/jquery-cron.css" rel="stylesheet">
     {% for plugin in installed_plugins %}
     <link href="/static/{{ plugin.plugin_meta.name }}/css/{{ plugin.plugin_meta.name }}.css" rel="stylesheet">
     {% endfor %}
@@ -104,6 +105,7 @@
     <script src="/static/js/lib/simple-slider.min.js"></script>
     <script src="/static/js/lib/chosen.jquery.js"></script>
     <script src="/static/storageadmin/js/storageadmin.js"></script>
+    <script src="/static/js/lib/jquery-cron.js"></script>
     {% for plugin in installed_plugins %}
     <script src="/static/{{ plugin.plugin_meta.name }}/js/{{ plugin.plugin_meta.name }}_plugin.js"></script>
     {% endfor %}
