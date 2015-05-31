@@ -178,7 +178,6 @@ RockonsView = RockstorLayoutView.extend({
 	    type: 'POST',
 	    dataType: 'json',
 	    success: function(data, status, xhr) {
-		console.log('after call', this.rockon);
 		_this.setSliderVal(rockon_id, 1);
 		_this.updateStatus();
 	    },
@@ -376,7 +375,7 @@ RockonShareChoice = RockstorWizardPage.extend({
     save: function() {
 	var share_map = {};
 	var volumes = this.volumes.filter(function(volume) {
-	    share_map[this.$('#' + volume.id).val()] = volume.get('dest_dir');
+	    share_map[volume.get('dest_dir')] = this.$('#' + volume.id).val();
 	    return volume;
 	}, this);
 	this.model.set('share_map', share_map);
@@ -401,7 +400,6 @@ RockonPortChoice = RockstorWizardPage.extend({
       var rules = {};
       var messages = {};
       this.ports.each(function(port) {
-        //rules[port.id] = "required";
 	rules[port.id] = { required: true, number: true };
         messages[port.id] = "Please enter a valid port number";
       });
@@ -414,20 +412,20 @@ RockonPortChoice = RockstorWizardPage.extend({
 
     save: function() {
 
-      // Validate the form
-      if (!this.portForm.valid()) {
-        this.validator.showErrors();
-        // return rejected promise so that the wizard doesn't proceed to the next page.
-        return $.Deferred().reject();
-      }
+	// Validate the form
+	if (!this.portForm.valid()) {
+            this.validator.showErrors();
+            // return rejected promise so that the wizard doesn't proceed to the next page.
+            return $.Deferred().reject();
+	}
 
-      var port_map = {};
-      var cports = this.ports.filter(function(port) {
-        port_map[this.$('#' + port.id).val()] = port.get('containerp');
-        return port;
-      }, this);
-      this.model.set('port_map', port_map);
-      return $.Deferred().resolve();
+	var port_map = {};
+	var cports = this.ports.filter(function(port) {
+	    port_map[port.get('containerp')] = this.$('#' + port.id).val();
+	    return port;
+	}, this);
+	this.model.set('port_map', port_map);
+	return $.Deferred().resolve();
     }
 });
 
@@ -463,7 +461,7 @@ RockonCustomChoice = RockstorWizardPage.extend({
 	}
 	var cc_map = {};
 	var cconfigs = this.custom_config.filter(function(cc) {
-	    cc_map[this.$('#' + cc.id).val()] = cc.get('key');
+	    cc_map[cc.get('key')] = this.$('#' + cc.id).val();
 	    return cc;
 	}, this);
 	this.model.set('cc_map', cc_map);
@@ -488,9 +486,7 @@ RockonInstallSummary = RockstorWizardPage.extend({
 	this.$('#ph-summary-table').html(this.table_template({
 	    share_map: this.share_map,
 	    port_map: this.port_map,
-	    cc_map: this.cc_map,
-	    ports: this.ports,
-	    cc: this.cc}));
+	    cc_map: this.cc_map,}));
 	return this;
     }
 });
@@ -678,7 +674,7 @@ RockonAddShare = RockstorWizardPage.extend({
 	    return $.Deferred().reject();
 	}
 	this.share_map = this.model.get('shares');
-	this.share_map[this.$('#share').val()] = this.$('#volume').val();
+	this.share_map[this.$('#volume').val()] = this.$('#share').val();
 	this.model.set('shares', this.share_map);
 	return $.Deferred().resolve();
     }
