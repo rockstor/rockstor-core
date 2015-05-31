@@ -24,7 +24,7 @@ from storageadmin.models import (RockOn, DContainer, DVolume, Share, DPort,
 from storageadmin.serializers import RockOnSerializer
 import rest_framework_custom as rfc
 from storageadmin.util import handle_exception
-from rockon_helpers import (docker_status, start, stop, install, uninstall)
+from rockon_helpers import (docker_status, start, stop, install, uninstall, update)
 from system.services import superctl
 
 import logging
@@ -125,11 +125,11 @@ class RockOnIdView(rfc.GenericView):
             elif (command == 'update'):
                 if (rockon.state != 'installed'):
                     e_msg = ('Rock-on(%s) is not currently installed. Cannot '
-                             'uninstall it' % rid)
+                             'update it' % rid)
                     handle_exception(Exception(e_msg), request)
                 if (rockon.status != 'stopped'):
                     e_msg = ('Rock-on(%s) must be stopped before it can '
-                             'be uninstalled. Stop it and try again' %
+                             'be updated. Stop it and try again' %
                              rid)
                     handle_exception(Exception(e_msg), request)
                 share_map = request.data.get('shares')
@@ -149,8 +149,7 @@ class RockOnIdView(rfc.GenericView):
                         do.save()
                 rockon.state = 'pending_update'
                 rockon.save()
-                uninstall.async(rockon.id, new_state='pending_install')
-                install.async(rockon.id)
+                update.async(rockon.id)
             elif (command == 'stop'):
                 stop.async(rockon.id)
                 rockon.status = 'stop_pending'
