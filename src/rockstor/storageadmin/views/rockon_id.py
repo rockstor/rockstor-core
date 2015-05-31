@@ -78,19 +78,21 @@ class RockOnIdView(rfc.GenericView):
                 containers = DContainer.objects.filter(rockon=rockon)
                 for co in containers:
                     for s in share_map.keys():
-                        if (not Share.objects.filter(name=s).exists()):
-                            e_msg = ('Invalid Share(%s).' % s)
+                        sname = share_map[s]
+                        if (not Share.objects.filter(name=sname).exists()):
+                            e_msg = ('Invalid Share(%s).' % sname)
                             handle_exception(Exception(e_msg), request)
-                        so = Share.objects.get(name=s)
+                        so = Share.objects.get(name=sname)
                         vo = DVolume.objects.get(container=co,
-                                                 dest_dir=share_map[s])
+                                                 dest_dir=s)
                         vo.share = so
                         vo.save()
                     for p in port_map.keys():
-                        if (not DPort.objects.filter(containerp=port_map[p]).exists()):
-                            e_msg = ('Invalid Port(%s).' % port_map[p])
+                        containerp = port_map[p]
+                        if (not DPort.objects.filter(containerp=containerp).exists()):
+                            e_msg = ('Invalid Port(%s).' % containerp)
                             handle_exception(Exception(e_msg), request)
-                        po = DPort.objects.get(containerp=port_map[p])
+                        po = DPort.objects.get(containerp=p)
                         po.hostp = p
                         po.save()
                         if (rockon.link is not None and
@@ -98,11 +100,11 @@ class RockOnIdView(rfc.GenericView):
                             rockon.link[0] != ':'):
                             rockon.link = (':%s/%s' % (po.hostp, rockon.link))
                     for c in cc_map.keys():
-                        if (not DCustomConfig.objects.filter(rockon=rockon, key=cc_map[c]).exists()):
+                        if (not DCustomConfig.objects.filter(rockon=rockon, key=c).exists()):
                             e_msg = ('Invalid custom config key(%s)' % c)
                             handle_exception(Exception(e_msg), request)
-                        cco = DCustomConfig.objects.get(rockon=rockon, key=cc_map[c])
-                        cco.val = c
+                        cco = DCustomConfig.objects.get(rockon=rockon, key=c)
+                        cco.val = cc_map[c]
                         cco.save()
                 install.async(rockon.id)
                 rockon.state = 'pending_install'
@@ -135,17 +137,18 @@ class RockOnIdView(rfc.GenericView):
                 share_map = request.data.get('shares')
                 for co in DContainer.objects.filter(rockon=rockon):
                     for s in share_map.keys():
-                        if (not Share.objects.filter(name=s).exists()):
-                            e_msg = ('Invalid Share(%s).' % s)
+                        sname = share_map[s]
+                        if (not Share.objects.filter(name=sname).exists()):
+                            e_msg = ('Invalid Share(%s).' % sname)
                             handle_exception(Exception(e_msg), request)
-                        so = Share.objects.get(name=s)
+                        so = Share.objects.get(name=sname)
                         if (DVolume.objects.filter(container=co, share=so).exists()):
-                            e_msg = ('Share(%s) is already assigned to this Rock-on' % s)
+                            e_msg = ('Share(%s) is already assigned to this Rock-on' % sname)
                             handle_exception(Exception(e_msg), request)
-                        if (DVolume.objects.filter(container=co, dest_dir=share_map[s]).exists()):
-                            e_msg = ('Directory(%s) is already mapped for this Rock-on' % share_map[s])
+                        if (DVolume.objects.filter(container=co, dest_dir=s).exists()):
+                            e_msg = ('Directory(%s) is already mapped for this Rock-on' % s)
                             handle_exception(Exception(e_msg), request)
-                        do = DVolume(container=co, share=so, uservol=True, dest_dir=share_map[s])
+                        do = DVolume(container=co, share=so, uservol=True, dest_dir=s)
                         do.save()
                 rockon.state = 'pending_update'
                 rockon.save()
