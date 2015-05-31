@@ -85,6 +85,12 @@ def stop(rid):
 
 
 @task()
+def update(rid):
+    uninstall(rid, new_state='pending_update')
+    install(rid)
+
+
+@task()
 def install(rid):
     new_state = 'installed'
     try:
