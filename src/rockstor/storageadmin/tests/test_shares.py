@@ -63,46 +63,24 @@ class ShareTests(APITestMixin, APITestCase):
         cls.mock_remove_share = cls.patch_remove_share.start()
         cls.mock_remove_share.return_value = 'foo'
 
-        # error handling run_command mocks
-        # cls.patch_run_command = patch('storageadmin.util.run_command')
-        # cls.mock_run_command = cls.patch_run_command.start()
-        # cls.mock_run_command.return_value = True
-
     @classmethod
     def tearDownClass(cls):
         super(ShareTests, cls).tearDownClass()
-        # patch.stopall()
 
-    # def setUp(self):
-        # self.client.login(username='admin', password='admin')
-        # super(ShareTests, self).setUp()
-        # APITestMixin.setUp()
+    def test_get(self):
+        """
+        Test GET request
+        1. Get base URL
+        2. Get nonexistant share
+        """
+        response = self.client.get(self.BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
-    # def tearDown(self):
-        # self.client.logout()
-        # super(ShareTests, self).tearDown()
-        # APITestMixin.tearDown()
-
-    # def test_auth(self):
-    #     """
-    #     Test unauthorized api access
-    #     """
-    #     self.client.logout()
-    #     response = self.client.get(self.BASE_URL)
-    #     self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-    # def test_get(self):
-    #     """
-    #     Test GET request
-    #     1. Get base URL
-    #     2. Get nonexistant share
-    #     """
-    #     response = self.client.get(self.BASE_URL)
-    #     self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
-    #
-    #     # get share that doesn't exist
-    #     response1 = self.client.get('%s/invalid' % self.BASE_URL)
-    #     self.assertEqual(response1.status_code, status.HTTP_404_NOT_FOUND, msg=response1.data)
+        # get share that doesn't exist
+        e_msg = ('Not Found')
+        response1 = self.client.get('%s/invalid' % self.BASE_URL)
+        self.assertEqual(response1.status_code, status.HTTP_404_NOT_FOUND, msg=response1.data)
+        self.assertEqual(response1.data['detail'], e_msg)
 
     def test_name_regex(self):
         """
@@ -119,6 +97,7 @@ class ShareTests(APITestMixin, APITestCase):
         data = {'pool': 'rockstor_rockstor', 'size': 1000}
         valid_names = ('123share', 'SHARE_TEST', 'Zzzz...', '1234', 'myshare',
                        'Sha' + 'r' * 250 + 'e',)
+
         for sname in valid_names:
             data['sname'] = sname
             response = self.client.post(self.BASE_URL, data=data)

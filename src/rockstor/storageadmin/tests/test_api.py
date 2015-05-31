@@ -17,21 +17,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from rest_framework import status
-from rest_framework.test import APITestCase
+from rest_framework.test import APITestCase, APIClient
 import mock
 from mock import patch
-from django.test import Client
-# can't access client in setUpClass: http://stackoverflow.com/questions/28084683/accessing-django-test-client-in-setupclass
 
 # functionality for all API tests.
 
 class APITestMixin(APITestCase):
+
     @classmethod
     def setUpClass(cls):
-        # cls.myclient = Client()
-        # print dir(cls.myclient)
-        # cls.myclient.login(username='admin', password='admin')
-
         # error handling run_command mocks
         cls.patch_run_command = patch('storageadmin.util.run_command')
         cls.mock_run_command = cls.patch_run_command.start()
@@ -39,7 +34,6 @@ class APITestMixin(APITestCase):
 
     @classmethod
     def tearDownClass(cls):
-        # cls.myclient.logout()
         patch.stopall()
 
     def setUp(self):
@@ -48,6 +42,7 @@ class APITestMixin(APITestCase):
     def tearDown(self):
         self.client.logout()
 
+    # TODO way to make this test not run on base class?
     def test_get_base(self):
         """
         get on the base url.
