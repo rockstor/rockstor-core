@@ -217,7 +217,6 @@ RockonsView = RockstorLayoutView.extend({
     },
 
     updateStatus: function() {
-	console.log('in update status');
 	var _this = this;
 	_this.startTime = new Date().getTime();
 	_this.rockons.fetch({
@@ -547,7 +546,6 @@ RockonSettingsWizardView = WizardView.extend({
 	this.volumes.fetch({
 	    success: function () {
 		_this.model.set('volumes', _this.volumes);
-		console.log('rockon', _this.rockon.id, 'volumes', _this.volumes);
 		_this.fetchPorts();
 	    }
 	});

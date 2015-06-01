@@ -21,7 +21,8 @@ from django_ztask.decorators import task
 from cli.rest_util import api_call
 from system.services import service_status
 from storageadmin.models import (RockOn, DContainer, DVolume, DPort,
-                                 DCustomConfig)
+                                 DCustomConfig, Share, Disk)
+from fs import btrfs
 
 DOCKER = '/usr/bin/docker'
 ROCKON_URL = 'https://localhost/api/rockons'
@@ -36,6 +37,10 @@ def docker_status():
         return False
     return True
 
+def mount_share(name, mnt):
+    share = Share.objects.get(name=name)
+    disk = Disk.objects.filter(pool=share.pool)[0].name
+    btrfs.mount_share(share, disk, mnt)
 
 def rockon_status(name):
     try:
@@ -99,6 +104,8 @@ def install(rid):
             plex_install(rockon)
         elif (rockon.name == 'OpenVPN'):
             ovpn_install(rockon)
+        elif (rockon.name == 'Transmission'):
+            transmission_install(rockon)
     except Exception, e:
         logger.debug('exception while installing the rockon')
         logger.exception(e)
@@ -166,6 +173,8 @@ def plex_install(rockon):
 
 
 def ovpn_install(rockon):
+    rm_container('ovpn-data')
+    rm_container(rockon.name)
     cco = DCustomConfig.objects.get(rockon=rockon)
     for c in DContainer.objects.filter(rockon=rockon):
         image = c.dimage.name
@@ -186,9 +195,27 @@ def ovpn_install(rockon):
     run_command(dinit_cmd)
     #logger.debug('volume container initialized 2')
     #dinit2_cmd = [DOCKER, 'run', '--volumes-from', data_container, '--rm', '-it', image, 'ovpn_initpki', ]
-    #run_command(dinit2_cmd)
+    #run_command(dini(t2_cmd)
     logger.debug('volume container initialized 3')
     server_cmd = [DOCKER, 'run', '--volumes-from', data_container, '-d', '--name', rockon.name,
                   '-p', '%s:%s/udp' % (po.hostp, po.containerp), '--cap-add=NET_ADMIN', image]
     run_command(server_cmd)
     run_command([DOCKER, 'stop', rockon.name])
+
+
+def transmission_install(rockon):
+    rm_container(rockon.name)
+    cmd = [DOCKER, 'run', '-d', '--name', rockon.name,]
+    for cco in DCustomConfig.objects.filter(rockon=rockon):
+        cmd.extend(['-e', '%s=%s' % (cco.key, cco.val)])
+    c = DContainer.objects.get(rockon=rockon)
+    image = c.dimage.name
+    run_command([DOCKER, 'pull', image])
+    for v in DVolume.objects.filter(container=c):
+        share_mnt = '/mnt2/%s' % v.share.name
+        mount_share(v.share.name, share_mnt)
+        cmd.extend(['-v', '%s:%s' % (share_mnt, v.dest_dir), ])
+    for p in DPort.objects.filter(container=c):
+        cmd.extend(['-p', '%d:%d' % (p.hostp, p.containerp), ])
+    cmd.append(image)
+    run_command(cmd)

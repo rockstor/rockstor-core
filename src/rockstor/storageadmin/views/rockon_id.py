@@ -95,10 +95,11 @@ class RockOnIdView(rfc.GenericView):
                         po = DPort.objects.get(containerp=p)
                         po.hostp = p
                         po.save()
-                        if (rockon.link is not None and
-                            len(rockon.link) > 0 and
-                            rockon.link[0] != ':'):
-                            rockon.link = (':%s/%s' % (po.hostp, rockon.link))
+                        if (rockon.link is not None):
+                            if (len(rockon.link) > 0 and rockon.link[0] != ':'):
+                                rockon.link = (':%s/%s' % (po.hostp, rockon.link))
+                            else:
+                                rockon.link = (':%s' % po.hostp)
                     for c in cc_map.keys():
                         if (not DCustomConfig.objects.filter(rockon=rockon, key=c).exists()):
                             e_msg = ('Invalid custom config key(%s)' % c)
@@ -114,7 +115,7 @@ class RockOnIdView(rfc.GenericView):
                     e_msg = ('Rock-on(%s) is not currently installed. Cannot '
                              'uninstall it' % rid)
                     handle_exception(Exception(e_msg), request)
-                if (rockon.status != 'stopped'):
+                if (rockon.status == 'started' or rockon.status == 'start_pending'):
                     e_msg = ('Rock-on(%s) must be stopped before it can '
                              'be uninstalled. Stop it and try again' %
                              rid)
