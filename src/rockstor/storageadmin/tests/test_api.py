@@ -42,13 +42,19 @@ class APITestMixin(APITestCase):
     def tearDown(self):
         self.client.logout()
 
-    # TODO pass baseurl & call test method from other test suites
     def get_base(self, baseurl):
         """
-        get on the base url.
+        Test GET request
+        1. Get base URL
+        2. Pass URL params
+        3. Get nonexistant object
         """
         response = self.client.get(baseurl)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
+
+        # TODO not picking up URL params
+        response1 = self.client.get('%s?sortby=-usage&reverse=yes' % baseurl)
+        self.assertEqual(response1.status_code, status.HTTP_200_OK, msg=response1.data)
 
         # get object that doesn't exist
         e_msg = ('Not Found')
