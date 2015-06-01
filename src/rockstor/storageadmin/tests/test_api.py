@@ -42,17 +42,16 @@ class APITestMixin(APITestCase):
     def tearDown(self):
         self.client.logout()
 
-    # TODO way to make this test not run on base class?
-    def test_get_base(self):
+    # TODO pass baseurl & call test method from other test suites
+    def get_base(self, baseurl):
         """
         get on the base url.
         """
-        response1 = self.client.get(self.BASE_URL)
-        self.assertEqual(response1.status_code, status.HTTP_200_OK, msg=response1.data)
+        response = self.client.get(baseurl)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
-        # TODO Could test get nonexistant item for each
-        # e_msg = ('Not found')
-        # response3 = self.client.get('%s/raid0pool' % self.BASE_URL)
-        # self.assertEqual(response3.status_code,
-        #                  status.HTTP_404_NOT_FOUND, msg=response3.data)
-        # self.assertEqual(response3.data['detail'], e_msg)
+        # get object that doesn't exist
+        e_msg = ('Not Found')
+        response1 = self.client.get('%s/invalid' % baseurl)
+        self.assertEqual(response1.status_code, status.HTTP_404_NOT_FOUND, msg=response1.data)
+        self.assertEqual(response1.data['detail'], e_msg)

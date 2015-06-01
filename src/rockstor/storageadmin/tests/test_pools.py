@@ -73,14 +73,15 @@ class PoolTests(APITestMixin, APITestCase):
     def tearDownClass(cls):
         super(PoolTests, cls).tearDownClass()
 
-    def test_get_base(self):
+    def test_get(self):
         """
-        get on the base url.
+        Test GET request
+        1. Get base URL
+        2. Get nonexistant pool
         """
-        response1 = self.client.get(self.BASE_URL)
-        self.assertEqual(response1.status_code, status.HTTP_200_OK, msg=response1.data)
+        super(PoolTests, self).get_base(self.BASE_URL)
 
-    def test_invalid_api_requests(self):
+    def test_invalid_requests(self):
         """
         invalid pool api operations
         1. create a pool with invalid raid level
@@ -101,14 +102,8 @@ class PoolTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
         self.assertEqual(response.data['detail'], e_msg)
 
-        # get a pool that doesn't exist
-        e_msg = ('Not found')
-        response3 = self.client.get('%s/raid0pool' % self.BASE_URL)
-        self.assertEqual(response3.status_code,
-                         status.HTTP_404_NOT_FOUND, msg=response3.data)
-        self.assertEqual(response3.data['detail'], e_msg)
-
         # edit a pool that doesn't exist
+        data2 = {'disks': ('sdc', 'sdd',)}
         e_msg = ('Pool(raid0pool) does not exist.')
         response4 = self.client.put('%s/raid0pool/add' % self.BASE_URL, data=data2)
         self.assertEqual(response4.status_code,
@@ -122,7 +117,6 @@ class PoolTests(APITestMixin, APITestCase):
         self.assertEqual(response5.data['detail'], e_msg)
 
         # attempt to add disk to root pool
-        data2 = {'disks': ('sdc', 'sdd',)}
         e_msg = ('Edit operations are not allowed on this '
                  'Pool(rockstor_rockstor) as it contains the operating system.')
         response2 = self.client.put('%s/rockstor_rockstor/add' % self.BASE_URL, data=data2)
@@ -172,7 +166,6 @@ class PoolTests(APITestMixin, APITestCase):
             self.assertEqual(response.status_code,
                              status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
             self.assertEqual(response.data['detail'], e_msg)
-
 
     def test_compression(self):
         """
