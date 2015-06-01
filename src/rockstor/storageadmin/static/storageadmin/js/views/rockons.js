@@ -485,7 +485,7 @@ RockonInstallSummary = RockstorWizardPage.extend({
 	this.$('#ph-summary-table').html(this.table_template({
 	    share_map: this.share_map,
 	    port_map: this.port_map,
-	    cc_map: this.cc_map,}));
+	    cc_map: this.cc_map}));
 	return this;
     }
 });

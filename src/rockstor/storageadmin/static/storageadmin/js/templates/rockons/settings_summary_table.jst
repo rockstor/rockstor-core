@@ -52,4 +52,17 @@
     following command as root. The resulting .ovpn file can be used to connect.
   </p>
   <code>/opt/rockstor/bin/ovpn-client-print</code>
+  <h4><u>Configure firewall</u></h4>
+  <p>
+    If your Rockstor machine is behind a firewall, you may need to configure
+    port forwarding to pass through vpn traffic to Rockstor.
+  </p>
+<% } else if (rockon.get('name') == "BTSync") { %>
+  <% var vol = volumes.find(function(v) { return v.get('dest_dir') == '/data'; }); %>
+  <h3>Information about Authentication</h3>
+  <p>The default username for the UI is <strong>admin</strong> and the password is <strong>password</strong> .</p>
+  <% if (vol) { %>
+  <p>You can change the username and password by editing <strong>btsync.conf</strong> inside the Share called <strong><%= vol.get('share_name') %></strong></p>
+  <p>Restart the Rock-on after changing the password for it to take affect.</p>
+  <% } %>
 <% } %>

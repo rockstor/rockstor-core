@@ -127,7 +127,7 @@ class RockOnView(rfc.GenericView):
                                 defaults={'description': cc_d[k]})
                             if (not created):
                                 cco.description = cc_d[k]
-                            if (k == 'iprange' and ro.name == 'Plex'):
+                            if (not created and k == 'iprange' and ro.name == 'Plex'):
                                 from storageadmin.models import NetworkInterface
                                 try:
                                     ni = NetworkInterface.objects.filter(itype='management')[0]
@@ -137,7 +137,8 @@ class RockOnView(rfc.GenericView):
                             cco.save()
                     if ('app_link' in rockons[r]):
                         app_link = rockons[r]['app_link']
-                        ro.link = app_link
+                        if (ro.state != 'installed'):
+                            ro.link = app_link
                     if ('website' in rockons[r]):
                         ro.website = rockons[r]['website']
                     ro.save()
