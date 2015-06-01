@@ -73,14 +73,7 @@ class ShareTests(APITestMixin, APITestCase):
         1. Get base URL
         2. Get nonexistant share
         """
-        response = self.client.get(self.BASE_URL)
-        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
-
-        # get share that doesn't exist
-        e_msg = ('Not Found')
-        response1 = self.client.get('%s/invalid' % self.BASE_URL)
-        self.assertEqual(response1.status_code, status.HTTP_404_NOT_FOUND, msg=response1.data)
-        self.assertEqual(response1.data['detail'], e_msg)
+        super(ShareTests, self).get_base(self.BASE_URL)
 
     def test_name_regex(self):
         """
@@ -335,4 +328,4 @@ class ShareTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response3.data)
         self.assertEqual(response3.data['detail'], e_msg)
 
-        # TODO test delete on shares w/ snapshots... requires creating snapshots (views/snapshot.py)
+        # TODO test delete on shares w/ snapshots... mock snapshot
