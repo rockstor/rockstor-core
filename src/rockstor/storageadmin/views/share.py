@@ -111,14 +111,7 @@ class ShareListView(ShareMixin, rfc.GenericView):
                 e_msg = ('A Pool with this name(%s) exists. Share and Pool names '
                          'must be distinct. Choose a different name' % sname)
                 handle_exception(Exception(e_msg), request)
-
-            try:
-                disk = Disk.objects.filter(pool=pool)[0]
-            except:
-                e_msg = ('Pool(%s) does not have any disks in it.' %
-                         pool_name)
-                handle_exception(Exception(e_msg), request)
-
+            disk = Disk.objects.filter(pool=pool)[0]
             replica = False
             if ('replica' in request.data):
                 replica = request.data['replica']
