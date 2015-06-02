@@ -53,7 +53,7 @@ class APITestMixin(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
         # TODO not picking up URL params
-        response1 = self.client.get('%s?sortby=-usage&reverse=yes' % baseurl)
+        response1 = self.client.get('%s?sortby=usage&reverse=yes' % baseurl)
         self.assertEqual(response1.status_code, status.HTTP_200_OK, msg=response1.data)
 
         # get object that doesn't exist
