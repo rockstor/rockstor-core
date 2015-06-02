@@ -2,36 +2,41 @@
 <table class="table table-condensed table-bordered table-hover table-striped tablesorter">
 <thead>
   <tr>
-    <th>Resource type</th>
-    <th>Name ... Value&nbsp;&nbsp<i class="fa fa-exclamation-circle" title="Name is how the resource appears inside the Rock-on and Value is the Rockstor resource that maps to it." rel="tooltip"></i></th>
+     <th>Resource type&nbsp;&nbsp<i class="fa fa-exclamation-circle" title="Type of the system resource on Rockstor. Eg: Share, port numbers etc.. Custom type is for arbitrary variables needed by the Rock-on that may not map to a system resource." rel="tooltip"></i></th>
+    <th>Name&nbsp;&nbsp<i class="fa fa-exclamation-circle" title="Name of the resource according to Rockstor. Eg: Share names, port numbers etc.." rel="tooltip"></i></th>
+    <th>Mapped representation&nbsp;&nbsp<i class="fa fa-exclamation-circle" title="Name/representation of the resource inside the Rock-on. Eg: Shares map to directories, ports map to (possibly different)ports to send traffic to the Rock-on, etc.." rel="tooltip"></i></th>
   </tr>
 </thead>
 
   <% volumes.each(function(volume, index) { %>
     <tr>
       <td>Share</td>
-      <td><%= volume.get('dest_dir') %> ... <%= volume.get('share_name') %></td>
+      <td><%= volume.get('share_name') %></td>
+      <td><%= volume.get('dest_dir') %></td>
     </tr>
   <% }); %>
 
   <% for (share in new_volumes) { %>
     <tr>
       <td><i>Share</i></td>
-      <td><i><%= share %> ... <%= new_volumes[share] %></i></td>
+      <td><i><%= new_volumes[share] %></i></td>
+      <td><i><%= share %></i></td>
     </tr>
   <% } %>
 
   <% ports.each(function(port, index) { %>
     <tr>
       <td>Port</td>
-      <td><%= port.get('containerp') %> ... <%= port.get('hostp') %></td>
+      <td><%= port.get('hostp') %></td>
+      <td><%= port.get('containerp') %></td>
     </tr>
   <% }); %>
 
   <% cc.each(function(cci, index) { %>
     <tr>
       <td>Custom</td>
-      <td><%= cci.get('key') %> ... <%= cci.get('val') %>&nbsp;&nbsp<i class="fa fa-exclamation-circle" title="<%= cci.get('description') %>" rel="tooltip"></i></td>
+      <td><%= cci.get('val') %>&nbsp;&nbsp<i class="fa fa-exclamation-circle" title="<%= cci.get('description') %>" rel="tooltip"></i></td>
+      <td><%= cci.get('key') %></td>
     </tr>
   <% }); %>
 </table>
