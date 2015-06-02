@@ -234,7 +234,7 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
             self._rockon_check(request, sname)
 
             pool_device = Disk.objects.filter(pool=share.pool)[0].name
-            e_msg = ('Share(%s) is still mounted and cannot be deleted. '
+            e_msg = ('Share(%s) may still be mounted and cannot be deleted. '
                      'Trying again usually succeeds. But if it does not, '
                      'you can manually unmount it with'
                      ' command: /usr/bin/umount /mnt2/%s' % (sname, sname))
@@ -242,6 +242,7 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
                 remove_share(share.pool, pool_device, share.subvol_name)
             except Exception, e:
                 logger.exception(e)
+                e_msg = ('%s . Error from the OS: %s' % (e_msg, e.__str__()))
                 handle_exception(Exception(e_msg), request)
             share.delete()
             return Response()
