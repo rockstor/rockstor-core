@@ -95,9 +95,18 @@ class RockOnIdView(rfc.GenericView):
                         po = DPort.objects.get(containerp=p)
                         if (po.hostp != port_map[p] and
                             DPort.objects.filter(Q(hostp=port_map[p]) & ~Q(id=po.id)).exists()):
-                            e_msg = ('Rockstor port(%s) is in use. '
-                                     'Choose a different one' % port_map[p])
-                            handle_exception(Exception(e_msg), request)
+                            opo = DPort.objects.filter(Q(hostp=port_map[p]) & ~Q(id=po.id))[0]
+                            if (opo.container.rockon.state != 'available' or
+                                opo.hostp == opo.containerp):
+                                e_msg = ('Rockstor port(%s) is dedicated '
+                                         'to another rockon(%s) and cannot'
+                                         ' be changed. '
+                                         'Choose a different one' %
+                                         (port_map[p], opo.container.rockon.name))
+                                handle_exception(Exception(e_msg), request)
+                            else:
+                                opo.hostp = opo.containerp
+                                opo.save()
                         po.hostp = port_map[p]
                         po.save()
                         if (po.uiport is True and rockon.link is not None):
