@@ -19,6 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import time
 from rest_framework.response import Response
 from django.db import transaction
+from django.db.models import Q
 from storageadmin.models import (RockOn, DContainer, DVolume, Share, DPort,
                                  DCustomConfig)
 from storageadmin.serializers import RockOnSerializer
@@ -88,12 +89,16 @@ class RockOnIdView(rfc.GenericView):
                         vo.share = so
                         vo.save()
                     for p in port_map.keys():
-                        containerp = port_map[p]
-                        if (not DPort.objects.filter(containerp=containerp).exists()):
-                            e_msg = ('Invalid Port(%s).' % containerp)
+                        if (not DPort.objects.filter(containerp=p).exists()):
+                            e_msg = ('Invalid Port(%s).' % p)
                             handle_exception(Exception(e_msg), request)
                         po = DPort.objects.get(containerp=p)
-                        po.hostp = p
+                        if (po.hostp != port_map[p] and
+                            DPort.objects.filter(Q(hostp=port_map[p]) & ~Q(id=po.id)).exists()):
+                            e_msg = ('Rockstor port(%s) is in use. '
+                                     'Choose a different one' % port_map[p])
+                            handle_exception(Exception(e_msg), request)
+                        po.hostp = port_map[p]
                         po.save()
                         if (po.uiport is True and rockon.link is not None):
                             if (len(rockon.link) > 0 and rockon.link[0] != ':'):
