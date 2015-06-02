@@ -1,4 +1,4 @@
-from storageadmin.models import Snapshot
+from storageadmin.models import Snapshot, Share
 
 __author__ = 'samrichards'
 
@@ -65,9 +65,9 @@ class ShareTests(APITestMixin, APITestCase):
         cls.mock_share_usage.return_value = 500
 
         # delete mocks
-        cls.patch_remove_share = patch('storageadmin.views.share.remove_share')
-        cls.mock_remove_share = cls.patch_remove_share.start()
-        cls.mock_remove_share.return_value = 'foo'
+        # cls.patch_remove_share = patch('storageadmin.views.share.remove_share')
+        # cls.mock_remove_share = cls.patch_remove_share.start()
+        # cls.mock_remove_share.return_value = 'foo'
 
         # cls.patch_snapshot_exists = patch('storageadmin.views.share.Snapshot.objects.filter.exists')
         # cls.mock_snapshot_exists = cls.patch_snapshot_exists.start()
@@ -321,40 +321,101 @@ class ShareTests(APITestMixin, APITestCase):
         self.assertEqual(response8.status_code, status.HTTP_200_OK, msg=response8.data)
         self.assertEqual(response8.data['compression_algo'], 'lzo')
 
-    # @mock.patch.object(Snapshot, 'objects')
-    # @mock.patch('storageadmin.views.share.Snapshot.objects.filter')
-    # def test_delete(self, mock_snapshot):
-    def test_delete(self):
+    @mock.patch('storageadmin.views.share.remove_share')
+    @mock.patch('storageadmin.views.share.SFTP')
+    @mock.patch('storageadmin.views.share.SambaShare')
+    @mock.patch('storageadmin.views.share.NFSExport')
+    @mock.patch('storageadmin.views.share.Snapshot')
+    def test_delete(self, mock_snapshot, mock_nfs, mock_samba, mock_sftp, mock_remove_share):
+    # def test_delete(self):
         """
         Test DELETE request on share
         1. Create valid share
-        2. Delete share
-        3. Delete nonexistent share
+        2. Delete share with replication related snapshots
+        3. Delete share with NFS export
+        4. Delete share that is shared via Samba
+        5. Delete share with snapshots
+        6. Delete share with SFTP export
+        7. Delete share with remove_share failure (share still mounted)
+        8. Delete share
+        9. Delete nonexistent share
         """
         # create share
         data = {'sname': 'rootshare', 'pool': 'rockstor_rockstor', 'size': 100}
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
         self.assertEqual(response.data['name'], 'rootshare')
+        share = Share.objects.get(name = 'rootshare')
 
-        # TODO test delete on shares w/ mocked snapshots & exports
-        # mock_snapshot.exists.return_value = True
-        # e_msg = ('Share(rootshare) cannot be deleted as it has replication related snapshots.')
-        # response3 = self.client.delete('%s/rootshare' % self.BASE_URL)
-        # self.assertEqual(response3.status_code,
-        #                  status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response3.data)
-        # self.assertEqual(response3.data['detail'], e_msg)
-        # mock_snapshot.exists.return_value = False
+        # Delete share with replication related snapshots
+        mock_snapshot.objects.filter(share = share, snap_type = 'replication').exists.return_value = True
+        e_msg = ('Share(rootshare) cannot be deleted as it has replication related snapshots.')
+        response2 = self.client.delete('%s/rootshare' % self.BASE_URL)
+        self.assertEqual(response2.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response2.data)
+        self.assertEqual(response2.data['detail'], e_msg)
+        mock_snapshot.objects.filter(share=share, snap_type='replication').exists.return_value = False
 
-        # delete share
-        response9 = self.client.delete('%s/rootshare' % self.BASE_URL)
-        self.assertEqual(response9.status_code, status.HTTP_200_OK, msg=response9.data)
-        assert self.mock_remove_share.called
-        self.assertEqual(response9.data, None)
-
-        # delete a share that doesn't exist
-        e_msg = ('Share(invalid) does not exist.')
-        response3 = self.client.delete('%s/invalid' % self.BASE_URL)
+        # Delete share with NFS export
+        mock_nfs.objects.filter(share = share).exists.return_value = True
+        e_msg = ('Share(rootshare) cannot be deleted as it is exported via nfs. Delete nfs exports and try again')
+        response3 = self.client.delete('%s/rootshare' % self.BASE_URL)
         self.assertEqual(response3.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response3.data)
         self.assertEqual(response3.data['detail'], e_msg)
+        mock_nfs.objects.filter(share = share).exists.return_value = False
+
+        # Delete share that is shared via Samba
+        mock_samba.objects.filter(share = share).exists.return_value = True
+        e_msg = ('Share(rootshare) cannot be deleted as it is shared via Samba. '
+                 'Unshare and try again')
+        response4 = self.client.delete('%s/rootshare' % self.BASE_URL)
+        self.assertEqual(response4.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response4.data)
+        self.assertEqual(response4.data['detail'], e_msg)
+        mock_samba.objects.filter(share = share).exists.return_value = False
+
+        # Delete share with snapshots
+        mock_snapshot.objects.filter(share = share).exists.return_value = True
+        e_msg = ('Share(rootshare) cannot be deleted as it has replication '
+                 'related snapshots.')
+        response5 = self.client.delete('%s/rootshare' % self.BASE_URL)
+        self.assertEqual(response5.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response5.data)
+        self.assertEqual(response5.data['detail'], e_msg)
+        mock_snapshot.objects.filter(share=share).exists.return_value = False
+
+        # Delete share with SFTP export
+        mock_sftp.objects.filter(share = share).exists.return_value = True
+        e_msg = ('Share(rootshare) cannot be deleted as it is exported via '
+                 'SFTP. Delete SFTP export and try again')
+        response6 = self.client.delete('%s/rootshare' % self.BASE_URL)
+        self.assertEqual(response6.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response6.data)
+        self.assertEqual(response6.data['detail'], e_msg)
+        mock_sftp.objects.filter(share = share).exists.return_value = False
+
+        # Delete share with remove_share failure (share still mounted)
+        mock_remove_share.side_effect = Exception
+        e_msg = ('Share(rootshare) is still mounted and cannot be deleted. '
+                 'Trying again usually succeeds. But if it does not, you can '
+                 'manually unmount it with command: /usr/bin/umount /mnt2/rootshare')
+        response7 = self.client.delete('%s/rootshare' % self.BASE_URL)
+        self.assertEqual(response7.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response7.data)
+        self.assertEqual(response7.data['detail'], e_msg)
+        mock_remove_share.return_value = 'foo'
+        mock_remove_share.side_effect = None
+
+        # delete share
+        response8 = self.client.delete('%s/rootshare' % self.BASE_URL)
+        self.assertEqual(response8.status_code, status.HTTP_200_OK, msg=response8.data)
+        assert mock_remove_share.called
+        self.assertEqual(response8.data, None)
+
+        # delete a share that doesn't exist
+        e_msg = ('Share(invalid) does not exist.')
+        response9 = self.client.delete('%s/invalid' % self.BASE_URL)
+        self.assertEqual(response9.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response9.data)
+        self.assertEqual(response9.data['detail'], e_msg)
