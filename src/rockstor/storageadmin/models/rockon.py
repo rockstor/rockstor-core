@@ -56,11 +56,8 @@ class DPort(models.Model):
     hostp = models.IntegerField(unique=True)
     containerp = models.IntegerField()
     container = models.ForeignKey(DContainer)
-    PROTOCOL = [
-        ('tcp',) * 2,
-        ('udp',) * 2,
-    ]
-    protocol = models.CharField(max_length=32, choices=PROTOCOL, null=True)
+    protocol = models.CharField(max_length=32, null=True)
+    uiport = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ('container', 'containerp',)
