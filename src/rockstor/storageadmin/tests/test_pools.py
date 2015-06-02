@@ -199,9 +199,9 @@ class PoolTests(APITestMixin, APITestCase):
 
         # create pool with lzo compression
         data2 = {'disks': ('sde', 'sdf',),
-                'pname': 'singlepool2',
-                'raid_level': 'single',
-                'compression': 'lzo'}
+                 'pname': 'singlepool2',
+                 'raid_level': 'single',
+                 'compression': 'lzo'}
         response2 = self.client.post(self.BASE_URL, data=data2)
         self.assertEqual(response2.status_code, status.HTTP_200_OK, msg=response2.data)
         self.assertEqual(response2.data['compression'], 'lzo')
@@ -409,7 +409,7 @@ class PoolTests(APITestMixin, APITestCase):
 
         # add a disk that already belongs to a pool
         data4 = {'disks': ('sdc',)}
-        e_msg  = ('Disk(sdc) cannot be added to this Pool(singlepool) '
+        e_msg = ('Disk(sdc) cannot be added to this Pool(singlepool) '
                  'because it belongs to another pool(singlepool2)')
         response6 = self.client.put('%s/singlepool/add' % self.BASE_URL, data=data4)
         self.assertEqual(response6.status_code,
@@ -467,7 +467,9 @@ class PoolTests(APITestMixin, APITestCase):
         self.assertEqual(response.data['name'], 'raid0pool')
         self.assertEqual(response.data['raid'], 'raid0')
         self.mock_btrfs_uuid.assert_called_with('sdb')
-        # disk length assert was failing... list is 'empty'... post function was not adding disks to the pool (atleast not saving them)... appears they WERE added but then dropped it on DB call
+        # disk length assert was failing... list is 'empty'... post function
+        # was not adding disks to the pool (atleast not saving them)...
+        # appears they WERE added but then dropped it on DB call
         # solution: assigned disks to the pool & saved each disk
         self.assertEqual(len(response.data['disks']), 2)
 
@@ -492,11 +494,11 @@ class PoolTests(APITestMixin, APITestCase):
         # add 3 disks & change raid_level
         data3 = {'disks': ('sde', 'sdf', 'sdg',),
                  'raid_level': 'raid1', }
-        e_msg = 'A Balance process is already running for this pool(raid0pool).' \
-                ' Resize is not supported during a balance process.'
+        e_msg = 'A Balance process is already running for this pool(raid0pool). ' \
+                'Resize is not supported during a balance process.'
         response4 = self.client.put('%s/raid0pool/add' % self.BASE_URL, data=data3)
         self.assertEqual(response4.status_code,
-                            status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response4.data)
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response4.data)
         self.assertEqual(response4.data['detail'], e_msg)
 
         # delete pool
@@ -799,8 +801,8 @@ class PoolTests(APITestMixin, APITestCase):
 
         # create 'raid1' pool with 2 disks
         data4 = {'disks': ('sdf', 'sdg',),
-                'pname': 'raid1pool',
-                'raid_level': 'raid1', }
+                 'pname': 'raid1pool',
+                 'raid_level': 'raid1', }
         response = self.client.post(self.BASE_URL, data=data4)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
         self.assertEqual(response.data['name'], 'raid1pool')

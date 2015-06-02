@@ -18,11 +18,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework import status
 from rest_framework.test import APITestCase, APIClient
-import mock
 from mock import patch
 
-# functionality for all API tests.
 
+# functionality for all API tests.
 class APITestMixin(APITestCase):
 
     @classmethod
@@ -51,10 +50,6 @@ class APITestMixin(APITestCase):
         """
         response = self.client.get(baseurl)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
-
-        # TODO not picking up URL params
-        response1 = self.client.get('%s?sortby=usage&reverse=yes' % baseurl)
-        self.assertEqual(response1.status_code, status.HTTP_200_OK, msg=response1.data)
 
         # get object that doesn't exist
         e_msg = ('Not Found')
