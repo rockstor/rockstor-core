@@ -477,6 +477,7 @@ RockonInstallSummary = RockstorWizardPage.extend({
 	this.cc_map = this.model.get('cc_map');
 	this.ports = this.model.get('ports');
 	this.cc = this.model.get('custom_config');
+	this.rockon = this.model.get('rockon');
 	RockstorWizardPage.prototype.initialize.apply(this, arguments);
     },
 
@@ -486,26 +487,6 @@ RockonInstallSummary = RockstorWizardPage.extend({
 	    share_map: this.share_map,
 	    port_map: this.port_map,
 	    cc_map: this.cc_map}));
-	return this;
-    }
-});
-
-RockonInstallComplete = RockstorWizardPage.extend({
-    initialize: function() {
-	this.template = window.JST.rockons_install_complete;
-	this.rockon = this.model.get('rockon');
-	this.port_map = this.model.get('port_map');
-	this.share_map = this.model.get('share_map');
-	this.cc_map = this.model.get('cc_map');
-	RockstorWizardPage.prototype.initialize.apply(this, arguments);
-    },
-
-    render: function() {
-	$(this.el).html(this.template({
-	    model: this.model,
-	    port_map: this.port_map,
-	    share_map: this.share_map
-	}));
 	return this;
     },
 
@@ -527,6 +508,25 @@ RockonInstallComplete = RockstorWizardPage.extend({
 	    error: function(request, status, error) { }
 	});
     }
+});
+
+RockonInstallComplete = RockstorWizardPage.extend({
+    initialize: function() {
+	this.template = window.JST.rockons_install_complete;
+	this.port_map = this.model.get('port_map');
+	this.share_map = this.model.get('share_map');
+	RockstorWizardPage.prototype.initialize.apply(this, arguments);
+    },
+
+    render: function() {
+	$(this.el).html(this.template({
+	    model: this.model,
+	    port_map: this.port_map,
+	    share_map: this.share_map
+	}));
+	return this;
+    }
+
 });
 
 RockonSettingsWizardView = WizardView.extend({
@@ -684,6 +684,7 @@ RockonSettingsSummary = RockstorWizardPage.extend({
     initialize: function() {
 	this.template = window.JST.rockons_settings_summary;
 	this.sub_template = window.JST.rockons_settings_summary_table;
+	this.rockon = this.model.get('rockon');
 	RockstorWizardPage.prototype.initialize.apply(this, arguments);
     },
 
@@ -696,22 +697,6 @@ RockonSettingsSummary = RockstorWizardPage.extend({
 	    ports: this.model.get('ports'),
 	    cc: this.model.get('custom_config'),
 	    rockon: this.model.get('rockon')
-	}));
-	return this;
-    }
-});
-
-RockonSettingsComplete = RockstorWizardPage.extend({
-    initialize: function() {
-	this.template = window.JST.rockons_update_complete;
-	this.rockon = this.model.get('rockon');
-	this.shares = this.model.get('shares');
-	RockstorWizardPage.prototype.initialize.apply(this, arguments);
-    },
-
-    render: function() {
-	$(this.el).html(this.template({
-	    model: this.model
 	}));
 	return this;
     },
@@ -728,5 +713,21 @@ RockonSettingsComplete = RockstorWizardPage.extend({
 	    }),
 	    success: function() {}
 	});
+    }
+});
+
+RockonSettingsComplete = RockstorWizardPage.extend({
+    initialize: function() {
+	this.template = window.JST.rockons_update_complete;
+	this.rockon = this.model.get('rockon');
+	this.shares = this.model.get('shares');
+	RockstorWizardPage.prototype.initialize.apply(this, arguments);
+    },
+
+    render: function() {
+	$(this.el).html(this.template({
+	    model: this.model
+	}));
+	return this;
     }
 });
