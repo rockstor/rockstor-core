@@ -33,11 +33,12 @@ class RockOnView(rfc.GenericView):
     serializer_class = RockOnSerializer
 
     def get_queryset(self, *args, **kwargs):
-        for ro in RockOn.objects.all():
-            if (ro.state == 'installed'):
-                #update current running status of installed rockons.
-                ro.status = rockon_status(ro.name)
-                ro.save()
+        if (docker_status()):
+            for ro in RockOn.objects.all():
+                if (ro.state == 'installed'):
+                    #update current running status of installed rockons.
+                    ro.status = rockon_status(ro.name)
+                    ro.save()
         return RockOn.objects.filter().order_by('-id')
 
     @transaction.atomic
