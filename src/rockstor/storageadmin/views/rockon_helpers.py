@@ -108,6 +108,8 @@ def install(rid):
             transmission_install(rockon)
         elif (rockon.name == 'BTSync'):
             btsync_install(rockon)
+        elif (rockon.name == 'Syncthing'):
+            syncthing_install(rockon)
     except Exception, e:
         logger.debug('exception while installing the rockon')
         logger.exception(e)
@@ -224,6 +226,22 @@ def transmission_install(rockon):
 
 
 def btsync_install(rockon):
+    rm_container(rockon.name)
+    cmd = [DOCKER, 'run', '-d', '--name', rockon.name,]
+    c = DContainer.objects.get(rockon=rockon)
+    image = c.dimage.name
+    run_command([DOCKER, 'pull', image])
+    for v in DVolume.objects.filter(container=c):
+        share_mnt = '/mnt2/%s' % v.share.name
+        mount_share(v.share.name, share_mnt)
+        cmd.extend(['-v', '%s:%s' % (share_mnt, v.dest_dir), ])
+    for p in DPort.objects.filter(container=c):
+        cmd.extend(['-p', '%d:%d' % (p.hostp, p.containerp), ])
+    cmd.append(image)
+    run_command(cmd)
+
+
+def syncthing_install(rockon):
     rm_container(rockon.name)
     cmd = [DOCKER, 'run', '-d', '--name', rockon.name,]
     c = DContainer.objects.get(rockon=rockon)

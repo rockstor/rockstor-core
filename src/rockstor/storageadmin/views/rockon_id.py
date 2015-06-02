@@ -95,7 +95,7 @@ class RockOnIdView(rfc.GenericView):
                         po = DPort.objects.get(containerp=p)
                         po.hostp = p
                         po.save()
-                        if (rockon.link is not None):
+                        if (po.uiport is True and rockon.link is not None):
                             if (len(rockon.link) > 0 and rockon.link[0] != ':'):
                                 rockon.link = (':%s/%s' % (po.hostp, rockon.link))
                             else:

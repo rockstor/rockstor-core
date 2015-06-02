@@ -38,7 +38,7 @@ class RockOnView(rfc.GenericView):
                 #update current running status of installed rockons.
                 ro.status = rockon_status(ro.name)
                 ro.save()
-        return RockOn.objects.all()
+        return RockOn.objects.filter().order_by('-id')
 
     @transaction.atomic
     def put(self, request):
@@ -93,10 +93,13 @@ class RockOnView(rfc.GenericView):
                                 if (DPort.objects.filter(hostp=p).exists()):
                                     po = DPort.objects.get(hostp=p)
                                     po.container = co
-                                    po.protocol = ports[p]
                                 else:
                                     po = DPort(hostp=p, containerp=p,
-                                               container=co, protocol=ports[p])
+                                               container=co)
+                                if (ports[p] == 'ui'):
+                                    po.uiport = True
+                                else:
+                                    po.protocol = ports[p]
                                 po.save()
 
                         if ('volumes' in containers[c]):
