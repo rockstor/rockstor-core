@@ -1,5 +1,3 @@
-__author__ = 'samrichards'
-
 """
 Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
@@ -23,6 +21,8 @@ from rest_framework.test import APITestCase
 import mock
 from mock import patch
 from storageadmin.tests.test_api import APITestMixin
+from storageadmin.models import Pool, Share
+
 
 class ShareTests(APITestMixin, APITestCase):
     fixtures = ['fix1.json']
@@ -47,21 +47,20 @@ class ShareTests(APITestMixin, APITestCase):
 
         cls.patch_is_share_mounted = patch('storageadmin.views.share.is_share_mounted')
         cls.mock_is_share_mounted = cls.patch_is_share_mounted.start()
-        cls.mock_is_share_mounted.return_value = True
+        cls.mock_is_share_mounted.return_value = False
 
         cls.patch_set_property = patch('storageadmin.views.share.set_property')
         cls.mock_set_property = cls.patch_set_property.start()
         cls.mock_set_property.return_value = True
 
+        cls.patch_mount_share = patch('storageadmin.views.share.mount_share')
+        cls.mock_mount_share = cls.patch_mount_share.start()
+        cls.mock_mount_share.return_value = True
+
         # put mocks
         cls.patch_share_usage = patch('storageadmin.views.share.share_usage')
         cls.mock_share_usage = cls.patch_share_usage.start()
         cls.mock_share_usage.return_value = 500
-
-        # delete mocks
-        cls.patch_remove_share = patch('storageadmin.views.share.remove_share')
-        cls.mock_remove_share = cls.patch_remove_share.start()
-        cls.mock_remove_share.return_value = 'foo'
 
     @classmethod
     def tearDownClass(cls):
@@ -72,15 +71,16 @@ class ShareTests(APITestMixin, APITestCase):
         Test GET request
         1. Get base URL
         2. Get nonexistant share
+        3. Get w/ sort parameters
         """
-        response = self.client.get(self.BASE_URL)
-        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
+        super(ShareTests, self).get_base(self.BASE_URL)
 
-        # get share that doesn't exist
-        e_msg = ('Not Found')
-        response1 = self.client.get('%s/invalid' % self.BASE_URL)
-        self.assertEqual(response1.status_code, status.HTTP_404_NOT_FOUND, msg=response1.data)
-        self.assertEqual(response1.data['detail'], e_msg)
+        # TODO not picking up URL params
+        response1 = self.client.get('%s?sortby=usage&reverse=yes' % self.BASE_URL)
+        self.assertEqual(response1.status_code, status.HTTP_200_OK, msg=response1.data)
+
+        response2 = self.client.get('%s?sortby=usage' % self.BASE_URL)
+        self.assertEqual(response1.status_code, status.HTTP_200_OK, msg=response2.data)
 
     def test_name_regex(self):
         """
@@ -108,8 +108,8 @@ class ShareTests(APITestMixin, APITestCase):
         e_msg = ('Share name must start with a alphanumeric(a-z0-9) character '
                  'and can be followed by any of the following characters: '
                  'letter(a-z), digits(0-9), hyphen(-), underscore(_) or a period(.).')
-        invalid_names = ('Share $', '-share', '.share', '', ' ',
-                              'Sh' + 'a' * 254 + 're',)
+        invalid_names = ('Share $', '-share', '.share', '', ' ', 'Sh' +
+                         'a' * 254 + 're',)
         for sname in invalid_names:
             data['sname'] = sname
             response = self.client.post(self.BASE_URL, data=data)
@@ -123,8 +123,11 @@ class ShareTests(APITestMixin, APITestCase):
         1. Create share on a nonexistent pool
         2. Create share on root pool
         3. Create share with invalid compression
-        4. Create shares with invalid sizes
-        5. Create shares with duplicate names
+        4. Create share with invalid sizes
+        5. Create share with duplicate names
+        6. Create share with valid replica
+        7. Create share with invalid replica
+        8. Create share with share size > pool size
         """
         # create a share on a pool that does not exist
         data = {'sname': 'rootshare', 'pool': 'does_not_exist', 'size': 1048576}
@@ -166,7 +169,8 @@ class ShareTests(APITestMixin, APITestCase):
 
         # create share with same name as a pool that already exists
         data3 = {'sname': 'rockstor_rockstor', 'pool': 'rockstor_rockstor', 'size': 1048576}
-        e_msg5 = ('A Pool with this name(rockstor_rockstor) exists. Share and Pool names must be distinct. Choose a different name')
+        e_msg5 = ('A Pool with this name(rockstor_rockstor) exists. Share and '
+                  'Pool names must be distinct. Choose a different name')
         response6 = self.client.post(self.BASE_URL, data=data3)
         self.assertEqual(response6.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response6.data)
@@ -178,11 +182,32 @@ class ShareTests(APITestMixin, APITestCase):
         response7 = self.client.post(self.BASE_URL, data=data3)
         self.assertEqual(response7.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response7.data)
-        self.assertEqual(response7.data['detail'], e_msg6)        
+        self.assertEqual(response7.data['detail'], e_msg6)
 
-        # test share with a pool that has no disks
+        # create share with valid replica
+        data4 = {'sname': 'valid_replica', 'pool': 'rockstor_rockstor',
+                 'size': 100, 'replica': True}
+        response8 = self.client.post(self.BASE_URL, data=data4)
+        self.assertEqual(response8.status_code, status.HTTP_200_OK, msg=response8.data)
+        self.assertEqual(response8.data['name'], 'valid_replica')
+        self.assertEqual(response8.data['replica'], True)
 
-        # test replica command
+        # create share with invalid replica
+        data5 = {'sname': 'invalid_replica', 'pool': 'rockstor_rockstor',
+                 'size': 100, 'replica': 'non-bool'}
+        e_msg7 = ("replica must be a boolean, not <type 'unicode'>")
+        response9 = self.client.post(self.BASE_URL, data=data5)
+        self.assertEqual(response9.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response9.data)
+        self.assertEqual(response9.data['detail'], e_msg7)
+
+        # create share with size > pool size
+        data6 = {'sname': 'too_big', 'pool': 'rockstor_rockstor', 'size': 10000000000000}
+        response8 = self.client.post(self.BASE_URL, data=data6)
+        self.assertEqual(response8.status_code, status.HTTP_200_OK, msg=response8.data)
+        self.assertEqual(response8.data['name'], 'too_big')
+        pool = Pool.objects.get(name=data6['pool'])
+        self.assertEqual(response8.data['size'], pool.size)
 
     def test_resize(self):
         """
@@ -194,7 +219,7 @@ class ShareTests(APITestMixin, APITestCase):
         5. Resize share below minimum 100KB
         """
 
-        #create new share
+        # create new share
         data = {'sname': 'rootshare', 'pool': 'rockstor_rockstor', 'size': 100}
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
@@ -263,20 +288,14 @@ class ShareTests(APITestMixin, APITestCase):
         self.assertEqual(response.data['compression_algo'], 'zlib')
 
         # create share with lzo compression
-        data2 = {'sname': 'share2', 'pool': 'rockstor_rockstor',
-                'size': 100, 'compression': 'lzo'}
+        data2 = {'sname': 'share2', 'pool': 'rockstor_rockstor', 'size': 100,
+                 'compression': 'lzo'}
         response2 = self.client.post(self.BASE_URL, data=data2)
         self.assertEqual(response2.status_code, status.HTTP_200_OK, msg=response2.data)
         self.assertEqual(response2.data['compression_algo'], 'lzo')
 
         # change compression from zlib to lzo
         data3 = {'compression': 'lzo'}
-        # data3 = {'sname': 'rootshare', 'pool': 'rockstor_rockstor',
-        #         'size': 100, 'compression': 'lzo'}
-        # data3 = {'group': u'root', 'name': u'rootshare', 'perms': u'755', 'r_usage': -1, 'e_usage': -1, 'snapshots': [], 'compression_algo': u'lzo', 'owner': u'root', 'replica': False, 'qgroup': u'0/derp', 'toc': u'2015-05-24T06:08:50.406267Z', 'subvol_name': u'rootshare', 'size': 100, 'nfs_exports': [], u'id': 1, 'pool': OrderedDict([(u'id', 1), ('disks', [OrderedDict([(u'id', 1), ('pool_name', u'rockstor_rockstor'), ('name', u'sda3'), ('size', 8912896), ('offline', False), ('parted', False), ('btrfs_uuid', u'b71dd067-abd9-48ca-8e48-67c7c5cb17de'), ('model', None), ('serial', u'VBb419f409-272c21e5'), ('transport', None), ('vendor', None), ('smart_available', False), ('smart_enabled', False), ('pool', 1)])]), ('free', 8924160), ('reclaimable', 0), ('name', u'rockstor_rockstor'), ('uuid', u'b71dd067-abd9-48ca-8e48-67c7c5cb17de'), ('size', 8924160), ('raid', u'single'), ('toc', u'2015-04-11T00:31:29.550000Z'), ('compression', None), ('mnt_options', None)]), 'uuid': None}
-        # TODO should be PUT not POST
-        # response3 = self.client.post('%s/rootshare/compress' % self.BASE_URL, data=data3)
-        # TODO suman -- need "compress" command? currently doesn't allow PUTs
         response3 = self.client.put('%s/rootshare' % self.BASE_URL, data=data3)
         self.assertEqual(response3.status_code, status.HTTP_200_OK, msg=response3.data)
         self.assertEqual(response3.data['compression_algo'], 'lzo')
@@ -308,31 +327,102 @@ class ShareTests(APITestMixin, APITestCase):
         self.assertEqual(response8.status_code, status.HTTP_200_OK, msg=response8.data)
         self.assertEqual(response8.data['compression_algo'], 'lzo')
 
-    def test_delete(self):
+    @mock.patch('storageadmin.views.share.remove_share')
+    @mock.patch('storageadmin.views.share.SFTP')
+    @mock.patch('storageadmin.views.share.SambaShare')
+    @mock.patch('storageadmin.views.share.NFSExport')
+    @mock.patch('storageadmin.views.share.Snapshot')
+    def test_delete(self, mock_snapshot, mock_nfs, mock_samba, mock_sftp, mock_remove_share):
         """
         Test DELETE request on share
         1. Create valid share
-        2. Delete share
-        3. Delete nonexistent share
+        2. Delete share with replication related snapshots
+        3. Delete share with NFS export
+        4. Delete share that is shared via Samba
+        5. Delete share with snapshots
+        6. Delete share with SFTP export
+        7. Delete share with remove_share failure (share still mounted)
+        8. Delete share
+        9. Delete nonexistent share
         """
-
         # create share
         data = {'sname': 'rootshare', 'pool': 'rockstor_rockstor', 'size': 100}
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
         self.assertEqual(response.data['name'], 'rootshare')
+        share = Share.objects.get(name='rootshare')
 
-        # delete share
-        response9 = self.client.delete('%s/rootshare' % self.BASE_URL)
-        self.assertEqual(response9.status_code, status.HTTP_200_OK, msg=response9.data)
-        assert self.mock_remove_share.called
-        self.assertEqual(response9.data, None)
+        # Delete share with replication related snapshots
+        mock_snapshot.objects.filter(share=share, snap_type='replication').exists.return_value = True
+        e_msg = ('Share(rootshare) cannot be deleted as it has replication related snapshots.')
+        response2 = self.client.delete('%s/rootshare' % self.BASE_URL)
+        self.assertEqual(response2.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response2.data)
+        self.assertEqual(response2.data['detail'], e_msg)
+        mock_snapshot.objects.filter(share=share, snap_type='replication').exists.return_value = False
 
-        # delete a share that doesn't exist
-        e_msg = ('Share(invalid) does not exist.')
-        response3 = self.client.delete('%s/invalid' % self.BASE_URL)
+        # Delete share with NFS export
+        mock_nfs.objects.filter(share=share).exists.return_value = True
+        e_msg = ('Share(rootshare) cannot be deleted as it is exported via nfs. '
+                 'Delete nfs exports and try again')
+        response3 = self.client.delete('%s/rootshare' % self.BASE_URL)
         self.assertEqual(response3.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response3.data)
         self.assertEqual(response3.data['detail'], e_msg)
+        mock_nfs.objects.filter(share=share).exists.return_value = False
 
-        # TODO test delete on shares w/ snapshots... requires creating snapshots (views/snapshot.py)
+        # Delete share that is shared via Samba
+        mock_samba.objects.filter(share=share).exists.return_value = True
+        e_msg = ('Share(rootshare) cannot be deleted as it is shared via Samba. '
+                 'Unshare and try again')
+        response4 = self.client.delete('%s/rootshare' % self.BASE_URL)
+        self.assertEqual(response4.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response4.data)
+        self.assertEqual(response4.data['detail'], e_msg)
+        mock_samba.objects.filter(share=share).exists.return_value = False
+
+        # Delete share with SFTP export
+        mock_sftp.objects.filter(share=share).exists.return_value = True
+        e_msg = ('Share(rootshare) cannot be deleted as it is exported via '
+                 'SFTP. Delete SFTP export and try again')
+        response6 = self.client.delete('%s/rootshare' % self.BASE_URL)
+        self.assertEqual(response6.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response6.data)
+        self.assertEqual(response6.data['detail'], e_msg)
+        mock_sftp.objects.filter(share=share).exists.return_value = False
+
+        # Delete share with snapshots
+        # TODO this test get triggered by check for snap_type='replication'
+        mock_snapshot.objects.filter(share=share, snap_type='admin').exists.return_value = True
+        e_msg = ('Share(rootshare) cannot be deleted as it has snapshots. '
+                 'Delete snapshots and try again')
+        response5 = self.client.delete('%s/rootshare' % self.BASE_URL)
+        self.assertEqual(response5.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response5.data)
+        self.assertEqual(response5.data['detail'], e_msg)
+        mock_snapshot.objects.filter(share=share, snap_type='admin').exists.return_value = False
+
+        # Delete share with remove_share failure (share still mounted)
+        mock_remove_share.return_value = 'foo'
+        mock_remove_share.side_effect = Exception
+        e_msg = ('Share(rootshare) is still mounted and cannot be deleted. '
+                 'Trying again usually succeeds. But if it does not, you can '
+                 'manually unmount it with command: /usr/bin/umount /mnt2/rootshare')
+        response7 = self.client.delete('%s/rootshare' % self.BASE_URL)
+        self.assertEqual(response7.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response7.data)
+        self.assertEqual(response7.data['detail'], e_msg)
+        mock_remove_share.side_effect = None
+
+        # delete share
+        response8 = self.client.delete('%s/rootshare' % self.BASE_URL)
+        self.assertEqual(response8.status_code, status.HTTP_200_OK, msg=response8.data)
+        assert mock_remove_share.called
+        self.assertEqual(response8.data, None)
+
+        # delete a share that doesn't exist
+        e_msg = ('Share(invalid) does not exist.')
+        response9 = self.client.delete('%s/invalid' % self.BASE_URL)
+        self.assertEqual(response9.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response9.data)
+        self.assertEqual(response9.data['detail'], e_msg)
