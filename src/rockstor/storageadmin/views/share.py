@@ -60,6 +60,16 @@ class ShareMixin(object):
             return pool.size
         return size
 
+    @staticmethod
+    def _validate_compression(request):
+        compression = request.data.get('compression', 'no')
+        if (compression is None):
+            compression = 'no'
+        if (compression not in settings.COMPRESSION_TYPES):
+            e_msg = ('Unsupported compression algorithm(%s). Use one of '
+                     '%s' % (compression, settings.COMPRESSION_TYPES))
+            handle_exception(Exception(e_msg), request)
+        return compression
 
 class ShareListView(ShareMixin, rfc.GenericView):
     serializer_class = ShareSerializer
@@ -75,17 +85,6 @@ class ShareListView(ShareMixin, rfc.GenericView):
             return sorted(Share.objects.all(), key=lambda u: u.cur_usage(),
                           reverse=reverse)
         return Share.objects.all()
-
-    @staticmethod
-    def _validate_compression(request):
-        compression = request.data.get('compression', 'no')
-        if (compression is None):
-            compression = 'no'
-        if (compression not in settings.COMPRESSION_TYPES):
-            e_msg = ('Unsupported compression algorithm(%s). Use one of '
-                     '%s' % (compression, settings.COMPRESSION_TYPES))
-            handle_exception(Exception(e_msg), request)
-        return compression
 
     @transaction.atomic
     def post(self, request):
@@ -104,7 +103,7 @@ class ShareListView(ShareMixin, rfc.GenericView):
                 e_msg = ('Share name must start with a alphanumeric(a-z0-9) '
                          'character and can be followed by any of the '
                          'following characters: letter(a-z), digits(0-9), '
-                         'hyphen(-), underscore (_) or a period(.).')
+                         'hyphen(-), underscore(_) or a period(.).')
                 handle_exception(Exception(e_msg), request)
 
             if (Share.objects.filter(name=sname).exists()):
@@ -115,14 +114,7 @@ class ShareListView(ShareMixin, rfc.GenericView):
                 e_msg = ('A Pool with this name(%s) exists. Share and Pool names '
                          'must be distinct. Choose a different name' % sname)
                 handle_exception(Exception(e_msg), request)
-
-            try:
-                disk = Disk.objects.filter(pool=pool)[0]
-            except:
-                e_msg = ('Pool(%s) does not have any disks in it.' %
-                         pool_name)
-                handle_exception(Exception(e_msg), request)
-
+            disk = Disk.objects.filter(pool=pool)[0]
             replica = False
             if ('replica' in request.data):
                 replica = request.data['replica']
@@ -162,9 +154,9 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
             if (not Share.objects.filter(name=sname).exists()):
                 e_msg = ('Share(%s) does not exist.' % sname)
                 handle_exception(Exception(e_msg), request)
-
             share = Share.objects.get(name=sname)
             new_size = self._validate_share_size(request, share.pool)
+            new_compression = self._validate_compression(request)
             disk = Disk.objects.filter(pool=share.pool)[0]
             qgroup_id = self._update_quota(share.pool, disk.name,
                                            share.subvol_name, new_size)
@@ -174,7 +166,11 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
                          'is less than current usage(%dKB) of the share.' %
                          (new_size, cur_usage))
                 handle_exception(Exception(e_msg), request)
-            share.size = new_size
+            # added new_compression variable & checks for share changes
+            if (share.size != new_size):
+                share.size = new_size
+            if (share.compression_algo != new_compression):
+                share.compression_algo = new_compression
             share.save()
             return Response(ShareSerializer(share).data)
 

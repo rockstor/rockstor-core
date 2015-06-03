@@ -22,78 +22,66 @@ import mock
 from mock import patch
 
 from storageadmin.models import Pool
+from storageadmin.tests.test_api import APITestMixin
 
-class PoolTests(APITestCase):
+
+class PoolTests(APITestMixin, APITestCase):
     fixtures = ['fix1.json']
     BASE_URL = '/api/pools'
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
+        super(PoolTests, cls).setUpClass()
 
         # post mocks
-        self.patch_mount_root = patch('storageadmin.views.pool.mount_root')
-        self.mock_mount_root = self.patch_mount_root.start()
-        self.mock_mount_root.return_value = 'foo'
+        cls.patch_mount_root = patch('storageadmin.views.pool.mount_root')
+        cls.mock_mount_root = cls.patch_mount_root.start()
+        cls.mock_mount_root.return_value = 'foo'
 
-        self.patch_add_pool = patch('storageadmin.views.pool.add_pool')
-        self.mock_add_pool = self.patch_add_pool.start()
-        self.mock_add_pool.return_value = True
+        cls.patch_add_pool = patch('storageadmin.views.pool.add_pool')
+        cls.mock_add_pool = cls.patch_add_pool.start()
+        cls.mock_add_pool.return_value = True
 
-        self.patch_pool_usage = patch('storageadmin.views.pool.pool_usage')
-        self.mock_pool_usage = self.patch_pool_usage.start()
-        self.mock_pool_usage.return_value = (100, 10, 90)
+        cls.patch_pool_usage = patch('storageadmin.views.pool.pool_usage')
+        cls.mock_pool_usage = cls.patch_pool_usage.start()
+        cls.mock_pool_usage.return_value = (100, 10, 90)
 
-        self.patch_btrfs_uuid = patch('storageadmin.views.pool.btrfs_uuid')
-        self.mock_btrfs_uuid = self.patch_btrfs_uuid.start()
-        self.mock_btrfs_uuid.return_value = 'bar'
+        cls.patch_btrfs_uuid = patch('storageadmin.views.pool.btrfs_uuid')
+        cls.mock_btrfs_uuid = cls.patch_btrfs_uuid.start()
+        cls.mock_btrfs_uuid.return_value = 'bar'
 
         # put mocks (also uses pool_usage)
-        self.patch_resize_pool = patch('storageadmin.views.pool.resize_pool')
-        self.mock_resize_pool = self.patch_resize_pool.start()
-        self.mock_resize_pool = True
+        cls.patch_resize_pool = patch('storageadmin.views.pool.resize_pool')
+        cls.mock_resize_pool = cls.patch_resize_pool.start()
+        cls.mock_resize_pool = True
 
-        self.patch_balance_start = patch('storageadmin.views.pool.balance_start')
-        self.mock_balance_start = self.patch_balance_start.start()
-        self.mock_balance_start.return_value = 1
+        cls.patch_balance_start = patch('storageadmin.views.pool.balance_start')
+        cls.mock_balance_start = cls.patch_balance_start.start()
+        cls.mock_balance_start.return_value = 1
 
         # delete mocks
-        self.patch_umount_root = patch('storageadmin.views.pool.umount_root')
-        self.mock_umount_root = self.patch_umount_root.start()
-        self.mock_umount_root.return_value = True
+        cls.patch_umount_root = patch('storageadmin.views.pool.umount_root')
+        cls.mock_umount_root = cls.patch_umount_root.start()
+        cls.mock_umount_root.return_value = True
 
         # remount mocks
-        self.patch_remount = patch('storageadmin.views.pool.remount')
-        self.mock_remount = self.patch_remount.start()
-        self.mock_remount.return_value = True
-
-        # error handling run_command mocks
-        self.patch_run_command = patch('storageadmin.util.run_command')
-        self.mock_run_command = self.patch_run_command.start()
-        self.mock_run_command.return_value = True
+        cls.patch_remount = patch('storageadmin.views.pool.remount')
+        cls.mock_remount = cls.patch_remount.start()
+        cls.mock_remount.return_value = True
 
     @classmethod
-    def tearDownClass(self):
-        patch.stopall()
-
-    def setUp(self):
-        self.client.login(username='admin', password='admin')
-
-    def test_auth(self):
-        """
-        unauthorized api access
-        """
-        self.client.logout()
-        response = self.client.get(self.BASE_URL)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+    def tearDownClass(cls):
+        super(PoolTests, cls).tearDownClass()
 
     def test_get(self):
         """
-        get on the base url.
+        Test GET request
+        1. Get base URL
+        2. Get nonexistant pool
         """
-        response1 = self.client.get(self.BASE_URL)
-        self.assertEqual(response1.status_code, status.HTTP_200_OK, msg=response1.data)
+        super(PoolTests, self).get_base(self.BASE_URL)
 
-    def test_invalid_api_requests(self):
+    def test_invalid_requests(self):
         """
         invalid pool api operations
         1. create a pool with invalid raid level
@@ -114,14 +102,8 @@ class PoolTests(APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
         self.assertEqual(response.data['detail'], e_msg)
 
-        # get a pool that doesn't exist
-        e_msg = ('Not found')
-        response3 = self.client.get('%s/raid0pool' % self.BASE_URL)
-        self.assertEqual(response3.status_code,
-                         status.HTTP_404_NOT_FOUND, msg=response3.data)
-        self.assertEqual(response3.data['detail'], e_msg)
-
         # edit a pool that doesn't exist
+        data2 = {'disks': ('sdc', 'sdd',)}
         e_msg = ('Pool(raid0pool) does not exist.')
         response4 = self.client.put('%s/raid0pool/add' % self.BASE_URL, data=data2)
         self.assertEqual(response4.status_code,
@@ -135,7 +117,6 @@ class PoolTests(APITestCase):
         self.assertEqual(response5.data['detail'], e_msg)
 
         # attempt to add disk to root pool
-        data2 = {'disks': ('sdc', 'sdd',)}
         e_msg = ('Edit operations are not allowed on this '
                  'Pool(rockstor_rockstor) as it contains the operating system.')
         response2 = self.client.put('%s/rockstor_rockstor/add' % self.BASE_URL, data=data2)
@@ -186,7 +167,6 @@ class PoolTests(APITestCase):
                              status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
             self.assertEqual(response.data['detail'], e_msg)
 
-
     def test_compression(self):
         """
         Compression is agnostic to name, raid and number of disks. So no need to
@@ -219,9 +199,9 @@ class PoolTests(APITestCase):
 
         # create pool with lzo compression
         data2 = {'disks': ('sde', 'sdf',),
-                'pname': 'singlepool2',
-                'raid_level': 'single',
-                'compression': 'lzo'}
+                 'pname': 'singlepool2',
+                 'raid_level': 'single',
+                 'compression': 'lzo'}
         response2 = self.client.post(self.BASE_URL, data=data2)
         self.assertEqual(response2.status_code, status.HTTP_200_OK, msg=response2.data)
         self.assertEqual(response2.data['compression'], 'lzo')
@@ -429,7 +409,7 @@ class PoolTests(APITestCase):
 
         # add a disk that already belongs to a pool
         data4 = {'disks': ('sdc',)}
-        e_msg  = ('Disk(sdc) cannot be added to this Pool(singlepool) '
+        e_msg = ('Disk(sdc) cannot be added to this Pool(singlepool) '
                  'because it belongs to another pool(singlepool2)')
         response6 = self.client.put('%s/singlepool/add' % self.BASE_URL, data=data4)
         self.assertEqual(response6.status_code,
@@ -487,7 +467,9 @@ class PoolTests(APITestCase):
         self.assertEqual(response.data['name'], 'raid0pool')
         self.assertEqual(response.data['raid'], 'raid0')
         self.mock_btrfs_uuid.assert_called_with('sdb')
-        # disk length assert was failing... list is 'empty'... post function was not adding disks to the pool (atleast not saving them)... appears they WERE added but then dropped it on DB call
+        # disk length assert was failing... list is 'empty'... post function
+        # was not adding disks to the pool (atleast not saving them)...
+        # appears they WERE added but then dropped it on DB call
         # solution: assigned disks to the pool & saved each disk
         self.assertEqual(len(response.data['disks']), 2)
 
@@ -512,11 +494,11 @@ class PoolTests(APITestCase):
         # add 3 disks & change raid_level
         data3 = {'disks': ('sde', 'sdf', 'sdg',),
                  'raid_level': 'raid1', }
-        e_msg = 'A Balance process is already running for this pool(raid0pool).' \
-                ' Resize is not supported during a balance process.'
+        e_msg = 'A Balance process is already running for this pool(raid0pool). ' \
+                'Resize is not supported during a balance process.'
         response4 = self.client.put('%s/raid0pool/add' % self.BASE_URL, data=data3)
         self.assertEqual(response4.status_code,
-                            status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response4.data)
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response4.data)
         self.assertEqual(response4.data['detail'], e_msg)
 
         # delete pool
@@ -811,8 +793,8 @@ class PoolTests(APITestCase):
 
         # create 'raid1' pool with 2 disks
         data4 = {'disks': ('sdf', 'sdg',),
-                'pname': 'raid1pool',
-                'raid_level': 'raid1', }
+                 'pname': 'raid1pool',
+                 'raid_level': 'raid1', }
         response = self.client.post(self.BASE_URL, data=data4)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
         self.assertEqual(response.data['name'], 'raid1pool')
