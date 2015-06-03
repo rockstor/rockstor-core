@@ -23,7 +23,7 @@ from django.db import transaction
 from storageadmin.models import (Share, Disk, Pool, Snapshot,
                                  NFSExport, SambaShare, SFTP)
 from fs.btrfs import (add_share, remove_share, share_id, update_quota,
-                      share_usage, set_property, mount_share)
+                      share_usage, set_property, mount_share, qgroup_id)
 from system.osi import is_share_mounted
 from storageadmin.serializers import ShareSerializer
 from storageadmin.util import handle_exception
@@ -38,12 +38,6 @@ logger = logging.getLogger(__name__)
 
 class ShareMixin(object):
 
-    @staticmethod
-    def _update_quota(pool, disk_name, share_name, size):
-        sid = share_id(pool, disk_name, share_name)
-        qgroup_id = '0/' + sid
-        update_quota(pool, disk_name, qgroup_id, size * 1024)
-        return qgroup_id
 
     @staticmethod
     def _validate_share_size(request, pool):
@@ -124,7 +118,8 @@ class ShareListView(ShareMixin, rfc.GenericView):
                              type(replica))
                     handle_exception(Exception(e_msg), request)
             add_share(pool, disk.name, sname)
-            qgroup_id = self._update_quota(pool, disk.name, sname, size)
+            qid = qgroup_id(pool, disk.name, sname)
+            update_quota(pool, disk.name, qid, size * 1024)
             s = Share(pool=pool, qgroup=qgroup_id, name=sname, size=size,
                       subvol_name=sname, replica=replica,
                       compression_algo=compression)
@@ -156,22 +151,24 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
                 e_msg = ('Share(%s) does not exist.' % sname)
                 handle_exception(Exception(e_msg), request)
             share = Share.objects.get(name=sname)
-            new_size = self._validate_share_size(request, share.pool)
-            new_compression = self._validate_compression(request)
-            disk = Disk.objects.filter(pool=share.pool)[0]
-            qgroup_id = self._update_quota(share.pool, disk.name,
-                                           share.subvol_name, new_size)
-            cur_usage = share_usage(share.pool, disk.name, qgroup_id)
-            if (new_size < cur_usage):
-                e_msg = ('Unable to resize because requested new size(%dKB) '
-                         'is less than current usage(%dKB) of the share.' %
-                         (new_size, cur_usage))
-                handle_exception(Exception(e_msg), request)
-            # added new_compression variable & checks for share changes
-            if (share.size != new_size):
+            if ('size' in request.data):
+                new_size = self._validate_share_size(request, share.pool)
+                disk = Disk.objects.filter(pool=share.pool)[0]
+                qid = qgroup_id(share.pool, disk.name, share.subvol_name)
+                cur_usage = share_usage(share.pool, disk.name, qid)
+                if (new_size < cur_usage):
+                    e_msg = ('Unable to resize because requested new size(%dKB) '
+                             'is less than current usage(%dKB) of the share.' %
+                             (new_size, cur_usage))
+                    handle_exception(Exception(e_msg), request)
+                update_quota(share.pool, disk.name, qid, new_size * 1024)
                 share.size = new_size
-            if (share.compression_algo != new_compression):
-                share.compression_algo = new_compression
+            if ('compression' in request.data):
+                new_compression = self._validate_compression(
+                    request, share.compression_algo)
+                if (share.compression_algo != new_compression):
+                    share.compression_algo = new_compression
+                    setproperty(mnt_pt, 'compression', new_compression)
             share.save()
             return Response(ShareSerializer(share).data)
 
