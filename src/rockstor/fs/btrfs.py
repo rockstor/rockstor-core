@@ -366,6 +366,11 @@ def disable_quota(pool_name, device):
     return switch_quota(pool_name, device, flag='disable')
 
 
+def qgroup_id(pool, disk_name, share_name):
+    sid = share_id(pool, disk_name, share_name)
+    return '0/' + sid
+
+
 def update_quota(pool, pool_device, qgroup, size_bytes):
     pool_device = '/dev/' + pool_device
     root_pool_mnt = mount_root(pool, pool_device)

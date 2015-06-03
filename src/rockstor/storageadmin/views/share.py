@@ -18,11 +18,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import re
 from rest_framework.response import Response
+from rest_framework.exceptions import NotFound
 from django.db import transaction
 from storageadmin.models import (Share, Disk, Pool, Snapshot,
                                  NFSExport, SambaShare, SFTP)
 from fs.btrfs import (add_share, remove_share, share_id, update_quota,
-                      share_usage, set_property, mount_share)
+                      share_usage, set_property, mount_share, qgroup_id)
 from system.osi import is_share_mounted
 from storageadmin.serializers import ShareSerializer
 from storageadmin.util import handle_exception
@@ -34,12 +35,6 @@ logger = logging.getLogger(__name__)
 
 class ShareMixin(object):
 
-    @staticmethod
-    def _update_quota(pool, disk_name, share_name, size):
-        sid = share_id(pool, disk_name, share_name)
-        qgroup_id = '0/' + sid
-        update_quota(pool, disk_name, qgroup_id, size * 1024)
-        return qgroup_id
 
     @staticmethod
     def _validate_share_size(request, pool):
@@ -57,6 +52,16 @@ class ShareMixin(object):
             return pool.size
         return size
 
+    @staticmethod
+    def _validate_compression(request):
+        compression = request.data.get('compression', 'no')
+        if (compression is None):
+            compression = 'no'
+        if (compression not in settings.COMPRESSION_TYPES):
+            e_msg = ('Unsupported compression algorithm(%s). Use one of '
+                     '%s' % (compression, settings.COMPRESSION_TYPES))
+            handle_exception(Exception(e_msg), request)
+        return compression
 
 class ShareListView(ShareMixin, rfc.GenericView):
     serializer_class = ShareSerializer
@@ -72,17 +77,6 @@ class ShareListView(ShareMixin, rfc.GenericView):
             return sorted(Share.objects.all(), key=lambda u: u.cur_usage(),
                           reverse=reverse)
         return Share.objects.all()
-
-    @staticmethod
-    def _validate_compression(request):
-        compression = request.data.get('compression', 'no')
-        if (compression is None):
-            compression = 'no'
-        if (compression not in settings.COMPRESSION_TYPES):
-            e_msg = ('Unsupported compression algorithm(%s). Use one of '
-                     '%s' % (compression, settings.COMPRESSION_TYPES))
-            handle_exception(Exception(e_msg), request)
-        return compression
 
     @transaction.atomic
     def post(self, request):
@@ -101,7 +95,7 @@ class ShareListView(ShareMixin, rfc.GenericView):
                 e_msg = ('Share name must start with a alphanumeric(a-z0-9) '
                          'character and can be followed by any of the '
                          'following characters: letter(a-z), digits(0-9), '
-                         'hyphen(-), underscore (_) or a period(.).')
+                         'hyphen(-), underscore(_) or a period(.).')
                 handle_exception(Exception(e_msg), request)
 
             if (Share.objects.filter(name=sname).exists()):
@@ -112,14 +106,7 @@ class ShareListView(ShareMixin, rfc.GenericView):
                 e_msg = ('A Pool with this name(%s) exists. Share and Pool names '
                          'must be distinct. Choose a different name' % sname)
                 handle_exception(Exception(e_msg), request)
-
-            try:
-                disk = Disk.objects.filter(pool=pool)[0]
-            except:
-                e_msg = ('Pool(%s) does not have any disks in it.' %
-                         pool_name)
-                handle_exception(Exception(e_msg), request)
-
+            disk = Disk.objects.filter(pool=pool)[0]
             replica = False
             if ('replica' in request.data):
                 replica = request.data['replica']
@@ -128,7 +115,8 @@ class ShareListView(ShareMixin, rfc.GenericView):
                              type(replica))
                     handle_exception(Exception(e_msg), request)
             add_share(pool, disk.name, sname)
-            qgroup_id = self._update_quota(pool, disk.name, sname, size)
+            qid = qgroup_id(pool, disk.name, sname)
+            update_quota(pool, disk.name, qid, size * 1024)
             s = Share(pool=pool, qgroup=qgroup_id, name=sname, size=size,
                       subvol_name=sname, replica=replica,
                       compression_algo=compression)
@@ -150,8 +138,8 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
             data = Share.objects.get(name=self.kwargs['sname'])
             serialized_data = ShareSerializer(data)
             return Response(serialized_data.data)
-        except:
-            return Response()
+        except Share.DoesNotExist:
+            raise NotFound(detail=None)
 
     @transaction.atomic
     def put(self, request, sname):
@@ -159,19 +147,27 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
             if (not Share.objects.filter(name=sname).exists()):
                 e_msg = ('Share(%s) does not exist.' % sname)
                 handle_exception(Exception(e_msg), request)
-
             share = Share.objects.get(name=sname)
-            new_size = self._validate_share_size(request, share.pool)
-            disk = Disk.objects.filter(pool=share.pool)[0]
-            qgroup_id = self._update_quota(share.pool, disk.name,
-                                           share.subvol_name, new_size)
-            cur_usage = share_usage(share.pool, disk.name, qgroup_id)
-            if (new_size < cur_usage):
-                e_msg = ('Unable to resize because requested new size(%dKB) '
-                         'is less than current usage(%dKB) of the share.' %
-                         (new_size, cur_usage))
-                handle_exception(Exception(e_msg), request)
-            share.size = new_size
+            if ('size' in request.data):
+                new_size = self._validate_share_size(request, share.pool)
+                disk = Disk.objects.filter(pool=share.pool)[0]
+                qid = qgroup_id(share.pool, disk.name, share.subvol_name)
+                cur_usage = share_usage(share.pool, disk.name, qid)
+                if (new_size < cur_usage):
+                    e_msg = ('Unable to resize because requested new size(%dKB) '
+                             'is less than current usage(%dKB) of the share.' %
+                             (new_size, cur_usage))
+                    handle_exception(Exception(e_msg), request)
+                update_quota(share.pool, disk.name, qid, new_size * 1024)
+                share.size = new_size
+            if ('compression' in request.data):
+                new_compression = self._validate_compression(request)
+                if (share.compression_algo != new_compression):
+                    share.compression_algo = new_compression
+                    mnt_pt = '%s%s' % (settings.MNT_PT, sname)
+                    if (new_compression == 'no'):
+                        new_compression = ''
+                    set_property(mnt_pt, 'compression', new_compression)
             share.save()
             return Response(ShareSerializer(share).data)
 

@@ -314,11 +314,11 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
     if (buttonDisabled(button)) return false;
     disableButton(button);
     $.ajax({
-      url: "/api/shares/" + this.share.get('name') + '/compress',
-      type: "POST",
+      url: "/api/shares/" + this.share.get('name'),
+      type: "PUT",
       dataType: "json",
       data: {
-        "compress": this.$('#compression').val(),
+        "compression": this.$('#compression').val(),
       },
       success: function() {
         _this.hideCompressionTooltips();
