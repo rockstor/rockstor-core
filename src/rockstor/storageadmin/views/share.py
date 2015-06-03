@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import re
 from rest_framework.response import Response
+from rest_framework.exceptions import NotFound
 from django.db import transaction
 from storageadmin.models import (Share, Disk, Pool, Snapshot,
                                  NFSExport, SambaShare, SFTP)
@@ -142,8 +143,8 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
             data = Share.objects.get(name=self.kwargs['sname'])
             serialized_data = ShareSerializer(data)
             return Response(serialized_data.data)
-        except:
-            return Response()
+        except Share.DoesNotExist:
+            raise NotFound(detail=None)
 
     @transaction.atomic
     def put(self, request, sname):
