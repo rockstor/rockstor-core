@@ -33,12 +33,13 @@ class RockOnView(rfc.GenericView):
     serializer_class = RockOnSerializer
 
     def get_queryset(self, *args, **kwargs):
-        for ro in RockOn.objects.all():
-            if (ro.state == 'installed'):
-                #update current running status of installed rockons.
-                ro.status = rockon_status(ro.name)
-                ro.save()
-        return RockOn.objects.all()
+        if (docker_status()):
+            for ro in RockOn.objects.all():
+                if (ro.state == 'installed'):
+                    #update current running status of installed rockons.
+                    ro.status = rockon_status(ro.name)
+                    ro.save()
+        return RockOn.objects.filter().order_by('-id')
 
     @transaction.atomic
     def put(self, request):
@@ -93,10 +94,13 @@ class RockOnView(rfc.GenericView):
                                 if (DPort.objects.filter(hostp=p).exists()):
                                     po = DPort.objects.get(hostp=p)
                                     po.container = co
-                                    po.protocol = ports[p]
                                 else:
                                     po = DPort(hostp=p, containerp=p,
-                                               container=co, protocol=ports[p])
+                                               container=co)
+                                if (ports[p] == 'ui'):
+                                    po.uiport = True
+                                else:
+                                    po.protocol = ports[p]
                                 po.save()
 
                         if ('volumes' in containers[c]):
@@ -127,7 +131,7 @@ class RockOnView(rfc.GenericView):
                                 defaults={'description': cc_d[k]})
                             if (not created):
                                 cco.description = cc_d[k]
-                            if (k == 'iprange' and ro.name == 'Plex'):
+                            if (not created and k == 'iprange' and ro.name == 'Plex'):
                                 from storageadmin.models import NetworkInterface
                                 try:
                                     ni = NetworkInterface.objects.filter(itype='management')[0]
@@ -137,7 +141,8 @@ class RockOnView(rfc.GenericView):
                             cco.save()
                     if ('app_link' in rockons[r]):
                         app_link = rockons[r]['app_link']
-                        ro.link = app_link
+                        if (ro.state != 'installed'):
+                            ro.link = app_link
                     if ('website' in rockons[r]):
                         ro.website = rockons[r]['website']
                     ro.save()
@@ -147,7 +152,7 @@ class RockOnView(rfc.GenericView):
         msg = ('Network error while checking for updates. '
                'Please try again later.')
         with self._handle_exception(request, msg=msg):
-            r = requests.get('http://rockstor.com/rockons.json')
+            r = requests.get('http://rockstor.com/rockons_testing.json')
             rockons = r.json()
             return rockons
 

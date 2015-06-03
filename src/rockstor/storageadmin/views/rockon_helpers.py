@@ -21,7 +21,8 @@ from django_ztask.decorators import task
 from cli.rest_util import api_call
 from system.services import service_status
 from storageadmin.models import (RockOn, DContainer, DVolume, DPort,
-                                 DCustomConfig)
+                                 DCustomConfig, Share, Disk)
+from fs import btrfs
 
 DOCKER = '/usr/bin/docker'
 ROCKON_URL = 'https://localhost/api/rockons'
@@ -36,20 +37,40 @@ def docker_status():
         return False
     return True
 
+def mount_share(name, mnt):
+    share = Share.objects.get(name=name)
+    disk = Disk.objects.filter(pool=share.pool)[0].name
+    btrfs.mount_share(share, disk, mnt)
 
 def rockon_status(name):
+    state = 'unknown error'
     try:
-        o, e, rc = run_command([DOCKER, 'inspect', '-f', '{{.State.Running}}', name])
-        if (len(o) > 0):
-            if (o[0] == 'true'):
-                return 'started'
+        o, e, rc = run_command([DOCKER, 'inspect', '-f', '{{range $key, $value := .State}}{{$key}}:{{$value}},{{ end }}', name])
+        state_d = {}
+        for i in o[0].split(','):
+            fields = i.split(':')
+            if (len(fields) >= 2):
+                state_d[fields[0]] = ':'.join(fields[1:])
+        if ('Running' in state_d):
+            if (state_d['Running'] == 'true'):
+                state = 'started'
             else:
-                return 'stopped'
-        return 'error'
+                state = 'stopped'
+                if ('Error' in state_d and 'ExitCode' in state_d):
+                    exitcode = int(state_d['ExitCode'])
+                    if (exitcode != 0):
+                        state = 'exitcode: %d error: %s' % (exitcode, state_d['Error'])
+        return state
     except Exception, e:
         logger.exception(e)
-        return 'error'
+    finally:
+        return state
 
+
+def rm_container(name):
+    o, e, rc = run_command([DOCKER, 'rm', name], throw=False)
+    return logger.debug('Attempted to remove a container(%s). out: %s '
+                        'err: %s rc: %s.' %  (name, o, e, rc))
 
 @task()
 def start(rid):
@@ -80,6 +101,12 @@ def stop(rid):
 
 
 @task()
+def update(rid):
+    uninstall(rid, new_state='pending_update')
+    install(rid)
+
+
+@task()
 def install(rid):
     new_state = 'installed'
     try:
@@ -88,6 +115,12 @@ def install(rid):
             plex_install(rockon)
         elif (rockon.name == 'OpenVPN'):
             ovpn_install(rockon)
+        elif (rockon.name == 'Transmission'):
+            transmission_install(rockon)
+        elif (rockon.name == 'BTSync'):
+            btsync_install(rockon)
+        elif (rockon.name == 'Syncthing'):
+            syncthing_install(rockon)
     except Exception, e:
         logger.debug('exception while installing the rockon')
         logger.exception(e)
@@ -102,12 +135,12 @@ def install(rid):
 def uninstall(rid, new_state='available'):
     try:
         rockon = RockOn.objects.get(id=rid)
-        if (rockon.name == 'Plex'):
-            run_command([DOCKER, 'rm', rockon.name, ])
+        rm_container(rockon.name)
         if (rockon.name == 'OpenVPN'):
-            run_command([DOCKER, 'rm', rockon.name])
-            run_command([DOCKER, 'rm', 'ovpn-data'])
-    except:
+            rm_container('ovpn-data')
+    except Exception, e:
+        logger.debug('exception while uninstalling rockon')
+        logger.exception(e)
         new_state = 'error'
     finally:
         url = ('%s/%d/state_update' % (ROCKON_URL, rid))
@@ -116,6 +149,8 @@ def uninstall(rid, new_state='available'):
 
 
 def plex_install(rockon):
+    # to make install idempotent, remove the container that may exist from a previous attempt
+    rm_container(rockon.name)
     cmd = [DOCKER, 'run', '-d', '--name', rockon.name, '--net="host"', ]
     config_share = None
     for c in DContainer.objects.filter(rockon=rockon):
@@ -153,6 +188,8 @@ def plex_install(rockon):
 
 
 def ovpn_install(rockon):
+    rm_container('ovpn-data')
+    rm_container(rockon.name)
     cco = DCustomConfig.objects.get(rockon=rockon)
     for c in DContainer.objects.filter(rockon=rockon):
         image = c.dimage.name
@@ -173,9 +210,59 @@ def ovpn_install(rockon):
     run_command(dinit_cmd)
     #logger.debug('volume container initialized 2')
     #dinit2_cmd = [DOCKER, 'run', '--volumes-from', data_container, '--rm', '-it', image, 'ovpn_initpki', ]
-    #run_command(dinit2_cmd)
+    #run_command(dini(t2_cmd)
     logger.debug('volume container initialized 3')
     server_cmd = [DOCKER, 'run', '--volumes-from', data_container, '-d', '--name', rockon.name,
                   '-p', '%s:%s/udp' % (po.hostp, po.containerp), '--cap-add=NET_ADMIN', image]
     run_command(server_cmd)
     run_command([DOCKER, 'stop', rockon.name])
+
+
+def transmission_install(rockon):
+    rm_container(rockon.name)
+    cmd = [DOCKER, 'run', '-d', '--name', rockon.name,]
+    for cco in DCustomConfig.objects.filter(rockon=rockon):
+        cmd.extend(['-e', '%s=%s' % (cco.key, cco.val)])
+    c = DContainer.objects.get(rockon=rockon)
+    image = c.dimage.name
+    run_command([DOCKER, 'pull', image])
+    for v in DVolume.objects.filter(container=c):
+        share_mnt = '/mnt2/%s' % v.share.name
+        mount_share(v.share.name, share_mnt)
+        cmd.extend(['-v', '%s:%s' % (share_mnt, v.dest_dir), ])
+    for p in DPort.objects.filter(container=c):
+        cmd.extend(['-p', '%d:%d' % (p.hostp, p.containerp), ])
+    cmd.append(image)
+    run_command(cmd)
+
+
+def btsync_install(rockon):
+    rm_container(rockon.name)
+    cmd = [DOCKER, 'run', '-d', '--name', rockon.name,]
+    c = DContainer.objects.get(rockon=rockon)
+    image = c.dimage.name
+    run_command([DOCKER, 'pull', image])
+    for v in DVolume.objects.filter(container=c):
+        share_mnt = '/mnt2/%s' % v.share.name
+        mount_share(v.share.name, share_mnt)
+        cmd.extend(['-v', '%s:%s' % (share_mnt, v.dest_dir), ])
+    for p in DPort.objects.filter(container=c):
+        cmd.extend(['-p', '%d:%d' % (p.hostp, p.containerp), ])
+    cmd.append(image)
+    run_command(cmd)
+
+
+def syncthing_install(rockon):
+    rm_container(rockon.name)
+    cmd = [DOCKER, 'run', '-d', '--name', rockon.name,]
+    c = DContainer.objects.get(rockon=rockon)
+    image = c.dimage.name
+    run_command([DOCKER, 'pull', image])
+    for v in DVolume.objects.filter(container=c):
+        share_mnt = '/mnt2/%s' % v.share.name
+        mount_share(v.share.name, share_mnt)
+        cmd.extend(['-v', '%s:%s' % (share_mnt, v.dest_dir), ])
+    for p in DPort.objects.filter(container=c):
+        cmd.extend(['-p', '%d:%d' % (p.hostp, p.containerp), ])
+    cmd.append(image)
+    run_command(cmd)

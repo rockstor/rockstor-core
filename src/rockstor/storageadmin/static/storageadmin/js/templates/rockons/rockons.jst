@@ -99,6 +99,14 @@
 	  <div class="span12">
 	    <a href="<%= rockon.get('website') %>" target="_blank"><h3><%= rockon.get('name') %></h3></a>
 	    <p><%= rockon.get('description') %></p>
+	    <% if (rockon.get('state') == 'install_failed')  { %>
+	    <strong>Failed to install in the previous attempt.</strong> Here's how you can proceed.
+	    <ul>
+	      <li>Check logs in /opt/rockstor/var/log for clues.</li>
+	      <li>Install again.</li>
+	      <li>If the problem persists, post on the forums or email support@rockstor.com</li>
+	    </ul>
+	    <% } %>
 	    <a id="js-install-rockon" class="btn btn-primary pull-right" href="#" data-name="<%= rockon.get('id') %>">Install</a>
 	  </div>
 	</div>

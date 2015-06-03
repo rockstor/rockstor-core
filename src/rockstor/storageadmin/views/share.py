@@ -29,6 +29,9 @@ from storageadmin.serializers import ShareSerializer
 from storageadmin.util import handle_exception
 from django.conf import settings
 import rest_framework_custom as rfc
+import json
+from smart_manager.models import Service
+
 import logging
 logger = logging.getLogger(__name__)
 
@@ -171,6 +174,24 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
             share.save()
             return Response(ShareSerializer(share).data)
 
+    @staticmethod
+    def _rockon_check(request, sname):
+        try:
+            s = Service.objects.get(name='docker')
+            config = json.loads(s.config)
+        except Exception, e:
+            return logger.exception(e)
+
+        if ('root_share' in config):
+            if (config['root_share'] == sname):
+                e_msg = ('Share(%s) cannot be deleted because it is in use '
+                         'by Rock-on service. If you really need to delete '
+                         'it, (1)turn the service off, (2)change its '
+                         'configuration to use a different Share and then '
+                         '(3)try deleting this Share(%s) again.' %
+                         (sname, sname))
+                handle_exception(Exception(e_msg), request)
+
     @transaction.atomic
     def delete(self, request, sname):
         """
@@ -210,8 +231,10 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
                          'SFTP. Delete SFTP export and try again' % sname)
                 handle_exception(Exception(e_msg), request)
 
+            self._rockon_check(request, sname)
+
             pool_device = Disk.objects.filter(pool=share.pool)[0].name
-            e_msg = ('Share(%s) is still mounted and cannot be deleted. '
+            e_msg = ('Share(%s) may still be mounted and cannot be deleted. '
                      'Trying again usually succeeds. But if it does not, '
                      'you can manually unmount it with'
                      ' command: /usr/bin/umount /mnt2/%s' % (sname, sname))
@@ -219,6 +242,7 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
                 remove_share(share.pool, pool_device, share.subvol_name)
             except Exception, e:
                 logger.exception(e)
+                e_msg = ('%s . Error from the OS: %s' % (e_msg, e.__str__()))
                 handle_exception(Exception(e_msg), request)
             share.delete()
             return Response()

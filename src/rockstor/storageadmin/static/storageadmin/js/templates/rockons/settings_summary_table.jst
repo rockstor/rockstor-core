@@ -2,36 +2,41 @@
 <table class="table table-condensed table-bordered table-hover table-striped tablesorter">
 <thead>
   <tr>
-    <th>Resource type</th>
-    <th>Name/Value</th>
+     <th>Resource type&nbsp;&nbsp<i class="fa fa-exclamation-circle" title="Type of the system resource on Rockstor. Eg: Share, port numbers etc.. Custom type is for arbitrary variables needed by the Rock-on that may not map to a system resource." rel="tooltip"></i></th>
+    <th>Name&nbsp;&nbsp<i class="fa fa-exclamation-circle" title="Name of the resource according to Rockstor. Eg: Share names, port numbers etc.." rel="tooltip"></i></th>
+    <th>Mapped representation&nbsp;&nbsp<i class="fa fa-exclamation-circle" title="Name/representation of the resource inside the Rock-on. Eg: Shares map to directories, ports map to (possibly different)ports to send traffic to the Rock-on, etc.." rel="tooltip"></i></th>
   </tr>
 </thead>
 
   <% volumes.each(function(volume, index) { %>
     <tr>
       <td>Share</td>
-      <td><%= volume.get('share_name') %>&nbsp;&nbsp(<%= volume.get('dest_dir') %>)</td>
+      <td><%= volume.get('share_name') %></td>
+      <td><%= volume.get('dest_dir') %></td>
     </tr>
   <% }); %>
 
   <% for (share in new_volumes) { %>
     <tr>
       <td><i>Share</i></td>
-      <td><i><%= share %>&nbsp;&nbsp(<%= new_volumes[share] %>)</i></td>
+      <td><i><%= new_volumes[share] %></i></td>
+      <td><i><%= share %></i></td>
     </tr>
   <% } %>
 
   <% ports.each(function(port, index) { %>
     <tr>
       <td>Port</td>
-      <td><%= port.get('hostp') %>&nbsp;&nbsp(<%= port.get('containerp') %>)</td>
+      <td><%= port.get('hostp') %></td>
+      <td><%= port.get('containerp') %></td>
     </tr>
   <% }); %>
 
   <% cc.each(function(cci, index) { %>
     <tr>
       <td>Custom</td>
-      <td><%= cci.get('val') %>&nbsp;&nbsp(<%= cci.get('key') %>)&nbsp;&nbsp<i class="fa fa-exclamation-circle" title="<%= cci.get('description') %>" rel="tooltip"></i></td>
+      <td><%= cci.get('val') %>&nbsp;&nbsp<i class="fa fa-exclamation-circle" title="<%= cci.get('description') %>" rel="tooltip"></i></td>
+      <td><%= cci.get('key') %></td>
     </tr>
   <% }); %>
 </table>
@@ -52,4 +57,17 @@
     following command as root. The resulting .ovpn file can be used to connect.
   </p>
   <code>/opt/rockstor/bin/ovpn-client-print</code>
+  <h4><u>Configure firewall</u></h4>
+  <p>
+    If your Rockstor machine is behind a firewall, you may need to configure
+    port forwarding to pass through vpn traffic to Rockstor.
+  </p>
+<% } else if (rockon.get('name') == "BTSync") { %>
+  <% var vol = volumes.find(function(v) { return v.get('dest_dir') == '/data'; }); %>
+  <h3>Information about Authentication</h3>
+  <p>The default username for the UI is <strong>admin</strong> and the password is <strong>password</strong> .</p>
+  <% if (vol) { %>
+  <p>You can change the username and password by editing <strong>btsync.conf</strong> inside the Share called <strong><%= vol.get('share_name') %></strong></p>
+  <p>Restart the Rock-on after changing the password for it to take affect.</p>
+  <% } %>
 <% } %>

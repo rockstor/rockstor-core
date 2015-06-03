@@ -109,8 +109,6 @@ urlpatterns = patterns('',
                        (r'^api/sm/replicas/',
                         include('smart_manager.urls.replicas')),
 
-                       # Backup Plugin
-                       (r'^api/plugin/backup', include('backup.urls')),
                        # Certificate URL
                        (r'^api/certificate', TLSCertificateView.as_view()),
                        (r'^api/rockons',
