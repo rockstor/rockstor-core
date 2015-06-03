@@ -152,7 +152,7 @@ class RockOnView(rfc.GenericView):
         msg = ('Network error while checking for updates. '
                'Please try again later.')
         with self._handle_exception(request, msg=msg):
-            r = requests.get('http://rockstor.com/rockons.json')
+            r = requests.get('http://rockstor.com/rockons_testing.json')
             rockons = r.json()
             return rockons
 
