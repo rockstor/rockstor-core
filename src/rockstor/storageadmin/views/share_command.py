@@ -99,24 +99,3 @@ class ShareCommandView(rfc.GenericView):
                 share.save()
                 snap.delete()
                 return Response()
-
-            if (command == 'compress'):
-                algo = request.data.get('compress', None)
-                if (algo is None):
-                    e_msg = ('Compression algorithm must be specified. Valid '
-                             'options are: %s' % settings.COMPRESSION_TYPES)
-                    handle_exception(Exception(e_msg), request)
-                if (algo not in settings.COMPRESSION_TYPES):
-                    e_msg = ('Compression algorithm(%s) is invalid. Valid '
-                             'options are: %s' % settings.COMPRESSION_TYPES)
-                    handle_exception(Exception(e_msg), request)
-                mnt_pt = '%s%s' % (settings.MNT_PT, share.name)
-                if (not is_share_mounted(share.name)):
-                    disk = Disk.objects.filter(pool=share.pool)[0].name
-                    mount_share(share, disk, mnt_pt)
-                share.compression_algo = algo
-                share.save()
-                if (algo == 'no'):
-                    algo = ''
-                set_property(mnt_pt, 'compression', algo)
-                return Response(ShareSerializer(share).data)
