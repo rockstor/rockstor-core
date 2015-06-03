@@ -38,6 +38,14 @@ class RockOnIdView(rfc.GenericView):
     def get_queryset(self, *args, **kwargs):
         return RockOn.objects.all()
 
+    @staticmethod
+    def _pending_check(request):
+        if (RockOn.objects.filter(state__contains='pending').exists()):
+            e_msg = ('Another Rockon is in state transition. Multiple '
+                     'simultaneous Rockon transitions are not '
+                     'supported. Please try again later.')
+            handle_exception(Exception(e_msg), request)
+
     @transaction.atomic
     def post(self, request, rid, command):
         with self._handle_exception(request):
@@ -70,6 +78,7 @@ class RockOnIdView(rfc.GenericView):
                         handle_exception(Exception(e_msg), request)
 
             if (command == 'install'):
+                self._pending_check(request)
                 share_map = request.data.get('shares', {})
                 logger.debug('share map = %s' % share_map)
                 port_map = request.data.get('ports', {})
@@ -125,6 +134,7 @@ class RockOnIdView(rfc.GenericView):
                 rockon.state = 'pending_install'
                 rockon.save()
             elif (command == 'uninstall'):
+                self._pending_check(request)
                 if (rockon.state != 'installed'):
                     e_msg = ('Rock-on(%s) is not currently installed. Cannot '
                              'uninstall it' % rid)
@@ -140,6 +150,7 @@ class RockOnIdView(rfc.GenericView):
                 for co in DContainer.objects.filter(rockon=rockon):
                     DVolume.objects.filter(container=co, uservol=True).delete()
             elif (command == 'update'):
+                self._pending_check(request)
                 if (rockon.state != 'installed'):
                     e_msg = ('Rock-on(%s) is not currently installed. Cannot '
                              'update it' % rid)
