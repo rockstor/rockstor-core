@@ -144,7 +144,7 @@ class RockOnIdView(rfc.GenericView):
                     e_msg = ('Rock-on(%s) is not currently installed. Cannot '
                              'update it' % rid)
                     handle_exception(Exception(e_msg), request)
-                if (rockon.status != 'stopped'):
+                if (rockon.status == 'started' or rockon.status == 'start_pending'):
                     e_msg = ('Rock-on(%s) must be stopped before it can '
                              'be updated. Stop it and try again' %
                              rid)

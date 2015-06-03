@@ -601,10 +601,10 @@ RockonSettingsWizardView = WizardView.extend({
 	    }
 	} else if (this.currentPageNum == (this.pages.length - 2)) {
 	    this.$('#prev-page').html('Add a Share');
-    	    this.$('#next-page').html('Submit');
+    	    this.$('#next-page').html('Next');
     	} else if (this.currentPageNum == (this.pages.length - 1)) {
     	    this.$('#prev-page').hide();
-    	    this.$('#next-page').html('Close');
+    	    this.$('#next-page').html('Submit');
 	} else {
     	    this.$('#prev-page').show();
 	    this.$('#next-page').html('Next');
@@ -699,20 +699,6 @@ RockonSettingsSummary = RockstorWizardPage.extend({
 	    rockon: this.model.get('rockon')
 	}));
 	return this;
-    },
-
-    save: function() {
-	var _this = this;
-	return $.ajax({
-	    url: '/api/rockons/' + this.rockon.id + '/update',
-	    type: 'POST',
-	    dataType: 'json',
-	    contentType: 'application/json',
-	    data: JSON.stringify({
-		'shares': this.shares
-	    }),
-	    success: function() {}
-	});
     }
 });
 
@@ -729,5 +715,19 @@ RockonSettingsComplete = RockstorWizardPage.extend({
 	    model: this.model
 	}));
 	return this;
+    },
+
+    save: function() {
+	var _this = this;
+	return $.ajax({
+	    url: '/api/rockons/' + this.rockon.id + '/update',
+	    type: 'POST',
+	    dataType: 'json',
+	    contentType: 'application/json',
+	    data: JSON.stringify({
+		'shares': this.shares
+	    }),
+	    success: function() {}
+	});
     }
 });
