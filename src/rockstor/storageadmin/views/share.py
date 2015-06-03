@@ -164,11 +164,13 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
                 update_quota(share.pool, disk.name, qid, new_size * 1024)
                 share.size = new_size
             if ('compression' in request.data):
-                new_compression = self._validate_compression(
-                    request, share.compression_algo)
+                new_compression = self._validate_compression(request)
                 if (share.compression_algo != new_compression):
                     share.compression_algo = new_compression
-                    setproperty(mnt_pt, 'compression', new_compression)
+                    mnt_pt = '%s%s' % (settings.MNT_PT, sname)
+                    if (new_compression == 'no'):
+                        new_compression = ''
+                    set_property(mnt_pt, 'compression', new_compression)
             share.save()
             return Response(ShareSerializer(share).data)
 
