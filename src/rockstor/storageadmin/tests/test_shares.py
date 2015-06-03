@@ -57,6 +57,10 @@ class ShareTests(APITestMixin, APITestCase):
         cls.mock_mount_share = cls.patch_mount_share.start()
         cls.mock_mount_share.return_value = True
 
+        cls.patch_qgroup_id = patch('storageadmin.views.share.qgroup_id')
+        cls.mock_qgroup_id = cls.patch_qgroup_id.start()
+        cls.mock_qgroup_id.return_value = True
+
         # put mocks
         cls.patch_share_usage = patch('storageadmin.views.share.share_usage')
         cls.mock_share_usage = cls.patch_share_usage.start()
