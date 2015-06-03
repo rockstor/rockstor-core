@@ -79,7 +79,7 @@ class PoolTests(APITestMixin, APITestCase):
         1. Get base URL
         2. Get nonexistant pool
         """
-        super(PoolTests, self).get_base(self.BASE_URL)
+        self.get_base(self.BASE_URL)
 
     def test_invalid_requests(self):
         """

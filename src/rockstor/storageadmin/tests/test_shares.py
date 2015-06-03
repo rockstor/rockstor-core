@@ -73,9 +73,8 @@ class ShareTests(APITestMixin, APITestCase):
         2. Get nonexistant share
         3. Get w/ sort parameters
         """
-        super(ShareTests, self).get_base(self.BASE_URL)
+        self.get_base(self.BASE_URL)
 
-        # TODO not picking up URL params
         response1 = self.client.get('%s?sortby=usage&reverse=yes' % self.BASE_URL)
         self.assertEqual(response1.status_code, status.HTTP_200_OK, msg=response1.data)
 
