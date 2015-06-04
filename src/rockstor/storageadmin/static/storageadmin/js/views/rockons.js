@@ -218,6 +218,7 @@ RockonsView = RockstorLayoutView.extend({
 
     updateStatus: function() {
 	var _this = this;
+	_this.defTab = 0;
 	_this.startTime = new Date().getTime();
 	_this.rockons.fetch({
 	    silent: true,
