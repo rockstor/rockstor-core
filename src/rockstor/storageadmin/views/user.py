@@ -26,7 +26,6 @@ from storageadmin.models import (User, Group)
 import rest_framework_custom as rfc
 from system.users import (useradd, usermod, userdel,
                           smbpasswd, add_ssh_key, update_shell)
-from storageadmin.exceptions import RockStorAPIException
 import pwd
 from system.ssh import is_pub_key
 from ug_helpers import (combined_users, combined_groups)
