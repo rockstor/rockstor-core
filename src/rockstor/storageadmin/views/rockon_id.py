@@ -139,13 +139,13 @@ class RockOnIdView(rfc.GenericView):
                     e_msg = ('Rock-on(%s) is not currently installed. Cannot '
                              'uninstall it' % rid)
                     handle_exception(Exception(e_msg), request)
-                if (rockon.status == 'started' or rockon.status == 'start_pending'):
+                if (rockon.status == 'started' or rockon.status == 'pending_start'):
                     e_msg = ('Rock-on(%s) must be stopped before it can '
                              'be uninstalled. Stop it and try again' %
                              rid)
                     handle_exception(Exception(e_msg), request)
                 uninstall.async(rockon.id)
-                rockon.state = 'uninstall_pending'
+                rockon.state = 'pending_uninstall'
                 rockon.save()
                 for co in DContainer.objects.filter(rockon=rockon):
                     DVolume.objects.filter(container=co, uservol=True).delete()
@@ -155,7 +155,7 @@ class RockOnIdView(rfc.GenericView):
                     e_msg = ('Rock-on(%s) is not currently installed. Cannot '
                              'update it' % rid)
                     handle_exception(Exception(e_msg), request)
-                if (rockon.status == 'started' or rockon.status == 'start_pending'):
+                if (rockon.status == 'started' or rockon.status == 'pending_start'):
                     e_msg = ('Rock-on(%s) must be stopped before it can '
                              'be updated. Stop it and try again' %
                              rid)
@@ -181,11 +181,11 @@ class RockOnIdView(rfc.GenericView):
                 update.async(rockon.id)
             elif (command == 'stop'):
                 stop.async(rockon.id)
-                rockon.status = 'stop_pending'
+                rockon.status = 'pending_stop'
                 rockon.save()
             elif (command == 'start'):
                 start.async(rockon.id)
-                rockon.status = 'start_pending'
+                rockon.status = 'pending_start'
                 rockon.save()
             elif (command == 'state_update'):
                 state = request.data.get('new_state')
