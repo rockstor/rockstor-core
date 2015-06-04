@@ -25,7 +25,7 @@ class RockOn(models.Model):
     description = models.CharField(max_length=2048)
     version = models.CharField(max_length=2048)
     state = models.CharField(max_length=2048)
-    status = models.CharField(max_length=32)
+    status = models.CharField(max_length=2048)
     link = models.CharField(max_length=1024, null=True)
     website = models.CharField(max_length=2048, null=True)
 
