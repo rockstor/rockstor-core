@@ -161,8 +161,7 @@ class RockOnView(rfc.GenericView):
                             cco.save()
                     if ('app_link' in rockons[r]):
                         app_link = rockons[r]['app_link']
-                        if (ro.state != 'installed'):
-                            ro.link = app_link
+                        ro.link = app_link
                     if ('website' in rockons[r]):
                         ro.website = rockons[r]['website']
                     ro.save()
