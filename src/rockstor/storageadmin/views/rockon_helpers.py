@@ -141,7 +141,7 @@ def uninstall(rid, new_state='available'):
     except Exception, e:
         logger.debug('exception while uninstalling rockon')
         logger.exception(e)
-        new_state = 'error'
+        new_state = 'uninstall_failed'
     finally:
         url = ('%s/%d/state_update' % (ROCKON_URL, rid))
         return api_call(url, data={'new_state': new_state, }, calltype='post',

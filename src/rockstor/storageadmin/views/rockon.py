@@ -25,6 +25,9 @@ from storageadmin.serializers import RockOnSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
 from rockon_helpers import (docker_status, rockon_status)
+from django_ztask.models import Task
+import pickle
+import re
 import logging
 logger = logging.getLogger(__name__)
 
@@ -34,11 +37,22 @@ class RockOnView(rfc.GenericView):
 
     def get_queryset(self, *args, **kwargs):
         if (docker_status()):
+            pending_rids = []
+            for t in Task.objects.all():
+                pending_rids.append(pickle.loads(t.args)[0])
             for ro in RockOn.objects.all():
                 if (ro.state == 'installed'):
-                    #update current running status of installed rockons.
+                    # update current running status of installed rockons.
                     ro.status = rockon_status(ro.name)
-                    ro.save()
+                elif (re.search('pending', ro.state) is not None and
+                      ro.id not in pending_rids):
+                    # reset rockons to their previosu state if they are stuck
+                    # in a pending transition.
+                    if (re.search('uninstall', ro.state) is not None):
+                        ro.state = 'installed'
+                    else:
+                        ro.state = 'available'
+                ro.save()
         return RockOn.objects.filter().order_by('-id')
 
     @transaction.atomic
