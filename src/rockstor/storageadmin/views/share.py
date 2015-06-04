@@ -22,7 +22,7 @@ from rest_framework.exceptions import NotFound
 from django.db import transaction
 from storageadmin.models import (Share, Disk, Pool, Snapshot,
                                  NFSExport, SambaShare, SFTP)
-from fs.btrfs import (add_share, remove_share, share_id, update_quota,
+from fs.btrfs import (add_share, remove_share, update_quota,
                       share_usage, set_property, mount_share, qgroup_id)
 from system.osi import is_share_mounted
 from storageadmin.serializers import ShareSerializer
