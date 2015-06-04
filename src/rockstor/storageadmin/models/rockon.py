@@ -23,8 +23,8 @@ from storageadmin.models import Share
 class RockOn(models.Model):
     name = models.CharField(max_length=1024)
     description = models.CharField(max_length=2048)
-    version = models.CharField(max_length=32)
-    state = models.CharField(max_length=32)
+    version = models.CharField(max_length=2048)
+    state = models.CharField(max_length=2048)
     status = models.CharField(max_length=32)
     link = models.CharField(max_length=1024, null=True)
     website = models.CharField(max_length=2048, null=True)
