@@ -493,6 +493,10 @@ RockonInstallSummary = RockstorWizardPage.extend({
 
     save: function() {
 	var _this = this;
+	event.preventDefault();
+	var button = $(event.currentTarget);
+	if (buttonDisabled(button)) return false;
+	disableButton(button);
 	return $.ajax({
 	    url: '/api/rockons/' + this.rockon.id + '/install',
 	    type: 'POST',
@@ -720,6 +724,10 @@ RockonSettingsComplete = RockstorWizardPage.extend({
 
     save: function() {
 	var _this = this;
+	event.preventDefault();
+	var button = $(event.currentTarget);
+	if (buttonDisabled(button)) return false;
+	disableButton(button);
 	return $.ajax({
 	    url: '/api/rockons/' + this.rockon.id + '/update',
 	    type: 'POST',
