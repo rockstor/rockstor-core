@@ -61,6 +61,9 @@ class RockOnView(rfc.GenericView):
                     ro = None
                     if (RockOn.objects.filter(name=name).exists()):
                         ro = RockOn.objects.get(name=name)
+                        if (ro.state != 'available'):
+                            #don't update metadata if it's installed or in some pending state.
+                            continue
                         ro.description = rockons[r]['description']
                     else:
                         ro = RockOn(name=name,
@@ -94,6 +97,9 @@ class RockOnView(rfc.GenericView):
                                 if (DPort.objects.filter(hostp=p).exists()):
                                     po = DPort.objects.get(hostp=p)
                                     po.container = co
+                                elif (DPort.objects.filter(containerp=p, container=co).exists()):
+                                    po = DPort.objects.get(containerp=p, container=co)
+                                    po.hostp = p
                                 else:
                                     po = DPort(hostp=p, containerp=p,
                                                container=co)
