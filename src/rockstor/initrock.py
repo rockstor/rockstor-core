@@ -128,6 +128,16 @@ def main():
         logging.info('restarting nginx...')
         run_command(['/opt/rockstor/bin/supervisorctl', 'restart', 'nginx'])
 
+    with open('/etc/rc.d/rc.local', 'a+') as lfo:
+        found = False
+        for l in lfo.readlines():
+            if (re.match('/opt/rockstor/bin/initrock', l) is not None):
+                found = True
+        if (not found):
+            lfo.write('#rockstor script. dont remove\n')
+            lfo.write('/opt/rockstor/bin/initrock -x\n')
+    run_command(['/usr/bin/chmod', 'a+x', '/etc/rc.d/rc.local'])
+
     if (os.path.isfile(STAMP)):
         return logging.info(
             'initrock ran successfully before, so not running it again.'
