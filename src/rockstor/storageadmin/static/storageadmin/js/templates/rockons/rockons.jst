@@ -31,7 +31,11 @@
   <li class="active"><a href="#js-rockons-installed" data-toggle="tab">Installed</a></li>
   <li><a href="#js-rockons-available" data-toggle="tab">All</a></li>
 </ul>
-
+<% if ( status ) { %>
+<p>You have enabled rockons</p>
+<% } else { %>
+<p>You have not enabled the Rockons service</p>
+<% } %>
 
 <div class="css-panes">
 

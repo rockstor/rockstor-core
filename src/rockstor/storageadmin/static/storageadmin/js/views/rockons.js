@@ -31,7 +31,8 @@ RockonsView = RockstorLayoutView.extend({
 	this.constructor.__super__.initialize.apply(this, arguments);
 	this.template = window.JST.rockons_rockons;
 	this.rockons = new RockOnCollection({});
-	this.dependencies.push(this.rockons);
+	this.service = new Service({ name: 'docker' });
+	this.dependencies.push(this.rockons, this.service);
 	this.updateFreq = 15000;
 	this.defTab = 0;
     },
@@ -54,14 +55,14 @@ RockonsView = RockstorLayoutView.extend({
 
     renderRockons: function() {
 	var _this = this;
-	$(this.el).html(this.template({rockons: this.rockons}));
 	if (!this.dockerServiceView) {
 	    this.dockerServiceView = new DockerServiceView({
 		parentView: this,
 		dockerService: this.dockerService
 	    });
 	}
-
+	// Render the Rockons template with a status describing whether
+	// the Rockons service has been enabled
 	this.$('input.service-status').simpleSlider({
 	    "theme": "volume",
 	    allowedValues: [0,1],
@@ -75,9 +76,21 @@ RockonsView = RockstorLayoutView.extend({
 	});
 
 	$('#docker-service-ph').append(this.dockerServiceView.render().el);
-	$('#install-rockon-overlay').overlay({load: false});
-	this.$("ul.css-tabs").tabs("div.css-panes > div");
-	this.$("ul.css-tabs").data("tabs").click(this.defTab);
+	var serviceThis = this;
+	var dockerServiceStatus;
+	this.service.fetch().then(function(data) {
+	    dockerServiceStatus = data.status;
+	    $(serviceThis.el).html(serviceThis.template({
+		rockons: serviceThis.rockons,
+		status: dockerServiceStatus
+	    }));
+	}).then(function() {
+	    $('#install-rockon-overlay').overlay({load: false});
+	    serviceThis.$("ul.css-tabs").tabs("div.css-panes > div");
+	    serviceThis.$("ul.css-tabs").data("tabs").click(serviceThis.defTab);
+	});
+
+
     },
 
     installRockon: function(event) {
