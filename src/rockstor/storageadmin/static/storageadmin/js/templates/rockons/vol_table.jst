@@ -1,13 +1,13 @@
 <div class="row-fluid">
-  <div class="span8">
+  <div class="span10">
     <label class="control-label"></label>
     <div class="form-box">
       <form id="vol-select-form" name="aform" class="form-horizontal">
 	<div class="messages"></div>
 	<div class="control-group">
 	  <% volumes.each(function(volume, index) { %>
-	  <label class="control-label" for="shares">Share(<%= volume.get('dest_dir')%>)<span class="required"> *</span></label>
-	  <div class="controls">
+	  <label class="pull-left" for="shares">Share(<%= volume.get('dest_dir')%>) *</label>
+	  <div class="controls pull-right">
 	    <select name="<%= volume.id %>" id="<%= volume.id %>" data-placeholder="Select shares to export">
 	      <% shares.each(function(share, index) { %>
 	      <option value="<%= share.get('name') %>"><%= share.get('name') %></option>
