@@ -652,7 +652,7 @@ WizardView = Backbone.View.extend({
 
     events: {
 	'click #next-page': 'nextPage',
-	'click #prev-page': 'prevPage',
+	'click #prev-page': 'prevPage'
     },
 
     initialize: function() {
