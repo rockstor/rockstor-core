@@ -358,6 +358,7 @@ RockonShareChoice = RockstorWizardPage.extend({
 	this.rockon = this.model.get('rockon');
 	this.volumes = this.model.get('volumes');
 	this.shares = new ShareCollection();
+	this.shares.setPageSize(100);
 	RockstorWizardPage.prototype.initialize.apply(this, arguments);
 	this.shares.on('reset', this.renderVolumes, this);
     },
@@ -634,6 +635,7 @@ RockonAddShare = RockstorWizardPage.extend({
 	this.template = window.JST.rockons_add_shares;
 	this.sub_template = window.JST.rockons_add_shares_form;
 	this.shares = new ShareCollection();
+	this.shares.setPageSize(100);
 	RockstorWizardPage.prototype.initialize.apply(this, arguments);
 	this.shares.on('reset', this.renderShares, this);
     },
