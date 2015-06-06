@@ -653,6 +653,8 @@ def scan_disks(min_size):
             if (dmap['SIZE'] < min_size):
                 continue
             if (dmap['SERIAL'] == '' or (dmap['SERIAL'] in serials)):
+                # so no serial number or its a repeat so overwrite with drive name
+                # see disks_table.jst for a use of this flag mechanism.
                 dmap['SERIAL'] = dmap['NAME']
             serials.append(dmap['SERIAL'])
             for k in dmap.keys():
