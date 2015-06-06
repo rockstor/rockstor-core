@@ -50,11 +50,13 @@ RockonsView = RockstorLayoutView.extend({
     render: function() {
 	this.rockons.fetch();
 	this.updateStatus();
+	this.service.fetch();
 	return this;
     },
 
     renderRockons: function() {
 	var _this = this;
+
 	if (!this.dockerServiceView) {
 	    this.dockerServiceView = new DockerServiceView({
 		parentView: this,
@@ -76,20 +78,16 @@ RockonsView = RockstorLayoutView.extend({
 	});
 
 	$('#docker-service-ph').append(this.dockerServiceView.render().el);
-	var serviceThis = this;
-	var dockerServiceStatus;
-	this.service.fetch().then(function(data) {
-	    dockerServiceStatus = data.status;
-	    $(serviceThis.el).html(serviceThis.template({
-		rockons: serviceThis.rockons,
-		status: dockerServiceStatus
-	    }));
-	}).then(function() {
-	    $('#install-rockon-overlay').overlay({load: false});
-	    serviceThis.$("ul.css-tabs").tabs("div.css-panes > div");
-	    serviceThis.$("ul.css-tabs").data("tabs").click(serviceThis.defTab);
-	});
+	$(this.el).html(this.template({
+	    rockons: this.rockons,
+	    status: this.service.get('status')
+	}));
 
+	console.log(this.service.get('status'));
+
+	$('#install-rockon-overlay').overlay({load: false});
+	this.$("ul.css-tabs").tabs("div.css-panes > div");
+	this.$("ul.css-tabs").data("tabs").click(this.defTab);
 
     },
 
