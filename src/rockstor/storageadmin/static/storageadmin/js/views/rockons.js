@@ -56,7 +56,13 @@ RockonsView = RockstorLayoutView.extend({
     },
 
     renderRockons: function() {
+	console.log('rockons rendered');
 	var _this = this;
+	
+	$(this.el).html(this.template({
+	    rockons: this.rockons,
+	    status: this.service.get('status')
+	}));
 
 	if (!this.dockerServiceView) {
 	    this.dockerServiceView = new DockerServiceView({
@@ -79,12 +85,6 @@ RockonsView = RockstorLayoutView.extend({
 	});
 
 	$('#docker-service-ph').append(this.dockerServiceView.render().el);
-	$(this.el).html(this.template({
-	    rockons: this.rockons,
-	    status: this.service.get('status')
-	}));
-
-	console.log(this.service.get('status'));
 
 	$('#install-rockon-overlay').overlay({load: false});
 	this.$("ul.css-tabs").tabs("div.css-panes > div");
@@ -168,22 +168,29 @@ RockonsView = RockstorLayoutView.extend({
     },
 
     getRockonId: function(event) {
+	console.log('getrockonid');
 	var slider = $(event.currentTarget);
 	return slider.attr('data-rockon-id');
     },
 
     getSliderVal: function(id) {
+	console.log('getsliderval');
 	return this.$('input[data-rockon-id='+id+']').data('slider-object').value;
     },
 
     setSliderVal: function(id, val) {
+	console.log('setsliderval');
 	this.$('input[data-rockon-id='+id+']').simpleSlider('setValue', val);
     },
 
     startRockon: function(event) {
+
 	var _this = this;
 	var rockon_id = this.getRockonId(event);
-	if (this.getSliderVal(rockon_id).toString() == "1") { return; }
+	if (this.getSliderVal(rockon_id).toString() == "1") {
+	    console.log('slider stuff');
+	    return;
+	}
 	this.stopPolling();
 	$.ajax({
 	    url: '/api/rockons/' + rockon_id + '/start',

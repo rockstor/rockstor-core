@@ -26,17 +26,11 @@
 </div>
 <span class="h2">Rock-ons</span>
 <br><br>
-
+  <h1>Hey there</h1>
 <ul class="css-tabs">
   <li class="active"><a href="#js-rockons-installed" data-toggle="tab">Installed</a></li>
   <li><a href="#js-rockons-available" data-toggle="tab">All</a></li>
 </ul>
-
-<% if ( status ) {%>
-<h1>you have enabled rockons!</h1>
-<% } else { %>
-<h1>you have not enabled rockons</h1>
-<% } %>
 
 <div class="css-panes">
 
@@ -84,15 +78,18 @@
       <% } %>
     <% }); %>
     <% if (installed == 0) { %>
-      <div class="tab-section">
-	<div class="row-fluid">
-	  <div class="span12">
-	    <h3>There are no Rock-ons installed currently.</h3>
-	  </div>
+
+    <div class="tab-section">
+      <div class="row-fluid">
+	<div class="span12">
+	  <h3>There are no Rock-ons installed currently.</h3>
 	</div>
       </div>
+    </div>
     <% } %>
   </div>
+
+  
 
   <div id="js-rockons-available">
     <% var all = 0; %>
