@@ -168,18 +168,15 @@ RockonsView = RockstorLayoutView.extend({
     },
 
     getRockonId: function(event) {
-	console.log('getrockonid');
 	var slider = $(event.currentTarget);
 	return slider.attr('data-rockon-id');
     },
 
     getSliderVal: function(id) {
-	console.log('getsliderval');
 	return this.$('input[data-rockon-id='+id+']').data('slider-object').value;
     },
 
     setSliderVal: function(id, val) {
-	console.log('setsliderval');
 	this.$('input[data-rockon-id='+id+']').simpleSlider('setValue', val);
     },
 
@@ -188,7 +185,6 @@ RockonsView = RockstorLayoutView.extend({
 	var _this = this;
 	var rockon_id = this.getRockonId(event);
 	if (this.getSliderVal(rockon_id).toString() == "1") {
-	    console.log('slider stuff');
 	    return;
 	}
 	this.stopPolling();
