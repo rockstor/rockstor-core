@@ -1,27 +1,27 @@
 /*
  *
- * @licstart  The following is the entire license notice for the 
+ * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
- * 
+ *
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
- * 
+ *
  * RockStor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
- * 
+ *
  * RockStor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * @licend  The above is the entire license notice
  * for the JavaScript code in this page.
- * 
+ *
  */
 
 DockerServiceView = Backbone.View.extend({
@@ -49,18 +49,18 @@ DockerServiceView = Backbone.View.extend({
 	this.startPolling();
 	return this;
     },
-    
+
     renderPage: function() {
 	$(this.el).html(this.template({
    	    service: this.service
 	}));
-	
+
 	this.$('input.service-status').simpleSlider({
 	    "theme": "volume",
 	    allowedValues: [0,1],
-	    snap: true 
+	    snap: true
 	});
-	
+
 	this.$('input.service-status').each(function(i, el) {
 	    var slider = $(el).data('slider-object');
 	    // disable track and dragger events to disable slider
@@ -73,9 +73,9 @@ DockerServiceView = Backbone.View.extend({
 
     startService: function(event) {
 	var _this = this;
-	var serviceName = this.serviceName; 
+	var serviceName = this.serviceName;
 	// if already started, return
-	if (this.getSliderVal(serviceName).toString() == "1") return; 
+	if (this.getSliderVal(serviceName).toString() == "1") return;
 	this.stopPolling();
 	this.setStatusLoading(serviceName, true);
 	$.ajax({
@@ -83,8 +83,9 @@ DockerServiceView = Backbone.View.extend({
 	    type: "POST",
 	    dataType: "json",
 	    success: function(data, status, xhr) {
+		location.reload(true);
 		_this.highlightStartEl(serviceName, true);
-		_this.setSliderVal(serviceName, 1); 
+		_this.setSliderVal(serviceName, 1);
 		_this.setStatusLoading(serviceName, false);
 		_this.startPolling();
 	    },
@@ -97,9 +98,9 @@ DockerServiceView = Backbone.View.extend({
 
     stopService: function(event) {
 	var _this = this;
-	var serviceName = $(event.currentTarget).data('service-name'); 
+	var serviceName = $(event.currentTarget).data('service-name');
 	// if already stopped, return
-	if (this.getSliderVal(serviceName).toString() == "0") return; 
+	if (this.getSliderVal(serviceName).toString() == "0") return;
 	this.stopPolling();
 	this.setStatusLoading(serviceName, true);
 	$.ajax({
@@ -107,8 +108,9 @@ DockerServiceView = Backbone.View.extend({
 	    type: "POST",
 	    dataType: "json",
 	    success: function(data, status, xhr) {
+		location.reload(true);
 		_this.highlightStartEl(serviceName, false);
-		_this.setSliderVal(serviceName, 0); 
+		_this.setSliderVal(serviceName, 0);
 		_this.setStatusLoading(serviceName, false);
 		_this.startPolling();
 	    },
@@ -154,10 +156,10 @@ DockerServiceView = Backbone.View.extend({
 		var serviceName = service.get('name');
 		if (service.get('status')) {
 		    _this.highlightStartEl(serviceName, true);
-		    _this.setSliderVal(serviceName, 1); 
+		    _this.setSliderVal(serviceName, 1);
 		} else {
 		    _this.highlightStartEl(serviceName, false);
-		    _this.setSliderVal(serviceName, 0); 
+		    _this.setSliderVal(serviceName, 0);
 		}
 		var currentTime = new Date().getTime();
 		var diff = currentTime - _this.startTime;
@@ -166,7 +168,7 @@ DockerServiceView = Backbone.View.extend({
 		    _this.updateStatus();
 		} else {
 		    // wait till updateFreq msec has elapsed since startTime
-		    _this.timeoutId = window.setTimeout( function() { 
+		    _this.timeoutId = window.setTimeout( function() {
 			_this.updateStatus();
 		    }, _this.updateFreq - diff);
 		}
@@ -217,5 +219,3 @@ DockerServiceView = Backbone.View.extend({
     }
 
 });
-
-
