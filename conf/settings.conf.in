@@ -321,7 +321,7 @@ SYSCONFIG = {
 SOUTH_TESTS_MIGRATE = False
 
 REST_FRAMEWORK = {
-	'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+	'DEFAULT_PAGINATION_CLASS': 'rest_framework_custom.custom_pagination.CustomPagination',
 	'TEST_REQUEST_DEFAULT_FORMAT': 'json',
 	'PAGE_SIZE': 15,
 	'MAX_LIMIT': 10000,

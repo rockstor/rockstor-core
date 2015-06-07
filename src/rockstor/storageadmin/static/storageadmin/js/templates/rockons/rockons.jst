@@ -20,18 +20,22 @@
 </script>
 
 <div class="messages"></div>
-
+<% if ( !status ) {%>
+<div class='alert'>
+  <button type='button' class='close'>&times;</button>
+  <strong>Warning!</strong> Rock-on service is not running. Please turn it on to use features on this screen.
+</div>
+<% } else { %>
+<span class="h2">Rock-ons</span>
 <div class="pull-right">
   <a id="js-update-rockons" class="btn btn-primary pull-right" href="#" title="Check for new Rock-ons"><i class="icon-refresh icon-white"></i> Update</a>
 </div>
-<span class="h2">Rock-ons</span>
 <br><br>
 
 <ul class="css-tabs">
   <li class="active"><a href="#js-rockons-installed" data-toggle="tab">Installed</a></li>
   <li><a href="#js-rockons-available" data-toggle="tab">All</a></li>
 </ul>
-
 
 <div class="css-panes">
 
@@ -79,15 +83,18 @@
       <% } %>
     <% }); %>
     <% if (installed == 0) { %>
-      <div class="tab-section">
-	<div class="row-fluid">
-	  <div class="span12">
-	    <h3>There are no Rock-ons installed currently.</h3>
-	  </div>
+
+    <div class="tab-section">
+      <div class="row-fluid">
+	<div class="span12">
+	  <h3>There are no Rock-ons installed currently.</h3>
 	</div>
       </div>
+    </div>
     <% } %>
   </div>
+
+
 
   <div id="js-rockons-available">
     <% var all = 0; %>
@@ -136,3 +143,4 @@
     <div id="install-rockon-modal-contents"></div>
   </div>
 </div>
+<% } %>

@@ -22,7 +22,7 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 from django.db import transaction
 from django.contrib.auth.models import User as DjangoUser
 from storageadmin.models import User
-from system.users import (get_users, usermod)
+from system.users import (get_users, usermod, smbpasswd)
 
 @transaction.commit_on_success
 def change_password(username, password):
@@ -44,6 +44,7 @@ def change_password(username, password):
 
     try:
         usermod(username, password)
+        smbpasswd(username, password)
     except:
         sys.exit('Low level error occured while changing password of user: %s'
         % username)

@@ -44,7 +44,7 @@ ServicesView = Backbone.View.extend({
       'stop': 'stopped',
       'restart': 'restarted',
       'reload': 'reloaded'
-    }
+    };
     this.updateFreq = 5000;
     this.smTs = null; // current timestamp of sm service
   },
