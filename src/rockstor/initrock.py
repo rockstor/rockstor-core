@@ -162,8 +162,6 @@ def main():
     run_command(['su', '-', 'postgres', '-c',
                  '/usr/bin/createdb storageadmin'])
     logging.debug('storageadmin created')
-    run_command(['su', '-', 'postgres', '-c', '/usr/bin/createdb backup'])
-    logging.debug('backup created')
     logging.info('Done')
     logging.info('Initializing app databases...')
     run_command(['su', '-', 'postgres', '-c', "psql -c \"CREATE ROLE rocky WITH SUPERUSER LOGIN PASSWORD 'rocky'\""])
@@ -172,14 +170,10 @@ def main():
     logging.debug('storageadmin app database loaded')
     run_command(['su', '-', 'postgres', '-c', "psql smartdb -f /opt/rockstor/conf/smartdb.sql.in"])
     logging.debug('smartdb app database loaded')
-    run_command(['su', '-', 'postgres', '-c', "psql backup -f /opt/rockstor/conf/backup.sql.in"])
-    logging.debug('backup app database loaded')
     run_command(['su', '-', 'postgres', '-c', "psql storageadmin -c \"select setval('south_migrationhistory_id_seq', (select max(id) from south_migrationhistory))\""])
     logging.debug('storageadmin migration history copied')
     run_command(['su', '-', 'postgres', '-c', "psql smartdb -c \"select setval('south_migrationhistory_id_seq', (select max(id) from south_migrationhistory))\""])
     logging.debug('smartdb migration history copied')
-    run_command(['su', '-', 'postgres', '-c', "psql backup -c \"select setval('south_migrationhistory_id_seq', (select max(id) from south_migrationhistory))\""])
-    logging.debug('backup migration history copied')
     logging.info('Done')
     run_command(['cp', '-f', '/opt/rockstor/conf/postgresql.conf',
                  '/var/lib/pgsql/data/'])
@@ -198,9 +192,6 @@ def main():
     run_command([DJANGO, 'migrate', 'smart_manager',
                  '--database=smart_manager', '--noinput'])
     logging.debug('smart manager migrated')
-    run_command([DJANGO, 'migrate', 'backup', '--database=backup',
-                 '--noinput'])
-    logging.debug('backup migrated')
     logging.info('Done')
     logging.info('Running prepdb...')
     run_command(['/opt/rockstor/bin/prep_db', ])
