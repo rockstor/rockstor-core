@@ -29,7 +29,7 @@
 <span class="h2"><%= pool.get('name') %></span>
 <% if (pool.get('name') == 'rockstor_rockstor') { %>
    <br>
-   <div class="alert alert-error">
+   <div class="alert alert-danger">
      <h4>Warning! This Pool is created during install and contains the OS. You can create Shares in it like in any other pool on the system. However, operations like resize, compression and deletion are not allowed.</h4>
    </div>
 <% } %>

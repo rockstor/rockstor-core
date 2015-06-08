@@ -23,7 +23,7 @@
 <!-- page heading -->
 
 <% if (!disk.get('smart_available')) { %>
-<div class="alert alert-error">
+<div class="alert alert-danger">
   <h4>S.M.A.R.T support is not available for this disk (<%= disk.get('name')%>)</h4>
 </div>
 <% } else if (!disk.get('smart_enabled')) { %>
@@ -269,7 +269,7 @@
   <div id="smarttests">
     <div class="row">
       <% if (!disk.get('smart_available') || !disk.get('smart_enabled')) { %>
-      <div class="alert alert-error">
+      <div class="alert alert-danger">
 	<h4>Tests cannot be run because S.M.A.R.T support is either unavailable or disabled</h4>
       </div>
       <% } else { %>

@@ -29,7 +29,7 @@
           </td>
 	  <td>
 	   <% if (disk.get('serial') == null || disk.get('serial') == '' || disk.get('serial') == disk.get('name')) { %>
-	      <div class="alert alert-error">
+	      <div class="alert alert-danger">
        	      <h4>Warning! Disk serial number or UUID is not legitimate or unique.</h4>
        	      Disk names may change unfavorably upon reboot, errors and replacement resulting in data loss. This error is caused by the source of these disks such as your Hypervisor or SAN. Please ensure that disks are provided with unique serial numbers before proceeding futher
      	      </div>
