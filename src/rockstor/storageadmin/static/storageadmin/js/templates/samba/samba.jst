@@ -1,6 +1,6 @@
 <!-- Module Body -->
-<div class="row-fluid">
-  <div class="span12">
+<div class="row">
+  <div class="col-md-12">
     <div id="details-header">
       <table>
         <tr>
@@ -60,9 +60,9 @@
 	      </td>
               <td><%= sambaShare.get('comment') %></td>
               <td>
-	      <a href="#samba/edit/<%= sambaShare.id %>"><i class="icon-pencil"></i></a>
+	      <a href="#samba/edit/<%= sambaShare.id %>"><i class="glyphicon glyphicon-pencil"></i></a>
 	      &nbsp;
-                <a href="#" class="delete-samba-export" data-share="<%= sambaShare.get('share') %>" data-id="<%= sambaShare.id %>"><i class="icon-trash"></i></a>
+                <a href="#" class="delete-samba-export" data-share="<%= sambaShare.get('share') %>" data-id="<%= sambaShare.id %>"><i class="glyphicon glyphicon-trash"></i></a>
               </td>
             </tr>
           <% }); %>
@@ -80,9 +80,9 @@
       </table>
     <% } %>
     <% if (freeShares.length > 0) { %>
-      <a href="#add-samba-export" id="add-samba-export" class="btn btn-primary"><i class="icon-edit icon-white"></i> Add Samba Export</a>
+      <a href="#add-samba-export" id="add-samba-export" class="btn btn-primary"><i class="glyphicon glyphicon-edit "></i> Add Samba Export</a>
     <% } else { %>
-      <a  id="add-samba-export" class="btn btn-primary disabled" title="No shares available to export through Samba"><i class="icon-edit icon-white"></i> Add Samba Export</a>
+      <a  id="add-samba-export" class="btn btn-primary disabled" title="No shares available to export through Samba"><i class="glyphicon glyphicon-edit "></i> Add Samba Export</a>
     <% } %>
   </div>
 </div>

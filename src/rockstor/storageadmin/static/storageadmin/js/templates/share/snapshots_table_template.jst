@@ -45,7 +45,7 @@
               <input class="js-snapshot-select inline" type="checkbox" name="snapshot-select" data-name="<%= snapshot.get('name') %>" data-id="<%= snapshot.get('id') %>" ></input>
             <% } %>
           </td>
-          <td><i class="icon-camera"></i> <%= snapshot.get('name') %></td>
+          <td><i class="glyphicon glyphicon-camera"></i> <%= snapshot.get('name') %></td>
           <td><%= moment(snapshot.get("toc")).format(RS_DATE_FORMAT) %></td>
           <td>
             <% if (snapshot.get("uvisible")) { %>
@@ -65,9 +65,9 @@
 	        <td><%= humanize.filesize(snapshot.get('e_usage')*1024) %></td>
           <td>
 	  <% if (snapshot.get("writable")) { %>
-            <a class="js-snapshot-clone" href="#" data-name="<%= snapshot.get('name') %>"><i rel="tooltip" title="Clone snapshot" class="icon-book"></i></a>
+            <a class="js-snapshot-clone" href="#" data-name="<%= snapshot.get('name') %>"><i rel="tooltip" title="Clone snapshot" class="glyphicon glyphicon-book"></i></a>
 	    <% } %>
-            <a href="#" class="js-snapshot-delete" id="delete_snapshot_<%=snapshot.get('name') %>" data-name="<%= snapshot.get('name') %>" data-size="<%= humanize.filesize(snapshot.get('e_usage')*1024) %>" data-share-name="<%= share.get('name') %>" data-action="delete" title="Delete snapshot"><i rel="tooltip" title="Delete snapshot" class="icon-trash"></i></a>
+            <a href="#" class="js-snapshot-delete" id="delete_snapshot_<%=snapshot.get('name') %>" data-name="<%= snapshot.get('name') %>" data-size="<%= humanize.filesize(snapshot.get('e_usage')*1024) %>" data-share-name="<%= share.get('name') %>" data-action="delete" title="Delete snapshot"><i rel="tooltip" title="Delete snapshot" class="glyphicon glyphicon-trash"></i></a>
           </td>
         </tr>
 	  <% }); %>
@@ -78,11 +78,11 @@
 <% } else { %>
   <div class="alert"><h4>There are no snapshots to display</h4></div>
 <% } %>
-<div class="row-fluid">
+<div class="row">
   <div class="pull-right">
     <% if (!snapshots.isEmpty()) { %>
-      <a class="btn btn-danger" href="#" id="js-snapshot-delete-multiple"><i class="icon-trash icon-white"></i> Delete</a>
+      <a class="btn btn-danger" href="#" id="js-snapshot-delete-multiple"><i class="glyphicon glyphicon-trash "></i> Delete</a>
     <% } %>
-    <a class="btn btn-primary" href="#" id="js-snapshot-add"><i class="icon-edit icon-white"></i> Create snapshot</a>
+    <a class="btn btn-primary" href="#" id="js-snapshot-add"><i class="glyphicon glyphicon-edit "></i> Create snapshot</a>
   </div>
 </div>

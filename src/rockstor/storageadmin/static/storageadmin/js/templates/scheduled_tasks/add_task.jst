@@ -21,20 +21,20 @@
 
 <% if (taskDefId == null) { %>
   <h3>Add a new scheduled task</h3>
-  <div class="row-fluid">
-    <div class="span12">
+  <div class="row">
+    <div class="col-md-12">
       <label class="control-label"></label>
       <div class="form-box">
         <form id="scheduled-task-create-form" name="aform">
           <div class="messages"></div>
           <div class="control-group">
             <div class="controls controls-row">
-              <label class="control-label span4" for="task_name">Task name<span class="required"> *</span></label>
-              <label class="control-label span4" for="task_type">Task type<span class="required"> *</span></label>
+              <label class="control-label col-md-4" for="task_name">Task name<span class="required"> *</span></label>
+              <label class="control-label col-md-4" for="task_type">Task type<span class="required"> *</span></label>
             </div>
             <div class="controls controls-row">
-              <input class="span4" type="text" id="name" name="name" placeholder="Task name" title="A descriptive name for this task">
-              <select class="span4" id="task-type" name="task_type">
+              <input class="col-md-4" type="text" id="name" name="name" placeholder="Task name" title="A descriptive name for this task">
+              <select class="col-md-4" id="task-type" name="task_type">
                 <% _.each(taskTypes, function(taskType, index) { %>
                   <option value="<%= taskType %>"> <%= taskType %> </option>
                 <% }); %>
@@ -44,18 +44,18 @@
           <div id="optional-fields"></div>
           <div class="control-group">
             <div class="controls controls-row">
-              <label class="control-label span4" for="start_date">Start Date (MM/DD/YYYY)<span class="required"> *</span></label>
-              <label class="control-label span4" for="start_time">Start Time (hh:mm)<span class="required"> *</span></label>
+              <label class="control-label col-md-4" for="start_date">Start Date (MM/DD/YYYY)<span class="required"> *</span></label>
+              <label class="control-label col-md-4" for="start_time">Start Time (hh:mm)<span class="required"> *</span></label>
             </div>
             <div class="controls controls-row">
-              <input class="span4" type="text" id="start_date" name="start_date" placeholder="Start Date">
-              <input class="span4" type="text" id="start_time" name="start_time" placeholder="Start Time">
+              <input class="col-md-4" type="text" id="start_date" name="start_date" placeholder="Start Date">
+              <input class="col-md-4" type="text" id="start_time" name="start_time" placeholder="Start Time">
             </div>
           </div>
           <div class="control-group">
             <label class="control-label" for="frequency">Task Frequency (in minutes)<span class="required"> *</span></label>
             <div class="controls">
-              <input class="span4" type="text" id="frequency" name="frequency" placeholder="Frequency" title="How often should this task run(in minutes)?">
+              <input class="col-md-4" type="text" id="frequency" name="frequency" placeholder="Frequency" title="How often should this task run(in minutes)?">
             </div>
           </div>
           <div class="control-group">
@@ -74,12 +74,12 @@
         </form>
 
       </div> <!-- form-box -->
-    </div> <!-- span8 -->
-  </div> <!-- row-fluid -->
+    </div> <!-- col-md-8 -->
+  </div> <!-- row -->
 <% } else { %>
   <h3>Edit scheduled task</h3>
-  <div class="row-fluid">
-    <div class="span8">
+  <div class="row">
+    <div class="col-md-8">
       <div class="form-box">
         <form id="scheduled-task-create-form" name="aform" class="form-horizontal">
           <div class="control-group">
@@ -127,7 +127,7 @@
             <div class="control-group">
               <label class="control-label" for="max_count">Maximum count<span class="required"> *</span></label>
               <div class="controls">
-                <input class="span2" type="text" id="max_count" name="meta.max_count" value="<%= taskDef.max_count() %>" title="Older snapshots beyond this number and created by this task will be deleted">
+                <input class="col-md-2" type="text" id="max_count" name="meta.max_count" value="<%= taskDef.max_count() %>" title="Older snapshots beyond this number and created by this task will be deleted">
               </div>
             </div>
 	    <div class="control-group">
@@ -140,7 +140,7 @@
           <div class="control-group">
             <label class="control-label" for="frequency">Task Frequency (in minutes)<span class="required"> *</span></label>
             <div class="controls">
-              <input class="span2" type="text" id="frequency" name="frequency" value="<%= taskDef.get('frequency') %>" placeholder="Frequency" title="How often should this task run(in minutes)?">
+              <input class="col-md-2" type="text" id="frequency" name="frequency" value="<%= taskDef.get('frequency') %>" placeholder="Frequency" title="How often should this task run(in minutes)?">
             </div>
           </div>
           <div class="control-group">

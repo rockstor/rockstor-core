@@ -32,7 +32,7 @@
 </div>
 <% } else { %>
 <div class="pull-right">
-  <button id="smartinfo" class="btn btn-primary pull-right" title="Refresh for latest information"><i class="icon-refresh icon-white"></i>Refresh</button>
+  <button id="smartinfo" class="btn btn-primary pull-right" title="Refresh for latest information"><i class="glyphicon glyphicon-refresh "></i>Refresh</button>
 </div>
 <span class="h2">S.M.A.R.T details for <strong><%= disk.get('name') %></strong></span>
 <% } %>
@@ -51,7 +51,7 @@
 <div class="css-panes">
 
   <div id="smartidentity">
-    <div class="row-fluid">
+    <div class="row">
       <% if (smartinfo.get('identity')) { %>
         <% var identity = smartinfo.get('identity'); %>
 	<table id="smartidentity-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" summary="List of S.M.A.R.T identity attributes">
@@ -133,7 +133,7 @@
   </div>
 
   <div id="smartattributes">
-      <div class="row-fluid">
+      <div class="row">
 	<table id="smartattributes-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" summary="List of S.M.A.R.T attributes">
 	  <thead>
 	    <tr>
@@ -170,7 +170,7 @@
   </div>
 
   <div id="smartcapabilities">
-    <div class="row-fluid">
+    <div class="row">
       <table id="smartcapabilites-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" summary="Table of S.M.A.R.T capabilities">
 	<thead>
 	  <tr>
@@ -194,7 +194,7 @@
     </div>
   </div>
   <div id="smarterrorlogs">
-    <div class="row-fluid">
+    <div class="row">
       <% if (errorlogsummary.length == 0) { %>
         <h3>There are no errors.</h3>
       <% } else { %>
@@ -230,7 +230,7 @@
   </div>
 
   <div id="smarttestlogs">
-    <div class="row-fluid">
+    <div class="row">
       <% if (testlog.length == 0) { %>
       <h3>There are no Self-Test logs.</h3>
       <% } else { %>
@@ -267,7 +267,7 @@
   </div>
 
   <div id="smarttests">
-    <div class="row-fluid">
+    <div class="row">
       <% if (!disk.get('smart_available') || !disk.get('smart_enabled')) { %>
       <div class="alert alert-error">
 	<h4>Tests cannot be run because S.M.A.R.T support is either unavailable or disabled</h4>
@@ -280,7 +280,7 @@
 	to complete if the drive is not idle. You will not be able to access
 	the drive's SMART data while a test is in progress.
       </p>
-      <div class="span8">
+      <div class="col-md-8">
 	<label class="control-label"></label>
 	<div class="form-box">
 	  <form class="form-horizontal" name="run-test-form" id="run-test-form">

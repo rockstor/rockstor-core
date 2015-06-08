@@ -1,16 +1,16 @@
 <% if (taskDefId == null) { %>
   <div class="control-group">
     <div class="controls controls-row">
-      <label class="control-label span4" for="share">Share<span class="required"> *</span></label>
-      <label class="control-label span4" for="prefix">Snapshot prefix<span class="required"> *</span></label>
+      <label class="control-label col-md-4" for="share">Share<span class="required"> *</span></label>
+      <label class="control-label col-md-4" for="prefix">Snapshot prefix<span class="required"> *</span></label>
     </div>
     <div class="controls controls-row">
-      <select class="span4" id="share" name="meta.share">
+      <select class="col-md-4" id="share" name="meta.share">
         <% shares.each(function(share, index) { %>
           <option value="<%= share.get('name') %>"> <%= share.get('name') %> </option>
         <% }); %>
       </select>
-      <input class="span4" type="text" id="prefix" name="meta.prefix" placeholder="Prefix" title="Snapshot will be named with this prefix. The format is prefix_YYYYMMDDHHMMSS">
+      <input class="col-md-4" type="text" id="prefix" name="meta.prefix" placeholder="Prefix" title="Snapshot will be named with this prefix. The format is prefix_YYYYMMDDHHMMSS">
     </div>
   </div>
 <% } else { %>
@@ -20,9 +20,9 @@
 </div>
 <div class="controls controls-row">
   <% if (taskDefId != null) { %>
-    <input class="span4" type="text" id="max_count" name="meta.max_count" value="<%= taskDef.max_count() %>" placeholder="Maximum count" title="Older snapshots beyond this number and created by this task will be deleted">
+    <input class="col-md-4" type="text" id="max_count" name="meta.max_count" value="<%= taskDef.max_count() %>" placeholder="Maximum count" title="Older snapshots beyond this number and created by this task will be deleted">
   <% } else { %>
-    <input class="span4" type="text" id="max_count" name="meta.max_count" placeholder="Maximum count" title="Older snapshots beyond this number and created by this task will be deleted">
+    <input class="col-md-4" type="text" id="max_count" name="meta.max_count" placeholder="Maximum count" title="Older snapshots beyond this number and created by this task will be deleted">
   <% } %>
 </div>
 <div class="control-group">

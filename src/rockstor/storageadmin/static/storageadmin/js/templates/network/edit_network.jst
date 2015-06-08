@@ -22,8 +22,8 @@
 <h3>Configure network interface <%= network.get('name') %></h3>
 
 
-<div class="row-fluid">
-  <div class="span8">
+<div class="row">
+  <div class="col-md-8">
     <label class="control-label"></label>
     <% if (network.get('itype') == 'management') { %>
       <div class="alert alert-error">
@@ -121,5 +121,5 @@
         </div>
       </form>
     </div> <!-- form-box -->
-  </div> <!-- span8 -->
-</div> <!-- row-fluid -->
+  </div> <!-- col-md-8 -->
+</div> <!-- row -->

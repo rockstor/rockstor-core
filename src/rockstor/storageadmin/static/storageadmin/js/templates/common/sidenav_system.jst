@@ -1,14 +1,14 @@
 <h3>System</h3>
 <ul class="nav">
   <% if (selected == "services") { %>
-    <li><a href="#services" class="selected"><i class="icon-cog"></i> Services</span></a></li>
+    <li><a href="#services" class="selected"><i class="glyphicon glyphicon-cog"></i> Services</span></a></li>
 
   <% } else { %>
-    <li><a href="#services"><i class="icon-cog"></i> Services</span></a></li>
+    <li><a href="#services"><i class="glyphicon glyphicon-cog"></i> Services</span></a></li>
   <% } %>
   <li>
     <div class="subnav">
-      <i class="icon-user"></i> Identity
+      <i class="glyphicon glyphicon-user"></i> Identity
       <ul>
         <% if (selected == "users") { %>
           <li><a href="#users" class="selected"><i class="fa fa-user"></i> Users</span></a></li>
@@ -29,19 +29,19 @@
     </div>
   </li>
   <% if (selected == "network") { %>
-    <li><a href="#network" class="selected"><i class="icon-signal"></i> Network Interfaces</span></a></li>
+    <li><a href="#network" class="selected"><i class="glyphicon glyphicon-signal"></i> Network Interfaces</span></a></li>
 <% } else { %>
-  <li><a href="#network"><i class="icon-signal"></i> Network Interfaces</span></a></li>
+  <li><a href="#network"><i class="glyphicon glyphicon-signal"></i> Network Interfaces</span></a></li>
   <% } %>
   <% if (selected == "scheduled-tasks") { %>
-    <li><a href="#scheduled-tasks" class="selected"><i class="icon-tasks icon-white"></i> Scheduled Tasks</span></a></li>
+    <li><a href="#scheduled-tasks" class="selected"><i class="glyphicon glyphicon-tasks "></i> Scheduled Tasks</span></a></li>
 <% } else { %>
-  <li><a href="#scheduled-tasks"><i class="icon-tasks"></i> Scheduled Tasks</span></a></li>
+  <li><a href="#scheduled-tasks"><i class="glyphicon glyphicon-tasks"></i> Scheduled Tasks</span></a></li>
   <% } %>
   <% if (selected == "version") { %>
-    <li><a href="#version" class="selected"><i class="icon-arrow-up icon-white"></i> Software Update</span></a></li>
+    <li><a href="#version" class="selected"><i class="glyphicon glyphicon-arrow-up "></i> Software Update</span></a></li>
 <% } else { %>
-  <li><a href="#version"><i class="icon-arrow-up"></i> Software Update</span></a></li>
+  <li><a href="#version"><i class="glyphicon glyphicon-arrow-up"></i> Software Update</span></a></li>
   <% } %>
   <% if (selected == "appliances") { %>
     <li><a href="#appliances" class="selected"><i class="fa fa-desktop"></i> Appliances</span></a></li>

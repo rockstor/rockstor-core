@@ -23,8 +23,8 @@
 <!-- page heading -->
 
 <div class="pull-right">
-  <a href="#add_share?poolName=<%= pool.get('name') %>" id="add_share" class="btn btn-primary"><i class="icon-edit icon-white"></i> Add Share</a>
-  <button id="delete-pool" class="btn btn-danger" type="button"><i class="icon-trash icon-white"></i> Delete</button>
+  <a href="#add_share?poolName=<%= pool.get('name') %>" id="add_share" class="btn btn-primary"><i class="glyphicon glyphicon-edit "></i> Add Share</a>
+  <button id="delete-pool" class="btn btn-danger" type="button"><i class="glyphicon glyphicon-trash "></i> Delete</button>
 </div>
 <span class="h2"><%= pool.get('name') %></span>
 <% if (pool.get('name') == 'rockstor_rockstor') { %>
@@ -45,33 +45,33 @@
   <div class="css-panes">
     <div id="details">
       <div class="tab-section">
-      <div class="row-fluid">
-        <div class="span6">
+      <div class="row">
+        <div class="col-md-6">
             <div id="ph-pool-info"></div>
-        </div> <!-- span6 -->
-        <div class="span6">
+        </div> <!-- col-md-6 -->
+        <div class="col-md-6">
             <h3>Compression and extra mount options</h3>
             <div id="ph-compression-info"></div>
-        </div> <!-- span6 -->
+        </div> <!-- col-md-6 -->
       </div>
       </div>
-      <div class="row-fluid">
-        <div class="span12">
+      <div class="row">
+        <div class="col-md-12">
           <div class="tab-section">
             <div id="ph-pool-usage"></div>
           </div>
-        </div> <!-- span12 -->
-      </div> <!-- row-fluid -->
-      <div class="row-fluid">
-        <div class="span12">
+        </div> <!-- col-md-12 -->
+      </div> <!-- row -->
+      <div class="row">
+        <div class="col-md-12">
           <div class="tab-section">
 
             <div id="ph-resize-pool-info"></div>
-      <!--   <button id="resize-pool-popup" rel="#resize-pool-form" class="btn btn-primary" type="button"><i class="icon-edit icon-white"></i> Resize Pool</button> -->
+      <!--   <button id="resize-pool-popup" rel="#resize-pool-form" class="btn btn-primary" type="button"><i class="glyphicon glyphicon-edit "></i> Resize Pool</button> -->
 
           </div> <!-- tab-section -->
-        </div> <!-- span12 -->
-      </div> <!-- row-fluid -->
+        </div> <!-- col-md-12 -->
+      </div> <!-- row -->
     </div>
     <div id="poolscrubs">
       <div id="ph-pool-scrubs"></div>
@@ -82,7 +82,7 @@
   </div>
 
 <div class="simple-overlay" id="resize-pool-form">
-  <div class="span6 well">
+  <div class="col-md-6 well">
     <h4>Resize Pool(<%= pool.get('name') %>)</h4>
     <div id="alert-msg"></div></br>
     Select new disk(s) to add to the pool or Unselect disk(s) to remove from the pool.<br>

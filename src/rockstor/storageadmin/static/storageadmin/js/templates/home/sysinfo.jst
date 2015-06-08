@@ -20,23 +20,23 @@
 </script>
 
 <!-- Header -->
-<div class="row-fluid">
-  <div class="span12">
+<div class="row">
+  <div class="col-md-12">
     <div class="module-header">
       <div class="title"><span class="h3">System Info</span></div>
       <div class="gear"><a id="configure-module" href="#"><img src="img/gear.png" width="18px" /></a></div>
     </div>
-  </div> <!-- span12 -->
-</div> <!-- row-fluid -->
+  </div> <!-- col-md-12 -->
+</div> <!-- row -->
 
 
 <!-- Module Body -->
-<div class="row-fluid">
-  <div class="span12">
+<div class="row">
+  <div class="col-md-12">
     <!-- Content -->
     <div class="module-content">
-      <div class="row-fluid">
-        <div class="span12">
+      <div class="row">
+        <div class="col-md-12">
           Load average: <span id="load-avg"></span> <br>
           <% _.each(_.keys(model.attributes), function(k) { %>
             <%= k %>: <%= model.get(k) %><br>
@@ -45,8 +45,8 @@
       </div>
     </div>
     <!-- End Content -->
-  </div> <!-- span12 -->
-</div> <!-- row-fluid --> 
+  </div> <!-- col-md-12 -->
+</div> <!-- row -->
 <!-- end module body -->
 
 

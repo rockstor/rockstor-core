@@ -21,8 +21,8 @@
 
 
 <div id="messages"></div>
-<div class="row-fluid">
-  <div class="span12">
+<div class="row">
+  <div class="col-md-12">
     <br>
     <br>
     <div id="services-list">
@@ -41,7 +41,7 @@
                   <td>
                     <%= service.get('display_name') %>&nbsp;
                     <% if ((service.get('name') == 'nis') || (service.get('name') == 'ntpd') || (service.get('name') == 'winbind') || (service.get('name') == 'ldap') || (service.get('name') == 'snmpd') || (service.get('name') == 'docker') || (service.get('name') == 'smartd')) { %>
-                      <a href="#" class="configure" data-service-name="<%= service.get('name') %>"><i class="icon-wrench"></i></a>
+                      <a href="#" class="configure" data-service-name="<%= service.get('name') %>"><i class="glyphicon glyphicon-wrench"></i></a>
                     <% } %>
                     <% if ((service.get('name') == 'winbind')) { %>
                       &nbsp;
@@ -72,7 +72,7 @@
                     <div class="simple-overlay" id="<%= service.get('name') %>-err-popup"><div class="overlay-content"></div></div>
                   </td>
                   <!--
-                  <td><a href="#" class="configure" data-service-name="<%= service.get('name') %>"><i class="icon-wrench"></i></a></td>
+                  <td><a href="#" class="configure" data-service-name="<%= service.get('name') %>"><i class="glyphicon glyphicon-wrench"></i></a></td>
                   -->
 
                 </tr>

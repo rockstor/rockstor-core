@@ -19,15 +19,15 @@
  */
 </script>
 
-<div class="span9 well">
+<div class="col-md-9 well">
   <div class="row">
-    <div class="span8">
+    <div class="col-md-8">
       <h4>Share <%= share.get('name') %></h4>
       <hr>
     </div>
   </div> <!-- row -->
   <div class="row">
-    <div class="span4">
+    <div class="col-md-4">
       <h4>Details</h4>
       Created on Oct 1 2011 <br>
       Last action on Sep 20 2012 <br>
@@ -40,14 +40,14 @@
         CIFS: path: <%= share.get('smb_share')['path'] %> <br>
       <% } %>
     </div>
-    <div class="span4">
+    <div class="col-md-4">
       <h4>Usage</h4>
       <div id="chart">
       </div>
     </div>
   </div> <!-- row -->
   <div class="row">
-    <div class="span8">
+    <div class="col-md-8">
       <button class="btn btn-primary" type="button">Resize</button>
       <button class="btn btn-danger" type="button">Delete</button>
       <button rel="#nfs_export_form" class="btn btn-primary" type="button">NFS Export</button>
@@ -57,23 +57,23 @@
   </div>
 </div>
 
-<div class="span9 well">
+<div class="col-md-9 well">
   <div class="row">
-    <div class="span8">
+    <div class="col-md-8">
       <h4>Snapshots</h4>
       <hr>
     </div>
   </div> <!-- row -->
   <div class="row">
-    <div class="span8">
+    <div class="col-md-8">
       <div id="snapshots">
       </div>
-    </div> <!-- span8 -->
+    </div> <!-- col-md-8 -->
   </div>
 </div>
 
 <div class="simple-overlay" id="create_snapshot_form">
-  <div class="span6 well">
+  <div class="col-md-6 well">
     <h4>Create a snapshot</h4>
     <label>Snapshot Name</label>
     <input type="text" name="snapshot_name" id="snapshot_name">
@@ -83,7 +83,7 @@
 </div>
 
 <div class="simple-overlay" id="nfs_export_form">
-  <div class="span6 well">
+  <div class="col-md-6 well">
     <h4>NFS Export</h4>
     <label>Host</label>
     <input type="text" name="host_string" id="host_string">
@@ -99,7 +99,7 @@
 </div>
 
 <div class="simple-overlay" id="smb_share_form">
-  <div class="span6 well">
+  <div class="col-md-6 well">
     <h4>Share SMB</h4>
     <label>Browsable</label>
     <input type="text" name="browsable" id="browsable">

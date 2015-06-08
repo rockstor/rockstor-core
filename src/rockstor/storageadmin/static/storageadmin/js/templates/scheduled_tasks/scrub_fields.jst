@@ -2,7 +2,7 @@
   <div class="control-group">
     <label class="control-label" for="pool">Pool to scrub<span class="required"> *</span></label>
     <div class="controls">
-      <select class="span4" id="pool" name="meta.pool">
+      <select class="col-md-4" id="pool" name="meta.pool">
         <% pools.each(function(pool, index) { %>
           <option value="<%= pool.get('name') %>"> <%= pool.get('name') %> </option>
         <% }); %> 

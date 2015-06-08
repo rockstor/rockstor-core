@@ -1,5 +1,5 @@
-<div class="row-fluid">
-  <div class="span12">
+<div class="row">
+  <div class="col-md-12">
     <div id="details-header">
       <table>
         <tr>
@@ -48,7 +48,7 @@
                 <% } %>
               </td>
               <td>
-                <a href="#" class="delete-sftp-share" data-id="<%= sftpShare.id %>"><i class="icon-trash"></i></a>
+                <a href="#" class="delete-sftp-share" data-id="<%= sftpShare.id %>"><i class="glyphicon glyphicon-trash"></i></a>
               </td>
             </tr>
           <% }); %>
@@ -71,9 +71,9 @@
 </div>
 
 <% if (freeShares.length > 0) { %>
-  <a href="#add-sftp-share" id="add-sftp-share" class="btn btn-primary"><i class="icon-edit icon-white"></i> Add SFTP Share</a>
+  <a href="#add-sftp-share" id="add-sftp-share" class="btn btn-primary"><i class="glyphicon glyphicon-edit "></i> Add SFTP Share</a>
 <% } else { %>
-  <a  id="add-sftp-share" class="btn btn-primary disabled" title="No shares available to export via SFTP"><i class="icon-edit icon-white"></i> Add SFTP Share</a>
+  <a  id="add-sftp-share" class="btn btn-primary disabled" title="No shares available to export via SFTP"><i class="glyphicon glyphicon-edit "></i> Add SFTP Share</a>
 
 <% } %>
 

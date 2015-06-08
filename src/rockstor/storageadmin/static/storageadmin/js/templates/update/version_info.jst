@@ -12,8 +12,8 @@
       <li><h4><%= item %></h4></li>
     <% }); %>
   </ul>
-  <div class="row-fluid">
-    <div class="span6">
+  <div class="row">
+    <div class="col-md-6">
       <div class="alert alert-success" id="contrib-alert">
       <h4>We are happy to make this update available to you.<br>Will you help support Rockstor development with a generous donation?<br><br></h4>
 	<label class="radio inline">
@@ -31,7 +31,7 @@
         <label class="radio inline">
           <input type="radio" name="contrib" id="contrib-custom" value="custom">Other
         </label>
-        &nbsp;<input class="span4" id="custom-amount" name="custom-amount" placeholder="Enter amount" style="display: none">
+        &nbsp;<input class="col-md-4" id="custom-amount" name="custom-amount" placeholder="Enter amount" style="display: none">
         <br>
         <br>
         <a id="donateYes" class="btn btn-primary" title="Update">Yes, I'll support Rockstor</a>
