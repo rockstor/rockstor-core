@@ -189,6 +189,9 @@ def main():
     run_command([DJANGO, 'migrate', 'storageadmin', '--database=default',
                  '--noinput'])
     logging.debug('storageadmin migrated')
+    run_command([DJANGO, 'migrate', 'django_ztask', '--database=default',
+                 '--noinput'])
+    logging.debug('django_ztask migrated')
     run_command([DJANGO, 'migrate', 'smart_manager',
                  '--database=smart_manager', '--noinput'])
     logging.debug('smart manager migrated')
