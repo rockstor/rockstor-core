@@ -11,7 +11,7 @@
         <div class="messages"></div>
 
         <!-- Shares -->
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="shares">Shares to export via afp<span class="required">*</span></label>
           <div class="controls">
             <select name="shares" id="shares" size="10" class='required' multiple data-placeholder="Select shares" >
@@ -27,7 +27,7 @@
 
         <!-- Time Machine -->
 
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="time_machine">Time Machine<span class="required"> *</span></label>
           <div class="controls">
               <% _.each(time_machine_choices, function(c) { %>
@@ -51,7 +51,7 @@
         </div>
 
         <!-- Submit -->
-        <div class="control-group">
+        <div class="form-group">
           <div class="controls">
             <a id="cancel" class="btn btn-default">Cancel</a>
             <input type="Submit" id="create-afp-share" class="btn btn-primary" value="Submit"></input>

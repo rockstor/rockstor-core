@@ -11,7 +11,7 @@
         <div class="messages"></div>
 
         <!-- Shares -->
-        <div class="control-group">
+        <div class="form-group">
           <% if (sambaShareId == null) {  %>
             <label class="control-label" for="shares">Shares to export<span class="required"> *</span></label>
           <% } %>
@@ -29,7 +29,7 @@
         </div>
 
         <!-- Admin Users  -->
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="admin_users">Admin users</label>
           <div class="controls">
             <select name="admin_users" id="admin_users" size="10" title="(optional) list of users who will be granted super-user privileges for all file operations." data-placeholder="Select admin user(s)" multiple>
@@ -52,7 +52,7 @@
           </div>
         </div>
 
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="browsable">Browsable<span class="required"> *</span></label>
           <div class="controls">
               <% _.each(browsable_choices, function(c) { %>
@@ -76,7 +76,7 @@
           </div>
         </div>
 
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="guest_ok">Guest Ok<span class="required"> *</span></label>
           <div class="controls">
              <% _.each(guest_ok_choices, function(c) { %>
@@ -100,7 +100,7 @@
            </div>
         </div>
 
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="read_only">Read only<span class="required"> *</span></label>
           <div class="controls">
              <% _.each(read_only_choices, function(c) { %>
@@ -124,14 +124,14 @@
            </div>
         </div>
 
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="comment">Comment</label>
           <div class="controls">
             <input type="text" id="comment" name="comment" value="Samba-Export" title="Comment string to associate with the new share">
           </div>
         </div>
 
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="custom_config">Custom configuration </label>
           <div class="controls">
           <% if (sambaShareId!=null){ %>
@@ -142,7 +142,7 @@
         </div>
 
       </div>
-        <div class="control-group">
+        <div class="form-group">
           <div class="controls">
             <a id="cancel" class="btn btn-default">Cancel</a>
             <input type="Submit" id="create-samba-export" class="btn btn-primary" value="Submit"></input>

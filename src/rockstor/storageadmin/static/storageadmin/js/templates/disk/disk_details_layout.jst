@@ -285,7 +285,7 @@
 	<div class="form-box">
 	  <form class="form-horizontal" name="run-test-form" id="run-test-form">
 	    <div class="messages"></div>
-	    <div class="control-group">
+	    <div class="form-group">
 	      <% if (!running_test) { %>
 	      <label class="control-label" for="test_type">Test Type </label>
 	      <div class="controls">
@@ -297,13 +297,13 @@
 	      </div>
 	    </div>
 
-	    <div class="control-group">
+	    <div class="form-group">
 	      <div class="controls">
 		<button id="test-start" class="btn btn-primary" title="Start the test">Start Test</button>
 	      </div>
 	    </div>
 	    <% } else { %>
-	    <div class="control-group">
+	    <div class="form-group">
 	      <h4><%= running_test %></h4>
 	      <p>Wait until this test finishes to start a new one. Refresh for an update.</p>
 	    </div>

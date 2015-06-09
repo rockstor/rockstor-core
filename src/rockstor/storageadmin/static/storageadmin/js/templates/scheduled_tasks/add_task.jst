@@ -27,7 +27,7 @@
       <div class="form-box">
         <form id="scheduled-task-create-form" name="aform">
           <div class="messages"></div>
-          <div class="control-group">
+          <div class="form-group">
             <div class="controls controls-row">
               <label class="control-label col-md-4" for="task_name">Task name<span class="required"> *</span></label>
               <label class="control-label col-md-4" for="task_type">Task type<span class="required"> *</span></label>
@@ -42,7 +42,7 @@
             </div>
           </div>
           <div id="optional-fields"></div>
-          <div class="control-group">
+          <div class="form-group">
             <div class="controls controls-row">
               <label class="control-label col-md-4" for="start_date">Start Date (MM/DD/YYYY)<span class="required"> *</span></label>
               <label class="control-label col-md-4" for="start_time">Start Time (hh:mm)<span class="required"> *</span></label>
@@ -52,20 +52,20 @@
               <input class="col-md-4" type="text" id="start_time" name="start_time" placeholder="Start Time">
             </div>
           </div>
-          <div class="control-group">
+          <div class="form-group">
             <label class="control-label" for="frequency">Task Frequency (in minutes)<span class="required"> *</span></label>
             <div class="controls">
               <input class="col-md-4" type="text" id="frequency" name="frequency" placeholder="Frequency" title="How often should this task run(in minutes)?">
             </div>
           </div>
-          <div class="control-group">
+          <div class="form-group">
             <div class="controls form-inline">
               <label class="checkbox">
                 <input class="checkbox inline" type="checkbox" checked="true" id="enabled" name="enabled" placeholder="Enable this task" title="Disabled tasks will be created but not run till they are enabled"> Enable this task?
               </label>
             </div>
           </div>
-          <div class="control-group">
+          <div class="form-group">
             <div class="controls">
               <a id="js-cancel" class="btn btn-default">Cancel</a>
               <input type="Submit" id="create-scheduled-task" class="btn btn-primary" value="Submit"></input>
@@ -82,13 +82,13 @@
     <div class="col-md-8">
       <div class="form-box">
         <form id="scheduled-task-create-form" name="aform" class="form-horizontal">
-          <div class="control-group">
+          <div class="form-group">
             <label class="control-label" for="share">Task name: </label>
             <div class="controls">
               <label class="control-label" style="text-align: left"><%= taskDef.get('name') %></label>
             </div>
           </div>
-          <div class="control-group">
+          <div class="form-group">
             <label class="control-label" for="share">Task type: </label>
             <div class="controls">
               <label class="control-label" style="text-align: left"><%= taskDef.get('task_type') %></label>
@@ -96,20 +96,20 @@
           </div>
           <!-- Type dependent fields -->
           <% if (taskDef.get('task_type') == 'snapshot') { %>
-            <div class="control-group">
+            <div class="form-group">
               <label class="control-label" for="share">Share: </label>
               <div class="controls">
                 <label class="control-label" style="text-align: left"><%= taskDef.share() %></label>
               </div>
             </div>
-            <div class="control-group">
+            <div class="form-group">
               <label class="control-label" for="share">Snapshot prefix: </label>
               <div class="controls">
                 <label class="control-label" style="text-align: left"><%= taskDef.prefix() %></label>
               </div>
             </div>
           <% } else { %>
-            <div class="control-group">
+            <div class="form-group">
               <label class="control-label" for="share">Pool: </label>
               <div class="controls">
                 <label class="control-label" style="text-align: left"><%= taskDef.pool() %></label>
@@ -117,33 +117,33 @@
             </div>
           <% } %>
 
-          <div class="control-group">
+          <div class="form-group">
             <label class="control-label" for="start_date">Start time:</label>
             <div class="controls">
               <label class="control-label"><%= moment(taskDef.get('ts')).format('MM/DD/YYYY') %>&nbsp;&nbsp;&nbsp;<%= moment(taskDef.get('ts')).format('h:mm:ss a') %></label>
             </div>
           </div>
           <% if (taskDef.get('task_type') == 'snapshot') { %>
-            <div class="control-group">
+            <div class="form-group">
               <label class="control-label" for="max_count">Maximum count<span class="required"> *</span></label>
               <div class="controls">
                 <input class="col-md-2" type="text" id="max_count" name="meta.max_count" value="<%= taskDef.max_count() %>" title="Older snapshots beyond this number and created by this task will be deleted">
               </div>
             </div>
-	    <div class="control-group">
+	    <div class="form-group">
 	      <label class="control-label" for="visible">Make snapshots visible</label>
 	      <div class="controls">
 	        <input class="checkbox" type="checkbox" checked="true" id="visible" name="meta.visible" title="Make snapshots visible to the end user">
 	      </div>
 	    </div>
           <% } %>
-          <div class="control-group">
+          <div class="form-group">
             <label class="control-label" for="frequency">Task Frequency (in minutes)<span class="required"> *</span></label>
             <div class="controls">
               <input class="col-md-2" type="text" id="frequency" name="frequency" value="<%= taskDef.get('frequency') %>" placeholder="Frequency" title="How often should this task run(in minutes)?">
             </div>
           </div>
-          <div class="control-group">
+          <div class="form-group">
             <label class="control-label" for="enabled">Enable this task?</label>
             <div class="controls">
               <% if (taskDef.get('enabled')) { %>
@@ -153,7 +153,7 @@
               <% } %>
             </div>
           </div>
-          <div class="control-group">
+          <div class="form-group">
             <div class="controls">
               <a id="js-cancel" class="btn btn-default">Cancel</a>
               <input type="Submit" id="create-scheduled-task" class="btn btn-primary" value="Submit"></input>
