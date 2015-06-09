@@ -58,7 +58,7 @@ RockonsView = RockstorLayoutView.extend({
     renderRockons: function() {
 	console.log('rockons rendered');
 	var _this = this;
-	
+
 	$(this.el).html(this.template({
 	    rockons: this.rockons,
 	    status: this.service.get('status')
@@ -94,6 +94,7 @@ RockonsView = RockstorLayoutView.extend({
 
     installRockon: function(event) {
 	var _this = this;
+	this.defTab = 0;
 	event.preventDefault();
 	var button = $(event.currentTarget);
 	var rockon_id = button.attr('data-name');
@@ -121,6 +122,7 @@ RockonsView = RockstorLayoutView.extend({
 		type: 'POST',
 		dataType: 'json',
 		success: function() {
+		    _this.defTab = 0;
 		    _this.render();
 		    enableButton(button);
 		},
@@ -193,6 +195,7 @@ RockonsView = RockstorLayoutView.extend({
 	    type: 'POST',
 	    dataType: 'json',
 	    success: function(data, status, xhr) {
+		_this.defTab = 0;
 		_this.setSliderVal(rockon_id, 1);
 		_this.updateStatus();
 	    },
@@ -213,6 +216,7 @@ RockonsView = RockstorLayoutView.extend({
 	    dataType: 'json',
 	    success: function(data, status, xhr) {
 		_this.setSliderVal(rockon_id, 0);
+		_this.defTab = 0;
 		_this.updateStatus();
 	    },
 	    error: function(data, status, xhr) {
@@ -233,7 +237,6 @@ RockonsView = RockstorLayoutView.extend({
 
     updateStatus: function() {
 	var _this = this;
-	_this.defTab = 0;
 	_this.startTime = new Date().getTime();
 	_this.rockons.fetch({
 	    silent: true,
