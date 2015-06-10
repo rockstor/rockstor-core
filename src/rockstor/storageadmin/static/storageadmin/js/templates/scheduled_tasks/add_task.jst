@@ -20,6 +20,16 @@
 </script>
 
 <% if (taskDefId == null) { %>
+<script type="text/javascript">
+$(document).ready(function() {
+    $('#example1').cron({
+        initial: "<%= defaultFrequency %>",
+        onChange: function() {
+            $('#frequency').val($(this).cron("value"));
+        }
+    });
+});
+</script>
   <h3>Add a new scheduled task</h3>
   <div class="row-fluid">
     <div class="span12">
@@ -52,10 +62,19 @@
               <input class="span4" type="text" id="start_time" name="start_time" placeholder="Start Time">
             </div>
           </div>
-          <div class="control-group">
+<!--          <div class="control-group">
             <label class="control-label" for="frequency">Task Frequency (in minutes)<span class="required"> *</span></label>
             <div class="controls">
               <input class="span4" type="text" id="frequency" name="frequency" placeholder="Frequency" title="How often should this task run(in minutes)?">
+            </div>
+          </div>
+-->
+          <div class="control-group">
+            <label class="control-label" for="frequency">Task Frequency</label>
+            <div>
+              <div id="example1">&nbsp;</div>
+              <input type="hidden" id="frequency" name="frequency" value="">
+              <!--<p>Generated cron entry: <span id="example1-val"></span></p>-->
             </div>
           </div>
           <div class="control-group">
@@ -77,6 +96,17 @@
     </div> <!-- span8 -->
   </div> <!-- row-fluid -->
 <% } else { %>
+<script type="text/javascript">
+$(document).ready(function() {
+    $('#example1').cron({
+        initial: "<%= frequency %>",
+        onChange: function() {
+            $('#frequency').val($(this).cron("value"));
+        }
+    });
+});
+</script>
+
   <h3>Edit scheduled task</h3>
   <div class="row-fluid">
     <div class="span8">
@@ -137,10 +167,19 @@
 	      </div>
 	    </div>
           <% } %>
-          <div class="control-group">
+<!--          <div class="control-group">
             <label class="control-label" for="frequency">Task Frequency (in minutes)<span class="required"> *</span></label>
             <div class="controls">
               <input class="span2" type="text" id="frequency" name="frequency" value="<%= taskDef.get('frequency') %>" placeholder="Frequency" title="How often should this task run(in minutes)?">
+            </div>
+          </div>
+-->
+          <div class="control-group">
+            <label class="control-label" for="frequency">Task Frequency: </label>
+            <div>
+              <div id="example1">&nbsp;</div>
+              <input type="hidden" id="frequency" name="frequency" value="">
+              <!--<p>Generated cron entry: <span id="example1-val"></span></p>-->
             </div>
           </div>
           <div class="control-group">
