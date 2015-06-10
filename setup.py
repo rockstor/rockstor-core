@@ -59,7 +59,7 @@ setup(
         'requests == 1.1.0',
         'pyzmq == 13.0.0',
         'South == 0.8.4',
-        'psycopg2 == 2.5.2',
+        'psycopg2 == 2.6',
         'django-oauth-toolkit == 0.7.0',
         'six == 1.7.3',
         'django-ztask == 0.1.5',
