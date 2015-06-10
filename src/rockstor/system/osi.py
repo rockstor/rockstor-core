@@ -460,8 +460,7 @@ def get_virtio_disk_serial(device_name):
     Note also that this process may not deal well with spaces in the serial number but VMM does not allow this.
     """
     dev_path = ('/sys/block/%s/serial' % device_name)
-    # out, err, rc = run_command([CAT, dev_path], throw=False)
-    out, err, rc = run_command([CAT, dev_path])
+    out, err, rc = run_command([CAT, dev_path], throw=False)
     if (rc != 0):
         return ''
     # our str(out) string from list looks like ['11111111111111111111'] so [2:-2] strips the surrounding [' ']
