@@ -62,6 +62,31 @@ def add_pool(pool, disks):
     return out, err, rc
 
 
+def get_pool_info(disk):
+    cmd = [BTRFS, 'fi', 'show', '/dev/%s' % disk]
+    o, e, rc = run_command(cmd)
+    pool_info = {'disks': [],}
+    for l in o:
+        if (re.match('Label', l) is not None):
+            fields = l.split()
+            pool_info['label'] = fields[1].strip("'")
+            pool_info['uuid'] = fields[3]
+        elif (re.match('\tdevid', l) is not None):
+            pool_info['disks'].append(l.split()[-1].split('/')[-1])
+    return pool_info
+
+def pool_raid(mnt_pt):
+    o, e, rc = run_command([BTRFS, 'fi', 'df', mnt_pt])
+    #data, system, metadata, globalreserve
+    raid_d = {}
+    for l in o:
+        fields = l.split()
+        if (len(fields) > 1):
+            raid_d[fields[0][:-1].lower()] = fields[1][:-1].lower()
+    if (raid_d['metadata'] == 'single'):
+        raid_d['data'] = raid_d['metadata']
+    return raid_d;
+
 def cur_devices(mnt_pt):
     devices = []
     o, e, rc = run_command([BTRFS, 'fi', 'show', mnt_pt])

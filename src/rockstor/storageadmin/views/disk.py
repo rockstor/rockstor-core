@@ -26,7 +26,8 @@ from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (Disk, Pool)
 from fs.btrfs import (scan_disks, wipe_disk, blink_disk, enable_quota,
-                      btrfs_uuid, pool_usage, mount_root)
+                      btrfs_uuid, pool_usage, mount_root, get_pool_info,
+                      pool_raid)
 from storageadmin.serializers import DiskInfoSerializer
 from storageadmin.util import handle_exception
 from django.conf import settings
@@ -178,10 +179,23 @@ class DiskDetailView(rfc.GenericView):
         return Response(DiskInfoSerializer(disk).data)
 
     def _btrfs_disk_import(self, dname, request):
-        """stub method for now"""
-        e_msg = ('Failed to import any pools, shares and snapshots that '
-                 'may be on the disk: %s. Import or backup manually' % dname)
-        handle_exception(Exception(e_msg), request)
+        try:
+            disk = self._validate_disk(dname, request)
+            p_info = get_pool_info(dname)
+            #get some options from saved config?
+            po = Pool(name=p_info['label'], raid="unknown")
+            for d in p_info['disks']:
+                do = Disk.objects.get(name=d)
+                do.pool = po
+                do.save()
+                mount_root(po, d)
+            po.raid = pool_raid('%s%s' % (settings.MNT_PT, po.name))['data']
+            po.save()
+            return Response(DiskInfoSerializer(disk).data)
+        except Exception, e:
+            e_msg = ('Failed to import any pool on this device(%s). Error: %s'
+                     % (dname, e.__str__()))
+            handle_exception(Exception(e_msg), request)
 
     @classmethod
     @transaction.atomic
