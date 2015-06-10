@@ -47,11 +47,12 @@ DEFAULT_MNT_DIR = '/mnt2/'
 RPM = '/usr/bin/rpm'
 SHUTDOWN = '/usr/sbin/shutdown'
 GRUBBY = '/usr/sbin/grubby'
+CAT = '/usr/bin/cat'
 
 
 def inplace_replace(of, nf, regex, nl):
     with open(of) as afo, open(nf, 'w') as tfo:
-        replaced = [False,] * len(regex)
+        replaced = [False, ] * len(regex)
         for l in afo.readlines():
             ireplace = False
             for i in range(0, len(regex)):
@@ -101,7 +102,7 @@ def kernel_info(supported_version):
                  'may not work properly.' % uname[2])
         cur_kernel = def_kernel()
         if ((cur_kernel is not None and
-             cur_kernel == supported_version)):
+                     cur_kernel == supported_version)):
             e_msg = ('%s Please reboot and the system will '
                      'automatically boot using the supported kernel(%s)' %
                      (e_msg, supported_version))
@@ -317,7 +318,6 @@ def parse_ifcfg(config_file, config_d):
 
 
 def get_net_config_fedora(devices):
-
     config_d = {}
     script_dir = ('/etc/sysconfig/network-scripts/')
     for d in devices:
@@ -387,14 +387,14 @@ def update_check():
                 i = i + 1
                 while True:
                     if (len(out) > i):
-                        if (out[i+1] == ''):
+                        if (out[i + 1] == ''):
                             break
-                        updates.append(out[i+1])
+                        updates.append(out[i + 1])
                         i = i + 1
         if (version is None):
             version = cur_version
         return (cur_version, version, updates)
-    #  no update available
+    # no update available
     out, err, rc = run_command([YUM, 'info', 'installed', 'rockstor'])
     version = ('%s-%s' % (out[4].split(': ')[1], out[5].split(': ')[1]))
     return (version, version, [])
@@ -441,6 +441,31 @@ def is_mounted(mnt_pt):
             if (re.search(' ' + mnt_pt + ' ', line) is not None):
                 return True
     return False
+
+
+def get_virtio_disk_serial(device_name):
+    """
+    Returns the serial number of device_name virtio disk eg vda
+    Returns empty string if the eg cat /sys/block/vda/serial command fails
+    N.B. there is no serial entry in /sys/block/sda/ for real or KVM sata bus drives
+    :param device_name: vda
+    :return: 12345678901234567890
+
+    Note maximum length of serial number reported = 20 chars
+    But longer serial numbers can be specified in the XML spec of the VM's drive eg /etc/libvirt/qemu/rockstor3.8.xml
+    But the virtio block device is itself limited to 20 chars ie:-
+    https://github.com/qemu/qemu/blob/a9392bc93c8615ad1983047e9f91ee3fa8aae75f/include/standard-headers/linux/virtio_blk.h
+    #define VIRTIO_BLK_ID_BYTES	20	/* ID string length */
+
+    Note also that this process may not deal well with spaces in the serial number but VMM does not allow this.
+    """
+    dev_path = ('/sys/block/%s/serial' % device_name)
+    # out, err, rc = run_command([CAT, dev_path], throw=False)
+    out, err, rc = run_command([CAT, dev_path])
+    if (rc != 0):
+        return ''
+    # our str(out) string from list looks like ['11111111111111111111'] so [2:-2] strips the surrounding [' ']
+    return str(out)[2:-2]
 
 
 def system_shutdown():
