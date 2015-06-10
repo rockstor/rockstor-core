@@ -81,6 +81,7 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
   margin-bottom: 0px;
   /*box-shadow: 0px 0px 12px rgb(85, 85, 85);*/
   box-shadow: none;
+  border-radius: 0;
 }
 .navbar-outer { box-shadow: 0px 0px 12px rgb(85, 85, 85); }
 .navbar-inner { min-height: 60px; }
@@ -106,52 +107,12 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
   font-size: 11px;
 }
 
-/*
-.navbar .nav li.dropdown>.dropdown-toggle .caret {
-  display: none;
-  border-top-color: #000;
-  border-bottom-color: #000;
-}
-*/
-
-/*
-.navbar .nav>li>a:hover {
-  color: #6191bf;
-  text-decoration: none;
-  background-color: none;
-}
-
-.navbar .nav>li>a:focus {
-  color: #fff;
-  text-decoration: none;
-  background-color: none;
-}
-
-.navbar .nav li.dropdown.open>.dropdown-toggle, .navbar .nav li.dropdown.active>.dropdown-toggle, .navbar .nav li.dropdown.open.active>.dropdown-toggle {
-  color: #000;
-  background-color: transparent;
-}
-*/
-
-/*
-.navbar .nav li.dropdown>a:focus .caret {
-  border-top-color: #333;
-  border-bottom-color: #333;
-}
-
-.navbar .nav li.dropdown>a:hover .caret {
-  border-top-color: #333;
-  border-bottom-color: #333;
-}
-*/
-/***/
-
 /* Logo */
-#logo {
-  height: 51px;
-  float: left;
-  padding: 4px 20px 4px;
-  margin-left: -20px;
+.logo {
+    width: 150px;
+    position: relative;
+    top: 50%;
+    transform: translateY(50%);
 }
 
 #logo-name {
@@ -706,8 +667,7 @@ label.error { font-size: 12px; color: #b94a48; }
 }
 
 #appliance-breadcrumb {
-  position: fixed;
-  margin-top: 60px;
+  position: relative;
   right: 0px;
   left: 0px;
   z-index: 999;
@@ -760,6 +720,11 @@ hr.module-sep { margin: 0; border: 0; border-top: 1px solid #ddd;
 
 
 /****/
+
+/* Get inverse of icon */
+.white, .white a {
+  color: #fff;
+}
 
 /* Status icons */
 .service-status {
@@ -1394,7 +1359,6 @@ input[type="radio"].selectedRoot {
 
 /* Layout */
 #wrapper1 {
-  position: relative;
   top: 0px;
   left: 0px;
   width: 100%;
@@ -1469,17 +1433,20 @@ input[type="radio"].selectedRoot {
 }
 
 #content {
-	position: absolute;
-	height: auto;
-	width: auto;
-	top: 0px;
-	left: 154px;
-	bottom: 0px;
-	right: 0px;
-  overflow-y: auto;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background: #fff;
+    position: relative;
+    height: auto;
+    /* 
+       Width not 100% because that would mean it is the parent's width
+       which is the page width
+    */
+    width: 87%; 
+    left: 154px;
+    bottom: 0px;
+    right: 0px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fff;
 }
 
 #maincontent {

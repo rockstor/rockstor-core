@@ -1,5 +1,5 @@
 <% if (taskDefId == null) { %>
-  <div class="control-group">
+  <div class="form-group">
     <div class="controls controls-row">
       <label class="control-label col-md-4" for="share">Share<span class="required"> *</span></label>
       <label class="control-label col-md-4" for="prefix">Snapshot prefix<span class="required"> *</span></label>
@@ -25,7 +25,7 @@
     <input class="col-md-4" type="text" id="max_count" name="meta.max_count" placeholder="Maximum count" title="Older snapshots beyond this number and created by this task will be deleted">
   <% } %>
 </div>
-<div class="control-group">
+<div class="form-group">
   <label class="control-label" for="visible">Make snapshots visible?</label>
   <div class="controls">
     <input class="checkbox" type="checkbox" checked="true" id="visible" name="meta.visible" title="Make snapshots visible to the end user.">

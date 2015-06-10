@@ -28,7 +28,7 @@
       <form id="smartd-form" name="aform">
         <div class="messages"></div>
 
-        <div class="control-group">
+        <div class="form-group">
             <label class="control-label" for="custom_config">configuration lines will be saved to the ROCKSTOR section in /etc/smartmontools/smartd.conf</label>
             <div class="controls">
               <% if (config.smartd_config){ %>
@@ -38,7 +38,7 @@
               <%  } %>
             </div>
         </div>
-        <div class="control-group">
+        <div class="form-group">
           <div class="controls">
             <button id="cancel" class="btn btn-default">Cancel</button>
             <button type="Submit" id="save-smartd-config" class="btn btn-primary">Submit</button>

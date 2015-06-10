@@ -26,14 +26,14 @@
     <div class="alert"><strong>Warning!</strong> You are editing the nfs exports file. Incorrect values can affect your exports.</div>
     <div class="form-box">
       <form id="advanced-edit-form" name="aform">
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="nfs-text">Enter nfs export entries below</label>
           <div class="controls">
             <textarea id="nfs-text-ro" name="nfs-text-ro" rows="<%= ro_str.split('\n').length + 1 %>" class="col-md-10" readonly><%= ro_str %>\nENTER NFS EXPORTS BELOW THIS LINE</textarea>
             <textarea id="nfs-text" name="nfs-text" rows="20" class="col-md-10"><%= rw_str %></textarea>
           </div>
         </div>
-        <div class="control-group">
+        <div class="form-group">
           <div class="controls">
             <a id="cancel" class="btn btn-default">Cancel</a>
             <input type="Submit" id="create-nfs-export" class="btn btn-primary" value="Submit"></input>

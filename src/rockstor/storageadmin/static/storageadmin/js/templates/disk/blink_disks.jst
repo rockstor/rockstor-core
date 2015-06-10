@@ -8,7 +8,7 @@
         <div class="messages"></div>
 
         <!-- disks -->
-        <div class="control-group">
+        <div class="form-group">
           <div class="controls">
             <h4>Drive name:&nbsp;&nbsp;<strong><%= diskName %></strong></h4>
 	    <h4>Serial number:&nbsp;&nbsp;<strong><%= serialNumber %></strong></h4>
@@ -16,7 +16,7 @@
         </div>
 
        <!-- Total Time -->
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="total_time">Total time<span class="required"> *</span></label>
           <div class="controls">
             <input type="text" name="total_time" id="total_time" title="Total time of desired led activity in seconds. This is the sum of all (read + sleep) cycles" value=90>
@@ -24,7 +24,7 @@
         </div>
 
         <!-- Blink Time -->
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="blink_time">Read Time<span class="required"> *</span></label>
           <div class="controls">
             <input type="text" name="blink_time" id="blink_time" title="Number of seconds to read from the drive per cycle. The drive LED lights up during read" value=10>
@@ -32,14 +32,14 @@
         </div>
 
         <!-- Sleep Time -->
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="sleep_time">Sleep Time<span class="required"> *</span></label>
           <div class="controls">
             <input type="text" name="sleep_time" id="sleep_time" title="Number of seconds to sleep per cycle. The drive LED doesn't light up during sleep time" value=5>
           </div>
         </div>
 
-        <div class="control-group">
+        <div class="form-group">
           <div class="controls">
             <a id="cancel" class="btn btn-default">Cancel</a>
             <input type="Submit" id="blink-disk" class="btn btn-primary" value="Submit"></input>

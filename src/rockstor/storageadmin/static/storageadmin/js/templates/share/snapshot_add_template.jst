@@ -29,7 +29,7 @@
       <form name="add-snapshot-form" id="add-snapshot-form" class="form-horizontal">
         <div class="messages"></div>
 
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="snapshot-name">Name<span class="required"> *</span></label>
           <div class="controls">
             <input type="text" name="snapshot-name" id="snapshot-name" title="Name of the Snapshot must start with a letter(a-z) and can be followed by any of the following characters: letter(a-z), digits(0-9), hyphen(-), underscore(_) or a period(.).">
@@ -37,7 +37,7 @@
         </div>
 
         <!-- Select Shares -->
-        <div class="control-group">
+        <div class="form-group">
          <label class="control-label" for="shares">Select Shares<span class="required"> *</span></label>
          <div class="controls">
          <select name="shares" id="shares" size="10" data-placeholder="Select share" title="Select the Share to snapshot">
@@ -48,7 +48,7 @@
          </div>
         </div>
 
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for=writable">Writable<span class="required"> *</span></label>
           <div class="controls">
              <% _.each(modify_choices, function(c) { %>
@@ -64,14 +64,14 @@
         </div>
 
 
-       <div class="control-group">
+       <div class="form-group">
           <label class="control-label" for="snapshot-visible"> </label>
           <div class="controls">
             <input type="checkbox" name="uvisible" id="snapshot-visible" title="Snapshots can be visible or hidden to the end user of the Share"> Visible to user?
           </div>
         </div>
 
-        <div class="control-group">
+        <div class="form-group">
           <div class="controls">
             <a class="btn btn-default" href="#" id="js-snapshot-cancel"> Cancel</a>
             <input type="Submit" class="btn btn-primary" value="Submit" id="js-snapshot-save"></input>

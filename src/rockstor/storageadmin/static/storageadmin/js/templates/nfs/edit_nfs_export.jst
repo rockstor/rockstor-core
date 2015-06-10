@@ -33,7 +33,7 @@
         <div class="messages"></div>
 
         <!-- Shares -->
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="shares">Shares to export<span class="required"> *</span></label>
           <div class="controls">
             <select name="shares" id="shares" size="10" data-placeholder="Select shares to export" multiple>
@@ -55,7 +55,7 @@
         </div>
 
         <!-- host string -->
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="host_str">NFS Clients<span class="required"> *</span></label>
           <div class="controls">
             <input type="text" name="host_str" id="host_str"
@@ -64,7 +64,7 @@
         </div>
 
 	<!-- admin host -->
-	<div class="control-group">
+	<div class="form-group">
 	  <label class="control-label" for="trusted_host">Admin
 	Host</span></label>
 	  <div class="controls">
@@ -78,7 +78,7 @@
 	</div>
 
         <!-- writable -->
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="mod_choice">Access type</label>
           <div class="controls">
             <% _.each(modify_choices, function(c) { %>
@@ -95,7 +95,7 @@
         </div>
 
         <!-- sync -->
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="sync_choice">Response type</label>
           <div class="controls">
             <% _.each(sync_choices, function(c) { %>
@@ -112,7 +112,7 @@
         </div>
 
         <!-- Submit -->
-        <div class="control-group">
+        <div class="form-group">
           <div class="controls">
             <a id="cancel" class="btn btn-default">Cancel</a>
             <input type="Submit" id="update-nfs-export" class="btn btn-primary" value="Submit"></input>

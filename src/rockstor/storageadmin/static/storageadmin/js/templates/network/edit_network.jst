@@ -34,7 +34,7 @@
     <div class="form-box">
       <form class="form-horizontal" id="edit-network-form" name="aform">
         <div class="messages"></div>
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="boot_proto">Configuration<span class="required"> *</span></label>
           <div class="controls">
             <select id="boot_proto" name="boot_proto">
@@ -51,7 +51,7 @@
             </select>
           </div>
         </div>
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="ipaddr">IP Address<span class="required"> *</span></label>
           <div class="controls">
             <% if (network.get('boot_proto') == 'static') { %>
@@ -61,7 +61,7 @@
             <% } %>
           </div>
         </div>
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="netmask">Netmask<span class="required"> *</span></label>
           <div class="controls">
             <% if (network.get('boot_proto') == 'static') { %>
@@ -71,7 +71,7 @@
             <% } %>
           </div>
         </div>
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="gateway">Gateway<span class="required"> *</span></label>
           <div class="controls">
             <% if (network.get('boot_proto') == 'static') { %>
@@ -81,7 +81,7 @@
             <% } %>
           </div>
         </div>
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="domain">Domain<span class="required"> *</span></label>
           <div class="controls">
             <% if (network.get('boot_proto') == 'static') { %>
@@ -91,7 +91,7 @@
             <% } %>
           </div>
         </div>
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="dns_servers">DNS Servers<span class="required"> *</span></label>
           <div class="controls">
             <% if (network.get('boot_proto') == 'static') { %>
@@ -101,19 +101,19 @@
             <% } %>
           </div>
         </div>
-        <div class="control-group">
+        <div class="form-group">
           <div class="controls">
             <label class="checkbox">
               <% if (network.get('itype') == 'management') { %>
-                <input class="checkbox inline" type="checkbox" id="itype" name="itype" placeholder="Management Interface" checked="checked">
+                <input class="checkbox-inline" type="checkbox" id="itype" name="itype" placeholder="Management Interface" checked="checked">
               <% } else { %>
-                <input class="checkbox inline" type="checkbox" id="itype" name="itype" placeholder="Management Interface" >
+                <input class="checkbox-inline" type="checkbox" id="itype" name="itype" placeholder="Management Interface" >
               <% } %>
               Allow RockStor administration through this interface
             </label>
           </div>
         </div>
-        <div class="control-group">
+        <div class="form-group">
           <div class="controls">
             <button type="Submit" id="submit" class="btn btn-primary">Submit</button>
             <button id="cancel" class="btn btn-default">Cancel</button>
