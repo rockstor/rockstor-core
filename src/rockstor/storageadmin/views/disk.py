@@ -190,6 +190,7 @@ class DiskDetailView(rfc.GenericView):
                 do.save()
                 mount_root(po, d)
             po.raid = pool_raid('%s%s' % (settings.MNT_PT, po.name))['data']
+            po.size = pool_usage('%s%s' % (settings.MNT_PT, po.name))[0]
             po.save()
             return Response(DiskInfoSerializer(disk).data)
         except Exception, e:

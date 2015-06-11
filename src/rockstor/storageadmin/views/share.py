@@ -71,7 +71,7 @@ class ShareListView(ShareMixin, rfc.GenericView):
     serializer_class = ShareSerializer
 
     def get_queryset(self, *args, **kwargs):
-        self.refresh_shares_state();
+        self._refresh_shares_state();
         sort_col = self.request.query_params.get('sortby', None)
         if (sort_col is not None and sort_col == 'usage'):
             reverse = self.request.query_params.get('reverse', 'no')
@@ -84,7 +84,7 @@ class ShareListView(ShareMixin, rfc.GenericView):
         return Share.objects.all()
 
     @transaction.atomic
-    def refresh_shares_state(self):
+    def _refresh_shares_state(self):
         for p in Pool.objects.all():
             disk = Disk.objects.filter(pool=p)[0].name
             shares = [s.name for s in Share.objects.filter(pool=p)]
