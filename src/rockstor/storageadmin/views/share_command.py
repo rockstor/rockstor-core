@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (Share, Snapshot, Disk, NFSExport, SambaShare)
-from fs.btrfs import (update_quota, rollback_snap, set_property, mount_share)
+from fs.btrfs import (update_quota, rollback_snap)
 from storageadmin.serializers import ShareSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
