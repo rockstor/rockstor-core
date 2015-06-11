@@ -23,7 +23,8 @@ from django.db import transaction
 from storageadmin.models import (Share, Disk, Pool, Snapshot,
                                  NFSExport, SambaShare, SFTP)
 from fs.btrfs import (add_share, remove_share, update_quota,
-                      share_usage, set_property, mount_share, qgroup_id)
+                      share_usage, set_property, mount_share, qgroup_id,
+                      shares_info)
 from system.osi import is_share_mounted
 from storageadmin.serializers import ShareSerializer
 from storageadmin.util import handle_exception
@@ -70,6 +71,7 @@ class ShareListView(ShareMixin, rfc.GenericView):
     serializer_class = ShareSerializer
 
     def get_queryset(self, *args, **kwargs):
+        self.refresh_shares_state();
         sort_col = self.request.query_params.get('sortby', None)
         if (sort_col is not None and sort_col == 'usage'):
             reverse = self.request.query_params.get('reverse', 'no')
@@ -80,6 +82,23 @@ class ShareListView(ShareMixin, rfc.GenericView):
             return sorted(Share.objects.all(), key=lambda u: u.cur_usage(),
                           reverse=reverse)
         return Share.objects.all()
+
+    @transaction.atomic
+    def refresh_shares_state(self):
+        for p in Pool.objects.all():
+            disk = Disk.objects.filter(pool=p)[0].name
+            shares = [s.name for s in Share.objects.filter(pool=p)]
+            shares_d = shares_info('%s%s' % (settings.MNT_PT, p.name))
+            for s in shares:
+                if (s not in shares_d):
+                    Share.objects.get(pool=p, name=s).delete()
+            for s in shares_d:
+                if (s in shares):
+                    continue
+                nso = Share(pool=p, qgroup=shares_d[s], name=s, size=p.size,
+                            subvol_name=s)
+                nso.save()
+                mount_share(nso, disk, '%s%s' % (settings.MNT_PT, s))
 
     @transaction.atomic
     def post(self, request):

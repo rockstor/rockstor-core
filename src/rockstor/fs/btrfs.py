@@ -249,6 +249,20 @@ def snapshot_list(mnt_pt):
     return snaps
 
 
+def shares_info(mnt_pt):
+    #return a lit of share names unter this mount_point.
+    #useful to gather names of all shares in a pool
+    o, e, rc = run_command([BTRFS, 'subvolume', 'list', mnt_pt])
+    shares_d = {}
+    for l in o:
+        if (re.search('.snapshots/', l) is not None):
+            continue
+        if (re.match('ID ', l) is not None):
+            fields = l.split()
+            shares_d[fields[-1]] = '0/%s' % fields[1]
+    return shares_d
+
+
 def share_id(pool, pool_device, share_name):
     """
     returns the subvolume id, becomes the share's uuid.
