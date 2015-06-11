@@ -263,6 +263,24 @@ def shares_info(mnt_pt):
     return shares_d
 
 
+def snaps_info(mnt_pt, share_name):
+    o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-s', mnt_pt])
+    snaps_d = {}
+    for l in o:
+        if (re.match('ID ', l) is not None):
+            if (re.search('/%s/' % share_name, l) is not None):
+                writable = True
+                fields = l.split()
+                o1, e1, rc1 = run_command([BTRFS, 'property', 'get',
+                                           '%s/%s' % (mnt_pt, fields[-1])])
+                for l1 in o1:
+                    if (re.match('ro=', l1) is not None):
+                        if (l1.split('=')[1] == 'true'):
+                            writable = False
+                snap_name = fields[-1].split('/%s/' % share_name)[1]
+                snaps_d[snap_name] = ('0/%s' % fields[1], writable)
+    return snaps_d
+
 def share_id(pool, pool_device, share_name):
     """
     returns the subvolume id, becomes the share's uuid.

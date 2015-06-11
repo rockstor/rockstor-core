@@ -26,7 +26,7 @@ from django.conf import settings
 from storageadmin.models import (Snapshot, Share, Disk, NFSExport,
                                  NFSExportGroup, AdvancedNFSExport)
 from fs.btrfs import (add_snap, share_id, share_usage, remove_snap,
-                      umount_root, mount_snap)
+                      umount_root, mount_snap, snaps_info)
 from system.osi import refresh_nfs_exports
 from storageadmin.serializers import SnapshotSerializer
 from storageadmin.util import handle_exception
@@ -47,6 +47,8 @@ class SnapshotView(rfc.GenericView):
             share = Share.objects.get(name=self.kwargs['sname'])
         except:
             if ('sname' not in self.kwargs):
+                for s in Share.objects.all():
+                    self._refresh_snapshots_state(s)
                 return Snapshot.objects.filter().order_by('-id')
 
             e_msg = ('Share with name: %s does not exist' % self.kwargs['sname'])
@@ -60,12 +62,27 @@ class SnapshotView(rfc.GenericView):
             except:
                 return []
 
+        self._refresh_snapshots_state(share)
         snap_type = self.request.query_params.get('snap_type', None)
         if (snap_type is not None and snap_type != ''):
             return Snapshot.objects.filter(
                 share=share, snap_type=snap_type).order_by('-id')
 
         return Snapshot.objects.filter(share=share).order_by('-id')
+
+    @transaction.atomic
+    def _refresh_snapshots_state(self, share):
+        snaps_d = snaps_info('%s%s' % (settings.MNT_PT, share.pool.name),
+                             share.name)
+        snaps = [s.name for s in Snapshot.objects.filter(share=share)]
+        for s in snaps:
+            if (s not in snaps_d):
+                Snapshot.objects.get(share=share,name=s).delete()
+        for s in snaps_d:
+            if (s not in snaps):
+                nso = Snapshot(share=share, name=s, real_name=s,
+                               writable=snaps_d[s][1], qgroup=snaps_d[s][0])
+                nso.save()
 
     @transaction.atomic
     def _toggle_visibility(self, share, snap_name, on=True):
