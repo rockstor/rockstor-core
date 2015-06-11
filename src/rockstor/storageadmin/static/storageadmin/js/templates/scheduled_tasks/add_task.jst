@@ -28,11 +28,11 @@
         <form id="scheduled-task-create-form" name="aform">
           <div class="messages"></div>
           <div class="form-group">
-            <div class="controls controls-row">
+            <div class=" row">
               <label class="control-label col-md-4" for="task_name">Task name<span class="required"> *</span></label>
               <label class="control-label col-md-4" for="task_type">Task type<span class="required"> *</span></label>
             </div>
-            <div class="controls controls-row">
+            <div class=" row">
               <input class="col-md-4" type="text" id="name" name="name" placeholder="Task name" title="A descriptive name for this task">
               <select class="col-md-4" id="task-type" name="task_type">
                 <% _.each(taskTypes, function(taskType, index) { %>
@@ -43,30 +43,30 @@
           </div>
           <div id="optional-fields"></div>
           <div class="form-group">
-            <div class="controls controls-row">
+            <div class=" row">
               <label class="control-label col-md-4" for="start_date">Start Date (MM/DD/YYYY)<span class="required"> *</span></label>
               <label class="control-label col-md-4" for="start_time">Start Time (hh:mm)<span class="required"> *</span></label>
             </div>
-            <div class="controls controls-row">
+            <div class=" row">
               <input class="col-md-4" type="text" id="start_date" name="start_date" placeholder="Start Date">
               <input class="col-md-4" type="text" id="start_time" name="start_time" placeholder="Start Time">
             </div>
           </div>
           <div class="form-group">
             <label class="control-label" for="frequency">Task Frequency (in minutes)<span class="required"> *</span></label>
-            <div class="controls">
+            <div class="">
               <input class="col-md-4" type="text" id="frequency" name="frequency" placeholder="Frequency" title="How often should this task run(in minutes)?">
             </div>
           </div>
           <div class="form-group">
-            <div class="controls form-inline">
+            <div class=" form-inline">
               <label class="checkbox">
                 <input class="checkbox-inline" type="checkbox" checked="true" id="enabled" name="enabled" placeholder="Enable this task" title="Disabled tasks will be created but not run till they are enabled"> Enable this task?
               </label>
             </div>
           </div>
           <div class="form-group">
-            <div class="controls">
+            <div class="">
               <a id="js-cancel" class="btn btn-default">Cancel</a>
               <input type="Submit" id="create-scheduled-task" class="btn btn-primary" value="Submit"></input>
             </div>
@@ -84,7 +84,7 @@
         <form id="scheduled-task-create-form" name="aform" class="form-horizontal">
           <div class="form-group">
             <label class="control-label" for="share">Task name: </label>
-            <div class="controls">
+            <div class="">
               <label class="control-label" style="text-align: left"><%= taskDef.get('name') %></label>
             </div>
           </div>

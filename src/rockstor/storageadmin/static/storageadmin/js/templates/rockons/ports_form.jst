@@ -11,7 +11,7 @@
 	  <% ports.each(function(port, index) { %>
 	  <label class="control-label" for="ports">Port(<%= port.get('containerp')%>)<span class="required"> *</span></label>
 
-	  <div class="controls">
+	  <div class="">
 	    <input type="text" id="<%= port.id %>" name="<%= port.id %>" value="<%= port.get('containerp')%>" title="host port to map to the Rock-on port">
 	  </div>
 	  <% }); %>

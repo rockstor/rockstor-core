@@ -110,8 +110,6 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
 /* Logo */
 .logo {
     width: 150px;
-    position: relative;
-    top: 50%;
     transform: translateY(50%);
 }
 
@@ -1372,7 +1370,7 @@ input[type="radio"].selectedRoot {
   right: 0px;
   bottom: 4px;
   left: 0px;
-  overflow: hidden;
+  overflow: scroll;
 }
 
 #sidebar {

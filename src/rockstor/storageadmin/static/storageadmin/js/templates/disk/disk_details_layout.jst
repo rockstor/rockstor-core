@@ -286,7 +286,7 @@
 	    <div class="form-group">
 	      <% if (!running_test) { %>
 	      <label class="control-label" for="test_type">Test Type </label>
-	      <div class="controls">
+	      <div class="">
 		<select id="test_name" name="test_name" title="select the test you want to run">
 		  <% for (t in tests) { %>
 		  <option value="<%= t %>"><%= t %>    (Estimated duration: <%= tests[t] %>)</option>
@@ -296,7 +296,7 @@
 	    </div>
 
 	    <div class="form-group">
-	      <div class="controls">
+	      <div class="">
 		<button id="test-start" class="btn btn-primary" title="Start the test">Start Test</button>
 	      </div>
 	    </div>

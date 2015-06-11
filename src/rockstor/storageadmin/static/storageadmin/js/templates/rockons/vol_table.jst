@@ -7,7 +7,7 @@
 	<div class="form-group">
 	  <% volumes.each(function(volume, index) { %>
 	  <label class="pull-left" for="shares">Share(<%= volume.get('dest_dir')%>) *</label>
-	  <div class="controls pull-right">
+	  <div class=" pull-right">
 	    <select name="<%= volume.id %>" id="<%= volume.id %>" data-placeholder="Select shares to export">
 	      <% shares.each(function(share, index) { %>
 	      <option value="<%= share.get('name') %>"><%= share.get('name') %></option>

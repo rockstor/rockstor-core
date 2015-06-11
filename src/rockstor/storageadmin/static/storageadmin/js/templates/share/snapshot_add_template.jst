@@ -52,7 +52,7 @@
           <label class="control-label" for=writable">Writable<span class="required"> *</span></label>
           <div class="controls">
              <% _.each(modify_choices, function(c) { %>
-                <label class="radio inline">
+                <label class="radio-inline">
                    <% if(c.value == 'yes'){ %>
                       <input type="radio" name="writable" value="rw" checked> <%= c.name %>
                    <%  }else{ %>

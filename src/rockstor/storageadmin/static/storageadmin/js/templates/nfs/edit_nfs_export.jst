@@ -35,7 +35,7 @@
         <!-- Shares -->
         <div class="form-group">
           <label class="control-label" for="shares">Shares to export<span class="required"> *</span></label>
-          <div class="controls">
+          <div class="">
             <select name="shares" id="shares" size="10" data-placeholder="Select shares to export" multiple>
               <%
                 var nShares = _.map(nfsExportGroup.get('exports'),
@@ -57,7 +57,7 @@
         <!-- host string -->
         <div class="form-group">
           <label class="control-label" for="host_str">NFS Clients<span class="required"> *</span></label>
-          <div class="controls">
+          <div class="">
             <input type="text" name="host_str" id="host_str"
 	    title="Hosts permitted to NFS mount. There are five broad categories of this input.<br><strong>anonymous:</strong> Just type a single * character and any host will be allowed.<br><strong>single host:</strong> Hostname or a IP address.<br><strong>IP networks:</strong> All hosts of a subnet given by <strong>address/netmask</strong>.<br><strong>wildcards:</strong> Names with wildcard(*, ?) characters for compact notation. for example, *.cs.foo.edu matches all hosts in the domain cs.food.edu.<br><strong>Netgroups:</strong> NIS netgroups given as @group.<br><br>For more details read the manpage for exports." value="<%= nfsExportGroup.get('host_str') %>">
           </div>
@@ -67,7 +67,7 @@
 	<div class="form-group">
 	  <label class="control-label" for="trusted_host">Admin
 	Host</span></label>
-	  <div class="controls">
+	  <div class="">
 	    <input type="text" id="admin_host" name="admin_host"
 	title="Hostname or IP of a host to be designated as the admin host. The
 	export will be available for this host with rw and no_root_squash
@@ -80,9 +80,9 @@
         <!-- writable -->
         <div class="form-group">
           <label class="control-label" for="mod_choice">Access type</label>
-          <div class="controls">
+          <div class="">
             <% _.each(modify_choices, function(c) { %>
-              <label class="radio inline">
+              <label class="radio-inline">
                 <% if (nfsExportGroup.get('editable') == c.value) { %>
                   <input type="radio" name="mod_choice" value="<%= c.value %>" checked="checked">
                 <% } else { %>
@@ -97,9 +97,9 @@
         <!-- sync -->
         <div class="form-group">
           <label class="control-label" for="sync_choice">Response type</label>
-          <div class="controls">
+          <div class="">
             <% _.each(sync_choices, function(c) { %>
-              <label class="radio inline">
+              <label class="radio-inline">
                 <% if (nfsExportGroup.get('syncable') == c.value) { %>
                   <input type="radio" name="sync_choice" value="<%= c.value %>" checked="checked">
                 <% } else { %>
@@ -113,7 +113,7 @@
 
         <!-- Submit -->
         <div class="form-group">
-          <div class="controls">
+          <div class="">
             <a id="cancel" class="btn btn-default">Cancel</a>
             <input type="Submit" id="update-nfs-export" class="btn btn-primary" value="Submit"></input>
           </div>

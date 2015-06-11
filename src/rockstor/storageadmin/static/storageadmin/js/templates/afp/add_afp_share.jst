@@ -13,7 +13,7 @@
         <!-- Shares -->
         <div class="form-group">
           <label class="control-label" for="shares">Shares to export via afp<span class="required">*</span></label>
-          <div class="controls">
+          <div class="">
             <select name="shares" id="shares" size="10" class='required' multiple data-placeholder="Select shares" >
             <% if (afpShareId!=null) {  %>
             <option value="<%= afpShare.get('share')%>" selected="selected"> <%= afpShare.get('share') %></option>
@@ -29,9 +29,9 @@
 
         <div class="form-group">
           <label class="control-label" for="time_machine">Time Machine<span class="required"> *</span></label>
-          <div class="controls">
+          <div class="">
               <% _.each(time_machine_choices, function(c) { %>
-                <label class="radio inline">
+                <label class="radio-inline">
                 <% if (afpShareId!=null){ %>
                     <% if(c.value == afpShare.get("time_machine")){ %>
                         <input type="radio" name="time_machine" value="<%= c.value %>" title="Enable Time Machine support for this Share to backup Macs." checked> <%= c.name %>
@@ -52,7 +52,7 @@
 
         <!-- Submit -->
         <div class="form-group">
-          <div class="controls">
+          <div class="">
             <a id="cancel" class="btn btn-default">Cancel</a>
             <input type="Submit" id="create-afp-share" class="btn btn-primary" value="Submit"></input>
           </div>
