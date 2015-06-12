@@ -645,12 +645,13 @@ label.error { font-size: 12px; color: #b94a48; }
 }
 
 #appliance-breadcrumb {
-  position: relative;
+  position: fixed;
   right: 0px;
+  top: 50px;
   left: 0px;
   z-index: 999;
   padding: 2px 20px 2px 20px;
-  background: #6C7A89;
+  background: #222222;
   border-top: 1px solid #ddd;
   border-bottom: 1px solid #ddd;
 }
@@ -1253,7 +1254,7 @@ input[type="radio"].selectedRoot {
 
 #wrapper2 {
   position: absolute;
-  top: 94px;
+  top: 80px;
   right: 0px;
   bottom: 4px;
   left: 0px;
@@ -1685,7 +1686,6 @@ input[type="radio"].selectedRoot {
 }
 
 /* font-awesome styling */
-a i.fa { color: #000; }
 .nav > li > a.selected i.fa { color: #fff; }
 .subnav > ul > li > a.selected i.fa { color: #fff; }
 
@@ -1748,7 +1748,7 @@ ul.css-tabs a.current {
 /* tab pane */
 .css-panes > div {
     display:none;
-    border:1px solid #bbb;
+    border:1px solid #ddd;
     border-width:0 1px 1px 1px;
     min-height:150px;
     padding:15px 20px;
