@@ -82,8 +82,8 @@ DiskDetailsLayoutView = RockstorLayoutView.extend({
 	    allowedValues: [0,1],
 	    snap: true
 	});
-	this.$("ul.css-tabs").tabs("div.css-panes > div");
-	this.$("ul.css-tabs").data("tabs").click(this.active_tab);
+	this.$("ul.nav.nav-tabs").tabs("div.css-panes > div");
+	this.$("ul.nav.nav-tabs").data("tabs").click(this.active_tab);
 	this.active_tab = 0;
     },
 

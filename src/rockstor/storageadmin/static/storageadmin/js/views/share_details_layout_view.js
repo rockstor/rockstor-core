@@ -126,7 +126,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
     } else {
       this.$('#ph-compression-info').html(this.compression_info_template({share: this.share}));
     }
-    this.$("ul.css-tabs").tabs("div.css-panes > div");
+    this.$("ul.nav.nav-tabs").tabs("div.css-panes > div");
     this.attachActions();
   },
 

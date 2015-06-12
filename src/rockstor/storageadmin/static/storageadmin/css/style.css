@@ -1287,7 +1287,7 @@ input[type="radio"].selectedRoot {
   color: #fff;
 }
 
-.nav > li > a {
+.side > li > a {
   padding-left: 4px;
 }
 
