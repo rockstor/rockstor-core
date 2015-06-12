@@ -1261,23 +1261,25 @@ input[type="radio"].selectedRoot {
 }
 
 #sidebar {
-	height: 100%;
-	width: 150px;
-	overflow: hidden;
-	position: absolute;
-	left: 0px;
-	top: 0px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.5);
-  background: #fff;
+    height: 100%;
+    width: 150px;
+    overflow: hidden;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.5);
+    background: #fff;
 }
 
 #sidebar-inner {
   padding: 4px 4px 12px 8px;
 }
-
-.nav > li > a.selected {
+.side {
+    padding: 0;
+}
+.side > li > a.selected {
   background-color: rgb(33, 133, 197);
   color: #fff;
 }
@@ -1287,20 +1289,28 @@ input[type="radio"].selectedRoot {
   color: #fff;
 }
 
+.side > li {
+    list-style: none;
+}
+.side > li > a > i {
+    list-style: none;
+}
+
 .side > li > a {
+    padding-left: 4px;
+
+}
+
+.side > li > div.subnav {
   padding-left: 4px;
 }
 
-.nav > li > div.subnav {
-  padding-left: 4px;
-}
-
-.nav > li > div.subnav ul {
+.side > li > div.subnav ul {
   padding-left: 0px;
   list-style: none outside none;
 }
 
-.nav > li > div.subnav ul li a {
+.side > li > div.subnav ul li a {
   padding-left: 4px;
 }
 
@@ -1308,12 +1318,13 @@ input[type="radio"].selectedRoot {
     text-decoration: none;
 }
 
-.nav > li > a {
+.side > li > a {
     display: block;
 }
 
-.nav li > div.subnav > ul > li > a {
-  display: block;
+.side li > div.subnav > ul > li > a {
+    display: block;
+    padding-left: 20px;
 }
 
 #content {
