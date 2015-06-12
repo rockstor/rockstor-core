@@ -95,9 +95,26 @@ class ShareListView(ShareMixin, rfc.GenericView):
             for s in shares_d:
                 if (s in shares):
                     continue
-                nso = Share(pool=p, qgroup=shares_d[s], name=s, size=p.size,
-                            subvol_name=s)
-                nso.save()
+                try:
+                    cshare = Share.objects.get(name=s)
+                    cshares_d = shares_info('%s%s' % (settings.MNT_PT,
+                                                      cshare.pool.name))
+                    if (s in cshares_d):
+                        e_msg = ('Another pool(%s) has a Share with this same '
+                                 'name(%s) as this pool(%s). This configuration is not supported.'
+                                 ' Remove or rename one of them manually.' %
+                                 (cshare.pool.name, s, p.name))
+                        handle_exception(Exception(e_msg), self.request)
+                    else:
+                        cshare.pool = p
+                        cshare.qgroup = shares_d[s]
+                        cshare.size = p.size
+                        cshare.subvol_name = s
+                        cshare.save()
+                except Share.DoesNotExist:
+                    nso = Share(pool=p, qgroup=shares_d[s], name=s, size=p.size,
+                                subvol_name=s)
+                    nso.save()
                 mount_share(nso, disk, '%s%s' % (settings.MNT_PT, s))
 
     @transaction.atomic
