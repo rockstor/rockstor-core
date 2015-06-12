@@ -33,24 +33,6 @@ logger = logging.getLogger(__name__)
 class ShareCommandView(rfc.GenericView):
     serializer_class = ShareSerializer
 
-    def get_queryset(self, *args, **kwargs):
-        if ('sname' in self.kwargs):
-            self.paginate_by = 0
-            try:
-                return Share.objects.get(name=self.kwargs['sname'])
-            except:
-                return []
-        sort_col = self.request.query_params.get('sortby', None)
-        if (sort_col is not None and sort_col == 'usage'):
-            reverse = self.request.query_params.get('reverse', 'no')
-            if (reverse == 'yes'):
-                reverse = True
-            else:
-                reverse = False
-            return sorted(Share.objects.all(), key=lambda u: u.cur_usage(),
-                          reverse=reverse)
-        return Share.objects.all()
-
     def _validate_share(self, request, sname):
         try:
             return Share.objects.get(name=sname)
