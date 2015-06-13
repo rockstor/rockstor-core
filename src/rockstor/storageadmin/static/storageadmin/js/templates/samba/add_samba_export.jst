@@ -135,17 +135,18 @@
           <label class="control-label" for="custom_config">Custom configuration </label>
           <div class="">
           <% if (sambaShareId!=null){ %>
-           <textarea id="custom_config" name="custom_config" rows="10" columns="40" class="col-md-10" title="You can provide custom parameters here. These lines will be added to the section of each Share selected above in smb.conf"><%= configList %></textarea>
+           <textarea id="custom_config" name="custom_config" class="form-control" title="You can provide custom parameters here. These lines will be added to the section of each Share selected above in smb.conf"><%= configList %></textarea>
            <% }else { %>
-           <textarea id="custom_config" name="custom_config" rows="10" columns="40" class="col-md-10" title="You can provide custom parameters here. These lines will be added to the section of each Share selected above in smb.conf"></textarea>
+           <textarea id="custom_config" name="custom_config" class="form-control" title="You can provide custom parameters here. These lines will be added to the section of each Share selected above in smb.conf"></textarea>
               <%  } %>
         </div>
 
       </div>
         <div class="form-group">
           <div class="">
-            <a id="cancel" class="btn btn-default">Cancel</a>
+
             <input type="Submit" id="create-samba-export" class="btn btn-primary" value="Submit"></input>
+	    <a id="cancel" class="btn btn-default">Cancel</a>
           </div>
         </div>
 

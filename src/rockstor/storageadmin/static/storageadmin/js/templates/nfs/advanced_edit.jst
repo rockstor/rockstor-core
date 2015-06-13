@@ -28,15 +28,16 @@
       <form id="advanced-edit-form" name="aform">
         <div class="form-group">
           <label class="control-label" for="nfs-text">Enter nfs export entries below</label>
-          <div class="">
-            <textarea id="nfs-text-ro" name="nfs-text-ro" rows="<%= ro_str.split('\n').length + 1 %>" class="col-md-10" readonly><%= ro_str %>\nENTER NFS EXPORTS BELOW THIS LINE</textarea>
-            <textarea id="nfs-text" name="nfs-text" rows="20" class="col-md-10"><%= rw_str %></textarea>
+          <div class="form-group">
+            <label id="nfs-text-ro" name="nfs-text-ro" rows="<%= ro_str.split('\n').length + 1 %>" class="form-control" readonly><%= ro_str %>\nENTER NFS EXPORTS BELOW THIS LINE</label>
+            <textarea id="nfs-text" name="nfs-text" class="form-control"><%= rw_str %></textarea>
           </div>
         </div>
         <div class="form-group">
           <div class="">
-            <a id="cancel" class="btn btn-default">Cancel</a>
+
             <input type="Submit" id="create-nfs-export" class="btn btn-primary" value="Submit"></input>
+	    <a id="cancel" class="btn btn-default">Cancel</a>
           </div>
         </div>
       </form>
