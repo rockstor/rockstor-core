@@ -28,6 +28,7 @@ from django.conf import settings
 from system.osi import is_share_mounted
 import logging
 logger = logging.getLogger(__name__)
+from django.core.exceptions import ObjectDoesNotExist
 
 
 class ShareCommandView(rfc.GenericView):
@@ -36,7 +37,7 @@ class ShareCommandView(rfc.GenericView):
     def _validate_share(self, request, sname):
         try:
             return Share.objects.get(name=sname)
-        except:
+        except ObjectDoesNotExist:
             e_msg = ('Share(%s) does not exist' % sname)
             handle_exception(Exception(e_msg), request)
 
@@ -44,7 +45,7 @@ class ShareCommandView(rfc.GenericView):
         try:
             snap_name = request.data.get('name', '')
             return Snapshot.objects.get(share=share, name=snap_name)
-        except:
+        except ObjectDoesNotExist:
             e_msg = ('Snapshot(%s) does not exist for this Share(%s)' %
                      (snap_name, share.name))
             handle_exception(Exception(e_msg), request)

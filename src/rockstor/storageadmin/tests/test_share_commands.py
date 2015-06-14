@@ -56,7 +56,7 @@ class ShareCommandTests(APITestMixin, APITestCase):
         """
         Test  invalid Post request
         1. Clone a share that does not exist
-        2. Clone a share 
+        2. Clone a share
         """
         # Clone a share that does not exist
 
@@ -64,23 +64,22 @@ class ShareCommandTests(APITestMixin, APITestCase):
         data = {'name':'clone1'}
 
         # clone a share that does not exist
-        conf = {'get.side_effect': Share.DoesNotExist}
-        mock_share.objects.configure_mock(**conf)
+        mock_share.objects.get.side_effect = Share.DoesNotExist
         response = self.client.post('%s/%s/clone' % (self.BASE_URL, shareName), data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
         e_msg = ('Share(cshare1) does not exist')
-        self.assertEqual(response.data['detail'], e_msg)                 
+        self.assertEqual(response.data['detail'], e_msg)
         conf = {'get.side_effect': None}
         mock_share.objects.configure_mock(**conf)
-        
+
         # clone happy path
         data = {'name':'clone'}
         shareName = 'cshare2'
         response = self.client.post('%s/%s/clone' % (self.BASE_URL, shareName), data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
-   
+
 
     @mock.patch('storageadmin.views.share_command.SambaShare')
     @mock.patch('storageadmin.views.share_command.NFSExport')
@@ -99,27 +98,28 @@ class ShareCommandTests(APITestMixin, APITestCase):
         data = {'name':'rsnap2'}
 
         # rollback share that does not exist
-        conf = {'get.side_effect': Share.DoesNotExist}
-        mock_share.objects.configure_mock(name='rshare2', **conf)
+        mock_share.objects.get.side_effect = Share.DoesNotExist
         response = self.client.post('%s/%s/rollback' % (self.BASE_URL, shareName), data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
         e_msg = ('Share(rshare2) does not exist')
         self.assertEqual(response.data['detail'], e_msg)
-         
+
         # rollback share snapshot does not exist
-        conf = {'get.side_effect': None}
-        mock_share.objects.configure_mock(**conf)
-        conf1 = {'get.side_effect': Snapshot.DoesNotExist}
-        mock_snapshot.objects.configure_mock(**conf1)
+        class MockShare(object):
+            def __init__(self, **kwargs):
+                self.name = 'rshare2'
+
+        mock_share.objects.get.side_effect = MockShare
+        mock_snapshot.objects.get.side_effect = Snapshot.DoesNotExist
         response = self.client.post('%s/%s/rollback' % (self.BASE_URL, shareName), data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
-        #e_msg = ('Snapshot(rsnap2) does not exist for this Share(rshare2)')
-        #self.assertEqual(response.data['detail'], e_msg)
-        
-        mock_snapshot.objects.configure_mock(**conf)
-        
+        e_msg = ('Snapshot(rsnap2) does not exist for this Share(rshare2)')
+        self.assertEqual(response.data['detail'], e_msg)
+        mock_snapshot.objects.get.side_effect = None
+        mock_share.objects.get.side_effect = None
+
 
         # rollback share while exported via NFS
         response = self.client.post('%s/%s/rollback' % (self.BASE_URL, shareName), data=data)
