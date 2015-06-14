@@ -53,7 +53,7 @@
         </div>
         <div class="form-group">
           <div class="controls">
-            <label class="checkbox">
+            <label class="checkbox-inline">
             <% if (user != null && user.get('user')) { %>
                 <input class="checkbox-inline" type="checkbox" id="admin" name="admin" placeholder="Admin" checked="true">
               <% } else { %>
@@ -137,8 +137,9 @@
 	</div>
         <div class="form-group">
           <div class="controls">
+	    <button type="Submit" id="create-user" class="btn btn-primary">Submit</button>
             <button id="cancel" class="btn btn-default">Cancel</button>
-            <button type="Submit" id="create-user" class="btn btn-primary">Submit</button>
+
           </div>
         </div>
 
