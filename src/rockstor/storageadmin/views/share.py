@@ -67,6 +67,20 @@ class ShareMixin(object):
             handle_exception(Exception(e_msg), request)
         return compression
 
+    @staticmethod
+    def _validate_share(request, sname):
+        try:
+            share = Share.objects.get(name=sname)
+            if (share.name == 'home' or share.name == 'root'):
+                e_msg = ('Operation not permitted on this Share(%s) because '
+                         'it is a special system Share' % sname)
+                handle_exception(Exception(e_msg), request)
+            return share
+        except Share.DoesNotExist:
+            e_msg = ('Share(%s) does not exist' % sname)
+            handle_exception(Exception(e_msg), request)
+
+
 class ShareListView(ShareMixin, rfc.GenericView):
     serializer_class = ShareSerializer
 
@@ -183,10 +197,7 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
     @transaction.atomic
     def put(self, request, sname):
         with self._handle_exception(request):
-            if (not Share.objects.filter(name=sname).exists()):
-                e_msg = ('Share(%s) does not exist.' % sname)
-                handle_exception(Exception(e_msg), request)
-            share = Share.objects.get(name=sname)
+            share = self._validate_share(request, sname)
             if ('size' in request.data):
                 new_size = self._validate_share_size(request, share.pool)
                 disk = Disk.objects.filter(pool=share.pool)[0]
@@ -235,12 +246,7 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
         share itself.
         """
         with self._handle_exception(request):
-            try:
-                share = Share.objects.get(name=sname)
-            except:
-                e_msg = ('Share(%s) does not exist.' % sname)
-                handle_exception(Exception(e_msg), request)
-
+            share = self._validate_share(request, sname)
             if (Snapshot.objects.filter(share=share,
                                         snap_type='replication').exists()):
                 e_msg = ('Share(%s) cannot be deleted as it has replication '
