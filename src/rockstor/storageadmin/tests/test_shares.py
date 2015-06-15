@@ -36,11 +36,7 @@ class ShareTests(APITestMixin, APITestCase):
         cls.patch_add_share = patch('storageadmin.views.share.add_share')
         cls.mock_add_share = cls.patch_add_share.start()
         cls.mock_add_share.return_value = True
-
-        cls.patch_share_id = patch('storageadmin.views.share.share_id')
-        cls.mock_share_id = cls.patch_share_id.start()
-        cls.mock_share_id.return_value = 'derp'
-
+        
         cls.patch_update_quota = patch('storageadmin.views.share.update_quota')
         cls.mock_update_quota = cls.patch_update_quota.start()
         cls.mock_update_quota.return_value = True
