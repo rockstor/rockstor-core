@@ -116,8 +116,9 @@ class ShareListView(ShareMixin, rfc.GenericView):
                     if (s in cshares_d):
                         e_msg = ('Another pool(%s) has a Share with this same '
                                  'name(%s) as this pool(%s). This configuration is not supported.'
-                                 ' Remove or rename one of them manually.' %
-                                 (cshare.pool.name, s, p.name))
+                                 ' You can delete one of them manually with this command: '
+                                 'btrfs subvol delete %s[pool name]/%s' %
+                                 (cshare.pool.name, s, p.name, settings.MNT_PT, s))
                         handle_exception(Exception(e_msg), self.request)
                     else:
                         cshare.pool = p
