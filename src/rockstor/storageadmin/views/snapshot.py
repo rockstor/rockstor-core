@@ -43,32 +43,33 @@ class SnapshotView(rfc.GenericView):
     serializer_class = SnapshotSerializer
 
     def get_queryset(self, *args, **kwargs):
-        try:
-            share = Share.objects.get(name=self.kwargs['sname'])
-        except:
-            if ('sname' not in self.kwargs):
-                for s in Share.objects.all():
-                    self._refresh_snapshots_state(s)
-                return Snapshot.objects.filter().order_by('-id')
-
-            e_msg = ('Share with name: %s does not exist' % self.kwargs['sname'])
-            handle_exception(Exception(e_msg), self.request)
-
-        if ('snap_name' in self.kwargs):
-            self.paginate_by = 0
+        with self._handle_exception(self.request):
             try:
-                return Snapshot.objects.get(share=share,
-                                            name=self.kwargs['snap_name'])
+                share = Share.objects.get(name=self.kwargs['sname'])
             except:
-                return []
+                if ('sname' not in self.kwargs):
+                    for s in Share.objects.all():
+                        self._refresh_snapshots_state(s)
+                    return Snapshot.objects.filter().order_by('-id')
 
-        self._refresh_snapshots_state(share)
-        snap_type = self.request.query_params.get('snap_type', None)
-        if (snap_type is not None and snap_type != ''):
-            return Snapshot.objects.filter(
-                share=share, snap_type=snap_type).order_by('-id')
+                e_msg = ('Share with name: %s does not exist' % self.kwargs['sname'])
+                handle_exception(Exception(e_msg), self.request)
 
-        return Snapshot.objects.filter(share=share).order_by('-id')
+            if ('snap_name' in self.kwargs):
+                self.paginate_by = 0
+                try:
+                    return Snapshot.objects.get(share=share,
+                                                name=self.kwargs['snap_name'])
+                except:
+                    return []
+
+            self._refresh_snapshots_state(share)
+            snap_type = self.request.query_params.get('snap_type', None)
+            if (snap_type is not None and snap_type != ''):
+                return Snapshot.objects.filter(
+                    share=share, snap_type=snap_type).order_by('-id')
+
+            return Snapshot.objects.filter(share=share).order_by('-id')
 
     @transaction.atomic
     def _refresh_snapshots_state(self, share):

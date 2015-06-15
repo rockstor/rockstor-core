@@ -252,33 +252,64 @@ def snapshot_list(mnt_pt):
 def shares_info(mnt_pt):
     #return a lit of share names unter this mount_point.
     #useful to gather names of all shares in a pool
-    o, e, rc = run_command([BTRFS, 'subvolume', 'list', mnt_pt])
-    shares_d = {}
+    o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-s', mnt_pt])
+    snap_ids = []
     for l in o:
-        if (re.search('.snapshots/', l) is not None):
-            continue
         if (re.match('ID ', l) is not None):
-            fields = l.split()
-            shares_d[fields[-1]] = '0/%s' % fields[1]
+            snap_ids.append(l.split()[1])
+
+    o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-p', mnt_pt])
+    shares_d = {}
+    share_ids = []
+    for l in o:
+        if (re.match('ID ', l) is None):
+            continue
+        fields = l.split()
+        vol_id = fields[1]
+        if (vol_id in snap_ids):
+            #snapshot
+            continue
+
+        parent_id = fields[5]
+        if (parent_id in share_ids or
+            parent_id in snap_ids):
+            #subvol of subvol or snapshot
+            continue
+        shares_d[fields[-1]] = '0/%s' % vol_id
+        share_ids.append(vol_id)
     return shares_d
 
 
 def snaps_info(mnt_pt, share_name):
-    o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-s', mnt_pt])
+    o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-u', '-p', '-q', mnt_pt])
+    share_uuid = None
+    for l in o:
+        if (re.match('ID ', l) is not None):
+            fields = l.split()
+            if (fields[-1] == share_name):
+                share_uuid = fields[-3]
+    if (share_uuid is None):
+        raise Exception('Failed to get uuid of the share(%s) under mount(%s)'
+                        % (share_name, mnt_pt))
+
+    o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-s', '-u', '-p',
+                            '-q', mnt_pt])
     snaps_d = {}
     for l in o:
         if (re.match('ID ', l) is not None):
-            if (re.search('/%s/' % share_name, l) is not None):
-                writable = True
-                fields = l.split()
-                o1, e1, rc1 = run_command([BTRFS, 'property', 'get',
-                                           '%s/%s' % (mnt_pt, fields[-1])])
-                for l1 in o1:
-                    if (re.match('ro=', l1) is not None):
-                        if (l1.split('=')[1] == 'true'):
-                            writable = False
-                snap_name = fields[-1].split('/%s/' % share_name)[1]
-                snaps_d[snap_name] = ('0/%s' % fields[1], writable)
+            fields = l.split()
+            #parent uuid must be share_uuid
+            if (fields[-5] != share_uuid):
+                continue
+            writable = True
+            o1, e1, rc1 = run_command([BTRFS, 'property', 'get',
+                                       '%s/%s' % (mnt_pt, fields[-1])])
+            for l1 in o1:
+                if (re.match('ro=', l1) is not None):
+                    if (l1.split('=')[1] == 'true'):
+                        writable = False
+            snap_name = fields[-1].split('/')[-1]
+            snaps_d[snap_name] = ('0/%s' % fields[1], writable)
     return snaps_d
 
 def share_id(pool, pool_device, share_name):
