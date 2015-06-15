@@ -271,12 +271,15 @@ def shares_info(mnt_pt):
             continue
 
         parent_id = fields[5]
-        if (parent_id in share_ids or
-            parent_id in snap_ids):
-            #subvol of subvol or snapshot
-            continue
-        shares_d[fields[-1]] = '0/%s' % vol_id
-        share_ids.append(vol_id)
+        if (parent_id in share_ids):
+            #subvol of subvol. add it so child subvols can also be ignored.
+            share_ids.append(vol_id)
+        elif (parent_id in snap_ids):
+            #snapshot/subvol of snapshot. add it so child subvols can also be ignored.
+            snap_ids.append(vol_id)
+        else:
+            shares_d[fields[-1]] = '0/%s' % vol_id
+            share_ids.append(vol_id)
     return shares_d
 
 
