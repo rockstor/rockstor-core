@@ -26,11 +26,12 @@ import rest_framework_custom as rfc
 from clone_helpers import create_clone
 from django.conf import settings
 from system.osi import is_share_mounted
+from share import ShareMixin
 import logging
 logger = logging.getLogger(__name__)
 
 
-class ShareCommandView(rfc.GenericView):
+class ShareCommandView(ShareMixin, rfc.GenericView):
     serializer_class = ShareSerializer
 
     def get_queryset(self, *args, **kwargs):
@@ -50,13 +51,6 @@ class ShareCommandView(rfc.GenericView):
             return sorted(Share.objects.all(), key=lambda u: u.cur_usage(),
                           reverse=reverse)
         return Share.objects.all()
-
-    def _validate_share(self, request, sname):
-        try:
-            return Share.objects.get(name=sname)
-        except:
-            e_msg = ('Share(%s) does not exist' % sname)
-            handle_exception(Exception(e_msg), request)
 
     def _validate_snapshot(self, request, share):
         try:
