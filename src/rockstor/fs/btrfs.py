@@ -353,28 +353,26 @@ def remove_share(pool, pool_device, share_name):
     run_command(delete_cmd)
 
 
-def remove_snap_old(pool, pool_device, share_name, snap_name):
-    full_name = ('%s/%s' % (share_name, snap_name))
-    if (is_share_mounted(full_name)):
-        umount_root('%s%s' % (DEFAULT_MNT_DIR, full_name))
-    root_pool_mnt = mount_root(pool, pool_device)
-    subvol_mnt_pt = ('%s/%s_%s' % (root_pool_mnt, share_name, snap_name))
-    if (is_subvol(subvol_mnt_pt)):
-        return run_command([BTRFS, 'subvolume', 'delete', subvol_mnt_pt])
-    return True
-
-
 def remove_snap(pool, pool_device, share_name, snap_name):
     root_mnt = mount_root(pool, pool_device)
     snap_path = ('%s/.snapshots/%s/%s' %
                  (root_mnt, share_name, snap_name))
-    if (not os.path.exists(snap_path)):
-        return remove_snap_old(pool, pool_device, share_name, snap_name)
     if (is_mounted(snap_path)):
         umount_root(snap_path)
     if (is_subvol(snap_path)):
         return run_command([BTRFS, 'subvolume', 'delete', snap_path])
-    return True
+    else:
+        o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-s', root_mnt])
+        snap = None
+        for l in o:
+            #just give the first match.
+            if (re.match('ID.*%s$' % snap_name, l) is not None):
+                snap = '%s/%s' % (root_mnt, l.split()[-1])
+                break
+        e_msg = ('This snapshot(%s) was created outside of Rockstor. If you '
+                 'really want to delete it, you can do so manually with this '
+                 'command: btrfs subvol delete %s' % (snap_name, snap))
+        raise Exception(e_msg)
 
 
 def add_snap_helper(orig, snap, readonly=False):
