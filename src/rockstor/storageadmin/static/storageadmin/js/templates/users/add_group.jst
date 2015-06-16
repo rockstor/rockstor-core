@@ -44,17 +44,15 @@
           <% } %>
           </div>
         </div>
-        <div class="form-group">
-          <div class="controls">
-            <label class="checkbox">
+        <div class="checkbox">
+            <label>
             <% if (group != null && group.get('admin')) { %>
-                <input class="checkbox-inline" type="checkbox" id="admin" name="admin" placeholder="Admin" checked="true">
+                <input type="checkbox" id="admin" name="admin" placeholder="Admin" checked="true">
               <% } else { %>
-                <input class="checkbox-inline" type="checkbox" id="admin" name="admin" placeholder="Admin">
+                <input type="checkbox" id="admin" name="admin" placeholder="Admin">
               <% } %>
               Put this group under Rockstor management?
             </label>
-          </div>
         </div>
 	<div class="form-group">
 	<label class="control-label">GID</label>
