@@ -17,14 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-html { height: 100%; }
+html {
+    height: 100%;
+    overflow: hidden;
+}
 
 body {
-  color: rgb(85,85,85);
-  background: #eee;
-  height: 100%;
-
-
+    color: rgb(85,85,85);
+    background: #eee;
+    height: 100%;
 }
 .orange { color: #FF7F66; }
 
@@ -1254,11 +1255,11 @@ input[type="radio"].selectedRoot {
 
 #wrapper2 {
   position: absolute;
-  top: 80px;
+  top: 94px;
   right: 0px;
   bottom: 4px;
   left: 0px;
-  overflow: scroll;
+  overflow: hidden;
 }
 
 #sidebar {
@@ -1329,16 +1330,13 @@ input[type="radio"].selectedRoot {
 }
 
 #content {
-    position: relative;
+    position: absolute;
     height: auto;
-    /* 
-       Width not 100% because that would mean it is the parent's width
-       which is the page width
-    */
-    width: 87%; 
+    width: auto;
     left: 154px;
     bottom: 0px;
     right: 0px;
+    top: 0px;
     overflow-y: auto;
     border: 1px solid #ddd;
     border-radius: 4px;
