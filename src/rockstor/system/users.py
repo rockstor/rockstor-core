@@ -111,6 +111,22 @@ def update_shell(username, shell):
 
 
 def useradd(username, shell, uid=None, gid=None):
+    pw_entry = None
+    try:
+        pw_entry = pwd.getpwnam(username)
+    except:
+        pass
+    if (pw_entry is not None):
+        if (uid is not None and
+            uid != pw_entry.pw_uid):
+            raise Exception('User(%s) already exists, but her uid(%d) is different from the input(%d).' % (username, pw_entry.pw_uid, uid))
+        if (gid is not None and
+            gid != pw_entry.pw_gid):
+            raise Exception('User(%s) already exists, but her gid(%d) is different from the input(%d).' % (username, pw_entry.pw_gid, gid))
+        if (shell != pw_entry.pw_shell):
+            raise Exception('User(%s) already exists, but her shell(%s) is different from the input(%s).' % (username, pw_entry.shell, shell))
+        return ([''], [''], 0)
+
     cmd = [USERADD, '-s', shell, '-m', username]
     if (uid is not None):
         cmd.insert(-1, '-u')
