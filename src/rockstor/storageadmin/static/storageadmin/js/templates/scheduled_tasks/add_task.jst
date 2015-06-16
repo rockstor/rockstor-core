@@ -33,7 +33,7 @@
               <label class="control-label col-md-4" for="task_type">Task type<span class="required"> *</span></label>
             </div>
             <div class=" row">
-              <input class="col-md-4" type="text" id="name" name="name" placeholder="Task name" title="A descriptive name for this task">
+              <input class="col-md-4 offset-row-child" type="text" id="name" name="name" placeholder="Task name" title="A descriptive name for this task">
               <select class="col-md-4" id="task-type" name="task_type">
                 <% _.each(taskTypes, function(taskType, index) { %>
                   <option value="<%= taskType %>"> <%= taskType %> </option>
@@ -47,9 +47,9 @@
               <label class="control-label col-md-4" for="start_date">Start Date (MM/DD/YYYY)<span class="required"> *</span></label>
               <label class="control-label col-md-4" for="start_time">Start Time (hh:mm)<span class="required"> *</span></label>
             </div>
-            <div class=" row">
-              <input class="col-md-4" type="text" id="start_date" name="start_date" placeholder="Start Date">
-              <input class="col-md-4" type="text" id="start_time" name="start_time" placeholder="Start Time">
+            <div class="row">
+              <input class="col-md-4 offset-row-child" type="text" id="start_date" name="start_date" placeholder="Start Date">
+              <input class="col-md-4 offset-row-child" type="text" id="start_time" name="start_time" placeholder="Start Time">
             </div>
           </div>
           <div class="form-group">
@@ -59,17 +59,15 @@
             </div>
           </div>
           <div class="form-group">
-            <div class=" form-inline">
+            <div class="form-inline" style="clear: both">
               <label class="checkbox">
                 <input class="checkbox-inline" type="checkbox" checked="true" id="enabled" name="enabled" placeholder="Enable this task" title="Disabled tasks will be created but not run till they are enabled"> Enable this task?
               </label>
             </div>
           </div>
           <div class="form-group">
-            <div class="">
+	                  <input type="Submit" id="create-scheduled-task" class="btn btn-primary" value="Submit"></input>
               <a id="js-cancel" class="btn btn-default">Cancel</a>
-              <input type="Submit" id="create-scheduled-task" class="btn btn-primary" value="Submit"></input>
-            </div>
           </div>
         </form>
 
@@ -126,21 +124,22 @@
           <% if (taskDef.get('task_type') == 'snapshot') { %>
             <div class="form-group">
               <label class="control-label" for="max_count">Maximum count<span class="required"> *</span></label>
-              <div class="controls">
-                <input class="col-md-2" type="text" id="max_count" name="meta.max_count" value="<%= taskDef.max_count() %>" title="Older snapshots beyond this number and created by this task will be deleted">
+              <div class="form-group">
+                <input class="col-md-2 offset-row-child" type="text" id="max_count" name="meta.max_count" value="<%= taskDef.max_count() %>" title="Older snapshots beyond this number and created by this task will be deleted">
+		<input class="checkbox" type="checkbox" checked="true" id="visible" name="meta.visible" title="Make snapshots visible to the end user">
               </div>
             </div>
 	    <div class="form-group">
 	      <label class="control-label" for="visible">Make snapshots visible</label>
 	      <div class="controls">
-	        <input class="checkbox" type="checkbox" checked="true" id="visible" name="meta.visible" title="Make snapshots visible to the end user">
+
 	      </div>
 	    </div>
           <% } %>
           <div class="form-group">
             <label class="control-label" for="frequency">Task Frequency (in minutes)<span class="required"> *</span></label>
             <div class="controls">
-              <input class="col-md-2" type="text" id="frequency" name="frequency" value="<%= taskDef.get('frequency') %>" placeholder="Frequency" title="How often should this task run(in minutes)?">
+              <input class="col-md-2 offset-row-child" type="text" id="frequency" name="frequency" value="<%= taskDef.get('frequency') %>" placeholder="Frequency" title="How often should this task run(in minutes)?">
             </div>
           </div>
           <div class="form-group">
