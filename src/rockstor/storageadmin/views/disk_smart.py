@@ -91,6 +91,14 @@ class DiskSMARTDetailView(rfc.GenericView):
             SMARTErrorLog(info=si, line=l).save()
         for tnum in sorted(test_d.keys()):
             t = test_d[tnum]
+            tlen = len(t)
+            if (tlen < 5):
+                [t.append('') for i in range(tlen, 5)]
+            for i in range(2, 4):
+                try:
+                    t[i] = int(t[i])
+                except:
+                    t[i] = -1
             SMARTTestLog(info=si, test_num=tnum, description=t[0], status=t[1],
                          pct_completed=t[2], lifetime_hours=t[3],
                          lba_of_first_error=t[4]).save()
@@ -113,7 +121,7 @@ class DiskSMARTDetailView(rfc.GenericView):
             if (command == 'info'):
                 return self._info(disk)
             elif (command == 'test'):
-                test_type = request.DATA.get('test_type')
+                test_type = request.data.get('test_type')
                 if (re.search('short', test_type, re.IGNORECASE) is not None):
                     test_type = 'short'
                 elif (re.search('extended', test_type, re.IGNORECASE) is not None):
@@ -125,6 +133,6 @@ class DiskSMARTDetailView(rfc.GenericView):
                 smart.run_test(disk.name, test_type)
                 return self._info(disk)
 
-            e_msg = ('Unknown command: %s. Only valid commands are scan, '
-                     'wipe' % command)
+            e_msg = ('Unknown command: %s. Only valid commands are info and '
+                     'test' % command)
             handle_exception(Exception(e_msg), request)

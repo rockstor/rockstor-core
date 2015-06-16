@@ -26,12 +26,13 @@ import rest_framework_custom as rfc
 from clone_helpers import create_clone
 from django.conf import settings
 from system.osi import is_share_mounted
+from share import ShareMixin
 import logging
 logger = logging.getLogger(__name__)
 from django.core.exceptions import ObjectDoesNotExist
 
 
-class ShareCommandView(rfc.GenericView):
+class ShareCommandView(ShareMixin, rfc.GenericView):
     serializer_class = ShareSerializer
 
     def _validate_share(self, request, sname):

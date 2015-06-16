@@ -62,6 +62,31 @@ def add_pool(pool, disks):
     return out, err, rc
 
 
+def get_pool_info(disk):
+    cmd = [BTRFS, 'fi', 'show', '/dev/%s' % disk]
+    o, e, rc = run_command(cmd)
+    pool_info = {'disks': [],}
+    for l in o:
+        if (re.match('Label', l) is not None):
+            fields = l.split()
+            pool_info['label'] = fields[1].strip("'")
+            pool_info['uuid'] = fields[3]
+        elif (re.match('\tdevid', l) is not None):
+            pool_info['disks'].append(l.split()[-1].split('/')[-1])
+    return pool_info
+
+def pool_raid(mnt_pt):
+    o, e, rc = run_command([BTRFS, 'fi', 'df', mnt_pt])
+    #data, system, metadata, globalreserve
+    raid_d = {}
+    for l in o:
+        fields = l.split()
+        if (len(fields) > 1):
+            raid_d[fields[0][:-1].lower()] = fields[1][:-1].lower()
+    if (raid_d['metadata'] == 'single'):
+        raid_d['data'] = raid_d['metadata']
+    return raid_d;
+
 def cur_devices(mnt_pt):
     devices = []
     o, e, rc = run_command([BTRFS, 'fi', 'show', mnt_pt])
@@ -224,6 +249,72 @@ def snapshot_list(mnt_pt):
     return snaps
 
 
+def shares_info(mnt_pt):
+    #return a lit of share names unter this mount_point.
+    #useful to gather names of all shares in a pool
+    o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-s', mnt_pt])
+    snap_ids = []
+    for l in o:
+        if (re.match('ID ', l) is not None):
+            snap_ids.append(l.split()[1])
+
+    o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-p', mnt_pt])
+    shares_d = {}
+    share_ids = []
+    for l in o:
+        if (re.match('ID ', l) is None):
+            continue
+        fields = l.split()
+        vol_id = fields[1]
+        if (vol_id in snap_ids):
+            #snapshot
+            continue
+
+        parent_id = fields[5]
+        if (parent_id in share_ids):
+            #subvol of subvol. add it so child subvols can also be ignored.
+            share_ids.append(vol_id)
+        elif (parent_id in snap_ids):
+            #snapshot/subvol of snapshot. add it so child subvols can also be ignored.
+            snap_ids.append(vol_id)
+        else:
+            shares_d[fields[-1]] = '0/%s' % vol_id
+            share_ids.append(vol_id)
+    return shares_d
+
+
+def snaps_info(mnt_pt, share_name):
+    o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-u', '-p', '-q', mnt_pt])
+    share_id = None
+    for l in o:
+        if (re.match('ID ', l) is not None):
+            fields = l.split()
+            if (fields[-1] == share_name):
+                share_id = fields[1]
+    if (share_id is None):
+        raise Exception('Failed to get uuid of the share(%s) under mount(%s)'
+                        % (share_name, mnt_pt))
+
+    o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-s', '-p', '-q',
+                            mnt_pt])
+    snaps_d = {}
+    for l in o:
+        if (re.match('ID ', l) is not None):
+            fields = l.split()
+            #parent uuid must be share_uuid
+            if (fields[7] != share_id):
+                continue
+            writable = True
+            o1, e1, rc1 = run_command([BTRFS, 'property', 'get',
+                                       '%s/%s' % (mnt_pt, fields[-1])])
+            for l1 in o1:
+                if (re.match('ro=', l1) is not None):
+                    if (l1.split('=')[1] == 'true'):
+                        writable = False
+            snap_name = fields[-1].split('/')[-1]
+            snaps_d[snap_name] = ('0/%s' % fields[1], writable)
+    return snaps_d
+
 def share_id(pool, pool_device, share_name):
     """
     returns the subvolume id, becomes the share's uuid.
@@ -262,28 +353,26 @@ def remove_share(pool, pool_device, share_name):
     run_command(delete_cmd)
 
 
-def remove_snap_old(pool, pool_device, share_name, snap_name):
-    full_name = ('%s/%s' % (share_name, snap_name))
-    if (is_share_mounted(full_name)):
-        umount_root('%s%s' % (DEFAULT_MNT_DIR, full_name))
-    root_pool_mnt = mount_root(pool, pool_device)
-    subvol_mnt_pt = ('%s/%s_%s' % (root_pool_mnt, share_name, snap_name))
-    if (is_subvol(subvol_mnt_pt)):
-        return run_command([BTRFS, 'subvolume', 'delete', subvol_mnt_pt])
-    return True
-
-
 def remove_snap(pool, pool_device, share_name, snap_name):
     root_mnt = mount_root(pool, pool_device)
     snap_path = ('%s/.snapshots/%s/%s' %
                  (root_mnt, share_name, snap_name))
-    if (not os.path.exists(snap_path)):
-        return remove_snap_old(pool, pool_device, share_name, snap_name)
     if (is_mounted(snap_path)):
         umount_root(snap_path)
     if (is_subvol(snap_path)):
         return run_command([BTRFS, 'subvolume', 'delete', snap_path])
-    return True
+    else:
+        o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-s', root_mnt])
+        snap = None
+        for l in o:
+            #just give the first match.
+            if (re.match('ID.*%s$' % snap_name, l) is not None):
+                snap = '%s/%s' % (root_mnt, l.split()[-1])
+                break
+        e_msg = ('This snapshot(%s) was created outside of Rockstor. If you '
+                 'really want to delete it, you can do so manually with this '
+                 'command: btrfs subvol delete %s' % (snap_name, snap))
+        raise Exception(e_msg)
 
 
 def add_snap_helper(orig, snap, readonly=False):

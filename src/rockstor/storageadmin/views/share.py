@@ -23,7 +23,8 @@ from django.db import transaction
 from storageadmin.models import (Share, Disk, Pool, Snapshot,
                                  NFSExport, SambaShare, SFTP)
 from fs.btrfs import (add_share, remove_share, update_quota,
-                      share_usage, set_property, mount_share, qgroup_id)
+                      share_usage, set_property, mount_share, qgroup_id,
+                      shares_info)
 from system.osi import is_share_mounted
 from storageadmin.serializers import ShareSerializer
 from storageadmin.util import handle_exception
@@ -66,10 +67,25 @@ class ShareMixin(object):
             handle_exception(Exception(e_msg), request)
         return compression
 
+    @staticmethod
+    def _validate_share(request, sname):
+        try:
+            share = Share.objects.get(name=sname)
+            if (share.name == 'home' or share.name == 'root'):
+                e_msg = ('Operation not permitted on this Share(%s) because '
+                         'it is a special system Share' % sname)
+                handle_exception(Exception(e_msg), request)
+            return share
+        except Share.DoesNotExist:
+            e_msg = ('Share(%s) does not exist' % sname)
+            handle_exception(Exception(e_msg), request)
+
+
 class ShareListView(ShareMixin, rfc.GenericView):
     serializer_class = ShareSerializer
 
     def get_queryset(self, *args, **kwargs):
+        self._refresh_shares_state();
         sort_col = self.request.query_params.get('sortby', None)
         if (sort_col is not None and sort_col == 'usage'):
             reverse = self.request.query_params.get('reverse', 'no')
@@ -80,6 +96,41 @@ class ShareListView(ShareMixin, rfc.GenericView):
             return sorted(Share.objects.all(), key=lambda u: u.cur_usage(),
                           reverse=reverse)
         return Share.objects.all()
+
+    @transaction.atomic
+    def _refresh_shares_state(self):
+        for p in Pool.objects.all():
+            disk = Disk.objects.filter(pool=p)[0].name
+            shares = [s.name for s in Share.objects.filter(pool=p)]
+            shares_d = shares_info('%s%s' % (settings.MNT_PT, p.name))
+            for s in shares:
+                if (s not in shares_d):
+                    Share.objects.get(pool=p, name=s).delete()
+            for s in shares_d:
+                if (s in shares):
+                    continue
+                try:
+                    cshare = Share.objects.get(name=s)
+                    cshares_d = shares_info('%s%s' % (settings.MNT_PT,
+                                                      cshare.pool.name))
+                    if (s in cshares_d):
+                        e_msg = ('Another pool(%s) has a Share with this same '
+                                 'name(%s) as this pool(%s). This configuration is not supported.'
+                                 ' You can delete one of them manually with this command: '
+                                 'btrfs subvol delete %s[pool name]/%s' %
+                                 (cshare.pool.name, s, p.name, settings.MNT_PT, s))
+                        handle_exception(Exception(e_msg), self.request)
+                    else:
+                        cshare.pool = p
+                        cshare.qgroup = shares_d[s]
+                        cshare.size = p.size
+                        cshare.subvol_name = s
+                        cshare.save()
+                except Share.DoesNotExist:
+                    nso = Share(pool=p, qgroup=shares_d[s], name=s, size=p.size,
+                                subvol_name=s)
+                    nso.save()
+                mount_share(nso, disk, '%s%s' % (settings.MNT_PT, s))
 
     @transaction.atomic
     def post(self, request):
@@ -147,10 +198,7 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
     @transaction.atomic
     def put(self, request, sname):
         with self._handle_exception(request):
-            if (not Share.objects.filter(name=sname).exists()):
-                e_msg = ('Share(%s) does not exist.' % sname)
-                handle_exception(Exception(e_msg), request)
-            share = Share.objects.get(name=sname)
+            share = self._validate_share(request, sname)
             if ('size' in request.data):
                 new_size = self._validate_share_size(request, share.pool)
                 disk = Disk.objects.filter(pool=share.pool)[0]
@@ -199,12 +247,7 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
         share itself.
         """
         with self._handle_exception(request):
-            try:
-                share = Share.objects.get(name=sname)
-            except:
-                e_msg = ('Share(%s) does not exist.' % sname)
-                handle_exception(Exception(e_msg), request)
-
+            share = self._validate_share(request, sname)
             if (Snapshot.objects.filter(share=share,
                                         snap_type='replication').exists()):
                 e_msg = ('Share(%s) cannot be deleted as it has replication '
@@ -234,15 +277,11 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
             self._rockon_check(request, sname)
 
             pool_device = Disk.objects.filter(pool=share.pool)[0].name
-            e_msg = ('Share(%s) may still be mounted and cannot be deleted. '
-                     'Trying again usually succeeds. But if it does not, '
-                     'you can manually unmount it with'
-                     ' command: /usr/bin/umount /mnt2/%s' % (sname, sname))
             try:
                 remove_share(share.pool, pool_device, share.subvol_name)
             except Exception, e:
                 logger.exception(e)
-                e_msg = ('%s . Error from the OS: %s' % (e_msg, e.__str__()))
+                e_msg = ('Failed to delete the Share(%s). Error from the OS: %s' % (sname, e.__str__()))
                 handle_exception(Exception(e_msg), request)
             share.delete()
             return Response()
