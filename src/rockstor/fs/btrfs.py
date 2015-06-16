@@ -27,7 +27,7 @@ import subprocess
 import signal
 import shutil
 from system.osi import (run_command, create_tmp_dir, is_share_mounted,
-                        is_mounted)
+                        is_mounted, get_virtio_disk_serial)
 from system.exceptions import (CommandException, NonBTRFSRootException)
 from pool_scrub import PoolScrub
 from pool_balance import PoolBalance
@@ -42,11 +42,11 @@ DEFAULT_MNT_DIR = '/mnt2/'
 RMDIR = '/bin/rmdir'
 WIPEFS = '/usr/sbin/wipefs'
 
-
 import collections
+
 Disk = collections.namedtuple('Disk', 'name model serial size '
-                              'transport vendor hctl type fstype '
-                              'label btrfs_uuid parted root')
+                                      'transport vendor hctl type fstype '
+                                      'label btrfs_uuid parted root')
 
 
 def add_pool(pool, disks):
@@ -109,7 +109,7 @@ def resize_pool(pool, device, dev_list, add=True):
     resize = False
     for d in dev_list:
         if (((resize_flag == 'add' and (d not in cur_dev)) or
-             (resize_flag == 'delete' and (d in cur_dev)))):
+                 (resize_flag == 'delete' and (d in cur_dev)))):
             resize = True
             resize_cmd.append(d)
     if (not resize):
@@ -232,8 +232,8 @@ def subvol_list_helper(mnt_pt):
             return run_command([BTRFS, 'subvolume', 'list', mnt_pt])
         except CommandException, ce:
             if (ce.rc != 19):
-                #rc == 19 is due to the slow kernel cleanup thread. It should
-                #eventually succeed.
+                # rc == 19 is due to the slow kernel cleanup thread. It should
+                # eventually succeed.
                 raise ce
             time.sleep(1)
             num_tries = num_tries + 1
@@ -383,8 +383,8 @@ def add_snap_helper(orig, snap, readonly=False):
         return run_command(cmd)
     except CommandException, ce:
         if (ce.rc != 19):
-            #rc == 19 is due to the slow kernel cleanup thread. snapshot gets
-            #created just fine. lookup is delayed arbitrarily.
+            # rc == 19 is due to the slow kernel cleanup thread. snapshot gets
+            # created just fine. lookup is delayed arbitrarily.
             raise ce
 
 
@@ -619,7 +619,7 @@ def balance_status(pool, pool_device):
         if (re.match('Balance', out[0]) is not None):
             stats['status'] = 'running'
             if ((len(out) > 1 and
-                 re.search('chunks balanced', out[1]) is not None)):
+                         re.search('chunks balanced', out[1]) is not None)):
                 percent_left = out[1].split()[-2][:-1]
                 try:
                     percent_left = int(percent_left)
@@ -662,7 +662,7 @@ def root_disk():
         for line in fo.readlines():
             fields = line.split()
             if (fields[1] == '/' and
-                (fields[2] == 'ext4' or fields[2] == 'btrfs')):
+                    (fields[2] == 'ext4' or fields[2] == 'btrfs')):
                 disk = os.path.realpath(fields[0])
                 return disk[5:-1]
     msg = ('root filesystem is not BTRFS. During Rockstor installation, '
@@ -691,12 +691,12 @@ def scan_disks(min_size):
         sl = l.strip()
         i = 0
         while i < len(sl):
-            if (name_iter and sl[i] == '=' and sl[i+1] == '"'):
+            if (name_iter and sl[i] == '=' and sl[i + 1] == '"'):
                 name_iter = False
                 val_iter = True
                 i = i + 2
             elif (val_iter and sl[i] == '"' and
-                  (i == (len(sl)-1) or sl[i+1] == ' ')):
+                      (i == (len(sl) - 1) or sl[i + 1] == ' ')):
                 val_iter = False
                 name_iter = True
                 i = i + 2
@@ -720,7 +720,7 @@ def scan_disks(min_size):
                 if (re.match(dname, dmap['NAME']) is not None):
                     dnames[dname][11] = True
         if (((dmap['NAME'] != root and dmap['TYPE'] != 'part') or
-             (dmap['TYPE'] == 'part' and dmap['FSTYPE'] == 'btrfs'))):
+                 (dmap['TYPE'] == 'part' and dmap['FSTYPE'] == 'btrfs'))):
             dmap['parted'] = False  # part = False by default
             dmap['root'] = False
             if (dmap['TYPE'] == 'part' and dmap['FSTYPE'] == 'btrfs'):
@@ -741,7 +741,12 @@ def scan_disks(min_size):
                 continue
             if (dmap['SIZE'] < min_size):
                 continue
+            if (dmap['SERIAL'] == ''):
+                # lsblk fails to retrieve SERIAL from KVM VirtIO drives so try specialized function
+                dmap['SERIAL'] = get_virtio_disk_serial(dmap['NAME'])
             if (dmap['SERIAL'] == '' or (dmap['SERIAL'] in serials)):
+                # no serial number still or its a repeat
+                # overwrite drive serial entry with drive name: see disks_table.jst for a use of this flag mechanism.
                 dmap['SERIAL'] = dmap['NAME']
             serials.append(dmap['SERIAL'])
             for k in dmap.keys():
