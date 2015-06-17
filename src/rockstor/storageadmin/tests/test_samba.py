@@ -56,11 +56,10 @@ class SambaTests(APITestMixin, APITestCase):
         cls.mock_status = cls.patch_status.start()
         cls.mock_status.return_value = 'sts'
         
-        """
         cls.patch_refresh_smb_config = patch('storageadmin.views.samba.refresh_smb_config')
         cls.mock_refresh_smb_config = cls.patch_refresh_smb_config.start()
         cls.mock_refresh_smb_config.return_value = 'smbconfig'
-        """
+        
 
         
         
@@ -105,10 +104,10 @@ class SambaTests(APITestMixin, APITestCase):
         self.assertEqual(response.data['detail'], e_msg) 
         
         # create samba export 
-        data = {'shares': ('mshare1', ), 'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes'}
+        data = {'shares': ('mshare1', ), 'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes', 'admin_users':'usr'}
         mock_samba.objects.filter.return_value.exists.return_value = False
         #mock_sambaShareSerializer.data = 'data'
-        #mock_user.objects.get.side_effect = None
+        mock_user.objects.get.side_effect = None
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)  
