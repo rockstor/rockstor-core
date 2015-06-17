@@ -83,7 +83,7 @@ def resize_pool(pool, device, dev_list, add=True):
     resize = False
     for d in dev_list:
         if (((resize_flag == 'add' and (d not in cur_dev)) or
-                 (resize_flag == 'delete' and (d in cur_dev)))):
+                (resize_flag == 'delete' and (d in cur_dev)))):
             resize = True
             resize_cmd.append(d)
     if (not resize):
