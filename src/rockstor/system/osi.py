@@ -445,25 +445,29 @@ def is_mounted(mnt_pt):
 
 def get_virtio_disk_serial(device_name):
     """
-    Returns the serial number of device_name virtio disk eg vda
-    Returns empty string if the eg cat /sys/block/vda/serial command fails
-    N.B. there is no serial entry in /sys/block/sda/ for real or KVM sata bus drives
+    Returns the serial number of device_name virtio disk eg /dev/vda
+    Returns empty string if cat /sys/block/vda/serial command fails
+    Note no serial entry in /sys/block/sda/ for real or KVM sata drives
     :param device_name: vda
     :return: 12345678901234567890
 
     Note maximum length of serial number reported = 20 chars
-    But longer serial numbers can be specified in the XML spec of the VM's drive eg /etc/libvirt/qemu/rockstor3.8.xml
-    But the virtio block device is itself limited to 20 chars ie:-
-    https://github.com/qemu/qemu/blob/a9392bc93c8615ad1983047e9f91ee3fa8aae75f/include/standard-headers/linux/virtio_blk.h
+    But longer serial numbers can be specified in the VM XML spec file.
+    The virtio block device is itself limited to 20 chars ie:-
+    https://github.com/qemu/qemu/blob/
+    a9392bc93c8615ad1983047e9f91ee3fa8aae75f/include/standard-headers/
+    linux/virtio_blk.h
     #define VIRTIO_BLK_ID_BYTES	20	/* ID string length */
 
-    Note also that this process may not deal well with spaces in the serial number but VMM does not allow this.
+    This process may not deal well with spaces in the serial number
+    but VMM does not allow this.
     """
     dev_path = ('/sys/block/%s/serial' % device_name)
     out, err, rc = run_command([CAT, dev_path], throw=False)
     if (rc != 0):
         return ''
-    # our str(out) string from list looks like ['11111111111111111111'] so [2:-2] strips the surrounding [' ']
+    # our str(out) string from list looks like ['11111111111111111111']
+    # so [2:-2] strips the surrounding [' ']
     return str(out)[2:-2]
 
 
