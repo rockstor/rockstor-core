@@ -1,3 +1,4 @@
+{% load staticfiles %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -96,15 +97,16 @@
   </head>
   <body>
 
-    <div class="navbar navbar-inverse navbar-fixed-top">
-      <div class="navbar-inner">
-        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
-        <div id="logo">
-          <object data="/static/storageadmin/img/rockstor_webui_logo.svg" width="100px"
-            type="image/svg+xml"></object>
-        </div>
-        <div id="navbar-links"></div>
-      </div> <!-- navbar-inner -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container-fluid">
+	<div class="navbar-header">
+          <div id="navbar-brand">
+	    <a href="#/home">
+              <img class="img-responsive logo" src="{% static 'storageadmin/img/rockstorlogo-font2.png' %}" />
+	    </a>
+          </div>
+	</div>
+    </nav> <!-- navbar-inner -->
     </div> <!-- navbar -->
 
     <div id="wrapper1">
@@ -133,21 +135,32 @@
       <div class="overlay-content"> </div>
     </div>
 
-    <div id="errorPopup" class="modal hide fade" tabindex="-1" role="dialog" >
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" >x</button>
-        <h3>Error!</h3>
-      </div>
-      <div class="modal-body" id="errorContent" style="overflow: scroll; height: 200px;"></div>
-      <div class="modal-footer">
-        <button type="button" data-dismiss="modal" class="btn">Close</button>
-      </div>
-    </div>
+    <div class="modal fade" id="appliance-select-popup">
+      <div class="modal-dialog">
+	<div class="modal-content">
+	  <div id="appliance-select-content">
+	</div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
 
-    <div id="appliance-select-popup" class="modal hide fade">
-      <div id="appliance-select-content"></div>
-    </div>
 
+    <div id="errorPopup" class="modal fade">
+      <div class="modal-dialog">
+	<div class="modal-content">
+	  <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h3 class="modal-title">Error!</h3>
+	  </div>
+	  <div class="modal-body" id="errorContent" style="overflow: scroll; height: 200px">
+	  </div>
+	  <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary">Save changes</button>
+	  </div>
+	</div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+    
     <form name="dummy-form" action="/login" method="post">
       {% csrf_token %}
     </form>
