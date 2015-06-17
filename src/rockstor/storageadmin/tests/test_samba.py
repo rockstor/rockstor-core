@@ -77,10 +77,11 @@ class SambaTests(APITestMixin, APITestCase):
     @mock.patch('storageadmin.views.samba.User')
     @mock.patch('storageadmin.views.samba.SambaShare')
     @mock.patch('storageadmin.views.samba.Disk')  
-    def test_invalid_requests(self, mock_disk, mock_samba, mock_user):
+    def test_post_requests(self, mock_disk, mock_samba, mock_user):
         """
         invalid samba api operations
         1. Create a samba without providing share names
+        2. Create a samba export for the share that is already been exported
         """
         
         # create samba export with no share names
@@ -111,9 +112,69 @@ class SambaTests(APITestMixin, APITestCase):
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)  
-        
-   
-        
-                               
-              
     
+    
+    @mock.patch('storageadmin.views.samba.User')
+    @mock.patch('storageadmin.views.samba.SambaShare')
+    @mock.patch('storageadmin.views.samba.Disk')  
+    def test_put_requests(self, mock_disk, mock_samba, mock_user):
+        """
+        1. Edit samba
+        """        
+        smb_id = 3
+        data = {'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes', 'admin_users':'usr'}
+        mock_samba.objects.get.side_effect = SambaShare.DoesNotExist
+        response = self.client.put('%s/%d' % (self.BASE_URL, smb_id))
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+        e_msg = ('Samba export for the id(3) does not exist')
+        self.assertEqual(response.data['detail'], e_msg)   
+
+
+        class MockSamba(object):
+            def __init__(self, **kwargs):
+                self.share = 'mshare1' 
+                self.id = '4'
+                self.browsable = 'no'
+                self.read_only = 'no'
+                self.guest_ok = 'yes'
+        
+        mock_samba.objects.get.return_value = MockSamba()
+        response = self.client.put('%s/%d' % (self.BASE_URL, smb_id))
+        self.assertEqual(response.status_code,
+                         status.HTTP_200_OK, msg=response.data)
+
+
+
+    @mock.patch('storageadmin.views.samba.SambaCustomConfig') 
+    @mock.patch('storageadmin.views.samba.SambaShare')    
+    def test_delete_requests(self, mock_samba, mock_sambaCustomConfig):        
+                               
+        """
+        1. Delete samba that does not exist
+        2. Delete samba
+        """      
+        # Delete samba that does nor exists
+        smb_id = 3
+        mock_samba.objects.get.side_effect = SambaShare.DoesNotExist
+        response = self.client.delete('%s/%d' % (self.BASE_URL, smb_id))
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+        e_msg = ('Samba export for the id(3) does not exist')
+        self.assertEqual(response.data['detail'], e_msg) 
+        
+        # happy path
+        
+        class MockSamba(object):
+            def __init__(self, **kwargs):
+                self.share = 'mshare1' 
+                self.id = '4'
+                self.browsable = 'no'
+                self.read_only = 'no'
+                self.guest_ok = 'yes'
+        
+        mock_samba.objects.get.side_effect = MockSamba
+        mock_sambaCustomConfig.objects.filter.side_effect = None
+        response = self.client.delete('%s/4' % (self.BASE_URL))
+        self.assertEqual(response.status_code,
+                         status.HTTP_200_OK, msg=response.data)
