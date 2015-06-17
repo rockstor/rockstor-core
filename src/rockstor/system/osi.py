@@ -102,7 +102,7 @@ def kernel_info(supported_version):
                  'may not work properly.' % uname[2])
         cur_kernel = def_kernel()
         if ((cur_kernel is not None and
-                     cur_kernel == supported_version)):
+                cur_kernel == supported_version)):
             e_msg = ('%s Please reboot and the system will '
                      'automatically boot using the supported kernel(%s)' %
                      (e_msg, supported_version))
@@ -378,10 +378,10 @@ def update_check():
         version = None
         for i in range(len(out)):
             if (re.match('---> Package rockstor.* updated', out[i])
-                is not None):
+                    is not None):
                 cur_version = out[i].split()[3].split(':')[1]
             if (re.match('---> Package rockstor.* be an update', out[i])
-                is not None):
+                    is not None):
                 version = out[i].split()[3].split(':')[1]
             if (re.match('ChangeLog for: ', out[i]) is not None):
                 i = i + 1
