@@ -43,9 +43,9 @@ WIPEFS = '/usr/sbin/wipefs'
 
 import collections
 
-Disk = collections.namedtuple('Disk', 'name model serial size '
-                                      'transport vendor hctl type fstype '
-                                      'label btrfs_uuid parted root')
+Disk = collections.namedtuple('Disk',
+                              'name model serial size transport vendor '
+                              'hctl type fstype label btrfs_uuid parted root')
 
 
 def add_pool(pool, disks):
