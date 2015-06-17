@@ -652,11 +652,13 @@ def scan_disks(min_size):
             if (dmap['SIZE'] < min_size):
                 continue
             if (dmap['SERIAL'] == ''):
-                # lsblk fails to retrieve SERIAL from KVM VirtIO drives so try specialized function
+                # lsblk fails to retrieve SERIAL from KVM VirtIO drives
+                # so try specialized function.
                 dmap['SERIAL'] = get_virtio_disk_serial(dmap['NAME'])
             if (dmap['SERIAL'] == '' or (dmap['SERIAL'] in serials)):
-                # no serial number still or its a repeat
-                # overwrite drive serial entry with drive name: see disks_table.jst for a use of this flag mechanism.
+                # No serial number still or its a repeat.
+                # Overwrite drive serial entry with drive name:
+                # see disks_table.jst for a use of this flag mechanism.
                 dmap['SERIAL'] = dmap['NAME']
             serials.append(dmap['SERIAL'])
             for k in dmap.keys():
