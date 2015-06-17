@@ -32,7 +32,6 @@ from system.exceptions import (CommandException, NonBTRFSRootException)
 from pool_scrub import PoolScrub
 from pool_balance import PoolBalance
 
-
 MKFS_BTRFS = '/sbin/mkfs.btrfs'
 BTRFS = '/sbin/btrfs'
 MOUNT = '/bin/mount'
@@ -530,7 +529,7 @@ def balance_status(pool, pool_device):
         if (re.match('Balance', out[0]) is not None):
             stats['status'] = 'running'
             if ((len(out) > 1 and
-                         re.search('chunks balanced', out[1]) is not None)):
+                    re.search('chunks balanced', out[1]) is not None)):
                 percent_left = out[1].split()[-2][:-1]
                 try:
                     percent_left = int(percent_left)
@@ -607,7 +606,7 @@ def scan_disks(min_size):
                 val_iter = True
                 i = i + 2
             elif (val_iter and sl[i] == '"' and
-                      (i == (len(sl) - 1) or sl[i + 1] == ' ')):
+                    (i == (len(sl) - 1) or sl[i + 1] == ' ')):
                 val_iter = False
                 name_iter = True
                 i = i + 2
@@ -631,7 +630,7 @@ def scan_disks(min_size):
                 if (re.match(dname, dmap['NAME']) is not None):
                     dnames[dname][11] = True
         if (((dmap['NAME'] != root and dmap['TYPE'] != 'part') or
-                 (dmap['TYPE'] == 'part' and dmap['FSTYPE'] == 'btrfs'))):
+                (dmap['TYPE'] == 'part' and dmap['FSTYPE'] == 'btrfs'))):
             dmap['parted'] = False  # part = False by default
             dmap['root'] = False
             if (dmap['TYPE'] == 'part' and dmap['FSTYPE'] == 'btrfs'):
