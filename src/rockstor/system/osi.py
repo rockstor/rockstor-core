@@ -466,9 +466,8 @@ def get_virtio_disk_serial(device_name):
     out, err, rc = run_command([CAT, dev_path], throw=False)
     if (rc != 0):
         return ''
-    # our str(out) string from list looks like ['11111111111111111111']
-    # so [2:-2] strips the surrounding [' ']
-    return str(out)[2:-2]
+    # our out list has one element that is the serial number, like ['11111111111111111111']
+    return out[0]
 
 
 def system_shutdown():
