@@ -67,13 +67,14 @@ class SambaTests(APITestMixin, APITestCase):
     def tearDownClass(cls):
         super(SambaTests, cls).tearDownClass()
 
+    
     def test_get(self):
         """
         Test GET request
         1. Get base URL
         """
         self.get_base(self.BASE_URL)
-    
+        
     @mock.patch('storageadmin.views.samba.User')
     @mock.patch('storageadmin.views.samba.SambaShare')
     @mock.patch('storageadmin.views.samba.Disk')  
@@ -119,18 +120,22 @@ class SambaTests(APITestMixin, APITestCase):
     @mock.patch('storageadmin.views.samba.Disk')  
     def test_put_requests(self, mock_disk, mock_samba, mock_user):
         """
-        1. Edit samba
-        """        
+        1. Edit samba that does not exists
+        2. Edit samba
+        """       
+        # edit samba that does not exists 
         smb_id = 3
         data = {'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes', 'admin_users':'usr'}
         mock_samba.objects.get.side_effect = SambaShare.DoesNotExist
-        response = self.client.put('%s/%d' % (self.BASE_URL, smb_id))
+        response = self.client.put('%s/%d' % (self.BASE_URL, smb_id), data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
         e_msg = ('Samba export for the id(3) does not exist')
         self.assertEqual(response.data['detail'], e_msg)   
 
-
+        # happy path
+        smb_id = 4
+        data = {'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes', 'admin_users':'usr'}
         class MockSamba(object):
             def __init__(self, **kwargs):
                 self.share = 'mshare1' 
@@ -139,8 +144,8 @@ class SambaTests(APITestMixin, APITestCase):
                 self.read_only = 'no'
                 self.guest_ok = 'yes'
         
-        mock_samba.objects.get.return_value = MockSamba()
-        response = self.client.put('%s/%d' % (self.BASE_URL, smb_id))
+        mock_samba.objects.get.side_effect = MockSamba
+        response = self.client.put('%s/%d' % (self.BASE_URL, smb_id), data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 
@@ -173,7 +178,7 @@ class SambaTests(APITestMixin, APITestCase):
                 self.read_only = 'no'
                 self.guest_ok = 'yes'
         
-        mock_samba.objects.get.side_effect = MockSamba
+        mock_samba.objects.get.return_value = MockSamba()
         mock_sambaCustomConfig.objects.filter.side_effect = None
         response = self.client.delete('%s/4' % (self.BASE_URL))
         self.assertEqual(response.status_code,
