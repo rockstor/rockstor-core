@@ -1,3 +1,4 @@
+{% load staticfiles %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -103,7 +104,8 @@
     <script src="/static/js/lib/moment.min.js"></script>
     <script src="/static/js/lib/simple-slider.min.js"></script>
     <script src="/static/js/lib/chosen.jquery.js"></script>
-    <script src="/static/storageadmin/js/storageadmin.js"></script>
+    <!-- <script src="{% static 'storageadmin/js/storageadmin.js' %}"></script> -->
+    {% include 'extra_head.html' %}
     {% for plugin in installed_plugins %}
     <script src="/static/{{ plugin.plugin_meta.name }}/js/{{ plugin.plugin_meta.name }}_plugin.js"></script>
     {% endfor %}
@@ -119,7 +121,7 @@
           <span class="icon-bar"></span>
         </button>
         <div id="logo">
-          <object data="/static/storageadmin/img/rockstor_webui_logo.svg" width="100px"
+          <!-- <object data="/static/storageadmin/img/rockstor_webui_logo.svg" width="100px" -->
             type="image/svg+xml"></object>
         </div>
         <div class="nav-collapse collapse">
