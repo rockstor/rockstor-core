@@ -14,7 +14,7 @@ sys.path[0:0] = [
     join(base, 'eggs/zc.recipe.egg-2.0.1-py2.7.egg'),
     join(base, 'eggs/zc.buildout-2.2.1-py2.7.egg'),
     join(base, 'eggs/django_oauth_toolkit-0.7.0-py2.7.egg'),
-    join(base, 'eggs/psycopg2-2.5.2-py2.7-linux-x86_64.egg'),
+    join(base, 'eggs/psycopg2-2.6-py2.7-linux-x86_64.egg'),
     join(base, 'eggs/South-0.8.4-py2.7.egg'),
     join(base, 'eggs/pyzmq-13.0.0-py2.7-linux-x86_64.egg'),
     join(base, 'eggs/requests-1.1.0-py2.7.egg'),
