@@ -143,7 +143,9 @@ class SambaTests(APITestMixin, APITestCase):
                 self.browsable = 'no'
                 self.read_only = 'no'
                 self.guest_ok = 'yes'
-        
+            def save(self):
+                return True
+                
         mock_samba.objects.get.side_effect = MockSamba
         response = self.client.put('%s/%d' % (self.BASE_URL, smb_id), data=data)
         self.assertEqual(response.status_code,
