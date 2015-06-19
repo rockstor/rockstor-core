@@ -20,216 +20,168 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from rest_framework import status
 from rest_framework.test import APITestCase
 from system.services import systemctl
+from storageadmin.models import SambaShare
+import mock
+from mock import patch
+from storageadmin.tests.test_api import APITestMixin
 
-
-class SambaTests(APITestCase):
-    fixtures = ['samba.json']
+class SambaTests(APITestMixin, APITestCase):
+    fixtures = ['fix1.json']
     BASE_URL = '/api/samba'
-    data = {'shares': ('share1', ),
-            'comment': 'samba export',
-            'browsable': 'yes',
-            'guest_ok': 'yes',
-            'read_only': 'yes',
-            'admin_users': ('smbuser', ), }
-    exp_response = {'share': u'share1',
-                    'admin_users': [{u'id': 2,
-                                     'user': 2,
-                                     'username': u'smbuser',
-                                     'uid': 5002,
-                                     'gid': 5002,
-                                     'public_key': u'',
-                                     'smb_shares': [1]}],
-                    u'id': 1,
-                    'path': u'/mnt2/share1',
-                    'comment': u'samba export',
-                    'browsable': u'yes',
-                    'read_only': u'yes',
-                    'guest_ok': u'yes',
-                    'create_mask': u'0755'}
+    
+    @classmethod
+    def setUpClass(cls):
+        super(SambaTests, cls).setUpClass()
+         
+        class MockShare(object):
+            def __init__(self, **kwargs):
+                self.name = 'mshare1' 
+                self.pool = 'pool1'
+                
+                      
+        # post mocks
+        cls.patch_validate_share = patch('storageadmin.views.samba.validate_share')
+        cls.mock_validate_share = cls.patch_validate_share.start()
+        cls.mock_validate_share.return_value = MockShare()
+        
+        cls.patch_mount_share = patch('storageadmin.views.samba.mount_share')
+        cls.mock_mount_share = cls.patch_mount_share.start()
+        cls.mock_mount_share.return_value = 'foo'
+        
+        cls.patch_is_share_mounted = patch('storageadmin.views.samba.is_share_mounted')
+        cls.mock_is_share_mounted = cls.patch_is_share_mounted.start()
+        cls.mock_is_share_mounted.return_value = False
+        
+        cls.patch_status = patch('storageadmin.views.samba.status')
+        cls.mock_status = cls.patch_status.start()
+        cls.mock_status.return_value = 'sts'
+        
+        cls.patch_refresh_smb_config = patch('storageadmin.views.samba.refresh_smb_config')
+        cls.mock_refresh_smb_config = cls.patch_refresh_smb_config.start()
+        cls.mock_refresh_smb_config.return_value = 'smbconfig'
+        
 
-    def session_login(self):
-        self.client.login(username='admin', password='admin')
+        
+        
+    @classmethod
+    def tearDownClass(cls):
+        super(SambaTests, cls).tearDownClass()
 
-    def switch_samba(self, switch):
-        systemctl('smb', switch)
-        systemctl('nmb', switch)
-
-    def test_samba_0(self):
+    
+    def test_get(self):
         """
-        unauthorized api access
+        Test GET request
+        1. Get base URL
         """
-        response = self.client.get(self.BASE_URL)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-    def test_samba_1(self):
+        self.get_base(self.BASE_URL)
+        
+    @mock.patch('storageadmin.views.samba.User')
+    @mock.patch('storageadmin.views.samba.SambaShare')
+    @mock.patch('storageadmin.views.samba.Disk')  
+    def test_post_requests(self, mock_disk, mock_samba, mock_user):
         """
-        happy path with vanilla self.data
+        invalid samba api operations
+        1. Create a samba without providing share names
+        2. Create a samba export for the share that is already been exported
         """
-        self.session_login()
-        self.switch_samba('start')
-        response = self.client.post(self.BASE_URL, data=self.data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK,
-                         msg=response.data)
-        self.assertEqual(response.data, self.exp_response)
-
-    def test_samba_2(self):
-        """
-        happy path with self.data, all options no
-        """
-        self.session_login()
-        data = self.data.copy()
-        del(data['comment'])
-        data['browsable'] = 'no'
-        data['guest_ok'] = 'no'
-        data['read_only'] = 'no'
-        response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['browsable'], 'no')
-        self.assertEqual(response.data['guest_ok'], 'no')
-        self.assertEqual(response.data['read_only'], 'no')
-
-    def test_samba_3(self):
-        """
-        happy path, multiple admin users
-        """
-        data = self.data.copy()
-        data['admin_users'] = ('smbuser', 'user1', 'user2', 'user3',)
-        self.session_login()
-        response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK,
-                         msg=response.data)
-        self.assertEqual(len(response.data['admin_users']), 4)
-
-    def test_samba_4(self):
-        """
-        happy path, no admin users
-        """
-        data = {'shares': ('share1', ),
-                'comment': 'samba export',
-                'browsable': 'yes',
-                'guest_ok': 'yes',
-                'read_only': 'yes', }
-        self.session_login()
-        response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['admin_users']), 0)
-
-    def test_samba_5(self):
-        """
-        non existant admin user
-        """
-        data = self.data.copy()
-        data['admin_users'] = ('suman',)
-        self.session_login()
+        
+        # create samba export with no share names
+        data = {'browsable': 'yes','guest_ok': 'yes','read_only': 'yes', }
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg=response.data)
-        self.assertEqual(response.data['detail'],
-                         'User matching query does not exist.')
-
-    def test_samba_6(self):
-        """
-        non existant share
-        """
-        data = self.data.copy()
-        data['shares'] = ('share10',)
-        self.session_login()
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+                         
+        e_msg = ('Must provide share names')
+        self.assertEqual(response.data['detail'], e_msg)   
+        
+        
+        # create samba export with the share that is already been exported   
+        data = {'shares': ('mshare1', ), 'browsable': 'no', 'guest_ok': 'yes', 'read_only': 'yes'}
+        mock_samba.objects.filter.return_value.exists.return_value = True
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg=response.data)
-        self.assertEqual(response.data['detail'],
-                         'Share with name: share10 does not exist')
-
-    def test_samba_7(self):
-        """
-        happy path, multiple shares
-        """
-        data = self.data.copy()
-        data['shares'] = ('share1', 'share2', 'share3',)
-        self.session_login()
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+                         
+        e_msg = ('Share(mshare1) is already exported via Samba')
+        self.assertEqual(response.data['detail'], e_msg) 
+        
+        # create samba export 
+        data = {'shares': ('mshare1', ), 'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes', 'admin_users':'usr'}
+        mock_samba.objects.filter.return_value.exists.return_value = False
+        #mock_sambaShareSerializer.data = 'data'
+        mock_user.objects.get.side_effect = None
         response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK,
-                         msg=response.data)
-        self.assertTrue(response.data['share'] in data['shares'])
-
-    def test_samba_8(self):
-        """
-        add export while samba service is off
-        """
-        self.session_login()
-        self.switch_samba('stop')
-        response = self.client.post(self.BASE_URL, data=self.data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK,
-                         msg=response.data)
-
-    def test_samba_8_1(self):
-        """
-        delete export, happy path
-        """
-        self.session_login()
-        self.switch_samba('start')
-        self._create_and_delete()
-
-    def _create_and_delete(self):
-        response = self.client.post(self.BASE_URL, data=self.data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK,
-                         msg=response.data)
-        smb_id = response.data['id']
-        response2 = self.client.delete('%s/%d' % (self.BASE_URL, smb_id))
-        self.assertEqual(response2.status_code, status.HTTP_200_OK,
-                         msg=response2.data)
-
-    def test_samba_9(self):
-        """
-        delete export while samba service is off
-        """
-        self.session_login()
-        self.switch_samba('stop')
-        self._create_and_delete()
-
-    def create_and_update(self):
-        self.session_login()
-        response = self.client.post(self.BASE_URL, data=self.data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK,
-                         msg=response.data)
-        smb_id = response.data['id']
-        data = self.data.copy()
-        data['browsable'] = 'no'
-        data['guest_ok'] = 'no'
-        data['read_only'] = 'no'
-        response2 = self.client.put('%s/%d' % (self.BASE_URL, smb_id),
-                                    data=data)
-        self.assertEqual(response2.status_code, status.HTTP_200_OK,
-                         msg=response.data)
-        self.assertEqual(response2.data['browsable'], 'no', msg=response2.data)
-        self.assertEqual(response2.data['guest_ok'], 'no', msg=response2.data)
-        self.assertEqual(response2.data['read_only'], 'no', msg=response2.data)
-
-    def test_samba_10(self):
-        """
-        export edit happy path
-        """
-        self.switch_samba('start')
-        self.create_and_update()
-
-    def test_samba_11(self):
-        """
-        export edit while samba service is off
-        """
-        self.switch_samba('stop')
-        self.create_and_update()
-
-    def test_samba_12(self):
-        """
-        export edit on an non-existant export
-        """
-        self.session_login()
-        response = self.client.put('%s/%d' % (self.BASE_URL, 10000),
-                                   data=self.data)
         self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg=response.data)
-        self.assertEqual(response.data['detail'],
-                         'Samba export for the id(10000) does not exist')
+                         status.HTTP_200_OK, msg=response.data)  
+    
+    
+    @mock.patch('storageadmin.views.samba.User')
+    @mock.patch('storageadmin.views.samba.SambaShare')
+    @mock.patch('storageadmin.views.samba.Disk')  
+    def test_put_requests(self, mock_disk, mock_samba, mock_user):
+        """
+        1. Edit samba that does not exists
+        2. Edit samba
+        """       
+        # edit samba that does not exists 
+        smb_id = 3
+        data = {'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes', 'admin_users':'usr'}
+        mock_samba.objects.get.side_effect = SambaShare.DoesNotExist
+        response = self.client.put('%s/%d' % (self.BASE_URL, smb_id), data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+        e_msg = ('Samba export for the id(3) does not exist')
+        self.assertEqual(response.data['detail'], e_msg)   
+
+        # happy path
+        smb_id = 4
+        data = {'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes', 'admin_users':'usr'}
+        class MockSamba(object):
+            def __init__(self, **kwargs):
+                self.share = 'mshare1' 
+                self.id = '4'
+                self.browsable = 'no'
+                self.read_only = 'no'
+                self.guest_ok = 'yes'
+            def save(self):
+                return True
+                
+        mock_samba.objects.get.side_effect = MockSamba
+        response = self.client.put('%s/%d' % (self.BASE_URL, smb_id), data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_200_OK, msg=response.data)
+
+
+
+    @mock.patch('storageadmin.views.samba.SambaCustomConfig') 
+    @mock.patch('storageadmin.views.samba.SambaShare')    
+    def test_delete_requests(self, mock_samba, mock_sambaCustomConfig):        
+                               
+        """
+        1. Delete samba that does not exist
+        2. Delete samba
+        """      
+        # Delete samba that does nor exists
+        smb_id = 3
+        mock_samba.objects.get.side_effect = SambaShare.DoesNotExist
+        response = self.client.delete('%s/%d' % (self.BASE_URL, smb_id))
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+        e_msg = ('Samba export for the id(3) does not exist')
+        self.assertEqual(response.data['detail'], e_msg) 
+        
+        # happy path
+        
+        class MockSamba(object):
+            def __init__(self, **kwargs):
+                self.share = 'mshare1' 
+                self.id = '4'
+                self.browsable = 'no'
+                self.read_only = 'no'
+                self.guest_ok = 'yes'
+        
+        mock_samba.objects.get.return_value = MockSamba()
+        mock_sambaCustomConfig.objects.filter.side_effect = None
+        response = self.client.delete('%s/4' % (self.BASE_URL))
+        self.assertEqual(response.status_code,
+                         status.HTTP_200_OK, msg=response.data)
