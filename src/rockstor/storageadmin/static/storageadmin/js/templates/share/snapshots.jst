@@ -89,16 +89,16 @@
 	       </td>
         </tr>
 	  <% }); %>
-    </tbody>
+    </tbody>    
   </table>
 <div class="pagination-ph"></div>
 <% } else { %>
   <div class="alert alert-warning"><h4>There are no snapshots to display</h4></div>
 <% } %>
-<div class="row">
-  <div class="pull-left">
-    <% if (!snapshots.isEmpty()) { %>
-      <a class="btn btn-danger" href="#" id="js-snapshot-delete-multiple"><i class="glyphicon glyphicon-trash "></i> Delete</a>
-    <% } %>
-    </div>
+
+<div class="pull-left">
+  <% if (!snapshots.isEmpty()) { %>
+  <a class="btn btn-danger" href="#" id="js-snapshot-delete-multiple"><i class="glyphicon glyphicon-trash "></i> Delete</a>
+  <% } %>
 </div>
+

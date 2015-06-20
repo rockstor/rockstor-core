@@ -20,26 +20,29 @@
 </script>
 
 <h3>Configure <%= service.get('display_name') %> Daemon</h3>
-
 <div class="row">
-  <div class="col-md-8">
+  <div class="col-xs-8">
     <label class="control-label"></label>
     <div class="form-box">
       <form id="smartd-form" name="aform">
-        <div class="messages"></div>
+	<div class="messages"></div>
 
-        <div class="form-group">
-            <label class="control-label" for="custom_config">configuration lines will be saved to the ROCKSTOR section in /etc/smartmontools/smartd.conf</label>
-              <% if (config.smartd_config){ %>
-              <textarea id="smartd_config" name="smartd_config" class="col-md-12"><%= config.smartd_config %></textarea>
-              <% } else { %>
-              <textarea id="smartd__config" name="smartd_config" class="col-md-12"></textarea>
-              <%  } %>
-        </div>
-	<button id="cancel" class="btn btn-default">Cancel</button>
-        <button type="Submit" id="save-smartd-config" class="btn btn-primary">Submit</button>
-
-</form>
+	<div class="form-group">
+	  <label for="custom_config">configuration lines will be saved to the ROCKSTOR section in /etc/smartmontools/smartd.conf</label>
+	  <% if (config.smartd_config){ %>
+          <textarea style="width: 50%" class="form-control" id="smartd_config" name="custom_config" rows="10"><%= config.smartd_config %></textarea>
+	  <% } else { %>
+          <textarea style="width: 80"class="form-control" id="smartd__config" name="custom_config" rows="10"></textarea>
+	  <%  } %>
+	</div>
+	<div class="row">
+	  <div class="col-xs-12">
+	    <button id="cancel" class="btn btn-default">Cancel</button>
+	    <button type="Submit" id="save-smartd-config" class="btn btn-primary">Submit</button>
+	  </div>
+	</div>
+      </form>
     </div> <!-- form-box -->
-  </div> <!-- col-md-8 -->
-</div> <!-- row -->
+  </div>
+</div>
+
