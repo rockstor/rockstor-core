@@ -1,0 +1,1584 @@
+[
+{
+    "pk": 1, 
+    "model": "auth.user", 
+    "fields": {
+        "username": "admin", 
+        "first_name": "", 
+        "last_name": "", 
+        "is_active": true, 
+        "is_superuser": false, 
+        "is_staff": false, 
+        "last_login": "2015-06-15T20:55:19.651Z", 
+        "groups": [], 
+        "user_permissions": [], 
+        "password": "pbkdf2_sha256$12000$dBGecdW7GZBe$w2aDnhX8kOvaqb8+GReaV8Nl4Wnkv+34fRvFB+3aZ1o=", 
+        "email": "", 
+        "date_joined": "2015-06-15T20:55:18.496Z"
+    }
+},
+{
+    "pk": "o1p82tx3vqevlyrfqrq6mchjrs2q9t0a", 
+    "model": "sessions.session", 
+    "fields": {
+        "expire_date": "2015-06-29T20:53:54.408Z", 
+        "session_data": "NTJmMGVmYjQxYjU3MzUxNzIxMzJlOWI5NzZmY2ZiNmQ3OWIwNDg4Zjp7fQ=="
+    }
+},
+{
+    "pk": "pq8fq4qgpgjy0s0cwurtssl1v3vvmgtr", 
+    "model": "sessions.session", 
+    "fields": {
+        "expire_date": "2015-06-29T20:55:19.670Z", 
+        "session_data": "NjY3MGEzMTNmYmFmNzQxMGIzZTcxNTgxNDZlNTE5OWU3Mzc3OTJkMTp7Il9hdXRoX3VzZXJfYmFja2VuZCI6ImRqYW5nby5jb250cmliLmF1dGguYmFja2VuZHMuTW9kZWxCYWNrZW5kIiwiX2F1dGhfdXNlcl9pZCI6MX0="
+    }
+},
+{
+    "pk": 1, 
+    "model": "sites.site", 
+    "fields": {
+        "domain": "example.com", 
+        "name": "example.com"
+    }
+},
+{
+    "pk": 1, 
+    "model": "storageadmin.pool", 
+    "fields": {
+        "raid": "single", 
+        "compression": null, 
+        "uuid": "07d64501-358e-4bd1-a057-d49f16342a60", 
+        "name": "rockstor_rockstor", 
+        "mnt_options": null, 
+        "toc": "2015-06-15T20:55:30.484Z", 
+        "size": 14585856
+    }
+},
+{
+    "pk": 2, 
+    "model": "storageadmin.pool", 
+    "fields": {
+        "raid": "raid0", 
+        "compression": null, 
+        "uuid": null, 
+        "name": "raid0pool", 
+        "mnt_options": null, 
+        "toc": "2015-06-15T21:10:03.872Z", 
+        "size": 4194304
+    }
+},
+{
+    "pk": 3, 
+    "model": "storageadmin.pool", 
+    "fields": {
+        "raid": "single", 
+        "compression": null, 
+        "uuid": null, 
+        "name": "raid1pool", 
+        "mnt_options": null, 
+        "toc": "2015-06-15T21:10:37.408Z", 
+        "size": 2139951
+    }
+},
+{
+    "pk": 1, 
+    "model": "storageadmin.disk", 
+    "fields": {
+        "smart_enabled": false, 
+        "parted": false, 
+        "btrfs_uuid": "fb6d1b90-d7d9-4c08-9bed-cef32af18c50", 
+        "vendor": "ATA", 
+        "name": "sdd", 
+        "smart_available": false, 
+        "transport": "sata", 
+        "serial": "VB05357545-b96365fa", 
+        "offline": false, 
+        "model": "VBOX HARDDISK", 
+        "pool": 3, 
+        "size": 2097152
+    }
+},
+{
+    "pk": 2, 
+    "model": "storageadmin.disk", 
+    "fields": {
+        "smart_enabled": false, 
+        "parted": false, 
+        "btrfs_uuid": "fb6d1b90-d7d9-4c08-9bed-cef32af18c50", 
+        "vendor": "ATA", 
+        "name": "sde", 
+        "smart_available": false, 
+        "transport": "sata", 
+        "serial": "VB02832830-54521232", 
+        "offline": false, 
+        "model": "VBOX HARDDISK", 
+        "pool": 3, 
+        "size": 2097152
+    }
+},
+{
+    "pk": 3, 
+    "model": "storageadmin.disk", 
+    "fields": {
+        "smart_enabled": false, 
+        "parted": false, 
+        "btrfs_uuid": null, 
+        "vendor": "ATA", 
+        "name": "sdf", 
+        "smart_available": false, 
+        "transport": "sata", 
+        "serial": "VB3c777867-4caadb7c", 
+        "offline": false, 
+        "model": "VBOX HARDDISK", 
+        "pool": null, 
+        "size": 2097152
+    }
+},
+{
+    "pk": 4, 
+    "model": "storageadmin.disk", 
+    "fields": {
+        "smart_enabled": false, 
+        "parted": false, 
+        "btrfs_uuid": null, 
+        "vendor": "ATA", 
+        "name": "sdg", 
+        "smart_available": false, 
+        "transport": "sata", 
+        "serial": "VB77ecec23-f4236192", 
+        "offline": false, 
+        "model": "VBOX HARDDISK", 
+        "pool": null, 
+        "size": 2097152
+    }
+},
+{
+    "pk": 5, 
+    "model": "storageadmin.disk", 
+    "fields": {
+        "smart_enabled": false, 
+        "parted": false, 
+        "btrfs_uuid": "07d64501-358e-4bd1-a057-d49f16342a60", 
+        "vendor": null, 
+        "name": "sda3", 
+        "smart_available": false, 
+        "transport": null, 
+        "serial": "VB7a207885-83e93a3f", 
+        "offline": false, 
+        "model": null, 
+        "pool": 1, 
+        "size": 14575206
+    }
+},
+{
+    "pk": 6, 
+    "model": "storageadmin.disk", 
+    "fields": {
+        "smart_enabled": false, 
+        "parted": false, 
+        "btrfs_uuid": "b3f6937c-a2cf-4df1-9e2d-2e9f48279900", 
+        "vendor": "ATA", 
+        "name": "sdb", 
+        "smart_available": false, 
+        "transport": "sata", 
+        "serial": "VB18109dca-6cb923a7", 
+        "offline": false, 
+        "model": "VBOX HARDDISK", 
+        "pool": 2, 
+        "size": 2097152
+    }
+},
+{
+    "pk": 7, 
+    "model": "storageadmin.disk", 
+    "fields": {
+        "smart_enabled": false, 
+        "parted": false, 
+        "btrfs_uuid": "b3f6937c-a2cf-4df1-9e2d-2e9f48279900", 
+        "vendor": "ATA", 
+        "name": "sdc", 
+        "smart_available": false, 
+        "transport": "sata", 
+        "serial": "VB3e21370f-5ab19cb3", 
+        "offline": false, 
+        "model": "VBOX HARDDISK", 
+        "pool": 2, 
+        "size": 2097152
+    }
+},
+{
+    "pk": 8, 
+    "model": "storageadmin.disk", 
+    "fields": {
+        "smart_enabled": false, 
+        "parted": false, 
+        "btrfs_uuid": null, 
+        "vendor": "ATA", 
+        "name": "sdh", 
+        "smart_available": false, 
+        "transport": "sata", 
+        "serial": "VBcdeabdb5-e8975f4e", 
+        "offline": false, 
+        "model": "VBOX HARDDISK", 
+        "pool": null, 
+        "size": 2097152
+    }
+},
+{
+    "pk": 9, 
+    "model": "storageadmin.disk", 
+    "fields": {
+        "smart_enabled": false, 
+        "parted": false, 
+        "btrfs_uuid": null, 
+        "vendor": "ATA", 
+        "name": "sdi", 
+        "smart_available": false, 
+        "transport": "sata", 
+        "serial": "VB30c46238-225b8e4a", 
+        "offline": false, 
+        "model": "VBOX HARDDISK", 
+        "pool": null, 
+        "size": 2097152
+    }
+},
+{
+    "pk": 10, 
+    "model": "storageadmin.disk", 
+    "fields": {
+        "smart_enabled": false, 
+        "parted": false, 
+        "btrfs_uuid": null, 
+        "vendor": "ATA", 
+        "name": "sdj", 
+        "smart_available": false, 
+        "transport": "sata", 
+        "serial": "VBb29a5153-3373de72", 
+        "offline": false, 
+        "model": "VBOX HARDDISK", 
+        "pool": null, 
+        "size": 2097152
+    }
+},
+{
+    "pk": 1, 
+    "model": "storageadmin.snapshot", 
+    "fields": {
+        "name": "cf7d9d3bbd3b88790145c8e5c5d09fec1edfd1c8914e6d1d96d0cab232db0dc6", 
+        "snap_type": "admin", 
+        "share": 7, 
+        "real_name": "cf7d9d3bbd3b88790145c8e5c5d09fec1edfd1c8914e6d1d96d0cab232db0dc6", 
+        "writable": true, 
+        "uvisible": false, 
+        "qgroup": "0/272", 
+        "toc": "2015-06-15T23:32:18.234Z", 
+        "size": 0
+    }
+},
+{
+    "pk": 2, 
+    "model": "storageadmin.snapshot", 
+    "fields": {
+        "name": "1f634688ae03136703678950ff3f4179d58c6900d7114833f4ccd23f9aaf0504", 
+        "snap_type": "admin", 
+        "share": 7, 
+        "real_name": "1f634688ae03136703678950ff3f4179d58c6900d7114833f4ccd23f9aaf0504", 
+        "writable": true, 
+        "uvisible": false, 
+        "qgroup": "0/268", 
+        "toc": "2015-06-15T23:32:18.277Z", 
+        "size": 0
+    }
+},
+{
+    "pk": 3, 
+    "model": "storageadmin.snapshot", 
+    "fields": {
+        "name": "2db61feafabb41f4809d49fb5289f9e88eec624805cb50fc91f5dd7996175256", 
+        "snap_type": "admin", 
+        "share": 7, 
+        "real_name": "2db61feafabb41f4809d49fb5289f9e88eec624805cb50fc91f5dd7996175256", 
+        "writable": true, 
+        "uvisible": false, 
+        "qgroup": "0/267", 
+        "toc": "2015-06-15T23:32:18.281Z", 
+        "size": 0
+    }
+},
+{
+    "pk": 4, 
+    "model": "storageadmin.snapshot", 
+    "fields": {
+        "name": "d95081a1cfe884476c4f58c3309761930e6126c2cc47db6834540adc81a159c6", 
+        "snap_type": "admin", 
+        "share": 7, 
+        "real_name": "d95081a1cfe884476c4f58c3309761930e6126c2cc47db6834540adc81a159c6", 
+        "writable": true, 
+        "uvisible": false, 
+        "qgroup": "0/269", 
+        "toc": "2015-06-15T23:32:18.286Z", 
+        "size": 0
+    }
+},
+{
+    "pk": 5, 
+    "model": "storageadmin.snapshot", 
+    "fields": {
+        "name": "dccae1aa95b7858dd6c1dec295d587b04874b2f9e8c8b6aecf3b0fb23f20902e", 
+        "snap_type": "admin", 
+        "share": 7, 
+        "real_name": "dccae1aa95b7858dd6c1dec295d587b04874b2f9e8c8b6aecf3b0fb23f20902e", 
+        "writable": true, 
+        "uvisible": false, 
+        "qgroup": "0/276", 
+        "toc": "2015-06-15T23:32:18.288Z", 
+        "size": 0
+    }
+},
+{
+    "pk": 6, 
+    "model": "storageadmin.snapshot", 
+    "fields": {
+        "name": "c17e8c850f09aaa78aaf11da142bcd57513a4b22a30d293f69dbb0573c4b4f85", 
+        "snap_type": "admin", 
+        "share": 7, 
+        "real_name": "c17e8c850f09aaa78aaf11da142bcd57513a4b22a30d293f69dbb0573c4b4f85", 
+        "writable": true, 
+        "uvisible": false, 
+        "qgroup": "0/270", 
+        "toc": "2015-06-15T23:32:18.291Z", 
+        "size": 0
+    }
+},
+{
+    "pk": 7, 
+    "model": "storageadmin.snapshot", 
+    "fields": {
+        "name": "11a7b0f144934b9264234d9ce1c64a6526908e0bc1cf9e51080e85723d6a95ba-init", 
+        "snap_type": "admin", 
+        "share": 7, 
+        "real_name": "11a7b0f144934b9264234d9ce1c64a6526908e0bc1cf9e51080e85723d6a95ba-init", 
+        "writable": true, 
+        "uvisible": false, 
+        "qgroup": "0/284", 
+        "toc": "2015-06-15T23:32:18.294Z", 
+        "size": 0
+    }
+},
+{
+    "pk": 8, 
+    "model": "storageadmin.snapshot", 
+    "fields": {
+        "name": "aefd7818900baa5ab2214123d411294ef306fcd5896a6a0744e48667cfcf8691", 
+        "snap_type": "admin", 
+        "share": 7, 
+        "real_name": "aefd7818900baa5ab2214123d411294ef306fcd5896a6a0744e48667cfcf8691", 
+        "writable": true, 
+        "uvisible": false, 
+        "qgroup": "0/264", 
+        "toc": "2015-06-15T23:32:18.296Z", 
+        "size": 0
+    }
+},
+{
+    "pk": 9, 
+    "model": "storageadmin.snapshot", 
+    "fields": {
+        "name": "11a7b0f144934b9264234d9ce1c64a6526908e0bc1cf9e51080e85723d6a95ba", 
+        "snap_type": "admin", 
+        "share": 7, 
+        "real_name": "11a7b0f144934b9264234d9ce1c64a6526908e0bc1cf9e51080e85723d6a95ba", 
+        "writable": true, 
+        "uvisible": false, 
+        "qgroup": "0/285", 
+        "toc": "2015-06-15T23:32:18.299Z", 
+        "size": 0
+    }
+},
+{
+    "pk": 10, 
+    "model": "storageadmin.snapshot", 
+    "fields": {
+        "name": "a9d7cd5f21f8c55b81218d84d9de5468f9db441beffe701fa05847b5c7195657", 
+        "snap_type": "admin", 
+        "share": 7, 
+        "real_name": "a9d7cd5f21f8c55b81218d84d9de5468f9db441beffe701fa05847b5c7195657", 
+        "writable": true, 
+        "uvisible": false, 
+        "qgroup": "0/273", 
+        "toc": "2015-06-15T23:32:18.302Z", 
+        "size": 0
+    }
+},
+{
+    "pk": 11, 
+    "model": "storageadmin.snapshot", 
+    "fields": {
+        "name": "210bfbd7fdb23f33c72cab74b6df56098658bbb141e2b5750d8ebf1690f578a4", 
+        "snap_type": "admin", 
+        "share": 7, 
+        "real_name": "210bfbd7fdb23f33c72cab74b6df56098658bbb141e2b5750d8ebf1690f578a4", 
+        "writable": true, 
+        "uvisible": false, 
+        "qgroup": "0/265", 
+        "toc": "2015-06-15T23:32:18.305Z", 
+        "size": 0
+    }
+},
+{
+    "pk": 12, 
+    "model": "storageadmin.snapshot", 
+    "fields": {
+        "name": "7d789d34831345f8291a03e44408baea9165359728b9b9e1e24b86a884198dbe", 
+        "snap_type": "admin", 
+        "share": 7, 
+        "real_name": "7d789d34831345f8291a03e44408baea9165359728b9b9e1e24b86a884198dbe", 
+        "writable": true, 
+        "uvisible": false, 
+        "qgroup": "0/274", 
+        "toc": "2015-06-15T23:32:18.308Z", 
+        "size": 0
+    }
+},
+{
+    "pk": 13, 
+    "model": "storageadmin.snapshot", 
+    "fields": {
+        "name": "df2a0347c9d081fa05ecb83669dcae5830c67b0676a6d6358218e55d8a45969c", 
+        "snap_type": "admin", 
+        "share": 7, 
+        "real_name": "df2a0347c9d081fa05ecb83669dcae5830c67b0676a6d6358218e55d8a45969c", 
+        "writable": true, 
+        "uvisible": false, 
+        "qgroup": "0/263", 
+        "toc": "2015-06-15T23:32:18.310Z", 
+        "size": 0
+    }
+},
+{
+    "pk": 14, 
+    "model": "storageadmin.snapshot", 
+    "fields": {
+        "name": "4686f9d4d2a1cc28bd49b0b00cca8498175fd25b743fa9fc0ac488d8d5d05c93", 
+        "snap_type": "admin", 
+        "share": 7, 
+        "real_name": "4686f9d4d2a1cc28bd49b0b00cca8498175fd25b743fa9fc0ac488d8d5d05c93", 
+        "writable": true, 
+        "uvisible": false, 
+        "qgroup": "0/271", 
+        "toc": "2015-06-15T23:32:18.312Z", 
+        "size": 0
+    }
+},
+{
+    "pk": 15, 
+    "model": "storageadmin.snapshot", 
+    "fields": {
+        "name": "d40ceb399cb24d56544f5de86eed00d64a2c2fb7a4b83609f6a91fdeeaf03f11", 
+        "snap_type": "admin", 
+        "share": 7, 
+        "real_name": "d40ceb399cb24d56544f5de86eed00d64a2c2fb7a4b83609f6a91fdeeaf03f11", 
+        "writable": true, 
+        "uvisible": false, 
+        "qgroup": "0/266", 
+        "toc": "2015-06-15T23:32:18.314Z", 
+        "size": 0
+    }
+},
+{
+    "pk": 16, 
+    "model": "storageadmin.snapshot", 
+    "fields": {
+        "name": "ed2e5a682b5cecfdc037aa188c9b22e20679e3583decb81bdf2756ba1e4ad763", 
+        "snap_type": "admin", 
+        "share": 7, 
+        "real_name": "ed2e5a682b5cecfdc037aa188c9b22e20679e3583decb81bdf2756ba1e4ad763", 
+        "writable": true, 
+        "uvisible": false, 
+        "qgroup": "0/275", 
+        "toc": "2015-06-15T23:32:18.316Z", 
+        "size": 0
+    }
+},
+{
+    "pk": 17, 
+    "model": "storageadmin.snapshot", 
+    "fields": {
+        "name": "68cab49a5de52b0f1a38973e64151334adc0856c26875e4fc705127af390a001-init", 
+        "snap_type": "admin", 
+        "share": 7, 
+        "real_name": "68cab49a5de52b0f1a38973e64151334adc0856c26875e4fc705127af390a001-init", 
+        "writable": true, 
+        "uvisible": false, 
+        "qgroup": "0/280", 
+        "toc": "2015-06-15T23:32:18.318Z", 
+        "size": 0
+    }
+},
+{
+    "pk": 18, 
+    "model": "storageadmin.snapshot", 
+    "fields": {
+        "name": "6ce2e90b0bc7224de3db1f0d646fe8e2c4dd37f1793928287f6074bc451a57ea", 
+        "snap_type": "admin", 
+        "share": 7, 
+        "real_name": "6ce2e90b0bc7224de3db1f0d646fe8e2c4dd37f1793928287f6074bc451a57ea", 
+        "writable": true, 
+        "uvisible": false, 
+        "qgroup": "0/278", 
+        "toc": "2015-06-15T23:32:18.319Z", 
+        "size": 0
+    }
+},
+{
+    "pk": 19, 
+    "model": "storageadmin.snapshot", 
+    "fields": {
+        "name": "68cab49a5de52b0f1a38973e64151334adc0856c26875e4fc705127af390a001", 
+        "snap_type": "admin", 
+        "share": 7, 
+        "real_name": "68cab49a5de52b0f1a38973e64151334adc0856c26875e4fc705127af390a001", 
+        "writable": true, 
+        "uvisible": false, 
+        "qgroup": "0/281", 
+        "toc": "2015-06-15T23:32:18.321Z", 
+        "size": 0
+    }
+},
+{
+    "pk": 20, 
+    "model": "storageadmin.snapshot", 
+    "fields": {
+        "name": "8c2e06607696bd4afb3d03b687e361cc43cf8ec1a4a725bc96e39f05ba97dd55", 
+        "snap_type": "admin", 
+        "share": 7, 
+        "real_name": "8c2e06607696bd4afb3d03b687e361cc43cf8ec1a4a725bc96e39f05ba97dd55", 
+        "writable": true, 
+        "uvisible": false, 
+        "qgroup": "0/279", 
+        "toc": "2015-06-15T23:32:18.322Z", 
+        "size": 0
+    }
+},
+{
+    "pk": 1, 
+    "model": "storageadmin.share", 
+    "fields": {
+        "group": "root", 
+        "name": "home", 
+        "perms": "755", 
+        "uuid": null, 
+        "compression_algo": null, 
+        "owner": "root", 
+        "replica": false, 
+        "qgroup": "0/257", 
+        "toc": "2015-06-15T20:55:32.998Z", 
+        "subvol_name": "home", 
+        "pool": 1, 
+        "size": 14585856
+    }
+},
+{
+    "pk": 2, 
+    "model": "storageadmin.share", 
+    "fields": {
+        "group": "root", 
+        "name": "root", 
+        "perms": "755", 
+        "uuid": null, 
+        "compression_algo": null, 
+        "owner": "root", 
+        "replica": false, 
+        "qgroup": "0/258", 
+        "toc": "2015-06-15T20:55:33.047Z", 
+        "subvol_name": "root", 
+        "pool": 1, 
+        "size": 14585856
+    }
+},
+{
+    "pk": 4, 
+    "model": "storageadmin.share", 
+    "fields": {
+        "group": "root", 
+        "name": "share2", 
+        "perms": "755", 
+        "uuid": null, 
+        "compression_algo": null, 
+        "owner": "root", 
+        "replica": false, 
+        "qgroup": "0/270", 
+        "toc": "2015-06-15T20:55:33.157Z", 
+        "subvol_name": "share2", 
+        "pool": 1, 
+        "size": 14585856
+    }
+},
+{
+    "pk": 6, 
+    "model": "storageadmin.share", 
+    "fields": {
+        "group": "root", 
+        "name": "share4", 
+        "perms": "755", 
+        "uuid": null, 
+        "compression_algo": null, 
+        "owner": "root", 
+        "replica": false, 
+        "qgroup": "0/286", 
+        "toc": "2015-06-15T21:10:07.265Z", 
+        "subvol_name": "share4", 
+        "pool": 2, 
+        "size": 4194304
+    }
+},
+{
+    "pk": 7, 
+    "model": "storageadmin.share", 
+    "fields": {
+        "group": "root", 
+        "name": "rockonroot", 
+        "perms": "755", 
+        "uuid": null, 
+        "compression_algo": null, 
+        "owner": "root", 
+        "replica": false, 
+        "qgroup": "0/261", 
+        "toc": "2015-06-15T21:10:07.314Z", 
+        "subvol_name": "rockonroot", 
+        "pool": 2, 
+        "size": 4194304
+    }
+},
+{
+    "pk": 39, 
+    "model": "storageadmin.share", 
+    "fields": {
+        "group": "root", 
+        "name": "share3", 
+        "perms": "755", 
+        "uuid": null, 
+        "compression_algo": null, 
+        "owner": "root", 
+        "replica": false, 
+        "qgroup": "0/258", 
+        "toc": "2015-06-15T23:32:04.654Z", 
+        "subvol_name": "share3", 
+        "pool": 3, 
+        "size": 2139951
+    }
+},
+{
+    "pk": 1, 
+    "model": "storageadmin.appliance", 
+    "fields": {
+        "current_appliance": true, 
+        "uuid": "000a0f04-c3526cde-2ab1-4047-bf4b-1e7b45e3b45c", 
+        "mgmt_port": 443, 
+        "ip": "10.0.4.15", 
+        "hostname": "rock-dev", 
+        "client_id": null, 
+        "client_secret": null
+    }
+},
+{
+    "pk": 1, 
+    "model": "storageadmin.networkinterface", 
+    "fields": {
+        "domain": null, 
+        "dns_servers": null, 
+        "itype": "io", 
+        "name": "enp0s3", 
+        "boot_proto": "dhcp", 
+        "ipaddr": "192.168.56.102", 
+        "netmask": null, 
+        "gateway": null, 
+        "alias": "enp0s3", 
+        "mac": "08:00:27:c5:0d:61", 
+        "onboot": "yes", 
+        "network": null
+    }
+},
+{
+    "pk": 2, 
+    "model": "storageadmin.networkinterface", 
+    "fields": {
+        "domain": null, 
+        "dns_servers": null, 
+        "itype": "management", 
+        "name": "enp0s9", 
+        "boot_proto": "dhcp", 
+        "ipaddr": "10.0.4.15", 
+        "netmask": null, 
+        "gateway": null, 
+        "alias": "enp0s9", 
+        "mac": "08:00:27:54:63:93", 
+        "onboot": "yes", 
+        "network": null
+    }
+},
+{
+    "pk": 1, 
+    "model": "storageadmin.group", 
+    "fields": {
+        "admin": true, 
+        "groupname": "admin", 
+        "gid": 1000
+    }
+},
+{
+    "pk": 3, 
+    "model": "storageadmin.group", 
+    "fields": {
+        "admin": true, 
+        "groupname": "user123", 
+        "gid": 1001
+    }
+},
+{
+    "pk": 1, 
+    "model": "storageadmin.user", 
+    "fields": {
+        "username": "admin", 
+        "public_key": null, 
+        "shell": "/bin/bash", 
+        "group": 1, 
+        "uid": 1000, 
+        "admin": true, 
+        "gid": 1000, 
+        "user": [
+            "admin"
+        ], 
+        "smb_shares": [], 
+        "email": null, 
+        "homedir": "/home/admin"
+    }
+},
+{
+    "pk": 3, 
+    "model": "storageadmin.user", 
+    "fields": {
+        "username": "user123", 
+        "public_key": null, 
+        "shell": "/bin/bash", 
+        "group": 3, 
+        "uid": 1001, 
+        "admin": true, 
+        "gid": 1001, 
+        "user": null, 
+        "smb_shares": [], 
+        "email": null, 
+        "homedir": "/home/user123"
+    }
+},
+{
+    "pk": 1, 
+    "model": "storageadmin.poolscrub", 
+    "fields": {
+        "status": "running", 
+        "csum_discards": 0, 
+        "super_errors": 0, 
+        "data_extents_scrubbed": 0, 
+        "last_physical": 43515904, 
+        "start_time": "2015-06-18T00:27:47.826Z", 
+        "no_csum": 0, 
+        "pid": 5656, 
+        "read_errors": 0, 
+        "verify_errors": 0, 
+        "csum_errors": 0, 
+        "uncorrectable_errors": 0, 
+        "malloc_errors": 0, 
+        "unverified_errors": 0, 
+        "end_time": null, 
+        "tree_extents_scrubbed": 245, 
+        "kb_scrubbed": 0, 
+        "tree_bytes_scrubbed": 4014080, 
+        "pool": 2, 
+        "corrected_errors": 0
+    }
+},
+{
+    "pk": 1, 
+    "model": "storageadmin.setup", 
+    "fields": {
+        "setup_network": false, 
+        "setup_user": true, 
+        "setup_disks": false, 
+        "setup_system": true
+    }
+},
+{
+    "pk": 1, 
+    "model": "storageadmin.plugin", 
+    "fields": {
+        "display_name": "Backup", 
+        "css_file_name": "backup", 
+        "description": "Backup Server functionality", 
+        "js_file_name": "backup", 
+        "key": "", 
+        "name": "backup"
+    }
+},
+{
+    "pk": 1, 
+    "model": "storageadmin.oauthapp", 
+    "fields": {
+        "application": 1, 
+        "name": "cliapp", 
+        "user": 1
+    }
+},
+{
+    "pk": 1, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2014-02-27T04:51:28.513Z", 
+        "app_name": "storageadmin", 
+        "migration": "0001_initial"
+    }
+},
+{
+    "pk": 2, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-15T20:50:51.325Z", 
+        "app_name": "storageadmin", 
+        "migration": "0002_auto__del_poolstatistic__del_sharestatistic__chg_field_disk_size__chg_"
+    }
+},
+{
+    "pk": 3, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-15T20:50:51.397Z", 
+        "app_name": "storageadmin", 
+        "migration": "0003_auto__add_field_nfsexportgroup_admin_host"
+    }
+},
+{
+    "pk": 4, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-15T20:50:51.492Z", 
+        "app_name": "storageadmin", 
+        "migration": "0004_auto__add_advancednfsexport"
+    }
+},
+{
+    "pk": 5, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-15T20:50:51.570Z", 
+        "app_name": "storageadmin", 
+        "migration": "0005_auto__add_field_networkinterface_gateway__add_field_networkinterface_d"
+    }
+},
+{
+    "pk": 6, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-15T20:50:51.831Z", 
+        "app_name": "oauth2_provider", 
+        "migration": "0001_initial"
+    }
+},
+{
+    "pk": 7, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-15T20:50:52.459Z", 
+        "app_name": "storageadmin", 
+        "migration": "0006_auto__add_oauthapp"
+    }
+},
+{
+    "pk": 8, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-15T20:50:52.539Z", 
+        "app_name": "storageadmin", 
+        "migration": "0007_auto__add_field_appliance_client_id__add_field_appliance_client_secret"
+    }
+},
+{
+    "pk": 9, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-15T20:50:52.617Z", 
+        "app_name": "storageadmin", 
+        "migration": "0008_auto__add_field_user_public_key"
+    }
+},
+{
+    "pk": 10, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-15T20:50:52.744Z", 
+        "app_name": "storageadmin", 
+        "migration": "0009_auto__del_field_sambashare_admin_users"
+    }
+},
+{
+    "pk": 11, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-15T20:50:52.831Z", 
+        "app_name": "storageadmin", 
+        "migration": "0010_auto__add_field_disk_btrfs_uuid"
+    }
+},
+{
+    "pk": 12, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-15T20:50:52.961Z", 
+        "app_name": "storageadmin", 
+        "migration": "0011_auto__add_netatalkshare"
+    }
+},
+{
+    "pk": 13, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-15T20:50:53.065Z", 
+        "app_name": "storageadmin", 
+        "migration": "0012_auto__add_field_disk_model__add_field_disk_serial__add_field_disk_tran"
+    }
+},
+{
+    "pk": 14, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-15T20:50:53.217Z", 
+        "app_name": "storageadmin", 
+        "migration": "0013_auto__add_field_user_shell__add_field_user_homedir__add_field_user_ema"
+    }
+},
+{
+    "pk": 15, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-15T20:50:53.336Z", 
+        "app_name": "storageadmin", 
+        "migration": "0014_auto__add_group"
+    }
+},
+{
+    "pk": 16, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-15T20:50:53.436Z", 
+        "app_name": "storageadmin", 
+        "migration": "0015_auto__add_field_user_group"
+    }
+},
+{
+    "pk": 17, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-15T20:50:53.972Z", 
+        "app_name": "storageadmin", 
+        "migration": "0016_auto__del_field_poolscrub_errors__add_field_poolscrub_data_extents_scr"
+    }
+},
+{
+    "pk": 18, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-15T20:50:54.069Z", 
+        "app_name": "storageadmin", 
+        "migration": "0017_auto__add_field_pool_compression__add_field_pool_mnt_options"
+    }
+},
+{
+    "pk": 19, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-15T20:50:54.210Z", 
+        "app_name": "storageadmin", 
+        "migration": "0018_auto__add_field_share_compression_algo"
+    }
+},
+{
+    "pk": 20, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-15T20:50:54.392Z", 
+        "app_name": "storageadmin", 
+        "migration": "0019_auto__add_poolbalance"
+    }
+},
+{
+    "pk": 21, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-15T20:50:54.521Z", 
+        "app_name": "storageadmin", 
+        "migration": "0020_auto__add_sambacustomconfig"
+    }
+},
+{
+    "pk": 22, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-15T20:50:54.612Z", 
+        "app_name": "storageadmin", 
+        "migration": "0021_auto__del_field_sambashare_create_mask"
+    }
+},
+{
+    "pk": 23, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-15T20:50:55.040Z", 
+        "app_name": "storageadmin", 
+        "migration": "0022_auto__add_dvolume__add_unique_dvolume_container_dest_dir__add_containe"
+    }
+},
+{
+    "pk": 24, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-15T20:50:55.192Z", 
+        "app_name": "storageadmin", 
+        "migration": "0023_auto__add_tlscertificate"
+    }
+},
+{
+    "pk": 25, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-15T20:50:55.785Z", 
+        "app_name": "storageadmin", 
+        "migration": "0024_auto__add_smarttestlogdetail__add_smartinfo__add_smarttestlog__add_sma"
+    }
+},
+{
+    "pk": 26, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-15T20:50:56.050Z", 
+        "app_name": "storageadmin", 
+        "migration": "0025_auto__add_field_dport_uiport"
+    }
+},
+{
+    "pk": 27, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-15T20:50:56.252Z", 
+        "app_name": "storageadmin", 
+        "migration": "0026_auto__chg_field_rockon_state__chg_field_rockon_version"
+    }
+},
+{
+    "pk": 28, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-15T20:50:56.421Z", 
+        "app_name": "storageadmin", 
+        "migration": "0027_auto__chg_field_rockon_status"
+    }
+},
+{
+    "pk": 29, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-15T20:50:58.429Z", 
+        "app_name": "django_ztask", 
+        "migration": "0001_initial"
+    }
+},
+{
+    "pk": 30, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-15T20:50:58.450Z", 
+        "app_name": "django_ztask", 
+        "migration": "0002_auto__add_field_task_created"
+    }
+},
+{
+    "pk": 1, 
+    "model": "oauth2_provider.application", 
+    "fields": {
+        "redirect_uris": "", 
+        "name": "cliapp", 
+        "client_type": "confidential", 
+        "user": [
+            "admin"
+        ], 
+        "client_id": "zZj?6aR2R79TD!U;RP-YveIIGmzb?uC1.PlLsO!V", 
+        "client_secret": "-9lwVlPY5YBd7_S;vz4fScj8NLty2zUvj16IqXiAno0FVkJrGKtJ?sio69z6I_iTK?6g9oo;GGNx?0kNxtBkm30FOvpzQ=6v2yzMdljuvKbSpBF@SNt7UYm0;ZkVnQTj", 
+        "authorization_grant_type": "client-credentials"
+    }
+},
+{
+    "pk": 1, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "dQEl1DwGca6PGmeC8usCyVN1L6dhaO", 
+        "expires": "2015-06-16T09:20:23.374Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 2, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "q8V2iHmQ04cNMryN1CEvt82A0Dip57", 
+        "expires": "2015-06-16T09:20:34.604Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 3, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "axgl5id7VuUENWlVZH7UvGcCeu94V3", 
+        "expires": "2015-06-16T09:25:22.105Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 4, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "T7vVU02XOSLGw4wyqbmQChIC0k9qN3", 
+        "expires": "2015-06-16T09:25:34.787Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 5, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "zKrR0DhQH78HBsaaWkwqJWcT7Hcrbf", 
+        "expires": "2015-06-16T09:27:08.825Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 6, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "1eKBzr9S8xcJEvYnCVtBsDLKU0yaAN", 
+        "expires": "2015-06-16T09:27:21.524Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 7, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "pF6HZkesdUK0pZeN9T1K8UwGlG5ZDm", 
+        "expires": "2015-06-16T09:28:18.784Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 8, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "MVWmLbFmRf2ZPROboL2pmuEV3i1HdF", 
+        "expires": "2015-06-16T09:28:31.456Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 9, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "q2bQnAAra2InZ0rEKfd7n4T2qWBSNh", 
+        "expires": "2015-06-16T09:41:01.184Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 10, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "udULdtDrENpurTo7nLblnSu1cxj83m", 
+        "expires": "2015-06-16T09:41:13.841Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 11, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "sSWZ0YGIRuBlAbHL5A8MfjXstU9R7c", 
+        "expires": "2015-06-16T11:25:32.771Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 12, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "T3DNjMOCJNlaZkP2DQAqIGhM2BO3sM", 
+        "expires": "2015-06-16T11:25:44.648Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 13, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "J0FriekhUCjHJB51ZiKURQ9xr0ApQ0", 
+        "expires": "2015-06-16T11:30:00.493Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 14, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "FTMOeV6EBuUELqgtRjYtbV97rQpOFr", 
+        "expires": "2015-06-16T11:30:12.639Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 15, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "H50i3VwtrnX1FdVhCimrTv11N99EMu", 
+        "expires": "2015-06-16T11:31:42.668Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 16, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "mWO9oNhZitrTzkzxb6NRejt09LQ03X", 
+        "expires": "2015-06-16T11:31:55.347Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 17, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "gYJ5TmH7JfUVk6KjLtiKwPtQNZGHtr", 
+        "expires": "2015-06-16T11:34:28.186Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 18, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "q9vBqEOjVV7rrVM4g58n8JOhJUOAif", 
+        "expires": "2015-06-16T11:34:40.859Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 19, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "AKQruC9czEDfmmyQT3FMipUvqUyE87", 
+        "expires": "2015-06-16T11:35:02.312Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 20, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "B387I9M1l0CEkuWwF0PPWs7aBiNVvY", 
+        "expires": "2015-06-16T11:35:14.993Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 21, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "s5tx0xLOyBy14lurczB1knVBDFTJob", 
+        "expires": "2015-06-16T12:05:27.181Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 22, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "u0EokFgfKPbswsJw5tvXixdL2ay6S7", 
+        "expires": "2015-06-16T12:05:39.858Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 23, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "wFG8kca7iRDOTfqJCIaZMrgUjOyASp", 
+        "expires": "2015-06-18T09:56:42.850Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 24, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "kDelJ8gBobZboNaWG0wcYtLhsUfMWZ", 
+        "expires": "2015-06-18T09:56:51.128Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 25, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "hch6TIC5vjh1gzCF7HozIDGVtHe4ZW", 
+        "expires": "2015-06-18T10:17:59.448Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 26, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "60tY8hpISyIJGxHW677y6mXAW5X4rl", 
+        "expires": "2015-06-18T10:18:12.441Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 27, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "8g6QZuxmmgLkxyN6tsObs8dD6QLSL2", 
+        "expires": "2015-06-18T11:46:30.359Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 28, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "Q9thlUjOOHCTXjcgmRGgZmZSwC5ikX", 
+        "expires": "2015-06-18T11:46:43.013Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 29, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "mpT2XRYbeWYxHyeRXdJPOOXSXtuSs8", 
+        "expires": "2015-06-19T06:16:19.455Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 30, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "7Jv6hvbLa8C3pJxM8iSNGZViqU2dyW", 
+        "expires": "2015-06-19T06:16:27.918Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 31, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "pwXJiZZI9PnwgHI9UKu2rp03hsrI3c", 
+        "expires": "2015-06-20T04:48:05.537Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 32, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "WsNdBOx3f1XOvFwUdNEWQOkgUK5Kq0", 
+        "expires": "2015-06-20T04:48:16.267Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 33, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "F56OlJU7WZQKliOWxjWCZkRdo08H0u", 
+        "expires": "2015-06-21T10:58:11.184Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 34, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "Ek9YFcZ8IPANv4YYxj9DJTM1StNfoJ", 
+        "expires": "2015-06-21T10:58:22.381Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 35, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "2M8eQIWYcrB2z5c9XytHWgcvn7KRTo", 
+        "expires": "2015-06-21T12:46:50.952Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 36, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "faLdCEF4IUHaYEkhWntVz4MM8UsEm2", 
+        "expires": "2015-06-21T12:47:02.247Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+}
+]
