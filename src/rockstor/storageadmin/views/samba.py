@@ -23,7 +23,7 @@ from storageadmin.models import (SambaShare, Disk, User, SambaCustomConfig)
 from storageadmin.serializers import SambaShareSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
-from share_helpers import validate_share
+from share import ShareMixin
 from system.samba import (refresh_smb_config, status, restart_samba)
 from fs.btrfs import (mount_share, is_share_mounted)
 
@@ -85,7 +85,7 @@ class SambaMixin(object):
         return options
 
 
-class SambaListView(SambaMixin, rfc.GenericView):
+class SambaListView(SambaMixin, ShareMixin, rfc.GenericView):
     def get_queryset(self, *args, **kwargs):
         if ('id' in self.kwargs):
             self.paginate_by = 0
@@ -100,7 +100,7 @@ class SambaListView(SambaMixin, rfc.GenericView):
         if ('shares' not in request.data):
             e_msg = ('Must provide share names')
             handle_exception(Exception(e_msg), request)
-        shares = [validate_share(s, request) for s in request.data['shares']]
+        shares = [self._validate_share(request, s) for s in request.data['shares']]
         options = self._validate_input(request)
         custom_config = options['custom_config']
         del(options['custom_config'])
