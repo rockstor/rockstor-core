@@ -44,7 +44,7 @@ class SambaTests(APITestMixin, APITestCase):
 
         cls.patch_status = patch('storageadmin.views.samba.status')
         cls.mock_status = cls.patch_status.start()
-        cls.mock_status.return_value = 'sts'
+        cls.mock_status.return_value = 'out','err',0
 
         cls.patch_restart_samba = patch('storageadmin.views.samba.restart_samba')
         cls.mock_status = cls.patch_restart_samba.start()
@@ -63,9 +63,16 @@ class SambaTests(APITestMixin, APITestCase):
         """
         Test GET request
         1. Get base URL
+        2. Get request with id
         """
+        # get base URL
         self.get_base(self.BASE_URL)
-
+        
+        # get sambashare with id
+        id = 3
+        self.client.get('%s/%d' % (self.BASE_URL,id))
+        
+    
     @mock.patch('storageadmin.views.samba.User')
     def test_post_requests(self, mock_user):
         """
@@ -121,6 +128,13 @@ class SambaTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)     
 
+        # create samba export with no admin users
+        data = {'shares': ('share5', ), 'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes', 'custom_config':('CONFIG','XYZ' )}
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_200_OK, msg=response.data)
+       
+       
         # create samba export with the share that is already been exported above
         data = {'shares': ('share1', ), 'browsable': 'no', 'guest_ok': 'yes', 'read_only': 'yes'}
         response = self.client.post(self.BASE_URL, data=data)
@@ -153,21 +167,45 @@ class SambaTests(APITestMixin, APITestCase):
         e_msg = ('custom config must be a list of strings')
         self.assertEqual(response.data['detail'], e_msg)                 
                          
+        # test mount_share exception case
+        smb_id = 3
+        mock_user.objects.filter.return_value.exists.return_value = False
+        data = {'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes', 'admin_users': 'uadmin', 'custom_config': ('CONFIG','XYZ' )}
+        self.mock_mount_share.side_effect = KeyError('error')
+        response = self.client.put('%s/%d' % (self.BASE_URL, smb_id), data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+        e_msg = ('Failed to mount share(share6) due to a low level error.')
+        self.assertEqual(response.data['detail'], e_msg)                 
+        
+        
+        
         # happy path
         smb_id = 3
+        self.mock_mount_share.side_effect = None
         mock_user.objects.filter.return_value.exists.return_value = False
         data = {'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes', 'admin_users': 'admin', 'custom_config': ('CONFIG','XYZ' )}
         response = self.client.put('%s/%d' % (self.BASE_URL, smb_id), data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
-
+        
+        # edit samba export with admin user other than admin
         smb_id = 3
         mock_user.objects.filter.return_value.exists.return_value = False
         data = {'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes', 'admin_users': 'uadmin', 'custom_config': ('CONFIG','XYZ' )}
         response = self.client.put('%s/%d' % (self.BASE_URL, smb_id), data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
-
+                         
+        # edit samba export passing no admin users                
+        smb_id = 3
+        mock_user.objects.filter.return_value.exists.return_value = False
+        data = {'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes', 'custom_config': ('CONFIG','XYZ' )}
+        response = self.client.put('%s/%d' % (self.BASE_URL, smb_id), data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_200_OK, msg=response.data)                 
+        
+                
     def test_delete_requests(self):
 
         """
