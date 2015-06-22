@@ -26,7 +26,7 @@ from mock import patch
 from storageadmin.tests.test_api import APITestMixin
 
 class SambaTests(APITestMixin, APITestCase):
-    fixtures = ['fix2.json']
+    fixtures = ['fix3.json']
     BASE_URL = '/api/samba'
 
     @classmethod
@@ -67,8 +67,7 @@ class SambaTests(APITestMixin, APITestCase):
         self.get_base(self.BASE_URL)
 
     @mock.patch('storageadmin.views.samba.User')
-    @mock.patch('storageadmin.views.samba.Disk')
-    def test_post_requests(self, mock_disk,  mock_user):
+    def test_post_requests(self, mock_user):
         """
         invalid samba api operations
         1. Create a samba without providing share names
@@ -83,69 +82,108 @@ class SambaTests(APITestMixin, APITestCase):
 
         e_msg = ('Must provide share names')
         self.assertEqual(response.data['detail'], e_msg)
-
-
-        # create samba export
-        # we use 'share2' which is available from the fixture, fix2.json
-        data = {'shares': ('share2', ), 'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes', 'admin_users':'usr'}
-        response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)
-
-        # @todo: create samba exports for multiple(3) shares at once
-
-        # create samba export with the share that is already been exported above
-        data = {'shares': ('share2', ), 'browsable': 'no', 'guest_ok': 'yes', 'read_only': 'yes'}
+        
+        # create samba with invalid browsable, guest_ok, read_only choices
+        
+        data = {'shares': ('share1', ), 'browsable': 'Y', 'guest_ok': 'yes', 'read_only': 'yes'}
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
-        e_msg = ('Share(share2) is already exported via Samba')
+        e_msg = ('Invalid choice for browsable. Possible choices are yes or no.')
         self.assertEqual(response.data['detail'], e_msg)
+         
+                      
+        data = {'shares': ('share1', ), 'browsable': 'yes', 'guest_ok': 'Y', 'read_only': 'yes'}
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+        e_msg = ('Invalid choice for guest_ok. Possible options are yes or no.')
+        self.assertEqual(response.data['detail'], e_msg)
+                                          
+        data = {'shares': ('share1', ), 'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'Y'}
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+        e_msg = ('Invalid choice for read_only. Possible options are yes or no.')
+        self.assertEqual(response.data['detail'], e_msg)
+        
+                         
+        # create samba export
+        # we use 'share1' which is available from the fixture, fix3.json
+        data = {'shares': ('share1', ), 'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes', 'admin_users':'admin','custom_config':('CONFIG','XYZ' )}
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_200_OK, msg=response.data)
+                         
+        # @todo: create samba exports for multiple(3) shares at once
+        data = {'shares': ('share2','share3','share4' ), 'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes', 'admin_users':'usr'}
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_200_OK, msg=response.data)     
 
-    @mock.patch('storageadmin.views.samba.User')
-    @mock.patch('storageadmin.views.samba.Disk')
-    def test_put_requests(self, mock_disk, mock_user):
+        # create samba export with the share that is already been exported above
+        data = {'shares': ('share1', ), 'browsable': 'no', 'guest_ok': 'yes', 'read_only': 'yes'}
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+        e_msg = ('Share(share1) is already exported via Samba')
+        self.assertEqual(response.data['detail'], e_msg)
+    
+    @mock.patch('storageadmin.views.samba.User')  
+    def test_put_requests(self, mock_user):
         """
         1. Edit samba that does not exists
         2. Edit samba
         """
         # edit samba that does not exist
-        smb_id = 3
+        smb_id = 1
         data = {'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes', 'admin_users':'usr'}
         response = self.client.put('%s/%d' % (self.BASE_URL, smb_id), data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
-        e_msg = ('Samba export for the id(3) does not exist')
+        e_msg = ('Samba export for the id(1) does not exist')
         self.assertEqual(response.data['detail'], e_msg)
 
+        # edit samba with invalid custom config
+        smb_id = 3
+        data = {'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes','custom_config':'CONFIGXYZ'}
+        response = self.client.put('%s/%d' % (self.BASE_URL, smb_id), data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+        e_msg = ('custom config must be a list of strings')
+        self.assertEqual(response.data['detail'], e_msg)                 
+                         
         # happy path
-        data = {'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes', 'admin_users':'usr'}
-        response = self.client.put('%s/1' % self.BASE_URL, data=data)
+        smb_id = 3
+        mock_user.objects.filter.return_value.exists.return_value = False
+        data = {'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes', 'admin_users': 'admin', 'custom_config': ('CONFIG','XYZ' )}
+        response = self.client.put('%s/%d' % (self.BASE_URL, smb_id), data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 
+        smb_id = 3
+        mock_user.objects.filter.return_value.exists.return_value = False
+        data = {'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes', 'admin_users': 'uadmin', 'custom_config': ('CONFIG','XYZ' )}
+        response = self.client.put('%s/%d' % (self.BASE_URL, smb_id), data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_200_OK, msg=response.data)
 
-
-    @mock.patch('storageadmin.views.samba.SambaCustomConfig')
-    @mock.patch('storageadmin.views.samba.SambaShare')
-    def test_delete_requests(self, mock_samba, mock_sambaCustomConfig):
+    def test_delete_requests(self):
 
         """
         1. Delete samba that does not exist
         2. Delete samba
         """
         # Delete samba that does nor exists
-        smb_id = 3
-        mock_samba.objects.get.side_effect = SambaShare.DoesNotExist
+        smb_id = 12
         response = self.client.delete('%s/%d' % (self.BASE_URL, smb_id))
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
-        e_msg = ('Samba export for the id(3) does not exist')
+        e_msg = ('Samba export for the id(12) does not exist')
         self.assertEqual(response.data['detail'], e_msg)
 
         # happy path
-        mock_samba.objects.get.side_effect = None
-        mock_sambaCustomConfig.objects.filter.side_effect = None
-        response = self.client.delete('%s/4' % (self.BASE_URL))
+        smb_id = 3
+        response = self.client.delete('%s/%d' % (self.BASE_URL, smb_id))
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)

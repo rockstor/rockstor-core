@@ -1,0 +1,787 @@
+[
+{
+    "pk": 1, 
+    "model": "auth.user", 
+    "fields": {
+        "username": "admin", 
+        "first_name": "", 
+        "last_name": "", 
+        "is_active": true, 
+        "is_superuser": false, 
+        "is_staff": false, 
+        "last_login": "2015-06-22T09:05:06.880Z", 
+        "groups": [], 
+        "user_permissions": [], 
+        "password": "pbkdf2_sha256$12000$8al3ZUHjHGRk$M9Z0ffIcx6VIZLyZS4tSywUjBLZIicN6KHzpaTumjvA=", 
+        "email": "", 
+        "date_joined": "2015-06-22T09:05:06.529Z"
+    }
+},
+{
+    "pk": "psc9vlwgacfxjcqmohyivolkkdcphgvs", 
+    "model": "sessions.session", 
+    "fields": {
+        "expire_date": "2015-07-06T09:05:06.884Z", 
+        "session_data": "NjY3MGEzMTNmYmFmNzQxMGIzZTcxNTgxNDZlNTE5OWU3Mzc3OTJkMTp7Il9hdXRoX3VzZXJfYmFja2VuZCI6ImRqYW5nby5jb250cmliLmF1dGguYmFja2VuZHMuTW9kZWxCYWNrZW5kIiwiX2F1dGhfdXNlcl9pZCI6MX0="
+    }
+},
+{
+    "pk": 1, 
+    "model": "sites.site", 
+    "fields": {
+        "domain": "example.com", 
+        "name": "example.com"
+    }
+},
+{
+    "pk": 1, 
+    "model": "storageadmin.pool", 
+    "fields": {
+        "raid": "single", 
+        "compression": null, 
+        "uuid": "54451c3d-ab13-4ac1-8f5d-9856ae4e301f", 
+        "name": "rockstor_rockstor", 
+        "mnt_options": null, 
+        "toc": "2015-06-22T09:05:07.262Z", 
+        "size": 8924160
+    }
+},
+{
+    "pk": 4, 
+    "model": "storageadmin.pool", 
+    "fields": {
+        "raid": "single", 
+        "compression": "no", 
+        "uuid": "140de4b1-18fc-4016-a932-18dd82b2c638", 
+        "name": "pool1", 
+        "mnt_options": "", 
+        "toc": "2015-06-22T09:50:37.055Z", 
+        "size": 2097152
+    }
+},
+{
+    "pk": 5, 
+    "model": "storageadmin.pool", 
+    "fields": {
+        "raid": "raid0", 
+        "compression": "no", 
+        "uuid": "db9212c3-f76d-44ff-b73b-0d42c2d33dab", 
+        "name": "pool2", 
+        "mnt_options": "", 
+        "toc": "2015-06-22T09:50:53.792Z", 
+        "size": 3145728
+    }
+},
+{
+    "pk": 6, 
+    "model": "storageadmin.pool", 
+    "fields": {
+        "raid": "single", 
+        "compression": "no", 
+        "uuid": "813753da-3951-46da-bfda-70bceab2930b", 
+        "name": "pool3", 
+        "mnt_options": "", 
+        "toc": "2015-06-22T09:51:01.264Z", 
+        "size": 1048576
+    }
+},
+{
+    "pk": 1, 
+    "model": "storageadmin.disk", 
+    "fields": {
+        "smart_enabled": false, 
+        "parted": false, 
+        "btrfs_uuid": "db9212c3-f76d-44ff-b73b-0d42c2d33dab", 
+        "vendor": "ATA", 
+        "name": "sdd", 
+        "smart_available": false, 
+        "transport": "sata", 
+        "serial": "VB1945a3ed-31b3ab82", 
+        "offline": false, 
+        "model": "VBOX HARDDISK", 
+        "pool": 5, 
+        "size": 1048576
+    }
+},
+{
+    "pk": 2, 
+    "model": "storageadmin.disk", 
+    "fields": {
+        "smart_enabled": false, 
+        "parted": false, 
+        "btrfs_uuid": "813753da-3951-46da-bfda-70bceab2930b", 
+        "vendor": "ATA", 
+        "name": "sde", 
+        "smart_available": false, 
+        "transport": "sata", 
+        "serial": "VB14fccd25-e8d02a77", 
+        "offline": false, 
+        "model": "VBOX HARDDISK", 
+        "pool": 6, 
+        "size": 1048576
+    }
+},
+{
+    "pk": 3, 
+    "model": "storageadmin.disk", 
+    "fields": {
+        "smart_enabled": false, 
+        "parted": false, 
+        "btrfs_uuid": "54451c3d-ab13-4ac1-8f5d-9856ae4e301f", 
+        "vendor": null, 
+        "name": "sda3", 
+        "smart_available": false, 
+        "transport": null, 
+        "serial": "VBa9aea2b9-befbd956", 
+        "offline": false, 
+        "model": null, 
+        "pool": 1, 
+        "size": 8912896
+    }
+},
+{
+    "pk": 4, 
+    "model": "storageadmin.disk", 
+    "fields": {
+        "smart_enabled": false, 
+        "parted": false, 
+        "btrfs_uuid": "140de4b1-18fc-4016-a932-18dd82b2c638", 
+        "vendor": "ATA", 
+        "name": "sdb", 
+        "smart_available": false, 
+        "transport": "sata", 
+        "serial": "VBaae151b9-6b642c81", 
+        "offline": false, 
+        "model": "VBOX HARDDISK", 
+        "pool": 4, 
+        "size": 2097152
+    }
+},
+{
+    "pk": 5, 
+    "model": "storageadmin.disk", 
+    "fields": {
+        "smart_enabled": false, 
+        "parted": false, 
+        "btrfs_uuid": "db9212c3-f76d-44ff-b73b-0d42c2d33dab", 
+        "vendor": "ATA", 
+        "name": "sdc", 
+        "smart_available": false, 
+        "transport": "sata", 
+        "serial": "VB9acc307b-68ae0871", 
+        "offline": false, 
+        "model": "VBOX HARDDISK", 
+        "pool": 5, 
+        "size": 2097152
+    }
+},
+{
+    "pk": 5, 
+    "model": "storageadmin.share", 
+    "fields": {
+        "group": "root", 
+        "name": "home", 
+        "perms": "755", 
+        "uuid": null, 
+        "compression_algo": null, 
+        "owner": "root", 
+        "replica": false, 
+        "qgroup": "0/257", 
+        "toc": "2015-06-22T09:05:08.264Z", 
+        "subvol_name": "home", 
+        "pool": 1, 
+        "size": 8924160
+    }
+},
+{
+    "pk": 7, 
+    "model": "storageadmin.share", 
+    "fields": {
+        "group": "root", 
+        "name": "root", 
+        "perms": "755", 
+        "uuid": null, 
+        "compression_algo": null, 
+        "owner": "root", 
+        "replica": false, 
+        "qgroup": "0/258", 
+        "toc": "2015-06-22T09:05:08.309Z", 
+        "subvol_name": "root", 
+        "pool": 1, 
+        "size": 8924160
+    }
+},
+{
+    "pk": 10, 
+    "model": "storageadmin.share", 
+    "fields": {
+        "group": "root", 
+        "name": "share1", 
+        "perms": "755", 
+        "uuid": null, 
+        "compression_algo": "no", 
+        "owner": "root", 
+        "replica": false, 
+        "qgroup": "<function qgroup_id at 0x2e880c8>", 
+        "toc": "2015-06-22T09:51:50.459Z", 
+        "subvol_name": "share1", 
+        "pool": 4, 
+        "size": 1048576
+    }
+},
+{
+    "pk": 11, 
+    "model": "storageadmin.share", 
+    "fields": {
+        "group": "root", 
+        "name": "share2", 
+        "perms": "755", 
+        "uuid": null, 
+        "compression_algo": "no", 
+        "owner": "root", 
+        "replica": false, 
+        "qgroup": "<function qgroup_id at 0x2e880c8>", 
+        "toc": "2015-06-22T09:51:59.853Z", 
+        "subvol_name": "share2", 
+        "pool": 4, 
+        "size": 1048576
+    }
+},
+{
+    "pk": 13, 
+    "model": "storageadmin.share", 
+    "fields": {
+        "group": "root", 
+        "name": "share3", 
+        "perms": "755", 
+        "uuid": null, 
+        "compression_algo": "no", 
+        "owner": "root", 
+        "replica": false, 
+        "qgroup": "<function qgroup_id at 0x2e880c8>", 
+        "toc": "2015-06-22T09:52:26.178Z", 
+        "subvol_name": "share3", 
+        "pool": 4, 
+        "size": 1048576
+    }
+},
+{
+    "pk": 14, 
+    "model": "storageadmin.share", 
+    "fields": {
+        "group": "root", 
+        "name": "share4", 
+        "perms": "755", 
+        "uuid": null, 
+        "compression_algo": "no", 
+        "owner": "root", 
+        "replica": false, 
+        "qgroup": "<function qgroup_id at 0x2e880c8>", 
+        "toc": "2015-06-22T09:52:51.231Z", 
+        "subvol_name": "share4", 
+        "pool": 5, 
+        "size": 1048576
+    }
+},
+{
+    "pk": 15, 
+    "model": "storageadmin.share", 
+    "fields": {
+        "group": "root", 
+        "name": "share5", 
+        "perms": "755", 
+        "uuid": null, 
+        "compression_algo": "no", 
+        "owner": "root", 
+        "replica": false, 
+        "qgroup": "<function qgroup_id at 0x2e880c8>", 
+        "toc": "2015-06-22T09:53:02.498Z", 
+        "subvol_name": "share5", 
+        "pool": 5, 
+        "size": 1048576
+    }
+},
+{
+    "pk": 16, 
+    "model": "storageadmin.share", 
+    "fields": {
+        "group": "root", 
+        "name": "share6", 
+        "perms": "755", 
+        "uuid": null, 
+        "compression_algo": "no", 
+        "owner": "root", 
+        "replica": false, 
+        "qgroup": "<function qgroup_id at 0x2e880c8>", 
+        "toc": "2015-06-22T09:53:23.451Z", 
+        "subvol_name": "share6", 
+        "pool": 6, 
+        "size": 1048576
+    }
+},
+{
+    "pk": 1, 
+    "model": "storageadmin.appliance", 
+    "fields": {
+        "current_appliance": true, 
+        "uuid": "000a0f02-64597a8e-dd38-468f-94b7-fd11ce4545e8", 
+        "mgmt_port": 443, 
+        "ip": "10.0.3.15", 
+        "hostname": "rockstor", 
+        "client_id": null, 
+        "client_secret": null
+    }
+},
+{
+    "pk": 1, 
+    "model": "storageadmin.networkinterface", 
+    "fields": {
+        "domain": null, 
+        "dns_servers": null, 
+        "itype": "io", 
+        "name": "enp0s3", 
+        "boot_proto": "dhcp", 
+        "ipaddr": "192.168.56.101", 
+        "netmask": null, 
+        "gateway": null, 
+        "alias": "enp0s3", 
+        "mac": "08:00:27:f6:2c:85", 
+        "onboot": "yes", 
+        "network": null
+    }
+},
+{
+    "pk": 2, 
+    "model": "storageadmin.networkinterface", 
+    "fields": {
+        "domain": null, 
+        "dns_servers": null, 
+        "itype": "management", 
+        "name": "enp0s8", 
+        "boot_proto": null, 
+        "ipaddr": "10.0.3.15", 
+        "netmask": null, 
+        "gateway": null, 
+        "alias": "enp0s8", 
+        "mac": "08:00:27:ba:4b:88", 
+        "onboot": null, 
+        "network": null
+    }
+},
+{
+    "pk": 1, 
+    "model": "storageadmin.group", 
+    "fields": {
+        "admin": true, 
+        "groupname": "admin", 
+        "gid": 1000
+    }
+},
+{
+    "pk": 1, 
+    "model": "storageadmin.user", 
+    "fields": {
+        "username": "admin", 
+        "public_key": null, 
+        "shell": "/bin/bash", 
+        "group": 1, 
+        "uid": 1000, 
+        "admin": true, 
+        "gid": 1000, 
+        "user": [
+            "admin"
+        ], 
+        "smb_shares": [], 
+        "email": null, 
+        "homedir": "/home/admin"
+    }
+},
+{
+    "pk": 3, 
+    "model": "storageadmin.sambashare", 
+    "fields": {
+        "comment": "Samba-Export", 
+        "read_only": "yes", 
+        "browsable": "yes", 
+        "share": 16, 
+        "guest_ok": "no", 
+        "path": "/mnt2/share6"
+    }
+},
+{
+    "pk": 1, 
+    "model": "storageadmin.sambacustomconfig", 
+    "fields": {
+        "smb_share": 3, 
+        "custom_config": "zzz xxx yyy"
+    }
+},
+{
+    "pk": 1, 
+    "model": "storageadmin.setup", 
+    "fields": {
+        "setup_network": false, 
+        "setup_user": true, 
+        "setup_disks": false, 
+        "setup_system": true
+    }
+},
+{
+    "pk": 1, 
+    "model": "storageadmin.plugin", 
+    "fields": {
+        "display_name": "Backup", 
+        "css_file_name": "backup", 
+        "description": "Backup Server functionality", 
+        "js_file_name": "backup", 
+        "key": "", 
+        "name": "backup"
+    }
+},
+{
+    "pk": 1, 
+    "model": "storageadmin.oauthapp", 
+    "fields": {
+        "application": 1, 
+        "name": "cliapp", 
+        "user": 1
+    }
+},
+{
+    "pk": 1, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2014-02-27T04:51:28.513Z", 
+        "app_name": "storageadmin", 
+        "migration": "0001_initial"
+    }
+},
+{
+    "pk": 2, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-22T09:03:03.415Z", 
+        "app_name": "storageadmin", 
+        "migration": "0002_auto__del_poolstatistic__del_sharestatistic__chg_field_disk_size__chg_"
+    }
+},
+{
+    "pk": 3, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-22T09:03:03.459Z", 
+        "app_name": "storageadmin", 
+        "migration": "0003_auto__add_field_nfsexportgroup_admin_host"
+    }
+},
+{
+    "pk": 4, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-22T09:03:03.511Z", 
+        "app_name": "storageadmin", 
+        "migration": "0004_auto__add_advancednfsexport"
+    }
+},
+{
+    "pk": 5, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-22T09:03:03.554Z", 
+        "app_name": "storageadmin", 
+        "migration": "0005_auto__add_field_networkinterface_gateway__add_field_networkinterface_d"
+    }
+},
+{
+    "pk": 6, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-22T09:03:03.655Z", 
+        "app_name": "oauth2_provider", 
+        "migration": "0001_initial"
+    }
+},
+{
+    "pk": 7, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-22T09:03:03.727Z", 
+        "app_name": "storageadmin", 
+        "migration": "0006_auto__add_oauthapp"
+    }
+},
+{
+    "pk": 8, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-22T09:03:03.775Z", 
+        "app_name": "storageadmin", 
+        "migration": "0007_auto__add_field_appliance_client_id__add_field_appliance_client_secret"
+    }
+},
+{
+    "pk": 9, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-22T09:03:03.823Z", 
+        "app_name": "storageadmin", 
+        "migration": "0008_auto__add_field_user_public_key"
+    }
+},
+{
+    "pk": 10, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-22T09:03:03.910Z", 
+        "app_name": "storageadmin", 
+        "migration": "0009_auto__del_field_sambashare_admin_users"
+    }
+},
+{
+    "pk": 11, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-22T09:03:03.966Z", 
+        "app_name": "storageadmin", 
+        "migration": "0010_auto__add_field_disk_btrfs_uuid"
+    }
+},
+{
+    "pk": 12, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-22T09:03:04.040Z", 
+        "app_name": "storageadmin", 
+        "migration": "0011_auto__add_netatalkshare"
+    }
+},
+{
+    "pk": 13, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-22T09:03:04.095Z", 
+        "app_name": "storageadmin", 
+        "migration": "0012_auto__add_field_disk_model__add_field_disk_serial__add_field_disk_tran"
+    }
+},
+{
+    "pk": 14, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-22T09:03:04.187Z", 
+        "app_name": "storageadmin", 
+        "migration": "0013_auto__add_field_user_shell__add_field_user_homedir__add_field_user_ema"
+    }
+},
+{
+    "pk": 15, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-22T09:03:04.255Z", 
+        "app_name": "storageadmin", 
+        "migration": "0014_auto__add_group"
+    }
+},
+{
+    "pk": 16, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-22T09:03:04.316Z", 
+        "app_name": "storageadmin", 
+        "migration": "0015_auto__add_field_user_group"
+    }
+},
+{
+    "pk": 17, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-22T09:03:04.550Z", 
+        "app_name": "storageadmin", 
+        "migration": "0016_auto__del_field_poolscrub_errors__add_field_poolscrub_data_extents_scr"
+    }
+},
+{
+    "pk": 18, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-22T09:03:04.609Z", 
+        "app_name": "storageadmin", 
+        "migration": "0017_auto__add_field_pool_compression__add_field_pool_mnt_options"
+    }
+},
+{
+    "pk": 19, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-22T09:03:04.716Z", 
+        "app_name": "storageadmin", 
+        "migration": "0018_auto__add_field_share_compression_algo"
+    }
+},
+{
+    "pk": 20, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-22T09:03:04.787Z", 
+        "app_name": "storageadmin", 
+        "migration": "0019_auto__add_poolbalance"
+    }
+},
+{
+    "pk": 21, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-22T09:03:04.861Z", 
+        "app_name": "storageadmin", 
+        "migration": "0020_auto__add_sambacustomconfig"
+    }
+},
+{
+    "pk": 22, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-22T09:03:04.921Z", 
+        "app_name": "storageadmin", 
+        "migration": "0021_auto__del_field_sambashare_create_mask"
+    }
+},
+{
+    "pk": 23, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-22T09:03:05.142Z", 
+        "app_name": "storageadmin", 
+        "migration": "0022_auto__add_dvolume__add_unique_dvolume_container_dest_dir__add_containe"
+    }
+},
+{
+    "pk": 24, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-22T09:03:05.234Z", 
+        "app_name": "storageadmin", 
+        "migration": "0023_auto__add_tlscertificate"
+    }
+},
+{
+    "pk": 25, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-22T09:03:05.484Z", 
+        "app_name": "storageadmin", 
+        "migration": "0024_auto__add_smarttestlogdetail__add_smartinfo__add_smarttestlog__add_sma"
+    }
+},
+{
+    "pk": 26, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-22T09:03:05.593Z", 
+        "app_name": "storageadmin", 
+        "migration": "0025_auto__add_field_dport_uiport"
+    }
+},
+{
+    "pk": 27, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-22T09:03:05.721Z", 
+        "app_name": "storageadmin", 
+        "migration": "0026_auto__chg_field_rockon_state__chg_field_rockon_version"
+    }
+},
+{
+    "pk": 28, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-22T09:03:05.840Z", 
+        "app_name": "storageadmin", 
+        "migration": "0027_auto__chg_field_rockon_status"
+    }
+},
+{
+    "pk": 29, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-22T09:03:06.962Z", 
+        "app_name": "django_ztask", 
+        "migration": "0001_initial"
+    }
+},
+{
+    "pk": 30, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-22T09:03:06.970Z", 
+        "app_name": "django_ztask", 
+        "migration": "0002_auto__add_field_task_created"
+    }
+},
+{
+    "pk": 1, 
+    "model": "oauth2_provider.application", 
+    "fields": {
+        "redirect_uris": "", 
+        "name": "cliapp", 
+        "client_type": "confidential", 
+        "user": [
+            "admin"
+        ], 
+        "client_id": "v629IrZpP.GOmvs7t_mRlJHS4I1L?=BM__We1N.M", 
+        "client_secret": "g-NKor7lwDibCi3sAPA6HdxE.ym80MjkCTr__4:SA9JOD;ylV26@b6n!ql!;WJ4ff-;PT4CWp5EnUqIXGowRZxoYE6rUrVEOEonKCbGEVey8meBdGPKT-MGFYldlJP8P", 
+        "authorization_grant_type": "client-credentials"
+    }
+},
+{
+    "pk": 1, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "Gsfszv6Q0q7sBYH8LZzFZzvKDmDbyk", 
+        "expires": "2015-06-22T19:19:00.275Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 2, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "4kt9Rn9ko7Q6UFkFB7ItCPs3kchbac", 
+        "expires": "2015-06-22T19:19:11.986Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 3, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "mT7X8BQzRZVHYqt4QLwidJsWqNY3ZE", 
+        "expires": "2015-06-22T19:47:06.508Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 4, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "xFLkQChHz7v5cbXYeuNpYp7lmuuS2S", 
+        "expires": "2015-06-22T19:47:17.853Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+}
+]
