@@ -86,15 +86,8 @@ class SambaMixin(object):
 
 
 class SambaListView(SambaMixin, ShareMixin, rfc.GenericView):
-    def get_queryset(self, *args, **kwargs):
-        if ('id' in self.kwargs):
-            self.paginate_by = 0
-            try:
-                return SambaShare.objects.get(id=self.kwargs['id'])
-            except:
-                return []
-        return SambaShare.objects.all()
-
+    queryset = SambaShare.objects.all()
+    
     @transaction.atomic
     def post(self, request):
         if ('shares' not in request.data):
