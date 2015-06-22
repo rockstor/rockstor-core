@@ -20,6 +20,32 @@
 </script>
 
 <!-- Module Body -->
+<html>
+
+<body>
+  
+    <div id="container"></div>
+    <a id="link"></a>
+
+    <script>
+        var button = Dropbox.createChooseButton({
+            success: function(files) {
+                var linkTag = document.getElementById('link');
+                linkTag.href = files[0].link;
+                linkTag.textContent = files[0].link;
+            },
+            linkType: 'direct'
+        });
+        var link = "http://www.rockstor.com/media/images/dashboard.png";
+         var savebutton = Dropbox.createSaveButton({
+             files: [{url: link}],
+             
+         });
+
+        document.getElementById('container').appendChild(button);
+        document.getElementById('container').appendChild(savebutton);
+    </script>
+    
 <div class="row-fluid">
   <div class="span12">
     <!-- Content -->
@@ -30,5 +56,6 @@
   </div> <!-- span12 -->
 </div> <!-- row-fluid --> 
 
-
+</body>
+</html>
 
