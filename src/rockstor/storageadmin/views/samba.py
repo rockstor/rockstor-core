@@ -53,7 +53,7 @@ class SambaMixin(object):
         options = {}
         def_opts = cls.DEF_OPTS
         if (smbo is not None):
-            def_opts = self.DEF_OPTS.copy()
+            def_opts = cls.DEF_OPTS.copy()
             def_opts['comment'] = smbo.comment
             def_opts['browsable'] = smbo.browsable
             def_opts['guest_ok'] = smbo.guest_ok
@@ -162,7 +162,7 @@ class SambaDetailView(SambaMixin, rfc.GenericView):
                 e_msg = ('Samba export for the id(%s) does not exist' % smb_id)
                 handle_exception(Exception(e_msg), request)
 
-            options = self._validate_input(request)
+            options = self._validate_input(request, smbo=smbo)
             custom_config = options['custom_config']
             del(options['custom_config'])
             smbo.__dict__.update(**options)
