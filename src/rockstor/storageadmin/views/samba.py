@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from rest_framework.response import Response
+from rest_framework.exceptions import NotFound
 from django.db import transaction
 from django.conf import settings
 from storageadmin.models import (SambaShare, Disk, User, SambaCustomConfig)
@@ -87,7 +88,7 @@ class SambaMixin(object):
 
 class SambaListView(SambaMixin, ShareMixin, rfc.GenericView):
     queryset = SambaShare.objects.all()
-    
+
     @transaction.atomic
     def post(self, request):
         if ('shares' not in request.data):
@@ -131,11 +132,11 @@ class SambaListView(SambaMixin, ShareMixin, rfc.GenericView):
 class SambaDetailView(SambaMixin, rfc.GenericView):
     def get(self, *args, **kwargs):
         try:
-            data = SambaShare.objects.get(id=self.kwargs['id'])
-            serialized_data = SamabShareSerializer(data)
+            data = SambaShare.objects.get(id=self.kwargs['smb_id'])
+            serialized_data = SambaShareSerializer(data)
             return Response(serialized_data.data)
-        except:
-            return Response()
+        except SambaShare.DoesNotExist:
+            raise NotFound(detail=None)
 
     @transaction.atomic
     def delete(self, request, smb_id):

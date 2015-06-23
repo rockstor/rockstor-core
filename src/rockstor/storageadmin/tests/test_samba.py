@@ -67,12 +67,12 @@ class SambaTests(APITestMixin, APITestCase):
         """
         # get base URL
         self.get_base(self.BASE_URL)
-        
+
         # get sambashare with id
-        id = 3
-        self.client.get('%s/%d' % (self.BASE_URL,id))
-        
-    
+        response = self.client.get('%s/4' % self.BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND, msg=response)
+
+
     @mock.patch('storageadmin.views.samba.User')
     def test_post_requests(self, mock_user):
         """
