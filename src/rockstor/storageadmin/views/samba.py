@@ -17,13 +17,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from rest_framework.response import Response
+from rest_framework.exceptions import NotFound
 from django.db import transaction
 from django.conf import settings
 from storageadmin.models import (SambaShare, Disk, User, SambaCustomConfig)
 from storageadmin.serializers import SambaShareSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
-from share_helpers import validate_share
+from share import ShareMixin
 from system.samba import (refresh_smb_config, status, restart_samba)
 from fs.btrfs import (mount_share, is_share_mounted)
 
@@ -52,7 +53,7 @@ class SambaMixin(object):
         options = {}
         def_opts = cls.DEF_OPTS
         if (smbo is not None):
-            def_opts = self.DEF_OPTS.copy()
+            def_opts = cls.DEF_OPTS.copy()
             def_opts['comment'] = smbo.comment
             def_opts['browsable'] = smbo.browsable
             def_opts['guest_ok'] = smbo.guest_ok
@@ -85,22 +86,15 @@ class SambaMixin(object):
         return options
 
 
-class SambaListView(SambaMixin, rfc.GenericView):
-    def get_queryset(self, *args, **kwargs):
-        if ('id' in self.kwargs):
-            self.paginate_by = 0
-            try:
-                return SambaShare.objects.get(id=self.kwargs['id'])
-            except:
-                return []
-        return SambaShare.objects.all()
+class SambaListView(SambaMixin, ShareMixin, rfc.GenericView):
+    queryset = SambaShare.objects.all()
 
     @transaction.atomic
     def post(self, request):
         if ('shares' not in request.data):
             e_msg = ('Must provide share names')
             handle_exception(Exception(e_msg), request)
-        shares = [validate_share(s, request) for s in request.data['shares']]
+        shares = [self._validate_share(request, s) for s in request.data['shares']]
         options = self._validate_input(request)
         custom_config = options['custom_config']
         del(options['custom_config'])
@@ -138,11 +132,11 @@ class SambaListView(SambaMixin, rfc.GenericView):
 class SambaDetailView(SambaMixin, rfc.GenericView):
     def get(self, *args, **kwargs):
         try:
-            data = SambaShare.objects.get(id=self.kwargs['id'])
-            serialized_data = SamabShareSerializer(data)
+            data = SambaShare.objects.get(id=self.kwargs['smb_id'])
+            serialized_data = SambaShareSerializer(data)
             return Response(serialized_data.data)
-        except:
-            return Response()
+        except SambaShare.DoesNotExist:
+            raise NotFound(detail=None)
 
     @transaction.atomic
     def delete(self, request, smb_id):
@@ -168,7 +162,7 @@ class SambaDetailView(SambaMixin, rfc.GenericView):
                 e_msg = ('Samba export for the id(%s) does not exist' % smb_id)
                 handle_exception(Exception(e_msg), request)
 
-            options = self._validate_input(request)
+            options = self._validate_input(request, smbo=smbo)
             custom_config = options['custom_config']
             del(options['custom_config'])
             smbo.__dict__.update(**options)
