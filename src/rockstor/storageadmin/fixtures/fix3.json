@@ -320,6 +320,24 @@
     }
 },
 {
+    "pk": 17, 
+    "model": "storageadmin.share", 
+    "fields": {
+        "group": "root", 
+        "name": "share7", 
+        "perms": "755", 
+        "uuid": null, 
+        "compression_algo": "no", 
+        "owner": "root", 
+        "replica": false, 
+        "qgroup": "<function qgroup_id at 0x2c0f0c8>", 
+        "toc": "2015-06-22T21:11:51.524Z", 
+        "subvol_name": "share7", 
+        "pool": 6, 
+        "size": 1048576
+    }
+},
+{
     "pk": 1, 
     "model": "storageadmin.appliance", 
     "fields": {
@@ -378,6 +396,15 @@
     }
 },
 {
+    "pk": 2, 
+    "model": "storageadmin.group", 
+    "fields": {
+        "admin": true, 
+        "groupname": "admin2", 
+        "gid": 1001
+    }
+},
+{
     "pk": 1, 
     "model": "storageadmin.user", 
     "fields": {
@@ -391,9 +418,28 @@
         "user": [
             "admin"
         ], 
-        "smb_shares": [], 
+        "smb_shares": [
+            4
+        ], 
         "email": null, 
         "homedir": "/home/admin"
+    }
+},
+{
+    "pk": 2, 
+    "model": "storageadmin.user", 
+    "fields": {
+        "username": "admin2", 
+        "public_key": null, 
+        "shell": "/bin/bash", 
+        "group": 2, 
+        "uid": 1001, 
+        "admin": true, 
+        "gid": 1001, 
+        "user": null, 
+        "smb_shares": [], 
+        "email": null, 
+        "homedir": "/home/admin2"
     }
 },
 {
@@ -406,6 +452,18 @@
         "share": 16, 
         "guest_ok": "no", 
         "path": "/mnt2/share6"
+    }
+},
+{
+    "pk": 4, 
+    "model": "storageadmin.sambashare", 
+    "fields": {
+        "comment": "Samba-Export", 
+        "read_only": "yes", 
+        "browsable": "yes", 
+        "share": 17, 
+        "guest_ok": "no", 
+        "path": "/mnt2/share7"
     }
 },
 {
@@ -778,6 +836,162 @@
         "application": 1, 
         "token": "xFLkQChHz7v5cbXYeuNpYp7lmuuS2S", 
         "expires": "2015-06-22T19:47:17.853Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 5, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "hadM2u1jvIXjpkvWSwu6XPpMDTQ9zf", 
+        "expires": "2015-06-22T20:24:49.774Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 6, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "R2mq680Ni2B786uzDEOIDl6LvIuuZ0", 
+        "expires": "2015-06-22T20:25:01.125Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 7, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "jPB9ROAb7HbFyMZSBlc3ZIYgNI5IHv", 
+        "expires": "2015-06-22T22:50:46.161Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 8, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "yEOT1DLde5IpowvV9JFHGlrfEYMSF8", 
+        "expires": "2015-06-22T22:50:57.918Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 9, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "cH4q54ZFEoDbs3EaWvHxce29GoQ5An", 
+        "expires": "2015-06-22T22:52:49.275Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 10, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "cNn8ATCeShhvmcJzWhGZ40rMZh11rX", 
+        "expires": "2015-06-22T22:53:00.622Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 11, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "MsuhUBkNymYiEZ7iAgZFy6ZgjUoTXy", 
+        "expires": "2015-06-22T23:08:40.853Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 12, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "krJZpuGRkMnhBUuu7CQ4AG3z8HoM6m", 
+        "expires": "2015-06-22T23:08:52.203Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 13, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "ZyEQR7etCiFSRC0YLPsj9Ooc1qkAek", 
+        "expires": "2015-06-23T07:10:36.802Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 14, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "deggCeChHB0StxKg06XrCZmw7XO95Y", 
+        "expires": "2015-06-23T07:10:48.154Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 15, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "3CkFVpx63tXyAh7vW2NgI814hfWJvk", 
+        "expires": "2015-06-23T20:13:40.280Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 16, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "8iHmWeMsl1HXQXBZKbIPSX5oShcmqa", 
+        "expires": "2015-06-23T20:13:51.167Z", 
         "user": [
             "admin"
         ], 

@@ -69,6 +69,10 @@ class SambaTests(APITestMixin, APITestCase):
 
         # get sambashare with id
         response = self.client.get('%s/4' % self.BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response)
+        
+        # get sambashare with non-existant id
+        response = self.client.get('%s/5' % self.BASE_URL)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND, msg=response)
 
     def test_post_requests(self):
