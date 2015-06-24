@@ -93,8 +93,6 @@ class UserTests(APITestMixin, APITestCase):
             self.assertEqual(response.data['detail'], e_msg)
            
         
-        
-        
         # username with more than 30 characters     
         invalid_user_name = 'user'*11
         data = {'username': invalid_user_name,'password': 'pwadmin',}
@@ -128,23 +126,6 @@ class UserTests(APITestMixin, APITestCase):
         e_msg = ("shell(Y) is not valid. Valid shells are ('/opt/rock-dep/bin/rcli', '/bin/bash', '/sbin/nologin')")                 
         self.assertEqual(response.data['detail'], e_msg)
         
-        #?????? post not considering email
-        # create user with invalid email
-        data = {'username': 'user1','password': 'pwuser1','email':'...'}
-        #response = self.client.post(self.BASE_URL, data=data)
-        #self.assertEqual(response.status_code,
-        #                 status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)  
-         
-        # public_key
-        data = {'username': 'newUser','password': 'pwuser2','pubic_key':'xxx'}
-        self.mock_is_pub_key.side_effect = False
-        response = self.client.post(self.BASE_URL, data=data)
-        self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
-        e_msg = ("Public key is invalid")                 
-        self.assertEqual(response.data['detail'], e_msg) 
-        self.mock_is_pub_key.side_effect = True     
-           
         # create user with existing username
         data = {'username': 'admin','password': 'pwadmin',}
         response = self.client.post(self.BASE_URL, data=data)
@@ -173,7 +154,15 @@ class UserTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
         self.assertEqual(response.data['username'], 'newUser2')
-        
+    
+    def test_email_validation(self):
+    
+        # create user with invalid email
+        data = {'username': 'user1','password': 'pwuser1','email':'123'}
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)  
+             
         
     def test_put_requests(self):   
         
