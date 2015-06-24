@@ -254,7 +254,7 @@ deleteMultipleSnapshots: function(event) {
 		snapIds = snapIds.slice(0, snapIds.length-1);
 
 		var totalSize = _.reduce(this.selectedSnapshots, function(sum, snap) {
-			return sum + snap.get('e_usage');
+			return sum + snap.get('eusage');
 		}, 0, this);
 
 		var totalSizeStr = humanize.filesize(totalSize*1024);
