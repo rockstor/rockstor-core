@@ -53,4 +53,4 @@ class APITestMixin(APITestCase):
 
         # get object that doesn't exist
         response1 = self.client.get('%s/invalid' % baseurl)
-        self.assertEqual(response1.status_code, status.HTTP_404_NOT_FOUND, msg=response1.data)
+        self.assertEqual(response1.status_code, status.HTTP_404_NOT_FOUND, msg=response1)
