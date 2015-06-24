@@ -1,17 +1,17 @@
-<div class="row-fluid">
-  <div class="span8">
+<div class="row">
+  <div class="col-md-8">
     <label class="control-label"></label>
 
     <div class="form-box">
-      <form id="port-select-form" name="aform" class="form-horizontal">
+      <form id="port-select-form" name="aform" >
 
 	<div class="messages"></div>
 
-	<div class="control-group">
+	<div class="form-group">
 	  <% ports.each(function(port, index) { %>
 	  <label class="control-label" for="ports">Port(<%= port.get('containerp')%>)<span class="required"> *</span></label>
 
-	  <div class="controls">
+	  <div class="">
 	    <input type="text" id="<%= port.id %>" name="<%= port.id %>" value="<%= port.get('containerp')%>" title="host port to map to the Rock-on port">
 	  </div>
 	  <% }); %>

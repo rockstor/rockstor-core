@@ -1,13 +1,13 @@
 <h3>Add SFTP Share</h3>
-<div class="row-fluid">
-  <div class="span8">
+<div class="row">
+  <div class="col-md-8">
     <label class="control-label"></label>
     <div class="form-box">
-      <form id="add-sftp-share-form" name="aform" class="form-horizontal">
+      <form id="add-sftp-share-form" name="aform" >
         <div class="messages"></div>
 
         <!-- Shares -->
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="shares">Shares to export via sftp<span class="required">*</span></label>
           <div class="controls">
             <select name="shares" id="shares" size="10" multiple data-placeholder="Select shares">
@@ -19,29 +19,29 @@
         </div>
 
         <!-- Read only -->
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="read_only">Access type</label>
           <div class="controls">
-            <label class="radio inline">
+            <label class="radio-inline">
               <input type="radio" name="read_only" value="false" checked="checked"> Writable 
             </label>
-            <label class="radio inline">
+            <label class="radio-inline">
               <input type="radio" name="read_only" value="true"> Read only
             </label>
           </div>
         </div>
 
         <!-- Submit -->
-        <div class="control-group">
+        <div class="form-group">
           <div class="controls">
-            <a id="cancel" class="btn">Cancel</a>
+            <a id="cancel" class="btn btn-default">Cancel</a>
             <input type="Submit" id="create-sftp-share" class="btn btn-primary" value="Submit"></input>
           </div>
         </div>
 
       </form>
     </div>
-  </div> <!-- span8 -->
-</div>  <!-- row-fluid -->
+  </div> <!-- col-md-8 -->
+</div>  <!-- row -->
 
 

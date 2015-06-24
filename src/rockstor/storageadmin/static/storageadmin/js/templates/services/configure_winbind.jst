@@ -21,15 +21,15 @@
 
 <h3>Configure <%= service.get('display_name') %></h3>
 
-<div class="row-fluid">
-  <div class="span8">
+<div class="row">
+  <div class="col-md-8">
     <label class="control-label"></label>
     <div class="form-box">
       <form id="winbind-form" name="aform">
         <div class="messages"></div>
         
         <!-- Winbind Domain -->
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="domain">Winbind Domain<span class="required"> *</span></label>
           <div class="controls">
             <input type="text" id="domain" name="domain" value="<%= config.domain %>" placeholder="Domain" >
@@ -38,7 +38,7 @@
 
         <!-- Security model -->
         <% var securityTypes = ['ads','domain','server','user']; %>
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="security">Security Model<span class="required"> *</span></label>
           <div class="controls">
             <select id="security" name="security">
@@ -55,7 +55,7 @@
         </div>
 
         <!-- Winbind ADS Realm -->
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="realm">Winbind ADS Realm<span class="required"> * </span></label>
           <div class="controls">
             <% if (config.security == 'ads' || _.isNull(config.security) || _.isUndefined(config.security) ) { %>
@@ -70,7 +70,7 @@
         </div>
         
         <!-- Winbind Domain Controllers -->
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="controllers">Winbind Domain Controllers<span class="required"> *</span></label>
           <div class="controls">
             <input type="text" id="controllers" name="controllers" value="<%= config.controllers %>" placeholder="Controllers">
@@ -79,7 +79,7 @@
 
         <!-- Template Shell -->
         <% var templateShells = ['/bin/false', '/bin/sh', '/bin/bash', '/bin/nologin', '/bin/tcsh', '/bin/csh']; %>
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="templateshell">Template Shell<span class="required"> *</span></label>
           <div class="controls">
             <% if (config.security == 'ads' || config.security == 'domain' || _.isNull(config.security) || _.isUndefined(config.security))  { %>
@@ -106,24 +106,22 @@
               </select>
             <% } %>
           </div>
-        </div> <!-- control-group -->
+        </div> <!-- form-group -->
 
         <!-- Offline login -->
-        <div class="control-group">
-          <label class="checkbox">
+        <div class="form-group">
             <% if (config.allow_offline) { %>
               <input type="checkbox" name="allow-offline" id="allow-offline"
               checked="true">
             <% } else { %>
               <input type="checkbox" name="allow-offline" id="allow-offline">
             <% } %> Allow Offline login?
-          </label>
         </div>
 
         <!-- Submit -->
-        <div class="control-group">
+        <div class="form-group">
           <div class="controls">
-            <button id="cancel" class="btn">Cancel</button>
+            <button id="cancel" class="btn btn-default">Cancel</button>
             <button type="Submit" id="submit" class="btn btn-primary">Submit</button>
           </div>
         </div>
@@ -131,7 +129,7 @@
       </form>
 
     </div> <!-- form-box -->
-  </div> <!-- span8 -->
-</div> <!-- row-fluid -->
+  </div> <!-- col-md-8 -->
+</div> <!-- row -->
 
 

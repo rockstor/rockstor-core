@@ -21,11 +21,11 @@
 
 
 <h4>Resize Share</h4>
-<div class="row-fluid">
-  <div class="span8">
+<div class="row">
+  <div class="col-md-8">
     <div class="form-box"> 
       <div class="messages"></div>
-      <div class="control-group">
+      <div class="form-group">
         <label class="control-label" for="new-size">Size</label>
         <div class="controls">
           <input class="smallinput" type="text" name="new-size" id="new-size" value="<%= humanize.filesize(share.get('size')*1024).replace(/[^0-9\.]+/g,"") %>">
@@ -37,9 +37,9 @@
           </select>
         </div>
       </div>
-      <div class="control-group">
+      <div class="form-group">
         <div class="controls">
-          <a class="btn" href="#" id="js-resize-cancel"> Cancel</a>
+          <a class="btn btn-default" href="#" id="js-resize-cancel"> Cancel</a>
           <a class="btn btn-primary" href="#" id="js-resize-save"> Save</a>
         </div>
       </div>

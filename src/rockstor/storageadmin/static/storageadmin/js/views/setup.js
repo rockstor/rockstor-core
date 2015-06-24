@@ -187,7 +187,7 @@ SetupView = RockstorLayoutView.extend({
   renderSidebar: function(name, selected) {
     var sidenavTemplate = window.JST["common_sidenav_" + name];
     $("#sidebar-inner").html(sidenavTemplate({selected: selected}));
-  },
+  }
 
 
 });

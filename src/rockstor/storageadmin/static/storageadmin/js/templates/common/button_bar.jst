@@ -20,7 +20,7 @@
 </script>
 
 <% _.each(actions, function(action) { %>
-  <button id="js-<%= action.name %>" class="btn <%= action.class %>" type="button"
+  <button id="js-<%= action.name %>" class="btn btn-default <%= action.class %>" type="button"
     <% if (!_.isUndefined(action.options)) { %>
       <% _.each(action.options, function(v,k) { %>
         <%= k %>=<%= v %>

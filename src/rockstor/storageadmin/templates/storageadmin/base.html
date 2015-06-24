@@ -1,3 +1,4 @@
+{% load staticfiles %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -26,7 +27,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RockStor | {% block title %}{% endblock %}</title>
     <link href="/static/storageadmin/css/bootstrap.min.css" rel="stylesheet">
-    <link href="/static/storageadmin/css/bootstrap-responsive.css" rel="stylesheet">
     <link href="/static/storageadmin/css/datepicker.css" rel="stylesheet">
     <link href="/static/storageadmin/css/bootstrap-timepicker.css" rel="stylesheet">
     <link href="/static/storageadmin/css/style.css" rel="stylesheet">
@@ -109,23 +109,25 @@
     {% endfor %}
   </head>
   <body>
-
-    <div class="navbar navbar-inverse navbar-fixed-top">
-      <div class="navbar-inner">
-        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
-        <button class="btn btn-navbar" data-toggle="mycollapse" data-target=".nav-collapse" type="button">
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
-        <div id="logo">
-          <object data="/static/storageadmin/img/rockstor_webui_logo.svg" width="100px"
-            type="image/svg+xml"></object>
-        </div>
-        <div class="nav-collapse collapse">
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container-fluid">
+	<div class="navbar-header">
+          <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+          <button class="navbar-toggle collapsed" data-toggle="mycollapse" data-target=".nav-collapse" type="button">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <div id="navbar-brand">
+	    <a href="#/home">
+              <img class="img-responsive logo" src="{% static 'storageadmin/img/rockstorlogo-font2.png' %}" />
+	      </a>
+          </div>
+	</div>
+        <div class="collapse navbar-collapse">
           <div id="navbar-links"></div>
         </div>
-      </div> <!-- navbar-inner -->
+      </nav> <!-- navbar-inner -->
     </div> <!-- navbar -->
     <div id="appliance-breadcrumb">
       <a id="appliance-name" href="#"></a>
@@ -178,33 +180,54 @@
       <div id="appliance-select-content"></div>
     </div>
 
-    <div id="donate-modal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="donate-modal-label" aria-hidden="true">
-      <div class="modal-header">
-        <h3 id="donate-modal-label">We really appreciate your generous donation. Choose an amount and click Donate. Thank you!</h3>
-        <br>
-      </div>
-      <div class="modal-body">
-      <label class="radio inline">
-        <input type="radio" name="contrib" id="contrib10" value="10" checked>$10
-      </label>
-      <label class="radio inline">
-        <input type="radio" name="contrib" class="contrib-other" id="contrib20" value="20">$20
-      </label>
-      <label class="radio inline">
-        <input type="radio" name="contrib" class="contrib-other" id="contrib30" value="30">$30
-      </label>
-      <label class="radio inline">
-        <input type="radio" name="contrib" class="contrib-other" id="contrib50" value="50">$50
-      </label>
-      <label class="radio inline">
-        <input type="radio" name="contrib" id="contrib-custom" value="custom">Other
-      </label>
-      &nbsp;<input class="span2" id="custom-amount" name="custom-amount" placeholder="Enter amount" style="display: none">
-      <br><br>
-      <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
-      <a id="donateYes" class="btn btn-primary" title="Donate">Donate</a>
-      </div>
-    </div>
+    <div class="modal fade" id="donate-modal">
+      <div class="modal-dialog">
+	<div class="modal-content">
+	  <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+	    <h3 id="donate-modal-label">We really appreciate your generous donation. Choose an amount and click Donate. Thank you!</h3>
+	  </div>
+	  <div class="modal-body">
+	    <div class="radio">
+	      <label>
+		<input type="radio" name="contrib" id="contrib10" value="10" checked>$10
+	      </label>
+	    <div class="radio">
+	      <label>
+		<input type="radio" name="contrib" class="contrib-other" id="contrib20" value="20">$20
+	      </label>
+	    </div>
+	    <div class="radio">
+	      <label>
+		<input type="radio" name="contrib" class="contrib-other" id="contrib30" value="30">$30
+	      </label>
+	    </div>
+	    <div class="radio">
+	      <label>
+		<input type="radio" name="contrib" class="contrib-other" id="contrib50" value="50">$50
+	      </label>
+	    </div>
+	    <div class="radio">
+	      <label>
+		<input type="radio" name="contrib" id="contrib-custom" value="custom">Other
+	      </label>
+	    </div>
+	    &nbsp;<input class="span2" id="custom-amount" name="custom-amount" placeholder="Enter amount" style="display: none">
+	    <br><br>
+	    <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+	    <a id="donateYes" class="btn btn-primary" title="Donate">Donate</a>
+
+
+	  </div>
+	  <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary">Save changes</button>
+	  </div>
+	</div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+    
     <form name="dummy-form" action="/login" method="post">
       {% csrf_token %}
     </form>

@@ -1,24 +1,24 @@
 <h3>Storage</h3>
-<ul class="nav">
+<ul class="side">
   <% if (selected == "disks") { %>
-    <li><a href="#disks" class="selected"><i class="icon-hdd icon-white"></i> Disks</a></li>
+    <li><a href="#disks" class="selected"><i class="glyphicon glyphicon-hdd "></i> Disks</a></li>
   <% } else { %>
-    <li><a href="#disks"><i class="icon-hdd"></i> Disks</a></li>
+    <li><a href="#disks"><i class="glyphicon glyphicon-hdd"></i> Disks</a></li>
   <% } %>
   <% if (selected == "pools") { %>
-    <li><a href="#pools" class="selected"><i class="icon-list icon-white"></i> Pools</a></li>
+    <li><a href="#pools" class="selected"><i class="glyphicon glyphicon-list "></i> Pools</a></li>
   <% } else { %>
-    <li><a href="#pools"><i class="icon-list"></i> Pools</a></li>
+    <li><a href="#pools"><i class="glyphicon glyphicon-list"></i> Pools</a></li>
   <% } %>
   <% if (selected == "shares") { %>
-    <li><a href="#shares" class="selected"><i class="icon-folder-open icon-white"></i> Shares</a></li>
+    <li><a href="#shares" class="selected"><i class="glyphicon glyphicon-folder-open "></i> Shares</a></li>
   <% } else { %>
-    <li><a href="#shares"><i class="icon-folder-open"></i> Shares</a></li>
+    <li><a href="#shares"><i class="glyphicon glyphicon-folder-open"></i> Shares</a></li>
   <% } %>
   <% if (selected == "snapshots") { %>
-  <li><a href="#snapshots" class="selected"><i class="icon-camera  icon-white"></i> Snapshots</a></li>
+  <li><a href="#snapshots" class="selected"><i class="glyphicon glyphicon-camera  "></i> Snapshots</a></li>
 <% } else { %>
-  <li><a href="#snapshots">  <i class="icon-camera"></i> Snapshots</a></li>
+  <li><a href="#snapshots">  <i class="glyphicon glyphicon-camera"></i> Snapshots</a></li>
 <% } %>
  
   <li>
@@ -40,7 +40,7 @@
   </li>
   <li>
     <div class="subnav">
-      <i class="icon-share"></i> File Sharing
+      <i class="glyphicon glyphicon-share"></i> File Sharing
       <ul>
         <% if (selected == "nfs-exports") { %>
           <li><a href="#nfs-exports" class="selected">NFS</a></li>

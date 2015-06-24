@@ -20,8 +20,8 @@
 </script>
 
 <!-- Module Body -->
-<div class="row-fluid">
-  <div class="span12">
+<div class="row">
+  <div class="col-md-12">
   <div id="details-header">
       <table>
         <tr>
@@ -45,7 +45,7 @@
         </tr>
       </table>
     </div>
-    <div id="nfs-warning" class="alert" style="display:none">
+    <div id="nfs-warning" class="alert alert-warning" style="display:none">
     	<strong>Warning! NFS Service is not running</strong>. Clients won't be able to mount unless NFS is running.
     </div>
     <br>
@@ -85,9 +85,9 @@
               </td>
               <td><%= n.get('syncable') %></td>
               <td>
-                <a href="#nfs-exports/edit/<%= n.id %>"><i class="icon-edit"></i></a>
+                <a href="#nfs-exports/edit/<%= n.id %>"><i class="glyphicon glyphicon-edit"></i></a>
                 &nbsp;
-                <a href="#" class="delete-nfs-export" data-id="<%= n.id %>"><i class="icon-trash"></i></a>
+                <a href="#" class="delete-nfs-export" data-id="<%= n.id %>"><i class="glyphicon glyphicon-trash"></i></a>
               </td>
             </tr>
           <% }); %>
@@ -109,9 +109,9 @@
       Mount a share using <code>mount <%= currentAppliance.get('ip') %>:/export/&lt;share_name&gt; &lt;mount_pt&gt;</code>
     <% } %>
     <!-- End Content -->
-  </div> <!-- span12 -->
-</div> <!-- row-fluid -->
+  </div> <!-- col-md-12 -->
+</div> <!-- row -->
 <br>
-<a href="##nfs-exports/edit/-1" id="add-nfs-export" class="btn btn-primary"><i class="icon-edit icon-white"></i> Add NFS Export</a>
-<a href="#nfs-advanced-edit" id="nfs-advanced-edit" title="Edit /etc/exports file directly" class="btn btn-primary"><i class="icon-edit icon-white"></i> Advanced Edit</a>
+<a href="##nfs-exports/edit/-1" id="add-nfs-export" class="btn btn-primary"><i class="glyphicon glyphicon-edit "></i> Add NFS Export</a>
+<a href="#nfs-advanced-edit" id="nfs-advanced-edit" title="Edit /etc/exports file directly" class="btn btn-primary"><i class="glyphicon glyphicon-edit "></i> Advanced Edit</a>
 <!-- end module body -->

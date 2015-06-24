@@ -19,13 +19,13 @@
   */
 </script>
 <h3>Update Certificate</h3>
-<div class="row-fluid">
-  <div class="span8">
+<div class="row">
+  <div class="col-md-8">
     <label class="control-label"></label>
     <div class="form-box">
-      <form id="update-certificate-form" name="update-certificate-form" class="form-horizontal">
+      <form id="update-certificate-form" name="update-certificate-form" >
         <div class="messages"></div>
-        <div class="control-group">
+        <div class="form-group">
 	 	 <label class="control-label" for="certificatename">Certificate Name
           <span class="required"> *</span>
        	 </label>
@@ -33,7 +33,7 @@
        		<input type="text" class="valid" id="certificatename" name="certificatename" title="Name of the certificate.">
          </div>
         </div>
-        <div class="control-group">
+        <div class="form-group">
 	 	 <label class="control-label" for="certificate">Certificate
           <span class="required"> *</span>
        	 </label>
@@ -47,7 +47,7 @@ BAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnR
  title="Content of the certificate starting with '-----BEGIN CERTIFICATE-----' and ending with  '-----END CERTIFICATE-----' ."></textarea>
          </div>
         </div>
-        <div class="control-group">
+        <div class="form-group">
 	 	 <label class="control-label" for="privatekey">Private Key
           <span class="required"> *</span>
        	 </label>
@@ -61,7 +61,7 @@ GEs=
 -----END ENCRYPTED PRIVATE KEY-----" title="Content of the private key starting with '-----BEGIN ENCRYPTED PRIVATE KEY-----' and ending with  '-----END ENCRYPTED PRIVATE KEY-----'."></textarea>
          </div>
         </div>
-        <div class="control-group">
+        <div class="form-group">
           <div class="controls">
             <button id="cancel" class="btn btn-primary">Cancel</button>
             <button type="Submit" id="save-certificate" class="btn btn-primary">Submit</button>

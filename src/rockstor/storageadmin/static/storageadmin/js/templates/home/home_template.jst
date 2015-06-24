@@ -23,8 +23,8 @@
 
 <div id="dashboard-config-popup" class="modal hide fade">
   <div id="dashboard-config-content">
-    <div class="row-fluid">
-      <div class="span12">
+    <div class="row">
+      <div class="col-md-12">
         <h3>Select Dashboard widgets</h3>
       </div>
     </div>
@@ -32,13 +32,22 @@
 </div>
 
 
-<div id="update-version-modal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="update-version-modal-label" aria-hidden="true">
-  <div class="modal-body">
-    <h3 id="update-version-modal-label">Thanks for installing Rockstor. We recommend updating to the latest version.</h3>
-    <br>
-    <h4>Would you like to update now?</h4>
-    <br>
-    <button class="btn" data-dismiss="modal" aria-hidden="true">No, Thanks</button>
-    <a id="updateYes" class="btn btn-primary" title="Update">Update Now</a>
-  </div>
-</div>
+<div class="modal fade" id="update-version-modal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+        
+      </div>
+      <div class="modal-body">
+	<h3 id="update-version-modal-label">Thanks for installing Rockstor. We recommend updating to the latest version.</h3>
+	<br>
+	<h4>Would you like to update now?</h4>
+	<br>
+      </div>
+      <div class="modal-footer">
+	<button class="btn btn-default" data-dismiss="modal" aria-hidden="true">No, Thanks</button>
+	<a id="updateYes" class="btn btn-primary" title="Update">Update Now</a>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->

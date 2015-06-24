@@ -42,13 +42,13 @@
     </td>
   </tr>
 </table>
-<div id="ts-warning" class="alert" style="display:none">
+<div id="ts-warning" class="alert alert-warning" style="display:none">
     	<strong>Warning! Task Scheduler is not running</strong>. Tasks won't be scheduled unless it's running.
 </div>
 <br>
 <% if (!scheduledTasks.isEmpty()) { %>
-  <div class="row-fluid">
-    <div class="span12">
+  <div class="row">
+    <div class="col-md-12">
       <table id="scheduled-tasks-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of scheduled tasks">
         <thead>
           <tr>
@@ -87,7 +87,7 @@
                   <% if (taskMap[t.id].length > 0) { %>
                     <% var task = taskMap[t.id][0]; %>
                     <% if (task.get('state') != 'scheduled' && task.get('state') != 'pending' && task.get('state') != 'running' && task.get('state') != 'finished') { %>
-                      <a href="#scheduled-tasks/<%= t.id %>/log" class="task-log"><i class="icon-warning-sign"></i> <%= task.get('state') %></a>
+                      <a href="#scheduled-tasks/<%= t.id %>/log" class="task-log"><i class="glyphicon glyphicon-warning-sign"></i> <%= task.get('state') %></a>
                     <% } else if (task.get('state') == 'finished') { %>
                       <a href="#scheduled-tasks/<%= t.id %>/log" class="task-log"><%= moment(task.get('end')).fromNow() %></a>
                     <% } else { %>
@@ -99,9 +99,9 @@
 
               </td>
               <td>
-	        <a href="#edit-scheduled-task/<%= t.get('id') %>" <i class= "icon-pencil" rel="rooltip" title="Edit"></i></a>
+	        <a href="#edit-scheduled-task/<%= t.get('id') %>" <i class= "glyphicon glyphicon-pencil" rel="rooltip" title="Edit"></i></a>
 		&nbsp;
-                <a href="#" data-task-name="<%= t.get('name') %>" data-task-id="<%= t.id %>" data-action="delete"><i class="icon-trash" rel="tooltip" title="Delete"></i></a>
+                <a href="#" data-task-name="<%= t.get('name') %>" data-task-id="<%= t.id %>" data-action="delete"><i class="glyphicon glyphicon-trash" rel="tooltip" title="Delete"></i></a>
 
               </td>
             </tr>

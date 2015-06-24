@@ -20,21 +20,21 @@
 </script>
 <form name="pool-table-ph-form" id="pool-table-ph-form">
 <!-- Module Body -->
-<div class="row-fluid">
-  <div class="span12">
+<div class="row">
+  <div class="col-md-12">
     <!-- Content -->
      <div class="messages"></div>
       <div id="pools-table-ph">
       </div>
     <!-- End Content -->
-  </div> <!-- span12 -->
-</div> <!-- row-fluid -->
+  </div> <!-- col-md-12 -->
+</div> <!-- row -->
 
  <% if(noOfFreeDisks > 0){ %>
-<a href="#add_pool" id="add_pool" class="btn btn-primary"><i class="icon-edit icon-white"></i> Create Pool</a>
+<a href="#add_pool" id="add_pool" class="btn btn-primary"><i class="glyphicon glyphicon-edit "></i> Create Pool</a>
 
 <% }else{ %>
-<a  id="add_pool" class="btn btn-primary disabled" title="There are no Disks available to create a Pool at this time." ><i class="icon-edit icon-white"></i> Create Pool</a>
+<a  id="add_pool" class="btn btn-primary disabled" title="There are no Disks available to create a Pool at this time." ><i class="glyphicon glyphicon-edit "></i> Create Pool</a>
 <% } %>
 <!-- end module body -->
 </form>

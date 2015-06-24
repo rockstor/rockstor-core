@@ -21,8 +21,8 @@
 
 
 <div id="messages"></div>
-<div class="row-fluid">
-  <div class="span12">
+<div class="row">
+  <div class="col-md-12">
     <br>
     <br>
     <div id="services-list">
@@ -41,14 +41,14 @@
                   <td>
                     <%= service.get('display_name') %>&nbsp;
                     <% if ((service.get('name') == 'nis') || (service.get('name') == 'ntpd') || (service.get('name') == 'winbind') || (service.get('name') == 'ldap') || (service.get('name') == 'snmpd') || (service.get('name') == 'docker') || (service.get('name') == 'smartd')) { %>
-                      <a href="#" class="configure" data-service-name="<%= service.get('name') %>"><i class="icon-wrench"></i></a>
+                      <a href="#" class="configure" data-service-name="<%= service.get('name') %>"><i class="glyphicon glyphicon-wrench"></i></a>
                     <% } %>
                     <% if ((service.get('name') == 'winbind')) { %>
                       &nbsp;
                       <% if ((adServiceConfig.security == 'ads' || adServiceConfig.security == 'domain'))  { %>
-                        <button type="button" id="join-domain" class="btn btn-primary btn-mini">Join Domain</button>
+                        <button type="button" id="join-domain" class="btn btn-primary btn-xs">Join Domain</button>
                       <% } else { %>
-                        <button type="button" id="join-domain" class="btn btn-mini disabled">Join Domain</button>
+                        <button type="button" id="join-domain" class="btn btn-xs disabled">Join Domain</button>
                       <% } %>
                       &nbsp;&nbsp;
                       <span id="join-domain-status"></span>
@@ -72,7 +72,7 @@
                     <div class="simple-overlay" id="<%= service.get('name') %>-err-popup"><div class="overlay-content"></div></div>
                   </td>
                   <!--
-                  <td><a href="#" class="configure" data-service-name="<%= service.get('name') %>"><i class="icon-wrench"></i></a></td>
+                  <td><a href="#" class="configure" data-service-name="<%= service.get('name') %>"><i class="glyphicon glyphicon-wrench"></i></a></td>
                   -->
 
                 </tr>
@@ -95,7 +95,7 @@
   <!-- Body -->
   <div class="modal-body">
     <div id="join-domain-err"></div>
-    <div class="alert">
+    <div class="alert alert-warning">
       Please make sure you have configured Winbind with the correct values.<br>
       <br>
       Current configuration:<br>
@@ -108,21 +108,21 @@
 
     </div>
     <form id="join-domain-form" name="join-domain-form">
-      <div class="control-group">
+      <div class="form-group">
         <label class="control-label" for="administrator">Administrator<span class="required"> *</span></label>
         <div class="controls">
           <input type="text" id="join-domain-administrator" name="administrator" value="" placeholder="Administrator" >
         </div>
       </div>
-      <div class="control-group">
+      <div class="form-group">
         <label class="control-label" for="password">Password<span class="required"> *</span></label>
         <div class="controls">
           <input type="password" id="join-domain-password" name="password" value="" placeholder="Password" >
         </div>
       </div>
-      <div class="control-group">
+      <div class="form-group">
         <div class="controls">
-          <button id="cancel-join" class="btn" data-dismiss="modal">Cancel</button>
+          <button id="cancel-join" class="btn btn-default" data-dismiss="modal">Cancel</button>
           <button type="Submit" id="join-domain-submit" class="btn btn-primary">Submit</button>
         </div>
       </div>

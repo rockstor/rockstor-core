@@ -3,19 +3,19 @@
 <% } else {%>
 <h3>Add Samba export</h3>
 <% } %>
-<div class="row-fluid">
-  <div class="span8">
+<div class="row">
+  <div class="col-md-8">
     <label class="control-label"></label>
     <div class="form-box">
-      <form id="add-samba-export-form" name="aform" class="form-horizontal">
+      <form id="add-samba-export-form" name="aform" >
         <div class="messages"></div>
 
         <!-- Shares -->
-        <div class="control-group">
+        <div class="form-group">
           <% if (sambaShareId == null) {  %>
             <label class="control-label" for="shares">Shares to export<span class="required"> *</span></label>
           <% } %>
-          <div class="controls">
+          <div class="">
             <% if (sambaShareId == null) {  %>
             <select name="shares" id="shares" size="10" data-placeholder="Select shares to export" multiple>
             <% _.each(shares, function(share, index) { %>
@@ -29,9 +29,9 @@
         </div>
 
         <!-- Admin Users  -->
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="admin_users">Admin users</label>
-          <div class="controls">
+          <div class="">
             <select name="admin_users" id="admin_users" size="10" title="(optional) list of users who will be granted super-user privileges for all file operations." data-placeholder="Select admin user(s)" multiple>
 
               <% users.each(function(user, index) {
@@ -52,11 +52,11 @@
           </div>
         </div>
 
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="browsable">Browsable<span class="required"> *</span></label>
-          <div class="controls">
+          <div class="">
               <% _.each(browsable_choices, function(c) { %>
-                <label class="radio inline">
+                <label class="radio-inline">
                  <% if (sambaShareId!=null){ %>
                     <% if(c.value == smbShare.get("browsable")){ %>
                         <input type="radio" name="browsable" value="<%= c.value %>" checked> <%= c.name %>
@@ -76,11 +76,11 @@
           </div>
         </div>
 
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="guest_ok">Guest Ok<span class="required"> *</span></label>
-          <div class="controls">
+          <div class="">
              <% _.each(guest_ok_choices, function(c) { %>
-                <label class="radio inline">
+                <label class="radio-inline">
                 <% if (sambaShareId!=null){ %>
                     <% if(c.value == smbShare.get("guest_ok")){ %>
                         <input type="radio" name="guest_ok" value="<%= c.value %>" checked> <%= c.name %>
@@ -100,11 +100,11 @@
            </div>
         </div>
 
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="read_only">Read only<span class="required"> *</span></label>
-          <div class="controls">
+          <div class="">
              <% _.each(read_only_choices, function(c) { %>
-                <label class="radio inline">
+                <label class="radio-inline">
                 <% if (sambaShareId!=null){ %>
                     <% if(c.value == smbShare.get("read_only")){ %>
                         <input type="radio" name="read_only" value="<%= c.value %>" checked> <%= c.name %>
@@ -124,28 +124,29 @@
            </div>
         </div>
 
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="comment">Comment</label>
-          <div class="controls">
+          <div class="">
             <input type="text" id="comment" name="comment" value="Samba-Export" title="Comment string to associate with the new share">
           </div>
         </div>
 
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="custom_config">Custom configuration </label>
-          <div class="controls">
+          <div class="">
           <% if (sambaShareId!=null){ %>
-           <textarea id="custom_config" name="custom_config" rows="10" columns="40" class="span10" title="You can provide custom parameters here. These lines will be added to the section of each Share selected above in smb.conf"><%= configList %></textarea>
+           <textarea id="custom_config" name="custom_config" class="form-control" title="You can provide custom parameters here. These lines will be added to the section of each Share selected above in smb.conf"><%= configList %></textarea>
            <% }else { %>
-           <textarea id="custom_config" name="custom_config" rows="10" columns="40" class="span10" title="You can provide custom parameters here. These lines will be added to the section of each Share selected above in smb.conf"></textarea>
+           <textarea id="custom_config" name="custom_config" class="form-control" title="You can provide custom parameters here. These lines will be added to the section of each Share selected above in smb.conf"></textarea>
               <%  } %>
         </div>
 
       </div>
-        <div class="control-group">
-          <div class="controls">
-            <a id="cancel" class="btn">Cancel</a>
+        <div class="form-group">
+          <div class="">
+
             <input type="Submit" id="create-samba-export" class="btn btn-primary" value="Submit"></input>
+	    <a id="cancel" class="btn btn-default">Cancel</a>
           </div>
         </div>
 

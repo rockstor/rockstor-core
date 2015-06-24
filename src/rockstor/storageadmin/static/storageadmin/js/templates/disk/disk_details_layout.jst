@@ -23,7 +23,7 @@
 <!-- page heading -->
 
 <% if (!disk.get('smart_available')) { %>
-<div class="alert alert-error">
+<div class="alert alert-danger">
   <h4>S.M.A.R.T support is not available for this disk (<%= disk.get('name')%>)</h4>
 </div>
 <% } else if (!disk.get('smart_enabled')) { %>
@@ -32,14 +32,12 @@
 </div>
 <% } else { %>
 <div class="pull-right">
-  <button id="smartinfo" class="btn btn-primary pull-right" title="Refresh for latest information"><i class="icon-refresh icon-white"></i>Refresh</button>
+  <button id="smartinfo" class="btn btn-primary pull-right" title="Refresh for latest information"><i class="glyphicon glyphicon-refresh "></i>Refresh</button>
 </div>
 <span class="h2">S.M.A.R.T details for <strong><%= disk.get('name') %></strong></span>
 <% } %>
-<br>
-<br>
 
-<ul class="css-tabs">
+<ul class="nav nav-tabs">
   <li class="active"><a href="#smartidentity" data-toggle="tab">Identity</a></li>
   <li><a href="#smartattributes" data-toggle="tab">Attributes</a></li>
   <li><a href="#smartcapabilities" data-toggle="tab">Capabilities</a></li>
@@ -51,7 +49,7 @@
 <div class="css-panes">
 
   <div id="smartidentity">
-    <div class="row-fluid">
+    <div class="row">
       <% if (smartinfo.get('identity')) { %>
         <% var identity = smartinfo.get('identity'); %>
 	<table id="smartidentity-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" summary="List of S.M.A.R.T identity attributes">
@@ -133,7 +131,7 @@
   </div>
 
   <div id="smartattributes">
-      <div class="row-fluid">
+      <div class="row">
 	<table id="smartattributes-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" summary="List of S.M.A.R.T attributes">
 	  <thead>
 	    <tr>
@@ -170,7 +168,7 @@
   </div>
 
   <div id="smartcapabilities">
-    <div class="row-fluid">
+    <div class="row">
       <table id="smartcapabilites-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" summary="Table of S.M.A.R.T capabilities">
 	<thead>
 	  <tr>
@@ -194,7 +192,7 @@
     </div>
   </div>
   <div id="smarterrorlogs">
-    <div class="row-fluid">
+    <div class="row">
       <% if (errorlogsummary.length == 0) { %>
         <h3>There are no errors.</h3>
       <% } else { %>
@@ -230,7 +228,7 @@
   </div>
 
   <div id="smarttestlogs">
-    <div class="row-fluid">
+    <div class="row">
       <% if (testlog.length == 0) { %>
       <h3>There are no Self-Test logs.</h3>
       <% } else { %>
@@ -267,9 +265,9 @@
   </div>
 
   <div id="smarttests">
-    <div class="row-fluid">
+    <div class="row">
       <% if (!disk.get('smart_available') || !disk.get('smart_enabled')) { %>
-      <div class="alert alert-error">
+      <div class="alert alert-danger">
 	<h4>Tests cannot be run because S.M.A.R.T support is either unavailable or disabled</h4>
       </div>
       <% } else { %>
@@ -280,15 +278,15 @@
 	to complete if the drive is not idle. You will not be able to access
 	the drive's SMART data while a test is in progress.
       </p>
-      <div class="span8">
+      <div class="col-md-8">
 	<label class="control-label"></label>
 	<div class="form-box">
-	  <form class="form-horizontal" name="run-test-form" id="run-test-form">
+	  <form  name="run-test-form" id="run-test-form">
 	    <div class="messages"></div>
-	    <div class="control-group">
+	    <div class="form-group">
 	      <% if (!running_test) { %>
 	      <label class="control-label" for="test_type">Test Type </label>
-	      <div class="controls">
+	      <div class="">
 		<select id="test_name" name="test_name" title="select the test you want to run">
 		  <% for (t in tests) { %>
 		  <option value="<%= t %>"><%= t %>    (Estimated duration: <%= tests[t] %>)</option>
@@ -297,13 +295,13 @@
 	      </div>
 	    </div>
 
-	    <div class="control-group">
-	      <div class="controls">
+	    <div class="form-group">
+	      <div class="">
 		<button id="test-start" class="btn btn-primary" title="Start the test">Start Test</button>
 	      </div>
 	    </div>
 	    <% } else { %>
-	    <div class="control-group">
+	    <div class="form-group">
 	      <h4><%= running_test %></h4>
 	      <p>Wait until this test finishes to start a new one. Refresh for an update.</p>
 	    </div>

@@ -1,20 +1,20 @@
 <h3>Start a new probe</h3>
-<div class="row-fluid">
-  <div class="span8">
+<div class="row">
+  <div class="col-md-8">
     <label class="control-label"></label>
     <div class="form-box">
       <form id="probe-create-form" name="aform">
         <div class="messages"></div>
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="probe-name">Probe Name<span class="required"> *</span></label>
-          <div class="controls">
+          <div class="">
             <input type="text" name="probe_name" id="probe-name" name="probeName" placeholder="Probe Name" >
 
           </div>
         </div>
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="probe-type">Probe Type<span class="required"> *</span></label>
-          <div class="controls">
+          <div class="">
             <select id="probe-type" name="probeType">
               <% probeTemplates.each(function(p) { %>
                 <option value="<%= p.get('uuid') %>"><%= p.get("uuid") %> (<%= p.get("sdetail") %>)</option>
@@ -22,9 +22,9 @@
             </select>
           </div>
         </div>
-        <div class="control-group">
-          <div class="controls">
-            <button id="js-cancel" class="btn">Cancel</button>
+        <div class="form-group">
+          <div class="">
+            <button id="js-cancel" class="btn btn-default">Cancel</button>
             <button type="Submit" id="create-probe" class="btn btn-primary">Run Probe</button>
           </div>
         </div>

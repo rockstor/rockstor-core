@@ -1,33 +1,31 @@
 <% if (taskDefId == null) { %>
-  <div class="control-group">
-    <div class="controls controls-row">
-      <label class="control-label span4" for="share">Share<span class="required"> *</span></label>
-      <label class="control-label span4" for="prefix">Snapshot prefix<span class="required"> *</span></label>
+  <div class="form-group">
+    <div class="controls row">
+      <label class="control-label col-md-4" for="share">Share<span class="required"> *</span></label>
+      <label class="control-label col-md-4" for="prefix">Snapshot prefix<span class="required"> *</span></label>
     </div>
-    <div class="controls controls-row">
-      <select class="span4" id="share" name="meta.share">
+    <div class="controls row">
+      <select class="col-md-4 offset-row-child" id="share" name="meta.share">
         <% shares.each(function(share, index) { %>
           <option value="<%= share.get('name') %>"> <%= share.get('name') %> </option>
         <% }); %>
       </select>
-      <input class="span4" type="text" id="prefix" name="meta.prefix" placeholder="Prefix" title="Snapshot will be named with this prefix. The format is prefix_YYYYMMDDHHMMSS">
+      <input class="col-md-4" type="text" id="prefix" name="meta.prefix" placeholder="Prefix" title="Snapshot will be named with this prefix. The format is prefix_YYYYMMDDHHMMSS">
     </div>
   </div>
 <% } else { %>
 <% } %>
-<div class="controls controls-row">
   <label class="control-label snap4" for="max_count">Maximum count<span class="required"> *</span></label>
-</div>
-<div class="controls controls-row">
+<div class="controls">
   <% if (taskDefId != null) { %>
-    <input class="span4" type="text" id="max_count" name="meta.max_count" value="<%= taskDef.max_count() %>" placeholder="Maximum count" title="Older snapshots beyond this number and created by this task will be deleted">
+    <input class="col-md-4" type="text" id="max_count" name="meta.max_count" value="<%= taskDef.max_count() %>" placeholder="Maximum count" title="Older snapshots beyond this number and created by this task will be deleted">
   <% } else { %>
-    <input class="span4" type="text" id="max_count" name="meta.max_count" placeholder="Maximum count" title="Older snapshots beyond this number and created by this task will be deleted">
-  <% } %>
+    <input class="col-md-4" type="text" id="max_count" name="meta.max_count" placeholder="Maximum count" title="Older snapshots beyond this number and created by this task will be deleted">
+    <% } %>
 </div>
-<div class="control-group">
-  <label class="control-label" for="visible">Make snapshots visible?</label>
-  <div class="controls">
-    <input class="checkbox" type="checkbox" checked="true" id="visible" name="meta.visible" title="Make snapshots visible to the end user.">
-  </div>
+<div class="checkbox" style="clear: both">
+  <label>
+    <input  type="checkbox" checked="true" id="visible" name="meta.visible" title="Make snapshots visible to the end user.">
+    Make snapshots visible?
+  </label>
 </div>

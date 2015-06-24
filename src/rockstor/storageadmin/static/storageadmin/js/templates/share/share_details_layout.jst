@@ -28,14 +28,14 @@
   %>
 <div class="pull-right">
   <span id="rollback-btn-ph"></span>
-    <a id="js-clone" class="btn btn-primary" href="#shares/<%= share.get('name') %>/create-clone"><i class="icon-book icon-white"></i> Clone</a>
-    <button id="js-delete" class="btn btn-danger" type="button" type="button"><i class="icon-trash icon-white"></i> Delete </button>
+    <a id="js-clone" class="btn btn-primary" href="#shares/<%= share.get('name') %>/create-clone"><i class="glyphicon glyphicon-book "></i> Clone</a>
+    <button id="js-delete" class="btn btn-danger" type="button" type="button"><i class="glyphicon glyphicon-trash "></i> Delete </button>
 </div>
 <span class="h2"><%= share.get('name') %></span>
 <br>
 <br>
 
-<ul class="css-tabs">
+<ul class="nav nav-tabs">
   <li class="active"><a href="#usage" data-toggle="tab">Usage</a></li>
   <li><a href="#access-control" data-toggle="tab">Access control</a></li>
   <li><a href="#snapshots" data-toggle="tab">Snapshots</a></li>
@@ -45,14 +45,14 @@
 <div class="css-panes">
   <div id="usage">
     <div class="tab-section">
-      <div class="row-fluid">
-        <div class="span12">
+      <div class="row">
+        <div class="col-md-12">
           <div id="ph-share-usage"></div>
 	</div>
       </div>
     </div>
-    <div class="row-fluid">
-      <div class="span12">
+    <div class="row">
+      <div class="col-md-12">
         <div class="tab-section">
 	  <div id="ph-compression-info"></div>
 	</div>

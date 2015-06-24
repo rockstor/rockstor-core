@@ -21,21 +21,21 @@
 
 <h3>Create Pool</h3>
 
-<div class="row-fluid">
-  <div class="span8">
+<div class="row">
+  <div class="col-md-8">
     <label class="control-label"></label>
     <div class="form-box">
-      <form name="add-pool-form" id="add-pool-form" class="form-horizontal">
+      <form name="add-pool-form" id="add-pool-form" >
         <div class="messages"></div>
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="pool_name">Name<span class="required"> *</span></label>
-          <div class="controls">
+          <div class="">
             <input type="text" name="pool_name" id="pool_name" title="Name of the Pool must start with a letter(a-z) and can be followed by any of the following characters: letter(a-z), digits(0-9), hyphen(-), underscore(_) or a period(.). ">
           </div>
         </div>
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="raid_level">Raid configuration<span class="required"> *</span></label>
-          <div class="controls">
+          <div class="">
             <select id="raid_level" name="raid_level">
               <option value="single">Single</option>
               <option value="raid0">Raid0</option>
@@ -46,9 +46,9 @@
             </select>
           </div>
         </div>
-	<div class="control-group">
+	<div class="form-group">
           <label class="control-label" for="compression">Compression</label>
-          <div class="controls">
+          <div class="">
             <select id="compression" name="compression">
               <option value="no">Dont enable compression</option>
               <option value="zlib">zlib</option>
@@ -56,16 +56,16 @@
             </select>
           </div>
         </div>
-	<div class="control-group">
+	<div class="form-group">
           <label class="control-label" for="mnt_options">Mount options</label>
-          <div class="controls">
+          <div class="">
             <input type="text" name="mnt_options" id="mnt_options" title="This is for <strong>Advanced users</strong> to provide specific BTRFS mount options.<br>Type them as a commma separated string of options without any spaces.<br> Allowed options are <strong>alloc_start, autodefrag, clear_cache, commit, compress-force, discard, fatal_errors, inode_cache, max_inline, metadata_ratio, noacl, noatime, nodatacow, nodatasum, nospace_cache, space_cache, ssd, ssd_spread, thread_pool</strong>">
           </div>
         </div>
           <div id="SelectedDisksTable"> </div>
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="disks">Select disks<span class="required"> *</span></label>
-          <div class="controls">
+          <div class="">
 
             <table id="disks-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of disks">
               <thead>
@@ -92,13 +92,13 @@
            <div class="pagination-ph"> </div>
           </div>
         </div>
-        <div class="control-group">
-          <div class="controls">
-            <a id="js-cancel" class="btn" href="#">Cancel</a>
+        <div class="form-group">
+          <div class="">
+            <a id="js-cancel" class="btn btn-default" href="#">Cancel</a>
             <input type="Submit" id="create_pool" class="btn btn-primary" value="Submit"></input>
           </div>
         </div>
       </form>
     </div> <!-- form-box -->
-  </div> <!-- span8 -->
-</div> <!-- row-fluid -->
+  </div> <!-- col-md-8 -->
+</div> <!-- row -->

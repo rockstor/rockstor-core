@@ -1,7 +1,7 @@
-<form name="add-pool-form" id="add-pool-form" class="form-horizontal">
-  <div class="control-group">
+<form name="add-pool-form" id="add-pool-form" >
+  <div class="form-group">
     <label class="control-label" for="compression">Compression algorithm</label>
-    <div class="controls">
+    <div class="">
       <select id="compression" name="compression">
         <% _.each(_.keys(cOpts), function(c) { %>
           <% if (pool.get('compression') == c) { %>
@@ -13,14 +13,14 @@
       </select>
     </div>
   </div>
-  <div class="control-group">
+  <div class="form-group">
     <label class="control-label" for="mnt_options">Extra mount options</label>
-    <div class="controls">
+    <div class="">
       <input type="text" name="mnt_options" id="mnt_options" value="<%= pool.get('mnt_options') %>" title="This is for <strong>Advanced users</strong> to provide specific BTRFS mount options.<br>Type them as a commma separated string of options without any spaces.<br> Allowed options are <strong>alloc_start, autodefrag, clear_cache, commit, compress-force, discard, fatal_errors, inode_cache, max_inline, metadata_ratio, noacl, noatime, nodatacow, nodatasum, nospace_cache, space_cache, ssd, ssd_spread, thread_pool</strong>">
     </div>
   </div>
 
   <a id="js-submit-compression" class="btn btn-primary" href="#">Submit</a>
     &nbsp;
-  <a id="js-edit-compression-cancel" class="btn" href="#">Cancel</a>
+  <a id="js-edit-compression-cancel" class="btn btn-default" href="#">Cancel</a>
 </form>

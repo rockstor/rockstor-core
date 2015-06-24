@@ -20,26 +20,26 @@
 </script>
 
 <!-- Header -->
-<div class="row-fluid">
-  <div class="span12">
+<div class="row">
+  <div class="col-md-12">
     <div class="widget-header">
       <div class="title"><span class="h3"><%= displayName %></span></div>
       <div class="gear">
-        <a class="resize-widget" href="#"><i class="icon-white icon-resize-full"></i></a>
-        <a class="close-widget" href="#"><i class="icon-white icon-remove"></i></a>
+        <a class="resize-widget" href="#"><i class=" glyphicon glyphicon-resize-full"></i></a>
+        <a class="close-widget" href="#"><i class=" glyphicon glyphicon-remove"></i></a>
       </div>
     </div>
-  </div> <!-- span12 -->
-</div> <!-- row-fluid -->
+  </div> <!-- col-md-12 -->
+</div> <!-- row -->
 
 
 <!-- widget Body -->
-<div class="row-fluid">
-  <div class="span12">
+<div class="row">
+  <div class="col-md-12">
     <!-- Content -->
     <div class="widget-content">
-      <div class="row-fluid">
-        <div class="span12">
+      <div class="row">
+        <div class="col-md-12">
           Load average: <span id="load-avg"></span> <br>
           <% _.each(_.keys(model.attributes), function(k) { %>
             <%= k %>: <%= model.get(k) %><br>
@@ -48,7 +48,7 @@
       </div>
     </div>
     <!-- End Content -->
-  </div> <!-- span12 -->
-</div> <!-- row-fluid --> 
+  </div> <!-- col-md-12 -->
+</div> <!-- row -->
 <!-- end widget body -->
 

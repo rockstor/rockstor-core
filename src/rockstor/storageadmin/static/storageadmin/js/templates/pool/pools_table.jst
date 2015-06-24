@@ -16,7 +16,7 @@
       <% collection.each(function(pool, index) { %>
         <tr>
           <td>
-	    <a href="#pools/<%= pool.get('name') %>"><i class="icon-list"></i> <%= pool.get('name') %></a>
+	    <a href="#pools/<%= pool.get('name') %>"><i class="glyphicon glyphicon-list"></i> <%= pool.get('name') %></a>
 	    <% if (pool.get('name') == 'rockstor_rockstor') { %>
 	       <i class="fa fa-exclamation-circle" title="This Pool is created during install and contains the OS. You can create Shares in it like in any other pool on the system. However, operations like resize, compression and deletion are not allowed." rel="tooltip"></i>
 	    <% } %>
@@ -42,7 +42,7 @@
             <% var dNames =  _.reduce(pool.get('disks'), function(s, disk, i, list) { if (i < (list.length-1)) { return s + disk.name + ',';} else { return s + disk.name; } }, ''); %>
             <%= dNames %>
           </td>
-          <td><a id="delete_pool_<%= pool.get('name') %>" data-name="<%= pool.get('name') %>" data-action="delete" rel="tooltip" title="Delete pool"><i class="icon-trash"></i></a></td>
+          <td><a id="delete_pool_<%= pool.get('name') %>" data-name="<%= pool.get('name') %>" data-action="delete" rel="tooltip" title="Delete pool"><i class="glyphicon glyphicon-trash"></i></a></td>
         </tr>
       <% }); %>
     </tbody>
