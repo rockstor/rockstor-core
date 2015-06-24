@@ -106,6 +106,7 @@ class UserListView(UserMixin, rfc.GenericView):
     @transaction.atomic
     def post(self, request):
         with self._handle_exception(request):
+            
             invar = self._validate_input(request)
             # Check that a django user with the same name does not exist
             e_msg = ('user: %s already exists. Please choose a different'

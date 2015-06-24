@@ -77,6 +77,10 @@ class UserTests(APITestMixin, APITestCase):
         # get base URL
         self.get_base(self.BASE_URL)
         
+        # get user with username admin2
+        response = self.client.get('%s/admin2' % self.BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response)
+        
     def test_post_requests(self): 
         data = {'username': 'user1','password': 'pwuser1',}
         invalid_user_names = ('User $', '-user', '.user', '', ' ',)
@@ -87,7 +91,11 @@ class UserTests(APITestMixin, APITestCase):
                              status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
             e_msg = ("Username is invalid. It must confirm to the regex: [A-Za-z][-a-zA-Z0-9_]*$")                 
             self.assertEqual(response.data['detail'], e_msg)
-            
+           
+        
+        
+        
+        # username with more than 30 characters     
         invalid_user_name = 'user'*11
         data = {'username': invalid_user_name,'password': 'pwadmin',}
         response = self.client.post(self.BASE_URL, data=data)
@@ -125,7 +133,17 @@ class UserTests(APITestMixin, APITestCase):
         data = {'username': 'user1','password': 'pwuser1','email':'...'}
         #response = self.client.post(self.BASE_URL, data=data)
         #self.assertEqual(response.status_code,
-        #                 status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)   
+        #                 status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)  
+         
+        # public_key
+        data = {'username': 'newUser','password': 'pwuser2','pubic_key':'xxx'}
+        self.mock_is_pub_key.side_effect = False
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+        e_msg = ("Public key is invalid")                 
+        self.assertEqual(response.data['detail'], e_msg) 
+        self.mock_is_pub_key.side_effect = True     
            
         # create user with existing username
         data = {'username': 'admin','password': 'pwadmin',}
@@ -192,7 +210,7 @@ class UserTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data) 
                          
-        data = {'password': 'admin2','group':'admin', 'user':'uadmin2', 'email':'admin2@xyz.com'}
+        data = {'password': 'admin2','group':'admin', 'user':'uadmin2','shell':'/bin/xyz', 'email':'admin2@xyz.com'}
         response = self.client.put('%s/admin2' % self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)                           
@@ -232,13 +250,17 @@ class UserTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
         e_msg = ("Cannot delete the currently logged in user")    
         self.assertEqual(response.data['detail'], e_msg)
-           
-                         
+         
         # happy path
         # delete user 
         username = 'admin2'
         response = self.client.delete('%s/%s' % (self.BASE_URL,username))
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
+                         
+        username = 'admin3'
+        response = self.client.delete('%s/%s' % (self.BASE_URL,username))
+        self.assertEqual(response.status_code,
+                         status.HTTP_200_OK, msg=response.data)                 
             
             
