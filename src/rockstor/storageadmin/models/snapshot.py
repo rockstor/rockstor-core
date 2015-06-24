@@ -36,22 +36,8 @@ class Snapshot(models.Model):
 	uvisible = models.BooleanField(default=False)
 	"""replication, admin etc.."""
 	snap_type = models.CharField(max_length=64, default='admin')
-
-        @property
-	def cur_rusage(self, *args, **kwargs):
-		try:
-			su = ShareUsage.objects.filter(name=self.real_name).order_by('-ts')[0]
-			return su.r_usage
-		except:
-			return -1
-
-        @property
-	def cur_eusage(self, *args, **kwargs):
-		try:
-			su = ShareUsage.objects.filter(name=self.real_name).order_by('-ts')[0]
-			return su.e_usage
-		except:
-			return -1
+        rusage = models.BigIntegerField(default=0)
+        eusage = models.BigIntegerField(default=0)
 
 	class Meta:
 		unique_together = ('share', 'name',)
