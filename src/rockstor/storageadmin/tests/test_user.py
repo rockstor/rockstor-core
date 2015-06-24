@@ -135,6 +135,13 @@ class UserTests(APITestMixin, APITestCase):
         e_msg = ("user: admin already exists. Please choose a different username")                 
         self.assertEqual(response.data['detail'], e_msg)       
 
+        # create a user with existing uid (admin2 has uid 1001)
+        data = {'username': 'newUser','password': 'pwuser2', 'group': 'admin', 'uid':'1001','pubic_key':'xxx'}
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+        e_msg = ("uid: 1001 already exists. Please choose a different one.")                 
+        self.assertEqual(response.data['detail'], e_msg)          
        
         # happy path
         data = {'username': 'newUser','password': 'pwuser2', 'group': 'admin', 'pubic_key':'xxx'}
@@ -143,7 +150,7 @@ class UserTests(APITestMixin, APITestCase):
                          status.HTTP_200_OK, msg=response.data)
         self.assertEqual(response.data['username'], 'newUser')                 
         
-        data = {'username': 'newUser2','password': 'pwuser2', 'uid':'5001'}
+        data = {'username': 'newUser2','password': 'pwuser2', 'uid':'5001', 'user':'newuser'}
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
@@ -151,6 +158,14 @@ class UserTests(APITestMixin, APITestCase):
         
         
     def test_put_requests(self):   
+        
+        # Edit user that does not exists
+        data = {'group':'admin'}
+        response = self.client.put('%s/admin5' % self.BASE_URL, data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+        e_msg = ("User(admin5) does not exist")    
+        self.assertEqual(response.data['detail'], e_msg) 
         
         data = {'password': 'admin2','group':'admin'}
         response = self.client.put('%s/bin' % self.BASE_URL, data=data)
@@ -172,6 +187,58 @@ class UserTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
                          
-                  
+        data = {'password': 'admin2','group':'admin', 'admin': True, 'user':'uadmin2'}
+        response = self.client.put('%s/admin2' % self.BASE_URL, data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_200_OK, msg=response.data) 
+                         
+        data = {'password': 'admin2','group':'admin', 'user':'uadmin2', 'email':'admin2@xyz.com'}
+        response = self.client.put('%s/admin2' % self.BASE_URL, data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_200_OK, msg=response.data)                           
        
-          
+    def test_delete_requests(self): 
+    
+        # delete user that does not exists
+        username = 'admin5'
+        response = self.client.delete('%s/%s' % (self.BASE_URL,username))
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+        e_msg = ("User(admin5) does not exist")    
+        self.assertEqual(response.data['detail'], e_msg)         
+        
+        # delete user that does not exists
+        username = 'bin'
+        response = self.client.delete('%s/%s' % (self.BASE_URL,username))
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+        e_msg = ("Delete of restricted user(bin) is not supported.")    
+        self.assertEqual(response.data['detail'], e_msg)   
+        
+            
+        username = 'admin2'
+        self.mock_userdel.side_effect = KeyError('error')  
+        response = self.client.delete('%s/%s' % (self.BASE_URL,username))
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+        e_msg = ("A low level error occured while deleting the user: admin2")    
+        self.assertEqual(response.data['detail'], e_msg)
+        
+        # delete currently logged in user
+        self.mock_userdel.side_effect = None
+        username = 'admin'
+        response = self.client.delete('%s/%s' % (self.BASE_URL,username))
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+        e_msg = ("Cannot delete the currently logged in user")    
+        self.assertEqual(response.data['detail'], e_msg)
+           
+                         
+        # happy path
+        # delete user 
+        username = 'admin2'
+        response = self.client.delete('%s/%s' % (self.BASE_URL,username))
+        self.assertEqual(response.status_code,
+                         status.HTTP_200_OK, msg=response.data)
+            
+            
