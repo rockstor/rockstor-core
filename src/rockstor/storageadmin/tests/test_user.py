@@ -54,7 +54,7 @@ class UserTests(APITestMixin, APITestCase):
 
         cls.patch_add_ssh_key = patch('storageadmin.views.user.add_ssh_key')
         cls.mock_add_ssh_key = cls.patch_add_ssh_key.start()
-        cls.mock_add_ssh_key.return_value = 'key'
+        cls.mock_add_ssh_key.return_value = True
 
         cls.patch_update_shell = patch('storageadmin.views.user.update_shell')
         cls.mock_update_shell = cls.patch_update_shell.start()
