@@ -128,7 +128,6 @@ class UserListView(UserMixin, rfc.GenericView):
             user_exists = False
             for u in users:
                 if (u.username == invar['username']):
-                    logger.debug('uid = %d gid = %d invar = %s' % (u.uid, u.gid, invar))
                     if ((invar['uid'] is None or u.uid == invar['uid']) and
                         (invar['gid'] is None or u.gid == invar['gid'])):
                         user_exists = True
