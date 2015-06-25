@@ -38,7 +38,7 @@ from storageadmin.util import handle_exception
 from datetime import datetime
 from django.utils.timezone import utc
 from django.conf import settings
-from share_helpers import sftp_snap_toggle
+from sftp import SFTPMixin
 from oauth2_provider.ext.rest_framework import OAuth2Authentication
 from system.pkg_mgmt import install_pkg
 
@@ -46,7 +46,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class CommandView(APIView):
+class CommandView(SFTPMixin, APIView):
     authentication_classes = (DigestAuthentication, SessionAuthentication,
                               BasicAuthentication, OAuth2Authentication,)
     permission_classes = (IsAuthenticated,)
@@ -90,7 +90,7 @@ class CommandView(APIView):
                 for sftpo in SFTP.objects.all():
                     sftp_mount(sftpo.share, settings.MNT_PT,
                                settings.SFTP_MNT_ROOT, mnt_map, sftpo.editable)
-                    sftp_snap_toggle(sftpo.share)
+                    self._sftp_snap_toggle(sftpo.share)
             except Exception, e:
                 e_msg = ('Unable to export all sftp shares due to a system'
                          ' error')

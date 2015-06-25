@@ -236,7 +236,7 @@ class ShareTests(APITestMixin, APITestCase):
         response3 = self.client.put('%s/invalid' % self.BASE_URL, data=data3)
         self.assertEqual(response3.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response3.data)
-        e_msg = ('Share(invalid) does not exist.')
+        e_msg = ('Share(invalid) does not exist')
         self.assertEqual(response3.data['detail'], e_msg)
 
         # resize to below current share usage value

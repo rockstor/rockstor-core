@@ -34,24 +34,24 @@ def helper_mount_share(share, mnt_pt=None):
         mount_share(share, pool_device, mnt_pt)
 
 
-def validate_share(sname, request):
-    try:
-        return Share.objects.get(name=sname)
-    except:
-        e_msg = ('Share with name: %s does not exist' % sname)
-        handle_exception(Exception(e_msg), request)
+# def validate_share(sname, request):
+#     try:
+#         return Share.objects.get(name=sname)
+#     except:
+#         e_msg = ('Share with name: %s does not exist' % sname)
+#         handle_exception(Exception(e_msg), request)
 
 
-def sftp_snap_toggle(share, mount=True):
-    pool_device = Disk.objects.filter(pool=share.pool)[0].name
-    for snap in Snapshot.objects.filter(share=share, uvisible=True):
-        mnt_pt = ('%s/%s/%s/.%s' % (settings.SFTP_MNT_ROOT,
-                                    share.owner, share.name,
-                                    snap.name))
-        if (mount and not is_mounted(mnt_pt)):
-            mount_snap(share, snap.name, pool_device, mnt_pt)
-        elif (is_mounted(mnt_pt) and not mount):
-            umount_root(mnt_pt)
+# def sftp_snap_toggle(share, mount=True):
+#     pool_device = Disk.objects.filter(pool=share.pool)[0].name
+#     for snap in Snapshot.objects.filter(share=share, uvisible=True):
+#         mnt_pt = ('%s/%s/%s/.%s' % (settings.SFTP_MNT_ROOT,
+#                                     share.owner, share.name,
+#                                     snap.name))
+#         if (mount and not is_mounted(mnt_pt)):
+#             mount_snap(share, snap.name, pool_device, mnt_pt)
+#         elif (is_mounted(mnt_pt) and not mount):
+#             umount_root(mnt_pt)
 
 
 def toggle_sftp_visibility(share, snap_name, on=True):

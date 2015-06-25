@@ -19,13 +19,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from rest_framework.response import Response
 from django.db import transaction
 from django.conf import settings
-from storageadmin.models import SFTP
+from storageadmin.models import SFTP, Disk, Snapshot
 from storageadmin.util import handle_exception
 from storageadmin.serializers import SFTPSerializer
-from fs.btrfs import (is_share_mounted, umount_root)
+from fs.btrfs import (is_share_mounted, umount_root, is_mounted, mount_snap)
 from system.ssh import (update_sftp_config, sftp_mount_map, sftp_mount,
                         rsync_for_sftp)
-from share_helpers import (helper_mount_share, sftp_snap_toggle)
+from share_helpers import helper_mount_share
 from share import ShareMixin
 import rest_framework_custom as rfc
 import shutil
@@ -35,7 +35,22 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class SFTPListView(ShareMixin, rfc.GenericView):
+class SFTPMixin(object):
+
+    @staticmethod
+    def _sftp_snap_toggle(share, mount=True):
+        pool_device = Disk.objects.filter(pool=share.pool)[0].name
+        for snap in Snapshot.objects.filter(share=share, uvisible=True):
+            mnt_pt = ('%s/%s/%s/.%s' % (settings.SFTP_MNT_ROOT,
+                                        share.owner, share.name,
+                                        snap.name))
+            if (mount and not is_mounted(mnt_pt)):
+                mount_snap(share, snap.name, pool_device, mnt_pt)
+            elif (is_mounted(mnt_pt) and not mount):
+                umount_root(mnt_pt)
+
+
+class SFTPListView(ShareMixin, SFTPMixin, rfc.GenericView):
     serializer_class = SFTPSerializer
 
     def get_queryset(self, *args, **kwargs):
@@ -73,7 +88,7 @@ class SFTPListView(ShareMixin, rfc.GenericView):
                 #  bindmount if not already
                 sftp_mount(share, settings.MNT_PT, settings.SFTP_MNT_ROOT,
                            mnt_map, editable)
-                sftp_snap_toggle(share)
+                self._sftp_snap_toggle(share)
 
                 chroot_loc = ('%s%s' % (settings.SFTP_MNT_ROOT, share.owner))
                 rsync_for_sftp(chroot_loc)
@@ -109,7 +124,7 @@ class SFTPDetailView(rfc.GenericView):
                                      sftpo.share.owner))
 
             if (is_share_mounted(sftpo.share.name, mnt_prefix)):
-                sftp_snap_toggle(sftpo.share, mount=False)
+                self._sftp_snap_toggle(sftpo.share, mount=False)
                 mnt_pt = ('%s%s' % (mnt_prefix, sftpo.share.name))
                 umount_root(mnt_pt)
                 if (os.path.isdir(mnt_pt)):
