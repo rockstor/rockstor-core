@@ -21,7 +21,7 @@ from storageadmin.models import (Disk, Pool, Share, Snapshot, NFSExport,
                                  SambaShare, IscsiTarget, Appliance,
                                  SupportCase, DashboardConfig,
                                  NetworkInterface, User, PoolScrub, Setup,
-                                 NFSExportGroup, SFTP, Plugin, InstalledPlugin,
+                                 NFSExportGroup, SFTP,
                                  AdvancedNFSExport, OauthApp, NetatalkShare,
                                  Group, PoolBalance, SambaCustomConfig,
                                  TLSCertificate, RockOn, DVolume, DPort,
@@ -161,19 +161,6 @@ class SFTPSerializer(serializers.ModelSerializer):
 
 	class Meta:
 		model = SFTP
-
-
-class PluginSerializer(serializers.ModelSerializer):
-
-    class Meta:
-	model = Plugin
-
-
-class InstalledPluginSerializer(serializers.ModelSerializer):
-    plugin_meta = PluginSerializer(source='plugin_meta')
-
-    class Meta:
-	model = InstalledPlugin
 
 
 class OauthAppSerializer(serializers.ModelSerializer):

@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from smart_manager.models import Service
-from storageadmin.models import Setup, Plugin
+from storageadmin.models import Setup
 
 
 def register_services():
