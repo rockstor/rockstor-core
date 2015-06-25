@@ -27,14 +27,42 @@ from fs.btrfs import (mount_share, is_share_mounted)
 import rest_framework_custom as rfc
 from nfs_helpers import (create_nfs_export_input, parse_options,
                          dup_export_check, refresh_wrapper,
-                         teardown_wrapper, validate_export_group,
-                         create_adv_nfs_export_input)
+                         teardown_wrapper, validate_export_group)
 from share import ShareMixin
 import logging
 logger = logging.getLogger(__name__)
 
+class NFSMixin(ShareMixin, object):
 
-class NFSExportGroupListView(ShareMixin, rfc.GenericView):
+
+    def _create_adv_nfs_export_input(self, exports, request):
+        exports_d = {}
+        for e in exports:
+            fields = e.split()
+            if (len(fields) < 2):
+                e_msg = ('Invalid exports input -- %s' % e)
+                handle_exception(Exception(e_msg), request)
+            share = fields[0].split('/')[-1]
+            s = self._validate_share(share, request)
+            mnt_pt = ('%s%s' % (settings.MNT_PT, s.name))
+            if (not is_share_mounted(s.name)):
+                pool_device = Disk.objects.filter(pool=s.pool)[0].name
+                mount_share(s, pool_device, mnt_pt)
+            exports_d[fields[0]] = []
+            for f in fields[1:]:
+                cf = f.split('(')
+                if (len(cf) != 2 or cf[1][-1] != ')'):
+                    e_msg = ('Invalid exports input -- %s. offending '
+                             'section: %s' % (e, f))
+                    handle_exception(Exception(e_msg), request)
+                exports_d[fields[0]].append(
+                    {'client_str': cf[0], 'option_list': cf[1][:-1],
+                     'mnt_pt': ('%s%s' % (settings.MNT_PT, share))})
+        return exports_d
+
+
+
+class NFSExportGroupListView(NFSMixin, rfc.GenericView):
     serializer_class = NFSExportGroupSerializer
 
     def get_queryset(self, *args, **kwargs):
@@ -68,7 +96,7 @@ class NFSExportGroupListView(ShareMixin, rfc.GenericView):
             exports = create_nfs_export_input(cur_exports)
             adv_entries = [e.export_str for e in
                            AdvancedNFSExport.objects.all()]
-            exports_d = create_adv_nfs_export_input(adv_entries, request)
+            exports_d = self._create_adv_nfs_export_input(adv_entries, request)
             exports.update(exports_d)
             refresh_wrapper(exports, request, logger)
             nfs_serializer = NFSExportGroupSerializer(eg)
@@ -104,7 +132,7 @@ class NFSExportGroupDetailView(ShareMixin, rfc.GenericView):
             exports = create_nfs_export_input(cur_exports)
             adv_entries = [e.export_str for e in
                            AdvancedNFSExport.objects.all()]
-            exports_d = create_adv_nfs_export_input(adv_entries, request)
+            exports_d = self._create_adv_nfs_export_input(adv_entries, request)
             exports.update(exports_d)
             refresh_wrapper(exports, request, logger)
             return Response()
@@ -143,7 +171,7 @@ class NFSExportGroupDetailView(ShareMixin, rfc.GenericView):
             exports = create_nfs_export_input(cur_exports)
             adv_entries = [e.export_str for e in
                            AdvancedNFSExport.objects.all()]
-            exports_d = create_adv_nfs_export_input(adv_entries, request)
+            exports_d = self._create_adv_nfs_export_input(adv_entries, request)
             exports.update(exports_d)
             refresh_wrapper(exports, request, logger)
             nfs_serializer = NFSExportGroupSerializer(eg)

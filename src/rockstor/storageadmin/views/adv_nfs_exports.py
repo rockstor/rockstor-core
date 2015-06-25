@@ -22,13 +22,14 @@ from storageadmin.models import (NFSExport, AdvancedNFSExport)
 from storageadmin.util import handle_exception
 from storageadmin.serializers import AdvancedNFSExportSerializer
 import rest_framework_custom as rfc
-from nfs_helpers import (create_nfs_export_input, refresh_wrapper,
-                         create_adv_nfs_export_input)
+from nfs_helpers import (create_nfs_export_input, refresh_wrapper)
 import logging
+from nfs_exports import NFSMixin
+
 logger = logging.getLogger(__name__)
 
 
-class AdvancedNFSExportView(rfc.GenericView):
+class AdvancedNFSExportView(NFSMixin, rfc.GenericView):
     serializer_class = AdvancedNFSExportSerializer
 
     def get_queryset(self, *args, **kwargs):
@@ -67,7 +68,7 @@ class AdvancedNFSExportView(rfc.GenericView):
                 ce = AdvancedNFSExport(export_str=e)
                 ce.save()
                 cur_entries.append(ce)
-            exports_d = create_adv_nfs_export_input(request.data['entries'],
+            exports_d = self._create_adv_nfs_export_input(request.data['entries'],
                                                     request)
             cur_exports = list(NFSExport.objects.all())
             exports = create_nfs_export_input(cur_exports)
