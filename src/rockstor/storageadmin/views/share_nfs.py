@@ -26,17 +26,17 @@ import rest_framework_custom as rfc
 from nfs_helpers import (create_nfs_export_input, parse_options,
                          dup_export_check, refresh_wrapper,
                          teardown_wrapper, validate_export_group)
-from share_helpers import validate_share
-
+from share import ShareMixin
 import logging
+
 logger = logging.getLogger(__name__)
 
 
-class ShareNFSListView(rfc.GenericView):
+class ShareNFSListView(ShareMixin, rfc.GenericView):
     serializer_class = NFSExportGroupSerializer
 
     def get_queryset(self, *args, **kwargs):
-        share = validate_share(self.kwargs['sname'], self.request)
+        share = self._validate_share(self.kwargs['sname'], self.request)
         exports = NFSExport.objects.filter(share=share)
         ids = [e.export_group.id for e in exports]
         return NFSExportGroup.objects.filter(nohide=False, id__in=ids)
@@ -44,7 +44,7 @@ class ShareNFSListView(rfc.GenericView):
     @transaction.commit_on_success
     def post(self, request, sname):
         with self._handle_exception(request):
-            share = validate_share(sname, request)
+            share = self._validate_share(sname, request)
             options = parse_options(request)
             dup_export_check(share, options['host_str'], request)
             cur_exports = list(NFSExport.objects.all())
@@ -80,7 +80,7 @@ class ShareNFSDetailView(rfc.GenericView):
     @transaction.atomic
     def put(self, request, sname, export_id):
         with self._handle_exception(request):
-            share = validate_share(sname, request)
+            share = self._validate_share(sname, request)
             eg = validate_export_group(export_id, request)
             options = parse_options(request)
             dup_export_check(share, options['host_str'], request,
@@ -96,7 +96,7 @@ class ShareNFSDetailView(rfc.GenericView):
     @transaction.atomic
     def delete(self, request, sname, export_id):
         with self._handle_exception(request):
-            share = validate_share(sname, request)
+            share = self._validate_share(sname, request)
             eg = validate_export_group(export_id, request)
             cur_exports = list(NFSExport.objects.all())
             export = NFSExport.objects.get(export_group=eg, share=share)

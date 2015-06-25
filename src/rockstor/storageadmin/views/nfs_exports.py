@@ -29,12 +29,12 @@ from nfs_helpers import (create_nfs_export_input, parse_options,
                          dup_export_check, refresh_wrapper,
                          teardown_wrapper, validate_export_group,
                          create_adv_nfs_export_input)
-from share_helpers import validate_share
+from share import ShareMixin
 import logging
 logger = logging.getLogger(__name__)
 
 
-class NFSExportGroupListView(rfc.GenericView):
+class NFSExportGroupListView(ShareMixin, rfc.GenericView):
     serializer_class = NFSExportGroupSerializer
 
     def get_queryset(self, *args, **kwargs):
@@ -46,7 +46,7 @@ class NFSExportGroupListView(rfc.GenericView):
             if ('shares' not in request.data):
                 e_msg = ('Cannot export without specifying shares')
                 handle_exception(Exception(e_msg), request)
-            shares = [validate_share(s, request) for s in request.data['shares']]
+            shares = [self._validate_share(s, request) for s in request.data['shares']]
             options = parse_options(request)
             for s in shares:
                 dup_export_check(s, options['host_str'], request)
@@ -75,7 +75,7 @@ class NFSExportGroupListView(rfc.GenericView):
             return Response(nfs_serializer.data)
 
 
-class NFSExportGroupDetailView(rfc.GenericView):
+class NFSExportGroupDetailView(ShareMixin, rfc.GenericView):
     serializer_class = NFSExportGroupSerializer
 
     def get(self, *args, **kwargs):
@@ -115,7 +115,7 @@ class NFSExportGroupDetailView(rfc.GenericView):
             if ('shares' not in request.data):
                 e_msg = ('Cannot export without specifying shares')
                 handle_exception(Exception(e_msg), request)
-            shares = [validate_share(s, request) for s in request.data['shares']]
+            shares = [self._validate_share(s, request) for s in request.data['shares']]
             eg = validate_export_group(export_id, request)
             options = parse_options(request)
             for s in shares:

@@ -26,7 +26,7 @@ from storageadmin.exceptions import RockStorAPIException
 from fs.btrfs import (mount_share, is_share_mounted)
 from system.services import (systemctl, refresh_afp_config)
 import rest_framework_custom as rfc
-from share_helpers import validate_share
+from share import ShareMixin
 
 
 import logging
@@ -90,7 +90,7 @@ class NetatalkDetailView(rfc.GenericView):
             handle_exception(Exception(e_msg), request)
 
 
-class NetatalkListView(rfc.GenericView):
+class NetatalkListView(ShareMixin, rfc.GenericView):
     serializer_class = NetatalkShareSerializer
     def_description = 'on Rockstor'
 
@@ -103,7 +103,7 @@ class NetatalkListView(rfc.GenericView):
             e_msg = ('Must provide share names')
             handle_exception(Exception(e_msg), request)
 
-        shares = [validate_share(s, request) for s in request.data['shares']]
+        shares = [self._validate_share(s, request) for s in request.data['shares']]
         description = request.data.get('description', '')
         if (description == ''):
             description = self.def_description

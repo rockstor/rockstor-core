@@ -25,8 +25,8 @@ from storageadmin.serializers import SFTPSerializer
 from fs.btrfs import (is_share_mounted, umount_root)
 from system.ssh import (update_sftp_config, sftp_mount_map, sftp_mount,
                         rsync_for_sftp)
-from share_helpers import (helper_mount_share, validate_share,
-                           sftp_snap_toggle)
+from share_helpers import (helper_mount_share, sftp_snap_toggle)
+from share import ShareMixin
 import rest_framework_custom as rfc
 import shutil
 import os
@@ -35,7 +35,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class SFTPListView(rfc.GenericView):
+class SFTPListView(ShareMixin, rfc.GenericView):
     serializer_class = SFTPSerializer
 
     def get_queryset(self, *args, **kwargs):
@@ -47,7 +47,7 @@ class SFTPListView(rfc.GenericView):
             if ('shares' not in request.data):
                 e_msg = ('Must provide share names')
                 handle_exception(Exception(e_msg), request)
-            shares = [validate_share(s, request) for s in request.data['shares']]
+            shares = [self._validate_share(s, request) for s in request.data['shares']]
             editable = 'rw'
             if ('read_only' in request.data and
                 request.data['read_only'] is True):
