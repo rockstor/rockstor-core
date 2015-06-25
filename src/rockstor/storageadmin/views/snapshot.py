@@ -33,7 +33,6 @@ from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
 from nfs_helpers import create_nfs_export_input
 from nfs_exports import NFSMixin
-from share_helpers import toggle_sftp_visibility
 from clone_helpers import create_clone
 
 import logging
@@ -42,6 +41,20 @@ logger = logging.getLogger(__name__)
 
 class SnapshotView(NFSMixin, rfc.GenericView):
     serializer_class = SnapshotSerializer
+
+    @staticmethod
+    def _toggle_sftp_visibility(share, snap_name, on=True):
+        if (not SFTP.objects.filter(share=share).exists()):
+            return
+
+        mnt_pt = ('%s/%s/%s/.%s' % (settings.SFTP_MNT_ROOT, share.owner,
+                                    share.name, snap_name))
+        if (on):
+            if (not is_mounted(mnt_pt)):
+                pool_device = Disk.objects.filter(pool=share.pool)[0].name
+                mount_snap(share, snap_name, pool_device, mnt_pt)
+        else:
+            umount_root(mnt_pt)
 
     def get_queryset(self, *args, **kwargs):
         with self._handle_exception(self.request):
@@ -177,7 +190,7 @@ class SnapshotView(NFSMixin, rfc.GenericView):
                         logger.exception(e)
 
                     try:
-                        toggle_sftp_visibility(share, ret.data['real_name'])
+                        self._toggle_sftp_visibility(share, ret.data['real_name'])
                     except Exception, e:
                         msg = ('Failed to make the Snapshot(%s) visible for '
                                'SFTP.' % snap_name)
@@ -193,13 +206,6 @@ class SnapshotView(NFSMixin, rfc.GenericView):
             e_msg = ('Unknown command: %s' % command)
             handle_exception(Exception(e_msg), request)
 
-    @staticmethod
-    def _validate_share(sname, request):
-        try:
-            return Share.objects.get(name=sname)
-        except:
-            e_msg = ('Share: %s does not exist' % sname)
-            handle_exception(Exception(e_msg), request)
 
     @transaction.atomic
     def _delete_snapshot(self, request, sname, id=None, snap_name=None):
@@ -223,7 +229,7 @@ class SnapshotView(NFSMixin, rfc.GenericView):
         pool_device = Disk.objects.filter(pool=share.pool)[0].name
         if (snapshot.uvisible):
             self._toggle_visibility(share, snapshot.real_name, on=False)
-            toggle_sftp_visibility(share, snapshot.real_name, on=False)
+            self._toggle_sftp_visibility(share, snapshot.real_name, on=False)
 
         remove_snap(share.pool, pool_device, sname, snapshot.name)
         snapshot.delete()
