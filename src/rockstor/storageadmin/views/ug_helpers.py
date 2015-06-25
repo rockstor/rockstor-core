@@ -46,13 +46,13 @@ def combined_users():
                     go.gid = uo.gid
                     go.save()
                     uo.group = go
-                except DoesNotExist:
+                except Group.DoesNotExist:
                     try:
                         go = Group.objects.get(gid=uo.gid)
                         go.groupname = gname
                         go.save()
                         uo.group = go
-                    except DoesNotExist:
+                    except Group.DoesNotExist:
                         go = Group(groupname=gname, gid=uo.gid)
                         go.save()
                         uo.group = go

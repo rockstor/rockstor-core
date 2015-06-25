@@ -45,7 +45,7 @@ def info(device):
     return res
 
 def extended_info(device):
-    o, e, rc = run_command([SMART, '-a', '/dev/%s' % device])
+    o, e, rc = run_command([SMART, '-a', '/dev/%s' % device], throw=False)
     attributes = {}
     for i in range(len(o)):
         if (re.match('Vendor Specific SMART Attributes with Thresholds:', o[i]) is not None):

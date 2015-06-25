@@ -77,6 +77,8 @@ class UserMixin(object):
         input_fields['homedir'] = request.data.get(
             'homedir', '/home/%s' % username)
         input_fields['uid'] = request.data.get('uid', None)
+        if (input_fields['uid'] is not None):
+            input_fields['uid'] = int(input_fields['uid'])
         input_fields['group'] = request.data.get('group', None)
         input_fields['public_key'] = cls._validate_public_key(request)
         return input_fields
@@ -112,13 +114,6 @@ class UserListView(UserMixin, rfc.GenericView):
                     username=invar['username']).exists()):
                 handle_exception(Exception(e_msg), request)
             users = combined_users()
-            for u in users:
-                if (u.username == invar['username']):
-                    handle_exception(Exception(e_msg), request)
-                if (u.uid == invar['uid']):
-                    e_msg = ('uid: %d already exists.' % invar['uid'])
-                    handle_exception(Exception(e_msg), request)
-
             groups = combined_groups()
             invar['gid'] = None
             admin_group = None
@@ -129,6 +124,20 @@ class UserListView(UserMixin, rfc.GenericView):
                         admin_group = g
                         break
 
+            user_exists = False
+            for u in users:
+                if (u.username == invar['username']):
+                    logger.debug('uid = %d gid = %d invar = %s' % (u.uid, u.gid, invar))
+                    if ((invar['uid'] is None or u.uid == invar['uid']) and
+                        (invar['gid'] is None or u.gid == invar['gid'])):
+                        user_exists = True
+                    else:
+                        handle_exception(Exception(e_msg), request)
+                elif (u.uid == invar['uid']):
+                    e_msg = ('uid: %d already exists. Please choose a '
+                             'different one.' % invar['uid'])
+                    handle_exception(Exception(e_msg), request)
+
             if (invar['admin']):
                 # Create Django user
                 auser = DjangoUser.objects.create_user(invar['username'],
@@ -137,8 +146,9 @@ class UserListView(UserMixin, rfc.GenericView):
                 auser.save()
                 invar['user'] = auser
 
-            useradd(invar['username'], invar['shell'], uid=invar['uid'],
-                    gid=invar['gid'])
+            if (not user_exists):
+                useradd(invar['username'], invar['shell'], uid=invar['uid'],
+                        gid=invar['gid'])
             pw_entries = pwd.getpwnam(invar['username'])
             invar['uid'] = pw_entries[2]
             invar['gid'] = pw_entries[3]

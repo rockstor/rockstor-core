@@ -27,11 +27,10 @@ import subprocess
 import signal
 import shutil
 from system.osi import (run_command, create_tmp_dir, is_share_mounted,
-                        is_mounted)
+                        is_mounted, get_virtio_disk_serial)
 from system.exceptions import (CommandException, NonBTRFSRootException)
 from pool_scrub import PoolScrub
 from pool_balance import PoolBalance
-
 
 MKFS_BTRFS = '/sbin/mkfs.btrfs'
 BTRFS = '/sbin/btrfs'
@@ -42,11 +41,11 @@ DEFAULT_MNT_DIR = '/mnt2/'
 RMDIR = '/bin/rmdir'
 WIPEFS = '/usr/sbin/wipefs'
 
-
 import collections
-Disk = collections.namedtuple('Disk', 'name model serial size '
-                              'transport vendor hctl type fstype '
-                              'label btrfs_uuid parted root')
+
+Disk = collections.namedtuple('Disk',
+                              'name model serial size transport vendor '
+                              'hctl type fstype label btrfs_uuid parted root')
 
 
 def add_pool(pool, disks):
@@ -61,6 +60,31 @@ def add_pool(pool, disks):
     enable_quota(pool, disks_fp[0])
     return out, err, rc
 
+
+def get_pool_info(disk):
+    cmd = [BTRFS, 'fi', 'show', '/dev/%s' % disk]
+    o, e, rc = run_command(cmd)
+    pool_info = {'disks': [],}
+    for l in o:
+        if (re.match('Label', l) is not None):
+            fields = l.split()
+            pool_info['label'] = fields[1].strip("'")
+            pool_info['uuid'] = fields[3]
+        elif (re.match('\tdevid', l) is not None):
+            pool_info['disks'].append(l.split()[-1].split('/')[-1])
+    return pool_info
+
+def pool_raid(mnt_pt):
+    o, e, rc = run_command([BTRFS, 'fi', 'df', mnt_pt])
+    #data, system, metadata, globalreserve
+    raid_d = {}
+    for l in o:
+        fields = l.split()
+        if (len(fields) > 1):
+            raid_d[fields[0][:-1].lower()] = fields[1][:-1].lower()
+    if (raid_d['metadata'] == 'single'):
+        raid_d['data'] = raid_d['metadata']
+    return raid_d;
 
 def cur_devices(mnt_pt):
     devices = []
@@ -84,7 +108,7 @@ def resize_pool(pool, device, dev_list, add=True):
     resize = False
     for d in dev_list:
         if (((resize_flag == 'add' and (d not in cur_dev)) or
-             (resize_flag == 'delete' and (d in cur_dev)))):
+                (resize_flag == 'delete' and (d in cur_dev)))):
             resize = True
             resize_cmd.append(d)
     if (not resize):
@@ -207,8 +231,8 @@ def subvol_list_helper(mnt_pt):
             return run_command([BTRFS, 'subvolume', 'list', mnt_pt])
         except CommandException, ce:
             if (ce.rc != 19):
-                #rc == 19 is due to the slow kernel cleanup thread. It should
-                #eventually succeed.
+                # rc == 19 is due to the slow kernel cleanup thread. It should
+                # eventually succeed.
                 raise ce
             time.sleep(1)
             num_tries = num_tries + 1
@@ -223,6 +247,72 @@ def snapshot_list(mnt_pt):
         snaps.append(s.split()[-1])
     return snaps
 
+
+def shares_info(mnt_pt):
+    #return a lit of share names unter this mount_point.
+    #useful to gather names of all shares in a pool
+    o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-s', mnt_pt])
+    snap_ids = []
+    for l in o:
+        if (re.match('ID ', l) is not None):
+            snap_ids.append(l.split()[1])
+
+    o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-p', mnt_pt])
+    shares_d = {}
+    share_ids = []
+    for l in o:
+        if (re.match('ID ', l) is None):
+            continue
+        fields = l.split()
+        vol_id = fields[1]
+        if (vol_id in snap_ids):
+            #snapshot
+            continue
+
+        parent_id = fields[5]
+        if (parent_id in share_ids):
+            #subvol of subvol. add it so child subvols can also be ignored.
+            share_ids.append(vol_id)
+        elif (parent_id in snap_ids):
+            #snapshot/subvol of snapshot. add it so child subvols can also be ignored.
+            snap_ids.append(vol_id)
+        else:
+            shares_d[fields[-1]] = '0/%s' % vol_id
+            share_ids.append(vol_id)
+    return shares_d
+
+
+def snaps_info(mnt_pt, share_name):
+    o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-u', '-p', '-q', mnt_pt])
+    share_id = None
+    for l in o:
+        if (re.match('ID ', l) is not None):
+            fields = l.split()
+            if (fields[-1] == share_name):
+                share_id = fields[1]
+    if (share_id is None):
+        raise Exception('Failed to get uuid of the share(%s) under mount(%s)'
+                        % (share_name, mnt_pt))
+
+    o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-s', '-p', '-q',
+                            mnt_pt])
+    snaps_d = {}
+    for l in o:
+        if (re.match('ID ', l) is not None):
+            fields = l.split()
+            #parent uuid must be share_uuid
+            if (fields[7] != share_id):
+                continue
+            writable = True
+            o1, e1, rc1 = run_command([BTRFS, 'property', 'get',
+                                       '%s/%s' % (mnt_pt, fields[-1])])
+            for l1 in o1:
+                if (re.match('ro=', l1) is not None):
+                    if (l1.split('=')[1] == 'true'):
+                        writable = False
+            snap_name = fields[-1].split('/')[-1]
+            snaps_d[snap_name] = ('0/%s' % fields[1], writable)
+    return snaps_d
 
 def share_id(pool, pool_device, share_name):
     """
@@ -262,28 +352,26 @@ def remove_share(pool, pool_device, share_name):
     run_command(delete_cmd)
 
 
-def remove_snap_old(pool, pool_device, share_name, snap_name):
-    full_name = ('%s/%s' % (share_name, snap_name))
-    if (is_share_mounted(full_name)):
-        umount_root('%s%s' % (DEFAULT_MNT_DIR, full_name))
-    root_pool_mnt = mount_root(pool, pool_device)
-    subvol_mnt_pt = ('%s/%s_%s' % (root_pool_mnt, share_name, snap_name))
-    if (is_subvol(subvol_mnt_pt)):
-        return run_command([BTRFS, 'subvolume', 'delete', subvol_mnt_pt])
-    return True
-
-
 def remove_snap(pool, pool_device, share_name, snap_name):
     root_mnt = mount_root(pool, pool_device)
     snap_path = ('%s/.snapshots/%s/%s' %
                  (root_mnt, share_name, snap_name))
-    if (not os.path.exists(snap_path)):
-        return remove_snap_old(pool, pool_device, share_name, snap_name)
     if (is_mounted(snap_path)):
         umount_root(snap_path)
     if (is_subvol(snap_path)):
         return run_command([BTRFS, 'subvolume', 'delete', snap_path])
-    return True
+    else:
+        o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-s', root_mnt])
+        snap = None
+        for l in o:
+            #just give the first match.
+            if (re.match('ID.*%s$' % snap_name, l) is not None):
+                snap = '%s/%s' % (root_mnt, l.split()[-1])
+                break
+        e_msg = ('This snapshot(%s) was created outside of Rockstor. If you '
+                 'really want to delete it, you can do so manually with this '
+                 'command: btrfs subvol delete %s' % (snap_name, snap))
+        raise Exception(e_msg)
 
 
 def add_snap_helper(orig, snap, readonly=False):
@@ -294,8 +382,8 @@ def add_snap_helper(orig, snap, readonly=False):
         return run_command(cmd)
     except CommandException, ce:
         if (ce.rc != 19):
-            #rc == 19 is due to the slow kernel cleanup thread. snapshot gets
-            #created just fine. lookup is delayed arbitrarily.
+            # rc == 19 is due to the slow kernel cleanup thread. snapshot gets
+            # created just fine. lookup is delayed arbitrarily.
             raise ce
 
 
@@ -530,7 +618,7 @@ def balance_status(pool, pool_device):
         if (re.match('Balance', out[0]) is not None):
             stats['status'] = 'running'
             if ((len(out) > 1 and
-                 re.search('chunks balanced', out[1]) is not None)):
+                    re.search('chunks balanced', out[1]) is not None)):
                 percent_left = out[1].split()[-2][:-1]
                 try:
                     percent_left = int(percent_left)
@@ -573,7 +661,7 @@ def root_disk():
         for line in fo.readlines():
             fields = line.split()
             if (fields[1] == '/' and
-                (fields[2] == 'ext4' or fields[2] == 'btrfs')):
+                    (fields[2] == 'ext4' or fields[2] == 'btrfs')):
                 disk = os.path.realpath(fields[0])
                 return disk[5:-1]
     msg = ('root filesystem is not BTRFS. During Rockstor installation, '
@@ -602,12 +690,12 @@ def scan_disks(min_size):
         sl = l.strip()
         i = 0
         while i < len(sl):
-            if (name_iter and sl[i] == '=' and sl[i+1] == '"'):
+            if (name_iter and sl[i] == '=' and sl[i + 1] == '"'):
                 name_iter = False
                 val_iter = True
                 i = i + 2
             elif (val_iter and sl[i] == '"' and
-                  (i == (len(sl)-1) or sl[i+1] == ' ')):
+                    (i == (len(sl) - 1) or sl[i + 1] == ' ')):
                 val_iter = False
                 name_iter = True
                 i = i + 2
@@ -631,7 +719,7 @@ def scan_disks(min_size):
                 if (re.match(dname, dmap['NAME']) is not None):
                     dnames[dname][11] = True
         if (((dmap['NAME'] != root and dmap['TYPE'] != 'part') or
-             (dmap['TYPE'] == 'part' and dmap['FSTYPE'] == 'btrfs'))):
+                (dmap['TYPE'] == 'part' and dmap['FSTYPE'] == 'btrfs'))):
             dmap['parted'] = False  # part = False by default
             dmap['root'] = False
             if (dmap['TYPE'] == 'part' and dmap['FSTYPE'] == 'btrfs'):
@@ -652,7 +740,14 @@ def scan_disks(min_size):
                 continue
             if (dmap['SIZE'] < min_size):
                 continue
+            if (dmap['SERIAL'] == ''):
+                # lsblk fails to retrieve SERIAL from KVM VirtIO drives
+                # so try specialized function.
+                dmap['SERIAL'] = get_virtio_disk_serial(dmap['NAME'])
             if (dmap['SERIAL'] == '' or (dmap['SERIAL'] in serials)):
+                # No serial number still or its a repeat.
+                # Overwrite drive serial entry with drive name:
+                # see disks_table.jst for a use of this flag mechanism.
                 dmap['SERIAL'] = dmap['NAME']
             serials.append(dmap['SERIAL'])
             for k in dmap.keys():

@@ -19,42 +19,26 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (Share, Snapshot, Disk, NFSExport, SambaShare)
-from fs.btrfs import (update_quota, rollback_snap, set_property, mount_share)
+from fs.btrfs import (update_quota, rollback_snap)
 from storageadmin.serializers import ShareSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
 from clone_helpers import create_clone
 from django.conf import settings
 from system.osi import is_share_mounted
+from share import ShareMixin
 import logging
 logger = logging.getLogger(__name__)
+from django.core.exceptions import ObjectDoesNotExist
 
 
-class ShareCommandView(rfc.GenericView):
+class ShareCommandView(ShareMixin, rfc.GenericView):
     serializer_class = ShareSerializer
-
-    def get_queryset(self, *args, **kwargs):
-        if ('sname' in self.kwargs):
-            self.paginate_by = 0
-            try:
-                return Share.objects.get(name=self.kwargs['sname'])
-            except:
-                return []
-        sort_col = self.request.query_params.get('sortby', None)
-        if (sort_col is not None and sort_col == 'usage'):
-            reverse = self.request.query_params.get('reverse', 'no')
-            if (reverse == 'yes'):
-                reverse = True
-            else:
-                reverse = False
-            return sorted(Share.objects.all(), key=lambda u: u.cur_usage(),
-                          reverse=reverse)
-        return Share.objects.all()
 
     def _validate_share(self, request, sname):
         try:
             return Share.objects.get(name=sname)
-        except:
+        except ObjectDoesNotExist:
             e_msg = ('Share(%s) does not exist' % sname)
             handle_exception(Exception(e_msg), request)
 
@@ -62,7 +46,7 @@ class ShareCommandView(rfc.GenericView):
         try:
             snap_name = request.data.get('name', '')
             return Snapshot.objects.get(share=share, name=snap_name)
-        except:
+        except ObjectDoesNotExist:
             e_msg = ('Snapshot(%s) does not exist for this Share(%s)' %
                      (snap_name, share.name))
             handle_exception(Exception(e_msg), request)
