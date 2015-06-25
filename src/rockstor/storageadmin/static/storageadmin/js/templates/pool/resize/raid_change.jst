@@ -7,9 +7,8 @@
 
 <form id="raid-change-form">
   <% var levels = ['single', 'raid0', 'raid1', 'raid10', 'raid5', 'raid6']; %>
-  <div class="form-group">
   <div class="row">
-  <div class="col-md-4">
+  <div class="form-group col-md-4">
      <label for="raid-level">Select a new raid level</label>
     <select id="raid-level" name="raid-level" class="form-control">
       <option value="">Select a new raid level</option>
@@ -19,7 +18,6 @@
         <% } %>
       <% }); %>
     </select>
-    </div>
     </div>
   </div>
   <div class="alert alert-warning">Note! You need to add disks while changing raid level</div>
