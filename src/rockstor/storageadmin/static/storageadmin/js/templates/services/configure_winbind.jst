@@ -32,7 +32,7 @@
         <div class="form-group">
           <label class="control-label" for="domain">Winbind Domain<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" id="domain" name="domain" value="<%= config.domain %>" placeholder="Domain" >
+            <input class="form-control shorten-input" type="text" id="domain" name="domain" value="<%= config.domain %>" placeholder="Domain" >
           </div>
         </div>
 
@@ -41,7 +41,7 @@
         <div class="form-group">
           <label class="control-label" for="security">Security Model<span class="required"> *</span></label>
           <div class="controls">
-            <select id="security" name="security">
+            <select class="form-control shorten-input" id="security" name="security">
               <% _.each(securityTypes, function(security, index) { %>
                 <% if (security == config.security) { %>
                   <option value="<%= security %>" selected="selected">
@@ -59,10 +59,10 @@
           <label class="control-label" for="realm">Winbind ADS Realm<span class="required"> * </span></label>
           <div class="controls">
             <% if (config.security == 'ads' || _.isNull(config.security) || _.isUndefined(config.security) ) { %>
-              <input type="text" id="realm" name="realm"
+              <input class="form-control shorten-input"type="text" id="realm" name="realm"
               value="<%= config.realm %>" placeholder="Realm">
             <% } else { %>
-              <input type="text" id="realm" name="realm"
+              <input class="form-control shorten-input" type="text" id="realm" name="realm"
               disabled="true" value="<%= config.realm %>"
               placeholder="Winbind ADS Realm" >
             <% } %>
@@ -73,7 +73,7 @@
         <div class="form-group">
           <label class="control-label" for="controllers">Winbind Domain Controllers<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" id="controllers" name="controllers" value="<%= config.controllers %>" placeholder="Controllers">
+            <input class="form-control shorten-input" type="text" id="controllers" name="controllers" value="<%= config.controllers %>" placeholder="Controllers">
           </div>
         </div>
 
@@ -83,7 +83,7 @@
           <label class="control-label" for="templateshell">Template Shell<span class="required"> *</span></label>
           <div class="controls">
             <% if (config.security == 'ads' || config.security == 'domain' || _.isNull(config.security) || _.isUndefined(config.security))  { %>
-              <select id="templateshell" name="templateshell">
+              <select class="form-control shorten-input" id="templateshell" name="templateshell">
                 <% _.each(templateShells, function(shell, index) { %>
                   <% if (shell == config.shell) { %>
                     <option value="<%= shell %>" selected="selected">

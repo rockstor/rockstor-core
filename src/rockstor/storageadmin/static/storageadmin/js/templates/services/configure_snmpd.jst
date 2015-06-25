@@ -30,35 +30,34 @@
         <div class="form-group">
           <label class="control-label" for="syslocation">System Location<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" id="syslocation" name="syslocation" value="<%= config.syslocation %>" placeholder="System Location" title="A string indicating the location of the system" >
+            <input class="form-control shorten-input" type="text" id="syslocation" name="syslocation" value="<%= config.syslocation %>" placeholder="System Location" title="A string indicating the location of the system" >
           </div>
         </div>
         <div class="form-group">
           <label class="control-label" for="syscontact">System Contact<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" id="syscontact" name="syscontact" value="<%= config.syscontact %>" placeholder="System Contact" title="contact(e-mail) information for the administrator">
+            <input class="form-control shorten-input" type="text" id="syscontact" name="syscontact" value="<%= config.syscontact %>" placeholder="System Contact" title="contact(e-mail) information for the administrator">
           </div>
         </div>
         <div class="form-group">
           <label class="control-label" for="rocommunity">RO Community<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" id="rocommunity" name="rocommunity" value="<%= config.rocommunity %>" placeholder="RO Community" title="a community name to allow read-only access">
+            <input class="form-control shorten-input" type="text" id="rocommunity" name="rocommunity" value="<%= config.rocommunity %>" placeholder="RO Community" title="a community name to allow read-only access">
           </div>
         </div>
 
         <div class="form-group">
           <label class="control-label" for="options">Below directives will be put in /etc/snmp/snmpd.conf file</label>
           <div class="controls">
-           <textarea id="options" name="options" rows="5" class="col-md-10"><%= config.aux %></textarea>
+           <textarea clas="form-control" id="options" name="options" rows="5" cols="80"><%= config.aux %></textarea>
            </div>
         </div>
+	<button id="cancel" class="btn btn-default">Cancel</button>
+        <button type="Submit" id="create-user" class="btn btn-primary">Submit</button>
 
-        <div class="form-group">
-          <div class="controls">
-            <button id="cancel" class="btn btn-default">Cancel</button>
-            <button type="Submit" id="create-user" class="btn btn-primary">Submit</button>
-          </div>
-        </div>
+      </div>
+
+
       </form>
 
     </div> <!-- form-box -->

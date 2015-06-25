@@ -38,7 +38,7 @@
 		   <a href="#/shares">Go to shares</a>
 		<% } else { %>
 
-             <select name="root_share" id="root_share" data-placeholder="Select root share">
+             <select class="form-control shorten-input" name="root_share" id="root_share" data-placeholder="Select root share">
              <% shares.each( function(share, index) { %>
               <% if (share.get('name') == config.root_share) { %>
               <option value="<%= share.get('name') %>" selected="selected">  <%= share.get('name') %> </option>
@@ -47,16 +47,14 @@
             <% } %>
              <% }); %>
           </select>
-          <div class="form-group">
-            <div class="controls">
-              <button id="cancel" class="btn btn-default">Cancel</button>
-              <button type="Submit" id="create-user" class="btn btn-primary">Submit</button>
-           </div>
-         </div>
+
+          </div>
+
 
         </div>
-      	<% } %>
-        </div>
+        <% } %>
+              <button id="cancel" class="btn btn-default">Cancel</button>
+              <button type="Submit" id="create-user" class="btn btn-primary">Submit</button>
       </form>
 
     </div> <!-- form-box -->
