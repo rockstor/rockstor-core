@@ -97,7 +97,7 @@ class ShareListView(ShareMixin, rfc.GenericView):
                     reverse = True
                 else:
                     reverse = False
-                return sorted(Share.objects.all(), key=lambda u: u.cur_usage(),
+                return sorted(Share.objects.all(), key=lambda u: u.rusage,
                               reverse=reverse)
             return Share.objects.all()
 
@@ -229,11 +229,11 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
                 new_size = self._validate_share_size(request, share.pool)
                 disk = Disk.objects.filter(pool=share.pool)[0]
                 qid = qgroup_id(share.pool, disk.name, share.subvol_name)
-                cur_usage = share_usage(share.pool, disk.name, qid)
-                if (new_size < cur_usage):
+                cur_rusage, cur_eusage = share_usage(share.pool, disk.name, qid)
+                if (new_size < cur_rusage):
                     e_msg = ('Unable to resize because requested new size(%dKB) '
                              'is less than current usage(%dKB) of the share.' %
-                             (new_size, cur_usage))
+                             (new_size, cur_rusage))
                     handle_exception(Exception(e_msg), request)
                 update_quota(share.pool, disk.name, qid, new_size * 1024)
                 share.size = new_size

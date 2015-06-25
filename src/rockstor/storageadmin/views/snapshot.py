@@ -163,8 +163,8 @@ class SnapshotView(rfc.GenericView):
                      real_name, readonly=not writable)
             snap_id = share_id(share.pool, pool_device, real_name)
             qgroup_id = ('0/%s' % snap_id)
-            snap_size = share_usage(share.pool, pool_device,
-                                    qgroup_id)
+            snap_size, eusage = share_usage(share.pool, pool_device,
+                                            qgroup_id)
         s = Snapshot(share=share, name=snap_name, real_name=real_name,
                      size=snap_size, qgroup=qgroup_id,
                      uvisible=uvisible, snap_type=snap_type,
