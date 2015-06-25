@@ -22,10 +22,9 @@ from django.conf import settings
 from storageadmin.models import SFTP, Disk, Snapshot
 from storageadmin.util import handle_exception
 from storageadmin.serializers import SFTPSerializer
-from fs.btrfs import (is_share_mounted, umount_root, is_mounted, mount_snap)
+from fs.btrfs import (is_share_mounted, umount_root, is_mounted, mount_snap, mount_share)
 from system.ssh import (update_sftp_config, sftp_mount_map, sftp_mount,
                         rsync_for_sftp)
-from share_helpers import helper_mount_share
 from share import ShareMixin
 import rest_framework_custom as rfc
 import shutil
@@ -52,6 +51,14 @@ class SFTPMixin(object):
 
 class SFTPListView(ShareMixin, SFTPMixin, rfc.GenericView):
     serializer_class = SFTPSerializer
+
+    @staticmethod
+    def _helper_mount_share(share, mnt_pt=None):
+        if (not is_share_mounted(share.name)):
+            pool_device = Disk.objects.filter(pool=share.pool)[0].name
+            if(mnt_pt is None):
+                mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
+            mount_share(share, pool_device, mnt_pt)
 
     def get_queryset(self, *args, **kwargs):
         return SFTP.objects.all()
@@ -84,7 +91,7 @@ class SFTPListView(ShareMixin, SFTPMixin, rfc.GenericView):
                 sftpo = SFTP(share=share, editable=editable)
                 sftpo.save()
                 #  mount if not already mounted
-                helper_mount_share(share)
+                self._helper_mount_share(share)
                 #  bindmount if not already
                 sftp_mount(share, settings.MNT_PT, settings.SFTP_MNT_ROOT,
                            mnt_map, editable)
