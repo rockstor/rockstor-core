@@ -25,14 +25,12 @@ from storageadmin.util import handle_exception
 from storageadmin.serializers import NFSExportGroupSerializer
 from fs.btrfs import (mount_share, is_share_mounted)
 import rest_framework_custom as rfc
-from nfs_helpers import (dup_export_check, refresh_wrapper,
-                         teardown_wrapper, validate_export_group)
 from share import ShareMixin
 import logging
 logger = logging.getLogger(__name__)
 
-class NFSMixin(ShareMixin, object):
 
+class NFSMixin(ShareMixin, object):
 
     @staticmethod
     def _client_input(export):
@@ -115,6 +113,49 @@ class NFSMixin(ShareMixin, object):
             return options
 
 
+    @staticmethod
+    def _dup_export_check(share, host_str, request, export_id=None):
+        for e in NFSExport.objects.filter(share=share):
+            if (e.export_group.host_str == host_str):
+                if (e.export_group.id == export_id):
+                    continue
+                e_msg = ('An export already exists for the host string: %s' %
+                         host_str)
+                handle_exception(Exception(e_msg), request)
+
+
+    @staticmethod
+    def _validate_export_group(export_id, request):
+        try:
+            return NFSExportGroup.objects.get(id=export_id)
+        except:
+            e_msg = ('NFS export with id: %d does not exist' % export_id)
+            handle_exception(Exception(e_msg), request)
+
+
+    @staticmethod
+    def _refresh_wrapper(exports, request, logger):
+        try:
+            refresh_nfs_exports(exports)
+        except Exception, e:
+            e_msg = ('A lower level error occured while refreshing NFS exports. '
+                     'Error: %s. This could be due to invalid input. '
+                     'If so, correct your input and try again.' % e)
+            logger.exception(e)
+            handle_exception(Exception(e_msg), request)
+
+
+    @staticmethod
+    def _teardown_wrapper(export_pt, request, logger):
+        try:
+            nfs4_mount_teardown(export_pt)
+        except Exception, e:
+            e_msg = ('Unable to delete the export(%s) because it is '
+                     'in use' % (export_pt))
+            logger.exception(e)
+            handle_exception(Exception(e_msg), request)
+
+
 class NFSExportGroupListView(NFSMixin, rfc.GenericView):
     serializer_class = NFSExportGroupSerializer
 
@@ -130,7 +171,7 @@ class NFSExportGroupListView(NFSMixin, rfc.GenericView):
             shares = [self._validate_share(s, request) for s in request.data['shares']]
             options = self._parse_options(request)
             for s in shares:
-                dup_export_check(s, options['host_str'], request)
+                self._dup_export_check(s, options['host_str'], request)
 
             cur_exports = list(NFSExport.objects.all())
             eg = NFSExportGroup(**options)
@@ -151,7 +192,7 @@ class NFSExportGroupListView(NFSMixin, rfc.GenericView):
                            AdvancedNFSExport.objects.all()]
             exports_d = self._create_adv_nfs_export_input(adv_entries, request)
             exports.update(exports_d)
-            refresh_wrapper(exports, request, logger)
+            self._refresh_wrapper(exports, request, logger)
             nfs_serializer = NFSExportGroupSerializer(eg)
             return Response(nfs_serializer.data)
 
@@ -171,14 +212,14 @@ class NFSExportGroupDetailView(ShareMixin, rfc.GenericView):
     @transaction.atomic
     def delete(self, request, export_id):
         with self._handle_exception(request):
-            eg = validate_export_group(export_id, request)
+            eg = self._validate_export_group(export_id, request)
             cur_exports = list(NFSExport.objects.all())
             for e in NFSExport.objects.filter(export_group=eg):
                 export_pt = ('%s%s' % (settings.NFS_EXPORT_ROOT, e.share.name))
                 if (e.export_group.nohide):
                     snap_name = e.mount.split(e.share.name + '_')[-1]
                     export_pt = ('%s/%s' % (export_pt, snap_name))
-                teardown_wrapper(export_pt, request, logger)
+                self._teardown_wrapper(export_pt, request, logger)
                 cur_exports.remove(e)
                 e.delete()
             eg.delete()
@@ -187,7 +228,7 @@ class NFSExportGroupDetailView(ShareMixin, rfc.GenericView):
                            AdvancedNFSExport.objects.all()]
             exports_d = self._create_adv_nfs_export_input(adv_entries, request)
             exports.update(exports_d)
-            refresh_wrapper(exports, request, logger)
+            self._refresh_wrapper(exports, request, logger)
             return Response()
 
     @transaction.atomic
@@ -197,10 +238,10 @@ class NFSExportGroupDetailView(ShareMixin, rfc.GenericView):
                 e_msg = ('Cannot export without specifying shares')
                 handle_exception(Exception(e_msg), request)
             shares = [self._validate_share(s, request) for s in request.data['shares']]
-            eg = validate_export_group(export_id, request)
+            eg = self._validate_export_group(export_id, request)
             options = self._parse_options(request)
             for s in shares:
-                dup_export_check(s, options['host_str'], request,
+                self._dup_export_check(s, options['host_str'], request,
                                  export_id=int(export_id))
             NFSExportGroup.objects.filter(id=export_id).update(**options)
             NFSExportGroup.objects.filter(id=export_id)[0].save()
@@ -226,6 +267,6 @@ class NFSExportGroupDetailView(ShareMixin, rfc.GenericView):
                            AdvancedNFSExport.objects.all()]
             exports_d = self._create_adv_nfs_export_input(adv_entries, request)
             exports.update(exports_d)
-            refresh_wrapper(exports, request, logger)
+            self._refresh_wrapper(exports, request, logger)
             nfs_serializer = NFSExportGroupSerializer(eg)
             return Response(nfs_serializer.data)

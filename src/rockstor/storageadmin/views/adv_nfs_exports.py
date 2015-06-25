@@ -22,7 +22,6 @@ from storageadmin.models import (NFSExport, AdvancedNFSExport)
 from storageadmin.util import handle_exception
 from storageadmin.serializers import AdvancedNFSExportSerializer
 import rest_framework_custom as rfc
-from nfs_helpers import refresh_wrapper
 import logging
 from nfs_exports import NFSMixin
 
@@ -73,6 +72,6 @@ class AdvancedNFSExportView(NFSMixin, rfc.GenericView):
             cur_exports = list(NFSExport.objects.all())
             exports = self._create_nfs_export_input(cur_exports)
             exports.update(exports_d)
-            refresh_wrapper(exports, request, logger)
+            self._refresh_wrapper(exports, request, logger)
             nfs_serializer = AdvancedNFSExportSerializer(cur_entries)
             return Response(nfs_serializer.data)
