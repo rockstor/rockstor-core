@@ -23,18 +23,18 @@ from system.osi import (refresh_nfs_exports, nfs4_mount_teardown)
 from fs.btrfs import (mount_share, is_share_mounted)
 
 
-def client_input(export):
-    eg = export.export_group
-    ci = {'client_str': eg.host_str,
-          'option_list': ('%s,%s,%s' % (eg.editable, eg.syncable,
-                                        eg.mount_security))}
-    if (eg.nohide):
-        ci['option_list'] = ('%s,nohide' % ci['option_list'])
-    ci['mnt_pt'] = export.mount.replace(settings.NFS_EXPORT_ROOT,
-                                        settings.MNT_PT)
-    if (eg.admin_host is not None):
-        ci['admin_host'] = eg.admin_host
-    return ci
+# def client_input(export):
+#     eg = export.export_group
+#     ci = {'client_str': eg.host_str,
+#           'option_list': ('%s,%s,%s' % (eg.editable, eg.syncable,
+#                                         eg.mount_security))}
+#     if (eg.nohide):
+#         ci['option_list'] = ('%s,nohide' % ci['option_list'])
+#     ci['mnt_pt'] = export.mount.replace(settings.NFS_EXPORT_ROOT,
+#                                         settings.MNT_PT)
+#     if (eg.admin_host is not None):
+#         ci['admin_host'] = eg.admin_host
+#     return ci
 
 
 # def create_adv_nfs_export_input(exports, request):
@@ -63,43 +63,43 @@ def client_input(export):
 #     return exports_d
 
 
-def create_nfs_export_input(exports):
-    exports_d = {}
-    for e in exports:
-        e_list = []
-        export_pt = ('%s%s' % (settings.NFS_EXPORT_ROOT, e.share.name))
-        if (e.export_group.nohide):
-            snap_name = e.mount.split('/')[-1]
-            export_pt = ('%s/%s' % (export_pt, snap_name))
-        if (export_pt in exports_d):
-            e_list = exports_d[export_pt]
-        e_list.append(client_input(e))
-        exports_d[export_pt] = e_list
-    return exports_d
+# def create_nfs_export_input(exports):
+#     exports_d = {}
+#     for e in exports:
+#         e_list = []
+#         export_pt = ('%s%s' % (settings.NFS_EXPORT_ROOT, e.share.name))
+#         if (e.export_group.nohide):
+#             snap_name = e.mount.split('/')[-1]
+#             export_pt = ('%s/%s' % (export_pt, snap_name))
+#         if (export_pt in exports_d):
+#             e_list = exports_d[export_pt]
+#         e_list.append(client_input(e))
+#         exports_d[export_pt] = e_list
+#     return exports_d
 
 
-def parse_options(request):
-    options = {
-        'host_str': '*',
-        'editable': 'ro',
-        'syncable': 'async',
-        'mount_security': 'insecure',
-        'admin_host': None,
-        }
-    if ('host_str' in request.data):
-        options['host_str'] = request.data['host_str']
-    if ('mod_choice' in request.data and
-        (request.data['mod_choice'] == 'ro' or
-         request.data['mod_choice'] == 'rw')):
-        options['editable'] = request.data['mod_choice']
-    if ('sync_choice' in request.data and
-        (request.data['sync_choice'] == 'sync' or
-         request.data['sync_choice'] == 'async')):
-        options['syncable'] = request.data['sync_choice']
-    if ('admin_host' in request.data and
-        len(request.data['admin_host']) > 0):
-        options['admin_host'] = request.data['admin_host']
-    return options
+# def parse_options(request):
+#     options = {
+#         'host_str': '*',
+#         'editable': 'ro',
+#         'syncable': 'async',
+#         'mount_security': 'insecure',
+#         'admin_host': None,
+#         }
+#     if ('host_str' in request.data):
+#         options['host_str'] = request.data['host_str']
+#     if ('mod_choice' in request.data and
+#         (request.data['mod_choice'] == 'ro' or
+#          request.data['mod_choice'] == 'rw')):
+#         options['editable'] = request.data['mod_choice']
+#     if ('sync_choice' in request.data and
+#         (request.data['sync_choice'] == 'sync' or
+#          request.data['sync_choice'] == 'async')):
+#         options['syncable'] = request.data['sync_choice']
+#     if ('admin_host' in request.data and
+#         len(request.data['admin_host']) > 0):
+#         options['admin_host'] = request.data['admin_host']
+#     return options
 
 
 def dup_export_check(share, host_str, request, export_id=None):
