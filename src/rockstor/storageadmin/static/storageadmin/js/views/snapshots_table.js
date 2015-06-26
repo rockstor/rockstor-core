@@ -85,7 +85,7 @@ add: function(event) {
 		modify_choices: this.modify_choices
 
 	}));
-	
+
     var err_msg = '';
     var name_err_msg = function() {
       return err_msg;
@@ -101,11 +101,11 @@ add: function(event) {
              if(/^[A-Za-z][A-Za-z0-9_.-]*$/.test(snapshot_name) == false){
           	 err_msg = 'Please enter a valid snapshot name.';
                return false;
-              }        
+              }
             return true;
-            
+
       }, name_err_msg);
-    
+
 	this.$('#add-snapshot-form :input').tooltip();
 	this.validator = this.$('#add-snapshot-form').validate({
 		onfocusout: false,
@@ -129,7 +129,7 @@ add: function(event) {
 			_this.collection.fetch({
 				success: function(collection, response, options) {
 				_this.parentView.trigger('snapshotsModified');
-			}                
+			}
 			});
 		},
 		error: function(xhr, status, error) {
@@ -162,7 +162,7 @@ deleteSnapshot: function(event) {
 			_this.collection.fetch({
 				success: function(collection, response, options) {
 				_this.parentView.trigger('snapshotsModified');
-			}                
+			}
 			});
 		},
 		error: function(xhr, status, error) {
@@ -238,7 +238,7 @@ deleteMultipleSnapshots: function(event) {
 		}, '', this);
 		snapIds = snapIds.slice(0, snapIds.length-1);
 		var totalSize = _.reduce(this.selectedSnapshots, function(sum, snap) {
-			return sum + snap.get('e_usage');
+			return sum + snap.get('eusage');
 		}, 0, this);
 		var totalSizeStr = humanize.filesize(totalSize*1024);
 		if (confirm(confirmMsg + snapNames + ' deletes ' + totalSizeStr + ' of data. Are you sure?')) {
@@ -259,7 +259,7 @@ deleteMultipleSnapshots: function(event) {
 					_this.collection.fetch({
 						success: function(collection, response, options) {
 						_this.parentView.trigger('snapshotsModified');
-					}                
+					}
 					});
 				}
 			},

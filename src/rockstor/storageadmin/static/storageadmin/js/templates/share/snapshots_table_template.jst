@@ -61,8 +61,8 @@
               No
             <% } %>
           </td>
-          <td><%= humanize.filesize(snapshot.get('r_usage')*1024) %></td>
-	        <td><%= humanize.filesize(snapshot.get('e_usage')*1024) %></td>
+          <td><%= humanize.filesize(snapshot.get('rusage')*1024) %></td>
+	        <td><%= humanize.filesize(snapshot.get('eusage')*1024) %></td>
           <td>
 	  <% if (snapshot.get("writable")) { %>
             <a class="js-snapshot-clone" href="#" data-name="<%= snapshot.get('name') %>"><i rel="tooltip" title="Clone snapshot" class="icon-book"></i></a>

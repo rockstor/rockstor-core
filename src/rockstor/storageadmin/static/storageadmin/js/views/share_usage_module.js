@@ -1,27 +1,27 @@
 /*
  *
- * @licstart  The following is the entire license notice for the 
+ * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
- * 
+ *
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
- * 
+ *
  * RockStor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
- * 
+ *
  * RockStor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * @licend  The above is the entire license notice
  * for the JavaScript code in this page.
- * 
+ *
  */
 
 ShareUsageModule = RockstorModuleView.extend({
@@ -40,7 +40,7 @@ ShareUsageModule = RockstorModuleView.extend({
   },
 
   render: function() {
-    $(this.el).html(this.template({ 
+    $(this.el).html(this.template({
       module_name: this.module_name,
       share: this.share,
       collection: this.collection
@@ -49,24 +49,24 @@ ShareUsageModule = RockstorModuleView.extend({
     //this.renderBar();
     return this;
   },
-   
+
   renderBar: function() {
     var _this = this;
     var w = 300;
     var h = 100;
     var padding = [10,10,10,1];
-    var barHeight = 50; 
+    var barHeight = 50;
 
     total = parseInt(this.share.get('size')*1024);
-    used = parseInt(this.share.get('r_usage')*1024);
+    used = parseInt(this.share.get('rusage')*1024);
     free = total - used;
-    var dataSet = [used, free]; 
+    var dataSet = [used, free];
     var data = [Math.round((used/total)*100), Math.round((free/total)*100)];
     //var data = [70,30]; //convert to percentages
     var dataLabels = ['used', 'free']
     var colors = {
       used: {fill: "rgb(128,128,128)", stroke: "rgb(221,221,221)"},
-      free: {fill: "rgb(168,247,171)", stroke: "rgb(221,221,221)"}, 
+      free: {fill: "rgb(168,247,171)", stroke: "rgb(221,221,221)"},
     };
 
     var svg = d3.select(this.el).select("#chart")
@@ -132,9 +132,9 @@ ShareUsageModule = RockstorModuleView.extend({
     h = 100;                            //height
     var outerRadius = 20;
     var innerRadius = 0;
-    
+
     total = parseInt(this.share.get('size')*1024);
-    used = parseInt(this.share.get('r_usage')*1024);
+    used = parseInt(this.share.get('rusage')*1024);
     free = total - used;
     var dataset = [free, used];
     var dataLabels = ["free", "used"];
@@ -143,7 +143,7 @@ ShareUsageModule = RockstorModuleView.extend({
     .append("svg")
     .attr("width", w)
     .attr("height", h);
-    
+
     displayUsagePieChart(svg, outerRadius, innerRadius, w, h, dataset, dataLabels, total);
 
   },
@@ -165,7 +165,7 @@ ShareUsageModule = RockstorModuleView.extend({
     if(sizeFormat == 'KB'){
       size = size;
     }else if(sizeFormat == 'MB'){
-      size = size*1024;	
+      size = size*1024;
     }else if(sizeFormat == 'GB'){
       size = size*1024*1024;
     }else if(sizeFormat == 'TB'){
@@ -197,5 +197,3 @@ ShareUsageModule = RockstorModuleView.extend({
 
 
 });
-
-
