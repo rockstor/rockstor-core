@@ -28,7 +28,7 @@
       <div class="form-group">
         <label class="control-label col-md-4" for="task_name">Task name<span class="required"> *</span></label>
         <label class="control-label col-md-4" for="task_type">Task type<span class="required"> *</span></label>
-          <input class="form-constrol col-md-4 offset-row-child" type="text" id="name" name="name" placeholder="Task name" title="A descriptive name for this task">
+          <input class="form-constrol col-md-4" type="text" id="name" name="name" placeholder="Task name" title="A descriptive name for this task">
           <select class="col-md-4" id="task-type" name="task_type">
             <% _.each(taskTypes, function(taskType, index) { %>
             <option value="<%= taskType %>"> <%= taskType %> </option>
