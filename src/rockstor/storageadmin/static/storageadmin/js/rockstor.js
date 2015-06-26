@@ -437,7 +437,7 @@ function fetchKernelInfo() {
 	},
 	error: function(xhr, status, error) {
 	    msg = JSON.parse(xhr.responseText).detail;
-	    $('#browsermsg').html('<div class="alert alert-error"><button type="button" class="close" data-dismiss="alert">&times;</button>' + msg + '</div>');
+	    $('#browsermsg').html('<div class="alert alert-danger"><button type="button" class="close" data-dismiss="alert">&times;</button>' + msg + '</div>');
 	}
     });
 }
