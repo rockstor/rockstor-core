@@ -29,75 +29,83 @@
     <label class="control-label"></label>
 
     <div class="form-box">
-      <form id="user-create-form" name="aform" class="">
+      <form id="user-create-form" name="aform" class="form-horizontal">
 
         <div class="messages"></div>
         <div class="form-group">
 	  <% if (username != null) { %>
-          <label class="control-label" for="username">Username (UID)
+          <label class="col-sm-2 control-label" for="username">Username (UID)
 	  <% } else { %>
-	  <label class="control-label" for="username">Username
+	  <label class="col-sm-2 control-label" for="username">Username
 	  <% } %>
           <% if (username == null) { %>
           <span class="required"> *</span>
           <% } %>
           </label>
           <div class="controls">
-          <% if (username != null) { %>
-            <label class="control-label" style="text-align:left"><%=username%>        (<%=user.get('uid')%>)</label>
-            <input type="hidden" id="username" name="username" value="<%=username%>">
+            <% if (username != null) { %>
+	    <div class="col-sm-10" style="padding-top: 7px"> <!-- Inline styling since this is the first instance of this case -->
+              <label><%=username%>(<%=user.get('uid')%>)</label>
+	    </div>
+	  <div class="col-sm-offset-2 col-sm-10">
+            <input class="form-control" type="hidden" id="username" name="username" value="<%=username%>">
+	  </div>
           <% } else { %>
-            <input type="text" id="username" name="username" placeholder="Username" title="Username must start with a letter and can contain letters, numbers, - and _ characters. It cannot exceed 30 characters in length.">
+	  <div class="col-sm-10">
+            <input class="form-control shorten-input" type="text" id="username" name="username" placeholder="Username" title="Username must start with a letter and can contain letters, numbers, - and _ characters. It cannot exceed 30 characters in length.">
+	  </div>
           <% } %>
           </div>
         </div>
         <div class="form-group">
-          <div class="controls">
-            <label class="checkbox-inline">
-            <% if (user != null && user.get('user')) { %>
+	  <div class="col-sm-offset-2 col-sm-10">
+            <div class="checkbox">
+              <label>
+		<% if (user != null && user.get('user')) { %>
                 <input class="checkbox-inline" type="checkbox" id="admin" name="admin" placeholder="Admin" checked="true">
-              <% } else { %>
+		<% } else { %>
                 <input class="checkbox-inline" type="checkbox" id="admin" name="admin" placeholder="Admin">
-              <% } %>
-              Allow this user to login to RockStor Web UI?
-            </label>
-          </div>
+		<% } %>
+		Allow this user to login to RockStor Web UI?
+              </label>
+            </div>
+	  </div>
+        </div>
+        <div class="form-group">
+	      <% if (username == null) { %>
+              <label class="col-sm-2 control-label">Password<span class="required"> *</span></label>
+	      <% } else { %>
+	      <label class="col-sm-2 control-label">Password<span class="required"></span></label>
+	      <% } %>
+	      <div class="col-sm-10">
+		<input class="form-control shorten-input" type="password" id="password" name="password" placeholder="Password">
+	      </div>
         </div>
         <div class="form-group">
 	  <% if (username == null) { %>
-            <label class="control-label">Password<span class="required"> *</span></label>
+            <label class="col-sm-2 control-label">Confirm Password<span class="required"> *</span></label>
 	  <% } else { %>
-	    <label class="control-label">Password<span class="required"></span></label>
+	    <label class="col-sm-2 control-label">Confirm Password<span class="required"></span></label>
 	  <% } %>
-          <div class="controls">
-            <input type="password" id="password" name="password" placeholder="Password">
+          <div class="col-sm-10 controls">
+            <input class="form-control shorten-input" type="password" id="password_confirmation" name="password_confirmation" placeholder="Password">
           </div>
         </div>
         <div class="form-group">
-	  <% if (username == null) { %>
-            <label class="control-label">Confirm Password<span class="required"> *</span></label>
-	  <% } else { %>
-	    <label class="control-label">Confirm Password<span class="required"></span></label>
-	  <% } %>
-          <div class="controls">
-            <input type="password" id="password_confirmation" name="password_confirmation" placeholder="Password">
-          </div>
-        </div>
-        <div class="form-group">
-        <label class="control-label">Public key</label>
-          <div class="controls">
+        <label class="col-sm-2 control-label">Public key</label>
+          <div class="col-sm-10 controls">
              <% if ((username != null) && (user.get("public_key") != null)) { %>
-             <textarea rows="1" cols="50" id="public_key" name="public_key"> <%= user.get("public_key") %> </textarea>
+             <textarea class="form-control" rows="1" cols="50" id="public_key" name="public_key"> <%= user.get("public_key") %> </textarea>
              <% } else { %>
-             <textarea id="public_key" name="public_key" />
+             <textarea class="form-control" rows="1" cols="50" id="public_key" name="public_key" />
              <% } %>
           </div>
         </div>
 	<% shells = ['/bin/bash', '/sbin/nologin']; %>
 	<div class="form-group">
-	  <label class="control-label" for="shell">Login shell<span class="required"></span></label>
-	  <div class="controls">
-	    <select id="shell" name="shell">
+	  <label class="col-sm-2 control-label" for="shell">Login shell<span class="required"></span></label>
+	  <div class="col-sm-10 controls">
+	    <select class="form-control shorten-input" id="shell" name="shell">
         <% _.each(shells, function(s, index) { %>
           <% if (user.get('shell') == s) { %>
             <option value="<%= s %>" selected="selected"><%= s %> </option>
@@ -110,17 +118,17 @@
 	</div>
 	<% if (username == null) { %>
 	<div class="form-group">
-	<label class="control-label">UID</label>
-	  <div class="controls">
-	    <input type="text" id="uid" name="uid" placeholder="Create a new one" title="Enter a custom uid here or one will be autogenerated">
+	<label class="col-sm-2 control-label">UID</label>
+	  <div class="col-sm-10 controls">
+	    <input class="form-control shorten-input" type="text" id="uid" name="uid" placeholder="Create a new one" title="Enter a custom uid here or one will be autogenerated">
 	  </div>
 	</div>
 	<% } %>
 	<% if (username == null) { %>
 	<div class="form-group">
-	<label class="control-label">Group</label>
-	  <div class="controls">
-	    <select name="group" id="group" title="Select a primary group from the list of one will be autogenerated" data-placeholder="Autogenerate">
+	<label class="col-sm-2 control-label">Group</label>
+	  <div class="col-sm-10 controls">
+	    <select class="form-conrol shorten-input" name="group" id="group" title="Select a primary group from the list of one will be autogenerated" data-placeholder="Autogenerate">
 	    <option value="Autogenerate" selected="selected">Create a new one</option>
       <% groups.each(function(group, index) { %>
           <option value="<%= group.get('groupname') %>"><%= group.get('groupname') %></option>
@@ -130,18 +138,17 @@
 	</div>
         <% } %>
 	<div class="form-group">
-	<label class="control-label">Email</label>
-	  <div class="controls">
-	    <input type="text" id="email" name="email" title="Enter an email address to associate with the user">
+	<label class="col-sm-2 control-label">Email</label>
+	  <div class="col-sm-10 controls">
+	    <input class="form-control shorten-input" type="text" id="email" name="email" title="Enter an email address to associate with the user">
 	  </div>
 	</div>
-        <div class="form-group">
-          <div class="controls">
+	<div class="form-group">
+	  <div class="col-sm-offset-2 col-sm-10">
 	    <button id="cancel" class="btn btn-default">Cancel</button>
 	    <button type="Submit" id="create-user" class="btn btn-primary">Submit</button>
-          </div>
-        </div>
-
+	  </div>
+	</div>
       </form>
     </div>
   </div>
