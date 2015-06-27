@@ -349,8 +349,10 @@ def remove_share(pool, pool_device, share_name):
     subvol_mnt_pt = root_pool_mnt + '/' + share_name
     if (not is_subvol(subvol_mnt_pt)):
         return
+    qgroup = ('0/%s' % share_id(pool, pool_device, share_name))
     delete_cmd = [BTRFS, 'subvolume', 'delete', subvol_mnt_pt]
     run_command(delete_cmd)
+    return qgroup_destroy(qgroup, root_pool_mnt)
 
 
 def remove_snap(pool, pool_device, share_name, snap_name):
@@ -458,6 +460,15 @@ def disable_quota(pool_name, device):
 def qgroup_id(pool, disk_name, share_name):
     sid = share_id(pool, disk_name, share_name)
     return '0/' + sid
+
+
+def qgroup_destroy(qid, mnt_pt):
+    o, e, rc = run_command([BTRFS, 'qgroup', 'show', mnt_pt])
+    for l in o:
+        if (re.match(qid, l) is not None and
+            l.split()[0] == qid):
+            return run_command([BTRFS, 'qgroup', 'destroy', qid, mnt_pt])
+    return False
 
 
 def update_quota(pool, pool_device, qgroup, size_bytes):
