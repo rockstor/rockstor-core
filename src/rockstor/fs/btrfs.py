@@ -362,7 +362,9 @@ def remove_snap(pool, pool_device, share_name, snap_name):
     if (is_mounted(snap_path)):
         umount_root(snap_path)
     if (is_subvol(snap_path)):
-        return run_command([BTRFS, 'subvolume', 'delete', snap_path])
+        qgroup = ('0/%s' % share_id(pool, pool_device, snap_name))
+        run_command([BTRFS, 'subvolume', 'delete', snap_path])
+        return qgroup_destroy(qgroup, root_mnt)
     else:
         o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-s', root_mnt])
         snap = None
