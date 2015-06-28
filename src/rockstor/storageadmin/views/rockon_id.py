@@ -92,11 +92,12 @@ class RockOnIdView(rfc.GenericView):
                         if (not Share.objects.filter(name=sname).exists()):
                             e_msg = ('Invalid Share(%s).' % sname)
                             handle_exception(Exception(e_msg), request)
-                        so = Share.objects.get(name=sname)
-                        vo = DVolume.objects.get(container=co,
-                                                 dest_dir=s)
-                        vo.share = so
-                        vo.save()
+                        if (DVolume.objects.filter(container=co, dest_dir=s).exists()):
+                            so = Share.objects.get(name=sname)
+                            vo = DVolume.objects.get(container=co,
+                                                     dest_dir=s)
+                            vo.share = so
+                            vo.save()
                     for p in port_map.keys():
                         if (not DPort.objects.filter(containerp=p).exists()):
                             e_msg = ('Invalid Port(%s).' % p)

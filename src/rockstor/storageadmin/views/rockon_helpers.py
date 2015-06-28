@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from system.osi import run_command
+from django.conf import settings
 from django_ztask.decorators import task
 from cli.rest_util import api_call
 from system.services import service_status
@@ -77,6 +78,10 @@ def start(rid):
     new_status = 'started'
     try:
         rockon = RockOn.objects.get(id=rid)
+        if (rockon.name == 'OpenVPN'):
+            run_command([DOCKER, 'start', 'ovpn-data'])
+        if (rockon.name == 'OwnCloud'):
+            run_command([DOCKER, 'start', 'owncloud-postgres'])
         run_command([DOCKER, 'start', rockon.name])
     except:
         new_status = 'start_failed'
@@ -92,6 +97,10 @@ def stop(rid):
     try:
         rockon = RockOn.objects.get(id=rid)
         run_command([DOCKER, 'stop', rockon.name])
+        if (rockon.name == 'OpenVPN'):
+            run_command([DOCKER, 'stop', 'ovpn-data'])
+        if (rockon.name == 'OwnCloud'):
+            run_command([DOCKER, 'stop', 'owncloud-postgres'])
     except:
         new_status = 'stop_failed'
     finally:
@@ -121,6 +130,8 @@ def install(rid):
             btsync_install(rockon)
         elif (rockon.name == 'Syncthing'):
             syncthing_install(rockon)
+        elif (rockon.name == 'OwnCloud'):
+            owncloud_install(rockon)
     except Exception, e:
         logger.debug('exception while installing the rockon')
         logger.exception(e)
@@ -138,6 +149,8 @@ def uninstall(rid, new_state='available'):
         rm_container(rockon.name)
         if (rockon.name == 'OpenVPN'):
             rm_container('ovpn-data')
+        if (rockon.name == 'OwnCloud'):
+            rm_container('owncloud-postgres')
     except Exception, e:
         logger.debug('exception while uninstalling rockon')
         logger.exception(e)
@@ -157,7 +170,7 @@ def plex_install(rockon):
         image = c.dimage.name
         run_command([DOCKER, 'pull', image, ])
         for v in DVolume.objects.filter(container=c):
-            share_mnt = '/mnt2/%s' % v.share.name
+            share_mnt = '%s%s' % (settings.MNT_PT, v.share.name)
             if (v.dest_dir == '/config'):
                 config_share = share_mnt
             cmd.extend(['-v', '%s:%s' % (share_mnt, v.dest_dir), ])
@@ -227,7 +240,7 @@ def transmission_install(rockon):
     image = c.dimage.name
     run_command([DOCKER, 'pull', image])
     for v in DVolume.objects.filter(container=c):
-        share_mnt = '/mnt2/%s' % v.share.name
+        share_mnt = '%s%s' % (settings.MNT_PT, v.share.name)
         mount_share(v.share.name, share_mnt)
         cmd.extend(['-v', '%s:%s' % (share_mnt, v.dest_dir), ])
     for p in DPort.objects.filter(container=c):
@@ -243,7 +256,7 @@ def btsync_install(rockon):
     image = c.dimage.name
     run_command([DOCKER, 'pull', image])
     for v in DVolume.objects.filter(container=c):
-        share_mnt = '/mnt2/%s' % v.share.name
+        share_mnt = '%s%s' % (settings.MNT_PT, v.share.name)
         mount_share(v.share.name, share_mnt)
         cmd.extend(['-v', '%s:%s' % (share_mnt, v.dest_dir), ])
     for p in DPort.objects.filter(container=c):
@@ -259,10 +272,44 @@ def syncthing_install(rockon):
     image = c.dimage.name
     run_command([DOCKER, 'pull', image])
     for v in DVolume.objects.filter(container=c):
-        share_mnt = '/mnt2/%s' % v.share.name
+        share_mnt = '%s%s' % (settings.MNT_PT, v.share.name)
         mount_share(v.share.name, share_mnt)
         cmd.extend(['-v', '%s:%s' % (share_mnt, v.dest_dir), ])
     for p in DPort.objects.filter(container=c):
         cmd.extend(['-p', '%d:%d' % (p.hostp, p.containerp), ])
     cmd.append(image)
     run_command(cmd)
+
+
+def owncloud_install(rockon):
+    oc_name = 'owncloud'
+    dbc_name = '%s-postgres' % oc_name
+    rm_container(dbc_name)
+    rm_container(rockon.name)
+    for c in DContainer.objects.filter(rockon=rockon):
+        image = c.dimage.name
+        run_command([DOCKER, 'pull', image,])
+    dbc_cmd = [DOCKER, 'run', '--name', dbc_name]
+    dbc = DContainer.objects.get(rockon=rockon, name=dbc_name)
+    vo = DVolume.objects.get(container=dbc)
+    share_mnt = '%s%s' % (settings.MNT_PT, vo.share.name)
+    dbc_cmd.extend(['-v', '%s:%s' % (share_mnt, vo.dest_dir)])
+    db_user = DCustomConfig.objects.get(rockon=rockon, key='DB User')
+    db_pw = DCustomConfig.objects.get(rockon=rockon, key='DB Password')
+    dbc_cmd.extend(['-e', 'POSTGRES_USER=%s' % db_user, '-e',
+                    'POSTGRES_PASSWORD=%s' % db_pw, '-d', 'postgres'])
+    run_command(dbc_cmd)
+    logger.debug('postgres container initiated')
+
+    oc = DContainer.objects.get(rockon=rockon, name=oc_name)
+    po = DPort.objects.get(container=oc)
+    oc_cmd = [DOCKER, 'run', '--link', '%s:db' % dbc_name, '-d', '--name',
+              rockon.name, '-p', '%s:%s' % (po.hostp, po.containerp)]
+    for v in DVolume.objects.filter(container=oc):
+        share_mnt = '%s%s' % (settings.MNT_PT, v.share.name)
+        oc_cmd.extend(['-v', '%s:%s' % (share_mnt, v.dest_dir)])
+    oc_cmd.extend(['-v', '%s/rockstor.key:/etc/ssl/private/owncloud.key' % settings.CERTDIR,
+                   '-v', '%s/rockstor.cert:/etc/ssl/certs/owncloud.crt' % settings.CERTDIR,
+                   '-e', 'HTTPS_ENABLED=true'])
+    oc_cmd.append(oc.dimage.name)
+    run_command(oc_cmd)

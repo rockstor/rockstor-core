@@ -122,6 +122,12 @@ class RockOnView(rfc.GenericView):
                                 else:
                                     po.protocol = ports[p]
                                 po.save()
+                        else:
+                            ports = {}
+                        ports = [int(p) for p in ports.keys()]
+                        for po in DPort.objects.filter(container=co):
+                            if (po.containerp not in ports):
+                                po.delete()
 
                         if ('volumes' in containers[c]):
                             volumes = containers[c]['volumes']
@@ -159,6 +165,12 @@ class RockOnView(rfc.GenericView):
                                 except:
                                     pass
                             cco.save()
+                    else:
+                        cc_d = {}
+                    for cco in DCustomConfig.objects.filter(rockon=ro):
+                        if (cco.key not in cc_d):
+                            cco.delete()
+
                     if ('app_link' in rockons[r]):
                         app_link = rockons[r]['app_link']
                         if (ro.state != 'installed'):
