@@ -36,20 +36,24 @@
 
 <% } %>
 
-<div id="shutdown-modal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="updateModalLabel" aria-hidden="true">
-  <div class="modal-header">
-    <h3 id="shutdownModalLabel">Shutdown</h3>
+<div id="shutdown-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="updateModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+	<h3 id="shutdownModalLabel">Shutdown</h3>
+      </div>
+      <div class="modal-body">
+	<h4 id="message" >Graceful system shutdown is in progress. Please wait... &nbsp;&nbsp; </h4>
+	<br>
+	<div style="text-align: center">
+	  <img id="timer" src="/static/storageadmin/img/ajax-loader-big.gif">
+	  <div id="time-left"></div>
+	</div>
+	<div id="user-msg" style="display: none"><h4> Shutdown still not complete. Connect to the console for current status of the system. </h4> </div>
+	<div id="user-msg2" style="display: none"><h4> System is now shutdown.</h4></div>
+      </div>
+    </div>
   </div>
-  <div class="modal-body">
-    <h4 id="message" >Graceful system shutdown is in progress. Please wait... &nbsp;&nbsp; </h4>
-    <br>
-    <div style="text-align: center">
-      <img id="timer" src="/static/storageadmin/img/ajax-loader-big.gif">
-      <div id="time-left"></div>
-    </div>
-    <div id="user-msg" style="display: none"><h4> Shutdown still not complete. Connect to the console for current status of the system. </h4> </div>
-    <div id="user-msg2" style="display: none"><h4> System is now shutdown.</h4></div>
-    </div>
 </div>
 
 <div id="reboot-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="updateModalLabel" aria-hidden="true">

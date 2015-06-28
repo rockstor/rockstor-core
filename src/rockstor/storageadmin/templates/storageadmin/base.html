@@ -166,13 +166,17 @@
 
 
     <div id="errorPopup" class="modal hide fade" tabindex="-1" role="dialog" >
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" >x</button>
-        <h3>Error!</h3>
-      </div>
-      <div class="modal-body" id="errorContent" style="overflow: scroll; height: 200px;"></div>
-      <div class="modal-footer">
-        <button type="button" data-dismiss="modal" class="btn">Close</button>
+      <div class="modal-dialog">
+	<div class="modal-content">
+	  <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true" >x</button>
+            <h3>Error!</h3>
+	  </div>
+	  <div class="modal-body" id="errorContent" style="overflow: scroll; height: 200px;"></div>
+	  <div class="modal-footer">
+            <button type="button" data-dismiss="modal" class="btn">Close</button>
+	  </div>
+	</div>
       </div>
     </div>
 
