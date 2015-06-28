@@ -22,11 +22,11 @@
 <h3>Configure network interface <%= network.get('name') %></h3>
 
 
-<div class="row-fluid">
-  <div class="span8">
+<div class="row">
+  <div class="col-md-8">
     <label class="control-label"></label>
     <% if (network.get('itype') == 'management') { %>
-      <div class="alert alert-error">
+      <div class="alert alert-danger">
         <h4>Warning! You are editing the Rockstor administration interface.</h4>
         You will lose connectivity to the old ip address and must access the web-ui at the new ip address.
       </div>
@@ -34,10 +34,10 @@
     <div class="form-box">
       <form class="form-horizontal" id="edit-network-form" name="aform">
         <div class="messages"></div>
-        <div class="control-group">
-          <label class="control-label" for="boot_proto">Configuration<span class="required"> *</span></label>
-          <div class="controls">
-            <select id="boot_proto" name="boot_proto">
+        <div class="form-group">
+          <label class="col-sm-2 control-label" for="boot_proto">Configuration<span class="required"> *</span></label>
+          <div class="col-sm-10">
+            <select class="form-control shorten-input" id="boot_proto" name="boot_proto">
               <% if (network.get('boot_proto') == 'dhcp') { %>
                 <option value="dhcp" selected="selected">DHCP</option>
               <% } else { %>
@@ -51,75 +51,75 @@
             </select>
           </div>
         </div>
-        <div class="control-group">
-          <label class="control-label" for="ipaddr">IP Address<span class="required"> *</span></label>
-          <div class="controls">
+        <div class="form-group">
+          <label class="col-sm-2 control-label" for="ipaddr">IP Address<span class="required"> *</span></label>
+          <div class="col-sm-10">
             <% if (network.get('boot_proto') == 'static') { %>
-              <input type="text" id="ipaddr" name="ipaddr" value="<%= network.get('ipaddr') %>" placeholder="IP Address" title="Enter IP Address" >
+              <input class="form-control shorten-input" type="text" id="ipaddr" name="ipaddr" value="<%= network.get('ipaddr') %>" placeholder="IP Address" title="Enter IP Address">
             <% } else { %>
-              <input type="text" id="ipaddr" name="ipaddr" value="<%= network.get('ipaddr') %>" placeholder="IP Address" title="ENter IP Address" disabled="disabled"  >
+              <input class="form-control shorten-input" type="text" id="ipaddr" name="ipaddr" value="<%= network.get('ipaddr') %>" placeholder="IP Address" title="ENter IP Address" disabled="disabled"  >
             <% } %>
           </div>
         </div>
-        <div class="control-group">
-          <label class="control-label" for="netmask">Netmask<span class="required"> *</span></label>
-          <div class="controls">
+        <div class="form-group">
+          <label class="col-sm-2 control-label" for="netmask">Netmask<span class="required"> *</span></label>
+          <div class="col-sm-10">
             <% if (network.get('boot_proto') == 'static') { %>
-              <input type="text" id="netmask" name="netmask" value="<%= network.get('netmask') %>" placeholder="Netmask" title="Enter Netmask">
+              <input class="form-control shorten-input" type="text" id="netmask" name="netmask" value="<%= network.get('netmask') %>" placeholder="Netmask" title="Enter Netmask">
             <% } else { %>
-              <input type="text" id="netmask" name="netmask" value="<%= network.get('netmask') %>" placeholder="Netmask" title="Enter Netmak" disabled="disabled" >
+              <input class="form-control shorten-input" type="text" id="netmask" name="netmask" value="<%= network.get('netmask') %>" placeholder="Netmask" title="Enter Netmak" disabled="disabled" >
             <% } %>
           </div>
         </div>
-        <div class="control-group">
-          <label class="control-label" for="gateway">Gateway<span class="required"> *</span></label>
-          <div class="controls">
+        <div class="form-group">
+          <label class="col-sm-2 control-label" for="gateway">Gateway<span class="required"> *</span></label>
+          <div class="col-sm-10">
             <% if (network.get('boot_proto') == 'static') { %>
-              <input type="text" id="gateway" name="gateway" value="<%= network.get('gateway') %>" placeholder="Gateway" title="Enter Gateway">
+              <input class="form-control shorten-input" type="text" id="gateway" name="gateway" value="<%= network.get('gateway') %>" placeholder="Gateway" title="Enter Gateway">
             <% } else { %>
-              <input type="text" id="gateway" name="gateway" value="<%= network.get('gateway') %>" placeholder="Gateway" title="Enter Gateway" disabled="disabled" >
+              <input class="form-control shorten-input" type="text" id="gateway" name="gateway" value="<%= network.get('gateway') %>" placeholder="Gateway" title="Enter Gateway" disabled="disabled" >
             <% } %>
           </div>
         </div>
-        <div class="control-group">
-          <label class="control-label" for="domain">Domain<span class="required"> *</span></label>
-          <div class="controls">
+        <div class="form-group">
+          <label class="col-sm-2 control-label" for="domain">Domain<span class="required"> *</span></label>
+          <div class="col-sm-10">
             <% if (network.get('boot_proto') == 'static') { %>
-              <input type="text" id="domain" name="domain" value="<%= network.get('domain') %>" placeholder="Domain" title="Enter Domain">
+              <input class="form-control shorten-input" type="text" id="domain" name="domain" value="<%= network.get('domain') %>" placeholder="Domain" title="Enter Domain">
             <% } else { %>
-              <input type="text" id="domain" name="domain" value="<%= network.get('domain') %>" placeholder="Domain" title="Enter Domain" disabled="disabled" >
+              <input class="form-control shorten-input" type="text" id="domain" name="domain" value="<%= network.get('domain') %>" placeholder="Domain" title="Enter Domain" disabled="disabled" >
             <% } %>
           </div>
         </div>
-        <div class="control-group">
-          <label class="control-label" for="dns_servers">DNS Servers<span class="required"> *</span></label>
-          <div class="controls">
+        <div class="form-group">
+          <label class="col-sm-2 control-label" for="dns_servers">DNS Servers<span class="required"> *</span></label>
+          <div class="col-sm-10">
             <% if (network.get('boot_proto') == 'static') { %>
-              <input type="text" id="dns_servers" name="dns_servers" value="<%= network.get('dns_servers') %>" placeholder="DNS Servers" title="Enter comma separated list of dns server addresses">
+              <input class="form-control shorten-input" type="text" id="dns_servers" name="dns_servers" value="<%= network.get('dns_servers') %>" placeholder="DNS Servers" title="Enter comma separated list of dns server addresses">
             <% } else { %>
-              <input type="text" id="dns_servers" name="dns_servers" value="<%= network.get('dns_servers') %>" placeholder="DNS Servers" title="Enter comma separated list of dns server addresses" disabled="disabled" >
+              <input class="form-control shorten-input" type="text" id="dns_servers" name="dns_servers" value="<%= network.get('dns_servers') %>" placeholder="DNS Servers" title="Enter comma separated list of dns server addresses" disabled="disabled" >
             <% } %>
           </div>
         </div>
-        <div class="control-group">
-          <div class="controls">
-            <label class="checkbox">
+        <div class="form-group">
+          <div class="col-sm-offset-2 col-sm-10">
+            <label class="checkbox-inline">
               <% if (network.get('itype') == 'management') { %>
-                <input class="checkbox inline" type="checkbox" id="itype" name="itype" placeholder="Management Interface" checked="checked">
+                <input class="checkbox-inline" type="checkbox" id="itype" name="itype" placeholder="Management Interface" checked="checked">
               <% } else { %>
-                <input class="checkbox inline" type="checkbox" id="itype" name="itype" placeholder="Management Interface" >
+                <input class="checkbox-inline" type="checkbox" id="itype" name="itype" placeholder="Management Interface" >
               <% } %>
               Allow RockStor administration through this interface
             </label>
           </div>
         </div>
-        <div class="control-group">
-          <div class="controls">
-            <button type="Submit" id="submit" class="btn btn-primary">Submit</button>
-            <button id="cancel" class="btn">Cancel</button>
+        <div class="form-group">
+          <div class="col-sm-offset-2 col-sm-10">
+	    <button id="cancel" class="btn btn-default">Cancel</button>
+	    <button type="Submit" id="submit" class="btn btn-primary">Submit</button>
           </div>
         </div>
       </form>
     </div> <!-- form-box -->
-  </div> <!-- span8 -->
-</div> <!-- row-fluid -->
+  </div> <!-- col-md-8 -->
+</div> <!-- row -->

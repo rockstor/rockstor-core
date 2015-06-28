@@ -1,13 +1,13 @@
-<div class="row-fluid">
-  <div class="span8">
+<div class="row">
+  <div class="col-md-8">
     <label class="control-label"></label>
 
     <div class="form-box">
-      <form id="custom-choice-form" name="aform" class="form-horizontal">
+      <form id="custom-choice-form" name="aform" >
 	<div class="messages"></div>
-	<div class="control-group">
+	<div class="form-group">
 	  <% cc.each(function(cci, index) { %>
-	    <label class="control-label" for="cc"><%= cci.get('key')%><span class="required"> *</span></label>
+	    <label class="control-label" for="cc"><%= cci.get('key')%><span class="required"> *</span></label!>
 	    <div class="controls">
 	      <input type="text" id="<%= cci.id %>" name="<%= cci.id %>" value="<%= cci.get('val')%>">
 	      &nbsp;&nbsp<i class="fa fa-exclamation-circle" title="<%= cci.get('description') %>" rel="tooltip"></i>

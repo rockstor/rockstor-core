@@ -22,9 +22,9 @@
 
   <h4>Resize Pool(<%= poolName %>). You can add or remove disks and change raid configuration of your pool.</h4>
   <div id="alert-msg"></div>
-  <div class="control-group">
+  <div class="form-group">
   <label class="control-label" for="raid_level">Raid configuration</label>
-  <div class="controls">
+  <div class="">
     <select id="raid_level" name="raid_level">
      <option value="<%= pool.get('raid') %>" selected="selected"> <%= pool.get('raid') %> </option>
       <option value="single">Single</option>
@@ -78,4 +78,4 @@
 </table>
 <a id="js-submit-resize" class="btn btn-primary" href="#">Submit</a>
 &nbsp;
-<a id="js-resize-cancel" class="btn" href="#">Cancel</a>
+<a id="js-resize-cancel" class="btn btn-default" href="#">Cancel</a>

@@ -21,81 +21,74 @@
 
 
 <h3>Create Share</h3>
+<label class="control-label"></label>
+<div class="form-box">
+  <form class="form-horizontal" id="add-share-form">
+    <div class="messages"></div>
+    <div class="form-group">
+      <label for="share_name" class="col-sm-2 control-label">Name</label>
+      <div class="col-sm-3">
+        <input class="form-control" type="text" name="share_name" id="share_name" title="Name of the Share must start with a letter(a-z) and can be followed by any of the following characters: letter(a-z), digits(0-9), hyphen(-), underscore(_) or a period(.).">
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="pool_name" class="col-xs-2 control-label">Pool <span class="required">*</span></label>
+      <div class="col-sm-3">
+        <select class="form-control" id="pool_name" name="pool_name" title="Select pool the share should belong to">
+	  <% if(poolName == ''){%>
+          <% pools.each(function(pool, index) { %>
+          <% if (index > 0) { %>
+          <option value="<%= pool.get('name') %>"> <%= pool.get('name') %> </option>
+          <% } else{ %>
+          <option value="<%= pool.get('name') %>" selected="selected"> <%= pool.get('name') %> </option>
+          <% } %>
+          <% }); %>
+	  <%} else { %>
+          <% pools.each(function(pool, index) { %>
+          <% if (index >= 0) { %>
+          <% if(poolName != pool.get('name')){ %>
+          <option value="<%= pool.get('name') %>"> <%= pool.get('name') %> </option>
+          <% }else{ %>
+          <option value="<%= pool.get('name') %>" selected="selected"> <%= pool.get('name') %> </option>
+          <% } %>
+          <% } %>
+          <% }); %>
+	  <% } %>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="col-xs-2 control-label" for="compression">Compression</label>
+      <div class="col-sm-3">
+        <select class="form-control" id="compression" name="compression">
+          <option value="no">Inherit from pool wide configuration</option>
+          <option value="zlib">zlib</option>
+          <option value="lzo">lzo</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="col-xs-2 control-label" for="share_size">Size<span class="required"> *</span></label>
+      <div class="col-xs-10">
+        <div id="slider" class="control-label" style="width: 400px;"></div>
+        <input type="text" style="margin-top: 16px;" class="col-md-2" name="share_size" id="share_size" title="Enter share size in GB or TB">
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="col-xs-12 col-xs-offset-2">
+        <div style="width: 15px; height: 15px; float: left" class="slider-legend-free"></div> <div>&nbsp;<span id="legend-free-num"></span>&nbsp;Space that is completely free and unprovisioned</div>
+        <br>
+        <div style="width: 15px; height: 15px; float: left" class="slider-legend-reclaimable"></div> <div>&nbsp;<span id="legend-reclaimable-num"></span>Space that is provisioned for other shares, but currently free</div>
+        <br>
+        <div style="width: 15px; height: 15px; float: left" class="slider-legend-used"> </div><div>&nbsp;<span id="legend-used-num"></span>Space that is provisioned for other shares and is in use</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="col-xs-10 col-xs-offset-2">
+        <a id="js-cancel" class="btn btn-default">Cancel</a>
+        <input type="Submit" id="create_share" class="btn btn-primary" value="Submit"></input>
+      </div>
+    </div>
+  </form>
+</div> <!-- form-box -->
 
-<div class="row-fluid">
-  <div class="span12">
-    <label class="control-label"></label>
-    <div class="form-box">
-      <form class="form-horizontal" name="add-share-form" id="add-share-form">
-        <div class="messages"></div>
-        <div class="control-group">
-          <label class="control-label" for="share_name">Name<span class="required"> *</span></label>
-          <div class="controls">
-            <input type="text" name="share_name" id="share_name" title="Name of the Share must start with a letter(a-z) and can be followed by any of the following characters: letter(a-z), digits(0-9), hyphen(-), underscore(_) or a period(.).">
-          </div>
-        </div>
-        <div class="control-group">
-          <label class="control-label" for="pool_name">Pool<span class="required"> *</span></label>
-          <div class="controls">
-            <select id="pool_name" name="pool_name" title="Select pool the share should belong to">
-              <% if(poolName == ''){%>
-                <% pools.each(function(pool, index) { %>
-                  <% if (index > 0) { %>
-                    <option value="<%= pool.get('name') %>"> <%= pool.get('name') %> </option>
-                  <% } else{ %>
-                    <option value="<%= pool.get('name') %>" selected="selected"> <%= pool.get('name') %> </option>
-                  <% } %>
-                <% }); %>
-
-              <%} else { %>
-                <% pools.each(function(pool, index) { %>
-                  <% if (index >= 0) { %>
-                    <% if(poolName != pool.get('name')){ %>
-                      <option value="<%= pool.get('name') %>"> <%= pool.get('name') %> </option>
-                    <% }else{ %>
-                      <option value="<%= pool.get('name') %>" selected="selected"> <%= pool.get('name') %> </option>
-
-                    <% } %>
-                  <% } %>
-                <% }); %>
-              <% } %>
-
-            </select>
-          </div>
-        </div>
-	<div class="control-group">
-          <label class="control-label" for="compression">Compression</label>
-          <div class="controls">
-            <select id="compression" name="compression">
-              <option value="no">Inherit from pool wide configuration</option>
-              <option value="zlib">zlib</option>
-              <option value="lzo">lzo</option>
-            </select>
-          </div>
-        </div>
-        <div class="control-group">
-          <label class="control-label" for="share_size">Size<span class="required"> *</span></label>
-          <div class="controls">
-            <div id="slider" style="width: 400px; float: left;"></div>
-            <input type="text" style="margin-top: 16px;" class="span2" name="share_size" id="share_size" title="Enter share size in GB or TB">
-          </div>
-        </div>
-        <div class="control-group">
-          <div class="controls slider-legend">
-            <div style="width: 15px; height: 15px; float: left" class="slider-legend-free"></div> <div>&nbsp;<span id="legend-free-num"></span>&nbsp;Space that is completely free and unprovisioned</div>
-            <br>
-            <div style="width: 15px; height: 15px; float: left" class="slider-legend-reclaimable"></div> <div>&nbsp;<span id="legend-reclaimable-num"></span>Space that is provisioned for other shares, but currently free</div>
-            <br>
-            <div style="width: 15px; height: 15px; float: left" class="slider-legend-used"> </div><div>&nbsp;<span id="legend-used-num"></span>Space that is provisioned for other shares and is in use</div>
-          </div>
-        </div>
-        <div class="control-group">
-          <div class="controls">
-            <a id="js-cancel" class="btn">Cancel</a>
-            <input type="Submit" id="create_share" class="btn btn-primary" value="Submit"></input>
-          </div>
-        </div>
-      </form>
-    </div> <!-- form-box -->
-  </div> <!-- span8 -->
-</div> <!-- row-fluid -->

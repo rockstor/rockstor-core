@@ -1,41 +1,31 @@
 <h3>Bind to another Rockstor Appliance</h3>
-<div class="row-fluid">
-  <div class="span8">
+<div class="row">
+  <div class="col-md-8">
     <label class="control-label"></label>
     <div class="form-box">
       <form name="add-appliance-form" id="add-appliance-form">
         <div class="messages"></div>
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="ip">Appliance IP or Hostname<span class="required"> *</span></label>
-          <div class="controls">
-            <input type="text" name="ip" id="ip" title="Enter either the appliance ip address or the appliance hostname that is reachable from this appliance">
-          </div>
+            <input class="form-control" type="text" name="ip" id="ip" title="Enter either the appliance ip address or the appliance hostname that is reachable from this appliance">
         </div>
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="port">Management Port<span class="required"> *</span></label>
-          <div class="controls">
-            <input type="text" name="mgmt_port" id="mgmt_port" value="443" title="Management Port of the remote appliance">
-          </div>
+            <input class="form-control" type="text" name="mgmt_port" id="mgmt_port" value="443" title="Management Port of the remote appliance">
         </div>
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="client_id">Access key ID<span class="required"> *</span></label>
-          <div class="controls">
-            <input type="text" name="client_id" id="client_id" title="Access key ID of the remote appliance. You can get this from System -> Access Keys; screen of the remote aplliance web-ui.">
-          </div>
+            <input class="form-control" type="text" name="client_id" id="client_id" title="Access key ID of the remote appliance. You can get this from System -> Access Keys; screen of the remote aplliance web-ui.">
         </div>
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="password">Access Key Secret<span class="required"> *</span></label>
-          <div class="controls">
-            <input type="password" name="client_secret" id="client_secret" title="Access key Secret of the remote appliance. You can get this from System -> Access Keys; screen of the remote appliance web-ui.">
-          </div>
-          <div class="controls">
-            <a id="js-cancel" class="btn" href="#">Cancel</a>
-            <input type="Submit" id="add-appliance" class="btn btn-primary" value="Submit"></input>
+            <input class="form-control" type="password" name="client_secret" id="client_secret" title="Access key Secret of the remote appliance. You can get this from System -> Access Keys; screen of the remote appliance web-ui.">
+          <div class="">
           </div>
         </div>
-
+	<a id="js-cancel" class="btn btn-default" href="#">Cancel</a>
+        <input type="Submit" id="add-appliance" class="btn btn-primary" value="Submit"></input>
       </form>
-
     </div>
-  </div> <!-- span8 -->
-</div> <!-- row-fluid -->
+  </div> <!-- col-md-8 -->
+</div> <!-- row -->
