@@ -15,21 +15,21 @@
     <tbody>
       <% collection.each(function(disk, index) { %>
         <tr>
-          <td><a href="#disks/<%= disk.get('name') %>"><i class="icon-hdd"></i> <%= disk.get('name') %></a>&nbsp;
+          <td><a href="#disks/<%= disk.get('name') %>"><i class="glyphicon glyphicon-hdd"></i> <%= disk.get('name') %></a>&nbsp;
              <% if (disk.get('offline')) { %>
-              <a href="#" class="delete" data-disk-name="<%= disk.get('name') %>" title="Disk is unusable because it is offline. Click to delete it from the system" rel="tooltip"><i class="icon-trash"></i></a>
+              <a href="#" class="delete" data-disk-name="<%= disk.get('name') %>" title="Disk is unusable because it is offline. Click to delete it from the system" rel="tooltip"><i class="glyphicon glyphicon-trash"></i></a>
             <% } else if (disk.get('parted')) { %>
-              <a href="#" class="wipe" data-disk-name="<%= disk.get('name') %>" title="Disk is unusable because it has some other filesystem on it. Click to wipe it clean." rel="tooltip"><i class="icon-cog"></i></a>
+              <a href="#" class="wipe" data-disk-name="<%= disk.get('name') %>" title="Disk is unusable because it has some other filesystem on it. Click to wipe it clean." rel="tooltip"><i class="glyphicon glyphicon-cog"></i></a>
             <% } else if (disk.get('btrfs_uuid') && _.isNull(disk.get("pool_name"))) { %>
               <a href="#" class="btrfs_wipe" data-disk-name="<%= disk.get('name') %>" title="Disk is unusable because it has BTRFS filesystem(s) on it. Click to wipe it clean." rel="tooltip"><i class="fa fa-eraser"></i></a> &nbsp
-              <a href="#" class="btrfs_import" data-disk-name="<%= disk.get('name') %>" title="Click to import data(pools, shares and snapshots) on this disk automatically" rel="tooltip"><i class="icon-circle-arrow-down"></i></a>
+              <a href="#" class="btrfs_import" data-disk-name="<%= disk.get('name') %>" title="Click to import data(pools, shares and snapshots) on this disk automatically" rel="tooltip"><i class="glyphicon glyphicon-circle-arrow-down"></i></a>
 
             <% } %>
 
           </td>
 	  <td>
 	   <% if (disk.get('serial') == null || disk.get('serial') == '' || disk.get('serial') == disk.get('name')) { %>
-	      <div class="alert alert-error">
+	      <div class="alert alert-danger">
        	      <h4>Warning! Disk serial number or UUID is not legitimate or unique.</h4>
        	      Disk names may change unfavourably upon reboot leading to inadvertent drive reallocation and potential data loss. This error is caused by the source of these disks such as your Hypervisor or SAN. Please ensure that disks are provided with unique serial numbers before proceeding further
      	      </div>

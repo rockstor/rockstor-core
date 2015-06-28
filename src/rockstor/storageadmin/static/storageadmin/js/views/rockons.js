@@ -87,8 +87,8 @@ RockonsView = RockstorLayoutView.extend({
 	$('#docker-service-ph').append(this.dockerServiceView.render().el);
 
 	$('#install-rockon-overlay').overlay({load: false});
-	this.$("ul.css-tabs").tabs("div.css-panes > div");
-	this.$("ul.css-tabs").data("tabs").click(this.defTab);
+	this.$("ul.nav.nav-tabs").tabs("div.css-panes > div");
+	this.$("ul.nav.nav-tabs").data("tabs").click(this.defTab);
 
     },
 

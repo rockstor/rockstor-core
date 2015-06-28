@@ -21,25 +21,25 @@
 
 <h3>Configure <%= service.get('display_name') %></h3>
 
-<div class="row-fluid">
-  <div class="span8">
+<div class="row">
+  <div class="col-md-8">
     <label class="control-label"></label>
     <div class="form-box">
       <form id="ldap-form" name="aform">
         <div class="messages"></div>
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="server">LDAP Server<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" id="server" name="server" value="<%= config.server %>" placeholder="LDAP Server" title="IP address of LDAP Server">
+            <input class="form-control shorten-input" type="text" id="server" name="server" value="<%= config.server %>" placeholder="LDAP Server" title="IP address of LDAP Server">
           </div>
         </div>
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="basedn">Search base DN<span class="required"> *</span></label>
           <div class="controls">
-            <input type="text" id="basedn" name="basedn" value="<%= config.basedn %>" placeholder="Search base DN" title="Distinguished Name ">
+            <input class="form-control shorten-input" type="text" id="basedn" name="basedn" value="<%= config.basedn %>" placeholder="Search base DN" title="Distinguished Name ">
           </div>
         </div>
-	<div class="control-group">
+	<div class="checkbox">
           <label class="checkbox">
 	    <% if (config.enabletls) { %>
             <input type="checkbox" name="enabletls" id="enabletls"
@@ -50,24 +50,24 @@
           </label>
         </div>
         <% if (config.enabletls) { %>
-          <div class="control-group" id="cert-ph">
+          <div class="form-group" id="cert-ph">
           <% } else { %>
-            <div class="control-group" id="cert-ph" style="visibility: hidden">
+            <div class="form-group" id="cert-ph" style="visibility: hidden">
         <% } %>
           <label class="control-label" for="cert-utl">Certificate URL<span class="required"> *</span></label>
           <div class="controls">
             <input type="text" id="cert" name="cert" value="<%= config.cert %>" placeholder="Certificate URL" title="URL to download Certificate in PEM format">
           </div>
         </div>
-        <div class="control-group">
+        <div class="form-group">
           <div class="controls">
-            <button id="cancel" class="btn">Cancel</button>
+            <button id="cancel" class="btn btn-default">Cancel</button>
             <button type="Submit" id="create-user" class="btn btn-primary">Submit</button>
           </div>
         </div>
       </form>
 
     </div> <!-- form-box -->
-  </div> <!-- span8 -->
-</div> <!-- row-fluid -->
+  </div> <!-- col-md-8 -->
+</div> <!-- row -->
 

@@ -20,22 +20,22 @@
 </script>
 
 <!-- Module Body -->
-<div class="row-fluid">
-  <div class="span12">
+<div class="row">
+  <div class="col-md-12">
     <div class="messages"></div>
-    <div class="alert"><strong>Warning!</strong> You are editing the nfs exports file. Incorrect values can affect your exports.</div>
+    <div class="alert alert-warning"><strong>Warning!</strong> You are editing the nfs exports file. Incorrect values can affect your exports.</div>
     <div class="form-box">
       <form id="advanced-edit-form" name="aform">
-        <div class="control-group">
+        <div class="form-group">
           <label class="control-label" for="nfs-text">Enter nfs export entries below</label>
-          <div class="controls">
-            <textarea id="nfs-text-ro" name="nfs-text-ro" rows="<%= ro_str.split('\n').length + 1 %>" class="span10" readonly><%= ro_str %>\nENTER NFS EXPORTS BELOW THIS LINE</textarea>
-            <textarea id="nfs-text" name="nfs-text" rows="20" class="span10"><%= rw_str %></textarea>
+          <div class="form-group">
+            <label id="nfs-text-ro" name="nfs-text-ro" rows="<%= ro_str.split('\n').length + 1 %>" class="form-control" readonly><%= ro_str %>\nENTER NFS EXPORTS BELOW THIS LINE</label>
+            <textarea id="nfs-text" name="nfs-text" class="form-control"><%= rw_str %></textarea>
           </div>
         </div>
-        <div class="control-group">
-          <div class="controls">
-            <a id="cancel" class="btn">Cancel</a>
+        <div class="form-group">
+          <div class="">
+	    <a id="cancel" class="btn btn-default">Cancel</a>
             <input type="Submit" id="create-nfs-export" class="btn btn-primary" value="Submit"></input>
           </div>
         </div>

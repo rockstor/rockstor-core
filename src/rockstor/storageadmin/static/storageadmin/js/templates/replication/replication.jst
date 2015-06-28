@@ -18,8 +18,8 @@
  *
  */
 </script>
-<div class="row-fluid">
-<div class="span12">
+<div class="row">
+<div class="col-md-12">
 <div id="details-header">
 <table>
 <tr>
@@ -45,7 +45,7 @@
 </div>
 
 
-<div id="replication-warning" class="alert" style="display:none">
+<div id="replication-warning" class="alert alert-warning" style="display:none">
 <strong>Warning! The Replication service is not turned on. </strong> 
 </div>
 
@@ -55,8 +55,8 @@
 <span class="h3">Replication Send Tasks on this appliance</span>
 </div>
 <% if (!replicas.isEmpty()) { %>
-<div class="row-fluid">
-<div class="span12">
+<div class="row">
+<div class="col-md-12">
 <div class="messages"></div>
 <!-- Content -->
 <table id="replicas-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of replicas">
@@ -74,7 +74,7 @@
 <tbody>
 <% replicas.each(function(replica, index) { %>
 <tr>
-<td><a href="#edit-replication-task/<%= replica.id %>"><%= replica.get('task_name') %></a>&nbsp;<a href="#" data-task-name="<%= replica.get('task_name') %>" data-task-id="<%= replica.id %>" data-action="delete"><i class="icon-trash" rel="tooltip" title="Delete"></i></a></td>
+<td><a href="#edit-replication-task/<%= replica.id %>"><%= replica.get('task_name') %></a>&nbsp;<a href="#" data-task-name="<%= replica.get('task_name') %>" data-task-id="<%= replica.id %>" data-action="delete"><i class="glyphicon glyphicon-trash" rel="tooltip" title="Delete"></i></a></td>
 <td><%= replica.get('share') %></td>
 <td><%= replica.get('appliance') %></td>
 <td><%= replica.get('dpool') %></td>
@@ -118,21 +118,21 @@
 </tbody>
 </table>
 <div class="ph-pagination"></div>
-</div> <!-- span12 -->
-</div> <!-- row-fluid -->
+</div> <!-- col-md-12 -->
+</div> <!-- row -->
 <% } else { %>
-<div class="alert"><h4>No replication tasks have been created</h4></div>
+<div class="alert alert-warning"><h4>No replication tasks have been created</h4></div>
 <% } %>
 
 <% if (otherAppliances.length > 0 && freeShares.length > 0) { %>
 <a href="#add_replication_task" class="btn btn-primary">Add Replication Task</a>
 <% } else { %>
 <% if (otherAppliances.length == 0) { %>
-<div class="alert"><h4>No other RockStor appliances have been connected. At least one other appliance must be connected to setup a replication task. You can connect to an appliance on the <a href=#appliances>Appliances</a> page.</h4></div>
+<div class="alert alert-warning"><h4>No other RockStor appliances have been connected. At least one other appliance must be connected to setup a replication task. You can connect to an appliance on the <a href=#appliances>Appliances</a> page.</h4></div>
 <% } %>
 <% if (freeShares.length == 0) { %>
-<div class="alert"><h4>All existing shares have replication tasks setup. Create a new share to setup a new replication task.</h4>
+<div class="alert alert-warning"><h4>All existing shares have replication tasks setup. Create a new share to setup a new replication task.</h4>
 <% } %>
 <% } %>
-</div> <!-- span12 -->
-</div> <!-- row-fluid -->
+</div> <!-- col-md-12 -->
+</div> <!-- row -->

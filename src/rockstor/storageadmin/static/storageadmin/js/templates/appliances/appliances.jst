@@ -1,7 +1,7 @@
 <!-- appliances -->
 <h3>RockStor Appliances that are known to this one</h3>
-<div class="row-fluid">
-  <div class="span12">
+<div class="row">
+  <div class="col-md-12">
     <table class="table table-condensed table-bordered table-hover table-striped tablesorter"style="width: 100%">
       <thead>
         <tr>
@@ -26,7 +26,7 @@
           <td><%= appliance.get('mgmt_port') %></td>
           <td>
             <% if (!appliance.get('current_appliance')) { %>
-              <a class="delete-appliance" id="<%= appliance.get('ip') %>" data-id="<%= appliance.get('id') %>" href="#"><i class="icon-trash"></i></a>
+              <a class="delete-appliance" id="<%= appliance.get('ip') %>" data-id="<%= appliance.get('id') %>" href="#"><i class="glyphicon glyphicon-trash"></i></a>
             <% } %>
           </td>
         </tr>
@@ -35,8 +35,8 @@
     </table>
     <div class="pagination-ph"></div>
     ( <span class="required">*</span> - current appliance )
-  </div> <!-- span12 -->
-</div> <!-- row-fluid -->
+  </div> <!-- col-md-12 -->
+</div> <!-- row -->
 <br>
 <a class="btn btn-primary" id="add-appliance" href="#add-appliance">Add Appliance</button>
 <br>

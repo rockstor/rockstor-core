@@ -20,25 +20,25 @@
 </script>
 
 <h3>Start a new balance</h3>
-<div class="row-fluid">
-  <div class="span12">
+<div class="row">
+  <div class="col-md-12">
     <label class="control-label"></label>
     <div class="form-box">
-      <form class="form-horizontal" name="pool-rebalance-form" id="pool-rebalance-form">
+      <form  name="pool-rebalance-form" id="pool-rebalance-form">
         <div class="messages"></div>
-        <div class="control-group">
-          <div class="controls">
+        <div class="form-group">
+          <div class="">
             <input type="checkbox" name="forcebalance" id="forcebalance" title="force start a new balance even if there is one running">
             Force (start a new balance even if there is one running)
           </div>
         </div>
-        <div class="control-group">
-          <div class="controls">
-            <a id="js-poolrebalance-cancel" class="btn">Cancel</a>
+        <div class="form-group">
+          <div class="">
+            <a id="js-poolrebalance-cancel" class="btn btn-default">Cancel</a>
             <input type="Submit" id="start_rebalance" class="btn btn-primary" value="Start"></input>
           </div>
         </div>
       </form>
     </div> <!-- form-box -->
-  </div> <!-- span8 -->
-</div> <!-- row-fluid -->
+  </div> <!-- col-md-8 -->
+</div> <!-- row -->

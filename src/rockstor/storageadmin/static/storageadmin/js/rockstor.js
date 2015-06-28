@@ -394,7 +394,7 @@ function setApplianceName() {
 		    appliances.find(function(appliance) {
 			return appliance.get('current_appliance') == true;
 		    });
-		$('#appliance-name').html('<i class="fa fa-desktop"></i>&nbsp;Hostname: ' + RockStorGlobals.currentAppliance.get('hostname') + '&nbsp;&nbsp;&nbsp;&nbsp;Mgmt IP: ' + RockStorGlobals.currentAppliance.get('ip'));
+		$('#appliance-name').html('<i class="fa fa-desktop fa-inverse"></i>&nbsp;Hostname: ' + RockStorGlobals.currentAppliance.get('hostname') + '&nbsp;&nbsp;&nbsp;&nbsp;Mgmt IP: ' + RockStorGlobals.currentAppliance.get('ip'));
 	    }
 	},
 	error: function(request, response) {
@@ -437,7 +437,7 @@ function fetchKernelInfo() {
 	},
 	error: function(xhr, status, error) {
 	    msg = JSON.parse(xhr.responseText).detail;
-	    $('#browsermsg').html('<div class="alert alert-error"><button type="button" class="close" data-dismiss="alert">&times;</button>' + msg + '</div>');
+	    $('#browsermsg').html('<div class="alert alert-danger"><button type="button" class="close" data-dismiss="alert">&times;</button>' + msg + '</div>');
 	}
     });
 }
