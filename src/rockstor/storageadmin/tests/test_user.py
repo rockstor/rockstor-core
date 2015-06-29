@@ -25,6 +25,7 @@ from storageadmin.tests.test_api import APITestMixin
 class UserTests(APITestMixin, APITestCase):
     fixtures = ['fix3.json']
     BASE_URL = '/api/users'
+    valid_pubkey = 'ssh-dss AAAAB3NzaC1kc3MAAACBAIo+KNTMOS6H9slesrwgSsqp+hxJUDxTT3uy5/LLBDPHRxUz+OR5jcbk/CvgbZsDE3Q7iAIlN8w2bM/L/CG4AwT90f4vFf783QJK9gRxqZmgrPb7Ey88EIeb7UN3+nhc754IEl28y82Rqnq/gtQveSB3aQIWdEIdw17ToLsN5dDPAAAAFQDQ+005d8pBpJSuwH5T7n/xhI6s5wAAAIBJP0okYMbFrYWBfPJvi+WsLHw1tqRerX7bteVmN4IcIlDDtSTaQV7DOAl5B+iMPciRGaixtParUPk8oTew/MY1rECfIBs5wt+3hns4XDcsrXDTNyFDx9qYDtI3Fxt0+2f8k58Ym622Pqq1TZ09IBX7hEZH2EB0dUvxsUOf/4cUNAAAAIEAh3IpPoHWodVQpCalZ0AJXub9hJtOWWke4v4l8JL5w5hNlJwUmAPGuJHZq5GC511hg/7r9PqOk3KnSVp9Jsya6DrtJAxr/8JjAd0fqQjDsWXQRLONgcMfH24ciuFLyIWgDprTWmEWekyFF68vEwd4Jpnd4CiDbZjxc44xBnlbPEI= suman@Learnix'
 
     @classmethod
     def setUpClass(cls):
@@ -59,10 +60,6 @@ class UserTests(APITestMixin, APITestCase):
         cls.patch_update_shell = patch('storageadmin.views.user.update_shell')
         cls.mock_update_shell = cls.patch_update_shell.start()
         cls.mock_update_shell.return_value = True
-
-        cls.patch_is_pub_key = patch('storageadmin.views.user.is_pub_key')
-        cls.mock_is_pub_key = cls.patch_is_pub_key.start()
-        cls.mock_is_pub_key.return_value = False
 
 
     @classmethod
@@ -164,6 +161,17 @@ class UserTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
         self.assertEqual(response.data['detail'], "{'email': [u'Enter a valid email address.']}")
 
+    def test_pubkey_validation(self):
+        data = {'username': 'user1', 'password': 'pwuser1', 'email': 'test@test.com',
+                'public_key': 'foobar'}
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg=response.data)
+        self.assertEqual(response.data['detail'], 'Public key is invalid')
+        data['public_key'] = self.valid_pubkey
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
+        self.assertEqual(response.data['public_key'], data['public_key'])
 
     def test_put_requests(self):
 

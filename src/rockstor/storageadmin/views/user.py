@@ -72,9 +72,6 @@ class UserMixin(object):
             handle_exception(Exception(e_msg), request)
         input_fields['shell'] = shell
         email = request.data.get('email', None)
-        if (email is not None and type(email) != unicode):
-            e_msg = ('Email must be a valid string. not: %s' % type(email))
-            handle_exception(Exception(e_msg), request)
         input_fields['email'] = email
         input_fields['homedir'] = request.data.get(
             'homedir', '/home/%s' % username)
@@ -91,17 +88,11 @@ class UserMixin(object):
         if (public_key is not None and not is_pub_key(public_key)):
             e_msg = ('Public key is invalid')
             handle_exception(Exception(e_msg), request)
+        return public_key
 
 
 class UserListView(UserMixin, rfc.GenericView):
-    def get_queryset(self, *args, **kwargs):
-        if ('username' in self.kwargs):
-            self.paginate_by = 0
-            try:
-                return User.objects.get(username=self.kwargs['username'])
-            except:
-                return []
-        return combined_users()
+    queryset = combined_users()
 
     @transaction.atomic
     def post(self, request):
