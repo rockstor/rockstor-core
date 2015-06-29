@@ -18,25 +18,26 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.db import models
 from django.contrib.auth.models import User as DjangoUser
+from django.core.validators import validate_email
 from django.conf import settings
 from storageadmin.models import Group
 import grp
 
 
 class User(models.Model):
-    user = models.OneToOneField(DjangoUser, null=True,
+    user = models.OneToOneField(DjangoUser, null=True, blank=True,
                                 related_name='suser')
     username = models.CharField(max_length=4096, unique=True, default='')
     uid = models.IntegerField(default=settings.START_UID)
     gid = models.IntegerField(default=settings.START_UID)
-    public_key = models.CharField(max_length=4096, null=True)
+    public_key = models.CharField(max_length=4096, null=True, blank=True)
     smb_shares = models.ManyToManyField('SambaShare', null=True,
                                         related_name='admin_users')
     shell = models.CharField(max_length=1024, null=True)
     homedir = models.CharField(max_length=1024, null=True)
-    email = models.CharField(max_length=1024, null=True)
+    email = models.CharField(max_length=1024, null=True, blank=True, validators=[validate_email])
     admin = models.BooleanField(default=True)
-    group = models.ForeignKey(Group, null=True)
+    group = models.ForeignKey(Group, null=True, blank=True)
 
     @property
     def groupname(self, *args, **kwargs):
