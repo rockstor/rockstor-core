@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from rest_framework.response import Response
+from rest_framework import status
 from django.db import transaction
 from django.conf import settings
 from storageadmin.util import handle_exception
@@ -35,6 +36,7 @@ logger = logging.getLogger(__name__)
 
 
 class UserMixin(object):
+    serializer_class = SUserSerializer
     exclude_list = ('root', 'nobody', 'bin', 'daemon', 'adm', 'sync',
                     'shutdown', 'halt', 'mail', 'operator', 'dbus', 'rpc',
                     'avahi', 'avahi-autoipd', 'rpcuser', 'nfsnobody',
@@ -92,8 +94,6 @@ class UserMixin(object):
 
 
 class UserListView(UserMixin, rfc.GenericView):
-    serializer_class = SUserSerializer
-
     def get_queryset(self, *args, **kwargs):
         if ('username' in self.kwargs):
             self.paginate_by = 0
@@ -177,8 +177,8 @@ class UserDetailView(UserMixin, rfc.GenericView):
             data = User.objects.get(username=self.kwargs['username'])
             serialized_data = SUserSerializer(data)
             return Response(serialized_data.data)
-        except:
-            return Response()
+        except User.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
     @transaction.atomic
     def put(self, request, username):
