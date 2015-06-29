@@ -106,7 +106,7 @@ class UserListView(UserMixin, rfc.GenericView):
     @transaction.atomic
     def post(self, request):
         with self._handle_exception(request):
-            
+
             invar = self._validate_input(request)
             # Check that a django user with the same name does not exist
             e_msg = ('user: %s already exists. Please choose a different'
@@ -123,6 +123,7 @@ class UserListView(UserMixin, rfc.GenericView):
                     if (g.groupname == invar['group']):
                         invar['gid'] = g.gid
                         admin_group = g
+                        invar['group'] = g
                         break
 
             user_exists = False
@@ -157,7 +158,6 @@ class UserListView(UserMixin, rfc.GenericView):
             if (invar['public_key'] is not None):
                 add_ssh_key(invar['username'], invar['public_key'])
             del(invar['password'])
-            invar['group'] = None
             if (admin_group is None):
                 admin_group = Group(gid=invar['gid'],
                                     groupname=invar['username'],
@@ -166,6 +166,7 @@ class UserListView(UserMixin, rfc.GenericView):
                 invar['group'] = admin_group
             invar['admin'] = True
             suser = User(**invar)
+            suser.full_clean()
             suser.save()
             return Response(SUserSerializer(suser).data)
 
@@ -205,6 +206,7 @@ class UserDetailView(UserMixin, rfc.GenericView):
                         auser.is_active = True
                         auser.save()
                         u.user = auser
+                        u.full_clean()
                         u.save()
                     elif (new_pw is not None):
                         u.user.set_password(new_pw)
@@ -219,6 +221,7 @@ class UserDetailView(UserMixin, rfc.GenericView):
                     u.email = email
                 if (shell is not None and shell != u.shell):
                     u.shell = shell
+                u.full_clean()
                 u.save()
 
             sysusers = combined_users()
