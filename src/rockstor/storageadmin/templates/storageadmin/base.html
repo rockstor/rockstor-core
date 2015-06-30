@@ -114,7 +114,7 @@
           </button>
           <div id="navbar-brand">
 	    <a href="#/home">
-              <img class="img-responsive logo" src="{% static 'storageadmin/img/rockstorlogo-font2.png' %}" />
+              <img class="img-responsive logo" src="/static/storageadmin/img/rockstorlogo-font2.png"/>
 	      </a>
           </div>
 	</div>
@@ -225,7 +225,7 @@
       </div><!-- /.modal-dialog -->
     </div><!-- /.modal -->
 
-    
+
     <form name="dummy-form" action="/login" method="post">
       {% csrf_token %}
     </form>
