@@ -79,6 +79,7 @@ class UserTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response)
 
     def test_post_requests(self):
+        
         data = {'username': 'user1','password': 'pwuser1',}
         invalid_user_names = ('User $', '-user', '.user', '', ' ',)
         for uname in invalid_user_names:
@@ -129,6 +130,22 @@ class UserTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
         e_msg = ("user: admin already exists. Please choose a different username")
+        self.assertEqual(response.data['detail'], e_msg)
+
+        # create user with existing username admin2
+        data = {'username': 'admin2','password': 'pwadmin2',}
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+        e_msg = ("{'username': [u'User with this Username already exists.']}")
+        self.assertEqual(response.data['detail'], e_msg)
+        
+        # create user with existing username admin2 and uid 
+        data = {'username': 'admin2', 'password': 'pwadmin2', 'uid':'0000'}
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+        e_msg = ("user: admin2 already exists. Please choose a different username")
         self.assertEqual(response.data['detail'], e_msg)
 
         # create a user with existing uid (admin2 has uid 1001)
@@ -203,7 +220,7 @@ class UserTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 
-        data = {'password': 'admin2','group':'admin', 'admin': True, 'user':'uadmin2'}
+        data = {'password': 'admin2','group':'admin', 'admin': True, 'user':'uadmin2', 'public_key': self.valid_pubkey}
         response = self.client.put('%s/admin2' % self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
@@ -222,7 +239,8 @@ class UserTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
         e_msg = ("User(admin5) does not exist")
         self.assertEqual(response.data['detail'], e_msg)
-
+        
+        
         # delete user that does not exists
         username = 'bin'
         response = self.client.delete('%s/%s' % (self.BASE_URL,username))
@@ -257,6 +275,11 @@ class UserTests(APITestMixin, APITestCase):
                          status.HTTP_200_OK, msg=response.data)
 
         username = 'admin3'
+        response = self.client.delete('%s/%s' % (self.BASE_URL,username))
+        self.assertEqual(response.status_code,
+                         status.HTTP_200_OK, msg=response.data)
+
+        username = 'chrony'
         response = self.client.delete('%s/%s' % (self.BASE_URL,username))
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
