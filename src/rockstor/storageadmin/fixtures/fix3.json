@@ -427,7 +427,7 @@
     "model": "storageadmin.group", 
     "fields": {
         "admin": true, 
-        "groupname": "madhuri", 
+        "groupname": "admin7", 
         "gid": 1002
     }
 },
@@ -491,7 +491,7 @@
     "pk": 3, 
     "model": "storageadmin.user", 
     "fields": {
-        "username": "madhuri", 
+        "username": "admin7", 
         "public_key": null, 
         "shell": "/bin/bash", 
         "group": 3, 
@@ -501,7 +501,7 @@
         "user": null, 
         "smb_shares": [], 
         "email": null, 
-        "homedir": "/home/madhuri"
+        "homedir": "/home/admin7"
     }
 },
 {
