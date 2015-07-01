@@ -141,7 +141,7 @@ class RockOnView(rfc.GenericView):
                                     po.label = p_d['label']
                                 else:
                                     po = DPort(description=p_d['description'],
-                                               hostp=p, containerp=p,
+                                               hostp=p, containerp=p_d['default'],
                                                containerp_default=p_d['default'],
                                                container=co, uiport=p_d['ui'],
                                                protocol=p_d['protocol'],

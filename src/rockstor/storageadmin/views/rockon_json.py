@@ -47,7 +47,7 @@ rockons = \
                                                                       'default': 8080,
                                                                       'protocol': 'tcp',
                                                                       'label': 'UI port',
-                                                                      'description': 'The port where OwnCloud UI runs. Since Rockstor WebUI runs on 443, choose a different port or the suggested default.',},},
+                                                                      'description': 'OwnCloud UI port. Since Rockstor WebUI runs on 443, choose a different port or the suggested default.',},},
                                                     'volumes': {'/var/www/owncloud/data':
                                                                 {'description': 'Choose a dedicated Share for OwnCloud data. Eg: create a Share called owncloud-data for this purpose alone.',
                                                                  'min_size': 1073741824,
@@ -59,7 +59,7 @@ rockons = \
                                                     'launch_order': 2,},
                                        'owncloud-postgres': {'image': 'postgres',
                                                              'volumes': {'/var/lib/pgsql/data':
-                                                                         {'description': 'Choose a dedicated Share for OwnClouds postgresql database. Eg: create a Share called owncloud-db for this purpose.',
+                                                                         {'description': 'Choose a dedicated Share for OwnClouds postgresql database. Eg: create a Share called owncloud-db for this purpose alone.',
                                                                           'label': 'Database',
                                                                           'min_size': 1073741824, }, },
                                                              'launch_order': 1}, },
@@ -67,7 +67,7 @@ rockons = \
                                                           'name': 'db'},]},
                         'custom_config': {'db_user':
                                           {'label': 'DB User',
-                                           'description': 'Choose a username for the admin of OwnCloud database.',},
+                                           'description': 'Choose a administrator username for the OwnCloud database.',},
                                           'db_pw':
                                           {'label': 'DB Password',
                                            'description': 'Choose a secure password for the database admin user',},},

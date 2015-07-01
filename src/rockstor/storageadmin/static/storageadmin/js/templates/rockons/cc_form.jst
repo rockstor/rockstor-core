@@ -7,7 +7,7 @@
 	<div class="messages"></div>
 	<div class="form-group">
 	  <% cc.each(function(cci, index) { %>
-	    <label class="control-label" for="cc"><%= cci.get('key')%><span class="required"> *</span></label!>
+	    <label class="control-label" for="cc"><%= cci.get('label')%><span class="required"> *</span></label!>
 	    <div class="controls">
 	      <input type="text" id="<%= cci.id %>" name="<%= cci.id %>" value="<%= cci.get('val')%>">
 	      &nbsp;&nbsp<i class="fa fa-exclamation-circle" title="<%= cci.get('description') %>" rel="tooltip"></i>
