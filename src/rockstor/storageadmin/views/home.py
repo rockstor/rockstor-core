@@ -24,8 +24,7 @@ from django.template import RequestContext
 from django.shortcuts import render_to_response
 from django.contrib.auth import (authenticate, login, logout)
 
-from storageadmin.models import (Appliance, Setup, InstalledPlugin)
-from storageadmin.serializers import InstalledPluginSerializer
+from storageadmin.models import (Appliance, Setup)
 from django.shortcuts import redirect
 from django.contrib import messages
 from django.conf import settings
@@ -63,10 +62,6 @@ def home(request):
         'current_appliance': current_appliance,
         'setup_user': setup.setup_user,
         'page_size': settings.REST_FRAMEWORK['PAGE_SIZE'],
-        'installed_plugins': InstalledPlugin.objects.all(),
-        'installed_plugins_json': JSONRenderer().render(
-            InstalledPluginSerializer(InstalledPlugin.objects.all(),
-                                      many=True).data),
         'replica_data_port': settings.REPLICA_DATA_PORT,
         'replica_meta_port': settings.REPLICA_META_PORT,
     }

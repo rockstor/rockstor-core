@@ -3,22 +3,26 @@
   <tr>
     <td>Owner</td>
     <td>
-      <select id="share-owner">
+    <div class="col-md-3">
+      <select id="share-owner" class="form-control">
         <% users.each(function(user) { %>
           <option value="<%= user.get('username') %>"><%= user.get('username') %></option>
         <% }); %>
       </select>
+      </div>
     </td>
 
   </tr>
   <tr>
     <td>Group</td>
     <td>
-      <select id="share-group">
+    <div class="col-md-3">
+      <select id="share-group" class="form-control">
         <% groups.each(function(group) { %>
 	  <option value="<%= group.get('groupname') %>"><%= group.get('groupname') %></option>
 	<% }); %>
       </select>
+      </div>
     </td>
     <!-- <td><%= share.get("group") %></td> -->
   </tr>
@@ -112,5 +116,5 @@
     </td>
   </tr>
 </table>
-<a class="btn" href="#" id="js-acl-cancel"> Cancel</a>
+<a class="btn btn-default" href="#" id="js-acl-cancel"> Cancel</a>
 <a class="btn btn-primary" href="#" id="js-acl-save"> Save</a>

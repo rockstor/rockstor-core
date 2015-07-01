@@ -25,7 +25,8 @@ from django.db import transaction
 from storageadmin.serializers import PoolInfoSerializer
 from storageadmin.models import (Disk, Pool, Share, PoolBalance)
 from fs.btrfs import (add_pool, pool_usage, resize_pool, umount_root,
-                      btrfs_uuid, mount_root, remount, balance_start)
+                      btrfs_uuid, mount_root, remount, balance_start,
+                      get_pool_info, pool_raid)
 from storageadmin.util import handle_exception
 from django.conf import settings
 import rest_framework_custom as rfc
@@ -176,9 +177,21 @@ class PoolMixin(object):
             handle_exception(Exception(e_msg), request)
         return Response(PoolInfoSerializer(pool).data)
 
+    @transaction.atomic
+    def _refresh_pool_state(self, pool):
+        dname = Disk.objects.filter(pool=pool)[0].name
+        mount_root(pool, dname)
+        pool_info = get_pool_info(dname)
+        pool.name = pool_info['label']
+        pool.raid = pool_raid('%s%s' % (settings.MNT_PT, pool.name))['data']
+        pool.size = pool_usage('%s%s' % (settings.MNT_PT, pool.name))[0]
+        pool.save()
+        return pool
 
 class PoolListView(PoolMixin, rfc.GenericView):
     def get_queryset(self, *args, **kwargs):
+        for p in Pool.objects.all():
+            self._refresh_pool_state(p)
         sort_col = self.request.query_params.get('sortby', None)
         if (sort_col is not None and sort_col == 'usage'):
             reverse = self.request.query_params.get('reverse', 'no')
@@ -266,10 +279,11 @@ class PoolListView(PoolMixin, rfc.GenericView):
 class PoolDetailView(PoolMixin, rfc.GenericView):
     def get(self, *args, **kwargs):
         try:
-            data = Pool.objects.get(name=self.kwargs['pname'])
+            pool = Pool.objects.get(name=self.kwargs['pname'])
+            data = self._refresh_pool_state(pool)
             serialized_data = PoolInfoSerializer(data)
             return Response(serialized_data.data)
-        except:
+        except Pool.DoesNotExist:
             return Response()
 
     @transaction.atomic

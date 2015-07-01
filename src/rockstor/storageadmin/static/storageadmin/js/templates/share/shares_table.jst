@@ -13,19 +13,19 @@
     <tbody>
       <% collection.each(function(share, index) { %>
         <tr>
-          <td><a href="#shares/<%= share.get('name') %>"><i class="icon-folder-open"></i> <%= share.get('name') %></a></td>
+          <td><a href="#shares/<%= share.get('name') %>"><i class="glyphicon glyphicon-folder-open"></i> <%= share.get('name') %></a></td>
           <td><%= humanize.filesize(share.get('size')*1024) %></td>
           <td><%= share.get('pool').name %></td>
-          <td><%= humanize.filesize(share.get('r_usage')*1024)%></td>
+          <td><%= humanize.filesize(share.get('rusage')*1024)%></td>
 	  <td>
 	  <% if (share.get('compression_algo')) { %>
 	     <%= share.get('compression_algo') %>
 	  <% } else { %>
 	     None(defaults to pool level compression, if any)
 	  <% } %>
-	   &nbsp;&nbsp;<a href="#shares/<%= share.get('name') %>/?cView=edit"><i class="icon-pencil"></i></a>
+	   &nbsp;&nbsp;<a href="#shares/<%= share.get('name') %>/?cView=edit"><i class="glyphicon glyphicon-pencil"></i></a>
 	  </td>
-          <td><a id="delete_share_<%= share.get('name') %>" data-name="<%= share.get('name') %>" data-action="delete" data-pool="<%= share.get('pool').name %>" data-size="<%= share.get('size')*1024 %>" rel="tooltip" title="Delete share"><i class="icon-trash"></i></a></td>
+          <td><a id="delete_share_<%= share.get('name') %>" data-name="<%= share.get('name') %>" data-action="delete" data-pool="<%= share.get('pool').name %>" data-size="<%= share.get('size')*1024 %>" rel="tooltip" title="Delete share"><i class="glyphicon glyphicon-trash"></i></a></td>
 
         </tr>
       <% }); %>
@@ -40,5 +40,5 @@
   <% } %>
 <% } %>
 <% if (!pools.isEmpty()) { %>
-  <a href="#add_share" id="add_share" class="btn btn-primary"><i class="icon-edit icon-white"></i> Create Share</a>
+  <a href="#add_share" id="add_share" class="btn btn-primary"><i class="glyphicon glyphicon-edit "></i> Create Share</a>
 <% } %>

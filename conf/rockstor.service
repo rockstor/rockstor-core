@@ -1,5 +1,7 @@
 [Unit]
 Description=RockStor startup script
+After=postgresql.service
+Requires=postgresql.service
 
 [Service]
 ExecStart=/opt/rockstor/bin/supervisord -c /opt/rockstor/etc/supervisord.conf

@@ -19,9 +19,8 @@
  */
 </script>
 <div class="messages"></div>
-<div class="row-fluid">
-  <a class="btn btn-primary" href="#" id="js-poolrebalance-start" title="Restripe data across all disks of the pool. Do this only if you need to."><i class="icon-edit icon-white"></i>Start a new balance</a>
-</div>
+
+  <a class="btn btn-primary btn-spacing" href="#" id="js-poolrebalance-start" title="Restripe data across all disks of the pool. Do this only if you need to."><i class="glyphicon glyphicon-edit "></i>Start a new balance</a>
 <br>
 <% if (!poolrebalances.isEmpty()) { %>
   <table id="poolrebalances-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of pool balances">
@@ -50,5 +49,5 @@
   </table>
 <div class="pagination-ph"></div>
 <% } else { %>
-  <div class="alert"><h4>There are no balances to display</h4></div>
+  <div class="alert alert-warning"><h4>There are no balances to display</h4></div>
 <% } %>

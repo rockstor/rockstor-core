@@ -1,27 +1,27 @@
 /*
  *
- * @licstart  The following is the entire license notice for the 
+ * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
- * 
+ *
  * Copyright (c) 2012-2014 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
- * 
+ *
  * RockStor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
- * 
+ *
  * RockStor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * @licend  The above is the entire license notice
  * for the JavaScript code in this page.
- * 
+ *
  */
 
 
@@ -31,7 +31,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     var _this = this;
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.dashboard_widgets_storage_metrics;
-    // Dependencies 
+    // Dependencies
     this.disks = new DiskCollection();
     this.pools = new PoolCollection();
     this.shares = new ShareCollection();
@@ -41,15 +41,15 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     this.dependencies.push(this.disks);
     this.dependencies.push(this.pools);
     this.dependencies.push(this.shares);
-    // svg 
+    // svg
     this.svgEl = '#ph-metrics-viz';
     this.svgLegendEl = '#ph-metrics-legend';
-    // Metrics 
+    // Metrics
     this.raw = 0; // raw storage capacity in GB
-    this.allocated = 0; 
-    this.free = 0; 
-    this.poolCapacity = 0; 
-    this.usage = 0; 
+    this.allocated = 0;
+    this.free = 0;
+    this.poolCapacity = 0;
+    this.usage = 0;
     this.margin = {top: 0, right: 40, bottom: 20, left: 30};
   },
 
@@ -57,7 +57,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     var _this = this;
     // call render of base
     this.constructor.__super__.render.apply(this, arguments);
-    $(this.el).html(this.template({ 
+    $(this.el).html(this.template({
       module_name: this.module_name,
       displayName: this.displayName,
       maximized: this.maximized
@@ -87,20 +87,20 @@ StorageMetricsWidget = RockStorWidgetView.extend({
       sum += pool.get('size');
       return sum;
     }, 0);
-    this.raidOverhead = this.provisioned - this.pool; 
+    this.raidOverhead = this.provisioned - this.pool;
     this.share = this.shares.reduce(function(sum, share) {
       sum += share.get('size');
       return sum;
     }, 0);
     this.usage = this.shares.reduce(function(sum, share) {
-      sum += share.get('r_usage');
+      sum += share.get('rusage');
       return sum;
     }, 0);
     this.pctUsed = parseFloat(((this.usage/this.raw).toFixed(0)) * 100);
-    
+
     this.data = [
       {name: 'used', label: 'Usage', value: this.usage},
-      {name: 'pool', label: 'Pool Capacity', value: this.poolCapacity}, 
+      {name: 'pool', label: 'Pool Capacity', value: this.poolCapacity},
       {name: 'raw', label: 'Raw Capacity', value: this.raw}
     ];
 
@@ -116,7 +116,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     ]
 
   },
-  
+
   setDimensions: function() {
     //this.graphWidth = this.maximized ? 500 : 250;
     //this.graphHeight = this.maximized ? 300 : 150;
@@ -133,7 +133,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     this.y = d3.scale.linear().domain([0, this.data1.length]).range([0, this.height]);
     this.barHeight = (this.height / this.data1.length );
   },
-  
+
   setupSvg: function() {
     // svg for viz
     this.$(this.svgEl).empty();
@@ -144,7 +144,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     .attr('height', this.height + this.margin.top + this.margin.bottom);
     this.svgG = this.svg.append("g")
     .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
-    
+
     // svg for legend
     this.$(this.svgLegendEl).empty();
     this.svgLegend = d3.select(this.el).select(this.svgLegendEl)
@@ -156,7 +156,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
 
   renderMetrics: function() {
     var _this = this;
-    
+
     // tickValues(this.x.domain()) sets tick values at beginning and end of the scale
     this.xAxis = d3.svg.axis().scale(this.x).orient('bottom').tickValues(_this.x.domain()).tickFormat(function(d) {
       return humanize.filesize(d*1024);
@@ -171,11 +171,11 @@ StorageMetricsWidget = RockStorWidgetView.extend({
       }
     });
 
-    this.svgG.append("g")	
+    this.svgG.append("g")
     .attr("class", "metrics-axis")
     .attr("transform", "translate(0," + _this.height + ")")
     .call(this.xAxis)
-    
+
     // render data1
     this.svgG.selectAll('metrics-rect1')
     .data(this.data1)
@@ -207,8 +207,8 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     })
     .attr('width', function(d) { return _this.x(d.value); })
     .attr('height', function() { return _this.barHeight-4; });
-    
-    // allocated 
+
+    // allocated
     //this.svgG
     //.append('rect')
     //.attr('class', function(d) {
@@ -218,14 +218,14 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     //.attr('y', _this.y(2))
     //.attr('width', function(d) { return _this.x(_this.allocated); })
     //.attr('height', function() { return _this.barHeight-4; });
-   
-    // text labels 
+
+    // text labels
     this.svgG.selectAll('metrics-text-data1')
     .data(this.data1)
     .enter()
     .append('text')
     .attr("class", "metrics-text-data1")
-    .attr('x', function(d){ 
+    .attr('x', function(d){
       var xOff = _this.x(d.value) - 4;
       return (xOff > 0 ? xOff : 0);
     })
@@ -243,13 +243,13 @@ StorageMetricsWidget = RockStorWidgetView.extend({
       return humanize.filesize(tmp*1024);
     });
 
-    // text labels 
+    // text labels
     this.svgG.selectAll('metrics-text-data2')
     .data(this.data2)
     .enter()
     .append('text')
     .attr("class", "metrics-text-data1")
-    .attr('x', function(d){ 
+    .attr('x', function(d){
       //var xOff = _this.x(d.value) - 4;
       //return (xOff > 0 ? xOff : 0);
       return 4;
@@ -266,8 +266,8 @@ StorageMetricsWidget = RockStorWidgetView.extend({
       var pct = (d.value/_this.data1[i].value)*100;
       return humanize.filesize(d.value*1024) + ' (' + pct.toFixed() + '%)';
     });
-    
-    // legend 
+
+    // legend
     //this.svgGLegend
     //.append('text')
     //.attr("class", "metrics-small-text")
@@ -298,7 +298,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
       {label: 'Capacity', fill: '#FAE8CA'},
       {label: 'Used', fill: '#FAC670'},
     ];
-   
+
     var diskLabels = this.gDisk.selectAll('legend-disk')
     .data(diskLabelData)
     .enter();
@@ -319,8 +319,8 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     .attr("transform", function(d,i) {
       return "translate(16,12)"
     })
-    .text(function(d) { return d.label;}); 
-   
+    .text(function(d) { return d.label;});
+
     var poolLabels = this.gDisk.selectAll('legend-pool')
     .data(poolLabelData)
     .enter();
@@ -341,7 +341,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     .attr("transform", function(d,i) {
       return "translate(16,12)"
     })
-    .text(function(d) { return d.label;}); 
+    .text(function(d) { return d.label;});
 
     var shareLabels = this.gDisk.selectAll('legend-share')
     .data(shareLabelData)
@@ -363,10 +363,10 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     .attr("transform", function(d,i) {
       return "translate(16,12)"
     })
-    .text(function(d) { return d.label;}); 
+    .text(function(d) { return d.label;});
 
 
-    /* 
+    /*
     labels.append("rect")
     .attr("width", 13)
     .attr("height", 13)
@@ -378,14 +378,14 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     .attr("text-anchor", "left")
     .attr("class", "metrics-small-text")
     .attr("transform", "translate(96,13)")
-    .text(labelText[1]); 
+    .text(labelText[1]);
     */
 
     // draw y axis last so that it is above all rects
-    this.svgG.append("g")	
+    this.svgG.append("g")
     .attr("class", "metrics-axis")
     .call(this.yAxis)
-    .selectAll("text")	
+    .selectAll("text")
     .style("text-anchor", "end")
     .attr("transform", function(d) {
       return "rotate(-90)";
@@ -402,9 +402,9 @@ StorageMetricsWidget = RockStorWidgetView.extend({
 
 });
 
-RockStorWidgets.widgetDefs.push({ 
-    name: 'storage_metrics', 
-    displayName: 'Total Capacity, Allocation and Usage', 
+RockStorWidgets.widgetDefs.push({
+    name: 'storage_metrics',
+    displayName: 'Total Capacity, Allocation and Usage',
     view: 'StorageMetricsWidget',
     description: 'Display capacity and usage',
     defaultWidget: true,
@@ -412,10 +412,6 @@ RockStorWidgets.widgetDefs.push({
     cols: 5,
     maxRows: 2,
     maxCols: 10,
-    category: 'Storage', 
+    category: 'Storage',
     position: 6,
 });
-
-
-
-

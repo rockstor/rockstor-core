@@ -20,11 +20,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 View for things at snapshot level
 """
 
+from datetime import datetime
+from django.utils.timezone import utc
 from rest_framework.response import Response
 from django.db import transaction
 from django.conf import settings
 from storageadmin.models import (Snapshot, Share, Disk, NFSExport,
                                  NFSExportGroup, AdvancedNFSExport)
+from smart_manager.models import ShareUsage
 from fs.btrfs import (add_snap, share_id, share_usage, remove_snap,
                       umount_root, mount_snap, snaps_info)
 from system.osi import refresh_nfs_exports
@@ -88,15 +91,35 @@ class SnapshotView(NFSMixin, rfc.GenericView):
     def _refresh_snapshots_state(self, share):
         snaps_d = snaps_info('%s%s' % (settings.MNT_PT, share.pool.name),
                              share.name)
+        disk = Disk.objects.filter(pool=share.pool)[0].name
         snaps = [s.name for s in Snapshot.objects.filter(share=share)]
         for s in snaps:
             if (s not in snaps_d):
                 Snapshot.objects.get(share=share,name=s).delete()
         for s in snaps_d:
-            if (s not in snaps):
-                nso = Snapshot(share=share, name=s, real_name=s,
-                               writable=snaps_d[s][1], qgroup=snaps_d[s][0])
-                nso.save()
+            if (s in snaps):
+                so = Snapshot.objects.get(share=share, name=s)
+            else:
+                so = Snapshot(share=share, name=s, real_name=s,
+                              writable=snaps_d[s][1], qgroup=snaps_d[s][0])
+            rusage, eusage = share_usage(share.pool, disk, snaps_d[s][0])
+            ts = datetime.utcnow().replace(tzinfo=utc)
+            if (rusage != so.rusage or eusage != so.eusage):
+                so.rusage = rusage
+                so.eusage = eusage
+                su = ShareUsage(name=s, r_usage=rusage, e_usage=eusage, ts=ts)
+                su.save()
+            else:
+                try:
+                    su = ShareUsage.objects.filter(name=s).latest('id')
+                    su.ts = ts
+                    su.count += 1
+                except ShareUsage.DoesNotExist:
+                    su = ShareUsage(name=s, r_usage=rusage, e_usage=eusage,
+                                    ts=ts)
+                finally:
+                    su.save()
+            so.save()
 
     @transaction.atomic
     def _toggle_visibility(self, share, snap_name, on=True):
@@ -153,8 +176,8 @@ class SnapshotView(NFSMixin, rfc.GenericView):
                      real_name, readonly=not writable)
             snap_id = share_id(share.pool, pool_device, real_name)
             qgroup_id = ('0/%s' % snap_id)
-            snap_size = share_usage(share.pool, pool_device,
-                                    qgroup_id)
+            snap_size, eusage = share_usage(share.pool, pool_device,
+                                            qgroup_id)
         s = Snapshot(share=share, name=snap_name, real_name=real_name,
                      size=snap_size, qgroup=qgroup_id,
                      uvisible=uvisible, snap_type=snap_type,

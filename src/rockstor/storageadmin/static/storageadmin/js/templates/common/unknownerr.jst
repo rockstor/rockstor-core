@@ -1,6 +1,6 @@
-<div class="row-fluid">
-  <div class="span8">
-    <div class="alert alert-error">
+<div class="row">
+  <div class="col-md-8">
+    <div class="alert alert-danger">
       <button class="close" data-dismiss="alert" type="button">x</button>
       <% if (jqXhr.status >= 400 && jqXhr.status < 500) { %>
         <strong>Unknown client error doing a <%= ajaxSettings.type %> to <%= ajaxSettings.url %></strong>

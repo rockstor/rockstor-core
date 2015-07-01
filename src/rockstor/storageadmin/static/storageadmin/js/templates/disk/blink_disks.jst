@@ -1,47 +1,47 @@
 
 <h4>Activate the hard drive LED of /dev/<%= diskName %></h4>
-<div class="row-fluid">
-  <div class="span8">
+<div class="row">
+  <div class="col-md-8">
     <label class="control-label"></label>
     <div class="form-box">
       <form class="form-horizontal" id="add-blink-disk-form"  name="aform" >
         <div class="messages"></div>
 
         <!-- disks -->
-        <div class="control-group">
-          <div class="controls">
+        <div class="form-group">
+          <div class="col-sm-offset-4 col-sm-8">
             <h4>Drive name:&nbsp;&nbsp;<strong><%= diskName %></strong></h4>
 	    <h4>Serial number:&nbsp;&nbsp;<strong><%= serialNumber %></strong></h4>
           </div>
         </div>
 
        <!-- Total Time -->
-        <div class="control-group">
-          <label class="control-label" for="total_time">Total time<span class="required"> *</span></label>
-          <div class="controls">
-            <input type="text" name="total_time" id="total_time" title="Total time of desired led activity in seconds. This is the sum of all (read + sleep) cycles" value=90>
+        <div class="form-group">
+          <label class="col-sm-4 control-label" for="total_time">Total time<span class="required"> *</span></label>
+          <div class="col-sm-8">
+            <input class="form-control shorten-input" type="text" name="total_time" id="total_time" title="Total time of desired led activity in seconds. This is the sum of all (read + sleep) cycles" value=90>
           </div>
         </div>
 
         <!-- Blink Time -->
-        <div class="control-group">
-          <label class="control-label" for="blink_time">Read Time<span class="required"> *</span></label>
-          <div class="controls">
-            <input type="text" name="blink_time" id="blink_time" title="Number of seconds to read from the drive per cycle. The drive LED lights up during read" value=10>
+        <div class="form-group">
+          <label class="col-sm-4 control-label" for="blink_time">Read Time<span class="required"> *</span></label>
+          <div class="col-sm-8">
+            <input class="form-control shorten-input" type="text" name="blink_time" id="blink_time" title="Number of seconds to read from the drive per cycle. The drive LED lights up during read" value=10>
           </div>
         </div>
 
         <!-- Sleep Time -->
-        <div class="control-group">
-          <label class="control-label" for="sleep_time">Sleep Time<span class="required"> *</span></label>
-          <div class="controls">
-            <input type="text" name="sleep_time" id="sleep_time" title="Number of seconds to sleep per cycle. The drive LED doesn't light up during sleep time" value=5>
-          </div>
+        <div class="form-group">
+          <label class="col-sm-4 control-label" for="sleep_time">Sleep Time<span class="required"> *</span></label>
+	  <div class="col-sm-8">
+            <input class="form-control shorten-input" type="text" name="sleep_time" id="sleep_time" title="Number of seconds to sleep per cycle. The drive LED doesn't light up during sleep time" value=5>
+	  </div>
         </div>
 
-        <div class="control-group">
-          <div class="controls">
-            <a id="cancel" class="btn">Cancel</a>
+        <div class="form-group">
+          <div class="col-sm-offset-4 col-sm-8">
+            <a id="cancel" class="btn btn-default">Cancel</a>
             <input type="Submit" id="blink-disk" class="btn btn-primary" value="Submit"></input>
           </div>
         </div>

@@ -92,7 +92,7 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 		this.$('#ph-compression-info').html(this.compression_info_template({pool: this.pool})); }
 
 	this.$('#ph-resize-pool-info').html(this.resize_pool_info_template({pool:
-									    this.pool})); this.$("ul.css-tabs").tabs("div.css-panes > div"); if
+									    this.pool})); this.$("ul.nav.nav-tabs").tabs("div.css-panes > div"); if
 										(!_.isUndefined(this.cView) && this.cView == 'resize') { // scroll to resize section
 										    $('#content').scrollTop($('#ph-resize-pool-info').offset().top); }
 

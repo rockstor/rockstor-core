@@ -1,19 +1,19 @@
 <% if (collection.pageInfo().pages > 1) { %>
  
-   <div class="pagination">
+<nav>
    <% var entries = (collection.pageInfo().page)*collection.pageSize ; 
    if(collection.pageInfo().page*collection.pageSize > collection.pageInfo().count){
    entries = collection.pageInfo().count;
    }
    %>
     <p><i>Displaying entries <%= (collection.pageInfo().page-1)*collection.pageSize+1 %>  -  <%= entries %>  of  <%= collection.pageInfo().count %></i></p>
-    <ul>
+    <ul class="pagination">
     
-    <li><a class="go-to-page" href="#" data-page="1"><i class="icon-fast-backward"></i></a></li>
+    <li><a class="go-to-page" href="#" data-page="1"><i class="glyphicon glyphicon-fast-backward"></i></a></li>
       <% if (collection.pageInfo().prev) { %>
-        <li><a class="prev-page" href="#"><i class="icon-backward"></i></a></li>
+        <li><a class="prev-page" href="#"><i class="glyphicon glyphicon-backward"></i></a></li>
       <% } else { %>
-        <li class="disabled"><a class="prev-page" href="#"><i class="icon-backward"></i></a></li>
+        <li class="disabled"><a class="prev-page" href="#"><i class="glyphicon glyphicon-backward"></i></a></li>
       <% } %>
       
       <% var start = collection.pageInfo().page - 4 ;
@@ -32,12 +32,12 @@
         <% } %>
       <% } %>
       <% if (collection.pageInfo().next) { %>
-        <li><a class="next-page" href="#"><i class="icon-forward"></i></a></li>
+        <li><a class="next-page" href="#"><i class="glyphicon glyphicon-forward"></i></a></li>
       <% } else { %>
-        <li class="disabled"><a class="next-page" href="#"><i class="icon-forward"></i></a></li>
+        <li class="disabled"><a class="next-page" href="#"><i class="glyphicon glyphicon-forward"></i></a></li>
       <% } %>
-      <li><a class="go-to-page" href="#" data-page="<%= collection.pageInfo().pages%>"><i class="icon-fast-forward"></i></a></li>
+      <li><a class="go-to-page" href="#" data-page="<%= collection.pageInfo().pages%>"><i class="glyphicon glyphicon-fast-forward"></i></a></li>
     </ul>
-  </div>
+</nav>
 <% } %>
 

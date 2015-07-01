@@ -17,11 +17,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import re
+from datetime import datetime
+from django.utils.timezone import utc
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
 from django.db import transaction
 from storageadmin.models import (Share, Disk, Pool, Snapshot,
                                  NFSExport, SambaShare, SFTP)
+from smart_manager.models import ShareUsage
 from fs.btrfs import (add_share, remove_share, update_quota,
                       share_usage, set_property, mount_share, qgroup_id,
                       shares_info)
@@ -85,17 +88,18 @@ class ShareListView(ShareMixin, rfc.GenericView):
     serializer_class = ShareSerializer
 
     def get_queryset(self, *args, **kwargs):
-        self._refresh_shares_state();
-        sort_col = self.request.query_params.get('sortby', None)
-        if (sort_col is not None and sort_col == 'usage'):
-            reverse = self.request.query_params.get('reverse', 'no')
-            if (reverse == 'yes'):
-                reverse = True
-            else:
-                reverse = False
-            return sorted(Share.objects.all(), key=lambda u: u.cur_usage(),
-                          reverse=reverse)
-        return Share.objects.all()
+        with self._handle_exception(self.request):
+            self._refresh_shares_state()
+            sort_col = self.request.query_params.get('sortby', None)
+            if (sort_col is not None and sort_col == 'usage'):
+                reverse = self.request.query_params.get('reverse', 'no')
+                if (reverse == 'yes'):
+                    reverse = True
+                else:
+                    reverse = False
+                return sorted(Share.objects.all(), key=lambda u: u.rusage,
+                              reverse=reverse)
+            return Share.objects.all()
 
     @transaction.atomic
     def _refresh_shares_state(self):
@@ -108,6 +112,27 @@ class ShareListView(ShareMixin, rfc.GenericView):
                     Share.objects.get(pool=p, name=s).delete()
             for s in shares_d:
                 if (s in shares):
+                    share = Share.objects.get(name=s)
+                    share.qgroup = shares_d[s]
+                    rusage, eusage = share_usage(p, disk, share.qgroup)
+                    ts = datetime.utcnow().replace(tzinfo=utc)
+                    if (rusage != share.rusage or eusage != share.eusage):
+                        share.rusage = rusage
+                        share.eusage = eusage
+                        su = ShareUsage(name=s, r_usage=rusage, e_usage=eusage,
+                                        ts=ts)
+                        su.save()
+                    else:
+                        try:
+                            su = ShareUsage.objects.filter(name=s).latest('id')
+                            su.ts = ts
+                            su.count += 1
+                        except ShareUsage.DoesNotExist:
+                            su = ShareUsage(name=s, r_usage=rusage,
+                                            e_usage=eusage, ts=ts)
+                        finally:
+                            su.save()
+                    share.save()
                     continue
                 try:
                     cshare = Share.objects.get(name=s)
@@ -125,6 +150,7 @@ class ShareListView(ShareMixin, rfc.GenericView):
                         cshare.qgroup = shares_d[s]
                         cshare.size = p.size
                         cshare.subvol_name = s
+                        cshare.rusage, cshare.eusage = share_usage(p, disk, cshare.qgroup)
                         cshare.save()
                 except Share.DoesNotExist:
                     nso = Share(pool=p, qgroup=shares_d[s], name=s, size=p.size,
@@ -171,7 +197,7 @@ class ShareListView(ShareMixin, rfc.GenericView):
             add_share(pool, disk.name, sname)
             qid = qgroup_id(pool, disk.name, sname)
             update_quota(pool, disk.name, qid, size * 1024)
-            s = Share(pool=pool, qgroup=qgroup_id, name=sname, size=size,
+            s = Share(pool=pool, qgroup=qid, name=sname, size=size,
                       subvol_name=sname, replica=replica,
                       compression_algo=compression)
             s.save()
@@ -203,11 +229,11 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
                 new_size = self._validate_share_size(request, share.pool)
                 disk = Disk.objects.filter(pool=share.pool)[0]
                 qid = qgroup_id(share.pool, disk.name, share.subvol_name)
-                cur_usage = share_usage(share.pool, disk.name, qid)
-                if (new_size < cur_usage):
+                cur_rusage, cur_eusage = share_usage(share.pool, disk.name, qid)
+                if (new_size < cur_rusage):
                     e_msg = ('Unable to resize because requested new size(%dKB) '
                              'is less than current usage(%dKB) of the share.' %
-                             (new_size, cur_usage))
+                             (new_size, cur_rusage))
                     handle_exception(Exception(e_msg), request)
                 update_quota(share.pool, disk.name, qid, new_size * 1024)
                 share.size = new_size
