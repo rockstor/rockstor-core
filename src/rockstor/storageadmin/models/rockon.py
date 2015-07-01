@@ -28,6 +28,8 @@ class RockOn(models.Model):
     status = models.CharField(max_length=2048)
     link = models.CharField(max_length=1024, null=True)
     website = models.CharField(max_length=2048, null=True)
+    https = models.BooleanField(default=False)
+    icon = models.URLField(max_length=1024, null=True)
 
     class Meta:
         app_label = 'storageadmin'
@@ -46,18 +48,31 @@ class DContainer(models.Model):
     rockon = models.ForeignKey(RockOn)
     dimage = models.ForeignKey(DImage)
     name = models.CharField(max_length=1024, unique=True)
-    link = models.ForeignKey('self', null=True)
+    launch_order = models.IntegerField(default=1)
 
     class Meta:
         app_label = 'storageadmin'
 
 
+class DContainerLink(models.Model):
+    source = models.OneToOneField(DContainer)
+    destination = models.ForeignKey(DContainer, related_name='destination_container')
+    name = models.CharField(max_length=64, null=True)
+
+    class Meta:
+        unique_together = ('destination', 'name')
+        app_label = 'storageadmin'
+
+
 class DPort(models.Model):
+    description = models.CharField(max_length=1024, null=True)
     hostp = models.IntegerField(unique=True)
     containerp = models.IntegerField()
+    containerp_default = models.IntegerField(null=True)
     container = models.ForeignKey(DContainer)
     protocol = models.CharField(max_length=32, null=True)
     uiport = models.BooleanField(default=False)
+    label = models.CharField(max_length=1024, null=True)
 
     class Meta:
         unique_together = ('container', 'containerp',)
@@ -69,6 +84,9 @@ class DVolume(models.Model):
     share = models.ForeignKey(Share, null=True)
     dest_dir = models.CharField(max_length=1024)
     uservol = models.BooleanField(default=False)
+    description = models.CharField(max_length=1024, null=True)
+    min_size = models.IntegerField(default=0)
+    label = models.CharField(max_length=1024, null=True)
 
     @property
     def share_name(self):
@@ -95,6 +113,7 @@ class DCustomConfig(models.Model):
     key = models.CharField(max_length=1024)
     val = models.CharField(max_length=1024, null=True)
     description = models.CharField(max_length=2048, null=True)
+    label = models.CharField(max_length=64, null=True)
 
     class Meta:
         unique_together = ('rockon', 'key',)

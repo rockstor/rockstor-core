@@ -130,6 +130,7 @@ class RockOnView(rfc.GenericView):
                                     po.description = p_d['description']
                                     po.uiport = p_d['ui']
                                     po.protocol = p_d['protocol']
+                                    po.label = p_d['label']
                                 elif (DPort.objects.filter(containerp=p, container=co).exists()):
                                     po = DPort.objects.get(containerp=p, container=co)
                                     po.hostp = p
@@ -137,12 +138,14 @@ class RockOnView(rfc.GenericView):
                                     po.description = p_d['description']
                                     po.uiport = p_d['ui']
                                     po.protocol = p_d['protocol']
+                                    po.label = p_d['label']
                                 else:
                                     po = DPort(description=p_d['description'],
                                                hostp=p, containerp=p,
                                                containerp_default=p_d['default'],
                                                container=co, uiport=p_d['ui'],
-                                               protocol=p_d['protocol'])
+                                               protocol=p_d['protocol'],
+                                               label=p_d['label'])
                                 po.save()
                         else:
                             ports = {}
