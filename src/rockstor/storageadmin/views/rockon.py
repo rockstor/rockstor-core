@@ -20,7 +20,7 @@ import requests
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (RockOn, DImage, DContainer, DPort, DVolume,
-                                 ContainerOption, DCustomConfig)
+                                 ContainerOption, DCustomConfig, DContainerLink)
 from storageadmin.serializers import RockOnSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
@@ -71,24 +71,35 @@ class RockOnView(rfc.GenericView):
             if (command == 'update'):
                 rockons = self._get_available(request)
                 for r in rockons.keys():
+                    if (r != 'OwnCloud'):
+                        continue
                     name = r
+                    r_d = rockons[r]
+                    ui_d = r_d['ui']
                     ro = None
                     if (RockOn.objects.filter(name=name).exists()):
                         ro = RockOn.objects.get(name=name)
                         if (ro.state != 'available'):
                             #don't update metadata if it's installed or in some pending state.
                             continue
-                        ro.description = rockons[r]['description']
+                        ro.description = r_d['description']
+                        ro.website = r_d['website']
+                        ro.icon = r_d['icon']
+                        ro.link = ui_d['slug']
+                        ro.https = ui_d['https']
                     else:
                         ro = RockOn(name=name,
-                                    description=rockons[r]['description'],
+                                    description=r_d['description'],
                                     version='1.0', state='available',
-                                    status='stopped')
+                                    status='stopped', website=r_d['website'],
+                                    icon=r_d['icon'], link=ui_d['slug'],
+                                    https=ui_d['https'])
                     ro.save()
-                    containers = rockons[r]['containers']
+                    containers = r_d['containers']
                     for c in containers.keys():
                         io = None
-                        iname = containers[c]['image']
+                        c_d = containers[c]
+                        iname = c_d['image']
                         if (DImage.objects.filter(name=iname).exists()):
                             io = DImage.objects.get(name=iname)
                         else:
@@ -100,27 +111,38 @@ class RockOnView(rfc.GenericView):
                             co = DContainer.objects.get(name=c)
                             co.dimage = io
                             co.rockon = ro
+                            co.launch_order = c_d['launch_order']
                         else:
-                            co = DContainer(rockon=ro, dimage=io, name=c)
+                            co = DContainer(rockon=ro, dimage=io, name=c,
+                                            launch_order=c_d['launch_order'])
                         co.save()
+
 
                         if ('ports' in containers[c]):
                             ports = containers[c]['ports']
                             for p in ports.keys():
+                                p_d = ports[p]
                                 po = None
                                 if (DPort.objects.filter(hostp=p).exists()):
                                     po = DPort.objects.get(hostp=p)
                                     po.container = co
+                                    po.containerp_default = p_d['default']
+                                    po.description = p_d['description']
+                                    po.uiport = p_d['ui']
+                                    po.protocol = p_d['protocol']
                                 elif (DPort.objects.filter(containerp=p, container=co).exists()):
                                     po = DPort.objects.get(containerp=p, container=co)
                                     po.hostp = p
+                                    po.containerp_default = p_d['default']
+                                    po.description = p_d['description']
+                                    po.uiport = p_d['ui']
+                                    po.protocol = p_d['protocol']
                                 else:
-                                    po = DPort(hostp=p, containerp=p,
-                                               container=co)
-                                if (ports[p] == 'ui'):
-                                    po.uiport = True
-                                else:
-                                    po.protocol = ports[p]
+                                    po = DPort(description=p_d['description'],
+                                               hostp=p, containerp=p,
+                                               containerp_default=p_d['default'],
+                                               container=co, uiport=p_d['ui'],
+                                               protocol=p_d['protocol'])
                                 po.save()
                         else:
                             ports = {}
@@ -129,16 +151,24 @@ class RockOnView(rfc.GenericView):
                             if (po.containerp not in ports):
                                 po.delete()
 
+                        v_d = {}
                         if ('volumes' in containers[c]):
-                            volumes = containers[c]['volumes']
-                            for v in volumes:
-                                if (not DVolume.objects.filter(
-                                        dest_dir=v, container=co).exists()):
-                                    vo = DVolume(container=co, dest_dir=v)
+                            v_d = containers[c]['volumes']
+                            for v in v_d.keys():
+                                cv_d = v_d[v]
+                                if (DVolume.objects.filter(dest_dir=v, container=co).exists()):
+                                    vo = DVolume.objects.get(dest_dir=v, container=co)
+                                    vo.description = cv_d['description']
+                                    vo.label = cv_d['label']
+                                    vo.min_size = cv_d['min_size']
                                     vo.save()
-                            for vo in DVolume.objects.filter(container=co):
-                                if (vo.dest_dir not in volumes):
-                                    vo.delete()
+                                else:
+                                    vo = DVolume(container=co, dest_dir=v, description=cv_d['description'],
+                                                 min_size=cv_d['min_size'], label=cv_d['label'])
+                                    vo.save()
+                        for vo in DVolume.objects.filter(container=co):
+                            if (vo.dest_dir not in v_d):
+                                vo.delete()
 
                         if ('opts' in containers[c]):
                             options = containers[c]['opts']
@@ -149,14 +179,36 @@ class RockOnView(rfc.GenericView):
                                                          val=options[o])
                                     oo.save()
 
-                    if ('custom_config' in rockons[r]):
-                        cc_d = rockons[r]['custom_config']
+                    if ('container_links' in r_d):
+                        l_d = r_d['container_links']
+                        for cname in l_d.keys():
+                            ll = l_d[cname]
+                            lsources = [l['source_container'] for l in ll]
+                            co = DContainer.objects.get(rockon=ro, name=cname)
+                            for clo in co.destination_container.all():
+                                if (clo.name not in lsources):
+                                    clo.delete()
+                            for cl_d in ll:
+                                sco = DContainer.objects.get(rockon=ro, name=cl_d['source_container'])
+                                if (DContainerLink.objects.filter(source=sco, destination=co).exists()):
+                                    clo = DContainerLink.objects.get(source=sco)
+                                    clo.name = cl_d['name']
+                                    clo.save()
+                                else:
+                                    clo = DContainerLink(source=sco,
+                                                         destination=co, name=cl_d['name'])
+                                    clo.save()
+
+                    if ('custom_config' in r_d):
+                        cc_d = r_d['custom_config']
                         for k in cc_d:
+                            ccc_d = cc_d[k]
                             cco, created = DCustomConfig.objects.get_or_create(
                                 rockon=ro, key=k,
-                                defaults={'description': cc_d[k]})
+                                defaults={'description': ccc_d['description'], 'label': ccc_d['label']})
                             if (not created):
-                                cco.description = cc_d[k]
+                                cco.description = ccc_d['description']
+                                cco.label = ccc_d['label']
                             if (not created and k == 'iprange' and ro.name == 'Plex'):
                                 from storageadmin.models import NetworkInterface
                                 try:
@@ -170,22 +222,15 @@ class RockOnView(rfc.GenericView):
                     for cco in DCustomConfig.objects.filter(rockon=ro):
                         if (cco.key not in cc_d):
                             cco.delete()
-
-                    if ('app_link' in rockons[r]):
-                        app_link = rockons[r]['app_link']
-                        if (ro.state != 'installed'):
-                            ro.link = app_link
-                    if ('website' in rockons[r]):
-                        ro.website = rockons[r]['website']
-                    ro.save()
             return Response()
 
     def _get_available(self, request):
         msg = ('Network error while checking for updates. '
                'Please try again later.')
         with self._handle_exception(request, msg=msg):
-            r = requests.get('http://rockstor.com/rockons.json')
-            rockons = r.json()
+            #r = requests.get('http://rockstor.com/rockons.json')
+            #rockons = r.json()
+            from rockon_json import rockons
             return rockons
 
     @transaction.atomic
