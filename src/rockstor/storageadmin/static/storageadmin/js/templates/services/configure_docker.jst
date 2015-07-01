@@ -19,7 +19,7 @@
   */
 </script>
 
-<h3>Configure <%= service.get('display_name') %></h3>
+<h3>Configure <%= service.get('display_name') %> Service</h3>
 
 <div class="row">
   <div class="col-md-8">
@@ -29,6 +29,9 @@
         <div class="messages"></div>
 
         <div class="form-group">
+	  <div class="alert alert-warning">
+	    <h5>We strongly recommend that you create a separate Share(at least 5GB size) for this purpose. During the lifetime of Rock-ons, several snapshots will be created and space could fill up quickly. It is best managed in a separate Share to avoid clobbering other data.</h5>
+	  </div>
           <label class="control-label" for="root_share">Root Share<span class="required"> *</span></label>
           <div class="controls">
 	     <% if (shares.length ===  0) {%>
@@ -37,7 +40,6 @@
 		   </p>
 		   <a href="#/shares">Go to shares</a>
 		<% } else { %>
-
              <select class="form-control shorten-input" name="root_share" id="root_share" data-placeholder="Select root share">
              <% shares.each( function(share, index) { %>
               <% if (share.get('name') == config.root_share) { %>

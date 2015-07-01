@@ -101,7 +101,7 @@ RockonsView = RockstorLayoutView.extend({
 	var rockon_o = _this.rockons.get(rockon_id);
 	var wizardView = new RockonInstallWizardView({
 	    model: new Backbone.Model({ rockon: rockon_o }),
-	    title: 'Rock-on install wizard [' + rockon_o.get('name') + ']',
+	    title: rockon_o.get('name') + ' install wizard',
 	    parent: this
 	});
 	$('.overlay-content', '#install-rockon-overlay').html(wizardView.render().el);

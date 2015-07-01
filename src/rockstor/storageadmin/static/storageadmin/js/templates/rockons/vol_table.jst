@@ -6,7 +6,7 @@
 	<div class="messages"></div>
 	<% volumes.each(function(volume, index) { %>
 	<div class="form-group">
-	  <label class="control-label col-sm-3" for="shares">Share(<%= volume.get('dest_dir')%>) <span class="required">*</span></label>
+	  <label class="control-label col-sm-3" for="shares"><%= volume.get('label') %> <span class="required">*</span></label>
 	  <div class="col-sm-5">
 	    <select class="form-control" name="<%= volume.id %>" id="<%= volume.id %>" data-placeholder="Select shares to export">
 	      <% shares.each(function(share, index) { %>
@@ -14,9 +14,8 @@
 	      <% }); %>
 	    </select>
 	  </div>
-	  <div class="col-sm-offset-3 col-sm-9">
-	      <span class="help-block">Example help text</span> <!-- help text goes in here -->
-	  </div>
+	  <i class="fa fa-exclamation-circle" title="<%= volume.get('description') %>"></i>
+
 	</div>
 	<% }); %>
 	<div class="form-group">
@@ -28,4 +27,3 @@
     </div>
   </div>
 </div>
-
