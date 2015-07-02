@@ -66,9 +66,8 @@
 	      <div class="slider-start on" data-rockon-id="<%= rockon.get('id') %>">ON</div>&nbsp;&nbsp
 	      <a id="js-rockon-settings" href="#" class="settings" data-rockon-id="<%= rockon.get('id') %>"><i class="glyphicon glyphicon-wrench"></i></a>
 	      <br><br>
-	      <% if (rockon.get('link')) { %>
-	        <% var ui_link = "http://" + window.location.host + rockon.get('link'); %>
-	        <a href="<%= ui_link %>" target="_blank" class="btn btn-primary">Open</a>
+	      <% if (ui_map[rockon.get('id')]) { %>
+	      <a href="<%= ui_map[rockon.get('id')] %>" target="_blank" class="btn btn-primary">Open</a>
 	      <% } %>
 	      <a id="js-uninstall-rockon" class="btn btn-danger" data-name="<%= rockon.get('id') %>">Uninstall</a>
 	    <% } else { %>

@@ -56,12 +56,32 @@ RockonsView = RockstorLayoutView.extend({
     },
 
     renderRockons: function() {
-	console.log('rockons rendered');
 	var _this = this;
+
+	var ui_map = {};
+	var uis = this.rockons.filter(function(rockon) {
+	    ui_map[rockon.get('id')] = null;
+	    if (rockon.get('ui')) {
+		var protocol = "http://";
+		if (rockon.get('https')) {
+		    protocol = "https://";
+		}
+		var ui_link = protocol + window.location.hostname;
+		if (rockon.get('ui_port')) {
+		    ui_link += ":" + rockon.get('ui_port');
+		}
+		if (rockon.get('link')) {
+		    ui_link += "/" + rockon.get('link');
+		}
+		ui_map[rockon.get('id')] = ui_link;
+	    }
+	    return false;
+	});
 
 	$(this.el).html(this.template({
 	    rockons: this.rockons,
-	    status: this.service.get('status')
+	    status: this.service.get('status'),
+	    ui_map: ui_map
 	}));
 
 	if (!this.dockerServiceView) {
