@@ -58,7 +58,7 @@ rockons = \
                                                                  'min_size': 1073741824,},},
                                                     'launch_order': 2,},
                                        'owncloud-postgres': {'image': 'postgres',
-                                                             'volumes': {'/var/lib/pgsql/data':
+                                                             'volumes': {'/var/lib/postgresql/data':
                                                                          {'description': 'Choose a dedicated Share for OwnClouds postgresql database. Eg: create a Share called owncloud-db for this purpose alone.',
                                                                           'label': 'Database',
                                                                           'min_size': 1073741824, }, },

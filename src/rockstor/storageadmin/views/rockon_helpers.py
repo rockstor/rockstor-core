@@ -22,7 +22,7 @@ from django_ztask.decorators import task
 from cli.rest_util import api_call
 from system.services import service_status
 from storageadmin.models import (RockOn, DContainer, DVolume, DPort,
-                                 DCustomConfig, Share, Disk)
+                                 DCustomConfig, Share, Disk, DContainerLink)
 from fs import btrfs
 
 DOCKER = '/usr/bin/docker'
@@ -69,6 +69,7 @@ def rockon_status(name):
 
 
 def rm_container(name):
+    o, e, rc = run_command([DOCKER, 'stop', name], throw=False)
     o, e, rc = run_command([DOCKER, 'rm', name], throw=False)
     return logger.debug('Attempted to remove a container(%s). out: %s '
                         'err: %s rc: %s.' %  (name, o, e, rc))
@@ -78,11 +79,8 @@ def start(rid):
     new_status = 'started'
     try:
         rockon = RockOn.objects.get(id=rid)
-        if (rockon.name == 'OpenVPN'):
-            run_command([DOCKER, 'start', 'ovpn-data'])
-        if (rockon.name == 'OwnCloud'):
-            run_command([DOCKER, 'start', 'owncloud-postgres'])
-        run_command([DOCKER, 'start', rockon.name])
+        for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
+            run_command([DOCKER, 'start', c.name])
     except:
         new_status = 'start_failed'
     finally:
@@ -282,34 +280,31 @@ def syncthing_install(rockon):
 
 
 def owncloud_install(rockon):
-    oc_name = 'owncloud'
-    dbc_name = '%s-postgres' % oc_name
-    rm_container(dbc_name)
-    rm_container(rockon.name)
     for c in DContainer.objects.filter(rockon=rockon):
-        image = c.dimage.name
-        run_command([DOCKER, 'pull', image,])
-    dbc_cmd = [DOCKER, 'run', '--name', dbc_name]
-    dbc = DContainer.objects.get(rockon=rockon, name=dbc_name)
-    vo = DVolume.objects.get(container=dbc)
-    share_mnt = '%s%s' % (settings.MNT_PT, vo.share.name)
-    dbc_cmd.extend(['-v', '%s:%s' % (share_mnt, vo.dest_dir)])
-    db_user = DCustomConfig.objects.get(rockon=rockon, key='DB User')
-    db_pw = DCustomConfig.objects.get(rockon=rockon, key='DB Password')
-    dbc_cmd.extend(['-e', 'POSTGRES_USER=%s' % db_user, '-e',
-                    'POSTGRES_PASSWORD=%s' % db_pw, '-d', 'postgres'])
-    run_command(dbc_cmd)
-    logger.debug('postgres container initiated')
+        rm_container(c.name)
+        run_command([DOCKER, 'pull', c.dimage.name])
 
-    oc = DContainer.objects.get(rockon=rockon, name=oc_name)
-    po = DPort.objects.get(container=oc)
-    oc_cmd = [DOCKER, 'run', '--link', '%s:db' % dbc_name, '-d', '--name',
-              rockon.name, '-p', '%s:%s' % (po.hostp, po.containerp)]
-    for v in DVolume.objects.filter(container=oc):
-        share_mnt = '%s%s' % (settings.MNT_PT, v.share.name)
-        oc_cmd.extend(['-v', '%s:%s' % (share_mnt, v.dest_dir)])
-    oc_cmd.extend(['-v', '%s/rockstor.key:/etc/ssl/private/owncloud.key' % settings.CERTDIR,
-                   '-v', '%s/rockstor.cert:/etc/ssl/certs/owncloud.crt' % settings.CERTDIR,
-                   '-e', 'HTTPS_ENABLED=true'])
-    oc_cmd.append(oc.dimage.name)
-    run_command(oc_cmd)
+    for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
+        cmd = [DOCKER, 'run', '-d', '--name', c.name, ]
+        if (c.dimage.name == 'postgres'):
+            db_user = DCustomConfig.objects.get(rockon=rockon, key='db_user')
+            db_pw = DCustomConfig.objects.get(rockon=rockon, key='db_pw')
+            cmd.extend(['-e', 'POSTGRES_USER=%s' % db_user, '-e',
+                        'POSTGRES_PASSWORD=%s' % db_pw])
+        for po in DPort.objects.filter(container=c):
+            pstr = '%s:%s' % (po.hostp, po.containerp)
+            if (po.protocol is not None):
+                pstr = '%s/%s' % (pstr, po.protocol)
+            cmd.extend(['-p', '%s:%s' % (po.hostp, po.containerp)])
+        for lo in DContainerLink.objects.filter(destination=c):
+            cmd.extend(['--link', '%s:%s' % (lo.source.name, lo.name)])
+        for v in DVolume.objects.filter(container=c):
+            share_mnt = ('%s%s' % (settings.MNT_PT, v.share.name))
+            cmd.extend(['-v', '%s:%s' % (share_mnt, v.dest_dir)])
+        if (c.name == 'owncloud'):
+            cmd.extend(['-v', '%s/rockstor.key:/etc/ssl/private/owncloud.key' % settings.CERTDIR,
+                        '-v', '%s/rockstor.cert:/etc/ssl/certs/owncloud.crt' % settings.CERTDIR,
+                        '-e', 'HTTPS_ENABLED=true'])
+        cmd.append(c.dimage.name)
+        logger.debug('docker cmd = %s' % cmd)
+        run_command(cmd)

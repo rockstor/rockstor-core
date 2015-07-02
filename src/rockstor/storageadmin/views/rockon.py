@@ -79,7 +79,8 @@ class RockOnView(rfc.GenericView):
                     ro = None
                     if (RockOn.objects.filter(name=name).exists()):
                         ro = RockOn.objects.get(name=name)
-                        if (ro.state != 'available'):
+                        logger.debug('ro state = %s' % ro.state)
+                        if (ro.state != 'available' and (re.match('pending', ro.state) is not None)):
                             #don't update metadata if it's installed or in some pending state.
                             continue
                         ro.description = r_d['description']
@@ -155,8 +156,8 @@ class RockOnView(rfc.GenericView):
                                 po.delete()
 
                         v_d = {}
-                        if ('volumes' in containers[c]):
-                            v_d = containers[c]['volumes']
+                        if ('volumes' in c_d):
+                            v_d = c_d['volumes']
                             for v in v_d.keys():
                                 cv_d = v_d[v]
                                 if (DVolume.objects.filter(dest_dir=v, container=co).exists()):
@@ -169,6 +170,8 @@ class RockOnView(rfc.GenericView):
                                     vo = DVolume(container=co, dest_dir=v, description=cv_d['description'],
                                                  min_size=cv_d['min_size'], label=cv_d['label'])
                                     vo.save()
+
+                        logger.debug('v_d = %s' % v_d)
                         for vo in DVolume.objects.filter(container=co):
                             if (vo.dest_dir not in v_d):
                                 vo.delete()

@@ -389,9 +389,28 @@ RockonShareChoice = RockstorWizardPage.extend({
 
     renderVolumes: function() {
 	this.$('#ph-vols-table').html(this.vol_template({volumes: this.volumes, shares: this.shares}));
+	//form validation
+	this.volForm = this.$('#vol-select-form');
+	var rules = {};
+	var messages = {};
+	this.volumes.each(function(volume) {
+	    rules[volume.id] = { required: true };
+	    messages[volume.id] = "Please read the tooltip and make the right selection";
+	});
+	this.validator = this.volForm.validate({
+	    rules: rules,
+	    messages: messages
+	});
     },
 
     save: function() {
+
+	// Validate the form
+	if (!this.volForm.valid()) {
+	    this.validator.showErrors();
+	    return $.Deferred().reject();
+	}
+
 	var share_map = {};
 	var volumes = this.volumes.filter(function(volume) {
 	    share_map[volume.get('dest_dir')] = this.$('#' + volume.id).val();
