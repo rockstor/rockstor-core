@@ -187,7 +187,7 @@ class SnapshotView(NFSMixin, rfc.GenericView):
 
     def post(self, request, sname, snap_name, command=None):
         with self._handle_exception(request):
-            share = self._validate_share(sname, request)
+            share = self._validate_share(request, sname)
             uvisible = request.data.get('uvisible', False)
             if (type(uvisible) != bool):
                 e_msg = ('uvisible must be a boolean, not %s' % type(uvisible))
