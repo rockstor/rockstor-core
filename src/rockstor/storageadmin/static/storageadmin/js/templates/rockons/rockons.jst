@@ -44,8 +44,33 @@
     <% rockons.each(function(rockon, index) { %>
       <% if (rockon.get('state') == 'installed' || rockon.get('state').match('pending')) { %>
       <% installed += 1; %>
-      <div id="js-rockons-installed" class="tab-section">
+      <div id="js-rockons-installed" class="tab-section" style="position: relative">
+	<% if (rockon.get('state') === 'pending_install') { %>
+	<div class="overlay">
+	  <div class="text-center">
+	    <i class="fa fa-3x fa-cog fa-spin"></i>
+	    <div>
+	      <p class="lead">Installing...</p>
+	    </div>
+	  </div>
+	</div>
+	<% } %>
+
+	<% if (rockon.get('state') === 'pending_uninstall') { %>
+	<div class="overlay">
+	  <div class="text-center">
+	    <i class="fa fa-3x fa-cog fa-spin"></i>
+	    <div>
+	      <p class="lead">Uninstalling...</p>
+	    </div>
+	    
+	  </div>
+	</div>	
+	<% } %>
+
+
 	<div class="row">
+
 	  <div class="col-md-6">
 	    <a href="<%= rockon.get('website') %>" target="_blank"><h3><u><%= rockon.get('name') %></u></h3></a>
 	    <p><%= rockon.get('description') %></p>
@@ -100,7 +125,7 @@
     <% rockons.each(function(rockon, index) { %>
       <% if (rockon.get('state') == 'available' || rockon.get('state') == 'install_failed') { %>
       <% all += 1; %>
-      <div class="tab-section">
+     <div class="tab-section">
 	<div class="row">
 	  <div class="col-md-12">
 	    <a href="<%= rockon.get('website') %>" target="_blank"><h3><%= rockon.get('name') %></h3></a>
@@ -117,8 +142,9 @@
 	  </div>
 	</div>
       </div>
-      <% } %>
-    <% }); %>
+	<% } %>
+      <% }); %>
+      
     <% if (all == 0) { %>
       <div class="tab-section">
 	<div class="row">
