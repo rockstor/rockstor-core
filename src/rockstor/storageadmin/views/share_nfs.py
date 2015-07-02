@@ -33,7 +33,7 @@ class ShareNFSListView(NFSMixin, rfc.GenericView):
     serializer_class = NFSExportGroupSerializer
 
     def get_queryset(self, *args, **kwargs):
-        share = self._validate_share(self.kwargs['sname'], self.request)
+        share = self._validate_share(self.request, self.kwargs['sname'])
         exports = NFSExport.objects.filter(share=share)
         ids = [e.export_group.id for e in exports]
         return NFSExportGroup.objects.filter(nohide=False, id__in=ids)
@@ -41,7 +41,7 @@ class ShareNFSListView(NFSMixin, rfc.GenericView):
     @transaction.commit_on_success
     def post(self, request, sname):
         with self._handle_exception(request):
-            share = self._validate_share(sname, request)
+            share = self._validate_share(request, sname)
             options = self._parse_options(request)
             self._dup_export_check(share, options['host_str'], request)
             cur_exports = list(NFSExport.objects.all())
@@ -77,7 +77,7 @@ class ShareNFSDetailView(rfc.GenericView):
     @transaction.atomic
     def put(self, request, sname, export_id):
         with self._handle_exception(request):
-            share = self._validate_share(sname, request)
+            share = self._validate_share(request, sname)
             eg = self._validate_export_group(export_id, request)
             options = self._parse_options(request)
             self._dup_export_check(share, options['host_str'], request,
@@ -93,7 +93,7 @@ class ShareNFSDetailView(rfc.GenericView):
     @transaction.atomic
     def delete(self, request, sname, export_id):
         with self._handle_exception(request):
-            share = self._validate_share(sname, request)
+            share = self._validate_share(request, sname)
             eg = self._validate_export_group(export_id, request)
             cur_exports = list(NFSExport.objects.all())
             export = NFSExport.objects.get(export_group=eg, share=share)

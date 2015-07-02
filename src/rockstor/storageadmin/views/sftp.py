@@ -69,7 +69,7 @@ class SFTPListView(ShareMixin, SFTPMixin, rfc.GenericView):
             if ('shares' not in request.data):
                 e_msg = ('Must provide share names')
                 handle_exception(Exception(e_msg), request)
-            shares = [self._validate_share(s, request) for s in request.data['shares']]
+            shares = [self._validate_share(request, s) for s in request.data['shares']]
             editable = 'rw'
             if ('read_only' in request.data and
                 request.data['read_only'] is True):

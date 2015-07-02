@@ -71,7 +71,7 @@ class NFSMixin(ShareMixin, object):
                 e_msg = ('Invalid exports input -- %s' % e)
                 handle_exception(Exception(e_msg), request)
             share = fields[0].split('/')[-1]
-            s = self._validate_share(share, request)
+            s = self._validate_share(request, share)
             mnt_pt = ('%s%s' % (settings.MNT_PT, s.name))
             if (not is_share_mounted(s.name)):
                 pool_device = Disk.objects.filter(pool=s.pool)[0].name
@@ -169,7 +169,7 @@ class NFSExportGroupListView(NFSMixin, rfc.GenericView):
             if ('shares' not in request.data):
                 e_msg = ('Cannot export without specifying shares')
                 handle_exception(Exception(e_msg), request)
-            shares = [self._validate_share(s, request) for s in request.data['shares']]
+            shares = [self._validate_share(request, s) for s in request.data['shares']]
             options = self._parse_options(request)
             for s in shares:
                 self._dup_export_check(s, options['host_str'], request)
@@ -238,7 +238,7 @@ class NFSExportGroupDetailView(ShareMixin, rfc.GenericView):
             if ('shares' not in request.data):
                 e_msg = ('Cannot export without specifying shares')
                 handle_exception(Exception(e_msg), request)
-            shares = [self._validate_share(s, request) for s in request.data['shares']]
+            shares = [self._validate_share(request, s) for s in request.data['shares']]
             eg = self._validate_export_group(export_id, request)
             options = self._parse_options(request)
             for s in shares:

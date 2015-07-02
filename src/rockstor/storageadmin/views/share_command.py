@@ -35,13 +35,6 @@ from django.core.exceptions import ObjectDoesNotExist
 class ShareCommandView(ShareMixin, rfc.GenericView):
     serializer_class = ShareSerializer
 
-    def _validate_share(self, request, sname):
-        try:
-            return Share.objects.get(name=sname)
-        except ObjectDoesNotExist:
-            e_msg = ('Share(%s) does not exist' % sname)
-            handle_exception(Exception(e_msg), request)
-
     def _validate_snapshot(self, request, share):
         try:
             snap_name = request.data.get('name', '')

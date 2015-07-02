@@ -231,7 +231,7 @@ class SnapshotView(NFSMixin, rfc.GenericView):
 
     @transaction.atomic
     def _delete_snapshot(self, request, sname, id=None, snap_name=None):
-        share = self._validate_share(sname, request)
+        share = self._validate_share(request, sname)
         try:
             snapshot = None
             if (id is not None):
