@@ -45,29 +45,24 @@
       <% if (rockon.get('state') == 'installed' || rockon.get('state').match('pending')) { %>
       <% installed += 1; %>
       <div id="js-rockons-installed" class="tab-section" style="position: relative">
-	<% if (rockon.get('state') === 'pending_install') { %>
+	<% if (rockon.get('state').search('pending') > -1 || rockon.get('status').search('pending') > -1) { %>
+	<% var text = 'Installing ...'; %>
+	<% if (rockon.get('state') == 'pending_uninstall') { %>
+	<% text = 'Uninstalling ...'; %>
+	<% } else if (rockon.get('status') == 'pending_start') { %>
+	<% text = 'Starting ...'; %>
+	<% } else if (rockon.get('status') == 'pending_stop') { %>
+	<% text = 'Stopping ...'; %>
+	<% } %>
 	<div class="overlay">
 	  <div class="text-center">
 	    <i class="fa fa-3x fa-cog fa-spin"></i>
 	    <div>
-	      <p class="lead">Installing...</p>
+	      <p class="lead"><%= text %></p>
 	    </div>
 	  </div>
 	</div>
 	<% } %>
-
-	<% if (rockon.get('state') === 'pending_uninstall') { %>
-	<div class="overlay">
-	  <div class="text-center">
-	    <i class="fa fa-3x fa-cog fa-spin"></i>
-	    <div>
-	      <p class="lead">Uninstalling...</p>
-	    </div>
-
-	  </div>
-	</div>
-	<% } %>
-
 
 	<div class="row">
 
@@ -91,10 +86,15 @@
 	      <div class="slider-start on" data-rockon-id="<%= rockon.get('id') %>">ON</div>&nbsp;&nbsp
 	      <a id="js-rockon-settings" href="#" class="settings" data-rockon-id="<%= rockon.get('id') %>"><i class="glyphicon glyphicon-wrench"></i></a>
 	      <br><br>
-	      <% if (ui_map[rockon.get('id')] && (rockon.get('status') == 'started')) { %>
-	      <a href="<%= ui_map[rockon.get('id')] %>" target="_blank" class="btn btn-primary">Open</a>
+	      <% if (ui_map[rockon.get('id')]) { %>
+		 <% if (rockon.get('status') == 'started') { %>
+		 <a href="<%= ui_map[rockon.get('id')] %>" target="_blank" class="btn btn-primary"><%= rockon.get('name') %> UI</a>
+		 <% } else { %>
+		 <a href="#" class="btn btn-primary disabled" title="Switch on to access the UI"><%= rockon.get('name') %> UI</a>
+		 <a id="js-uninstall-rockon" class="btn btn-danger" data-name="<%= rockon.get('id') %>">Uninstall</a>
+		 <% } %>
 	      <% } %>
-	      <a id="js-uninstall-rockon" class="btn btn-danger" data-name="<%= rockon.get('id') %>">Uninstall</a>
+
 	    <% } %>
 	  </div>
 	</div>

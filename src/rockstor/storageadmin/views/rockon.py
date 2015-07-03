@@ -43,10 +43,11 @@ class RockOnView(rfc.GenericView):
             for ro in RockOn.objects.all():
                 if (ro.state == 'installed'):
                     # update current running status of installed rockons.
-                    ro.status = rockon_status(ro.name)
+                    if (ro.id not in pending_rids):
+                        ro.status = rockon_status(ro.name)
                 elif (re.search('pending', ro.state) is not None and
                       ro.id not in pending_rids):
-                    # reset rockons to their previosu state if they are stuck
+                    # reset rockons to their previous state if they are stuck
                     # in a pending transition.
                     if (re.search('uninstall', ro.state) is not None):
                         ro.state = 'installed'
@@ -80,21 +81,27 @@ class RockOnView(rfc.GenericView):
                     if (RockOn.objects.filter(name=name).exists()):
                         ro = RockOn.objects.get(name=name)
                         logger.debug('ro state = %s' % ro.state)
-                        if (ro.state != 'available' and (re.match('pending', ro.state) is not None)):
+                        if (ro.state == 'installed' or (re.match('pending', ro.state) is not None)):
                             #don't update metadata if it's installed or in some pending state.
+                            logger.debug('Rock-On(%s) is either installed or '
+                                         'in pending state. Skipping update.' %
+                                         name)
                             continue
                         ro.description = r_d['description']
                         ro.website = r_d['website']
                         ro.icon = r_d['icon']
                         ro.link = ui_d['slug']
                         ro.https = ui_d['https']
+                        ro.volume_add_support = r_d['volume_add_support']
+                        ro.more_info = r_d['more_info']
                     else:
                         ro = RockOn(name=name,
                                     description=r_d['description'],
                                     version='1.0', state='available',
                                     status='stopped', website=r_d['website'],
                                     icon=r_d['icon'], link=ui_d['slug'],
-                                    https=ui_d['https'])
+                                    https=ui_d['https'], volume_add_support=r_d['volume_add_support'],
+                                    more_info=r_d['more_info'])
                     ro.save()
                     containers = r_d['containers']
                     for c in containers.keys():
