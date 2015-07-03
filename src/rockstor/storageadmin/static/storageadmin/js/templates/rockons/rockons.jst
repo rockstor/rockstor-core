@@ -86,13 +86,14 @@
 	      <div class="slider-start on" data-rockon-id="<%= rockon.get('id') %>">ON</div>&nbsp;&nbsp
 	      <a id="js-rockon-settings" href="#" class="settings" data-rockon-id="<%= rockon.get('id') %>"><i class="glyphicon glyphicon-wrench"></i></a>
 	      <br><br>
+	      <% if (rockon.get('status') == 'started') { %>
 	      <% if (ui_map[rockon.get('id')]) { %>
-		 <% if (rockon.get('status') == 'started') { %>
-		 <a href="<%= ui_map[rockon.get('id')] %>" target="_blank" class="btn btn-primary"><%= rockon.get('name') %> UI</a>
-		 <% } else { %>
-		 <a href="#" class="btn btn-primary disabled" title="Switch on to access the UI"><%= rockon.get('name') %> UI</a>
-		 <a id="js-uninstall-rockon" class="btn btn-danger" data-name="<%= rockon.get('id') %>">Uninstall</a>
-		 <% } %>
+	      <a href="<%= ui_map[rockon.get('id')] %>" target="_blank" class="btn btn-primary"><%= rockon.get('name') %> UI</a>
+	      <% } else { %>
+	      <a href="#" class="btn btn-primary disabled" title="Switch on to access the UI"><%= rockon.get('name') %> UI</a>
+	      <% } %>
+	      <% } else { %>
+	      <a id="js-uninstall-rockon" class="btn btn-danger" data-name="<%= rockon.get('id') %>">Uninstall</a>
 	      <% } %>
 
 	    <% } %>
