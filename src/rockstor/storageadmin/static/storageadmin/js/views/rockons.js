@@ -479,7 +479,7 @@ RockonPortChoice = RockstorWizardPage.extend({
 
 	var port_map = {};
 	var cports = this.ports.filter(function(port) {
-	    port_map[port.get('containerp')] = this.$('#' + port.id).val();
+	    port_map[this.$('#' + port.id).val()] = port.get('containerp');
 	    return port;
 	}, this);
 	this.model.set('port_map', port_map);
