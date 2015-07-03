@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import time
 from system.osi import run_command
 from django.conf import settings
 from django_ztask.decorators import task
@@ -44,9 +45,12 @@ def mount_share(name, mnt):
     btrfs.mount_share(share, disk, mnt)
 
 def rockon_status(name):
+    ro = RockOn.objects.get(name=name)
     state = 'unknown error'
+    co = DContainer.objects.filter(rockon=ro).order_by('-launch_order')[0]
     try:
-        o, e, rc = run_command([DOCKER, 'inspect', '-f', '{{range $key, $value := .State}}{{$key}}:{{$value}},{{ end }}', name])
+        o, e, rc = run_command([DOCKER, 'inspect', '-f',
+                                '{{range $key, $value := .State}}{{$key}}:{{$value}},{{ end }}', co.name])
         state_d = {}
         for i in o[0].split(','):
             fields = i.split(':')
@@ -94,12 +98,11 @@ def stop(rid):
     new_status = 'stopped'
     try:
         rockon = RockOn.objects.get(id=rid)
-        run_command([DOCKER, 'stop', rockon.name])
-        if (rockon.name == 'OpenVPN'):
-            run_command([DOCKER, 'stop', 'ovpn-data'])
-        if (rockon.name == 'OwnCloud'):
-            run_command([DOCKER, 'stop', 'owncloud-postgres'])
-    except:
+        for c in DContainer.objects.filter(rockon=rockon).order_by('-launch_order'):
+            run_command([DOCKER, 'stop', c.name])
+    except Exception, e:
+        logger.debug('exception while stopping the rockon(%s)' % rid)
+        logger.exception(e)
         new_status = 'stop_failed'
     finally:
         url = ('%s/%d/status_update' % (ROCKON_URL, rid))
@@ -144,11 +147,8 @@ def install(rid):
 def uninstall(rid, new_state='available'):
     try:
         rockon = RockOn.objects.get(id=rid)
-        rm_container(rockon.name)
-        if (rockon.name == 'OpenVPN'):
-            rm_container('ovpn-data')
-        if (rockon.name == 'OwnCloud'):
-            rm_container('owncloud-postgres')
+        for c in DContainer.objects.filter(rockon=rockon):
+            rm_container(c.name)
     except Exception, e:
         logger.debug('exception while uninstalling rockon')
         logger.exception(e)
@@ -286,9 +286,9 @@ def owncloud_install(rockon):
 
     for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
         cmd = [DOCKER, 'run', '-d', '--name', c.name, ]
+        db_user = DCustomConfig.objects.get(rockon=rockon, key='db_user').val
+        db_pw = DCustomConfig.objects.get(rockon=rockon, key='db_pw').val
         if (c.dimage.name == 'postgres'):
-            db_user = DCustomConfig.objects.get(rockon=rockon, key='db_user')
-            db_pw = DCustomConfig.objects.get(rockon=rockon, key='db_pw')
             cmd.extend(['-e', 'POSTGRES_USER=%s' % db_user, '-e',
                         'POSTGRES_PASSWORD=%s' % db_pw])
         for po in DPort.objects.filter(container=c):
@@ -305,6 +305,21 @@ def owncloud_install(rockon):
             cmd.extend(['-v', '%s/rockstor.key:/etc/ssl/private/owncloud.key' % settings.CERTDIR,
                         '-v', '%s/rockstor.cert:/etc/ssl/certs/owncloud.crt' % settings.CERTDIR,
                         '-e', 'HTTPS_ENABLED=true'])
+            cmd.extend(['-e', 'DB_USER=%s' % db_user, '-e', 'DB_PASS=%s' % db_pw,])
         cmd.append(c.dimage.name)
         logger.debug('docker cmd = %s' % cmd)
         run_command(cmd)
+        if (c.dimage.name == 'postgres'):
+            #make sure postgres is setup
+            cur_wait = 0;
+            while (True):
+                o, e, rc = run_command([DOCKER, 'exec', c.name, 'psql', '-U',
+                                        'postgres', '-c', "\l"], throw=False)
+                if (rc == 0):
+                    break
+                if (cur_wait > 300):
+                    logger.error('Waited too long(300 seconds) for '
+                                 'postgres to initialize for owncloud. giving up.')
+                    break
+                time.sleep(1)
+                cur_wait += 1

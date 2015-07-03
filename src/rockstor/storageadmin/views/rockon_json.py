@@ -43,11 +43,12 @@ rockons = \
            'OwnCloud': {'ui': {'slug': '',
                                 'https': True,},
                         'containers': {'owncloud': {'image': 'pschmitt/owncloud',
-                                                    'ports': {'443': {'ui': True,
-                                                                      'default': 8080,
-                                                                      'protocol': 'tcp',
-                                                                      'label': 'UI port',
-                                                                      'description': 'OwnCloud UI port. Since Rockstor WebUI runs on 443, choose a different port or the suggested default.',},},
+                                                    'ports': {'443':
+                                                              {'ui': True,
+                                                               'host_default': 8080,
+                                                               'protocol': 'tcp',
+                                                               'label': 'UI port',
+                                                               'description': 'OwnCloud UI port. Since Rockstor WebUI runs on 443, choose a different port or the suggested default.',},},
                                                     'volumes': {'/var/www/owncloud/data':
                                                                 {'description': 'Choose a dedicated Share for OwnCloud data. Eg: create a Share called owncloud-data for this purpose alone.',
                                                                  'min_size': 1073741824,

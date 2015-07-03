@@ -123,34 +123,39 @@ class RockOnView(rfc.GenericView):
                             ports = containers[c]['ports']
                             for p in ports.keys():
                                 p_d = ports[p]
+                                p = int(p)
                                 po = None
-                                if (DPort.objects.filter(hostp=p).exists()):
-                                    po = DPort.objects.get(hostp=p)
-                                    po.container = co
-                                    po.containerp_default = p_d['default']
-                                    po.description = p_d['description']
-                                    po.uiport = p_d['ui']
-                                    po.protocol = p_d['protocol']
-                                    po.label = p_d['label']
-                                elif (DPort.objects.filter(containerp=p, container=co).exists()):
+                                if (DPort.objects.filter(containerp=p, container=co).exists()):
                                     po = DPort.objects.get(containerp=p, container=co)
-                                    po.hostp = p
-                                    po.containerp_default = p_d['default']
+                                    po.hostp_default = p_d['host_default']
                                     po.description = p_d['description']
                                     po.uiport = p_d['ui']
+                                    if (po.uiport):
+                                        ro.ui = True
+                                        ro.save()
                                     po.protocol = p_d['protocol']
                                     po.label = p_d['label']
                                 else:
+                                    #let's find next available default if default is already taken
+                                    def_hostp = p_d['host_default']
+                                    while (True):
+                                        if (DPort.objects.filter(hostp=def_hostp).exists()):
+                                            def_hostp += 1
+                                        else:
+                                            break
                                     po = DPort(description=p_d['description'],
-                                               hostp=p, containerp=p_d['default'],
-                                               containerp_default=p_d['default'],
+                                               hostp=def_hostp, containerp=p,
+                                               hostp_default=def_hostp,
                                                container=co, uiport=p_d['ui'],
                                                protocol=p_d['protocol'],
                                                label=p_d['label'])
+                                if (po.uiport):
+                                    ro.ui = True
+                                    ro.save()
                                 po.save()
                         else:
                             ports = {}
-                        ports = [int(p) for p in ports.keys()]
+                        ports = [int(p) for p in ports]
                         for po in DPort.objects.filter(container=co):
                             if (po.containerp not in ports):
                                 po.delete()
