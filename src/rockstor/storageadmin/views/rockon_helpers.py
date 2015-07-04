@@ -23,7 +23,8 @@ from django_ztask.decorators import task
 from cli.rest_util import api_call
 from system.services import service_status
 from storageadmin.models import (RockOn, DContainer, DVolume, DPort,
-                                 DCustomConfig, Share, Disk, DContainerLink)
+                                 DCustomConfig, Share, Disk, DContainerLink,
+                                 ContainerOption)
 from fs import btrfs
 
 DOCKER = '/usr/bin/docker'
@@ -121,6 +122,7 @@ def install(rid):
     new_state = 'installed'
     try:
         rockon = RockOn.objects.get(id=rid)
+        pull_images(rockon)
         if (rockon.name == 'Plex'):
             plex_install(rockon)
         elif (rockon.name == 'OpenVPN'):
@@ -198,35 +200,45 @@ def plex_install(rockon):
     return move(npath, pref_file)
 
 
+def container_ops(container):
+    ops_list = []
+    for o in ContainerOption.objects.filter(container=container):
+        ops_list.append(o.name)
+        if (len(o.val.strip()) > 0):
+            ops_list.append(o.val)
+    return ops_list
+
+
+def port_ops(container):
+    ops_list = []
+    for po in DPort.objects.filter(container=container):
+        pstr = '%s:%s' % (po.hostp, po.containerp)
+        if (po.protocol is not None):
+            pstr = '%s/%s' % (pstr, po.protocol)
+        ops_list.extend(['-p', pstr])
+    return ops_list
+
+
 def ovpn_install(rockon):
-    rm_container('ovpn-data')
-    rm_container(rockon.name)
-    cco = DCustomConfig.objects.get(rockon=rockon)
-    for c in DContainer.objects.filter(rockon=rockon):
-        image = c.dimage.name
-        run_command([DOCKER, 'pull', image, ])
-    oc = DContainer.objects.get(rockon=rockon, name='openvpn')
-    po = DPort.objects.get(container=oc)
-    data_container = 'ovpn-data'
-    image = 'kylemanna/openvpn'
-    logger.debug('server name = %s' % cco.val)
     #volume container
-    volc_cmd = [DOCKER, 'run', '--name', data_container, '-v', '/etc/openvpn',
-                'busybox', ]
+    vol_co = DContainer.objects.get(rockon=rockon, launch_order=1)
+    volc_cmd = [DOCKER, 'run', '--name', vol_co.name,]
+    volc_cmd.extend(container_ops(vol_co))
+    volc_cmd.append(vol_co.dimage.name)
     run_command(volc_cmd)
-    logger.debug('volume container initialized')
     #initialize vol container data
-    dinit_cmd = [DOCKER, 'run', '--volumes-from', data_container, '--rm',
-                 image, 'ovpn_genconfig', '-u', 'udp://%s' % cco.val, ]
+    cco = DCustomConfig.objects.get(rockon=rockon)
+    oc = DContainer.objects.get(rockon=rockon, launch_order=2)
+    dinit_cmd = [DOCKER, 'run', '--rm',]
+    dinit_cmd.extend(container_ops(oc))
+    dinit_cmd.extend([oc.dimage.name, 'ovpn_genconfig', '-u', 'udp://%s' % cco.val, ])
     run_command(dinit_cmd)
-    #logger.debug('volume container initialized 2')
-    #dinit2_cmd = [DOCKER, 'run', '--volumes-from', data_container, '--rm', '-it', image, 'ovpn_initpki', ]
-    #run_command(dini(t2_cmd)
-    logger.debug('volume container initialized 3')
-    server_cmd = [DOCKER, 'run', '--volumes-from', data_container, '-d', '--name', rockon.name,
-                  '-p', '%s:%s/udp' % (po.hostp, po.containerp), '--cap-add=NET_ADMIN', image]
+    #start the server
+    server_cmd = [DOCKER, 'run', '-d', '--name', oc.name,]
+    server_cmd.extend(container_ops(oc))
+    server_cmd.extend(port_ops(oc))
+    server_cmd.append(oc.dimage.name)
     run_command(server_cmd)
-    run_command([DOCKER, 'stop', rockon.name])
 
 
 def transmission_install(rockon):
@@ -279,11 +291,12 @@ def syncthing_install(rockon):
     run_command(cmd)
 
 
-def owncloud_install(rockon):
+def pull_images(rockon):
     for c in DContainer.objects.filter(rockon=rockon):
         rm_container(c.name)
         run_command([DOCKER, 'pull', c.dimage.name])
 
+def owncloud_install(rockon):
     for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
         cmd = [DOCKER, 'run', '-d', '--name', c.name, ]
         db_user = DCustomConfig.objects.get(rockon=rockon, key='db_user').val
@@ -295,7 +308,7 @@ def owncloud_install(rockon):
             pstr = '%s:%s' % (po.hostp, po.containerp)
             if (po.protocol is not None):
                 pstr = '%s/%s' % (pstr, po.protocol)
-            cmd.extend(['-p', '%s:%s' % (po.hostp, po.containerp)])
+            cmd.extend(['-p', pstr])
         for lo in DContainerLink.objects.filter(destination=c):
             cmd.extend(['--link', '%s:%s' % (lo.source.name, lo.name)])
         for v in DVolume.objects.filter(container=c):
