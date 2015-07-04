@@ -45,13 +45,3 @@
 <h3>Important information about this Rock-On</h3>
 <%= rockon.get('more_info') %>
 <% } %>
-
-<% if (rockon.get('name') == "BTSync") { %>
-  <% var vol = volumes.find(function(v) { return v.get('dest_dir') == '/data'; }); %>
-  <h3>Information about Authentication</h3>
-  <p>The default username for the UI is <strong>admin</strong> and the password is <strong>password</strong> .</p>
-  <% if (vol) { %>
-  <p>You can change the username and password by editing <strong>btsync.conf</strong> inside the Share called <strong><%= vol.get('share_name') %></strong></p>
-  <p>Restart the Rock-on after changing the password for it to take affect.</p>
-  <% } %>
-<% } %>

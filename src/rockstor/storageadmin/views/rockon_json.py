@@ -79,7 +79,7 @@ syncthing = {'ui': {'slug': '',
                                                     {'host_default': 22000,
                                                      'protocol': TCP,
                                                      'label': 'Listening port',
-                                                     'description': 'Port for incoming data. You may need to open it(protocol: tcp) on your firewall. Suggest default: 22000.',},
+                                                     'description': 'Port for incoming data. You may need to open it(protocol: tcp) on your firewall. Suggested default: 22000.',},
                                                     '21025':
                                                     {'host_default': 21025,
                                                      'protocol': UDP,
@@ -101,7 +101,7 @@ transmission = {'ui': {'slug': '',},
                                                 'ports': {'9091':
                                                           {'ui': True,
                                                            'host_default': 9091,
-                                                           'protocol': 'tcp',
+                                                           'protocol': TCP,
                                                            'label': 'WebUI port',
                                                            'description': 'Transmission WebUI port. Suggested default: 9091',},
                                                           '51413':
@@ -121,10 +121,33 @@ transmission = {'ui': {'slug': '',},
                 'description': 'Open Source BitTorrent client',
                 'website': 'http://www.transmissionbt.com/',}
 
+btsync = {'ui': {'slug': '',},
+          'containers': {'btsync': {'image': 'aostanin/btsync',
+                                    'ports': {'8888':
+                                              {'ui': True,
+                                               'host_default': 8888,
+                                               'protocol': TCP,
+                                               'label': 'WebUI port',
+                                               'description': 'BTSync WebUI port. Suggested default: 8888',},
+                                              '3369':
+                                              {'host_default': 3369,
+                                               'procotol': UDP,
+                                               'label': 'Listening port',
+                                               'description': 'Port for incoming data. You may need to open it(protocol: udp) on your firewall. Suggested default: 3369.',},},
+                                    'volumes': {'/data':
+                                                {'description': 'Choose a dedicated Share for all incoming data. Eg: create a Share called btsync-data for this purpose alone.',
+                                                 'label': 'Data directory',},},
+                                    'launch_order': 1,},},
+          'description': 'BitTorrent Sync',
+          'website': 'https://www.getsync.com/',
+          'volume_add_support': True,
+          'more_info': '<h4>Authentication</h4><p>Default username for your BTSync UI is<code>admin</code>and password is<code>password</code></p><h4>Storage</h4><p>We strongly recommend changing the Default folder location to<code>/data</code>in the UI preferences.</p><p>You can also assign additional Shares for custom organization of your data.</p>'}
+
 rockons = {'OpenVPN': openvpn,
            'OwnCloud': owncloud,
            'Syncthing': syncthing,
-           'Transmission': transmission, }
+           'Transmission': transmission,
+           'BTSync': btsync, }
 
 
 
