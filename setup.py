@@ -46,6 +46,7 @@ setup(
             'ovpn-initpki = ovpn_util:initpki',
             'ovpn-client-gen = ovpn_util:client_gen',
             'ovpn-client-print = ovpn_util:client_retrieve',
+            'dc2 = smart_manager.dc2:main'
         ],
     },
 
@@ -64,7 +65,10 @@ setup(
         'six == 1.7.3',
         'django-ztask == 0.1.5',
         'mock == 1.0.1',
-        'coverage'
+        'coverage',
+        'gevent-socketio',
+        'psycogreen',
+        'psutil',
     ]
 
 )

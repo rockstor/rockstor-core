@@ -887,5 +887,5 @@ $(document).ready(function() {
 	$('#contrib-form').submit()
 	$('#donate-modal').modal('hide');
     });
-
+    Rockstorsocket = io.connect('/dashboard', {secure: 'false', url: 'http://192.168.56.105:8080'});
 });
