@@ -218,6 +218,12 @@ def port_ops(container):
         ops_list.extend(['-p', pstr])
     return ops_list
 
+def vol_ops(container):
+    ops_list = []
+    for v in DVolume.objects.filter(container=container):
+        share_mnt = ('%s%s' % (settings.MNT_PT, v.share.name))
+        ops_list.extend(['-v', '%s:%s' % (share_mnt, v.dest_dir)])
+    return ops_list
 
 def ovpn_install(rockon):
     #volume container
@@ -304,16 +310,10 @@ def owncloud_install(rockon):
         if (c.dimage.name == 'postgres'):
             cmd.extend(['-e', 'POSTGRES_USER=%s' % db_user, '-e',
                         'POSTGRES_PASSWORD=%s' % db_pw])
-        for po in DPort.objects.filter(container=c):
-            pstr = '%s:%s' % (po.hostp, po.containerp)
-            if (po.protocol is not None):
-                pstr = '%s/%s' % (pstr, po.protocol)
-            cmd.extend(['-p', pstr])
+        cmd.extend(port_ops(c))
         for lo in DContainerLink.objects.filter(destination=c):
             cmd.extend(['--link', '%s:%s' % (lo.source.name, lo.name)])
-        for v in DVolume.objects.filter(container=c):
-            share_mnt = ('%s%s' % (settings.MNT_PT, v.share.name))
-            cmd.extend(['-v', '%s:%s' % (share_mnt, v.dest_dir)])
+        cmd.extend(vol_ops(c))
         if (c.name == 'owncloud'):
             cmd.extend(['-v', '%s/rockstor.key:/etc/ssl/private/owncloud.key' % settings.CERTDIR,
                         '-v', '%s/rockstor.cert:/etc/ssl/certs/owncloud.crt' % settings.CERTDIR,
