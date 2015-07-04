@@ -71,25 +71,20 @@ class RockOnView(rfc.GenericView):
 
             if (command == 'update'):
                 rockons = self._get_available(request)
-                for r in rockons.keys():
+                for r in rockons:
                     name = r
                     r_d = rockons[r]
-                    ro = None
-                    if (RockOn.objects.filter(name=name).exists()):
-                        ro = RockOn.objects.get(name=name)
-                        if (ro.state == 'installed' or (re.match('pending', ro.state) is not None)):
-                            #don't update metadata if it's installed or in some pending state.
-                            logger.debug('Rock-On(%s) is either installed or '
-                                         'in pending state. Skipping update.' %
-                                         name)
-                            continue
-                        ro.description = r_d['description']
-                        ro.website = r_d['website']
-                    else:
-                        ro = RockOn(name=name,
-                                    description=r_d['description'],
-                                    version='1.0', state='available',
-                                    status='stopped', website=r_d['website'])
+                    ro_defaults = {'description': r_d['description'],
+                                   'website': r_d['website'],
+                                   'version': '1.0',
+                                   'state': 'available',
+                                   'status': 'stopped'}
+                    ro, created = RockOn.objects.get_or_create(name=name,
+                                                               defaults=ro_defaults)
+                    if (not created):
+                        ro.description = ro_defaults['description']
+                        ro.website = ro_defaults['website']
+                        ro.version = ro_defaults['version']
                     if ('ui' in r_d):
                         ui_d = r_d['ui']
                         ro.link = ui_d['slug']
@@ -102,31 +97,30 @@ class RockOnView(rfc.GenericView):
                         ro.more_info = r_d['more_info']
                     ro.save()
                     containers = r_d['containers']
-                    for c in containers.keys():
-                        io = None
+                    for c in containers:
                         c_d = containers[c]
-                        iname = c_d['image']
-                        if (DImage.objects.filter(name=iname).exists()):
-                            io = DImage.objects.get(name=iname)
-                        else:
-                            io = DImage(name=iname, tag='latest', repo='foo')
-                        io.save()
-
-                        co = None
-                        if (DContainer.objects.filter(name=c).exists()):
-                            co = DContainer.objects.get(name=c)
+                        io, created = DImage.objects.get_or_create(name=c_d['image'],
+                                                                   defaults={'tag': 'latest',
+                                                                             'repo': 'na'})
+                        co_defaults = {'rockon': ro,
+                                       'dimage': io,
+                                       'launch_order': c_d['launch_order'],}
+                        co, created = DContainer.objects.get_or_create(name=c,
+                                                                       defaults=co_defaults)
+                        if (co.rockon.name != ro.name):
+                            e_msg = ('Container(%s) belongs to another '
+                                     'Rock-On(%s). Update rolled back.' %
+                                     (c, co.rockon.name))
+                            handle_exception(Exception(e_msg), request)
+                        if (not created):
                             co.dimage = io
-                            co.rockon = ro
-                            co.launch_order = c_d['launch_order']
-                        else:
-                            co = DContainer(rockon=ro, dimage=io, name=c,
-                                            launch_order=c_d['launch_order'])
+                            co.launch_order = co_defaults['launch_order']
                         co.save()
 
-
+                        ports = {}
                         if ('ports' in containers[c]):
                             ports = containers[c]['ports']
-                            for p in ports.keys():
+                            for p in ports:
                                 p_d = ports[p]
                                 p = int(p)
                                 po = None
@@ -156,8 +150,6 @@ class RockOnView(rfc.GenericView):
                                     ro.ui = True
                                     ro.save()
                                 po.save()
-                        else:
-                            ports = {}
                         ports = [int(p) for p in ports]
                         for po in DPort.objects.filter(container=co):
                             if (po.containerp not in ports):
@@ -166,21 +158,18 @@ class RockOnView(rfc.GenericView):
                         v_d = {}
                         if ('volumes' in c_d):
                             v_d = c_d['volumes']
-                            for v in v_d.keys():
+                            for v in v_d:
                                 cv_d = v_d[v]
-                                vo = None
-                                if (DVolume.objects.filter(dest_dir=v, container=co).exists()):
-                                    vo = DVolume.objects.get(dest_dir=v, container=co)
-                                    vo.description = cv_d['description']
-                                    vo.label = cv_d['label']
-                                    vo.save()
-                                else:
-                                    vo = DVolume(container=co, dest_dir=v, description=cv_d['description'],
-                                                 label=cv_d['label'])
+                                vo_defaults = {'description': cv_d['description'],
+                                               'label': cv_d['label']}
+                                vo, created = DVolume.objects.get_or_create(dest_dir=v, container=co,
+                                                                            defaults=vo_defaults)
+                                if (not created):
+                                    vo.description = vo_defaults['description']
+                                    vo.label = vo_defaults['label']
                                 if ('min_size' in cv_d):
                                     vo.min_size = cv_d['min_size']
                                 vo.save()
-
                         for vo in DVolume.objects.filter(container=co):
                             if (vo.dest_dir not in v_d):
                                 vo.delete()
@@ -189,20 +178,17 @@ class RockOnView(rfc.GenericView):
                             options = containers[c]['opts']
                             id_l = []
                             for o in options:
-                                try:
-                                    oo = ContainerOption.objects.get(container=co, name=o[0], val=o[1])
-                                    id_l.append(oo.id)
-                                except ContainerOption.DoesNotExist:
-                                    oo = ContainerOption(container=co, name=o[0], val=o[1])
-                                    oo.save()
-                                    id_l.append(oo.id)
+                                oo, created = ContainerOption.objects.get_or_create(container=co,
+                                                                                    name=o[0],
+                                                                                    val=o[1])
+                                id_l.append(oo.id)
                             for oo in ContainerOption.objects.filter(container=co):
                                 if (oo.id not in id_l):
                                     oo.delete()
 
                     if ('container_links' in r_d):
                         l_d = r_d['container_links']
-                        for cname in l_d.keys():
+                        for cname in l_d:
                             ll = l_d[cname]
                             lsources = [l['source_container'] for l in ll]
                             co = DContainer.objects.get(rockon=ro, name=cname)
@@ -211,15 +197,12 @@ class RockOnView(rfc.GenericView):
                                     clo.delete()
                             for cl_d in ll:
                                 sco = DContainer.objects.get(rockon=ro, name=cl_d['source_container'])
-                                if (DContainerLink.objects.filter(source=sco, destination=co).exists()):
-                                    clo = DContainerLink.objects.get(source=sco)
-                                    clo.name = cl_d['name']
-                                    clo.save()
-                                else:
-                                    clo = DContainerLink(source=sco,
-                                                         destination=co, name=cl_d['name'])
-                                    clo.save()
+                                clo, created = DContainerLink.objects.get_or_create(source=sco,
+                                                                                    destination=co)
+                                clo.name = cl_d['name']
+                                clo.save()
 
+                    cc_d = {}
                     if ('custom_config' in r_d):
                         cc_d = r_d['custom_config']
                         for k in cc_d:
@@ -238,8 +221,6 @@ class RockOnView(rfc.GenericView):
                                 except:
                                     pass
                             cco.save()
-                    else:
-                        cc_d = {}
                     for cco in DCustomConfig.objects.filter(rockon=ro):
                         if (cco.key not in cc_d):
                             cco.delete()

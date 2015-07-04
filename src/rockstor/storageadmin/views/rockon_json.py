@@ -71,7 +71,7 @@ syncthing = {'ui': {'slug': '',
              'containers': {'syncthing': {'image': 'istepanov/syncthing',
                                           'ports': {'8384':
                                                     {'ui': True,
-                                                     'host_default': 8090,
+                                                     'host_default': 8384,
                                                      'protocol': TCP,
                                                      'label': 'WebUI port',
                                                      'description': 'Syncthing WebUI port. Choose the suggested default unless you have a strong reason not to.',},
