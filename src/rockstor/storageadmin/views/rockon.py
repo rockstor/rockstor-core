@@ -72,15 +72,11 @@ class RockOnView(rfc.GenericView):
             if (command == 'update'):
                 rockons = self._get_available(request)
                 for r in rockons.keys():
-                    if (r != 'OwnCloud'):
-                        continue
                     name = r
                     r_d = rockons[r]
-                    ui_d = r_d['ui']
                     ro = None
                     if (RockOn.objects.filter(name=name).exists()):
                         ro = RockOn.objects.get(name=name)
-                        logger.debug('ro state = %s' % ro.state)
                         if (ro.state == 'installed' or (re.match('pending', ro.state) is not None)):
                             #don't update metadata if it's installed or in some pending state.
                             logger.debug('Rock-On(%s) is either installed or '
@@ -182,7 +178,6 @@ class RockOnView(rfc.GenericView):
                                                  min_size=cv_d['min_size'], label=cv_d['label'])
                                     vo.save()
 
-                        logger.debug('v_d = %s' % v_d)
                         for vo in DVolume.objects.filter(container=co):
                             if (vo.dest_dir not in v_d):
                                 vo.delete()

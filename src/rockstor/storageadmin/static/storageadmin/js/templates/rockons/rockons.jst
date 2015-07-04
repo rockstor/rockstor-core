@@ -94,7 +94,7 @@
 	      <a href="#" class="btn btn-primary disabled" title="Switch on to access the UI"><%= rockon.get('name') %> UI</a>
 	      <% } %>
 	      <% } %>
-	      <% if (rockon.get('status') == 'stopped') { %>
+	      <% if (rockon.get('status') != 'started') { %>
 	      <a id="js-uninstall-rockon" class="btn btn-danger" data-name="<%= rockon.get('id') %>">Uninstall</a>
 	      <% } %>
 
@@ -133,7 +133,7 @@
 	    <ul>
 	      <li>Check logs in /opt/rockstor/var/log for clues.</li>
 	      <li>Install again.</li>
-	      <li>If the problem persists, post on the forums or email support@rockstor.com</li>
+	      <li>If the problem persists, post on the <a href="http://forum.rockstor.com" target="_blank">Forum</a> or email support@rockstor.com</li>
 	    </ul>
 	    <% } %>
 	    <a id="js-install-rockon" class="btn btn-primary pull-right" href="#" data-name="<%= rockon.get('id') %>">Install</a>
