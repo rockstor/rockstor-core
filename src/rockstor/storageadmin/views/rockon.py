@@ -88,7 +88,8 @@ class RockOnView(rfc.GenericView):
                     if ('ui' in r_d):
                         ui_d = r_d['ui']
                         ro.link = ui_d['slug']
-                        ro.https = ui_d['https']
+                        if ('https' in ui_d):
+                            ro.https = ui_d['https']
                     if ('icon' in r_d):
                         ro.icon = r_d['icon']
                     if ('volume_add_support' in r_d):
@@ -122,6 +123,8 @@ class RockOnView(rfc.GenericView):
                             ports = containers[c]['ports']
                             for p in ports:
                                 p_d = ports[p]
+                                if ('protocol' not in p_d):
+                                    p_d['protocol'] = None
                                 p = int(p)
                                 po = None
                                 if (DPort.objects.filter(containerp=p, container=co).exists()):

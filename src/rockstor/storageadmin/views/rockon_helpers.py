@@ -204,13 +204,18 @@ def port_ops(container):
         pstr = '%s:%s' % (po.hostp, po.containerp)
         if (po.protocol is not None):
             pstr = '%s/%s' % (pstr, po.protocol)
-        ops_list.extend(['-p', pstr])
+            ops_list.extend(['-p', pstr])
+        else:
+            tcp = '%s/tcp' % pstr
+            udp = '%s/udp' % pstr
+            ops_list.extend(['-p', tcp, '-p', udp,])
     return ops_list
 
 def vol_ops(container):
     ops_list = []
     for v in DVolume.objects.filter(container=container):
         share_mnt = ('%s%s' % (settings.MNT_PT, v.share.name))
+        mount_share(v.share.name, share_mnt)
         ops_list.extend(['-v', '%s:%s' % (share_mnt, v.dest_dir)])
     return ops_list
 
@@ -237,20 +242,13 @@ def openvpn_install(rockon):
 
 
 def transmission_install(rockon):
-    rm_container(rockon.name)
-    cmd = [DOCKER, 'run', '-d', '--name', rockon.name,]
+    co = DContainer.objects.get(rockon=rockon, launch_order=1)
+    cmd = [DOCKER, 'run', '-d', '--name', co.name]
     for cco in DCustomConfig.objects.filter(rockon=rockon):
         cmd.extend(['-e', '%s=%s' % (cco.key, cco.val)])
-    c = DContainer.objects.get(rockon=rockon)
-    image = c.dimage.name
-    run_command([DOCKER, 'pull', image])
-    for v in DVolume.objects.filter(container=c):
-        share_mnt = '%s%s' % (settings.MNT_PT, v.share.name)
-        mount_share(v.share.name, share_mnt)
-        cmd.extend(['-v', '%s:%s' % (share_mnt, v.dest_dir), ])
-    for p in DPort.objects.filter(container=c):
-        cmd.extend(['-p', '%d:%d' % (p.hostp, p.containerp), ])
-    cmd.append(image)
+    cmd.extend(vol_ops(co))
+    cmd.extend(port_ops(co))
+    cmd.append(co.dimage.name)
     run_command(cmd)
 
 

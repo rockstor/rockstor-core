@@ -74,17 +74,17 @@ syncthing = {'ui': {'slug': '',
                                                      'host_default': 8384,
                                                      'protocol': TCP,
                                                      'label': 'WebUI port',
-                                                     'description': 'Syncthing WebUI port. Choose the suggested default unless you have a strong reason not to.',},
+                                                     'description': 'Syncthing WebUI port. Suggested default: 8384.',},
                                                     '22000':
                                                     {'host_default': 22000,
                                                      'protocol': TCP,
                                                      'label': 'Listening port',
-                                                     'description': 'Port for incoming data. You may need to open it on your firewall',},
+                                                     'description': 'Port for incoming data. You may need to open it(protocol: tcp) on your firewall. Suggest default: 22000.',},
                                                     '21025':
                                                     {'host_default': 21025,
                                                      'protocol': UDP,
                                                      'label': 'Discovery port',
-                                                     'description': 'Port for discovery broadcasts. You may need to open it on your firewall',},},
+                                                     'description': 'Port for discovery broadcasts. You may need to open it(protocol: udp) on your firewall. Suggested default: 21025.',},},
                                           'volumes': {'/home/syncthing/.config/syncthing':
                                                       {'description': 'Choose a dedicated Share for configuration. Eg: create a Share called syncthing-config for this purpose alone.',
                                                        'min_size': ONE_GB,
@@ -96,9 +96,35 @@ syncthing = {'ui': {'slug': '',
              'description': 'Continuous File Synchronization',
              'website': 'https://syncthing.net/',}
 
+transmission = {'ui': {'slug': '',},
+                'containers': {'transmission': {'image': 'dperson/transmission',
+                                                'ports': {'9091':
+                                                          {'ui': True,
+                                                           'host_default': 9091,
+                                                           'protocol': 'tcp',
+                                                           'label': 'WebUI port',
+                                                           'description': 'Transmission WebUI port. Suggested default: 9091',},
+                                                          '51413':
+                                                          {'host_default': 51413,
+                                                           'label': 'Sharing port',
+                                                           'description': 'Port used to share the file being downloaded. You may need to open it(protocol: tcp and udp) on your firewall. Suggested default: 51413.',},},
+                                                'volumes': {'/var/lib/transmission-daemon':
+                                                            {'description': "Choose a Share where Transmission will save all of it's files including your downloads. Eg: create a Share called transmission-rockon.",
+                                                             'label': 'Data directory',},},
+                                                'launch_order': 1,},},
+                'custom_config': {'TRUSER':
+                                  {'label': 'WebUI username',
+                                   'description': 'Choose a login username for Transmission WebUI.',},
+                                  'TRPASSWD':
+                                  {'label': 'WebUI password',
+                                   'description': 'Choose a login password for the Transmission WebUI.',},},
+                'description': 'Open Source BitTorrent client',
+                'website': 'http://www.transmissionbt.com/',}
+
 rockons = {'OpenVPN': openvpn,
            'OwnCloud': owncloud,
-           'Syncthing': syncthing, }
+           'Syncthing': syncthing,
+           'Transmission': transmission, }
 
 
 
@@ -113,16 +139,6 @@ rockons = {'OpenVPN': openvpn,
 #                      u'custom_config': {u'iprange': u'ip range of your network'},
 #                      u'description': u'Plex media server',
 #                      u'website': u'https://plex.tv/'},
-#            'Transmission': {'app_link': '',
-#                             'containers': {'transmission': {'image': 'dperson/transmission',
-#                                                             'ports': {'9091': 'ui',
-#                                                                       '51413': ''},
-#                                                             'volumes': ['/var/lib/transmission-daemon/downloads',
-#                                                                         '/var/lib/transmission-daemon/incomplete',]}},
-#                             'custom_config': {'TRUSER': 'Set the username for your Transmission UI',
-#                                               'TRPASSWD': 'Password for the user'},
-#                             'description': 'Open Source BitTorrent client',
-#                             'website': 'http://www.transmissionbt.com/'},
 #            'BTSync': {'app_link': '',
 #                       'containers': {'btsync': {'image': 'aostanin/btsync',
 #                                                 'ports': {'8888': 'ui'},
