@@ -595,7 +595,7 @@ RockonInstallComplete = RockstorWizardPage.extend({
 RockonSettingsWizardView = WizardView.extend({
     initialize: function() {
 	WizardView.prototype.initialize.apply(this, arguments);
-	this.pages = [];
+	this.pages = [RockonSettingsSummary,];
 	this.rockon = this.model.get('rockon');
 	this.volumes = new RockOnVolumeCollection(null, {rid: this.rockon.id});
 	this.ports = new RockOnPortCollection(null, {rid: this.rockon.id});
@@ -640,9 +640,11 @@ RockonSettingsWizardView = WizardView.extend({
     },
 
     addPages: function() {
-	this.pages.push.apply(this.pages,
-			      [RockonSettingsSummary, RockonAddShare,
-			       RockonSettingsSummary, RockonSettingsComplete]);
+	if (this.rockon.get('volume_add_support')) {
+	    this.pages.push.apply(this.pages,
+				  [RockonAddShare, RockonSettingsSummary,
+				   RockonSettingsComplete]);
+	}
 	WizardView.prototype.render.apply(this, arguments);
     	return this;
     },
@@ -659,7 +661,7 @@ RockonSettingsWizardView = WizardView.extend({
 	if (this.currentPageNum == 0) {
 	    this.$('#prev-page').hide();
 	    this.$('#next-page').html('Add a Share');
-	    if (this.volumes.length == 0) {
+	    if (!this.rockon.get('volume_add_support')) {
 		this.$('#next-page').hide();
 	    }
 	} else if (this.currentPageNum == (this.pages.length - 2)) {

@@ -30,6 +30,19 @@ class RockOn(models.Model):
     website = models.CharField(max_length=2048, null=True)
     https = models.BooleanField(default=False)
     icon = models.URLField(max_length=1024, null=True)
+    ui = models.BooleanField(default=False)
+    volume_add_support = models.BooleanField(default=False)
+    more_info = models.CharField(max_length=4096, null=True)
+
+    @property
+    def ui_port(self):
+        if (not self.ui):
+            return None
+        for co in self.dcontainer_set.all():
+            for po in co.dport_set.all():
+                if (po.uiport):
+                    return po.hostp
+        return None
 
     class Meta:
         app_label = 'storageadmin'
@@ -67,8 +80,8 @@ class DContainerLink(models.Model):
 class DPort(models.Model):
     description = models.CharField(max_length=1024, null=True)
     hostp = models.IntegerField(unique=True)
+    hostp_default = models.IntegerField(null=True)
     containerp = models.IntegerField()
-    containerp_default = models.IntegerField(null=True)
     container = models.ForeignKey(DContainer)
     protocol = models.CharField(max_length=32, null=True)
     uiport = models.BooleanField(default=False)
@@ -85,7 +98,7 @@ class DVolume(models.Model):
     dest_dir = models.CharField(max_length=1024)
     uservol = models.BooleanField(default=False)
     description = models.CharField(max_length=1024, null=True)
-    min_size = models.IntegerField(default=0)
+    min_size = models.IntegerField(null=True)
     label = models.CharField(max_length=1024, null=True)
 
     @property
@@ -102,7 +115,7 @@ class DVolume(models.Model):
 class ContainerOption(models.Model):
     container = models.ForeignKey(DContainer)
     name = models.CharField(max_length=1024)
-    val = models.CharField(max_length=1024)
+    val = models.CharField(max_length=1024, blank=True)
 
     class Meta:
         app_label = 'storageadmin'

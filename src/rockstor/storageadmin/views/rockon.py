@@ -85,20 +85,21 @@ class RockOnView(rfc.GenericView):
                             continue
                         ro.description = r_d['description']
                         ro.website = r_d['website']
-                        ro.icon = r_d['icon']
-                        ro.volume_add_support = r_d['volume_add_support']
-                        ro.more_info = r_d['more_info']
                     else:
                         ro = RockOn(name=name,
                                     description=r_d['description'],
                                     version='1.0', state='available',
-                                    status='stopped', website=r_d['website'],
-                                    icon=r_d['icon'], volume_add_support=r_d['volume_add_support'],
-                                    more_info=r_d['more_info'])
+                                    status='stopped', website=r_d['website'])
                     if ('ui' in r_d):
                         ui_d = r_d['ui']
                         ro.link = ui_d['slug']
                         ro.https = ui_d['https']
+                    if ('icon' in r_d):
+                        ro.icon = r_d['icon']
+                    if ('volume_add_support' in r_d):
+                        ro.volume_add_support = r_d['volume_add_support']
+                    if ('more_info' in r_d):
+                        ro.more_info = r_d['more_info']
                     ro.save()
                     containers = r_d['containers']
                     for c in containers.keys():
@@ -167,16 +168,18 @@ class RockOnView(rfc.GenericView):
                             v_d = c_d['volumes']
                             for v in v_d.keys():
                                 cv_d = v_d[v]
+                                vo = None
                                 if (DVolume.objects.filter(dest_dir=v, container=co).exists()):
                                     vo = DVolume.objects.get(dest_dir=v, container=co)
                                     vo.description = cv_d['description']
                                     vo.label = cv_d['label']
-                                    vo.min_size = cv_d['min_size']
                                     vo.save()
                                 else:
                                     vo = DVolume(container=co, dest_dir=v, description=cv_d['description'],
-                                                 min_size=cv_d['min_size'], label=cv_d['label'])
-                                    vo.save()
+                                                 label=cv_d['label'])
+                                if ('min_size' in cv_d):
+                                    vo.min_size = cv_d['min_size']
+                                vo.save()
 
                         for vo in DVolume.objects.filter(container=co):
                             if (vo.dest_dir not in v_d):

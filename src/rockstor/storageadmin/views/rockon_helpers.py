@@ -270,20 +270,17 @@ def btsync_install(rockon):
     run_command(cmd)
 
 
+def generic_install(rockon):
+    for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
+        cmd = [DOCKER, 'run', '-d', '--name', c.name,]
+        cmd.extend(vol_ops(c))
+        cmd.extend(port_ops(c))
+        cmd.append(c.dimage.name)
+        run_command(cmd)
+
+
 def syncthing_install(rockon):
-    rm_container(rockon.name)
-    cmd = [DOCKER, 'run', '-d', '--name', rockon.name,]
-    c = DContainer.objects.get(rockon=rockon)
-    image = c.dimage.name
-    run_command([DOCKER, 'pull', image])
-    for v in DVolume.objects.filter(container=c):
-        share_mnt = '%s%s' % (settings.MNT_PT, v.share.name)
-        mount_share(v.share.name, share_mnt)
-        cmd.extend(['-v', '%s:%s' % (share_mnt, v.dest_dir), ])
-    for p in DPort.objects.filter(container=c):
-        cmd.extend(['-p', '%d:%d' % (p.hostp, p.containerp), ])
-    cmd.append(image)
-    run_command(cmd)
+    return generic_install(rockon)
 
 
 def pull_images(rockon):
