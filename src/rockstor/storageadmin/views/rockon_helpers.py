@@ -123,18 +123,7 @@ def install(rid):
     try:
         rockon = RockOn.objects.get(id=rid)
         pull_images(rockon)
-        if (rockon.name == 'Plex'):
-            plex_install(rockon)
-        elif (rockon.name == 'OpenVPN'):
-            ovpn_install(rockon)
-        elif (rockon.name == 'Transmission'):
-            transmission_install(rockon)
-        elif (rockon.name == 'BTSync'):
-            btsync_install(rockon)
-        elif (rockon.name == 'Syncthing'):
-            syncthing_install(rockon)
-        elif (rockon.name == 'OwnCloud'):
-            owncloud_install(rockon)
+        globals()['%s_install' % rockon.name.lower()](rockon)
     except Exception, e:
         logger.debug('exception while installing the rockon')
         logger.exception(e)
@@ -225,7 +214,7 @@ def vol_ops(container):
         ops_list.extend(['-v', '%s:%s' % (share_mnt, v.dest_dir)])
     return ops_list
 
-def ovpn_install(rockon):
+def openvpn_install(rockon):
     #volume container
     vol_co = DContainer.objects.get(rockon=rockon, launch_order=1)
     volc_cmd = [DOCKER, 'run', '--name', vol_co.name,]
