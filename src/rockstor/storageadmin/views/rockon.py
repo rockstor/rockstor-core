@@ -90,8 +90,6 @@ class RockOnView(rfc.GenericView):
                         ro.description = r_d['description']
                         ro.website = r_d['website']
                         ro.icon = r_d['icon']
-                        ro.link = ui_d['slug']
-                        ro.https = ui_d['https']
                         ro.volume_add_support = r_d['volume_add_support']
                         ro.more_info = r_d['more_info']
                     else:
@@ -99,9 +97,12 @@ class RockOnView(rfc.GenericView):
                                     description=r_d['description'],
                                     version='1.0', state='available',
                                     status='stopped', website=r_d['website'],
-                                    icon=r_d['icon'], link=ui_d['slug'],
-                                    https=ui_d['https'], volume_add_support=r_d['volume_add_support'],
+                                    icon=r_d['icon'], volume_add_support=r_d['volume_add_support'],
                                     more_info=r_d['more_info'])
+                    if ('ui' in r_d):
+                        ui_d = r_d['ui']
+                        ro.link = ui_d['slug']
+                        ro.https = ui_d['https']
                     ro.save()
                     containers = r_d['containers']
                     for c in containers.keys():
@@ -136,10 +137,6 @@ class RockOnView(rfc.GenericView):
                                     po = DPort.objects.get(containerp=p, container=co)
                                     po.hostp_default = p_d['host_default']
                                     po.description = p_d['description']
-                                    po.uiport = p_d['ui']
-                                    if (po.uiport):
-                                        ro.ui = True
-                                        ro.save()
                                     po.protocol = p_d['protocol']
                                     po.label = p_d['label']
                                 else:
@@ -153,9 +150,11 @@ class RockOnView(rfc.GenericView):
                                     po = DPort(description=p_d['description'],
                                                hostp=def_hostp, containerp=p,
                                                hostp_default=def_hostp,
-                                               container=co, uiport=p_d['ui'],
+                                               container=co,
                                                protocol=p_d['protocol'],
                                                label=p_d['label'])
+                                if ('ui' in p_d):
+                                    po.uiport = p_d['ui']
                                 if (po.uiport):
                                     ro.ui = True
                                     ro.save()
@@ -190,12 +189,18 @@ class RockOnView(rfc.GenericView):
 
                         if ('opts' in containers[c]):
                             options = containers[c]['opts']
-                            for o in options.keys():
-                                if (not ContainerOption.objects.filter(
-                                        container=co, name=options[o]).exists()):
-                                    oo = ContainerOption(container=co, name=o,
-                                                         val=options[o])
+                            id_l = []
+                            for o in options:
+                                try:
+                                    oo = ContainerOption.objects.get(container=co, name=o[0], val=o[1])
+                                    id_l.append(oo.id)
+                                except ContainerOption.DoesNotExist:
+                                    oo = ContainerOption(container=co, name=o[0], val=o[1])
                                     oo.save()
+                                    id_l.append(oo.id)
+                            for oo in ContainerOption.objects.filter(container=co):
+                                if (oo.id not in id_l):
+                                    oo.delete()
 
                     if ('container_links' in r_d):
                         l_d = r_d['container_links']
