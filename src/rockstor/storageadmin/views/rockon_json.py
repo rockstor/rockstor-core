@@ -1,12 +1,27 @@
 rockons = \
-          {u'OpenVPN': {u'containers': {u'openvpn': {u'image': u'kylemanna/openvpn',
-                                                     u'opts': {u'cap-add': u'NET_ADMIN'},
-                                                     u'ports': {u'1194': u'udp'}},
-                                        u'ovpn-data': {u'image': u'busybox',
-                                                       u'opts': {u'-v': u'/etc/openvpn'}}},
-                        u'custom_config': {u'servername': u'Your vpn server domainname or ip address. This is the server endpoint clients will try to connect. eg: vpn.rockstor.com'},
-                        u'description': u'Open Source VPN',
-                        u'website': u'https://openvpn.net/'},
+          {u'OpenVPN': {u'containers': {u'openvpn': {'image': 'kylemanna/openvpn',
+                                                     'ports': {'1194':
+                                                               {'protocol': 'udp',
+                                                                'label': 'Server port',
+                                                                'host_default': 1194,
+                                                                'description': 'OpenVPN server listening port. You may need to open this port on your firewall.',},},
+                                                     'launch_order': 2,
+                                                     u'opts': [['--cap-add=NET_ADMIN', ''],
+                                                               ['--volumes-from', 'ovpn-data'], ],},
+                                        u'ovpn-data': {'image': 'busybox',
+                                                       'opts': [['-v', '/etc/openvpn'], ],
+                                                       'launch_order': 1,},},
+
+                        'custom_config': {'servername':
+                                          {'label': 'Server address',
+                                           'description': "Your Rockstor system's public ip address or hostname.",},},
+
+                        'description': 'Open Source VPN server',
+                        'website': 'https://openvpn.net/',
+                        'icon': 'https://openvpn.net/',
+                        'more_info': '<h4>Additional steps are required by this Rockon.</h4><p>The following steps require you to execute commands as the <code>root</code> user on your Rockstor system.</p><h4><u>Initialize PKI</u>&nbsp;&nbsp;&nbsp;&nbsp;<i>Do this only once.</i></h4><code>/opt/rockstor/bin/ovpn-initpki</code><h4><u>Generate a client certificate</u>&nbsp;&nbsp;&nbsp;&nbsp;<i>One for every client(without passphrase)</i></h4><code>/opt/rockstor/bin/ovpn-client-gen</code><br><h4><u>Retrieve client configuration</u>&nbsp;&nbsp;&nbsp;&nbsp<i>For any one of your clients. The resulting .ovpn file can be used to connect.</i></h4><code>/opt/rockstor/bin/ovpn-client-print</code><h4><u>Configure firewall</u></h4><p>If your Rockstor system is behind a firewall, you will need to configure it to allow OpenVPN traffic to forward to your Rockstor system.</p>',
+                        'volume_add_support': False, },
+
            u'Plex': {u'app_link': u'web',
                      u'containers': {u'plex': {u'image': u'timhaak/plex',
                                                u'opts': {u'net': u'host'},
@@ -74,7 +89,9 @@ rockons = \
                                            'description': 'Choose a secure password for the database admin user',},},
                         'description': 'Secure file sharing and hosting',
                         'website': 'https://owncloud.org/',
-                        'icon': 'https://owncloud.org/wp-content/themes/owncloudorgnew/assets/img/common/logo_owncloud.svg',},
+                        'icon': 'https://owncloud.org/wp-content/themes/owncloudorgnew/assets/img/common/logo_owncloud.svg',
+                        'more_info': '<p>Default username for your OwnCloud UI is <code>admin</code> and password is <code>changeme</code></p>',
+                        'volume_add_support': False, },
           }
 
 # help text for Volumes
