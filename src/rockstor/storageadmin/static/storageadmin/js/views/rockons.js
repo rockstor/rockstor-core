@@ -44,7 +44,8 @@ RockonsView = RockstorLayoutView.extend({
 	'click .slider-stop': 'stopRockon',
 	'click .slider-start': 'startRockon',
 	'click #js-update-rockons': 'updateRockons',
-	'click #js-rockon-settings': 'rockonSettings'
+	'click #js-rockon-settings': 'rockonSettings',
+	'click #js-rockon-info': 'rockonInfo'
     },
 
     render: function() {
@@ -177,15 +178,30 @@ RockonsView = RockstorLayoutView.extend({
     rockonSettings: function(event) {
 	var _this = this;
 	event.preventDefault();
-	var rockon_id = this.getRockonId(event);
+	var rockon_id = _this.getRockonId(event);
 	var rockon_o = _this.rockons.get(rockon_id);
-	this.stopPolling();
+	_this.stopPolling();
 	var wizardView = new RockonSettingsWizardView({
 	    model: new Backbone.Model({ rockon: rockon_o}),
 	    title: rockon_o.get('name') + ' Settings',
 	    parent: this
 	});
 	$('.overlay-content', '#install-rockon-overlay').html(wizardView.render().el);
+	$('#install-rockon-overlay').overlay().load();
+    },
+
+    rockonInfo: function(event) {
+	var _this = this;
+	event.preventDefault();
+	var rockon_id = _this.getRockonId(event);
+	var rockon_o = _this.rockons.get(rockon_id);
+	_this.stopPolling();
+	var infoView = new RockonInfoView({
+	    model: new Backbone.Model({ rockon: rockon_o}),
+	    title: 'Additional information about ' + rockon_o.get('name') + ' Rock-on',
+	    parent: this
+	});
+	$('.overlay-content', '#install-rockon-overlay').html(infoView.render().el);
 	$('#install-rockon-overlay').overlay().load();
     },
 
@@ -592,6 +608,23 @@ RockonInstallComplete = RockstorWizardPage.extend({
 
 });
 
+RockonInfoView = WizardView.extend({
+    initialize: function() {
+	WizardView.prototype.initialize.apply(this, arguments);
+	this.pages = [RockonInfoSummary,];
+    },
+
+    render: function() {
+	WizardView.prototype.render.apply(this, arguments);
+    	return this;
+    },
+
+    modifyButtonText: function() {
+	this.$('#prev-page').hide();
+	this.$('#next-page').hide();
+    }
+});
+
 RockonSettingsWizardView = WizardView.extend({
     initialize: function() {
 	WizardView.prototype.initialize.apply(this, arguments);
@@ -743,6 +776,23 @@ RockonAddShare = RockstorWizardPage.extend({
 	return $.Deferred().resolve();
     }
 
+
+});
+
+RockonInfoSummary = RockstorWizardPage.extend({
+    initialize: function() {
+	this.template = window.JST.rockons_settings_summary;
+	this.sub_template = window.JST.rockons_more_info;
+	RockstorWizardPage.prototype.initialize.apply(this, arguments);
+    },
+
+    render: function() {
+	RockstorWizardPage.prototype.render.apply(this, arguments);
+	this.$('#ph-settings-summary-table').html(this.sub_template({
+	    rockon: this.model.get('rockon')
+	}));
+	return this;
+    }
 
 });
 

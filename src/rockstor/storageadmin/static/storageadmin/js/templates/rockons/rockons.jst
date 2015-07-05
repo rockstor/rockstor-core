@@ -84,7 +84,10 @@
 		<% } %>
 	      </div>
 	      <div class="slider-start on" data-rockon-id="<%= rockon.get('id') %>">ON</div>&nbsp;&nbsp
-	      <a id="js-rockon-settings" href="#" class="settings" data-rockon-id="<%= rockon.get('id') %>"><i class="glyphicon glyphicon-wrench"></i></a>
+	      <a id="js-rockon-settings" href="#" class="settings" data-rockon-id="<%= rockon.get('id') %>"><i class="glyphicon glyphicon-wrench"></i></a>&nbsp;&nbsp
+	      <% if (rockon.get('more_info')) { %>
+	      <a id="js-rockon-info" href="#" class="moreinfo" data-rockon-id="<%= rockon.get('id') %>"><i class="fa fa-info-circle"></i></a>
+	      <% } %>
 	      <br><br>
 	      <% if (ui_map[rockon.get('id')]) { %>
 	      <% if (rockon.get('status') == 'started') { %>

@@ -158,7 +158,7 @@ plex = {'ui': {'slug': 'web',},
         'description': 'Plex media server',
         'website': 'https://plex.tv/',
         'volume_add_support': True,
-        'more_info': '<h4>Adding media to Plex.</h4><p>You can add more Shares(with media) from here</p><p>Then, from Plex WebUI, you can update and re-index your library.</p>'}
+        'more_info': '<h4>Adding more media to Plex.</h4><p>You can add more Shares(with media) to Plex from the settings wizard of this Rock-on. Then, from Plex WebUI, you can update and re-index your library.</p>'}
 
 rockons = {'OpenVPN': openvpn,
            'OwnCloud': owncloud,
