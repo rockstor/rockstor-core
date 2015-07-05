@@ -48,8 +48,8 @@ RockonsView = RockstorLayoutView.extend({
     },
 
     render: function() {
-	this.rockons.fetch();
 	this.service.fetch();
+	this.rockons.fetch();
 	this.updateStatus();
 
 	return this;
