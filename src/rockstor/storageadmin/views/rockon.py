@@ -226,10 +226,8 @@ class RockOnView(rfc.GenericView):
         msg = ('Network error while checking for updates. '
                'Please try again later.')
         with self._handle_exception(request, msg=msg):
-            #r = requests.get('http://rockstor.com/rockons.json')
-            #rockons = r.json()
-            from rockon_json import rockons
-            return rockons
+            r = requests.get('http://rockstor.com/rockons_testing.json')
+            return r.json()
 
     @transaction.atomic
     def delete(self, request, sname):

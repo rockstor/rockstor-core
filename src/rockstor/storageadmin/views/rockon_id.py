@@ -80,11 +80,8 @@ class RockOnIdView(rfc.GenericView):
             if (command == 'install'):
                 self._pending_check(request)
                 share_map = request.data.get('shares', {})
-                logger.debug('share map = %s' % share_map)
                 port_map = request.data.get('ports', {})
-                logger.debug('port map = %s' % port_map)
                 cc_map = request.data.get('cc', {})
-                logger.debug('cc map = %s' % cc_map)
                 containers = DContainer.objects.filter(rockon=rockon)
                 for co in containers:
                     for s in share_map.keys():

@@ -23,31 +23,29 @@ openvpn = {u'containers': {u'openvpn': {'image': 'kylemanna/openvpn',
            'description': 'Open Source VPN server',
            'website': 'https://openvpn.net/',
            'icon': 'https://openvpn.net/',
-           'more_info': '<h4>Additional steps are required by this Rockon.</h4><p>The following steps require you to execute commands as the <code>root</code> user on your Rockstor system.</p><h4><u>Initialize PKI</u>&nbsp;&nbsp;&nbsp;&nbsp;<i>Do this only once.</i></h4><code>/opt/rockstor/bin/ovpn-initpki</code><h4><u>Generate a client certificate</u>&nbsp;&nbsp;&nbsp;&nbsp;<i>One for every client(without passphrase)</i></h4><code>/opt/rockstor/bin/ovpn-client-gen</code><br><h4><u>Retrieve client configuration</u>&nbsp;&nbsp;&nbsp;&nbsp<i>For any one of your clients. The resulting .ovpn file can be used to connect.</i></h4><code>/opt/rockstor/bin/ovpn-client-print</code><h4><u>Configure firewall</u></h4><p>If your Rockstor system is behind a firewall, you will need to configure it to allow OpenVPN traffic to forward to your Rockstor system.</p>',
-           'volume_add_support': False, }
+           'more_info': '<h4>Additional steps are required by this Rockon.</h4><p>Run these following commands as the<code>root</code>user on your Rockstor system.</p><h4><u>Initialize PKI</u>&nbsp;&nbsp;&nbsp;&nbsp;<i>Rock-on will not start without it.</i></h4><code>/opt/rockstor/bin/ovpn-initpki</code><h4><u>Generate a client certificate</u>&nbsp;&nbsp;&nbsp;&nbsp;<i>One for every client</i></h4><code>/opt/rockstor/bin/ovpn-client-gen</code><br><h4><u>Retrieve client configuration</u>&nbsp;&nbsp;&nbsp;&nbsp<i>For any one of your clients. The resulting .ovpn file can be used to connect.</i></h4><code>/opt/rockstor/bin/ovpn-client-print</code><h4><u>Configure firewall</u></h4><p>If your Rockstor system is behind a firewall, you will need to configure it to allow OpenVPN traffic to forward to your Rockstor system.</p>',}
 
 owncloud = {'ui': {'slug': '',
                    'https': True,},
-
             'containers': {'owncloud': {'image': 'pschmitt/owncloud',
                                         'ports': {'443':
                                                   {'ui': True,
                                                    'host_default': 8080,
                                                    'protocol': 'tcp',
                                                    'label': 'WebUI port',
-                                                   'description': 'OwnCloud WebUI port. Since Rockstor WebUI runs on 443, choose a different port or the suggested default.',},},
+                                                   'description': 'OwnCloud WebUI port. Suggested default: 8080',},},
                                         'volumes': {'/var/www/owncloud/data':
-                                                    {'description': 'Choose a dedicated Share for OwnCloud data. Eg: create a Share called owncloud-data for this purpose alone.',
+                                                    {'description': 'Choose a Share for OwnCloud data. Eg: create a Share called owncloud-data for this purpose alone.',
                                                      'min_size': 1073741824,
                                                      'label': 'Data directory',},
                                                     '/var/www/owncloud/config':
-                                                    {'description': 'Choose a dedicated Share for OwnCloud configuration. Eg: create a Share called owncloud-config for this purpose alone.',
+                                                    {'description': 'Choose a Share for OwnCloud configuration. Eg: create a Share called owncloud-config for this purpose alone.',
                                                      'label': 'Config directory',
                                                      'min_size': 1073741824,},},
                                         'launch_order': 2,},
                            'owncloud-postgres': {'image': 'postgres',
                                                  'volumes': {'/var/lib/postgresql/data':
-                                                             {'description': 'Choose a dedicated Share for OwnClouds postgresql database. Eg: create a Share called owncloud-db for this purpose alone.',
+                                                             {'description': "Choose a Share for OwnCloud's postgresql database. Eg: create a Share called owncloud-db for this purpose alone.",
                                                               'label': 'Database',
                                                               'min_size': 1073741824, }, },
                                                  'launch_order': 1}, },
@@ -62,12 +60,10 @@ owncloud = {'ui': {'slug': '',
             'description': 'Secure file sharing and hosting',
             'website': 'https://owncloud.org/',
             'icon': 'https://owncloud.org/wp-content/themes/owncloudorgnew/assets/img/common/logo_owncloud.svg',
-            'more_info': '<p>Default username for your OwnCloud UI is <code>admin</code> and password is <code>changeme</code></p>',
-            'volume_add_support': False, }
+            'more_info': '<p>Default username for your OwnCloud UI is<code>admin</code>and password is<code>changeme</code></p>',}
 
 syncthing = {'ui': {'slug': '',
                     'https': True,},
-
              'containers': {'syncthing': {'image': 'istepanov/syncthing',
                                           'ports': {'8384':
                                                     {'ui': True,
@@ -86,12 +82,12 @@ syncthing = {'ui': {'slug': '',
                                                      'label': 'Discovery port',
                                                      'description': 'Port for discovery broadcasts. You may need to open it(protocol: udp) on your firewall. Suggested default: 21025.',},},
                                           'volumes': {'/home/syncthing/.config/syncthing':
-                                                      {'description': 'Choose a dedicated Share for configuration. Eg: create a Share called syncthing-config for this purpose alone.',
+                                                      {'description': 'Choose a Share for configuration. Eg: create a Share called syncthing-config for this purpose alone.',
                                                        'min_size': ONE_GB,
                                                        'label': 'Config directory',},
                                                       '/home/syncthing/Sync':
                                                       {'label': 'Data directory',
-                                                       'description': 'Choose a dedicated Share for all incoming data. Eg: create a Share called syncthing-data for this purpose alone.',},},
+                                                       'description': 'Choose a Share for all incoming data. Eg: create a Share called syncthing-data for this purpose alone.',},},
                                           'launch_order': 1,},},
              'description': 'Continuous File Synchronization',
              'website': 'https://syncthing.net/',}
@@ -135,7 +131,7 @@ btsync = {'ui': {'slug': '',},
                                                'label': 'Listening port',
                                                'description': 'Port for incoming data. You may need to open it(protocol: udp) on your firewall. Suggested default: 3369.',},},
                                     'volumes': {'/data':
-                                                {'description': 'Choose a dedicated Share for all incoming data. Eg: create a Share called btsync-data for this purpose alone. It will be available as /data inside BTSync.',
+                                                {'description': 'Choose a Share for all incoming data. Eg: create a Share called btsync-data for this purpose alone. It will be available as /data inside BTSync.',
                                                  'label': 'Data directory',},},
                                     'launch_order': 1,},},
           'description': 'BitTorrent Sync',
@@ -154,10 +150,10 @@ plex = {'ui': {'slug': 'web',},
                                 'launch_order': 1,
                                 'opts': [['--net=host', ''],],
                                 'volumes': {'/config':
-                                            {'description': 'Choose a dedicated Share for Plex configuration. Eg: create a Share called plex-config for this purpose alone.',
+                                            {'description': 'Choose a Share for Plex configuration. Eg: create a Share called plex-config for this purpose alone.',
                                              'label': 'Config directory',},
                                             '/data':
-                                            {'description': 'Choose a dedicated Share for Plex content(your media). Eg: create a Share called plex-data for this purpose alone. You can also assign other media Shares on the system after installation.',
+                                            {'description': 'Choose a Share for Plex content(your media). Eg: create a Share called plex-data for this purpose alone. You can also assign other media Shares on the system after installation.',
                                              'label': 'Data directory',},},},},
         'description': 'Plex media server',
         'website': 'https://plex.tv/',
