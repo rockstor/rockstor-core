@@ -216,14 +216,7 @@ class RockOnView(rfc.GenericView):
                             if (not created):
                                 cco.description = ccc_d['description']
                                 cco.label = ccc_d['label']
-                            if (not created and k == 'iprange' and ro.name == 'Plex'):
-                                from storageadmin.models import NetworkInterface
-                                try:
-                                    ni = NetworkInterface.objects.filter(itype='management')[0]
-                                    cco.val = ('%s/255.255.255.0' % ni.ipaddr)
-                                except:
-                                    pass
-                            cco.save()
+                                cco.save()
                     for cco in DCustomConfig.objects.filter(rockon=ro):
                         if (cco.key not in cc_d):
                             cco.delete()

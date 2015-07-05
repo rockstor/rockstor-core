@@ -150,45 +150,6 @@ def uninstall(rid, new_state='available'):
                         save_error=False)
 
 
-def plex_install(rockon):
-    # to make install idempotent, remove the container that may exist from a previous attempt
-    rm_container(rockon.name)
-    cmd = [DOCKER, 'run', '-d', '--name', rockon.name, '--net="host"', ]
-    config_share = None
-    for c in DContainer.objects.filter(rockon=rockon):
-        image = c.dimage.name
-        run_command([DOCKER, 'pull', image, ])
-        for v in DVolume.objects.filter(container=c):
-            share_mnt = '%s%s' % (settings.MNT_PT, v.share.name)
-            if (v.dest_dir == '/config'):
-                config_share = share_mnt
-            cmd.extend(['-v', '%s:%s' % (share_mnt, v.dest_dir), ])
-        for p in DPort.objects.filter(container=c):
-            cmd.extend(['-p', '%d:%d' % (p.hostp, p.containerp), ])
-        cmd.append(image)
-    logger.debug('cmd = %s' % cmd)
-    run_command(cmd)
-    run_command([DOCKER, 'stop', rockon.name, ])
-    pref_file = ('%s/Library/Application Support/Plex Media Server/'
-                 'Preferences.xml' % config_share)
-    logger.debug('pref file: %s' % pref_file)
-    cco = DCustomConfig.objects.get(rockon=rockon)
-    logger.debug('network val %s' % cco.val)
-    import re
-    from tempfile import mkstemp
-    from shutil import move
-    fo, npath = mkstemp()
-    with open(pref_file) as pfo, open(npath, 'w') as tfo:
-        for l in pfo.readlines():
-            nl = l
-            if (re.match('<Preferences ', l) is not None and
-                re.match('allowedNetworks', l) is None):
-                nl = ('%s allowedNetworks="%s"/>' %
-                      (l[:-3], cco.val))
-            tfo.write('%s\n' % nl)
-    return move(npath, pref_file)
-
-
 def container_ops(container):
     ops_list = []
     for o in ContainerOption.objects.filter(container=container):
@@ -218,6 +179,16 @@ def vol_ops(container):
         mount_share(v.share.name, share_mnt)
         ops_list.extend(['-v', '%s:%s' % (share_mnt, v.dest_dir)])
     return ops_list
+
+def generic_install(rockon):
+    for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
+        cmd = [DOCKER, 'run', '-d', '--name', c.name,]
+        cmd.extend(vol_ops(c))
+        cmd.extend(port_ops(c))
+        cmd.extend(container_ops(c))
+        cmd.append(c.dimage.name)
+        run_command(cmd)
+
 
 def openvpn_install(rockon):
     #volume container
@@ -256,13 +227,8 @@ def btsync_install(rockon):
     return generic_install(rockon)
 
 
-def generic_install(rockon):
-    for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
-        cmd = [DOCKER, 'run', '-d', '--name', c.name,]
-        cmd.extend(vol_ops(c))
-        cmd.extend(port_ops(c))
-        cmd.append(c.dimage.name)
-        run_command(cmd)
+def plex_install(rockon):
+    return generic_install(rockon)
 
 
 def syncthing_install(rockon):
@@ -273,6 +239,7 @@ def pull_images(rockon):
     for c in DContainer.objects.filter(rockon=rockon):
         rm_container(c.name)
         run_command([DOCKER, 'pull', c.dimage.name])
+
 
 def owncloud_install(rockon):
     for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):

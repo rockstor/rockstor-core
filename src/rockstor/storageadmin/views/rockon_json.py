@@ -135,7 +135,7 @@ btsync = {'ui': {'slug': '',},
                                                'label': 'Listening port',
                                                'description': 'Port for incoming data. You may need to open it(protocol: udp) on your firewall. Suggested default: 3369.',},},
                                     'volumes': {'/data':
-                                                {'description': 'Choose a dedicated Share for all incoming data. Eg: create a Share called btsync-data for this purpose alone.',
+                                                {'description': 'Choose a dedicated Share for all incoming data. Eg: create a Share called btsync-data for this purpose alone. It will be available as /data inside BTSync.',
                                                  'label': 'Data directory',},},
                                     'launch_order': 1,},},
           'description': 'BitTorrent Sync',
@@ -143,33 +143,30 @@ btsync = {'ui': {'slug': '',},
           'volume_add_support': True,
           'more_info': '<h4>Authentication</h4><p>Default username for your BTSync UI is<code>admin</code>and password is<code>password</code></p><h4>Storage</h4><p>We strongly recommend changing the Default folder location to<code>/data</code>in the UI preferences.</p><p>You can also assign additional Shares for custom organization of your data.</p>'}
 
+plex = {'ui': {'slug': 'web',},
+        'containers': {'plex': {'image': 'timhaak/plex',
+                                'ports': {'32400':
+                                          {'ui': True,
+                                           'host_default': 32400,
+                                           'protocol': TCP,
+                                           'label': 'WebUI port',
+                                           'description': 'Plex WebUI port. Suggested default: 32400',},},
+                                'launch_order': 1,
+                                'opts': [['--net=host', ''],],
+                                'volumes': {'/config':
+                                            {'description': 'Choose a dedicated Share for Plex configuration. Eg: create a Share called plex-config for this purpose alone.',
+                                             'label': 'Config directory',},
+                                            '/data':
+                                            {'description': 'Choose a dedicated Share for Plex content(your media). Eg: create a Share called plex-data for this purpose alone. You can also assign other media Shares on the system after installation.',
+                                             'label': 'Data directory',},},},},
+        'description': 'Plex media server',
+        'website': 'https://plex.tv/',
+        'volume_add_support': True,
+        'more_info': '<h4>Adding media to Plex.</h4><p>You can add more Shares(with media) from here</p><p>Then, from Plex WebUI, you can update and re-index your library.</p>'}
+
 rockons = {'OpenVPN': openvpn,
            'OwnCloud': owncloud,
            'Syncthing': syncthing,
            'Transmission': transmission,
-           'BTSync': btsync, }
-
-
-
-# rockons = \
-#           {
-
-#            u'Plex': {u'app_link': u'web',
-#                      u'containers': {u'plex': {u'image': u'timhaak/plex',
-#                                                u'opts': {u'net': u'host'},
-#                                                u'ports': {u'32400': u'ui'},
-#                                                u'volumes': [u'/config', '/data',]}},
-#                      u'custom_config': {u'iprange': u'ip range of your network'},
-#                      u'description': u'Plex media server',
-#                      u'website': u'https://plex.tv/'},
-#            'BTSync': {'app_link': '',
-#                       'containers': {'btsync': {'image': 'aostanin/btsync',
-#                                                 'ports': {'8888': 'ui'},
-#                                                 'volumes': ['/data']}},
-#                       'description': 'BitTorrent Sync',
-#                       'website': 'https://www.getsync.com/'},
-
-#           }
-
-# help text for Volumes
-# It is strongly recommended
+           'BTSync': btsync,
+           'Plex': plex, }
