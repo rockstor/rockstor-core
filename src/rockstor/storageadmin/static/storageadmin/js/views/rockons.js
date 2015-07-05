@@ -108,7 +108,7 @@ RockonsView = RockstorLayoutView.extend({
 
 	$('#install-rockon-overlay').overlay({load: false});
 	this.$("ul.nav.nav-tabs").tabs("div.css-panes > div");
-	this.$("ul.nav.nav-tabs").data("tabs").click(this.defTab);
+	this.$('.nav-tabs li:eq(' + this.defTab + ') a').click();
 
     },
 
