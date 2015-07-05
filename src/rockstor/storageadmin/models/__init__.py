@@ -44,7 +44,7 @@ from netatalk_share import NetatalkShare
 from pool_balance import PoolBalance
 from tls_certificate import TLSCertificate
 from rockon import (RockOn, DImage, DContainer, DPort, DVolume,
-                    ContainerOption, DCustomConfig)
+                    ContainerOption, DCustomConfig, DContainerLink)
 from smart import (SMARTAttribute, SMARTCapability, SMARTErrorLog,
                    SMARTErrorLogSummary, SMARTTestLog, SMARTTestLogDetail,
                    SMARTIdentity, SMARTInfo)
