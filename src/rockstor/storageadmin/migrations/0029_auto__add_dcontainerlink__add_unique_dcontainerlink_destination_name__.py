@@ -27,7 +27,7 @@ class Migration(SchemaMigration):
 
         # Adding field 'DVolume.min_size'
         db.add_column(u'storageadmin_dvolume', 'min_size',
-                      self.gf('django.db.models.fields.IntegerField')(default=0),
+                      self.gf('django.db.models.fields.IntegerField')(null=True),
                       keep_default=False)
 
         # Adding field 'DVolume.label'
@@ -40,9 +40,14 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.CharField')(max_length=1024, null=True),
                       keep_default=False)
 
-        # Adding field 'DPort.containerp_default'
-        db.add_column(u'storageadmin_dport', 'containerp_default',
+        # Adding field 'DPort.hostp_default'
+        db.add_column(u'storageadmin_dport', 'hostp_default',
                       self.gf('django.db.models.fields.IntegerField')(null=True),
+                      keep_default=False)
+
+        # Adding field 'DPort.label'
+        db.add_column(u'storageadmin_dport', 'label',
+                      self.gf('django.db.models.fields.CharField')(max_length=1024, null=True),
                       keep_default=False)
 
         # Adding field 'RockOn.https'
@@ -53,6 +58,21 @@ class Migration(SchemaMigration):
         # Adding field 'RockOn.icon'
         db.add_column(u'storageadmin_rockon', 'icon',
                       self.gf('django.db.models.fields.URLField')(max_length=1024, null=True),
+                      keep_default=False)
+
+        # Adding field 'RockOn.ui'
+        db.add_column(u'storageadmin_rockon', 'ui',
+                      self.gf('django.db.models.fields.BooleanField')(default=False),
+                      keep_default=False)
+
+        # Adding field 'RockOn.volume_add_support'
+        db.add_column(u'storageadmin_rockon', 'volume_add_support',
+                      self.gf('django.db.models.fields.BooleanField')(default=False),
+                      keep_default=False)
+
+        # Adding field 'RockOn.more_info'
+        db.add_column(u'storageadmin_rockon', 'more_info',
+                      self.gf('django.db.models.fields.CharField')(max_length=4096, null=True),
                       keep_default=False)
 
         # Deleting field 'DContainer.link'
@@ -88,14 +108,26 @@ class Migration(SchemaMigration):
         # Deleting field 'DPort.description'
         db.delete_column(u'storageadmin_dport', 'description')
 
-        # Deleting field 'DPort.containerp_default'
-        db.delete_column(u'storageadmin_dport', 'containerp_default')
+        # Deleting field 'DPort.hostp_default'
+        db.delete_column(u'storageadmin_dport', 'hostp_default')
+
+        # Deleting field 'DPort.label'
+        db.delete_column(u'storageadmin_dport', 'label')
 
         # Deleting field 'RockOn.https'
         db.delete_column(u'storageadmin_rockon', 'https')
 
         # Deleting field 'RockOn.icon'
         db.delete_column(u'storageadmin_rockon', 'icon')
+
+        # Deleting field 'RockOn.ui'
+        db.delete_column(u'storageadmin_rockon', 'ui')
+
+        # Deleting field 'RockOn.volume_add_support'
+        db.delete_column(u'storageadmin_rockon', 'volume_add_support')
+
+        # Deleting field 'RockOn.more_info'
+        db.delete_column(u'storageadmin_rockon', 'more_info')
 
         # Adding field 'DContainer.link'
         db.add_column(u'storageadmin_dcontainer', 'link',
@@ -149,8 +181,8 @@ class Migration(SchemaMigration):
         u'oauth2_provider.application': {
             'Meta': {'object_name': 'Application'},
             'authorization_grant_type': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
-            'client_id': ('django.db.models.fields.CharField', [], {'default': "u'30bogdA73xoMjf1P1DT0gBfIU4c3lU1sak6Wx?XA'", 'unique': 'True', 'max_length': '100'}),
-            'client_secret': ('django.db.models.fields.CharField', [], {'default': "u'A5pWZVo_sjfl491r:!7S7tq9;e_So9gAfmLpn=1yy25ZK7WO3ZDbD5EbAbtaXMslEc=I08XFsoMTDXZ6OIw0Ef7oHC7sGxUN2w-Z9.?nt3QtX97BX?2jI9mpGanIylmh'", 'max_length': '255', 'blank': 'True'}),
+            'client_id': ('django.db.models.fields.CharField', [], {'default': "u'nu4VyMB1uIUDSd2M3;7Ftd74pUoXeCw.OMpJW@3z'", 'unique': 'True', 'max_length': '100'}),
+            'client_secret': ('django.db.models.fields.CharField', [], {'default': "u'9ervOaClzm7nrzPBY6hA8BNDr6;-12MuIm?1403MD=y.nGCM!ei3K:0fCips!423br;TIahiyspAojObwHI5WtaKUsqxN9mP9dkb:ou;L5YRsLRF@Ib3l-ARp9Vfz6CC'", 'max_length': '255', 'blank': 'True'}),
             'client_type': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
@@ -184,7 +216,7 @@ class Migration(SchemaMigration):
             'container': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storageadmin.DContainer']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '1024'}),
-            'val': ('django.db.models.fields.CharField', [], {'max_length': '1024'})
+            'val': ('django.db.models.fields.CharField', [], {'max_length': '1024', 'blank': 'True'})
         },
         'storageadmin.dashboardconfig': {
             'Meta': {'object_name': 'DashboardConfig'},
@@ -243,10 +275,11 @@ class Migration(SchemaMigration):
             'Meta': {'unique_together': "(('container', 'containerp'),)", 'object_name': 'DPort'},
             'container': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storageadmin.DContainer']"}),
             'containerp': ('django.db.models.fields.IntegerField', [], {}),
-            'containerp_default': ('django.db.models.fields.IntegerField', [], {'null': 'True'}),
             'description': ('django.db.models.fields.CharField', [], {'max_length': '1024', 'null': 'True'}),
             'hostp': ('django.db.models.fields.IntegerField', [], {'unique': 'True'}),
+            'hostp_default': ('django.db.models.fields.IntegerField', [], {'null': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'label': ('django.db.models.fields.CharField', [], {'max_length': '1024', 'null': 'True'}),
             'protocol': ('django.db.models.fields.CharField', [], {'max_length': '32', 'null': 'True'}),
             'uiport': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
         },
@@ -257,7 +290,7 @@ class Migration(SchemaMigration):
             'dest_dir': ('django.db.models.fields.CharField', [], {'max_length': '1024'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'label': ('django.db.models.fields.CharField', [], {'max_length': '1024', 'null': 'True'}),
-            'min_size': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
+            'min_size': ('django.db.models.fields.IntegerField', [], {'null': 'True'}),
             'share': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storageadmin.Share']", 'null': 'True'}),
             'uservol': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
         },
@@ -401,10 +434,13 @@ class Migration(SchemaMigration):
             'icon': ('django.db.models.fields.URLField', [], {'max_length': '1024', 'null': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'link': ('django.db.models.fields.CharField', [], {'max_length': '1024', 'null': 'True'}),
+            'more_info': ('django.db.models.fields.CharField', [], {'max_length': '4096', 'null': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '1024'}),
             'state': ('django.db.models.fields.CharField', [], {'max_length': '2048'}),
             'status': ('django.db.models.fields.CharField', [], {'max_length': '2048'}),
+            'ui': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'version': ('django.db.models.fields.CharField', [], {'max_length': '2048'}),
+            'volume_add_support': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'website': ('django.db.models.fields.CharField', [], {'max_length': '2048', 'null': 'True'})
         },
         'storageadmin.sambacustomconfig': {
