@@ -46,6 +46,8 @@ setup(
             'ovpn-initpki = ovpn_util:initpki',
             'ovpn-client-gen = ovpn_util:client_gen',
             'ovpn-client-print = ovpn_util:client_retrieve',
+            'qgroup-clean = qgroup_clean:main',
+            'rockon-json = rockon_util:main',
         ],
     },
 

@@ -162,6 +162,10 @@ class RockOnIdView(rfc.GenericView):
                         if (DVolume.objects.filter(container=co, dest_dir=s).exists()):
                             e_msg = ('Directory(%s) is already mapped for this Rock-on' % s)
                             handle_exception(Exception(e_msg), request)
+                        if (not s.startswith('/')):
+                            e_msg = ('Invalid Directory(%s). Must provide an '
+                                     'absolute path. Eg: /data/media' % s)
+                            handle_exception(Exception(e_msg), request)
                         do = DVolume(container=co, share=so, uservol=True, dest_dir=s)
                         do.save()
                 rockon.state = 'pending_update'
