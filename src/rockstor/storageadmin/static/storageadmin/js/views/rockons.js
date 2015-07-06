@@ -136,7 +136,7 @@ RockonsView = RockstorLayoutView.extend({
 	if (buttonDisabled(button)) return false;
 	var rockon_id = button.attr('data-name');
 	var rockon_o = _this.rockons.get(rockon_id);
-	if (confirm("Are you sure you want to uninstall this Rockon(" + rockon_o.get('name') + ")?")) {
+	if (confirm("Are you sure you want to uninstall this Rock-on (" + rockon_o.get('name') + ")?")) {
 	    disableButton(button);
 	    $.ajax({
 		url: '/api/rockons/' + rockon_id + '/uninstall',

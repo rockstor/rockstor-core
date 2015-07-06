@@ -41,8 +41,8 @@ class RockOnIdView(rfc.GenericView):
     @staticmethod
     def _pending_check(request):
         if (RockOn.objects.filter(state__contains='pending').exists()):
-            e_msg = ('Another Rockon is in state transition. Multiple '
-                     'simultaneous Rockon transitions are not '
+            e_msg = ('Another Rock-on is in state transition. Multiple '
+                     'simultaneous Rock-on transitions are not '
                      'supported. Please try again later.')
             handle_exception(Exception(e_msg), request)
 
@@ -100,7 +100,7 @@ class RockOnIdView(rfc.GenericView):
                         if (DPort.objects.filter(hostp=p).exists()):
                             po = DPort.objects.get(hostp=p)
                             if (po.container.rockon.id != rockon.id):
-                                e_msg = ('Rockon port(%s) is dedicated to '
+                                e_msg = ('Rock-on port(%s) is dedicated to '
                                          'another Rock-On(%s) and cannot '
                                          'be changed. Choose a different name'
                                          % (p, po.container.rockon.name))
