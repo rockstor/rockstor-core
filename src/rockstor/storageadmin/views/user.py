@@ -102,10 +102,11 @@ class UserListView(UserMixin, rfc.GenericView):
 
             invar = self._validate_input(request)
             # Check that a django user with the same name does not exist
-            e_msg = ('user: %s already exists. Please choose a different'
+            e_msg = ('User(%s) already exists. Please choose a different'
                      ' username' % invar['username'])
             if (DjangoUser.objects.filter(
-                    username=invar['username']).exists()):
+                    username=invar['username']).exists() or
+                User.objects.filter(username=invar['username']).exists()):
                 handle_exception(Exception(e_msg), request)
             users = combined_users()
             groups = combined_groups()
@@ -157,7 +158,6 @@ class UserListView(UserMixin, rfc.GenericView):
                                     admin=True)
                 admin_group.save()
                 invar['group'] = admin_group
-            invar['admin'] = True
             suser = User(**invar)
             suser.full_clean()
             suser.save()
@@ -204,10 +204,12 @@ class UserDetailView(UserMixin, rfc.GenericView):
                     elif (new_pw is not None):
                         u.user.set_password(new_pw)
                         u.user.save()
-                elif (u.user is not None):
-                    auser = u.user
-                    u.user = None
-                    auser.delete()
+                else:
+                    u.admin = admin
+                    if (u.user is not None):
+                        auser = u.user
+                        u.user = None
+                        auser.delete()
 
                 u.public_key = public_key
                 if (email is not None and email != ''):
