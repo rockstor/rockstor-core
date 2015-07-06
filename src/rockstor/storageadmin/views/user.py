@@ -92,7 +92,9 @@ class UserMixin(object):
 
 
 class UserListView(UserMixin, rfc.GenericView):
-    queryset = combined_users()
+    def get_queryset(self, *args, **kwargs):
+        with self._handle_exception(self.request):
+            return combined_users()
 
     @transaction.atomic
     def post(self, request):
