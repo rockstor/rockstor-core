@@ -59,8 +59,10 @@ def combined_users():
             uo.save()
             users.append(uo)
         except User.DoesNotExist:
-            users.append(User(username=u, uid=sys_users[u][0],
-                              gid=sys_users[u][1], admin=False))
+            temp_uo = User(username=u, uid=sys_users[u][0],
+                           gid=sys_users[u][1], admin=False)
+            temp_uo.managed_user = False
+            users.append(temp_uo)
     for u in User.objects.all():
         if (u.username not in uname_list):
             users.append(u)

@@ -72,7 +72,7 @@
 	  </div>
         </div>
         <div class="form-group">
-	      <% if (username == null) { %>
+	      <% if (!username) { %>
               <label class="col-sm-4 control-label">Password<span class="required"> *</span></label>
 	      <% } else { %>
 	      <label class="col-sm-4 control-label">Password<span class="required"></span></label>
@@ -82,7 +82,7 @@
 	      </div>
         </div>
         <div class="form-group">
-	  <% if (username == null) { %>
+	  <% if (!username) { %>
             <label class="col-sm-4 control-label">Confirm Password<span class="required"> *</span></label>
 	  <% } else { %>
 	    <label class="col-sm-4 control-label">Confirm Password<span class="required"></span></label>
@@ -116,7 +116,7 @@
 	    </select>
 	  </div>
 	</div>
-	<% if (username == null) { %>
+	<% if (!username) { %>
 	<div class="form-group">
 	<label class="col-sm-4 control-label">UID</label>
 	  <div class="col-sm-8 controls">
@@ -124,7 +124,7 @@
 	  </div>
 	</div>
 	<% } %>
-	<% if (username == null) { %>
+	<% if (!username) { %>
 	<div class="form-group">
 	<label class="col-sm-4 control-label">Group</label>
 	  <div class="col-sm-8 controls">
@@ -139,10 +139,15 @@
         <% } %>
 	<div class="form-group">
 	<label class="col-sm-4 control-label">Email</label>
-	  <div class="col-sm-8 controls">
-	    <input class="form-control shorten-input" type="text" id="email" name="email" title="Enter an email address to associate with the user">
+	<div class="col-sm-8 controls">
+	  <% if (!username) { %>
+	  <input class="form-control shorten-input" type="text" id="email" name="email" title="Enter an email address to associate with the user">
+	  <% } else { %>
+	  <input class="form-control shorten-input" type="text" id="email" name="email" title="Enter an email address to associate with the user" value="<%= user.get('email') %>">
+	  <% } %>
 	  </div>
 	</div>
+	<% >
 	<div class="form-group">
 	  <div class="col-sm-offset-4 col-sm-8">
 	    <button id="cancel" class="btn btn-default">Cancel</button>
