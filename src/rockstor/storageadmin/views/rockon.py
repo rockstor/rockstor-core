@@ -20,7 +20,7 @@ import requests
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (RockOn, DImage, DContainer, DPort, DVolume,
-                                 ContainerOption, DCustomConfig)
+                                 ContainerOption, DCustomConfig, DContainerLink)
 from storageadmin.serializers import RockOnSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
@@ -43,10 +43,11 @@ class RockOnView(rfc.GenericView):
             for ro in RockOn.objects.all():
                 if (ro.state == 'installed'):
                     # update current running status of installed rockons.
-                    ro.status = rockon_status(ro.name)
+                    if (ro.id not in pending_rids):
+                        ro.status = rockon_status(ro.name)
                 elif (re.search('pending', ro.state) is not None and
                       ro.id not in pending_rids):
-                    # reset rockons to their previosu state if they are stuck
+                    # reset rockons to their previous state if they are stuck
                     # in a pending transition.
                     if (re.search('uninstall', ro.state) is not None):
                         ro.state = 'installed'
@@ -70,111 +71,163 @@ class RockOnView(rfc.GenericView):
 
             if (command == 'update'):
                 rockons = self._get_available(request)
-                for r in rockons.keys():
+                for r in rockons:
                     name = r
-                    ro = None
-                    if (RockOn.objects.filter(name=name).exists()):
-                        ro = RockOn.objects.get(name=name)
-                        if (ro.state != 'available'):
-                            #don't update metadata if it's installed or in some pending state.
-                            continue
-                        ro.description = rockons[r]['description']
-                    else:
-                        ro = RockOn(name=name,
-                                    description=rockons[r]['description'],
-                                    version='1.0', state='available',
-                                    status='stopped')
+                    r_d = rockons[r]
+                    ro_defaults = {'description': r_d['description'],
+                                   'website': r_d['website'],
+                                   'version': '1.0',
+                                   'state': 'available',
+                                   'status': 'stopped'}
+                    ro, created = RockOn.objects.get_or_create(name=name,
+                                                               defaults=ro_defaults)
+                    if (not created):
+                        ro.description = ro_defaults['description']
+                        ro.website = ro_defaults['website']
+                        ro.version = ro_defaults['version']
+                    if ('ui' in r_d):
+                        ui_d = r_d['ui']
+                        ro.link = ui_d['slug']
+                        if ('https' in ui_d):
+                            ro.https = ui_d['https']
+                    if ('icon' in r_d):
+                        ro.icon = r_d['icon']
+                    if ('volume_add_support' in r_d):
+                        ro.volume_add_support = r_d['volume_add_support']
+                    if ('more_info' in r_d):
+                        ro.more_info = r_d['more_info']
                     ro.save()
-                    containers = rockons[r]['containers']
-                    for c in containers.keys():
-                        io = None
-                        iname = containers[c]['image']
-                        if (DImage.objects.filter(name=iname).exists()):
-                            io = DImage.objects.get(name=iname)
-                        else:
-                            io = DImage(name=iname, tag='latest', repo='foo')
-                        io.save()
-
-                        co = None
-                        if (DContainer.objects.filter(name=c).exists()):
-                            co = DContainer.objects.get(name=c)
+                    containers = r_d['containers']
+                    for c in containers:
+                        c_d = containers[c]
+                        io, created = DImage.objects.get_or_create(name=c_d['image'],
+                                                                   defaults={'tag': 'latest',
+                                                                             'repo': 'na'})
+                        co_defaults = {'rockon': ro,
+                                       'dimage': io,
+                                       'launch_order': c_d['launch_order'],}
+                        co, created = DContainer.objects.get_or_create(name=c,
+                                                                       defaults=co_defaults)
+                        if (co.rockon.name != ro.name):
+                            e_msg = ('Container(%s) belongs to another '
+                                     'Rock-On(%s). Update rolled back.' %
+                                     (c, co.rockon.name))
+                            handle_exception(Exception(e_msg), request)
+                        if (not created):
                             co.dimage = io
-                            co.rockon = ro
-                        else:
-                            co = DContainer(rockon=ro, dimage=io, name=c)
+                            co.launch_order = co_defaults['launch_order']
                         co.save()
 
+                        ports = {}
                         if ('ports' in containers[c]):
                             ports = containers[c]['ports']
-                            for p in ports.keys():
+                            for p in ports:
+                                p_d = ports[p]
+                                if ('protocol' not in p_d):
+                                    p_d['protocol'] = None
+                                p = int(p)
                                 po = None
-                                if (DPort.objects.filter(hostp=p).exists()):
-                                    po = DPort.objects.get(hostp=p)
-                                    po.container = co
-                                elif (DPort.objects.filter(containerp=p, container=co).exists()):
+                                if (DPort.objects.filter(containerp=p, container=co).exists()):
                                     po = DPort.objects.get(containerp=p, container=co)
-                                    po.hostp = p
+                                    po.hostp_default = p_d['host_default']
+                                    po.description = p_d['description']
+                                    po.protocol = p_d['protocol']
+                                    po.label = p_d['label']
                                 else:
-                                    po = DPort(hostp=p, containerp=p,
-                                               container=co)
-                                if (ports[p] == 'ui'):
-                                    po.uiport = True
-                                else:
-                                    po.protocol = ports[p]
+                                    #let's find next available default if default is already taken
+                                    def_hostp = p_d['host_default']
+                                    while (True):
+                                        if (DPort.objects.filter(hostp=def_hostp).exists()):
+                                            def_hostp += 1
+                                        else:
+                                            break
+                                    po = DPort(description=p_d['description'],
+                                               hostp=def_hostp, containerp=p,
+                                               hostp_default=def_hostp,
+                                               container=co,
+                                               protocol=p_d['protocol'],
+                                               label=p_d['label'])
+                                if ('ui' in p_d):
+                                    po.uiport = p_d['ui']
+                                if (po.uiport):
+                                    ro.ui = True
+                                    ro.save()
                                 po.save()
+                        ports = [int(p) for p in ports]
+                        for po in DPort.objects.filter(container=co):
+                            if (po.containerp not in ports):
+                                po.delete()
 
-                        if ('volumes' in containers[c]):
-                            volumes = containers[c]['volumes']
-                            for v in volumes:
-                                if (not DVolume.objects.filter(
-                                        dest_dir=v, container=co).exists()):
-                                    vo = DVolume(container=co, dest_dir=v)
-                                    vo.save()
-                            for vo in DVolume.objects.filter(container=co):
-                                if (vo.dest_dir not in volumes):
-                                    vo.delete()
+                        v_d = {}
+                        if ('volumes' in c_d):
+                            v_d = c_d['volumes']
+                            for v in v_d:
+                                cv_d = v_d[v]
+                                vo_defaults = {'description': cv_d['description'],
+                                               'label': cv_d['label']}
+                                vo, created = DVolume.objects.get_or_create(dest_dir=v, container=co,
+                                                                            defaults=vo_defaults)
+                                if (not created):
+                                    vo.description = vo_defaults['description']
+                                    vo.label = vo_defaults['label']
+                                if ('min_size' in cv_d):
+                                    vo.min_size = cv_d['min_size']
+                                vo.save()
+                        for vo in DVolume.objects.filter(container=co):
+                            if (vo.dest_dir not in v_d):
+                                vo.delete()
 
                         if ('opts' in containers[c]):
                             options = containers[c]['opts']
-                            for o in options.keys():
-                                if (not ContainerOption.objects.filter(
-                                        container=co, name=options[o]).exists()):
-                                    oo = ContainerOption(container=co, name=o,
-                                                         val=options[o])
-                                    oo.save()
+                            id_l = []
+                            for o in options:
+                                oo, created = ContainerOption.objects.get_or_create(container=co,
+                                                                                    name=o[0],
+                                                                                    val=o[1])
+                                id_l.append(oo.id)
+                            for oo in ContainerOption.objects.filter(container=co):
+                                if (oo.id not in id_l):
+                                    oo.delete()
 
-                    if ('custom_config' in rockons[r]):
-                        cc_d = rockons[r]['custom_config']
+                    if ('container_links' in r_d):
+                        l_d = r_d['container_links']
+                        for cname in l_d:
+                            ll = l_d[cname]
+                            lsources = [l['source_container'] for l in ll]
+                            co = DContainer.objects.get(rockon=ro, name=cname)
+                            for clo in co.destination_container.all():
+                                if (clo.name not in lsources):
+                                    clo.delete()
+                            for cl_d in ll:
+                                sco = DContainer.objects.get(rockon=ro, name=cl_d['source_container'])
+                                clo, created = DContainerLink.objects.get_or_create(source=sco,
+                                                                                    destination=co)
+                                clo.name = cl_d['name']
+                                clo.save()
+
+                    cc_d = {}
+                    if ('custom_config' in r_d):
+                        cc_d = r_d['custom_config']
                         for k in cc_d:
+                            ccc_d = cc_d[k]
                             cco, created = DCustomConfig.objects.get_or_create(
                                 rockon=ro, key=k,
-                                defaults={'description': cc_d[k]})
+                                defaults={'description': ccc_d['description'], 'label': ccc_d['label']})
                             if (not created):
-                                cco.description = cc_d[k]
-                            if (not created and k == 'iprange' and ro.name == 'Plex'):
-                                from storageadmin.models import NetworkInterface
-                                try:
-                                    ni = NetworkInterface.objects.filter(itype='management')[0]
-                                    cco.val = ('%s/255.255.255.0' % ni.ipaddr)
-                                except:
-                                    pass
-                            cco.save()
-                    if ('app_link' in rockons[r]):
-                        app_link = rockons[r]['app_link']
-                        if (ro.state != 'installed'):
-                            ro.link = app_link
-                    if ('website' in rockons[r]):
-                        ro.website = rockons[r]['website']
-                    ro.save()
+                                cco.description = ccc_d['description']
+                                cco.label = ccc_d['label']
+                                cco.save()
+                    for cco in DCustomConfig.objects.filter(rockon=ro):
+                        if (cco.key not in cc_d):
+                            cco.delete()
             return Response()
 
     def _get_available(self, request):
         msg = ('Network error while checking for updates. '
                'Please try again later.')
         with self._handle_exception(request, msg=msg):
-            r = requests.get('http://rockstor.com/rockons.json')
-            rockons = r.json()
-            return rockons
+            r = requests.get('http://rockstor.com/rockons_testing.json')
+            return r.json()
 
     @transaction.atomic
     def delete(self, request, sname):

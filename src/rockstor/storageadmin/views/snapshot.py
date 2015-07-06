@@ -153,19 +153,18 @@ class SnapshotView(rfc.GenericView):
                      (snap_name, share.name))
             handle_exception(Exception(e_msg), request)
 
-        real_name = snap_name
         snap_size = 0
         qgroup_id = '0/na'
         if (snap_type != 'receiver'):
             if (snap_type == 'replication'):
                 writable = False
             add_snap(share.pool, pool_device, share.subvol_name,
-                     real_name, readonly=not writable)
-            snap_id = share_id(share.pool, pool_device, real_name)
+                     snap_name, readonly=not writable)
+            snap_id = share_id(share.pool, pool_device, snap_name)
             qgroup_id = ('0/%s' % snap_id)
             snap_size, eusage = share_usage(share.pool, pool_device,
                                             qgroup_id)
-        s = Snapshot(share=share, name=snap_name, real_name=real_name,
+        s = Snapshot(share=share, name=snap_name, real_name=snap_name,
                      size=snap_size, qgroup=qgroup_id,
                      uvisible=uvisible, snap_type=snap_type,
                      writable=writable)

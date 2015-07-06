@@ -185,6 +185,7 @@ class TLSCertificateSerializer(serializers.ModelSerializer):
 
 
 class RockOnSerializer(serializers.ModelSerializer):
+    ui_port = serializers.IntegerField()
 
     class Meta:
         model = RockOn
