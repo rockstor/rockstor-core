@@ -47,5 +47,13 @@ class User(models.Model):
             return grp.getgrgid(self.gid).gr_name
         return None
 
+    @property
+    def managed_user(self, *args, **kwargs):
+        return getattr(self, 'editable', True)
+
+    @managed_user.setter
+    def managed_user(self, val, *args, **kwargs):
+        self.editable = val
+
     class Meta:
         app_label = 'storageadmin'

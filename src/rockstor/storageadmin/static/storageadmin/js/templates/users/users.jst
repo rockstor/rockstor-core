@@ -85,8 +85,11 @@
             <td><%= user.get('gid') %></td>
 	    <td><%= user.get('shell') %></td>
             <td>
+	      <% if (user.get('managed_user')) { %>
+	      <a href="#" class="edit-user" data-username="<%= user.get('username') %>" rel="tooltip" title="Edit user"><i class="glyphicon glyphicon-pencil"></i></a>
               <a href="#" class="delete-user" data-username="<%= user.get('username') %>" rel="tooltip" title="Delete user"><i class="glyphicon glyphicon-trash"></i></a>
             </td>
+	    <% } %>
           </tr>
 	  <% } %>
         <% }); %>
