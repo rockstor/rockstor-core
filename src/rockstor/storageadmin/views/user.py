@@ -199,12 +199,11 @@ class UserDetailView(UserMixin, rfc.GenericView):
                         u.user.set_password(new_pw)
                         u.user.save()
                 else:
-                    u.admin = admin
                     if (u.user is not None):
                         auser = u.user
                         u.user = None
                         auser.delete()
-
+                u.admin = admin
                 u.public_key = public_key
                 if (email is not None and email != ''):
                     u.email = email
