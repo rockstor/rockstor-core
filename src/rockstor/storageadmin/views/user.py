@@ -120,14 +120,9 @@ class UserListView(UserMixin, rfc.GenericView):
                         invar['group'] = g
                         break
 
-            user_exists = False
             for u in users:
                 if (u.username == invar['username']):
-                    if ((invar['uid'] is None or u.uid == invar['uid']) and
-                        (invar['gid'] is None or u.gid == invar['gid'])):
-                        user_exists = True
-                    else:
-                        handle_exception(Exception(e_msg), request)
+                    handle_exception(Exception(e_msg), request)
                 elif (u.uid == invar['uid']):
                     e_msg = ('uid: %d already exists. Please choose a '
                              'different one.' % invar['uid'])
@@ -141,9 +136,8 @@ class UserListView(UserMixin, rfc.GenericView):
                 auser.save()
                 invar['user'] = auser
 
-            if (not user_exists):
-                useradd(invar['username'], invar['shell'], uid=invar['uid'],
-                        gid=invar['gid'])
+            useradd(invar['username'], invar['shell'], uid=invar['uid'],
+                    gid=invar['gid'])
             pw_entries = pwd.getpwnam(invar['username'])
             invar['uid'] = pw_entries[2]
             invar['gid'] = pw_entries[3]
