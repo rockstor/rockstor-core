@@ -23,7 +23,7 @@ openvpn = {u'containers': {u'openvpn': {'image': 'kylemanna/openvpn',
            'description': 'Open Source VPN server',
            'website': 'https://openvpn.net/',
            'icon': 'https://openvpn.net/',
-           'more_info': '<h4>Additional steps are required by this Rockon.</h4><p>Run these following commands as the<code>root</code>user on your Rockstor system.</p><h4><u>Initialize PKI</u>&nbsp;&nbsp;&nbsp;&nbsp;<i>Rock-on will not start without it.</i></h4><code>/opt/rockstor/bin/ovpn-initpki</code><h4><u>Generate a client certificate</u>&nbsp;&nbsp;&nbsp;&nbsp;<i>One for every client</i></h4><code>/opt/rockstor/bin/ovpn-client-gen</code><br><h4><u>Retrieve client configuration</u>&nbsp;&nbsp;&nbsp;&nbsp<i>For any one of your clients. The resulting .ovpn file can be used to connect.</i></h4><code>/opt/rockstor/bin/ovpn-client-print</code><h4><u>Configure firewall</u></h4><p>If your Rockstor system is behind a firewall, you will need to configure it to allow OpenVPN traffic to forward to your Rockstor system.</p>',}
+           'more_info': '<h4>Additional steps are required by this Rock-on.</h4><p>Run these following commands as the<code>root</code>user on your Rockstor system, i.e., via a ssh console.</p><h4><u>Initialize PKI</u>&nbsp;&nbsp;&nbsp;&nbsp;<i>The OpenVPN Rock-on will not start without it.</i></h4><code>/opt/rockstor/bin/ovpn-initpki</code><h4><u>Generate a client certificate</u>&nbsp;&nbsp;&nbsp;&nbsp;<i>One for every client</i></h4><code>/opt/rockstor/bin/ovpn-client-gen</code><br><h4><u>Retrieve client configuration</u>&nbsp;&nbsp;&nbsp;&nbsp<i>For any one of your clients. The resulting .ovpn file can be used to connect to this OpenVPN server.</i></h4><code>/opt/rockstor/bin/ovpn-client-print</code><h4><u>Configure firewall</u></h4><p>If your Rockstor system is behind a firewall, you will need to configure it to allow OpenVPN traffic to forward to your Rockstor system.</p>',}
 
 owncloud = {'ui': {'slug': '',
                    'https': True,},
@@ -37,16 +37,16 @@ owncloud = {'ui': {'slug': '',
                                         'volumes': {'/var/www/owncloud/data':
                                                     {'description': 'Choose a Share for OwnCloud data. Eg: create a Share called owncloud-data for this purpose alone.',
                                                      'min_size': 1073741824,
-                                                     'label': 'Data directory',},
+                                                     'label': 'Data Storage',},
                                                     '/var/www/owncloud/config':
                                                     {'description': 'Choose a Share for OwnCloud configuration. Eg: create a Share called owncloud-config for this purpose alone.',
-                                                     'label': 'Config directory',
+                                                     'label': 'Config Storage',
                                                      'min_size': 1073741824,},},
                                         'launch_order': 2,},
                            'owncloud-postgres': {'image': 'postgres',
                                                  'volumes': {'/var/lib/postgresql/data':
                                                              {'description': "Choose a Share for OwnCloud's postgresql database. Eg: create a Share called owncloud-db for this purpose alone.",
-                                                              'label': 'Database',
+                                                              'label': 'DB Storage',
                                                               'min_size': 1073741824, }, },
                                                  'launch_order': 1}, },
             'container_links': {'owncloud': [{'source_container': 'owncloud-postgres',
@@ -84,13 +84,14 @@ syncthing = {'ui': {'slug': '',
                                           'volumes': {'/home/syncthing/.config/syncthing':
                                                       {'description': 'Choose a Share for configuration. Eg: create a Share called syncthing-config for this purpose alone.',
                                                        'min_size': ONE_GB,
-                                                       'label': 'Config directory',},
+                                                       'label': 'Config Storage',},
                                                       '/home/syncthing/Sync':
-                                                      {'label': 'Data directory',
+                                                      {'label': 'Data Storage',
                                                        'description': 'Choose a Share for all incoming data. Eg: create a Share called syncthing-data for this purpose alone.',},},
                                           'launch_order': 1,},},
              'description': 'Continuous File Synchronization',
-             'website': 'https://syncthing.net/',}
+             'website': 'https://syncthing.net/',
+             'volume_add_support': True, }
 
 transmission = {'ui': {'slug': '',},
                 'containers': {'transmission': {'image': 'dperson/transmission',
@@ -106,7 +107,7 @@ transmission = {'ui': {'slug': '',},
                                                            'description': 'Port used to share the file being downloaded. You may need to open it(protocol: tcp and udp) on your firewall. Suggested default: 51413.',},},
                                                 'volumes': {'/var/lib/transmission-daemon':
                                                             {'description': "Choose a Share where Transmission will save all of it's files including your downloads. Eg: create a Share called transmission-rockon.",
-                                                             'label': 'Data directory',},},
+                                                             'label': 'Data Storage',},},
                                                 'launch_order': 1,},},
                 'custom_config': {'TRUSER':
                                   {'label': 'WebUI username',
@@ -132,12 +133,12 @@ btsync = {'ui': {'slug': '',},
                                                'description': 'Port for incoming data. You may need to open it(protocol: udp) on your firewall. Suggested default: 3369.',},},
                                     'volumes': {'/data':
                                                 {'description': 'Choose a Share for all incoming data. Eg: create a Share called btsync-data for this purpose alone. It will be available as /data inside BTSync.',
-                                                 'label': 'Data directory',},},
+                                                 'label': 'Data Storage',},},
                                     'launch_order': 1,},},
           'description': 'BitTorrent Sync',
           'website': 'https://www.getsync.com/',
           'volume_add_support': True,
-          'more_info': '<h4>Authentication</h4><p>Default username for your BTSync UI is<code>admin</code>and password is<code>password</code></p><h4>Storage</h4><p>We strongly recommend changing the Default folder location to<code>/data</code>in the UI preferences.</p><p>You can also assign additional Shares for custom organization of your data.</p>'}
+          'more_info': '<h4>Authentication</h4><p>Default username for your BTSync UI is<code>admin</code>and password is<code>password</code></p><h4>Storage</h4><p>You can also assign additional Shares for custom organization of your data.</p>'}
 
 plex = {'ui': {'slug': 'web',},
         'containers': {'plex': {'image': 'timhaak/plex',
@@ -151,10 +152,10 @@ plex = {'ui': {'slug': 'web',},
                                 'opts': [['--net=host', ''],],
                                 'volumes': {'/config':
                                             {'description': 'Choose a Share for Plex configuration. Eg: create a Share called plex-config for this purpose alone.',
-                                             'label': 'Config directory',},
+                                             'label': 'Config Storage',},
                                             '/data':
                                             {'description': 'Choose a Share for Plex content(your media). Eg: create a Share called plex-data for this purpose alone. You can also assign other media Shares on the system after installation.',
-                                             'label': 'Data directory',},},},},
+                                             'label': 'Data Storage',},},},},
         'description': 'Plex media server',
         'website': 'https://plex.tv/',
         'volume_add_support': True,

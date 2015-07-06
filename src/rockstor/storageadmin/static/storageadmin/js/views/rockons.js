@@ -136,7 +136,7 @@ RockonsView = RockstorLayoutView.extend({
 	if (buttonDisabled(button)) return false;
 	var rockon_id = button.attr('data-name');
 	var rockon_o = _this.rockons.get(rockon_id);
-	if (confirm("Are you sure you want to uninstall this Rockon(" + rockon_o.get('name') + ")?")) {
+	if (confirm("Are you sure you want to uninstall this Rock-on (" + rockon_o.get('name') + ")?")) {
 	    disableButton(button);
 	    $.ajax({
 		url: '/api/rockons/' + rockon_id + '/uninstall',
@@ -693,12 +693,12 @@ RockonSettingsWizardView = WizardView.extend({
     modifyButtonText: function() {
 	if (this.currentPageNum == 0) {
 	    this.$('#prev-page').hide();
-	    this.$('#next-page').html('Add a Share');
+	    this.$('#next-page').html('Add Storage');
 	    if (!this.rockon.get('volume_add_support')) {
 		this.$('#next-page').hide();
 	    }
 	} else if (this.currentPageNum == (this.pages.length - 2)) {
-	    this.$('#prev-page').html('Add a Share');
+	    this.$('#prev-page').html('Add Storage');
     	    this.$('#next-page').html('Next');
     	} else if (this.currentPageNum == (this.pages.length - 1)) {
     	    this.$('#prev-page').hide();
@@ -759,8 +759,10 @@ RockonAddShare = RockstorWizardPage.extend({
 	}));
 	this.share_form = this.$('#vol-select-form');
 	this.validator = this.share_form.validate({
-	    rules: { "volume": "required" },
-	    messages: { "volume": "Must be a valid unix path. Eg: /data/media" }
+	    rules: { "volume": "required",
+		     "share": "required" },
+	    messages: { "volume": "Must be a valid unix path. Eg: /data/media",
+			"share": "Select an appropriate Share to map"}
 	});
 	return this;
     },

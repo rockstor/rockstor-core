@@ -181,6 +181,9 @@ class RockOnView(rfc.GenericView):
                             options = containers[c]['opts']
                             id_l = []
                             for o in options:
+                                #there are no unique constraints on this model, so we need this bandaid.
+                                if (ContainerOption.objects.filter(container=co, name=o[0], val=o[1]).count() > 1):
+                                    ContainerOption.objects.filter(container=co, name=o[0], val=o[1]).delete()
                                 oo, created = ContainerOption.objects.get_or_create(container=co,
                                                                                     name=o[0],
                                                                                     val=o[1])
