@@ -23,20 +23,17 @@ from storageadmin.models import (NFSExport, NFSExportGroup, Disk)
 from storageadmin.serializers import NFSExportGroupSerializer
 from fs.btrfs import (mount_share, is_share_mounted)
 import rest_framework_custom as rfc
-from nfs_helpers import (create_nfs_export_input, parse_options,
-                         dup_export_check, refresh_wrapper,
-                         teardown_wrapper, validate_export_group)
-from share_helpers import validate_share
-
+from nfs_exports import NFSMixin
 import logging
+
 logger = logging.getLogger(__name__)
 
 
-class ShareNFSListView(rfc.GenericView):
+class ShareNFSListView(NFSMixin, rfc.GenericView):
     serializer_class = NFSExportGroupSerializer
 
     def get_queryset(self, *args, **kwargs):
-        share = validate_share(self.kwargs['sname'], self.request)
+        share = self._validate_share(self.request, self.kwargs['sname'])
         exports = NFSExport.objects.filter(share=share)
         ids = [e.export_group.id for e in exports]
         return NFSExportGroup.objects.filter(nohide=False, id__in=ids)
@@ -44,9 +41,9 @@ class ShareNFSListView(rfc.GenericView):
     @transaction.commit_on_success
     def post(self, request, sname):
         with self._handle_exception(request):
-            share = validate_share(sname, request)
-            options = parse_options(request)
-            dup_export_check(share, options['host_str'], request)
+            share = self._validate_share(request, sname)
+            options = self._parse_options(request)
+            self._dup_export_check(share, options['host_str'], request)
             cur_exports = list(NFSExport.objects.all())
             eg = NFSExportGroup(**options)
             eg.save()
@@ -60,8 +57,8 @@ class ShareNFSListView(rfc.GenericView):
             export.save()
             cur_exports.append(export)
 
-            exports = create_nfs_export_input(cur_exports)
-            refresh_wrapper(exports, request, logger)
+            exports = self._create_nfs_export_input(cur_exports)
+            self._refresh_wrapper(exports, request, logger)
             nfs_serializer = NFSExportGroupSerializer(eg)
             return Response(nfs_serializer.data)
 
@@ -80,24 +77,24 @@ class ShareNFSDetailView(rfc.GenericView):
     @transaction.atomic
     def put(self, request, sname, export_id):
         with self._handle_exception(request):
-            share = validate_share(sname, request)
-            eg = validate_export_group(export_id, request)
-            options = parse_options(request)
-            dup_export_check(share, options['host_str'], request,
+            share = self._validate_share(request, sname)
+            eg = self._validate_export_group(export_id, request)
+            options = self._parse_options(request)
+            self._dup_export_check(share, options['host_str'], request,
                              export_id=int(export_id))
             NFSExportGroup.objects.filter(id=export_id).update(**options)
             NFSExportGroup.objects.filter(id=export_id)[0].save()
             cur_exports = list(NFSExport.objects.all())
-            exports = create_nfs_export_input(cur_exports)
-            refresh_wrapper(exports, request, logger)
+            exports = self._create_nfs_export_input(cur_exports)
+            self._refresh_wrapper(exports, request, logger)
             nfs_serializer = NFSExportGroupSerializer(eg)
             return Response(nfs_serializer.data)
 
     @transaction.atomic
     def delete(self, request, sname, export_id):
         with self._handle_exception(request):
-            share = validate_share(sname, request)
-            eg = validate_export_group(export_id, request)
+            share = self._validate_share(request, sname)
+            eg = self._validate_export_group(export_id, request)
             cur_exports = list(NFSExport.objects.all())
             export = NFSExport.objects.get(export_group=eg, share=share)
             for e in NFSExport.objects.filter(share=share):
@@ -108,12 +105,12 @@ class ShareNFSDetailView(rfc.GenericView):
                         snap_name = e.mount.split(e.share.name + '_')[-1]
                         export_pt = ('%s%s/%s' % (settings.NFS_EXPORT_ROOT,
                                                   e.share.name, snap_name))
-                    teardown_wrapper(export_pt, request, logger)
+                    self._teardown_wrapper(export_pt, request, logger)
                     cur_exports.remove(e)
-            exports = create_nfs_export_input(cur_exports)
+            exports = self._create_nfs_export_input(cur_exports)
             export.delete()
             if (NFSExport.objects.filter(export_group=eg).count() == 0):
                 #delete only when this is the only share in the group
                 eg.delete()
-            refresh_wrapper(exports, request, logger)
+            self._refresh_wrapper(exports, request, logger)
             return Response()

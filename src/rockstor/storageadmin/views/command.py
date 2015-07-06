@@ -33,12 +33,12 @@ from system.ssh import (sftp_mount_map, sftp_mount)
 from system.services import (systemctl, join_winbind_domain, ads_join_status)
 from system.osi import (is_share_mounted, system_shutdown, system_reboot)
 from storageadmin.models import (Share, Disk, NFSExport, SFTP, Pool)
-from nfs_helpers import create_nfs_export_input
 from storageadmin.util import handle_exception
 from datetime import datetime
 from django.utils.timezone import utc
 from django.conf import settings
-from share_helpers import sftp_snap_toggle
+from sftp import SFTPMixin
+from nfs_exports import NFSMixin
 from oauth2_provider.ext.rest_framework import OAuth2Authentication
 from system.pkg_mgmt import install_pkg
 
@@ -46,7 +46,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class CommandView(APIView):
+class CommandView(SFTPMixin, NFSMixin, APIView):
     authentication_classes = (DigestAuthentication, SessionAuthentication,
                               BasicAuthentication, OAuth2Authentication,)
     permission_classes = (IsAuthenticated,)
@@ -90,7 +90,7 @@ class CommandView(APIView):
                 for sftpo in SFTP.objects.all():
                     sftp_mount(sftpo.share, settings.MNT_PT,
                                settings.SFTP_MNT_ROOT, mnt_map, sftpo.editable)
-                    sftp_snap_toggle(sftpo.share)
+                    self._sftp_snap_toggle(sftpo.share)
             except Exception, e:
                 e_msg = ('Unable to export all sftp shares due to a system'
                          ' error')
@@ -99,7 +99,8 @@ class CommandView(APIView):
                 handle_exception(Exception(e_msg), request)
 
             try:
-                exports = create_nfs_export_input(NFSExport.objects.all())
+                exports = self._create_nfs_export_input(NFSExport.objects.all())
+                logger.info('export = %s' % exports)
                 refresh_nfs_exports(exports)
             except Exception, e:
                 e_msg = ('Unable to export all nfs shares due to a system'
