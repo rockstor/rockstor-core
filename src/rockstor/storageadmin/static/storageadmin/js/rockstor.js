@@ -426,6 +426,7 @@ function fetchLoadAvg() {
     });
 }
 
+/* Deprecated in favor of websockets
 function fetchKernelInfo() {
     $.ajax({
 	url: '/api/commands/kernel',
