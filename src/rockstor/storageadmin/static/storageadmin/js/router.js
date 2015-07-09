@@ -122,17 +122,11 @@ var AppRouter = Backbone.Router.extend({
 	if (RockStorGlobals.currentAppliance == null) {
 	    setApplianceName();
 	}
-	if (!RockStorGlobals.loadAvgDisplayed) {
-	    updateLoadAvg();
-	}
 	if (!RockStorGlobals.serverTimeFetched) {
 	    fetchServerTime();
 	}
 	if (!RockStorGlobals.browserChecked) {
 	    checkBrowser();
-	}
-	if (!RockStorGlobals.kernel) {
-	    fetchKernelInfo();
 	}
 
 	// set a timer to get current rockstor version and checkif there is an
@@ -887,5 +881,53 @@ $(document).ready(function() {
 	$('#contrib-form').submit()
 	$('#donate-modal').modal('hide');
     });
-    Rockstorsocket = io.connect('/dashboard', {secure: 'false', url: 'http://192.168.56.105:8080'});
+    var $loadavg = $('#appliance-loadavg');
+    var socket = io.connect('/sysinfo', {'secure': true});
+
+
+    socket.on('sysinfo', function(data) {
+	console.log(data);
+    });
+
+    socket.on('uptime', function(data) {
+	displayLoadAvg(data);
+    });
+
+    socket.on('kernel_info', function(data) {
+	$loadavg.text('Linux: ' + data.kernel_info);
+    });
+
+    socket.on('unsupported_kernel', function() {
+	console.log('unsupported kernel');
+    });
 });
+
+
+function displayLoadAvg(data) {
+    var n = parseInt(data.uptime);
+    var secs = n % 60;
+    var mins = Math.round(n/60) % 60;
+    var hrs = Math.round(n / (60*60)) % 24;
+    var days = Math.round(n / (60*60*24)) % 365;
+    var yrs = Math.round(n / (60*60*24*365));
+    var str = 'Uptime: ';
+    if (yrs == 1) {
+	str += yrs + ' year, ';
+    } else if (yrs > 1) {
+	str += yrs + ' years, ';
+    }
+    if (days == 1) {
+	str += days + ' day, ';
+    } else if (days > 1) {
+	str += days + ' days, ';
+    }
+    if (hrs < 10) {
+	str += '0';
+    }
+    str += hrs + ':';
+    if (mins < 10) {
+	str += '0';
+    }
+    str += mins;
+    $('#uptime').text(str);
+};
