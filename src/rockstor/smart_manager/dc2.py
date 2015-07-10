@@ -18,40 +18,39 @@ class DashboardNamespace(BaseNamespace, BroadcastMixin):
         pass
 
 
+# Read more on gevent to make connections more robust
+# Best practices for spawning greenlets
 class SysinfoNamespace(BaseNamespace, BroadcastMixin):
     start = False
     supported_kernel = settings.SUPPORTED_KERNEL_VERSION
+    kernel_func = 0
 
-    def initialize(self):
-        self.emit("sysinfo", {"sysinfo": "connected"})
+    def recv_connect(self):
+        self.emit("sysinfo", {"key": "connected"})
         self.start = True
         gevent.spawn(self.send_uptime)
-        gevent.spawn(self.send_kernel_info)
+        self.kernel_func = gevent.spawn(self.send_kernel_info)
 
     def recv_disconnect(self):
         self.start = False
         self.disconnect(silent=True)
 
     def send_uptime(self):
-
         while self.start:
             if not self.start:
                 break
-            self.emit('uptime', {'uptime': uptime()})
-            # seconds not displayed
+            self.emit('uptime', {'key': uptime()})
             gevent.sleep(30)
 
     def send_kernel_info(self):
-        while self.start:
-            if not self.start:
-                break
             try:
                 self.emit('kernel_info', {'kernel_info':
                                           kernel_info(self.supported_kernel)})
+                # Send information once per connection
+                self.kernel_func.kill()
             except:
+                # How do errors get reported to the front end?
                 self.error('unsupported_kernel', 'the kernel is bad')
-            # kernel information doesn't change that much
-            gevent.sleep(1000)
 
 
 class Application(object):

@@ -25,17 +25,17 @@
  */
 
 var RockStorSocket = {};
-RockStorSocket.handlerMap = {} // initialize handler array
+RockStorSocket.handlerMap = {}; // initialize handler array
 
 RockStorSocket.addListener = function(fn, fn_this, key) {
   RockStorSocket.handlerMap[key] = {fn: fn, fn_this: fn_this}; 
-}
+};
 
 RockStorSocket.removeAllListeners = function() {
   _.each(_.keys(RockStorSocket.handlerMap), function(key) {
     delete RockStorSocket.handlerMap[key];
   });
-}
+};
 
 RockStorSocket.msgHandler = function(data) {
   logger.debug('received msg');
@@ -46,5 +46,5 @@ RockStorSocket.msgHandler = function(data) {
       obj.fn.call(obj.fn_this, msg_data[key]); 
     }
   });
-}
+};
 

@@ -829,12 +829,6 @@ $(document).ready(function() {
 	$('#globalerrmsg').empty();
     });
 
-    // Initialize websocket connection
-    // logger.debug('connecting to websocket');
-    // RockStorSocket.socket = io.connect('https://' + document.location.host + ':' + NGINX_WEBSOCKET_PORT,
-    // {secure: true}
-    // );
-    // RockStorSocket.socket.on('sm_data', RockStorSocket.msgHandler);
 
     // Initialize global error popup
     $('#global-err-overlay').overlay({load: false});
@@ -881,17 +875,61 @@ $(document).ready(function() {
 	$('#contrib-form').submit()
 	$('#donate-modal').modal('hide');
     });
+
+    /********** Websockets **************/
+    var RockStorSocket = {};
+    RockStorSocket.handlerMap = {}; // initialize handler array
+
+    RockStorSocket.addListener = function(fn, fn_this, key) {
+	RockStorSocket.handlerMap[key] = {fn: fn, fn_this: fn_this};
+    };
+
+    RockStorSocket.removeListener = function(key) {
+	// Fill in with stripped down version of removealllisteners
+	RockStorSocket[key].disconnect();
+	console.log(key + ' has bee disconnected');
+
+    };
+
+    RockStorSocket.removeAllListeners = function() {
+	_.each(_.keys(RockStorSocket.handlerMap), function(key) {
+	    delete RockStorSocket.handlerMap[key];
+	    console.log(key);
+	});
+    };
+
+    RockStorSocket.msgHandler = function(data) {
+	_.each(_.keys(RockStorSocket.handlerMap), function(key) {
+	    if (!_.isNull(data.key) && !_.isUndefined(data.key)) {
+		var obj = RockStorSocket.handlerMap[key];
+		obj.fn.call(obj.fn_this, data);
+	    }
+	});
+    };
     var $loadavg = $('#appliance-loadavg');
-    var socket = io.connect('/sysinfo', {'secure': true});
 
+    var sysinfo = function(data) {
+	console.log("We're in sysinfo", data);
+	RockStorSocket.removeListener('socket');
+    };
 
-    socket.on('sysinfo', function(data) {
-	console.log(data);
-    });
-
-    socket.on('uptime', function(data) {
+    var uptime = function(data) {
 	displayLoadAvg(data);
-    });
+    };
+
+
+    // Connect to the virtual endpoint
+    RockStorSocket.socket = io.connect('/sysinfo', {'secure': true});
+
+    // Add the callback to the listener map
+    RockStorSocket.addListener(sysinfo, this, 'sysinfo');
+    RockStorSocket.addListener(uptime, this, 'uptime');
+
+    // Listen for signals
+    RockStorSocket.socket.on('sysinfo', RockStorSocket.msgHandler);
+
+
+    /*
 
     socket.on('kernel_info', function(data) {
 	$loadavg.text('Linux: ' + data.kernel_info);
