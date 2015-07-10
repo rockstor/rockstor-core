@@ -194,14 +194,10 @@ def main():
 #run_command(['echo', 'deadline', '>', '/sys/block/%s/queue/scheduler' % root_disk])
 
 #add deadline scheduler to kernel parameters
-#open /etc/grub/default
+#this is also not necessary since deadline scheduler is default for non sata drives.
+#in /etc/grub/default
 #GRUB_CMDLINE_LINUX="crashkernel=auto rhgb quiet elevator=deadline"
 #run_command(['grub2-mkconfig', '-o', '/boot/grub2/grub.cfg'])
-
-#keep around 15-20 % free space in each file system on root disk
-#warn the user some how?
-
-
 
 #useful links
 #https://wiki.archlinux.org/index.php/Solid_State_Drives
