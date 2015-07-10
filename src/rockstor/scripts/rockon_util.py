@@ -1,5 +1,5 @@
 """
-Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+Copyright (c) 2012-2015 RockStor, Inc. <http://rockstor.com>
 This file is part of RockStor.
 
 RockStor is free software; you can redistribute it and/or modify
@@ -16,14 +16,17 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from rest_framework import serializers
-from storageadmin.models import (Disk, Pool,)
+import os
+os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
+import json
+import sys
+from storageadmin.views.rockon_json import rockons
+
+def main():
+    out_file = sys.argv[1]
+    with open(out_file, 'w') as ofo:
+        json.dump(rockons, ofo, indent=4, sort_keys=True)
 
 
-class DiskInfoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Disk
-
-class PoolInfoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Pool
+if __name__ == '__main__':
+    main()

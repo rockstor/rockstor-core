@@ -25,6 +25,7 @@
 
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="http://rockstor.com/media/images/ico/favicon.ico">
     <title>RockStor | {% block title %}{% endblock %}</title>
     <link href="/static/storageadmin/css/bootstrap.min.css" rel="stylesheet">
     <link href="/static/storageadmin/css/datepicker.css" rel="stylesheet">
@@ -115,7 +116,7 @@
           </button>
           <div id="navbar-brand">
 	    <a href="#/home">
-              <img class="img-responsive logo" src="{% static 'storageadmin/img/rockstorlogo-font2.png' %}" />
+              <img class="img-responsive logo" src="/static/storageadmin/img/rockstorlogo-font2.png"/>
 	      </a>
           </div>
 	</div>
@@ -229,7 +230,7 @@
       </div><!-- /.modal-dialog -->
     </div><!-- /.modal -->
 
-    
+
     <form name="dummy-form" action="/login" method="post">
       {% csrf_token %}
     </form>

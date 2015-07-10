@@ -41,8 +41,8 @@ class RockOnIdView(rfc.GenericView):
     @staticmethod
     def _pending_check(request):
         if (RockOn.objects.filter(state__contains='pending').exists()):
-            e_msg = ('Another Rockon is in state transition. Multiple '
-                     'simultaneous Rockon transitions are not '
+            e_msg = ('Another Rock-on is in state transition. Multiple '
+                     'simultaneous Rock-on transitions are not '
                      'supported. Please try again later.')
             handle_exception(Exception(e_msg), request)
 
@@ -80,11 +80,8 @@ class RockOnIdView(rfc.GenericView):
             if (command == 'install'):
                 self._pending_check(request)
                 share_map = request.data.get('shares', {})
-                logger.debug('share map = %s' % share_map)
                 port_map = request.data.get('ports', {})
-                logger.debug('port map = %s' % port_map)
                 cc_map = request.data.get('cc', {})
-                logger.debug('cc map = %s' % cc_map)
                 containers = DContainer.objects.filter(rockon=rockon)
                 for co in containers:
                     for s in share_map.keys():
@@ -92,37 +89,28 @@ class RockOnIdView(rfc.GenericView):
                         if (not Share.objects.filter(name=sname).exists()):
                             e_msg = ('Invalid Share(%s).' % sname)
                             handle_exception(Exception(e_msg), request)
-                        so = Share.objects.get(name=sname)
-                        vo = DVolume.objects.get(container=co,
-                                                 dest_dir=s)
-                        vo.share = so
-                        vo.save()
+                        if (DVolume.objects.filter(container=co, dest_dir=s).exists()):
+                            so = Share.objects.get(name=sname)
+                            vo = DVolume.objects.get(container=co,
+                                                     dest_dir=s)
+                            vo.share = so
+                            vo.save()
+                    # {'host_port' : 'container_port', ... }
                     for p in port_map.keys():
-                        if (not DPort.objects.filter(containerp=p).exists()):
-                            e_msg = ('Invalid Port(%s).' % p)
-                            handle_exception(Exception(e_msg), request)
-                        po = DPort.objects.get(containerp=p)
-                        if (po.hostp != port_map[p] and
-                            DPort.objects.filter(Q(hostp=port_map[p]) & ~Q(id=po.id)).exists()):
-                            opo = DPort.objects.filter(Q(hostp=port_map[p]) & ~Q(id=po.id))[0]
-                            if (opo.container.rockon.state != 'available' or
-                                opo.hostp == opo.containerp):
-                                e_msg = ('Rockstor port(%s) is dedicated '
-                                         'to another rockon(%s) and cannot'
-                                         ' be changed. '
-                                         'Choose a different one' %
-                                         (port_map[p], opo.container.rockon.name))
+                        if (DPort.objects.filter(hostp=p).exists()):
+                            po = DPort.objects.get(hostp=p)
+                            if (po.container.rockon.id != rockon.id):
+                                e_msg = ('Rock-on port(%s) is dedicated to '
+                                         'another Rock-On(%s) and cannot '
+                                         'be changed. Choose a different name'
+                                         % (p, po.container.rockon.name))
                                 handle_exception(Exception(e_msg), request)
-                            else:
-                                opo.hostp = opo.containerp
-                                opo.save()
-                        po.hostp = port_map[p]
-                        po.save()
-                        if (po.uiport is True and rockon.link is not None):
-                            if (len(rockon.link) > 0 and rockon.link[0] != ':'):
-                                rockon.link = (':%s/%s' % (po.hostp, rockon.link))
-                            else:
-                                rockon.link = (':%s' % po.hostp)
+                        else:
+                            for co2 in DContainer.objects.filter(rockon=rockon):
+                                if (DPort.objects.filter(container=co2, containerp=port_map[p]).exists()):
+                                    po = DPort.objects.get(container=co2, containerp=port_map[p])
+                                    po.hostp = p
+                                    po.save()
                     for c in cc_map.keys():
                         if (not DCustomConfig.objects.filter(rockon=rockon, key=c).exists()):
                             e_msg = ('Invalid custom config key(%s)' % c)
@@ -173,6 +161,10 @@ class RockOnIdView(rfc.GenericView):
                             handle_exception(Exception(e_msg), request)
                         if (DVolume.objects.filter(container=co, dest_dir=s).exists()):
                             e_msg = ('Directory(%s) is already mapped for this Rock-on' % s)
+                            handle_exception(Exception(e_msg), request)
+                        if (not s.startswith('/')):
+                            e_msg = ('Invalid Directory(%s). Must provide an '
+                                     'absolute path. Eg: /data/media' % s)
                             handle_exception(Exception(e_msg), request)
                         do = DVolume(container=co, share=so, uservol=True, dest_dir=s)
                         do.save()

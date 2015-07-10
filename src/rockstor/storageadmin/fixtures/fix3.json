@@ -18,6 +18,24 @@
     }
 },
 {
+    "pk": 2, 
+    "model": "auth.user", 
+    "fields": {
+        "username": "admin3", 
+        "first_name": "", 
+        "last_name": "", 
+        "is_active": true, 
+        "is_superuser": false, 
+        "is_staff": false, 
+        "last_login": "2015-06-24T13:45:07.798Z", 
+        "groups": [], 
+        "user_permissions": [], 
+        "password": "pbkdf2_sha256$12000$Bb43rKaysb7C$XLW1jhTPzwXkzcoujNwdNte7QFpaN2S+T1rnVMAXFZU=", 
+        "email": "", 
+        "date_joined": "2015-06-24T13:45:07.798Z"
+    }
+},
+{
     "pk": "psc9vlwgacfxjcqmohyivolkkdcphgvs", 
     "model": "sessions.session", 
     "fields": {
@@ -42,7 +60,7 @@
         "uuid": "54451c3d-ab13-4ac1-8f5d-9856ae4e301f", 
         "name": "rockstor_rockstor", 
         "mnt_options": null, 
-        "toc": "2015-06-22T09:05:07.262Z", 
+        "toc": "2015-06-30T10:50:58.063Z", 
         "size": 8924160
     }
 },
@@ -55,7 +73,7 @@
         "uuid": "140de4b1-18fc-4016-a932-18dd82b2c638", 
         "name": "pool1", 
         "mnt_options": "", 
-        "toc": "2015-06-22T09:50:37.055Z", 
+        "toc": "2015-06-30T10:50:58.081Z", 
         "size": 2097152
     }
 },
@@ -68,7 +86,7 @@
         "uuid": "db9212c3-f76d-44ff-b73b-0d42c2d33dab", 
         "name": "pool2", 
         "mnt_options": "", 
-        "toc": "2015-06-22T09:50:53.792Z", 
+        "toc": "2015-06-30T10:50:58.025Z", 
         "size": 3145728
     }
 },
@@ -81,7 +99,7 @@
         "uuid": "813753da-3951-46da-bfda-70bceab2930b", 
         "name": "pool3", 
         "mnt_options": "", 
-        "toc": "2015-06-22T09:51:01.264Z", 
+        "toc": "2015-06-30T10:50:58.044Z", 
         "size": 1048576
     }
 },
@@ -182,13 +200,15 @@
         "group": "root", 
         "name": "home", 
         "perms": "755", 
+        "eusage": 16, 
         "uuid": null, 
         "compression_algo": null, 
         "owner": "root", 
         "replica": false, 
         "qgroup": "0/257", 
-        "toc": "2015-06-22T09:05:08.264Z", 
+        "toc": "2015-06-30T10:50:58.535Z", 
         "subvol_name": "home", 
+        "rusage": 16, 
         "pool": 1, 
         "size": 8924160
     }
@@ -200,13 +220,15 @@
         "group": "root", 
         "name": "root", 
         "perms": "755", 
+        "eusage": 2044723, 
         "uuid": null, 
         "compression_algo": null, 
         "owner": "root", 
         "replica": false, 
         "qgroup": "0/258", 
-        "toc": "2015-06-22T09:05:08.309Z", 
+        "toc": "2015-06-30T10:50:58.550Z", 
         "subvol_name": "root", 
+        "rusage": 2044723, 
         "pool": 1, 
         "size": 8924160
     }
@@ -218,13 +240,15 @@
         "group": "root", 
         "name": "share1", 
         "perms": "755", 
+        "eusage": 16, 
         "uuid": null, 
         "compression_algo": "no", 
         "owner": "root", 
         "replica": false, 
-        "qgroup": "<function qgroup_id at 0x2e880c8>", 
-        "toc": "2015-06-22T09:51:50.459Z", 
+        "qgroup": "0/257", 
+        "toc": "2015-06-30T10:50:58.573Z", 
         "subvol_name": "share1", 
+        "rusage": 16, 
         "pool": 4, 
         "size": 1048576
     }
@@ -236,13 +260,15 @@
         "group": "root", 
         "name": "share2", 
         "perms": "755", 
+        "eusage": 16, 
         "uuid": null, 
         "compression_algo": "no", 
         "owner": "root", 
         "replica": false, 
-        "qgroup": "<function qgroup_id at 0x2e880c8>", 
-        "toc": "2015-06-22T09:51:59.853Z", 
+        "qgroup": "0/258", 
+        "toc": "2015-06-30T10:50:58.597Z", 
         "subvol_name": "share2", 
+        "rusage": 16, 
         "pool": 4, 
         "size": 1048576
     }
@@ -254,13 +280,15 @@
         "group": "root", 
         "name": "share3", 
         "perms": "755", 
+        "eusage": 16, 
         "uuid": null, 
         "compression_algo": "no", 
         "owner": "root", 
         "replica": false, 
-        "qgroup": "<function qgroup_id at 0x2e880c8>", 
-        "toc": "2015-06-22T09:52:26.178Z", 
+        "qgroup": "0/259", 
+        "toc": "2015-06-30T10:50:58.585Z", 
         "subvol_name": "share3", 
+        "rusage": 16, 
         "pool": 4, 
         "size": 1048576
     }
@@ -272,13 +300,15 @@
         "group": "root", 
         "name": "share4", 
         "perms": "755", 
+        "eusage": 16, 
         "uuid": null, 
         "compression_algo": "no", 
         "owner": "root", 
         "replica": false, 
-        "qgroup": "<function qgroup_id at 0x2e880c8>", 
-        "toc": "2015-06-22T09:52:51.231Z", 
+        "qgroup": "0/258", 
+        "toc": "2015-06-30T10:50:58.472Z", 
         "subvol_name": "share4", 
+        "rusage": 16, 
         "pool": 5, 
         "size": 1048576
     }
@@ -290,13 +320,15 @@
         "group": "root", 
         "name": "share5", 
         "perms": "755", 
+        "eusage": 16, 
         "uuid": null, 
         "compression_algo": "no", 
         "owner": "root", 
         "replica": false, 
-        "qgroup": "<function qgroup_id at 0x2e880c8>", 
-        "toc": "2015-06-22T09:53:02.498Z", 
+        "qgroup": "0/259", 
+        "toc": "2015-06-30T10:50:58.450Z", 
         "subvol_name": "share5", 
+        "rusage": 16, 
         "pool": 5, 
         "size": 1048576
     }
@@ -308,13 +340,15 @@
         "group": "root", 
         "name": "share6", 
         "perms": "755", 
+        "eusage": 16, 
         "uuid": null, 
         "compression_algo": "no", 
         "owner": "root", 
         "replica": false, 
-        "qgroup": "<function qgroup_id at 0x2e880c8>", 
-        "toc": "2015-06-22T09:53:23.451Z", 
+        "qgroup": "0/257", 
+        "toc": "2015-06-30T10:50:58.511Z", 
         "subvol_name": "share6", 
+        "rusage": 16, 
         "pool": 6, 
         "size": 1048576
     }
@@ -326,13 +360,15 @@
         "group": "root", 
         "name": "share7", 
         "perms": "755", 
+        "eusage": 16, 
         "uuid": null, 
         "compression_algo": "no", 
         "owner": "root", 
         "replica": false, 
-        "qgroup": "<function qgroup_id at 0x2c0f0c8>", 
-        "toc": "2015-06-22T21:11:51.524Z", 
+        "qgroup": "0/258", 
+        "toc": "2015-06-30T10:50:58.496Z", 
         "subvol_name": "share7", 
+        "rusage": 16, 
         "pool": 6, 
         "size": 1048576
     }
@@ -405,6 +441,51 @@
     }
 },
 {
+    "pk": 6, 
+    "model": "storageadmin.group", 
+    "fields": {
+        "admin": true, 
+        "groupname": "root", 
+        "gid": 0
+    }
+},
+{
+    "pk": 9, 
+    "model": "storageadmin.group", 
+    "fields": {
+        "admin": true, 
+        "groupname": "admin7", 
+        "gid": 1005
+    }
+},
+{
+    "pk": 10, 
+    "model": "storageadmin.group", 
+    "fields": {
+        "admin": true, 
+        "groupname": "admin4", 
+        "gid": 1006
+    }
+},
+{
+    "pk": 11, 
+    "model": "storageadmin.group", 
+    "fields": {
+        "admin": true, 
+        "groupname": "chrony", 
+        "gid": 996
+    }
+},
+{
+    "pk": 16, 
+    "model": "storageadmin.group", 
+    "fields": {
+        "admin": true, 
+        "groupname": "bin", 
+        "gid": 1
+    }
+},
+{
     "pk": 1, 
     "model": "storageadmin.user", 
     "fields": {
@@ -440,6 +521,110 @@
         "smb_shares": [], 
         "email": null, 
         "homedir": "/home/admin2"
+    }
+},
+{
+    "pk": 5, 
+    "model": "storageadmin.user", 
+    "fields": {
+        "username": "admin3", 
+        "public_key": null, 
+        "shell": "/bin/bash", 
+        "group": 1, 
+        "uid": 1003, 
+        "admin": true, 
+        "gid": 1000, 
+        "user": [
+            "admin3"
+        ], 
+        "smb_shares": [], 
+        "email": null, 
+        "homedir": "/home/admin3"
+    }
+},
+{
+    "pk": 6, 
+    "model": "storageadmin.user", 
+    "fields": {
+        "username": "root", 
+        "public_key": null, 
+        "shell": "/bin/bash", 
+        "group": 6, 
+        "uid": 0, 
+        "admin": true, 
+        "gid": 0, 
+        "user": null, 
+        "smb_shares": [], 
+        "email": null, 
+        "homedir": "/home/root"
+    }
+},
+{
+    "pk": 8, 
+    "model": "storageadmin.user", 
+    "fields": {
+        "username": "admin7", 
+        "public_key": null, 
+        "shell": "/bin/bash", 
+        "group": 9, 
+        "uid": 1005, 
+        "admin": true, 
+        "gid": 1005, 
+        "user": null, 
+        "smb_shares": [], 
+        "email": null, 
+        "homedir": "/home/admin7"
+    }
+},
+{
+    "pk": 9, 
+    "model": "storageadmin.user", 
+    "fields": {
+        "username": "admin4", 
+        "public_key": null, 
+        "shell": "/bin/bash", 
+        "group": 10, 
+        "uid": 1006, 
+        "admin": true, 
+        "gid": 1006, 
+        "user": null, 
+        "smb_shares": [], 
+        "email": null, 
+        "homedir": "/home/admin4"
+    }
+},
+{
+    "pk": 10, 
+    "model": "storageadmin.user", 
+    "fields": {
+        "username": "chrony", 
+        "public_key": null, 
+        "shell": "/bin/bash", 
+        "group": 11, 
+        "uid": 997, 
+        "admin": true, 
+        "gid": 996, 
+        "user": null, 
+        "smb_shares": [], 
+        "email": null, 
+        "homedir": "/home/chrony"
+    }
+},
+{
+    "pk": 11, 
+    "model": "storageadmin.user", 
+    "fields": {
+        "username": "bin", 
+        "public_key": null, 
+        "shell": "/bin/bash", 
+        "group": 16, 
+        "uid": 1, 
+        "admin": true, 
+        "gid": 1, 
+        "user": null, 
+        "smb_shares": [], 
+        "email": null, 
+        "homedir": "/home/bin"
     }
 },
 {
@@ -776,6 +961,15 @@
     }
 },
 {
+    "pk": 31, 
+    "model": "south.migrationhistory", 
+    "fields": {
+        "applied": "2015-06-29T08:25:52.903Z", 
+        "app_name": "storageadmin", 
+        "migration": "0028_auto__add_field_snapshot_rusage__add_field_snapshot_eusage__add_field_"
+    }
+},
+{
     "pk": 1, 
     "model": "oauth2_provider.application", 
     "fields": {
@@ -992,6 +1186,292 @@
         "application": 1, 
         "token": "8iHmWeMsl1HXQXBZKbIPSX5oShcmqa", 
         "expires": "2015-06-23T20:13:51.167Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 17, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "ILyFZnU0pTQStGvCZuGHD0EdRzfUGq", 
+        "expires": "2015-06-23T21:46:03.979Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 18, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "f5l6eXqTjWE3NVLqQVNcipHwVf4RyV", 
+        "expires": "2015-06-23T21:46:15.695Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 19, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "bSSOO062iYLQnNVry9l6TeVCyCq9OO", 
+        "expires": "2015-06-24T07:46:48.750Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 20, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "mVJ1QU8qOcrTwP4wsLfZwMhlZ1nu7i", 
+        "expires": "2015-06-24T17:47:33.069Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 21, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "1eZAxzoatWPLsVmOy2tJ0UIyb25O4A", 
+        "expires": "2015-06-24T19:18:28.419Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 22, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "SdTGHJ4WtzTzaI3gmXUmOagJoUpAif", 
+        "expires": "2015-06-24T19:18:39.815Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 23, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "LBZUtZ3ZW8oFR2FFsTq9WIJZGNZUkY", 
+        "expires": "2015-06-25T03:37:34.068Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 24, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "TjuAWjRRwfhPLF4lMy7Sp24q3xKIHq", 
+        "expires": "2015-06-25T03:37:45.433Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 25, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "vASYoHKZQs44R7PENkznCbUEIOMnz4", 
+        "expires": "2015-06-29T18:31:48.159Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 26, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "khN38hJbdvXGz2NxsMECNAvfOGuON4", 
+        "expires": "2015-06-29T18:31:57.241Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 27, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "LT8b85wkyISCLUk1mwa2ifxp2e6s2F", 
+        "expires": "2015-06-29T20:57:46.078Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 28, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "TyPLef1DzXGv7kcpcUTvTvwZNufLhS", 
+        "expires": "2015-06-29T20:57:57.522Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 29, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "TpVg7nwCKDh6ISNpg84V10LrfG7BRV", 
+        "expires": "2015-06-30T06:58:36.898Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 30, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "iHfta6KIqhtIeo6XE417DDlWorRNZW", 
+        "expires": "2015-06-30T16:58:36.977Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 31, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "C4Qf8oGkJbeKYnnpMyIBITlO6l6Ngx", 
+        "expires": "2015-06-30T20:48:54.023Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 32, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "aiPMJev2bHOGfBAPqgVDdmw2cCx2q8", 
+        "expires": "2015-06-30T20:48:59.378Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 33, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "AYAi6yAcjmXwyQ0z7E4InX13EbGSaC", 
+        "expires": "2015-06-30T20:50:53.916Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 34, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "4XDhCDIjhR4sytAh8O79SoxG8prf59", 
+        "expires": "2015-06-30T20:51:05.666Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 35, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "QjN2PuRqg626u3TdAZWhdYywLjFBut", 
+        "expires": "2015-06-30T21:12:25.084Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 36, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "HOQsvL5iAhxH2XfeIw47vqvsXC5ak7", 
+        "expires": "2015-06-30T21:12:36.416Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 37, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "CEfEqUzZLzH7oIeHl11Uga5pXb6XDB", 
+        "expires": "2015-06-30T21:15:14.349Z", 
+        "user": [
+            "admin"
+        ], 
+        "scope": "read write"
+    }
+},
+{
+    "pk": 38, 
+    "model": "oauth2_provider.accesstoken", 
+    "fields": {
+        "application": 1, 
+        "token": "GSWsAoNcNAD4IWmYSnhZInP9aNIEC8", 
+        "expires": "2015-06-30T21:15:25.668Z", 
         "user": [
             "admin"
         ], 

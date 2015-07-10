@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from rest_framework.response import Response
+from rest_framework import status
 from django.db import transaction
 from django.conf import settings
 from storageadmin.util import handle_exception
@@ -35,6 +36,7 @@ logger = logging.getLogger(__name__)
 
 
 class UserMixin(object):
+    serializer_class = SUserSerializer
     exclude_list = ('root', 'nobody', 'bin', 'daemon', 'adm', 'sync',
                     'shutdown', 'halt', 'mail', 'operator', 'dbus', 'rpc',
                     'avahi', 'avahi-autoipd', 'rpcuser', 'nfsnobody',
@@ -70,9 +72,6 @@ class UserMixin(object):
             handle_exception(Exception(e_msg), request)
         input_fields['shell'] = shell
         email = request.data.get('email', None)
-        if (email is not None and type(email) != unicode):
-            e_msg = ('Email must be a valid string. not: %s' % type(email))
-            handle_exception(Exception(e_msg), request)
         input_fields['email'] = email
         input_fields['homedir'] = request.data.get(
             'homedir', '/home/%s' % username)
@@ -89,29 +88,25 @@ class UserMixin(object):
         if (public_key is not None and not is_pub_key(public_key)):
             e_msg = ('Public key is invalid')
             handle_exception(Exception(e_msg), request)
+        return public_key
 
 
 class UserListView(UserMixin, rfc.GenericView):
-    serializer_class = SUserSerializer
-
     def get_queryset(self, *args, **kwargs):
-        if ('username' in self.kwargs):
-            self.paginate_by = 0
-            try:
-                return User.objects.get(username=self.kwargs['username'])
-            except:
-                return []
-        return combined_users()
+        with self._handle_exception(self.request):
+            return combined_users()
 
     @transaction.atomic
     def post(self, request):
         with self._handle_exception(request):
+
             invar = self._validate_input(request)
             # Check that a django user with the same name does not exist
-            e_msg = ('user: %s already exists. Please choose a different'
+            e_msg = ('User(%s) already exists. Please choose a different'
                      ' username' % invar['username'])
             if (DjangoUser.objects.filter(
-                    username=invar['username']).exists()):
+                    username=invar['username']).exists() or
+                User.objects.filter(username=invar['username']).exists()):
                 handle_exception(Exception(e_msg), request)
             users = combined_users()
             groups = combined_groups()
@@ -122,17 +117,12 @@ class UserListView(UserMixin, rfc.GenericView):
                     if (g.groupname == invar['group']):
                         invar['gid'] = g.gid
                         admin_group = g
+                        invar['group'] = g
                         break
 
-            user_exists = False
             for u in users:
                 if (u.username == invar['username']):
-                    logger.debug('uid = %d gid = %d invar = %s' % (u.uid, u.gid, invar))
-                    if ((invar['uid'] is None or u.uid == invar['uid']) and
-                        (invar['gid'] is None or u.gid == invar['gid'])):
-                        user_exists = True
-                    else:
-                        handle_exception(Exception(e_msg), request)
+                    handle_exception(Exception(e_msg), request)
                 elif (u.uid == invar['uid']):
                     e_msg = ('uid: %d already exists. Please choose a '
                              'different one.' % invar['uid'])
@@ -146,9 +136,8 @@ class UserListView(UserMixin, rfc.GenericView):
                 auser.save()
                 invar['user'] = auser
 
-            if (not user_exists):
-                useradd(invar['username'], invar['shell'], uid=invar['uid'],
-                        gid=invar['gid'])
+            useradd(invar['username'], invar['shell'], uid=invar['uid'],
+                    gid=invar['gid'])
             pw_entries = pwd.getpwnam(invar['username'])
             invar['uid'] = pw_entries[2]
             invar['gid'] = pw_entries[3]
@@ -157,15 +146,14 @@ class UserListView(UserMixin, rfc.GenericView):
             if (invar['public_key'] is not None):
                 add_ssh_key(invar['username'], invar['public_key'])
             del(invar['password'])
-            invar['group'] = None
             if (admin_group is None):
                 admin_group = Group(gid=invar['gid'],
                                     groupname=invar['username'],
                                     admin=True)
                 admin_group.save()
                 invar['group'] = admin_group
-            invar['admin'] = True
             suser = User(**invar)
+            suser.full_clean()
             suser.save()
             return Response(SUserSerializer(suser).data)
 
@@ -176,8 +164,8 @@ class UserDetailView(UserMixin, rfc.GenericView):
             data = User.objects.get(username=self.kwargs['username'])
             serialized_data = SUserSerializer(data)
             return Response(serialized_data.data)
-        except:
-            return Response()
+        except User.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
     @transaction.atomic
     def put(self, request, username):
@@ -205,20 +193,23 @@ class UserDetailView(UserMixin, rfc.GenericView):
                         auser.is_active = True
                         auser.save()
                         u.user = auser
+                        u.full_clean()
                         u.save()
                     elif (new_pw is not None):
                         u.user.set_password(new_pw)
                         u.user.save()
-                elif (u.user is not None):
-                    auser = u.user
-                    u.user = None
-                    auser.delete()
-
+                else:
+                    if (u.user is not None):
+                        auser = u.user
+                        u.user = None
+                        auser.delete()
+                u.admin = admin
                 u.public_key = public_key
                 if (email is not None and email != ''):
                     u.email = email
                 if (shell is not None and shell != u.shell):
                     u.shell = shell
+                u.full_clean()
                 u.save()
 
             sysusers = combined_users()

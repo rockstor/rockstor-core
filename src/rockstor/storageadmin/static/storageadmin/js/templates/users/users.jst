@@ -25,14 +25,14 @@
   <div class="col-md-12">
     <div class="messages"></div>
     <!-- Content -->
-    <h3> Rockstor managed users </h3>
+    <h3> Rockstor Admin users </h3>
     <table id="users-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of user">
       <thead>
         <tr>
           <th scope="col" abbr="Name">Username</th>
-	  <th scope="col" abbr="Admin">Admin access</th>
           <th scope="col" abbr="UID">UID</th>
           <th scope="col" abbr="Group">Group</th>
+	  <th scope="col" abbr="GID">GID</th>
 	  <th scope="col" abbr="Shell">Shell</th>
           <th scope="col" abbr="Actions">Actions</th>
         </tr>
@@ -42,18 +42,13 @@
 	<% if (user.get('admin')) { %>
            <tr>
 	    <td><i class="glyphicon glyphicon-user"></i> <%= user.get("username") %></td>
-	    <td>
-	      <% if (user.get('user')) { %>
-                Yes
-              <% } else { %>
-	        No
-              <% } %>
-            </td>
             <td><%= user.get('uid') %></td>
 	    <td>
 	      <% if (user.get('groupname')) { %>
-	        <%= user.get('groupname') %>
+	      <%= user.get('groupname') %>
 	      <% } %>
+	    </td>
+	    <td><%= user.get('gid') %></td>
 	    <td><%= user.get('shell') %></td>
             <td>
               <a href="#" class="edit-user" data-username="<%= user.get('username') %>" rel="tooltip" title="Edit user"><i class="glyphicon glyphicon-pencil"></i></a>
@@ -74,7 +69,9 @@
         <tr>
           <th scope="col" abbr="Name">Username</th>
           <th scope="col" abbr="UID">UID</th>
+	  <th scope="col" abbr="Group">Group</th>
           <th scope="col" abbr="GID">GID</th>
+	  <th scope="col" abbr="Shell">Shell</th>
           <th scope="col" abbr="Actions">Actions</th>
         </tr>
       </thead>
@@ -82,12 +79,17 @@
 	<% users.each(function(user, index) { %>
 	<% if (!user.get('admin')) { %>
            <tr>
-	    <td><i class="glyphicon glyphicon-user"></i> <%= user.get("username") %></td>
-            <td><%= user.get("uid") %></td>
-            <td><%= user.get("gid") %></td>
+	    <td><i class="glyphicon glyphicon-user"></i> <%= user.get('username') %></td>
+            <td><%= user.get('uid') %></td>
+	    <td><%= user.get('groupname') %></td>
+            <td><%= user.get('gid') %></td>
+	    <td><%= user.get('shell') %></td>
             <td>
+	      <% if (user.get('managed_user')) { %>
+	      <a href="#" class="edit-user" data-username="<%= user.get('username') %>" rel="tooltip" title="Edit user"><i class="glyphicon glyphicon-pencil"></i></a>
               <a href="#" class="delete-user" data-username="<%= user.get('username') %>" rel="tooltip" title="Delete user"><i class="glyphicon glyphicon-trash"></i></a>
             </td>
+	    <% } %>
           </tr>
 	  <% } %>
         <% }); %>

@@ -28,8 +28,13 @@ from django.conf import settings
 
 
 SYSCTL = '/usr/bin/systemctl'
-DJANGO = '/opt/rockstor/bin/django'
-STAMP = '/opt/rockstor/.initrock'
+BASE_DIR = settings.ROOT_DIR
+BASE_BIN = '%s/bin' % BASE_DIR
+DJANGO = '%s/django' % BASE_BIN
+STAMP = '%s/.initrock' % BASE_DIR
+FLASH_OPTIMIZE = '%s/flash-optimize' % BASE_BIN
+PREP_DB = '%s/prep_db' % BASE_BIN
+SUPERCTL = '%s/supervisorctl' % BASE_BIN
 OPENSSL = '/usr/bin/openssl'
 GRUBBY = '/usr/sbin/grubby'
 
@@ -101,7 +106,7 @@ def main():
                              'Quiting.')
                 raise e
             time.sleep(2)
-    cert_loc = '/opt/rockstor/certs/'
+    cert_loc = '%s/certs/' % BASE_DIR
     if (os.path.isdir(cert_loc)):
         if (not os.path.isfile('%s/rockstor.cert' % cert_loc) or
             not os.path.isfile('%s/rockstor.key' % cert_loc)):
@@ -126,27 +131,29 @@ def main():
                      '%s/rockstor.key' % cert_loc, '-days', '3650'])
         logging.debug('cert signed.')
         logging.info('restarting nginx...')
-        run_command(['/opt/rockstor/bin/supervisorctl', 'restart', 'nginx'])
+        run_command([SUPERCTL, 'restart', 'nginx'])
 
     with open('/etc/rc.d/rc.local', 'a+') as lfo:
         found = False
+        initrock_loc = '%s/initrock' % BASE_BIN
         for l in lfo.readlines():
-            if (re.match('/opt/rockstor/bin/initrock', l) is not None):
+            if (re.match(initrock_loc, l) is not None):
                 found = True
         if (not found):
             lfo.write('#rockstor script. dont remove\n')
-            lfo.write('/opt/rockstor/bin/initrock -x\n')
+            lfo.write('%s -x\n' % initrock_loc)
     run_command(['/usr/bin/chmod', 'a+x', '/etc/rc.d/rc.local'])
 
+    run_command([FLASH_OPTIMIZE, '-x'])
     if (os.path.isfile(STAMP)):
         return logging.info(
             'initrock ran successfully before, so not running it again.'
             ' Running it again can destroy your Rockstor state. If you know '
-            'what you are doing, remove /opt/rockstor/.initrock '
-            'and run again.')
+            'what you are doing, remove %s/.initrock '
+            'and run again.' % BASE_DIR)
     logging.info('Please be patient. This script could take a few minutes')
-    shutil.copyfile('/opt/rockstor/conf/django-hack',
-                    '/opt/rockstor/bin/django')
+    shutil.copyfile('%s/conf/django-hack' % BASE_DIR,
+                    '%s/django' % BASE_BIN)
     run_command([SYSCTL, 'enable', 'postgresql'])
     logging.debug('Progresql enabled')
     shutil.rmtree('/var/lib/pgsql/data')
@@ -197,9 +204,9 @@ def main():
     logging.debug('smart manager migrated')
     logging.info('Done')
     logging.info('Running prepdb...')
-    run_command(['/opt/rockstor/bin/prep_db', ])
+    run_command([PREP_DB, ])
     logging.info('Done')
-    shutil.copy('/opt/rockstor/conf/rockstor.service', '/etc/systemd/system/')
+    shutil.copy('%s/conf/rockstor.service' % BASE_DIR, '/etc/systemd/system/')
     run_command([SYSCTL, 'enable', 'rockstor'])
     run_command([SYSCTL, 'start', 'rockstor'])
     logging.info('Started rockstor service')

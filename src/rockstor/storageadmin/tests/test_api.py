@@ -41,7 +41,7 @@ class APITestMixin(APITestCase):
     def tearDown(self):
         self.client.logout()
 
-    def get_base(self, baseurl):
+    def get_base(self, baseurl, name=True):
         """
         Test GET request
         1. Get base URL
@@ -52,5 +52,8 @@ class APITestMixin(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
         # get object that doesn't exist
-        response1 = self.client.get('%s/invalid' % baseurl)
+        if (name):
+            response1 = self.client.get('%s/invalid' % baseurl)
+        else:
+            response1 = self.client.get('%s/1234567' % baseurl)
         self.assertEqual(response1.status_code, status.HTTP_404_NOT_FOUND, msg=response1)

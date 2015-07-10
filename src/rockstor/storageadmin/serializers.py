@@ -75,6 +75,7 @@ class AdvancedNFSExportSerializer(serializers.ModelSerializer):
 
 class SUserSerializer(serializers.ModelSerializer):
     groupname = serializers.CharField()
+    managed_user = serializers.BooleanField(default=True)
 
     class Meta:
         model = User
@@ -185,6 +186,7 @@ class TLSCertificateSerializer(serializers.ModelSerializer):
 
 
 class RockOnSerializer(serializers.ModelSerializer):
+    ui_port = serializers.IntegerField()
 
     class Meta:
         model = RockOn
