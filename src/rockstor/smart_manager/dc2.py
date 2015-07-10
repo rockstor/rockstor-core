@@ -89,6 +89,5 @@ def not_found(start_response):
 
 def main():
     logger.debug('Listening on port http://127.0.0.1:8080 and on port 10843 (flash policy server)')
-    server = SocketIOServer(('127.0.0.1', 8080), Application(),
+    SocketIOServer(('127.0.0.1', 8001), Application(),
                             resource="socket.io", policy_server=True).serve_forever()
-
