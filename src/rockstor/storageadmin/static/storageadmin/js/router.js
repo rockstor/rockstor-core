@@ -938,6 +938,7 @@ $(document).ready(function() {
     socket.on('unsupported_kernel', function() {
 	console.log('unsupported kernel');
     });
+    */
 });
 
 
