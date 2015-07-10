@@ -48,6 +48,7 @@ setup(
             'ovpn-client-print = ovpn_util:client_retrieve',
             'qgroup-clean = qgroup_clean:main',
             'rockon-json = rockon_util:main',
+            'flash-optimize = scripts.flash_optimize:main',
         ],
     },
 
