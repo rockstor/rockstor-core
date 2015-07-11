@@ -29,6 +29,8 @@ from fs import btrfs
 
 DOCKER = '/usr/bin/docker'
 ROCKON_URL = 'https://localhost/api/rockons'
+DCMD = [DOCKER, 'run', '--log-driver=syslog',]
+DCMD2 = list(DCMD) + ['-d']
 
 import logging
 logger = logging.getLogger(__name__)
@@ -182,7 +184,7 @@ def vol_ops(container):
 
 def generic_install(rockon):
     for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
-        cmd = [DOCKER, 'run', '-d', '--name', c.name,]
+        cmd = list(DCMD2) + ['--name', c.name,]
         cmd.extend(vol_ops(c))
         cmd.extend(port_ops(c))
         cmd.extend(container_ops(c))
@@ -193,19 +195,19 @@ def generic_install(rockon):
 def openvpn_install(rockon):
     #volume container
     vol_co = DContainer.objects.get(rockon=rockon, launch_order=1)
-    volc_cmd = [DOCKER, 'run', '--name', vol_co.name,]
+    volc_cmd = list(DCMD) + ['--name', vol_co.name,]
     volc_cmd.extend(container_ops(vol_co))
     volc_cmd.append(vol_co.dimage.name)
     run_command(volc_cmd)
     #initialize vol container data
     cco = DCustomConfig.objects.get(rockon=rockon)
     oc = DContainer.objects.get(rockon=rockon, launch_order=2)
-    dinit_cmd = [DOCKER, 'run', '--rm',]
+    dinit_cmd = list(DCMD) + ['--rm',]
     dinit_cmd.extend(container_ops(oc))
     dinit_cmd.extend([oc.dimage.name, 'ovpn_genconfig', '-u', 'udp://%s' % cco.val, ])
     run_command(dinit_cmd)
     #start the server
-    server_cmd = [DOCKER, 'run', '-d', '--name', oc.name,]
+    server_cmd = list(DCMD2) + ['--name', oc.name,]
     server_cmd.extend(container_ops(oc))
     server_cmd.extend(port_ops(oc))
     server_cmd.append(oc.dimage.name)
@@ -214,7 +216,7 @@ def openvpn_install(rockon):
 
 def transmission_install(rockon):
     co = DContainer.objects.get(rockon=rockon, launch_order=1)
-    cmd = [DOCKER, 'run', '-d', '--name', co.name]
+    cmd = list(DCMD2) + ['--name', co.name]
     for cco in DCustomConfig.objects.filter(rockon=rockon):
         cmd.extend(['-e', '%s=%s' % (cco.key, cco.val)])
     cmd.extend(vol_ops(co))
@@ -243,7 +245,7 @@ def pull_images(rockon):
 
 def owncloud_install(rockon):
     for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
-        cmd = [DOCKER, 'run', '-d', '--name', c.name, ]
+        cmd = list(DCMD2) + ['--name', c.name, ]
         db_user = DCustomConfig.objects.get(rockon=rockon, key='db_user').val
         db_pw = DCustomConfig.objects.get(rockon=rockon, key='db_pw').val
         if (c.dimage.name == 'postgres'):
