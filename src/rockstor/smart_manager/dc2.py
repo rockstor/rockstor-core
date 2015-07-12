@@ -1,5 +1,6 @@
 from gevent import monkey
 monkey.patch_all()
+
 import gevent
 from socketio.server import SocketIOServer
 from socketio import socketio_manage
@@ -25,12 +26,14 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
     supported_kernel = settings.SUPPORTED_KERNEL_VERSION
     kernel_func = 0
 
+    # This function is run once on every connection
     def recv_connect(self):
         self.emit("sysinfo", {"key": "connected"})
         self.start = True
         gevent.spawn(self.send_uptime)
         self.kernel_func = gevent.spawn(self.send_kernel_info)
 
+    # Run on every disconnect
     def recv_disconnect(self):
         self.start = False
         self.disconnect(silent=True)
@@ -39,18 +42,21 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
         while self.start:
             if not self.start:
                 break
-            self.emit('uptime', {'key': uptime()})
+            self.emit('uptime', {'data': uptime(), 'key': 'uptime'})
             gevent.sleep(30)
 
     def send_kernel_info(self):
             try:
-                self.emit('kernel_info', {'kernel_info':
-                                          kernel_info(self.supported_kernel)})
+                self.emit('kernel_info', {'data':
+                                          kernel_info(self.supported_kernel),
+                                          'key': 'kernel_info'})
                 # Send information once per connection
                 self.kernel_func.kill()
-            except:
-                # How do errors get reported to the front end?
-                self.error('unsupported_kernel', 'the kernel is bad')
+            except Exception as e:
+                logger.debug('kernel error')
+                # Emit an event to the front end to capture error report
+                self.emit('kernel_error', {'error': str(e)})
+                self.error('unsupported_kernel', str(e))
 
 
 class Application(object):

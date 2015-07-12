@@ -884,66 +884,67 @@ $(document).ready(function() {
 	RockStorSocket.handlerMap[key] = {fn: fn, fn_this: fn_this};
     };
 
-    RockStorSocket.removeListener = function(key) {
-	// Fill in with stripped down version of removealllisteners
-	RockStorSocket[key].disconnect();
-	console.log(key + ' has bee disconnected');
-
-    };
-
     RockStorSocket.removeAllListeners = function() {
 	_.each(_.keys(RockStorSocket.handlerMap), function(key) {
 	    delete RockStorSocket.handlerMap[key];
-	    console.log(key);
 	});
     };
 
     RockStorSocket.msgHandler = function(data) {
-	_.each(_.keys(RockStorSocket.handlerMap), function(key) {
-	    if (!_.isNull(data.key) && !_.isUndefined(data.key)) {
-		var obj = RockStorSocket.handlerMap[key];
-		obj.fn.call(obj.fn_this, data);
-	    }
-	});
+	// Error handling
+	var obj = RockStorSocket.handlerMap[data.key];
+	if (!_.isNull(obj) || !_.isUndefined(obj)) {
+	    obj.fn.call(obj.fn_this, data);
+	} else {
+	    console.debug('Key ' + data.key + ' is not valid.');
+	}
+
     };
     var $loadavg = $('#appliance-loadavg');
 
     var sysinfo = function(data) {
 	console.log("We're in sysinfo", data);
-	RockStorSocket.removeListener('socket');
     };
 
     var uptime = function(data) {
 	displayLoadAvg(data);
     };
 
+    var kernelInfo = function(data) {
+	$loadavg.text('Linux: ' + data.data);
+    };
+
+    var connected = function(data) {
+	console.log('Successfully connected to websocket');
+    };
 
     // Connect to the virtual endpoint
-    RockStorSocket.socket = io.connect('/sysinfo', {'secure': true});
+    RockStorSocket.socket = io.connect('/sysinfo', {'secure': true}, {'force new connection': true});
 
     // Add the callback to the listener map
     RockStorSocket.addListener(sysinfo, this, 'sysinfo');
     RockStorSocket.addListener(uptime, this, 'uptime');
+    RockStorSocket.addListener(kernelInfo, this, 'kernel_info');
+    RockStorSocket.addListener(connected, this, 'connected');
 
-    // Listen for signals
+    // Redirect incoming websocket signals
     RockStorSocket.socket.on('sysinfo', RockStorSocket.msgHandler);
+    RockStorSocket.socket.on('uptime', RockStorSocket.msgHandler);
+    RockStorSocket.socket.on('kernel_info', RockStorSocket.msgHandler);
 
+    RockStorSocket.socket.on('kernel_error', function(data) {
+	if (data.error.indexOf('kernel') !== -1) {
+	    // Put an alert at the top of the page
+	    $('#browsermsg').html('<div class="alert alert-danger"><button type="button" class="close" data-dismiss="alert">&times;</button>' + data.error + '</div>');
+	}
 
-    /*
-
-    socket.on('kernel_info', function(data) {
-	$loadavg.text('Linux: ' + data.kernel_info);
     });
 
-    socket.on('unsupported_kernel', function() {
-	console.log('unsupported kernel');
-    });
-    */
 });
 
 
 function displayLoadAvg(data) {
-    var n = parseInt(data.uptime);
+    var n = parseInt(data.data);
     var secs = n % 60;
     var mins = Math.round(n/60) % 60;
     var hrs = Math.round(n / (60*60)) % 24;
