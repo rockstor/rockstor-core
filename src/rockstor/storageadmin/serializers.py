@@ -258,7 +258,6 @@ class SMARTInfoSerializer(serializers.ModelSerializer):
 
 
 class ConfigBackupSerializer(serializers.ModelSerializer):
-    filename = serializers.FileField(use_url=False)
 
     class Meta:
         model = ConfigBackup
