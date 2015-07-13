@@ -12,7 +12,11 @@
         <tr>
           <td><%= cb.get('filename') %></td>
           <td><%= humanize.filesize(cb.get('size')*1024) %></td>
-          <td><a href="#" class="cb-delete" id="delete_cb_<%= cb.get('filename') %>" data-id="<%= cb.get('id') %>" data-action="delete" rel="tooltip" title="Delete backup"><i class="glyphicon glyphicon-trash"></i></a></td>
+          <td>
+	    <a href="#" class="cb-delete" id="delete_cb_<%= cb.get('filename') %>" data-id="<%= cb.get('id') %>" data-action="delete" rel="tooltip" title="Delete backup"><i class="glyphicon glyphicon-trash"></i></a>
+	    &nbsp;&nbsp;
+	    <a href="/static/config-backups/<%=cb.get('filename') %>" title="Download the backup to your computer"><i class="glyphicon glyphicon-cloud-download"></i></a>
+	  </td>
         </tr>
       <% }); %>
     </tbody>
