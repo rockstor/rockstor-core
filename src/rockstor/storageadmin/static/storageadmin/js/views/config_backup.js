@@ -27,7 +27,8 @@
 ConfigBackupView = RockstorLayoutView.extend({
     events: {
 	'click #new_backup': 'newBackup',
-	'click .cb-delete': 'deleteBackup'
+	'click .cb-delete': 'deleteBackup',
+	'click .cb-restore': 'restoreBackup'
     },
 
     initialize: function() {
@@ -96,7 +97,33 @@ ConfigBackupView = RockstorLayoutView.extend({
 		}
 	    });
 	}
-	console.log('in deleteBackup');
+	return this;
+    },
+
+    restoreBackup: function(event) {
+	event.preventDefault();
+	var _this = this;
+	var cbid = $(event.currentTarget).attr('data-id');
+	var button = $(event.currentTarget);
+	if (buttonDisabled(button)) return false;
+	if (confirm("Are you sure?")) {
+	    disableButton(button);
+	    $.ajax({
+		url: "/api/config-backup/" + cbid,
+		type: "POST",
+		dataType: "json",
+		contentType: "application/json",
+		data: JSON.stringify({"command": "restore"}),
+		success: function() {
+		    enableButton(button);
+		    _this.collection.fetch({reset: true});
+		},
+		error: function() {
+		    console.log('error while restoring this config backup');
+		    enableButton(button);
+		}
+	    });
+	}
 	return this;
     }
 
