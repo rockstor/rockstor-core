@@ -113,5 +113,5 @@ urlpatterns = patterns('',
 
                        # Config Backup
                        url(r'^api/config-backup$', ConfigBackupListView.as_view()),
-                       url(r'^api/config-backup/(?<backup_id>\d+)$', ConfigBackupDetailView.as_view()),
+                       url(r'^api/config-backup/(?P<backup_id>\d+)$', ConfigBackupDetailView.as_view()),
 )
