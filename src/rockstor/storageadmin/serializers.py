@@ -28,7 +28,7 @@ from storageadmin.models import (Disk, Pool, Share, Snapshot, NFSExport,
                                  DCustomConfig, SMARTAttribute,
                                  SMARTCapability, SMARTInfo, SMARTErrorLog,
                                  SMARTErrorLogSummary, SMARTTestLog,
-                                 SMARTTestLogDetail, SMARTIdentity)
+                                 SMARTTestLogDetail, SMARTIdentity, ConfigBackup)
 from django.contrib.auth.models import User as DjangoUser
 
 
@@ -255,3 +255,9 @@ class SMARTInfoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SMARTInfo
+
+
+class ConfigBackupSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ConfigBackup
