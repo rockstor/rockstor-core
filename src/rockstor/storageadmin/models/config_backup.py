@@ -20,9 +20,9 @@ from django.db import models
 
 
 class ConfigBackup(models.Model):
-    filename = models.FileField(upload_to='config_backups')
+    filename = models.CharField(max_length=64)
+    md5sum = models.CharField(max_length=32, null=True)
     size = models.IntegerField(null=True)
-    #toc = models.DateTimeField(null=True)
 
     class Meta:
         app_label = 'storageadmin'

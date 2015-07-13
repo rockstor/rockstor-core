@@ -36,7 +36,19 @@ class ConfigBackupMixin(object):
     cb_dir = os.path.join(settings.STATIC_ROOT, 'config-backups')
 
 class ConfigBackupListView(ConfigBackupMixin, rfc.GenericView):
-    queryset = ConfigBackup.objects.all()
+
+    def get_queryset(self, *args, **kwargs):
+        for cbo in ConfigBackup.objects.all():
+            fp = os.path.join(self.cb_dir, cbo.filename)
+            if (not os.path.isfile(fp)):
+                cbo.delete()
+            md5sum = self._md5sum(fp)
+            if (md5sum != cbo.md5sum):
+                logger.error('md5sum mismatch for %s. cbo: %s file: %s. '
+                             'Deleting dbo' %
+                             (cbo.filename, cbo.md5sum, md5sum))
+                cbo.delete()
+        return ConfigBackup.objects.filter().order_by('-id')
 
     @transaction.atomic
     def post(self, request):
@@ -49,11 +61,16 @@ class ConfigBackupListView(ConfigBackupMixin, rfc.GenericView):
             call_command('dumpdata', 'storageadmin', stdout=dfo)
         run_command(['/usr/bin/gzip', fp])
         gz_name = ('%s.gz' % filename)
-        size = os.stat(os.join(self.cb_dir, gz_name)).st_size
-        cbo = ConfigBackup(filename=filename, size=size)
+        fp = os.path.join(self.cb_dir, gz_name)
+        md5sum = self._md5sum(fp)
+        size = os.stat(fp).st_size
+        cbo = ConfigBackup(filename=gz_name, md5sum=md5sum, size=size)
         cbo.save()
         return Response(ConfigBackupSerializer(cbo).data)
 
+    @staticmethod
+    def _md5sum(fp):
+        return run_command(['/usr/bin/md5sum', fp])[0][0].split()[0]
 
 class ConfigBackupDetailView(ConfigBackupMixin, rfc.GenericView):
 
@@ -66,7 +83,7 @@ class ConfigBackupDetailView(ConfigBackupMixin, rfc.GenericView):
                 os.remove(fp)
             cbo.delete()
             return Response()
-        except:
+        except ConfigBackup.DoesNotExist:
             e_msg = ('Config backup for the id(%s) does not exist' % backup_id)
             handle_exception(Exception(e_msg), request)
 
