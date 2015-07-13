@@ -579,6 +579,14 @@ var AppRouter = Backbone.Router.extend({
 	$('#maincontent').append(this.currentLayout.render().el);
     },
 
+    configBackup: function() {
+	this.renderSidebar('system', 'config-backup');
+	this.cleanup();
+	this.currentLayout = new ConfigBackupView();
+	$('#maincontent').empty();
+	$('#maincontent').append(this.currentLayout.render().el);
+    },
+
     showTasks: function(taskDefId) {
 	this.renderSidebar("system", "scheduled-tasks");
 	this.cleanup();

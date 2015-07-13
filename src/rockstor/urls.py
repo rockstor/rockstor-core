@@ -23,7 +23,8 @@ from storageadmin.views import (SetupUserView, LoginView, DashboardConfigView,
                                 SambaDetailView, SFTPListView, SFTPDetailView,
                                 AdvancedNFSExportView, OauthAppView,
                                 NetatalkListView, NetatalkDetailView,
-                                TLSCertificateView, SnapshotView)
+                                TLSCertificateView, SnapshotView,
+                                ConfigBackupListView, ConfigBackupDetailView)
 import os.path
 
 site_media = os.path.join(
@@ -108,4 +109,9 @@ urlpatterns = patterns('',
                        # Certificate URL
                        (r'^api/certificate', TLSCertificateView.as_view()),
                        (r'^api/rockons',
-                        include('storageadmin.urls.rockons')),)
+                        include('storageadmin.urls.rockons')),
+
+                       # Config Backup
+                       url(r'^api/config-backup$', ConfigBackupListView.as_view()),
+                       url(r'^api/config-backup/(?<backup_id>\d+)$', ConfigBackupDetailView.as_view()),
+)

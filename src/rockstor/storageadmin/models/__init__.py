@@ -48,3 +48,4 @@ from rockon import (RockOn, DImage, DContainer, DPort, DVolume,
 from smart import (SMARTAttribute, SMARTCapability, SMARTErrorLog,
                    SMARTErrorLogSummary, SMARTTestLog, SMARTTestLogDetail,
                    SMARTIdentity, SMARTInfo)
+from config_backup import ConfigBackup
