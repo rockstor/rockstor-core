@@ -877,62 +877,67 @@ $(document).ready(function() {
     });
 
     /********** Websockets **************/
-    var RockStorSocket = {};
-    RockStorSocket.handlerMap = {}; // initialize handler array
+    // These are global websocket events
 
-    RockStorSocket.addListener = function(fn, fn_this, key) {
-	RockStorSocket.handlerMap[key] = {fn: fn, fn_this: fn_this};
-    };
-
-    RockStorSocket.removeAllListeners = function() {
-	_.each(_.keys(RockStorSocket.handlerMap), function(key) {
-	    delete RockStorSocket.handlerMap[key];
-	});
-    };
-
-    RockStorSocket.msgHandler = function(data) {
-	// Error handling
-	var obj = RockStorSocket.handlerMap[data.key];
-	if (!_.isNull(obj) || !_.isUndefined(obj)) {
-	    obj.fn.call(obj.fn_this, data);
-	} else {
-	    console.debug('Key ' + data.key + ' is not valid.');
-	}
-
-    };
+    // Grab the far right of the breadcrumb (under nav)
     var $loadavg = $('#appliance-loadavg');
 
     var sysinfo = function(data) {
 	console.log("We're in sysinfo", data);
     };
 
-    var uptime = function(data) {
-	displayLoadAvg(data);
-    };
-
     var kernelInfo = function(data) {
-	$loadavg.text('Linux: ' + data.data);
+	
+	$loadavg.text('Linux: ' + data);
     };
 
     var connected = function(data) {
-	console.log('Successfully connected to websocket');
+	console.log('connected to sysinfo', data);
+    };
+    var displayLoadAvg = function(data) {
+	var n = parseInt(data);
+	var secs = n % 60;
+	var mins = Math.round(n/60) % 60;
+	var hrs = Math.round(n / (60*60)) % 24;
+	var days = Math.round(n / (60*60*24)) % 365;
+	var yrs = Math.round(n / (60*60*24*365));
+	var str = 'Uptime: ';
+	if (yrs == 1) {
+	    str += yrs + ' year, ';
+	} else if (yrs > 1) {
+	    str += yrs + ' years, ';
+	}
+	if (days == 1) {
+	    str += days + ' day, ';
+	} else if (days > 1) {
+	    str += days + ' days, ';
+	}
+	if (hrs < 10) {
+	    str += '0';
+	}
+	str += hrs + ':';
+	if (mins < 10) {
+	    str += '0';
+	}
+	str += mins;
+	$('#uptime').text(str);
     };
 
-    // Connect to the virtual endpoint
-    RockStorSocket.socket = io.connect('/sysinfo', {'secure': true}, {'force new connection': true});
-
     // Add the callback to the listener map
-    RockStorSocket.addListener(sysinfo, this, 'sysinfo');
-    RockStorSocket.addListener(uptime, this, 'uptime');
-    RockStorSocket.addListener(kernelInfo, this, 'kernel_info');
-    RockStorSocket.addListener(connected, this, 'connected');
+    // TODO: Lots of repeated code here...should it be this way?
+    RockStorSocket.addListener(sysinfo, this, 'sysinfo:sysinfo');
+    RockStorSocket.addListener(kernelInfo, this, 'sysinfo:kernel_info');
+    RockStorSocket.addListener(connected, this, 'sysinfo:connected');
+    RockStorSocket.addListener(displayLoadAvg, this, 'sysinfo:uptime');
 
+
+    
     // Redirect incoming websocket signals
-    RockStorSocket.socket.on('sysinfo', RockStorSocket.msgHandler);
-    RockStorSocket.socket.on('uptime', RockStorSocket.msgHandler);
-    RockStorSocket.socket.on('kernel_info', RockStorSocket.msgHandler);
 
-    RockStorSocket.socket.on('kernel_error', function(data) {
+
+    RockStorSocket.sysinfo.on('kernel_error', function(data) {
+	// Handling errors just by emitting message via the server
+	// Is there a better way to do this? Seems brittle
 	if (data.error.indexOf('kernel') !== -1) {
 	    // Put an alert at the top of the page
 	    $('#browsermsg').html('<div class="alert alert-danger"><button type="button" class="close" data-dismiss="alert">&times;</button>' + data.error + '</div>');
@@ -943,31 +948,3 @@ $(document).ready(function() {
 });
 
 
-function displayLoadAvg(data) {
-    var n = parseInt(data.data);
-    var secs = n % 60;
-    var mins = Math.round(n/60) % 60;
-    var hrs = Math.round(n / (60*60)) % 24;
-    var days = Math.round(n / (60*60*24)) % 365;
-    var yrs = Math.round(n / (60*60*24*365));
-    var str = 'Uptime: ';
-    if (yrs == 1) {
-	str += yrs + ' year, ';
-    } else if (yrs > 1) {
-	str += yrs + ' years, ';
-    }
-    if (days == 1) {
-	str += days + ' day, ';
-    } else if (days > 1) {
-	str += days + ' days, ';
-    }
-    if (hrs < 10) {
-	str += '0';
-    }
-    str += hrs + ':';
-    if (mins < 10) {
-	str += '0';
-    }
-    str += mins;
-    $('#uptime').text(str);
-};
