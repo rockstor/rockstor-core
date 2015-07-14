@@ -491,6 +491,8 @@ def qgroup_destroy(qid, mnt_pt):
             return run_command([BTRFS, 'qgroup', 'destroy', qid, mnt_pt])
     return False
 
+def qgroup_assign(qid, pqid, mnt_pt):
+    return run_command([BTRFS, 'qgroup', 'assign', qid, pqid, mnt_pt])
 
 def update_quota(pool, pool_device, qgroup, size_bytes):
     pool_device = '/dev/' + pool_device
@@ -521,6 +523,7 @@ def share_usage(pool, pool_device, share_id):
     """
     pool_device = '/dev/' + pool_device
     root_pool_mnt = mount_root(pool, pool_device)
+    run_command([BTRFS, 'quota', 'rescan', root_pool_mnt], throw=False)
     cmd = [BTRFS, 'qgroup', 'show', root_pool_mnt]
     out, err, rc = run_command(cmd)
     rusage = eusage = None
@@ -546,6 +549,7 @@ def shares_usage(pool, pool_device, share_map, snap_map):
             break
     if (mnt_pt is None):
         mnt_pt = mount_root(pool, '/dev/' + pool_device)
+    run_command([BTRFS, 'quota', 'rescan', mnt_pt], throw=False)
     cmd = [BTRFS, 'qgroup', 'show', mnt_pt]
     out, err, rc = run_command(cmd)
     combined_map = dict(share_map, **snap_map)
