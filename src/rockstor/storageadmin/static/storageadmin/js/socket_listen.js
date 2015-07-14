@@ -27,10 +27,9 @@
 var RockStorSocket = {};
 RockStorSocket.handlerMap = {}; // initialize handler array
 
-// Connect to socket endpoints
+// Connect globally to sysinfo as the information is in the breadcrumb
 RockStorSocket.sysinfo = io.connect('/sysinfo', {'secure': true, 'force new connection': true});
 
-RockStorSocket.services = io.connect('/services', {'secure': true, 'force new connection': true});
 
 // Add the function and context to be fired when a message comes in
 RockStorSocket.addListener = function(fn, fn_this, namespace) {

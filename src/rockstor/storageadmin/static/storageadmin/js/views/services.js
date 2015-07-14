@@ -57,6 +57,7 @@ ServicesView = Backbone.View.extend({
 	    }
 	});
 	// Register function for socket endpoint
+	RockStorSocket.services = io.connect('/services', {'secure': true, 'force new connection': true});
 	RockStorSocket.addListener(this.servicesStatuses, this, 'services:get_services');
 	RockStorSocket.addListener(this.servicesConnect, this, 'services:connect');
 
@@ -69,11 +70,6 @@ ServicesView = Backbone.View.extend({
 
     servicesStatuses: function(data) {
 	console.log('services', data);
-    },
-
-    uptimeFunction: function(data) {
-	this.displayLoadAvg(data);
-	console.log('backbone uptime', data);
     },
 
     renderServices: function() {

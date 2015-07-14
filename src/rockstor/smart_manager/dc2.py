@@ -20,7 +20,6 @@ class ServicesNamespace(BaseNamespace, BroadcastMixin):
         self.emit('services:connected', {
             'key': 'services:connected', 'data': 'connected'
         })
-        logger.debug('hey there')
         self.spawn(self.send_service_statuses)
 
     def recv_disconnect(self):
@@ -54,7 +53,6 @@ class ServicesNamespace(BaseNamespace, BroadcastMixin):
 class SysinfoNamespace(BaseNamespace, BroadcastMixin):
     start = False
     supported_kernel = settings.SUPPORTED_KERNEL_VERSION
-    kernel_func = 0
 
     # This function is run once on every connection
     def recv_connect(self):
