@@ -426,6 +426,7 @@ function fetchLoadAvg() {
     });
 }
 
+/* Deprecated in favor of websockets
 function fetchKernelInfo() {
     $.ajax({
 	url: '/api/commands/kernel',
@@ -441,42 +442,7 @@ function fetchKernelInfo() {
 	}
     });
 }
-
-function displayLoadAvg(data) {
-    var n = parseInt(data.results[0]['uptime']);
-    var load_1 = parseFloat(data.results[0]['load_1']);
-    var load_5 = parseFloat(data.results[0]['load_5']);
-    var load_15 = parseFloat(data.results[0]['load_15']);
-    var secs = n % 60;
-    var mins = Math.round(n/60) % 60;
-    var hrs = Math.round(n / (60*60)) % 24;
-    var days = Math.round(n / (60*60*24)) % 365;
-    var yrs = Math.round(n / (60*60*24*365));
-    var str = 'Uptime: ';
-    if (RockStorGlobals.kernel) {
-	str = 'Linux: ' + RockStorGlobals.kernel + ' &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + str;
-    }
-    if (yrs == 1) {
-	str += yrs + ' year, ';
-    } else if (yrs > 1) {
-	str += yrs + ' years, ';
-    }
-    if (days == 1) {
-	str += days + ' day, ';
-    } else if (days > 1) {
-	str += days + ' days, ';
-    }
-    if (hrs < 10) {
-	str += '0';
-    }
-    str += hrs + ':';
-    if (mins < 10) {
-	str += '0';
-    }
-    str += mins;
-    str += ' &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Load: ' + load_1 + ', ' + load_5 + ', ' + load_15;
-    $('#appliance-loadavg').html(str);
-}
+*/
 
 function fetchServerTime() {
     RockStorGlobals.serverTimeTimer = window.setInterval(function() {

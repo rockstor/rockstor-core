@@ -122,17 +122,11 @@ var AppRouter = Backbone.Router.extend({
 	if (RockStorGlobals.currentAppliance == null) {
 	    setApplianceName();
 	}
-	if (!RockStorGlobals.loadAvgDisplayed) {
-	    updateLoadAvg();
-	}
 	if (!RockStorGlobals.serverTimeFetched) {
 	    fetchServerTime();
 	}
 	if (!RockStorGlobals.browserChecked) {
 	    checkBrowser();
-	}
-	if (!RockStorGlobals.kernel) {
-	    fetchKernelInfo();
 	}
 
 	// set a timer to get current rockstor version and checkif there is an
@@ -835,12 +829,6 @@ $(document).ready(function() {
 	$('#globalerrmsg').empty();
     });
 
-    // Initialize websocket connection
-    // logger.debug('connecting to websocket');
-    // RockStorSocket.socket = io.connect('https://' + document.location.host + ':' + NGINX_WEBSOCKET_PORT,
-    // {secure: true}
-    // );
-    // RockStorSocket.socket.on('sm_data', RockStorSocket.msgHandler);
 
     // Initialize global error popup
     $('#global-err-overlay').overlay({load: false});
@@ -888,4 +876,57 @@ $(document).ready(function() {
 	$('#donate-modal').modal('hide');
     });
 
+    /********** Websockets **************/
+    // These are global websocket events
+
+    // Grab the far right of the breadcrumb (under nav)
+    var $loadavg = $('#appliance-loadavg');
+
+    var kernelInfo = function(data) {
+	$loadavg.text('Linux: ' + data);
+    };
+
+    var displayLoadAvg = function(data) {
+	var n = parseInt(data);
+	var secs = n % 60;
+	var mins = Math.round(n/60) % 60;
+	var hrs = Math.round(n / (60*60)) % 24;
+	var days = Math.round(n / (60*60*24)) % 365;
+	var yrs = Math.round(n / (60*60*24*365));
+	var str = 'Uptime: ';
+	if (yrs == 1) {
+	    str += yrs + ' year, ';
+	} else if (yrs > 1) {
+	    str += yrs + ' years, ';
+	}
+	if (days == 1) {
+	    str += days + ' day, ';
+	} else if (days > 1) {
+	    str += days + ' days, ';
+	}
+	if (hrs < 10) {
+	    str += '0';
+	}
+	str += hrs + ':';
+	if (mins < 10) {
+	    str += '0';
+	}
+	str += mins;
+	$('#uptime').text(str);
+    };
+
+    RockStorSocket.addListener(kernelInfo, this, 'sysinfo:kernel_info');
+    RockStorSocket.addListener(displayLoadAvg, this, 'sysinfo:uptime');
+
+    RockStorSocket.sysinfo.on('kernel_error', function(data) {
+	// Handling errors just by emitting message via the server
+	if (data.error.indexOf('kernel') !== -1) {
+	    // Put an alert at the top of the page
+	    $('#browsermsg').html('<div class="alert alert-danger"><button type="button" class="close" data-dismiss="alert">&times;</button>' + data.error + '</div>');
+	}
+
+    });
+
 });
+
+

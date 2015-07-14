@@ -25,26 +25,35 @@
  */
 
 var RockStorSocket = {};
-RockStorSocket.handlerMap = {} // initialize handler array
+RockStorSocket.handlerMap = {}; // initialize handler array
 
-RockStorSocket.addListener = function(fn, fn_this, key) {
-  RockStorSocket.handlerMap[key] = {fn: fn, fn_this: fn_this}; 
-}
+// Connect globally to sysinfo as the information is in the breadcrumb
+RockStorSocket.sysinfo = io.connect('/sysinfo', {'secure': true, 'force new connection': true});
 
+
+// Add the function and context to be fired when a message comes in
+RockStorSocket.addListener = function(fn, fn_this, namespace) {
+    RockStorSocket.handlerMap[namespace] = {fn: fn, fn_this: fn_this};
+    var key = namespace.split(':')[0];
+    RockStorSocket[key].on(namespace, RockStorSocket.msgHandler);
+};
+
+// Disconnect everything
 RockStorSocket.removeAllListeners = function() {
-  _.each(_.keys(RockStorSocket.handlerMap), function(key) {
-    delete RockStorSocket.handlerMap[key];
-  });
-}
+    _.each(_.keys(RockStorSocket.handlerMap), function(key) {
+	delete RockStorSocket.handlerMap[key];
+    });
+};
 
+RockStorSocket.removeOneListener = function(socketName) {
+    RockStorSocket[socketName].disconnect();
+};
+
+// Fire appropriate callback given message
 RockStorSocket.msgHandler = function(data) {
-  logger.debug('received msg');
-  msg_data = JSON.parse(data.msg);
-  _.each(_.keys(RockStorSocket.handlerMap), function(key) {
-    if (!_.isNull(msg_data[key]) && !_.isUndefined(msg_data[key])) {
-      var obj = RockStorSocket.handlerMap[key];
-      obj.fn.call(obj.fn_this, msg_data[key]); 
+    var obj = RockStorSocket.handlerMap[data.key];
+    if (!_.isNull(obj) && !_.isUndefined(obj)) {
+	obj.fn.call(obj.fn_this, data.data);
     }
-  });
-}
+};
 
