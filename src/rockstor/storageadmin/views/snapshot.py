@@ -29,7 +29,7 @@ from storageadmin.models import (Snapshot, Share, Disk, NFSExport,
                                  NFSExportGroup, AdvancedNFSExport)
 from smart_manager.models import ShareUsage
 from fs.btrfs import (add_snap, share_id, share_usage, remove_snap,
-                      umount_root, mount_snap, snaps_info)
+                      umount_root, mount_snap, snaps_info, qgroup_assign)
 from system.osi import refresh_nfs_exports
 from storageadmin.serializers import SnapshotSerializer
 from storageadmin.util import handle_exception
@@ -162,6 +162,7 @@ class SnapshotView(rfc.GenericView):
                      snap_name, readonly=not writable)
             snap_id = share_id(share.pool, pool_device, snap_name)
             qgroup_id = ('0/%s' % snap_id)
+            qgroup_assign(qgroup_id, share.pqgroup, ('%s/%s' % (settings.MNT_PT, share.pool.name)))
             snap_size, eusage = share_usage(share.pool, pool_device,
                                             qgroup_id)
         s = Snapshot(share=share, name=snap_name, real_name=snap_name,

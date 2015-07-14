@@ -163,20 +163,21 @@ class ShareListView(ShareMixin, rfc.GenericView):
         #qgroup notes for shares. we need to create a qgroup prior to share
         #creation. qgroup ids 0/<subvol_id> automatically get created when a
         #subvolume(i.e., a Share or a Snapshot) is created. So let's create a
-        #new qgroup: 1/<some_number> whenever a Share is created. <some_number>
-        #starts from 1 and is incremented as more Shares are created. So, for
-        #the very first Share in a pool, it's qgroup will be 1/1.
+        #new qgroup: 2015/<some_number> whenever a Share is
+        #created. <some_number> starts from 1 and is incremented as more Shares
+        #are created. So, for the very first Share in a pool, it's qgroup will
+        #be 1/1. 2015 is arbitrarily chose.
 
         #Before creating a new Share, we create the qgroup for it. And during
         #it's creation, we assign this qgroup to it. During it's creation a 0/x
         #qgroup will automatically be created, but it will be come the child of
-        #our explicitly-created qgroup(1/x).
+        #our explicitly-created qgroup(2015/x).
 
         #We will set the qgroup limit on our qgroup and it will enforce the
-        #quota on every subvolume(i.e., Share ans Snapshot) in that qgroup.
+        #quota on every subvolume(i.e., Share and Snapshot) in that qgroup.
 
         #When a Share is deleted, we need to destroy two qgroups. One is it's
-        #auto 0/x qgroup and the other is our explicitly-created 1/y qgroup.
+        #auto 0/x qgroup and the other is our explicitly-created 2015/y qgroup.
 
         with self._handle_exception(request):
             pool_name = request.data.get('pool', None)
