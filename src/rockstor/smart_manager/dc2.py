@@ -32,8 +32,6 @@ class ServicesNamespace(BaseNamespace, BroadcastMixin):
         logger.debug("Services have disconnected")
 
     def send_service_statuses(self):
-        # TODO: key/value pairs of the shortened, longer name for each service
-        # check to see what the collection looks like (if there is a shortened name)
         # Iterate through the collection and assign the values accordingly
         services = ('nfs', 'smb', 'ntpd', 'winbind', 'netatalk',
                     'snmpd', 'docker', 'smartd', 'replication',
@@ -55,7 +53,6 @@ class ServicesNamespace(BaseNamespace, BroadcastMixin):
             gevent.sleep(5)
 
 
-# TODO: Create a base class that runs all other classes within a context manager
 class SysinfoNamespace(BaseNamespace, BroadcastMixin):
     start = False
     supported_kernel = settings.SUPPORTED_KERNEL_VERSION

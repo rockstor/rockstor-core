@@ -882,18 +882,10 @@ $(document).ready(function() {
     // Grab the far right of the breadcrumb (under nav)
     var $loadavg = $('#appliance-loadavg');
 
-    var sysinfo = function(data) {
-	console.log("We're in sysinfo", data);
-    };
-
     var kernelInfo = function(data) {
-	
 	$loadavg.text('Linux: ' + data);
     };
 
-    var connected = function(data) {
-	console.log('connected to sysinfo', data);
-    };
     var displayLoadAvg = function(data) {
 	var n = parseInt(data);
 	var secs = n % 60;
@@ -923,21 +915,11 @@ $(document).ready(function() {
 	$('#uptime').text(str);
     };
 
-    // Add the callback to the listener map
-    // TODO: Lots of repeated code here...should it be this way?
-    RockStorSocket.addListener(sysinfo, this, 'sysinfo:sysinfo');
     RockStorSocket.addListener(kernelInfo, this, 'sysinfo:kernel_info');
-    RockStorSocket.addListener(connected, this, 'sysinfo:connected');
     RockStorSocket.addListener(displayLoadAvg, this, 'sysinfo:uptime');
-
-
-    
-    // Redirect incoming websocket signals
-
 
     RockStorSocket.sysinfo.on('kernel_error', function(data) {
 	// Handling errors just by emitting message via the server
-	// Is there a better way to do this? Seems brittle
 	if (data.error.indexOf('kernel') !== -1) {
 	    // Put an alert at the top of the page
 	    $('#browsermsg').html('<div class="alert alert-danger"><button type="button" class="close" data-dismiss="alert">&times;</button>' + data.error + '</div>');
