@@ -27,7 +27,7 @@ from storageadmin.models import (Share, Disk, Pool, Snapshot,
 from smart_manager.models import ShareUsage
 from fs.btrfs import (add_share, remove_share, update_quota,
                       share_usage, set_property, mount_share, qgroup_id,
-                      shares_info)
+                      shares_info, qgroup_create)
 from system.osi import is_share_mounted
 from storageadmin.serializers import ShareSerializer
 from storageadmin.util import handle_exception
@@ -160,6 +160,24 @@ class ShareListView(ShareMixin, rfc.GenericView):
 
     @transaction.atomic
     def post(self, request):
+        #qgroup notes for shares. we need to create a qgroup prior to share
+        #creation. qgroup ids 0/<subvol_id> automatically get created when a
+        #subvolume(i.e., a Share or a Snapshot) is created. So let's create a
+        #new qgroup: 1/<some_number> whenever a Share is created. <some_number>
+        #starts from 1 and is incremented as more Shares are created. So, for
+        #the very first Share in a pool, it's qgroup will be 1/1.
+
+        #Before creating a new Share, we create the qgroup for it. And during
+        #it's creation, we assign this qgroup to it. During it's creation a 0/x
+        #qgroup will automatically be created, but it will be come the child of
+        #our explicitly-created qgroup(1/x).
+
+        #We will set the qgroup limit on our qgroup and it will enforce the
+        #quota on every subvolume(i.e., Share ans Snapshot) in that qgroup.
+
+        #When a Share is deleted, we need to destroy two qgroups. One is it's
+        #auto 0/x qgroup and the other is our explicitly-created 1/y qgroup.
+
         with self._handle_exception(request):
             pool_name = request.data.get('pool', None)
             try:
@@ -194,11 +212,12 @@ class ShareListView(ShareMixin, rfc.GenericView):
                     e_msg = ('replica must be a boolean, not %s' %
                              type(replica))
                     handle_exception(Exception(e_msg), request)
-            add_share(pool, disk.name, sname)
+            pqid = qgroup_create(pool)
+            add_share(pool, disk.name, sname, pqid)
             qid = qgroup_id(pool, disk.name, sname)
-            update_quota(pool, disk.name, qid, size * 1024)
-            s = Share(pool=pool, qgroup=qid, name=sname, size=size,
-                      subvol_name=sname, replica=replica,
+            update_quota(pool, disk.name, pqid, size * 1024)
+            s = Share(pool=pool, qgroup=qid, pqgroup=pqid, name=sname,
+                      size=size, subvol_name=sname, replica=replica,
                       compression_algo=compression)
             s.save()
             mnt_pt = '%s%s' % (settings.MNT_PT, sname)
@@ -304,7 +323,7 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
 
             pool_device = Disk.objects.filter(pool=share.pool)[0].name
             try:
-                remove_share(share.pool, pool_device, share.subvol_name)
+                remove_share(share.pool, pool_device, share.subvol_name, share.pqgroup)
             except Exception, e:
                 logger.exception(e)
                 e_msg = ('Failed to delete the Share(%s). Error from the OS: %s' % (sname, e.__str__()))
