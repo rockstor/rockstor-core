@@ -54,22 +54,32 @@ ServicesView = Backbone.View.extend({
 	this.collection.fetch({
 	    success: function(collection, response, options) {
 		_this.renderServices();
+		// Register function for socket endpoint
+		RockStorSocket.services = io.connect('/services', {'secure': true});
+		RockStorSocket.addListener(_this.servicesStatuses, _this, 'services:get_services');
+
 	    }
 	});
-	// Register function for socket endpoint
-	RockStorSocket.services = io.connect('/services', {'secure': true});
-	RockStorSocket.addListener(this.servicesStatuses, this, 'services:get_services');
-	RockStorSocket.addListener(this.servicesConnect, this, 'services:connect');
 
 	return this;
     },
 
-    servicesConnect: function(data) {
-	console.log('services connected', data);
-    },
-
     servicesStatuses: function(data) {
-	console.log('services', data);
+	var _this = this;
+	_.each(data, function(value, key, list) {
+	    // Returns array of one object
+	    var collectionArr = _this.collection.where({ 'name': key });
+	    var collectionModel = collectionArr[0];
+	    if ( collectionArr.length > 0) {
+		if ( value.running > 0) {
+		    collectionModel.set('status', false);
+		} else {
+		    collectionModel.set('status', true);
+		}
+	    }
+	});
+	this.renderServices();
+
     },
 
     renderServices: function() {

@@ -51,9 +51,8 @@ RockStorSocket.removeOneListener = function(socketName) {
 
 // Fire appropriate callback given message
 RockStorSocket.msgHandler = function(data) {
-    console.debug(data);
-    if (!_.isNull(data.key) && !_.isUndefined(data.key)) {
-	var obj = RockStorSocket.handlerMap[data.key];
+    var obj = RockStorSocket.handlerMap[data.key];
+    if (!_.isNull(obj) && !_.isUndefined(obj)) {
 	obj.fn.call(obj.fn_this, data.data);
     }
 };

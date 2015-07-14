@@ -35,24 +35,24 @@ class ServicesNamespace(BaseNamespace, BroadcastMixin):
         # TODO: key/value pairs of the shortened, longer name for each service
         # check to see what the collection looks like (if there is a shortened name)
         # Iterate through the collection and assign the values accordingly
-        services = {'nfs', 'smb', 'ntpd', 'winbind', 'netatalk',
+        services = ('nfs', 'smb', 'ntpd', 'winbind', 'netatalk',
                     'snmpd', 'docker', 'smartd', 'replication',
                     'nis', 'ldap', 'sftp', 'data-collector', 'smartd',
-                    'service-monitor', 'docker', 'task-scheduler'}
-        data = {}
-        for service in services:
-            data[service] = {}
-            output, error, return_code = service_status(service)
-            if (return_code == 0):
-                data[service]['running'] = return_code
-            else:
-                data[service]['running'] = return_code
+                    'service-monitor', 'docker', 'task-scheduler')
+        while True:
+            data = {}
+            for service in services:
+                data[service] = {}
+                output, error, return_code = service_status(service)
+                if (return_code == 0):
+                    data[service]['running'] = return_code
+                else:
+                    data[service]['running'] = return_code
 
-        self.emit('services:get_services', {
-            'data': data, 'key': 'services:get_services'
-        })
-
-        gevent.sleep(30)
+            self.emit('services:get_services', {
+                'data': data, 'key': 'services:get_services'
+            })
+            gevent.sleep(5)
 
 
 # TODO: Create a base class that runs all other classes within a context manager
