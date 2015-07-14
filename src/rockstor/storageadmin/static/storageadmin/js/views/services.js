@@ -158,7 +158,6 @@ ServicesView = Backbone.View.extend({
 	var serviceName = $(event.currentTarget).data('service-name');
 	// if already started, return
 	if (this.getSliderVal(serviceName).toString() == "1") return;
-	this.stopPolling();
 	this.setStatusLoading(serviceName, true);
 	$.ajax({
 	    url: "/api/sm/services/" + serviceName + "/start",
@@ -168,11 +167,9 @@ ServicesView = Backbone.View.extend({
 		_this.highlightStartEl(serviceName, true);
 		_this.setSliderVal(serviceName, 1);
 		_this.setStatusLoading(serviceName, false);
-		_this.startPolling();
 	    },
 	    error: function(xhr, status, error) {
 		_this.setStatusError(serviceName, xhr);
-		_this.startPolling();
 	    }
 	});
     },
@@ -183,7 +180,6 @@ ServicesView = Backbone.View.extend({
 	if (serviceName == 'service-monitor') return;
 	// if already stopped, return
 	if (this.getSliderVal(serviceName).toString() == "0") return;
-	this.stopPolling();
 	this.setStatusLoading(serviceName, true);
 	$.ajax({
 	    url: "/api/sm/services/" + serviceName + "/stop",
@@ -193,11 +189,9 @@ ServicesView = Backbone.View.extend({
 		_this.highlightStartEl(serviceName, false);
 		_this.setSliderVal(serviceName, 0);
 		_this.setStatusLoading(serviceName, false);
-		_this.startPolling();
 	    },
 	    error: function(xhr, status, error) {
 		_this.setStatusError(serviceName, xhr);
-		_this.startPolling();
 	    }
 	});
     },
@@ -252,53 +246,7 @@ ServicesView = Backbone.View.extend({
 
     cleanup: function() {
 	RockStorSocket.removeOneListener('services');
-	this.stopPolling();
-    },
 
-    startPolling: function() {
-	var _this = this;
-	// start after updateFreq
-	this.timeoutId = window.setTimeout(function() {
-	    _this.updateStatus();
-	}, this.updateFreq);
-    },
-
-    updateStatus: function() {
-	var _this = this;
-	_this.startTime = new Date().getTime();
-	_this.collection.fetch({
-	    silent: true,
-	    success: function(collection, response, options) {
-		_this.collection.each(function(service) {
-		    var serviceName = service.get('name');
-		    if (service.get('status')) {
-			_this.highlightStartEl(serviceName, true);
-			_this.setSliderVal(serviceName, 1);
-		    } else {
-			_this.highlightStartEl(serviceName, false);
-			_this.setSliderVal(serviceName, 0);
-		    }
-		});
-		var currentTime = new Date().getTime();
-		var diff = currentTime - _this.startTime;
-		// if diff > updateFreq, make next call immediately
-		if (diff > _this.updateFreq) {
-		    _this.updateStatus();
-		} else {
-		    // wait till updateFreq msec has elapsed since startTime
-		    _this.timeoutId = window.setTimeout( function() {
-			_this.updateStatus();
-		    }, _this.updateFreq - diff);
-		}
-	    }
-	});
-    },
-
-    stopPolling: function() {
-	var _this = this;
-	if (!_.isUndefined(this.timeoutId)) {
-	    window.clearInterval(this.timeoutId);
-	}
     },
 
     showJoinDomainPopup: function(event) {
