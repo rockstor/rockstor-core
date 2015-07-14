@@ -255,7 +255,7 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
                              'is less than current usage(%dKB) of the share.' %
                              (new_size, cur_rusage))
                     handle_exception(Exception(e_msg), request)
-                update_quota(share.pool, disk.name, qid, new_size * 1024)
+                update_quota(share.pool, disk.name, share.pqgroup, new_size * 1024)
                 share.size = new_size
             if ('compression' in request.data):
                 new_compression = self._validate_compression(request)
