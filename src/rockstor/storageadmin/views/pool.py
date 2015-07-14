@@ -185,7 +185,6 @@ class PoolMixin(object):
         mount_root(pool, fd.name)
         pool_info = get_pool_info(fd.name)
         pool.name = pool_info['label']
-        mount_root(pool, dname)
         pool.raid = pool_raid('%s%s' % (settings.MNT_PT, pool.name))['data']
         pool.size = pool_usage('%s%s' % (settings.MNT_PT, pool.name))[0]
         pool.save()
