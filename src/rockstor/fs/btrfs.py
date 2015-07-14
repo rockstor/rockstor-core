@@ -40,6 +40,7 @@ DD = '/bin/dd'
 DEFAULT_MNT_DIR = '/mnt2/'
 RMDIR = '/bin/rmdir'
 WIPEFS = '/usr/sbin/wipefs'
+QID = '2015'
 
 import collections
 
@@ -178,7 +179,7 @@ def subvol_info(mnt_pt):
     return info
 
 
-def add_share(pool, pool_device, share_name):
+def add_share(pool, pool_device, share_name, qid):
     """
     share is a subvolume in btrfs.
     """
@@ -190,7 +191,7 @@ def add_share(pool, pool_device, share_name):
     if (rc == 0):
         return o, e, rc
     if (not is_subvol(subvol_mnt_pt)):
-        sub_vol_cmd = [BTRFS, 'subvolume', 'create', subvol_mnt_pt]
+        sub_vol_cmd = [BTRFS, 'subvolume', 'create', '-i', qid, subvol_mnt_pt]
         return run_command(sub_vol_cmd)
     return True
 
@@ -334,7 +335,7 @@ def share_id(pool, pool_device, share_name):
     raise Exception('subvolume id for share: %s not found.' % share_name)
 
 
-def remove_share(pool, pool_device, share_name):
+def remove_share(pool, pool_device, share_name, pqgroup):
     """
     umount share if its mounted.
     mount root pool
@@ -352,8 +353,8 @@ def remove_share(pool, pool_device, share_name):
     qgroup = ('0/%s' % share_id(pool, pool_device, share_name))
     delete_cmd = [BTRFS, 'subvolume', 'delete', subvol_mnt_pt]
     run_command(delete_cmd)
-    return qgroup_destroy(qgroup, root_pool_mnt)
-
+    qgroup_destroy(qgroup, root_pool_mnt)
+    return qgroup_destroy(pqgroup, root_pool_mnt)
 
 def remove_snap(pool, pool_device, share_name, snap_name):
     root_mnt = mount_root(pool, pool_device)
@@ -462,6 +463,24 @@ def disable_quota(pool_name, device):
 def qgroup_id(pool, disk_name, share_name):
     sid = share_id(pool, disk_name, share_name)
     return '0/' + sid
+
+def qgroup_max(mnt_pt):
+    o, e, rc = run_command([BTRFS, 'qgroup', 'show', mnt_pt])
+    res = 0
+    for l in o:
+        if (re.match('%s/' % QID, l) is not None):
+            cid = int(l.split()[0].split('/')[1])
+            if (cid > res):
+                res = cid
+    return res
+
+def qgroup_create(pool):
+    #mount pool
+    pd = pool.disk_set.first().name
+    mnt_pt = mount_root(pool, ('/dev/%s' % pd))
+    qid = ('%s/%d' % (QID, qgroup_max(mnt_pt) + 1))
+    o, e, rc = run_command([BTRFS, 'qgroup', 'create', qid, mnt_pt])
+    return qid
 
 
 def qgroup_destroy(qid, mnt_pt):
