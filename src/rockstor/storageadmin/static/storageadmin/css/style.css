@@ -1660,11 +1660,6 @@ input[type="radio"].selectedRoot {
   border-radius: 7px; 
 }
 
-/* Rockstor update modal dialog */
-#update-modal {
-  margin-left: -380px;
-  height: 300px;
-}
 
 /* Rockstor shutdown modal dialog */
 #shutdown-modal {
