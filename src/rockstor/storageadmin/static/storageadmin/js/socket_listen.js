@@ -45,6 +45,10 @@ RockStorSocket.removeAllListeners = function() {
     });
 };
 
+RockStorSocket.removeOneListener = function(socketName) {
+    RockStorSocket[socketName].disconnect();
+};
+
 // Fire appropriate callback given message
 RockStorSocket.msgHandler = function(data) {
     console.debug(data);

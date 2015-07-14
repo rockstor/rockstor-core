@@ -57,7 +57,7 @@ ServicesView = Backbone.View.extend({
 	    }
 	});
 	// Register function for socket endpoint
-	RockStorSocket.services = io.connect('/services', {'secure': true, 'force new connection': true});
+	RockStorSocket.services = io.connect('/services', {'secure': true});
 	RockStorSocket.addListener(this.servicesStatuses, this, 'services:get_services');
 	RockStorSocket.addListener(this.servicesConnect, this, 'services:connect');
 
@@ -135,7 +135,7 @@ ServicesView = Backbone.View.extend({
 		    },
 		    error: function(xhr, status, error) {
 			enableButton(button);
-			var msg = parseXhrError(xhr)
+			var msg = parseXhrError(xhr);
 			_this.$('#join-domain-err').html(msg);
 			RockStorGlobals.adJoinStatus = false;
 			_this.showJoinDomainStatus();
@@ -220,7 +220,7 @@ ServicesView = Backbone.View.extend({
 
     setStatusError: function(serviceName, xhr) {
 	var statusEl = this.$('div.command-status[data-service-name="' + serviceName + '"]');
-	var msg = parseXhrError(xhr)
+	var msg = parseXhrError(xhr);
 	// remove any existing error popups
 	$('body').find('#' + serviceName + 'err-popup').remove();
 	// add icon and popup
@@ -251,6 +251,7 @@ ServicesView = Backbone.View.extend({
     },
 
     cleanup: function() {
+	RockStorSocket.removeOneListener('services');
 	this.stopPolling();
     },
 

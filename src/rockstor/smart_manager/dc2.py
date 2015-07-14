@@ -16,21 +16,27 @@ logger = logging.getLogger(__name__)
 
 
 class ServicesNamespace(BaseNamespace, BroadcastMixin):
+
+    # Called before the recv_connect function
+    def initialize(self):
+        logger.debug('Services have been initialized')
+
     def recv_connect(self):
+        logger.debug("Services has connected")
         self.emit('services:connected', {
             'key': 'services:connected', 'data': 'connected'
         })
         self.spawn(self.send_service_statuses)
 
     def recv_disconnect(self):
-        self.disconnect(silent=True)
+        logger.debug("Services have disconnected")
 
     def send_service_statuses(self):
         # TODO: key/value pairs of the shortened, longer name for each service
         # check to see what the collection looks like (if there is a shortened name)
         # Iterate through the collection and assign the values accordingly
         services = {'nfs', 'smb', 'ntpd', 'winbind', 'netatalk',
-                    'snmpd', 'docker', 'smartd', 'replication'
+                    'snmpd', 'docker', 'smartd', 'replication',
                     'nis', 'ldap', 'sftp', 'data-collector', 'smartd',
                     'service-monitor', 'docker', 'task-scheduler'}
         data = {}
@@ -54,34 +60,39 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
     start = False
     supported_kernel = settings.SUPPORTED_KERNEL_VERSION
 
+    # Called before the connection is established
+    def initialize(self):
+        logger.debug("Sysinfo has been initialized")
+
     # This function is run once on every connection
     def recv_connect(self):
+        logger.debug("Sysinfo has connected")
         self.emit("sysinfo:sysinfo", {
             "key": "sysinfo:connected", "data": "connected"
         })
         self.start = True
         gevent.spawn(self.send_uptime)
-        self.kernel_func = gevent.spawn(self.send_kernel_info)
+        gevent.spawn(self.send_kernel_info)
 
     # Run on every disconnect
     def recv_disconnect(self):
+        logger.debug("Sysinfo has disconnected")
         self.start = False
-        self.disconnect(silent=True)
 
     def send_uptime(self):
+        # Seems redundant
         while self.start:
-            if not self.start:
-                break
-            self.emit('sysinfo:uptime', {'data': uptime(), 'key': 'sysinfo:uptime'})
+            self.emit('sysinfo:uptime', {
+                'data': uptime(), 'key': 'sysinfo:uptime'
+            })
             gevent.sleep(30)
 
     def send_kernel_info(self):
             try:
                 self.emit('sysinfo:kernel_info', {
                     'data': kernel_info(self.supported_kernel),
-                    'key': 'sysinfo:kernel_info'})
-                # Send information once per connection
-                self.kernel_func.kill()
+                    'key': 'sysinfo:kernel_info'
+                })
             except Exception as e:
                 logger.debug('kernel error')
                 # Emit an event to the front end to capture error report
@@ -116,7 +127,6 @@ class Application(object):
         if path.startswith("socket.io"):
             socketio_manage(environ, {'/services': ServicesNamespace,
                                       '/sysinfo': SysinfoNamespace})
-
 
 
 def not_found(start_response):
