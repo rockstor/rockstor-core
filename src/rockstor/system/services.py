@@ -24,13 +24,14 @@ from exceptions import CommandException
 import shutil
 from tempfile import mkstemp
 import os
-
+from shutil import move
 
 CHKCONFIG_BIN = '/sbin/chkconfig'
 AUTHCONFIG = '/usr/sbin/authconfig'
 SSHD_CONFIG = '/etc/ssh/sshd_config'
 SYSTEMCTL_BIN = '/usr/bin/systemctl'
 SUPERCTL_BIN = ('%s/bin/supervisorctl' % settings.ROOT_DIR)
+SUPERVISORD_CONF = ('%s/etc/supervisord.conf' % settings.ROOT_DIR)
 NET = '/usr/bin/net'
 AFP_CONFIG = '/etc/netatalk/afp.conf'
 
@@ -52,8 +53,36 @@ def systemctl(service_name, switch):
     return run_command([SYSTEMCTL_BIN, switch, service_name])
 
 
+def set_autostart(service, switch):
+    switch_map = {'start': 'true',
+                  'stop': 'false'}
+    if (switch not in switch_map):
+        return
+    switch = switch_map[switch]
+    fo, npath = mkstemp()
+    with open(SUPERVISORD_CONF) as sfo, open(npath, 'w') as tfo:
+        start = False
+        stop = False
+        for line in sfo.readlines():
+            if (re.match('\[program:%s\]' % service, line) is not None):
+                start = True
+            elif (start is True and len(line.strip()) == 0):
+                stop = True
+
+            if (start is True and stop is False):
+                if (re.match('autostart', line) is not None):
+                    tfo.write('autostart=%s\n' % switch)
+                else:
+                    tfo.write(line)
+            else:
+                tfo.write(line)
+    move(npath, SUPERVISORD_CONF)
+
+
+
 def superctl(service, switch):
     out, err, rc = run_command([SUPERCTL_BIN, switch, service])
+    set_autostart(service, switch)
     if (switch == 'status'):
         status = out[0].split()[1]
         if (status != 'RUNNING'):

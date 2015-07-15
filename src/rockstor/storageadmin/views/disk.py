@@ -74,6 +74,8 @@ class DiskListView(rfc.GenericView):
                 dob.parted = True
             if (Pool.objects.filter(name=d.label).exists()):
                 dob.pool = Pool.objects.get(name=d.label)
+            else:
+                dob.pool = None
             if (dob.pool is None and d.root is True):
                 p = self._create_root_pool(d)
                 p.disk_set.add(dob)
