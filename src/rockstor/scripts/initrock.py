@@ -34,6 +34,7 @@ DJANGO = '%s/django' % BASE_BIN
 STAMP = '%s/.initrock' % BASE_DIR
 FLASH_OPTIMIZE = '%s/flash-optimize' % BASE_BIN
 PREP_DB = '%s/prep_db' % BASE_BIN
+QGROUP_CLEAN = '%s/qgroup-clean' % BASE_BIN
 SUPERCTL = '%s/supervisorctl' % BASE_BIN
 OPENSSL = '/usr/bin/openssl'
 GRUBBY = '/usr/sbin/grubby'
@@ -144,7 +145,10 @@ def main():
             lfo.write('%s -x\n' % initrock_loc)
     run_command(['/usr/bin/chmod', 'a+x', '/etc/rc.d/rc.local'])
 
+    logging.info('Checking for flash and Running flash optimizations if appropriate.')
     run_command([FLASH_OPTIMIZE, '-x'])
+    logging.info('Running qgroup cleanup. %s' % QGROUP_CLEAN)
+    run_command([QGROUP_CLEAN])
     if (os.path.isfile(STAMP)):
         return logging.info(
             'initrock ran successfully before, so not running it again.'
