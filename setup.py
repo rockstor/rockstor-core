@@ -49,6 +49,7 @@ setup(
             'qgroup-clean = scripts.qgroup_clean:main',
             'rockon-json = scripts.rockon_util:main',
             'flash-optimize = scripts.flash_optimize:main',
+            'dc2 = smart_manager.dc2:main',
         ],
     },
 
@@ -67,7 +68,10 @@ setup(
         'six == 1.7.3',
         'django-ztask == 0.1.5',
         'mock == 1.0.1',
-        'coverage'
+        'coverage',
+        'gevent-socketio',
+        'psycogreen',
+        'psutil',
     ]
 
 )
