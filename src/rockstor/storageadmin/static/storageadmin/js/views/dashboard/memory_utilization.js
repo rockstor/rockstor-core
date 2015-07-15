@@ -278,8 +278,8 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
         _this.x.domain([min_ts, max_ts]);
         
         _this.svg.selectAll('.area')
-        .attr("d", function(d) { return _this.area(d.values); });
-        //.attr('transform', null);
+        .attr("d", function(d) { return _this.area(d.values); })
+        .attr('transform', "translate(0,0)");
        
         _this.xAxisG.transition()
         .duration(_this.updateFreq)

@@ -366,17 +366,17 @@ CpuUsageWidget = RockStorWidgetView.extend({
     //this.cpuData = data;
     var _this = this;
     // Render svg
-    this.svg = d3.select(this.el).select('#cpuusage-avg')
-    .append("svg")
-    .attr("class", "cpugraph")
-    .attr("width", this.width + this.margin.left + this.margin.right)
-    .attr("height", this.height + this.margin.top + this.margin.bottom +
-         this.padding.top + this.padding.bottom);
+      this.svg = d3.select(this.el).select('#cpuusage-avg')
+	  .append("svg")
+	  .attr("class", "cpugraph")
+	  .attr("width", this.width + this.margin.left + this.margin.right)
+	  .attr("height", this.height + this.margin.top + this.margin.bottom +
+		this.padding.top + this.padding.bottom);
 
-    this.svgG = this.svg.append("g")
-    .attr("transform", "translate(" + 
-          (this.margin.left + this.padding.left) + "," +
-          (this.margin.top + this.padding.top) + ")");
+      this.svgG = this.svg.append("g")
+      	  .attr("transform", "translate(" + 
+      		(this.margin.left + this.padding.left) + "," +
+      		(this.margin.top + this.padding.top) + ")");
     
     // svg clip path
     this.svgG.append("defs").append("clipPath")
@@ -399,9 +399,10 @@ CpuUsageWidget = RockStorWidgetView.extend({
 
     // X Axis
     this.xAxis = this.svgG.append("g")	
-    .attr("class", "cpugraph x axis")
-    .attr("transform", "translate(0," + this.height + ")")
-    .call(this.x.axis = d3.svg.axis().scale(this.x).orient("bottom").ticks(5));
+	  .attr("class", "cpugraph x axis")
+	  .attr("transform", "translate(0, 0)")
+	  .attr("transform", "translate(0," + this.height + ")")
+	  .call(this.x.axis = d3.svg.axis().scale(this.x).orient("bottom").ticks(5));
 
     // X Grid
     this.x.grid = d3.svg.axis()
@@ -412,9 +413,10 @@ CpuUsageWidget = RockStorWidgetView.extend({
     .tickFormat('');
 
     this.xGrid = this.svgG.append("g")	
-    .attr("class", "cpugraph grid")
-    .attr("transform", "translate(0," + this.height + ")")
-    .call(this.x.grid) ;
+	  .attr("class", "cpugraph grid")
+	  .attr("transform", "translate(0, 0)")
+	  .attr("transform", "translate(0," + this.height + ")")
+	  .call(this.x.grid) ;
 
     this.path = this.svgG.append("g")
     .attr("clip-path", "url(#clip)")
@@ -475,7 +477,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
     
     this.svgG.select(".line")
     .attr("d", this.line)
-    .attr("transform", null);
+    .attr("transform", "translate(0, 0)");
 
     this.xAxis.transition()
     .duration(this.transDuration)
