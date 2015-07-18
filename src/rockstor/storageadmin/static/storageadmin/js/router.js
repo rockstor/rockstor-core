@@ -101,7 +101,7 @@ var AppRouter = Backbone.Router.extend({
 	"add-access-key": "addAccessKey",
 	"404": "handle404",
 	"500": "handle500",
-	"*Path": "showHome",
+	"*path": "showHome",
     },
 
     before: function (route, param) {

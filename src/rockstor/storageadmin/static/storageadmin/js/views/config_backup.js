@@ -28,7 +28,8 @@ ConfigBackupView = RockstorLayoutView.extend({
     events: {
 	'click #new_backup': 'newBackup',
 	'click .cb-delete': 'deleteBackup',
-	'click .cb-restore': 'restoreBackup'
+	'click .cb-restore': 'restoreBackup',
+	'submit': 'uploadConfig'
     },
 
     initialize: function() {
@@ -125,8 +126,88 @@ ConfigBackupView = RockstorLayoutView.extend({
 	    });
 	}
 	return this;
+    },
+    getCookie: function(name) {
+	var cookieValue = null;
+	if (document.cookie && document.cookie != '') {
+	    var cookies = document.cookie.split(';');
+	    for (var i = 0; i < cookies.length; i++) {
+		var cookie = jQuery.trim(cookies[i]);
+		// Does this cookie string begin with the name we want?
+		if (cookie.substring(0, name.length + 1) == (name + '=')) {
+		    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+		    break;
+		}
+	    }
+	}
+	return cookieValue;
+    },
+    uploadConfig: function(event) {
+	event.preventDefault();
+	var form = this.$('#file-form')[0];
+	var fileSelect = this.$('#file-select')[0];
+	var uploadButton = this.$('#upload-button')[0];
+
+	var send = XMLHttpRequest.prototype.send,
+	    token = this.getCookie('csrftoken');
+
+	XMLHttpRequest.prototype.send = function(data) {
+            this.setRequestHeader('X-CSRFToken', token);
+	    return send.apply(this, arguments);
+	};
+
+	var file = fileSelect.files;
+	var formData = new FormData();
+	formData.append('file', file[0]);
+	formData.append('file-name', file[0].name);
+	var xhr = new XMLHttpRequest();
+
+
+	xhr.open('POST', '/api/config-backup/file-upload', true);
+	console.log(xhr);
+
+	xhr.onload = function() {
+	    if (xhr.status < 400) {
+		console.log('things went well');
+	    } else {
+		console.log('problem in file upload');
+	    }
+	};
+	xhr.send(formData);
     }
 
 });
 
 Cocktail.mixin(ConfigBackupView, PaginationMixin);
+
+
+
+/*
+    var form = document.getElementById('file-form');
+    console.log(form);
+    var fileSelect = document.getElementById('file-select');
+    var uploadButton = document.getElementById('upload-button');
+
+    form.onsubmit = function(event) {
+	event.preventDefault();
+	console.log('form has been submitted');
+	var file = fileSelect.files;
+	console.log(file);
+	var formData = new FormData();
+
+	formData.append('file', file[0], file[0].name);
+
+	var xhr = new XMLHttpRequest();
+	console.log(xhr);
+	xhr.open('POST', '/api/file-upload/', true);
+
+	xhr.onload = function () {
+	    if (xhr.status < 400) {
+		// File(s) uploaded.
+		uploadButton.innerHTML = 'Upload';
+	    };
+	    console.log(xhr);
+	    xhr.send(formData);
+	};
+    };
+*/
