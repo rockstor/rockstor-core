@@ -28,6 +28,8 @@ import rest_framework_custom as rfc
 from django.core.management import call_command
 from system.osi import run_command
 from datetime import datetime
+from rest_framework.parsers import FileUploadParser, MultiPartParser
+from rest_framework import status
 
 import logging
 logger = logging.getLogger(__name__)
@@ -131,3 +133,13 @@ class ConfigBackupDetailView(ConfigBackupMixin, rfc.GenericView):
         except ConfigBackup.DoesNotExist:
             e_msg = ('Contif backup for the id(%s) does not exist' % backup_id)
             handle_exception(Exception(e_msg), request)
+
+
+class ConfigBackupUpload(rfc.GenericView):
+    parser_classes = (FileUploadParser, MultiPartParser)
+
+    def post(self, request, format=None):
+        file_obj = request.data['file']
+        filename = request.data['file-name']
+        ConfigBackup.objects.create(config_backup=file_obj, filename=filename)
+        return Response(file_obj, status.HTTP_201_CREATED)
