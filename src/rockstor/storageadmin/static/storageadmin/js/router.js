@@ -935,7 +935,7 @@ $(document).ready(function() {
 	}
 
     });
-
+    
 });
 
 
