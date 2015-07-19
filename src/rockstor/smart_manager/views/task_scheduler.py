@@ -99,6 +99,14 @@ class TaskSchedulerListView(TaskSchedulerMixin, rfc.GenericView):
 class TaskSchedulerDetailView(TaskSchedulerMixin, rfc.GenericView):
     serializer_class = TaskDefinitionSerializer
 
+    def get(self, request, *args, **kwargs):
+        try:
+            data = TaskDefinition.objects.get(id=self.kwargs['tdid'])
+            serialized_data = TaskDefinitionSerializer(data)
+            return Response(serialized_data.data)
+        except:
+            return Response()
+
     @transaction.atomic
     def put(self, request, tdid):
         with self._handle_exception(request):
