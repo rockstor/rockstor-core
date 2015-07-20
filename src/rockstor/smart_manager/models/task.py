@@ -23,13 +23,7 @@ from smart_manager.models import TaskDefinition
 class Task(models.Model):
 
     task_def = models.ForeignKey(TaskDefinition)
-    STATE_CHOICES = [
-        ('scheduled',) * 2,
-        ('aborted',) * 2,
-        ('running',) * 2,
-        ('finished',) * 2,
-        ]
-    state = models.CharField(max_length=64, choices=STATE_CHOICES)
+    state = models.CharField(max_length=64)
     start = models.DateTimeField(auto_now=True, db_index=True)
     end = models.DateTimeField(null=True, db_index=True)
 
