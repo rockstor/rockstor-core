@@ -73,5 +73,5 @@ class AdvancedNFSExportView(rfc.GenericView):
             exports = create_nfs_export_input(cur_exports)
             exports.update(exports_d)
             refresh_wrapper(exports, request, logger)
-            nfs_serializer = AdvancedNFSExportSerializer(cur_entries)
+            nfs_serializer = AdvancedNFSExportSerializer(cur_entries, many=True)
             return Response(nfs_serializer.data)
