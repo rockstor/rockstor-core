@@ -100,12 +100,10 @@ def kernel_info(supported_version):
     if (uname[2] != supported_version):
         e_msg = ('You are running an unsupported kernel(%s). Some features '
                  'may not work properly.' % uname[2])
-        cur_kernel = def_kernel()
-        if ((cur_kernel is not None and
-                cur_kernel == supported_version)):
-            e_msg = ('%s Please reboot and the system will '
-                     'automatically boot using the supported kernel(%s)' %
-                     (e_msg, supported_version))
+        run_command([GRUBBY, '--set-default=/boot/vmlinuz-%s' % supported_version])
+        e_msg = ('%s Please reboot and the system will '
+                 'automatically boot using the supported kernel(%s)' %
+                 (e_msg, supported_version))
         raise Exception(e_msg)
     return uname[2]
 

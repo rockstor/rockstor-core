@@ -25,9 +25,9 @@ from django.conf import settings
 from storageadmin.models import Pool
 from system.osi import run_command
 
-
 def main():
     for p in Pool.objects.all():
+        print('Processing pool(%s)' % p.name)
         mnt_pt = '%s%s' % (settings.MNT_PT, p.name)
         o, e, rc = run_command([BTRFS, 'subvol', 'list', mnt_pt])
         subvol_ids = []
@@ -35,7 +35,11 @@ def main():
             if (re.match('ID ', l) is not None):
                 subvol_ids.append(l.split()[1])
 
-        o, e, rc = run_command([BTRFS, 'qgroup', 'show', mnt_pt])
+        o, e, rc = run_command([BTRFS, 'qgroup', 'show', mnt_pt], throw=False)
+        if (rc != 0):
+            print('Quotas not enabled on pool(%s). Skipping it.' % p.name)
+            continue
+
         qgroup_ids = []
         for l in o:
             if (re.match('0/', l) is not None):
@@ -46,8 +50,11 @@ def main():
 
         for q in qgroup_ids:
             if (q not in subvol_ids):
-                print ('qgroup %s not in use. deleting' % q)
+                print('qgroup %s not in use. deleting' % q)
                 run_command([BTRFS, 'qgroup', 'destroy', '0/%s' % q, mnt_pt])
+            else:
+                print('qgroup %s is in use. Moving on.' % q)
+        print('Finished processing pool(%s)' % p.name)
 
 
 if __name__ == '__main__':

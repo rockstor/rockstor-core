@@ -24,8 +24,10 @@ from smart_manager.models import ShareUsage
 class Share(models.Model):
 	"""pool that this share is part of"""
 	pool = models.ForeignKey(Pool)
-	"""quota group this share is part of"""
+        """auto created 0/x qgroup"""
 	qgroup = models.CharField(max_length=100)
+        """quota group y/x explicitly created for this Share"""
+        pqgroup = models.CharField(max_length=32, default='-1/-1')
 	"""name of the share, kind of like id"""
 	name = models.CharField(max_length=4096, unique=True)
 	"""id of the share. numeric in case of btrfs"""

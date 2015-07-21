@@ -35,13 +35,13 @@
 				<div class="form-group">
 					<select class="smallinput form-control" id="size_format"
 						name="size_format">
-						<option<%if(humanize.filesize(share.get('size')*1024).match(/Kb/g,"")){%>
+						<option<%if(humanize.filesize(share.get('size')*1024).match(/KB/g,"")){%>
 							selected="selected"<%}%> >KB</option>
-						<option<%if(humanize.filesize(share.get('size')*1024).match(/Mb/g,"")){%>
+						<option<%if(humanize.filesize(share.get('size')*1024).match(/MB/g,"")){%>
 							selected="selected"<%}%> >MB</option>
-						<option<%if(humanize.filesize(share.get('size')*1024).match(/Gb/g,"")){%>
+						<option<%if(humanize.filesize(share.get('size')*1024).match(/GB/g,"")){%>
 							selected="selected"<%}%> >GB</option>
-						<option<%if(humanize.filesize(share.get('size')*1024).match(/Tb/g,"")){%>
+						<option<%if(humanize.filesize(share.get('size')*1024).match(/TB/g,"")){%>
 							selected="selected"<%}%> >TB</option>
 					</select>
 				</div>
