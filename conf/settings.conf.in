@@ -333,5 +333,10 @@ COMPRESSION_TYPES = ('lzo', 'zlib', 'no',)
 
 SUPPORTED_KERNEL_VERSION = ${django-settings-conf:kernel}
 
-SNAP_TS_FORMAT = '%Y%m%d%H%M%S'
+SNAP_TS_FORMAT = '%Y%m%d%H%M'
 ROOT_POOL = 'rockstor_rockstor'
+
+
+MODEL_DEFS = {
+	   'pqgroup': '-1/-1',
+}
