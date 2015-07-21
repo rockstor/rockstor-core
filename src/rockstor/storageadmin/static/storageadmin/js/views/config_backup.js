@@ -143,71 +143,44 @@ ConfigBackupView = RockstorLayoutView.extend({
 	return cookieValue;
     },
     uploadConfig: function(event) {
-	event.preventDefault();
-	var form = this.$('#file-form')[0];
-	var fileSelect = this.$('#file-select')[0];
-	var uploadButton = this.$('#upload-button')[0];
+      event.preventDefault();
+      var form = this.$('#file-form')[0];
+      var fileSelect = this.$('#file-select')[0];
+      var uploadButton = this.$('#upload-button')[0];
 
-	var send = XMLHttpRequest.prototype.send,
-	    token = this.getCookie('csrftoken');
+      var send = XMLHttpRequest.prototype.send,
+	  token = this.getCookie('csrftoken');
 
-	XMLHttpRequest.prototype.send = function(data) {
-            this.setRequestHeader('X-CSRFToken', token);
-	    return send.apply(this, arguments);
-	};
+      // Save the original function to replace it later
+      var originalSend = XMLHttpRequest.prototype.send;
 
-	var file = fileSelect.files;
-	var formData = new FormData();
-	formData.append('file', file[0]);
-	formData.append('file-name', file[0].name);
-	var xhr = new XMLHttpRequest();
+      XMLHttpRequest.prototype.send = function(data) {
+        this.setRequestHeader('X-CSRFToken', token);
+	return send.apply(this, arguments);
+      };
+
+      var file = fileSelect.files;
+      var formData = new FormData();
+      formData.append('file', file[0]);
+      formData.append('file-name', file[0].name);
+      var xhr = new XMLHttpRequest();
 
 
-	xhr.open('POST', '/api/config-backup/file-upload', true);
-	console.log(xhr);
+      xhr.open('POST', '/api/config-backup/file-upload', true);
+      console.log(xhr);
 
-	xhr.onload = function() {
-	    if (xhr.status < 400) {
-		console.log('things went well');
-	    } else {
-		console.log('problem in file upload');
-	    }
-	};
-	xhr.send(formData);
+      xhr.onload = function() {
+	if (xhr.status < 400) {
+	  console.log('things went well');
+	} else {
+	  console.log('problem in file upload');
+	}
+      };
+      xhr.send(formData);
+      // Replace the original function
+      XMLHttpRequest.prototype.send = originalSend;
     }
 
 });
 
 Cocktail.mixin(ConfigBackupView, PaginationMixin);
-
-
-
-/*
-    var form = document.getElementById('file-form');
-    console.log(form);
-    var fileSelect = document.getElementById('file-select');
-    var uploadButton = document.getElementById('upload-button');
-
-    form.onsubmit = function(event) {
-	event.preventDefault();
-	console.log('form has been submitted');
-	var file = fileSelect.files;
-	console.log(file);
-	var formData = new FormData();
-
-	formData.append('file', file[0], file[0].name);
-
-	var xhr = new XMLHttpRequest();
-	console.log(xhr);
-	xhr.open('POST', '/api/file-upload/', true);
-
-	xhr.onload = function () {
-	    if (xhr.status < 400) {
-		// File(s) uploaded.
-		uploadButton.innerHTML = 'Upload';
-	    };
-	    console.log(xhr);
-	    xhr.send(formData);
-	};
-    };
-*/
