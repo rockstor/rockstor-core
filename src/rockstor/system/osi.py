@@ -23,6 +23,9 @@ import shutil
 from tempfile import mkstemp
 import time
 from exceptions import CommandException
+import logging
+logger = logging.getLogger(__name__)
+
 
 HOSTS_FILE = '/etc/hosts'
 MKDIR = '/bin/mkdir'
@@ -75,8 +78,12 @@ def run_command(cmd, shell=False, stdout=subprocess.PIPE,
     out = out.split('\n')
     err = err.split('\n')
     rc = p.returncode
-    if (throw and rc != 0):
-        raise CommandException(out, err, rc)
+    if (rc != 0):
+        e_msg = ('non-zero code(%d) returned by command: %s. output: %s error:'
+                 ' %s' % (rc, cmd, out, err))
+        logger.error(e_msg)
+        if (throw):
+            raise CommandException(out, err, rc)
     return (out, err, rc)
 
 
