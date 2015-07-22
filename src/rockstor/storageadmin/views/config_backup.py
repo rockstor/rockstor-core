@@ -58,6 +58,11 @@ class ConfigBackupMixin(object):
     serializer_class = ConfigBackupSerializer
     cb_dir = os.path.join(settings.STATIC_ROOT, 'config-backups')
 
+    @staticmethod
+    def _md5sum(fp):
+        return run_command(['/usr/bin/md5sum', fp])[0][0].split()[0]
+
+
 class ConfigBackupListView(ConfigBackupMixin, rfc.GenericView):
 
     def get_queryset(self, *args, **kwargs):
@@ -91,9 +96,6 @@ class ConfigBackupListView(ConfigBackupMixin, rfc.GenericView):
             cbo.save()
             return Response(ConfigBackupSerializer(cbo).data)
 
-    @staticmethod
-    def _md5sum(fp):
-        return run_command(['/usr/bin/md5sum', fp])[0][0].split()[0]
 
 class ConfigBackupDetailView(ConfigBackupMixin, rfc.GenericView):
 
@@ -135,11 +137,36 @@ class ConfigBackupDetailView(ConfigBackupMixin, rfc.GenericView):
             handle_exception(Exception(e_msg), request)
 
 
-class ConfigBackupUpload(rfc.GenericView):
+class ConfigBackupUpload(ConfigBackupMixin, rfc.GenericView):
     parser_classes = (FileUploadParser, MultiPartParser)
 
+    def get_queryset(self, *args, **kwargs):
+        for cbo in ConfigBackup.objects.all():
+            fp = os.path.join(self.cb_dir, cbo.filename)
+            if (not os.path.isfile(fp)):
+                cbo.delete()
+            md5sum = self._md5sum(fp)
+            if (md5sum != cbo.md5sum):
+                logger.error('md5sum mismatch for %s. cbo: %s file: %s. '
+                             'Deleting dbo' %
+                             (cbo.filename, cbo.md5sum, md5sum))
+                cbo.delete()
+        return ConfigBackup.objects.filter().order_by('-id')
+
+
+
     def post(self, request, format=None):
-        file_obj = request.data['file']
-        filename = request.data['file-name']
-        ConfigBackup.objects.create(config_backup=file_obj, filename=filename)
-        return Response(file_obj, status.HTTP_201_CREATED)
+        with self._handle_exception(request):
+            filename = request.data['file-name']
+            fp = ''
+            if (not os.path.isdir(self.cb_dir)):
+                os.mkdir(self.cb_dir)
+                fp = os.path.join(self.cb_dir, filename)
+            else:
+                fp = os.path.join(self.cb_dir, filename)
+            md5sum = self._md5sum(fp)
+            size = os.stat(fp).st_size
+            file_obj = request.data['file']
+            cbo = ConfigBackup(filename=filename, md5sum=md5sum, size=size, config_backup=file_obj)
+            cbo.save()
+            return Response(ConfigBackupSerializer(cbo).data)

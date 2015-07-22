@@ -23,7 +23,7 @@ class ConfigBackup(models.Model):
     filename = models.CharField(max_length=64)
     md5sum = models.CharField(max_length=32, null=True)
     size = models.IntegerField(null=True)
-    config_backup = models.FileField(upload_to='.')
+    config_backup = models.FileField(upload_to='.', null=True)
 
     def __unicode__(self):
         return "{0}".format(self.filename)

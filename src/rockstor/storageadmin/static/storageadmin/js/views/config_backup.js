@@ -29,9 +29,8 @@ ConfigBackupView = RockstorLayoutView.extend({
 	'click #new_backup': 'newBackup',
 	'click .cb-delete': 'deleteBackup',
 	'click .cb-restore': 'restoreBackup',
-	'submit': 'uploadConfig'
+	'click #upload-button': 'uploadConfig'
     },
-
     initialize: function() {
 	// call initialize of base
 	this.constructor.__super__.initialize.apply(this, arguments);
@@ -142,45 +141,53 @@ ConfigBackupView = RockstorLayoutView.extend({
 	}
 	return cookieValue;
     },
-    uploadConfig: function(event) {
-      event.preventDefault();
-      var form = this.$('#file-form')[0];
-      var fileSelect = this.$('#file-select')[0];
-      var uploadButton = this.$('#upload-button')[0];
-
-      var send = XMLHttpRequest.prototype.send,
-	  token = this.getCookie('csrftoken');
-
-      // Save the original function to replace it later
-      var originalSend = XMLHttpRequest.prototype.send;
-
-      XMLHttpRequest.prototype.send = function(data) {
-        this.setRequestHeader('X-CSRFToken', token);
-	return send.apply(this, arguments);
-      };
-
-      var file = fileSelect.files;
-      var formData = new FormData();
-      formData.append('file', file[0]);
-      formData.append('file-name', file[0].name);
-      var xhr = new XMLHttpRequest();
+  uploadConfig: function(event) {
+    /* This hand submits the form. The code should feel straightforward
+     * One note...the send() prototype is being proxied as other functions
+     * rely on it later in the code.
+     */
+    event.preventDefault();
 
 
-      xhr.open('POST', '/api/config-backup/file-upload', true);
-      console.log(xhr);
+    var fileSelect = this.$('#file-select')[0];
+    var uploadButton = this.$('#upload-button')[0];
 
-      xhr.onload = function() {
-	if (xhr.status < 400) {
-	  console.log('things went well');
-	} else {
-	  console.log('problem in file upload');
-	}
-      };
-      xhr.send(formData);
-      // Replace the original function
-      XMLHttpRequest.prototype.send = originalSend;
-    }
+    var send = XMLHttpRequest.prototype.send,
+	token = this.getCookie('csrftoken');
 
+    // Save the original function to replace it later
+    var originalSend = XMLHttpRequest.prototype.send;
+
+    XMLHttpRequest.prototype.send = function(data) {
+      this.setRequestHeader('X-CSRFToken', token);
+      return send.apply(this, arguments);
+    };
+
+    var file = fileSelect.files;
+    var formData = new FormData();
+    formData.append('file', file[0]);
+    formData.append('file-name', file[0].name);
+    var xhr = new XMLHttpRequest();
+
+
+    xhr.open('POST', '/api/config-backup/file-upload', true);
+    console.log(xhr);
+    var _this = this;
+    xhr.onload = function() {
+      if (xhr.status < 400) {
+	console.log('things went well');
+        // use jquery here to show success to user
+        // add to the collection and then rerender
+        console.log(_this.collection);
+        _this.collection.fetch({ reset:true });
+      } else {
+	console.log('problem in file upload');
+      }
+    };
+    xhr.send(formData);
+    // Replace the original function
+    XMLHttpRequest.prototype.send = originalSend;
+  }
 });
 
 Cocktail.mixin(ConfigBackupView, PaginationMixin);
