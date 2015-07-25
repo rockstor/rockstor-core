@@ -50,6 +50,15 @@ class TaskSchedulerMixin(object):
         return frequency, meta
 
     @staticmethod
+    def _validate_enabled(request):
+        enabled = request.data.get('enabled', True)
+        if (type(enabled) != bool):
+            e_msg = ('enabled flag must be a boolean and not %s' %
+                     type(enabled))
+            handle_exception(Exception(e_msg), request)
+        return enabled
+
+    @staticmethod
     def _task_def(request, tdid):
         try:
             return TaskDefinition.objects.get(id=tdid)
@@ -86,12 +95,14 @@ class TaskSchedulerListView(TaskSchedulerMixin, rfc.GenericView):
 
             frequency, meta = self._validate_input(request)
             json_meta = json.dumps(meta)
+            enabled = self._validate_enabled(request)
 
             ts = int(float(request.data['ts']))
             ts_dto = datetime.utcfromtimestamp(
                 float(ts)).replace(second=0, microsecond=0, tzinfo=utc)
             td = TaskDefinition(name=name, task_type=task_type, ts=ts_dto,
-                                frequency=frequency, json_meta=json_meta)
+                                frequency=frequency, json_meta=json_meta,
+                                enabled=enabled)
             td.save()
             return Response(TaskDefinitionSerializer(td).data)
 
@@ -111,12 +122,7 @@ class TaskSchedulerDetailView(TaskSchedulerMixin, rfc.GenericView):
     def put(self, request, tdid):
         with self._handle_exception(request):
             tdo = self._task_def(request, tdid)
-            enabled = request.data.get('enabled', True)
-            if (type(enabled) != bool):
-                e_msg = ('enabled flag must be a boolean and not %s' %
-                         type(enabled))
-                handle_exception(Exception(e_msg), request)
-            tdo.enabled = enabled
+            tdo.enabled = self._validate_enabled(request)
             tdo.frequency, new_meta = self._validate_input(request)
             meta = json.loads(tdo.json_meta)
             meta.update(new_meta)
