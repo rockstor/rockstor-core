@@ -124,21 +124,22 @@ class SnapshotView(rfc.GenericView):
                     host_str=se.export_group.host_str, nohide=True)
                 export_group.save()
                 export = NFSExport(share=share, export_group=export_group,
-                                   mount=snap_mnt_pt)
+                                   mount=export_pt)
                 export.full_clean()
                 export.save()
                 cur_exports.append(export)
         else:
-            try:
-                export = NFSExport.objects.get(share=share, mount=snap_mnt_pt)
-                cur_exports.remove(export)
-                export.export_group.delete()
-                export.delete()
-            except Exception, e:
-                logger.exception(e)
-            finally:
-                umount_root(export_pt)
-                umount_root(snap_mnt_pt)
+            for mnt in (snap_mnt_pt, export_pt):
+                try:
+                    export = NFSExport.objects.get(share=share, mount=mnt)
+                    cur_exports.remove(export)
+                    export.export_group.delete()
+                    export.delete()
+                except Exception, e:
+                    logger.exception(e)
+                finally:
+                    umount_root(export_pt)
+                    umount_root(snap_mnt_pt)
         exports = create_nfs_export_input(cur_exports)
         adv_entries = [x.export_str for x in AdvancedNFSExport.objects.all()]
         exports_d = create_adv_nfs_export_input(adv_entries, self.request)
