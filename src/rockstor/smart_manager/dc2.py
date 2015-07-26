@@ -93,7 +93,10 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
             except Exception as e:
                 logger.debug('kernel error')
                 # Emit an event to the front end to capture error report
-                self.emit('sysinfo:kernel_error', {'error': str(e)})
+                self.emit('sysinfo:kernel_error', {
+                    'data': str(e),
+                    'key': 'sysinfo:kernel_error'
+                })
                 self.error('unsupported_kernel', str(e))
 
 

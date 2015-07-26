@@ -83,6 +83,7 @@ var AppRouter = Backbone.Router.extend({
 	"add-scheduled-task": "addScheduledTask",
 	"edit-scheduled-task/:taskDefId": "editScheduledTask",
 	"update-certificate": "updateCertificate",
+	"config-backup": "configBackup",
 	"shutdown": "showShutdownView",
 	"reboot": "showReboot",
 	"version": "showVersion",
@@ -100,7 +101,7 @@ var AppRouter = Backbone.Router.extend({
 	"add-access-key": "addAccessKey",
 	"404": "handle404",
 	"500": "handle500",
-	"*path": "showHome",
+	"*Path": "showHome",
     },
 
     before: function (route, param) {
@@ -915,17 +916,20 @@ $(document).ready(function() {
 	$('#uptime').text(str);
     };
 
+
+  var kernelError = function(data) {
+    // If 'kernel' does not show up in the string, we're ok
+    if (data.indexOf('kernel') !== -1) {
+      // Put an alert at the top of the page
+      $('#browsermsg').html('<div class="alert alert-danger"><button type="button" class="close" data-dismiss="alert">&times;</button>' + data + '</div>');
+    }
+  };
+
+
     RockStorSocket.addListener(kernelInfo, this, 'sysinfo:kernel_info');
     RockStorSocket.addListener(displayLoadAvg, this, 'sysinfo:uptime');
+    RockStorSocket.addListener(kernelError, this, 'sysinfo:kernel_error');
 
-    RockStorSocket.sysinfo.on('kernel_error', function(data) {
-	// Handling errors just by emitting message via the server
-	if (data.error.indexOf('kernel') !== -1) {
-	    // Put an alert at the top of the page
-	    $('#browsermsg').html('<div class="alert alert-danger"><button type="button" class="close" data-dismiss="alert">&times;</button>' + data.error + '</div>');
-	}
-
-    });
 
 });
 
