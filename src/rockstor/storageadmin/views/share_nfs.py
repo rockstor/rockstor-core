@@ -22,10 +22,11 @@ from django.conf import settings
 from storageadmin.models import (NFSExport, NFSExportGroup, Disk)
 from storageadmin.serializers import NFSExportGroupSerializer
 from fs.btrfs import (mount_share, is_share_mounted)
+from system.osi import nfs4_mount_teardown
 import rest_framework_custom as rfc
 from nfs_helpers import (create_nfs_export_input, parse_options,
                          dup_export_check, refresh_wrapper,
-                         teardown_wrapper, validate_export_group)
+                         validate_export_group)
 from share_helpers import validate_share
 
 import logging
@@ -108,7 +109,7 @@ class ShareNFSDetailView(rfc.GenericView):
                         snap_name = e.mount.split(e.share.name + '_')[-1]
                         export_pt = ('%s%s/%s' % (settings.NFS_EXPORT_ROOT,
                                                   e.share.name, snap_name))
-                    teardown_wrapper(export_pt, request, logger)
+                    nfs4_mount_teardown(export_pt)
                     cur_exports.remove(e)
             exports = create_nfs_export_input(cur_exports)
             export.delete()
