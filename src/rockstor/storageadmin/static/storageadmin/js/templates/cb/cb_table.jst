@@ -1,0 +1,29 @@
+<% if (!collection.isEmpty()) { %>
+  <table id="cb-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of Config Backups">
+    <thead>
+      <tr>
+        <th>Filename</th>
+        <th>Size</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% collection.each(function(cb, index) { %>
+        <tr>
+          <td><%= cb.get('filename') %></td>
+          <td><%= humanize.filesize(cb.get('size')) %></td>
+          <td>
+	    <a href="#" class="cb-delete" id="delete_cb_<%= cb.get('filename') %>" data-id="<%= cb.get('id') %>" data-action="delete" rel="tooltip" title="Delete backup"><i class="glyphicon glyphicon-trash"></i></a>
+	    &nbsp;&nbsp;
+	    <a href="/static/config-backups/<%=cb.get('filename') %>" title="Download the config backup to your computer"><i class="glyphicon glyphicon-cloud-download"></i></a>
+	    &nbsp;&nbsp;
+	    <a href="#" class="cb-restore" id="cb-restore" data-id="<%= cb.get('id') %>" rel="tooltip" title="Restore config from this backup."><i class="glyphicon glyphicon-play"></i></a>
+	  </td>
+        </tr>
+      <% }); %>
+    </tbody>
+  </table>
+  <div class="pagination-ph">
+<% } else { %>
+  <h4>No backups have been created.</h4>
+<% } %>

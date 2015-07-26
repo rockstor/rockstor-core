@@ -180,8 +180,8 @@ deleteSnapshot: function(event) {
 
 		},
 		error: function(xhr, status, error) {
-			enableButton(button)
-			_this.$('[rel=tooltip]').tooltip('hide');
+		    enableButton(button);
+		    _this.$('[rel=tooltip]').tooltip('hide');
 		}
 		});
 	}
