@@ -2,20 +2,20 @@
 /*
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
- * 
+ *
  * RockStor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
- * 
+ *
  * RockStor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 </script>
 
@@ -27,9 +27,10 @@
     <div class="form-box">
       <form id="advanced-edit-form" name="aform">
         <div class="form-group">
-          <label class="control-label" for="nfs-text">Enter nfs export entries below</label>
+          <label class="control-label" for="nfs-text">Automatically added entries</label>
           <div class="form-group">
-            <label id="nfs-text-ro" name="nfs-text-ro" rows="<%= ro_str.split('\n').length + 1 %>" class="form-control" readonly><%= ro_str %>\nENTER NFS EXPORTS BELOW THIS LINE</label>
+            <textarea id="nfs-text-ro" name="nfs-text-ro" rows="4" class="form-control" readonly><%= ro_str %></textarea>
+	    <br><label>Enter manual export entries below.</label>
             <textarea id="nfs-text" name="nfs-text" class="form-control"><%= rw_str %></textarea>
           </div>
         </div>
@@ -42,5 +43,3 @@
       </form>
   </div>
 </div>
-
-
