@@ -38,11 +38,11 @@ class AdvancedNFSExportView(rfc.GenericView):
             eg = e.export_group
             export_str = ('%s(%s,%s,%s)' % (eg.host_str, eg.editable,
                                             eg.syncable, eg.mount_security))
-            if (e.share.name in exports_by_share):
-                exports_by_share[e.share.name] += (' %s' % export_str)
+            if (e.mount in exports_by_share):
+                exports_by_share[e.mount] += (' %s' % export_str)
             else:
-                exports_by_share[e.share.name] = ('%s %s' %
-                                                  (e.mount, export_str))
+                exports_by_share[e.mount] = ('%s %s' %
+                                             (e.mount, export_str))
         for e in exports_by_share:
             exports_by_share[e] = ('Normally added -- %s' %
                                    exports_by_share[e])
