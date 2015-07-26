@@ -30,11 +30,44 @@ from system.osi import run_command
 from datetime import datetime
 from rest_framework.parsers import FileUploadParser, MultiPartParser
 from rest_framework import status
-
+from django_ztask.decorators import task
 import logging
 logger = logging.getLogger(__name__)
+BASE_URL = 'https://localhost/api'
 
-from django_ztask.decorators import task
+def generic_post(url, payload):
+    headers = {'content-type': 'application/json', }
+    try:
+        api_call(url, data=payload, calltype='post', headers=headers,
+                 save_error=False)
+        logger.debug('Successfully created resource: %s. payload: %s' %
+                     (url, payload))
+    except Exception, e:
+        logger.error('Exception occured while creating resource: %s. '
+                     'payload: %s. exception: %s. Moving on.' %
+                     (url, payload, e.__str__()))
+
+
+def restore_users_groups(ml):
+    users = []
+    groups = []
+    for m in ml:
+        if (m['model'] == 'storageadmin.user'):
+            users.append(m)
+        if (m['model'] == 'storageadmin.group'):
+            groups.append(m)
+
+    #order is important, first create all the groups and then users.
+    for g in groups:
+        generic_post('%s/groups' % BASE_URL, g['fields'])
+    for u in users:
+        #users are created with default(rockstor) password
+        u['fields']['password'] = 'rockstor'
+        generic_post('%s/users' % BASE_URL, u['fields'])
+
+def restore_samba_exports(ml):
+    pass
+
 @task()
 def restore_config(cbid):
     cbo = ConfigBackup.objects.get(id=cbid)
@@ -46,13 +79,17 @@ def restore_config(cbid):
     ml = json.load(gfo)
     gfo.close()
     base_url = 'https://localhost/api'
-    for i in ml:
-        if (i['model'] == 'storageadmin.user'):
-            ufields = i['fields']
-            url = ('%s/users' % base_url)
-            ufields['password'] = 'rockstor'
-            api_call(url, data=ufields, calltype='post', save_error=False)
+    restore_users_groups(ml)
+    #restore_dashboard(ml)
+    restore_samba_exports(ml)
+    #restore_nfs_exports(ml)
+    #restore_afp_exports(ml)
+    #restore_services(ml)
+    #restore_appliances(ml)
+    #restore_network(ml)
 
+    #restore_scheduled_tasks(ml)
+    #restore_rockons(ml)
 
 class ConfigBackupMixin(object):
     serializer_class = ConfigBackupSerializer
