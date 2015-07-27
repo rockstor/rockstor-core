@@ -94,6 +94,29 @@ def restore_afp_exports(ml):
     logger.debug('Finished restoring AFP exports.')
 
 
+def restore_nfs_exports(ml):
+    logger.debug('Restoring NFS exports.')
+    exports = []
+    export_groups = {}
+    adv_exports = {'entries': [], }
+    for m in ml:
+        if (m['model'] == 'storageadmin.nfsexport'):
+            exports.append(m['fields'])
+        elif (m['model'] == 'storageadmin.nfsexportgroup'):
+            m['fields']['pk'] = m['pk']
+            export_groups[m['pk']] = m['fields']
+        elif (m['model'] == 'storageadmin.advancednfsexport'):
+            adv_exports['entries'].append(m['fields']['export_str'])
+    for e in exports:
+        if (len(e['mount'].split('/')) != 3):
+            logger.debug('skipping nfs export with mount: %s' % e['mount'])
+            continue
+        e['shares'] = [e['mount'].split('/')[2],]
+        payload = dict(export_groups[e['export_group']], **e)
+        generic_post('%s/nfs-exports' % BASE_URL, payload)
+    generic_post('%s/adv-nfs-exports' % BASE_URL, adv_exports)
+
+
 @task()
 def restore_config(cbid):
     cbo = ConfigBackup.objects.get(id=cbid)
@@ -108,7 +131,7 @@ def restore_config(cbid):
     restore_users_groups(ml)
     #restore_dashboard(ml)
     restore_samba_exports(ml)
-    #restore_nfs_exports(ml)
+    restore_nfs_exports(ml)
     restore_afp_exports(ml)
     #restore_services(ml)
     #restore_appliances(ml)
