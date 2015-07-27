@@ -79,6 +79,21 @@ def restore_samba_exports(ml):
     logger.debug('Finished restoring Samba exports.')
 
 
+def restore_afp_exports(ml):
+    logger.debug('Restoring AFP exports.')
+    exports = []
+    for m in ml:
+        if (m['model'] == 'storageadmin.netatalkshare'):
+            exports.append(m['fields'])
+    if (len(exports) > 0):
+        logger.debug('Starting Netatalk service')
+        generic_post('%s/sm/services/netatalk/start' % BASE_URL, {})
+    for e in exports:
+        e['shares'] = [e['path'].split('/')[-1],]
+        generic_post('%s/netatalk' % BASE_URL, e)
+    logger.debug('Finished restoring AFP exports.')
+
+
 @task()
 def restore_config(cbid):
     cbo = ConfigBackup.objects.get(id=cbid)
@@ -94,7 +109,7 @@ def restore_config(cbid):
     #restore_dashboard(ml)
     restore_samba_exports(ml)
     #restore_nfs_exports(ml)
-    #restore_afp_exports(ml)
+    restore_afp_exports(ml)
     #restore_services(ml)
     #restore_appliances(ml)
     #restore_network(ml)
