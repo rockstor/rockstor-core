@@ -31,6 +31,7 @@ from datetime import datetime
 from rest_framework.parsers import FileUploadParser, MultiPartParser
 from rest_framework import status
 from django_ztask.decorators import task
+from cli.rest_util import api_call
 import logging
 logger = logging.getLogger(__name__)
 BASE_URL = 'https://localhost/api'
@@ -53,20 +54,30 @@ def restore_users_groups(ml):
     groups = []
     for m in ml:
         if (m['model'] == 'storageadmin.user'):
-            users.append(m)
+            users.append(m['fields'])
         if (m['model'] == 'storageadmin.group'):
-            groups.append(m)
+            groups.append(m['fields'])
 
     #order is important, first create all the groups and then users.
     for g in groups:
-        generic_post('%s/groups' % BASE_URL, g['fields'])
+        generic_post('%s/groups' % BASE_URL, g)
     for u in users:
         #users are created with default(rockstor) password
-        u['fields']['password'] = 'rockstor'
-        generic_post('%s/users' % BASE_URL, u['fields'])
+        u['password'] = 'rockstor'
+        generic_post('%s/users' % BASE_URL, u)
+
 
 def restore_samba_exports(ml):
-    pass
+    logger.debug('Restoring Samba exports.')
+    exports = []
+    for m in ml:
+        if (m['model'] == 'storageadmin.sambashare'):
+            exports.append(m['fields'])
+    for e in exports:
+        e['shares'] = [e['path'].split('/')[-1],]
+        generic_post('%s/samba' % BASE_URL, e)
+    logger.debug('Finished restoring Samba exports.')
+
 
 @task()
 def restore_config(cbid):
