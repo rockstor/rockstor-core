@@ -52,6 +52,7 @@ def generic_post(url, payload):
 
 
 def restore_users_groups(ml):
+    logger.debug('Started restoring users and groups.')
     users = []
     groups = []
     for m in ml:
@@ -67,10 +68,11 @@ def restore_users_groups(ml):
         #users are created with default(rockstor) password
         u['password'] = 'rockstor'
         generic_post('%s/users' % BASE_URL, u)
+    logger.debug('Finished restoring users and groups.')
 
 
 def restore_samba_exports(ml):
-    logger.debug('Restoring Samba exports.')
+    logger.debug('Started restoring Samba exports.')
     exports = []
     for m in ml:
         if (m['model'] == 'storageadmin.sambashare'):
@@ -82,7 +84,7 @@ def restore_samba_exports(ml):
 
 
 def restore_afp_exports(ml):
-    logger.debug('Restoring AFP exports.')
+    logger.debug('Started restoring AFP exports.')
     exports = []
     for m in ml:
         if (m['model'] == 'storageadmin.netatalkshare'):
@@ -146,14 +148,13 @@ def restore_config(cbid):
     sm_ml = json.loads(lines[1])
     gfo.close()
     restore_users_groups(sa_ml)
-    #restore_dashboard(ml)
     restore_samba_exports(sa_ml)
     restore_nfs_exports(sa_ml)
     restore_afp_exports(sa_ml)
     restore_services(sm_ml)
+    #restore_dashboard(ml)
     #restore_appliances(ml)
-    #restore_network(ml)
-
+    #restore_network(sa_ml)
     #restore_scheduled_tasks(ml)
     #restore_rockons(ml)
 
