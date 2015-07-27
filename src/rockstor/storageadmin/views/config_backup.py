@@ -32,6 +32,8 @@ from rest_framework.parsers import FileUploadParser, MultiPartParser
 from rest_framework import status
 from django_ztask.decorators import task
 from cli.rest_util import api_call
+import gzip
+import json
 import logging
 logger = logging.getLogger(__name__)
 BASE_URL = 'https://localhost/api'
@@ -95,7 +97,7 @@ def restore_afp_exports(ml):
 
 
 def restore_nfs_exports(ml):
-    logger.debug('Restoring NFS exports.')
+    logger.debug('Started restoring NFS exports.')
     exports = []
     export_groups = {}
     adv_exports = {'entries': [], }
@@ -115,25 +117,40 @@ def restore_nfs_exports(ml):
         payload = dict(export_groups[e['export_group']], **e)
         generic_post('%s/nfs-exports' % BASE_URL, payload)
     generic_post('%s/adv-nfs-exports' % BASE_URL, adv_exports)
+    logger.debug('Finished restoring NFS exports.')
+
+
+def restore_services(ml):
+    logger.debug('Started restoring services.')
+    services = {}
+    for m in ml:
+        if (m['model'] == 'smart_manager.service'):
+            name = m['fields']['name']
+            config = m['fields']['config']
+            if (config is not None):
+                config = json.loads(config)
+                services[name] = {'config': config, }
+    logger.debug('services = %s' % services)
+    for s in services:
+        generic_post('%s/sm/services/%s/config' % (BASE_URL, s), services[s])
+    logger.debug('Finished restoring services.')
 
 
 @task()
 def restore_config(cbid):
     cbo = ConfigBackup.objects.get(id=cbid)
     fp = os.path.join(settings.STATIC_ROOT, 'config-backups', cbo.filename)
-    import gzip
-    import json
-    from cli.rest_util import api_call
     gfo = gzip.open(fp)
-    ml = json.load(gfo)
+    lines = gfo.readlines()
+    sa_ml = json.loads(lines[0])
+    sm_ml = json.loads(lines[1])
     gfo.close()
-    base_url = 'https://localhost/api'
-    restore_users_groups(ml)
+    restore_users_groups(sa_ml)
     #restore_dashboard(ml)
-    restore_samba_exports(ml)
-    restore_nfs_exports(ml)
-    restore_afp_exports(ml)
-    #restore_services(ml)
+    restore_samba_exports(sa_ml)
+    restore_nfs_exports(sa_ml)
+    restore_afp_exports(sa_ml)
+    restore_services(sm_ml)
     #restore_appliances(ml)
     #restore_network(ml)
 
@@ -166,13 +183,25 @@ class ConfigBackupListView(ConfigBackupMixin, rfc.GenericView):
 
     @transaction.atomic
     def post(self, request):
+        models = {'storageadmin':
+                  ['user', 'group', 'sambashare', 'netatalkshare', 'nfsexport',
+                   'nfsexportgroup', 'advancednfsexport', ],
+                  'smart_manager':
+                  ['service', ], }
+        model_list = []
+        for a in models:
+            for m in models[a]:
+                model_list.append('%s.%s' % (a, m))
+        logger.debug('model list = %s' % model_list)
         with self._handle_exception(request):
             filename = ('backup-%s.json' % datetime.now().strftime('%Y-%m-%d-%H%M%S'))
             if (not os.path.isdir(self.cb_dir)):
                 os.mkdir(self.cb_dir)
             fp = os.path.join(self.cb_dir, filename)
             with open(fp, 'w') as dfo:
-                call_command('dumpdata', 'storageadmin', stdout=dfo)
+                call_command('dumpdata', *model_list, stdout=dfo)
+                dfo.write('\n')
+                call_command('dumpdata', database='smart_manager', *model_list, stdout=dfo)
             run_command(['/usr/bin/gzip', fp])
             gz_name = ('%s.gz' % filename)
             fp = os.path.join(self.cb_dir, gz_name)
