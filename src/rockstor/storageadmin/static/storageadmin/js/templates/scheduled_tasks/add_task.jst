@@ -53,29 +53,6 @@ $(document).ready(function() {
 	</div>
       </div>
       <div id="optional-fields"></div>
-      <div class="form-group">
-        <div class="row">
-          <label class="control-label col-md-4" for="start_date">Start Date (MM/DD/YYYY)<span class="required"> *</span></label>
-          <label class="control-label col-md-4" for="start_time">Start Time (hh:mm)<span class="required"> *</span></label>
-        </div>
-        <div class="row">
-	  <div class="col-sm-4">
-            <input class="form-control" type="text" id="start_date" name="start_date" placeholder="Start Date">
-	  </div>
-	  <div class="col-sm-4">
-            <input class="form-control" type="text" id="start_time" name="start_time" placeholder="Start Time" title="Pick the time in your local timezone.">
-	  </div>
-        </div>
-      </div>
-      <div class="form-group">
-	<div class="row">
-          <label class="control-label col-sm-4" for="frequency">Task Frequency (in minutes)<span class="required"> *</span></label>
-	</div>
-        <div class="row">
-	  <div class="col-sm-4">
-          <input class="form-control" type="text" id="frequency" name="frequency" placeholder="Frequency" title="How often should this task run(in minutes)?">
-        </div>
-      </div>
       <div class="checkbox" style="clear: both">
         <label>
           <input type="checkbox" checked="true" id="enabled" name="enabled" placeholder="Enable this task" title="Disabled tasks will be created but not run till they are enabled"> Enable this task?
@@ -83,7 +60,12 @@ $(document).ready(function() {
       </div>
 
       <div class="form-group">
-         <div id="cron"></div>
+         <label for="cron">Frequency of task</label>
+         <div class="row">
+           <div class="col-sm-12">
+             <div id="cron"></div>
+           </div>
+         </div>
       </div>
 
       <div class="form-group">
