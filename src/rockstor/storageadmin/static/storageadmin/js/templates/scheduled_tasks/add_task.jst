@@ -19,6 +19,15 @@
  */
 </script>
 
+<script>
+$(document).ready(function() {
+  $('#cron').cron({
+    initial: "42 3 * * 5",
+    useGentleSelect: true
+  });
+});
+</script
+
 <% if (taskDefId == null) { %>
   <h3>Add a new scheduled task</h3>
   <label class="control-label"></label>
@@ -72,6 +81,11 @@
           <input type="checkbox" checked="true" id="enabled" name="enabled" placeholder="Enable this task" title="Disabled tasks will be created but not run till they are enabled"> Enable this task?
         </label>
       </div>
+
+      <div class="form-group">
+         <div id="cron"></div>
+      </div>
+
       <div class="form-group">
 	<a id="js-cancel" class="btn btn-default">Cancel</a>
 	<input type="Submit" id="create-scheduled-task" class="btn btn-primary" value="Submit"></input>
