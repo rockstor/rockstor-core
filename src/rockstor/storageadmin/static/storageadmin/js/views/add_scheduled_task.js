@@ -102,13 +102,6 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 
 		    }
 		},
-		'meta.visible': {
-		    required: {
-			depends: function(element) {
-			    return (_this.$('#task-type').val() == 'snapshot');
-			},
-		    }
-		},
 		pool: {
 		    required: {
 			depends: function(element) {
