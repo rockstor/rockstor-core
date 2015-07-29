@@ -47,7 +47,7 @@
                 <% } %>
               </td>
               <td><%= moment(t.get('ts')).format(RS_DATE_FORMAT) %></td>
-              <td><%= t.get('frequency') %>
+              <td><%= prettyCron.toString(t.get('crontab')) %>
               <td>
                 <% if (t.get('enabled')) { %>
                   <input type="checkbox" disabled="true" checked="true"></input>
