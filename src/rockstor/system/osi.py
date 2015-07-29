@@ -23,6 +23,9 @@ import shutil
 from tempfile import mkstemp
 import time
 from exceptions import CommandException
+import logging
+logger = logging.getLogger(__name__)
+
 
 HOSTS_FILE = '/etc/hosts'
 MKDIR = '/bin/mkdir'
@@ -69,14 +72,19 @@ def inplace_replace(of, nf, regex, nl):
 
 
 def run_command(cmd, shell=False, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE, throw=True):
+                stderr=subprocess.PIPE, throw=True, log=False):
     p = subprocess.Popen(cmd, shell=shell, stdout=stdout, stderr=stderr)
     out, err = p.communicate()
     out = out.split('\n')
     err = err.split('\n')
     rc = p.returncode
-    if (throw and rc != 0):
-        raise CommandException(out, err, rc)
+    if (rc != 0):
+        if (log):
+            e_msg = ('non-zero code(%d) returned by command: %s. output: %s error:'
+                     ' %s' % (rc, cmd, out, err))
+            logger.error(e_msg)
+        if (throw):
+            raise CommandException(cmd, out, err, rc)
     return (out, err, rc)
 
 

@@ -28,7 +28,7 @@ from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
 from system.osi import (uptime, refresh_nfs_exports, update_check,
                         update_run, current_version, kernel_info)
-from fs.btrfs import (mount_share, device_scan, mount_root)
+from fs.btrfs import (mount_share, device_scan, mount_root, qgroup_create)
 from system.ssh import (sftp_mount_map, sftp_mount)
 from system.services import (systemctl, join_winbind_domain, ads_join_status)
 from system.osi import (is_share_mounted, system_shutdown, system_reboot)
@@ -61,42 +61,44 @@ class CommandView(APIView):
                 logger.exception(e)
                 handle_exception(Exception(e_msg), request)
 
-            try:
-                for pool in Pool.objects.all():
-                    disk = Disk.objects.filter(pool=pool)[0].name
+            for pool in Pool.objects.all():
+                disk = Disk.objects.filter(pool=pool)[0].name
+                try:
                     mount_root(pool, '/dev/%s' % disk)
-            except Exception, e:
-                e_msg = ('Unable to mount a pool(%s) during bootstrap.'
-                         % pool.name)
-                logger.exception(e)
-                handle_exception(Exception(e_msg), request)
+                except Exception, e:
+                    e_msg = ('Unable to mount a pool(%s) during bootstrap.'
+                             % pool.name)
+                    logger.exception(e)
 
-            try:
-                for share in Share.objects.all():
+            for share in Share.objects.all():
+                try:
+                    if (share.pqgroup == settings.MODEL_DEFS['pqgroup']):
+                        share.pqgroup = qgroup_create(share.pool)
+                        share.save()
                     if (not is_share_mounted(share.name)):
                         mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
                         pool_device = Disk.objects.filter(
                             pool=share.pool)[0].name
                         mount_share(share, pool_device, mnt_pt)
-            except Exception, e:
-                e_msg = ('Unable to mount a share(%s, %s) during bootstrap.' %
-                         (pool_device, mnt_pt))
-                logger.error(e_msg)
-                logger.exception(e)
-                handle_exception(Exception(e_msg), request)
 
-            try:
-                mnt_map = sftp_mount_map(settings.SFTP_MNT_ROOT)
-                for sftpo in SFTP.objects.all():
+
+                except Exception, e:
+                    e_msg = ('Unable to mount a share(%s, %s) during bootstrap.' %
+                             (pool_device, mnt_pt))
+                    logger.error(e_msg)
+                    logger.exception(e)
+
+            mnt_map = sftp_mount_map(settings.SFTP_MNT_ROOT)
+            for sftpo in SFTP.objects.all():
+                try:
                     sftp_mount(sftpo.share, settings.MNT_PT,
                                settings.SFTP_MNT_ROOT, mnt_map, sftpo.editable)
                     sftp_snap_toggle(sftpo.share)
-            except Exception, e:
-                e_msg = ('Unable to export all sftp shares due to a system'
-                         ' error')
-                logger.error(e_msg)
-                logger.exception(e)
-                handle_exception(Exception(e_msg), request)
+                except Exception, e:
+                    e_msg = ('Unable to export all sftp shares due to a system'
+                             ' error')
+                    logger.error(e_msg)
+                    logger.exception(e)
 
             try:
                 exports = create_nfs_export_input(NFSExport.objects.all())
@@ -106,7 +108,6 @@ class CommandView(APIView):
                          'error')
                 logger.error(e_msg)
                 logger.exception(e)
-                handle_exception(Exception(e_msg), request)
 
             #  bootstrap services
             try:
@@ -122,6 +123,7 @@ class CommandView(APIView):
                 logger.exception(e)
                 handle_exception(Exception(e_msg), request)
 
+            logger.debug('Bootstrap operations completed')
             return Response()
 
         elif (command == 'utcnow'):

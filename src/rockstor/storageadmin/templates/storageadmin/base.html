@@ -28,8 +28,8 @@
     <link rel="icon" type="image/png" href="http://rockstor.com/media/images/ico/favicon.ico">
     <title>RockStor | {% block title %}{% endblock %}</title>
     <link href="/static/storageadmin/css/bootstrap.min.css" rel="stylesheet">
-    <link href="/static/storageadmin/css/datepicker.css" rel="stylesheet">
-    <link href="/static/storageadmin/css/bootstrap-timepicker.css" rel="stylesheet">
+    <link href="/static/js/lib/cron/jquery-cron.css" rel="stylesheet">
+    <link href="/static/js/lib/gentleSelect/jquery-gentleSelect.css" rel="stylesheet">
     <link href="/static/storageadmin/css/style.css" rel="stylesheet">
     <link href="/static/storageadmin/css/font-awesome-4.0.3/css/font-awesome.min.css" rel="stylesheet">
 
@@ -99,6 +99,10 @@
     <script src="/static/js/lib/simple-slider.min.js"></script>
     <script src="/static/js/lib/chosen.jquery.js"></script>
     <script src="/static/js/lib/socket.io.min.js"></script>
+    <script src="/static/js/lib/cron/jquery-cron.js"></script>
+    <script src="/static/js/lib/gentleSelect/jquery-gentleSelect.js"></script>
+    <script src="/static/js/lib/later.min.js"></script>
+    <script src="/static/js/lib/prettycron.js"></script>
     <script src="/static/storageadmin/js/storageadmin.js"></script>
   </head>
   <body>
@@ -242,8 +246,6 @@
     </form>
 
     <script src="/static/js/lib/bootstrap.js"></script>
-    <script src="/static/js/lib/bootstrap-datepicker.js"></script>
-    <script src="/static/js/lib/bootstrap-timepicker.js"></script>
     <script type="text/javascript">
       {% if current_appliance %}
       setup_done = true;

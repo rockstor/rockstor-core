@@ -26,10 +26,9 @@ class TaskDefinition(models.Model):
         ('snapshot',) * 2,
         ]
     task_type = models.CharField(max_length=100, choices=TASK_TYPES)
-    ts = models.DateTimeField(db_index=True)
-    frequency = models.IntegerField(null=True)
     json_meta = models.CharField(max_length=8192)
     enabled = models.BooleanField(default=True)
+    crontab = models.CharField(max_length=64, null=True)
 
     class Meta:
         app_label = 'smart_manager'

@@ -57,7 +57,7 @@
             <% if (network.get('boot_proto') == 'static') { %>
               <input class="form-control shorten-input" type="text" id="ipaddr" name="ipaddr" value="<%= network.get('ipaddr') %>" placeholder="IP Address" title="Enter IP Address">
             <% } else { %>
-              <input class="form-control shorten-input" type="text" id="ipaddr" name="ipaddr" value="<%= network.get('ipaddr') %>" placeholder="IP Address" title="ENter IP Address" disabled="disabled"  >
+              <input class="form-control shorten-input" type="text" id="ipaddr" name="ipaddr" value="<%= network.get('ipaddr') %>" placeholder="IP Address" title="Enter IP Address" disabled="disabled"  >
             <% } %>
           </div>
         </div>
@@ -95,7 +95,7 @@
           <label class="col-sm-2 control-label" for="dns_servers">DNS Servers<span class="required"> *</span></label>
           <div class="col-sm-10">
             <% if (network.get('boot_proto') == 'static') { %>
-              <input class="form-control shorten-input" type="text" id="dns_servers" name="dns_servers" value="<%= network.get('dns_servers') %>" placeholder="DNS Servers" title="Enter comma separated list of dns server addresses">
+              <input class="form-control shorten-input" type="text" id="dns_servers" name="dns_servers" value="<%= network.get('dns_servers') %>" placeholder="DNS Servers" title="Enter comma separated list of DNS server addresses">
             <% } else { %>
               <input class="form-control shorten-input" type="text" id="dns_servers" name="dns_servers" value="<%= network.get('dns_servers') %>" placeholder="DNS Servers" title="Enter comma separated list of dns server addresses" disabled="disabled" >
             <% } %>

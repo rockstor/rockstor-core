@@ -19,13 +19,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 class CommandException(Exception):
 
-    def __init__(self, out, err, rc):
+    def __init__(self, cmd, out, err, rc):
+        self.cmd = cmd
         self.out = out
         self.err = err
         self.rc = rc
 
     def __str__(self):
-        return repr(' '.join(self.out + self.err))
+        return ('Error running a command. cmd = %s. rc = %d. stdout = %s. '
+                'stderr = %s' % (self.cmd, self.rc, self.out, self.err))
 
 
 class NonBTRFSRootException(Exception):

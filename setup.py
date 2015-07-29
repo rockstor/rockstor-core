@@ -40,7 +40,6 @@ setup(
             'pwreset = scripts.pwreset:main',
             'backup-plugin = backup.scheduler:main',
             'initrock = scripts.initrock:main',
-            'task-scheduler = smart_manager.scheduler.task_dispatcher:main',
             'data-collector = smart_manager.data_collector:main',
             'docker-wrapper = scripts.docker_wrapper:main',
             'ovpn-initpki = scripts.ovpn_util:initpki',
@@ -50,6 +49,8 @@ setup(
             'rockon-json = scripts.rockon_util:main',
             'flash-optimize = scripts.flash_optimize:main',
             'dc2 = smart_manager.dc2:main',
+            'st-snapshot = scripts.scheduled_tasks.snapshot:main',
+            'st-pool-scrub = scripts.scheduled_tasks.pool_scrub:main',
         ],
     },
 
