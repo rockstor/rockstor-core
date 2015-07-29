@@ -40,7 +40,6 @@ setup(
             'pwreset = scripts.pwreset:main',
             'backup-plugin = backup.scheduler:main',
             'initrock = scripts.initrock:main',
-            'task-scheduler = smart_manager.scheduler.task_dispatcher:main',
             'data-collector = smart_manager.data_collector:main',
             'docker-wrapper = scripts.docker_wrapper:main',
             'ovpn-initpki = scripts.ovpn_util:initpki',

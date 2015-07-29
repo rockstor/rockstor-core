@@ -120,14 +120,12 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 		var data = _this.$('#scheduled-task-create-form').getJSON();
 		if (_this.taskDefId == null) {
 		    var url = '/api/sm/tasks/';
-		    var req_type='POST';
+		    var req_type = 'POST';
 		} else {
 		    var url = '/api/sm/tasks/' + _this.taskDefId;
-		    var req_type='PUT';
+		    var req_type = 'PUT';
 		}
-		var cron_str = $("#cron").cron("value");
-		console.log('crontab entry', cron_str);
-		data.crontab = cron_str;
+		data.crontab = $("#cron").cron("value");
 		$.ajax({
 		    url: url,
 		    type: req_type,
@@ -152,7 +150,7 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 	if (this.taskDefId == null) {
 	    taskType = this.$('#task-type').val();
 	} else {
-	    taskType = this.taskDef.get('task_type')
+	    taskType = this.taskDef.get('task_type');
 	}
 	if (taskType == 'snapshot') {
 	    this.$('#optional-fields').html(this.snapshotFieldsTemplate({
