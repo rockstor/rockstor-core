@@ -71,8 +71,14 @@ class TaskSchedulerMixin(object):
                 if (td.crontab is not None):
                     tab = '%s root' % td.crontab
                     if (td.task_type == 'snapshot'):
-                        tab = ('%s %s/bin/st-snapshot %d\n' %
+                        tab = ('%s %sbin/st-snapshot %d\n' %
                                (tab, settings.ROOT_DIR, td.id))
+                    elif (td.task_type == 'scrub'):
+                        tab = ('%s %s/bin/st-pool-scrub %d\n' %
+                               (tab, settings.ROOT_DIR, td.id))
+                    else:
+                        logger.error('ignoring unknown task_type: %s' % td.task_type)
+                        continue
                     cfo.write(tab)
 
 class TaskSchedulerListView(TaskSchedulerMixin, rfc.GenericView):
