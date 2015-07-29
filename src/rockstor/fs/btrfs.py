@@ -624,7 +624,9 @@ def scrub_status(pool, pool_device):
             stats['status'] = 'running'
         elif (re.search('finished', out[1]) is not None):
             stats['status'] = 'finished'
-            stats['duration'] = int(out[1].split()[-2])
+            dfields = out[1].split()[-1].split(':')
+            stats['duration'] = ((int(dfields[0]) * 60 * 60) +
+                                 (int(dfields[1]) * 60) + int(dfields[2]))
         else:
             return stats
     else:

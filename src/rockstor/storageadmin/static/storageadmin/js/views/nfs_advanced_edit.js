@@ -49,7 +49,7 @@ NFSAdvancedEditView = RockstorLayoutView.extend({
     this.collection.each(function(nfsExport) {
       var prefix = "Normally added -- ";
       var n = prefix.length;
-      var s =nfsExport.get('export_str');
+      var s = nfsExport.get('export_str');
       if (s.indexOf(prefix) == 0) {
         ro_str = ro_str + s.substring(n, s.length) + '\n';
       } else {
