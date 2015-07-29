@@ -22,9 +22,12 @@
 <script>
 $(document).ready(function() {
   $('#cron').cron({
-    initial: "42 3 * * 5",
+  initial: "42 3 * * 5",
+  customValues: {
+    "30 minutes" : "*/30 * * * *",
+  },
     useGentleSelect: true
-  });
+});
 });
 </script
 
@@ -119,12 +122,6 @@ $(document).ready(function() {
           </div>
           <% } %>
 
-          <div class="form-group">
-            <label class="control-label col-sm-2" for="start_date">Start time:</label>
-            <div class="col-sm-6">
-              <label class="form-control"><%= moment(taskDef.get('ts')).format('MM/DD/YYYY') %>&nbsp;&nbsp;&nbsp;<%= moment(taskDef.get('ts')).format('h:mm:ss a') %></label>
-            </div>
-          </div>
           <% if (taskDef.get('task_type') == 'snapshot') { %>
           <div class="form-group">
             <label class="control-label col-sm-2" for="max_count">Maximum count<span class="required"> *</span></label>
@@ -144,12 +141,6 @@ $(document).ready(function() {
 	  </div>
           <% } %>
           <div class="form-group">
-            <label class="control-label col-sm-2" for="frequency">Task Frequency (in minutes)<span class="required"> *</span></label>
-            <div class="col-sm-6">
-              <input class="form-control" type="text" id="frequency" name="frequency" value="<%= taskDef.get('frequency') %>" placeholder="Frequency" title="How often should this task run(in minutes)?">
-            </div>
-          </div>
-          <div class="form-group">
 	    <div class="col-sm-offset-2 col-sm-6">
 	      <div class="checkbox">
 		<label>
@@ -162,6 +153,14 @@ $(document).ready(function() {
 	      </div>
             </div>
           </div>
+	  <div class="form-group">
+            <label for="cron">Frequency of task</label>
+            <div class="row">
+              <div class="col-sm-12">
+		<div id="cron"></div>
+              </div>
+            </div>
+	  </div>
           <div class="form-group">
             <div class="controls col-sm-offset-2 col-sm-6">
               <a id="js-cancel" class="btn btn-default">Cancel</a>

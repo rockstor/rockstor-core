@@ -129,11 +129,12 @@ class TaskSchedulerDetailView(TaskSchedulerMixin, rfc.GenericView):
         with self._handle_exception(request):
             tdo = self._task_def(request, tdid)
             tdo.enabled = self._validate_enabled(request)
-            tdo.frequency, new_meta = self._validate_input(request)
+            tdo.crontab, new_meta = self._validate_input(request)
             meta = json.loads(tdo.json_meta)
             meta.update(new_meta)
             tdo.json_meta = json.dumps(meta)
             tdo.save()
+            self._refresh_crontab()
             return Response(TaskDefinitionSerializer(tdo).data)
 
     @transaction.atomic
