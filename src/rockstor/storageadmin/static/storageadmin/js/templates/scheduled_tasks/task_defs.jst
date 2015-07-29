@@ -19,33 +19,6 @@
  */
 </script>
 
-
-<div class="messages"></div>
-<table>
-  <tr>
-    <td><span class="h3">Task Scheduler&nbsp;&nbsp;&nbsp;</span></td>
-    <td>
-      <% if (service.get('status')) { %>
-        <div class="slider-stop" data-service-name="<%= service.get('name') %>">OFF</div>
-        <div class="slider-ph">
-          <input type="text" class="service-status" value="1" data-service-name="<%= service.get('name') %>"></input>
-        </div>
-        <div class="slider-start on" data-service-name="<%= service.get('name') %>">ON</div>
-      <% } else { %>
-        <div class="slider-stop" data-service-name="<%= service.get('name') %>">OFF</div>
-        <div class="slider-ph">
-          <input type="text" class="service-status" value="0" data-service-name="<%= service.get('name') %>"></input>
-        </div>
-        <div class="slider-start" data-service-name="<%= service.get('name') %>">ON</div>
-      <% } %>
-      <div class="command-status" data-service-name="<%= service.get('name') %>">&nbsp;</div>
-    </td>
-  </tr>
-</table>
-<div id="ts-warning" class="alert alert-warning" style="display:none">
-    	<strong>Warning! Task Scheduler is not running</strong>. Tasks won't be scheduled unless it's running.
-</div>
-<br>
 <% if (!scheduledTasks.isEmpty()) { %>
   <div class="row">
     <div class="col-md-12">
