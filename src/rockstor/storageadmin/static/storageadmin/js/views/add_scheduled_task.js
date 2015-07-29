@@ -61,6 +61,10 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 	    taskDef: this.taskDef,
 	    taskDefId: this.taskDefId
 	}));
+	if (!_.isNull(this.taskDefId)) {
+	    var crontab = this.taskDef.get('crontab');
+	    $('#cron').cron("value", crontab);
+	}
 	this.renderOptionalFields();
 	this.$('#start_date').datepicker();
 	this.validator = $('#scheduled-task-create-form').validate({
