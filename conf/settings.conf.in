@@ -241,7 +241,11 @@ LOGGING = {
 	'system': {
 		  'handlers': ['file'],
 		  'level': 'DEBUG',
-	}
+	},
+	'scripts': {
+		   'handlers': ['file'],
+		   'level': 'DEBUG',
+	},
     }
 }
 
