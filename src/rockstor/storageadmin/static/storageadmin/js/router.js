@@ -938,7 +938,13 @@ $(document).ready(function() {
     RockStorSocket.addListener(displayLoadAvg, this, 'sysinfo:uptime');
     RockStorSocket.addListener(kernelError, this, 'sysinfo:kernel_error');
 
+    RockStorSocket.sysinfo.on('kernel_error', function(data) {
+	// Handling errors just by emitting message via the server
+	if (data.error.indexOf('kernel') !== -1) {
+	    // Put an alert at the top of the page
+	    $('#browsermsg').html('<div class="alert alert-danger"><button type="button" class="close" data-dismiss="alert">&times;</button>' + data.error + '</div>');
+	}
+
+    });
 
 });
-
-

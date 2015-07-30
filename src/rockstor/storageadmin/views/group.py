@@ -41,6 +41,7 @@ class GroupListView(rfc.GenericView):
     def post(self, request):
         groupname = request.data.get('groupname', None)
         gid = request.data.get('gid', None)
+        admin = request.data.get('admin', True)
         if (groupname is None or
             re.match(settings.USERNAME_REGEX, groupname) is None):
             e_msg = ('Groupname is invalid. It must confirm to the regex: %s' %
@@ -63,7 +64,7 @@ class GroupListView(rfc.GenericView):
         groupadd(groupname, gid)
         grp_entries = grp.getgrnam(groupname)
         gid = grp_entries[2]
-        group = Group(gid=gid, groupname=groupname, admin=True)
+        group = Group(gid=gid, groupname=groupname, admin=admin)
         group.save()
 
         return Response(GroupSerializer(group).data)

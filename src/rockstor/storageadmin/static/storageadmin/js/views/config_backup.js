@@ -114,10 +114,9 @@ ConfigBackupView = RockstorLayoutView.extend({
 		dataType: "json",
 		contentType: "application/json",
 		data: JSON.stringify({"command": "restore"}),
-	      success: function() {
-		enableButton(button);
-		_this.collection.fetch({reset: true});
-                alert('Config restore started successfully. It may take a few moments to propagate the changes.');
+		success: function() {
+		    enableButton(button);
+		    _this.collection.fetch({reset: true});
 		},
 	      error: function(error) {
                 alert('Error with restoring the config backup.');
