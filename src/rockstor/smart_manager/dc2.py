@@ -70,6 +70,7 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
         self.start = True
         gevent.spawn(self.send_uptime)
         gevent.spawn(self.send_kernel_info)
+        gevent.spawn(self.update_rockons)
 
     # Run on every disconnect
     def recv_disconnect(self):
@@ -98,6 +99,16 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
                     'key': 'sysinfo:kernel_error'
                 })
                 self.error('unsupported_kernel', str(e))
+
+    def update_rockons(self):
+        from cli.rest_util import api_call
+        try:
+            url = 'https://localhost/api/rockons/update'
+            api_call(url, data=None, calltype='post', save_error=False)
+            logger.debug('Updated Rock-on metadata')
+        except Exception, e:
+            logger.debug('failed to update Rock-on metadata. low-level '
+                         'exception: %s' % e.__str__())
 
 
 class Application(object):
