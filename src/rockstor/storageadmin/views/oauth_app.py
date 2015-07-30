@@ -41,7 +41,7 @@ class OauthAppView(rfc.GenericView):
     @transaction.atomic
     def post(self, request):
         with self._handle_exception(request):
-            name = request.data['name']
+            name = request.data.get('name')
             username = request.user.username
             if (OauthApp.objects.filter(name=name).exists()):
                 e_msg = ('application with name: %s already exists.' % name)

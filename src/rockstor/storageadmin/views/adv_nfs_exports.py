@@ -63,7 +63,6 @@ class AdvancedNFSExportView(rfc.GenericView):
             AdvancedNFSExport.objects.all().delete()
             cur_entries = []
             for e in request.data.get('entries'):
-                logger.debug('adv export entry -- %s' % e)
                 ce = AdvancedNFSExport(export_str=e)
                 ce.save()
                 cur_entries.append(ce)

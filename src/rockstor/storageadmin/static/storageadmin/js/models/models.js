@@ -550,6 +550,15 @@ var Certificate = Backbone.Model.extend({
     urlRoot: '/api/certificate',
 });
 
+var ConfigBackup = Backbone.Model.extend({
+    urlRoot: '/api/config-backup',
+});
+
+var ConfigBackupCollection = RockStorPaginatedCollection.extend({
+    model: ConfigBackup,
+    baseUrl: '/api/config-backup'
+});
+
 var RockOn = Backbone.Model.extend({
     urlRoot: '/api/rockons'
 });
