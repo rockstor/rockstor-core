@@ -153,20 +153,25 @@ class ConfigBackupUpload(ConfigBackupMixin, rfc.GenericView):
                 cbo.delete()
         return ConfigBackup.objects.filter().order_by('-id')
 
-
-
     def post(self, request, format=None):
-        with self._handle_exception(request):
-            filename = request.data['file-name']
-            fp = ''
-            if (not os.path.isdir(self.cb_dir)):
-                os.mkdir(self.cb_dir)
-                fp = os.path.join(self.cb_dir, filename)
-            else:
-                fp = os.path.join(self.cb_dir, filename)
-            md5sum = self._md5sum(fp)
-            size = os.stat(fp).st_size
-            file_obj = request.data['file']
-            cbo = ConfigBackup(filename=filename, md5sum=md5sum, size=size, config_backup=file_obj)
-            cbo.save()
-            return Response(ConfigBackupSerializer(cbo).data)
+        # This code is broken
+        # with self._handle_exception(request):
+        #     filename = request.data['file-name']
+        #     fp = ''
+        #     if (not os.path.isdir(self.cb_dir)):
+        #         os.mkdir(self.cb_dir)
+        #         fp = os.path.join(self.cb_dir, filename)
+        #     else:
+        #         fp = os.path.join(self.cb_dir, filename)
+        #     md5sum = self._md5sum(fp)
+        #     size = os.stat(fp).st_size
+        #     file_obj = request.data['file']
+        #     cbo = ConfigBackup(filename=filename, md5sum=md5sum, size=size, config_backup=file_obj)
+        #     cbo.save()
+        #     return Response(ConfigBackupSerializer(cbo).data)
+
+        # This code will upload the file
+        file_obj = request.data['file']
+        filename = request.data['file-name']
+        ConfigBackup.objects.create(config_backup=file_obj, filename=filename)
+        return Response(file_obj, status.HTTP_201_CREATED)
