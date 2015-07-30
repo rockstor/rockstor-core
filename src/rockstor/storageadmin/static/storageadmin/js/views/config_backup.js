@@ -82,7 +82,7 @@ ConfigBackupView = RockstorLayoutView.extend({
 	var cbid = $(event.currentTarget).attr('data-id');
 	var button = $(event.currentTarget);
 	if (buttonDisabled(button)) return false;
-	if (confirm("Are you sure?")) {
+	if (confirm("Are you sure about deleting this backup?")) {
 	    disableButton(button);
 	    $.ajax({
 		url: "/api/config-backup/" + cbid,
@@ -106,7 +106,7 @@ ConfigBackupView = RockstorLayoutView.extend({
 	var cbid = $(event.currentTarget).attr('data-id');
 	var button = $(event.currentTarget);
 	if (buttonDisabled(button)) return false;
-	if (confirm("Are you sure?")) {
+	if (confirm("Are you sure about restoring config with this backup?")) {
 	    disableButton(button);
 	    $.ajax({
 		url: "/api/config-backup/" + cbid,
@@ -117,11 +117,10 @@ ConfigBackupView = RockstorLayoutView.extend({
 		success: function() {
 		    enableButton(button);
 		    _this.collection.fetch({reset: true});
-                  alert('Config backup successfully started. The changes may take a few minutes to propagate');
+                  alert('Config restoration started. It may take a bit to propagate.');
 		},
 	      error: function(error) {
                 alert('Error with restoring the config backup.');
-		    console.log('error while restoring this config backup');
 		    enableButton(button);
 		}
 	    });
@@ -169,7 +168,7 @@ ConfigBackupView = RockstorLayoutView.extend({
     var formData = new FormData();
     // Alert the user that they must attach file
     if ( file.length < 1 ) {
-      alert('Please attach a config file');
+      alert('Please choose a config file');
       // If things go wrong, put the original 'send' function back
       XMLHttpRequest.prototype.send = originalSend;
       return;
