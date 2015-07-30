@@ -117,6 +117,7 @@ ConfigBackupView = RockstorLayoutView.extend({
 		success: function() {
 		    enableButton(button);
 		    _this.collection.fetch({reset: true});
+                  alert('Config backup successfully started. The changes may take a few minutes to propagate');
 		},
 	      error: function(error) {
                 alert('Error with restoring the config backup.');
@@ -178,14 +179,11 @@ ConfigBackupView = RockstorLayoutView.extend({
     var xhr = new XMLHttpRequest();
 
     xhr.open('POST', '/api/config-backup/file-upload', true);
-    console.log(xhr);
     var _this = this;
     xhr.onload = function() {
       if (xhr.status < 400) {
-	console.log('things went well');
         // use jquery here to show success to user
         // add to the collection and then rerender
-        console.log(_this.collection);
         _this.collection.fetch({ reset:true });
       } else {
 	console.log('problem in file upload');
