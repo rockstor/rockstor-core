@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.db import models
+from django.conf import settings
 from storageadmin.models import Pool, Snapshot
 from smart_manager.models import ShareUsage
 
@@ -27,7 +28,7 @@ class Share(models.Model):
         """auto created 0/x qgroup"""
 	qgroup = models.CharField(max_length=100)
         """quota group y/x explicitly created for this Share"""
-        pqgroup = models.CharField(max_length=32, default='-1/-1')
+        pqgroup = models.CharField(max_length=32, default=settings.MODEL_DEFS['pqgroup'])
 	"""name of the share, kind of like id"""
 	name = models.CharField(max_length=4096, unique=True)
 	"""id of the share. numeric in case of btrfs"""

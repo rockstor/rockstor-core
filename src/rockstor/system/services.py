@@ -162,7 +162,7 @@ def join_winbind_domain(username, passwd):
                  'that /etc/resolv.conf on Rockstor is pointing to '
                  'the right nameserver -- stdout: %s stderr: %s'
                  % (' '.join(out), ' '.join(err)))
-        raise CommandException(out, error, rc)
+        raise CommandException(cmd, out, error, rc)
     return (out, err, rc)
 
 

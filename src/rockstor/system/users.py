@@ -90,7 +90,7 @@ def usermod(username, passwd):
     out, err = p.communicate(input=passwd)
     rc = p.returncode
     if (rc != 0):
-        raise CommandException(out, err, rc)
+        raise CommandException(cmd, out, err, rc)
     return (out, err, rc)
 
 
@@ -102,7 +102,7 @@ def smbpasswd(username, passwd):
     out, err = p.communicate(input=pstr)
     rc = p.returncode
     if (rc != 0):
-        raise CommandException(out, err, rc)
+        raise CommandException(cmd, out, err, rc)
     return (out, err, rc)
 
 

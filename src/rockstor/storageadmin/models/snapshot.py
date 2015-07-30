@@ -31,7 +31,7 @@ class Snapshot(models.Model):
 	writable = models.BooleanField(default=False)
 	"""size of the snapshot in KB"""
 	size = models.BigIntegerField(default=0)
-	toc = models.DateTimeField(auto_now=True)
+	toc = models.DateTimeField(auto_now_add=True)
 	qgroup = models.CharField(max_length=100)
 	uvisible = models.BooleanField(default=False)
 	"""replication, admin etc.."""

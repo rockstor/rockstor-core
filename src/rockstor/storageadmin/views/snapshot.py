@@ -135,6 +135,8 @@ class SnapshotView(rfc.GenericView):
                     cur_exports.remove(export)
                     export.export_group.delete()
                     export.delete()
+                except NFSExport.DoesNotExist:
+                    pass
                 except Exception, e:
                     logger.exception(e)
                 finally:
