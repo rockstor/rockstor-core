@@ -114,11 +114,13 @@ ConfigBackupView = RockstorLayoutView.extend({
 		dataType: "json",
 		contentType: "application/json",
 		data: JSON.stringify({"command": "restore"}),
-		success: function() {
-		    enableButton(button);
-		    _this.collection.fetch({reset: true});
+	      success: function() {
+		enableButton(button);
+		_this.collection.fetch({reset: true});
+                alert('Config restore started successfully. It may take a few moments to propagate the changes.');
 		},
-		error: function() {
+	      error: function(error) {
+                alert('Error with restoring the config backup.');
 		    console.log('error while restoring this config backup');
 		    enableButton(button);
 		}
@@ -148,16 +150,16 @@ ConfigBackupView = RockstorLayoutView.extend({
      */
     event.preventDefault();
 
-
+    // Grab the file from the input
     var fileSelect = this.$('#file-select')[0];
     var uploadButton = this.$('#upload-button')[0];
-
-    var send = XMLHttpRequest.prototype.send,
-	token = this.getCookie('csrftoken');
+    var send = XMLHttpRequest.prototype.send;
+    var token = this.getCookie('csrftoken');
 
     // Save the original function to replace it later
     var originalSend = XMLHttpRequest.prototype.send;
 
+    // Update the prototype of send to include the CSRF token
     XMLHttpRequest.prototype.send = function(data) {
       this.setRequestHeader('X-CSRFToken', token);
       return send.apply(this, arguments);
@@ -165,10 +167,16 @@ ConfigBackupView = RockstorLayoutView.extend({
 
     var file = fileSelect.files;
     var formData = new FormData();
+    // Alert the user that they must attach file
+    if ( file.length < 1 ) {
+      alert('Please attach a config file');
+      // If things go wrong, put the original 'send' function back
+      XMLHttpRequest.prototype.send = originalSend;
+      return;
+    }
     formData.append('file', file[0]);
     formData.append('file-name', file[0].name);
     var xhr = new XMLHttpRequest();
-
 
     xhr.open('POST', '/api/config-backup/file-upload', true);
     console.log(xhr);
