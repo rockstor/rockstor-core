@@ -18,7 +18,7 @@
           <td><%= share.get('pool').name %></td>
           <td><%= humanize.filesize(share.get('rusage')*1024)%></td>
 	  <td>
-	  <% if (share.get('compression_algo')) { %>
+	  <% if (share.get('compression_algo') && share.get('compression_algo') != 'no') { %>
 	     <%= share.get('compression_algo') %>
 	  <% } else { %>
 	     None(defaults to pool level compression, if any)
