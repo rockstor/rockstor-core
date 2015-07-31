@@ -51,6 +51,8 @@ RPM = '/usr/bin/rpm'
 SHUTDOWN = '/usr/sbin/shutdown'
 GRUBBY = '/usr/sbin/grubby'
 CAT = '/usr/bin/cat'
+UDEVADM = '/usr/sbin/udevadm'
+GREP = '/usr/bin/grep'
 
 
 def inplace_replace(of, nf, regex, nl):
@@ -447,6 +449,52 @@ def is_mounted(mnt_pt):
             if (re.search(' ' + mnt_pt + ' ', line) is not None):
                 return True
     return False
+
+
+def get_disk_serial(device_name, test):
+    """
+    Returns the serial number of device_name using udevadm to match that returned by lsblk
+    udevadm has been observed to return the following serial numbers for real and virtual devices.
+    ID_SCSI_SERIAL  rarely seen
+    ID_SERIAL_SHORT  often seen
+    ID_SERIAL        thought to always be seen (see note below)
+    N.B. if used in this order the serial is most likely to resemble that shown on the device as well as that returned
+    by the lsblk. ID_SERIAL seems always to appear but is sometimes accompanied by one or both of the other two.
+    When ID_SERIAL is accompanied by ID_SERIAL_SHORT the short variant is closer to lsblk and the serial label on the
+    device as when they are both present the ID_SERIAL appears to be concatenation of the model and the ID_SERIAL_SHORT
+    :param device_name:
+    :param test:
+    :return: 12345678901234567890
+    """
+    serial_num = ''
+    if test is None:
+        out, err, rc = run_command([UDEVADM, 'info', '--name=' + device_name, '|', GREP, 'SERIAL'], throw=True)
+    else:
+        # we are in test mode so process test data as if it's the output of a udevadmin command
+        out = test
+        rc = 0
+    # if return code is an error return empty string
+    if (rc != 0):
+        return ''
+    for line in out:
+        line = line.strip()
+        if re.match("ID_SCSI_SERIAL", line) is not None:
+            # since SCSI_SERIAL is more reliably unique when present than SERIAL_SHORT or SERIAL we
+            # overwrite whatever we have and look no further by breaking out of the search loop
+            serial_num = line.split('=')[1]
+            break
+        elif re.match("ID_SERIAL_SHORT", line) is not None:
+            # SERIAL_SHORT is better than SERIAL so just overwrite whatever we have so far with SERIAL_SHORT
+            serial_num = out.split('=')[1]
+        else:
+            if re.match("ID_SERIAL", line) is not None:
+                # SERIAL is sometimes our only option but only use it if we have found nothing else.
+                if serial_num == '':
+                    serial_num = out.split('=')[1]
+
+    # should return one of the following in order of priority
+    # SCSI_SERIAL, SERIAL_SHORT, SERIAL
+    return serial_num
 
 
 def get_virtio_disk_serial(device_name):
