@@ -141,7 +141,7 @@ def restore_services(ml):
 @task()
 def restore_config(cbid):
     cbo = ConfigBackup.objects.get(id=cbid)
-    fp = os.path.join(settings.STATIC_ROOT, 'config-backups', cbo.filename)
+    fp = os.path.join(settings.MEDIA_ROOT, 'config-backups', cbo.filename)
     gfo = gzip.open(fp)
     lines = gfo.readlines()
     sa_ml = json.loads(lines[0])
@@ -160,7 +160,7 @@ def restore_config(cbid):
 
 class ConfigBackupMixin(object):
     serializer_class = ConfigBackupSerializer
-    cb_dir = os.path.join(settings.STATIC_ROOT, 'config-backups')
+    cb_dir = os.path.join(settings.MEDIA_ROOT, 'config-backups')
 
     @staticmethod
     def _md5sum(fp):
@@ -273,6 +273,10 @@ class ConfigBackupUpload(ConfigBackupMixin, rfc.GenericView):
         with self._handle_exception(request):
             filename = request.data['file-name']
             file_obj = request.data['file']
+            if (ConfigBackup.objects.filter(filename=filename).exists()):
+                msg = ('Config backup(%s) already exists. Uploading a '
+                       'duplicate is not allowed.' % filename)
+                handle_exception(Exception(msg), request)
             cbo = ConfigBackup.objects.create(
                 filename=filename, config_backup=file_obj
             )

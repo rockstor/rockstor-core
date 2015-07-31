@@ -180,12 +180,12 @@ ConfigBackupView = RockstorLayoutView.extend({
     xhr.open('POST', '/api/config-backup/file-upload', true);
     var _this = this;
     xhr.onload = function() {
-      if (xhr.status < 400) {
+      if (xhr.status == 200) {
         // use jquery here to show success to user
         // add to the collection and then rerender
         _this.collection.fetch({ reset:true });
       } else {
-	console.log('problem in file upload');
+	  alert(xhr.response);
       }
     };
     xhr.send(formData);
