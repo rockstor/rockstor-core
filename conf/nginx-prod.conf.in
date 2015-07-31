@@ -58,7 +58,7 @@ http {
 		location /site_media  {
 			root /media/; # Notice this is the /media folder that we create above
 		}
-		location ~* ^.+\.(zip|gz|rar|bz2|doc|xls|exe|pdf|ppt|txt|tar|mid|midi|wav|bmp|rtf|mov) {
+		location ~* ^.+\.(zip|rar|bz2|doc|xls|exe|pdf|ppt|txt|tar|mid|midi|wav|bmp|rtf|mov) {
 			access_log   off;
 			expires      30d;
 		}
