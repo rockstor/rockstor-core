@@ -125,9 +125,6 @@ var AppRouter = Backbone.Router.extend({
 	if (RockStorGlobals.currentAppliance == null) {
 	    setApplianceName();
 	}
-	if (!RockStorGlobals.serverTimeFetched) {
-	    fetchServerTime();
-	}
 	if (!RockStorGlobals.browserChecked) {
 	    checkBrowser();
 	}
@@ -952,17 +949,26 @@ $(document).ready(function() {
   };
 
 
-    RockStorSocket.addListener(kernelInfo, this, 'sysinfo:kernel_info');
-    RockStorSocket.addListener(displayLoadAvg, this, 'sysinfo:uptime');
-    RockStorSocket.addListener(kernelError, this, 'sysinfo:kernel_error');
+  RockStorSocket.addListener(kernelInfo, this, 'sysinfo:kernel_info');
+  RockStorSocket.addListener(displayLoadAvg, this, 'sysinfo:uptime');
+  RockStorSocket.addListener(kernelError, this, 'sysinfo:kernel_error');
 
-    RockStorSocket.sysinfo.on('kernel_error', function(data) {
-	// Handling errors just by emitting message via the server
-	if (data.error.indexOf('kernel') !== -1) {
-	    // Put an alert at the top of the page
-	    $('#browsermsg').html('<div class="alert alert-danger"><button type="button" class="close" data-dismiss="alert">&times;</button>' + data.error + '</div>');
-	}
+  RockStorSocket.sysinfo.on('kernel_error', function(data) {
+    // Handling errors just by emitting message via the server
+    if (data.error.indexOf('kernel') !== -1) {
+      // Put an alert at the top of the page
+      $('#browsermsg').html('<div class="alert alert-danger"><button type="button" class="close" data-dismiss="alert">&times;</button>' + data.error + '</div>');
+    }
 
-    });
+  });
+
+  var utcNow = function(data) {
+    RockStorGlobals.currentTimeOnServer = new Date(data);
+    RockStorGlobals.serverTimeFetched = true;
+    console.log(data);
+  };
+
+  RockStorSocket.addListener(utcNow, this, 'sysinfo:utcnow');
+
 
 });

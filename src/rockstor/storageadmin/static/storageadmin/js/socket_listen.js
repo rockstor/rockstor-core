@@ -30,6 +30,9 @@ RockStorSocket.handlerMap = {}; // initialize handler array
 // Connect globally to sysinfo as the information is in the breadcrumb
 RockStorSocket.sysinfo = io.connect('/sysinfo', {'secure': true, 'force new connection': true});
 
+RockStorSocket.widgets = io.connect('/widgets', {'secure': true, 'force new connection': true });
+
+
 
 // Add the function and context to be fired when a message comes in
 RockStorSocket.addListener = function(fn, fn_this, namespace) {

@@ -10,9 +10,62 @@ from socketio.mixins import BroadcastMixin
 from django.conf import settings
 from system.osi import (uptime, kernel_info)
 
+import psutil
+from datetime import datetime
+from django.utils.timezone import utc
+
+from smart_manager.models import CPUMetric
+
 from system.services import service_status
 import logging
 logger = logging.getLogger(__name__)
+
+
+class WidgetNamespace(BaseNamespace, BroadcastMixin):
+    send_cpu = False
+
+    def recv_connect(self):
+        logger.debug("Widget namespace connected")
+        self.emit('widgets:connected', {
+            'key': 'widgets:connected', 'data': 'connected'
+        })
+
+    def recv_disconnect(self):
+        logger.debug("Widgets have disconnected")
+
+    def on_send_cpu_data(self):
+        # Switch for emitting cpu data
+        self.send_cpu = True
+        cpu_stats = []
+
+        def get_cpu_stats():
+            while True:
+                vals = psutil.cpu_times_percent(percpu=True)
+                ts = datetime.utcnow().replace(tzinfo=utc)
+                for i, val in enumerate(vals):
+                    name = 'cpu%d' % i
+                    cm = CPUMetric(name=name, umode=val.user, umode_nice=val.nice,
+                                   smode=val.system, idle=val.idle, ts=ts)
+                    str_time = ts.strftime('%Y-%m-%dT%H:%M:%SZ')
+                    cpu_stats.append({'name': name, 'umode': val.user,
+                                      'umode_nice': val.nice, 'smode': val.system,
+                                      'idle': val.idle, 'ts': str_time, })
+                    cpu_stats.append({'name': name, 'umode': cm.umode,
+                                      'umode_nice': cm.umode_nice, 'smode': cm.smode,
+                                      'idle': cm.idle, 'ts': str_time, })
+                gevent.sleep(1)
+
+        def send_cpu():
+            while self.send_cpu:
+                self.emit('widgets:cpudata', {
+                    'key': 'widgets:cpudata', 'data': cpu_stats
+                })
+                del cpu_stats[:]
+                gevent.sleep(1)
+
+        self.spawn(get_cpu_stats)
+        self.spawn(send_cpu)
+
 
 
 class ServicesNamespace(BaseNamespace, BroadcastMixin):
@@ -71,6 +124,7 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
         gevent.spawn(self.send_uptime)
         gevent.spawn(self.send_kernel_info)
         gevent.spawn(self.update_rockons)
+        gevent.spawn(self.send_utcnow)
 
     # Run on every disconnect
     def recv_disconnect(self):
@@ -99,6 +153,14 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
                     'key': 'sysinfo:kernel_error'
                 })
                 self.error('unsupported_kernel', str(e))
+
+    def send_utcnow(self):
+        while True:
+            self.emit('sysinfo:utcnow', {
+                'data': str(datetime.utcnow().replace(tzinfo=utc)),
+                'key': 'sysinfo:utcnow'
+            })
+            gevent.sleep(1)
 
     def update_rockons(self):
         from cli.rest_util import api_call
@@ -137,7 +199,8 @@ class Application(object):
             return [data]
         if path.startswith("socket.io"):
             socketio_manage(environ, {'/services': ServicesNamespace,
-                                      '/sysinfo': SysinfoNamespace})
+                                      '/sysinfo': SysinfoNamespace,
+                                      '/widgets': WidgetNamespace})
 
 
 def not_found(start_response):
