@@ -478,16 +478,18 @@ def get_disk_serial(device_name, test):
         return ''
     for line in out:
         line = line.strip()
-        if re.match("ID_SCSI_SERIAL", line) is not None:
+        # Might be better to drop the first 3 chars from each line and use match not search
+        # not sure how stable / consistent the output of udevadm is though.
+        if re.search("ID_SCSI_SERIAL", line) is not None:
             # since SCSI_SERIAL is more reliably unique when present than SERIAL_SHORT or SERIAL we
             # overwrite whatever we have and look no further by breaking out of the search loop
             serial_num = line.split('=')[1]
             break
-        elif re.match("ID_SERIAL_SHORT", line) is not None:
+        elif re.search("ID_SERIAL_SHORT", line) is not None:
             # SERIAL_SHORT is better than SERIAL so just overwrite whatever we have so far with SERIAL_SHORT
             serial_num = out.split('=')[1]
         else:
-            if re.match("ID_SERIAL", line) is not None:
+            if re.search("ID_SERIAL", line) is not None:
                 # SERIAL is sometimes our only option but only use it if we have found nothing else.
                 if serial_num == '':
                     serial_num = out.split('=')[1]
