@@ -453,15 +453,17 @@ def is_mounted(mnt_pt):
 
 def get_disk_serial(device_name, test):
     """
-    Returns the serial number of device_name using udevadm to match that returned by lsblk
-    udevadm has been observed to return the following serial numbers for real and virtual devices.
+    Returns the serial number of device_name using udevadm to match that
+    returned by lsblk. N.B. udevadm has been observed to return the following:-
     ID_SCSI_SERIAL  rarely seen
     ID_SERIAL_SHORT  often seen
     ID_SERIAL        thought to always be seen (see note below)
-    N.B. if used in this order the serial is most likely to resemble that shown on the device as well as that returned
-    by the lsblk. ID_SERIAL seems always to appear but is sometimes accompanied by one or both of the other two.
-    When ID_SERIAL is accompanied by ID_SERIAL_SHORT the short variant is closer to lsblk and the serial label on the
-    device as when they are both present the ID_SERIAL appears to be concatenation of the model and the ID_SERIAL_SHORT
+    N.B. if used in this order the serial is most likely to resemble that shown
+    on the device label as well as that returned by the lsblk. ID_SERIAL seems
+    always to appear but is sometimes accompanied by one or both of the others.
+    When ID_SERIAL is accompanied by ID_SERIAL_SHORT the short variant is
+    closer to lsblk and physical label When they are both present the
+    ID_SERIAL appears to be a combination of the model and the ID_SERIAL_SHORT
     :param device_name:
     :param test:
     :return: 12345678901234567890
@@ -485,16 +487,19 @@ def get_disk_serial(device_name, test):
         # E: ID_SERIAL_SHORT=S1D5NSAF111111K
         line.replace('=', ' ').split()
         if line[1] == 'ID_SCSI_SERIAL':
-            # since SCSI_SERIAL is more reliably unique when present than SERIAL_SHORT or SERIAL we
-            # overwrite whatever we have and look no further by breaking out of the search loop
+            # we have an instance of SCSI_SERIAL being more reliably unique
+            # when present than SERIAL_SHORT or SERIAL so overwrite whatever
+            # we have and look no further by breaking out of the search loop
             serial_num = line[2]
             break
         elif line[1] == 'ID_SERIAL_SHORT':
-            # SERIAL_SHORT is better than SERIAL so just overwrite whatever we have so far with SERIAL_SHORT
+            # SERIAL_SHORT is better than SERIAL so just overwrite whatever we
+            # have so far with SERIAL_SHORT
             serial_num = line[2]
         else:
             if line[1] == 'ID_SERIAL':
-                # SERIAL is sometimes our only option but only use it if we have found nothing else.
+                # SERIAL is sometimes our only option but only use it if we
+                # have found nothing else.
                 if serial_num == '':
                     serial_num = line[2]
     # should return one of the following in order of priority
