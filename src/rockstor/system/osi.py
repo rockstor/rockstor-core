@@ -468,9 +468,11 @@ def get_disk_serial(device_name, test):
     """
     serial_num = ''
     if test is None:
-        out, err, rc = run_command([UDEVADM, 'info', '--name=' + device_name, '|', GREP, 'SERIAL'], throw=True)
+        out, err, rc = run_command([UDEVADM, 'info', '--name=' + device_name,
+                                    '|', GREP, 'SERIAL'], throw=True)
     else:
-        # we are in test mode so process test data as if it's the output of a udevadmin command
+        # we are in test mode so process test data as if it's the output of a
+        # udevadmin command
         out = test
         rc = 0
     # if return code is an error return empty string
@@ -478,22 +480,23 @@ def get_disk_serial(device_name, test):
         return ''
     for line in out:
         line = line.strip()
-        # Might be better to drop the first 3 chars from each line and use match not search
-        # not sure how stable / consistent the output of udevadm is though.
-        if re.search("ID_SCSI_SERIAL", line) is not None:
+        # if we do a fast replace of the '=' with a space we can just split()
+        # on spaces then identifier is [1] and serial is [2] an example line:-
+        # E: ID_SERIAL_SHORT=S1D5NSAF111111K
+        line.replace('=', ' ').split()
+        if line[1] == 'ID_SCSI_SERIAL':
             # since SCSI_SERIAL is more reliably unique when present than SERIAL_SHORT or SERIAL we
             # overwrite whatever we have and look no further by breaking out of the search loop
-            serial_num = line.split('=')[1]
+            serial_num = line[2]
             break
-        elif re.search("ID_SERIAL_SHORT", line) is not None:
+        elif line[1] == 'ID_SERIAL_SHORT':
             # SERIAL_SHORT is better than SERIAL so just overwrite whatever we have so far with SERIAL_SHORT
-            serial_num = out.split('=')[1]
+            serial_num = line[2]
         else:
-            if re.search("ID_SERIAL", line) is not None:
+            if line[1] == 'ID_SERIAL':
                 # SERIAL is sometimes our only option but only use it if we have found nothing else.
                 if serial_num == '':
-                    serial_num = out.split('=')[1]
-
+                    serial_num = line[2]
     # should return one of the following in order of priority
     # SCSI_SERIAL, SERIAL_SHORT, SERIAL
     return serial_num
