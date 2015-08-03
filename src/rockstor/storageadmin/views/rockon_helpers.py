@@ -29,8 +29,8 @@ from fs import btrfs
 
 DOCKER = '/usr/bin/docker'
 ROCKON_URL = 'https://localhost/api/rockons'
-DCMD = [DOCKER, 'run', '--log-driver=syslog', '--restart=on-failure:5',]
-DCMD2 = list(DCMD) + ['-d']
+DCMD = [DOCKER, 'run', '--log-driver=syslog', ]
+DCMD2 = list(DCMD) + ['-d', '--restart=on-failure:5', ]
 
 import logging
 logger = logging.getLogger(__name__)
