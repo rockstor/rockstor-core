@@ -2,26 +2,26 @@
  *
  * @licstart  The following is the entire license notice for the 
  * JavaScript code in this page.
- * 
+ *
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
- * 
+ *
  * RockStor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
- * 
+ *
  * RockStor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * @licend  The above is the entire license notice
  * for the JavaScript code in this page.
- * 
+ *
  */
 
 
@@ -83,7 +83,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
         noColumns : 4,
         labelBoxBorderColor: '#ffffff'
 
-      },
+      }
 
     };
 
@@ -109,20 +109,20 @@ CpuUsageWidget = RockStorWidgetView.extend({
         min: 0,
         max: 100,
         ticks: 4,
-        tickFormatter: this.pctTickFormatter,
+        tickFormatter: this.pctTickFormatter
       },
       xaxis: {
         tickFormatter: this.cpuTickFormatter,
         tickSize: 12,
         min: 0,
-        max: 60,
+        max: 60
       },
       legend : { container : "#cpuusage-legend", noColumns : 4 }
       //tooltip: true,
       //tooltipOpts: { content: "<b>%s</b> (%p.2%)" }
     };
 
-    // d3 graph 
+    // d3 graph
 
     this.rawData = null;
     this.windowLength = 60000; // window length in msec (1 min)
@@ -181,7 +181,6 @@ CpuUsageWidget = RockStorWidgetView.extend({
       displayName: this.displayName,
       maximized: this.maximized
     }));
-
 
     return this;
   },
@@ -313,7 +312,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
 
 
   genRawData: function(n) {
-    //{"id": 96262, "name": "cpu1", "umode": 188641, "umode_nice": 0, "smode": 269451, "idle": 17115082, "ts": "2013-07-29T00:44:09.250Z"}, 
+    //{"id": 96262, "name": "cpu1", "umode": 188641, "umode_nice": 0, "smode": 269451, "idle": 17115082, "ts": "2013-07-29T00:44:09.250Z"},
 
     var rawData = [];
     for (i=0; i<this.numCpus; i++) {
@@ -440,9 +439,6 @@ CpuUsageWidget = RockStorWidgetView.extend({
 
   updateGraph: function(data) {
     var _this = this;
-
-    //var now = new Date(data[data.length-1].ts).getTime();
-    //this.x.domain([now-(this.windowLength + this.updateFreq), now - this.updateFreq]);
     this.x.domain([this.t2-(this.windowLength + this.updateFreq), this.t2 - this.updateFreq]);
 
     //this.cpuData.push.apply(this.cpuData, data);
@@ -465,12 +461,6 @@ CpuUsageWidget = RockStorWidgetView.extend({
     .duration(this.transDuration)
     .ease("linear")
     .attr("transform", "translate(" + this.x(this.t2 - (this.windowLength+2*this.updateFreq)) + ")");
-
-    //if (this.cpuData.length > 0) {
-      //while (new Date(this.cpuData[0].ts).getTime() < this.t1-this.windowLength) {
-        //this.cpuData.shift();
-      //}
-    //}
 
   },
 
@@ -497,8 +487,8 @@ CpuUsageWidget = RockStorWidgetView.extend({
       }
       if (mode != 'idle') {
         _this.allCpuGraphData.push({
-          "label": mode, 
-          "data": tmp2, 
+          "label": mode,
+          "data": tmp2,
           "color": _this.colors[i]
         });
       }
@@ -542,7 +532,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
     }
     this.$('#cpuusage-avg').empty();
     this.renderGraph(this.cpuData);
-  },
+  }
 
 });
 
