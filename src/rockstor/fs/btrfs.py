@@ -26,11 +26,14 @@ import os
 import subprocess
 import signal
 import shutil
+import collections
 from system.osi import (run_command, create_tmp_dir, is_share_mounted,
                         is_mounted, get_virtio_disk_serial)
 from system.exceptions import (CommandException, NonBTRFSRootException)
 from pool_scrub import PoolScrub
 from pool_balance import PoolBalance
+import logging
+logger = logging.getLogger(__name__)
 
 MKFS_BTRFS = '/sbin/mkfs.btrfs'
 BTRFS = '/sbin/btrfs'
@@ -42,7 +45,6 @@ RMDIR = '/bin/rmdir'
 WIPEFS = '/usr/sbin/wipefs'
 QID = '2015'
 
-import collections
 
 Disk = collections.namedtuple('Disk',
                               'name model serial size transport vendor '
@@ -253,10 +255,11 @@ def shares_info(mnt_pt):
     #return a lit of share names unter this mount_point.
     #useful to gather names of all shares in a pool
     o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-s', mnt_pt])
-    snap_ids = []
+    snap_idmap = {}
     for l in o:
         if (re.match('ID ', l) is not None):
-            snap_ids.append(l.split()[1])
+            fields = l.strip().split()
+            snap_idmap[fields[1]] = fields[-1]
 
     o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-p', mnt_pt])
     shares_d = {}
@@ -266,17 +269,27 @@ def shares_info(mnt_pt):
             continue
         fields = l.split()
         vol_id = fields[1]
-        if (vol_id in snap_ids):
+        if (vol_id in snap_idmap):
             #snapshot
-            continue
+            #if the snapshot directory is direct child of a pool and is rw,
+            #then it's a Share. (aka Rockstor Share clone).
+            clone = False
+            if (len(snap_idmap[vol_id].split('/')) == 1):
+                o, e, rc = run_command([BTRFS, 'property', 'get',
+                                        '%s/%s' % (mnt_pt, snap_idmap[vol_id])])
+                for l in o:
+                    if (l == 'ro=false'):
+                        clone = True
+            if (not clone):
+                continue
 
         parent_id = fields[5]
         if (parent_id in share_ids):
             #subvol of subvol. add it so child subvols can also be ignored.
             share_ids.append(vol_id)
-        elif (parent_id in snap_ids):
+        elif (parent_id in snap_idmap):
             #snapshot/subvol of snapshot. add it so child subvols can also be ignored.
-            snap_ids.append(vol_id)
+            snap_idmap[vol_id] = fields[-1]
         else:
             shares_d[fields[-1]] = '0/%s' % vol_id
             share_ids.append(vol_id)
@@ -312,6 +325,10 @@ def snaps_info(mnt_pt, share_name):
                 if (re.match('ro=', l1) is not None):
                     if (l1.split('=')[1] == 'true'):
                         writable = False
+            if (writable is True):
+                if (len(fields[-1].split('/')) == 1):
+                    #writable snapshot + direct child of pool. so we'll treat it as a share.
+                    continue
             snap_name = fields[-1].split('/')[-1]
             snaps_d[snap_name] = ('0/%s' % fields[1], writable)
     return snaps_d
