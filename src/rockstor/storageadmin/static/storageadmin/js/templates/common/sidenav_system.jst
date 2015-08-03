@@ -58,4 +58,9 @@
 <% } else { %>
 <li><a href="#config-backup"><i class="glyphicon glyphicon-floppy-save"></i> Config Backups</span></a></li>
 <% } %>
+<% if (selected == "email") { %>
+<li><a href="#email" class="selected"><i class="fa fa-envelope"></i>Email</span></a></li>
+<% } else { %>
+<li><a href="#email"><i class="fa fa-envelope"></i> Email</span></a></li>
+<% } %>
 </ul>

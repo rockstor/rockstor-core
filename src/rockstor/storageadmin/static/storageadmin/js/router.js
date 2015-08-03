@@ -83,6 +83,8 @@ var AppRouter = Backbone.Router.extend({
 	"add-scheduled-task": "addScheduledTask",
 	"edit-scheduled-task/:taskDefId": "editScheduledTask",
 	"update-certificate": "updateCertificate",
+	"email": "showEmail",
+	"email/:emailID/edit": "editEmail",
 	"config-backup": "configBackup",
 	"shutdown": "showShutdownView",
 	"reboot": "showReboot",
@@ -760,6 +762,22 @@ var AppRouter = Backbone.Router.extend({
 		this.currentLayout.cleanup();
 	    }
 	}
+    },
+
+    showEmail: function() {
+	this.renderSidebar('system', 'email');
+	this.cleanup();
+	this.currentLayout = new EmailView();
+	$('#maincontent').empty();
+	$('#maincontent').append(this.currentLayout.render().el);
+    },
+
+    editEmail: function(emailID) {
+        this.renderSidebar("system", "email");
+	this.cleanup();
+	this.currentLayout = new EmailView({emailID: emailID});
+	$('#maincontent').empty();
+	$('#maincontent').append(this.currentLayout.render().el);
     }
 
 });
@@ -881,7 +899,7 @@ $(document).ready(function() {
 	    contrib = 0; // set contrib to 0, let user input the number on paypal
 	}
 	$('#contrib-form input[name="amount"]').val(contrib);
-	$('#contrib-form').submit()
+	$('#contrib-form').submit();
 	$('#donate-modal').modal('hide');
     });
 
