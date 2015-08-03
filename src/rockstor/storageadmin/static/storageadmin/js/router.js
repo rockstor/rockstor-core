@@ -947,7 +947,6 @@ $(document).ready(function() {
   var utcNow = function(data) {
     RockStorGlobals.currentTimeOnServer = new Date(data);
     RockStorGlobals.serverTimeFetched = true;
-    console.log(data);
   };
 
   RockStorSocket.addListener(utcNow, this, 'sysinfo:utcnow');

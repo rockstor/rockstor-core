@@ -29,43 +29,36 @@ class WidgetNamespace(BaseNamespace, BroadcastMixin):
         self.emit('widgets:connected', {
             'key': 'widgets:connected', 'data': 'connected'
         })
-
-    def recv_disconnect(self):
-        logger.debug("Widgets have disconnected")
-
-    def on_send_cpu_data(self):
         # Switch for emitting cpu data
         self.send_cpu = True
-        cpu_stats = []
+        self.spawn(self.send_cpu_data)
 
-        def get_cpu_stats():
-            while True:
-                vals = psutil.cpu_times_percent(percpu=True)
-                ts = datetime.utcnow().replace(tzinfo=utc)
-                for i, val in enumerate(vals):
-                    name = 'cpu%d' % i
-                    cm = CPUMetric(name=name, umode=val.user, umode_nice=val.nice,
-                                   smode=val.system, idle=val.idle, ts=ts)
-                    str_time = ts.strftime('%Y-%m-%dT%H:%M:%SZ')
-                    cpu_stats.append({'name': name, 'umode': val.user,
-                                      'umode_nice': val.nice, 'smode': val.system,
-                                      'idle': val.idle, 'ts': str_time, })
-                    cpu_stats.append({'name': name, 'umode': cm.umode,
-                                      'umode_nice': cm.umode_nice, 'smode': cm.smode,
-                                      'idle': cm.idle, 'ts': str_time, })
-                gevent.sleep(1)
+    def recv_disconnect(self):
+        logger.debug('disconnect received')
+        self.send_cpu = False
+        self.disconnect()
 
-        def send_cpu():
-            while self.send_cpu:
-                self.emit('widgets:cpudata', {
-                    'key': 'widgets:cpudata', 'data': cpu_stats
-                })
-                del cpu_stats[:]
-                gevent.sleep(1)
+    def send_cpu_data(self):
+        while self.send_cpu:
+            cpu_stats = []
+            vals = psutil.cpu_times_percent(percpu=True)
+            ts = datetime.utcnow().replace(tzinfo=utc)
+            for i, val in enumerate(vals):
+                name = 'cpu%d' % i
+                cm = CPUMetric(name=name, umode=val.user, umode_nice=val.nice,
+                               smode=val.system, idle=val.idle, ts=ts)
+                str_time = ts.strftime('%Y-%m-%dT%H:%M:%SZ')
+                cpu_stats.append({'name': name, 'umode': val.user,
+                                  'umode_nice': val.nice, 'smode': val.system,
+                                  'idle': val.idle, 'ts': str_time, })
+                cpu_stats.append({'name': name, 'umode': cm.umode,
+                                  'umode_nice': cm.umode_nice, 'smode': cm.smode,
+                                  'idle': cm.idle, 'ts': str_time })
 
-        self.spawn(get_cpu_stats)
-        self.spawn(send_cpu)
-
+            self.emit('widgets:cpudata', {
+                'key': 'widgets:cpudata', 'data': cpu_stats
+            })
+            gevent.sleep(1)
 
 
 class ServicesNamespace(BaseNamespace, BroadcastMixin):

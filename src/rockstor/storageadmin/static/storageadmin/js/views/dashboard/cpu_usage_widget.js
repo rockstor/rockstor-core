@@ -28,6 +28,9 @@
 CpuUsageWidget = RockStorWidgetView.extend({
 
   initialize: function() {
+    // Initialize the socket connection
+    RockStorSocket.widgets = io.connect('/widgets', {'secure': true, 'force new connection': true });
+    RockStorSocket.addListener(this.cpuDataListener, this, 'widgets:cpudata');
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.dashboard_widgets_cpuusage;
     // maximized size for shapeshift
@@ -179,30 +182,25 @@ CpuUsageWidget = RockStorWidgetView.extend({
       maximized: this.maximized
     }));
 
-    RockStorSocket.addListener(this.cpuDataListener, this, 'widgets:cpudata');
-    RockStorSocket.widgets.emit('send_cpu_data');
+
     return this;
   },
 
   cpuDataListener: function(data) {
-    console.log(data);
     var _this = this;
-    console.log('received cpu widget data');
-    console.log(data);
     _this.cpuData.push.apply(_this.cpuData, _this.getAvgCpuUsge(data));
 
     _this.displayIndividualCpuUsage(data);
 
     if (!_this.graphRendered) {
-      console.log('graph is not rendered');
       _this.renderGraph(data);
       _this.graphRendered = true;
     } else {
-      console.log('updating graph');
       _this.updateGraph(data);
     }
 
     if (_this.cpuData.length > 0) {
+      console.log(_this.cpuData);
       while (new Date(_this.cpuData[0].ts).getTime() < _this.t2-(_this.windowLength + _this.updateFreq)) {
         _this.cpuData.shift();
       }
@@ -229,78 +227,6 @@ CpuUsageWidget = RockStorWidgetView.extend({
     }
   },
 
-
-  // getData: function(context) {
-  //   var _this = context;
-
-  //   _this.startTime = new Date().getTime();
-  //   // if t2 is more than 10 sec behind current time
-  //   // update t2 and t1
-  //   //if (RockStorGlobals.currentTimeOnServer - _this.t2 > 20000) {
-  //   //  _this.t2 = RockStorGlobals.currentTimeOnServer-5000;
-  //   //  _this.t1 = _this.t2 - _this.windowLength;
-  //   //}
-  //   var t1Str = moment(_this.t1).toISOString();
-  //   var t2Str = moment(_this.t2).toISOString();
-  //   var pageSizeStr = '&page_size=' + RockStorGlobals.maxPageSize;
-  //   _this.jqXhr = $.ajax({
-  //     url: '/api/sm/sprobes/cpumetric/?format=json' + pageSizeStr + '&t1=' +
-  //       t1Str + '&t2=' + t2Str,
-  //     type: "GET",
-  //     dataType: "json",
-  //     global: false, // dont show global loading indicator
-  //     success: function(data, status, xhr) {
-  //       data = data.results;
-  //       if (data.length > 0) {
-  //         _this.cpuData.push.apply(_this.cpuData, _this.getAvgCpuUsge(data));
-  //       }
-
-  //       _this.displayIndividualCpuUsage(data);
-  //       if (!_this.graphRendered) {
-  //         _this.renderGraph(data);
-  //         _this.graphRendered = true;
-  //       } else {
-  //         _this.updateGraph(data);
-  //       }
-
-  //       if (_this.cpuData.length > 0) {
-  //         while (new Date(_this.cpuData[0].ts).getTime() < _this.t2-(_this.windowLength + _this.updateFreq)) {
-  //           _this.cpuData.shift();
-  //         }
-  //       }
-
-  //       // call getData immediately to fetch the next set of  data, 
-  //       // or set a timer
-  //       // depending on how much time has elapsed since the 
-  //       // start of the ajax call.
-  //       var currentTime = new Date().getTime();
-  //       var diff = currentTime - _this.startTime;
-  //       if (diff > _this.updateFreq) {
-  //         if (_this.cpuData.length > 0) {
-  //           _this.t1 = new Date(_this.cpuData[_this.cpuData.length-1].ts).getTime();
-  //         } else {
-  //           _this.t1 = _this.t1 + diff;
-  //         }
-  //         _this.t2 = _this.t2 + diff;
-  //         _this.getData(_this);
-  //       } else {
-  //         _this.timeoutId = window.setTimeout( function() {
-  //           if (_this.cpuData.length > 0) {
-  //             _this.t1 = new Date(_this.cpuData[_this.cpuData.length-1].ts).getTime();
-  //           } else {
-  //             _this.t1 = _this.t1 + _this.updateFreq;
-  //           }
-  //           _this.t2 = _this.t2 + _this.updateFreq;
-  //           _this.getData(_this);
-  //         }, _this.updateFreq - diff);
-  //       }
-  //     },
-  //     error: function(xhr, status, error) {
-  //       logger.debug(error);
-  //     }
-  //   });
-  // },
-
   cleanup: function() {
     if (!_.isUndefined(this.timeoutId)) {
       window.clearTimeout(this.timeoutId);
@@ -308,6 +234,8 @@ CpuUsageWidget = RockStorWidgetView.extend({
     if (this.jqXhr) {
       this.jqXhr.abort();
     }
+    console.log('cleaning up');
+    RockStorSocket.removeOneListener('widgets');
   },
 
   parseData: function(data) {
