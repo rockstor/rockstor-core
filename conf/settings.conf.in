@@ -255,6 +255,10 @@ LOGGING = {
 		   'handlers': ['file'],
 		   'level': 'DEBUG',
 	},
+	'fs': {
+	      'handlers': ['file'],
+	      'level': 'DEBUG',
+	},
     }
 }
 
