@@ -76,6 +76,7 @@ class ServicesNamespace(BaseNamespace, BroadcastMixin):
 
     def recv_disconnect(self):
         logger.debug("Services have disconnected")
+        self.disconnect()
 
     def send_service_statuses(self):
         # Iterate through the collection and assign the values accordingly
@@ -123,6 +124,7 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
     def recv_disconnect(self):
         logger.debug("Sysinfo has disconnected")
         self.start = False
+        self.disconnect()
 
     def send_uptime(self):
         # Seems redundant
