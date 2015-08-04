@@ -31,14 +31,16 @@
         <table id="email-table" class="table table-condensed table-bordered table-hover table-striped share-table " >
           <thead>
             <tr>
-              <th scope="col" abbr="Email">Email</th>
+              <th scope="col" abbr="Sender">Sender</th>
+	      <th scope="col" abbr="Receiver">Reciver</th>
 	      <th scope="col" abbr="smtp-server">SMTP Server</th>
               <th scope="col" abbr="Actions">Actions</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><%= email.get('email') %></td>
+              <td><%= email.get('sender') %></td>
+	      <td><%= email.get('receiver') %></td>
 	      <td><%= email.get('smtp_server') %></td>
               <td>
                 <a href="#" class="email-delete" id="email-delete" rel="tooltip" title="Delete email"><i class="glyphicon glyphicon-trash"></i></a>

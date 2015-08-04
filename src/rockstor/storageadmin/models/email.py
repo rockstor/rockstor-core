@@ -22,7 +22,8 @@ from django.db import models
 class EmailClient(models.Model):
     smtp_server = models.CharField(max_length=1024)
     name = models.CharField(max_length=1024, unique=True)
-    email = models.CharField(max_length=1024)
+    sender = models.CharField(max_length=1024)
+    receiver = models.CharField(max_length=1024)
 
     class Meta:
         app_label = 'storageadmin'

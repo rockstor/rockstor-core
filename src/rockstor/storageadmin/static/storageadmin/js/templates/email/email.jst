@@ -46,11 +46,18 @@
         <label class="control-label">Email Id </label>
         <div class="controls">
         <%  if(email!=null) {  %>
-          <input type="email" id= "email"  name="email" value="<%= email.get('email')%>" >
-        <%  }else{ %>
-        <input type="email" id="email" name="email"  placeholder="Enter your Email Address" >
+          <input type="email" id="sender"  name="sender" value="<%= email.get('sender')%>" >
+        <% } else { %>
+        <input type="email" id="sender" name="sender"  placeholder="Rockstor will send email notifications from this address" >
         <% }  %>
         </div>
+        </div>
+
+	<div class="control-group">
+          <label class="control-label">Password:</label>
+          <div class="controls">
+            <input type="password"  name="password" placeholder="Enter Password">
+          </div>
         </div>
 
         <div class="control-group">
@@ -59,26 +66,8 @@
         <%  if(email!=null) {  %>
         <input type="text" id= "smtp_server"  name="smtp_server" value="<%= email.get('smtp_server') %>" >
         <%  }else{ %>
-        <input type="text" id="smtp_server" name="smtp_server"  placeholder="Enter your Email ID" >
+        <input type="text" id="smtp_server" name="smtp_server"  placeholder="smtp.gmail.com" title="smtp server url of your email provider. eg: smtp.gmail.com, smtp.zoho.com etc..">
         <% }  %>
-        </div>
-        </div>
-
-        <div class="control-group">
-        <label class="control-label">Username: </label>
-        <div class="controls">
-        <%  if(email!=null) {  %>
-        <input type="text" id="username" name="username" value="<%= email.get('username')%>" >
-        <%  }else{ %>
-        <input type="text" id="username" name="username"  placeholder="Enter Name" >
-        <% }  %>
-         </div>
-        </div>
-
-        <div class="control-group">
-        <label class="control-label">Password:</label>
-        <div class="controls">
-          <input type="password"  name="password" placeholder="Enter Password">
         </div>
         </div>
 
@@ -89,6 +78,17 @@
         </label>
         </div>
         </div>
+
+	<div class="control-group">
+          <label class="control-label">Receipient email: </label>
+          <div class="controls">
+            <%  if(email!=null) {  %>
+            <input type="email" id="receiver"  name="receiver" value="<%= email.get('receiver')%>" >
+            <% } else { %>
+            <input type="email" id="receiver" name="receiver"  placeholder="Rockstor will send email notifications to this address" >
+            <% }  %>
+          </div>
+	</div>
 
         <div class="control-group">
           <div class="controls">
