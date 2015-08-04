@@ -638,3 +638,8 @@ var RockOnCustomConfigCollection = RockStorPaginatedCollection.extend({
 var EmailAccount = Backbone.Model.extend({
     urlRoot: '/api/email'
 });
+
+var EmailAccountCollection = RockStorPaginatedCollection.extend({
+    model: EmailAccount,
+    baseUrl: '/api/email'
+});
