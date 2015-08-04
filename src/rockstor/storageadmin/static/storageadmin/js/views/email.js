@@ -123,16 +123,13 @@ EmailView = RockstorLayoutView.extend({
 	}
     },
 
-
     cancel: function(event) {
 	$(this.el).empty();
 	$(this.el).html(this.template({
 	    email: this.emailAccount,
 	    emailID: this.emailID
 	}));
-	//event.preventDefault();
-
-    },
+    }
 
 
 });

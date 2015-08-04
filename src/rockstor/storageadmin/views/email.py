@@ -30,7 +30,71 @@ from system.services import superctl
 import logging
 logger = logging.getLogger(__name__)
 
-OPENSSL = '/usr/bin/openssl'
+
+POSTMAP = '/usr/sbin/postmap'
+HEADER = '####BEGIN: Rockstor section####'
+FOOTER = '####END: Rockstor section####'
+MAIN_CF = '/etc/postfix/main.cf'
+GEN_CF = '/etc/postfix/generic'
+
+
+def rockstor_postfix_config(fo, hostname, smtp_server):
+    fo.write('%s\n' % HEADER)
+    fo.write('myhostname = %s\n' % hostname)
+    fo.write('relayhost = [%s]:587\n' % smtp_server)
+    fo.write('smtp_use_tls = yes\n')
+    fo.write('smtp_sasl_auth_enable = yes\n')
+    fo.write('smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd\n')
+    fo.write('smtp_tls_CAfile = /etc/ssl/certs/ca-bundle.crt\n')
+    fo.write('smtp_sasl_security_options = noanonymous\n')
+    fo.write('smtp_sasl_tls_security_options = noanonymous\n')
+    fo.write('smtp_generic_maps = hash:/etc/postfix/generic\n')
+    fo.write('%s\n' % FOOTER)
+
+def update_forward(email):
+    with open('/root/.forward', 'w') as fo:
+        fo.write('%s\n' % email)
+
+def update_sasl(smtp_server, username, password):
+    sasl_file = '/etc/postfix/sasl_passwd'
+    with open(sasl_file, 'w') as fo:
+        fo.write('[%s]:587 %s:%s\n' % (smtp_server, username, password))
+    run_command([POSTMAP, sasl_file])
+
+def update_alias(from_email, to_email):
+    fh, npath = mkstemp()
+    with open(GEN_CF) as gfo, open(npath, 'w') as tfo:
+        rockstor_section = False
+        for line in gfo.readlines():
+            if (re.match(HEADER, line) is not None):
+                rockstor_section = True
+                tfo.write('%s\n' % HEADER)
+                tfo.write('%s %s\n' % (from_email, to_email))
+                break
+            else:
+                tfo.write(line)
+        if (rockstor_section is False):
+            tfo.write('%s\n' % HEADER)
+            tfo.write('%s %s\n' % (from_email, to_email))
+        tfo.write('%s\n' % FOOTER)
+    move(npath, GEN_CF)
+    run_command([POSTMAP, GEN_CF])
+
+def update_postfix():
+    fh, npath = mkstemp()
+    with open(MAIN_CF) as mfo, open(npath, 'w') as tfo:
+        rockstor_section = False
+        for line in mfo.readlines():
+            if (re.match('####BEGIN: Rockstor postfix config####', line)
+                is not None):
+                rockstor_section = True
+                rockstor_postfix_config(tfo, input)
+                break
+            else:
+                tfo.write(line)
+        if (rockstor_section is False):
+            rockstor_postfix_config(tfo, input)
+    move(npath, MAIN_CF)
 
 
 class EmailClientView(rfc.GenericView):
@@ -43,13 +107,15 @@ class EmailClientView(rfc.GenericView):
     def post(self, request):
         with self._handle_exception(request):
             email = request.data.get('email')
+            username = email.split('@')[0]
             smtp_server = request.data.get('smtp_server')
             name = request.data.get('name')
             password = request.data.get('password')
-
             eco = EmailClient(smtp_server=smtp_server, name=name, email=email)
             eco.save()
-
+            update_sasl(smtp_server, username, password)
+            update_alias()
+            update_postfix()
             return Response(EmailClientSerializer(eco).data)
 
     @transaction.atomic
