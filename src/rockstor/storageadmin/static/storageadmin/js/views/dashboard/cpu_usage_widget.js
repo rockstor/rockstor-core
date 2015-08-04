@@ -125,12 +125,13 @@ CpuUsageWidget = RockStorWidgetView.extend({
     // d3 graph
 
     this.rawData = null;
-    this.windowLength = 60000; // window length in msec (1 min)
+    this.windowLength = 100000; // window length in msec (1 min)
     this.transDuration = 1000; // transition duration
     this.updateFreq = 1000;
 
     // Start and end timestamps for api call
-    this.t2 = RockStorGlobals.currentTimeOnServer.getTime()-30000;
+    this.t2 = RockStorGlobals.currentTimeOnServer.getTime();
+
     //this.t2 = new Date('2013-12-03T17:18:06.312Z').getTime();
     this.t1 = this.t2 - this.windowLength;
 
@@ -215,21 +216,16 @@ CpuUsageWidget = RockStorWidgetView.extend({
       }
       _this.t2 = _this.t2 + diff;
     } else {
-      _this.timeoutId = window.setTimeout( function() {
         if (_this.cpuData.length > 0) {
       	  _this.t1 = new Date(_this.cpuData[_this.cpuData.length-1].ts).getTime();
         } else {
       	  _this.t1 = _this.t1 + _this.updateFreq;
         }
         _this.t2 = _this.t2 + _this.updateFreq;
-      }, _this.updateFreq - diff);
     }
   },
 
   cleanup: function() {
-    if (!_.isUndefined(this.timeoutId)) {
-      window.clearTimeout(this.timeoutId);
-    }
     if (this.jqXhr) {
       this.jqXhr.abort();
     }
