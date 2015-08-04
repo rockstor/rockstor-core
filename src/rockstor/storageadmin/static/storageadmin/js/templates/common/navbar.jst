@@ -1,39 +1,80 @@
 <% if (logged_in) { %>
-  <ul class="nav navbar-nav">
-    <li><a id="home_nav" href="#home">Dashboard</a></li>
-    <li><a id="storage_nav" href="#disks">Storage</a></li>
-    <li><a id="analytics_nav" href="#analytics">Analytics</a></li>
-    <li><a id="system_nav" href="#services">System</a></li>
-    <li><a id="rockons_nav" href="#rockons">Rock-ons</a></li>
-    <li class="dropdown">
-      <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-        Support
-        <span class="caret"></span>
-      </a>
-      <ul class="dropdown-menu">
-        <li><a id="documentation_nav" href="http://rockstor.com/docs" target="_blank">Documentation</a></li>
-        <li><a href="http://rockstor.com/forums" target="_blank">Community forums</a></li>
-        <li><a href="https://github.com/rockstor/rockstor-core/issues?state=open" target="_blank">Github issue tracker</a></li>
-        <li><a href="https://lists.sourceforge.net/lists/listinfo/rockstor-announce" target="_blank">Announce mailing list</a></li>
-        <li><a href="mailto:support@rockstor.com" target="_blank">Rockstor team e-mail</a></li>
+<ul class="nav navbar-nav">
+  <li><a id="home_nav" href="#home">Dashboard</a></li>
+  <li class="dropdown">
+    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Storage <span class="caret"></span></a>
+    <ul class="dropdown-menu">
+      <li><a href="#disks"><i class="glyphicon glyphicon-hdd"></i> Disks</a></li>
+      <li><a href="#pools"><i class="glyphicon glyphicon-list"></i> Pools</a></li>
+      <li><a href="#shares"><i class="glyphicon glyphicon-folder-open"></i> Shares</a></li>
+      <li><a href="#snapshots"><i class="glyphicon glyphicon-camera"></i> Snapshots</a></li>
+      <li><span><i class="fa fa-exchange"></i> Replication</span></li>
+      <ul style="list-style-type: none">
+        <li><a href="#replication"><i class="fa fa-long-arrow-right"></i> Send</a></li>
+        <li><a href="#replication-receive"><i class="fa fa-long-arrow-left"></i> Receive</a></li>
       </ul>
-    </li>
-    <li><a id="donate_nav" href="#"><i class="fa fa-heart fa-lg" style="color:#BA0707" ></i> Donate</a></li>
-    <li><a href="http://shop.rockstor.com" target="_blank"><i class="fa fa-shopping-cart fa-lg" style="color:#E76545"></i> Shop</a></li>
-  </ul>
-  <ul class="nav navbar-nav navbar-right">
-    <li><a href="#version" id="version-msg"></a></li>
-    <li  class="dropdown">
-      <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span id="user-name"></span>
-	<span class="fa fa-power-off fa-lg fa-inverse"></i>
-</a>
+      <li><span><i class="glyphicon glyphicon-share"></i> File sharing</span></li>
+      <ul style="list-style-type: none">
+        <li><a href="#nfs-exports">NFS</a></li>
+        <li><a href="#samba-exports">Samba</a></li>
+        <li><a href="#sftp">SFTP</a></li>
+        <li><a href="#afp">AFP</a></li>
+      </ul>
+    </ul>
+  </li>
+  <li><a id="analytics_nav" href="#analytics">Analytics</a></li>
+  <li class="dropdown">
+    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">System <span class="caret"></span></a>
+    <ul class="dropdown-menu">
+      <li><a href="#services"><i class="glyphicon glyphicon-cog"></i> Services</a></li>
+      <li><span><i class="glyphicon glyphicon-user"></i> Identity</span></li>
+      <ul style="list-style-type: none">
+        <li><a href="#users"><i class="fa fa-user"></i> Users</a></li>
+        <li><a href="#groups"><i class="fa fa-group"></i> Groups</a></li>
+        <li><a href="#access-keys"><i class="fa fa-key"></i> Access Keys</a></li>
+      </ul>
+      <li><a href="#network"><i class="glyphicon glyphicon-signal"></i> Network Interfaces</a></li>
+      <li><a href="#scheduled-tasks"><i class="glyphicon glyphicon-tasks"></i> Scheduled Tasks</a></li>
+      <li><a href="#version"><i class="glyphicon glyphicon-arrow-up"></i> Software Update</a></li>
+      <li><a href="#appliances"><i class="fa fa-desktop"></i> Appliances</a></li>
+      <li><a href="#update-certificate"><i class="fa fa-certificate"></i> Update Certificate</a></li>
+      <li><a href="#config-backup"><i class="glyphicon glyphicon-floppy-save"></i> Config Backups</a></li>
+    </ul>
+  </li>
+
+  <li><a id="rockons_nav" href="#rockons">Rock-ons</a></li>
+  <li class="dropdown">
+    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+      Support
+      <span class="caret"></span>
+    </a>
+    <ul class="dropdown-menu">
+      <li><a id="documentation_nav" href="http://rockstor.com/docs" target="_blank">Documentation</a></li>
+      <li><a href="http://rockstor.com/forums" target="_blank">Community forums</a></li>
+      <li><a href="https://github.com/rockstor/rockstor-core/issues?state=open" target="_blank">Github issue tracker</a></li>
+      <li><a href="https://lists.sourceforge.net/lists/listinfo/rockstor-announce" target="_blank">Announce mailing list</a></li>
+      <li><a href="mailto:support@rockstor.com" target="_blank">Rockstor team e-mail</a></li>
+    </ul>
+  </li>
+  <li><a id="donate_nav" href="#"><i class="fa fa-heart fa-lg" style="color:#BA0707" ></i> Donate</a></li>
+  <li><a href="http://shop.rockstor.com" target="_blank"><i class="fa fa-shopping-cart fa-lg" style="color:#E76545"></i> Shop</a></li>
+
+</ul>
+
+<ul class="nav navbar-nav navbar-right">
+  <li><a href="#version" id="version-msg"></a></li>
+  <li  class="dropdown">
+    <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span id="user-name"></span>
+      <span class="fa fa-power-off fa-lg fa-inverse"></i>
+    </a>
+</ul>
 <ul class="dropdown-menu">
   <li><a id="logout_user" href="/logout_user">Logout</a></li>
   <li><a id="shutdown" href="#shutdown">Shutdown</a></li>
   <li><a id="reboot" href="#reboot">Reboot</a></li>
 </ul>
 </li>
-</ul>
+
 
 <% } %>
 
