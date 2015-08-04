@@ -455,7 +455,7 @@ def rollback_snap(snap_name, sname, subvol_name, pool, pool_device):
     mount_root(pool, dpath)
     if (is_share_mounted(sname)):
         umount_root(mnt_pt)
-    remove_share(pool, pool_device, subvol_name)
+    remove_share(pool, pool_device, subvol_name, '-1/-1')
     shutil.move(snap_fp, '%s/%s/%s' % (DEFAULT_MNT_DIR, pool.name, sname))
     create_tmp_dir(mnt_pt)
     subvol_str = 'subvol=%s' % sname
