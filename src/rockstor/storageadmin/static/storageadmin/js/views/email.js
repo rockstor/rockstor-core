@@ -72,9 +72,10 @@ EmailView = RockstorLayoutView.extend({
             onkeyup: false,
             rules: {
 		name: 'required',
-		email_id: 'required',
-		smtpName: 'required',
-		username: 'required'
+		sender: 'required',
+		password: 'required',
+		smtp_server: 'required',
+		receiver: 'required'
             },
 
             submitHandler: function() {
