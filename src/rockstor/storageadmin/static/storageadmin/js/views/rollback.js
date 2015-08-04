@@ -100,7 +100,9 @@ RollbackView = RockstorLayoutView.extend({
       success: function() {
         enableButton(button);
         _this.$('#confirm-rollback').modal('hide');
-        app_router.navigate('shares/' + _this.share.get('name'), {trigger: true}) 
+        $('.modal-backdrop').remove();
+        app_router.navigate('shares/' + _this.share.get('name'), {trigger: true})
+
       },
       error: function(xhr, status, error) {
         enableButton(button);
