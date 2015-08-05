@@ -462,46 +462,46 @@ def get_disk_serial(device_name, test):
     on the device label as well as that returned by the lsblk. ID_SERIAL seems
     always to appear but is sometimes accompanied by one or both of the others.
     When ID_SERIAL is accompanied by ID_SERIAL_SHORT the short variant is
-    closer to lsblk and physical label When they are both present the
+    closer to lsblk and physical label. When they are both present the
     ID_SERIAL appears to be a combination of the model and the ID_SERIAL_SHORT
     :param device_name:
     :param test:
     :return: 12345678901234567890
     """
     serial_num = ''
+    line_fields = []
     if test is None:
-        out, err, rc = run_command([UDEVADM, 'info', '--name=' + device_name,
-                                    '|', GREP, 'SERIAL'], throw=True)
+        out, err, rc = run_command([UDEVADM, 'info', '--name=' + device_name],
+                                   throw=False)
     else:
-        # we are in test mode so process test data as if it's the output of a
-        # udevadmin command
+        # test mode so process test instead of udevadmin output
         out = test
         rc = 0
-    # if return code is an error return empty string
-    if (rc != 0):
+    if rc != 0:  # if return code is an error return empty string
         return ''
     for line in out:
-        line = line.strip()
-        # if we do a fast replace of the '=' with a space we can just split()
-        # on spaces then identifier is [1] and serial is [2] an example line:-
-        # E: ID_SERIAL_SHORT=S1D5NSAF111111K
-        line.replace('=', ' ').split()
-        if line[1] == 'ID_SCSI_SERIAL':
+        if line == '':
+            continue
+        # nonlocal line_fields
+        line_fields = line.strip().replace('=', ' ').split()
+        # fast replace of '=' with space so split() can divide all fields
+        # example original line "E: ID_SERIAL_SHORT=S1D5NSAF111111K"
+        if line_fields[1] == 'ID_SCSI_SERIAL':
             # we have an instance of SCSI_SERIAL being more reliably unique
             # when present than SERIAL_SHORT or SERIAL so overwrite whatever
             # we have and look no further by breaking out of the search loop
-            serial_num = line[2]
+            serial_num = line_fields[2]
             break
-        elif line[1] == 'ID_SERIAL_SHORT':
+        elif line_fields[1] == 'ID_SERIAL_SHORT':
             # SERIAL_SHORT is better than SERIAL so just overwrite whatever we
             # have so far with SERIAL_SHORT
-            serial_num = line[2]
+            serial_num = line_fields[2]
         else:
-            if line[1] == 'ID_SERIAL':
+            if line_fields[1] == 'ID_SERIAL':
                 # SERIAL is sometimes our only option but only use it if we
                 # have found nothing else.
                 if serial_num == '':
-                    serial_num = line[2]
+                    serial_num = line_fields[2]
     # should return one of the following in order of priority
     # SCSI_SERIAL, SERIAL_SHORT, SERIAL
     return serial_num
@@ -509,6 +509,7 @@ def get_disk_serial(device_name, test):
 
 def get_virtio_disk_serial(device_name):
     """
+    N.B. this function is deprecated by get_disk_serial
     Returns the serial number of device_name virtio disk eg /dev/vda
     Returns empty string if cat /sys/block/vda/serial command fails
     Note no serial entry in /sys/block/sda/ for real or KVM sata drives
