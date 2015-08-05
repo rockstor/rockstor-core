@@ -29,7 +29,6 @@ EmailView = RockstorLayoutView.extend({
 	"click #Add-email-address" : "renderEmailForm",
 	"click #cancel": "cancel",
 	"click .email-delete": "deleteEmail"
-
     },
 
     initialize: function() {
@@ -60,9 +59,12 @@ EmailView = RockstorLayoutView.extend({
 
     renderEmailForm: function() {
 	var _this = this;
+	var email = null;
+	if (this.emails.length > 0) {
+	    email = this.emails.at(0);
+	}
 	$(this.el).html(this.updatetemplate({
-	    email: this.emailAccount,
-	    emailID: this.emailID
+	    email: email
 	}));
 
 	this.$('#email-form input').tooltip({placement: 'right'});
@@ -79,7 +81,6 @@ EmailView = RockstorLayoutView.extend({
             },
 
             submitHandler: function() {
-		console.log('inside submit handler');
 		var button = $('#add-email');
 		disableButton(button);
 		var submitmethod = 'POST';
@@ -125,11 +126,7 @@ EmailView = RockstorLayoutView.extend({
     },
 
     cancel: function(event) {
-	$(this.el).empty();
-	$(this.el).html(this.template({
-	    email: this.emailAccount,
-	    emailID: this.emailID
-	}));
+	this.renderEmail();
     }
 
 

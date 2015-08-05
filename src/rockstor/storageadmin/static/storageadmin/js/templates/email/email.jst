@@ -18,12 +18,7 @@
   *
   */
 </script>
-<%  if(email!=null) {  %>
-<h3> Edit Configure Email</h3>
-<%  }else {  %>
-<h3> Configured Email</h3>
-<%  }  %>
-
+<h3>Setup E-mail for alerts</h3>
 <label class="control-label"></label>
 <div class="form-box">
   <form id="email-form" name="email-form" class="form-horizontal" autocomplete="off">
@@ -82,15 +77,15 @@
         <%  if(email!=null) {  %>
         <input class="form-control" type="email" id="receiver"  name="receiver" value="<%= email.get('receiver')%>" >
         <% } else { %>
-        <input class="form-control" type="email" id="receiver" name="receiver"  title="Rockstor will send email notifications to this address" >
+        <input class="form-control" type="email" id="receiver" name="receiver"  title="Rockstor will send email notifications to this address. eg: your personal e-mail." >
         <% }  %>
       </div>
     </div>
 
     <div class="form-group">
       <div class="col-xs-10 col-xs-offset-2">
-        <button id="cancel" class="btn btn-default">Cancel</button>
-        <button type="Submit" id="add-email" class="btn btn-primary" value="Submit">Submit</button>
+        <a id="cancel" class="btn btn-default">Cancel</a>
+        <input type="Submit" id="add-email" class="btn btn-primary" value="Submit"></input>
       </div>
     </div>
   </form>
