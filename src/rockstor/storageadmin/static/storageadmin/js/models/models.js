@@ -559,6 +559,10 @@ var ConfigBackupCollection = RockStorPaginatedCollection.extend({
     baseUrl: '/api/config-backup'
 });
 
+var EmailAccount = Backbone.Model.extend({
+	urlRoot: '/api/email',
+});
+
 var RockOn = Backbone.Model.extend({
     urlRoot: '/api/rockons'
 });
@@ -629,4 +633,13 @@ var RockOnCustomConfigCollection = RockStorPaginatedCollection.extend({
 	    return '/api/rockons/customconfig';
 	}
     }
+});
+
+var EmailAccount = Backbone.Model.extend({
+    urlRoot: '/api/email'
+});
+
+var EmailAccountCollection = RockStorPaginatedCollection.extend({
+    model: EmailAccount,
+    baseUrl: '/api/email'
 });

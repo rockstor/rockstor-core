@@ -41,9 +41,9 @@ UpdateCertificateView = RockstorLayoutView.extend({
   },
 
   render: function() {
-	var _this = this;
-    this.fetch(this.renderCertificate, this);
-    return this;
+      var _this = this;
+      this.fetch(this.renderCertificate, this);
+      return this;
   },
 
   renderCertificate: function() {

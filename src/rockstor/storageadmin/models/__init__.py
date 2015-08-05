@@ -49,3 +49,4 @@ from smart import (SMARTAttribute, SMARTCapability, SMARTErrorLog,
                    SMARTErrorLogSummary, SMARTTestLog, SMARTTestLogDetail,
                    SMARTIdentity, SMARTInfo)
 from config_backup import ConfigBackup
+from email import EmailClient

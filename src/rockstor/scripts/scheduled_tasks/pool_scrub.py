@@ -1,0 +1,91 @@
+"""
+Copyright (c) 2012-2015 RockStor, Inc. <http://rockstor.com>
+This file is part of RockStor.
+
+RockStor is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published
+by the Free Software Foundation; either version 2 of the License,
+or (at your option) any later version.
+
+RockStor is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+"""
+
+import time
+import os
+os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
+import sys
+import json
+from datetime import datetime
+from storageadmin.models import (Share, Snapshot)
+from smart_manager.models import (Task, TaskDefinition)
+from cli.rest_util import api_call
+from django.utils.timezone import utc
+from django.conf import settings
+import logging
+logger = logging.getLogger(__name__)
+baseurl = 'https://localhost/api/'
+
+def update_state(t, pool):
+    url = ('%spools/%s/scrub/status' % (baseurl, pool))
+    try:
+        status = api_call(url, data=None, calltype='post', save_error=False)
+        t.state = status['status']
+    except Exception, e:
+        logger.error('Failed to get scrub status at %s' % url)
+        t.state = 'error'
+        logger.exception(e)
+    finally:
+        t.save()
+    return t.state
+
+def main():
+    tid = int(sys.argv[1])
+    tdo = TaskDefinition.objects.get(id=tid)
+    if (tdo.task_type != 'scrub'):
+        return logger.error('task_type(%s) is not scrub.' % tdo.task_type)
+    meta = json.loads(tdo.json_meta)
+
+    if (Task.objects.filter(task_def=tdo).exists()):
+        ll = Task.objects.filter(task_def=tdo).order_by('-id')[0]
+        if (ll.state != 'error' and ll.state != 'finished'):
+            logger.debug('Non terminal state(%s) for task(%d). Checking '
+                         'again.' % (ll.state, tid))
+            cur_state = update_state(ll, meta['pool'])
+            if (cur_state != 'error' and cur_state != 'finished'):
+                return logger.debug('Non terminal state(%s) for task(%d). '
+                                    'A new task will not be run.' % (cur_state, tid))
+
+    now = datetime.utcnow().replace(second=0, microsecond=0, tzinfo=utc)
+    t = Task(task_def=tdo, state='started', start=now)
+    url = ('%spools/%s/scrub' % (baseurl, meta['pool']))
+    try:
+        api_call(url, data=None, calltype='post', save_error=False)
+        logger.debug('Started scrub at %s' % url)
+        t.state = 'running'
+    except Exception, e:
+        logger.error('Failed to start scrub at %s' % url)
+        t.state = 'error'
+        logger.exception(e)
+    finally:
+        t.end = datetime.utcnow().replace(tzinfo=utc)
+        t.save()
+
+    while True:
+        cur_state = update_state(t, meta['pool'])
+        if (cur_state == 'error' or cur_state == 'finished'):
+            logger.debug('task(%d) finished with state(%s).' %
+                         (tid, cur_state))
+            break
+        logger.debug('pending state(%s) for scrub task(%d). Will check again '
+                     'in 60 seconds.' % (cur_state, tid))
+        time.sleep(60)
+
+if __name__ == '__main__':
+    #takes one argument. taskdef object id.
+    main()
