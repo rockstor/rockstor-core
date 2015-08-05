@@ -31,17 +31,21 @@
   </div>
 </form>
 
-<div id="confirm-rollback" class="modal hide" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-  <div class="modal-header">
-    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-    <h3 id="myModalLabel">Confirm share rollback</h3>
-  </div>
-  <div class="modal-body">
-    <div class="messages"></div>
-    <h4>Share (<%= share.get('name') %>) will be rolled back to snapshot (<span id="confirm-snap-name"></span>). Are you sure?</h4>
-  </div>
-  <div class="modal-footer">
-    <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">Cancel</button>
-    <button id="js-confirm-rollback-submit" class="btn btn-primary">Confirm</button>
+<div id="confirm-rollback" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h3 id="myModalLabel">Confirm share rollback</h3>
+      </div>
+      <div class="modal-body">
+        <div class="messages"></div>
+        <h4>Share (<%= share.get('name') %>) will be rolled back to snapshot (<span id="confirm-snap-name"></span>). Are you sure?</h4>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">Cancel</button>
+        <button id="js-confirm-rollback-submit" class="btn btn-primary">Confirm</button>
+      </div>
+    </div>
   </div>
 </div>
