@@ -781,9 +781,9 @@ def scan_disks(min_size):
             if (dmap['SIZE'] < min_size):
                 continue
             if (dmap['SERIAL'] == ''):
-                # lsblk fails to retrieve SERIAL from KVM VirtIO drives
-                # so try specialized function.
-                #dmap['SERIAL'] = get_virtio_disk_serial(dmap['NAME'])
+                # lsblk fails to retrieve SERIAL from VirtIO drives and some
+                # sdcard devices so try specialized function.
+                # dmap['SERIAL'] = get_virtio_disk_serial(dmap['NAME'])
                 dmap['SERIAL'] = get_disk_serial(dmap['NAME'], None)
             if (dmap['SERIAL'] == '' or (dmap['SERIAL'] in serials)):
                 # No serial number still or its a repeat.
