@@ -21,14 +21,14 @@ from storageadmin.models import (Disk, Pool, Share, Snapshot, NFSExport,
                                  SambaShare, IscsiTarget, Appliance,
                                  SupportCase, DashboardConfig,
                                  NetworkInterface, User, PoolScrub, Setup,
-                                 NFSExportGroup, SFTP,
-                                 AdvancedNFSExport, OauthApp, NetatalkShare,
-                                 Group, PoolBalance, SambaCustomConfig,
-                                 TLSCertificate, RockOn, DVolume, DPort,
-                                 DCustomConfig, SMARTAttribute,
+                                 NFSExportGroup, SFTP, AdvancedNFSExport,
+                                 OauthApp, NetatalkShare, Group, PoolBalance,
+                                 SambaCustomConfig, TLSCertificate, RockOn,
+                                 DVolume, DPort, DCustomConfig, SMARTAttribute,
                                  SMARTCapability, SMARTInfo, SMARTErrorLog,
                                  SMARTErrorLogSummary, SMARTTestLog,
-                                 SMARTTestLogDetail, SMARTIdentity, ConfigBackup)
+                                 SMARTTestLogDetail, SMARTIdentity,
+                                 ConfigBackup, EmailClient)
 from django.contrib.auth.models import User as DjangoUser
 
 
@@ -261,3 +261,9 @@ class ConfigBackupSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ConfigBackup
+
+
+class EmailClientSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = EmailClient
