@@ -32,6 +32,7 @@ class WidgetNamespace(BaseNamespace, BroadcastMixin):
         # Switch for emitting cpu data
         self.send_cpu = True
         self.spawn(self.send_cpu_data)
+        self.spawn(self.send_top_disks)
 
     def recv_disconnect(self):
         logger.debug('disconnect received')
@@ -54,11 +55,70 @@ class WidgetNamespace(BaseNamespace, BroadcastMixin):
                 cpu_stats.append({'name': name, 'umode': cm.umode,
                                   'umode_nice': cm.umode_nice, 'smode': cm.smode,
                                   'idle': cm.idle, 'ts': str_time })
-
             self.emit('widgets:cpudata', {
                 'key': 'widgets:cpudata', 'data': cpu_stats
             })
             gevent.sleep(1)
+
+    def send_top_disks(self):
+        from storageadmin.models import Disk
+        from smart_manager.models import DiskStat
+
+        def disk_stats(prev_stats):
+            # invoke body of disk_stats with empty cur_stats
+            stats_file_path = '/proc/diskstats'
+            cur_stats = {}
+            interval = 1
+            disks = [d.name for d in Disk.objects.all()]
+            with open(stats_file_path) as stats_file:
+                for line in stats_file.readlines():
+                    fields = line.split()
+                    if (fields[2] not in disks):
+                        continue
+                cur_stats[fields[2]] = fields[2:]
+                if (isinstance(prev_stats, dict)):
+                    ts = datetime.utcnow().replace(tzinfo=utc)
+                    for disk in cur_stats.keys():
+                        if (disk in prev_stats):
+                            prev = prev_stats[disk]
+                            cur = cur_stats[disk]
+                            data = []
+                            for i in range(1, len(prev)):
+                                if (i == 9):
+                                    avg_ios = (float(cur[i]) + float(prev[i]))/2
+                                    data.append(avg_ios)
+                                    continue
+                                datum = None
+                                if (cur[i] < prev[i]):
+                                    datum = float(cur[i])/interval
+                                else:
+                                    datum = (float(cur[i]) - float(prev[i]))/interval
+                                    data.append(datum)
+                            ds = DiskStat(name=disk, reads_completed=data[0],
+                                          reads_merged=data[1],
+                                          sectors_read=data[2],
+                                          ms_reading=data[3],
+                                          writes_completed=data[4],
+                                          writes_merged=data[5],
+                                          sectors_written=data[6],
+                                          ms_writing=data[7],
+                                          ios_progress=data[8],
+                                          ms_ios=data[9],
+                                          weighted_ios=data[10],
+                                          ts=ts)
+                    return cur_stats
+
+        def get_stats():
+            cur_disk_stats = {}
+            while True:
+                cur_disk_stats = disk_stats(cur_disk_stats)
+                self.emit('widgets:top_disks', {
+                    'key': 'widgets:top_disks', 'data': cur_disk_stats
+                })
+                logger.debug(cur_disk_stats)
+                gevent.sleep(1)
+
+        get_stats()
 
 
 class ServicesNamespace(BaseNamespace, BroadcastMixin):
