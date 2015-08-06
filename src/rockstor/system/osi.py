@@ -220,11 +220,36 @@ def restart_network_interface(iname):
 
 def network_devices():
     """
-    return all network devices on the system
+    return all network devices on the system. @todo: this logic needs to mature
+    over all.
     """
-    devices = os.listdir('/sys/class/net')
-    if ('lo' in devices):
-        devices.remove('lo')
+    ifpath = '/sys/class/net'
+    devices = []
+    dvirt = os.path.join(ifpath, 'docker0')
+    docker = False
+    if (os.path.exists(dvirt)):
+        docker = True
+    for n in os.listdir(ifpath):
+        fp = os.path.join(ifpath, n)
+        if (os.path.isdir(fp)):
+            #ignore files. nic bonding creates a file called bonding_masters,
+            #for example.
+
+            #ignore loopback device
+            #ignore docker virt interface
+            if (n == 'lo'):
+                continue
+            if (n == 'docker0'):
+                continue
+
+            #ignore all docker virt interfaces.
+            master = os.path.join(fp, 'master')
+            if (os.path.exists(master) and
+                docker is True and
+                os.path.samefile(master, dvirt)):
+                continue
+
+            devices.append(n)
     return devices
 
 
