@@ -1,69 +1,60 @@
-# Rockstor: Store smartly.
+# What is Rockstor?
 
-Below is a high level overview of Rockstor. Detailed documentation is available
-[here.](http://rockstor.com/docs/index.html)
+Rockstor is a Network Attached Storage(NAS) solution based on Linux and B-Tree
+Filesystem(BTRFS). It is written in Python and Javascript, and is made
+available as a complete Linux distribution for convenience. Rockstor takes NAS
+to a new level with advanced features, ease of use and management. It goes
+beyond NAS by supporting Docker based apps, RESTful APIs and serves as a
+powerful cloud storage platform in a box.
 
-## A Powerful Storage Platform
+# What are the project goals?
 
-RockStor is a Linux based operating system tailored specifically for Storage
-usecases. It combines our own free software stack on top of technologies
-including the Linux kernel, BTRFS filesystem and SystemTap to create a uniquely
-compelling storage platform.
+The main goal is to develop the ultimate open source NAS solution that anyone can
+simply deploy on commodity hardware, use it easily and not be restricted in any
+way. For more information, read the [team's
+mission](http://rockstor.com/about-us.html)
 
-RockStor is a File Storage solution and supports file sharing protocols such as
-**NFS, Samba/CIFS, and SFTP.**
+# Who should use it?
 
-RockStor is a software appliance and can be installed on any hardware or
-virtual machine satisfying [minimum
-requirements](http://rockstor.com/docs/quickstart.html#minimum-system-requirements)
+Rockstor can be used by consumers and organizations, both big and small. As of
+the current release, it's intended for home users, DIY NAS builders and smaller
+organizations that need NAS or personal cloud in a box. Go
+[here](http://rockstor.com) for more information.
 
-## Enterprise features for everyone
+# Getting started
 
-Rockstor supports advanced features for users of all types ranging from
-home users to large enterprises.
+Best way to get started is by following the [quickstart
+guide](http://rockstor.com/docs/quickstart.html)
 
-* Snapshots, Fast Cloning and Thin provisioning of Shares
-* Dynamic disk and Pool(volume) management
-* Efficient replication of Shares over WAN
-* Feature rich and easy to use Web UI for management
-* Interactive and scriptable CLI
-* RESTful API for complete programmability
-* Plugin ready (comes with a backup plugin)
+To get in touch with developers, users and contributors, join our
+[forum](http://forum.rockstor.com)
 
-## Free Software
+# Documentation
 
-Rockstor is Free and Open Source software and will remain so. You can use it
-free of charge and buy commercial support when you need it. Join our community!
+Documentation is in the
+[rockstor-doc](https://github.com/rockstor/rockstor-doc)
 
-## Ease of use and manageability
+You can also read it [online](http://rockstor.com/docs)
 
-Rockstor comes with a slick Web-ui using which you can manage your Storage
-operations very easily.
+# Troubleshooting
 
-* Browser based UI
-* Realtime monitoring using the dashboard
-* Customizable dashboard with widgets of your choice
-* Multiple dashboard profiles
-* Losely coupled multi appliance management from the UI
+[Community forum](http://forum.rockstor.com) is the ideal place to look for
+help and ask other users and developers questions.
 
-## Real-time insights into the system with Smart probes
+# Issue tracking
 
-RockStor's pluggable **Smart Probe mechanism**, and a growing list of smart probes
-provide detailed on-demand information about the various aspects of your
-storage infrastructure.
+You can go through all open issues
+[here](https://github.com/rockstor/rockstor-core/issues).
 
-## NFS Server Analytics
+# License
 
-Analyse your NFS workloads with real-time server side information about NFS
-calls, clients and users accessing the storage system over NFS.
+Please see the file COPYING
 
-## Plugins
+# Contributing
 
-Rockstor exposes an application container where new functionality can be
-added as plugins. It comes with a Backup plugin to replicate
-another Filer with Rockstor.
+Development environment setup and contribution guidelines are explained
+[here.](http://rockstor.com/docs/contribute.html)
 
-## Programmability
-
-Rockstor's RESTful API allows automated storage provisioning and management,
-using which you can easily integrate into your Cloud environment.
+Pull request are welcome. Pick an issue that interests you or create a new one
+to work on. You can also ask on the [forum](http://forum.rockstor.com) for
+guidance. We'll be happy to help.
