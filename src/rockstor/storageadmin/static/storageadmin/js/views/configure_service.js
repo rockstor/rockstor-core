@@ -28,7 +28,7 @@ ConfigureServiceView = RockstorLayoutView.extend({
     events: {
 	"click #cancel": "cancel",
 	"click #security": "toggleFormFields",
-	"click #enabletls": "toggleCertUrl",
+	"click #enabletls": "toggleCertUrl"
     },
 
     initialize: function() {
@@ -40,6 +40,7 @@ ConfigureServiceView = RockstorLayoutView.extend({
 	this.template = window.JST['services_configure_' + this.serviceName];
 	this.rules = {
 	    ntpd: { server: 'required' },
+	    smb: { workgroup: 'required' },
 	    nis: { domain: 'required', server: 'required' },
 	    snmpd: { syslocation: 'required', syscontact: 'required',rocommunity: 'required'},
 	    winbind: {domain: 'required', controllers: 'required',
@@ -96,25 +97,27 @@ ConfigureServiceView = RockstorLayoutView.extend({
 	if (config != null) {
 	    configObj = JSON.parse(this.service.get('config'));
 	}
-	console.log('configobj', configObj);
-	console.log('smartd_config', configObj.smartd_config);
 	$(this.el).html(this.template({service: this.service, config: configObj, shares: this.shares}));
 
 	this.$('#nis-form :input').tooltip({
     	    html: true,
-            placement: 'right',
+            placement: 'right'
 	});
 	this.$('#snmpd-form :input').tooltip({
             html: true,
-            placement: 'right',
+            placement: 'right'
 	});
 	this.$('#ldap-form :input').tooltip({
     	    html: true,
-            placement: 'right',
+            placement: 'right'
 	});
 	this.$('#ntpd-form :input').tooltip({
     	    html: true,
-            placement: 'right',
+            placement: 'right'
+	});
+	this.$('#smb-form :input').tooltip({
+	    html: true,
+	    placement: 'right'
 	});
 	this.$('#docker-form #root_share').tooltip({
     	    html: true,
@@ -166,11 +169,7 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
 	    onfocusout: false,
 	    onkeyup: false,
 	    rules: this.rules[this.serviceName],
-	    //messages: {
-            //password_confirmation: {
-            //equalTo: "The passwords do not match"
-            //}
-	    //},
+
 	    submitHandler: function() {
 		var button = _this.$('#submit');
 		if (buttonDisabled(button)) return false;
