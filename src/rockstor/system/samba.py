@@ -100,9 +100,8 @@ def restart_samba(hard=False):
     mode = 'reload'
     if (hard):
         mode = 'restart'
-    smbd_cmd = [SYSTEMCTL, mode, 'smb']
-    return run_command(smbd_cmd)
-
+    run_command([SYSTEMCTL, mode, 'smb'])
+    return run_command([SYSTEMCTL, mode, 'nmb'])
 
 def update_samba_discovery():
     avahi_smb_config = '/etc/avahi/services/smb.service'

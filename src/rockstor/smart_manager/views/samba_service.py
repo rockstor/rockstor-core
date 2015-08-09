@@ -45,7 +45,7 @@ class SambaServiceView(BaseServiceDetailView):
                 workgroup = config['workgroup']
                 self._save_config(service, config)
                 update_global_config(workgroup)
-                restart_samba()
+                restart_samba(hard=True)
             except Exception, e:
                 e_msg = ('Samba could not be configured. Try again. '
                          'Exception: %s' % e.__str__())
