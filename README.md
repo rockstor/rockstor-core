@@ -17,8 +17,8 @@ mission](http://rockstor.com/about-us.html)
 # Who should use it?
 
 Rockstor can be used by consumers and organizations, both big and small. As of
-the current release, it's intended for home users, DIY NAS builders and smaller
-organizations that need NAS or personal cloud in a box. Go
+the current release, it's intended for advanced home users, DIY NAS builders
+and smaller organizations that need NAS or private cloud in a box. Go
 [here](http://rockstor.com) for more information.
 
 # Getting started
@@ -32,9 +32,8 @@ To get in touch with developers, users and contributors, join our
 # Documentation
 
 Documentation is in the
-[rockstor-doc](https://github.com/rockstor/rockstor-doc)
-
-You can also read it [online](http://rockstor.com/docs)
+[rockstor-doc](https://github.com/rockstor/rockstor-doc). You can also read it
+[online](http://rockstor.com/docs)
 
 # Troubleshooting
 
