@@ -47,6 +47,7 @@ ServicesView = Backbone.View.extend({
 	    'reload': 'reloaded'
 	};
 	this.smTs = null; // current timestamp of sm service
+	this.configurable_services = ['nis', 'ntpd', 'winbind', 'ldap', 'snmpd', 'docker', 'smartd', 'smb',];
     },
 
     render: function() {
@@ -95,7 +96,8 @@ ServicesView = Backbone.View.extend({
 	// find service-monitor service
 	$(this.el).append(this.template({
 	    services: this.collection,
-	    adServiceConfig: this.adServiceConfig
+	    adServiceConfig: this.adServiceConfig,
+	    configurable_services: this.configurable_services
 	}));
 	this.$(".ph-pagination").html(this.paginationTemplate({
 	    collection: this.collection

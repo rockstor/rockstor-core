@@ -19,10 +19,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from rest_framework.response import Response
 from storageadmin.util import handle_exception
 from system.services import systemctl
-from system.nis import configure_nis
+from system.samba import (update_global_config, restart_samba)
 from django.db import transaction
 from base_service import BaseServiceDetailView
 from smart_manager.models import Service
+from storageadmin.models import SambaShare
 
 import logging
 logger = logging.getLogger(__name__)
@@ -40,13 +41,15 @@ class SambaServiceView(BaseServiceDetailView):
         if (command == 'config'):
             #nothing to really configure atm. just save the model
             try:
-                config = request.data['config']
+                config = request.data.get('config', {'workgroup': 'MYGROUP',})
+                workgroup = config['workgroup']
                 self._save_config(service, config)
+                update_global_config(workgroup)
+                restart_samba(hard=True)
             except Exception, e:
-                logger.exception(e)
-                e_msg = ('Samba could not be configured. Try again')
+                e_msg = ('Samba could not be configured. Try again. '
+                         'Exception: %s' % e.__str__())
                 handle_exception(Exception(e_msg), request)
-
         else:
             try:
                 switch = 'on'
@@ -64,5 +67,4 @@ class SambaServiceView(BaseServiceDetailView):
                 logger.exception(e)
                 e_msg = ('Failed to %s samba due to a system error.' % command)
                 handle_exception(Exception(e_msg), request)
-
         return Response()

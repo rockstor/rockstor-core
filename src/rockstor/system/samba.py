@@ -34,7 +34,13 @@ def test_parm(config='/etc/samba/smb.conf'):
     cmd = [TESTPARM, '-s', config]
     o, e, rc = run_command(cmd, throw=False)
     if (rc != 0):
-        return False
+        try:
+            os.remove(npath)
+        except:
+            pass
+        finally:
+            raise Exception('Syntax error while checking the temporary '
+                            'samba config file')
     return True
 
 
@@ -72,14 +78,18 @@ def refresh_smb_config(exports):
                 tfo.write(line)
         if (rockstor_section is False):
             rockstor_smb_config(tfo, exports)
-    if (not test_parm(npath)):
-        try:
-            os.remove(npath)
-        except:
-            pass
-        finally:
-            raise Exception('Syntax error while checking the temporary '
-                            'samba config file')
+    test_parm(npath)
+    shutil.move(npath, SMB_CONFIG)
+
+
+def update_global_config(workgroup):
+    fh, npath = mkstemp()
+    with open(SMB_CONFIG) as sfo, open(npath, 'w') as tfo:
+        for line in sfo.readlines():
+            if (re.match('workgroup = ', line.strip()) is not None):
+                line = 'workgroup = %s\n' % workgroup
+            tfo.write(line)
+    test_parm(npath)
     shutil.move(npath, SMB_CONFIG)
 
 
@@ -90,9 +100,8 @@ def restart_samba(hard=False):
     mode = 'reload'
     if (hard):
         mode = 'restart'
-    smbd_cmd = [SYSTEMCTL, mode, 'smb']
-    return run_command(smbd_cmd)
-
+    run_command([SYSTEMCTL, mode, 'smb'])
+    return run_command([SYSTEMCTL, mode, 'nmb'])
 
 def update_samba_discovery():
     avahi_smb_config = '/etc/avahi/services/smb.service'

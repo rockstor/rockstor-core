@@ -40,7 +40,7 @@
                 <tr id="<%= service.get('name') %>">
                   <td>
                     <%= service.get('display_name') %>&nbsp;
-                    <% if ((service.get('name') == 'nis') || (service.get('name') == 'ntpd') || (service.get('name') == 'winbind') || (service.get('name') == 'ldap') || (service.get('name') == 'snmpd') || (service.get('name') == 'docker') || (service.get('name') == 'smartd')) { %>
+		    <% if (configurable_services.indexOf(service.get('name')) > -1) { %>
                       <a href="#" class="configure" data-service-name="<%= service.get('name') %>"><i class="glyphicon glyphicon-wrench"></i></a>
                     <% } %>
                     <% if ((service.get('name') == 'winbind')) { %>
