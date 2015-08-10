@@ -31,7 +31,6 @@ from system.osi import (run_command, create_tmp_dir, is_share_mounted,
                         is_mounted, get_virtio_disk_serial)
 from system.exceptions import (CommandException, NonBTRFSRootException)
 from pool_scrub import PoolScrub
-from pool_balance import PoolBalance
 from django_ztask.decorators import task
 
 import logging
@@ -668,15 +667,6 @@ def start_balance(mnt_pt, force=False, convert=None):
         cmd.insert(3, '-dconvert=%s' % convert)
         cmd.insert(3, '-mconvert=%s' % convert)
     run_command(cmd)
-
-
-def balance_start(pool, pool_device, force=False, convert=None):
-    mnt_pt = mount_root(pool, ('/dev/%s' % pool_device))
-    if (convert is not None and convert == pool.raid):
-        convert = None
-    b = PoolBalance(mnt_pt, convert=convert)
-    b.start()
-    return b.pid
 
 
 def balance_status(pool, pool_device):
