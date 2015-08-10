@@ -30,6 +30,7 @@
         <th>Status</th>
         <th>Start Time</th>
         <th>Percent finished</th>
+	<th>Errors</th>
       </tr>
     </thead>
     <tbody>
@@ -43,6 +44,7 @@
 	  <% } %>
 	  </td>
           <td><%= poolrebalance.get('percent_done') %></td>
+	  <td><%= poolrebalance.get('message') %></td>
         </tr>
 	  <% }); %>
     </tbody>

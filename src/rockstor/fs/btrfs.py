@@ -32,6 +32,8 @@ from system.osi import (run_command, create_tmp_dir, is_share_mounted,
 from system.exceptions import (CommandException, NonBTRFSRootException)
 from pool_scrub import PoolScrub
 from pool_balance import PoolBalance
+from django_ztask.decorators import task
+
 import logging
 logger = logging.getLogger(__name__)
 
@@ -655,6 +657,17 @@ def scrub_status(pool, pool_device):
         else:
             stats[fields[0]] = int(fields[1])
     return stats
+
+
+@task()
+def start_balance(mnt_pt, force=False, convert=None):
+    cmd = ['btrfs', 'balance', 'start', mnt_pt]
+    if (force):
+        cmd.insert(3, '-f')
+    if (convert is not None):
+        cmd.insert(3, '-dconvert=%s' % convert)
+        cmd.insert(3, '-mconvert=%s' % convert)
+    run_command(cmd)
 
 
 def balance_start(pool, pool_device, force=False, convert=None):

@@ -20,16 +20,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Pool view. for all things at pool level
 """
 import re
+import pickle
+import time
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.serializers import PoolInfoSerializer
 from storageadmin.models import (Disk, Pool, Share, PoolBalance)
 from fs.btrfs import (add_pool, pool_usage, resize_pool, umount_root,
                       btrfs_uuid, mount_root, remount, balance_start,
-                      get_pool_info, pool_raid)
+                      get_pool_info, pool_raid, start_balance)
 from storageadmin.util import handle_exception
 from django.conf import settings
 import rest_framework_custom as rfc
+
 
 import logging
 logger = logging.getLogger(__name__)
@@ -189,6 +192,20 @@ class PoolMixin(object):
         pool.size = pool_usage('%s%s' % (settings.MNT_PT, pool.name))[0]
         pool.save()
         return pool
+
+    def _balance_start(self, pool, dname, force=False, convert=None):
+        mnt_pt = mount_root(pool, '/dev/%s' % dname)
+        start_balance.async(mnt_pt, force=force, convert=convert)
+        tid = 0
+        count = 0
+        while (tid is None and count < 25):
+            for t in Task.objects.all():
+                if (pickle.loads(t.args)[0] == mnt_pt):
+                    tid = t.uuid
+            time.sleep(0.2)
+            count += 1
+        logger.debug('balance tid = %s' % tid)
+        return tid
 
 class PoolListView(PoolMixin, rfc.GenericView):
     def get_queryset(self, *args, **kwargs):
@@ -372,8 +389,8 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                             handle_exception(Exception(e_msg), request)
 
                 resize_pool(pool, mount_disk, dnames)
-                balance_pid = balance_start(pool, mount_disk, convert=new_raid)
-                ps = PoolBalance(pool=pool, pid=balance_pid)
+                tid = self._balance_start(pool, mount_disk, convert=new_raid)
+                ps = PoolBalance(pool=pool, tid=tid)
                 ps.save()
 
                 pool.raid = new_raid
@@ -438,8 +455,8 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                     handle_exception(Exception(e_msg), request)
 
                 resize_pool(pool, mount_disk, dnames, add=False)
-                balance_pid = balance_start(pool, mount_disk)
-                ps = PoolBalance(pool=pool, pid=balance_pid)
+                tid = self._balance_start(pool, mount_disk)
+                ps = PoolBalance(pool=pool, tid=tid)
                 ps.save()
 
                 for d in disks:

@@ -18,17 +18,21 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework.response import Response
 from django.db import transaction
+from django_ztask.models import Task
 from storageadmin.util import handle_exception
 from storageadmin.serializers import PoolBalanceSerializer
 from storageadmin.models import (Pool, PoolBalance, Disk)
 import rest_framework_custom as rfc
-from fs.btrfs import (balance_start, balance_status)
+from fs.btrfs import (start_balance, balance_status, mount_root)
+from system.osi import run_command
+from pool import PoolMixin
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-class PoolBalanceView(rfc.GenericView):
+
+class PoolBalanceView(PoolMixin, rfc.GenericView):
     serializer_class = PoolBalanceSerializer
 
     @staticmethod
@@ -53,7 +57,17 @@ class PoolBalanceView(rfc.GenericView):
             ps = PoolBalance.objects.filter(pool=pool).order_by('-id')[0]
         except:
             return Response()
-        if (ps.status == 'started' or ps.status == 'running'):
+        if (Task.objects.filter(uuid=ps.tid).exists()):
+            to = Task.objects.get(uuid=ps.tid)
+            if (to.failed is not None):
+                ps.status = 'failed'
+                ps.message = to.last_exception
+                ps.end_time = to.failed
+                ps.save()
+                to.delete()
+                return ps
+        elif (ps.status == 'started' or ps.status == 'running'):
+            #task finished sucessfully or is still running
             cur_status = balance_status(pool, disk.name)
             PoolBalance.objects.filter(id=ps.id).update(**cur_status)
         return ps
@@ -85,7 +99,7 @@ class PoolBalanceView(rfc.GenericView):
                              'pool(%s).' % pname)
                     handle_exception(Exception(e_msg), request)
 
-            balance_pid = balance_start(pool, disk.name, force=force)
-            ps = PoolBalance(pool=pool, pid=balance_pid)
+            tid = self._balance_start(pool, disk.name, force=force)
+            ps = PoolBalance(pool=pool, tid=tid)
             ps.save()
             return Response(PoolBalanceSerializer(ps).data)
