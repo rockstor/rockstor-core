@@ -368,13 +368,6 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                              'balance process.' % pool.name)
                     handle_exception(Exception(e_msg), request)
 
-                if (free_percent < threshold_percent):
-                    e_msg = ('Resize is only supported when there is at least '
-                             '%d percent free space available. But currently '
-                             'only %d percent is free. Remove some data and '
-                             'try again.' % (threshold_percent, free_percent))
-                    handle_exception(Exception(e_msg), request)
-
                 if (new_raid != pool.raid):
                     if (((pool.raid in ('single', 'raid0')) and
                          new_raid in ('raid1', 'raid10'))):
