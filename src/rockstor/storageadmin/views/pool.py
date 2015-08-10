@@ -27,8 +27,8 @@ from django.db import transaction
 from storageadmin.serializers import PoolInfoSerializer
 from storageadmin.models import (Disk, Pool, Share, PoolBalance)
 from fs.btrfs import (add_pool, pool_usage, resize_pool, umount_root,
-                      btrfs_uuid, mount_root, remount, balance_start,
-                      get_pool_info, pool_raid, start_balance)
+                      btrfs_uuid, mount_root, remount, get_pool_info,
+                      pool_raid, start_balance)
 from storageadmin.util import handle_exception
 from django.conf import settings
 import rest_framework_custom as rfc
@@ -422,12 +422,7 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                     handle_exception(Exception(e_msg), request)
 
                 if (pool.raid == 'raid10'):
-                    if (num_new_disks != 2):
-                        e_msg = ('Only two disks can be removed at once from '
-                                 'this pool because of its raid '
-                                 'configuration(%s)' % pool.raid)
-                        handle_exception(Exception(e_msg), request)
-                    elif (remaining_disks < 4):
+                    if (remaining_disks < 4):
                         e_msg = ('Disks cannot be removed from this pool '
                                  'because its raid configuration(%s) '
                                  'requires a minimum of 4 disks' % pool.raid)
