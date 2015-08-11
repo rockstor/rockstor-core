@@ -24,7 +24,9 @@ class PoolBalance(models.Model):
 
     pool = models.ForeignKey(Pool)
     status = models.CharField(max_length=10, default='started')
-    pid = models.IntegerField()
+    #django ztask uuid
+    tid = models.CharField(max_length=36, null=True)
+    message = models.CharField(max_length=1024, null=True)
     start_time = models.DateTimeField(auto_now=True)
     end_time = models.DateTimeField(null=True)
     percent_done = models.IntegerField(default=0)

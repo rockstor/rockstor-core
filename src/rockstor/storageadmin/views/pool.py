@@ -32,7 +32,7 @@ from fs.btrfs import (add_pool, pool_usage, resize_pool, umount_root,
 from storageadmin.util import handle_exception
 from django.conf import settings
 import rest_framework_custom as rfc
-
+from django_ztask.models import Task
 
 import logging
 logger = logging.getLogger(__name__)
@@ -189,7 +189,7 @@ class PoolMixin(object):
         start_balance.async(mnt_pt, force=force, convert=convert)
         tid = 0
         count = 0
-        while (tid is None and count < 25):
+        while (tid == 0 and count < 25):
             for t in Task.objects.all():
                 if (pickle.loads(t.args)[0] == mnt_pt):
                     tid = t.uuid
@@ -319,7 +319,7 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                 return self._remount(request, pool)
 
             disks = [self._validate_disk(d, request) for d in
-                     request.data.get('disks')]
+                     request.data.get('disks', [])]
             num_new_disks = len(disks)
             dnames = [d.name for d in disks]
             mount_disk = Disk.objects.filter(pool=pool)[0].name
