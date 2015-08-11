@@ -34,7 +34,7 @@ AddAFPShareView = RockstorLayoutView.extend({
     this.template = window.JST.afp_add_afp_share;
     this.shares = new ShareCollection();
     // dont paginate shares for now
-    this.shares.pageSize = 1000;
+    this.shares.pageSize = RockStorGlobals.maxPageSize;
     this.dependencies.push(this.shares);
     this.afpShareId = this.options.afpShareId;
     this.afpShares = new AFPCollection({afpShareId: this.afpShareId});
@@ -72,26 +72,26 @@ AddAFPShareView = RockstorLayoutView.extend({
       afpShareId: this.afpShareId,
       time_machine_choices: this.time_machine_choices,
     }));
-   
+
     $('#add-afp-share-form :input').tooltip({
      html: true,
      placement: 'right'
     });
-    
+
     this.$('#shares').chosen();
-   
-    
+
+
     $.validator.setDefaults({ ignore: ":hidden:not(select)" });
-    
+
     $('#add-afp-share-form').validate({
      onfocusout: false,
       onkeyup: false,
       rules: {
-    	
+
          shares: "required" ,
-      
+
     },
-        
+
       submitHandler: function() {
        var button = $('#create-afp-export');
         if (buttonDisabled(button)) return false;
