@@ -42,14 +42,6 @@ class PoolMixin(object):
     serializer_class = PoolInfoSerializer
     RAID_LEVELS = ('single', 'raid0', 'raid1', 'raid10', 'raid5', 'raid6')
     ADD_THRESHOLD = .3  # min free/total ratio to allow a device addition
-    SUPPORTED_MIGRATIONS = {
-        'single': ('single', 'raid0', 'raid1', 'raid10',),
-        'raid0': ('raid0', 'raid1', 'raid10',),
-        'raid1': ('raid1', 'raid10',),
-        'raid10': ('raid10',),
-        'raid5': ('raid5',),
-        'raid6': ('raid6',),
-        }
 
     @staticmethod
     def _validate_disk(d, request):
@@ -330,9 +322,6 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
             disks = [self._validate_disk(d, request) for d in
                      request.data.get('disks')]
             num_new_disks = len(disks)
-            if (num_new_disks == 0):
-                e_msg = ('List of disks in the input cannot be empty.')
-                handle_exception(Exception(e_msg), request)
             dnames = [d.name for d in disks]
             mount_disk = Disk.objects.filter(pool=pool)[0].name
             new_raid = request.data.get('raid_level', pool.raid)
@@ -355,7 +344,7 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                                  'from the Storage -> Disks screen of the '
                                  'web-ui' % d.name)
                         handle_exception(Exception(e_msg), request)
-                if (new_raid not in self.SUPPORTED_MIGRATIONS[pool.raid]):
+                if (new_raid == 'single'):
                     e_msg = ('Pool migration from %s to %s is not supported.'
                              % (pool.raid, new_raid))
                     handle_exception(Exception(e_msg), request)
@@ -367,19 +356,6 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                              'pool(%s). Resize is not supported during a '
                              'balance process.' % pool.name)
                     handle_exception(Exception(e_msg), request)
-
-                if (new_raid != pool.raid):
-                    if (((pool.raid in ('single', 'raid0')) and
-                         new_raid in ('raid1', 'raid10'))):
-                        cur_num_disks = num_total_disks - num_new_disks
-                        if (num_new_disks < cur_num_disks):
-                            e_msg = ('For single/raid0 to raid1/raid10 '
-                                     'conversion, at least as many as present '
-                                     'number of disks must be added. %d '
-                                     'disks are provided, but at least %d are '
-                                     'required.' % (num_new_disks,
-                                                    cur_num_disks))
-                            handle_exception(Exception(e_msg), request)
 
                 resize_pool(pool, mount_disk, dnames)
                 tid = self._balance_start(pool, mount_disk, convert=new_raid)

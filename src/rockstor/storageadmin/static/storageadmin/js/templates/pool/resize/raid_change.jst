@@ -6,7 +6,7 @@
 <h4>Current raid level: <%= model.get('pool').get('raid') %></h4>
 
 <form id="raid-change-form">
-  <% var levels = ['single', 'raid0', 'raid1', 'raid10', 'raid5', 'raid6']; %>
+  <% var levels = ['raid0', 'raid1', 'raid10', 'raid5', 'raid6']; %>
   <div class="row">
   <div class="form-group col-md-4">
      <label for="raid-level">Select a new raid level</label>
@@ -20,10 +20,4 @@
     </select>
     </div>
   </div>
-  <div class="alert alert-warning">Note! You need to add disks while changing raid level</div>
-
-  <label for="diskname">Select disks to add to <%= model.get('pool').get('name') %></label>
-  <input type="hidden" name="disknamehidden" value="">
-  <div id="ph-disks-table"></div>
-
 </form>
