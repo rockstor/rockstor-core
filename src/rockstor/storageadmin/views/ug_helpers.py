@@ -66,7 +66,7 @@ def combined_users():
     for u in User.objects.all():
         if (u.username not in uname_list):
             users.append(u)
-    return users
+    return sorted(users, cmp=lambda x,y: cmp(x.username.lower(), y.username.lower()))
 
 
 def combined_groups():
@@ -84,4 +84,4 @@ def combined_groups():
     for g in Group.objects.all():
         if (g.groupname not in gname_list):
             groups.append(g)
-    return groups
+    return sorted(groups, cmp=lambda x,y: cmp(x.groupname.lower(), y.groupname.lower()))

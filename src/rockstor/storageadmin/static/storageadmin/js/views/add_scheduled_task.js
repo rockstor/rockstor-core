@@ -28,7 +28,7 @@
 AddScheduledTaskView = RockstorLayoutView.extend({
     events: {
 	"click #js-cancel": "cancel",
-	"change #task-type": "renderOptionalFields",
+	"change #task-type": "renderOptionalFields"
     },
 
     initialize: function() {
@@ -38,6 +38,8 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 	this.scrubFieldsTemplate = window.JST.scheduled_tasks_scrub_fields;
 	this.shares = new ShareCollection();
 	this.pools = new PoolCollection();
+	this.shares.pageSize = RockStorGlobals.maxPageSize;
+	this.pools.pageSize = RockStorGlobals.maxPageSize;
 	this.dependencies.push(this.shares);
 	this.dependencies.push(this.pools);
 	this.taskDefId = this.options.taskDefId;

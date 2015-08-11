@@ -26,7 +26,7 @@
 
 EditNFSExportView = RockstorLayoutView.extend({
   events: {
-      'click #cancel': 'cancel',
+      'click #cancel': 'cancel'
   },
 
   initialize: function() {
@@ -41,7 +41,7 @@ EditNFSExportView = RockstorLayoutView.extend({
     	this.nfsExportGroup = new NFSExportGroup();
     }
     // dont paginate shares for now
-    this.shares.pageSize = 1000;
+    this.shares.pageSize = RockStorGlobals.maxPageSize;
     this.dependencies.push(this.shares);
     this.modify_choices = [
       {name: 'Writable', value: 'rw'},
@@ -68,9 +68,9 @@ EditNFSExportView = RockstorLayoutView.extend({
     }));
     this.$('#shares').chosen();
     this.$('#edit-nfs-export-form :input').tooltip({placement: 'right'});
-    
+
     $.validator.setDefaults({ ignore: ":hidden:not(select)" });
-    
+
     this.$('#edit-nfs-export-form').validate({
       onfocusout: false,
       onkeyup: false,
