@@ -41,7 +41,6 @@ logger = logging.getLogger(__name__)
 class PoolMixin(object):
     serializer_class = PoolInfoSerializer
     RAID_LEVELS = ('single', 'raid0', 'raid1', 'raid10', 'raid5', 'raid6')
-    ADD_THRESHOLD = .3  # min free/total ratio to allow a device addition
 
     @staticmethod
     def _validate_disk(d, request):
@@ -327,10 +326,6 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
             new_raid = request.data.get('raid_level', pool.raid)
             num_total_disks = (Disk.objects.filter(pool=pool).count() +
                                num_new_disks)
-            usage = pool_usage('/%s/%s' % (settings.MNT_PT, pool.name))
-            # free_percent = (usage[2]/usage[0]) * 100
-            free_percent = (usage[2]* 100)/usage[0]
-            threshold_percent = self.ADD_THRESHOLD * 100
             if (command == 'add'):
                 for d in disks:
                     if (d.pool is not None):
@@ -385,10 +380,6 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                              'raid(%s) configuration' % pool.raid)
                     handle_exception(Exception(e_msg), request)
 
-                if (pool.raid in ('raid5', 'raid6',)):
-                    e_msg = ('Disk removal is not supported for pools with '
-                             'raid5/6 configuration')
-                    handle_exception(Exception(e_msg), request)
 
                 if (pool.raid == 'raid10'):
                     if (remaining_disks < 4):
@@ -397,25 +388,15 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                                  'requires a minimum of 4 disks' % pool.raid)
                         handle_exception(Exception(e_msg), request)
 
-                elif (pool.raid == 'raid1'):
-                    if (num_new_disks != 1):
-                        e_msg = ('Only one disk can be removed at once from '
-                                 'this pool because of its raid '
-                                 'configuration(%s)' % pool.raid)
-                        handle_exception(Exception(e_msg), request)
-                    elif (remaining_disks < 2):
-                        e_msg = ('Disks cannot be removed from this pool '
-                                 'because its raid configuration(%s) '
-                                 'requires a minimum of 2 disks' % pool.raid)
-                        handle_exception(Exception(e_msg), request)
-
-                threshold_percent = 100 - threshold_percent
-                if (free_percent < threshold_percent):
-                    e_msg = ('Removing disks is only supported when there is '
-                             'at least %d percent free space available. But '
-                             'currently only %d percent is free. Remove some '
-                             'data and try again.' %
-                             (threshold_percent, free_percent))
+                usage = pool_usage('/%s/%s' % (settings.MNT_PT, pool.name))
+                size_cut = 0
+                for d in disks:
+                    size_cut += d.size
+                if (size_cut >= usage[2]):
+                    e_msg = ('Removing these(%s) disks may shrink the pool by '
+                             '%dKB, which is greater than available free space'
+                             ' %dKB. This is not supported.' %
+                             (dnames, size_cut, usage[2]))
                     handle_exception(Exception(e_msg), request)
 
                 resize_pool(pool, mount_disk, dnames, add=False)
