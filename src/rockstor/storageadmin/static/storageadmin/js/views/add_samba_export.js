@@ -25,138 +25,139 @@
  */
 
 AddSambaExportView = RockstorLayoutView.extend({
-  events: {
-    'click #cancel': 'cancel'
-  },
+    events: {
+	'click #cancel': 'cancel'
+    },
 
-  initialize: function() {
-    this.constructor.__super__.initialize.apply(this, arguments);
-    this.template = window.JST.samba_add_samba_export;
-    this.shares = new ShareCollection();
-    this.users = new UserCollection();
-     // dont paginate shares for now
-    this.shares.pageSize = 1000;
-    this.dependencies.push(this.shares);
-    this.dependencies.push(this.users);
-    this.sambaShareId = this.options.sambaShareId;
-    this.sambaShares = new SambaCollection({sambaShareId: this.sambaShareId});
-    this.dependencies.push(this.sambaShares);
+    initialize: function() {
+	this.constructor.__super__.initialize.apply(this, arguments);
+	this.template = window.JST.samba_add_samba_export;
+	this.shares = new ShareCollection();
+	this.users = new UserCollection();
+	// dont paginate shares for now
+	this.shares.pageSize = RockStorGlobals.maxPageSize;
+	this.users.pageSize = RockStorGlobals.maxPageSize;
+	this.dependencies.push(this.shares);
+	this.dependencies.push(this.users);
+	this.sambaShareId = this.options.sambaShareId;
+	this.sambaShares = new SambaCollection({sambaShareId: this.sambaShareId});
+	this.dependencies.push(this.sambaShares);
 
-    this.yes_no_choices = [
-      {name: 'yes', value: 'yes'},
-      {name: 'no', value: 'no'},
-    ];
-    this.browsable_choices = this.yes_no_choices;
-    this.guest_ok_choices = this.yes_no_choices;
-    this.read_only_choices = this.yes_no_choices;
-  },
+	this.yes_no_choices = [
+	    {name: 'yes', value: 'yes'},
+	    {name: 'no', value: 'no'},
+	];
+	this.browsable_choices = this.yes_no_choices;
+	this.guest_ok_choices = this.yes_no_choices;
+	this.read_only_choices = this.yes_no_choices;
+    },
 
 
-  render: function() {
-    this.fetch(this.renderSambaForm, this);
-    return this;
-  },
+    render: function() {
+	this.fetch(this.renderSambaForm, this);
+	return this;
+    },
 
-  renderSambaForm: function() {
-    var _this = this;
-    this.freeShares = this.shares.reject(function(share) {
-      s = this.sambaShares.find(function(sambaShare) {
-        return (sambaShare.get('share') == share.get('name'));
-      });
-      return !_.isUndefined(s);
-    }, this);
+    renderSambaForm: function() {
+	var _this = this;
+	this.freeShares = this.shares.reject(function(share) {
+	    s = this.sambaShares.find(function(sambaShare) {
+		return (sambaShare.get('share') == share.get('name'));
+	    });
+	    return !_.isUndefined(s);
+	}, this);
 
-    this.sShares = this.shares.reject(function(share) {
-      s = this.sambaShares.find(function(sambaShare) {
-        return (sambaShare.get('share') != share.get('name'));
-      });
-      return !_.isUndefined(s);
-    }, this);
+	this.sShares = this.shares.reject(function(share) {
+	    s = this.sambaShares.find(function(sambaShare) {
+		return (sambaShare.get('share') != share.get('name'));
+	    });
+	    return !_.isUndefined(s);
+	}, this);
 
-    if(this.sambaShareId != null){
-      this.sShares = this.sambaShares.get(this.sambaShareId);
-         }else{
-      this.sShares = null;
-      }
+	if(this.sambaShareId != null){
+	    this.sShares = this.sambaShares.get(this.sambaShareId);
+        }else{
+	    this.sShares = null;
+	}
 
-    var configList = '';
-    if (this.sShares != null) {
-        var config = this.sShares.get('custom_config');
-        for(i=0;i<config.length;i++){
-            configList = configList+config[i].custom_config+'\n';
-        }
+	var configList = '';
+	if (this.sShares != null) {
+            var config = this.sShares.get('custom_config');
+            for(i=0;i<config.length;i++){
+		configList = configList+config[i].custom_config+'\n';
+            }
+	}
+
+	$(this.el).html(this.template({
+	    shares: this.freeShares,
+	    smbShare: this.sShares,
+	    users: this.users,
+	    configList: configList,
+	    sambaShareId: this.sambaShareId,
+	    browsable_choices: this.browsable_choices,
+	    guest_ok_choices: this.guest_ok_choices,
+	    read_only_choices: this.read_only_choices
+
+	}));
+	if(this.sambaShareId == null) {
+	    this.$('#shares').chosen();
+	}
+	this.$('#admin_users').chosen();
+
+	this.$('#add-samba-export-form :input').tooltip({
+	    html: true,
+	    placement: 'right'
+	});
+
+	$.validator.setDefaults({ ignore: ":hidden:not(select)" });
+
+	$('#add-samba-export-form').validate({
+	    onfocusout: false,
+	    onkeyup: false,
+	    rules: {
+		shares: 'required',
+	    },
+
+	    submitHandler: function() {
+		var button = $('#create-samba-export');
+		var custom_config = _this.$('#custom_config').val();
+		var entries = [];
+		if (!_.isNull(custom_config) && custom_config.trim() != '') entries = custom_config.trim().split('\n');
+		if (buttonDisabled(button)) return false;
+		disableButton(button);
+		var submitmethod = 'POST';
+		var posturl = '/api/samba';
+		if(_this.sambaShareId != null){
+		    submitmethod = 'PUT';
+		    posturl += '/'+_this.sambaShareId;
+		}
+		var data = _this.$('#add-samba-export-form').getJSON();
+		data.custom_config = entries;
+		$.ajax({
+		    url: posturl,
+		    type: submitmethod,
+		    dataType: 'json',
+		    contentType: 'application/json',
+		    data: JSON.stringify(data),
+		    success: function() {
+			enableButton(button);
+			_this.$('#add-samba-export-form :input').tooltip('hide');
+			app_router.navigate('samba-exports', {trigger: true});
+		    },
+		    error: function(xhr, status, error) {
+			enableButton(button);
+		    }
+		});
+
+		return false;
+	    }
+	});
+    },
+
+    cancel: function(event) {
+	event.preventDefault();
+	this.$('#add-samba-export-form :input').tooltip('hide');
+	app_router.navigate('samba-exports', {trigger: true});
     }
-
-    $(this.el).html(this.template({
-      shares: this.freeShares,
-      smbShare: this.sShares,
-      users: this.users,
-      configList: configList,
-      sambaShareId: this.sambaShareId,
-      browsable_choices: this.browsable_choices,
-      guest_ok_choices: this.guest_ok_choices,
-      read_only_choices: this.read_only_choices
-
-    }));
-    if(this.sambaShareId == null) {
-      this.$('#shares').chosen();
-    }
-    this.$('#admin_users').chosen();
-
-    this.$('#add-samba-export-form :input').tooltip({
-      html: true,
-      placement: 'right'
-    });
-
-    $.validator.setDefaults({ ignore: ":hidden:not(select)" });
-
-    $('#add-samba-export-form').validate({
-      onfocusout: false,
-      onkeyup: false,
-      rules: {
-        shares: 'required',
-      },
-
-      submitHandler: function() {
-        var button = $('#create-samba-export');
-        var custom_config = _this.$('#custom_config').val();
-        var entries = [];
-        if (!_.isNull(custom_config) && custom_config.trim() != '') entries = custom_config.trim().split('\n');
-       if (buttonDisabled(button)) return false;
-        disableButton(button);
-        var submitmethod = 'POST';
-        var posturl = '/api/samba';
-        if(_this.sambaShareId != null){
-            submitmethod = 'PUT';
-            posturl += '/'+_this.sambaShareId;
-          }
-        var data = _this.$('#add-samba-export-form').getJSON();
-        data.custom_config = entries;
-       $.ajax({
-          url: posturl,
-          type: submitmethod,
-          dataType: 'json',
-          contentType: 'application/json',
-          data: JSON.stringify(data),
-          success: function() {
-            enableButton(button);
-            _this.$('#add-samba-export-form :input').tooltip('hide');
-            app_router.navigate('samba-exports', {trigger: true});
-          },
-          error: function(xhr, status, error) {
-            enableButton(button);
-          }
-        });
-
-        return false;
-      }
-    });
-  },
-
-  cancel: function(event) {
-    event.preventDefault();
-    this.$('#add-samba-export-form :input').tooltip('hide');
-    app_router.navigate('samba-exports', {trigger: true});
-  }
 
 });
