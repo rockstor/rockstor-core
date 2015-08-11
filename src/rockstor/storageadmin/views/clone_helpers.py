@@ -35,7 +35,6 @@ def create_clone(share, new_name, request, logger, snapshot=None):
     if (Share.objects.filter(name=new_name).exists()):
         e_msg = ('Another Share with name: %s already exists.' % new_name)
         handle_exception(Exception(e_msg), request)
-    pool_device = Disk.objects.filter(pool=share.pool)[0].name
     if (Snapshot.objects.filter(share=share, name=new_name).exists()):
         e_msg = ('Snapshot with name: %s already exists for the '
                  'share: %s. Choose a different name' %
@@ -47,11 +46,10 @@ def create_clone(share, new_name, request, logger, snapshot=None):
         snap = None
         if (snapshot is not None):
             snap = snapshot.real_name
-        add_clone(share.pool, pool_device, share_name, new_name, snapshot=snap)
-        snap_id = share_id(share.pool, pool_device, new_name)
+        add_clone(share.pool, share_name, new_name, snapshot=snap)
+        snap_id = share_id(share.pool, new_name)
         qgroup_id = ('0/%s' % snap_id)
-        update_quota(share.pool, pool_device, qgroup_id,
-                     share.size * 1024)
+        update_quota(share.pool, qgroup_id, share.size * 1024)
         new_share = Share(pool=share.pool, qgroup=qgroup_id, name=new_name,
                           size=share.size, subvol_name=new_name)
         new_share.save()

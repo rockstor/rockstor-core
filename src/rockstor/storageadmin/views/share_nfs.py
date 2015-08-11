@@ -54,8 +54,7 @@ class ShareNFSListView(rfc.GenericView):
             mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
             export_pt = ('%s%s' % (settings.NFS_EXPORT_ROOT, share.name))
             if (not is_share_mounted(share.name)):
-                pool_device = Disk.objects.filter(pool=share.pool)[0].name
-                mount_share(share, pool_device, mnt_pt)
+                mount_share(share, mnt_pt)
             export = NFSExport(export_group=eg, share=share, mount=export_pt)
             export.full_clean()
             export.save()

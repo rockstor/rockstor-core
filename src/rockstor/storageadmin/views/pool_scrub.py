@@ -42,18 +42,17 @@ class PoolScrubView(rfc.GenericView):
     def get_queryset(self, *args, **kwargs):
         with self._handle_exception(self.request):
             pool = self._validate_pool(self.kwargs['pname'], self.request)
-            disk = Disk.objects.filter(pool=pool)[0]
-            self._scrub_status(pool, disk)
+            self._scrub_status(pool)
             return PoolScrub.objects.filter(pool=pool).order_by('-id')
 
     @transaction.commit_on_success
-    def _scrub_status(self, pool, disk):
+    def _scrub_status(self, pool):
         try:
             ps = PoolScrub.objects.filter(pool=pool).order_by('-id')[0]
         except:
             return Response()
         if (ps.status == 'started' or ps.status == 'running'):
-            cur_status = scrub_status(pool, disk.name)
+            cur_status = scrub_status(pool)
             if (cur_status['status'] == 'finished'):
                 duration = int(cur_status['duration'])
                 cur_status['end_time'] = (ps.start_time +
@@ -70,8 +69,7 @@ class PoolScrubView(rfc.GenericView):
             handle_exception(Exception(e_msg), request)
 
         with self._handle_exception(request):
-            disk = Disk.objects.filter(pool=pool)[0]
-            ps = self._scrub_status(pool, disk)
+            ps = self._scrub_status(pool)
             if (command == 'status'):
                 return Response(PoolScrubSerializer(ps).data)
             force = request.data.get('force', False)
@@ -90,7 +88,7 @@ class PoolScrubView(rfc.GenericView):
                              'and start a new scrub, use force option' % pname)
                     handle_exception(Exception(e_msg), request)
 
-            scrub_pid = scrub_start(pool, disk.name, force=force)
+            scrub_pid = scrub_start(pool, force=force)
             ps = PoolScrub(pool=pool, pid=scrub_pid)
             ps.save()
             return Response(PoolScrubSerializer(ps).data)

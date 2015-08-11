@@ -62,9 +62,8 @@ class CommandView(APIView):
                 handle_exception(Exception(e_msg), request)
 
             for pool in Pool.objects.all():
-                disk = Disk.objects.filter(pool=pool)[0].name
                 try:
-                    mount_root(pool, '/dev/%s' % disk)
+                    mount_root(pool)
                 except Exception, e:
                     e_msg = ('Unable to mount a pool(%s) during bootstrap.'
                              % pool.name)
@@ -77,10 +76,7 @@ class CommandView(APIView):
                         share.save()
                     if (not is_share_mounted(share.name)):
                         mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
-                        pool_device = Disk.objects.filter(
-                            pool=share.pool)[0].name
-                        mount_share(share, pool_device, mnt_pt)
-
+                        mount_share(share, mnt_pt)
 
                 except Exception, e:
                     e_msg = ('Unable to mount a share(%s, %s) during bootstrap.' %

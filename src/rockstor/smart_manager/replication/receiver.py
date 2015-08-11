@@ -210,9 +210,7 @@ class Receiver(Process):
                                    'to Share(%s)' % (snap_path, share_path))
                             try:
                                 pool = Pool.objects.get(name=self.dest_pool)
-                                pool_device = Disk.objects.filter(
-                                    pool=pool)[0].name
-                                remove_share(pool, pool_device, sname)
+                                remove_share(pool, sname)
                                 set_property(snap_path, 'ro', 'false',
                                              mount=False)
                                 run_command(['/usr/bin/rm', '-rf', share_path],

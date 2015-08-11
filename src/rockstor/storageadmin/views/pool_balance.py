@@ -23,7 +23,7 @@ from storageadmin.util import handle_exception
 from storageadmin.serializers import PoolBalanceSerializer
 from storageadmin.models import (Pool, PoolBalance, Disk)
 import rest_framework_custom as rfc
-from fs.btrfs import (start_balance, balance_status, mount_root)
+from fs.btrfs import (start_balance, balance_status)
 from system.osi import run_command
 from pool import PoolMixin
 
@@ -46,13 +46,12 @@ class PoolBalanceView(PoolMixin, rfc.GenericView):
     def get_queryset(self, *args, **kwargs):
         with self._handle_exception(self.request):
             pool = self._validate_pool(self.kwargs['pname'], self.request)
-            disk = Disk.objects.filter(pool=pool)[0]
-            self._balance_status(pool, disk)
+            self._balance_status(pool)
             return PoolBalance.objects.filter(pool=pool).order_by('-id')
 
     @staticmethod
     @transaction.atomic
-    def _balance_status(pool, disk):
+    def _balance_status(pool):
         try:
             ps = PoolBalance.objects.filter(pool=pool).order_by('-id')[0]
         except:
@@ -68,7 +67,7 @@ class PoolBalanceView(PoolMixin, rfc.GenericView):
                 return ps
         elif (ps.status == 'started' or ps.status == 'running'):
             #task finished sucessfully or is still running
-            cur_status = balance_status(pool, disk.name)
+            cur_status = balance_status(pool)
             PoolBalance.objects.filter(id=ps.id).update(**cur_status)
         return ps
 
@@ -81,7 +80,7 @@ class PoolBalanceView(PoolMixin, rfc.GenericView):
 
         with self._handle_exception(request):
             disk = Disk.objects.filter(pool=pool)[0]
-            ps = self._balance_status(pool, disk)
+            ps = self._balance_status(pool)
             if (command == 'status'):
                 return Response(PoolBalanceSerializer(ps).data)
             force = request.data.get('force', False)

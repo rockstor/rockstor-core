@@ -28,10 +28,9 @@ logger = logging.getLogger(__name__)
 
 def helper_mount_share(share, mnt_pt=None):
     if (not is_share_mounted(share.name)):
-        pool_device = Disk.objects.filter(pool=share.pool)[0].name
         if(mnt_pt is None):
             mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
-        mount_share(share, pool_device, mnt_pt)
+        mount_share(share, mnt_pt)
 
 
 def validate_share(sname, request):

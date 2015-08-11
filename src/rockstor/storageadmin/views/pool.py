@@ -176,7 +176,7 @@ class PoolMixin(object):
         fd = pool.disk_set.first()
         if (fd is None):
             return pool.delete()
-        mount_root(pool, fd.name)
+        mount_root(pool)
         pool_info = get_pool_info(fd.name)
         pool.name = pool_info['label']
         pool.raid = pool_raid('%s%s' % (settings.MNT_PT, pool.name))['data']
@@ -184,8 +184,8 @@ class PoolMixin(object):
         pool.save()
         return pool
 
-    def _balance_start(self, pool, dname, force=False, convert=None):
-        mnt_pt = mount_root(pool, '/dev/%s' % dname)
+    def _balance_start(self, pool, force=False, convert=None):
+        mnt_pt = mount_root(pool)
         start_balance.async(mnt_pt, force=force, convert=convert)
         tid = 0
         count = 0
@@ -273,10 +273,10 @@ class PoolListView(PoolMixin, rfc.GenericView):
             dnames = [d.name for d in disks]
             p = Pool(name=pname, raid=raid_level, compression=compression,
                      mnt_options=mnt_options)
-            add_pool(p, dnames)
-            p.size = pool_usage(mount_root(p, dnames[0]))[0]
-            p.uuid = btrfs_uuid(dnames[0])
             p.disk_set.add(*disks)
+            add_pool(p, dnames)
+            p.size = pool_usage(mount_root(p))[0]
+            p.uuid = btrfs_uuid(dnames[0])
             p.save()
             # added for loop to save disks
             # appears p.disk_set.add(*disks) was not saving disks in test environment
@@ -322,7 +322,6 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                      request.data.get('disks', [])]
             num_new_disks = len(disks)
             dnames = [d.name for d in disks]
-            mount_disk = Disk.objects.filter(pool=pool)[0].name
             new_raid = request.data.get('raid_level', pool.raid)
             num_total_disks = (Disk.objects.filter(pool=pool).count() +
                                num_new_disks)
@@ -352,8 +351,8 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                              'balance process.' % pool.name)
                     handle_exception(Exception(e_msg), request)
 
-                resize_pool(pool, mount_disk, dnames)
-                tid = self._balance_start(pool, mount_disk, convert=new_raid)
+                resize_pool(pool, dnames)
+                tid = self._balance_start(pool, convert=new_raid)
                 ps = PoolBalance(pool=pool, tid=tid)
                 ps.save()
 
@@ -399,8 +398,8 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                              (dnames, size_cut, usage[2]))
                     handle_exception(Exception(e_msg), request)
 
-                resize_pool(pool, mount_disk, dnames, add=False)
-                tid = self._balance_start(pool, mount_disk)
+                resize_pool(pool, dnames, add=False)
+                tid = self._balance_start(pool)
                 ps = PoolBalance(pool=pool, tid=tid)
                 ps.save()
 

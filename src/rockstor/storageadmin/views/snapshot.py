@@ -89,7 +89,7 @@ class SnapshotView(rfc.GenericView):
             else:
                 so = Snapshot(share=share, name=s, real_name=s,
                               writable=snaps_d[s][1], qgroup=snaps_d[s][0])
-            rusage, eusage = share_usage(share.pool, disk, snaps_d[s][0])
+            rusage, eusage = share_usage(share.pool, snaps_d[s][0])
             ts = datetime.utcnow().replace(tzinfo=utc)
             if (rusage != so.rusage or eusage != so.eusage):
                 so.rusage = rusage
@@ -149,8 +149,7 @@ class SnapshotView(rfc.GenericView):
         refresh_nfs_exports(exports)
 
     @transaction.atomic
-    def _create(self, share, snap_name, pool_device, request, uvisible,
-                snap_type, writable):
+    def _create(self, share, snap_name, request, uvisible, snap_type, writable):
         if (Snapshot.objects.filter(share=share, name=snap_name).exists()):
             e_msg = ('Snapshot(%s) already exists for the Share(%s).' %
                      (snap_name, share.name))
@@ -161,13 +160,12 @@ class SnapshotView(rfc.GenericView):
         if (snap_type != 'receiver'):
             if (snap_type == 'replication'):
                 writable = False
-            add_snap(share.pool, pool_device, share.subvol_name,
-                     snap_name, readonly=not writable)
-            snap_id = share_id(share.pool, pool_device, snap_name)
+            add_snap(share.pool, share.subvol_name, snap_name, readonly=not
+                     writable)
+            snap_id = share_id(share.pool, snap_name)
             qgroup_id = ('0/%s' % snap_id)
             qgroup_assign(qgroup_id, share.pqgroup, ('%s/%s' % (settings.MNT_PT, share.pool.name)))
-            snap_size, eusage = share_usage(share.pool, pool_device,
-                                            qgroup_id)
+            snap_size, eusage = share_usage(share.pool, qgroup_id)
         s = Snapshot(share=share, name=snap_name, real_name=snap_name,
                      size=snap_size, qgroup=qgroup_id,
                      uvisible=uvisible, snap_type=snap_type,
@@ -186,9 +184,8 @@ class SnapshotView(rfc.GenericView):
             snap_type = request.data.get('snap_type', 'admin')
             writable = request.data.get('writable', 'rw')
             writable = True if (writable == 'rw') else False
-            pool_device = Disk.objects.filter(pool=share.pool)[0].name
             if (command is None):
-                ret = self._create(share, snap_name, pool_device, request,
+                ret = self._create(share, snap_name, request,
                                    uvisible=uvisible, snap_type=snap_type,
                                    writable=writable)
 
@@ -245,12 +242,11 @@ class SnapshotView(rfc.GenericView):
                 e_msg = ('Snapshot(%s) does not exist.' % snap_name)
             handle_exception(Exception(e_msg), request)
 
-        pool_device = Disk.objects.filter(pool=share.pool)[0].name
         if (snapshot.uvisible):
             self._toggle_visibility(share, snapshot.real_name, on=False)
             toggle_sftp_visibility(share, snapshot.real_name, on=False)
 
-        remove_snap(share.pool, pool_device, sname, snapshot.name)
+        remove_snap(share.pool, sname, snapshot.name)
         snapshot.delete()
         return Response()
 

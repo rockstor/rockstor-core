@@ -74,11 +74,9 @@ class ShareCommandView(ShareMixin, rfc.GenericView):
                              ' via Samba. Unshare and try again' % sname)
                     handle_exception(Exception(e_msg), request)
 
-                pool_device = Disk.objects.filter(pool=share.pool)[0].name
                 rollback_snap(snap.real_name, share.name, share.subvol_name,
-                              share.pool, pool_device)
-                update_quota(share.pool, pool_device, snap.qgroup,
-                             share.size * 1024)
+                              share.pool)
+                update_quota(share.pool, snap.qgroup, share.size * 1024)
                 share.qgroup = snap.qgroup
                 share.save()
                 snap.delete()

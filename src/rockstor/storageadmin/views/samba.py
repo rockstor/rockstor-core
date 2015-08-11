@@ -115,8 +115,7 @@ class SambaListView(SambaMixin, ShareMixin, rfc.GenericView):
                                             custom_config=cc)
                     cco.save()
                 if (not is_share_mounted(share.name)):
-                    pool_device = Disk.objects.filter(pool=share.pool)[0].name
-                    mount_share(share, pool_device, mnt_pt)
+                    mount_share(share, mnt_pt)
 
                 admin_users = request.data.get('admin_users', None)
                 if (admin_users is None):
@@ -188,11 +187,9 @@ class SambaDetailView(SambaMixin, rfc.GenericView):
                 cco.save()
             for smb_o in SambaShare.objects.all():
                 if (not is_share_mounted(smb_o.share.name)):
-                    pool_device = Disk.objects.filter(
-                        pool=smb_o.share.pool)[0].name
                     mnt_pt = ('%s%s' % (settings.MNT_PT, smb_o.share.name))
                     try:
-                        mount_share(smb_o.share, pool_device, mnt_pt)
+                        mount_share(smb_o.share, mnt_pt)
                     except Exception, e:
                         logger.exception(e)
                         if (smb_o.id == smbo.id):
