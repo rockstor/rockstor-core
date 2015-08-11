@@ -33,7 +33,6 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 	this.cView = this.options.cView;
 	this.template = window.JST.pool_pool_details_layout;
 	this.select_disks_template = window.JST.disk_select_disks_template;
-	this.resize_pool_edit_template = window.JST.pool_resize_pool_edit;
 	this.resize_pool_info_template = window.JST.pool_resize_pool_info;
 	this.compression_info_template = window.JST.pool_compression_info;
 	this.compression_info_edit_template = window.JST.pool_compression_info_edit;

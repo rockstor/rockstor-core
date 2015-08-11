@@ -44,8 +44,7 @@ def docker_status():
 
 def mount_share(name, mnt):
     share = Share.objects.get(name=name)
-    disk = Disk.objects.filter(pool=share.pool)[0].name
-    btrfs.mount_share(share, disk, mnt)
+    btrfs.mount_share(share, mnt)
 
 def rockon_status(name):
     ro = RockOn.objects.get(name=name)

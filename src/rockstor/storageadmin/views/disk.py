@@ -98,8 +98,8 @@ class DiskListView(rfc.GenericView):
 
     def _create_root_pool(self, d):
         p = Pool(name=settings.ROOT_POOL, raid='single')
-        p.size = pool_usage(mount_root(p, d.name))[0]
-        enable_quota(p, '/dev/%s' % d.name)
+        p.size = pool_usage(mount_root(p))[0]
+        enable_quota(p)
         p.uuid = btrfs_uuid(d.name)
         return p
 
@@ -190,7 +190,7 @@ class DiskDetailView(rfc.GenericView):
                 do = Disk.objects.get(name=d)
                 do.pool = po
                 do.save()
-                mount_root(po, d)
+                mount_root(po)
             po.raid = pool_raid('%s%s' % (settings.MNT_PT, po.name))['data']
             po.size = pool_usage('%s%s' % (settings.MNT_PT, po.name))[0]
             po.save()

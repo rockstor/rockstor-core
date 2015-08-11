@@ -73,9 +73,8 @@ class ShareIscsiView(APIView):
                 except:
                     raise Exception('tid must be an integer')
 
-            pool_device = Disk.objects.filter(pool=share.pool)[0].name
             mnt_pt = '/mnt2/' + share.name
-            mount_share(share.name, pool_device, mnt_pt)
+            mount_share(share.name, mnt_pt)
             dev_name = mnt_pt + '/' + options['dev_name']
             export_iscsi(options['tid'], options['tname'], options['tid'],
                          dev_name, options['dev_size'])

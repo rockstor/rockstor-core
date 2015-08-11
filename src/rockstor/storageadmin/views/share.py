@@ -114,7 +114,7 @@ class ShareListView(ShareMixin, rfc.GenericView):
                 if (s in shares):
                     share = Share.objects.get(name=s)
                     share.qgroup = shares_d[s]
-                    rusage, eusage = share_usage(p, disk, share.qgroup)
+                    rusage, eusage = share_usage(p, share.qgroup)
                     ts = datetime.utcnow().replace(tzinfo=utc)
                     if (rusage != share.rusage or eusage != share.eusage):
                         share.rusage = rusage
@@ -150,13 +150,13 @@ class ShareListView(ShareMixin, rfc.GenericView):
                         cshare.qgroup = shares_d[s]
                         cshare.size = p.size
                         cshare.subvol_name = s
-                        cshare.rusage, cshare.eusage = share_usage(p, disk, cshare.qgroup)
+                        cshare.rusage, cshare.eusage = share_usage(p, cshare.qgroup)
                         cshare.save()
                 except Share.DoesNotExist:
                     nso = Share(pool=p, qgroup=shares_d[s], name=s, size=p.size,
                                 subvol_name=s)
                     nso.save()
-                mount_share(nso, disk, '%s%s' % (settings.MNT_PT, s))
+                mount_share(nso, '%s%s' % (settings.MNT_PT, s))
 
     @transaction.atomic
     def post(self, request):
@@ -214,17 +214,16 @@ class ShareListView(ShareMixin, rfc.GenericView):
                              type(replica))
                     handle_exception(Exception(e_msg), request)
             pqid = qgroup_create(pool)
-            add_share(pool, disk.name, sname, pqid)
-            qid = qgroup_id(pool, disk.name, sname)
-            update_quota(pool, disk.name, pqid, size * 1024)
+            add_share(pool, sname, pqid)
+            qid = qgroup_id(pool, sname)
+            update_quota(pool, pqid, size * 1024)
             s = Share(pool=pool, qgroup=qid, pqgroup=pqid, name=sname,
                       size=size, subvol_name=sname, replica=replica,
                       compression_algo=compression)
             s.save()
             mnt_pt = '%s%s' % (settings.MNT_PT, sname)
             if (not is_share_mounted(sname)):
-                disk = Disk.objects.filter(pool=pool)[0].name
-                mount_share(s, disk, mnt_pt)
+                mount_share(s, mnt_pt)
             if (compression != 'no'):
                 set_property(mnt_pt, 'compression', compression)
             return Response(ShareSerializer(s).data)
@@ -248,14 +247,14 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
             if ('size' in request.data):
                 new_size = self._validate_share_size(request, share.pool)
                 disk = Disk.objects.filter(pool=share.pool)[0]
-                qid = qgroup_id(share.pool, disk.name, share.subvol_name)
-                cur_rusage, cur_eusage = share_usage(share.pool, disk.name, qid)
+                qid = qgroup_id(share.pool, share.subvol_name)
+                cur_rusage, cur_eusage = share_usage(share.pool, qid)
                 if (new_size < cur_rusage):
                     e_msg = ('Unable to resize because requested new size(%dKB) '
                              'is less than current usage(%dKB) of the share.' %
                              (new_size, cur_rusage))
                     handle_exception(Exception(e_msg), request)
-                update_quota(share.pool, disk.name, share.pqgroup, new_size * 1024)
+                update_quota(share.pool, share.pqgroup, new_size * 1024)
                 share.size = new_size
             if ('compression' in request.data):
                 new_compression = self._validate_compression(request)
@@ -322,9 +321,8 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
 
             self._rockon_check(request, sname)
 
-            pool_device = Disk.objects.filter(pool=share.pool)[0].name
             try:
-                remove_share(share.pool, pool_device, share.subvol_name, share.pqgroup)
+                remove_share(share.pool, share.subvol_name, share.pqgroup)
             except Exception, e:
                 logger.exception(e)
                 e_msg = ('Failed to delete the Share(%s). Error from the OS: %s' % (sname, e.__str__()))

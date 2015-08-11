@@ -275,14 +275,13 @@ class ProcRetreiver(Process):
             total_reclaimable = 0
             try:
                 #  get usage of all shares in this pool
-                pool_device = Disk.objects.filter(pool=p)[0].name
                 share_map = {}
                 snap_map = {}
                 for share in Share.objects.filter(pool=p):
                     share_map[share.qgroup] = share.name
                     for snap in Snapshot.objects.filter(share=share):
                         snap_map[snap.qgroup] = snap.real_name
-                usaged = shares_usage(p, pool_device, share_map, snap_map)
+                usaged = shares_usage(p, share_map, snap_map)
                 for s in usaged.keys():
                     try:
                         total_reclaimable += (

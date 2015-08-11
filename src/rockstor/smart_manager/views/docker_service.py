@@ -64,8 +64,7 @@ class DockerServiceView(BaseServiceDetailView):
             share = self._validate_root(request, config['root_share'])
             mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
             if (not is_share_mounted(share.name)):
-                pool_device = Disk.objects.filter(pool=share.pool)[0].name
-                mount_share(share, pool_device, mnt_pt)
+                mount_share(share, mnt_pt)
 
             inf = ('%s/docker.service' % (settings.CONFROOT))
             outf = '/etc/systemd/system/docker.service'
