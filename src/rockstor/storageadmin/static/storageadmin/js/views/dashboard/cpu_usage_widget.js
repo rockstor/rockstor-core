@@ -200,29 +200,20 @@ CpuUsageWidget = RockStorWidgetView.extend({
     }
 
     if (_this.cpuData.length > 0) {
-      console.log(_this.cpuData);
       while (new Date(_this.cpuData[0].ts).getTime() < _this.t2-(_this.windowLength + _this.updateFreq)) {
         _this.cpuData.shift();
       }
     }
 
     var currentTime = new Date().getTime();
-    var diff = currentTime - _this.startTime;
-    if (diff > _this.updateFreq) {
-      if (_this.cpuData.length > 0) {
-        _this.t1 = new Date(_this.cpuData[_this.cpuData.length-1].ts).getTime();
-      } else {
-        _this.t1 = _this.t1 + diff;
-      }
-      _this.t2 = _this.t2 + diff;
+
+    if (_this.cpuData.length > 0) {
+      _this.t1 = new Date(_this.cpuData[_this.cpuData.length-1].ts).getTime();
     } else {
-        if (_this.cpuData.length > 0) {
-      	  _this.t1 = new Date(_this.cpuData[_this.cpuData.length-1].ts).getTime();
-        } else {
-      	  _this.t1 = _this.t1 + _this.updateFreq;
-        }
-        _this.t2 = _this.t2 + _this.updateFreq;
+      _this.t1 = _this.t1 + _this.updateFreq;
     }
+    _this.t2 = _this.t2 + _this.updateFreq;
+
   },
 
   cleanup: function() {
