@@ -51,7 +51,7 @@ TopSharesWidget = RockStorWidgetView.extend({
         _this.setGraphDimensions();
         _this.renderTopShares();
       }
-    })
+    });
     return this;
   },
 

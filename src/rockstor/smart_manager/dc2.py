@@ -11,6 +11,7 @@ from django.conf import settings
 from system.osi import (uptime, kernel_info)
 
 import psutil
+import re
 from datetime import datetime
 from django.utils.timezone import utc
 from storageadmin.models import Disk
@@ -116,6 +117,56 @@ class WidgetNamespace(BaseNamespace, BroadcastMixin):
                 gevent.sleep(1)
         # Kick things off
         get_stats()
+
+
+class MemoryWidgetNamespace(BaseNamespace, BroadcastMixin):
+    def recv_disconnect(self):
+        self.disconnect()
+
+    def on_send_data(self):
+        self.spawn(self.send_meminfo_data)
+        logger.debug('sending data!')
+
+    def send_meminfo_data(self):
+        logger.debug('meminfo sent')
+        while True:
+            stats_file = '/proc/meminfo'
+            (total, free, buffers, cached, swap_total, swap_free, active, inactive,
+             dirty,) = (None,) * 9
+            with open(stats_file) as sfo:
+                for l in sfo.readlines():
+                    if (re.match('MemTotal:', l) is not None):
+                        total = int(l.split()[1])
+                    elif (re.match('MemFree:', l) is not None):
+                        free = int(l.split()[1])
+                    elif (re.match('Buffers:', l) is not None):
+                        buffers = int(l.split()[1])
+                    elif (re.match('Cached:', l) is not None):
+                        cached = int(l.split()[1])
+                    elif (re.match('SwapTotal:', l) is not None):
+                        swap_total = int(l.split()[1])
+                    elif (re.match('SwapFree:', l) is not None):
+                        swap_free = int(l.split()[1])
+                    elif (re.match('Active:', l) is not None):
+                        active = int(l.split()[1])
+                    elif (re.match('Inactive:', l) is not None):
+                        inactive = int(l.split()[1])
+                    elif (re.match('Dirty:', l) is not None):
+                        dirty = int(l.split()[1])
+                        break  # no need to look at lines after dirty.
+            ts = datetime.utcnow().replace(tzinfo=utc)
+            self.emit('widgets:memory', {
+                'key': 'widgets:memory', 'data': {'results':[{
+                    'total': total, 'free': free, 'buffers': buffers,
+                    'cached': cached, 'swap_total': swap_total,
+                    'swap_free': swap_free, 'active': active,
+                    'inactive': inactive, 'dirty': dirty, 'ts': str(ts)
+                    }
+                  ]
+                }
+            })
+
+            gevent.sleep(5)
 
 
 class ServicesNamespace(BaseNamespace, BroadcastMixin):
@@ -252,7 +303,8 @@ class Application(object):
         if path.startswith("socket.io"):
             socketio_manage(environ, {'/services': ServicesNamespace,
                                       '/sysinfo': SysinfoNamespace,
-                                      '/widgets': WidgetNamespace})
+                                      '/widgets': WidgetNamespace,
+                                      '/memory-widgets': MemoryWidgetNamespace})
 
 
 def not_found(start_response):
