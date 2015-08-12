@@ -68,13 +68,11 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
             "key": "sysinfo:connected", "data": "connected"
         })
         self.start = True
+        gevent.spawn(self.update_storage_state)
         gevent.spawn(self.send_uptime)
         gevent.spawn(self.send_kernel_info)
         gevent.spawn(self.update_rockons)
-        gevent.spawn(self.refresh_disks)
-        gevent.spawn(self.refresh_pools)
-        gevent.spawn(self.refresh_shares)
-        gevent.spawn(self.refresh_snapshots)
+
 
     # Run on every disconnect
     def recv_disconnect(self):
@@ -113,41 +111,26 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
             logger.debug('failed to update Rock-on metadata. low-level '
                          'exception: %s' % e.__str__())
 
-    def refresh_disks(self):
-        try:
-            url = '%s/disks/scan' % self.base_url
-            api_call(url, data=None, calltype='post', save_error=False)
-            logger.debug('Disk scan finished')
-        except Exception, e:
-            logger.error('failed to perform disk scan. low-level exception: '
-                         '%s' % e.__str__())
+    def update_storage_state(self):
+        resources = [{'url': '%s/disks/scan' % self.base_url,
+                      'success': 'Disk state updated successfully',
+                      'error': 'Failed to update disk state.'},
+                     {'url': '%s/commands/refresh-pool-state' % self.base_url,
+                      'success': 'Pool state updated successfully',
+                      'error': 'Failed to update pool state.'},
+                     {'url': '%s/commands/refresh-share-state' % self.base_url,
+                      'success': 'Share state updated successfully',
+                      'error': 'Failed to update share state.'},
+                     {'url': '%s/commands/refresh-snapshot-state' % self.base_url,
+                      'success': 'Snapshot state updated successfully',
+                      'error': 'Failed to update snapshot state.'},]
+        for r in resources:
+            try:
+                api_call(r['url'], data=None, calltype='post', save_error=False)
+                logger.debug(r['success'])
+            except Exception, e:
+                logger.error('%s. exception: %s' % (r['error'], e.__str__()))
 
-    def refresh_pools(self):
-        try:
-            url = '%s/commands/refresh-pool-state' % self.base_url
-            api_call(url, data=None, calltype='post', save_error=False)
-            logger.debug('Pool state refreshed successfully.')
-        except Exception, e:
-            logger.error('failed to refresh pool state. low-level exception: '
-                         '%s' % e.__str__())
-
-    def refresh_shares(self):
-        try:
-            url = '%s/commands/refresh-share-state' % self.base_url
-            api_call(url, data=None, calltype='post', save_error=False)
-            logger.debug('Share state refreshed successfully.')
-        except Exception, e:
-            logger.error('failed to refresh share state. low-level '
-                         'exception: %s' % e.__str__())
-
-    def refresh_snapshots(self):
-        try:
-            url = '%s/commands/refresh-snapshot-state' % self.base_url
-            api_call(url, data=None, calltype='post', save_error=False)
-            logger.debug('Snapshot state refreshed successfully.')
-        except Exception, e:
-            logger.error('failed to refresh snapshot state. exception: %s'
-                         % e.__str__())
 
 class Application(object):
     def __init__(self):
