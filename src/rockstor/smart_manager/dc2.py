@@ -6,11 +6,10 @@ from socketio.server import SocketIOServer
 from socketio import socketio_manage
 from socketio.namespace import BaseNamespace
 from socketio.mixins import BroadcastMixin
-
 from django.conf import settings
 from system.osi import (uptime, kernel_info)
-
 from system.services import service_status
+from cli.rest_util import api_call
 import logging
 logger = logging.getLogger(__name__)
 
@@ -56,6 +55,7 @@ class ServicesNamespace(BaseNamespace, BroadcastMixin):
 class SysinfoNamespace(BaseNamespace, BroadcastMixin):
     start = False
     supported_kernel = settings.SUPPORTED_KERNEL_VERSION
+    base_url = 'https://localhost/api'
 
     # Called before the connection is established
     def initialize(self):
@@ -71,6 +71,7 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
         gevent.spawn(self.send_uptime)
         gevent.spawn(self.send_kernel_info)
         gevent.spawn(self.update_rockons)
+        gevent.spawn(self.refresh_disks)
 
     # Run on every disconnect
     def recv_disconnect(self):
@@ -101,15 +102,22 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
                 self.error('unsupported_kernel', str(e))
 
     def update_rockons(self):
-        from cli.rest_util import api_call
         try:
-            url = 'https://localhost/api/rockons/update'
+            url = '%s/rockons/update' % self.base_url
             api_call(url, data=None, calltype='post', save_error=False)
             logger.debug('Updated Rock-on metadata')
         except Exception, e:
             logger.debug('failed to update Rock-on metadata. low-level '
                          'exception: %s' % e.__str__())
 
+    def refresh_disks(self):
+        try:
+            url = '%s/disks/scan' % self.base_url
+            api_call(url, data=None, calltype='post', save_error=False)
+            logger.debug('Disk scan finished')
+        except Exception, e:
+            logger.debug('failed to perform disk scan. low-level exception: '
+                         '%s' % e.__str__())
 
 class Application(object):
     def __init__(self):
