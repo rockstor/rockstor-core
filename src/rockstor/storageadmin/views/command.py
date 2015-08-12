@@ -30,11 +30,11 @@ from system.osi import (uptime, refresh_nfs_exports, update_check,
                         update_run, current_version, kernel_info)
 from fs.btrfs import (mount_share, device_scan, mount_root, qgroup_create,
                       get_pool_info, pool_raid, pool_usage, shares_info,
-                      share_usage)
+                      share_usage, snaps_info)
 from system.ssh import (sftp_mount_map, sftp_mount)
 from system.services import (systemctl, join_winbind_domain, ads_join_status)
 from system.osi import (is_share_mounted, system_shutdown, system_reboot)
-from storageadmin.models import (Share, Disk, NFSExport, SFTP, Pool)
+from storageadmin.models import (Share, Disk, NFSExport, SFTP, Pool, Snapshot)
 from smart_manager.models import ShareUsage
 from nfs_helpers import create_nfs_export_input
 from storageadmin.util import handle_exception
@@ -126,19 +126,19 @@ class CommandView(APIView):
             logger.debug('Bootstrap operations completed')
             return Response()
 
-        elif (command == 'utcnow'):
+        if (command == 'utcnow'):
             return Response(datetime.utcnow().replace(tzinfo=utc))
 
-        elif (command == 'uptime'):
+        if (command == 'uptime'):
             return Response(uptime())
 
-        elif (command == 'kernel'):
+        if (command == 'kernel'):
             try:
                 return Response(kernel_info(settings.SUPPORTED_KERNEL_VERSION))
             except Exception, e:
                 handle_exception(e, request)
 
-        elif (command == 'update-check'):
+        if (command == 'update-check'):
             try:
                 return Response(update_check())
             except Exception, e:
@@ -146,7 +146,7 @@ class CommandView(APIView):
                 logger.exception(e)
                 handle_exception(Exception(e_msg), request)
 
-        elif (command == 'update'):
+        if (command == 'update'):
             try:
                 update_run()
                 return Response('Done')
@@ -155,7 +155,7 @@ class CommandView(APIView):
                 logger.exception(e)
                 handle_exception(Exception(e_msg), request)
 
-        elif (command == 'current-version'):
+        if (command == 'current-version'):
             try:
                 return Response(current_version())
             except Exception, e:
@@ -164,7 +164,7 @@ class CommandView(APIView):
                 logger.exception(e)
                 handle_exception(Exception(e_msg), request)
 
-        elif (command == 'join-winbind-domain'):
+        if (command == 'join-winbind-domain'):
             try:
                 systemctl('winbind', 'restart')
                 username = request.data['administrator']
@@ -174,7 +174,7 @@ class CommandView(APIView):
             except Exception, e:
                 handle_exception(e, request)
 
-        elif (command == 'winbind-domain-status'):
+        if (command == 'winbind-domain-status'):
             msg = 'Yes'
             try:
                 username = request.data['administrator']
@@ -191,7 +191,7 @@ class CommandView(APIView):
             finally:
                 return Response(msg)
 
-        elif (command == 'shutdown'):
+        if (command == 'shutdown'):
             msg = ('The system will be shutdown after 1 minute')
             try:
                 request.session.flush()
@@ -204,7 +204,7 @@ class CommandView(APIView):
             finally:
                 return Response(msg)
 
-        elif (command == 'reboot'):
+        if (command == 'reboot'):
             msg = ('The system will reboot after 1 minute')
             try:
                 request.session.flush()
@@ -216,10 +216,10 @@ class CommandView(APIView):
             finally:
                 return Response(msg)
 
-        elif (command == 'current-user'):
+        if (command == 'current-user'):
             return Response(request.user.username)
 
-        elif (command == 'auto-update-status'):
+        if (command == 'auto-update-status'):
             status = True
             try:
                 systemctl('yum-cron', 'status')
@@ -228,7 +228,7 @@ class CommandView(APIView):
             finally:
                 return Response({'enabled': status, })
 
-        elif (command == 'enable-auto-update'):
+        if (command == 'enable-auto-update'):
             try:
                 install_pkg('yum-cron')
                 systemctl('yum-cron', 'enable')
@@ -240,7 +240,7 @@ class CommandView(APIView):
             finally:
                 return Response({'enabled': True, })
 
-        elif (command == 'disable-auto-update'):
+        if (command == 'disable-auto-update'):
             try:
                 systemctl('yum-cron', 'stop')
                 systemctl('yum-cron', 'disable')
@@ -252,7 +252,7 @@ class CommandView(APIView):
             finally:
                 return Response({'enabled': False, })
 
-        elif (command == 'refresh-pool-state'):
+        if (command == 'refresh-pool-state'):
             for p in Pool.objects.all():
                 fd = p.disk_set.first()
                 if (fd is None):
@@ -265,7 +265,7 @@ class CommandView(APIView):
                 p.save()
             return Response()
 
-        elif (command == 'refresh-share-state'):
+        if (command == 'refresh-share-state'):
             for p in Pool.objects.all():
                 disk = Disk.objects.filter(pool=p)[0].name
                 shares = [s.name for s in Share.objects.filter(pool=p)]
@@ -320,4 +320,39 @@ class CommandView(APIView):
                                     subvol_name=s)
                         nso.save()
                     mount_share(nso, '%s%s' % (settings.MNT_PT, s))
+            return Response()
+
+        if (command == 'refresh-snapshot-state'):
+            for share in Share.objects.all():
+                snaps_d = snaps_info('%s%s' % (settings.MNT_PT, share.pool.name),
+                                     share.name)
+                disk = Disk.objects.filter(pool=share.pool)[0].name
+                snaps = [s.name for s in Snapshot.objects.filter(share=share)]
+                for s in snaps:
+                    if (s not in snaps_d):
+                        Snapshot.objects.get(share=share,name=s).delete()
+                for s in snaps_d:
+                    if (s in snaps):
+                        so = Snapshot.objects.get(share=share, name=s)
+                    else:
+                        so = Snapshot(share=share, name=s, real_name=s,
+                                      writable=snaps_d[s][1], qgroup=snaps_d[s][0])
+                    rusage, eusage = share_usage(share.pool, snaps_d[s][0])
+                    ts = datetime.utcnow().replace(tzinfo=utc)
+                    if (rusage != so.rusage or eusage != so.eusage):
+                        so.rusage = rusage
+                        so.eusage = eusage
+                        su = ShareUsage(name=s, r_usage=rusage, e_usage=eusage, ts=ts)
+                        su.save()
+                    else:
+                        try:
+                            su = ShareUsage.objects.filter(name=s).latest('id')
+                            su.ts = ts
+                            su.count += 1
+                        except ShareUsage.DoesNotExist:
+                            su = ShareUsage(name=s, r_usage=rusage, e_usage=eusage,
+                                            ts=ts)
+                        finally:
+                            su.save()
+                    so.save()
             return Response()

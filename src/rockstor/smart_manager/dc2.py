@@ -74,6 +74,7 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
         gevent.spawn(self.refresh_disks)
         gevent.spawn(self.refresh_pools)
         gevent.spawn(self.refresh_shares)
+        gevent.spawn(self.refresh_snapshots)
 
     # Run on every disconnect
     def recv_disconnect(self):
@@ -138,6 +139,15 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
         except Exception, e:
             logger.error('failed to refresh share state. low-level '
                          'exception: %s' % e.__str__())
+
+    def refresh_snapshots(self):
+        try:
+            url = '%s/commands/refresh-snapshot-state' % self.base_url
+            api_call(url, data=None, calltype='post', save_error=False)
+            logger.debug('Snapshot state refreshed successfully.')
+        except Exception, e:
+            logger.error('failed to refresh snapshot state. exception: %s'
+                         % e.__str__())
 
 class Application(object):
     def __init__(self):
