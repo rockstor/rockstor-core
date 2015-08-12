@@ -326,6 +326,7 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
     if (this.timeoutId) {
       clearTimeout(this.timeoutId);
     }
+    RockStorSocket.removeOneListener('widgets');
   },
 
   resize: function() {
