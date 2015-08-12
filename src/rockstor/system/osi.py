@@ -468,6 +468,7 @@ def get_disk_serial(device_name, test):
     :param test:
     :return: 12345678901234567890
     """
+    # logger.info('get_disk_serial called with device name %s' % device_name)
     serial_num = ''
     line_fields = []
     if test is None:
@@ -507,6 +508,7 @@ def get_disk_serial(device_name, test):
                     serial_num = line_fields[2]
     # should return one of the following in order of priority
     # SCSI_SERIAL, SERIAL_SHORT, SERIAL
+    # logger.info('get_disk_serial returning serial # %s' % serial_num)
     return serial_num
 
 
