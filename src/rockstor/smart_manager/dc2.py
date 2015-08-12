@@ -166,7 +166,7 @@ class MemoryWidgetNamespace(BaseNamespace, BroadcastMixin):
                 }
             })
 
-            gevent.sleep(5)
+            gevent.sleep(1)
 
 
 class ServicesNamespace(BaseNamespace, BroadcastMixin):

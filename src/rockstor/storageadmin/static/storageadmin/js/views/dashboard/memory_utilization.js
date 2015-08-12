@@ -29,10 +29,9 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
 
   initialize: function() {
     RockStorSocket.widgets = io.connect('/memory-widgets', {'secure': true, 'force new connection': true});
-    RockStorSocket.addListener(this.update, this, 'widgets:memory');
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.dashboard_widgets_memory_utilization;
-    this.updateFreq = 100;
+    this.updateFreq = 1000;
     this.dataLength = 60;
     this.windowLength = 60000;
     this.currentTs = null;
@@ -59,10 +58,9 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
     this.free = { name: 'free', values: [] };
     this.layers = [this.used, this.cached, this.buffers, this.free];
     this.setDimensions();
-    RockStorSocket.widgets.emit('send_data');
     this.setupSvg(svgEl);
     this.initial = true;
-
+    this.update();
   },
 
   setDimensions: function() {
@@ -133,89 +131,106 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
   },
 
   update: function(data) {
-    console.log('in update', data);
     var _this = this;
-    _this.modifyData(data);
-    _this.truncateData();
-    _this.x.domain(d3.extent(_this.used.values, function(d) { return new Date(d.date).getTime(); }));
-    var utilTypes = _this.stack(_this.layers);
-    var utilType = _this.svg.selectAll('.utilType')
-          .data(utilTypes)
-          .enter()
-          .append('g')
-          .attr("clip-path", "url(#clip)")
-          .attr('class', '.utilType');
+    var pageSizeStr = '&page_size=1';
+    if (this.initial) {
+      pageSizeStr = '&page_size=' + this.dataLength;
+      this.initial = false;
+    }
+    /* TODO: this seems unnecessary given sockets but it works */
+    $.ajax({
+      url: '/api/sm/sprobes/meminfo/?format=json' + pageSizeStr, 
+      type: "GET",
+      dataType: "json",
+      global: false, // dont show global loading indicator
+      success: function(data, status, xhr) {
+        _this.modifyData(data);
+        _this.truncateData();
+        _this.x.domain(d3.extent(_this.used.values, function(d) { return new Date(d.date).getTime(); }));
+        var utilTypes = _this.stack(_this.layers);
+        var utilType = _this.svg.selectAll('.utilType')
+        .data(utilTypes)
+        .enter()
+        .append('g')
+        .attr("clip-path", "url(#clip)")
+        .attr('class', '.utilType');
 
-    _this.path = utilType.append('path')
-      .attr("class", "area")
-      .attr("d", function(d) { return _this.area(d.values); })
-      .style("fill", function(d) { return _this.color[d.name]; });
+        _this.path = utilType.append('path')
+        .attr("class", "area")
+        .attr("d", function(d) { return _this.area(d.values); })
+        .style("fill", function(d) { return _this.color[d.name]; });
 
-    var textData = _this.layers.map(function(d) { return {name: d.name, value: d.values[d.values.length -1]}; }).reverse();
+        var textData = _this.layers.map(function(d) { return {name: d.name, value: d.values[d.values.length -1]}; }).reverse();
 
-    _this.utilValues = _this.svg.selectAll(".utilValue")
-      .data(textData)
-      .enter()
-      .append('g')
-      .attr('class', 'utilValue')
-      .attr("transform", function(d, i) { return "translate(" + _this.width + "," + (20*(i+1)) + ")";});
+        _this.utilValues = _this.svg.selectAll(".utilValue")
+        .data(textData)
+        .enter()
+        .append('g')
+        .attr('class', 'utilValue')
+        .attr("transform", function(d, i) { return "translate(" + _this.width + "," + (20*(i+1)) + ")";});
 
-    _this.utilValues.append('rect')
-      .attr('class', 'utilValueColor')
-      .attr('x', -20)
-      .attr('y', -10)
-      .attr('width', 10)
-      .attr('height', 10)
-      .attr('fill', function(d) { return _this.color[d.name];})
-      .attr('stroke', '#000');
+        _this.utilValues.append('rect')
+        .attr('class', 'utilValueColor')
+        .attr('x', -20)
+        .attr('y', -10)
+        .attr('width', 10)
+        .attr('height', 10)
+        .attr('fill', function(d) { return _this.color[d.name];})
+        .attr('stroke', '#000');
 
-    _this.utilValues.append("text")
-      .attr("class", "utilValueText")
-      .attr("x", -26)
-      .text(function(d) { return d.name + " " + d3.format(".0%")(d.value.y); });
+        _this.utilValues.append("text")
+        .attr("class", "utilValueText")
+        .attr("x", -26)
+        .text(function(d) { return d.name + " " + d3.format(".0%")(d.value.y); });
 
-    _this.xAxisG = _this.svg.append("g")
-      .attr("class", "x axis")
-      .attr("transform", "translate(0," + _this.height + ")")
-      .call(_this.xAxis);
+        _this.xAxisG = _this.svg.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + _this.height + ")")
+        .call(_this.xAxis);
 
-    _this.svg.append("g")
-      .attr("class", "y axis")
-      .call(_this.yAxis);
+        _this.svg.append("g")
+        .attr("class", "y axis")
+        .call(_this.yAxis);
 
-    // Swap Usage
-    _this.swapX = d3.scale.linear().range([0,_this.swapWidth]).domain([0,_this.swapTotal]);
-    _this.swapXAxis = d3.svg.axis()
-      .scale(_this.swapX)
-      .orient("bottom")
-      .ticks(3)
-      .tickFormat(function(d) { return humanize.filesize(d*1024); });
+        // Swap Usage
+        _this.swapX = d3.scale.linear().range([0,_this.swapWidth]).domain([0,_this.swapTotal]);
+        _this.swapXAxis = d3.svg.axis()
+        .scale(_this.swapX)
+        .orient("bottom")
+        .ticks(3)
+        .tickFormat(function(d) { return humanize.filesize(d*1024); });
 
-    _this.swapXAxisG = _this.swapSvg.append("g")
-      .attr("class", "x axis")
-      .attr("transform", "translate(0," + _this.swapHeight + ")")
-      .call(_this.swapXAxis);
+        _this.swapXAxisG = _this.swapSvg.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + _this.swapHeight + ")")
+        .call(_this.swapXAxis);
 
-    _this.swapSvg.append('rect')
-      .attr('class', 'swapRect')
-      .attr('x', 0)
-      .attr('y', 0)
-      .attr('width', _this.swapX(_this.swapUsage))
-      .attr('height', _this.swapHeight-2)
-      .attr('fill', function(d) { return '#D0D8DB';})
-      .attr('stroke', '#aaa');
+        _this.swapSvg.append('rect')
+        .attr('class', 'swapRect')
+        .attr('x', 0)
+        .attr('y', 0)
+        .attr('width', _this.swapX(_this.swapUsage))
+        .attr('height', _this.swapHeight-2)
+        .attr('fill', function(d) { return '#D0D8DB';})
+        .attr('stroke', '#aaa');
 
-    _this.swapSvg.append('text')
-      .attr('class', 'swapText')
-      .attr('x', 2)
-      .attr('y', _this.swapHeight/2 - 2)
-      .text(humanize.filesize(_this.swapUsage*1024) + ' (' + d3.format(".0%")(_this.swapUsagePc/100) + ')');
+        _this.swapSvg.append('text')
+        .attr('class', 'swapText')
+        .attr('x', 2)
+        .attr('y', _this.swapHeight/2 - 2)
+        .text(humanize.filesize(_this.swapUsage*1024) + ' (' + d3.format(".0%")(_this.swapUsagePc/100) + ')');
 
-    _this.tick(_this, data);
+        RockStorSocket.addListener(_this.tick, _this, 'widgets:memory');
+        RockStorSocket.widgets.emit('send_data');
+      },
+      error: function(xhr, status, error) {
+        logger.debug(error);
+      }
+    });
   },
 
-  tick: function(context, data) {
-    var _this = context;
+  tick: function(data) {
+    var _this = this;
     _this.modifyData(data);
     _this.stack(_this.layers);
     var min_ts = new Date(_this.dataBuffer[0].ts).getTime();
