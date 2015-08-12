@@ -28,6 +28,8 @@
 DiskUtilizationWidget = RockStorWidgetView.extend({
 
   initialize: function() {
+    RockStorSocket.widgets = io.connect('/widgets', {'secure': true,
+                                                     'force new connection': true});
     var _this = this;
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.dashboard_widgets_disk_utilization;
@@ -114,10 +116,6 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
         shadowSize: 0	// Drawing is faster without shadows
 			}
     };
-    // Start and end timestamps for api call
-    this.windowLength = 300000;
-    this.t2 = RockStorGlobals.currentTimeOnServer.getTime()-30000;
-    this.t1 = this.t2 - this.windowLength;
   },
 
   render: function() {
@@ -160,7 +158,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     this.disks.fetch({
       success: function(collection, response, options) {
         _this.initializeDisksData();
-        _this.getData(_this);
+        RockStorSocket.addListener(_this.getData, _this, 'widgets:top_disks');
       }
     });
     return this;
@@ -169,12 +167,8 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
   // initialize disksData with disk names and empty value arrays
   initializeDisksData: function() {
     var _this = this;
-    // TODO remove after test
-    //var disks = ['sdb','sdc','sdd','sde'];
     this.disks.each(function(disk) {
-    //_.each(disks, function(disk) {
       var name = disk.get('name');
-      //var name = disk;
       _this.disksData[name] = [];
       for (var i=0; i<_this.dataLength; i++) {
         _this.disksData[name].push(_this.genEmptyDiskData());
@@ -196,41 +190,10 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     }
   },
 
-  getData: function(context) {
-    var _this = context;
+  getData: function(data) {
+    var _this = this;
     _this.startTime = new Date().getTime();
-    var t1Str = moment(_this.t1).toISOString();
-    var t2Str = moment(_this.t2).toISOString();
-    var pageSizeStr = '&page_size=' + RockStorGlobals.maxPageSize;
-    _this.jqXhr = $.ajax({
-      url: '/api/sm/sprobes/diskstat/?format=json' + pageSizeStr + '&t1=' +
-        t1Str + '&t2=' + t2Str,
-      type: "GET",
-      dataType: "json",
-      global: false, // dont show global loading indicator
-      success: function(data, status, xhr) {
-        _this.update(data.results);
-        // Check time interval from beginning of last call
-        // and call getData or setTimeout accordingly
-        var currentTime = new Date().getTime();
-        var diff = currentTime - _this.startTime;
-        if (diff > _this.updateFreq) {
-          _this.t1 = _this.t1 + diff;
-          _this.t2 = _this.t2 + diff;
-          _this.getData(_this);
-        } else {
-          _this.timeoutId = window.setTimeout( function() {
-            _this.t1 = _this.t1 + _this.updateFreq;
-            _this.t2 = _this.t2 + _this.updateFreq;
-            _this.getData(_this);
-          }, _this.updateFreq - diff);
-        }
-      },
-      error: function(xhr, status, error) {
-      }
-    });
-
-
+    _this.update(data);
   },
 
   update: function(data) {
@@ -525,6 +488,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
   cleanup: function() {
     if (this.jqXhr) this.jqXhr.abort();
     if (this.timeoutId) window.clearTimeout(this.timeoutId);
+    RockStorSocket.removeOneListener('widgets');
   }
 
 });

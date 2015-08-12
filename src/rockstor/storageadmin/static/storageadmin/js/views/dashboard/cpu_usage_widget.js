@@ -425,9 +425,8 @@ CpuUsageWidget = RockStorWidgetView.extend({
   },
 
   updateGraph: function(data) {
-    var _this = this;
-    this.x.domain([this.t2-(this.windowLength + this.updateFreq), this.t2 - this.updateFreq]);
-
+    var now = new Date();
+    this.x.domain([new Date(now.setHours(now.getHours() - 8)), this.t2 - this.updateFreq]);
     //this.cpuData.push.apply(this.cpuData, data);
     this.svgG.select(".line")
     .attr("d", this.line)
@@ -447,7 +446,9 @@ CpuUsageWidget = RockStorWidgetView.extend({
     this.path.transition()
     .duration(this.transDuration)
     .ease("linear")
-    .attr("transform", "translate(" + this.x(this.t2 - (this.windowLength+2*this.updateFreq)) + ")");
+      .attr("transform", "translate(" + this.x(this.t2 - (this.windowLength+2*this.updateFreq)) + ")");
+
+    console.log(this.t2 - (this.windowLength + 2*this.updateFreq));
 
   },
 
