@@ -28,7 +28,8 @@ from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
 from system.osi import (uptime, refresh_nfs_exports, update_check,
                         update_run, current_version, kernel_info)
-from fs.btrfs import (mount_share, device_scan, mount_root, qgroup_create)
+from fs.btrfs import (mount_share, device_scan, mount_root, qgroup_create,
+                      get_pool_info, pool_raid, pool_usage)
 from system.ssh import (sftp_mount_map, sftp_mount)
 from system.services import (systemctl, join_winbind_domain, ads_join_status)
 from system.osi import (is_share_mounted, system_shutdown, system_reboot)
@@ -41,7 +42,6 @@ from django.conf import settings
 from share_helpers import sftp_snap_toggle
 from oauth2_provider.ext.rest_framework import OAuth2Authentication
 from system.pkg_mgmt import install_pkg
-
 import logging
 logger = logging.getLogger(__name__)
 
@@ -247,3 +247,16 @@ class CommandView(APIView):
                 handle_exception(Exception(msg), request)
             finally:
                 return Response({'enabled': False, })
+
+        elif (command == 'refresh-pool-state'):
+            for p in Pool.objects.all():
+                fd = p.disk_set.first()
+                if (fd is None):
+                    p.delete()
+                mount_root(p)
+                pool_info = get_pool_info(fd.name)
+                p.name = pool_info['label']
+                p.raid = pool_raid('%s%s' % (settings.MNT_PT, p.name))['data']
+                p.size = pool_usage('%s%s' % (settings.MNT_PT, p.name))[0]
+                p.save()
+            return Response()

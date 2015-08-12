@@ -72,6 +72,7 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
         gevent.spawn(self.send_kernel_info)
         gevent.spawn(self.update_rockons)
         gevent.spawn(self.refresh_disks)
+        gevent.spawn(self.refresh_pools)
 
     # Run on every disconnect
     def recv_disconnect(self):
@@ -116,7 +117,16 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
             api_call(url, data=None, calltype='post', save_error=False)
             logger.debug('Disk scan finished')
         except Exception, e:
-            logger.debug('failed to perform disk scan. low-level exception: '
+            logger.error('failed to perform disk scan. low-level exception: '
+                         '%s' % e.__str__())
+
+    def refresh_pools(self):
+        try:
+            url = '%s/commands/refresh-pool-state' % self.base_url
+            api_call(url, data=None, calltype='post', save_error=False)
+            logger.debug('Pool scan finished')
+        except Exception, e:
+            logger.error('failed to refresh pool state. low-level exception: '
                          '%s' % e.__str__())
 
 class Application(object):

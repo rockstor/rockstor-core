@@ -171,19 +171,6 @@ class PoolMixin(object):
             handle_exception(Exception(e_msg), request)
         return Response(PoolInfoSerializer(pool).data)
 
-    @transaction.atomic
-    def _refresh_pool_state(self, pool):
-        fd = pool.disk_set.first()
-        if (fd is None):
-            return pool.delete()
-        mount_root(pool)
-        pool_info = get_pool_info(fd.name)
-        pool.name = pool_info['label']
-        pool.raid = pool_raid('%s%s' % (settings.MNT_PT, pool.name))['data']
-        pool.size = pool_usage('%s%s' % (settings.MNT_PT, pool.name))[0]
-        pool.save()
-        return pool
-
     def _balance_start(self, pool, force=False, convert=None):
         mnt_pt = mount_root(pool)
         start_balance.async(mnt_pt, force=force, convert=convert)
@@ -200,8 +187,6 @@ class PoolMixin(object):
 
 class PoolListView(PoolMixin, rfc.GenericView):
     def get_queryset(self, *args, **kwargs):
-        for p in Pool.objects.all():
-            self._refresh_pool_state(p)
         sort_col = self.request.query_params.get('sortby', None)
         if (sort_col is not None and sort_col == 'usage'):
             reverse = self.request.query_params.get('reverse', 'no')
@@ -290,8 +275,7 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
     def get(self, *args, **kwargs):
         try:
             pool = Pool.objects.get(name=self.kwargs['pname'])
-            data = self._refresh_pool_state(pool)
-            serialized_data = PoolInfoSerializer(data)
+            serialized_data = PoolInfoSerializer(pool)
             return Response(serialized_data.data)
         except Pool.DoesNotExist:
             return Response()
