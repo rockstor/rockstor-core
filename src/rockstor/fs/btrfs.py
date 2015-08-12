@@ -719,6 +719,8 @@ def scan_disks(min_size):
     disks = []
     serials = []
     root_serial = None
+    # to use udevadm for serial # rather than lsblk make this True
+    always_use_udev_serial = False
     for l in o:
         if (re.match('NAME', l) is None):
             continue
@@ -780,7 +782,7 @@ def scan_disks(min_size):
                 continue
             if (dmap['SIZE'] < min_size):
                 continue
-            if (dmap['SERIAL'] == ''):
+            if (dmap['SERIAL'] == '' or always_use_udev_serial):
                 # lsblk fails to retrieve SERIAL from VirtIO drives and some
                 # sdcard devices so try specialized function.
                 # dmap['SERIAL'] = get_virtio_disk_serial(dmap['NAME'])
