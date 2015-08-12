@@ -73,6 +73,7 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
         gevent.spawn(self.update_rockons)
         gevent.spawn(self.refresh_disks)
         gevent.spawn(self.refresh_pools)
+        gevent.spawn(self.refresh_shares)
 
     # Run on every disconnect
     def recv_disconnect(self):
@@ -124,10 +125,19 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
         try:
             url = '%s/commands/refresh-pool-state' % self.base_url
             api_call(url, data=None, calltype='post', save_error=False)
-            logger.debug('Pool scan finished')
+            logger.debug('Pool state refreshed successfully.')
         except Exception, e:
             logger.error('failed to refresh pool state. low-level exception: '
                          '%s' % e.__str__())
+
+    def refresh_shares(self):
+        try:
+            url = '%s/commands/refresh-share-state' % self.base_url
+            api_call(url, data=None, calltype='post', save_error=False)
+            logger.debug('Share state refreshed successfully.')
+        except Exception, e:
+            logger.error('failed to refresh share state. low-level '
+                         'exception: %s' % e.__str__())
 
 class Application(object):
     def __init__(self):

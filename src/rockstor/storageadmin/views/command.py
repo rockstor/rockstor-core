@@ -29,16 +29,19 @@ from rest_framework.permissions import IsAuthenticated
 from system.osi import (uptime, refresh_nfs_exports, update_check,
                         update_run, current_version, kernel_info)
 from fs.btrfs import (mount_share, device_scan, mount_root, qgroup_create,
-                      get_pool_info, pool_raid, pool_usage)
+                      get_pool_info, pool_raid, pool_usage, shares_info,
+                      share_usage)
 from system.ssh import (sftp_mount_map, sftp_mount)
 from system.services import (systemctl, join_winbind_domain, ads_join_status)
 from system.osi import (is_share_mounted, system_shutdown, system_reboot)
 from storageadmin.models import (Share, Disk, NFSExport, SFTP, Pool)
+from smart_manager.models import ShareUsage
 from nfs_helpers import create_nfs_export_input
 from storageadmin.util import handle_exception
 from datetime import datetime
 from django.utils.timezone import utc
 from django.conf import settings
+from django.db import transaction
 from share_helpers import sftp_snap_toggle
 from oauth2_provider.ext.rest_framework import OAuth2Authentication
 from system.pkg_mgmt import install_pkg
@@ -51,6 +54,7 @@ class CommandView(APIView):
                               BasicAuthentication, OAuth2Authentication,)
     permission_classes = (IsAuthenticated,)
 
+    @transaction.atomic
     def post(self, request, command):
         if (command == 'bootstrap'):
             try:
@@ -259,4 +263,61 @@ class CommandView(APIView):
                 p.raid = pool_raid('%s%s' % (settings.MNT_PT, p.name))['data']
                 p.size = pool_usage('%s%s' % (settings.MNT_PT, p.name))[0]
                 p.save()
+            return Response()
+
+        elif (command == 'refresh-share-state'):
+            for p in Pool.objects.all():
+                disk = Disk.objects.filter(pool=p)[0].name
+                shares = [s.name for s in Share.objects.filter(pool=p)]
+                shares_d = shares_info('%s%s' % (settings.MNT_PT, p.name))
+                for s in shares:
+                    if (s not in shares_d):
+                        Share.objects.get(pool=p, name=s).delete()
+                for s in shares_d:
+                    if (s in shares):
+                        share = Share.objects.get(name=s)
+                        share.qgroup = shares_d[s]
+                        rusage, eusage = share_usage(p, share.qgroup)
+                        ts = datetime.utcnow().replace(tzinfo=utc)
+                        if (rusage != share.rusage or eusage != share.eusage):
+                            share.rusage = rusage
+                            share.eusage = eusage
+                            su = ShareUsage(name=s, r_usage=rusage, e_usage=eusage,
+                                            ts=ts)
+                            su.save()
+                        else:
+                            try:
+                                su = ShareUsage.objects.filter(name=s).latest('id')
+                                su.ts = ts
+                                su.count += 1
+                            except ShareUsage.DoesNotExist:
+                                su = ShareUsage(name=s, r_usage=rusage,
+                                                e_usage=eusage, ts=ts)
+                            finally:
+                                su.save()
+                        share.save()
+                        continue
+                    try:
+                        cshare = Share.objects.get(name=s)
+                        cshares_d = shares_info('%s%s' % (settings.MNT_PT,
+                                                          cshare.pool.name))
+                        if (s in cshares_d):
+                            e_msg = ('Another pool(%s) has a Share with this same '
+                                     'name(%s) as this pool(%s). This configuration is not supported.'
+                                     ' You can delete one of them manually with this command: '
+                                     'btrfs subvol delete %s[pool name]/%s' %
+                                     (cshare.pool.name, s, p.name, settings.MNT_PT, s))
+                            handle_exception(Exception(e_msg), self.request)
+                        else:
+                            cshare.pool = p
+                            cshare.qgroup = shares_d[s]
+                            cshare.size = p.size
+                            cshare.subvol_name = s
+                            cshare.rusage, cshare.eusage = share_usage(p, cshare.qgroup)
+                            cshare.save()
+                    except Share.DoesNotExist:
+                        nso = Share(pool=p, qgroup=shares_d[s], name=s, size=p.size,
+                                    subvol_name=s)
+                        nso.save()
+                    mount_share(nso, '%s%s' % (settings.MNT_PT, s))
             return Response()
