@@ -486,6 +486,9 @@ def get_disk_serial(device_name, test):
         line_fields = line.strip().replace('=', ' ').split()
         # fast replace of '=' with space so split() can divide all fields
         # example original line "E: ID_SERIAL_SHORT=S1D5NSAF111111K"
+        # less than 3 fields are of no use so just in case:-
+        if len(line_fields) < 3:
+            continue
         if line_fields[1] == 'ID_SCSI_SERIAL':
             # we have an instance of SCSI_SERIAL being more reliably unique
             # when present than SERIAL_SHORT or SERIAL so overwrite whatever
