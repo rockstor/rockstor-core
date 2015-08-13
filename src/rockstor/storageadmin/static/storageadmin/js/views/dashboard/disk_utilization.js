@@ -1,6 +1,6 @@
 /*
  *
- * @licstart  The following is the entire license notice for the 
+ * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
  *
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
@@ -36,19 +36,20 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     this.diskUtilSelect = window.JST.dashboard_widgets_disk_util_select;
     this.dataLength = 300;
     this.topDiskColors = [];
-    // calculate colors from dark to light for top disks 
+    // calculate colors from dark to light for top disks
     var startColor = d3.rgb('#CC6104');
     for (var i=0; i<5; i++)  {
       this.topDiskColors.push(startColor.toString());
       startColor = startColor.brighter(2);
     }
     this.colors = ["#4DAF4A", "#377EB8"];
-    // disks data is a map of diskname to array of values of length 
+    // disks data is a map of diskname to array of values of length
     // dataLength
     // each value is of the format of the data returned by the api
     // see genEmptyDiskData for an example of this format
     this.disksData = {};
-    this.disks = new DiskCollection();
+      this.disks = new DiskCollection();
+      this.disks.pageSize = RockStorGlobals.maxPageSize;
 
     this.topDisks = [];
     this.topDisksWidth = this.maximized ? 400 : 200;
@@ -381,73 +382,6 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     };
   },
 
-  genRandomDisksData: function() {
-    return [
-      {
-        'name': 'sdb',
-        "reads_completed": 10 + parseInt(Math.random()*10),
-        "reads_merged": 0,
-        "sectors_read": 0,
-        "ms_reading": 0,
-        "writes_completed": 0,
-        "writes_merged": 0,
-        "sectors_written": 0,
-        "ms_writing": 0,
-        "ios_progress": 0,
-        "ms_ios": 0,
-        "weighted_ios": 0,
-        "ts": 0
-      },
-      {
-        'name': 'sdc',
-        "reads_completed": 20 + parseInt(Math.random()*10),
-        "reads_merged": 0,
-        "sectors_read": 0,
-        "ms_reading": 0,
-        "writes_completed": 0,
-        "writes_merged": 0,
-        "sectors_written": 0,
-        "ms_writing": 0,
-        "ios_progress": 0,
-        "ms_ios": 0,
-        "weighted_ios": 0,
-        "ts": 0
-      },
-      {
-        'name': 'sdd',
-        "reads_completed": 5 + parseInt(Math.random()*5),
-        "reads_merged": 0,
-        "sectors_read": 0,
-        "ms_reading": 0,
-        "writes_completed": 0,
-        "writes_merged": 0,
-        "sectors_written": 0,
-        "ms_writing": 0,
-        "ios_progress": 0,
-        "ms_ios": 0,
-        "weighted_ios": 0,
-        "ts": 0
-      },
-      {
-        'name': 'sde',
-        "reads_completed": 7 + parseInt(Math.random()*5),
-        "reads_merged": 0,
-        "sectors_read": 0,
-        "ms_reading": 0,
-        "writes_completed": 0,
-        "writes_merged": 0,
-        "sectors_written": 0,
-        "ms_writing": 0,
-        "ios_progress": 0,
-        "ms_ios": 0,
-        "weighted_ios": 0,
-        "ts": 0
-      }
-    ];
-
-
-  },
-
   resize: function(event) {
     var _this = this;
     this.constructor.__super__.resize.apply(this, arguments);
@@ -504,5 +438,3 @@ RockStorWidgets.widgetDefs.push({
     category: 'Storage',
     position: 1
 });
-
-
