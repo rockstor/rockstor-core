@@ -89,7 +89,6 @@ class ShareListView(ShareMixin, rfc.GenericView):
 
     def get_queryset(self, *args, **kwargs):
         with self._handle_exception(self.request):
-            self._refresh_shares_state()
             sort_col = self.request.query_params.get('sortby', None)
             if (sort_col is not None and sort_col == 'usage'):
                 reverse = self.request.query_params.get('reverse', 'no')
@@ -100,63 +99,6 @@ class ShareListView(ShareMixin, rfc.GenericView):
                 return sorted(Share.objects.all(), key=lambda u: u.rusage,
                               reverse=reverse)
             return Share.objects.all()
-
-    @transaction.atomic
-    def _refresh_shares_state(self):
-        for p in Pool.objects.all():
-            disk = Disk.objects.filter(pool=p)[0].name
-            shares = [s.name for s in Share.objects.filter(pool=p)]
-            shares_d = shares_info('%s%s' % (settings.MNT_PT, p.name))
-            for s in shares:
-                if (s not in shares_d):
-                    Share.objects.get(pool=p, name=s).delete()
-            for s in shares_d:
-                if (s in shares):
-                    share = Share.objects.get(name=s)
-                    share.qgroup = shares_d[s]
-                    rusage, eusage = share_usage(p, share.qgroup)
-                    ts = datetime.utcnow().replace(tzinfo=utc)
-                    if (rusage != share.rusage or eusage != share.eusage):
-                        share.rusage = rusage
-                        share.eusage = eusage
-                        su = ShareUsage(name=s, r_usage=rusage, e_usage=eusage,
-                                        ts=ts)
-                        su.save()
-                    else:
-                        try:
-                            su = ShareUsage.objects.filter(name=s).latest('id')
-                            su.ts = ts
-                            su.count += 1
-                        except ShareUsage.DoesNotExist:
-                            su = ShareUsage(name=s, r_usage=rusage,
-                                            e_usage=eusage, ts=ts)
-                        finally:
-                            su.save()
-                    share.save()
-                    continue
-                try:
-                    cshare = Share.objects.get(name=s)
-                    cshares_d = shares_info('%s%s' % (settings.MNT_PT,
-                                                      cshare.pool.name))
-                    if (s in cshares_d):
-                        e_msg = ('Another pool(%s) has a Share with this same '
-                                 'name(%s) as this pool(%s). This configuration is not supported.'
-                                 ' You can delete one of them manually with this command: '
-                                 'btrfs subvol delete %s[pool name]/%s' %
-                                 (cshare.pool.name, s, p.name, settings.MNT_PT, s))
-                        handle_exception(Exception(e_msg), self.request)
-                    else:
-                        cshare.pool = p
-                        cshare.qgroup = shares_d[s]
-                        cshare.size = p.size
-                        cshare.subvol_name = s
-                        cshare.rusage, cshare.eusage = share_usage(p, cshare.qgroup)
-                        cshare.save()
-                except Share.DoesNotExist:
-                    nso = Share(pool=p, qgroup=shares_d[s], name=s, size=p.size,
-                                subvol_name=s)
-                    nso.save()
-                mount_share(nso, '%s%s' % (settings.MNT_PT, s))
 
     @transaction.atomic
     def post(self, request):
@@ -272,8 +214,10 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
         try:
             s = Service.objects.get(name='docker')
             config = json.loads(s.config)
-        except Exception, e:
-            return logger.exception(e)
+        except TypeError, e:
+            return logger.debug('Could not check if the Share(%s) is docker '
+                                'root. Perhaps docker is not configured yet. '
+                                'exception: %s' % (e.__str__(), sname))
 
         if ('root_share' in config):
             if (config['root_share'] == sname):

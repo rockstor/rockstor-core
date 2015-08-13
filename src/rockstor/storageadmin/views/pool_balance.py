@@ -98,7 +98,7 @@ class PoolBalanceView(PoolMixin, rfc.GenericView):
                              'pool(%s).' % pname)
                     handle_exception(Exception(e_msg), request)
 
-            tid = self._balance_start(pool, disk.name, force=force)
+            tid = self._balance_start(pool, force=force)
             ps = PoolBalance(pool=pool, tid=tid)
             ps.save()
             return Response(PoolBalanceSerializer(ps).data)

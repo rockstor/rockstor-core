@@ -43,7 +43,6 @@ class DiskListView(rfc.GenericView):
     def get_queryset(self, *args, **kwargs):
         #do rescan on get.
         with self._handle_exception(self.request):
-            self._scan()
             return Disk.objects.all().order_by('name')
 
     @transaction.atomic
@@ -180,15 +179,20 @@ class DiskDetailView(rfc.GenericView):
         disk.save()
         return Response(DiskInfoSerializer(disk).data)
 
+    @transaction.atomic
     def _btrfs_disk_import(self, dname, request):
         try:
             disk = self._validate_disk(dname, request)
             p_info = get_pool_info(dname)
             #get some options from saved config?
             po = Pool(name=p_info['label'], raid="unknown")
+            #need to save it so disk objects get updated properly in the for
+            #loop below.
+            po.save()
             for d in p_info['disks']:
                 do = Disk.objects.get(name=d)
                 do.pool = po
+                do.parted = False
                 do.save()
                 mount_root(po)
             po.raid = pool_raid('%s%s' % (settings.MNT_PT, po.name))['data']
