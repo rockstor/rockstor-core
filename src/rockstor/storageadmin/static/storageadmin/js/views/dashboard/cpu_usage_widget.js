@@ -125,7 +125,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
     this.updateFreq = 1000;
 
     // Start and end timestamps for api call
-    this.t2 = RockStorGlobals.currentTimeOnServer.getTime()-30000;
+
     //this.t2 = new Date('2013-12-03T17:18:06.312Z').getTime();
     this.t1 = this.t2 - this.windowLength;
 
@@ -182,8 +182,8 @@ CpuUsageWidget = RockStorWidgetView.extend({
   },
 
   getData: function(data) {
+    this.t2 = new Date(data.results[0].ts);
     var _this = this;
-    console.log('cpu data', _this.cpuData);
     _this.startTime = new Date().getTime();
     var t1Str = moment(_this.t1).toISOString();
     var t2Str = moment(_this.t2).toISOString();
@@ -215,7 +215,6 @@ CpuUsageWidget = RockStorWidgetView.extend({
         _this.t1 = _this.t1 + diff;
       }
       _this.t2 = _this.t2 + diff;
-
     } else {
       if (_this.cpuData.length > 0) {
         _this.t1 = new Date(_this.cpuData[_this.cpuData.length-1].ts).getTime();
@@ -224,18 +223,13 @@ CpuUsageWidget = RockStorWidgetView.extend({
       }
       _this.t2 = _this.t2 + _this.updateFreq;
     }
-
   },
 
   cleanup: function() {
     if (!_.isUndefined(this.timeoutId)) {
       window.clearTimeout(this.timeoutId);
     }
-    if (this.jqXhr) {
-      this.jqXhr.abort();
-    }
     RockStorSocket.removeOneListener('widgets');
-    console.log('cpu socket removed');
   },
 
   parseData: function(data) {
@@ -442,7 +436,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
     //this.x.domain([now-(this.windowLength + this.updateFreq), now - this.updateFreq]);
     this.x.domain([this.t2-(this.windowLength + this.updateFreq), this.t2 - this.updateFreq]);
 
-    //this.cpuData.push.apply(this.cpuData, data); 
+    //this.cpuData.push.apply(this.cpuData, data);
     this.svgG.select(".line")
     .attr("d", this.line)
     .attr("transform", "translate(0, 0)");
