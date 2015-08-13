@@ -42,7 +42,8 @@ class WidgetNamespace(BaseNamespace, BroadcastMixin):
 
     def send_cpu_data(self):
         while self.send_cpu:
-            cpu_stats = []
+            cpu_stats = {}
+            cpu_stats['results'] = []
             vals = psutil.cpu_times_percent(percpu=True)
             ts = datetime.utcnow().replace(tzinfo=utc)
             for i, val in enumerate(vals):
@@ -50,12 +51,11 @@ class WidgetNamespace(BaseNamespace, BroadcastMixin):
                 cm = CPUMetric(name=name, umode=val.user, umode_nice=val.nice,
                                smode=val.system, idle=val.idle, ts=ts)
                 str_time = ts.strftime('%Y-%m-%dT%H:%M:%SZ')
-                cpu_stats.append({'name': name, 'umode': val.user,
-                                  'umode_nice': val.nice, 'smode': val.system,
-                                  'idle': val.idle, 'ts': str_time, })
-                cpu_stats.append({'name': name, 'umode': cm.umode,
-                                  'umode_nice': cm.umode_nice, 'smode': cm.smode,
-                                  'idle': cm.idle, 'ts': str_time })
+                cpu_stats['results'].append({
+                    'name': name, 'umode': val.user,
+                    'umode_nice': val.nice, 'smode': val.system,
+                    'idle': val.idle, 'ts': str(ts)
+                })
             self.emit('widgets:cpudata', {
                 'key': 'widgets:cpudata', 'data': cpu_stats
             })

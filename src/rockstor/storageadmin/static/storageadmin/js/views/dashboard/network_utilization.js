@@ -28,7 +28,6 @@
 NetworkUtilizationWidget = RockStorWidgetView.extend({
 
   initialize: function() {
-    console.log('initialized');
     RockStorSocket.widgets = io.connect('/network-widget', {'secure': true, 'force new connection': true});
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.dashboard_widgets_network_utilization;
@@ -42,8 +41,8 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
     this.selectedInterface = null;
     this.colors = ["#1224E3", "#F25805", "#04D6D6", "#F5CC73", "#750413"];
     this.totalMem = 0;
-    this.graphOptions = { 
-      grid : { 
+    this.graphOptions = {
+      grid : {
         //hoverable : true,
         borderWidth: {
           top: 1,
@@ -87,7 +86,7 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
         margin: [30,0],
         labelBoxBorderColor: "#fff"
 
-      },
+      }
     };
 
     // Start and end timestamps for api call
@@ -328,7 +327,9 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
   cleanup: function() {
     if (this.jqXhr) this.jqXhr.abort();
     if (this.timeoutId) window.clearTimeout(this.timeoutId);
+    RockStorSocket.removeOneListener('widgets');
   }
+
 
 });
 
