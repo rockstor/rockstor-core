@@ -51,8 +51,6 @@ class SnapshotView(rfc.GenericView):
                 share = Share.objects.get(name=self.kwargs['sname'])
             except:
                 if ('sname' not in self.kwargs):
-                    for s in Share.objects.all():
-                        self._refresh_snapshots_state(s)
                     return Snapshot.objects.filter().order_by('-id')
 
                 e_msg = ('Share with name: %s does not exist' % self.kwargs['sname'])
@@ -66,47 +64,12 @@ class SnapshotView(rfc.GenericView):
                 except:
                     return []
 
-            self._refresh_snapshots_state(share)
             snap_type = self.request.query_params.get('snap_type', None)
             if (snap_type is not None and snap_type != ''):
                 return Snapshot.objects.filter(
                     share=share, snap_type=snap_type).order_by('-id')
 
             return Snapshot.objects.filter(share=share).order_by('-id')
-
-    @transaction.atomic
-    def _refresh_snapshots_state(self, share):
-        snaps_d = snaps_info('%s%s' % (settings.MNT_PT, share.pool.name),
-                             share.name)
-        disk = Disk.objects.filter(pool=share.pool)[0].name
-        snaps = [s.name for s in Snapshot.objects.filter(share=share)]
-        for s in snaps:
-            if (s not in snaps_d):
-                Snapshot.objects.get(share=share,name=s).delete()
-        for s in snaps_d:
-            if (s in snaps):
-                so = Snapshot.objects.get(share=share, name=s)
-            else:
-                so = Snapshot(share=share, name=s, real_name=s,
-                              writable=snaps_d[s][1], qgroup=snaps_d[s][0])
-            rusage, eusage = share_usage(share.pool, snaps_d[s][0])
-            ts = datetime.utcnow().replace(tzinfo=utc)
-            if (rusage != so.rusage or eusage != so.eusage):
-                so.rusage = rusage
-                so.eusage = eusage
-                su = ShareUsage(name=s, r_usage=rusage, e_usage=eusage, ts=ts)
-                su.save()
-            else:
-                try:
-                    su = ShareUsage.objects.filter(name=s).latest('id')
-                    su.ts = ts
-                    su.count += 1
-                except ShareUsage.DoesNotExist:
-                    su = ShareUsage(name=s, r_usage=rusage, e_usage=eusage,
-                                    ts=ts)
-                finally:
-                    su.save()
-            so.save()
 
     @transaction.atomic
     def _toggle_visibility(self, share, snap_name, on=True):

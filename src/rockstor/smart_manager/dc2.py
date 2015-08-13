@@ -6,11 +6,10 @@ from socketio.server import SocketIOServer
 from socketio import socketio_manage
 from socketio.namespace import BaseNamespace
 from socketio.mixins import BroadcastMixin
-
 from django.conf import settings
 from system.osi import (uptime, kernel_info)
-
 from system.services import service_status
+from cli.rest_util import api_call
 import logging
 logger = logging.getLogger(__name__)
 
@@ -56,6 +55,7 @@ class ServicesNamespace(BaseNamespace, BroadcastMixin):
 class SysinfoNamespace(BaseNamespace, BroadcastMixin):
     start = False
     supported_kernel = settings.SUPPORTED_KERNEL_VERSION
+    base_url = 'https://localhost/api'
 
     # Called before the connection is established
     def initialize(self):
@@ -68,9 +68,11 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
             "key": "sysinfo:connected", "data": "connected"
         })
         self.start = True
+        gevent.spawn(self.update_storage_state)
         gevent.spawn(self.send_uptime)
         gevent.spawn(self.send_kernel_info)
         gevent.spawn(self.update_rockons)
+
 
     # Run on every disconnect
     def recv_disconnect(self):
@@ -101,14 +103,33 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
                 self.error('unsupported_kernel', str(e))
 
     def update_rockons(self):
-        from cli.rest_util import api_call
         try:
-            url = 'https://localhost/api/rockons/update'
+            url = '%s/rockons/update' % self.base_url
             api_call(url, data=None, calltype='post', save_error=False)
             logger.debug('Updated Rock-on metadata')
         except Exception, e:
             logger.debug('failed to update Rock-on metadata. low-level '
                          'exception: %s' % e.__str__())
+
+    def update_storage_state(self):
+        resources = [{'url': '%s/disks/scan' % self.base_url,
+                      'success': 'Disk state updated successfully',
+                      'error': 'Failed to update disk state.'},
+                     {'url': '%s/commands/refresh-pool-state' % self.base_url,
+                      'success': 'Pool state updated successfully',
+                      'error': 'Failed to update pool state.'},
+                     {'url': '%s/commands/refresh-share-state' % self.base_url,
+                      'success': 'Share state updated successfully',
+                      'error': 'Failed to update share state.'},
+                     {'url': '%s/commands/refresh-snapshot-state' % self.base_url,
+                      'success': 'Snapshot state updated successfully',
+                      'error': 'Failed to update snapshot state.'},]
+        for r in resources:
+            try:
+                api_call(r['url'], data=None, calltype='post', save_error=False)
+                logger.debug(r['success'])
+            except Exception, e:
+                logger.error('%s. exception: %s' % (r['error'], e.__str__()))
 
 
 class Application(object):
