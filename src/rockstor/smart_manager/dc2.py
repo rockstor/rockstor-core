@@ -119,6 +119,66 @@ class WidgetNamespace(BaseNamespace, BroadcastMixin):
         get_stats()
 
 
+class NetworkWidgetNamespace(BaseNamespace, BroadcastMixin):
+    send = False
+
+    def recv_connect(self):
+        logger.debug('network stats connected')
+        self.send = True
+        self.spawn(self.network_stats)
+
+    def recv_disconnect(self):
+        logger.debug('network stats disconnected')
+        self.send = False
+        self.disconnect()
+
+    def network_stats(self):
+        from storageadmin.models import NetworkInterface
+
+        def retrieve_network_stats(prev_stats):
+            interfaces = [i.name for i in NetworkInterface.objects.all()]
+            interval = 1
+            cur_stats = {}
+            with open('/proc/net/dev') as sfo:
+                sfo.readline()
+                sfo.readline()
+                for l in sfo.readlines():
+                    fields = l.split()
+                    if (fields[0][:-1] not in interfaces):
+                        continue
+                    cur_stats[fields[0][:-1]] = fields[1:]
+            ts = datetime.utcnow().replace(tzinfo=utc)
+            if (isinstance(prev_stats, dict)):
+                results = []
+                for interface in cur_stats.keys():
+                    if (interface in prev_stats):
+                        data = map(lambda x, y: float(x)/interval if x < y else
+                                   (float(x) - float(y))/interval,
+                                   cur_stats[interface], prev_stats[interface])
+                        results.append({
+                            'device': interface, 'kb_rx': data[0],
+                            'packets_rx': data[1], 'errs_rx': data[2],
+                            'drop_rx': data[3], 'fifo_rx': data[4],
+                            'frame': data[5], 'compressed_rx': data[6],
+                            'multicast_rx': data[7], 'kb_tx': data[8],
+                            'packets_tx': data[9], 'errs_tx': data[10],
+                            'drop_tx': data[11], 'fifo_tx': data[12],
+                            'colls': data[13], 'carrier': data[14],
+                            'compressed_tx': data[15], 'ts': str(ts)
+                        })
+                self.emit('widgets:network', {
+                    'key': 'widgets:network', 'data': {'results': results}
+                })
+            return cur_stats
+
+        def send_network_stats():
+            cur_stats = {}
+            while self.send:
+                cur_stats = retrieve_network_stats(cur_stats)
+                gevent.sleep(1)
+        send_network_stats()
+
+
 class MemoryWidgetNamespace(BaseNamespace, BroadcastMixin):
     switch = False
 
@@ -308,7 +368,9 @@ class Application(object):
             socketio_manage(environ, {'/services': ServicesNamespace,
                                       '/sysinfo': SysinfoNamespace,
                                       '/widgets': WidgetNamespace,
-                                      '/memory-widgets': MemoryWidgetNamespace})
+                                      '/memory-widget': MemoryWidgetNamespace,
+                                      '/network-widget': NetworkWidgetNamespace,
+            })
 
 
 def not_found(start_response):
