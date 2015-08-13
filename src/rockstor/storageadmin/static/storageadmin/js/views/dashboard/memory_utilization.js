@@ -28,7 +28,7 @@
 MemoryUtilizationWidget = RockStorWidgetView.extend({
 
   initialize: function() {
-    RockStorSocket.widgets = io.connect('/memory-widgets', {'secure': true, 'force new connection': true});
+    RockStorSocket.memoryWidget = io.connect('/memory-widget', {'secure': true, 'force new connection': true});
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.dashboard_widgets_memory_utilization;
     this.updateFreq = 1000;
@@ -77,7 +77,7 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
       this.swapHeight = 50 - this.margin.top - this.margin.bottom;
     }
   },
-  
+
   setupSvg: function(svgEl) {
     var _this = this;
     this.$(svgEl).empty();
@@ -220,8 +220,8 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
         .attr('y', _this.swapHeight/2 - 2)
         .text(humanize.filesize(_this.swapUsage*1024) + ' (' + d3.format(".0%")(_this.swapUsagePc/100) + ')');
 
-        RockStorSocket.addListener(_this.tick, _this, 'widgets:memory');
-        RockStorSocket.widgets.emit('send_data');
+        RockStorSocket.addListener(_this.tick, _this, 'memoryWidget:memory');
+        RockStorSocket.memoryWidget.emit('send_data');
       },
       error: function(xhr, status, error) {
         logger.debug(error);
@@ -323,10 +323,7 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
   },
 
   cleanup: function() {
-    if (this.timeoutId) {
-      clearTimeout(this.timeoutId);
-    }
-    RockStorSocket.removeOneListener('widgets');
+    RockStorSocket.removeOneListener('memoryWidget');
   },
 
   resize: function() {
@@ -351,9 +348,9 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
 
 });
 
-RockStorWidgets.widgetDefs.push({ 
-    name: 'memory_utilization', 
-    displayName: 'Memory', 
+RockStorWidgets.widgetDefs.push({
+    name: 'memory_utilization',
+    displayName: 'Memory',
     view: 'MemoryUtilizationWidget',
     description: 'Display memory utilization',
     defaultWidget: true,

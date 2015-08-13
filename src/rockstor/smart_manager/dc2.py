@@ -22,44 +22,17 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class WidgetNamespace(BaseNamespace, BroadcastMixin):
-    send_cpu = False
+class DisksWidgetNamespace(BaseNamespace, BroadcastMixin):
+    switch = False
 
     def recv_connect(self):
-        logger.debug("Widget namespace connected")
-        self.emit('widgets:connected', {
-            'key': 'widgets:connected', 'data': 'connected'
-        })
-        # Switch for emitting cpu data
-        self.send_cpu = True
-        self.spawn(self.send_cpu_data)
+        self.switch = True
         self.spawn(self.send_top_disks)
 
     def recv_disconnect(self):
-        logger.debug('disconnect received')
-        self.send_cpu = False
+        logger.debug('disks namespace disconnected')
+        self.switch = False
         self.disconnect()
-
-    def send_cpu_data(self):
-        while self.send_cpu:
-            cpu_stats = {}
-            cpu_stats['results'] = []
-            vals = psutil.cpu_times_percent(percpu=True)
-            ts = datetime.utcnow().replace(tzinfo=utc)
-            for i, val in enumerate(vals):
-                name = 'cpu%d' % i
-                cm = CPUMetric(name=name, umode=val.user, umode_nice=val.nice,
-                               smode=val.system, idle=val.idle, ts=ts)
-                str_time = ts.strftime('%Y-%m-%dT%H:%M:%SZ')
-                cpu_stats['results'].append({
-                    'name': name, 'umode': val.user,
-                    'umode_nice': val.nice, 'smode': val.system,
-                    'idle': val.idle, 'ts': str(ts)
-                })
-            self.emit('widgets:cpudata', {
-                'key': 'widgets:cpudata', 'data': cpu_stats
-            })
-            gevent.sleep(1)
 
     def send_top_disks(self):
 
@@ -91,8 +64,8 @@ class WidgetNamespace(BaseNamespace, BroadcastMixin):
                         else:
                             datum = (float(cur[i]) - float(prev[i]))/interval
                         data.append(datum)
-                    self.emit('widgets:top_disks', {
-                        'key': 'widgets:top_disks', 'data': [{
+                    self.emit('diskWidget:top_disks', {
+                        'key': 'diskWidget:top_disks', 'data': [{
                             'name': disk,
                             'reads_completed': data[0],
                             'reads_merged': data[1],
@@ -112,11 +85,43 @@ class WidgetNamespace(BaseNamespace, BroadcastMixin):
 
         def get_stats():
             cur_disk_stats = {}
-            while True:
+            while self.switch:
                 cur_disk_stats = disk_stats(cur_disk_stats)
                 gevent.sleep(1)
         # Kick things off
         get_stats()
+
+
+class CPUWidgetNamespace(BaseNamespace, BroadcastMixin):
+    send_cpu = False
+
+    def recv_connect(self):
+        # Switch for emitting cpu data
+        self.send_cpu = True
+        self.spawn(self.send_cpu_data)
+
+    def recv_disconnect(self):
+        logger.debug('disconnect received')
+        self.send_cpu = False
+        self.disconnect()
+
+    def send_cpu_data(self):
+        while self.send_cpu:
+            cpu_stats = {}
+            cpu_stats['results'] = []
+            vals = psutil.cpu_times_percent(percpu=True)
+            ts = datetime.utcnow().replace(tzinfo=utc)
+            for i, val in enumerate(vals):
+                name = 'cpu%d' % i
+                cpu_stats['results'].append({
+                    'name': name, 'umode': val.user,
+                    'umode_nice': val.nice, 'smode': val.system,
+                    'idle': val.idle, 'ts': str(ts)
+                })
+            self.emit('cpuWidget:cpudata', {
+                'key': 'cpuWidget:cpudata', 'data': cpu_stats
+            })
+            gevent.sleep(1)
 
 
 class NetworkWidgetNamespace(BaseNamespace, BroadcastMixin):
@@ -166,8 +171,8 @@ class NetworkWidgetNamespace(BaseNamespace, BroadcastMixin):
                             'colls': data[13], 'carrier': data[14],
                             'compressed_tx': data[15], 'ts': str(ts)
                         })
-                self.emit('widgets:network', {
-                    'key': 'widgets:network', 'data': {'results': results}
+                self.emit('networkWidget:network', {
+                    'key': 'networkWidget:network', 'data': {'results': results}
                 })
             return cur_stats
 
@@ -219,14 +224,13 @@ class MemoryWidgetNamespace(BaseNamespace, BroadcastMixin):
                         dirty = int(l.split()[1])
                         break  # no need to look at lines after dirty.
             ts = datetime.utcnow().replace(tzinfo=utc)
-            self.emit('widgets:memory', {
-                'key': 'widgets:memory', 'data': {'results':[{
+            self.emit('memoryWidget:memory', {
+                'key': 'memoryWidget:memory', 'data': {'results': [{
                     'total': total, 'free': free, 'buffers': buffers,
                     'cached': cached, 'swap_total': swap_total,
                     'swap_free': swap_free, 'active': active,
                     'inactive': inactive, 'dirty': dirty, 'ts': str(ts)
-                    }
-                  ]
+                    }]
                 }
             })
 
@@ -290,7 +294,6 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
         gevent.spawn(self.send_uptime)
         gevent.spawn(self.send_kernel_info)
         gevent.spawn(self.update_rockons)
-        gevent.spawn(self.send_utcnow)
 
     # Run on every disconnect
     def recv_disconnect(self):
@@ -320,14 +323,6 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
                     'key': 'sysinfo:kernel_error'
                 })
                 self.error('unsupported_kernel', str(e))
-
-    def send_utcnow(self):
-        while True:
-            self.emit('sysinfo:utcnow', {
-                'data': str(datetime.utcnow().replace(tzinfo=utc)),
-                'key': 'sysinfo:utcnow'
-            })
-            gevent.sleep(1)
 
     def update_rockons(self):
         from cli.rest_util import api_call
@@ -367,9 +362,10 @@ class Application(object):
         if path.startswith("socket.io"):
             socketio_manage(environ, {'/services': ServicesNamespace,
                                       '/sysinfo': SysinfoNamespace,
-                                      '/widgets': WidgetNamespace,
+                                      '/cpu-widget': CPUWidgetNamespace,
                                       '/memory-widget': MemoryWidgetNamespace,
                                       '/network-widget': NetworkWidgetNamespace,
+                                      '/disk-widget': DisksWidgetNamespace,
             })
 
 
@@ -380,5 +376,5 @@ def not_found(start_response):
 
 def main():
     logger.debug('Listening on port http://127.0.0.1:8080 and on port 10843 (flash policy server)')
-    SocketIOServer(('127.0.0.1', 8001), Application(),
-            resource="socket.io", policy_server=True).serve_forever()
+    SocketIOServer(('127.0.0.1', 8001), Application(),resource="socket.io",
+                   policy_server=True).serve_forever()

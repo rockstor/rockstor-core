@@ -28,7 +28,7 @@
 DiskUtilizationWidget = RockStorWidgetView.extend({
 
   initialize: function() {
-    RockStorSocket.widgets = io.connect('/widgets', {'secure': true,
+    RockStorSocket.diskWidget = io.connect('/disk-widget', {'secure': true,
                                                      'force new connection': true});
     var _this = this;
     this.constructor.__super__.initialize.apply(this, arguments);
@@ -158,7 +158,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     this.disks.fetch({
       success: function(collection, response, options) {
         _this.initializeDisksData();
-        RockStorSocket.addListener(_this.getData, _this, 'widgets:top_disks');
+        RockStorSocket.addListener(_this.getData, _this, 'diskWidget:top_disks');
       }
     });
     return this;
@@ -486,9 +486,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
   },
 
   cleanup: function() {
-    if (this.jqXhr) this.jqXhr.abort();
-    if (this.timeoutId) window.clearTimeout(this.timeoutId);
-    RockStorSocket.removeOneListener('widgets');
+    RockStorSocket.removeOneListener('diskWidget');
   }
 
 });

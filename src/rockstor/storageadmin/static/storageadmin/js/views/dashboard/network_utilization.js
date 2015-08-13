@@ -28,7 +28,7 @@
 NetworkUtilizationWidget = RockStorWidgetView.extend({
 
   initialize: function() {
-    RockStorSocket.widgets = io.connect('/network-widget', {'secure': true, 'force new connection': true});
+    RockStorSocket.networkWidget = io.connect('/network-widget', {'secure': true, 'force new connection': true});
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.dashboard_widgets_network_utilization;
     this.valuesTemplate = window.JST.dashboard_widgets_network_util_values;
@@ -91,7 +91,7 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
 
     // Start and end timestamps for api call
     this.windowLength = 300000;
-    this.t2 = RockStorGlobals.currentTimeOnServer.getTime()-30000;
+
     //this.t2 = new Date('2013-12-03T17:18:06.312Z').getTime();
     this.t1 = this.t2 - this.windowLength;
   },
@@ -132,8 +132,7 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
     var t2Str = moment(_this.t2).toISOString();
     var pageSizeStr = '&page_size=' + RockStorGlobals.maxPageSize;
     this.jqXhr = $.ajax({
-      url: '/api/sm/sprobes/netstat/?format=json' + pageSizeStr + '&t1=' +
-        t1Str + '&t2=' + t2Str,
+      url: '/api/sm/sprobes/netstat/?format=json&page_size=1',
       type: "GET",
       dataType: "json",
       global: false, // dont show global loading indicator
@@ -154,7 +153,7 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
             }
           }
         });
-        RockStorSocket.addListener(_this.getData, _this, 'widgets:network');
+        RockStorSocket.addListener(_this.getData, _this, 'networkWidget:network');
 
       },
       error: function(xhr, status, error) {
@@ -167,6 +166,7 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
 
   getData: function(data) {
     var _this = this;
+    this.t2 = new Date(data.results[0].ts);
     //var data = {"id": 7120, "total": 2055148, "free": 1524904, "buffers": 140224, "cached": 139152, "swap_total": 4128764, "swap_free": 4128764, "active": 324000, "inactive": 123260, "dirty": 56, "ts": "2013-07-17T00:00:16.109Z"};
     _this.startTime = new Date().getTime();
     var t1Str = moment(_this.t1).toISOString();
@@ -325,9 +325,7 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
   },
 
   cleanup: function() {
-    if (this.jqXhr) this.jqXhr.abort();
-    if (this.timeoutId) window.clearTimeout(this.timeoutId);
-    RockStorSocket.removeOneListener('widgets');
+    RockStorSocket.removeOneListener('networkWidget');
   }
 
 

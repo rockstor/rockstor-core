@@ -961,13 +961,4 @@ $(document).ready(function() {
     }
 
   });
-
-  var utcNow = function(data) {
-    RockStorGlobals.currentTimeOnServer = new Date(data);
-    RockStorGlobals.serverTimeFetched = true;
-  };
-
-  RockStorSocket.addListener(utcNow, this, 'sysinfo:utcnow');
-
-
 });

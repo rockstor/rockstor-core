@@ -28,7 +28,7 @@
 CpuUsageWidget = RockStorWidgetView.extend({
 
   initialize: function() {
-    RockStorSocket.widgets = io.connect('/widgets', {'secure': true, 'force new connection': true});
+    RockStorSocket.cpuWidget = io.connect('/cpu-widget', {'secure': true, 'force new connection': true});
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.dashboard_widgets_cpuusage;
     // maximized size for shapeshift
@@ -177,7 +177,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
       maximized: this.maximized
     }));
 
-    RockStorSocket.addListener(this.getData, this, 'widgets:cpudata');
+    RockStorSocket.addListener(this.getData, this, 'cpuWidget:cpudata');
     return this;
   },
 
@@ -229,7 +229,7 @@ CpuUsageWidget = RockStorWidgetView.extend({
     if (!_.isUndefined(this.timeoutId)) {
       window.clearTimeout(this.timeoutId);
     }
-    RockStorSocket.removeOneListener('widgets');
+    RockStorSocket.removeOneListener('cpuWidget');
   },
 
   parseData: function(data) {
