@@ -57,14 +57,6 @@ class CommandView(APIView):
     @transaction.atomic
     def post(self, request, command):
         if (command == 'bootstrap'):
-            try:
-                device_scan()
-            except Exception, e:
-                e_msg = ('Unabled to scan disk drives on the system.')
-                logger.error(e_msg)
-                logger.exception(e)
-                handle_exception(Exception(e_msg), request)
-
             for pool in Pool.objects.all():
                 try:
                     mount_root(pool)

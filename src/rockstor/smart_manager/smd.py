@@ -20,6 +20,7 @@ import sys
 from django.conf import settings
 from stap_dispatcher import Stap
 from cli.rest_util import (api_call, set_token)
+from fs.btrfs import device_scan
 
 import logging
 logger = logging.getLogger(__name__)
@@ -44,15 +45,39 @@ def clean_exit(children):
 
 
 def main():
-    #  bootstrap the machine. success of quit
+    try:
+        device_scan()
+    except Exception, e:
+        e_msg = ('Exception while btrfs device scan: %s. This is a critical '
+                 'error. Rockstor cannot be bootstrapped. ' % e.__str__())
+        logger.error(e_msg)
+        clean_exit([])
+
+    #sometimes the db system takes several seconds to start up.
+    #generously retry every 5 seconds, for 120 times, i.e., 10 minutes
+    #before giving up.
+    num_attempts = 0
+    while True:
+        try:
+            set_token()
+            logger.debug('API token set. Moving on the boostrapping...')
+            break
+        except Exception, e:
+            e_msg = ('Exception while setting token: %s' % e.__str__())
+            if (num_attempts > 10):
+                e_msg = ('Too many retries. Giving up. Rockstor cannot be '
+                         'bootstrapped, this is a critical error. %s' % e_msg)
+                logger.error(e_msg)
+                clean_exit([])
+
+            logger.error(e_msg)
+            num_attempts += 1
+            time.sleep(5)
+
     api_url = 'https://localhost/api'
     bootstrap_url = ('%s/commands/bootstrap' % api_url)
-    diskscan_url = ('%s/disks/scan' % api_url)
     netscan_url = ('%s/network' % api_url)
-    time.sleep(10)
     try:
-        set_token()
-        api_call(diskscan_url, calltype='post')
         api_call(netscan_url, calltype='get')
         api_call(bootstrap_url, calltype='post')
     except Exception, e:
