@@ -1660,23 +1660,6 @@ input[type="radio"].selectedRoot {
   border-radius: 7px; 
 }
 
-
-/* Rockstor shutdown modal dialog */
-#shutdown-modal {
-  top: 30%;
-  margin-left: -380px;
-  height: 300px;
-  position:fixed;
-}
-
-/* Rockstor reboot modal dialog */
-#reboot-modal {
-  top: 30%;
-  margin-left: -380px;
-  height: 300px;
-  position:fixed;
-}
-
 /* font-awesome styling */
 
 .nav > li > a.selected i.fa { color: #fff; }

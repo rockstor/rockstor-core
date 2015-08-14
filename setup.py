@@ -48,7 +48,6 @@ setup(
             'qgroup-clean = scripts.qgroup_clean:main',
             'rockon-json = scripts.rockon_util:main',
             'flash-optimize = scripts.flash_optimize:main',
-            'dc2 = smart_manager.dc2:main',
             'st-snapshot = scripts.scheduled_tasks.snapshot:main',
             'st-pool-scrub = scripts.scheduled_tasks.pool_scrub:main',
         ],

@@ -81,7 +81,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
       sum = disk.get('pool') != null ? sum + disk.get('size') : sum;
       return sum;
     }, 0);
-    this.free = this.raw - this.provisioned
+    this.free = this.raw - this.provisioned;
 
     this.pool = this.pools.reduce(function(sum, pool) {
       sum += pool.get('size');
@@ -108,12 +108,12 @@ StorageMetricsWidget = RockStorWidgetView.extend({
       { name: 'share', label: 'Share Capacity', value: this.share },
       { name: 'pool-provisioned', label: 'Provisioned', value: this.provisioned },
       { name: 'raw', label: 'Raw Capacity', value: this.raw },
-    ]
+    ];
     this.data2 = [
       { name: 'usage', label: 'Usage', value: this.usage},
       { name: 'pool', label: 'Pool Capacity', value: this.pool },
       { name: 'provisioned', label: 'Provisioned', value: this.provisioned },
-    ]
+    ];
 
   },
 
@@ -121,7 +121,7 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     //this.graphWidth = this.maximized ? 500 : 250;
     //this.graphHeight = this.maximized ? 300 : 150;
     this.barPadding = this.maximized ? 40 : 20;
-    this.barWidth = this.maximized ? 400 : 200
+    this.barWidth = this.maximized ? 400 : 200;
     if (this.maximized) {
       this.width = 500 - this.margin.left - this.margin.right;
       this.height = 500 - this.margin.top - this.margin.bottom;
@@ -167,14 +167,14 @@ StorageMetricsWidget = RockStorWidgetView.extend({
       } else if (d==1) {
         return 'Pools';
       } else if (d==2) {
-        return 'Disks'
+        return 'Disks';
       }
     });
 
     this.svgG.append("g")
     .attr("class", "metrics-axis")
     .attr("transform", "translate(0," + _this.height + ")")
-    .call(this.xAxis)
+    .call(this.xAxis);
 
     // render data1
     this.svgG.selectAll('metrics-rect1')
@@ -202,22 +202,10 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     })
     .attr('x',0)
     .attr('y', function(d,i) {
-      //return _this.y(i) + _this.barHeight/2 + _this.barPadding;
       return _this.y(i);
     })
     .attr('width', function(d) { return _this.x(d.value); })
     .attr('height', function() { return _this.barHeight-4; });
-
-    // allocated
-    //this.svgG
-    //.append('rect')
-    //.attr('class', function(d) {
-      //return 'allocated';
-    //})
-    //.attr('x',0)
-    //.attr('y', _this.y(2))
-    //.attr('width', function(d) { return _this.x(_this.allocated); })
-    //.attr('height', function() { return _this.barHeight-4; });
 
     // text labels
     this.svgG.selectAll('metrics-text-data1')
@@ -250,16 +238,12 @@ StorageMetricsWidget = RockStorWidgetView.extend({
     .append('text')
     .attr("class", "metrics-text-data1")
     .attr('x', function(d){
-      //var xOff = _this.x(d.value) - 4;
-      //return (xOff > 0 ? xOff : 0);
       return 4;
     })
     .attr('y', function(d,i) {
       return _this.y(i) + _this.barHeight - 12;
     })
     .style('text-anchor', function(d) {
-      //var xOff = _this.x(d.value) - 4;
-      //return (xOff > 30 ?  'end' : 'start');
       return 'start';
     })
     .text(function(d,i) {
@@ -267,22 +251,8 @@ StorageMetricsWidget = RockStorWidgetView.extend({
       return humanize.filesize(d.value*1024) + ' (' + pct.toFixed() + '%)';
     });
 
-    // legend
-    //this.svgGLegend
-    //.append('text')
-    //.attr("class", "metrics-small-text")
-    //.attr('x', 5)
-    //.attr('y', this.y(2) + _this.barHeight/4 + 16) // y of raw + 16px for large label above it
-    //.style("text-anchor", "left")
-    //.text(function(d,i) {
-      //return _this.disks.length + ' x ' + humanize.filesize(_this.disks.at(0).get('size')*1024) + ' disks';
-    //});
-
     this.gDisk = this.svgLegend.append('g')
     .attr('class', 'metrics-disk-legend');
-    //.attr("transform", function(d,i) {
-      //return "translate(" + _this.margin.left + ",0)"
-    //});
 
     var diskLabelData = [
       {label: 'Provisioned', fill: '#91BFF2'},
@@ -305,19 +275,19 @@ StorageMetricsWidget = RockStorWidgetView.extend({
 
     var diskLabelG = diskLabels.append('g')
     .attr("transform", function(d,i) {
-      return "translate(0, " + (i*14) + ")"
+      return "translate(0, " + (i*14) + ")";
     });
 
     diskLabelG.append("rect")
     .attr("width", 13)
     .attr("height", 13)
-    .attr("fill", function(d) { return d.fill;})
+    .attr("fill", function(d) { return d.fill;});
 
     diskLabelG.append("text")
     .attr("text-anchor", "left")
     .attr("class", "metrics-legend-text")
     .attr("transform", function(d,i) {
-      return "translate(16,12)"
+      return "translate(16,12)";
     })
     .text(function(d) { return d.label;});
 
@@ -327,19 +297,19 @@ StorageMetricsWidget = RockStorWidgetView.extend({
 
     var poolLabelG = poolLabels.append('g')
     .attr("transform", function(d,i) {
-      return "translate(75, " + (i*14) + ")"
+      return "translate(75, " + (i*14) + ")";
     });
 
     poolLabelG.append("rect")
     .attr("width", 13)
     .attr("height", 13)
-    .attr("fill", function(d) { return d.fill;})
+    .attr("fill", function(d) { return d.fill;});
 
     poolLabelG.append("text")
     .attr("text-anchor", "left")
     .attr("class", "metrics-legend-text")
     .attr("transform", function(d,i) {
-      return "translate(16,12)"
+      return "translate(16,12)";
     })
     .text(function(d) { return d.label;});
 
@@ -349,13 +319,13 @@ StorageMetricsWidget = RockStorWidgetView.extend({
 
     var shareLabelG = shareLabels.append('g')
     .attr("transform", function(d,i) {
-      return "translate(160, " + (i*14) + ")"
+      return "translate(160, " + (i*14) + ")";
     });
 
     shareLabelG.append("rect")
     .attr("width", 13)
     .attr("height", 13)
-    .attr("fill", function(d) { return d.fill;})
+    .attr("fill", function(d) { return d.fill;});
 
     shareLabelG.append("text")
     .attr("text-anchor", "left")
@@ -364,22 +334,6 @@ StorageMetricsWidget = RockStorWidgetView.extend({
       return "translate(16,12)"
     })
     .text(function(d) { return d.label;});
-
-
-    /*
-    labels.append("rect")
-    .attr("width", 13)
-    .attr("height", 13)
-    .attr("transform", "translate(80,0)")
-    .attr("fill", colors[1].fill)
-    .attr("stroke", colors[1].stroke);
-
-    labels.append("text")
-    .attr("text-anchor", "left")
-    .attr("class", "metrics-small-text")
-    .attr("transform", "translate(96,13)")
-    .text(labelText[1]);
-    */
 
     // draw y axis last so that it is above all rects
     this.svgG.append("g")

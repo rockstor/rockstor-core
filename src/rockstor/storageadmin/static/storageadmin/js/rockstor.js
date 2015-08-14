@@ -426,46 +426,6 @@ function fetchLoadAvg() {
     });
 }
 
-/* Deprecated in favor of websockets
-function fetchKernelInfo() {
-    $.ajax({
-	url: '/api/commands/kernel',
-	type: 'POST',
-	dataType: 'json',
-	global: false,
-	success: function(data, status, xhr) {
-	    RockStorGlobals.kernel = data;
-	},
-	error: function(xhr, status, error) {
-	    msg = JSON.parse(xhr.responseText).detail;
-	    $('#browsermsg').html('<div class="alert alert-danger"><button type="button" class="close" data-dismiss="alert">&times;</button>' + msg + '</div>');
-	}
-    });
-}
-*/
-
-function fetchServerTime() {
-    RockStorGlobals.serverTimeTimer = window.setInterval(function() {
-	getCurrentTimeOnServer();
-    }, 10000);
-    getCurrentTimeOnServer();
-    RockStorGlobals.serverTimeFetched = true;
-}
-
-function getCurrentTimeOnServer() {
-    $.ajax({
-	url: "/api/commands/utcnow",
-	type: "POST",
-	dataType: "json",
-	global: false, // dont show global loading indicator
-	success: function(data, status, xhr) {
-	    RockStorGlobals.currentTimeOnServer = new Date(data);
-	},
-	error: function(xhr, status, error) {
-	}
-    });
-}
-
 function setVersionCheckTimer() {
     RockStorGlobals.versionCheckTimer = window.setInterval(function() {
 	checkVersion();
