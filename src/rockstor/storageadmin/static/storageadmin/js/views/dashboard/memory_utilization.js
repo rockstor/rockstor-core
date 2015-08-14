@@ -267,7 +267,6 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
       .text(function(d) { return d.name + " " + d3.format(".0%")(d.value.y); });
 
       // Swap Usage
-      console.log('redrawing swap part');
       _this.swapSvg.select('svg').remove();
       _this.swapSvg.select('g').remove();
       _this.swapSvg.select('rect').remove();

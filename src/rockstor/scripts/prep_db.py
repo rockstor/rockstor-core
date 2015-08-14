@@ -31,17 +31,18 @@ def register_services():
         'LDAP': 'ldap',
         'SFTP': 'sftp',
         'Replication': 'replication',
-        'Task Scheduler': 'task-scheduler',
-        'Data Collector': 'data-collector',
-        'Service Monitor': 'service-monitor',
         'SNMP': 'snmpd',
         'Rock-on': 'docker',
         'S.M.A.R.T': 'smartd',}
 
-    for s in services.keys():
+    keylist = services.keys()
+    for s in keylist:
         if (not Service.objects.filter(display_name=s).exists()):
             s_o = Service(display_name=s, name=services[s])
             s_o.save()
+    for so in Service.objects.filter():
+        if (so.display_name not in keylist):
+            so.delete()
 
 
 def create_setup():
