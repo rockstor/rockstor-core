@@ -1,6 +1,6 @@
 /*
  *
- * @licstart  The following is the entire license notice for the 
+ * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
  *
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
@@ -144,6 +144,7 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
     };
 
   },
+
   update: function() {
     var _this = this;
     var data = {'results': []};
@@ -265,7 +266,45 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
       .data(textData)
       .text(function(d) { return d.name + " " + d3.format(".0%")(d.value.y); });
 
-    // Swap Usage
+      // Swap Usage
+      console.log('redrawing swap part');
+      _this.swapSvg.select('svg').remove();
+      _this.swapSvg.select('g').remove();
+      _this.swapSvg.select('rect').remove();
+      _this.swapSvg.select('text').remove();
+      _this.swapSvg
+	  .append('svg')
+	  .attr('width', this.swapWidth + this.margin.left + this.margin.right)
+	  .attr('height', this.swapHeight + this.margin.top + this.margin.bottom)
+	  .append("g")
+	  .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
+      _this.swapX = d3.scale.linear().range([0,_this.swapWidth]).domain([0,_this.swapTotal]);
+      _this.swapXAxis = d3.svg.axis()
+	  .scale(_this.swapX)
+	  .orient("bottom")
+	  .ticks(3)
+	  .tickFormat(function(d) { return humanize.filesize(d*1024); });
+
+      _this.swapXAxisG = _this.swapSvg.append("g")
+	  .attr("class", "x axis")
+	  .attr("transform", "translate(0," + _this.swapHeight + ")")
+	  .call(_this.swapXAxis);
+
+    _this.swapSvg.append('rect')
+      .attr('class', 'swapRect')
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('width', _this.swapX(_this.swapUsage))
+      .attr('height', _this.swapHeight-2)
+      .attr('fill', function(d) { return '#D0D8DB';})
+      .attr('stroke', '#aaa');
+
+    _this.swapSvg.append('text')
+      .attr('class', 'swapText')
+      .attr('x', 2)
+      .attr('y', _this.swapHeight/2 - 2)
+      .text(humanize.filesize(_this.swapUsage*1024) + ' (' + d3.format(".0%")(_this.swapUsagePc/100) + ')');
+
     _this.swapSvg.selectAll('.swapRect')
       .attr('width', _this.swapX(_this.swapUsage));
 
@@ -308,7 +347,7 @@ MemoryUtilizationWidget = RockStorWidgetView.extend({
         this.buffers.values.shift();
         this.free.values.shift();
       }
-    } 
+    }
   },
 
   download: function(event) {
@@ -359,7 +398,6 @@ RockStorWidgets.widgetDefs.push({
     cols: 5,
     maxRows: 2,
     maxCols: 10,
-    category: 'Compute', 
+    category: 'Compute',
     position: 4
 });
-
