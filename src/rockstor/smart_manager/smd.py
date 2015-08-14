@@ -64,7 +64,7 @@ def main():
             break
         except Exception, e:
             e_msg = ('Exception while setting token: %s' % e.__str__())
-            if (num_attempts > 10):
+            if (num_attempts > 120):
                 e_msg = ('Too many retries. Giving up. Rockstor cannot be '
                          'bootstrapped, this is a critical error. %s' % e_msg)
                 logger.error(e_msg)
