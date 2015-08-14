@@ -887,7 +887,6 @@ $(document).ready(function() {
     });
 
     $('#donate-modal #donateYes').click(function(event) {
-	console.log('donate yes clicked');
 	contrib = $('#donate-modal input[type="radio"][name="contrib"]:checked').val();
 	if (contrib=='custom') {
 	    contrib = $('#custom-amount').val();

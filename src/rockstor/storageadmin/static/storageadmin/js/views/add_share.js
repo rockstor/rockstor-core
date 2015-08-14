@@ -108,9 +108,9 @@ AddShareView = Backbone.View.extend({
             _this.slider.setValue((size_value));
           }
         });
-        
-      
-        
+
+
+
         $('#add-share-form input').tooltip({placement: 'right'});
 
         _this.$('#compression').tooltip({
@@ -152,7 +152,6 @@ AddShareView = Backbone.View.extend({
                 size_value = size_value*1024*1024;
               }
 
-	      console.log('compression = ' + compression);
               $.ajax({
                 url: "/api/shares",
                 type: "POST",

@@ -53,7 +53,6 @@ ConfigBackupView = RockstorLayoutView.extend({
     },
 
     newBackup: function() {
-	console.log('in newBackup');
 	var _this = this;
 	var button = _this.$('#new-backup');
 	if (buttonDisabled(button)) return false;
@@ -65,11 +64,9 @@ ConfigBackupView = RockstorLayoutView.extend({
 	    contentType: "application/json",
 	    success: function() {
 		enableButton(button);
-		console.log('backup successful');
 		_this.collection.fetch({reset: true});
 	    },
 	    error: function(xhr, status, error) {
-		console.log("error in config backup");
 		enableButton(button);
 	    }
 	});
@@ -92,7 +89,6 @@ ConfigBackupView = RockstorLayoutView.extend({
 		    _this.collection.fetch({reset: true});
 		},
 		error: function(xhr, status, error) {
-		    console.log('error while deleting config backup');
 		    enableButton(button);
 		}
 	    });

@@ -60,7 +60,6 @@ PoolRaidChange = RockstorWizardPage.extend({
 
     save: function() {
 	var valid = $('#raid-change-form').valid();
-	console.log(valid);
 	if (valid) {
 	    var raidLevel = this.$('#raid-level').val();
 	    this.model.set('raidLevel', raidLevel);

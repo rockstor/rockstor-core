@@ -1,27 +1,27 @@
 /*
  *
- * @licstart  The following is the entire license notice for the 
+ * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
- * 
+ *
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
- * 
+ *
  * RockStor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
- * 
+ *
  * RockStor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * @licend  The above is the entire license notice
  * for the JavaScript code in this page.
- * 
+ *
  */
 
 LoginView = RockstorLayoutView.extend({
@@ -36,7 +36,7 @@ initialize: function() {
 	this.networkInterfaces.pageSize = RockStorGlobals.maxPageSize;
 	this.networkInterfaces.on("reset", this.saveAppliance, this);
 	this.appliances = new ApplianceCollection();
-	
+
 },
 
 render: function() {
@@ -108,7 +108,7 @@ makeLoginRequest: function(username, password) {
 		data: {
 		username: username,
 		password: password,
-	}, 
+	},
 	success: function(data, status, xhr) {
 		_this.scanNetwork();
 
@@ -122,7 +122,7 @@ makeLoginRequest: function(username, password) {
 scanNetwork: function() {
 	var _this = this;
 	$.ajax({
-		url: "/api/network", 
+		url: "/api/network",
 		type: "POST",
 		dataType: "json",
 		success: function(data, status, xhr) {
@@ -146,15 +146,13 @@ setIp: function() {
 },
 
 saveAppliance: function() {
-	console.log('again inside save appliance');
 	var _this = this;
 	this.setIp();
 	// create current appliance if not created already
 	if (this.appliances.length > 0) {
 		var current_appliance = this.appliances.find(function(appliance) {
-			return appliance.get('current_appliance') == true; 
+			return appliance.get('current_appliance') == true;
 		});
-		console.log(current_appliance);
 	}
 	if (_.isUndefined(current_appliance)) {
 		var new_appliance = new Appliance();

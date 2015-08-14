@@ -1,27 +1,27 @@
 /*
  *
- * @licstart  The following is the entire license notice for the 
+ * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
- * 
+ *
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
- * 
+ *
  * RockStor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
- * 
+ *
  * RockStor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * @licend  The above is the entire license notice
  * for the JavaScript code in this page.
- * 
+ *
  */
 
 NfsShareClientDistribView = Backbone.View.extend({
@@ -30,7 +30,7 @@ NfsShareClientDistribView = Backbone.View.extend({
     this.template = window.JST.probes_nfs_share_client_distrib;
     this.nfsAttrs = ["num_read", "num_write", "num_lookup"];
 
-    this.m = [20, 100, 20, 20]; 
+    this.m = [20, 100, 20, 20];
     this.w = 400 - this.m[1] - this.m[3],
     this.h = 350 - this.m[0] - this.m[2];
 
@@ -50,14 +50,14 @@ NfsShareClientDistribView = Backbone.View.extend({
     //this.fullTree = null;
     //this.prevTree = null;
     //this.currentTree = null;
-    
+
     //this.clientTree = null;
     //this.shareTree = null;
-    
+
   },
 
   render: function() {
-    
+
     $(this.el).html(this.template({probe: this.probe}));
     var _this = this;
 
@@ -68,7 +68,7 @@ NfsShareClientDistribView = Backbone.View.extend({
           _this.selAttrs.push(val);
         }
       } else {
-        var i = _this.selAttrs.indexOf(val) 
+        var i = _this.selAttrs.indexOf(val)
         if (i != -1) {
           _this.selAttrs.splice(i, 1);
         }
@@ -87,72 +87,18 @@ NfsShareClientDistribView = Backbone.View.extend({
       }
       _this.treeType = $(this).attr("data-treetype");
     });
-    
+
     this.vis = d3.select(this.el).select("#nfs-share-client-graph").append("svg:svg")
     .attr("width", this.w + this.m[1] + this.m[3])
     .attr("height", this.h + this.m[0] + this.m[2])
     .append("svg:g")
     .attr("transform", "translate(" + this.m[3] + "," + this.m[0] + ")");
-   
+
     if (this.probe.get("state") == "running") {
       this.updateAndRenderViz();
     } else if (this.probe.get("state") == "stopped") {
       this.renderViz();
-    }
-
-    /*
-    this.renderIntervalId = window.setInterval(function() {
-      var data = _this.generateData();
-      var filteredData = _this.filterData(data, _this.treeType, _this.selAttrs, _this.numTop);
-      //console.log(filteredData);
-      _this.root = _this.createTree(filteredData, _this.treeType, _this.nfsAttrs);
-      _this.displayTree(_this.root);
-    }, 5000);
-    */
-    
-    /*
-    this.renderIntervalId = window.setInterval(function() {
-      $.ajax({
-        url: dataUrl,
-        type: "GET",
-        dataType: "json",
-        success: function(data, textStatus, jqXHR) {
-          console.log("data length is " + data.length);
-          console.log("ts is "  + _this.tsN);
-          if (data.length > 0 && _.isNull(_this.tsN)) {
-            console.log("got data length > 0");
-            console.log(data[0]);
-            _this.tsN = (new Date(data[0].ts)).getTime();
-          }
-          _this.fullTree = _this.generateTree(data, "client");
-          _this.sortTree(_this.fullTree, _this.selectedAttr);
-          _this.currentTree = _this.getTopN(_this.fullTree, 5);
-          console.log("current tree is ");
-          console.log(_this.currentTree);
-          _.each(_this.currentTree.children, function(d) {
-            _this.toggleAll(d);
-          });
-          //_this.currentTree.children.forEach(_this.toggleAll);
-          _this.toggleCopy(_this.prevTree, _this.currentTree);
-          _this.displayTree(_this.currentTree);
-          if (_.isNull(_this.selectedNode)) {
-            _this.selectedNode = _this.currentTree;
-          } else {
-            _this.setSelectedNode(_this.selectedNode.name);
-          }
-          _this.updateDetail(_this.selectedNode, _this.selectedAttr);
-          _this.prevTree = _this.currentTree;
-          if (!_.isNull(_this.tsN)) {
-            _this.tsN = _this.tsN + 1000*5;
-          }
-        },
-        error: function(request, status, error) {
-          logger.debug(error);
-        }
-      });
-
-    }, 5000);
-    */
+    }g
 
     return this;
   },
@@ -162,7 +108,7 @@ NfsShareClientDistribView = Backbone.View.extend({
     // set t1 and t2 for dataUrl
     var dataUrl = this.appendTimeIntervaltoUrl(
       this.probe.dataUrl(),
-      this.ts, 
+      this.ts,
       this.updateInterval
     );
     // update current timestamp by updateInterval
@@ -194,7 +140,7 @@ NfsShareClientDistribView = Backbone.View.extend({
   },
 
   cleanup: function() {
-    if (!_.isUndefined(this.renderIntervalId) && 
+    if (!_.isUndefined(this.renderIntervalId) &&
     !_.isNull(this.renderIntervalId)) {
       window.clearInterval(this.renderIntervalId);
     }
@@ -227,9 +173,9 @@ NfsShareClientDistribView = Backbone.View.extend({
         var share = _this.findOrCreateNodeWithName(root.children,
         d.share, "share", d, attrList, treeType);
         // get client node
-        var client = _this.findOrCreateNodeWithName(share.children, 
+        var client = _this.findOrCreateNodeWithName(share.children,
         d.client, "client", d, attrList, treeType);
-        
+
         // update attributes - there may be multiple data points
         // for each client or share, so add the attr values
         _.each(attrList, function(attr) {
@@ -239,13 +185,13 @@ NfsShareClientDistribView = Backbone.View.extend({
       });
 
     }
-    // update attributes for root 
+    // update attributes for root
     _.each(root.children, function(c) {
       _.each(attrList, function(attr) {
         root[attr] = root[attr] + c[attr];
       });
     });
-    
+
     return root;
   },
 
@@ -261,7 +207,7 @@ NfsShareClientDistribView = Backbone.View.extend({
     });
   },
 
-  findOrCreateNodeWithName: function(nodeList, name, nodeType, 
+  findOrCreateNodeWithName: function(nodeList, name, nodeType,
   d, attrList, treeType) {
     var node = this.findNodeWithName(nodeList, name);
     if (_.isUndefined(node)) {
@@ -284,13 +230,13 @@ NfsShareClientDistribView = Backbone.View.extend({
         e.value = 0;
         list.push(e);
       }
-      // add attr value 
+      // add attr value
       _.each(selAttrs, function(attr) {
         e.value = e.value + d[attr];
       });
     });
-    list = (_.sortBy(list, function(e) { 
-      return e.value; 
+    list = (_.sortBy(list, function(e) {
+      return e.value;
     })).reverse().slice(0,n);
     return _.filter(data, function(d) {
       return _.find(list, function(e) {
@@ -377,15 +323,15 @@ NfsShareClientDistribView = Backbone.View.extend({
       if (treeType == "share") {
         node.children = [];
       }
-    } 
+    }
     _.each(attrList, function(attr) {
       node[attr] = 0;
     });
     return node;
   },
   ///// end new
-  
-  
+
+
   generateTree: function(data, treeType) {
     var root = null;
     var _this = this;
@@ -393,7 +339,7 @@ NfsShareClientDistribView = Backbone.View.extend({
       root = this.createRoot(treeType, this.nfsAttrs);
       _.each(data, function(d) {
         var c = _.find(root.children, function(x) {
-          return x.clientName == d.client; 
+          return x.clientName == d.client;
         });
         if (_.isUndefined(c)) {
           c = _this.createNode("client", d, _this.nfsAttrs, treeType);
@@ -463,7 +409,7 @@ NfsShareClientDistribView = Backbone.View.extend({
         n = this.findNode(root.children[i], id);
         if (!_.isNull(n)) break;
       }
-    } 
+    }
     return n;
   },
 
@@ -485,7 +431,7 @@ NfsShareClientDistribView = Backbone.View.extend({
 
   // copies attrs from old root, does not copy children
   copyRoot: function(oldRoot, nfsAttrs) {
-    var newRoot = {}; 
+    var newRoot = {};
     newRoot.name = oldRoot.name;
     newRoot.displayName = oldRoot.displayName;
     newRoot.treeType = oldRoot.treeType;
@@ -498,7 +444,7 @@ NfsShareClientDistribView = Backbone.View.extend({
     return newRoot;
   },
 
-  displayTree: function(json) { 
+  displayTree: function(json) {
     var root = json;
     root.x0 = this.h / 2;
     root.y0 = 0;
@@ -519,7 +465,7 @@ NfsShareClientDistribView = Backbone.View.extend({
     });
     var offset = 0;
     if (!_.isNull(this.selectedNode)) {
-      this.selectedNode = this.findNode(source, this.selectedNode.id); 
+      this.selectedNode = this.findNode(source, this.selectedNode.id);
     }
     if (this.treeType == "client") {
       if (clientNodes.length > 0) {
@@ -533,25 +479,25 @@ NfsShareClientDistribView = Backbone.View.extend({
         offset = -(shareNodes[0].y);
         if (_.isUndefined(this.selectedNode) || _.isNull(this.selectedNode)) {
           this.selectedNode = shareNodes[0];
-        } 
+        }
       }
     }
     // move everything to the left since we are not displaying the root
     //this.vis.attr("transform", "translate(" + offset + ",0)");
     this.updateDetail(this.selectedNode);
-    
+
     var clientNode = this.vis.selectAll("g.clientNode")
     .data(clientNodes, function(d,i) {
       return d.id;
     });
-    
+
     var clientNodeEnter = clientNode.enter().append("svg:g")
     .attr("class", "clientNode")
-    .attr("transform", function(d) { 
-      return "translate(" + source.y0 + "," + source.x0 + ")"; 
+    .attr("transform", function(d) {
+      return "translate(" + source.y0 + "," + source.x0 + ")";
     })
     .on("click", function(d) {
-      _this.setSelectedNode(d); 
+      _this.setSelectedNode(d);
       _this.update(_this.root);
     });
 
@@ -560,7 +506,7 @@ NfsShareClientDistribView = Backbone.View.extend({
     .attr("width", "20")
     .attr("height", "20")
     .attr("transform", function(d) { return "translate(0,-5)"});
-    
+
     clientNodeEnter.append("svg:text")
     .attr("class","nodeLabel")
     .attr("x", 25)
@@ -573,17 +519,17 @@ NfsShareClientDistribView = Backbone.View.extend({
     .data(shareNodes, function(d,i) {
       return d.id;
     });
-    
+
     var shareNodeEnter = shareNode.enter().append("svg:g")
     .attr("class", "shareNode")
-    .attr("transform", function(d) { 
-      return "translate(" + source.y0 + "," + source.x0 + ")"; 
+    .attr("transform", function(d) {
+      return "translate(" + source.y0 + "," + source.x0 + ")";
     })
     .on("click", function(d) {
-      _this.setSelectedNode(d); 
+      _this.setSelectedNode(d);
       _this.update(_this.root);
     });
-    
+
     shareNodeEnter.append("svg:image")
     .attr("xlink:href", "/img/Closed_32x32x32.png")
     .attr("width", "20")
@@ -593,7 +539,7 @@ NfsShareClientDistribView = Backbone.View.extend({
     //shareNodeEnter.append("svg:circle")
     //.attr("r", 1e-6)
     //.style("fill", "lightsteelblue");
-    
+
     shareNodeEnter.append("svg:text")
     .attr("class","nodeLabel")
     .attr("x", 25)
@@ -605,8 +551,8 @@ NfsShareClientDistribView = Backbone.View.extend({
     // Transition nodes to their new position.
     var clientNodeUpdate = clientNode.transition()
     .duration(duration)
-    .attr("transform", function(d) { 
-      return "translate(" + d.y + "," + d.x + ")"; 
+    .attr("transform", function(d) {
+      return "translate(" + d.y + "," + d.x + ")";
     });
 
     clientNodeUpdate.select("text.nodeLabel")
@@ -621,8 +567,8 @@ NfsShareClientDistribView = Backbone.View.extend({
 
     var shareNodeUpdate = shareNode.transition()
     .duration(duration)
-    .attr("transform", function(d) { 
-      return "translate(" + d.y + "," + d.x + ")"; 
+    .attr("transform", function(d) {
+      return "translate(" + d.y + "," + d.x + ")";
     });
 
     shareNodeUpdate.select("text.nodeLabel")
@@ -638,7 +584,7 @@ NfsShareClientDistribView = Backbone.View.extend({
 
 //
 //    nodeUpdate.select("text.nodeValue")
-//    .text(function(d) { 
+//    .text(function(d) {
 //      return _this.selectedAttr + ": " + d[_this.selectedAttr];
 //    })
 //
@@ -647,7 +593,7 @@ NfsShareClientDistribView = Backbone.View.extend({
     .duration(duration)
     .attr("transform", function(d) { return "translate(" + source.y + "," + source.x + ")"; })
     .remove();
-    
+
     clientNodeExit.select("text")
     .style("fill-opacity", 1e-6);
 
@@ -666,11 +612,11 @@ NfsShareClientDistribView = Backbone.View.extend({
     var link = null;
     if (this.treeType == "client") {
       link = this.vis.selectAll("path.link")
-      .data(_this.d3tree.links(clientNodes), 
+      .data(_this.d3tree.links(clientNodes),
       function(d) { return d.target.id; });
     } else if (this.treeType == "share") {
       link = this.vis.selectAll("path.link")
-      .data(_this.d3tree.links(shareNodes), 
+      .data(_this.d3tree.links(shareNodes),
       function(d) { return d.target.id; });
 
     }
@@ -747,7 +693,7 @@ NfsShareClientDistribView = Backbone.View.extend({
 
   toggleIfDifferent: function(oldNode, newNode) {
     // toggles newNode if oldNode and newNode are in a different toggled state
-    if ( (oldNode.children && newNode._children) || 
+    if ( (oldNode.children && newNode._children) ||
     (oldNode._children && newNode.children)) {
       this.toggle(newNode);
     }
@@ -787,8 +733,8 @@ NfsShareClientDistribView = Backbone.View.extend({
     this.selectedNode = node;
     this.updateDetail(this.selectedNode);
   },
-  
-  // Accepts date string in ISO 8601 format and returns 
+
+  // Accepts date string in ISO 8601 format and returns
   // date string 'dMs' milliseconds later
   getDateAfter: function(s, dMs) {
     var t1 = moment(s);
@@ -802,6 +748,3 @@ NfsShareClientDistribView = Backbone.View.extend({
   }
 
 });
-
-
-

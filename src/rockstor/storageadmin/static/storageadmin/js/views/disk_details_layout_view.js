@@ -68,7 +68,6 @@ DiskDetailsLayoutView = RockstorLayoutView.extend({
 	var errorlog = this.smartinfo.get('errorlog') || [];
 	var testlog = this.smartinfo.get('testlog') || [];
 	var testlogdetail = this.smartinfo.get('testlogdetail') || [];
-	console.log('attributes ', attributes);
 	$(this.el).html(this.template({disk: this.disk, attributes: attributes,
 				       capabilities: capabilities,
 				       errorlogsummary: errorlogsummary,
@@ -92,7 +91,6 @@ DiskDetailsLayoutView = RockstorLayoutView.extend({
 	var button = $(event.currentTarget);
 	if (buttonDisabled(button)) return false;
 	disableButton(button);
-	console.log('refreshing');
 	$.ajax({
 	    url: '/api/disks/smart/info/' + _this.diskName,
 	    type: 'POST',
@@ -111,7 +109,6 @@ DiskDetailsLayoutView = RockstorLayoutView.extend({
 	if (buttonDisabled(button)) return false;
 	disableButton(button);
 	var test_type = $('#test_name').val();
-	console.log('test type', test_type);
 	$.ajax({
 	    url: '/api/disks/smart/test/' + _this.diskName,
 	    type: 'POST',
