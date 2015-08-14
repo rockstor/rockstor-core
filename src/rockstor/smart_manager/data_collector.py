@@ -187,17 +187,15 @@ class NetworkWidgetNamespace(BaseNamespace, BroadcastMixin):
 class MemoryWidgetNamespace(BaseNamespace, BroadcastMixin):
     switch = False
 
+    def recv_connect(self):
+        self.switch = True
+        self.spawn(self.send_meminfo_data)
+
     def recv_disconnect(self):
         self.switch = False
         self.disconnect()
 
-    def on_send_data(self):
-        self.spawn(self.send_meminfo_data)
-        self.switch = True
-        logger.debug('sending data!')
-
     def send_meminfo_data(self):
-        logger.debug('meminfo sent')
         while self.switch:
             stats_file = '/proc/meminfo'
             (total, free, buffers, cached, swap_total, swap_free, active, inactive,
@@ -233,9 +231,7 @@ class MemoryWidgetNamespace(BaseNamespace, BroadcastMixin):
                     }]
                 }
             })
-
             gevent.sleep(1)
-
 
 class ServicesNamespace(BaseNamespace, BroadcastMixin):
 
