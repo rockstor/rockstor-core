@@ -61,9 +61,9 @@ class CommandView(APIView):
                 try:
                     mount_root(pool)
                 except Exception, e:
-                    e_msg = ('Unable to mount a pool(%s) during bootstrap.'
-                             % pool.name)
-                    logger.exception(e)
+                    e_msg = ('Exception while mounting a pool(%s) during '
+                             'bootstrap: %s' % (pool.name, e.__str__()))
+                    logger.error(e_msg)
 
             for share in Share.objects.all():
                 try:
@@ -73,12 +73,10 @@ class CommandView(APIView):
                     if (not is_share_mounted(share.name)):
                         mnt_pt = ('%s%s' % (settings.MNT_PT, share.name))
                         mount_share(share, mnt_pt)
-
                 except Exception, e:
-                    e_msg = ('Unable to mount a share(%s, %s) during bootstrap.' %
-                             (pool_device, mnt_pt))
+                    e_msg = ('Exception while mounting a share(%s) during '
+                             'bootstrap: %s' % (share.name, e.__str__()))
                     logger.error(e_msg)
-                    logger.exception(e)
 
             mnt_map = sftp_mount_map(settings.SFTP_MNT_ROOT)
             for sftpo in SFTP.objects.all():
@@ -87,19 +85,16 @@ class CommandView(APIView):
                                settings.SFTP_MNT_ROOT, mnt_map, sftpo.editable)
                     sftp_snap_toggle(sftpo.share)
                 except Exception, e:
-                    e_msg = ('Unable to export all sftp shares due to a system'
-                             ' error')
+                    e_msg = ('Exception while exportin a sftp share during '
+                             'bootstrap: %s' % e.__str__())
                     logger.error(e_msg)
-                    logger.exception(e)
 
             try:
                 exports = create_nfs_export_input(NFSExport.objects.all())
                 refresh_nfs_exports(exports)
             except Exception, e:
-                e_msg = ('Unable to export all nfs shares due to a system'
-                         'error')
+                e_msg = ('Exception while exporting NFS: %s' % e.__str__())
                 logger.error(e_msg)
-                logger.exception(e)
 
             #  bootstrap services
             try:
@@ -110,9 +105,9 @@ class CommandView(APIView):
                 systemctl('atd', 'enable')
                 systemctl('atd', 'start')
             except Exception, e:
-                e_msg = ('Unable to bootstrap services due to a system error')
+                e_msg = ('Exception while setting service statuses during '
+                         'bootstrap: %s' % e.__str__())
                 logger.error(e_msg)
-                logger.exception(e)
                 handle_exception(Exception(e_msg), request)
 
             logger.debug('Bootstrap operations completed')
