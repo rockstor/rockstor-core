@@ -144,12 +144,13 @@ def main():
             lfo.write('#rockstor script. dont remove\n')
             lfo.write('%s -x\n' % initrock_loc)
     run_command(['/usr/bin/chmod', 'a+x', '/etc/rc.d/rc.local'])
-
     logging.info('Checking for flash and Running flash optimizations if appropriate.')
     run_command([FLASH_OPTIMIZE, '-x'])
-    logging.info('Running qgroup cleanup. %s' % QGROUP_CLEAN)
-    run_command([QGROUP_CLEAN])
     if (os.path.isfile(STAMP)):
+        logging.info('Running prepdb...')
+        run_command([PREP_DB, ])
+        logging.info('Running qgroup cleanup. %s' % QGROUP_CLEAN)
+        run_command([QGROUP_CLEAN])
         return logging.info(
             'initrock ran successfully before, so not running it again.'
             ' Running it again can destroy your Rockstor state. If you know '
