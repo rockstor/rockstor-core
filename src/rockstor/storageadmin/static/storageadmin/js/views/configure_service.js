@@ -97,6 +97,9 @@ ConfigureServiceView = RockstorLayoutView.extend({
 	if (config != null) {
 	    configObj = JSON.parse(this.service.get('config'));
 	}
+	console.log('configobj', configObj);
+	console.log('smartd_config', configObj.smartd_config);
+	console.log('custom_config', configObj.custom_config);
 	$(this.el).html(this.template({service: this.service, config: configObj, shares: this.shares}));
 
 	this.$('#nis-form :input').tooltip({
