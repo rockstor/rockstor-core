@@ -46,8 +46,9 @@
 	    access to and is simply the recipient of the notifications sent.
 	  </p>
 
-	  <p>To test if notifications are setup properly, login as root and
-	    send a test e-mail using this command: <code>echo "Hello from
+	  <p>To test if notifications are setup properly, login to Rockstor as root
+	     on a terminal or via ssh and
+	     send a test e-mail using this command: <code>echo "Hello from
 	      Rockstor" | mail -s "test message" -r <%= email.get('sender') %> <%= email.get('receiver') %></code>.
 	     If you do not receive the e-mail, you can find clues
 	    in <code>/var/log/maillog</code>.
