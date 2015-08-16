@@ -56,11 +56,11 @@ def update_forward(email, revert=False):
         if (not revert):
             fo.write('%s, root\n' % email)
 
-def update_sasl(smtp_server, username, password, revert=False):
+def update_sasl(smtp_server, sender, password, revert=False):
     sasl_file = '/etc/postfix/sasl_passwd'
     with open(sasl_file, 'w') as fo:
         if (not revert):
-            fo.write('[%s]:587 %s:%s\n' % (smtp_server, username, password))
+            fo.write('[%s]:587 %s:%s\n' % (smtp_server, sender, password))
     run_command([POSTMAP, sasl_file])
 
 def update_postfix(smtp_server, revert=False):
@@ -97,7 +97,7 @@ class EmailClientView(rfc.GenericView):
             receiver = request.data.get('receiver')
             eco = EmailClient(smtp_server=smtp_server, name=name, sender=sender, receiver=receiver)
             eco.save()
-            update_sasl(smtp_server, username, password)
+            update_sasl(smtp_server, sender, password)
             update_forward(receiver)
             update_postfix(smtp_server)
             systemctl('postfix', 'restart')
