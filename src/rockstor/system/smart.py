@@ -187,7 +187,10 @@ def update_config(config):
     fo, npath = mkstemp()
     with open(SMARTD_CONFIG) as sfo, open(npath, 'w') as tfo:
         for line in sfo.readlines():
-            if (re.match(ROCKSTOR_HEADER, line) is None):
+            if (re.match('DEVICESCAN', line) is not None):
+                #comment out this line, if not, smartd ignores everything else
+                tfo.write('#%s' % line)
+            elif (re.match(ROCKSTOR_HEADER, line) is None):
                 tfo.write(line)
             else:
                 break
