@@ -26,28 +26,29 @@
         <div class="controls">
 	  <div class="alert alert-warning">
 	    <p>Rockstor can push notifications to you via e-mail. We recommend
-	      creating a separate e-mail account for this purpose. Rockstor will
-	      login to this e-mail account and send notifications to another
-	      preferred e-mail address, such as your personal gmail
-	      account.</p>
+	      creating a separate dedicated e-mail account for this purpose.
+	      Rockstor will login to this e-mail account and use it to send
+	      notifications to another specified e-mail address, such as your
+	      personal gmail account.</p>
 	  </div>
       	<button type="Submit" id="Add-email-address" class="btn btn-primary">Setup E-mail for alerts</button>
         <%} else { %>
 	<div class="alert alert-warning">
-	  <p>Rockstor uses below credentials to send e-mail notifications. Any
+	  <p>Rockstor uses the credentials below to send e-mail notifications. Any
 	    system information sent to the root user results in a
-	    notification. Rockstor assumes the <b>Sender</b> account and from
-	    that account, sends e-mails to <b>Receiver</b>
-	    account. <b>Sender</b> e-mail password is stored in
+	    notification. Rockstor assumes/uses the <b>Sender</b> account and from
+	    that account sends e-mails to the <b>Receiver</b>
+	    email address. The <b>Sender</b> e-mail account password is stored in
 	    <code>/etc/postfix/sasl_passwd</code> which has restricted
-	    permissions. However, we strongly recommend against using personal
+	    permissions. However, we strongly recommend against using a personal
 	    or important e-mail account for the <b>Sender</b>. On the other
-	    hand, <b>Receiver</b> e-mail address can be anything you have
-	    access to, where notifications will arrive.
+	    hand the <b>Receiver</b> e-mail address can be anything you have
+	    access to and is simply the recipient of the notifications sent.
 	  </p>
 
-	  <p>To test if notifications are setup properly, login as root and
-	    send a test e-mail using this command: <code>echo "Hello from
+	  <p>To test if notifications are setup properly, login to Rockstor as root
+	     on a terminal or via ssh and
+	     send a test e-mail using this command: <code>echo "Hello from
 	      Rockstor" | mail -s "test message" -r <%= email.get('sender') %> <%= email.get('receiver') %></code>.
 	     If you do not receive the e-mail, you can find clues
 	    in <code>/var/log/maillog</code>.
