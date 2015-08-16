@@ -52,8 +52,8 @@ class SMARTDServiceView(BaseServiceDetailView):
                 config = request.DATA.get('config', {})
                 logger.debug('config = %s' % config)
                 self._save_config(service, config)
-                if ('smartd_config' in config):
-                    config = config['smartd_config']
+                if ('custom_config' in config):
+                    config = config['custom_config']
                 else:
                     config = ''
                 smart.update_config(config)
