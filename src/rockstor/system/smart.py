@@ -181,7 +181,6 @@ def toggle_smart(device, enable=False):
     return run_command([SMART, '--smart=%s' % switch, '/dev/%s' % device])
 
 def update_config(config):
-    logger.debug("smart.udate_config received %s" % config)
     SMARTD_CONFIG = '/etc/smartmontools/smartd.conf'
     ROCKSTOR_HEADER = '###BEGIN: Rockstor smartd config. DO NOT EDIT BELOW THIS LINE###'
     fo, npath = mkstemp()
