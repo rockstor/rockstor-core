@@ -213,6 +213,10 @@ class PoolListView(PoolMixin, rfc.GenericView):
                          'following characters: letter(a-z), digits(0-9), '
                          'hyphen(-), underscore(_) or a period(.).')
                 handle_exception(Exception(e_msg), request)
+            
+            if (len(pname) > 255):
+                e_msg = ('Pool name must be less than 255 characters') 
+                handle_exception(Exception(e_msg), request)       
 
             if (Pool.objects.filter(name=pname).exists()):
                 e_msg = ('Pool(%s) already exists. Choose a different name' % pname)
