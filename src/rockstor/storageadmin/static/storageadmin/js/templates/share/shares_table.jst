@@ -1,3 +1,11 @@
+<div class="alert alert-warning">
+  <p>
+    Share size enforcement is temporarily disabled due to incomplete support in
+    BTRFS. Until this status changes, the effective size of a Share is equal to the
+    size of the Pool it belongs to.
+  </p>
+</div>
+
 <% if (!collection.isEmpty()) { %>
   <table id="shares-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of shares">
     <thead>

@@ -32,8 +32,13 @@
     <button id="js-delete" class="btn btn-danger" type="button" type="button"><i class="glyphicon glyphicon-trash "></i> Delete </button>
 </div>
 <span class="h2"><%= share.get('name') %></span>
-<br>
-<br>
+<div class="alert alert-warning">
+  <p>
+    Share size enforcement is temporarily disabled due to incomplete support in
+    BTRFS. Until this status changes, the effective size of a Share is equal to the
+    size of the Pool it belongs to.
+  </p>
+</div>
 
 <ul class="nav nav-tabs">
   <li class="active"><a href="#usage" data-toggle="tab">Usage</a></li>

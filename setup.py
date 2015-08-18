@@ -46,6 +46,7 @@ setup(
             'ovpn-client-gen = scripts.ovpn_util:client_gen',
             'ovpn-client-print = scripts.ovpn_util:client_retrieve',
             'qgroup-clean = scripts.qgroup_clean:main',
+            'qgroup-maxout-limit = scripts.qgroup_maxout_limit:main',
             'rockon-json = scripts.rockon_util:main',
             'flash-optimize = scripts.flash_optimize:main',
             'st-snapshot = scripts.scheduled_tasks.snapshot:main',

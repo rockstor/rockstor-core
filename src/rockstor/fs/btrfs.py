@@ -509,7 +509,10 @@ def qgroup_assign(qid, pqid, mnt_pt):
 
 def update_quota(pool, qgroup, size_bytes):
     root_pool_mnt = mount_root(pool)
-    cmd = [BTRFS, 'qgroup', 'limit', str(size_bytes), qgroup, root_pool_mnt]
+    #until btrfs adds better support for qgroup limits. We'll not set limits.
+    #It looks like we'll see the fixes in 4.2 and final ones by 4.3.
+    #cmd = [BTRFS, 'qgroup', 'limit', str(size_bytes), qgroup, root_pool_mnt]
+    cmd = [BTRFS, 'qgroup', 'limit', 'none', qgroup, root_pool_mnt]
     return run_command(cmd, log=True)
 
 

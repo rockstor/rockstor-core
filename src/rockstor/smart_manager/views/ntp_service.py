@@ -78,9 +78,13 @@ class NTPServiceView(BaseServiceDetailView):
         if (switch == 'start'):
             systemctl('ntpd', 'enable')
             systemctl('ntpd', 'start')
+            systemctl('chronyd', 'stop')
+            systemctl('chronyd', 'disable')
         else:
             systemctl('ntpd', 'disable')
             systemctl('ntpd', 'stop')
+            systemctl('chronyd', 'enable')
+            systemctl('chronyd', 'start')
 
     @staticmethod
     def _update_ntp_conf(servers):

@@ -35,6 +35,7 @@ STAMP = '%s/.initrock' % BASE_DIR
 FLASH_OPTIMIZE = '%s/flash-optimize' % BASE_BIN
 PREP_DB = '%s/prep_db' % BASE_BIN
 QGROUP_CLEAN = '%s/qgroup-clean' % BASE_BIN
+QGROUP_MAXOUT_LIMIT = '%s/qgroup-maxout-limit' % BASE_BIN
 SUPERCTL = '%s/supervisorctl' % BASE_BIN
 OPENSSL = '/usr/bin/openssl'
 GRUBBY = '/usr/sbin/grubby'
@@ -151,6 +152,8 @@ def main():
         run_command([PREP_DB, ])
         logging.info('Running qgroup cleanup. %s' % QGROUP_CLEAN)
         run_command([QGROUP_CLEAN])
+        logging.info('Running qgroup limit maxout. %s' % QGROUP_MAXOUT_LIMIT)
+        run_command([QGROUP_MAXOUT_LIMIT])
         return logging.info(
             'initrock ran successfully before, so not running it again.'
             ' Running it again can destroy your Rockstor state. If you know '
