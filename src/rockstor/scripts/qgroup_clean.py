@@ -24,11 +24,12 @@ import re
 from django.conf import settings
 from storageadmin.models import Pool
 from system.osi import run_command
+from fs.btrfs import mount_root
 
 def main():
     for p in Pool.objects.all():
         print('Processing pool(%s)' % p.name)
-        mnt_pt = '%s%s' % (settings.MNT_PT, p.name)
+        mnt_pt = mount_root(p)
         o, e, rc = run_command([BTRFS, 'subvol', 'list', mnt_pt])
         subvol_ids = []
         for l in o:
