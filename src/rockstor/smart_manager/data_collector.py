@@ -291,6 +291,7 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
         gevent.spawn(self.send_uptime)
         gevent.spawn(self.send_kernel_info)
         gevent.spawn(self.update_rockons)
+        gevent.spawn(self.update_check)
 
     # Run on every disconnect
     def recv_disconnect(self):
@@ -350,6 +351,14 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
             except Exception, e:
                 logger.error('%s. exception: %s' % (r['error'], e.__str__()))
 
+    def update_check(self):
+        from system.osi import update_check
+        uinfo = update_check()
+        self.emit('sysinfo:software-update', {
+            'data': uinfo,
+            'key': 'sysinfo:software-update'
+        })
+        logger.debug('sent update information %s' % uinfo)
 
 class Application(object):
     def __init__(self):
