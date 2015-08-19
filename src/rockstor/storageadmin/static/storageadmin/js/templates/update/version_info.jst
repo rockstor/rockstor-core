@@ -26,10 +26,10 @@
   <p>Rockstor is up-to-date. If you've updated recently, reload the browser<b>(Ctrl+Shift+R)</b> for latest UI changes.</p><br>
 
   <% if (autoUpdateEnabled) { %>
-  <p>Rockstor is configured to check for updates once a day and automatically update itself. If you so choose, you can disable auto update.</p>
+  <p>Rockstor is configured to check for package updates and automatically upgrade on a daily basis. This will keep your system up to date. While it's not recommended, you can disable this feature and only update when you want to.</p>
   <a id="disableAuto" class="btn btn-primary" title="Disable Auto Update">Disable auto update</a>
   <% } else { %>
-  <p>Rockstor can be configured to check for updates once a day and automatically update itself. We recommend you enable auto update.</p>
+  <p>Rockstor can be configured to check for package updates and automatically upgrade on a daily basis. We recommend you enable this feature to keep your system up to date without delay.</p>
   <a id="enableAuto" class="btn btn-primary" title="Enable Auto Update">Enable auto update</a>
   <% } %>
 <% } %>
@@ -39,7 +39,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-	<h4>RockStor is being updated to the latest version. Please wait... &nbsp;&nbsp; </h4>	
+	<h4>RockStor is being updated to the latest version. Please wait... &nbsp;&nbsp; </h4>
       </div>
       <div class="modal-body">
 	<div style="text-align: center">
