@@ -403,29 +403,6 @@ function setApplianceName() {
     });
 }
 
-function updateLoadAvg() {
-    RockStorGlobals.loadAvgTimer = window.setInterval(function() {
-	fetchLoadAvg();
-    }, 60000);
-    fetchLoadAvg();
-    RockStorGlobals.loadAvgDisplayed = true;
-}
-
-
-function fetchLoadAvg() {
-    $.ajax({
-	url: "/api/sm/sprobes/loadavg?limit=1&format=json",
-	type: "GET",
-	dataType: "json",
-	global: false, // dont show global loading indicator
-	success: function(data, status, xhr) {
-	    displayLoadAvg(data);
-	},
-	error: function(xhr, status, error) {
-	}
-    });
-}
-
 function setVersionCheckTimer() {
     RockStorGlobals.versionCheckTimer = window.setInterval(function() {
 	checkVersion();
