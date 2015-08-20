@@ -26,8 +26,7 @@ from rest_framework.authentication import (BasicAuthentication,
                                            SessionAuthentication)
 from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
-from system.osi import (uptime, refresh_nfs_exports, update_check,
-                        update_run, current_version, kernel_info)
+from system.osi import (uptime, refresh_nfs_exports, kernel_info)
 from fs.btrfs import (mount_share, device_scan, mount_root, qgroup_create,
                       get_pool_info, pool_raid, pool_usage, shares_info,
                       share_usage, snaps_info)
@@ -44,7 +43,8 @@ from django.conf import settings
 from django.db import transaction
 from share_helpers import sftp_snap_toggle
 from oauth2_provider.ext.rest_framework import OAuth2Authentication
-from system.pkg_mgmt import auto_update
+from system.pkg_mgmt import (auto_update, current_version, update_check,
+                             update_run)
 import logging
 logger = logging.getLogger(__name__)
 
