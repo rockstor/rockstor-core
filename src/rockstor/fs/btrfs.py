@@ -121,7 +121,7 @@ def resize_pool(pool, dev_list, add=True):
 
 
 def mount_root(pool):
-    device = pool.disk_set.first()
+    device = pool.disk_set.first().name
     root_pool_mnt = DEFAULT_MNT_DIR + pool.name
     if (is_share_mounted(pool.name)):
         return root_pool_mnt
