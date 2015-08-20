@@ -49,6 +49,8 @@ DEFAULT_MNT_DIR = '/mnt2/'
 SHUTDOWN = '/usr/sbin/shutdown'
 GRUBBY = '/usr/sbin/grubby'
 CAT = '/usr/bin/cat'
+UDEVADM = '/usr/sbin/udevadm'
+GREP = '/usr/bin/grep'
 
 
 def inplace_replace(of, nf, regex, nl):
@@ -417,8 +419,70 @@ def is_mounted(mnt_pt):
     return False
 
 
+def get_disk_serial(device_name, test):
+    """
+    Returns the serial number of device_name using udevadm to match that
+    returned by lsblk. N.B. udevadm has been observed to return the following:-
+    ID_SCSI_SERIAL  rarely seen
+    ID_SERIAL_SHORT  often seen
+    ID_SERIAL        thought to always be seen (see note below)
+    N.B. if used in this order the serial is most likely to resemble that shown
+    on the device label as well as that returned by the lsblk. ID_SERIAL seems
+    always to appear but is sometimes accompanied by one or both of the others.
+    When ID_SERIAL is accompanied by ID_SERIAL_SHORT the short variant is
+    closer to lsblk and physical label. When they are both present the
+    ID_SERIAL appears to be a combination of the model and the ID_SERIAL_SHORT
+    :param device_name:
+    :param test:
+    :return: 12345678901234567890
+    """
+    # logger.info('get_disk_serial called with device name %s' % device_name)
+    serial_num = ''
+    line_fields = []
+    if test is None:
+        out, err, rc = run_command([UDEVADM, 'info', '--name=' + device_name],
+                                   throw=False)
+    else:
+        # test mode so process test instead of udevadmin output
+        out = test
+        rc = 0
+    if rc != 0:  # if return code is an error return empty string
+        return ''
+    for line in out:
+        if line == '':
+            continue
+        # nonlocal line_fields
+        line_fields = line.strip().replace('=', ' ').split()
+        # fast replace of '=' with space so split() can divide all fields
+        # example original line "E: ID_SERIAL_SHORT=S1D5NSAF111111K"
+        # less than 3 fields are of no use so just in case:-
+        if len(line_fields) < 3:
+            continue
+        if line_fields[1] == 'ID_SCSI_SERIAL':
+            # we have an instance of SCSI_SERIAL being more reliably unique
+            # when present than SERIAL_SHORT or SERIAL so overwrite whatever
+            # we have and look no further by breaking out of the search loop
+            serial_num = line_fields[2]
+            break
+        elif line_fields[1] == 'ID_SERIAL_SHORT':
+            # SERIAL_SHORT is better than SERIAL so just overwrite whatever we
+            # have so far with SERIAL_SHORT
+            serial_num = line_fields[2]
+        else:
+            if line_fields[1] == 'ID_SERIAL':
+                # SERIAL is sometimes our only option but only use it if we
+                # have found nothing else.
+                if serial_num == '':
+                    serial_num = line_fields[2]
+    # should return one of the following in order of priority
+    # SCSI_SERIAL, SERIAL_SHORT, SERIAL
+    # logger.info('get_disk_serial returning serial # %s' % serial_num)
+    return serial_num
+
+
 def get_virtio_disk_serial(device_name):
     """
+    N.B. this function is deprecated by get_disk_serial
     Returns the serial number of device_name virtio disk eg /dev/vda
     Returns empty string if cat /sys/block/vda/serial command fails
     Note no serial entry in /sys/block/sda/ for real or KVM sata drives
