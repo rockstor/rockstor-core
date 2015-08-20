@@ -932,7 +932,6 @@ $(document).ready(function() {
     };
 
     var displayUpdate = function(data) {
-	console.log('update received', data);
 	var currentVersion = data[0];
 	var mostRecentVersion = data[1];
 	if (currentVersion != mostRecentVersion) {
