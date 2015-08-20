@@ -44,10 +44,8 @@ IFUP = '/sbin/ifup'
 IFDOWN = '/sbin/ifdown'
 ROUTE = '/sbin/route'
 SYSTEMCTL = '/usr/bin/systemctl'
-YUM = '/usr/bin/yum'
 AT = '/usr/bin/at'
 DEFAULT_MNT_DIR = '/mnt2/'
-RPM = '/usr/bin/rpm'
 SHUTDOWN = '/usr/sbin/shutdown'
 GRUBBY = '/usr/sbin/grubby'
 CAT = '/usr/bin/cat'
@@ -387,61 +385,6 @@ def update_issue(ipaddr):
            " to https://%s\n\n" % ipaddr)
     with open('/etc/issue', 'a') as ifo:
         ifo.write(msg)
-
-
-def current_version():
-    out, err, rc = run_command([RPM, '-qi', 'rockstor'], throw=False)
-    if (rc != 0):
-        return '0.0-0'
-    return ('%s-%s' % (out[1].split(':')[-1].strip(),
-                       out[2].split(':')[-1].strip()))
-
-
-def update_check():
-    out, err, rc = run_command([YUM, 'update', 'rockstor', '--changelog',
-                                '--assumeno'], throw=False)
-    if (rc == 1):
-        #  parse the output for the following information
-        #  1. what's the latest update version?
-        #  2. what are the updates?
-        updates = []
-        cur_version = None
-        version = None
-        for i in range(len(out)):
-            if (re.match('---> Package rockstor.* updated', out[i])
-                    is not None):
-                cur_version = out[i].split()[3].split(':')[1]
-            if (re.match('---> Package rockstor.* be an update', out[i])
-                    is not None):
-                version = out[i].split()[3].split(':')[1]
-            if (re.match('ChangeLog for: ', out[i]) is not None):
-                i = i + 1
-                while True:
-                    if (len(out) > i):
-                        if (out[i + 1] == ''):
-                            break
-                        updates.append(out[i + 1])
-                        i = i + 1
-        if (version is None):
-            version = cur_version
-        return (cur_version, version, updates)
-    # no update available
-    out, err, rc = run_command([YUM, 'info', 'installed', 'rockstor'])
-    version = ('%s-%s' % (out[4].split(': ')[1], out[5].split(': ')[1]))
-    return (version, version, [])
-
-
-def update_run():
-    fh, npath = mkstemp()
-    with open(npath, 'w') as atfo:
-        atfo.write('%s stop rockstor\n' % SYSTEMCTL)
-        atfo.write('%s --setopt=timeout=600 -y update\n' % YUM)
-        atfo.write('%s start rockstor\n' % SYSTEMCTL)
-        atfo.write('/bin/rm -f %s\n' % npath)
-    run_command([SYSTEMCTL, 'start', 'atd'])
-    out, err, rc = run_command([AT, '-f', npath, 'now + 1 minutes'])
-    time.sleep(120)
-    return out, err, rc
 
 
 def sethostname(ip, hostname):

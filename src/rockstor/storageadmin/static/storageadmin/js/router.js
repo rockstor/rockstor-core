@@ -128,13 +128,6 @@ var AppRouter = Backbone.Router.extend({
 	if (!RockStorGlobals.browserChecked) {
 	    checkBrowser();
 	}
-
-	// set a timer to get current rockstor version and checkif there is an
-	// update available
-	if (!RockStorGlobals.versionCheckTimerStarted) {
-	    setVersionCheckTimer();
-	}
-
     },
 
 
@@ -938,26 +931,37 @@ $(document).ready(function() {
 	$('#uptime').text(str);
     };
 
+    var displayUpdate = function(data) {
+	var currentVersion = data[0];
+	var mostRecentVersion = data[1];
+	if (currentVersion != mostRecentVersion) {
+	    $('#version-msg').html('RockStor ' + currentVersion + ' <i class="glyphicon glyphicon-arrow-up"></i>');
+	} else {
+	    $('#version-msg').html('RockStor ' + currentVersion);
+	}
+    };
 
-  var kernelError = function(data) {
-    // If 'kernel' does not show up in the string, we're ok
-    if (data.indexOf('kernel') !== -1) {
-      // Put an alert at the top of the page
-      $('#browsermsg').html('<div class="alert alert-danger"><button type="button" class="close" data-dismiss="alert">&times;</button>' + data + '</div>');
-    }
-  };
+
+    var kernelError = function(data) {
+	// If 'kernel' does not show up in the string, we're ok
+	if (data.indexOf('kernel') !== -1) {
+	    // Put an alert at the top of the page
+	    $('#browsermsg').html('<div class="alert alert-danger"><button type="button" class="close" data-dismiss="alert">&times;</button>' + data + '</div>');
+	}
+    };
 
 
-  RockStorSocket.addListener(kernelInfo, this, 'sysinfo:kernel_info');
-  RockStorSocket.addListener(displayLoadAvg, this, 'sysinfo:uptime');
-  RockStorSocket.addListener(kernelError, this, 'sysinfo:kernel_error');
+    RockStorSocket.addListener(kernelInfo, this, 'sysinfo:kernel_info');
+    RockStorSocket.addListener(displayLoadAvg, this, 'sysinfo:uptime');
+    RockStorSocket.addListener(kernelError, this, 'sysinfo:kernel_error');
+    RockStorSocket.addListener(displayUpdate, this, 'sysinfo:software-update');
 
-  RockStorSocket.sysinfo.on('kernel_error', function(data) {
-    // Handling errors just by emitting message via the server
-    if (data.error.indexOf('kernel') !== -1) {
-      // Put an alert at the top of the page
-      $('#browsermsg').html('<div class="alert alert-danger"><button type="button" class="close" data-dismiss="alert">&times;</button>' + data.error + '</div>');
-    }
+    RockStorSocket.sysinfo.on('kernel_error', function(data) {
+	// Handling errors just by emitting message via the server
+	if (data.error.indexOf('kernel') !== -1) {
+	    // Put an alert at the top of the page
+	    $('#browsermsg').html('<div class="alert alert-danger"><button type="button" class="close" data-dismiss="alert">&times;</button>' + data.error + '</div>');
+	}
 
-  });
+    });
 });

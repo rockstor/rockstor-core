@@ -26,8 +26,7 @@ from rest_framework.authentication import (BasicAuthentication,
                                            SessionAuthentication)
 from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
-from system.osi import (uptime, refresh_nfs_exports, update_check,
-                        update_run, current_version, kernel_info)
+from system.osi import (uptime, refresh_nfs_exports, kernel_info)
 from fs.btrfs import (mount_share, device_scan, mount_root, qgroup_create,
                       get_pool_info, pool_raid, pool_usage, shares_info,
                       share_usage, snaps_info)
@@ -44,7 +43,8 @@ from django.conf import settings
 from django.db import transaction
 from share_helpers import sftp_snap_toggle
 from oauth2_provider.ext.rest_framework import OAuth2Authentication
-from system.pkg_mgmt import install_pkg
+from system.pkg_mgmt import (auto_update, current_version, update_check,
+                             update_run)
 import logging
 logger = logging.getLogger(__name__)
 
@@ -217,27 +217,21 @@ class CommandView(APIView):
 
         if (command == 'enable-auto-update'):
             try:
-                install_pkg('yum-cron')
-                systemctl('yum-cron', 'enable')
-                systemctl('yum-cron', 'start')
-            except Exception, e:
-                msg = ('Failed to enable auto update due to a low level error')
-                logger.exception(e)
-                handle_exception(Exception(msg), request)
-            finally:
+                auto_update(enable=True)
                 return Response({'enabled': True, })
+            except Exception, e:
+                msg = ('Failed to enable auto update due to this exception: '
+                       '%s' % e.__str__())
+                handle_exception(Exception(msg), request)
 
         if (command == 'disable-auto-update'):
             try:
-                systemctl('yum-cron', 'stop')
-                systemctl('yum-cron', 'disable')
-            except Exception, e:
-                msg = ('Failed to disable auto update due to a low level '
-                       'error')
-                logger.exception(e)
-                handle_exception(Exception(msg), request)
-            finally:
+                auto_update(enable=False)
                 return Response({'enabled': False, })
+            except Exception, e:
+                msg = ('Failed to disable auto update due to this exception:  '
+                       '%s' % e.__str__())
+                handle_exception(Exception(msg), request)
 
         if (command == 'refresh-pool-state'):
             for p in Pool.objects.all():
