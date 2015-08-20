@@ -90,6 +90,9 @@ def parse_options(request):
     options['editable'] = request.data.get('mod_choice', options['editable'])
     options['syncable'] = request.data.get('sync_choice', options['syncable'])
     options['admin_host'] = request.data.get('admin_host', options['admin_host'])
+    if (options['admin_host'] is not None and
+        len(options['admin_host'].strip()) == 0):
+        options['admin_host'] = None
     return options
 
 
@@ -115,8 +118,6 @@ def refresh_wrapper(exports, request, logger):
     try:
         refresh_nfs_exports(exports)
     except Exception, e:
-        e_msg = ('A lower level error occured while refreshing NFS exports. '
-                 'Error: %s. This could be due to invalid input. '
-                 'If so, correct your input and try again.' % e)
-        logger.exception(e)
+        e_msg = ('A lower level error occured while refreshing NFS exports: '
+                 '%s' % e.__str__())
         handle_exception(Exception(e_msg), request)
