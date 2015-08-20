@@ -43,8 +43,8 @@ class NFSServiceView(BaseServiceDetailView):
                 config = request.data['config']
                 self._save_config(service, config)
             except Exception, e:
-                logger.exception(e)
-                e_msg = ('NFS could not be configured. Try again')
+                e_msg = ('NFS could not be configured due to the following '
+                         'exception. You could try again. %s' % e.__str__())
                 handle_exception(Exception(e_msg), request)
 
         else:
@@ -59,8 +59,7 @@ class NFSServiceView(BaseServiceDetailView):
                     systemctl(service_name, 'restart')
                 #init_service_op('nfs', command)
             except Exception, e:
-                logger.exception(e)
-                e_msg = ('Failed to %s NFS due to a system error.' % command)
+                e_msg = ('Failed to %s NFS due to this error: %s' % (command, e.__str__()))
                 handle_exception(Exception(e_msg), request)
 
         return Response()
