@@ -59,10 +59,7 @@ PoolResizeSummary = RockstorWizardPage.extend({
 
     save: function() {
 	var _this = this;
-	event.preventDefault();
-	var button = $(event.currentTarget);
-	if (buttonDisabled(button)) return false;
-	disableButton(button);
+  $('button#next-page').prop('disable', true);
 	var choice = this.model.get('choice');
 	var raidLevel = null;
 	if (choice == 'add') {
