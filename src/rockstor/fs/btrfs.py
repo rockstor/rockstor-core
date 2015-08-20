@@ -28,7 +28,7 @@ import signal
 import shutil
 import collections
 from system.osi import (run_command, create_tmp_dir, is_share_mounted,
-                        is_mounted, get_virtio_disk_serial)
+                        is_mounted, get_virtio_disk_serial, get_disk_serial)
 from system.exceptions import (CommandException, NonBTRFSRootException)
 from pool_scrub import PoolScrub
 from django_ztask.decorators import task
@@ -121,7 +121,7 @@ def resize_pool(pool, dev_list, add=True):
 
 
 def mount_root(pool):
-    device = pool.disk_set.first()
+    device = pool.disk_set.first().name
     root_pool_mnt = DEFAULT_MNT_DIR + pool.name
     if (is_share_mounted(pool.name)):
         return root_pool_mnt
@@ -735,6 +735,8 @@ def scan_disks(min_size):
     disks = []
     serials = []
     root_serial = None
+    # to use udevadm for serial # rather than lsblk make this True
+    always_use_udev_serial = False
     for l in o:
         if (re.match('NAME', l) is None):
             continue
@@ -796,10 +798,11 @@ def scan_disks(min_size):
                 continue
             if (dmap['SIZE'] < min_size):
                 continue
-            if (dmap['SERIAL'] == ''):
-                # lsblk fails to retrieve SERIAL from KVM VirtIO drives
-                # so try specialized function.
-                dmap['SERIAL'] = get_virtio_disk_serial(dmap['NAME'])
+            if (dmap['SERIAL'] == '' or always_use_udev_serial):
+                # lsblk fails to retrieve SERIAL from VirtIO drives and some
+                # sdcard devices so try specialized function.
+                # dmap['SERIAL'] = get_virtio_disk_serial(dmap['NAME'])
+                dmap['SERIAL'] = get_disk_serial(dmap['NAME'], None)
             if (dmap['SERIAL'] == '' or (dmap['SERIAL'] in serials)):
                 # No serial number still or its a repeat.
                 # Overwrite drive serial entry with drive name:

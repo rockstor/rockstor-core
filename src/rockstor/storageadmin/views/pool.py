@@ -259,15 +259,16 @@ class PoolListView(PoolMixin, rfc.GenericView):
             p = Pool(name=pname, raid=raid_level, compression=compression,
                      mnt_options=mnt_options)
             p.disk_set.add(*disks)
-            add_pool(p, dnames)
-            p.size = pool_usage(mount_root(p))[0]
-            p.uuid = btrfs_uuid(dnames[0])
             p.save()
             # added for loop to save disks
             # appears p.disk_set.add(*disks) was not saving disks in test environment
             for d in disks:
                 d.pool = p
                 d.save()
+            add_pool(p, dnames)
+            p.size = pool_usage(mount_root(p))[0]
+            p.uuid = btrfs_uuid(dnames[0])
+            p.save()
             return Response(PoolInfoSerializer(p).data)
 
 
