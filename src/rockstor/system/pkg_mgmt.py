@@ -105,6 +105,8 @@ def update_check():
                 log = False
         if (re.match('\* ', l) is not None):
             log = True
+    if (new_version is None):
+        new_version = version
     return (version, new_version, updates)
 
 
