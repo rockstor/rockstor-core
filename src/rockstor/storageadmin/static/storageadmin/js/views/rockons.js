@@ -567,10 +567,8 @@ RockonInstallSummary = RockstorWizardPage.extend({
 
     save: function() {
 	var _this = this;
-	event.preventDefault();
-	var button = $(event.currentTarget);
-	if (buttonDisabled(button)) return false;
-	disableButton(button);
+  //$('button#next-page').prop('disable', true);
+  document.getElementById('next-page').disabled = true;
 	return $.ajax({
 	    url: '/api/rockons/' + this.rockon.id + '/install',
 	    type: 'POST',
@@ -582,7 +580,7 @@ RockonInstallSummary = RockstorWizardPage.extend({
 		'cc': this.cc_map
 	    }),
 	    success: function() {
-		console.log('rockon install success');
+    document.getElementById('next-page').disabled = false;
 	    },
 	    error: function(request, status, error) { }
 	});

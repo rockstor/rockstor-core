@@ -59,10 +59,7 @@ PoolResizeSummary = RockstorWizardPage.extend({
 
     save: function() {
 	var _this = this;
-	event.preventDefault();
-	var button = $(event.currentTarget);
-	if (buttonDisabled(button)) return false;
-	disableButton(button);
+	document.getElementById('next-page').disabled = true;
 	var choice = this.model.get('choice');
 	var raidLevel = null;
 	if (choice == 'add') {
@@ -77,6 +74,11 @@ PoolResizeSummary = RockstorWizardPage.extend({
 		    'disks': this.model.get('diskNames'),
 		    'raid_level': raidLevel
 		}),
+		success: function() {
+		    document.getElementById('next-page').disabled = false;
+		},
+		error: function(request, status, error) {
+		}
 	    });
 	} else if (choice == 'remove') {
 	    return $.ajax({
@@ -88,7 +90,9 @@ PoolResizeSummary = RockstorWizardPage.extend({
 		    'disks': this.model.get('diskNames'),
 		    'raid_level': this.model.get('pool').get('raid')
 		}),
-		success: function() { },
+		success: function() {
+		    document.getElementById('next-page').disabled = false;
+		},
 		error: function(request, status, error) {
 		}
 	    });
@@ -102,7 +106,9 @@ PoolResizeSummary = RockstorWizardPage.extend({
 		    'disks': this.model.get('diskNames'),
 		    'raid_level': this.model.get('raidLevel')
 		}),
-		success: function() { },
+		success: function() {
+		    document.getElementById('next-page').disabled = false;
+		},
 		error: function(request, status, error) {
 		}
 	    });
