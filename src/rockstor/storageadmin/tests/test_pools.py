@@ -719,7 +719,8 @@ class PoolTests(APITestMixin, APITestCase):
         response4 = self.client.put('%s/raid5pool/remove' % self.BASE_URL, data=data2)
         self.assertEqual(response4.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response4.data)
-        e_msg = ('Disks cannot be removed from this pool because its raid configuration(raid5)requires a minimum of 2 disks')
+        e_msg = ('Disks cannot be removed from this pool because its raid '
+                 'configuration(raid5) requires a minimum of 2 disks')
         self.assertEqual(response4.data['detail'], e_msg)
 
         # delete pool

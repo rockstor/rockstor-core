@@ -369,19 +369,23 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                              'raid(%s) configuration' % pool.raid)
                     handle_exception(Exception(e_msg), request)
 
-                if (pool.raid == 'raid1'):
-                    if (remaining_disks < 2):
-                        e_msg = ('Disks cannot be removed from this pool '
-                                 'because its raid configuration(raid1) '
-                                 'requires a minimum of 2 disks')
-                        handle_exception(Exception(e_msg), request)
+                if (pool.raid == 'raid1' and remaining_disks < 2):
+                    e_msg = ('Disks cannot be removed from this pool '
+                             'because its raid configuration(raid1) '
+                             'requires a minimum of 2 disks')
+                    handle_exception(Exception(e_msg), request)
 
-                if (pool.raid == 'raid10'):
-                    if (remaining_disks < 4):
-                        e_msg = ('Disks cannot be removed from this pool '
-                                 'because its raid configuration(raid10) '
-                                 'requires a minimum of 4 disks')
-                        handle_exception(Exception(e_msg), request)
+                if (pool.raid == 'raid10' and remaining_disks < 4):
+                    e_msg = ('Disks cannot be removed from this pool '
+                             'because its raid configuration(raid10) '
+                             'requires a minimum of 4 disks')
+                    handle_exception(Exception(e_msg), request)
+
+                if (pool.raid == 'raid5' and remaining_disks < 2):
+                    e_msg = ('Disks cannot be removed from this pool because '
+                             'its raid configuration(raid5) requires a '
+                             'minimum of 2 disks')
+                    handle_exception(Exception(e_msg), request)
 
                 usage = pool_usage('/%s/%s' % (settings.MNT_PT, pool.name))
                 size_cut = 0
