@@ -338,6 +338,16 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                               'raid level: raid10')
                      handle_exception(Exception(e_msg), request)
 
+                if (new_raid == 'raid6' and num_total_disks < 3):
+                    e_msg = ('A minimum of Three drives are required for the '
+                             'raid level: raid6')
+                    handle_exception(Exception(e_msg), request)
+
+                if (new_raid == 'raid5' and num_total_disks < 2):
+                    e_msg == ('A minimum of Two drives are required for the '
+                              'raid level: raid5')
+                    handle_exception(Exception(e_msg), request)
+
                 if (PoolBalance.objects.filter(
                         pool=pool,
                         status__regex=r'(started|running)').exists()):

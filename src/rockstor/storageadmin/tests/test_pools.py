@@ -861,6 +861,15 @@ class PoolTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response4.data)
         self.assertEqual(response4.data['detail'], e_msg)
 
+        # invalid migrate from raid1 to raid6 with total disks < 3
+        e_msg = 'A minimum of Three drives are required for the raid level: raid6'
+        data5 = {'disks': [],
+                 'raid_level': 'raid6', }
+        response4 = self.client.put('%s/raid1pool/add' % self.BASE_URL, data=data5)
+        self.assertEqual(response4.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response4.data)
+        self.assertEqual(response4.data['detail'], e_msg)
+
         # migrate 'raid1' to 'raid10'
         data5 = {'disks': ('sdh','sde'),
                  'raid_level': 'raid10', }
