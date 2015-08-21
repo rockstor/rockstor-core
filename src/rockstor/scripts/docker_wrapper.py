@@ -16,14 +16,25 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import os
+os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 import sys
-from system.osi import (run_command, is_mounted)
+from system.osi import run_command
+from fs.btrfs import (mount_share, device_scan)
+from storageadmin.models import Share
 
 DOCKER = '/usr/bin/docker'
 
 
 def main():
     mnt_pt = sys.argv[1]
-    if (not is_mounted(mnt_pt)):
-        sys.exit('Docker root(%s) not mounted.' % mnt_pt)
+    sname = mnt_pt.split('/')[-1]
+    try:
+        #rockstor service may have done this moments before, but we can't be
+        #sure. so scan just in case.
+        device_scan()
+        so = Share.objects.get(name=sname)
+        mount_share(so, mnt_pt)
+    except Exception, e:
+        sys.exit('Failed to mount Docker root(%s). Exception: %s' % (mnt_pt, e.__str__()))
     run_command([DOCKER, '-d', '-s', 'btrfs', '-g', mnt_pt])
