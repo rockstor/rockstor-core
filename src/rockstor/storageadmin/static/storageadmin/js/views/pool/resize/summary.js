@@ -59,7 +59,7 @@ PoolResizeSummary = RockstorWizardPage.extend({
 
     save: function() {
 	var _this = this;
-  document.getElementById('next-page').disabled = true;
+	document.getElementById('next-page').disabled = true;
 	var choice = this.model.get('choice');
 	var raidLevel = null;
 	if (choice == 'add') {
@@ -74,9 +74,9 @@ PoolResizeSummary = RockstorWizardPage.extend({
 		    'disks': this.model.get('diskNames'),
 		    'raid_level': raidLevel
 		}),
-    success: function() {
-      document.getElementById('next-page').disabled = false;
-    },
+		success: function() {
+		    document.getElementById('next-page').disabled = false;
+		},
 		error: function(request, status, error) {
 		}
 	    });
@@ -91,8 +91,8 @@ PoolResizeSummary = RockstorWizardPage.extend({
 		    'raid_level': this.model.get('pool').get('raid')
 		}),
 		success: function() {
-        document.getElementById('next-page').disabled = false;
-     },
+		    document.getElementById('next-page').disabled = false;
+		},
 		error: function(request, status, error) {
 		}
 	    });
@@ -107,8 +107,8 @@ PoolResizeSummary = RockstorWizardPage.extend({
 		    'raid_level': this.model.get('raidLevel')
 		}),
 		success: function() {
-      document.getElementById('next-page').disabled = false;
-    },
+		    document.getElementById('next-page').disabled = false;
+		},
 		error: function(request, status, error) {
 		}
 	    });
