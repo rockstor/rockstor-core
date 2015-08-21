@@ -23,11 +23,13 @@ from shutil import move
 from osi import run_command
 from services import systemctl
 import shutil
+import time
 from datetime import (datetime, timedelta)
 
 YUM = '/usr/bin/yum'
 RPM = '/usr/bin/rpm'
-
+SYSTEMCTL = '/usr/bin/systemctl'
+AT = '/usr/bin/at'
 
 def install_pkg(name):
     return run_command([YUM, '--setopt=timeout=600', '-y', 'install', name])

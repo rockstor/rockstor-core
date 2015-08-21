@@ -138,17 +138,15 @@ class CommandView(APIView):
                 update_run()
                 return Response('Done')
             except Exception, e:
-                e_msg = ('Update failed due to a system error')
-                logger.exception(e)
+                e_msg = ('Update failed due to this exception: %s' % e.__str__())
                 handle_exception(Exception(e_msg), request)
 
         if (command == 'current-version'):
             try:
                 return Response(current_version())
             except Exception, e:
-                e_msg = ('Unable to check current version due to a system'
-                         ' error')
-                logger.exception(e)
+                e_msg = ('Unable to check current version due to a this '
+                         'exception: ' % e.__str__())
                 handle_exception(Exception(e_msg), request)
 
         if (command == 'join-winbind-domain'):
