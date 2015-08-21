@@ -20,7 +20,8 @@ from django.db import models
 
 
 class TLSCertificate(models.Model):
-    name = models.CharField(max_length=1024, unique=True)
+    #support upto 12K length certs.
+    name = models.CharField(max_length=12288, unique=True)
     certificate = models.CharField(max_length=2048, null=True)
     key = models.CharField(max_length=2048, null=True)
 

@@ -23,6 +23,7 @@ import re
 import pickle
 import time
 from rest_framework.response import Response
+from rest_framework import status
 from django.db import transaction
 from storageadmin.serializers import PoolInfoSerializer
 from storageadmin.models import (Disk, Pool, Share, PoolBalance)
@@ -214,6 +215,10 @@ class PoolListView(PoolMixin, rfc.GenericView):
                          'hyphen(-), underscore(_) or a period(.).')
                 handle_exception(Exception(e_msg), request)
 
+            if (len(pname) > 255):
+                e_msg = ('Pool name must be less than 255 characters')
+                handle_exception(Exception(e_msg), request)
+
             if (Pool.objects.filter(name=pname).exists()):
                 e_msg = ('Pool(%s) already exists. Choose a different name' % pname)
                 handle_exception(Exception(e_msg), request)
@@ -279,7 +284,7 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
             serialized_data = PoolInfoSerializer(pool)
             return Response(serialized_data.data)
         except Pool.DoesNotExist:
-            return Response()
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
     @transaction.atomic
     def put(self, request, pname, command):
@@ -328,6 +333,21 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                              % (pool.raid, new_raid))
                     handle_exception(Exception(e_msg), request)
 
+                if (new_raid == 'raid10' and num_total_disks < 4):
+                     e_msg = ('A minimum of Four drives are required for the '
+                              'raid level: raid10')
+                     handle_exception(Exception(e_msg), request)
+
+                if (new_raid == 'raid6' and num_total_disks < 3):
+                    e_msg = ('A minimum of Three drives are required for the '
+                             'raid level: raid6')
+                    handle_exception(Exception(e_msg), request)
+
+                if (new_raid == 'raid5' and num_total_disks < 2):
+                    e_msg == ('A minimum of Two drives are required for the '
+                              'raid level: raid5')
+                    handle_exception(Exception(e_msg), request)
+
                 if (PoolBalance.objects.filter(
                         pool=pool,
                         status__regex=r'(started|running)').exists()):
@@ -364,13 +384,29 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
                              'raid(%s) configuration' % pool.raid)
                     handle_exception(Exception(e_msg), request)
 
+                if (pool.raid == 'raid1' and remaining_disks < 2):
+                    e_msg = ('Disks cannot be removed from this pool '
+                             'because its raid configuration(raid1) '
+                             'requires a minimum of 2 disks')
+                    handle_exception(Exception(e_msg), request)
 
-                if (pool.raid == 'raid10'):
-                    if (remaining_disks < 4):
-                        e_msg = ('Disks cannot be removed from this pool '
-                                 'because its raid configuration(%s) '
-                                 'requires a minimum of 4 disks' % pool.raid)
-                        handle_exception(Exception(e_msg), request)
+                if (pool.raid == 'raid10' and remaining_disks < 4):
+                    e_msg = ('Disks cannot be removed from this pool '
+                             'because its raid configuration(raid10) '
+                             'requires a minimum of 4 disks')
+                    handle_exception(Exception(e_msg), request)
+
+                if (pool.raid == 'raid5' and remaining_disks < 2):
+                    e_msg = ('Disks cannot be removed from this pool because '
+                             'its raid configuration(raid5) requires a '
+                             'minimum of 2 disks')
+                    handle_exception(Exception(e_msg), request)
+
+                if (pool.raid == 'raid6' and remaining_disks < 3):
+                    e_msg = ('Disks cannot be removed from this pool because '
+                             'its raid configuration(raid6) requires a '
+                             'minimum of 3 disks')
+                    handle_exception(Exception(e_msg), request)
 
                 usage = pool_usage('/%s/%s' % (settings.MNT_PT, pool.name))
                 size_cut = 0
