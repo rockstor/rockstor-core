@@ -785,7 +785,8 @@ class PoolTests(APITestMixin, APITestCase):
         response4 = self.client.put('%s/raid6pool/remove' % self.BASE_URL, data=data2)
         self.assertEqual(response4.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response4.data)
-        e_msg = ('Disks cannot be removed from this pool because its raid configuration(raid6)requires a minimum of 3 disks')
+        e_msg = ('Disks cannot be removed from this pool because its raid '
+                 'configuration(raid6) requires a minimum of 3 disks')
         self.assertEqual(response4.data['detail'], e_msg)
 
         # delete pool
@@ -865,10 +866,9 @@ class PoolTests(APITestMixin, APITestCase):
                  'raid_level': 'raid10', }
         response4 = self.client.put('%s/raid1pool/add' % self.BASE_URL, data=data5)
         self.assertEqual(response4.status_code, status.HTTP_200_OK, msg=response.data)
-        self.assertEqual(response.data['name'], 'raid1pool')
-        self.assertEqual(response.data['raid'], 'raid10')
-        self.mock_btrfs_uuid.assert_called_with('sdh')
-        self.assertEqual(len(response.data['disks']), 4)
+        self.assertEqual(response4.data['name'], 'raid1pool')
+        self.assertEqual(response4.data['raid'], 'raid10')
+        self.assertEqual(len(response4.data['disks']), 4)
 
     @mock.patch('storageadmin.views.share_command.Share')
     def test_delete_pool(self, mock_share):
