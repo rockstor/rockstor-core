@@ -62,7 +62,7 @@ class TLSCertificateView(rfc.GenericView):
             except Exception, e:
                 logger.exception(e)
                 e_msg = ('RSA key modulus could not be verified for the given '
-                         'Private Key. Check and try again')
+                         'Private Key. Correct your input and try again')
                 handle_exception(Exception(e_msg), request)
             try:
                 o2, e, rc = run_command([OPENSSL, 'x509', '-noout',
@@ -70,11 +70,11 @@ class TLSCertificateView(rfc.GenericView):
             except Exception, e:
                 logger.exception(e)
                 e_msg = ('RSA key modulus could not be verified for the given '
-                         'Certificate. Check and try again')
+                         'Certificate. Correct your input and try again')
                 handle_exception(Exception(e_msg), request)
             if (o[0] != o2[0]):
                 e_msg = ('Given Certificate and the Private Key do not match. '
-                         'Check and try again')
+                         'Correct your input and try again')
                 handle_exception(Exception(e_msg), request)
             move(cpath, '%s/rockstor.cert' % settings.CERTDIR)
             move(kpath, '%s/rockstor.key' % settings.CERTDIR)
