@@ -23,6 +23,7 @@ import re
 import pickle
 import time
 from rest_framework.response import Response
+from rest_framework import status
 from django.db import transaction
 from storageadmin.serializers import PoolInfoSerializer
 from storageadmin.models import (Disk, Pool, Share, PoolBalance)
@@ -213,10 +214,10 @@ class PoolListView(PoolMixin, rfc.GenericView):
                          'following characters: letter(a-z), digits(0-9), '
                          'hyphen(-), underscore(_) or a period(.).')
                 handle_exception(Exception(e_msg), request)
-            
+
             if (len(pname) > 255):
-                e_msg = ('Pool name must be less than 255 characters') 
-                handle_exception(Exception(e_msg), request)       
+                e_msg = ('Pool name must be less than 255 characters')
+                handle_exception(Exception(e_msg), request)
 
             if (Pool.objects.filter(name=pname).exists()):
                 e_msg = ('Pool(%s) already exists. Choose a different name' % pname)
@@ -283,7 +284,7 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
             serialized_data = PoolInfoSerializer(pool)
             return Response(serialized_data.data)
         except Pool.DoesNotExist:
-            return Response()
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
     @transaction.atomic
     def put(self, request, pname, command):
