@@ -358,7 +358,7 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
             'data': uinfo,
             'key': 'sysinfo:software-update'
         })
-        logger.debug('sent update information %s' % uinfo)
+        logger.debug('sent update information %s' % repr(uinfo))
 
 class Application(object):
     def __init__(self):
