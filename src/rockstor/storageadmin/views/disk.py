@@ -76,10 +76,7 @@ class DiskListView(rfc.GenericView):
             else:
                 dob.pool = None
             if (dob.pool is None and d.root is True):
-                p = self._create_root_pool(d)
-                p.disk_set.add(dob)
-                p.save()
-                dob.pool = p
+                self._create_root_pool(dob)
             dob.save()
         for do in Disk.objects.all():
             if (do.name not in [d.name for d in disks]):
@@ -97,9 +94,14 @@ class DiskListView(rfc.GenericView):
 
     def _create_root_pool(self, d):
         p = Pool(name=settings.ROOT_POOL, raid='single')
+        p.disk_set.add(d)
+        p.save()
+        d.pool = p
+        d.save()
         p.size = pool_usage(mount_root(p))[0]
         enable_quota(p)
         p.uuid = btrfs_uuid(d.name)
+        p.save()
         return p
 
     def post(self, request, command, dname=None):
