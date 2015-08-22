@@ -44,7 +44,7 @@ from django.db import transaction
 from share_helpers import sftp_snap_toggle
 from oauth2_provider.ext.rest_framework import OAuth2Authentication
 from system.pkg_mgmt import (auto_update, current_version, update_check,
-                             update_run)
+                             update_run, auto_update_status)
 import logging
 logger = logging.getLogger(__name__)
 
@@ -207,7 +207,7 @@ class CommandView(APIView):
         if (command == 'auto-update-status'):
             status = True
             try:
-                systemctl('yum-cron', 'status')
+                status = auto_update_status()
             except:
                 status = False
             finally:

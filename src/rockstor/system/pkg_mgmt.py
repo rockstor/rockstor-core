@@ -30,16 +30,16 @@ YUM = '/usr/bin/yum'
 RPM = '/usr/bin/rpm'
 SYSTEMCTL = '/usr/bin/systemctl'
 AT = '/usr/bin/at'
+YCFILE = '/etc/yum/yum-cron.conf'
 
 def install_pkg(name):
     return run_command([YUM, '--setopt=timeout=600', '-y', 'install', name])
 
 def auto_update(enable=True):
-    cfile = '/etc/yum/yum-cron.conf'
     service = 'yum-cron'
     fo, npath = mkstemp()
     updated = False
-    with open(cfile) as ifo, open(npath, 'w') as tfo:
+    with open(YCFILE) as ifo, open(npath, 'w') as tfo:
         for line in ifo.readlines():
             if (re.match('apply_updates = ', line) is not None):
                 if (enable):
@@ -51,14 +51,25 @@ def auto_update(enable=True):
                 tfo.write(line)
     if (not updated):
         raise Exception('apply_updates directive missing in %s, assuming its '
-                        'is corrupt. No change made.' % cfile)
-    shutil.move(npath, cfile)
+                        'is corrupt. No change made.' % YCFILE)
+    shutil.move(npath, YCFILE)
     if (enable):
         systemctl(service, 'enable')
         systemctl(service, 'start')
     else:
         systemctl(service, 'stop')
         systemctl(service, 'disable')
+
+def auto_update_status():
+    enabled = False
+    with open(YCFILE) as ifo:
+        for line in ifo.readlines():
+            if (re.match('apply_updates = yes', line) is not None):
+                enabled = True
+                break
+    if (enabled):
+        systemctl('yum-cron', 'status')
+    return enabled
 
 def current_version():
     out, err, rc = run_command([RPM, '-qi', 'rockstor'], throw=False)
