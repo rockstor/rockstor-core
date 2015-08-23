@@ -72,25 +72,18 @@
   </head>
   <body>
 
-    <div id="wrapper1">
+    <div id="wrapper1" style="background-color: #151515;">
       <div id="wrapper2">
 
         <div id="logincontent">
           <div class="row-fluid">
             <div class="span12">
-              <div style="margin: auto; width: 300px;">
-                <span class="h1">Rockstor: Store Smartly</span>
+              <div style="margin: auto; width: 230px;">
+                <div class="logo-login">
+                  <img width="150px" src="../../static/storageadmin/img/rockstorlogo-font2.png">
+                </div>
                 <form id="login_form" name="aform" method="POST" action="/login_submit">
                   <div id="login-box">
-                    {% if messages %}
-                    <div class="alert alert-error">
-                      <ul class="messages">
-                        {% for message in messages %}
-                        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-                        {% endfor %}
-                      </ul>
-                    </div>
-                    {% endif %}
                     <div class="form-group">
                       <label class="control-label" for="username">Username</label>
                       <div class="controls">
@@ -109,7 +102,15 @@
                         <a href="#" id="forgot-pw" class="btn btn-primary">Reset password</a>
                       </div>
                     </div>
-
+                    {% if messages %}
+                    <div class="alert alert-error">
+                      <ul class="messages">
+                        {% for message in messages %}
+                        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                        {% endfor %}
+                      </ul>
+                    </div>
+                    {% endif %}
                   </div>
                   {% csrf_token %}
                 </form>
