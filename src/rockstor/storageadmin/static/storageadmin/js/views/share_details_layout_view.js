@@ -116,7 +116,6 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
     this.renderAcl();
     this.$('#ph-share-usage').html(this.subviews['share-usage'].render().el);
     this.$('#ph-snapshots').html(this.subviews['snapshots'].render().el);
-    this.$('#ph-nfs-exports').html(this.subviews['nfs-exports'].render().el);
     if (!_.isUndefined(this.cView) && this.cView == 'edit') {
       this.$('#ph-compression-info').html(this.compression_info_edit_template({
 	share: this.share,
