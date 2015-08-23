@@ -97,12 +97,6 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
       share: this.share,
       parentView: this
     });
-    this.subviews['nfs-exports'] = new ShareNFSExports({
-      share: this.share,
-      modify_choices: this.modify_choices,
-      sync_choices: this.sync_choices,
-      appliance_ip: current_appliance.get('ip'),
-    });
     this.share.on('change', this.subviews['share-usage'].render, this.subviews['share-usage']);
     $(this.el).html(this.template({
       share: this.share,
