@@ -28,9 +28,8 @@ VersionView = RockstorLayoutView.extend({
     events: {
 	'click #update': 'update',
 	'click #donateYes': 'donateYes',
-	'click #donateNo': 'donateNo',
 	'click #enableAuto': 'enableAutoUpdate',
-	'click #disableAuto': 'disableAutoUpdate',
+	'click #disableAuto': 'disableAutoUpdate'
     },
 
     initialize: function() {
@@ -104,19 +103,9 @@ VersionView = RockstorLayoutView.extend({
     },
 
     donateYes: function() {
-	contrib = this.$('input[type="radio"][name="contrib"]:checked').val();
-	if (contrib=='custom') {
-	    contrib = $('#custom-amount').val();
-	}
-	if (_.isNull(contrib) || _.isEmpty(contrib) || isNaN(contrib)) {
-	    contrib = 0; // set contrib to 0, let user input the number on paypal
-	}
+	var contrib = 0;
 	this.$('input[name="amount"]').val(contrib);
-	this.$('#contrib-form').submit()
-	this.update();
-    },
-
-    donateNo: function() {
+	this.$('#contrib-form').submit();
 	this.update();
     },
 
