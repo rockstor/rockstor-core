@@ -1,37 +1,45 @@
-<h3>You are currently running RockStor <%= currentVersion %></h3>
 <% if (currentVersion != mostRecentVersion) { %>
   <br>
-  <h3>A new update is available!</h3>
-  <span class="h3">RockStor <%= mostRecentVersion %></span>&nbsp;&nbsp;&nbsp;&nbsp;
-  <!-- <a id="update" class="btn btn-primary" title="Update">Update</a> -->
+<div class="col-sm-offset-3 col-sm-6 col-sm-offset-3">
+<div id="updateInfo">
+<h3><strong>Rockstor <%= mostRecentVersion %></strong> update is available! </h3>
+</div>
+</div>&nbsp;&nbsp;&nbsp;&nbsp;
   <br>
   <br>
-  <h4>Here are the changes with this update</h4>
+<div class="col-sm-offset-2 col-sm-8 col-sm-offset-2">
+<div id="changeSection">
+  <p>Here are the changes with this update</p>
   <ul>
     <% _.each(changeList, function(item) { %>
-      <li><h4><%= item %></h4></li>
+      <li><p><%= item %></p></li>
     <% }); %>
   </ul>
-  <div class="row">
-    <div class="col-md-6">
+</p>
+</div>
+</div>
+
+<div class="col-md-offset-2 col-md-8 col-md-offset-2" id="supportBox">
       <div class="alert alert-success" id="contrib-alert">
-      <h4>We are happy to make this update available to you.<br>Support us by making a purchase at the official RockStor shop.</h4>
-        <a id="donateYes" class="btn btn-primary" title="Update" href="http://shop.rockstor.com" target="_blank">Start the update and take me to the shop</a>
-      </div>
-    </div>
-  </div>
-  <a id="donateNo" class="btn btn-default" title="Update">No, just update </a>
-  </p>
+      <h4>We are happy to make this update available to you. Please support us by
+      <a id="donate_nav" href="#"> Donating</a> or making a <a href="http://shop.rockstor.com" target="_blank"> Purchase</a></h4>
+        <a id="update" class="btn btn-default" title="start update">Start Update</a>
+</div>
+
 <% } else { %>
-  <p>Rockstor is up-to-date. If you've updated recently, reload the browser<b>(Ctrl+Shift+R)</b> for latest UI changes.</p><br>
+<div class="col-md-offset-3 col-md-6 col-md-offset-3">
+<div id="updateInfo">
+  <h3>Everything is up-to-date.</h3>
+<p>If you've updated recently, reload the browser<b>(Ctrl+Shift+R)</b> for latest UI changes.</p><br>
 
   <% if (autoUpdateEnabled) { %>
-  <p>Rockstor is configured to check for updates once a day and automatically update itself. If you so choose, you can disable auto update.</p>
-  <a id="disableAuto" class="btn btn-primary" title="Disable Auto Update">Disable auto update</a>
+  <a id="disableAuto" class="btn btn-primary" title="Rockstor is configured to check for updates once a day and automatically update itself. If you so choose, you can disable auto update.">Disable auto update</a>
   <% } else { %>
-  <p>Rockstor can be configured to check for updates once a day and automatically update itself. We recommend you enable auto update.</p>
-  <a id="enableAuto" class="btn btn-primary" title="Enable Auto Update">Enable auto update</a>
+  <a id="enableAuto" class="btn btn-primary" title="Rockstor can be configured to check for updates once a day and automatically update itself. We recommend you enable auto update.">Enable auto update</a>
   <% } %>
+<p></p>
+</div>
+</div>
 <% } %>
 
 <div id="update-modal" class="modal fade">
@@ -39,7 +47,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-	<h4>RockStor is being updated to the latest version. Please wait... &nbsp;&nbsp; </h4>	
+	<h4>RockStor is being updated to the latest version. Please wait... &nbsp;&nbsp; </h4>
       </div>
       <div class="modal-body">
 	<div style="text-align: center">
