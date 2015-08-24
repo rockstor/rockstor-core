@@ -51,7 +51,6 @@ VersionView = RockstorLayoutView.extend({
 		_this.currentVersion = data[0];
 		_this.mostRecentVersion = data[1];
 		_this.changeList = data[2];
-		//_this.renderVersionInfo();
 		_this.checkAutoUpdateStatus();
 	    },
 	    error: function(xhr, status, error) {
@@ -106,7 +105,6 @@ VersionView = RockstorLayoutView.extend({
 	var contrib = 0;
 	this.$('input[name="amount"]').val(contrib);
 	this.$('#contrib-form').submit();
-	this.update();
     },
 
     update: function() {
