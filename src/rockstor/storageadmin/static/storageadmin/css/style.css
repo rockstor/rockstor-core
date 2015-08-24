@@ -17,6 +17,33 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
 
+/**** Update page css ****/
+
+#supportBox h4{
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: medium;
+}
+#updateInfo {
+  text-align:center;
+}
+#updateInfo h3 {
+  color:#3c763d;
+}
+#changeSection{
+  min-height: 15px;
+  padding: 8px;
+  margin-bottom: 10px;
+  border: 1px solid #e3e3e3;
+  border-radius: 4px;
+  -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.05);
+  box-shadow: inset 0 1px 1px rgba(0,0,0,.05);
+}
+#changeSection p{
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: medium;
+}
+/**** Update page css ****/
+
 html {
     height: 100%;
     overflow: hidden;
@@ -71,9 +98,9 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
 */
 
 /* Navbar */
-.navbar-fixed-top .navbar-inner { 
-  padding-left: 20px; 
-  padding-right: 20px; 
+.navbar-fixed-top .navbar-inner {
+  padding-left: 20px;
+  padding-right: 20px;
   background: #6C7A89;
   border: none;
 }
@@ -1538,7 +1565,7 @@ input[type="radio"].selectedRoot {
 }
 
 /* cpu graph */
-.cpugraph path { 
+.cpugraph path {
   stroke: steelblue;
   stroke-width: 1;
   fill: none;
@@ -1557,7 +1584,7 @@ input[type="radio"].selectedRoot {
 }
 .cpugraph.grid path {
   stroke-width: 0;
-}    
+}
 .cpugraph line {
 
 }
@@ -1567,7 +1594,7 @@ input[type="radio"].selectedRoot {
 }
 
 #cpuusage-individual div.cpu {
-  float: left; 
+  float: left;
   margin-right: 2px;
 }
 
@@ -1653,11 +1680,11 @@ input[type="radio"].selectedRoot {
   100% { background-color: none; }
 }
 
-#version-msg i { 
+#version-msg i {
   animation: versionflash 2s;
   animation-iteration-count: infinite;
   -webkit-animation: versionflash 2s;
-  border-radius: 7px; 
+  border-radius: 7px;
 }
 
 /* font-awesome styling */
