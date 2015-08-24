@@ -120,6 +120,14 @@ def update_check():
             log = True
     if (new_version is None):
         new_version = version
+        #do a second check which is valid for updates without changelog
+        #updates. eg: same day updates, testing updates.
+        o, e, rc = run_command([YUM, 'update', pkg, '--assumeno'], throw=False)
+        if (rc == 1):
+            for l in o:
+                if (re.search('will be an update', l) is not None):
+                    if (re.search('rockstor.x86_64', l) is not None):
+                        new_version = l.strip().split()[3].split(':')[1]
     return (version, new_version, updates)
 
 
