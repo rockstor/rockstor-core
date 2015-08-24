@@ -36,10 +36,10 @@
   <h3>System is up-to-date.</h3>
 <p>If you've updated recently, reload the browser<b>(Ctrl+Shift+R)</b> for latest UI changes.</p><br>
 
-  <% if (autoUpdateEnabled) { %>
-  <a id="disableAuto" class="btn btn-primary" title="Rockstor is configured to check for updates once a day and automatically update itself. If you so choose, you can disable auto update.">Disable auto update</a>
+<% if (autoUpdateEnabled) { %>
+  <a id="disableAuto" class="btn btn-primary" title="Rockstor is configured to check for available system updates and automatically upgrade all packages on a daily basis. This will keep your entire system up to date. While it's not recommended, you can disable this feature and only update when you want to.">Disable auto update</a>
   <% } else { %>
-  <a id="enableAuto" class="btn btn-primary" title="Rockstor can be configured to check for updates once a day and automatically update itself. We recommend you enable auto update.">Enable auto update</a>
+  <a id="enableAuto" class="btn btn-primary" title="Rockstor can be configured to check for available system updates and automatically upgrade all packages on a daily basis. We recommend you enable this feature to keep your entire system up to date without delay.">Enable auto update</a>
   <% } %>
 <p></p>
 </div>
