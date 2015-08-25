@@ -459,9 +459,9 @@ input[type="submit"] {
   line-height: 18px;
   *line-height: 18px;
   font-size: 12px;
-  -webkit-border-radius: 4px;
-  -moz-border-radius: 4px;
-  border-radius: 4px;
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  border-radius: 3px;
   border: 1px solid #ccc;
   background-image: none;
 }
@@ -477,24 +477,32 @@ input[type="submit"] {
 
 .btn-primary:hover,
 .btn-primary:active,
-.btn-primary.active,
+.btn-primary.active {
+    background-color: #e45735;
+    border: 1px solid #e45735;
+}
+
 .btn-primary.disabled,
 .btn-primary[disabled] {
-  color: #ffffff;
-  background-color: #E25939;
-    border: 1px solid #E25939;
-  background-position: 0 -15px;
-  -webkit-transition: background-position 0.1s linear;
-  -moz-transition: background-position 0.1s linear;
-  -o-transition: background-position 0.1s linear;
-  transition: background-position 0.1s linear;
-  background-image: none;
+    color: #ffffff;
+    background-color: #BDBDBD;
+    border: 1px solid #9E9E9E;
+    background-position: 0 -15px;
+    -webkit-transition: background-position 0.1s linear;
+    -moz-transition: background-position 0.1s linear;
+    -o-transition: background-position 0.1s linear;
+    transition: background-position 0.1s linear;
+    background-image: none;
 }
 .btn-primary:active,
 .btn-primary.active {
   background-color: #E25939;
 }
 
+.btn-danger {
+    background-color: #DD2C00;
+    border-color: #DD2C00;
+}
 
 .axis path, .axis line {
   shape-rendering: crispEdges;
