@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <!--
     /**
     * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
@@ -36,31 +36,31 @@
     <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
     <script>
-      /*
-      *
-      * @licstart  The following is the entire license notice for the
-      * JavaScript code in this page.
-      *
-      * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
-      * This file is part of RockStor.
-      *
-      * RockStor is free software; you can redistribute it and/or modify
-      * it under the terms of the GNU General Public License as published
-      * by the Free Software Foundation; either version 2 of the License,
-      * or (at your option) any later version.
-      *
-      * RockStor is distributed in the hope that it will be useful, but
-      * WITHOUT ANY WARRANTY; without even the implied warranty of
-      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-      * General Public License for more details.
-      *
-      * You should have received a copy of the GNU General Public License
-      * along with this program. If not, see <http://www.gnu.org/licenses/>.
-      *
-      * @licend  The above is the entire license notice
-      * for the JavaScript code in this page.
-      *
-      */
+        /*
+         *
+         * @licstart  The following is the entire license notice for the
+         * JavaScript code in this page.
+         *
+         * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+         * This file is part of RockStor.
+         *
+         * RockStor is free software; you can redistribute it and/or modify
+         * it under the terms of the GNU General Public License as published
+         * by the Free Software Foundation; either version 2 of the License,
+         * or (at your option) any later version.
+         *
+         * RockStor is distributed in the hope that it will be useful, but
+         * WITHOUT ANY WARRANTY; without even the implied warranty of
+         * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+         * General Public License for more details.
+         *
+         * You should have received a copy of the GNU General Public License
+         * along with this program. If not, see <http://www.gnu.org/licenses/>.
+         *
+         * @licend  The above is the entire license notice
+         * for the JavaScript code in this page.
+         *
+         */
 
     </script>
 
@@ -69,71 +69,84 @@
     <script src="/static/js/lib/jquery-migrate-1.2.1.min.js"></script>
     <script src="/static/js/lib/jquery-ui.min.js"></script>
 
-  </head>
-  <body>
+</head>
+<body>
 
-    <div id="wrapper1">
-      <div id="wrapper2">
+<div id="wrapper1" style="background-color: #151515;">
+    <div id="wrapper2">
 
         <div id="logincontent">
-          <div class="row-fluid">
-            <div class="span12">
-              <div style="margin: auto; width: 300px;">
-                <span class="h1">Rockstor: Store Smartly</span>
-                <form id="login_form" name="aform" method="POST" action="/login_submit">
-                  <div id="login-box">
-                    {% if messages %}
-                    <div class="alert alert-error">
-                      <ul class="messages">
-                        {% for message in messages %}
-                        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-                        {% endfor %}
-                      </ul>
-                    </div>
-                    {% endif %}
-                    <div class="form-group">
-                      <label class="control-label" for="username">Username</label>
-                      <div class="controls">
-                        <input class="form-control" type="text" id="username" name="login" placeholder="Username" >
-                      </div>
-                    </div>
-                    <div class="form-group">
-                      <label class="control-label" for="password">Password</label>
-                      <div class="controls">
-                        <input class="form-control" type="password" id="password" name="password" placeholder="Password">
-                      </div>
-                    </div>
-                    <div class="form-group">
-                      <div class="controls">
-                        <button type="submit" id="sign_in" class="btn btn-primary">Sign in</button>
-                        <a href="#" id="forgot-pw" class="btn btn-primary">Reset password</a>
-                      </div>
-                    </div>
+            <div class="row-fluid">
+                <div class="span12">
+                    <div style="margin: auto; width: 300px;">
+                        <div class="logo-login">
+                            <img width="220px" src="../../static/storageadmin/img/rockstorlogo-font2.png">
+                        </div>
+                        <br>
 
-                  </div>
-                  {% csrf_token %}
-                </form>
-              </div>
+                        <form id="login_form" name="aform" method="POST" action="/login_submit">
+                            <div id="login-box">
+
+                                <div class="input-field">
+                                    <input class="mat-input" type="text" id="username" name="login">
+                                    <label for="username">Username</label>
+                                </div>
+
+
+                                <div class="input-field">
+                                    <input class="mat-input" type="password" id="password" name="password">
+                                    <label for="password">Password</label>
+                                </div>
+
+                                {% if messages %}
+                                <div class="alert-login alert-danger-login">
+                                    <span class="messages">
+                                        {% for message in messages %}
+                                        <span
+                                                {% if message.tags %} class="{{ message.tags }}" {% endif %}>{{ message }}</span>
+                                        {% endfor %}
+                                    </span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% csrf_token %}
+
+                            <div class="form-group">
+                                <div class="controls" style="padding-left: 42px;">
+                                    <button style="width: 230px;" type="submit" id="sign_in" class="btn btn-primary">
+                                        Sign in
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="form-group reset-password-login">
+                                <a href="#" id="forgot-pw">Reset password</a>
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
             </div>
-          </div>
-        </div> <!-- logincontent -->
-      </div>
+        </div>
+        <!-- logincontent -->
     </div>
-    <div class="simple-overlay" id="forgot-pw-info">
-      <div style="padding: 20px">
-        <h4>To reset your password, run the following command as root user from your Rockstor appliance:<br><br> /opt/rockstor/bin/pwreset</h4>
-      </div>
+</div>
+<div class="simple-overlay" id="forgot-pw-info">
+    <div style="padding: 20px">
+        <h4>To reset your password, run the following command as root user from your Rockstor appliance:<br><br>
+            /opt/rockstor/bin/pwreset</h4>
     </div>
+</div>
 
-    <script src="/static/js/lib/bootstrap.js"></script>
-    <script src="/static/js/lib/bootstrap-datepicker.js"></script>
-    <script src="/static/js/lib/bootstrap-timepicker.js"></script>
-    <script src="/static/js/lib/jquery.tools.min.js"></script>
-    <script>
-      $('#forgot-pw-info').overlay({load: false});
-      $('#forgot-pw').click(function() {
-      $('#forgot-pw-info').overlay().load();
-      });
-    </script>
-  </body>
+<script src="/static/js/lib/bootstrap.js"></script>
+<script src="/static/js/lib/bootstrap-datepicker.js"></script>
+<script src="/static/js/lib/bootstrap-timepicker.js"></script>
+<script src="/static/js/lib/jquery.tools.min.js"></script>
+<script>
+    $('#forgot-pw-info').overlay({load: false});
+    $('#forgot-pw').click(function () {
+        $('#forgot-pw-info').overlay().load();
+    });
+</script>
+</body>
 </html>
