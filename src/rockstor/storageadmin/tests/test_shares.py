@@ -482,5 +482,22 @@ class ShareTests(APITestMixin, APITestCase):
         self.assertEqual(response7.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response7.data)
         self.assertEqual(response7.data['detail'], e_msg)
-       
+        self.mock_remove_share.side_effect = None
         
+        # Delete share that is in use by rock-on service
+        class MockService(object):
+             def __init__(self, **kwargs):
+                self.config = {'root_share': 'rootshare',}
+        e_msg = ('Share(rootshare) cannot be deleted because it is in use '
+                 'by Rock-on service. If you really need to delete '
+                 'it, (1)turn the service off, (2)change its '
+                 'configuration to use a different Share and then '
+                 '(3)try deleting this Share(%s) again.')        
+        mock_service.objects.get.side_effect = MockService
+        response7 = self.client.delete('%s/rootshare' % self.BASE_URL)
+        self.assertEqual(response7.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response7.data)
+        self.assertEqual(response7.data['detail'], e_msg)
+        
+        
+       
