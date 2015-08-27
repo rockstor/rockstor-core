@@ -105,13 +105,13 @@ class ShareTests(APITestMixin, APITestCase):
         1. Test a few valid regexes (eg: share1, Myshare, 123, etc..)
         2. Test a few invalid regexes (eg: -share1, .share etc..)
         3. Empty string for share name
-        4. max length(4096 characters) for share name
+        4. max length(254 characters) for share name
         5. max length + 1 for share name
         """
         # valid share names
         data = {'pool': 'rockstor_rockstor', 'size': 1000}
         valid_names = ('123share', 'SHARE_TEST', 'Zzzz...', '1234', 'myshare',
-                       'Sha' + 'r' * 4092 + 'e',)
+                       'Sha' + 'r' * 250 + 'e',)
 
         for sname in valid_names:
             data['sname'] = sname
@@ -132,9 +132,9 @@ class ShareTests(APITestMixin, APITestCase):
             self.assertEqual(response.data['detail'], e_msg)
 
         # Share name with more than 255 characters
-        e_msg = ('Share name length cannot exceed 4096 characters')
+        e_msg = ('Share name length cannot exceed 254 characters')
 
-        data['sname']= 'Sh' + 'a' * 4093 + 're'
+        data['sname']= 'Sh' + 'a' * 251 + 're'
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)

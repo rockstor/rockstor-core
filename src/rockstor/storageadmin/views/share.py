@@ -139,8 +139,9 @@ class ShareListView(ShareMixin, rfc.GenericView):
                          'hyphen(-), underscore(_) or a period(.).')
                 handle_exception(Exception(e_msg), request)
 
-            if (len(sname) > 4096):
-                e_msg = ('Share name length cannot exceed 4096 characters')
+            if (len(sname) > 254):
+                #btrfs subvolume names cannot exceed 254 characters.
+                e_msg = ('Share name length cannot exceed 254 characters')
                 handle_exception(Exception(e_msg), request)
 
             if (Share.objects.filter(name=sname).exists()):
