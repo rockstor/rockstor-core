@@ -139,10 +139,10 @@ class ShareListView(ShareMixin, rfc.GenericView):
                          'hyphen(-), underscore(_) or a period(.).')
                 handle_exception(Exception(e_msg), request)
 
-            if (len(sname) > 255):
-                e_msg = ('Share name must be less than 255 characters')
+            if (len(sname) > 4096):
+                e_msg = ('Share name length cannot exceed 4096 characters')
                 handle_exception(Exception(e_msg), request)
-                
+
             if (Share.objects.filter(name=sname).exists()):
                 e_msg = ('Share(%s) already exists. Choose a different name' % sname)
                 handle_exception(Exception(e_msg), request)
