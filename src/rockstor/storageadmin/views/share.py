@@ -139,6 +139,11 @@ class ShareListView(ShareMixin, rfc.GenericView):
                          'hyphen(-), underscore(_) or a period(.).')
                 handle_exception(Exception(e_msg), request)
 
+            if (len(sname) > 254):
+                #btrfs subvolume names cannot exceed 254 characters.
+                e_msg = ('Share name length cannot exceed 254 characters')
+                handle_exception(Exception(e_msg), request)
+
             if (Share.objects.filter(name=sname).exists()):
                 e_msg = ('Share(%s) already exists. Choose a different name' % sname)
                 handle_exception(Exception(e_msg), request)
