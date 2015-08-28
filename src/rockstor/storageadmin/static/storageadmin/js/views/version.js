@@ -36,13 +36,13 @@ VersionView = RockstorLayoutView.extend({
 	// call initialize of base
 	this.constructor.__super__.initialize.apply(this, arguments);
 	this.template = window.JST.update_version_info;
-
 	this.paginationTemplate = window.JST.common_pagination;
 	this.timeLeft = 300;
     },
 
     render: function() {
 	var _this = this;
+	$('.modal-backdrop').remove();
 	$.ajax({
 	    url: "/api/commands/update-check",
 	    type: "POST",
@@ -88,16 +88,6 @@ VersionView = RockstorLayoutView.extend({
 	    keyboard: false,
 	    backdrop: 'static',
 	    show: false
-	});
-	// Show or hide custom contrib textfield
-	this.$('#contrib-custom').click(function(e) {
-	    _this.$('#custom-amount').css('display', 'inline');
-	});
-	this.$('#contrib20').click(function(e) {
-	    _this.$('#custom-amount').css('display', 'none');
-	});
-	this.$('#contrib30').click(function(e) {
-	    _this.$('#custom-amount').css('display', 'none');
 	});
     },
 
