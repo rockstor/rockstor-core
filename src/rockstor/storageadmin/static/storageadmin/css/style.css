@@ -185,7 +185,7 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
     color: #FFFFFF;
     font-family: Roboto-Light;
         font-size: 90%;
-    letter-spacing: 1.5px;
+    letter-spacing: 1px;
 }
 
 .dropdown-menu>li>span {
@@ -197,7 +197,7 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
     color: #FFFFFF;
     font-family: Roboto-Light;
     font-size: 90%;
-    letter-spacing: 1.5px;
+    letter-spacing: 1px;
     white-space: nowrap;
 }
 
@@ -210,7 +210,7 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
     color: #FFFFFF;
     font-family: Roboto-Light;
     font-size: 90%;
-    letter-spacing: 1.5px;
+    letter-spacing: 1px;
     white-space: nowrap;
 }
 
@@ -1469,7 +1469,7 @@ input[type="radio"].selectedRoot {
     padding-left: 5px;
     color: #FFFFFF;
     font-family: Roboto-Light;
-    letter-spacing: 1.5px;
+    letter-spacing: 1px;
     padding-bottom: 4px;
     padding-top: 4px;
 }
@@ -1492,7 +1492,7 @@ input[type="radio"].selectedRoot {
     padding-left: 20px;
     color: #FFFFFF;
     font-family: Roboto-Light;
-    letter-spacing: 1.5px;
+    letter-spacing: 1px;
     text-decoration: none;
 }
 
