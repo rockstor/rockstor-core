@@ -30,6 +30,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 }
 
 @font-face {
+  font-family: 'Roboto-Light';
+  src: url('../fonts/Roboto-Light.ttf') format('truetype');
+}
+
+@font-face {
   font-family: 'Roboto-Thin';
   src: url('../fonts/Roboto-Thin.ttf') format('truetype');
 }
@@ -143,28 +148,28 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
 }
 
 .navbar-inverse .nav li.dropdown > .dropdown-toggle .caret {
-  border-top-color: #BDBDBD;
+  border-top-color: #FFFFFF;
   border-bottom-color: #fff;
 }
 
 .navbar-inverse .navbar-nav>.open {
-    background-color: rgba(66, 66, 66, 1);
+    background-color: rgba(33, 33, 33, 1);
 }
 
 .navbar-inverse .navbar-nav>.open>a,
 .navbar-inverse .navbar-nav>.open>a:focus,
 .navbar-inverse .navbar-nav>.open>a:hover {
-    background-color: rgba(66, 66, 66, 1);
+    background-color: rgba(33, 33, 33, 1);
     color: #FFFFFF;
 }
 
 .navbar .nav>li>a {
     padding: 22px 14px 7px;
     text-transform: uppercase;
-    font-size: 11px;
-    font-family: Roboto-Thin;
-    letter-spacing: 1.5px;
-    color: #BDBDBD;
+    font-size: 11.5px;
+    font-family: Roboto-Light;
+    letter-spacing: 1px;
+    color: #FFFFFF;
 }
 
 .navbar .nav>li>a:hover {
@@ -172,12 +177,13 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
 }
 
 .dropdown-menu>li>a:hover {
+    color: #FFFFFF;
     background-color: #E76545;
 }
 
 .dropdown-menu>li>a {
-    color: #BDBDBD;
-    font-family: Roboto-Thin;
+    color: #FFFFFF;
+    font-family: Roboto-Light;
         font-size: 90%;
     letter-spacing: 1.5px;
 }
@@ -188,8 +194,8 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
     clear: both;
     font-weight: 400;
     line-height: 1.42857143;
-    color: #BDBDBD;
-    font-family: Roboto-Thin;
+    color: #FFFFFF;
+    font-family: Roboto-Light;
     font-size: 90%;
     letter-spacing: 1.5px;
     white-space: nowrap;
@@ -201,8 +207,8 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
     clear: both;
     font-weight: 400;
     line-height: 1.42857143;
-    color: #BDBDBD;
-    font-family: Roboto-Thin;
+    color: #FFFFFF;
+    font-family: Roboto-Light;
     font-size: 90%;
     letter-spacing: 1.5px;
     white-space: nowrap;
@@ -213,7 +219,7 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
 }
 
 .dropdown-menu>ul>li>a:hover {
-    color: #000000;
+    color: #FFFFFF;
 }
 
 .dropdown-menu>ul>li:hover {
@@ -222,7 +228,7 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
 }
 
 .navbar-inverse .navbar-nav .dropdown-menu {
-    background-color: rgba(66, 66, 66, .95);
+    background-color: rgba(33, 33, 33, .95);
     -webkit-box-shadow: 0 3px 8px rgba(0, 0, 0, 0.125);
     -moz-box-shadow: 0 3px 8px rgba(0, 0, 0, 0.125);
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.125);
@@ -278,11 +284,11 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
     }
 
     .navbar-inverse .navbar-nav .open .dropdown-menu>li>a {
-        color: #9d9d9d;
+        color: #FFFFFF;
     }
 
     .navbar-inverse .navbar-nav .open .dropdown-menu>li>a:hover {
-        color: #000000;
+        color: #FFFFFF;
     }
 
     .navbar-inverse .navbar-nav .open .dropdown-menu>li:hover {
@@ -309,7 +315,7 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
     }
 
     .navbar-nav>li:hover {
-        background-color: #000000;
+        background-color: rgba(33, 33, 33, 1);
     }
 
     .navbar .nav>li>a {
@@ -789,7 +795,7 @@ label.error { font-size: 12px; color: #b94a48; }
 #appliance-name {
     color: #0DB922;
     font-family: "Lucida Console";
-    font-size: 11px;
+    font-size: 12px;
 }
 
 #appliance-select-content {
@@ -1401,7 +1407,7 @@ input[type="radio"].selectedRoot {
     left: 0px;
     top: 0px;
     box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.5);
-    background-color: rgba(66, 66, 66, 1);
+    background-color: rgba(56, 56, 56, 1);
 }
 
 #sidebar-inner {
@@ -1409,11 +1415,17 @@ input[type="radio"].selectedRoot {
 }
 
 #sidebar-inner > h3 {
-    color: #BDBDBD;
+    color: #FFFFFF;
     font-family: Roboto-Medium;
     letter-spacing: 1px;
     border-bottom: 1px solid;
     padding-left: 3px;
+}
+
+.rockons-sidepanel {
+    padding: 12px 12px 12px 12px;
+    background: #151515;
+    color: #FFFFFF
 }
 
 .side {
@@ -1440,8 +1452,8 @@ input[type="radio"].selectedRoot {
 .side > li > a {
     padding-left: 5px;
     display: block;
-    color: #BDBDBD;
-    font-family: Roboto-Thin;
+    color: #FFFFFF;
+    font-family: Roboto-Light;
     letter-spacing: 1px;
     padding-bottom: 4px;
     padding-top: 4px;
@@ -1449,14 +1461,14 @@ input[type="radio"].selectedRoot {
 
 .side > li > a:hover {
     text-decoration: none;
-    color: #000000;
+    color: #FFFFFF;
     background-color: #EB6841;
 }
 
 .side > li > div.subnav {
     padding-left: 5px;
-    color: #BDBDBD;
-    font-family: Roboto-Thin;
+    color: #FFFFFF;
+    font-family: Roboto-Light;
     letter-spacing: 1.5px;
     padding-bottom: 4px;
     padding-top: 4px;
@@ -1478,14 +1490,14 @@ input[type="radio"].selectedRoot {
 .side li > div.subnav > ul > li > a {
     display: block;
     padding-left: 20px;
-    color: #BDBDBD;
-    font-family: Roboto-Thin;
+    color: #FFFFFF;
+    font-family: Roboto-Light;
     letter-spacing: 1.5px;
     text-decoration: none;
 }
 
 .side li > div.subnav > ul > li > a:hover {
-    color: #000000;
+    color: #FFFFFF;
     background-color: #EB6841;
 }
 
@@ -1503,8 +1515,8 @@ input[type="radio"].selectedRoot {
 }
 
 .dashboard-widget-controls {
-    color: #BDBDBD;
-    font-family: Roboto-Thin;
+    color: #FFFFFF;
+    font-family: Roboto-Light;
     letter-spacing: 1px;
     padding-left: 5px;
     line-height: 20px;
@@ -2702,7 +2714,7 @@ This file is generated by `grunt build`, do not edit it by hand.
     padding-left: 20px;
     color: #0DB922;
     font-family: "Lucida Console";
-    font-size: 11px;
+    font-size: 12px;
 }
 
 .gentleselect-label {
