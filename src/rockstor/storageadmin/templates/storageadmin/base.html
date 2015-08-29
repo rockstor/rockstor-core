@@ -105,137 +105,137 @@
     <script src="/static/js/lib/prettycron.js"></script>
     <script src="/static/storageadmin/js/storageadmin.js"></script>
   </head>
+
   <body>
-    <nav class="navbar navbar-inverse navbar-fixed-top">
+  <nav class="navbar navbar-inverse navbar-fixed-top">
       <div class="container-fluid">
-	<div class="navbar-header">
-          <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
-          <button class="navbar-toggle collapsed" data-toggle="mycollapse" data-target=".nav-collapse" type="button">
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <div id="navbar-brand">
-	    <a href="#/home">
-              <img class="img-responsive logo" src="/static/storageadmin/img/rockstorlogo-font2.png"/>
-	      </a>
+          <!-- Brand and toggle get grouped for better mobile display -->
+          <div class="navbar-header">
+              <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                  <span class="sr-only">Toggle navigation</span>
+                  <span class="icon-bar"></span>
+                  <span class="icon-bar"></span>
+                  <span class="icon-bar"></span>
+              </button>
+              <div id="navbar-brand">
+                  <a href="#/home">
+                      <img class="img-responsive logo" src="/static/storageadmin/img/rockstorlogo-font2.png"/>
+                  </a>
+              </div>
           </div>
-	</div>
-        <div class="collapse navbar-collapse">
-          <div id="navbar-links"></div>
-        </div>
-      </nav> <!-- navbar-inner -->
-    </div> <!-- navbar -->
-    <div id="appliance-breadcrumb">
+
+          <!-- Collect the nav links, forms, and other content for toggling -->
+          <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+              <div id="navbar-links"></div>
+          </div><!-- /.navbar-collapse -->
+      </div><!-- /.container-fluid -->
+  </nav>
+
+  <div id="appliance-breadcrumb">
       <a id="appliance-name" href="#"></a>
       <div id="uptime"></div>
       <div id="appliance-loadavg"></div>
+  </div>
 
-
-    </div>
-
-    <div id="wrapper1">
-
+  <div id="wrapper1">
       <div id="wrapper2">
 
-        <div id="loading-indicator" style="visibility:hidden"><img src="/static/storageadmin/img/ajax-loader.gif"/></div>
-        <div id="sidebar">
-          <div id="sidebar-inner">
+          <div id="loading-indicator" style="visibility:hidden"><img src="/static/storageadmin/img/ajax-loader.gif"/></div>
+          <div id="sidebar">
+              <div id="sidebar-inner">
+              </div>
           </div>
-        </div>
-        <div id="content">
-          <div id="browsermsg" style="clear: both;"></div>
-          <div id="globalerrmsg"></div>
+          <div id="content">
+              <div id="browsermsg" style="clear: both;"></div>
+              <div id="globalerrmsg"></div>
 
-          <div id="maincontent">
-          <!--Body content-->
-          {% block content %}{% endblock %}
-          </div>
-        </div> <!-- maincontent -->
+              <div id="maincontent">
+                  <!--Body content-->
+                  {% block content %}{% endblock %}
+              </div>
+          </div> <!-- maincontent -->
 
       </div> <!-- wrapper2 -->
       <div id="footer"></div>
+  </div> <!-- wrapper1 -->
 
-    </div> <!-- wrapper1 -->
-
-
-
-    <div class="simple-overlay" id="global-err-overlay">
+  <div class="simple-overlay" id="global-err-overlay">
       <div class="overlay-content"> </div>
-    </div>
+  </div>
 
 
-    <div id="errorPopup" class="modal hide fade" tabindex="-1" role="dialog" >
+  <div id="errorPopup" class="modal hide fade" tabindex="-1" role="dialog" >
       <div class="modal-dialog">
-	<div class="modal-content">
-	  <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-hidden="true" >x</button>
-            <h3>Error!</h3>
-	  </div>
-	  <div class="modal-body" id="errorContent" style="overflow: scroll; height: 200px;"></div>
-	  <div class="modal-footer">
-            <button type="button" data-dismiss="modal" class="btn">Close</button>
-	  </div>
-	</div>
+          <div class="modal-content">
+              <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-hidden="true" >x</button>
+                  <h3>Error!</h3>
+              </div>
+              <div class="modal-body" id="errorContent" style="overflow: scroll; height: 200px;"></div>
+              <div class="modal-footer">
+                  <button type="button" data-dismiss="modal" class="btn">Close</button>
+              </div>
+          </div>
       </div>
-    </div>
+  </div>
 
-    <div id="appliance-select-popup" class="modal hide fade">
+  <div id="appliance-select-popup" class="modal hide fade">
       <div id="appliance-select-content"></div>
-    </div>
+  </div>
 
-    <div class="modal fade" id="donate-modal">
+  <div class="modal fade" id="donate-modal">
       <div class="modal-dialog">
-	<div class="modal-content">
-	  <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-	    <h3 id="donate-modal-label">We really appreciate your generous donation. Choose an amount and click Donate. Thank you!</h3>
-	  </div>
-	  <div class="modal-body">
-	    <div class="radio">
-	      <label>
-		<input type="radio" name="contrib" id="contrib10" value="10" checked>$10
-	      </label>
-	    <div class="radio">
-	      <label>
-		<input type="radio" name="contrib" class="contrib-other" id="contrib20" value="20">$20
-	      </label>
-	    </div>
-	    <div class="radio">
-	      <label>
-		<input type="radio" name="contrib" class="contrib-other" id="contrib30" value="30">$30
-	      </label>
-	    </div>
-	    <div class="radio">
-	      <label>
-		<input type="radio" name="contrib" class="contrib-other" id="contrib50" value="50">$50
-	      </label>
-	    </div>
-	    <div class="radio">
-	      <label>
-		<input type="radio" name="contrib" id="contrib-custom" value="custom">Other
-	      </label>
-	    </div>
-	    &nbsp;<input class="span2" id="custom-amount" name="custom-amount" placeholder="Enter amount" style="display: none">
-	    <br><br>
-	    <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
-	    <a id="donateYes" class="btn btn-primary" title="Donate">Donate</a>
+          <div class="modal-content">
+              <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                  <h3 id="donate-modal-label">We really appreciate your generous donation. Choose an amount and click Donate. Thank you!</h3>
+              </div>
+              <div class="modal-body">
+                  <div class="radio">
+                      <label>
+                          <input type="radio" name="contrib" id="contrib10" value="10" checked>$10
+                      </label>
+                      <div class="radio">
+                          <label>
+                              <input type="radio" name="contrib" class="contrib-other" id="contrib20" value="20">$20
+                          </label>
+                      </div>
+                      <div class="radio">
+                          <label>
+                              <input type="radio" name="contrib" class="contrib-other" id="contrib30" value="30">$30
+                          </label>
+                      </div>
+                      <div class="radio">
+                          <label>
+                              <input type="radio" name="contrib" class="contrib-other" id="contrib50" value="50">$50
+                          </label>
+                      </div>
+                      <div class="radio">
+                          <label>
+                              <input type="radio" name="contrib" id="contrib-custom" value="custom">Other
+                          </label>
+                      </div>
+                      &nbsp;<input class="span2" id="custom-amount" name="custom-amount" placeholder="Enter amount" style="display: none">
+                      <br><br>
+                      <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+                      <a id="donateYes" class="btn btn-primary" title="Donate">Donate</a>
 
-
-	  </div>
-	  <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-primary">Save changes</button>
-	  </div>
-	</div><!-- /.modal-content -->
+                  </div>
+                  <div class="modal-footer">
+                      <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                      <button type="button" class="btn btn-primary">Save changes</button>
+                  </div>
+              </div>
+          </div><!-- /.modal-content -->
       </div><!-- /.modal-dialog -->
-    </div><!-- /.modal -->
+  </div><!-- /.modal -->
 
 
-    <form name="dummy-form" action="/login" method="post">
+  <form name="dummy-form" action="/login" method="post">
       {% csrf_token %}
-    </form>
-    <form id="contrib-form" action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank"i style="display:none">
+  </form>
+
+  <form id="contrib-form" action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank"i style="display:none">
       <input type="hidden" name="cmd" value="_xclick" />
       <input type="hidden" name="business" value="WUDA5UNJXDCZ8" />
       <input type="hidden" name="currency_code" value="USD" />
@@ -243,7 +243,7 @@
       <input type="hidden" name="amount" value="10" />
       <input type="hidden" name="cn" value="Note to Rockstor developers" />
       <input type="hidden" name="no_shipping" value="1" />
-    </form>
+  </form>
 
     <script src="/static/js/lib/bootstrap.js"></script>
     <script type="text/javascript">

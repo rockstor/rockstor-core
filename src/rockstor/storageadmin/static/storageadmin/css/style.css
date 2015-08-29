@@ -19,6 +19,21 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 /**** Update page css ****/
 
+@font-face {
+  font-family: 'Roboto-Bold';
+  src: url('../fonts/Roboto-Bold.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Roboto-Medium';
+  src: url('../fonts/Roboto-Medium.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Roboto-Thin';
+  src: url('../fonts/Roboto-Thin.ttf') format('truetype');
+}
+
 #supportBox h4{
   font-family: Arial, Helvetica, sans-serif;
   font-size: medium;
@@ -51,7 +66,7 @@ html {
 
 body {
     color: rgb(85,85,85);
-    background: #eee;
+    background: #FFFFFF;
     height: 100%;
 }
 .orange { color: #FF7F66; }
@@ -77,8 +92,14 @@ ul.large li { font-size: 118%; line-height: 1.5em; }
 .inner-container { padding: 0px 0px 0px 0px; }
 
 /* links */
-a:hover { cursor: pointer; }
-a { color: #EB6841; }
+a:hover {
+    cursor: pointer;
+    color: #000000;
+}
+
+a {
+    color: #EB6841;
+}
 
 /* Input fields */
 select, textarea, input[type="text"], input[type="password"], input[type="datetime"], input[type="datetime-local"], input[type="date"], input[type="month"], input[type="time"], input[type="week"], input[type="number"], input[type="email"], input[type="url"], input[type="search"], input[type="tel"], input[type="color"], .uneditable-input {
@@ -115,18 +136,220 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
 
 .navbar-inverse .nav > li > a {
   color: #fff;
+}
 
+.navbar-nav {
+    padding-left: 20px;
 }
 
 .navbar-inverse .nav li.dropdown > .dropdown-toggle .caret {
-  border-top-color: #fff;
+  border-top-color: #BDBDBD;
   border-bottom-color: #fff;
 }
 
+.navbar-inverse .navbar-nav>.open {
+    background-color: rgba(66, 66, 66, 1);
+}
+
+.navbar-inverse .navbar-nav>.open>a,
+.navbar-inverse .navbar-nav>.open>a:focus,
+.navbar-inverse .navbar-nav>.open>a:hover {
+    background-color: rgba(66, 66, 66, 1);
+    color: #FFFFFF;
+}
+
 .navbar .nav>li>a {
-  padding: 16px 15px 10px;
-  text-transform: uppercase;
-  font-size: 11px;
+    padding: 22px 14px 7px;
+    text-transform: uppercase;
+    font-size: 11px;
+    font-family: Roboto-Thin;
+    letter-spacing: 1.5px;
+    color: #BDBDBD;
+}
+
+.navbar .nav>li>a:hover {
+    color: #ffffff;
+}
+
+.dropdown-menu>li>a:hover {
+    background-color: #E76545;
+}
+
+.dropdown-menu>li>a {
+    color: #BDBDBD;
+    font-family: Roboto-Thin;
+        font-size: 90%;
+    letter-spacing: 1.5px;
+}
+
+.dropdown-menu>li>span {
+    display: block;
+    padding: 3px 20px;
+    clear: both;
+    font-weight: 400;
+    line-height: 1.42857143;
+    color: #BDBDBD;
+    font-family: Roboto-Thin;
+    font-size: 90%;
+    letter-spacing: 1.5px;
+    white-space: nowrap;
+}
+
+.dropdown-menu>ul>li>a {
+    display: block;
+    padding: 3px 20px;
+    clear: both;
+    font-weight: 400;
+    line-height: 1.42857143;
+    color: #BDBDBD;
+    font-family: Roboto-Thin;
+    font-size: 90%;
+    letter-spacing: 1.5px;
+    white-space: nowrap;
+}
+
+.dropdown-menu>ul>li>a:hover {
+    text-decoration: none;
+}
+
+.dropdown-menu>ul>li>a:hover {
+    color: #000000;
+}
+
+.dropdown-menu>ul>li:hover {
+    background-color: #EB6841;
+    color: #000000;
+}
+
+.navbar-inverse .navbar-nav .dropdown-menu {
+    background-color: rgba(66, 66, 66, .95);
+    -webkit-box-shadow: 0 3px 8px rgba(0, 0, 0, 0.125);
+    -moz-box-shadow: 0 3px 8px rgba(0, 0, 0, 0.125);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.125);
+    border: 0;
+    padding: 0;
+    margin-top: 0;
+    border-top: 0;
+    border-radius: 2px;
+    left: 0;
+}
+
+@media (max-width: 1150px) {
+    .navbar-header {
+        float: none;
+    }
+
+    #appliance-breadcrumb {
+        border-top: 1px solid #4E4E4E;
+    }
+
+    .container-fluid>.navbar-collapse {
+        margin-right: -15px;
+        margin-left: -15px;
+    }
+
+    .container-fluid {
+        padding-right: 15px;
+        padding-left: 15px;
+        margin-right: auto;
+        margin-left: auto;
+    }
+
+    .navbar-collapse.collapse {
+        display: block !important;
+        height: auto !important;
+        padding-bottom: 0;
+        overflow: visible !important;
+    }
+    .navbar-collapse.in {
+        overflow-y: scroll !important;
+        overflow-x: hidden !important;
+    }
+
+    .navbar-collapse {
+        max-height: none;
+        overflow-x: scroll;
+        padding-right: 15px !important;
+        padding-left: 15px !important;
+    }
+
+    .navbar-nav {
+        padding-left: 0px;
+    }
+
+    .navbar-inverse .navbar-nav .open .dropdown-menu>li>a {
+        color: #9d9d9d;
+    }
+
+    .navbar-inverse .navbar-nav .open .dropdown-menu>li>a:hover {
+        color: #000000;
+    }
+
+    .navbar-inverse .navbar-nav .open .dropdown-menu>li:hover {
+        background-color: #EB6841;
+    }
+
+    .navbar-nav .open .dropdown-menu {
+        position: static;
+        float: none;
+        width: auto;
+        margin-top: 0;
+        background-color: transparent;
+        border: 0;
+        -webkit-box-shadow: none;
+        box-shadow: none;
+    }
+
+    .navbar-nav .open .dropdown-menu>li>a {
+        line-height: 20px;
+    }
+
+    .navbar-nav .open .dropdown-menu>li>a  {
+        padding: 5px 15px 5px 25px;
+    }
+
+    .navbar-nav>li:hover {
+        background-color: #000000;
+    }
+
+    .navbar .nav>li>a {
+         padding: 12px 14px 7px;
+    }
+
+    .navbar-toggle {
+        display: block;
+    }
+    .navbar-collapse {
+        border-top: 1px solid transparent;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+    .navbar-collapse.collapse {
+        display: none!important;
+    }
+    .navbar-nav {
+        float: none!important;
+        margin: 7.5px -15px;
+    }
+    .navbar-nav>li {
+        float: none;
+    }
+    .navbar-nav>li>a {
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+    .navbar-text {
+        float: none;
+        margin: 15px 0;
+    }
+    .navbar-collapse.collapse.in {
+        display: block!important;
+    }
+    .collapsing {
+        overflow: hidden!important;
+    }
+    .navbar-collapse.collapse.in {
+        display: block!important;
+    }
 }
 
 /* Logo */
@@ -439,7 +662,7 @@ form#login_form {
 .size2of5{width:40%;}
 .size3of5{width:60%;}
 .size4of5{width:80%;}
-.lastUnit{float:none;width:auto;_position:relative;_left:-3px;_margin-right:-3px;}
+.lastUnit{float:none;width:auto;_position:relative;_left: -3px;_margin-right:-3px;}
 
 /* rcontainer */
 .rcontainer {
@@ -563,7 +786,11 @@ label.error { font-size: 12px; color: #b94a48; }
 
 #breadcrumbs h3 { color: #005580; padding: 0; margin: 0;}
 
-#appliance-name { color: #fff; }
+#appliance-name {
+    color: #0DB922;
+    font-family: "Lucida Console";
+    font-size: 11px;
+}
 
 #appliance-select-content {
   height: 400px;
@@ -572,15 +799,17 @@ label.error { font-size: 12px; color: #b94a48; }
 }
 
 #appliance-breadcrumb {
-  position: fixed;
-  right: 0px;
-  top: 50px;
-  left: 0px;
-  z-index: 999;
-  padding: 2px 20px 2px 20px;
-  background: #151515;
-  border-top: 1px solid #ddd;
-  border-bottom: 1px solid #ddd;
+    position: fixed;
+    right: 0px;
+    top: 50px;
+    left: 0px;
+    z-index: 999;
+    padding: 2px 20px 2px 20px;
+    background: #151515;
+    border-top: 1px solid #4E4E4E;
+    webkit-box-shadow: 0 2px 5px 0 rgba(0,0,0,0.16),0 2px 10px 0 rgba(0,0,0,0.12);
+    -moz-box-shadow: 0 2px 5px 0 rgba(0,0,0,0.16),0 2px 10px 0 rgba(0,0,0,0.12);
+    box-shadow: 0 2px 5px 0 rgba(0,0,0,0.16),0 2px 10px 0 rgba(0,0,0,0.12);
 }
 
 #appliance-loadavg {
@@ -1157,9 +1386,9 @@ input[type="radio"].selectedRoot {
 
 #wrapper2 {
   position: absolute;
-  top: 94px;
+  top: 74px;
   right: 0px;
-  bottom: 4px;
+  bottom: 0px;
   left: 0px;
   overflow: hidden;
 }
@@ -1171,41 +1400,66 @@ input[type="radio"].selectedRoot {
     position: absolute;
     left: 0px;
     top: 0px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
     box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.5);
-    background: #fff;
+    background-color: rgba(66, 66, 66, 1);
 }
 
 #sidebar-inner {
-  padding: 4px 4px 12px 4px;
+  padding: 0px;
 }
+
+#sidebar-inner > h3 {
+    color: #BDBDBD;
+    font-family: Roboto-Medium;
+    letter-spacing: 1px;
+    border-bottom: 1px solid;
+    padding-left: 3px;
+}
+
 .side {
     padding: 0;
 }
 .side > li > a.selected {
-  background-color: rgb(235, 104, 65);
+  background-color: #151515;
   color: #fff;
 }
 
 .subnav > ul > li > a.selected {
-  background-color: rgb(33, 133, 197);
+  background-color: #151515;
   color: #fff;
 }
 
 .side > li {
     list-style: none;
 }
+
 .side > li > a > i {
     list-style: none;
 }
 
 .side > li > a {
-    padding-left: 4px;
+    padding-left: 5px;
+    display: block;
+    color: #BDBDBD;
+    font-family: Roboto-Thin;
+    letter-spacing: 1px;
+    padding-bottom: 4px;
+    padding-top: 4px;
+}
+
+.side > li > a:hover {
+    text-decoration: none;
+    color: #000000;
+    background-color: #EB6841;
 }
 
 .side > li > div.subnav {
-  padding-left: 4px;
+    padding-left: 5px;
+    color: #BDBDBD;
+    font-family: Roboto-Thin;
+    letter-spacing: 1.5px;
+    padding-bottom: 4px;
+    padding-top: 4px;
 }
 
 .side > li > div.subnav ul {
@@ -1221,13 +1475,18 @@ input[type="radio"].selectedRoot {
     text-decoration: none;
 }
 
-.side > li > a {
-    display: block;
-}
-
 .side li > div.subnav > ul > li > a {
     display: block;
     padding-left: 20px;
+    color: #BDBDBD;
+    font-family: Roboto-Thin;
+    letter-spacing: 1.5px;
+    text-decoration: none;
+}
+
+.side li > div.subnav > ul > li > a:hover {
+    color: #000000;
+    background-color: #EB6841;
 }
 
 #content {
@@ -1235,13 +1494,24 @@ input[type="radio"].selectedRoot {
     height: auto;
     width: auto;
     left: 154px;
-    bottom: 0px;
-    right: 0px;
-    top: 0px;
+    bottom: 5px;
+    right: 5px;
+    top: 5px;
     overflow-y: auto;
-    border: 1px solid #ddd;
     border-radius: 4px;
     background: #fff;
+}
+
+.dashboard-widget-controls {
+    color: #BDBDBD;
+    font-family: Roboto-Thin;
+    letter-spacing: 1px;
+    padding-left: 5px;
+    line-height: 20px;
+}
+
+.widget-heading {
+    font-family: Roboto-Medium;
 }
 
 #maincontent {
@@ -2430,7 +2700,9 @@ This file is generated by `grunt build`, do not edit it by hand.
 #uptime {
     float: right;
     padding-left: 20px;
-    color: white;
+    color: #0DB922;
+    font-family: "Lucida Console";
+    font-size: 11px;
 }
 
 .gentleselect-label {
@@ -2439,20 +2711,6 @@ This file is generated by `grunt build`, do not edit it by hand.
 
 .custom-button-group {
     margin-bottom: 10px !important;
-}
-
-.dropdown-menu>li>a {
-    color: #EB6841;
-}
-
-.dropdown-menu>li>span {
-    display: block;
-    padding: 3px 20px;
-    clear: both;
-    font-weight: 400;
-    line-height: 1.42857143;
-    color: #333;
-    white-space: nowrap;
 }
 
 /* Login Input-Fields */
