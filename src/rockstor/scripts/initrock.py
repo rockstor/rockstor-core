@@ -87,6 +87,33 @@ def set_def_kernel(logger, version=settings.SUPPORTED_KERNEL_VERSION):
         logger.error('Exception while setting kernel(%s) as default' % version)
         return logger.exception(e)
 
+def update_tz(logging):
+    #update timezon variable in settings.py
+    zonestr = os.path.realpath('/etc/localtime').split('zoneinfo/')[1]
+    logging.info('system timezone = %s' % zonestr)
+    sfile = '%s/src/rockstor/settings.py' % BASE_DIR
+    from tempfile import mkstemp
+    import shutil
+    fo, npath = mkstemp()
+    updated = False
+    with open(sfile) as sfo, open(npath, 'w') as tfo:
+        for line in sfo.readlines():
+            if (re.match('TIME_ZONE = ', line) is not None):
+                curzone = line.strip().split('= ')[1].strip("'")
+                if (curzone == zonestr):
+                    break
+                else:
+                    tfo.write("TIME_ZONE = '%s'\n" % zonestr)
+                    updated = True
+                    logging.info('Changed timezone from %s to %s' %
+                                 (curzone, zonestr))
+            else:
+                tfo.write(line)
+    if (updated):
+        shutil.move(npath, sfile)
+    else:
+        os.remove(npath)
+    return updated
 
 def main():
     loglevel = logging.INFO
@@ -147,6 +174,13 @@ def main():
     run_command(['/usr/bin/chmod', 'a+x', '/etc/rc.d/rc.local'])
     logging.info('Checking for flash and Running flash optimizations if appropriate.')
     run_command([FLASH_OPTIMIZE, '-x'])
+    tz_updated = False
+    try:
+        logging.info('Updating the timezone from the system')
+        tz_updated = update_tz(logging)
+    except Exception, e:
+        logger.error('Exception while updating timezone: %s' % e.__str__())
+
     if (os.path.isfile(STAMP)):
         logging.info('Running prepdb...')
         run_command([PREP_DB, ])
@@ -154,6 +188,8 @@ def main():
         run_command([QGROUP_CLEAN])
         logging.info('Running qgroup limit maxout. %s' % QGROUP_MAXOUT_LIMIT)
         run_command([QGROUP_MAXOUT_LIMIT])
+        if (tz_updated):
+            run_command([SYSCTL, 'restart', 'rockstor'])
         return logging.info(
             'initrock ran successfully before, so not running it again.'
             ' Running it again can destroy your Rockstor state. If you know '
