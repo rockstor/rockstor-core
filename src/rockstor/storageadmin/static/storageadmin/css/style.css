@@ -30,6 +30,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 }
 
 @font-face {
+  font-family: 'Roboto-Light';
+  src: url('../fonts/Roboto-Light.ttf') format('truetype');
+}
+
+@font-face {
   font-family: 'Roboto-Thin';
   src: url('../fonts/Roboto-Thin.ttf') format('truetype');
 }
@@ -66,7 +71,7 @@ html {
 
 body {
     color: rgb(85,85,85);
-    background: #eee;
+    background: #FFFFFF;
     height: 100%;
 }
 .orange { color: #FF7F66; }
@@ -92,8 +97,14 @@ ul.large li { font-size: 118%; line-height: 1.5em; }
 .inner-container { padding: 0px 0px 0px 0px; }
 
 /* links */
-a:hover { cursor: pointer; }
-a { color: #EB6841; }
+a:hover {
+    cursor: pointer;
+    color: #000000;
+}
+
+a {
+    color: #EB6841;
+}
 
 /* Input fields */
 select, textarea, input[type="text"], input[type="password"], input[type="datetime"], input[type="datetime-local"], input[type="date"], input[type="month"], input[type="time"], input[type="week"], input[type="number"], input[type="email"], input[type="url"], input[type="search"], input[type="tel"], input[type="color"], .uneditable-input {
@@ -137,28 +148,28 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
 }
 
 .navbar-inverse .nav li.dropdown > .dropdown-toggle .caret {
-  border-top-color: #BDBDBD;
+  border-top-color: #FFFFFF;
   border-bottom-color: #fff;
 }
 
 .navbar-inverse .navbar-nav>.open {
-    background-color: rgba(66, 66, 66, 1);
+    background-color: rgba(33, 33, 33, 1);
 }
 
 .navbar-inverse .navbar-nav>.open>a,
 .navbar-inverse .navbar-nav>.open>a:focus,
 .navbar-inverse .navbar-nav>.open>a:hover {
-    background-color: rgba(66, 66, 66, 1);
+    background-color: rgba(33, 33, 33, 1);
     color: #FFFFFF;
 }
 
 .navbar .nav>li>a {
     padding: 22px 14px 7px;
     text-transform: uppercase;
-    font-size: 11px;
-    font-family: Roboto-Thin;
-    letter-spacing: 1.5px;
-    color: #BDBDBD;
+    font-size: 11.5px;
+    font-family: Roboto-Light;
+    letter-spacing: 1px;
+    color: #FFFFFF;
 }
 
 .navbar .nav>li>a:hover {
@@ -166,14 +177,15 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
 }
 
 .dropdown-menu>li>a:hover {
+    color: #FFFFFF;
     background-color: #E76545;
 }
 
 .dropdown-menu>li>a {
-    color: #BDBDBD;
-    font-family: Roboto-Thin;
+    color: #FFFFFF;
+    font-family: Roboto-Light;
         font-size: 90%;
-    letter-spacing: 1.5px;
+    letter-spacing: 1px;
 }
 
 .dropdown-menu>li>span {
@@ -182,10 +194,10 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
     clear: both;
     font-weight: 400;
     line-height: 1.42857143;
-    color: #BDBDBD;
-    font-family: Roboto-Thin;
+    color: #FFFFFF;
+    font-family: Roboto-Light;
     font-size: 90%;
-    letter-spacing: 1.5px;
+    letter-spacing: 1px;
     white-space: nowrap;
 }
 
@@ -195,10 +207,10 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
     clear: both;
     font-weight: 400;
     line-height: 1.42857143;
-    color: #BDBDBD;
-    font-family: Roboto-Thin;
+    color: #FFFFFF;
+    font-family: Roboto-Light;
     font-size: 90%;
-    letter-spacing: 1.5px;
+    letter-spacing: 1px;
     white-space: nowrap;
 }
 
@@ -207,7 +219,7 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
 }
 
 .dropdown-menu>ul>li>a:hover {
-    color: #000000;
+    color: #FFFFFF;
 }
 
 .dropdown-menu>ul>li:hover {
@@ -216,7 +228,7 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
 }
 
 .navbar-inverse .navbar-nav .dropdown-menu {
-    background-color: rgba(66, 66, 66, .95);
+    background-color: rgba(33, 33, 33, .95);
     -webkit-box-shadow: 0 3px 8px rgba(0, 0, 0, 0.125);
     -moz-box-shadow: 0 3px 8px rgba(0, 0, 0, 0.125);
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.125);
@@ -272,11 +284,11 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
     }
 
     .navbar-inverse .navbar-nav .open .dropdown-menu>li>a {
-        color: #9d9d9d;
+        color: #FFFFFF;
     }
 
     .navbar-inverse .navbar-nav .open .dropdown-menu>li>a:hover {
-        color: #000000;
+        color: #FFFFFF;
     }
 
     .navbar-inverse .navbar-nav .open .dropdown-menu>li:hover {
@@ -303,7 +315,7 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
     }
 
     .navbar-nav>li:hover {
-        background-color: #000000;
+        background-color: rgba(33, 33, 33, 1);
     }
 
     .navbar .nav>li>a {
@@ -656,7 +668,7 @@ form#login_form {
 .size2of5{width:40%;}
 .size3of5{width:60%;}
 .size4of5{width:80%;}
-.lastUnit{float:none;width:auto;_position:relative;_left:-3px;_margin-right:-3px;}
+.lastUnit{float:none;width:auto;_position:relative;_left: -3px;_margin-right:-3px;}
 
 /* rcontainer */
 .rcontainer {
@@ -783,7 +795,7 @@ label.error { font-size: 12px; color: #b94a48; }
 #appliance-name {
     color: #0DB922;
     font-family: "Lucida Console";
-    font-size: 11px;
+    font-size: 12px;
 }
 
 #appliance-select-content {
@@ -1380,9 +1392,9 @@ input[type="radio"].selectedRoot {
 
 #wrapper2 {
   position: absolute;
-  top: 94px;
+  top: 74px;
   right: 0px;
-  bottom: 4px;
+  bottom: 0px;
   left: 0px;
   overflow: hidden;
 }
@@ -1394,41 +1406,72 @@ input[type="radio"].selectedRoot {
     position: absolute;
     left: 0px;
     top: 0px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
     box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.5);
-    background: #fff;
+    background-color: rgba(56, 56, 56, 1);
 }
 
 #sidebar-inner {
-  padding: 4px 4px 12px 4px;
+  padding: 0px;
 }
+
+#sidebar-inner > h3 {
+    color: #FFFFFF;
+    font-family: Roboto-Medium;
+    letter-spacing: 1px;
+    border-bottom: 1px solid;
+    padding-left: 3px;
+}
+
+.rockons-sidepanel {
+    padding: 12px 12px 12px 12px;
+    background: #151515;
+    color: #FFFFFF
+}
+
 .side {
     padding: 0;
 }
 .side > li > a.selected {
-  background-color: rgb(235, 104, 65);
+  background-color: #151515;
   color: #fff;
 }
 
 .subnav > ul > li > a.selected {
-  background-color: rgb(33, 133, 197);
+  background-color: #151515;
   color: #fff;
 }
 
 .side > li {
     list-style: none;
 }
+
 .side > li > a > i {
     list-style: none;
 }
 
 .side > li > a {
-    padding-left: 4px;
+    padding-left: 5px;
+    display: block;
+    color: #FFFFFF;
+    font-family: Roboto-Light;
+    letter-spacing: 1px;
+    padding-bottom: 4px;
+    padding-top: 4px;
+}
+
+.side > li > a:hover {
+    text-decoration: none;
+    color: #FFFFFF;
+    background-color: #EB6841;
 }
 
 .side > li > div.subnav {
-  padding-left: 4px;
+    padding-left: 5px;
+    color: #FFFFFF;
+    font-family: Roboto-Light;
+    letter-spacing: 1px;
+    padding-bottom: 4px;
+    padding-top: 4px;
 }
 
 .side > li > div.subnav ul {
@@ -1444,13 +1487,18 @@ input[type="radio"].selectedRoot {
     text-decoration: none;
 }
 
-.side > li > a {
-    display: block;
-}
-
 .side li > div.subnav > ul > li > a {
     display: block;
     padding-left: 20px;
+    color: #FFFFFF;
+    font-family: Roboto-Light;
+    letter-spacing: 1px;
+    text-decoration: none;
+}
+
+.side li > div.subnav > ul > li > a:hover {
+    color: #FFFFFF;
+    background-color: #EB6841;
 }
 
 #content {
@@ -1458,13 +1506,24 @@ input[type="radio"].selectedRoot {
     height: auto;
     width: auto;
     left: 154px;
-    bottom: 0px;
-    right: 0px;
-    top: 0px;
+    bottom: 5px;
+    right: 5px;
+    top: 5px;
     overflow-y: auto;
-    border: 1px solid #ddd;
     border-radius: 4px;
     background: #fff;
+}
+
+.dashboard-widget-controls {
+    color: #FFFFFF;
+    font-family: Roboto-Light;
+    letter-spacing: 1px;
+    padding-left: 5px;
+    line-height: 20px;
+}
+
+.widget-heading {
+    font-family: Roboto-Medium;
 }
 
 #maincontent {
@@ -2655,7 +2714,7 @@ This file is generated by `grunt build`, do not edit it by hand.
     padding-left: 20px;
     color: #0DB922;
     font-family: "Lucida Console";
-    font-size: 11px;
+    font-size: 12px;
 }
 
 .gentleselect-label {
