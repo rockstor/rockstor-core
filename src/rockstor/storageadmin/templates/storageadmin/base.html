@@ -260,5 +260,19 @@
       RockStorGlobals.replica_data_port = {{ replica_data_port }};
       RockStorGlobals.replica_meta_port = {{ replica_meta_port }};
     </script>
+  <script>
+      // Controls hamburger menu collapse after click
+      $(document).ready(function() {
+
+        $("body").click(function(event) {
+                // only do this if navigation is visible, otherwise you see jump in navigation while collapse() is called
+                 if ($(".navbar-collapse").is(":visible") && $(".navbar-toggle").is(":visible") ) {
+                    $('.navbar-collapse').collapse('toggle');
+                }
+          });
+
+      });
+  </script>
+
   </body>
 </html>
