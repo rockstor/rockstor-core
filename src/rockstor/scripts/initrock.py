@@ -24,6 +24,8 @@ import logging
 import sys
 import re
 import time
+from tempfile import mkstemp
+import shutil
 from django.conf import settings
 
 
@@ -92,8 +94,6 @@ def update_tz(logging):
     zonestr = os.path.realpath('/etc/localtime').split('zoneinfo/')[1]
     logging.info('system timezone = %s' % zonestr)
     sfile = '%s/src/rockstor/settings.py' % BASE_DIR
-    from tempfile import mkstemp
-    import shutil
     fo, npath = mkstemp()
     updated = False
     with open(sfile) as sfo, open(npath, 'w') as tfo:
