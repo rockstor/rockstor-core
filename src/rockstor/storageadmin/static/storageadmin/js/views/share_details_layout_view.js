@@ -97,12 +97,6 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
       share: this.share,
       parentView: this
     });
-    this.subviews['nfs-exports'] = new ShareNFSExports({
-      share: this.share,
-      modify_choices: this.modify_choices,
-      sync_choices: this.sync_choices,
-      appliance_ip: current_appliance.get('ip'),
-    });
     this.share.on('change', this.subviews['share-usage'].render, this.subviews['share-usage']);
     $(this.el).html(this.template({
       share: this.share,
@@ -116,7 +110,6 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
     this.renderAcl();
     this.$('#ph-share-usage').html(this.subviews['share-usage'].render().el);
     this.$('#ph-snapshots').html(this.subviews['snapshots'].render().el);
-    this.$('#ph-nfs-exports').html(this.subviews['nfs-exports'].render().el);
     if (!_.isUndefined(this.cView) && this.cView == 'edit') {
       this.$('#ph-compression-info').html(this.compression_info_edit_template({
 	share: this.share,
