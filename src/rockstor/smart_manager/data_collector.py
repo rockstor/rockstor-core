@@ -11,7 +11,7 @@ from socketio.mixins import BroadcastMixin
 
 from django.conf import settings
 from system.osi import (uptime, kernel_info)
-from datetime import datetime
+from datetime import (datetime, timedelta)
 from django.utils.timezone import utc
 from storageadmin.models import Disk
 from smart_manager.models import CPUMetric
@@ -288,11 +288,9 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
             "key": "sysinfo:connected", "data": "connected"
         })
         self.start = True
-        gevent.spawn(self.update_storage_state)
+        gevent.spawn(self.refresh_system)
         gevent.spawn(self.send_uptime)
         gevent.spawn(self.send_kernel_info)
-        gevent.spawn(self.update_rockons)
-        gevent.spawn(self.update_check)
 
     # Run on every disconnect
     def recv_disconnect(self):
@@ -322,6 +320,16 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
                     'key': 'sysinfo:kernel_error'
                 })
                 self.error('unsupported_kernel', str(e))
+
+    def refresh_system(self):
+        cur_ts = datetime.utcnow()
+        if ((cur_ts - self.environ['scan_ts']).total_seconds() < self.environ['scan_interval']):
+            logger.debug('Skipping system state refresh as it was done less '
+                         'than %d seconds ago.' % self.environ['scan_interval'])
+            return
+        self.update_storage_state()
+        self.update_rockons()
+        self.update_check()
 
     def update_rockons(self):
         try:
@@ -363,6 +371,8 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
 class Application(object):
     def __init__(self):
         self.buffer = []
+        self.scan_interval = 600
+        self.scan_ts = datetime.utcnow() - timedelta(seconds=self.scan_interval)
 
     def __call__(self, environ, start_response):
         path = environ['PATH_INFO'].strip('/') or 'index.html'
@@ -385,6 +395,8 @@ class Application(object):
             start_response('200 OK', [('Content-Type', content_type)])
             return [data]
         if path.startswith("socket.io"):
+            environ['scan_ts'] = self.scan_ts
+            environ['scan_interval'] = self.scan_interval
             socketio_manage(environ, {'/services': ServicesNamespace,
                                       '/sysinfo': SysinfoNamespace,
                                       '/cpu-widget': CPUWidgetNamespace,
@@ -392,7 +404,9 @@ class Application(object):
                                       '/network-widget': NetworkWidgetNamespace,
                                       '/disk-widget': DisksWidgetNamespace,
             })
-
+            cur_ts = datetime.utcnow()
+            if ((cur_ts - self.scan_ts).total_seconds() > self.scan_interval):
+                self.scan_ts = cur_ts
 
 def not_found(start_response):
     start_response('404 Not Found', [])
