@@ -146,10 +146,13 @@ def groupadd(groupname, gid=None):
 
 
 def add_ssh_key(username, key):
+    grp_name = grp.getgrgid(pwd.getpwnam(username).pw_gid).gr_name
     SSH_DIR = '/home/%s/.ssh' % username
     AUTH_KEYS = '%s/authorized_keys' % SSH_DIR
     if (not os.path.isdir(SSH_DIR)):
         os.mkdir(SSH_DIR)
+    run_command([CHOWN, '-R', '%s:%s' % (username, grp_name), SSH_DIR])
+    os.chmod(SSH_DIR, 0700)
     with open(AUTH_KEYS, 'w') as afo:
         afo.write('%s\n' % key)
     os.chmod(AUTH_KEYS, 0600)
