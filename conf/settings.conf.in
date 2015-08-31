@@ -361,3 +361,5 @@ ROOT_POOL = 'rockstor_rockstor'
 MODEL_DEFS = {
 	   'pqgroup': '-1/-1',
 }
+
+SSHD_HEADER = '###BEGIN: Rockstor SFTP CONFIG. DO NOT EDIT BELOW THIS LINE###'

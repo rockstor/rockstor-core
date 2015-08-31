@@ -115,6 +115,24 @@ def update_tz(logging):
         os.remove(npath)
     return updated
 
+def bootstrap_sshd_config(logging):
+    # Set AllowUsers if needed
+    with open('/etc/ssh/sshd_config', 'a+') as sfo:
+        found = False
+        for line in sfo.readlines():
+            if (re.match(settings.SSHD_HEADER, line) is not None or
+                re.match('AllowUsers ', line) is not None):
+                #if header is found,
+                found = True
+                logging.info('sshd_config already has the updates.'
+                             ' Leaving it unchanged.')
+                break
+        if (not found):
+            sfo.write('%s\n' % settings.SSHD_HEADER)
+            sfo.write('AllowUsers root\n')
+            logging.info('updated sshd_config')
+            run_command([SYSCTL, 'restart', 'sshd'])
+
 def main():
     loglevel = logging.INFO
     if (len(sys.argv) > 1 and sys.argv[1] == '-x'):
@@ -179,7 +197,13 @@ def main():
         logging.info('Updating the timezone from the system')
         tz_updated = update_tz(logging)
     except Exception, e:
-        logger.error('Exception while updating timezone: %s' % e.__str__())
+        logging.error('Exception while updating timezone: %s' % e.__str__())
+
+    try:
+        logging.info('Updating sshd_config')
+        bootstrap_sshd_config(logging)
+    except Exception, e:
+        logging.error('Exception while updating sshd_config: %s' % e.__str__())
 
     if (os.path.isfile(STAMP)):
         logging.info('Running prepdb...')
