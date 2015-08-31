@@ -249,7 +249,7 @@ class ConfigBackupDetailView(ConfigBackupMixin, rfc.GenericView):
         try:
             return ConfigBackup.objects.get(id=backup_id)
         except ConfigBackup.DoesNotExist:
-            e_msg = ('Contif backup for the id(%s) does not exist' % backup_id)
+            e_msg = ('Config backup for the id(%s) does not exist' % backup_id)
             handle_exception(Exception(e_msg), request)
 
 
