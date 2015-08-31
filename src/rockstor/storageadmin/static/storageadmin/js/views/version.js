@@ -82,7 +82,7 @@ VersionView = RockstorLayoutView.extend({
 	    currentVersion: this.currentVersion,
 	    mostRecentVersion: this.mostRecentVersion,
 	    changeList: this.changeList,
-      changeMap: this.changeLog(this.changeList),
+	    changeMap: this.changeLog(this.changeList),
 	    autoUpdateEnabled: this.autoUpdateEnabled
 	}));
 	this.$('#update-modal').modal({
@@ -194,26 +194,26 @@ VersionView = RockstorLayoutView.extend({
 	});
     },
 
-     changeLog: function(logArray){
+    changeLog: function(logArray){
 	var changeLogArray = []
 	var issues = [];
 	var nextString = [];
 	var changeDescription = [];
-  var contributors = [];
+	var contributors = [];
 
 	for(var i = 0; i < logArray.length; i++){
-  	var hashIndex = logArray[i].indexOf('#');
-  	var atRateIndex = logArray[i].indexOf('@');
-  	issues[i] = logArray[i].substring(hashIndex + 1,atRateIndex - 1);
-  	var namesNum = logArray[i].indexOf('@') + 1;
-  	changeDescription[i] = logArray[i].substring(0, hashIndex - 1);
-  	nextString[i] = logArray[i].substring(namesNum, logArray[i].length);
-  	contributors[i] = nextString[i].split(' @');
+  	    var hashIndex = logArray[i].indexOf('#');
+  	    var atRateIndex = logArray[i].indexOf('@');
+  	    issues[i] = logArray[i].substring(hashIndex + 1,atRateIndex - 1);
+  	    var namesNum = logArray[i].indexOf('@') + 1;
+  	    changeDescription[i] = logArray[i].substring(0, hashIndex - 1);
+  	    nextString[i] = logArray[i].substring(namesNum, logArray[i].length);
+  	    contributors[i] = nextString[i].split(' @');
 	}
-  changeLogArray.push(changeDescription);
-  changeLogArray.push(issues);
-  changeLogArray.push(contributors);
+	changeLogArray.push(changeDescription);
+	changeLogArray.push(issues);
+	changeLogArray.push(contributors);
 	return changeLogArray;
-},
+    },
 
 });
