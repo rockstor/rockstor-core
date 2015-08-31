@@ -54,6 +54,15 @@ def systemctl(service_name, switch):
 
 
 def set_autostart(service, switch):
+    """
+    configure autostart setting for supervisord managed services eg:-
+    nginx, gunicorn, smart_manager daemon, replication daemon, data-collector,
+    and ztask-daemon. Works by rewriting autostart lines in  SUPERVISORD_CONF
+    http://supervisord.org/
+    :param service:
+    :param switch:
+    :return:
+    """
     switch_map = {'start': 'true',
                   'stop': 'false'}
     if (switch not in switch_map):
