@@ -22,12 +22,12 @@ from tempfile import mkstemp
 from services import systemctl
 from system.osi import run_command
 import os
+from django.conf import settings
 
 SSHD_CONFIG = '/etc/ssh/sshd_config'
 MKDIR = '/bin/mkdir'
 MOUNT = '/bin/mount'
 USERMOD = '/usr/sbin/usermod'
-SSHD_HEADER = '###BEGIN: Rockstor SFTP CONFIG. DO NOT EDIT BELOW THIS LINE###'
 SFTP_REGEX = 'Subsystem\s+sftp'
 SFTP_STR = 'Subsystem\tsftp\tinternal-sftp'
 
@@ -37,13 +37,15 @@ def update_sftp_config(input_map):
     input map is a dictionary of user,directory pairs
     """
     fo, npath = mkstemp()
+    userstr = 'AllowUsers root %s' % ' '.join(input_map.keys())
     with open(SSHD_CONFIG) as sfo, open(npath, 'w') as tfo:
         for line in sfo.readlines():
-            if (re.match(SSHD_HEADER, line) is None):
+            if (re.match(settings.SSHD_HEADER, line) is None):
                 tfo.write(line)
             else:
                 break
-        tfo.write('%s\n' % SSHD_HEADER)
+        tfo.write('%s\n' % settings.SSHD_HEADER)
+        tfo.write('%s\n' % userstr)
         for user in input_map:
             tfo.write('Match User %s\n' % user)
             tfo.write('\tChrootDirectory %s\n' % input_map[user])
@@ -64,7 +66,7 @@ def toggle_sftp_service(switch=True):
                 if (switch and not written):
                     tfo.write('%s\n' % SFTP_STR)
                     written = True
-            elif (re.match(SSHD_HEADER, line) is not None):
+            elif (re.match(settings.SSHD_HEADER, line) is not None):
                 if (switch and not written):
                     tfo.write('%s\n' % SFTP_STR)
                     written = True

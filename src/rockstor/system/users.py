@@ -23,6 +23,8 @@ import re
 import os
 import pwd
 import grp
+from shutil import move
+from tempfile import mkstemp
 
 import logging
 logger = logging.getLogger(__name__)
@@ -145,12 +147,30 @@ def groupadd(groupname, gid=None):
     return run_command(cmd)
 
 
-def add_ssh_key(username, key):
+def add_ssh_key(username, key, old_key=None):
+    groupname = grp.getgrgid(pwd.getpwnam(username).pw_gid).gr_name
     SSH_DIR = '/home/%s/.ssh' % username
     AUTH_KEYS = '%s/authorized_keys' % SSH_DIR
+    openmode = 'r'
+    if (not os.path.isfile(AUTH_KEYS)):
+        openmode = 'a+'
     if (not os.path.isdir(SSH_DIR)):
         os.mkdir(SSH_DIR)
-    with open(AUTH_KEYS, 'w') as afo:
-        afo.write('%s\n' % key)
+    run_command([CHOWN, '-R', '%s:%s' % (username, groupname), SSH_DIR])
+    os.chmod(SSH_DIR, 0700)
+    fo, npath = mkstemp()
+    exists = False
+    with open(AUTH_KEYS, openmode) as afo, open(npath, 'w') as tfo:
+        for line in afo.readlines():
+            if (line.strip('\n') == key):
+                exists = True
+            if (line.strip('\n') == old_key):
+                continue
+            tfo.write(line)
+        if (not exists and key is not None):
+            tfo.write('%s\n' % key)
+    if (exists):
+        return os.remove(npath)
+    move(npath, AUTH_KEYS)
     os.chmod(AUTH_KEYS, 0600)
-    run_command([CHOWN, '%s:%s' % (username, username), AUTH_KEYS])
+    run_command([CHOWN, '%s:%s' % (username, groupname), AUTH_KEYS])

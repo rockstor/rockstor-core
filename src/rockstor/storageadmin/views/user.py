@@ -85,9 +85,11 @@ class UserMixin(object):
     @staticmethod
     def _validate_public_key(request):
         public_key = request.data.get('public_key', None)
-        if (public_key is not None and not is_pub_key(public_key)):
-            e_msg = ('Public key is invalid')
-            handle_exception(Exception(e_msg), request)
+        if (public_key is not None):
+            public_key = public_key.strip()
+            if (not is_pub_key(public_key)):
+                e_msg = ('Public key is invalid')
+                handle_exception(Exception(e_msg), request)
         return public_key
 
 
@@ -179,6 +181,7 @@ class UserDetailView(UserMixin, rfc.GenericView):
             new_pw = request.data.get('password', None)
             shell = request.data.get('shell', None)
             public_key = self._validate_public_key(request)
+            cur_public_key = None
             admin = request.data.get('admin', False)
             if (User.objects.filter(username=username).exists()):
                 u = User.objects.get(username=username)
@@ -204,6 +207,8 @@ class UserDetailView(UserMixin, rfc.GenericView):
                         u.user = None
                         auser.delete()
                 u.admin = admin
+                if (u.public_key is not None and u.public_key != public_key):
+                    cur_public_key = u.public_key
                 u.public_key = public_key
                 if (email is not None and email != ''):
                     u.email = email
@@ -222,8 +227,7 @@ class UserDetailView(UserMixin, rfc.GenericView):
                         smbpasswd(username, new_pw)
                     if (shell is not None):
                         update_shell(username, shell)
-                    if (public_key is not None):
-                        add_ssh_key(username, public_key)
+                    add_ssh_key(username, public_key, cur_public_key)
                     break
             if (suser is None):
                 e_msg = ('User(%s) does not exist' % username)
