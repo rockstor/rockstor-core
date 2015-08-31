@@ -8,16 +8,22 @@
   <br>
   <br>
 <div class="col-sm-offset-2 col-sm-8 col-sm-offset-2">
+
 <div id="changeSection">
-  <p>Here are the changes with this update</p>
+  <p>List of new changes in this update</p>
   <ul>
-    <% _.each(changeList, function(item) { %>
-    <% if (item == '') { %>
-    <br>
+    <% for(var i = 0; i < changeMap[0].length; i++) { %>
+    <% if(changeMap[0][i] == "") { %>
+        <br>
     <% } else { %>
-    <li><p><%= item %></p></li>
+      <li><p><%= changeMap[0][i] %>
+      <a href="https://github.com/rockstor/rockstor-core/issues/<%= changeMap[1][i] %>" target="_blank"><%= " #" + changeMap[1][i] %></a>
+        <% for(var j = 0; j < changeMap[2][i].length; j++) { %>
+          <a href="https://github.com/<%= changeMap[2][i][j] %>" target="_blank"><%= " @" + changeMap[2][i][j] %></a>
+        <% } %>
+      </p></li>
     <% } %>
-    <% }); %>
+  <% } %>
   </ul>
 </p>
 </div>
