@@ -60,7 +60,7 @@ def main():
     while True:
         try:
             set_token()
-            logger.debug('API token set. Moving on the boostrapping...')
+            logger.debug('API token set. Moving on to boostrapping...')
             break
         except Exception, e:
             e_msg = ('Exception while setting token: %s' % e.__str__())

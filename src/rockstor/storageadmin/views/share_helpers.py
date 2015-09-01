@@ -16,10 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+from datetime import datetime
+from django.utils.timezone import utc
 from django.conf import settings
 from storageadmin.models import (Share, Disk, Snapshot, SFTP)
+from smart_manager.models import ShareUsage
 from fs.btrfs import (mount_share, mount_snap, is_share_mounted, is_mounted,
-                      umount_root)
+                      umount_root, shares_info, share_usage, snaps_info)
 from storageadmin.util import handle_exception
 
 import logging
@@ -65,3 +68,93 @@ def toggle_sftp_visibility(share, snap_name, on=True):
             mount_snap(share, snap_name, pool_device, mnt_pt)
     else:
         umount_root(mnt_pt)
+
+
+def import_shares(pool):
+    disk = Disk.objects.filter(pool=pool)[0].name
+    shares = [s.name for s in Share.objects.filter(pool=pool)]
+    shares_d = shares_info('%s%s' % (settings.MNT_PT, pool.name))
+    for s in shares:
+        if (s not in shares_d):
+            Share.objects.get(pool=pool, name=s).delete()
+    for s in shares_d:
+        if (s in shares):
+            share = Share.objects.get(name=s)
+            share.qgroup = shares_d[s]
+            rusage, eusage = share_usage(pool, share.qgroup)
+            ts = datetime.utcnow().replace(tzinfo=utc)
+            if (rusage != share.rusage or eusage != share.eusage):
+                share.rusage = rusage
+                share.eusage = eusage
+                su = ShareUsage(name=s, r_usage=rusage, e_usage=eusage,
+                                ts=ts)
+                su.save()
+            else:
+                try:
+                    su = ShareUsage.objects.filter(name=s).latest('id')
+                    su.ts = ts
+                    su.count += 1
+                except ShareUsage.DoesNotExist:
+                    su = ShareUsage(name=s, r_usage=rusage,
+                                    e_usage=eusage, ts=ts)
+                finally:
+                    su.save()
+            share.save()
+            continue
+        try:
+            cshare = Share.objects.get(name=s)
+            cshares_d = shares_info('%s%s' % (settings.MNT_PT,
+                                              cshare.pool.name))
+            if (s in cshares_d):
+                e_msg = ('Another pool(%s) has a Share with this same '
+                         'name(%s) as this pool(%s). This configuration is not supported.'
+                         ' You can delete one of them manually with this command: '
+                         'btrfs subvol delete %s[pool name]/%s' %
+                         (cshare.pool.name, s, pool.name, settings.MNT_PT, s))
+                handle_exception(Exception(e_msg), self.request)
+            else:
+                cshare.pool = pool
+                cshare.qgroup = shares_d[s]
+                cshare.size = pool.size
+                cshare.subvol_name = s
+                cshare.rusage, cshare.eusage = share_usage(pool, cshare.qgroup)
+                cshare.save()
+        except Share.DoesNotExist:
+            nso = Share(pool=pool, qgroup=shares_d[s], name=s, size=pool.size,
+                        subvol_name=s)
+            nso.save()
+        mount_share(nso, '%s%s' % (settings.MNT_PT, s))
+
+
+def import_snapshots(share):
+    snaps_d = snaps_info('%s%s' % (settings.MNT_PT, share.pool.name),
+                         share.name)
+    disk = Disk.objects.filter(pool=share.pool)[0].name
+    snaps = [s.name for s in Snapshot.objects.filter(share=share)]
+    for s in snaps:
+        if (s not in snaps_d):
+            Snapshot.objects.get(share=share,name=s).delete()
+    for s in snaps_d:
+        if (s in snaps):
+            so = Snapshot.objects.get(share=share, name=s)
+        else:
+            so = Snapshot(share=share, name=s, real_name=s,
+                          writable=snaps_d[s][1], qgroup=snaps_d[s][0])
+        rusage, eusage = share_usage(share.pool, snaps_d[s][0])
+        ts = datetime.utcnow().replace(tzinfo=utc)
+        if (rusage != so.rusage or eusage != so.eusage):
+            so.rusage = rusage
+            so.eusage = eusage
+            su = ShareUsage(name=s, r_usage=rusage, e_usage=eusage, ts=ts)
+            su.save()
+        else:
+            try:
+                su = ShareUsage.objects.filter(name=s).latest('id')
+                su.ts = ts
+                su.count += 1
+            except ShareUsage.DoesNotExist:
+                su = ShareUsage(name=s, r_usage=rusage, e_usage=eusage,
+                                ts=ts)
+            finally:
+                su.save()
+        so.save()

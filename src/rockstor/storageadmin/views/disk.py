@@ -24,12 +24,13 @@ Disk view, for anything at the disk level
 
 from rest_framework.response import Response
 from django.db import transaction
-from storageadmin.models import (Disk, Pool)
+from storageadmin.models import (Disk, Pool, Share)
 from fs.btrfs import (scan_disks, wipe_disk, blink_disk, enable_quota,
                       btrfs_uuid, pool_usage, mount_root, get_pool_info,
                       pool_raid)
 from storageadmin.serializers import DiskInfoSerializer
 from storageadmin.util import handle_exception
+from share_helpers import (import_shares, import_snapshots)
 from django.conf import settings
 import rest_framework_custom as rfc
 from system import smart
@@ -200,6 +201,9 @@ class DiskDetailView(rfc.GenericView):
             po.raid = pool_raid('%s%s' % (settings.MNT_PT, po.name))['data']
             po.size = pool_usage('%s%s' % (settings.MNT_PT, po.name))[0]
             po.save()
+            import_shares(po)
+            for share in Share.objects.filter(pool=po):
+                import_snapshots(share)
             return Response(DiskInfoSerializer(disk).data)
         except Exception, e:
             e_msg = ('Failed to import any pool on this device(%s). Error: %s'
