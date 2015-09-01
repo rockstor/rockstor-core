@@ -169,7 +169,7 @@ INSTALLED_APPS = (
 
 STATICFILES_STORAGE = 'pipeline.storage.PipelineCachedStorage'
 
-PIPELINE_CSS_COMPRESOR = None
+PIPELINE_CSS_COMPRESSOR = None
 PIPELINE_JS_COMPRESSOR = None
 
 # Don't wrap in anonymous function so that license is at the top.
