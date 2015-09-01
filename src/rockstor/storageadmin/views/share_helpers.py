@@ -22,7 +22,8 @@ from django.conf import settings
 from storageadmin.models import (Share, Disk, Snapshot, SFTP)
 from smart_manager.models import ShareUsage
 from fs.btrfs import (mount_share, mount_snap, is_share_mounted, is_mounted,
-                      umount_root, shares_info, share_usage, snaps_info)
+                      umount_root, shares_info, share_usage, snaps_info,
+                      qgroup_create, update_quota)
 from storageadmin.util import handle_exception
 
 import logging
@@ -120,8 +121,10 @@ def import_shares(pool):
                 cshare.rusage, cshare.eusage = share_usage(pool, cshare.qgroup)
                 cshare.save()
         except Share.DoesNotExist:
-            nso = Share(pool=pool, qgroup=shares_d[s], name=s, size=pool.size,
-                        subvol_name=s)
+            pqid = qgroup_create(pool)
+            update_quota(pool, pqid, pool.size * 1024)
+            nso = Share(pool=pool, qgroup=shares_d[s], pqgroup=pqid, name=s,
+                        size=pool.size, subvol_name=s)
             nso.save()
         mount_share(nso, '%s%s' % (settings.MNT_PT, s))
 
