@@ -371,7 +371,7 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
 class Application(object):
     def __init__(self):
         self.buffer = []
-        self.scan_interval = 600
+        self.scan_interval = 300
         self.scan_ts = datetime.utcnow() - timedelta(seconds=self.scan_interval)
 
     def __call__(self, environ, start_response):
@@ -397,6 +397,7 @@ class Application(object):
         if path.startswith("socket.io"):
             environ['scan_ts'] = self.scan_ts
             environ['scan_interval'] = self.scan_interval
+            cur_ts = datetime.utcnow()
             socketio_manage(environ, {'/services': ServicesNamespace,
                                       '/sysinfo': SysinfoNamespace,
                                       '/cpu-widget': CPUWidgetNamespace,
@@ -404,7 +405,6 @@ class Application(object):
                                       '/network-widget': NetworkWidgetNamespace,
                                       '/disk-widget': DisksWidgetNamespace,
             })
-            cur_ts = datetime.utcnow()
             if ((cur_ts - self.scan_ts).total_seconds() > self.scan_interval):
                 self.scan_ts = cur_ts
 
