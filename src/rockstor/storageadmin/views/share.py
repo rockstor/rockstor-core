@@ -112,7 +112,7 @@ class ShareListView(ShareMixin, rfc.GenericView):
 
         #Before creating a new Share, we create the qgroup for it. And during
         #it's creation, we assign this qgroup to it. During it's creation a 0/x
-        #qgroup will automatically be created, but it will be come the child of
+        #qgroup will automatically be created, but it will become the child of
         #our explicitly-created qgroup(2015/x).
 
         #We will set the qgroup limit on our qgroup and it will enforce the
