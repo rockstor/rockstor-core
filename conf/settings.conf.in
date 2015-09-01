@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 """
 
-# Django settings for RockStor project.
+# Django settings for Rockstor project.
 import os
 
 DEBUG = ${django-settings-conf:debug}
@@ -172,7 +172,7 @@ STATICFILES_STORAGE = 'pipeline.storage.PipelineCachedStorage'
 PIPELINE_CSS_COMPRESOR = None
 PIPELINE_JS_COMPRESSOR = None
 
-# Dont wrap in anonymous function so that license is at the top.
+# Don't wrap in anonymous function so that license is at the top.
 PIPELINE_DISABLE_WRAPPER = True
 
 PIPELINE_JS = {
@@ -302,7 +302,7 @@ PROBE_DATA_INTERVAL = 600
 
 """
 Minimum share size allowed is 100KB. This is purely arbitrary. 4K is what is
-strictly required by btrfs. Similary, maximum is 2^64 bytes which is more than
+strictly required by btrfs. Similarly the maximum is 2^64 bytes which is more than
 enough for all practical purposes and also is the max allowed in btrfs.
 """
 MIN_SHARE_SIZE = 100
