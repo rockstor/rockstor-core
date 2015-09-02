@@ -25,7 +25,6 @@ import sys
 import re
 import time
 from tempfile import mkstemp
-import shutil
 from django.conf import settings
 
 
