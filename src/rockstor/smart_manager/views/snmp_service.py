@@ -22,8 +22,6 @@ from system.services import systemctl
 from system.pkg_mgmt import install_pkg
 from django.db import transaction
 from base_service import BaseServiceDetailView
-from contextlib import contextmanager
-from storageadmin.exceptions import RockStorAPIException
 import os
 from system.snmp import configure_snmp
 from smart_manager.models import Service
@@ -36,16 +34,6 @@ logger = logging.getLogger(__name__)
 class SNMPServiceView(BaseServiceDetailView):
 
     service_name = 'snmpd'
-
-    @staticmethod
-    @contextmanager
-    def _handle_exception(request, msg):
-        try:
-            yield
-        except RockStorAPIException:
-            raise
-        except Exception, e:
-            handle_exception(e, request, msg)
 
     @transaction.commit_on_success
     def post(self, request, command):
