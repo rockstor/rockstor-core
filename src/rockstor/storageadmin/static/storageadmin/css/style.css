@@ -548,7 +548,6 @@ table.tablesorter thead tr .headerSortDown {
 table, th, td {
   border: none; }
 
-
 /* Overlay */
 .simple-overlay {
     display:none; /* must be initially hidden */
@@ -759,7 +758,13 @@ input[type="submit"] {
   -webkit-appearance: button;
 }
 
+.right {
+    float: right;
+}
+
 .btn {
+    margin-left: 2px;
+    margin-right: 2px;
   padding: 4px 12px;
   line-height: 18px;
   *line-height: 18px;
