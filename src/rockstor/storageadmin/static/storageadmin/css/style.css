@@ -440,10 +440,28 @@ a#logo-name { color: #fff; }
 }
 
 /* Tables */
-table.noborder { border: none; }
-.noborder td { border: none; }
-.noborder tr { border: none; }
-#disks-table, #shares-table { width: 100%; }
+.table {
+    font-family: Roboto-Medium;
+}
+
+tbody {
+    color: rgba(255, 255, 255, 0.87) !important;
+}
+
+table.noborder {
+    border: none;
+}
+
+.noborder td {
+    border: none;
+}
+
+.noborder tr {
+    border: none;
+}
+#disks-table, #shares-table {
+    width: 100%;
+}
 
 .table-title {
   background-image: linear-gradient(top, rgb(26,55,89) 34%, rgb(31,48,66) 84%);
@@ -465,6 +483,7 @@ table.noborder { border: none; }
   font-weight: normal !important;
   background: #9AB5C8;
 }
+
 .table-striped tbody tr:nth-child(odd) td {
 	background: #F5FAFA !important;
 }
@@ -479,26 +498,56 @@ table.tablesorter thead tr th.title h4 {
 }
 
 table.tablesorter thead tr th, table.tablesorter tfoot tr th {
-	background: #868C97;
-  color: #fff;
+	background: #FFFFFF;
+    color: rgba(0, 0, 0, 0.54) !important;
+    height: 36px;
+    line-height: 36px;
+    font-size: 12px;
+}
+
+.table-bordered>thead>tr>th {
+    border-bottom: 1px solid #d0d0d0;
+}
+
+.table>thead>tr>th {
+    border-bottom: 1px solid #d0d0d0;
+}
+
+.table>tbody>tr>td {
+    color: rgba(0, 0, 0, 0.87) !important;
+    background-color: #FFFFFF;
+    height: 34px;
+    line-height: 34px;
+    font-size: 13px;
+    border-bottom: 1px solid #d0d0d0;
+}
+
+.table>tbody>tr:hover td{
+    background-color: #EEEEEE;
 }
 
 table.tablesorter thead tr .header {
-        background-image: url('../img/bg.gif');
-        background-repeat: no-repeat;
-        background-position: center right;
-        cursor: pointer;
+    background-image: url('../img/bg.gif');
+    background-repeat: no-repeat;
+    background-position: center right;
+    cursor: pointer;
 }
 
 table.tablesorter tbody tr.odd td {
         background-color:#F0F0F6;
 }
+
 table.tablesorter thead tr .headerSortUp {
         background-image: url('../img/asc.gif');
 }
+
 table.tablesorter thead tr .headerSortDown {
         background-image: url('../img/desc.gif');
 }
+
+table, th, td {
+  border: none; }
+
 
 /* Overlay */
 .simple-overlay {
