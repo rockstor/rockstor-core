@@ -73,6 +73,31 @@
           </div>
         </div>
 
+        <!-- nut user name / ip -->
+        <div class="form-group">
+          <label class="control-label" for="nutuser">Nut User<span class="required"> *</span></label>
+
+          <div class="controls">
+            <input class="form-control shorten-input" type="text"
+                   id="nutuser" name="nutuser"
+                   value="<%= config.nutuser %>"
+                   placeholder="NUT username eg 'upsmon'"
+                   title="NUT username (single word)">
+          </div>
+        </div>
+
+        <!-- nut user password / ip -->
+        <div class="form-group">
+          <label class="control-label" for="nutuserpass">Nut User Password<span class="required"> *</span></label>
+
+          <div class="controls">
+            <input class="form-control shorten-input" type="text"
+                   id="nutuserpass" name="nutuserpass"
+                   value="<%= config.nutuserpass %>"
+                   placeholder="NUT user password"
+                   title="Password for above NUT user">
+          </div>
+        </div>
 
         <button id="cancel" class="btn btn-default">Cancel</button>
         <button type="Submit" id="create-user" class="btn btn-primary">
