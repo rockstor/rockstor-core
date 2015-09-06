@@ -117,6 +117,15 @@
   }
 },
 {
+  "pk": 14,
+  "model": "smart_manager.service",
+  "fields": {
+    "config": null,
+    "display_name": "NUT-UPS",
+    "name": "nut"
+  }
+},
+{
   "pk": 1, 
   "model": "auth.user", 
   "fields": {
