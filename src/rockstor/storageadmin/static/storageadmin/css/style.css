@@ -862,6 +862,7 @@ label.error { font-size: 12px; color: #b94a48; }
 
 #appliance-breadcrumb {
     position: fixed;
+    height: 24px;
     right: 0px;
     top: 50px;
     left: 0px;
