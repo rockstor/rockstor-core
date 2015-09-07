@@ -25,7 +25,7 @@ import sys
 import re
 import time
 from tempfile import mkstemp
-import shutil
+import hashlib
 from django.conf import settings
 
 
@@ -133,6 +133,28 @@ def bootstrap_sshd_config(logging):
             logging.info('updated sshd_config')
             run_command([SYSCTL, 'restart', 'sshd'])
 
+def md5sum(fpath):
+    #return the md5sum of the given file
+    if (not os.path.isfile(fpath)):
+        return None
+    md5 = hashlib.md5()
+    with open(fpath) as tfo:
+        for l in tfo.readlines():
+            md5.update(l)
+    return md5.hexdigest()
+
+def enable_rockstor_service(logging):
+    rs_dest = '/etc/systemd/system/rockstor.service'
+    rs_src = '%s/conf/rockstor.service' % BASE_DIR
+    sum1 = md5sum(rs_dest)
+    sum2 = md5sum(rs_src)
+    if (sum1 != sum2):
+        logging.info('updating rockstor systemd service')
+        shutil.copy(rs_src, rs_dest)
+        run_command([SYSCTL, 'enable', 'rockstor'])
+        run_command([SYSCTL, 'start', 'rockstor'])
+        logging.info('Started rockstor service')
+
 def main():
     loglevel = logging.INFO
     if (len(sys.argv) > 1 and sys.argv[1] == '-x'):
@@ -208,10 +230,19 @@ def main():
     if (os.path.isfile(STAMP)):
         logging.info('Running prepdb...')
         run_command([PREP_DB, ])
-        logging.info('Running qgroup cleanup. %s' % QGROUP_CLEAN)
-        run_command([QGROUP_CLEAN])
-        logging.info('Running qgroup limit maxout. %s' % QGROUP_MAXOUT_LIMIT)
-        run_command([QGROUP_MAXOUT_LIMIT])
+        try:
+            logging.info('Running qgroup cleanup. %s' % QGROUP_CLEAN)
+            run_command([QGROUP_CLEAN])
+        except Exception, e:
+            logging.error('Exception while running %s: %s' % (QGROUP_CLEAN, e.__str__()))
+
+        try:
+            logging.info('Running qgroup limit maxout. %s' % QGROUP_MAXOUT_LIMIT)
+            run_command([QGROUP_MAXOUT_LIMIT])
+        except Exception, e:
+            logging.error('Exception while running %s: %s' % (QGROUP_MAXOUT_LIMIT, e.__str__()))
+
+        enable_rockstor_service(logging)
         if (tz_updated):
             run_command([SYSCTL, 'restart', 'rockstor'])
         return logging.info(
@@ -241,19 +272,19 @@ def main():
     logging.info('Initializing app databases...')
     run_command(['su', '-', 'postgres', '-c', "psql -c \"CREATE ROLE rocky WITH SUPERUSER LOGIN PASSWORD 'rocky'\""])
     logging.debug('rocky ROLE created')
-    run_command(['su', '-', 'postgres', '-c', "psql storageadmin -f /opt/rockstor/conf/storageadmin.sql.in"])
+    run_command(['su', '-', 'postgres', '-c', "psql storageadmin -f %s/conf/storageadmin.sql.in" % BASE_DIR])
     logging.debug('storageadmin app database loaded')
-    run_command(['su', '-', 'postgres', '-c', "psql smartdb -f /opt/rockstor/conf/smartdb.sql.in"])
+    run_command(['su', '-', 'postgres', '-c', "psql smartdb -f %s/conf/smartdb.sql.in" % BASE_DIR])
     logging.debug('smartdb app database loaded')
     run_command(['su', '-', 'postgres', '-c', "psql storageadmin -c \"select setval('south_migrationhistory_id_seq', (select max(id) from south_migrationhistory))\""])
     logging.debug('storageadmin migration history copied')
     run_command(['su', '-', 'postgres', '-c', "psql smartdb -c \"select setval('south_migrationhistory_id_seq', (select max(id) from south_migrationhistory))\""])
     logging.debug('smartdb migration history copied')
     logging.info('Done')
-    run_command(['cp', '-f', '/opt/rockstor/conf/postgresql.conf',
+    run_command(['cp', '-f', '%s/conf/postgresql.conf' % BASE_DIR,
                  '/var/lib/pgsql/data/'])
     logging.debug('postgresql.conf copied')
-    run_command(['cp', '-f', '/opt/rockstor/conf/pg_hba.conf',
+    run_command(['cp', '-f', '%s/conf/pg_hba.conf' % BASE_DIR,
                  '/var/lib/pgsql/data/'])
     logging.debug('pg_hba.conf copied')
     run_command([SYSCTL, 'restart', 'postgresql'])
@@ -274,9 +305,7 @@ def main():
     logging.info('Running prepdb...')
     run_command([PREP_DB, ])
     logging.info('Done')
-    shutil.copy('%s/conf/rockstor.service' % BASE_DIR, '/etc/systemd/system/')
-    run_command([SYSCTL, 'enable', 'rockstor'])
-    run_command([SYSCTL, 'start', 'rockstor'])
+    enable_rockstor_service(logging)
     logging.info('Started rockstor service')
     logging.info('Shutting down firewall...')
     run_command([SYSCTL, 'stop', 'firewalld'])
