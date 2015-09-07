@@ -126,9 +126,9 @@ def pre_process_nut_config(config):
     # iterate over the nut_options_dict to allocate the configs to the
     # right section in nut_configs so they can applied to the correct file.
     # N.B. we don't pop from config as some options are used in multiple files
-    for config_file, options in nut_options_dict:
+    for config_file, options in nut_options_dict.items():
         # now repeatedly match config's entries to our host loops offerings.
-        for config_option, config_value in config.index():
+        for config_option, config_value in config.items():
             if config_option in nut_options_dict:
                 # add this config_option and value pair to our nut_configs
                 nut_configs[config_file][config_option] = config_value
