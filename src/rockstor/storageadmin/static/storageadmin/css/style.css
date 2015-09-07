@@ -503,6 +503,7 @@ table.tablesorter thead tr th, table.tablesorter tfoot tr th {
     height: 36px;
     line-height: 36px;
     font-size: 12px;
+    padding-left: 20px;
 }
 
 .table-bordered>thead>tr>th {
@@ -520,6 +521,7 @@ table.tablesorter thead tr th, table.tablesorter tfoot tr th {
     line-height: 34px;
     font-size: 13px;
     border-bottom: 1px solid #d0d0d0;
+    padding-left: 20px;
 }
 
 .table>tbody>tr:hover td{
@@ -529,7 +531,7 @@ table.tablesorter thead tr th, table.tablesorter tfoot tr th {
 table.tablesorter thead tr .header {
     background-image: url('../img/bg.gif');
     background-repeat: no-repeat;
-    background-position: center right;
+    background-position: center left;
     cursor: pointer;
 }
 
