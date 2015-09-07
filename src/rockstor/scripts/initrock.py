@@ -207,10 +207,18 @@ def main():
     if (os.path.isfile(STAMP)):
         logging.info('Running prepdb...')
         run_command([PREP_DB, ])
-        logging.info('Running qgroup cleanup. %s' % QGROUP_CLEAN)
-        run_command([QGROUP_CLEAN])
-        logging.info('Running qgroup limit maxout. %s' % QGROUP_MAXOUT_LIMIT)
-        run_command([QGROUP_MAXOUT_LIMIT])
+        try:
+            logging.info('Running qgroup cleanup. %s' % QGROUP_CLEAN)
+            run_command([QGROUP_CLEAN])
+        except Exception, e:
+            logging.error('Exception while running %s: %s' % (QGROUP_CLEAN, e.__str__()))
+
+        try:
+            logging.info('Running qgroup limit maxout. %s' % QGROUP_MAXOUT_LIMIT)
+            run_command([QGROUP_MAXOUT_LIMIT])
+        except Exception, e:
+            logging.error('Exception while running %s: %s' % (QGROUP_MAXOUT_LIMIT, e.__str__()))
+
         if (tz_updated):
             run_command([SYSCTL, 'restart', 'rockstor'])
         return logging.info(
