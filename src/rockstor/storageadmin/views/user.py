@@ -79,11 +79,10 @@ class UserMixin(object):
         if (input_fields['uid'] is not None):
             try:
                 input_fields['uid'] = int(input_fields['uid'])
-            except Exception, e:
-                logger.exception(e)
-                e_msg = ('UID must be an integer')
+            except ValueError, e:
+                e_msg = ('UID must be an integer, try again. Exception: %s' % e.__str__())
                 handle_exception(Exception(e_msg), request)
-            
+
         input_fields['group'] = request.data.get('group', None)
         input_fields['public_key'] = cls._validate_public_key(request)
         return input_fields
