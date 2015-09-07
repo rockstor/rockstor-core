@@ -25,7 +25,6 @@ import sys
 import re
 import time
 from tempfile import mkstemp
-import shutil
 from django.conf import settings
 
 
@@ -241,19 +240,19 @@ def main():
     logging.info('Initializing app databases...')
     run_command(['su', '-', 'postgres', '-c', "psql -c \"CREATE ROLE rocky WITH SUPERUSER LOGIN PASSWORD 'rocky'\""])
     logging.debug('rocky ROLE created')
-    run_command(['su', '-', 'postgres', '-c', "psql storageadmin -f /opt/rockstor/conf/storageadmin.sql.in"])
+    run_command(['su', '-', 'postgres', '-c', "psql storageadmin -f %s/conf/storageadmin.sql.in" % BASE_DIR])
     logging.debug('storageadmin app database loaded')
-    run_command(['su', '-', 'postgres', '-c', "psql smartdb -f /opt/rockstor/conf/smartdb.sql.in"])
+    run_command(['su', '-', 'postgres', '-c', "psql smartdb -f %s/conf/smartdb.sql.in" % BASE_DIR])
     logging.debug('smartdb app database loaded')
     run_command(['su', '-', 'postgres', '-c', "psql storageadmin -c \"select setval('south_migrationhistory_id_seq', (select max(id) from south_migrationhistory))\""])
     logging.debug('storageadmin migration history copied')
     run_command(['su', '-', 'postgres', '-c', "psql smartdb -c \"select setval('south_migrationhistory_id_seq', (select max(id) from south_migrationhistory))\""])
     logging.debug('smartdb migration history copied')
     logging.info('Done')
-    run_command(['cp', '-f', '/opt/rockstor/conf/postgresql.conf',
+    run_command(['cp', '-f', '%s/conf/postgresql.conf' % BASE_DIR,
                  '/var/lib/pgsql/data/'])
     logging.debug('postgresql.conf copied')
-    run_command(['cp', '-f', '/opt/rockstor/conf/pg_hba.conf',
+    run_command(['cp', '-f', '%s/conf/pg_hba.conf' % BASE_DIR,
                  '/var/lib/pgsql/data/'])
     logging.debug('pg_hba.conf copied')
     run_command([SYSCTL, 'restart', 'postgresql'])
