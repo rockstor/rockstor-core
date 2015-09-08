@@ -29,7 +29,7 @@
       <form id="nut-form" name="aform">
         <div class="messages"></div>
 
-         <!-- NUT mode -->
+        <!-- NUT mode -->
         <% var nutModeTypes = ['None','standalone','netserver','netclient']; %>
         <div class="form-group">
           <label class="control-label" for="MODE">Nut Mode<span class="required"> *</span></label>
@@ -46,6 +46,11 @@
             </select>
           </div>
         </div>
+
+        <!-- Monitor mode -->
+        <!-- monmode either master or slave -->
+
+
 
         <!-- internal UPS name -->
         <div class="form-group">
@@ -73,7 +78,7 @@
           </div>
         </div>
 
-        <!-- nut user name / ip -->
+        <!-- nut user name -->
         <div class="form-group">
           <label class="control-label" for="nutuser">Nut User<span class="required"> *</span></label>
 
@@ -86,7 +91,7 @@
           </div>
         </div>
 
-        <!-- nut user password / ip -->
+        <!-- nut user password (no spaces, "=" or "\" or "#" here)-->
         <div class="form-group">
           <label class="control-label" for="nutuserpass">Nut User Password<span class="required"> *</span></label>
 
