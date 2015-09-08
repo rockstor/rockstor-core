@@ -34,7 +34,8 @@ class NUTServiceView(BaseServiceDetailView):
                 service = Service.objects.get(name=self.service_name)
                 # defaults can be provided in second parameter {dictionary: x}
                 config = request.data.get('config', {'upsname': 'rockups',
-                                                     'nutserver': '127.0.0.1', })
+                                                     'nutserver': '127.0.0.1',
+                                                     'monmode': 'master', })
                 # initial check on config type just in case
                 if type(config) != dict:
                     e_msg = ('config dictionary is required input')
