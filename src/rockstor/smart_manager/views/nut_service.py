@@ -25,6 +25,8 @@ class NUTServiceView(BaseServiceDetailView):
         with self._handle_exception(request, e_msg):
             if (
             not os.path.exists('/usr/lib/systemd/system/nut-server.service')):
+                # I think these should be dependencies of Rockstor package
+                # only available in epel repo though.
                 install_pkg('nut')
                 install_pkg('nut-xml')
             if command == 'config':
