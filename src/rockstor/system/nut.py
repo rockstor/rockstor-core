@@ -24,8 +24,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 # the nut-server requires the nut-driver and is started before:-
 # from nut-client package
 # /usr/lib/systemd/system/nut-monitor.service
-# nut-client also contains
 # /lib/systemd/system-shutdown/nutshutdown
+# note nut-monitor.service is set to start after nut-server.service
 
 # N.B. some config options passed to nut from service configuration are used
 # in multiple configuration files ie upsname in ups.conf and upsmon.conf
@@ -126,30 +126,12 @@ def pre_process_nut_config(config):
     # iterate over the nut_options_dict to allocate the configs to the
     # right section in nut_configs so they can applied to the correct file.
     # N.B. we don't pop from config as some options are used in multiple files
-    for config_file, options in nut_options_dict.items():
+    for config_file, file_options in nut_options_dict.items():
         # now repeatedly match config's entries to our host loops offerings.
         for config_option, config_value in config.items():
-            if config_option in nut_options_dict:
+            if config_option in file_options:
                 # add this config_option and value pair to our nut_configs
                 nut_configs[config_file][config_option] = config_value
-
-        # for option, value in config.items():
-        #     if option in NUT_CONFIG_OPTIONS:
-        #         nut_options[option] = value
-        #     elif option in NUT_UPS_CONFIG_OPTIONS:
-        #         ups_options[option] = value
-        #     elif option in NUT_UPSD_CONFIG_OPTIONS:
-        #         upsd_options[option] = value
-        #     elif option in NUT_USERS_CONFIG_OPTIONS:
-        #         user_options[option] = value
-        #     elif option in NUT_MONITOR_CONFIG_OPTIONS:
-        #         monitor_options[option] = value
-        #     else:
-        #         # we can't match this key value pair to a config file so bailing
-        #         error = ("can't match unknown nut option %s %s to a nut config"
-        #                  "file: see nut.py" % (
-        #                      option, value))
-        #         raise Exception(error)
 
 
 def update_config_in(file, config):
