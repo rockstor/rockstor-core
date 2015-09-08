@@ -67,7 +67,10 @@ class NUTServiceView(BaseServiceDetailView):
             # should maybe use init_service_op here but both throw=true
             systemctl('nut-server', 'enable')
             systemctl('nut-server', 'start')
-
+            systemctl('nut-monitor', 'enable')
+            systemctl('nut-monitor', 'start')
         else:
+            systemctl('nut-monitor', 'disable')
+            systemctl('nut-monitor', 'stop')
             systemctl('nut-server', 'disable')
             systemctl('nut-server', 'stop')
