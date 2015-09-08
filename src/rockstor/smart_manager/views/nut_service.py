@@ -24,7 +24,8 @@ class NUTServiceView(BaseServiceDetailView):
                  command)
         with self._handle_exception(request, e_msg):
             if (
-            not os.path.exists('/usr/lib/systemd/system/nut-server.service')):
+                    not os.path.exists(
+                        '/usr/lib/systemd/system/nut-server.service')):
                 # I think these should be dependencies of Rockstor package
                 # only available in epel repo though.
                 install_pkg('nut')
@@ -32,7 +33,8 @@ class NUTServiceView(BaseServiceDetailView):
             if command == 'config':
                 service = Service.objects.get(name=self.service_name)
                 # defaults can be provided in second parameter {dictionary: x}
-                config = request.data.get('config', {'upsname': 'rockups', })
+                config = request.data.get('config', {'upsname': 'rockups',
+                                                     'nutserver': '127.0.0.1', })
                 # initial check on config type just in case
                 if type(config) != dict:
                     e_msg = ('config dictionary is required input')
