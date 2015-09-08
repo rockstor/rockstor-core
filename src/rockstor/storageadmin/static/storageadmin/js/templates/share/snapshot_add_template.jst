@@ -22,24 +22,21 @@
 <h4>Create Snapshot</h4>
 
 
-<div class="row">
-  <div class="col-md-8">
     <label class="control-label"></label>
     <div class="form-box">
-      <form name="add-snapshot-form" id="add-snapshot-form" class="">
+      <form class="form-horizontal" name="add-snapshot-form" id="add-snapshot-form" >
         <div class="messages"></div>
-
         <div class="form-group">
-          <label class="control-label" for="snapshot-name">Name<span class="required"> *</span></label>
-          <div class="controls">
-            <input type="text" name="snapshot-name" id="snapshot-name" title="Name of the Snapshot must start with a letter(a-z) and can be followed by any of the following characters: letter(a-z), digits(0-9), hyphen(-), underscore(_) or a period(.).">
+          <label class="col-sm-2 control-label" for="snapshot-name">Name<span class="required"> *</span></label>
+          <div class="col-sm-3">
+            <input type="text" class="form-control" name="snapshot-name" id="snapshot-name" title="Name of the Snapshot must start with a letter(a-z) and can be followed by any of the following characters: letter(a-z), digits(0-9), hyphen(-), underscore(_) or a period(.).">
           </div>
         </div>
 
         <!-- Select Shares -->
         <div class="form-group">
-         <label class="control-label" for="shares">Select Shares<span class="required"> *</span></label>
-         <div class="controls">
+         <label class="col-xs-2 control-label" for="shares">Share<span class="required"> *</span></label>
+         <div class="col-sm-3">
          <select name="shares" id="shares" size="10" data-placeholder="Select share" title="Select the Share to snapshot">
          <% shares.each( function(share, index) { %>
          <option value="<%= share.get('name') %>" > <%= share.get('name') %></option>
@@ -49,8 +46,8 @@
         </div>
 
         <div class="form-group">
-          <label class="control-label" for=writable">Writable<span class="required"> *</span></label>
-          <div class="controls">
+          <label class="col-xs-2 control-label" for=writable">Writable<span class="required"> *</span></label>
+          <div class="col-sm-3">
              <% _.each(modify_choices, function(c) { %>
                 <label class="radio-inline">
                    <% if(c.value == 'yes'){ %>
@@ -65,14 +62,14 @@
 
 
        <div class="form-group">
-          <label class="control-label" for="snapshot-visible"> </label>
-          <div class="controls">
+          <label class="col-xs-2 control-label" for="snapshot-visible"> </label>
+          <div class="col-sm-3">
             <input type="checkbox" name="uvisible" id="snapshot-visible" title="Snapshots can be visible or hidden to the end user of the Share"> Visible to user?
           </div>
         </div>
 
         <div class="form-group">
-          <div class="controls">
+          <div class="col-xs-10 col-xs-offset-2">
             <a class="btn btn-default" href="#" id="js-snapshot-cancel"> Cancel</a>
             <input type="Submit" class="btn btn-primary" value="Submit" id="js-snapshot-save"></input>
           </div>
@@ -80,5 +77,3 @@
 
       </form>
     </div>
-  </div>
-</div>
