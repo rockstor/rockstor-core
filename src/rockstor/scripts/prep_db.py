@@ -33,7 +33,8 @@ def register_services():
         'Replication': 'replication',
         'SNMP': 'snmpd',
         'Rock-on': 'docker',
-        'S.M.A.R.T': 'smartd',}
+        'S.M.A.R.T': 'smartd',
+        'NUT-UPS': 'nut', }
 
     keylist = services.keys()
     for s in keylist:
