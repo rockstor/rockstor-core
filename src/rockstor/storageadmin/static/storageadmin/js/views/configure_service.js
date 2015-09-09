@@ -76,13 +76,13 @@ ConfigureServiceView = RockstorLayoutView.extend({
     		rootshare: 'required'
 	    },
 	    nut: {
-		MODE: 'required',
+		mode: 'required',
 		nutuser: 'required',
 		nutpass: 'required',
 		nutserver: {
 		    required: {
 			depends: function(element) {
-				return (_this.$('#MODE').val() == 'netclient');
+				return (_this.$('#mode').val() == 'netclient');
 				}
 		    }
 		}
@@ -176,7 +176,7 @@ To monitor /dev/sdb and /dev/sdc but ignore other devices: <br> <strong>/dev/sdb
 To email potential problems: <br> <strong>DEVICESCAN -m user@example.com</strong> <br> \
 To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br>'
 	});
-	this.$('#nut-form #MODE').tooltip({
+	this.$('#nut-form #mode').tooltip({
 	    html: true,
 	    placement: 'right',
 	    title: "<strong>Nut Mode</strong> — Allows you to select the overall mode of Network UPS Tools operation. The drop-down list offers the following options:<br> \
