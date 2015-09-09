@@ -20,7 +20,7 @@
 </script>
 <div class="messages"></div>
 <% if (!snapshots.isEmpty()) { %>
-  <table id="snapshots-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of snapshots">
+  <table id="snapshots-table" class="table table-condensed share-table tablesorter" summary="List of snapshots">
     <thead>
       <tr>
         <th>
@@ -81,8 +81,8 @@
 <div class="row">
   <div class="pull-right">
     <% if (!snapshots.isEmpty()) { %>
-      <a class="btn btn-danger" href="#" id="js-snapshot-delete-multiple"><i class="glyphicon glyphicon-trash "></i> Delete</a>
+      <a class="btn btn-danger right" href="#" id="js-snapshot-delete-multiple"><i class="glyphicon glyphicon-trash"></i> Delete</a>
     <% } %>
-    <a class="btn btn-primary" href="#" id="js-snapshot-add"><i class="glyphicon glyphicon-edit "></i> Create snapshot</a>
+    <a class="btn btn-primary right" href="#" id="js-snapshot-add"><i class="glyphicon glyphicon-edit "></i> Create snapshot</a>
   </div>
 </div>
