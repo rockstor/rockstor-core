@@ -1514,6 +1514,15 @@ input[type="radio"].selectedRoot {
     background: #fff;
 }
 
+@media (max-width: 800px) {
+    #sidebar {
+        display: none;
+    }
+    #content {
+        left: 0px;
+    }
+}
+
 .dashboard-widget-controls {
     color: #FFFFFF;
     font-family: Roboto-Light;
