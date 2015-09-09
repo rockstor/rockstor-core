@@ -32,15 +32,15 @@
         <!-- NUT mode -->
         <% var nutModeTypes = ['None','standalone','netserver','netclient']; %>
         <div class="form-group">
-          <label class="control-label" for="MODE">Nut Mode<span class="required"> *</span></label>
+          <label class="control-label" for="mode">Nut Mode<span class="required"> *</span></label>
           <div class="controls">
-            <select class="form-control shorten-input" id="MODE" name="MODE">
+            <select class="form-control shorten-input" id="mode" name="mode">
               <% _.each(nutModeTypes, function(mode, index) { %>
                 <% if (mode == config.mode) { %>
-                  <option value="<%= MODE %>" selected="selected">
+                  <option value="<%= mode %>" selected="selected">
                   <%= mode %> </option>
                 <% } else { %>
-                  <option value="<%= MODE %>"><%= mode %> </option>
+                  <option value="<%= mode %>"><%= mode %> </option>
                 <% } %>
               <% }); %>
             </select>
