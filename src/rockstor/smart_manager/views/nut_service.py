@@ -15,54 +15,24 @@ logger = logging.getLogger(__name__)
 class NUTServiceView(BaseServiceDetailView):
     service_name = 'nut'
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request, command):
         """
         execute a command on the service
         """
-        e_msg = ('Failed to %s NUT service due to system error.' %
-                 command)
-        with self._handle_exception(request, e_msg):
-            if (
-                    not os.path.exists(
-                        '/usr/lib/systemd/system/nut-server.service')):
-                # I think these should be dependencies of Rockstor package
-                # only available in epel repo though.
-                install_pkg('nut')
-                install_pkg('nut-xml')
+        with self._handle_exception(request):
+            service = Service.objects.get(name=self.service_name)
             if command == 'config':
-                service = Service.objects.get(name=self.service_name)
-                # defaults can be provided in second parameter {dictionary: x}
-                config = request.data.get('config', {'upsname': 'rockups',
-                                                     'nutuser': 'monuser',
-                                                     'nutserver': '127.0.0.1',
-                                                     'upsmon': 'master', })
-                # initial check on config type just in case
-                if type(config) != dict:
-                    e_msg = ('config dictionary is required input')
+                try:
+                    config = request.data.get('config', {})
+                    configure_nut(config)
+                    self._save_config(service, config)
+                except Exception, e:
+                    logger.exception(e)
+                    e_msg = ('NUT could not be configured. Please try again')
                     handle_exception(Exception(e_msg), request)
-                # first pass sanity check on minimum requirements
-                for option in ('upsname', 'upsuser', 'upsuserpass',):
-                    if option not in config:
-                        e_msg = ('%s is missing in config' % option)
-                        handle_exception(Exception(e_msg), request)
-                    if config[option] is None or config[option] == '':
-                        e_msg = ('%s cannot be empty' % option)
-                        handle_exception(Exception(e_msg), request)
-
-                # if ('aux' not in config):
-                #     e_msg = ('aux is missing in config: %s' % config)
-                #     handle_exception(Exception(e_msg), request)
-                # if (type(config['aux']) != list):
-                #     e_msg = ('aux must be a list in config: %s' % config)
-                #     handle_exception(Exception(e_msg), request)
-
-                # now we have min config save it
-                self._save_config(service, config)
-
-                # pass config whole sale onto specialized function
-                configure_nut(config)
             else:
+                # maybe a try exception around the switch.
                 # we are assuming if command is not config its start or other
                 self._switch_nut(command)
         return Response()
