@@ -34,14 +34,15 @@ class NUTServiceView(BaseServiceDetailView):
                 service = Service.objects.get(name=self.service_name)
                 # defaults can be provided in second parameter {dictionary: x}
                 config = request.data.get('config', {'upsname': 'rockups',
+                                                     'nutuser': 'monuser',
                                                      'nutserver': '127.0.0.1',
-                                                     'monmode': 'master', })
+                                                     'upsmon': 'master', })
                 # initial check on config type just in case
                 if type(config) != dict:
                     e_msg = ('config dictionary is required input')
                     handle_exception(Exception(e_msg), request)
                 # first pass sanity check on minimum requirements
-                for option in ('upsname', 'upsuser', 'upspassword',):
+                for option in ('upsname', 'upsuser', 'upsuserpass',):
                     if option not in config:
                         e_msg = ('%s is missing in config' % option)
                         handle_exception(Exception(e_msg), request)

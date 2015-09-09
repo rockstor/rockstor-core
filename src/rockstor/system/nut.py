@@ -57,10 +57,14 @@ NUT_USERS_CONFIG_OPTIONS = ("nutuser", "nutuserpass", "upsmon")
 NUT_MONITOR_CONFIG = '/etc/ups/upsmon.conf'
 # the following MONITOR entry reflects the compound line in upsmon.conf which
 # is created early on in pre-processing
-NUT_MONITOR_CONFIG_OPTIONS = ("POLLFREQ", "MONITOR")
+NUT_MONITOR_CONFIG_OPTIONS = ("POLLFREQ", "MONITOR", "DEADTIME")
 
 # the options used in pre-processing for upsmon.conf are
-# ("upsname", "nutserver", "nutuser", "nutuserpass" "monmode")
+# ("upsname", "nutserver", "nutuser", "nutuserpass" "upsmon")
+
+# Currently we only deal with upsmon  as master or slave in a single user
+# entry and apply the same upsmon value to the end of the MONITOR line in
+# upsmon.conf
 
 # a dictionary for each config files associated known options.
 nut_options_dict = {NUT_CONFIG: NUT_CONFIG_OPTIONS,
@@ -75,9 +79,9 @@ nut_section_heads = {"upsname": NUT_UPS_CONFIG, "nutuser": NUT_USERS_CONFIG}
 # dictionary of delimiters used, if not in this dict then "=" is assumed
 nut_option_delimiter = {"MODE": "=", "LISTEN": " ", "MAXAGE": " ",
                         "MINSUPPLIES": " ", "upsmon": " ", "MONITOR": " ",
-                        "POLLFREQ": " "}
+                        "POLLFREQ": " ", "DEADTIME": " "}
 
-# strings to separate auto config options from rest of config file.
+# Header string to separate auto config options from rest of config file.
 # this could be generalized across all Rockstor config files, problems during
 # upgrades though
 NUT_HEADER = '###BEGIN: Rockstor NUT Config. DO NOT EDIT BELOW THIS LINE###'
@@ -132,11 +136,14 @@ def pre_process_nut_config(config):
                    NUT_USERS_CONFIG: collections.OrderedDict,
                    NUT_MONITOR_CONFIG: collections.OrderedDict}
 
+    # Create a pair "MODE": "config-entry"
+    # for entry into /etc/ups/nut.conf
+
     # Create a pair "MONITOR": "upsname@nutserver 1 nutuser nutuserpass master"
     # for entry into /etc/ups/upsmon.conf
     nut_configs[NUT_MONITOR_CONFIG]['MONITOR'] = '%s@%s 1 %s %s %s' % (
         config['upsname'], config['nutserver'], config['nutuser'],
-        config['nutuserpass'], config['monmode'])
+        config['nutuserpass'], config['upsmon'])
 
     # move section headings from config to nut_configs OrderedDicts
     # this way all following entries will pertain to them in their respective
