@@ -77,7 +77,8 @@ ConfigureServiceView = RockstorLayoutView.extend({
 	    },
 	    nut: {
 		MODE: 'required',
-		basedn: 'required',
+		nutuser: 'required',
+		nutpass: 'required',
 		nutserver: {
 		    required: {
 			depends: function(element) {
@@ -199,7 +200,7 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
 		this.$('#nut-form #nutuser').tooltip({
 	    html: true,
 	    placement: 'right',
-	    title: 'The NUT username eg "monuser". Must be a single word without special characters. A default will be created if left blank'
+	    title: 'The NUT username eg "monuser" (not a Rockstor user). Must be a single word without special characters. A default will be created if left blank'
 	});
 	this.$('#nut-form #nutuserpass').tooltip({
 	    html: true,
