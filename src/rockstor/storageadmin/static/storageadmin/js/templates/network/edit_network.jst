@@ -39,12 +39,12 @@
           <div class="col-sm-10">
             <select class="form-control shorten-input" id="boot_proto" name="boot_proto">
               <% if (network.get('boot_proto') == 'dhcp') { %>
-                <option value="dhcp" selected="selected">DHCP</option>
+                <option value="dhcp" selected="selected">Auto (DHCP)</option>
               <% } else { %>
                 <option value="dhcp">DHCP</option>
               <% } %>
               <% if (network.get('boot_proto') == 'static') { %>
-                <option value="static" selected="selected">Static</option>
+                <option value="static" selected="selected">Manual</option>
               <% } else { %>
                 <option value="static">static</option>
               <% } %>
@@ -72,7 +72,7 @@
           </div>
         </div>
         <div class="form-group">
-          <label class="col-sm-2 control-label" for="gateway">Gateway<span class="required"> *</span></label>
+          <label class="col-sm-2 control-label" for="gateway">Gateway</label>
           <div class="col-sm-10">
             <% if (network.get('boot_proto') == 'static') { %>
               <input class="form-control shorten-input" type="text" id="gateway" name="gateway" value="<%= network.get('gateway') %>" placeholder="Gateway" title="Enter Gateway">
@@ -82,7 +82,7 @@
           </div>
         </div>
         <div class="form-group">
-          <label class="col-sm-2 control-label" for="domain">Domain<span class="required"> *</span></label>
+          <label class="col-sm-2 control-label" for="domain">Domain</label>
           <div class="col-sm-10">
             <% if (network.get('boot_proto') == 'static') { %>
               <input class="form-control shorten-input" type="text" id="domain" name="domain" value="<%= network.get('domain') %>" placeholder="Domain" title="Enter Domain">
@@ -92,7 +92,7 @@
           </div>
         </div>
         <div class="form-group">
-          <label class="col-sm-2 control-label" for="dns_servers">DNS Servers<span class="required"> *</span></label>
+          <label class="col-sm-2 control-label" for="dns_servers">DNS Servers</label>
           <div class="col-sm-10">
             <% if (network.get('boot_proto') == 'static') { %>
               <input class="form-control shorten-input" type="text" id="dns_servers" name="dns_servers" value="<%= network.get('dns_servers') %>" placeholder="DNS Servers" title="Enter comma separated list of DNS server addresses">
