@@ -164,6 +164,37 @@ To monitor /dev/sdb and /dev/sdc but ignore other devices: <br> <strong>/dev/sdb
 To email potential problems: <br> <strong>DEVICESCAN -m user@example.com</strong> <br> \
 To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br>'
 	});
+	this.$('#nut-form #MODE').tooltip({
+	    html: true,
+	    placement: 'right',
+	    title: "<strong>Nut Mode</strong> — Allows you to select the overall mode of Network UPS Tools operation. The drop-down list offers the following options:<br> \
+<ul>\
+<li><strong>None</strong> — The Default and essentially disables NUT.</li> \
+<li><strong>Standalone</strong> — The most common and recommended mode if you have a locally connected UPS and don't wish for Rockstor to act as a NUT server to any other LAN connected machines.</li> \
+<li><strong>Nut server</strong> — Is like Standalone only it also offers NUT services to other machines on the network who are running in Net client mode.</li> \
+<li><strong>Net client</strong> — Connect to an existing Nut server or network attached UPS on the LAN.</li> \
+</ul>"
+	});
+	this.$('#nut-form #upsname').tooltip({
+	    html: true,
+	    placement: 'right',
+	    title: 'The internal name for the UPS eg "ups" Leave blank if unsure.'
+	});
+	this.$('#nut-form #nutserver').tooltip({
+	    html: true,
+	    placement: 'right',
+	    title: 'The hostname or IP address of the NUT server.'
+	});
+		this.$('#nut-form #nutuser').tooltip({
+	    html: true,
+	    placement: 'right',
+	    title: 'The NUT username eg "monuser". Must be a single word without special characters. A default will be created if left blank'
+	});
+	this.$('#nut-form #nutuserpass').tooltip({
+	    html: true,
+	    placement: 'right',
+	    title: 'The password for the above nut user. Avoid using the following characters ( " = # space or backslash )'
+	});
 
 	this.validator = this.$('#' + this.formName).validate({
 	    onfocusout: false,
