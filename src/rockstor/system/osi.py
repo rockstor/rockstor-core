@@ -22,6 +22,8 @@ import subprocess
 import shutil
 from tempfile import mkstemp
 import time
+from socket import inet_ntoa
+from struct import pack
 from exceptions import CommandException
 import logging
 logger = logging.getLogger(__name__)
@@ -354,25 +356,56 @@ def parse_ifcfg(config_file, config_d):
             config_d['ipaddr'] = get_ip_addr(config_d['name'])
         return config_d
 
+def convert_netmask(bits):
+    #convert netmask bits into ip representation
+    bits = int(bits)
+    mask = 0
+    for i in xrange(32-bits,32):
+        mask |= (1 << i)
+    return inet_ntoa(pack('>I', mask))
 
-def get_net_config_fedora(devices):
-    config_d = {}
-    script_dir = ('/etc/sysconfig/network-scripts/')
-    for d in devices:
-        config = {'name': d,
-                  'alias': d,
-                  'bootproto': None,
-                  'onboot': None,
-                  'network': None,
-                  'netmask': None,
-                  'ipaddr': None,
-                  'gateway': None,
-                  'dns_servers': None,
-                  'domain': None, }
-        config['mac'] = get_mac_addr(d)
-        config = parse_ifcfg('%s/ifcfg-%s' % (script_dir, d), config)
-        config_d[d] = config
-    return config_d
+def net_config_helper(name):
+    o, e, rc = run_command([NMCLI, '-t', 'c', 'show', name], throw=False)
+    if (rc == 10):
+        return config
+
+    for l in o:
+        l = l.strip()
+        if (re.match('connection.interface-name:', l) is not None):
+            config['name'] = l.split(':')[1]
+        if (re.match('connection.auto_connect:', l) is not None):
+            config['auto_connect'] = l.split(':')[1]
+        elif (re.match('ipv4.method:', l) is not None):
+            config['bootproto'] = l.split(':')[1]
+        elif (re.match('ipv4.dns:', l) is not None):
+            fields = l.split(':')
+            if (len(fields) > 1):
+                config['dns_servers'] = fields[1]
+        elif (re.match('ipv4.gateway:', l) is not None):
+            fields = l.split(':')
+            if (len(fields) > 1):
+                config['gateway'] = fields[1]
+        elif (re.match('ipv4.addresses:', l) is not None):
+            ip, nm = l.split(':')[1].split('/')
+            nm = convert_netmask(nm)
+            config['netmask'] = nm
+            config['ip'] = ip
+    return config
+
+def get_net_config(all=False, name=None):
+    if (all):
+        o, e, rc = run_command([NMCLI, '-t', 'd', 'show'])
+        devices = []
+        for i in range(len(o)):
+            if (re.match('GENERAL.DEVICE:', o[i]) is not None and
+                re.match('GENERAL.TYPE:', o[i+1]) is not None and
+                o[i+1].strip().split(':')[1] == 'ethernet'):
+                devices.append(o[i].strip().split(':')[1])
+        config = {}
+        for d in devices:
+            config[d] = net_config_helper(d)
+        return config
+    return {name: net_config_helper(name),}
 
 
 def set_networking(hostname, default_gw):
