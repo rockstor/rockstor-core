@@ -141,6 +141,7 @@ def pre_process_nut_config(config):
 
     # Create a pair "MONITOR": "upsname@nutserver 1 nutuser nutuserpass master"
     # for entry into /etc/ups/upsmon.conf
+    # Todo need to sort object item assignment issue
     nut_configs[NUT_MONITOR_CONFIG]['MONITOR'] = '%s@%s 1 %s %s %s' % (
         config['upsname'], config['nutserver'], config['nutuser'],
         config['nutuserpass'], config['upsmon'])
