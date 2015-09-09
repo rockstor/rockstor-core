@@ -49,7 +49,22 @@
 
         <!-- Monitor mode -->
         <!-- upsmon either master or slave -->
-
+        <% var nutMonitorTypes = ['master','slave']; %>
+        <div class="form-group">
+          <label class="control-label" for="upsmon">Monitor Mode<span class="required"> *</span></label>
+          <div class="controls">
+            <select class="form-control shorten-input" id="upsmon" name="upsmon">
+              <% _.each(nutMonitorTypes, function(upsmon, index) { %>
+                <% if (upsmon == config.upsmon) { %>
+                  <option value="<%= mode %>" selected="selected">
+                  <%= upsmon %> </option>
+                <% } else { %>
+                  <option value="<%= upsmon %>"><%= upsmon %> </option>
+                <% } %>
+              <% }); %>
+            </select>
+          </div>
+        </div>
 
 
         <!-- internal UPS name -->
@@ -84,7 +99,7 @@
             <input class="form-control shorten-input" type="text"
                    id="nutuser" name="nutuser"
                    value="<%= config.nutuser %>"
-                   placeholder="NUT username eg 'upsmon'">
+                   placeholder="NUT username eg 'monuser'">
           </div>
         </div>
 

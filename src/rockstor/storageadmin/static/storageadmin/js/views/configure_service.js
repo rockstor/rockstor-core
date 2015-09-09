@@ -76,10 +76,14 @@ ConfigureServiceView = RockstorLayoutView.extend({
     		rootshare: 'required'
 	    },
 	    nut: {
+	    // TODO: improve on these by disabling / removing when not needed.
+		// for now leave as testing
 		mode: 'required',
+		upsmon: 'required',
+		upsname: 'required',
 		nutuser: 'required',
-		nutpass: 'required',
-		nutserver: {
+		nutuserpass: 'required',
+		nutserver: { // TODO: disable nutserver if we are not netclient mode
 		    required: {
 			depends: function(element) {
 				return (_this.$('#mode').val() == 'netclient');
@@ -206,6 +210,15 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
 	    html: true,
 	    placement: 'right',
 	    title: 'The password for the above nut user. Avoid using the following characters ( " = # space or backslash )'
+	});
+	this.$('#nut-form #upsmon').tooltip({
+	    html: true,
+	    placement: 'right',
+	    title: "<strong>Monitor Mode</strong>:<br> \
+<ul>\
+<li><strong>Master</strong> - Default, this system will shutdown last, allowing slave nut systems time to shutdown first. </li> \
+<li><strong>Slave</strong> - This system shuts down as soon as power is critical, it does not wait for any other nut systems. </li> \
+</ul>"
 	});
 
 	this.validator = this.$('#' + this.formName).validate({
