@@ -68,12 +68,23 @@ ConfigureServiceView = RockstorLayoutView.extend({
 		    required: {
 			depends: function(element) {
 			    return _this.$('#enabletls').prop('checked');
-			}
+				}
 		    }
 		}
 	    },
 	    docker:{
     		rootshare: 'required'
+	    },
+	    nut: {
+		MODE: 'required',
+		basedn: 'required',
+		nutserver: {
+		    required: {
+			depends: function(element) {
+				return (_this.$('#MODE').val() == 'netclient');
+				}
+		    }
+		}
 	    }
 	}
 	this.formName = this.serviceName + '-form';
