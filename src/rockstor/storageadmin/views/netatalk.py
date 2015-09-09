@@ -74,7 +74,7 @@ class NetatalkDetailView(rfc.GenericView):
     def _validate_input(request):
         time_machine = request.data.get('time_machine', 'yes')
         if (time_machine != 'yes' and time_machine != 'no'):
-            e_msg = ('time_machine must be yes or now. not %s' %
+            e_msg = ('time_machine must be yes or no. not %s' %
                      time_machine)
             handle_exception(Exception(e_msg), request)
         return time_machine
@@ -110,7 +110,7 @@ class NetatalkListView(rfc.GenericView):
 
         time_machine = request.data.get('time_machine', 'yes')
         if (time_machine != 'yes' and time_machine != 'no'):
-            e_msg = ('time_machine must be yes or now. not %s' %
+            e_msg = ('time_machine must be yes or no. not %s' %
                      time_machine)
             handle_exception(Exception(e_msg), request)
 
