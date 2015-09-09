@@ -49,6 +49,7 @@ GRUBBY = '/usr/sbin/grubby'
 CAT = '/usr/bin/cat'
 UDEVADM = '/usr/sbin/udevadm'
 GREP = '/usr/bin/grep'
+NMCLI = '/usr/bin/nmcli'
 
 
 def inplace_replace(of, nf, regex, nl):
@@ -286,25 +287,33 @@ def get_ip_addr(interface):
     return '0.0.0.0'
 
 
-def config_network_device(name, mac, boot_proto='dhcp', ipaddr=None,
-                          netmask=None, on_boot='yes', gateway=None,
-                          dns_servers=[], domain=None):
-    config_script = ('/etc/sysconfig/network-scripts/ifcfg-%s' % name)
-    with open(config_script, 'w') as cfo:
-        cfo.write('NAME="%s"\n' % name)
-        cfo.write('TYPE="Ethernet"\n')
-        cfo.write('HWADDR="%s"\n' % mac)
-        cfo.write('BOOTPROTO="%s"\n' % boot_proto)
-        cfo.write('ONBOOT="%s"\n' % on_boot)
-        if (boot_proto == 'static'):
-            cfo.write('IPADDR0="%s"\n' % ipaddr)
-            cfo.write('NETMASK="%s"\n' % netmask)
-            cfo.write('GATEWAY0="%s"\n' % gateway)
-            cur = 1
-            for ds in dns_servers:
-                cfo.write('DNS%d="%s"\n' % (cur, ds))
-                cur = cur + 1
-            cfo.write('DOMAIN=%s\n' % domain)
+def config_network_device(name, boot_proto='dhcp', ipaddr=None,
+                          netmask=None, auto_connect='yes', gateway=None,
+                          dns_servers=None):
+    #1. delete the existing connection
+    show_cmd = [NMCLI, 'c', 'show', name]
+    o, e, rc = run_command(show_cmd, throw=False)
+    if (rc == 0):
+        run_command([NMCLI, 'c', 'delete', name])
+    elif (rc != 0 and rc != 10):
+        #unknown error
+        e_msg = ('Unexpected error while running command: %s. out: %s err: '
+                 '%s' % (show_cmd, o, e))
+        raise Exception(e_msg)
+    #2. Add a new connection
+    add_cmd = [NMCLI, 'c', 'add', 'type', dtype, 'con-name', name, 'ifname', name]
+    if (boot_proto != 'dhcp'):
+        add_cmd.extend(['ip4', '%s/%s' % (ipaddr, netmask)])
+    if (gateway is not None):
+        add_cmd.extend(['gw4', gateway])
+    run_command(add_cmd)
+    #3. modify with extra options like dns servers
+    mod_cmd = [NMCLI, 'c', 'mod']
+    if (dns_servers is not None):
+        mod_cmd.extend(['ipv4.dns', dns_servers])
+    if (auto_connect == 'no'):
+        mod_cmd.extend(['connection.auto_connect', 'no'])
+    run_command(mod_cmd)
 
 
 def char_strip(line, char='"'):
