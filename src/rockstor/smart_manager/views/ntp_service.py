@@ -45,7 +45,7 @@ class NTPServiceView(BaseServiceDetailView):
                 config = request.data['config']
                 servers = [s.strip() for s in config['server'].split(',')]
 
-            e_msg = ('Error while saving saving configuration(%s) to the '
+            e_msg = ('Error while saving configuration(%s) to the '
                      'database' % config)
             with self._handle_exception(request, e_msg):
                 self._save_config(service, config)
