@@ -24,7 +24,7 @@ class Disk(models.Model):
     """Pool can be null for disks that are not part of any pool currently"""
     pool = models.ForeignKey(Pool, null=True, on_delete=models.SET_NULL)
     """typically sda, sdb etc.. max_length = 0 supports 100s of disks"""
-    name = models.CharField(max_length=10, unique=True)
+    name = models.CharField(max_length=64, unique=True)
     """total size in KB"""
     size = models.BigIntegerField(default=0)
     """true if disk went offline"""
