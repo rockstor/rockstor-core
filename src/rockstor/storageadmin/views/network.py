@@ -34,16 +34,6 @@ logger = logging.getLogger(__name__)
 class NetworkMixin(object):
 
     @staticmethod
-    def _restart_wrapper(ni, request):
-            try:
-                restart_network_interface(ni.name)
-            except Exception, e:
-                logger.exception(e)
-                e_msg = ('Failed to configure network interface(%s) due'
-                         ' to a system error' % ni.name)
-                handle_exception(Exception(e_msg), request)
-
-    @staticmethod
     def _update_ni_obj(nio, values):
         nio.dname = values.get('dname', None)
         nio.mac = values.get('mac', None)
@@ -161,11 +151,11 @@ class NetworkDetailView(rfc.GenericView, NetworkMixin):
             itype = request.data['itype']
             if (itype != 'management'):
                 itype = 'io'
-            boot_proto = request.data['boot_protocol']
+            method = request.data.get('method')
             ni.onboot = 'yes'
-            if (boot_proto == 'dhcp'):
-                config_network_device(ni.alias)
-            elif (boot_proto == 'static'):
+            if (method == 'auto'):
+                config_network_device(ni.name)
+            elif (method == 'manual'):
                 ipaddr = request.data.get('ipaddr')
                 for i in NetworkInterface.objects.filter(ipaddr=ipaddr):
                     if (i.id != ni.id):
@@ -175,17 +165,13 @@ class NetworkDetailView(rfc.GenericView, NetworkMixin):
                 netmask = self._validate_netmask(request)
                 gateway = request.data.get('gateway', None)
                 dns_servers = request.data.get('dns_servers', None)
-                logger.debug('ip: %s netmask: %s gateway: %s dns_servers: %s '
-                             'domain: %s' % (ipaddr, netmask, gateway, dns_servers, domain))
-                config_network_device(ni.alias, boot_proto='static',
+                config_network_device(ni.name, dtype=ni.dtype, method='manual',
                                       ipaddr=ipaddr, netmask=netmask,
                                       gateway=gateway, dns_servers=dns_servers)
             else:
-                e_msg = ('Boot protocol must be dhcp or static. not: %s' %
-                         boot_proto)
+                e_msg = ('Method must be auto(for dhcp) or manual(for static IP). not: %s' %
+                         method)
                 handle_exception(Exception(e_msg), request)
-            #restarting not needed?
-            #self._restart_wrapper(ni, request)
             dconfig = get_net_config(ni.name)[ni.name]
             ni = self._update_ni_obj(ni, dconfig)
             ni.save()
