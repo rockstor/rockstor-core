@@ -289,8 +289,8 @@ def get_ip_addr(interface):
     return '0.0.0.0'
 
 
-def config_network_device(name, boot_proto='dhcp', ipaddr=None,
-                          netmask=None, auto_connect='yes', gateway=None,
+def config_network_device(name, dtype='ethernet', method='auto', ipaddr=None,
+                          netmask=None, autoconnect='yes', gateway=None,
                           dns_servers=None):
     #1. delete the existing connection
     show_cmd = [NMCLI, 'c', 'show', name]
@@ -304,18 +304,19 @@ def config_network_device(name, boot_proto='dhcp', ipaddr=None,
         raise Exception(e_msg)
     #2. Add a new connection
     add_cmd = [NMCLI, 'c', 'add', 'type', dtype, 'con-name', name, 'ifname', name]
-    if (boot_proto != 'dhcp'):
+    if (method == 'manual'):
         add_cmd.extend(['ip4', '%s/%s' % (ipaddr, netmask)])
     if (gateway is not None):
         add_cmd.extend(['gw4', gateway])
     run_command(add_cmd)
     #3. modify with extra options like dns servers
-    mod_cmd = [NMCLI, 'c', 'mod']
-    if (dns_servers is not None):
-        mod_cmd.extend(['ipv4.dns', dns_servers])
-    if (auto_connect == 'no'):
-        mod_cmd.extend(['connection.auto_connect', 'no'])
-    run_command(mod_cmd)
+    if (method == 'manual'):
+        mod_cmd = [NMCLI, 'c', 'mod', name, ]
+        if (dns_servers is not None):
+            mod_cmd.extend(['ipv4.dns', dns_servers])
+        if (autoconnect == 'no'):
+            mod_cmd.extend(['connection.autoconnect', 'no'])
+        run_command(mod_cmd)
 
 
 def char_strip(line, char='"'):
@@ -376,9 +377,9 @@ def net_config_helper(name):
                 #dhcp
                 if (re.match('DHCP4.OPTION.*ip_address = .+', l) is not None):
                     config['ipaddr'] = l.split('= ')[1]
-                elif (re.match('DHCP4.OPTION.*domain_name_servers = .+', l) is not None):
+                elif (re.match('DHCP4.OPTION.*:domain_name_servers = .+', l) is not None):
                     config['dns_servers'] = l.split('= ')[1]
-                elif (re.match('DHCP4.OPTION.*subnet_mask = .+', l) is not None):
+                elif (re.match('DHCP4.OPTION.*:subnet_mask = .+', l) is not None):
                     config['netmask'] = l.split('= ')[1]
                 elif (re.match('IP4.GATEWAY:.+', l) is not None):
                     config['gateway'] = l.split(':')[1]
