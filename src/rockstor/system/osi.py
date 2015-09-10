@@ -365,31 +365,67 @@ def convert_netmask(bits):
     return inet_ntoa(pack('>I', mask))
 
 def net_config_helper(name):
+    config = {}
     o, e, rc = run_command([NMCLI, '-t', 'c', 'show', name], throw=False)
     if (rc == 10):
         return config
-
     for l in o:
         l = l.strip()
+        if ('method' in config):
+            if (config['method'] == 'auto'):
+                #dhcp
+                if (re.match('DHCP4.OPTION.*ip_address = .+', l) is not None):
+                    config['ipaddr'] = l.split('= ')[1]
+                elif (re.match('DHCP4.OPTION.*domain_name_servers = .+', l) is not None):
+                    config['dns_servers'] = l.split('= ')[1]
+                elif (re.match('DHCP4.OPTION.*subnet_mask = .+', l) is not None):
+                    config['netmask'] = l.split('= ')[1]
+                elif (re.match('IP4.GATEWAY:.+', l) is not None):
+                    config['gateway'] = l.split(':')[1]
+
+            elif (config['method'] == 'manual'):
+                #manual
+                if (re.match('IP4.ADDRESS', l) is not None):
+                    kv_split = l.split(':')
+                    if (len(kv_split) > 1):
+                        vsplit = kv_split[1].split('/')
+                    if (len(vsplit) > 0):
+                        config['ipaddr'] = vsplit[0]
+                    if (len(vsplit) > 1):
+                        config['netmask'] = convert_netmask(vsplit[1])
+                elif (re.match('ipv4.dns:.+', l) is not None):
+                    config['dns_servers'] = l.split(':')[1]
+                elif (re.match('ipv4.gateway:.+', l) is not None):
+                    config['gateway'] = l.split(':')[1]
+
+            else:
+                raise Exception('Unknown ipv4.method(%s). ' % config['method'])
+
         if (re.match('connection.interface-name:', l) is not None):
             config['name'] = l.split(':')[1]
-        if (re.match('connection.auto_connect:', l) is not None):
-            config['auto_connect'] = l.split(':')[1]
-        elif (re.match('ipv4.method:', l) is not None):
-            config['bootproto'] = l.split(':')[1]
-        elif (re.match('ipv4.dns:', l) is not None):
-            fields = l.split(':')
-            if (len(fields) > 1):
-                config['dns_servers'] = fields[1]
-        elif (re.match('ipv4.gateway:', l) is not None):
-            fields = l.split(':')
-            if (len(fields) > 1):
-                config['gateway'] = fields[1]
-        elif (re.match('ipv4.addresses:', l) is not None):
-            ip, nm = l.split(':')[1].split('/')
-            nm = convert_netmask(nm)
-            config['netmask'] = nm
-            config['ip'] = ip
+        elif (re.match('connection.autoconnect:', l) is not None):
+            config['autoconnect'] = l.split(':')[1]
+        elif (re.match('ipv4.method:.+', l) is not None):
+            config['method'] = l.split(':')[1]
+
+        if (re.match('GENERAL.DEVICES:.+', l) is not None):
+            config['dname'] = l.split(':')[1]
+        elif (re.match('connection.type:.+', l) is not None):
+            config['ctype'] = l.split(':')[1]
+        elif (re.match('GENERAL.STATE:.+', l) is not None):
+            config['state'] = l.split(':')[1]
+
+    if ('dname' in config):
+        o, e, rc = run_command([NMCLI, '-t', '-f', 'all', 'd', 'show', config['dname'],])
+        for l in o:
+            l = l.strip()
+            if (re.match('GENERAL.TYPE:.+', l) is not None):
+                config['dtype'] = l.split(':')[1]
+            elif (re.match('GENERAL.HWADDR:.+', l) is not None):
+                config['mac'] = l.split('GENERAL.HWADDR:')[1]
+            elif (re.match('CAPABILITIES.SPEED:.+', l) is not None):
+                config['dspeed'] = l.split(':')[1]
+
     return config
 
 def get_net_config(all=False, name=None):
