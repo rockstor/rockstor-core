@@ -55,9 +55,9 @@
           <label class="col-sm-2 control-label" for="ipaddr">IP Address<span class="required"> *</span></label>
           <div class="col-sm-10">
             <% if (network.get('method') == 'manual') { %>
-              <input class="form-control shorten-input" type="text" id="ipaddr" name="ipaddr" value="<%= network.get('ipaddr') %>" placeholder="IP Address" title="Enter IP Address">
+              <input class="form-control shorten-input" type="text" id="ipaddr" name="ipaddr" value="<%= network.get('ipaddr') %>" placeholder="IP Address" title="A usable static IP address for your network.">
             <% } else { %>
-              <input class="form-control shorten-input" type="text" id="ipaddr" name="ipaddr" value="<%= network.get('ipaddr') %>" placeholder="IP Address" title="Enter IP Address" disabled="disabled"  >
+              <input class="form-control shorten-input" type="text" id="ipaddr" name="ipaddr" value="<%= network.get('ipaddr') %>" placeholder="IP Address" title="A usable static IP address for your network." disabled="disabled"  >
             <% } %>
           </div>
         </div>
@@ -65,9 +65,9 @@
           <label class="col-sm-2 control-label" for="netmask">Netmask<span class="required"> *</span></label>
           <div class="col-sm-10">
             <% if (network.get('method') == 'manual') { %>
-              <input class="form-control shorten-input" type="text" id="netmask" name="netmask" value="<%= network.get('netmask') %>" placeholder="Netmask" title="Enter Netmask">
+              <input class="form-control shorten-input" type="text" id="netmask" name="netmask" value="<%= network.get('netmask') %>" placeholder="Netmask" title="A valid Subnet Mask for your network. Eg: 255.255.255.0. You can also enter number of bits.">
             <% } else { %>
-              <input class="form-control shorten-input" type="text" id="netmask" name="netmask" value="<%= network.get('netmask') %>" placeholder="Netmask" title="Enter Netmak" disabled="disabled" >
+              <input class="form-control shorten-input" type="text" id="netmask" name="netmask" value="<%= network.get('netmask') %>" placeholder="Netmask" title="A valid Subnet Mask for your network. Eg: 255.255.255.0. You can also enter number of bits." disabled="disabled" >
             <% } %>
           </div>
         </div>
@@ -75,9 +75,9 @@
           <label class="col-sm-2 control-label" for="gateway">Gateway</label>
           <div class="col-sm-10">
             <% if (network.get('method') == 'manual') { %>
-              <input class="form-control shorten-input" type="text" id="gateway" name="gateway" value="<%= network.get('gateway') %>" placeholder="Gateway" title="Enter Gateway">
+              <input class="form-control shorten-input" type="text" id="gateway" name="gateway" value="<%= network.get('gateway') %>" placeholder="Gateway" title="IP address of your Gateway.">
             <% } else { %>
-              <input class="form-control shorten-input" type="text" id="gateway" name="gateway" value="<%= network.get('gateway') %>" placeholder="Gateway" title="Enter Gateway" disabled="disabled" >
+              <input class="form-control shorten-input" type="text" id="gateway" name="gateway" value="<%= network.get('gateway') %>" placeholder="Gateway" title="IP address of your Gateway." disabled="disabled" >
             <% } %>
           </div>
         </div>
@@ -85,9 +85,9 @@
           <label class="col-sm-2 control-label" for="dns_servers">DNS Servers</label>
           <div class="col-sm-10">
             <% if (network.get('method') == 'manual') { %>
-              <input class="form-control shorten-input" type="text" id="dns_servers" name="dns_servers" value="<%= network.get('dns_servers') %>" placeholder="DNS Servers" title="Enter comma separated list of DNS server addresses">
+              <input class="form-control shorten-input" type="text" id="dns_servers" name="dns_servers" value="<%= network.get('dns_servers') %>" placeholder="DNS Servers" title="A comma separated list of DNS server addresses.">
             <% } else { %>
-              <input class="form-control shorten-input" type="text" id="dns_servers" name="dns_servers" value="<%= network.get('dns_servers') %>" placeholder="DNS Servers" title="Enter comma separated list of dns server addresses" disabled="disabled" >
+              <input class="form-control shorten-input" type="text" id="dns_servers" name="dns_servers" value="<%= network.get('dns_servers') %>" placeholder="DNS Servers" title="A comma separated list of DNS server addresses." disabled="disabled" >
             <% } %>
           </div>
         </div>
