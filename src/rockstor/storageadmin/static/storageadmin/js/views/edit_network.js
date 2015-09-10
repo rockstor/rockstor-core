@@ -27,7 +27,7 @@
 EditNetworkView = RockstorLayoutView.extend({
     events: {
 	'click #cancel': 'cancel',
-	'change #boot_proto': 'changeBootProtocol'
+	'change #method': 'changeBootProtocol'
     },
 
     initialize: function() {
@@ -104,7 +104,7 @@ EditNetworkView = RockstorLayoutView.extend({
     },
 
     changeBootProtocol: function(event) {
-	if (this.$('#boot_proto').val() == 'static') {
+	if (this.$('#method').val() == 'manual') {
 	    this.$('#ipaddr').removeAttr('disabled');
 	    this.$('#netmask').removeAttr('disabled');
 	    this.$('#gateway').removeAttr('disabled');

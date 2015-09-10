@@ -35,18 +35,18 @@
       <form class="form-horizontal" id="edit-network-form" name="aform">
         <div class="messages"></div>
         <div class="form-group">
-          <label class="col-sm-2 control-label" for="boot_proto">Configuration<span class="required"> *</span></label>
+          <label class="col-sm-2 control-label" for="method">Config Method<span class="required"> *</span></label>
           <div class="col-sm-10">
-            <select class="form-control shorten-input" id="boot_proto" name="boot_proto">
-              <% if (network.get('boot_proto') == 'dhcp') { %>
-                <option value="dhcp" selected="selected">Auto (DHCP)</option>
+            <select class="form-control shorten-input" id="method" name="method">
+              <% if (network.get('method') == 'auto') { %>
+                <option value="auto" selected="selected">Auto (DHCP)</option>
               <% } else { %>
-                <option value="dhcp">DHCP</option>
+                <option value="auto">Auto (DHCP)</option>
               <% } %>
-              <% if (network.get('boot_proto') == 'static') { %>
-                <option value="static" selected="selected">Manual</option>
+              <% if (network.get('method') == 'manual') { %>
+                <option value="manual" selected="selected">Manual</option>
               <% } else { %>
-                <option value="static">static</option>
+                <option value="manual">Manual</option>
               <% } %>
             </select>
           </div>
@@ -54,7 +54,7 @@
         <div class="form-group">
           <label class="col-sm-2 control-label" for="ipaddr">IP Address<span class="required"> *</span></label>
           <div class="col-sm-10">
-            <% if (network.get('boot_proto') == 'static') { %>
+            <% if (network.get('method') == 'manual') { %>
               <input class="form-control shorten-input" type="text" id="ipaddr" name="ipaddr" value="<%= network.get('ipaddr') %>" placeholder="IP Address" title="Enter IP Address">
             <% } else { %>
               <input class="form-control shorten-input" type="text" id="ipaddr" name="ipaddr" value="<%= network.get('ipaddr') %>" placeholder="IP Address" title="Enter IP Address" disabled="disabled"  >
@@ -64,7 +64,7 @@
         <div class="form-group">
           <label class="col-sm-2 control-label" for="netmask">Netmask<span class="required"> *</span></label>
           <div class="col-sm-10">
-            <% if (network.get('boot_proto') == 'static') { %>
+            <% if (network.get('method') == 'manual') { %>
               <input class="form-control shorten-input" type="text" id="netmask" name="netmask" value="<%= network.get('netmask') %>" placeholder="Netmask" title="Enter Netmask">
             <% } else { %>
               <input class="form-control shorten-input" type="text" id="netmask" name="netmask" value="<%= network.get('netmask') %>" placeholder="Netmask" title="Enter Netmak" disabled="disabled" >
@@ -74,7 +74,7 @@
         <div class="form-group">
           <label class="col-sm-2 control-label" for="gateway">Gateway</label>
           <div class="col-sm-10">
-            <% if (network.get('boot_proto') == 'static') { %>
+            <% if (network.get('method') == 'manual') { %>
               <input class="form-control shorten-input" type="text" id="gateway" name="gateway" value="<%= network.get('gateway') %>" placeholder="Gateway" title="Enter Gateway">
             <% } else { %>
               <input class="form-control shorten-input" type="text" id="gateway" name="gateway" value="<%= network.get('gateway') %>" placeholder="Gateway" title="Enter Gateway" disabled="disabled" >
@@ -82,19 +82,9 @@
           </div>
         </div>
         <div class="form-group">
-          <label class="col-sm-2 control-label" for="domain">Domain</label>
-          <div class="col-sm-10">
-            <% if (network.get('boot_proto') == 'static') { %>
-              <input class="form-control shorten-input" type="text" id="domain" name="domain" value="<%= network.get('domain') %>" placeholder="Domain" title="Enter Domain">
-            <% } else { %>
-              <input class="form-control shorten-input" type="text" id="domain" name="domain" value="<%= network.get('domain') %>" placeholder="Domain" title="Enter Domain" disabled="disabled" >
-            <% } %>
-          </div>
-        </div>
-        <div class="form-group">
           <label class="col-sm-2 control-label" for="dns_servers">DNS Servers</label>
           <div class="col-sm-10">
-            <% if (network.get('boot_proto') == 'static') { %>
+            <% if (network.get('method') == 'manual') { %>
               <input class="form-control shorten-input" type="text" id="dns_servers" name="dns_servers" value="<%= network.get('dns_servers') %>" placeholder="DNS Servers" title="Enter comma separated list of DNS server addresses">
             <% } else { %>
               <input class="form-control shorten-input" type="text" id="dns_servers" name="dns_servers" value="<%= network.get('dns_servers') %>" placeholder="DNS Servers" title="Enter comma separated list of dns server addresses" disabled="disabled" >
@@ -105,11 +95,11 @@
           <div class="col-sm-offset-2 col-sm-10">
             <label class="checkbox-inline">
               <% if (network.get('itype') == 'management') { %>
-                <input class="checkbox-inline" type="checkbox" id="itype" name="itype" placeholder="Management Interface" checked="checked">
+                <input class="checkbox-inline" type="checkbox" id="itype" name="itype" placeholder="Management Interface" checked="checked" title="The Web-UI will be accessible only through this interface. We do not recommend enabling this if you are currently using the Web-UI through another interface. It will result in disconnection.">
               <% } else { %>
-                <input class="checkbox-inline" type="checkbox" id="itype" name="itype" placeholder="Management Interface" >
+                <input class="checkbox-inline" type="checkbox" id="itype" name="itype" placeholder="Management Interface" title="The Web-UI will be accessible only through this interface. We do not recommend enabling this if you are currently using the Web-UI through another interface. It will result in disconnection.">
               <% } %>
-              Allow RockStor administration through this interface
+              Restrict Web-UI management only through this interface.
             </label>
           </div>
         </div>

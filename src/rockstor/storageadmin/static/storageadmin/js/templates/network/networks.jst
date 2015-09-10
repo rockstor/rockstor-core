@@ -30,10 +30,10 @@
         <tr>
           <th scope="col" abbr="Name">Connection</th>
 	  <th scope="col" abbr="Device">Device</th>
+	  <th scope="col" abbr="Mac">MAC Address</th>
+	  <th scope="col" abbr="Speed">Speed</th>
           <th scope="col" abbr="Method">Config method</th>
-	  <th scope="col" abbr="Autoconnect">Autoconnect</th>
           <th scope="col" abbr="IP">IP Address</th>
-          <th scope="col" abbr="Mac">MAC Address</th>
           <th scope="col" abbr="Netmask">Netmask</th>
           <th scope="col" abbr="Gateway">Gateway</th>
           <th scope="col" abbr="DNS">DNS Servers</th>
@@ -46,18 +46,18 @@
           <tr>
             <td><i class="glyphicon glyphicon-signal"></i> <%= network.get("name") %></td>
 	    <td><%= network.get("dname") %></td>
-	    <td><%= network.get("method") %></td>
-	    <td><%= network.get("autoconnect") %></td>
-	    <td><%= network.get("ipaddr") %></td>
             <td><%= network.get("mac") %></td>
+	    <td><%= network.get("dspeed") %></td>
+	    <td><%= network.get("method") %></td>
+	    <td><%= network.get("ipaddr") %></td>
             <td><%= network.get("netmask") %></td>
             <td><%= network.get("gateway") %></td>
             <td><%= network.get("dns_servers") %></td>
             <td>
               <% if (network.get("itype") == 'management') { %>
-                <input type="checkbox" name="itype" data-network"<%= network.get('name') %>" checked="checked" disabled="disabled" ></input>
+	        Yes
               <% } else { %>
-                <input type="checkbox" name="itype" data-network="<%= network.get('name') %>" disabled="disabled" ></input>
+	        No
               <% } %>
             </td>
             <td>

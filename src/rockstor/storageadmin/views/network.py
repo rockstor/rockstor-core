@@ -16,7 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import re
+from tempfile import mkstemp
+from shutil import move
 from django.db import transaction
+from django.conf import settings
 from rest_framework.response import Response
 from storageadmin.models import (NetworkInterface, Appliance)
 from storageadmin.util import handle_exception
@@ -25,6 +29,7 @@ from system.osi import (config_network_device, network_devices, get_net_config,
                         restart_network_interface, get_default_interface,
                         update_issue)
 from system.samba import update_samba_discovery
+from system.services import superctl
 import rest_framework_custom as rfc
 
 import logging
@@ -49,6 +54,27 @@ class NetworkMixin(object):
         nio.state = values.get('state', None)
         return nio
 
+    @staticmethod
+    def _update_nginx(ipaddr=None):
+        #update nginx config and restart the service
+        conf = '%s/etc/nginx/nginx.conf' % settings.ROOT_DIR
+        fo, npath = mkstemp()
+        with open(conf) as ifo, open(npath, 'w') as tfo:
+            for line in ifo.readlines():
+                if (re.search('listen.*80 default_server', line) is not None):
+                    substr = 'listen 80'
+                    if (ipaddr is not None):
+                        substr = 'listen %s:80' % ipaddr
+                    line = re.sub(r'listen.*80', substr, line)
+                elif (re.search('listen.*443 default_server', line) is not None):
+                    substr = 'listen 443'
+                    if (ipaddr is not None):
+                        substr = 'listen %s:443' % ipaddr
+                    line = re.sub(r'listen.*443', substr, line)
+                tfo.write(line)
+        move(npath, conf)
+        superctl('nginx', 'restart')
+
 class NetworkListView(rfc.GenericView, NetworkMixin):
     serializer_class = NetworkInterfaceSerializer
 
@@ -62,7 +88,6 @@ class NetworkListView(rfc.GenericView, NetworkMixin):
     @classmethod
     @transaction.atomic
     def _net_scan(cls):
-        default_if = get_default_interface()
         config_d = get_net_config(all=True)
         for dconfig in config_d.values():
             ni = None
@@ -79,12 +104,6 @@ class NetworkListView(rfc.GenericView, NetworkMixin):
                                       ipaddr=dconfig.get('ipaddr', None),
                                       gateway=dconfig.get('gateway', None),
                                       dns_servers=dconfig.get('dns_servers', None),)
-            if (default_if == ni.name):
-                ni.itype = 'management'
-                try:
-                    update_issue(dconfig['ipaddr'])
-                except Exception, e:
-                    logger.error('Unable to update /etc/issue. Exception: %s' % e.__str__())
             ni.save()
         devices = []
         for ni in NetworkInterface.objects.all():
@@ -148,7 +167,7 @@ class NetworkDetailView(rfc.GenericView, NetworkMixin):
                 handle_exception(Exception(e_msg), request)
             ni = NetworkInterface.objects.get(name=iname)
 
-            itype = request.data['itype']
+            itype = request.data.get('itype')
             if (itype != 'management'):
                 itype = 'io'
             method = request.data.get('method')
@@ -174,8 +193,13 @@ class NetworkDetailView(rfc.GenericView, NetworkMixin):
                 handle_exception(Exception(e_msg), request)
             dconfig = get_net_config(ni.name)[ni.name]
             ni = self._update_ni_obj(ni, dconfig)
-            ni.save()
-            if (itype == 'management'):
+            if (itype == 'management' and ni.itype != 'management'):
+                for i in NetworkInterface.objects.filter(itype='management'):
+                    if (i.name != ni.name):
+                        e_msg = ('Another interface(%s) is already configured '
+                                 'for management. You must disable it first '
+                                 'before making this change.' % i.name)
+                        handle_exception(Exception(e_msg), request)
                 a = Appliance.objects.get(current_appliance=True)
                 a.ip = ni.ipaddr
                 a.save()
@@ -183,4 +207,15 @@ class NetworkDetailView(rfc.GenericView, NetworkMixin):
                     update_issue(ni.ipaddr)
                 except Exception, e:
                     logger.error('Unable to update /etc/issue. Exception: %s' % e.__str__())
+                try:
+                    self._update_nginx(ni.ipaddr)
+                except Exception, e:
+                    logger.error('Failed to update Nginx. Exception: %s' % e.__str__())
+            elif (itype == 'io' and ni.itype == 'management'):
+                try:
+                    self._update_nginx()
+                except Exception, e:
+                    logger.error('Failed to update Nginx. Exception: %s' % e.__str__())
+            ni.itype = itype
+            ni.save()
             return Response(NetworkInterfaceSerializer(ni).data)
