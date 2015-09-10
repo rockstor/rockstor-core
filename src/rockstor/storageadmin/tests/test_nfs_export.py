@@ -185,14 +185,14 @@ class NFSExportTests(APITestMixin, APITestCase):
         self.assertEqual(response.data['detail'], e_msg)  
         
         # happy path
-        nfs_id = 1
+        nfs_id = 11
         data = {'shares':('share2',), 'host_str': '*.edu' , 'mod_choice': 'rw','sync_choice': 'async', }
         response = self.client.put('%s/%d' % (self.BASE_URL, nfs_id), data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
         
         # happy path2 with admin host
-        nfs_id = 1
+        nfs_id = 11
         data = {'shares':('share2',), 'host_str': '*.edu' , 'admin_host':'host', 'mod_choice': 'rw','sync_choice': 'async', }
         response = self.client.put('%s/%d' % (self.BASE_URL, nfs_id), data=data)
         self.assertEqual(response.status_code,
@@ -215,7 +215,7 @@ class NFSExportTests(APITestMixin, APITestCase):
         """
  
         # happy path
-        nfs_id = 1
+        nfs_id = 11
         response = self.client.delete('%s/%d' % (self.BASE_URL, nfs_id))
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
