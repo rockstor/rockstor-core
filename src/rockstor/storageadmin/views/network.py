@@ -43,6 +43,21 @@ class NetworkMixin(object):
                          ' to a system error' % ni.name)
                 handle_exception(Exception(e_msg), request)
 
+    @staticmethod
+    def _update_ni_obj(nio, values):
+        nio.dname = values.get('dname', None)
+        nio.mac = values.get('mac', None)
+        nio.method = values.get('method', 'manual')
+        nio.autoconnect = values.get('autoconnect', 'no')
+        nio.netmask = values.get('netmask', None)
+        nio.ipaddr = values.get('ipaddr', None)
+        nio.gateway = values.get('gateway', None)
+        nio.dns_servers = values.get('dns_servers', None)
+        nio.ctype = values.get('ctype', None)
+        nio.dtype = values.get('dtype', None)
+        nio.dspeed = values.get('dspeed', None)
+        nio.state = values.get('state', None)
+        return nio
 
 class NetworkListView(rfc.GenericView, NetworkMixin):
     serializer_class = NetworkInterfaceSerializer
@@ -54,9 +69,9 @@ class NetworkListView(rfc.GenericView, NetworkMixin):
             update_samba_discovery()
         return NetworkInterface.objects.all()
 
-    @staticmethod
+    @classmethod
     @transaction.atomic
-    def _net_scan():
+    def _net_scan(cls):
         default_if = get_default_interface()
         config_d = get_net_config(all=True)
         for dconfig in config_d.values():
@@ -64,18 +79,7 @@ class NetworkListView(rfc.GenericView, NetworkMixin):
             if (NetworkInterface.objects.filter(
                     name=dconfig['name']).exists()):
                 ni = NetworkInterface.objects.get(name=dconfig['name'])
-                ni.dname = dconfig.get('dname', None)
-                ni.mac = dconfig.get('mac', None)
-                ni.method = dconfig.get('method', 'manual')
-                ni.autoconnect = dconfig.get('autoconnect', 'no')
-                ni.netmask = dconfig.get('netmask', None)
-                ni.ipaddr = dconfig.get('ipaddr', None)
-                ni.gateway = dconfig.get('gateway', None)
-                ni.dns_servers = dconfig.get('dns_servers', None)
-                ni.ctype = dconfig.get('ctype', None)
-                ni.dtype = dconfig.get('dtype', None)
-                ni.dspeed = dconfig.get('dspeed', None)
-                ni.state = dconfig.get('state', None)
+                ni = cls._update_ni_obj(ni, dconfig)
             else:
                 ni = NetworkInterface(name=dconfig['name'],
                                       mac=dconfig.get('mac', None),
@@ -183,18 +187,7 @@ class NetworkDetailView(rfc.GenericView, NetworkMixin):
             #restarting not needed?
             #self._restart_wrapper(ni, request)
             dconfig = get_net_config(ni.name)[ni.name]
-            ni.dname = dconfig.get('dname', None)
-            ni.mac = dconfig.get('mac', None)
-            ni.method = dconfig.get('method', 'manual')
-            ni.autoconnect = dconfig.get('autoconnect', 'no')
-            ni.netmask = dconfig.get('netmask', None)
-            ni.ipaddr = dconfig.get('ipaddr', None)
-            ni.gateway = dconfig.get('gateway', None)
-            ni.dns_servers = dconfig.get('dns_servers', None)
-            ni.ctype = dconfig.get('ctype', None)
-            ni.dtype = dconfig.get('dtype', None)
-            ni.dspeed = dconfig.get('dspeed', None)
-            ni.state = dconfig.get('state', None)
+            ni = self._update_ni_obj(ni, dconfig)
             ni.save()
             if (itype == 'management'):
                 a = Appliance.objects.get(current_appliance=True)
