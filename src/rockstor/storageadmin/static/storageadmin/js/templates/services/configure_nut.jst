@@ -47,6 +47,7 @@
           </div>
         </div>
 
+
         <!-- Monitor mode -->
         <!-- upsmon either master or slave -->
         <% var nutMonitorTypes = ['master','slave']; %>
@@ -56,7 +57,7 @@
             <select class="form-control shorten-input" id="upsmon" name="upsmon">
               <% _.each(nutMonitorTypes, function(upsmon, index) { %>
                 <% if (upsmon == config.upsmon) { %>
-                  <option value="<%= mode %>" selected="selected">
+                  <option value="<%= upsmon %>" selected="selected">
                   <%= upsmon %> </option>
                 <% } else { %>
                   <option value="<%= upsmon %>"><%= upsmon %> </option>
