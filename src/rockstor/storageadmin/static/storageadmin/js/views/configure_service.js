@@ -81,6 +81,7 @@ ConfigureServiceView = RockstorLayoutView.extend({
 		mode: 'required',
 		upsmon: 'required',
 		upsname: 'required',
+		driver: 'required',
 		nutuser: 'required',
 		password: 'required',
 		nutserver: { // TODO: disable nutserver if we are not netclient mode
@@ -220,6 +221,11 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
 <li><strong>Slave</strong> - This system shuts down as soon as power is critical, it does not wait for any other nut systems. </li> \
 </ul>"
 	});
+	this.$('#nut-form #driver').tooltip({
+	    html: true,
+	    placement: 'right',
+	    title: 'Driver for you UPS. Please see http://www.networkupstools.org/stable-hcl.html'
+	});
 
 	this.validator = this.$('#' + this.formName).validate({
 	    onfocusout: false,
@@ -291,6 +297,7 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
 	    this.$('#cert-ph').css('visibility','hidden');
 	}
     },
+
 
 
 });

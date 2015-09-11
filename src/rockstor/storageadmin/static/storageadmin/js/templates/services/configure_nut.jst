@@ -32,45 +32,51 @@
         <!-- NUT mode -->
         <% var nutModeTypes = ['None','standalone','netserver','netclient']; %>
         <div class="form-group">
-          <label class="control-label" for="mode">Nut Mode<span class="required"> *</span></label>
+          <label class="control-label" for="mode">Nut Mode<span
+              class="required"> *</span></label>
+
           <div class="controls">
             <select class="form-control shorten-input" id="mode" name="mode">
               <% _.each(nutModeTypes, function(mode, index) { %>
-                <% if (mode == config.mode) { %>
-                  <option value="<%= mode %>" selected="selected">
-                  <%= mode %> </option>
-                <% } else { %>
-                  <option value="<%= mode %>"><%= mode %> </option>
-                <% } %>
+              <% if (mode == config.mode) { %>
+              <option value="<%= mode %>" selected="selected">
+                <%= mode %>
+              </option>
+              <% } else { %>
+              <option value="<%= mode %>"><%= mode %></option>
+              <% } %>
               <% }); %>
             </select>
           </div>
         </div>
-
 
         <!-- Monitor mode -->
         <!-- upsmon either master or slave -->
         <% var nutMonitorTypes = ['master','slave']; %>
         <div class="form-group">
-          <label class="control-label" for="upsmon">Monitor Mode<span class="required"> *</span></label>
+          <label class="control-label" for="upsmon">Monitor Mode<span
+              class="required"> *</span></label>
+
           <div class="controls">
-            <select class="form-control shorten-input" id="upsmon" name="upsmon">
+            <select class="form-control shorten-input" id="upsmon"
+                    name="upsmon">
               <% _.each(nutMonitorTypes, function(upsmon, index) { %>
-                <% if (upsmon == config.upsmon) { %>
-                  <option value="<%= upsmon %>" selected="selected">
-                  <%= upsmon %> </option>
-                <% } else { %>
-                  <option value="<%= upsmon %>"><%= upsmon %> </option>
-                <% } %>
+              <% if (upsmon == config.upsmon) { %>
+              <option value="<%= upsmon %>" selected="selected">
+                <%= upsmon %>
+              </option>
+              <% } else { %>
+              <option value="<%= upsmon %>"><%= upsmon %></option>
+              <% } %>
               <% }); %>
             </select>
           </div>
         </div>
 
-
-        <!-- internal UPS name -->
+        <!-- Internal UPS name -->
         <div class="form-group">
-          <label class="control-label" for="upsname">Internal UPS name<span class="required"> *</span></label>
+          <label class="control-label" for="upsname">Internal UPS name<span
+              class="required"> *</span></label>
 
           <div class="controls">
             <input class="form-control shorten-input" type="text"
@@ -80,16 +86,58 @@
           </div>
         </div>
 
-        <!-- todo add human name description -->
+        <!--  UPS Descriptive Name -->
+        <div class="form-group">
+          <label class="control-label" for="desc">UPS Description</label>
 
-        <!-- todo add driver -->
+          <div class="controls">
+            <input class="form-control shorten-input" type="text"
+                   id="desc" name="desc"
+                   value="<%= config.desc %>"
+                   placeholder="Rockstor UPS Unit">
+          </div>
+        </div>
 
-        <!-- todo add port -->
+        <!-- nut driver -->
+        <% var nutMonitorTypes =
+        ['apcsmart','apcsmart-old','apcupsd-ups','bcmxcp','bcmxcp_usb','belkin','belkinunv','bestfcom','bestfortress','bestuferrups','bestups','blazer_ser','blazer_usb','dummy-ups','etapro','everups','gamatronic','genericups','isbmex','ivtscd','liebert','liebert-esp2','masterguard','metasys','mge-shut','mge-utalk','microdowell','','nutdrv_qx','oldmge-shut','oneac','optiups','powercom','powerpanel','rhino','richcomm_usb','riello_ser','riello_usb','safenet','skel','snmp-ups','solis','tripplite','tripplite_usb','tripplitesu','upscode2','usbhid-ups','victronups'];
+        %>
+        <div class="form-group">
+          <label class="control-label" for="driver">NUT Driver<span
+              class="required"> *</span></label>
 
+          <div class="controls">
+            <select class="form-control shorten-input" id="driver"
+                    name="driver">
+              <% _.each(nutMonitorTypes, function(driver, index) { %>
+              <% if (driver == config.driver) { %>
+              <option value="<%= driver %>" selected="selected">
+                <%= driver %>
+              </option>
+              <% } else { %>
+              <option value="<%= driver %>"><%= driver %></option>
+              <% } %>
+              <% }); %>
+            </select>
+          </div>
+        </div>
+
+        <!--  UPS port -->
+        <div class="form-group">
+          <label class="control-label" for="port">UPS Port</label>
+
+          <div class="controls">
+            <input class="form-control shorten-input" type="text"
+                   id="port" name="port"
+                   value="<%= config.port %>"
+                   placeholder="auto">
+          </div>
+        </div>
 
         <!-- nut server name / ip -->
         <div class="form-group">
-          <label class="control-label" for="nutserver">Nut Server <span class="required"> *</span></label>
+          <label class="control-label" for="nutserver">Nut Server <span
+              class="required"> *</span></label>
 
           <div class="controls">
             <input class="form-control shorten-input" type="text"
@@ -101,7 +149,8 @@
 
         <!-- nut user name -->
         <div class="form-group">
-          <label class="control-label" for="nutuser">Nut User<span class="required"> *</span></label>
+          <label class="control-label" for="nutuser">Nut User<span
+              class="required"> *</span></label>
 
           <div class="controls">
             <input class="form-control shorten-input" type="text"
@@ -113,7 +162,8 @@
 
         <!-- nut user password (no spaces, "=" or "\" or "#" here)-->
         <div class="form-group">
-          <label class="control-label" for="password">Nut User Password<span class="required"> *</span></label>
+          <label class="control-label" for="password">Nut User Password<span
+              class="required"> *</span></label>
 
           <div class="controls">
             <input class="form-control shorten-input" type="text"

@@ -23,6 +23,7 @@ class NUTServiceView(BaseServiceDetailView):
             service = Service.objects.get(name=self.service_name)
             if command == 'config':
                 try:
+                    # todo sort our default here prior to save.
                     config = request.data.get('config')
                     configure_nut(config)
                     self._save_config(service, config)
