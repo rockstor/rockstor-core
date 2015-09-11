@@ -6,7 +6,6 @@ from smart_manager.models import Service
 from smart_manager.views import BaseServiceDetailView
 from storageadmin.util import handle_exception
 from system.nut import configure_nut
-from system.pkg_mgmt import install_pkg
 from system.services import systemctl
 
 logger = logging.getLogger(__name__)
@@ -24,7 +23,7 @@ class NUTServiceView(BaseServiceDetailView):
             service = Service.objects.get(name=self.service_name)
             if command == 'config':
                 try:
-                    config = request.data.get('config', {})
+                    config = request.data.get('config')
                     configure_nut(config)
                     self._save_config(service, config)
                 except Exception, e:

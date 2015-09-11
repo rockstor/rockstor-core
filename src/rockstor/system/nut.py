@@ -53,14 +53,14 @@ NUT_UPS_CONFIG_OPTIONS = ("upsname", "driver", "port", "cable", "desc")
 NUT_UPSD_CONFIG = '/etc/ups/upsd.conf'
 NUT_UPSD_CONFIG_OPTIONS = ("LISTEN", "MAXAGE")
 NUT_USERS_CONFIG = '/etc/ups/upsd.users'
-NUT_USERS_CONFIG_OPTIONS = ("nutuser", "nutuserpass", "upsmon")
+NUT_USERS_CONFIG_OPTIONS = ("nutuser", "password", "upsmon")
 NUT_MONITOR_CONFIG = '/etc/ups/upsmon.conf'
 # the following MONITOR entry reflects the compound line in upsmon.conf which
 # is created early on in pre-processing
 NUT_MONITOR_CONFIG_OPTIONS = ("POLLFREQ", "MONITOR", "DEADTIME")
 
 # the options used in pre-processing for upsmon.conf are
-# ("upsname", "nutserver", "nutuser", "nutuserpass" "upsmon")
+# ("upsname", "nutserver", "nutuser", "password" "upsmon")
 
 # Currently we only deal with upsmon  as master or slave in a single user
 # entry and apply the same upsmon value to the end of the MONITOR line in
@@ -77,7 +77,7 @@ nut_options_dict = {NUT_CONFIG: NUT_CONFIG_OPTIONS,
 nut_section_heads = {"upsname": NUT_UPS_CONFIG, "nutuser": NUT_USERS_CONFIG}
 
 # dictionary of delimiters used, if not in this dict then "=" is assumed
-nut_option_delimiter = {"MODE": "=", "LISTEN": " ", "MAXAGE": " ",
+nut_option_delimiter = {"LISTEN": " ", "MAXAGE": " ",
                         "MINSUPPLIES": " ", "upsmon": " ", "MONITOR": " ",
                         "POLLFREQ": " ", "DEADTIME": " "}
 
@@ -130,21 +130,23 @@ def pre_process_nut_config(config):
     """
     # create local structure to populate:-
     # dictionary of items with:- {'path-to-file', {OrderedDict-of-options}}
-    nut_configs = {NUT_CONFIG: collections.OrderedDict,
-                   NUT_UPS_CONFIG: collections.OrderedDict,
-                   NUT_UPSD_CONFIG: collections.OrderedDict,
-                   NUT_USERS_CONFIG: collections.OrderedDict,
-                   NUT_MONITOR_CONFIG: collections.OrderedDict}
+    nut_configs = {NUT_CONFIG: collections.OrderedDict(),
+                   NUT_UPS_CONFIG: collections.OrderedDict(),
+                   NUT_UPSD_CONFIG: collections.OrderedDict(),
+                   NUT_USERS_CONFIG: collections.OrderedDict(),
+                   NUT_MONITOR_CONFIG: collections.OrderedDict()}
 
-    # Create a pair "MODE": "config-entry"
-    # for entry into /etc/ups/nut.conf
+    # change mode index to uppercase as front end didn't like uppercase ref
+    config['MODE'] = config.pop('mode')
 
-    # Create a pair "MONITOR": "upsname@nutserver 1 nutuser nutuserpass master"
-    # for entry into /etc/ups/upsmon.conf
-    # Todo need to sort object item assignment issue
-    nut_configs[NUT_MONITOR_CONFIG]['MONITOR'] = '%s@%s 1 %s %s %s' % (
+    # Create key value for MONITOR (upsmon.conf) line eg:-
+    # "MONITOR": "upsname@nutserver 1 nutuser password master"
+    nut_configs[NUT_MONITOR_CONFIG]['MONITOR'] = ('%s@%s 1 %s %s %s' % (
         config['upsname'], config['nutserver'], config['nutuser'],
-        config['nutuserpass'], config['upsmon'])
+        config['password'], config['upsmon']))
+    logger.info(
+        'NUT MONITOR LINE = %s' % nut_configs[NUT_MONITOR_CONFIG]['MONITOR'])
+
 
     # move section headings from config to nut_configs OrderedDicts
     # this way all following entries will pertain to them in their respective
@@ -179,7 +181,7 @@ def update_config_in(file, config, header):
     :param config: OrderedDict of options with possible section-- tags on index
     :return:
     """
-    file_descriptor, tempNamePath = mkstemp(prefix=rocknut)
+    file_descriptor, tempNamePath = mkstemp(prefix='rocknut')
     with open(file) as source_file_object, open(tempNamePath,
                                                 'w') as tempFileObject:
         # copy existing config file line by line until complete or
@@ -188,33 +190,38 @@ def update_config_in(file, config, header):
         # N.B. we don't deal well here with section headers above our header
         # but could just remark our all lines beginning with '[' but overkill.
         for line in source_file_object.readlines():
-            if (not re.match('#', line)) and any(
-                            word in config for word in line.split()):
-                # a config entry has been found in a line that doesn't start
-                # with a '#' so remark out that line to be safe ie could be a
-                # config option with leading space ie an indented sub section
-                tempFileObject.write('#' + line)
+            if not re.match('#', line):
+                # on lines that don't already begin with a "#" char look for
+                # any occurrence of a config entry (split by space or =)
+                if ((any(word in config for word in line.split())) or (
+                        any(word in config for word in line.split('=')))):
+                    # a config entry has been found so remark out that line to
+                    # be safe (indented or otherwise).
+                    tempFileObject.write('#' + line)
             elif (re.match(header, line) is None):
+                # if the current line is not a Rockstor header then
+                # write the source file line unchanged to the temp file
                 tempFileObject.write(line)
             else:
-                # end of lines in source file
+                # We have found an existing rockstor header so break out.
                 break
-        # write a fresh header and config to end of temp file so far
+        # All source file lines above any Rockstor header have been processed.
+        # Write a fresh Rockstor header and config to end of temp file so far
         tempFileObject.write('%s\n' % NUT_HEADER)
         # now write out our config including section headers which should come
         # before their subsection counterparts courtesy of pre-processing.
         for option, value in config.items():
             if re.match("section--", option) is not None:
                 # section header so surround value in [] and ignore option
-                tempFileObject.write('[' + value + ']')
+                tempFileObject.write('[' + value + ']' + '\n')
                 # no need to indent subsection as parser ignores white space:-
                 # http://www.networkupstools.org/docs/user-manual.chunked/ar01s06.html
             else:
-                # get our delimiter from nut_option_delimiter dict or user "="
+                # get our delimiter from nut_option_delimiter dict or use "="
                 if option in nut_option_delimiter:
                     delimiter = nut_option_delimiter[option]
                 else:
                     delimiter = "="
-                tempFileObject.write(option + delimiter + value)
+                tempFileObject.write(option + delimiter + value + '\n')
     # finally overwrite passed config file with the newly created temp file.
     move(tempNamePath, file)
