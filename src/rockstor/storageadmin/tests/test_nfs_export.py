@@ -33,10 +33,6 @@ class NFSExportTests(APITestMixin, APITestCase):
         super(NFSExportTests, cls).setUpClass()
 
         # post mocks
-        cls.patch_refresh_wrapper = patch('storageadmin.views.nfs_exports.refresh_wrapper')
-        cls.mock_refresh_wrapper = cls.patch_refresh_wrapper.start()
-        cls.mock_refresh_wrapper.return_value = False
-
         cls.patch_mount_share = patch('storageadmin.views.nfs_exports.mount_share')
         cls.mock_mount_share = cls.patch_mount_share.start()
         cls.mock_mount_share.return_value = 'out','err', 0
