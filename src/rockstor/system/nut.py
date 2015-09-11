@@ -49,7 +49,8 @@ logger = logging.getLogger(__name__)
 NUT_CONFIG = '/etc/ups/nut.conf'
 NUT_CONFIG_OPTIONS = ("MODE")
 NUT_UPS_CONFIG = '/etc/ups/ups.conf'
-NUT_UPS_CONFIG_OPTIONS = ("upsname", "driver", "port", "cable", "desc")
+NUT_UPS_CONFIG_OPTIONS = ("upsname", "driver", "port", "cable", "serial",
+                          "desc", "community")
 NUT_UPSD_CONFIG = '/etc/ups/upsd.conf'
 NUT_UPSD_CONFIG_OPTIONS = ("LISTEN", "MAXAGE")
 NUT_USERS_CONFIG = '/etc/ups/upsd.users'
