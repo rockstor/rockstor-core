@@ -35,11 +35,11 @@ from network import NetworkDetailView
 from pool_scrub import PoolScrubView
 from setup_user import SetupUserView
 from share_acl import ShareACLView
-from nfs_exports import (NFSExportGroupListView, NFSExportGroupDetailView)
+from nfs_exports import (NFSExportGroupListView, NFSExportGroupDetailView,
+                         AdvancedNFSExportView)
 from share_command import ShareCommandView
 from samba import (SambaListView, SambaDetailView)
 from sftp import (SFTPListView, SFTPDetailView)
-from adv_nfs_exports import AdvancedNFSExportView
 from oauth_app import OauthAppView
 from netatalk import (NetatalkListView, NetatalkDetailView)
 from group import (GroupListView, GroupDetailView)
