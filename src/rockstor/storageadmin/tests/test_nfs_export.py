@@ -39,8 +39,12 @@ class NFSExportTests(APITestMixin, APITestCase):
 
         cls.patch_mount_share = patch('storageadmin.views.nfs_exports.mount_share')
         cls.mock_mount_share = cls.patch_mount_share.start()
-        cls.mock_mount_share.return_value = 'out','err',0
-        
+        cls.mock_mount_share.return_value = 'out','err', 0
+
+        cls.patch_mount_share2 = patch('storageadmin.views.nfs_helpers.mount_share')
+        cls.mock_mount_share2 = cls.patch_mount_share2.start()
+        cls.mock_mount_share2.return_value = 'out', 'err', 0
+
         cls.patch_is_share_mounted = patch('storageadmin.views.nfs_exports.is_share_mounted')
         cls.mock_is_share_mounted = cls.patch_is_share_mounted.start()
         cls.mock_is_share_mounted.return_value = False
