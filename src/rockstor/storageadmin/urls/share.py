@@ -18,7 +18,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.conf.urls import patterns, url
 from storageadmin.views import (ShareListView, ShareDetailView,
-                                ShareNFSListView, ShareNFSDetailView,
                                 ShareACLView, SnapshotView, ShareIscsiView,
                                 ShareCommandView,)
 
@@ -34,11 +33,6 @@ urlpatterns = patterns(
     url(r'^$', ShareListView.as_view(), name='share-view'),
     url(r'^/(?P<sname>%s)$' % share_regex, ShareDetailView.as_view(),
         name='share-view'),
-
-    url(r'^/(?P<sname>%s)/nfs$' % share_regex, ShareNFSListView.as_view(),
-        name='nfs-view'),
-    url(r'^/(?P<sname>%s)/nfs/(?P<export_id>[0-9]+)$' % share_regex,
-        ShareNFSDetailView.as_view(), name='nfs-view'),
 
     #Individual snapshots don't have detailed representation in the web-ui. So
     #thre is no need for SnapshotDetailView.
