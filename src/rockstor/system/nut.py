@@ -140,6 +140,10 @@ def pre_process_nut_config(config):
     # change mode index to uppercase as front end didn't like uppercase ref
     config['MODE'] = config.pop('mode')
 
+
+    # todo consider wrapping value of password and desc with ""
+    # could then deal with spaces and special chars
+
     # Create key value for MONITOR (upsmon.conf) line eg:-
     # "MONITOR": "upsname@nutserver 1 nutuser password master"
     nut_configs[NUT_MONITOR_CONFIG]['MONITOR'] = ('%s@%s 1 %s %s %s' % (
