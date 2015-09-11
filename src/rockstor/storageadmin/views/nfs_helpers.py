@@ -110,7 +110,7 @@ def validate_export_group(export_id, request):
     try:
         return NFSExportGroup.objects.get(id=export_id)
     except:
-        e_msg = ('NFS export with id: %d does not exist' % export_id)
+        e_msg = ('NFS export with id: %s does not exist' % export_id)
         handle_exception(Exception(e_msg), request)
 
 
