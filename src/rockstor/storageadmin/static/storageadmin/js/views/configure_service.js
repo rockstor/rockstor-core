@@ -82,7 +82,7 @@ ConfigureServiceView = RockstorLayoutView.extend({
 		upsmon: 'required',
 		upsname: 'required',
 		nutuser: 'required',
-		nutuserpass: 'required',
+		password: 'required',
 		nutserver: { // TODO: disable nutserver if we are not netclient mode
 		    required: {
 			depends: function(element) {
@@ -183,7 +183,7 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
 	this.$('#nut-form #mode').tooltip({
 	    html: true,
 	    placement: 'right',
-	    title: "<strong>Nut Mode</strong> — Allows you to select the overall mode of Network UPS Tools operation. The drop-down list offers the following options:<br> \
+	    title: "<strong>Nut Mode</strong> — Select the overall mode of Network UPS Tools operation. The drop-down list offers the following options:<br> \
 <ul>\
 <li><strong>None</strong> — The Default and essentially disables NUT.</li> \
 <li><strong>Standalone</strong> — The most common and recommended mode if you have a locally connected UPS and don't wish for Rockstor to act as a NUT server to any other LAN connected machines.</li> \
@@ -206,7 +206,7 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
 	    placement: 'right',
 	    title: 'The NUT username eg "monuser" (not a Rockstor user). Must be a single word without special characters. A default will be created if left blank'
 	});
-	this.$('#nut-form #nutuserpass').tooltip({
+	this.$('#nut-form #password').tooltip({
 	    html: true,
 	    placement: 'right',
 	    title: 'The password for the above nut user. Avoid using the following characters ( " = # space or backslash )'
