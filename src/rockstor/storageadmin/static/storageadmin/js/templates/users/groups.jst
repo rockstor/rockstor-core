@@ -26,7 +26,8 @@
     <div class="messages"></div>
     <!-- Content -->
     <h3> Rockstor managed groups </h3>
-    <table id="users-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of user">
+    <a href="#add-group" id="add-group" class="btn btn-primary right">Add Group</a>
+    <table id="users-table" class="table table-condensed share-table tablesorter" summary="List of user">
       <thead>
         <tr>
           <th scope="col" abbr="Name">Groupname</th>
@@ -48,13 +49,12 @@
         <% }); %>
       </tbody>
     </table>
-    <a href="#add-group" id="add-group" class="btn btn-primary">Add Group</a>
     <nav>
-    <div class="ph-pagination"></div>
+    <div style="text-align: center" class="ph-pagination"></div>
     </nav>
 
     <h3> Other system groups </h3>
-    <table id="groups-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of groups">
+    <table id="groups-table" class="table table-condensed share-table tablesorter" summary="List of groups">
       <thead>
         <tr>
           <th scope="col" abbr="Name">Groupname</th>
@@ -76,7 +76,7 @@
         <% }); %>
       </tbody>
       </table>
-      <div class="ph-pagination"></div>
+      <div style="text-align: center" class="ph-pagination"></div>
 
   </div> <!-- col-md-12 -->
 </div> <!-- row -->

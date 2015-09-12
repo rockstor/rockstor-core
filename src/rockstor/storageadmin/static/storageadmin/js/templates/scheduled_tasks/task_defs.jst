@@ -22,7 +22,7 @@
 <% if (!scheduledTasks.isEmpty()) { %>
   <div class="row">
     <div class="col-md-12">
-      <table id="scheduled-tasks-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of scheduled tasks">
+      <table id="scheduled-tasks-table" class="table table-condensed share-table tablesorter" summary="List of scheduled tasks">
         <thead>
           <tr>
             <th scope="col" abbr="Task name">Task name</th>
@@ -81,10 +81,10 @@
           <% }); %>
         </tbody>
       </table>
-      <div class="ph-pagination"></div>
+      <div style="text-align: center" class="ph-pagination"></div>
     </div>
   </div>
 <% } else { %>
   <h4>There are no tasks scheduled at this time.</h4>
 <% } %>
-<a href="#add-scheduled-task" class="btn btn-primary">Schedule a Task</a>
+<a href="#add-scheduled-task" class="btn btn-primary right">Schedule a Task</a>
