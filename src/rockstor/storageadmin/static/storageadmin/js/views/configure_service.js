@@ -28,7 +28,8 @@ ConfigureServiceView = RockstorLayoutView.extend({
     events: {
 	"click #cancel": "cancel",
 	"click #security": "toggleFormFields",
-	"click #enabletls": "toggleCertUrl"
+	"click #enabletls": "toggleCertUrl",
+	"click #mode": "toggleNutFields"
     },
 
     initialize: function() {
@@ -293,6 +294,17 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
 	    this.$('#templateshell').attr('disabled', 'true');
 	}
     },
+
+	toggleNutFields: function() {
+	if (this.$('#mode').val() == 'None') {
+		this.$('#upsmon').attr('disabled', 'true');
+	} else {
+		this.$('#upsmon').removeAttr('disabled');
+	}
+	},
+
+
+
 
     toggleCertUrl: function() {
 	var cbox = this.$('#enabletls');
