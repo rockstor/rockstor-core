@@ -195,7 +195,7 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
 	this.$('#nut-form #upsname').tooltip({
 	    html: true,
 	    placement: 'right',
-	    title: 'The internal name for the UPS eg "ups" Leave blank if unsure.'
+	    title: 'The internal name for the UPS eg "ups". A single word with no special characters ( " = # space or backslash ) Defaults to "ups".'
 	});
 	this.$('#nut-form #nutserver').tooltip({
 	    html: true,
@@ -205,12 +205,12 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
 		this.$('#nut-form #nutuser').tooltip({
 	    html: true,
 	    placement: 'right',
-	    title: 'The NUT username eg "monuser" (not a Rockstor user). Must be a single word without special characters. A default will be created if left blank'
+	    title: 'The NUT username (not a Rockstor user). Must be a single word without special characters. Defaults to "monuser".'
 	});
 	this.$('#nut-form #password').tooltip({
 	    html: true,
 	    placement: 'right',
-	    title: 'The password for the above nut user. Avoid using the following characters ( " = # space or backslash )'
+	    title: 'The password for the above nut user.'
 	});
 	this.$('#nut-form #upsmon').tooltip({
 	    html: true,
@@ -224,7 +224,12 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
 	this.$('#nut-form #driver').tooltip({
 	    html: true,
 	    placement: 'right',
-	    title: 'Driver for you UPS. Please see http://www.networkupstools.org/stable-hcl.html'
+	    title: 'Driver for you UPS. Please see the NUT <a href="http://www.networkupstools.org/stable-hcl.html" target="_blank">Hardware Compatibility List for guidance.</a>'
+	});
+	this.$('#nut-form #desc').tooltip({
+	    html: true,
+	    placement: 'right',
+	    title: 'Human Friendly name for this UPS device. Defaults to "Rockstor UPS Unit"'
 	});
 
 	this.validator = this.$('#' + this.formName).validate({
