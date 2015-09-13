@@ -38,6 +38,7 @@ import re
 import collections
 from tempfile import mkstemp
 from shutil import move
+from copy import deepcopy
 
 import logging
 
@@ -94,9 +95,15 @@ def configure_nut(config):
     :param config: sanitized config from input form
     :return:
     """
+    # as we process / change the config we must work on a deep copy to avoid
+    # breaking the front end 'memory'.
+    # Note we could use a custom deepcopy to do some of our pre-processing
+    # ie the re-writing of indexes and surrounding password and desk in ""
+    config_copy = deepcopy(config)
+
     # pre-process the config options so we know which files to put what options
     # in and in what order
-    all_nut_configs = pre_process_nut_config(config)
+    all_nut_configs = pre_process_nut_config(config_copy)
     # now go through each file - options pair and apply the config
     for config_file, config_options in all_nut_configs.items():
         # consider parallelizing these calls by executing on it's own thread
