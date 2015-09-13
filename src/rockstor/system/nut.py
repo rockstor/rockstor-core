@@ -140,9 +140,9 @@ def pre_process_nut_config(config):
     # change mode index to uppercase as front end didn't like uppercase ref
     config['MODE'] = config.pop('mode')
 
-
-    # todo consider wrapping value of password and desc with ""
-    # could then deal with spaces and special chars
+    # wrap the value entries for password and desc in double inverted commas
+    config['password'] = ('"%s"' % config['password'])
+    config['desc'] = ('"%s"' % config['desc'])
 
     # Create key value for MONITOR (upsmon.conf) line eg:-
     # "MONITOR": "upsname@nutserver 1 nutuser password master"
@@ -151,7 +151,6 @@ def pre_process_nut_config(config):
         config['password'], config['upsmon']))
     logger.info(
         'NUT MONITOR LINE = %s' % nut_configs[NUT_MONITOR_CONFIG]['MONITOR'])
-
 
     # move section headings from config to nut_configs OrderedDicts
     # this way all following entries will pertain to them in their respective
