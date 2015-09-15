@@ -113,17 +113,17 @@ class NFSExportTests(APITestMixin, APITestCase):
         self.assertEqual(response.data['detail'], e_msg)
 
 
-    def test_invalid_nfs_client1(self):
+    def test_no_nfs_client(self):
 
-        # Add nfs-export without specifying nfs-clients
+        # Add nfs-export without specifying nfs-clients(host string). The
+        # server side defaults the host string to *
 
+        self.mock_refresh_nfs_exports.side_effect = None
         data1 = {'shares':('clone1',) , 'mod_choice': 'rw','sync_choice': 'async', }
         response = self.client.post(self.BASE_URL, data=data1)
         self.assertEqual(response.status_code,
-                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
-
-        e_msg = ('Cannot export without specifying nfs-clients')
-        self.assertEqual(response.data['detail'], e_msg)
+                         status.HTTP_200_OK, msg=response.data)
+        self.assertEqual(response.data['host_str'], '*')
 
 
     def test_invalid_nfs_client2(self):
@@ -139,6 +139,7 @@ class NFSExportTests(APITestMixin, APITestCase):
 
         e_msg = ('Invalid Hostname or IP: host%%%edu')
         self.assertEqual(response.data['detail'], e_msg)
+        self.mock_refresh_nfs_exports.side_effect = None
 
     def test_invalid_nfs_client3(self):
 
@@ -152,6 +153,7 @@ class NFSExportTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
         e_msg = ('Invalid Hostname or IP: host%%%edu')
         self.assertEqual(response.data['detail'], e_msg)
+        self.mock_refresh_nfs_exports.side_effect = None
 
     def test_invalid_admin_host1(self):
 
@@ -164,6 +166,7 @@ class NFSExportTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
         e_msg = ('Invalid admin host: admin%host')
         self.assertEqual(response.data['detail'], e_msg)
+        self.mock_refresh_nfs_exports.side_effect = None
 
 
     def test_invalid_admin_host2(self):
@@ -178,6 +181,7 @@ class NFSExportTests(APITestMixin, APITestCase):
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
         e_msg = ('Invalid admin host: admin%host')
         self.assertEqual(response.data['detail'], e_msg)
+        self.mock_refresh_nfs_exports.side_effect = None
 
     def test_put_requests(self):
         """
