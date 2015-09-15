@@ -27,6 +27,7 @@ from fs.btrfs import (mount_share, is_share_mounted)
 from system.osi import (refresh_nfs_exports, nfs4_mount_teardown)
 from share_helpers import validate_share
 import rest_framework_custom as rfc
+from rest_framework.exceptions import NotFound
 from share_helpers import validate_share
 import logging
 logger = logging.getLogger(__name__)
@@ -181,8 +182,8 @@ class NFSExportGroupDetailView(NFSExportMixin, rfc.GenericView):
             data = NFSExportGroup.objects.get(id=self.kwargs['export_id'])
             serialized_data = NFSExportGroupSerializer(data)
             return Response(serialized_data.data)
-        except:
-            return Response()
+        except NFSExportGroup.DoesNotExist:
+            raise NotFound(detail=None)
 
 
     @transaction.atomic
