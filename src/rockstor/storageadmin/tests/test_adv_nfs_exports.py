@@ -69,7 +69,15 @@ class AdvNFSExportTests(APITestMixin, APITestCase):
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
-                         
+        
+        # Invalid entries
+        data = {'entries':["/export/share2 "] }
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+        e_msg = ('Invalid exports input -- invalid')
+        self.assertEqual(response.data['detail'], e_msg)
+                                          
         # Invalid entries
         data = {'entries':['invalid'] }
         response = self.client.post(self.BASE_URL, data=data)
