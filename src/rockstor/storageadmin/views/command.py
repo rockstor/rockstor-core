@@ -34,7 +34,6 @@ from system.ssh import (sftp_mount_map, sftp_mount)
 from system.services import (systemctl, join_winbind_domain, ads_join_status)
 from system.osi import (is_share_mounted, system_shutdown, system_reboot)
 from storageadmin.models import (Share, Disk, NFSExport, SFTP, Pool, Snapshot)
-from nfs_helpers import create_nfs_export_input
 from storageadmin.util import handle_exception
 from datetime import datetime
 from django.utils.timezone import utc
@@ -44,11 +43,12 @@ from share_helpers import (sftp_snap_toggle, import_shares, import_snapshots)
 from oauth2_provider.ext.rest_framework import OAuth2Authentication
 from system.pkg_mgmt import (auto_update, current_version, update_check,
                              update_run, auto_update_status)
+from nfs_exports import NFSExportMixin
 import logging
 logger = logging.getLogger(__name__)
 
 
-class CommandView(APIView):
+class CommandView(NFSExportMixin, APIView):
     authentication_classes = (DigestAuthentication, SessionAuthentication,
                               BasicAuthentication, OAuth2Authentication,)
     permission_classes = (IsAuthenticated,)
@@ -89,7 +89,7 @@ class CommandView(APIView):
                     logger.error(e_msg)
 
             try:
-                exports = create_nfs_export_input(NFSExport.objects.all())
+                exports = self.create_nfs_export_input(NFSExport.objects.all())
                 refresh_nfs_exports(exports)
             except Exception, e:
                 e_msg = ('Exception while exporting NFS: %s' % e.__str__())
