@@ -206,7 +206,7 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
 		this.$('#nut-form #nutuser').tooltip({
 	    html: true,
 	    placement: 'right',
-	    title: 'The NUT username (not a Rockstor user). Must be a single word without special characters. Defaults to "monuser".'
+	    title: 'The NUT username (not a Rockstor user). Must be a single word without special characters and is case sensitive. Defaults to "monuser".'
 	});
 	this.$('#nut-form #password').tooltip({
 	    html: true,
