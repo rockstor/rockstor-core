@@ -50,6 +50,8 @@ CHMOD = '/bin/chmod'
 # The command that the root part of upsmon uses to shutdown the system.
 SHUTDOWNCMD = '/sbin/shutdown -h +0'
 
+# todo add a notify command akin to the shutdown entry.
+
 # CONSTANTS of file names and associated tuples (immutable lists) of accepted
 # / known options in those config files
 # in a more abstract sense these might be better as collections.namedtuples
@@ -177,6 +179,7 @@ def pre_process_nut_config(config):
         config['password'], config['upsmon']))
     logger.info(
         'NUT MONITOR LINE = %s' % nut_configs[NUT_MONITOR_CONFIG]['MONITOR'])
+    logger.info('NUT CONFIG DICT = %s' % config)
 
     # move section headings from config to nut_configs OrderedDicts
     # this way all following entries will pertain to them in their respective
