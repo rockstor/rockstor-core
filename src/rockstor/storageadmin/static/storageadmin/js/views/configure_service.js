@@ -230,7 +230,12 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
 	this.$('#nut-form #desc').tooltip({
 	    html: true,
 	    placement: 'right',
-	    title: 'Human Friendly name for this UPS device. Defaults to "Rockstor UPS Unit"'
+	    title: 'Human Friendly name for this UPS device. Defaults to "Rockstor UPS Unit".'
+	});
+	this.$('#nut-form #port').tooltip({
+	    html: true,
+	    placement: 'right',
+	    title: 'Device name for how this UPS is connected. Ie for the first serial port use "/dev/ttyS0". Use "auto" if using USB.'
 	});
 
 	this.validator = this.$('#' + this.formName).validate({
