@@ -33,14 +33,10 @@ class AFPTests(APITestMixin, APITestCase):
         super(AFPTests, cls).setUpClass()
 
         # post mocks
+        
         cls.patch_mount_share = patch('storageadmin.views.netatalk.mount_share')
         cls.mock_mount_share = cls.patch_mount_share.start()
         cls.mock_mount_share.return_value = 'foo'
-
-        cls.patch_is_share_mounted = patch('storageadmin.views.netatalk.is_share_mounted')
-        cls.mock_is_share_mounted = cls.patch_is_share_mounted.start()
-        cls.mock_is_share_mounted.return_value = False
-
         
 
     @classmethod
@@ -96,7 +92,7 @@ class AFPTests(APITestMixin, APITestCase):
                          
                          
         # happy path
-        data = {'shares':('share2',) , 'time_machine': 'yes',}
+        data = {'shares':('share3',) , 'time_machine': 'yes',}
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
