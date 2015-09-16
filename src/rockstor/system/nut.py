@@ -41,8 +41,11 @@ from shutil import move
 from copy import deepcopy
 
 import logging
+from system.osi import run_command
 
 logger = logging.getLogger(__name__)
+
+CHMOD = '/bin/chmod'
 
 # CONSTANTS of file names and associated tuples (immutable lists) of accepted
 # / known options in those config files
@@ -109,6 +112,18 @@ def configure_nut(config):
         # consider parallelizing these calls by executing on it's own thread
         # should be safe as "pleasingly parallel".
         update_config_in(config_file, config_options, NUT_HEADER)
+        # correct nut config file permissions from the default root rw -- --
+        # without this nut services cannot access the details they require as
+        # on startup nut mostly drops root privileges and runs as the nut user.
+        # nut-client installs upsmon.conf and upssched.conf
+        # ups.conf must be readable by upsdrvctl and any drivers and upsd
+        # all nut config files by default in a CentOS install are 640 but our
+        # file editing process creates a temp file and copies it over as root
+        # the files as is are left as root.nut owner group so:-
+        # os.chmod(config_file, 0644)
+        run_command([CHMOD, '640', config_file])
+
+
 
 
 def pre_process_nut_config(config):
