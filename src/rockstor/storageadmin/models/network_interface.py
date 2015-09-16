@@ -20,18 +20,36 @@ from django.db import models
 
 
 class NetworkInterface(models.Model):
-    name = models.CharField(max_length=100)
-    alias = models.CharField(max_length=100, null=True)
-    mac = models.CharField(max_length=100)
-    boot_proto = models.CharField(max_length=100, null=True)
-    onboot = models.CharField(max_length=100, null=True)
-    network = models.CharField(max_length=100, null=True)
-    netmask = models.CharField(max_length=100, null=True)
-    ipaddr = models.CharField(max_length=100, null=True)
+    #connection name. eg: eno1, enp4s0. same as device name
+    name = models.CharField(max_length=100, unique=True)
+    #device name, if any
+    dname = models.CharField(max_length=100, null=True)
+    #device type, eg: ethernet
+    dtype = models.CharField(max_length=64, null=True)
+    #device speed capabilities. 1000 Mb/s etc..
+    dspeed = models.CharField(max_length=64, null=True)
+    #hw mac address, if any
+    mac = models.CharField(max_length=100, null=True)
+    #auto for dhcp and manual for static
+    method = models.CharField(max_length=64, default='auto')
+    #automatically activate, on boot etc..
+    autoconnect = models.CharField(max_length=8, default='yes')
+    #netmask in ip address format
+    netmask = models.CharField(max_length=64, null=True)
+    #IP address
+    ipaddr = models.CharField(max_length=64, null=True)
+    #not really implemented currently, but interfaces can be dedicated for
+    #IO or manaagement.
     itype = models.CharField(max_length=100, default='io')
-    gateway = models.CharField(max_length=100, null=True)
+    #gateway address in IP address format
+    gateway = models.CharField(max_length=64, null=True)
+    #comma separated ip addresses
     dns_servers = models.CharField(max_length=1024, null=True)
-    domain = models.CharField(max_length=1024, null=True)
+    #connection type, ethernet or team
+    ctype = models.CharField(max_length=64, null=True)
+    #state of the connection. activated etc..
+    state = models.CharField(max_length=64, null=True)
+
 
     class Meta:
         app_label = 'storageadmin'

@@ -16,15 +16,20 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import re
+from tempfile import mkstemp
+from shutil import move
 from django.db import transaction
+from django.conf import settings
 from rest_framework.response import Response
 from storageadmin.models import (NetworkInterface, Appliance)
 from storageadmin.util import handle_exception
 from storageadmin.serializers import NetworkInterfaceSerializer
-from system.osi import (config_network_device, network_devices,
-                        get_net_config_fedora, restart_network_interface,
-                        get_default_interface, update_issue)
+from system.osi import (config_network_device, network_devices, get_net_config,
+                        restart_network_interface, get_default_interface,
+                        update_issue)
 from system.samba import update_samba_discovery
+from system.services import superctl
 import rest_framework_custom as rfc
 
 import logging
@@ -34,15 +39,41 @@ logger = logging.getLogger(__name__)
 class NetworkMixin(object):
 
     @staticmethod
-    def _restart_wrapper(ni, request):
-            try:
-                restart_network_interface(ni.name)
-            except Exception, e:
-                logger.exception(e)
-                e_msg = ('Failed to configure network interface(%s) due'
-                         ' to a system error' % ni.name)
-                handle_exception(Exception(e_msg), request)
+    def _update_ni_obj(nio, values):
+        nio.dname = values.get('dname', None)
+        nio.mac = values.get('mac', None)
+        nio.method = values.get('method', 'manual')
+        nio.autoconnect = values.get('autoconnect', 'no')
+        nio.netmask = values.get('netmask', None)
+        nio.ipaddr = values.get('ipaddr', None)
+        nio.gateway = values.get('gateway', None)
+        nio.dns_servers = values.get('dns_servers', None)
+        nio.ctype = values.get('ctype', None)
+        nio.dtype = values.get('dtype', None)
+        nio.dspeed = values.get('dspeed', None)
+        nio.state = values.get('state', None)
+        return nio
 
+    @staticmethod
+    def _update_nginx(ipaddr=None):
+        #update nginx config and restart the service
+        conf = '%s/etc/nginx/nginx.conf' % settings.ROOT_DIR
+        fo, npath = mkstemp()
+        with open(conf) as ifo, open(npath, 'w') as tfo:
+            for line in ifo.readlines():
+                if (re.search('listen.*80 default_server', line) is not None):
+                    substr = 'listen 80'
+                    if (ipaddr is not None):
+                        substr = 'listen %s:80' % ipaddr
+                    line = re.sub(r'listen.*80', substr, line)
+                elif (re.search('listen.*443 default_server', line) is not None):
+                    substr = 'listen 443'
+                    if (ipaddr is not None):
+                        substr = 'listen %s:443' % ipaddr
+                    line = re.sub(r'listen.*443', substr, line)
+                tfo.write(line)
+        move(npath, conf)
+        superctl('nginx', 'restart')
 
 class NetworkListView(rfc.GenericView, NetworkMixin):
     serializer_class = NetworkInterfaceSerializer
@@ -54,44 +85,25 @@ class NetworkListView(rfc.GenericView, NetworkMixin):
             update_samba_discovery()
         return NetworkInterface.objects.all()
 
-    @staticmethod
+    @classmethod
     @transaction.atomic
-    def _net_scan():
-        default_if = get_default_interface()
-        config_d = get_net_config_fedora(network_devices())
+    def _net_scan(cls):
+        config_d = get_net_config(all=True)
         for dconfig in config_d.values():
             ni = None
             if (NetworkInterface.objects.filter(
                     name=dconfig['name']).exists()):
                 ni = NetworkInterface.objects.get(name=dconfig['name'])
-                ni.alias = dconfig['alias']
-                ni.mac = dconfig['mac']
-                ni.boot_proto = dconfig['bootproto']
-                ni.onboot = dconfig['onboot']
-                ni.network = dconfig['network']
-                ni.netmask = dconfig['netmask']
-                ni.ipaddr = dconfig['ipaddr']
-                ni.gateway = dconfig['gateway']
-                ni.dns_servers = dconfig['dns_servers']
-                ni.domain = dconfig['domain']
+                ni = cls._update_ni_obj(ni, dconfig)
             else:
                 ni = NetworkInterface(name=dconfig['name'],
-                                      alias=dconfig['alias'],
-                                      mac=dconfig['mac'],
-                                      boot_proto=dconfig['bootproto'],
-                                      onboot=dconfig['onboot'],
-                                      network=dconfig['network'],
-                                      netmask=dconfig['netmask'],
-                                      ipaddr=dconfig['ipaddr'],
-                                      gateway=dconfig['gateway'],
-                                      dns_servers=dconfig['dns_servers'],
-                                      domain=dconfig['domain'])
-            if (default_if == ni.name):
-                ni.itype = 'management'
-                try:
-                    update_issue(dconfig['ipaddr'])
-                except:
-                    logger.error('Unable to update /etc/issue')
+                                      mac=dconfig.get('mac', None),
+                                      method=dconfig.get('method', None),
+                                      autoconnect=dconfig.get('autoconnect', None),
+                                      netmask=dconfig.get('netmask', None),
+                                      ipaddr=dconfig.get('ipaddr', None),
+                                      gateway=dconfig.get('gateway', None),
+                                      dns_servers=dconfig.get('dns_servers', None),)
             ni.save()
         devices = []
         for ni in NetworkInterface.objects.all():
@@ -128,6 +140,25 @@ class NetworkDetailView(rfc.GenericView, NetworkMixin):
                 i.delete()
             return Response()
 
+    def _validate_netmask(self, request):
+        netmask = request.data.get('netmask', None)
+        e_msg = ('Provided netmask value(%s) is invalid. You can provide it '
+                 'in a IP address format(eg: 255.255.255.0) or number of '
+                 'bits(eg: 24)' % netmask)
+        if (netmask is None):
+            handle_exception(Exception(e_msg), request)
+        bits = 0
+        try:
+            bits = int(netmask)
+        except ValueError:
+            #assume ip address format was provided
+            bits = sum([bin(int(x)).count('1') for x in '255.255.255'.split('.')])
+        if (bits < 1 or bits > 32):
+            e_msg = ('Provided netmask value(%s) is invalid. Number of '
+                     'bits in netmask must be between 1-32' % netmask)
+            handle_exception(Exception(e_msg), request)
+        return bits
+
     @transaction.atomic
     def put(self, request, iname):
         with self._handle_exception(request):
@@ -136,48 +167,55 @@ class NetworkDetailView(rfc.GenericView, NetworkMixin):
                 handle_exception(Exception(e_msg), request)
             ni = NetworkInterface.objects.get(name=iname)
 
-            itype = request.data['itype']
+            itype = request.data.get('itype')
             if (itype != 'management'):
                 itype = 'io'
-            boot_proto = request.data['boot_protocol']
+            method = request.data.get('method')
             ni.onboot = 'yes'
-            if (boot_proto == 'dhcp'):
-                config_network_device(ni.alias, ni.mac)
-            elif (boot_proto == 'static'):
-                ipaddr = request.data['ipaddr']
+            if (method == 'auto'):
+                config_network_device(ni.name)
+            elif (method == 'manual'):
+                ipaddr = request.data.get('ipaddr')
                 for i in NetworkInterface.objects.filter(ipaddr=ipaddr):
                     if (i.id != ni.id):
                         e_msg = ('IP: %s already in use by another '
                                  'interface: %s' % (ni.ipaddr, i.name))
                         handle_exception(Exception(e_msg), request)
-                netmask = request.data['netmask']
-                gateway = request.data['gateway']
-                dns_servers = request.data['dns_servers'].split(',')
-                domain = request.data['domain']
-                config_network_device(ni.alias, ni.mac, boot_proto='static',
+                netmask = self._validate_netmask(request)
+                gateway = request.data.get('gateway', None)
+                dns_servers = request.data.get('dns_servers', None)
+                config_network_device(ni.name, dtype=ni.dtype, method='manual',
                                       ipaddr=ipaddr, netmask=netmask,
-                                      gateway=gateway,
-                                      dns_servers=dns_servers, domain=domain)
+                                      gateway=gateway, dns_servers=dns_servers)
             else:
-                e_msg = ('Boot protocol must be dhcp or static. not: %s' %
-                         boot_proto)
+                e_msg = ('Method must be auto(for dhcp) or manual(for static IP). not: %s' %
+                         method)
                 handle_exception(Exception(e_msg), request)
-            self._restart_wrapper(ni, request)
-            dconfig = get_net_config_fedora([ni.name])[ni.name]
-            ni.boot_proto = dconfig['bootproto']
-            ni.netmask = dconfig['netmask']
-            ni.ipaddr = dconfig['ipaddr']
-            ni.itype = itype
-            ni.gateway = dconfig['gateway']
-            ni.dns_servers = dconfig['dns_servers']
-            ni.domain = dconfig['domain']
-            ni.save()
-            if (itype == 'management'):
+            dconfig = get_net_config(ni.name)[ni.name]
+            ni = self._update_ni_obj(ni, dconfig)
+            if (itype == 'management' and ni.itype != 'management'):
+                for i in NetworkInterface.objects.filter(itype='management'):
+                    if (i.name != ni.name):
+                        e_msg = ('Another interface(%s) is already configured '
+                                 'for management. You must disable it first '
+                                 'before making this change.' % i.name)
+                        handle_exception(Exception(e_msg), request)
                 a = Appliance.objects.get(current_appliance=True)
                 a.ip = ni.ipaddr
                 a.save()
                 try:
                     update_issue(ni.ipaddr)
-                except:
-                    logger.error('Unable to update /etc/issue')
+                except Exception, e:
+                    logger.error('Unable to update /etc/issue. Exception: %s' % e.__str__())
+                try:
+                    self._update_nginx(ni.ipaddr)
+                except Exception, e:
+                    logger.error('Failed to update Nginx. Exception: %s' % e.__str__())
+            elif (itype == 'io' and ni.itype == 'management'):
+                try:
+                    self._update_nginx()
+                except Exception, e:
+                    logger.error('Failed to update Nginx. Exception: %s' % e.__str__())
+            ni.itype = itype
+            ni.save()
             return Response(NetworkInterfaceSerializer(ni).data)

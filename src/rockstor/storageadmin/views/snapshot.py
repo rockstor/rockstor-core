@@ -34,15 +34,15 @@ from system.osi import refresh_nfs_exports
 from storageadmin.serializers import SnapshotSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
-from nfs_helpers import (create_nfs_export_input, create_adv_nfs_export_input)
 from share_helpers import toggle_sftp_visibility
 from clone_helpers import create_clone
+from nfs_exports import NFSExportMixin
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-class SnapshotView(rfc.GenericView):
+class SnapshotView(NFSExportMixin, rfc.GenericView):
     serializer_class = SnapshotSerializer
 
     def get_queryset(self, *args, **kwargs):
@@ -105,9 +105,9 @@ class SnapshotView(rfc.GenericView):
                 finally:
                     umount_root(export_pt)
                     umount_root(snap_mnt_pt)
-        exports = create_nfs_export_input(cur_exports)
+        exports = self.create_nfs_export_input(cur_exports)
         adv_entries = [x.export_str for x in AdvancedNFSExport.objects.all()]
-        exports_d = create_adv_nfs_export_input(adv_entries, self.request)
+        exports_d = self.create_adv_nfs_export_input(adv_entries, self.request)
         exports.update(exports_d)
         refresh_nfs_exports(exports)
 
