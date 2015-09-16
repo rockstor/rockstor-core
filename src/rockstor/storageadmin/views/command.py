@@ -29,7 +29,7 @@ from rest_framework.permissions import IsAuthenticated
 from system.osi import (uptime, refresh_nfs_exports, kernel_info)
 from fs.btrfs import (mount_share, device_scan, mount_root, qgroup_create,
                       get_pool_info, pool_raid, pool_usage, shares_info,
-                      share_usage, snaps_info)
+                      share_usage, snaps_info, mount_snap)
 from system.ssh import (sftp_mount_map, sftp_mount)
 from system.services import (systemctl, join_winbind_domain, ads_join_status)
 from system.osi import (is_share_mounted, system_shutdown, system_reboot)
@@ -76,6 +76,16 @@ class CommandView(NFSExportMixin, APIView):
                     e_msg = ('Exception while mounting a share(%s) during '
                              'bootstrap: %s' % (share.name, e.__str__()))
                     logger.error(e_msg)
+
+            for snap in Snapshot.objects.all():
+                if (snap.uvisible):
+                    try:
+                        mount_snap(snap.share, snap.real_name)
+                    except Exception, e:
+                        e_msg = ('Failed to make the Snapshot(%s) visible. '
+                                 'Exception: %s' % (snap.real_name, e.__str__()))
+                        logger.error(e_msg)
+                        logger.exception(e)
 
             mnt_map = sftp_mount_map(settings.SFTP_MNT_ROOT)
             for sftpo in SFTP.objects.all():

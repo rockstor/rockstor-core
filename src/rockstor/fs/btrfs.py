@@ -217,6 +217,8 @@ def mount_snap(share, snap_name, snap_mnt=None):
                  (DEFAULT_MNT_DIR, share.pool.name, rel_snap_path))
     if (snap_mnt is None):
         snap_mnt = ('%s/.%s' % (share_path, snap_name))
+    if (is_mounted(snap_mnt)):
+        return
     mount_share(share, share_path)
     if (is_subvol(snap_path)):
         create_tmp_dir(snap_mnt)
