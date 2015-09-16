@@ -41,10 +41,11 @@ class NUTServiceView(BaseServiceDetailView):
     def _switch_nut(switch):
         if (switch == 'start'):
             # should maybe use init_service_op here but both throw=true
+            # todo does this work when only nut-monitor required
             systemctl('nut-server', 'enable')
-            systemctl('nut-server', 'start')
+            systemctl('nut-server', 'reload-or-restart')
             systemctl('nut-monitor', 'enable')
-            systemctl('nut-monitor', 'start')
+            systemctl('nut-monitor', 'reload-or-restart')
         else:
             systemctl('nut-monitor', 'disable')
             systemctl('nut-monitor', 'stop')
