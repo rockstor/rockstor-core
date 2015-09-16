@@ -47,6 +47,9 @@ logger = logging.getLogger(__name__)
 
 CHMOD = '/bin/chmod'
 
+# The command that the root part of upsmon uses to shutdown the system.
+SHUTDOWNCMD = '/sbin/shutdown -h +0'
+
 # CONSTANTS of file names and associated tuples (immutable lists) of accepted
 # / known options in those config files
 # in a more abstract sense these might be better as collections.namedtuples
@@ -62,7 +65,7 @@ NUT_USERS_CONFIG_OPTIONS = ("nutuser", "password", "upsmon")
 NUT_MONITOR_CONFIG = '/etc/ups/upsmon.conf'
 # the following MONITOR entry reflects the compound line in upsmon.conf which
 # is created early on in pre-processing
-NUT_MONITOR_CONFIG_OPTIONS = ("POLLFREQ", "MONITOR", "DEADTIME")
+NUT_MONITOR_CONFIG_OPTIONS = ("POLLFREQ", "MONITOR", "DEADTIME", "SHUTDOWNCMD")
 
 # the options used in pre-processing for upsmon.conf are
 # ("upsname", "nutserver", "nutuser", "password" "upsmon")
@@ -84,7 +87,7 @@ nut_section_heads = {"upsname": NUT_UPS_CONFIG, "nutuser": NUT_USERS_CONFIG}
 # dictionary of delimiters used, if not in this dict then "=" is assumed
 nut_option_delimiter = {"LISTEN": " ", "MAXAGE": " ",
                         "MINSUPPLIES": " ", "upsmon": " ", "MONITOR": " ",
-                        "POLLFREQ": " ", "DEADTIME": " "}
+                        "POLLFREQ": " ", "DEADTIME": " ", "SHUTDOWNCMD": " "}
 
 # Header string to separate auto config options from rest of config file.
 # this could be generalized across all Rockstor config files, problems during
@@ -122,8 +125,6 @@ def configure_nut(config):
         # the files as is are left as root.nut owner group so:-
         # os.chmod(config_file, 0644)
         run_command([CHMOD, '640', config_file])
-
-
 
 
 def pre_process_nut_config(config):
@@ -165,6 +166,9 @@ def pre_process_nut_config(config):
     # wrap the value entries for password and desc in double inverted commas
     config['password'] = ('"%s"' % config['password'])
     config['desc'] = ('"%s"' % config['desc'])
+
+    # Hard wire our generic shutdown command wraped in double inverted commas
+    config['SHUTDOWNCMD'] = ('"%s"' % SHUTDOWNCMD)
 
     # Create key value for MONITOR (upsmon.conf) line eg:-
     # "MONITOR": "upsname@nutserver 1 nutuser password master"
