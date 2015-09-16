@@ -46,7 +46,7 @@ class SambaMixin(object):
     def _restart_samba():
         out = status()
         if (out[2] == 0):
-            restart_samba()
+            restart_samba(hard=True)
 
     @classmethod
     def _validate_input(cls, request, smbo=None):
