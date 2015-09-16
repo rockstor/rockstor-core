@@ -41,7 +41,7 @@ class NUTServiceView(BaseServiceDetailView):
     def _switch_nut(switch):
         if (switch == 'start'):
             # should maybe use init_service_op here but both throw=true
-            # todo does this work when only nut-monitor required
+            # todo change to only start nut-monitor when in netclient mode
             systemctl('nut-server', 'enable')
             systemctl('nut-server', 'reload-or-restart')
             systemctl('nut-monitor', 'enable')
