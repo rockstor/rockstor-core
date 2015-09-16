@@ -33,11 +33,15 @@ class AFPTests(APITestMixin, APITestCase):
         super(AFPTests, cls).setUpClass()
 
         # post mocks
-        
+
         cls.patch_mount_share = patch('storageadmin.views.netatalk.mount_share')
         cls.mock_mount_share = cls.patch_mount_share.start()
-        cls.mock_mount_share.return_value = 'foo'
-        
+
+        cls.patch_refresh_afp_config = patch('storageadmin.views.netatalk.refresh_afp_config')
+        cls.mock_refresh_afp_config = cls.patch_refresh_afp_config.start()
+
+        cls.patch_systemctl = patch('storageadmin.views.netatalk.systemctl')
+        cls.mock_systemctl = cls.patch_systemctl.start()
 
     @classmethod
     def tearDownClass(cls):
@@ -55,7 +59,7 @@ class AFPTests(APITestMixin, APITestCase):
         # get afp-export with id
         response = self.client.get('%s/2' % self.BASE_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response)
-        
+
     def test_post_requests(self):
         """
         invalid afp export operations
@@ -80,7 +84,7 @@ class AFPTests(APITestMixin, APITestCase):
 
         e_msg = ('time_machine must be yes or no. not invalid')
         self.assertEqual(response.data['detail'], e_msg)
-        
+
         # create afp export with already existing share
         data = {'shares':('share1',) , 'time_machine': 'yes',}
         response = self.client.post(self.BASE_URL, data=data)
@@ -89,8 +93,8 @@ class AFPTests(APITestMixin, APITestCase):
 
         e_msg = ('Share(share1) is already exported via AFP')
         self.assertEqual(response.data['detail'], e_msg)
-                         
-                         
+
+
         # happy path
         data = {'shares':('share3',) , 'time_machine': 'yes',}
         response = self.client.post(self.BASE_URL, data=data)
@@ -120,7 +124,7 @@ class AFPTests(APITestMixin, APITestCase):
 
         e_msg = ('time_machine must be yes or no. not invalid')
         self.assertEqual(response.data['detail'], e_msg)
-       
+
 
         # happy path
         afp_id = 8
@@ -129,7 +133,7 @@ class AFPTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 
-       
+
 
     def test_delete_requests(self):
 

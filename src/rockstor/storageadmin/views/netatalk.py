@@ -85,8 +85,7 @@ class NetatalkDetailView(rfc.GenericView):
             refresh_afp_config(list(NetatalkShare.objects.all()))
             return systemctl('netatalk', 'reload')
         except Exception, e:
-            logger.exception(e)
-            e_msg = ('System error occured while reloading Netatalk server')
+            e_msg = ('Failed to reload Netatalk server. Exception: %s' % e.__str__())
             handle_exception(Exception(e_msg), request)
 
 
