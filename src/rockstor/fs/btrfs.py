@@ -210,7 +210,7 @@ def mount_share(share, mnt_pt):
 
 
 def mount_snap(share, snap_name, snap_mnt=None):
-    pool_device = ('/dev/%s' % share.pool.disk_set.first())
+    pool_device = ('/dev/%s' % share.pool.disk_set.first().name)
     share_path = ('%s%s' % (DEFAULT_MNT_DIR, share.name))
     rel_snap_path = ('.snapshots/%s/%s' % (share.name, snap_name))
     snap_path = ('%s%s/%s' %

@@ -78,8 +78,7 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
         export_pt = snap_mnt_pt.replace(settings.MNT_PT,
                                         settings.NFS_EXPORT_ROOT)
         if (on):
-            pool_device = Disk.objects.filter(pool=share.pool)[0].name
-            mount_snap(share, snap_name, pool_device)
+            mount_snap(share, snap_name)
 
             if (NFSExport.objects.filter(share=share).exists()):
                 se = NFSExport.objects.filter(share=share)[0]
@@ -156,8 +155,8 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
                     try:
                         self._toggle_visibility(share, ret.data['real_name'])
                     except Exception, e:
-                        msg = ('Failed to make the Snapshot(%s) visible.' %
-                               snap_name)
+                        msg = ('Failed to make the Snapshot(%s) visible. '
+                               'Exception: %s' % (snap_name, e.__str__()))
                         logger.error(msg)
                         logger.exception(e)
 
@@ -165,7 +164,7 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
                         toggle_sftp_visibility(share, ret.data['real_name'])
                     except Exception, e:
                         msg = ('Failed to make the Snapshot(%s) visible for '
-                               'SFTP.' % snap_name)
+                               'SFTP. Exception: %s' % (snap_name, e.__str__()))
                         logger.error(msg)
                         logger.exception(e)
 
