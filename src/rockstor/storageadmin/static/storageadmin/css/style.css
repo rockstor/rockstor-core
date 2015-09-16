@@ -499,10 +499,10 @@ table.tablesorter thead tr th.title h4 {
 
 table.tablesorter thead tr th, table.tablesorter tfoot tr th {
 	background: #FFFFFF;
-    color: rgba(0, 0, 0, 0.54) !important;
-    height: 20px;
-    line-height: 20px;
-    font-size: 12px;
+    color: rgba(0, 0, 0, 0.70) !important;
+    height: 22px;
+    line-height: 22px;
+    font-size: 13.5px;
     padding-left: 20px;
 }
 
@@ -517,11 +517,31 @@ table.tablesorter thead tr th, table.tablesorter tfoot tr th {
 .table>tbody>tr>td {
     color: rgba(0, 0, 0, 0.87) !important;
     background-color: #FFFFFF;
-    height: 28px;
-    line-height: 28px;
-    font-size: 13px;
+    height: 25px;
+    line-height: 25px;
+    font-size: 12.5px;
     border-bottom: 1px solid #d0d0d0;
     padding-left: 20px;
+}
+
+.table>tbody>tr>td>a {
+    color: rgba(0, 0, 0, 0.50) !important;
+    text-decoration: none;
+}
+
+.table>tbody>tr>td>a:hover {
+    color: #EB6841 !important;
+    text-decoration: underline;
+}
+
+.table>tbody>tr>td>a>i {
+    color: rgba(0, 0, 0, 0.50) !important;
+    text-decoration: none;
+}
+
+.table>tbody>tr>td>a>i:hover {
+    color: #EB6841 !important;
+    text-decoration: underline;
 }
 
 .table>tbody>tr:hover td{
