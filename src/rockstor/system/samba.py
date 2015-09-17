@@ -58,6 +58,13 @@ def rockstor_smb_config(fo, exports):
         fo.write('    guest ok = %s\n' % e.guest_ok)
         if (len(admin_users) > 0):
             fo.write('    admin users = %s\n' % admin_users)
+        if (e.shadow_copy == 'yes'):
+            fo.write('    shadow:format = .hourly_%Y%m%d%H%M\n')
+            fo.write('    shadow:basedir = %s\n' % e.path)
+            fo.write('    shadow:snapdir = ./\n')
+            fo.write('    shadow:sort = desc\n')
+            fo.write('    vfs objects = shadow_copy2\n')
+            fo.write('    veto files = /.hourly*/\n')
         for cco in SambaCustomConfig.objects.filter(smb_share=e):
             if (cco.custom_config.strip()):
                     fo.write('    %s\n' % cco.custom_config)

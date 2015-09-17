@@ -210,13 +210,15 @@ def mount_share(share, mnt_pt):
 
 
 def mount_snap(share, snap_name, snap_mnt=None):
-    pool_device = ('/dev/%s' % share.pool.disk_set.first())
+    pool_device = ('/dev/%s' % share.pool.disk_set.first().name)
     share_path = ('%s%s' % (DEFAULT_MNT_DIR, share.name))
     rel_snap_path = ('.snapshots/%s/%s' % (share.name, snap_name))
     snap_path = ('%s%s/%s' %
                  (DEFAULT_MNT_DIR, share.pool.name, rel_snap_path))
     if (snap_mnt is None):
         snap_mnt = ('%s/.%s' % (share_path, snap_name))
+    if (is_mounted(snap_mnt)):
+        return
     mount_share(share, share_path)
     if (is_subvol(snap_path)):
         create_tmp_dir(snap_mnt)
@@ -504,8 +506,36 @@ def qgroup_destroy(qid, mnt_pt):
             return run_command([BTRFS, 'qgroup', 'destroy', qid, mnt_pt], log=True)
     return False
 
+
+def qgroup_is_assigned(qid, pqid, mnt_pt):
+    #returns true if the given qgroup qid is already assigned to pqid for the
+    #path(mnt_pt)
+    o, e, rc = run_command([BTRFS, 'qgroup', 'show', '-pc', mnt_pt])
+    for l in o:
+        fields = l.split()
+        if (len(fields) > 3 and
+            fields[0] == qid and
+            fields[3] == pqid):
+            return True
+    return False
+
 def qgroup_assign(qid, pqid, mnt_pt):
-    return run_command([BTRFS, 'qgroup', 'assign', qid, pqid, mnt_pt], log=True)
+    if (qgroup_is_assigned(qid, pqid, mnt_pt)):
+        return True
+
+    # in btrfs-progs 4.2, qgroup assign succeeds but throws a warning:
+    # "WARNING: # quotas may be inconsistent, rescan needed" and returns with
+    # exit code 1.
+    try:
+        run_command([BTRFS, 'qgroup', 'assign', qid, pqid, mnt_pt],
+                    log=True)
+    except CommandException, e:
+        wmsg = 'WARNING: quotas may be inconsistent, rescan needed'
+        if (e.rc == 1 and e.out[0] == wmsg):
+            if (qgroup_is_assigned(qid, pqid, mnt_pt)):
+                return True
+        raise e
+
 
 def update_quota(pool, qgroup, size_bytes):
     root_pool_mnt = mount_root(pool)
