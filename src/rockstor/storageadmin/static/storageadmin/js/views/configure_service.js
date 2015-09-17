@@ -199,7 +199,7 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
 <li><strong>None</strong> — The Default and essentially disables NUT.</li> \
 <li><strong>Standalone</strong> — The most common and recommended mode if you have a locally connected UPS and don't wish for Rockstor to act as a NUT server to any other LAN connected machines.</li> \
 <li><strong>Net server</strong> — Is like Standalone only it also offers NUT services to other machines on the network who are running in Net client mode.</li> \
-<li><strong>Net client</strong> — Connect to an existing Nut server or network attached UPS on the LAN.</li> \
+<li><strong>Net client</strong> — Connect to an existing Nut server.</li> \
 </ul>"
         });
         this.$('#nut-form #upsname').tooltip({
@@ -227,8 +227,8 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
             placement: 'right',
             title: "<strong>Monitor Mode</strong>:<br> \
 <ul>\
-<li><strong>Master</strong> - Default, this system will shutdown last, allowing slave nut systems time to shutdown first. </li> \
-<li><strong>Slave</strong> - This system shuts down as soon as power is critical, it does not wait for any other nut systems. </li> \
+<li><strong>Master</strong> - Default, this system will shutdown last, allowing slave nut systems time to shutdown first. UPS data port is most likely directly connected to this system.</li> \
+<li><strong>Slave</strong> - This system shuts down as soon as power is critical, it does not wait for any other nut systems. Mostly used when in netclient mode and no direct UPS data connection.</li> \
 </ul>"
         });
         this.$('#nut-form #driver').tooltip({
@@ -309,18 +309,51 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
     },
 
     toggleNutFields: function () {
-        if (this.$('#mode').val() == 'None'
-            || this.$('#mode').val() == 'standalone') {
+        if (this.$('#mode').val() == 'standalone') {
             this.$('#upsmon').attr('value', 'master');
             this.$('#upsmon').attr('disabled', 'true');
+            this.$('#upsname').attr('value', 'ups');
+            this.$('#upsname').attr('disabled', 'true');
+            this.$('#desc').attr('value', 'Rockstor UPS');
+            this.$('#desc').attr('disabled', 'true');
+            this.$('#driver').removeAttr('disabled');
+            this.$('#port').removeAttr('disabled');
             this.$('#nutserver').attr('value', 'localhost');
             this.$('#nutserver').attr('disabled', 'true');
-        } else {
+            this.$('#nutuser').removeAttr('disabled');
+            this.$('#password').removeAttr('disabled');
+        } else if (this.$('#mode').val() == 'netserver') {
             this.$('#upsmon').removeAttr('disabled');
+            this.$('#upsname').removeAttr('disabled');
+            this.$('#desc').removeAttr('disabled');
             this.$('#nutserver').removeAttr('disabled');
+            this.$('#driver').removeAttr('disabled');
+            this.$('#port').removeAttr('disabled');
+            this.$('#nutuser').removeAttr('disabled');
+            this.$('#password').removeAttr('disabled');
+        } else if (this.$('#mode').val() == 'netclient') {
+            this.$('#upsmon').attr('value', 'slave');
+            this.$('#upsmon').attr('disabled', 'true');
+            this.$('#upsname').removeAttr('disabled');
+            this.$('#desc').removeAttr('disabled');
+            this.$('#driver').val() == 'nutclient'
+            this.$('#driver').attr('disabled', 'true');
+            this.$('#port').val() == 'auto'
+            this.$('#port').attr('disabled', 'true');
+            this.$('#nutserver').removeAttr('disabled');
+            this.$('#nutuser').removeAttr('disabled');
+            this.$('#password').removeAttr('disabled');
+        } else { // probably has value of None so disable everything
+            this.$('#upsmon').attr('disabled', 'true');
+            this.$('#upsname').attr('disabled', 'true');
+            this.$('#desc').attr('disabled', 'true');
+            this.$('#driver').attr('disabled', 'true');
+            this.$('#port').attr('disabled', 'true');
+            this.$('#nutserver').attr('disabled', 'true');
+            this.$('#nutuser').attr('disabled', 'true');
+            this.$('#password').attr('disabled', 'true');
         }
     },
-
 
     toggleCertUrl: function () {
         var cbox = this.$('#enabletls');
