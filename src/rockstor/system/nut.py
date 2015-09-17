@@ -50,6 +50,11 @@ CHMOD = '/bin/chmod'
 # The command that the root part of upsmon uses to shutdown the system.
 SHUTDOWNCMD = '/sbin/shutdown -h +0'
 
+# The ip address for the LISTEN directive in upsd.conf when in netserver mode
+# when set to 0.0.0.0 it will accept connections from any machine.
+# default port is 3493
+LISTEN_ON_IP = '0.0.0.0'
+
 # todo add a notify command akin to the shutdown entry.
 
 # CONSTANTS of file names and associated tuples (immutable lists) of accepted
@@ -171,6 +176,10 @@ def pre_process_nut_config(config):
 
     # Hard wire our generic shutdown command wraped in double inverted commas
     config['SHUTDOWNCMD'] = ('"%s"' % SHUTDOWNCMD)
+
+    # todo add LISTEN config capability N.B. no config = 127.0.0.1
+    # only really needed with netserver mode so otherwise remove all entries
+    # and fall back to safe localhost default.
 
     # Create key value for MONITOR (upsmon.conf) line eg:-
     # "MONITOR": "upsname@nutserver 1 nutuser password master"
