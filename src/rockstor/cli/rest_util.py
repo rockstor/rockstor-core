@@ -26,6 +26,7 @@ from storageadmin.exceptions import RockStorAPIException
 from functools import wraps
 from base_console import BaseConsole
 from storageadmin.models import OauthApp
+from django.conf import settings
 
 API_TOKEN = None
 
@@ -33,7 +34,7 @@ API_TOKEN = None
 def set_token(client_id=None, client_secret=None, url=None, logger=None):
     if (client_id is None or client_secret is None or url is None):
         os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
-        app = OauthApp.objects.get(name='cliapp')
+        app = OauthApp.objects.get(name=settings.OAUTH_INTERNAL_APP)
         client_id = app.client_id()
         client_secret = app.client_secret()
         url = 'https://localhost'
