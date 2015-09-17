@@ -7,7 +7,7 @@
   <div class="col-md-8">
     <label class="control-label"></label>
     <div class="form-box">
-      <form id="add-samba-export-form" name="aform" class="form-horizontal">
+      <form class="form-horizontal" id="add-samba-export-form" name="aform">
         <div class="messages"></div>
 
         <!-- Shares -->
@@ -15,7 +15,7 @@
           <% if (sambaShareId == null) {  %>
           <label class="col-sm-4 control-label" for="shares">Shares to export<span class="required"> *</span></label>
           <% } %>
-          <div class="col-sm-8">
+          <div class="col-sm-4">
             <% if (sambaShareId == null) {  %>
             <select class="form-control" name="shares" id="shares" size="10" data-placeholder="Select shares to export" multiple>
             <% _.each(shares, function(share, index) { %>
@@ -31,7 +31,7 @@
         <!-- Admin Users  -->
         <div class="form-group">
           <label class="col-sm-4 control-label" for="admin_users">Admin users</label>
-          <div class="col-sm-8">
+          <div class="col-sm-4">
             <select class="form-control" name="admin_users" id="admin_users" size="10" title="(optional) list of users who will be granted super-user privileges for all file operations." data-placeholder="Select admin user(s)" multiple>
 
               <% users.each(function(user, index) {
@@ -54,7 +54,7 @@
 
         <div class="form-group">
           <label class="col-sm-4 control-label" for="browsable">Browsable<span class="required"> *</span></label>
-          <div class="col-sm-8">
+          <div class="col-sm-4">
               <% _.each(browsable_choices, function(c) { %>
                 <label class="radio-inline">
                  <% if (sambaShareId!=null){ %>
@@ -78,7 +78,7 @@
 
         <div class="form-group">
           <label class="col-sm-4 control-label" for="guest_ok">Guest Ok<span class="required"> *</span></label>
-          <div class="col-sm-8">
+          <div class="col-sm-4">
              <% _.each(guest_ok_choices, function(c) { %>
                 <label class="radio-inline">
                 <% if (sambaShareId!=null){ %>
@@ -102,7 +102,7 @@
 
         <div class="form-group">
           <label class="col-sm-4 control-label" for="read_only">Read only<span class="required"> *</span></label>
-          <div class="col-sm-8">
+          <div class="col-sm-4">
              <% _.each(read_only_choices, function(c) { %>
                 <label class="radio-inline">
                 <% if (sambaShareId!=null){ %>
@@ -126,38 +126,37 @@
 
         <div class="form-group">
           <label class="col-sm-4 control-label" for="comment">Comment</label>
-          <div class="col-sm-8">
+          <div class="col-sm-4">
             <% if (sambaShareId!=null){ %>
-             <input type="text" id="comment" name="comment" value="<%= smbShare.get('comment') %>" title="Comment string to associate with the new share">
+             <input type="text" id="comment" class="form-control" name="comment" value="<%= smbShare.get('comment') %>" title="Comment string to associate with the new share">
             <% }else { %>
-             <input type="text" id="comment" name="comment" value="Samba-Export" title="Comment string to associate with the new share">
+             <input type="text" id="comment" class="form-control" name="comment" value="Samba-Export" title="Comment string to associate with the new share">
             <%  } %>
           </div>
 	</div>
 
 	<div class="form-group">
-          <label class="col-sm-4 control-label" for="shadow_copy">Shadow Copy<span class="required"> *</span></label>
-	  <div class="checkbox">
-	    <label class="checkbox">
+  <div class="col-sm-4"></div>
+	  <div class="col-sm-4">
 	      <% if (sambaShareId != null && smbShare.get("shadow_copy")) { %>
 	      <input type="checkbox" name="shadow_copy" id="shadow_copy" checked="true">
 	      <% } else { %>
 	      <input type="checkbox" name="shadow_copy" id="shadow_copy">
 	      <% } %> Enable Shadow Copy? &nbsp;&nbsp;<a id="shadow-copy-info" href="#" class="moreinfo"><i class="fa fa-info-circle"></i></a>
-		<% if (sambaShareId != null && smbShare.get("shadow_copy")) { %>
-		<div class="form-group" id="snapprefix-ph">
+      </div>
+      </div> <!-- closing form group -->
+    <% if (sambaShareId != null && smbShare.get("shadow_copy")) { %>
+		  <div class="form-group" id="snapprefix-ph">
 		  <% } else { %>
 		  <div class="form-group" id="snapprefix-ph" style="visibility: hidden">
 		    <% } %>
-		    <label class="control-label" for="cert-utl">Snapshot prefix<span class="required"> *</span></label>
-		    <div class="controls">
+		    <label class="col-sm-4 control-label" for="cert-utl">Snapshot prefix<span class="required"> *</span></label>
+        <div class="col-sm-4">
 		      <% if (sambaShareId != null) { %>
-		      <input type="text" id="snapshot_prefix" name="snapshot_prefix" value="<%= smbShare.get('snapshot_prefix') %>" title="Prefix of the Snapshots for this Share">
+		      <input type="text" class="col-sm-4 form-control" id="snapshot_prefix" name="snapshot_prefix" value="<%= smbShare.get('snapshot_prefix') %>" title="Prefix of the Snapshots for this Share">
 		      <% } else { %>
-		      <input type="text" id="snapshot_prefix" name="snapshot_prefix" title="Prefix of the Snapshots for this Share">
+		      <input type="text" class="col-sm-4 form-control" id="snapshot_prefix" name="snapshot_prefix" title="Prefix of the Snapshots for this Share">
 		      <% } %>
-		    </div>
-		  </div>
           </div>
         </div>
 
@@ -165,9 +164,9 @@
           <label class="col-sm-4 control-label" for="custom_config">Custom configuration </label>
           <div class="col-sm-8">
           <% if (sambaShareId!=null){ %>
-           <textarea rows="10" columns="40" id="custom_config" name="custom_config" class="form-control" title="You can provide custom parameters here. These lines will be added to the section of each Share selected above in smb.conf"><%= configList %></textarea>
+           <textarea rows="5" columns="40" id="custom_config" name="custom_config" class="form-control" title="You can provide custom parameters here. These lines will be added to the section of each Share selected above in smb.conf"><%= configList %></textarea>
            <% }else { %>
-           <textarea rows="10" columns="40" id="custom_config" name="custom_config" class="form-control" title="You can provide custom parameters here. These lines will be added to the section of each Share selected above in smb.conf"></textarea>
+           <textarea rows="5" columns="40" id="custom_config" name="custom_config" class="form-control" title="You can provide custom parameters here. These lines will be added to the section of each Share selected above in smb.conf"></textarea>
               <%  } %>
         </div>
 
