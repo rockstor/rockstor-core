@@ -137,26 +137,27 @@
 
 	<div class="form-group">
           <label class="col-sm-4 control-label" for="shadow_copy">Shadow Copy<span class="required"> *</span></label>
-          <div class="col-sm-8">
-             <% _.each(shadow_copy_choices, function(c) { %>
-                <label class="radio-inline">
-                <% if (sambaShareId!=null){ %>
-                <% if(c.value == smbShare.get("shadow_copy")){ %>
-                <input type="radio" name="shadow_copy" value="<%= c.value %>" checked> <%= c.name %>
-                <% } else { %>
-                <input type="radio" name="shadow_copy" value="<%= c.value %>" > <%= c.name %>
-                <% } %>
-                <% } else { %>
-
-                <% if (c.value == 'no'){ %>
-                <input type="radio" name="shadow_copy" value="<%= c.value %>" checked> <%= c.name %>
-                <%  } else{ %>
-                <input type="radio" name="shadow_copy" value="<%= c.value %>" > <%= c.name %>
-                <%  } %>
-		<% } %>
-		</label>
-		<% }); %>
-		&nbsp;&nbsp;<a id="shadow-copy-info" href="#" class="moreinfo"><i class="fa fa-info-circle"></i></a>
+	  <div class="checkbox">
+	    <label class="checkbox">
+	      <% if (sambaShareId != null && smbShare.get("shadow_copy")) { %>
+	      <input type="checkbox" name="shadow_copy" id="shadow_copy" checked="true">
+	      <% } else { %>
+	      <input type="checkbox" name="shadow_copy" id="shadow_copy">
+	      <% } %> Enable Shadow Copy? &nbsp;&nbsp;<a id="shadow-copy-info" href="#" class="moreinfo"><i class="fa fa-info-circle"></i></a>
+		<% if (sambaShareId != null && smbShare.get("shadow_copy")) { %>
+		<div class="form-group" id="snapprefix-ph">
+		  <% } else { %>
+		  <div class="form-group" id="snapprefix-ph" style="visibility: hidden">
+		    <% } %>
+		    <label class="control-label" for="cert-utl">Snapshot prefix<span class="required"> *</span></label>
+		    <div class="controls">
+		      <% if (sambaShareId != null) { %>
+		      <input type="text" id="snapshot_prefix" name="snapshot_prefix" value="<%= smbShare.get('snapshot_prefix') %>" title="Prefix of the Snapshots for this Share">
+		      <% } else { %>
+		      <input type="text" id="snapshot_prefix" name="snapshot_prefix" title="Prefix of the Snapshots for this Share">
+		      <% } %>
+		    </div>
+		  </div>
           </div>
         </div>
 

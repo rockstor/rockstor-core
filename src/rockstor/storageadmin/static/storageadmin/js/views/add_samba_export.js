@@ -27,7 +27,8 @@
 AddSambaExportView = RockstorLayoutView.extend({
     events: {
 	'click #cancel': 'cancel',
-	'click #shadow-copy-info': 'shadowCopyInfo'
+	'click #shadow-copy-info': 'shadowCopyInfo',
+	'click #shadow_copy': 'toggleSnapPrefix'
     },
 
     initialize: function() {
@@ -118,6 +119,13 @@ AddSambaExportView = RockstorLayoutView.extend({
 	    onkeyup: false,
 	    rules: {
 		shares: 'required',
+		snapshot_prefix: {
+		    required: {
+			depends: function(element) {
+			    return _this.$('#shadow_copy').prop('checked');
+			}
+		    }
+		}
 	    },
 
 	    submitHandler: function() {
@@ -172,6 +180,15 @@ AddSambaExportView = RockstorLayoutView.extend({
 	    backdrop: 'static'
 	});
 	$('#shadow-copy-info-modal').modal('show');
+    },
+
+    toggleSnapPrefix: function() {
+	var cbox = this.$('#shadow_copy');
+	if (cbox.prop('checked')) {
+	    this.$('#snapprefix-ph').css('visibility', 'visible');
+	} else {
+	    this.$('#snapprefix-ph').css('visibility', 'hidden');
+	}
     }
 
 });
