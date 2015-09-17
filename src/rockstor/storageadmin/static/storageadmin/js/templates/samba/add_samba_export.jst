@@ -153,9 +153,9 @@
 		    <label class="col-sm-4 control-label" for="cert-utl">Snapshot prefix<span class="required"> *</span></label>
         <div class="col-sm-4">
 		      <% if (sambaShareId != null) { %>
-		      <input type="text" class="col-sm-4 form-control" id="snapshot_prefix" name="snapshot_prefix" value="<%= smbShare.get('snapshot_prefix') %>" title="Prefix of the Snapshots for this Share">
+		      <input type="text" class="col-sm-4 form-control" id="snapshot_prefix" name="snapshot_prefix" value="<%= smbShare.get('snapshot_prefix') %>" title="Prefix of Snapshots for this Share. You must use this prefix when scheduling Snapshot tasks for this Share for shadow copies to work.">
 		      <% } else { %>
-		      <input type="text" class="col-sm-4 form-control" id="snapshot_prefix" name="snapshot_prefix" title="Prefix of the Snapshots for this Share">
+		      <input type="text" class="col-sm-4 form-control" id="snapshot_prefix" name="snapshot_prefix" title="Prefix of Snapshots for this Share. You must use this prefix when scheduling Snapshot tasks for this Share for shadow copies to work.">
 		      <% } %>
           </div>
         </div>
