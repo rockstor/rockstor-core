@@ -40,6 +40,7 @@ class SambaMixin(object):
         'read_only': 'no',
         'custom_config': None,
         'shadow_copy': False,
+        'snapshot_prefix': None,
     }
     BOOL_OPTS = ('yes', 'no',)
 
@@ -87,10 +88,15 @@ class SambaMixin(object):
             handle_exception(Exception(e_msg), request)
         options['shadow_copy'] = request.data.get('shadow_copy',
                                                   def_opts['shadow_copy'])
-        if (options['shadow_copy'] not in cls.BOOL_OPTS):
-            e_msg = ('Invalid choice for shadow_copy. Possible '
-                     'options are yes or no.')
-            handle_exception(Exception(e_msg), request)
+        if (options['shadow_copy']):
+            options['snapshot_prefix'] = request.data.get('snapshot_prefix',
+                                                          def_opts['snapshot_prefix'])
+            if (options['snapshot_prefix'] is None or
+                len(options['snapshot_prefix'].strip()) == 0):
+                e_msg = ('Invalid choice for snapshot_prefix. It must be a '
+                         'valid non-empty string')
+                handle_exception(Exception(e_msg), request)
+
         return options
 
 
