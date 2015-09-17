@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework.response import Response
 from django.db import transaction
+from django.conf import settings
 from oauth2_provider.models import Application as OauthApplication
 from storageadmin.models import (OauthApp, User)
 from storageadmin.serializers import OauthAppSerializer
@@ -69,7 +70,17 @@ class OauthAppView(rfc.GenericView):
             try:
                 app = OauthApp.objects.get(name=name)
             except:
-                e_msg = ('application with name: %s does not exist' % name)
+                e_msg = ('application(%s) does not exist' % name)
+                handle_exception(Exception(e_msg), request)
+
+            if (app.name == settings.OAUTH_INTERNAL_APP):
+                e_msg = ('application(%s) cannot be deleted because it is '
+                         'used internally by Rockstor. If you really need to '
+                         'delete it, login as root and use '
+                         '%sbin/delete-api-key command. If you do delete it, '
+                         'please create another one with the same name as it '
+                         'is required by Rockstor internally.' %
+                         (name, settings.ROOT_DIR))
                 handle_exception(Exception(e_msg), request)
 
             app.application.delete()
