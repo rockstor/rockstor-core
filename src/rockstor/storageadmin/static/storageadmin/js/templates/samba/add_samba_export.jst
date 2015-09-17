@@ -131,7 +131,32 @@
              <input type="text" id="comment" name="comment" value="<%= smbShare.get('comment') %>" title="Comment string to associate with the new share">
             <% }else { %>
              <input type="text" id="comment" name="comment" value="Samba-Export" title="Comment string to associate with the new share">
-            <%  } %>        
+            <%  } %>
+          </div>
+	</div>
+
+	<div class="form-group">
+          <label class="col-sm-4 control-label" for="shadow_copy">Shadow Copy<span class="required"> *</span></label>
+          <div class="col-sm-8">
+             <% _.each(shadow_copy_choices, function(c) { %>
+                <label class="radio-inline">
+                <% if (sambaShareId!=null){ %>
+                <% if(c.value == smbShare.get("shadow_copy")){ %>
+                <input type="radio" name="shadow_copy" value="<%= c.value %>" checked> <%= c.name %>
+                <% } else { %>
+                <input type="radio" name="shadow_copy" value="<%= c.value %>" > <%= c.name %>
+                <% } %>
+                <% } else { %>
+
+                <% if (c.value == 'no'){ %>
+                <input type="radio" name="shadow_copy" value="<%= c.value %>" checked> <%= c.name %>
+                <%  } else{ %>
+                <input type="radio" name="shadow_copy" value="<%= c.value %>" > <%= c.name %>
+                <%  } %>
+		<% } %>
+		</label>
+		<% }); %>
+		&nbsp;&nbsp;<a id="shadow-copy-info" href="#" class="moreinfo"><i class="fa fa-info-circle"></i></a>
           </div>
         </div>
 
@@ -154,6 +179,34 @@
         </div>
 
       </form>
+    </div>
+  </div>
+</div>
+
+
+<div id="shadow-copy-info-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h4 id="myModalLabel">Shadow Copy</h4>
+      </div>
+      <div class="modal-body">
+        <div class="messages"></div>
+        <p>
+	  This feature is useful if you'll be accessing this Share from Windows
+	  clients. By enabling this feature, you can browse older versions or
+	  "shadow copies" of files from Windows. You can read technical details
+	  on <a href="https://en.wikipedia.org/wiki/Shadow_Copy"
+	  target="_blank">Wikipedia</a>.
+	</p>
+	<p>
+	  In addition to enabling this feature, you need to schedule
+	  Snapshots. See this
+	  short <a href="https://www.youtube.com/watch?v=DouOx8gX5yE">video</a>
+	  or read this document for more information.
+	</p>
+      </div>
     </div>
   </div>
 </div>
