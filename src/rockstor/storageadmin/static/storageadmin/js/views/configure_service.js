@@ -196,7 +196,6 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
             placement: 'right',
             title: "<strong>Nut Mode</strong> — Select the overall mode of Network UPS Tools operation. The drop-down list offers the following options:<br> \
 <ul>\
-<li><strong>None</strong> — The Default and essentially disables NUT.</li> \
 <li><strong>Standalone</strong> — The most common and recommended mode if you have a locally connected UPS and don't wish for Rockstor to act as a NUT server to any other LAN connected machines.</li> \
 <li><strong>Net server</strong> — Is like Standalone only it also offers NUT services to other machines on the network who are running in Net client mode.</li> \
 <li><strong>Net client</strong> — Connect to an existing Nut server.</li> \
@@ -331,27 +330,18 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
             this.$('#port').removeAttr('disabled');
             this.$('#nutuser').removeAttr('disabled');
             this.$('#password').removeAttr('disabled');
-        } else if (this.$('#mode').val() == 'netclient') {
+        } else { // probably has value of netclient or unknown
             this.$('#upsmon').attr('value', 'slave');
             this.$('#upsmon').attr('disabled', 'true');
             this.$('#upsname').removeAttr('disabled');
             this.$('#desc').removeAttr('disabled');
-            this.$('#driver').val() == 'nutclient'
+            this.$('#driver').attr('value', 'nutclient');
             this.$('#driver').attr('disabled', 'true');
-            this.$('#port').val() == 'auto'
+            this.$('#port').attr('value', 'auto');
             this.$('#port').attr('disabled', 'true');
             this.$('#nutserver').removeAttr('disabled');
             this.$('#nutuser').removeAttr('disabled');
             this.$('#password').removeAttr('disabled');
-        } else { // probably has value of None so disable everything
-            this.$('#upsmon').attr('disabled', 'true');
-            this.$('#upsname').attr('disabled', 'true');
-            this.$('#desc').attr('disabled', 'true');
-            this.$('#driver').attr('disabled', 'true');
-            this.$('#port').attr('disabled', 'true');
-            this.$('#nutserver').attr('disabled', 'true');
-            this.$('#nutuser').attr('disabled', 'true');
-            this.$('#password').attr('disabled', 'true');
         }
     },
 
