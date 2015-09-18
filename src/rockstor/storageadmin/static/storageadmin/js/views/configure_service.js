@@ -82,15 +82,13 @@ ConfigureServiceView = RockstorLayoutView.extend({
                 rootshare: 'required'
             },
             nut: {
-                // TODO: improve on these by disabling / removing when not needed.
-                // for now leave as testing
                 mode: 'required',
                 upsmon: 'required',
                 upsname: 'required',
                 driver: 'required',
                 nutuser: 'required',
                 password: 'required',
-                nutserver: { // TODO: disable nutserver if we are not netclient mode
+                nutserver: {
                     required: {
                         depends: function (element) {
                             return (_this.$('#mode').val() == 'netclient');
@@ -209,7 +207,7 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
         this.$('#nut-form #nutserver').tooltip({
             html: true,
             placement: 'right',
-            title: 'The hostname or IP address of the NUT server.'
+            title: 'The hostname or IP address of the NUT server when in Net Client mode. Otherwise this is usually localhost'
         });
         this.$('#nut-form #nutuser').tooltip({
             html: true,
@@ -325,7 +323,8 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
             this.$('#upsmon').removeAttr('disabled');
             this.$('#upsname').removeAttr('disabled');
             this.$('#desc').removeAttr('disabled');
-            this.$('#nutserver').removeAttr('disabled');
+            this.$('#nutserver').attr('value', 'localhost');
+            this.$('#nutserver').attr('disabled', 'true');
             this.$('#driver').removeAttr('disabled');
             this.$('#port').removeAttr('disabled');
             this.$('#nutuser').removeAttr('disabled');
