@@ -176,12 +176,14 @@ def pre_process_nut_config(config):
     config['password'] = ('"%s"' % config['password'])
     config['desc'] = ('"%s"' % config['desc'])
 
-    # Hard wire our generic shutdown command wraped in double inverted commas
+    # set nut shutdown command to SHUTDOWNCMD wrapped in double inverted commas
     config['SHUTDOWNCMD'] = ('"%s"' % SHUTDOWNCMD)
 
-    # todo add LISTEN config capability N.B. no config = 127.0.0.1
-    # only really needed with netserver mode so otherwise remove all entries
-    # and fall back to safe localhost default.
+    # set nut network LISTEN to LISTEN_ON_IP when in netserver mode, else ll.
+    if config['MODE'] == 'netserver':
+        config['LISTEN'] = LISTEN_ON_IP
+    else:
+        config['LISTEN'] = 'localhost'
 
     # Create key value for MONITOR (upsmon.conf) line eg:-
     # "MONITOR": "upsname@nutserver 1 nutuser password master"
