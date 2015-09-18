@@ -53,6 +53,8 @@ SHUTDOWNCMD = '/sbin/shutdown -h +0'
 # The ip address for the LISTEN directive in upsd.conf when in netserver mode
 # when set to 0.0.0.0 it will accept connections from any machine.
 # default port is 3493
+# Note this might later be tied into multi lan configs ie ups monitoring on
+# admin interface for example.
 LISTEN_ON_IP = '0.0.0.0'
 
 # todo add a notify command akin to the shutdown entry.
@@ -226,23 +228,28 @@ def update_config_in(file, config, header):
     file_descriptor, tempNamePath = mkstemp(prefix='rocknut')
     with open(file) as source_file_object, open(tempNamePath,
                                                 'w') as tempFileObject:
-        # copy existing config file line by line until complete or
+        # Copy existing config file line by line until complete or
         # the Rockstor header is found.
         # Also remark out any line containing a config option entry.
         # N.B. we don't deal well here with section headers above our header
         # but could just remark our all lines beginning with '[' but overkill.
         for line in source_file_object.readlines():
-            if not re.match('#', line):
-                # on lines that don't already begin with a "#" char look for
+            if (not re.match('#', line)) and line.strip():
+                # On non empty lines that don't begin with a "#" char look for
                 # any occurrence of a config entry (split by space or =)
                 if ((any(word in config for word in line.split())) or (
                         any(word in config for word in line.split('=')))):
-                    # a config entry has been found so remark out that line to
+                    # A config entry has been found so remark out that line to
                     # be safe (indented or otherwise).
                     tempFileObject.write('#' + line)
+                else:
+                    # Not remarked and not empty and not know to duplicate a
+                    # config entry. Remark out to filter out unknown entries.
+                    tempFileObject.write(line)
             elif (re.match(header, line) is None):
-                # if the current line is not a Rockstor header then
-                # write the source file line unchanged to the temp file
+                # If the current line is not a Rockstor header then
+                # write the source file line unchanged to the temp file.
+                # N.B. This is a quick path for empty and remarked lines.
                 tempFileObject.write(line)
             else:
                 # We have found an existing rockstor header so break out.
