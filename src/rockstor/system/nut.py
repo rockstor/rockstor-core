@@ -205,13 +205,20 @@ def pre_process_nut_config(config):
         config['LISTEN'] = 'localhost'
 
     # set the notify command to user the build in scheduler
+    # upsmon ---> calls nut's upssched ---> calls our CMDSCRIPT
     config['NOTIFYCMD'] = UPSSCHED
+
+    # now configure nuts upssched.conf
+    # todo - insert  CMDSCRIPT, PIPEFN, LOCKFN
+    # todo - sort out our base at commands to control
+
+    # finally for the notification chain setup out CMDSCRIPT
+    # todo - sort out emailing from this script
 
     # setup the response type for notifications ie NOTIFYFLAG <EVENT> <TYPE>
     # all events are listed in NOTIFY_EVENTS, types are SYSLOG WALL EXEC
     for event in NOTIFY_EVENTS:
         config[('NOTIFYFLAG ' + event)] = "SYSLOG+WALL+EXEC"
-
 
     # Create key value for MONITOR (upsmon.conf) line eg:-
     # "MONITOR": "upsname@nutserver 1 nutuser password master"
@@ -258,7 +265,7 @@ def update_config_in(config_file, config, remove_all, header):
     """
     file_descriptor, tempNamePath = mkstemp(prefix='rocknut')
     with open(config_file) as source_file_object, open(tempNamePath,
-                                                'w') as tempFileObject:
+                                                       'w') as tempFileObject:
         # Copy existing config file line by line until complete or
         # the Rockstor header is found.
         # Also remark out any line containing a config option entry.
@@ -269,8 +276,8 @@ def update_config_in(config_file, config, remove_all, header):
                 # On non empty lines that don't begin with a "#" char look for
                 # any occurrence of a config entry (split by space or =)
                 words_in_line = line.split()
-                if ((any(word in config for word in words_in_line)) or (
-                        any(word in config for word in line.split('='))) or
+                if (any(word in config for word in words_in_line) or
+                        any(word in config for word in line.split('=')) or
                         any(word in remove_all for word in words_in_line)):
                     # A config entry has been found so remark out that line to
                     # be safe (indented or otherwise).
