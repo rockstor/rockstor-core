@@ -46,6 +46,8 @@ from system.osi import run_command
 logger = logging.getLogger(__name__)
 
 CHMOD = '/bin/chmod'
+#  which upssched the nut scheduler for dealing with event / notices
+UPSSCHED = '/usr/sbin/upssched'
 
 # The command that the root part of upsmon uses to shutdown the system.
 SHUTDOWNCMD = '/sbin/shutdown -h +0'
@@ -72,12 +74,23 @@ NUT_UPSD_CONFIG_OPTIONS = ("LISTEN", "MAXAGE")
 NUT_USERS_CONFIG = '/etc/ups/upsd.users'
 NUT_USERS_CONFIG_OPTIONS = ("nutuser", "password", "upsmon")
 NUT_MONITOR_CONFIG = '/etc/ups/upsmon.conf'
-# the following MONITOR entry reflects the compound line in upsmon.conf which
-# is created early on in pre-processing
-NUT_MONITOR_CONFIG_OPTIONS = ("POLLFREQ", "MONITOR", "DEADTIME", "SHUTDOWNCMD")
+# the following options are used in pre-processing to create the MONITOR line
+# for upsmon.conf ("upsname", "nutserver", "nutuser", "password" "upsmon")
+NUT_MONITOR_CONFIG_OPTIONS = ("NOTIFYCMD", "POLLFREQ", "MONITOR", "DEADTIME",
+                              "SHUTDOWNCMD", "NOTIFYFLAG ONLINE",
+                              "NOTIFYFLAG ONBATT", "NOTIFYFLAG LOWBATT",
+                              "NOTIFYFLAG FSD", "NOTIFYFLAG COMMOK",
+                              "NOTIFYFLAG COMMBAD",
+                              "NOTIFYFLAG SHUTDOWN", "NOTIFYFLAG REPLBATT",
+                              "NOTIFYFLAG NOCOMM", "NOTIFYFLAG NOPARENT")
 
-# the options used in pre-processing for upsmon.conf are
-# ("upsname", "nutserver", "nutuser", "password" "upsmon")
+# The events that will trigger a notify event.
+NOTIFY_EVENTS = ("ONLINE", "ONBATT", "LOWBATT", "FSD", "COMMOK", "COMMBAD",
+                 "SHUTDOWN", "REPLBATT", "NOCOMM", "NOPARENT")
+
+# A catch all list where we always remove lines containing the following words:
+# hack to work around only having whole word removal methods in our parser.
+REMARK_OUT = ("NOTIFYFLAG")
 
 # Currently we only deal with upsmon  as master or slave in a single user
 # entry and apply the same upsmon value to the end of the MONITOR line in
@@ -96,7 +109,13 @@ nut_section_heads = {"upsname": NUT_UPS_CONFIG, "nutuser": NUT_USERS_CONFIG}
 # dictionary of delimiters used, if not in this dict then "=" is assumed
 nut_option_delimiter = {"LISTEN": " ", "MAXAGE": " ",
                         "MINSUPPLIES": " ", "upsmon": " ", "MONITOR": " ",
-                        "POLLFREQ": " ", "DEADTIME": " ", "SHUTDOWNCMD": " "}
+                        "POLLFREQ": " ", "DEADTIME": " ", "SHUTDOWNCMD": " ",
+                        "NOTIFYCMD": " ", "NOTIFYFLAG ONLINE": " ",
+                        "NOTIFYFLAG ONBATT": " ", "NOTIFYFLAG LOWBATT": " ",
+                        "NOTIFYFLAG FSD": " ", "NOTIFYFLAG COMMOK": " ",
+                        "NOTIFYFLAG COMMBAD": " ", "NOTIFYFLAG SHUTDOWN": " ",
+                        "NOTIFYFLAG REPLBATT": " ", "NOTIFYFLAG NOCOMM": " ",
+                        "NOTIFYFLAG NOPARENT": " "}
 
 # Header string to separate auto config options from rest of config file.
 # this could be generalized across all Rockstor config files, problems during
@@ -123,7 +142,7 @@ def configure_nut(config):
     for config_file, config_options in all_nut_configs.items():
         # consider parallelizing these calls by executing on it's own thread
         # should be safe as "pleasingly parallel".
-        update_config_in(config_file, config_options, NUT_HEADER)
+        update_config_in(config_file, config_options, REMARK_OUT, NUT_HEADER)
         # correct nut config file permissions from the default root rw -- --
         # without this nut services cannot access the details they require as
         # on startup nut mostly drops root privileges and runs as the nut user.
@@ -185,6 +204,15 @@ def pre_process_nut_config(config):
     else:
         config['LISTEN'] = 'localhost'
 
+    # set the notify command to user the build in scheduler
+    config['NOTIFYCMD'] = UPSSCHED
+
+    # setup the response type for notifications ie NOTIFYFLAG <EVENT> <TYPE>
+    # all events are listed in NOTIFY_EVENTS, types are SYSLOG WALL EXEC
+    for event in NOTIFY_EVENTS:
+        config[('NOTIFYFLAG ' + event)] = "SYSLOG+WALL+EXEC"
+
+
     # Create key value for MONITOR (upsmon.conf) line eg:-
     # "MONITOR": "upsname@nutserver 1 nutuser password master"
     nut_configs[NUT_MONITOR_CONFIG]['MONITOR'] = ('%s@%s 1 %s %s %s' % (
@@ -216,19 +244,20 @@ def pre_process_nut_config(config):
     return nut_configs
 
 
-def update_config_in(file, config, header):
+def update_config_in(config_file, config, remove_all, header):
     """
     # potentially upgrade this to a generic config writer via class def.
     Remark out all occurrences of options in config dict above HEADER.
     Apply key, value pairs in config dict as option = value setting in file
     after HEADER unless key starts with section--, in this case insert a
     section header as [value] and ignoring the key.
-    :param file: path and filename of config file to update
+    :param config_file: path and filename of config file to update
     :param config: OrderedDict of options with possible section-- tags on index
+    :param remove_all: list of entries to always remark out regardless
     :return:
     """
     file_descriptor, tempNamePath = mkstemp(prefix='rocknut')
-    with open(file) as source_file_object, open(tempNamePath,
+    with open(config_file) as source_file_object, open(tempNamePath,
                                                 'w') as tempFileObject:
         # Copy existing config file line by line until complete or
         # the Rockstor header is found.
@@ -239,8 +268,10 @@ def update_config_in(file, config, header):
             if (not re.match('#', line)) and line.strip():
                 # On non empty lines that don't begin with a "#" char look for
                 # any occurrence of a config entry (split by space or =)
-                if ((any(word in config for word in line.split())) or (
-                        any(word in config for word in line.split('=')))):
+                words_in_line = line.split()
+                if ((any(word in config for word in words_in_line)) or (
+                        any(word in config for word in line.split('='))) or
+                        any(word in remove_all for word in words_in_line)):
                     # A config entry has been found so remark out that line to
                     # be safe (indented or otherwise).
                     tempFileObject.write('#' + line)
@@ -275,4 +306,4 @@ def update_config_in(file, config, header):
                     delimiter = "="
                 tempFileObject.write(option + delimiter + value + '\n')
     # finally overwrite passed config file with the newly created temp file.
-    move(tempNamePath, file)
+    move(tempNamePath, config_file)
