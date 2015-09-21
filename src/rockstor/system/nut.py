@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+# todo revise comments for brevity
+
 # for CentOS nut systemd files are:-
 # from nut package
 # /usr/lib/systemd/system/nut-driver.service
@@ -41,13 +43,19 @@ from shutil import move
 from copy import deepcopy
 
 import logging
+from django.conf import settings
+import shutil
 from system.osi import run_command
 
 logger = logging.getLogger(__name__)
 
-CHMOD = '/bin/chmod'
-#  which upssched the nut scheduler for dealing with event / notices
+CHMOD = '/usr/bin/chmod'
+CHOWN = '/usr/bin/chown'
+# NUT scheduler files for dealing with event / notices / action.
+# Directories as per default CentOS install to maintain SELinux compatibility.
 UPSSCHED = '/usr/sbin/upssched'
+UPSSCHED_CONF = '/etc/ups/upssched.conf'
+UPSSCHED_CMD = '/usr/bin/upssched-cmd'
 
 # The command that the root part of upsmon uses to shutdown the system.
 SHUTDOWNCMD = '/sbin/shutdown -h +0'
@@ -123,6 +131,26 @@ nut_option_delimiter = {"LISTEN": " ", "MAXAGE": " ",
 NUT_HEADER = '###BEGIN: Rockstor NUT Config. DO NOT EDIT BELOW THIS LINE###'
 
 
+def config_upssched():
+    """
+    Overwite nut default upssched.conf and upssched-cmd files with Rockstor
+    versions. Set owner.group and permissions to originals.
+    """
+    # the upssched config file
+    upsshed_conf_template = ('%s/upssched.conf' % settings.CONFROOT)
+    # would be better if we could set a file creation mask first then copy
+    # todo set file creation mask to 640
+    shutil.copyfile(upsshed_conf_template, UPSSCHED_CONF)
+    run_command([CHOWN, 'root.nut', UPSSCHED_CONF])
+    run_command([CHMOD, '640', UPSSCHED_CONF])
+    # the upssched command file
+    upsshed_cmd_template = ('%s/upssched-cmd' % settings.CONFROOT)
+    shutil.copyfile(upsshed_cmd_template, UPSSCHED_CMD)
+    run_command([CHOWN, 'root.root', UPSSCHED_CMD])
+    # going with existing rights but this should be reviewed
+    run_command([CHMOD, '755', UPSSCHED_CMD])
+
+
 def configure_nut(config):
     """
     Top level nut config function.
@@ -153,6 +181,7 @@ def configure_nut(config):
         # the files as is are left as root.nut owner group so:-
         # os.chmod(config_file, 0644)
         run_command([CHMOD, '640', config_file])
+    config_upssched()
 
 
 def pre_process_nut_config(config):
@@ -204,16 +233,10 @@ def pre_process_nut_config(config):
     else:
         config['LISTEN'] = 'localhost'
 
-    # set the notify command to user the build in scheduler
+    # set the notify command to use NUT's built in scheduler
     # upsmon ---> calls nut's upssched ---> calls our CMDSCRIPT
+    # see config_upssched()
     config['NOTIFYCMD'] = UPSSCHED
-
-    # now configure nuts upssched.conf
-    # todo - insert  CMDSCRIPT, PIPEFN, LOCKFN
-    # todo - sort out our base at commands to control
-
-    # finally for the notification chain setup out CMDSCRIPT
-    # todo - sort out emailing from this script
 
     # setup the response type for notifications ie NOTIFYFLAG <EVENT> <TYPE>
     # all events are listed in NOTIFY_EVENTS, types are SYSLOG WALL EXEC
