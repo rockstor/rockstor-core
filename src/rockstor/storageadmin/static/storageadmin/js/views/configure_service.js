@@ -241,7 +241,7 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
         this.$('#nut-form #port').tooltip({
             html: true,
             placement: 'right',
-            title: 'Device name for how this UPS is connected. Ie for the first serial port use "/dev/ttyS0". Use "auto" if using USB.'
+            title: 'Device name for how this UPS is connected. E.g for the first serial port use "/dev/ttyS0" or if using a USB to serial port adapter then "/dev/ttyUSB0". Use "auto" if connected direct via USB.'
         });
 
         this.validator = this.$('#' + this.formName).validate({
