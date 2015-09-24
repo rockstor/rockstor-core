@@ -1,12 +1,13 @@
-<% if (sambaShareId!=null) { %>
-  <h3>Edit Samba export for <%= smbShare.get('share') %></h3>
-<% } else {%>
-<h3>Add Samba export</h3>
-<% } %>
 <div class="row">
   <div class="col-md-8">
-    <label class="control-label"></label>
-    <div class="form-box">
+  <div class="panel panel-default">
+<% if (sambaShareId!=null) { %>
+  <div class="panel-heading">Edit Samba export for <strong><%= smbShare.get('share') %></strong></div>
+<% } else {%>
+<div class="panel-heading">Add Samba export</div>
+<% } %>
+
+    <div class="panel-body">
       <form class="form-horizontal" id="add-samba-export-form" name="aform">
         <div class="messages"></div>
 
@@ -22,9 +23,7 @@
               <option value="<%= share.get('name') %>" > <%= share.get('name') %></option>
             <% }); %>
             </select>
-          <% } else { %>
-            <h4>Edit Samba Export for share: <strong><%= smbShare.get('share') %></strong></h4>
-          <% } %>
+          <% } else {} %>
           </div>
         </div>
 
@@ -179,9 +178,10 @@
         </div>
 
       </form>
-    </div>
-  </div>
-</div>
+    </div><!--panel-body-->
+  </div><!--panel-default-->
+</div><!--col-md-8-->
+</div><!--row-->
 
 
 <div id="shadow-copy-info-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
