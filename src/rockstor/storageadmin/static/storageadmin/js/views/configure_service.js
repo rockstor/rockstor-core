@@ -307,6 +307,7 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
 
     toggleNutFields: function () {
         if (this.$('#mode').val() == 'standalone') {
+	    this.$('#monitor-mode').show();
             this.$('#upsmon').attr('value', 'master');
             this.$('#upsmon').attr('disabled', 'true');
             this.$('#upsname').attr('value', 'ups');
@@ -320,7 +321,8 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
             this.$('#nutuser').removeAttr('disabled');
             this.$('#password').removeAttr('disabled');
         } else if (this.$('#mode').val() == 'netserver') {
-            this.$('#upsmon').removeAttr('disabled');
+	    this.$('#monitor-mode').hide();
+            // this.$('#upsmon').removeAttr('disabled');
             this.$('#upsname').removeAttr('disabled');
             this.$('#desc').removeAttr('disabled');
             this.$('#nutserver').attr('value', 'localhost');
@@ -330,17 +332,18 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
             this.$('#nutuser').removeAttr('disabled');
             this.$('#password').removeAttr('disabled');
         } else { // probably has value of netclient or unknown
-            this.$('#upsmon').attr('value', 'slave');
-            this.$('#upsmon').attr('disabled', 'true');
-            this.$('#upsname').removeAttr('disabled');
-            this.$('#desc').removeAttr('disabled');
-            this.$('#driver').attr('value', 'nutclient');
-            this.$('#driver').attr('disabled', 'true');
-            this.$('#port').attr('value', 'auto');
-            this.$('#port').attr('disabled', 'true');
-            this.$('#nutserver').removeAttr('disabled');
-            this.$('#nutuser').removeAttr('disabled');
-            this.$('#password').removeAttr('disabled');
+	    this.$('#monitor-mode').hide();
+            // this.$('#upsmon').attr('value', 'slave');
+            // this.$('#upsmon').attr('disabled', 'true');
+            // this.$('#upsname').removeAttr('disabled');
+            // this.$('#desc').removeAttr('disabled');
+            // this.$('#driver').attr('value', 'nutclient');
+            // this.$('#driver').attr('disabled', 'true');
+            // this.$('#port').attr('value', 'auto');
+            // this.$('#port').attr('disabled', 'true');
+            // this.$('#nutserver').removeAttr('disabled');
+            // this.$('#nutuser').removeAttr('disabled');
+            // this.$('#password').removeAttr('disabled');
         }
     },
 
