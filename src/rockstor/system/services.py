@@ -16,7 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-
 import re
 from django.conf import settings
 from osi import run_command
@@ -37,8 +36,18 @@ AFP_CONFIG = '/etc/netatalk/afp.conf'
 
 
 def init_service_op(service_name, command, throw=True):
+    """
+    Wrapper for run_command calling systemctl, hardwired filter on service_name
+    and will raise Exception on failed match. Enables run_command exceptions
+    by default.
+    :param service_name:
+    :param command:
+    :param throw:
+    :return: out err rc
+    """
     supported_services = ('nfs', 'smb', 'sshd', 'ypbind', 'rpcbind', 'ntpd',
-                          'winbind', 'nslcd', 'netatalk', 'snmpd', 'docker', 'smartd')
+                          'winbind', 'nslcd', 'netatalk', 'snmpd', 'docker',
+                          'smartd', 'nut-server')
     if (service_name not in supported_services):
         raise Exception('unknown service: %s' % service_name)
 
@@ -54,6 +63,15 @@ def systemctl(service_name, switch):
 
 
 def set_autostart(service, switch):
+    """
+    Configure autostart setting for supervisord managed services eg:-
+    nginx, gunicorn, smart_manager daemon, replication daemon, data-collector,
+    and ztask-daemon. Works by rewriting autostart lines in  SUPERVISORD_CONF
+    http://supervisord.org/
+    :param service:
+    :param switch:
+    :return:
+    """
     switch_map = {'start': 'true',
                   'stop': 'false'}
     if (switch not in switch_map):
@@ -79,7 +97,6 @@ def set_autostart(service, switch):
     move(npath, SUPERVISORD_CONF)
 
 
-
 def superctl(service, switch):
     out, err, rc = run_command([SUPERCTL_BIN, switch, service])
     set_autostart(service, switch)
@@ -91,6 +108,14 @@ def superctl(service, switch):
 
 
 def service_status(service_name):
+    """
+    Service status of either systemd or supervisord managed services.
+    Hardwired to identify controlling system by service name and uses one of
+    systemctrl, init_service_op, or superctl to assess status accordingly.
+    Note some sanity checks for some services.
+    :param service_name:
+    :return:
+    """
     if (service_name == 'nis' or service_name == 'nfs'):
         out, err, rc = init_service_op('rpcbind', 'status', throw=False)
         if (rc != 0):
@@ -108,7 +133,7 @@ def service_status(service_name):
         with open(SSHD_CONFIG) as sfo:
             for line in sfo.readlines():
                 if (re.match("Subsystem\tsftp\tinternal-sftp", line) is not
-                    None):
+                        None):
                     return out, err, rc
             return out, err, -1
     elif (service_name == 'replication' or
@@ -122,6 +147,15 @@ def service_status(service_name):
         if (rc != 0):
             return out, err, rc
         return run_command([SYSTEMCTL_BIN, 'status', 'nmb'], throw=False)
+    elif (service_name == 'nut'):
+        # may need nut-driver in here also but start with nut-monitor at least
+        # as minimum required for net-client function.
+        # might be nicer to use init_service_op on these sys calls
+        out, err, rc = run_command([SYSTEMCTL_BIN, 'status', 'nut-monitor'],
+                                   throw=False)
+        if (rc !=0):
+            return out, err, rc
+        return run_command([SYSTEMCTL_BIN, 'status', 'nut-server'], throw=False)
     return init_service_op(service_name, 'status', throw=False)
 
 
@@ -156,7 +190,7 @@ def winbind_input(config, command):
 def join_winbind_domain(username, passwd):
     up = '%s%%%s' % (username, passwd)
     cmd = [NET, 'ads', 'join', '-U', up, '--request-timeout', '30']
-    out, err, rc = run_command(cmd, throw=False,)
+    out, err, rc = run_command(cmd, throw=False, )
     if (rc != 0):
         error = ('Below error can occur due to DNS issue. Ensure '
                  'that /etc/resolv.conf on Rockstor is pointing to '
@@ -214,7 +248,7 @@ def refresh_afp_config(afpl):
         rockstor_section = False
         for line in afo.readlines():
             if (re.match(';####BEGIN: Rockstor AFP CONFIG####', line)
-                is not None):
+                    is not None):
                 rockstor_section = True
                 rockstor_afp_config(tfo, afpl)
                 break

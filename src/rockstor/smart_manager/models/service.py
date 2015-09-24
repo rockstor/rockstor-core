@@ -45,10 +45,6 @@ class ServiceStatus(models.Model):
         return self.service.name
 
     @property
-    def config(self, *args, **kwargs):
-        return self.service.config
-
-    @property
     def display_name(self, *args, **kwargs):
         return self.service.display_name
 

@@ -1,0 +1,53 @@
+#!/bin/sh
+#
+# This script should be called by upssched via the CMDSCRIPT directive.
+#
+# This script may be replaced with another program without harm.
+#
+# The first argument passed to your CMDSCRIPT is the name of the timer
+# from your AT lines.
+#
+# N.B. The $NOTIFYTYPE can be misleading so best to stick to AT event names
+
+case $1 in
+    	no-comms)
+                logger -t upssched-cmd "UPS no comms event triggered."
+                ;;
+        comms-bad)
+                logger -t upssched-cmd "UPS comms bad state exceeded timer value."
+                ;;
+        comms-ok)
+                logger -t upssched-cmd "UPS comms OK for at least timer value."
+                ;;
+        on-batt)
+                logger -t upssched-cmd "UPS On Battery state exceeded timer value."
+                ;;
+        on-mains)
+                logger -t upssched-cmd "UPS mains power has returned."
+                ;;
+        early-shutdown)
+                logger -t upssched-cmd "UPS On Battery state exceeded early Shutdown timer value."
+                /usr/sbin/upsmon -c fsd
+                ;;
+        forced-shutdown)
+                logger -t upssched-cmd "UPS force shutdown has been executed (ie upsmon -c fsd)."
+                ;;
+        shutdown)
+                logger -t upssched-cmd "UPS - shutdown in progress."
+                ;;
+        low-batt)
+                logger -t upssched-cmd "UPS Low Battery Warning."
+                ;;
+        replace-batt)
+                logger -t upssched-cmd "UPS Replace Battery Warning."
+                ;;
+        *)
+          	logger -t upssched-cmd "UPS Unrecognized event: $1"
+                ;;
+esac
+
+# email root with the AT event name irrespective
+echo "$UPSNAME tripped $1 timer or event filter" | mail -s "Rockstor NUT notification" root@localhost
+
+
+
