@@ -1,12 +1,18 @@
 <% if (taskDefId == null) { %>
+<div class="row">
   <div class="form-group">
-    <label class="control-label" for="pool">Pool to scrub<span class="required"> *</span></label>
-    <div class="controls">
-      <select class="col-md-4" id="pool" name="meta.pool">
+    <label class="control-label col-md-4" for="pool">Pool to scrub<span class="required"> *</span></label>
+</div>
+</div>
+<div class="row">
+<div class="form-group">
+    <div class="col-md-4">
+      <select class="form-control" id="pool" name="meta.pool">
         <% pools.each(function(pool, index) { %>
           <option value="<%= pool.get('name') %>"> <%= pool.get('name') %> </option>
-        <% }); %> 
+        <% }); %>
       </select>
-    </div>
-  </div>
+    </div><!--col-md-4-->
+  </div><!--form-group-->
+</div><!--row -->
 <% } %>

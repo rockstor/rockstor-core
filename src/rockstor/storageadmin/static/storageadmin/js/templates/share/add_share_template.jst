@@ -19,76 +19,80 @@
  */
 </script>
 
-
-<h3>Create Share</h3>
-<label class="control-label"></label>
-<div class="form-box">
-  <form class="form-horizontal" id="add-share-form">
-    <div class="messages"></div>
-    <div class="form-group">
-      <label for="share_name" class="col-sm-2 control-label">Name</label>
-      <div class="col-sm-3">
-        <input class="form-control" type="text" name="share_name" id="share_name" title="Name of the Share must start with a letter(a-z) and can be followed by any of the following characters: letter(a-z), digits(0-9), hyphen(-), underscore(_) or a period(.).">
+<!-- Testing Bootstrap Panel Layout -->
+  <div class="row">
+  <div class="col-md-8">
+  <div class="panel panel-default">
+  <div class="panel-heading">Create Share</div>
+  <div class="panel-body">
+    <form class="form-horizontal" id="add-share-form">
+      <div class="messages"></div>
+      <div class="form-group">
+        <label for="share_name" class="col-sm-4 control-label">Name</label>
+        <div class="col-sm-6">
+          <input class="form-control" type="text" name="share_name" id="share_name" title="Name of the Share must start with a letter(a-z) and can be followed by any of the following characters: letter(a-z), digits(0-9), hyphen(-), underscore(_) or a period(.).">
+        </div>
       </div>
-    </div>
-    <div class="form-group">
-      <label for="pool_name" class="col-xs-2 control-label">Pool <span class="required">*</span></label>
-      <div class="col-sm-3">
-        <select class="form-control" id="pool_name" name="pool_name" title="Select pool the share should belong to">
-	  <% if(poolName == ''){%>
-          <% pools.each(function(pool, index) { %>
-          <% if (index > 0) { %>
-          <option value="<%= pool.get('name') %>"> <%= pool.get('name') %> </option>
-          <% } else{ %>
-          <option value="<%= pool.get('name') %>" selected="selected"> <%= pool.get('name') %> </option>
-          <% } %>
-          <% }); %>
-	  <%} else { %>
-          <% pools.each(function(pool, index) { %>
-          <% if (index >= 0) { %>
-          <% if(poolName != pool.get('name')){ %>
-          <option value="<%= pool.get('name') %>"> <%= pool.get('name') %> </option>
-          <% }else{ %>
-          <option value="<%= pool.get('name') %>" selected="selected"> <%= pool.get('name') %> </option>
-          <% } %>
-          <% } %>
-          <% }); %>
-	  <% } %>
-        </select>
+      <div class="form-group">
+        <label for="pool_name" class="col-xs-4 control-label">Pool <span class="required">*</span></label>
+        <div class="col-sm-6">
+          <select class="form-control" id="pool_name" name="pool_name" title="Select pool the share should belong to">
+  	  <% if(poolName == ''){%>
+            <% pools.each(function(pool, index) { %>
+            <% if (index > 0) { %>
+            <option value="<%= pool.get('name') %>"> <%= pool.get('name') %> </option>
+            <% } else{ %>
+            <option value="<%= pool.get('name') %>" selected="selected"> <%= pool.get('name') %> </option>
+            <% } %>
+            <% }); %>
+  	  <%} else { %>
+            <% pools.each(function(pool, index) { %>
+            <% if (index >= 0) { %>
+            <% if(poolName != pool.get('name')){ %>
+            <option value="<%= pool.get('name') %>"> <%= pool.get('name') %> </option>
+            <% }else{ %>
+            <option value="<%= pool.get('name') %>" selected="selected"> <%= pool.get('name') %> </option>
+            <% } %>
+            <% } %>
+            <% }); %>
+  	  <% } %>
+          </select>
+        </div>
       </div>
-    </div>
-    <div class="form-group">
-      <label class="col-xs-2 control-label" for="compression">Compression</label>
-      <div class="col-sm-3">
-        <select class="form-control" id="compression" name="compression">
-          <option value="no">Inherit from pool wide configuration</option>
-          <option value="zlib">zlib</option>
-          <option value="lzo">lzo</option>
-        </select>
+      <div class="form-group">
+        <label class="col-xs-4 control-label" for="compression">Compression</label>
+        <div class="col-sm-6">
+          <select class="form-control" id="compression" name="compression">
+            <option value="no">Inherit from pool wide configuration</option>
+            <option value="zlib">zlib</option>
+            <option value="lzo">lzo</option>
+          </select>
+        </div>
       </div>
-    </div>
-    <div class="form-group">
-      <label class="col-xs-2 control-label" for="share_size">Size<span class="required"> *</span></label>
-      <div class="col-xs-10">
-        <div id="slider" class="control-label" style="width: 400px;"></div>
-        <input type="text" style="margin-top: 16px;" class="col-md-2" name="share_size" id="share_size" title="Enter share size in GB or TB">
+      <div class="form-group">
+        <label class="col-xs-4 control-label" for="share_size">Size<span class="required"> *</span></label>
+        <div class="col-xs-8">
+          <div id="slider" class="control-label" style="width: 400px;"></div>
+          <input type="text" style="margin-top: 16px;" class="col-md-2" name="share_size" id="share_size" title="Enter share size in GB or TB">
+        </div>
       </div>
-    </div>
-    <div class="form-group">
-      <div class="col-xs-12 col-xs-offset-2">
-        <div style="width: 15px; height: 15px; float: left" class="slider-legend-free"></div> <div>&nbsp;<span id="legend-free-num"></span>&nbsp;Space that is completely free and unprovisioned</div>
-        <br>
-        <div style="width: 15px; height: 15px; float: left" class="slider-legend-reclaimable"></div> <div>&nbsp;<span id="legend-reclaimable-num"></span>Space that is provisioned for other shares, but currently free</div>
-        <br>
-        <div style="width: 15px; height: 15px; float: left" class="slider-legend-used"> </div><div>&nbsp;<span id="legend-used-num"></span>Space that is provisioned for other shares and is in use</div>
+      <div class="form-group">
+        <div class="col-xs-8 col-xs-offset-4">
+          <div style="width: 15px; height: 15px; float: left" class="slider-legend-free"></div> <div>&nbsp;<span id="legend-free-num"></span>&nbsp;Space that is completely free and unprovisioned</div>
+          <br>
+          <div style="width: 15px; height: 15px; float: left" class="slider-legend-reclaimable"></div> <div>&nbsp;<span id="legend-reclaimable-num"></span>Space that is provisioned for other shares, but currently free</div>
+          <br>
+          <div style="width: 15px; height: 15px; float: left" class="slider-legend-used"> </div><div>&nbsp;<span id="legend-used-num"></span>Space that is provisioned for other shares and is in use</div>
+        </div>
       </div>
-    </div>
-    <div class="form-group">
-      <div class="col-xs-10 col-xs-offset-2">
-        <a id="js-cancel" class="btn btn-default">Cancel</a>
-        <input type="Submit" id="create_share" class="btn btn-primary" value="Submit"></input>
+      <div class="form-group">
+        <div class="col-xs-6 col-xs-offset-4">
+          <a id="js-cancel" class="btn btn-default">Cancel</a>
+          <input type="Submit" id="create_share" class="btn btn-primary" value="Submit"></input>
+        </div>
       </div>
-    </div>
-  </form>
-</div> <!-- form-box -->
-
+</div><!--panel-body-->
+    </form>
+  </div> <!-- panel closing -->
+</div>
+</div>
