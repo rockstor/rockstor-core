@@ -139,7 +139,11 @@ $(document).ready(function() {
 	    <div class="col-sm-offset-4 col-sm-6">
 	      <div class="checkbox">
 		<label>
+		  <% if (taskDef.visible()) { %>
 		  <input class="checkbox" type="checkbox" checked="true" id="visible" name="meta.visible" title="Make snapshots visible to the end user"> Make snapshots visible?
+		  <% } else { %>
+		  <input class="checkbox" type="checkbox" id="visible" name="meta.visible" title="Make snapshots visible to the end user"> Make snapshots visible?
+		  <% } %>
 		</label>
 	      </div>
 	    </div>

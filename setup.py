@@ -51,6 +51,7 @@ setup(
             'flash-optimize = scripts.flash_optimize:main',
             'st-snapshot = scripts.scheduled_tasks.snapshot:main',
             'st-pool-scrub = scripts.scheduled_tasks.pool_scrub:main',
+            'delete-api-key = scripts.delete_api_key:main',
         ],
     },
 
