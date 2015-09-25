@@ -25,9 +25,7 @@ from rest_framework.response import Response
 from storageadmin.models import (NetworkInterface, Appliance)
 from storageadmin.util import handle_exception
 from storageadmin.serializers import NetworkInterfaceSerializer
-from system.osi import (config_network_device, network_devices, get_net_config,
-                        restart_network_interface, get_default_interface,
-                        update_issue)
+from system.osi import (config_network_device, get_net_config, update_issue)
 from system.samba import update_samba_discovery
 from system.services import superctl
 import rest_framework_custom as rfc
