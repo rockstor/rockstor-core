@@ -148,14 +148,11 @@ def service_status(service_name):
             return out, err, rc
         return run_command([SYSTEMCTL_BIN, 'status', 'nmb'], throw=False)
     elif (service_name == 'nut'):
-        # may need nut-driver in here also but start with nut-monitor at least
-        # as minimum required for net-client function.
-        # might be nicer to use init_service_op on these sys calls
-        out, err, rc = run_command([SYSTEMCTL_BIN, 'status', 'nut-monitor'],
+        # Establish if nut is running by lowest common denominator nut-monitor
+        # In netclient mode it is all that is required, however we don't then
+        # reflect the state of the other services of nut-server and nut-driver.
+        return run_command([SYSTEMCTL_BIN, 'status', 'nut-monitor'],
                                    throw=False)
-        if (rc !=0):
-            return out, err, rc
-        return run_command([SYSTEMCTL_BIN, 'status', 'nut-server'], throw=False)
     return init_service_op(service_name, 'status', throw=False)
 
 
