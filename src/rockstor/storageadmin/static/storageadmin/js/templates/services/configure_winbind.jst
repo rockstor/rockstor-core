@@ -19,29 +19,30 @@
   */
 </script>
 
-<h3>Configure <%= service.get('display_name') %></h3>
-
 <div class="row">
   <div class="col-md-8">
-    <label class="control-label"></label>
-    <div class="form-box">
-      <form id="winbind-form" name="aform">
+    <div class="panel panel-default">
+
+<div class="panel-heading">Configure <%= service.get('display_name') %></div>
+
+  <div class="panel-body">
+      <form class="form-horizontal" id="winbind-form" name="aform">
         <div class="messages"></div>
-        
+
         <!-- Winbind Domain -->
         <div class="form-group">
-          <label class="control-label" for="domain">Winbind Domain<span class="required"> *</span></label>
-          <div class="controls">
-            <input class="form-control shorten-input" type="text" id="domain" name="domain" value="<%= config.domain %>" placeholder="Domain" >
+          <label class="col-sm-4 control-label" for="domain">Winbind Domain<span class="required"> *</span></label>
+          <div class="col-sm-4">
+            <input class="form-control" type="text" id="domain" name="domain" value="<%= config.domain %>" placeholder="Domain" >
           </div>
         </div>
 
         <!-- Security model -->
         <% var securityTypes = ['ads','domain','server','user']; %>
         <div class="form-group">
-          <label class="control-label" for="security">Security Model<span class="required"> *</span></label>
-          <div class="controls">
-            <select class="form-control shorten-input" id="security" name="security">
+          <label class="col-sm-4 control-label" for="security">Security Model<span class="required"> *</span></label>
+          <div class="col-sm-4">
+            <select class="form-control" id="security" name="security">
               <% _.each(securityTypes, function(security, index) { %>
                 <% if (security == config.security) { %>
                   <option value="<%= security %>" selected="selected">
@@ -56,34 +57,34 @@
 
         <!-- Winbind ADS Realm -->
         <div class="form-group">
-          <label class="control-label" for="realm">Winbind ADS Realm<span class="required"> * </span></label>
-          <div class="controls">
+          <label class="col-sm-4 control-label" for="realm">Winbind ADS Realm<span class="required"> * </span></label>
+          <div class="col-sm-4">
             <% if (config.security == 'ads' || _.isNull(config.security) || _.isUndefined(config.security) ) { %>
-              <input class="form-control shorten-input"type="text" id="realm" name="realm"
+              <input class="form-control"type="text" id="realm" name="realm"
               value="<%= config.realm %>" placeholder="Realm">
             <% } else { %>
-              <input class="form-control shorten-input" type="text" id="realm" name="realm"
+              <input class="form-control" type="text" id="realm" name="realm"
               disabled="true" value="<%= config.realm %>"
               placeholder="Winbind ADS Realm" >
             <% } %>
           </div>
         </div>
-        
+
         <!-- Winbind Domain Controllers -->
         <div class="form-group">
-          <label class="control-label" for="controllers">Winbind Domain Controllers<span class="required"> *</span></label>
-          <div class="controls">
-            <input class="form-control shorten-input" type="text" id="controllers" name="controllers" value="<%= config.controllers %>" placeholder="Controllers">
+          <label class="col-sm-4 control-label" for="controllers">Winbind Domain Controllers<span class="required"> *</span></label>
+          <div class="col-sm-4 ">
+            <input class="form-control" type="text" id="controllers" name="controllers" value="<%= config.controllers %>" placeholder="Controllers">
           </div>
         </div>
 
         <!-- Template Shell -->
         <% var templateShells = ['/bin/false', '/bin/sh', '/bin/bash', '/bin/nologin', '/bin/tcsh', '/bin/csh']; %>
         <div class="form-group">
-          <label class="control-label" for="templateshell">Template Shell<span class="required"> *</span></label>
-          <div class="controls">
+          <label class="col-sm-4 control-label" for="templateshell">Template Shell<span class="required"> *</span></label>
+          <div class="col-sm-4 ">
             <% if (config.security == 'ads' || config.security == 'domain' || _.isNull(config.security) || _.isUndefined(config.security))  { %>
-              <select class="form-control shorten-input" id="templateshell" name="templateshell">
+              <select class="form-control" id="templateshell" name="templateshell">
                 <% _.each(templateShells, function(shell, index) { %>
                   <% if (shell == config.shell) { %>
                     <option value="<%= shell %>" selected="selected">
@@ -111,16 +112,22 @@
         <!-- Offline login -->
         <div class="form-group">
             <% if (config.allow_offline) { %>
-              <input type="checkbox" name="allow-offline" id="allow-offline"
+              <label class="control-label col-sm-4" for="offline-login"></label>
+              <div class="col-sm-4">
+                <input type="checkbox" name="allow-offline" id="allow-offline"
               checked="true">
+            </div>
             <% } else { %>
-              <input type="checkbox" name="allow-offline" id="allow-offline">
+              <label class="control-label col-sm-4" for="offline-login"></label>
+              <div class="col-sm-4">
+                <input type="checkbox" name="allow-offline" id="allow-offline">
             <% } %> Allow Offline login?
+              </div>  
         </div>
 
         <!-- Submit -->
         <div class="form-group">
-          <div class="controls">
+          <div class="col-sm-8 col-sm-offset-4">
             <button id="cancel" class="btn btn-default">Cancel</button>
             <button type="Submit" id="submit" class="btn btn-primary">Submit</button>
           </div>
@@ -128,8 +135,7 @@
 
       </form>
 
-    </div> <!-- form-box -->
+    </div> <!-- panel-body -->
+  </div><!--panel-default-->
   </div> <!-- col-md-8 -->
 </div> <!-- row -->
-
-
