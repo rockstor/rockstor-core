@@ -433,14 +433,19 @@ def get_net_config(all=False, name=None):
     if (all):
         o, e, rc = run_command([NMCLI, '-t', 'd', 'show'])
         devices = []
+        config = {}
         for i in range(len(o)):
             if (re.match('GENERAL.DEVICE:', o[i]) is not None and
                 re.match('GENERAL.TYPE:', o[i+1]) is not None and
                 o[i+1].strip().split(':')[1] == 'ethernet'):
-                devices.append(o[i].strip().split(':')[1])
-        config = {}
-        for d in devices:
-            config[d] = net_config_helper(d)
+                dname = o[i].strip().split(':')[1]
+                config[dname] = {'dname': dname,
+                                 'mac': o[i+2].strip().split('GENERAL.HWADDR:')[1],
+                                 'name': o[i+5].strip().split('GENERAL.CONNECTION:')[1],}
+        for device in config:
+            config[device].update(net_config_helper(config[device]['name']))
+            if (config[device]['name'] == '--'):
+                config[device]['name'] = device
         return config
     return {name: net_config_helper(name),}
 
