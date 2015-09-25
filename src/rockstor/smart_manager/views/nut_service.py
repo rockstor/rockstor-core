@@ -39,17 +39,22 @@ class NUTServiceView(BaseServiceDetailView):
 
     @staticmethod
     def _switch_nut(switch, config):
-        if (switch == 'start'):
+        logger.info('CONTENTS OF CONFIG DICT = %s' % config)
+        if switch == 'start':
             # should maybe use init_service_op here but both throw=true
             # todo change to only start nut-monitor when in netclient mode
-            systemctl('nut-server', 'enable')
-            systemctl('nut-server', 'reload-or-restart')
-            if (config.mode == 'netclient'):
-                systemctl('nut-monitor', 'enable')
-                systemctl('nut-monitor', 'reload-or-restart')
-        else:
-            if (config.mode == 'netclient'):
-                systemctl('nut-monitor', 'disable')
-                systemctl('nut-monitor', 'stop')
+            if config['mode'] == 'netclient':
+                systemctl('nut-server', 'disable')
+                systemctl('nut-server', 'stop')
+            else:  # presumably starting in standalone or netserver mode
+                systemctl('nut-server', 'enable')
+                systemctl('nut-server', 'start')
+            # in all three modes we always enable and reload nut-monitor
+            systemctl('nut-monitor', 'enable')
+            systemctl('nut-monitor', 'reload-or-restart')
+        else:  # disable and stop monitor and server regardless of mode
+            # just as well as config may have changed.
+            systemctl('nut-monitor', 'disable')
+            systemctl('nut-monitor', 'stop')
             systemctl('nut-server', 'disable')
             systemctl('nut-server', 'stop')
