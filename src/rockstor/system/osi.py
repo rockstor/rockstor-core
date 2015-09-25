@@ -39,12 +39,6 @@ EXPORTFS = '/usr/sbin/exportfs'
 RESTART = '/sbin/restart'
 SERVICE = '/sbin/service'
 HOSTID = '/usr/bin/hostid'
-IFCONFIG = '/sbin/ifconfig'
-LVS = '/sbin/lvs'
-VGS = '/sbin/vgs'
-IFUP = '/sbin/ifup'
-IFDOWN = '/sbin/ifdown'
-ROUTE = '/sbin/route'
 DEFAULT_MNT_DIR = '/mnt2/'
 SHUTDOWN = '/usr/sbin/shutdown'
 GRUBBY = '/usr/sbin/grubby'
@@ -203,92 +197,6 @@ def hostid():
     return run_command([HOSTID])
 
 
-def restart_network():
-    """
-    restart network service
-    """
-    cmd = [SERVICE, 'network', 'restart']
-    return run_command(cmd)
-
-
-def restart_network_interface(iname):
-    """
-    ifdown followed by ifup of a ethernet interface
-    """
-    run_command([IFDOWN, iname])
-    return run_command([IFUP, iname])
-
-
-def network_devices():
-    """
-    return all network devices on the system. @todo: this logic needs to mature
-    over all.
-    """
-    ifpath = '/sys/class/net'
-    devices = []
-    dvirt = os.path.join(ifpath, 'docker0')
-    docker = False
-    if (os.path.exists(dvirt)):
-        docker = True
-    for n in os.listdir(ifpath):
-        fp = os.path.join(ifpath, n)
-        if (os.path.isdir(fp)):
-            #ignore files. nic bonding creates a file called bonding_masters,
-            #for example.
-
-            #ignore loopback device
-            #ignore docker virt interface
-            if (n == 'lo'):
-                continue
-            if (n == 'docker0'):
-                continue
-
-            #ignore all docker virt interfaces.
-            master = os.path.join(fp, 'master')
-            if (os.path.exists(master) and
-                docker is True and
-                os.path.samefile(master, dvirt)):
-                continue
-
-            devices.append(n)
-    return devices
-
-
-def get_mac_addr(interface):
-    """
-    return the mac address of the given interface
-    """
-    ifile = ('/sys/class/net/%s/address' % interface)
-    with open(ifile) as ifo:
-        return ifo.readline().strip()
-
-
-def get_default_interface():
-    """
-    returns the interface configured with default gateway
-    """
-    out, err, rc = run_command([ROUTE])
-    for line in out:
-        fields = line.split()
-        if (len(fields) > 0 and fields[0] == 'default'):
-            return fields[-1]
-    return None
-
-
-def get_ip_addr(interface):
-    """
-    useful when the interface gets ip from a dhcp server
-    """
-    out, err, rc = run_command([IFCONFIG, interface])
-    if (len(out) > 1):
-        line2 = out[1].strip()
-        if (re.match('inet ', line2) is not None):
-            fields = line2.split()
-            if (len(fields) > 1):
-                return line2.split()[1]
-    return '0.0.0.0'
-
-
 def config_network_device(name, dtype='ethernet', method='auto', ipaddr=None,
                           netmask=None, autoconnect='yes', gateway=None,
                           dns_servers=None):
@@ -318,44 +226,6 @@ def config_network_device(name, dtype='ethernet', method='auto', ipaddr=None,
             mod_cmd.extend(['connection.autoconnect', 'no'])
         run_command(mod_cmd)
 
-
-def char_strip(line, char='"'):
-    if (line[0] == char and line[-1] == char):
-        return line[1:-1]
-    return line
-
-
-def parse_ifcfg(config_file, config_d):
-    try:
-        with open(config_file) as cfo:
-            dns_servers = []
-            for l in cfo.readlines():
-                if (re.match('BOOTPROTO', l) is not None):
-                    config_d['bootproto'] = char_strip(l.strip().split('=')[1])
-                elif (re.match('ONBOOT', l) is not None):
-                    config_d['onboot'] = char_strip(l.strip().split('=')[1])
-                elif (re.match('IPADDR', l) is not None):
-                    config_d['ipaddr'] = char_strip(l.strip().split('=')[1])
-                elif (re.match('NETMASK', l) is not None):
-                    config_d['netmask'] = char_strip(l.strip().split('=')[1])
-                elif (re.match('NETWORK', l) is not None):
-                    config_d['network'] = char_strip(l.strip().split('=')[1])
-                elif (re.match('NAME', l) is not None):
-                    config_d['alias'] = char_strip(l.strip().split('=')[1])
-                elif (re.match('GATEWAY', l) is not None):
-                    config_d['gateway'] = char_strip(l.strip().split('=')[1])
-                elif (re.match('DNS', l) is not None):
-                    dns_servers.append(char_strip(l.strip().split('=')[1]))
-                elif (re.match('DOMAIN', l) is not None):
-                    config_d['domain'] = char_strip(l.strip().split('=')[1])
-            if (len(dns_servers) > 0):
-                config_d['dns_servers'] = ','.join(dns_servers)
-    except:
-        pass
-    finally:
-        if (config_d['bootproto'] != 'static'):
-            config_d['ipaddr'] = get_ip_addr(config_d['name'])
-        return config_d
 
 def convert_netmask(bits):
     #convert netmask bits into ip representation
@@ -433,29 +303,21 @@ def get_net_config(all=False, name=None):
     if (all):
         o, e, rc = run_command([NMCLI, '-t', 'd', 'show'])
         devices = []
+        config = {}
         for i in range(len(o)):
             if (re.match('GENERAL.DEVICE:', o[i]) is not None and
                 re.match('GENERAL.TYPE:', o[i+1]) is not None and
                 o[i+1].strip().split(':')[1] == 'ethernet'):
-                devices.append(o[i].strip().split(':')[1])
-        config = {}
-        for d in devices:
-            config[d] = net_config_helper(d)
+                dname = o[i].strip().split(':')[1]
+                config[dname] = {'dname': dname,
+                                 'mac': o[i+2].strip().split('GENERAL.HWADDR:')[1],
+                                 'name': o[i+5].strip().split('GENERAL.CONNECTION:')[1],}
+        for device in config:
+            config[device].update(net_config_helper(config[device]['name']))
+            if (config[device]['name'] == '--'):
+                config[device]['name'] = device
         return config
     return {name: net_config_helper(name),}
-
-
-def set_networking(hostname, default_gw):
-    with open('/etc/sysconfig/network', 'w') as nfo:
-        nfo.write('NETWORKING=yes\n')
-        nfo.write('HOSTNAME=%s\n' % hostname)
-        nfo.write('GATEWAY=%s\n' % default_gw)
-
-
-def set_nameservers(servers):
-    with open('/etc/resolv.conf', 'w') as rfo:
-        for s in servers:
-            rfo.write('nameserver %s\n' % s)
 
 
 def update_issue(ipaddr):

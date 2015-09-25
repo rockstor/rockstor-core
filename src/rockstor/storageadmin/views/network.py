@@ -25,9 +25,7 @@ from rest_framework.response import Response
 from storageadmin.models import (NetworkInterface, Appliance)
 from storageadmin.util import handle_exception
 from storageadmin.serializers import NetworkInterfaceSerializer
-from system.osi import (config_network_device, network_devices, get_net_config,
-                        restart_network_interface, get_default_interface,
-                        update_issue)
+from system.osi import (config_network_device, get_net_config, update_issue)
 from system.samba import update_samba_discovery
 from system.services import superctl
 import rest_framework_custom as rfc
@@ -96,18 +94,23 @@ class NetworkListView(rfc.GenericView, NetworkMixin):
                 ni = NetworkInterface.objects.get(name=dconfig['name'])
                 ni = cls._update_ni_obj(ni, dconfig)
             else:
-                ni = NetworkInterface(name=dconfig['name'],
+                ni = NetworkInterface(name=dconfig.get('name', None),
+                                      dname=dconfig.get('dname', None),
+                                      dtype=dconfig.get('dtype', None),
+                                      dspeed=dconfig.get('dspeed', None),
                                       mac=dconfig.get('mac', None),
                                       method=dconfig.get('method', None),
                                       autoconnect=dconfig.get('autoconnect', None),
                                       netmask=dconfig.get('netmask', None),
                                       ipaddr=dconfig.get('ipaddr', None),
                                       gateway=dconfig.get('gateway', None),
-                                      dns_servers=dconfig.get('dns_servers', None),)
+                                      dns_servers=dconfig.get('dns_servers', None),
+                                      ctype=dconfig.get('ctype', None),
+                                      state=dconfig.get('state', None))
             ni.save()
         devices = []
         for ni in NetworkInterface.objects.all():
-            if (ni.name not in config_d):
+            if (ni.dname not in config_d):
                 logger.debug('network interface(%s) does not exist in the '
                              'system anymore. Removing from db' % (ni.name))
                 ni.delete()
@@ -191,7 +194,7 @@ class NetworkDetailView(rfc.GenericView, NetworkMixin):
                 e_msg = ('Method must be auto(for dhcp) or manual(for static IP). not: %s' %
                          method)
                 handle_exception(Exception(e_msg), request)
-            dconfig = get_net_config(ni.name)[ni.name]
+            dconfig = get_net_config(ni.name)[ni.dname]
             ni = self._update_ni_obj(ni, dconfig)
             if (itype == 'management' and ni.itype != 'management'):
                 for i in NetworkInterface.objects.filter(itype='management'):
