@@ -21,7 +21,7 @@ from django.db import models
 
 class NetworkInterface(models.Model):
     #connection name. eg: eno1, enp4s0. same as device name
-    name = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=100, null=True)
     #device name, if any
     dname = models.CharField(max_length=100, null=True)
     #device type, eg: ethernet
@@ -31,9 +31,9 @@ class NetworkInterface(models.Model):
     #hw mac address, if any
     mac = models.CharField(max_length=100, null=True)
     #auto for dhcp and manual for static
-    method = models.CharField(max_length=64, default='auto')
+    method = models.CharField(max_length=64, null=True)
     #automatically activate, on boot etc..
-    autoconnect = models.CharField(max_length=8, default='yes')
+    autoconnect = models.CharField(max_length=8, null=True)
     #netmask in ip address format
     netmask = models.CharField(max_length=64, null=True)
     #IP address
