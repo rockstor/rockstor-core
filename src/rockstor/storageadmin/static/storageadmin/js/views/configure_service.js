@@ -236,7 +236,7 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
         this.$('#nut-form #desc').tooltip({
             html: true,
             placement: 'right',
-            title: 'Human Friendly name for this UPS device. Defaults to "Rockstor UPS Unit".'
+            title: 'Human Friendly name for this UPS device. Defaults to "Rockstor UPS".'
         });
         this.$('#nut-form #port').tooltip({
             html: true,
