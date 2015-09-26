@@ -365,3 +365,18 @@ MODEL_DEFS = {
 SSHD_HEADER = '###BEGIN: Rockstor SFTP CONFIG. DO NOT EDIT BELOW THIS LINE###'
 
 OAUTH_INTERNAL_APP = 'cliapp'
+
+# Header string to separate auto config options from rest of config file.
+# this could be generalized across all Rockstor config files, problems during
+# upgrades though
+NUT_HEADER = '###BEGIN: Rockstor NUT Config. DO NOT EDIT BELOW THIS LINE###'
+
+# The ip address for the LISTEN directive in upsd.conf when in netserver mode
+# when set to 0.0.0.0 it will accept connections from any machine.
+# default port is 3493
+# Note this might later be tied into multi lan configs ie ups monitoring on
+# admin interface for example.
+NUT_LISTEN_ON_IP = '0.0.0.0'
+
+# The command that the root part of upsmon uses to shutdown the system.
+NUT_SYSTEM_SHUTDOWNCMD = '/sbin/shutdown -h +0'

@@ -51,27 +51,16 @@ logger = logging.getLogger(__name__)
 
 CHMOD = '/usr/bin/chmod'
 CHOWN = '/usr/bin/chown'
+
 # NUT scheduler files for dealing with event / notices / action.
 # Directories as per default CentOS install to maintain SELinux compatibility.
 UPSSCHED = '/usr/sbin/upssched'
 UPSSCHED_CONF = '/etc/ups/upssched.conf'
 UPSSCHED_CMD = '/usr/bin/upssched-cmd'
 
-# The command that the root part of upsmon uses to shutdown the system.
-SHUTDOWNCMD = '/sbin/shutdown -h +0'
-
-# The ip address for the LISTEN directive in upsd.conf when in netserver mode
-# when set to 0.0.0.0 it will accept connections from any machine.
-# default port is 3493
-# Note this might later be tied into multi lan configs ie ups monitoring on
-# admin interface for example.
-LISTEN_ON_IP = '0.0.0.0'
-
-# todo add a notify command akin to the shutdown entry.
-
 # CONSTANTS of file names and associated tuples (immutable lists) of accepted
 # / known options in those config files
-# in a more abstract sense these might be better as collections.namedtuples
+# These might be better as collections.namedtuples
 NUT_CONFIG = '/etc/ups/nut.conf'
 NUT_CONFIG_OPTIONS = ("MODE")
 NUT_UPS_CONFIG = '/etc/ups/ups.conf'
@@ -82,7 +71,7 @@ NUT_UPSD_CONFIG_OPTIONS = ("LISTEN", "MAXAGE")
 NUT_USERS_CONFIG = '/etc/ups/upsd.users'
 NUT_USERS_CONFIG_OPTIONS = ("nutuser", "password", "upsmon")
 NUT_MONITOR_CONFIG = '/etc/ups/upsmon.conf'
-# the following options are used in pre-processing to create the MONITOR line
+# The following options are used in pre-processing to create the MONITOR line
 # for upsmon.conf ("upsname", "nutserver", "nutuser", "password" "upsmon")
 NUT_MONITOR_CONFIG_OPTIONS = ("NOTIFYCMD", "POLLFREQ", "MONITOR", "DEADTIME",
                               "SHUTDOWNCMD", "NOTIFYFLAG ONLINE",
@@ -92,12 +81,12 @@ NUT_MONITOR_CONFIG_OPTIONS = ("NOTIFYCMD", "POLLFREQ", "MONITOR", "DEADTIME",
                               "NOTIFYFLAG SHUTDOWN", "NOTIFYFLAG REPLBATT",
                               "NOTIFYFLAG NOCOMM", "NOTIFYFLAG NOPARENT")
 
-# The events that will trigger a notify event.
+# The events that will trigger a notify action.
 NOTIFY_EVENTS = ("ONLINE", "ONBATT", "LOWBATT", "FSD", "COMMOK", "COMMBAD",
                  "SHUTDOWN", "REPLBATT", "NOCOMM", "NOPARENT")
 
-# A catch all list where we always remove lines containing the following words:
-# hack to work around only having whole word removal methods in our parser.
+# A catch all list: we always remark out lines containing the following words:
+# (hack to work around only having whole word removal methods in our parser.)
 REMARK_OUT = ("NOTIFYFLAG")
 
 # Currently we only deal with upsmon  as master or slave in a single user
@@ -124,11 +113,6 @@ nut_option_delimiter = {"LISTEN": " ", "MAXAGE": " ",
                         "NOTIFYFLAG COMMBAD": " ", "NOTIFYFLAG SHUTDOWN": " ",
                         "NOTIFYFLAG REPLBATT": " ", "NOTIFYFLAG NOCOMM": " ",
                         "NOTIFYFLAG NOPARENT": " "}
-
-# Header string to separate auto config options from rest of config file.
-# this could be generalized across all Rockstor config files, problems during
-# upgrades though
-NUT_HEADER = '###BEGIN: Rockstor NUT Config. DO NOT EDIT BELOW THIS LINE###'
 
 
 def config_upssched():
@@ -170,7 +154,8 @@ def configure_nut(config):
     for config_file, config_options in all_nut_configs.items():
         # consider parallelizing these calls by executing on it's own thread
         # should be safe as "pleasingly parallel".
-        update_config_in(config_file, config_options, REMARK_OUT, NUT_HEADER)
+        update_config_in(config_file, config_options, REMARK_OUT,
+                         settings.NUT_HEADER)
         # correct nut config file permissions from the default root rw -- --
         # without this nut services cannot access the details they require as
         # on startup nut mostly drops root privileges and runs as the nut user.
@@ -224,12 +209,12 @@ def pre_process_nut_config(config):
     config['password'] = ('"%s"' % config['password'])
     config['desc'] = ('"%s"' % config['desc'])
 
-    # set nut shutdown command to SHUTDOWNCMD wrapped in double inverted commas
-    config['SHUTDOWNCMD'] = ('"%s"' % SHUTDOWNCMD)
+    # set nut shutdown command wrapped in double inverted commas
+    config['SHUTDOWNCMD'] = ('"%s"' % settings.NUT_SYSTEM_SHUTDOWNCMD)
 
     # set nut network LISTEN to LISTEN_ON_IP when in netserver mode, else ll.
     if config['MODE'] == 'netserver':
-        config['LISTEN'] = LISTEN_ON_IP
+        config['LISTEN'] = settings.NUT_LISTEN_ON_IP
     else:
         config['LISTEN'] = 'localhost'
 
@@ -319,7 +304,7 @@ def update_config_in(config_file, config, remove_all, header):
                 break
         # All source file lines above any Rockstor header have been processed.
         # Write a fresh Rockstor header and config to end of temp file so far
-        tempFileObject.write('%s\n' % NUT_HEADER)
+        tempFileObject.write('%s\n' % settings.NUT_HEADER)
         # now write out our config including section headers which should come
         # before their subsection counterparts courtesy of pre-processing.
         for option, value in config.items():
