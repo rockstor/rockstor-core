@@ -1,0 +1,73 @@
+battery.charge: 100
+battery.charge.low: 20
+battery.charge.restart: 0
+battery.energysave: no
+battery.protection: yes
+battery.runtime: 900
+battery.type: PbAc
+device.mfr: MGE UPS SYSTEMS
+device.model: Pulsar Evolution 800
+device.serial: unknown
+device.type: ups
+driver.name: mge-shut
+driver.parameter.pollfreq: 30
+driver.parameter.pollinterval: 20
+driver.parameter.port: /dev/ttyUSB0
+driver.version: 2.6.5-Unversioned directory
+driver.version.data: MGE HID 1.31
+driver.version.internal: 0.38
+input.frequency: 49.0
+input.frequency.extended: no
+input.frequency.nominal: 50
+input.sensitivity: normal
+input.transfer.boost.low: 184
+input.transfer.high: 294
+input.transfer.low: 160
+input.transfer.trim.high: 265
+input.voltage: 232.0
+input.voltage.extended: no
+input.voltage.nominal: 230
+outlet.1.autoswitch.charge.low: 0
+outlet.1.delay.shutdown: 65535
+outlet.1.delay.start: 3
+outlet.1.desc: PowerShare Outlet 1
+outlet.1.id: 1
+outlet.1.status: on
+outlet.1.switchable: yes
+outlet.2.autoswitch.charge.low: 0
+outlet.2.delay.shutdown: 65535
+outlet.2.delay.start: 6
+outlet.2.desc: PowerShare Outlet 2
+outlet.2.id: 2
+outlet.2.status: on
+outlet.2.switchable: yes
+outlet.desc: Main Outlet
+outlet.id: 0
+outlet.switchable: no
+output.current: 1.45
+output.current.nominal: 3.48
+output.frequency: 49.0
+output.frequency.nominal: 50
+output.voltage: 232.0
+output.voltage.nominal: 230
+ups.beeper.status: enabled
+ups.delay.shutdown: 20
+ups.delay.start: 30
+ups.load: 47
+ups.mfr: MGE UPS SYSTEMS
+ups.model: Pulsar Evolution 800
+ups.power: 337
+ups.power.nominal: 800
+ups.productid: ffff
+ups.realpower.nominal: 560
+ups.serial: unknown
+ups.start.auto: no
+ups.start.battery: yes
+ups.start.reboot: yes
+ups.status: OL CHRG
+ups.test.interval: 604800
+ups.test.result: Done and passed
+ups.timer.shutdown: -1
+ups.timer.start: -10
+ups.type: offline / line interactive
+ups.vendorid: 6304
