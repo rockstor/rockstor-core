@@ -39,10 +39,8 @@ class NUTServiceView(BaseServiceDetailView):
 
     @staticmethod
     def _switch_nut(switch, config):
-        logger.info('CONTENTS OF CONFIG DICT = %s' % config)
         if switch == 'start':
-            # should maybe use init_service_op here but both throw=true
-            # todo change to only start nut-monitor when in netclient mode
+            # don't start nut-server when in netclient mode.
             if config['mode'] == 'netclient':
                 systemctl('nut-server', 'disable')
                 systemctl('nut-server', 'stop')
