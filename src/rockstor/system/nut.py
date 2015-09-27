@@ -141,10 +141,18 @@ def configure_nut(config):
     :param config: sanitized config from input form
     :return:
     """
+    # todo add a section that sanitizes input ie if empty config then throw
+    # an exception of "not configured". Also if no mode then choose "None" as
+    # we should never have no mode, so there's a problem if we are not empty
+    # config but we have no mode.
+    # Also work on original config here to sanitize what is saved in front end
+    # memory. Note that these sanitizing defaults must be consistent with what
+    # is done in storageadmin/static/storageadmin/js/views/configure_service.js
+
     # as we process / change the config we must work on a deep copy to avoid
     # breaking the front end 'memory'.
     # Note we could use a custom deepcopy to do some of our pre-processing
-    # ie the re-writing of indexes and surrounding password and desk in ""
+    # ie the re-writing of indexes and surrounding password and desc in ""
     config_copy = deepcopy(config)
 
     # pre-process the config options so we know which files to put what options
