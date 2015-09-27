@@ -146,22 +146,19 @@ def establish_config_defaults(config):
     """
     # An empty config dictionary will be false so raise exception as what else.
     if not config:
-        logger.info("WE HAVE AN EMPTY CONFIG SO THROW EXCEPTION")
+        # todo I am unsure if this is the best way to raise an exception here.
         e_msg = ('No NUT-UPS configuration found, make sure you have'
                  'configured this service properly.')
         raise Exception(e_msg)
     # if mode is present but empty then change to "none" as we should never
     # have empty mode so we can't know what it is supposed to be.
     if ('mode' in config) and (config['mode'] == ''):
-        logger.info("MODE EMPTY SO CHANGING TO NONE")
         config['mode'] = 'none'
     # if upsname is not present or is present but empty then make it "ups"
     if (('upsname' in config) and (config['upsname'] == '')) or (
                 'upsname' not in config):
-        logger.info("UPSNAME EMPTY SO ENABLE DEFAULT")
         config['upsname'] = 'ups'
     if ('nutserver' in config) and (config['nutserver'] == ''):
-        logger.info("NUTSERVER EMPTY SO ENABLE DEFAULT")
         config['nutserver'] = 'localhost'
 
 
