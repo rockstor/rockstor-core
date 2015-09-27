@@ -90,7 +90,7 @@ def set_def_kernel(logger, version=settings.SUPPORTED_KERNEL_VERSION):
         return logger.exception(e)
 
 def update_tz(logging):
-    #update timezon variable in settings.py
+    # update timezone variable in settings.py
     zonestr = os.path.realpath('/etc/localtime').split('zoneinfo/')[1]
     logging.info('system timezone = %s' % zonestr)
     sfile = '%s/src/rockstor/settings.py' % BASE_DIR
@@ -122,7 +122,7 @@ def bootstrap_sshd_config(logging):
         for line in sfo.readlines():
             if (re.match(settings.SSHD_HEADER, line) is not None or
                 re.match('AllowUsers ', line) is not None):
-                #if header is found,
+                # if header is found,
                 found = True
                 logging.info('sshd_config already has the updates.'
                              ' Leaving it unchanged.')
@@ -134,7 +134,7 @@ def bootstrap_sshd_config(logging):
             run_command([SYSCTL, 'restart', 'sshd'])
 
 def md5sum(fpath):
-    #return the md5sum of the given file
+    # return the md5sum of the given file
     if (not os.path.isfile(fpath)):
         return None
     md5 = hashlib.md5()
