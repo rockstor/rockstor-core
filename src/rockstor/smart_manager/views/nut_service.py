@@ -23,7 +23,6 @@ class NUTServiceView(BaseServiceDetailView):
             service = Service.objects.get(name=self.service_name)
             if command == 'config':
                 try:
-                    # todo sort our default here prior to save.
                     config = request.data.get('config')
                     configure_nut(config)
                     self._save_config(service, config)
@@ -32,14 +31,30 @@ class NUTServiceView(BaseServiceDetailView):
                     e_msg = ('NUT could not be configured. Please try again')
                     handle_exception(Exception(e_msg), request)
             else:
-                # maybe a try exception around the switch.
-                # we are assuming if command is not config its start or other
-                self._switch_nut(command, self._get_config(service))
+                # By now command is != config so hopefully start or stop.
+                # Try dealing with this command by passing to switch_nut
+                # N.B. as config may not be good or even exist we try and
+                # if exception then suggest config as cause.
+                # Otherwise users would see system level error which is dumped
+                # to logs. Email support is offered with log zip.
+                try:
+                    self._switch_nut(command, self._get_config(service))
+                    logger.info('NUT-UPS toggled')
+                except Exception, e:
+                    logger.exception(e)
+                    e_msg = ("Failed to %s NUT-UPS service due to a system "
+                             "error. Check the service is configured correctly "
+                             "via it's spanner icon." % command)
+                    handle_exception(Exception(e_msg), request)
         return Response()
 
     @staticmethod
     def _switch_nut(switch, config):
         if switch == 'start':
+            # empty config causes a type error before we get here, this we
+            # catch and suggest settings but just in case we check here also.
+            if not config:
+                raise Exception("NUT un-configured; please configure first.")
             # don't start nut-server when in netclient mode.
             if config['mode'] == 'netclient':
                 systemctl('nut-server', 'disable')
