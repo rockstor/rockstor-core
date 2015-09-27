@@ -135,27 +135,55 @@ def config_upssched():
     run_command([CHMOD, '755', UPSSCHED_CMD])
 
 
+def establish_config_defaults(config):
+    """
+    Sanitizes input ie if empty config then throw an exception or set defaults.
+    Also if no mode then choose "None" as we should never have no mode so
+    there's a problem if we are not empty config but we have no mode!
+    N.B. this works on the original config to sanitize what is saved in
+    front end memory. Note that these sanitizing defaults must be consistent
+    with storageadmin/static/storageadmin/js/views/configure_service.js
+    """
+    # An empty config dictionary will be false so raise exception as what else.
+    if not config:
+        logger.info("WE HAVE AN EMPTY CONFIG SO THROW EXCEPTION")
+        e_msg = ('No NUT-UPS configuration found, make sure you have'
+                 'configured this service properly.')
+        raise Exception(e_msg)
+    # if mode is present but empty then change to "none" as we should never
+    # have empty mode so we can't know what it is supposed to be.
+    if ('mode' in config) and (config['mode'] == ''):
+        logger.info("MODE EMPTY SO CHANGING TO NONE")
+        config['mode'] = 'none'
+    # if upsname is not present or is present but empty then make it "ups"
+    if (('upsname' in config) and (config['upsname'] == '')) or (
+                'upsname' not in config):
+        logger.info("UPSNAME EMPTY SO ENABLE DEFAULT")
+        config['upsname'] = 'ups'
+    if ('nutserver' in config) and (config['nutserver'] == ''):
+        logger.info("NUTSERVER EMPTY SO ENABLE DEFAULT")
+        config['nutserver'] = 'localhost'
+
+
 def configure_nut(config):
     """
-    Top level nut config function.
+    Top level nut config function. Takes the input config and initially applies
+    any defaults that the front end failed to assert and then make a copy prior
+    to sending to pre-processing and then in turn to final config application.
+    Also establishes Rockstor defaults for upssched.
     :param config: sanitized config from input form
     :return:
     """
-    # todo add a section that sanitizes input ie if empty config then throw
-    # an exception of "not configured". Also if no mode then choose "None" as
-    # we should never have no mode, so there's a problem if we are not empty
-    # config but we have no mode.
-    # Also work on original config here to sanitize what is saved in front end
-    # memory. Note that these sanitizing defaults must be consistent with what
-    # is done in storageadmin/static/storageadmin/js/views/configure_service.js
+    # clean config and establish defaults
+    establish_config_defaults(config)
 
-    # as we process / change the config we must work on a deep copy to avoid
-    # breaking the front end 'memory'.
+    # As we change the config prior to its application in the config files we
+    # must work on a deep copy to avoid breaking the front end 'memory'.
     # Note we could use a custom deepcopy to do some of our pre-processing
     # ie the re-writing of indexes and surrounding password and desc in ""
     config_copy = deepcopy(config)
 
-    # pre-process the config options so we know which files to put what options
+    # Pre-process the config options so we know which files to put what options
     # in and in what order
     all_nut_configs = pre_process_nut_config(config_copy)
     # now go through each file - options pair and apply the config
@@ -243,7 +271,6 @@ def pre_process_nut_config(config):
         config['password'], config['upsmon']))
     logger.info(
         'NUT MONITOR LINE = %s' % nut_configs[NUT_MONITOR_CONFIG]['MONITOR'])
-    logger.info('NUT CONFIG DICT = %s' % config)
 
     # move section headings from config to nut_configs OrderedDicts
     # this way all following entries will pertain to them in their respective
