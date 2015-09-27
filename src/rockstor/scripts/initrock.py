@@ -167,7 +167,7 @@ def main():
             update_issue()
             break
         except Exception, e:
-            logging.info('exception occured while running update_issue. '
+            logging.info('exception occurred while running update_issue. '
                          'Perhaps rc.local ran before it should have. '
                          'Trying again after 2 seconds')
             if (i > 28):
