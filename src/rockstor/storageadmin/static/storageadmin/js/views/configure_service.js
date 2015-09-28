@@ -284,6 +284,7 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
             }
         });
 
+	this.toggleNutFields();
         return this;
     },
 
