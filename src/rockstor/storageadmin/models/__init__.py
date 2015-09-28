@@ -50,3 +50,4 @@ from smart import (SMARTAttribute, SMARTCapability, SMARTErrorLog,
                    SMARTIdentity, SMARTInfo)
 from config_backup import ConfigBackup
 from email import EmailClient
+from update_subscription import UpdateSubscription

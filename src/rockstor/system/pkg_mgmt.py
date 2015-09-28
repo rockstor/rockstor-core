@@ -97,7 +97,33 @@ def rpm_build_info(pkg):
             version = '%s-%s' % (version, l.strip().split()[2])
     return (version, date)
 
-def update_check():
+def switch_repo(subscription, on=True):
+    yum_file = '/etc/yum.repos.d/Rockstor-%s.repo' % subscription.name
+    if (on):
+        with open(yum_file, 'w') as rfo:
+            rfo.write('[Rockstor-%s]\n' % subscription.name)
+            rfo.write('name=%s\n' % subscription.description)
+            rfo.write('baseurl=http://%s:%s@%s\n' %
+                      (subscription.appliance.uuid, subscription.password,
+                       subscription.url))
+            rfo.write('enabled=1\n')
+            rfo.write('gpgcheck=0\n')
+            rfo.write('metadata_expire=1m\n')
+    else:
+        if (os.path.exists(yum_file)):
+            os.remove(yum_file)
+
+def repo_status(subscription):
+    import requests
+    try:
+        requests.get('http://%s' % subscription.url,
+                     auth=(subscription.appliance.uuid, subscription.password))
+
+def update_check(subscription=None):
+    if (subscription is not None and
+        subscription.name == 'stable'):
+        switch_repo(subscription)
+
     pkg = 'rockstor'
     version, date = rpm_build_info(pkg)
     o, e, rc = run_command([YUM, 'changelog', date, pkg])
@@ -128,17 +154,32 @@ def update_check():
                 if (re.search('will be an update', l) is not None):
                     if (re.search('rockstor.x86_64', l) is not None):
                         new_version = l.strip().split()[3].split(':')[1]
+
+    if (subscription is not None and
+        subscription.name == 'stable'):
+        switch_repo(subscription, on=False)
+
     return (version, new_version, updates)
 
 
-def update_run():
+def update_run(subscription=None):
+
+    if (subscription is not None and
+        subscription.name == 'stable'):
+        switch_repo(subscription)
+
+    run_command([SYSTEMCTL, 'start', 'atd'])
     fh, npath = mkstemp()
     with open(npath, 'w') as atfo:
         atfo.write('%s stop rockstor\n' % SYSTEMCTL)
         atfo.write('%s --setopt=timeout=600 -y update\n' % YUM)
         atfo.write('%s start rockstor\n' % SYSTEMCTL)
         atfo.write('/bin/rm -f %s\n' % npath)
-    run_command([SYSTEMCTL, 'start', 'atd'])
+        if (subscription is not None and
+            subscription.name == 'stable'):
+            atfo.write('/bin/rm -f /etc/yum.repos.d/Rockstor-%s.repo\n' %
+                       subscription.name)
     out, err, rc = run_command([AT, '-f', npath, 'now + 1 minutes'])
     time.sleep(120)
+
     return out, err, rc
