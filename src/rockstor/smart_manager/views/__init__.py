@@ -50,3 +50,4 @@ from afp_service import AFPServiceView
 from snmp_service import SNMPServiceView
 from docker_service import DockerServiceView
 from smartd_service import SMARTDServiceView
+from nut_service import NUTServiceView
