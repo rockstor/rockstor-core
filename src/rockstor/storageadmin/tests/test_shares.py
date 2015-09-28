@@ -81,8 +81,8 @@ class ShareTests(APITestMixin, APITestCase):
         """
         self.get_base(self.BASE_URL)
 
-        # get share poolshare1( alreday existing share in fixture fix1)
-        response = self.client.get('%s/poolshare1' % self.BASE_URL)
+        # get share share1( alreday existing share in fixture fix1)
+        response = self.client.get('%s/share1' % self.BASE_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response)
 
         # get share that does not exist
@@ -243,10 +243,10 @@ class ShareTests(APITestMixin, APITestCase):
         """
 
         # create new share
-        data = {'sname': 'share1', 'pool': 'rockstor_rockstor', 'size': 1000}
+        data = {'sname': 'share2', 'pool': 'rockstor_rockstor', 'size': 1000}
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
-        self.assertEqual(response.data['name'], 'share1')
+        self.assertEqual(response.data['name'], 'share2')
         self.assertEqual(response.data['size'], 1000)
 
         # resize share

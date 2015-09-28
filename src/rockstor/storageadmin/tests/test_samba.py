@@ -36,8 +36,7 @@ class SambaTests(APITestMixin, APITestCase):
         # post mocks
         cls.patch_mount_share = patch('storageadmin.views.samba.mount_share')
         cls.mock_mount_share = cls.patch_mount_share.start()
-        cls.mock_mount_share.return_value = 'foo'
-
+        
         cls.patch_is_share_mounted = patch('storageadmin.views.samba.is_share_mounted')
         cls.mock_is_share_mounted = cls.patch_is_share_mounted.start()
         cls.mock_is_share_mounted.return_value = False
@@ -68,7 +67,7 @@ class SambaTests(APITestMixin, APITestCase):
         self.get_base(self.BASE_URL)
 
         # get sambashare with id
-        response = self.client.get('%s/4' % self.BASE_URL)
+        response = self.client.get('%s/1' % self.BASE_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response)
         
         # get sambashare with non-existant id
@@ -160,16 +159,16 @@ class SambaTests(APITestMixin, APITestCase):
         2. Edit samba
         """
         # edit samba that does not exist
-        smb_id = 1
+        smb_id = 12
         data = {'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes', 'admin_users':'usr'}
         response = self.client.put('%s/%d' % (self.BASE_URL, smb_id), data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
-        e_msg = ('Samba export for the id(1) does not exist')
+        e_msg = ('Samba export for the id(12) does not exist')
         self.assertEqual(response.data['detail'], e_msg)
 
         # edit samba with invalid custom config
-        smb_id = 3
+        smb_id = 1
         data = {'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes','custom_config':'CONFIGXYZ'}
         response = self.client.put('%s/%d' % (self.BASE_URL, smb_id), data=data)
         self.assertEqual(response.status_code,
@@ -178,7 +177,7 @@ class SambaTests(APITestMixin, APITestCase):
         self.assertEqual(response.data['detail'], e_msg)
 
         # test mount_share exception case
-        smb_id = 3
+        smb_id = 1
         data = {'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes',}
         self.mock_mount_share.side_effect = KeyError('error')
         response = self.client.put('%s/%d' % (self.BASE_URL, smb_id), data=data)
@@ -190,7 +189,7 @@ class SambaTests(APITestMixin, APITestCase):
 
 
         # happy path
-        smb_id = 3
+        smb_id = 1
         self.mock_mount_share.side_effect = None
         data = {'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes',
                 'admin_users': ('admin', ), 'custom_config': ('CONFIG','XYZ' )}
@@ -199,7 +198,7 @@ class SambaTests(APITestMixin, APITestCase):
                          status.HTTP_200_OK, msg=response.data)
 
         # edit samba export with admin user other than admin
-        smb_id = 3
+        smb_id = 1
         data = {'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes',
                 'admin_users': ('admin2', ), 'custom_config': ('CONFIG','XYZ' )}
         response = self.client.put('%s/%d' % (self.BASE_URL, smb_id), data=data)
@@ -207,7 +206,7 @@ class SambaTests(APITestMixin, APITestCase):
                          status.HTTP_200_OK, msg=response.data)
 
         # edit samba export passing no admin users
-        smb_id = 3
+        smb_id = 1
         data = {'browsable': 'yes', 'guest_ok': 'yes', 'read_only': 'yes', 'custom_config': ('CONFIG','XYZ' )}
         response = self.client.put('%s/%d' % (self.BASE_URL, smb_id), data=data)
         self.assertEqual(response.status_code,
@@ -229,7 +228,7 @@ class SambaTests(APITestMixin, APITestCase):
         self.assertEqual(response.data['detail'], e_msg)
 
         # happy path
-        smb_id = 3
+        smb_id = 1
         response = self.client.delete('%s/%d' % (self.BASE_URL, smb_id))
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
