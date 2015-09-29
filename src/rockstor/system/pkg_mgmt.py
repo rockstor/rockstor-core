@@ -97,6 +97,7 @@ def rpm_build_info(pkg):
             version = '%s-%s' % (version, l.strip().split()[2])
     return (version, date)
 
+
 def switch_repo(subscription, on=True):
     yum_file = '/etc/yum.repos.d/Rockstor-%s.repo' % subscription.name
     if (on):
@@ -120,10 +121,10 @@ def repo_status(subscription):
         res = requests.get('http://%s' % subscription.url,
                            auth=(subscription.appliance.uuid, subscription.password))
         if (res.status_code == 401):
-            return 'inactive'
+            return ('inactive', res.text)
         elif (res.status_code == 200):
-            return 'active'
-        return 'unknown'
+            return ('active', res.text)
+        return (res.status_code, res.text)
     except requests.ConnectionError, e:
         e_msg = ('Failed to connect to %s. Is the Rockstor system connected '
                  'to the internet?. Lower level exception: %s' % (subscription.url, e.__str__()))

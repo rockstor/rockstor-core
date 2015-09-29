@@ -26,6 +26,7 @@ from storageadmin.util import handle_exception
 from storageadmin.serializers import UpdateSubscriptionSerializer
 import rest_framework_custom as rfc
 from django.conf import settings
+from system.pkg_mgmt import repo_status
 import logging
 logger = logging.getLogger(__name__)
 
@@ -49,10 +50,46 @@ class UpdateSubscriptionListView(rfc.GenericView):
                                                  description=cd['description'],
                                                  url=cd['url'], appliance=appliance,
                                                  status='inactive')
-                stableo.password = request.data.get('activation_code')
+                stableo.password = request.data.get('activation_code', stableo.password)
+                if (stableo.password is None):
+                    e_msg = ('Activation code is required for Stable subscription')
+                    handle_exception(Exception(e_msg), request)
+
                 stableo.status = 'active'
                 stableo.save()
+                status, text = repo_status(stableo)
+                if (status == 'inactive'):
+                    e_msg = ('Activation code(%s) could not be authorized. If '
+                             'the problem persists, contact '
+                             'support@rockstor.com' % stableo.password)
+                    raise Exception(e_msg)
+                if (status != 'active'):
+                    e_msg = ('Failed to activate subscription. status code: '
+                             '%s details: %s' % (status, text))
+                    raise Exception(e_msg)
                 return Response(UpdateSubscriptionSerializer(stableo).data)
+
+            if (command == 'activate-testing'):
+                logger.debug('activate testing now')
+                scd = settings.UPDATE_CHANNELS['stable']
+                tcd = settings.UPDATE_CHANNELS['testing']
+                try:
+                    stableo = UpdateSubscription.objects.get(name=scd['name'], status='active')
+                    stableo.status = 'inactive'
+                    stableo.save()
+                except UpdateSubscription.DoesNotExist:
+                    pass
+                try:
+                    testingo = UpdateSubscription.objects.get(name=tcd['name'])
+                except UpdateSubscription.DoesNotExist:
+                    appliance = Appliance.objects.get(current_appliance=True)
+                    testingo = UpdateSubscription(name=tcd['name'],
+                                                  description=tcd['description'],
+                                                  url=tcd['url'], appliance=appliance,
+                                                  status='active')
+                testingo.save()
+                return Response(UpdateSubscriptionSerializer(testingo).data)
+
 
             if (command == 'check-status'):
                 name = request.data.get('name')
@@ -61,7 +98,6 @@ class UpdateSubscriptionListView(rfc.GenericView):
                     stableo.status = repo_status(stableo)
                     stableo.save()
                 return Response(UpdateSubscriptionSerializer(stableo).data)
-
 
 class UpdateSubscriptionDetailView(rfc.GenericView):
     serializer_class = UpdateSubscriptionSerializer

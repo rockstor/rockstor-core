@@ -120,6 +120,6 @@ urlpatterns = patterns('',
                        url(r'^api/email', EmailClientView.as_view()),
 
                        #update subscription
-                       (r'^api/update-subscriptions/',
+                       (r'^api/update-subscriptions',
                         include('storageadmin.urls.update_subscription')),
 )

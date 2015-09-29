@@ -23,5 +23,6 @@ from storageadmin.views import (UpdateSubscriptionListView,
 urlpatterns = patterns(
     '',
     url(r'^$', UpdateSubscriptionListView.as_view()),
-    url(r'^/(?P<id>\d+)$', UpdateSubscriptionDetailView.as_view())
+    url(r'^/(?P<id>\d+)$', UpdateSubscriptionDetailView.as_view()),
+    url(r'^/(?P<command>.*)$', UpdateSubscriptionListView.as_view()),
 )
