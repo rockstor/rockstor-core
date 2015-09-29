@@ -33,7 +33,8 @@ from fs.btrfs import (mount_share, device_scan, mount_root, qgroup_create,
 from system.ssh import (sftp_mount_map, sftp_mount)
 from system.services import (systemctl, join_winbind_domain, ads_join_status)
 from system.osi import (is_share_mounted, system_shutdown, system_reboot)
-from storageadmin.models import (Share, Disk, NFSExport, SFTP, Pool, Snapshot)
+from storageadmin.models import (Share, Disk, NFSExport, SFTP, Pool, Snapshot,
+                                 UpdateSubscription)
 from storageadmin.util import handle_exception
 from datetime import datetime
 from django.utils.timezone import utc
@@ -56,6 +57,7 @@ class CommandView(NFSExportMixin, APIView):
     @transaction.atomic
     def post(self, request, command):
         if (command == 'bootstrap'):
+
             for pool in Pool.objects.all():
                 try:
                     mount_root(pool)
@@ -136,16 +138,17 @@ class CommandView(NFSExportMixin, APIView):
 
         if (command == 'update-check'):
             try:
-                from storageadmin.models import UpdateSubscription
-                stableo = None
+                subo = None
                 try:
-                    stableo = UpdateSubscription.objects.get(name='stable', status='active')
+                    subo = UpdateSubscription.objects.get(name='Stable', status='active')
                 except UpdateSubscription.DoesNotExist:
-                    pass
-                return Response(update_check(channel=stableo))
+                    try:
+                        subo = UpdateSubscription.objects.get(name='Testing', status='active')
+                    except UpdateSubscription.DoesNotExist:
+                        pass
+                return Response(update_check(subscription=subo))
             except Exception, e:
-                e_msg = ('Unable to check update due to a system error')
-                logger.exception(e)
+                e_msg = ('Unable to check update due to a system error: %s' % e.__str__())
                 handle_exception(Exception(e_msg), request)
 
         if (command == 'update'):

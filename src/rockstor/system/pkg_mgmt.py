@@ -25,6 +25,7 @@ from services import systemctl
 import shutil
 import time
 from datetime import (datetime, timedelta)
+import requests
 
 YUM = '/usr/bin/yum'
 RPM = '/usr/bin/rpm'
@@ -104,9 +105,12 @@ def switch_repo(subscription, on=True):
         with open(yum_file, 'w') as rfo:
             rfo.write('[Rockstor-%s]\n' % subscription.name)
             rfo.write('name=%s\n' % subscription.description)
-            rfo.write('baseurl=http://%s:%s@%s\n' %
-                      (subscription.appliance.uuid, subscription.password,
-                       subscription.url))
+            if (subscription.password is not None):
+                rfo.write('baseurl=http://%s:%s@%s\n' %
+                          (subscription.appliance.uuid, subscription.password,
+                           subscription.url))
+            else:
+                rfo.write('baseurl=http://%s\n' % subscription.url)
             rfo.write('enabled=1\n')
             rfo.write('gpgcheck=0\n')
             rfo.write('metadata_expire=1m\n')
@@ -116,7 +120,9 @@ def switch_repo(subscription, on=True):
 
 
 def repo_status(subscription):
-    import requests
+    if (subscription.password is None):
+        return ('active', 'public repo')
+
     try:
         res = requests.get('http://%s' % subscription.url,
                            auth=(subscription.appliance.uuid, subscription.password))
@@ -132,8 +138,7 @@ def repo_status(subscription):
 
 
 def update_check(subscription=None):
-    if (subscription is not None and
-        subscription.name == 'stable'):
+    if (subscription is not None):
         switch_repo(subscription)
 
     pkg = 'rockstor'
@@ -167,17 +172,11 @@ def update_check(subscription=None):
                     if (re.search('rockstor.x86_64', l) is not None):
                         new_version = l.strip().split()[3].split(':')[1]
 
-    if (subscription is not None and
-        subscription.name == 'stable'):
-        switch_repo(subscription, on=False)
-
     return (version, new_version, updates)
 
 
 def update_run(subscription=None):
-
-    if (subscription is not None and
-        subscription.name == 'stable'):
+    if (subscription is not None):
         switch_repo(subscription)
 
     run_command([SYSTEMCTL, 'start', 'atd'])
@@ -187,10 +186,6 @@ def update_run(subscription=None):
         atfo.write('%s --setopt=timeout=600 -y update\n' % YUM)
         atfo.write('%s start rockstor\n' % SYSTEMCTL)
         atfo.write('/bin/rm -f %s\n' % npath)
-        if (subscription is not None and
-            subscription.name == 'stable'):
-            atfo.write('/bin/rm -f /etc/yum.repos.d/Rockstor-%s.repo\n' %
-                       subscription.name)
     out, err, rc = run_command([AT, '-f', npath, 'now + 1 minutes'])
     time.sleep(120)
 
