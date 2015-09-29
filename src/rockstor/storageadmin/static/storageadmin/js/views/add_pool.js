@@ -123,7 +123,7 @@ renderDisks: function() {
 		return true;
 	}, raid_err_msg);
 
-	
+
 
 	this.$("#disks-table").tablesorter({
 		headers: {
@@ -135,7 +135,7 @@ renderDisks: function() {
 	            // assign the third column (we start counting zero)
 	        3: {
 		        // disable it by setting the property sorter to false
-		        sorter: false 
+		        sorter: false
 	        }
 	    }
 	});
@@ -222,7 +222,7 @@ cancel: function(event) {
 clicked: function (event) {
 
 	var _this = this;
-	var tableStyle=" <div class="+"'control-group'"+"> <label class="+"'control-label'"+" >Selected disks</label><div class='controls'>";
+	var tableStyle=" <div class="+"'form-group'"+"><label class="+"'col-sm-4 control-label'"+" >Selected disks</label><div class='col-sm-6'>";
 	var disktableHtml = tableStyle+"<table class= 'table table-condensed table-bordered  table-striped share-table tablesorter '"+"><thead><tr><th>No.</th><th>Disk Name</th><th>Capacity</th></tr></thead><tbody>";
 	var n = $("input:checked.disk").length;
 	$("input:checked.disk").each(function(index) {
