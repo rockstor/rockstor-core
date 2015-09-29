@@ -26,7 +26,7 @@ from storageadmin.util import handle_exception
 from storageadmin.serializers import UpdateSubscriptionSerializer
 import rest_framework_custom as rfc
 from django.conf import settings
-from system.pkg_mgmt import repo_status
+from system.pkg_mgmt import (repo_status, switch_repo)
 import logging
 logger = logging.getLogger(__name__)
 
@@ -37,65 +37,62 @@ class UpdateSubscriptionListView(rfc.GenericView):
     def get_queryset(self, *args, **kwargs):
         return UpdateSubscription.objects.all()
 
+    def _toggle_repos(self, on='stable', off='testing', password=None):
+        #toggle between testing and stabel repos
+        ncd = settings.UPDATE_CHANNELS[on]
+        fcd = settings.UPDATE_CHANNELS[off]
+        try:
+            offo = UpdateSubscription.objects.get(name=fcd['name'], status='active')
+            offo.status = 'inactive'
+            offo.save()
+            switch_repo(offo, on=False)
+        except UpdateSubscription.DoesNotExist:
+            pass
+
+        try:
+            ono = UpdateSubscription.objects.get(name=ncd['name'])
+        except UpdateSubscription.DoesNotExist:
+            appliance = Appliance.objects.get(current_appliance=True)
+            ono = UpdateSubscription(name=ncd['name'],
+                                     description=ncd['description'],
+                                     url=ncd['url'], appliance=appliance,
+                                     status='active')
+        ono.password = password
+        ono.save()
+        status, text = repo_status(ono)
+        if (status == 'inactive'):
+            e_msg = ('Activation code(%s) could not be authorized. '
+                     'Verify the code and try again. If '
+                     'the problem persists, contact '
+                     'support@rockstor.com' % ono.password)
+            raise Exception(e_msg)
+        if (status != 'active'):
+            e_msg = ('Failed to activate subscription. status code: '
+                     '%s details: %s' % (status, text))
+            raise Exception(e_msg)
+        switch_repo(ono)
+        return ono
+
     @transaction.commit_on_success
     def post(self, request, command):
         with self._handle_exception(request):
             if (command == 'activate-stable'):
-                cd = settings.UPDATE_CHANNELS['stable']
-                try:
-                    stableo = UpdateSubscription.objects.get(name=cd['name'])
-                except UpdateSubscription.DoesNotExist:
-                    appliance = Appliance.objects.get(current_appliance=True)
-                    stableo = UpdateSubscription(name=cd['name'],
-                                                 description=cd['description'],
-                                                 url=cd['url'], appliance=appliance,
-                                                 status='inactive')
-                stableo.password = request.data.get('activation_code', stableo.password)
-                if (stableo.password is None):
+                password = request.data.get('activation_code', None)
+                if (password is None):
                     e_msg = ('Activation code is required for Stable subscription')
                     handle_exception(Exception(e_msg), request)
-
-                stableo.status = 'active'
-                stableo.save()
-                status, text = repo_status(stableo)
-                if (status == 'inactive'):
-                    e_msg = ('Activation code(%s) could not be authorized. If '
-                             'the problem persists, contact '
-                             'support@rockstor.com' % stableo.password)
-                    raise Exception(e_msg)
-                if (status != 'active'):
-                    e_msg = ('Failed to activate subscription. status code: '
-                             '%s details: %s' % (status, text))
-                    raise Exception(e_msg)
+                stableo = self._toggle_repos(password=password)
                 return Response(UpdateSubscriptionSerializer(stableo).data)
 
             if (command == 'activate-testing'):
-                logger.debug('activate testing now')
-                scd = settings.UPDATE_CHANNELS['stable']
-                tcd = settings.UPDATE_CHANNELS['testing']
-                try:
-                    stableo = UpdateSubscription.objects.get(name=scd['name'], status='active')
-                    stableo.status = 'inactive'
-                    stableo.save()
-                except UpdateSubscription.DoesNotExist:
-                    pass
-                try:
-                    testingo = UpdateSubscription.objects.get(name=tcd['name'])
-                except UpdateSubscription.DoesNotExist:
-                    appliance = Appliance.objects.get(current_appliance=True)
-                    testingo = UpdateSubscription(name=tcd['name'],
-                                                  description=tcd['description'],
-                                                  url=tcd['url'], appliance=appliance,
-                                                  status='active')
-                testingo.save()
+                testingo = self._toggle_repos(on='testing', off='stable')
                 return Response(UpdateSubscriptionSerializer(testingo).data)
-
 
             if (command == 'check-status'):
                 name = request.data.get('name')
                 stableo = UpdateSubscription.objects.get(name=name)
                 if (stableo.password is not None):
-                    stableo.status = repo_status(stableo)
+                    stableo.status, text = repo_status(stableo)
                     stableo.save()
                 return Response(UpdateSubscriptionSerializer(stableo).data)
 
