@@ -31,6 +31,7 @@ VersionView = RockstorLayoutView.extend({
 	'click #enableAuto': 'enableAutoUpdate',
 	'click #disableAuto': 'disableAutoUpdate',
 	'click #stable-modal': 'showStableModal',
+	'click #testing-modal': 'showTestingModal',
 	'click #activateStable': 'activateStable',
 	'click #activateTesting': 'activateTesting'
     },
@@ -241,7 +242,14 @@ VersionView = RockstorLayoutView.extend({
 	this.$('#activate-stable').modal('show');
     },
 
+    showTestingModal: function() {
+	this.$('#activate-testing').modal('show');
+    },
+
     activateStable: function() {
+	var button = this.$('activateStable');
+	if (buttonDisabled(button)) return false;
+	disableButton(button);
 	var activationCode = this.$('#activation-code').val();
 	var _this = this;
 	$.ajax({
@@ -252,6 +260,9 @@ VersionView = RockstorLayoutView.extend({
 	    data: JSON.stringify({'activation_code': activationCode }),
 	    success: function(data, status, xhr) {
 		_this.reloadWindow();
+	    },
+	    error: function(xhr, status, error) {
+		enableButton(button);
 	    }
 	});
     },

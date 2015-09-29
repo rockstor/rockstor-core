@@ -4,12 +4,13 @@
 <% if (!defaultSub || defaultSub.get('status') != 'active') { %>
 <br>
 <h3>Alternatively, Testing channel can be activated for cutting edge updates. Read about pros and cons of Stable and Testing here..</h3>
-<a id="activateTesting" class="btn btn-danger" title="Activate Testing subscription">Activate Testing subscription</a>
+<a id="testing-modal" class="btn btn-danger" title="Activate Testing subscription">Activate Testing subscription</a>
 <% } else { %>
-<h3>Testing subscription is active.</h3>
+<h3>Testing subscription is active, which provides cutting edge updates. Stable subscription is recommended for most users.</h3>
 <% } %>
 <% } else { %>
-<h3>Stable subscription is active.</h3>
+<h3>Stable subscription is active. While it's not recommended for most users, if you are absolutely sure, you can activate the Testing channel. By doing so, Stable channel will be deactivated for this system.</h3>
+<a id="testing-modal" class="btn btn-danger" title="Activate Testing subscription">Activate Testing subscription</a>
 <% } %>
 
 <% if (currentVersion != mostRecentVersion) { %>
@@ -103,7 +104,11 @@
 	    <div class="form-group">
 	      <label class="col-sm-3 control-label" for="activation-code">Activation Code <span class="required">*</span></label>
 	      <div class="controls col-sm-5">
+		<% if (stableSub) { %>
+		<input class="form-control" type="text" id="activation-code" value="<%= stableSub.get('password') %>"name="activation-code">
+		<% } else { %>
 		<input class="form-control" type="text" id="activation-code" name="activation-code">
+		<% } %>
 	      </div>
 	    </div>
 	    <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">Cancel</button>
@@ -111,6 +116,19 @@
 	  </form>
 	</div>
       </div>
+    </div>
+  </div>
+</div>
+
+<div id="activate-testing" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body">
+	<h3>Activate Testing subscription</h3>
+	<p>Are you sure about this?</p>
+      </div>
+      <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">Cancel</button>
+      <a id="activateTesting" class="btn btn-primary" title="Activate">Activate</a>
     </div>
   </div>
 </div>
