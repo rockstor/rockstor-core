@@ -238,7 +238,7 @@ class UserTests(APITestMixin, APITestCase):
         self.assertEqual(response.data['detail'], e_msg)
 
         data = {'admin': True, 'group':'admin'}
-        response = self.client.put('%s/admin2' % self.BASE_URL, data=data)
+        response = self.client.put('%s/admin4' % self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
         e_msg = ("password reset is required to enable admin access. please provide a new password")
