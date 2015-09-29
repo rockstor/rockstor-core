@@ -41,7 +41,6 @@
           <span class="required"> *</span>
           <% } %>
           </label>
-          <div class="controls">
             <% if (username != null) { %>
 	    <div class="col-sm-4"> <!-- Inline styling since this is the first instance of this case -->
       <input type="text" class="form-control" disabled value="<%=username%><%=user.get('uid')%>" />
@@ -54,7 +53,6 @@
             <input class="form-control" type="text" id="username" name="username" placeholder="Username" title="Username must start with a letter and can contain letters, numbers, - and _ characters. It cannot exceed 30 characters in length.">
 	  </div>
           <% } %>
-          </div>
         </div>
         <div class="form-group">
 	  <div class="col-sm-offset-4 col-sm-8">
