@@ -28,7 +28,7 @@ from storageadmin.models import (Disk, Pool, Share, Snapshot, NFSExport,
                                  SMARTCapability, SMARTInfo, SMARTErrorLog,
                                  SMARTErrorLogSummary, SMARTTestLog,
                                  SMARTTestLogDetail, SMARTIdentity,
-                                 ConfigBackup, EmailClient)
+                                 ConfigBackup, EmailClient, UpdateSubscription)
 from django.contrib.auth.models import User as DjangoUser
 
 
@@ -264,3 +264,9 @@ class ConfigBackupSerializer(serializers.ModelSerializer):
 class EmailClientSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmailClient
+
+
+class UpdateSubscriptionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = UpdateSubscription

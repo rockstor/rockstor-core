@@ -136,7 +136,13 @@ class CommandView(NFSExportMixin, APIView):
 
         if (command == 'update-check'):
             try:
-                return Response(update_check())
+                from storageadmin.models import UpdateSubscription
+                stableo = None
+                try:
+                    stableo = UpdateSubscription.objects.get(name='stable', status='active')
+                except UpdateSubscription.DoesNotExist:
+                    pass
+                return Response(update_check(channel=stableo))
             except Exception, e:
                 e_msg = ('Unable to check update due to a system error')
                 logger.exception(e)

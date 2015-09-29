@@ -155,6 +155,7 @@ def enable_rockstor_service(logging):
         run_command([SYSCTL, 'start', 'rockstor'])
         logging.info('Started rockstor service')
 
+
 def main():
     loglevel = logging.INFO
     if (len(sys.argv) > 1 and sys.argv[1] == '-x'):
