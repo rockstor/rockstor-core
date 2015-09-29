@@ -113,11 +113,22 @@ def switch_repo(subscription, on=True):
         if (os.path.exists(yum_file)):
             os.remove(yum_file)
 
+
 def repo_status(subscription):
     import requests
     try:
-        requests.get('http://%s' % subscription.url,
-                     auth=(subscription.appliance.uuid, subscription.password))
+        res = requests.get('http://%s' % subscription.url,
+                           auth=(subscription.appliance.uuid, subscription.password))
+        if (res.status_code == 401):
+            return 'inactive'
+        elif (res.status_code == 200):
+            return 'active'
+        return 'unknown'
+    except requests.ConnectionError, e:
+        e_msg = ('Failed to connect to %s. Is the Rockstor system connected '
+                 'to the internet?. Lower level exception: %s' % (subscription.url, e.__str__()))
+        raise Exception(e_msg)
+
 
 def update_check(subscription=None):
     if (subscription is not None and
