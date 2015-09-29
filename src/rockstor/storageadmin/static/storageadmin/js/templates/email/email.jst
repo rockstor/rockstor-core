@@ -18,14 +18,17 @@
   *
   */
 </script>
-<h3>Setup Email for alerts</h3>
-<label class="control-label"></label>
-<div class="form-box">
+<div class="row">
+<div class="col-md-8">
+<div class="panel panel-default">
+<div class="panel-heading">Setup Email for alerts</div>
+<div class="panel-body">
+
   <form id="email-form" name="email-form" class="form-horizontal" autocomplete="off">
     <div class="messages"></div>
     <div class="form-group">
-      <label class="col-sm-2 control-label">Name<span class="required"> *</span></label>
-      <div class="col-sm-3">
+      <label class="col-sm-4 control-label">Name<span class="required"> *</span></label>
+      <div class="col-sm-4">
         <%  if(email!=null) {  %>
         <input class="form-control" type="text" id="name" name="name" value="<%= email.get('name') %>" >
         <% } else { %>
@@ -35,8 +38,8 @@
     </div>
 
     <div class="form-group">
-      <label class="col-sm-2 control-label">Email<span class="required"> *</span></label>
-      <div class="col-sm-3">
+      <label class="col-sm-4 control-label">Email<span class="required"> *</span></label>
+      <div class="col-sm-4">
         <%  if(email!=null) {  %>
         <input class="form-control" type="email" id="sender"  name="sender" value="<%= email.get('sender')%>" >
         <% } else { %>
@@ -46,15 +49,15 @@
     </div>
 
     <div class="form-group">
-      <label class="col-sm-2 control-label">Password<span class="required"> *</span></label>
-      <div class="col-sm-3">
+      <label class="col-sm-4 control-label">Password<span class="required"> *</span></label>
+      <div class="col-sm-4">
         <input class="form-control" type="password"  name="password" title="Password for the above email address">
       </div>
     </div>
 
     <div class="form-group">
-      <label class="col-sm-2 control-label">SMTP Server<span class="required"> *</span></label>
-      <div class="col-sm-3">
+      <label class="col-sm-4 control-label">SMTP Server<span class="required"> *</span></label>
+      <div class="col-sm-4">
         <%  if(email!=null) {  %>
         <input class="form-control" type="text" id="smtp_server" name="smtp_server" value="<%= email.get('smtp_server') %>" >
         <% } else { %>
@@ -64,7 +67,7 @@
     </div>
 
     <div class="form-group">
-      <div class="col-sm-offset-2 col-sm-6 controls">
+      <div class="col-sm-offset-4 col-sm-8">
         <label class="radio inline">
           <input type="radio" name="secured_connection" value="TLS" checked> Secured connection using TLS
         </label>
@@ -72,8 +75,8 @@
     </div>
 
     <div class="form-group">
-      <label class="col-sm-2 control-label">Recipient Email<span class="required"> *</span></label>
-      <div class="col-sm-3">
+      <label class="col-sm-4 control-label">Recipient Email<span class="required"> *</span></label>
+      <div class="col-sm-4">
         <%  if(email!=null) {  %>
         <input class="form-control" type="email" id="receiver"  name="receiver" value="<%= email.get('receiver')%>" >
         <% } else { %>
@@ -83,10 +86,13 @@
     </div>
 
     <div class="form-group">
-      <div class="col-xs-10 col-xs-offset-2">
+      <div class="col-xs-8 col-xs-offset-4">
         <a id="cancel" class="btn btn-default">Cancel</a>
         <input type="Submit" id="add-email" class="btn btn-primary" value="Submit"></input>
       </div>
     </div>
   </form>
-</div>
+</div><!--panel-body-->
+</div><!--panel-default -->
+</div><!--col-md-8 -->
+</div><!-- row-->
