@@ -388,4 +388,9 @@ UPDATE_CHANNELS = {
 		'description': 'Subscription channel for stable updates',
 		'url': 'updates.rockstor.com:8999/rockstor-stable',
 		},
+		'testing': {
+		'name': 'Testing',
+		'description': 'Subscription channel for testing updates',
+		'url': 'rockstor.com/rockstor-testing',
+		},
 }
