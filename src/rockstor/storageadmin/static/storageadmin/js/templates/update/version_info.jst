@@ -1,17 +1,28 @@
-<% if (!stableSub || stableSub.get('status') != 'active' ) { %>
-<h3>Stable subscription channel is inactive. It is recommended for most users. You can read about the benefits here.</h3>
-<a id="stable-modal" class="btn btn-primary" title="Activate Stable subscription">Activate Stable subscription</a>
-<% if (!defaultSub || defaultSub.get('status') != 'active') { %>
-<br>
-<h3>Alternatively, Testing channel can be activated for cutting edge updates. Read about pros and cons of Stable and Testing here..</h3>
-<a id="testing-modal" class="btn btn-danger" title="Activate Testing subscription">Activate Testing subscription</a>
-<% } else { %>
-<h3>Testing subscription is active, which provides cutting edge updates. Stable subscription is recommended for most users.</h3>
-<% } %>
-<% } else { %>
-<h3>Stable subscription is active. While it's not recommended for most users, if you are absolutely sure, you can activate the Testing channel. By doing so, Stable channel will be deactivated for this system.</h3>
-<a id="testing-modal" class="btn btn-danger" title="Activate Testing subscription">Activate Testing subscription</a>
-<% } %>
+<div class="row">
+<div class="col-md-8">
+<div class="panel panel-default">
+<div class="panel-heading">Subscriptions</div>
+  <div class="panel-body">
+    <% if (!stableSub || stableSub.get('status') != 'active' ) { %>
+    <h3>Stable subscription channel is inactive. It is recommended for most users. You can read about the benefits here.</h3>
+    <a id="stable-modal" class="btn btn-primary" title="Activate Stable subscription">Activate Stable subscription</a>
+    <% if (!defaultSub || defaultSub.get('status') != 'active') { %>
+    <br>
+    <h3>Alternatively, Testing channel can be activated for cutting edge updates. Read about pros and cons of Stable and Testing here..</h3>
+    <a id="testing-modal" class="btn btn-danger" title="Activate Testing subscription">Activate Testing subscription</a>
+    <% } else { %>
+    <h3>Testing subscription is active, which provides cutting edge updates. Stable subscription is recommended for most users.</h3>
+    <% } %>
+    <% } else { %>
+    <h3>Stable subscription is active. While it's not recommended for most users, if you are absolutely sure, you can activate the Testing channel. By doing so, Stable channel will be deactivated for this system.</h3>
+    <a id="testing-modal" class="btn btn-danger" title="Activate Testing subscription">Activate Testing subscription</a>
+    <% } %>
+  </div>
+</div>
+</div>
+</div>
+
+
 
 <% if (currentVersion != mostRecentVersion) { %>
   <br>
@@ -97,22 +108,25 @@
 <div id="activate-stable" class="modal fade">
   <div class="modal-dialog">
     <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Activate stable subscription</h3>
+      </div>
       <div class="modal-body">
-	<h3>Activate stable subscription</h3>
-	<div class="form-box">
 	  <form id="activate-stable-form" name="aform" class="form-horizontal">
 	    <div class="form-group">
-	      <label class="col-sm-3 control-label" for="activation-code">Activation Code <span class="required">*</span></label>
-	      <div class="controls col-sm-5">
+	      <label class="col-sm-4 control-label" for="activation-code">Activation Code <span class="required">*</span></label>
+	      <div class="col-sm-4">
 		<% if (stableSub) { %>
 		<input class="form-control" type="text" id="activation-code" value="<%= stableSub.get('password') %>"name="activation-code">
 		<% } else { %>
 		<input class="form-control" type="text" id="activation-code" name="activation-code">
 		<% } %>
-	      </div>
 	    </div>
-	    <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">Cancel</button>
-	    <a id="activateStable" class="btn btn-primary" title="Activate">Activate</a>
+      </div>
+      <div class="modal-footer">
+  	    <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">Cancel</button>
+  	    <a id="activateStable" class="btn btn-primary" title="Activate">Activate</a>
+      </div>
 	  </form>
 	</div>
       </div>
@@ -123,12 +137,22 @@
 <div id="activate-testing" class="modal fade">
   <div class="modal-dialog">
     <div class="modal-content">
-      <div class="modal-body">
-	<h3>Activate Testing subscription</h3>
-	<p>Are you sure about this?</p>
+      <div class="modal-header">
+        <h4 class="modal-title">Activate Testing subscription<?h4>
       </div>
+      <div class="modal-body">
+      	<p>Are you sure about this?</p>
+        <p>Lorem ipsum dolor sit amet, inani semper saperet per ut, et tation facilis molestie vix, ex vix quem oporteat.
+        His ne aeterno consetetur argumentum. Cetero epicurei eu vis, ei labore impedit tincidunt eum, est sententiae voluptatum
+        repudiandae ne. Everti lucilius expetenda pri ad, nam et tale commodo delicata.
+        Nisl propriae iracundia est cu. Quo ea amet recusabo mediocritatem, choro habemus epicurei in vix.
+        Molestie assueverit pri ne, laoreet interesset pro cu. At pro meis fabulas laboramus. Eum eu malis
+        molestie sensibus. Est primis postea labore ut, ad vis dolore euismod.
+      </div></p>
+      <div class="modal-footer">
       <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">Cancel</button>
       <a id="activateTesting" class="btn btn-primary" title="Activate">Activate</a>
+      </div>
     </div>
   </div>
 </div>
