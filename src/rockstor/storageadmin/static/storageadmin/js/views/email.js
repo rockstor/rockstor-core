@@ -28,7 +28,8 @@ EmailView = RockstorLayoutView.extend({
     events: {
 	"click #Add-email-address" : "renderEmailForm",
 	"click #cancel": "cancel",
-	"click .email-delete": "deleteEmail"
+	"click .email-delete": "deleteEmail",
+	"click .send-test-message": "sendTestEmail"
     },
 
     initialize: function() {
@@ -111,7 +112,7 @@ EmailView = RockstorLayoutView.extend({
 	var _this = this;
 	if(confirm("Are you sure about deleting this Email Account?")){
 	    $.ajax({
-		url: "/api/email/",
+		url: "/api/email",
 		type: "DELETE",
 		dataType: "json",
 		success: function() {
@@ -125,6 +126,18 @@ EmailView = RockstorLayoutView.extend({
 	}
     },
 
+    sendTestEmail: function(event) {
+	event.preventDefault();
+	var _this = this;
+	$.ajax({
+	    url: "/api/email/send-test-email",
+	    type: "POST",
+	    dataType: "json",
+	    success: function() {
+		console.log('test email sent successfully');
+	    },
+	});
+    },
     cancel: function(event) {
 	this.renderEmail();
     }

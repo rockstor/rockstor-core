@@ -46,12 +46,11 @@
 	    access to and is simply the recipient of the notifications sent.
 	  </p>
 
-	  <p>To test if notifications are setup properly, login to Rockstor as root
-	     on a terminal or via ssh and
-	     send a test e-mail using this command: <code>echo "Hello from
-	      Rockstor" | mail -s "test message" -r <%= email.get('sender') %> <%= email.get('receiver') %></code>.
-	     If you do not receive the e-mail, you can find clues
-	    in <code>/var/log/maillog</code>.
+	  <p>To test if notifications are setup properly, click
+	     on <i class="glyphicon glyphicon-send"></i> icon below to send a
+	     test message. It may take up to several minutes, but if you do not
+	     receive the e-mail, you can find clues
+	     in <code>/var/log/maillog</code>.
 	  </p>
 	</div>
         <table id="email-table" class="table table-condensed table-bordered table-hover table-striped share-table " >
@@ -70,7 +69,8 @@
 	      <td><%= email.get('smtp_server') %></td>
               <td>
                 <a href="#" class="email-delete" id="email-delete" rel="tooltip" title="Delete email"><i class="glyphicon glyphicon-trash"></i></a>
-               </td>
+		<a href="#" class="send-test-message" id="send-test-message" rel="tooltip" title="Send a test e-mail"><i class="glyphicon glyphicon-send"></i></a>
+              </td>
             </tr>
           </tbody>
         </table>
