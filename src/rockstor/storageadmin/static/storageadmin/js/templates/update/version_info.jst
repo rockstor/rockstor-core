@@ -179,11 +179,19 @@ $(document).ready(function(){
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 class="modal-title">Activate stable subscription</h3>
+        <h3 class="modal-title">Activate Stable updates. (UUID: <%= applianceId %>)</h3>
       </div>
       <div class="modal-body">
-	<h3>Activate stable subscription. id: <%= applianceId %></h3>
-	  <form id="activate-stable-form" name="aform" class="form-horizontal">
+	<p>
+	  In order to activate Stable updates, please follow these steps.
+	</p>
+	<ol>
+	  <li>Purchase the Activation code by clicking <a href="http://shop.rockstor.com/products/stable-release-channel-subscription#applianceid=<%= applianceId %>" target="_blank">here.</a>
+	  <li>The Activation code will be sent to you via e-mail.</li>
+	  <li>Come back to this screen and enter the Activation code.</li>
+	  <li>Enjoy Stable updates. Thanks for supporting Rockstor!</li>
+	</ol>
+	<form id="activate-stable-form" name="aform" class="form-horizontal">
 	    <div class="form-group">
 	      <label class="col-sm-4 control-label" for="activation-code">Activation Code <span class="required">*</span></label>
 	      <div class="col-sm-4">
