@@ -1,27 +1,88 @@
+<script>
+$(document).ready(function(){
+  $("#sub tr td:first-child").css( "color", "#eb6841" );
+});
+</script>
+
 <div class="row">
-<div class="col-md-8">
+<div class="col-md-8 col-md-offset-2">
 <div class="panel panel-default">
 <div class="panel-heading">Subscriptions</div>
   <div class="panel-body">
-    <% if (!stableSub || stableSub.get('status') != 'active' ) { %>
-    <h3>Stable subscription channel is inactive. It is recommended for most users. You can read about the benefits here.</h3>
-    <a id="stable-modal" class="btn btn-primary" title="Activate Stable subscription">Activate Stable subscription</a>
-    <% if (!defaultSub || defaultSub.get('status') != 'active') { %>
-    <br>
-    <h3>Alternatively, Testing channel can be activated for cutting edge updates. Read about pros and cons of Stable and Testing here..</h3>
-    <a id="testing-modal" class="btn btn-danger" title="Activate Testing subscription">Activate Testing subscription</a>
-    <% } else { %>
-    <h3>Testing subscription is active, which provides cutting edge updates. Stable subscription is recommended for most users.</h3>
-    <% } %>
-    <% } else { %>
-    <h3>Stable subscription is active. While it's not recommended for most users, if you are absolutely sure, you can activate the Testing channel. By doing so, Stable channel will be deactivated for this system.</h3>
-    <a id="testing-modal" class="btn btn-danger" title="Activate Testing subscription">Activate Testing subscription</a>
-    <% } %>
+<% if (!stableSub || stableSub.get('status') != 'active' ) { %>
+<h3>Stable subscription channel is inactive. It is recommended for most users. You can read about the benefits here.</h3>
+<a id="stable-modal" class="btn btn-primary" title="Activate Stable subscription">Activate Stable subscription</a>
+<% if (!defaultSub || defaultSub.get('status') != 'active') { %>
+<br>
+<h3>Alternatively, Testing channel can be activated for cutting edge updates. Read about pros and cons of Stable and Testing here..</h3>
+<a id="testing-modal" class="btn btn-danger" title="Activate Testing subscription">Activate Testing subscription</a>
+<% } else { %>
+<h3>Testing subscription is active, which provides cutting edge updates. Stable subscription is recommended for most users.</h3>
+<% } %>
+<% } else { %>
+<h3>Stable subscription is active. While it's not recommended for most users, if you are absolutely sure, you can activate the Testing channel. By doing so, Stable channel will be deactivated for this system.</h3>
+<a id="testing-modal" class="btn btn-danger" title="Activate Testing subscription">Activate Testing subscription</a>
+<% } %>
   </div>
 </div>
 </div>
 </div>
 
+<div class="col-md-8 col-md-offset-2">
+<div class="form-group">
+  <table class="table table-hover" id="sub">
+    <thead>
+      <tr class="active">
+        <th>Feature</th>
+        <th>Stable Channel</th>
+        <th>Testing Channel</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Update Frequency</td>
+        <td>3-4 Weeks</td>
+        <td>2-3 days</td>
+      </tr>
+      <tr>
+        <td>Low risk of regressions</td>
+        <td><i class="fa fa-check"></i></td>
+        <td><i class="fa fa-times"></i></td>
+      </tr>
+      <tr>
+        <td>Priority of bug fixes</td>
+        <td>Highest</td>
+        <td>Varies</td>
+      </tr>
+      <tr>
+        <td>Tested in production environment</td>
+        <td><i class="fa fa-check"></i></td>
+        <td><i class="fa fa-times"></i></td>
+      </tr>
+      <tr>
+        <td>Tested by community</td>
+        <td><i class="fa fa-check"></i></td>
+        <td><i class="fa fa-times"></i></td>
+      </tr>
+      <tr>
+        <td>Tested in development environment</td>
+        <td><i class="fa fa-check"></i></td>
+        <td><i class="fa fa-check"></i></td>
+      </tr>
+      <tr>
+        <td>Automated functional testing</td>
+        <td><i class="fa fa-check"></i></td>
+        <td><i class="fa fa-check"></i></td>
+      </tr>
+      <tr>
+        <td></td>
+        <td><a id="stable-modal" class="btn btn-success" title="Activate Stable subscription">Activate</a></td>
+        <td><a id="testing-modal" class="btn btn-danger" title="Activate Testing subscription">Activate</a></td>
+      </tr>
+  </tbody>
+</table>
+</div><!-- form-group-->
+</div>
 
 
 <% if (currentVersion != mostRecentVersion) { %>
