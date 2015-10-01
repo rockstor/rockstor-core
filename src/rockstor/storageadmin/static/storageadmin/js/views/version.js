@@ -285,10 +285,11 @@ VersionView = RockstorLayoutView.extend({
     },
 
     activateTesting: function() {
-  var button = this.$('activateTesting');
-  if (buttonDisabled(button)) return false;
-  disableButton(button);
-  console.log("Inactive testing");
+	var _this = this;
+	var button = this.$('activateTesting');
+	if (buttonDisabled(button)) return false;
+	disableButton(button);
+	console.log("Inactive testing");
 	$.ajax({
 	    url: '/api/update-subscriptions/activate-testing',
 	    type: 'POST',

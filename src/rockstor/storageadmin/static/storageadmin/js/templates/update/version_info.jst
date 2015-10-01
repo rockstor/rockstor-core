@@ -7,13 +7,26 @@ $(document).ready(function(){
 <div class="row">
 <div class="col-md-8 col-md-offset-2">
 
-<% if (!stableSub || stableSub.get('status') != 'active' ) { %>
+  <% if (defaultSub && defaultSub.get('status') == 'active') { %>
+  <div class="alert alert-danger">
+    <p>
+      Testing updates are activated. These are cutting edge updates that should
+      be applied only after careful consideration. When an update is released,
+      read the changelog and proceed with caution.
+    </p>
+    <p>
+      Alternatively, Stable updates are generally recommended as shown below.
+    </p>
+  </div>
+  <% } %>
+
+  <% if (!stableSub || stableSub.get('status') != 'active' ) { %>
   <table class="table table-hover" id="subscription-table">
     <thead>
       <tr class="active">
         <th>Feature</th>
-        <th>Stable Channel</th>
-        <th>Testing Channel</th>
+        <th>Stable Updates</th>
+        <th>Testing Updates</th>
       </tr>
     </thead>
     <tbody>
@@ -109,7 +122,7 @@ $(document).ready(function(){
 <% } else { %>
 <div class="col-md-offset-3 col-md-6 col-md-offset-3">
   <div id="updateInfo">
-    <h3>System is up to date with latest Rockstor version: <%= currentVersion %></h3>
+    <h3>System is running the latest Rockstor version: <%= currentVersion %></h3>
     <p>If you've updated recently, reload the browser<b>(Ctrl+Shift+R)</b> for latest UI changes.</p><br>
 
     <% if (autoUpdateEnabled) { %>
@@ -196,17 +209,18 @@ $(document).ready(function(){
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h4 class="modal-title">Activate Testing subscription</h4>
+        <h4 class="modal-title">Activate Testing updates</h4>
       </div>
       <div class="modal-body">
-      	<p>Are you sure about this?</p>
-        <p>Lorem ipsum dolor sit amet, inani semper saperet per ut, et tation facilis molestie vix, ex vix quem oporteat.
-        His ne aeterno consetetur argumentum. Cetero epicurei eu vis, ei labore impedit tincidunt eum, est sententiae voluptatum
-        repudiandae ne. Everti lucilius expetenda pri ad, nam et tale commodo delicata.
-        Nisl propriae iracundia est cu. Quo ea amet recusabo mediocritatem, choro habemus epicurei in vix.
-        Molestie assueverit pri ne, laoreet interesset pro cu. At pro meis fabulas laboramus. Eum eu malis
-        molestie sensibus. Est primis postea labore ut, ad vis dolore euismod.
+	<p>
+	  Testing updates are high frequency updates that are released just
+	  after testing in development environment as opposed to Stable updates
+	  that are released only after significant testing and qualification
+	  process. Because of this, Testing updates are cutting edge that are
+	  generally not recommended and should be applied only after careful
+	  consideration.
 	</p>
+      	<p>Are you sure?</p>
       </div>
       <div class="modal-footer">
       <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">Cancel</button>
