@@ -128,16 +128,21 @@ EmailView = RockstorLayoutView.extend({
 
     sendTestEmail: function(event) {
 	event.preventDefault();
-	var _this = this;
 	$.ajax({
 	    url: "/api/email/send-test-email",
 	    type: "POST",
 	    dataType: "json",
 	    success: function() {
-		console.log('test email sent successfully');
+		$('#test-message-confirm').modal({
+		    keyboard: false,
+		    show: false,
+		    backdrop: 'static'
+		});
+		$('#test-message-confirm').modal('show');
 	    },
 	});
     },
+
     cancel: function(event) {
 	this.renderEmail();
     }

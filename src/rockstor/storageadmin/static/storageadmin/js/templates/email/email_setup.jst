@@ -31,7 +31,7 @@
 	      notifications to another specified e-mail address, such as your
 	      personal gmail account.</p>
 	  </div>
-      	<button type="Submit" id="Add-email-address" class="btn btn-primary">Setup E-mail for alerts</button>
+      	<button type="Submit" id="Add-email-address" class="btn btn-primary" title="Add an e-mail account to be used for sending notifications.">Add an E-mail account</button>
         <%} else { %>
 	<div class="alert alert-warning">
 	  <p>Rockstor uses the credentials below to send e-mail notifications. Any
@@ -43,14 +43,12 @@
 	    permissions. However, we strongly recommend against using a personal
 	    or important e-mail account for the <b>Sender</b>. On the other
 	    hand the <b>Receiver</b> e-mail address can be anything you have
-	    access to and is simply the recipient of the notifications sent.
+	    access to and is simply the recipient of the notifications.
 	  </p>
 
 	  <p>To test if notifications are setup properly, click
 	     on <i class="glyphicon glyphicon-send"></i> icon below to send a
-	     test message. It may take up to several minutes, but if you do not
-	     receive the e-mail, you can find clues
-	     in <code>/var/log/maillog</code>.
+	     test message.
 	  </p>
 	</div>
         <table id="email-table" class="table table-condensed table-bordered table-hover table-striped share-table " >
@@ -81,3 +79,19 @@
         </div>
   </div>
 </div>
+
+<% if (!_.isNull(email)) { %>
+<div id="test-message-confirm" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+	<button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
+	<h3 id="myModalLabel">Test e-mail sent successfully.</h3>
+      </div>
+      <div class="modal-body">
+	<p>Test e-mail is sent successfully from <code><%= email.get('sender') %></code> to <code><%= email.get('receiver') %></code>. It could take up to several minutes for the e-mail to arrive. If you do not receive it, check <code>/var/log/maillog</code> for clues. You may want to verify the input, delete and add the E-mail account again.</p>
+      </div>
+    </div>
+  </div>
+</div>
+<% } %>
