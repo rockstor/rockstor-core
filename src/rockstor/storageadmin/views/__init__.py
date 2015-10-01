@@ -52,6 +52,6 @@ from rockon_custom_config import RockOnCustomConfigView
 from disk_smart import DiskSMARTDetailView
 from config_backup import (ConfigBackupListView, ConfigBackupDetailView,
                            ConfigBackupUpload)
-from email import EmailClientView
+from email_client import EmailClientView
 from update_subscription import (UpdateSubscriptionListView,
                                  UpdateSubscriptionDetailView)

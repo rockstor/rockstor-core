@@ -44,6 +44,8 @@ VersionView = RockstorLayoutView.extend({
 	this.timeLeft = 300;
 	this.subscriptions = new UpdateSubscriptionCollection();
 	this.dependencies.push(this.subscriptions);
+	this.appliances = new ApplianceCollection();
+	this.dependencies.push(this.appliances);
     },
 
     render: function() {
@@ -98,6 +100,10 @@ VersionView = RockstorLayoutView.extend({
 		defaultSub = s;
 	    }
 	});
+	var currentAppliance = this.appliances.find(function(a) {
+	    return a.get('current_appliance') == true;
+	});
+
 	$(this.el).html(this.template({
 	    currentVersion: this.currentVersion,
 	    mostRecentVersion: this.mostRecentVersion,
@@ -105,7 +111,8 @@ VersionView = RockstorLayoutView.extend({
 	    changeMap: this.changeLog(this.changeList),
 	    autoUpdateEnabled: this.autoUpdateEnabled,
 	    stableSub: stableSub,
-	    defaultSub: defaultSub
+	    defaultSub: defaultSub,
+	    applianceId: currentAppliance.get('uuid')
 	}));
 	this.$('#update-modal').modal({
 	    keyboard: false,

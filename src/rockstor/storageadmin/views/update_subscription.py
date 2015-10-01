@@ -42,7 +42,7 @@ class UpdateSubscriptionListView(rfc.GenericView):
         ncd = settings.UPDATE_CHANNELS[on]
         fcd = settings.UPDATE_CHANNELS[off]
         try:
-            offo = UpdateSubscription.objects.get(name=fcd['name'], status='active')
+            offo = UpdateSubscription.objects.get(name=fcd['name'])
             offo.status = 'inactive'
             offo.save()
             switch_repo(offo, on=False)
@@ -58,8 +58,9 @@ class UpdateSubscriptionListView(rfc.GenericView):
                                      url=ncd['url'], appliance=appliance,
                                      status='active')
         ono.password = password
-        ono.save()
         status, text = repo_status(ono)
+        ono.status = status
+        ono.save()
         if (status == 'inactive'):
             e_msg = ('Activation code(%s) could not be authorized. '
                      'Verify the code and try again. If '

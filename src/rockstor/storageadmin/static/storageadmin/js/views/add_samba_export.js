@@ -171,9 +171,7 @@ AddSambaExportView = RockstorLayoutView.extend({
     },
 
     shadowCopyInfo: function(event) {
-	var _this = this;
 	event.preventDefault();
-	console.log('hello');
 	$('#shadow-copy-info-modal').modal({
 	    keyboard: false,
 	    show: false,
