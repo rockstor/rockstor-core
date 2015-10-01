@@ -28,6 +28,7 @@ VersionView = RockstorLayoutView.extend({
     events: {
 	'click #update': 'update',
 	'click #donateYes': 'donateYes',
+	'click #autoUpdateSwitch': 'autoUpdateSwitch',
 	'click #enableAuto': 'enableAutoUpdate',
 	'click #disableAuto': 'disableAutoUpdate',
 	'click #stable-modal': 'showStableModal',
@@ -198,6 +199,15 @@ VersionView = RockstorLayoutView.extend({
 
     displayUserMsg: function() {
 	this.$('#user-msg').show('highlight', null, 1000);
+    },
+
+    autoUpdateSwitch: function() {
+	$('#auto-update-modal').modal({
+	    keyboard: false,
+	    show: false,
+	    backdrop: 'static'
+	});
+	$('#auto-update-modal').modal('show');
     },
 
     enableAutoUpdate: function() {

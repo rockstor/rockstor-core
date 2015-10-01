@@ -21,7 +21,7 @@ $(document).ready(function(){
     <tbody>
       <tr>
         <td>Update Frequency</td>
-        <td>3-4 Weeks</td>  
+        <td>3-4 Weeks</td>
         <td>2-3 days</td>
       </tr>
       <tr>
@@ -111,13 +111,13 @@ $(document).ready(function(){
 <% } else { %>
 <div class="col-md-offset-3 col-md-6 col-md-offset-3">
 <div id="updateInfo">
-  <h3>System is up-to-date.</h3>
+  <h3>System is up to date with latest Rockstor version: <%= currentVersion %></h3>
 <p>If you've updated recently, reload the browser<b>(Ctrl+Shift+R)</b> for latest UI changes.</p><br>
 
 <% if (autoUpdateEnabled) { %>
-  <a id="disableAuto" class="btn btn-primary" title="Rockstor is configured to check for available system updates and automatically upgrade all packages on a daily basis. This will keep your entire system up to date. While it's not recommended, you can disable this feature and only update when you want to.">Disable auto update</a>
+  <a id="autoUpdateSwitch" class="btn btn-primary" title="Rockstor is configured to check for available system updates and automatically upgrade all packages on a daily basis. This will keep your entire system up to date. While it's not recommended, you can disable this feature and only update when you want to.">Disable auto update</a>
   <% } else { %>
-  <a id="enableAuto" class="btn btn-primary" title="Rockstor can be configured to check for available system updates and automatically upgrade all packages on a daily basis. We recommend you enable this feature to keep your entire system up to date without delay.">Enable auto update</a>
+  <a id="autoUpdateSwitch" class="btn btn-primary" title="Rockstor can be configured to check for available system updates and automatically upgrade all packages on a daily basis. We recommend you enable this feature to keep your entire system up to date without delay.">Enable auto update</a>
   <% } %>
 <p></p>
 </div>
@@ -185,7 +185,7 @@ $(document).ready(function(){
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h4 class="modal-title">Activate Testing subscription<?h4>
+        <h4 class="modal-title">Activate Testing subscription</h4>
       </div>
       <div class="modal-body">
       	<p>Are you sure about this?</p>
@@ -195,10 +195,59 @@ $(document).ready(function(){
         Nisl propriae iracundia est cu. Quo ea amet recusabo mediocritatem, choro habemus epicurei in vix.
         Molestie assueverit pri ne, laoreet interesset pro cu. At pro meis fabulas laboramus. Eum eu malis
         molestie sensibus. Est primis postea labore ut, ad vis dolore euismod.
-      </div></p>
+	</p>
+      </div>
       <div class="modal-footer">
       <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">Cancel</button>
       <a id="activateTesting" class="btn btn-primary" title="Activate">Activate</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="auto-update-modal" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+	<% if (autoUpdateEnabled) { %>
+        <h4 class="modal-title">Disable auto updates</h4>
+	<% } else { %>
+	<h4 class="modal-title">Enable auto updates</h4>
+	<% } %>
+      </div>
+      <div class="modal-body">
+	<% if (autoUpdateEnabled) { %>
+	<p>
+	Currently Rockstor is configured to check for available system updates
+	and automatically upgrade all packages on a daily basis. This will keep
+	your entire system up to date. Disabling auto updates is only
+	recommended when you have Testing updates activated.
+	</p>
+	<% } else { %>
+	<% if (defaultSub && defaultSub.get('status') == 'active') { %>
+	<div class="alert alert-danger">
+	  <p>
+	    Testing updates are activated on this system. Enabling auto updates
+	    is strongly discouraged while this is the case.
+	  </p>
+	</div>
+	<% } %>
+	<p>
+	  By enabling auto updates, Rockstor will check for available system
+	  updates and automatically upgrade all packages on a daily
+	  basis. Enabling this feature is recommended except when Testing
+	  updates are active.
+	</p>
+	<% } %>
+      	<p>Are you sure?</p>
+	<div class="modal-footer">
+	  <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">Cancel</button>
+	  <% if (autoUpdateEnabled) { %>
+	  <a id="disableAuto" class="btn btn-primary" title="Activate">Disable auto updates</a>
+	  <% } else { %>
+	  <a id="enableAuto" class="btn btn-primary" title="Activate">Enable auto updates</a>
+	  <% } %>
+	</div>
       </div>
     </div>
   </div>
