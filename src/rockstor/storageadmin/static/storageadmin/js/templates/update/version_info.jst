@@ -6,9 +6,7 @@ $(document).ready(function(){
 
 <div class="row">
 <div class="col-md-8 col-md-offset-2">
-<div class="alert alert-success">
-  <p>Put your explaination here....</p>
-</div>
+
 <% if (!stableSub || stableSub.get('status') != 'active' ) { %>
   <table class="table table-hover" id="subscription-table">
     <thead>
@@ -110,19 +108,32 @@ $(document).ready(function(){
 
 <% } else { %>
 <div class="col-md-offset-3 col-md-6 col-md-offset-3">
-<div id="updateInfo">
-  <h3>System is up to date with latest Rockstor version: <%= currentVersion %></h3>
-<p>If you've updated recently, reload the browser<b>(Ctrl+Shift+R)</b> for latest UI changes.</p><br>
+  <div id="updateInfo">
+    <h3>System is up to date with latest Rockstor version: <%= currentVersion %></h3>
+    <p>If you've updated recently, reload the browser<b>(Ctrl+Shift+R)</b> for latest UI changes.</p><br>
 
-<% if (autoUpdateEnabled) { %>
-  <a id="autoUpdateSwitch" class="btn btn-primary" title="Rockstor is configured to check for available system updates and automatically upgrade all packages on a daily basis. This will keep your entire system up to date. While it's not recommended, you can disable this feature and only update when you want to.">Disable auto update</a>
-  <% } else { %>
-  <a id="autoUpdateSwitch" class="btn btn-primary" title="Rockstor can be configured to check for available system updates and automatically upgrade all packages on a daily basis. We recommend you enable this feature to keep your entire system up to date without delay.">Enable auto update</a>
-  <% } %>
-<p></p>
-</div>
+    <% if (autoUpdateEnabled) { %>
+    <a id="autoUpdateSwitch" class="btn btn-primary" title="Rockstor is configured to check for available system updates and automatically upgrade all packages on a daily basis. This will keep your entire system up to date. While it's not recommended, you can disable this feature and only update when you want to.">Disable auto update</a>
+    <% } else { %>
+    <a id="autoUpdateSwitch" class="btn btn-primary" title="Rockstor can be configured to check for available system updates and automatically upgrade all packages on a daily basis. We recommend you enable this feature to keep your entire system up to date without delay.">Enable auto update</a>
+    <% } %>
+  </div>
 </div>
 <% } %>
+
+<div class="col-md-offset-3 col-md-6 col-md-offset-3">
+<% if (stableSub && stableSub.get('status') == 'active') { %>
+<div id="updateInfo" class="alert alert-success">
+  <p></p>
+  <p>
+    Stable updates are activated. While it's not recommended, if you are
+    absolutely sure, Testing updates can be activated by clicking <a id="testing-modal">
+    here.
+    </a>
+  </p>
+</div>
+<% } %>
+</div>
 
 <div id="update-modal" class="modal fade" role="dialog" aria-hidden="true">
   <div class="modal-dialog">
