@@ -20,6 +20,18 @@ $(document).ready(function(){
   </div>
   <% } %>
 
+  <% if (!defaultSub && !stableSub) { %>
+  <div class="alert alert-success">
+    <p>
+      You can receive software updates from one of the two update channels as
+      shown in the below table. Please activate a channel that is appropriate
+      for your needs. Stable updates are generally recommended, unless you want
+      to actively test Rockstor. If you have questions, email
+      support@rockstor.com
+    </p>
+  </div>
+  <% } %>
+
   <% if (!stableSub || stableSub.get('status') != 'active' ) { %>
   <table class="table table-hover" id="subscription-table">
     <thead>
