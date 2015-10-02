@@ -112,12 +112,14 @@ $(document).ready(function(){
 </div>
 </div>
 
+<% if(defaultSub.get('status') == 'active'){ %>
 <div class="col-md-offset-2 col-md-8 col-md-offset-2" id="supportBox">
       <div class="alert alert-success" id="contrib-alert">
       <h4>We are happy to make this update available to you. Please support us by
       <a id="donateYes" href="#version"> Donating</a> or making a <a href="http://shop.rockstor.com" target="_blank"> Purchase</a></h4>
         <a id="update" class="btn btn-primary" title="start update">Start Update</a>
 </div>
+ <% } %>
 
 <% } else { %>
 <div class="col-md-offset-3 col-md-6 col-md-offset-3">
@@ -179,7 +181,7 @@ $(document).ready(function(){
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 class="modal-title">Activate Stable updates. (UUID: <%= applianceId %>)</h3>
+        <h3 class="modal-title">Activate Stable updates.</h3>
       </div>
       <div class="modal-body">
 	<p>
@@ -202,6 +204,7 @@ $(document).ready(function(){
 		<% } %>
 	    </div>
       </div>
+    <p style="color:'#eb6841'">(UUID for reference: <%= applianceId %>)</p>
       <div class="modal-footer">
   	    <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">Cancel</button>
   	    <a id="activateStable" class="btn btn-primary" title="Activate">Activate</a>
