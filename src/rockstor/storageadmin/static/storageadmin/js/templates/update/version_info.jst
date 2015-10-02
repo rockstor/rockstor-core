@@ -36,14 +36,24 @@ $(document).ready(function(){
         <td>2-3 days</td>
       </tr>
       <tr>
-        <td>Low risk of regressions</td>
-        <td><i class="fa fa-check"></i></td>
-        <td><i class="fa fa-times"></i></td>
-      </tr>
-      <tr>
         <td>Priority of bug fixes</td>
         <td>Highest</td>
         <td>Varies</td>
+      </tr>
+      <tr>
+        <td>Automated functional testing</td>
+        <td><i class="fa fa-check"></i></td>
+        <td><i class="fa fa-check"></i></td>
+      </tr>
+      <tr>
+        <td>Tested in development environment</td>
+        <td><i class="fa fa-check"></i></td>
+        <td><i class="fa fa-check"></i></td>
+      </tr>
+      <tr>
+        <td>Low risk of regressions</td>
+        <td><i class="fa fa-check"></i></td>
+        <td><i class="fa fa-times"></i></td>
       </tr>
       <tr>
         <td>Tested in production environment</td>
@@ -56,20 +66,10 @@ $(document).ready(function(){
         <td><i class="fa fa-times"></i></td>
       </tr>
       <tr>
-        <td>Tested in development environment</td>
-        <td><i class="fa fa-check"></i></td>
-        <td><i class="fa fa-check"></i></td>
-      </tr>
-      <tr>
-        <td>Automated functional testing</td>
-        <td><i class="fa fa-check"></i></td>
-        <td><i class="fa fa-check"></i></td>
-      </tr>
-      <tr>
         <td></td>
         <td><a id="stable-modal" class="btn btn-success" title="Activate Stable subscription">Activate</a></td>
       <% if (defaultSub && defaultSub.get('status') == 'active') { %>
-        <td><a id="testing-modal" class="btn btn-danger" title="Activate Testing subscription" disabled>Activate</a></td>
+        <td><a id="testing-modal" class="btn btn-danger" title="Activate Testing subscription" disabled>Currently Active</a></td>
       <% } else { %>
         <td><a id="testing-modal" class="btn btn-danger" title="Activate Testing subscription">Activate</a></td>
       <% } %>
@@ -183,9 +183,9 @@ $(document).ready(function(){
       <div class="modal-header">
         <h3 class="modal-title">Activate Stable updates.</h3>
       </div>
-      <div class="modal-body">
+      <div style="font-size: 13px" class="modal-body">
 	<p>
-	  In order to activate Stable updates, please follow these steps.
+	  Please follow these steps to activate Stable updates.
 	</p>
 	<ol>
 	  <li>Purchase the Activation code by clicking <a href="http://shop.rockstor.com/products/stable-release-channel-subscription#applianceid=<%= applianceId %>" target="_blank">here.</a>
@@ -204,7 +204,7 @@ $(document).ready(function(){
 		<% } %>
 	    </div>
       </div>
-    <p style="color:'#eb6841'">(UUID for reference: <%= applianceId %>)</p>
+    <p style="color:'#eb6841'">UUID for reference: <%= applianceId %></p>
       <div class="modal-footer">
   	    <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">Cancel</button>
   	    <a id="activateStable" class="btn btn-primary" title="Activate">Activate</a>
