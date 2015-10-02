@@ -380,3 +380,17 @@ NUT_LISTEN_ON_IP = '0.0.0.0'
 
 # The command that the root part of upsmon uses to shutdown the system.
 NUT_SYSTEM_SHUTDOWNCMD = '/sbin/shutdown -h +0'
+
+
+UPDATE_CHANNELS = {
+		'stable': {
+		'name': 'Stable',
+		'description': 'Subscription channel for stable updates',
+		'url': 'updates.rockstor.com:8999/rockstor-stable',
+		},
+		'testing': {
+		'name': 'Testing',
+		'description': 'Subscription channel for testing updates',
+		'url': 'rockstor.com/rockrepo-testing',
+		},
+}

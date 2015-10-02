@@ -650,3 +650,12 @@ var EmailAccountCollection = RockStorPaginatedCollection.extend({
     model: EmailAccount,
     baseUrl: '/api/email'
 });
+
+var UpdateSubscription = Backbone.Model.extend({
+    urlRoot: '/api/update-subscriptions'
+});
+
+var UpdateSubscriptionCollection = RockStorPaginatedCollection.extend({
+    model: UpdateSubscription,
+    baseUrl: '/api/update-subscriptions'
+});

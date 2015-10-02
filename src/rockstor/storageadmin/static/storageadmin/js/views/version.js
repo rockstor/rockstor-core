@@ -28,8 +28,13 @@ VersionView = RockstorLayoutView.extend({
     events: {
 	'click #update': 'update',
 	'click #donateYes': 'donateYes',
+	'click #autoUpdateSwitch': 'autoUpdateSwitch',
 	'click #enableAuto': 'enableAutoUpdate',
-	'click #disableAuto': 'disableAutoUpdate'
+	'click #disableAuto': 'disableAutoUpdate',
+	'click #stable-modal': 'showStableModal',
+	'click #testing-modal': 'showTestingModal',
+	'click #activateStable': 'activateStable',
+	'click #activateTesting': 'activateTesting'
     },
 
     initialize: function() {
@@ -38,9 +43,18 @@ VersionView = RockstorLayoutView.extend({
 	this.template = window.JST.update_version_info;
 	this.paginationTemplate = window.JST.common_pagination;
 	this.timeLeft = 300;
+	this.subscriptions = new UpdateSubscriptionCollection();
+	this.dependencies.push(this.subscriptions);
+	this.appliances = new ApplianceCollection();
+	this.dependencies.push(this.appliances);
     },
 
     render: function() {
+	this.fetch(this.renderUpdates, this);
+	return this;
+    },
+
+    renderUpdates: function() {
 	var _this = this;
 	$('.modal-backdrop').remove();
 	$.ajax({
@@ -77,13 +91,29 @@ VersionView = RockstorLayoutView.extend({
 
     renderVersionInfo: function() {
 
-	var _this = this;
+	var stableSub = null;
+	var defaultSub = null;
+	this.subscriptions.each(function(s) {
+	    if (s.get('name') == 'Stable') {
+		stableSub = s;
+	    }
+	    if (s.get('name') == 'Testing') {
+		defaultSub = s;
+	    }
+	});
+	var currentAppliance = this.appliances.find(function(a) {
+	    return a.get('current_appliance') == true;
+	});
+
 	$(this.el).html(this.template({
 	    currentVersion: this.currentVersion,
 	    mostRecentVersion: this.mostRecentVersion,
 	    changeList: this.changeList,
 	    changeMap: this.changeLog(this.changeList),
-	    autoUpdateEnabled: this.autoUpdateEnabled
+	    autoUpdateEnabled: this.autoUpdateEnabled,
+	    stableSub: stableSub,
+	    defaultSub: defaultSub,
+	    applianceId: currentAppliance.get('uuid')
 	}));
 	this.$('#update-modal').modal({
 	    keyboard: false,
@@ -148,8 +178,8 @@ VersionView = RockstorLayoutView.extend({
     showTimeRemaining: function() {
 	mins = Math.floor(this.timeLeft/60);
 	sec = this.timeLeft - (mins*60);
-	sec = sec >=10 ? '' + sec : '0' + sec
-	this.$('#time-left').html(mins + ':' + sec)
+	sec = sec >=10 ? '' + sec : '0' + sec;
+	this.$('#time-left').html(mins + ':' + sec);
 	if (mins <= 1 && !this.userMsgDisplayed) {
 	    this.displayUserMsg();
 	    this.userMsgDisplayed = true;
@@ -169,6 +199,15 @@ VersionView = RockstorLayoutView.extend({
 
     displayUserMsg: function() {
 	this.$('#user-msg').show('highlight', null, 1000);
+    },
+
+    autoUpdateSwitch: function() {
+	$('#auto-update-modal').modal({
+	    keyboard: false,
+	    show: false,
+	    backdrop: 'static'
+	});
+	$('#auto-update-modal').modal('show');
     },
 
     enableAutoUpdate: function() {
@@ -195,7 +234,7 @@ VersionView = RockstorLayoutView.extend({
     },
 
     changeLog: function(logArray){
-	var changeLogArray = []
+	var changeLogArray = [];
 	var issues = [];
 	var nextString = [];
 	var changeDescription = [];
@@ -216,4 +255,48 @@ VersionView = RockstorLayoutView.extend({
 	return changeLogArray;
     },
 
+    showStableModal: function() {
+	this.$('#activate-stable').modal('show');
+    },
+
+    showTestingModal: function() {
+	this.$('#activate-testing').modal('show');
+    },
+
+    activateStable: function() {
+	var button = this.$('activateStable');
+	if (buttonDisabled(button)) return false;
+	disableButton(button);
+	var activationCode = this.$('#activation-code').val();
+	var _this = this;
+	$.ajax({
+	    url: '/api/update-subscriptions/activate-stable',
+	    type: 'POST',
+	    dataType: 'json',
+	    contentType: 'application/json',
+	    data: JSON.stringify({'activation_code': activationCode }),
+	    success: function(data, status, xhr) {
+		_this.reloadWindow();
+	    },
+	    error: function(xhr, status, error) {
+		enableButton(button);
+	    }
+	});
+    },
+
+    activateTesting: function() {
+	var _this = this;
+	var button = this.$('activateTesting');
+	if (buttonDisabled(button)) return false;
+	disableButton(button);
+	console.log("Inactive testing");
+	$.ajax({
+	    url: '/api/update-subscriptions/activate-testing',
+	    type: 'POST',
+	    dataType: 'json',
+	    success: function(data, status, xhr) {
+		_this.reloadWindow();
+	    }
+	});
+    }
 });
