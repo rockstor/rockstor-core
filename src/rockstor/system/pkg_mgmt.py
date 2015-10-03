@@ -26,6 +26,7 @@ import shutil
 import time
 from datetime import (datetime, timedelta)
 import requests
+from django.conf import settings
 
 YUM = '/usr/bin/yum'
 RPM = '/usr/bin/rpm'
@@ -184,6 +185,7 @@ def update_run(subscription=None):
     fh, npath = mkstemp()
     with open(npath, 'w') as atfo:
         atfo.write('%s stop rockstor\n' % SYSTEMCTL)
+        atfo.write('/usr/bin/find %s -name "*.pyc" -type f -delete\n' % settings.ROOT_DIR)
         atfo.write('%s --setopt=timeout=600 -y update\n' % YUM)
         atfo.write('%s start rockstor\n' % SYSTEMCTL)
         atfo.write('/bin/rm -f %s\n' % npath)
