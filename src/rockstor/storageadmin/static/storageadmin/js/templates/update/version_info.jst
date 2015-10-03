@@ -132,14 +132,16 @@ $(document).ready(function(){
     </div>
   </div>
 
-<% if(defaultSub && defaultSub.get('status') == 'active'){ %>
 <div class="col-md-offset-2 col-md-8 col-md-offset-2" id="supportBox">
-      <div class="alert alert-success" id="contrib-alert">
-      <h4>We are happy to make this update available to you. Please support us by
+  <% if(defaultSub && defaultSub.get('status') == 'active'){ %>
+  <div class="alert alert-success" id="contrib-alert">
+    <h4>We are happy to make this update available to you. Please support us by
       <a id="donateYes" href="#version"> Donating</a> or making a <a href="http://shop.rockstor.com" target="_blank"> Purchase</a></h4>
-        <a id="update" class="btn btn-primary" title="start update">Start Update</a>
+  </div>
+  <% } %>
+  <a id="update" class="btn btn-primary" title="start update">Start Update</a>
 </div>
- <% } %>
+
 
 <% } else { %>
 <div class="col-md-offset-3 col-md-6 col-md-offset-3">
