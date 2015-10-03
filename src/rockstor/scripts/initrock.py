@@ -161,6 +161,8 @@ def main():
     if (len(sys.argv) > 1 and sys.argv[1] == '-x'):
         loglevel = logging.DEBUG
     logging.basicConfig(format='%(asctime)s: %(message)s', level=loglevel)
+    run_command(['/usr/bin/find', BASE_DIR, '-name', "*.pyc", '-type', 'f', '-delete',], throw=False)
+    logging.info('Removed .pyc files from %s' % BASE_DIR)
     set_def_kernel(logging)
     shutil.copyfile('/etc/issue', '/etc/issue.rockstor')
     for i in range(30):
