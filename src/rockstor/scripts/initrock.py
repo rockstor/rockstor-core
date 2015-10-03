@@ -79,15 +79,15 @@ def set_def_kernel(logger, version=settings.SUPPORTED_KERNEL_VERSION):
             return logging.info('Supported kernel(%s) is already the default' %
                                 supported_kernel_path)
     except Exception, e:
-        logger.error('Exception while listing the default kernel')
-        return logger.exception(e)
+        return logger.error('Exception while listing the default kernel: %s'
+                            % e.__str__())
 
     try:
         run_command([GRUBBY, '--set-default=%s' % supported_kernel_path])
         return logger.info('Default kernel set to %s' % supported_kernel_path)
     except Exception, e:
-        logger.error('Exception while setting kernel(%s) as default' % version)
-        return logger.exception(e)
+        return logger.error('Exception while setting kernel(%s) as default: %s' %
+                            (version, e.__str__()))
 
 def update_tz(logging):
     # update timezone variable in settings.py
@@ -161,8 +161,6 @@ def main():
     if (len(sys.argv) > 1 and sys.argv[1] == '-x'):
         loglevel = logging.DEBUG
     logging.basicConfig(format='%(asctime)s: %(message)s', level=loglevel)
-    run_command(['/usr/bin/find', BASE_DIR, '-name', "*.pyc", '-type', 'f', '-delete',], throw=False)
-    logging.info('Removed .pyc files from %s' % BASE_DIR)
     set_def_kernel(logging)
     shutil.copyfile('/etc/issue', '/etc/issue.rockstor')
     for i in range(30):
@@ -216,7 +214,7 @@ def main():
             lfo.write('%s -x\n' % initrock_loc)
     run_command(['/usr/bin/chmod', 'a+x', '/etc/rc.d/rc.local'])
     logging.info('Checking for flash and Running flash optimizations if appropriate.')
-    run_command([FLASH_OPTIMIZE, '-x'])
+    run_command([FLASH_OPTIMIZE, '-x'], throw=False)
     tz_updated = False
     try:
         logging.info('Updating the timezone from the system')
