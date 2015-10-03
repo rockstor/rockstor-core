@@ -29,12 +29,7 @@ from shutil import move
 from tempfile import mkstemp
 from django.conf import settings
 from system.services import systemctl
-import smtplib
-from email.MIMEMultipart import MIMEMultipart
-from email.MIMEBase import MIMEBase
-from email.MIMEText import MIMEText
-from email.Utils import formatdate
-from email import Encoders
+from system.email_util import send_test_email
 import logging
 logger = logging.getLogger(__name__)
 
@@ -88,19 +83,6 @@ def update_postfix(smtp_server, revert=False):
             rockstor_postfix_config(tfo, smtp_server, revert)
     move(npath, MAIN_CF)
     os.chmod(MAIN_CF, 0644)
-
-
-def send_test_email(eco, subject):
-    msg = MIMEMultipart()
-    msg['From'] = eco.sender
-    msg['To'] = eco.receiver
-    msg['Date'] = formatdate(localtime=True)
-    msg['Subject'] = subject
-
-    msg.attach(MIMEText(subject))
-    smtp = smtplib.SMTP('localhost')
-    smtp.sendmail(eco.sender, eco.receiver, msg.as_string())
-    smtp.close()
 
 
 class EmailClientView(rfc.GenericView):
