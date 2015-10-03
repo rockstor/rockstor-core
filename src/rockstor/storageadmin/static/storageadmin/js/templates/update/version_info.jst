@@ -102,10 +102,16 @@ $(document).ready(function(){
 </div>&nbsp;&nbsp;&nbsp;&nbsp;
   <br>
   <br>
-<div class="col-sm-offset-2 col-sm-8 col-sm-offset-2">
-
-<div id="changeSection">
-  <p>List of new changes in this update</p>
+  <div class="col-sm-offset-2 col-sm-8 col-sm-offset-2">
+    <div id="changeSection">
+      <p>List of changes in this update</p>
+      <% if (defaultSub && defaultSub.get('status') == 'active') { %>
+      <p>
+	You should review the
+	changelog <a href="https://github.com/rockstor/rockstor-core/commits/master"
+	target="_blank">here</a> before proceeding with the update.
+      </p>
+      <% } %>
   <ul>
     <% for(var i = 0; i < changeMap[0].length; i++) { %>
     <% if(changeMap[0][i] == "") { %>
