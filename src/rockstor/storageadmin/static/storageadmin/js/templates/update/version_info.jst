@@ -105,6 +105,23 @@ $(document).ready(function(){
   <div class="col-sm-offset-2 col-sm-8 col-sm-offset-2">
     <div id="changeSection">
       <p>List of changes in this update</p>
+      <ul>
+	<% for(var i = 0; i < changeMap[0].length; i++) { %>
+	   <% if(changeMap[0][i] == "") { %>
+           <br>
+	   <% } else { %>
+	   <li>
+	     <p>
+	       <%= changeMap[0][i] %>
+	       <a href="https://github.com/rockstor/rockstor-core/issues/<%= changeMap[1][i] %>" target="_blank"><%= " #" + changeMap[1][i] %></a>
+               <% for(var j = 0; j < changeMap[2][i].length; j++) { %>
+		  <a href="https://github.com/<%= changeMap[2][i][j] %>" target="_blank"><%= " @" + changeMap[2][i][j] %></a>
+		  <% } %>
+	     </p>
+	   </li>
+	   <% } %>
+	<% } %>
+      </ul>
       <% if (defaultSub && defaultSub.get('status') == 'active') { %>
       <p>
 	You should review the
@@ -112,23 +129,8 @@ $(document).ready(function(){
 	target="_blank">here</a> before proceeding with the update.
       </p>
       <% } %>
-  <ul>
-    <% for(var i = 0; i < changeMap[0].length; i++) { %>
-    <% if(changeMap[0][i] == "") { %>
-        <br>
-    <% } else { %>
-      <li><p><%= changeMap[0][i] %>
-      <a href="https://github.com/rockstor/rockstor-core/issues/<%= changeMap[1][i] %>" target="_blank"><%= " #" + changeMap[1][i] %></a>
-        <% for(var j = 0; j < changeMap[2][i].length; j++) { %>
-          <a href="https://github.com/<%= changeMap[2][i][j] %>" target="_blank"><%= " @" + changeMap[2][i][j] %></a>
-        <% } %>
-      </p></li>
-    <% } %>
-  <% } %>
-  </ul>
-</p>
-</div>
-</div>
+    </div>
+  </div>
 
 <% if(defaultSub && defaultSub.get('status') == 'active'){ %>
 <div class="col-md-offset-2 col-md-8 col-md-offset-2" id="supportBox">
