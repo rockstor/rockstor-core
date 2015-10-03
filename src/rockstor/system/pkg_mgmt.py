@@ -114,6 +114,7 @@ def switch_repo(subscription, on=True):
             rfo.write('enabled=1\n')
             rfo.write('gpgcheck=0\n')
             rfo.write('metadata_expire=1m\n')
+        os.chmod(yum_file, 0600)
     else:
         if (os.path.exists(yum_file)):
             os.remove(yum_file)
