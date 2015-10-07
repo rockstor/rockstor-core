@@ -155,6 +155,29 @@ def enable_rockstor_service(logging):
         run_command([SYSCTL, 'start', 'rockstor'])
         logging.info('Started rockstor service')
 
+def enable_bootstrap_service(logging):
+    name = 'rockstor-bootstrap.service'
+    bs_dest = '/etc/systemd/system/%s' % name
+    bs_src = ('%s/conf/%s' % (BASE_DIR, name))
+    sum1 = "na"
+    if (os.path.isfile(bs_dest)):
+        sum1 = md5sum(bs_dest)
+    sum2 = md5sum(bs_src)
+    if (sum1 != sum2):
+        logging.info('updating rockstor-bootstrap systemd service')
+        shutil.copy(bs_src, bs_dest)
+        run_command([SYSCTL, 'enable', name])
+        run_command([SYSCTL, 'start', name])
+
+def cleanup_rclocal(logging):
+    rc_dest = '/etc/rc.d/rc.local'
+    rc_src = '%s/conf/rc.local' % BASE_DIR
+    sum1 = md5sum(rc_dest)
+    sum2 = md5sum(rc_src)
+    if (sum1 != sum2):
+        logging.info('updating %s' % rc_dest)
+        shutil.copy(rc_src, rc_dest)
+        os.chmod(rc_dest, 0755)
 
 def main():
     loglevel = logging.INFO
@@ -306,8 +329,12 @@ def main():
     logging.info('Running prepdb...')
     run_command([PREP_DB, ])
     logging.info('Done')
+    cleanup_rclocal(logging)
+    logging.info('Cleaned up rc.local')
     enable_rockstor_service(logging)
     logging.info('Started rockstor service')
+    enable_bootstrap_service(logging)
+    logging.info('Started rockstor-bootstrap service')
     logging.info('Shutting down firewall...')
     run_command([SYSCTL, 'stop', 'firewalld'])
     run_command([SYSCTL, 'disable', 'firewalld'])
