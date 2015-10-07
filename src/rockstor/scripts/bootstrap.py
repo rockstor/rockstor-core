@@ -22,7 +22,15 @@ import sys
 import time
 from cli.rest_util import api_call
 from fs.btrfs import device_scan
+from system.osi import run_command
 import requests
+from django.conf import settings
+
+BASE_DIR = settings.ROOT_DIR
+BASE_BIN = '%sbin' % BASE_DIR
+QGROUP_CLEAN = '%s/qgroup-clean' % BASE_BIN
+QGROUP_MAXOUT_LIMIT = '%s/qgroup-maxout-limit' % BASE_BIN
+
 
 def main():
     baseurl = 'https://localhost/api'
@@ -48,6 +56,19 @@ def main():
             time.sleep(2)
             num_attempts += 1
     print('Bootstrapping complete')
+
+    try:
+        print('Running qgroup cleanup. %s' % QGROUP_CLEAN)
+        run_command([QGROUP_CLEAN])
+    except Exception, e:
+        print('Exception while running %s: %s' % (QGROUP_CLEAN, e.__str__()))
+
+    try:
+        print('Running qgroup limit maxout. %s' % QGROUP_MAXOUT_LIMIT)
+        run_command([QGROUP_MAXOUT_LIMIT])
+    except Exception, e:
+        print('Exception while running %s: %s' % (QGROUP_MAXOUT_LIMIT, e.__str__()))
+
 
 if __name__ == '__main__':
     main()

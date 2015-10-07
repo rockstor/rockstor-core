@@ -30,13 +30,11 @@ from django.conf import settings
 
 SYSCTL = '/usr/bin/systemctl'
 BASE_DIR = settings.ROOT_DIR
-BASE_BIN = '%s/bin' % BASE_DIR
+BASE_BIN = '%sbin' % BASE_DIR
 DJANGO = '%s/django' % BASE_BIN
 STAMP = '%s/.initrock' % BASE_DIR
 FLASH_OPTIMIZE = '%s/flash-optimize' % BASE_BIN
 PREP_DB = '%s/prep_db' % BASE_BIN
-QGROUP_CLEAN = '%s/qgroup-clean' % BASE_BIN
-QGROUP_MAXOUT_LIMIT = '%s/qgroup-maxout-limit' % BASE_BIN
 SUPERCTL = '%s/supervisorctl' % BASE_BIN
 OPENSSL = '/usr/bin/openssl'
 GRUBBY = '/usr/sbin/grubby'
@@ -320,20 +318,6 @@ def main():
     else:
         logging.info('Running prepdb...')
         run_command([PREP_DB, ])
-        try:
-            logging.info('Running qgroup cleanup. %s' % QGROUP_CLEAN)
-            run_command([QGROUP_CLEAN])
-        except Exception, e:
-            logging.error('Exception while running %s: %s' % (QGROUP_CLEAN, e.__str__()))
-
-        try:
-            logging.info('Running qgroup limit maxout. %s' % QGROUP_MAXOUT_LIMIT)
-            run_command([QGROUP_MAXOUT_LIMIT])
-        except Exception, e:
-            logging.error('Exception while running %s: %s' % (QGROUP_MAXOUT_LIMIT, e.__str__()))
-
-        if (tz_updated):
-            run_command([SYSCTL, 'restart', 'rockstor'])
 
 
     logging.info('Shutting down firewall...')
