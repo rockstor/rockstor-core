@@ -226,16 +226,6 @@ def main():
         logging.info('restarting nginx...')
         run_command([SUPERCTL, 'restart', 'nginx'])
 
-    with open('/etc/rc.d/rc.local', 'a+') as lfo:
-        found = False
-        initrock_loc = '%s/initrock' % BASE_BIN
-        for l in lfo.readlines():
-            if (re.match(initrock_loc, l) is not None):
-                found = True
-        if (not found):
-            lfo.write('#rockstor script. dont remove\n')
-            lfo.write('%s -x\n' % initrock_loc)
-    run_command(['/usr/bin/chmod', 'a+x', '/etc/rc.d/rc.local'])
     logging.info('Checking for flash and Running flash optimizations if appropriate.')
     run_command([FLASH_OPTIMIZE, '-x'], throw=False)
     tz_updated = False
