@@ -18,17 +18,36 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import os
 os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
+import sys
+import time
 from cli.rest_util import api_call
 from fs.btrfs import device_scan
+import requests
 
 def main():
-    baseurl = 'https://localhost/api/'
+    baseurl = 'https://localhost/api'
     bootstrap_url = ('%s/commands/bootstrap' % baseurl)
     netscan_url = ('%s/network' % baseurl)
     device_scan()
-    api_call(netscan_url, calltype='get')
-    api_call(bootstrap_url, calltype='post')
+    print('BTRFS device scan complete')
 
+    num_attempts = 0
+    while True:
+        try:
+            api_call(netscan_url, calltype='get')
+            api_call(bootstrap_url, calltype='post')
+            break
+        except requests.exceptions.ConnectionError, e:
+            if (num_attempts > 15):
+                print('Max attempts(15) reached. Connection errors persist. '
+                      'Failed to bootstrap. Error: %s' % e.__str__())
+                sys.exit(1)
+            print('Connection error while bootstrapping. This could be because '
+                  'rockstor.service is still starting up. will wait 2 seconds '
+                  'and try again.')
+            time.sleep(2)
+            num_attempts += 1
+    print('Bootstrapping complete')
 
 if __name__ == '__main__':
     main()
