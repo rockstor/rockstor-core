@@ -19,13 +19,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import os
 import shutil
 os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
-from system.osi import run_command
+from system.osi import (run_command, md5sum)
 import logging
 import sys
 import re
 import time
 from tempfile import mkstemp
-import hashlib
 from django.conf import settings
 
 
@@ -133,15 +132,6 @@ def bootstrap_sshd_config(logging):
             logging.info('updated sshd_config')
             run_command([SYSCTL, 'restart', 'sshd'])
 
-def md5sum(fpath):
-    # return the md5sum of the given file
-    if (not os.path.isfile(fpath)):
-        return None
-    md5 = hashlib.md5()
-    with open(fpath) as tfo:
-        for l in tfo.readlines():
-            md5.update(l)
-    return md5.hexdigest()
 
 def enable_rockstor_service(logging):
     rs_dest = '/etc/systemd/system/rockstor.service'
@@ -169,6 +159,21 @@ def enable_bootstrap_service(logging):
         shutil.copy(bs_src, bs_dest)
         run_command([SYSCTL, 'enable', name])
         run_command([SYSCTL, 'start', name])
+        return logging.info('Done.')
+    return logging.info('%s looks correct. Not updating.' % name)
+
+def update_smb_service(logging):
+    name = 'smb.service'
+    ss_dest = '/etc/systemd/system/%s' % name
+    if (not os.path.isfile(ss_dest)):
+        return logging.info('%s is not enabled. Not updating.')
+    ss_src = '%s/conf/%s' % (BASE_DIR, name)
+    sum1 = md5sum(ss_dest)
+    sum2 = md5sum(ss_src)
+    if (sum1 != sum2):
+        logging.info('Updating %s' % name)
+        shutil.copy(ss_src, ss_dest)
+        run_command([SYSCTL, 'daemon-reload'])
         return logging.info('Done.')
     return logging.info('%s looks correct. Not updating.' % name)
 

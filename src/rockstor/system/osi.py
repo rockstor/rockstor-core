@@ -25,6 +25,7 @@ import time
 from socket import inet_ntoa
 from struct import pack
 from exceptions import CommandException
+import hashlib
 import logging
 logger = logging.getLogger(__name__)
 
@@ -453,3 +454,14 @@ def system_shutdown():
 
 def system_reboot():
     return run_command([SHUTDOWN, '-r'])
+
+
+def md5sum(fpath):
+    # return the md5sum of the given file
+    if (not os.path.isfile(fpath)):
+        return None
+    md5 = hashlib.md5()
+    with open(fpath) as tfo:
+        for l in tfo.readlines():
+            md5.update(l)
+    return md5.hexdigest()
