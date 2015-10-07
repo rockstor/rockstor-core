@@ -69,7 +69,7 @@ def toggle_sftp_visibility(share, snap_name, on=True):
         umount_root(mnt_pt)
 
 
-def import_shares(pool):
+def import_shares(pool, request):
     disk = Disk.objects.filter(pool=pool)[0].name
     shares = [s.name for s in Share.objects.filter(pool=pool)]
     shares_d = shares_info('%s%s' % (settings.MNT_PT, pool.name))
@@ -110,7 +110,7 @@ def import_shares(pool):
                          ' You can delete one of them manually with this command: '
                          'btrfs subvol delete %s[pool name]/%s' %
                          (cshare.pool.name, s, pool.name, settings.MNT_PT, s))
-                handle_exception(Exception(e_msg), self.request)
+                handle_exception(Exception(e_msg), request)
             else:
                 cshare.pool = pool
                 cshare.qgroup = shares_d[s]

@@ -198,7 +198,7 @@ class DiskDetailView(rfc.GenericView):
             po.size = pool_usage('%s%s' % (settings.MNT_PT, po.name))[0]
             po.save()
             enable_quota(po)
-            import_shares(po)
+            import_shares(po, request)
             for share in Share.objects.filter(pool=po):
                 import_snapshots(share)
             return Response(DiskInfoSerializer(disk).data)
