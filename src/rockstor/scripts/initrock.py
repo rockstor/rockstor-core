@@ -153,7 +153,8 @@ def enable_rockstor_service(logging):
         shutil.copy(rs_src, rs_dest)
         run_command([SYSCTL, 'enable', 'rockstor'])
         run_command([SYSCTL, 'start', 'rockstor'])
-        logging.info('Started rockstor service')
+        logging.info('Done.')
+    logging.info('rockstor service looks correct. Not updating.')
 
 def enable_bootstrap_service(logging):
     name = 'rockstor-bootstrap.service'
@@ -168,8 +169,17 @@ def enable_bootstrap_service(logging):
         shutil.copy(bs_src, bs_dest)
         run_command([SYSCTL, 'enable', name])
         run_command([SYSCTL, 'start', name])
+        return logging.info('Done.')
+    return logging.info('%s looks correct. Not updating.' % name)
 
 def cleanup_rclocal(logging):
+    #this could potentially be problematic if users want to have a custom
+    #rc.local file, which is not really needed or recommended due to better
+    #systemd alternative method.
+
+    #This cleanup method can be safely removed when we know there are no
+    #<3.8-9 versions out there any more.
+
     rc_dest = '/etc/rc.d/rc.local'
     rc_src = '%s/conf/rc.local' % BASE_DIR
     sum1 = md5sum(rc_dest)
@@ -177,7 +187,9 @@ def cleanup_rclocal(logging):
     if (sum1 != sum2):
         logging.info('updating %s' % rc_dest)
         shutil.copy(rc_src, rc_dest)
-        os.chmod(rc_dest, 0755)
+        logging.info('Done.')
+        return os.chmod(rc_dest, 0755)
+    logging.info('%s looks correct. Not updating.' % rc_dest)
 
 def main():
     loglevel = logging.INFO
@@ -226,6 +238,7 @@ def main():
         logging.info('restarting nginx...')
         run_command([SUPERCTL, 'restart', 'nginx'])
 
+    cleanup_rclocal(logging)
     logging.info('Checking for flash and Running flash optimizations if appropriate.')
     run_command([FLASH_OPTIMIZE, '-x'], throw=False)
     tz_updated = False
@@ -241,7 +254,65 @@ def main():
     except Exception, e:
         logging.error('Exception while updating sshd_config: %s' % e.__str__())
 
-    if (os.path.isfile(STAMP)):
+    if (not os.path.isfile(STAMP)):
+        logging.info('Please be patient. This script could take a few minutes')
+        shutil.copyfile('%s/conf/django-hack' % BASE_DIR,
+                        '%s/django' % BASE_BIN)
+        run_command([SYSCTL, 'enable', 'postgresql'])
+        logging.debug('Progresql enabled')
+        shutil.rmtree('/var/lib/pgsql/data')
+        logging.info('initializing Postgresql...')
+        run_command(['/usr/bin/postgresql-setup', 'initdb'])
+        logging.info('Done.')
+        run_command([SYSCTL, 'restart', 'postgresql'])
+        run_command([SYSCTL, 'status', 'postgresql'])
+        logging.debug('Postgresql restarted')
+        logging.info('Creating app databases...')
+        run_command(['su', '-', 'postgres', '-c', '/usr/bin/createdb smartdb'])
+        logging.debug('smartdb created')
+        run_command(['su', '-', 'postgres', '-c',
+                     '/usr/bin/createdb storageadmin'])
+        logging.debug('storageadmin created')
+        logging.info('Done')
+        logging.info('Initializing app databases...')
+        run_command(['su', '-', 'postgres', '-c', "psql -c \"CREATE ROLE rocky WITH SUPERUSER LOGIN PASSWORD 'rocky'\""])
+        logging.debug('rocky ROLE created')
+        run_command(['su', '-', 'postgres', '-c', "psql storageadmin -f %s/conf/storageadmin.sql.in" % BASE_DIR])
+        logging.debug('storageadmin app database loaded')
+        run_command(['su', '-', 'postgres', '-c', "psql smartdb -f %s/conf/smartdb.sql.in" % BASE_DIR])
+        logging.debug('smartdb app database loaded')
+        run_command(['su', '-', 'postgres', '-c', "psql storageadmin -c \"select setval('south_migrationhistory_id_seq', (select max(id) from south_migrationhistory))\""])
+        logging.debug('storageadmin migration history copied')
+        run_command(['su', '-', 'postgres', '-c', "psql smartdb -c \"select setval('south_migrationhistory_id_seq', (select max(id) from south_migrationhistory))\""])
+        logging.debug('smartdb migration history copied')
+        logging.info('Done')
+        run_command(['cp', '-f', '%s/conf/postgresql.conf' % BASE_DIR,
+                     '/var/lib/pgsql/data/'])
+        logging.debug('postgresql.conf copied')
+        run_command(['cp', '-f', '%s/conf/pg_hba.conf' % BASE_DIR,
+                     '/var/lib/pgsql/data/'])
+        logging.debug('pg_hba.conf copied')
+        run_command([SYSCTL, 'restart', 'postgresql'])
+        logging.info('Postgresql restarted')
+        logging.info('Running app database migrations...')
+        run_command([DJANGO, 'migrate', 'oauth2_provider', '--database=default',
+                     '--noinput'])
+        run_command([DJANGO, 'migrate', 'storageadmin', '--database=default',
+                     '--noinput'])
+        logging.debug('storageadmin migrated')
+        run_command([DJANGO, 'migrate', 'django_ztask', '--database=default',
+                     '--noinput'])
+        logging.debug('django_ztask migrated')
+        run_command([DJANGO, 'migrate', 'smart_manager',
+                     '--database=smart_manager', '--noinput'])
+        logging.debug('smart manager migrated')
+        logging.info('Done')
+        logging.info('Running prepdb...')
+        run_command([PREP_DB, ])
+        logging.info('Done')
+        run_command(['touch', STAMP])
+        logging.info('Done')
+    else:
         logging.info('Running prepdb...')
         run_command([PREP_DB, ])
         try:
@@ -256,81 +327,15 @@ def main():
         except Exception, e:
             logging.error('Exception while running %s: %s' % (QGROUP_MAXOUT_LIMIT, e.__str__()))
 
-        enable_rockstor_service(logging)
         if (tz_updated):
             run_command([SYSCTL, 'restart', 'rockstor'])
-        return logging.info(
-            'initrock ran successfully before, so not running it again.'
-            ' Running it again can destroy your Rockstor state. If you know '
-            'what you are doing, remove %s/.initrock '
-            'and run again.' % BASE_DIR)
-    logging.info('Please be patient. This script could take a few minutes')
-    shutil.copyfile('%s/conf/django-hack' % BASE_DIR,
-                    '%s/django' % BASE_BIN)
-    run_command([SYSCTL, 'enable', 'postgresql'])
-    logging.debug('Progresql enabled')
-    shutil.rmtree('/var/lib/pgsql/data')
-    logging.info('initializing Postgresql...')
-    run_command(['/usr/bin/postgresql-setup', 'initdb'])
-    logging.info('Done.')
-    run_command([SYSCTL, 'restart', 'postgresql'])
-    run_command([SYSCTL, 'status', 'postgresql'])
-    logging.debug('Postgresql restarted')
-    logging.info('Creating app databases...')
-    run_command(['su', '-', 'postgres', '-c', '/usr/bin/createdb smartdb'])
-    logging.debug('smartdb created')
-    run_command(['su', '-', 'postgres', '-c',
-                 '/usr/bin/createdb storageadmin'])
-    logging.debug('storageadmin created')
-    logging.info('Done')
-    logging.info('Initializing app databases...')
-    run_command(['su', '-', 'postgres', '-c', "psql -c \"CREATE ROLE rocky WITH SUPERUSER LOGIN PASSWORD 'rocky'\""])
-    logging.debug('rocky ROLE created')
-    run_command(['su', '-', 'postgres', '-c', "psql storageadmin -f %s/conf/storageadmin.sql.in" % BASE_DIR])
-    logging.debug('storageadmin app database loaded')
-    run_command(['su', '-', 'postgres', '-c', "psql smartdb -f %s/conf/smartdb.sql.in" % BASE_DIR])
-    logging.debug('smartdb app database loaded')
-    run_command(['su', '-', 'postgres', '-c', "psql storageadmin -c \"select setval('south_migrationhistory_id_seq', (select max(id) from south_migrationhistory))\""])
-    logging.debug('storageadmin migration history copied')
-    run_command(['su', '-', 'postgres', '-c', "psql smartdb -c \"select setval('south_migrationhistory_id_seq', (select max(id) from south_migrationhistory))\""])
-    logging.debug('smartdb migration history copied')
-    logging.info('Done')
-    run_command(['cp', '-f', '%s/conf/postgresql.conf' % BASE_DIR,
-                 '/var/lib/pgsql/data/'])
-    logging.debug('postgresql.conf copied')
-    run_command(['cp', '-f', '%s/conf/pg_hba.conf' % BASE_DIR,
-                 '/var/lib/pgsql/data/'])
-    logging.debug('pg_hba.conf copied')
-    run_command([SYSCTL, 'restart', 'postgresql'])
-    logging.info('Postgresql restarted')
-    logging.info('Running app database migrations...')
-    run_command([DJANGO, 'migrate', 'oauth2_provider', '--database=default',
-                 '--noinput'])
-    run_command([DJANGO, 'migrate', 'storageadmin', '--database=default',
-                 '--noinput'])
-    logging.debug('storageadmin migrated')
-    run_command([DJANGO, 'migrate', 'django_ztask', '--database=default',
-                 '--noinput'])
-    logging.debug('django_ztask migrated')
-    run_command([DJANGO, 'migrate', 'smart_manager',
-                 '--database=smart_manager', '--noinput'])
-    logging.debug('smart manager migrated')
-    logging.info('Done')
-    logging.info('Running prepdb...')
-    run_command([PREP_DB, ])
-    logging.info('Done')
-    cleanup_rclocal(logging)
-    logging.info('Cleaned up rc.local')
-    enable_rockstor_service(logging)
-    logging.info('Started rockstor service')
-    enable_bootstrap_service(logging)
-    logging.info('Started rockstor-bootstrap service')
+
+
     logging.info('Shutting down firewall...')
     run_command([SYSCTL, 'stop', 'firewalld'])
     run_command([SYSCTL, 'disable', 'firewalld'])
-    run_command(['touch', STAMP])
-    logging.info('Done')
-    logging.info('All set. Go to the web-ui now and start using Rockstor!')
+    enable_rockstor_service(logging)
+    enable_bootstrap_service(logging)
 
 if __name__ == '__main__':
     main()
