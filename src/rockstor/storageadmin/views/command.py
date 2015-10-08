@@ -264,7 +264,7 @@ class CommandView(NFSExportMixin, APIView):
 
         if (command == 'refresh-share-state'):
             for p in Pool.objects.all():
-                import_shares(p)
+                import_shares(p, request)
             return Response()
 
         if (command == 'refresh-snapshot-state'):
