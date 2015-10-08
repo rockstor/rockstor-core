@@ -194,7 +194,7 @@ class NetworkDetailView(rfc.GenericView, NetworkMixin):
                 e_msg = ('Method must be auto(for dhcp) or manual(for static IP). not: %s' %
                          method)
                 handle_exception(Exception(e_msg), request)
-            dconfig = get_net_config(ni.name)[ni.dname]
+            dconfig = get_net_config(name=ni.name)[ni.dname]
             ni = self._update_ni_obj(ni, dconfig)
             if (itype == 'management' and ni.itype != 'management'):
                 for i in NetworkInterface.objects.filter(itype='management'):
@@ -207,10 +207,6 @@ class NetworkDetailView(rfc.GenericView, NetworkMixin):
                 a.ip = ni.ipaddr
                 a.save()
                 try:
-                    update_issue(ni.ipaddr)
-                except Exception, e:
-                    logger.error('Unable to update /etc/issue. Exception: %s' % e.__str__())
-                try:
                     self._update_nginx(ni.ipaddr)
                 except Exception, e:
                     logger.error('Failed to update Nginx. Exception: %s' % e.__str__())
@@ -221,4 +217,10 @@ class NetworkDetailView(rfc.GenericView, NetworkMixin):
                     logger.error('Failed to update Nginx. Exception: %s' % e.__str__())
             ni.itype = itype
             ni.save()
+            if (ni.itype == 'management'):
+                try:
+                    update_issue(ni.ipaddr)
+                except Exception, e:
+                    logger.error('Unable to update /etc/issue. Exception: %s' % e.__str__())
+
             return Response(NetworkInterfaceSerializer(ni).data)

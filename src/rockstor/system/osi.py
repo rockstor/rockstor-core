@@ -226,6 +226,20 @@ def config_network_device(name, dtype='ethernet', method='auto', ipaddr=None,
         if (autoconnect == 'no'):
             mod_cmd.extend(['connection.autoconnect', 'no'])
         run_command(mod_cmd)
+    #wait for the interface to be activated
+    num_attempts = 0
+    while True:
+        state = get_net_config(name)[name].get('state', None)
+        if (state != 'activated'):
+            time.sleep(1)
+            num_attempts += 1
+        else:
+            break
+        if (num_attempts > 30):
+            msg = ('Waited more than %s seconds for connection(%s) state to '
+                   'be activated but it has not. Giving up. current state: %s'
+                   % (num_attempts, name, state))
+            raise Exception(msg)
 
 
 def convert_netmask(bits):
@@ -322,10 +336,9 @@ def get_net_config(all=False, name=None):
 
 
 def update_issue(ipaddr):
-    shutil.copyfile('/etc/issue.rockstor', '/etc/issue')
     msg = ("\n\nYou can go to RockStor's webui by pointing your web browser"
            " to https://%s\n\n" % ipaddr)
-    with open('/etc/issue', 'a') as ifo:
+    with open('/etc/issue', 'w') as ifo:
         ifo.write(msg)
 
 

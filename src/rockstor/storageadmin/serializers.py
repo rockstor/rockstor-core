@@ -123,6 +123,8 @@ class ShareSerializer(serializers.ModelSerializer):
 
 
 class ApplianceSerializer(serializers.ModelSerializer):
+    ip = serializers.CharField(source='ipaddr')
+
     class Meta:
         model = Appliance
 
