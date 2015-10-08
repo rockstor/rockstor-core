@@ -140,7 +140,6 @@ def enable_rockstor_service(logging):
         logging.info('updating rockstor systemd service')
         shutil.copy(rs_src, rs_dest)
         run_command([SYSCTL, 'enable', 'rockstor'])
-        run_command([SYSCTL, 'start', 'rockstor'])
         logging.info('Done.')
     logging.info('rockstor service looks correct. Not updating.')
 
@@ -156,7 +155,6 @@ def enable_bootstrap_service(logging):
         logging.info('updating rockstor-bootstrap systemd service')
         shutil.copy(bs_src, bs_dest)
         run_command([SYSCTL, 'enable', name])
-        run_command([SYSCTL, 'start', name])
         return logging.info('Done.')
     return logging.info('%s looks correct. Not updating.' % name)
 
