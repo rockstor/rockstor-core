@@ -207,10 +207,6 @@ class NetworkDetailView(rfc.GenericView, NetworkMixin):
                 a.ip = ni.ipaddr
                 a.save()
                 try:
-                    update_issue(ni.ipaddr)
-                except Exception, e:
-                    logger.error('Unable to update /etc/issue. Exception: %s' % e.__str__())
-                try:
                     self._update_nginx(ni.ipaddr)
                 except Exception, e:
                     logger.error('Failed to update Nginx. Exception: %s' % e.__str__())
@@ -221,4 +217,10 @@ class NetworkDetailView(rfc.GenericView, NetworkMixin):
                     logger.error('Failed to update Nginx. Exception: %s' % e.__str__())
             ni.itype = itype
             ni.save()
+            if (ni.itype == 'management'):
+                try:
+                    update_issue(ni.ipaddr)
+                except Exception, e:
+                    logger.error('Unable to update /etc/issue. Exception: %s' % e.__str__())
+
             return Response(NetworkInterfaceSerializer(ni).data)

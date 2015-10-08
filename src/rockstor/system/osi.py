@@ -336,10 +336,9 @@ def get_net_config(all=False, name=None):
 
 
 def update_issue(ipaddr):
-    shutil.copyfile('/etc/issue.rockstor', '/etc/issue')
     msg = ("\n\nYou can go to RockStor's webui by pointing your web browser"
            " to https://%s\n\n" % ipaddr)
-    with open('/etc/issue', 'a') as ifo:
+    with open('/etc/issue', 'w') as ifo:
         ifo.write(msg)
 
 
