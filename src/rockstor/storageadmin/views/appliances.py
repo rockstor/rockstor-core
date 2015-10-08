@@ -25,7 +25,7 @@ from storageadmin.models import Appliance
 from storageadmin.util import handle_exception
 from storageadmin.serializers import ApplianceSerializer
 
-from system.osi import (hostid, sethostname)
+from system.osi import (hostid, sethostname, gethostname)
 import rest_framework_custom as rfc
 from cli.rest_util import (api_call, set_token)
 from smart_manager.models import Replica
@@ -39,7 +39,16 @@ class ApplianceListView(rfc.GenericView):
     serializer_class = ApplianceSerializer
 
     def get_queryset(self, *args, **kwargs):
+        self._update_hostname()
         return Appliance.objects.all()
+
+    @staticmethod
+    def _update_hostname():
+        a = Appliance.objects.get(current_appliance=True)
+        cur_hostname = gethostname()
+        if (cur_hostname != a.hostname):
+            a.hostname = cur_hostname
+            a.save()
 
     def _get_remote_appliance(self, request, ip, port, client_id,
                               client_secret):
@@ -136,7 +145,7 @@ class ApplianceListView(rfc.GenericView):
                 if ('hostname' in request.data):
                     appliance.hostname = request.data['hostname']
                 appliance.save()
-                sethostname(ip, appliance.hostname)
+                sethostname(appliance.hostname)
             return Response(ApplianceSerializer(appliance).data)
 
 

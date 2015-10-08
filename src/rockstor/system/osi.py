@@ -47,6 +47,7 @@ CAT = '/usr/bin/cat'
 UDEVADM = '/usr/sbin/udevadm'
 GREP = '/usr/bin/grep'
 NMCLI = '/usr/bin/nmcli'
+HOSTNAMECTL = '/usr/bin/hostnamectl'
 
 
 def inplace_replace(of, nf, regex, nl):
@@ -342,21 +343,13 @@ def update_issue(ipaddr):
         ifo.write(msg)
 
 
-def sethostname(ip, hostname):
-    """
-    edit /etc/hosts file and /etc/hostname
-    """
-    fh, npath = mkstemp()
-    with open(HOSTS_FILE) as hfo, open(npath, 'w') as tfo:
-        for line in hfo.readlines():
-            if (re.match(ip, line) is None):
-                tfo.write(line)
-        tfo.write('%s %s\n' % (ip, hostname))
-    shutil.move(npath, HOSTS_FILE)
-    os.chmod(HOSTS_FILE, 0644)
+def sethostname(hostname):
+    return run_command([HOSTNAMECTL, 'set-hostname', hostname])
 
-    with open('/etc/hostname', 'w') as hnfo:
-        hnfo.write('%s\n' % hostname)
+
+def gethostname():
+    o, e, rc = run_command([HOSTNAMECTL, '--static'])
+    return o[0]
 
 
 def is_share_mounted(sname, mnt_prefix=DEFAULT_MNT_DIR):
