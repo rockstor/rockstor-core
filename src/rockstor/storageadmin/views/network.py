@@ -194,7 +194,7 @@ class NetworkDetailView(rfc.GenericView, NetworkMixin):
                 e_msg = ('Method must be auto(for dhcp) or manual(for static IP). not: %s' %
                          method)
                 handle_exception(Exception(e_msg), request)
-            dconfig = get_net_config(ni.name)[ni.dname]
+            dconfig = get_net_config(name=ni.name)[ni.dname]
             ni = self._update_ni_obj(ni, dconfig)
             if (itype == 'management' and ni.itype != 'management'):
                 for i in NetworkInterface.objects.filter(itype='management'):
