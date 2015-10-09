@@ -34,16 +34,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class DiskListView(rfc.GenericView):
+class DiskMixin(object):
     serializer_class = DiskInfoSerializer
 
-    def get_queryset(self, *args, **kwargs):
-        #do rescan on get.
-        with self._handle_exception(self.request):
-            return Disk.objects.all().order_by('name')
-
+    @staticmethod
     @transaction.atomic
-    def _scan(self):
+    def _update_disk_state():
         disks = scan_disks(settings.MIN_DISK_SIZE)
         for d in disks:
             dob = None
@@ -73,7 +69,15 @@ class DiskListView(rfc.GenericView):
             else:
                 dob.pool = None
             if (dob.pool is None and d.root is True):
-                self._create_root_pool(dob)
+                p = Pool(name=settings.ROOT_POOL, raid='single')
+                p.disk_set.add(d)
+                p.save()
+                d.pool = p
+                d.save()
+                p.size = pool_usage(mount_root(p))[0]
+                enable_quota(p)
+                p.uuid = btrfs_uuid(d.name)
+                p.save()
             dob.save()
         for do in Disk.objects.all():
             if (do.name not in [d.name for d in disks]):
@@ -89,22 +93,18 @@ class DiskListView(rfc.GenericView):
         ds = DiskInfoSerializer(Disk.objects.all().order_by('name'), many=True)
         return Response(ds.data)
 
-    def _create_root_pool(self, d):
-        p = Pool(name=settings.ROOT_POOL, raid='single')
-        p.disk_set.add(d)
-        p.save()
-        d.pool = p
-        d.save()
-        p.size = pool_usage(mount_root(p))[0]
-        enable_quota(p)
-        p.uuid = btrfs_uuid(d.name)
-        p.save()
-        return p
+
+class DiskListView(DiskMixin, rfc.GenericView):
+    serializer_class = DiskInfoSerializer
+
+    def get_queryset(self, *args, **kwargs):
+        with self._handle_exception(self.request):
+            return Disk.objects.all().order_by('name')
 
     def post(self, request, command, dname=None):
         with self._handle_exception(request):
             if (command == 'scan'):
-                return self._scan()
+                return self._update_disk_state()
 
         e_msg = ('Unsupported command(%s).' % command)
         handle_exception(Exception(e_msg), request)
