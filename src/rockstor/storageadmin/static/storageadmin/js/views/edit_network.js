@@ -62,14 +62,14 @@ EditNetworkView = RockstorLayoutView.extend({
 		ipaddr: {
 		    required: {
 			depends: function(element) {
-			    return (_this.$('#boot_proto').val() == 'static')
+			    return (_this.$('#method').val() == 'manual')
 			}
 		    }
 		},
 		netmask: {
 		    required: {
 			depends: function(element) {
-			    return (_this.$('#boot_proto').val() == 'static')
+			    return (_this.$('#method').val() == 'manual')
 			}
 		    }
 		}
@@ -88,7 +88,6 @@ EditNetworkView = RockstorLayoutView.extend({
 		} else {
 		    data.itype = '';
 		}
-		data.boot_protocol = data.boot_proto;
 		network.save(data, {
 		    success: function(model, response, options) {
 			app_router.navigate("network", {trigger: true});
@@ -122,7 +121,7 @@ EditNetworkView = RockstorLayoutView.extend({
 
     },
 
-    cancel: function() {
+    cancel: function(event) {
 	event.preventDefault();
 	app_router.navigate("network", {trigger: true});
     }
