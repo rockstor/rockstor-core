@@ -455,11 +455,11 @@ def get_virtio_disk_serial(device_name):
 
 
 def system_shutdown():
-    return run_command([SHUTDOWN, '-h'])
+    return run_command([SHUTDOWN, '-h', 'now'])
 
 
 def system_reboot():
-    return run_command([SHUTDOWN, '-r'])
+    return run_command([SHUTDOWN, '-r', 'now'])
 
 
 def md5sum(fpath):
