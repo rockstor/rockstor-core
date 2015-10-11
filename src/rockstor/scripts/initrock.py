@@ -27,6 +27,7 @@ import time
 from tempfile import mkstemp
 from django.conf import settings
 
+logger = logging.getLogger(__name__)
 
 SYSCTL = '/usr/bin/systemctl'
 BASE_DIR = settings.ROOT_DIR
@@ -63,6 +64,7 @@ def update_issue():
             ifo.write('\nRockstor is successfully installed.\n\n')
             ifo.write('You can access the web-ui by pointing your browser to '
                       'https://%s\n\n' % ipaddr)
+    return ipaddr
 
 
 def set_def_kernel(logger, version=settings.SUPPORTED_KERNEL_VERSION):
@@ -201,7 +203,8 @@ def main():
     shutil.copyfile('/etc/issue', '/etc/issue.rockstor')
     for i in range(30):
         try:
-            update_issue()
+            if update_issue() is None:
+                raise e
             break
         except Exception, e:
             logging.info('exception occurred while running update_issue. '
