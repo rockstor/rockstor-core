@@ -55,11 +55,12 @@ def update_issue():
                 ipaddr = i2.split()[1]
     with open('/etc/issue', 'w') as ifo:
         if (ipaddr is None):
-            ifo.write('The system does not have an ip address.\n\n')
-            ifo.write('Rockstor cannot be configured using the web-ui '
-                      'without an ip address.\n\n')
-            ifo.write('Login as root and configure your network to proceed '
-                      'further.\n')
+            ifo.write('The system does not yet have an ip address.\n')
+            ifo.write('Rockstor cannot be configured using the web interface '
+                        'without this.\n\n')
+            ifo.write('Press Enter to receive updated network status\n')
+            ifo.write('If this message persists login as root and configure '
+                      'your network manually to proceed further.\n')
         else:
             ifo.write('\nRockstor is successfully installed.\n\n')
             ifo.write('You can access the web-ui by pointing your browser to '
