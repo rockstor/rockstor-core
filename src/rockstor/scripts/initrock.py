@@ -41,7 +41,7 @@ OPENSSL = '/usr/bin/openssl'
 GRUBBY = '/usr/sbin/grubby'
 
 
-def update_issue():
+def init_update_issue():
     default_if = None
     ipaddr = None
     o, e, c = run_command(['/usr/sbin/route'])
@@ -204,7 +204,7 @@ def main():
     shutil.copyfile('/etc/issue', '/etc/issue.rockstor')
     for i in range(30):
         try:
-            if update_issue() is None:
+            if init_update_issue() is None:
                 raise e
             break
         except Exception, e:
