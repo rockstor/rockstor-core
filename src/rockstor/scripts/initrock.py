@@ -204,16 +204,14 @@ def main():
     shutil.copyfile('/etc/issue', '/etc/issue.rockstor')
     for i in range(30):
         try:
-            if init_update_issue() is None:
-                raise e
-            break
+            if (init_update_issue() is not None):
+                break
         except Exception, e:
-            logging.info('exception occurred while running update_issue. '
-                         'Perhaps rc.local ran before it should have. '
-                         'Trying again after 2 seconds')
+            logging.debug('exception occurred while running update_issue: %s. '
+                         'Trying again after 2 seconds.' % e.__str__())
             if (i > 28):
-                logging.info('Waited too long and tried too many times. '
-                             'Quiting.')
+                logging.error('Waited too long and tried too many times. '
+                              'Quiting.')
                 raise e
             time.sleep(2)
     cert_loc = '%s/certs/' % BASE_DIR
