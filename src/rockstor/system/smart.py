@@ -92,7 +92,15 @@ def capabilities(device):
     return cap_d
 
 def error_logs(device):
-    o, e, rc = run_command([SMART, '-l', 'error', '/dev/%s' % device])
+    o, e, rc = run_command([SMART, '-l', 'error', '/dev/%s' % device],
+                           throw=False)
+    # As we mute exceptions when calling the above command we should at least
+    # examine what we have as return code (rc); 64 has been seen when the error
+    # log contains errors so we deal with it.
+    if rc == 64:
+        msg = ('Drive /dev/%s has logged SMART errors. Please view '\
+               'the Error logs tab for this device' % device)
+        logger.info(msg)
     ecode_map = {
         'ABRT' : 'Command ABoRTed',
         'AMNF' : 'Address Mark Not Found',
