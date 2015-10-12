@@ -70,13 +70,13 @@ class DiskMixin(object):
                 dob.pool = None
             if (dob.pool is None and d.root is True):
                 p = Pool(name=settings.ROOT_POOL, raid='single')
-                p.disk_set.add(d)
+                p.disk_set.add(dob)
                 p.save()
-                d.pool = p
-                d.save()
+                dob.pool = p
+                dob.save()
                 p.size = pool_usage(mount_root(p))[0]
                 enable_quota(p)
-                p.uuid = btrfs_uuid(d.name)
+                p.uuid = btrfs_uuid(dob.name)
                 p.save()
             dob.save()
         for do in Disk.objects.all():

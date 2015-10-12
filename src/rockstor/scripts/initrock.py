@@ -27,6 +27,7 @@ import time
 from tempfile import mkstemp
 from django.conf import settings
 
+logger = logging.getLogger(__name__)
 
 SYSCTL = '/usr/bin/systemctl'
 BASE_DIR = settings.ROOT_DIR
@@ -40,7 +41,7 @@ OPENSSL = '/usr/bin/openssl'
 GRUBBY = '/usr/sbin/grubby'
 
 
-def update_issue():
+def init_update_issue():
     default_if = None
     ipaddr = None
     o, e, c = run_command(['/usr/sbin/route'])
@@ -54,15 +55,17 @@ def update_issue():
                 ipaddr = i2.split()[1]
     with open('/etc/issue', 'w') as ifo:
         if (ipaddr is None):
-            ifo.write('The system does not have an ip address.\n\n')
-            ifo.write('Rockstor cannot be configured using the web-ui '
-                      'without an ip address.\n\n')
-            ifo.write('Login as root and configure your network to proceed '
-                      'further.\n')
+            ifo.write('The system does not yet have an ip address.\n')
+            ifo.write('Rockstor cannot be configured using the web interface '
+                        'without this.\n\n')
+            ifo.write('Press Enter to receive updated network status\n')
+            ifo.write('If this message persists login as root and configure '
+                      'your network manually to proceed further.\n')
         else:
             ifo.write('\nRockstor is successfully installed.\n\n')
             ifo.write('You can access the web-ui by pointing your browser to '
                       'https://%s\n\n' % ipaddr)
+    return ipaddr
 
 
 def set_def_kernel(logger, version=settings.SUPPORTED_KERNEL_VERSION):
@@ -201,15 +204,14 @@ def main():
     shutil.copyfile('/etc/issue', '/etc/issue.rockstor')
     for i in range(30):
         try:
-            update_issue()
-            break
+            if (init_update_issue() is not None):
+                break
         except Exception, e:
-            logging.info('exception occurred while running update_issue. '
-                         'Perhaps rc.local ran before it should have. '
-                         'Trying again after 2 seconds')
+            logging.debug('exception occurred while running update_issue: %s. '
+                         'Trying again after 2 seconds.' % e.__str__())
             if (i > 28):
-                logging.info('Waited too long and tried too many times. '
-                             'Quiting.')
+                logging.error('Waited too long and tried too many times. '
+                              'Quiting.')
                 raise e
             time.sleep(2)
     cert_loc = '%s/certs/' % BASE_DIR
