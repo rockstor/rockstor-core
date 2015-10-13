@@ -76,8 +76,14 @@ ConfigureServiceView = RockstorLayoutView.extend({
                         }
                     }
                 }
-            }
+            },
+	    "active-directory": {
+		domain: 'required',
+		username: 'required',
+		password: 'required'
+	    }
         }
+
         this.formName = this.serviceName + '-form';
         this.service = new Service({name: this.serviceName});
         this.dependencies.push(this.service);
@@ -135,10 +141,15 @@ ConfigureServiceView = RockstorLayoutView.extend({
             placement: 'right',
             title: 'Windows Active Directory or Domain Controller to connect to.'
         });
-	this.$('#active-directory-form #ipaddr').tooltip({
+	this.$('#active-directory-form #username').tooltip({
 	    html: true,
 	    placement: 'right',
-	    title: 'IP Address of the Domain Controller. Not necessary if the above domain name resolves automatically in your network.'
+	    title: 'Administrator username to use for authentication while joining the domain. Eg: Administrator'
+	});
+	this.$('#active-directory-form #password').tooltip({
+	    html: true,
+	    placement: 'right',
+	    title: 'Password for the above username.'
 	});
         this.$('#smartd-form #smartd_config').tooltip({
             html: true,
