@@ -36,50 +36,34 @@
           </thead>
           <tbody>
             <% services.each(function(service) { %>
-              <% if (service.get('name') != 'service-monitor') { %>
-                <tr id="<%= service.get('name') %>">
-                  <td>
-                    <%= service.get('display_name') %>&nbsp;
-		    <% if (configurable_services.indexOf(service.get('name')) > -1) { %>
-                      <a href="#" class="configure" data-service-name="<%= service.get('name') %>"><i class="glyphicon glyphicon-wrench"></i></a>
-                    <% } %>
-                    <!--
-                    <% if ((service.get('name') == 'nut')) { %>
-                      &nbsp;
-                      <% if (false) { %>
-                        <div class="progress">
-                          <div class="progress-bar" role="progressbar" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100" style="width: 70%;">UPS Load 70%</div>
-                        </div>
-                      <% } else { %>
-                        No UPS detected
-                      <% } %>
-                      &nbsp;&nbsp;
-                    <% } %>
-                    -->
-                  </td>
-                  <td id="<%= service.get('name') %>-status">
-                    <% if (service.get('status')) { %>
-                      <div class="slider-stop" data-service-name="<%= service.get('name') %>">OFF</div>
-                      <div class="slider-ph">
-                        <input type="text" class="service-status" value="1" data-service-name="<%= service.get('name') %>"></input>
-                      </div>
-                      <div class="slider-start on" data-service-name="<%= service.get('name') %>">ON</div>
-                    <% } else { %>
-                      <div class="slider-stop" data-service-name="<%= service.get('name') %>">OFF</div>
-                      <div class="slider-ph">
-                        <input type="text" class="service-status" value="0" data-service-name="<%= service.get('name') %>"></input>
-                      </div>
-                      <div class="slider-start" data-service-name="<%= service.get('name') %>">ON</div>
-                    <% } %>
-                    <div class="command-status" data-service-name="<%= service.get('name') %>">&nbsp;</div>
-                    <div class="simple-overlay" id="<%= service.get('name') %>-err-popup"><div class="overlay-content"></div></div>
-                  </td>
-                  <!--
-                  <td><a href="#" class="configure" data-service-name="<%= service.get('name') %>"><i class="glyphicon glyphicon-wrench"></i></a></td>
-                  -->
-
-                </tr>
-              <% } %>
+            <tr id="<%= service.get('name') %>">
+              <td>
+                <%= service.get('display_name') %>&nbsp;
+		<% if (configurable_services.indexOf(service.get('name')) > -1) { %>
+                <a href="#" class="configure" data-service-name="<%= service.get('name') %>"><i class="glyphicon glyphicon-wrench"></i></a>&nbsp;
+                <% } %>
+		<% if (service.get('name') == 'active-directory') { %>
+		<i class="fa fa-info-circle" title="By turning this service on, the system will attempt to join Active Directory domain using the credentials provided during configuration. Note that domain user/group information is not listed anywhere in the Web-UI. However, domain users should be able to access Samba Shares and domain Administrators can set permissions from Windows computers. For support, contact support@rockstor.com"></i>
+		<% } %>
+	      </td>
+              <td id="<%= service.get('name') %>-status">
+                <% if (service.get('status')) { %>
+                <div class="slider-stop" data-service-name="<%= service.get('name') %>">OFF</div>
+                <div class="slider-ph">
+                  <input type="text" class="service-status" value="1" data-service-name="<%= service.get('name') %>"></input>
+                </div>
+                <div class="slider-start on" data-service-name="<%= service.get('name') %>">ON</div>
+                <% } else { %>
+                <div class="slider-stop" data-service-name="<%= service.get('name') %>">OFF</div>
+                <div class="slider-ph">
+                  <input type="text" class="service-status" value="0" data-service-name="<%= service.get('name') %>"></input>
+                </div>
+                <div class="slider-start" data-service-name="<%= service.get('name') %>">ON</div>
+                <% } %>
+                <div class="command-status" data-service-name="<%= service.get('name') %>">&nbsp;</div>
+                <div class="simple-overlay" id="<%= service.get('name') %>-err-popup"><div class="overlay-content"></div></div>
+              </td>
+            </tr>
             <% }); %>
           </tbody>
         </table>
