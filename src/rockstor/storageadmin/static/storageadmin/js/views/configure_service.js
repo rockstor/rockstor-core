@@ -48,25 +48,6 @@ ConfigureServiceView = RockstorLayoutView.extend({
                 syscontact: 'required',
                 rocommunity: 'required'
             },
-            winbind: {
-                domain: 'required', controllers: 'required',
-                security: 'required',
-                realm: {
-                    required: {
-                        depends: function (element) {
-                            return (_this.$('#security').val() == 'ads');
-                        }
-                    }
-                },
-                templateshell: {
-                    required: {
-                        depends: function (element) {
-                            return ((_this.$('#security').val() == 'ads') ||
-                            (_this.$('#security').val() == 'domain'));
-                        }
-                    }
-                }
-            },
             ldap: {
                 server: 'required',
                 basedn: 'required',
@@ -149,37 +130,16 @@ ConfigureServiceView = RockstorLayoutView.extend({
             placement: 'right',
             title: 'We strongly recommend that you create a separate Share(at least 5GB size) for this purpose. During the lifetime of Rock-ons, several snapshots will be created and space could fill up quickly. It is best managed in a separate Share to avoid clobbering other data.'
         });
-        this.$('#winbind-form #domain').tooltip({
+        this.$('#active-directory-form #domain').tooltip({
             html: true,
             placement: 'right',
-            title: 'Specifies the Windows Active Directory or domain controller to connect to.'
+            title: 'Windows Active Directory or Domain Controller to connect to.'
         });
-        this.$('#winbind-form #security').tooltip({
-            html: true,
-            placement: 'right',
-            title: "<strong>Security Model</strong> — Allows you to select a security model, which configures how clients should respond to Samba. The drop-down list allows you select any of the following:<br> \
-<ul>\
-<li><strong>ads</strong> — This mode instructs Samba to act as a domain member in an Active Directory Server (ADS) realm. To operate in this mode, the krb5-server package must be installed, and Kerberos must be configured properly.</li> \
-<li><strong>domain</strong> — In this mode, Samba will attempt to validate the username/password by authenticating it through a Windows NT Primary or Backup Domain Controller, similar to how a Windows NT Server would.</li> \
-<li><strong>server</strong> — In this mode, Samba will attempt to validate the username/password by authenticating it through another SMB server (for example, a Windows NT Server). If the attempt fails, the user mode will take effect instead.</li> \
-<li><strong>user</strong> — This is the default mode. With this level of security, a client must first log in with a valid username and password. Encrypted passwords can also be used in this security mode.</li> \
-</ul>"
-        });
-        this.$('#winbind-form #realm').tooltip({
-            html: true,
-            placement: 'right',
-            title: 'When the ads Security Model is selected, this allows you to specify the ADS Realm the Samba server should act as a domain member of.'
-        });
-        this.$('#winbind-form #controllers').tooltip({
-            html: true,
-            placement: 'right',
-            title: 'Use this option to specify which domain controller winbind should use.'
-        });
-        this.$('#winbind-form #templateshell').tooltip({
-            html: true,
-            placement: 'right',
-            title: 'When filling out the user information for a Windows NT user, the winbindd daemon uses the value chosen here to to specify the login shell for that user.'
-        });
+	this.$('#active-directory-form #ipaddr').tooltip({
+	    html: true,
+	    placement: 'right',
+	    title: 'IP Address of the Domain Controller. Not necessary if the above domain name resolves automatically in your network.'
+	});
         this.$('#smartd-form #smartd_config').tooltip({
             html: true,
             placement: 'right',
