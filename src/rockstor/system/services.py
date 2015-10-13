@@ -137,9 +137,7 @@ def service_status(service_name):
                     return out, err, rc
             return out, err, -1
     elif (service_name == 'replication' or
-          service_name == 'task-scheduler' or
-          service_name == 'data-collector' or
-          service_name == 'service-monitor'):
+          service_name == 'data-collector'):
         return superctl(service_name, 'status')
     elif (service_name == 'smb'):
         out, err, rc = run_command([SYSTEMCTL_BIN, 'status', 'smb'],
