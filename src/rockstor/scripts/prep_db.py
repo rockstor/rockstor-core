@@ -27,7 +27,7 @@ def register_services():
         'Samba': 'smb',
         'NIS': 'nis',
         'NTP': 'ntpd',
-        'AD': 'winbind',
+        'Active Directory': 'active-directory',
         'LDAP': 'ldap',
         'SFTP': 'sftp',
         'Replication': 'replication',

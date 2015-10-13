@@ -31,7 +31,7 @@ from fs.btrfs import (mount_share, device_scan, mount_root, qgroup_create,
                       get_pool_info, pool_raid, pool_usage, shares_info,
                       share_usage, snaps_info, mount_snap)
 from system.ssh import (sftp_mount_map, sftp_mount)
-from system.services import (systemctl, join_winbind_domain, ads_join_status)
+from system.services import systemctl
 from system.osi import (is_share_mounted, system_shutdown, system_reboot)
 from storageadmin.models import (Share, Disk, NFSExport, SFTP, Pool, Snapshot,
                                  UpdateSubscription)
@@ -166,33 +166,6 @@ class CommandView(NFSExportMixin, APIView):
                 e_msg = ('Unable to check current version due to a this '
                          'exception: ' % e.__str__())
                 handle_exception(Exception(e_msg), request)
-
-        if (command == 'join-winbind-domain'):
-            try:
-                systemctl('winbind', 'restart')
-                username = request.data['administrator']
-                passwd = request.data['password']
-                join_winbind_domain(username, passwd)
-                return Response('Done')
-            except Exception, e:
-                handle_exception(e, request)
-
-        if (command == 'winbind-domain-status'):
-            msg = 'Yes'
-            try:
-                username = request.data['administrator']
-                passwd = request.data['password']
-            except Exception, e:
-                handle_exception(e, request)
-
-            try:
-                ads_join_status(username, passwd)
-            except Exception, e:
-                logger.exception(e)
-                msg = ('Domain join check failed. Low level error: %s %s' %
-                       (e.out, e.err))
-            finally:
-                return Response(msg)
 
         if (command == 'shutdown'):
             msg = ('The system will be shutdown after 1 minute')
