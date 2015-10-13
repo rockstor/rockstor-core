@@ -46,7 +46,7 @@ def init_service_op(service_name, command, throw=True):
     :return: out err rc
     """
     supported_services = ('nfs', 'smb', 'sshd', 'ypbind', 'rpcbind', 'ntpd',
-                          'winbind', 'nslcd', 'netatalk', 'snmpd', 'docker',
+                          'nslcd', 'netatalk', 'snmpd', 'docker',
                           'smartd', 'nut-server')
     if (service_name not in supported_services):
         raise Exception('unknown service: %s' % service_name)
@@ -163,47 +163,6 @@ def service_status(service_name, config=None):
     return init_service_op(service_name, 'status', throw=False)
 
 
-def winbind_input(config, command):
-    ac_cmd = []
-    if (command == 'stop'):
-        ac_cmd.extend(['--disablewinbind', '--disablewinbindauth'])
-    else:
-        ac_cmd.append('--smbworkgroup=%s' % config['domain'])
-        ac_cmd.append('--smbsecurity=%s' % config['security'])
-        if (config['security'] == 'ads'):
-            ac_cmd.append('--smbrealm=%s' % config['realm'])
-        if (config['security'] == 'ads' or config['security'] == 'domain'):
-            ac_cmd.append('--winbindtemplateshell=%s' %
-                          config['templateshell'])
-        ac_cmd.append('--smbservers=%s' % config['controllers'])
-        if (config['allow-offline'] is True):
-            ac_cmd.append('--enablewinbindoffline')
-        else:
-            ac_cmd.append('--disablewinbindoffline')
-        ac_cmd.extend(['--kickstart', '--enablewinbind',
-                       '--winbindtemplatehomedir=/home/%%U',
-                       '--enablewinbindusedefaultdomain',
-                       '--enablelocauthorize',
-                       '--enablepamaccess',
-                       '--disablekrb5',
-                       '--disablekrb5kdcdns',
-                       '--disablekrb5realmdns', ])
-    return ac_cmd
-
-
-def join_winbind_domain(username, passwd):
-    up = '%s%%%s' % (username, passwd)
-    cmd = [NET, 'ads', 'join', '-U', up, '--request-timeout', '30']
-    out, err, rc = run_command(cmd, throw=False, )
-    if (rc != 0):
-        error = ('Below error can occur due to DNS issue. Ensure '
-                 'that /etc/resolv.conf on Rockstor is pointing to '
-                 'the right nameserver -- stdout: %s stderr: %s'
-                 % (' '.join(out), ' '.join(err)))
-        raise CommandException(cmd, out, error, rc)
-    return (out, err, rc)
-
-
 def ldap_input(config, command):
     ac_cmd = []
     if (command == 'stop'):
@@ -220,19 +179,11 @@ def ldap_input(config, command):
 
 def toggle_auth_service(service, command, config=None):
     ac_cmd = [AUTHCONFIG, '--update', ]
-    if (service == 'winbind'):
-        ac_cmd.extend(winbind_input(config, command))
-    elif (service == 'ldap'):
+    if (service == 'ldap'):
         ac_cmd.extend(ldap_input(config, command))
     else:
         return None
     return run_command(ac_cmd)
-
-
-def ads_join_status(username, passwd):
-    up = '%s%%%s' % (username, passwd)
-    return run_command([NET, 'ads', 'status', '-U', up, '--request-timeout',
-                        '60'])
 
 
 def rockstor_afp_config(fo, afpl):

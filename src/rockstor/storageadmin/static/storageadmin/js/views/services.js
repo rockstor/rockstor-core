@@ -203,25 +203,7 @@ ServicesView = Backbone.View.extend({
     cleanup: function() {
 	RockStorSocket.removeOneListener('services');
 
-    },
-
-    showJoinDomainPopup: function(event) {
-	if (!$(event.currentTarget).hasClass('disabled')) {
-	    this.$('#join-domain-modal').modal('show');
-	}
-    },
-
-    showJoinDomainStatus: function() {
-	if (!_.isUndefined(RockStorGlobals.adJoinStatus) &&
-            !_.isNull(RockStorGlobals.adJoinStatus)) {
-	    if (RockStorGlobals.adJoinStatus) {
-		this.$('#join-domain-status').html('<span class="alert alert-success alert-small">Join Ok</span>');
-	    } else {
-		this.$('#join-domain-status').html('<span class="alert alert-success alert-small">Not Joined</span>');
-	    }
-	}
     }
-
 });
 
 // Add pagination
