@@ -107,7 +107,7 @@ def superctl(service, switch):
     return out, err, rc
 
 
-def service_status(service_name):
+def service_status(service_name, config=None):
     """
     Service status of either systemd or supervisord managed services.
     Hardwired to identify controlling system by service name and uses one of
@@ -150,7 +150,16 @@ def service_status(service_name):
         # In netclient mode it is all that is required, however we don't then
         # reflect the state of the other services of nut-server and nut-driver.
         return run_command([SYSTEMCTL_BIN, 'status', 'nut-monitor'],
-                                   throw=False)
+                           throw=False)
+    elif (service_name == 'active-directory'):
+        if (config is not None):
+            REALM = '/usr/sbin/realm'
+            o, e, rc = run_command([REALM, 'list', '--name-only'])
+            for l in o:
+                if (l == config['domain']):
+                    return '', '', 0
+        return '', '', -1
+
     return init_service_op(service_name, 'status', throw=False)
 
 
