@@ -335,7 +335,6 @@ def get_net_config(all=False, name=None):
         return config
     return {name: net_config_helper(name),}
 
-
 def update_issue(ipaddr):
     msg = ("\n\nYou can go to RockStor's webui by pointing your web browser"
            " to https://%s\n\n" % ipaddr)
