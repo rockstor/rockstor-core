@@ -21,6 +21,8 @@ from osi import run_command
 from tempfile import mkstemp
 from shutil import move
 import logging
+from system.email_util import email_root
+
 logger = logging.getLogger(__name__)
 
 SMART = '/usr/sbin/smartctl'
@@ -98,9 +100,10 @@ def error_logs(device):
     # examine what we have as return code (rc); 64 has been seen when the error
     # log contains errors so we deal with it.
     if rc == 64:
-        msg = ('Drive /dev/%s has logged SMART errors. Please view '\
-               'the Error logs tab for this device' % device)
-        logger.info(msg)
+        e_msg = 'Drive /dev/%s has logged S.M.A.R.T errors. Please view ' \
+                'the Error logs tab for this device.' % device
+        logger.error(e_msg)
+        email_root('S.M.A.R.T error', e_msg)
     ecode_map = {
         'ABRT' : 'Command ABoRTed',
         'AMNF' : 'Address Mark Not Found',
