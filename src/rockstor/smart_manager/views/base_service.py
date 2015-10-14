@@ -83,7 +83,7 @@ class BaseServiceView(ServiceMixin, rfc.GenericView):
                 sos = []
                 for s in Service.objects.all():
                     sos.append(self._get_or_create_sso(s))
-                return sos
+                return sorted(sos, cmp=lambda x,y: cmp(x.display_name, y.display_name))
 
 
 class BaseServiceDetailView(ServiceMixin, rfc.GenericView):
