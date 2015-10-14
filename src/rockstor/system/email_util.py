@@ -36,3 +36,23 @@ def send_test_email(eco, subject):
     smtp = smtplib.SMTP('localhost')
     smtp.sendmail(eco.sender, eco.receiver, msg.as_string())
     smtp.close()
+
+def email_root(subject, message):
+    """
+    Simple wrapper to email root, which generally will be forwarded to admin
+    personnel if email notifications are enabled hence acting as remote monitor
+    / notification system
+    :param subject: of the email
+    :param message: body content of the email
+    """
+    msg = MIMEMultipart()
+    msg['From'] = 'notifications@localhost'
+    msg['To'] = 'root@localhost'
+    msg['Date'] = formatdate(localtime=True)
+    msg['Subject'] = subject
+    msg.attach(MIMEText(message))
+
+    smtp = smtplib.SMTP('localhost')
+    smtp.sendmail(msg['From'], msg['To'], msg.as_string())
+    smtp.close()
+
