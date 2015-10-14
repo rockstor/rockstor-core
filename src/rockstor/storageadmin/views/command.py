@@ -168,7 +168,7 @@ class CommandView(NFSExportMixin, APIView):
                 handle_exception(Exception(e_msg), request)
 
         if (command == 'shutdown'):
-            msg = ('The system will be shutdown after 1 minute')
+            msg = ('The system will now be shutdown')
             try:
                 request.session.flush()
                 system_shutdown()
@@ -181,7 +181,7 @@ class CommandView(NFSExportMixin, APIView):
                 return Response(msg)
 
         if (command == 'reboot'):
-            msg = ('The system will reboot after 1 minute')
+            msg = ('The system will now reboot')
             try:
                 request.session.flush()
                 system_reboot()

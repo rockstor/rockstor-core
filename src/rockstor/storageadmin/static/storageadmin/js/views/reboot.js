@@ -31,7 +31,7 @@ RebootView = RockstorLayoutView.extend({
     this.constructor.__super__.initialize.apply(this, arguments);
    this.template = window.JST.common_navbar;
     this.paginationTemplate = window.JST.common_pagination;
-    this.timeLeft = 600;
+    this.timeLeft = 300;
     this.isStopped=false;
     },
 
