@@ -24,6 +24,8 @@ from email.MIMEBase import MIMEBase
 from email.MIMEText import MIMEText
 from email.Utils import formatdate
 from email import Encoders
+from system.osi import gethostname
+
 
 def send_test_email(eco, subject):
     msg = MIMEMultipart()
@@ -45,9 +47,11 @@ def email_root(subject, message):
     :param subject: of the email
     :param message: body content of the email
     """
+    hostname = gethostname()
+
     msg = MIMEMultipart()
-    msg['From'] = 'notifications@localhost'
-    msg['To'] = 'root@localhost'
+    msg['From'] = 'notifications@%s' % hostname
+    msg['To'] = 'root@%s' % hostname
     msg['Date'] = formatdate(localtime=True)
     msg['Subject'] = subject
     msg.attach(MIMEText(message))
