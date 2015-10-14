@@ -36,6 +36,7 @@ class NetworkTests(APITestMixin, APITestCase):
         cls.mock_config_network_device = cls.patch_config_network_device.start()
         cls.mock_config_network_device.return_value = 'out', 'err', 0
         
+        # return value is set as per the network interface configuration data in fixture fix1.json
         cls.patch_get_net_config = patch('storageadmin.views.network.get_net_config')
         cls.mock_get_net_config = cls.patch_get_net_config.start()
         cls.mock_get_net_config.return_value = {'enp0s3': {'autoconnect': 'yes', 'name': 'enp0s3', 'state': 'activated', 'dname': 'enp0s3', 'dtype': 'ethernet', 'dspeed': '1000 Mb/s', 'ipaddr': '192.168.56.101', 'netmask': '255.255.255.0', 'ctype': '802-3-ethernet', 'mac': '08:00:27:F6:2C:85', 'method': 'auto'}, 'enp0s8': {'dns_servers': '10.0.3.3', 'dtype': 'ethernet', 'ctype': '802-3-ethernet', 'mac': '08:00:27:BA:4B:88', 'gateway': '10.0.3.2', 'autoconnect': 'yes', 'name': 'enp0s8', 'dname': 'enp0s8', 'dspeed': '1000 Mb/s', 'ipaddr': '10.0.3.15', 'netmask': '255.255.255.0', 'state': 'activated', 'method': 'auto'}}
@@ -46,6 +47,8 @@ class NetworkTests(APITestMixin, APITestCase):
     @classmethod
     def tearDownClass(cls):
         super(NetworkTests, cls).tearDownClass()
+
+    # Fixture fix1.json has the test data. networks already exits in data are 'enp0s3' and 'enp0s8' 
 
     def test_get(self):
         """
