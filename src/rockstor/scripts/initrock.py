@@ -215,7 +215,7 @@ def main():
             # only executed if there is an actual exception with
             # init_update_issue() or if it returns None so we can try again
             # regardless as in both instances we may succeed on another try.
-            logging.info('Exception occurred while running update_issue: %s. '
+            logging.debug('Exception occurred while running update_issue: %s. '
                          'Trying again after 2 seconds.' % e.__str__())
             if (i > 28):
                 logging.error('Waited too long and tried too many times. '
