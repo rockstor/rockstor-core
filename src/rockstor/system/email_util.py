@@ -24,6 +24,8 @@ from email.MIMEBase import MIMEBase
 from email.MIMEText import MIMEText
 from email.Utils import formatdate
 from email import Encoders
+from system.osi import gethostname
+
 
 def send_test_email(eco, subject):
     msg = MIMEMultipart()
@@ -36,3 +38,25 @@ def send_test_email(eco, subject):
     smtp = smtplib.SMTP('localhost')
     smtp.sendmail(eco.sender, eco.receiver, msg.as_string())
     smtp.close()
+
+def email_root(subject, message):
+    """
+    Simple wrapper to email root, which generally will be forwarded to admin
+    personnel if email notifications are enabled hence acting as remote monitor
+    / notification system
+    :param subject: of the email
+    :param message: body content of the email
+    """
+    hostname = gethostname()
+
+    msg = MIMEMultipart()
+    msg['From'] = 'notifications@%s' % hostname
+    msg['To'] = 'root@%s' % hostname
+    msg['Date'] = formatdate(localtime=True)
+    msg['Subject'] = subject
+    msg.attach(MIMEText(message))
+
+    smtp = smtplib.SMTP('localhost')
+    smtp.sendmail(msg['From'], msg['To'], msg.as_string())
+    smtp.close()
+
