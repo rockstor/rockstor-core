@@ -194,7 +194,8 @@ SnapshotsView  = RockstorLayoutView.extend({
 	// even after new page has loaded.
 	this.$('[rel=tooltip]').tooltip('hide');
 	var name = $(event.currentTarget).attr('data-name');
-	var url = 'shares/' + this.share.get('name') + '/snapshots/' +
+	var shareName = $(event.currentTarget).attr('data-share-name');
+	var url = 'shares/' + shareName + '/snapshots/' +
 	    name + '/create-clone';
 	app_router.navigate(url, {trigger: true});
 
