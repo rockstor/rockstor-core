@@ -205,9 +205,17 @@ def main():
     for i in range(30):
         try:
             if (init_update_issue() is not None):
+                # init_update_issue() didn't cause an exception and did return
+                # an ip so we break out of the multi try loop as we are done.
                 break
+            else:
+                # execute except block with message so we can try again.
+                raise Exception('default interface IP not yet configured')
         except Exception, e:
-            logging.debug('exception occurred while running update_issue: %s. '
+            # only executed if there is an actual exception with
+            # init_update_issue() or if it returns None so we can try again
+            # regardless as in both instances we may succeed on another try.
+            logging.debug('Exception occurred while running update_issue: %s. '
                          'Trying again after 2 seconds.' % e.__str__())
             if (i > 28):
                 logging.error('Waited too long and tried too many times. '
