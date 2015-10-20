@@ -75,6 +75,7 @@ def update_generic(sender, revert=False):
         if (not revert):
             fo.write('@%s %s\n' % (hostname, sender))
             fo.write('@%s.localdomain %s\n' %(hostname, sender))
+            # todo need an entry here to add @<hostname>.<domain>
     os.chmod(generic_file, 0400)
     run_command([POSTMAP, generic_file])
     os.chmod('%s.db' % generic_file, 0600)
