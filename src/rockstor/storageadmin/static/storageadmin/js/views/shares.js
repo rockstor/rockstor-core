@@ -73,13 +73,16 @@ SharesView = RockstorLayoutView.extend({
       collection: this.collection
     }));
     this.$("#shares-table").tablesorter({
-       headers: { 
-            // assign the fourth column (we start counting zero) 
-            4: { 
-                // disable it by setting the property sorter to false 
-                sorter: false 
-            }
-         }    
+      // initially sort shares by name (column 0) ascending (0)
+      sortList: [
+        [0, 0]
+      ],
+      headers: { 
+        // disable sorting in fifth column (counting starts at 0)
+        4: {
+          sorter: false
+        }
+      }
     });
     this.$('[rel=tooltip]').tooltip({placement: 'bottom'});
   },
