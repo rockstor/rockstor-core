@@ -63,10 +63,11 @@ def update_generic(sender, revert=False):
     """
     overrites the contents of /etc/postfix/generic with the following mapping
     @<hostname> <sender-email-address>
+    @<hostname>.localdomain <sender-email-address>
     Then sets the file permissions and runs "postmap generic" to create the db
-    The db file is then chmod 0600
+    file and change it's permissions in turn.
     :param sender: email address entered as the sender email account
-    :param revert: if True do nothing (defaults to False)
+    :param revert: if True wipe the generic_file and db (defaults to False)
     :return:
     """
     generic_file = '/etc/postfix/generic'
