@@ -51,6 +51,7 @@ def rockstor_postfix_config(fo, smtp_server, revert):
     fo.write('smtp_tls_CAfile = /etc/ssl/certs/ca-bundle.crt\n')
     fo.write('smtp_sasl_security_options = noanonymous\n')
     fo.write('smtp_sasl_tls_security_options = noanonymous\n')
+    fo.write('smtp_generic_maps = hash:/etc/postfix/generic\n')
     fo.write('%s\n' % FOOTER)
 
 def update_forward(email, revert=False):
@@ -63,7 +64,7 @@ def update_generic(sender, revert=False):
     overrites the contents of /etc/postfix/generic with the following mapping
     @<hostname> <sender-email-address>
     Then sets the file permissions and runs "postmap generic" to create the db
-    The db file is then chmod 600 
+    The db file is then chmod 0600
     :param sender: email address entered as the sender email account
     :param revert: if True do nothing (defaults to False)
     :return:
