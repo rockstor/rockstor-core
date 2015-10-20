@@ -24,7 +24,7 @@ from storageadmin.models import (EmailClient, Appliance)
 from storageadmin.serializers import EmailClientSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
-from system.osi import run_command
+from system.osi import run_command, gethostname
 from shutil import move
 from tempfile import mkstemp
 from django.conf import settings
@@ -57,6 +57,26 @@ def update_forward(email, revert=False):
     with open('/root/.forward', 'w') as fo:
         if (not revert):
             fo.write('%s, root\n' % email)
+
+def update_generic(sender, revert=False):
+    """
+    overrites the contents of /etc/postfix/generic with the following mapping
+    @<hostname> <sender-email-address>
+    Then sets the file permissions and runs "postmap generic" to create the db
+    The db file is then chmod 600 
+    :param sender: email address entered as the sender email account
+    :param revert: if True do nothing (defaults to False)
+    :return:
+    """
+    if (revert is True):
+        return
+    generic_file = '/etc/postfix/generic'
+    hostname = gethostname()
+    with open(generic_file, 'w') as fo:
+        fo.write('@%s %s' % (hostname, sender))
+    os.chmod(generic_file, 0400)
+    run_command([POSTMAP, generic_file])
+    os.chmod('%s.db' % generic_file, 0600)
 
 def update_sasl(smtp_server, sender, password, revert=False):
     sasl_file = '/etc/postfix/sasl_passwd'
@@ -122,6 +142,7 @@ class EmailClientView(rfc.GenericView):
             eco.save()
             update_sasl(smtp_server, sender, password)
             update_forward(receiver)
+            update_generic(sender)
             update_postfix(smtp_server)
             systemctl('postfix', 'restart')
             return Response(EmailClientSerializer(eco).data)
@@ -130,6 +151,7 @@ class EmailClientView(rfc.GenericView):
     def delete(self, request):
         update_sasl('', '', '', revert=True)
         update_forward('', revert=True)
+        update_generic('', revert=True)
         update_postfix('', revert=True)
         systemctl('postfix', 'restart')
         EmailClient.objects.all().delete()
