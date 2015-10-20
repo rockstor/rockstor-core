@@ -69,12 +69,11 @@ def update_generic(sender, revert=False):
     :param revert: if True do nothing (defaults to False)
     :return:
     """
-    if (revert is True):
-        return
     generic_file = '/etc/postfix/generic'
     hostname = gethostname()
     with open(generic_file, 'w') as fo:
-        fo.write('@%s %s' % (hostname, sender))
+        if (not revert):
+            fo.write('@%s %s\n' % (hostname, sender))
     os.chmod(generic_file, 0400)
     run_command([POSTMAP, generic_file])
     os.chmod('%s.db' % generic_file, 0600)
