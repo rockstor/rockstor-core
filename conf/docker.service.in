@@ -1,8 +1,8 @@
 [Unit]
 Description=Docker Application Container Engine
 Documentation=http://docs.docker.com
-After=network.target docker.socket rockstor.service
-Requires=docker.socket
+After=network.target docker.socket rockstor-bootstrap.service
+Requires=docker.socket rockstor-bootstrap.service
 
 [Service]
 ExecStart=${buildout:depdir}/bin/docker-wrapper

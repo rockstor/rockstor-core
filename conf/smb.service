@@ -1,0 +1,17 @@
+[Unit]
+Description=Samba SMB Daemon
+After=syslog.target network.target nmb.service winbind.service rockstor-bootstrap.service
+RequiresOverridable=rockstor-bootstrap.service
+
+[Service]
+Environment=KRB5CCNAME=/run/samba/krb5cc_samba
+Type=notify
+NotifyAccess=all
+PIDFile=/run/smbd.pid
+LimitNOFILE=16384
+EnvironmentFile=-/etc/sysconfig/samba
+ExecStart=/usr/sbin/smbd $SMBDOPTIONS
+ExecReload=/usr/bin/kill -HUP $MAINPID
+
+[Install]
+WantedBy=multi-user.target

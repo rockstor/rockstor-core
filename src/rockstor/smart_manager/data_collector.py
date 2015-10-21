@@ -252,7 +252,7 @@ class ServicesNamespace(BaseNamespace, BroadcastMixin):
 
     def send_service_statuses(self):
         # Iterate through the collection and assign the values accordingly
-        services = ('nfs', 'smb', 'ntpd', 'winbind', 'netatalk',
+        services = ('nfs', 'smb', 'ntpd', 'netatalk',
                     'snmpd', 'docker', 'smartd', 'replication',
                     'nis', 'ldap', 'sftp', 'data-collector', 'smartd',
                     'service-monitor', 'docker', 'task-scheduler')

@@ -1,12 +1,12 @@
-<% if (afpShareId!=null) { %>
-<h3>Edit afp export</h3>
-<%} else {%>
-<h3>Add afp export</h3>
-<%}%>
 <div class="row">
   <div class="col-md-8">
-    <label class="control-label"></label>
-    <div class="form-box">
+<div class="panel panel-default">
+<% if (afpShareId!=null) { %>
+<div class="panel-heading">Edit afp export</div>
+<%} else {%>
+<div class="panel-heading">Add afp export</div>
+<%}%>
+<div class="panel-body">
       <form id="add-afp-share-form" name="aform" class="form-horizontal">
         <div class="messages"></div>
 
@@ -59,6 +59,7 @@
         </div>
 
       </form>
-    </div>
+    </div><!--panel-body-->
+</div><!--panel-default-->
   </div> <!--col-md-8 -->
 </div>  <!-- row -->

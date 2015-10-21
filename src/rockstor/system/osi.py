@@ -22,7 +22,10 @@ import subprocess
 import shutil
 from tempfile import mkstemp
 import time
+from socket import inet_ntoa
+from struct import pack
 from exceptions import CommandException
+import hashlib
 import logging
 logger = logging.getLogger(__name__)
 
@@ -37,18 +40,14 @@ EXPORTFS = '/usr/sbin/exportfs'
 RESTART = '/sbin/restart'
 SERVICE = '/sbin/service'
 HOSTID = '/usr/bin/hostid'
-IFCONFIG = '/sbin/ifconfig'
-LVS = '/sbin/lvs'
-VGS = '/sbin/vgs'
-IFUP = '/sbin/ifup'
-IFDOWN = '/sbin/ifdown'
-ROUTE = '/sbin/route'
 DEFAULT_MNT_DIR = '/mnt2/'
 SHUTDOWN = '/usr/sbin/shutdown'
 GRUBBY = '/usr/sbin/grubby'
 CAT = '/usr/bin/cat'
 UDEVADM = '/usr/sbin/udevadm'
 GREP = '/usr/bin/grep'
+NMCLI = '/usr/bin/nmcli'
+HOSTNAMECTL = '/usr/bin/hostnamectl'
 
 
 def inplace_replace(of, nf, regex, nl):
@@ -200,208 +199,156 @@ def hostid():
     return run_command([HOSTID])
 
 
-def restart_network():
-    """
-    restart network service
-    """
-    cmd = [SERVICE, 'network', 'restart']
-    return run_command(cmd)
+def config_network_device(name, dtype='ethernet', method='auto', ipaddr=None,
+                          netmask=None, autoconnect='yes', gateway=None,
+                          dns_servers=None):
+    #1. delete the existing connection
+    show_cmd = [NMCLI, 'c', 'show', name]
+    o, e, rc = run_command(show_cmd, throw=False)
+    if (rc == 0):
+        run_command([NMCLI, 'c', 'delete', name])
+    elif (rc != 0 and rc != 10):
+        #unknown error
+        e_msg = ('Unexpected error while running command: %s. out: %s err: '
+                 '%s' % (show_cmd, o, e))
+        raise Exception(e_msg)
+    #2. Add a new connection
+    add_cmd = [NMCLI, 'c', 'add', 'type', dtype, 'con-name', name, 'ifname', name]
+    if (method == 'manual'):
+        add_cmd.extend(['ip4', '%s/%s' % (ipaddr, netmask)])
+    if (gateway is not None):
+        add_cmd.extend(['gw4', gateway])
+    run_command(add_cmd)
+    #3. modify with extra options like dns servers
+    if (method == 'manual'):
+        mod_cmd = [NMCLI, 'c', 'mod', name, ]
+        if (dns_servers is not None):
+            mod_cmd.extend(['ipv4.dns', dns_servers])
+        if (autoconnect == 'no'):
+            mod_cmd.extend(['connection.autoconnect', 'no'])
+        run_command(mod_cmd)
+    #wait for the interface to be activated
+    num_attempts = 0
+    while True:
+        state = get_net_config(name)[name].get('state', None)
+        if (state != 'activated'):
+            time.sleep(1)
+            num_attempts += 1
+        else:
+            break
+        if (num_attempts > 30):
+            msg = ('Waited more than %s seconds for connection(%s) state to '
+                   'be activated but it has not. Giving up. current state: %s'
+                   % (num_attempts, name, state))
+            raise Exception(msg)
 
 
-def restart_network_interface(iname):
-    """
-    ifdown followed by ifup of a ethernet interface
-    """
-    run_command([IFDOWN, iname])
-    return run_command([IFUP, iname])
+def convert_netmask(bits):
+    #convert netmask bits into ip representation
+    bits = int(bits)
+    mask = 0
+    for i in xrange(32-bits,32):
+        mask |= (1 << i)
+    return inet_ntoa(pack('>I', mask))
 
+def net_config_helper(name):
+    config = {}
+    o, e, rc = run_command([NMCLI, '-t', 'c', 'show', name], throw=False)
+    if (rc == 10):
+        return config
+    for l in o:
+        l = l.strip()
+        if ('method' in config):
+            if (config['method'] == 'auto'):
+                #dhcp
+                if (re.match('DHCP4.OPTION.*ip_address = .+', l) is not None):
+                    config['ipaddr'] = l.split('= ')[1]
+                elif (re.match('DHCP4.OPTION.*:domain_name_servers = .+', l) is not None):
+                    config['dns_servers'] = l.split('= ')[1]
+                elif (re.match('DHCP4.OPTION.*:subnet_mask = .+', l) is not None):
+                    config['netmask'] = l.split('= ')[1]
+                elif (re.match('IP4.GATEWAY:.+', l) is not None):
+                    config['gateway'] = l.split(':')[1]
 
-def network_devices():
-    """
-    return all network devices on the system. @todo: this logic needs to mature
-    over all.
-    """
-    ifpath = '/sys/class/net'
-    devices = []
-    dvirt = os.path.join(ifpath, 'docker0')
-    docker = False
-    if (os.path.exists(dvirt)):
-        docker = True
-    for n in os.listdir(ifpath):
-        fp = os.path.join(ifpath, n)
-        if (os.path.isdir(fp)):
-            #ignore files. nic bonding creates a file called bonding_masters,
-            #for example.
+            elif (config['method'] == 'manual'):
+                #manual
+                if (re.match('IP4.ADDRESS', l) is not None):
+                    kv_split = l.split(':')
+                    if (len(kv_split) > 1):
+                        vsplit = kv_split[1].split('/')
+                    if (len(vsplit) > 0):
+                        config['ipaddr'] = vsplit[0]
+                    if (len(vsplit) > 1):
+                        config['netmask'] = convert_netmask(vsplit[1])
+                elif (re.match('ipv4.dns:.+', l) is not None):
+                    config['dns_servers'] = l.split(':')[1]
+                elif (re.match('ipv4.gateway:.+', l) is not None):
+                    config['gateway'] = l.split(':')[1]
 
-            #ignore loopback device
-            #ignore docker virt interface
-            if (n == 'lo'):
-                continue
-            if (n == 'docker0'):
-                continue
+            else:
+                raise Exception('Unknown ipv4.method(%s). ' % config['method'])
 
-            #ignore all docker virt interfaces.
-            master = os.path.join(fp, 'master')
-            if (os.path.exists(master) and
-                docker is True and
-                os.path.samefile(master, dvirt)):
-                continue
+        if (re.match('connection.interface-name:', l) is not None):
+            config['name'] = l.split(':')[1]
+        elif (re.match('connection.autoconnect:', l) is not None):
+            config['autoconnect'] = l.split(':')[1]
+        elif (re.match('ipv4.method:.+', l) is not None):
+            config['method'] = l.split(':')[1]
 
-            devices.append(n)
-    return devices
+        if (re.match('GENERAL.DEVICES:.+', l) is not None):
+            config['dname'] = l.split(':')[1]
+        elif (re.match('connection.type:.+', l) is not None):
+            config['ctype'] = l.split(':')[1]
+        elif (re.match('GENERAL.STATE:.+', l) is not None):
+            config['state'] = l.split(':')[1]
 
+    if ('dname' in config):
+        o, e, rc = run_command([NMCLI, '-t', '-f', 'all', 'd', 'show', config['dname'],])
+        for l in o:
+            l = l.strip()
+            if (re.match('GENERAL.TYPE:.+', l) is not None):
+                config['dtype'] = l.split(':')[1]
+            elif (re.match('GENERAL.HWADDR:.+', l) is not None):
+                config['mac'] = l.split('GENERAL.HWADDR:')[1]
+            elif (re.match('CAPABILITIES.SPEED:.+', l) is not None):
+                config['dspeed'] = l.split(':')[1]
 
-def get_mac_addr(interface):
-    """
-    return the mac address of the given interface
-    """
-    ifile = ('/sys/class/net/%s/address' % interface)
-    with open(ifile) as ifo:
-        return ifo.readline().strip()
+    return config
 
-
-def get_default_interface():
-    """
-    returns the interface configured with default gateway
-    """
-    out, err, rc = run_command([ROUTE])
-    for line in out:
-        fields = line.split()
-        if (len(fields) > 0 and fields[0] == 'default'):
-            return fields[-1]
-    return None
-
-
-def get_ip_addr(interface):
-    """
-    useful when the interface gets ip from a dhcp server
-    """
-    out, err, rc = run_command([IFCONFIG, interface])
-    if (len(out) > 1):
-        line2 = out[1].strip()
-        if (re.match('inet ', line2) is not None):
-            fields = line2.split()
-            if (len(fields) > 1):
-                return line2.split()[1]
-    return '0.0.0.0'
-
-
-def config_network_device(name, mac, boot_proto='dhcp', ipaddr=None,
-                          netmask=None, on_boot='yes', gateway=None,
-                          dns_servers=[], domain=None):
-    config_script = ('/etc/sysconfig/network-scripts/ifcfg-%s' % name)
-    with open(config_script, 'w') as cfo:
-        cfo.write('NAME="%s"\n' % name)
-        cfo.write('TYPE="Ethernet"\n')
-        cfo.write('HWADDR="%s"\n' % mac)
-        cfo.write('BOOTPROTO="%s"\n' % boot_proto)
-        cfo.write('ONBOOT="%s"\n' % on_boot)
-        if (boot_proto == 'static'):
-            cfo.write('IPADDR0="%s"\n' % ipaddr)
-            cfo.write('NETMASK="%s"\n' % netmask)
-            cfo.write('GATEWAY0="%s"\n' % gateway)
-            cur = 1
-            for ds in dns_servers:
-                cfo.write('DNS%d="%s"\n' % (cur, ds))
-                cur = cur + 1
-            cfo.write('DOMAIN=%s\n' % domain)
-
-
-def char_strip(line, char='"'):
-    if (line[0] == char and line[-1] == char):
-        return line[1:-1]
-    return line
-
-
-def parse_ifcfg(config_file, config_d):
-    try:
-        with open(config_file) as cfo:
-            dns_servers = []
-            for l in cfo.readlines():
-                if (re.match('BOOTPROTO', l) is not None):
-                    config_d['bootproto'] = char_strip(l.strip().split('=')[1])
-                elif (re.match('ONBOOT', l) is not None):
-                    config_d['onboot'] = char_strip(l.strip().split('=')[1])
-                elif (re.match('IPADDR', l) is not None):
-                    config_d['ipaddr'] = char_strip(l.strip().split('=')[1])
-                elif (re.match('NETMASK', l) is not None):
-                    config_d['netmask'] = char_strip(l.strip().split('=')[1])
-                elif (re.match('NETWORK', l) is not None):
-                    config_d['network'] = char_strip(l.strip().split('=')[1])
-                elif (re.match('NAME', l) is not None):
-                    config_d['alias'] = char_strip(l.strip().split('=')[1])
-                elif (re.match('GATEWAY', l) is not None):
-                    config_d['gateway'] = char_strip(l.strip().split('=')[1])
-                elif (re.match('DNS', l) is not None):
-                    dns_servers.append(char_strip(l.strip().split('=')[1]))
-                elif (re.match('DOMAIN', l) is not None):
-                    config_d['domain'] = char_strip(l.strip().split('=')[1])
-            if (len(dns_servers) > 0):
-                config_d['dns_servers'] = ','.join(dns_servers)
-    except:
-        pass
-    finally:
-        if (config_d['bootproto'] != 'static'):
-            config_d['ipaddr'] = get_ip_addr(config_d['name'])
-        return config_d
-
-
-def get_net_config_fedora(devices):
-    config_d = {}
-    script_dir = ('/etc/sysconfig/network-scripts/')
-    for d in devices:
-        config = {'name': d,
-                  'alias': d,
-                  'bootproto': None,
-                  'onboot': None,
-                  'network': None,
-                  'netmask': None,
-                  'ipaddr': None,
-                  'gateway': None,
-                  'dns_servers': None,
-                  'domain': None, }
-        config['mac'] = get_mac_addr(d)
-        config = parse_ifcfg('%s/ifcfg-%s' % (script_dir, d), config)
-        config_d[d] = config
-    return config_d
-
-
-def set_networking(hostname, default_gw):
-    with open('/etc/sysconfig/network', 'w') as nfo:
-        nfo.write('NETWORKING=yes\n')
-        nfo.write('HOSTNAME=%s\n' % hostname)
-        nfo.write('GATEWAY=%s\n' % default_gw)
-
-
-def set_nameservers(servers):
-    with open('/etc/resolv.conf', 'w') as rfo:
-        for s in servers:
-            rfo.write('nameserver %s\n' % s)
-
+def get_net_config(all=False, name=None):
+    if (all):
+        o, e, rc = run_command([NMCLI, '-t', 'd', 'show'])
+        devices = []
+        config = {}
+        for i in range(len(o)):
+            if (re.match('GENERAL.DEVICE:', o[i]) is not None and
+                re.match('GENERAL.TYPE:', o[i+1]) is not None and
+                o[i+1].strip().split(':')[1] == 'ethernet'):
+                dname = o[i].strip().split(':')[1]
+                config[dname] = {'dname': dname,
+                                 'mac': o[i+2].strip().split('GENERAL.HWADDR:')[1],
+                                 'name': o[i+5].strip().split('GENERAL.CONNECTION:')[1],}
+        for device in config:
+            config[device].update(net_config_helper(config[device]['name']))
+            if (config[device]['name'] == '--'):
+                config[device]['name'] = device
+        return config
+    return {name: net_config_helper(name),}
 
 def update_issue(ipaddr):
-    shutil.copyfile('/etc/issue.rockstor', '/etc/issue')
     msg = ("\n\nYou can go to RockStor's webui by pointing your web browser"
            " to https://%s\n\n" % ipaddr)
-    with open('/etc/issue', 'a') as ifo:
+    with open('/etc/issue', 'w') as ifo:
         ifo.write(msg)
 
 
-def sethostname(ip, hostname):
-    """
-    edit /etc/hosts file and /etc/hostname
-    """
-    fh, npath = mkstemp()
-    with open(HOSTS_FILE) as hfo, open(npath, 'w') as tfo:
-        for line in hfo.readlines():
-            if (re.match(ip, line) is None):
-                tfo.write(line)
-        tfo.write('%s %s\n' % (ip, hostname))
-    shutil.move(npath, HOSTS_FILE)
-    os.chmod(HOSTS_FILE, 0644)
+def sethostname(hostname):
+    return run_command([HOSTNAMECTL, 'set-hostname', hostname])
 
-    with open('/etc/hostname', 'w') as hnfo:
-        hnfo.write('%s\n' % hostname)
+
+def gethostname():
+    o, e, rc = run_command([HOSTNAMECTL, '--static'])
+    return o[0]
 
 
 def is_share_mounted(sname, mnt_prefix=DEFAULT_MNT_DIR):
@@ -507,8 +454,19 @@ def get_virtio_disk_serial(device_name):
 
 
 def system_shutdown():
-    return run_command([SHUTDOWN, '-h'])
+    return run_command([SHUTDOWN, '-h', 'now'])
 
 
 def system_reboot():
-    return run_command([SHUTDOWN, '-r'])
+    return run_command([SHUTDOWN, '-r', 'now'])
+
+
+def md5sum(fpath):
+    # return the md5sum of the given file
+    if (not os.path.isfile(fpath)):
+        return None
+    md5 = hashlib.md5()
+    with open(fpath) as tfo:
+        for l in tfo.readlines():
+            md5.update(l)
+    return md5.hexdigest()

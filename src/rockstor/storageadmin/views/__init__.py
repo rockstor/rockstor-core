@@ -20,9 +20,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from home import (login_page, login_submit, logout_user, home)
 from snapshot import SnapshotView
 from share import (ShareListView, ShareDetailView)
-from share_nfs import (ShareNFSListView, ShareNFSDetailView)
+from disk import (DiskMixin, DiskListView, DiskDetailView)
 from pool import (PoolListView, PoolDetailView)
-from disk import (DiskListView, DiskDetailView)
 from command import CommandView
 from share_iscsi import ShareIscsiView
 from appliances import (ApplianceListView, ApplianceDetailView)
@@ -35,11 +34,11 @@ from network import NetworkDetailView
 from pool_scrub import PoolScrubView
 from setup_user import SetupUserView
 from share_acl import ShareACLView
-from nfs_exports import (NFSExportGroupListView, NFSExportGroupDetailView)
+from nfs_exports import (NFSExportGroupListView, NFSExportGroupDetailView,
+                         AdvancedNFSExportView)
 from share_command import ShareCommandView
 from samba import (SambaListView, SambaDetailView)
 from sftp import (SFTPListView, SFTPDetailView)
-from adv_nfs_exports import AdvancedNFSExportView
 from oauth_app import OauthAppView
 from netatalk import (NetatalkListView, NetatalkDetailView)
 from group import (GroupListView, GroupDetailView)
@@ -51,5 +50,8 @@ from rockon_volume import RockOnVolumeView
 from rockon_port import RockOnPortView
 from rockon_custom_config import RockOnCustomConfigView
 from disk_smart import DiskSMARTDetailView
-from config_backup import (ConfigBackupListView, ConfigBackupDetailView, ConfigBackupUpload)
-from email import EmailClientView
+from config_backup import (ConfigBackupListView, ConfigBackupDetailView,
+                           ConfigBackupUpload)
+from email_client import EmailClientView
+from update_subscription import (UpdateSubscriptionListView,
+                                 UpdateSubscriptionDetailView)

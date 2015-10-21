@@ -56,6 +56,10 @@ class ShareTests(APITestMixin, APITestCase):
         cls.patch_qgroup_id = patch('storageadmin.views.share.qgroup_id')
         cls.mock_qgroup_id = cls.patch_qgroup_id.start()
         cls.mock_qgroup_id.return_value = '0f123f'
+        
+        cls.patch_qgroup_create = patch('storageadmin.views.share.qgroup_create')
+        cls.mock_qgroup_create = cls.patch_qgroup_create.start()
+        cls.mock_qgroup_create.return_value = '1'
 
         # put mocks
         cls.patch_share_usage = patch('storageadmin.views.share.share_usage')
@@ -81,8 +85,8 @@ class ShareTests(APITestMixin, APITestCase):
         """
         self.get_base(self.BASE_URL)
 
-        # get share poolshare1( alreday existing share in fixture fix1)
-        response = self.client.get('%s/poolshare1' % self.BASE_URL)
+        # get share share1( alreday existing share in fixture fix1)
+        response = self.client.get('%s/share1' % self.BASE_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response)
 
         # get share that does not exist
@@ -243,10 +247,10 @@ class ShareTests(APITestMixin, APITestCase):
         """
 
         # create new share
-        data = {'sname': 'share1', 'pool': 'rockstor_rockstor', 'size': 1000}
+        data = {'sname': 'share2', 'pool': 'rockstor_rockstor', 'size': 1000}
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
-        self.assertEqual(response.data['name'], 'share1')
+        self.assertEqual(response.data['name'], 'share2')
         self.assertEqual(response.data['size'], 1000)
 
         # resize share

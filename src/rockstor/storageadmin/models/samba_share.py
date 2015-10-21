@@ -31,13 +31,15 @@ class SambaShare(models.Model):
     BOOLEAN_CHOICES = (
         (YES, 'yes'),
         (NO, 'no'),
-        )
+    )
     browsable = models.CharField(max_length=3, choices=BOOLEAN_CHOICES,
                                  default=YES)
     read_only = models.CharField(max_length=3, choices=BOOLEAN_CHOICES,
                                  default=NO)
     guest_ok = models.CharField(max_length=3, choices=BOOLEAN_CHOICES,
                                 default=NO)
+    shadow_copy = models.BooleanField(default=False)
+    snapshot_prefix = models.CharField(max_length=128, null=True)
 
     def admin_users(self):
         return User.objects.filter(smb_share=self)

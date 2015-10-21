@@ -22,5 +22,5 @@ from storageadmin.views import NetworkListView, NetworkDetailView
 urlpatterns = patterns(
     '',
     url(r'^$', NetworkListView.as_view()),
-    url(r'^/(?P<iname>[A-Za-z0-9]+)$', NetworkDetailView.as_view(),)
+    url(r'^/(?P<iname>.*)$', NetworkDetailView.as_view(),)
     )

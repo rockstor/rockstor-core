@@ -18,30 +18,27 @@
   *
   */
 </script>
-<h3>Update Certificate</h3>
 <div class="row">
   <div class="col-md-8">
-    <label class="control-label"></label>
-    <div class="form-box">
+    <div class="panel panel-default">
+    <div class="panel-heading">Update SSL Certificate</div>
+    <div class="panel-body">
       <form id="update-certificate-form" name="update-certificate-form" class="form-horizontal" >
         <div class="messages"></div>
         <div class="form-group">
-	  <label class="control-label col-sm-3" for="certificatename">Certificate Name
+	  <label class="control-label col-sm-4" for="certificatename">Certificate Name
 	    <span class="required"> *</span>
        	  </label>
-	  <div class="controls">
-	    <div class="col-sm-6">
+	    <div class="col-sm-4">
        	      <input type="text" class="form-control valid" id="certificatename" name="certificatename" title="Name of the certificate.">
 	    </div>
-         </div>
         </div>
         <div class="form-group">
-	  <label class="control-label col-sm-3" for="certificate">Certificate
+	  <label class="control-label col-sm-4" for="certificate">Certificate
           <span class="required"> *</span>
        	 </label>
-          <div class="controls">
-	    <div class="col-sm-6">
-            <textarea class="form-control valid" id="certificate" name="certificate" rows="15" cols="80" style="width: 500px;"
+	    <div class="col-sm-8">
+            <textarea class="form-control valid" id="certificate" name="certificate" rows="15" cols="50"
             placeholder="-----BEGIN CERTIFICATE-----
 MIIDXTCCAkWgAwIBAgIJAJC1HiIAZAiIMA0GCSqGSIb3DQEBBQUAMEU
 BAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnR
@@ -49,15 +46,13 @@ BAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnR
 -----END CERTIFICATE-----"
 		      title="Content of the certificate starting with '-----BEGIN CERTIFICATE-----' and ending with  '-----END CERTIFICATE-----' ."></textarea>
 	    </div>
-         </div>
         </div>
         <div class="form-group">
-	  <label class="control-label col-sm-3" for="privatekey">Private Key
+	  <label class="control-label col-sm-4" for="privatekey">Private Key
           <span class="required"> *</span>
        	 </label>
-          <div class="controls">
-	    <div class="col-sm-6">
-              <textarea class="form-control valid" id="privatekey" name="privatekey" rows="15" cols="80" style="width: 500px;"
+	    <div class="col-sm-8">
+              <textarea class="form-control valid" id="privatekey" name="privatekey" rows="15" cols="50"
             placeholder="-----BEGIN ENCRYPTED PRIVATE KEY-----
 MIIFDjBABgkqhkiG9w0BBQ0wMzAbBgkqhkiG9w0BBQwwDgQIS2qgprFqPxECAggA
 9g73NQbtqZwI+9X5OhpSg/2ALxlCCjbqvzgSu8gfFZ4yo+Xd8VucZDmDSpzZGDod
@@ -65,17 +60,15 @@ A .... .... ..... .... .... .... .... .... .... .... .... ....
 GEs=
 -----END ENCRYPTED PRIVATE KEY-----" title="Content of the private key starting with '-----BEGIN ENCRYPTED PRIVATE KEY-----' and ending with  '-----END ENCRYPTED PRIVATE KEY-----'."></textarea>
 	    </div>
-         </div>
         </div>
         <div class="form-group">
-	  <div class="col-sm-offset-3 col-sm-4">
-            <div class="controls">
+	     <div class="col-sm-offset-4 col-sm-8">
               <button id="cancel" class="btn btn-default">Cancel</button>
               <button type="Submit" id="save-certificate" class="btn btn-primary">Submit</button>
 	    </div>
-          </div>
         </div>
       </form>
-    </div>
-  </div>
-</div>
+    </div><!--panel-body-->
+  </div><!--panel-default-->
+</div><!--col-md-8-->
+</div><!--row-->

@@ -117,5 +117,10 @@ urlpatterns = patterns('',
                        url(r'^api/config-backup/(?P<backup_id>\d+)$', ConfigBackupDetailView.as_view()),
                        url(r'^api/config-backup/file-upload$',
                            ConfigBackupUpload.as_view()),
-                       url(r'^api/email', EmailClientView.as_view()),
+                       url(r'^api/email$', EmailClientView.as_view()),
+                       url(r'^api/email/(?P<command>.*)$', EmailClientView.as_view()),
+
+                       #update subscription
+                       (r'^api/update-subscriptions',
+                        include('storageadmin.urls.update_subscription')),
 )

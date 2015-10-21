@@ -36,96 +36,39 @@
           </thead>
           <tbody>
             <% services.each(function(service) { %>
-              <% if (service.get('name') != 'service-monitor') { %>
-                <tr id="<%= service.get('name') %>">
-                  <td>
-                    <%= service.get('display_name') %>&nbsp;
-		    <% if (configurable_services.indexOf(service.get('name')) > -1) { %>
-                      <a href="#" class="configure" data-service-name="<%= service.get('name') %>"><i class="glyphicon glyphicon-wrench"></i></a>
-                    <% } %>
-                    <% if ((service.get('name') == 'winbind')) { %>
-                      &nbsp;
-                      <% if ((adServiceConfig.security == 'ads' || adServiceConfig.security == 'domain'))  { %>
-                        <button type="button" id="join-domain" class="btn btn-primary btn-xs">Join Domain</button>
-                      <% } else { %>
-                        <button type="button" id="join-domain" class="btn btn-xs disabled">Join Domain</button>
-                      <% } %>
-                      &nbsp;&nbsp;
-                      <span id="join-domain-status"></span>
-                    <% } %>
-                  </td>
-                  <td id="<%= service.get('name') %>-status">
-                    <% if (service.get('status')) { %>
-                      <div class="slider-stop" data-service-name="<%= service.get('name') %>">OFF</div>
-                      <div class="slider-ph">
-                        <input type="text" class="service-status" value="1" data-service-name="<%= service.get('name') %>"></input>
-                      </div>
-                      <div class="slider-start on" data-service-name="<%= service.get('name') %>">ON</div>
-                    <% } else { %>
-                      <div class="slider-stop" data-service-name="<%= service.get('name') %>">OFF</div>
-                      <div class="slider-ph">
-                        <input type="text" class="service-status" value="0" data-service-name="<%= service.get('name') %>"></input>
-                      </div>
-                      <div class="slider-start" data-service-name="<%= service.get('name') %>">ON</div>
-                    <% } %>
-                    <div class="command-status" data-service-name="<%= service.get('name') %>">&nbsp;</div>
-                    <div class="simple-overlay" id="<%= service.get('name') %>-err-popup"><div class="overlay-content"></div></div>
-                  </td>
-                  <!--
-                  <td><a href="#" class="configure" data-service-name="<%= service.get('name') %>"><i class="glyphicon glyphicon-wrench"></i></a></td>
-                  -->
-
-                </tr>
-              <% } %>
+            <tr id="<%= service.get('name') %>">
+              <td>
+                <%= service.get('display_name') %>&nbsp;
+		<% if (configurable_services.indexOf(service.get('name')) > -1) { %>
+                <a href="#" class="configure" data-service-name="<%= service.get('name') %>"><i class="glyphicon glyphicon-wrench"></i></a>&nbsp;
+                <% } %>
+		<% if (service.get('name') == 'active-directory') { %>
+		<i class="fa fa-info-circle" title="By turning this service on, the system will attempt to join Active Directory domain using the credentials provided during configuration. Note that domain user/group information is not listed anywhere in the Web-UI. However, domain users should be able to access Samba Shares and domain Administrators can set permissions from Windows computers. For support, contact support@rockstor.com"></i>
+		<% } %>
+	      </td>
+              <td id="<%= service.get('name') %>-status">
+                <% if (service.get('status')) { %>
+                <div class="slider-stop" data-service-name="<%= service.get('name') %>">OFF</div>
+                <div class="slider-ph">
+                  <input type="text" class="service-status" value="1" data-service-name="<%= service.get('name') %>"></input>
+                </div>
+                <div class="slider-start on" data-service-name="<%= service.get('name') %>">ON</div>
+                <% } else { %>
+                <div class="slider-stop" data-service-name="<%= service.get('name') %>">OFF</div>
+                <div class="slider-ph">
+                  <input type="text" class="service-status" value="0" data-service-name="<%= service.get('name') %>"></input>
+                </div>
+                <div class="slider-start" data-service-name="<%= service.get('name') %>">ON</div>
+                <% } %>
+                <div class="command-status" data-service-name="<%= service.get('name') %>">&nbsp;</div>
+                <div class="simple-overlay" id="<%= service.get('name') %>-err-popup"><div class="overlay-content"></div></div>
+              </td>
+            </tr>
             <% }); %>
           </tbody>
         </table>
         <div class="ph-pagination"></div>
       </div>
     </div>
-  </div>
-</div>
-
-<div id="join-domain-modal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="joinDomainModalLabel" aria-hidden="true">
-  <!-- Header -->
-  <div class="modal-header">
-    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-    <h3>Join Domain</h3>
-  </div>
-  <!-- Body -->
-  <div class="modal-body">
-    <div id="join-domain-err"></div>
-    <div class="alert alert-warning">
-      Please make sure you have configured Winbind with the correct values.<br>
-      <br>
-      Current configuration:<br>
-      <strong>Domain</strong>: <%= adServiceConfig.domain %><br>
-      <strong>Security Model</strong>: <%= adServiceConfig.security %><br>
-      <strong>Winbind ADS Realm</strong>: <%= adServiceConfig.realm %><br>
-      <strong>Winbind Domain Controllers</strong>: <%= adServiceConfig.controllers %><br>
-      <strong>Template Shell</strong>: <%= adServiceConfig.templateshell %><br>
-      <strong>Allow Offline Login</strong>: <%= adServiceConfig.allow_offline %><br>
-
-    </div>
-    <form id="join-domain-form" name="join-domain-form">
-      <div class="form-group">
-        <label class="control-label" for="administrator">Administrator<span class="required"> *</span></label>
-        <div class="controls">
-          <input type="text" id="join-domain-administrator" name="administrator" value="" placeholder="Administrator" >
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="control-label" for="password">Password<span class="required"> *</span></label>
-        <div class="controls">
-          <input type="password" id="join-domain-password" name="password" value="" placeholder="Password" >
-        </div>
-      </div>
-      <div class="form-group">
-        <div class="controls">
-          <button id="cancel-join" class="btn btn-default" data-dismiss="modal">Cancel</button>
-          <button type="Submit" id="join-domain-submit" class="btn btn-primary">Submit</button>
-        </div>
-      </div>
-    </form>
   </div>
 </div>

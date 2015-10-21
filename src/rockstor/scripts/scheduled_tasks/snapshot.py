@@ -83,8 +83,7 @@ def main():
     now = datetime.utcnow().replace(second=0, microsecond=0, tzinfo=utc)
     t = Task(task_def=tdo, state='started', start=now)
     try:
-        name = ('%s_%s' % (meta['prefix'], datetime.utcnow().replace(
-            tzinfo=utc).strftime(settings.SNAP_TS_FORMAT)))
+        name = ('%s_%s' % (meta['prefix'], datetime.now().strftime(settings.SNAP_TS_FORMAT)))
         url = ('%sshares/%s/snapshots/%s' % (baseurl, meta['share'], name))
         data = {'snap_type': stype,
                 'uvisible': meta['visible'], }

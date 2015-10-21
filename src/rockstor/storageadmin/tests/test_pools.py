@@ -101,9 +101,9 @@ class PoolTests(APITestMixin, APITestCase):
 
         # create a pool with same name as an existing share
         data = {'disks': ('sdc', 'sdd',),
-                'pname': 'poolshare1',
-                'raid_level': 'derp', }
-        e_msg = ('A Share with this name(poolshare1) exists. Pool and Share names must be distinct. Choose a different name')
+                'pname': 'share1',
+                'raid_level': 'raid0', }
+        e_msg = ('A Share with this name(share1) exists. Pool and Share names must be distinct. Choose a different name')
         response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)

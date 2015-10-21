@@ -27,13 +27,14 @@ def register_services():
         'Samba': 'smb',
         'NIS': 'nis',
         'NTP': 'ntpd',
-        'AD': 'winbind',
+        'Active Directory': 'active-directory',
         'LDAP': 'ldap',
         'SFTP': 'sftp',
         'Replication': 'replication',
         'SNMP': 'snmpd',
         'Rock-on': 'docker',
-        'S.M.A.R.T': 'smartd',}
+        'S.M.A.R.T': 'smartd',
+        'NUT-UPS': 'nut', }
 
     keylist = services.keys()
     for s in keylist:

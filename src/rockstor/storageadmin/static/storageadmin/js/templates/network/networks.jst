@@ -2,20 +2,20 @@
 /*
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
- * 
+ *
  * RockStor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
- * 
+ *
  * RockStor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 </script>
 
@@ -28,15 +28,16 @@
     <table id="networks-table" class="table table-condensed share-table tablesorter" summary="List of network interfaces">
       <thead>
         <tr>
-          <th scope="col" abbr="Name">Name</th>
-          <th scope="col" abbr="UID">Configuration</th>
-          <th scope="col" abbr="Admin">IP Address</th>
-          <th scope="col" abbr="Admin">Mac Address</th>
+          <th scope="col" abbr="Name">Connection</th>
+	  <th scope="col" abbr="Device">Device</th>
+	  <th scope="col" abbr="Mac">MAC Address</th>
+	  <th scope="col" abbr="Speed">Speed</th>
+          <th scope="col" abbr="Method">Config method</th>
+          <th scope="col" abbr="IP">IP Address</th>
           <th scope="col" abbr="Netmask">Netmask</th>
           <th scope="col" abbr="Gateway">Gateway</th>
-          <th scope="col" abbr="Domain">Domain</th>
           <th scope="col" abbr="DNS">DNS Servers</th>
-          <th scope="col" abbr="UID">Management</th>
+          <th scope="col" abbr="Mgmt">Management</th>
           <th scope="col" abbr="Actions">Actions</th>
         </tr>
       </thead>
@@ -44,18 +45,19 @@
         <% networks.each(function(network, index) { %>
           <tr>
             <td><i class="glyphicon glyphicon-signal"></i> <%= network.get("name") %></td>
-            <td><%= network.get("boot_proto") %></td>
-            <td><%= network.get("ipaddr") %></td>
+	    <td><%= network.get("dname") %></td>
             <td><%= network.get("mac") %></td>
+	    <td><%= network.get("dspeed") %></td>
+	    <td><%= network.get("method") %></td>
+	    <td><%= network.get("ipaddr") %></td>
             <td><%= network.get("netmask") %></td>
             <td><%= network.get("gateway") %></td>
-            <td><%= network.get("domain") %></td>
             <td><%= network.get("dns_servers") %></td>
             <td>
               <% if (network.get("itype") == 'management') { %>
-                <input type="checkbox" name="itype" data-network"<%= network.get('name') %>" checked="checked" disabled="disabled" ></input>
+	        Yes
               <% } else { %>
-                <input type="checkbox" name="itype" data-network="<%= network.get('name') %>" disabled="disabled" ></input>
+	        No
               <% } %>
             </td>
             <td>
@@ -66,11 +68,5 @@
       </tbody>
     </table>
     <div style="text-align: center" class="ph-pagination"></div>
-    
   </div> <!-- col-md-12 -->
 </div> <!-- row -->
-
-
-
-
-

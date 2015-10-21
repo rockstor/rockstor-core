@@ -32,9 +32,11 @@ $(document).ready(function() {
 </script
 
 <% if (taskDefId == null) { %>
-  <h3>Schedule a new task</h3>
-  <label class="control-label"></label>
-  <div class="form-box">
+<div class="row">
+<div class="col-md-8">
+  <div class="panel panel-default">
+<div class="panel-heading">Schedule a new task</div>
+<div class="panel-body">
     <form id="scheduled-task-create-form" name="aform">
       <div class="messages"></div>
       <div class="form-group">
@@ -78,70 +80,77 @@ $(document).ready(function() {
       </div>
     </form>
 
-  </div> <!-- form-box -->
+  </div> <!-- panel-body -->
+</div><!-- panel-default-->
+</div>
   <!-- col-md-8 -->
-  <!-- row -->
+
   <% } else { %>
-  <h3>Edit a scheduled task</h3>
   <div class="row">
     <div class="col-md-8">
-      <div class="form-box">
+<div class="panel panel-default">
+<div class="panel-heading">Edit a scheduled task</div>
+<div class="panel-body">
         <form id="scheduled-task-create-form" class="form-horizontal" name="aform" >
           <div class="form-group">
-            <label class="control-label col-sm-2" for="share">Task name: </label>
+            <label class="control-label col-sm-4" for="share">Task name: </label>
             <div class="col-sm-6">
-              <label class="form-control"><%= taskDef.get('name') %></label>
+              <input type="text" class="form-control" value="<%= taskDef.get('name') %>" disabled />
             </div>
           </div>
           <div class="form-group">
-            <label class="control-label col-sm-2" for="share">Task type: </label>
+            <label class="control-label col-sm-4" for="share">Task type: </label>
             <div class="col-sm-6">
-              <label class="form-control"><%= taskDef.get('task_type') %></label>
+              <input type="text" class="form-control" value="<%= taskDef.get('task_type') %>" disabled />
             </div>
           </div>
           <!-- Type dependent fields -->
           <% if (taskDef.get('task_type') == 'snapshot') { %>
           <div class="form-group">
-            <label class="control-label col-sm-2" for="share">Share: </label>
+            <label class="control-label col-sm-4" for="share">Share: </label>
             <div class="col-sm-6">
-              <label class="form-control"><%= taskDef.share() %></label>
+              <input type="text" class="form-control" value="<%= taskDef.share() %>" disabled />
             </div>
           </div>
           <div class="form-group">
-            <label class="control-label col-sm-2" for="share">Snapshot prefix: </label>
+            <label class="control-label col-sm-4" for="share">Snapshot prefix: </label>
             <div class="col-sm-6">
-              <label class="form-control"><%= taskDef.prefix() %></label>
+              <input type="text" class="form-control" value="<%= taskDef.prefix() %>" disabled />
             </div>
           </div>
           <% } else { %>
           <div class="form-group">
-            <label class="control-label col-sm-2" for="share">Pool: </label>
+            <label class="control-label col-sm-4" for="share">Pool: </label>
             <div class="col-sm-6">
-              <label class="control-label form-control"><%= taskDef.pool() %></label>
+              <input type="text" class="form-control" value="<%= taskDef.pool() %>" disabled />
             </div>
           </div>
           <% } %>
 
           <% if (taskDef.get('task_type') == 'snapshot') { %>
           <div class="form-group">
-            <label class="control-label col-sm-2" for="max_count">Maximum count<span class="required"> *</span></label>
+            <label class="control-label col-sm-4" for="max_count">Maximum count<span class="required"> *</span></label>
 	    <div class="col-sm-6">
               <input class="form-control" type="text" id="max_count" name="meta.max_count" value="<%= taskDef.max_count() %>" title="Older snapshots beyond this number and created by this task will be deleted">
 	    </div>
 
           </div>
 	  <div class="form-group">
-	    <div class="col-sm-offset-2 col-sm-6">
+	    <div class="col-sm-offset-4 col-sm-6">
 	      <div class="checkbox">
 		<label>
+		  <% if (taskDef.visible()) { %>
 		  <input class="checkbox" type="checkbox" checked="true" id="visible" name="meta.visible" title="Make snapshots visible to the end user"> Make snapshots visible?
+		  <% } else { %>
+		  <input class="checkbox" type="checkbox" id="visible" name="meta.visible" title="Make snapshots visible to the end user"> Make snapshots visible?
+		  <% } %>
 		</label>
 	      </div>
 	    </div>
 	  </div>
           <% } %>
           <div class="form-group">
-	    <div class="col-sm-offset-2 col-sm-6">
+	    <div class="col-sm-offset-4 col-sm-6">
 	      <div class="checkbox">
 		<label>
               <% if (taskDef.get('enabled')) { %>
@@ -154,19 +163,20 @@ $(document).ready(function() {
             </div>
           </div>
 	  <div class="form-group">
-            <label class="control-label col-sm-2" for="cron">Task frequency</label>
+            <label class="control-label col-sm-4" for="cron">Task frequency</label>
             <div class="col-sm-6">
 	      <div id="cron"></div>
             </div>
 	  </div>
           <div class="form-group">
-            <div class="controls col-sm-offset-2 col-sm-6">
+            <div class="controls col-sm-offset-4 col-sm-6">
               <a id="js-cancel" class="btn btn-default">Cancel</a>
 	      <input type="Submit" id="create-scheduled-task" class="btn btn-primary" value="Submit"></input>
             </div>
           </div>
         </form>
-      </div>
+      </div><!--panel-body-->
+  </div><!--panel-->
     </div>
   </div>
   <% } %>

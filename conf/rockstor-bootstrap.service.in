@@ -1,0 +1,12 @@
+[Unit]
+Description=Rockstor bootstrapping tasks
+After=rockstor.service
+Requires=rockstor.service
+
+[Service]
+ExecStart=${buildout:depdir}/bin/bootstrap
+Type=oneshot
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

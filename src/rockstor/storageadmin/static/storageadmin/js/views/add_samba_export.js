@@ -26,7 +26,9 @@
 
 AddSambaExportView = RockstorLayoutView.extend({
     events: {
-	'click #cancel': 'cancel'
+	'click #cancel': 'cancel',
+	'click #shadow-copy-info': 'shadowCopyInfo',
+	'click #shadow_copy': 'toggleSnapPrefix'
     },
 
     initialize: function() {
@@ -96,7 +98,8 @@ AddSambaExportView = RockstorLayoutView.extend({
 	    sambaShareId: this.sambaShareId,
 	    browsable_choices: this.browsable_choices,
 	    guest_ok_choices: this.guest_ok_choices,
-	    read_only_choices: this.read_only_choices
+	    read_only_choices: this.read_only_choices,
+	    shadow_copy_choices: this.yes_no_choices
 
 	}));
 	if(this.sambaShareId == null) {
@@ -116,6 +119,13 @@ AddSambaExportView = RockstorLayoutView.extend({
 	    onkeyup: false,
 	    rules: {
 		shares: 'required',
+		snapshot_prefix: {
+		    required: {
+			depends: function(element) {
+			    return _this.$('#shadow_copy').prop('checked');
+			}
+		    }
+		}
 	    },
 
 	    submitHandler: function() {
@@ -158,6 +168,25 @@ AddSambaExportView = RockstorLayoutView.extend({
 	event.preventDefault();
 	this.$('#add-samba-export-form :input').tooltip('hide');
 	app_router.navigate('samba-exports', {trigger: true});
+    },
+
+    shadowCopyInfo: function(event) {
+	event.preventDefault();
+	$('#shadow-copy-info-modal').modal({
+	    keyboard: false,
+	    show: false,
+	    backdrop: 'static'
+	});
+	$('#shadow-copy-info-modal').modal('show');
+    },
+
+    toggleSnapPrefix: function() {
+	var cbox = this.$('#shadow_copy');
+	if (cbox.prop('checked')) {
+	    this.$('#snapprefix-ph').css('visibility', 'visible');
+	} else {
+	    this.$('#snapprefix-ph').css('visibility', 'hidden');
+	}
     }
 
 });

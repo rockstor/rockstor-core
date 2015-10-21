@@ -54,14 +54,18 @@ class ServiceMixin(object):
 
     def _get_status(self, service):
         try:
-            o, e, rc = service_status(service.name)
+            config = None
+            if (service.config is not None):
+                config = self._get_config(service)
+
+            o, e, rc = service_status(service.name, config)
             if (rc == 0):
                 return True
             return False
         except Exception, e:
-            msg = ('Exception while querying status of service: %s' % service.name)
+            msg = ('Exception while querying status of service(%s): %s' %
+                   (service.name, e.__str__()))
             logger.error(msg)
-            logger.exception(e)
             return False
 
 
@@ -79,7 +83,7 @@ class BaseServiceView(ServiceMixin, rfc.GenericView):
                 sos = []
                 for s in Service.objects.all():
                     sos.append(self._get_or_create_sso(s))
-                return sos
+                return sorted(sos, cmp=lambda x,y: cmp(x.display_name, y.display_name))
 
 
 class BaseServiceDetailView(ServiceMixin, rfc.GenericView):

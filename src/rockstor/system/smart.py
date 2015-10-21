@@ -21,6 +21,10 @@ from osi import run_command
 from tempfile import mkstemp
 from shutil import move
 import logging
+from system.email_util import email_root
+from exceptions import CommandException
+
+
 logger = logging.getLogger(__name__)
 
 SMART = '/usr/sbin/smartctl'
@@ -92,7 +96,24 @@ def capabilities(device):
     return cap_d
 
 def error_logs(device):
-    o, e, rc = run_command([SMART, '-l', 'error', '/dev/%s' % device])
+    o, e, rc = run_command([SMART, '-l', 'error', '/dev/%s' % device],
+                           throw=False)
+    # As we mute exceptions when calling the above command we should at least
+    # examine what we have as return code (rc); 64 has been seen when the error
+    # log contains errors but otherwise executes successfully so we catch this.
+    if rc == 64:
+        e_msg = 'Drive /dev/%s has logged S.M.A.R.T errors. Please view ' \
+                'the Error logs tab for this device.' % device
+        logger.error(e_msg)
+        email_root('S.M.A.R.T error', e_msg)
+    # In all other instances that are an error (non zero) we raise exception
+    # as normal.
+    elif rc != 0:
+        e_msg = ('non-zero code(%d) returned by command: %s -l error output: '
+                 '%s error: %s' % (rc, SMART, o, e))
+        logger.error(e_msg)
+        raise CommandException(('%s -l error /dev/%s' % (SMART, device)), o, e,
+                               rc)
     ecode_map = {
         'ABRT' : 'Command ABoRTed',
         'AMNF' : 'Address Mark Not Found',

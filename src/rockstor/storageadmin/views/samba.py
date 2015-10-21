@@ -39,6 +39,8 @@ class SambaMixin(object):
         'guest_ok': 'no',
         'read_only': 'no',
         'custom_config': None,
+        'shadow_copy': False,
+        'snapshot_prefix': None,
     }
     BOOL_OPTS = ('yes', 'no',)
 
@@ -46,7 +48,7 @@ class SambaMixin(object):
     def _restart_samba():
         out = status()
         if (out[2] == 0):
-            restart_samba()
+            restart_samba(hard=True)
 
     @classmethod
     def _validate_input(cls, request, smbo=None):
@@ -58,6 +60,7 @@ class SambaMixin(object):
             def_opts['browsable'] = smbo.browsable
             def_opts['guest_ok'] = smbo.guest_ok
             def_opts['read_only'] = smbo.read_only
+            def_opts['shadow_copy'] = smbo.shadow_copy
 
         options['comment'] = request.data.get('comment', def_opts['comment'])
         options['browsable'] = request.data.get('browsable',
@@ -83,6 +86,17 @@ class SambaMixin(object):
             e_msg = ('Invalid choice for read_only. Possible '
                      'options are yes or no.')
             handle_exception(Exception(e_msg), request)
+        options['shadow_copy'] = request.data.get('shadow_copy',
+                                                  def_opts['shadow_copy'])
+        if (options['shadow_copy']):
+            options['snapshot_prefix'] = request.data.get('snapshot_prefix',
+                                                          def_opts['snapshot_prefix'])
+            if (options['snapshot_prefix'] is None or
+                len(options['snapshot_prefix'].strip()) == 0):
+                e_msg = ('Invalid choice for snapshot_prefix. It must be a '
+                         'valid non-empty string')
+                handle_exception(Exception(e_msg), request)
+
         return options
 
 

@@ -77,7 +77,12 @@ class UserMixin(object):
             'homedir', '/home/%s' % username)
         input_fields['uid'] = request.data.get('uid', None)
         if (input_fields['uid'] is not None):
-            input_fields['uid'] = int(input_fields['uid'])
+            try:
+                input_fields['uid'] = int(input_fields['uid'])
+            except ValueError, e:
+                e_msg = ('UID must be an integer, try again. Exception: %s' % e.__str__())
+                handle_exception(Exception(e_msg), request)
+
         input_fields['group'] = request.data.get('group', None)
         input_fields['public_key'] = cls._validate_public_key(request)
         return input_fields

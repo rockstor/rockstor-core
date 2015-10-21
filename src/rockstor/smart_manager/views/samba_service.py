@@ -16,14 +16,17 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import shutil
 from rest_framework.response import Response
 from storageadmin.util import handle_exception
 from system.services import systemctl
 from system.samba import (update_global_config, restart_samba)
 from django.db import transaction
+from django.conf import settings
 from base_service import BaseServiceDetailView
 from smart_manager.models import Service
 from storageadmin.models import SambaShare
+from system.osi import md5sum
 
 import logging
 logger = logging.getLogger(__name__)
@@ -52,19 +55,22 @@ class SambaServiceView(BaseServiceDetailView):
                 handle_exception(Exception(e_msg), request)
         else:
             try:
-                switch = 'on'
-                if (command == 'stop'):
-                    switch = 'off'
                 if (command == 'stop'):
                     systemctl('smb', 'disable')
                     systemctl('nmb', 'disable')
                 else:
+                    systemd_name = '%s.service' % service_name
+                    ss_dest = ('/etc/systemd/system/%s' % systemd_name)
+                    ss_src = ('%s/%s' % (settings.CONFROOT, systemd_name))
+                    sum1 = md5sum(ss_dest)
+                    sum2 = md5sum(ss_src)
+                    if (sum1 != sum2):
+                        shutil.copy(ss_src, ss_dest)
                     systemctl('smb', 'enable')
                     systemctl('nmb', 'enable')
                 systemctl('smb', command)
                 systemctl('nmb', command)
             except Exception, e:
-                logger.exception(e)
-                e_msg = ('Failed to %s samba due to a system error.' % command)
+                e_msg = ('Failed to %s samba due to a system error: %s' % (command, e.__str__()))
                 handle_exception(Exception(e_msg), request)
         return Response()

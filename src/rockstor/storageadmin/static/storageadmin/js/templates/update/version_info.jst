@@ -1,3 +1,98 @@
+<script>
+$(document).ready(function(){
+  $("#subscription-table tr td:first-child").css( "color", "#eb6841" );
+});
+</script>
+
+<div class="row">
+<div class="col-md-8 col-md-offset-2">
+
+  <% if (defaultSub && defaultSub.get('status') == 'active') { %>
+  <div class="alert alert-danger">
+    <p>
+      Testing updates are activated. These are cutting edge updates that should
+      be applied only after careful consideration. When an update is released,
+      read the changelog and proceed with caution.
+    </p>
+    <p>
+      Alternatively, Stable updates are generally recommended as shown below.
+    </p>
+  </div>
+  <% } %>
+
+  <% if (!defaultSub && !stableSub) { %>
+  <div class="alert alert-success">
+    <p>
+      You can receive software updates from one of the two update channels as
+      shown in the below table. Please activate a channel that is appropriate
+      for your needs. Stable updates are generally recommended, unless you want
+      to actively test Rockstor. If you have questions, email
+      support@rockstor.com
+    </p>
+  </div>
+  <% } %>
+
+  <% if (!stableSub || stableSub.get('status') != 'active' ) { %>
+  <table class="table table-hover" id="subscription-table">
+    <thead>
+      <tr class="active">
+        <th>Feature</th>
+        <th>Stable Updates</th>
+        <th>Testing Updates</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Update Frequency</td>
+        <td>3-4 Weeks</td>
+        <td>2-3 days</td>
+      </tr>
+      <tr>
+        <td>Priority of bug fixes</td>
+        <td>Highest</td>
+        <td>Varies</td>
+      </tr>
+      <tr>
+        <td>Automated functional testing</td>
+        <td><i class="fa fa-check"></i></td>
+        <td><i class="fa fa-check"></i></td>
+      </tr>
+      <tr>
+        <td>Tested in development environment</td>
+        <td><i class="fa fa-check"></i></td>
+        <td><i class="fa fa-check"></i></td>
+      </tr>
+      <tr>
+        <td>Low risk of regressions</td>
+        <td><i class="fa fa-check"></i></td>
+        <td><i class="fa fa-times"></i></td>
+      </tr>
+      <tr>
+        <td>Tested in production environment</td>
+        <td><i class="fa fa-check"></i></td>
+        <td><i class="fa fa-times"></i></td>
+      </tr>
+      <tr>
+        <td>Tested by community</td>
+        <td><i class="fa fa-check"></i></td>
+        <td><i class="fa fa-times"></i></td>
+      </tr>
+      <tr>
+        <td></td>
+        <td><a id="stable-modal" class="btn btn-success" title="Activate Stable subscription">Activate</a></td>
+      <% if (defaultSub && defaultSub.get('status') == 'active') { %>
+        <td><a id="testing-modal" class="btn btn-danger" title="Activate Testing subscription" disabled>Currently Active</a></td>
+      <% } else { %>
+        <td><a id="testing-modal" class="btn btn-danger" title="Activate Testing subscription">Activate</a></td>
+      <% } %>
+      </tr>
+  </tbody>
+</table>
+<% } %>
+</div><!-- col-md-8 -->
+</div><!-- row-->
+
+
 <% if (currentVersion != mostRecentVersion) { %>
   <br>
 <div class="col-sm-offset-3 col-sm-6 col-sm-offset-3">
@@ -7,50 +102,75 @@
 </div>&nbsp;&nbsp;&nbsp;&nbsp;
   <br>
   <br>
-<div class="col-sm-offset-2 col-sm-8 col-sm-offset-2">
-
-<div id="changeSection">
-  <p>List of new changes in this update</p>
-  <ul>
-    <% for(var i = 0; i < changeMap[0].length; i++) { %>
-    <% if(changeMap[0][i] == "") { %>
-        <br>
-    <% } else { %>
-      <li><p><%= changeMap[0][i] %>
-      <a href="https://github.com/rockstor/rockstor-core/issues/<%= changeMap[1][i] %>" target="_blank"><%= " #" + changeMap[1][i] %></a>
-        <% for(var j = 0; j < changeMap[2][i].length; j++) { %>
-          <a href="https://github.com/<%= changeMap[2][i][j] %>" target="_blank"><%= " @" + changeMap[2][i][j] %></a>
-        <% } %>
-      </p></li>
-    <% } %>
-  <% } %>
-  </ul>
-</p>
-</div>
-</div>
+  <div class="col-sm-offset-2 col-sm-8 col-sm-offset-2">
+    <div id="changeSection">
+      <p>List of changes in this update</p>
+      <ul>
+	<% for(var i = 0; i < changeMap[0].length; i++) { %>
+	   <% if(changeMap[0][i] == "") { %>
+           <br>
+	   <% } else { %>
+	   <li>
+	     <p>
+	       <%= changeMap[0][i] %>
+	       <a href="https://github.com/rockstor/rockstor-core/issues/<%= changeMap[1][i] %>" target="_blank"><%= " #" + changeMap[1][i] %></a>
+               <% for(var j = 0; j < changeMap[2][i].length; j++) { %>
+		  <a href="https://github.com/<%= changeMap[2][i][j] %>" target="_blank"><%= " @" + changeMap[2][i][j] %></a>
+		  <% } %>
+	     </p>
+	   </li>
+	   <% } %>
+	<% } %>
+      </ul>
+      <% if (defaultSub && defaultSub.get('status') == 'active') { %>
+      <p>
+	You should review the
+	changelog <a href="https://github.com/rockstor/rockstor-core/commits/master"
+	target="_blank">here</a> before proceeding with the update.
+      </p>
+      <% } %>
+    </div>
+  </div>
 
 <div class="col-md-offset-2 col-md-8 col-md-offset-2" id="supportBox">
-      <div class="alert alert-success" id="contrib-alert">
-      <h4>We are happy to make this update available to you. Please support us by
+  <% if(defaultSub && defaultSub.get('status') == 'active'){ %>
+  <div class="alert alert-success" id="contrib-alert">
+    <h4>We are happy to make this update available to you. Please support us by
       <a id="donateYes" href="#version"> Donating</a> or making a <a href="http://shop.rockstor.com" target="_blank"> Purchase</a></h4>
-        <a id="update" class="btn btn-primary" title="start update">Start Update</a>
+  </div>
+  <% } %>
+  <a id="update" class="btn btn-primary" title="start update">Start Update</a>
 </div>
+
 
 <% } else { %>
 <div class="col-md-offset-3 col-md-6 col-md-offset-3">
-<div id="updateInfo">
-  <h3>System is up-to-date.</h3>
-<p>If you've updated recently, reload the browser<b>(Ctrl+Shift+R)</b> for latest UI changes.</p><br>
+  <div id="updateInfo">
+    <h3>System is running the latest Rockstor version: <%= currentVersion %></h3>
+    <p>If you've updated recently, reload the browser<b>(Ctrl+Shift+R)</b> for latest UI changes.</p><br>
 
-<% if (autoUpdateEnabled) { %>
-  <a id="disableAuto" class="btn btn-primary" title="Rockstor is configured to check for available system updates and automatically upgrade all packages on a daily basis. This will keep your entire system up to date. While it's not recommended, you can disable this feature and only update when you want to.">Disable auto update</a>
-  <% } else { %>
-  <a id="enableAuto" class="btn btn-primary" title="Rockstor can be configured to check for available system updates and automatically upgrade all packages on a daily basis. We recommend you enable this feature to keep your entire system up to date without delay.">Enable auto update</a>
-  <% } %>
-<p></p>
-</div>
+    <% if (autoUpdateEnabled) { %>
+    <a id="autoUpdateSwitch" class="btn btn-primary" title="Rockstor is configured to check for available system updates and automatically upgrade all packages on a daily basis. This will keep your entire system up to date. While it's not recommended, you can disable this feature and only update when you want to.">Disable auto update</a>
+    <% } else { %>
+    <a id="autoUpdateSwitch" class="btn btn-primary" title="Rockstor can be configured to check for available system updates and automatically upgrade all packages on a daily basis. We recommend you enable this feature to keep your entire system up to date without delay.">Enable auto update</a>
+    <% } %>
+  </div>
 </div>
 <% } %>
+
+<div class="col-md-offset-3 col-md-6 col-md-offset-3">
+<% if (stableSub && stableSub.get('status') == 'active') { %>
+<div id="updateInfo" class="alert alert-success">
+  <p></p>
+  <p>
+    Stable updates are activated. While it's not recommended, if you are
+    absolutely sure, Testing updates can be activated by clicking <a id="testing-modal">
+    here.
+    </a>
+  </p>
+</div>
+<% } %>
+</div>
 
 <div id="update-modal" class="modal fade" role="dialog" aria-hidden="true">
   <div class="modal-dialog">
@@ -78,3 +198,118 @@
   <input type="hidden" name="cn" value="Note to Rockstor developers" />
   <input type="hidden" name="no_shipping" value="1" />
 </form>
+
+<div id="activate-stable" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Activate Stable updates.</h3>
+      </div>
+      <div style="font-size: 13px" class="modal-body">
+	<p>
+	  Please follow these steps to activate Stable updates.
+	</p>
+	<ol>
+	  <li>Purchase the Activation code by clicking <a href="http://shop.rockstor.com/products/stable-release-channel-subscription#applianceid=<%= applianceId %>" target="_blank">here.</a>
+	  <li>The Activation code will be sent to you via e-mail.</li>
+	  <li>Come back to this screen and enter the Activation code.</li>
+	  <li>Enjoy Stable updates. Thanks for supporting Rockstor!</li>
+	</ol>
+	<form id="activate-stable-form" name="aform" class="form-horizontal">
+	    <div class="form-group">
+	      <label class="col-sm-4 control-label" for="activation-code">Activation Code <span class="required">*</span></label>
+	      <div class="col-sm-4">
+		<% if (stableSub) { %>
+		<input class="form-control" type="text" id="activation-code" value="<%= stableSub.get('password') %>"name="activation-code">
+		<% } else { %>
+		<input class="form-control" type="text" id="activation-code" name="activation-code">
+		<% } %>
+	    </div>
+      </div>
+    <p style="color:'#eb6841'">UUID for reference: <%= applianceId %></p>
+      <div class="modal-footer">
+  	    <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">Cancel</button>
+  	    <a id="activateStable" class="btn btn-primary" title="Activate">Activate</a>
+      </div>
+	  </form>
+	</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="activate-testing" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Activate Testing updates</h4>
+      </div>
+      <div class="modal-body">
+	<p>
+	  Testing updates are high frequency updates that are released just
+	  after testing in development environment as opposed to Stable updates
+	  that are released only after significant testing and qualification
+	  process. Because of this, Testing updates are cutting edge that are
+	  generally not recommended.
+	</p>
+	<p>
+	  Whenever an update is released, read the changelog and decide to
+	  update or not after careful consideration.
+	</p>
+      	<p>Are you sure?</p>
+      </div>
+      <div class="modal-footer">
+      <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">Cancel</button>
+      <a id="activateTesting" class="btn btn-primary" title="Activate">Activate</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="auto-update-modal" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+	<% if (autoUpdateEnabled) { %>
+        <h4 class="modal-title">Disable auto updates</h4>
+	<% } else { %>
+	<h4 class="modal-title">Enable auto updates</h4>
+	<% } %>
+      </div>
+      <div class="modal-body">
+	<% if (autoUpdateEnabled) { %>
+	<p>
+	Currently Rockstor is configured to check for available system updates
+	and automatically upgrade all packages on a daily basis. This will keep
+	your entire system up to date. Disabling auto updates is only
+	recommended when you have Testing updates activated.
+	</p>
+	<% } else { %>
+	<% if (defaultSub && defaultSub.get('status') == 'active') { %>
+	<div class="alert alert-danger">
+	  <p>
+	    Testing updates are activated on this system. Enabling auto updates
+	    is strongly discouraged while this is the case.
+	  </p>
+	</div>
+	<% } %>
+	<p>
+	  By enabling auto updates, Rockstor will check for available system
+	  updates and automatically upgrade all packages on a daily
+	  basis. Enabling this feature is recommended except when Testing
+	  updates are active.
+	</p>
+	<% } %>
+      	<p>Are you sure?</p>
+	<div class="modal-footer">
+	  <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">Cancel</button>
+	  <% if (autoUpdateEnabled) { %>
+	  <a id="disableAuto" class="btn btn-primary" title="Activate">Disable auto updates</a>
+	  <% } else { %>
+	  <a id="enableAuto" class="btn btn-primary" title="Activate">Enable auto updates</a>
+	  <% } %>
+	</div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -29,12 +29,12 @@ from rest_framework.permissions import IsAuthenticated
 from system.osi import (uptime, refresh_nfs_exports, kernel_info)
 from fs.btrfs import (mount_share, device_scan, mount_root, qgroup_create,
                       get_pool_info, pool_raid, pool_usage, shares_info,
-                      share_usage, snaps_info)
+                      share_usage, snaps_info, mount_snap)
 from system.ssh import (sftp_mount_map, sftp_mount)
-from system.services import (systemctl, join_winbind_domain, ads_join_status)
+from system.services import systemctl
 from system.osi import (is_share_mounted, system_shutdown, system_reboot)
-from storageadmin.models import (Share, Disk, NFSExport, SFTP, Pool, Snapshot)
-from nfs_helpers import create_nfs_export_input
+from storageadmin.models import (Share, Disk, NFSExport, SFTP, Pool, Snapshot,
+                                 UpdateSubscription)
 from storageadmin.util import handle_exception
 from datetime import datetime
 from django.utils.timezone import utc
@@ -44,11 +44,12 @@ from share_helpers import (sftp_snap_toggle, import_shares, import_snapshots)
 from oauth2_provider.ext.rest_framework import OAuth2Authentication
 from system.pkg_mgmt import (auto_update, current_version, update_check,
                              update_run, auto_update_status)
+from nfs_exports import NFSExportMixin
 import logging
 logger = logging.getLogger(__name__)
 
 
-class CommandView(APIView):
+class CommandView(NFSExportMixin, APIView):
     authentication_classes = (DigestAuthentication, SessionAuthentication,
                               BasicAuthentication, OAuth2Authentication,)
     permission_classes = (IsAuthenticated,)
@@ -56,6 +57,7 @@ class CommandView(APIView):
     @transaction.atomic
     def post(self, request, command):
         if (command == 'bootstrap'):
+
             for pool in Pool.objects.all():
                 try:
                     mount_root(pool)
@@ -77,6 +79,16 @@ class CommandView(APIView):
                              'bootstrap: %s' % (share.name, e.__str__()))
                     logger.error(e_msg)
 
+            for snap in Snapshot.objects.all():
+                if (snap.uvisible):
+                    try:
+                        mount_snap(snap.share, snap.real_name)
+                    except Exception, e:
+                        e_msg = ('Failed to make the Snapshot(%s) visible. '
+                                 'Exception: %s' % (snap.real_name, e.__str__()))
+                        logger.error(e_msg)
+                        logger.exception(e)
+
             mnt_map = sftp_mount_map(settings.SFTP_MNT_ROOT)
             for sftpo in SFTP.objects.all():
                 try:
@@ -89,7 +101,7 @@ class CommandView(APIView):
                     logger.error(e_msg)
 
             try:
-                exports = create_nfs_export_input(NFSExport.objects.all())
+                exports = self.create_nfs_export_input(NFSExport.objects.all())
                 refresh_nfs_exports(exports)
             except Exception, e:
                 e_msg = ('Exception while exporting NFS: %s' % e.__str__())
@@ -126,10 +138,17 @@ class CommandView(APIView):
 
         if (command == 'update-check'):
             try:
-                return Response(update_check())
+                subo = None
+                try:
+                    subo = UpdateSubscription.objects.get(name='Stable', status='active')
+                except UpdateSubscription.DoesNotExist:
+                    try:
+                        subo = UpdateSubscription.objects.get(name='Testing', status='active')
+                    except UpdateSubscription.DoesNotExist:
+                        pass
+                return Response(update_check(subscription=subo))
             except Exception, e:
-                e_msg = ('Unable to check update due to a system error')
-                logger.exception(e)
+                e_msg = ('Unable to check update due to a system error: %s' % e.__str__())
                 handle_exception(Exception(e_msg), request)
 
         if (command == 'update'):
@@ -148,35 +167,8 @@ class CommandView(APIView):
                          'exception: ' % e.__str__())
                 handle_exception(Exception(e_msg), request)
 
-        if (command == 'join-winbind-domain'):
-            try:
-                systemctl('winbind', 'restart')
-                username = request.data['administrator']
-                passwd = request.data['password']
-                join_winbind_domain(username, passwd)
-                return Response('Done')
-            except Exception, e:
-                handle_exception(e, request)
-
-        if (command == 'winbind-domain-status'):
-            msg = 'Yes'
-            try:
-                username = request.data['administrator']
-                passwd = request.data['password']
-            except Exception, e:
-                handle_exception(e, request)
-
-            try:
-                ads_join_status(username, passwd)
-            except Exception, e:
-                logger.exception(e)
-                msg = ('Domain join check failed. Low level error: %s %s' %
-                       (e.out, e.err))
-            finally:
-                return Response(msg)
-
         if (command == 'shutdown'):
-            msg = ('The system will be shutdown after 1 minute')
+            msg = ('The system will now be shutdown')
             try:
                 request.session.flush()
                 system_shutdown()
@@ -189,7 +181,7 @@ class CommandView(APIView):
                 return Response(msg)
 
         if (command == 'reboot'):
-            msg = ('The system will reboot after 1 minute')
+            msg = ('The system will now reboot')
             try:
                 request.session.flush()
                 system_reboot()
@@ -245,7 +237,7 @@ class CommandView(APIView):
 
         if (command == 'refresh-share-state'):
             for p in Pool.objects.all():
-                import_shares(p)
+                import_shares(p, request)
             return Response()
 
         if (command == 'refresh-snapshot-state'):

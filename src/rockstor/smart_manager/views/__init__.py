@@ -35,7 +35,6 @@ from replication import (ReplicaListView, ReplicaDetailView)
 from replica_trail import (ReplicaTrailListView, ReplicaTrailDetailView)
 from replication_service import ReplicationServiceView
 from ntp_service import NTPServiceView
-from winbind_service import WinbindServiceView
 from ldap_service import LdapServiceView
 from sftp_service import SFTPServiceView
 from tasktypes import TaskTypeView
@@ -50,3 +49,5 @@ from afp_service import AFPServiceView
 from snmp_service import SNMPServiceView
 from docker_service import DockerServiceView
 from smartd_service import SMARTDServiceView
+from nut_service import NUTServiceView
+from active_directory import ActiveDirectoryServiceView

@@ -16,10 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import os
 import re
 from rest_framework.response import Response
 from django.db import transaction
-from storageadmin.models import EmailClient
+from storageadmin.models import (EmailClient, Appliance)
 from storageadmin.serializers import EmailClientSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
@@ -28,6 +29,7 @@ from shutil import move
 from tempfile import mkstemp
 from django.conf import settings
 from system.services import systemctl
+from system.email_util import send_test_email
 import logging
 logger = logging.getLogger(__name__)
 
@@ -61,7 +63,9 @@ def update_sasl(smtp_server, sender, password, revert=False):
     with open(sasl_file, 'w') as fo:
         if (not revert):
             fo.write('[%s]:587 %s:%s\n' % (smtp_server, sender, password))
+    os.chmod(sasl_file, 0400)
     run_command([POSTMAP, sasl_file])
+    os.chmod('%s.db' % sasl_file, 0600)
 
 def update_postfix(smtp_server, revert=False):
     fh, npath = mkstemp()
@@ -78,6 +82,7 @@ def update_postfix(smtp_server, revert=False):
         if (rockstor_section is False):
             rockstor_postfix_config(tfo, smtp_server, revert)
     move(npath, MAIN_CF)
+    os.chmod(MAIN_CF, 0644)
 
 
 class EmailClientView(rfc.GenericView):
@@ -87,8 +92,26 @@ class EmailClientView(rfc.GenericView):
         return EmailClient.objects.filter()
 
     @transaction.atomic
-    def post(self, request):
+    def post(self, request, command=None):
         with self._handle_exception(request):
+
+            if (command is not None):
+                if (command != 'send-test-email'):
+                    e_msg = ('unknown command(%s) is not supported.' %
+                             command)
+                    handle_exception(Exception(e_msg), request)
+
+                if (EmailClient.objects.count() == 0):
+                    e_msg = ('E-mail account must be setup first before test '
+                             'e-mail could be sent')
+                    handle_exception(Exception(e_msg), request)
+
+                eco = EmailClient.objects.all()[0]
+                subject = ('Test message from Rockstor. Appliance id: %s' %
+                           Appliance.objects.get(current_appliance=True).uuid)
+                send_test_email(eco, subject)
+                return Response()
+
             sender = request.data.get('sender')
             username = sender.split('@')[0]
             smtp_server = request.data.get('smtp_server')

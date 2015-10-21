@@ -24,34 +24,33 @@
  *
  */
 
-/* Services */
-
 NetworksView = Backbone.View.extend({
 
-  initialize: function() {
-    this.template = window.JST.network_networks;
-    this.collection = new NetworkInterfaceCollection();
-    this.paginationTemplate = window.JST.common_pagination;
-    this.collection.on('reset', this.renderNetworks, this);
-  },
+    initialize: function() {
+	this.template = window.JST.network_networks;
+	this.collection = new NetworkInterfaceCollection();
+	this.paginationTemplate = window.JST.common_pagination;
+	this.collection.on('reset', this.renderNetworks, this);
+    },
 
-  render: function() {
-    var _this = this;
-    this.collection.fetch();
-    return this;
-  },
+    render: function() {
+	var _this = this;
+	this.collection.fetch();
+	return this;
+    },
 
 
-  renderNetworks: function() {
-    var _this = this;
-    $(this.el).empty();
-    $(this.el).append(this.template({
-      networks: this.collection
-    }));
-    this.$(".ph-pagination").html(this.paginationTemplate({
-      collection: this.collection
-    }));
-  },
+    renderNetworks: function() {
+	var _this = this;
+	$(this.el).empty();
+	$(this.el).append(this.template({
+	    networks: this.collection
+	}));
+	this.$(".ph-pagination").html(this.paginationTemplate({
+	    collection: this.collection
+	}));
+	setApplianceName();
+    },
 
 });
 

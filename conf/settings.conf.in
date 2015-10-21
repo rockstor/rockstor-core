@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 """
 
-# Django settings for RockStor project.
+# Django settings for Rockstor project.
 import os
 
 DEBUG = ${django-settings-conf:debug}
@@ -169,10 +169,10 @@ INSTALLED_APPS = (
 
 STATICFILES_STORAGE = 'pipeline.storage.PipelineCachedStorage'
 
-PIPELINE_CSS_COMPRESOR = None
+PIPELINE_CSS_COMPRESSOR = None
 PIPELINE_JS_COMPRESSOR = None
 
-# Dont wrap in anonymous function so that license is at the top.
+# Don't wrap in anonymous function so that license is at the top.
 PIPELINE_DISABLE_WRAPPER = True
 
 PIPELINE_JS = {
@@ -302,7 +302,7 @@ PROBE_DATA_INTERVAL = 600
 
 """
 Minimum share size allowed is 100KB. This is purely arbitrary. 4K is what is
-strictly required by btrfs. Similary, maximum is 2^64 bytes which is more than
+strictly required by btrfs. Similarly the maximum is 2^64 bytes which is more than
 enough for all practical purposes and also is the max allowed in btrfs.
 """
 MIN_SHARE_SIZE = 100
@@ -363,3 +363,34 @@ MODEL_DEFS = {
 }
 
 SSHD_HEADER = '###BEGIN: Rockstor SFTP CONFIG. DO NOT EDIT BELOW THIS LINE###'
+
+OAUTH_INTERNAL_APP = 'cliapp'
+
+# Header string to separate auto config options from rest of config file.
+# this could be generalized across all Rockstor config files, problems during
+# upgrades though
+NUT_HEADER = '###BEGIN: Rockstor NUT Config. DO NOT EDIT BELOW THIS LINE###'
+
+# The ip address for the LISTEN directive in upsd.conf when in netserver mode
+# when set to 0.0.0.0 it will accept connections from any machine.
+# default port is 3493
+# Note this might later be tied into multi lan configs ie ups monitoring on
+# admin interface for example.
+NUT_LISTEN_ON_IP = '0.0.0.0'
+
+# The command that the root part of upsmon uses to shutdown the system.
+NUT_SYSTEM_SHUTDOWNCMD = '/sbin/shutdown -h +0'
+
+
+UPDATE_CHANNELS = {
+		'stable': {
+		'name': 'Stable',
+		'description': 'Subscription channel for stable updates',
+		'url': 'updates.rockstor.com:8999/rockstor-stable',
+		},
+		'testing': {
+		'name': 'Testing',
+		'description': 'Subscription channel for testing updates',
+		'url': 'rockstor.com/rockrepo-testing',
+		},
+}

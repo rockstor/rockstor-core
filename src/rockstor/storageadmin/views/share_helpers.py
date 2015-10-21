@@ -46,13 +46,12 @@ def validate_share(sname, request):
 
 
 def sftp_snap_toggle(share, mount=True):
-    pool_device = Disk.objects.filter(pool=share.pool)[0].name
     for snap in Snapshot.objects.filter(share=share, uvisible=True):
         mnt_pt = ('%s/%s/%s/.%s' % (settings.SFTP_MNT_ROOT,
                                     share.owner, share.name,
                                     snap.name))
         if (mount and not is_mounted(mnt_pt)):
-            mount_snap(share, snap.name, pool_device, mnt_pt)
+            mount_snap(share, snap.name, mnt_pt)
         elif (is_mounted(mnt_pt) and not mount):
             umount_root(mnt_pt)
 
@@ -65,13 +64,12 @@ def toggle_sftp_visibility(share, snap_name, on=True):
                                 share.name, snap_name))
     if (on):
         if (not is_mounted(mnt_pt)):
-            pool_device = Disk.objects.filter(pool=share.pool)[0].name
-            mount_snap(share, snap_name, pool_device, mnt_pt)
+            mount_snap(share, snap_name, mnt_pt)
     else:
         umount_root(mnt_pt)
 
 
-def import_shares(pool):
+def import_shares(pool, request):
     disk = Disk.objects.filter(pool=pool)[0].name
     shares = [s.name for s in Share.objects.filter(pool=pool)]
     shares_d = shares_info('%s%s' % (settings.MNT_PT, pool.name))
@@ -112,7 +110,7 @@ def import_shares(pool):
                          ' You can delete one of them manually with this command: '
                          'btrfs subvol delete %s[pool name]/%s' %
                          (cshare.pool.name, s, pool.name, settings.MNT_PT, s))
-                handle_exception(Exception(e_msg), self.request)
+                handle_exception(Exception(e_msg), request)
             else:
                 cshare.pool = pool
                 cshare.qgroup = shares_d[s]

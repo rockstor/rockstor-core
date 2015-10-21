@@ -459,6 +459,13 @@ var TaskDef = Backbone.Model.extend({
 	    return '';
 	}
     },
+    visible: function() {
+	if (this.get('json_meta') != null) {
+	    return JSON.parse(this.get('json_meta')).visible;
+	} else {
+	    return false;
+	}
+    },
 
 
 });
@@ -642,4 +649,13 @@ var EmailAccount = Backbone.Model.extend({
 var EmailAccountCollection = RockStorPaginatedCollection.extend({
     model: EmailAccount,
     baseUrl: '/api/email'
+});
+
+var UpdateSubscription = Backbone.Model.extend({
+    urlRoot: '/api/update-subscriptions'
+});
+
+var UpdateSubscriptionCollection = RockStorPaginatedCollection.extend({
+    model: UpdateSubscription,
+    baseUrl: '/api/update-subscriptions'
 });

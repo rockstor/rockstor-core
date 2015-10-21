@@ -896,6 +896,7 @@ label.error { font-size: 12px; color: #b94a48; }
 
 #appliance-breadcrumb {
     position: fixed;
+    min-height: 24px;
     right: 0px;
     top: 50px;
     left: 0px;
@@ -1602,6 +1603,15 @@ input[type="radio"].selectedRoot {
     overflow-y: auto;
     border-radius: 4px;
     background: #fff;
+}
+
+@media (max-width: 800px) {
+    #sidebar {
+        display: none;
+    }
+    #content {
+        left: 0px;
+    }
 }
 
 .dashboard-widget-controls {

@@ -30,9 +30,6 @@ def main():
     mnt_pt = sys.argv[1]
     sname = mnt_pt.split('/')[-1]
     try:
-        #rockstor service may have done this moments before, but we can't be
-        #sure. so scan just in case.
-        device_scan()
         so = Share.objects.get(name=sname)
         mount_share(so, mnt_pt)
     except Exception, e:

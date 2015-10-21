@@ -19,28 +19,29 @@
   */
 </script>
 
-<h3>Configure <%= service.get('display_name') %> Service</h3>
 <div class="alert alert-warning">
   <p>We strongly recommend that you create a separate Share(at least 5GB size) for this purpose. During the lifetime of Rock-ons, several snapshots will be created and space could fill up quickly. It is best managed in a separate Share to avoid clobbering other data.</p>
   <p>To create a new Share, <a href="#add_share">click here.</a></p>
 </div>
+
 <div class="row">
   <div class="col-md-8">
-    <label class="control-label"></label>
-    <div class="form-box">
-      <form id="docker-form" name="aform">
+  <div class="panel panel-default">
+    <div class="panel-heading">Configure <%= service.get('display_name') %> Service</div>
+    <div class="panel-body">
+      <form class="form-horizontal" id="docker-form" name="aform">
         <div class="messages"></div>
-        <div class="form-group">
 
-          <label class="control-label" for="root_share">Root Share<span class="required"> *</span></label>
-          <div class="controls">
+        <div class="form-group">
+          <label class="col-sm-4 control-label" for="root_share">Root Share<span class="required"> *</span></label>
+          <div class="col-sm-4">
 	    <% if (shares.length ===  0) {%>
 	    <p>You currently have no Shares. You will need a share to run the
 	      the Rock-ons service.
 	    </p>
 	    <a href="#add_share">Add a Share</a>
 	    <% } else { %>
-	    <select class="form-control shorten-input" name="root_share" id="root_share" data-placeholder="Select root share">
+	    <select class="form-control" name="root_share" id="root_share" data-placeholder="Select root share">
 	      <option></option>
               <% shares.each( function(share, index) { %>
               <% if (share.get('name') == config.root_share) { %>
@@ -52,14 +53,18 @@
             </select>
           </div>
 
-
         </div>
         <% } %>
+
+      <div class="form-group">
+        <div class="col-sm-offset-4 col-sm-8">
         <button id="cancel" class="btn btn-default">Cancel</button>
         <button type="Submit" id="create-user" class="btn btn-primary">Submit</button>
+    </div>
+    </div>
       </form>
 
-    </div> <!-- form-box -->
-
-  </div> <!-- span8 -->
-</div> <!-- row-fluid -->
+    </div> <!-- panel-body -->
+  </div> <!-- panel-default -->
+  </div> <!-- col-md-8 -->
+</div> <!-- row -->

@@ -90,7 +90,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
   renderSubViews: function() {
     var current_appliance = this.appliances.find(function(appliance) {
       return appliance.get('current_appliance') == true;
-    })
+    });
     this.subviews['share-usage'] = new ShareUsageModule({ share: this.share });
     this.subviews['snapshots'] = new SnapshotsTableModule({
       snapshots: this.snapshots,

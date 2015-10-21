@@ -27,6 +27,7 @@ from rest_framework import status
 from django.db import transaction
 from storageadmin.serializers import PoolInfoSerializer
 from storageadmin.models import (Disk, Pool, Share, PoolBalance)
+from storageadmin.views import DiskMixin
 from fs.btrfs import (add_pool, pool_usage, resize_pool, umount_root,
                       btrfs_uuid, mount_root, remount, get_pool_info,
                       pool_raid, start_balance)
@@ -277,7 +278,7 @@ class PoolListView(PoolMixin, rfc.GenericView):
             return Response(PoolInfoSerializer(p).data)
 
 
-class PoolDetailView(PoolMixin, rfc.GenericView):
+class PoolDetailView(DiskMixin, PoolMixin, rfc.GenericView):
     def get(self, *args, **kwargs):
         try:
             pool = Pool.objects.get(name=self.kwargs['pname'])
@@ -455,4 +456,8 @@ class PoolDetailView(PoolMixin, rfc.GenericView):
             pool_path = ('%s%s' % (settings.MNT_PT, pname))
             umount_root(pool_path)
             pool.delete()
+            try:
+                self._update_disk_state()
+            except Exception, e:
+                logger.error('Exception while updating disk state: %s' % e.__str__())
             return Response()

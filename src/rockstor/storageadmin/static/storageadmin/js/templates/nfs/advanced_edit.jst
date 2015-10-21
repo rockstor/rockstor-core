@@ -19,27 +19,39 @@
  */
 </script>
 
-<!-- Module Body -->
+<div class="alert alert-warning"><strong>Warning!</strong> You are editing the nfs exports file. Incorrect values can affect your exports.</div>
 <div class="row">
-  <div class="col-md-12">
+  <div class="col-md-8">
+    <div class="panel panel-default">
+    <div class="panel-heading">NFS Advanced Edit</div>
+    <div class="panel-body">
     <div class="messages"></div>
-    <div class="alert alert-warning"><strong>Warning!</strong> You are editing the nfs exports file. Incorrect values can affect your exports.</div>
-    <div class="form-box">
-      <form id="advanced-edit-form" name="aform">
+      <form class="form-horizontal" id="advanced-edit-form" name="aform">
+
         <div class="form-group">
-          <label class="control-label" for="nfs-text">Automatically added entries</label>
-          <div class="form-group">
-            <textarea id="nfs-text-ro" name="nfs-text-ro" rows="4" class="form-control" readonly><%= ro_str %></textarea>
-	    <br><label>Enter manual export entries below.</label>
-            <textarea id="nfs-text" name="nfs-text" class="form-control"><%= rw_str %></textarea>
+          <label class="col-sm-4 control-label" for="nfs-text">Automatically added entries</label>
+          <div class="col-sm-8">
+            <textarea id="nfs-text-ro" name="nfs-text-ro" rows="5" class="form-control" disabled><%= ro_str %></textarea>
           </div>
         </div>
+
+	      <div class="form-group">
+            <label class="col-sm-4 control-label" for="manual-export">Enter manual export entries below.</label>
+          <div class="col-sm-8">
+            <textarea id="nfs-text" name="nfs-text" rows="5" columns="40" class="form-control"><%= rw_str %></textarea>
+          </div>
+        </div>
+
         <div class="form-group">
-          <div class="">
-	    <a id="cancel" class="btn btn-default">Cancel</a>
+          <div class="col-sm-offset-4 col-sm-8">
+	          <a id="cancel" class="btn btn-default">Cancel</a>
             <input type="Submit" id="create-nfs-export" class="btn btn-primary" value="Submit"></input>
           </div>
         </div>
+
       </form>
-  </div>
-</div>
+
+  </div> <!--panel-body-->
+</div> <!--panel-default-->
+</div> <!--col-md-8->
+</div> <!--row-->
