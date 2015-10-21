@@ -88,7 +88,11 @@ var Share = Backbone.Model.extend({
 var ShareCollection = RockStorPaginatedCollection.extend({
     model: Share,
     baseUrl: '/api/shares',
-
+    extraParams: function() {
+        var p = this.constructor.__super__.extraParams.apply(this, arguments);
+        p['sortby'] = 'name';
+        return p;
+    } 
 });
 
 var Image = Backbone.Model.extend({
