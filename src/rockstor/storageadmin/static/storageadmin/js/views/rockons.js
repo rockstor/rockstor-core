@@ -834,20 +834,18 @@ RockonSettingsComplete = RockstorWizardPage.extend({
     },
 
     save: function() {
-	var _this = this;
-	event.preventDefault();
-	var button = $(event.currentTarget);
-	if (buttonDisabled(button)) return false;
-	disableButton(button);
-	return $.ajax({
-	    url: '/api/rockons/' + this.rockon.id + '/update',
-	    type: 'POST',
-	    dataType: 'json',
-	    contentType: 'application/json',
-	    data: JSON.stringify({
-		'shares': this.shares
-	    }),
-	    success: function() {}
-	});
+        var _this = this;
+       	if (document.getElementById('next-page').disabled) return false;
+        document.getElementById('next-page').disabled = true;
+        return $.ajax({
+            url: '/api/rockons/' + this.rockon.id + '/update',
+            type: 'POST',
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify({
+               	'shares': this.shares
+            }),
+            success: function() {}
+        });
     }
 });
