@@ -567,7 +567,6 @@ def share_usage(pool, share_id):
     for now, exclusive byte count
     """
     root_pool_mnt = mount_root(pool)
-    run_command([BTRFS, 'quota', 'rescan', root_pool_mnt], throw=False)
     cmd = [BTRFS, 'qgroup', 'show', root_pool_mnt]
     out, err, rc = run_command(cmd, log=True)
     rusage = eusage = None
@@ -593,7 +592,6 @@ def shares_usage(pool, share_map, snap_map):
             break
     if (mnt_pt is None):
         mnt_pt = mount_root(pool)
-    run_command([BTRFS, 'quota', 'rescan', mnt_pt], throw=False)
     cmd = [BTRFS, 'qgroup', 'show', mnt_pt]
     out, err, rc = run_command(cmd, log=True)
     combined_map = dict(share_map, **snap_map)
