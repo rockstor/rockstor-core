@@ -113,7 +113,8 @@ def switch_repo(subscription, on=True):
             else:
                 rfo.write('baseurl=http://%s\n' % subscription.url)
             rfo.write('enabled=1\n')
-            rfo.write('gpgcheck=0\n')
+            rfo.write('gpgcheck=1\n')
+            rfo.write('gpgkey=file://%sconf/ROCKSTOR-GPG-KEY\n' % settings.ROOT_DIR)
             rfo.write('metadata_expire=1m\n')
         os.chmod(yum_file, 0600)
     else:
