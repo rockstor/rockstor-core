@@ -77,7 +77,7 @@ var HomeLayoutView = RockstorLayoutView.extend({
   			    $('#update-version-modal').modal({
   				keyboard: false,
   				show: false,
-				backdrop: 'static',
+				backdrop: 'static'
   			    });
   			    $('#update-version-modal').modal('show');
 
@@ -86,7 +86,22 @@ var HomeLayoutView = RockstorLayoutView.extend({
 
   	  		}
   	  	    });
-  		}
+  		} else {
+		    var subscriptions = new UpdateSubscriptionCollection();
+		    subscriptions.fetch({
+			success: function(collection, response, options) {
+			    if (collection.length == 0) {
+				$('#update-channel-modal').modal({
+				    keyboard: false,
+		     		    show: false,
+		     		    backdrop: 'static'
+		     		});
+		     		$('#update-channel-modal').modal('show');
+			    }
+
+			}
+		    });
+		}
   	    },
   	    error: function(xhr, status, error) {
 
@@ -96,6 +111,10 @@ var HomeLayoutView = RockstorLayoutView.extend({
 	    $('#update-version-modal').modal('hide');
 	    app_router.navigate('version', {trigger: true}) ;
 
+	});
+	$('#update-channel-modal #activate').click(function(event) {
+	    $('#update-channel-modal').modal('hide');
+	    app_router.navigate('version', {trigger: true});
 	});
 	this.widgetsContainer = this.$('.widgets-container');
 	// render dashboard widgets
