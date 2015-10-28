@@ -135,9 +135,9 @@ def bootstrap_sshd_config(logging):
 
 def require_postgres(logging):
     rs_dest = '/etc/systemd/system/rockstor-pre.service'
-    rs_src = '%s/conf/rockstor-pre.service'
+    rs_src = '%s/conf/rockstor-pre.service' % BASE_DIR
     logging.info('updating rockstor-pre service..')
-    with open(rs_dest, 'w') as dfo and open(rs_src) as sfo:
+    with open(rs_dest, 'w') as dfo, open(rs_src) as sfo:
         for l in sfo.readlines():
             dfo.write(l)
             if (re.match('After=postgresql.service', l) is not None):
