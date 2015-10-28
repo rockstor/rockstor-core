@@ -133,6 +133,18 @@ def bootstrap_sshd_config(logging):
             logging.info('updated sshd_config')
             run_command([SYSCTL, 'restart', 'sshd'])
 
+def require_postgres(logging):
+    rs_dest = '/etc/systemd/system/rockstor-pre.service'
+    rs_src = '%s/conf/rockstor-pre.service'
+    logging.info('updating rockstor-pre service..')
+    with open(rs_dest, 'w') as dfo and open(rs_src) as sfo:
+        for l in sfo.readlines():
+            dfo.write(l)
+            if (re.match('After=postgresql.service', l) is not None):
+                dfo.write('Requires=postgresql.service\n')
+                logging.info('rockstor-pre now requires postgresql')
+    run_command([SYSCTL, 'daemon-reload'])
+    return logging.info('systemd daemon reloaded')
 
 def enable_rockstor_service(logging):
     rs_dest = '/etc/systemd/system/rockstor.service'
@@ -322,6 +334,7 @@ def main():
         run_command([PREP_DB, ])
         logging.info('Done')
         run_command(['touch', STAMP])
+        require_postgres(logging)
         logging.info('Done')
     else:
         logging.info('Running prepdb...')
