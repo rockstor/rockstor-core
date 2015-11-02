@@ -43,12 +43,15 @@ class ApplianceListView(rfc.GenericView):
         return Appliance.objects.all()
 
     @staticmethod
+    @transaction.atomic
     def _update_hostname():
         a = Appliance.objects.get(current_appliance=True)
         cur_hostname = gethostname()
         if (cur_hostname != a.hostname):
             a.hostname = cur_hostname
-            a.save()
+        if (a.ipaddr != a.ip):
+            a.ip = a.ipaddr
+        a.save()
 
     def _get_remote_appliance(self, request, ip, port, client_id,
                               client_secret):
@@ -114,6 +117,7 @@ class ApplianceListView(rfc.GenericView):
                 e_msg = ('The appliance with ip = %s already exists and '
                          'cannot be added again' % ip)
                 handle_exception(Exception(e_msg), request)
+
             if (current_appliance is False):
                 client_id = request.data.get('client_id', None)
                 if (client_id is None):
