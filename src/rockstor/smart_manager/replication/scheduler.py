@@ -57,8 +57,12 @@ class ReplicaScheduler(Process):
     def _replication_interface(self):
         url = 'https://localhost/api/network'
         interfaces = api_call(url, save_error=False)
-        mgmt_iface = [x for x in interfaces['results']
-                      if x['itype'] == 'management'][0]
+        mgmt_iface = None
+        if (len(interfaces['results']) > 0):
+            mgmt_iface = interfaces['results'][0]
+        for i in interfaces['results']:
+            if (i['itype'] == 'management'):
+                mgmt_iface = i
         return mgmt_iface['ipaddr']
 
     def _prune_workers(self, workers):
