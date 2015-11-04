@@ -129,7 +129,7 @@ class Receiver(Process):
             with self._clean_exit_handler(msg):
                 self.rid = rshare_id(sname, logger)
 
-        sub_vol = ('%s%s/.snapshots/%s' % (settings.MNT_PT, self.meta['pool'],
+        sub_vol = ('%s%s/%s' % (settings.MNT_PT, self.meta['pool'],
                                            sname))
         if (not is_subvol(sub_vol)):
             msg = ('Failed to create parent subvolume %s' % sub_vol)
