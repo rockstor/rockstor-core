@@ -86,8 +86,7 @@ class Sender(Process):
         try:
             yield
         except Exception, e:
-            logger.error(msg)
-            logger.exception(e)
+            logger.error('%s. Exception: %s' % (msg, e.__str__()))
             self._sys_exit(3)
 
     def _sys_exit(self, code, linger=6000):
@@ -99,16 +98,14 @@ class Sender(Process):
         try:
             yield
         except Exception, e:
-            logger.error(msg)
-            logger.exception(e)
+            logger.error('%s. Exception: %s' % (msg, e.__str__()))
             try:
                 data = {'status': 'failed',
                         'error': msg,
                         'end_ts': datetime.utcnow().replace(tzinfo=utc).strftime(settings.SNAP_TS_FORMAT), }
                 update_replica_status(self.rt2_id, data, logger)
             except Exception, e:
-                logger.error('Exception occured in cleanup handler')
-                logger.exception(e)
+                logger.error('Exception occured in cleanup handler: %s' % e.__str__())
             finally:
                 self._sys_exit(3)
 

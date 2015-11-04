@@ -68,8 +68,7 @@ class Receiver(Process):
         try:
             yield
         except Exception, e:
-            logger.error(msg)
-            logger.exception(e)
+            logger.error('%s. Exception: %s' % (msg, e.__str__()))
             if (ack is True):
                 try:
                     err_ack = {'msg': 'error',
@@ -79,8 +78,7 @@ class Receiver(Process):
                 except Exception, e:
                     msg = ('Failed to send ack: %s to the sender for meta: '
                            '%s. Aborting' % (err_ack, self.meta))
-                    logger.error(msg)
-                    logger.exception(e)
+                    logger.error('%s. Exception: %s' % (msg, e.__str__()))
                     self._sys_exit(3)
             self._sys_exit(3)
 
