@@ -17,9 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf.urls import patterns, url
-from storageadmin.views import (ShareListView, ShareDetailView,
-                                ShareACLView, SnapshotView, ShareIscsiView,
-                                ShareCommandView,)
+from storageadmin.views import (ShareListView, ShareDetailView, ShareACLView,
+                                SnapshotView, ShareCommandView,)
 
 from django.conf import settings
 
@@ -43,9 +42,6 @@ urlpatterns = patterns(
         SnapshotView.as_view(), name='snapshot-view'),
     url(r'^/(?P<sname>%s)/snapshots/(?P<snap_name>%s)/(?P<command>%s)$' %
         (share_regex, snap_regex, snap_command), SnapshotView.as_view()),
-
-    url(r'^/(?P<sname>[A-Za-z]+[A-Za-z0-9_]*)/iscsi/$',
-        ShareIscsiView.as_view(), name='share-iscsi-view'),
 
     url(r'^/(?P<sname>%s)/acl$' % share_regex, ShareACLView.as_view(),
         name='acl-view'),
