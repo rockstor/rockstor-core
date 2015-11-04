@@ -196,7 +196,7 @@ class Receiver(Process):
                     ts = datetime.utcnow().replace(tzinfo=utc)
                     data = {'kb_received': self.kb_received / 1024, }
                     if (recv_data == 'END_SUCCESS'):
-                        data['receive_succeeded'] = ts
+                        data['receive_succeeded'] = ts.strftime(settings.SNAP_TS_FORMAT)
                         #delete the share, move the oldest snap to share
                         oldest_snap = get_oldest_snap(sub_vol, 3)
                         if (oldest_snap is not None):
@@ -244,7 +244,7 @@ class Receiver(Process):
                            % (out, err, self.rtid, self.meta))
                     with self._clean_exit_handler(msg, ack=True):
                         ts = datetime.utcnow().replace(tzinfo=utc)
-                        data = {'receive_failed': ts,
+                        data = {'receive_failed': ts.strftime(settings.SNAP_TS_FORMAT),
                                 'status': 'failed',
                                 'error': msg, }
                         update_receive_trail(self.rtid, data, logger)
@@ -261,7 +261,7 @@ class Receiver(Process):
                 logger.exception(e)
                 rp.terminate()
                 out, err = rp.communicate()
-                data['receive_failed'] = datetime.utcnow().replace(tzinfo=utc)
+                data['receive_failed'] = datetime.utcnow().replace(tzinfo=utc).strftime(settings.SNAP_TS_FORMAT)
                 data['status'] = 'failed'
                 data['error'] = msg
 
@@ -287,7 +287,7 @@ class Receiver(Process):
         ack = {'msg': 'receive_ok',
                'id': self.meta['id'], }
         data = {'status': 'succeeded',
-                'end_ts': datetime.utcnow().replace(tzinfo=utc), }
+                'end_ts': datetime.utcnow().replace(tzinfo=utc).strftime(settings.SNAP_TS_FORMAT), }
         if (rp.returncode != 0):
             ack['msg'] = 'receive_error'
             data['status'] = 'failed'
