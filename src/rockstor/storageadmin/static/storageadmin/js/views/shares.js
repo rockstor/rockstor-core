@@ -90,7 +90,7 @@ SharesView = RockstorLayoutView.extend({
     if (buttonDisabled(button)) return false;
     shareName = button.attr('data-name');
     // set share name in confirm dialog
-    _this.$('#pass-share-name').html(name);
+    _this.$('#pass-share-name').html(shareName);
     //show the dialog
     _this.$('#delete-share-modal').modal();
     /* if(confirm("Delete share:  " + name + " ...Are you sure?")){
