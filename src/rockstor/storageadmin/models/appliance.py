@@ -38,7 +38,13 @@ class Appliance(models.Model):
             return no.ipaddr
         except NetworkInterface.DoesNotExist:
             try:
-                return NetworkInterface.objects.all()[0].ipaddr
+                ip = self.ip
+                for ni in NetworkInterface.objects.all():
+                    if (ni.ipaddr is not None):
+                        if (ni.ipaddr == self.ip):
+                            return self.ip
+                        ip = ni.ipaddr
+                return ip
             except Exception, e:
                 msg = ('Failed to grab the management IP of the appliance '
                        'due to an error: %s' % e.__str__())
