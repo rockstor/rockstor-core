@@ -220,9 +220,8 @@ class ReplicaScheduler(Process):
                     total_sleep = 0
                 except DatabaseError, e:
                     e_msg = ('Error getting the list of enabled replica '
-                             'tasks. Moving on')
+                             'tasks. Moving on. Exception: %s' % e.__str__())
                     logger.error(e_msg)
-                    logger.exception(e)
 
             time.sleep(1)
             total_sleep = total_sleep + 1

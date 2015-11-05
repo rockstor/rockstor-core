@@ -187,9 +187,8 @@ class Sender(Process):
             fcntl.fcntl(sp.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
         except Exception, e:
             msg = ('Failed to start the low level btrfs send '
-                   'command(%s). Aborting' % cmd)
+                   'command(%s). Aborting. Exception: ' % (cmd, e.__str__()))
             logger.error(msg)
-            logger.exception(e)
             with self._update_trail_and_quit(msg):
                 self.pub.put('%sEND_FAIL' % self.snap_id)
             self._sys_exit(3)

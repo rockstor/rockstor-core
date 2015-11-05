@@ -218,8 +218,7 @@ class Receiver(Process):
                                              mount=False)
                                 delete_snapshot(sname, oldest_snap, logger)
                             except Exception, e:
-                                logger.error(msg)
-                                logger.exception(msg)
+                                logger.error('%s. Exception: %s' % (msg, e.__str__()))
                     else:
                         logger.error('END_FAIL received for meta: %s. '
                                      'Terminating.' % self.meta)
@@ -256,9 +255,8 @@ class Receiver(Process):
                                  % self.meta)
                     self._sys_exit(3)
             except Exception, e:
-                msg = ('Exception occured while receiving fsdata')
+                msg = ('Exception occured while receiving fsdata: %s' % e.__str__())
                 logger.error(msg)
-                logger.exception(e)
                 rp.terminate()
                 out, err = rp.communicate()
                 data['receive_failed'] = datetime.utcnow().replace(tzinfo=utc).strftime(settings.SNAP_TS_FORMAT)
@@ -281,8 +279,7 @@ class Receiver(Process):
             out, err = rp.communicate()
         except Exception, e:
             logger.debug('Exception while terminating receive. Probably '
-                         'already terminated.')
-            logger.exception(e)
+                         'already terminated: %s' % e.__str__())
 
         ack = {'msg': 'receive_ok',
                'id': self.meta['id'], }
