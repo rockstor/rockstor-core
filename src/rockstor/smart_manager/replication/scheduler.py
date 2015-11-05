@@ -21,6 +21,7 @@ import zmq
 import os
 import time
 from datetime import datetime
+from storageadmin.models import (NetworkInterface, Appliance)
 from smart_manager.models import (ReplicaTrail, ReplicaShare, Replica)
 from django.conf import settings
 from sender import Sender
@@ -48,27 +49,10 @@ class ReplicaScheduler(Process):
         self.pubq = Queue()
         self.uuid = None
         self.base_url = 'https://localhost/api'
+        self.rep_ip = None
+        self.uuid = None
         self.prune_time = int(time.time())
         super(ReplicaScheduler, self).__init__()
-
-    def _my_uuid(self):
-        #current appliance's id is always 1.
-        url = '%s/appliances/1' % self.base_url
-        ad = api_call(url, save_error=False)
-        return ad['uuid']
-
-    def _replication_interface(self):
-        url = '%s/network' % self.base_url
-        interfaces = api_call(url, save_error=False)
-        mgmt_iface = None
-        if (len(interfaces['results']) > 0):
-            mgmt_iface = interfaces['results'][0]
-        for i in interfaces['results']:
-            if (i['itype'] == 'management'):
-                mgmt_iface = i
-            elif (mgmt_iface is None and i['ipaddr'] is not None):
-                mgmt_iface = i
-        return mgmt_iface['ipaddr']
 
     def _prune_workers(self, workers):
         for wd in workers:
@@ -78,15 +62,22 @@ class ReplicaScheduler(Process):
         return workers
 
     def run(self):
-        while True:
-            try:
-                self.rep_ip = self._replication_interface()
-                self.uuid = self._my_uuid()
-                break
-            except Exception, e:
-                msg = ('Failed to get replication interface or uuid. '
-                       'Aborting.')
-                return logger.error('%s Exception: %s' % (msg, e.__str__()))
+        try:
+            if (NetworkInterface.objects.filter(itype='replication').exists()):
+                self.rep_ip = NetworkInterface.objects.filter(itype='replication')[0].ipaddr
+            else:
+                self.rep_ip = NetworkInterface.objects.filter(ipaddr__isnull=False)[0].ipaddr
+        except Exception, e:
+            msg = ('Failed to get replication interface. Aborting. '
+                   'Exception: %s' % e.__str__())
+            return logger.error(msg)
+
+        try:
+            self.uuid = Appliance.objects.get(current_appliance=True).uuid
+        except Exception, e:
+            msg = ('Failed to get uuid of current appliance. Aborting. '
+                   'Exception: %s' % e.__str__())
+            return logger.error(msg)
 
         ctx = zmq.Context()
         #  fs diffs are sent via this publisher.

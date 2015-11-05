@@ -222,7 +222,7 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
         except TypeError, e:
             return logger.debug('Could not check if the Share(%s) is docker '
                                 'root. Perhaps docker is not configured yet. '
-                                'exception: %s' % (e.__str__(), sname))
+                                'exception: %s' % (sname, e.__str__()))
 
         if ('root_share' in config):
             if (config['root_share'] == sname):
