@@ -386,13 +386,11 @@ def remove_snap(pool, share_name, snap_name):
         return qgroup_destroy(qgroup, root_mnt)
     else:
         o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-s', root_mnt])
-        snap = None
         for l in o:
             #just give the first match.
             if (re.match('ID.*%s$' % snap_name, l) is not None):
                 snap = '%s/%s' % (root_mnt, l.split()[-1])
-                break
-        return run_command([BTRFS, 'subvolume', 'delete', snap], log=True)
+                return run_command([BTRFS, 'subvolume', 'delete', snap], log=True)
 
 
 def add_snap_helper(orig, snap, readonly=False):
