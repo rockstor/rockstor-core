@@ -33,6 +33,7 @@ from django.db import DatabaseError
 from util import (update_replica_status, disable_replica, prune_receive_trail,
                   get_replicas, get_replica_trail, prune_replica_trail)
 
+#@todo: Can we just use ORM for read only db transactions instead of API calls?
 
 class ReplicaScheduler(Process):
 
@@ -46,22 +47,26 @@ class ReplicaScheduler(Process):
         self.recv_meta = None
         self.pubq = Queue()
         self.uuid = None
+        self.base_url = 'https://localhost/api'
         self.prune_time = int(time.time())
         super(ReplicaScheduler, self).__init__()
 
     def _my_uuid(self):
-        url = 'https://localhost/api/appliances/1'
+        #current appliance's id is always 1.
+        url = '%s/appliances/1' % self.base_url
         ad = api_call(url, save_error=False)
         return ad['uuid']
 
     def _replication_interface(self):
-        url = 'https://localhost/api/network'
+        url = '%s/network' % self.base_url
         interfaces = api_call(url, save_error=False)
         mgmt_iface = None
         if (len(interfaces['results']) > 0):
             mgmt_iface = interfaces['results'][0]
         for i in interfaces['results']:
             if (i['itype'] == 'management'):
+                mgmt_iface = i
+            elif (mgmt_iface is None and i['ipaddr'] is not None):
                 mgmt_iface = i
         return mgmt_iface['ipaddr']
 
@@ -78,10 +83,10 @@ class ReplicaScheduler(Process):
                 self.rep_ip = self._replication_interface()
                 self.uuid = self._my_uuid()
                 break
-            except:
+            except Exception, e:
                 msg = ('Failed to get replication interface or uuid. '
                        'Aborting.')
-                return logger.error(msg)
+                return logger.error('%s Exception: %s' % (msg, e.__str__()))
 
         ctx = zmq.Context()
         #  fs diffs are sent via this publisher.
