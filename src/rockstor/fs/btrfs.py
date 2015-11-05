@@ -392,10 +392,7 @@ def remove_snap(pool, share_name, snap_name):
             if (re.match('ID.*%s$' % snap_name, l) is not None):
                 snap = '%s/%s' % (root_mnt, l.split()[-1])
                 break
-        e_msg = ('This snapshot(%s) was created outside of Rockstor. If you '
-                 'really want to delete it, you can do so manually with this '
-                 'command: btrfs subvol delete %s' % (snap_name, snap))
-        raise Exception(e_msg)
+        return run_command([BTRFS, 'subvolume', 'delete', snap], log=True)
 
 
 def add_snap_helper(orig, snap, readonly=False):
