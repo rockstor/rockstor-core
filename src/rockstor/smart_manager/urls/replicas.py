@@ -36,10 +36,10 @@ urlpatterns = patterns('',
         name='replica-view'),
 
     url(r'^rshare$', ReplicaShareListView.as_view()),
+    url(r'^rshare/(?P<rid>[0-9]+)$', ReplicaShareDetailView.as_view()),
     url(r'^rshare/(?P<sname>%s)$' % share_regex, ReplicaShareDetailView.as_view()),
-    url(r'^rshare/(?P<rid>[0-9]+)', ReplicaShareDetailView.as_view()),
     url(r'^rtrail$', ReceiveTrailListView.as_view()),
-    url(r'^rtrail/rshare/(?P<rid>[0-9]+)', ReceiveTrailListView.as_view()),
+    url(r'^rtrail/rshare/(?P<rid>[0-9]+)$', ReceiveTrailListView.as_view()),
     url(r'^rtrail/(?P<rtid>[0-9]+)', ReceiveTrailDetailView.as_view()),
 
 )

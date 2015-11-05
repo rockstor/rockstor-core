@@ -14,7 +14,7 @@ from system.osi import (uptime, kernel_info)
 from datetime import (datetime, timedelta)
 from django.utils.timezone import utc
 from storageadmin.models import Disk
-from smart_manager.models import CPUMetric
+from smart_manager.models import Service
 from system.services import service_status
 from cli.rest_util import api_call
 from system.pkg_mgmt import update_check
@@ -252,10 +252,7 @@ class ServicesNamespace(BaseNamespace, BroadcastMixin):
 
     def send_service_statuses(self):
         # Iterate through the collection and assign the values accordingly
-        services = ('nfs', 'smb', 'ntpd', 'netatalk',
-                    'snmpd', 'docker', 'smartd', 'replication',
-                    'nis', 'ldap', 'sftp', 'data-collector', 'smartd',
-                    'service-monitor', 'docker', 'task-scheduler')
+        services = [s.name for s in Service.objects.all()]
         while True:
             data = {}
             for service in services:

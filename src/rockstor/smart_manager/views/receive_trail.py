@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.db import transaction
 from django.utils.timezone import utc
+from django.conf import settings
 from rest_framework.response import Response
 from smart_manager.models import (ReplicaShare, ReceiveTrail)
 from smart_manager.serializers import (ReceiveTrailSerializer)
@@ -67,17 +68,22 @@ class ReceiveTrailDetailView(rfc.GenericView):
                 serialized_data = ReceiveTrailSerializer(data)
                 return Response(serialized_data.data)
 
+    @staticmethod
+    def _convert_datestr(request, attr, default):
+        val = request.data.get(attr, None)
+        if (val is not None):
+            return datetime.strptime(val, settings.SNAP_TS_FORMAT).replace(tzinfo=utc)
+        return default
+
     @transaction.atomic
     def put(self, request, rtid):
         with self._handle_exception(request):
             rt = ReceiveTrail.objects.get(id=rtid)
-            rt.receive_succeeded = request.data.get('receive_succeeded',
-                                                    rt.receive_succeeded)
-            rt.receive_failed = request.data.get('receive_failed',
-                                                 rt.receive_failed)
+            rt.receive_succeeded = self._convert_datestr(request, 'receive_succeeded', rt.receive_succeeded)
+            rt.receive_failed = self._convert_datestr(request, 'receive_failed', rt.receive_failed)
             rt.status = request.data.get('status', rt.status)
             rt.error = request.data.get('error', rt.error)
             rt.kb_received = request.data.get('kb_received', rt.kb_received)
-            rt.end_ts = request.data.get('end_ts', rt.end_ts)
+            rt.end_ts = self._convert_datestr(request, 'end_ts', rt.end_ts)
             rt.save()
             return Response(ReceiveTrailSerializer(rt).data)

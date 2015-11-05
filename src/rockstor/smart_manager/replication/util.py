@@ -240,6 +240,6 @@ def create_share(sname, pool, logger):
         return api_call(url, data=data, calltype='post', headers=headers,
                         save_error=False)
     except RockStorAPIException, e:
-        if (e.detail == 'Share(%s) already exists.' % sname):
+        if (e.detail == 'Share(%s) already exists. Choose a different name' % sname):
             return logger.debug(e.detail)
         raise e

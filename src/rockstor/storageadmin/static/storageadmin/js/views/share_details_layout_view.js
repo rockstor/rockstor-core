@@ -277,7 +277,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
     this.$('#ph-compression-info #compression').tooltip({
       html: true,
       placement: 'top',
-      title: "Choose a compression algorithm for this Share. By default, parent pool's compression algorithm is applied.<br> If you like to set pool wide compression, don't choose anything here. If you want finer control of this particular Share's compression algorithm, you can set it here.<br><strong>zlib: </strong>slower but higher compression ratio.<br><strong>lzo: </strong>faster compression/decompression, but compression ratio is lover than zlib"
+      title: "Choose a compression algorithm for this Share. By default, parent pool's compression algorithm is applied.<br> If you like to set pool wide compression, don't choose anything here. If you want finer control of this particular Share's compression algorithm, you can set it here.<br><strong>zlib: </strong>slower but higher compression ratio.<br><strong>lzo: </strong>faster compression/decompression, but compression ratio is lower than zlib."
     });
   },
 
