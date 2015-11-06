@@ -34,11 +34,30 @@
 	   &nbsp;&nbsp;<a href="#shares/<%= share.get('name') %>/?cView=edit"><i class="glyphicon glyphicon-pencil"></i></a>
 	  </td>
           <td><a id="delete_share_<%= share.get('name') %>" data-name="<%= share.get('name') %>" data-action="delete" data-pool="<%= share.get('pool').name %>" data-size="<%= share.get('size')*1024 %>" rel="tooltip" title="Delete share"><i class="glyphicon glyphicon-trash"></i></a></td>
-
         </tr>
       <% }); %>
     </tbody>
   </table>
+
+<div id="delete-share-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h3 id="myModalLabel">Delete Share</h3>
+      </div>
+      <div class="modal-body">
+        <div class="messages"></div>
+        <h4>Share (<span id="pass-share-name"></span>) will be deleted. Are you sure?</h4>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">Cancel</button>
+        <button id="js-confirm-share-delete" class="btn btn-primary">Confirm</button>
+      </div><!--end modal-fooetr-->
+    </div><!--end modal-content-->
+  </div><!--end modal-dialog-->
+</div>
+
   <div class="pagination-ph"></div>
 <% } else { %>
   <% if (!pools.isEmpty()) { %>
