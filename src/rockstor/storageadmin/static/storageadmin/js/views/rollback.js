@@ -1,27 +1,27 @@
 /*
  *
- * @licstart  The following is the entire license notice for the 
+ * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
- * 
+ *
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
- * 
+ *
  * RockStor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
- * 
+ *
  * RockStor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * @licend  The above is the entire license notice
  * for the JavaScript code in this page.
- * 
+ *
  */
 
 RollbackView = RockstorLayoutView.extend({
@@ -32,11 +32,11 @@ RollbackView = RockstorLayoutView.extend({
 
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
-    // Templates 
+    // Templates
     this.template = window.JST.share_rollback;
     this.snapshot_list_template = window.JST.share_rollback_snapshot_list;
     this.pagination_template = window.JST.common_pagination;
-    // Dependencies 
+    // Dependencies
     this.share = new Share({shareName: this.options.shareName});
     this.collection = new SnapshotCollection();
     this.collection.pageSize = 10;
@@ -62,11 +62,11 @@ RollbackView = RockstorLayoutView.extend({
       onfocusout: false,
       onkeyup: false,
       rules: {
-        snapshot: "required",  
+        snapshot: "required",
       },
       submitHandler: function() {
         var button = _this.$('#rollback-share');
-        var snapName = _this.$('input:radio[name=snapshot]:checked').val(); 
+        var snapName = _this.$('input:radio[name=snapshot]:checked').val();
         // set snap name in confirm dialog
         _this.$('#confirm-snap-name').html(snapName);
         // show confirm dialog
@@ -86,11 +86,12 @@ RollbackView = RockstorLayoutView.extend({
     }));
   },
 
-  confirmRollback: function() {
+  confirmRollback: function(event) {
     var _this = this;
-    var button = this.$('#js-confirm-rollback-submit');
+    var button = $(event.currentTarget);
     if (buttonDisabled(button)) return false;
-    var snapName = this.$('input:radio[name=snapshot]:checked').val(); 
+    disableButton(button);
+    var snapName = this.$('input:radio[name=snapshot]:checked').val();
     $.ajax({
       url: '/api/shares/' + _this.share.get('name') + '/rollback',
       type: "POST",
@@ -113,11 +114,10 @@ RollbackView = RockstorLayoutView.extend({
 
   cancel: function(event) {
     if (event) event.preventDefault();
-    app_router.navigate('shares/' + this.share.get('name'), {trigger: true}) 
+    app_router.navigate('shares/' + this.share.get('name'), {trigger: true})
   }
 
 });
 
 // Add pagination
 Cocktail.mixin(RollbackView, PaginationMixin);
-

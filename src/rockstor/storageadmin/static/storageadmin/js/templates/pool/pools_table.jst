@@ -38,7 +38,7 @@
     <td>N/A</td>
 	</tr>
     <% }else{ %>
-    
+
     <tr>
       <td>
         <a href="#pools/<%= pool.get('name') %>"><i class="glyphicon glyphicon-list"></i> <%= pool.get('name') %></a>
@@ -73,6 +73,26 @@
 	<% }); %>
 	</tbody>
 </table>
+
+<div id="delete-pool-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h3 id="myModalLabel">Delete Pool</h3>
+      </div>
+      <div class="modal-body">
+        <div class="messages"></div>
+        <h4>Pool (<span id="pass-pool-name"></span>) will be deleted. Are you sure?</h4>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">Cancel</button>
+        <button id="js-confirm-pool-delete" class="btn btn-primary">Confirm</button>
+      </div><!--end modal-fooetr-->
+    </div><!--end modal-content-->
+  </div><!--end modal-dialog-->
+</div>
+
 <div class="pagination-ph">
 <% } else { %>
 <h4>No pools have been created.</h4>
