@@ -297,6 +297,21 @@ def shares_info(mnt_pt):
             share_ids.append(vol_id)
     return shares_d
 
+def parse_snap_details(mnt_pt, fields):
+    writable = True
+    snap_name = None
+    o1, e1, rc1 = run_command([BTRFS, 'property', 'get',
+                               '%s/%s' % (mnt_pt, fields[-1])])
+    for l1 in o1:
+        if (re.match('ro=', l1) is not None):
+            if (l1.split('=')[1] == 'true'):
+                writable = False
+            if (writable is True):
+                if (len(fields[-1].split('/')) == 1):
+                    #writable snapshot + direct child of pool. so we'll treat it as a share.
+                    continue
+            snap_name = fields[-1].split('/')[-1]
+    return snap_name, writable
 
 def snaps_info(mnt_pt, share_name):
     o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-u', '-p', '-q', mnt_pt])
@@ -307,32 +322,31 @@ def snaps_info(mnt_pt, share_name):
             if (fields[-1] == share_name):
                 share_id = fields[1]
                 share_uuid = fields[12]
+
     if (share_id is None):
         raise Exception('Failed to get uuid of the share(%s) under mount(%s)'
                         % (share_name, mnt_pt))
 
     o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-s', '-p', '-q',
-                            mnt_pt])
+                            '-u', mnt_pt])
+
     snaps_d = {}
+    snap_uuids = []
     for l in o:
         if (re.match('ID ', l) is not None):
             fields = l.split()
-            #parent uuid must be share_uuid
-            if (fields[7] != share_id and fields[15] != share_uuid):
+            #parent uuid must be share_uuid or another snapshot's uuid
+            if (fields[7] != share_id and fields[15] != share_uuid and
+                fields[15] not in snap_uuids):
                 continue
-            writable = True
-            o1, e1, rc1 = run_command([BTRFS, 'property', 'get',
-                                       '%s/%s' % (mnt_pt, fields[-1])])
-            for l1 in o1:
-                if (re.match('ro=', l1) is not None):
-                    if (l1.split('=')[1] == 'true'):
-                        writable = False
-            if (writable is True):
-                if (len(fields[-1].split('/')) == 1):
-                    #writable snapshot + direct child of pool. so we'll treat it as a share.
-                    continue
-            snap_name = fields[-1].split('/')[-1]
-            snaps_d[snap_name] = ('0/%s' % fields[1], writable)
+            snap_name, writable = parse_snap_details(mnt_pt, fields)
+            snaps_d[snap_name] = ('0/%s' % fields[1], writable, )
+            #we rely on the observation that child snaps are listed after their
+            #parents, so no need to iterate through results separately. Instead,
+            #we add the uuid of a snap to the list and look up if it's a parent
+            #of subsequent entries.
+            snap_uuids.append(fields[17])
+
     return snaps_d
 
 
@@ -888,6 +902,6 @@ def get_oldest_snap(subvol_path, num_retain):
                 continue
             snaps[int(fields[1])] = snap_fields[-1]
     snap_ids = sorted(snaps.keys())
-    if (len(snap_ids) >= num_retain):
+    if (len(snap_ids) > num_retain):
         return snaps[snap_ids[0]]
     return None
