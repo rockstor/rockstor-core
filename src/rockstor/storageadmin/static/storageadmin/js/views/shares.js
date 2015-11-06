@@ -30,7 +30,9 @@
 
 SharesView = RockstorLayoutView.extend({
   events: {
-    "click a[data-action=delete]": "deleteShare"
+    "click a[data-action=delete]": "deleteShare",
+    'click #js-cancel': 'cancel',
+    'click #js-confirm-share-delete': 'confirmShareDelete'
   },
 
   initialize: function() {
@@ -84,6 +86,7 @@ SharesView = RockstorLayoutView.extend({
     this.$('[rel=tooltip]').tooltip({placement: 'bottom'});
   },
 
+// delete button handler
   deleteShare: function(event) {
     var _this = this;
     var button = $(event.currentTarget);
@@ -93,22 +96,35 @@ SharesView = RockstorLayoutView.extend({
     _this.$('#pass-share-name').html(shareName);
     //show the dialog
     _this.$('#delete-share-modal').modal();
-    /* if(confirm("Delete share:  " + name + " ...Are you sure?")){
+    return false;
+  },
+
+//modal confirm button handler
+  confirmShareDelete: function(event) {
+    var _this = this;
+    var button = $(event.currentTarget);
+    if (buttonDisabled(button)) return false;
       $.ajax({
-        url: "/api/shares/"+name,
+        url: "/api/shares/" + shareName,
         type: "DELETE",
         dataType: "json",
         success: function() {
           _this.collection.fetch({reset: true});
           enableButton(button);
+          _this.$('#delete-share-modal').modal('hide');
+          $('.modal-backdrop').remove();
+          app_router.navigate('shares', {trigger: true})
         },
         error: function(xhr, status, error) {
           enableButton(button);
         }
       });
-    } */
-  }
+    },
 
+    cancel: function(event) {
+      if (event) event.preventDefault();
+      app_router.navigate('shares', {trigger: true})
+    }
 });
 
 // Add pagination
