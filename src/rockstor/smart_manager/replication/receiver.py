@@ -27,11 +27,11 @@ from django.utils.timezone import utc
 from django.conf import settings
 from contextlib import contextmanager
 from util import (create_share, create_receive_trail, update_receive_trail,
-                  create_snapshot, create_rshare, rshare_id, get_sender_ip,
-                  delete_snapshot)
+                  create_snapshot, create_rshare, rshare_id, delete_snapshot,
+                  validate_src_share)
 from fs.btrfs import (get_oldest_snap, remove_share, set_property, is_subvol)
 from system.osi import run_command
-from storageadmin.models import (Disk, Pool)
+from storageadmin.models import (Disk, Pool, Appliance)
 import shutil
 
 
@@ -87,12 +87,21 @@ class Receiver(Process):
         msg = ('Failed to get the sender ip from the uuid(%s) for meta: %s' %
                (self.meta['uuid'], self.meta))
         with self._clean_exit_handler(msg):
-            self.sender_ip = get_sender_ip(self.meta['uuid'], logger)
+            self.sender_ip = Appliance.objects.get(uuid=self.meta['uuid']).ip
+
+        msg = ('Failed to validate the source share(%s) on sender(uuid: %s '
+               'ip: %s) for meta: %s. Did the ip of the sender change?' %
+               (self.src_share, self.sender_id, self.sender_ip, self.meta))
+        with self._clean_exit_handler(msg):
+            validate_src_share(self.sender_id, self.src_share)
 
         msg = ('Failed to connect to the sender(%s) on data_port(%s). meta: '
                '%s. Aborting.' % (self.sender_ip, self.data_port, self.meta))
         with self._clean_exit_handler(msg):
-            #@todo: add validation
+            #connection does not mean we are instantly connected.
+            #so no validation of that kind possible with pub sub
+            #for example, if the sender ip is different from what we have
+            #in the db, no error is raised here.
             recv_sub = self.ctx.socket(zmq.SUB)
             recv_sub.connect('tcp://%s:%d' % (self.sender_ip, self.data_port))
             recv_sub.RCVTIMEO = 100
@@ -102,6 +111,7 @@ class Receiver(Process):
                'meta_port(%d). meta: %s. Aborting.' %
                (self.sender_ip, self.meta_port, self.meta))
         with self._clean_exit_handler(msg):
+            #same comment from above applies here for push connection also.
             self.meta_push = self.ctx.socket(zmq.PUSH)
             self.meta_push.connect('tcp://%s:%d' % (self.sender_ip,
                                                     self.meta_port))
@@ -251,10 +261,10 @@ class Receiver(Process):
                         update_receive_trail(self.rtid, data, logger)
             except zmq.error.Again:
                 recv_timeout_counter = recv_timeout_counter + 1
-                if (recv_timeout_counter > 600):
+                if (recv_timeout_counter > 600): #60 seconds
                     logger.error('Nothing received in the last 60 seconds '
-                                 'from the sender for meta: %s. Aborting.'
-                                 % self.meta)
+                                 'from the sender(%s) for meta: %s. Aborting.'
+                                 % (self.sender_ip, self.meta))
                     self._sys_exit(3)
             except Exception, e:
                 msg = ('Exception occured while receiving fsdata: %s' % e.__str__())
