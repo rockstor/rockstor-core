@@ -30,7 +30,9 @@
 
 PoolsView = RockstorLayoutView.extend({
     events: {
-	"click a[data-action=delete]": "deletePool"
+	"click a[data-action=delete]": "deletePool",
+  'click #js-cancel': 'cancel',
+  'click #js-confirm-pool-delete': 'confirmPoolDelete'
     },
 
     initialize: function() {
@@ -89,27 +91,43 @@ PoolsView = RockstorLayoutView.extend({
     },
 
     deletePool: function(event) {
-	var _this = this;
-	var button = $(event.currentTarget);
-	if (buttonDisabled(button)) return false;
-	name = button.attr('data-name');
-	if(confirm("Delete pool: " + name + " ... Are you sure?")){
-	    disableButton(button);
-	    $.ajax({
-		url: "/api/pools/" + name,
-		type: "DELETE",
-		dataType: "json",
-		data: { "name": name },
-		success: function() {
-		    _this.render();
-		    enableButton(button);
-		},
-		error: function(xhr, status, error) {
-		    enableButton(button);
-		}
-	    });
-	}
-    }
+      var _this = this;
+      var button = $(event.currentTarget);
+      if (buttonDisabled(button)) return false;
+      poolName = button.attr('data-name');
+      // set share name in confirm dialog
+      _this.$('#pass-pool-name').html(poolName);
+      //show the dialog
+      _this.$('#delete-pool-modal').modal();
+      return false;
+    },
+
+    //modal confirm button handler
+      confirmPoolDelete: function(event) {
+        var _this = this;
+        var button = $(event.currentTarget);
+        if (buttonDisabled(button)) return false;
+          $.ajax({
+            url: "/api/pools/" + poolName,
+            type: "DELETE",
+            dataType: "json",
+            success: function() {
+              _this.collection.fetch({reset: true});
+              enableButton(button);
+              _this.$('#delete-pool-modal').modal('hide');
+              $('.modal-backdrop').remove();
+              app_router.navigate('pools', {trigger: true})
+            },
+            error: function(xhr, status, error) {
+              enableButton(button);
+            }
+          });
+        },
+
+        cancel: function(event) {
+          if (event) event.preventDefault();
+          app_router.navigate('pools', {trigger: true})
+        }
 });
 
 // Add pagination
