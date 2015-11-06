@@ -89,71 +89,72 @@
 	  </div>
 	</div>
       </form>
-
 </div> <!-- panel-body -->
 </div><!--panel-default-->
   </div> <!-- col-md-8 -->
 </div> <!-- row -->
+
 <% } else { %>
-<h3>Edit Replication  task</h3>
 <div class="row">
-  <div class="col-md-8">
-    <label class="control-label"></label>
-    <div class="form-box">
-      <form  id="replication-task-create-form" name="aform">
+<div class="col-md-8">
+<div class="panel panel-default">
+<div class="panel-heading">Edit Replication task</div>
+    <div class="panel-body">
+      <form class="form-horizontal" id="replication-task-create-form" name="aform">
 	<div class="messages"></div>
 	<div class="form-group">
-	  <label class="control-label" for="task_name">Task name:</label>
-	  <div class="">
-	    <label class="control-label" style="text-align: left"><%= replica.get('task_name') %></label>
+	  <label class="col-sm-4 control-label" for="task_name">Task name:</label>
+	  <div class="col-sm-6">
+	    <input type="text" class="form-control" value="<%= replica.get('task_name') %>" disabled="disabled">
 	  </div>
 	</div>
 	<div class="form-group">
-	  <label class="control-label" for="share">Share to replicate:</label>
-	  <div class="">
-	    <label class="control-label" style="text-align: left"><%= replica.get('share') %></label>
+	  <label class="col-sm-4 control-label" for="share">Share to replicate:</label>
+	  <div class="col-sm-6">
+	    <input type="text" class="form-control" value="<%= replica.get('share') %>" disabled="disabled">
 	  </div>
 	</div>
 	<div class="form-group">
-	  <label class="control-label" for="appliance">Target appliance:</label>
-	  <div class="">
-	    <label class="control-label" style="text-align: left"><%= replica.get('appliance') %></label>
+	  <label class="col-sm-4 control-label" for="appliance">Target appliance:</label>
+	  <div class="col-sm-6">
+	    <input type="text" class="form-control" value="<%= replica.get('appliance') %>" disabled="disabled">
 	  </div>
 	</div>
 	<div class="form-group">
-	  <label class="control-label" for="port">Replication Data Port:</label>
-	  <div class="">
-	    <label class="control-label" style="text-align: left"><%= replica.get('data_port') %></label>
+	  <label class="col-sm-4 control-label" for="port">Replication Data Port:</label>
+	  <div class="col-sm-6">
+	    <input type="text" class="form-control" value="<%= replica.get('data_port') %>" disabled="disabled">
 	  </div>
 	</div>
 	<div class="form-group">
-	  <label class="control-label" for="port">Replication Meta Port:</label>
-	  <div class="">
-	    <label class="control-label" style="text-align: left"><%= replica.get('meta_port') %></label>
+	  <label class="col-sm-4 control-label" for="port">Replication Meta Port:</label>
+	  <div class="col-sm-6">
+	    <input type="text" class="form-control" value="<%= replica.get('meta_port') %>" disabled="disabled">
 	  </div>
 	</div>
 	<div class="form-group">
-	  <label class="control-label" for="pool">Target pool name:</label>
-	  <div class="">
-	    <label class="control-label" style="text-align: left"><%= replica.get('dpool') %></label>
+	  <label class="col-sm-4 control-label" for="pool">Target pool name:</label>
+	  <div class="col-sm-6">
+	    <input type="text" class="form-control" value="<%= replica.get('dpool') %>" disabled="disabled">
 	  </div>
 	</div>
 	<div class="form-group">
-	  <label class="control-label" for="frequency">Frequency in minutes:<span class="required"> *</span></label>
-	  <div class="">
-	    <input type="text" id="frequency" name="frequency" value="<%= replica.get('frequency')%> "  title="Replication frequency in minutes" >
+	  <label class="col-sm-4 control-label" for="frequency">Frequency in minutes:<span class="required"> *</span></label>
+	  <div class="col-sm-6">
+	    <input class="form-control" type="text" id="frequency" name="frequency" value="<%= replica.get('frequency')%> "  title="Replication frequency in minutes" >
 	  </div>
 	</div>
 	<div class="form-group">
-	  <div class="">
+	  <div class="col-sm-offset-4 col-sm-8">
 	    <a id="js-cancel" class="btn btn-default">Cancel</a>
 	    <input type="Submit" id="create_replication_task" class="btn btn-primary" value="Submit"></input>
 	  </div>
 	</div>
       </form>
 
-    </div> <!-- form-box -->
-  </div> <!-- col-md-8 -->
-</div> <!-- row -->
+    </div> <!-- panel-body -->
+    </div><!--panel-default-->
+      </div> <!-- col-md-8 -->
+    </div> <!-- row -->
 
 <% } %>
