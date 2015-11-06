@@ -56,6 +56,7 @@ class Receiver(Process):
         self.rid = None
         self.rtid = None
         self.meta_push = None
+        self.num_retain_snaps = 5
         self.ctx = zmq.Context()
         super(Receiver, self).__init__()
 
@@ -130,20 +131,23 @@ class Receiver(Process):
                 self.rid = rshare_id(sname, logger)
 
         sub_vol = ('%s%s/%s' % (settings.MNT_PT, self.meta['pool'],
-                                           sname))
+                                sname))
         if (not is_subvol(sub_vol)):
             msg = ('Failed to create parent subvolume %s' % sub_vol)
             with self._clean_exit_handler(msg, ack=True):
                 run_command([BTRFS, 'subvolume', 'create', sub_vol])
 
-        snap_fp = ('%s/%s' % (sub_vol, self.snap_name))
+        snap_dir = ('%s%s/.snapshots/%s' % (settings.MNT_PT, self.meta['pool'],
+                                           sname))
+        run_command(['mkdir', '-p', snap_dir])
+        snap_fp = ('%s/%s' % (snap_dir, self.snap_name))
         with self._clean_exit_handler(msg):
             if (is_subvol(snap_fp)):
                 ack = {'msg': 'snap_exists',
                        'id': self.meta['id'], }
                 self.meta_push.send_json(ack)
 
-        cmd = [BTRFS, 'receive', sub_vol]
+        cmd = [BTRFS, 'receive', snap_dir]
         msg = ('Failed to start the low level btrfs receive command(%s)'
                '. Aborting.' % (cmd))
         with self._clean_exit_handler(msg, ack=True):
@@ -198,9 +202,9 @@ class Receiver(Process):
                     if (recv_data == 'END_SUCCESS'):
                         data['receive_succeeded'] = ts.strftime(settings.SNAP_TS_FORMAT)
                         #delete the share, move the oldest snap to share
-                        oldest_snap = get_oldest_snap(sub_vol, 3)
+                        oldest_snap = get_oldest_snap(snap_dir, self.num_retain_snaps)
                         if (oldest_snap is not None):
-                            snap_path = ('%s/%s' % (sub_vol, oldest_snap))
+                            snap_path = ('%s/%s' % (snap_dir, oldest_snap))
                             share_path = ('%s%s/%s' %
                                           (settings.MNT_PT, self.dest_pool,
                                            sname))
@@ -208,14 +212,12 @@ class Receiver(Process):
                                    'to Share(%s)' % (snap_path, share_path))
                             try:
                                 pool = Pool.objects.get(name=self.dest_pool)
-                                remove_share(pool, sname)
+                                remove_share(pool, sname, '-1/-1')
                                 set_property(snap_path, 'ro', 'false',
                                              mount=False)
                                 run_command(['/usr/bin/rm', '-rf', share_path],
                                             throw=False)
                                 shutil.move(snap_path, share_path)
-                                set_property(share_path, 'ro', 'true',
-                                             mount=False)
                                 delete_snapshot(sname, oldest_snap, logger)
                             except Exception, e:
                                 logger.error('%s. Exception: %s' % (msg, e.__str__()))
