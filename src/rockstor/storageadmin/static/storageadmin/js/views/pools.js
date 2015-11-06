@@ -107,6 +107,7 @@ PoolsView = RockstorLayoutView.extend({
         var _this = this;
         var button = $(event.currentTarget);
         if (buttonDisabled(button)) return false;
+          disableButton(button);
           $.ajax({
             url: "/api/pools/" + poolName,
             type: "DELETE",
