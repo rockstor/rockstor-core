@@ -186,7 +186,7 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
 .dropdown-menu>li>a:hover,
 .dropdown-menu>ul>li>a:hover {
   color: #FFFFFF;
-  background-color: #E76545;
+  background-color: #444444;
   text-decoration: none;
 }
 
@@ -280,18 +280,6 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
         padding-left: 0px;
     }
 
-    .navbar-inverse .navbar-nav .open .dropdown-menu>li>a {
-        color: #FFFFFF;
-    }
-
-    .navbar-inverse .navbar-nav .open .dropdown-menu>li>a:hover {
-        color: #FFFFFF;
-    }
-
-    .navbar-inverse .navbar-nav .open .dropdown-menu>li:hover {
-        background-color: #EB6841;
-    }
-
     .navbar-nav .open .dropdown-menu {
         position: static;
         float: none;
@@ -301,14 +289,6 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
         border: 0;
         -webkit-box-shadow: none;
         box-shadow: none;
-    }
-
-    .navbar-nav .open .dropdown-menu>li>a {
-        line-height: 20px;
-    }
-
-    .navbar-nav .open .dropdown-menu>li>a  {
-        padding: 5px 15px 5px 25px;
     }
 
     .navbar-nav>li:hover {
@@ -1456,7 +1436,7 @@ input[type="radio"].selectedRoot {
 .side a:hover {
   text-decoration: none;
   color: #FFFFFF;
-  background-color: #EB6841;
+  background-color: #444444;
 }
 
 /** Sidebar: first level item */
