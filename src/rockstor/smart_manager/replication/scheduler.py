@@ -51,6 +51,10 @@ class ReplicaScheduler(Process):
         self.base_url = 'https://localhost/api'
         self.rep_ip = None
         self.uuid = None
+        self.max_senders = 50
+        self.msg_buffer_size = 1000
+        self.trail_prune_interval = 3600 #seconds
+        self.sender_check_interval = 30 #seconds
         self.prune_time = int(time.time())
         super(ReplicaScheduler, self).__init__()
 
@@ -86,7 +90,7 @@ class ReplicaScheduler(Process):
 
         #  synchronization messages are received in this pull socket
         meta_pull = ctx.socket(zmq.PULL)
-        meta_pull.RCVTIMEO = 100
+        meta_pull.RCVTIMEO = 100 # milliseconds.
         meta_pull.bind('tcp://%s:%d' % (self.rep_ip, self.meta_port))
 
         total_sleep = 0
@@ -101,7 +105,10 @@ class ReplicaScheduler(Process):
 
             #  check for any recv's coming
             num_msgs = 0
-            while (num_msgs < 1000):
+            t0 = time.time()
+            while (num_msgs < self.msg_buffer_size):
+                #if we received msg_buffer_size number of messages at once,
+                #take a break to do other stuff and come back.
                 try:
                     self.recv_meta = meta_pull.recv_json()
                     num_msgs = num_msgs + 1
@@ -116,18 +123,28 @@ class ReplicaScheduler(Process):
                     else:
                         self.senders[snap_id].q.put(self.recv_meta)
                 except zmq.error.Again:
+                    #recv_json throws this exception if nothing is received
+                    #for 100 milliseconds. Break, do other stuff and come back here.
                     break
+            #seconds spend processing messages at once. should be counted as
+            #part of sleep time so new senders are not stalled.
+            total_sleep += int(time.time() - t0)
 
             self._prune_workers((self.receivers, self.senders))
 
-            if (int(time.time()) - self.prune_time > 3600):
-                self.prune_time = int(time.time())
+            if (int(time.time()) - self.prune_time > self.trail_prune_interval):
+                #trail objects keep accumulating and may grow to be quite large.
+                #so once every trail_prune_interval seconds, deleted the old ones
+                #by default the prune helper methods delete records older than 7 days
+                self.prune_time = int(time.time()) #reset
                 for rs in ReplicaShare.objects.all():
                     prune_receive_trail(rs.id, logger)
                 for r in Replica.objects.all():
                     prune_replica_trail(r.id, logger)
 
-            if (total_sleep >= 60 and len(self.senders) < 50):
+            if (total_sleep >= self.sender_check_interval and
+                len(self.senders) < self.max_senders):
+                #check to see if we can start any new senders.
 
                 try:
                     for r in get_replicas(logger):
@@ -166,7 +183,7 @@ class ReplicaScheduler(Process):
                                             r.pool, r.share, rt[0].snap_name))
                             if (prev_snap_id in self.senders):
                                 logger.debug('send process ongoing for snap: '
-                                             '%s' % snap_id)
+                                             '%s' % prev_snap_id)
                                 continue
                             logger.debug('%s not found in senders. Previous '
                                          'sender must have Aborted. Marking '
