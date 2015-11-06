@@ -53,6 +53,7 @@ class Sender(Process):
         self.rt = rt
         self.rt2 = None
         self.rt2_id = None
+        self.num_retain_snaps = 5
         self.ppid = os.getpid()
         self.snap_id = str(snap_id)  # must be ascii for zmq
         self.meta_begin = {'id': self.snap_id,
@@ -263,7 +264,7 @@ class Sender(Process):
             share_path = ('%s%s/.snapshots/%s' %
                           (settings.MNT_PT, self.replica.pool,
                            self.replica.share))
-            oldest_snap = get_oldest_snap(share_path, 3)
+            oldest_snap = get_oldest_snap(share_path, self.num_retain_snaps)
             if (oldest_snap is not None):
                 msg = ('Failed to delete snapshot: %s. Aborting.' %
                        oldest_snap)
