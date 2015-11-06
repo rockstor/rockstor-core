@@ -95,17 +95,30 @@ class ReplicaScheduler(Process):
 
         total_sleep = 0
         while True:
+            t0 = time.time()
             if (os.getppid() != self.ppid):
                 logger.error('Parent exited. Aborting.')
                 break
 
+            #pubq is passed to a Sender during initialization. Once a sender
+            #starts a btrfs-send process, it pipes that output to this pubq.
+            #this while loop gathers those messages and puts them on the pub
+            #socket for receivers to subscribe.
+
+            #I am seeing timeouts and perf issues where sometime messages are
+            #seemingly lost. Should we use another zmq mechanism instead of
+            #python queues? something that performs better and preserves order
+            #of messages?
+            num_msgs = 0
             while(not self.pubq.empty()):
                 msg = self.pubq.get()
                 rep_pub.send(msg)
+                num_msgs += 1
+                if (num_msgs > self.msg_buffer_size):
+                    break
 
             #  check for any recv's coming
             num_msgs = 0
-            t0 = time.time()
             while (num_msgs < self.msg_buffer_size):
                 #if we received msg_buffer_size number of messages at once,
                 #take a break to do other stuff and come back.
@@ -126,9 +139,6 @@ class ReplicaScheduler(Process):
                     #recv_json throws this exception if nothing is received
                     #for 100 milliseconds. Break, do other stuff and come back here.
                     break
-            #seconds spend processing messages at once. should be counted as
-            #part of sleep time so new senders are not stalled.
-            total_sleep += int(time.time() - t0)
 
             self._prune_workers((self.receivers, self.senders))
 
@@ -142,10 +152,13 @@ class ReplicaScheduler(Process):
                 for r in Replica.objects.all():
                     prune_replica_trail(r.id, logger)
 
+            #seconds spent processing messages at once. should be counted as
+            #part of sleep time so new senders are not stalled.
+            total_sleep += int(time.time() - t0)
             if (total_sleep >= self.sender_check_interval and
                 len(self.senders) < self.max_senders):
+                total_sleep = 0 #reset
                 #check to see if we can start any new senders.
-
                 try:
                     for r in get_replicas(logger):
                         rt = get_replica_trail(r.id, logger)
@@ -234,7 +247,6 @@ class ReplicaScheduler(Process):
                         self.senders[snap_id] = sw
                         sw.daemon = True
                         sw.start()
-                    total_sleep = 0
                 except DatabaseError, e:
                     e_msg = ('Error getting the list of enabled replica '
                              'tasks. Moving on. Exception: %s' % e.__str__())
