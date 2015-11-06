@@ -34,6 +34,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
     "click #js-edit-compression": "editCompression",
     "click #js-edit-compression-cancel": "editCompressionCancel",
     "click #js-submit-compression": "updateCompression",
+    "click #js-delete": "shareDel",
   },
 
   initialize: function() {
@@ -159,28 +160,28 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
         showError('error while creating snapshot');
       });
     });
+  },
 
-    this.$('#js-delete').click(function() {
-      var button = _this.$('#js-delete');
-      var name = _this.share.get('name');
-      if (buttonDisabled(button)) return false;
-      if(confirm("Delete share:  "+ name +"...Are you sure?")){
-      disableButton(button);
-      $.ajax({
-        url: "/api/shares/" + name,
-        type: "DELETE",
-        dataType: "json",
-        success: function() {
-          enableButton(button);
-          app_router.navigate('shares', {trigger: true})
-        },
-        error: function(xhr, status, error) {
-          enableButton(button);
-        }
-       });
+  shareDel: function(event){
+    var _this = this;
+    var button = _this.$('#js-delete');
+    var name = _this.share.get('name');
+    if (buttonDisabled(button)) return false;
+    if(confirm("Delete share:  "+ name +"...Are you sure?")){
+    disableButton(button);
+    $.ajax({
+      url: "/api/shares/" + name,
+      type: "DELETE",
+      dataType: "json",
+      success: function() {
+        enableButton(button);
+        app_router.navigate('shares', {trigger: true})
+      },
+      error: function(xhr, status, error) {
+        enableButton(button);
       }
-    });
-
+     });
+    }
   },
 
   renderAcl: function() {
