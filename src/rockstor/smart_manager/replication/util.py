@@ -165,8 +165,7 @@ def prune_trail(url, logger, days=7):
         data = {'days': days, }
         return api_call(url, data=data, calltype='delete', save_error=False)
     except Exception, e:
-        logger.debug('Failed to prune trail for url(%s)' % url)
-        logger.exception(e)
+        logger.error('Failed to prune trail for url(%s). Exception: %s' % (url, e.__str__()))
 
 
 def prune_receive_trail(rid, logger):
@@ -224,9 +223,8 @@ def is_share(sname, logger):
         api_call(url, save_error=False)
         return True
     except Exception, e:
-        logger.error('Exception while looking up if share exists at: %s'
-                     % url)
-        logger.exception(e)
+        logger.error('Exception while looking up if share exists at: %s '
+                     '. Exception: %s' % (url, e.__str__()))
         return False
 
 
