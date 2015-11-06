@@ -110,7 +110,8 @@ class Sender(Process):
                 self._sys_exit(3)
 
     def _process_q(self):
-        ack = self.q.get(block=True, timeout=600)
+        #block for 60 seconds.
+        ack = self.q.get(block=True, timeout=60)
         if (ack['msg'] == 'send_more'):
             #  excess credit messages from receiver at that end
             return self._process_q()
