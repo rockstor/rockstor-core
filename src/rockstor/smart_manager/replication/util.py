@@ -19,8 +19,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import re
 from datetime import datetime
 from django.utils.timezone import utc
-from cli.rest_util import api_call
+from cli.rest_util import (api_call, set_token)
 from storageadmin.exceptions import RockStorAPIException
+from storageadmin.models import Appliance
 
 BASE_URL = 'https://localhost/api/'
 
@@ -29,18 +30,15 @@ class Bunch(object):
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
 
-
 def get_sender_ip(uuid, logger):
-    try:
-        url = ('%sappliances' % BASE_URL)
-        ad = api_call(url, save_error=False)
-        for a in ad['results']:
-            if (a['uuid'] == uuid):
-                return a['ip']
-    except Exception, e:
-        logger.error('Failed to get sender ip address')
-        raise e
+    return Appliance.objects.get(uuid=uuid).ip
 
+def validate_src_share(sender_uuid, sname):
+    #do a simple get on the share of the sender.
+    a = Appliance.objects.get(uuid=sender_uuid)
+    url = ('https://%s:%s' % (a.ip, a.mgmt_port))
+    set_token(client_id=a.client_id, client_secret=a.client_secret, url=url)
+    api_call(url='%s/api/shares/%s' % (url, sname))
 
 def update_replica_status(rtid, data, logger):
     try:
@@ -165,8 +163,7 @@ def prune_trail(url, logger, days=7):
         data = {'days': days, }
         return api_call(url, data=data, calltype='delete', save_error=False)
     except Exception, e:
-        logger.debug('Failed to prune trail for url(%s)' % url)
-        logger.exception(e)
+        logger.error('Failed to prune trail for url(%s). Exception: %s' % (url, e.__str__()))
 
 
 def prune_receive_trail(rid, logger):
@@ -224,9 +221,8 @@ def is_share(sname, logger):
         api_call(url, save_error=False)
         return True
     except Exception, e:
-        logger.error('Exception while looking up if share exists at: %s'
-                     % url)
-        logger.exception(e)
+        logger.error('Exception while looking up if share exists at: %s '
+                     '. Exception: %s' % (url, e.__str__()))
         return False
 
 

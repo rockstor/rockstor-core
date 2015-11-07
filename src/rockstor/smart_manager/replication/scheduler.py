@@ -21,6 +21,7 @@ import zmq
 import os
 import time
 from datetime import datetime
+from storageadmin.models import (NetworkInterface, Appliance)
 from smart_manager.models import (ReplicaTrail, ReplicaShare, Replica)
 from django.conf import settings
 from sender import Sender
@@ -33,6 +34,7 @@ from django.db import DatabaseError
 from util import (update_replica_status, disable_replica, prune_receive_trail,
                   get_replicas, get_replica_trail, prune_replica_trail)
 
+#@todo: Can we just use ORM for read only db transactions instead of API calls?
 
 class ReplicaScheduler(Process):
 
@@ -46,24 +48,15 @@ class ReplicaScheduler(Process):
         self.recv_meta = None
         self.pubq = Queue()
         self.uuid = None
+        self.base_url = 'https://localhost/api'
+        self.rep_ip = None
+        self.uuid = None
+        self.max_senders = 50
+        self.msg_buffer_size = 1000
+        self.trail_prune_interval = 3600 #seconds
+        self.sender_check_interval = 30 #seconds
         self.prune_time = int(time.time())
         super(ReplicaScheduler, self).__init__()
-
-    def _my_uuid(self):
-        url = 'https://localhost/api/appliances/1'
-        ad = api_call(url, save_error=False)
-        return ad['uuid']
-
-    def _replication_interface(self):
-        url = 'https://localhost/api/network'
-        interfaces = api_call(url, save_error=False)
-        mgmt_iface = None
-        if (len(interfaces['results']) > 0):
-            mgmt_iface = interfaces['results'][0]
-        for i in interfaces['results']:
-            if (i['itype'] == 'management'):
-                mgmt_iface = i
-        return mgmt_iface['ipaddr']
 
     def _prune_workers(self, workers):
         for wd in workers:
@@ -73,15 +66,22 @@ class ReplicaScheduler(Process):
         return workers
 
     def run(self):
-        while True:
-            try:
-                self.rep_ip = self._replication_interface()
-                self.uuid = self._my_uuid()
-                break
-            except:
-                msg = ('Failed to get replication interface or uuid. '
-                       'Aborting.')
-                return logger.error(msg)
+        try:
+            if (NetworkInterface.objects.filter(itype='replication').exists()):
+                self.rep_ip = NetworkInterface.objects.filter(itype='replication')[0].ipaddr
+            else:
+                self.rep_ip = NetworkInterface.objects.filter(ipaddr__isnull=False)[0].ipaddr
+        except Exception, e:
+            msg = ('Failed to get replication interface. Aborting. '
+                   'Exception: %s' % e.__str__())
+            return logger.error(msg)
+
+        try:
+            self.uuid = Appliance.objects.get(current_appliance=True).uuid
+        except Exception, e:
+            msg = ('Failed to get uuid of current appliance. Aborting. '
+                   'Exception: %s' % e.__str__())
+            return logger.error(msg)
 
         ctx = zmq.Context()
         #  fs diffs are sent via this publisher.
@@ -90,22 +90,38 @@ class ReplicaScheduler(Process):
 
         #  synchronization messages are received in this pull socket
         meta_pull = ctx.socket(zmq.PULL)
-        meta_pull.RCVTIMEO = 100
+        meta_pull.RCVTIMEO = 100 # milliseconds.
         meta_pull.bind('tcp://%s:%d' % (self.rep_ip, self.meta_port))
 
         total_sleep = 0
         while True:
+            t0 = time.time()
             if (os.getppid() != self.ppid):
                 logger.error('Parent exited. Aborting.')
                 break
 
+            #pubq is passed to a Sender during initialization. Once a sender
+            #starts a btrfs-send process, it pipes that output to this pubq.
+            #this while loop gathers those messages and puts them on the pub
+            #socket for receivers to subscribe.
+
+            #I am seeing timeouts and perf issues where sometime messages are
+            #seemingly lost. Should we use another zmq mechanism instead of
+            #python queues? something that performs better and preserves order
+            #of messages?
+            num_msgs = 0
             while(not self.pubq.empty()):
                 msg = self.pubq.get()
                 rep_pub.send(msg)
+                num_msgs += 1
+                if (num_msgs > self.msg_buffer_size):
+                    break
 
             #  check for any recv's coming
             num_msgs = 0
-            while (num_msgs < 1000):
+            while (num_msgs < self.msg_buffer_size):
+                #if we received msg_buffer_size number of messages at once,
+                #take a break to do other stuff and come back.
                 try:
                     self.recv_meta = meta_pull.recv_json()
                     num_msgs = num_msgs + 1
@@ -120,19 +136,29 @@ class ReplicaScheduler(Process):
                     else:
                         self.senders[snap_id].q.put(self.recv_meta)
                 except zmq.error.Again:
+                    #recv_json throws this exception if nothing is received
+                    #for 100 milliseconds. Break, do other stuff and come back here.
                     break
 
             self._prune_workers((self.receivers, self.senders))
 
-            if (int(time.time()) - self.prune_time > 3600):
-                self.prune_time = int(time.time())
+            if (int(time.time()) - self.prune_time > self.trail_prune_interval):
+                #trail objects keep accumulating and may grow to be quite large.
+                #so once every trail_prune_interval seconds, deleted the old ones
+                #by default the prune helper methods delete records older than 7 days
+                self.prune_time = int(time.time()) #reset
                 for rs in ReplicaShare.objects.all():
                     prune_receive_trail(rs.id, logger)
                 for r in Replica.objects.all():
                     prune_replica_trail(r.id, logger)
 
-            if (total_sleep >= 60 and len(self.senders) < 50):
-
+            #seconds spent processing messages at once. should be counted as
+            #part of sleep time so new senders are not stalled.
+            total_sleep += int(time.time() - t0)
+            if (total_sleep >= self.sender_check_interval and
+                len(self.senders) < self.max_senders):
+                total_sleep = 0 #reset
+                #check to see if we can start any new senders.
                 try:
                     for r in get_replicas(logger):
                         rt = get_replica_trail(r.id, logger)
@@ -170,7 +196,7 @@ class ReplicaScheduler(Process):
                                             r.pool, r.share, rt[0].snap_name))
                             if (prev_snap_id in self.senders):
                                 logger.debug('send process ongoing for snap: '
-                                             '%s' % snap_id)
+                                             '%s' % prev_snap_id)
                                 continue
                             logger.debug('%s not found in senders. Previous '
                                          'sender must have Aborted. Marking '
@@ -221,12 +247,10 @@ class ReplicaScheduler(Process):
                         self.senders[snap_id] = sw
                         sw.daemon = True
                         sw.start()
-                    total_sleep = 0
                 except DatabaseError, e:
                     e_msg = ('Error getting the list of enabled replica '
-                             'tasks. Moving on')
+                             'tasks. Moving on. Exception: %s' % e.__str__())
                     logger.error(e_msg)
-                    logger.exception(e)
 
             time.sleep(1)
             total_sleep = total_sleep + 1

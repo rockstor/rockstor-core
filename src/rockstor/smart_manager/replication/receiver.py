@@ -27,11 +27,11 @@ from django.utils.timezone import utc
 from django.conf import settings
 from contextlib import contextmanager
 from util import (create_share, create_receive_trail, update_receive_trail,
-                  create_snapshot, create_rshare, rshare_id, get_sender_ip,
-                  delete_snapshot)
+                  create_snapshot, create_rshare, rshare_id, delete_snapshot,
+                  validate_src_share)
 from fs.btrfs import (get_oldest_snap, remove_share, set_property, is_subvol)
 from system.osi import run_command
-from storageadmin.models import (Disk, Pool)
+from storageadmin.models import (Disk, Pool, Appliance)
 import shutil
 
 
@@ -56,6 +56,7 @@ class Receiver(Process):
         self.rid = None
         self.rtid = None
         self.meta_push = None
+        self.num_retain_snaps = 5
         self.ctx = zmq.Context()
         super(Receiver, self).__init__()
 
@@ -86,12 +87,21 @@ class Receiver(Process):
         msg = ('Failed to get the sender ip from the uuid(%s) for meta: %s' %
                (self.meta['uuid'], self.meta))
         with self._clean_exit_handler(msg):
-            self.sender_ip = get_sender_ip(self.meta['uuid'], logger)
+            self.sender_ip = Appliance.objects.get(uuid=self.meta['uuid']).ip
+
+        msg = ('Failed to validate the source share(%s) on sender(uuid: %s '
+               'ip: %s) for meta: %s. Did the ip of the sender change?' %
+               (self.src_share, self.sender_id, self.sender_ip, self.meta))
+        with self._clean_exit_handler(msg):
+            validate_src_share(self.sender_id, self.src_share)
 
         msg = ('Failed to connect to the sender(%s) on data_port(%s). meta: '
                '%s. Aborting.' % (self.sender_ip, self.data_port, self.meta))
         with self._clean_exit_handler(msg):
-            #@todo: add validation
+            #connection does not mean we are instantly connected.
+            #so no validation of that kind possible with pub sub
+            #for example, if the sender ip is different from what we have
+            #in the db, no error is raised here.
             recv_sub = self.ctx.socket(zmq.SUB)
             recv_sub.connect('tcp://%s:%d' % (self.sender_ip, self.data_port))
             recv_sub.RCVTIMEO = 100
@@ -101,6 +111,7 @@ class Receiver(Process):
                'meta_port(%d). meta: %s. Aborting.' %
                (self.sender_ip, self.meta_port, self.meta))
         with self._clean_exit_handler(msg):
+            #same comment from above applies here for push connection also.
             self.meta_push = self.ctx.socket(zmq.PUSH)
             self.meta_push.connect('tcp://%s:%d' % (self.sender_ip,
                                                     self.meta_port))
@@ -130,20 +141,23 @@ class Receiver(Process):
                 self.rid = rshare_id(sname, logger)
 
         sub_vol = ('%s%s/%s' % (settings.MNT_PT, self.meta['pool'],
-                                           sname))
+                                sname))
         if (not is_subvol(sub_vol)):
             msg = ('Failed to create parent subvolume %s' % sub_vol)
             with self._clean_exit_handler(msg, ack=True):
                 run_command([BTRFS, 'subvolume', 'create', sub_vol])
 
-        snap_fp = ('%s/%s' % (sub_vol, self.snap_name))
+        snap_dir = ('%s%s/.snapshots/%s' % (settings.MNT_PT, self.meta['pool'],
+                                           sname))
+        run_command(['mkdir', '-p', snap_dir])
+        snap_fp = ('%s/%s' % (snap_dir, self.snap_name))
         with self._clean_exit_handler(msg):
             if (is_subvol(snap_fp)):
                 ack = {'msg': 'snap_exists',
                        'id': self.meta['id'], }
                 self.meta_push.send_json(ack)
 
-        cmd = [BTRFS, 'receive', sub_vol]
+        cmd = [BTRFS, 'receive', snap_dir]
         msg = ('Failed to start the low level btrfs receive command(%s)'
                '. Aborting.' % (cmd))
         with self._clean_exit_handler(msg, ack=True):
@@ -198,9 +212,9 @@ class Receiver(Process):
                     if (recv_data == 'END_SUCCESS'):
                         data['receive_succeeded'] = ts.strftime(settings.SNAP_TS_FORMAT)
                         #delete the share, move the oldest snap to share
-                        oldest_snap = get_oldest_snap(sub_vol, 3)
+                        oldest_snap = get_oldest_snap(snap_dir, self.num_retain_snaps)
                         if (oldest_snap is not None):
-                            snap_path = ('%s/%s' % (sub_vol, oldest_snap))
+                            snap_path = ('%s/%s' % (snap_dir, oldest_snap))
                             share_path = ('%s%s/%s' %
                                           (settings.MNT_PT, self.dest_pool,
                                            sname))
@@ -208,18 +222,15 @@ class Receiver(Process):
                                    'to Share(%s)' % (snap_path, share_path))
                             try:
                                 pool = Pool.objects.get(name=self.dest_pool)
-                                remove_share(pool, sname)
+                                remove_share(pool, sname, '-1/-1')
                                 set_property(snap_path, 'ro', 'false',
                                              mount=False)
                                 run_command(['/usr/bin/rm', '-rf', share_path],
                                             throw=False)
                                 shutil.move(snap_path, share_path)
-                                set_property(share_path, 'ro', 'true',
-                                             mount=False)
                                 delete_snapshot(sname, oldest_snap, logger)
                             except Exception, e:
-                                logger.error(msg)
-                                logger.exception(msg)
+                                logger.error('%s. Exception: %s' % (msg, e.__str__()))
                     else:
                         logger.error('END_FAIL received for meta: %s. '
                                      'Terminating.' % self.meta)
@@ -250,15 +261,14 @@ class Receiver(Process):
                         update_receive_trail(self.rtid, data, logger)
             except zmq.error.Again:
                 recv_timeout_counter = recv_timeout_counter + 1
-                if (recv_timeout_counter > 600):
+                if (recv_timeout_counter > 600): #60 seconds
                     logger.error('Nothing received in the last 60 seconds '
-                                 'from the sender for meta: %s. Aborting.'
-                                 % self.meta)
+                                 'from the sender(%s) for meta: %s. Aborting.'
+                                 % (self.sender_ip, self.meta))
                     self._sys_exit(3)
             except Exception, e:
-                msg = ('Exception occured while receiving fsdata')
+                msg = ('Exception occured while receiving fsdata: %s' % e.__str__())
                 logger.error(msg)
-                logger.exception(e)
                 rp.terminate()
                 out, err = rp.communicate()
                 data['receive_failed'] = datetime.utcnow().replace(tzinfo=utc).strftime(settings.SNAP_TS_FORMAT)
@@ -281,8 +291,7 @@ class Receiver(Process):
             out, err = rp.communicate()
         except Exception, e:
             logger.debug('Exception while terminating receive. Probably '
-                         'already terminated.')
-            logger.exception(e)
+                         'already terminated: %s' % e.__str__())
 
         ack = {'msg': 'receive_ok',
                'id': self.meta['id'], }
