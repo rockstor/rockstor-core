@@ -53,6 +53,7 @@ class Sender(Process):
         self.rt = rt
         self.rt2 = None
         self.rt2_id = None
+        self.num_retain_snaps = 5
         self.ppid = os.getpid()
         self.snap_id = str(snap_id)  # must be ascii for zmq
         self.meta_begin = {'id': self.snap_id,
@@ -110,7 +111,8 @@ class Sender(Process):
                 self._sys_exit(3)
 
     def _process_q(self):
-        ack = self.q.get(block=True, timeout=600)
+        #block for 60 seconds.
+        ack = self.q.get(block=True, timeout=60)
         if (ack['msg'] == 'send_more'):
             #  excess credit messages from receiver at that end
             return self._process_q()
@@ -131,7 +133,7 @@ class Sender(Process):
                                                self.rmeta_port))
 
         #  1. create a new replica trail if it's the very first time
-        # of if the last one succeeded
+        # or if the last one succeeded
         msg = ('Failed to create local replica trail for snap_name:'
                ' %s. Aborting.' % self.snap_name)
         with self._clean_exit_handler(msg):
@@ -262,7 +264,7 @@ class Sender(Process):
             share_path = ('%s%s/.snapshots/%s' %
                           (settings.MNT_PT, self.replica.pool,
                            self.replica.share))
-            oldest_snap = get_oldest_snap(share_path, 3)
+            oldest_snap = get_oldest_snap(share_path, self.num_retain_snaps)
             if (oldest_snap is not None):
                 msg = ('Failed to delete snapshot: %s. Aborting.' %
                        oldest_snap)

@@ -21,6 +21,7 @@ View for things at snapshot level
 """
 
 from rest_framework.response import Response
+from rest_framework.exceptions import NotFound
 from django.db import transaction
 from storageadmin.models import (Share, Appliance)
 from smart_manager.models import (Replica, ReplicaTrail)
@@ -116,8 +117,14 @@ class ReplicaListView(ReplicaMixin, rfc.GenericView):
 
 class ReplicaDetailView(ReplicaMixin, rfc.GenericView):
     serializer_class = ReplicaSerializer
-    # Queryset added to view DRF page but not necessary for deletion
-    queryset = Replica.objects.all()
+
+    def get(self, *args, **kwargs):
+        try:
+            data = Replica.objects.get(id=self.kwargs['rid'])
+            serialized_data = ReplicaSerializer(data)
+            return Response(serialized_data.data)
+        except Replica.DoesNotExist:
+            raise NotFound(detail=None)
 
     @transaction.atomic
     def put(self, request, rid):
