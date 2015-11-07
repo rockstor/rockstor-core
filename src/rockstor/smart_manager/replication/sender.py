@@ -133,7 +133,7 @@ class Sender(Process):
                                                self.rmeta_port))
 
         #  1. create a new replica trail if it's the very first time
-        # of if the last one succeeded
+        # or if the last one succeeded
         msg = ('Failed to create local replica trail for snap_name:'
                ' %s. Aborting.' % self.snap_name)
         with self._clean_exit_handler(msg):
