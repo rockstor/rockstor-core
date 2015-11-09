@@ -186,7 +186,7 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
 .dropdown-menu>li>a:hover,
 .dropdown-menu>ul>li>a:hover {
   color: #FFFFFF;
-  background-color: #444444;
+  background-color: #E76545;
   text-decoration: none;
 }
 
@@ -1436,7 +1436,7 @@ input[type="radio"].selectedRoot {
 .side a:hover {
   text-decoration: none;
   color: #FFFFFF;
-  background-color: #444444;
+  background-color: #EB6841;
 }
 
 /** Sidebar: first level item */
