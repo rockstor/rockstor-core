@@ -176,55 +176,52 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
     color: #ffffff;
 }
 
-.dropdown-menu>li>a:hover {
-    color: #FFFFFF;
-    background-color: #E76545;
+/** Make sure all items take full width of the container - for background-color hover */
+.dropdown-menu,
+.dropdown-menu li,
+.dropdown-menu ul  {
+  padding:  0;
 }
 
-.dropdown-menu>li>a {
-    color: #FFFFFF;
-    font-family: Roboto-Light;
-        font-size: 90%;
-    letter-spacing: 1px;
+.dropdown-menu>li>a:hover,
+.dropdown-menu>ul>li>a:hover {
+  color: #FFFFFF;
+  background-color: #E76545;
+  text-decoration: none;
 }
 
-.dropdown-menu>li>span {
-    display: block;
-    padding: 3px 20px;
-    clear: both;
-    font-weight: 400;
-    line-height: 1.42857143;
-    color: #FFFFFF;
-    font-family: Roboto-Light;
-    font-size: 90%;
-    letter-spacing: 1px;
-    white-space: nowrap;
-}
-
+.dropdown-menu>li>a,
+.dropdown-menu>li>span,
 .dropdown-menu>ul>li>a {
-    display: block;
-    padding: 3px 20px;
-    clear: both;
-    font-weight: 400;
-    line-height: 1.42857143;
-    color: #FFFFFF;
-    font-family: Roboto-Light;
-    font-size: 90%;
-    letter-spacing: 1px;
-    white-space: nowrap;
+  display: block;
+  font-weight: 400;
+  color: #FFFFFF;
+  font-family: Roboto-Light, sans-serif;
+  font-size: 90%;
+  letter-spacing: 1px;
+  white-space: nowrap;
 }
 
-.dropdown-menu>ul>li>a:hover {
-    text-decoration: none;
+/** Dropdown: first level item */
+.dropdown-menu>li>a,
+.dropdown-menu>li>span {
+  padding: 7px 22px 7px 16px;
 }
 
-.dropdown-menu>ul>li>a:hover {
-    color: #FFFFFF;
+/** Dropdown: second level item-group */
+.dropdown-menu>ul {
+  padding: 0 0 10px 0;
 }
 
-.dropdown-menu>ul>li:hover {
-    background-color: #EB6841;
-    color: #000000;
+/** Dropdown: second level item */
+.dropdown-menu>ul>li>a {
+  padding: 4px 22px 4px 39px;
+}
+
+/** Set fixed width of the icons, so all is aligned */
+.dropdown-menu .glyphicon,
+.dropdown-menu .fa {
+  width: 18px;
 }
 
 .navbar-inverse .navbar-nav .dropdown-menu {
@@ -283,18 +280,6 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
         padding-left: 0px;
     }
 
-    .navbar-inverse .navbar-nav .open .dropdown-menu>li>a {
-        color: #FFFFFF;
-    }
-
-    .navbar-inverse .navbar-nav .open .dropdown-menu>li>a:hover {
-        color: #FFFFFF;
-    }
-
-    .navbar-inverse .navbar-nav .open .dropdown-menu>li:hover {
-        background-color: #EB6841;
-    }
-
     .navbar-nav .open .dropdown-menu {
         position: static;
         float: none;
@@ -304,14 +289,6 @@ select, textarea, input[type="text"], input[type="password"], input[type="dateti
         border: 0;
         -webkit-box-shadow: none;
         box-shadow: none;
-    }
-
-    .navbar-nav .open .dropdown-menu>li>a {
-        line-height: 20px;
-    }
-
-    .navbar-nav .open .dropdown-menu>li>a  {
-        padding: 5px 15px 5px 25px;
     }
 
     .navbar-nav>li:hover {
@@ -1421,10 +1398,15 @@ input[type="radio"].selectedRoot {
 
 #sidebar-inner > h3 {
     color: #FFFFFF;
-    font-family: Roboto-Medium;
+    font-family: Roboto-Medium, sans-serif;
     letter-spacing: 1px;
     border-bottom: 1px solid;
-    padding-left: 3px;
+    padding: 0 0 0 10px;
+}
+
+#sidebar-inner h3 .fa,
+#sidebar-inner h3 .glyphicon {
+  width: 20px;
 }
 
 .rockons-sidepanel {
@@ -1433,77 +1415,53 @@ input[type="radio"].selectedRoot {
     color: #FFFFFF
 }
 
-.side {
-    padding: 0;
+.side .glyphicon,
+.side .fa {
+  width: 14px;
 }
-.side > li > a.selected {
+
+.side,
+.side ul,
+.side li {
+  padding: 0;
+  list-style: none;
+}
+
+.side > li > a.selected,
+.side > li > div.subnav > ul > li > a.selected{
   background-color: #151515;
   color: #fff;
 }
 
-.subnav > ul > li > a.selected {
-  background-color: #151515;
-  color: #fff;
+.side a:hover {
+  text-decoration: none;
+  color: #FFFFFF;
+  background-color: #EB6841;
 }
 
-.side > li {
-    list-style: none;
-}
-
-.side > li > a > i {
-    list-style: none;
-}
-
-.side > li > a {
-    padding-left: 5px;
-    display: block;
-    color: #FFFFFF;
-    font-family: Roboto-Light;
-    letter-spacing: 1px;
-    padding-bottom: 4px;
-    padding-top: 4px;
-}
-
-.side > li > a:hover {
-    text-decoration: none;
-    color: #FFFFFF;
-    background-color: #EB6841;
-}
-
+/** Sidebar: first level item */
+.side > li > a,
 .side > li > div.subnav {
-    padding-left: 5px;
-    color: #FFFFFF;
-    font-family: Roboto-Light;
-    letter-spacing: 1px;
-    padding-bottom: 4px;
-    padding-top: 4px;
+  padding: 7px 0 7px 10px;
+  display: block;
+  color: #FFFFFF;
+  font-family: Roboto-Light, sans-serif;
+  letter-spacing: 1px;
 }
 
-.side > li > div.subnav ul {
-  padding-left: 0px;
-  list-style: none outside none;
+/** The second level UL element is inside the DIV. Need to offset for the DIV padding */
+.side > li > div.subnav > ul {
+  margin: 5px -10px 5px;
 }
 
-.side > li > div.subnav ul li a {
-  padding-left: 4px;
-}
-
-.nav > li > div.subnav > ul > li > a:hover {
-    text-decoration: none;
-}
-
-.side li > div.subnav > ul > li > a {
-    display: block;
-    padding-left: 20px;
-    color: #FFFFFF;
-    font-family: Roboto-Light;
-    letter-spacing: 1px;
-    text-decoration: none;
-}
-
-.side li > div.subnav > ul > li > a:hover {
-    color: #FFFFFF;
-    background-color: #EB6841;
+/** Sidebar: second level item */
+.side > li > div.subnav > ul > li > a {
+  padding: 4px 10px 4px 28px;
+  display: block;
+  color: #FFFFFF;
+  font-family: Roboto-Light, sans-serif;
+  letter-spacing: 1px;
+  text-decoration: none;
 }
 
 #content {
