@@ -156,8 +156,8 @@ class ReplicaDetailView(ReplicaMixin, rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
 
             if (r.enabled is True):
-                e_msg = ('Replica(%s) is still enabled. Disable it and '
-                         'retry.' % rid)
+                e_msg = ('Replica(%s) is enabled. If you are sure, disable it '
+                         'first and then delete.' % rid)
                 handle_exception(Exception(e_msg), request)
 
             ReplicaTrail.objects.filter(replica=r).delete()

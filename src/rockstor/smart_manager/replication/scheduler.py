@@ -32,7 +32,7 @@ import logging
 logger = logging.getLogger(__name__)
 from django.db import DatabaseError
 from util import (update_replica_status, disable_replica, prune_receive_trail,
-                  get_replicas, get_replica_trail, prune_replica_trail)
+                  get_replica_trail, prune_replica_trail)
 
 #@todo: Can we just use ORM for read only db transactions instead of API calls?
 
@@ -160,8 +160,8 @@ class ReplicaScheduler(Process):
                 total_sleep = 0 #reset
                 #check to see if we can start any new senders.
                 try:
-                    for r in get_replicas(logger):
-                        rt = get_replica_trail(r.id, logger)
+                    for replica in Replica.objects.filter(enabled=True):
+                        rt = get_replica_trail(replica.id, logger)
                         now = datetime.utcnow().replace(second=0,
                                                         microsecond=0,
                                                         tzinfo=utc)
@@ -173,27 +173,27 @@ class ReplicaScheduler(Process):
                         else:
                             snap_name = ('%s_1' % snap_name)
                         snap_id = ('%s_%s_%s_%s' %
-                                   (self.uuid, r.pool, r.share, snap_name))
+                                   (self.uuid, replica.pool, replica.share, snap_name))
                         if (len(rt) == 0):
                             logger.debug('new sender for snap: %s' % snap_id)
-                            sw = Sender(r, self.rep_ip, self.pubq, Queue(),
+                            sw = Sender(replica, self.rep_ip, self.pubq, Queue(),
                                         snap_name, self.meta_port,
-                                        self.data_port, r.meta_port, self.uuid,
+                                        self.data_port, replica.meta_port, self.uuid,
                                         snap_id)
                         elif (rt[0].status == 'succeeded'):
                             if (((now - rt[0].end_ts).total_seconds() >
-                                 (r.frequency * 60))):
+                                 (replica.frequency * 60))):
                                 logger.debug('incremental sender for snap: %s'
                                              % snap_id)
-                                sw = Sender(r, self.rep_ip, self.pubq, Queue(),
+                                sw = Sender(replica, self.rep_ip, self.pubq, Queue(),
                                             snap_name, self.meta_port,
-                                            self.data_port, r.meta_port,
+                                            self.data_port, replica.meta_port,
                                             self.uuid, snap_id, rt[0])
                             else:
                                 continue
                         elif (rt[0].status == 'pending'):
                             prev_snap_id = ('%s_%s_%s_%s' % (self.uuid,
-                                            r.pool, r.share, rt[0].snap_name))
+                                            replica.pool, replica.share, rt[0].snap_name))
                             if (prev_snap_id in self.senders):
                                 logger.debug('send process ongoing for snap: '
                                              '%s' % prev_snap_id)
@@ -216,7 +216,7 @@ class ReplicaScheduler(Process):
                             for rto in rt:
                                 if (rto.status != 'failed' or
                                     num_tries >= self.MAX_ATTEMPTS or
-                                    rto.end_ts < r.ts):
+                                    rto.end_ts < replica.ts):
                                     break
                                 num_tries = num_tries + 1
                             if (num_tries >= self.MAX_ATTEMPTS):
@@ -224,7 +224,7 @@ class ReplicaScheduler(Process):
                                             'for snap: %s. Disabling the '
                                             'replica.' %
                                             (self.MAX_ATTEMPTS, snap_id))
-                                disable_replica(r.id, logger)
+                                disable_replica(replica.id, logger)
                                 continue
                             logger.info('previous backup failed for snap: '
                                         '%s. Starting a new one. Attempt '
@@ -235,9 +235,9 @@ class ReplicaScheduler(Process):
                                 if (rto.status == 'succeeded'):
                                     prev_rt = rto
                                     break
-                            sw = Sender(r, self.rep_ip, self.pubq, Queue(),
+                            sw = Sender(replica, self.rep_ip, self.pubq, Queue(),
                                         snap_name, self.meta_port,
-                                        self.data_port, r.meta_port,
+                                        self.data_port, replica.meta_port,
                                         self.uuid, snap_id, prev_rt)
                         else:
                             logger.error('unknown replica trail status: %s. '

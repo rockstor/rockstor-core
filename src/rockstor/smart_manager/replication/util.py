@@ -59,25 +59,6 @@ def convert_ts(ts):
             ts, tformat).replace(tzinfo=utc)
 
 
-def get_replicas(logger, enabled=True):
-    try:
-        query_str = 'page_size=1000'
-        if (enabled is True):
-            query_str = ('%s&status=enabled' % query_str)
-        else:
-            query_str = ('%s&status=disabled' % query_str)
-        url = ('%ssm/replicas?%s' % (BASE_URL, query_str))
-        replicas = api_call(url, save_error=False)
-        r = []
-        for replica in replicas['results']:
-            replica['ts'] = convert_ts(replica['ts'])
-            r.append(Bunch(**replica))
-        return r
-    except Exception, e:
-        logger.exception(e)
-        raise e
-
-
 def disable_replica(rid, logger):
     try:
         url = ('%ssm/replicas/%d' % (BASE_URL, rid))
