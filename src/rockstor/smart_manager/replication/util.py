@@ -81,25 +81,6 @@ def create_replica_trail(rid, snap_name, logger):
         raise e
 
 
-def get_replica_trail(rid, logger, limit=2):
-    url = ('%ssm/replicas/trail/replica/%d?limit=%d' % (BASE_URL, rid, limit))
-    try:
-        rt = api_call(url, save_error=False)
-        res = []
-        for r in rt['results']:
-            r['snapshot_created'] = convert_ts(r['snapshot_created'])
-            r['snapshot_failed'] = convert_ts(r['snapshot_failed'])
-            r['send_pending'] = convert_ts(r['send_pending'])
-            r['send_succeeded'] = convert_ts(r['send_succeeded'])
-            r['send_failed'] = convert_ts(r['send_failed'])
-            r['end_ts'] = convert_ts(r['end_ts'])
-            res.append(Bunch(**r))
-        return res
-    except Exception, e:
-        logger.exception(e)
-        raise e
-
-
 def rshare_id(sname, logger):
     try:
         url = ('%ssm/replicas/rshare/%s' % (BASE_URL, sname))

@@ -99,8 +99,8 @@ class ReplicaShareDetailView(rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
 
             if (Share.objects.filter(name=rs.share).exists()):
-                e_msg = ('Share(%s) linked to this receive exists. If you are '
-                         'sure, delete it and try again.' % rs.share)
+                e_msg = ('To delete this, you need to first delete this Share: %s. If you are '
+                         'sure, try again after deleting it.' % rs.share)
                 handle_exception(Exception(e_msg), request)
 
             ReceiveTrail.objects.filter(rshare=rs).delete()

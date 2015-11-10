@@ -32,7 +32,7 @@ import logging
 logger = logging.getLogger(__name__)
 from django.db import DatabaseError
 from util import (update_replica_status, disable_replica, prune_receive_trail,
-                  get_replica_trail, prune_replica_trail)
+                  prune_replica_trail)
 
 #@todo: Can we just use ORM for read only db transactions instead of API calls?
 
@@ -161,7 +161,7 @@ class ReplicaScheduler(Process):
                 #check to see if we can start any new senders.
                 try:
                     for replica in Replica.objects.filter(enabled=True):
-                        rt = get_replica_trail(replica.id, logger)
+                        rt = ReplicaTrail.objects.filter(replica=replica).order_by('-id')
                         now = datetime.utcnow().replace(second=0,
                                                         microsecond=0,
                                                         tzinfo=utc)
