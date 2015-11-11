@@ -87,7 +87,6 @@ class CommandView(NFSExportMixin, APIView):
                         e_msg = ('Failed to make the Snapshot(%s) visible. '
                                  'Exception: %s' % (snap.real_name, e.__str__()))
                         logger.error(e_msg)
-                        logger.exception(e)
 
             mnt_map = sftp_mount_map(settings.SFTP_MNT_ROOT)
             for sftpo in SFTP.objects.all():
@@ -177,8 +176,7 @@ class CommandView(NFSExportMixin, APIView):
                 system_shutdown()
             except Exception, e:
                 msg = ('Failed to shutdown the system due to a low level '
-                       'error')
-                logger.exception(e)
+                       'error: %s' % e.__str__())
                 handle_exception(Exception(msg), request)
             finally:
                 return Response(msg)
@@ -189,8 +187,8 @@ class CommandView(NFSExportMixin, APIView):
                 request.session.flush()
                 system_reboot()
             except Exception, e:
-                msg = ('Failed to reboot the system due to a low level error')
-                logger.exception(e)
+                msg = ('Failed to reboot the system due to a low level error: '
+                       '%s' % e.__str__())
                 handle_exception(Exception(msg), request)
             finally:
                 return Response(msg)
