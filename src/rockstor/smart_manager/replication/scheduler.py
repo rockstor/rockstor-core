@@ -166,12 +166,11 @@ class ReplicaScheduler(Process):
                                                         microsecond=0,
                                                         tzinfo=utc)
                         sw = None
-                        snap_name = 'replication'
-                        rt2 = ReplicaTrail.objects.filter().order_by('-id')
-                        if (len(rt2) != 0):
-                            snap_name = ('%s_%d' % (snap_name, rt2[0].id + 1))
+                        snap_name = '%s_%d_replication' % (replica.share, replica.id)
+                        if (len(rt) == 0):
+                            snap_name = '%s_1' % snap_name
                         else:
-                            snap_name = ('%s_1' % snap_name)
+                            snap_name = '%s_%d' % (snap_name, rt[0].id + 1)
                         snap_id = ('%s_%s_%s_%s' %
                                    (self.uuid, replica.pool, replica.share, snap_name))
                         if (len(rt) == 0):
