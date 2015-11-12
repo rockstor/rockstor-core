@@ -74,6 +74,10 @@ AddReplicationTaskView = RockstorLayoutView.extend({
 	    replica_meta_port: RockStorGlobals.replica_meta_port,
 	    remote_pools: this.remote_pools
 	}));
+	if (!_.isUndefined(this.replicaId) && !_.isNull(this.replica)) {
+	    var crontab = this.replica.get('crontab');
+	    $('#cron').cron("value", crontab);
+	}
 
 	$('#replication-task-create-form :input').tooltip({
 	    placement: 'right'
@@ -102,6 +106,7 @@ AddReplicationTaskView = RockstorLayoutView.extend({
 		    var url = '/api/sm/replicas/' + _this.replicaId;
 		    var req_type='PUT';
 		}
+		data.crontab = $("#cron").cron("value");
 		$.ajax({
 		    url: url,
 		    type: req_type,

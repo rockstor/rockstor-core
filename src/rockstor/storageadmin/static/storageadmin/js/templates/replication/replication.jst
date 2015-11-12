@@ -46,7 +46,7 @@
 
 
 <div id="replication-warning" class="alert alert-warning" style="display:none">
-<strong>Warning! The Replication service is not turned on. </strong> 
+<strong>Warning! The Replication service is not turned on. </strong>
 </div>
 
 
@@ -78,7 +78,7 @@
 <td><%= replica.get('share') %></td>
 <td><%= replica.get('appliance') %></td>
 <td><%= replica.get('dpool') %></td>
-<td><%= moment.duration(replica.get('frequency')*60000).humanize() %></td>
+<td><%= prettyCron.toString(replica.get('crontab')) %></td>
 <td>
 <% if (replicaTrailMap[replica.id]) { %>
 <% if (replicaTrailMap[replica.id].length > 0) { %>
