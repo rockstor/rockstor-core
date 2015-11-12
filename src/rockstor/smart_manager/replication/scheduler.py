@@ -46,7 +46,6 @@ class ReplicaScheduler(Process):
         self.meta_port = settings.REPLICA_META_PORT
         self.MAX_ATTEMPTS = settings.MAX_REPLICA_SEND_ATTEMPTS
         self.recv_meta = None
-        self.pubq = Queue()
         self.uuid = None
         self.base_url = 'https://localhost/api'
         self.rep_ip = None
@@ -81,14 +80,14 @@ class ReplicaScheduler(Process):
                    (self.uuid, replica.pool, replica.share, snap_name))
         if (len(rt) == 0):
             logger.debug('new sender for snap: %s' % snap_id)
-            sw = Sender(replica, self.rep_ip, self.pubq, Queue(),
+            sw = Sender(replica, self.rep_ip, Queue(),
                         snap_name, self.meta_port,
                         self.data_port, replica.meta_port, self.uuid,
                         snap_id)
         elif (rt[0].status == 'succeeded'):
             logger.debug('incremental sender for snap: %s'
                          % snap_id)
-            sw = Sender(replica, self.rep_ip, self.pubq, Queue(),
+            sw = Sender(replica, self.rep_ip, Queue(),
                         snap_name, self.meta_port,
                         self.data_port, replica.meta_port,
                         self.uuid, snap_id, rt[0])
@@ -134,7 +133,7 @@ class ReplicaScheduler(Process):
                 if (rto.status == 'succeeded'):
                     prev_rt = rto
                     break
-            sw = Sender(replica, self.rep_ip, self.pubq, Queue(),
+            sw = Sender(replica, self.rep_ip, Queue(),
                         snap_name, self.meta_port,
                         self.data_port, replica.meta_port,
                         self.uuid, snap_id, prev_rt)
@@ -174,6 +173,14 @@ class ReplicaScheduler(Process):
         meta_pull.RCVTIMEO = 100 # milliseconds.
         meta_pull.bind('tcp://%s:%d' % (self.rep_ip, self.meta_port))
 
+        data_sink = ctx.socket(zmq.PULL)
+        data_sink.RCVTIMEO = 100 # milliseconds.
+        data_sink.bind('tcp://%s:%d' % (self.rep_ip, 10004))
+
+        poller = zmq.Poller()
+        poller.register(meta_pull, zmq.POLLIN)
+        poller.register(data_sink, zmq.POLLIN)
+
         total_sleep = 0
         while True:
             t0 = time.time()
@@ -181,57 +188,31 @@ class ReplicaScheduler(Process):
                 logger.error('Parent exited. Aborting.')
                 break
 
-            #pubq is passed to a Sender during initialization. Once a sender
-            #starts a btrfs-send process, it pipes that output to this pubq.
-            #this while loop gathers those messages and puts them on the pub
-            #socket for receivers to subscribe.
-
-            #I am seeing timeouts and perf issues where sometime messages are
-            #seemingly lost. Should we use another zmq mechanism instead of
-            #python queues? something that performs better and preserves order
-            #of messages?
-            num_msgs = 0
-            while(not self.pubq.empty()):
-                msg = self.pubq.get()
-                rep_pub.send(msg)
-                num_msgs += 1
-                if (num_msgs > self.msg_buffer_size):
-                    break
-
-            #  check for any recv's coming
-            num_msgs = 0
-            num_timeouts = 0
-            while (num_msgs < self.msg_buffer_size):
-                #if we received msg_buffer_size number of messages at once,
-                #take a break to do other stuff and come back.
-                try:
-                    self.recv_meta = meta_pull.recv_json()
-                    logger.debug('message received: %s' % self.recv_meta)
-                    num_msgs = num_msgs + 1
-                    msg_id = self.recv_meta.get('id', -1)
-                    msg = self.recv_meta.get('msg', '')
-                    if (msg == 'begin'):
-                        rw = Receiver(self.recv_meta)
-                        self.receivers[msg_id] = rw
-                        rw.start()
-                    elif (msg == 'new_send'):
-                        self._prune_workers((self.receivers, self.senders))
-                        try:
-                            replica = Replica.objects.get(id=msg_id, enabled=True)
-                            logger.debug('calling process_send')
-                            self._process_send(replica)
-                        except Replica.DoesNotExist:
-                            logger.error('Replication task with id(%s) does '
-                                         'not exist of is not enabled.' % msg_id)
-                    elif (msg_id in self.senders):
-                        self.senders[msg_id].q.put(self.recv_meta)
-                    else:
-                        logger.error('Message(%s) cannot be processed. Ignoring'
+            socks = dict(poller.poll(timeout=1000))
+            if (meta_pull in socks and socks[meta_pull] == zmq.POLLIN):
+                self.recv_meta = meta_pull.recv_json()
+                msg_id = self.recv_meta.get('id', -1)
+                msg = self.recv_meta.get('msg', '')
+                if (msg == 'begin'):
+                    rw = Receiver(self.recv_meta)
+                    self.receivers[msg_id] = rw
+                    rw.start()
+                elif (msg == 'new_send'):
+                    self._prune_workers((self.receivers, self.senders))
+                    try:
+                        replica = Replica.objects.get(id=msg_id, enabled=True)
+                        logger.debug('calling process_send')
+                        self._process_send(replica)
+                    except Replica.DoesNotExist:
+                        logger.error('Replication task with id(%s) does '
+                                     'not exist of is not enabled.' % msg_id)
+                elif (msg_id in self.senders):
+                    self.senders[msg_id].q.put(self.recv_meta)
+                else:
+                    logger.error('Message(%s) cannot be processed. Ignoring'
                                      % msg)
-                except zmq.error.Again:
-                    #recv_json throws this exception if nothing is received
-                    #for 100 milliseconds. Break, do other stuff and come back here.
-                    break
+            elif (data_sink in socks and socks[data_sink] == zmq.POLLIN):
+                rep_pub.send(data_sink.recv())
 
             if (int(time.time()) - self.prune_time > self.trail_prune_interval):
                 #trail objects keep accumulating and may grow to be quite large.

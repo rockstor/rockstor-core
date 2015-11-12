@@ -144,7 +144,7 @@ class ReplicaDetailView(ReplicaMixin, rfc.GenericView):
                 e_msg = ('Replica(%s) does not exist' % rid)
                 handle_exception(Exception(e_msg), request)
 
-            r.crontab = request.data.get('crontab')
+            r.crontab = request.data.get('crontab', r.crontab)
             enabled = request.data.get('enabled', r.enabled)
             if (type(enabled) != bool):
                 e_msg = ('enabled switch must be a boolean, not %s' %

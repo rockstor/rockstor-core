@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 class Sender(Process):
 
-    def __init__(self, replica, sender_ip, pub, q, snap_name, smeta_port,
+    def __init__(self, replica, sender_ip, q, snap_name, smeta_port,
                  sdata_port, rmeta_port, uuid, snap_id, rt=None):
         self.replica = replica
         self.receiver_ip = self._get_receiver_ip(self.replica)
@@ -46,7 +46,6 @@ class Sender(Process):
         self.sdata_port = sdata_port
         self.rmeta_port = rmeta_port
         self.sender_ip = sender_ip
-        self.pub = pub
         self.q = q
         self.snap_name = snap_name
         self.uuid = uuid
@@ -132,6 +131,11 @@ class Sender(Process):
             meta_push.connect('tcp://%s:%d' % (self.receiver_ip,
                                                self.rmeta_port))
 
+        msg = ('Failed to connect to main scheduler')
+        with self._clean_exit_handler(msg):
+            self.data_push = self.ctx.socket(zmq.PUSH)
+            self.data_push.connect('tcp://%s:%d' % (self.sender_ip, 10004))
+
         #  1. create a new replica trail if it's the very first time
         # or if the last one succeeded
         msg = ('Failed to create local replica trail for snap_name:'
@@ -192,7 +196,7 @@ class Sender(Process):
                    'command(%s). Aborting. Exception: ' % (cmd, e.__str__()))
             logger.error(msg)
             with self._update_trail_and_quit(msg):
-                self.pub.put('%sEND_FAIL' % self.snap_id)
+                self.data_push.send('%sEND_FAIL' % self.snap_id)
             self._sys_exit(3)
 
         alive = True
@@ -221,22 +225,22 @@ class Sender(Process):
                 if (alive):
                     sp.terminate()
                 with self._update_trail_and_quit(msg):
-                    self.pub.put('%sEND_FAIL' % self.snap_id)
+                    self.data_push.send('%sEND_FAIL' % self.snap_id)
                     raise e
 
             msg = ('Failed to send fsdata to the receiver for %s. Aborting.' %
                    (self.snap_id))
             with self._update_trail_and_quit(msg):
-                self.pub.put('%s%s' % (self.snap_id, fs_data))
+                self.data_push.send('%s%s' % (self.snap_id, fs_data))
                 self.kb_sent = self.kb_sent + len(fs_data)
                 credit = credit - 1
 
                 if (not alive):
                     check_credit = False
                     if (sp.returncode != 0):
-                        self.pub.put('%sEND_FAIL' % self.snap_id)
+                        self.data_push.send('%sEND_FAIL' % self.snap_id)
                     else:
-                        self.pub.put('%sEND_SUCCESS' % self.snap_id)
+                        self.data_push.send('%sEND_SUCCESS' % self.snap_id)
 
             if (os.getppid() != self.ppid):
                 logger.error('Scheduler exited. Sender for %s cannot go on. '
