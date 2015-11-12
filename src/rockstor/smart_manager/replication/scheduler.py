@@ -178,39 +178,43 @@ class ReplicaScheduler(Process):
         poller.register(meta_pull, zmq.POLLIN)
         poller.register(data_sink, zmq.POLLIN)
 
-        total_sleep = 0
         while True:
-            t0 = time.time()
             if (os.getppid() != self.ppid):
                 logger.error('Parent exited. Aborting.')
+                ctx.destroy()
                 break
 
-            socks = dict(poller.poll(timeout=1000))
-            if (meta_pull in socks and socks[meta_pull] == zmq.POLLIN):
-                self.recv_meta = meta_pull.recv_json()
-                msg_id = self.recv_meta.get('id', -1)
-                msg = self.recv_meta.get('msg', '')
-                if (msg == 'begin'):
-                    rw = Receiver(self.recv_meta)
-                    self.receivers[msg_id] = rw
-                    rw.start()
-                elif (msg == 'new_send'):
-                    self._prune_workers((self.receivers, self.senders))
-                    try:
-                        replica = Replica.objects.get(id=msg_id, enabled=True)
-                        self._process_send(replica)
-                    except Replica.DoesNotExist:
-                        logger.error('Replication task with id(%s) does '
-                                     'not exist of is not enabled.' % msg_id)
-                elif (msg_id in self.senders):
-                    #self.senders[msg_id].q.put(self.recv_meta)
-                    msg = 'meta-%s%s' % (msg_id, json.dumps(self.recv_meta))
-                    rep_pub.send(str(msg))
-                else:
-                    logger.error('Message(%s) cannot be processed. Ignoring'
+            while True:
+                socks = dict(poller.poll(timeout=10000)) #poll for 10 seconds
+                if (meta_pull in socks and socks[meta_pull] == zmq.POLLIN):
+                    self.recv_meta = meta_pull.recv_json()
+                    msg_id = self.recv_meta.get('id', -1)
+                    msg = self.recv_meta.get('msg', '')
+                    if (msg == 'begin'):
+                        rw = Receiver(self.recv_meta)
+                        self.receivers[msg_id] = rw
+                        rw.start()
+                    elif (msg == 'new_send'):
+                        self._prune_workers((self.receivers, self.senders))
+                        try:
+                            replica = Replica.objects.get(id=msg_id, enabled=True)
+                            self._process_send(replica)
+                        except Replica.DoesNotExist:
+                            logger.error('Replication task with id(%s) does '
+                                         'not exist of is not enabled.' % msg_id)
+                    elif (msg_id in self.senders):
+                        msg = 'meta-%s%s' % (msg_id, json.dumps(self.recv_meta))
+                        rep_pub.send(str(msg))
+                    else:
+                        logger.error('Message(%s) cannot be processed. Ignoring'
                                      % msg)
-            elif (data_sink in socks and socks[data_sink] == zmq.POLLIN):
-                rep_pub.send(data_sink.recv())
+                elif (data_sink in socks and socks[data_sink] == zmq.POLLIN):
+                    rep_pub.send(data_sink.recv())
+                elif (len(socks) != 0):
+                    logger.error('poller picked up something unknown: %s' % socks)
+                else:
+                    #poller came out empty after timeout. break to do other things
+                    break
 
             if (int(time.time()) - self.prune_time > self.trail_prune_interval):
                 #trail objects keep accumulating and may grow to be quite large.
