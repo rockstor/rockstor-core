@@ -53,7 +53,7 @@ setup(
             'st-pool-scrub = scripts.scheduled_tasks.pool_scrub:main',
             'delete-api-key = scripts.delete_api_key:main',
             'bootstrap = scripts.bootstrap:main',
-            'send_replica = scripts.scheduled_tasks.send_replica:main',
+            'send-replica = scripts.scheduled_tasks.send_replica:main',
         ],
     },
 
