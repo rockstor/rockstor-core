@@ -27,11 +27,12 @@ from django.utils.timezone import utc
 from django.conf import settings
 from contextlib import contextmanager
 from util import (create_share, create_receive_trail, update_receive_trail,
-                  create_snapshot, create_rshare, rshare_id, delete_snapshot,
+                  create_snapshot, create_rshare, delete_snapshot,
                   validate_src_share)
 from fs.btrfs import (get_oldest_snap, remove_share, set_property, is_subvol)
 from system.osi import run_command
 from storageadmin.models import (Disk, Pool, Appliance)
+from smart_manager.models import ReplicaShare
 import shutil
 
 
@@ -138,7 +139,7 @@ class Receiver(Process):
             msg = ('Failed to retreive the replica metadata object for '
                    'share: %s. meta: %s. Aborting.' % (sname, self.meta))
             with self._clean_exit_handler(msg):
-                self.rid = rshare_id(sname, logger)
+                self.rid = ReplicaShare.objects.get(share=sname).id
 
         sub_vol = ('%s%s/%s' % (settings.MNT_PT, self.meta['pool'],
                                 sname))
