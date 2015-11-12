@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from multiprocessing import (Process, Queue)
+from multiprocessing import Process
 import zmq
 import os
 import time
@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 from django.db import DatabaseError
 from util import (update_replica_status, disable_replica, prune_receive_trail,
                   prune_replica_trail)
+import json
 
 #@todo: Can we just use ORM for read only db transactions instead of API calls?
 
@@ -80,17 +81,14 @@ class ReplicaScheduler(Process):
                    (self.uuid, replica.pool, replica.share, snap_name))
         if (len(rt) == 0):
             logger.debug('new sender for snap: %s' % snap_id)
-            sw = Sender(replica, self.rep_ip, Queue(),
-                        snap_name, self.meta_port,
-                        self.data_port, replica.meta_port, self.uuid,
-                        snap_id)
+            sw = Sender(replica, self.rep_ip, snap_name, self.meta_port,
+                        self.data_port, replica.meta_port, self.uuid, snap_id)
         elif (rt[0].status == 'succeeded'):
             logger.debug('incremental sender for snap: %s'
                          % snap_id)
-            sw = Sender(replica, self.rep_ip, Queue(),
-                        snap_name, self.meta_port,
-                        self.data_port, replica.meta_port,
-                        self.uuid, snap_id, rt[0])
+            sw = Sender(replica, self.rep_ip, snap_name, self.meta_port,
+                        self.data_port, replica.meta_port, self.uuid, snap_id,
+                        rt[0])
         elif (rt[0].status == 'pending'):
             prev_snap_id = ('%s_%s_%s_%s' % (self.uuid,
                             replica.pool, replica.share, rt[0].snap_name))
@@ -133,10 +131,9 @@ class ReplicaScheduler(Process):
                 if (rto.status == 'succeeded'):
                     prev_rt = rto
                     break
-            sw = Sender(replica, self.rep_ip, Queue(),
-                        snap_name, self.meta_port,
-                        self.data_port, replica.meta_port,
-                        self.uuid, snap_id, prev_rt)
+            sw = Sender(replica, self.rep_ip, snap_name, self.meta_port,
+                        self.data_port, replica.meta_port, self.uuid, snap_id,
+                        prev_rt)
         else:
             return logger.error('unknown replica trail status: %s. '
                                 'ignoring snap: %s' %
@@ -201,13 +198,14 @@ class ReplicaScheduler(Process):
                     self._prune_workers((self.receivers, self.senders))
                     try:
                         replica = Replica.objects.get(id=msg_id, enabled=True)
-                        logger.debug('calling process_send')
                         self._process_send(replica)
                     except Replica.DoesNotExist:
                         logger.error('Replication task with id(%s) does '
                                      'not exist of is not enabled.' % msg_id)
                 elif (msg_id in self.senders):
-                    self.senders[msg_id].q.put(self.recv_meta)
+                    #self.senders[msg_id].q.put(self.recv_meta)
+                    msg = 'meta-%s%s' % (msg_id, json.dumps(self.recv_meta))
+                    rep_pub.send(str(msg))
                 else:
                     logger.error('Message(%s) cannot be processed. Ignoring'
                                      % msg)

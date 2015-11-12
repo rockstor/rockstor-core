@@ -31,6 +31,7 @@ from util import (create_replica_trail, update_replica_status, create_snapshot,
                   delete_snapshot)
 from fs.btrfs import get_oldest_snap
 from storageadmin.models import Appliance
+import json
 
 BTRFS = '/sbin/btrfs'
 logger = logging.getLogger(__name__)
@@ -38,7 +39,7 @@ logger = logging.getLogger(__name__)
 
 class Sender(Process):
 
-    def __init__(self, replica, sender_ip, q, snap_name, smeta_port,
+    def __init__(self, replica, sender_ip, snap_name, smeta_port,
                  sdata_port, rmeta_port, uuid, snap_id, rt=None):
         self.replica = replica
         self.receiver_ip = self._get_receiver_ip(self.replica)
@@ -46,7 +47,6 @@ class Sender(Process):
         self.sdata_port = sdata_port
         self.rmeta_port = rmeta_port
         self.sender_ip = sender_ip
-        self.q = q
         self.snap_name = snap_name
         self.uuid = uuid
         self.rt = rt
@@ -110,8 +110,8 @@ class Sender(Process):
                 self._sys_exit(3)
 
     def _process_q(self):
-        #block for 60 seconds.
-        ack = self.q.get(block=True, timeout=60)
+        ack = self.meta_sub.recv()
+        ack = json.loads(ack[len('%s-meta' % self.snap_id):])
         if (ack['msg'] == 'send_more'):
             #  excess credit messages from receiver at that end
             return self._process_q()
@@ -135,6 +135,13 @@ class Sender(Process):
         with self._clean_exit_handler(msg):
             self.data_push = self.ctx.socket(zmq.PUSH)
             self.data_push.connect('tcp://%s:%d' % (self.sender_ip, 10004))
+
+        msg = ('Failed to subscribe to the main scheduler')
+        with self._clean_exit_handler(msg):
+            self.meta_sub = self.ctx.socket(zmq.SUB)
+            self.meta_sub.connect('tcp://%s:%d' % (self.sender_ip, self.sdata_port))
+            self.meta_sub.RCVTIMEO = 60000 #60 seconds
+            self.meta_sub.setsockopt(zmq.SUBSCRIBE, 'meta-%s' % self.snap_id)
 
         #  1. create a new replica trail if it's the very first time
         # or if the last one succeeded
@@ -204,7 +211,9 @@ class Sender(Process):
         check_credit = True
         while alive:
             if (check_credit is True and credit < 1):
-                ack = self.q.get(block=True, timeout=600)
+                #This does not seem reliable. @todo: redo.
+                ack = self.meta_sub.recv()
+                ack = json.loads(ack[len('%s-meta' % self.snap_id):])
                 if (ack['msg'] == 'send_more'):
                     credit = ack['credit']
                 logger.debug('send process alive for %s. %d KB sent.' %
