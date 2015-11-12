@@ -134,7 +134,7 @@ class Sender(Process):
         msg = ('Failed to connect to main scheduler')
         with self._clean_exit_handler(msg):
             self.data_push = self.ctx.socket(zmq.PUSH)
-            self.data_push.connect('tcp://%s:%d' % (self.sender_ip, 10004))
+            self.data_push.connect('tcp://%s:%d' % (self.sender_ip, settings.REPLICA_SINK_PORT))
 
         msg = ('Failed to subscribe to the main scheduler')
         with self._clean_exit_handler(msg):

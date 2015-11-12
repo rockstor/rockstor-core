@@ -172,7 +172,7 @@ class ReplicaScheduler(Process):
 
         data_sink = ctx.socket(zmq.PULL)
         data_sink.RCVTIMEO = 100 # milliseconds.
-        data_sink.bind('tcp://%s:%d' % (self.rep_ip, 10004))
+        data_sink.bind('tcp://%s:%d' % (self.rep_ip, settings.REPLICA_SINK_PORT))
 
         poller = zmq.Poller()
         poller.register(meta_pull, zmq.POLLIN)
