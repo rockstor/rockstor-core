@@ -138,23 +138,6 @@ def prune_replica_trail(rid, logger):
     return prune_trail(url, logger)
 
 
-def is_snapshot(sname, snap_name, logger):
-    try:
-        #  do a get and see if the snapshot is already created
-        url = ('%sshares/%s/snapshots/%s' % (BASE_URL, sname, snap_name))
-        api_call(url, save_error=False)
-        return True
-    except RockStorAPIException, e:
-        if (re.match('Invalid api end point', e.detail) is not None):
-            #  it's 404.
-            return False
-        raise e
-    except Exception:
-        logger.error('exception while looking up if snapshot exists at: '
-                     '%s' % url)
-        raise
-
-
 def create_snapshot(sname, snap_name, logger, snap_type='replication'):
     try:
         url = ('%sshares/%s/snapshots/%s' % (BASE_URL, sname, snap_name))
@@ -175,17 +158,6 @@ def delete_snapshot(sname, snap_name, logger):
         if (e.detail == 'Snapshot(%s) does not exist.' % snap_name):
             return logger.debug(e.detail)
         raise e
-
-
-def is_share(sname, logger):
-    try:
-        url = ('%sshares/%s' % (BASE_URL, sname))
-        api_call(url, save_error=False)
-        return True
-    except Exception, e:
-        logger.error('Exception while looking up if share exists at: %s '
-                     '. Exception: %s' % (url, e.__str__()))
-        return False
 
 
 def create_share(sname, pool, logger):
