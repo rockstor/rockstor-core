@@ -51,7 +51,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
         self.rep_ip = None
         self.uuid = None
         self.trail_prune_interval = 3600 #seconds
-        self.prune_time = int(time.time()) - 3601
+        self.prune_time = int(time.time()) - (self.trail_prune_interval + 1)
         super(ReplicaScheduler, self).__init__()
 
     def _prune_workers(self, workers):
@@ -163,11 +163,9 @@ class ReplicaScheduler(ReplicationMixin, Process):
 
         #  synchronization messages are received in this pull socket
         meta_pull = ctx.socket(zmq.PULL)
-        meta_pull.RCVTIMEO = 100 # milliseconds.
         meta_pull.bind('tcp://%s:%d' % (self.rep_ip, self.meta_port))
 
         data_sink = ctx.socket(zmq.PULL)
-        data_sink.RCVTIMEO = 100 # milliseconds.
         data_sink.bind('tcp://%s:%d' % (self.rep_ip, settings.REPLICA_SINK_PORT))
 
         poller = zmq.Poller()
