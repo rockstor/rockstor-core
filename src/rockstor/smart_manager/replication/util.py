@@ -26,19 +26,13 @@ from storageadmin.models import Appliance
 BASE_URL = 'https://localhost/api/'
 
 
-class Bunch(object):
-    def __init__(self, **kwargs):
-        self.__dict__.update(kwargs)
-
-def get_sender_ip(uuid, logger):
-    return Appliance.objects.get(uuid=uuid).ip
-
 def validate_src_share(sender_uuid, sname):
     #do a simple get on the share of the sender.
     a = Appliance.objects.get(uuid=sender_uuid)
     url = ('https://%s:%s' % (a.ip, a.mgmt_port))
     set_token(client_id=a.client_id, client_secret=a.client_secret, url=url)
     api_call(url='%s/api/shares/%s' % (url, sname))
+
 
 def update_replica_status(rtid, data, logger):
     try:
@@ -48,15 +42,6 @@ def update_replica_status(rtid, data, logger):
         logger.error('Failed to update replica(%s) status to: %s'
                      % (url, data['status']))
         raise e
-
-
-def convert_ts(ts):
-    if (ts is not None):
-        tformat = '%Y-%m-%dT%H:%M:%SZ'
-        if (len(ts) > 20):
-            tformat = '%Y-%m-%dT%H:%M:%S.%fZ'
-        return datetime.strptime(
-            ts, tformat).replace(tzinfo=utc)
 
 
 def disable_replica(rid, logger):
@@ -77,7 +62,7 @@ def create_replica_trail(rid, snap_name, logger):
                       calltype='post', save_error=False)
         return rt
     except Exception, e:
-        logger.error('Failed to create replica trail: %s' % url)
+        logger.error('Failed to create replica trail: %s. Exception: %s' % (url, e.__str__()))
         raise e
 
 
