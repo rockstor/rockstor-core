@@ -103,6 +103,9 @@ renderReplicas: function() {
 		freeShares: this.freeShares
 
 	}));
+  /** initialize bootstrap-switch **/
+  this.$("[name='my-checkbox']").bootstrapSwitch();
+
 	this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
 	this.$(".ph-pagination").html(this.paginationTemplate({
 		collection: this.collection
@@ -133,7 +136,12 @@ renderReplicas: function() {
 		slider.dragger.unbind('mousedown');
 	});
 	this.displayReplicationWarning(this.serviceName);
+	//this.testSwitch();
 },
+
+/*testSwitch: function(){
+	this.$("[name='my-checkbox']").bootstrapSwitch();
+},*/
 
 enable: function(event) {
 	var _this = this;
