@@ -31,13 +31,12 @@ from cli.rest_util import api_call
 import logging
 logger = logging.getLogger(__name__)
 from django.db import DatabaseError
-from util import (update_replica_status, disable_replica, prune_receive_trail,
-                  prune_replica_trail)
+from util import ReplicationMixin
+
 import json
 
-#@todo: Can we just use ORM for read only db transactions instead of API calls?
 
-class ReplicaScheduler(Process):
+class ReplicaScheduler(ReplicationMixin, Process):
 
     def __init__(self):
         self.ppid = os.getpid()
@@ -104,7 +103,7 @@ class ReplicaScheduler(Process):
                     'end_ts': now.strftime(settings.SNAP_TS_FORMAT),
                     'error': msg,
                     'send_failed': now, }
-            return update_replica_status(rt[0].id, data, logger)
+            return self.update_replica_status(rt[0].id, data)
         elif (rt[0].status == 'failed'):
             snap_name = rt[0].snap_name
             #  if num_failed attempts > 10, disable the replica
@@ -120,7 +119,7 @@ class ReplicaScheduler(Process):
                             'for snap: %s. Disabling the '
                             'replica.' %
                             (self.MAX_ATTEMPTS, snap_id))
-                return disable_replica(replica.id, logger)
+                return self.disable_replica(replica.id)
 
             logger.info('previous backup failed for snap: '
                         '%s. Starting a new one. Attempt '
@@ -224,9 +223,9 @@ class ReplicaScheduler(Process):
                 #by default the prune helper methods delete records older than 7 days
                 self.prune_time = int(time.time()) #reset
                 for rs in ReplicaShare.objects.all():
-                    prune_receive_trail(rs.id, logger)
+                    self.prune_receive_trail(rs.id)
                 for r in Replica.objects.all():
-                    prune_replica_trail(r.id, logger)
+                    self.prune_replica_trail(r.id)
 
 def main():
     rs = ReplicaScheduler()

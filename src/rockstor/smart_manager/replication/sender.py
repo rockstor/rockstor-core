@@ -27,8 +27,7 @@ from django.conf import settings
 from datetime import datetime
 from contextlib import contextmanager
 from django.utils.timezone import utc
-from util import (create_replica_trail, update_replica_status, create_snapshot,
-                  delete_snapshot)
+from util import ReplicationMixin
 from fs.btrfs import get_oldest_snap
 from storageadmin.models import Appliance
 import json
@@ -37,7 +36,7 @@ BTRFS = '/sbin/btrfs'
 logger = logging.getLogger(__name__)
 
 
-class Sender(Process):
+class Sender(ReplicationMixin, Process):
 
     def __init__(self, replica, sender_ip, snap_name, smeta_port,
                  sdata_port, rmeta_port, uuid, snap_id, rt=None):
@@ -103,7 +102,7 @@ class Sender(Process):
                 data = {'status': 'failed',
                         'error': msg,
                         'end_ts': datetime.utcnow().replace(tzinfo=utc).strftime(settings.SNAP_TS_FORMAT), }
-                update_replica_status(self.rt2_id, data, logger)
+                self.update_replica_status(self.rt2_id, data)
             except Exception, e:
                 logger.error('Exception occured in cleanup handler: %s' % e.__str__())
             finally:
@@ -128,7 +127,7 @@ class Sender(Process):
             msg = ('Failed to delete snapshot: %s. Aborting.' %
                    oldest_snap)
             with self._clean_exit_handler(msg):
-                delete_snapshot(self.replica.share, oldest_snap, logger)
+                self.delete_snapshot(self.replica.share, oldest_snap)
                 return self._delete_old_snaps(share_path)
 
     def run(self):
@@ -157,15 +156,15 @@ class Sender(Process):
         msg = ('Failed to create local replica trail for snap_name:'
                ' %s. Aborting.' % self.snap_name)
         with self._clean_exit_handler(msg):
-            self.rt2 = create_replica_trail(self.replica.id,
-                                            self.snap_name, logger)
+            self.rt2 = self.create_replica_trail(self.replica.id,
+                                                 self.snap_name)
             self.rt2_id = self.rt2['id']
 
         #  2. create a snapshot only if it's not already from a previous
         #  failed attempt.
         msg = ('Failed to create snapshot: %s. Aborting.' % self.snap_name)
         with self._clean_exit_handler(msg):
-            create_snapshot(self.replica.share, self.snap_name, logger)
+            self.create_snapshot(self.replica.share, self.snap_name)
 
         #  let the receiver know that following diff is coming
         msg = ('Failed to send initial metadata communication to the '
@@ -186,7 +185,7 @@ class Sender(Process):
                 msg = ('Failed to update replica status for snap_name: %s. '
                        'Aborting.' % self.snap_name)
                 with self._clean_exit_handler(msg):
-                    update_replica_status(self.rt2_id, data, logger)
+                    self.update_replica_status(self.rt2_id, data)
                     self._sys_exit(0)
 
         snap_path = ('%s%s/.snapshots/%s/%s' %
@@ -294,5 +293,5 @@ class Sender(Process):
         msg = ('Failed to update final replica status for %s'
                '. Aborting.' % self.snap_id)
         with self._clean_exit_handler(msg):
-            update_replica_status(self.rt2_id, data, logger)
+            self.update_replica_status(self.rt2_id, data)
         self._sys_exit(0)

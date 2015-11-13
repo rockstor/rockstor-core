@@ -26,9 +26,7 @@ from datetime import datetime
 from django.utils.timezone import utc
 from django.conf import settings
 from contextlib import contextmanager
-from util import (create_share, create_receive_trail, update_receive_trail,
-                  create_snapshot, create_rshare, delete_snapshot,
-                  validate_src_share)
+from util import ReplicationMixin
 from fs.btrfs import (get_oldest_snap, remove_share, set_property, is_subvol)
 from system.osi import run_command
 from storageadmin.models import (Disk, Pool, Appliance)
@@ -40,7 +38,7 @@ BTRFS = '/sbin/btrfs'
 logger = logging.getLogger(__name__)
 
 
-class Receiver(Process):
+class Receiver(ReplicationMixin, Process):
 
     def __init__(self, meta):
         self.meta = meta
@@ -94,7 +92,7 @@ class Receiver(Process):
                'ip: %s) for meta: %s. Did the ip of the sender change?' %
                (self.src_share, self.sender_id, self.sender_ip, self.meta))
         with self._clean_exit_handler(msg):
-            validate_src_share(self.sender_id, self.src_share)
+            self.validate_src_share(self.sender_id, self.src_share)
 
         msg = ('Failed to connect to the sender(%s) on data_port(%s). meta: '
                '%s. Aborting.' % (self.sender_ip, self.data_port, self.meta))
@@ -122,7 +120,7 @@ class Receiver(Process):
             msg = ('Failed to verify/create share: %s. meta: %s. '
                    'Aborting.' % (sname, self.meta))
             with self._clean_exit_handler(msg, ack=True):
-                create_share(sname, self.dest_pool, logger)
+                self.create_share(sname, self.dest_pool)
 
             msg = ('Failed to create the replica metadata object '
                    'for share: %s. meta: %s. Aborting.' %
@@ -133,7 +131,7 @@ class Receiver(Process):
                         'src_share': self.src_share,
                         'data_port': self.data_port,
                         'meta_port': self.meta_port, }
-                self.rid = create_rshare(data, logger)
+                self.rid = self.create_rshare(data)
 
         else:
             msg = ('Failed to retreive the replica metadata object for '
@@ -196,15 +194,14 @@ class Receiver(Process):
                            self.snap_name)
                     # create a snapshot only if it's not already from a previous failed attempt
                     with self._clean_exit_handler(msg, ack=True):
-                        create_snapshot(sname, self.snap_name, logger,
-                                        snap_type='receiver')
+                        self.create_snapshot(sname, self.snap_name,
+                                             snap_type='receiver')
 
                     data = {'snap_name': self.snap_name}
                     msg = ('Failed to create receive trail for rid: %d'
                            '. meta: %s' % (self.rid, self.meta))
                     with self._clean_exit_handler(msg, ack=True):
-                        self.rtid = create_receive_trail(self.rid, data,
-                                                         logger)
+                        self.rtid = self.create_receive_trail(self.rid, data)
 
                 if (recv_data == 'END_SUCCESS' or recv_data == 'END_FAIL'):
                     check_credit = False
@@ -229,7 +226,7 @@ class Receiver(Process):
                                 run_command(['/usr/bin/rm', '-rf', share_path],
                                             throw=False)
                                 shutil.move(snap_path, share_path)
-                                delete_snapshot(sname, oldest_snap, logger)
+                                self.delete_snapshot(sname, oldest_snap)
                             except Exception, e:
                                 logger.error('%s. Exception: %s' % (msg, e.__str__()))
                     else:
@@ -242,7 +239,7 @@ class Receiver(Process):
                     msg = ('Failed to update receive trail for rtid: %d'
                            '. meta: %s' % (self.rtid, self.meta))
                     with self._clean_exit_handler(msg, ack=True):
-                        update_receive_trail(self.rtid, data, logger)
+                        self.update_receive_trail(self.rtid, data)
                     break
                 if (rp.poll() is None):
                     rp.stdin.write(recv_data)
@@ -259,7 +256,7 @@ class Receiver(Process):
                         data = {'receive_failed': ts.strftime(settings.SNAP_TS_FORMAT),
                                 'status': 'failed',
                                 'error': msg, }
-                        update_receive_trail(self.rtid, data, logger)
+                        self.update_receive_trail(self.rtid, data)
             except zmq.error.Again:
                 recv_timeout_counter = recv_timeout_counter + 1
                 if (recv_timeout_counter > 600): #60 seconds
@@ -279,7 +276,7 @@ class Receiver(Process):
                 msg = ('Failed to update receive trail for rtid: %d'
                        '. meta: %s' % (self.rtid, self.meta))
                 with self._clean_exit_handler(msg, ack=True):
-                    update_receive_trail(self.rtid, data, logger)
+                    self.update_receive_trail(self.rtid, data)
                 self._sys_exit(3)
             finally:
                 if (os.getppid() != self.ppid):
@@ -305,7 +302,7 @@ class Receiver(Process):
         msg = ('Failed to update receive trail for rtid: %d. meta: '
                '%s' % (self.rtid, self.meta))
         with self._clean_exit_handler(msg, ack=True):
-            update_receive_trail(self.rtid, data, logger)
+            self.update_receive_trail(self.rtid, data)
 
         msg = ('Failed to send final ack to the sender for meta: %s' %
                self.meta)
