@@ -110,22 +110,22 @@ class ReplicationMixin(object):
             raise
 
     @staticmethod
-    def prune_trail(url, days=7):
+    def prune_trail(url, days=1):
         try:
             data = {'days': days, }
             return api_call(url, data=data, calltype='delete', save_error=False)
         except Exception, e:
             logger.error('Failed to prune trail for url(%s). Exception: %s' % (url, e.__str__()))
 
-    @staticmethod
-    def prune_receive_trail(rid):
+    @classmethod
+    def prune_receive_trail(cls, rid):
         url = ('%ssm/replicas/rtrail/rshare/%d' % (BASE_URL, rid))
-        return prune_trail(url)
+        return cls.prune_trail(url)
 
-    @staticmethod
-    def prune_replica_trail(rid):
+    @classmethod
+    def prune_replica_trail(cls, rid):
         url = ('%ssm/replicas/trail/replica/%d' % (BASE_URL, rid))
-        return prune_trail(url)
+        return cls.prune_trail(url)
 
     @staticmethod
     def create_snapshot(sname, snap_name, snap_type='replication'):
