@@ -119,8 +119,17 @@ class Sender(Process):
         if (ack['msg'] == 'error'):
             error = 'Error on Receiver: %s' % ack['error']
             with self._update_trail_and_quit(error):
-                raise Exception('got error from receiver')
+                raise Exception(error)
         return ack
+
+    def _delete_old_snaps(self, share_path):
+        oldest_snap = get_oldest_snap(share_path, self.num_retain_snaps)
+        if (oldest_snap is not None):
+            msg = ('Failed to delete snapshot: %s. Aborting.' %
+                   oldest_snap)
+            with self._clean_exit_handler(msg):
+                delete_snapshot(self.replica.share, oldest_snap, logger)
+                return self._delete_old_snaps(share_path)
 
     def run(self):
         msg = ('Failed to connect to receiver(%s) on meta port'
@@ -280,14 +289,10 @@ class Sender(Process):
             share_path = ('%s%s/.snapshots/%s' %
                           (settings.MNT_PT, self.replica.pool,
                            self.replica.share))
-            oldest_snap = get_oldest_snap(share_path, self.num_retain_snaps)
-            if (oldest_snap is not None):
-                msg = ('Failed to delete snapshot: %s. Aborting.' %
-                       oldest_snap)
-                with self._clean_exit_handler(msg):
-                    delete_snapshot(self.replica.share, oldest_snap, logger)
+            self._delete_old_snaps(share_path)
 
         msg = ('Failed to update final replica status for %s'
                '. Aborting.' % self.snap_id)
         with self._clean_exit_handler(msg):
             update_replica_status(self.rt2_id, data, logger)
+        self._sys_exit(0)
