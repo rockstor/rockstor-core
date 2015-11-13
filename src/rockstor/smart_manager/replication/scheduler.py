@@ -50,11 +50,8 @@ class ReplicaScheduler(ReplicationMixin, Process):
         self.base_url = 'https://localhost/api'
         self.rep_ip = None
         self.uuid = None
-        self.max_senders = 50
-        self.msg_buffer_size = 1000
         self.trail_prune_interval = 3600 #seconds
-        self.sender_check_interval = 30 #seconds
-        self.prune_time = int(time.time())
+        self.prune_time = int(time.time()) - 3601
         super(ReplicaScheduler, self).__init__()
 
     def _prune_workers(self, workers):
