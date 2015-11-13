@@ -213,11 +213,13 @@ class Sender(Process):
             if (check_credit is True and credit < 1):
                 #This does not seem reliable. @todo: redo.
                 ack = self.meta_sub.recv()
-                ack = json.loads(ack[len('%s-meta' % self.snap_id):])
+                ack = json.loads(ack[len('meta-%s' % self.snap_id):])
                 if (ack['msg'] == 'send_more'):
                     credit = ack['credit']
-                logger.debug('send process alive for %s. %d KB sent.' %
-                             (self.snap_id, int(self.kb_sent/1024)))
+                    logger.debug('send process alive for %s. %d KB sent.' %
+                                 (self.snap_id, int(self.kb_sent/1024)))
+                else:
+                    logger.error('unexpected message received: %s' % ack)
             try:
                 if (sp.poll() is not None):
                     logger.debug('send process finished for %s. rc: %d. '
@@ -261,6 +263,7 @@ class Sender(Process):
                % (self.receiver_ip, self.snap_id))
         with self._update_trail_and_quit(msg):
             ack = self._process_q()
+            self.data_push.send('%sACK_SUCCESS' % self.snap_id)
 
         end_ts = datetime.utcnow().replace(tzinfo=utc).strftime(settings.SNAP_TS_FORMAT)
         data = {'status': 'succeeded',

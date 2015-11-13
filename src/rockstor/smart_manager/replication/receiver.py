@@ -312,4 +312,12 @@ class Receiver(Process):
         with self._clean_exit_handler(msg):
             logger.debug('Receive finished for %s. ack = %s' % (sname, ack))
             self.meta_push.send_json(ack)
+
+        try:
+            recv_sub.RCVTIMEO = 60000
+            recv_data = recv_sub.recv()
+            recv_data = recv_data[len(self.meta['id']):]
+        except Exception, e:
+            logger.error('Exception while waiting for final ack from sender: %s' % e.__str__())
+
         self._sys_exit(0)
