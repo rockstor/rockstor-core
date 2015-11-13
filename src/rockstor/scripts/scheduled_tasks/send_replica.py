@@ -19,21 +19,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import os
 os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 import sys
-import json
-from datetime import datetime
-from storageadmin.models import (Share, Snapshot)
-from smart_manager.models import (Task, TaskDefinition)
-from cli.rest_util import api_call
-from django.utils.timezone import utc
 from django.conf import settings
+import zmq
+from storageadmin.models import NetworkInterface
 import logging
 logger = logging.getLogger(__name__)
 
 
 def main():
     rid = int(sys.argv[1])
-    import zmq
-    from storageadmin.models import NetworkInterface
     ctx = zmq.Context()
     #convert to request reply socket
     push_socket = ctx.socket(zmq.PUSH)
