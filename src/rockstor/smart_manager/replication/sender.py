@@ -89,7 +89,7 @@ class Sender(Process):
             logger.error('%s. Exception: %s' % (msg, e.__str__()))
             self._sys_exit(3)
 
-    def _sys_exit(self, code, linger=6000):
+    def _sys_exit(self, code, linger=60000):
         self.ctx.destroy(linger=linger)
         sys.exit(code)
 

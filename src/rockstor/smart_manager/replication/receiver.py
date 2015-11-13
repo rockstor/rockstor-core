@@ -61,7 +61,7 @@ class Receiver(Process):
         self.ctx = zmq.Context()
         super(Receiver, self).__init__()
 
-    def _sys_exit(self, code, linger=6000):
+    def _sys_exit(self, code, linger=60000):
         self.ctx.destroy(linger=linger)
         sys.exit(code)
 

@@ -185,6 +185,8 @@ class ReplicaScheduler(Process):
                 break
 
             while True:
+                #This loop may still continue even if replication service
+                #is terminated, as long as data is coming in.
                 socks = dict(poller.poll(timeout=10000)) #poll for 10 seconds
                 if (meta_pull in socks and socks[meta_pull] == zmq.POLLIN):
                     self.recv_meta = meta_pull.recv_json()
