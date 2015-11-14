@@ -130,14 +130,15 @@ AddReplicationTaskView = RockstorLayoutView.extend({
 	var _this = this;
 	var target_appliance = null;
 	var ip = $('#appliance').attr('value');
-	this.appliances.each(function(a) {
-	    if (!target_appliance && !a.current_appliance) {
-		target_appliance = a;
-	    } else if (ip && a.get('ip') == ip) {
-		target_appliance = a;
-	    }
-
-	});
+	if (!ip) {
+	    target_appliance = this.appliances.find(function(a) {
+		return !a.get('current_appliance');
+	    });
+	} else {
+	    target_appliance = this.appliances.find(function(a) {
+		return (a.get(ip) == ip);
+	    });
+	}
     	var uuid = target_appliance.get('uuid');
 	$.ajax({
 	    url: '/api/sm/replicas/rpool/' + uuid,
