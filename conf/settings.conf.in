@@ -315,6 +315,7 @@ VALID_SHELLS = ('${buildout:depdir}/bin/rcli', '/bin/bash', '/sbin/nologin',)
 SCHEDULER = ('127.0.0.1', ${django-settings-conf:schedulerport})
 REPLICA_DATA_PORT = ${django-settings-conf:reppubport}
 REPLICA_META_PORT = ${django-settings-conf:reprecvport}
+REPLICA_SINK_PORT = ${django-settings-conf:repsinkport}
 MAX_REPLICA_SEND_ATTEMPTS = 10
 DEFAULT_SEND_CREDIT = 10
 

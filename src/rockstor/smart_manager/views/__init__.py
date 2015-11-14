@@ -51,3 +51,4 @@ from docker_service import DockerServiceView
 from smartd_service import SMARTDServiceView
 from nut_service import NUTServiceView
 from active_directory import ActiveDirectoryServiceView
+from receiver_pools import ReceiverPoolListView

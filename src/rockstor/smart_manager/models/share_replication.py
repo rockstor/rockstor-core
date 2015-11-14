@@ -29,11 +29,11 @@ class Replica(models.Model):
     dpool = models.CharField(max_length=4096)
     dshare = models.CharField(max_length=4096, null=True)
     enabled = models.BooleanField(default=False)
-    frequency = models.IntegerField()
     data_port = models.IntegerField(default=settings.REPLICA_DATA_PORT)
     meta_port = models.IntegerField(default=settings.REPLICA_META_PORT)
     """enabled/disabled state change ts"""
     ts = models.DateTimeField(null=True, db_index=True)
+    crontab = models.CharField(max_length=64, null=True)
 
     class Meta:
         app_label = 'smart_manager'
@@ -106,4 +106,3 @@ class ReceiveTrail(models.Model):
 
     class Meta:
         app_label = 'smart_manager'
-

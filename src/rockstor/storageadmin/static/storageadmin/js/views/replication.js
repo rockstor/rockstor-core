@@ -82,9 +82,9 @@ renderReplicas: function() {
 		return replica.get('share');
 	});
 	_.each(shares, function(share) {
-		_this.replicaShareMap[share] = _this.collection.filter(function(replica) {
-			return replica.get('share') == share;
-		})
+	    _this.replicaShareMap[share] = _this.collection.filter(function(replica) {
+		return replica.get('share') == share;
+	    });
 	});
 	this.collection.each(function(replica, index) {
 		var tmp = _this.replicaTrails.filter(function(replicaTrail) {
@@ -123,7 +123,7 @@ renderReplicas: function() {
 	this.$('input.service-status').simpleSlider({
 		"theme": "volume",
 		allowedValues: [0,1],
-		snap: true 
+		snap: true
 	});
 
 	this.$('input.service-status').each(function(i, el) {
@@ -216,9 +216,9 @@ getSliderVal: function(serviceName) {
 
 startService: function(event) {
 	var _this = this;
-	var serviceName = this.serviceName; 
+	var serviceName = this.serviceName;
 	// if already started, return
-	if (this.getSlider1Val(serviceName).toString() == "1") return; 
+	if (this.getSlider1Val(serviceName).toString() == "1") return;
 	this.stopPolling();
 	this.setStatusLoading(serviceName, true);
 	$.ajax({
@@ -227,7 +227,7 @@ startService: function(event) {
 		dataType: "json",
 		success: function(data, status, xhr) {
 		_this.highlightStartEl(serviceName, true);
-		_this.setSlider1Val(serviceName, 1); 
+		_this.setSlider1Val(serviceName, 1);
 		_this.setStatusLoading(serviceName, false);
 		_this.startPolling();
 		_this.displayReplicationWarning(serviceName);
@@ -241,9 +241,9 @@ startService: function(event) {
 
 stopService: function(event) {
 	var _this = this;
-	var serviceName = $(event.currentTarget).data('service-name'); 
+	var serviceName = $(event.currentTarget).data('service-name');
 	// if already stopped, return
-	if (this.getSlider1Val(serviceName).toString() == "0") return; 
+	if (this.getSlider1Val(serviceName).toString() == "0") return;
 	this.stopPolling();
 	this.setStatusLoading(serviceName, true);
 	$.ajax({
@@ -252,7 +252,7 @@ stopService: function(event) {
 		dataType: "json",
 		success: function(data, status, xhr) {
 		_this.highlightStartEl(serviceName, false);
-		_this.setSlider1Val(serviceName, 0); 
+		_this.setSlider1Val(serviceName, 0);
 		_this.setStatusLoading(serviceName, false);
 		_this.startPolling();
 		_this.displayReplicationWarning(serviceName);
@@ -299,10 +299,10 @@ updateStatus: function() {
 		var serviceName = service.get('name');
 		if (service.get('status')) {
 			_this.highlightStartEl(serviceName, true);
-			_this.setSlider1Val(serviceName, 1); 
+			_this.setSlider1Val(serviceName, 1);
 		} else {
 			_this.highlightStartEl(serviceName, false);
-			_this.setSlider1Val(serviceName, 0); 
+			_this.setSlider1Val(serviceName, 0);
 		}
 		var currentTime = new Date().getTime();
 		var diff = currentTime - _this.startTime;
@@ -311,7 +311,7 @@ updateStatus: function() {
 			_this.updateStatus();
 		} else {
 			// wait till updateFreq msec has elapsed since startTime
-			_this.timeoutId = window.setTimeout( function() { 
+			_this.timeoutId = window.setTimeout( function() {
 				_this.updateStatus();
 			}, _this.updateFreq - diff);
 		}
@@ -358,7 +358,7 @@ displayReplicationWarning: function(serviceName) {
 
 cleanup: function() {
 	this.stopPolling();
-}	  
+}
 
 
 
