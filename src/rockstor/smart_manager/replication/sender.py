@@ -148,7 +148,7 @@ class Sender(ReplicationMixin, Process):
         with self._clean_exit_handler(msg):
             self.meta_sub = self.ctx.socket(zmq.SUB)
             self.meta_sub.connect('tcp://%s:%d' % (self.sender_ip, self.sdata_port))
-            self.meta_sub.RCVTIMEO = 60000 #60 seconds
+            self.meta_sub.RCVTIMEO = 600000 #10 minutes
             self.meta_sub.setsockopt(zmq.SUBSCRIBE, 'meta-%s' % self.snap_id)
 
         #  1. create a new replica trail if it's the very first time

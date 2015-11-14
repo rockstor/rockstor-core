@@ -32,7 +32,6 @@ import logging
 logger = logging.getLogger(__name__)
 from django.db import DatabaseError
 from util import ReplicationMixin
-
 import json
 
 
@@ -203,7 +202,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
                         rep_pub.send(str(msg))
                     else:
                         logger.error('Message(%s) cannot be processed. Ignoring'
-                                     % msg)
+                                     % self.recv_meta)
                 elif (data_sink in socks and socks[data_sink] == zmq.POLLIN):
                     rep_pub.send(data_sink.recv())
                 elif (len(socks) != 0):

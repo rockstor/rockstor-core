@@ -113,7 +113,7 @@ class Receiver(ReplicationMixin, Process):
             #in the db, no error is raised here.
             recv_sub = self.ctx.socket(zmq.SUB)
             recv_sub.connect('tcp://%s:%d' % (self.sender_ip, self.data_port))
-            recv_sub.RCVTIMEO = 100
+            recv_sub.RCVTIMEO = 1000 # 1 second
             recv_sub.setsockopt(zmq.SUBSCRIBE, str(self.meta['id']))
 
         msg = ('Failed to connect to the sender(%s) on '
@@ -245,7 +245,7 @@ class Receiver(ReplicationMixin, Process):
                         logger.error('END_FAIL received for meta: %s. '
                                      'Terminating.' % self.meta)
                         rp.terminate()
-                        data['receive_failed'] = ts
+                        data['receive_failed'] = ts.strftime(settings.SNAP_TS_FORMAT)
                         data['status'] = 'failed'
 
                     msg = ('Failed to update receive trail for rtid: %d'
@@ -271,7 +271,7 @@ class Receiver(ReplicationMixin, Process):
                         self.update_receive_trail(self.rtid, data)
             except zmq.error.Again:
                 recv_timeout_counter = recv_timeout_counter + 1
-                if (recv_timeout_counter > 600): #60 seconds
+                if (recv_timeout_counter > 600): #10 minutes
                     logger.error('Nothing received in the last 60 seconds '
                                  'from the sender(%s) for meta: %s. Aborting.'
                                  % (self.sender_ip, self.meta))
