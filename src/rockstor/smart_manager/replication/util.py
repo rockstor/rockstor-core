@@ -79,8 +79,8 @@ class ReplicationMixin(object):
         except Exception:
             raise
 
-    @staticmethod
-    def create_rshare(data):
+    @classmethod
+    def create_rshare(cls, data):
         try:
             url = ('%ssm/replicas/rshare' % BASE_URL)
             rshare = api_call(url, data=data, calltype='post', save_error=False)
@@ -88,7 +88,7 @@ class ReplicationMixin(object):
         except RockStorAPIException, e:
             if (e.detail == 'Replicashare(%s) already exists.' % data['share']):
                 logger.debug(e.detail)
-                return rshare_id(data['share'])
+                return cls.rshare_id(data['share'])
             raise e
 
     @staticmethod

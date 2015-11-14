@@ -110,7 +110,7 @@ class Sender(ReplicationMixin, Process):
 
     def _process_q(self):
         ack = self.meta_sub.recv()
-        ack = json.loads(ack[len('%s-meta' % self.snap_id):])
+        ack = json.loads(ack[len('meta-%s' % self.snap_id):])
         if (ack['msg'] == 'send_more'):
             #  excess credit messages from receiver at that end
             return self._process_q()
