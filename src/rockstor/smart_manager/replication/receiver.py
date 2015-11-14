@@ -82,6 +82,16 @@ class Receiver(ReplicationMixin, Process):
                     self._sys_exit(3)
             self._sys_exit(3)
 
+    def _delete_old_snaps(self, share_name, share_path, num_retain):
+        oldest_snap = get_oldest_snap(share_path, num_retain)
+        if (oldest_snap is not None):
+            msg = ('Failed to delete snapshot: %s. Aborting.' %
+                   oldest_snap)
+            with self._clean_exit_handler(msg):
+                self.delete_snapshot(share_name, oldest_snap)
+                return self._delete_old_snaps(share_name, share_path, num_retain)
+
+
     def run(self):
         msg = ('Failed to get the sender ip from the uuid(%s) for meta: %s' %
                (self.meta['uuid'], self.meta))
@@ -209,6 +219,8 @@ class Receiver(ReplicationMixin, Process):
                     data = {'kb_received': self.kb_received / 1024, }
                     if (recv_data == 'END_SUCCESS'):
                         data['receive_succeeded'] = ts.strftime(settings.SNAP_TS_FORMAT)
+                        #delete any snapshots older than num_retain
+                        self._delete_old_snaps(sname, snap_dir, self.num_retain_snaps + 1)
                         #delete the share, move the oldest snap to share
                         oldest_snap = get_oldest_snap(snap_dir, self.num_retain_snaps)
                         if (oldest_snap is not None):
