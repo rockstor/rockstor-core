@@ -104,9 +104,9 @@ ReplicationView = RockstorLayoutView.extend({
 	}));
 
 	// Display Service Warning
-	if(!this.replicationService.get('status')){
+	if (!this.replicationService.get('status')) {
 	    this.$('#replication-warning').show();
-	}else{
+	} else {
 	    this.$('#replication-warning').hide();
 	}
 	/** initialize bootstrap-switch **/
@@ -268,49 +268,6 @@ ReplicationView = RockstorLayoutView.extend({
 	}
     },
 
-    startPolling: function() {
-	var _this = this;
-	// start after updateFreq
-	this.timeoutId = window.setTimeout(function() {
-	    _this.updateStatus();
-	}, this.updateFreq);
-    },
-
-    updateStatus: function() {
-	var _this = this;
-	_this.startTime = new Date().getTime();
-	_this.replicationService.fetch({
-	    silent: true,
-	    success: function(service, response, options) {
-		var serviceName = service.get('name');
-		if (service.get('status')) {
-		    _this.highlightStartEl(serviceName, true);
-		    _this.setSlider1Val(serviceName, 1);
-		} else {
-		    _this.highlightStartEl(serviceName, false);
-		    _this.setSlider1Val(serviceName, 0);
-		}
-		var currentTime = new Date().getTime();
-		var diff = currentTime - _this.startTime;
-		// if diff > updateFreq, make next call immediately
-		if (diff > _this.updateFreq) {
-		    _this.updateStatus();
-		} else {
-		    // wait till updateFreq msec has elapsed since startTime
-		    _this.timeoutId = window.setTimeout( function() {
-			_this.updateStatus();
-		    }, _this.updateFreq - diff);
-		}
-	    }
-	});
-    },
-
-    stopPolling: function() {
-	if (!_.isUndefined(this.timeoutId)) {
-	    window.clearInterval(this.timeoutId);
-	}
-    },
-
     setStatusError: function(serviceName, xhr) {
 	var statusEl = this.$('div.command-status[data-service-name="' + serviceName + '"]');
 	var msg = parseXhrError(xhr);
@@ -324,14 +281,7 @@ ReplicationView = RockstorLayoutView.extend({
 	var errPopupContent = this.$('#' + serviceName + '-err-popup > div');
 	errPopupContent.html(msg);
 	statusEl.click(function(){ errPopup.overlay().load(); });
-    },
-
-
-    cleanup: function() {
-	this.stopPolling();
     }
-
-
 
 });
 
