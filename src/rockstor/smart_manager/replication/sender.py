@@ -24,7 +24,6 @@ import zmq
 import subprocess
 import fcntl
 from django.conf import settings
-from datetime import datetime
 from contextlib import contextmanager
 from django.utils.timezone import utc
 from util import ReplicationMixin
@@ -100,8 +99,7 @@ class Sender(ReplicationMixin, Process):
             logger.error('%s. Exception: %s' % (msg, e.__str__()))
             try:
                 data = {'status': 'failed',
-                        'error': msg,
-                        'end_ts': datetime.utcnow().replace(tzinfo=utc).strftime(settings.SNAP_TS_FORMAT), }
+                        'error': msg, }
                 self.update_replica_status(self.rt2_id, data)
             except Exception, e:
                 logger.error('Exception occured in cleanup handler: %s' % e.__str__())
@@ -180,7 +178,6 @@ class Sender(ReplicationMixin, Process):
             ack = self._process_q()
             if (ack['msg'] == 'snap_exists'):
                 data = {'status': 'succeeded',
-                        'end_ts': datetime.utcnow().replace(tzinfo=utc).strftime(settings.SNAP_TS_FORMAT),
                         'error': 'snapshot already exists on the receiver', }
                 msg = ('Failed to update replica status for snap_name: %s. '
                        'Aborting.' % self.snap_name)
@@ -273,17 +270,14 @@ class Sender(ReplicationMixin, Process):
             ack = self._process_q()
             self.data_push.send('%sACK_SUCCESS' % self.snap_id)
 
-        end_ts = datetime.utcnow().replace(tzinfo=utc).strftime(settings.SNAP_TS_FORMAT)
         data = {'status': 'succeeded',
-                'kb_sent': self.kb_sent / 1024,
-                'end_ts': end_ts, }
+                'kb_sent': self.kb_sent / 1024, }
         if (ack['msg'] == 'receive_error'):
             msg = ('Receiver(%s) returned a processing error for '
                    ' %s. Check it for more information.'
                    % (self.receiver_ip, self.snap_id))
             data['status'] = 'failed'
             data['error'] = msg
-            data['send_failed'] = end_ts
         else:
             share_path = ('%s%s/.snapshots/%s' %
                           (settings.MNT_PT, self.replica.pool,

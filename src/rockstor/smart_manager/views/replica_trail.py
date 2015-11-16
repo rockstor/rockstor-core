@@ -78,13 +78,15 @@ class ReplicaTrailDetailView(rfc.GenericView):
     def put(self, request, rtid):
         with self._handle_exception(request):
             rt = ReplicaTrail.objects.get(id=rtid)
-            new_status = request.data['status']
+            rt.status = request.data['status']
             if ('error' in request.data):
                 rt.error = request.data['error']
             if ('kb_sent' in request.data):
                 rt.kb_sent = request.data['kb_sent']
-            if ('end_ts' in request.data):
-                rt.end_ts = datetime.strptime(request.data['end_ts'], settings.SNAP_TS_FORMAT).replace(tzinfo=utc)
-            rt.status = new_status
+            if (rt.status in ('failed', 'succeeded',)):
+                ts = datetime.utcnow().replace(tzinfo=utc)
+                rt.end_ts = ts
+                if (rt.status == 'failed'):
+                    rt.send_failed = ts
             rt.save()
             return Response(ReplicaTrailSerializer(rt).data)
