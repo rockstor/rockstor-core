@@ -19,6 +19,18 @@
  */
 </script>
 
+<script>
+$(document).ready(function() {
+  $('#cron').cron({
+  initial: "42 3 * * 5",
+  customValues: {
+    "30 minutes" : "*/30 * * * *",
+  },
+    useGentleSelect: true
+});
+});
+</script>
+
 <% if (replicaId == null) { %>
 <div class="row">
   <div class="col-md-8">
@@ -73,15 +85,22 @@
 	<div class="form-group">
 	  <label class="col-sm-4 control-label" for="pool">Target pool<span class="required"> *</span></label>
 	  <div class="col-sm-6">
-	    <input class="form-control" type="text" id="pool" name="pool" placeholder="Target pool name" title="Name of a Pool(must already exists) on the remote appliance. Selected Share will be replicated inside this pool.">
+	    <select class="form-control" id="pool" name="pool" title="Target pool">
+	      <% for (var i=0; i < remote_pools.length; i++) { %>
+		 <option value="<%= remote_pools[i] %>"> <%= remote_pools[i] %></option>
+		 <% } %>
+	    </select>
 	  </div>
 	</div>
 	<div class="form-group">
-	  <label class="col-sm-4 control-label" for="frequency">Replication frequency<span class="required"> *</span></label>
-	  <div class="col-sm-6">
-	    <input class="form-control" type="text" id="frequency" name="frequency" placeholder="Frequency in minutes" title="Replication frequency in minutes." >
-	  </div>
+         <label class="col-sm-4 control-label" for="cron">Replication Frequency</label>
+         <div class="row">
+           <div class="col-sm-6">
+             <div id="cron"></div>
+           </div>
+         </div>
 	</div>
+
 	<div class="form-group">
 	  <div class="col-sm-offset-4 col-sm-8">
 	    <a id="js-cancel" class="btn btn-default">Cancel</a>
@@ -139,10 +158,12 @@
 	  </div>
 	</div>
 	<div class="form-group">
-	  <label class="col-sm-4 control-label" for="frequency">Frequency in minutes:<span class="required"> *</span></label>
-	  <div class="col-sm-6">
-	    <input class="form-control" type="text" id="frequency" name="frequency" value="<%= replica.get('frequency')%> "  title="Replication frequency in minutes" >
-	  </div>
+         <label class="col-sm-4 control-label" for="cron">Replication Frequency</label>
+         <div class="row">
+           <div class="col-sm-6">
+             <div id="cron"></div>
+           </div>
+         </div>
 	</div>
 	<div class="form-group">
 	  <div class="col-sm-offset-4 col-sm-8">

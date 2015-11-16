@@ -21,7 +21,7 @@ from django.conf import settings
 from smart_manager.views import (ReplicaListView, ReplicaTrailListView,
                                  ReplicaShareListView, ReplicaShareDetailView,
                                  ReceiveTrailListView, ReceiveTrailDetailView,
-                                 ReplicaTrailDetailView, ReplicaDetailView)
+                                 ReplicaTrailDetailView, ReplicaDetailView, ReceiverPoolListView)
 share_regex = settings.SHARE_REGEX
 
 urlpatterns = patterns('',
@@ -41,5 +41,5 @@ urlpatterns = patterns('',
     url(r'^rtrail$', ReceiveTrailListView.as_view()),
     url(r'^rtrail/rshare/(?P<rid>[0-9]+)$', ReceiveTrailListView.as_view()),
     url(r'^rtrail/(?P<rtid>[0-9]+)', ReceiveTrailDetailView.as_view()),
-
+    url(r'^rpool/(?P<auuid>.*)$', ReceiverPoolListView.as_view()),
 )

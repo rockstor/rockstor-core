@@ -28,7 +28,25 @@ class EmailTests(APITestMixin, APITestCase):
     @classmethod
     def setUpClass(cls):
         super(EmailTests, cls).setUpClass()
-
+       
+        cls.patch_systemctl = patch('storageadmin.views.email_client.systemctl')
+        cls.mock_systemctl = cls.patch_systemctl.start()
+        
+        cls.patch_send_test_email = patch('storageadmin.views.email_client.send_test_email')
+        cls.mock_send_test_email = cls.patch_send_test_email.start()
+        
+        
+        cls.patch_update_postfix = patch('storageadmin.views.email_client.update_postfix')
+        cls.mock_update_postfix = cls.patch_update_postfix.start()
+        
+        cls.patch_update_generic = patch('storageadmin.views.email_client.update_generic')
+        cls.mock_update_generic = cls.patch_update_generic.start()
+        
+        cls.patch_update_forward = patch('storageadmin.views.email_client.update_forward')
+        cls.mock_update_forward = cls.patch_update_forward.start()
+        
+        cls.patch_update_sasl = patch('storageadmin.views.email_client.update_sasl')
+        cls.mock_update_sasl = cls.patch_update_sasl.start()
 
     @classmethod
     def tearDownClass(cls):

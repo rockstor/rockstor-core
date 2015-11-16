@@ -26,11 +26,12 @@
 
 
 AddReplicationTaskView = RockstorLayoutView.extend({
-	events: {
-	"click #js-cancel": "cancel"
-},
+    events: {
+	"click #js-cancel": "cancel",
+	"change #appliance":  "fetchRemotePools"
+    },
 
-initialize: function() {
+    initialize: function() {
 	this.constructor.__super__.initialize.apply(this, arguments);
 	this.template = window.JST.replication_add_replication_task;
 	this.shares = new ShareCollection();
@@ -39,85 +40,119 @@ initialize: function() {
 	this.dependencies.push(this.appliances);
 	this.replicas = new ReplicaCollection();
 	this.dependencies.push(this.replicas);
+	this.remote_pools = [];
 
 	this.replicaId = this.options.replicaId;
 
 	if (!_.isUndefined(this.replicaId) && !_.isNull(this.replicaId)) {
-		this.replica = new Replica({id: this.replicaId});
-		this.dependencies.push(this.replica);
+	    this.replica = new Replica({id: this.replicaId});
+	    this.dependencies.push(this.replica);
 	}
-},
+    },
 
-render: function() {
+    render: function() {
 	this.fetch(this.renderNewReplicationTask, this);
 	return this;
-},
+    },
 
-renderNewReplicationTask: function() {
+    renderNewReplicationTask: function() {
 	var _this = this;
 	this.freeShares = this.shares.reject(function(share) {
-		return !_.isUndefined(_this.replicas.find(function(replica) {
-			return replica.get('share') == share.get('name');
-		})) ;
+	    return !_.isUndefined(_this.replicas.find(function(replica) {
+		return replica.get('share') == share.get('name');
+	    })) ;
 	});
+	if (this.remote_pools.length == 0) {
+	    this.fetchRemotePools();
+	}
 	$(this.el).html(this.template({
-		shares: this.freeShares,
-		appliances: this.appliances,
-		replica: this.replica,
-		replicaId: this.replicaId,
-		replica_data_port: RockStorGlobals.replica_data_port,
-		replica_meta_port: RockStorGlobals.replica_meta_port,
+	    shares: this.freeShares,
+	    appliances: this.appliances,
+	    replica: this.replica,
+	    replicaId: this.replicaId,
+	    replica_data_port: RockStorGlobals.replica_data_port,
+	    replica_meta_port: RockStorGlobals.replica_meta_port,
+	    remote_pools: this.remote_pools
 	}));
+	if (!_.isUndefined(this.replicaId) && !_.isNull(this.replica)) {
+	    var crontab = this.replica.get('crontab');
+	    $('#cron').cron("value", crontab);
+	}
 
 	$('#replication-task-create-form :input').tooltip({
-		placement: 'right'
+	    placement: 'right'
 	});
 
 	$('#replication-task-create-form').validate({
-		onfocusout: false,
-		onkeyup: false,
-		rules: {
+	    onfocusout: false,
+	    onkeyup: false,
+	    rules: {
 		task_name: "required",
 		pool: "required",
 		frequency: {
-		required: true,
-		number: true
-	}
-	},
-	submitHandler: function() {
+		    required: true,
+		    number: true
+		}
+	    },
+	    submitHandler: function() {
 		var button = $('#create_replication_task');
 		if (buttonDisabled(button)) return false;
 		disableButton(button);
 		var data = _this.$('#replication-task-create-form').getJSON();
 		if (_this.replicaId == null) {
-			var url = '/api/sm/replicas/';
-			var req_type='POST';
+		    var url = '/api/sm/replicas/';
+		    var req_type='POST';
 		} else {
-			var url = '/api/sm/replicas/' + _this.replicaId;
-			var req_type='PUT';
+		    var url = '/api/sm/replicas/' + _this.replicaId;
+		    var req_type='PUT';
 		}
+		data.crontab = $("#cron").cron("value");
 		$.ajax({
-			url: url,
-			type: req_type,
-			dataType: 'json',
-			contentType: 'application/json',
-			data: JSON.stringify(data),
-			success: function() {
+		    url: url,
+		    type: req_type,
+		    dataType: 'json',
+		    contentType: 'application/json',
+		    data: JSON.stringify(data),
+		    success: function() {
 			enableButton(button);
 			app_router.navigate('replication', {trigger: true});
-		},
-		error: function(xhr, status, error) {
+		    },
+		    error: function(xhr, status, error) {
 			enableButton(button);
-		}
+		    }
 		});
 		return false;
-	}
+	    }
 	});
-},
+    },
 
-cancel: function(event) {
+    fetchRemotePools: function(event) {
+	var _this = this;
+	var target_appliance = null;
+	var ip = $('#appliance').attr('value');
+	if (!ip) {
+	    target_appliance = this.appliances.find(function(a) {
+		return !a.get('current_appliance');
+	    });
+	} else {
+	    target_appliance = this.appliances.find(function(a) {
+		return (a.get(ip) == ip);
+	    });
+	}
+    	var uuid = target_appliance.get('uuid');
+	$.ajax({
+	    url: '/api/sm/replicas/rpool/' + uuid,
+	    dataType: 'json',
+	    success: function(data, status, xhr) {
+		_this.remote_pools = data;
+		_this.renderNewReplicationTask();
+	    }
+	});
+    },
+
+    cancel: function(event) {
 	event.preventDefault();
 	app_router.navigate('replication', {trigger: true});
-}
+    }
 
 });

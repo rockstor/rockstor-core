@@ -896,11 +896,12 @@ def get_oldest_snap(subvol_path, num_retain):
     snaps = {}
     for l in o:
         fields = l.split()
-        if (len(fields) > 0 and re.search(share_name, fields[-1]) is not None):
+        if (len(fields) > 0):
             snap_fields = fields[-1].split('/')
-            if (snap_fields[-1] == share_name):
+            if (len(snap_fields) != 3 or
+                snap_fields[1] != share_name):
                 continue
-            snaps[int(fields[1])] = snap_fields[-1]
+            snaps[int(fields[1])] = snap_fields[2]
     snap_ids = sorted(snaps.keys())
     if (len(snap_ids) > num_retain):
         return snaps[snap_ids[0]]

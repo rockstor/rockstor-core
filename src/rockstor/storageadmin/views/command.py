@@ -26,7 +26,7 @@ from rest_framework.authentication import (BasicAuthentication,
                                            SessionAuthentication)
 from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
-from system.osi import (uptime, refresh_nfs_exports, kernel_info)
+from system.osi import (uptime, kernel_info)
 from fs.btrfs import (mount_share, device_scan, mount_root, qgroup_create,
                       get_pool_info, pool_raid, pool_usage, shares_info,
                       share_usage, snaps_info, mount_snap)
@@ -34,7 +34,7 @@ from system.ssh import (sftp_mount_map, sftp_mount)
 from system.services import systemctl
 from system.osi import (is_share_mounted, system_shutdown, system_reboot)
 from storageadmin.models import (Share, Disk, NFSExport, SFTP, Pool, Snapshot,
-                                 UpdateSubscription)
+                                 UpdateSubscription, AdvancedNFSExport)
 from storageadmin.util import handle_exception
 from datetime import datetime
 from django.utils.timezone import utc
@@ -87,7 +87,6 @@ class CommandView(NFSExportMixin, APIView):
                         e_msg = ('Failed to make the Snapshot(%s) visible. '
                                  'Exception: %s' % (snap.real_name, e.__str__()))
                         logger.error(e_msg)
-                        logger.exception(e)
 
             mnt_map = sftp_mount_map(settings.SFTP_MNT_ROOT)
             for sftpo in SFTP.objects.all():
@@ -101,10 +100,13 @@ class CommandView(NFSExportMixin, APIView):
                     logger.error(e_msg)
 
             try:
+                adv_entries = [a.export_str for a in AdvancedNFSExport.objects.all()]
+                exports_d = self.create_adv_nfs_export_input(adv_entries, request)
                 exports = self.create_nfs_export_input(NFSExport.objects.all())
-                refresh_nfs_exports(exports)
+                exports.update(exports_d)
+                self.refresh_wrapper(exports, request, logger)
             except Exception, e:
-                e_msg = ('Exception while exporting NFS: %s' % e.__str__())
+                e_msg = ('Exception while bootstrapping NFS: %s' % e.__str__())
                 logger.error(e_msg)
 
             #  bootstrap services
@@ -174,8 +176,7 @@ class CommandView(NFSExportMixin, APIView):
                 system_shutdown()
             except Exception, e:
                 msg = ('Failed to shutdown the system due to a low level '
-                       'error')
-                logger.exception(e)
+                       'error: %s' % e.__str__())
                 handle_exception(Exception(msg), request)
             finally:
                 return Response(msg)
@@ -186,8 +187,8 @@ class CommandView(NFSExportMixin, APIView):
                 request.session.flush()
                 system_reboot()
             except Exception, e:
-                msg = ('Failed to reboot the system due to a low level error')
-                logger.exception(e)
+                msg = ('Failed to reboot the system due to a low level error: '
+                       '%s' % e.__str__())
                 handle_exception(Exception(msg), request)
             finally:
                 return Response(msg)
