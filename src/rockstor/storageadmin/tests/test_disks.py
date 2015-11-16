@@ -37,6 +37,25 @@ class DiskTests(APITestMixin, APITestCase):
         cls.mock_wipe_disk = cls.patch_wipe_disk.start()
         cls.mock_wipe_disk.return_value = 'out','err', 0
 
+        cls.patch_scan_disks = patch('storageadmin.views.disk.scan_disks')
+        cls.mock_scan_disks = cls.patch_scan_disks.start()
+        
+        cls.patch_blink_disk = patch('storageadmin.views.disk.blink_disk')
+        cls.mock_blink_disk = cls.patch_blink_disk.start()
+        
+        cls.patch_pool_usage = patch('storageadmin.views.disk.pool_usage')
+        cls.mock_pool_usage = cls.patch_pool_usage.start()
+        cls.mock_pool_usage.return_value = (14680064, 10, 4194305)
+        
+        cls.patch_mount_root = patch('storageadmin.views.disk.mount_root')
+        cls.mock_mount_root = cls.patch_mount_root.start()
+        
+        
+        cls.patch_pool_raid = patch('storageadmin.views.disk.pool_raid')
+        cls.mock_pool_raid = cls.patch_pool_raid.start()
+        
+        cls.patch_enable_quota = patch('storageadmin.views.disk.enable_quota')
+        cls.mock_enable_quota = cls.patch_enable_quota.start()
         
 
     @classmethod
