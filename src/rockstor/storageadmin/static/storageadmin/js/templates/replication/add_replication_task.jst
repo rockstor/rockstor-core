@@ -24,7 +24,11 @@ $(document).ready(function() {
   $('#cron').cron({
   initial: "42 3 * * 5",
   customValues: {
+    "5 minutes" : "*/5 * * * *",
+    "10 minutes": "*/10 * * * *",
+    "20 minutes": "*/20 * * * *",
     "30 minutes" : "*/30 * * * *",
+    "45 minutes" : "*/45 * * * *",
   },
     useGentleSelect: true
 });
@@ -58,7 +62,7 @@ $(document).ready(function() {
 	  </div>
 	</div>
 	<div class="form-group">
-	  <label class="col-sm-4 control-label" for="appliance">Target appliance<span class="required"> *</span></label>
+	  <label class="col-sm-4 control-label" for="appliance">Remote appliance<span class="required"> *</span></label>
 	  <div class="col-sm-6">
 	    <select class="form-control" id="appliance" name="appliance" title="Share will be replicated to this remote Rockstor appliance.">
 	      <% appliances.each(function(appliance, index) { %>
@@ -83,9 +87,9 @@ $(document).ready(function() {
 	  </div>
 	</div>
 	<div class="form-group">
-	  <label class="col-sm-4 control-label" for="pool">Target pool<span class="required"> *</span></label>
+	  <label class="col-sm-4 control-label" for="pool">Remote pool<span class="required"> *</span></label>
 	  <div class="col-sm-6">
-	    <select class="form-control" id="pool" name="pool" title="Target pool">
+	    <select class="form-control" id="pool" name="pool" title="Share will be replicated to this Pool on the remote Rockstor appliance.">
 	      <% for (var i=0; i < remote_pools.length; i++) { %>
 		 <option value="<%= remote_pools[i] %>"> <%= remote_pools[i] %></option>
 		 <% } %>
