@@ -20,7 +20,6 @@ from multiprocessing import Process
 import zmq
 import os
 import time
-from datetime import datetime
 from storageadmin.models import (NetworkInterface, Appliance)
 from smart_manager.models import (ReplicaTrail, ReplicaShare, Replica)
 from django.conf import settings
@@ -63,9 +62,6 @@ class ReplicaScheduler(ReplicationMixin, Process):
 
     def _process_send(self, replica):
         rt = ReplicaTrail.objects.filter(replica=replica).order_by('-id')
-        now = datetime.utcnow().replace(second=0,
-                                        microsecond=0,
-                                        tzinfo=utc)
         sw = None
         snap_name = '%s_%d_replication' % (replica.share, replica.id)
         if (len(rt) == 0):
@@ -96,9 +92,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
             msg = ('Sender process Aborted. See logs for '
                    'more information')
             data = {'status': 'failed',
-                    'end_ts': now.strftime(settings.SNAP_TS_FORMAT),
-                    'error': msg,
-                    'send_failed': now, }
+                    'error': msg, }
             return self.update_replica_status(rt[0].id, data)
         elif (rt[0].status == 'failed'):
             snap_name = rt[0].snap_name
