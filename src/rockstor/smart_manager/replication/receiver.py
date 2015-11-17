@@ -22,7 +22,6 @@ import sys
 import logging
 import zmq
 import subprocess
-from datetime import datetime
 from django.utils.timezone import utc
 from django.conf import settings
 from contextlib import contextmanager
@@ -215,10 +214,9 @@ class Receiver(ReplicationMixin, Process):
 
                 if (recv_data == 'END_SUCCESS' or recv_data == 'END_FAIL'):
                     check_credit = False
-                    ts = datetime.utcnow().replace(tzinfo=utc)
                     data = {'kb_received': self.kb_received / 1024, }
                     if (recv_data == 'END_SUCCESS'):
-                        data['receive_succeeded'] = ts.strftime(settings.SNAP_TS_FORMAT)
+                        data['status'] = 'succeeded'
                         #delete any snapshots older than num_retain
                         self._delete_old_snaps(sname, snap_dir, self.num_retain_snaps + 1)
                         #delete the share, move the oldest snap to share
@@ -245,7 +243,6 @@ class Receiver(ReplicationMixin, Process):
                         logger.error('END_FAIL received for meta: %s. '
                                      'Terminating.' % self.meta)
                         rp.terminate()
-                        data['receive_failed'] = ts.strftime(settings.SNAP_TS_FORMAT)
                         data['status'] = 'failed'
 
                     msg = ('Failed to update receive trail for rtid: %d'
@@ -264,9 +261,7 @@ class Receiver(ReplicationMixin, Process):
                            'command. out: %s err: %s for rtid: %s meta: %s'
                            % (out, err, self.rtid, self.meta))
                     with self._clean_exit_handler(msg, ack=True):
-                        ts = datetime.utcnow().replace(tzinfo=utc)
-                        data = {'receive_failed': ts.strftime(settings.SNAP_TS_FORMAT),
-                                'status': 'failed',
+                        data = {'status': 'failed',
                                 'error': msg, }
                         self.update_receive_trail(self.rtid, data)
             except zmq.error.Again:
@@ -281,7 +276,6 @@ class Receiver(ReplicationMixin, Process):
                 logger.error(msg)
                 rp.terminate()
                 out, err = rp.communicate()
-                data['receive_failed'] = datetime.utcnow().replace(tzinfo=utc).strftime(settings.SNAP_TS_FORMAT)
                 data['status'] = 'failed'
                 data['error'] = msg
 
@@ -305,8 +299,7 @@ class Receiver(ReplicationMixin, Process):
 
         ack = {'msg': 'receive_ok',
                'id': self.meta['id'], }
-        data = {'status': 'succeeded',
-                'end_ts': datetime.utcnow().replace(tzinfo=utc).strftime(settings.SNAP_TS_FORMAT), }
+        data = {'status': 'succeeded', }
         if (rp.returncode != 0):
             ack['msg'] = 'receive_error'
             data['status'] = 'failed'

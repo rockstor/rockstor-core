@@ -17,7 +17,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import re
-from datetime import datetime
 from django.utils.timezone import utc
 from cli.rest_util import (api_call, set_token)
 from storageadmin.exceptions import RockStorAPIException
