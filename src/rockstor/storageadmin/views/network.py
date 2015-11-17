@@ -170,9 +170,7 @@ class NetworkDetailView(rfc.GenericView, NetworkMixin):
                 handle_exception(Exception(e_msg), request)
             ni = NetworkInterface.objects.get(name=iname)
 
-            itype = request.data.get('itype')
-            if (itype != 'management'):
-                itype = 'io'
+            itype = request.data.get('itype', 'unassigned')
             method = request.data.get('method')
             ni.onboot = 'yes'
             if (method == 'auto'):
@@ -210,7 +208,7 @@ class NetworkDetailView(rfc.GenericView, NetworkMixin):
                     self._update_nginx(ni.ipaddr)
                 except Exception, e:
                     logger.error('Failed to update Nginx. Exception: %s' % e.__str__())
-            elif (itype == 'io' and ni.itype == 'management'):
+            elif (itype != 'management' and ni.itype == 'management'):
                 try:
                     self._update_nginx()
                 except Exception, e:

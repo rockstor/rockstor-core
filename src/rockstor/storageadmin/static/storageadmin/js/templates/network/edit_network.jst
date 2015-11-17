@@ -89,18 +89,17 @@
             <% } %>
           </div>
         </div>
-        <div class="form-group">
-          <div class="col-sm-offset-4 col-sm-8">
-            <label class="checkbox-inline">
-              <% if (network.get('itype') == 'management') { %>
-                <input class="checkbox-inline" type="checkbox" id="itype" name="itype" placeholder="Management Interface" checked="checked" title="The Web-UI will be accessible only through this interface. We do not recommend enabling this if you are currently using the Web-UI through another interface. It will result in disconnection.">
-              <% } else { %>
-                <input class="checkbox-inline" type="checkbox" id="itype" name="itype" placeholder="Management Interface" title="The Web-UI will be accessible only through this interface. We do not recommend enabling this if you are currently using the Web-UI through another interface. It will result in disconnection.">
-              <% } %>
-              Restrict Web-UI management only through this interface.
-            </label>
+	<div class="form-group">
+          <label class="col-sm-4 control-label" for="itype">Interface role<span class="required"> *</span></label>
+          <div class="col-sm-4">
+            <select class="form-control" id="itype" name="itype">
+              <option value="<%= network.get('itype') %>" selected="selected"><%= network.get('itype') %></option>
+              <option value="unassigned">unassigned</option>
+              <option value="management">management</option>
+              <option value="replication">replication</option>
+            </select>
           </div>
-        </div>
+	</div>
         <div class="form-group">
           <div class="col-sm-offset-4 col-sm-8">
 	    <button id="cancel" class="btn btn-default">Cancel</button>

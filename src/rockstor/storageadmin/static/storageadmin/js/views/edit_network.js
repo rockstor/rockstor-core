@@ -53,7 +53,13 @@ EditNetworkView = RockstorLayoutView.extend({
 	var _this = this;
 	$(this.el).html(this.template({network: this.network}));
 
-	this.$('#edit-network-form :input').tooltip({placement: 'right'});
+	this.$('#edit-network-form input').tooltip({placement: 'right'});
+
+	this.$('#itype').tooltip({
+	    html: true,
+	    placement: 'right',
+	    title: "You can assign a role for this interface. <strong>Unassigned</strong>: No special role will be assigned. <strong>Management</strong>: All Web-UI management will be restricted to this interface. <strong>Replication</strong>: Replication service will use this interface. Without a designated interface, Replication service will use the management interface by default"
+	});
 
 	this.validator = this.$("#edit-network-form").validate({
 	    onfocusout: false,
@@ -83,11 +89,6 @@ EditNetworkView = RockstorLayoutView.extend({
 		disableButton(cancelButton);
 		var network = new NetworkInterface({name: _this.name});
 		var data = _this.$('#edit-network-form').getJSON();
-		if (_this.$("#itype").prop("checked")) {
-		    data.itype = 'management';
-		} else {
-		    data.itype = '';
-		}
 		network.save(data, {
 		    success: function(model, response, options) {
 			app_router.navigate("network", {trigger: true});
