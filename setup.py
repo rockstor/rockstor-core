@@ -65,7 +65,7 @@ setup(
         'pytz == 2014.3',
         'django-pipeline == 1.2.23',
         'requests == 1.1.0',
-        'pyzmq == 13.0.0',
+        'pyzmq == 15.0.0',
         'South == 0.8.4',
         'psycopg2 == 2.6',
         'django-oauth-toolkit == 0.7.0',
