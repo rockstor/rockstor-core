@@ -107,8 +107,9 @@ class Sender(ReplicationMixin, Process):
                 self._sys_exit(3)
 
     def _process_q(self):
-        ack = self.meta_sub.recv()
+        ack = self.meta_sub.recv_string()
         ack = json.loads(ack[len('meta-%s' % self.snap_id):])
+        logger.debug('ack received by sender: %s' % ack)
         if (ack['msg'] == 'send_more'):
             #  excess credit messages from receiver at that end
             return self._process_q()
@@ -147,7 +148,8 @@ class Sender(ReplicationMixin, Process):
             self.meta_sub = self.ctx.socket(zmq.SUB)
             self.meta_sub.connect('tcp://%s:%d' % (self.sender_ip, self.sdata_port))
             self.meta_sub.RCVTIMEO = 600000 #10 minutes
-            self.meta_sub.setsockopt(zmq.SUBSCRIBE, 'meta-%s' % self.snap_id)
+            substr = 'meta-%s' % self.snap_id
+            self.meta_sub.setsockopt_string(zmq.SUBSCRIBE, substr.decode('ascii'))
 
         #  1. create a new replica trail if it's the very first time
         # or if the last one succeeded
@@ -171,7 +173,7 @@ class Sender(ReplicationMixin, Process):
         with self._update_trail_and_quit(msg):
             meta_push.send_json(self.meta_begin)
 
-        msg = ('Timeout occured(60 seconds) while waiting for OK '
+        msg = ('Timeout occured while waiting for OK '
                'from the receiver(%s) to start sending data. Aborting.'
                % self.receiver_ip)
         with self._update_trail_and_quit(msg):
@@ -217,7 +219,7 @@ class Sender(ReplicationMixin, Process):
         while alive:
             if (check_credit is True and credit < 1):
                 #This does not seem reliable. @todo: redo.
-                ack = self.meta_sub.recv()
+                ack = self.meta_sub.recv_string()
                 ack = json.loads(ack[len('meta-%s' % self.snap_id):])
                 if (ack['msg'] == 'send_more'):
                     credit = ack['credit']
@@ -263,7 +265,7 @@ class Sender(ReplicationMixin, Process):
                              'Aborting.' % self.snap_id)
                 self._sys_exit(3)
 
-        msg = ('Timeout occured(60 seconds) while waiting for final '
+        msg = ('Timeout occured while waiting for final '
                'send confirmation from the receiver(%s) for %s. Aborting.'
                % (self.receiver_ip, self.snap_id))
         with self._update_trail_and_quit(msg):

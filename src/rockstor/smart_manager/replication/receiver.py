@@ -74,6 +74,7 @@ class Receiver(ReplicationMixin, Process):
                                'id': self.meta['id'],
                                'error': msg, }
                     self.meta_push.send_json(err_ack)
+                    logger.debug('error_ack sent: %s' % err_ack)
                 except Exception, e:
                     msg = ('Failed to send ack: %s to the sender for meta: '
                            '%s. Aborting' % (err_ack, self.meta))
@@ -113,7 +114,7 @@ class Receiver(ReplicationMixin, Process):
             recv_sub = self.ctx.socket(zmq.SUB)
             recv_sub.connect('tcp://%s:%d' % (self.sender_ip, self.data_port))
             recv_sub.RCVTIMEO = 1000 # 1 second
-            recv_sub.setsockopt(zmq.SUBSCRIBE, str(self.meta['id']))
+            recv_sub.setsockopt_string(zmq.SUBSCRIBE, self.meta['id'].decode('ascii'))
 
         msg = ('Failed to connect to the sender(%s) on '
                'meta_port(%d). meta: %s. Aborting.' %
@@ -164,6 +165,7 @@ class Receiver(ReplicationMixin, Process):
                 ack = {'msg': 'snap_exists',
                        'id': self.meta['id'], }
                 self.meta_push.send_json(ack)
+                logger.debug('snap_exists ack sent: %s' % ack)
 
         cmd = [BTRFS, 'receive', snap_dir]
         msg = ('Failed to start the low level btrfs receive command(%s)'
@@ -179,6 +181,7 @@ class Receiver(ReplicationMixin, Process):
             ack = {'msg': 'begin_ok',
                    'id': self.meta['id'], }
             self.meta_push.send_json(ack)
+            logger.debug('begin_ok ack sent: %s' % ack)
         recv_timeout_counter = 0
         credit = settings.DEFAULT_SEND_CREDIT
         check_credit = True
@@ -188,6 +191,7 @@ class Receiver(ReplicationMixin, Process):
                        'id': self.meta['id'],
                        'credit': settings.DEFAULT_SEND_CREDIT, }
                 self.meta_push.send_json(ack)
+                logger.debug('send_more ack sent: %s' % ack)
                 credit = credit + settings.DEFAULT_SEND_CREDIT
                 logger.debug('%d KB received for %s' %
                              (int(self.kb_received / 1024), sname))
@@ -312,8 +316,8 @@ class Receiver(ReplicationMixin, Process):
         msg = ('Failed to send final ack to the sender for meta: %s' %
                self.meta)
         with self._clean_exit_handler(msg):
-            logger.debug('Receive finished for %s. ack = %s' % (sname, ack))
             self.meta_push.send_json(ack)
+            logger.debug('Receive finished for %s. ack = %s' % (sname, ack))
 
         try:
             recv_sub.RCVTIMEO = 60000

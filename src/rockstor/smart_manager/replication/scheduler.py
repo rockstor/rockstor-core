@@ -192,8 +192,9 @@ class ReplicaScheduler(ReplicationMixin, Process):
                             logger.error('Replication task with id(%s) does '
                                          'not exist of is not enabled.' % msg_id)
                     elif (msg_id in self.senders):
+                        logger.debug('message received for a sender: %s' % self.recv_meta)
                         msg = 'meta-%s%s' % (msg_id, json.dumps(self.recv_meta))
-                        rep_pub.send(str(msg))
+                        rep_pub.send_string(msg.decode('ascii'))
                     else:
                         logger.error('Message(%s) cannot be processed. Ignoring'
                                      % self.recv_meta)
