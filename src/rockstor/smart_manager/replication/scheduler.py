@@ -137,10 +137,13 @@ class ReplicaScheduler(ReplicationMixin, Process):
             if (NetworkInterface.objects.filter(itype='replication').exists()):
                 self.rep_ip = NetworkInterface.objects.filter(itype='replication')[0].ipaddr
             else:
-                self.rep_ip = NetworkInterface.objects.filter(ipaddr__isnull=False)[0].ipaddr
-        except Exception, e:
-            msg = ('Failed to get replication interface. Aborting. '
-                   'Exception: %s' % e.__str__())
+                self.rep_ip = NetworkInterface.objects.get(itype='management').ipaddr
+        except NetworkInterface.DoesNotExist:
+            msg = ('Failed to get replication interface. If you have only one'
+                   ' network interface, assign management role to it and '
+                   'replication service will use it. In addition, you can '
+                   'assign a dedicated replication role to another interface.'
+                   ' Aborting for now. Exception: %s' % e.__str__())
             return logger.error(msg)
 
         try:
