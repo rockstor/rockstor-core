@@ -130,6 +130,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
         self.senders[snap_id] = sw
         sw.daemon = True
         sw.start()
+        return snap_id
 
     def run(self):
         try:
@@ -187,7 +188,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
                         self._prune_workers((self.receivers, self.senders))
                         try:
                             replica = Replica.objects.get(id=msg_id, enabled=True)
-                            self._process_send(replica)
+                            snap_id = self._process_send(replica)
                         except Replica.DoesNotExist:
                             logger.error('Replication task with id(%s) does '
                                          'not exist of is not enabled.' % msg_id)

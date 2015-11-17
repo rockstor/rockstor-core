@@ -130,6 +130,14 @@ class Sender(ReplicationMixin, Process):
                 return self._delete_old_snaps(share_path)
 
     def run(self):
+        msg = ('Failed to subscribe to the main scheduler')
+        with self._clean_exit_handler(msg):
+            self.meta_sub = self.ctx.socket(zmq.SUB)
+            self.meta_sub.connect('tcp://%s:%d' % (self.sender_ip, self.sdata_port))
+            self.meta_sub.RCVTIMEO = 600000 #10 minutes
+            substr = 'meta-%s' % self.snap_id
+            self.meta_sub.setsockopt_string(zmq.SUBSCRIBE, substr.decode('ascii'))
+
         msg = ('Failed to connect to receiver(%s) on meta port'
                '(%d) for snap_name: %s. Aborting.' %
                (self.receiver_ip, self.rmeta_port, self.snap_name))
@@ -142,14 +150,6 @@ class Sender(ReplicationMixin, Process):
         with self._clean_exit_handler(msg):
             self.data_push = self.ctx.socket(zmq.PUSH)
             self.data_push.connect('tcp://%s:%d' % (self.sender_ip, settings.REPLICA_SINK_PORT))
-
-        msg = ('Failed to subscribe to the main scheduler')
-        with self._clean_exit_handler(msg):
-            self.meta_sub = self.ctx.socket(zmq.SUB)
-            self.meta_sub.connect('tcp://%s:%d' % (self.sender_ip, self.sdata_port))
-            self.meta_sub.RCVTIMEO = 600000 #10 minutes
-            substr = 'meta-%s' % self.snap_id
-            self.meta_sub.setsockopt_string(zmq.SUBSCRIBE, substr.decode('ascii'))
 
         #  1. create a new replica trail if it's the very first time
         # or if the last one succeeded
