@@ -109,12 +109,16 @@ ReplicationView = RockstorLayoutView.extend({
 	} else {
 	    this.$('#replication-warning').hide();
 	}
-	/** initialize bootstrap-switch **/
-	this.$("[name='my-checkbox']").bootstrapSwitch();
-	this.$('input[name="my-checkbox"]').bootstrapSwitch('state', this.replicationService.get('status'), true);
-	this.$("[name='my-checkbox']").bootstrapSwitch('onColor','success'); //left side text color
-	this.$("[name='my-checkbox']").bootstrapSwitch('offColor','danger'); //right side text color
-	/** initialize bootstrap-switch **/
+
+ //code optimization
+  this.$("[type='checkbox']").bootstrapSwitch();
+  if (typeof this.current_status == 'undefined') {
+    this.current_status = this.replicationService.get('status');
+  }
+  this.$('input[name="replica-service-checkbox"]').bootstrapSwitch('state', this.current_status, true);
+  this.$("[type='checkbox']").bootstrapSwitch('onColor','success'); //left side text color
+  this.$("[type='checkbox']").bootstrapSwitch('offColor','danger'); //right side text color
+
 
 	this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
 	this.$(".ph-pagination").html(this.paginationTemplate({
@@ -135,55 +139,69 @@ ReplicationView = RockstorLayoutView.extend({
     },
 
     switchStatus: function(event,state){
-	if(state) {
-	    this.startService();
-	} else {
-	    this.stopService();
-	}
+      //the bootsrap switch can either be Service or Status Switch
+      var replicaSwitchName = $(event.target).attr('name');
+      console.log("The current state is: " + state);
+      if (replicaSwitchName == "replica-service-checkbox"){
+        if (state){
+          this.startService();
+        }else {
+          this.stopService();
+        }
+      } else if(replicaSwitchName == "replica-task-checkbox"){
+        var replicaId = $(event.target).attr('data-replica-id');
+        console.log("the replica Id is:" + replicaId);
+        console.log('handling enable disble');
+        if (state){
+          this.enable(replicaId);
+        }else {
+          this.disable(replicaId);
+        }
+      }else {
+        console.log('throw an error');
+      }
     },
 
-    enable: function(event) {
-	var _this = this;
-	var replicaId = $(event.currentTarget).attr("data-replica-id");
-	if (this.getSliderVal(replicaId).toString() == "1") return;
-	$.ajax({
-	    url: '/api/sm/replicas/' + replicaId,
-	    type: 'PUT',
-	    dataType: 'json',
-	    contentType: 'application/json',
-	    data: JSON.stringify({enabled: true}),
-	    success: function() {
-		_this.collection.fetch({
-		    success: function() {
-			_this.renderReplicas();
-		    }
-		});
-	    },
-	    error: function(xhr, status, error) {
-	    }
-	});
+    enable: function(replicaId) {
+      console.log("inside enable function");
+    	var _this = this;
+    	$.ajax({
+    	    url: '/api/sm/replicas/' + replicaId,
+    	    type: 'PUT',
+    	    dataType: 'json',
+    	    contentType: 'application/json',
+    	    data: JSON.stringify({enabled: true}),
+    	    success: function() {
+    		_this.collection.fetch({
+    		    success: function() {
+    			_this.renderReplicas();
+    		    }
+    		});
+    	    },
+    	    error: function(xhr, status, error) {
+    	    }
+    	});
     },
 
-    disable: function(event) {
-	var _this = this;
-	var replicaId = $(event.currentTarget).attr("data-replica-id");
-	$.ajax({
-	    url: '/api/sm/replicas/' + replicaId,
-	    type: 'PUT',
-	    dataType: 'json',
-	    contentType: 'application/json',
-	    data: JSON.stringify({enabled: false}),
-	    success: function() {
-		_this.collection.fetch({
-		    success: function() {
-			_this.renderReplicas();
-		    }
-		});
-	    },
-	    error: function(xhr, status, error) {
-		enableButton(button);
-	    }
-	});
+    disable: function(replicaId) {
+      var _this = this;
+    	$.ajax({
+    	    url: '/api/sm/replicas/' + replicaId,
+    	    type: 'PUT',
+    	    dataType: 'json',
+    	    contentType: 'application/json',
+    	    data: JSON.stringify({enabled: false}),
+    	    success: function() {
+    		_this.collection.fetch({
+    		    success: function() {
+    			_this.renderReplicas();
+    		    }
+    		});
+    	    },
+    	    error: function(xhr, status, error) {
+    		enableButton(button);
+    	    }
+    	});
     },
 
     deleteTask: function(event) {
@@ -231,6 +249,7 @@ ReplicationView = RockstorLayoutView.extend({
 	    dataType: "json",
 	    success: function(data, status, xhr) {
 		_this.setStatusLoading(serviceName, false);
+    _this.current_status = true;
 		//hide replication service warning
 		_this.$('#replication-warning').hide();
 	    },
@@ -250,6 +269,7 @@ ReplicationView = RockstorLayoutView.extend({
   	    dataType: "json",
   	    success: function(data, status, xhr) {
   		_this.setStatusLoading(serviceName, false);
+      _this.current_status = false;
 		//display replication service warning
 		_this.$('#replication-warning').show();
   	    },

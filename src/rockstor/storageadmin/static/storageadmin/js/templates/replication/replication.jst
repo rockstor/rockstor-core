@@ -25,7 +25,7 @@
 <table>
 <tr>
 <td><span class="h3">Replication Service&nbsp;&nbsp;&nbsp;</span></td>
-<td><input type="checkbox" name="my-checkbox" data-size="mini"></td>
+<td><input type="checkbox" name="replica-service-checkbox" data-size="mini"></td>
 </tr>
 </table>
 </div>
@@ -82,19 +82,10 @@
 
 </td>
 <td>
-
 <% if (replica.get('enabled')) { %>
-<div class="slider-stop" data-replica-id="<%= replica.id %>">OFF</div>
-<div class="slider-ph">
-<input type="text" class="replication-status" value="1" data-replica-id="<%= replica.id %>"></input>
-</div>
-<div class="slider-start on" data-replica-id="<%= replica.id %>">ON</div>
+<input type="checkbox" name="replica-task-checkbox" data-replica-id="<%= replica.id %>" data-size="mini" checked>
 <% } else { %>
-<div class="slider-stop" data-replica-id="<%= replica.id %>">OFF</div>
-<div class="slider-ph">
-<input type="text" class="replication-status" value="0" data-replica-id="<%= replica.id %>"></input>
-</div>
-<div class="slider-start" data-replica-id="<%= replica.id %>">ON</div>
+<input type="checkbox" name="replica-task-checkbox" data-replica-id="<%= replica.id %>" data-size="mini">
 <% } %>
 
 
