@@ -31,28 +31,28 @@ ReplicationView = RockstorLayoutView.extend({
     },
 
     initialize: function() {
-	// call initialize of base
-	this.constructor.__super__.initialize.apply(this, arguments);
-	// set template
-	this.template = window.JST.replication_replication;
-	this.paginationTemplate = window.JST.common_pagination;
-	// add dependencies
-	this.collection = new ReplicaCollection();
-	this.dependencies.push(this.collection);
-	this.serviceName = 'replication';
-	this.replicationService = new Service({name: this.serviceName});
-	this.dependencies.push(this.replicationService);
-	this.replicaTrails = new ReplicaTrailCollection();
-	this.replicaTrails.pageSize = RockStorGlobals.maxPageSize;
-	this.dependencies.push(this.replicaTrails);
-	this.appliances = new ApplianceCollection();
-	this.dependencies.push(this.appliances);
-	this.shares = new ShareCollection();
-	this.dependencies.push(this.shares);
-	this.replicaShareMap = {};
-	this.replicaTrailMap = {};
-	this.updateFreq = 5000;
-	this.collection.on('reset', this.renderReplicas, this);
+    	// call initialize of base
+    	this.constructor.__super__.initialize.apply(this, arguments);
+    	// set template
+    	this.template = window.JST.replication_replication;
+    	this.paginationTemplate = window.JST.common_pagination;
+    	// add dependencies
+    	this.collection = new ReplicaCollection();
+    	this.dependencies.push(this.collection);
+    	this.serviceName = 'replication';
+    	this.replicationService = new Service({name: this.serviceName});
+    	this.dependencies.push(this.replicationService);
+    	this.replicaTrails = new ReplicaTrailCollection();
+    	this.replicaTrails.pageSize = RockStorGlobals.maxPageSize;
+    	this.dependencies.push(this.replicaTrails);
+    	this.appliances = new ApplianceCollection();
+    	this.dependencies.push(this.appliances);
+    	this.shares = new ShareCollection();
+    	this.dependencies.push(this.shares);
+    	this.replicaShareMap = {};
+    	this.replicaTrailMap = {};
+    	this.updateFreq = 5000;
+    	this.collection.on('reset', this.renderReplicas, this);
     },
 
     render: function() {
@@ -99,12 +99,6 @@ ReplicationView = RockstorLayoutView.extend({
     	    freeShares: this.freeShares
     	}));
 
-    	// Display Service Warning
-    	if (!this.replicationService.get('status')) {
-    	    this.$('#replication-warning').show();
-    	} else {
-    	    this.$('#replication-warning').hide();
-    	}
 
      //initalize Bootstrap Switch
       this.$("[type='checkbox']").bootstrapSwitch();
@@ -115,6 +109,12 @@ ReplicationView = RockstorLayoutView.extend({
       this.$("[type='checkbox']").bootstrapSwitch('onColor','success'); //left side text color
       this.$("[type='checkbox']").bootstrapSwitch('offColor','danger'); //right side text color
 
+      // Display Service Warning
+    	if (!this.current_status) {
+    	    this.$('#replication-warning').show();
+    	} else {
+    	    this.$('#replication-warning').hide();
+    	}
 
     	this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
     	this.$(".ph-pagination").html(this.paginationTemplate({
