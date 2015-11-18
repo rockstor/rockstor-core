@@ -99,7 +99,6 @@ ReplicationView = RockstorLayoutView.extend({
     	    freeShares: this.freeShares
     	}));
 
-
      //initalize Bootstrap Switch
       this.$("[type='checkbox']").bootstrapSwitch();
       if (typeof this.current_status == 'undefined') {
@@ -126,7 +125,6 @@ ReplicationView = RockstorLayoutView.extend({
     switchStatus: function(event,state){
       //the bootsrap switch can either be Service or Status Switch
       var replicaSwitchName = $(event.target).attr('name');
-      console.log("The current state is: " + state);
       if (replicaSwitchName == "replica-service-checkbox"){
         if (state){
           this.startService();
@@ -135,20 +133,15 @@ ReplicationView = RockstorLayoutView.extend({
         }
       } else if(replicaSwitchName == "replica-task-checkbox"){
         var replicaId = $(event.target).attr('data-replica-id');
-        console.log("the replica Id is:" + replicaId);
-        console.log('handling enable disble');
         if (state){
           this.enable(replicaId);
         }else {
           this.disable(replicaId);
         }
-      }else {
-        console.log('throw an error');
       }
     },
 
     enable: function(replicaId) {
-      console.log("inside enable function");
     	var _this = this;
     	$.ajax({
     	    url: '/api/sm/replicas/' + replicaId,
