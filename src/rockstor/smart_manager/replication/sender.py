@@ -37,10 +37,10 @@ logger = logging.getLogger(__name__)
 
 class Sender(ReplicationMixin, Process):
 
-    def __init__(self, replica, sender_ip, snap_name, smeta_port,
+    def __init__(self, replica, sender_ip, receiver_ip, snap_name, smeta_port,
                  sdata_port, rmeta_port, uuid, snap_id, rt=None):
         self.replica = replica
-        self.receiver_ip = self._get_receiver_ip(self.replica)
+        self.receiver_ip = receiver_ip
         self.smeta_port = smeta_port
         self.sdata_port = sdata_port
         self.rmeta_port = rmeta_port
@@ -68,18 +68,6 @@ class Sender(ReplicationMixin, Process):
         self.kb_sent = 0
         self.ctx = zmq.Context()
         super(Sender, self).__init__()
-
-    def _get_receiver_ip(self, replica):
-            if (replica.replication_ip is not None):
-                return replica.replication_ip
-        try:
-            appliance = Appliance.objects.get(uuid=replica.appliance)
-            return appliance.ip
-        except Exception, e:
-            msg = ('Failed to get receiver ip. Is the receiver '
-                   'appliance added?. Exception: %s' % e.__str__())
-            logger.error(msg)
-            raise Exception(msg)
 
     @contextmanager
     def _clean_exit_handler(self, msg):

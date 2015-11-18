@@ -60,7 +60,20 @@ class ReplicaScheduler(ReplicationMixin, Process):
                     logger.debug('deleted worker: %s' % w)
         return workers
 
+    def _get_receiver_ip(self, replica):
+            if (replica.replication_ip is not None):
+                return replica.replication_ip
+        try:
+            appliance = Appliance.objects.get(uuid=replica.appliance)
+            return appliance.ip
+        except Exception, e:
+            msg = ('Failed to get receiver ip. Is the receiver '
+                   'appliance added?. Exception: %s' % e.__str__())
+            logger.error(msg)
+            raise Exception(msg)
+
     def _process_send(self, replica):
+        receiver_ip = self._get_receiver_ip(replica)
         rt = ReplicaTrail.objects.filter(replica=replica).order_by('-id')
         sw = None
         snap_name = '%s_%d_replication' % (replica.share, replica.id)
@@ -77,9 +90,9 @@ class ReplicaScheduler(ReplicationMixin, Process):
         elif (rt[0].status == 'succeeded'):
             logger.debug('incremental sender for snap: %s'
                          % snap_id)
-            sw = Sender(replica, self.rep_ip, snap_name, self.meta_port,
-                        self.data_port, replica.meta_port, self.uuid, snap_id,
-                        rt[0])
+            sw = Sender(replica, self.rep_ip, receiver_ip, snap_name,
+                        self.meta_port, self.data_port, replica.meta_port,
+                        self.uuid, snap_id, rt[0])
         elif (rt[0].status == 'pending'):
             prev_snap_id = ('%s_%s_%s_%s' % (self.uuid,
                             replica.pool, replica.share, rt[0].snap_name))
@@ -120,7 +133,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
                 if (rto.status == 'succeeded'):
                     prev_rt = rto
                     break
-            sw = Sender(replica, self.rep_ip, snap_name, self.meta_port,
+            sw = Sender(replica, self.rep_ip, receiver_ip, snap_name, self.meta_port,
                         self.data_port, replica.meta_port, self.uuid, snap_id,
                         prev_rt)
         else:
