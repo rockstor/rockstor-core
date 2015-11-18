@@ -94,11 +94,15 @@ class ReplicaListView(ReplicaMixin, rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
             data_port = self._validate_port(data_port, request)
             meta_port = self._validate_port(meta_port, request)
+            replication_ip = request.data.get('replication_ip', None)
+            if (replication_ip is not None and len(replication_ip.strip()) == 0):
+                replication_ip = None
             ts = datetime.utcnow().replace(tzinfo=utc)
             r = Replica(task_name=task_name, share=sname,
                         appliance=appliance.uuid, pool=share.pool.name,
                         dpool=dpool, enabled=True, crontab=crontab,
-                        data_port=data_port, meta_port=meta_port, ts=ts)
+                        data_port=data_port, meta_port=meta_port, ts=ts,
+                        replication_ip=replication_ip)
             r.save()
             self._refresh_crontab()
             return Response(ReplicaSerializer(r).data)
@@ -151,6 +155,10 @@ class ReplicaDetailView(ReplicaMixin, rfc.GenericView):
                          type(enabled))
                 handle_exception(Exception(e_msg), request)
             r.enabled = enabled
+            replication_ip = request.data.get('replication_ip', r.replication_ip)
+            if (replication_ip is not None and len(replication_ip.strip()) == 0):
+                replication_ip = None
+            r.replication_ip = replication_ip
             ts = datetime.utcnow().replace(tzinfo=utc)
             r.ts = ts
             r.save()

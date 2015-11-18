@@ -104,7 +104,7 @@ AddReplicationTaskView = RockstorLayoutView.extend({
 		    var req_type='POST';
 		} else {
 		    var url = '/api/sm/replicas/' + _this.replicaId;
-		    var req_type='PUT';
+		    var req_type = 'PUT';
 		}
 		data.crontab = $("#cron").cron("value");
 		$.ajax({

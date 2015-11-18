@@ -70,13 +70,15 @@ class Sender(ReplicationMixin, Process):
         super(Sender, self).__init__()
 
     def _get_receiver_ip(self, replica):
+            if (replica.replication_ip is not None):
+                return replica.replication_ip
         try:
             appliance = Appliance.objects.get(uuid=replica.appliance)
             return appliance.ip
         except Exception, e:
-            logger.exception(e)
             msg = ('Failed to get receiver ip. Is the receiver '
-                   'appliance added?')
+                   'appliance added?. Exception: %s' % e.__str__())
+            logger.error(msg)
             raise Exception(msg)
 
     @contextmanager

@@ -75,6 +75,12 @@ $(document).ready(function() {
 	  </div>
 	</div>
 	<div class="form-group">
+	  <label class="col-sm-4 control-label" for="replicatin_ip">Replication IP Address</label>
+	  <div class="col-sm-6">
+	  <input class="form-control" type="text" id="replication_ip" name="replication_ip" title="If remote appliance's replication service is listening on a different IP address, provide here. If not, appliance's IP address will be used.">
+	  </div>
+	</div>
+	<div class="form-group">
 	  <label class="col-sm-4 control-label" for="port">Replication Data Port<span class="required"> *</span></label>
 	  <div class="col-sm-6">
 	    <input class="form-control" type="text" id="data-port" name="data_port" value="<%= replica_data_port %>" placeholder="Replication Data Port" title="Replication data port on the target appliance. (Default is <%= replica_data_port %>)">
@@ -138,25 +144,31 @@ $(document).ready(function() {
 	  </div>
 	</div>
 	<div class="form-group">
-	  <label class="col-sm-4 control-label" for="appliance">Target appliance:</label>
+	  <label class="col-sm-4 control-label" for="appliance">Remote appliance:</label>
 	  <div class="col-sm-6">
 	    <input type="text" class="form-control" value="<%= replica.get('appliance') %>" disabled="disabled">
 	  </div>
 	</div>
 	<div class="form-group">
-	  <label class="col-sm-4 control-label" for="port">Replication Data Port:</label>
+	  <label class="col-sm-4 control-label" for="replication_ip">Replication IP Address:</label>
+	  <div class="col-sm-6">
+	    <input type="text" class="form-control" value="<%= replica.get('replication_ip') %>">
+	  </div>
+	</div>
+	<div class="form-group">
+	  <label class="col-sm-4 control-label" for="port">Data Port:</label>
 	  <div class="col-sm-6">
 	    <input type="text" class="form-control" value="<%= replica.get('data_port') %>" disabled="disabled">
 	  </div>
 	</div>
 	<div class="form-group">
-	  <label class="col-sm-4 control-label" for="port">Replication Meta Port:</label>
+	  <label class="col-sm-4 control-label" for="port">Meta Port:</label>
 	  <div class="col-sm-6">
 	    <input type="text" class="form-control" value="<%= replica.get('meta_port') %>" disabled="disabled">
 	  </div>
 	</div>
 	<div class="form-group">
-	  <label class="col-sm-4 control-label" for="pool">Target pool name:</label>
+	  <label class="col-sm-4 control-label" for="pool">Remote pool:</label>
 	  <div class="col-sm-6">
 	    <input type="text" class="form-control" value="<%= replica.get('dpool') %>" disabled="disabled">
 	  </div>
