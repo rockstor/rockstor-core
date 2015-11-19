@@ -49,7 +49,6 @@ class ReplicaScheduler(ReplicationMixin, Process):
         self.trail_prune_interval = 3600 #seconds
         self.prune_time = int(time.time()) - (self.trail_prune_interval + 1)
         super(ReplicaScheduler, self).__init__()
-        self.logger = self.get_logger()
 
     def _prune_workers(self, workers):
         for wd in workers:
@@ -80,27 +79,25 @@ class ReplicaScheduler(ReplicationMixin, Process):
             snap_name = '%s_1' % snap_name
         else:
             snap_name = '%s_%d' % (snap_name, rt[0].id + 1)
-        snap_id = ('%s_%s_%s_%s' %
-                   (self.uuid, replica.pool, replica.share, snap_name))
+        snap_id = ('%s_%s' %
+                   (self.uuid, snap_name))
         if (len(rt) == 0):
             self.logger.debug('new sender for snap: %s' % snap_id)
             sw = Sender(replica, self.rep_ip, receiver_ip, snap_name, self.meta_port,
                         self.data_port, replica.meta_port, self.uuid, snap_id, self.logger)
         elif (rt[0].status == 'succeeded'):
-            self.logger.debug('incremental sender for snap: %s'
-                         % snap_id)
+            self.logger.debug('incremental sender for snap: %s' % snap_id)
             sw = Sender(replica, self.rep_ip, receiver_ip, snap_name,
                         self.meta_port, self.data_port, replica.meta_port,
                         self.uuid, snap_id, self.logger, rt[0])
         elif (rt[0].status == 'pending'):
-            prev_snap_id = ('%s_%s_%s_%s' % (self.uuid,
-                            replica.pool, replica.share, rt[0].snap_name))
+            prev_snap_id = ('%s_%s' % (self.uuid, rt[0].snap_name))
             if (prev_snap_id in self.senders):
                 return self.logger.debug('send process ongoing for snap: '
-                                    '%s' % prev_snap_id)
+                                         '%s' % prev_snap_id)
             self.logger.debug('%s not found in senders. Previous '
-                         'sender must have Aborted. Marking '
-                         'it as failed' % prev_snap_id)
+                              'sender must have Aborted. Marking '
+                              'it as failed' % prev_snap_id)
             msg = ('Sender process Aborted. See logs for '
                    'more information')
             data = {'status': 'failed',
@@ -118,9 +115,9 @@ class ReplicaScheduler(ReplicationMixin, Process):
                 num_tries = num_tries + 1
             if (num_tries >= self.MAX_ATTEMPTS):
                 self.logger.info('Maximum attempts(%d) reached '
-                            'for snap: %s. Disabling the '
-                            'replica.' %
-                            (self.MAX_ATTEMPTS, snap_id))
+                                 'for snap: %s. Disabling the '
+                                 'replica.' %
+                                 (self.MAX_ATTEMPTS, snap_id))
                 return self.disable_replica(replica.id)
 
             self.logger.info('previous backup failed for snap: '
@@ -145,6 +142,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
         return snap_id
 
     def run(self):
+        self.logger = self.get_logger()
         try:
             if (NetworkInterface.objects.filter(itype='replication').exists()):
                 self.rep_ip = NetworkInterface.objects.filter(itype='replication')[0].ipaddr
@@ -196,10 +194,12 @@ class ReplicaScheduler(ReplicationMixin, Process):
                     msg_id = self.recv_meta.get('id', -1)
                     msg = self.recv_meta.get('msg', '')
                     if (msg == 'begin'):
+                        self.logger.debug('Starting a new Receiver for %s' % msg_id)
                         rw = Receiver(self.recv_meta, self.logger)
                         self.receivers[msg_id] = rw
                         rw.start()
                     elif (msg == 'new_send'):
+                        self.logger.debug('new_send received for %s' % msg_id)
                         self._prune_workers((self.receivers, self.senders))
                         try:
                             replica = Replica.objects.get(id=msg_id, enabled=True)
@@ -213,7 +213,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
                         rep_pub.send_string(msg.decode('ascii'))
                     else:
                         self.logger.error('Message(%s) cannot be processed. Ignoring'
-                                     % self.recv_meta)
+                                          % self.recv_meta)
                 elif (data_sink in socks and socks[data_sink] == zmq.POLLIN):
                     rep_pub.send(data_sink.recv())
                 elif (len(socks) != 0):

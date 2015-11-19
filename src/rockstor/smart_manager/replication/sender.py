@@ -163,8 +163,8 @@ class Sender(ReplicationMixin, Process):
             meta_push.send_json(self.meta_begin)
 
         msg = ('Timeout occured while waiting for OK '
-               'from the receiver(%s) to start sending data. Aborting.'
-               % self.receiver_ip)
+               'from the receiver(%s) to start sending data for %s. Aborting.'
+               % (self.receiver_ip, self.snap_id))
         with self._update_trail_and_quit(msg):
             ack = self._process_q()
             if (ack['msg'] == 'snap_exists'):
@@ -216,7 +216,7 @@ class Sender(ReplicationMixin, Process):
                     if (ack['msg'] == 'send_more'):
                         credit = ack['credit']
                         self.logger.debug('send process alive for %s. %d KB sent.' %
-                                     (self.snap_id, int(self.kb_sent/1024)))
+                                          (self.snap_id, int(self.kb_sent/1024)))
                     else:
                         raise Exception('unexpected message received: %s' % ack)
 

@@ -204,10 +204,10 @@ class Receiver(ReplicationMixin, Process):
                 cycle_xfer = cycle_kb / (cur_t - t0_cycle)
                 total_avg_msg = self.kb_received / msg_count
                 cycle_avg_msg = recv_cycle / msg_count_cycle
-                self.logger.debug('KB received so far: %f . this cycle: %f .'
+                self.logger.debug('%s KB received so far: %f . this cycle: %f .'
                                   'xfer rate so far: %f . this cycle: %f .'
                                   'Avg msg size(Bytes) so far: %f . this cycle: %f .' %
-                                  (total_kb, cycle_kb, total_xfer, cycle_xfer,
+                                  (self.meta['id'], total_kb, cycle_kb, total_xfer, cycle_xfer,
                                    total_avg_msg, cycle_avg_msg))
                 recv_cycle = 0
                 t0_cycle = time.time()
