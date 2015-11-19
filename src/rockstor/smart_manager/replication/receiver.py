@@ -181,34 +181,52 @@ class Receiver(ReplicationMixin, Process):
             ack = {'msg': 'begin_ok',
                    'id': self.meta['id'], }
             self.meta_push.send_json(ack)
-            logger.debug('begin_ok ack sent: %s' % ack)
+            self.logger.debug('begin_ok ack sent: %s' % ack)
         recv_timeout_counter = 0
         credit = settings.DEFAULT_SEND_CREDIT
         check_credit = True
+        t0 = t0_cycle = time.time()
+        recv_cycle = 0
+        msg_count = 0
         while True:
             if (check_credit is True and credit < 5):
                 ack = {'msg': 'send_more',
                        'id': self.meta['id'],
                        'credit': settings.DEFAULT_SEND_CREDIT, }
                 self.meta_push.send_json(ack)
-                logger.debug('send_more ack sent: %s' % ack)
+                self.logger.debug('send_more ack sent: %s' % ack)
+                msg_count_cycle = settings.DEFAULT_SEND_CREDIT - credit
+                msg_count += msg_count_cycle
+                cur_t = time.time()
+                total_kb = self.kb_received / 1024
+                cycle_kb = recv_cycle / 1024
+                total_xfer = total_kb / (cur_t - t0)
+                cycle_xfer = cycle_kb / (cur_t - t0_cycle)
+                total_avg_msg = self.kb_received / msg_count
+                cycle_avg_msg = recv_cycle / msg_count_cycle
+                self.logger.debug('KB received so far: %f . this cycle: %f .'
+                                  'xfer rate so far: %f . this cycle: %f .'
+                                  'Avg msg size(Bytes) so far: %f . this cycle: %f .' %
+                                  (total_kb, cycle_kb, total_xfer, cycle_xfer,
+                                   total_avg_msg, cycle_avg_msg))
+                recv_cycle = 0
+                t0_cycle = time.time()
                 credit = credit + settings.DEFAULT_SEND_CREDIT
-                logger.debug('%d KB received for %s' %
-                             (int(self.kb_received / 1024), sname))
 
             try:
                 recv_data = recv_sub.recv()
                 recv_data = recv_data[len(self.meta['id']):]
                 credit = credit - 1
                 recv_timeout_counter = 0
-                self.kb_received = self.kb_received + len(recv_data)
+                self.kb_received += len(recv_data)
+                recv_cycle += len(recv_data)
                 if (self.rtid is None):
                     msg = ('Failed to create snapshot: %s. Aborting.' %
                            self.snap_name)
                     # create a snapshot only if it's not already from a previous failed attempt
                     with self._clean_exit_handler(msg, ack=True):
                         self.create_snapshot(sname, self.snap_name,
-                                             snap_type='receiver')
+                                             self.logger, snap_type='receiver')
 
                     data = {'snap_name': self.snap_name}
                     msg = ('Failed to create receive trail for rid: %d'
