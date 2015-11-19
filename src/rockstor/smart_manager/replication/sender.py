@@ -207,21 +207,25 @@ class Sender(ReplicationMixin, Process):
         check_credit = True
         while alive:
             if (check_credit is True and credit < 1):
-                #This does not seem reliable. @todo: redo.
-                ack = self.meta_sub.recv_string()
-                ack = json.loads(ack[len('meta-%s' % self.snap_id):])
-                if (ack['msg'] == 'send_more'):
-                    credit = ack['credit']
-                    logger.debug('send process alive for %s. %d KB sent.' %
-                                 (self.snap_id, int(self.kb_sent/1024)))
-                else:
-                    logger.error('unexpected message received: %s' % ack)
+                msg = ('Exception while waiting on receiver to ask for more '
+                       'credit')
+                with self._update_trail_and_quit(msg):
+                    ack = self.meta_sub.recv_string()
+                    ack = json.loads(ack[len('meta-%s' % self.snap_id):])
+                    self.logger.debug('ack received by sender: %s' % ack)
+                    if (ack['msg'] == 'send_more'):
+                        credit = ack['credit']
+                        self.logger.debug('send process alive for %s. %d KB sent.' %
+                                     (self.snap_id, int(self.kb_sent/1024)))
+                    else:
+                        raise Exception('unexpected message received: %s' % ack)
+
             try:
                 if (sp.poll() is not None):
-                    logger.debug('send process finished for %s. rc: %d. '
-                                 'stderr: %s' % (self.snap_id,
-                                                 sp.returncode,
-                                                 sp.stderr.read()))
+                    self.logger.debug('send process finished for %s. rc: %d. '
+                                      'stderr: %s' % (self.snap_id,
+                                                      sp.returncode,
+                                                      sp.stderr.read()))
                     alive = False
                 fs_data = sp.stdout.read()
             except IOError:
