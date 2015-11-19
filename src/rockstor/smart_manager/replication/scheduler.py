@@ -30,6 +30,7 @@ import logging
 from django.db import DatabaseError
 from util import ReplicationMixin
 import json
+from cli import APIWrapper
 
 
 class ReplicaScheduler(ReplicationMixin, Process):
@@ -48,6 +49,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
         self.uuid = None
         self.trail_prune_interval = 3600 #seconds
         self.prune_time = int(time.time()) - (self.trail_prune_interval + 1)
+        self.raw = None
         super(ReplicaScheduler, self).__init__()
 
     def _prune_workers(self, workers):
@@ -94,7 +96,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
             prev_snap_id = ('%s_%s' % (self.uuid, rt[0].snap_name))
             if (prev_snap_id in self.senders):
                 return self.logger.debug('send process ongoing for snap: '
-                                         '%s' % prev_snap_id)
+                                         '%s. Not starting a new one.' % prev_snap_id)
             self.logger.debug('%s not found in senders. Previous '
                               'sender must have Aborted. Marking '
                               'it as failed' % prev_snap_id)
@@ -143,6 +145,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
 
     def run(self):
         self.logger = self.get_logger()
+        self.law = APIWrapper()
         try:
             if (NetworkInterface.objects.filter(itype='replication').exists()):
                 self.rep_ip = NetworkInterface.objects.filter(itype='replication')[0].ipaddr

@@ -29,6 +29,7 @@ from util import ReplicationMixin
 from fs.btrfs import get_oldest_snap
 from storageadmin.models import Appliance
 import json
+from cli import APIWrapper
 
 BTRFS = '/sbin/btrfs'
 
@@ -65,8 +66,10 @@ class Sender(ReplicationMixin, Process):
                          'msg': 'end', }
         self.kb_sent = 0
         self.ctx = zmq.Context()
-        super(Sender, self).__init__()
         self.logger = logger
+        self.raw = None
+        super(Sender, self).__init__()
+
 
     @contextmanager
     def _clean_exit_handler(self, msg):
@@ -119,11 +122,12 @@ class Sender(ReplicationMixin, Process):
                 return self._delete_old_snaps(share_path)
 
     def run(self):
+        self.law = APIWrapper()
         msg = ('Failed to subscribe to the main scheduler')
         with self._clean_exit_handler(msg):
             self.meta_sub = self.ctx.socket(zmq.SUB)
             self.meta_sub.connect('tcp://%s:%d' % (self.sender_ip, self.sdata_port))
-            self.meta_sub.RCVTIMEO = 600000 #10 minutes
+            self.meta_sub.RCVTIMEO = 600000 #1 minutes
             substr = 'meta-%s' % self.snap_id
             self.meta_sub.setsockopt_string(zmq.SUBSCRIBE, substr.decode('ascii'))
 

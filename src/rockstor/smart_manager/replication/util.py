@@ -18,7 +18,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import re
 from django.utils.timezone import utc
-from cli.rest_util import (api_call, set_token)
 from storageadmin.exceptions import RockStorAPIException
 from storageadmin.models import Appliance
 import sys
@@ -29,6 +28,7 @@ import logging
 
 
 class ReplicationMixin(object):
+
 
     @classmethod
     def get_logger(cls):
@@ -43,125 +43,114 @@ class ReplicationMixin(object):
         cls.logger.addHandler(ch)
         return cls.logger
 
-    @staticmethod
-    def validate_src_share(sender_uuid, sname):
-        #do a simple get on the share of the sender.
-        a = Appliance.objects.get(uuid=sender_uuid)
-        url = ('https://%s:%s' % (a.ip, a.mgmt_port))
-        set_token(client_id=a.client_id, client_secret=a.client_secret, url=url)
-        api_call(url='%s/api/shares/%s' % (url, sname))
+    def validate_src_share(self, sender_uuid, sname):
+        url = 'https://'
+        if (self.raw is None):
+            a = Appliance.objects.get(uuid=sender_uuid)
+            url = ('%s%s:%s' % (url, a.ip, a.mgmt_port))
+            self.raw = APIWrapper(client_id=a.client_id,
+                                  client_secret=a.client_secret,
+                                  url=url)
+        return self.raw.api_call(url='%s/api/shares/%s' % (url, sname))
 
-    @staticmethod
-    def update_replica_status(rtid, data):
+    def update_replica_status(self, rtid, data):
         try:
             url = ('%ssm/replicas/trail/%d' % (BASE_URL, rtid))
-            return api_call(url, data=data, calltype='put')
+            return self.law.api_call(url, data=data, calltype='put')
         except Exception, e:
             msg = ('Exception while updating replica(%s) status to %s: %s' %
                    (url, data['status'], e.__str__()))
             raise Exception(msg)
 
-    @staticmethod
-    def disable_replica(rid):
+    def disable_replica(self, rid):
         try:
             url = ('%ssm/replicas/%d' % (BASE_URL, rid))
             headers = {'content-type': 'application/json', }
-            return api_call(url, data={'enabled': False, }, calltype='put',
-                            save_error=False, headers=headers)
+            return self.law.api_call(url, data={'enabled': False, }, calltype='put',
+                                     save_error=False, headers=headers)
         except Exception, e:
             msg = ('Exception while disabling replica(%s): %s' %
                    (url, e.__str__()))
             raise Exception(msg)
 
-    @staticmethod
-    def create_replica_trail(rid, snap_name):
+    def create_replica_trail(self, rid, snap_name):
         url = ('%ssm/replicas/trail/replica/%d' % (BASE_URL, rid))
-        return api_call(url, data={'snap_name': snap_name, },
-                        calltype='post', save_error=False)
+        return self.law.api_call(url, data={'snap_name': snap_name, },
+                                 calltype='post', save_error=False)
 
-    @staticmethod
-    def rshare_id(sname):
+    def rshare_id(self, sname):
         url = ('%ssm/replicas/rshare/%s' % (BASE_URL, sname))
-        rshare = api_call(url, save_error=False)
+        rshare = self.law.api_call(url, save_error=False)
         return rshare['id']
 
-    @classmethod
-    def create_rshare(cls, data):
+    def create_rshare(self, data):
         try:
             url = ('%ssm/replicas/rshare' % BASE_URL)
-            rshare = api_call(url, data=data, calltype='post', save_error=False)
+            rshare = self.law.api_call(url, data=data, calltype='post', save_error=False)
             return rshare['id']
         except RockStorAPIException, e:
             if (e.detail == 'Replicashare(%s) already exists.' % data['share']):
-                return cls.rshare_id(data['share'])
+                return self.rshare_id(data['share'])
             raise e
 
-    @staticmethod
-    def create_receive_trail(rid, data):
+    def create_receive_trail(self, rid, data):
         url = ('%ssm/replicas/rtrail/rshare/%d' % (BASE_URL, rid))
-        rt = api_call(url, data=data, calltype='post', save_error=False)
+        rt = self.law.api_call(url, data=data, calltype='post', save_error=False)
         return rt['id']
 
-    @staticmethod
-    def update_receive_trail(rtid, data):
+    def update_receive_trail(self, rtid, data):
         url = ('%ssm/replicas/rtrail/%d' % (BASE_URL, rtid))
         try:
-            return api_call(url, data=data, calltype='put', save_error=False)
+            return self.law.api_call(url, data=data, calltype='put', save_error=False)
         except Exception, e:
             msg = ('Exception while updating receive trail(%s): %s' %
                    (url, e.__str__()))
             raise Exception(msg)
 
-    @staticmethod
-    def prune_trail(url, days=1):
+    def prune_trail(self, url, days=1):
         try:
             data = {'days': days, }
-            return api_call(url, data=data, calltype='delete', save_error=False)
+            return self.law.api_call(url, data=data, calltype='delete', save_error=False)
         except Exception, e:
             msg = ('Exception while pruning trail for url(%s): %s' % (url, e.__str__()))
             raise Exception(msg)
 
-    @classmethod
-    def prune_receive_trail(cls, rid):
+    def prune_receive_trail(self, rid):
         url = ('%ssm/replicas/rtrail/rshare/%d' % (BASE_URL, rid))
-        return cls.prune_trail(url)
+        return self.prune_trail(url)
 
-    @classmethod
-    def prune_replica_trail(cls, rid):
+    def prune_replica_trail(self, rid):
         url = ('%ssm/replicas/trail/replica/%d' % (BASE_URL, rid))
-        return cls.prune_trail(url)
+        return self.prune_trail(url)
 
-    @staticmethod
-    def create_snapshot(sname, snap_name, logger, snap_type='replication'):
+    def create_snapshot(self, sname, snap_name, logger, snap_type='replication'):
         try:
             url = ('%sshares/%s/snapshots/%s' % (BASE_URL, sname, snap_name))
-            return api_call(url, data={'snap_type': snap_type, }, calltype='post',
-                            save_error=False)
+            return self.law.api_call(url, data={'snap_type': snap_type, }, calltype='post',
+                                     save_error=False)
         except RockStorAPIException, e:
             if (e.detail == ('Snapshot(%s) already exists for the Share(%s).' %
                              (snap_name, sname))):
                 return logger.debug(e.detail)
             raise e
 
-    @staticmethod
-    def delete_snapshot(sname, snap_name, logger):
+    def delete_snapshot(self, sname, snap_name, logger):
         try:
             url = ('%sshares/%s/snapshots/%s' % (BASE_URL, sname, snap_name))
-            return api_call(url, calltype='delete', save_error=False)
+            return self.law.api_call(url, calltype='delete', save_error=False)
         except RockStorAPIException, e:
             if (e.detail == 'Snapshot(%s) does not exist.' % snap_name):
                 return logger.debug(e.detail)
             raise e
 
-    @staticmethod
-    def create_share(sname, pool, logger):
+    def create_share(self, sname, pool, logger):
         try:
             url = ('%sshares' % BASE_URL)
             data = {'pool': pool,
                     'replica': True,
                     'sname': sname, }
             headers = {'content-type': 'application/json', }
-            return api_call(url, data=data, calltype='post', headers=headers,
+            return self.law.api_call(url, data=data, calltype='post', headers=headers,
                             save_error=False)
         except RockStorAPIException, e:
             if (e.detail == 'Share(%s) already exists. Choose a different name' % sname):
