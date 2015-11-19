@@ -31,7 +31,7 @@ from storageadmin.models import (Disk, Pool, Appliance)
 from smart_manager.models import ReplicaShare
 import shutil
 import time
-
+from cli import APIWrapper
 
 BTRFS = '/sbin/btrfs'
 
@@ -55,10 +55,18 @@ class Receiver(ReplicationMixin, Process):
         self.meta_push = None
         self.num_retain_snaps = 5
         self.ctx = zmq.Context()
-        super(Receiver, self).__init__()
         self.logger = logger
+        self.rp = None
+        self.raw = None
+        super(Receiver, self).__init__()
+
 
     def _sys_exit(self, code, linger=60000):
+        if (self.rp is not None and self.rp.returncode is None):
+            try:
+                self.rp.terminate()
+            except Exception, e:
+                self.logger.error('Exception while terminating the btrfs-recv process: %s' % e.__str__())
         self.ctx.destroy(linger=linger)
         sys.exit(code)
 
@@ -93,6 +101,7 @@ class Receiver(ReplicationMixin, Process):
 
 
     def run(self):
+        self.law = APIWrapper()
         msg = ('Failed to get the sender ip from the uuid(%s) for meta: %s' %
                (self.meta['uuid'], self.meta))
         with self._clean_exit_handler(msg):
@@ -171,9 +180,9 @@ class Receiver(ReplicationMixin, Process):
         msg = ('Failed to start the low level btrfs receive command(%s)'
                '. Aborting.' % (cmd))
         with self._clean_exit_handler(msg, ack=True):
-            rp = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE,
-                                  stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE)
+            self.rp = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE,
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE)
 
         msg = ('Failed to send begin_ok to the sender for meta: %s' %
                self.meta)
@@ -265,7 +274,7 @@ class Receiver(ReplicationMixin, Process):
                     else:
                         self.logger.error('END_FAIL received for meta: %s. '
                                           'Terminating.' % self.meta)
-                        rp.terminate()
+                        self.rp.terminate()
                         data['status'] = 'failed'
 
                     msg = ('Failed to update receive trail for rtid: %d'
@@ -273,13 +282,13 @@ class Receiver(ReplicationMixin, Process):
                     with self._clean_exit_handler(msg, ack=True):
                         self.update_receive_trail(self.rtid, data)
                     break
-                if (rp.poll() is None):
-                    rp.stdin.write(recv_data)
-                    rp.stdin.flush()
+                if (self.rp.poll() is None):
+                    self.rp.stdin.write(recv_data)
+                    self.rp.stdin.flush()
                 else:
                     self.logger.error('It seems the btrfs receive process died'
                                       ' unexpectedly.')
-                    out, err = rp.communicate()
+                    out, err = self.rp.communicate()
                     msg = ('Low level system error from btrfs receive '
                            'command. out: %s err: %s for rtid: %s meta: %s'
                            % (out, err, self.rtid, self.meta))
@@ -297,8 +306,8 @@ class Receiver(ReplicationMixin, Process):
             except Exception, e:
                 msg = ('Exception occured while receiving fsdata: %s' % e.__str__())
                 self.logger.error(msg)
-                rp.terminate()
-                out, err = rp.communicate()
+                self.rp.terminate()
+                out, err = self.rp.communicate()
                 data['status'] = 'failed'
                 data['error'] = msg
 
@@ -315,7 +324,7 @@ class Receiver(ReplicationMixin, Process):
         #rfo/stdin should be closed by now. We get here only if the sender
         #dint throw an error or if receiver did not get terminated
         try:
-            out, err = rp.communicate()
+            out, err = self.rp.communicate()
         except Exception, e:
             self.logger.debug('Exception while terminating receive. Probably '
                               'already terminated: %s' % e.__str__())
@@ -323,7 +332,7 @@ class Receiver(ReplicationMixin, Process):
         ack = {'msg': 'receive_ok',
                'id': self.meta['id'], }
         data = {'status': 'succeeded', }
-        if (rp.returncode != 0):
+        if (self.rp.returncode != 0):
             ack['msg'] = 'receive_error'
             data['status'] = 'failed'
 
