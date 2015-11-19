@@ -19,7 +19,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from multiprocessing import Process
 import os
 import sys
-import logging
 import zmq
 import subprocess
 from django.utils.timezone import utc
@@ -31,15 +30,15 @@ from system.osi import run_command
 from storageadmin.models import (Disk, Pool, Appliance)
 from smart_manager.models import ReplicaShare
 import shutil
+import time
 
 
 BTRFS = '/sbin/btrfs'
-logger = logging.getLogger(__name__)
 
 
 class Receiver(ReplicationMixin, Process):
 
-    def __init__(self, meta):
+    def __init__(self, meta, logger):
         self.meta = meta
         self.meta_port = self.meta['meta_port']
         self.data_port = self.meta['data_port']
@@ -57,6 +56,7 @@ class Receiver(ReplicationMixin, Process):
         self.num_retain_snaps = 5
         self.ctx = zmq.Context()
         super(Receiver, self).__init__()
+        self.logger = logger
 
     def _sys_exit(self, code, linger=60000):
         self.ctx.destroy(linger=linger)
@@ -67,18 +67,18 @@ class Receiver(ReplicationMixin, Process):
         try:
             yield
         except Exception, e:
-            logger.error('%s. Exception: %s' % (msg, e.__str__()))
+            self.logger.error('%s. Exception: %s' % (msg, e.__str__()))
             if (ack is True):
                 try:
                     err_ack = {'msg': 'error',
                                'id': self.meta['id'],
                                'error': msg, }
                     self.meta_push.send_json(err_ack)
-                    logger.debug('error_ack sent: %s' % err_ack)
+                    self.logger.debug('error_ack sent: %s' % err_ack)
                 except Exception, e:
                     msg = ('Failed to send ack: %s to the sender for meta: '
                            '%s. Aborting' % (err_ack, self.meta))
-                    logger.error('%s. Exception: %s' % (msg, e.__str__()))
+                    self.logger.error('%s. Exception: %s' % (msg, e.__str__()))
                     self._sys_exit(3)
             self._sys_exit(3)
 
@@ -88,7 +88,7 @@ class Receiver(ReplicationMixin, Process):
             msg = ('Failed to delete snapshot: %s. Aborting.' %
                    oldest_snap)
             with self._clean_exit_handler(msg):
-                self.delete_snapshot(share_name, oldest_snap)
+                self.delete_snapshot(share_name, oldest_snap, self.logger)
                 return self._delete_old_snaps(share_name, share_path, num_retain)
 
 
@@ -130,7 +130,7 @@ class Receiver(ReplicationMixin, Process):
             msg = ('Failed to verify/create share: %s. meta: %s. '
                    'Aborting.' % (sname, self.meta))
             with self._clean_exit_handler(msg, ack=True):
-                self.create_share(sname, self.dest_pool)
+                self.create_share(sname, self.dest_pool, self.logger)
 
             msg = ('Failed to create the replica metadata object '
                    'for share: %s. meta: %s. Aborting.' %
@@ -165,7 +165,7 @@ class Receiver(ReplicationMixin, Process):
                 ack = {'msg': 'snap_exists',
                        'id': self.meta['id'], }
                 self.meta_push.send_json(ack)
-                logger.debug('snap_exists ack sent: %s' % ack)
+                self.logger.debug('snap_exists ack sent: %s' % ack)
 
         cmd = [BTRFS, 'receive', snap_dir]
         msg = ('Failed to start the low level btrfs receive command(%s)'
@@ -219,6 +219,7 @@ class Receiver(ReplicationMixin, Process):
                 if (recv_data == 'END_SUCCESS' or recv_data == 'END_FAIL'):
                     check_credit = False
                     data = {'kb_received': self.kb_received / 1024, }
+                    self.logger.debug('END message received: %s' % recv_data)
                     if (recv_data == 'END_SUCCESS'):
                         data['status'] = 'succeeded'
                         #delete any snapshots older than num_retain
@@ -240,12 +241,12 @@ class Receiver(ReplicationMixin, Process):
                                 run_command(['/usr/bin/rm', '-rf', share_path],
                                             throw=False)
                                 shutil.move(snap_path, share_path)
-                                self.delete_snapshot(sname, oldest_snap)
+                                self.delete_snapshot(sname, oldest_snap, self.logger)
                             except Exception, e:
-                                logger.error('%s. Exception: %s' % (msg, e.__str__()))
+                                self.logger.error('%s. Exception: %s' % (msg, e.__str__()))
                     else:
-                        logger.error('END_FAIL received for meta: %s. '
-                                     'Terminating.' % self.meta)
+                        self.logger.error('END_FAIL received for meta: %s. '
+                                          'Terminating.' % self.meta)
                         rp.terminate()
                         data['status'] = 'failed'
 
@@ -258,8 +259,8 @@ class Receiver(ReplicationMixin, Process):
                     rp.stdin.write(recv_data)
                     rp.stdin.flush()
                 else:
-                    logger.error('It seems the btrfs receive process died'
-                                 ' unexpectedly.')
+                    self.logger.error('It seems the btrfs receive process died'
+                                      ' unexpectedly.')
                     out, err = rp.communicate()
                     msg = ('Low level system error from btrfs receive '
                            'command. out: %s err: %s for rtid: %s meta: %s'
@@ -271,13 +272,13 @@ class Receiver(ReplicationMixin, Process):
             except zmq.error.Again:
                 recv_timeout_counter = recv_timeout_counter + 1
                 if (recv_timeout_counter > 600): #10 minutes
-                    logger.error('Nothing received in the last 60 seconds '
-                                 'from the sender(%s) for meta: %s. Aborting.'
-                                 % (self.sender_ip, self.meta))
+                    self.logger.error('Nothing received in the last 60 seconds '
+                                      'from the sender(%s) for meta: %s. Aborting.'
+                                      % (self.sender_ip, self.meta))
                     self._sys_exit(3)
             except Exception, e:
                 msg = ('Exception occured while receiving fsdata: %s' % e.__str__())
-                logger.error(msg)
+                self.logger.error(msg)
                 rp.terminate()
                 out, err = rp.communicate()
                 data['status'] = 'failed'
@@ -290,7 +291,7 @@ class Receiver(ReplicationMixin, Process):
                 self._sys_exit(3)
             finally:
                 if (os.getppid() != self.ppid):
-                    logger.error('parent exited. aborting.')
+                    self.logger.error('parent exited. aborting.')
                     self._sys_exit(3)
 
         #rfo/stdin should be closed by now. We get here only if the sender
@@ -298,8 +299,8 @@ class Receiver(ReplicationMixin, Process):
         try:
             out, err = rp.communicate()
         except Exception, e:
-            logger.debug('Exception while terminating receive. Probably '
-                         'already terminated: %s' % e.__str__())
+            self.logger.debug('Exception while terminating receive. Probably '
+                              'already terminated: %s' % e.__str__())
 
         ack = {'msg': 'receive_ok',
                'id': self.meta['id'], }
@@ -317,13 +318,13 @@ class Receiver(ReplicationMixin, Process):
                self.meta)
         with self._clean_exit_handler(msg):
             self.meta_push.send_json(ack)
-            logger.debug('Receive finished for %s. ack = %s' % (sname, ack))
+            self.logger.debug('Receive finished for %s. ack = %s' % (sname, ack))
 
         try:
             recv_sub.RCVTIMEO = 60000
             recv_data = recv_sub.recv()
             recv_data = recv_data[len(self.meta['id']):]
         except Exception, e:
-            logger.error('Exception while waiting for final ack from sender: %s' % e.__str__())
+            self.logger.error('Exception while waiting for final ack from sender: %s' % e.__str__())
 
         self._sys_exit(0)

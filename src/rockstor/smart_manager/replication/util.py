@@ -21,13 +21,27 @@ from django.utils.timezone import utc
 from cli.rest_util import (api_call, set_token)
 from storageadmin.exceptions import RockStorAPIException
 from storageadmin.models import Appliance
+import sys
 
 BASE_URL = 'https://localhost/api/'
 
 import logging
-logger = logging.getLogger(__name__)
+
 
 class ReplicationMixin(object):
+
+    @classmethod
+    def get_logger(cls):
+        if (hasattr(cls, 'logger')):
+            return cls.logger
+        cls.logger = logging.getLogger()
+        cls.logger.setLevel(logging.DEBUG)
+        ch = logging.StreamHandler(sys.stdout)
+        ch.setLevel(logging.DEBUG)
+        formatter = logging.Formatter('[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s', datefmt='%d/%b/%Y %H:%M:%S')
+        ch.setFormatter(formatter)
+        cls.logger.addHandler(ch)
+        return cls.logger
 
     @staticmethod
     def validate_src_share(sender_uuid, sname):
@@ -43,9 +57,9 @@ class ReplicationMixin(object):
             url = ('%ssm/replicas/trail/%d' % (BASE_URL, rtid))
             return api_call(url, data=data, calltype='put')
         except Exception, e:
-            logger.error('Failed to update replica(%s) status to: %s'
-                         % (url, data['status']))
-            raise e
+            msg = ('Exception while updating replica(%s) status to %s: %s' %
+                   (url, data['status'], e.__str__()))
+            raise Exception(msg)
 
     @staticmethod
     def disable_replica(rid):
@@ -55,28 +69,21 @@ class ReplicationMixin(object):
             return api_call(url, data={'enabled': False, }, calltype='put',
                             save_error=False, headers=headers)
         except Exception, e:
-            logger.error('Failed to disable replica(%s)' % url)
-            raise e
+            msg = ('Exception while disabling replica(%s): %s' %
+                   (url, e.__str__()))
+            raise Exception(msg)
 
     @staticmethod
     def create_replica_trail(rid, snap_name):
         url = ('%ssm/replicas/trail/replica/%d' % (BASE_URL, rid))
-        try:
-            rt = api_call(url, data={'snap_name': snap_name, },
-                          calltype='post', save_error=False)
-            return rt
-        except Exception, e:
-            logger.error('Failed to create replica trail: %s. Exception: %s' % (url, e.__str__()))
-            raise e
+        return api_call(url, data={'snap_name': snap_name, },
+                        calltype='post', save_error=False)
 
     @staticmethod
     def rshare_id(sname):
-        try:
-            url = ('%ssm/replicas/rshare/%s' % (BASE_URL, sname))
-            rshare = api_call(url, save_error=False)
-            return rshare['id']
-        except Exception:
-            raise
+        url = ('%ssm/replicas/rshare/%s' % (BASE_URL, sname))
+        rshare = api_call(url, save_error=False)
+        return rshare['id']
 
     @classmethod
     def create_rshare(cls, data):
@@ -86,27 +93,24 @@ class ReplicationMixin(object):
             return rshare['id']
         except RockStorAPIException, e:
             if (e.detail == 'Replicashare(%s) already exists.' % data['share']):
-                logger.debug(e.detail)
                 return cls.rshare_id(data['share'])
             raise e
 
     @staticmethod
     def create_receive_trail(rid, data):
         url = ('%ssm/replicas/rtrail/rshare/%d' % (BASE_URL, rid))
-        try:
-            rt = api_call(url, data=data, calltype='post', save_error=False)
-            return rt['id']
-        except Exception:
-            raise
+        rt = api_call(url, data=data, calltype='post', save_error=False)
+        return rt['id']
 
     @staticmethod
     def update_receive_trail(rtid, data):
         url = ('%ssm/replicas/rtrail/%d' % (BASE_URL, rtid))
         try:
             return api_call(url, data=data, calltype='put', save_error=False)
-        except Exception:
-            logger.error('Failed to update receive trail: %s' % url)
-            raise
+        except Exception, e:
+            msg = ('Exception while updating receive trail(%s): %s' %
+                   (url, e.__str__()))
+            raise Exception(msg)
 
     @staticmethod
     def prune_trail(url, days=1):
@@ -114,7 +118,8 @@ class ReplicationMixin(object):
             data = {'days': days, }
             return api_call(url, data=data, calltype='delete', save_error=False)
         except Exception, e:
-            logger.error('Failed to prune trail for url(%s). Exception: %s' % (url, e.__str__()))
+            msg = ('Exception while pruning trail for url(%s): %s' % (url, e.__str__()))
+            raise Exception(msg)
 
     @classmethod
     def prune_receive_trail(cls, rid):
@@ -127,7 +132,7 @@ class ReplicationMixin(object):
         return cls.prune_trail(url)
 
     @staticmethod
-    def create_snapshot(sname, snap_name, snap_type='replication'):
+    def create_snapshot(sname, snap_name, logger, snap_type='replication'):
         try:
             url = ('%sshares/%s/snapshots/%s' % (BASE_URL, sname, snap_name))
             return api_call(url, data={'snap_type': snap_type, }, calltype='post',
@@ -139,7 +144,7 @@ class ReplicationMixin(object):
             raise e
 
     @staticmethod
-    def delete_snapshot(sname, snap_name):
+    def delete_snapshot(sname, snap_name, logger):
         try:
             url = ('%sshares/%s/snapshots/%s' % (BASE_URL, sname, snap_name))
             return api_call(url, calltype='delete', save_error=False)
@@ -149,7 +154,7 @@ class ReplicationMixin(object):
             raise e
 
     @staticmethod
-    def create_share(sname, pool):
+    def create_share(sname, pool, logger):
         try:
             url = ('%sshares' % BASE_URL)
             data = {'pool': pool,

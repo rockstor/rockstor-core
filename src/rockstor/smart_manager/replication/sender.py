@@ -19,7 +19,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from multiprocessing import Process
 import os
 import sys
-import logging
 import zmq
 import subprocess
 import fcntl
@@ -32,13 +31,12 @@ from storageadmin.models import Appliance
 import json
 
 BTRFS = '/sbin/btrfs'
-logger = logging.getLogger(__name__)
 
 
 class Sender(ReplicationMixin, Process):
 
     def __init__(self, replica, sender_ip, receiver_ip, snap_name, smeta_port,
-                 sdata_port, rmeta_port, uuid, snap_id, rt=None):
+                 sdata_port, rmeta_port, uuid, snap_id, logger, rt=None):
         self.replica = replica
         self.receiver_ip = receiver_ip
         self.smeta_port = smeta_port
@@ -68,13 +66,14 @@ class Sender(ReplicationMixin, Process):
         self.kb_sent = 0
         self.ctx = zmq.Context()
         super(Sender, self).__init__()
+        self.logger = logger
 
     @contextmanager
     def _clean_exit_handler(self, msg):
         try:
             yield
         except Exception, e:
-            logger.error('%s. Exception: %s' % (msg, e.__str__()))
+            self.logger.error('%s. Exception: %s' % (msg, e.__str__()))
             self._sys_exit(3)
 
     def _sys_exit(self, code, linger=60000):
@@ -86,20 +85,20 @@ class Sender(ReplicationMixin, Process):
         try:
             yield
         except Exception, e:
-            logger.error('%s. Exception: %s' % (msg, e.__str__()))
+            self.logger.error('%s. Exception: %s' % (msg, e.__str__()))
             try:
                 data = {'status': 'failed',
                         'error': msg, }
                 self.update_replica_status(self.rt2_id, data)
             except Exception, e:
-                logger.error('Exception occured in cleanup handler: %s' % e.__str__())
+                self.logger.error('Exception occured in cleanup handler: %s' % e.__str__())
             finally:
                 self._sys_exit(3)
 
     def _process_q(self):
         ack = self.meta_sub.recv_string()
         ack = json.loads(ack[len('meta-%s' % self.snap_id):])
-        logger.debug('ack received by sender: %s' % ack)
+        self.logger.debug('ack received by sender: %s' % ack)
         if (ack['msg'] == 'send_more'):
             #  excess credit messages from receiver at that end
             return self._process_q()
@@ -116,7 +115,7 @@ class Sender(ReplicationMixin, Process):
             msg = ('Failed to delete snapshot: %s. Aborting.' %
                    oldest_snap)
             with self._clean_exit_handler(msg):
-                self.delete_snapshot(self.replica.share, oldest_snap)
+                self.delete_snapshot(self.replica.share, oldest_snap, self.logger)
                 return self._delete_old_snaps(share_path)
 
     def run(self):
@@ -154,7 +153,7 @@ class Sender(ReplicationMixin, Process):
         #  failed attempt.
         msg = ('Failed to create snapshot: %s. Aborting.' % self.snap_name)
         with self._clean_exit_handler(msg):
-            self.create_snapshot(self.replica.share, self.snap_name)
+            self.create_snapshot(self.replica.share, self.snap_name, self.logger)
 
         #  let the receiver know that following diff is coming
         msg = ('Failed to send initial metadata communication to the '
@@ -185,11 +184,11 @@ class Sender(ReplicationMixin, Process):
             prev_snap = ('%s%s/.snapshots/%s/%s' %
                          (settings.MNT_PT, self.replica.pool,
                           self.replica.share, self.rt.snap_name))
-            logger.info('Sending incremental replica between %s -- %s' %
+            self.logger.info('Sending incremental replica between %s -- %s' %
                         (prev_snap, snap_path))
             cmd = [BTRFS, 'send', '-p', prev_snap, snap_path]
         else:
-            logger.info('Sending full replica: %s' % snap_path)
+            self.logger.info('Sending full replica: %s' % snap_path)
 
         try:
             sp = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE,
@@ -198,7 +197,7 @@ class Sender(ReplicationMixin, Process):
         except Exception, e:
             msg = ('Failed to start the low level btrfs send '
                    'command(%s). Aborting. Exception: ' % (cmd, e.__str__()))
-            logger.error(msg)
+            self.logger.error(msg)
             with self._update_trail_and_quit(msg):
                 self.data_push.send('%sEND_FAIL' % self.snap_id)
             self._sys_exit(3)
@@ -251,8 +250,8 @@ class Sender(ReplicationMixin, Process):
                         self.data_push.send('%sEND_SUCCESS' % self.snap_id)
 
             if (os.getppid() != self.ppid):
-                logger.error('Scheduler exited. Sender for %s cannot go on. '
-                             'Aborting.' % self.snap_id)
+                self.logger.error('Scheduler exited. Sender for %s cannot go on. '
+                                  'Aborting.' % self.snap_id)
                 self._sys_exit(3)
 
         msg = ('Timeout occured while waiting for final '
