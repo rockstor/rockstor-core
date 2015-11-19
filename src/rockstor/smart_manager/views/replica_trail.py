@@ -41,13 +41,14 @@ class ReplicaTrailListView(rfc.GenericView):
 
     @transaction.atomic
     def post(self, request, rid):
-        replica = Replica.objects.get(id=rid)
-        snap_name = request.data['snap_name']
-        ts = datetime.utcnow().replace(tzinfo=utc)
-        rt = ReplicaTrail(replica=replica, snap_name=snap_name,
-                          status='pending', snapshot_created=ts)
-        rt.save()
-        return Response(ReplicaTrailSerializer(rt).data)
+        with self._handle_exception(request):
+            replica = Replica.objects.get(id=rid)
+            snap_name = request.data['snap_name']
+            ts = datetime.utcnow().replace(tzinfo=utc)
+            rt = ReplicaTrail(replica=replica, snap_name=snap_name,
+                              status='pending', snapshot_created=ts)
+            rt.save()
+            return Response(ReplicaTrailSerializer(rt).data)
 
     @transaction.atomic
     def delete(self, request, rid):
