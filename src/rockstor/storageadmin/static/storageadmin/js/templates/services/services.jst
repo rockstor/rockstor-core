@@ -48,17 +48,9 @@
 	      </td>
               <td id="<%= service.get('name') %>-status">
                 <% if (service.get('status')) { %>
-                <div class="slider-stop" data-service-name="<%= service.get('name') %>">OFF</div>
-                <div class="slider-ph">
-                  <input type="text" class="service-status" value="1" data-service-name="<%= service.get('name') %>"></input>
-                </div>
-                <div class="slider-start on" data-service-name="<%= service.get('name') %>">ON</div>
+                <input type="checkbox" data-service-name="<%= service.get('name') %>" data-size="mini" checked>
                 <% } else { %>
-                <div class="slider-stop" data-service-name="<%= service.get('name') %>">OFF</div>
-                <div class="slider-ph">
-                  <input type="text" class="service-status" value="0" data-service-name="<%= service.get('name') %>"></input>
-                </div>
-                <div class="slider-start" data-service-name="<%= service.get('name') %>">ON</div>
+                <input type="checkbox" data-service-name="<%= service.get('name') %>" data-size="mini">
                 <% } %>
                 <div class="command-status" data-service-name="<%= service.get('name') %>">&nbsp;</div>
                 <div class="simple-overlay" id="<%= service.get('name') %>-err-popup"><div class="overlay-content"></div></div>
