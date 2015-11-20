@@ -31,9 +31,23 @@ class DiskSmartTests(APITestMixin, APITestCase):
     def setUpClass(cls):
         super(DiskSmartTests, cls).setUpClass()
         
-        cls.patch_info = patch('storageadmin.views.disk_smart_info')
+        # post mocks
+        cls.patch_extended_info = patch('storageadmin.views.disk_smart.extended_info')
+        cls.mock_extended_info = cls.patch_extended_info.start()
+        
+        cls.patch_capabilities = patch('storageadmin.views.disk_smart.capabilities')
+        cls.mock_capabilities = cls.patch_capabilities.start()
+        
+        cls.patch_info = patch('storageadmin.views.disk_smart.info')
         cls.mock_info = cls.patch_info.start()
-                      
+        
+        cls.patch_error_logs = patch('storageadmin.views.disk_smart.error_logs')
+        cls.mock_error_logs = cls.patch_error_logs.start()
+        
+        cls.patch_test_logs = patch('storageadmin.views.disk_smart.test_logs')
+        cls.mock_test_logs = cls.patch_test_logs.start()
+       
+                     
     @classmethod
     def tearDownClass(cls):
         super(DiskSmartTests, cls).tearDownClass()
