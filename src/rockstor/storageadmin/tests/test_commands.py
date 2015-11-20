@@ -79,58 +79,76 @@ class CommandTests(APITestMixin, APITestCase):
         super(CommandTests, cls).tearDownClass()
     
         
-    def test_post_requests(self):
+    def test_bootstrap_command(self):
        
-        
         # bootstrap command
         response = self.client.post('%s/bootstrap' % self.BASE_URL)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
-        
+    
+    def test_utcnow_command(self):    
+    
         # utcnow command
         response = self.client.post('%s/utcnow' % self.BASE_URL)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 
+    def test_uptime_command(self):
+    
         # uptime command
         response = self.client.post('%s/uptime' % self.BASE_URL)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
-
+    def test_kernel_command(self):
+    
         # kernel command
         response = self.client.post('%s/kernel' % self.BASE_URL)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
-
+                         
+    def test_update_check_command(self):
+    
         # update-check command
         response = self.client.post('%s/update-check' % self.BASE_URL)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
-
+                         
+    def test_update_command(self):
+    
         # update command
         response = self.client.post('%s/update' % self.BASE_URL)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
+     
+    def test_current_version_command(self):
                          
         # current-version command
         response = self.client.post('%s/current-version' % self.BASE_URL)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
+   
+    def test_current_user_command(self):
         
         # current-user command
         response = self.client.post('%s/current-user' % self.BASE_URL)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
+    
+    def test_auto_update_status_command(self):
                          
         # auto-update-status command
         response = self.client.post('%s/auto-update-status' % self.BASE_URL)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)    
+    
+    def test_enable_auto_update_command(self):
                          
         # enable-auto-update command
         response = self.client.post('%s/enable-auto-update' % self.BASE_URL)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)    
+    
+    def test_disable_auto_update_command(self):
                          
         # disable-auto-update command
         response = self.client.post('%s/disable-auto-update' % self.BASE_URL)
