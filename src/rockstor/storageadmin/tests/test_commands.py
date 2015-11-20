@@ -29,6 +29,17 @@ class CommandTests(APITestMixin, APITestCase):
     def setUpClass(cls):
         super(CommandTests, cls).setUpClass()
 
+        cls.patch_get_pool_info = patch('storageadmin.views.command.get_pool_info')
+        cls.mock_get_pool_info = cls.patch_get_pool_info.start()
+        cls.mock_get_pool_info.return_value = {'disks':[],'label':'pool2'}
+        
+        cls.patch_pool_usage = patch('storageadmin.views.command.pool_usage')
+        cls.mock_pool_usage = cls.patch_pool_usage.start()
+        cls.mock_pool_usage.return_value = (14680064, 10, 4194305)
+        
+        cls.patch_pool_raid = patch('storageadmin.views.command.pool_raid')
+        cls.mock_pool_raid = cls.patch_pool_raid.start()
+               
         cls.patch_mount_share = patch('storageadmin.views.command.mount_share')
         cls.mock_mount_share = cls.patch_mount_share.start()
         cls.mock_mount_share.return_value = True
