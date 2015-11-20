@@ -18,28 +18,14 @@
  *
  */
 </script>
+
 <div class="row">
 <div class="col-md-12">
 <div id="details-header">
 <table>
 <tr>
 <td><span class="h3">Replication Service&nbsp;&nbsp;&nbsp;</span></td>
-<td>
-<% if (replicationService.get('status')) { %>
-<div class="slider1-stop" data-service-name="<%= replicationService.get('name') %>">OFF</div>
-<div class="slider-ph">
-<input type="text" class="service-status" value="1" data-service-name="<%= replicationService.get('name') %>"></input>
-</div>
-<div class="slider1-start on" data-service-name="<%= replicationService.get('name') %>">ON</div>
-<% } else { %>
-<div class="slider1-stop" data-service-name="<%= replicationService.get('name') %>">OFF</div>
-<div class="slider-ph">
-<input type="text" class="service-status" value="0" data-service-name="<%= replicationService.get('name') %>"></input>
-</div>
-<div class="slider1-start" data-service-name="<%= replicationService.get('name') %>">ON</div>
-<% } %>
-<div class="command-status" data-service-name="<%= replicationService.get('name') %>">&nbsp;</div>
-</td>
+<td><input type="checkbox" name="replica-service-checkbox" data-size="mini"></td>
 </tr>
 </table>
 </div>
@@ -96,19 +82,10 @@
 
 </td>
 <td>
-
 <% if (replica.get('enabled')) { %>
-<div class="slider-stop" data-replica-id="<%= replica.id %>">OFF</div>
-<div class="slider-ph">
-<input type="text" class="replication-status" value="1" data-replica-id="<%= replica.id %>"></input>
-</div>
-<div class="slider-start on" data-replica-id="<%= replica.id %>">ON</div>
+<input type="checkbox" name="replica-task-checkbox" data-replica-id="<%= replica.id %>" data-size="mini" checked>
 <% } else { %>
-<div class="slider-stop" data-replica-id="<%= replica.id %>">OFF</div>
-<div class="slider-ph">
-<input type="text" class="replication-status" value="0" data-replica-id="<%= replica.id %>"></input>
-</div>
-<div class="slider-start" data-replica-id="<%= replica.id %>">ON</div>
+<input type="checkbox" name="replica-task-checkbox" data-replica-id="<%= replica.id %>" data-size="mini">
 <% } %>
 
 
