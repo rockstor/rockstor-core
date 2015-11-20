@@ -45,13 +45,15 @@ class DashboardConfigTests(APITestMixin, APITestCase):
     def test_post_requests(self):
        
         # happy path
-        response = self.client.post(self.BASE_URL)
+        data = {'widgets':''}
+        response = self.client.post(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
        
     def test_put_requests(self):
 
         # happy path
-        response = self.client.put(self.BASE_URL)
+        data = {'widgets':''}
+        response = self.client.put(self.BASE_URL, data=data)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)                  
