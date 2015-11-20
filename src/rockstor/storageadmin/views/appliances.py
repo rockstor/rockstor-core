@@ -174,7 +174,7 @@ class ApplianceDetailView(rfc.GenericView):
             appliance = Appliance.objects.get(pk=id)
         except Exception, e:
             logger.exception(e)
-            e_msg = ('Appliance(%d) does not exist' % id)
+            e_msg = ('Appliance(%s) does not exist' % id)
             handle_exception(Exception(e_msg), request)
 
         if (Replica.objects.filter(appliance=appliance.uuid).exists()):
