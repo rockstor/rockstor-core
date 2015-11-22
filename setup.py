@@ -58,7 +58,7 @@ setup(
     },
 
     install_requires=[
-        'django == 1.6.2',
+        'django == 1.6.11',
         'distribute >= 0.6.35',
         'URLObject == 2.1.1',
         'djangorestframework == 3.1.1',
@@ -66,9 +66,9 @@ setup(
         'django-pipeline == 1.2.23',
         'requests == 1.1.0',
         'pyzmq == 15.0.0',
-        'South == 0.8.4',
+        'South == 1.0.2',
         'psycopg2 == 2.6',
-        'django-oauth-toolkit == 0.7.0',
+        'django-oauth-toolkit == 0.9.0',
         'six == 1.7.3',
         'django-ztask == 0.1.5',
         'mock == 1.0.1',
