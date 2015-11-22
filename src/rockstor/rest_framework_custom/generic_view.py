@@ -21,7 +21,7 @@ from rest_framework.authentication import (BasicAuthentication,
                                            SessionAuthentication,)
 from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
-from oauth2_provider.ext.rest_framework import OAuth2Authentication
+from oauth_wrapper import RockstorOAuth2Authentication
 from contextlib import contextmanager
 from storageadmin.util import handle_exception
 from storageadmin.exceptions import RockStorAPIException
@@ -30,8 +30,8 @@ from storageadmin.exceptions import RockStorAPIException
 # TODO: Only allow put, and patch where necessary. This works right now
 class GenericView(ListCreateAPIView):
     authentication_classes = (DigestAuthentication, SessionAuthentication,
-                              BasicAuthentication, OAuth2Authentication,)
-    permission_classes = (IsAuthenticated,)
+                              BasicAuthentication, RockstorOAuth2Authentication,)
+    permission_classes = (IsAuthenticated, )
 
     @staticmethod
     @contextmanager
