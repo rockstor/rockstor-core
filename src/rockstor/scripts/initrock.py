@@ -67,6 +67,25 @@ def init_update_issue():
                       'https://%s\n\n' % ipaddr)
     return ipaddr
 
+def update_nginx(logger):
+    from storageadmin.models import NetworkInterface
+    try:
+        ni = NetworkInterface.objects.get(itype='management')
+    except NetworkInterface.DoesNotExist:
+        return logger.debug('management interface not configured. Not updating Nginx conf')
+    conf = '%s/etc/nginx/nginx.conf' % settings.ROOT_DIR
+    fo, npath = mkstemp()
+    with open(conf) as ifo, open(npath, 'w') as tfo:
+        for line in ifo.readlines():
+            if (re.search('listen.*80 default_server', line) is not None):
+                substr = 'listen %s:80' % ni.ipaddr
+                line = re.sub(r'listen.*80', substr, line)
+            elif (re.search('listen.*443 default_server', line) is not None):
+                substr = 'listen %s:443' % ni.ipaddr
+                line = re.sub(r'listen.*443', substr, line)
+            tfo.write(line)
+    shutil.move(npath, conf)
+    run_command([SUPERCTL, 'restart', 'nginx'])
 
 def set_def_kernel(logger, version=settings.SUPPORTED_KERNEL_VERSION):
     supported_kernel_path = ('/boot/vmlinuz-%s' % version)
@@ -344,6 +363,7 @@ def main():
     logging.info('Shutting down firewall...')
     run_command([SYSCTL, 'stop', 'firewalld'])
     run_command([SYSCTL, 'disable', 'firewalld'])
+    update_nginx(logging)
     enable_rockstor_service(logging)
     enable_bootstrap_service(logging)
 

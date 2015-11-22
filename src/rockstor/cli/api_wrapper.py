@@ -21,27 +21,35 @@ import requests
 import time
 import json
 import base64
-import settings
 from storageadmin.exceptions import RockStorAPIException
-from storageadmin.models import OauthApp
+from storageadmin.models import (OauthApp, NetworkInterface)
+from oauth2_provider.models import AccessToken
 from django.conf import settings
+from django.utils.timezone import utc
+from datetime import datetime
 
 
 class APIWrapper(object):
 
     def __init__(self, client_id=None, client_secret=None, url=None):
         self.access_token = None
-        self.expriation = time.time()
+        self.expiration = time.time()
         self.client_id = client_id
         self.client_secret = client_secret
         self.url = url
 
         if (client_id is None or client_secret is None or url is None):
-            os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
-            app = OauthApp.objects.get(name=settings.OAUTH_INTERNAL_APP)
-            self.client_id = app.client_id()
-            self.client_secret = app.client_secret()
             self.url = 'https://localhost'
+            try:
+                mgmt_ip = NetworkInterface.objects.get(itype='management').ipaddr
+                self.url = 'https://%s' % mgmt_ip
+            except NetworkInterface.DoesNotExist:
+                pass
+
+            app = OauthApp.objects.get(name=settings.OAUTH_INTERNAL_APP)
+            self.client_id = app.application.client_id
+            self.client_secret = app.application.client_secret
+
 
     def set_token(self):
         token_request_data = {
@@ -62,19 +70,23 @@ class APIWrapper(object):
             content = json.loads(response.content.decode("utf-8"))
             self.access_token = content['access_token']
             self.expiration = int(time.time()) + content['expires_in'] - 600
+            print('token = %s cur_time = %f expiration = %f' % (self.access_token, time.time(), self.expiration))
         except Exception, e:
             msg = ('Exception while setting access_token for url(%s): %s. '
-                   'content: %s' % (url, e.__str__(), content))
+                   'content: %s' % (self.url, e.__str__(), content))
             raise Exception(msg)
 
 
     def api_call(self, url, data=None, calltype='get', headers=None, save_error=True):
         if (self.access_token is None or
-            time.time() > self.expriation):
+            (time.time() > self.expiration)):
             self.set_token()
+        else:
+            print('reusing old token')
 
         api_auth_header = {'Authorization': 'Bearer ' + self.access_token, }
         call = getattr(requests, calltype)
+        url = ('%s/api/%s' % (self.url, url))
         try:
             if (headers is not None):
                 headers.update(api_auth_header)
