@@ -20,7 +20,7 @@ import os
 os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 import sys
 import time
-from cli.rest_util import api_call
+from cli.api_wrapper import APIWrapper
 from fs.btrfs import device_scan
 from system.osi import run_command
 import requests
@@ -33,17 +33,15 @@ QGROUP_MAXOUT_LIMIT = '%s/qgroup-maxout-limit' % BASE_BIN
 
 
 def main():
-    baseurl = 'https://localhost/api'
-    bootstrap_url = ('%s/commands/bootstrap' % baseurl)
-    netscan_url = ('%s/network' % baseurl)
+    aw = APIWrapper()
     device_scan()
     print('BTRFS device scan complete')
 
     num_attempts = 0
     while True:
         try:
-            api_call(netscan_url, calltype='get')
-            api_call(bootstrap_url, calltype='post')
+            aw.api_call('network')
+            aw.api_call('commands/bootstrap', calltype='post')
             break
         except requests.exceptions.ConnectionError, e:
             if (num_attempts > 15):
