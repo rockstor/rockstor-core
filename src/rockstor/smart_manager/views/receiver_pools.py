@@ -20,7 +20,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from storageadmin.models import Appliance
 from storageadmin.util import handle_exception
-from cli.rest_util import (api_call, set_token)
+from cli.api_wrapper import APIWrapper
 
 
 class ReceiverPoolListView(APIView):
@@ -30,11 +30,16 @@ class ReceiverPoolListView(APIView):
             auuid = self.kwargs.get('auuid', None)
             ao = Appliance.objects.get(uuid=auuid)
             url = ('https://%s:%s' % (ao.ip, ao.mgmt_port))
-            set_token(client_id=ao.client_id, client_secret=ao.client_secret, url=url)
-            response = api_call(url='%s/api/pools' % url)
+            aw = APIWrapper(client_id=ao.client_id, client_secret=ao.client_secret, url=url)
+            response = aw.api_call('pools')
             res = [p['name'] for p in response['results']]
             return Response(res)
+        except Appliance.DoesNotExist:
+            msg = ('Remote appliance with the given uuid(%s) does not exist.' %
+                   auuid)
+            handle_exception(Exception(msg), self.request)
         except Exception, e:
-            msg = ('Failed to retrieve list of Pools on the target appliance '
-                   'due to this exception: %s' % e.__str__())
+            msg = ('Failed to retrieve list of Pools on the remote '
+                   'appliance(%s). Make sure it is running and try again. '
+                   'Here is the exact error: %s' % (ao.ip, e.__str__()))
             handle_exception(Exception(msg), self.request)
