@@ -123,12 +123,13 @@ class Sender(ReplicationMixin, Process):
                     return self._delete_old_snaps(share_path)
 
     def run(self):
-        self.law = APIWrapper()
+
         msg = ('Failed to subscribe to the main scheduler')
         with self._clean_exit_handler(msg):
+            self.law = APIWrapper()
             self.meta_sub = self.ctx.socket(zmq.SUB)
             self.meta_sub.connect('tcp://%s:%d' % (self.sender_ip, self.sdata_port))
-            self.meta_sub.RCVTIMEO = 600000 #1 minutes
+            self.meta_sub.RCVTIMEO = 60000 #1 minutes
             substr = 'meta-%s' % self.snap_id
             self.meta_sub.setsockopt_string(zmq.SUBSCRIBE, substr.decode('ascii'))
 

@@ -122,7 +122,7 @@ class Receiver(ReplicationMixin, Process):
             #in the db, no error is raised here.
             recv_sub = self.ctx.socket(zmq.SUB)
             recv_sub.connect('tcp://%s:%d' % (self.sender_ip, self.data_port))
-            recv_sub.RCVTIMEO = 1000 # 1 second
+            recv_sub.RCVTIMEO = 1000 # 1 minute
             recv_sub.setsockopt_string(zmq.SUBSCRIBE, self.meta['id'].decode('ascii'))
 
         msg = ('Failed to connect to the sender(%s) on '
@@ -350,7 +350,7 @@ class Receiver(ReplicationMixin, Process):
             self.logger.debug('Receive finished for %s. ack = %s' % (sname, ack))
 
         try:
-            recv_sub.RCVTIMEO = 60000
+            recv_sub.RCVTIMEO = 60000 # 1 minute
             recv_data = recv_sub.recv()
             recv_data = recv_data[len(self.meta['id']):]
         except Exception, e:
