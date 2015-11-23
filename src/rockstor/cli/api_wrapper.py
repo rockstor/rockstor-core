@@ -42,7 +42,10 @@ class APIWrapper(object):
             self.url = 'https://localhost'
             try:
                 mgmt_ip = NetworkInterface.objects.get(itype='management').ipaddr
-                self.url = 'https://%s' % mgmt_ip
+                if (mgmt_ip is None):
+                    print('Management IP is not defined. Falling back to localhost')
+                else:
+                    self.url = 'https://%s' % mgmt_ip
             except NetworkInterface.DoesNotExist:
                 pass
 
@@ -70,7 +73,6 @@ class APIWrapper(object):
             content = json.loads(response.content.decode("utf-8"))
             self.access_token = content['access_token']
             self.expiration = int(time.time()) + content['expires_in'] - 600
-            print('token = %s cur_time = %f expiration = %f' % (self.access_token, time.time(), self.expiration))
         except Exception, e:
             msg = ('Exception while setting access_token for url(%s): %s. '
                    'content: %s' % (self.url, e.__str__(), content))
@@ -81,8 +83,6 @@ class APIWrapper(object):
         if (self.access_token is None or
             (time.time() > self.expiration)):
             self.set_token()
-        else:
-            print('reusing old token')
 
         api_auth_header = {'Authorization': 'Bearer ' + self.access_token, }
         call = getattr(requests, calltype)
@@ -100,7 +100,7 @@ class APIWrapper(object):
                 r = call(url, verify=False, headers=api_auth_header, data=data)
         except requests.exceptions.ConnectionError:
             print('Error connecting to Rockstor. Is it running?')
-            return {}
+            raise
 
         if (r.status_code == 404):
             msg = ('Invalid api end point: %s' % url)

@@ -24,17 +24,16 @@ import json
 from datetime import datetime
 from storageadmin.models import (Share, Snapshot)
 from smart_manager.models import (Task, TaskDefinition)
-from cli.rest_util import api_call
+from cli.api_wrapper import APIWrapper
 from django.utils.timezone import utc
 from django.conf import settings
 import logging
 logger = logging.getLogger(__name__)
-baseurl = 'https://localhost/api/'
 
-def update_state(t, pool):
-    url = ('%spools/%s/scrub/status' % (baseurl, pool))
+def update_state(t, pool, aw):
+    url = ('pools/%s/scrub/status' % pool)
     try:
-        status = api_call(url, data=None, calltype='post', save_error=False)
+        status = aw.api_call(url, data=None, calltype='post', save_error=False)
         t.state = status['status']
     except Exception, e:
         logger.error('Failed to get scrub status at %s' % url)
@@ -50,22 +49,23 @@ def main():
     if (tdo.task_type != 'scrub'):
         return logger.error('task_type(%s) is not scrub.' % tdo.task_type)
     meta = json.loads(tdo.json_meta)
+    aw = APIWrapper()
 
     if (Task.objects.filter(task_def=tdo).exists()):
         ll = Task.objects.filter(task_def=tdo).order_by('-id')[0]
         if (ll.state != 'error' and ll.state != 'finished'):
             logger.debug('Non terminal state(%s) for task(%d). Checking '
                          'again.' % (ll.state, tid))
-            cur_state = update_state(ll, meta['pool'])
+            cur_state = update_state(ll, meta['pool'], aw)
             if (cur_state != 'error' and cur_state != 'finished'):
                 return logger.debug('Non terminal state(%s) for task(%d). '
                                     'A new task will not be run.' % (cur_state, tid))
 
     now = datetime.utcnow().replace(second=0, microsecond=0, tzinfo=utc)
     t = Task(task_def=tdo, state='started', start=now)
-    url = ('%spools/%s/scrub' % (baseurl, meta['pool']))
+    url = ('pools/%s/scrub' % meta['pool'])
     try:
-        api_call(url, data=None, calltype='post', save_error=False)
+        aw.api_call(url, data=None, calltype='post', save_error=False)
         logger.debug('Started scrub at %s' % url)
         t.state = 'running'
     except Exception, e:
@@ -77,7 +77,7 @@ def main():
         t.save()
 
     while True:
-        cur_state = update_state(t, meta['pool'])
+        cur_state = update_state(t, meta['pool'], aw)
         if (cur_state == 'error' or cur_state == 'finished'):
             logger.debug('task(%d) finished with state(%s).' %
                          (tid, cur_state))
