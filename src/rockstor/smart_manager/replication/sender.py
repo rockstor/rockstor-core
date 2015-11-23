@@ -67,6 +67,7 @@ class Sender(ReplicationMixin, Process):
         self.kb_sent = 0
         self.ctx = zmq.Context()
         self.logger = logger
+        self.law = None
         self.raw = None
         super(Sender, self).__init__()
 
@@ -118,8 +119,8 @@ class Sender(ReplicationMixin, Process):
             msg = ('Failed to delete snapshot: %s. Aborting.' %
                    oldest_snap)
             with self._clean_exit_handler(msg):
-                self.delete_snapshot(self.replica.share, oldest_snap, self.logger)
-                return self._delete_old_snaps(share_path)
+                if (self.delete_snapshot(self.replica.share, oldest_snap, self.logger)):
+                    return self._delete_old_snaps(share_path)
 
     def run(self):
         self.law = APIWrapper()

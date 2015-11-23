@@ -135,10 +135,12 @@ class ReplicationMixin(object):
     def delete_snapshot(self, sname, snap_name, logger):
         try:
             url = ('shares/%s/snapshots/%s' % (sname, snap_name))
-            return self.law.api_call(url, calltype='delete', save_error=False)
+            self.law.api_call(url, calltype='delete', save_error=False)
+            return True
         except RockStorAPIException, e:
             if (e.detail == 'Snapshot(%s) does not exist.' % snap_name):
-                return logger.debug(e.detail)
+                logger.debug(e.detail)
+                return False
             raise e
 
     def create_share(self, sname, pool, logger):

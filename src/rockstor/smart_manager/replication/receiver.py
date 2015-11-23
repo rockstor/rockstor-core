@@ -96,8 +96,8 @@ class Receiver(ReplicationMixin, Process):
             msg = ('Failed to delete snapshot: %s. Aborting.' %
                    oldest_snap)
             with self._clean_exit_handler(msg):
-                self.delete_snapshot(share_name, oldest_snap, self.logger)
-                return self._delete_old_snaps(share_name, share_path, num_retain)
+                if (self.delete_snapshot(share_name, oldest_snap, self.logger)):
+                    return self._delete_old_snaps(share_name, share_path, num_retain)
 
 
     def run(self):
@@ -287,7 +287,7 @@ class Receiver(ReplicationMixin, Process):
                     self.rp.stdin.flush()
                 else:
                     self.logger.error('It seems the btrfs receive process died'
-                                      ' unexpectedly.')
+                                      ' unexpectedly for meta: %s' % self.meta)
                     out, err = self.rp.communicate()
                     msg = ('Low level system error from btrfs receive '
                            'command. out: %s err: %s for rtid: %s meta: %s'
@@ -304,7 +304,8 @@ class Receiver(ReplicationMixin, Process):
                                       % (self.sender_ip, self.meta))
                     self._sys_exit(3)
             except Exception, e:
-                msg = ('Exception occured while receiving fsdata: %s' % e.__str__())
+                msg = ('Exception occured while receiving fsdata for meta: %s.'
+                       'Exception: %s' % (self.meta, e.__str__()))
                 self.logger.error(msg)
                 self.rp.terminate()
                 out, err = self.rp.communicate()
@@ -326,8 +327,9 @@ class Receiver(ReplicationMixin, Process):
         try:
             out, err = self.rp.communicate()
         except Exception, e:
-            self.logger.debug('Exception while terminating receive. Probably '
-                              'already terminated: %s' % e.__str__())
+            self.logger.debug('Exception while terminating receive. Meta: %s. '
+                              'Probably already terminated: %s' %
+                              (self.meta, e.__str__()))
 
         ack = {'msg': 'receive_ok',
                'id': self.meta['id'], }
@@ -352,6 +354,7 @@ class Receiver(ReplicationMixin, Process):
             recv_data = recv_sub.recv()
             recv_data = recv_data[len(self.meta['id']):]
         except Exception, e:
-            self.logger.error('Exception while waiting for final ack from sender: %s' % e.__str__())
+            self.logger.error('Exception while waiting for final ack from '
+                              'sender for %s: %s' % (sname, e.__str__()))
 
         self._sys_exit(0)
