@@ -22,24 +22,9 @@
 <div class="col-md-12">
 <div id="details-header">
 <table>
-<tr>
-<td><span class="h3">Replication Service&nbsp;&nbsp;&nbsp;</span></td>
-<td>
-<% if (replicationService.get('status')) { %>
-<div class="slider-stop" data-service-name="<%= replicationService.get('name') %>">OFF</div>
-<div class="slider-ph">
-<input type="text" class="service-status" value="1" data-service-name="<%= replicationService.get('name') %>"></input>
-</div>
-<div class="slider-start on" data-service-name="<%= replicationService.get('name') %>">ON</div>
-<% } else { %>
-<div class="slider-stop" data-service-name="<%= replicationService.get('name') %>">OFF</div>
-<div class="slider-ph">
-<input type="text" class="service-status" value="0" data-service-name="<%= replicationService.get('name') %>"></input>
-</div>
-<div class="slider-start" data-service-name="<%= replicationService.get('name') %>">ON</div>
-<% } %>
-<div class="command-status" data-service-name="<%= replicationService.get('name') %>">&nbsp;</div>
-</td>
+  <tr>
+    <td><span class="h3">Replication Service&nbsp;&nbsp;&nbsp;</span></td>
+    <td><input type="checkbox" name="replica-service-checkbox" data-size="mini"></td>
 </tr>
 </table>
 </div>
