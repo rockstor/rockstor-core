@@ -281,7 +281,7 @@ var ISCSITarget = Backbone.Model.extend({
 });
 
 var DashboardConfig = Backbone.Model.extend({
-    url: '/api/dashboardconfig/',
+    url: '/api/dashboardconfig',
     setConfig: function(wConfigs) {
 	var tmp = [];
 	_.each(wConfigs, function(wConfig) {

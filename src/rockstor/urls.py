@@ -93,7 +93,7 @@ urlpatterns = patterns('',
                        url(r'^api/netatalk/(?P<afp_id>\d+)$',
                            NetatalkDetailView.as_view()),
                        # Dashboard config
-                       url(r'^api/dashboardconfig/$',
+                       url(r'^api/dashboardconfig$',
                            DashboardConfigView.as_view()),
                        url(r'^api/oauth_app$', OauthAppView.as_view()),
                        url(r'^api/oauth_app/(?P<name>\w+)$',

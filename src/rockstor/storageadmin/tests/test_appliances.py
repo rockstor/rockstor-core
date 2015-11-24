@@ -101,7 +101,12 @@ class AppliancesTests(APITestMixin, APITestCase):
     
     def test_delete_requests(self):
 
-         
+        # add appliance
+        data = {'ip': '1.1.1.1', 'mgmt_port': '443', 'client_id':'', 'client_secret':'', 'current_appliance': False }
+        response = self.client.post(self.BASE_URL, data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_200_OK, msg=response.data)
+                          
         # delete appliance that does not exists
         app_id = 11
         response = self.client.delete('%s/%d' % (self.BASE_URL, app_id))

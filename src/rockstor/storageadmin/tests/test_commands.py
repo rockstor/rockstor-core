@@ -29,6 +29,17 @@ class CommandTests(APITestMixin, APITestCase):
     def setUpClass(cls):
         super(CommandTests, cls).setUpClass()
 
+        cls.patch_get_pool_info = patch('storageadmin.views.command.get_pool_info')
+        cls.mock_get_pool_info = cls.patch_get_pool_info.start()
+        cls.mock_get_pool_info.return_value = {'disks':[],'label':'pool2'}
+        
+        cls.patch_pool_usage = patch('storageadmin.views.command.pool_usage')
+        cls.mock_pool_usage = cls.patch_pool_usage.start()
+        cls.mock_pool_usage.return_value = (14680064, 10, 4194305)
+        
+        cls.patch_pool_raid = patch('storageadmin.views.command.pool_raid')
+        cls.mock_pool_raid = cls.patch_pool_raid.start()
+               
         cls.patch_mount_share = patch('storageadmin.views.command.mount_share')
         cls.mock_mount_share = cls.patch_mount_share.start()
         cls.mock_mount_share.return_value = True
@@ -79,58 +90,76 @@ class CommandTests(APITestMixin, APITestCase):
         super(CommandTests, cls).tearDownClass()
     
         
-    def test_post_requests(self):
+    def test_bootstrap_command(self):
        
-        
         # bootstrap command
         response = self.client.post('%s/bootstrap' % self.BASE_URL)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
-        
+    
+    def test_utcnow_command(self):    
+    
         # utcnow command
         response = self.client.post('%s/utcnow' % self.BASE_URL)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
 
+    def test_uptime_command(self):
+    
         # uptime command
         response = self.client.post('%s/uptime' % self.BASE_URL)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
-
+    def test_kernel_command(self):
+    
         # kernel command
         response = self.client.post('%s/kernel' % self.BASE_URL)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
-
+                         
+    def test_update_check_command(self):
+    
         # update-check command
         response = self.client.post('%s/update-check' % self.BASE_URL)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
-
+                         
+    def test_update_command(self):
+    
         # update command
         response = self.client.post('%s/update' % self.BASE_URL)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
+     
+    def test_current_version_command(self):
                          
         # current-version command
         response = self.client.post('%s/current-version' % self.BASE_URL)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
+   
+    def test_current_user_command(self):
         
         # current-user command
         response = self.client.post('%s/current-user' % self.BASE_URL)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
+    
+    def test_auto_update_status_command(self):
                          
         # auto-update-status command
         response = self.client.post('%s/auto-update-status' % self.BASE_URL)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)    
+    
+    def test_enable_auto_update_command(self):
                          
         # enable-auto-update command
         response = self.client.post('%s/enable-auto-update' % self.BASE_URL)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)    
+    
+    def test_disable_auto_update_command(self):
                          
         # disable-auto-update command
         response = self.client.post('%s/disable-auto-update' % self.BASE_URL)

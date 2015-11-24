@@ -75,38 +75,7 @@ class ApplianceListView(rfc.GenericView):
                          'all inputs and try again.')
                 handle_exception(Exception(e_msg), request)
 
-    def _connect_to_appliance(self, request, url, ip, username, password):
-        try:
-            r = requests.post(
-                url,
-                headers={'content-type': 'application/json'},
-                verify=False,
-                data=json.dumps({'username': username,
-                                 'password': password}),
-                timeout=30.0)
-            if (r.status_code == 401):
-                #login incorrect
-                logger.error(r.text)
-                e_msg = ('Authentication to the remote Rockstor '
-                         'appliance(%s) failed due to wrong id or '
-                         'secret. Try again.' % ip)
-                handle_exception(Exception(e_msg), request)
-            if (r.status_code != 200):
-                logger.error(r.text)
-                e_msg = ('Could not establish connection with the remote '
-                         'Rockstor appliance(%s)')
-                handle_exception(e_msg, request)
-        except requests.exceptions.ConnectionError, e:
-            logger.exception(e)
-            e_msg = ('Could not reach the remote Rockstor appliance(%s). '
-                     'Verify the IP or hostname provided and try again' % ip)
-            handle_exception(Exception(e_msg), request)
-        except requests.exceptions.Timeout, e:
-            logger.exception(e)
-            e_msg = ('Timeout occured while connecting to the remote '
-                     'Rockstor appliance(%s). Try again later.' % ip)
-            handle_exception(Exception(e_msg), request)
-
+    
     @transaction.atomic
     def post(self, request, *args, **kwargs):
         with self._handle_exception(request):
@@ -174,7 +143,7 @@ class ApplianceDetailView(rfc.GenericView):
             appliance = Appliance.objects.get(pk=id)
         except Exception, e:
             logger.exception(e)
-            e_msg = ('Appliance(%d) does not exist' % id)
+            e_msg = ('Appliance(%s) does not exist' % id)
             handle_exception(Exception(e_msg), request)
 
         if (Replica.objects.filter(appliance=appliance.uuid).exists()):

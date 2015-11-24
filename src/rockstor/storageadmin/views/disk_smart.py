@@ -33,7 +33,7 @@ from storageadmin.serializers import SMARTInfoSerializer
 from storageadmin.util import handle_exception
 from django.conf import settings
 import rest_framework_custom as rfc
-from system import smart
+from system.smart import (extended_info, capabilities, info, error_logs, test_logs)
 from datetime import datetime
 from django.utils.timezone import utc
 from django.db.models import Count
@@ -65,11 +65,11 @@ class DiskSMARTDetailView(rfc.GenericView):
     @staticmethod
     @transaction.atomic
     def _info(disk):
-        attributes = smart.extended_info(disk.name)
-        capabilities = smart.capabilities(disk.name)
-        e_summary, e_lines = smart.error_logs(disk.name)
-        smartid = smart.info(disk.name)
-        test_d, log_lines = smart.test_logs(disk.name)
+        attributes = extended_info(disk.name)
+        capabilities = capabilities(disk.name)
+        e_summary, e_lines = error_logs(disk.name)
+        smartid = info(disk.name)
+        test_d, log_lines = test_logs(disk.name)
         ts = datetime.utcnow().replace(tzinfo=utc)
         si = SMARTInfo(disk=disk, toc=ts)
         si.save()

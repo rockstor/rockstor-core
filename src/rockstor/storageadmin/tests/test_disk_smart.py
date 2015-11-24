@@ -30,8 +30,24 @@ class DiskSmartTests(APITestMixin, APITestCase):
     @classmethod
     def setUpClass(cls):
         super(DiskSmartTests, cls).setUpClass()
-    
-                      
+        
+        # post mocks
+        cls.patch_extended_info = patch('storageadmin.views.disk_smart.extended_info')
+        cls.mock_extended_info = cls.patch_extended_info.start()
+        
+        cls.patch_capabilities = patch('storageadmin.views.disk_smart.capabilities')
+        cls.mock_capabilities = cls.patch_capabilities.start()
+        
+        cls.patch_info = patch('storageadmin.views.disk_smart.info')
+        cls.mock_info = cls.patch_info.start()
+        
+        cls.patch_error_logs = patch('storageadmin.views.disk_smart.error_logs')
+        cls.mock_error_logs = cls.patch_error_logs.start()
+        
+        cls.patch_test_logs = patch('storageadmin.views.disk_smart.test_logs')
+        cls.mock_test_logs = cls.patch_test_logs.start()
+       
+                     
     @classmethod
     def tearDownClass(cls):
         super(DiskSmartTests, cls).tearDownClass()
@@ -39,7 +55,12 @@ class DiskSmartTests(APITestMixin, APITestCase):
     def test_get(self):
         
         # get base URL
-        response = self.client.get('%s/info' % self.BASE_URL)
+        response = self.client.get('%s' % self.BASE_URL)
+        self.assertEqual(response.status_code,
+                         status.HTTP_200_OK, msg=response.data)
+        
+        # get with disk name
+        response = self.client.get('%s/sdd' % self.BASE_URL)
         self.assertEqual(response.status_code,
                          status.HTTP_200_OK, msg=response.data)
          

@@ -53,4 +53,12 @@ class CongigBackupTests(APITestMixin, APITestCase):
         # Happy path DELETE
         response = self.client.delete('%s/1' % self.BASE_URL)
         self.assertEqual(response.status_code,
-                         status.HTTP_200_OK, msg=response.data)                  
+                         status.HTTP_200_OK, msg=response.data)        
+                         
+    def test_config_upload_file(self):        
+        # happy path POST
+        data = {'file-name':'file1', 'file':'file1 txt'}
+        response = self.client.post('%s/file-upload' % self.BASE_URL, data=data)
+        self.assertEqual(response.status_code,
+                         status.HTTP_200_OK, msg=response.data)       
+                        
