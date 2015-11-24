@@ -69,6 +69,7 @@ class Sender(ReplicationMixin, Process):
         self.logger = logger
         self.law = None
         self.raw = None
+        self.sp = None
         super(Sender, self).__init__()
 
 
@@ -81,6 +82,10 @@ class Sender(ReplicationMixin, Process):
             self._sys_exit(3)
 
     def _sys_exit(self, code, linger=60000):
+        if (self.sp is not None and
+            self.sp.poll() is None):
+            self.sp.terminate()
+
         self.ctx.destroy(linger=linger)
         sys.exit(code)
 
@@ -197,9 +202,9 @@ class Sender(ReplicationMixin, Process):
             self.logger.info('Sending full replica: %s' % snap_path)
 
         try:
-            sp = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE)
-            fcntl.fcntl(sp.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
+            self.sp = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE)
+            fcntl.fcntl(self.sp.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
         except Exception, e:
             msg = ('Failed to start the low level btrfs send '
                    'command(%s). Aborting. Exception: ' % (cmd, e.__str__()))
@@ -227,23 +232,24 @@ class Sender(ReplicationMixin, Process):
                         raise Exception('unexpected message received: %s' % ack)
 
             try:
-                if (sp.poll() is not None):
+                if (self.sp.poll() is not None):
                     self.logger.debug('send process finished for %s. rc: %d. '
                                       'stderr: %s' % (self.snap_id,
-                                                      sp.returncode,
-                                                      sp.stderr.read()))
+                                                      self.sp.returncode,
+                                                      self.sp.stderr.read()))
                     alive = False
-                fs_data = sp.stdout.read()
+                fs_data = self.sp.stdout.read()
             except IOError:
                 continue
             except Exception, e:
                 msg = ('Exception occured while reading low level btrfs '
                        'send data for %s. Aborting.' % self.snap_id)
                 if (alive):
-                    sp.terminate()
+                    self.sp.terminate()
                 with self._update_trail_and_quit(msg):
                     self.data_push.send('%sEND_FAIL' % self.snap_id)
-                    raise e
+                    self.logger.debug(msg)
+                    self._sys_exit(3)
 
             msg = ('Failed to send fsdata to the receiver for %s. Aborting.' %
                    (self.snap_id))
@@ -254,7 +260,7 @@ class Sender(ReplicationMixin, Process):
 
                 if (not alive):
                     check_credit = False
-                    if (sp.returncode != 0):
+                    if (self.sp.returncode != 0):
                         self.data_push.send('%sEND_FAIL' % self.snap_id)
                     else:
                         self.data_push.send('%sEND_SUCCESS' % self.snap_id)
@@ -283,7 +289,9 @@ class Sender(ReplicationMixin, Process):
             share_path = ('%s%s/.snapshots/%s' %
                           (settings.MNT_PT, self.replica.pool,
                            self.replica.share))
-            self._delete_old_snaps(share_path)
+            msg = ('Failed to delete old snapshots')
+            with self._clean_exit_handler(msg):
+                self._delete_old_snaps(share_path)
 
         msg = ('Failed to update final replica status for %s'
                '. Aborting.' % self.snap_id)

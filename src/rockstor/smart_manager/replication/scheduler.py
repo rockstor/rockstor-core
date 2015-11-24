@@ -139,7 +139,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
                                      'ignoring snap: %s' %
                                      (rt[0].status, snap_id))
         self.senders[snap_id] = sw
-        sw.daemon = True
+        sw.daemon = True #to kill all senders in case scheduler dies.
         sw.start()
         return snap_id
 
@@ -200,6 +200,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
                         self.logger.debug('Starting a new Receiver for %s' % msg_id)
                         rw = Receiver(self.recv_meta, self.logger)
                         self.receivers[msg_id] = rw
+                        rw.daemon = True #kill it if scheduler dies
                         rw.start()
                     elif (msg == 'new_send'):
                         self.logger.debug('new_send received for %s' % msg_id)
