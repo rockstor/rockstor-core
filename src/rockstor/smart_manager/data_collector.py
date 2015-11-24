@@ -16,7 +16,7 @@ from django.utils.timezone import utc
 from storageadmin.models import Disk
 from smart_manager.models import Service
 from system.services import service_status
-from cli.rest_util import api_call
+from cli.api_wrapper import APIWrapper
 from system.pkg_mgmt import update_check
 import logging
 logger = logging.getLogger(__name__)
@@ -272,10 +272,10 @@ class ServicesNamespace(BaseNamespace, BroadcastMixin):
 class SysinfoNamespace(BaseNamespace, BroadcastMixin):
     start = False
     supported_kernel = settings.SUPPORTED_KERNEL_VERSION
-    base_url = 'https://localhost/api'
 
     # Called before the connection is established
     def initialize(self):
+        self.aw = APIWrapper()
         logger.debug("Sysinfo has been initialized")
 
     # This function is run once on every connection
@@ -330,29 +330,28 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
 
     def update_rockons(self):
         try:
-            url = '%s/rockons/update' % self.base_url
-            api_call(url, data=None, calltype='post', save_error=False)
-            logger.debug('Updated Rock-on metadata')
+            self.aw.api_call('rockons/update', data=None, calltype='post', save_error=False)
+            logger.debug('Updated Rock-on metadata.')
         except Exception, e:
             logger.debug('failed to update Rock-on metadata. low-level '
                          'exception: %s' % e.__str__())
 
     def update_storage_state(self):
-        resources = [{'url': '%s/disks/scan' % self.base_url,
+        resources = [{'url': 'disks/scan',
                       'success': 'Disk state updated successfully',
                       'error': 'Failed to update disk state.'},
-                     {'url': '%s/commands/refresh-pool-state' % self.base_url,
+                     {'url': 'commands/refresh-pool-state',
                       'success': 'Pool state updated successfully',
                       'error': 'Failed to update pool state.'},
-                     {'url': '%s/commands/refresh-share-state' % self.base_url,
+                     {'url': 'commands/refresh-share-state',
                       'success': 'Share state updated successfully',
                       'error': 'Failed to update share state.'},
-                     {'url': '%s/commands/refresh-snapshot-state' % self.base_url,
+                     {'url': 'commands/refresh-snapshot-state',
                       'success': 'Snapshot state updated successfully',
                       'error': 'Failed to update snapshot state.'},]
         for r in resources:
             try:
-                api_call(r['url'], data=None, calltype='post', save_error=False)
+                self.aw.api_call(r['url'], data=None, calltype='post', save_error=False)
                 logger.debug(r['success'])
             except Exception, e:
                 logger.error('%s. exception: %s' % (r['error'], e.__str__()))

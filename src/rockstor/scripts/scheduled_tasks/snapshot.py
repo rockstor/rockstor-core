@@ -23,7 +23,7 @@ import json
 from datetime import datetime
 from storageadmin.models import (Share, Snapshot)
 from smart_manager.models import (Task, TaskDefinition)
-from cli.rest_util import api_call
+from cli.api_wrapper import APIWrapper
 from django.utils.timezone import utc
 from django.conf import settings
 import logging
@@ -56,7 +56,7 @@ def main():
     tid = int(sys.argv[1])
     tdo = TaskDefinition.objects.get(id=tid)
     stype = 'task_scheduler'
-    baseurl = 'https://localhost/api/'
+    aw = APIWrapper()
     if (tdo.task_type != 'snapshot'):
         logger.error('task_type(%s) is not snapshot.' % tdo.task_type)
         return
@@ -70,10 +70,9 @@ def main():
                                         name__startswith=prefix).order_by('-id')
     if (len(snapshots) > max_count):
         for snap in snapshots[max_count:]:
-            url = ('%s/shares/%s/snapshots/%s' %
-                   (baseurl, meta['share'], snap.name))
+            url = ('shares/%s/snapshots/%s' % (meta['share'], snap.name))
             try:
-                api_call(url, data=None, calltype='delete', save_error=False)
+                aw.api_call(url, data=None, calltype='delete', save_error=False)
                 logger.debug('deleted old snapshot at %s' % url)
             except Exception, e:
                 logger.error('Failed to delete old snapshot at %s' % url)
@@ -84,11 +83,11 @@ def main():
     t = Task(task_def=tdo, state='started', start=now)
     try:
         name = ('%s_%s' % (meta['prefix'], datetime.now().strftime(settings.SNAP_TS_FORMAT)))
-        url = ('%sshares/%s/snapshots/%s' % (baseurl, meta['share'], name))
+        url = ('shares/%s/snapshots/%s' % (meta['share'], name))
         data = {'snap_type': stype,
                 'uvisible': meta['visible'], }
         headers = {'content-type': 'application/json'}
-        api_call(url, data=data, calltype='post', headers=headers, save_error=False)
+        aw.api_call(url, data=data, calltype='post', headers=headers, save_error=False)
         logger.debug('created snapshot at %s' % url)
         t.state = 'finished'
     except Exception, e:

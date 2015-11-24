@@ -41,7 +41,7 @@ from django.utils.timezone import utc
 from django.conf import settings
 from django.db import transaction
 from share_helpers import (sftp_snap_toggle, import_shares, import_snapshots)
-from oauth2_provider.ext.rest_framework import OAuth2Authentication
+from rest_framework_custom.oauth_wrapper import RockstorOAuth2Authentication
 from system.pkg_mgmt import (auto_update, current_version, update_check,
                              update_run, auto_update_status)
 from nfs_exports import NFSExportMixin
@@ -51,7 +51,7 @@ logger = logging.getLogger(__name__)
 
 class CommandView(NFSExportMixin, APIView):
     authentication_classes = (DigestAuthentication, SessionAuthentication,
-                              BasicAuthentication, OAuth2Authentication,)
+                              BasicAuthentication, RockstorOAuth2Authentication,)
     permission_classes = (IsAuthenticated,)
 
     @transaction.atomic

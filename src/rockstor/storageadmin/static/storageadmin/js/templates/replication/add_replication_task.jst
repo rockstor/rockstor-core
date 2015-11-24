@@ -24,7 +24,11 @@ $(document).ready(function() {
   $('#cron').cron({
   initial: "42 3 * * 5",
   customValues: {
+    "5 minutes" : "*/5 * * * *",
+    "10 minutes": "*/10 * * * *",
+    "20 minutes": "*/20 * * * *",
     "30 minutes" : "*/30 * * * *",
+    "45 minutes" : "*/45 * * * *",
   },
     useGentleSelect: true
 });
@@ -58,7 +62,7 @@ $(document).ready(function() {
 	  </div>
 	</div>
 	<div class="form-group">
-	  <label class="col-sm-4 control-label" for="appliance">Target appliance<span class="required"> *</span></label>
+	  <label class="col-sm-4 control-label" for="appliance">Remote appliance<span class="required"> *</span></label>
 	  <div class="col-sm-6">
 	    <select class="form-control" id="appliance" name="appliance" title="Share will be replicated to this remote Rockstor appliance.">
 	      <% appliances.each(function(appliance, index) { %>
@@ -68,6 +72,12 @@ $(document).ready(function() {
 	      <% }); %>
 
 	    </select>
+	  </div>
+	</div>
+	<div class="form-group">
+	  <label class="col-sm-4 control-label" for="replicatin_ip">Replication IP Address</label>
+	  <div class="col-sm-6">
+	  <input class="form-control" type="text" id="replication_ip" name="replication_ip" title="If remote appliance's replication service is listening on a different IP address, provide here. If not, appliance's IP address will be used.">
 	  </div>
 	</div>
 	<div class="form-group">
@@ -83,9 +93,9 @@ $(document).ready(function() {
 	  </div>
 	</div>
 	<div class="form-group">
-	  <label class="col-sm-4 control-label" for="pool">Target pool<span class="required"> *</span></label>
+	  <label class="col-sm-4 control-label" for="pool">Remote pool<span class="required"> *</span></label>
 	  <div class="col-sm-6">
-	    <select class="form-control" id="pool" name="pool" title="Target pool">
+	    <select class="form-control" id="pool" name="pool" title="Share will be replicated to this Pool on the remote Rockstor appliance.">
 	      <% for (var i=0; i < remote_pools.length; i++) { %>
 		 <option value="<%= remote_pools[i] %>"> <%= remote_pools[i] %></option>
 		 <% } %>
@@ -134,25 +144,31 @@ $(document).ready(function() {
 	  </div>
 	</div>
 	<div class="form-group">
-	  <label class="col-sm-4 control-label" for="appliance">Target appliance:</label>
+	  <label class="col-sm-4 control-label" for="appliance">Remote appliance:</label>
 	  <div class="col-sm-6">
 	    <input type="text" class="form-control" value="<%= replica.get('appliance') %>" disabled="disabled">
 	  </div>
 	</div>
 	<div class="form-group">
-	  <label class="col-sm-4 control-label" for="port">Replication Data Port:</label>
+	  <label class="col-sm-4 control-label" for="replication_ip">Replication IP Address:</label>
+	  <div class="col-sm-6">
+	    <input type="text" class="form-control" value="<%= replica.get('replication_ip') %>">
+	  </div>
+	</div>
+	<div class="form-group">
+	  <label class="col-sm-4 control-label" for="port">Data Port:</label>
 	  <div class="col-sm-6">
 	    <input type="text" class="form-control" value="<%= replica.get('data_port') %>" disabled="disabled">
 	  </div>
 	</div>
 	<div class="form-group">
-	  <label class="col-sm-4 control-label" for="port">Replication Meta Port:</label>
+	  <label class="col-sm-4 control-label" for="port">Meta Port:</label>
 	  <div class="col-sm-6">
 	    <input type="text" class="form-control" value="<%= replica.get('meta_port') %>" disabled="disabled">
 	  </div>
 	</div>
 	<div class="form-group">
-	  <label class="col-sm-4 control-label" for="pool">Target pool name:</label>
+	  <label class="col-sm-4 control-label" for="pool">Remote pool:</label>
 	  <div class="col-sm-6">
 	    <input type="text" class="form-control" value="<%= replica.get('dpool') %>" disabled="disabled">
 	  </div>

@@ -37,7 +37,7 @@
           <th scope="col" abbr="Netmask">Netmask</th>
           <th scope="col" abbr="Gateway">Gateway</th>
           <th scope="col" abbr="DNS">DNS Servers</th>
-          <th scope="col" abbr="Mgmt">Management</th>
+          <th scope="col" abbr="Role">Role</th>
           <th scope="col" abbr="Actions">Actions</th>
         </tr>
       </thead>
@@ -53,13 +53,7 @@
             <td><%= network.get("netmask") %></td>
             <td><%= network.get("gateway") %></td>
             <td><%= network.get("dns_servers") %></td>
-            <td>
-              <% if (network.get("itype") == 'management') { %>
-	        Yes
-              <% } else { %>
-	        No
-              <% } %>
-            </td>
+            <td><%= network.get("itype") %></td>
             <td>
               <a href="#network/<%= network.get('name') %>/edit" class="edit-network" data-network="<%= network.get('name') %>"><i class="glyphicon glyphicon-pencil"></i></a>
             </td>

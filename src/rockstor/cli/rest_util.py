@@ -60,7 +60,7 @@ def set_token(client_id=None, client_secret=None, url=None, logger=None):
         if (logger is not None):
             logger.exception(e)
         msg = ('Exception while setting access_token for url(%s). Make sure '
-               'credentials are correct.' % url)
+               'credentials are correct: %s' % (url, e.__str__()))
         raise Exception(msg)
 
 

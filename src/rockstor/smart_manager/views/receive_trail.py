@@ -79,11 +79,16 @@ class ReceiveTrailDetailView(rfc.GenericView):
     def put(self, request, rtid):
         with self._handle_exception(request):
             rt = ReceiveTrail.objects.get(id=rtid)
-            rt.receive_succeeded = self._convert_datestr(request, 'receive_succeeded', rt.receive_succeeded)
-            rt.receive_failed = self._convert_datestr(request, 'receive_failed', rt.receive_failed)
+            ts = datetime.utcnow().replace(tzinfo=utc)
+            if ('receive_succeeded' in request.data):
+                rt.receive_succeeded = ts
             rt.status = request.data.get('status', rt.status)
             rt.error = request.data.get('error', rt.error)
             rt.kb_received = request.data.get('kb_received', rt.kb_received)
-            rt.end_ts = self._convert_datestr(request, 'end_ts', rt.end_ts)
+            if (rt.status in ('succeeded', 'failed',)):
+                rt.end_ts = ts
+                rt.receive_succeeded = ts
+                if (rt.status == 'failed'):
+                    rt.receive_failed = ts
             rt.save()
             return Response(ReceiveTrailSerializer(rt).data)

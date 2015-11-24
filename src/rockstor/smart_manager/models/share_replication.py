@@ -34,6 +34,7 @@ class Replica(models.Model):
     """enabled/disabled state change ts"""
     ts = models.DateTimeField(null=True, db_index=True)
     crontab = models.CharField(max_length=64, null=True)
+    replication_ip = models.CharField(max_length=4096, null=True)
 
     class Meta:
         app_label = 'smart_manager'

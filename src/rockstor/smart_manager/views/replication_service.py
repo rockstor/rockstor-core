@@ -22,6 +22,7 @@ from system.services import superctl
 from django.db import transaction
 from base_service import BaseServiceDetailView
 from smart_manager.models import Service
+from storageadmin.models import NetworkInterface
 from django.conf import settings
 
 import logging
@@ -47,12 +48,19 @@ class ReplicationServiceView(BaseServiceDetailView):
                 handle_exception(Exception(e_msg), request)
 
         else:
+            if (not NetworkInterface.objects.filter(itype__regex=r'^(management|replication)').exists()):
+                e_msg = ('Replication service needs a network interface '
+                         'configured with management or replication role. '
+                         'Go to System -> Network Interfaces to assign a role.'
+                         'Then, come back and try again.')
+                handle_exception(Exception(e_msg), request)
+
             try:
+
                 superctl(service.name, command)
             except Exception, e:
-                logger.exception(e)
-                e_msg = ('Failed to %s Replication due to a system error.' %
-                         command)
+                e_msg = ('Failed to %s Replication due to a system error: %s' %
+                         (command, e.__str__()))
                 handle_exception(Exception(e_msg), request)
 
         return Response()
