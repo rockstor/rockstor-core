@@ -1,4 +1,4 @@
-<% if (logged_in) { %>
+{{#if logged_in }}
 <ul class="nav navbar-nav">
   <li><a id="home_nav" href="#home">Dashboard</a></li>
   <li class="dropdown">
@@ -79,8 +79,7 @@
 </ul>
 </li>
 
-
-<% } %>
+{{/if}}
 
 <div id="shutdown-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="updateModalLabel" aria-hidden="true">
   <div class="modal-dialog">
