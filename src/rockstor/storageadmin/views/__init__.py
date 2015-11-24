@@ -26,7 +26,6 @@ from command import CommandView
 from appliances import (ApplianceListView, ApplianceDetailView)
 from login import LoginView
 from user import (UserListView, UserDetailView)
-from support import SupportView
 from dashboardconfig import DashboardConfigView
 from network import NetworkListView
 from network import NetworkDetailView
