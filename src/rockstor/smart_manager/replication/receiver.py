@@ -175,6 +175,7 @@ class Receiver(ReplicationMixin, Process):
                        'id': self.meta['id'], }
                 self.meta_push.send_json(ack)
                 self.logger.debug('snap_exists ack sent: %s' % ack)
+                self._sys_exit(0)
 
         cmd = [BTRFS, 'receive', snap_dir]
         msg = ('Failed to start the low level btrfs receive command(%s)'
@@ -246,21 +247,27 @@ class Receiver(ReplicationMixin, Process):
                 if (recv_data == 'END_SUCCESS' or recv_data == 'END_FAIL'):
                     check_credit = False
                     data = {'kb_received': self.kb_received / 1024, }
-                    self.logger.debug('END message received: %s' % recv_data)
+                    self.logger.debug('END message received for %s : %s' %
+                                      (self.meta['id'], recv_data))
                     if (recv_data == 'END_SUCCESS'):
                         data['status'] = 'succeeded'
-                        #delete any snapshots older than num_retain
-                        self._delete_old_snaps(sname, snap_dir, self.num_retain_snaps + 1)
+                        try:
+                            #delete any snapshots older than num_retain
+                            self._delete_old_snaps(sname, snap_dir, self.num_retain_snaps + 1)
+                        except Exception, e:
+                            self.logger.error('Exception while deleting old '
+                                              'snapshots: %s' % e.__str__())
+                            #raising the exception would make a bigger mess.
+                            #problematic past snapshots can be manually deleted.
+
                         #delete the share, move the oldest snap to share
-                        oldest_snap = get_oldest_snap(snap_dir, self.num_retain_snaps)
-                        if (oldest_snap is not None):
-                            snap_path = ('%s/%s' % (snap_dir, oldest_snap))
-                            share_path = ('%s%s/%s' %
-                                          (settings.MNT_PT, self.dest_pool,
-                                           sname))
-                            msg = ('Failed to promote the oldest Snapshot(%s) '
-                                   'to Share(%s)' % (snap_path, share_path))
-                            try:
+                        try:
+                            oldest_snap = get_oldest_snap(snap_dir, self.num_retain_snaps)
+                            if (oldest_snap is not None):
+                                snap_path = ('%s/%s' % (snap_dir, oldest_snap))
+                                share_path = ('%s%s/%s' %
+                                              (settings.MNT_PT, self.dest_pool,
+                                               sname))
                                 pool = Pool.objects.get(name=self.dest_pool)
                                 remove_share(pool, sname, '-1/-1')
                                 set_property(snap_path, 'ro', 'false',
@@ -269,12 +276,15 @@ class Receiver(ReplicationMixin, Process):
                                             throw=False)
                                 shutil.move(snap_path, share_path)
                                 self.delete_snapshot(sname, oldest_snap, self.logger)
-                            except Exception, e:
-                                self.logger.error('%s. Exception: %s' % (msg, e.__str__()))
+                        except Exception, e:
+                            msg = ('Failed to promote the oldest Snapshot to Share'
+                                   ' for %s' % self.meta['id'])
+                            self.logger.error('%s. Exception: %s' % (msg, e.__str__()))
                     else:
                         self.logger.error('END_FAIL received for meta: %s. '
                                           'Terminating.' % self.meta)
-                        self.rp.terminate()
+                        if (self.rp.poll() is None):
+                            self.rp.terminate()
                         data['status'] = 'failed'
 
                     msg = ('Failed to update receive trail for rtid: %d'
@@ -307,11 +317,15 @@ class Receiver(ReplicationMixin, Process):
                 msg = ('Exception occured while receiving fsdata for meta: %s.'
                        'Exception: %s' % (self.meta, e.__str__()))
                 self.logger.error(msg)
-                self.rp.terminate()
-                out, err = self.rp.communicate()
+                try:
+                    self.rp.terminate()
+                except Exception, e:
+                    self.logger.error('Exception while terminating btrfs-recv '
+                                      'for %s: %s' % (self.meta['id'], e.__str__()))
+                    #don't raise the exception because it will create a bigger mess.
+
                 data['status'] = 'failed'
                 data['error'] = msg
-
                 msg = ('Failed to update receive trail for rtid: %d'
                        '. meta: %s' % (self.rtid, self.meta))
                 with self._clean_exit_handler(msg, ack=True):
@@ -326,6 +340,8 @@ class Receiver(ReplicationMixin, Process):
         #dint throw an error or if receiver did not get terminated
         try:
             out, err = self.rp.communicate()
+            self.logger.debug('cmd = %s out: %s err: %s rc: %s' %
+                              (cmd, out, err, self.rp.returncode))
         except Exception, e:
             self.logger.debug('Exception while terminating receive. Meta: %s. '
                               'Probably already terminated: %s' %
@@ -356,5 +372,8 @@ class Receiver(ReplicationMixin, Process):
         except Exception, e:
             self.logger.error('Exception while waiting for final ack from '
                               'sender for %s: %s' % (sname, e.__str__()))
+            #it's ok if we don't receive the final ack, this is perhaps a
+            #hacky way of waiting a while to make sure the previous send
+            #made it through.
 
         self._sys_exit(0)
