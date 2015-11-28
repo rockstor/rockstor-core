@@ -51,6 +51,8 @@ class SFTPServiceView(BaseServiceDetailView):
                 if (command == 'start'):
                     toggle_sftp_service()
                 else:
+                    e_msg = 'non config and non start so assuming stop in sftpserviceview'
+                    logger.error(e_msg)
                     toggle_sftp_service(switch=False)
             except Exception, e:
                 logger.exception(e)
