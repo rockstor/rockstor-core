@@ -114,7 +114,7 @@ SambaView  = RockstorLayoutView.extend({
     }
   },
 
-  startService: function(event) {
+  startService: function() {
     var _this = this;
     this.setStatusLoading(this.serviceName, true);
     $.ajax({
@@ -132,7 +132,7 @@ SambaView  = RockstorLayoutView.extend({
     });
   },
 
-  stopService: function(event) {
+  stopService: function() {
     var _this = this;
     this.setStatusLoading(this.serviceName, true);
     $.ajax({
