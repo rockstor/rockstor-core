@@ -5,20 +5,7 @@
         <tr>
           <td><span class="h3">SFTP Service&nbsp;&nbsp;&nbsp;</span></td>
           <td>
-            <% if (service.get('status')) { %>
-              <div class="slider-stop" data-service-name="<%= service.get('name') %>">OFF</div>
-              <div class="slider-ph">
-                <input type="text" class="service-status" value="1" data-service-name="<%= service.get('name') %>"></input>
-              </div>
-              <div class="slider-start on" data-service-name="<%= service.get('name') %>">ON</div>
-            <% } else { %>
-              <div class="slider-stop" data-service-name="<%= service.get('name') %>">OFF</div>
-              <div class="slider-ph">
-                <input type="text" class="service-status" value="0" data-service-name="<%= service.get('name') %>"></input>
-              </div>
-              <div class="slider-start" data-service-name="<%= service.get('name') %>">ON</div>
-            <% } %>
-            <div class="command-status" data-service-name="<%= service.get('name') %>">&nbsp;</div>
+            <input type="checkbox" name="sftp-service-checkbox" data-size="mini">
           </td>
         </tr>
       </table>
@@ -76,4 +63,3 @@
   <a  id="add-sftp-share" class="btn btn-primary disabled" title="No shares available to export via SFTP"><i class="glyphicon glyphicon-edit "></i> Add SFTP Share</a>
 
 <% } %>
-
