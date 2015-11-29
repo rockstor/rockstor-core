@@ -24,8 +24,7 @@ import shutil
 from tempfile import mkstemp
 import os
 from shutil import move
-import logging
-logger = logging.getLogger(__name__)
+
 
 CHKCONFIG_BIN = '/sbin/chkconfig'
 AUTHCONFIG = '/usr/sbin/authconfig'
@@ -130,18 +129,13 @@ def service_status(service_name, config=None):
         return init_service_op('nslcd', 'status', throw=False)
     elif (service_name == 'sftp'):
         out, err, rc = init_service_op('sshd', 'status', throw=False)
-        logger.debug('service_status called for sftp')
-        logger.debug('return code from systemctl sshd status = %s' % rc)
         if (rc != 0):
-            logger.debug('rc != 0 so returning all results')
             return out, err, rc
         with open(SSHD_CONFIG) as sfo:
             for line in sfo.readlines():
                 if (re.match("Subsystem\s+sftp", line) is not
                         None):
-                    logger.debug('sftp Subsystem string found returning rc as is')
                     return out, err, rc
-            logger.debug('sftp Subsystem string not found returning rc as 1')
             # -1 not appropriate as inconsistent with bash return codes
             # Returning 1 as Catchall for general errors.
             return out, err, 1

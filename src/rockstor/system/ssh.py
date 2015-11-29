@@ -24,9 +24,6 @@ from system.osi import run_command
 import os
 from django.conf import settings
 
-import logging
-logger = logging.getLogger(__name__)
-
 
 SSHD_CONFIG = '/etc/ssh/sshd_config'
 MKDIR = '/bin/mkdir'
@@ -62,8 +59,6 @@ def update_sftp_config(input_map):
 
 
 def toggle_sftp_service(switch=True):
-    e_msg = 'toggle_sftp_service called with %s' % switch
-    logger.error(e_msg)
     fo, npath = mkstemp()
     written = False
     with open(SSHD_CONFIG) as sfo, open(npath, 'w') as tfo:
