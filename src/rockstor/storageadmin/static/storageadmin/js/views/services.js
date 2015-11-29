@@ -102,9 +102,9 @@ ServicesView = Backbone.View.extend({
     switchStatus: function(event,state){
       var serviceName = $(event.target).attr('data-service-name');
         if (state){
-			this.startService(serviceName);
+		  this.startService(serviceName);
         }else {
-			this.stopService(serviceName);
+		  this.stopService(serviceName);
         }
     },
 
