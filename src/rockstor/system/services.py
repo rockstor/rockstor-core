@@ -137,7 +137,7 @@ def service_status(service_name, config=None):
             return out, err, rc
         with open(SSHD_CONFIG) as sfo:
             for line in sfo.readlines():
-                if (re.match("Subsystem\tsftp\tinternal-sftp", line) is not
+                if (re.match("Subsystem\s+sftp", line) is not
                         None):
                     logger.debug('sftp Subsystem string found returning rc as is')
                     return out, err, rc
