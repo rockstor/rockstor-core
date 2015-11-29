@@ -129,8 +129,11 @@ def service_status(service_name, config=None):
         return init_service_op('nslcd', 'status', throw=False)
     elif (service_name == 'sftp'):
         out, err, rc = init_service_op('sshd', 'status', throw=False)
+        # initial check on sshd status: 0 = OK 3 = stopped
         if (rc != 0):
             return out, err, rc
+        # sshd has sftp subsystem so we check for it's config line which is
+        # inserted or deleted to enable or disable the sftp service.
         with open(SSHD_CONFIG) as sfo:
             for line in sfo.readlines():
                 if (re.match("Subsystem\s+sftp", line) is not
@@ -138,6 +141,7 @@ def service_status(service_name, config=None):
                     return out, err, rc
             # -1 not appropriate as inconsistent with bash return codes
             # Returning 1 as Catchall for general errors.
+            # the calling system interprets -1 as enabled, 1 works for disabled.
             return out, err, 1
     elif (service_name == 'replication' or
           service_name == 'data-collector'):
