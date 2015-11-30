@@ -258,10 +258,7 @@ class ServicesNamespace(BaseNamespace, BroadcastMixin):
             for service in services:
                 data[service] = {}
                 output, error, return_code = service_status(service)
-                if (return_code == 0):
-                    data[service]['running'] = return_code
-                else:
-                    data[service]['running'] = return_code
+                data[service]['running'] = return_code
 
             self.emit('services:get_services', {
                 'data': data, 'key': 'services:get_services'
