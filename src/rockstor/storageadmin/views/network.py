@@ -38,18 +38,18 @@ class NetworkMixin(object):
 
     @staticmethod
     def _update_ni_obj(nio, values):
-        nio.dname = values.get('dname', None)
-        nio.mac = values.get('mac', None)
+        nio.dname = values.get('dname', nio.dname)
+        nio.mac = values.get('mac', nio.mac)
         nio.method = values.get('method', 'manual')
         nio.autoconnect = values.get('autoconnect', 'no')
-        nio.netmask = values.get('netmask', None)
-        nio.ipaddr = values.get('ipaddr', None)
-        nio.gateway = values.get('gateway', None)
-        nio.dns_servers = values.get('dns_servers', None)
-        nio.ctype = values.get('ctype', None)
-        nio.dtype = values.get('dtype', None)
-        nio.dspeed = values.get('dspeed', None)
-        nio.state = values.get('state', None)
+        nio.netmask = values.get('netmask', nio.netmask)
+        nio.ipaddr = values.get('ipaddr', nio.ipaddr)
+        nio.gateway = values.get('gateway', nio.gateway)
+        nio.dns_servers = values.get('dns_servers', nio.dns_servers)
+        nio.ctype = values.get('ctype', nio.ctype)
+        nio.dtype = values.get('dtype', nio.dtype)
+        nio.dspeed = values.get('dspeed', nio.dspeed)
+        nio.state = values.get('state', nio.state)
         return nio
 
     @staticmethod

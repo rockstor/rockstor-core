@@ -70,11 +70,16 @@ def inplace_replace(of, nf, regex, nl):
 
 def run_command(cmd, shell=False, stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE, throw=True, log=False):
-    p = subprocess.Popen(cmd, shell=shell, stdout=stdout, stderr=stderr)
-    out, err = p.communicate()
-    out = out.split('\n')
-    err = err.split('\n')
-    rc = p.returncode
+    try:
+        p = subprocess.Popen(cmd, shell=shell, stdout=stdout, stderr=stderr)
+        out, err = p.communicate()
+        out = out.split('\n')
+        err = err.split('\n')
+        rc = p.returncode
+    except Exception, e:
+        msg = ('Exception while running command(%s): %s' % (cmd, e.__str__()))
+        raise Exception(msg)
+
     if (rc != 0):
         if (log):
             e_msg = ('non-zero code(%d) returned by command: %s. output: %s error:'
@@ -216,17 +221,18 @@ def config_network_device(name, dtype='ethernet', method='auto', ipaddr=None,
     add_cmd = [NMCLI, 'c', 'add', 'type', dtype, 'con-name', name, 'ifname', name]
     if (method == 'manual'):
         add_cmd.extend(['ip4', '%s/%s' % (ipaddr, netmask)])
-    if (gateway is not None):
+    if (gateway is not None and len(gateway.strip()) > 0):
         add_cmd.extend(['gw4', gateway])
     run_command(add_cmd)
     #3. modify with extra options like dns servers
     if (method == 'manual'):
         mod_cmd = [NMCLI, 'c', 'mod', name, ]
-        if (dns_servers is not None):
+        if (dns_servers is not None and len(dns_servers.strip()) > 0):
             mod_cmd.extend(['ipv4.dns', dns_servers])
         if (autoconnect == 'no'):
             mod_cmd.extend(['connection.autoconnect', 'no'])
-        run_command(mod_cmd)
+        if (len(mod_cmd) > 4):
+            run_command(mod_cmd)
     #wait for the interface to be activated
     num_attempts = 0
     while True:
@@ -237,7 +243,7 @@ def config_network_device(name, dtype='ethernet', method='auto', ipaddr=None,
         else:
             break
         if (num_attempts > 30):
-            msg = ('Waited more than %s seconds for connection(%s) state to '
+            msg = ('Waited %s seconds for connection(%s) state to '
                    'be activated but it has not. Giving up. current state: %s'
                    % (num_attempts, name, state))
             raise Exception(msg)
@@ -327,7 +333,8 @@ def get_net_config(all=False, name=None):
                 dname = o[i].strip().split(':')[1]
                 config[dname] = {'dname': dname,
                                  'mac': o[i+2].strip().split('GENERAL.HWADDR:')[1],
-                                 'name': o[i+5].strip().split('GENERAL.CONNECTION:')[1],}
+                                 'name': o[i+5].strip().split('GENERAL.CONNECTION:')[1],
+                                 'dtype': 'ethernet', }
         for device in config:
             config[device].update(net_config_helper(config[device]['name']))
             if (config[device]['name'] == '--'):
