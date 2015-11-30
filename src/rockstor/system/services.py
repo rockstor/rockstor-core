@@ -165,7 +165,8 @@ def service_status(service_name, config=None):
             for l in o:
                 if (l == config['domain']):
                     return '', '', 0
-        return '', '', -1
+        # bootstrap switch subsystem interprets -1 as ON so returning 1 instead
+        return '', '', 1
 
     return init_service_op(service_name, 'status', throw=False)
 
