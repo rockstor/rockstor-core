@@ -33,13 +33,19 @@ QGROUP_MAXOUT_LIMIT = '%s/qgroup-maxout-limit' % BASE_BIN
 
 
 def main():
-    aw = APIWrapper()
-    device_scan()
+
+    try:
+        device_scan()
+    except Exception, e:
+        print ('BTRFS device scan failed due to an exception. This indicates '
+               'a serious problem. Aborting. Exception: %s' % e.__str__())
+        sys.exit(1)
     print('BTRFS device scan complete')
 
     num_attempts = 0
     while True:
         try:
+            aw = APIWrapper()
             aw.api_call('network')
             aw.api_call('commands/bootstrap', calltype='post')
             break
