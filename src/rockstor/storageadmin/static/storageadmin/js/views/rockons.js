@@ -38,6 +38,7 @@ RockonsView = RockstorLayoutView.extend({
     },
 
     events: {
+  //'switchChange.bootstrapSwitch': 'switchStatus',
 	'click #js-install-rockon': 'installRockon',
 	'click #js-uninstall-rockon': 'uninstallRockon',
 	'click #js-rockons-installed': 'installedRockons',
@@ -110,6 +111,9 @@ RockonsView = RockstorLayoutView.extend({
 	$('#install-rockon-overlay').overlay({load: false});
 	this.$("ul.nav.nav-tabs").tabs("div.css-panes > div");
 	this.$('.nav-tabs li:eq(' + this.defTab + ') a').click();
+
+  //initalize bootstrap switch
+  //this.$("[type='checkbox']").bootstrapSwitch();
 
     },
 
