@@ -169,11 +169,21 @@ INSTALLED_APPS = (
 
 STATICFILES_STORAGE = 'pipeline.storage.PipelineCachedStorage'
 
+#yum install npm, then npm install yuglify, then ln -s ..../yuglify /usr/bin/yuglify
+#using yuglify compresses js and css to some extent. What do we do with .jst files?
+#PIPELINE_CSS_COMPRESSOR = 'pipeline.compressors.yuglify.YuglifyCompressor'
+#PIPELINE_JS_COMPRESSOR = 'pipeline.compressors.yuglify.YuglifyCompressor'
 PIPELINE_CSS_COMPRESSOR = None
 PIPELINE_JS_COMPRESSOR = None
 
+#for handlebars
+#PIPELINE_TEMPLATE_EXT = '.handlebars'
+PIPELINE_TEMPLATE_FUNC = 'Handlebars.compile'
+#PIPELINE_TEMPLATE_NAMESPACE = 'Handlebars.templates'
+
 # Don't wrap in anonymous function so that license is at the top.
 PIPELINE_DISABLE_WRAPPER = True
+
 
 PIPELINE_JS = {
     'storageadmin': {
