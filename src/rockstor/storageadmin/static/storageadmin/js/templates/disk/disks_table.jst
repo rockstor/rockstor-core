@@ -56,15 +56,11 @@
 	  <td>Not supported</td>
 	  <% } else { %>
 	  <td>
-	    <div class="slider-stop" data-disk-name="<%= disk.get('name') %>">OFF</div>
-	    <div class="slider-ph">
 	      <% if (disk.get('smart_enabled')) { %>
-	      <input type="text" class="smart-status" value="1" data-disk-name="<%= disk.get('name') %>"></input>
+	      <input type="checkbox" data-disk-name="<%= disk.get('name') %>" data-size="mini" checked></input>
 	      <% } else { %>
-	      <input type="text" class="smart-status" value="0" data-disk-name="<%= disk.get('name') %>"></input>
+	      <input type="checkbox" data-disk-name="<%= disk.get('name') %>" data-size="mini"></input>
 	      <% } %>
-	    </div>
-	    <div class="slider-start on" data-disk-name="<%= disk.get('name') %>">ON</div>
 	  </td>
 	  <% } %>
         </tr>
