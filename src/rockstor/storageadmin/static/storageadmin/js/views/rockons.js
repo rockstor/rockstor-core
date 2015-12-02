@@ -38,12 +38,10 @@ RockonsView = RockstorLayoutView.extend({
     },
 
     events: {
-  //'switchChange.bootstrapSwitch': 'switchStatus',
+  'switchChange.bootstrapSwitch': 'rockonToggle',
 	'click #js-install-rockon': 'installRockon',
 	'click #js-uninstall-rockon': 'uninstallRockon',
 	'click #js-rockons-installed': 'installedRockons',
-	'click .slider-stop': 'stopRockon',
-	'click .slider-start': 'startRockon',
 	'click #js-update-rockons': 'updateRockons',
 	'click #js-rockon-settings': 'rockonSettings',
 	'click #js-rockon-info': 'rockonInfo'
@@ -94,17 +92,6 @@ RockonsView = RockstorLayoutView.extend({
 	}
 	// Render the Rockons template with a status describing whether
 	// the Rockons service has been enabled
-	this.$('input.service-status').simpleSlider({
-	    "theme": "volume",
-	    allowedValues: [0,1],
-	    snap: true
-	});
-
-	this.$('input.service-status').each(function(i, el) {
-	    var slider = $(el).data('slider-object');
-	    slider.trackEvent = function(e) {};
-	    slider.dragger.unbind('mousedown');
-	});
 
 	$('#docker-service-ph').append(this.dockerServiceView.render().el);
 
@@ -113,202 +100,196 @@ RockonsView = RockstorLayoutView.extend({
 	this.$('.nav-tabs li:eq(' + this.defTab + ') a').click();
 
   //initalize bootstrap switch
-  //this.$("[type='checkbox']").bootstrapSwitch();
-
+  this.$("[type='checkbox']").bootstrapSwitch();
+  this.$("[type='checkbox']").bootstrapSwitch('onColor','success'); //left side text color
+  this.$("[type='checkbox']").bootstrapSwitch('offColor','danger'); //right side text color
     },
 
     installRockon: function(event) {
-	var _this = this;
-	this.defTab = 0;
-	event.preventDefault();
-	var button = $(event.currentTarget);
-	var rockon_id = button.attr('data-name');
-	var rockon_o = _this.rockons.get(rockon_id);
-	var wizardView = new RockonInstallWizardView({
-	    model: new Backbone.Model({ rockon: rockon_o }),
-	    title: rockon_o.get('name') + ' install wizard',
-	    parent: this
-	});
-	$('.overlay-content', '#install-rockon-overlay').html(wizardView.render().el);
-	$('#install-rockon-overlay').overlay().load();
+    	var _this = this;
+    	this.defTab = 0;
+    	event.preventDefault();
+    	var button = $(event.currentTarget);
+    	var rockon_id = button.attr('data-name');
+    	var rockon_o = _this.rockons.get(rockon_id);
+    	var wizardView = new RockonInstallWizardView({
+    	    model: new Backbone.Model({ rockon: rockon_o }),
+    	    title: rockon_o.get('name') + ' install wizard',
+    	    parent: this
+    	});
+    	$('.overlay-content', '#install-rockon-overlay').html(wizardView.render().el);
+    	$('#install-rockon-overlay').overlay().load();
     },
 
     uninstallRockon: function(event) {
-	var _this = this;
-	event.preventDefault();
-	var button = $(event.currentTarget);
-	if (buttonDisabled(button)) return false;
-	var rockon_id = button.attr('data-name');
-	var rockon_o = _this.rockons.get(rockon_id);
-	if (confirm("Are you sure you want to uninstall this Rock-on (" + rockon_o.get('name') + ")?")) {
-	    disableButton(button);
-	    $.ajax({
-		url: '/api/rockons/' + rockon_id + '/uninstall',
-		type: 'POST',
-		dataType: 'json',
-		success: function() {
-		    _this.defTab = 0;
-		    _this.render();
-		    enableButton(button);
-		},
-		error: function(xhr, status, error) {
-		    enableButton(button);
-		}
-	    });
-	}
+    	var _this = this;
+    	event.preventDefault();
+    	var button = $(event.currentTarget);
+    	if (buttonDisabled(button)) return false;
+    	var rockon_id = button.attr('data-name');
+    	var rockon_o = _this.rockons.get(rockon_id);
+    	if (confirm("Are you sure you want to uninstall this Rock-on (" + rockon_o.get('name') + ")?")) {
+    	    disableButton(button);
+    	    $.ajax({
+    		url: '/api/rockons/' + rockon_id + '/uninstall',
+    		type: 'POST',
+    		dataType: 'json',
+    		success: function() {
+    		    _this.defTab = 0;
+    		    _this.render();
+    		    enableButton(button);
+    		},
+    		error: function(xhr, status, error) {
+    		    enableButton(button);
+    		}
+    	    });
+    	}
     },
 
     updateRockons: function(event) {
-	var _this = this;
-	event.preventDefault();
-	var button = $(event.currentTarget);
-	if (buttonDisabled(button)) return false;
-	disableButton(button);
-	$.ajax({
-	    url: '/api/rockons/update',
-	    type: 'POST',
-	    dataType: 'json',
-	    success: function() {
-		_this.defTab = 1;
-		_this.render();
-		enableButton(button);
-	    },
-	    error: function(xhr, status, error) {
-		enableButton(button);
-	    }
-	});
+    	var _this = this;
+    	event.preventDefault();
+    	var button = $(event.currentTarget);
+    	if (buttonDisabled(button)) return false;
+    	disableButton(button);
+    	$.ajax({
+    	    url: '/api/rockons/update',
+    	    type: 'POST',
+    	    dataType: 'json',
+    	    success: function() {
+    		_this.defTab = 1;
+    		_this.render();
+    		enableButton(button);
+    	    },
+    	    error: function(xhr, status, error) {
+    		enableButton(button);
+    	    }
+    	});
     },
 
     rockonSettings: function(event) {
-	var _this = this;
-	event.preventDefault();
-	var rockon_id = _this.getRockonId(event);
-	var rockon_o = _this.rockons.get(rockon_id);
-	_this.stopPolling();
-	var wizardView = new RockonSettingsWizardView({
-	    model: new Backbone.Model({ rockon: rockon_o}),
-	    title: rockon_o.get('name') + ' Settings',
-	    parent: this
-	});
-	$('.overlay-content', '#install-rockon-overlay').html(wizardView.render().el);
-	$('#install-rockon-overlay').overlay().load();
+    	var _this = this;
+    	event.preventDefault();
+    	var rockon_id = _this.getRockonId(event);
+    	var rockon_o = _this.rockons.get(rockon_id);
+    	_this.stopPolling();
+    	var wizardView = new RockonSettingsWizardView({
+    	    model: new Backbone.Model({ rockon: rockon_o}),
+    	    title: rockon_o.get('name') + ' Settings',
+    	    parent: this
+    	});
+    	$('.overlay-content', '#install-rockon-overlay').html(wizardView.render().el);
+    	$('#install-rockon-overlay').overlay().load();
     },
 
     rockonInfo: function(event) {
-	var _this = this;
-	event.preventDefault();
-	var rockon_id = _this.getRockonId(event);
-	var rockon_o = _this.rockons.get(rockon_id);
-	_this.stopPolling();
-	var infoView = new RockonInfoView({
-	    model: new Backbone.Model({ rockon: rockon_o}),
-	    title: 'Additional information about ' + rockon_o.get('name') + ' Rock-on',
-	    parent: this
-	});
-	$('.overlay-content', '#install-rockon-overlay').html(infoView.render().el);
-	$('#install-rockon-overlay').overlay().load();
+    	var _this = this;
+    	event.preventDefault();
+    	var rockon_id = _this.getRockonId(event);
+    	var rockon_o = _this.rockons.get(rockon_id);
+    	_this.stopPolling();
+    	var infoView = new RockonInfoView({
+    	    model: new Backbone.Model({ rockon: rockon_o}),
+    	    title: 'Additional information about ' + rockon_o.get('name') + ' Rock-on',
+    	    parent: this
+    	});
+    	$('.overlay-content', '#install-rockon-overlay').html(infoView.render().el);
+    	$('#install-rockon-overlay').overlay().load();
     },
 
     getRockonId: function(event) {
-	var slider = $(event.currentTarget);
-	return slider.attr('data-rockon-id');
+    	var slider = $(event.currentTarget);
+    	return slider.attr('data-rockon-id');
     },
 
-    getSliderVal: function(id) {
-	return this.$('input[data-rockon-id='+id+']').data('slider-object').value;
+    rockonToggle: function(event,state){
+      var rockonId = $(event.target).attr('data-rockon-id');
+      if(state){
+        this.startRockon(rockonId);
+      }else{
+        this.stopRockon(rockonId);
+      }
     },
 
-    setSliderVal: function(id, val) {
-	this.$('input[data-rockon-id='+id+']').simpleSlider('setValue', val);
+    startRockon: function(rockonId) {
+      console.log(event);
+    	var _this = this;
+    	this.stopPolling();
+    	$.ajax({
+    	    url: '/api/rockons/' + rockonId + '/start',
+    	    type: 'POST',
+    	    dataType: 'json',
+    	    success: function(data, status, xhr) {
+        		_this.defTab = 0;
+        		_this.updateStatus();
+    	    },
+    	    error: function(data, status, xhr) {
+    		      console.log('error while starting rockon');
+    	    }
+    	});
     },
 
-    startRockon: function(event) {
-
-	var _this = this;
-	var rockon_id = this.getRockonId(event);
-	if (this.getSliderVal(rockon_id).toString() == "1") {
-	    return;
-	}
-	this.stopPolling();
-	$.ajax({
-	    url: '/api/rockons/' + rockon_id + '/start',
-	    type: 'POST',
-	    dataType: 'json',
-	    success: function(data, status, xhr) {
-		_this.defTab = 0;
-		_this.setSliderVal(rockon_id, 1);
-		_this.updateStatus();
-	    },
-	    error: function(data, status, xhr) {
-		console.log('error while starting rockon');
-	    }
-	});
-    },
-
-    stopRockon: function(event) {
-	var _this = this;
-	var rockon_id = this.getRockonId(event);
-	if (this.getSliderVal(rockon_id).toString() == "0") { return; }
-	this.stopPolling();
-	$.ajax({
-	    url: '/api/rockons/' + rockon_id + '/stop',
-	    type: 'POST',
-	    dataType: 'json',
-	    success: function(data, status, xhr) {
-		_this.setSliderVal(rockon_id, 0);
-		_this.defTab = 0;
-		_this.updateStatus();
-	    },
-	    error: function(data, status, xhr) {
-		console.log('error while stopping rockon');
-	    }
-	});
+    stopRockon: function(rockonId) {
+    	var _this = this;
+    	this.stopPolling();
+    	$.ajax({
+    	    url: '/api/rockons/' + rockonId + '/stop',
+    	    type: 'POST',
+    	    dataType: 'json',
+    	    success: function(data, status, xhr) {
+        		_this.defTab = 0;
+        		_this.updateStatus();
+    	    },
+    	    error: function(data, status, xhr) {
+        		console.log('error while stopping rockon');
+    	    }
+    	});
     },
 
     pendingOps: function() {
-	var pending = this.rockons.find(function(rockon) {
-	    if ((rockon.get('status').search('pending') != -1) || (rockon.get('state').search('pending') != -1)) {
-		return true;
-	    }
-	});
-	if (pending) { return true; }
-	return false;
+    	var pending = this.rockons.find(function(rockon) {
+    	    if ((rockon.get('status').search('pending') != -1) || (rockon.get('state').search('pending') != -1)) {
+    		      return true;
+    	    }
+    	});
+    	if (pending) { return true; }
+    	   return false;
     },
 
     updateStatus: function() {
-	var _this = this;
-	_this.startTime = new Date().getTime();
-	_this.rockons.fetch({
-	    silent: true,
-	    success: function(data, response, options) {
-		_this.renderRockons();
-		if (_this.pendingOps()) {
-		    var ct = new Date().getTime();
-		    var diff = ct - _this.startTime;
-		    if (diff > _this.updateFreq) {
-			_this.updateStatus();
-		    } else {
-			_this.timeoutId = window.setTimeout( function() {
-			    _this.updateStatus();
-			}, _this.updateFreq - diff);
-		    }
-		} else {
-		    _this.stopPolling();
-		}
-	    }
-	});
+    	var _this = this;
+    	_this.startTime = new Date().getTime();
+    	_this.rockons.fetch({
+    	    silent: true,
+    	    success: function(data, response, options) {
+    		_this.renderRockons();
+    		if (_this.pendingOps()) {
+    		    var ct = new Date().getTime();
+    		    var diff = ct - _this.startTime;
+    		    if (diff > _this.updateFreq) {
+    			_this.updateStatus();
+    		    } else {
+    			_this.timeoutId = window.setTimeout( function() {
+    			    _this.updateStatus();
+    			}, _this.updateFreq - diff);
+    		    }
+    		} else {
+    		    _this.stopPolling();
+    		}
+    	    }
+    	});
     },
 
     stopPolling: function() {
-	if (!_.isUndefined(this.timeoutId)) {
-	    window.clearInterval(this.timeoutId);
-	}
+    	if (!_.isUndefined(this.timeoutId)) {
+    	    window.clearInterval(this.timeoutId);
+    	}
     },
 
     installedRockons: function(event) {
-	if (this.pendingOps()) {
-	    this.updateStatus();
-	}
+    	if (this.pendingOps()) {
+    	    this.updateStatus();
+    	}
     }
 
 });
