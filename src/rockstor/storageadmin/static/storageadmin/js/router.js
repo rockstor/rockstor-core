@@ -964,4 +964,70 @@ $(document).ready(function() {
 	}
 
     });
+
+    // insert pagination partial and helper functions here
+    Handlebars.registerPartial('pagination',
+    '{{pagination_helper}}'
+    );
+
+    Handlebars.registerHelper('pagination_helper', function() {
+
+      var totalPageCount = this.collection.pageInfo().num_pages,
+          currPageNumber = this.collection.pageInfo().page_number,
+          maxEntriesPerPage = this.collection.pageSize,
+          totalEntryCount = this.collection.count,
+          pagePrev = this.collection.pageInfo().prev,
+          pageNext = this.collection.pageInfo().next,
+          backwardIcon = '<i class="glyphicon glyphicon-backward"></i>',
+          fastBackwardIcon = '<i class="glyphicon glyphicon-fast-backward"></i>',
+          forwardIcon = '<i class="glyphicon glyphicon-forward"></i>',
+          fastForwardIcon = '<i class="glyphicon glyphicon-fast-forward"></i>'
+          html = '',
+          entries = currPageNumber * maxEntriesPerPage,
+          entry_prefix = 0;
+
+          if (totalPageCount > 1) {
+            html += '<nav>';
+            if(currPageNumber * maxEntriesPerPage > totalEntryCount){
+              entries = totalEntryCount;
+            }
+            entry_prefix = (currPageNumber - 1) * (maxEntriesPerPage) + 1 ;
+
+            html += '<p><i>Displaying entries ' + entry_prefix + ' - ' + (entries) + ' of ' + totalEntryCount + '</i></p>';
+            html += '<ul class="pagination">';
+            html += '<li><a class="go-to-page" href="#" data-page="1">' + fastBackwardIcon + '</a></li>';
+            if (pagePrev) {
+              html += '<li><a class="prev-page" href="#">' + backwardIcon + '</a></li>';
+            } else {
+              html += '<li class="disabled"><a class="prev-page" href="#">' + backwardIcon + '</a></li>';
+            }
+
+            var start = currPageNumber - 4 ;
+            if(start <= 0){
+              start = 1;
+            }
+            var end = start + 9;
+            if(end > totalPageCount){
+              end = totalPageCount;
+            }
+            for (var i=start; i<= end; i++) {
+              if (i == currPageNumber) {
+                  html += '<li class="active"><a class="go-to-page" href="#" data-page="' + i + '">' + i + '</a></li>';
+              } else {
+                  html += '<li><a class="go-to-page" href="#" data-page="' + i + '">' + i + '</a></li>';
+              }
+            }
+            if (pageNext) {
+                html += '<li><a class="next-page" href="#">' + fastForwardIcon + '</a></li>';
+            } else {
+                html += '<li class="disabled"><a class="next-page" href="#">' + forwardIcon + '</a></li>';
+            }
+              html += '<li><a class="go-to-page" href="#" data-page="' + totalPageCount + '">'+ fastForwardIcon +'</a></li>';
+              html += '</ul>';
+              html += '</nav>';
+         }
+
+        return new Handlebars.SafeString(html);
+    });
+
 });
