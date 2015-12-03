@@ -63,29 +63,28 @@ SharesView = RockstorLayoutView.extend({
 
     Handlebars.registerHelper('test_helper', function() {
 
-      var numOfPages = this.collection.pageInfo().num_pages, // total number of pages
-          page_number = this.collection.pageInfo().page_number, // page number of current page
-          pageSize = this.collection.pageSize, //maximum number of entries that could be in this page
-          //pageCount = this.collection.pageInfo().count,
-          entryCount = this.collection.count, //total number of entries in all pages combined.
+      var totalPageCount = this.collection.pageInfo().num_pages,
+          currPageNumber = this.collection.pageInfo().page_number,
+          maxEntriesPerPage = this.collection.pageSize,
+          totalEntryCount = this.collection.count,
           pagePrev = this.collection.pageInfo().prev,
           pageNext = this.collection.pageInfo().next,
-          entries = page_number * pageSize,
           backwardIcon = '<i class="glyphicon glyphicon-backward"></i>',
           fastBackwardIcon = '<i class="glyphicon glyphicon-fast-backward"></i>',
           forwardIcon = '<i class="glyphicon glyphicon-forward"></i>',
           fastForwardIcon = '<i class="glyphicon glyphicon-fast-forward"></i>'
           html = '',
+          entries = currPageNumber * maxEntriesPerPage,
           entry_prefix = 0;
 
-          if (numOfPages > 1) {
+          if (totalPageCount > 1) {
             html += '<nav>';
-            if(page_number * pageSize > entryCount){
-              entries = entryCount;
+            if(currPageNumber * maxEntriesPerPage > totalEntryCount){
+              entries = totalEntryCount;
             }
-            entry_prefix = (page_number - 1) * (pageSize + 1) - (entries);
+            entry_prefix = (currPageNumber - 1) * (maxEntriesPerPage) + 1 ;
 
-            html += '<p><i>Displaying entries ' + entry_prefix + 'of ' + entryCount + '</i></p>';
+            html += '<p><i>Displaying entries ' + entry_prefix + ' - ' + (entries) + ' of ' + totalEntryCount + '</i></p>';
             html += '<ul class="pagination">';
             html += '<li><a class="go-to-page" href="#" data-page="1">' + fastBackwardIcon + '</a></li>';
             if (pagePrev) {
@@ -94,16 +93,16 @@ SharesView = RockstorLayoutView.extend({
               html += '<li class="disabled"><a class="prev-page" href="#">' + backwardIcon + '</a></li>';
             }
 
-            var start = page_number - 4 ;
+            var start = currPageNumber - 4 ;
             if(start <= 0){
               start = 1;
             }
             var end = start + 9;
-            if(end > numOfPages){
-              end = numOfPages;
+            if(end > totalPageCount){
+              end = totalPageCount;
             }
             for (var i=start; i<= end; i++) {
-              if (i == page_number) {
+              if (i == currPageNumber) {
                   html += '<li class="active"><a class="go-to-page" href="#" data-page="' + i + '">' + i + '</a></li>';
               } else {
                   html += '<li><a class="go-to-page" href="#" data-page="' + i + '">' + i + '</a></li>';
@@ -114,7 +113,7 @@ SharesView = RockstorLayoutView.extend({
             } else {
                 html += '<li class="disabled"><a class="next-page" href="#">' + forwardIcon + '</a></li>';
             }
-              html += '<li><a class="go-to-page" href="#" data-page="' + numOfPages + '">'+ fastForwardIcon +'</a></li>';
+              html += '<li><a class="go-to-page" href="#" data-page="' + totalPageCount + '">'+ fastForwardIcon +'</a></li>';
               html += '</ul>';
               html += '</nav>';
          }
