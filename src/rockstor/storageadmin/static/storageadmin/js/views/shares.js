@@ -40,7 +40,7 @@ SharesView = RockstorLayoutView.extend({
 
     this.template = window.JST.share_shares;
     this.shares_table_template = window.JST.share_shares_table;
-    this.pagination_template = window.JST.common_pagination;
+    //this.pagination_template = window.JST.common_pagination;
 
     this.pools = new PoolCollection();
     this.collection = new ShareCollection();
@@ -49,6 +49,78 @@ SharesView = RockstorLayoutView.extend({
 
     this.pools.on("reset", this.renderShares, this);
     this.collection.on("reset", this.renderShares, this);
+
+    /* let's suppose we get variables along with collection as context.
+    var numPages = collection.pageInfo().pages,
+        page = collection.pageInfo().page,
+        pageSize = collection.pageSize,
+        pageCount = collection.pageInfo().count
+    */
+
+    Handlebars.registerPartial('pagination',
+    '{{test_helper}}'
+    );
+
+    Handlebars.registerHelper('test_helper', function() {
+
+      var numOfPages = this.collection.pageInfo().num_pages, // total number of pages
+          page_number = this.collection.pageInfo().page_number, // page number of current page
+          pageSize = this.collection.pageSize, //maximum number of entries that could be in this page
+          //pageCount = this.collection.pageInfo().count,
+          entryCount = this.collection.count, //total number of entries in all pages combined.
+          pagePrev = this.collection.pageInfo().prev,
+          pageNext = this.collection.pageInfo().next,
+          entries = page_number * pageSize,
+          backwardIcon = '<i class="glyphicon glyphicon-backward"></i>',
+          fastBackwardIcon = '<i class="glyphicon glyphicon-fast-backward"></i>',
+          forwardIcon = '<i class="glyphicon glyphicon-forward"></i>',
+          fastForwardIcon = '<i class="glyphicon glyphicon-fast-forward"></i>'
+          html = '',
+          entry_prefix = 0;
+
+          if (numOfPages > 1) {
+            html += '<nav>';
+            if(page_number * pageSize > entryCount){
+              entries = entryCount;
+            }
+            entry_prefix = (page_number - 1) * (pageSize + 1) - (entries);
+
+            html += '<p><i>Displaying entries ' + entry_prefix + 'of ' + entryCount + '</i></p>';
+            html += '<ul class="pagination">';
+            html += '<li><a class="go-to-page" href="#" data-page="1">' + fastBackwardIcon + '</a></li>';
+            if (pagePrev) {
+              html += '<li><a class="prev-page" href="#">' + backwardIcon + '</a></li>';
+            } else {
+              html += '<li class="disabled"><a class="prev-page" href="#">' + backwardIcon + '</a></li>';
+            }
+
+            var start = page_number - 4 ;
+            if(start <= 0){
+              start = 1;
+            }
+            var end = start + 9;
+            if(end > numOfPages){
+              end = numOfPages;
+            }
+            for (var i=start; i<= end; i++) {
+              if (i == page_number) {
+                  html += '<li class="active"><a class="go-to-page" href="#" data-page="' + i + '">' + i + '</a></li>';
+              } else {
+                  html += '<li><a class="go-to-page" href="#" data-page="' + i + '">' + i + '</a></li>';
+              }
+            }
+            if (pageNext) {
+                html += '<li><a class="next-page" href="#">' + fastForwardIcon + '</a></li>';
+            } else {
+                html += '<li class="disabled"><a class="next-page" href="#">' + forwardIcon + '</a></li>';
+            }
+              html += '<li><a class="go-to-page" href="#" data-page="' + numOfPages + '">'+ fastForwardIcon +'</a></li>';
+              html += '</ul>';
+              html += '</nav>';
+         }
+
+        return new Handlebars.SafeString(html);
+    });
 
     Handlebars.registerHelper('print_tbody', function() {
       var html = '';
@@ -105,9 +177,9 @@ SharesView = RockstorLayoutView.extend({
       pools: this.pools,
       poolsNotEmpty: !this.pools.isEmpty()
     }));
-    this.$(".pagination-ph").html(this.pagination_template({
-      collection: this.collection
-    }));
+    //this.$(".pagination-ph").html(this.pagination_template({
+    //  collection: this.collection
+    //}));
     this.$("#shares-table").tablesorter({
        headers: {
             // assign the fourth column (we start counting zero)
