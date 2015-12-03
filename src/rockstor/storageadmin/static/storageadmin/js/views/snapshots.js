@@ -38,7 +38,6 @@ SnapshotsView  = RockstorLayoutView.extend({
     initialize: function() {
 	this.constructor.__super__.initialize.apply(this, arguments);
 	this.template = window.JST.share_snapshots;
-	this.paginationTemplate = window.JST.common_pagination;
 	this.addTemplate = window.JST.share_snapshot_add_template;
 	this.module_name = 'snapshots';
 	this.snapshots = this.options.snapshots;
@@ -72,6 +71,7 @@ SnapshotsView  = RockstorLayoutView.extend({
 
 	$(this.el).append(this.template({
 	    snapshots: this.collection,
+      collection: this.collection,
 	    selectedSnapshots: this.selectedSnapshots,
 	    share: this.share,
 	    shares: this.shares,
@@ -82,9 +82,6 @@ SnapshotsView  = RockstorLayoutView.extend({
 	this.$('#snapshots-table').tablesorter({
 	    headers: { 0: {sorter: false}}
 	});
-	this.$(".pagination-ph").html(this.paginationTemplate({
-	    collection: this.collection
-	}));
 	return this;
     },
 
