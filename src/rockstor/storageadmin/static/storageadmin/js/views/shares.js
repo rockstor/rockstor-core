@@ -40,7 +40,6 @@ SharesView = RockstorLayoutView.extend({
 
     this.template = window.JST.share_shares;
     this.shares_table_template = window.JST.share_shares_table;
-    //this.pagination_template = window.JST.common_pagination;
 
     this.pools = new PoolCollection();
     this.collection = new ShareCollection();
@@ -49,13 +48,6 @@ SharesView = RockstorLayoutView.extend({
 
     this.pools.on("reset", this.renderShares, this);
     this.collection.on("reset", this.renderShares, this);
-
-    /* let's suppose we get variables along with collection as context.
-    var numPages = collection.pageInfo().pages,
-        page = collection.pageInfo().page,
-        pageSize = collection.pageSize,
-        pageCount = collection.pageInfo().count
-    */
 
     Handlebars.registerPartial('pagination',
     '{{test_helper}}'
@@ -176,9 +168,7 @@ SharesView = RockstorLayoutView.extend({
       pools: this.pools,
       poolsNotEmpty: !this.pools.isEmpty()
     }));
-    //this.$(".pagination-ph").html(this.pagination_template({
-    //  collection: this.collection
-    //}));
+
     this.$("#shares-table").tablesorter({
        headers: {
             // assign the fourth column (we start counting zero)
