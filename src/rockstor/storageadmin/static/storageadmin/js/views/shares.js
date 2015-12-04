@@ -46,38 +46,7 @@ SharesView = RockstorLayoutView.extend({
     this.dependencies.push(this.collection);
     this.pools.on("reset", this.renderShares, this);
     this.collection.on("reset", this.renderShares, this);
-
-    Handlebars.registerHelper('print_tbody', function() {
-      var html = '';
-      this.collection.each(function(share, index) {
-          var shareName = share.get('name'),
-              shareSize = humanize.filesize(share.get('size')*1024),
-              shareUsage = humanize.filesize(share.get('rusage')*1024),
-              poolName = share.get('pool').name,
-              shareCompression = share.get('compression_algo'),
-              folderIcon = '<i class="glyphicon glyphicon-folder-open"></i>  ',
-              editIcon = '<i class="glyphicon glyphicon-pencil"></i>',
-              trashIcon = '<i class="glyphicon glyphicon-trash"></i>';
-          html += '<tr>';
-          html += '<td><a href="#shares/' + shareName + '">' + folderIcon + shareName +'</a></td>';
-          html += '<td>'+ shareSize +'</td>';
-          html += '<td>'+ poolName +'</td>';
-          html += '<td>'+ shareUsage +'</td>';
-          html += '<td>';
-          if (shareCompression && shareCompression != 'no') {
-              html += shareCompression;
-          }else{
-              html += 'None(defaults to pool level compression, if any)   ' +
-               '<a href="#shares/' + shareName + '/?cView=edit">' + editIcon + '</a>';
-          }
-          html += '</td>';
-          html += '<td><a id="delete_share_' + shareName + '" data-name="' + shareName + '" data-action="delete"' +
-          'data-pool="' + poolName + '" data-size="' + shareSize + '" rel="tooltip" title="Delete share">' + trashIcon + '</a></td>';
-          html += '</tr>';
-      });
-
-      return new Handlebars.SafeString(html);
-    });
+    this.initHandlebarHelpers();
   },
 
   render: function() {
@@ -148,6 +117,40 @@ SharesView = RockstorLayoutView.extend({
         error: function(xhr, status, error) {
           enableButton(button);
         }
+      });
+    },
+
+    initHandlebarHelpers: function(){
+      //register any share related handlebar helpers here.
+      Handlebars.registerHelper('print_tbody', function() {
+        var html = '';
+        this.collection.each(function(share, index) {
+            var shareName = share.get('name'),
+                shareSize = humanize.filesize(share.get('size')*1024),
+                shareUsage = humanize.filesize(share.get('rusage')*1024),
+                poolName = share.get('pool').name,
+                shareCompression = share.get('compression_algo'),
+                folderIcon = '<i class="glyphicon glyphicon-folder-open"></i>  ',
+                editIcon = '<i class="glyphicon glyphicon-pencil"></i>',
+                trashIcon = '<i class="glyphicon glyphicon-trash"></i>';
+            html += '<tr>';
+            html += '<td><a href="#shares/' + shareName + '">' + folderIcon + shareName +'</a></td>';
+            html += '<td>'+ shareSize +'</td>';
+            html += '<td>'+ poolName +'</td>';
+            html += '<td>'+ shareUsage +'</td>';
+            html += '<td>';
+            if (shareCompression && shareCompression != 'no') {
+                html += shareCompression;
+            }else{
+                html += 'None(defaults to pool level compression, if any)   ' +
+                 '<a href="#shares/' + shareName + '/?cView=edit">' + editIcon + '</a>';
+            }
+            html += '</td>';
+            html += '<td><a id="delete_share_' + shareName + '" data-name="' + shareName + '" data-action="delete"' +
+            'data-pool="' + poolName + '" data-size="' + shareSize + '" rel="tooltip" title="Delete share">' + trashIcon + '</a></td>';
+            html += '</tr>';
+        });
+        return new Handlebars.SafeString(html);
       });
     },
 
