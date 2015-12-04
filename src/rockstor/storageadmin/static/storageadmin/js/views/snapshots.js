@@ -56,7 +56,7 @@ SnapshotsView  = RockstorLayoutView.extend({
 	];
 	this.parentView = this.options.parentView;
 	this.collection.on("reset", this.renderSnapshots, this);
-
+  this.initHandlebarHelpers();
     },
 
     render: function() {
@@ -71,10 +71,12 @@ SnapshotsView  = RockstorLayoutView.extend({
 
 	$(this.el).append(this.template({
 	    snapshots: this.collection,
-      collection: this.collection,
 	    selectedSnapshots: this.selectedSnapshots,
-	    share: this.share,
+      //share: this.share,
 	    shares: this.shares,
+      //add new variables to access from template
+      collection: this.collection,
+      collectionNotEmpty: !this.collection.isEmpty(),
 	}));
 	this.$('[rel=tooltip]').tooltip({
 	    placement: 'bottom'
@@ -314,6 +316,78 @@ SnapshotsView  = RockstorLayoutView.extend({
 	event.preventDefault();
 	this.render();
     },
+
+    initHandlebarHelpers: function(){
+      // add snapshot table helper
+      Handlebars.registerHelper('print_snapshot_tbody', function() {
+        var html = '';
+        var _this = this;
+        this.collection.each(function(snapshot, index) {
+            var snapName = snapshot.get('name'),
+                snapId = snapshot.get('id'),
+                snapVisible = snapshot.get('uvisible'),
+                snapWritable = snapshot.get('writable'),
+                snapShare = snapshot.get('share'),
+                snapUsage = humanize.filesize(snapshot.get('rusage') * 1024),
+                snapExUsage = humanize.filesize(snapshot.get('eusage') * 1024),
+                cameraIcon = '<i class="glyphicon glyphicon-camera"></i>  ',
+                cloneIcon = '<i rel="tooltip" title="Clone snapshot" class="glyphicon glyphicon-book"></i> ',
+                trashIcon = '<i class="glyphicon glyphicon-trash"></i>';
+
+            html += '<tr>';
+            html += '<td>';
+            if (RockstorUtil.listContains(_this.selectedSnapshots, 'name', snapName)) {
+                html += '<input class="js-snapshot-select inline" type="checkbox" name="snapshot-select"' +
+                'data-name="' + snapName + '" data-id="' + snapId + '" checked="checked"></input>';
+            } else {
+                html += '<input class="js-snapshot-select inline" type="checkbox" name="snapshot-select"' +
+                'data-name="' + snapName + '" data-id="' + snapId + '" ></input>';
+            }
+            html += '</td>';
+            html += '<td>' + cameraIcon + snapName + '</td>';
+            html += '<td>' + moment(snapshot.get("toc")).format(RS_DATE_FORMAT) + '</td>';
+            _this.shares.each( function(share, index) {
+              var shareName = share.get('name'),
+                  shareId = share.get('id');
+              if(snapShare == shareId){
+                html += '<td><a href="#shares/' + shareName + '">' + shareName + '</a></td>';
+              }
+            });
+            html += '<td>';
+            if (snapVisible) {
+              html += 'Visible';
+            } else {
+              html += 'Hidden';
+            }
+            html += '</td>';
+            html += '<td>';
+            if (snapWritable) {
+              html += 'Yes';
+            } else {
+              html += 'No';
+            }
+            html += '</td>';
+            html += '<td>' + snapUsage + '</td>';
+            html += '<td>' + snapExUsage + '</td>';
+            html += '<td>';
+      	    _this.shares.each( function(share, index) {
+              var shareName = share.get('name'),
+                  shareId = share.get('id');
+      	        if(snapShare == shareId){
+      	           if (snapWritable) {
+                     html += '<a class="js-snapshot-clone" href="#" data-name="' + snapName + '" data-share-name="' + shareName + '">' + cloneIcon + '</a>';
+      	           }
+      	           html += '<a href="#" class="js-snapshot-delete" id="delete_snapshot_' + snapName + '"' +
+                   'data-name="' + snapName + '" data-size="' + snapExUsage + '"' +
+                   'data-share-name="' + shareName + '" data-action="delete" title="Delete snapshot">' + trashIcon + '</a>';
+      	        }
+      	    });
+            html += '</td>';
+            html += '</tr>';
+          });
+        return new Handlebars.SafeString(html);
+      });
+    }
 
 });
 
