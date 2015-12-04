@@ -965,12 +965,8 @@ $(document).ready(function() {
 
     });
 
-    // insert pagination partial and helper functions here
-    Handlebars.registerPartial('pagination',
-    '{{pagination_helper}}'
-    );
-
-    Handlebars.registerHelper('pagination_helper', function() {
+    //insert pagination partial helper functions here
+    Handlebars.registerHelper('pagination', function() {
 
       var totalPageCount = this.collection.pageInfo().num_pages,
           currPageNumber = this.collection.pageInfo().page_number,
