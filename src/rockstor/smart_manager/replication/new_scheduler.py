@@ -187,15 +187,12 @@ class ReplicaScheduler(ReplicationMixin, Process):
                     logger.debug('removed sender: %s' % snap_id)
             logger.debug('Active senders = %s' % self.senders.keys())
 
-            term_msgs = ('btrfs-send-init-error', 'btrfs-send-unexpected-termination-error',
-                         'btrfs-send-nonzero-termination-error', 'btrfs-send-stream-finished',)
             while True:
                 #This loop may still continue even if replication service
                 #is terminated, as long as data is coming in.
                 socks = dict(poller.poll(timeout=25000)) #poll for 10 seconds
                 if (frontend in socks and socks[frontend] == zmq.POLLIN):
                     address, command, msg = frontend.recv_multipart()
-                    logger.debug('command = %s.' % command)
                     if (address not in self.clients):
                         self.clients[address] = 1
                     else:
@@ -223,18 +220,12 @@ class ReplicaScheduler(ReplicationMixin, Process):
                         #do we hit hwm? is the dealer still connected?
                         backend.send_multipart([address, command, msg])
 
-                    # if (msg in term_msgs):
-                    #     self.logger.debug('terminal message(%s) from %s' % (msg, address))
-                    #     reply_msg = 'ok, goodbye'
-                    #     del self.clients[address]
-                    # frontend.send_multipart([address, command, reply_msg])
-
 
                 elif (backend in socks and socks[backend] == zmq.POLLIN):
                     address, command, msg = backend.recv_multipart()
-                    logger.debug('Received backend msg: %s from: %s' % (msg, address))
                     if (re.match('new_send-', address) is not None):
                         rid = int(address.split('new_send-')[1])
+                        logger.debug('new_send request received for %d' % rid)
                         try:
                             replica = Replica.objects.get(id=rid, enabled=True)
                             snap_id = self._process_send(replica)
@@ -244,7 +235,8 @@ class ReplicaScheduler(ReplicationMixin, Process):
                         finally:
                             backend.send_multipart([address, command, msg])
                     elif (address in self.clients):
-                        if (command in ('receiver-ready', 'receiver-error', )):
+                        if (command in ('receiver-ready', 'receiver-error', 'btrfs-recv-finished')):
+                            logger.debug('message from backend: %s' % command)
                             backend.send_multipart([address, b'ACK'])
                             #a new receiver has started. reply to the sender that must be waiting
                         frontend.send_multipart([address, command, msg])

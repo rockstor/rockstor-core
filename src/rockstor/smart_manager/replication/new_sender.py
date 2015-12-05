@@ -116,14 +116,13 @@ class NewSender(ReplicationMixin, Process):
         logger.debug('Initial greeting sent from %s' % self.identity)
         self.poll.register(self.send_req, zmq.POLLIN)
 
-    def _req_rep_helper(self, msg):
-        self.send_req.send_multipart(['', b'%s' % msg])
+    def _req_rep_helper(self, command, msg=''):
+        self.send_req.send_multipart([command, b'%s' % msg])
         socks = dict(self.poll.poll(25000))
         if (socks.get(self.send_req) == zmq.POLLIN):
             return self.send_req.recv()
-        else:
-            logger.debug('no reply from the server(%s:%d) for %s' %
-                         (self.receiver_ip, self.receiver_port, self.identity))
+        logger.debug('no reply from the server(%s:%d) for %s' %
+                     (self.receiver_ip, self.receiver_port, self.identity))
 
     def _delete_old_snaps(self, share_path):
         oldest_snap = get_oldest_snap(share_path, self.num_retain_snaps)
@@ -234,7 +233,7 @@ class NewSender(ReplicationMixin, Process):
                 self.msg = ('Failed to send fsdata to the receiver for %s. Aborting.' %
                             (self.snap_id))
                 self.update_trail = True
-                self._req_rep_helper(fs_data)
+                self._req_rep_helper('', fs_data)
                 self.kb_sent = self.kb_sent + len(fs_data)
 
                 if (not alive):
@@ -260,28 +259,3 @@ class NewSender(ReplicationMixin, Process):
                         '. Aborting.' % self.snap_id)
             self.update_replica_status(self.rt2_id, data)
             self._sys_exit(0)
-
-
-            # num_chunks = 0;
-            # #this is what the first btrfs-send data transfer chunk will be
-            # self.send_req.send(b'ok thanks')
-
-            # while (True):
-            #     socks = dict(self.poll.poll(25000))
-            #     if (socks.get(self.send_req) == zmq.POLLIN):
-            #         reply = self.send_req.recv()
-            #         if (reply == 'ok, goodbye'):
-            #             self.logger.debug('Send successful for snap_id-%d. Quiting' % self.rid)
-            #             break
-            #         if (num_chunks % 1000 == 0):
-            #             self.logger.debug('Total chunks sent from snap_id-%d: %d' % (self.rid, num_chunks))
-            #         if (num_chunks > 5000):
-            #             self.logger.debug('no more data. final goodbye from snap_id-%d' % self.rid)
-            #             self.send_req.send(b'goodbye')
-            #         else:
-            #             d = 's' * 1000
-            #             self.send_req.send(b'%s' % d)
-            #         num_chunks += 1
-
-            #     else:
-            #         self.logger.debug('no reply from server. retrying')

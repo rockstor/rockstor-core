@@ -109,8 +109,17 @@ class NewReceiver(ReplicationMixin, Process):
                 if (self.delete_snapshot(share_name, oldest_snap)):
                     return self._delete_old_snaps(share_name, share_path, num_retain)
 
+    def _send_recv(self, command, msg):
+        self.dealer.send_multipart([command, b'%s' % msg])
+        socks = dict(self.poll.poll(25000))
+        if (socks.get(self.dealer) == zmq.POLLIN):
+            return self.dealer.recv()
+        logger.debug('no reply from the broker for identity: %s command: '
+                     '%s message: %s' % (self.identity, command, msg))
+        return None
 
     def run(self):
+        logger.debug('Starting a new receiver for meta: %s' % self.meta)
         self.msg = ('Top level exception in receiver')
         with self._clean_exit_handler():
             self.law = APIWrapper()
@@ -119,35 +128,135 @@ class NewReceiver(ReplicationMixin, Process):
             self.dealer.setsockopt_string(zmq.IDENTITY, u'%s' % self.identity)
             self.dealer.set_hwm(10)
             self.dealer.connect('ipc:///tmp/foobar.ipc')
+            self.poll.register(self.dealer, zmq.POLLIN)
 
             self.ack = True
+            self.msg = ('Failed to get the sender ip for appliance: %s' % self.sender_id)
+            self.sender_ip = Appliance.objects.get(uuid=self.sender_id).ip
+
             self.msg = ('Failed to validate the source share(%s) on sender(uuid: %s '
                         ') Did the ip of the sender change?' %
                         (self.src_share, self.sender_id))
             self.validate_src_share(self.sender_id, self.src_share)
 
-            self.dealer.send_multipart(['receiver-ready', b'receiver-ready'])
-            self.poll.register(self.dealer, zmq.POLLIN)
+            sname = ('%s_%s' % (self.sender_id, self.src_share))
+            if (not self.incremental):
+                self.msg = ('Failed to verify/create share: %s.' % sname)
+                self.create_share(sname, self.dest_pool)
 
-            socks = dict(self.poll.poll(3000))
-            if (socks.get(self.dealer) == zmq.POLLIN):
-                msg = self.dealer.recv()
-                logger.debug('Reply for the receiver: %s' % msg)
+                self.msg = ('Failed to create the replica metadata object '
+                            'for share: %s.' % sname)
+                data = {'share': sname,
+                        'appliance': self.sender_ip,
+                        'src_share': self.src_share, }
+                self.rid = self.create_rshare(data)
             else:
-                logger.debug('No initial response received from the broker for: %s' % self.identity)
+                self.msg = ('Failed to retreive the replica metadata object for '
+                            'share: %s.' % sname)
+                self.rid = ReplicaShare.objects.get(share=sname).id
+
+            sub_vol = ('%s%s/%s' % (settings.MNT_PT, self.dest_pool, sname))
+            if (not is_subvol(sub_vol)):
+                self.msg = ('Failed to create parent subvolume %s' % sub_vol)
+                run_command([BTRFS, 'subvolume', 'create', sub_vol])
+
+            snap_dir = ('%s%s/.snapshots/%s' % (settings.MNT_PT, self.dest_pool,
+                                                sname))
+            self.msg = ('Failed to create snapshot directory: %s' % snap_dir)
+            run_command(['mkdir', '-p', snap_dir])
+            snap_fp = ('%s/%s' % (snap_dir, self.snap_name))
+
+            #If the snapshot already exists, presumably from the previous attempt and
+            #the sender tries to send the same, reply back with snap_exists and do not
+            #start the btrfs-receive
+            if (is_subvol(snap_fp)):
+                logger.debug('Snapshot to be sent(%s) already exists. Not '
+                             'starting a new receive process' % snap_fp)
+                self.dealer.send_multipart(['snap-exists', b'snap-exists'])
+                #get an ack from the broker and quit? may be get an ack from the sender?
+
+            self.msg = ('Failed to create Snapshot: %s' % self.snap_name)
+            self.create_snapshot(sname, self.snap_name, snap_type='receiver')
+
+            self.msg = ('Failed to create receive trail for rid: %d' % self.rid)
+            data = {'snap_name': self.snap_name, }
+            self.rtid = self.create_receive_trail(self.rid, data)
+
+            cmd = [BTRFS, 'receive', snap_dir]
+            self.msg = ('Failed to start the low level btrfs receive command(%s)'
+                        '. Aborting.' % (cmd))
+            self.rp = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE,
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE)
+
+            if (self._send_recv('receiver-ready', 'receiver-ready') is None):
                 self._sys_exit(3)
 
             term_msgs = ('btrfs-send-init-error', 'btrfs-send-unexpected-termination-error',
-                         'btrfs-send-nonzero-termination-error', 'btrfs-send-stream-finished',)
+                         'btrfs-send-nonzero-termination-error',)
             num_tries = 10
             while (True):
                 socks = dict(self.poll.poll(3000))
                 if (socks.get(self.dealer) == zmq.POLLIN):
-                    command, msg = self.dealer.recv_multipart()
-                    if (msg in term_msgs):
-                        logger.debug('terminal message received for: %s : %s' % (self.identity, msg))
-                        self._sys_exit(0)
-                    self.dealer.send_multipart(['', b'send more'])
+                    command, message = self.dealer.recv_multipart()
+                    if (command in term_msgs):
+                        logger.debug('terminal command received for: %s : %s' % (self.identity, command))
+                        #do some cleanup?
+                        if (self.rp.poll() is None):
+                            self.rp.terminate()
+                        data['status'] = 'failed'
+                        msg = ('Failed to update receive trail for rtid: %d' % self.rtid)
+                        self.update_receive_trail(self.rtid, data)
+                        break
+                    if (command == 'btrfs-send-stream-finished'):
+                        data['status'] = 'succeeded'
+                        try:
+                            #delete any snapshots older than num_retain
+                            self._delete_old_snaps(sname, snap_dir, self.num_retain_snaps + 1)
+                        except Exception, e:
+                            logger.error('Exception while deleting old '
+                                         'snapshots: %s' % e.__str__())
+                            #raising the exception would make a bigger mess.
+                            #problematic past snapshots can be manually deleted.
+
+                        #delete the share, move the oldest snap to share
+                        try:
+                            oldest_snap = get_oldest_snap(snap_dir, self.num_retain_snaps)
+                            if (oldest_snap is not None):
+                                snap_path = ('%s/%s' % (snap_dir, oldest_snap))
+                                share_path = ('%s%s/%s' %
+                                              (settings.MNT_PT, self.dest_pool,
+                                               sname))
+                                pool = Pool.objects.get(name=self.dest_pool)
+                                remove_share(pool, sname, '-1/-1')
+                                set_property(snap_path, 'ro', 'false',
+                                             mount=False)
+                                run_command(['/usr/bin/rm', '-rf', share_path],
+                                            throw=False)
+                                shutil.move(snap_path, share_path)
+                                self.delete_snapshot(sname, oldest_snap, logger)
+                        except Exception, e:
+                            msg = ('Failed to promote the oldest Snapshot to Share')
+                            logger.error('%s. Exception: %s' % (msg, e.__str__()))
+                        msg = ('Failed to update receive trail for rtid: %d' % self.rtid)
+                        self.update_receive_trail(self.rtid, data)
+                        break
+                    if (self.rp.poll() is None):
+                        self.rp.stdin.write(message)
+                        self.rp.stdin.flush()
+                        self.dealer.send_multipart([b'send-more', ''])
+                    else:
+                        logger.error('It seems the btrfs receive process died'
+                                     ' unexpectedly')
+                        out, err = self.rp.communicate()
+                        msg = ('Low level system error from btrfs receive '
+                               'command. out: %s err: %s for rtid: %s identity: %s'
+                               % (out, err, self.rtid, self.identity))
+                        data = {'status': 'failed',
+                                'error': msg, }
+                        self.update_receive_trail(self.rtid, data)
+                        #send a message to the broker, wait for reply and quit?
+
                 else:
                     num_tries -= 1
                     logger.error('No response received from the broker. '
@@ -156,248 +265,23 @@ class NewReceiver(ReplicationMixin, Process):
                         logger.error('terminating the receiver(%s)' % self.identity)
                         break
 
+            #rfo/stdin should be closed by now. We get here only if the sender
+            #dint throw an error or if receiver did not get terminated
+            try:
+                out, err = self.rp.communicate()
+                logger.debug('cmd = %s out: %s err: %s rc: %s' %
+                             (cmd, out, err, self.rp.returncode))
+            except Exception, e:
+                logger.debug('Exception while terminating receive. Meta: %s. '
+                                  'Probably already terminated: %s' %
+                                  (self.meta, e.__str__()))
 
+            data = {'status': 'succeeded', }
+            if (self.rp.returncode != 0):
+                data['status'] = 'failed'
 
-        # sname = ('%s_%s' % (self.sender_id, self.src_share))
-        # if (not self.incremental):
-        #     msg = ('Failed to verify/create share: %s. meta: %s. '
-        #            'Aborting.' % (sname, self.meta))
-        #     with self._clean_exit_handler(msg, ack=True):
-        #         self.create_share(sname, self.dest_pool, self.logger)
+            self.dealer.send_multipart([b'btrfs-recv-finished', ''])
 
-        #     msg = ('Failed to create the replica metadata object '
-        #            'for share: %s. meta: %s. Aborting.' %
-        #            (sname, self.meta))
-        #     with self._clean_exit_handler(msg, ack=True):
-        #         data = {'share': sname,
-        #                 'appliance': self.sender_ip,
-        #                 'src_share': self.src_share,
-        #                 'data_port': self.data_port,
-        #                 'meta_port': self.meta_port, }
-        #         self.rid = self.create_rshare(data)
-
-        # else:
-        #     msg = ('Failed to retreive the replica metadata object for '
-        #            'share: %s. meta: %s. Aborting.' % (sname, self.meta))
-        #     with self._clean_exit_handler(msg):
-        #         self.rid = ReplicaShare.objects.get(share=sname).id
-
-        # sub_vol = ('%s%s/%s' % (settings.MNT_PT, self.meta['pool'],
-        #                         sname))
-        # if (not is_subvol(sub_vol)):
-        #     msg = ('Failed to create parent subvolume %s' % sub_vol)
-        #     with self._clean_exit_handler(msg, ack=True):
-        #         run_command([BTRFS, 'subvolume', 'create', sub_vol])
-
-        # snap_dir = ('%s%s/.snapshots/%s' % (settings.MNT_PT, self.meta['pool'],
-        #                                    sname))
-        # run_command(['mkdir', '-p', snap_dir])
-        # snap_fp = ('%s/%s' % (snap_dir, self.snap_name))
-        # with self._clean_exit_handler(msg):
-        #     if (is_subvol(snap_fp)):
-        #         ack = {'msg': 'snap_exists',
-        #                'id': self.meta['id'], }
-        #         self.meta_push.send_json(ack)
-        #         self.logger.debug('snap_exists ack sent: %s' % ack)
-        #         self._sys_exit(0)
-
-        # cmd = [BTRFS, 'receive', snap_dir]
-        # msg = ('Failed to start the low level btrfs receive command(%s)'
-        #        '. Aborting.' % (cmd))
-        # with self._clean_exit_handler(msg, ack=True):
-        #     self.rp = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE,
-        #                                stdout=subprocess.PIPE,
-        #                                stderr=subprocess.PIPE)
-
-        # msg = ('Failed to send begin_ok to the sender for meta: %s' %
-        #        self.meta)
-        # with self._clean_exit_handler(msg):
-        #     ack = {'msg': 'begin_ok',
-        #            'id': self.meta['id'], }
-        #     self.meta_push.send_json(ack)
-        #     self.logger.debug('begin_ok ack sent: %s' % ack)
-        # recv_timeout_counter = 0
-        # credit = settings.DEFAULT_SEND_CREDIT
-        # check_credit = True
-        # t0 = t0_cycle = time.time()
-        # recv_cycle = 0
-        # msg_count = 0
-        # while True:
-        #     if (check_credit is True and credit < 5):
-        #         ack = {'msg': 'send_more',
-        #                'id': self.meta['id'],
-        #                'credit': settings.DEFAULT_SEND_CREDIT, }
-        #         self.meta_push.send_json(ack)
-        #         self.logger.debug('send_more ack sent: %s' % ack)
-        #         msg_count_cycle = settings.DEFAULT_SEND_CREDIT - credit
-        #         msg_count += msg_count_cycle
-        #         cur_t = time.time()
-        #         total_kb = self.kb_received / 1024
-        #         cycle_kb = recv_cycle / 1024
-        #         total_xfer = total_kb / (cur_t - t0)
-        #         cycle_xfer = cycle_kb / (cur_t - t0_cycle)
-        #         total_avg_msg = self.kb_received / msg_count
-        #         cycle_avg_msg = recv_cycle / msg_count_cycle
-        #         self.logger.debug('%s KB received so far: %f . this cycle: %f .'
-        #                           'xfer rate so far: %f . this cycle: %f .'
-        #                           'Avg msg size(Bytes) so far: %f . this cycle: %f .' %
-        #                           (self.meta['id'], total_kb, cycle_kb, total_xfer, cycle_xfer,
-        #                            total_avg_msg, cycle_avg_msg))
-        #         recv_cycle = 0
-        #         t0_cycle = time.time()
-        #         credit = credit + settings.DEFAULT_SEND_CREDIT
-
-        #     try:
-        #         recv_data = recv_sub.recv()
-        #         recv_data = recv_data[len(self.meta['id']):]
-        #         credit = credit - 1
-        #         recv_timeout_counter = 0
-        #         self.kb_received += len(recv_data)
-        #         recv_cycle += len(recv_data)
-        #         if (self.rtid is None):
-        #             msg = ('Failed to create snapshot: %s. Aborting.' %
-        #                    self.snap_name)
-        #             # create a snapshot only if it's not already from a previous failed attempt
-        #             with self._clean_exit_handler(msg, ack=True):
-        #                 self.create_snapshot(sname, self.snap_name,
-        #                                      self.logger, snap_type='receiver')
-
-        #             data = {'snap_name': self.snap_name}
-        #             msg = ('Failed to create receive trail for rid: %d'
-        #                    '. meta: %s' % (self.rid, self.meta))
-        #             with self._clean_exit_handler(msg, ack=True):
-        #                 self.rtid = self.create_receive_trail(self.rid, data)
-
-        #         if (recv_data == 'END_SUCCESS' or recv_data == 'END_FAIL'):
-        #             check_credit = False
-        #             data = {'kb_received': self.kb_received / 1024, }
-        #             self.logger.debug('END message received for %s : %s' %
-        #                               (self.meta['id'], recv_data))
-        #             if (recv_data == 'END_SUCCESS'):
-        #                 data['status'] = 'succeeded'
-        #                 try:
-        #                     #delete any snapshots older than num_retain
-        #                     self._delete_old_snaps(sname, snap_dir, self.num_retain_snaps + 1)
-        #                 except Exception, e:
-        #                     self.logger.error('Exception while deleting old '
-        #                                       'snapshots: %s' % e.__str__())
-        #                     #raising the exception would make a bigger mess.
-        #                     #problematic past snapshots can be manually deleted.
-
-        #                 #delete the share, move the oldest snap to share
-        #                 try:
-        #                     oldest_snap = get_oldest_snap(snap_dir, self.num_retain_snaps)
-        #                     if (oldest_snap is not None):
-        #                         snap_path = ('%s/%s' % (snap_dir, oldest_snap))
-        #                         share_path = ('%s%s/%s' %
-        #                                       (settings.MNT_PT, self.dest_pool,
-        #                                        sname))
-        #                         pool = Pool.objects.get(name=self.dest_pool)
-        #                         remove_share(pool, sname, '-1/-1')
-        #                         set_property(snap_path, 'ro', 'false',
-        #                                      mount=False)
-        #                         run_command(['/usr/bin/rm', '-rf', share_path],
-        #                                     throw=False)
-        #                         shutil.move(snap_path, share_path)
-        #                         self.delete_snapshot(sname, oldest_snap, self.logger)
-        #                 except Exception, e:
-        #                     msg = ('Failed to promote the oldest Snapshot to Share'
-        #                            ' for %s' % self.meta['id'])
-        #                     self.logger.error('%s. Exception: %s' % (msg, e.__str__()))
-        #             else:
-        #                 self.logger.error('END_FAIL received for meta: %s. '
-        #                                   'Terminating.' % self.meta)
-        #                 if (self.rp.poll() is None):
-        #                     self.rp.terminate()
-        #                 data['status'] = 'failed'
-
-        #             msg = ('Failed to update receive trail for rtid: %d'
-        #                    '. meta: %s' % (self.rtid, self.meta))
-        #             with self._clean_exit_handler(msg, ack=True):
-        #                 self.update_receive_trail(self.rtid, data)
-        #             break
-        #         if (self.rp.poll() is None):
-        #             self.rp.stdin.write(recv_data)
-        #             self.rp.stdin.flush()
-        #         else:
-        #             self.logger.error('It seems the btrfs receive process died'
-        #                               ' unexpectedly for meta: %s' % self.meta)
-        #             out, err = self.rp.communicate()
-        #             msg = ('Low level system error from btrfs receive '
-        #                    'command. out: %s err: %s for rtid: %s meta: %s'
-        #                    % (out, err, self.rtid, self.meta))
-        #             with self._clean_exit_handler(msg, ack=True):
-        #                 data = {'status': 'failed',
-        #                         'error': msg, }
-        #                 self.update_receive_trail(self.rtid, data)
-        #     except zmq.error.Again:
-        #         recv_timeout_counter = recv_timeout_counter + 1
-        #         if (recv_timeout_counter > 600): #10 minutes
-        #             self.logger.error('Nothing received in the last 60 seconds '
-        #                               'from the sender(%s) for meta: %s. Aborting.'
-        #                               % (self.sender_ip, self.meta))
-        #             self._sys_exit(3)
-        #     except Exception, e:
-        #         msg = ('Exception occured while receiving fsdata for meta: %s.'
-        #                'Exception: %s' % (self.meta, e.__str__()))
-        #         self.logger.error(msg)
-        #         try:
-        #             self.rp.terminate()
-        #         except Exception, e:
-        #             self.logger.error('Exception while terminating btrfs-recv '
-        #                               'for %s: %s' % (self.meta['id'], e.__str__()))
-        #             #don't raise the exception because it will create a bigger mess.
-
-        #         data['status'] = 'failed'
-        #         data['error'] = msg
-        #         msg = ('Failed to update receive trail for rtid: %d'
-        #                '. meta: %s' % (self.rtid, self.meta))
-        #         with self._clean_exit_handler(msg, ack=True):
-        #             self.update_receive_trail(self.rtid, data)
-        #         self._sys_exit(3)
-        #     finally:
-        #         if (os.getppid() != self.ppid):
-        #             self.logger.error('parent exited. aborting.')
-        #             self._sys_exit(3)
-
-        # #rfo/stdin should be closed by now. We get here only if the sender
-        # #dint throw an error or if receiver did not get terminated
-        # try:
-        #     out, err = self.rp.communicate()
-        #     self.logger.debug('cmd = %s out: %s err: %s rc: %s' %
-        #                       (cmd, out, err, self.rp.returncode))
-        # except Exception, e:
-        #     self.logger.debug('Exception while terminating receive. Meta: %s. '
-        #                       'Probably already terminated: %s' %
-        #                       (self.meta, e.__str__()))
-
-        # ack = {'msg': 'receive_ok',
-        #        'id': self.meta['id'], }
-        # data = {'status': 'succeeded', }
-        # if (self.rp.returncode != 0):
-        #     ack['msg'] = 'receive_error'
-        #     data['status'] = 'failed'
-
-        # msg = ('Failed to update receive trail for rtid: %d. meta: '
-        #        '%s' % (self.rtid, self.meta))
-        # with self._clean_exit_handler(msg, ack=True):
-        #     self.update_receive_trail(self.rtid, data)
-
-        # msg = ('Failed to send final ack to the sender for meta: %s' %
-        #        self.meta)
-        # with self._clean_exit_handler(msg):
-        #     self.meta_push.send_json(ack)
-        #     self.logger.debug('Receive finished for %s. ack = %s' % (sname, ack))
-
-        # try:
-        #     recv_sub.RCVTIMEO = 60000 # 1 minute
-        #     recv_data = recv_sub.recv()
-        #     recv_data = recv_data[len(self.meta['id']):]
-        # except Exception, e:
-        #     self.logger.error('Exception while waiting for final ack from '
-        #                       'sender for %s: %s' % (sname, e.__str__()))
-        #     #it's ok if we don't receive the final ack, this is perhaps a
-        #     #hacky way of waiting a while to make sure the previous send
-        #     #made it through.
-
-        # self._sys_exit(0)
+            self.msg = ('Failed to update receive trail for rtid: %d.' % self.rtid)
+            self.update_receive_trail(self.rtid, data)
+            self._sys_exit(0)
