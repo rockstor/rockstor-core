@@ -28,6 +28,7 @@ from new_sender import NewSender
 from new_receiver import NewReceiver
 from django.utils.timezone import utc
 import logging
+logger = logging.getLogger(__name__)
 from django.db import DatabaseError
 from util import ReplicationMixin
 import json
@@ -58,7 +59,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
             for w in wd.keys():
                 if (wd[w].exitcode is not None):
                     del(wd[w])
-                    self.logger.debug('deleted worker: %s' % w)
+                    logger.debug('deleted worker: %s' % w)
         return workers
 
     def _get_receiver_ip(self, replica):
@@ -70,7 +71,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
         except Exception, e:
             msg = ('Failed to get receiver ip. Is the receiver '
                    'appliance added?. Exception: %s' % e.__str__())
-            self.logger.error(msg)
+            logger.error(msg)
             raise Exception(msg)
 
     def _process_send(self, replica):
@@ -85,19 +86,19 @@ class ReplicaScheduler(ReplicationMixin, Process):
         snap_id = ('%s_%s' %
                    (self.uuid, snap_name))
         if (len(rt) == 0):
-            self.logger.debug('new sender for snap: %s' % snap_id)
-            sw = NewSender(replica, snap_name, snap_id, self.logger)
+            logger.debug('new sender for snap: %s' % snap_id)
+            sw = NewSender(self.uuid, receiver_ip, replica, snap_name, snap_id)
         elif (rt[0].status == 'succeeded'):
-            self.logger.debug('incremental sender for snap: %s' % snap_id)
-            sw = NewSender(replica, snap_name, snap_id, self.logger, rt[0])
+            logger.debug('incremental sender for snap: %s' % snap_id)
+            sw = NewSender(self.uuid, receiver_ip, replica, snap_name, snap_id, rt[0])
         elif (rt[0].status == 'pending'):
             prev_snap_id = ('%s_%s' % (self.uuid, rt[0].snap_name))
             if (prev_snap_id in self.senders):
-                return self.logger.debug('send process ongoing for snap: '
-                                         '%s. Not starting a new one.' % prev_snap_id)
-            self.logger.debug('%s not found in senders. Previous '
-                              'sender must have Aborted. Marking '
-                              'it as failed' % prev_snap_id)
+                return logger.debug('send process ongoing for snap: '
+                                    '%s. Not starting a new one.' % prev_snap_id)
+            logger.debug('%s not found in senders. Previous '
+                         'sender must have Aborted. Marking '
+                         'it as failed' % prev_snap_id)
             msg = ('Sender process Aborted. See logs for '
                    'more information')
             data = {'status': 'failed',
@@ -114,33 +115,32 @@ class ReplicaScheduler(ReplicationMixin, Process):
                     break
                 num_tries = num_tries + 1
             if (num_tries >= self.MAX_ATTEMPTS):
-                self.logger.info('Maximum attempts(%d) reached '
-                                 'for snap: %s. Disabling the '
-                                 'replica.' %
-                                 (self.MAX_ATTEMPTS, snap_id))
+                logger.info('Maximum attempts(%d) reached '
+                            'for snap: %s. Disabling the '
+                            'replica.' %
+                            (self.MAX_ATTEMPTS, snap_id))
                 return self.disable_replica(replica.id)
 
-            self.logger.info('previous backup failed for snap: '
-                             '%s. Starting a new one. Attempt '
-                             '%d/%d.' % (snap_id, num_tries,
-                                         self.MAX_ATTEMPTS))
+            logger.info('previous backup failed for snap: '
+                        '%s. Starting a new one. Attempt '
+                        '%d/%d.' % (snap_id, num_tries,
+                                    self.MAX_ATTEMPTS))
             prev_rt = None
             for rto in rt:
                 if (rto.status == 'succeeded'):
                     prev_rt = rto
                     break
-            sw = NewSender(replica, snap_name, snap_id, self.logger, prev_rt)
+            sw = NewSender(self.uuid, receiver_ip, replica, snap_name, snap_id, prev_rt)
         else:
-            return self.logger.error('unknown replica trail status: %s. '
-                                     'ignoring snap: %s' %
-                                     (rt[0].status, snap_id))
+            return logger.error('unknown replica trail status: %s. '
+                                'ignoring snap: %s' %
+                                (rt[0].status, snap_id))
         self.senders[snap_id] = sw
         sw.daemon = True #to kill all senders in case scheduler dies.
         sw.start()
         return snap_id
 
     def run(self):
-        self.logger = self.get_logger()
         self.law = APIWrapper()
         try:
             if (NetworkInterface.objects.filter(itype='replication').exists()):
@@ -153,14 +153,14 @@ class ReplicaScheduler(ReplicationMixin, Process):
                    'replication service will use it. In addition, you can '
                    'assign a dedicated replication role to another interface.'
                    ' Aborting for now. Exception: %s' % e.__str__())
-            return self.logger.error(msg)
+            return logger.error(msg)
 
         try:
             self.uuid = Appliance.objects.get(current_appliance=True).uuid
         except Exception, e:
             msg = ('Failed to get uuid of current appliance. Aborting. '
                    'Exception: %s' % e.__str__())
-            return self.logger.error(msg)
+            return logger.error(msg)
 
         ctx = zmq.Context()
         frontend = ctx.socket(zmq.ROUTER)
@@ -177,15 +177,15 @@ class ReplicaScheduler(ReplicationMixin, Process):
 
         while True:
             if (os.getppid() != self.ppid):
-                self.logger.error('Parent exited. Aborting.')
+                logger.error('Parent exited. Aborting.')
                 ctx.destroy()
                 break
 
             for snap_id in self.senders.keys():
                 if (self.senders[snap_id].exitcode is not None):
                     del self.senders[snap_id]
-                    self.logger.debug('removed sender: %s' % snap_id)
-            self.logger.debug('Active senders = %s' % self.senders.keys())
+                    logger.debug('removed sender: %s' % snap_id)
+            logger.debug('Active senders = %s' % self.senders.keys())
 
             term_msgs = ('btrfs-send-init-error', 'btrfs-send-unexpected-termination-error',
                          'btrfs-send-nonzero-termination-error', 'btrfs-send-stream-finished',)
@@ -195,28 +195,28 @@ class ReplicaScheduler(ReplicationMixin, Process):
                 socks = dict(poller.poll(timeout=25000)) #poll for 10 seconds
                 if (frontend in socks and socks[frontend] == zmq.POLLIN):
                     address, command, msg = frontend.recv_multipart()
-                    self.logger.debug('command = %s.' % command)
+                    logger.debug('command = %s.' % command)
                     if (address not in self.clients):
                         self.clients[address] = 1
                     else:
                         self.clients[address] += 1
 
                     if (self.clients[address] % 100 == 0):
-                        self.logger.debug('Processed %d messages from %s' %
-                                          (self.clients[address], address))
-                    if (msg == 'shall I begin sending?'):
-                        self.logger.debug('initial greeting from %s' % address)
+                        logger.debug('Processed %d messages from %s' %
+                                     (self.clients[address], address))
+                    if (command == 'sender-ready'):
+                        logger.debug('initial greeting from %s' % address)
                         #Start a new receiver and send the appropriate response
                         try:
-                            nr = NewReceiver(address, 'test', self.logger)
+                            nr = NewReceiver(address, msg)
                             nr.daemon = True
                             nr.start()
-                            self.logger.debug('New receiver started for %s' % address)
+                            logger.debug('New receiver started for %s' % address)
                             continue
                         except Exception, e:
-                            self.logger.debug('Exception while starting the '
-                                              'new receiver for %s: %s'
-                                              % (address, e.__str__()))
+                            logger.debug('Exception while starting the '
+                                         'new receiver for %s: %s'
+                                         % (address, e.__str__()))
                             reply_msg = 'receiver-init-error'
                             frontend.send_multipart([address, command, 'receiver-init-error'])
                     else:
@@ -232,31 +232,26 @@ class ReplicaScheduler(ReplicationMixin, Process):
 
                 elif (backend in socks and socks[backend] == zmq.POLLIN):
                     address, command, msg = backend.recv_multipart()
-                    self.logger.debug('Received backend msg: %s from: %s' % (msg, address))
+                    logger.debug('Received backend msg: %s from: %s' % (msg, address))
                     if (re.match('new_send-', address) is not None):
                         rid = int(address.split('new_send-')[1])
                         try:
                             replica = Replica.objects.get(id=rid, enabled=True)
                             snap_id = self._process_send(replica)
-                            # ns = NewSender(replica, snap_name, self.logger, rid)
-                            # self.senders[rid] = ns
-                            # ns.daemon = True
-                            # ns.start()
                             msg = b'SUCCESS'
                         except Exception, e:
                             msg = (b'FAILED. Exception: %s' % e.__str__())
                         finally:
                             backend.send_multipart([address, command, msg])
                     elif (address in self.clients):
-                        if (command == 'receiver-ready'):
+                        if (command in ('receiver-ready', 'receiver-error', )):
                             backend.send_multipart([address, b'ACK'])
                             #a new receiver has started. reply to the sender that must be waiting
-                        self.logger.debug('address: %s' % address)
-                        frontend.send_multipart([address, '', msg])
+                        frontend.send_multipart([address, command, msg])
 
                 else:
                     #poller came out empty after timeout. break to do other things
-                    self.logger.debug('nothing received')
+                    logger.debug('nothing received')
                     break
 
 def main():

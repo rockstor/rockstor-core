@@ -33,33 +33,35 @@ from smart_manager.models import ReplicaShare
 import shutil
 import time
 from cli import APIWrapper
+import json
+import logging
+logger = logging.getLogger(__name__)
 
 BTRFS = '/sbin/btrfs'
 
 
 class NewReceiver(ReplicationMixin, Process):
 
-    def __init__(self, identity, meta, logger):
-        #self.meta = meta
+    def __init__(self, identity, meta):
+        self.identity = identity
+        self.meta = json.loads(meta)
         #self.meta_port = self.meta['meta_port']
         #self.data_port = self.meta['data_port']
-        self.sender_ip = None
-        #self.src_share = self.meta['share']
-        #self.dest_pool = self.meta['pool']
-        #self.incremental = self.meta['incremental']
-        #self.snap_name = self.meta['snap']
-        #self.sender_id = self.meta['uuid']
-        self.identity = identity
+        self.src_share = self.meta['share']
+        self.dest_pool = self.meta['pool']
+        self.incremental = self.meta['incremental']
+        self.snap_name = self.meta['snap']
+        self.sender_id = self.meta['uuid']
+
         self.ppid = os.getpid()
         self.kb_received = 0
         self.rid = None
         self.rtid = None
-        self.meta_push = None
         self.num_retain_snaps = 5
         self.ctx = zmq.Context()
-        self.logger = logger
         self.rp = None
         self.raw = None
+        self.ack = False
         #close all db connections prior to fork.
         for alias, info in db.connections.databases.items():
             db.close_connection()
@@ -71,27 +73,30 @@ class NewReceiver(ReplicationMixin, Process):
             try:
                 self.rp.terminate()
             except Exception, e:
-                self.logger.error('Exception while terminating the btrfs-recv process: %s' % e.__str__())
+                logger.error('Exception while terminating the btrfs-recv process: %s' % e.__str__())
         self.ctx.destroy(linger=0)
         sys.exit(code)
 
     @contextmanager
-    def _clean_exit_handler(self, ack=False):
+    def _clean_exit_handler(self):
         try:
             yield
         except Exception, e:
-            self.logger.error('%s. Exception: %s' % (self.msg, e.__str__()))
-            if (ack is True):
+            logger.error('%s. Exception: %s' % (self.msg, e.__str__()))
+            if (self.ack is True):
                 try:
-                    err_ack = {'msg': 'error',
-                               'id': self.meta['id'],
-                               'error': self.msg, }
-                    self.meta_push.send_json(err_ack)
-                    self.logger.debug('error_ack sent: %s' % err_ack)
+                    command = 'receiver-error'
+                    self.dealer.send_multipart(['receiver-error', b'%s' % str(self.msg)])
+                    socks = dict(self.poll.poll(3000))
+                    if (socks.get(self.dealer) == zmq.POLLIN):
+                        msg = self.dealer.recv()
+                        logger.debug('Response from the broker: %s' % msg)
+                    else:
+                        logger.debug('No response received from the broker for: %s. Aborting' % self.identity)
+                        self._sys_exit(3)
                 except Exception, e:
-                    msg = ('Failed to send ack: %s to the sender for meta: '
-                           '%s. Aborting' % (err_ack, self.meta))
-                    self.logger.error('%s. Exception: %s' % (msg, e.__str__()))
+                    msg = ('Exception while sending %s back to the broker from %s. Aborting' % (command, self.identity))
+                    logger.error('%s. Exception: %s' % (msg, e.__str__()))
                     self._sys_exit(3)
             self._sys_exit(3)
 
@@ -101,7 +106,7 @@ class NewReceiver(ReplicationMixin, Process):
             msg = ('Failed to delete snapshot: %s. Aborting.' %
                    oldest_snap)
             with self._clean_exit_handler(msg):
-                if (self.delete_snapshot(share_name, oldest_snap, self.logger)):
+                if (self.delete_snapshot(share_name, oldest_snap)):
                     return self._delete_old_snaps(share_name, share_path, num_retain)
 
 
@@ -114,15 +119,22 @@ class NewReceiver(ReplicationMixin, Process):
             self.dealer.setsockopt_string(zmq.IDENTITY, u'%s' % self.identity)
             self.dealer.set_hwm(10)
             self.dealer.connect('ipc:///tmp/foobar.ipc')
+
+            self.ack = True
+            self.msg = ('Failed to validate the source share(%s) on sender(uuid: %s '
+                        ') Did the ip of the sender change?' %
+                        (self.src_share, self.sender_id))
+            self.validate_src_share(self.sender_id, self.src_share)
+
             self.dealer.send_multipart(['receiver-ready', b'receiver-ready'])
             self.poll.register(self.dealer, zmq.POLLIN)
 
             socks = dict(self.poll.poll(3000))
             if (socks.get(self.dealer) == zmq.POLLIN):
                 msg = self.dealer.recv()
-                self.logger.debug('Reply for the receiver: %s' % msg)
+                logger.debug('Reply for the receiver: %s' % msg)
             else:
-                self.logger.debug('No initial response received from the broker for: %s' % self.identity)
+                logger.debug('No initial response received from the broker for: %s' % self.identity)
                 self._sys_exit(3)
 
             term_msgs = ('btrfs-send-init-error', 'btrfs-send-unexpected-termination-error',
@@ -133,21 +145,18 @@ class NewReceiver(ReplicationMixin, Process):
                 if (socks.get(self.dealer) == zmq.POLLIN):
                     command, msg = self.dealer.recv_multipart()
                     if (msg in term_msgs):
-                        self.logger.debug('terminal message received for: %s : %s' % (self.identity, msg))
+                        logger.debug('terminal message received for: %s : %s' % (self.identity, msg))
                         self._sys_exit(0)
                     self.dealer.send_multipart(['', b'send more'])
                 else:
                     num_tries -= 1
-                    self.logger.error('No response received from the broker. '
-                                      'remaining tries: %d' % num_tries)
+                    logger.error('No response received from the broker. '
+                                 'remaining tries: %d' % num_tries)
                     if (num_tries == 0):
-                        self.logger.error('terminating the receiver')
+                        logger.error('terminating the receiver(%s)' % self.identity)
                         break
 
-        #     self.msg = ('Failed to validate the source share(%s) on sender(uuid: %s '
-        #                 'ip: %s) for meta: %s. Did the ip of the sender change?' %
-        #                 (self.src_share, self.sender_id, self.sender_ip, self.meta))
-        #     self.validate_src_share(self.sender_id, self.src_share)
+
 
         # sname = ('%s_%s' % (self.sender_id, self.src_share))
         # if (not self.incremental):

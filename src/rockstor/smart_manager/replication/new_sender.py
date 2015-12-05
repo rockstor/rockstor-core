@@ -34,18 +34,23 @@ from django import db
 
 BTRFS = '/sbin/btrfs'
 
+import logging
+logger = logging.getLogger(__name__)
 
 class NewSender(ReplicationMixin, Process):
 
-    def __init__(self, replica, snap_name, snap_id, logger, rt=None):
+    def __init__(self, uuid, receiver_ip, replica, snap_name, snap_id, rt=None):
+        self.uuid = uuid
+        self.receiver_ip = receiver_ip
+        self.receiver_port = 5555
         self.replica = replica
         self.snap_name = snap_name
         self.snap_id = snap_id
-        self.logger = logger
         self.rt = rt
         self.rt2 = None
         self.rt2_id = None
         self.rid = replica.id
+        self.identity = u'%s-%s' % (self.uuid, self.rid)
         self.sp = None
         self.ctx = zmq.Context()
         self.msg = ''
@@ -64,24 +69,21 @@ class NewSender(ReplicationMixin, Process):
         try:
             yield
         except Exception, e:
-            self.logger.error('%s. Exception: %s' % (self.msg, e.__str__()))
+            logger.error('%s. Exception: %s' % (self.msg, e.__str__()))
             if (self.update_trail):
                 try:
                     data = {'status': 'failed',
                             'error': self.msg, }
                     self.update_replica_status(self.rt2_id, data)
                 except Exception, e:
-                    self.logger.error('Exception occured while updating replica status: %s' % e.__str__())
+                    logger.error('Exception occured while updating replica status: %s' % e.__str__())
             self._sys_exit(3)
 
     def _sys_exit(self, code):
         if (self.sp is not None and
             self.sp.poll() is None):
             self.sp.terminate()
-
-        self.logger.debug('calling ctx.destroy for snap_id-%d' % self.rid)
         self.ctx.destroy(linger=0)
-        self.logger.debug('context destroyed for snap_id-%d' % self.rid)
         sys.exit(code)
 
     @contextmanager
@@ -90,76 +92,84 @@ class NewSender(ReplicationMixin, Process):
         try:
             yield
         except Exception, e:
-            self.logger.error('%s. Exception: %s' % (self.msg, e.__str__()))
+            logger.error('%s. Exception: %s' % (self.msg, e.__str__()))
             try:
                 data = {'status': 'failed',
                         'error': self.msg, }
                 self.update_replica_status(self.rt2_id, data)
             except Exception, e:
-                self.logger.error('Exception occured in cleanup handler: %s' % e.__str__())
+                logger.error('Exception occured in cleanup handler: %s' % e.__str__())
             finally:
                 self._sys_exit(3)
 
     def _init_greeting(self):
-        self.send_req = self.ctx.socket(zmq.REQ)
-        self.send_req.setsockopt_string(zmq.IDENTITY, u'snap_id-%d' % self.rid)
-        self.send_req.connect('tcp://192.168.56.102:5555')
-        self.send_req.send(b"shall I begin sending?")
-        self.logger.debug('Initial greeting sent from snap_id-%d' % self.rid)
+        self.send_req = self.ctx.socket(zmq.DEALER)
+        self.send_req.setsockopt_string(zmq.IDENTITY, self.identity)
+        self.send_req.connect('tcp://%s:%d' % (self.receiver_ip, self.receiver_port))
+        msg = { 'pool': self.replica.dpool,
+                'share': self.replica.share,
+                'snap': self.snap_name,
+                'incremental': self.rt is not None,
+                'uuid': self.uuid, }
+        msg_str = json.dumps(msg)
+        self.send_req.send_multipart(['sender-ready', b'%s' % msg_str])
+        logger.debug('Initial greeting sent from %s' % self.identity)
         self.poll.register(self.send_req, zmq.POLLIN)
 
     def _req_rep_helper(self, msg):
-        self.send_req.send(b'%s' % msg)
+        self.send_req.send_multipart(['', b'%s' % msg])
         socks = dict(self.poll.poll(25000))
         if (socks.get(self.send_req) == zmq.POLLIN):
-            reply = self.send_req.recv()
-            return reply
+            return self.send_req.recv()
         else:
-            self.logger.debug('no reply from the server...')
+            logger.debug('no reply from the server(%s:%d) for %s' %
+                         (self.receiver_ip, self.receiver_port, self.identity))
 
     def _delete_old_snaps(self, share_path):
         oldest_snap = get_oldest_snap(share_path, self.num_retain_snaps)
         if (oldest_snap is not None):
             self.msg = ('Failed to delete snapshot: %s. Aborting.' %
                         oldest_snap)
-            if (self.delete_snapshot(self.replica.share, oldest_snap, self.logger)):
+            if (self.delete_snapshot(self.replica.share, oldest_snap)):
                 return self._delete_old_snaps(share_path)
 
     def run(self):
 
-        self.msg = ('Top level exception in sender: snap_id-%d' % self.rid)
+        self.msg = ('Top level exception in sender: %s' % self.identity)
         with self._clean_exit_handler():
-            self.logger.debug('sender run for snap_id-%d' % self.rid)
             self.law = APIWrapper()
-            self.logger.debug('apiwrapper initialized for snap_id-%d' % self.rid)
             self.poll = zmq.Poller()
-            self.logger.debug('poll initialized for snap_id-%d' % self.rid)
             self._init_greeting()
 
-            self.logger.debug('before initial greeting for snap_id-%d' % self.rid)
             retries_left = 10
             while (True):
                 socks = dict(self.poll.poll(3000))
                 if (socks.get(self.send_req) == zmq.POLLIN):
-                    reply = self.send_req.recv()
-                    self.logger.debug('reply from receiver for snap_id-%d: %s' % (self.rid, reply))
-                    if (reply == 'yes, please send'):
-                        self.logger.debug('ok, receiver is ready for snap_id-%d' % self.rid)
+                    command, reply = self.send_req.recv_multipart()
+                    logger.debug('reply from receiver for %s' % self.identity)
+                    if (command == 'receiver-ready'):
+                        logger.debug('%s received for %s. Proceeding to send fsdata.' % (command, self.identity))
                         break
                     else:
-                        self.logger.debug('unexpected reply from receiver for snap_id-%d: %s' % (self.rid, reply))
+                        if (command == 'receiver-error'):
+                            self.msg = ('%s received for %s. extended reply: %s .Aborting.' %
+                                        (command, self.identity, reply))
+                        else:
+                            self.msg = ('unexpected reply(%s) for %s. extended reply: %s. Aborting' %
+                                        (command, self.identity, reply))
+                        raise Exception(self.msg)
                 else:
-                    self.logger.debug('no response from receiver for snap_id-%d. will retry' % self.rid)
+                    logger.debug('no response from receiver for %s. will retry' % self.identity)
                     self.send_req.setsockopt(zmq.LINGER, 0)
                     self.send_req.close()
                     self.poll.unregister(self.send_req)
                     retries_left -= 1
                     if (retries_left == 0):
-                        self.logger.error('snap_id-%d Retried a few times. Receiver is unreachable. Quiting' % self.rid)
+                        logger.error('%s Retried a few times. Receiver is unreachable. Quiting' % self.identity)
                         self._sys_exit(3)
-                    self.logger.debug('reconnecting and resending for snap_id-%d' % self.rid)
+                    logger.debug('reconnecting for %s' % self.identity)
                     self._init_greeting()
-                    self.logger.debug('Initial greeting resent for snap_id-%d' % self.rid)
+                    logger.debug('Initial greeting resent for %s' % self.identity)
 
             #  1. create a new replica trail if it's the very first time
             # or if the last one succeeded
@@ -172,7 +182,7 @@ class NewSender(ReplicationMixin, Process):
             #  2. create a snapshot only if it's not already from a previous
             #  failed attempt.
             self.msg = ('Failed to create snapshot: %s. Aborting.' % self.snap_name)
-            self.create_snapshot(self.replica.share, self.snap_name, self.logger)
+            self.create_snapshot(self.replica.share, self.snap_name)
 
             snap_path = ('%s%s/.snapshots/%s/%s' %
                          (settings.MNT_PT, self.replica.pool, self.replica.share,
@@ -182,11 +192,11 @@ class NewSender(ReplicationMixin, Process):
                 prev_snap = ('%s%s/.snapshots/%s/%s' %
                              (settings.MNT_PT, self.replica.pool,
                               self.replica.share, self.rt.snap_name))
-                self.logger.info('Sending incremental replica between %s -- %s' %
-                                 (prev_snap, snap_path))
+                logger.info('Sending incremental replica between %s -- %s' %
+                            (prev_snap, snap_path))
                 cmd = [BTRFS, 'send', '-p', prev_snap, snap_path]
             else:
-                self.logger.info('Sending full replica: %s' % snap_path)
+                logger.info('Sending full replica: %s' % snap_path)
 
             try:
                 self.sp = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE,
@@ -195,7 +205,7 @@ class NewSender(ReplicationMixin, Process):
             except Exception, e:
                 self.msg = ('Failed to start the low level btrfs send '
                             'command(%s). Aborting. Exception: ' % (cmd, e.__str__()))
-                self.logger.error(msg)
+                logger.error(msg)
                 self.update_trail = True
                 self._req_rep_helper('btrfs-send-init-error')
                 self._sys_exit(3)
@@ -204,10 +214,10 @@ class NewSender(ReplicationMixin, Process):
             while (alive):
                 try:
                     if (self.sp.poll() is not None):
-                        self.logger.debug('send process finished for %s. rc: %d. '
-                                          'stderr: %s' % (self.snap_id,
-                                                          self.sp.returncode,
-                                                          self.sp.stderr.read()))
+                        logger.debug('send process finished for %s. rc: %d. '
+                                     'stderr: %s' % (self.snap_id,
+                                                     self.sp.returncode,
+                                                     self.sp.stderr.read()))
                         alive = False
                     fs_data = self.sp.stdout.read()
                 except IOError:
@@ -234,8 +244,8 @@ class NewSender(ReplicationMixin, Process):
                         self._req_rep_helper('btrfs-send-stream-finished')
 
                 if (os.getppid() != self.ppid):
-                    self.logger.error('Scheduler exited. Sender for %s cannot go on. '
-                                      'Aborting.' % self.snap_id)
+                    logger.error('Scheduler exited. Sender for %s cannot go on. '
+                                 'Aborting.' % self.snap_id)
                     self._sys_exit(3)
 
             share_path = ('%s%s/.snapshots/%s' %

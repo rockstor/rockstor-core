@@ -23,23 +23,10 @@ from storageadmin.exceptions import RockStorAPIException
 from storageadmin.models import Appliance
 from cli import APIWrapper
 import logging
+logger = logging.getLogger(__name__)
 
 
 class ReplicationMixin(object):
-
-
-    @classmethod
-    def get_logger(cls):
-        if (hasattr(cls, 'logger')):
-            return cls.logger
-        cls.logger = logging.getLogger()
-        cls.logger.setLevel(logging.DEBUG)
-        ch = logging.StreamHandler(sys.stdout)
-        ch.setLevel(logging.DEBUG)
-        formatter = logging.Formatter('[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s', datefmt='%d/%b/%Y %H:%M:%S')
-        ch.setFormatter(formatter)
-        cls.logger.addHandler(ch)
-        return cls.logger
 
     def validate_src_share(self, sender_uuid, sname):
         url = 'https://'
@@ -121,7 +108,7 @@ class ReplicationMixin(object):
         url = ('sm/replicas/trail/replica/%d' % rid)
         return self.prune_trail(url)
 
-    def create_snapshot(self, sname, snap_name, logger, snap_type='replication'):
+    def create_snapshot(self, sname, snap_name, snap_type='replication'):
         try:
             url = ('shares/%s/snapshots/%s' % (sname, snap_name))
             return self.law.api_call(url, data={'snap_type': snap_type, }, calltype='post',
@@ -132,7 +119,7 @@ class ReplicationMixin(object):
                 return logger.debug(e.detail)
             raise e
 
-    def delete_snapshot(self, sname, snap_name, logger):
+    def delete_snapshot(self, sname, snap_name):
         try:
             url = ('shares/%s/snapshots/%s' % (sname, snap_name))
             self.law.api_call(url, calltype='delete', save_error=False)
@@ -143,7 +130,7 @@ class ReplicationMixin(object):
                 return False
             raise e
 
-    def create_share(self, sname, pool, logger):
+    def create_share(self, sname, pool):
         try:
             url = 'shares'
             data = {'pool': pool,
