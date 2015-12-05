@@ -40,35 +40,54 @@ class DiskMixin(object):
     @staticmethod
     @transaction.atomic
     def _update_disk_state():
+        # todo shorten / simpliy by sub-dividing
+        # todo sort out rougue serial and size details from removed devices
+        # Acquire a list (namedtupil collection) of attached drives > min size
         disks = scan_disks(settings.MIN_DISK_SIZE)
+        # Iterate over the attached drives to update the db's knowledge.
         for d in disks:
+            # start with an empty disk object
             dob = None
+            # If the db has an exiting entry with this disk's name then
+            # copy this entire entry but update the serial number.
             if (Disk.objects.filter(name=d.name).exists()):
                 dob = Disk.objects.get(name=d.name)
                 dob.serial = d.serial
+            # If the db has existing entry with this disk's serial number and
+            # there was no prior match by name (last conditional) then
+            # copy this entire entry but update the device name (ie the dev)
             elif (Disk.objects.filter(serial=d.serial).exists()):
                 dob = Disk.objects.get(serial=d.serial)
                 dob.name = d.name
+            # we have an assumed new disk entry as no dev name or serial match
+            # with db stored results. Build a new entry for this disk.
             else:
                 dob = Disk(name=d.name, size=d.size, parted=d.parted,
                            btrfs_uuid=d.btrfs_uuid, model=d.model,
                            serial=d.serial, transport=d.transport,
                            vendor=d.vendor)
+            # Update the chosen disk object (existing or new)
             dob.size = d.size
             dob.parted = d.parted
-            dob.offline = False
+            dob.offline = False  # as we are iterating over attached devices
             dob.model = d.model
             dob.transport = d.transport
             dob.vendor = d.vendor
             dob.btrfs_uuid = d.btrfs_uuid
+            # If attached disk has an fs and it isn't btrfs
             if (d.fstype is not None and d.fstype != 'btrfs'):
                 dob.btrfs_uuid = None
                 dob.parted = True
+            # If our existing Pool db knows of this disk's label then
             if (Pool.objects.filter(name=d.label).exists()):
+                # update the disk object's pool attribute as we know it already
                 dob.pool = Pool.objects.get(name=d.label)
-            else:
+            else:  # this disk is not known to exist in any pool via it's label
                 dob.pool = None
+            # if the disk object is not a member of a pool and
+            # the attached disk we are examining is our root disk
             if (dob.pool is None and d.root is True):
+                # setup our special root disk db entry
                 p = Pool(name=settings.ROOT_POOL, raid='single')
                 p.disk_set.add(dob)
                 p.save()
@@ -79,8 +98,12 @@ class DiskMixin(object):
                 p.uuid = btrfs_uuid(dob.name)
                 p.save()
             dob.save()
+        # Now do a final pass over all database Disk.objects
+        # 1) to update offline status
+        # 2) if not offline then check for S.M.A.R.T capability and update db
         for do in Disk.objects.all():
             if (do.name not in [d.name for d in disks]):
+                # db entry whose name isn't in our last disk_scan
                 do.offline = True
             else:
                 try:
