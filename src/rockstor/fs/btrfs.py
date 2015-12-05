@@ -80,7 +80,7 @@ def get_pool_info(disk):
 
 def pool_raid(mnt_pt):
     o, e, rc = run_command([BTRFS, 'fi', 'df', mnt_pt])
-    #data, system, metadata, globalreserve
+    # data, system, metadata, globalreserve
     raid_d = {}
     for l in o:
         fields = l.split()
@@ -254,8 +254,8 @@ def snapshot_list(mnt_pt):
 
 
 def shares_info(mnt_pt):
-    #return a lit of share names unter this mount_point.
-    #useful to gather names of all shares in a pool
+    # return a list of share names under this mount_point.
+    # useful to gather names of all shares in a pool
     o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-s', mnt_pt])
     snap_idmap = {}
     for l in o:
@@ -272,9 +272,9 @@ def shares_info(mnt_pt):
         fields = l.split()
         vol_id = fields[1]
         if (vol_id in snap_idmap):
-            #snapshot
-            #if the snapshot directory is direct child of a pool and is rw,
-            #then it's a Share. (aka Rockstor Share clone).
+            # snapshot
+            # if the snapshot directory is direct child of a pool and is rw,
+            # then it's a Share. (aka Rockstor Share clone).
             clone = False
             if (len(snap_idmap[vol_id].split('/')) == 1):
                 o, e, rc = run_command([BTRFS, 'property', 'get',
@@ -287,10 +287,11 @@ def shares_info(mnt_pt):
 
         parent_id = fields[5]
         if (parent_id in share_ids):
-            #subvol of subvol. add it so child subvols can also be ignored.
+            # subvol of subvol. add it so child subvols can also be ignored.
             share_ids.append(vol_id)
         elif (parent_id in snap_idmap):
-            #snapshot/subvol of snapshot. add it so child subvols can also be ignored.
+            # snapshot/subvol of snapshot.
+            # add it so child subvols can also be ignored.
             snap_idmap[vol_id] = fields[-1]
         else:
             shares_d[fields[-1]] = '0/%s' % vol_id
@@ -308,7 +309,8 @@ def parse_snap_details(mnt_pt, fields):
                 writable = False
             if (writable is True):
                 if (len(fields[-1].split('/')) == 1):
-                    #writable snapshot + direct child of pool. so we'll treat it as a share.
+                    # writable snapshot + direct child of pool.
+                    # So we'll treat it as a share.
                     continue
             snap_name = fields[-1].split('/')[-1]
     return snap_name, writable
@@ -335,16 +337,16 @@ def snaps_info(mnt_pt, share_name):
     for l in o:
         if (re.match('ID ', l) is not None):
             fields = l.split()
-            #parent uuid must be share_uuid or another snapshot's uuid
+            # parent uuid must be share_uuid or another snapshot's uuid
             if (fields[7] != share_id and fields[15] != share_uuid and
                 fields[15] not in snap_uuids):
                 continue
             snap_name, writable = parse_snap_details(mnt_pt, fields)
             snaps_d[snap_name] = ('0/%s' % fields[1], writable, )
-            #we rely on the observation that child snaps are listed after their
-            #parents, so no need to iterate through results separately. Instead,
-            #we add the uuid of a snap to the list and look up if it's a parent
-            #of subsequent entries.
+            # we rely on the observation that child snaps are listed after their
+            # parents, so no need to iterate through results separately.
+            # Instead, we add the uuid of a snap to the list and look up if
+            # it's a parent of subsequent entries.
             snap_uuids.append(fields[17])
 
     return snaps_d
@@ -500,7 +502,7 @@ def qgroup_max(mnt_pt):
     return res
 
 def qgroup_create(pool):
-    #mount pool
+    # mount pool
     mnt_pt = mount_root(pool)
     qid = ('%s/%d' % (QID, qgroup_max(mnt_pt) + 1))
     o, e, rc = run_command([BTRFS, 'qgroup', 'create', qid, mnt_pt], log=True)
@@ -517,8 +519,8 @@ def qgroup_destroy(qid, mnt_pt):
 
 
 def qgroup_is_assigned(qid, pqid, mnt_pt):
-    #returns true if the given qgroup qid is already assigned to pqid for the
-    #path(mnt_pt)
+    # Returns true if the given qgroup qid is already assigned to pqid for the
+    # path(mnt_pt)
     o, e, rc = run_command([BTRFS, 'qgroup', 'show', '-pc', mnt_pt])
     for l in o:
         fields = l.split()
@@ -548,9 +550,9 @@ def qgroup_assign(qid, pqid, mnt_pt):
 
 def update_quota(pool, qgroup, size_bytes):
     root_pool_mnt = mount_root(pool)
-    #until btrfs adds better support for qgroup limits. We'll not set limits.
-    #It looks like we'll see the fixes in 4.2 and final ones by 4.3.
-    #cmd = [BTRFS, 'qgroup', 'limit', str(size_bytes), qgroup, root_pool_mnt]
+    # Until btrfs adds better support for qgroup limits. We'll not set limits.
+    # It looks like we'll see the fixes in 4.2 and final ones by 4.3.
+    # cmd = [BTRFS, 'qgroup', 'limit', str(size_bytes), qgroup, root_pool_mnt]
     cmd = [BTRFS, 'qgroup', 'limit', 'none', qgroup, root_pool_mnt]
     return run_command(cmd, log=True)
 
@@ -614,8 +616,8 @@ def shares_usage(pool, share_map, snap_map):
 
 
 def pool_usage(mnt_pt):
-    #  @todo: remove temporary raid5/6 custom logic once fi usage
-    #  supports raid5/6.
+    # @todo: remove temporary raid5/6 custom logic once fi usage
+    # supports raid5/6.
     cmd = [BTRFS, 'fi', 'usage', '-b', mnt_pt]
     total = 0
     inuse = 0
@@ -819,12 +821,12 @@ def scan_disks(min_size):
             dmap['parted'] = False  # part = False by default
             dmap['root'] = False
             if (dmap['TYPE'] == 'part' and dmap['FSTYPE'] == 'btrfs'):
-                #  btrfs partition for root(rockstor_rockstor) pool
+                # btrfs partition for root(rockstor_rockstor) pool
                 if (re.match(root, dmap['NAME']) is not None):
                     dmap['SERIAL'] = root_serial
                     dmap['root'] = True
                 else:
-                    #  ignore btrfs partitions that are not for rootfs.
+                    # ignore btrfs partitions that are not for rootfs.
                     continue
             # convert size into KB
             size_str = dmap['SIZE']
