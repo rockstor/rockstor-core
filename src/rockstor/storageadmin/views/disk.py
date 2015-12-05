@@ -40,22 +40,35 @@ class DiskMixin(object):
     @staticmethod
     @transaction.atomic
     def _update_disk_state():
-        # todo shorten / simpliy by sub-dividing
-        # todo sort out rougue serial and size details from removed devices
+        # todo shorten / simplify by sub-dividing
+        # todo sort out rogue serial and size details from removed devices
         # Acquire a list (namedtupil collection) of attached drives > min size
         disks = scan_disks(settings.MIN_DISK_SIZE)
+        # Build a list of the missing devices by serial number comparison.
+        # Ie stored device serial numbers vs attached device serial numbers
+        # This way we can preserve removed device info prior to overwrite.
+        offline_disks = []
+        for do in Disk.objects.all():
+            # look for devices that are in the db but not in our disk_scan
+            # use serial num as dev names may have changed
+            if (do.serial not in [d.serial for d in disks]):
+                do.offline = True  # to inform us later if need be
+                offline_disks.append(do)
+            do.save()
         # Iterate over the attached drives to update the db's knowledge.
+        # N.B. Disk model has name (dev name) as unique to reflect kernel dev
+        # Also note that this involves a whole sale overwrite of dev db slots
         for d in disks:
             # start with an empty disk object
             dob = None
             # If the db has an exiting entry with this disk's name then
-            # copy this entire entry but update the serial number.
+            # copy this entire entry and then update the serial number.
             if (Disk.objects.filter(name=d.name).exists()):
                 dob = Disk.objects.get(name=d.name)
                 dob.serial = d.serial
             # If the db has existing entry with this disk's serial number and
             # there was no prior match by name (last conditional) then
-            # copy this entire entry but update the device name (ie the dev)
+            # copy this entire entry and update the device name (ie the dev)
             elif (Disk.objects.filter(serial=d.serial).exists()):
                 dob = Disk.objects.get(serial=d.serial)
                 dob.name = d.name
@@ -67,6 +80,7 @@ class DiskMixin(object):
                            serial=d.serial, transport=d.transport,
                            vendor=d.vendor)
             # Update the chosen disk object (existing or new)
+            # todo examine if wholesale overwrite is correct here
             dob.size = d.size
             dob.parted = d.parted
             dob.offline = False  # as we are iterating over attached devices
@@ -98,13 +112,18 @@ class DiskMixin(object):
                 p.uuid = btrfs_uuid(dob.name)
                 p.save()
             dob.save()
-        # Now do a final pass over all database Disk.objects
-        # 1) to update offline status
-        # 2) if not offline then check for S.M.A.R.T capability and update db
+        # Now do a final pass over all database Disk.objects to
+        # 1) update offline status after db re-writes above
+        # 2) insert the missing / offline disk info into the remaining dev slots
+        # 3) update smart (available, enabled) properties
+        # todo do we need to cope with more missing disk than db entries
+        # todo how would they be missing if we didn't first know of them
+        # todo and to know of them their must be a db slot. caution with unique
         for do in Disk.objects.all():
-            if (do.name not in [d.name for d in disks]):
-                # db entry whose name isn't in our last disk_scan
+            if (do.serial in [entry.serial for entry in offline_disks]):
+                # db entry whose serial number isn't in our last disk_scan
                 do.offline = True
+                do.smart_available = do.smart_enabled = False
             else:
                 try:
                     # for non ata/sata drives
