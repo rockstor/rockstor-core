@@ -25,6 +25,7 @@ from storageadmin.models import (NetworkInterface, Appliance)
 from smart_manager.models import (ReplicaTrail, ReplicaShare, Replica)
 from django.conf import settings
 from new_sender import NewSender
+from new_receiver import NewReceiver
 from django.utils.timezone import utc
 import logging
 from django.db import DatabaseError
@@ -193,7 +194,8 @@ class ReplicaScheduler(ReplicationMixin, Process):
                 #is terminated, as long as data is coming in.
                 socks = dict(poller.poll(timeout=25000)) #poll for 10 seconds
                 if (frontend in socks and socks[frontend] == zmq.POLLIN):
-                    address, empty, msg = frontend.recv_multipart()
+                    address, command, msg = frontend.recv_multipart()
+                    self.logger.debug('command = %s.' % command)
                     if (address not in self.clients):
                         self.clients[address] = 1
                     else:
@@ -202,19 +204,34 @@ class ReplicaScheduler(ReplicationMixin, Process):
                     if (self.clients[address] % 100 == 0):
                         self.logger.debug('Processed %d messages from %s' %
                                           (self.clients[address], address))
-                    reply_msg = 'yes, more'
                     if (msg == 'shall I begin sending?'):
                         self.logger.debug('initial greeting from %s' % address)
-                        reply_msg = 'yes, please send'
-                    if (msg in term_msgs):
-                        self.logger.debug('terminal message(%s) from %s' % (msg, address))
-                        reply_msg = 'ok, goodbye'
-                        del self.clients[address]
-                    frontend.send_multipart([address, empty, reply_msg])
+                        #Start a new receiver and send the appropriate response
+                        try:
+                            nr = NewReceiver(address, 'test', self.logger)
+                            nr.daemon = True
+                            nr.start()
+                            self.logger.debug('New receiver started for %s' % address)
+                            continue
+                        except Exception, e:
+                            self.logger.debug('Exception while starting the '
+                                              'new receiver for %s: %s'
+                                              % (address, e.__str__()))
+                            reply_msg = 'receiver-init-error'
+                            frontend.send_multipart([address, command, 'receiver-init-error'])
+                    else:
+                        #do we hit hwm? is the dealer still connected?
+                        backend.send_multipart([address, command, msg])
+
+                    # if (msg in term_msgs):
+                    #     self.logger.debug('terminal message(%s) from %s' % (msg, address))
+                    #     reply_msg = 'ok, goodbye'
+                    #     del self.clients[address]
+                    # frontend.send_multipart([address, command, reply_msg])
 
 
                 elif (backend in socks and socks[backend] == zmq.POLLIN):
-                    address, empty, msg = backend.recv_multipart()
+                    address, command, msg = backend.recv_multipart()
                     self.logger.debug('Received backend msg: %s from: %s' % (msg, address))
                     if (re.match('new_send-', address) is not None):
                         rid = int(address.split('new_send-')[1])
@@ -229,7 +246,13 @@ class ReplicaScheduler(ReplicationMixin, Process):
                         except Exception, e:
                             msg = (b'FAILED. Exception: %s' % e.__str__())
                         finally:
-                            backend.send_multipart([address, empty, msg])
+                            backend.send_multipart([address, command, msg])
+                    elif (address in self.clients):
+                        if (command == 'receiver-ready'):
+                            backend.send_multipart([address, b'ACK'])
+                            #a new receiver has started. reply to the sender that must be waiting
+                        self.logger.debug('address: %s' % address)
+                        frontend.send_multipart([address, '', msg])
 
                 else:
                     #poller came out empty after timeout. break to do other things
