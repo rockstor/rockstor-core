@@ -764,6 +764,7 @@ def root_disk():
 
 
 def scan_disks(min_size):
+    logger.debug('scan_disks called with %s' % min_size)
     root = root_disk()
     cmd = ['/usr/bin/lsblk', '-P', '-o',
            'NAME,MODEL,SERIAL,SIZE,TRAN,VENDOR,HCTL,TYPE,FSTYPE,LABEL,UUID']
@@ -858,6 +859,7 @@ def scan_disks(min_size):
                                     dmap['root'], ]
     for d in dnames.keys():
         disks.append(Disk(*dnames[d]))
+    logger.debug('scan_disks returns Disk namedtuple %s' % disks)
     return disks
 
 
