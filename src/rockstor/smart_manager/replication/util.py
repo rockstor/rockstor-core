@@ -143,3 +143,10 @@ class ReplicationMixin(object):
             if (e.detail == 'Share(%s) already exists. Choose a different name' % sname):
                 return logger.debug(e.detail)
             raise e
+
+    def refresh_snapshot_state(self):
+        try:
+            return self.law.api_cal('commands/refresh-snapshot-state',
+                                    data=None, calltype='post', save_error=False)
+        except Exception, e:
+            logger.error('Exception while refreshing Snapshot state: %s' % e.__str__())

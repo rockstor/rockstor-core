@@ -254,8 +254,8 @@ class NewSender(ReplicationMixin, Process):
                 self.update_trail = True
                 command, message = self._send_recv('', fs_data)
                 if (command == 'receiver-error'):
-                    self.msg = ('Got error command(%s) from the Receiver while'
-                                ' transmitting fsdata. Aborting.' % command)
+                    self.msg = ('Got error command(%s) message(%s) from the Receiver while'
+                                ' transmitting fsdata. Aborting.' % (command, message))
                     raise Exception(message)
 
                 self.kb_sent = self.kb_sent + len(fs_data)

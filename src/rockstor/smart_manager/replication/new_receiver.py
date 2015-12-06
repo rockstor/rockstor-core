@@ -203,9 +203,6 @@ class NewReceiver(ReplicationMixin, Process):
                 self._send_recv('snap-exists')
                 self._sys_exit(0)
 
-            self.msg = ('Failed to create Snapshot: %s' % self.snap_name)
-            self.create_snapshot(self.sname, self.snap_name, snap_type='receiver')
-
             cmd = [BTRFS, 'receive', self.snap_dir]
             self.msg = ('Failed to start the low level btrfs receive command(%s)'
                         '. Aborting.' % cmd)
@@ -240,12 +237,14 @@ class NewReceiver(ReplicationMixin, Process):
                             self.msg = ('btrfs-recv exited with unexpected exitcode(%s). ' % self.rp.returncode)
                             raise Exception(self.msg)
                         self._send_recv('btrfs-recv-finished')
+                        self.refresh_snapshot_state()
+
                         self.msg = ('Failed to update receive trail for rtid: %d' % self.rtid)
                         self.update_receive_trail(self.rtid, {'status': 'succeeded',})
                         self._sys_exit(0)
 
                     if (command in term_commands):
-                        self.msg = ('Terminal command(%s) received from the sender. Aborting.')
+                        self.msg = ('Terminal command(%s) received from the sender. Aborting.' % command)
                         raise Exception(self.msg)
 
                     if (self.rp.poll() is None):
