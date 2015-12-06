@@ -215,47 +215,48 @@ class NewReceiver(ReplicationMixin, Process):
                 self._sys_exit(3)
 
             term_msgs = ('btrfs-send-init-error', 'btrfs-send-unexpected-termination-error',
-                         'btrfs-send-nonzero-termination-error',)
+                         'btrfs-send-nonzero-termination-error', 'btrfs-send-stream-finished',)
             num_tries = 10
             while (True):
                 socks = dict(self.poll.poll(3000))
                 if (socks.get(self.dealer) == zmq.POLLIN):
                     command, message = self.dealer.recv_multipart()
                     if (command in term_msgs):
-                        logger.debug('terminal command received for: %s : %s' % (self.identity, command))
-                        #do some cleanup?
-                        if (self.rp.poll() is None):
-                            self.rp.terminate()
+                        logger.debug('Id: %s. terminal command received: %s' % (self.identity, command))
                         data['status'] = 'failed'
+                        if (command == 'btrfs-send-stream-finished'):
+                            data['status'] = 'succeeded'
+                        else:
+                            #do some cleanup?
+                            if (self.rp.poll() is None):
+                                self.rp.terminate()
                         msg = ('Failed to update receive trail for rtid: %d' % self.rtid)
                         self.update_receive_trail(self.rtid, data)
                         break
-                    if (command == 'btrfs-send-stream-finished'):
-                        logger.debug('terminal command received for: %s : %s' % (self.identity, command))
-                        data['status'] = 'succeeded'
 
-                        msg = ('Failed to update receive trail for rtid: %d' % self.rtid)
-                        self.update_receive_trail(self.rtid, data)
-                        break
                     if (self.rp.poll() is None):
+                        logger.debug('Id: %s. fsdata received' % self.identity)
                         self.rp.stdin.write(message)
                         self.rp.stdin.flush()
                         self.dealer.send_multipart([b'send-more', ''])
                     else:
-                        logger.error('It seems the btrfs receive process died'
-                                     ' unexpectedly')
                         out, err = self.rp.communicate()
+                        out = out.split('\n')
+                        err = err.split('\n')
+                        logger.error('Id: %s. btrfs-recv died unexpectedly. cmd: %s out: %s. err: %s' %
+                                     (self.identity, cmd, out, err))
                         msg = ('Low level system error from btrfs receive '
-                               'command. out: %s err: %s for rtid: %s identity: %s'
-                               % (out, err, self.rtid, self.identity))
+                               'command. cmd: %s out: %s err: %s for rtid: %s'
+                               % (cmd, out, err, self.rtid))
                         data = {'status': 'failed',
                                 'error': msg, }
+                        self.msg = ('Failed to update receive trail for rtid: %d.' % self.rtid)
                         self.update_receive_trail(self.rtid, data)
-                        #send a message to the broker, wait for reply and quit?
-
+                        self.msg = msg
+                        raise Exception()
                 else:
                     num_tries -= 1
-                    msg = ('ID: %s. No response received from the broker. '
+                    msg = ('Id: %s. No response received from the broker. '
                            'remaining tries: %d' % (self.identity, num_tries))
                     if (num_tries == 0):
                         msg = ('%s. Terminating the receiver.' % msg)
@@ -263,17 +264,19 @@ class NewReceiver(ReplicationMixin, Process):
                         break
                     logger.error(msg)
 
-            #rfo/stdin should be closed by now. We get here only if the sender
-            #dint throw an error or if receiver did not get terminated
             try:
                 if (self.rp.poll() is None):
+                    msg = ('btrfs-recv is expected to be terminated but it did not.')
                     out, err = self.rp.communicate()
-                    logger.debug('cmd = %s out: %s err: %s rc: %s' %
-                                 (cmd, out, err, self.rp.returncode))
+                    out = out.split('\n')
+                    err = err.split('\n')
+                    logger.debug('Id: %s. %s. cmd = %s out: %s err: %s rc: %s' %
+                                 (self.identity, msg, cmd, out, err, self.rp.returncode))
             except Exception, e:
-                logger.debug('Exception while terminating receive. Meta: %s. '
+                #Is this a fatal error?
+                logger.debug('Id: %s. Exception while terminating btrfs-receive. Meta: %s. '
                              'Probably already terminated: %s' %
-                             (self.meta, e.__str__()))
+                             (self.identity, self.meta, e.__str__()))
 
             data = {'status': 'succeeded', }
             if (self.rp.returncode != 0):

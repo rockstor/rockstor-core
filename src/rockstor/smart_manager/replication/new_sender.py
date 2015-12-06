@@ -225,7 +225,6 @@ class NewSender(ReplicationMixin, Process):
                 self.msg = ('Failed to start the low level btrfs send '
                             'command(%s). Aborting. Exception: ' % (cmd, e.__str__()))
                 logger.error(msg)
-                self.update_trail = True
                 self._send_recv('btrfs-send-init-error')
                 self._sys_exit(3)
 
@@ -253,7 +252,12 @@ class NewSender(ReplicationMixin, Process):
                 self.msg = ('Failed to send fsdata to the receiver for %s. Aborting.' %
                             (self.snap_id))
                 self.update_trail = True
-                self._send_recv('', fs_data)
+                command, message = self._send_recv('', fs_data)
+                if (command == 'receiver-error'):
+                    self.msg = ('Got error command(%s) from the Receiver while'
+                                ' transmitting fsdata. Aborting.' % command)
+                    raise Exception(message)
+
                 self.kb_sent = self.kb_sent + len(fs_data)
 
                 if (not alive):
