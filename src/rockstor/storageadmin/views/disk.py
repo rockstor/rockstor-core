@@ -30,6 +30,9 @@ from share_helpers import (import_shares, import_snapshots)
 from django.conf import settings
 import rest_framework_custom as rfc
 from system import smart
+from copy import deepcopy
+import uuid
+
 import logging
 logger = logging.getLogger(__name__)
 
@@ -45,16 +48,17 @@ class DiskMixin(object):
         # Acquire a list (namedtupil collection) of attached drives > min size
         disks = scan_disks(settings.MIN_DISK_SIZE)
         # Build a list of the missing devices by serial number comparison.
-        # Ie stored device serial numbers vs attached device serial numbers
+        # I.e. stored device serial numbers vs attached device serial numbers
         # This way we can preserve removed device info prior to overwrite.
         offline_disks = []
+        # Note that the following doesn't cope with the circumstance left from
+        # the previous code where a removed disk was incorrectly labeled with
+        # the details, including serial and size, of an existing attached disk.
         for do in Disk.objects.all():
             # look for devices that are in the db but not in our disk_scan
-            # use serial num as dev names may have changed
+            # using serial to uniquely identify devices.
             if (do.serial not in [d.serial for d in disks]):
-                do.offline = True  # to inform us later if need be
-                offline_disks.append(do)
-            do.save()
+                offline_disks.append(deepcopy(do))
         # Iterate over the attached drives to update the db's knowledge.
         # N.B. Disk model has name (dev name) as unique to reflect kernel dev
         # Also note that this involves a whole sale overwrite of dev db slots
@@ -75,12 +79,15 @@ class DiskMixin(object):
             # we have an assumed new disk entry as no dev name or serial match
             # with db stored results. Build a new entry for this disk.
             else:
+                # should only need to write name and serial here as in above
+                # cases where either serial or name already match
                 dob = Disk(name=d.name, size=d.size, parted=d.parted,
                            btrfs_uuid=d.btrfs_uuid, model=d.model,
                            serial=d.serial, transport=d.transport,
                            vendor=d.vendor)
             # Update the chosen disk object (existing or new)
-            # todo examine if wholesale overwrite is correct here
+            # todo examine if wholesale overwrite is correct here see serial and
+            # todo name comment above
             dob.size = d.size
             dob.parted = d.parted
             dob.offline = False  # as we are iterating over attached devices
@@ -120,11 +127,35 @@ class DiskMixin(object):
         # todo how would they be missing if we didn't first know of them
         # todo and to know of them their must be a db slot. caution with unique
         for do in Disk.objects.all():
-            if (do.serial in [entry.serial for entry in offline_disks]):
-                # db entry whose serial number isn't in our last disk_scan
+            logger.debug('final process off db entries by name of %s' % do.name)
+            # if the name (db index) is not in our scanned disks by now then
+            # this is an unused db entry, re-use it to store our missing drive
+            # info and use a uuid.uuid4() db indexes to maintain unique index.
+            if (do.name not in [d.name for d in disks]):
+                # todo optimize to re-use 36 char long name entries as they are
+                # todo ie if len(do.name) == 36 then don't bother generating another.
+                # save missing devices as uuid dev names str(uuid.uuid4())
+                # rewrite the db index to a new unique value, 36 chars string
+                do.name = str(uuid.uuid4())
                 do.offline = True
                 do.smart_available = do.smart_enabled = False
-            else:
+                # now update this entry with one of our missing drives, if any.
+                if len(offline_disks) > 0:
+                    logger.debug('len of offline_disks  = %s' % len(offline_disks))
+                    logger.debug('popping one item from this list')
+                    # maintain do's name as it's unique but update all other
+                    # info from out popped offline disk.
+                    missing_disk = offline_disks.pop()
+                    do.serial = missing_disk.serial
+                    do.size = missing_disk.size
+                    do.parted = missing_disk.parted
+                    do.pool = missing_disk.pool
+                    dob.transport = missing_disk.transport
+                    dob.vendor = missing_disk.vendor
+                    # N.B. very dangerous to have duplicate uuid block devices
+                    # however this is a missing / offline entry
+                    dob.btrfs_uuid = missing_disk.btrfs_uuid
+            else:  # we have an attached disk entry so try updating smart info
                 try:
                     # for non ata/sata drives
                     do.smart_available, do.smart_enabled = smart.available(do.name)
