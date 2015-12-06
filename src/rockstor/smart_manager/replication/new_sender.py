@@ -113,20 +113,25 @@ class NewSender(ReplicationMixin, Process):
                 'uuid': self.uuid, }
         msg_str = json.dumps(msg)
         self.send_req.send_multipart(['sender-ready', b'%s' % msg_str])
-        logger.debug('Initial greeting sent from %s' % self.identity)
+        logger.debug('Identity: %s Initial greeting: %s' % (self.identity, msg))
         self.poll.register(self.send_req, zmq.POLLIN)
 
-    def _req_rep_helper(self, command, msg=''):
+    def _send_recv(self, command, msg=''):
+        rcommand = rmsg = None
         self.send_req.send_multipart([command, b'%s' % msg])
         socks = dict(self.poll.poll(25000))
         if (socks.get(self.send_req) == zmq.POLLIN):
-            return self.send_req.recv()
-        logger.debug('no reply from the server(%s:%d) for %s' %
-                     (self.receiver_ip, self.receiver_port, self.identity))
+            rcommand, rmsg = self.send_req.recv_multipart()
+        if ((len(command) > 0 or (rcommand is not None and rcommand != 'send-more')) or
+            (len(command) > 0 and rcommand is None)):
+            logger.debug('Identity: %s Server: %s:%d scommand: %s rcommand: %s' %
+                         (self.identity, self.receiver_ip, self.receiver_port, command, rcommand))
+        return rcommand, rmsg
 
     def _delete_old_snaps(self, share_path):
         oldest_snap = get_oldest_snap(share_path, self.num_retain_snaps)
         if (oldest_snap is not None):
+            logger.debug('Deleting old snapshot: %s' % oldest_snap)
             self.msg = ('Failed to delete snapshot: %s. Aborting.' %
                         oldest_snap)
             if (self.delete_snapshot(self.replica.share, oldest_snap)):
@@ -140,12 +145,24 @@ class NewSender(ReplicationMixin, Process):
             self.poll = zmq.Poller()
             self._init_greeting()
 
+            #  1. create a new replica trail if it's the very first time
+            # or if the last one succeeded
+            self.msg = ('Failed to create local replica trail for snap_name:'
+                        ' %s. Aborting.' % self.snap_name)
+            self.rt2 = self.create_replica_trail(self.replica.id,
+                                                 self.snap_name)
+            self.rt2_id = self.rt2['id']
+
+            #  2. create a snapshot only if it's not already from a previous
+            #  failed attempt.
+            self.msg = ('Failed to create snapshot: %s. Aborting.' % self.snap_name)
+            self.create_snapshot(self.replica.share, self.snap_name)
+
             retries_left = 10
             while (True):
                 socks = dict(self.poll.poll(3000))
                 if (socks.get(self.send_req) == zmq.POLLIN):
                     command, reply = self.send_req.recv_multipart()
-                    logger.debug('reply from receiver for %s' % self.identity)
                     if (command == 'receiver-ready'):
                         logger.debug('%s received for %s. Proceeding to send fsdata.' % (command, self.identity))
                         break
@@ -153,6 +170,13 @@ class NewSender(ReplicationMixin, Process):
                         if (command == 'receiver-error'):
                             self.msg = ('%s received for %s. extended reply: %s .Aborting.' %
                                         (command, self.identity, reply))
+                        elif (command == 'snap-exists'):
+                            logger.debug('%s received for %s. Not sending fsdata' % (command, self.identity))
+                            data = {'status': 'succeeded',
+                                    'error': 'snapshot already exists on the receiver',}
+                            self.msg = ('Failed to  update replica status for %s' % self.snap_id)
+                            self.update_replica_status(self.rt2_id, data)
+                            self._sys_exit(0)
                         else:
                             self.msg = ('unexpected reply(%s) for %s. extended reply: %s. Aborting' %
                                         (command, self.identity, reply))
@@ -170,18 +194,7 @@ class NewSender(ReplicationMixin, Process):
                     self._init_greeting()
                     logger.debug('Initial greeting resent for %s' % self.identity)
 
-            #  1. create a new replica trail if it's the very first time
-            # or if the last one succeeded
-            self.msg = ('Failed to create local replica trail for snap_name:'
-                        ' %s. Aborting.' % self.snap_name)
-            self.rt2 = self.create_replica_trail(self.replica.id,
-                                                 self.snap_name)
-            self.rt2_id = self.rt2['id']
 
-            #  2. create a snapshot only if it's not already from a previous
-            #  failed attempt.
-            self.msg = ('Failed to create snapshot: %s. Aborting.' % self.snap_name)
-            self.create_snapshot(self.replica.share, self.snap_name)
 
             snap_path = ('%s%s/.snapshots/%s/%s' %
                          (settings.MNT_PT, self.replica.pool, self.replica.share,
@@ -206,7 +219,7 @@ class NewSender(ReplicationMixin, Process):
                             'command(%s). Aborting. Exception: ' % (cmd, e.__str__()))
                 logger.error(msg)
                 self.update_trail = True
-                self._req_rep_helper('btrfs-send-init-error')
+                self._send_recv('btrfs-send-init-error')
                 self._sys_exit(3)
 
             alive = True
@@ -227,20 +240,20 @@ class NewSender(ReplicationMixin, Process):
                     if (alive):
                         self.sp.terminate()
                     self.update_trail = True
-                    self._req_rep_helper('btrfs-send-unexpected-termination-error')
+                    self._send_recv('btrfs-send-unexpected-termination-error')
                     self._sys_exit(3)
 
                 self.msg = ('Failed to send fsdata to the receiver for %s. Aborting.' %
                             (self.snap_id))
                 self.update_trail = True
-                self._req_rep_helper('', fs_data)
+                self._send_recv('', fs_data)
                 self.kb_sent = self.kb_sent + len(fs_data)
 
                 if (not alive):
                     if (self.sp.returncode != 0):
-                        self._req_rep_helper('btrfs-send-nonzero-termination-error')
+                        command, message = self._send_recv('btrfs-send-nonzero-termination-error')
                     else:
-                        self._req_rep_helper('btrfs-send-stream-finished')
+                        command, message = self._send_recv('btrfs-send-stream-finished')
 
                 if (os.getppid() != self.ppid):
                     logger.error('Scheduler exited. Sender for %s cannot go on. '
@@ -258,4 +271,5 @@ class NewSender(ReplicationMixin, Process):
             self.msg = ('Failed to update final replica status for %s'
                         '. Aborting.' % self.snap_id)
             self.update_replica_status(self.rt2_id, data)
+            logger.debug('Identity: %s. Send successful' % self.identity)
             self._sys_exit(0)

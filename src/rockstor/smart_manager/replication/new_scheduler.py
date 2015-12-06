@@ -185,8 +185,10 @@ class ReplicaScheduler(ReplicationMixin, Process):
                 if (self.senders[snap_id].exitcode is not None):
                     del self.senders[snap_id]
                     logger.debug('removed sender: %s' % snap_id)
-            logger.debug('Active senders = %s' % self.senders.keys())
+            if (len(self.senders) > 0):
+                logger.debug('Active senders = %s' % self.senders.keys())
 
+            iterations = 0
             while True:
                 #This loop may still continue even if replication service
                 #is terminated, as long as data is coming in.
@@ -198,7 +200,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
                     else:
                         self.clients[address] += 1
 
-                    if (self.clients[address] % 100 == 0):
+                    if (self.clients[address] % 1000 == 0):
                         logger.debug('Processed %d messages from %s' %
                                      (self.clients[address], address))
                     if (command == 'sender-ready'):
@@ -236,14 +238,16 @@ class ReplicaScheduler(ReplicationMixin, Process):
                             backend.send_multipart([address, command, msg])
                     elif (address in self.clients):
                         if (command in ('receiver-ready', 'receiver-error', 'btrfs-recv-finished')):
-                            logger.debug('message from backend: %s' % command)
-                            backend.send_multipart([address, b'ACK'])
+                            logger.debug('Identitiy: %s command: %s' % (address, command))
+                            backend.send_multipart([address, b'ACK', ''])
                             #a new receiver has started. reply to the sender that must be waiting
                         frontend.send_multipart([address, command, msg])
 
                 else:
-                    #poller came out empty after timeout. break to do other things
-                    logger.debug('nothing received')
+                    iterations += 1
+                    if (iterations == 10):
+                        iterations = 0
+                        logger.debug('nothing received')
                     break
 
 def main():
