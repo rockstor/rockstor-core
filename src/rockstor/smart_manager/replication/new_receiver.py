@@ -105,11 +105,8 @@ class NewReceiver(ReplicationMixin, Process):
     def _delete_old_snaps(self, share_name, share_path, num_retain):
         oldest_snap = get_oldest_snap(share_path, num_retain)
         if (oldest_snap is not None):
-            msg = ('Failed to delete snapshot: %s. Aborting.' %
-                   oldest_snap)
-            with self._clean_exit_handler(msg):
-                if (self.delete_snapshot(share_name, oldest_snap)):
-                    return self._delete_old_snaps(share_name, share_path, num_retain)
+            if (self.delete_snapshot(share_name, oldest_snap)):
+                return self._delete_old_snaps(share_name, share_path, num_retain)
 
     def _send_recv(self, command, msg=''):
         rcommand = rmsg = None
@@ -137,12 +134,34 @@ class NewReceiver(ReplicationMixin, Process):
             self.msg = ('Failed to get the sender ip for appliance: %s' % self.sender_id)
             self.sender_ip = Appliance.objects.get(uuid=self.sender_id).ip
 
+            sname = ('%s_%s' % (self.sender_id, self.src_share))
+            snap_dir = ('%s%s/.snapshots/%s' % (settings.MNT_PT, self.dest_pool, sname))
+
+            #delete the share, move the oldest snap to share
+            self.msg = ('Failed to promote the oldest Snapshot to Share.')
+            oldest_snap = get_oldest_snap(snap_dir, self.num_retain_snaps)
+            if (oldest_snap is not None):
+                snap_path = ('%s/%s' % (snap_dir, oldest_snap))
+                share_path = ('%s%s/%s' %
+                              (settings.MNT_PT, self.dest_pool,
+                               sname))
+                pool = Pool.objects.get(name=self.dest_pool)
+                remove_share(pool, sname, '-1/-1')
+                set_property(snap_path, 'ro', 'false',
+                             mount=False)
+                run_command(['/usr/bin/rm', '-rf', share_path],
+                            throw=False)
+                shutil.move(snap_path, share_path)
+                self.delete_snapshot(sname, oldest_snap)
+
+            self.msg = ('Failed to prune old Snapshots')
+            self._delete_old_snaps(sname, snap_dir, self.num_retain_snaps + 1)
+
             self.msg = ('Failed to validate the source share(%s) on sender(uuid: %s '
                         ') Did the ip of the sender change?' %
                         (self.src_share, self.sender_id))
             self.validate_src_share(self.sender_id, self.src_share)
 
-            sname = ('%s_%s' % (self.sender_id, self.src_share))
             if (not self.incremental):
                 self.msg = ('Failed to verify/create share: %s.' % sname)
                 self.create_share(sname, self.dest_pool)
@@ -163,8 +182,6 @@ class NewReceiver(ReplicationMixin, Process):
                 self.msg = ('Failed to create parent subvolume %s' % sub_vol)
                 run_command([BTRFS, 'subvolume', 'create', sub_vol])
 
-            snap_dir = ('%s%s/.snapshots/%s' % (settings.MNT_PT, self.dest_pool,
-                                                sname))
             self.msg = ('Failed to create snapshot directory: %s' % snap_dir)
             run_command(['mkdir', '-p', snap_dir])
             snap_fp = ('%s/%s' % (snap_dir, self.snap_name))
@@ -173,8 +190,8 @@ class NewReceiver(ReplicationMixin, Process):
             #the sender tries to send the same, reply back with snap_exists and do not
             #start the btrfs-receive
             if (is_subvol(snap_fp)):
-                logger.debug('Snapshot to be sent(%s) already exists. Not '
-                             'starting a new receive process' % snap_fp)
+                logger.debug('Id: %s. Snapshot to be sent(%s) already exists. Not '
+                             'starting a new receive process' % (self.identity, snap_fp))
                 self._send_recv('snap-exists')
                 self._sys_exit(0)
 
@@ -216,34 +233,7 @@ class NewReceiver(ReplicationMixin, Process):
                     if (command == 'btrfs-send-stream-finished'):
                         logger.debug('terminal command received for: %s : %s' % (self.identity, command))
                         data['status'] = 'succeeded'
-                        try:
-                            #delete any snapshots older than num_retain
-                            self._delete_old_snaps(sname, snap_dir, self.num_retain_snaps + 1)
-                        except Exception, e:
-                            logger.error('Exception while deleting old '
-                                         'snapshots: %s' % e.__str__())
-                            #raising the exception would make a bigger mess.
-                            #problematic past snapshots can be manually deleted.
 
-                        #delete the share, move the oldest snap to share
-                        try:
-                            oldest_snap = get_oldest_snap(snap_dir, self.num_retain_snaps)
-                            if (oldest_snap is not None):
-                                snap_path = ('%s/%s' % (snap_dir, oldest_snap))
-                                share_path = ('%s%s/%s' %
-                                              (settings.MNT_PT, self.dest_pool,
-                                               sname))
-                                pool = Pool.objects.get(name=self.dest_pool)
-                                remove_share(pool, sname, '-1/-1')
-                                set_property(snap_path, 'ro', 'false',
-                                             mount=False)
-                                run_command(['/usr/bin/rm', '-rf', share_path],
-                                            throw=False)
-                                shutil.move(snap_path, share_path)
-                                self.delete_snapshot(sname, oldest_snap)
-                        except Exception, e:
-                            msg = ('Failed to promote the oldest Snapshot to Share')
-                            logger.error('%s. Exception: %s' % (msg, e.__str__()))
                         msg = ('Failed to update receive trail for rtid: %d' % self.rtid)
                         self.update_receive_trail(self.rtid, data)
                         break
@@ -265,22 +255,25 @@ class NewReceiver(ReplicationMixin, Process):
 
                 else:
                     num_tries -= 1
-                    logger.error('No response received from the broker. '
-                                 'remaining tries: %d' % num_tries)
+                    msg = ('ID: %s. No response received from the broker. '
+                           'remaining tries: %d' % (self.identity, num_tries))
                     if (num_tries == 0):
-                        logger.error('terminating the receiver(%s)' % self.identity)
+                        msg = ('%s. Terminating the receiver.' % msg)
+                        logger.error(msg)
                         break
+                    logger.error(msg)
 
             #rfo/stdin should be closed by now. We get here only if the sender
             #dint throw an error or if receiver did not get terminated
             try:
-                out, err = self.rp.communicate()
-                logger.debug('cmd = %s out: %s err: %s rc: %s' %
-                             (cmd, out, err, self.rp.returncode))
+                if (self.rp.poll() is None):
+                    out, err = self.rp.communicate()
+                    logger.debug('cmd = %s out: %s err: %s rc: %s' %
+                                 (cmd, out, err, self.rp.returncode))
             except Exception, e:
                 logger.debug('Exception while terminating receive. Meta: %s. '
-                                  'Probably already terminated: %s' %
-                                  (self.meta, e.__str__()))
+                             'Probably already terminated: %s' %
+                             (self.meta, e.__str__()))
 
             data = {'status': 'succeeded', }
             if (self.rp.returncode != 0):

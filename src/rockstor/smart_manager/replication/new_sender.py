@@ -60,23 +60,22 @@ class NewSender(ReplicationMixin, Process):
         self.num_retain_snaps = 5
         for alias, info in db.connections.databases.items():
             db.close_connection()
-
         super(NewSender, self).__init__()
-
 
     @contextmanager
     def _clean_exit_handler(self):
         try:
             yield
         except Exception, e:
-            logger.error('%s. Exception: %s' % (self.msg, e.__str__()))
+            logger.error('Id: %s. %s. Exception: %s' % (self.identity, self.msg, e.__str__()))
             if (self.update_trail):
                 try:
                     data = {'status': 'failed',
                             'error': self.msg, }
                     self.update_replica_status(self.rt2_id, data)
                 except Exception, e:
-                    logger.error('Exception occured while updating replica status: %s' % e.__str__())
+                    logger.error('Id: %s. Exception occured while updating replica status: %s' %
+                                 (self.identity, e.__str__()))
             self._sys_exit(3)
 
     def _sys_exit(self, code):
@@ -92,13 +91,14 @@ class NewSender(ReplicationMixin, Process):
         try:
             yield
         except Exception, e:
-            logger.error('%s. Exception: %s' % (self.msg, e.__str__()))
+            logger.error('Id: %s. %s. Exception: %s' % (self.identity, self.msg, e.__str__()))
             try:
                 data = {'status': 'failed',
                         'error': self.msg, }
                 self.update_replica_status(self.rt2_id, data)
             except Exception, e:
-                logger.error('Exception occured in cleanup handler: %s' % e.__str__())
+                logger.error('Id: %s. Exception occured in cleanup handler: %s' %
+                             (self.identity, e.__str__()))
             finally:
                 self._sys_exit(3)
 
@@ -113,7 +113,7 @@ class NewSender(ReplicationMixin, Process):
                 'uuid': self.uuid, }
         msg_str = json.dumps(msg)
         self.send_req.send_multipart(['sender-ready', b'%s' % msg_str])
-        logger.debug('Identity: %s Initial greeting: %s' % (self.identity, msg))
+        logger.debug('Id: %s Initial greeting: %s' % (self.identity, msg))
         self.poll.register(self.send_req, zmq.POLLIN)
 
     def _send_recv(self, command, msg=''):
@@ -124,7 +124,7 @@ class NewSender(ReplicationMixin, Process):
             rcommand, rmsg = self.send_req.recv_multipart()
         if ((len(command) > 0 or (rcommand is not None and rcommand != 'send-more')) or
             (len(command) > 0 and rcommand is None)):
-            logger.debug('Identity: %s Server: %s:%d scommand: %s rcommand: %s' %
+            logger.debug('Id: %s Server: %s:%d scommand: %s rcommand: %s' %
                          (self.identity, self.receiver_ip, self.receiver_port, command, rcommand))
         return rcommand, rmsg
 
@@ -153,7 +153,14 @@ class NewSender(ReplicationMixin, Process):
                                                  self.snap_name)
             self.rt2_id = self.rt2['id']
 
-            #  2. create a snapshot only if it's not already from a previous
+            # 2. prune old snapshots.
+            self.update_trail = True
+            self.msg = ('Failed to prune old snapshots')
+            share_path = ('%s%s/.snapshots/%s' % (settings.MNT_PT, self.replica.pool,
+                                                  self.replica.share))
+            self._delete_old_snaps(share_path)
+
+            #  3. create a snapshot only if it's not already from a previous
             #  failed attempt.
             self.msg = ('Failed to create snapshot: %s. Aborting.' % self.snap_name)
             self.create_snapshot(self.replica.share, self.snap_name)
@@ -251,6 +258,7 @@ class NewSender(ReplicationMixin, Process):
 
                 if (not alive):
                     if (self.sp.returncode != 0):
+                        #do we mark failed?
                         command, message = self._send_recv('btrfs-send-nonzero-termination-error')
                     else:
                         command, message = self._send_recv('btrfs-send-stream-finished')
@@ -259,12 +267,6 @@ class NewSender(ReplicationMixin, Process):
                     logger.error('Scheduler exited. Sender for %s cannot go on. '
                                  'Aborting.' % self.snap_id)
                     self._sys_exit(3)
-
-            share_path = ('%s%s/.snapshots/%s' %
-                          (settings.MNT_PT, self.replica.pool,
-                           self.replica.share))
-            self.msg = ('Failed to delete old snapshots')
-            self._delete_old_snaps(share_path)
 
             data = {'status': 'succeeded',
                     'kb_sent': self.kb_sent / 1024, }
