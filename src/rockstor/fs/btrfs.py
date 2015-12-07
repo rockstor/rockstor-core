@@ -32,6 +32,7 @@ from system.osi import (run_command, create_tmp_dir, is_share_mounted,
 from system.exceptions import (CommandException, NonBTRFSRootException)
 from pool_scrub import PoolScrub
 from django_ztask.decorators import task
+import uuid
 
 import logging
 logger = logging.getLogger(__name__)
@@ -845,9 +846,12 @@ def scan_disks(min_size):
                 dmap['SERIAL'] = get_disk_serial(dmap['NAME'], None)
             if (dmap['SERIAL'] == '' or (dmap['SERIAL'] in serials)):
                 # No serial number still or its a repeat.
-                # Overwrite drive serial entry with drive name:
-                # see disks_table.jst for a use of this flag mechanism.
-                dmap['SERIAL'] = dmap['NAME']
+                # Overwrite drive serial entry in db with 'fake-serial-' + uuid4
+                # see disk/disks_table.jst for a use of this flag mechanism.
+                # Previously we did dmap['SERIAL'] = dmap['NAME'] which is less
+                # robust as it can itself produce duplicate serial numbers in db
+                dmap['SERIAL'] = 'fake-serial-' + str(uuid.uuid4())
+                # 12 chars (fake-serial-) + 36 chars (uuid4) = 48 chars
             serials.append(dmap['SERIAL'])
             for k in dmap.keys():
                 if (dmap[k] == ''):
