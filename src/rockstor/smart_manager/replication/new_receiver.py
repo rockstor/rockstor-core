@@ -111,7 +111,7 @@ class NewReceiver(ReplicationMixin, Process):
             self._sys_exit(3)
 
     def _delete_old_snaps(self, share_name, share_path, num_retain):
-        oldest_snap = get_oldest_snap(share_path, num_retain)
+        oldest_snap = get_oldest_snap(share_path, num_retain, regex='_replication_')
         if (oldest_snap is not None):
             if (self.delete_snapshot(share_name, oldest_snap)):
                 return self._delete_old_snaps(share_name, share_path, num_retain)
@@ -176,7 +176,7 @@ class NewReceiver(ReplicationMixin, Process):
 
             #delete the share, move the oldest snap to share
             self.msg = ('Failed to promote the oldest Snapshot to Share.')
-            oldest_snap = get_oldest_snap(self.snap_dir, self.num_retain_snaps)
+            oldest_snap = get_oldest_snap(self.snap_dir, self.num_retain_snaps, regex='_replication_')
             if (oldest_snap is not None):
                 snap_path = ('%s/%s' % (self.snap_dir, oldest_snap))
                 share_path = ('%s%s/%s' %

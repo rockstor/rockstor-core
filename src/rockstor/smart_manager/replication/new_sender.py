@@ -131,7 +131,7 @@ class NewSender(ReplicationMixin, Process):
         return rcommand, rmsg
 
     def _delete_old_snaps(self, share_path):
-        oldest_snap = get_oldest_snap(share_path, self.num_retain_snaps)
+        oldest_snap = get_oldest_snap(share_path, self.num_retain_snaps, regex='_replication_')
         if (oldest_snap is not None):
             logger.debug('Deleting old snapshot: %s' % oldest_snap)
             self.msg = ('Failed to delete snapshot: %s. Aborting.' %

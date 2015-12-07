@@ -902,7 +902,7 @@ def get_snap(subvol_path, oldest=False, num_retain=None, regex=None):
                 snap_fields[1] != share_name):
                 #not the Share we are interested in.
                 continue
-            if (regex is not None and re.search(regex, fields[1]) is None):
+            if (regex is not None and re.search(regex, snap_fields[2]) is None):
                 #regex not in the name
                 continue
             snaps[int(fields[1])] = snap_fields[2]
