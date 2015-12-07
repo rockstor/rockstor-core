@@ -120,22 +120,22 @@ class DiskMixin(object):
                 p.save()
             dob.save()
         # Now do a final pass over all database Disk.objects to
-        # 1) update offline status after db re-writes above
-        # 2) insert the missing / offline disk info into the remaining dev slots
-        # 3) update smart (available, enabled) properties
-        # todo do we need to cope with more missing disk than db entries
-        # todo how would they be missing if we didn't first know of them
-        # todo and to know of them their must be a db slot. caution with unique
+        # 1) Update offline status after db re-writes above
+        # 2) Insert the missing / offline disk info into the remaining db slots
+        # 3) Update smart (available, enabled) properties
+        # todo Do we need to cope with more missing disks than db entries?
+        # todo How would they be missing if we didn't first know of them?
+        # todo To know of them there must be a db slot / entry.
         for do in Disk.objects.all():
             logger.debug('final process off db entries by name of %s' % do.name)
-            # if the name (db index) is not in our scanned disks by now then
+            # If the name (db index) is not in our scanned disks by now then
             # this is an unused db entry, re-use it to store our missing drive
-            # info and use a uuid.uuid4() db indexes to maintain unique index.
+            # info and rewrite the db index to a fresh unique value each time.
             if (do.name not in [d.name for d in disks]):
-                # todo optimize to re-use 36 char long name entries as they are
-                # todo ie if len(do.name) == 36 then don't bother generating another.
-                # save missing devices as uuid dev names str(uuid.uuid4())
-                # rewrite the db index to a new unique value, 36 chars string
+                # N.B. Do NOT optimize by re using existing uuid derived
+                # missing device names as this could lead to webui showing old
+                # info from a previous boot and deleting the wrong missing dev.
+                # Rewrite the db index to a new unique chars string.
                 do.name = str(uuid.uuid4())
                 do.offline = True
                 do.smart_available = do.smart_enabled = False
