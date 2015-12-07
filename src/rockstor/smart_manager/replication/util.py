@@ -150,3 +150,10 @@ class ReplicationMixin(object):
                                     data=None, calltype='post', save_error=False)
         except Exception, e:
             logger.error('Exception while refreshing Snapshot state: %s' % e.__str__())
+
+    def refresh_share_state(self):
+        try:
+            return self.law.api_call('commands/refresh-share-state',
+                                     data=None, calltype='post', save_error=False)
+        except Exception, e:
+            logger.error('Exception while refresh Shar state: %s' % e.__str__())
