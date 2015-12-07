@@ -40,14 +40,14 @@ PoolsView = RockstorLayoutView.extend({
 	this.constructor.__super__.initialize.apply(this, arguments);
 	this.template = window.JST.pool_pools;
 	this.pools_table_template = window.JST.pool_pools_table;
-	this.pagination_template = window.JST.common_pagination;
+  //this.pagination_template = window.JST.common_pagination;
 	this.collection = new PoolCollection();
-
 	this.disks = new DiskCollection();
 	this.disks.pageSize = RockStorGlobals.maxPageSize;
 	this.dependencies.push(this.disks);
 	this.dependencies.push(this.collection);
 	this.collection.on("reset", this.renderPools, this);
+  this.initHandlebarHelpers();
 
     },
 
@@ -67,15 +67,19 @@ PoolsView = RockstorLayoutView.extend({
 		!(disk.get('parted'));
 	});
 
-	$(this.el).html(this.template({ collection: this.collection, disks: this.disks,noOfFreeDisks: _.size(freedisks)  }));
-
+	$(this.el).html(this.template({
+    collection: this.collection,
+    disks: this.disks,
+    noOfFreeDisks: _.size(freedisks)
+  }));
 
 	this.$("#pools-table-ph").html(this.pools_table_template({
-	    collection: this.collection
+	    collection: this.collection,
+      collectionNotEmpty: !this.collection.isEmpty(),
 	}));
-	this.$(".pagination-ph").html(this.pagination_template({
+	/* this.$(".pagination-ph").html(this.pagination_template({
 	    collection: this.collection
-	}));
+	})); */
 	this.$("#pools-table").tablesorter({
 	    headers: {
 		// assign the fifth column (we start counting zero)
@@ -128,8 +132,88 @@ PoolsView = RockstorLayoutView.extend({
         cancel: function(event) {
           if (event) event.preventDefault();
           app_router.navigate('pools', {trigger: true})
-        }
-});
+        },
+
+        initHandlebarHelpers: function(){
+          Handlebars.registerHelper('print_pools_tbody', function() {
+            var html = '';
+            this.collection.each(function(pool, index) {
+              var poolName = pool.get('name'),
+                  poolSize = humanize.filesize(pool.get('size') * 1024),
+                  poolUsage = humanize.filesize((pool.get('size') - pool.get('reclaimable') - pool.get('free')) * 1024),
+                  poolUsagePercent = (((pool.get('size')-pool.get('reclaimable')-pool.get('free'))/pool.get('size')) * 100).toFixed(2),
+                  poolRaid = pool.get('raid'),
+                  poolCompression = pool.get('compression'),
+                  poolMtOptions = pool.get('mnt_options'),
+                  listIcon = '<i class="glyphicon glyphicon-list"></i>  ',
+                  editIcon = '<i class="fa fa-pencil-square-o"></i>',
+                  trashIcon = '<i class="glyphicon glyphicon-trash"></i>',
+                  toolTip = '<i class="fa fa-exclamation-circle" title="This Pool is created during install and contains the OS. You can create Shares in it like in any other pool on the system. However, operations like resize, compression and deletion are not allowed." rel="tooltip"></i>';
+
+              if (poolName == 'rockstor_rockstor') {
+                  html += '<tr>';
+                  html += '<td><a href="#pools/' + poolName + '">' + listIcon + poolName +'</a> ' + toolTip + '</td>';
+                  html += '<td>'+ poolSize +'</td>';
+                  html += '<td>'+ poolUsage + '<strong>(' + poolUsagePercent + ' %)</strong></td>';
+                  html += '<td>'+ poolRaid +'</td>';
+                  html += '<td>';
+                  if (poolCompression == 'no' || _.isNull(poolCompression) || _.isUndefined(poolCompression) ) {
+                    html += 'Off';
+                  }else {
+                    html += 'On (Algorithm: <strong>' + poolCompression + '</strong>)';
+                  }
+                  html += '</td>';
+                  html += '<td>'+ poolMtOptions +'</td>';
+                  html += '<td>';
+                  var dNames =  _.reduce(pool.get('disks'),
+                  function(s, disk, i, list) {
+                     if (i < (list.length-1)){
+                        return s + disk.name + ',';
+                    } else {
+                        return s + disk.name;
+                    }
+                  }, '');
+                  html += dNames;
+                  html += '</td>';
+                  html += '<td>N/A</td>';
+                  html += '</tr>';
+
+            }else{
+
+              html += '<tr>';
+              html += '<td><a href="#pools/' + poolName + '">' + listIcon + poolName +'</a> ' + toolTip + '</td>';
+              html += '<td>'+ poolSize + '&nbsp; <a href="#pools/' + poolName + '/?cView=resize">' + editIcon + '</a></td>';
+              html += '<td>'+ poolUsage + '<strong>(' + poolUsagePercent + ' %)</strong></td>';
+              html += '<td>'+ poolRaid + '&nbsp; <a href="#pools/' + poolName + '/?cView=resize">' + editIcon + '</a></td>';
+              html += '<td>';
+              if (poolCompression == 'no' || _.isNull(poolCompression) || _.isUndefined(poolCompression) ) {
+                html += 'Off';
+              }else {
+                html += 'On (Algorithm: <strong>' + poolCompression + '</strong>)' +
+                + '&nbsp;<a href="#pools/' + poolName + '/?cView=edit">' + editIcon + '</a>';
+              }
+              html += '</td>';
+              html += '<td>' + poolMtOptions + '&nbsp;<a href="#pools/' + poolName +'/?cView=edit">' + editIcon + '</a></td>';
+              html += '<td>';
+              var dNames =  _.reduce(pool.get('disks'),
+              function(s, disk, i, list) {
+                 if (i < (list.length-1)){
+                    return s + disk.name + ',';
+                } else {
+                    return s + disk.name;
+                }
+              }, '');
+              html += dNames;
+              html += '</td>';
+              html += '<td><a id="delete_pool_' + poolName + '" data-name="'+ poolName + '" data-action="delete" rel="tooltip" title="Delete pool">' + trashIcon + '</a></td>';
+        	    html += '</tr>';
+        	}
+            });
+            return new Handlebars.SafeString(html);
+            });
+          }
+        });
+
 
 // Add pagination
 Cocktail.mixin(PoolsView, PaginationMixin);

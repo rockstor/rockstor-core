@@ -1,4 +1,4 @@
-<% if (!collection.isEmpty()) { %>
+{{#if collectionNotEmpty}}
 <table id="pools-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of pools">
   <thead>
     <tr>
@@ -13,66 +13,15 @@
       </tr>
   </thead>
   <tbody>
-    <% collection.each(function(pool, index) { %>
-    <% if (pool.get('name') == 'rockstor_rockstor') { %>
-    <tr>
-    <td>
-      <a href="#pools/<%= pool.get('name') %>"><i class="glyphicon glyphicon-list"></i> <%= pool.get('name') %></a>
-      <i class="fa fa-exclamation-circle" title="This Pool is created during install and contains the OS. You can create Shares in it like in any other pool on the system. However, operations like resize, compression and deletion are not allowed." rel="tooltip"></i>
-    </td>
-    <td><%= humanize.filesize(pool.get('size')*1024) %></td>
-    <td><%= humanize.filesize((pool.get('size')-pool.get('reclaimable')-pool.get('free'))*1024) %><strong>(<%= (((pool.get('size')-pool.get('reclaimable')-pool.get('free'))/pool.get('size')) * 100).toFixed(2) %> %)</strong></td>
-    <td><%= pool.get('raid') %></td>
-    <td>
-      <% if (pool.get('compression') == 'no' || _.isNull(pool.get('compression')) || _.isUndefined(pool.get('compression')) ) { %>
-      Off
-      <% } else { %>
-      On (Algorithm: <strong><%= pool.get('compression') %></strong>)
-      <% } %>
-    </td>
-    <td><%= pool.get('mnt_options') %></td>
-    <td>
-      <% var dNames =  _.reduce(pool.get('disks'), function(s, disk, i, list) { if (i < (list.length-1)) { return s + disk.name + ',';} else { return s + disk.name; } }, ''); %>
-      <%= dNames %>
-    </td>
-    <td>N/A</td>
-	</tr>
-    <% }else{ %>
-
-    <tr>
-      <td>
-        <a href="#pools/<%= pool.get('name') %>"><i class="glyphicon glyphicon-list"></i> <%= pool.get('name') %></a>
-        <% if (pool.get('name') == 'rockstor_rockstor') { %>
-        <i class="fa fa-exclamation-circle" title="This Pool is created during install and contains the OS. You can create Shares in it like in any other pool on the system. However, operations like resize, compression and deletion are not allowed." rel="tooltip"></i>
-        <% } %>
-      </td>
-      <td>
-        <%= humanize.filesize(pool.get('size')*1024) %>
-        &nbsp;
-        <a href="#pools/<%= pool.get('name') %>/?cView=resize"><i class="fa fa-pencil-square-o"></i>
-        </a>
-      </td>
-      <td><%= humanize.filesize((pool.get('size')-pool.get('reclaimable')-pool.get('free'))*1024) %><strong>(<%= (((pool.get('size')-pool.get('reclaimable')-pool.get('free'))/pool.get('size')) * 100).toFixed(2) %> %)</strong></td>
-      <td><%= pool.get('raid') %>&nbsp;<a href="#pools/<%= pool.get('name') %>/?cView=resize"><i class="fa fa-pencil-square-o"></i></a></td>
-      <td>
-        <% if (pool.get('compression') == 'no' || _.isNull(pool.get('compression')) || _.isUndefined(pool.get('compression')) ) { %>
-        Off
-        <% } else { %>
-        On (Algorithm: <strong><%= pool.get('compression') %></strong>)
-        <% } %>
-        &nbsp;<a href="#pools/<%= pool.get('name') %>/?cView=edit"><i class="fa fa-pencil-square-o"></i></a>
-      </td>
-      <td><%= pool.get('mnt_options') %>&nbsp;<a href="#pools/<%= pool.get('name') %>/?cView=edit"><i class="fa fa-pencil-square-o"></i></a></td>
-      <td>
-        <% var dNames =  _.reduce(pool.get('disks'), function(s, disk, i, list) { if (i < (list.length-1)) { return s + disk.name + ',';} else { return s + disk.name; } }, ''); %>
-        <%= dNames %>
-      </td>
-      <td><a id="delete_pool_<%= pool.get('name') %>" data-name="<%= pool.get('name') %>" data-action="delete" rel="tooltip" title="Delete pool"><i class="glyphicon glyphicon-trash"></i></a></td>
-	</tr>
-	<% }%>
-	<% }); %>
+    {{print_pools_tbody}}
 	</tbody>
 </table>
+<div>
+{{pagination}}
+</div>
+{{ else }}
+      <h4>No Pools have been created</h4>
+{{/if}}
 
 <div id="delete-pool-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
   <div class="modal-dialog">
@@ -92,8 +41,3 @@
     </div><!--end modal-content-->
   </div><!--end modal-dialog-->
 </div>
-
-<div class="pagination-ph">
-<% } else { %>
-<h4>No pools have been created.</h4>
-<% } %>
