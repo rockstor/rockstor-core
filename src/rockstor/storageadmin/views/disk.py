@@ -148,6 +148,7 @@ class DiskMixin(object):
                     missing_disk = offline_disks.pop()
                     do.serial = missing_disk.serial
                     do.size = missing_disk.size
+                    do.model = missing_disk.model
                     do.parted = missing_disk.parted
                     do.pool = missing_disk.pool
                     dob.transport = missing_disk.transport
