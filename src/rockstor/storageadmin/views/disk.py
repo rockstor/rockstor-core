@@ -136,7 +136,7 @@ class DiskMixin(object):
                 # missing device names as this could lead to webui showing old
                 # info from a previous boot and deleting the wrong missing dev.
                 # Rewrite the db index to a new unique chars string.
-                do.name = str(uuid.uuid4())
+                do.name = str(uuid.uuid4()).replace('-', '')  # 32 chars long
                 do.offline = True
                 do.smart_available = do.smart_enabled = False
                 # now update this entry with one of our missing drives, if any.
