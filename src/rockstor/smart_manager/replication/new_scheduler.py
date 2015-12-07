@@ -62,6 +62,15 @@ class ReplicaScheduler(ReplicationMixin, Process):
                     logger.debug('deleted worker: %s' % w)
         return workers
 
+    def _prune_senders(self):
+        for s in self.senders.keys():
+            ecode = self.senders[s].exitcode
+            if (ecode is not None):
+                del self.senders[s]
+                logger.debug('Sender(%s) exited. exitcode: %s' % (s, ecode))
+        if (len(self.senders) > 0):
+            logger.debug('Active Senders: %s' % self.senders.keys())
+
     def _get_receiver_ip(self, replica):
         if (replica.replication_ip is not None):
             return replica.replication_ip
@@ -77,8 +86,16 @@ class ReplicaScheduler(ReplicationMixin, Process):
     def _process_send(self, replica):
         sender_key = ('%s_%s' % (self.uuid, replica.id))
         if (sender_key in self.senders):
-            raise Exception('There is live sender for(%s). Will not start '
-                            'a new one.' % sender_key)
+            #If the sender exited but hasn't been removed from the dict,
+            #remove and proceed.
+            ecode = self.senders[sender_key].exitcode
+            if (ecode is not None):
+                del self.senders[sender_key]
+                logger.debug('Sender(%s) exited. exitcode: %s. Forcing '
+                             'removal.' % (sender_key, ecode))
+            else:
+                raise Exception('There is live sender for(%s). Will not start '
+                                'a new one.' % sender_key)
 
         receiver_ip = self._get_receiver_ip(replica)
         rt_qs = ReplicaTrail.objects.filter(replica=replica).order_by('-id')
@@ -166,81 +183,76 @@ class ReplicaScheduler(ReplicationMixin, Process):
         poller.register(backend, zmq.POLLIN)
         self.clients = {}
 
+        iterations = 10 #
+        poll_interval = 6000 # 6 seconds
+        msg_count = 0
         while True:
-            if (os.getppid() != self.ppid):
-                logger.error('Parent exited. Aborting.')
-                ctx.destroy()
-                break
-
-            for s in self.senders.keys():
-                ecode = self.senders[s].exitcode
-                if (ecode is not None):
-                    del self.senders[s]
-                    logger.debug('Sender(%s) exited. exitcode: %s' % (s, ecode))
-            if (len(self.senders) > 0):
-                logger.debug('Active Senders: %s' % self.senders.keys())
-
-            iterations = 0
-            while True:
-                #This loop may still continue even if replication service
-                #is terminated, as long as data is coming in.
-                socks = dict(poller.poll(timeout=25000)) #poll for 10 seconds
-                if (frontend in socks and socks[frontend] == zmq.POLLIN):
-                    address, command, msg = frontend.recv_multipart()
-                    if (address not in self.clients):
-                        self.clients[address] = 1
-                    else:
-                        self.clients[address] += 1
-
-                    if (self.clients[address] % 1000 == 0):
-                        logger.debug('Processed %d messages from %s' %
-                                     (self.clients[address], address))
-                    if (command == 'sender-ready'):
-                        logger.debug('initial greeting from %s' % address)
-                        #Start a new receiver and send the appropriate response
-                        try:
-                            nr = NewReceiver(address, msg)
-                            nr.daemon = True
-                            nr.start()
-                            logger.debug('New receiver started for %s' % address)
-                            continue
-                        except Exception, e:
-                            logger.debug('Exception while starting the '
-                                         'new receiver for %s: %s'
-                                         % (address, e.__str__()))
-                            reply_msg = 'receiver-init-error'
-                            frontend.send_multipart([address, command, 'receiver-init-error'])
-                    else:
-                        #do we hit hwm? is the dealer still connected?
-                        backend.send_multipart([address, command, msg])
-
-
-                elif (backend in socks and socks[backend] == zmq.POLLIN):
-                    address, command, msg = backend.recv_multipart()
-                    if (re.match('new_send-', address) is not None):
-                        rid = int(address.split('new_send-')[1])
-                        logger.debug('new_send request received for %d' % rid)
-                        try:
-                            replica = Replica.objects.get(id=rid, enabled=True)
-                            self._process_send(replica)
-                            msg = b'SUCCESS'
-                        except Exception, e:
-                            msg = (b'FAILED. Exception: %s' % e.__str__())
-                        finally:
-                            backend.send_multipart([address, command, msg])
-                    elif (address in self.clients):
-                        if (command in ('receiver-ready', 'receiver-error', 'btrfs-recv-finished')):
-                            logger.debug('Identitiy: %s command: %s' % (address, command))
-                            backend.send_multipart([address, b'ACK', ''])
-                            #a new receiver has started. reply to the sender that must be waiting
-                        frontend.send_multipart([address, command, msg])
-
+            #This loop may still continue even if replication service
+            #is terminated, as long as data is coming in.
+            socks = dict(poller.poll(timeout=poll_interval))
+            if (frontend in socks and socks[frontend] == zmq.POLLIN):
+                address, command, msg = frontend.recv_multipart()
+                if (address not in self.clients):
+                    self.clients[address] = 1
                 else:
-                    iterations += 1
-                    if (iterations == 10):
-                        iterations = 0
-                        logger.debug('nothing received')
-                    break
+                    self.clients[address] += 1
+
+                if (self.clients[address] % 1000 == 0):
+                    logger.debug('Processed %d messages from %s' %
+                                 (self.clients[address], address))
+                if (command == 'sender-ready'):
+                    logger.debug('initial greeting from %s' % address)
+                    #Start a new receiver and send the appropriate response
+                    try:
+                        nr = NewReceiver(address, msg)
+                        nr.daemon = True
+                        nr.start()
+                        logger.debug('New receiver started for %s' % address)
+                        continue
+                    except Exception, e:
+                        logger.debug('Exception while starting the '
+                                     'new receiver for %s: %s'
+                                     % (address, e.__str__()))
+                        reply_msg = 'receiver-init-error'
+                        frontend.send_multipart([address, command, 'receiver-init-error'])
+                else:
+                    #do we hit hwm? is the dealer still connected?
+                    backend.send_multipart([address, command, msg])
+
+
+            elif (backend in socks and socks[backend] == zmq.POLLIN):
+                address, command, msg = backend.recv_multipart()
+                if (re.match('new_send-', address) is not None):
+                    rid = int(address.split('new_send-')[1])
+                    logger.debug('new_send request received for %d' % rid)
+                    try:
+                        replica = Replica.objects.get(id=rid, enabled=True)
+                        self._process_send(replica)
+                        msg = b'SUCCESS'
+                    except Exception, e:
+                        msg = (b'FAILED. Exception: %s' % e.__str__())
+                    finally:
+                        backend.send_multipart([address, command, msg])
+                elif (address in self.clients):
+                    if (command in ('receiver-ready', 'receiver-error', 'btrfs-recv-finished')):
+                        logger.debug('Identitiy: %s command: %s' % (address, command))
+                        backend.send_multipart([address, b'ACK', ''])
+                        #a new receiver has started. reply to the sender that must be waiting
+                    frontend.send_multipart([address, command, msg])
+
+            else:
+                iterations -= 1
+                if (iterations == 0):
+                    iterations = 10
+                    self._prune_senders()
+
+                    if (os.getppid() != self.ppid):
+                        logger.error('Parent exited. Aborting.')
+                        ctx.destroy()
+                        #do some cleanup of senders before quitting?
+                        break
+
+
 
 def main():
     rs = ReplicaScheduler()
