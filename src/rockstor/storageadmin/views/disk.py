@@ -43,8 +43,7 @@ class DiskMixin(object):
     @staticmethod
     @transaction.atomic
     def _update_disk_state():
-        # todo shorten / simplify by sub-dividing
-        # todo sort out rogue serial and size details from removed devices
+        # todo shorten / simplify by sub-dividing (after automated testing)
         # Acquire a list (namedtupil collection) of attached drives > min size
         disks = scan_disks(settings.MIN_DISK_SIZE)
         # Build a list of the missing devices by serial number comparison.
@@ -86,8 +85,7 @@ class DiskMixin(object):
                            serial=d.serial, transport=d.transport,
                            vendor=d.vendor)
             # Update the chosen disk object (existing or new)
-            # todo examine if wholesale overwrite is correct here see serial and
-            # todo name comment above
+            # Some detail transfers here may be redundant but working as is.
             dob.size = d.size
             dob.parted = d.parted
             dob.offline = False  # as we are iterating over attached devices
@@ -127,7 +125,6 @@ class DiskMixin(object):
         # todo How would they be missing if we didn't first know of them?
         # todo To know of them there must be a db slot / entry.
         for do in Disk.objects.all():
-            logger.debug('final process off db entries by name of %s' % do.name)
             # If the name (db index) is not in our scanned disks by now then
             # this is an unused db entry, re-use it to store our missing drive
             # info and rewrite the db index to a fresh unique value each time.
@@ -141,11 +138,8 @@ class DiskMixin(object):
                 do.smart_available = do.smart_enabled = False
                 # now update this entry with one of our missing drives, if any.
                 if len(offline_disks) > 0:
-                    logger.debug('len of offline_disks  = %s' % len(offline_disks))
-                    logger.debug('popping one item from this list')
-                    # maintain do's name as it's unique but update all other
-                    # info from out popped offline disk.
                     missing_disk = offline_disks.pop()
+                    # update the remaining info from our popped offline disk.
                     do.serial = missing_disk.serial
                     do.size = missing_disk.size
                     do.model = missing_disk.model
