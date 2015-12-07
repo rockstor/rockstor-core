@@ -75,70 +75,61 @@ class ReplicaScheduler(ReplicationMixin, Process):
             raise Exception(msg)
 
     def _process_send(self, replica):
+        sender_key = ('%s_%s' % (self.uuid, replica.id))
+        if (sender_key in self.senders):
+            raise Exception('There is live sender for(%s). Will not start '
+                            'a new one.' % sender_key)
+
         receiver_ip = self._get_receiver_ip(replica)
-        rt = ReplicaTrail.objects.filter(replica=replica).order_by('-id')
-        sw = None
-        snap_name = '%s_%d_replication' % (replica.share, replica.id)
-        if (len(rt) == 0):
-            snap_name = '%s_1' % snap_name
-        else:
-            snap_name = '%s_%d' % (snap_name, rt[0].id + 1)
-        snap_id = ('%s_%s' %
-                   (self.uuid, snap_name))
-        if (len(rt) == 0):
-            logger.debug('new sender for snap: %s' % snap_id)
-            sw = NewSender(self.uuid, receiver_ip, replica, snap_name, snap_id)
-        elif (rt[0].status == 'succeeded'):
-            logger.debug('incremental sender for snap: %s' % snap_id)
-            sw = NewSender(self.uuid, receiver_ip, replica, snap_name, snap_id, rt[0])
-        elif (rt[0].status == 'pending'):
-            prev_snap_id = ('%s_%s' % (self.uuid, rt[0].snap_name))
-            if (prev_snap_id in self.senders):
-                return logger.debug('send process ongoing for snap: '
-                                    '%s. Not starting a new one.' % prev_snap_id)
-            logger.debug('%s not found in senders. Previous '
-                         'sender must have Aborted. Marking '
-                         'it as failed' % prev_snap_id)
-            msg = ('Sender process Aborted. See logs for '
-                   'more information')
+        rt_qs = ReplicaTrail.objects.filter(replica=replica).order_by('-id')
+        last_rt = rt_qs[0] if (len(rt_qs) > 0) else None
+        if (last_rt is None):
+            logger.debug('Starting a new Sender(%s).' % sender_key)
+            self.senders[sender_key] = NewSender(self.uuid, receiver_ip, replica)
+        elif (last_rt.status == 'succeeded'):
+            logger.debug('Starting a new Sender(%s)' % sender_key)
+            self.senders[sender_key] = NewSender(self.uuid, receiver_ip, replica, last_rt)
+        elif (last_rt.status == 'pending'):
+            msg = ('Replica trail shows a pending Sender(%s), but it is not '
+                   'alive. Marking it as failed. Will not start a new one.' % sender_key)
+            logger.error(msg)
             data = {'status': 'failed',
                     'error': msg, }
-            return self.update_replica_status(rt[0].id, data)
-        elif (rt[0].status == 'failed'):
-            snap_name = rt[0].snap_name
+            self.update_replica_status(last_rt.id, data)
+            raise Exception(msg)
+        elif (last_rt.status == 'failed'):
             #  if num_failed attempts > 10, disable the replica
             num_tries = 0
-            for rto in rt:
+            for rto in rt_qs:
                 if (rto.status != 'failed' or
                     num_tries >= self.MAX_ATTEMPTS or
                     rto.end_ts < replica.ts):
                     break
                 num_tries = num_tries + 1
             if (num_tries >= self.MAX_ATTEMPTS):
-                logger.info('Maximum attempts(%d) reached '
-                            'for snap: %s. Disabling the '
-                            'replica.' %
-                            (self.MAX_ATTEMPTS, snap_id))
-                return self.disable_replica(replica.id)
+                msg = ('Maximum attempts(%d) reached for Sender(%s). A new one '
+                       'will not be started and the Replica task will be '
+                       'disabled.' % (self.MAX_ATTEMPTS, sender_key))
+                logger.error(msg)
+                self.disable_replica(replica.id)
+                raise Exception(msg)
 
-            logger.info('previous backup failed for snap: '
-                        '%s. Starting a new one. Attempt '
-                        '%d/%d.' % (snap_id, num_tries,
-                                    self.MAX_ATTEMPTS))
-            prev_rt = None
-            for rto in rt:
-                if (rto.status == 'succeeded'):
-                    prev_rt = rto
-                    break
-            sw = NewSender(self.uuid, receiver_ip, replica, snap_name, snap_id, prev_rt)
+            msg = ('previous backup failed for Sender(%s). Starting a new '
+                   'one. Attempt %d/%d.' %
+                   (sender_key, num_tries, self.MAX_ATTEMPTS))
+            logger.debug(msg)
+            last_success_rt = ReplicaTrail.objects.filter(replica=replica, status='succeeded').latest('id')
+            if (last_success_rt is None):
+                raise Exception('Failed to find the last successful '
+                                'ReplicaTrail for the Sender(%s). ' % sender_key)
+            self.senders[sender_key] = NewSender(self.uuid, receiver_ip, replica, last_success_rt)
         else:
-            return logger.error('unknown replica trail status: %s. '
-                                'ignoring snap: %s' %
-                                (rt[0].status, snap_id))
-        self.senders[snap_id] = sw
-        sw.daemon = True #to kill all senders in case scheduler dies.
-        sw.start()
-        return snap_id
+            msg = ('Unexpected ReplicaTrail status(%s) for Sender(%s). '
+                   'Will not start a new one.' % (last_rt.status, sender_key))
+            raise Exception(msg)
+
+        self.senders[sender_key].daemon = True #to kill all senders in case scheduler dies.
+        self.senders[sender_key].start()
 
     def run(self):
         self.law = APIWrapper()
@@ -181,12 +172,13 @@ class ReplicaScheduler(ReplicationMixin, Process):
                 ctx.destroy()
                 break
 
-            for snap_id in self.senders.keys():
-                if (self.senders[snap_id].exitcode is not None):
-                    del self.senders[snap_id]
-                    logger.debug('removed sender: %s' % snap_id)
+            for s in self.senders.keys():
+                ecode = self.senders[s].exitcode
+                if (ecode is not None):
+                    del self.senders[s]
+                    logger.debug('Sender(%s) exited. exitcode: %s' % (s, ecode))
             if (len(self.senders) > 0):
-                logger.debug('Active senders = %s' % self.senders.keys())
+                logger.debug('Active Senders: %s' % self.senders.keys())
 
             iterations = 0
             while True:
@@ -230,7 +222,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
                         logger.debug('new_send request received for %d' % rid)
                         try:
                             replica = Replica.objects.get(id=rid, enabled=True)
-                            snap_id = self._process_send(replica)
+                            self._process_send(replica)
                             msg = b'SUCCESS'
                         except Exception, e:
                             msg = (b'FAILED. Exception: %s' % e.__str__())

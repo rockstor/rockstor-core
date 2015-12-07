@@ -40,13 +40,14 @@ logger = logging.getLogger(__name__)
 
 class NewSender(ReplicationMixin, Process):
 
-    def __init__(self, uuid, receiver_ip, replica, snap_name, snap_id, rt=None):
+    def __init__(self, uuid, receiver_ip, replica, rt=None):
         self.uuid = uuid
         self.receiver_ip = receiver_ip
         self.receiver_port = 5555
         self.replica = replica
-        self.snap_name = snap_name
-        self.snap_id = snap_id
+        self.snap_name = '%s_%d_replication' % (replica.share, replica.id)
+        self.snap_name += '_1' if (rt is None) else '_%d' % (rt.id + 1)
+        self.snap_id = '%s_%s' % (self.uuid, self.snap_name)
         self.rt = rt
         self.rt2 = None
         self.rt2_id = None
