@@ -153,13 +153,20 @@ class NewSender(ReplicationMixin, Process):
                                                         self.replica.share, self.rt.snap_name))
                 if (is_subvol(snap_path)):
                     return rt
-            raise Exception('None of the Snapshots from succeeded replica '
-                            'trails exist on the system.')
+            #Snapshots from previous succeeded ReplicaTrails don't actually
+            #exist on the system. So we send a Full replication instead of
+            #incremental.
+            return None
+
+        if (len(self.rlatest_snap) == 0):
+            #Receiver sends empty string when it fails to reply back to an
+            #incremental send request with an appropriate parent snapshot name.
+            return None
 
         if (self.rt.snap_name != self.rlatest_snap):
             msg = ('Mismatch on starting snapshot for '
                    'btrfs-send. Sender picked %s but Receiver wants '
-                   '%s, which takes precedence.')
+                   '%s, which takes precedence.' % (self.rt.snap_name, self.rlatest_snap))
             for rt in ReplicaTrail.objects.filter(replica=self.replica, status='succeeded').order_by('-id'):
                 if (rt.snap_name == self.rlatest_snap):
                     msg = ('%s. successful trail found for %s' % (msg, self.rlatest_snap))
@@ -205,7 +212,7 @@ class NewSender(ReplicationMixin, Process):
 
             # Refresh replica trail.
             if (self.rt is not None):
-                self.msg = ('Failed while validating/refreshing replica trail.')
+                self.msg = ('Failed to validate/refresh replica trail.')
                 self.rt = self._refresh_rt()
 
             #  create a snapshot only if it's not already from a previous
@@ -222,7 +229,9 @@ class NewSender(ReplicationMixin, Process):
                         if (self.rt is not None):
                             self.rlatest_snap = reply
                             self.rt = self._refresh_rt()
-                        logger.debug('%s received for %s. Proceeding to send fsdata.' % (command, self.identity))
+                        logger.debug('Id: %s. command(%s) and message(%s) '
+                                     'received. Proceeding to send fsdata.'
+                                     % (self.identity, command, reply))
                         break
                     else:
                         if (command == 'receiver-error'):

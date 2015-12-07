@@ -129,14 +129,16 @@ class NewReceiver(ReplicationMixin, Process):
     def _latest_snap(self, rso):
         for snap in ReceiveTrail.objects.filter(rshare=rso, status='succeeded').order_by('-id'):
             if (is_subvol('%s/%s' % (self.snap_dir, snap.snap_name))):
-                return snap.snap_name
-        raise Exception('There are no replication snapshots on the system for '
-                        'Share(%s).' % rso.share)
+                return str(snap.snap_name) #cannot be unicode for zmq message
+        logger.error('Id: %s. There are no replication snapshots on the system for '
+                     'Share(%s).' % (self.identity, rso.share))
+        #This would mean, a full backup transfer is required.
+        return None
 
     def run(self):
         logger.debug('Starting a new receiver for meta: %s' % self.meta)
         self.msg = ('Top level exception in receiver')
-        latest_snap = ''
+        latest_snap = None
         with self._clean_exit_handler():
             self.law = APIWrapper()
             self.poll = zmq.Poller()
@@ -205,7 +207,7 @@ class NewReceiver(ReplicationMixin, Process):
                 run_command([BTRFS, 'subvolume', 'create', sub_vol])
 
             self.msg = ('Failed to create snapshot directory: %s' % self.snap_dir)
-            run_command(['mkdir', '-p', self.snap_dir])
+            run_command(['/usr/bin/mkdir', '-p', self.snap_dir])
             snap_fp = ('%s/%s' % (self.snap_dir, self.snap_name))
 
             #If the snapshot already exists, presumably from the previous attempt and
@@ -225,7 +227,7 @@ class NewReceiver(ReplicationMixin, Process):
                                        stderr=subprocess.PIPE)
 
             self.msg = ('Failed to send receiver-ready for identity: %s' % self.identity)
-            rcommand, rmsg = self._send_recv('receiver-ready', str(latest_snap))
+            rcommand, rmsg = self._send_recv('receiver-ready', latest_snap or '')
             if (rcommand is None):
                 self._sys_exit(3)
 
@@ -251,6 +253,7 @@ class NewReceiver(ReplicationMixin, Process):
                             self.msg = ('btrfs-recv exited with unexpected exitcode(%s). ' % self.rp.returncode)
                             raise Exception(self.msg)
                         self._send_recv('btrfs-recv-finished')
+                        self.refresh_share_state()
                         self.refresh_snapshot_state()
 
                         self.msg = ('Failed to update receive trail for rtid: %d' % self.rtid)
