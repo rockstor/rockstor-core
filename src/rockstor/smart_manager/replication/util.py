@@ -146,7 +146,7 @@ class ReplicationMixin(object):
 
     def refresh_snapshot_state(self):
         try:
-            return self.law.api_cal('commands/refresh-snapshot-state',
+            return self.law.api_call('commands/refresh-snapshot-state',
                                     data=None, calltype='post', save_error=False)
         except Exception, e:
             logger.error('Exception while refreshing Snapshot state: %s' % e.__str__())

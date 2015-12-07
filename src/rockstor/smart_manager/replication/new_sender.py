@@ -172,6 +172,13 @@ class NewSender(ReplicationMixin, Process):
                     raise Exception(msg)
             raise Exception('%s. No succeeded trail found for %s.' % (msg, self.rlatest_snap))
 
+        snap_path = ('%s%s/.snapshots/%s/%s' % (settings.MNT_PT, self.replica.pool,
+                                                self.replica.share, self.rlatest_snap))
+        if (is_subvol(snap_path)):
+            return self.rt
+        raise Exception('Parent Snapshot(%s) to use in btrfs-send does not '
+                        'exist in the system.' % snap_path)
+
     def run(self):
 
         self.msg = ('Top level exception in sender: %s' % self.identity)
