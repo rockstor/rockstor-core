@@ -29,7 +29,7 @@ from util import ReplicationMixin
 from fs.btrfs import (get_oldest_snap, remove_share, set_property, is_subvol)
 from system.osi import run_command
 from storageadmin.models import (Disk, Pool, Appliance)
-from smart_manager.models import ReplicaShare
+from smart_manager.models import (ReplicaShare, ReceiveTrail)
 import shutil
 import time
 from cli import APIWrapper
@@ -97,7 +97,8 @@ class NewReceiver(ReplicationMixin, Process):
             if (self.ack is True):
                 try:
                     command = 'receiver-error'
-                    self.dealer.send_multipart(['receiver-error', b'%s' % str(self.msg)])
+                    self.dealer.send_multipart(['receiver-error', b'%s. Exception: %s' %
+                                                (str(self.msg), str(e.__str__()))])
                     socks = dict(self.poll.poll(3000))
                     if (socks.get(self.dealer) == zmq.POLLIN):
                         msg = self.dealer.recv()
@@ -125,9 +126,17 @@ class NewReceiver(ReplicationMixin, Process):
                      (self.identity, command, rcommand))
         return rcommand, rmsg
 
+    def _latest_snap(self, rso):
+        for snap in ReceiveTrail.objects.filter(rshare=rso, status='succeeded').order_by('-id'):
+            if (is_subvol('%s/%s' % (self.snap_dir, snap.snap_name))):
+                return snap.snap_name
+        raise Exception('There are no replication snapshots on the system for '
+                        'Share(%s).' % rso.share)
+
     def run(self):
         logger.debug('Starting a new receiver for meta: %s' % self.meta)
         self.msg = ('Top level exception in receiver')
+        latest_snap = ''
         with self._clean_exit_handler():
             self.law = APIWrapper()
             self.poll = zmq.Poller()
@@ -154,7 +163,12 @@ class NewReceiver(ReplicationMixin, Process):
             else:
                 self.msg = ('Failed to retreive the replica metadata object for '
                             'share: %s.' % self.sname)
-                self.rid = ReplicaShare.objects.get(share=self.sname).id
+                rso = ReplicaShare.objects.get(share=self.sname)
+                self.rid = rso.id
+                #Find and send the current snapshot to the sender. This will
+                #be used as the start by btrfs-send diff.
+                self.msg = ('Failed to verify latest replication snapshot on the system.')
+                latest_snap = self._latest_snap(rso)
 
             self.msg = ('Failed to create receive trail for rid: %d' % self.rid)
             data = {'snap_name': self.snap_name, }
@@ -211,7 +225,7 @@ class NewReceiver(ReplicationMixin, Process):
                                        stderr=subprocess.PIPE)
 
             self.msg = ('Failed to send receiver-ready for identity: %s' % self.identity)
-            rcommand, rmsg = self._send_recv('receiver-ready')
+            rcommand, rmsg = self._send_recv('receiver-ready', str(latest_snap))
             if (rcommand is None):
                 self._sys_exit(3)
 

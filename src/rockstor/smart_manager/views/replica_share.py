@@ -48,13 +48,10 @@ class ReplicaShareListView(rfc.GenericView):
         aip = request.data['appliance']
         self._validate_appliance(aip, request)
         src_share = request.data['src_share']
-        data_port = int(request.data['data_port'])
-        meta_port = int(request.data['meta_port'])
         ts = datetime.utcnow().replace(tzinfo=utc)
         r = ReplicaShare(share=sname, appliance=aip,
                          pool=share.pool.name, src_share=src_share,
-                         data_port=data_port,
-                         meta_port=meta_port, ts=ts)
+                         ts=ts)
         r.save()
         return Response(ReplicaShareSerializer(r).data)
 

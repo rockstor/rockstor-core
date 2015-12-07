@@ -26,8 +26,9 @@ from django.conf import settings
 from contextlib import contextmanager
 from django.utils.timezone import utc
 from util import ReplicationMixin
-from fs.btrfs import get_oldest_snap
+from fs.btrfs import (get_oldest_snap, is_subvol)
 from storageadmin.models import Appliance
+from smart_manager.models import ReplicaTrail
 import json
 from cli import APIWrapper
 from django import db
@@ -52,6 +53,7 @@ class NewSender(ReplicationMixin, Process):
         self.rid = replica.id
         self.identity = u'%s-%s' % (self.uuid, self.rid)
         self.sp = None
+        self.rlatest_snap = None #Latest snapshot per Receiver(comes along with receiver-ready)
         self.ctx = zmq.Context()
         self.msg = ''
         self.update_trail = False
@@ -71,7 +73,7 @@ class NewSender(ReplicationMixin, Process):
             if (self.update_trail):
                 try:
                     data = {'status': 'failed',
-                            'error': self.msg, }
+                            'error': '%s. Exception: %s' % (self.msg, e.__str__())}
                     self.update_replica_status(self.rt2_id, data)
                 except Exception, e:
                     logger.error('Id: %s. Exception occured while updating replica status: %s' %
@@ -137,6 +139,39 @@ class NewSender(ReplicationMixin, Process):
             if (self.delete_snapshot(self.replica.share, oldest_snap)):
                 return self._delete_old_snaps(share_path)
 
+    def _refresh_rt(self):
+        #for incremental sends, the receiver tells us the latest successful
+        #snapshot on it. This should match self.rt in most cases. Sometimes,
+        #it may not be the one refered by self.rt(latest) but a previous one.
+        #We need to make sure to *only* send the incremental send that receiver
+        #expects.
+        if (self.rlatest_snap is None):
+            #Validate/update self.rt to the one that has the expected Snapshot on the system.
+            for rt in ReplicaTrail.objects.filter(replica=self.replica, status='succeeded').order_by('-id'):
+                snap_path = ('%s%s/.snapshots/%s/%s' % (settings.MNT_PT, self.replica.pool,
+                                                        self.replica.share, self.rt.snap_name))
+                if (is_subvol(snap_path)):
+                    return rt
+            raise Exception('None of the Snapshots from succeeded replica '
+                            'trails exist on the system.')
+
+        if (self.rt.snap_name != self.rlatest_snap):
+            msg = ('Mismatch on starting snapshot for '
+                   'btrfs-send. Sender picked %s but Receiver wants '
+                   '%s, which takes precedence.')
+            for rt in ReplicaTrail.objects.filter(replica=self.replica, status='succeeded').order_by('-id'):
+                if (rt.snap_name == self.rlatest_snap):
+                    msg = ('%s. successful trail found for %s' % (msg, self.rlatest_snap))
+                    snap_path = ('%s%s/.snapshots/%s/%s' % (settings.MNT_PT, self.replica.pool,
+                                                            self.replica.share, self.rlatest_snap))
+                    if (is_subvol(snap_path)):
+                        msg = ('%s. Exists in the system and will be used at the start.')
+                        logger.debug(msg)
+                        return rt
+                    msg = ('%s. Does not exist on the system. So cannot use it.')
+                    raise Exception(msg)
+            raise Exception('%s. No succeeded trail found for %s.' % (msg, self.rlatest_snap))
+
     def run(self):
 
         self.msg = ('Top level exception in sender: %s' % self.identity)
@@ -145,7 +180,7 @@ class NewSender(ReplicationMixin, Process):
             self.poll = zmq.Poller()
             self._init_greeting()
 
-            #  1. create a new replica trail if it's the very first time
+            #  create a new replica trail if it's the very first time
             # or if the last one succeeded
             self.msg = ('Failed to create local replica trail for snap_name:'
                         ' %s. Aborting.' % self.snap_name)
@@ -153,14 +188,19 @@ class NewSender(ReplicationMixin, Process):
                                                  self.snap_name)
             self.rt2_id = self.rt2['id']
 
-            # 2. prune old snapshots.
+            # prune old snapshots.
             self.update_trail = True
             self.msg = ('Failed to prune old snapshots')
             share_path = ('%s%s/.snapshots/%s' % (settings.MNT_PT, self.replica.pool,
                                                   self.replica.share))
             self._delete_old_snaps(share_path)
 
-            #  3. create a snapshot only if it's not already from a previous
+            # Refresh replica trail.
+            if (self.rt is not None):
+                self.msg = ('Failed while validating/refreshing replica trail.')
+                self.rt = self._refresh_rt()
+
+            #  create a snapshot only if it's not already from a previous
             #  failed attempt.
             self.msg = ('Failed to create snapshot: %s. Aborting.' % self.snap_name)
             self.create_snapshot(self.replica.share, self.snap_name)
@@ -171,6 +211,9 @@ class NewSender(ReplicationMixin, Process):
                 if (socks.get(self.send_req) == zmq.POLLIN):
                     command, reply = self.send_req.recv_multipart()
                     if (command == 'receiver-ready'):
+                        if (self.rt is not None):
+                            self.rlatest_snap = reply
+                            self.rt = self._refresh_rt()
                         logger.debug('%s received for %s. Proceeding to send fsdata.' % (command, self.identity))
                         break
                     else:
