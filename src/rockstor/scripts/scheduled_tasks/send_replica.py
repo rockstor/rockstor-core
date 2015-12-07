@@ -24,19 +24,41 @@ import zmq
 from storageadmin.models import NetworkInterface
 import logging
 logger = logging.getLogger(__name__)
-
+import time
 
 def main():
     rid = int(sys.argv[1])
     ctx = zmq.Context()
-    #convert to request reply socket
-    push_socket = ctx.socket(zmq.PUSH)
-    ip = NetworkInterface.objects.filter(ipaddr__isnull=False)[0].ipaddr
-    push_socket.connect('tcp://%s:%d' % (ip, settings.REPLICA_META_PORT))
-    msg = {'id': rid,
-           'msg': 'new_send', }
-    push_socket.send_json(msg)
-    ctx.destroy(linger=6000)
+    poll = zmq.Poller()
+    num_tries = 12
+    while (True):
+        req = ctx.socket(zmq.DEALER)
+        #req.setsockopt_string(zmq.IDENTITY, u'new_send-%d' % rid)
+        poll.register(req, zmq.POLLIN)
+        req.connect('ipc:///tmp/foobar.ipc')
+        req.send_multipart(['new-send', b"%d" % rid])
+
+        socks = dict(poll.poll(5000))
+        if (socks.get(req) == zmq.POLLIN):
+            rcommand, reply = req.recv_multipart()
+            if (rcommand == 'SUCCESS'):
+                print(reply)
+                break
+            ctx.destroy(linger=0)
+            sys.exit(reply)
+        num_tries -= 1
+        print('No response from Replication service. Number of retry '
+              'attempts left: %d' % num_tries)
+        if (num_tries == 0):
+            ctx.destroy(linger=0)
+            sys.exit('Check that Replication service is running properly '
+                     'and try again.')
+        req.setsockopt(zmq.LINGER, 0)
+        req.close()
+        poll.unregister(req)
+
+    ctx.destroy(linger=0)
+    sys.exit(0)
 
 if __name__ == '__main__':
     #takes one argument. taskdef object id.

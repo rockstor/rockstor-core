@@ -222,17 +222,26 @@ class ReplicaScheduler(ReplicationMixin, Process):
 
             elif (backend in socks and socks[backend] == zmq.POLLIN):
                 address, command, msg = backend.recv_multipart()
-                if (re.match('new_send-', address) is not None):
-                    rid = int(address.split('new_send-')[1])
-                    logger.debug('new_send request received for %d' % rid)
+                if (command == 'new-send'):
+                    rid = int(msg)
+                    logger.debug('new-send request received for %d' % rid)
+                    rcommand = 'ERROR'
                     try:
-                        replica = Replica.objects.get(id=rid, enabled=True)
-                        self._process_send(replica)
-                        msg = b'SUCCESS'
+                        replica = Replica.objects.get(id=rid)
+                        if (replica.enabled):
+                            self._process_send(replica)
+                            msg = ('A new Sender started successfully for '
+                                   'Replication Task(%d).' % rid)
+                            rcommand = 'SUCCESS'
+                        else:
+                            msg = ('Failed to start a new Sender for Replication '
+                                   'Task(%d) because it is disabled.' % rid)
                     except Exception, e:
-                        msg = (b'FAILED. Exception: %s' % e.__str__())
+                        msg = ('Failed to start a new Sender for Replication '
+                               'Task(%d). Exception: %s' % (rid, e.__str__()))
+                        logger.error(msg)
                     finally:
-                        backend.send_multipart([address, command, msg])
+                        backend.send_multipart([address, rcommand, str(msg)])
                 elif (address in self.clients):
                     if (command in ('receiver-ready', 'receiver-error', 'btrfs-recv-finished')):
                         logger.debug('Identitiy: %s command: %s' % (address, command))
