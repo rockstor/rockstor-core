@@ -33,9 +33,8 @@ def main():
     num_tries = 12
     while (True):
         req = ctx.socket(zmq.DEALER)
-        #req.setsockopt_string(zmq.IDENTITY, u'new_send-%d' % rid)
         poll.register(req, zmq.POLLIN)
-        req.connect('ipc:///tmp/foobar.ipc')
+        req.connect('ipc://%s' % settings.REPLICATION.get('ipc_socket'))
         req.send_multipart(['new-send', b"%d" % rid])
 
         socks = dict(poll.poll(5000))

@@ -120,7 +120,7 @@ class NewReceiver(ReplicationMixin, Process):
     def _send_recv(self, command, msg=''):
         rcommand = rmsg = None
         self.dealer.send_multipart([command, msg])
-        #Retry logic doesn't make sense at. So one long patient wait.
+        #Retry logic doesn't make sense atm. So one long patient wait.
         socks = dict(self.poll.poll(60000)) # 60 seconds.
         if (socks.get(self.dealer) == zmq.POLLIN):
             rcommand, rmsg = self.dealer.recv_multipart()
@@ -147,7 +147,7 @@ class NewReceiver(ReplicationMixin, Process):
             self.dealer = self.ctx.socket(zmq.DEALER)
             self.dealer.setsockopt_string(zmq.IDENTITY, u'%s' % self.identity)
             self.dealer.set_hwm(10)
-            self.dealer.connect('ipc://%s' % settings.REPLICATION.get('listener_port'))
+            self.dealer.connect('ipc://%s' % settings.REPLICATION.get('ipc_socket'))
             self.poll.register(self.dealer, zmq.POLLIN)
 
             self.ack = True
