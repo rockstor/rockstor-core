@@ -122,7 +122,11 @@ class NewSender(ReplicationMixin, Process):
     def _send_recv(self, command, msg=''):
         rcommand = rmsg = None
         self.send_req.send_multipart([command, b'%s' % msg])
-        socks = dict(self.poll.poll(25000))
+        #There is no retry logic here because it's an overkill at the moment.
+        #If the stream is interrupted, we can only start from the beginning again.
+        #So we wait patiently, but only once. Perhaps we can implement a buffering
+        #or temporary caching strategy to make this part robust.
+        socks = dict(self.poll.poll(60000)) # 60 seconds.
         if (socks.get(self.send_req) == zmq.POLLIN):
             rcommand, rmsg = self.send_req.recv_multipart()
         if ((len(command) > 0 or (rcommand is not None and rcommand != 'send-more')) or
@@ -221,9 +225,11 @@ class NewSender(ReplicationMixin, Process):
             self.create_snapshot(self.replica.share, self.snap_name)
 
             retries_left = 10
+            poll_interval = 6000 # 6 seconds
             while (True):
-                socks = dict(self.poll.poll(3000))
+                socks = dict(self.poll.poll(poll_interval))
                 if (socks.get(self.send_req) == zmq.POLLIN):
+                    retries_left = 10 # not really necessary because we just want one reply for now.
                     command, reply = self.send_req.recv_multipart()
                     if (command == 'receiver-ready'):
                         if (self.rt is not None):
@@ -249,19 +255,16 @@ class NewSender(ReplicationMixin, Process):
                                         (command, self.identity, reply))
                         raise Exception(self.msg)
                 else:
-                    logger.debug('no response from receiver for %s. will retry' % self.identity)
+                    retries_left -= 1
+                    logger.debug('Id: %s. No response from receiver. Number '
+                                 'of retry attempts left: %d' % (self.identity, retries_left))
+                    if (retries_left == 0):
+                        logger.error('Id: %s Receiver is unreachable. Quiting' % self.identity)
+                        self._sys_exit(3)
                     self.send_req.setsockopt(zmq.LINGER, 0)
                     self.send_req.close()
                     self.poll.unregister(self.send_req)
-                    retries_left -= 1
-                    if (retries_left == 0):
-                        logger.error('%s Retried a few times. Receiver is unreachable. Quiting' % self.identity)
-                        self._sys_exit(3)
-                    logger.debug('reconnecting for %s' % self.identity)
                     self._init_greeting()
-                    logger.debug('Initial greeting resent for %s' % self.identity)
-
-
 
             snap_path = ('%s%s/.snapshots/%s/%s' %
                          (settings.MNT_PT, self.replica.pool, self.replica.share,

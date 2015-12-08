@@ -99,7 +99,8 @@ class NewReceiver(ReplicationMixin, Process):
                     command = 'receiver-error'
                     self.dealer.send_multipart(['receiver-error', b'%s. Exception: %s' %
                                                 (str(self.msg), str(e.__str__()))])
-                    socks = dict(self.poll.poll(3000))
+                    #Retry logic here is overkill atm.
+                    socks = dict(self.poll.poll(60000)) # 60 seconds
                     if (socks.get(self.dealer) == zmq.POLLIN):
                         msg = self.dealer.recv()
                         logger.debug('Response from the broker: %s' % msg)
@@ -119,7 +120,8 @@ class NewReceiver(ReplicationMixin, Process):
     def _send_recv(self, command, msg=''):
         rcommand = rmsg = None
         self.dealer.send_multipart([command, msg])
-        socks = dict(self.poll.poll(25000))
+        #Retry logic doesn't make sense at. So one long patient wait.
+        socks = dict(self.poll.poll(60000)) # 60 seconds.
         if (socks.get(self.dealer) == zmq.POLLIN):
             rcommand, rmsg = self.dealer.recv_multipart()
         logger.debug('Identity: %s command: %s rcommand: %s' %
@@ -234,9 +236,12 @@ class NewReceiver(ReplicationMixin, Process):
             term_commands = ('btrfs-send-init-error', 'btrfs-send-unexpected-termination-error',
                              'btrfs-send-nonzero-termination-error',)
             num_tries = 10
+            poll_interval = 6000 # 6 seconds
             while (True):
-                socks = dict(self.poll.poll(3000))
+                socks = dict(self.poll.poll(poll_interval))
                 if (socks.get(self.dealer) == zmq.POLLIN):
+                    #reset to wait upto 60(poll_interval x num_tries milliseconds) for every message
+                    num_tries = 10
                     command, message = self.dealer.recv_multipart()
                     if (command == 'btrfs-send-stream-finished'):
                         #this command concludes fsdata transfer. After this, btrfs-recev
@@ -265,9 +270,9 @@ class NewReceiver(ReplicationMixin, Process):
                         raise Exception(self.msg)
 
                     if (self.rp.poll() is None):
-                        logger.debug('Id: %s. fsdata received' % self.identity)
                         self.rp.stdin.write(message)
                         self.rp.stdin.flush()
+                        #@todo: implement advanced credit request system.
                         self.dealer.send_multipart([b'send-more', ''])
                     else:
                         out, err = self.rp.communicate()
