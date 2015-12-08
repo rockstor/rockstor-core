@@ -21,19 +21,17 @@ import os
 import sys
 import zmq
 import subprocess
-from django.utils.timezone import utc
+import json
 from django.conf import settings
 from django import db
 from contextlib import contextmanager
 from util import ReplicationMixin
 from fs.btrfs import (get_oldest_snap, remove_share, set_property, is_subvol)
 from system.osi import run_command
-from storageadmin.models import (Disk, Pool, Appliance)
+from storageadmin.models import (Pool, Appliance)
 from smart_manager.models import (ReplicaShare, ReceiveTrail)
 import shutil
-import time
 from cli import APIWrapper
-import json
 import logging
 logger = logging.getLogger(__name__)
 

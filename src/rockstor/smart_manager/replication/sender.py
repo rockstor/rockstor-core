@@ -22,21 +22,20 @@ import sys
 import zmq
 import subprocess
 import fcntl
+import json
 from django.conf import settings
 from contextlib import contextmanager
-from django.utils.timezone import utc
 from util import ReplicationMixin
 from fs.btrfs import (get_oldest_snap, is_subvol)
 from storageadmin.models import Appliance
 from smart_manager.models import ReplicaTrail
-import json
 from cli import APIWrapper
 from django import db
+import logging
+logger = logging.getLogger(__name__)
 
 BTRFS = '/sbin/btrfs'
 
-import logging
-logger = logging.getLogger(__name__)
 
 class Sender(ReplicationMixin, Process):
 
@@ -60,7 +59,7 @@ class Sender(ReplicationMixin, Process):
         self.update_trail = False
         self.kb_sent = 0
         self.ppid = os.getpid()
-        self.num_retain_snaps = 5
+        self.max_snap_retain = settings.REPLICATION.get('max_snap_retain')
         for alias, info in db.connections.databases.items():
             db.close_connection()
         super(Sender, self).__init__()
@@ -137,7 +136,7 @@ class Sender(ReplicationMixin, Process):
         return rcommand, rmsg
 
     def _delete_old_snaps(self, share_path):
-        oldest_snap = get_oldest_snap(share_path, self.num_retain_snaps, regex='_replication_')
+        oldest_snap = get_oldest_snap(share_path, self.max_snap_retain, regex='_replication_')
         if (oldest_snap is not None):
             logger.debug('Id: %s. Deleting old snapshot: %s' % (self.identity, oldest_snap))
             self.msg = ('Failed to delete snapshot: %s. Aborting.' %

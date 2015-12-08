@@ -19,20 +19,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from multiprocessing import Process
 import zmq
 import os
-import re
-import time
 from storageadmin.models import (NetworkInterface, Appliance)
 from smart_manager.models import (ReplicaTrail, ReplicaShare, Replica)
 from django.conf import settings
 from sender import Sender
 from receiver import Receiver
-from django.utils.timezone import utc
+from util import ReplicationMixin
+from cli import APIWrapper
 import logging
 logger = logging.getLogger(__name__)
-from django.db import DatabaseError
-from util import ReplicationMixin
-import json
-from cli import APIWrapper
 
 
 class ReplicaScheduler(ReplicationMixin, Process):
@@ -42,17 +37,9 @@ class ReplicaScheduler(ReplicationMixin, Process):
         self.senders = {} # Active Sender(outgoing) process map.
         self.receivers = {} # Active Receiver process map.
         self.remote_senders = {} # Active incoming/remote Sender/client map.
-        self.data_port = settings.REPLICA_DATA_PORT
-        self.meta_port = settings.REPLICA_META_PORT
-        self.MAX_ATTEMPTS = settings.MAX_REPLICA_SEND_ATTEMPTS
-        self.recv_meta = None
+        self.MAX_ATTEMPTS = settings.REPLICATION.get('max_send_attempts')
         self.uuid = None
-        self.base_url = 'https://localhost/api'
         self.rep_ip = None
-        self.uuid = None
-        self.trail_prune_interval = 3600 #seconds
-        self.prune_time = int(time.time()) - (self.trail_prune_interval + 1)
-        self.raw = None
         super(ReplicaScheduler, self).__init__()
 
     def _prune_workers(self, workers):
