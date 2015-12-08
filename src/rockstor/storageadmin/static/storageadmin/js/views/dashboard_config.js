@@ -33,6 +33,8 @@ DashboardConfigView = Backbone.View.extend({
 	this.dashboardconfig = this.options.dashboardconfig;
 	this.template = window.JST.dashboard_dashboard_config;
 	this.parentView = this.options.parentView;
+	this.wSelect = this.dashboardconfig.getConfig();
+	this.initHandlebarHelpers();
     },
 
     render: function() {
@@ -41,9 +43,7 @@ DashboardConfigView = Backbone.View.extend({
     },
 
     renderPage: function() {
-	$(this.el).html(this.template({
-	    wSelected: this.dashboardconfig.getConfig()
-	}));
+	$(this.el).html(this.template());
 	return this;
     },
 
@@ -58,7 +58,28 @@ DashboardConfigView = Backbone.View.extend({
 	    cbox.attr("checked", "true");
 	} else {
 	    cbox.removeAttr("checked");
-	}
+	    }
+    },
+    
+    initHandlebarHelpers: function(){
+      //register any share related handlebar helpers here.
+      Handlebars.registerHelper('display_widgets', function() {
+        var html = '';
+        var widget_categories = ['Storage', 'Compute', 'Network']; 
+        _.each(widget_categories, function(category) {
+            html += '<span class="widget-heading">' + category + '</span><br>';
+            _.each(RockStorWidgets.findByCategory(category), function(widget) {
+                if (_.some(this.wSelect, function(w) { return w.name == widget.name})) { 
+                    html += '<input class="widget-name inline" type="checkbox" name="selections" value="'+ widget.name + '" checked="checked"></input>';
+                }else{ 
+                    html += '<input class="widget-name inline" type="checkbox" name="selections" value="'+ widget.name +'"></input>';
+                }
+                html += widget.displayName +'<br>';
+            });
+            html += '<br>';
+        });    
+        return new Handlebars.SafeString(html);
+      });
     },
 
     cleanup: function() {
