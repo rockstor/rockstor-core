@@ -176,7 +176,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
         frontend.bind('tcp://%s:5555' % self.rep_ip)
 
         backend = ctx.socket(zmq.ROUTER)
-        backend.bind('ipc:///tmp/foobar.ipc')
+        backend.bind('ipc://%s' % settings.REPLICATION.get('ipc_socket'))
 
         poller = zmq.Poller()
         poller.register(frontend, zmq.POLLIN)

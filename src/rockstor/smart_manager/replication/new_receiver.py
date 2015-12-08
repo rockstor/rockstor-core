@@ -147,7 +147,7 @@ class NewReceiver(ReplicationMixin, Process):
             self.dealer = self.ctx.socket(zmq.DEALER)
             self.dealer.setsockopt_string(zmq.IDENTITY, u'%s' % self.identity)
             self.dealer.set_hwm(10)
-            self.dealer.connect('ipc:///tmp/foobar.ipc')
+            self.dealer.connect('ipc://%s' % settings.REPLICATION.get('listener_port'))
             self.poll.register(self.dealer, zmq.POLLIN)
 
             self.ack = True
