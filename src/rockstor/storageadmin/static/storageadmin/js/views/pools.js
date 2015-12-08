@@ -38,9 +38,7 @@ PoolsView = RockstorLayoutView.extend({
     initialize: function() {
 
 	this.constructor.__super__.initialize.apply(this, arguments);
-	this.template = window.JST.pool_pools;
 	this.pools_table_template = window.JST.pool_pools_table;
-  //this.pagination_template = window.JST.common_pagination;
 	this.collection = new PoolCollection();
 	this.disks = new DiskCollection();
 	this.disks.pageSize = RockStorGlobals.maxPageSize;
@@ -67,19 +65,12 @@ PoolsView = RockstorLayoutView.extend({
 		!(disk.get('parted'));
 	});
 
-	$(this.el).html(this.template({
-    collection: this.collection,
-    disks: this.disks,
-    noOfFreeDisks: _.size(freedisks)
-  }));
-
-	this.$("#pools-table-ph").html(this.pools_table_template({
+    $(this.el).html(this.pools_table_template({
 	    collection: this.collection,
       collectionNotEmpty: !this.collection.isEmpty(),
+      noOfFreeDisks: _.size(freedisks)
 	}));
-	/* this.$(".pagination-ph").html(this.pagination_template({
-	    collection: this.collection
-	})); */
+
 	this.$("#pools-table").tablesorter({
 	    headers: {
 		// assign the fifth column (we start counting zero)
@@ -136,7 +127,12 @@ PoolsView = RockstorLayoutView.extend({
 
         initHandlebarHelpers: function(){
           Handlebars.registerHelper('print_pools_tbody', function() {
-            var html = '';
+            var html = '',
+            listIcon = '<i class="glyphicon glyphicon-list"></i>  ',
+            editIcon = '<i class="fa fa-pencil-square-o"></i>',
+            trashIcon = '<i class="glyphicon glyphicon-trash"></i>',
+            toolTip = '<i class="fa fa-exclamation-circle" title="This Pool is created during install and contains the OS. You can create Shares in it like in any other pool on the system. However, operations like resize, compression and deletion are not allowed." rel="tooltip"></i>';
+
             this.collection.each(function(pool, index) {
               var poolName = pool.get('name'),
                   poolSize = humanize.filesize(pool.get('size') * 1024),
@@ -144,11 +140,8 @@ PoolsView = RockstorLayoutView.extend({
                   poolUsagePercent = (((pool.get('size')-pool.get('reclaimable')-pool.get('free'))/pool.get('size')) * 100).toFixed(2),
                   poolRaid = pool.get('raid'),
                   poolCompression = pool.get('compression'),
-                  poolMtOptions = pool.get('mnt_options'),
-                  listIcon = '<i class="glyphicon glyphicon-list"></i>  ',
-                  editIcon = '<i class="fa fa-pencil-square-o"></i>',
-                  trashIcon = '<i class="glyphicon glyphicon-trash"></i>',
-                  toolTip = '<i class="fa fa-exclamation-circle" title="This Pool is created during install and contains the OS. You can create Shares in it like in any other pool on the system. However, operations like resize, compression and deletion are not allowed." rel="tooltip"></i>';
+                  poolMtOptions = pool.get('mnt_options');
+                  if(poolMtOptions == null){poolMtOptions = '';}
 
               if (poolName == 'rockstor_rockstor') {
                   html += '<tr>';
@@ -181,7 +174,7 @@ PoolsView = RockstorLayoutView.extend({
             }else{
 
               html += '<tr>';
-              html += '<td><a href="#pools/' + poolName + '">' + listIcon + poolName +'</a> ' + toolTip + '</td>';
+              html += '<td><a href="#pools/' + poolName + '">' + listIcon + poolName +'</a></td>';
               html += '<td>'+ poolSize + '&nbsp; <a href="#pools/' + poolName + '/?cView=resize">' + editIcon + '</a></td>';
               html += '<td>'+ poolUsage + '<strong>(' + poolUsagePercent + ' %)</strong></td>';
               html += '<td>'+ poolRaid + '&nbsp; <a href="#pools/' + poolName + '/?cView=resize">' + editIcon + '</a></td>';
@@ -189,9 +182,9 @@ PoolsView = RockstorLayoutView.extend({
               if (poolCompression == 'no' || _.isNull(poolCompression) || _.isUndefined(poolCompression) ) {
                 html += 'Off';
               }else {
-                html += 'On (Algorithm: <strong>' + poolCompression + '</strong>)' +
-                + '&nbsp;<a href="#pools/' + poolName + '/?cView=edit">' + editIcon + '</a>';
+                html += 'On (Algorithm: <strong>' + poolCompression + '</strong>)';
               }
+              html += ' &nbsp;<a href="#pools/' + poolName + '/?cView=edit">' + editIcon + '</a>';
               html += '</td>';
               html += '<td>' + poolMtOptions + '&nbsp;<a href="#pools/' + poolName +'/?cView=edit">' + editIcon + '</a></td>';
               html += '<td>';
@@ -209,10 +202,23 @@ PoolsView = RockstorLayoutView.extend({
         	    html += '</tr>';
         	}
             });
+
             return new Handlebars.SafeString(html);
             });
-          }
-        });
+
+          //createPool button needs to appear after the table so, call another helper function
+          Handlebars.registerHelper('print_CreatePool_Button', function() {
+            var html = '',
+                editIconGlyph = '<i class="glyphicon glyphicon-edit"></i>';
+            if(this.noOfFreeDisks > 0){
+              html += '<a href="#add_pool" id="add_pool" class="btn btn-primary">' + editIconGlyph + ' Create Pool</a>';
+            }else{
+              html += '<a  id="add_pool" class="btn btn-primary disabled" title="There are no Disks available to create a Pool at this time." >' + editIconGlyph + ' Create Pool</a>';
+           }
+           return new Handlebars.SafeString(html);
+         });
+      }
+  });
 
 
 // Add pagination
