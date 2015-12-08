@@ -24,8 +24,8 @@ import time
 from storageadmin.models import (NetworkInterface, Appliance)
 from smart_manager.models import (ReplicaTrail, ReplicaShare, Replica)
 from django.conf import settings
-from new_sender import NewSender
-from new_receiver import NewReceiver
+from sender import Sender
+from receiver import Receiver
 from django.utils.timezone import utc
 import logging
 logger = logging.getLogger(__name__)
@@ -120,10 +120,10 @@ class ReplicaScheduler(ReplicationMixin, Process):
         last_rt = rt_qs[0] if (len(rt_qs) > 0) else None
         if (last_rt is None):
             logger.debug('Starting a new Sender(%s).' % sender_key)
-            self.senders[sender_key] = NewSender(self.uuid, receiver_ip, replica)
+            self.senders[sender_key] = Sender(self.uuid, receiver_ip, replica)
         elif (last_rt.status == 'succeeded'):
             logger.debug('Starting a new Sender(%s)' % sender_key)
-            self.senders[sender_key] = NewSender(self.uuid, receiver_ip, replica, last_rt)
+            self.senders[sender_key] = Sender(self.uuid, receiver_ip, replica, last_rt)
         elif (last_rt.status == 'pending'):
             msg = ('Replica trail shows a pending Sender(%s), but it is not '
                    'alive. Marking it as failed. Will not start a new one.' % sender_key)
@@ -157,7 +157,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
             if (last_success_rt is None):
                 raise Exception('Failed to find the last successful '
                                 'ReplicaTrail for the Sender(%s). ' % sender_key)
-            self.senders[sender_key] = NewSender(self.uuid, receiver_ip, replica, last_success_rt)
+            self.senders[sender_key] = Sender(self.uuid, receiver_ip, replica, last_success_rt)
         else:
             msg = ('Unexpected ReplicaTrail status(%s) for Sender(%s). '
                    'Will not start a new one.' % (last_rt.status, sender_key))
@@ -243,7 +243,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
                                 #into it's retry/robust logic. But that is for later.
                                 frontend.send_multipart([address, 'receiver-init-error', msg])
                         if (start_nr):
-                            nr = NewReceiver(address, msg)
+                            nr = Receiver(address, msg)
                             nr.daemon = True
                             nr.start()
                             logger.debug('New Receiver(%s) started.' % address)
