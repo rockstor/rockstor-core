@@ -39,8 +39,9 @@ class ReplicaScheduler(ReplicationMixin, Process):
 
     def __init__(self):
         self.ppid = os.getpid()
-        self.senders = {}
-        self.receivers = {}
+        self.senders = {} # Active Sender(outgoing) process map.
+        self.receivers = {} # Active Receiver process map.
+        self.remote_senders = {} # Active incoming/remote Sender/client map.
         self.data_port = settings.REPLICA_DATA_PORT
         self.meta_port = settings.REPLICA_META_PORT
         self.MAX_ATTEMPTS = settings.MAX_REPLICA_SEND_ATTEMPTS
@@ -72,13 +73,21 @@ class ReplicaScheduler(ReplicationMixin, Process):
             logger.debug('Active Senders: %s' % self.senders.keys())
 
     def _delete_receivers(self):
+        active_msgs = []
         for r in self.local_receivers.keys():
+            msg_count = self.remote_senders.get(r, 0)
             ecode = self.local_receivers[r].exitcode
             if (ecode is not None):
                 del self.local_receivers[r]
-                logger.debug('Receiver(%s) exited. exitcode: %s. Removing from the list.' % (r, ecode))
-            if (len(self.local_receivers) > 0):
-                logger.debug('Active Receivers: %s' % self.local_receivers.keys())
+                if (r in self.remote_senders):
+                    del self.remote_senders[r]
+                logger.debug('Receiver(%s) exited. exitcode: %s. Total '
+                             'messages processed: %d. Removing from the list.'
+                             % (r, ecode, msg_count))
+            else:
+                active_msgs.append('Active Receiver: %s. Total messages processed: %d' % (r, msg_count))
+        for m in active_msgs:
+            logger.debug(m)
 
     def _get_receiver_ip(self, replica):
         if (replica.replication_ip is not None):
@@ -190,7 +199,6 @@ class ReplicaScheduler(ReplicationMixin, Process):
         poller = zmq.Poller()
         poller.register(frontend, zmq.POLLIN)
         poller.register(backend, zmq.POLLIN)
-        self.clients = {}
         self.local_receivers = {}
 
         iterations = 10 #
@@ -202,15 +210,15 @@ class ReplicaScheduler(ReplicationMixin, Process):
             socks = dict(poller.poll(timeout=poll_interval))
             if (frontend in socks and socks[frontend] == zmq.POLLIN):
                 address, command, msg = frontend.recv_multipart()
-                if (address not in self.clients):
-                    #@todo: need a way to cleanup clients that exited.
-                    self.clients[address] = 1
+                if (address not in self.remote_senders):
+                    self.remote_senders[address] = 1
                 else:
-                    self.clients[address] += 1
-
-                if (self.clients[address] % 1000 == 0):
-                    logger.debug('Processed %d messages from %s' %
-                                 (self.clients[address], address))
+                    self.remote_senders[address] += 1
+                msg_count += 1
+                if (msg_count == 1000):
+                    msg_count = 0
+                    for rs, count in self.remote_senders.items():
+                        logger.debug('Active Receiver: %s. Messages processed: %d' % (rs, count))
                 if (command == 'sender-ready'):
                     logger.debug('initial greeting from %s' % address)
                     #Start a new receiver and send the appropriate response
@@ -274,7 +282,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
                         logger.error(msg)
                     finally:
                         backend.send_multipart([address, rcommand, str(msg)])
-                elif (address in self.clients):
+                elif (address in self.remote_senders):
                     if (command in ('receiver-ready', 'receiver-error', 'btrfs-recv-finished')):
                         logger.debug('Identitiy: %s command: %s' % (address, command))
                         backend.send_multipart([address, b'ACK', ''])

@@ -316,8 +316,9 @@ class NewSender(ReplicationMixin, Process):
                             (self.snap_id))
                 self.update_trail = True
                 command, message = self._send_recv('', fs_data)
-                if (command == 'receiver-error'):
-                    self.msg = ('Got error command(%s) message(%s) from the Receiver while'
+                if (command is None or command == 'receiver-error'):
+                    #command is None when the remote side vanishes.
+                    self.msg = ('Got null or error command(%s) message(%s) from the Receiver while'
                                 ' transmitting fsdata. Aborting.' % (command, message))
                     raise Exception(message)
 
