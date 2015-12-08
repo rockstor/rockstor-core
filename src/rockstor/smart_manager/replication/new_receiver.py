@@ -228,9 +228,11 @@ class NewReceiver(ReplicationMixin, Process):
                                        stdout=subprocess.PIPE,
                                        stderr=subprocess.PIPE)
 
-            self.msg = ('Failed to send receiver-ready for identity: %s' % self.identity)
+            self.msg = ('Failed to send receiver-ready')
             rcommand, rmsg = self._send_recv('receiver-ready', latest_snap or '')
             if (rcommand is None):
+                logger.error('Id: %s. No response from the broker for '
+                             'receiver-ready command. Aborting.' % self.identity)
                 self._sys_exit(3)
 
             term_commands = ('btrfs-send-init-error', 'btrfs-send-unexpected-termination-error',

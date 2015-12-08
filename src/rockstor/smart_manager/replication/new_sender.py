@@ -240,8 +240,8 @@ class NewSender(ReplicationMixin, Process):
                                      % (self.identity, command, reply))
                         break
                     else:
-                        if (command == 'receiver-error'):
-                            self.msg = ('%s received for %s. extended reply: %s .Aborting.' %
+                        if (command in 'receiver-init-error'):
+                            self.msg = ('%s received for %s. extended reply: %s. Aborting.' %
                                         (command, self.identity, reply))
                         elif (command == 'snap-exists'):
                             logger.debug('%s received for %s. Not sending fsdata' % (command, self.identity))

@@ -71,6 +71,15 @@ class ReplicaScheduler(ReplicationMixin, Process):
         if (len(self.senders) > 0):
             logger.debug('Active Senders: %s' % self.senders.keys())
 
+    def _delete_receivers(self):
+        for r in self.local_receivers.keys():
+            ecode = self.local_receivers[r].exitcode
+            if (ecode is not None):
+                del self.local_receivers[r]
+                logger.debug('Receiver(%s) exited. exitcode: %s. Removing from the list.' % (r, ecode))
+            if (len(self.local_receivers) > 0):
+                logger.debug('Active Receivers: %s' % self.local_receivers.keys())
+
     def _get_receiver_ip(self, replica):
         if (replica.replication_ip is not None):
             return replica.replication_ip
@@ -182,6 +191,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
         poller.register(frontend, zmq.POLLIN)
         poller.register(backend, zmq.POLLIN)
         self.clients = {}
+        self.local_receivers = {}
 
         iterations = 10 #
         poll_interval = 6000 # 6 seconds
@@ -193,6 +203,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
             if (frontend in socks and socks[frontend] == zmq.POLLIN):
                 address, command, msg = frontend.recv_multipart()
                 if (address not in self.clients):
+                    #@todo: need a way to cleanup clients that exited.
                     self.clients[address] = 1
                 else:
                     self.clients[address] += 1
@@ -204,17 +215,38 @@ class ReplicaScheduler(ReplicationMixin, Process):
                     logger.debug('initial greeting from %s' % address)
                     #Start a new receiver and send the appropriate response
                     try:
-                        nr = NewReceiver(address, msg)
-                        nr.daemon = True
-                        nr.start()
-                        logger.debug('New receiver started for %s' % address)
+                        start_nr = True
+                        if (address in self.local_receivers):
+                            start_nr = False
+                            ecode = self.local_receivers[address].exitcode
+                            if (ecode is not None):
+                                del self.local_receivers[address]
+                                logger.debug('Receiver(%s) exited. exitcode: '
+                                             '%s. Forcing removal from broker '
+                                             'list.' % (address, ecode))
+                                start_nr = True
+                            else:
+                                msg = ('Receiver(%s) already exists. '
+                                       'Will not start a new one.' %
+                                       address)
+                                logger.error(msg)
+                                #@todo: There may be a different way to handle this. For example,
+                                #we can pass the message to the active receiver and factor
+                                #into it's retry/robust logic. But that is for later.
+                                frontend.send_multipart([address, 'receiver-init-error', msg])
+                        if (start_nr):
+                            nr = NewReceiver(address, msg)
+                            nr.daemon = True
+                            nr.start()
+                            logger.debug('New Receiver(%s) started.' % address)
+                            self.local_receivers[address] = nr
                         continue
                     except Exception, e:
-                        logger.debug('Exception while starting the '
-                                     'new receiver for %s: %s'
-                                     % (address, e.__str__()))
-                        reply_msg = 'receiver-init-error'
-                        frontend.send_multipart([address, command, 'receiver-init-error'])
+                        msg = ('Exception while starting the '
+                               'new receiver for %s: %s'
+                               % (address, e.__str__()))
+                        logger.error(msg)
+                        frontend.send_multipart([address, 'receiver-init-error', msg])
                 else:
                     #do we hit hwm? is the dealer still connected?
                     backend.send_multipart([address, command, msg])
@@ -254,6 +286,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
                 if (iterations == 0):
                     iterations = 10
                     self._prune_senders()
+                    self._delete_receivers()
 
                     if (os.getppid() != self.ppid):
                         logger.error('Parent exited. Aborting.')
