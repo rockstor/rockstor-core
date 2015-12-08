@@ -120,6 +120,7 @@ class NewSender(ReplicationMixin, Process):
         self.poll.register(self.send_req, zmq.POLLIN)
 
     def _send_recv(self, command, msg=''):
+        self.msg = ('Failed while send-recv-ing command(%s)' % command)
         rcommand = rmsg = None
         self.send_req.send_multipart([command, b'%s' % msg])
         #There is no retry logic here because it's an overkill at the moment.
@@ -138,7 +139,7 @@ class NewSender(ReplicationMixin, Process):
     def _delete_old_snaps(self, share_path):
         oldest_snap = get_oldest_snap(share_path, self.num_retain_snaps, regex='_replication_')
         if (oldest_snap is not None):
-            logger.debug('Deleting old snapshot: %s' % oldest_snap)
+            logger.debug('Id: %s. Deleting old snapshot: %s' % (self.identity, oldest_snap))
             self.msg = ('Failed to delete snapshot: %s. Aborting.' %
                         oldest_snap)
             if (self.delete_snapshot(self.replica.share, oldest_snap)):
@@ -150,6 +151,7 @@ class NewSender(ReplicationMixin, Process):
         #it may not be the one refered by self.rt(latest) but a previous one.
         #We need to make sure to *only* send the incremental send that receiver
         #expects.
+        self.msg = ('Failed to validate/refresh ReplicaTrail.')
         if (self.rlatest_snap is None):
             #Validate/update self.rt to the one that has the expected Snapshot on the system.
             for rt in ReplicaTrail.objects.filter(replica=self.replica, status='succeeded').order_by('-id'):
@@ -168,21 +170,22 @@ class NewSender(ReplicationMixin, Process):
             return None
 
         if (self.rt.snap_name != self.rlatest_snap):
-            msg = ('Mismatch on starting snapshot for '
-                   'btrfs-send. Sender picked %s but Receiver wants '
-                   '%s, which takes precedence.' % (self.rt.snap_name, self.rlatest_snap))
+            self.msg = ('Mismatch on starting snapshot for '
+                        'btrfs-send. Sender picked %s but Receiver wants '
+                        '%s, which takes precedence.' % (self.rt.snap_name, self.rlatest_snap))
             for rt in ReplicaTrail.objects.filter(replica=self.replica, status='succeeded').order_by('-id'):
                 if (rt.snap_name == self.rlatest_snap):
-                    msg = ('%s. successful trail found for %s' % (msg, self.rlatest_snap))
+                    self.msg = ('%s. successful trail found for %s' % (self.msg, self.rlatest_snap))
                     snap_path = ('%s%s/.snapshots/%s/%s' % (settings.MNT_PT, self.replica.pool,
                                                             self.replica.share, self.rlatest_snap))
                     if (is_subvol(snap_path)):
-                        msg = ('%s. Exists in the system and will be used at the start.')
-                        logger.debug(msg)
+                        self.msg = ('Snapshot(%s) exists in the system and will be '
+                                    'used as the parent' % snap_path)
+                        logger.debug('Id: %s. %s' % (self.identity, self.msg))
                         return rt
-                    msg = ('%s. Does not exist on the system. So cannot use it.')
-                    raise Exception(msg)
-            raise Exception('%s. No succeeded trail found for %s.' % (msg, self.rlatest_snap))
+                    self.msg = ('Snapshot(%s) does not exist on the system. So cannot use it.' % snap_path)
+                    raise Exception(self.msg)
+            raise Exception('%s. No succeeded trail found for %s.' % (self.msg, self.rlatest_snap))
 
         snap_path = ('%s%s/.snapshots/%s/%s' % (settings.MNT_PT, self.replica.pool,
                                                 self.replica.share, self.rlatest_snap))
@@ -216,7 +219,6 @@ class NewSender(ReplicationMixin, Process):
 
             # Refresh replica trail.
             if (self.rt is not None):
-                self.msg = ('Failed to validate/refresh replica trail.')
                 self.rt = self._refresh_rt()
 
             #  create a snapshot only if it's not already from a previous
@@ -244,7 +246,7 @@ class NewSender(ReplicationMixin, Process):
                             self.msg = ('%s received for %s. extended reply: %s. Aborting.' %
                                         (command, self.identity, reply))
                         elif (command == 'snap-exists'):
-                            logger.debug('%s received for %s. Not sending fsdata' % (command, self.identity))
+                            logger.debug('Id: %s. %s received. Not sending fsdata' % (self.identity, command))
                             data = {'status': 'succeeded',
                                     'error': 'snapshot already exists on the receiver',}
                             self.msg = ('Failed to  update replica status for %s' % self.snap_id)
@@ -274,11 +276,11 @@ class NewSender(ReplicationMixin, Process):
                 prev_snap = ('%s%s/.snapshots/%s/%s' %
                              (settings.MNT_PT, self.replica.pool,
                               self.replica.share, self.rt.snap_name))
-                logger.info('Sending incremental replica between %s -- %s' %
-                            (prev_snap, snap_path))
+                logger.info('Id: %s. Sending incremental replica between %s -- %s' %
+                            (self.identity, prev_snap, snap_path))
                 cmd = [BTRFS, 'send', '-p', prev_snap, snap_path]
             else:
-                logger.info('Sending full replica: %s' % snap_path)
+                logger.info('Id: %s. Sending full replica: %s' % (self.identity, snap_path))
 
             try:
                 self.sp = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE,
@@ -287,7 +289,7 @@ class NewSender(ReplicationMixin, Process):
             except Exception, e:
                 self.msg = ('Failed to start the low level btrfs send '
                             'command(%s). Aborting. Exception: ' % (cmd, e.__str__()))
-                logger.error(msg)
+                logger.error('Id: %s. %s' % (self.identity, msg))
                 self._send_recv('btrfs-send-init-error')
                 self._sys_exit(3)
 
@@ -295,8 +297,8 @@ class NewSender(ReplicationMixin, Process):
             while (alive):
                 try:
                     if (self.sp.poll() is not None):
-                        logger.debug('send process finished for %s. rc: %d. '
-                                     'stderr: %s' % (self.snap_id,
+                        logger.debug('Id: %s. send process finished for %s. rc: %d. '
+                                     'stderr: %s' % (self.identity, self.snap_id,
                                                      self.sp.returncode,
                                                      self.sp.stderr.read()))
                         alive = False
@@ -332,8 +334,8 @@ class NewSender(ReplicationMixin, Process):
                         command, message = self._send_recv('btrfs-send-stream-finished')
 
                 if (os.getppid() != self.ppid):
-                    logger.error('Scheduler exited. Sender for %s cannot go on. '
-                                 'Aborting.' % self.snap_id)
+                    logger.error('Id: %s. Scheduler exited. Sender for %s cannot go on. '
+                                 'Aborting.' % (self.identity, self.snap_id))
                     self._sys_exit(3)
 
             data = {'status': 'succeeded',
@@ -341,5 +343,5 @@ class NewSender(ReplicationMixin, Process):
             self.msg = ('Failed to update final replica status for %s'
                         '. Aborting.' % self.snap_id)
             self.update_replica_status(self.rt2_id, data)
-            logger.debug('Identity: %s. Send successful' % self.identity)
+            logger.debug('Id: %s. Send successful' % self.identity)
             self._sys_exit(0)

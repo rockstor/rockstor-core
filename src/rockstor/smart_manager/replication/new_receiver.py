@@ -73,10 +73,11 @@ class NewReceiver(ReplicationMixin, Process):
             try:
                 self.rp.terminate()
             except Exception, e:
-                logger.error('Exception while terminating the btrfs-recv process: %s' % e.__str__())
+                logger.error('Id: %s. Exception while terminating the btrfs-recv process: %s'
+                             % (self.identity, e.__str__()))
         self.ctx.destroy(linger=0)
         if (code == 0):
-            logger.debug('Identity: %s. meta: %s Receive successful' % (self.identity, self.meta))
+            logger.debug('Id: %s. meta: %s Receive successful' % (self.identity, self.meta))
         sys.exit(code)
 
     @contextmanager
@@ -91,7 +92,8 @@ class NewReceiver(ReplicationMixin, Process):
                             'error': self.msg, }
                     self.update_receive_trail(self.rtid, data)
                 except Exception, e:
-                    msg = ('Exception while updating receive trail for rtid(%d).' % self.rtid)
+                    msg = ('Id: %s. Exception while updating receive trail for rtid(%d).'
+                           % (self.identity, self.rtid))
                     logger.error('%s. Exception: %s' % (msg, e.__str__()))
 
             if (self.ack is True):
@@ -103,11 +105,12 @@ class NewReceiver(ReplicationMixin, Process):
                     socks = dict(self.poll.poll(60000)) # 60 seconds
                     if (socks.get(self.dealer) == zmq.POLLIN):
                         msg = self.dealer.recv()
-                        logger.debug('Response from the broker: %s' % msg)
+                        logger.debug('Id: %s. Response from the broker: %s' % (self.identity, msg))
                     else:
-                        logger.debug('No response received from the broker for: %s. Aborting' % self.identity)
+                        logger.debug('Id: %s. No response received from the broker' % self.identity)
                 except Exception, e:
-                    msg = ('Exception while sending %s back to the broker from %s. Aborting' % (command, self.identity))
+                    msg = ('Id: %s. Exception while sending %s back to the broker. Aborting'
+                           % (self.identity, command))
                     logger.error('%s. Exception: %s' % (msg, e.__str__()))
             self._sys_exit(3)
 
@@ -124,7 +127,7 @@ class NewReceiver(ReplicationMixin, Process):
         socks = dict(self.poll.poll(60000)) # 60 seconds.
         if (socks.get(self.dealer) == zmq.POLLIN):
             rcommand, rmsg = self.dealer.recv_multipart()
-        logger.debug('Identity: %s command: %s rcommand: %s' %
+        logger.debug('Id: %s command: %s rcommand: %s' %
                      (self.identity, command, rcommand))
         return rcommand, rmsg
 
@@ -138,7 +141,7 @@ class NewReceiver(ReplicationMixin, Process):
         return None
 
     def run(self):
-        logger.debug('Starting a new receiver for meta: %s' % self.meta)
+        logger.debug('Id: %s. Starting a new Receiver for meta: %s' % (self.identity, self.meta))
         self.msg = ('Top level exception in receiver')
         latest_snap = None
         with self._clean_exit_handler():
@@ -293,9 +296,9 @@ class NewReceiver(ReplicationMixin, Process):
                         raise Exception(self.msg)
                 else:
                     num_tries -= 1
-                    msg = ('Id: %s. No response received from the broker. '
-                           'remaining tries: %d' % (self.identity, num_tries))
-                    logger.error(msg)
+                    msg = ('No response received from the broker. '
+                           'remaining tries: %d' % num_tries)
+                    logger.error('Id: %s. %s' % (self.identity, msg))
                     if (num_tries == 0):
                         self.msg = ('%s. Terminating the receiver.' % msg)
                         raise Exception(self.msg)
