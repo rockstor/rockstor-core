@@ -50,42 +50,51 @@ class DiskMixin(object):
         # I.e. stored device serial numbers vs attached device serial numbers
         # This way we can preserve removed device info prior to overwrite.
         offline_disks = []
+        serial_numbers = []
         # Note that the following doesn't cope with the circumstance left from
         # the previous code where a removed disk was incorrectly labeled with
         # the details, including serial and size, of an existing attached disk.
+
+        # Sanitize our db entries in view of what we know we have attached.
+        # Device serial number is only known external unique entry, scan_disks
+        # make this so in the case of empty or repeat entries.
+        # 1) scrub all device names with unique but nonsense uuid4
+        # 1) mark all offline disks as such via db flag
+        # 2) mark all offline disks smart available and enabled flags as False
         for do in Disk.objects.all():
-            # look for devices that are in the db but not in our disk_scan
+            # Replace all device names with a unique placeholder on each scan
+            # N.B. do not optimize by re-using uuid index as this could lead
+            # to a non refreshed webui acting upon an entry that was different
+            # from that shown to the user.
+            do.name = str(uuid.uuid4()).replace('-', '')  # 32 chars long
+            # Look for devices that are in the db but not in our disk_scan
             # using serial to uniquely identify devices.
+            # This means they were once known but are no longer attached.
             if (do.serial not in [d.serial for d in disks]):
+                # add this disk to the offline_disks list (may be redundant now)
                 offline_disks.append(deepcopy(do))
-        # Iterate over the attached drives to update the db's knowledge.
-        # N.B. Disk model has name (dev name) as unique to reflect kernel dev
-        # Also note that this involves a whole sale overwrite of dev db slots
+                # update the db entry as offline
+                do.offline = True
+                # disable S.M.A.R.T available and enabled flags.
+                do.smart_available = do.smart_enabled = False
+            # make sure all updates are flushed to db
+            do.save()
+        # Our db now has no device name info as all dev names are place holders.
+        # Iterate over attached drives to update the db's knowledge of them.
+        # Kernel dev names are unique so safe to overwrite our db unique name.
         for d in disks:
             # start with an empty disk object
             dob = None
-            # If the db has an exiting entry with this disk's name then
-            # copy this entire entry and then update the serial number.
-            if (Disk.objects.filter(name=d.name).exists()):
-                dob = Disk.objects.get(name=d.name)
-                dob.serial = d.serial
-            # If the db has existing entry with this disk's serial number and
-            # there was no prior match by name (last conditional) then
-            # copy this entire entry and update the device name (ie the dev)
-            elif (Disk.objects.filter(serial=d.serial).exists()):
+            # If the db has an entry with this disk's serial number then
+            # use this entry and update the device name from our recent scan.
+            if (Disk.objects.filter(serial=d.serial).exists()):
                 dob = Disk.objects.get(serial=d.serial)
                 dob.name = d.name
-            # we have an assumed new disk entry as no dev name or serial match
-            # with db stored results. Build a new entry for this disk.
             else:
-                # should only need to write name and serial here as in above
-                # cases where either serial or name already match
-                dob = Disk(name=d.name, size=d.size, parted=d.parted,
-                           btrfs_uuid=d.btrfs_uuid, model=d.model,
-                           serial=d.serial, transport=d.transport,
-                           vendor=d.vendor)
-            # Update the chosen disk object (existing or new)
-            # Some detail transfers here may be redundant but working as is.
+                # We have an assumed new disk entry as there was no serial match
+                # with db stored results. Build a new entry for this disk.
+                dob = Disk(name=d.name, serial=d.serial)
+            # Update the db disk object (existing or new) with our scanned info
             dob.size = d.size
             dob.parted = d.parted
             dob.offline = False  # as we are iterating over attached devices
@@ -97,60 +106,33 @@ class DiskMixin(object):
             if (d.fstype is not None and d.fstype != 'btrfs'):
                 dob.btrfs_uuid = None
                 dob.parted = True
-            # If our existing Pool db knows of this disk's label then
+            # If our existing Pool db knows of this disk's pool via it's label:
             if (Pool.objects.filter(name=d.label).exists()):
-                # update the disk object's pool attribute as we know it already
+                # update the disk db object's pool field accordingly.
                 dob.pool = Pool.objects.get(name=d.label)
             else:  # this disk is not known to exist in any pool via it's label
                 dob.pool = None
-            # if the disk object is not a member of a pool and
-            # the attached disk we are examining is our root disk
+            # if no pool has yet been found with this disk's label in and
+            # the attached disk is our root disk:
             if (dob.pool is None and d.root is True):
-                # setup our special root disk db entry
+                # setup our special root disk db entry in Pool
                 p = Pool(name=settings.ROOT_POOL, raid='single')
                 p.disk_set.add(dob)
                 p.save()
+                # update disk db object to reflect special root pool status
                 dob.pool = p
                 dob.save()
                 p.size = pool_usage(mount_root(p))[0]
                 enable_quota(p)
                 p.uuid = btrfs_uuid(dob.name)
                 p.save()
+            # save our updated db disk object
             dob.save()
-        # Now do a final pass over all database Disk.objects to
-        # 1) Update offline status after db re-writes above
-        # 2) Insert the missing / offline disk info into the remaining db slots
-        # 3) Update smart (available, enabled) properties
-        # todo Do we need to cope with more missing disks than db entries?
-        # todo How would they be missing if we didn't first know of them?
-        # todo To know of them there must be a db slot / entry.
+        # Update online db entries with S.M.A.R.T availability and status.
         for do in Disk.objects.all():
-            # If the name (db index) is not in our scanned disks by now then
-            # this is an unused db entry, re-use it to store our missing drive
-            # info and rewrite the db index to a fresh unique value each time.
-            if (do.name not in [d.name for d in disks]):
-                # N.B. Do NOT optimize by re using existing uuid derived
-                # missing device names as this could lead to webui showing old
-                # info from a previous boot and deleting the wrong missing dev.
-                # Rewrite the db index to a new unique chars string.
-                do.name = str(uuid.uuid4()).replace('-', '')  # 32 chars long
-                do.offline = True
-                do.smart_available = do.smart_enabled = False
-                # now update this entry with one of our missing drives, if any.
-                if len(offline_disks) > 0:
-                    missing_disk = offline_disks.pop()
-                    # update the remaining info from our popped offline disk.
-                    do.serial = missing_disk.serial
-                    do.size = missing_disk.size
-                    do.model = missing_disk.model
-                    do.parted = missing_disk.parted
-                    do.pool = missing_disk.pool
-                    dob.transport = missing_disk.transport
-                    dob.vendor = missing_disk.vendor
-                    # N.B. very dangerous to have duplicate uuid block devices
-                    # however this is a missing / offline entry
-                    dob.btrfs_uuid = missing_disk.btrfs_uuid
-            else:  # we have an attached disk entry so try updating smart info
+            # find all the off line db entries
+            if (not do.offline):
+               # we have an attached disk entry so try updating smart info
                 try:
                     # for non ata/sata drives
                     do.smart_available, do.smart_enabled = smart.available(do.name)
