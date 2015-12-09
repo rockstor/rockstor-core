@@ -243,8 +243,9 @@ class Sender(ReplicationMixin, Process):
                     logger.debug('Id: %s. No response from receiver. Number '
                                  'of retry attempts left: %d' % (self.identity, retries_left))
                     if (retries_left == 0):
-                        logger.error('Id: %s Receiver is unreachable. Quiting' % self.identity)
-                        self._sys_exit(3)
+                        self.msg = ('Receiver(%s:%d) is unreachable. Aborting.' %
+                                    (self.receiver_ip, self.receiver_port))
+                        raise Exception(self.msg)
                     self.send_req.setsockopt(zmq.LINGER, 0)
                     self.send_req.close()
                     self.poll.unregister(self.send_req)
