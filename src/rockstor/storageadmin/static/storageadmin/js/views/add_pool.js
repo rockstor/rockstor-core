@@ -35,7 +35,7 @@ initialize: function() {
 	this.template = window.JST.pool_add_pool_template;
 
 	// dont paginate disk selection table for now
-	this.pagination_template = window.JST.common_pagination;
+	//this.pagination_template = window.JST.common_pagination;
 	this.collection = new DiskCollection();
 	// we do this as a workaround until we fix the add pool form properly.
 	// with default page size, only upto 15 drives are shown.
@@ -43,6 +43,7 @@ initialize: function() {
 	this.collection.setPageSize(100);
 	this.filteredCollection = new DiskCollection();
 	this.collection.on("reset", this.renderDisks, this);
+	this.initHandlebarHelpers();
 },
 
 render: function() {
@@ -237,7 +238,27 @@ clicked: function (event) {
 		$("#SelectedDisksTable").empty();
 	}
 
+},
+
+initHandlebarHelpers: function(){
+	Handlebars.registerHelper('show_disks', function(){
+		var html = '';
+		this.disks.each(function(disk, index) {
+				 var diskName = disk.get('name'),
+				 			diskId = disk.get('id');
+				 html += '<tr>';
+				 html += '<td>' + (index+1) + '</td>';
+				 html += '<td>' + diskName + '</td>';
+				 html += '<td>' + humanize.filesize(disk.get('size') * 1024) + '</td>';
+				 html += '<td>';
+				 html += '<input type="checkbox" class="disk" name="'+ diskName +'" id="' + diskId + '" value="' + diskName + '" />';
+				 html += '</td>';
+				 html += '</tr>';
+		});
+		return new Handlebars.SafeString(html);
+	});
 }
+
 });
 
 // Add pagination
