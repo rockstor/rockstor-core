@@ -51,9 +51,12 @@ class DiskMixin(object):
         # This way we can preserve removed device info prior to overwrite.
         offline_disks = []
         serial_numbers = []
+
         # Note that the following doesn't cope with the circumstance left from
         # the previous code where a removed disk was incorrectly labeled with
         # the details, including serial and size, of an existing attached disk.
+        # todo we should be defensive and check if all serials ar in fact unique
+        # todo and remove entries to deal with the above scenario, just in case.
 
         # Sanitize our db entries in view of what we know we have attached.
         # Device serial number is only known external unique entry, scan_disks
