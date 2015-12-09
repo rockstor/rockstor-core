@@ -81,8 +81,12 @@ ConfigureServiceView = RockstorLayoutView.extend({
 		domain: 'required',
 		username: 'required',
 		password: 'required'
+	    },
+	    replication: {
+		listener_port: 'required',
+		network_interface: 'required'
 	    }
-        }
+	}
 
         this.formName = this.serviceName + '-form';
         this.service = new Service({name: this.serviceName});
@@ -90,7 +94,8 @@ ConfigureServiceView = RockstorLayoutView.extend({
         this.shares = new ShareCollection();
         this.shares.setPageSize(100);
         this.dependencies.push(this.shares);
-
+	this.network = new NetworkInterfaceCollection();
+	this.dependencies.push(this.network);
     },
 
     render: function () {
@@ -108,7 +113,8 @@ ConfigureServiceView = RockstorLayoutView.extend({
         $(this.el).html(this.template({
             service: this.service,
             config: configObj,
-            shares: this.shares
+            shares: this.shares,
+	    network: this.network
         }));
 
         this.$('#nis-form :input').tooltip({
@@ -214,6 +220,16 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
             placement: 'right',
             title: 'Device name for how this UPS is connected. E.g for the first serial port use "/dev/ttyS0" or if using a USB to serial port adapter then "/dev/ttyUSB0". Use "auto" if connected direct via USB.'
         });
+	this.$('#replication-form #network_interface').tooltip({
+            html: true,
+            placement: 'right',
+            title: 'Select one of the available Network interfaces to be used by the listener.'
+        });
+	this.$('#replication-form #listener_port').tooltip({
+	    html: true,
+	    placement: 'right',
+	    title: 'A valid port number(between 1-65535) for the listener. Default/Suggested port -- 10002'
+	});
 
         this.validator = this.$('#' + this.formName).validate({
             onfocusout: false,

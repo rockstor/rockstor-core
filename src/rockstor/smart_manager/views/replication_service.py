@@ -38,29 +38,38 @@ class ReplicationServiceView(BaseServiceDetailView):
         """
         service = Service.objects.get(name='replication')
         if (command == 'config'):
-            #nothing to really configure atm. just save the model
             try:
                 config = request.data['config']
+                try:
+                    listener_port = int(config['listener_port'])
+                except ValueError:
+                    raise Exception('Listener Port must be a valid port number between 0-65535')
+
+                if (listener_port < 0 or listener_port > 65535):
+                    raise Exception('Invalid listener port(%d)' % listener_port)
+                ni = config['network_interface']
+                if (not NetworkInterface.objects.filter(name=ni).exists()):
+                    raise Exception('Network Interface(%s) does not exist.' % ni)
                 self._save_config(service, config)
+                return Response()
             except Exception, e:
-                logger.exception(e)
-                e_msg = ('Replication could not be configured. Try again')
+                e_msg = ('Failed to configure Replication. Try again. Exception: %s' % e.__str__())
                 handle_exception(Exception(e_msg), request)
 
-        else:
-            if (not NetworkInterface.objects.filter(itype__regex=r'^(management|replication)').exists()):
-                e_msg = ('Replication service needs a network interface '
-                         'configured with management or replication role. '
-                         'Go to System -> Network Interfaces to assign a role.'
-                         'Then, come back and try again.')
-                handle_exception(Exception(e_msg), request)
-
+        if (command == 'start'):
             try:
-
-                superctl(service.name, command)
-            except Exception, e:
-                e_msg = ('Failed to %s Replication due to a system error: %s' %
-                         (command, e.__str__()))
+                config = self._get_config(service)
+            except:
+                e_msg = ('Configuration undefined. Configure the service first before starting.')
                 handle_exception(Exception(e_msg), request)
 
-        return Response()
+            if (not NetworkInterface.objects.filter(name=config['network_interface']).exists()):
+                e_msg = ('Network interface does not exist. Update your configuration and try again.')
+                handle_exception(Exception(e_msg), request)
+        try:
+            superctl(service.name, command)
+            return Response()
+        except Exception, e:
+            e_msg = ('Failed to %s Replication due to an error: %s' %
+                     (command, e.__str__()))
+            handle_exception(Exception(e_msg), request)
