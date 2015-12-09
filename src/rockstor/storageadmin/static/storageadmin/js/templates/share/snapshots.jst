@@ -55,11 +55,13 @@
       </td>
       <td><i class="glyphicon glyphicon-camera"></i> <%= snapshot.get('name') %></td>
       <td><%= moment(snapshot.get("toc")).format(RS_DATE_FORMAT) %></td>
+      <td>
       <% shares.each( function(share, index) { %>
-      <%  if(snapshot.get('share')== share.get('id')){  %>
-      <td><a href="#shares/<%= share.get('name') %>"> <%= share.get('name') %></a></td>
-      <%     } %>
+      <% if(snapshot.get('share')== share.get('id')){  %>
+      <a href="#shares/<%= share.get('name') %>"> <%= share.get('name') %></a>
+      <% } %>
       <% }); %>
+      </td>
 
       <td>
         <% if (snapshot.get("uvisible")) { %>

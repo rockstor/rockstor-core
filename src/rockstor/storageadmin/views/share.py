@@ -98,7 +98,7 @@ class ShareListView(ShareMixin, rfc.GenericView):
                     reverse = False
                 return sorted(Share.objects.all(), key=lambda u: u.rusage,
                               reverse=reverse)
-            return Share.objects.all()
+            return Share.objects.exclude(name__regex=r'^\.snapshots/.*/.*_replication_')
 
     @transaction.atomic
     def post(self, request):
