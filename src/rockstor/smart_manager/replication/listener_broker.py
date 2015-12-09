@@ -19,6 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from multiprocessing import Process
 import zmq
 import os
+import json
 from storageadmin.models import (NetworkInterface, Appliance)
 from smart_manager.models import (ReplicaTrail, ReplicaShare, Replica)
 from django.conf import settings
@@ -38,8 +39,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
         self.receivers = {} # Active Receiver process map.
         self.remote_senders = {} # Active incoming/remote Sender/client map.
         self.MAX_ATTEMPTS = settings.REPLICATION.get('max_send_attempts')
-        self.uuid = None
-        self.rep_ip = None
+        self.uuid = self.listener_interface = self.listener_port = None
         super(ReplicaScheduler, self).__init__()
 
     def _prune_workers(self, workers):
@@ -156,16 +156,14 @@ class ReplicaScheduler(ReplicationMixin, Process):
     def run(self):
         self.law = APIWrapper()
         try:
-            if (NetworkInterface.objects.filter(itype='replication').exists()):
-                self.rep_ip = NetworkInterface.objects.filter(itype='replication')[0].ipaddr
-            else:
-                self.rep_ip = NetworkInterface.objects.get(itype='management').ipaddr
-        except NetworkInterface.DoesNotExist:
-            msg = ('Failed to get replication interface. If you have only one'
-                   ' network interface, assign management role to it and '
-                   'replication service will use it. In addition, you can '
-                   'assign a dedicated replication role to another interface.'
-                   ' Aborting for now. Exception: %s' % e.__str__())
+            from smart_manager.models import Service
+            so = Service.objects.get(name='replication')
+            config_d = json.loads(so.config)
+            self.listener_interface = NetworkInterface.objects.get(name=config_d['network_interface']).ipaddr
+            self.listener_port = int(config_d['listener_port'])
+        except Exception, e:
+            msg = ('Failed to fetch network interface for Listner/Broker. '
+                   'Exception: %s' % e.__str__())
             return logger.error(msg)
 
         try:
@@ -178,7 +176,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
         ctx = zmq.Context()
         frontend = ctx.socket(zmq.ROUTER)
         frontend.set_hwm(10)
-        frontend.bind('tcp://%s:5555' % self.rep_ip)
+        frontend.bind('tcp://%s:%d' % (self.listener_interface, self.listener_port))
 
         backend = ctx.socket(zmq.ROUTER)
         backend.bind('ipc://%s' % settings.REPLICATION.get('ipc_socket'))
