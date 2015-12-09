@@ -72,7 +72,6 @@ SnapshotsView  = RockstorLayoutView.extend({
 	$(this.el).append(this.template({
 	    snapshots: this.collection,
 	    selectedSnapshots: this.selectedSnapshots,
-      //share: this.share,
 	    shares: this.shares,
       //add new variables to access from template
       collection: this.collection,
@@ -96,7 +95,7 @@ SnapshotsView  = RockstorLayoutView.extend({
 	event.preventDefault();
 	$(this.el).html(this.addTemplate({
 	    snapshots: this.collection,
-	    share: this.share,
+	    //share: this.share,
 	    shares: this.shares,
 	    modify_choices: this.modify_choices
 
@@ -387,8 +386,31 @@ SnapshotsView  = RockstorLayoutView.extend({
           });
         return new Handlebars.SafeString(html);
       });
-    }
 
+      Handlebars.registerHelper('show_shares_dropdown', function() {
+        var html = '';
+        this.shares.each( function(share, index) {
+          var shareName = share.get('name');
+          html += '<option value="' + shareName + '">' + shareName + '</option>';
+        });
+          return new Handlebars.SafeString(html);
+      });
+
+      Handlebars.registerHelper('display_writeable_options', function() {
+        var html = '';
+        _.each(this.modify_choices, function(c) {
+           html += '<label class="radio-inline">';
+           if(c.value == 'yes'){
+              html += '<input type="radio" name="writable" value="rw" checked>' + c.name;
+           }else{
+              html += '<input type="radio" name="writable" value="ro" title="Note that (1)read-only snapshots cannot be cloned and (2)Shares cannot be rolled back to read-only snapshots" >' + c.name;
+           }
+           html += '</label>';
+         });
+          return new Handlebars.SafeString(html);
+      });
+
+    }
 });
 
 // Add pagination
