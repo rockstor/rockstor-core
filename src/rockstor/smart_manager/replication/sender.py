@@ -42,7 +42,7 @@ class Sender(ReplicationMixin, Process):
     def __init__(self, uuid, receiver_ip, replica, rt=None):
         self.uuid = uuid
         self.receiver_ip = receiver_ip
-        self.receiver_port = 5555
+        self.receiver_port = replica.data_port
         self.replica = replica
         self.snap_name = '%s_%d_replication' % (replica.share, replica.id)
         self.snap_name += '_1' if (rt is None) else '_%d' % (rt.id + 1)
@@ -86,23 +86,6 @@ class Sender(ReplicationMixin, Process):
             self.sp.terminate()
         self.ctx.destroy(linger=0)
         sys.exit(code)
-
-    @contextmanager
-    #but we don't always quit?
-    def _update_trail_and_quit(self):
-        try:
-            yield
-        except Exception, e:
-            logger.error('Id: %s. %s. Exception: %s' % (self.identity, self.msg, e.__str__()))
-            try:
-                data = {'status': 'failed',
-                        'error': self.msg, }
-                self.update_replica_status(self.rt2_id, data)
-            except Exception, e:
-                logger.error('Id: %s. Exception occured in cleanup handler: %s' %
-                             (self.identity, e.__str__()))
-            finally:
-                self._sys_exit(3)
 
     def _init_greeting(self):
         self.send_req = self.ctx.socket(zmq.DEALER)
