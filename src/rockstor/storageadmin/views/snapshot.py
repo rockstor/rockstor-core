@@ -119,15 +119,14 @@ class SnapshotView(NFSExportMixin, rfc.GenericView):
 
         snap_size = 0
         qgroup_id = '0/na'
-        if (snap_type != 'receiver'):
-            if (snap_type == 'replication'):
-                writable = False
-            add_snap(share.pool, share.subvol_name, snap_name, readonly=not
-                     writable)
-            snap_id = share_id(share.pool, snap_name)
-            qgroup_id = ('0/%s' % snap_id)
-            qgroup_assign(qgroup_id, share.pqgroup, ('%s/%s' % (settings.MNT_PT, share.pool.name)))
-            snap_size, eusage = share_usage(share.pool, qgroup_id)
+        if (snap_type == 'replication'):
+            writable = False
+        add_snap(share.pool, share.subvol_name, snap_name, readonly=not
+                 writable)
+        snap_id = share_id(share.pool, snap_name)
+        qgroup_id = ('0/%s' % snap_id)
+        qgroup_assign(qgroup_id, share.pqgroup, ('%s/%s' % (settings.MNT_PT, share.pool.name)))
+        snap_size, eusage = share_usage(share.pool, qgroup_id)
         s = Snapshot(share=share, name=snap_name, real_name=snap_name,
                      size=snap_size, qgroup=qgroup_id,
                      uvisible=uvisible, snap_type=snap_type,

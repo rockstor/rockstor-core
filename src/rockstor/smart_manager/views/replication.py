@@ -56,6 +56,18 @@ class ReplicaMixin(object):
                    cfo.write('%s root %sbin/send-replica %d\n' %
                              (replica.crontab, settings.ROOT_DIR, replica.id))
 
+    @staticmethod
+    def _validate_port(port, request):
+        try:
+            port = int(port)
+        except ValueError:
+            e_msg = ('Remote Listener port must be a valid port number(1-65535)')
+            handle_exception(Exception(e_msg), request)
+
+        if (port < 1 or port > 65535):
+            e_msg = ('Valid port numbers are between 1-65535')
+            handle_exception(Exception(e_msg), request)
+        return port
 
 class ReplicaListView(ReplicaMixin, rfc.GenericView):
 
@@ -85,48 +97,36 @@ class ReplicaListView(ReplicaMixin, rfc.GenericView):
             dpool = request.data.get('pool')
             crontab = request.data.get('crontab')
             task_name = request.data.get('task_name')
-            try:
-                data_port = int(request.data.get('data_port'))
-                meta_port = int(request.data.get('meta_port'))
-            except:
-                e_msg = ('data and meta ports must be valid port '
-                         'numbers(1-65535).')
-                handle_exception(Exception(e_msg), request)
-            data_port = self._validate_port(data_port, request)
-            meta_port = self._validate_port(meta_port, request)
-            replication_ip = request.data.get('replication_ip', None)
+            data_port = self._validate_port(request.data.get('listener_port'), request)
+            replication_ip = request.data.get('listener_ip', None)
             if (replication_ip is not None and len(replication_ip.strip()) == 0):
                 replication_ip = None
             ts = datetime.utcnow().replace(tzinfo=utc)
             r = Replica(task_name=task_name, share=sname,
                         appliance=appliance.uuid, pool=share.pool.name,
                         dpool=dpool, enabled=True, crontab=crontab,
-                        data_port=data_port, meta_port=meta_port, ts=ts,
+                        data_port=data_port, ts=ts,
                         replication_ip=replication_ip)
             r.save()
             self._refresh_crontab()
             return Response(ReplicaSerializer(r).data)
 
-    def _validate_share(self, sname, request):
+    @staticmethod
+    def _validate_share(sname, request):
         try:
             return Share.objects.get(name=sname)
         except:
             e_msg = ('Share: %s does not exist' % sname)
             handle_exception(Exception(e_msg), request)
 
-    def _validate_appliance(self, request):
+    @staticmethod
+    def _validate_appliance(request):
         try:
             ip = request.data.get('appliance', None)
             return Appliance.objects.get(ip=ip)
         except:
             e_msg = ('Appliance with ip(%s) is not recognized.' % ip)
             handle_exception(Exception(e_msg), request)
-
-    def _validate_port(self, port, request):
-        if (port < 1 or port > 65535):
-            e_msg = ('Valid port numbers are between 1-65535')
-            handle_exception(Exception(e_msg), request)
-        return port
 
 
 class ReplicaDetailView(ReplicaMixin, rfc.GenericView):
@@ -155,10 +155,11 @@ class ReplicaDetailView(ReplicaMixin, rfc.GenericView):
                          type(enabled))
                 handle_exception(Exception(e_msg), request)
             r.enabled = enabled
-            replication_ip = request.data.get('replication_ip', r.replication_ip)
+            replication_ip = request.data.get('listener_ip', r.replication_ip)
             if (replication_ip is not None and len(replication_ip.strip()) == 0):
                 replication_ip = None
             r.replication_ip = replication_ip
+            r.data_port = self._validate_port(request.data.get('listener_port', r.data_port), request)
             ts = datetime.utcnow().replace(tzinfo=utc)
             r.ts = ts
             r.save()
