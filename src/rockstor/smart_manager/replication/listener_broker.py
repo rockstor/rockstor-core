@@ -136,14 +136,15 @@ class ReplicaScheduler(ReplicationMixin, Process):
                 self.disable_replica(replica.id)
                 raise Exception(msg)
 
-            msg = ('previous backup failed for Sender(%s). Starting a new '
-                   'one. Attempt %d/%d.' %
-                   (sender_key, num_tries, self.MAX_ATTEMPTS))
-            logger.debug(msg)
-            last_success_rt = ReplicaTrail.objects.filter(replica=replica, status='succeeded').latest('id')
-            if (last_success_rt is None):
-                raise Exception('Failed to find the last successful '
-                                'ReplicaTrail for the Sender(%s). ' % sender_key)
+            logger.debug('previous backup failed for Sender(%s). Starting a new '
+                         'one. Attempt %d/%d.' %
+                         (sender_key, num_tries, self.MAX_ATTEMPTS))
+            try:
+                last_success_rt = ReplicaTrail.objects.filter(replica=replica, status='succeeded').latest('id')
+            except ReplicaTrail.DoesNotExist:
+                logger.debug('No record of last successful ReplicaTrail for '
+                             'Sender(%s). Will start a new Full Sender.' % sender_key)
+                last_success_rt = None
             self.senders[sender_key] = Sender(self.uuid, receiver_ip, replica, last_success_rt)
         else:
             msg = ('Unexpected ReplicaTrail status(%s) for Sender(%s). '
