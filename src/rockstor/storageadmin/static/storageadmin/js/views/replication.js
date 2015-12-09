@@ -208,42 +208,40 @@ ReplicationView = RockstorLayoutView.extend({
     	}
     },
 
-    startService: function(event){
+    startService: function(){
     	var _this = this;
-    	var serviceName = this.serviceName;
-    	this.setStatusLoading(serviceName, true);
+    	this.setStatusLoading(this.serviceName, true);
     	$.ajax({
     	    url: "/api/sm/services/replication/start",
     	    type: "POST",
     	    dataType: "json",
     	    success: function(data, status, xhr) {
-    		_this.setStatusLoading(serviceName, false);
+    		_this.setStatusLoading(_this.serviceName, false);
 		_this.current_status = true;
     		//hide replication service warning
     		_this.$('#replication-warning').hide();
     	    },
     	    error: function(xhr, status, error) {
-    		_this.setStatusError(serviceName, xhr);
+    		_this.setStatusError(_this.serviceName, xhr);
     	    }
     	});
     },
 
-    stopService: function(event) {
-	var _this = this;
-    	var serviceName = this.serviceName;
-      	this.setStatusLoading(serviceName, true);
+    stopService: function() {
+	    var _this = this;
+      	this.setStatusLoading(this.serviceName, true);
       	$.ajax({
       	    url: "/api/sm/services/replication/stop",
       	    type: "POST",
       	    dataType: "json",
       	    success: function(data, status, xhr) {
-      		_this.setStatusLoading(serviceName, false);
+      		_this.setStatusLoading(_this.serviceName, false);
 		_this.current_status = false;
     		//display replication service warning
     		_this.$('#replication-warning').show();
       	    },
       	    error: function(xhr, status, error) {
-      		_this.setStatusError(serviceName, xhr);
+      		_this.setStatusError(_this.serviceName, xhr);
       	    }
       	});
     },

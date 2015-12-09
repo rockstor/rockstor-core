@@ -26,8 +26,7 @@
 
 AFPView  = RockstorLayoutView.extend({
   events: {
-    'click .slider-stop': "stopService",
-    'click .slider-start': "startService",
+    'switchChange.bootstrapSwitch' : 'switchStatus',
     'click .delete-afp-share': 'deleteAFP'
   },
 
@@ -69,22 +68,29 @@ AFPView  = RockstorLayoutView.extend({
     this.$(".ph-pagination").html(this.paginationTemplate({
       collection: this.collection
     }));
-  
-  this.$('input.service-status').simpleSlider({
-      "theme": "volume",
-      allowedValues: [0,1],
-      snap: true 
-    });
 
-    this.$('input.service-status').each(function(i, el) {
-      var slider = $(el).data('slider-object');
-      // disable track and dragger events to disable slider
-      slider.trackEvent = function(e) {};
-      slider.dragger.unbind('mousedown');
-    });
-    this.displayAfpWarning(this.serviceName);
+    //initalize Bootstrap Switch
+  	this.$("[type='checkbox']").bootstrapSwitch();
+  	this.$('input[name="afp-service-checkbox"]').bootstrapSwitch('state', this.service.get('status'), true);
+  	this.$("[type='checkbox']").bootstrapSwitch('onColor','success'); //left side text color
+  	this.$("[type='checkbox']").bootstrapSwitch('offColor','danger'); //right side text color
+
+  	// Display NFS Export Service Warning
+      	if (!this.service.get('status')) {
+      	    this.$('#afp-warning').show();
+      	} else {
+      	    this.$('#afp-warning').hide();
+      	}
   },
-  
+
+  switchStatus: function(event,state){
+          if (state){
+              this.startService();
+          }else {
+              this.stopService();
+          }
+  },
+
   deleteAFP: function(event) {
     var _this = this;
     if (event) event.preventDefault();
@@ -109,64 +115,41 @@ AFPView  = RockstorLayoutView.extend({
 
     }
   },
-  
-   startService: function(event) {
+
+   startService: function() {
     var _this = this;
-    var serviceName = this.serviceName; 
-    // if already started, return
-    if (this.getSliderVal(serviceName).toString() == "1") return; 
-    this.stopPolling();
-    this.setStatusLoading(serviceName, true);
+    this.setStatusLoading(this.serviceName, true);
     $.ajax({
       url: "/api/sm/services/netatalk/start",
       type: "POST",
       dataType: "json",
       success: function(data, status, xhr) {
-        _this.highlightStartEl(serviceName, true);
-        _this.setSliderVal(serviceName, 1); 
-        _this.setStatusLoading(serviceName, false);
-        _this.startPolling();
-        _this.displayAfpWarning(serviceName);
+        _this.setStatusLoading(_this.serviceName, false);
+        _this.$('#afp-warning').hide();
       },
       error: function(xhr, status, error) {
         _this.setStatusError(serviceName, xhr);
-        _this.startPolling();
+        _this.$('#afp-warning').show();
       }
     });
   },
 
-  stopService: function(event) {
+  stopService: function() {
     var _this = this;
-    var serviceName = $(event.currentTarget).data('service-name'); 
-    // if already stopped, return
-    if (this.getSliderVal(serviceName).toString() == "0") return; 
-    this.stopPolling();
-    this.setStatusLoading(serviceName, true);
+    this.setStatusLoading(this.serviceName, true);
     $.ajax({
       url: "/api/sm/services/netatalk/stop",
       type: "POST",
       dataType: "json",
       success: function(data, status, xhr) {
-        _this.highlightStartEl(serviceName, false);
-        _this.setSliderVal(serviceName, 0); 
-        _this.setStatusLoading(serviceName, false);
-        _this.startPolling();
-        _this.displayAfpWarning(serviceName);
+        _this.setStatusLoading(_this.serviceName, false);
+        _this.$('#afp-warning').show();
       },
       error: function(xhr, status, error) {
-        _this.setStatusError(serviceName, xhr);
-        _this.startPolling();
+        _this.setStatusError(_this.serviceName, xhr);
+        _this.$('#afp-warning').hide();
       }
     });
-  },
-
-  highlightStartEl: function(serviceName, on) {
-    var startEl = this.$('div.slider-start[data-service-name="'+serviceName+'"]');
-    if (on) {
-      startEl.addClass('on');
-    } else {
-      startEl.removeClass('on');
-    }
   },
 
   setStatusLoading: function(serviceName, show) {
@@ -175,49 +158,6 @@ AFPView  = RockstorLayoutView.extend({
       statusEl.html('<img src="/static/storageadmin/img/ajax-loader.gif"></img>');
     } else {
       statusEl.empty();
-    }
-  },
-
-  startPolling: function() {
-    var _this = this;
-    // start after updateFreq
-    this.timeoutId = window.setTimeout(function() {
-      _this.updateStatus();
-    }, this.updateFreq);
-  },
-
-  updateStatus: function() {
-    var _this = this;
-    _this.startTime = new Date().getTime();
-    _this.service.fetch({
-      silent: true,
-      success: function(service, response, options) {
-        var serviceName = service.get('name');
-        if (service.get('status')) {
-          _this.highlightStartEl(serviceName, true);
-          _this.setSliderVal(serviceName, 1); 
-        } else {
-          _this.highlightStartEl(serviceName, false);
-          _this.setSliderVal(serviceName, 0); 
-        }
-        var currentTime = new Date().getTime();
-        var diff = currentTime - _this.startTime;
-        // if diff > updateFreq, make next call immediately
-        if (diff > _this.updateFreq) {
-          _this.updateStatus();
-        } else {
-          // wait till updateFreq msec has elapsed since startTime
-          _this.timeoutId = window.setTimeout( function() { 
-            _this.updateStatus();
-          }, _this.updateFreq - diff);
-        }
-      }
-    });
-  },
-
-  stopPolling: function() {
-    if (!_.isUndefined(this.timeoutId)) {
-      window.clearInterval(this.timeoutId);
     }
   },
 
@@ -235,27 +175,6 @@ AFPView  = RockstorLayoutView.extend({
     errPopupContent.html(msg);
     statusEl.click(function(){ errPopup.overlay().load(); });
   },
-
-  setSliderVal: function(serviceName, val) {
-    this.$('input[data-service-name='+serviceName+']').simpleSlider('setValue',val);
-  },
-
-  getSliderVal: function(serviceName) {
-    return this.$('input[data-service-name='+serviceName+']').data('slider-object').value;
-  },
-	  
-  displayAfpWarning: function(serviceName) {
-    if (this.getSliderVal(serviceName).toString() == "0") {
-      this.$('#afp-warning').show();
-    } else {
-      this.$('#afp-warning').hide();
-    }
-  },
-
-  cleanup: function() {
-    this.stopPolling();
-  }
-  
 
 });
 
