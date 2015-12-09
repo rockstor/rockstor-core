@@ -22,6 +22,7 @@ import sys
 import zmq
 import subprocess
 import json
+import time
 from django.conf import settings
 from django import db
 from contextlib import contextmanager
@@ -60,6 +61,7 @@ class Receiver(ReplicationMixin, Process):
         self.rp = None
         self.raw = None
         self.ack = False
+        self.total_bytes_received = 0
         #close all db connections prior to fork.
         for alias, info in db.connections.databases.items():
             db.close_connection()
@@ -240,6 +242,8 @@ class Receiver(ReplicationMixin, Process):
                              'btrfs-send-nonzero-termination-error',)
             num_tries = 10
             poll_interval = 6000 # 6 seconds
+            num_msgs = 0
+            t0 = time.time()
             while (True):
                 socks = dict(self.poll.poll(poll_interval))
                 if (socks.get(self.dealer) == zmq.POLLIN):
@@ -266,6 +270,10 @@ class Receiver(ReplicationMixin, Process):
 
                         self.msg = ('Failed to update receive trail for rtid: %d' % self.rtid)
                         self.update_receive_trail(self.rtid, {'status': 'succeeded',})
+                        dsize, drate = self.size_report(self.total_bytes_received, t0)
+                        logger.debug('Id: %s. Receive complete. Total data '
+                                     'transferred: %s. Rate: %s/sec.' %
+                                     (self.identity, dsize, drate))
                         self._sys_exit(0)
 
                     if (command in term_commands):
@@ -277,6 +285,14 @@ class Receiver(ReplicationMixin, Process):
                         self.rp.stdin.flush()
                         #@todo: implement advanced credit request system.
                         self.dealer.send_multipart([b'send-more', ''])
+                        num_msgs += 1
+                        self.total_bytes_received += len(message)
+                        if (num_msgs == 1000):
+                            num_msgs = 0
+                            dsize, drate = self.size_report(self.total_bytes_received, t0)
+                            logger.debug('Id: %s. Receiver alive. Data '
+                                         'transferred: %s. Rate: %s/sec.' %
+                                         (self.identity, dsize, drate))
                     else:
                         out, err = self.rp.communicate()
                         out = out.split('\n')

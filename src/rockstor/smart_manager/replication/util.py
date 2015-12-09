@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import re
 import sys
+import time
 from django.utils.timezone import utc
 from storageadmin.exceptions import RockStorAPIException
 from storageadmin.models import Appliance
@@ -157,3 +158,14 @@ class ReplicationMixin(object):
                                      data=None, calltype='post', save_error=False)
         except Exception, e:
             logger.error('Exception while refresh Shar state: %s' % e.__str__())
+
+    def humanize_bytes(self, num, units=('Bytes', 'KB', 'MB', 'GB',)):
+        if (num < 1024 or len(units) == 1):
+            return '%.2f %s' % (num, units[0])
+        return self.humanize_bytes(num/1024, units[1:])
+
+    def size_report(self, num, t0):
+        t1 = time.time()
+        dsize = self.humanize_bytes(float(num))
+        drate = self.humanize_bytes(float(num/(t1 - t0)))
+        return dsize, drate

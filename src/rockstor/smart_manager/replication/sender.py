@@ -23,6 +23,7 @@ import zmq
 import subprocess
 import fcntl
 import json
+import time
 from django.conf import settings
 from contextlib import contextmanager
 from util import ReplicationMixin
@@ -57,7 +58,7 @@ class Sender(ReplicationMixin, Process):
         self.ctx = zmq.Context()
         self.msg = ''
         self.update_trail = False
-        self.kb_sent = 0
+        self.total_bytes_sent = 0
         self.ppid = os.getpid()
         self.max_snap_retain = settings.REPLICATION.get('max_snap_retain')
         for alias, info in db.connections.databases.items():
@@ -277,6 +278,8 @@ class Sender(ReplicationMixin, Process):
                 self._sys_exit(3)
 
             alive = True
+            num_msgs = 0
+            t0 = time.time()
             while (alive):
                 try:
                     if (self.sp.poll() is not None):
@@ -301,13 +304,18 @@ class Sender(ReplicationMixin, Process):
                             (self.snap_id))
                 self.update_trail = True
                 command, message = self._send_recv('', fs_data)
+                self.total_bytes_sent += len(fs_data)
+                num_msgs += 1
+                if (num_msgs == 1000):
+                    num_msgs = 0
+                    dsize, drate = self.size_report(self.total_bytes_sent, t0)
+                    logger.debug('Id: %s Sender alive. Data transferred: '
+                                 '%s. Rate: %s/sec.' % (self.identity, dsize, drate))
                 if (command is None or command == 'receiver-error'):
                     #command is None when the remote side vanishes.
                     self.msg = ('Got null or error command(%s) message(%s) from the Receiver while'
                                 ' transmitting fsdata. Aborting.' % (command, message))
                     raise Exception(message)
-
-                self.kb_sent = self.kb_sent + len(fs_data)
 
                 if (not alive):
                     if (self.sp.returncode != 0):
@@ -322,9 +330,11 @@ class Sender(ReplicationMixin, Process):
                     self._sys_exit(3)
 
             data = {'status': 'succeeded',
-                    'kb_sent': self.kb_sent / 1024, }
+                    'kb_sent': self.total_bytes_sent / 1024, }
             self.msg = ('Failed to update final replica status for %s'
                         '. Aborting.' % self.snap_id)
             self.update_replica_status(self.rt2_id, data)
-            logger.debug('Id: %s. Send successful' % self.identity)
+            dsize, drate = self.size_report(self.total_bytes_sent, t0)
+            logger.debug('Id: %s. Send complete. Total data transferred: %s.'
+                         ' Rate: %s/sec.' % (self.identity, dsize, drate))
             self._sys_exit(0)
