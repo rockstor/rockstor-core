@@ -98,6 +98,11 @@ class ShareListView(ShareMixin, rfc.GenericView):
                     reverse = False
                 return sorted(Share.objects.all(), key=lambda u: u.rusage,
                               reverse=reverse)
+            #If this box is receiving replication backups, the first full-send is
+            #interpreted as a Share(because it does not have a parent subvol/snapshot)
+            #It is a transient subvolume that gets rolled into a proper Share after
+            #5 incremental-sends. Until then, keep such transient shares hidden from the UI,
+            #mostly for costmetic and UX reasons.
             return Share.objects.exclude(name__regex=r'^\.snapshots/.*/.*_replication_')
 
     @transaction.atomic
