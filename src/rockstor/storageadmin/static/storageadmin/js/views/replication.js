@@ -56,6 +56,8 @@ ReplicationView = RockstorLayoutView.extend({
 
     render: function() {
     	this.fetch(this.renderReplicas, this);
+	RockStorSocket.services = io.connect('/services', {'secure': true, 'force new connection': true});
+	RockStorSocket.addListener(this.serviceStatusSync, this, 'services:get_services');
     	return this;
     },
 
@@ -222,7 +224,7 @@ ReplicationView = RockstorLayoutView.extend({
     		_this.$('#replication-warning').hide();
     	    },
     	    error: function(xhr, status, error) {
-    		_this.setStatusError(_this.serviceName, xhr);
+		_this.$('input[name="replica-service-checkbox"]').bootstrapSwitch('state', _this.current_status, true);
     	    }
     	});
     },
@@ -241,7 +243,7 @@ ReplicationView = RockstorLayoutView.extend({
     		_this.$('#replication-warning').show();
       	    },
       	    error: function(xhr, status, error) {
-      		_this.setStatusError(_this.serviceName, xhr);
+		_this.$('input[name="replica-service-checkbox"]').bootstrapSwitch('state', _this.current_status, true);
       	    }
       	});
     },
@@ -255,19 +257,19 @@ ReplicationView = RockstorLayoutView.extend({
     	}
     },
 
-    setStatusError: function(serviceName, xhr) {
-    	var statusEl = this.$('div.command-status[data-service-name="' + serviceName + '"]');
-    	var msg = parseXhrError(xhr);
-    	// remove any existing error popups
-    	$('body').find('#' + serviceName + 'err-popup').remove();
-    	// add icon and popup
-    	statusEl.empty();
-    	var icon = $('<i>').addClass('icon-exclamation-sign').attr('rel', '#' + serviceName + '-err-popup');
-    	statusEl.append(icon);
-    	var errPopup = this.$('#' + serviceName + '-err-popup');
-    	var errPopupContent = this.$('#' + serviceName + '-err-popup > div');
-    	errPopupContent.html(msg);
-    	statusEl.click(function(){ errPopup.overlay().load(); });
+    serviceStatusSync: function(data) {
+	if (data.replication.running > 0) {
+	    this.current_status = false;
+	    this.$('#replication-warning').show();
+	} else {
+	    this.current_status = true;
+	    this.$('#replication-warning').hide();
+	}
+	this.$('input[name="replica-service-checkbox"]').bootstrapSwitch('state', this.current_status, true);
+    },
+
+    cleanup: function() {
+	RockStorSocket.removeOneListener('services');
     }
 
 });
