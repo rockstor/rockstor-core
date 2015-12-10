@@ -20,8 +20,9 @@ from multiprocessing import Process
 import zmq
 import os
 import json
+import time
 from storageadmin.models import (NetworkInterface, Appliance)
-from smart_manager.models import (ReplicaTrail, ReplicaShare, Replica)
+from smart_manager.models import (ReplicaTrail, ReplicaShare, Replica, Service)
 from django.conf import settings
 from sender import Sender
 from receiver import Receiver
@@ -40,6 +41,7 @@ class ReplicaScheduler(ReplicationMixin, Process):
         self.remote_senders = {} # Active incoming/remote Sender/client map.
         self.MAX_ATTEMPTS = settings.REPLICATION.get('max_send_attempts')
         self.uuid = self.listener_interface = self.listener_port = None
+        self.trail_prune_time = None
         super(ReplicaScheduler, self).__init__()
 
     def _prune_workers(self, workers):
@@ -157,7 +159,6 @@ class ReplicaScheduler(ReplicationMixin, Process):
     def run(self):
         self.law = APIWrapper()
         try:
-            from smart_manager.models import Service
             so = Service.objects.get(name='replication')
             config_d = json.loads(so.config)
             self.listener_interface = NetworkInterface.objects.get(name=config_d['network_interface']).ipaddr
@@ -281,6 +282,13 @@ class ReplicaScheduler(ReplicationMixin, Process):
                     iterations = 10
                     self._prune_senders()
                     self._delete_receivers()
+                    cur_time = time.time()
+                    if (self.trail_prune_time is None or (cur_time - self.trail_prune_time) > 3600):
+                        #prune send/receive trails every hour or so.
+                        self.trail_prune_time = cur_time
+                        map(self.prune_replica_trail, Replica.objects.filter())
+                        map(self.prune_receive_trail, ReplicaShare.objects.filter())
+                        logger.debug('Replica trails are truncated successfully.')
 
                     if (os.getppid() != self.ppid):
                         logger.error('Parent exited. Aborting.')

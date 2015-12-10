@@ -207,16 +207,14 @@ def hostid():
 def config_network_device(name, dtype='ethernet', method='auto', ipaddr=None,
                           netmask=None, autoconnect='yes', gateway=None,
                           dns_servers=None):
-    #1. delete the existing connection
-    show_cmd = [NMCLI, 'c', 'show', name]
-    o, e, rc = run_command(show_cmd, throw=False)
-    if (rc == 0):
-        run_command([NMCLI, 'c', 'delete', name])
-    elif (rc != 0 and rc != 10):
-        #unknown error
-        e_msg = ('Unexpected error while running command: %s. out: %s err: '
-                 '%s' % (show_cmd, o, e))
-        raise Exception(e_msg)
+    #1. delete any existing connections that are using the given device.
+    show_cmd = [NMCLI, 'c', 'show']
+    o, e, rc = run_command(show_cmd)
+    for l in o:
+        fields = l.strip().split()
+        if (len(fields) > 3 and fields[-1] == name):
+            #fields[-3] is the uuid of the connection
+            run_command([NMCLI, 'c', 'delete', fields[-3]])
     #2. Add a new connection
     add_cmd = [NMCLI, 'c', 'add', 'type', dtype, 'con-name', name, 'ifname', name]
     if (method == 'manual'):
