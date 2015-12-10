@@ -155,7 +155,7 @@ class NetworkDetailView(rfc.GenericView, NetworkMixin):
             bits = int(netmask)
         except ValueError:
             #assume ip address format was provided
-            bits = sum([bin(int(x)).count('1') for x in '255.255.255'.split('.')])
+            bits = sum([bin(int(x)).count('1') for x in netmask.split('.')])
         if (bits < 1 or bits > 32):
             e_msg = ('Provided netmask value(%s) is invalid. Number of '
                      'bits in netmask must be between 1-32' % netmask)

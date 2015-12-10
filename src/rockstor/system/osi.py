@@ -212,7 +212,7 @@ def config_network_device(name, dtype='ethernet', method='auto', ipaddr=None,
     o, e, rc = run_command(show_cmd)
     for l in o:
         fields = l.strip().split()
-        if (len(fields) > 0 and fields[-1] == name):
+        if (len(fields) > 3 and fields[-1] == name):
             #fields[-3] is the uuid of the connection
             run_command([NMCLI, 'c', 'delete', fields[-3]])
     #2. Add a new connection
