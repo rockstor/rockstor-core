@@ -28,8 +28,9 @@ class RockstorOAuth2Authentication(OAuth2Authentication):
         #but user is None(due to a bug/feature in oauth2_provider). In
         #this case, we set the user and return the tuple.
         creds = super(RockstorOAuth2Authentication, self).authenticate(request)
-        if (creds is None or len(creds != 2)):
+        if (creds is None or len(creds) != 2):
             return None
-        if (creds[0] is None):
-            creds[0] = creds[1].application.user
-        return creds
+        user, access_token = creds
+        if (user is None):
+            user = access_token.application.user
+        return user, access_token
