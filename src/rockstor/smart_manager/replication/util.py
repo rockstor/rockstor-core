@@ -93,7 +93,7 @@ class ReplicationMixin(object):
                    (url, e.__str__()))
             raise Exception(msg)
 
-    def prune_trail(self, url, days=1):
+    def prune_trail(self, url, days=7):
         try:
             data = {'days': days, }
             return self.law.api_call(url, data=data, calltype='delete', save_error=False)
@@ -101,12 +101,12 @@ class ReplicationMixin(object):
             msg = ('Exception while pruning trail for url(%s): %s' % (url, e.__str__()))
             raise Exception(msg)
 
-    def prune_receive_trail(self, rid):
-        url = ('sm/replicas/rtrail/rshare/%d' % rid)
+    def prune_receive_trail(self, ro):
+        url = ('sm/replicas/rtrail/rshare/%d' % ro.id)
         return self.prune_trail(url)
 
-    def prune_replica_trail(self, rid):
-        url = ('sm/replicas/trail/replica/%d' % rid)
+    def prune_replica_trail(self, ro):
+        url = ('sm/replicas/trail/replica/%d' % ro.id)
         return self.prune_trail(url)
 
     def create_snapshot(self, sname, snap_name, snap_type='replication'):
