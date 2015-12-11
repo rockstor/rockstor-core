@@ -317,7 +317,7 @@ REPLICATION = {
 	    'ipc_socket': '/var/run/replication.sock',
 	    'max_send_attempts': 10,
 	    'max_snap_retain': 5,
-	    'listener_port': 8888,
+	    'listener_port': 10002,
 }
 
 SHARE_REGEX = r'[A-Za-z0-9][A-Za-z0-9_.-]*'
