@@ -12,28 +12,11 @@
         </tr>
       </thead>
       <tbody>
-      <% collection.each(function(appliance) { %>
-        <tr>
-        <td><%= appliance.get('uuid') %></td>
-          <td>
-            <i class="fa fa-desktop"></i>&nbsp;
-            <% if (appliance.get('current_appliance')) { %>
-              <%= appliance.get('ip') %> <span class="required">*</span>
-            <% } else { %>
-              <a href="https://<%= appliance.get('ip') %>:<%= appliance.get('mgmt_port') %>" target="_blank"><%= appliance.get('ip') %></a>
-            <% } %>
-          </td>
-          <td><%= appliance.get('mgmt_port') %></td>
-          <td>
-            <% if (!appliance.get('current_appliance')) { %>
-              <a class="delete-appliance" id="<%= appliance.get('ip') %>" data-id="<%= appliance.get('id') %>" href="#"><i class="glyphicon glyphicon-trash"></i></a>
-            <% } %>
-          </td>
-        </tr>
-      <% }); %>
-
+      {{print_appliances_tbody}}
     </table>
-    <div class="pagination-ph"></div>
+    <div>
+    {{pagination}}
+    </div>
     ( <span class="required">*</span> - current appliance )
   </div> <!-- col-md-12 -->
 </div> <!-- row -->
@@ -42,4 +25,3 @@
 <br>
 <div id="new-appliance-container">
 </div>
-
