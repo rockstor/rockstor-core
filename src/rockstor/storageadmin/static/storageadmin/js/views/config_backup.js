@@ -40,6 +40,7 @@ ConfigBackupView = RockstorLayoutView.extend({
 	this.collection = new ConfigBackupCollection();
 	this.dependencies.push(this.collection);
 	this.collection.on("reset", this.renderConfigBackups, this);
+  this.initHandlebarHelpers();
     },
 
     render: function() {
@@ -49,7 +50,10 @@ ConfigBackupView = RockstorLayoutView.extend({
 
     renderConfigBackups: function() {
 	$(this.el).html(this.template({ collection: this.collection }));
-	this.$("#cb-table-ph").html(this.cb_table_template({ collection: this.collection }));
+	this.$("#cb-table-ph").html(this.cb_table_template({
+    collection: this.collection,
+    collectionNotEmpty: !this.collection.isEmpty(),
+  }));
     },
 
     newBackup: function() {
@@ -187,6 +191,28 @@ ConfigBackupView = RockstorLayoutView.extend({
     xhr.send(formData);
     // Replace the original function
     XMLHttpRequest.prototype.send = originalSend;
+  },
+
+  initHandlebarHelpers: function(){
+    Handlebars.registerHelper('print_cb_tbody', function(){
+      console.log("inisde the helper");
+      var html = '';
+      this.collection.each(function(cb, index) {
+        console.log("inside the each");
+        var cbFileName = cb.get('filename'),
+            cbID = cb.get('id');
+        html += '<tr>';
+        html += '<td>' + cbFileName + '</td>';
+        html += '<td>' + humanize.filesize(cb.get("size")) + '</td>';
+        html += '<td>';
+        html += '<a href="#" class="cb-delete" id="delete_cb_' + cbFileName + '" data-id="' + cbID + '" data-action="delete" rel="tooltip" title="Delete backup"><i class="glyphicon glyphicon-trash"></i></a>&nbsp;&nbsp;';
+        html += '<a href="/static/config-backups/' + cbFileName + '" title="Download the config backup to your computer"><i class="glyphicon glyphicon-cloud-download"></i></a>&nbsp;&nbsp;';
+        html += '<a href="#" class="cb-restore" id="cb-restore" data-id="' + cbID + '" rel="tooltip" title="Restore config from this backup."><i class="glyphicon glyphicon-play"></i></a>';
+        html += '</td>';
+        html += '</tr>';
+      });
+      return Handlebars.SafeString(html);
+    });
   }
 });
 
