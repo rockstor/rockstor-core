@@ -15,7 +15,7 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-
+import re
 from contextlib import contextmanager
 from storageadmin.exceptions import RockStorAPIException
 from rest_framework.response import Response
@@ -50,12 +50,12 @@ class DiskMixin(object):
         # I.e. stored device serial numbers vs attached device serial numbers
         # This way we can preserve removed device info prior to overwrite.
         offline_disks = []
-        serial_numbers = []
+        serial_numbers_encountered = []
 
         # Note that the following doesn't cope with the circumstance left from
         # the previous code where a removed disk was incorrectly labeled with
         # the details, including serial and size, of an existing attached disk.
-        # todo we should be defensive and check if all serials ar in fact unique
+        # todo we should be defensive and check if all serials are unique
         # todo and remove entries to deal with the above scenario, just in case.
 
         # Sanitize our db entries in view of what we know we have attached.
@@ -64,12 +64,25 @@ class DiskMixin(object):
         # 1) scrub all device names with unique but nonsense uuid4
         # 1) mark all offline disks as such via db flag
         # 2) mark all offline disks smart available and enabled flags as False
+        logger.debug('INITIAL DB CLEAN UP')
         for do in Disk.objects.all():
+            logger.debug('PRE-PROCESS  db entry by name of %s %s' % (do.name, do.serial))
             # Replace all device names with a unique placeholder on each scan
             # N.B. do not optimize by re-using uuid index as this could lead
             # to a non refreshed webui acting upon an entry that was different
             # from that shown to the user.
             do.name = str(uuid.uuid4()).replace('-', '')  # 32 chars long
+            # remove duplicate serial number entries and continue on with the
+            # next db entry.
+            if (do.serial in serial_numbers_encountered):
+                # we have a duplicate db entry by serial number so delete it.
+                logger.debug('Deleting duplicate (by serial) Disk db entry')
+                do.delete()  # django >=1.9 returns a dict of deleted items.
+                do.save()  # todo is this necessary?
+                # Continue onto next db object as nothing more to process.
+                continue
+            # first encounter of this serial in the db so stash it for reference
+            serial_numbers_encountered.append(deepcopy(do.serial))
             # Look for devices that are in the db but not in our disk_scan
             # using serial to uniquely identify devices.
             # This means they were once known but are no longer attached.
@@ -80,8 +93,8 @@ class DiskMixin(object):
                 do.offline = True
                 # disable S.M.A.R.T available and enabled flags.
                 do.smart_available = do.smart_enabled = False
-            # make sure all updates are flushed to db
-            do.save()
+            do.save()  # make sure all updates are flushed to db
+            logger.debug('POST-PROCESS db entry by name of %s %s' % (do.name, do.serial))
         # Our db now has no device name info as all dev names are place holders.
         # Iterate over attached drives to update the db's knowledge of them.
         # Kernel dev names are unique so safe to overwrite our db unique name.
@@ -132,10 +145,18 @@ class DiskMixin(object):
             # save our updated db disk object
             dob.save()
         # Update online db entries with S.M.A.R.T availability and status.
+        logger.debug('FINAL DB CONTENTS')
         for do in Disk.objects.all():
-            # find all the off line db entries
+            logger.debug('FINAL db entry by name of %s %s' % (do.name, do.serial))
+            # find all the not offline db entries
             if (not do.offline):
-               # we have an attached disk entry so try updating smart info
+                # We have an attached disk db entry
+                if re.match('vd', do.name):
+                    # Virtio disks (named vd*) have no smart capability.
+                    # avoids cluttering logs with exceptions on these devices.
+                    do.smart_available = do.smart_enabled = False
+                    continue
+                # try to establish smart availability and status and update db
                 try:
                     # for non ata/sata drives
                     do.smart_available, do.smart_enabled = smart.available(do.name)
