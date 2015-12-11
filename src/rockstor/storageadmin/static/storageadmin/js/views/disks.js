@@ -38,7 +38,6 @@ DisksView = Backbone.View.extend({
     initialize: function() {
 	this.template = window.JST.disk_disks;
 	this.disks_table_template = window.JST.disk_disks_table;
-	this.pagination_template = window.JST.common_pagination;
 	this.collection = new DiskCollection;
 	this.collection.on("reset", this.renderDisks, this);
 	this.initHandlebarHelpers();
@@ -71,9 +70,7 @@ DisksView = Backbone.View.extend({
 	    slider.trackEvent = function(e) {};
 	    slider.dragger.unbind('mousedown');
 	});
-	this.$(".pagination-ph").html(this.pagination_template({
-	    collection: this.collection
-	}));
+
 	this.$("#disks-table").tablesorter();
 	this.$("[rel=tooltip]").tooltip({
 	    placement: "right",
@@ -180,7 +177,7 @@ DisksView = Backbone.View.extend({
 	this.$("[rel='tooltip']").tooltip('hide');
     },
 
-    
+
     getDiskName: function(event) {
 	var slider = $(event.currentTarget);
 	return slider.attr('data-disk-name');
@@ -219,10 +216,10 @@ DisksView = Backbone.View.extend({
 	    }
 	});
     },
-    
+
     initHandlebarHelpers: function(){
     	Handlebars.registerHelper('display_disks_tbody', function() {
-    		
+
         var html = '',
             trashIcon = '<i class="glyphicon glyphicon-trash"></i>',
             importIcon = '<i class="glyphicon glyphicon-circle-arrow-down"></i>',
@@ -230,7 +227,7 @@ DisksView = Backbone.View.extend({
             eraseIcon = '<i class="fa fa-eraser"></i>',
             bulbIcon = '<i class="fa fa-lightbulb-o fa-lg"></i>',
             warning = 'Disk names may change unfavourably upon reboot leading to inadvertent drive reallocation and potential data loss. This error is caused by the source of these disks such as your Hypervisor or SAN. Please ensure that disks are provided with unique serial numbers before proceeding further';
-            
+
         this.collection.each(function(disk, index) {
           	var diskName = disk.get('name'),
                	diskOffline = disk.get('offline'),
@@ -244,56 +241,56 @@ DisksView = Backbone.View.extend({
                	btrfsUId = disk.get('btrfs_uuid'),
                	diskParted = disk.get('parted'),
                	smartEnabled = disk.get('smart_enabled');
-            
+
         html += '<tr>';
         html += '<td><a href="#disks/' + diskName +' "><i class="glyphicon glyphicon-hdd"></i> '+ diskName +'</a>&nbsp';
         if (diskOffline) {
            html += '<a href="#" class="delete" data-disk-name="'+ diskName +'" title="Disk is unusable because it is offline.Click to delete it from the system" rel="tooltip">'+ trashIcon +'</a>';
-        } else if (diskParted) { 
+        } else if (diskParted) {
            html += '<a href="#" class="wipe" data-disk-name="'+ diskName +'" title="Disk is unusable because it has some other filesystem on it.'+
                    +'Click to wipe it clean." rel="tooltip">'+ cogIcon +'</a>';
-        } else if (btrfsUId && _.isNull(poolName)) { 
+        } else if (btrfsUId && _.isNull(poolName)) {
            html += '<a href="#" class="btrfs_wipe" data-disk-name="'+ diskName +'" title="Disk is unusable because it has BTRFS filesystem(s) on it.Click to wipe it clean." rel="tooltip">'+ eraseIcon +'</a>'+
                    +'&nbsp;<a href="#" class="btrfs_import" data-disk-name="'+ diskName +'" title="Click to import data(pools, shares and snapshots) on this disk automatically" rel="tooltip">'+ importIcon +'</a>';
-        } 
-    
+        }
+
         html += '</td>';
         html += '<td>';
-	    if (serial == null || serial == '' || serial == diskName) { 
+	    if (serial == null || serial == '' || serial == diskName) {
 	       html += '<div class="alert alert-danger">' +
                    + '<h4>Warning! Disk serial number or UUID is not legitimate or unique.</h4>' + warning +'</div>';
        	}else{
 	       html += serial;
-	       if (serial) { 
+	       if (serial) {
 	          html += '&nbsp;&nbsp;&nbsp;&nbsp;<a href="#disks/blink/'+ diskName +'" title="A tool to physically identify the hard drive with this serial number"';                                              +'rel="tooltip">'+ bulbIcon +'</a>&nbsp';
            }
-	    } 
+	    }
         html += '</td>';
         html += '<td>'+diskSize+'</td>';
         html += '<td>';
-        if (!_.isNull(poolName)) { 
+        if (!_.isNull(poolName)) {
            html += '<a href="#pools/'+ poolName +'">'+ poolName + '</a>';
         }
         html += '</td>';
         html += '<td>'+diskModel+'</td>';
-        html += '<td>'+diskTransport+'</td>'; 
+        html += '<td>'+diskTransport+'</td>';
         html += '<td>'+diskVendor+'</td>';
-        if (!smartAvailable) { 
+        if (!smartAvailable) {
            html +='<td>Not Supported</td>';
         }else{
            html += '<td><div class="slider-stop" data-disk-name="'+ diskName +'">OFF</div><div class="slider-ph">';
-             if (smartEnabled) { 
+             if (smartEnabled) {
 	            html += '<input type="text" class="smart-status" value="1" data-disk-name="'+ diskName +'"></input>';
-	         } else { 
+	         } else {
 	        	html += '<input type="text" class="smart-status" value="0" data-disk-name="'+ diskName +'"></input>';
-	         } 
-	       html += '</div> <div class="slider-start on" data-disk-name="'+ diskName+'">ON</div></td>'; 
-	           
-        } 
+	         }
+	       html += '</div> <div class="slider-start on" data-disk-name="'+ diskName+'">ON</div></td>';
+
+        }
         html += '</tr>';
         });
 	    return new Handlebars.SafeString(html);
-        });  
+        });
      }
 
 });
