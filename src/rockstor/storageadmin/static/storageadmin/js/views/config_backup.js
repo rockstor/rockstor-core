@@ -36,7 +36,6 @@ ConfigBackupView = RockstorLayoutView.extend({
 	this.constructor.__super__.initialize.apply(this, arguments);
 	this.template = window.JST.cb_cb;
 	this.cb_table_template = window.JST.cb_cb_table;
-	this.pagination_template = window.JST.common_pagination;
 	this.collection = new ConfigBackupCollection();
 	this.dependencies.push(this.collection);
 	this.collection.on("reset", this.renderConfigBackups, this);
@@ -195,10 +194,8 @@ ConfigBackupView = RockstorLayoutView.extend({
 
   initHandlebarHelpers: function(){
     Handlebars.registerHelper('print_cb_tbody', function(){
-      console.log("inisde the helper");
       var html = '';
       this.collection.each(function(cb, index) {
-        console.log("inside the each");
         var cbFileName = cb.get('filename'),
             cbID = cb.get('id');
         html += '<tr>';
@@ -211,7 +208,7 @@ ConfigBackupView = RockstorLayoutView.extend({
         html += '</td>';
         html += '</tr>';
       });
-      return Handlebars.SafeString(html);
+      return new Handlebars.SafeString(html);
     });
   }
 });
