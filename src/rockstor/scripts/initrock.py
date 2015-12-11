@@ -189,6 +189,7 @@ def enable_bootstrap_service(logging):
         logging.info('updating rockstor-bootstrap systemd service')
         shutil.copy(bs_src, bs_dest)
         run_command([SYSCTL, 'enable', name])
+        run_command([SYSCTL, 'daemon-reload'])
         return logging.info('Done.')
     return logging.info('%s looks correct. Not updating.' % name)
 
