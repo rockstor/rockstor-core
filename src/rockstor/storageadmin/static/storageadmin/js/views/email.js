@@ -52,9 +52,17 @@ EmailView = RockstorLayoutView.extend({
 	var email = null;
 	if (this.emails.length > 0) {
 	    email = this.emails.at(0);
+      var emailObject = {
+        sender: email.get('sender'),
+        receiver: email.get('receiver'),
+        server: email.get('smtp_server')
+      };
 	}
+
 	$(this.el).html(this.template({
-	    email: email
+	    email: email,
+      isEmailNull: _.isNull(email),
+      emailObj: emailObject
 	}));
     },
 
@@ -145,7 +153,6 @@ EmailView = RockstorLayoutView.extend({
 
     cancel: function(event) {
 	this.renderEmail();
-    }
-
+}
 
 });
