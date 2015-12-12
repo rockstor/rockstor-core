@@ -31,8 +31,7 @@ DisksView = Backbone.View.extend({
 	'click .delete': 'deleteDisk',
 	'click .btrfs_wipe': 'btrfsWipeDisk',
 	'click .btrfs_import': 'btrfsImportDisk',
-	'click .slider-stop': 'smartOff',
-	'click .slider-start': 'smartOn'
+  'switchChange.bootstrapSwitch': 'smartToggle',
     },
 
     initialize: function() {
@@ -59,23 +58,17 @@ DisksView = Backbone.View.extend({
 	    collectionNotEmpty: !this.collection.isEmpty(),
 	}));
 
-	this.$('input.smart-status').simpleSlider({
-	    "theme": "volume",
-	    allowedValues: [0,1],
-	    snap: true
-	});
-
-	this.$('input.smart-status').each(function(i, el) {
-	    var slider = $(el).data('slider-object');
-	    slider.trackEvent = function(e) {};
-	    slider.dragger.unbind('mousedown');
-	});
-
 	this.$("#disks-table").tablesorter();
 	this.$("[rel=tooltip]").tooltip({
 	    placement: "right",
 	    container: '#disks-table'
 	});
+
+  //initialize bootstrap switch
+  this.$("[type='checkbox']").bootstrapSwitch();
+  this.$("[type='checkbox']").bootstrapSwitch('onColor','success'); //left side text color
+  this.$("[type='checkbox']").bootstrapSwitch('offColor','danger'); //right side text color
+
     },
 
     setupDisks: function() {
@@ -177,46 +170,6 @@ DisksView = Backbone.View.extend({
 	this.$("[rel='tooltip']").tooltip('hide');
     },
 
-
-    getDiskName: function(event) {
-	var slider = $(event.currentTarget);
-	return slider.attr('data-disk-name');
-    },
-
-    getSliderVal: function(name) {
-	return this.$('input[data-disk-name='+name+']').data('slider-object').value;
-    },
-
-    setSliderVal: function(name, val) {
-	this.$('input[data-disk-name='+name+']').simpleSlider('setValue', val);
-    },
-
-    smartOff: function(event) {
-	var _this = this;
-	var disk_name = this.getDiskName(event);
-	if (this.getSliderVal(disk_name).toString() == "0") { return; }
-	$.ajax({
-	    url: '/api/disks/' + disk_name + '/disable-smart',
-	    type: 'POST',
-	    success: function(data, status, xhr) {
-		_this.render();
-	    }
-	});
-    },
-
-    smartOn: function(event) {
-	var _this = this;
-	var disk_name = this.getDiskName(event);
-	if (this.getSliderVal(disk_name).toString() == "1") { return; }
-	$.ajax({
-	    url: '/api/disks/' + disk_name + '/enable-smart',
-	    type: 'POST',
-	    success: function(data, status, xhr) {
-		_this.render();
-	    }
-	});
-    },
-
     initHandlebarHelpers: function(){
     	Handlebars.registerHelper('display_disks_tbody', function() {
 
@@ -293,6 +246,36 @@ DisksView = Backbone.View.extend({
         });
      }
 
+    smartToggle: function(event, state){
+      var disk_name = $(event.target).attr('data-disk-name');
+      if(state){
+        this.smartOn(disk_name);
+      }else{
+        this.smartOff(disk_name);
+      }
+    },
+
+    smartOff: function(disk_name) {
+    	var _this = this;
+    	$.ajax({
+    	    url: '/api/disks/' + disk_name + '/disable-smart',
+    	    type: 'POST',
+    	    success: function(data, status, xhr) {
+    		_this.render();
+    	    }
+    	});
+    },
+
+    smartOn: function(disk_name) {
+    	var _this = this;
+    	$.ajax({
+    	    url: '/api/disks/' + disk_name + '/enable-smart',
+    	    type: 'POST',
+    	    success: function(data, status, xhr) {
+    		_this.render();
+    	    }
+    	});
+    },
 });
 
 // Add pagination

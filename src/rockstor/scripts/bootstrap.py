@@ -33,24 +33,33 @@ QGROUP_MAXOUT_LIMIT = '%s/qgroup-maxout-limit' % BASE_BIN
 
 
 def main():
-    aw = APIWrapper()
-    device_scan()
+
+    try:
+        device_scan()
+    except Exception, e:
+        print ('BTRFS device scan failed due to an exception. This indicates '
+               'a serious problem. Aborting. Exception: %s' % e.__str__())
+        sys.exit(1)
     print('BTRFS device scan complete')
 
     num_attempts = 0
     while True:
         try:
+            aw = APIWrapper()
             aw.api_call('network')
             aw.api_call('commands/bootstrap', calltype='post')
             break
-        except requests.exceptions.ConnectionError, e:
+        except Exception, e:
+            #Retry on every exception, primarily because of django-oauth related
+            #code behaving unpredictably while setting tokens. Retrying is a
+            #decent workaround for now(11302015).
             if (num_attempts > 15):
                 print('Max attempts(15) reached. Connection errors persist. '
                       'Failed to bootstrap. Error: %s' % e.__str__())
                 sys.exit(1)
-            print('Connection error while bootstrapping. This could be because '
+            print('Exception occured while bootstrapping. This could be because '
                   'rockstor.service is still starting up. will wait 2 seconds '
-                  'and try again.')
+                  'and try again. Exception: %s' % e.__str__())
             time.sleep(2)
             num_attempts += 1
     print('Bootstrapping complete')

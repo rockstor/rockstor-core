@@ -24,6 +24,7 @@ from system.osi import run_command
 import os
 from django.conf import settings
 
+
 SSHD_CONFIG = '/etc/ssh/sshd_config'
 MKDIR = '/bin/mkdir'
 MOUNT = '/bin/mount'
@@ -58,6 +59,7 @@ def update_sftp_config(input_map):
 
 
 def toggle_sftp_service(switch=True):
+    # TODO add Subsystem sftp line below Rockstor header rather than above
     fo, npath = mkstemp()
     written = False
     with open(SSHD_CONFIG) as sfo, open(npath, 'w') as tfo:

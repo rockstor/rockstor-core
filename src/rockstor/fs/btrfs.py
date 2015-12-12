@@ -889,7 +889,7 @@ def set_property(mnt_pt, name, val, mount=True):
         return run_command(cmd)
 
 
-def get_oldest_snap(subvol_path, num_retain):
+def get_snap(subvol_path, oldest=False, num_retain=None, regex=None):
     share_name = subvol_path.split('/')[-1]
     cmd = [BTRFS, 'subvol', 'list', '-o', subvol_path]
     o, e, rc = run_command(cmd)
@@ -900,9 +900,24 @@ def get_oldest_snap(subvol_path, num_retain):
             snap_fields = fields[-1].split('/')
             if (len(snap_fields) != 3 or
                 snap_fields[1] != share_name):
+                #not the Share we are interested in.
+                continue
+            if (regex is not None and re.search(regex, snap_fields[2]) is None):
+                #regex not in the name
                 continue
             snaps[int(fields[1])] = snap_fields[2]
     snap_ids = sorted(snaps.keys())
-    if (len(snap_ids) > num_retain):
-        return snaps[snap_ids[0]]
+    if (oldest):
+        if(len(snap_ids) > num_retain):
+            return snaps[snap_ids[0]]
+    elif (len(snap_ids) > 0):
+        return snaps[snap_ids[-1]]
     return None
+
+
+def get_oldest_snap(subvol_path, num_retain, regex=None):
+    return get_snap(subvol_path, oldest=True, num_retain=num_retain, regex=regex)
+
+
+def get_lastest_snap(subvol_path, regex=None):
+    return get_snap(subvol_path, regex=regex)

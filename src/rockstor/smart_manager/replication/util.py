@@ -18,28 +18,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import re
 import sys
+import time
 from django.utils.timezone import utc
 from storageadmin.exceptions import RockStorAPIException
 from storageadmin.models import Appliance
 from cli import APIWrapper
 import logging
+logger = logging.getLogger(__name__)
 
 
 class ReplicationMixin(object):
-
-
-    @classmethod
-    def get_logger(cls):
-        if (hasattr(cls, 'logger')):
-            return cls.logger
-        cls.logger = logging.getLogger()
-        cls.logger.setLevel(logging.DEBUG)
-        ch = logging.StreamHandler(sys.stdout)
-        ch.setLevel(logging.DEBUG)
-        formatter = logging.Formatter('[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s', datefmt='%d/%b/%Y %H:%M:%S')
-        ch.setFormatter(formatter)
-        cls.logger.addHandler(ch)
-        return cls.logger
 
     def validate_src_share(self, sender_uuid, sname):
         url = 'https://'
@@ -105,7 +93,7 @@ class ReplicationMixin(object):
                    (url, e.__str__()))
             raise Exception(msg)
 
-    def prune_trail(self, url, days=1):
+    def prune_trail(self, url, days=7):
         try:
             data = {'days': days, }
             return self.law.api_call(url, data=data, calltype='delete', save_error=False)
@@ -113,15 +101,15 @@ class ReplicationMixin(object):
             msg = ('Exception while pruning trail for url(%s): %s' % (url, e.__str__()))
             raise Exception(msg)
 
-    def prune_receive_trail(self, rid):
-        url = ('sm/replicas/rtrail/rshare/%d' % rid)
+    def prune_receive_trail(self, ro):
+        url = ('sm/replicas/rtrail/rshare/%d' % ro.id)
         return self.prune_trail(url)
 
-    def prune_replica_trail(self, rid):
-        url = ('sm/replicas/trail/replica/%d' % rid)
+    def prune_replica_trail(self, ro):
+        url = ('sm/replicas/trail/replica/%d' % ro.id)
         return self.prune_trail(url)
 
-    def create_snapshot(self, sname, snap_name, logger, snap_type='replication'):
+    def create_snapshot(self, sname, snap_name, snap_type='replication'):
         try:
             url = ('shares/%s/snapshots/%s' % (sname, snap_name))
             return self.law.api_call(url, data={'snap_type': snap_type, }, calltype='post',
@@ -132,7 +120,7 @@ class ReplicationMixin(object):
                 return logger.debug(e.detail)
             raise e
 
-    def delete_snapshot(self, sname, snap_name, logger):
+    def delete_snapshot(self, sname, snap_name):
         try:
             url = ('shares/%s/snapshots/%s' % (sname, snap_name))
             self.law.api_call(url, calltype='delete', save_error=False)
@@ -143,7 +131,7 @@ class ReplicationMixin(object):
                 return False
             raise e
 
-    def create_share(self, sname, pool, logger):
+    def create_share(self, sname, pool):
         try:
             url = 'shares'
             data = {'pool': pool,
@@ -156,3 +144,28 @@ class ReplicationMixin(object):
             if (e.detail == 'Share(%s) already exists. Choose a different name' % sname):
                 return logger.debug(e.detail)
             raise e
+
+    def refresh_snapshot_state(self):
+        try:
+            return self.law.api_call('commands/refresh-snapshot-state',
+                                    data=None, calltype='post', save_error=False)
+        except Exception, e:
+            logger.error('Exception while refreshing Snapshot state: %s' % e.__str__())
+
+    def refresh_share_state(self):
+        try:
+            return self.law.api_call('commands/refresh-share-state',
+                                     data=None, calltype='post', save_error=False)
+        except Exception, e:
+            logger.error('Exception while refresh Shar state: %s' % e.__str__())
+
+    def humanize_bytes(self, num, units=('Bytes', 'KB', 'MB', 'GB',)):
+        if (num < 1024 or len(units) == 1):
+            return '%.2f %s' % (num, units[0])
+        return self.humanize_bytes(num/1024, units[1:])
+
+    def size_report(self, num, t0):
+        t1 = time.time()
+        dsize = self.humanize_bytes(float(num))
+        drate = self.humanize_bytes(float(num/(t1 - t0)))
+        return dsize, drate

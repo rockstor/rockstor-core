@@ -24,14 +24,12 @@
  *
  */
 
-/* Services */
-
 
 ServicesView = Backbone.View.extend({
 
     events: {
     	'click .configure': "configureService",
-      'switchChange.bootstrapSwitch': 'switchStatus',
+	'switchChange.bootstrapSwitch': 'switchStatus'
     },
 
     initialize: function() {
@@ -43,9 +41,9 @@ ServicesView = Backbone.View.extend({
     	    'stop': 'stopped',
     	    'restart': 'restarted',
     	    'reload': 'reloaded'
-	  };
+	};
   	this.smTs = null; // current timestamp of sm service
-  	this.configurable_services = ['nis', 'ntpd', 'active-directory', 'ldap', 'snmpd', 'docker', 'smartd', 'smb', 'nut', ];
+  	this.configurable_services = ['nis', 'ntpd', 'active-directory', 'ldap', 'snmpd', 'docker', 'smartd', 'smb', 'nut', 'replication', ];
     },
 
     render: function() {
@@ -54,13 +52,12 @@ ServicesView = Backbone.View.extend({
     	    success: function(collection, response, options) {
     		_this.renderServices();
     		// Register function for socket endpoint
-    		RockStorSocket.services = io.connect('/services', {'secure': true});
+    		RockStorSocket.services = io.connect('/services', {'secure': true, 'force new connection': true});
     		RockStorSocket.addListener(_this.servicesStatuses, _this, 'services:get_services');
-
     	    }
-	  });
-	   return this;
-     },
+	});
+	return this;
+    },
 
     servicesStatuses: function(data) {
     	var _this = this;
@@ -69,11 +66,11 @@ ServicesView = Backbone.View.extend({
     	    var collectionArr = _this.collection.where({ 'name': key });
     	    var collectionModel = collectionArr[0];
     	    if ( collectionArr.length > 0) {
-    		      if ( value.running > 0) {
-    		      collectionModel.set('status', false);
-    		      }   else {
-    		            collectionModel.set('status', true);
-    		      }
+    		if ( value.running > 0) {
+    		    collectionModel.set('status', false);
+    		}   else {
+    		    collectionModel.set('status', true);
+    		}
     	    }
     	});
     	this.renderServices();
@@ -93,18 +90,18 @@ ServicesView = Backbone.View.extend({
     	    collection: this.collection
     	}));
 
-      //Initialize bootstrap switch
-      this.$("[type='checkbox']").bootstrapSwitch();
-      this.$("[type='checkbox']").bootstrapSwitch('onColor','success'); //left side text color
-      this.$("[type='checkbox']").bootstrapSwitch('offColor','danger'); //right side text color
+	//Initialize bootstrap switch
+	this.$("[type='checkbox']").bootstrapSwitch();
+	this.$("[type='checkbox']").bootstrapSwitch('onColor','success'); //left side text color
+	this.$("[type='checkbox']").bootstrapSwitch('offColor','danger'); //right side text color
     },
 
     switchStatus: function(event,state){
-      var serviceName = $(event.target).attr('data-service-name');
+	var serviceName = $(event.target).attr('data-service-name');
         if (state){
-          this.startService(serviceName);
+	    this.startService(serviceName);
         }else {
-          this.stopService(serviceName);
+	    this.stopService(serviceName);
         }
     },
 
@@ -143,16 +140,16 @@ ServicesView = Backbone.View.extend({
     	var _this = this;
     	var serviceName = $(event.currentTarget).data('service-name');
     	app_router.navigate('services/' + serviceName + '/edit', {trigger: true});
-        },
+    },
 
     setStatusLoading: function(serviceName, show) {
-    	  var statusEl = this.$('div.command-status[data-service-name="' + serviceName + '"]');
+    	var statusEl = this.$('div.command-status[data-service-name="' + serviceName + '"]');
       	if (show) {
       	    statusEl.html('<img src="/static/storageadmin/img/ajax-loader.gif"></img>');
       	} else {
       	    statusEl.empty();
       	}
-      },
+    },
 
     setStatusError: function(serviceName, xhr) {
     	var statusEl = this.$('div.command-status[data-service-name="' + serviceName + '"]');

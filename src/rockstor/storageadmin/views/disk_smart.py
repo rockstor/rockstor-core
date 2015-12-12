@@ -66,7 +66,7 @@ class DiskSMARTDetailView(rfc.GenericView):
     @transaction.atomic
     def _info(disk):
         attributes = extended_info(disk.name)
-        capabilities = capabilities(disk.name)
+        cap = capabilities(disk.name)
         e_summary, e_lines = error_logs(disk.name)
         smartid = info(disk.name)
         test_d, log_lines = test_logs(disk.name)
@@ -80,8 +80,8 @@ class DiskSMARTDetailView(rfc.GenericView):
                                 atype=t[6], updated=t[7], failed=t[8],
                                 raw_value=t[9])
             sa.save()
-        for c in capabilities:
-            t = capabilities[c]
+        for c in cap:
+            t = cap[c]
             SMARTCapability(info=si, name=c, flag=t[0], capabilities=t[1]).save()
         for enum in sorted(e_summary.keys(), reverse=True):
             l = e_summary[enum]

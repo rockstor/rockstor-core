@@ -74,16 +74,12 @@
 	  <div class="col-md-3"></div>
 	  <div class="col-md-3">
 	    <% if (rockon.get('state') == 'installed' && !rockon.get('status').match('pending')) { %>
-	      <div class="slider-stop" data-rockon-id="<%= rockon.get('id') %>">OFF</div>
-	      <div class="slider-ph">
-		<% if (rockon.get('status') == 'started') { %>
-		  <input type="text" class="service-status" value="1" data-rockon-id="<%= rockon.get('id') %>"></input>
-		<% } else { %>
-		  <input type="text" class="service-status" value="0" data-rockon-id="<%= rockon.get('id') %>"></input>
-		<% } %>
-	      </div>
-	      <div class="slider-start on" data-rockon-id="<%= rockon.get('id') %>">ON</div>&nbsp;&nbsp
-	      <a id="js-rockon-settings" href="#" class="settings" data-rockon-id="<%= rockon.get('id') %>"><i class="glyphicon glyphicon-wrench"></i></a>&nbsp;&nbsp
+		      <% if (rockon.get('status') == 'started') { %>
+            <input type="checkbox" name="rockon-status-checkbox" data-rockon-id="<%= rockon.get('id') %>" data-size="mini" checked />
+		      <% } else { %>
+            <input type="checkbox" name="rockon-status-checkbox" data-rockon-id="<%= rockon.get('id') %>" data-size="mini" />
+		      <% } %>
+        <a id="js-rockon-settings" href="#" class="settings" data-rockon-id="<%= rockon.get('id') %>"><i class="glyphicon glyphicon-wrench"></i></a>&nbsp;&nbsp
 	      <% if (rockon.get('more_info')) { %>
 	      <a id="js-rockon-info" href="#" class="moreinfo" data-rockon-id="<%= rockon.get('id') %>"><i class="fa fa-info-circle"></i></a>
 	      <% } %>

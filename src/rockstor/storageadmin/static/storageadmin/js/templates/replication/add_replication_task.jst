@@ -75,21 +75,15 @@ $(document).ready(function() {
 	  </div>
 	</div>
 	<div class="form-group">
-	  <label class="col-sm-4 control-label" for="replicatin_ip">Replication IP Address</label>
+	  <label class="col-sm-4 control-label" for="listener_ip">Remote Listener Address</label>
 	  <div class="col-sm-6">
-	  <input class="form-control" type="text" id="replication_ip" name="replication_ip" title="If remote appliance's replication service is listening on a different IP address, provide here. If not, appliance's IP address will be used.">
+	  <input class="form-control" type="text" id="listener_ip" name="listener_ip" value="<%= listener_ip %>"title="If remote appliance's replication service is listening on a different IP address, provide here. If not, appliance's IP address will be used.">
 	  </div>
 	</div>
 	<div class="form-group">
-	  <label class="col-sm-4 control-label" for="port">Replication Data Port<span class="required"> *</span></label>
+	  <label class="col-sm-4 control-label" for="port">Remore Listener Port<span class="required"> *</span></label>
 	  <div class="col-sm-6">
-	    <input class="form-control" type="text" id="data-port" name="data_port" value="<%= replica_data_port %>" placeholder="Replication Data Port" title="Replication data port on the target appliance. (Default is <%= replica_data_port %>)">
-	  </div>
-	</div>
-	<div class="form-group">
-	  <label class="col-sm-4 control-label" for="port">Replication Meta Port<span class="required"> *</span></label>
-	  <div class="col-sm-6">
-	    <input class="form-control" type="text" id="meta-port" name="meta_port" value="<%= replica_meta_port %>" placeholder="Replication Meta Port" title="Replication meta port on the target appliance. (Default is <%= replica_meta_port %>)">
+	    <input class="form-control" type="text" id="listener_port" name="listener_port" value="<%= listener_port %>" title="Replication meta port on the target appliance. (Default is <%= listener_port %>)">
 	  </div>
 	</div>
 	<div class="form-group">
@@ -150,21 +144,15 @@ $(document).ready(function() {
 	  </div>
 	</div>
 	<div class="form-group">
-	  <label class="col-sm-4 control-label" for="replication_ip">Replication IP Address:</label>
+	  <label class="col-sm-4 control-label" for="listener_ip">Remote Listener Address:</label>
 	  <div class="col-sm-6">
-	    <input type="text" class="form-control" value="<%= replica.get('replication_ip') %>">
+	    <input type="text" class="form-control" name="listener_ip" value="<%= replica.get('replication_ip') %>">
 	  </div>
 	</div>
 	<div class="form-group">
-	  <label class="col-sm-4 control-label" for="port">Data Port:</label>
+	  <label class="col-sm-4 control-label" for="listener_port">Remote Listener Port:</label>
 	  <div class="col-sm-6">
-	    <input type="text" class="form-control" value="<%= replica.get('data_port') %>" disabled="disabled">
-	  </div>
-	</div>
-	<div class="form-group">
-	  <label class="col-sm-4 control-label" for="port">Meta Port:</label>
-	  <div class="col-sm-6">
-	    <input type="text" class="form-control" value="<%= replica.get('meta_port') %>" disabled="disabled">
+	    <input type="text" class="form-control" name="listener_port" value="<%= replica.get('data_port') %>">
 	  </div>
 	</div>
 	<div class="form-group">
@@ -176,7 +164,7 @@ $(document).ready(function() {
 	<div class="form-group">
          <label class="col-sm-4 control-label" for="cron">Replication Frequency</label>
          <div class="row">
-           <div class="col-sm-6">
+           <div class="col-sm  -6">
              <div id="cron"></div>
            </div>
          </div>
