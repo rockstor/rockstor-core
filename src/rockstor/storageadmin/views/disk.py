@@ -64,6 +64,7 @@ class DiskMixin(object):
         # 1) scrub all device names with unique but nonsense uuid4
         # 1) mark all offline disks as such via db flag
         # 2) mark all offline disks smart available and enabled flags as False
+        logger.debug('Number of entries in db = %s' % len(Disk.objects.all()))
         logger.debug('INITIAL DB CLEAN UP')
         for do in Disk.objects.all():
             logger.debug('PRE-PROCESS  db entry by name of %s %s' % (do.name, do.serial))
@@ -78,7 +79,7 @@ class DiskMixin(object):
                 # we have a duplicate db entry by serial number so delete it.
                 logger.debug('Deleting duplicate (by serial) Disk db entry')
                 do.delete()  # django >=1.9 returns a dict of deleted items.
-                do.save()  # todo is this necessary?
+                # do.save()  # todo is this necessary?
                 # Continue onto next db object as nothing more to process.
                 continue
             # first encounter of this serial in the db so stash it for reference
@@ -95,6 +96,7 @@ class DiskMixin(object):
                 do.smart_available = do.smart_enabled = False
             do.save()  # make sure all updates are flushed to db
             logger.debug('POST-PROCESS db entry by name of %s %s' % (do.name, do.serial))
+        logger.debug('Number of entries in db = %s' % len(Disk.objects.all()))
         # Our db now has no device name info as all dev names are place holders.
         # Iterate over attached drives to update the db's knowledge of them.
         # Kernel dev names are unique so safe to overwrite our db unique name.
