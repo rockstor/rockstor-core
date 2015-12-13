@@ -56,13 +56,8 @@ class DiskMixin(object):
         availability assessed and activated if available.
         :return: serialized models of attached and missing disks via serial num
         """
-        # todo shorten / simplify by sub-dividing (after automated testing)
         # Acquire a list (namedtupil collection) of attached drives > min size
         disks = scan_disks(settings.MIN_DISK_SIZE)
-        # Build a list of the missing devices by serial number comparison.
-        # I.e. stored device serial numbers vs attached device serial numbers
-        # This way we can preserve removed device info prior to overwrite.
-        offline_disks = []
         serial_numbers_encountered = []
         # Make sane our db entries in view of what we know we have attached.
         # Device serial number is only known external unique entry, scan_disks
@@ -71,39 +66,29 @@ class DiskMixin(object):
         # 1) scrub all device names with unique but nonsense uuid4
         # 1) mark all offline disks as such via db flag
         # 2) mark all offline disks smart available and enabled flags as False
-        logger.debug('Number of entries in db = %s' % len(Disk.objects.all()))
-        logger.debug('INITIAL DB CLEAN UP')
+        logger.info('update_disk_state() Called')
         for do in Disk.objects.all():
-            logger.debug('PRE-PROCESS  db entry by name of %s %s' % (do.name, do.serial))
             # Replace all device names with a unique placeholder on each scan
             # N.B. do not optimize by re-using uuid index as this could lead
-            # to a non refreshed webui acting upon an entry that was different
+            # to a non refreshed webui acting upon an entry that is different
             # from that shown to the user.
             do.name = str(uuid.uuid4()).replace('-', '')  # 32 chars long
-            # remove duplicate serial number entries and continue on with the
-            # next db entry.
+            # Delete duplicate by serial number db disk entries.
             if (do.serial in serial_numbers_encountered):
-                # we have a duplicate db entry by serial number so delete it.
-                logger.debug('Deleting duplicate (by serial) Disk db entry')
+                logger.info('Deleting duplicate (by serial) Disk db entry')
                 do.delete()  # django >=1.9 returns a dict of deleted items.
-                # do.save()  # todo is this necessary?
-                # Continue onto next db object as nothing more to process.
+                # Continue onto next db disk object as nothing more to process.
                 continue
             # first encounter of this serial in the db so stash it for reference
             serial_numbers_encountered.append(deepcopy(do.serial))
-            # Look for devices that are in the db but not in our disk_scan
-            # using serial to uniquely identify devices.
-            # This means they were once known but are no longer attached.
+            # Look for devices (by serial number) that are in the db but not in
+            # our disk scan, ie offline / missing.
             if (do.serial not in [d.serial for d in disks]):
-                # add this disk to the offline_disks list (may be redundant now)
-                offline_disks.append(deepcopy(do))
                 # update the db entry as offline
                 do.offline = True
                 # disable S.M.A.R.T available and enabled flags.
                 do.smart_available = do.smart_enabled = False
             do.save()  # make sure all updates are flushed to db
-            logger.debug('POST-PROCESS db entry by name of %s %s' % (do.name, do.serial))
-        logger.debug('Number of entries in db = %s' % len(Disk.objects.all()))
         # Our db now has no device name info as all dev names are place holders.
         # Iterate over attached drives to update the db's knowledge of them.
         # Kernel dev names are unique so safe to overwrite our db unique name.
@@ -111,13 +96,13 @@ class DiskMixin(object):
             # start with an empty disk object
             dob = None
             # If the db has an entry with this disk's serial number then
-            # use this entry and update the device name from our recent scan.
+            # use this db entry and update the device name from our recent scan.
             if (Disk.objects.filter(serial=d.serial).exists()):
                 dob = Disk.objects.get(serial=d.serial)
                 dob.name = d.name
             else:
-                # We have an assumed new disk entry as there was no serial match
-                # with db stored results. Build a new entry for this disk.
+                # We have an assumed new disk entry as no serial match in db.
+                # Build a new entry for this disk.
                 dob = Disk(name=d.name, serial=d.serial)
             # Update the db disk object (existing or new) with our scanned info
             dob.size = d.size
@@ -137,8 +122,8 @@ class DiskMixin(object):
                 dob.pool = Pool.objects.get(name=d.label)
             else:  # this disk is not known to exist in any pool via it's label
                 dob.pool = None
-            # if no pool has yet been found with this disk's label in and
-            # the attached disk is our root disk:
+            # If no pool has yet been found with this disk's label in and
+            # the attached disk is our root disk (flagged by scan_disks)
             if (dob.pool is None and d.root is True):
                 # setup our special root disk db entry in Pool
                 p = Pool(name=settings.ROOT_POOL, raid='single')
@@ -154,9 +139,7 @@ class DiskMixin(object):
             # save our updated db disk object
             dob.save()
         # Update online db entries with S.M.A.R.T availability and status.
-        logger.debug('FINAL DB CONTENTS')
         for do in Disk.objects.all():
-            logger.debug('FINAL db entry by name of %s %s' % (do.name, do.serial))
             # find all the not offline db entries
             if (not do.offline):
                 # We have an attached disk db entry
