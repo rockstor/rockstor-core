@@ -43,6 +43,19 @@ class DiskMixin(object):
     @staticmethod
     @transaction.atomic
     def _update_disk_state():
+        """
+        A db atomic method to update the database of attached disks / drives.
+        Works only on device serial numbers for drive identification.
+        Calls scan_disks to establish the current connected drives info.
+        Initially removes duplicate by serial number db entries to deal
+        with legacy db states and obfuscates all previous device names as they
+        are transient. The drive database is then updated with the attached
+        disks info and previously known drives no longer found attached are
+        marked as offline. All offline drives have their SMART availability and
+        activation status removed and all attached drives have their SMART
+        availability assessed and activated if available.
+        :return: serialized models of attached and missing disks via serial num
+        """
         # todo shorten / simplify by sub-dividing (after automated testing)
         # Acquire a list (namedtupil collection) of attached drives > min size
         disks = scan_disks(settings.MIN_DISK_SIZE)
@@ -51,16 +64,10 @@ class DiskMixin(object):
         # This way we can preserve removed device info prior to overwrite.
         offline_disks = []
         serial_numbers_encountered = []
-
-        # Note that the following doesn't cope with the circumstance left from
-        # the previous code where a removed disk was incorrectly labeled with
-        # the details, including serial and size, of an existing attached disk.
-        # todo we should be defensive and check if all serials are unique
-        # todo and remove entries to deal with the above scenario, just in case.
-
-        # Sanitize our db entries in view of what we know we have attached.
+        # Make sane our db entries in view of what we know we have attached.
         # Device serial number is only known external unique entry, scan_disks
-        # make this so in the case of empty or repeat entries.
+        # make this so in the case of empty or repeat entries by providing
+        # fake serial numbers which are in turn flagged via WebUI as unreliable.
         # 1) scrub all device names with unique but nonsense uuid4
         # 1) mark all offline disks as such via db flag
         # 2) mark all offline disks smart available and enabled flags as False
