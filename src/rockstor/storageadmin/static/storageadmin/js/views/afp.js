@@ -64,7 +64,6 @@ AFPView  = RockstorLayoutView.extend({
     if(this.freeShares){
       freeShareBool = true;
     }
-    console.log("type of the freeshares: " + typeof(freeShares));
     $(this.el).html(this.template({
       collection: this.collection,
       collectionNotEmpty : !this.collection.isEmpty(),
