@@ -77,8 +77,8 @@ class DiskMixin(object):
             # It makes no sense to save fake serial number drives between scans
             # as on each scan the serial number is re-generated anyway.
             if (do.serial in serial_numbers_seen) or (len(do.serial) == 48):
-                logger.info(
-                    'Deleting duplicate or fake (by serial) Disk db entry')
+                logger.info('Deleting duplicate or fake (by serial) Disk db '
+                            'entry. Serial = %s' % do.serial)
                 do.delete()  # django >=1.9 returns a dict of deleted items.
                 # Continue onto next db disk object as nothing more to process.
                 continue
