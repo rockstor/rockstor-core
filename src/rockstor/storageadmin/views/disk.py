@@ -32,8 +32,8 @@ import rest_framework_custom as rfc
 from system import smart
 from copy import deepcopy
 import uuid
-
 import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -58,7 +58,7 @@ class DiskMixin(object):
         """
         # Acquire a list (namedtupil collection) of attached drives > min size
         disks = scan_disks(settings.MIN_DISK_SIZE)
-        serial_numbers_encountered = []
+        serial_numbers_seen = []
         # Make sane our db entries in view of what we know we have attached.
         # Device serial number is only known external unique entry, scan_disks
         # make this so in the case of empty or repeat entries by providing
@@ -73,14 +73,17 @@ class DiskMixin(object):
             # to a non refreshed webui acting upon an entry that is different
             # from that shown to the user.
             do.name = str(uuid.uuid4()).replace('-', '')  # 32 chars long
-            # Delete duplicate by serial number db disk entries.
-            if (do.serial in serial_numbers_encountered):
-                logger.info('Deleting duplicate (by serial) Disk db entry')
+            # Delete duplicate or fake by serial number db disk entries.
+            # It makes no sense to save fake serial number drives between scans
+            # as on each scan the serial number is re-generated anyway.
+            if (do.serial in serial_numbers_seen) or (len(do.serial) == 48):
+                logger.info(
+                    'Deleting duplicate or fake (by serial) Disk db entry')
                 do.delete()  # django >=1.9 returns a dict of deleted items.
                 # Continue onto next db disk object as nothing more to process.
                 continue
             # first encounter of this serial in the db so stash it for reference
-            serial_numbers_encountered.append(deepcopy(do.serial))
+            serial_numbers_seen.append(deepcopy(do.serial))
             # Look for devices (by serial number) that are in the db but not in
             # our disk scan, ie offline / missing.
             if (do.serial not in [d.serial for d in disks]):
@@ -249,10 +252,10 @@ class DiskDetailView(rfc.GenericView):
         try:
             disk = self._validate_disk(dname, request)
             p_info = get_pool_info(dname)
-            #get some options from saved config?
+            # get some options from saved config?
             po = Pool(name=p_info['label'], raid="unknown")
-            #need to save it so disk objects get updated properly in the for
-            #loop below.
+            # need to save it so disk objects get updated properly in the for
+            # loop below.
             po.save()
             for d in p_info['disks']:
                 do = Disk.objects.get(name=d)
