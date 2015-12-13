@@ -244,7 +244,7 @@ DisksView = Backbone.View.extend({
         });
 	    return new Handlebars.SafeString(html);
         });
-     }
+     },
 
     smartToggle: function(event, state){
       var disk_name = $(event.target).attr('data-disk-name');
