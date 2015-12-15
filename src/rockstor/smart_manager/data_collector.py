@@ -30,7 +30,6 @@ class DisksWidgetNamespace(BaseNamespace, BroadcastMixin):
         self.spawn(self.send_top_disks)
 
     def recv_disconnect(self):
-        logger.debug('disks namespace disconnected')
         self.switch = False
         self.disconnect()
 
@@ -101,7 +100,6 @@ class CPUWidgetNamespace(BaseNamespace, BroadcastMixin):
         self.spawn(self.send_cpu_data)
 
     def recv_disconnect(self):
-        logger.debug('disconnect received')
         self.send_cpu = False
         self.disconnect()
 
@@ -128,12 +126,10 @@ class NetworkWidgetNamespace(BaseNamespace, BroadcastMixin):
     send = False
 
     def recv_connect(self):
-        logger.debug('network stats connected')
         self.send = True
         self.spawn(self.network_stats)
 
     def recv_disconnect(self):
-        logger.debug('network stats disconnected')
         self.send = False
         self.disconnect()
 
@@ -235,19 +231,13 @@ class MemoryWidgetNamespace(BaseNamespace, BroadcastMixin):
 
 class ServicesNamespace(BaseNamespace, BroadcastMixin):
 
-    # Called before the recv_connect function
-    def initialize(self):
-        logger.debug('Services have been initialized')
-
     def recv_connect(self):
-        logger.debug("Services has connected")
         self.emit('services:connected', {
             'key': 'services:connected', 'data': 'connected'
         })
         self.spawn(self.send_service_statuses)
 
     def recv_disconnect(self):
-        logger.debug("Services have disconnected")
         self.disconnect()
 
     def send_service_statuses(self):
@@ -273,11 +263,9 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
     # Called before the connection is established
     def initialize(self):
         self.aw = APIWrapper()
-        logger.debug("Sysinfo has been initialized")
 
     # This function is run once on every connection
     def recv_connect(self):
-        logger.debug("Sysinfo has connected")
         self.emit("sysinfo:sysinfo", {
             "key": "sysinfo:connected", "data": "connected"
         })
@@ -288,7 +276,6 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
 
     # Run on every disconnect
     def recv_disconnect(self):
-        logger.debug("Sysinfo has disconnected")
         self.start = False
         self.disconnect()
 
@@ -328,9 +315,8 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
     def update_rockons(self):
         try:
             self.aw.api_call('rockons/update', data=None, calltype='post', save_error=False)
-            logger.debug('Updated Rock-on metadata.')
         except Exception, e:
-            logger.debug('failed to update Rock-on metadata. low-level '
+            logger.error('failed to update Rock-on metadata. low-level '
                          'exception: %s' % e.__str__())
 
     def update_storage_state(self):
@@ -359,7 +345,6 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
             'data': uinfo,
             'key': 'sysinfo:software-update'
         })
-        logger.debug('sent update information %s' % repr(uinfo))
 
 class Application(object):
     def __init__(self):
