@@ -189,8 +189,8 @@ AFPView  = RockstorLayoutView.extend({
         html += '<td>' + afpShareName + '</td>';
         html += '<td>' + afpShare.get("time_machine") + '</td>';
         html += '<td>';
-        html += '<a href="#afp/edit/' + afpShareID + '"><i class="glyphicon glyphicon-pencil"></i></a>&nbsp;' +
-        + '<a href="#" class="delete-afp-share" data-share="' + afpShareName + '" data-id="' + afpShareID + '"><i class="glyphicon glyphicon-trash"></i></a>';
+        html += '<a href="#afp/edit/' + afpShareID + '"><i class="glyphicon glyphicon-pencil"></i></a>&nbsp;';
+        html += '<a href="#" class="delete-afp-share" data-share="' + afpShareName + '" data-id="' + afpShareID + '"><i class="glyphicon glyphicon-trash"></i></a>';
         html += '</td>';
         html += '</tr>';
      });
