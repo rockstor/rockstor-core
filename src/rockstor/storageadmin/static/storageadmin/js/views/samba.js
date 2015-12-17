@@ -25,156 +25,193 @@
  */
 
 SambaView  = RockstorLayoutView.extend({
-  events: {
-    'switchChange.bootstrapSwitch': 'switchStatus',
-    'click .delete-samba-export' : 'deleteSambaExport'
-  },
+	events: {
+		'switchChange.bootstrapSwitch': 'switchStatus',
+		'click .delete-samba-export' : 'deleteSambaExport'
+	},
 
-  initialize: function() {
-    this.constructor.__super__.initialize.apply(this, arguments);
-    this.template = window.JST.samba_samba;
-    this.paginationTemplate = window.JST.common_pagination;
-    this.module_name = 'samba';
-    this.collection = new SambaCollection();
-    this.dependencies.push(this.collection);
-    this.serviceName = 'smb';
-    this.service = new Service({name: this.serviceName});
-    this.dependencies.push(this.service);
-    this.shares = new ShareCollection();
-    this.dependencies.push(this.shares);
-    this.updateFreq = 5000;
+	initialize: function() {
+		this.constructor.__super__.initialize.apply(this, arguments);
+		this.template = window.JST.samba_samba;
+		this.module_name = 'samba';
+		this.collection = new SambaCollection();
+		this.dependencies.push(this.collection);
+		this.serviceName = 'smb';
+		this.service = new Service({name: this.serviceName});
+		this.dependencies.push(this.service);
+		this.shares = new ShareCollection();
+		this.dependencies.push(this.shares);
+		this.updateFreq = 5000;
+		this.initHandlebarHelpers();
+	},
 
-  },
+	render: function() {
+		var _this = this;
+		this.fetch(this.renderSamba, this);
+		return this;
+	},
 
-  render: function() {
-    var _this = this;
-    this.fetch(this.renderSamba, this);
-    return this;
-  },
+	renderSamba: function() {
+		this.freeShares = this.shares.reject(function(share) {
+			s = this.collection.find(function(sambaShare) {
+				return (sambaShare.get('share') == share.get('name'));
+			});
+			return !_.isUndefined(s);
+		}, this);
 
-  renderSamba: function() {
-    this.freeShares = this.shares.reject(function(share) {
-      s = this.collection.find(function(sambaShare) {
-        return (sambaShare.get('share') == share.get('name'));
-      });
-      return !_.isUndefined(s);
-    }, this);
-    $(this.el).html(this.template({
-      collection: this.collection,
-      service: this.service,
-      freeShares: this.freeShares
-    }));
+		var freeShareBool = false;
+		if(this.freeShares){
+			freeShareBool = true;
+		}
+		$(this.el).html(this.template({
+			collection: this.collection,
+			collectionNotEmpty: !this.collection.isEmpty(),
+			service: this.service,
+			freeShares: this.freeShares,
+			freeSharesNotEmpty : freeShareBool,
+		}));
 
-    this.$(".ph-pagination").html(this.paginationTemplate({
-      collection: this.collection
-    }));
+		//initalize Bootstrap Switch
+		this.$("[type='checkbox']").bootstrapSwitch();
+		this.$('input[name="samba-export-checkbox"]').bootstrapSwitch('state', this.service.get('status'), true);
+		this.$("[type='checkbox']").bootstrapSwitch('onColor','success'); //left side text color
+		this.$("[type='checkbox']").bootstrapSwitch('offColor','danger'); //right side text color
 
-    //initalize Bootstrap Switch
-  	this.$("[type='checkbox']").bootstrapSwitch();
-  	this.$('input[name="samba-export-checkbox"]').bootstrapSwitch('state', this.service.get('status'), true);
-  	this.$("[type='checkbox']").bootstrapSwitch('onColor','success'); //left side text color
-  	this.$("[type='checkbox']").bootstrapSwitch('offColor','danger'); //right side text color
+		// Display NFS Export Service Warning
+		if (!this.service.get('status')) {
+			this.$('#samba-warning').show();
+		} else {
+			this.$('#samba-warning').hide();
+		}
+	},
 
-  	// Display NFS Export Service Warning
-      	if (!this.service.get('status')) {
-      	    this.$('#samba-warning').show();
-      	} else {
-      	    this.$('#samba-warning').hide();
-      	}
-  },
+	switchStatus: function(event,state){
+		if (state){
+			this.startService();
+		}else {
+			this.stopService();
+		}
+	},
 
-  switchStatus: function(event,state){
-          if (state){
-              this.startService();
-          }else {
-              this.stopService();
-          }
-  },
+	deleteSambaExport: function(event) {
+		var _this = this;
+		if (event) event.preventDefault();
+		var button = $(event.currentTarget);
+		if (buttonDisabled(button)) return false;
+		if(confirm("Delete samba export... Are you sure? ")){
+			disableButton(button)
+			var id = $(event.currentTarget).data('id');
+			$.ajax({
+				url: '/api/samba/' + id,
+				type: 'DELETE',
+				dataType: 'json',
+				contentType: 'application/json',
+				success: function() {
+					_this.render();
+				},
+				error: function(xhr, status, error) {
+					enableButton(button);
+				}
+			});
+		}
+	},
 
-  deleteSambaExport: function(event) {
-    var _this = this;
-    if (event) event.preventDefault();
-    var button = $(event.currentTarget);
-    if (buttonDisabled(button)) return false;
-    if(confirm("Delete samba export... Are you sure? ")){
-    disableButton(button)
-    var id = $(event.currentTarget).data('id');
-    $.ajax({
-      url: '/api/samba/' + id,
-      type: 'DELETE',
-      dataType: 'json',
-      contentType: 'application/json',
-      success: function() {
-        _this.render();
-      },
-      error: function(xhr, status, error) {
-        enableButton(button);
-      }
-    });
-    }
-  },
+	startService: function() {
+		var _this = this;
+		this.setStatusLoading(this.serviceName, true);
+		$.ajax({
+			url: "/api/sm/services/smb/start",
+			type: "POST",
+			dataType: "json",
+			success: function(data, status, xhr) {
+				_this.setStatusLoading(_this.serviceName, false);
+				_this.$('#samba-warning').hide();
+			},
+			error: function(xhr, status, error) {
+				_this.setStatusError(_this.serviceName, xhr);
+				_this.$('#samba-warning').show();
+			}
+		});
+	},
 
-  startService: function() {
-    var _this = this;
-    this.setStatusLoading(this.serviceName, true);
-    $.ajax({
-      url: "/api/sm/services/smb/start",
-      type: "POST",
-      dataType: "json",
-      success: function(data, status, xhr) {
-        _this.setStatusLoading(_this.serviceName, false);
-        _this.$('#samba-warning').hide();
-      },
-      error: function(xhr, status, error) {
-        _this.setStatusError(_this.serviceName, xhr);
-        _this.$('#samba-warning').show();
-      }
-    });
-  },
+	stopService: function() {
+		var _this = this;
+		this.setStatusLoading(this.serviceName, true);
+		$.ajax({
+			url: "/api/sm/services/smb/stop",
+			type: "POST",
+			dataType: "json",
+			success: function(data, status, xhr) {
+				_this.setStatusLoading(_this.serviceName, false);
+				_this.$('#samba-warning').show();
+			},
+			error: function(xhr, status, error) {
+				_this.setStatusError(_this.serviceName, xhr);
+				_this.$('#samba-warning').hide();
+			}
+		});
+	},
 
-  stopService: function() {
-    var _this = this;
-    this.setStatusLoading(this.serviceName, true);
-    $.ajax({
-      url: "/api/sm/services/smb/stop",
-      type: "POST",
-      dataType: "json",
-      success: function(data, status, xhr) {
-        _this.setStatusLoading(_this.serviceName, false);
-        _this.$('#samba-warning').show();
-      },
-      error: function(xhr, status, error) {
-        _this.setStatusError(_this.serviceName, xhr);
-        _this.$('#samba-warning').hide();
-      }
-    });
-  },
+	setStatusLoading: function(serviceName, show) {
+		var statusEl = this.$('div.command-status[data-service-name="'+serviceName+'"]');
+		if (show) {
+			statusEl.html('<img src="/static/storageadmin/img/ajax-loader.gif"></img>');
+		} else {
+			statusEl.empty();
+		}
+	},
 
-  setStatusLoading: function(serviceName, show) {
-    var statusEl = this.$('div.command-status[data-service-name="'+serviceName+'"]');
-    if (show) {
-      statusEl.html('<img src="/static/storageadmin/img/ajax-loader.gif"></img>');
-    } else {
-      statusEl.empty();
-    }
-  },
+	setStatusError: function(serviceName, xhr) {
+		var statusEl = this.$('div.command-status[data-service-name="' + serviceName + '"]');
+		var msg = parseXhrError(xhr);
+		// remove any existing error popups
+		$('body').find('#' + serviceName + 'err-popup').remove();
+		// add icon and popup
+		statusEl.empty();
+		var icon = $('<i>').addClass('icon-exclamation-sign').attr('rel', '#' + serviceName + '-err-popup');
+		statusEl.append(icon);
+		var errPopup = this.$('#' + serviceName + '-err-popup');
+		var errPopupContent = this.$('#' + serviceName + '-err-popup > div');
+		errPopupContent.html(msg);
+		statusEl.click(function(){ errPopup.overlay().load(); });
+	},
 
-  setStatusError: function(serviceName, xhr) {
-    var statusEl = this.$('div.command-status[data-service-name="' + serviceName + '"]');
-    var msg = parseXhrError(xhr);
-    // remove any existing error popups
-    $('body').find('#' + serviceName + 'err-popup').remove();
-    // add icon and popup
-    statusEl.empty();
-    var icon = $('<i>').addClass('icon-exclamation-sign').attr('rel', '#' + serviceName + '-err-popup');
-    statusEl.append(icon);
-    var errPopup = this.$('#' + serviceName + '-err-popup');
-    var errPopupContent = this.$('#' + serviceName + '-err-popup > div');
-    errPopupContent.html(msg);
-    statusEl.click(function(){ errPopup.overlay().load(); });
-  },
+	initHandlebarHelpers: function(){
+		Handlebars.registerHelper('display_samba_shares', function(){
+			var html = '';
+			this.collection.each(function(sambaShare) { 
+				var getSambaShare = sambaShare.get("share");
+				html += '<tr>';
+				html += '<td>' + getSambaShare + '</td>';
+				html += '<td>' + sambaShare.get("browsable") + '</td>';
+				html += '<td>' + sambaShare.get("guest_ok") + '</td>';
+				html += '<td>' + sambaShare.get("read_only") + '</td>';
+				html += '<td>';
+				var userNames = _.reduce(sambaShare.get('admin_users'), function(s, user, i, list) { 
+					if (i < (list.length-1)) { 
+						return s + user.username + ',';
+					} else{ 
+						return s + user.username; 
+					}
+				}, ''); 
+				if(userNames.length != 0){ 
+					html += userNames;
+				}else {
+					html += '&nbsp;--';
+				} 
+				html += '</td>';
+				html += '<td>' + sambaShare.get("comment") + '</td>';
+				html += '<td>';
+				html += '<a href="#samba/edit/' + sambaShare.id + '"><i class="glyphicon glyphicon-pencil"></i></a>&nbsp;';
+				html += '<a href="#" class="delete-samba-export" data-share="' + getSambaShare + '" data-id="' + sambaShare.id + '"><i class="glyphicon glyphicon-trash"></i></a>';
+				html += '</td>';
+				html += '</tr>';
+			});
 
+			return new Handlebars.SafeString(html);
+		});
+	}
 });
 
-// Add pagination
+//Add pagination
 Cocktail.mixin(SambaView, PaginationMixin);
