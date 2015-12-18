@@ -12,9 +12,7 @@
           <div class="controls">
 	    <div class="col-sm-8">
               <select class="form-control shorten-input" name="shares" id="shares" size="10" multiple data-placeholder="Select shares">
-		<% _.each(shares, function(share, index) { %>
-                <option value="<%= share.get('name') %>"><%= share.get('name') %></option>
-		<% }); %>
+		{{sftp_shares_dropdown}}
               </select>
 	    </div>
           </div>
