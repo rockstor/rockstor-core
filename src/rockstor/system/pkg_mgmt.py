@@ -37,6 +37,12 @@ YCFILE = '/etc/yum/yum-cron.conf'
 def install_pkg(name):
     return run_command([YUM, '--setopt=timeout=600', '-y', 'install', name])
 
+def downgrade_pkgs(*packages):
+    cmd = [YUM, '--setopt=timeout=600', '-y', 'downgrade',]
+    for p in packages:
+        cmd.append(p)
+    return run_command(cmd)
+
 def auto_update(enable=True):
     service = 'yum-cron'
     fo, npath = mkstemp()

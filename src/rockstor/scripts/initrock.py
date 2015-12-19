@@ -26,6 +26,7 @@ import re
 import time
 from tempfile import mkstemp
 from django.conf import settings
+from system.pkg_mgmt import downgrade_pkgs
 
 logger = logging.getLogger(__name__)
 
@@ -227,6 +228,18 @@ def cleanup_rclocal(logging):
         return os.chmod(rc_dest, 0755)
     logging.info('%s looks correct. Not updating.' % rc_dest)
 
+def downgrade_python(logging):
+    #With the release of CentOS 7.2, the new python package(2.7.5-34)
+    #backported some questionable changes that break gevent. So we downgrade to
+    #previous version: 2.7.5-18. I've moved these packages to rockrepo for
+    #now. Once the frankenversion resolves itself, we'll remove this workaround.
+    YUM = '/usr/bin/yum'
+    o, e, rc = run_command([YUM, 'info', 'python'])
+    for l in o:
+        if (re.match('Release.*34.el7$', l) is not None):
+            logging.info('Downgrading python and python-libs')
+            return downgrade_pkgs('python-2.7.5-18.el7_1.1', 'python-libs-2.7.5-18.el7_1.1')
+
 def main():
     loglevel = logging.INFO
     if (len(sys.argv) > 1 and sys.argv[1] == '-x'):
@@ -365,6 +378,7 @@ def main():
     run_command([SYSCTL, 'stop', 'firewalld'])
     run_command([SYSCTL, 'disable', 'firewalld'])
     update_nginx(logging)
+    downgrade_python(logging)
     enable_rockstor_service(logging)
     enable_bootstrap_service(logging)
 
