@@ -69,7 +69,6 @@ AddAFPShareView = RockstorLayoutView.extend({
       this.aShares = null;
       }
 
-    console.log("The type of sharedID is: " + typeof(afpSharesId));
     $(this.el).html(this.template({
       freeShares: this.freeShares,
       afpShare: this.aShares,
