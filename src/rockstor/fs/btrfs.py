@@ -896,6 +896,7 @@ def set_property(mnt_pt, name, val, mount=True):
 
 
 def get_snap(subvol_path, oldest=False, num_retain=None, regex=None):
+    if (not os.path.isdir(subvol_path)): return None
     share_name = subvol_path.split('/')[-1]
     cmd = [BTRFS, 'subvol', 'list', '-o', subvol_path]
     o, e, rc = run_command(cmd)
