@@ -59,16 +59,28 @@ SambaView  = RockstorLayoutView.extend({
 			return !_.isUndefined(s);
 		}, this);
 
-		var freeShareBool = false;
-		if(this.freeShares){
-			freeShareBool = true;
-		}
+		//check if there are shares in the system
+	    var sharesExistBool = false;
+	    if(this.shares.length > 0){
+	    	sharesExistBool = true;
+	    }
+	    //check if there are free shares not associated with afp.
+	    var freeSharesBool = false;
+	    if(this.freeShares){
+	      freeSharesBool = true;
+	    }
+	    //set a variable to true if both conditions are satisfied
+	    var verifySharesBool = false;
+	    if(freeSharesBool && sharesExistBool){
+	    	verifySharesBool = true;
+	    }
+	    
 		$(this.el).html(this.template({
 			collection: this.collection,
 			collectionNotEmpty: !this.collection.isEmpty(),
 			service: this.service,
 			freeShares: this.freeShares,
-			freeSharesNotEmpty : freeShareBool,
+			sharesNotEmpty : verifySharesBool,
 		}));
 
 		//initalize Bootstrap Switch
