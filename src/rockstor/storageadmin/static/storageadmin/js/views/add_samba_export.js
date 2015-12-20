@@ -76,9 +76,15 @@ AddSambaExportView = RockstorLayoutView.extend({
 			});
 			return !_.isUndefined(s);
 		}, this);
-
-		var sambaShareIdNotNull = false; //afpShareId is Null by default.
-
+		
+		//samba share id is null in Edit View. Not null in Add view.
+		var sambaShareIdNotNull = false; //sambaShareId is Null by default.
+		
+		var sambaShareIdNull = false;
+		if(this.sambaShareId == null){
+			sambaShareIdNull = true;
+		}
+		
 		if(this.sambaShareId != null){
 			this.sShares = this.sambaShares.get(this.sambaShareId);
 			sambaShareIdNotNull = true;
@@ -86,25 +92,41 @@ AddSambaExportView = RockstorLayoutView.extend({
 			this.sShares = null;
 		}
 
-		var configList = '';
+		var configList,
+		smbShadowCopy,
+		smbComments,
+		smbSnapPrefix = '';
 		if (this.sShares != null) {
-			var config = this.sShares.get('custom_config');
+			var config = this.sShares.get('custom_config'),
+			smbShadowCopy = this.sShares.get("shadow_copy"),
+			smbComments = this.sShares.get("comments"),
+			smbSnapPrefix = this.sShares.get("snapshot_prefix");
+
 			for(i=0;i<config.length;i++){
 				configList = configList+config[i].custom_config+'\n';
 			}
 		}
 
+		var smbSnapshotPrefixBool = false;
+		if(sambaShareIdNotNull && smbShareShadowCopy){
+			smbSnapshotPrefixBool = true;
+		}
 		$(this.el).html(this.template({
 			shares: this.freeShares,
 			smbShare: this.sShares,
+			smbShareShadowCopy: smbShadowCopy,
+			smbShareComments: smbComments,
+			smbShareSnapPrefix: smbSnapPrefix,
+			smbSnapshotPrefixRule: smbSnapshotPrefixBool,
 			users: this.users,
 			configList: configList,
 			sambaShareId: this.sambaShareId,
+			sambaShareIdNull: this.sambaShareIdNull,
 			sambaShareIdNotNull: sambaShareIdNotNull,
 			browsable_choices: this.browsable_choices,
 			guest_ok_choices: this.guest_ok_choices,
 			read_only_choices: this.read_only_choices,
-			shadow_copy_choices: this.yes_no_choices
+			shadow_copy_choices: this.yes_no_choices,
 
 		}));
 		if(this.sambaShareId == null) {
@@ -243,10 +265,10 @@ AddSambaExportView = RockstorLayoutView.extend({
 
 			return new Handlebars.SafeString(html);
 		});
-		
+
 		Handlebars.registerHelper('display_guestOk_options', function(){
 			var html = '';
-			
+
 			_.each(this.guest_ok_choices, function(c) {
 				var choiceValue = c.value,
 				choiceName = c.name;
@@ -269,10 +291,10 @@ AddSambaExportView = RockstorLayoutView.extend({
 
 			return new Handlebars.SafeString(html);
 		});
-		
+
 		Handlebars.registerHelper('display_readOnly_options', function(){
 			var html = '';
-			
+
 			_.each(this.read_only_choices, function(c) {
 				var choiceValue = c.value,
 				choiceName = c.name;
@@ -292,6 +314,20 @@ AddSambaExportView = RockstorLayoutView.extend({
 				} 
 				html += '</label>';
 			});
+
+			return new Handlebars.SafeString(html);
+		});
+
+		Handlebars.registerHelper('display_samba_shares', function(){
+			var html = '';
+			if (this.sambaShareIdNull) { 
+				html += '<select class="form-control" name="shares" id="shares" size="10" data-placeholder="Select shares to export" multiple>';
+				_.each(this.shares, function(share, index) {
+					var shareName = share.get('name');
+					html += '<option value="' + shareName + '" >' + shareName + '</option>';
+				});
+				html += '</select>';
+			} else {}
 
 			return new Handlebars.SafeString(html);
 		});
