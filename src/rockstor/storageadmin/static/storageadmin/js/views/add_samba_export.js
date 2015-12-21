@@ -41,7 +41,7 @@ AddSambaExportView = RockstorLayoutView.extend({
 		this.users.pageSize = RockStorGlobals.maxPageSize;
 		this.dependencies.push(this.shares);
 		this.dependencies.push(this.users);
-		this.sambaShareId = this.options.sambaShareId;
+		this.sambaShareId = this.options.sambaShareId || null;
 		this.sambaShares = new SambaCollection({sambaShareId: this.sambaShareId});
 		this.dependencies.push(this.sambaShares);
 
@@ -76,15 +76,14 @@ AddSambaExportView = RockstorLayoutView.extend({
 			});
 			return !_.isUndefined(s);
 		}, this);
-		
-		//samba share id is null in Edit View. Not null in Add view.
-		var sambaShareIdNotNull = false; //sambaShareId is Null by default.
-		
+
+		//Edit view gets the sambaShareId from initalize function and Null in Add view.
+		var sambaShareIdNotNull = false;
 		var sambaShareIdNull = false;
+		
 		if(this.sambaShareId == null){
 			sambaShareIdNull = true;
 		}
-		
 		if(this.sambaShareId != null){
 			this.sShares = this.sambaShares.get(this.sambaShareId);
 			sambaShareIdNotNull = true;
@@ -93,11 +92,13 @@ AddSambaExportView = RockstorLayoutView.extend({
 		}
 
 		var configList,
+		smbShareName,
 		smbShadowCopy,
 		smbComments,
 		smbSnapPrefix = '';
 		if (this.sShares != null) {
 			var config = this.sShares.get('custom_config'),
+			smbShareName = this.sShares.get('share'),
 			smbShadowCopy = this.sShares.get("shadow_copy"),
 			smbComments = this.sShares.get("comments"),
 			smbSnapPrefix = this.sShares.get("snapshot_prefix");
@@ -108,12 +109,13 @@ AddSambaExportView = RockstorLayoutView.extend({
 		}
 
 		var smbSnapshotPrefixBool = false;
-		if(sambaShareIdNotNull && smbShareShadowCopy){
+		if(sambaShareIdNotNull && smbShadowCopy){
 			smbSnapshotPrefixBool = true;
 		}
 		$(this.el).html(this.template({
 			shares: this.freeShares,
-			smbShare: this.sShares,
+			//smbShare: this.sShares,
+			smbShareName: smbShareName,
 			smbShareShadowCopy: smbShadowCopy,
 			smbShareComments: smbComments,
 			smbShareSnapPrefix: smbSnapPrefix,
@@ -121,7 +123,7 @@ AddSambaExportView = RockstorLayoutView.extend({
 			users: this.users,
 			configList: configList,
 			sambaShareId: this.sambaShareId,
-			sambaShareIdNull: this.sambaShareIdNull,
+			sambaShareIdNull: sambaShareIdNull,
 			sambaShareIdNotNull: sambaShareIdNotNull,
 			browsable_choices: this.browsable_choices,
 			guest_ok_choices: this.guest_ok_choices,
@@ -217,6 +219,20 @@ AddSambaExportView = RockstorLayoutView.extend({
 	},
 
 	initHandlebarHelpers: function(){
+		Handlebars.registerHelper('display_samba_shares', function(){
+			var html = '';
+			if (this.sambaShareIdNull) { 
+				html += '<select class="form-control" name="shares" id="shares" size="10" data-placeholder="Select shares to export" multiple>';
+				_.each(this.shares, function(share, index) {
+					var shareName = share.get('name');
+					html += '<option value="' + shareName + '" >' + shareName + '</option>';
+				});
+				html += '</select>';
+			} else {}
+
+			return new Handlebars.SafeString(html);
+		});
+
 		Handlebars.registerHelper('display_adminUser_options', function(){
 			var html = '';
 			this.users.each(function(user, index) {
@@ -314,20 +330,6 @@ AddSambaExportView = RockstorLayoutView.extend({
 				} 
 				html += '</label>';
 			});
-
-			return new Handlebars.SafeString(html);
-		});
-
-		Handlebars.registerHelper('display_samba_shares', function(){
-			var html = '';
-			if (this.sambaShareIdNull) { 
-				html += '<select class="form-control" name="shares" id="shares" size="10" data-placeholder="Select shares to export" multiple>';
-				_.each(this.shares, function(share, index) {
-					var shareName = share.get('name');
-					html += '<option value="' + shareName + '" >' + shareName + '</option>';
-				});
-				html += '</select>';
-			} else {}
 
 			return new Handlebars.SafeString(html);
 		});
