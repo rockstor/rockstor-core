@@ -24,7 +24,7 @@ from rest_framework.exceptions import NotFound
 from django.db import transaction
 from storageadmin.models import (Share, Disk, Pool, Snapshot,
                                  NFSExport, SambaShare, SFTP)
-from smart_manager.models import ShareUsage
+from smart_manager.models import (ShareUsage, Replica)
 from fs.btrfs import (add_share, remove_share, update_quota,
                       share_usage, set_property, mount_share, qgroup_id,
                       shares_info, qgroup_create)
@@ -274,6 +274,11 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
 
             self._rockon_check(request, sname)
+
+            if (Replica.objects.filter(share=sname).exists()):
+                e_msg = ('Share(%s) is configured for replication. If you are '
+                         'sure, delete the replication task and try again.' % sname)
+                handle_exception(Exception(e_msg), request)
 
             try:
                 remove_share(share.pool, share.subvol_name, share.pqgroup)
