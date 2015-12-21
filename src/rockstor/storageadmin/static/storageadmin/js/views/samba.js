@@ -64,7 +64,7 @@ SambaView  = RockstorLayoutView.extend({
 	    if(this.shares.length > 0){
 	    	sharesExistBool = true;
 	    }
-	    //check if there are free shares not associated with afp.
+	    //check if there are free shares not associated with samba.
 	    var freeSharesBool = false;
 	    if(this.freeShares){
 	      freeSharesBool = true;
