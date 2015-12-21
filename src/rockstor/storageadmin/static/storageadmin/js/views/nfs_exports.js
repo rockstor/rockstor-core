@@ -25,153 +25,193 @@
  */
 
 NFSExportsView  = RockstorLayoutView.extend({
-  events: {
-        'click .delete-nfs-export': 'deleteNfsExport',
-        'switchChange.bootstrapSwitch': 'switchStatus',
-  },
+	events: {
+		'click .delete-nfs-export': 'deleteNfsExport',
+		'switchChange.bootstrapSwitch': 'switchStatus',
+	},
 
-  initialize: function() {
-    this.constructor.__super__.initialize.apply(this, arguments);
-    this.template = window.JST.nfs_nfs_exports;
-    this.paginationTemplate = window.JST.common_pagination;
-    this.module_name = 'nfs_exports';
-    this.collection = new NFSExportGroupCollection();
-    this.dependencies.push(this.collection);
-    this.appliances = new ApplianceCollection();
-    this.dependencies.push(this.appliances);
-    this.serviceName = 'nfs';
-    this.service = new Service({name: this.serviceName});
-    this.dependencies.push(this.service);
-    this.updateFreq = 5000;
-    this.collection.on('reset', this.renderNFSExportGroups, this);
-  },
+	initialize: function() {
+		this.constructor.__super__.initialize.apply(this, arguments);
+		this.template = window.JST.nfs_nfs_exports;
+		this.module_name = 'nfs_exports';
+		this.collection = new NFSExportGroupCollection();
+		this.dependencies.push(this.collection);
+		this.appliances = new ApplianceCollection();
+		this.dependencies.push(this.appliances);
+		this.serviceName = 'nfs';
+		this.service = new Service({name: this.serviceName});
+		this.dependencies.push(this.service);
+		this.updateFreq = 5000;
+		this.collection.on('reset', this.renderNFSExportGroups, this);
+		this.initHandlebarHelpers();
+	},
 
-  render: function() {
-    var _this = this;
-    this.fetch(this.renderNFSExportGroups, this);
-    return this;
-  },
+	render: function() {
+		var _this = this;
+		this.fetch(this.renderNFSExportGroups, this);
+		return this;
+	},
 
-  renderNFSExportGroups: function() {
-    var currentAppliance = this.appliances.find(function(appliance) {
-      return appliance.get('current_appliance') == true;
-    });
-    $(this.el).html(this.template({
-      nfsExportGroups: this.collection,
-      service: this.service,
-      currentAppliance: currentAppliance
-    }));
+	renderNFSExportGroups: function() {
+		var currentAppliance = this.appliances.find(function(appliance) {
+			return appliance.get('current_appliance') == true;
+		});
+		$(this.el).html(this.template({
+			collection: this.collection,
+			collectionNotEmpty: !this.collection.isEmpty(),
+			nfsExportGroups: this.collection,
+			service: this.service,
+			currentAppliance: currentAppliance
+		}));
 
-    this.$(".ph-pagination").html(this.paginationTemplate({
-      collection: this.collection
-    }));
+		//initalize Bootstrap Switch
+		this.$("[type='checkbox']").bootstrapSwitch();
+		this.$('input[name="nfs-export-checkbox"]').bootstrapSwitch('state', this.service.get('status'), true);
+		this.$("[type='checkbox']").bootstrapSwitch('onColor','success'); //left side text color
+		this.$("[type='checkbox']").bootstrapSwitch('offColor','danger'); //right side text color
 
-    //initalize Bootstrap Switch
-  	this.$("[type='checkbox']").bootstrapSwitch();
-  	this.$('input[name="nfs-export-checkbox"]').bootstrapSwitch('state', this.service.get('status'), true);
-  	this.$("[type='checkbox']").bootstrapSwitch('onColor','success'); //left side text color
-  	this.$("[type='checkbox']").bootstrapSwitch('offColor','danger'); //right side text color
+		// Display NFS Export Service Warning
+		if (!this.service.get('status')) {
+			this.$('#nfs-warning').show();
+		} else {
+			this.$('#nfs-warning').hide();
+		}
+	},
 
-  	// Display NFS Export Service Warning
-      	if (!this.service.get('status')) {
-      	    this.$('#nfs-warning').show();
-      	} else {
-      	    this.$('#nfs-warning').hide();
-      	}
-  },
+	switchStatus: function(event,state){
+		if (state){
+			this.startService();
+		}else {
+			this.stopService();
+		}
+	},
 
-  switchStatus: function(event,state){
-          if (state){
-              this.startService();
-          }else {
-              this.stopService();
-          }
-  },
+	deleteNfsExport: function(event) {
+		var _this = this;
+		if (event) event.preventDefault();
+		var button = $(event.currentTarget);
+		if (buttonDisabled(button)) return false;
+		if(confirm("Delete nfs-export... Are you sure? ")){
+			disableButton(button);
+			var id = $(event.currentTarget).data('id');
+			$.ajax({
+				url: '/api/nfs-exports/' + id,
+				type: 'DELETE',
+				dataType: 'json',
+				contentType: 'application/json',
+				success: function() {
+					_this.render();
+				},
+				error: function(xhr, status, error) {
+					enableButton(button);
+				}
+			});
+		}
+	},
 
-  deleteNfsExport: function(event) {
-    var _this = this;
-    if (event) event.preventDefault();
-    var button = $(event.currentTarget);
-    if (buttonDisabled(button)) return false;
-    if(confirm("Delete nfs-export... Are you sure? ")){
-      disableButton(button);
-      var id = $(event.currentTarget).data('id');
-      $.ajax({
-        url: '/api/nfs-exports/' + id,
-        type: 'DELETE',
-        dataType: 'json',
-        contentType: 'application/json',
-        success: function() {
-          _this.render();
-        },
-        error: function(xhr, status, error) {
-          enableButton(button);
-        }
-      });
-    }
-  },
+	startService: function() {
+		var _this = this;
+		this.setStatusLoading(this.serviceName, true);
+		$.ajax({
+			url: "/api/sm/services/nfs/start",
+			type: "POST",
+			dataType: "json",
+			success: function(data, status, xhr) {
+				_this.setStatusLoading(_this.serviceName, false);
+				_this.$('#nfs-warning').hide();
+			},
+			error: function(xhr, status, error) {
+				_this.setStatusError(_this.serviceName, xhr);
+				_this.$('#nfs-warning').show();
+			}
+		});
+	},
 
-  startService: function() {
-    var _this = this;
-    this.setStatusLoading(this.serviceName, true);
-    $.ajax({
-      url: "/api/sm/services/nfs/start",
-      type: "POST",
-      dataType: "json",
-      success: function(data, status, xhr) {
-        _this.setStatusLoading(_this.serviceName, false);
-        _this.$('#nfs-warning').hide();
-      },
-      error: function(xhr, status, error) {
-        _this.setStatusError(_this.serviceName, xhr);
-        _this.$('#nfs-warning').show();
-      }
-    });
-  },
+	stopService: function() {
+		var _this = this;
+		this.setStatusLoading(this.serviceName, true);
+		$.ajax({
+			url: "/api/sm/services/nfs/stop",
+			type: "POST",
+			dataType: "json",
+			success: function(data, status, xhr) {
+				_this.setStatusLoading(_this.serviceName, false);
+				_this.$('#nfs-warning').show();
+			},
+			error: function(xhr, status, error) {
+				_this.setStatusError(_this.serviceName, xhr);
+				_this.$('#nfs-warning').hide();
+			}
+		});
+	},
 
-  stopService: function() {
-    var _this = this;
-    this.setStatusLoading(this.serviceName, true);
-    $.ajax({
-      url: "/api/sm/services/nfs/stop",
-      type: "POST",
-      dataType: "json",
-      success: function(data, status, xhr) {
-        _this.setStatusLoading(_this.serviceName, false);
-        _this.$('#nfs-warning').show();
-      },
-      error: function(xhr, status, error) {
-        _this.setStatusError(_this.serviceName, xhr);
-        _this.$('#nfs-warning').hide();
-      }
-    });
-  },
+	setStatusLoading: function(serviceName, show) {
+		var statusEl = this.$('div.command-status[data-service-name="'+serviceName+'"]');
+		if (show) {
+			statusEl.html('<img src="/static/storageadmin/img/ajax-loader.gif"></img>');
+		} else {
+			statusEl.empty();
+		}
+	},
 
-  setStatusLoading: function(serviceName, show) {
-    var statusEl = this.$('div.command-status[data-service-name="'+serviceName+'"]');
-    if (show) {
-      statusEl.html('<img src="/static/storageadmin/img/ajax-loader.gif"></img>');
-    } else {
-      statusEl.empty();
-    }
-  },
+	setStatusError: function(serviceName, xhr) {
+		var statusEl = this.$('div.command-status[data-service-name="' + serviceName + '"]');
+		var msg = parseXhrError(xhr);
+		// remove any existing error popups
+		$('body').find('#' + serviceName + 'err-popup').remove();
+		// add icon and popup
+		statusEl.empty();
+		var icon = $('<i>').addClass('icon-exclamation-sign').attr('rel', '#' + serviceName + '-err-popup');
+		statusEl.append(icon);
+		var errPopup = this.$('#' + serviceName + '-err-popup');
+		var errPopupContent = this.$('#' + serviceName + '-err-popup > div');
+		errPopupContent.html(msg);
+		statusEl.click(function(){ errPopup.overlay().load(); });
+	},
 
-  setStatusError: function(serviceName, xhr) {
-    var statusEl = this.$('div.command-status[data-service-name="' + serviceName + '"]');
-    var msg = parseXhrError(xhr);
-    // remove any existing error popups
-    $('body').find('#' + serviceName + 'err-popup').remove();
-    // add icon and popup
-    statusEl.empty();
-    var icon = $('<i>').addClass('icon-exclamation-sign').attr('rel', '#' + serviceName + '-err-popup');
-    statusEl.append(icon);
-    var errPopup = this.$('#' + serviceName + '-err-popup');
-    var errPopupContent = this.$('#' + serviceName + '-err-popup > div');
-    errPopupContent.html(msg);
-    statusEl.click(function(){ errPopup.overlay().load(); });
-  },
+	initHandlebarHelpers: function(){
+		Handlebars.registerHelper('display_nfs_sharesTable', function(){
+			var html = '';
+
+			this.collection.each(function(n) {
+				var nfsExports = n.get('exports'),
+					nfsId = n.id;
+				html += '<tr>';
+				html += '<td>' + n.get("host_str") + '</td>';
+				html += '<td>';
+				_.each(nfsExports, function(e, i) { 
+					if (i < (nfsExports.length - 1)) { 
+						html += e.share + ',';
+					} else { 
+						html += e.share;
+					}
+				});
+				html += '</td>';
+				html += '<td>';
+				if (n.get("editable") == 'rw') {
+					html += 'Writable';
+				} else { 
+					html += 'Read-only';
+				}
+				html += '</td>';
+				html += '<td>' + n.get("syncable") + '</td>';
+				html += '<td><a href="#nfs-exports/edit/' + nfsId + '"><i class="glyphicon glyphicon-edit"></i></a>&nbsp;';
+				html += '<a href="#" class="delete-nfs-export" data-id="' + nfsId + '"><i class="glyphicon glyphicon-trash"></i></a>';
+				html += '</td>';
+				html += '</tr>';
+			});
+
+
+
+
+
+
+
+			return new Handlebars.SafeString(html);
+		});
+	}
 
 });
 
-// Add pagination
+//Add pagination
 Cocktail.mixin(NFSExportsView, PaginationMixin);
