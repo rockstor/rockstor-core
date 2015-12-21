@@ -33,7 +33,8 @@ from storageadmin.serializers import SMARTInfoSerializer
 from storageadmin.util import handle_exception
 from django.conf import settings
 import rest_framework_custom as rfc
-from system.smart import (extended_info, capabilities, info, error_logs, test_logs)
+from system.smart import (extended_info, capabilities, info, error_logs, test_logs,
+                          run_test)
 from datetime import datetime
 from django.utils.timezone import utc
 from django.db.models import Count
@@ -130,7 +131,7 @@ class DiskSMARTDetailView(rfc.GenericView):
                     test_type = 'conveyance'
                 else:
                     raise Exception('Unsupported Self-Test: %s' % test_type)
-                smart.run_test(disk.name, test_type)
+                run_test(disk.name, test_type)
                 return self._info(disk)
 
             e_msg = ('Unknown command: %s. Only valid commands are info and '
