@@ -838,12 +838,18 @@ def scan_disks(min_size):
                 continue
             if (dmap['SIZE'] < min_size):
                 continue
+            logger.debug('########### process next block device ############')
+            logger.debug("dmap['serial'] = %s " % dmap['SERIAL'])
+            logger.debug('always_use_udev_serial = %s ' % always_use_udev_serial)
             if (dmap['SERIAL'] == '' or always_use_udev_serial):
+                logger.debug('USING the UDEV based get_disk_serial SYSTEM')
                 # lsblk fails to retrieve SERIAL from VirtIO drives and some
                 # sdcard devices so try specialized function.
                 # dmap['SERIAL'] = get_virtio_disk_serial(dmap['NAME'])
                 dmap['SERIAL'] = get_disk_serial(dmap['NAME'], None)
+                logger.debug('get_disk_serial returned = %s' % dmap['SERIAL'])
             if (dmap['SERIAL'] == '' or (dmap['SERIAL'] in serials)):
+                logger.debug('the contents of serials = %s' % serials)
                 # No serial number still or its a repeat.
                 # Overwrite drive serial entry in db with 'fake-serial-' + uuid4
                 # see disk/disks_table.jst for a use of this flag mechanism.
@@ -864,6 +870,7 @@ def scan_disks(min_size):
                                     dmap['root'], ]
     for d in dnames.keys():
         disks.append(Disk(*dnames[d]))
+    logger.debug('scan_disks returns the following as disks %s' % disks)
     return disks
 
 
