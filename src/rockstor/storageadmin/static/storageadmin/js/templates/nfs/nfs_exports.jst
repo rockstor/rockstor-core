@@ -67,7 +67,7 @@
    {{/if}}
   
     {{#if collectionNotEmpty}}
-      Mount a share using <code>mount <%= currentAppliance.get('ip') %>:/export/&lt;share_name&gt; &lt;mount_pt&gt;</code>
+      Mount a share using <code>mount {{currentApplianceIp}}:/export/&lt;share_name&gt; &lt;mount_pt&gt;</code>
     {{/if}}
     <!-- End Content -->
   </div> <!-- col-md-12 -->

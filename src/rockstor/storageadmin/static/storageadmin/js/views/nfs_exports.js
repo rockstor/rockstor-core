@@ -59,9 +59,9 @@ NFSExportsView  = RockstorLayoutView.extend({
 		$(this.el).html(this.template({
 			collection: this.collection,
 			collectionNotEmpty: !this.collection.isEmpty(),
-			nfsExportGroups: this.collection,
 			service: this.service,
-			currentAppliance: currentAppliance
+			currentAppliance: currentAppliance,
+			currentApplianceIp: currentAppliance.get('ip')
 		}));
 
 		//initalize Bootstrap Switch
