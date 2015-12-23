@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import os
 import requests
 from rest_framework.response import Response
 from django.db import transaction
@@ -26,6 +27,7 @@ from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
 from rockon_helpers import (docker_status, rockon_status)
 from django_ztask.models import Task
+from django.conf import settings
 import pickle
 import re
 import logging
@@ -223,9 +225,34 @@ class RockOnView(rfc.GenericView):
     def _get_available(self, request):
         msg = ('Network error while checking for updates. '
                'Please try again later.')
+        url_root = settings.ROCKONS.get('remote_metastore')
         with self._handle_exception(request, msg=msg):
-            r = requests.get('http://rockstor.com/rockons_testing.json')
-            return r.json()
+            response = requests.get(url_root, timeout=10)
+            root = response.json()
+            meta_cfg = {}
+            for k,v in root.items():
+                cur_meta_url = '%s/%s' % (url_root, v)
+                try:
+                    cur_res = requests.get(cur_meta_url, timeout=10)
+                    logger.debug('meta_cfg updated for %s' % k)
+                    meta_cfg.update(cur_res.json())
+                except Exception, e:
+                    logger.error('Error processing %s: %s' %
+                                 (cur_meta_url, e.__str__()))
+            local_root = settings.ROCKONS.get('local_metastore')
+            for f in os.listdir(local_root):
+                fp = '%s/%s' % (local_root, f)
+                try:
+                    with open(fp) as fo:
+                        ds = json.load(fo)
+                        meta_cfg.update(ds)
+                except Exception, e:
+                    logger.error('Error processing %s: %s' %
+                                 (fp, e.__str__()))
+            return meta_cfg
+
+
+
 
     @transaction.atomic
     def delete(self, request, sname):
