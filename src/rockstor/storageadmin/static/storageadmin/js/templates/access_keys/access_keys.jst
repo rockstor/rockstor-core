@@ -27,13 +27,15 @@
     <div class="messages"></div>
     <div id="access-keys-table-ph">
       <% if (!collection.isEmpty()) { %>
-        <table id="access-keys-table" class="table table-condensed table-bordered table-hover table-striped">
-          <tr>
-            <th>Name</th>
-            <th>Access Key ID</th>
-            <th>Secret Access Key</th>
-            <th></th>
-          </tr>
+        <table id="access-keys-table" class="table table-condensed share-table tablesorter">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Access Key ID</th>
+              <th>Secret Access Key</th>
+              <th></th>
+            </tr>
+          </thead>
           <% collection.each(function(c) { %>
             <tr>
               <td><%= c.get('name') %></td>
@@ -49,7 +51,7 @@
       <% } %>
     </div>
 
-    <a href="#add-access-key" id="add-access-key" class="btn btn-primary"><i class="glyphicon glyphicon-edit"></i> Add Access Key</a>
+    <a href="#add-access-key" id="add-access-key" class="btn btn-primary right"><i class="glyphicon glyphicon-edit"></i> Add Access Key</a>
     <!-- End Content -->
   </div> <!--col-md-12 -->
 </div> <!-- row -->
