@@ -82,7 +82,6 @@ ServicesView = Backbone.View.extend({
 		$(this.el).empty();
 		// find service-monitor service
 		$(this.el).append(this.template({
-			services: this.collection,
 			collection: this.collection,
 			configurable_services: this.configurable_services
 		}));
