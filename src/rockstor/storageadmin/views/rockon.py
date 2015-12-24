@@ -30,6 +30,7 @@ from django_ztask.models import Task
 from django.conf import settings
 import pickle
 import re
+import json
 import logging
 logger = logging.getLogger(__name__)
 
@@ -73,13 +74,14 @@ class RockOnView(rfc.GenericView):
                     except Exception, e:
                         logger.error('Exception while processing rockon(%s) '
                                      'metadata: %s' % (r, e.__str__()))
+                        logger.exception(e)
             return Response()
 
     @transaction.atomic
     def _create_update_meta(self, name, r_d):
         ro_defaults = {'description': r_d['description'],
                        'website': r_d['website'],
-                       'version': '1.0',
+                       'version': r_d['version'],
                        'state': 'available',
                        'status': 'stopped'}
         ro, created = RockOn.objects.get_or_create(name=name,
@@ -103,9 +105,10 @@ class RockOnView(rfc.GenericView):
         containers = r_d['containers']
         for c in containers:
             c_d = containers[c]
+            defaults = {'tag': c_d.get('tag', 'latest'),
+                        'repo': 'na',}
             io, created = DImage.objects.get_or_create(name=c_d['image'],
-                                                       defaults={'tag': 'latest',
-                                                                 'repo': 'na'})
+                                                       defaults=defaults)
             co_defaults = {'rockon': ro,
                            'dimage': io,
                            'launch_order': c_d['launch_order'],}
@@ -239,7 +242,6 @@ class RockOnView(rfc.GenericView):
                 cur_meta_url = '%s/%s' % (url_root, v)
                 try:
                     cur_res = requests.get(cur_meta_url, timeout=10)
-                    logger.debug('meta_cfg updated for %s' % k)
                     meta_cfg.update(cur_res.json())
                 except Exception, e:
                     logger.error('Error processing %s: %s' %
@@ -255,9 +257,6 @@ class RockOnView(rfc.GenericView):
                     logger.error('Error processing %s: %s' %
                                  (fp, e.__str__()))
             return meta_cfg
-
-
-
 
     @transaction.atomic
     def delete(self, request, sname):
