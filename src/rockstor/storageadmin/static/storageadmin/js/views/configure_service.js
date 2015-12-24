@@ -109,10 +109,15 @@ ConfigureServiceView = RockstorLayoutView.extend({
         var configObj = {};
         if (config != null) {
             configObj = JSON.parse(this.service.get('config'));
+            this.domain = configObj.domain;
+            this.userName = configObj.username;
         }
         $(this.el).html(this.template({
             service: this.service,
+            serviceName: this.service.get('display_name'),
             config: configObj,
+            domain: this.domain,
+            userName: this.userName,
             shares: this.shares,
 	    network: this.network
         }));
