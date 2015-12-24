@@ -239,7 +239,7 @@ def syncthing_install(rockon):
 def pull_images(rockon):
     for c in DContainer.objects.filter(rockon=rockon):
         rm_container(c.name)
-        run_command([DOCKER, 'pull', c.dimage.name])
+        run_command([DOCKER, 'pull', '%s:%s' % (c.dimage.name, c.dimage.tag)])
 
 
 def owncloud_install(rockon):
