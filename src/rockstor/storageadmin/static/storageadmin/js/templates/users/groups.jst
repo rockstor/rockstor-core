@@ -35,7 +35,7 @@
         </tr>
       </thead>
       <tbody>
-      {{> display_managed_groups testVar=true}}
+      {{display_managed_groups true}}
       </tbody>
     </table>
     <a href="#add-group" id="add-group" class="btn btn-primary">Add Group</a>
@@ -53,18 +53,7 @@
         </tr>
       </thead>
       <tbody>
-       {{> display_managed_groups testVar=false}}
-	{{! <% groups.each(function(group, index) { %>
-	<% if (!group.get('admin')) { %>
-           <tr>
-	    <td><i class="fa fa-group"></i> <%= group.get("groupname") %></td>
-            <td><%= group.get("gid") %></td>
-            <td>
-              <a href="#" class="delete-group" data-groupname="<%= group.get('groupname') %>" rel="tooltip" title="Delete group"><i class="glyphicon glyphicon-trash"></i></a>
-            </td>
-          </tr>
-	  <% } %>
-        <% }); %> }}
+       {{display_managed_groups false}}
       </tbody>
       </table>
       <div>{{pagination}}</div>

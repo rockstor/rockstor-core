@@ -49,9 +49,18 @@ GroupsView = RockstorLayoutView.extend({
 		if (this.$('[rel=tooltip]')) {
 			this.$('[rel=tooltip]').tooltip('hide');
 		}
+
+		this.rockstorGroups = this.collection.filter(function (grp) {
+			return (grp.get('admin'))
+		});
+		this.otherSystemGroups = this.collection.filter(function (grp) {
+			return (!grp.get('admin'))
+		});
+
 		$(this.el).html(this.template({
-			groups: this.collection, 
-			collection: this.collection
+			collection: this.collection,
+			rockstorGroups: this.rockstorGroups,
+			otherSystemGroups: this.otherSystemGroups,
 		}));
 		this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
 	},
@@ -86,35 +95,30 @@ GroupsView = RockstorLayoutView.extend({
 	},
 
 	initHandlebarHelpers: function(){
-		Handlebars.registerPartial('display_managed_groups', '{{test}}');
-		Handlebars.registerHelper('test', function(testVar){
-			console.log("Inside the helper");
+		Handlebars.registerHelper('display_managed_groups', function(adminBool){
 			var html = '';
-			this.collection.each(function(group, index) { 
-				console.log("printing the group: " + JSON.stringify(group));
-				var groupName = group.get("groupname");
-				console.log("print the testVar: " + testVar);
-				console.log("print the group Admin: " + group.get('admin'));
-				if (testVar == group.get('admin')) { 
+			var filteredCollection = null;
+			if (adminBool) {
+				filteredCollection = this.rockstorGroups;
+			} else {
+				filteredCollection = this.otherSystemGroups;
+			} 
+
+			if(filteredCollection == null){
+				html += "No groups exist";
+			}else{
+				for(var i = 0; i < filteredCollection.length; i++){
 					html += '<tr>';
-					html += '<td><i class="fa fa-group"></i> '+ groupName + '</td>';
-					html += '<td>' + group.get("gid") + '</td>';
+					html += '<td><i class="fa fa-group"></i> '+ filteredCollection[i].get('groupname') + '</td>';
+					html += '<td>' + filteredCollection[i].get('gid') + '</td>';
 					html += '<td>';
-					html += '<a href="#" class="delete-group" data-groupname="' + groupName  + '" rel="tooltip" title="Delete group"><i class="glyphicon glyphicon-trash"></i></a>';
+					html += '<a href="#" class="delete-group" data-groupname="' + filteredCollection[i].get('groupname')  + '" rel="tooltip" title="Delete group"><i class="glyphicon glyphicon-trash"></i></a>';
 					html += '</td>';
 					html += '</tr>';
-				} else if(this.testVar == !group.get('admin')){
-					html += '<tr>';
-					html += '<td><i class="fa fa-group"></i> '+ groupName + '</td>';
-					html += '<td>' + group.get("gid") + '</td>';
-					html += '<td>';
-					html += '<a href="#" class="delete-group" data-groupname="' + groupName  + '" rel="tooltip" title="Delete group"><i class="glyphicon glyphicon-trash"></i></a>';
-					html += '</td>';
-					html += '</tr>';
-					
-				}
-			});
-			return new Handlebars.SafeString();
+				} 
+
+			}
+			return new Handlebars.SafeString(html);
 		});
 	}
 
