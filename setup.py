@@ -32,7 +32,6 @@ setup(
     package_dir={'': 'src/rockstor'},
     entry_points={
         'console_scripts': [
-            'sm = smart_manager.smd:main',
             'rcli = cli.rock_cli:main',
             'prep_db = scripts.prep_db:main',
             'replicad = smart_manager.replication.listener_broker:main',
