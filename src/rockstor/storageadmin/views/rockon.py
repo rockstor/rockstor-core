@@ -38,26 +38,51 @@ logger = logging.getLogger(__name__)
 class RockOnView(rfc.GenericView):
     serializer_class = RockOnSerializer
 
+    @transaction.atomic
     def get_queryset(self, *args, **kwargs):
         if (docker_status()):
-            pending_rids = []
-            for t in Task.objects.all():
-                pending_rids.append(pickle.loads(t.args)[0])
+            pending_rids = {}
+            failed_rids = {}
+            for t in Task.objects.filter(function_name__regex='rockon_helpers'):
+                rid = pickle.loads(t.args)[0]
+                if (t.retry_count == 0 and t.failed is not None):
+                    failed_rids[rid] = t
+                else:
+                    pending_rids[rid] = t
+            #Remove old failed attempts
+            #@todo: we should prune all failed tasks of the past, not here though.
+            for rid in pending_rids.keys():
+                if (rid in failed_rids):
+                    pt = pending_rids[rid]
+                    ft = failed_rids[rid]
+                    if (failed_rids[rid].created > pending_rids[rid].created):
+                        #this should never be the case. pending tasks either
+                        #succeed and get deleted or they are marked failed.
+                        msg = ('Found a failed Task(%s) in the future of a '
+                               'pending Task(%s).' % (ft.uuid, pt.uuid))
+                        handle_exception(Exception(msg), self.request)
+                    failed_rids[rid].delete()
+                    logger.debug('deleted failed task')
+                    del failed_rids[rid]
             for ro in RockOn.objects.all():
                 if (ro.state == 'installed'):
                     # update current running status of installed rockons.
                     if (ro.id not in pending_rids):
                         ro.status = rockon_status(ro.name)
-                elif (re.search('pending', ro.state) is not None and
-                      ro.id not in pending_rids):
-                    # reset rockons to their previous state if they are stuck
-                    # in a pending transition.
-                    if (re.search('uninstall', ro.state) is not None):
-                        ro.state = 'installed'
+                elif (re.search('pending', ro.state) is not None):
+                    if (ro.id in failed_rids):
+                        #we update the status on behalf of the task runner
+                        func_name = t.function_name.split('.')[-1]
+                        ro.state = '%s_failed' % func_name
+                    elif (ro.id not in pending_rids):
+                        logger.error('Rockon(%d) is in pending state but there '
+                                     'is not pending or failed task for it. '
+                                     % ro.id)
                     else:
-                        ro.state = 'available'
+                        logger.debug('Rockon(%d) is in pending state' % ro.id)
+
                 ro.save()
-        return RockOn.objects.filter().order_by('-id')
+        return RockOn.objects.filter().order_by('name')
 
     @transaction.atomic
     def put(self, request):
