@@ -25,68 +25,115 @@
  */
 
 UsersView = RockstorLayoutView.extend({
-  events: {
-    "click .delete-user": "deleteUser",
-    "click .edit-user": "editUser"
-  },
+	events: {
+		"click .delete-user": "deleteUser",
+		"click .edit-user": "editUser"
+	},
 
-  initialize: function() {
-    // call initialize of base
-    this.constructor.__super__.initialize.apply(this, arguments);
-    this.template = window.JST.users_users;
-    this.paginationTemplate = window.JST.common_pagination;
-    this.collection = new UserCollection();
-    this.dependencies.push(this.collection);
-    this.collection.on("reset", this.renderUsers, this);
-  },
+	initialize: function() {
+		// call initialize of base
+		this.constructor.__super__.initialize.apply(this, arguments);
+		this.template = window.JST.users_users;
+		this.collection = new UserCollection();
+		this.dependencies.push(this.collection);
+		this.collection.on("reset", this.renderUsers, this);
+		this.initHandlebarHelpers();
+	},
 
-  render: function() {
-    this.collection.fetch();
-    return this;
-  },
+	render: function() {
+		this.collection.fetch();
+		return this;
+	},
 
-  renderUsers: function() {
-    if (this.$('[rel=tooltip]')) { 
-      this.$('[rel=tooltip]').tooltip('hide');
-    }
-    $(this.el).html(this.template({users: this.collection}));
-    this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
-    this.$(".ph-pagination").html(this.paginationTemplate({
-      collection: this.collection
-    }));
-  },
+	renderUsers: function() {
+		if (this.$('[rel=tooltip]')) { 
+			this.$('[rel=tooltip]').tooltip('hide');
+		}
 
-  deleteUser: function(event) {
-    event.preventDefault();
-    var _this = this;
-    var username = $(event.currentTarget).attr('data-username');
-    if(confirm("Delete user:  "+ username +". Are you sure?")){
-      $.ajax({
-        url: "/api/users/"+username,
-        type: "DELETE",
-        dataType: "json",
-        success: function() {
-          _this.collection.fetch();
-        },
-        error: function(xhr, status, error) {
-        }
-      });
-    } else {
-      return false;
-    }
-  },
+		this.rockstorUsers = this.collection.filter(function (grp) {
+			return (grp.get('admin'))
+		});
+		this.otherSystemUsers = this.collection.filter(function (grp) {
+			return (!grp.get('admin'))
+		});
 
-  editUser: function(event) {
-    if (event) event.preventDefault();
-    if (this.$('[rel=tooltip]')) { 
-      this.$('[rel=tooltip]').tooltip('hide');
-    }
-    var username = $(event.currentTarget).attr('data-username');
-    app_router.navigate('users/' + username + '/edit', {trigger: true});
-  }
+		$(this.el).html(this.template({
+			collection: this.collection,
+			rockstorUsers: this.rockstorUsers,
+			otherSystemUsers: this.otherSystemUsers,
+		}));
+
+		this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
+	},
+
+	deleteUser: function(event) {
+		event.preventDefault();
+		var _this = this;
+		var username = $(event.currentTarget).attr('data-username');
+		if(confirm("Delete user:  "+ username +". Are you sure?")){
+			$.ajax({
+				url: "/api/users/"+username,
+				type: "DELETE",
+				dataType: "json",
+				success: function() {
+					_this.collection.fetch();
+				},
+				error: function(xhr, status, error) {
+				}
+			});
+		} else {
+			return false;
+		}
+	},
+
+	editUser: function(event) {
+		if (event) event.preventDefault();
+		if (this.$('[rel=tooltip]')) { 
+			this.$('[rel=tooltip]').tooltip('hide');
+		}
+		var username = $(event.currentTarget).attr('data-username');
+		app_router.navigate('users/' + username + '/edit', {trigger: true});
+	},
+
+	initHandlebarHelpers: function(){
+		Handlebars.registerHelper('display_users_table', function(adminBool){
+			var html = '';
+			var filteredCollection = null;
+			if (adminBool) {
+				filteredCollection = this.rockstorUsers;
+			} else {
+				filteredCollection = this.otherSystemUsers;
+			} 
+
+			if(filteredCollection == null){
+				html += "No groups exist";
+			}else{
+				for(var i = 0; i < filteredCollection.length; i++){
+					html += '<tr>';
+					html += '<td><i class="glyphicon glyphicon-user"></i> '+ filteredCollection[i].get('username') + '</td>';
+					html += '<td>' + filteredCollection[i].get('uid') + '</td>';
+					html += '<td>' + filteredCollection[i].get('groupname') + '</td>';
+					html += '<td>' + filteredCollection[i].get('gid') + '</td>';
+					html += '<td>';
+					if(filteredCollection[i].get('shell') != null){
+						html += filteredCollection[i].get('shell');
+					}
+					html += '</td>';
+					html += '<td>';
+					if (filteredCollection[i].get('managed_user')) { 
+						html += '<a href="#" class="edit-user" data-username="' + filteredCollection[i].get('username') + '" rel="tooltip" title="Edit user"><i class="glyphicon glyphicon-pencil"></i></a>&nbsp;';
+						html += '<a href="#" class="delete-user" data-username="' + filteredCollection[i].get('username')  + '" rel="tooltip" title="Delete user"><i class="glyphicon glyphicon-trash"></i></a>';
+						html += '</td>';
+					}
+					html += '</tr>';
+				} 
+			}
+			return new Handlebars.SafeString(html);
+		});
+	}
 
 });
 
-// Add pagination
+//Add pagination
 Cocktail.mixin(UsersView, PaginationMixin);
 

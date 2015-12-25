@@ -38,30 +38,11 @@
         </tr>
       </thead>
       <tbody>
-        <% users.each(function(user, index) { %>
-	<% if (user.get('admin')) { %>
-           <tr>
-	    <td><i class="glyphicon glyphicon-user"></i> <%= user.get("username") %></td>
-            <td><%= user.get('uid') %></td>
-	    <td>
-	      <% if (user.get('groupname')) { %>
-	      <%= user.get('groupname') %>
-	      <% } %>
-	    </td>
-	    <td><%= user.get('gid') %></td>
-	    <td><%= user.get('shell') %></td>
-            <td>
-              <a href="#" class="edit-user" data-username="<%= user.get('username') %>" rel="tooltip" title="Edit user"><i class="glyphicon glyphicon-pencil"></i></a>
-              &nbsp;
-              <a href="#" class="delete-user" data-username="<%= user.get('username') %>" rel="tooltip" title="Delete user"><i class="glyphicon glyphicon-trash"></i></a>
-            </td>
-          </tr>
-	  <% } %>
-        <% }); %>
+        {{display_users_table true}}
       </tbody>
     </table>
     <a href="#add-user" id="add-user" class="btn btn-primary">Add User</a>
-    <div class="ph-pagination"></div>
+    <div>{{pagination}}</div>
 
     <h3> Other system users </h3>
     <table id="users-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of user">
@@ -76,26 +57,10 @@
         </tr>
       </thead>
       <tbody>
-	<% users.each(function(user, index) { %>
-	<% if (!user.get('admin')) { %>
-           <tr>
-	    <td><i class="glyphicon glyphicon-user"></i> <%= user.get('username') %></td>
-            <td><%= user.get('uid') %></td>
-	    <td><%= user.get('groupname') %></td>
-            <td><%= user.get('gid') %></td>
-	    <td><%= user.get('shell') %></td>
-            <td>
-	      <% if (user.get('managed_user')) { %>
-	      <a href="#" class="edit-user" data-username="<%= user.get('username') %>" rel="tooltip" title="Edit user"><i class="glyphicon glyphicon-pencil"></i></a>
-              <a href="#" class="delete-user" data-username="<%= user.get('username') %>" rel="tooltip" title="Delete user"><i class="glyphicon glyphicon-trash"></i></a>
-            </td>
-	    <% } %>
-          </tr>
-	  <% } %>
-        <% }); %>
+      {{display_users_table false}}
       </tbody>
       </table>
-      <div class="ph-pagination"></div>
+      <div>{{pagination}}</div>
 
   </div> <!-- col-md-12 -->
 </div> <!-- row -->
