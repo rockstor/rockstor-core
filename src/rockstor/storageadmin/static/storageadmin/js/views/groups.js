@@ -95,7 +95,7 @@ GroupsView = RockstorLayoutView.extend({
 	},
 
 	initHandlebarHelpers: function(){
-		Handlebars.registerHelper('display_managed_groups', function(adminBool){
+		Handlebars.registerHelper('display_groups_table', function(adminBool){
 			var html = '';
 			var filteredCollection = null;
 			if (adminBool) {
