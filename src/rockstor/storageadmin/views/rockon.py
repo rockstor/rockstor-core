@@ -272,15 +272,16 @@ class RockOnView(rfc.GenericView):
                     logger.error('Error processing %s: %s' %
                                  (cur_meta_url, e.__str__()))
             local_root = settings.ROCKONS.get('local_metastore')
-            for f in os.listdir(local_root):
-                fp = '%s/%s' % (local_root, f)
-                try:
-                    with open(fp) as fo:
-                        ds = json.load(fo)
-                        meta_cfg.update(ds)
-                except Exception, e:
-                    logger.error('Error processing %s: %s' %
-                                 (fp, e.__str__()))
+            if (os.path.isdir(local_root)):
+                for f in os.listdir(local_root):
+                    fp = '%s/%s' % (local_root, f)
+                    try:
+                        with open(fp) as fo:
+                            ds = json.load(fo)
+                            meta_cfg.update(ds)
+                    except Exception, e:
+                        logger.error('Error processing %s: %s' %
+                                     (fp, e.__str__()))
             return meta_cfg
 
     @transaction.atomic
