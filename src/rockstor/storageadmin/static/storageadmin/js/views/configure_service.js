@@ -96,6 +96,7 @@ ConfigureServiceView = RockstorLayoutView.extend({
 		this.dependencies.push(this.shares);
 		this.network = new NetworkInterfaceCollection();
 		this.dependencies.push(this.network);
+		this.initHandlebarHelpers();
 	},
 
 	render: function () {
@@ -113,6 +114,7 @@ ConfigureServiceView = RockstorLayoutView.extend({
 			this.userName = configObj.username;
 			this.server = configObj.server;
 			this.basedn = configObj.basedn;
+			this.rootShare = configObj.root_share;
 			this.enableTLS =  configObj.enabletls;
 			this.certificate = configObj.cert;
 			this.upsName = configObj.upsname;
@@ -136,6 +138,7 @@ ConfigureServiceView = RockstorLayoutView.extend({
 			network: this.network,
 			//newly added 
 			domain: this.domain,
+			rootShare: this.rootShare,
 			userName: this.userName,
 			server: this.server,
 			basedn: this.basedn,
@@ -372,6 +375,29 @@ ConfigureServiceView = RockstorLayoutView.extend({
 			this.$('#cert-ph').css('visibility', 'hidden');
 		}
 	},
+
+	initHandlebarHelpers: function(){
+		Handlebars.registerHelper('display_rockon_shares', function(){
+			var html = '';
+			if (this.shares.length ===  0) {
+				html += '<p>You currently have no Shares. You will need a share to run the Rock-ons service.</p>';
+				html += '<a href="#add_share">Add a Share</a>';
+			} else {
+				html += '<select class="form-control" name="root_share" id="root_share" data-placeholder="Select root share">';
+				html += '<option></option>';
+				this.shares.each( function(share, index) { 
+					var shareName = share.get('name');
+					if (shareName == this.rootShare) {
+						html += '<option value="' + shareName + '" selected="selected">  ' + shareName + ' </option>';
+					} else {
+						html += '<option value="' + shareName + '">' + shareName + ' </option>';
+					} 
+				}); 
+				html += '</select>';
+			} 
+			return new Handlebars.SafeString(html);
+		});
+	}
 
 
 });
