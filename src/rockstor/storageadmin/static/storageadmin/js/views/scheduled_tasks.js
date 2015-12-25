@@ -25,113 +25,165 @@
  */
 
 ScheduledTasksView = RockstorLayoutView.extend({
-  events: {
-    'click .toggle-task': 'toggleEnabled',
-    'click a[data-action=delete]': 'deleteTask'
-  },
+	events: {
+		'click .toggle-task': 'toggleEnabled',
+		'click a[data-action=delete]': 'deleteTask'
+	},
 
-  initialize: function() {
-    // call initialize of base
-    this.constructor.__super__.initialize.apply(this, arguments);
-    // set template
-    this.template = window.JST.scheduled_tasks_task_defs;
-    this.paginationTemplate = window.JST.common_pagination;
-    // add dependencies
-    this.collection = new TaskDefCollection();
-    this.tasks = new TaskCollection();
-    this.tasks.pageSize = RockStorGlobals.maxPageSize;
-    this.dependencies.push(this.collection);
-    this.dependencies.push(this.tasks);
-    this.collection.on('reset', this.renderScheduledTasks, this);
-    this.taskMap = {};
-  },
+	initialize: function() {
+		// call initialize of base
+		this.constructor.__super__.initialize.apply(this, arguments);
+		// set template
+		this.template = window.JST.scheduled_tasks_task_defs;
+		// add dependencies
+		this.collection = new TaskDefCollection();
+		this.tasks = new TaskCollection();
+		this.tasks.pageSize = RockStorGlobals.maxPageSize;
+		this.dependencies.push(this.collection);
+		this.dependencies.push(this.tasks);
+		this.collection.on('reset', this.renderScheduledTasks, this);
+		this.taskMap = {};
+		this.initHandlebarHelpers();
+	},
 
-  render: function() {
-    this.fetch(this.renderScheduledTasks, this);
-    return this;
-  },
+	render: function() {
+		this.fetch(this.renderScheduledTasks, this);
+		return this;
+	},
 
-  renderScheduledTasks: function() {
-    var _this = this;
-    this.collection.each(function(taskDef, index) {
-      var tmp = _this.tasks.filter(function(task) {
-        return task.get('task_def') == taskDef.id;
-      });
-      _this.taskMap[taskDef.id] = _.sortBy(tmp, function(task) {
-        return moment(task.get('start')).valueOf();
-      }).reverse();
-    });
-    // remove existing tooltips
-    if (this.$('[rel=tooltip]')) {
-      this.$('[rel=tooltip]').tooltip('hide');
-    }
-    $(this.el).html(this.template({
-      scheduledTasks: this.collection,
-      taskMap: this.taskMap
-    }));
-    this.$(".ph-pagination").html(this.paginationTemplate({
-      collection: this.collection
-    }));
-    this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
-  },
+	renderScheduledTasks: function() {
+		var _this = this;
+		this.collection.each(function(taskDef, index) {
+			var tmp = _this.tasks.filter(function(task) {
+				return task.get('task_def') == taskDef.id;
+			});
+			_this.taskMap[taskDef.id] = _.sortBy(tmp, function(task) {
+				return moment(task.get('start')).valueOf();
+			}).reverse();
+		});
+		// remove existing tooltips
+		if (this.$('[rel=tooltip]')) {
+			this.$('[rel=tooltip]').tooltip('hide');
+		}
+		$(this.el).html(this.template({
+			collection: this.collection,
+			collectionNotEmpty: !this.collection.isEmpty(),
+			taskMap: this.taskMap
+		}));
+		this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
+	},
 
-  toggleEnabled: function(event) {
-    var _this = this;
-    if (event) { event.preventDefault(); }
-    var button = $(event.currentTarget);
-    if (buttonDisabled(button)) return false;
-    disableButton(button);
-    var taskId = $(event.currentTarget).attr("data-task-id");
-    var enabled = $(event.currentTarget).attr('data-action') == 'enable'
-    ? true : false;
-    $.ajax({
-      url: '/api/sm/tasks/' + taskId,
-      type: 'PUT',
-      dataType: 'json',
-      contentType: 'application/json',
-      data: JSON.stringify({enabled: enabled}),
-      success: function() {
-        enableButton(button);
-        _this.collection.fetch({
-          success: function() {
-            _this.renderScheduledTasks();
-          }
-        });
-      },
-      error: function(xhr, status, error) {
-        enableButton(button);
-      }
-    });
-  },
+	toggleEnabled: function(event) {
+		var _this = this;
+		if (event) { event.preventDefault(); }
+		var button = $(event.currentTarget);
+		if (buttonDisabled(button)) return false;
+		disableButton(button);
+		var taskId = $(event.currentTarget).attr("data-task-id");
+		var enabled = $(event.currentTarget).attr('data-action') == 'enable'
+			? true : false;
+		$.ajax({
+			url: '/api/sm/tasks/' + taskId,
+			type: 'PUT',
+			dataType: 'json',
+			contentType: 'application/json',
+			data: JSON.stringify({enabled: enabled}),
+			success: function() {
+				enableButton(button);
+				_this.collection.fetch({
+					success: function() {
+						_this.renderScheduledTasks();
+					}
+				});
+			},
+			error: function(xhr, status, error) {
+				enableButton(button);
+			}
+		});
+	},
 
-  deleteTask: function(event) {
-    var _this = this;
-    if (event) { event.preventDefault(); }
-    var button = $(event.currentTarget);
-    if (buttonDisabled(button)) return false;
-    var taskId = $(event.currentTarget).attr("data-task-id");
-    var taskName = $(event.currentTarget).attr("data-task-name");
-    if(confirm("Delete task:  " + taskName + ". Are you sure?")){
-      $.ajax({
-        url: '/api/sm/tasks/' + taskId,
-        type: "DELETE",
-        dataType: "json",
-        success: function() {
-          enableButton(button);
-          _this.collection.fetch({
-            success: function() {
-              _this.renderScheduledTasks();
-            }
-          });
-        },
-        error: function(xhr, status, error) {
-          enableButton(button);
-        }
-      });
-    }
-  }
+	deleteTask: function(event) {
+		var _this = this;
+		if (event) { event.preventDefault(); }
+		var button = $(event.currentTarget);
+		if (buttonDisabled(button)) return false;
+		var taskId = $(event.currentTarget).attr("data-task-id");
+		var taskName = $(event.currentTarget).attr("data-task-name");
+		if(confirm("Delete task:  " + taskName + ". Are you sure?")){
+			$.ajax({
+				url: '/api/sm/tasks/' + taskId,
+				type: "DELETE",
+				dataType: "json",
+				success: function() {
+					enableButton(button);
+					_this.collection.fetch({
+						success: function() {
+							_this.renderScheduledTasks();
+						}
+					});
+				},
+				error: function(xhr, status, error) {
+					enableButton(button);
+				}
+			});
+		}
+	},
 
+	initHandlebarHelpers: function(){
+		Handlebars.registerHelper('display_scheduledTasks_table', function(adminBool){
+			var html = '';
+			this.collection.each(function(t) { 
+				var taskId = t.get('id'),
+				taskName = t.get('name'),
+				taskType = t.get('task_type'),
+				jsonMeta = t.get('json_meta'),
+				tId = t.id,
+				taskMapId = taskMap[tId];
+
+				html += '<tr>';
+				html += '<td><a href="#edit-scheduled-task/' + taskId + '">' + taskName + '</a></td>';
+				html += '<td>' + taskType;
+				if (taskType == 'snapshot') { 
+					html += (JSON.parse(jsonMeta).share);
+				} else { 
+					html += (JSON.parse(jsonMeta).pool);
+				} 
+				html += '</td>';
+				html += '<td>' + moment(t.get('ts')).format(RS_DATE_FORMAT) + '</td>';
+				html += '<td>' + prettyCron.toString(t.get('crontab')) + '</td>';
+				if (t.get('enabled')) {
+					html += '<input type="checkbox" disabled="true" checked="true"></input>';
+				} else { 
+					html += '<input type="checkbox" disabled="true"></input>';
+				} 
+				html += '</td>';
+				html += '<td>';
+				if (taskMapId) {
+					if (taskMapId.length > 0) {
+						var task = taskMapId[0],
+						taskState = task.get('state');
+
+						if (taskState != 'scheduled' && taskState != 'pending' && taskState != 'running' && taskState != 'finished') { 
+							html += '<a href="#scheduled-tasks/' + tId + '/log" class="task-log"><i class="glyphicon glyphicon-warning-sign"></i> ' + taskState + '</a>';
+						} else if (taskState == 'finished') { 
+							html += '<a href="#scheduled-tasks/' + tId + '/log" class="task-log">' + moment(task.get('end')).fromNow() + '</a>';
+						} else { 
+							html += '<a href="#scheduled-tasks/' + tId + '/log" class="task-log">' + taskState + '</a>';
+						}
+					} 
+				}
+				html += '</td>';
+				html += '<td>';
+				html += '<a href="#edit-scheduled-task/' + taskId + '" <i class= "glyphicon glyphicon-pencil" rel="rooltip" title="Edit"></i></a>&nbsp;';
+				html += '<a href="#" data-task-name="' + taskName + '" data-task-id="' + tId + '" data-action="delete"><i class="glyphicon glyphicon-trash" rel="tooltip" title="Delete"></i></a>';
+
+				html += '</td>';
+				html += '</tr>';
+			}); 
+			return new Handlebars.SafeString(html);
+		});
+	}
 });
 
-// Add pagination
+//Add pagination
 Cocktail.mixin(ScheduledTasksView, PaginationMixin);
