@@ -117,8 +117,12 @@ ConfigureServiceView = RockstorLayoutView.extend({
 			this.rootShare = configObj.root_share;
 			this.enableTLS =  configObj.enabletls;
 			this.certificate = configObj.cert;
+			this.upsMon = configObj.upsmon;
 			this.upsName = configObj.upsname;
+			this.upsPort = configObj.port;
 			this.upsDesc = configObj.desc;
+			this.nutMode = configObj.mode;
+			this.nutDriver = configObj.driver;
 			this.nutServer = configObj.nutserver;
 			this.nutUser = configObj.nutuser;
 			this.nutPassword = configObj.password;
@@ -144,8 +148,12 @@ ConfigureServiceView = RockstorLayoutView.extend({
 			basedn: this.basedn,
 			enableTLS: this.enableTLS,
 			certificate: this.certificate,
+			upsMonitor: this.upsMon,
 			upsName: this.upsName,
+			upsPort:this.upsPort,
 			upsDesc: this.upsDesc, 
+			nutMode: this.nutMode,
+			nutDriver: this.nutDriver,
 			nutServer: this.nutServer,
 			nutUser: this.nutUser,
 			password: this.nutPassword,
@@ -377,6 +385,50 @@ ConfigureServiceView = RockstorLayoutView.extend({
 	},
 
 	initHandlebarHelpers: function(){
+		//NUT-UPS
+		Handlebars.registerHelper('display_nutMode_options', function(){
+			var html = '';
+			var nutModeTypes = ['standalone','netserver','netclient']; 
+			_.each(nutModeTypes, function(mode, index) { 
+				if (mode == this.nutMode) {
+					html += '<option value="' + mode + '" selected="selected">';
+					html += mode + '</option>';
+				} else {
+					html += '<option value="' + mode + '">' + mode + '</option>';
+				} 
+			});
+			return new Handlebars.SafeString(html);
+		}); 
+
+		Handlebars.registerHelper('display_monitorMode_options', function(){
+			var html = '';
+			var nutMonitorTypes = ['master','slave'];
+			_.each(nutMonitorTypes, function(upsmon, index) { 
+				if (upsmon == this.upsMonitor) { 
+					htm += '<option value="' + upsmon + '" selected="selected">';
+					html += upsmon + '</option>';
+				} else { 
+					html += '<option value="' + upsmon + '">' + upsmon + '</option>';
+				}
+			});
+			return new Handlebars.SafeString(html);
+		});
+
+		Handlebars.registerHelper('display_nutDriver_options', function(){
+			var html = '';
+			var nutDriverTypes = ['apcsmart','apcsmart-old','apcupsd-ups','bcmxcp','bcmxcp_usb','belkin','belkinunv','bestfcom','bestfortress','bestuferrups','bestups','blazer_ser','blazer_usb','dummy-ups','etapro','everups','gamatronic','genericups','isbmex','ivtscd','liebert','liebert-esp2','masterguard','metasys','mge-shut','mge-utalk','microdowell','nutclient','nutdrv_qx','oldmge-shut','oneac','optiups','powercom','powerpanel','rhino','richcomm_usb','riello_ser','riello_usb','safenet','skel','snmp-ups','solis','tripplite','tripplite_usb','tripplitesu','upscode2','usbhid-ups','victronups'];
+			_.each(nutDriverTypes, function(driver, index) { 
+				if (driver == this.nutDriver) { 
+					htm += '<option value="' + driver + '" selected="selected">';
+					html += driver + '</option>';
+				} else { 
+					html += '<option value="' + driver + '">' + driver + '</option>';
+				}
+			});
+			return new Handlebars.SafeString(html);
+		}); 
+
+		//Rockon template
 		Handlebars.registerHelper('display_rockon_shares', function(){
 			var html = '';
 			if (this.shares.length ===  0) {
