@@ -20,7 +20,7 @@ import time
 from system.osi import run_command
 from django.conf import settings
 from django_ztask.decorators import task
-from cli.rest_util import api_call
+from cli.api_wrapper import APIWrapper
 from system.services import service_status
 from storageadmin.models import (RockOn, DContainer, DVolume, DPort,
                                  DCustomConfig, Share, Disk, DContainerLink,
@@ -34,6 +34,7 @@ DCMD2 = list(DCMD) + ['-d', '--restart=on-failure:5', ]
 
 import logging
 logger = logging.getLogger(__name__)
+aw = APIWrapper()
 
 
 def docker_status():
@@ -90,9 +91,9 @@ def start(rid):
     except:
         new_status = 'start_failed'
     finally:
-        url = ('%s/%d/status_update' % (ROCKON_URL, rid))
-        return api_call(url, data={'new_status': new_status, },
-                        calltype='post', save_error=False)
+        url = ('rockons/%d/status_update' % rid)
+        return aw.api_call(url, data={'new_status': new_status, },
+                           calltype='post', save_error=False)
 
 
 @task()
@@ -107,9 +108,9 @@ def stop(rid):
         logger.exception(e)
         new_status = 'stop_failed'
     finally:
-        url = ('%s/%d/status_update' % (ROCKON_URL, rid))
-        return api_call(url, data={'new_status': new_status, },
-                        calltype='post', save_error=False)
+        url = ('rockons/%d/status_update' % rid)
+        return aw.api_call(url, data={'new_status': new_status, },
+                           calltype='post', save_error=False)
 
 
 @task()
@@ -130,9 +131,9 @@ def install(rid):
         logger.exception(e)
         new_state = 'install_failed'
     finally:
-        url = ('%s/%d/state_update' % (ROCKON_URL, rid))
-        return api_call(url, data={'new_state': new_state, }, calltype='post',
-                        save_error=False)
+        url = ('rockons/%d/state_update' % rid)
+        return aw.api_call(url, data={'new_state': new_state, }, calltype='post',
+                           save_error=False)
 
 
 @task()
@@ -146,9 +147,9 @@ def uninstall(rid, new_state='available'):
         logger.exception(e)
         new_state = 'uninstall_failed'
     finally:
-        url = ('%s/%d/state_update' % (ROCKON_URL, rid))
-        return api_call(url, data={'new_state': new_state, }, calltype='post',
-                        save_error=False)
+        url = ('rockons/%d/state_update' % rid)
+        return aw.api_call(url, data={'new_state': new_state, }, calltype='post',
+                           save_error=False)
 
 
 def container_ops(container):
@@ -239,7 +240,7 @@ def syncthing_install(rockon):
 def pull_images(rockon):
     for c in DContainer.objects.filter(rockon=rockon):
         rm_container(c.name)
-        run_command([DOCKER, 'pull', c.dimage.name])
+        run_command([DOCKER, 'pull', '%s:%s' % (c.dimage.name, c.dimage.tag)])
 
 
 def owncloud_install(rockon):
