@@ -22,7 +22,7 @@
 <div class="row">
   <div class="col-md-8">
 <div class="panel panel-default">
-<div class="panel-heading">Configure <%= service.get('display_name') %></div>
+<div class="panel-heading">Configure {{serviceName}}</div>
     <div class="panel-body">
       <form class="form-horizontal" id="replication-form" name="aform">
         <div class="messages"></div>
@@ -32,13 +32,7 @@
 	  <div class="col-sm-4">
 	    <select class="form-control" name="network_interface" id="network_interface" data-placeholder="Select Network Interface">
 	      <option></option>
-	      <% network.each(function(ni, index) { %>
-	      <% if (ni.get('name') == config.network_interface) { %>
-	      <option value="<%= ni.get('name') %>" selected="selected"> <%= ni.get('name') %></option>
-	      <% } else { %>
-	      <option value="<%= ni.get('name') %>"><%= ni.get('name') %></option>
-	      <% } %>
-	      <% }); %>
+	      {{display_networkInterface_options}}
 	    </select>
 	  </div>
 	</div>
@@ -48,7 +42,7 @@
 	  <% if (config.listener_port) { default_port = config.listener_port } %>
           <label class="col-sm-4 control-label" for="listener_port">Listener Port<span class="required"> *</span></label>
           <div class="col-sm-4">
-            <input class="form-control" type="text" id="listener_port" name="listener_port" value="<%= default_port %>">         </div>
+            <input class="form-control" type="text" id="listener_port" name="listener_port" value="<%= default_port %>"></div>
         </div>
         <div class="form-group">
           <div class="col-sm-offset-4 col-sm-8">

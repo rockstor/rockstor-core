@@ -106,6 +106,7 @@ ConfigureServiceView = RockstorLayoutView.extend({
 
 	renderServiceConfig: function () {
 		var _this = this;
+		this.default_port = 10002;
 		var config = this.service.get('config');
 		var configObj = {};
 		if (config != null) {
@@ -117,6 +118,8 @@ ConfigureServiceView = RockstorLayoutView.extend({
 			this.rootShare = configObj.root_share;
 			this.enableTLS =  configObj.enabletls;
 			this.certificate = configObj.cert;
+			this.listenerPort = configObj.listener_port;
+			this.networkInterface = configObj.network_interface;
 			this.upsMon = configObj.upsmon;
 			this.upsName = configObj.upsname;
 			this.upsPort = configObj.port;
@@ -148,6 +151,9 @@ ConfigureServiceView = RockstorLayoutView.extend({
 			basedn: this.basedn,
 			enableTLS: this.enableTLS,
 			certificate: this.certificate,
+			defaultPort: this.default_port,
+			listenerPort: this.listenerPort,
+			networkInterface: this.networkInterface,
 			upsMonitor: this.upsMon,
 			upsName: this.upsName,
 			upsPort:this.upsPort,
@@ -427,6 +433,21 @@ ConfigureServiceView = RockstorLayoutView.extend({
 			});
 			return new Handlebars.SafeString(html);
 		}); 
+
+		//Replication
+		Handlebars.registerHelper('display_networkInterface_options', function(){
+			var html = '';
+			this.network.each(function(ni, index) { 
+				var niName = ni.get('name');
+				if (niName == this.networkInterface) { 
+					html += '<option value="' + niName + '" selected="selected"> ' + niName + '</option>';
+				} else { 
+					html += '<option value="' + niName + '">' + niName+ '</option>';
+				} 
+			});
+			return new Handlebars.SafeString(html);
+		}); 
+
 
 		//Rockon template
 		Handlebars.registerHelper('display_rockon_shares', function(){
