@@ -46,7 +46,6 @@ PoolScrubTableModule  = RockstorModuleView.extend({
 		var _this = this;
 		$(this.el).empty();
 		$(this.el).append(this.template({
-			poolscrubs: this.collection,
 			collection: this.collection,
 			collectionNotEmpty: !this.collection.isEmpty(),
 			pool: this.pool,
