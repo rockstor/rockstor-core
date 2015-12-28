@@ -21,7 +21,7 @@
 <div class="messages"></div>
   <a class="btn btn-primary btn-spacing" href="#" id="js-poolscrub-start"><i class="glyphicon glyphicon-edit "></i>Start a new scrub</a> or you can schedule a periodic scrub by clicking <a href="#add-scheduled-task">here.</a>
 <br>
-<% if (!poolscrubs.isEmpty()) { %>
+{{#if collectionNotEmpty}}
   <table id="poolscrubs-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of poolscrubs">
     <thead>
       <tr>
@@ -33,26 +33,10 @@
       </tr>
     </thead>
     <tbody>
-      <% poolscrubs.each(function(poolscrub, index) { %>
-        <tr>
-          <td><%= poolscrub.get('id') %></td>
-          <td><%= poolscrub.get('status') %></td>
-          <td>
-	  <% if (poolscrub.get('start_time')) { %>
-	     <%= moment(poolscrub.get('start_time')).format(RS_DATE_FORMAT) %>
-	  <% } %>
-	  </td>
-          <td>
-	  <% if (poolscrub.get('end_time')) { %>
-	     <%= moment(poolscrub.get('end_time')).format(RS_DATE_FORMAT) %>
-	  <% } %>
-	  </td>
-          <td><%= humanize.filesize(poolscrub.get('kb_scrubbed')*1024) %></td>
-        </tr>
-	  <% }); %>
+    {{display_poolScrub_table}}
     </tbody>
   </table>
-<div class="pagination-ph"></div>
-<% } else { %>
+<div>{{pagination}}</div>
+{{else}}
   <div class="alert alert-warning"><h4>There are no scrubs to display</h4></div>
-<% } %>
+{{/if}}
