@@ -73,10 +73,14 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 	},
 
 	renderSubViews: function() {
+		var poolNameIsRockstor = false;
+		if(this.pool.get('name') == 'rockstor_rockstor'){
+			poolNameIsRockstor = true;
+		}
 		$(this.el).html(this.template({
 			pool: this.pool,
 			poolName: this.pool.get('name'),
-
+			isPoolNameRockstor: poolNameIsRockstor,
 		}));
 
 		this.subviews['pool-info'] = new PoolInfoModule({ model: this.pool });
