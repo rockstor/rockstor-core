@@ -259,8 +259,9 @@ class RockOnView(rfc.GenericView):
         msg = ('Network error while checking for updates. '
                'Please try again later.')
         url_root = settings.ROCKONS.get('remote_metastore')
+        remote_root = ('%s/%s' % (url_root, settings.ROCKONS.get('remote_root')))
         with self._handle_exception(request, msg=msg):
-            response = requests.get(url_root, timeout=10)
+            response = requests.get(remote_root, timeout=10)
             root = response.json()
             meta_cfg = {}
             for k,v in root.items():
