@@ -75,11 +75,11 @@ class RockOnView(rfc.GenericView):
                         func_name = t.function_name.split('.')[-1]
                         ro.state = '%s_failed' % func_name
                     elif (ro.id not in pending_rids):
-                        logger.error('Rockon(%d) is in pending state but there '
+                        logger.error('Rockon(%s) is in pending state but there '
                                      'is not pending or failed task for it. '
-                                     % ro.id)
+                                     % ro.name)
                     else:
-                        logger.debug('Rockon(%d) is in pending state' % ro.id)
+                        logger.debug('Rockon(%s) is in pending state' % ro.name)
 
                 ro.save()
         return RockOn.objects.filter().order_by('name')
