@@ -39,6 +39,7 @@ PoolScrubTableModule  = RockstorModuleView.extend({
 		this.collection = this.options.poolscrubs;
 		this.collection.on("reset", this.render, this);
 		this.parentView = this.options.parentView;
+		this.initHandlebarHelpers();
 	},
 
 	render: function() {
