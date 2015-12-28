@@ -8,12 +8,7 @@
                 </tr>
               </thead>
               <tbody>
-                <% _.each(pool.get('disks'), function(disk, i) { %>
-                  <tr>
-                    <td><%= disk.name %></td>
-                    <td><%= humanize.filesize(disk.size*1024) %></td>
-                  </tr>
-                <% }); %>
+              {{disks_insidePools_tbody}}
               </tbody>
             </table>
             

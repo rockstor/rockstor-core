@@ -371,5 +371,17 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
 			}); 
 			return new Handlebars.SafeString(html);
 		});
+
+		Handlebars.registerHelper('disks_insidePools_tbody', function(){
+			var html = '',
+			_this = this;
+			_.each(_this.pool.get('disks'), function(disk, i) { 
+				html += '<tr>';
+				html += '<td>' + disk.name + '</td>';
+				html += '<td>' + humanize.filesize(disk.size*1024) + '</td>';
+				html += '</tr>';
+			}); 
+			return new Handlebars.SafeString(html);
+		});
 	}
 });
