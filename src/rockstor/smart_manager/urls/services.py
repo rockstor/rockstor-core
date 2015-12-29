@@ -26,11 +26,12 @@ from smart_manager.views import (NISServiceView, BaseServiceView,
                                  DataCollectorServiceView, ServiceMonitorView,
                                  AFPServiceView, SNMPServiceView,
                                  DockerServiceView, SMARTDServiceView,
-                                 NUTServiceView, ZTaskdServiceView)
+                                 NUTServiceView, ZTaskdServiceView, BootstrapServiceView)
 
 command_regex = ('config|start|stop')
 
-urlpatterns = patterns('',
+urlpatterns = patterns(
+    '',
     # Services
     url(r'^$', BaseServiceView.as_view()),
     url(r'^netatalk$', AFPServiceView.as_view()),
@@ -74,4 +75,6 @@ urlpatterns = patterns('',
     url(r'^nut/(?P<command>%s)$' % command_regex, NUTServiceView.as_view()),
     url(r'^ztask-daemon$', ZTaskdServiceView.as_view()),
     url(r'^ztask-daemon/(?P<command>%s)$' % command_regex, ZTaskdServiceView.as_view()),
+    url(r'^rockstor-bootstrap$', BootstrapServiceView.as_view()),
+    url(r'^rockstor-bootstrap/(?P<command>%s)$' % command_regex, BootstrapServiceView.as_view()),
 )

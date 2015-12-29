@@ -35,7 +35,8 @@ def register_services():
         'Rock-on': 'docker',
         'S.M.A.R.T': 'smartd',
         'NUT-UPS': 'nut',
-        'ZTaskd': 'ztask-daemon', }
+        'ZTaskd': 'ztask-daemon',
+        'Bootstrap': 'rockstor-bootstrap', }
 
     keylist = services.keys()
     for s in keylist:
