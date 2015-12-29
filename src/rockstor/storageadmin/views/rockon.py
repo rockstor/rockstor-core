@@ -75,11 +75,11 @@ class RockOnView(rfc.GenericView):
                         func_name = t.function_name.split('.')[-1]
                         ro.state = '%s_failed' % func_name
                     elif (ro.id not in pending_rids):
-                        logger.error('Rockon(%d) is in pending state but there '
+                        logger.error('Rockon(%s) is in pending state but there '
                                      'is not pending or failed task for it. '
-                                     % ro.id)
+                                     % ro.name)
                     else:
-                        logger.debug('Rockon(%d) is in pending state' % ro.id)
+                        logger.debug('Rockon(%s) is in pending state' % ro.name)
 
                 ro.save()
         return RockOn.objects.filter().order_by('name')
@@ -259,8 +259,9 @@ class RockOnView(rfc.GenericView):
         msg = ('Network error while checking for updates. '
                'Please try again later.')
         url_root = settings.ROCKONS.get('remote_metastore')
+        remote_root = ('%s/%s' % (url_root, settings.ROCKONS.get('remote_root')))
         with self._handle_exception(request, msg=msg):
-            response = requests.get(url_root, timeout=10)
+            response = requests.get(remote_root, timeout=10)
             root = response.json()
             meta_cfg = {}
             for k,v in root.items():

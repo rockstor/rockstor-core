@@ -66,6 +66,7 @@ class ServiceMixin(object):
             msg = ('Exception while querying status of service(%s): %s' %
                    (service.name, e.__str__()))
             logger.error(msg)
+            logger.exception(e)
             return False
 
 

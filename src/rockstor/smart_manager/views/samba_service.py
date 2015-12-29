@@ -68,8 +68,8 @@ class SambaServiceView(BaseServiceDetailView):
                         shutil.copy(ss_src, ss_dest)
                     systemctl('smb', 'enable')
                     systemctl('nmb', 'enable')
-                systemctl('smb', command)
                 systemctl('nmb', command)
+                systemctl('smb', command)
             except Exception, e:
                 e_msg = ('Failed to %s samba due to a system error: %s' % (command, e.__str__()))
                 handle_exception(Exception(e_msg), request)
