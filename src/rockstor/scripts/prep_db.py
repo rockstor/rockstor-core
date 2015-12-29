@@ -38,13 +38,16 @@ def register_services():
         'ZTaskd': 'ztask-daemon',
         'Bootstrap': 'rockstor-bootstrap', }
 
-    keylist = services.keys()
-    for s in keylist:
-        if (not Service.objects.filter(display_name=s).exists()):
-            s_o = Service(display_name=s, name=services[s])
-            s_o.save()
+    for k,v in services.items():
+        try:
+            so = Service.objects.get(name=v)
+            so.display_name = k
+        except Service.DoesNotExist:
+            so = Service(display_name=k, name=v)
+        finally:
+            so.save()
     for so in Service.objects.filter():
-        if (so.display_name not in keylist):
+        if (so.display_name not in services):
             so.delete()
 
 
