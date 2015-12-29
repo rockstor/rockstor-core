@@ -254,9 +254,19 @@ def snapshot_list(mnt_pt):
     return snaps
 
 
-def shares_info(mnt_pt):
+def shares_info(pool):
     # return a list of share names under this mount_point.
     # useful to gather names of all shares in a pool
+    try:
+        mnt_pt = mount_root(pool)
+    except CommandException, e:
+        if (e.rc == 32):
+            #mount failed, so we just assume that something has gone wrong at a
+            #lower level, like a device failure. Return empty share map.
+            #application state can be removed. If the low level failure is
+            #recovered, state gets reconstructed anyway.
+            return {}
+        raise
     o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-s', mnt_pt])
     snap_idmap = {}
     for l in o:

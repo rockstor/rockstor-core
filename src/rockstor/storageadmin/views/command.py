@@ -28,7 +28,7 @@ from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
 from system.osi import (uptime, kernel_info)
 from fs.btrfs import (mount_share, device_scan, mount_root, qgroup_create,
-                      get_pool_info, pool_raid, pool_usage, shares_info,
+                      get_pool_info, pool_raid, pool_usage,
                       share_usage, snaps_info, mount_snap)
 from system.ssh import (sftp_mount_map, sftp_mount)
 from system.services import systemctl

@@ -25,9 +25,8 @@ from django.db import transaction
 from storageadmin.models import (Share, Disk, Pool, Snapshot,
                                  NFSExport, SambaShare, SFTP)
 from smart_manager.models import (ShareUsage, Replica)
-from fs.btrfs import (add_share, remove_share, update_quota,
-                      share_usage, set_property, mount_share, qgroup_id,
-                      shares_info, qgroup_create)
+from fs.btrfs import (add_share, remove_share, update_quota, share_usage,
+                      set_property, mount_share, qgroup_id, qgroup_create)
 from system.osi import is_share_mounted
 from storageadmin.serializers import ShareSerializer
 from storageadmin.util import handle_exception
