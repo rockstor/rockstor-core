@@ -143,8 +143,7 @@ def service_status(service_name, config=None):
             # Returning 1 as Catchall for general errors.
             # the calling system interprets -1 as enabled, 1 works for disabled.
             return out, err, 1
-    elif (service_name == 'replication' or
-          service_name == 'data-collector'):
+    elif (service_name in ('replication', 'data-collector', 'ztask-daemon')):
         return superctl(service_name, 'status')
     elif (service_name == 'smb'):
         out, err, rc = run_command([SYSTEMCTL_BIN, 'status', 'smb'],

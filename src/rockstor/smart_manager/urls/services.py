@@ -26,7 +26,7 @@ from smart_manager.views import (NISServiceView, BaseServiceView,
                                  DataCollectorServiceView, ServiceMonitorView,
                                  AFPServiceView, SNMPServiceView,
                                  DockerServiceView, SMARTDServiceView,
-                                 NUTServiceView)
+                                 NUTServiceView, ZTaskdServiceView)
 
 command_regex = ('config|start|stop')
 
@@ -72,4 +72,6 @@ urlpatterns = patterns('',
         SMARTDServiceView.as_view()),
     url(r'^nut$', NUTServiceView.as_view()),
     url(r'^nut/(?P<command>%s)$' % command_regex, NUTServiceView.as_view()),
+    url(r'^ztask-daemon$', ZTaskdServiceView.as_view()),
+    url(r'^ztask-daemon/(?P<command>%s)$' % command_regex, ZTaskdServiceView.as_view()),
 )
