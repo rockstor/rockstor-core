@@ -131,14 +131,15 @@ ScheduledTasksView = RockstorLayoutView.extend({
 
 	initHandlebarHelpers: function(){
 		Handlebars.registerHelper('display_scheduledTasks_table', function(adminBool){
-			var html = '';
+			var html = '',
+			_this = this;
 			this.collection.each(function(t) { 
 				var taskId = t.get('id'),
 				taskName = t.get('name'),
 				taskType = t.get('task_type'),
 				jsonMeta = t.get('json_meta'),
 				tId = t.id,
-				taskMapId = taskMap[tId];
+				taskMapId = _this.taskMap[tId];
 
 				html += '<tr>';
 				html += '<td><a href="#edit-scheduled-task/' + taskId + '">' + taskName + '</a></td>';
@@ -151,6 +152,7 @@ ScheduledTasksView = RockstorLayoutView.extend({
 				html += '</td>';
 				html += '<td>' + moment(t.get('ts')).format(RS_DATE_FORMAT) + '</td>';
 				html += '<td>' + prettyCron.toString(t.get('crontab')) + '</td>';
+				html += '<td>';
 				if (t.get('enabled')) {
 					html += '<input type="checkbox" disabled="true" checked="true"></input>';
 				} else { 
