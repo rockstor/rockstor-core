@@ -809,17 +809,14 @@ def scan_disks(min_size):
                 i = i + 1
             else:
                 raise Exception('Failed to parse lsblk output: %s' % sl)
-        logger.debug('NAME found from lsblk parse was = %s ' % dmap['NAME'])
         # md devices, such as mdadmin software raid and some hardware raid block
         # devices show up in lsblk's output multiple times with identical info.
         # Given we only need one copy of this info we remove duplicate device
         # name entries, also offers more sane output to views/disk.py where name
         # will be used as the index
         if (dmap['NAME'] in device_names_seen):
-            logger.debug('found DUPLICATE device name in lsblk so skipping')
             continue
         device_names_seen.append(dmap['NAME'])
-        logger.debug('contents of device_names_seen = %s' % device_names_seen)
         # We are not interested in CD / DVD rom devices so skip to next device
         if (dmap['TYPE'] == 'rom'):
             continue
@@ -851,18 +848,12 @@ def scan_disks(min_size):
                 continue
             if (dmap['SIZE'] < min_size):
                 continue
-            logger.debug('######## process block device - %s - #########' % dmap['NAME'])
-            logger.debug("dmap['serial'] = %s " % dmap['SERIAL'])
-            logger.debug('always_use_udev_serial = %s ' % always_use_udev_serial)
             if (dmap['SERIAL'] == '' or always_use_udev_serial):
-                logger.debug('USING the UDEV based get_disk_serial SYSTEM')
                 # lsblk fails to retrieve SERIAL from VirtIO drives and some
                 # sdcard devices so try specialized function.
                 # dmap['SERIAL'] = get_virtio_disk_serial(dmap['NAME'])
                 dmap['SERIAL'] = get_disk_serial(dmap['NAME'], None)
-                logger.debug('get_disk_serial returned = %s' % dmap['SERIAL'])
             if (dmap['SERIAL'] == '' or (dmap['SERIAL'] in serials)):
-                logger.debug('the contents of serials = %s' % serials)
                 # No serial number still or its a repeat.
                 # Overwrite drive serial entry in db with 'fake-serial-' + uuid4
                 # see disk/disks_table.jst for a use of this flag mechanism.
@@ -883,7 +874,6 @@ def scan_disks(min_size):
                                     dmap['root'], ]
     for d in dnames.keys():
         disks.append(Disk(*dnames[d]))
-    logger.debug('scan_disks returns the following as disks %s' % disks)
     return disks
 
 
