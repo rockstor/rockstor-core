@@ -335,14 +335,10 @@ def snaps_info(mnt_pt, share_name):
             if (fields[-1] == share_name):
                 share_id = fields[1]
                 share_uuid = fields[12]
-
-    if (share_id is None):
-        raise Exception('Failed to get uuid of the share(%s) under mount(%s)'
-                        % (share_name, mnt_pt))
+    if (share_id is None): return {}
 
     o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-s', '-p', '-q',
                             '-u', mnt_pt])
-
     snaps_d = {}
     snap_uuids = []
     for l in o:
