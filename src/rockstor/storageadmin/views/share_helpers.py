@@ -72,7 +72,7 @@ def toggle_sftp_visibility(share, snap_name, on=True):
 def import_shares(pool, request):
     disk = Disk.objects.filter(pool=pool)[0].name
     shares = [s.name for s in Share.objects.filter(pool=pool)]
-    shares_d = shares_info('%s%s' % (settings.MNT_PT, pool.name))
+    shares_d = shares_info(pool)
     for s in shares:
         if (s not in shares_d):
             Share.objects.get(pool=pool, name=s).delete()

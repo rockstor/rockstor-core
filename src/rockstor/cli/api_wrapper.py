@@ -38,7 +38,7 @@ class APIWrapper(object):
         self.client_secret = client_secret
         self.url = url
 
-        if (client_id is None or client_secret is None or url is None):
+        if (url is None):
             self.url = 'https://localhost'
             try:
                 mgmt_ip = NetworkInterface.objects.get(itype='management').ipaddr
@@ -49,12 +49,12 @@ class APIWrapper(object):
             except NetworkInterface.DoesNotExist:
                 pass
 
+    def set_token(self):
+        if (self.client_id is None or self.client_secret is None):
             app = OauthApp.objects.get(name=settings.OAUTH_INTERNAL_APP)
             self.client_id = app.application.client_id
             self.client_secret = app.application.client_secret
 
-
-    def set_token(self):
         token_request_data = {
             'grant_type': 'client_credentials',
             'client_id': self.client_id,
