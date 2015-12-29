@@ -225,15 +225,22 @@ class CommandView(NFSExportMixin, APIView):
 
         if (command == 'refresh-pool-state'):
             for p in Pool.objects.all():
-                fd = p.disk_set.first()
-                if (fd is None):
+                if (p.disk_set.count() == 0):
                     p.delete()
-                mount_root(p)
-                pool_info = get_pool_info(fd.name)
-                p.name = pool_info['label']
-                p.raid = pool_raid('%s%s' % (settings.MNT_PT, p.name))['data']
-                p.size = pool_usage('%s%s' % (settings.MNT_PT, p.name))[0]
-                p.save()
+                    continue
+                try:
+                    mount_root(p)
+                    fd = p.disk_set.first()
+                    pool_info = get_pool_info(fd.name)
+                    p.name = pool_info['label']
+                    p.raid = pool_raid('%s%s' % (settings.MNT_PT, p.name))['data']
+                    p.size = pool_usage('%s%s' % (settings.MNT_PT, p.name))[0]
+                    p.save()
+                except Exception, e:
+                    logger.error('Exception while refreshing state for '
+                                 'Pool(%s). Moving on: %s' %
+                                 (p.name, e.__str__()))
+                    logger.exception(e)
             return Response()
 
         if (command == 'refresh-share-state'):
