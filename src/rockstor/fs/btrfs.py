@@ -783,6 +783,7 @@ def scan_disks(min_size):
     root_serial = None
     # to use udevadm to retrieve serial number rather than lsblk, make this True
     always_use_udev_serial = False
+    device_names_seen = []
     for l in o:
         if (re.match('NAME', l) is None):
             continue
@@ -814,6 +815,15 @@ def scan_disks(min_size):
                 i = i + 1
             else:
                 raise Exception('Failed to parse lsblk output: %s' % sl)
+        # md devices, such as mdadmin software raid and some hardware raid block
+        # devices show up in lsblk's output multiple times with identical info.
+        # Given we only need one copy of this info we remove duplicate device
+        # name entries, also offers more sane output to views/disk.py where name
+        # will be used as the index
+        if (dmap['NAME'] in device_names_seen):
+            continue
+        device_names_seen.append(dmap['NAME'])
+        # We are not interested in CD / DVD rom devices so skip to next device
         if (dmap['TYPE'] == 'rom'):
             continue
         if (dmap['NAME'] == root):
