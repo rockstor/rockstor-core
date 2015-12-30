@@ -25,6 +25,8 @@ from fs.btrfs import device_scan
 from system.osi import run_command
 import requests
 from django.conf import settings
+from storageadmin.models import Setup
+
 
 BASE_DIR = settings.ROOT_DIR
 BASE_BIN = '%sbin' % BASE_DIR
@@ -41,6 +43,13 @@ def main():
                'a serious problem. Aborting. Exception: %s' % e.__str__())
         sys.exit(1)
     print('BTRFS device scan complete')
+
+    #if the appliance is not setup, there's nothing more to do beyond
+    #device scan
+    setup = Setup.objects.first()
+    if (setup is None or setup.setup_user is False):
+        print('Appliance is not yet setup.')
+        return
 
     num_attempts = 0
     while True:
