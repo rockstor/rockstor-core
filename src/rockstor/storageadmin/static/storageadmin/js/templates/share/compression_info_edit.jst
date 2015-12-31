@@ -3,13 +3,7 @@
   <div class="form-group col-md-3">
     <label class="control-label" for="compression">Compression algorithm</label>
       <select id="compression" name="compression" class="form-control">
-        <% _.each(_.keys(cOpts), function(c) { %>
-          <% if (share.get('compression_algo') == c) { %>
-            <option value=<%= c %> selected="selected"><%= cOpts[c] %></option>
-          <% } else { %>
-            <option value=<%= c %>><%= cOpts[c] %></option>
-          <% } %>
-        <% }); %>
+        {{display_share_compressOptions}}
       </select>
     </div>
   </div>
