@@ -43,6 +43,8 @@ ShareUsageModule = RockstorModuleView.extend({
     $(this.el).html(this.template({
       module_name: this.module_name,
       share: this.share,
+      poolName: this.share.get('pool').name,
+      shareCreatedDate: moment(this.share.get("toc")).format(RS_DATE_FORMAT),
       collection: this.collection
     }));
     this.renderGraph();
