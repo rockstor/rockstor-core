@@ -2,11 +2,11 @@
   <tr>
     <td>Compression algorithm: </td>
     <td>
-    <% if (_.isNull(share.get('compression_algo')) || share.get('compression_algo') == 'no') { %>
+    {{#if shareCompressionNull}}
       <strong>None</strong>
-    <% } else { %>
-      <strong><%= share.get('compression_algo') %></strong>
-    <% } %>
+    {{else}}
+      <strong>{{shareCompression}}</strong>
+    {{/if}}
     </td>
   </tr>
 </table>

@@ -103,6 +103,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
     this.share.on('change', this.subviews['share-usage'].render, this.subviews['share-usage']);
     $(this.el).html(this.template({
       share: this.share,
+      shareName: this.share.get('name'),
       snapshots: this.snapshots,
       permStr: this.parsePermStr(this.share.get("perms")),
       modify_choices: this.modify_choices,
@@ -120,7 +121,15 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
       }));
       this.showCompressionTooltips();
     } else {
-      this.$('#ph-compression-info').html(this.compression_info_template({share: this.share}));
+    	var shareCompressBool = false;
+    	if(_.isNull(this.share.get('compression_algo')) || this.share.get('compression_algo') == 'no'){
+    		shareCompressBool = true;
+    	}
+      this.$('#ph-compression-info').html(this.compression_info_template({
+    	  share: this.share,
+    	  shareCompression: this.share.get('compression_algo'),
+    	  shareCompressionNull: shareCompressBool,
+    	  }));
     }
     this.$("ul.nav.nav-tabs").tabs("div.css-panes > div");
     this.attachActions();
