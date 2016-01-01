@@ -34,9 +34,11 @@ TESTMODE = True
 
 def info(device, test_mode=TESTMODE):
     """
-    Retrieve matching properties found in smartctl output.
-    :param device:
-    :return:
+    Retrieve matching properties found in smartctl -H --info output.
+    Used to populate the Identity / general info tab by views/disk_smart.py
+    :param device: disk name
+    :param test_mode: True causes cat from file rather than smartctl command
+    :return: list of smart parameters extracted from device or test file
     """
     if not test_mode:
         o, e, rc = run_command([SMART, '-H', '--info', '/dev/%s' % device],
@@ -66,12 +68,21 @@ def info(device, test_mode=TESTMODE):
             if (re.match(matches[i], l) is not None):
                 res[i] = l.split(': ')[1].strip()
     res.insert(14, version)
-    logger.debug('SMART info returns the following:- %s' % res)
     return res
 
 
-def extended_info(device):
-    o, e, rc = run_command([SMART, '-a', '/dev/%s' % device], throw=False)
+def extended_info(device, test_mode=TESTMODE):
+    """
+    Retrieves a list of SMART attributes found from parsing smartctl -a output
+    :param device: disk name
+    :param testmode: True causes cat from file rather than smartctl command
+    :return: list of smart attributes extracted from device or test file
+    """
+    if not test_mode:
+        o, e, rc = run_command([SMART, '-a', '/dev/%s' % device], throw=False)
+    else:  # we are testing so use a smartctl -a file dump instead
+        o, e, rc = run_command([CAT, '/root/smartdumps/smart-a.out'],
+                               throw=False)
     attributes = {}
     for i in range(len(o)):
         if (re.match('Vendor Specific SMART Attributes with Thresholds:',
@@ -85,6 +96,7 @@ def extended_info(device):
                         if (len(fields) > 10):
                             fields[9] = ' '.join(fields[9:])
                         attributes[fields[1]] = fields[0:10]
+    logger.debug('SMART -a extended_info parser returned %s' % attributes)
     return attributes
 
 
