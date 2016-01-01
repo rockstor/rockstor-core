@@ -231,6 +231,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 			permStr: this.parsePermStr(this.share.get("perms")),
 			users: this.users,
 			groups: this.groups,
+			sharePerms: this.share.get("perms"),
 		}));
 	},
 
@@ -380,83 +381,188 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 			return new Handlebars.SafeString(html);
 		});
 
-	Handlebars.registerHelper('read_share_permissions', function(){
-		var html = '';
-		html += '<td>';
-		if (this.permStr[0] == "1") { 
-			html += '<input type="checkbox" checked="true" disabled>';
-		} else { 
-			html += '<input type="checkbox" disabled>'; 
-		} 
-		html += '</td>';
-		html += '<td>';
-		if (this.permStr[3] == "1") { 
-			html += '<input type="checkbox" checked="true" disabled>';
-		} else { 
-			html += '<input type="checkbox" disabled>';
-		} 
-		html += '</td>';
-		html += '<td>';
-		if (this.permStr[6] == "1") { 
-			html += '<input type="checkbox" checked="true" disabled>';
-		} else { 
-			html += '<input type="checkbox" disabled>';
-		}
-		html += '</td>';
-		return new Handlebars.SafeString(html);
-	});
-	
-	Handlebars.registerHelper('write_share_permissions', function(){
-		var html = '';
-		html += '<td>';
-		if (this.permStr[1] == "1") { 
-			html += '<input type="checkbox" checked="true" disabled>';
-		} else { 
-			html += '<input type="checkbox" disabled>'; 
-		} 
-		html += '</td>';
-		html += '<td>';
-		if (this.permStr[4] == "1") { 
-			html += '<input type="checkbox" checked="true" disabled>';
-		} else { 
-			html += '<input type="checkbox" disabled>';
-		} 
-		html += '</td>';
-		html += '<td>';
-		if (this.permStr[7] == "1") { 
-			html += '<input type="checkbox" checked="true" disabled>';
-		} else { 
-			html += '<input type="checkbox" disabled>';
-		}
-		html += '</td>';
-		return new Handlebars.SafeString(html);
-	});
-	
-	Handlebars.registerHelper('execute_share_permissions', function(){
-		var html = '';
-		html += '<td>';
-		if (this.permStr[2] == "1") { 
-			html += '<input type="checkbox" checked="true" disabled>';
-		} else { 
-			html += '<input type="checkbox" disabled>'; 
-		} 
-		html += '</td>';
-		html += '<td>';
-		if (this.permStr[5] == "1") { 
-			html += '<input type="checkbox" checked="true" disabled>';
-		} else { 
-			html += '<input type="checkbox" disabled>';
-		} 
-		html += '</td>';
-		html += '<td>';
-		if (this.permStr[8] == "1") { 
-			html += '<input type="checkbox" checked="true" disabled>';
-		} else { 
-			html += '<input type="checkbox" disabled>';
-		}
-		html += '</td>';
-		return new Handlebars.SafeString(html);
-	});
-}
+		Handlebars.registerHelper('view_read_permissions', function(){
+			var html = '';
+			html += '<td>';
+			if (this.permStr[0] == "1") { 
+				html += '<input type="checkbox" checked="true" disabled>';
+			} else { 
+				html += '<input type="checkbox" disabled>'; 
+			} 
+			html += '</td>';
+			html += '<td>';
+			if (this.permStr[3] == "1") { 
+				html += '<input type="checkbox" checked="true" disabled>';
+			} else { 
+				html += '<input type="checkbox" disabled>';
+			} 
+			html += '</td>';
+			html += '<td>';
+			if (this.permStr[6] == "1") { 
+				html += '<input type="checkbox" checked="true" disabled>';
+			} else { 
+				html += '<input type="checkbox" disabled>';
+			}
+			html += '</td>';
+			return new Handlebars.SafeString(html);
+		});
+
+		Handlebars.registerHelper('view_write_permissions', function(){
+			var html = '';
+			html += '<td>';
+			if (this.permStr[1] == "1") { 
+				html += '<input type="checkbox" checked="true" disabled>';
+			} else { 
+				html += '<input type="checkbox" disabled>'; 
+			} 
+			html += '</td>';
+			html += '<td>';
+			if (this.permStr[4] == "1") { 
+				html += '<input type="checkbox" checked="true" disabled>';
+			} else { 
+				html += '<input type="checkbox" disabled>';
+			} 
+			html += '</td>';
+			html += '<td>';
+			if (this.permStr[7] == "1") { 
+				html += '<input type="checkbox" checked="true" disabled>';
+			} else { 
+				html += '<input type="checkbox" disabled>';
+			}
+			html += '</td>';
+			return new Handlebars.SafeString(html);
+		});
+
+		Handlebars.registerHelper('view_execute_permissions', function(){
+			var html = '';
+			html += '<td>';
+			if (this.permStr[2] == "1") { 
+				html += '<input type="checkbox" checked="true" disabled>';
+			} else { 
+				html += '<input type="checkbox" disabled>'; 
+			} 
+			html += '</td>';
+			html += '<td>';
+			if (this.permStr[5] == "1") { 
+				html += '<input type="checkbox" checked="true" disabled>';
+			} else { 
+				html += '<input type="checkbox" disabled>';
+			} 
+			html += '</td>';
+			html += '<td>';
+			if (this.permStr[8] == "1") { 
+				html += '<input type="checkbox" checked="true" disabled>';
+			} else { 
+				html += '<input type="checkbox" disabled>';
+			}
+			html += '</td>';
+			return new Handlebars.SafeString(html);
+		});
+
+		Handlebars.registerHelper('display_owner_options', function(){
+			var html = '',
+			_this = this;
+			this.users.each(function(user) { 
+				if(user.get('username') == _this.share.get('owner')){ 
+					html += '<option value="' + user.get('username') + '" selected="selected" >' + user.get('username') + '</option>';
+				}else{ 
+					html += '<option value="' + user.get('username') + '" >' + user.get('username') + '</option>';
+				} 
+			});
+			return new Handlebars.SafeString(html);
+		});
+
+		Handlebars.registerHelper('display_group_options', function(){
+			var html = '',
+			_this = this;
+			this.groups.each(function(group) { 
+				if(group.get('groupname') == _this.share.get('group')){
+				html += '<option value="' + group.get('groupname') + '" selected="selected" >' + group.get('groupname') + '</option>';
+				}else{
+				html += '<option value="' + group.get('groupname') + '">' + group.get('groupname') + '</option>';
+				} 
+				});
+				return new Handlebars.SafeString(html);
+		});
+
+
+		Handlebars.registerHelper('edit_read_permissions', function(){
+			var html = '';
+			html += '<td>';
+			if (this.permStr[0] == "1") { 
+				html += '<input type="checkbox" name="perms[]" value="owner-r" checked="true">';
+			} else { 
+				html += '<input type="checkbox">'; 
+			} 
+			html += '</td>';
+			html += '<td>';
+			if (this.permStr[3] == "1") { 
+				html += '<input type="checkbox" name="perms[]" value="group-r" checked="true">';
+			} else { 
+				html += '<input type="checkbox">';
+			} 
+			html += '</td>';
+			html += '<td>';
+			if (this.permStr[6] == "1") { 
+				html += '<input type="checkbox" name="perms[]" value="other-r" checked="true">';
+			} else {  
+				html += '<input type="checkbox">';
+			}
+			html += '</td>';
+			return new Handlebars.SafeString(html);
+		});
+
+		Handlebars.registerHelper('edit_write_permissions', function(){
+			var html = '';
+			html += '<td>';
+			if (this.permStr[1] == "1") { 
+				html += '<input type="checkbox" name="perms[]" value="owner-r" checked="true">';
+			} else { 
+				html += '<input type="checkbox">'; 
+			} 
+			html += '</td>';
+			html += '<td>';
+			if (this.permStr[4] == "1") { 
+				html += '<input type="checkbox" name="perms[]" value="group-r" checked="true">';
+			} else { 
+				html += '<input type="checkbox">';
+			} 
+			html += '</td>';
+			html += '<td>';
+			if (this.permStr[7] == "1") { 
+				html += '<input type="checkbox" name="perms[]" value="other-r" checked="true">';
+			} else {  
+				html += '<input type="checkbox">';
+			}
+			html += '</td>';
+			return new Handlebars.SafeString(html);
+		});
+
+		Handlebars.registerHelper('edit_execute_permissions', function(){
+			var html = '';
+			html += '<td>';
+			if (this.permStr[2] == "1") { 
+				html += '<input type="checkbox" name="perms[]" value="owner-r" checked="true">';
+			} else { 
+				html += '<input type="checkbox">'; 
+			} 
+			html += '</td>';
+			html += '<td>';
+			if (this.permStr[5] == "1") { 
+				html += '<input type="checkbox" name="perms[]" value="group-r" checked="true">';
+			} else { 
+				html += '<input type="checkbox">';
+			} 
+			html += '</td>';
+			html += '<td>';
+			if (this.permStr[8] == "1") { 
+				html += '<input type="checkbox" name="perms[]" value="other-r" checked="true">';
+			} else {  
+				html += '<input type="checkbox">';
+			}
+			html += '</td>';
+			return new Handlebars.SafeString(html);
+		});
+	}
 
 });

@@ -5,39 +5,25 @@
     <td>
     <div class="col-md-3">
       <select id="share-owner" class="form-control">
-        <% users.each(function(user) { %>
-          <% if(user.get('username')== share.get('owner')){ %>
-          <option value="<%= user.get('username') %>" selected="selected" ><%= user.get('username') %></option>
-          <% }else{ %>
-          <option value="<%= user.get('username') %>" ><%= user.get('username') %></option>
-          <% } %>
-        <% }); %>
+        {{display_owner_options}}
       </select>
       </div>
     </td>
-
   </tr>
   <tr>
     <td>Group</td>
     <td>
     <div class="col-md-3">
       <select id="share-group" class="form-control">
-        <% groups.each(function(group) { %>
-          <% if(group.get('groupname') == share.get('group')){ %>
-	      <option value="<%= group.get('groupname') %>" selected="selected" ><%= group.get('groupname') %></option>
-	      <% }else{ %>
-          <option value="<%= group.get('groupname') %>"><%= group.get('groupname') %></option>
-          <% } %>
-	    <% }); %>
+      {{display_group_options}}
       </select>
       </div>
     </td>
-    <!-- <td><%= share.get("group") %></td> -->
   </tr>
   <tr>
     <td>
       Permissions<br>
-      (<span id="permStrEdit"><%= share.get("perms") %></span>)
+      (<span id="permStrEdit">{{sharePerms}}</span>)
     </td>
     <td>
       <table class="noborder table-condensed">
@@ -49,77 +35,16 @@
         </tr>
         <tr>
           <td>Read</td>
-          <td>
-            <% if (permStr[0] == "1") { %>
-              <input name="perms[]" value="owner-r" type="checkbox" checked="true" >
-            <% } else { %>
-              <input name="perms[]" value="owner-r" type="checkbox" >
-            <% } %>
-          </td>
-          <td>
-            <% if (permStr[3] == "1") { %>
-              <input name="perms[]" value="group-r" type="checkbox" checked="true" >
-            <% } else { %>
-              <input name="perms[]" value="group-r" type="checkbox" >
-            <% } %>
-          </td>
-          <td>
-            <% if (permStr[6] == "1") { %>
-              <input name="perms[]" value="other-r" type="checkbox" checked="true" >
-            <% } else { %>
-              <input name="perms[]" value="other-r" type="checkbox" >
-            <% } %>
-          </td>
+          {{edit_read_permissions}}
         </tr>
         <tr>
           <td>Write</td>
-          <td>
-            <% if (permStr[1] == "1") { %>
-              <input name="perms[]" value="owner-w" type="checkbox" checked="true" >
-            <% } else { %>
-              <input name="perms[]" value="owner-w" type="checkbox" >
-            <% } %>
-          </td>
-          <td>
-            <% if (permStr[4] == "1") { %>
-              <input name="perms[]" value="group-w" type="checkbox" checked="true" >
-            <% } else { %>
-              <input name="perms[]" value="group-w" type="checkbox" >
-            <% } %>
-          </td>
-          <td>
-            <% if (permStr[7] == "1") { %>
-              <input name="perms[]" value="other-w" type="checkbox" checked="true" >
-            <% } else { %>
-              <input name="perms[]" value="other-w" type="checkbox" >
-            <% } %>
-          </td>
+          {{edit_write_permissions}}
         </tr>
         <tr>
           <td>Execute</td>
-          <td>
-            <% if (permStr[2] == "1") { %>
-              <input name="perms[]" value="owner-x" type="checkbox" checked="true" >
-            <% } else { %>
-              <input name="perms[]" value="owner-x" type="checkbox" >
-            <% } %>
-          </td>
-          <td>
-            <% if (permStr[5] == "1") { %>
-              <input name="perms[]" value="group-x" type="checkbox" checked="true" >
-            <% } else { %>
-              <input name="perms[]" value="group-x" type="checkbox" >
-            <% } %>
-          </td>
-          <td>
-            <% if (permStr[8] == "1") { %>
-              <input name="perms[]" value="other-x" type="checkbox" checked="true" >
-            <% } else { %>
-              <input name="perms[]" value="other-x" type="checkbox" >
-            <% } %>
-          </td>
+          {{edit_execute_permissions}}
         </tr>
-
       </table>
     </td>
   </tr>
