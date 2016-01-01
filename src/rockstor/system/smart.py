@@ -28,6 +28,7 @@ from exceptions import CommandException
 logger = logging.getLogger(__name__)
 
 SMART = '/usr/sbin/smartctl'
+CAT = '/usr/bin/cat'
 
 
 def info(device):
@@ -192,7 +193,7 @@ def run_test(device, test):
     # start a smart test(short, long or conveyance)
     return run_command([SMART, '-t', test, '/dev/%s' % device])
 
-def available(device):
+def available(device, test_mode=False):
     """
     Returns boolean pair: true if SMART support is available on the device and
     true if SMART support is enabled.
@@ -200,7 +201,10 @@ def available(device):
     :param device:
     :return: available (boolean), enabled (boolean)
     """
-    o, e, rc = run_command([SMART, '--info', ('/dev/%s' % device)])
+    if not test_mode:
+        o, e, rc = run_command([SMART, '--info', ('/dev/%s' % device)])
+    else: # we are testing so use a smartctl --info file dump instead
+        o, e, rc = run_command([CAT, '/root/smartdumps/smart--info.out'])
     a = False
     e = False
     for i in o:
