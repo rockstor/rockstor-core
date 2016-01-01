@@ -137,14 +137,18 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 	},
 
 	renderRollbackBtn: function() {
-		var foundWritableSnapshot = false;
+		var foundWritableSnapshot,
+		rollbackBtnDisabler = false;
 		if (!_.isUndefined(this.snapshots.find(function(s) { return s.get('writable') == true;}))) {
 			foundWritableSnapshot = true;
 		}
+		if(this.snapshots.isEmpty() || !foundWritableSnapshot){
+			rollbackBtnDisabler = true;
+		}
 		this.$('#rollback-btn-ph').html(this.rollback_btn_template({
 			foundWritableSnapshot: foundWritableSnapshot,
-			snapshots: this.snapshots,
-			share: this.share
+			shareName: this.share.get('name'),
+			rollbackBtnDisabler: rollbackBtnDisabler,
 		}));
 
 	},
@@ -328,7 +332,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 			share: this.share,
 			shareCompression: this.share.get('compression_algo'),
 			shareCompressionNull: this.shareCompressBool,
-			}));
+		}));
 	},
 
 	updateCompression: function(event) {
@@ -372,7 +376,6 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 			});
 			return new Handlebars.SafeString(html);
 		});
-
 	}
 
 });
