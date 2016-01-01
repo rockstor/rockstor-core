@@ -36,8 +36,8 @@ def info(device, test_mode=TESTMODE):
     """
     Retrieve matching properties found in smartctl -H --info output.
     Used to populate the Identity / general info tab by views/disk_smart.py
-    :param device: disk name
-    :param test_mode: True causes cat from file rather than smartctl command
+    :param device: disk device name
+    :param test_mode: Not True causes cat from file rather than smartctl command
     :return: list of smart parameters extracted from device or test file
     """
     if not test_mode:
@@ -74,9 +74,13 @@ def info(device, test_mode=TESTMODE):
 def extended_info(device, test_mode=TESTMODE):
     """
     Retrieves a list of SMART attributes found from parsing smartctl -a output
-    :param device: disk name
-    :param testmode: True causes cat from file rather than smartctl command
-    :return: list of smart attributes extracted from device or test file
+    Mostly ATA / SATA as SCSI uses a free form syntax for this.
+    Extracts all lines starting with ID# ATTRIBUTE_NAME and creates a dictionary
+    of lists containing each lines column entries indexed in the dictionary via
+    the Attribute name.
+    :param device: disk device name
+    :param testmode: Not True causes cat from file rather than smartctl command
+    :return: dictionary of smart attributes extracted from device or test file
     """
     if not test_mode:
         o, e, rc = run_command([SMART, '-a', '/dev/%s' % device], throw=False)
@@ -96,12 +100,25 @@ def extended_info(device, test_mode=TESTMODE):
                         if (len(fields) > 10):
                             fields[9] = ' '.join(fields[9:])
                         attributes[fields[1]] = fields[0:10]
-    logger.debug('SMART -a extended_info parser returned %s' % attributes)
     return attributes
 
 
-def capabilities(device):
-    o, e, rc = run_command([SMART, '-c', '/dev/%s' % device])
+def capabilities(device, test_mode=TESTMODE):
+    """
+    Retrieves a list of SMART capabilities found from parsing smartctl -c output
+    ATA / SATA only.
+    Extracts all capabilities and build a dictionary of lists containing
+    ID, Name, Flag, and description for each capability found. The dictionary
+    is indexed by the capability name.
+    :param device: disk device name
+    :param test_mode: Not True causes cat from file rather than smartctl command
+    :return: dictionary of smart capabilities extracted from device or test file
+    """
+    # todo should these run_command calls not have throw=False on as others have
+    if not test_mode:
+        o, e, rc = run_command([SMART, '-c', '/dev/%s' % device])
+    else:  # we are testing so use a smartctl -c file dump instead
+        o, e, rc = run_command([CAT, '/root/smartdumps/smart-c.out'])
     cap_d = {}
     for i in range(len(o)):
         if (re.match('=== START OF READ SMART DATA SECTION ===',
