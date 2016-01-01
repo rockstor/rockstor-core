@@ -148,10 +148,23 @@ def capabilities(device, test_mode=TESTMODE):
     return cap_d
 
 
-def error_logs(device):
-    # todo provide path to parse very differently parsed info from from example
-    # todo some lsi controllers.
-    o, e, rc = run_command([SMART, '-l', 'error', '/dev/%s' % device],
+def error_logs(device, test_mode=TESTMODE):
+    """
+    Retrieves a parsed list of SMART errors from the output of smartctl -l error
+    May be empty if no errors, also returns a raw output of the error log itself
+    :param device: disk device name
+    :param test_mode: Not True causes cat from file rather than smartctl command
+    :return: summary: dictionary of lists containing details of error. Index is
+    error number.
+    :return: log_l: A list containing each line in turn of the error log.
+    """
+    # todo successfully returns log_l for lsi type output but it is interpreted
+    # todo later in GUI as "There are no errors" suspect as no summary.
+    if not test_mode:
+        o, e, rc = run_command([SMART, '-l', 'error', '/dev/%s' % device],
+                           throw=False)
+    else:
+        o, e, rc = run_command([CAT, '/root/smartdumps/smart-l-error.out'],
                            throw=False)
     # As we mute exceptions when calling the above command we should at least
     # examine what we have as return code (rc); 64 has been seen when the error
@@ -185,7 +198,6 @@ def error_logs(device):
         'UNC' : 'UNCorrectable Error in Data',
         'WP' : 'Media is Write Protected',
     }
-
     summary = {}
     log_l = []
     for i in range(len(o)):
@@ -196,7 +208,6 @@ def error_logs(device):
             state = None
             etype = None
             details = None
-
             for j in range(i + 1, len(o)):
                 log_l.append(o[j])
                 if (re.match('Error ', o[j]) is not None):
@@ -216,6 +227,8 @@ def error_logs(device):
                     summary[err_num] = list([lifetime_hours, state, etype, details])
                     err_num = lifetime_hours = state = etype = details = None
     print ('summary_d %s' % summary)
+    logger.debug('SMART error_logs parser returned summary of %s' % summary)
+    logger.debug('SMART error_logs parser returned log_l of %s' % log_l)
     return (summary, log_l)
 
 
