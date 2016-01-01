@@ -29,11 +29,20 @@ logger = logging.getLogger(__name__)
 
 SMART = '/usr/sbin/smartctl'
 CAT = '/usr/bin/cat'
+# enables reading file dumps of smartctl output instead of running smartctl
+TESTMODE = True
 
 
-def info(device):
-    #get smart info of the device, such as availability
-    o, e, rc = run_command([SMART, '-H', '--info', '/dev/%s' % device], throw=False)
+def info(device, test_mode=TESTMODE):
+    """
+    Retrieve matching properties found in smartctl output.
+    :param device:
+    :return:
+    """
+    if not test_mode:
+        o, e, rc = run_command([SMART, '-H', '--info', '/dev/%s' % device], throw=False)
+    else:  # we are testing so use a smartctl -H --info file dump instead
+        o, e, rc = run_command([CAT, '/root/smartdumps/smart-H--info.out'], throw=False)
     res = {}
     # todo add additional matching to account of eg some lsi formatting and name
     # todo differences eg
@@ -54,6 +63,7 @@ def info(device):
             if (re.match(matches[i], l) is not None):
                 res[i] = l.split(': ')[1].strip()
     res.insert(14, version)
+    logger.debug('SMART info returns the following:- %s' % res)
     return res
 
 def extended_info(device):
@@ -193,7 +203,7 @@ def run_test(device, test):
     # start a smart test(short, long or conveyance)
     return run_command([SMART, '-t', test, '/dev/%s' % device])
 
-def available(device, test_mode=False):
+def available(device, test_mode=TESTMODE):
     """
     Returns boolean pair: true if SMART support is available on the device and
     true if SMART support is enabled.
@@ -203,7 +213,7 @@ def available(device, test_mode=False):
     """
     if not test_mode:
         o, e, rc = run_command([SMART, '--info', ('/dev/%s' % device)])
-    else: # we are testing so use a smartctl --info file dump instead
+    else:  # we are testing so use a smartctl --info file dump instead
         o, e, rc = run_command([CAT, '/root/smartdumps/smart--info.out'])
     a = False
     e = False
