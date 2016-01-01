@@ -34,6 +34,11 @@ def info(device):
     #get smart info of the device, such as availability
     o, e, rc = run_command([SMART, '-H', '--info', '/dev/%s' % device], throw=False)
     res = {}
+    # todo add additional matching to account of eg some lsi formatting and name
+    # todo differences eg
+    # expected:- "SMART Health Status: OK"
+    # presented by lsi:- "SMART overall-health self-assessment test result: PASSED"
+    # Also note there are quite a few additional keys to look for here.
     matches = ('Model Family:', 'Device Model:', 'Serial Number:',
                'LU WWN Device Id:', 'Firmware Version:', 'User Capacity:',
                'Sector Size:', 'Rotation Rate:', 'Device is:', 'ATA Version is:',
@@ -96,6 +101,8 @@ def capabilities(device):
     return cap_d
 
 def error_logs(device):
+    # todo provide path to parse very differently parsed info from from example
+    # todo some lsi controllers.
     o, e, rc = run_command([SMART, '-l', 'error', '/dev/%s' % device],
                            throw=False)
     # As we mute exceptions when calling the above command we should at least
@@ -163,6 +170,7 @@ def error_logs(device):
     return (summary, log_l)
 
 def test_logs(device):
+    # todo need to confirm this as working on lsi controller reports
     o, e, rc = run_command([SMART, '-l', 'selftest', '-l', 'selective', '/dev/%s' % device])
     test_d = {}
     log_l = []
@@ -181,15 +189,22 @@ def test_logs(device):
     return (test_d, log_l)
 
 def run_test(device, test):
-    #start a smart test(short, long or conveyance)
+    # start a smart test(short, long or conveyance)
     return run_command([SMART, '-t', test, '/dev/%s' % device])
 
 def available(device):
-    #return true if SMART support is available on the device
+    """
+    Returns boolean pair: true if SMART support is available on the device and
+    true if SMART support is enabled.
+    Used by update_disk_state in views/disk.py to assess smart status
+    :param device:
+    :return: available (boolean), enabled (boolean)
+    """
     o, e, rc = run_command([SMART, '--info', ('/dev/%s' % device)])
     a = False
     e = False
     for i in o:
+        # todo Check on matching as sometimes multiple spaces after ":" ie on lsi9207
         if (re.match('SMART support is: Available', i) is not None):
             a = True
         if (re.match('SMART support is: Enabled', i) is not None):
@@ -198,7 +213,7 @@ def available(device):
 
 def toggle_smart(device, enable=False):
     switch = 'on' if (enable) else 'off'
-    #enable SMART support of the device
+    # enable SMART support of the device
     return run_command([SMART, '--smart=%s' % switch, '/dev/%s' % device])
 
 def update_config(config):
@@ -208,7 +223,7 @@ def update_config(config):
     with open(SMARTD_CONFIG) as sfo, open(npath, 'w') as tfo:
         for line in sfo.readlines():
             if (re.match('DEVICESCAN', line) is not None):
-                #comment out this line, if not, smartd ignores everything else
+                # comment out this line, if not, smartd ignores everything else
                 tfo.write('#%s' % line)
             elif (re.match(ROCKSTOR_HEADER, line) is None):
                 tfo.write(line)
