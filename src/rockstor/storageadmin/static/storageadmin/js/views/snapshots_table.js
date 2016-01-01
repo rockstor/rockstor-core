@@ -324,19 +324,34 @@ SnapshotsTableModule  = RockstorModuleView.extend({
 					html += 'Yes';
 				} else { 
 					html += 'No';
-				 }
+				}
 				html += '</td>';
 				html += '<td>' + humanize.filesize(snapshot.get('rusage')*1024) + '</td>';
 				html += '<td>' + humanize.filesize(snapshot.get('eusage')*1024) + '</td>';
 				html += '<td>';
 				if (snapshot.get("writable")) { 
 					html += '<a class="js-snapshot-clone" href="#" data-name="' + snapshot.get('name') + '"><i rel="tooltip" title="Clone snapshot" class="glyphicon glyphicon-book"></i></a>&nbsp;';
-				 } 
+				} 
 				html += '<a href="#" class="js-snapshot-delete" id="delete_snapshot_' + snapshot.get('name') + '" data-name="' + snapshot.get('name') + '" data-size="' + humanize.filesize(snapshot.get('e_usage')*1024) + '" data-share-name="' + _this.share.get('name') + '" data-action="delete" title="Delete snapshot">';
 				html += '<i rel="tooltip" title="Delete snapshot" class="glyphicon glyphicon-trash"></i></a>';
 				html += '</td>';
 				html += '</tr>';
 			});
+			return new Handlebars.SafeString(html);
+		});
+
+		Handlebars.registerHelper('show_writable_options', function(){
+			var html = '',
+			_this = this;
+			_.each(this.modify_choices, function(c) { 
+				html += '<label class="radio-inline">';
+				if(c.value == 'yes'){
+					html += '<input type="radio" name="writable" value="rw" checked> '+ c.name;
+				}else{ 
+					html += '<input type="radio" name="writable" value="ro" title="Note that (1)read-only snapshots cannot be cloned and (2)Shares cannot be rolled back to read-only snapshots" > ' + c.name;
+				} 
+				html += '</label>';
+			}); 
 			return new Handlebars.SafeString(html);
 		});
 	}
