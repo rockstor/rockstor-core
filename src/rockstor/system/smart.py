@@ -208,10 +208,10 @@ def available(device, test_mode=False):
     a = False
     e = False
     for i in o:
-        # todo Check on matching as sometimes multiple spaces after ":" ie on lsi9207
-        if (re.match('SMART support is: Available', i) is not None):
+        # N.B. .* in pattern match to allow for multiple spaces
+        if (re.match('SMART support is:.* Available', i) is not None):
             a = True
-        if (re.match('SMART support is: Enabled', i) is not None):
+        if (re.match('SMART support is:.* Enabled', i) is not None):
             e = True
     return a, e
 
