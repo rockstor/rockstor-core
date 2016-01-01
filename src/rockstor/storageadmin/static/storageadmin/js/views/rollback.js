@@ -55,8 +55,7 @@ RollbackView = RockstorLayoutView.extend({
 		var _this = this;
 		$(this.el).html(this.template({
 			collection: this.collection,
-			share: this.share,
-			shareName: this.share.get('name');
+			shareName: this.share.get('name'),
 		}));
 		this.renderSnapshotList();
 		this.$('#rollback-form').validate({
@@ -119,10 +118,10 @@ RollbackView = RockstorLayoutView.extend({
 	initHandlebarHelpers: function(){
 		Handlebars.registerHelper('display_rollbackSnaps_tbody', function(){
 			var html = '';
-			this.snapshots.each(function(snapshot, index) {
+			this.collection.each(function(snapshot, index) {
 				if(snapshot.get("writable")) {
 					html += '<tr>';
-					html += '<td><input type="radio" name="snapshot" value="' + snapshot.get('name') + '</td>';
+					html += '<td><input type="radio" name="snapshot" value="' + snapshot.get('name') + '"></td>';
 					html += '<td><i class="glyphicon glyphicon-camera"></i> ' + snapshot.get('name') + '</td>';
 					html += '<td>' + moment(snapshot.get("toc")).format(RS_DATE_FORMAT) + '</td>';
 					html += '<td>' + humanize.filesize(snapshot.get('size')*1024) + '</td>';
