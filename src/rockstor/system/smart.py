@@ -160,6 +160,7 @@ def error_logs(device, test_mode=TESTMODE):
     """
     # todo successfully returns log_l for lsi type output but it is interpreted
     # todo later in GUI as "There are no errors" suspect as no summary.
+    # todo ie in storageadmin/js/templates/disk/disk_details_layout.jst
     if not test_mode:
         o, e, rc = run_command([SMART, '-l', 'error', '/dev/%s' % device],
                            throw=False)
