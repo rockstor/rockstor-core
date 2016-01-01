@@ -24,7 +24,6 @@ import logging
 from system.email_util import email_root
 from exceptions import CommandException
 
-
 logger = logging.getLogger(__name__)
 
 SMART = '/usr/sbin/smartctl'
@@ -40,18 +39,25 @@ def info(device, test_mode=TESTMODE):
     :return:
     """
     if not test_mode:
-        o, e, rc = run_command([SMART, '-H', '--info', '/dev/%s' % device], throw=False)
+        o, e, rc = run_command([SMART, '-H', '--info', '/dev/%s' % device],
+                               throw=False)
     else:  # we are testing so use a smartctl -H --info file dump instead
-        o, e, rc = run_command([CAT, '/root/smartdumps/smart-H--info.out'], throw=False)
+        o, e, rc = run_command([CAT, '/root/smartdumps/smart-H--info.out'],
+                               throw=False)
     res = {}
     # List of string matches to look for in smartctrl -H --info output.
     # Note the "|" char allows for defining alternative matches ie A or B
-    matches = ('Model Family:|Vendor:', 'Device Model:|Product:', 'Serial Number:|Serial number:',
-               'LU WWN Device Id:|Logical Unit id:', 'Firmware Version:|Revision', 'User Capacity:',
-               'Sector Size:|Logical block size:', 'Rotation Rate:', 'Device is:', 'ATA Version is:',
-               'SATA Version is:', 'Local Time is:', 'SMART support is:.* Available',
-               'SMART support is:.* Enabled', 'SMART overall-health self-assessment|SMART Health Status:',)
-    res = ['',] * len(matches)
+    matches = ('Model Family:|Vendor:', 'Device Model:|Product:',
+               'Serial Number:|Serial number:',
+               'LU WWN Device Id:|Logical Unit id:',
+               'Firmware Version:|Revision', 'User Capacity:',
+               'Sector Size:|Logical block size:', 'Rotation Rate:',
+               'Device is:', 'ATA Version is:',
+               'SATA Version is:', 'Local Time is:',
+               'SMART support is:.* Available',
+               'SMART support is:.* Enabled',
+               'SMART overall-health self-assessment|SMART Health Status:',)
+    res = ['', ] * len(matches)
     version = ''
     for l in o:
         if (re.match('smartctl ', l) is not None):
@@ -63,14 +69,16 @@ def info(device, test_mode=TESTMODE):
     logger.debug('SMART info returns the following:- %s' % res)
     return res
 
+
 def extended_info(device):
     o, e, rc = run_command([SMART, '-a', '/dev/%s' % device], throw=False)
     attributes = {}
     for i in range(len(o)):
-        if (re.match('Vendor Specific SMART Attributes with Thresholds:', o[i]) is not None):
+        if (re.match('Vendor Specific SMART Attributes with Thresholds:',
+                     o[i]) is not None):
             if (len(o) > i + 1):
-                if (re.match('ID# ATTRIBUTE_NAME', o[i+1]) is not None):
-                    for j in range(i+2, len(o)):
+                if (re.match('ID# ATTRIBUTE_NAME', o[i + 1]) is not None):
+                    for j in range(i + 2, len(o)):
                         if (o[j] == ''):
                             break
                         fields = o[j].strip().split()
@@ -79,15 +87,17 @@ def extended_info(device):
                         attributes[fields[1]] = fields[0:10]
     return attributes
 
+
 def capabilities(device):
     o, e, rc = run_command([SMART, '-c', '/dev/%s' % device])
     cap_d = {}
     for i in range(len(o)):
-        if (re.match('=== START OF READ SMART DATA SECTION ===', o[i]) is not None):
+        if (re.match('=== START OF READ SMART DATA SECTION ===',
+                     o[i]) is not None):
             prev_line = None
             cur_cap = None
             cur_val = None
-            for j in range(i+2, len(o)):
+            for j in range(i + 2, len(o)):
                 if (re.match('.*:\s+\(.*\)', o[j]) is not None):
                     cap = o[j][:o[j].index(':')]
                     flag = o[j][(o[j].index('(') + 1):o[j].index(')')].strip()
@@ -107,6 +117,7 @@ def capabilities(device):
                     prev_line = o[j].strip()
             break
     return cap_d
+
 
 def error_logs(device):
     # todo provide path to parse very differently parsed info from from example
@@ -149,14 +160,15 @@ def error_logs(device):
     summary = {}
     log_l = []
     for i in range(len(o)):
-        if (re.match('=== START OF READ SMART DATA SECTION ===', o[i]) is not None):
+        if (re.match('=== START OF READ SMART DATA SECTION ===',
+                     o[i]) is not None):
             err_num = None
             lifetime_hours = None
             state = None
             etype = None
             details = None
 
-            for j in range(i+1, len(o)):
+            for j in range(i + 1, len(o)):
                 log_l.append(o[j])
                 if (re.match('Error ', o[j]) is not None):
                     fields = o[j].split()
@@ -177,17 +189,21 @@ def error_logs(device):
     print ('summary_d %s' % summary)
     return (summary, log_l)
 
+
 def test_logs(device):
     # todo need to confirm this as working on lsi controller reports
-    o, e, rc = run_command([SMART, '-l', 'selftest', '-l', 'selective', '/dev/%s' % device])
+    o, e, rc = run_command(
+        [SMART, '-l', 'selftest', '-l', 'selective', '/dev/%s' % device])
     test_d = {}
     log_l = []
     for i in range(len(o)):
-        if (re.match('SMART Self-test log structure revision number', o[i]) is not None):
+        if (re.match('SMART Self-test log structure revision number',
+                     o[i]) is not None):
             log_l.append(o[i])
-            if (len(o) > (i+1)):
-                if (re.match('Num  Test_Description    Status', o[i+1]) is not None):
-                    for j in range(i+2, len(o)):
+            if (len(o) > (i + 1)):
+                if (re.match('Num  Test_Description    Status',
+                             o[i + 1]) is not None):
+                    for j in range(i + 2, len(o)):
                         if (re.match('# ', o[j]) is not None):
                             fields = re.split(r'\s\s+', o[j].strip()[2:])
                             fields[3] = 100 - int(fields[3][:-1])
@@ -196,9 +212,11 @@ def test_logs(device):
                             log_l.append(o[j])
     return (test_d, log_l)
 
+
 def run_test(device, test):
     # start a smart test(short, long or conveyance)
     return run_command([SMART, '-t', test, '/dev/%s' % device])
+
 
 def available(device, test_mode=TESTMODE):
     """
@@ -222,10 +240,12 @@ def available(device, test_mode=TESTMODE):
             e = True
     return a, e
 
+
 def toggle_smart(device, enable=False):
     switch = 'on' if (enable) else 'off'
     # enable SMART support of the device
     return run_command([SMART, '--smart=%s' % switch, '/dev/%s' % device])
+
 
 def update_config(config):
     SMARTD_CONFIG = '/etc/smartmontools/smartd.conf'
