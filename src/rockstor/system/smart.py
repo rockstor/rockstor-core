@@ -44,16 +44,13 @@ def info(device, test_mode=TESTMODE):
     else:  # we are testing so use a smartctl -H --info file dump instead
         o, e, rc = run_command([CAT, '/root/smartdumps/smart-H--info.out'], throw=False)
     res = {}
-    # todo add additional matching to account of eg some lsi formatting and name
-    # todo differences eg
-    # expected:- "SMART Health Status: OK"
-    # presented by lsi:- "SMART overall-health self-assessment test result: PASSED"
-    # Also note there are quite a few additional keys to look for here.
-    matches = ('Model Family:', 'Device Model:', 'Serial Number:',
-               'LU WWN Device Id:', 'Firmware Version:', 'User Capacity:',
-               'Sector Size:', 'Rotation Rate:', 'Device is:', 'ATA Version is:',
-               'SATA Version is:', 'Local Time is:', 'SMART support is: Available',
-               'SMART support is: Enabled', 'SMART overall-health self-assessment',)
+    # List of string matches to look for in smartctrl -H --info output.
+    # Note the "|" char allows for defining alternative matches ie A or B
+    matches = ('Model Family:|Vendor:', 'Device Model:|Product:', 'Serial Number:|Serial number:',
+               'LU WWN Device Id:|Logical Unit id:', 'Firmware Version:|Revision', 'User Capacity:',
+               'Sector Size:|Logical block size:', 'Rotation Rate:', 'Device is:', 'ATA Version is:',
+               'SATA Version is:', 'Local Time is:', 'SMART support is:.* Available',
+               'SMART support is:.* Enabled', 'SMART overall-health self-assessment|SMART Health Status:',)
     res = ['',] * len(matches)
     version = ''
     for l in o:
