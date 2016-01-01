@@ -217,6 +217,9 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 	renderAcl: function() {
 		this.$("#ph-access-control").html(this.shareAclTemplate({
 			share: this.share,
+			shareOwner: this.share.get("owner"),
+			shareGroup: this.share.get("group"),
+			sharePerms: this.share.get("perms"),
 			permStr: this.parsePermStr(this.share.get("perms")),
 		}));
 	},
@@ -376,6 +379,84 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 			});
 			return new Handlebars.SafeString(html);
 		});
-	}
+
+	Handlebars.registerHelper('read_share_permissions', function(){
+		var html = '';
+		html += '<td>';
+		if (this.permStr[0] == "1") { 
+			html += '<input type="checkbox" checked="true" disabled>';
+		} else { 
+			html += '<input type="checkbox" disabled>'; 
+		} 
+		html += '</td>';
+		html += '<td>';
+		if (this.permStr[3] == "1") { 
+			html += '<input type="checkbox" checked="true" disabled>';
+		} else { 
+			html += '<input type="checkbox" disabled>';
+		} 
+		html += '</td>';
+		html += '<td>';
+		if (this.permStr[6] == "1") { 
+			html += '<input type="checkbox" checked="true" disabled>';
+		} else { 
+			html += '<input type="checkbox" disabled>';
+		}
+		html += '</td>';
+		return new Handlebars.SafeString(html);
+	});
+	
+	Handlebars.registerHelper('write_share_permissions', function(){
+		var html = '';
+		html += '<td>';
+		if (this.permStr[1] == "1") { 
+			html += '<input type="checkbox" checked="true" disabled>';
+		} else { 
+			html += '<input type="checkbox" disabled>'; 
+		} 
+		html += '</td>';
+		html += '<td>';
+		if (this.permStr[4] == "1") { 
+			html += '<input type="checkbox" checked="true" disabled>';
+		} else { 
+			html += '<input type="checkbox" disabled>';
+		} 
+		html += '</td>';
+		html += '<td>';
+		if (this.permStr[7] == "1") { 
+			html += '<input type="checkbox" checked="true" disabled>';
+		} else { 
+			html += '<input type="checkbox" disabled>';
+		}
+		html += '</td>';
+		return new Handlebars.SafeString(html);
+	});
+	
+	Handlebars.registerHelper('execute_share_permissions', function(){
+		var html = '';
+		html += '<td>';
+		if (this.permStr[2] == "1") { 
+			html += '<input type="checkbox" checked="true" disabled>';
+		} else { 
+			html += '<input type="checkbox" disabled>'; 
+		} 
+		html += '</td>';
+		html += '<td>';
+		if (this.permStr[5] == "1") { 
+			html += '<input type="checkbox" checked="true" disabled>';
+		} else { 
+			html += '<input type="checkbox" disabled>';
+		} 
+		html += '</td>';
+		html += '<td>';
+		if (this.permStr[8] == "1") { 
+			html += '<input type="checkbox" checked="true" disabled>';
+		} else { 
+			html += '<input type="checkbox" disabled>';
+		}
+		html += '</td>';
+		return new Handlebars.SafeString(html);
+	});
+}
 
 });
