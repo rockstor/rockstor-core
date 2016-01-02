@@ -73,7 +73,7 @@ ReplicaReceiveTrailsView = RockstorLayoutView.extend({
 			html += 'to ' + this.replicaShare.get('pool') + ':' + this.replicaShare.get('share') + ')</h4>';
 			return new Handlebars.SafeString(html);
 		});
-		Handlebars.registerHelper('replication_receive_table', function(){
+		Handlebars.registerHelper('replicaTrails_receive_table', function(){
 			var html = '',
 			_this = this;
 			this.collection.each(function(r) { 
