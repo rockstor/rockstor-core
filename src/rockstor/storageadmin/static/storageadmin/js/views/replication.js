@@ -106,7 +106,6 @@ ReplicationView = RockstorLayoutView.extend({
 		}
 		$(this.el).html(this.template({
 			replicationService: this.replicationService,
-			replicas: this.collection,
 			collection: this.collection,
 			collectionNotEmpty: !this.collection.isEmpty(),
 			replicaShareMap: this.replicaShareMap,
