@@ -125,7 +125,7 @@ def install(rid):
     try:
         rockon = RockOn.objects.get(id=rid)
         pull_images(rockon)
-        globals()['%s_install' % rockon.name.lower()](rockon)
+        globals().get('%s_install' % rockon.name.lower(), generic_install)(rockon)
     except Exception, e:
         logger.debug('exception while installing the rockon')
         logger.exception(e)
@@ -191,7 +191,6 @@ def generic_install(rockon):
         cmd.append(c.dimage.name)
         run_command(cmd)
 
-
 def openvpn_install(rockon):
     #volume container
     vol_co = DContainer.objects.get(rockon=rockon, launch_order=1)
@@ -223,18 +222,6 @@ def transmission_install(rockon):
     cmd.extend(port_ops(co))
     cmd.append(co.dimage.name)
     run_command(cmd)
-
-
-def btsync_install(rockon):
-    return generic_install(rockon)
-
-
-def plex_install(rockon):
-    return generic_install(rockon)
-
-
-def syncthing_install(rockon):
-    return generic_install(rockon)
 
 
 def pull_images(rockon):
