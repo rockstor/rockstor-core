@@ -158,9 +158,6 @@ def error_logs(device, test_mode=TESTMODE):
     error number.
     :return: log_l: A list containing each line in turn of the error log.
     """
-    # todo successfully returns log_l for lsi type output but it is interpreted
-    # todo later in GUI as "There are no errors" suspect as no summary.
-    # todo ie in storageadmin/js/templates/disk/disk_details_layout.jst
     if not test_mode:
         o, e, rc = run_command([SMART, '-l', 'error', '/dev/%s' % device],
                            throw=False)
@@ -228,8 +225,6 @@ def error_logs(device, test_mode=TESTMODE):
                     summary[err_num] = list([lifetime_hours, state, etype, details])
                     err_num = lifetime_hours = state = etype = details = None
     print ('summary_d %s' % summary)
-    logger.debug('SMART error_logs parser returned summary of %s' % summary)
-    logger.debug('SMART error_logs parser returned log_l of %s' % log_l)
     return (summary, log_l)
 
 
