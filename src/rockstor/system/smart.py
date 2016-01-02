@@ -228,10 +228,22 @@ def error_logs(device, test_mode=TESTMODE):
     return (summary, log_l)
 
 
-def test_logs(device):
+def test_logs(device, test_mode=TESTMODE):
+    """
+    Retrieves information from SMART Self-Test logs held by the drive.
+    Creates a dictionary of previous test info, indexed by test number and a
+    list containing the remaining log info, each line is an item in the list.
+    :param device: disk device name
+    :param test_mode: Not True causes cat from file rather than smartctl command
+    :return: test_d as a dictionary of summarized test
+    """
     # todo need to confirm this as working on lsi controller reports
-    o, e, rc = run_command(
-        [SMART, '-l', 'selftest', '-l', 'selective', '/dev/%s' % device])
+    if not test_mode:
+        o, e, rc = run_command(
+            [SMART, '-l', 'selftest', '-l', 'selective', '/dev/%s' % device])
+    else:
+        o, e, rc = run_command(
+            [CAT, '/root/smartdumps/smart-l-selftest-l-selective.out'])
     test_d = {}
     log_l = []
     for i in range(len(o)):
