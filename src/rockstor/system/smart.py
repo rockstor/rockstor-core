@@ -29,7 +29,9 @@ logger = logging.getLogger(__name__)
 SMART = '/usr/sbin/smartctl'
 CAT = '/usr/bin/cat'
 # enables reading file dumps of smartctl output instead of running smartctl
-TESTMODE = True
+# currently hardwired to read from eg:- /root/smartdumps/smart-H--info.out
+# default setting = False
+TESTMODE = False
 
 
 def info(device, test_mode=TESTMODE):
@@ -114,7 +116,6 @@ def capabilities(device, test_mode=TESTMODE):
     :param test_mode: Not True causes cat from file rather than smartctl command
     :return: dictionary of smart capabilities extracted from device or test file
     """
-    # todo should these run_command calls not have throw=False on as others have
     if not test_mode:
         o, e, rc = run_command([SMART, '-c', '/dev/%s' % device])
     else:  # we are testing so use a smartctl -c file dump instead
@@ -237,7 +238,6 @@ def test_logs(device, test_mode=TESTMODE):
     :param test_mode: Not True causes cat from file rather than smartctl command
     :return: test_d as a dictionary of summarized test
     """
-    # todo need to confirm this as working on lsi controller reports
     if not test_mode:
         o, e, rc = run_command(
             [SMART, '-l', 'selftest', '-l', 'selective', '/dev/%s' % device])
