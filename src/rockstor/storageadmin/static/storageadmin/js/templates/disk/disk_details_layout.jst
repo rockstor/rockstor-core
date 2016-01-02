@@ -169,62 +169,76 @@
 
   <div id="smartcapabilities">
     <div class="row">
-      <table id="smartcapabilites-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" summary="Table of S.M.A.R.T capabilities">
-	<thead>
-	  <tr>
-	    <th>Id</th>
-	    <th>Name</th>
-	    <th>Flag</th>
-	    <th>Capabilities</th>
-	  </tr>
-	</thead>
-	<tbody>
-	  <% capabilities.forEach(function(capability) { %>
-	    <tr>
-	      <td><%= capability.id %></td>
-	      <td><%= capability.name %></td>
-	      <td><%= capability.flag %></td>
-	      <td><%= capability.capabilities %></td>
-	    </tr>
-	  <% }); %>
-	</tbody>
+      <table id="smartcapabilites-table"
+             class="table table-condensed table-bordered table-hover table-striped tablesorter"
+             summary="Table of S.M.A.R.T capabilities">
+        <thead>
+        <tr>
+          <th>Id</th>
+          <th>Name</th>
+          <th>Flag</th>
+          <th>Capabilities</th>
+        </tr>
+        </thead>
+        <tbody>
+        <% capabilities.forEach(function(capability) { %>
+        <tr>
+          <td><%= capability.id %></td>
+          <td><%= capability.name %></td>
+          <td><%= capability.flag %></td>
+          <td><%= capability.capabilities %></td>
+        </tr>
+        <% }); %>
+        </tbody>
       </table>
     </div>
   </div>
+
   <div id="smarterrorlogs">
     <div class="row">
       <% if (errorlogsummary.length == 0) { %>
-        <h3>There are no errors.</h3>
-      <% } else { %>
-        <p><%= errorlog[0].line %></p>
-	<p><%= errorlog[1].line %></p>
-      <table id="smarterrorlogsummary-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" summary="Table of S.M.A.R.T error log summary">
-	<thead>
-	  <tr>
-	    <th>Error #</th>
-	    <th>Lifetime hours</th>
-	    <th>State</th>
-	    <th>Type</th>
-	    <th>Details</th>
-	  </tr>
-	</thead>
-	<tbody>
-	  <% errorlogsummary.forEach(function(summary) { %>
-	    <tr>
-	      <td><%= summary.error_num %></td>
-	      <td><%= summary.lifetime_hours %></td>
-	      <td><%= summary.state %></td>
-	      <td><%= summary.etype %></td>
-	      <td><%= summary.details %></td>
-	    </tr>
-	  <% }); %>
-	</tbody>
+        <% if (errorlog.length < 5) { %> <!-- No errors and empty raw log -->
+          <h3>There are no errors.</h3>
+        <% } else {%> <!-- no summary but something in raw log -->
+          <h3>No error summary available, please see the raw log below</h3>
+        <% } %>
+      <% } else { %> <!-- we do have a summary so create and populate it -->
+      <p><%= errorlog[0].line %></p>
+      <p><%= errorlog[1].line %></p>
+      <table id="smarterrorlogsummary-table"
+             class="table table-condensed table-bordered table-hover table-striped tablesorter"
+             summary="Table of S.M.A.R.T error log summary">
+        <thead>
+        <tr>
+          <th>Error #</th>
+          <th>Lifetime hours</th>
+          <th>State</th>
+          <th>Type</th>
+          <th>Details</th>
+        </tr>
+        </thead>
+        <tbody>
+        <% errorlogsummary.forEach(function(summary) { %>
+        <tr>
+          <td><%= summary.error_num %></td>
+          <td><%= summary.lifetime_hours %></td>
+          <td><%= summary.state %></td>
+          <td><%= summary.etype %></td>
+          <td><%= summary.details %></td>
+        </tr>
+        <% }); %> <!-- errorlogsummary.forEach  -->
+        </tbody>
       </table>
-      <% errorlog.forEach(function(log) { %>
-        <%= log.line %><br>
-      <% }); %>
-      <% } %>
-    </div>
+      <% } %> <!-- (errorlogsummary.length == 0) else clause -->
+        <% if (errorlog.length > 4) { %>
+          <h3>Raw S.M.A.R.T error log</h3>
+          <pre>
+          <% errorlog.forEach(function(log) { %>
+            <%= log.line %>
+          <% }); %> <!-- errorlog.forEach -->
+          </pre>
+        <% } %> <!-- if (errorlog.length test) -->
+    </div> <!-- class="row" -->
   </div>
 
   <div id="smarttestlogs">
