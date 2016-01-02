@@ -167,39 +167,43 @@
       </div>
   </div>
 
-  <div id="smartcapabilities">
-    <div class="row">
-      <table id="smartcapabilites-table"
-             class="table table-condensed table-bordered table-hover table-striped tablesorter"
-             summary="Table of S.M.A.R.T capabilities">
-        <thead>
-        <tr>
-          <th>Id</th>
-          <th>Name</th>
-          <th>Flag</th>
-          <th>Capabilities</th>
-        </tr>
-        </thead>
-        <tbody>
-        <% capabilities.forEach(function(capability) { %>
-        <tr>
-          <td><%= capability.id %></td>
-          <td><%= capability.name %></td>
-          <td><%= capability.flag %></td>
-          <td><%= capability.capabilities %></td>
-        </tr>
-        <% }); %>
-        </tbody>
-      </table>
-    </div>
-  </div>
+	<div id="smartcapabilities">
+		<div class="row">
+			<% if (capabilities.length == 0) { %>
+			<h3>No S.M.A.R.T Capabilities found (ATA/SATA only)</h3>
+			<% } else { %>
+			<table id="smartcapabilites-table"
+						 class="table table-condensed table-bordered table-hover table-striped tablesorter"
+						 summary="Table of S.M.A.R.T capabilities">
+				<thead>
+				<tr>
+					<th>Id</th>
+					<th>Name</th>
+					<th>Flag</th>
+					<th>Capabilities</th>
+				</tr>
+				</thead>
+				<tbody>
+				<% capabilities.forEach(function(capability) { %>
+				<tr>
+					<td><%= capability.id %></td>
+					<td><%= capability.name %></td>
+					<td><%= capability.flag %></td>
+					<td><%= capability.capabilities %></td>
+				</tr>
+				<% }); %> <!-- capabilities.forEach  -->
+				</tbody>
+			</table>
+			<% } %> <!-- capabilities.length -->
+		</div>
+	</div>
 
   <div id="smarterrorlogs">
     <div class="row">
       <% if (errorlogsummary.length == 0) { %>
         <% if (errorlog.length < 5) { %> <!-- No errors and empty raw log -->
           <h3>There are no errors.</h3>
-        <% } else {%> <!-- no summary but something in raw log -->
+        <% } else { %> <!-- no summary but something in raw log -->
           <h3>No error summary available, please see the raw log below</h3>
         <% } %>
       <% } else { %> <!-- we do have a summary so create and populate it -->
