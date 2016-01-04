@@ -118,7 +118,6 @@ ConfigureServiceView = RockstorLayoutView.extend({
 			this.sysContact = configObj.syscontact;
 			this.roCommunity = configObj.rocommunity;
 			this.aux = configObj.aux;
-			this.workGroup = configObj.workgroup;
 		}
 		if (configObj.listener_port) { default_port = configObj.listener_port }
 		$(this.el).html(this.template({
@@ -136,8 +135,6 @@ ConfigureServiceView = RockstorLayoutView.extend({
 			sysContact: this.sysContact,
 			roCommunity: this.roCommunity,
 			aux: this.aux,
-			workGroup: this.workGroup,
-
 		}));
 
 		this.$('#nis-form :input').tooltip({
