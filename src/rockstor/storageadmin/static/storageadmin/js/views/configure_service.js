@@ -114,10 +114,6 @@ ConfigureServiceView = RockstorLayoutView.extend({
 			this.rootShare = configObj.root_share;
 			this.listenerPort = configObj.listener_port;
 			this.networkInterface = configObj.network_interface;
-			this.sysLocation = configObj.syslocation;
-			this.sysContact = configObj.syscontact;
-			this.roCommunity = configObj.rocommunity;
-			this.aux = configObj.aux;
 		}
 		if (configObj.listener_port) { default_port = configObj.listener_port }
 		$(this.el).html(this.template({
@@ -131,10 +127,6 @@ ConfigureServiceView = RockstorLayoutView.extend({
 			defaultPort: default_port,
 			listenerPort: this.listenerPort,
 			networkInterface: this.networkInterface,
-			sysLocation: this.sysLocation,
-			sysContact: this.sysContact,
-			roCommunity: this.roCommunity,
-			aux: this.aux,
 		}));
 
 		this.$('#nis-form :input').tooltip({

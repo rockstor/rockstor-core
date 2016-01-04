@@ -31,28 +31,28 @@
         <div class="form-group">
           <label class="col-sm-4 control-label" for="syslocation">System Location<span class="required"> *</span></label>
           <div class="col-sm-4">
-            <input class="form-control" type="text" id="syslocation" name="syslocation" value="{{sysLocation}}" placeholder="System Location" title="A string indicating the location of the system" >
+            <input class="form-control" type="text" id="syslocation" name="syslocation" value="{{config.syslocation}}" placeholder="System Location" title="A string indicating the location of the system" >
           </div>
         </div>
 
         <div class="form-group">
           <label class="col-sm-4 control-label" for="syscontact">System Contact<span class="required"> *</span></label>
           <div class="col-sm-4">
-            <input class="form-control" type="text" id="syscontact" name="syscontact" value="{{sysContact}}" placeholder="System Contact" title="contact(e-mail) information for the administrator">
+            <input class="form-control" type="text" id="syscontact" name="syscontact" value="{{config.syscontact}}" placeholder="System Contact" title="contact(e-mail) information for the administrator">
           </div>
         </div>
 
         <div class="form-group">
           <label class="col-sm-4 control-label" for="rocommunity">RO Community<span class="required"> *</span></label>
           <div class="col-sm-4">
-            <input class="form-control" type="text" id="rocommunity" name="rocommunity" value="{{roCommunity}}" placeholder="RO Community" title="a community name to allow read-only access">
+            <input class="form-control" type="text" id="rocommunity" name="rocommunity" value="{{config.rocommunity}}" placeholder="RO Community" title="a community name to allow read-only access">
           </div>
         </div>
 
         <div class="form-group">
           <label class="col-sm-4 control-label" for="options">Below directives will be put in /etc/snmp/snmpd.conf file</label>
           <div class="col-sm-8">
-           <textarea class="form-control" id="options" name="options" rows="5" columns="40" >{{aux}}</textarea>
+           <textarea class="form-control" id="options" name="options" rows="5" columns="40" >{{config.aux}}</textarea>
            </div>
         </div>
 
