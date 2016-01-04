@@ -111,8 +111,6 @@ ConfigureServiceView = RockstorLayoutView.extend({
 		var configObj = {};
 		if (config != null) {
 			configObj = JSON.parse(config);
-			this.domain = configObj.domain;
-			this.userName = configObj.username;
 			this.server = configObj.server;
 			this.basedn = configObj.basedn;
 			this.rootShare = configObj.root_share;
@@ -144,9 +142,7 @@ ConfigureServiceView = RockstorLayoutView.extend({
 			shares: this.shares,
 			network: this.network,
 			//newly added 
-			domain: this.domain,
 			rootShare: this.rootShare,
-			userName: this.userName,
 			server: this.server,
 			basedn: this.basedn,
 			enableTLS: this.enableTLS,
