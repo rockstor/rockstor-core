@@ -225,12 +225,6 @@ def transmission_install(rockon):
     run_command(cmd)
 
 
-def pull_images(rockon):
-    for c in DContainer.objects.filter(rockon=rockon):
-        rm_container(c.name)
-        run_command([DOCKER, 'pull', '%s:%s' % (c.dimage.name, c.dimage.tag)])
-
-
 def owncloud_install(rockon):
     for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
         cmd = list(DCMD2) + ['--name', c.name, ]
