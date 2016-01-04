@@ -106,7 +106,7 @@ ConfigureServiceView = RockstorLayoutView.extend({
 
 	renderServiceConfig: function () {
 		var _this = this;
-		this.default_port = 10002;
+		var default_port = 10002;
 		var config = this.service.get('config');
 		var configObj = {};
 		if (config != null) {
@@ -135,8 +135,8 @@ ConfigureServiceView = RockstorLayoutView.extend({
 			this.roCommunity = configObj.rocommunity;
 			this.aux = configObj.aux;
 			this.workGroup = configObj.workgroup;
-
 		}
+		if (configObj.listener_port) { default_port = configObj.listener_port }
 		$(this.el).html(this.template({
 			service: this.service,
 			serviceName: this.service.get('display_name'),
@@ -151,7 +151,7 @@ ConfigureServiceView = RockstorLayoutView.extend({
 			basedn: this.basedn,
 			enableTLS: this.enableTLS,
 			certificate: this.certificate,
-			defaultPort: this.default_port,
+			defaultPort: default_port,
 			listenerPort: this.listenerPort,
 			networkInterface: this.networkInterface,
 			upsMonitor: this.upsMon,

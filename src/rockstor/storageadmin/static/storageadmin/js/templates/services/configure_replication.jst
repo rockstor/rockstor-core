@@ -38,11 +38,9 @@
 	</div>
 
         <div class="form-group">
-	  <% var default_port = 10002; %>
-	  <% if (config.listener_port) { default_port = config.listener_port } %>
           <label class="col-sm-4 control-label" for="listener_port">Listener Port<span class="required"> *</span></label>
           <div class="col-sm-4">
-            <input class="form-control" type="text" id="listener_port" name="listener_port" value="<%= default_port %>"></div>
+            <input class="form-control" type="text" id="listener_port" name="listener_port" value="{{defaultPort}}"></div>
         </div>
         <div class="form-group">
           <div class="col-sm-offset-4 col-sm-8">
