@@ -111,11 +111,7 @@ ConfigureServiceView = RockstorLayoutView.extend({
 		var configObj = {};
 		if (config != null) {
 			configObj = JSON.parse(config);
-			this.server = configObj.server;
-			this.basedn = configObj.basedn;
 			this.rootShare = configObj.root_share;
-			this.enableTLS =  configObj.enabletls;
-			this.certificate = configObj.cert;
 			this.listenerPort = configObj.listener_port;
 			this.networkInterface = configObj.network_interface;
 			this.upsMon = configObj.upsmon;
@@ -143,10 +139,6 @@ ConfigureServiceView = RockstorLayoutView.extend({
 			network: this.network,
 			//newly added 
 			rootShare: this.rootShare,
-			server: this.server,
-			basedn: this.basedn,
-			enableTLS: this.enableTLS,
-			certificate: this.certificate,
 			defaultPort: default_port,
 			listenerPort: this.listenerPort,
 			networkInterface: this.networkInterface,
