@@ -51,7 +51,7 @@
         <div class="form-group" id="ups-name">
           <label class="col-sm-4 control-label" for="upsname">Internal UPS name<span class="required"> *</span></label>
           <div class="col-sm-4">
-            <input class="form-control" type="text" id="upsname" name="upsname" value="{{upsName}}" placeholder="internal ups name">
+            <input class="form-control" type="text" id="upsname" name="upsname" value="{{config.upsname}}" placeholder="internal ups name">
           </div>
         </div>
 
@@ -59,7 +59,7 @@
         <div class="form-group" id="ups-description">
           <label class="col-sm-4 control-label" for="desc">UPS Description</label>
           <div class="col-sm-4">
-            <input class="form-control" type="text" id="desc" name="desc" value="{{upsDesc}}" placeholder="Rockstor UPS Unit">
+            <input class="form-control" type="text" id="desc" name="desc" value="{{config.desc}}" placeholder="Rockstor UPS Unit">
           </div>
         </div>
 
@@ -77,7 +77,7 @@
         <div class="form-group" id="ups-port">
           <label class="col-sm-4 control-label" for="port">UPS Port</label>
           <div class="col-sm-4">
-            <input class="form-control" type="text" id="port" name="port" value="{{upsPort}}" placeholder="auto">
+            <input class="form-control" type="text" id="port" name="port" value="{{config.port}}" placeholder="auto">
           </div>
         </div>
 
@@ -85,7 +85,7 @@
         <div class="form-group" id="nut-server">
           <label class="col-sm-4 control-label" for="nutserver">Nut Server <span class="required"> *</span></label>
           <div class="col-sm-4">
-            <input class="form-control" type="text" id="nutserver" name="nutserver" value="{{nutServer}}" placeholder="hostname or ip of nutserver">
+            <input class="form-control" type="text" id="nutserver" name="nutserver" value="{{config.nutserver}}" placeholder="hostname or ip of nutserver">
           </div>
         </div>
 
@@ -93,7 +93,7 @@
         <div class="form-group">
           <label class="col-sm-4 control-label" for="nutuser">Nut User<span class="required"> *</span></label>
           <div class="col-sm-4">
-            <input class="form-control" type="text" id="nutuser" name="nutuser" value="{{nutUser}}" placeholder="NUT username eg 'monuser'">
+            <input class="form-control" type="text" id="nutuser" name="nutuser" value="{{config.nutuser}}" placeholder="NUT username eg 'monuser'">
           </div>
         </div>
 
@@ -101,7 +101,7 @@
         <div class="form-group">
           <label class="col-sm-4 control-label" for="password">Nut User Password<span class="required"> *</span></label>
           <div class="col-sm-4">
-            <input class="form-control" type="text" id="password" name="password" value="{{password}}" placeholder="NUT user password">
+            <input class="form-control" type="text" id="password" name="password" value="{{config.password}}" placeholder="NUT user password">
           </div>
         </div>
         <div class="form-group">
