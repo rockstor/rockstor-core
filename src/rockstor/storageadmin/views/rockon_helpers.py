@@ -49,6 +49,8 @@ def mount_share(name, mnt):
 
 def rockon_status(name):
     ro = RockOn.objects.get(name=name)
+    if (globals().get('%s_status' % ro.name.lower()) is not None):
+        return globals().get('%s_status' % ro.name.lower())(ro)
     state = 'unknown error'
     co = DContainer.objects.filter(rockon=ro).order_by('-launch_order')[0]
     try:
@@ -83,9 +85,13 @@ def rm_container(name):
 
 @task()
 def start(rid):
+    rockon = RockOn.objects.get(id=rid)
+    globals().get('%s_start' % rockon.name.lower(), generic_start)(rockon)
+
+
+def generic_start(rockon):
     new_status = 'started'
     try:
-        rockon = RockOn.objects.get(id=rid)
         for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
             run_command([DOCKER, 'start', c.name])
     except:
@@ -98,9 +104,13 @@ def start(rid):
 
 @task()
 def stop(rid):
+    rockon = RockOn.objects.get(id=rid)
+    globals().get('%s_stop' % rockon.name.lower(), generic_stop)(rockon)
+
+
+def generic_stop(rockon):
     new_status = 'stopped'
     try:
-        rockon = RockOn.objects.get(id=rid)
         for c in DContainer.objects.filter(rockon=rockon).order_by('-launch_order'):
             run_command([DOCKER, 'stop', c.name])
     except Exception, e:
@@ -124,7 +134,6 @@ def install(rid):
     new_state = 'installed'
     try:
         rockon = RockOn.objects.get(id=rid)
-        pull_images(rockon)
         globals().get('%s_install' % rockon.name.lower(), generic_install)(rockon)
     except Exception, e:
         logger.debug('exception while installing the rockon')
@@ -140,16 +149,20 @@ def install(rid):
 def uninstall(rid, new_state='available'):
     try:
         rockon = RockOn.objects.get(id=rid)
-        for c in DContainer.objects.filter(rockon=rockon):
-            rm_container(c.name)
+        globals().get('%s_uninstall' % rockon.name.lower(), generic_uninstall)(rockon)
     except Exception, e:
         logger.debug('exception while uninstalling rockon')
         logger.exception(e)
-        new_state = 'uninstall_failed'
+        new_state = 'installed'
     finally:
         url = ('rockons/%d/state_update' % rid)
         return aw.api_call(url, data={'new_state': new_state, }, calltype='post',
                            save_error=False)
+
+
+def generic_uninstall(rockon):
+    for c in DContainer.objects.filter(rockon=rockon):
+        rm_container(c.name)
 
 
 def container_ops(container):

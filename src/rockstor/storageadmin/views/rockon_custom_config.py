@@ -32,4 +32,4 @@ class RockOnCustomConfigView(rfc.GenericView):
             e_msg = ('Rock-on(%s) does not exist' % self.kwargs['rid'])
             handle_exception(Exception(e_msg), self.request)
 
-        return DCustomConfig.objects.filter(rockon=rockon).order_by('label')
+        return DCustomConfig.objects.filter(rockon=rockon).order_by('id')
