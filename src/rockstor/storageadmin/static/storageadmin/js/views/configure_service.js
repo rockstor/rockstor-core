@@ -111,9 +111,6 @@ ConfigureServiceView = RockstorLayoutView.extend({
 		var configObj = {};
 		if (config != null) {
 			configObj = JSON.parse(config);
-			this.rootShare = configObj.root_share;
-			this.listenerPort = configObj.listener_port;
-			this.networkInterface = configObj.network_interface;
 		}
 		if (configObj.listener_port) { default_port = configObj.listener_port }
 		$(this.el).html(this.template({
@@ -122,11 +119,7 @@ ConfigureServiceView = RockstorLayoutView.extend({
 			config: configObj,
 			shares: this.shares,
 			network: this.network,
-			//newly added 
-			rootShare: this.rootShare,
 			defaultPort: default_port,
-			listenerPort: this.listenerPort,
-			networkInterface: this.networkInterface,
 		}));
 
 		this.$('#nis-form :input').tooltip({
@@ -396,10 +389,11 @@ ConfigureServiceView = RockstorLayoutView.extend({
 
 		//Replication
 		Handlebars.registerHelper('display_networkInterface_options', function(){
-			var html = '';
+			var html = '',
+			_this = this;
 			this.network.each(function(ni, index) { 
 				var niName = ni.get('name');
-				if (niName == this.networkInterface) { 
+				if (niName == _this.config.network_interface) { 
 					html += '<option value="' + niName + '" selected="selected"> ' + niName + '</option>';
 				} else { 
 					html += '<option value="' + niName + '">' + niName+ '</option>';
@@ -411,7 +405,8 @@ ConfigureServiceView = RockstorLayoutView.extend({
 
 		//Rockon template
 		Handlebars.registerHelper('display_rockon_shares', function(){
-			var html = '';
+			var html = '',
+			_this = this;
 			if (this.shares.length ===  0) {
 				html += '<p>You currently have no Shares. You will need a share to run the Rock-ons service.</p>';
 				html += '<a href="#add_share">Add a Share</a>';
@@ -420,7 +415,7 @@ ConfigureServiceView = RockstorLayoutView.extend({
 				html += '<option></option>';
 				this.shares.each( function(share, index) { 
 					var shareName = share.get('name');
-					if (shareName == this.rootShare) {
+					if (shareName == _this.config.root_share) {
 						html += '<option value="' + shareName + '" selected="selected">  ' + shareName + ' </option>';
 					} else {
 						html += '<option value="' + shareName + '">' + shareName + ' </option>';
