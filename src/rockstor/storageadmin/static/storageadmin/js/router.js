@@ -801,7 +801,6 @@ $(document).ready(function() {
 	$(document).ajaxError(function(event, jqXhr, ajaxSettings, e) {
 		var commonerr_template = window.JST.common_commonerr;
 		var popuperrTemplate = window.JST.common_popuperr;
-		var unknownerr_template = window.JST.common_unknownerr;
 		var htmlErr = null;
 		var resType = jqXhr.getResponseHeader('Content-Type');
 		var detail = jqXhr.responseText;
