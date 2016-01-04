@@ -80,10 +80,12 @@ def generic_start(rockon):
     try:
         for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
             run_command([DOCKER, 'start', c.name])
-    except:
+    except Exception, e:
+        logger.error('Exception while starting the rockon(%s)' % rockon.name)
+        logger.exception(e)
         new_status = 'start_failed'
     finally:
-        url = ('rockons/%d/status_update' % rid)
+        url = ('rockons/%d/status_update' % rockon.id)
         return aw.api_call(url, data={'new_status': new_status, },
                            calltype='post', save_error=False)
 
@@ -100,11 +102,11 @@ def generic_stop(rockon):
         for c in DContainer.objects.filter(rockon=rockon).order_by('-launch_order'):
             run_command([DOCKER, 'stop', c.name])
     except Exception, e:
-        logger.debug('exception while stopping the rockon(%s)' % rid)
+        logger.debug('exception while stopping the rockon(%s)' % rockon.name)
         logger.exception(e)
         new_status = 'stop_failed'
     finally:
-        url = ('rockons/%d/status_update' % rid)
+        url = ('rockons/%d/status_update' % rockon.id)
         return aw.api_call(url, data={'new_status': new_status, },
                            calltype='post', save_error=False)
 
@@ -122,7 +124,7 @@ def install(rid):
         rockon = RockOn.objects.get(id=rid)
         globals().get('%s_install' % rockon.name.lower(), generic_install)(rockon)
     except Exception, e:
-        logger.debug('exception while installing the rockon')
+        logger.debug('exception while installing the Rockon(%d)' % rid)
         logger.exception(e)
         new_state = 'install_failed'
     finally:
@@ -137,7 +139,7 @@ def uninstall(rid, new_state='available'):
         rockon = RockOn.objects.get(id=rid)
         globals().get('%s_uninstall' % rockon.name.lower(), generic_uninstall)(rockon)
     except Exception, e:
-        logger.debug('exception while uninstalling rockon')
+        logger.debug('exception while uninstalling the Rockon(%d)' % rid)
         logger.exception(e)
         new_state = 'installed'
     finally:
