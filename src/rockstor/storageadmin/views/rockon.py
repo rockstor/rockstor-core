@@ -263,6 +263,10 @@ class RockOnView(rfc.GenericView):
                     cco.description = ccc_d['description']
                     cco.label = ccc_d['label']
                     cco.save()
+                def_val = ccc_d.get('default')
+                if (def_val is not None):
+                    cco.val = def_val
+                    cco.save()
         for cco in DCustomConfig.objects.filter(rockon=ro):
             if (cco.key not in cc_d):
                 cco.delete()
