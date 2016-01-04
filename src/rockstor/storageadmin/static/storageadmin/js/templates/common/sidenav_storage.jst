@@ -1,40 +1,15 @@
 <h3>Storage</h3>
 <ul class="side">
-  <% if (selected == "disks") { %>
-    <li><a href="#disks" class="selected"><i class="glyphicon glyphicon-hdd "></i> Disks</a></li>
-  <% } else { %>
-    <li><a href="#disks"><i class="glyphicon glyphicon-hdd"></i> Disks</a></li>
-  <% } %>
-  <% if (selected == "pools") { %>
-    <li><a href="#pools" class="selected"><i class="glyphicon glyphicon-list "></i> Pools</a></li>
-  <% } else { %>
-    <li><a href="#pools"><i class="glyphicon glyphicon-list"></i> Pools</a></li>
-  <% } %>
-  <% if (selected == "shares") { %>
-    <li><a href="#shares" class="selected"><i class="glyphicon glyphicon-folder-open "></i> Shares</a></li>
-  <% } else { %>
-    <li><a href="#shares"><i class="glyphicon glyphicon-folder-open"></i> Shares</a></li>
-  <% } %>
-  <% if (selected == "snapshots") { %>
-  <li><a href="#snapshots" class="selected"><i class="glyphicon glyphicon-camera  "></i> Snapshots</a></li>
-<% } else { %>
-  <li><a href="#snapshots">  <i class="glyphicon glyphicon-camera"></i> Snapshots</a></li>
-<% } %>
- 
+    <li><a href="#disks" {{sidenav "disks"}}><i class="glyphicon glyphicon-hdd "></i> Disks</a></li>
+    <li><a href="#pools" {{sidenav "pools"}}><i class="glyphicon glyphicon-list "></i> Pools</a></li>
+    <li><a href="#shares" {{sidenav "shares"}}><i class="glyphicon glyphicon-folder-open "></i> Shares</a></li>
+    <li><a href="#snapshots" {{sidenav "snapshots"}}><i class="glyphicon glyphicon-camera  "></i> Snapshots</a></li>
   <li>
     <div class="subnav">
       <i class="fa fa-exchange"></i> Replication
       <ul>
-        <% if (selected == "replication") { %>
-          <li><a href="#replication" class="selected"><i class="fa fa-long-arrow-right"></i> Send</a></li>
-        <% } else { %>
-          <li><a href="#replication"><i class="fa fa-long-arrow-right"></i> Send</a></li>
-        <% } %>
-        <% if (selected == "replication-receive") { %>
-          <li><a href="#replication-receive" class="selected"><i class="fa fa-long-arrow-left"></i> Receive</a></li>
-        <% } else { %>
-          <li><a href="#replication-receive"><i class="fa fa-long-arrow-left"></i> Receive</a></li>
-        <% } %>
+          <li><a href="#replication" {{sidenav "replication"}}><i class="fa fa-long-arrow-right"></i> Send</a></li>
+          <li><a href="#replication-receive" {{sidenav "replication-receive"}}><i class="fa fa-long-arrow-left"></i> Receive</a></li>
       </ul>
     </div>
   </li>
@@ -42,26 +17,10 @@
     <div class="subnav">
       <i class="glyphicon glyphicon-share"></i> File Sharing
       <ul>
-        <% if (selected == "nfs-exports") { %>
-          <li><a href="#nfs-exports" class="selected">NFS</a></li>
-        <% } else { %>
-          <li><a href="#nfs-exports">NFS</a></li>
-        <% } %>
-        <% if (selected == "samba") { %>
-          <li><a href="#samba-exports" class="selected">Samba</a></li>
-        <% } else { %>
-          <li><a href="#samba-exports">Samba</a></li>
-        <% } %>
-        <% if (selected == "sftp") { %>
-          <li><a href="#sftp" class="selected">SFTP</a></li>
-        <% } else { %>
-          <li><a href="#sftp">SFTP</a></li>
-        <% } %>
-        <% if (selected == "afp") { %>
-          <li><a href="#afp" class="selected">AFP</a></li>
-        <% } else { %>
-          <li><a href="#afp">AFP</a></li>
-        <% } %>
+          <li><a href="#nfs-exports" {{sidenav "nfs-exports"}}>NFS</a></li>
+          <li><a href="#samba-exports" {{sidenav "samba"}}>Samba</a></li>
+          <li><a href="#sftp" {{sidenav "sftp"}}>SFTP</a></li>
+          <li><a href="#afp" {{sidenav "afp"}}>AFP</a></li>
       </ul>
     </div>
   </li>
