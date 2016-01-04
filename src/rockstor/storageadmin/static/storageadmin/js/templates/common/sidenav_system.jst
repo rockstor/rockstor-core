@@ -1,66 +1,21 @@
 <h3>System</h3>
 <ul class="side">
-  <% if (selected == "services") { %>
-  <li><a href="#services" class="selected"><i class="glyphicon glyphicon-cog"></i> Services</span></a></li>
-
-<% } else { %>
-<li><a href="#services"><i class="glyphicon glyphicon-cog"></i> Services</span></a></li>
-<% } %>
-<li>
-  <div class="subnav">
-    <i class="glyphicon glyphicon-user"></i> Identity
-    <ul>
-      <% if (selected == "users") { %>
-      <li><a href="#users" class="selected"><i class="fa fa-user"></i> Users</span></a></li>
-      <% } else { %>
-<li><a href="#users"><i class="fa fa-user"></i> Users</span></a></li>
-<% } %>
-<% if (selected == "groups") { %>
-<li><a href="#groups" class="selected"><i class="fa fa-group"></i> Groups</span></a></li>
-<% } else { %>
-<li><a href="#groups"><i class="fa fa-group"></i> Groups</span></a></li>
-<% } %>
-<% if (selected == "access-keys") { %>
-<li><a href="#access-keys" class="selected"><i class="fa fa-key"></i> Access Keys</span></a></li>
-<% } else { %>
-<li><a href="#access-keys"><i class="fa fa-key"></i> Access Keys</span></a></li>
-<% } %>
-</ul>
-</div>
-</li>
-<% if (selected == "network") { %>
-<li><a href="#network" class="selected"><i class="glyphicon glyphicon-signal"></i> Network Interfaces</span></a></li>
-<% } else { %>
-<li><a href="#network"><i class="glyphicon glyphicon-signal"></i> Network Interfaces</span></a></li>
-<% } %>
-<% if (selected == "scheduled-tasks") { %>
-<li><a href="#scheduled-tasks" class="selected"><i class="glyphicon glyphicon-tasks "></i> Scheduled Tasks</span></a></li>
-<% } else { %>
-<li><a href="#scheduled-tasks"><i class="glyphicon glyphicon-tasks"></i> Scheduled Tasks</span></a></li>
-<% } %>
-<% if (selected == "version") { %>
-<li><a href="#version" class="selected"><i class="glyphicon glyphicon-arrow-up "></i> Software Update</span></a></li>
-<% } else { %>
-<li><a href="#version"><i class="glyphicon glyphicon-arrow-up"></i> Software Update</span></a></li>
-<% } %>
-<% if (selected == "appliances") { %>
-<li><a href="#appliances" class="selected"><i class="fa fa-desktop"></i> Appliances</span></a></li>
-<% } else { %>
-<li><a href="#appliances"><i class="fa fa-desktop"></i> Appliances</span></a></li>
-<% } %>
-<% if (selected == "update-certificate") { %>
-<li><a href="#update-certificate" class="selected"><i class="fa fa-certificate"></i> SSL Certificate</span></a></li>
-<% } else { %>
-<li><a href="#update-certificate"><i class="fa fa-certificate"></i> SSL Certificate</span></a></li>
-<% } %>
-<% if (selected == "config-backup") { %>
-<li><a href="#config-backup" class="selected"><i class="glyphicon glyphicon-floppy-save"></i> Config Backups</span></a></li>
-<% } else { %>
-<li><a href="#config-backup"><i class="glyphicon glyphicon-floppy-save"></i> Config Backups</span></a></li>
-<% } %>
-<% if (selected == "email") { %>
-<li><a href="#email" class="selected"><i class="fa fa-envelope"></i> Email Alerts</span></a></li>
-<% } else { %>
-<li><a href="#email"><i class="fa fa-envelope"></i> Email Alerts</span></a></li>
-<% } %>
+  <li><a href="#services" {{sidenav "services"}}><i class="glyphicon glyphicon-cog"></i> Services</span></a></li>
+  <li>
+      <div class="subnav">
+        <i class="glyphicon glyphicon-user"></i> Identity
+        <ul>
+          <li><a href="#users" {{sidenav "users"}}><i class="fa fa-user"></i> Users</span></a></li>
+          <li><a href="#groups" {{sidenav "groups"}}><i class="fa fa-group"></i> Groups</span></a></li>
+          <li><a href="#access-keys" {{sidenav "access-keys"}}><i class="fa fa-key"></i> Access Keys</span></a></li>
+        </ul>
+       </div>
+    </li>
+    <li><a href="#network" {{sidenav "network"}}><i class="glyphicon glyphicon-signal"></i> Network Interfaces</span></a></li>
+    <li><a href="#scheduled-tasks" {{sidenav "scheduled-tasks"}}><i class="glyphicon glyphicon-tasks "></i> Scheduled Tasks</span></a></li>
+    <li><a href="#version" {{sidenav "version"}}><i class="glyphicon glyphicon-arrow-up "></i> Software Update</span></a></li>
+    <li><a href="#appliances" {{sidenav "appliances"}}><i class="fa fa-desktop"></i> Appliances</span></a></li>
+    <li><a href="#update-certificate" {{sidenav "update-certificate"}}><i class="fa fa-certificate"></i> SSL Certificate</span></a></li>
+    <li><a href="#config-backup" {{sidenav "config-backup"}}><i class="glyphicon glyphicon-floppy-save"></i> Config Backups</span></a></li>
+    <li><a href="#email" {{sidenav "email"}}><i class="fa fa-envelope"></i> Email Alerts</span></a></li>
 </ul>
