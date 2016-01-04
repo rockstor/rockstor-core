@@ -74,7 +74,7 @@ setup(
         'coverage',
         'gevent-socketio',
         'psycogreen',
-        'psutil',
+        'psutil == 3.3.0',
     ]
 
 )
