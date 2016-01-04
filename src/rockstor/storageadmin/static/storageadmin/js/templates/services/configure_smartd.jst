@@ -30,8 +30,8 @@
   	<div class="form-group">
   	  <label class="col-sm-4 control-label" for="custom_config">configuration lines will be saved to the ROCKSTOR section in /etc/smartmontools/smartd.conf</label>
   	  <div class="col-sm-8">
-      {{#if customConfig}}
-            <textarea  class="form-control" id="smartd_config" name="custom_config" rows="10">{{customConfig}}</textarea>
+      {{#if config.custom_config}}
+            <textarea  class="form-control" id="smartd_config" name="custom_config" rows="10">{{config.custom_config}}</textarea>
   	  {{else}}
             <textarea class="form-control" id="smartd_config" name="custom_config" rows="10"></textarea>
   	  {{/if}}

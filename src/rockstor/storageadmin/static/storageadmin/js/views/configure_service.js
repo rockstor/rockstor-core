@@ -114,7 +114,6 @@ ConfigureServiceView = RockstorLayoutView.extend({
 			this.rootShare = configObj.root_share;
 			this.listenerPort = configObj.listener_port;
 			this.networkInterface = configObj.network_interface;
-			this.customConfig = configObj.custom_config;
 			this.sysLocation = configObj.syslocation;
 			this.sysContact = configObj.syscontact;
 			this.roCommunity = configObj.rocommunity;
@@ -133,7 +132,6 @@ ConfigureServiceView = RockstorLayoutView.extend({
 			defaultPort: default_port,
 			listenerPort: this.listenerPort,
 			networkInterface: this.networkInterface,
-			customConfig: this.customConfig,
 			sysLocation: this.sysLocation,
 			sysContact: this.sysContact,
 			roCommunity: this.roCommunity,
