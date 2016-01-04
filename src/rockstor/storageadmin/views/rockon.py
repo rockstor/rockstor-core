@@ -76,11 +76,13 @@ class RockOnView(rfc.GenericView):
                         ro.state = '%s_failed' % func_name
                     elif (ro.id not in pending_rids):
                         logger.error('Rockon(%s) is in pending state but there '
-                                     'is not pending or failed task for it. '
+                                     'is no pending or failed task for it. '
                                      % ro.name)
+                        ro.state = '%s_failed' % ro.state.split('_')[1]
                     else:
                         logger.debug('Rockon(%s) is in pending state' % ro.name)
-
+                elif (ro.state == 'uninstall_failed'):
+                    ro.state = 'installed'
                 ro.save()
         return RockOn.objects.filter().order_by('name')
 
@@ -242,7 +244,18 @@ class RockOnView(rfc.GenericView):
         cc_d = {}
         if ('custom_config' in r_d):
             cc_d = r_d['custom_config']
+            sorted_keys = [''] * len(cc_d.keys())
             for k in cc_d:
+                ccc_d = cc_d[k]
+                idx = ccc_d.get('index', 0)
+                if (idx == 0):
+                    for i in range(len(sorted_keys)):
+                        if (sorted_keys[i] == ''):
+                            sorted_keys[i] = k
+                            break
+                else:
+                    sorted_keys[idx-1] = k
+            for k in sorted_keys:
                 ccc_d = cc_d[k]
                 cco, created = DCustomConfig.objects.get_or_create(
                     rockon=ro, key=k,
@@ -250,6 +263,10 @@ class RockOnView(rfc.GenericView):
                 if (not created):
                     cco.description = ccc_d['description']
                     cco.label = ccc_d['label']
+                    cco.save()
+                def_val = ccc_d.get('default')
+                if (def_val is not None):
+                    cco.val = def_val
                     cco.save()
         for cco in DCustomConfig.objects.filter(rockon=ro):
             if (cco.key not in cc_d):

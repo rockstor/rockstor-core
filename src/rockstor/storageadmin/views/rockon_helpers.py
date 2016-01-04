@@ -16,7 +16,12 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import os
+import re
 import time
+from shutil import move
+from tempfile import mkstemp
+import psutil
 from system.osi import run_command
 from django.conf import settings
 from django_ztask.decorators import task
@@ -25,7 +30,12 @@ from system.services import service_status
 from storageadmin.models import (RockOn, DContainer, DVolume, DPort,
                                  DCustomConfig, Share, Disk, DContainerLink,
                                  ContainerOption)
-from fs import btrfs
+from fs.btrfs import mount_share
+from system.pkg_mgmt import install_pkg
+from rockon_utils import container_status
+from rockon_discourse import (discourse_install, discourse_uninstall,
+                              discourse_stop, discourse_start, discourse_status)
+
 
 DOCKER = '/usr/bin/docker'
 ROCKON_URL = 'https://localhost/api/rockons'
@@ -43,36 +53,14 @@ def docker_status():
         return False
     return True
 
-def mount_share(name, mnt):
-    share = Share.objects.get(name=name)
-    btrfs.mount_share(share, mnt)
 
 def rockon_status(name):
     ro = RockOn.objects.get(name=name)
+    if (globals().get('%s_status' % ro.name.lower()) is not None):
+        return globals().get('%s_status' % ro.name.lower())(ro)
     state = 'unknown error'
     co = DContainer.objects.filter(rockon=ro).order_by('-launch_order')[0]
-    try:
-        o, e, rc = run_command([DOCKER, 'inspect', '-f',
-                                '{{range $key, $value := .State}}{{$key}}:{{$value}},{{ end }}', co.name])
-        state_d = {}
-        for i in o[0].split(','):
-            fields = i.split(':')
-            if (len(fields) >= 2):
-                state_d[fields[0]] = ':'.join(fields[1:])
-        if ('Running' in state_d):
-            if (state_d['Running'] == 'true'):
-                state = 'started'
-            else:
-                state = 'stopped'
-                if ('Error' in state_d and 'ExitCode' in state_d):
-                    exitcode = int(state_d['ExitCode'])
-                    if (exitcode != 0):
-                        state = 'exitcode: %d error: %s' % (exitcode, state_d['Error'])
-        return state
-    except Exception, e:
-        logger.exception(e)
-    finally:
-        return state
+    return container_status(co.name)
 
 
 def rm_container(name):
@@ -83,32 +71,42 @@ def rm_container(name):
 
 @task()
 def start(rid):
+    rockon = RockOn.objects.get(id=rid)
+    globals().get('%s_start' % rockon.name.lower(), generic_start)(rockon)
+
+
+def generic_start(rockon):
     new_status = 'started'
     try:
-        rockon = RockOn.objects.get(id=rid)
         for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
             run_command([DOCKER, 'start', c.name])
-    except:
+    except Exception, e:
+        logger.error('Exception while starting the rockon(%s)' % rockon.name)
+        logger.exception(e)
         new_status = 'start_failed'
     finally:
-        url = ('rockons/%d/status_update' % rid)
+        url = ('rockons/%d/status_update' % rockon.id)
         return aw.api_call(url, data={'new_status': new_status, },
                            calltype='post', save_error=False)
 
 
 @task()
 def stop(rid):
+    rockon = RockOn.objects.get(id=rid)
+    globals().get('%s_stop' % rockon.name.lower(), generic_stop)(rockon)
+
+
+def generic_stop(rockon):
     new_status = 'stopped'
     try:
-        rockon = RockOn.objects.get(id=rid)
         for c in DContainer.objects.filter(rockon=rockon).order_by('-launch_order'):
             run_command([DOCKER, 'stop', c.name])
     except Exception, e:
-        logger.debug('exception while stopping the rockon(%s)' % rid)
+        logger.debug('exception while stopping the rockon(%s)' % rockon.name)
         logger.exception(e)
         new_status = 'stop_failed'
     finally:
-        url = ('rockons/%d/status_update' % rid)
+        url = ('rockons/%d/status_update' % rockon.id)
         return aw.api_call(url, data={'new_status': new_status, },
                            calltype='post', save_error=False)
 
@@ -124,10 +122,9 @@ def install(rid):
     new_state = 'installed'
     try:
         rockon = RockOn.objects.get(id=rid)
-        pull_images(rockon)
-        globals()['%s_install' % rockon.name.lower()](rockon)
+        globals().get('%s_install' % rockon.name.lower(), generic_install)(rockon)
     except Exception, e:
-        logger.debug('exception while installing the rockon')
+        logger.debug('exception while installing the Rockon(%d)' % rid)
         logger.exception(e)
         new_state = 'install_failed'
     finally:
@@ -140,16 +137,20 @@ def install(rid):
 def uninstall(rid, new_state='available'):
     try:
         rockon = RockOn.objects.get(id=rid)
-        for c in DContainer.objects.filter(rockon=rockon):
-            rm_container(c.name)
+        globals().get('%s_uninstall' % rockon.name.lower(), generic_uninstall)(rockon)
     except Exception, e:
-        logger.debug('exception while uninstalling rockon')
+        logger.debug('exception while uninstalling the Rockon(%d)' % rid)
         logger.exception(e)
-        new_state = 'uninstall_failed'
+        new_state = 'installed'
     finally:
         url = ('rockons/%d/state_update' % rid)
         return aw.api_call(url, data={'new_state': new_state, }, calltype='post',
                            save_error=False)
+
+
+def generic_uninstall(rockon):
+    for c in DContainer.objects.filter(rockon=rockon):
+        rm_container(c.name)
 
 
 def container_ops(container):
@@ -178,7 +179,7 @@ def vol_ops(container):
     ops_list = []
     for v in DVolume.objects.filter(container=container):
         share_mnt = ('%s%s' % (settings.MNT_PT, v.share.name))
-        mount_share(v.share.name, share_mnt)
+        mount_share(v.share, share_mnt)
         ops_list.extend(['-v', '%s:%s' % (share_mnt, v.dest_dir)])
     return ops_list
 
@@ -190,7 +191,6 @@ def generic_install(rockon):
         cmd.extend(container_ops(c))
         cmd.append(c.dimage.name)
         run_command(cmd)
-
 
 def openvpn_install(rockon):
     #volume container
@@ -223,24 +223,6 @@ def transmission_install(rockon):
     cmd.extend(port_ops(co))
     cmd.append(co.dimage.name)
     run_command(cmd)
-
-
-def btsync_install(rockon):
-    return generic_install(rockon)
-
-
-def plex_install(rockon):
-    return generic_install(rockon)
-
-
-def syncthing_install(rockon):
-    return generic_install(rockon)
-
-
-def pull_images(rockon):
-    for c in DContainer.objects.filter(rockon=rockon):
-        rm_container(c.name)
-        run_command([DOCKER, 'pull', '%s:%s' % (c.dimage.name, c.dimage.tag)])
 
 
 def owncloud_install(rockon):
