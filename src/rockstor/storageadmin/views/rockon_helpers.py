@@ -32,6 +32,9 @@ from storageadmin.models import (RockOn, DContainer, DVolume, DPort,
                                  ContainerOption)
 from fs.btrfs import mount_share
 from system.pkg_mgmt import install_pkg
+from rockon_utils import container_status
+from rockon_discourse import (discourse_install, discourse_uninstall,
+                              discourse_stop, discourse_start, discourse_status)
 
 
 DOCKER = '/usr/bin/docker'
@@ -50,31 +53,6 @@ def docker_status():
         return False
     return True
 
-
-def container_status(name):
-    state = 'unknown_error'
-    try:
-        o, e, rc = run_command([DOCKER, 'inspect', '-f',
-                                '{{range $key, $value := .State}}{{$key}}:{{$value}},{{ end }}', name])
-        state_d = {}
-        for i in o[0].split(','):
-            fields = i.split(':')
-            if (len(fields) >= 2):
-                state_d[fields[0]] = ':'.join(fields[1:])
-        if ('Running' in state_d):
-            if (state_d['Running'] == 'true'):
-                state = 'started'
-            else:
-                state = 'stopped'
-                if ('Error' in state_d and 'ExitCode' in state_d):
-                    exitcode = int(state_d['ExitCode'])
-                    if (exitcode != 0):
-                        state = 'exitcode: %d error: %s' % (exitcode, state_d['Error'])
-        return state
-    except Exception, e:
-        logger.exception(e)
-    finally:
-        return state
 
 def rockon_status(name):
     ro = RockOn.objects.get(name=name)
@@ -285,82 +263,3 @@ def owncloud_install(rockon):
                     break
                 time.sleep(1)
                 cur_wait += 1
-
-def discourse_repo(rockon):
-    co = DContainer.objects.get(rockon=rockon)
-    vo = DVolume.objects.get(container=co)
-    share_mnt = ('%s%s' % (settings.MNT_PT, vo.share.name))
-    mount_share(vo.share, share_mnt)
-    return '%s/%s' % (share_mnt, rockon.name.lower())
-
-def discourse_install(rockon):
-    #1. install git
-    if (not os.path.isfile('/usr/bin/git')):
-        install_pkg('git')
-
-    #2. prep Discourse.yml
-    repo = discourse_repo(rockon)
-    if (not os.path.isdir(repo)):
-        run_command(['git', 'clone',
-                     'https://github.com/discourse/discourse_docker.git',
-                     repo])
-
-    co = DContainer.objects.get(rockon=rockon)
-    po = DPort.objects.get(container=co)
-    cc_map = {}
-    for cco in DCustomConfig.objects.filter(rockon=rockon):
-        cc_map[cco.key] = cco.val
-    mem = int((psutil.virtual_memory().total / (1024 * 1024)) * .25)
-
-    fo, npath = mkstemp()
-    src_yml = '%s/samples/standalone.yml' % repo
-    dst_yml = '%s/containers/%s.yml' % (repo, rockon.name.lower())
-    with open(src_yml) as sfo, open(npath, 'w') as tfo:
-        for line in sfo.readlines():
-            if (re.match('  - "80:80"', line) is not None):
-                tfo.write('  - "%d:80"\n' % po.hostp)
-            elif (re.match('  #db_shared_buffers:', line) is not None):
-                tfo.write('  db_shared_buffers: "%dMB"\n' % mem)
-            elif (re.match('  #UNICORN_WORKERS:', line) is not None):
-                tfo.write('  UNICORN_WORKERS: 3\n')
-            elif (re.match('  DISCOURSE_DEVELOPER_EMAILS:', line) is not None):
-                tfo.write("  DISCOURSE_DEVELOPER_EMAILS: '%s'\n" % cc_map['admin-email'])
-            elif (re.match('  DISCOURSE_HOSTNAME:', line) is not None):
-                tfo.write("  DISCOURSE_HOSTNAME: '%s'\n" % cc_map['hostname'])
-            elif (re.match('  DISCOURSE_SMTP_ADDRESS:', line) is not None):
-                tfo.write('  DISCOURSE_SMTP_ADDRESS: %s\n' % cc_map['smtp-address'])
-            elif (re.match('  #DISCOURSE_SMTP_PORT:', line) is not None):
-                tfo.write('  DISCOURSE_SMTP_PORT: %s\n' % cc_map['smtp-port'])
-            elif (re.match('  #DISCOURSE_SMTP_USER_NAME:', line) is not None):
-                tfo.write('  DISCOURSE_SMTP_USER_NAME: %s\n' % cc_map['smtp-username'])
-            elif (re.match('  #DISCOURSE_SMTP_PASSWORD:', line) is not None):
-                tfo.write('  DISCOURSE_SMTP_PASSWORD: %s\n' % cc_map['smtp-password'])
-            elif (re.match('      host: /var/discourse/shared/standalone', line) is not None):
-                tfo.write('      host: %s/shares/standalone\n' % repo)
-            elif (re.match('      host: /var/discourse/shared/standalone/log/var-log', line) is not None):
-                tfo.write('      host: %s/shared/standalone/log/var-log\n' % repo)
-            else:
-                tfo.write(line)
-    move(npath, dst_yml)
-
-    #3. bootstrap: launcher bootstrap app
-    run_command(['%s/launcher' % repo, 'bootstrap', rockon.name.lower()])
-
-    #4. start: launcher start app
-    run_command(['%s/launcher' % repo, 'start', rockon.name.lower()])
-
-def discourse_uninstall(rockon):
-    repo = discourse_repo(rockon)
-    run_command(['%s/launcher' % repo, 'destroy', rockon.name.lower()])
-    return run_command(['/usr/bin/rm', '-rf', repo])
-
-def discourse_stop(rockon):
-    repo = discourse_repo(rockon)
-    return run_command(['%s/launcher' % repo, 'stop', rockon.name.lower()])
-
-def discourse_start(rockon):
-    repo = discourse_repo(rockon)
-    return run_command(['%s/launcher' % repo, 'start', rockon.name.lower()])
-
-def discourse_status(rockon):
-    return container_status(rockon.name.lower())

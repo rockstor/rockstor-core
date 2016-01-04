@@ -81,7 +81,8 @@ class RockOnView(rfc.GenericView):
                         ro.state = '%s_failed' % ro.state.split('_')[1]
                     else:
                         logger.debug('Rockon(%s) is in pending state' % ro.name)
-
+                elif (ro.state == 'uninstall_failed'):
+                    ro.state = 'installed'
                 ro.save()
         return RockOn.objects.filter().order_by('name')
 
