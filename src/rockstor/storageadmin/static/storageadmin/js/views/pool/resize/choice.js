@@ -3,6 +3,7 @@ PoolResizeChoice = RockstorWizardPage.extend({
   initialize: function() {
     this.template = window.JST.pool_resize_choice;
     RockstorWizardPage.prototype.initialize.apply(this, arguments);
+    this.initHandlebarHelpers();
   },
 
   events: {
@@ -28,5 +29,14 @@ PoolResizeChoice = RockstorWizardPage.extend({
     this.parent.nextPage();
     return false;
   },
+  
+  initHandlebarHelpers: function(){
+	  Handlebars.registerHelper('display_poolName', function(){
+		  var poolName = '';
+		  poolName = this.model.get('pool').get('name');
+		  return new Handlebars.SafeString(poolName);
+	  });
+	  
+  }
 
 });
