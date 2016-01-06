@@ -27,39 +27,62 @@
 
 PoolAddDisks = RockstorWizardPage.extend({
 
-    initialize: function() {
-	this.disks = new DiskCollection();
-	this.disks.setPageSize(100);
-	this.template = window.JST.pool_resize_add_disks;
-	this.disks_template = window.JST.common_disks_table;
-	RockstorWizardPage.prototype.initialize.apply(this, arguments);
-	this.disks.on('reset', this.renderDisks, this);
-    },
+	initialize: function() {
+		this.disks = new DiskCollection();
+		this.disks.setPageSize(100);
+		this.template = window.JST.pool_resize_add_disks;
+		this.disks_template = window.JST.common_disks_table;
+		RockstorWizardPage.prototype.initialize.apply(this, arguments);
+		this.disks.on('reset', this.renderDisks, this);
+		this.initHandlebarHelpers();
+	},
 
-    render: function() {
-	RockstorWizardPage.prototype.render.apply(this, arguments);
-	this.disks.fetch();
-	return this;
-    },
+	render: function() {
+		RockstorWizardPage.prototype.render.apply(this, arguments);
+		this.disks.fetch();
+		return this;
+	},
 
-    renderDisks: function() {
-	var disks = this.disks.filter(function(disk) {
-	    return disk.available();
-	}, this);
-	this.$('#ph-disks-table').html(this.disks_template({disks: disks}));
-    },
+	renderDisks: function() {
+		var disks = this.disks.filter(function(disk) {
+			return disk.available();
+		}, this);
+		this.$('#ph-disks-table').html(this.disks_template({disks: disks}));
+	},
 
-    save: function() {
-	var _this = this;
-	var checked = this.$(".diskname:checked").length;
-	var diskNames = [];
-	this.$(".diskname:checked").each(function(i) {
-	    diskNames.push($(this).val());
-	});
-	this.model.set('diskNames', diskNames);
-	if (this.model.get('raidChange')) {
-	    this.model.set('raidLevel', this.$('#raid-level').val());
+	save: function() {
+		var _this = this;
+		var checked = this.$(".diskname:checked").length;
+		var diskNames = [];
+		this.$(".diskname:checked").each(function(i) {
+			diskNames.push($(this).val());
+		});
+		this.model.set('diskNames', diskNames);
+		if (this.model.get('raidChange')) {
+			this.model.set('raidLevel', this.$('#raid-level').val());
+		}
+		return $.Deferred().resolve();
+	},
+
+	initHandlebarHelpers: function(){
+		Handlebars.registerHelper('display_disksToAdd', function(){
+			var html = '',
+			_this = this;
+			if (this.model.get('raidChange')) { 
+				html += '<h4>Select a new raid level</h4>';
+				var levels = ['single', 'raid0', 'raid1', 'raid10', 'raid5', 'raid6']; 
+				html += '<div class="">';
+				html += '<select id="raid-level" name="raid-level" title="Select a new raid level for the pool">';
+				html += '<option value="">Select a new raid level</option>';
+				_.each(levels, function(level) { 
+					if (_this.model.get('pool').get('raid') != level) { 
+					html += '<option value="' + level + '">' + level +'</option>';
+					}
+				});
+				html += '</select>';
+				html += '</div>';
+			} 
+			return new Handlebars.SafeString(html);
+		});
 	}
-	return $.Deferred().resolve();
-    }
 });
