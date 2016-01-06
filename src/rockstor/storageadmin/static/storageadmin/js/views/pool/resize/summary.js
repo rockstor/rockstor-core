@@ -121,7 +121,7 @@ PoolResizeSummary = RockstorWizardPage.extend({
 	initHandlebarHelpers: function(){
 		Handlebars.registerHelper('display_diskSet', function(){
 			var html = '';
-			_.map(this.model.get('pool').get('disks'), function(disk) { return disk.name; }).join(',') 
+			html += _.map(this.model.get('pool').get('disks'), function(disk) { return disk.name; }).join(','); 
 			return new Handlebars.SafeString(html);
 		});
 
