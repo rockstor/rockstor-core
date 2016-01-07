@@ -76,7 +76,7 @@ PoolAddDisks = RockstorWizardPage.extend({
 				html += '<option value="">Select a new raid level</option>';
 				_.each(levels, function(level) { 
 					if (_this.model.get('pool').get('raid') != level) { 
-					html += '<option value="' + level + '">' + level +'</option>';
+						html += '<option value="' + level + '">' + level +'</option>';
 					}
 				});
 				html += '</select>';
@@ -84,5 +84,21 @@ PoolAddDisks = RockstorWizardPage.extend({
 			} 
 			return new Handlebars.SafeString(html);
 		});
+
+		Handlebars.registerHelper('display_disksToAdd', function(){
+			var html = '';
+			_.each(this.disks, function(disk, index) {
+				var diskName = disk.get('name');
+				html += '<tr>';
+				html += '<td>' + (index+1) + '</td>';
+				html += '<td>' + diskName + '</td>';
+				html += '<td>' + humanize.filesize(disk.get('size')*1024) + '</td>';
+				html += '<td>' + disk.get('parted') + '</td>';
+				html += '<td><input type="checkbox" name="diskname" id="' + diskName + '" value="' + diskName + '" class="diskname"></td>';
+				html += '</tr>';
+			});
+			return new Handlebars.SafeString(html);
+		});
+
 	}
 });
