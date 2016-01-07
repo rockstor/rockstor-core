@@ -401,7 +401,7 @@ RockonsView = RockstorLayoutView.extend({
 				html += '</div>';
 				html += '</div>';
 				html += '</div>';
-		    } 
+			} 
 			return new Handlebars.SafeString(html);
 		});	
 	}
@@ -562,6 +562,7 @@ RockonPortChoice = RockstorWizardPage.extend({
 		this.port_template = window.JST.rockons_ports_form;
 		this.ports = this.model.get('ports');
 		RockstorWizardPage.prototype.initialize.apply(this, arguments);
+		this.initHandlebarHelpers();
 	},
 
 	render: function() {
@@ -599,6 +600,22 @@ RockonPortChoice = RockstorWizardPage.extend({
 		}, this);
 		this.model.set('port_map', port_map);
 		return $.Deferred().resolve();
+	},
+
+	initHandlebarHelpers: function(){
+		Handlebars.registerHelper('display_portsForm', function(){
+			var html = '';
+			this.ports.each(function(port, index) { 
+				html += '<div class="form-group">';
+				html += '<label class="control-label col-sm-3" for="ports">' + port.get('label') + '<span class="required">*</span></label>';
+				html += '<div class="col-sm-5">';
+				html += '<input class="form-control" type="text" id="' + port.id + '" name="' + port.id + '" value="' + port.get('hostp') + '">';
+				html += '</div>';
+				html += '<i class="fa fa-info-circle fa-lg" title="' + port.get('description') + '"></i>';
+				html += '</div>';
+			}); 
+			return new Handlebars.SafeString(html);
+		});
 	}
 });
 
@@ -901,6 +918,7 @@ RockonSettingsSummary = RockstorWizardPage.extend({
 		this.sub_template = window.JST.rockons_settings_summary_table;
 		this.rockon = this.model.get('rockon');
 		RockstorWizardPage.prototype.initialize.apply(this, arguments);
+		this.initHandlebarHelpers();
 	},
 
 	render: function() {
@@ -914,6 +932,56 @@ RockonSettingsSummary = RockstorWizardPage.extend({
 			rockon: this.model.get('rockon')
 		}));
 		return this;
+	},
+	initHandlebarHelpers: function(){
+		Handlebars.registerHelper('display_volumes', function(){
+			var html = '';
+			this.volumes.each(function(volume, index) { 
+				html += '<tr>';
+				html += '<td>Share</td>';
+				html += '<td>' + volume.get('share_name') + '</td>';
+				html += '<td>' + volume.get('dest_dir') + '</td>';
+				html += '</tr>';
+			}); 
+			return new Handlebars.SafeString(html);
+		});
+
+		Handlebars.registerHelper('display_newVolumes', function(){
+			var html = '';
+			for (share in this.new_volumes) { 
+				html += '<tr>';
+				html += '<td>Share</td>';
+				html += '<td>' + this.new_volumes[share] + '</td>';
+				html += '<td>' + share + '</td>';
+				html += '</tr>';
+			} 
+			return new Handlebars.SafeString(html);
+		});
+
+		Handlebars.registerHelper('display_ports', function(){
+			var html = '';
+			this.ports.each(function(port, index) { 
+				html += '<tr>';
+				html += '<td>Port</td>';
+				html += '<td>' + port.get('hostp') + '</td>';
+				html += '<td>' + port.get('containerp') + '</td>';
+				html += '</tr>';
+			}); 
+			return new Handlebars.SafeString(html);
+		});
+
+		Handlebars.registerHelper('display_cc', function(){
+			var html = '';
+			this.cc.each(function(cci, index) { 
+				html += '<tr>';
+				html += '<td>Custom</td>';
+				html += '<td>' + cci.get('val') + '&nbsp;&nbsp<i class="fa fa-info-circle" title="' + cci.get('description') + '" rel="tooltip"></i></td>';
+				html += '<td>' + cci.get('key') + '</td>';
+				html += '</tr>';
+			}); 
+			return new Handlebars.SafeString(html);
+		});
+
 	}
 });
 
