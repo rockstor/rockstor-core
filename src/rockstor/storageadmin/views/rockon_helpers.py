@@ -195,8 +195,6 @@ def generic_install(rockon):
         rm_container(c.name)
         cmd = list(DCMD2) + ['--name', c.name,]
         cmd.extend(vol_ops(c))
-        uid = get_uid(c)
-        if (uid is not None): cmd.extend(['-u', uid])
         cmd.extend(port_ops(c))
         cmd.extend(container_ops(c))
         cmd.append(c.dimage.name)
