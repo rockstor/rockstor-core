@@ -713,6 +713,7 @@ RockonInstallSummary = RockstorWizardPage.extend({
 		this.cc = this.model.get('custom_config');
 		this.rockon = this.model.get('rockon');
 		RockstorWizardPage.prototype.initialize.apply(this, arguments);
+		this.initHandlebarHelpers();
 	},
 
 	render: function() {
@@ -743,7 +744,36 @@ RockonInstallSummary = RockstorWizardPage.extend({
 			},
 			error: function(request, status, error) { }
 		});
+	},
+
+	initHandlebarHelpers: function(){
+		Handlebars.registerHelper('display_rockonsSummary_table', function(){
+			var html = '';
+			for (s in this.share_map) {
+				html += '<tr>';
+				html += '<td>Share</td>';
+				html += '<td>' + this.share_map[s] + '</td>';
+				html += '<td>' + s + '</td>';
+				html += '</tr>';
+			} 
+			for (p in this.port_map) { 
+				html += '<tr>';
+				html += '<td>Port</td>';
+				html += '<td>' + this.port_map[p] + '</td>';
+				html += '<td>' + p + '</td>';
+				html += '</tr>';
+			} 
+			for (c in this.cc_map) {
+				html += '<tr>';
+				html += '<td>Custom</td>';
+				html += '<td>' + this.cc_map[c] + '</td>';
+				html += '<td>' + c + '</td>';
+				html += '</tr>';
+			} 
+			return new Handlebars.SafeString(html);
+		});
 	}
+
 });
 
 RockonInstallComplete = RockstorWizardPage.extend({
