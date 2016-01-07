@@ -236,10 +236,15 @@ def transmission_install(rockon):
 
 def owncloud_install(rockon):
     for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
+        rm_container(c.name)
         cmd = list(DCMD2) + ['--name', c.name, ]
         db_user = DCustomConfig.objects.get(rockon=rockon, key='db_user').val
         db_pw = DCustomConfig.objects.get(rockon=rockon, key='db_pw').val
         if (c.dimage.name == 'postgres'):
+            #change permissions on the db volume to 700
+            vo = DVolume.objects.get(container=c)
+            share_mnt = ('%s%s' % (settings.MNT_PT, vo.share.name))
+            run_command(['/usr/bin/chmod', '700', share_mnt])
             cmd.extend(['-e', 'POSTGRES_USER=%s' % db_user, '-e',
                         'POSTGRES_PASSWORD=%s' % db_pw])
         cmd.extend(port_ops(c))
