@@ -625,6 +625,7 @@ RockonCustomChoice = RockstorWizardPage.extend({
 		this.cc_template = window.JST.rockons_cc_form;
 		this.custom_config = this.model.get('custom_config');
 		RockstorWizardPage.prototype.initialize.apply(this, arguments);
+		this.initHandlebarHelpers();
 	},
 
 	render: function() {
@@ -656,6 +657,24 @@ RockonCustomChoice = RockstorWizardPage.extend({
 		}, this);
 		this.model.set('cc_map', cc_map);
 		return $.Deferred().resolve();
+	},
+
+	initHandlebarHelpers: function(){
+		Handlebars.registerHelper('display_ccForm', function(){
+			var html = '';
+			this.cc.each(function(cci, index) { 
+				html += '<div class="form-group">';
+				html += '<label class="control-label col-sm-3" for="cc">' + cci.get('label') + '<span class="required">*</span></label>';
+				html += '<div class="controls">';
+				html += '<div class="col-sm-6">';
+				html += '<input class="form-control" type="text" id="' + cci.id + '" name="' + cci.id + '" value="' + cci.get('val') + '">';
+				html += '</div>&nbsp;&nbsp';
+				html += '<i class="fa fa-info-circle fa-lg" title="' + cci.get('description') + '" rel="tooltop"></i>';
+				html += '</div>';
+				html += '</div>';
+			}); 
+			return new Handlebars.SafeString(html);
+		});
 	}
 });
 
