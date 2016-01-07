@@ -65,7 +65,7 @@ PoolAddDisks = RockstorWizardPage.extend({
 	},
 
 	initHandlebarHelpers: function(){
-		Handlebars.registerHelper('display_disksToAdd', function(){
+		Handlebars.registerHelper('display_raidLevel_dropdown', function(){
 			var html = '',
 			_this = this;
 			if (this.model.get('raidChange')) { 
