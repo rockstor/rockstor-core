@@ -978,7 +978,8 @@ RockonInfoSummary = RockstorWizardPage.extend({
 	render: function() {
 		RockstorWizardPage.prototype.render.apply(this, arguments);
 		this.$('#ph-settings-summary-table').html(this.sub_template({
-			rockon: this.model.get('rockon')
+			rockonMoreInfo: this.model.get('more_info'),
+			
 		}));
 		return this;
 	}
