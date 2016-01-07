@@ -174,11 +174,6 @@ DisksView = Backbone.View.extend({
     	Handlebars.registerHelper('display_disks_tbody', function() {
 
         var html = '',
-            trashIcon = '<i class="glyphicon glyphicon-trash"></i>',
-            importIcon = '<i class="glyphicon glyphicon-circle-arrow-down"></i>',
-            cogIcon = '<i class="glyphicon glyphicon-cog"></i>',
-            eraseIcon = '<i class="fa fa-eraser"></i>',
-            bulbIcon = '<i class="fa fa-lightbulb-o fa-lg"></i>',
             warning = 'Disk names may change unfavourably upon reboot leading to inadvertent drive reallocation and potential data loss. This error is caused by the source of these disks such as your Hypervisor or SAN. Please ensure that disks are provided with unique serial numbers before proceeding further';
 
         this.collection.each(function(disk, index) {
@@ -198,13 +193,14 @@ DisksView = Backbone.View.extend({
         html += '<tr>';
         html += '<td><a href="#disks/' + diskName +' "><i class="glyphicon glyphicon-hdd"></i> '+ diskName +'</a>&nbsp';
         if (diskOffline) {
-           html += '<a href="#" class="delete" data-disk-name="'+ diskName +'" title="Disk is unusable because it is offline.Click to delete it from the system" rel="tooltip">'+ trashIcon +'</a>';
+           html += '<a href="#" class="delete" data-disk-name="'+ diskName +'" title="Disk is unusable because it is offline.Click to delete it from the system" rel="tooltip"><i class="glyphicon glyphicon-trash"></i></a>';
         } else if (diskParted) {
-           html += '<a href="#" class="wipe" data-disk-name="'+ diskName +'" title="Disk is unusable because it has some other filesystem on it.'+
-                   +'Click to wipe it clean." rel="tooltip">'+ cogIcon +'</a>';
+           html += '<a href="#" class="wipe" data-disk-name="'+ diskName +'" title="Disk is unusable because it has some other filesystem on it.';
+           html+= 'Click to wipe it clean." rel="tooltip"><i class="glyphicon glyphicon-cog"></i></a>';
         } else if (btrfsUId && _.isNull(poolName)) {
-           html += '<a href="#" class="btrfs_wipe" data-disk-name="'+ diskName +'" title="Disk is unusable because it has BTRFS filesystem(s) on it.Click to wipe it clean." rel="tooltip">'+ eraseIcon +'</a>'+
-                   +'&nbsp;<a href="#" class="btrfs_import" data-disk-name="'+ diskName +'" title="Click to import data(pools, shares and snapshots) on this disk automatically" rel="tooltip">'+ importIcon +'</a>';
+           html += '<a href="#" class="btrfs_wipe" data-disk-name="'+ diskName +'" title="Disk is unusable because it has BTRFS filesystem(s) on it.Click to wipe it clean." rel="tooltip">';
+           html += '<i class="fa fa-eraser"></i></a>&nbsp;<a href="#" class="btrfs_import" data-disk-name="'+ diskName +'" title="Click to import data(pools, shares and snapshots) on this disk automatically" rel="tooltip">';
+           html += '<i class="glyphicon glyphicon-circle-arrow-down"></i></a>';
         }
 
         html += '</td>';
@@ -215,7 +211,7 @@ DisksView = Backbone.View.extend({
        	}else{
 	       html += serial;
 	       if (serial) {
-	          html += '&nbsp;&nbsp;&nbsp;&nbsp;<a href="#disks/blink/'+ diskName +'" title="A tool to physically identify the hard drive with this serial number"';                                              +'rel="tooltip">'+ bulbIcon +'</a>&nbsp';
+	          html += '&nbsp;&nbsp;&nbsp;&nbsp;<a href="#disks/blink/'+ diskName +'" title="A tool to physically identify the hard drive with this serial number" rel="tooltip"><i class="fa fa-lightbulb-o fa-lg"></i></a>&nbsp';
            }
 	    }
         html += '</td>';
