@@ -192,6 +192,7 @@ def get_uid(container):
 
 def generic_install(rockon):
     for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
+        rm_container(c.name)
         cmd = list(DCMD2) + ['--name', c.name,]
         cmd.extend(vol_ops(c))
         uid = get_uid(c)
