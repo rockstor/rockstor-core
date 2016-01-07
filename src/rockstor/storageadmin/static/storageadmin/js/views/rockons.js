@@ -507,7 +507,7 @@ RockonInstallWizardView = WizardView.extend({
 RockonShareChoice = RockstorWizardPage.extend({
 	initialize: function() {
 		this.template = window.JST.rockons_install_choice;
-		this.vol_template = window.JST.rockons_vol_table;
+		this.vol_template = window.JST.rockons_vol_form;
 		this.rockon = this.model.get('rockon');
 		this.volumes = this.model.get('volumes');
 		this.shares = new ShareCollection();
