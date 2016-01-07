@@ -183,10 +183,19 @@ def vol_ops(container):
         ops_list.extend(['-v', '%s:%s' % (share_mnt, v.dest_dir)])
     return ops_list
 
+def get_uid(container):
+    # If there are volumes, return the uid of the owner of the first volume.
+    vo = DVolume.objects.filter(container=container).first()
+    if (vo is None): return None
+    share_mnt = ('%s%s' % (settings.MNT_PT, vo.share.name))
+    return str(os.stat(share_mnt).st_uid)
+
 def generic_install(rockon):
     for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
         cmd = list(DCMD2) + ['--name', c.name,]
         cmd.extend(vol_ops(c))
+        uid = get_uid(c)
+        if (uid is not None): cmd.extend(['-u', uid])
         cmd.extend(port_ops(c))
         cmd.extend(container_ops(c))
         cmd.append(c.dimage.name)
