@@ -29,7 +29,7 @@ from cli.api_wrapper import APIWrapper
 from system.services import service_status
 from storageadmin.models import (RockOn, DContainer, DVolume, DPort,
                                  DCustomConfig, Share, Disk, DContainerLink,
-                                 ContainerOption)
+                                 ContainerOption, DContainerEnv)
 from fs.btrfs import mount_share
 from system.pkg_mgmt import install_pkg
 from rockon_utils import container_status
@@ -183,22 +183,36 @@ def vol_ops(container):
         ops_list.extend(['-v', '%s:%s' % (share_mnt, v.dest_dir)])
     return ops_list
 
-def get_uid(container):
+def vol_owner_uid(container):
     # If there are volumes, return the uid of the owner of the first volume.
     vo = DVolume.objects.filter(container=container).first()
     if (vo is None): return None
     share_mnt = ('%s%s' % (settings.MNT_PT, vo.share.name))
-    return str(os.stat(share_mnt).st_uid)
+    return os.stat(share_mnt).st_uid
+
+def envars(container):
+    var_list = []
+    for e in DContainerEnv.objects.filter(container=container):
+        var_list.extend(['-e', '%s=%s' % (e.key, e.val)])
+    return var_list
 
 def generic_install(rockon):
     for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
         rm_container(c.name)
         cmd = list(DCMD2) + ['--name', c.name,]
         cmd.extend(vol_ops(c))
+        if (c.uid is not None):
+            uid = c.uid
+            if (c.uid is -1):
+                uid = vol_owner_uid(c)
+            #@todo: what if the uid does not exist? Create a user with username=container-name?
+            cmd.extend(['-u', str(uid)])
         cmd.extend(port_ops(c))
         cmd.extend(container_ops(c))
+        cmd.extend(envars(c))
         cmd.append(c.dimage.name)
         run_command(cmd)
+
 
 def openvpn_install(rockon):
     #volume container
