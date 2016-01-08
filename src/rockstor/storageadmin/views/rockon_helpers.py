@@ -236,17 +236,6 @@ def openvpn_install(rockon):
     run_command(server_cmd)
 
 
-def transmission_install(rockon):
-    co = DContainer.objects.get(rockon=rockon, launch_order=1)
-    cmd = list(DCMD2) + ['--name', co.name]
-    for cco in DCustomConfig.objects.filter(rockon=rockon):
-        cmd.extend(['-e', '%s=%s' % (cco.key, cco.val)])
-    cmd.extend(vol_ops(co))
-    cmd.extend(port_ops(co))
-    cmd.append(co.dimage.name)
-    run_command(cmd)
-
-
 def owncloud_install(rockon):
     for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
         rm_container(c.name)
