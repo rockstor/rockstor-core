@@ -21,7 +21,7 @@ from rest_framework.response import Response
 from django.db import transaction
 from django.db.models import Q
 from storageadmin.models import (RockOn, DContainer, DVolume, Share, DPort,
-                                 DCustomConfig)
+                                 DCustomConfig, DContainerEnv)
 from storageadmin.serializers import RockOnSerializer
 import rest_framework_custom as rfc
 from storageadmin.util import handle_exception
@@ -82,6 +82,7 @@ class RockOnIdView(rfc.GenericView):
                 share_map = request.data.get('shares', {})
                 port_map = request.data.get('ports', {})
                 cc_map = request.data.get('cc', {})
+                env_map = request.data.get('environment', {})
                 containers = DContainer.objects.filter(rockon=rockon)
                 for co in containers:
                     for s in share_map.keys():
@@ -118,6 +119,13 @@ class RockOnIdView(rfc.GenericView):
                         cco = DCustomConfig.objects.get(rockon=rockon, key=c)
                         cco.val = cc_map[c]
                         cco.save()
+                    for e in env_map.keys():
+                        if (not DContainerEnv.objects.filter(container=co, key=e).exists()):
+                            e_msg = ('Invalid environment variabled(%s)' % e)
+                            handle_exception(Exception(e_msg), request)
+                        ceo = DContainerEnv.objects.get(container=co, key=e)
+                        ceo.val = env_map[e]
+                        ceo.save()
                 install.async(rockon.id)
                 rockon.state = 'pending_install'
                 rockon.save()
