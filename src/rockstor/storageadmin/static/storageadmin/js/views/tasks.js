@@ -26,56 +26,90 @@
  */
 
 TasksView = RockstorLayoutView.extend({
-  events: {
-  },
+	events: {
+	},
 
-  initialize: function() {
-    // call initialize of base
-    this.constructor.__super__.initialize.apply(this, arguments);
-    // set template
-    this.template = window.JST.scheduled_tasks_tasks;
-    this.paginationTemplate = window.JST.common_pagination;
-    // add dependencies
-    this.taskDefId = this.options.taskDefId;
-    this.taskDef = new TaskDef({id: this.taskDefId});
-    this.dependencies.push(this.taskDef);
-    this.collection = new TaskCollection(null, {
-      taskDefId: this.taskDefId
-    });
-    this.collection.pageSize = 10;
-    this.dependencies.push(this.collection);
-    this.collection.on("reset", this.renderTasks, this);
-    // has the replica been fetched? prevents renderReplicaTrails executing
-    // (because of collection reset) before replica has been fetched
-    this.taskDefFetched = false;  
-  },
+	initialize: function() {
+		// call initialize of base
+		this.constructor.__super__.initialize.apply(this, arguments);
+		// set template
+		this.template = window.JST.scheduled_tasks_tasks;
+		// add dependencies
+		this.taskDefId = this.options.taskDefId;
+		this.taskDef = new TaskDef({id: this.taskDefId});
+		this.dependencies.push(this.taskDef);
+		this.collection = new TaskCollection(null, {
+			taskDefId: this.taskDefId
+		});
+		this.collection.pageSize = 10;
+		this.dependencies.push(this.collection);
+		this.collection.on("reset", this.renderTasks, this);
+		// has the replica been fetched? prevents renderReplicaTrails executing
+		// (because of collection reset) before replica has been fetched
+		this.taskDefFetched = false;  
+		this.initHandlebarHelpers();
+	},
 
-  render: function() {
-    this.fetch(this.firstFetch, this);
-    return this;
-  },
-  
-  firstFetch: function() {
-    this.taskDefFetched = true;
-    this.renderTasks();
-  },
+	render: function() {
+		this.fetch(this.firstFetch, this);
+		return this;
+	},
 
-  renderTasks: function() {
-    if (!this.taskDefFetched) return false;
-    var _this = this;
-    $(this.el).html(this.template({
-      taskDef: this.taskDef,
-      tasks: this.collection
-    }));
-    this.$(".pagination-ph").html(this.paginationTemplate({
-      collection: this.collection
-    }));
-    this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
-  },
+	firstFetch: function() {
+		this.taskDefFetched = true;
+		this.renderTasks();
+	},
+
+	renderTasks: function() {
+		if (!this.taskDefFetched) return false;
+		var _this = this;
+		$(this.el).html(this.template({
+			taskDef: this.taskDef,
+			taskName: this.taskDef.get('name'),
+			collection: this.collection,
+			collectionNotEmpty: !this.collection.isEmpty(),
+		}));
+		this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
+	},
+
+	initHandlebarHelpers: function(){
+		Handlebars.registerHelper('display_snapshot_scrub', function(){
+			var html = '';
+			if (this.taskDef.get('task_type') == 'snapshot') { 
+				html += 'Snapshot of Share[' + JSON.parse(this.taskDef.get('json_meta')).share + ']';
+			} else { 
+				html += 'Scrub of Pool[' + JSON.parse(this.taskDef.get('json_meta')).pool + ']';
+			} 
+			return new Handlebars.SafeString(html);
+		}); 
+
+		 Handlebars.registerHelper('display_taskHistory_tbody', function(){
+			var html = '';
+			this.collection.each(function(task) { 
+				html += '<tr>';
+				html += '<td>' + task.get('id') + '</td>';
+				html += '<td>' + moment(task.get('start')).format(RS_DATE_FORMAT) + '</td>';
+				html += '<td>';
+				if (task.get('end')) { 
+					html += moment(task.get('end')).format(RS_DATE_FORMAT); 
+				} 
+				html += '</td>';
+				html += '<td>' + task.get('state') + '</td>';
+				html += '<td>';
+				if (task.get('end')) { 
+					html += moment(task.get('end')).from(moment(task.get('start')));
+				} else { 
+				} 
+				html += '</td>';
+				html += '</tr>';
+			}); 
+			return new Handlebars.SafeString(html);
+		}); 
+	}
 
 });
 
-// Add pagination
+//Add pagination
 Cocktail.mixin(TasksView, PaginationMixin);
 
 
