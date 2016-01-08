@@ -52,3 +52,5 @@ from smartd_service import SMARTDServiceView
 from nut_service import NUTServiceView
 from active_directory import ActiveDirectoryServiceView
 from receiver_pools import ReceiverPoolListView
+from ztaskd_service import ZTaskdServiceView
+from bootstrap_service import BootstrapServiceView

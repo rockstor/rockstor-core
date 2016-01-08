@@ -33,4 +33,4 @@ class RockOnPortView(rfc.GenericView):
             handle_exception(Exception(e_msg), self.request)
 
         containers = DContainer.objects.filter(rockon=rockon)
-        return DPort.objects.filter(container__in=containers)
+        return DPort.objects.filter(container__in=containers).order_by('label')

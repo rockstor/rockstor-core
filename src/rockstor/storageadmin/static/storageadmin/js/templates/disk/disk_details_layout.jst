@@ -130,7 +130,7 @@
   </div>
 
   <div id="smartattributes">
-      <div class="row">
+    <div class="row">
 	<table id="smartattributes-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" summary="List of S.M.A.R.T attributes">
 	  <thead>
 	    <tr>
@@ -160,6 +160,8 @@
 		<td>{{attribute.updated}}</td>
 		<td>{{attribute.flag}}</td>
 	      </tr>
+	      {{else}}
+	      <h3>No S.M.A.R.T Attributes found (ATA/SATA only)</h3>
 	    {{/each}}
 	  </tbody>
 	</table>
@@ -185,6 +187,8 @@
 	      <td>{{capability.flag}}</td>
 	      <td>{{capability.capabilities}}</td>
 	    </tr>
+	    {{else}}
+	    <h3>No S.M.A.R.T Capabilities found (ATA/SATA only)</h3>
 	  {{/each}}
 	</tbody>
       </table>
@@ -219,10 +223,15 @@
 	  {{/each}}
 	</tbody>
       </table>
-      {{#each errorlog as |log|}}
+      {{#if errorlog.count}}
+      <h3>Raw S.M.A.R.T error log</h3>
+      <pre>
+	{{#each errorlog as |log|}}
         {{log.line}}<br>
-      {{/each}}
-       {{/if}}
+	{{/each}}
+	{{/if}}
+      </pre>
+      {{/if}}
     </div>
   </div>
 
@@ -256,9 +265,11 @@
 	  {{/each}}
 	</tbody>
       </table>
-      {{#each testlogdetail as |detail|}}
-      {{detail.line}}<br>
-      {{/each}}
+      <pre>
+	{{#each testlogdetail as |detail|}}
+	{{detail.line}}<br>
+	{{/each}}
+      </pre>
       {{/if}}
     </div>
   </div>
@@ -287,9 +298,9 @@
 	      <label class="control-label" for="test_type">Test Type </label>
 	      <div class="">
 		<select id="test_name" name="test_name" title="select the test you want to run">
-		  {{! <% for (t in tests) { %>
-          <option value="<%= t %>"><%= t %>    (Estimated duration: <%= tests[t] %>)</option>
-          <% } %> }}
+		  {{#each tests}}
+		  <option value="{{@key}}">{{@key}}    (Estimated duration: {{this}})</option>
+		  {{/each}}
 		</select>
 	      </div>
 	    </div>

@@ -28,7 +28,7 @@ from storageadmin.auth import DigestAuthentication
 from rest_framework.permissions import IsAuthenticated
 from system.osi import (uptime, kernel_info)
 from fs.btrfs import (mount_share, device_scan, mount_root, qgroup_create,
-                      get_pool_info, pool_raid, pool_usage, shares_info,
+                      get_pool_info, pool_raid, pool_usage,
                       share_usage, snaps_info, mount_snap)
 from system.ssh import (sftp_mount_map, sftp_mount)
 from system.services import systemctl
@@ -54,17 +54,34 @@ class CommandView(NFSExportMixin, APIView):
                               BasicAuthentication, RockstorOAuth2Authentication,)
     permission_classes = (IsAuthenticated,)
 
+    @staticmethod
+    @transaction.atomic
+    def _refresh_pool_state():
+        for p in Pool.objects.all():
+            if (p.disk_set.count() == 0):
+                p.delete()
+                continue
+            try:
+                mount_root(p)
+                fd = p.disk_set.first()
+                pool_info = get_pool_info(fd.name)
+                p.name = pool_info['label']
+                p.raid = pool_raid('%s%s' % (settings.MNT_PT, p.name))['data']
+                p.size = pool_usage('%s%s' % (settings.MNT_PT, p.name))[0]
+                p.save()
+            except Exception, e:
+                logger.error('Exception while refreshing state for '
+                             'Pool(%s). Moving on: %s' %
+                             (p.name, e.__str__()))
+                logger.exception(e)
+
     @transaction.atomic
     def post(self, request, command):
         if (command == 'bootstrap'):
 
-            for pool in Pool.objects.all():
-                try:
-                    mount_root(pool)
-                except Exception, e:
-                    e_msg = ('Exception while mounting a pool(%s) during '
-                             'bootstrap: %s' % (pool.name, e.__str__()))
-                    logger.error(e_msg)
+            self._refresh_pool_state()
+            for p in Pool.objects.all():
+                import_shares(p, request)
 
             for share in Share.objects.all():
                 try:
@@ -78,6 +95,15 @@ class CommandView(NFSExportMixin, APIView):
                     e_msg = ('Exception while mounting a share(%s) during '
                              'bootstrap: %s' % (share.name, e.__str__()))
                     logger.error(e_msg)
+                    logger.exception(e)
+
+                try:
+                    import_snapshots(share)
+                except Exception, e:
+                    e_msg = ('Exception while importing Snapshots of '
+                             'Share(%s): %s' % (share.name, e.__str__()))
+                    logger.error(e_msg)
+                    logger.exception(e)
 
             for snap in Snapshot.objects.all():
                 if (snap.uvisible):
@@ -224,16 +250,7 @@ class CommandView(NFSExportMixin, APIView):
                 handle_exception(Exception(msg), request)
 
         if (command == 'refresh-pool-state'):
-            for p in Pool.objects.all():
-                fd = p.disk_set.first()
-                if (fd is None):
-                    p.delete()
-                mount_root(p)
-                pool_info = get_pool_info(fd.name)
-                p.name = pool_info['label']
-                p.raid = pool_raid('%s%s' % (settings.MNT_PT, p.name))['data']
-                p.size = pool_usage('%s%s' % (settings.MNT_PT, p.name))[0]
-                p.save()
+            self._refresh_pool_state()
             return Response()
 
         if (command == 'refresh-share-state'):

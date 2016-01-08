@@ -406,3 +406,11 @@ UPDATE_CHANNELS = {
 		'url': 'rockstor.com/rockrepo-testing',
 		},
 }
+
+ROCKONS = {
+	'remote_metastore': 'http://rockstor.com/rockons',
+	'remote_root': 'root.json',
+	'local_metastore': '${buildout:depdir}/rockons-metastore',
+}
+
+ZTASKD_URL = 'ipc:///var/run/rockon-ztaskd'

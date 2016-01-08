@@ -41,12 +41,17 @@ class NFSExportMixin(object):
         ci = {'client_str': eg.host_str,
               'option_list': ('%s,%s,%s' % (eg.editable, eg.syncable,
                                             eg.mount_security))}
-        if (eg.nohide):
-            ci['option_list'] = ('%s,nohide' % ci['option_list'])
+
         ci['mnt_pt'] = export.mount.replace(settings.NFS_EXPORT_ROOT,
                                             settings.MNT_PT)
         if (eg.admin_host is not None):
-            ci['admin_host'] = eg.admin_host
+            if (eg.admin_host == eg.host_str):
+                ci['option_list'] = ('rw,no_root_squash,%s,%s' %
+                                     (eg.syncable, eg.mount_security))
+            else:
+                ci['admin_host'] = eg.admin_host
+        if (eg.nohide):
+            ci['option_list'] = ('%s,nohide' % ci['option_list'])
         return ci
 
     @staticmethod
