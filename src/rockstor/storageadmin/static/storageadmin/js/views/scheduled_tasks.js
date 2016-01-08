@@ -143,11 +143,11 @@ ScheduledTasksView = RockstorLayoutView.extend({
 
 				html += '<tr>';
 				html += '<td><a href="#edit-scheduled-task/' + taskId + '">' + taskName + '</a></td>';
-				html += '<td>' + taskType;
+				html += '<td>' + taskType + '&nbsp;';
 				if (taskType == 'snapshot') { 
-					html += (JSON.parse(jsonMeta).share);
+					html += '(' + JSON.parse(jsonMeta).share + ')';
 				} else { 
-					html += (JSON.parse(jsonMeta).pool);
+					html += '(' + JSON.parse(jsonMeta).pool + ')';
 				} 
 				html += '</td>';
 				html += '<td>' + moment(t.get('ts')).format(RS_DATE_FORMAT) + '</td>';
