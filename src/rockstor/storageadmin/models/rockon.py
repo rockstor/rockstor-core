@@ -62,6 +62,10 @@ class DContainer(models.Model):
     dimage = models.ForeignKey(DImage)
     name = models.CharField(max_length=1024, unique=True)
     launch_order = models.IntegerField(default=1)
+    #if uid is None, container's owner is not set. defaults to root.
+    #if it's -1, then owner is set to the owner of first volume, if any.
+    #if it's an integer other than -1, like 0, then owner is set to that uid.
+    uid = models.IntegerField(null=True)
 
     class Meta:
         app_label = 'storageadmin'
@@ -130,4 +134,16 @@ class DCustomConfig(models.Model):
 
     class Meta:
         unique_together = ('rockon', 'key',)
+        app_label = 'storageadmin'
+
+
+class DContainerEnv(models.Model):
+    container = models.ForeignKey(DContainer)
+    key = models.CharField(max_length=1024)
+    val = models.CharField(max_length=1024, null=True)
+    description = models.CharField(max_length=2048, null=True)
+    label = models.CharField(max_length=64, null=True)
+
+    class Meta:
+        unique_together = ('container', 'key')
         app_label = 'storageadmin'
