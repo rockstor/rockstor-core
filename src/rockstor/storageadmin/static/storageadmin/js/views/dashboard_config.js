@@ -43,8 +43,8 @@ DashboardConfigView = Backbone.View.extend({
 
     renderPage: function() {
 	$(this.el).html(this.template({
-      wSelect: this.dashboardconfig.getConfig()
-  }));
+	    wSelected: this.dashboardconfig.getConfig()
+	}));
 	return this;
     },
 
@@ -59,27 +59,28 @@ DashboardConfigView = Backbone.View.extend({
 	    cbox.attr("checked", "true");
 	} else {
 	    cbox.removeAttr("checked");
-	    }
+	}
     },
 
     initHandlebarHelpers: function(){
-      Handlebars.registerHelper('display_widgets', function() {
-        var html = '';
-        var widget_categories = ['Storage', 'Compute', 'Network'];
-        _.each(widget_categories, function(category) {
-            html += '<span class="widget-heading">' + category + '</span><br>';
-            _.each(RockStorWidgets.findByCategory(category), function(widget) {
-                if (_.some(this.wSelect, function(w) { return w.name == widget.name})) {
-                    html += '<input class="widget-name inline" type="checkbox" name="selections" value="' + widget.name + '" checked="checked"></input>';
-                }else{
-                    html += '<input class="widget-name inline" type="checkbox" name="selections" value="' + widget.name + '"></input>';
-                }
-                html += ' ' + widget.displayName +'<br>';
+	Handlebars.registerHelper('display_widgets', function() {
+	    var _this = this;
+	    var html = '';
+            var widget_categories = ['Storage', 'Compute', 'Network'];
+            _.each(widget_categories, function(category) {
+		html += '<span class="widget-heading">' + category + '</span><br>';
+		_.each(RockStorWidgets.findByCategory(category), function(widget) {
+                    if (_.some(_this.wSelected, function(w) { return w.name == widget.name})) {
+			html += '<input class="widget-name inline" type="checkbox" name="selections" value="' + widget.name + '" checked="checked"></input>';
+                    }else{
+			html += '<input class="widget-name inline" type="checkbox" name="selections" value="' + widget.name + '"></input>';
+                    }
+                    html += ' ' + widget.displayName +'<br>';
+		});
+		html += '<br>';
             });
-            html += '<br>';
-        });
-        return new Handlebars.SafeString(html);
-      });
+            return new Handlebars.SafeString(html);
+	});
     },
 
     cleanup: function() {
