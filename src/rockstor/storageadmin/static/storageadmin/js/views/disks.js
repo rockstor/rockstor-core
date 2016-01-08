@@ -55,7 +55,7 @@ DisksView = Backbone.View.extend({
 	$(this.el).html(this.template({ collection: this.collection }));
 	this.$("#disks-table-ph").html(this.disks_table_template({
 	    collection: this.collection,
-	    collectionNotEmpty: !this.collection.isEmpty(),
+	    collectionNotEmpty: !this.collection.isEmpty()
 	}));
 
 	this.$("#disks-table").tablesorter();
@@ -227,14 +227,13 @@ DisksView = Backbone.View.extend({
         if (!smartAvailable) {
            html +='<td>Not Supported</td>';
         }else{
-           html += '<td><div class="slider-stop" data-disk-name="'+ diskName +'">OFF</div><div class="slider-ph">';
-             if (smartEnabled) {
-	            html += '<input type="text" class="smart-status" value="1" data-disk-name="'+ diskName +'"></input>';
-	         } else {
-	        	html += '<input type="text" class="smart-status" value="0" data-disk-name="'+ diskName +'"></input>';
-	         }
-	       html += '</div> <div class="slider-start on" data-disk-name="'+ diskName+'">ON</div></td>';
-
+            html += '<td>';
+            if (smartEnabled) {
+		html += '<input type="checkbox" data-disk-name="' + diskName + '" data-size="mini" checked></input>';
+	    } else {
+		html += '<input type="checkbox" data-disk-name="' + diskName + '" data-size="mini"></input>';
+	    }
+	    html += '</td>';
         }
         html += '</tr>';
         });
