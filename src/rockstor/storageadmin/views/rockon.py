@@ -21,7 +21,8 @@ import requests
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (RockOn, DImage, DContainer, DPort, DVolume,
-                                 ContainerOption, DCustomConfig, DContainerLink)
+                                 ContainerOption, DCustomConfig,
+                                 DContainerLink, DContainerEnv)
 from storageadmin.serializers import RockOnSerializer
 from storageadmin.util import handle_exception
 import rest_framework_custom as rfc
@@ -149,128 +150,141 @@ class RockOnView(rfc.GenericView):
             if (not created):
                 co.dimage = io
                 co.launch_order = co_defaults['launch_order']
+            if ('uid' in c_d):
+                co.uid = int(c_d['uid'])
             co.save()
 
-            ports = {}
-            if ('ports' in containers[c]):
-                ports = containers[c]['ports']
-                for p in ports:
-                    p_d = ports[p]
-                    if ('protocol' not in p_d):
-                        p_d['protocol'] = None
-                    p = int(p)
-                    po = None
-                    if (DPort.objects.filter(containerp=p, container=co).exists()):
-                        po = DPort.objects.get(containerp=p, container=co)
-                        po.hostp_default = p_d['host_default']
-                        po.description = p_d['description']
-                        po.protocol = p_d['protocol']
-                        po.label = p_d['label']
-                    else:
-                        #let's find next available default if default is already taken
-                        def_hostp = p_d['host_default']
-                        while (True):
-                            if (DPort.objects.filter(hostp=def_hostp).exists()):
-                                def_hostp += 1
-                            else:
-                                break
-                        po = DPort(description=p_d['description'],
-                                   hostp=def_hostp, containerp=p,
-                                   hostp_default=def_hostp,
-                                   container=co,
-                                   protocol=p_d['protocol'],
-                                   label=p_d['label'])
-                    if ('ui' in p_d):
-                        po.uiport = p_d['ui']
-                    if (po.uiport):
-                        ro.ui = True
-                        ro.save()
-                    po.save()
+            ports = containers[c].get('ports', {})
+            for p in ports:
+                p_d = ports[p]
+                if ('protocol' not in p_d):
+                    p_d['protocol'] = None
+                p = int(p)
+                po = None
+                if (DPort.objects.filter(containerp=p, container=co).exists()):
+                    po = DPort.objects.get(containerp=p, container=co)
+                    po.hostp_default = p_d['host_default']
+                    po.description = p_d['description']
+                    po.protocol = p_d['protocol']
+                    po.label = p_d['label']
+                else:
+                    #let's find next available default if default is already taken
+                    def_hostp = p_d['host_default']
+                    while (True):
+                        if (DPort.objects.filter(hostp=def_hostp).exists()):
+                            def_hostp += 1
+                        else:
+                            break
+                    po = DPort(description=p_d['description'],
+                               hostp=def_hostp, containerp=p,
+                               hostp_default=def_hostp,
+                               container=co,
+                               protocol=p_d['protocol'],
+                               label=p_d['label'])
+                if ('ui' in p_d):
+                    po.uiport = p_d['ui']
+                if (po.uiport):
+                    ro.ui = True
+                    ro.save()
+                po.save()
             ports = [int(p) for p in ports]
             for po in DPort.objects.filter(container=co):
                 if (po.containerp not in ports):
                     po.delete()
 
-            v_d = {}
-            if ('volumes' in c_d):
-                v_d = c_d['volumes']
-                for v in v_d:
-                    cv_d = v_d[v]
-                    vo_defaults = {'description': cv_d['description'],
-                                   'label': cv_d['label']}
-                    vo, created = DVolume.objects.get_or_create(dest_dir=v, container=co,
-                                                                defaults=vo_defaults)
-                    if (not created):
-                        vo.description = vo_defaults['description']
-                        vo.label = vo_defaults['label']
-                    if ('min_size' in cv_d):
-                        vo.min_size = cv_d['min_size']
-                    vo.save()
+            v_d = c_d.get('volumes', {})
+            for v in v_d:
+                cv_d = v_d[v]
+                vo_defaults = {'description': cv_d['description'],
+                               'label': cv_d['label']}
+                vo, created = DVolume.objects.get_or_create(dest_dir=v, container=co,
+                                                            defaults=vo_defaults)
+                if (not created):
+                    vo.description = vo_defaults['description']
+                    vo.label = vo_defaults['label']
+                if ('min_size' in cv_d):
+                    vo.min_size = cv_d['min_size']
+                vo.save()
             for vo in DVolume.objects.filter(container=co):
                 if (vo.dest_dir not in v_d):
                     vo.delete()
 
-            if ('opts' in containers[c]):
-                options = containers[c]['opts']
-                id_l = []
-                for o in options:
-                    #there are no unique constraints on this model, so we need this bandaid.
-                    if (ContainerOption.objects.filter(container=co, name=o[0], val=o[1]).count() > 1):
-                        ContainerOption.objects.filter(container=co, name=o[0], val=o[1]).delete()
-                    oo, created = ContainerOption.objects.get_or_create(container=co,
-                                                                        name=o[0],
-                                                                        val=o[1])
-                    id_l.append(oo.id)
-                for oo in ContainerOption.objects.filter(container=co):
-                    if (oo.id not in id_l):
-                        oo.delete()
+            self._update_env(co, c_d)
+            options = containers[c].get('opts', [])
+            id_l = []
+            for o in options:
+                #there are no unique constraints on this model, so we need this bandaid.
+                if (ContainerOption.objects.filter(container=co, name=o[0], val=o[1]).count() > 1):
+                    ContainerOption.objects.filter(container=co, name=o[0], val=o[1]).delete()
+                oo, created = ContainerOption.objects.get_or_create(container=co,
+                                                                    name=o[0],
+                                                                    val=o[1])
+                id_l.append(oo.id)
+            for oo in ContainerOption.objects.filter(container=co):
+                if (oo.id not in id_l):
+                    oo.delete()
 
-        if ('container_links' in r_d):
-            l_d = r_d['container_links']
-            for cname in l_d:
-                ll = l_d[cname]
-                lsources = [l['source_container'] for l in ll]
-                co = DContainer.objects.get(rockon=ro, name=cname)
-                for clo in co.destination_container.all():
-                    if (clo.name not in lsources):
-                        clo.delete()
-                for cl_d in ll:
-                    sco = DContainer.objects.get(rockon=ro, name=cl_d['source_container'])
-                    clo, created = DContainerLink.objects.get_or_create(source=sco,
-                                                                        destination=co)
-                    clo.name = cl_d['name']
-                    clo.save()
+        l_d = r_d.get('container_links', {})
+        for cname in l_d:
+            ll = l_d[cname]
+            lsources = [l['source_container'] for l in ll]
+            co = DContainer.objects.get(rockon=ro, name=cname)
+            for clo in co.destination_container.all():
+                if (clo.name not in lsources):
+                    clo.delete()
+            for cl_d in ll:
+                sco = DContainer.objects.get(rockon=ro, name=cl_d['source_container'])
+                clo, created = DContainerLink.objects.get_or_create(source=sco,
+                                                                    destination=co)
+                clo.name = cl_d['name']
+                clo.save()
+        self._update_cc(ro, r_d)
 
-        cc_d = {}
-        if ('custom_config' in r_d):
-            cc_d = r_d['custom_config']
-            sorted_keys = [''] * len(cc_d.keys())
-            for k in cc_d:
-                ccc_d = cc_d[k]
-                idx = ccc_d.get('index', 0)
-                if (idx == 0):
-                    for i in range(len(sorted_keys)):
-                        if (sorted_keys[i] == ''):
-                            sorted_keys[i] = k
-                            break
-                else:
-                    sorted_keys[idx-1] = k
-            for k in sorted_keys:
-                ccc_d = cc_d[k]
-                cco, created = DCustomConfig.objects.get_or_create(
-                    rockon=ro, key=k,
-                    defaults={'description': ccc_d['description'], 'label': ccc_d['label']})
-                if (not created):
-                    cco.description = ccc_d['description']
-                    cco.label = ccc_d['label']
-                    cco.save()
-                def_val = ccc_d.get('default')
-                if (def_val is not None):
-                    cco.val = def_val
-                    cco.save()
+
+    def _sorted_keys(self, cd):
+        sorted_keys = [''] * len(cd.keys())
+        for k in cd:
+            ccd = cd[k]
+            idx = ccd.get('index', 0)
+            if (idx == 0):
+                for i in range(len(sorted_keys)):
+                    if (sorted_keys[i] == ''):
+                        sorted_keys[i] = k
+                        break
+            else:
+                sorted_keys[idx-1] = k
+        return sorted_keys
+
+    def _update_model(self, modelinst, ad):
+        for k,v in ad.iteritems():
+            setattr(modelinst, k, v)
+        modelinst.save()
+
+    def _update_cc(self, ro, r_d):
+        cc_d = r_d.get('custom_config', {})
+        for k in self._sorted_keys(cc_d):
+            ccc_d = cc_d[k]
+            defaults = {'description': ccc_d['description'],
+                        'label': ccc_d['label'],
+                        'val': ccc_d.get('val', None), }
+            cco, created = DCustomConfig.objects.get_or_create(
+                rockon=ro, key=k, defaults=defaults)
+            if (not created): self._update_model(cco, defaults)
         for cco in DCustomConfig.objects.filter(rockon=ro):
-            if (cco.key not in cc_d):
-                cco.delete()
+            if (cco.key not in cc_d): cco.delete()
+
+    def _update_env(self, co, c_d):
+        cc_d = c_d.get('environment', {})
+        for k in self._sorted_keys(cc_d):
+            ccc_d = cc_d[k]
+            defaults = {'description': ccc_d['description'],
+                        'label': ccc_d['label'],
+                        'val': ccc_d.get('val', None), }
+            cco, created = DContainerEnv.objects.get_or_create(
+                container=co, key=k, defaults=defaults)
+            if (not created): self._update_model(cco, defaults)
+        for eo in DContainerEnv.objects.filter(container=co):
+            if (eo.key not in cc_d): eo.delete()
 
     def _get_available(self, request):
         msg = ('Network error while checking for updates. '
