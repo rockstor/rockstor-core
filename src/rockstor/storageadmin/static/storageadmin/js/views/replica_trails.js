@@ -1,28 +1,28 @@
 
 /*
  *
- * @licstart  The following is the entire license notice for the 
+ * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
- * 
+ *
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
- * 
+ *
  * RockStor is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation; either version 2 of the License,
  * or (at your option) any later version.
- * 
+ *
  * RockStor is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * @licend  The above is the entire license notice
  * for the JavaScript code in this page.
- * 
+ *
  */
 
 ReplicaTrailsView = RockstorLayoutView.extend({
@@ -46,7 +46,7 @@ ReplicaTrailsView = RockstorLayoutView.extend({
 		this.collection.on("reset", this.renderReplicaTrails, this);
 		// has the replica been fetched? prevents renderReplicaTrails executing
 		// (because of collection reset) before replica has been fetched
-		this.replicaFetched = false; 
+		this.replicaFetched = false;
 		this.initHandlebarHelpers();
 	},
 
@@ -64,12 +64,12 @@ ReplicaTrailsView = RockstorLayoutView.extend({
 		if (!this.replicaFetched) return false;
 		var _this = this;
 		$(this.el).html(this.template({
-			replica: this.replica,
-			collection: this.collection,
-			collectionNotEmpty: !this.collection.isEmpty(),
+			replica: _this.replica,
+			collection: _this.collection,
+			collectionNotEmpty: !this.collection.isEmpty()
 		}));
 		// remove existing tooltips
-		if (this.$('[rel=tooltip]')) { 
+		if (this.$('[rel=tooltip]')) {
 			this.$('[rel=tooltip]').tooltip('hide');
 		}
 		this.$('[rel=tooltip]').tooltip({ placement: 'bottom'});
@@ -78,43 +78,43 @@ ReplicaTrailsView = RockstorLayoutView.extend({
 	initHandlebarHelpers: function(){
 		Handlebars.registerHelper('display_h4', function(){
 			var html = '';
-			html += '<h4>Replication history for ' + this.replica.get('task_name') + '(' + this.replica.get('share') + 'on' + this.replicaShare.get('appliance') + ':' + this.replicaShare.get('dpool') + ')';
+			html += '<h4>Replication history for ' + this.replica.get('task_name') + '(' + this.replica.get('share') + 'on' + this.replica.get('appliance') + ':' + this.replica.get('dpool') + ')</h4>';
 			return new Handlebars.SafeString(html);
 		});
 		Handlebars.registerHelper('replicaTrails_table', function(){
 			var html = '',
 			_this = this;
-			this.collection.each(function(r) { 
+			this.collection.each(function(r) {
 				html += '<tr>';
 				html += '<td>' + r.get('id') + '</td>';
 				html += '<td>' + r.get('snap_name') + '</td>';
 				html += '<td>' + moment(r.get('receive_pending')).format(RS_DATE_FORMAT) + '</td>';
 				html += '<td>';
-				if (r.get('end_ts')) { 
+				if (r.get('end_ts')) {
 					html += moment(r.get('end_ts')).format(RS_DATE_FORMAT);
-				} 
+				}
 				html += '</td>';
 				html += '<td>';
-				if (r.get('status') != 'failed') { 
+				if (r.get('status') != 'failed') {
 					html += r.get('status');
-				} else { 
+				} else {
 					html += '<i class="fa fa-exclamation-circle" title="' + r.get('error') + '" rel="tooltip"></i>&nbsp;' + r.get('status');
-				} 
+				}
 				html += '</td>';
 				html += '<td>';
-				if (r.get('end_ts')) { 
+				if (r.get('end_ts')) {
 					html += moment(r.get('end_ts')).from(moment(r.get('receive_pending')));
-				} else { 
-				} 
+				} else {
+				}
 				html += '</td>';
 				html += '<td>';
 				if (r.get('end_ts')) {
 					var d = moment(r.get('end_ts')).diff(moment(r.get('receive_pending')))/1000;
 					var rate = (r.get('kb_received') / d).toFixed(2);
-				} else { 
-					var d = moment().diff(moment(r.get('receive_pending')))/1000; 
+				} else {
+					var d = moment().diff(moment(r.get('receive_pending')))/1000;
 					var rate = (r.get('kb_received') / d).toFixed(2);
-				} 
+				}
 				html += r.get('kb_received') + ' KB at ' + rate + ' KB/sec.';
 				html += '</td>';
 				html += '</tr>';
@@ -128,4 +128,3 @@ ReplicaTrailsView = RockstorLayoutView.extend({
 
 //Add pagination
 Cocktail.mixin(ReplicaTrailsView, PaginationMixin);
-
