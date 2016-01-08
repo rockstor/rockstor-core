@@ -92,13 +92,13 @@ $(document).ready(function() {
           <div class="form-group">
             <label class="control-label col-sm-4" for="share">Task name: </label>
             <div class="col-sm-6">
-              <input type="text" class="form-control" value="{{taskName}}" disabled />
+              <input type="text" class="form-control" value="{{taskObj.name}}" disabled />
             </div>
           </div>
           <div class="form-group">
             <label class="control-label col-sm-4" for="share">Task type: </label>
             <div class="col-sm-6">
-              <input type="text" class="form-control" value="{{taskType}}" disabled />
+              <input type="text" class="form-control" value="{{taskObj.type}}" disabled />
             </div>
           </div>
           <!-- Type dependent fields -->
@@ -106,37 +106,37 @@ $(document).ready(function() {
           <div class="form-group">
             <label class="control-label col-sm-4" for="share">Share: </label>
             <div class="col-sm-6">
-              <input type="text" class="form-control" value="{{taskShare}}" disabled />
+              <input type="text" class="form-control" value="{{taskObj.share}}" disabled />
             </div>
           </div>
           <div class="form-group">
             <label class="control-label col-sm-4" for="share">Snapshot prefix: </label>
             <div class="col-sm-6">
-              <input type="text" class="form-control" value="{{taskPrefix}}" disabled />
+              <input type="text" class="form-control" value="{{taskObj.prefix}}" disabled />
             </div>
           </div>
           {{else}}
           <div class="form-group">
             <label class="control-label col-sm-4" for="share">Pool: </label>
             <div class="col-sm-6">
-              <input type="text" class="form-control" value="{{taskPool}}" disabled />
+              <input type="text" class="form-control" value="{{taskObj.pool}}" disabled />
             </div>
           </div>
           {{/if}}
 
-           {{#if isSnaphot}}
+           {{#if isSnapshot}}
           <div class="form-group">
             <label class="control-label col-sm-4" for="max_count">Maximum count<span class="required"> *</span></label>
 	    <div class="col-sm-6">
-              <input class="form-control" type="text" id="max_count" name="meta.max_count" value="{{taskMaxCount}}" title="Older snapshots beyond this number and created by this task will be deleted">
+              <input class="form-control" type="text" id="max_count" name="meta.max_count" value="{{taskObj.maxCount}}" title="Older snapshots beyond this number and created by this task will be deleted">
 	    </div>
-
           </div>
+          
 	  <div class="form-group">
 	    <div class="col-sm-offset-4 col-sm-6">
 	      <div class="checkbox">
 		<label>
-		{{#if taskVisible}}
+		{{#if taskObj.visible}}
 		  <input class="checkbox" type="checkbox" checked="true" id="visible" name="meta.visible" title="Make snapshots visible to the end user"> Make snapshots visible?
 		  {{else}}
 		  <input class="checkbox" type="checkbox" id="visible" name="meta.visible" title="Make snapshots visible to the end user"> Make snapshots visible?
@@ -150,7 +150,7 @@ $(document).ready(function() {
 	    <div class="col-sm-offset-4 col-sm-6">
 	      <div class="checkbox">
 		<label>
-              {{#if taskEnabled}}
+              {{#if taskObj.enabled}}
               <input class="checkbox" type="checkbox" checked="true" id="enabled" name="enabled" title="Disabled tasks will be created but not run till they are enabled">Enable task?
               {{else}}
               <input class="checkbox" type="checkbox" id="enabled" name="enabled" title="Disabled tasks will be created but not run till they are enabled">Enable task?

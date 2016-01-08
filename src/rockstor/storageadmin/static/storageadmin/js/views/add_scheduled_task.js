@@ -45,14 +45,6 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 		this.taskDefId = this.options.taskDefId;
 		if (!_.isUndefined(this.taskDefId) && !_.isNull(this.taskDefId)) {
 			this.taskDef = new TaskDef({id: this.taskDefId});
-			this.taskName = this.taskDef.get('name'),
-			this.taskType = this.taskDef.get('task_type');
-			this.taskShare = this.taskDef.share();
-			this.taskPrefix = this.taskDef.prefix();
-			this.taskPool = this.taskDef.pool();
-			this.taskMaxCount = this.taskDef.max_count();
-			this.taskVisible = this.taskDef.visible();
-			this.taskEnabled = this.taskDef.get('enabled')
 			this.dependencies.push(this.taskDef);
 		}
 		if(this.taskDefId == null){
@@ -69,27 +61,31 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 	},
 
 	renderNewScheduledTask: function() {
+		if(this.taskDef){
+		var taskObj = {name: this.taskDef.get('name'),
+				type: this.taskDef.get('task_type'),
+				share: this.taskDef.share(),
+				prefix: this.taskDef.prefix(),
+				pool: this.taskDef.pool(),
+				maxCount: this.taskDef.max_count(),
+				visible: this.taskDef.visible(),
+				enabled: this.taskDef.get('enabled'),	
+		};
 		var isSnapshot = false;
-		if(this.taskType == 'snapshot'){
+		if(taskObj.type == 'snapshot'){
 			isSnapshot = true;
 		}
+	}
 		var _this = this;
 		$(this.el).html(this.template({
 			shares: this.shares,
 			pools: this.pools,
 			taskTypes: ['snapshot', 'scrub'],
 			taskDef: this.taskDef,
+			taskObj: taskObj,
 			taskDefId: this.taskDefId,
 			taskDefIdNull: this.taskDefIdNull,
-			taskName: this.taskName,
-			taskType: this.taskType,
-			taskShare: this.taskShare,
-			taskPrefix: this.taskPrefix,
-			taskPool: this.taskPool,
-			taskMaxCount: this.taskMaxCount,
-			taskVisible: this.taskVisible,
-			taskEnabled: this.taskEnabled,
-			isSnapshot: isSnapshot
+			isSnapshot: isSnapshot,
 		}));
 		if (!_.isUndefined(this.taskDefId) && !_.isNull(this.taskDefId)) {
 			var crontab = this.taskDef.get('crontab');
