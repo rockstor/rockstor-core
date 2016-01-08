@@ -29,22 +29,14 @@
     <div class="form-group">
       <label class="col-sm-4 control-label">Name<span class="required"> *</span></label>
       <div class="col-sm-4">
-        <%  if(email!=null) {  %>
-        <input class="form-control" type="text" id="name" name="name" value="<%= email.get('name') %>" >
-        <% } else { %>
-        <input class="form-control" type="text" id="name" name="name" title="Name associated with the email, eg: firstname lastname." >
-        <% }  %>
+      <input class="form-control" type="text" id="name" name="name" {{add_email "name"}}>
       </div>
     </div>
 
     <div class="form-group">
       <label class="col-sm-4 control-label">Email<span class="required"> *</span></label>
       <div class="col-sm-4">
-        <%  if(email!=null) {  %>
-        <input class="form-control" type="email" id="sender"  name="sender" value="<%= email.get('sender')%>" >
-        <% } else { %>
-        <input class="form-control" type="email" id="sender" name="sender"  title="Rockstor will send email notifications from this address / account. For better security we highly recommend using a separate dedicated email account for this purpose." >
-        <% }  %>
+      <input class="form-control" type="text" id="name" name="name" {{add_email "email"}}>
       </div>
     </div>
 
@@ -58,11 +50,7 @@
     <div class="form-group">
       <label class="col-sm-4 control-label">SMTP Server<span class="required"> *</span></label>
       <div class="col-sm-4">
-        <%  if(email!=null) {  %>
-        <input class="form-control" type="text" id="smtp_server" name="smtp_server" value="<%= email.get('smtp_server') %>" >
-        <% } else { %>
-        <input class="form-control" type="text" id="smtp_server" name="smtp_server" title="smtp server url of your email provider. eg: smtp.gmail.com, smtp.zoho.com etc..">
-        <% }  %>
+      <input class="form-control" type="text" id="name" name="name" {{add_email "smtp"}}>
       </div>
     </div>
 
@@ -77,11 +65,7 @@
     <div class="form-group">
       <label class="col-sm-4 control-label">Recipient Email<span class="required"> *</span></label>
       <div class="col-sm-4">
-        <%  if(email!=null) {  %>
-        <input class="form-control" type="email" id="receiver"  name="receiver" value="<%= email.get('receiver')%>" >
-        <% } else { %>
-        <input class="form-control" type="email" id="receiver" name="receiver"  title="Rockstor will send email notifications to this address. eg: your personal email." >
-        <% }  %>
+      <input class="form-control" type="email" id="receiver"  name="receiver" {{add_email "recipient"}} >
       </div>
     </div>
 
