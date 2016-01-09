@@ -19,8 +19,8 @@
  */
 </script>
 
-<h4>Replication receive history for  <%= replicaShare.get('appliance') %>:<%= replicaShare.get('src_share') %> to <%= replicaShare.get('pool') %>: <%= replicaShare.get('share') %> )</h4>
-<% if (!receiveTrails.isEmpty()) { %>
+{{display_h4}}
+{{#if collectionNotEmpty}}
   <div class="row">
     <div class="col-md-12">
       <div class="messages"></div>
@@ -37,43 +37,11 @@
           </tr>
         </thead>
         <tbody>
-          <% receiveTrails.each(function(r) { %>
-            <tr>
-              <td><%= r.get('id') %></td>
-              <td><%= r.get('snap_name') %></td>
-              <td><%= moment(r.get('receive_pending')).format(RS_DATE_FORMAT) %></td>
-              <td>
-                <% if (r.get('end_ts')) { %>
-                  <%= moment(r.get('end_ts')).format(RS_DATE_FORMAT) %>
-                <% } %>
-              </td>
-              <td>
-                <% if (r.get('status') != 'failed') { %>
-                  <%= r.get('status') %>
-                <% } else { %>
-                  <i class="fa fa-exclamation-circle" title="<%= r.get('error') %>" rel="tooltip"></i>&nbsp;<%= r.get('status') %>
-                <% } %>
-              </td>
-              <td>
-                <% if (r.get('end_ts')) { %>
-                  <%= moment(r.get('end_ts')).from(moment(r.get('receive_pending'))) %>
-                <% } else { %>
-                <% } %>
-              </td>
-              <td>
-                <% if (r.get('end_ts')) { %>
-                  <% var d = moment(r.get('end_ts')).diff(moment(r.get('receive_pending')))/1000; var rate = (r.get('kb_received') / d).toFixed(2); %>
-                <% } else { %>
-                  <% var d = moment().diff(moment(r.get('receive_pending')))/1000; var rate = (r.get('kb_received') / d).toFixed(2); %>
-                <% } %>
-                <%= r.get('kb_received') %> KB at <%= rate %> KB/sec.
-              </td>
-            </tr>
-          <% }); %>
+        {{replicaTrails_receive_table}}
         </tbody>
       </table>
-      <div class="pagination-ph"></div>
+      <div>{{pagination}}</div>
     </div>
   </div>
-<% } %>
+{{/if}}
 

@@ -38,11 +38,16 @@ CreateCloneView = RockstorLayoutView.extend({
   },
 
   render: function() {
-    var _this = this;
+    var _this = this,
+    sourceTypeIsShare = false;
+    if(this.sourceType == 'share'){
+    	sourceTypeIsShare = true;
+    }
     $(this.el).html(this.template({
       sourceType: this.sourceType,
       shareName: this.shareName,
-      snapName: this.snapName
+      snapName: this.snapName,
+      sourceTypeIsShare: sourceTypeIsShare,
     }));
     this.$('#create-clone-form :input').tooltip();
     this.$('#create-clone-form').validate({

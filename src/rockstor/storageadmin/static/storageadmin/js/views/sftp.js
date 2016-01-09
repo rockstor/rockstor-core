@@ -25,158 +25,198 @@
  */
 
 SFTPView  = RockstorLayoutView.extend({
-  events: {
-    'switchChange.bootstrapSwitch': 'switchStatus',
-    'click .delete-sftp-share': 'deleteSFTP'
-  },
+    events: {
+	'switchChange.bootstrapSwitch': 'switchStatus',
+	'click .delete-sftp-share': 'deleteSFTP'
+    },
 
-  initialize: function() {
-    this.constructor.__super__.initialize.apply(this, arguments);
-    this.template = window.JST.sftp_sftp;
-    this.paginationTemplate = window.JST.common_pagination;
-    this.module_name = 'sftp';
-    this.collection = new SFTPCollection();
-    this.dependencies.push(this.collection);
-    this.serviceName = 'sftp';
-    this.service = new Service({name: this.serviceName});
-    this.dependencies.push(this.service);
-    this.shares = new ShareCollection();
-    // dont paginate shares for now
-    this.shares.pageSize = 1000;
-    this.dependencies.push(this.shares);
-    this.updateFreq = 5000;
-  },
+    initialize: function() {
+	this.constructor.__super__.initialize.apply(this, arguments);
+	this.template = window.JST.sftp_sftp;
+	this.module_name = 'sftp';
+	this.collection = new SFTPCollection();
+	this.dependencies.push(this.collection);
+	this.serviceName = 'sftp';
+	this.service = new Service({name: this.serviceName});
+	this.dependencies.push(this.service);
+	this.shares = new ShareCollection();
+	// dont paginate shares for now
+	this.shares.pageSize = 1000;
+	this.dependencies.push(this.shares);
+	this.updateFreq = 5000;
+	this.initHandlebarHelpers();
+    },
 
-  render: function() {
-    var _this = this;
-    this.fetch(this.renderSFTP, this);
-    return this;
-  },
+    render: function() {
+	var _this = this;
+	this.fetch(this.renderSFTP, this);
+	return this;
+    },
 
-  renderSFTP: function() {
-    this.freeShares = this.shares.reject(function(share) {
-      s = this.collection.find(function(sftpShare) {
-        return (sftpShare.get('share') == share.get('name'));
-      });
-      return !_.isUndefined(s);
-    }, this);
-    $(this.el).html(this.template({
-      sftp: this.collection,
-      freeShares: this.freeShares,
-      service: this.service
-    }));
-    this.$(".ph-pagination").html(this.paginationTemplate({
-      collection: this.collection
-    }));
+    renderSFTP: function() {
+	this.freeShares = this.shares.reject(function(share) {
+	    s = this.collection.find(function(sftpShare) {
+		return (sftpShare.get('share') == share.get('name'));
+	    });
+	    return !_.isUndefined(s);
+	}, this);
 
-    //initalize Bootstrap Switch
-    this.$("[type='checkbox']").bootstrapSwitch();
-    this.$('input[name="sftp-service-checkbox"]').bootstrapSwitch('state', this.service.get('status'), true);
-    this.$("[type='checkbox']").bootstrapSwitch('onColor','success'); //left side text color
-    this.$("[type='checkbox']").bootstrapSwitch('offColor','danger'); //right side text color
+	//check if there are shares in the system
+	var sharesExistBool = false;
+	if(this.shares.length > 0){
+	    sharesExistBool = true;
+	}
+	//check if there are free shares not associated with afp.
+	var freeSharesBool = false;
+	if(this.freeShares){
+	    freeSharesBool = true;
+	}
+	//set a variable to true if both conditions are satisfied
+	var verifySharesBool = false;
+	if(freeSharesBool && sharesExistBool){
+	    verifySharesBool = true;
+	}
 
-    // Display NFS Export Service Warning
-        if (!this.service.get('status')) {
-            this.$('#sftp-warning').show();
-        } else {
-            this.$('#sftp-warning').hide();
-        }
+	$(this.el).html(this.template({
+	    collection: this.collection,
+	    collectionNotEmpty: !this.collection.isEmpty(),
+	    freeShares: this.freeShares,
+	    sharesNotEmpty: verifySharesBool,
+	    service: this.service
+	}));
 
-  },
 
-  switchStatus: function(event,state){
-          if (state){
-              this.startService();
-          }else {
-              this.stopService();
-          }
-  },
+	//initalize Bootstrap Switch
+	this.$("[type='checkbox']").bootstrapSwitch();
+	this.$('input[name="sftp-service-checkbox"]').bootstrapSwitch('state', this.service.get('status'), true);
+	this.$("[type='checkbox']").bootstrapSwitch('onColor','success'); //left side text color
+	this.$("[type='checkbox']").bootstrapSwitch('offColor','danger'); //right side text color
 
-  deleteSFTP: function(event) {
-    var _this = this;
-    if (event) event.preventDefault();
-    var button = $(event.currentTarget);
-    if (buttonDisabled(button)) return false;
-    if(confirm("Delete sftp entry ... Are you sure? ")){
-      disableButton(button)
-      var id = $(event.currentTarget).data('id');
+	// Display NFS Export Service Warning
+	if (!this.service.get('status')) {
+	    this.$('#sftp-warning').show();
+	} else {
+	    this.$('#sftp-warning').hide();
+	}
 
-      $.ajax({
-        url: '/api/sftp/' + id,
-        type: 'DELETE',
-        dataType: 'json',
-        contentType: 'application/json',
-        success: function() {
-          _this.render();
-        },
-        error: function(xhr, status, error) {
-          enableButton(button);
-        }
-      });
+    },
 
+    switchStatus: function(event,state){
+	if (state){
+	    this.startService();
+	}else {
+	    this.stopService();
+	}
+    },
+
+    deleteSFTP: function(event) {
+	var _this = this;
+	if (event) event.preventDefault();
+	var button = $(event.currentTarget);
+	if (buttonDisabled(button)) return false;
+	if(confirm("Delete sftp entry ... Are you sure? ")){
+	    disableButton(button)
+	    var id = $(event.currentTarget).data('id');
+
+	    $.ajax({
+		url: '/api/sftp/' + id,
+		type: 'DELETE',
+		dataType: 'json',
+		contentType: 'application/json',
+		success: function() {
+		    _this.render();
+		},
+		error: function(xhr, status, error) {
+		    enableButton(button);
+		}
+	    });
+
+	}
+    },
+    startService: function() {
+	var _this = this;
+	this.setStatusLoading(this.serviceName, true);
+	$.ajax({
+	    url: "/api/sm/services/sftp/start",
+	    type: "POST",
+	    dataType: "json",
+	    success: function(data, status, xhr) {
+		_this.setStatusLoading(_this.serviceName, false);
+		_this.$('#sftp-warning').hide();
+	    },
+	    error: function(xhr, status, error) {
+		_this.setStatusError(_this.serviceName, xhr);
+		_this.$('#sftp-warning').show();
+	    }
+	});
+    },
+
+    stopService: function() {
+	var _this = this;
+	this.setStatusLoading(this.serviceName, true);
+	$.ajax({
+	    url: "/api/sm/services/sftp/stop",
+	    type: "POST",
+	    dataType: "json",
+	    success: function(data, status, xhr) {
+		_this.setStatusLoading(_this.serviceName, false);
+		_this.$('#sftp-warning').show();
+	    },
+	    error: function(xhr, status, error) {
+		_this.setStatusError(_this.serviceName, xhr);
+		_this.$('#sftp-warning').hide();
+	    }
+	});
+    },
+
+    setStatusLoading: function(serviceName, show) {
+	var statusEl = this.$('div.command-status[data-service-name="'+serviceName+'"]');
+	if (show) {
+	    statusEl.html('<img src="/static/storageadmin/img/ajax-loader.gif"></img>');
+	} else {
+	    statusEl.empty();
+	}
+    },
+
+    setStatusError: function(serviceName, xhr) {
+	var statusEl = this.$('div.command-status[data-service-name="' + serviceName + '"]');
+	var msg = parseXhrError(xhr);
+	// remove any existing error popups
+	$('body').find('#' + serviceName + 'err-popup').remove();
+	// add icon and popup
+	statusEl.empty();
+	var icon = $('<i>').addClass('icon-exclamation-sign').attr('rel', '#' + serviceName + '-err-popup');
+	statusEl.append(icon);
+	var errPopup = this.$('#' + serviceName + '-err-popup');
+	var errPopupContent = this.$('#' + serviceName + '-err-popup > div');
+	errPopupContent.html(msg);
+	statusEl.click(function(){ errPopup.overlay().load(); });
+    },
+
+    initHandlebarHelpers: function(){
+	Handlebars.registerHelper('display_sftp_shares', function(){
+	    var html = '';
+	    this.collection.each(function(sftpShare) {
+		html += '<tr>';
+		html += '<td>' + sftpShare.get("share") + '</td>';
+		html += '<td>';
+		if (sftpShare.get('editable') == 'ro') {
+		    html += 'Read only';
+		} else {
+		    html += 'Writable';
+		}
+		html += '</td>';
+		html += '<td>';
+		html += '<a href="#" class="delete-sftp-share" data-id="' + sftpShare.id + '"><i class="glyphicon glyphicon-trash"></i></a>';
+		html += '</td>';
+		html += '</tr>';
+	    });
+
+	    return new Handlebars.SafeString(html);
+	});
     }
-  },
-  startService: function() {
-    var _this = this;
-    this.setStatusLoading(this.serviceName, true);
-    $.ajax({
-      url: "/api/sm/services/sftp/start",
-      type: "POST",
-      dataType: "json",
-      success: function(data, status, xhr) {
-        _this.setStatusLoading(_this.serviceName, false);
-        _this.$('#sftp-warning').hide();
-      },
-      error: function(xhr, status, error) {
-        _this.setStatusError(_this.serviceName, xhr);
-        _this.$('#sftp-warning').show();
-      }
-    });
-  },
-
-  stopService: function() {
-    var _this = this;
-    this.setStatusLoading(this.serviceName, true);
-    $.ajax({
-      url: "/api/sm/services/sftp/stop",
-      type: "POST",
-      dataType: "json",
-      success: function(data, status, xhr) {
-        _this.setStatusLoading(_this.serviceName, false);
-        _this.$('#sftp-warning').show();
-      },
-      error: function(xhr, status, error) {
-        _this.setStatusError(_this.serviceName, xhr);
-        _this.$('#sftp-warning').hide();
-      }
-    });
-  },
-
-  setStatusLoading: function(serviceName, show) {
-    var statusEl = this.$('div.command-status[data-service-name="'+serviceName+'"]');
-    if (show) {
-      statusEl.html('<img src="/static/storageadmin/img/ajax-loader.gif"></img>');
-    } else {
-      statusEl.empty();
-    }
-  },
-
-  setStatusError: function(serviceName, xhr) {
-    var statusEl = this.$('div.command-status[data-service-name="' + serviceName + '"]');
-    var msg = parseXhrError(xhr);
-    // remove any existing error popups
-    $('body').find('#' + serviceName + 'err-popup').remove();
-    // add icon and popup
-    statusEl.empty();
-    var icon = $('<i>').addClass('icon-exclamation-sign').attr('rel', '#' + serviceName + '-err-popup');
-    statusEl.append(icon);
-    var errPopup = this.$('#' + serviceName + '-err-popup');
-    var errPopupContent = this.$('#' + serviceName + '-err-popup > div');
-    errPopupContent.html(msg);
-    statusEl.click(function(){ errPopup.overlay().load(); });
-  },
 
 });
 
-// Add pagination
+//Add pagination
 Cocktail.mixin(SFTPView, PaginationMixin);

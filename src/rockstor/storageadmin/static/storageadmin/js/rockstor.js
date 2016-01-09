@@ -354,7 +354,7 @@ function refreshNavbar() {
 
     var navbarTemplate = window.JST.common_navbar;
     $("#navbar-links").html(navbarTemplate({
-	logged_in: logged_in,
+	logged_in: logged_in
 
     }));
 
@@ -493,7 +493,7 @@ RockstorWizardPage = Backbone.View.extend({
 
     render: function() {
 	$(this.el).html(this.template({
-	    model: this.model
+	    model: this.model,
 	}));
 	return this;
     },

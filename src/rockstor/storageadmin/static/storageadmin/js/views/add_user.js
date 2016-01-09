@@ -55,8 +55,9 @@ AddUserView = RockstorLayoutView.extend({
 	var _this = this;
 	$(this.el).html(this.template({
 	    username: this.username,
-	    user: this.user,
-	    groups: this.groups
+	    user: this.user.toJSON(),
+	    groups: this.groups.toJSON(),
+	    shells: ['/bin/bash', '/sbin/nologin']
 
 	}));
 

@@ -40,15 +40,13 @@ SharesView = RockstorLayoutView.extend({
 
     this.template = window.JST.share_shares;
     this.shares_table_template = window.JST.share_shares_table;
-    this.pagination_template = window.JST.common_pagination;
-
     this.pools = new PoolCollection();
     this.collection = new ShareCollection();
     this.dependencies.push(this.pools);
     this.dependencies.push(this.collection);
-
     this.pools.on("reset", this.renderShares, this);
     this.collection.on("reset", this.renderShares, this);
+    this.initHandlebarHelpers();
   },
 
   render: function() {
@@ -69,11 +67,11 @@ SharesView = RockstorLayoutView.extend({
     }));
     this.$("#shares-table-ph").html(this.shares_table_template({
       collection: this.collection,
-      pools: this.pools
+      collectionNotEmpty: !this.collection.isEmpty(),
+      pools: this.pools,
+      poolsNotEmpty: !this.pools.isEmpty()
     }));
-    this.$(".pagination-ph").html(this.pagination_template({
-      collection: this.collection
-    }));
+
     this.$("#shares-table").tablesorter({
        headers: {
             // assign the fourth column (we start counting zero)
@@ -119,6 +117,40 @@ SharesView = RockstorLayoutView.extend({
         error: function(xhr, status, error) {
           enableButton(button);
         }
+      });
+    },
+
+    initHandlebarHelpers: function(){
+      //register any share related handlebar helpers here.
+      Handlebars.registerHelper('print_tbody', function() {
+        var html = '';
+        this.collection.each(function(share, index) {
+            var shareName = share.get('name'),
+                shareSize = humanize.filesize(share.get('size')*1024),
+                shareUsage = humanize.filesize(share.get('rusage')*1024),
+                poolName = share.get('pool').name,
+                shareCompression = share.get('compression_algo'),
+                folderIcon = '<i class="glyphicon glyphicon-folder-open"></i>  ',
+                editIcon = '<i class="glyphicon glyphicon-pencil"></i>',
+                trashIcon = '<i class="glyphicon glyphicon-trash"></i>';
+            html += '<tr>';
+            html += '<td><a href="#shares/' + shareName + '">' + folderIcon + shareName +'</a></td>';
+            html += '<td>'+ shareSize +'</td>';
+            html += '<td>'+ poolName +'</td>';
+            html += '<td>'+ shareUsage +'</td>';
+            html += '<td>';
+            if (shareCompression && shareCompression != 'no') {
+                html += shareCompression;
+            }else{
+                html += 'None(defaults to pool level compression, if any)   ' +
+                 '<a href="#shares/' + shareName + '/?cView=edit">' + editIcon + '</a>';
+            }
+            html += '</td>';
+            html += '<td><a id="delete_share_' + shareName + '" data-name="' + shareName + '" data-action="delete"' +
+            'data-pool="' + poolName + '" data-size="' + shareSize + '" rel="tooltip" title="Delete share">' + trashIcon + '</a></td>';
+            html += '</tr>';
+        });
+        return new Handlebars.SafeString(html);
       });
     },
 

@@ -18,19 +18,7 @@
  *
  */
 </script>
-<% var widget_categories = ['Storage', 'Compute', 'Network']; %>
+
 <div class="dashboard-widget-controls">
-  <% _.each(widget_categories, function(category) { %>
-    <span class="widget-heading"><%= category %></span><br>
-    <% _.each(RockStorWidgets.findByCategory(category), function(widget) { %>
-      <% if (_.some(wSelected, function(w) { return w.name == widget.name})) { %>
-        <input class="widget-name inline" type="checkbox" name="selections" value="<%= widget.name %>" checked="checked"></input>
-      <% } else { %>
-        <input class="widget-name inline" type="checkbox" name="selections" value="<%= widget.name %>"></input>
-      <% } %>
-      <%= widget.displayName %>
-      <br>
-    <% }); %>
-    <br>
-  <% }); %>
+{{display_widgets}}
 </div>

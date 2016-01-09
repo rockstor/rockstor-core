@@ -1,4 +1,4 @@
-<% if (taskDefId == null) { %>
+{{#if taskDefIdNull}}
   <div class="form-group">
     <div class="row">
       <label class="control-label col-md-4" for="share">Share<span class="required"> *</span></label>
@@ -7,9 +7,7 @@
     <div class="row">
       <div class="col-sm-4">
 	<select class="form-control" id="share" name="meta.share">
-          <% shares.each(function(share, index) { %>
-          <option value="<%= share.get('name') %>"> <%= share.get('name') %> </option>
-          <% }); %>
+          {{display_snapshot_shares}}
 	</select>
       </div>
       <div class="col-sm-4">
@@ -17,19 +15,18 @@
       </div>
     </div>
   </div>
-<% } else { %>
-<% } %>
+{{else}}
+{{/if}}
 <div class="row">
   <label class="control-label col-sm-4" for="max_count">Maximum count<span class="required"> *</span></label>
 </div>
 <div class="row">
   <div class="col-sm-4">
-  <% if (taskDefId != null) { %>
-
-    <input class="form-control col-sm-4" type="text" id="max_count" name="meta.max_count" value="<%= taskDef.max_count() %>" placeholder="Maximum count" title="Older snapshots beyond this number and created by this task will be deleted">
-  <% } else { %>
+  {{#unless taskDefIdNull}}
+    <input class="form-control col-sm-4" type="text" id="max_count" name="meta.max_count" value="{{taskMaxCount}}" placeholder="Maximum count" title="Older snapshots beyond this number and created by this task will be deleted">
+  {{else}}
     <input class="form-control col-sm-4" type="text" id="max_count" name="meta.max_count" placeholder="Maximum count" title="Older snapshots beyond this number and created by this task will be deleted">
-  <% } %>
+  {{/unless}}
   </div>
 </div>
 <div class="checkbox" style="clear: both">

@@ -24,7 +24,7 @@
   <div class="col-md-12">
     <div class="widget-header">
       <div class="title">
-        <span class="h4"><%= displayName %></span>
+        <span class="h4">{{ displayName }}</span>
       </div>
       <div class="gear">
         <a class="resize-widget" href="#"><i class="glyphicon glyphicon-resize-full"></i></a>
@@ -40,13 +40,13 @@
 <div class="widget-content">
 
   <div id="cpuusage-avg"></div>
-  <% if (maximized) { %>
+  {{#if maximized}}
     <div id="cpuusage-individual-title" style="width: 500px; text-align: center;">Individual cpu usage (%) </div>
     <div id="cpuusage-individual" style="width: 500px; height: 30%;"></div>
-  <% } else { %>
+  {{ else }}
     <div id="cpuusage-individual-title" style="width: 250px; text-align: center;">Individual cpu usage (%) </div>
     <div id="cpuusage-individual" style="width: 250px; height: 30%;"></div>
-  <% } %>
+  {{/if}}
   <div id="cpuusage-legend">
   </div>
 

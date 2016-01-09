@@ -21,14 +21,14 @@
 
 <div class="row">
   <div class="col-md-8">
-<% if (network.get('itype') == 'management') { %>
+  {{#if managementInterface}}
   <div class="alert alert-danger">
     <h4>Warning! You are editing the Rockstor administration interface.</h4>
     You will lose connectivity to the old ip address and must access the web-ui at the new ip address.
   </div>
-<% } %>
+{{/if}}
   <div class="panel panel-default">
-  <div class="panel-heading">Configure network interface <%= network.get('name') %></div>
+  <div class="panel-heading">Configure network interface {{networkName}}</div>
     <div class="panel-body">
       <form class="form-horizontal" id="edit-network-form" name="aform">
         <div class="messages"></div>
@@ -36,64 +36,48 @@
           <label class="col-sm-4 control-label" for="method">Config Method<span class="required"> *</span></label>
           <div class="col-sm-4">
             <select class="form-control" id="method" name="method">
-              <% if (network.get('method') == 'auto') { %>
+              {{#if methodAuto}}
                 <option value="auto" selected="selected">Auto (DHCP)</option>
-              <% } else { %>
+              {{else}}
                 <option value="auto">Auto (DHCP)</option>
-              <% } %>
-              <% if (network.get('method') == 'manual') { %>
+              {{/if}}
+              {{#if methodManual}}
                 <option value="manual" selected="selected">Manual</option>
-              <% } else { %>
+              {{else}}
                 <option value="manual">Manual</option>
-              <% } %>
+              {{/if}}
             </select>
           </div>
         </div>
         <div class="form-group">
           <label class="col-sm-4 control-label" for="ipaddr">IP Address<span class="required"> *</span></label>
           <div class="col-sm-4">
-            <% if (network.get('method') == 'manual') { %>
-              <input class="form-control" type="text" id="ipaddr" name="ipaddr" value="<%= network.get('ipaddr') %>" placeholder="IP Address" title="A usable static IP address for your network.">
-            <% } else { %>
-              <input class="form-control" type="text" id="ipaddr" name="ipaddr" value="<%= network.get('ipaddr') %>" placeholder="IP Address" title="A usable static IP address for your network." disabled="disabled"  >
-            <% } %>
+           <input class="form-control" type="text" id="ipaddr" name="ipaddr" value="{{ipAddr}}" {{disableIfAuto methodAuto}} placeholder="IP Address" title="A usable static IP address for your network.">
           </div>
         </div>
         <div class="form-group">
           <label class="col-sm-4 control-label" for="netmask">Netmask<span class="required"> *</span></label>
           <div class="col-sm-4">
-            <% if (network.get('method') == 'manual') { %>
-              <input class="form-control" type="text" id="netmask" name="netmask" value="<%= network.get('netmask') %>" placeholder="Netmask" title="A valid Subnet Mask for your network. Eg: 255.255.255.0. You can also enter number of bits.">
-            <% } else { %>
-              <input class="form-control" type="text" id="netmask" name="netmask" value="<%= network.get('netmask') %>" placeholder="Netmask" title="A valid Subnet Mask for your network. Eg: 255.255.255.0. You can also enter number of bits." disabled="disabled" >
-            <% } %>
+          <input class="form-control" type="text" id="netmask" name="netmask" value="{{netMask}}" {{disableIfAuto methodAuto}} placeholder="Netmask" title="A valid Subnet Mask for your network. Eg: 255.255.255.0. You can also enter number of bits.">
           </div>
         </div>
         <div class="form-group">
           <label class="col-sm-4 control-label" for="gateway">Gateway</label>
           <div class="col-sm-4">
-            <% if (network.get('method') == 'manual') { %>
-              <input class="form-control" type="text" id="gateway" name="gateway" value="<%= network.get('gateway') %>" placeholder="Gateway" title="IP address of your Gateway.">
-            <% } else { %>
-              <input class="form-control" type="text" id="gateway" name="gateway" value="<%= network.get('gateway') %>" placeholder="Gateway" title="IP address of your Gateway." disabled="disabled" >
-            <% } %>
+          <input class="form-control" type="text" id="gateway" name="gateway" value="{{gateWay}}"  {{disableIfAuto methodAuto}} placeholder="Gateway" title="IP address of your Gateway.">
           </div>
         </div>
         <div class="form-group">
           <label class="col-sm-4 control-label" for="dns_servers">DNS Servers</label>
           <div class="col-sm-4">
-            <% if (network.get('method') == 'manual') { %>
-              <input class="form-control" type="text" id="dns_servers" name="dns_servers" value="<%= network.get('dns_servers') %>" placeholder="DNS Servers" title="A comma separated list of DNS server addresses.">
-            <% } else { %>
-              <input class="form-control" type="text" id="dns_servers" name="dns_servers" value="<%= network.get('dns_servers') %>" placeholder="DNS Servers" title="A comma separated list of DNS server addresses." disabled="disabled" >
-            <% } %>
+          <input class="form-control" type="text" id="dns_servers" name="dns_servers" value="{{dnsServers}}" {{disableIfAuto methodAuto}} placeholder="DNS Servers" title="A comma separated list of DNS server addresses.">
           </div>
         </div>
 	<div class="form-group">
           <label class="col-sm-4 control-label" for="itype">Interface role<span class="required"> *</span></label>
           <div class="col-sm-4">
             <select class="form-control" id="itype" name="itype">
-              <option value="<%= network.get('itype') %>" selected="selected"><%= network.get('itype') %></option>
+              <option value="{{interfaceType}}" selected="selected">{{interfaceType}}</option>
               <option value="unassigned">unassigned</option>
               <option value="management">management</option>
               <option value="replication">replication</option>

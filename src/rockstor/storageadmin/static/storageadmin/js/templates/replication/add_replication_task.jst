@@ -35,7 +35,7 @@ $(document).ready(function() {
 });
 </script>
 
-<% if (replicaId == null) { %>
+{{#unless replicaId}}
 <div class="row">
   <div class="col-md-8">
 <div class="panel panel-default">
@@ -54,9 +54,9 @@ $(document).ready(function() {
 	  <label class="col-sm-4 control-label" for="share">Share to replicate<span class="required"> *</span></label>
 	  <div class="col-sm-6">
 	    <select class="form-control" id="share" name="share" title="Share to replicate">
-	      <% _.each(shares, function(share, index) { %>
-	      <option value="<%= share.get('name') %>"> <%= share.get('name') %> </option>
-	      <% }); %>
+	      {{#each shares}}
+	      <option value="{{this.name}}"> {{this.name}} </option>
+	      {{/each}}
 
 	    </select>
 	  </div>
@@ -65,11 +65,11 @@ $(document).ready(function() {
 	  <label class="col-sm-4 control-label" for="appliance">Remote appliance<span class="required"> *</span></label>
 	  <div class="col-sm-6">
 	    <select class="form-control" id="appliance" name="appliance" title="Share will be replicated to this remote Rockstor appliance.">
-	      <% appliances.each(function(appliance, index) { %>
-	      <% if (!appliance.get('current_appliance')) { %>
-	      <option value="<%= appliance.get('ip') %>"> <%= appliance.get('ip') %> </option>
-	      <% } %>
-	      <% }); %>
+	      {{#each appliances}}
+	      {{#unless this.current_appliance}}
+	      <option value="{{this.ip}}"> {{this.ip}} </option>
+	      {{/unless}}
+	      {{/each}}
 
 	    </select>
 	  </div>
@@ -77,22 +77,22 @@ $(document).ready(function() {
 	<div class="form-group">
 	  <label class="col-sm-4 control-label" for="listener_ip">Remote Listener Address</label>
 	  <div class="col-sm-6">
-	  <input class="form-control" type="text" id="listener_ip" name="listener_ip" value="<%= listener_ip %>"title="If remote appliance's replication service is listening on a different IP address, provide here. If not, appliance's IP address will be used.">
+	  <input class="form-control" type="text" id="listener_ip" name="listener_ip" value="{{listener_ip}}"title="If remote appliance's replication service is listening on a different IP address, provide here. If not, appliance's IP address will be used.">
 	  </div>
 	</div>
 	<div class="form-group">
 	  <label class="col-sm-4 control-label" for="port">Remore Listener Port<span class="required"> *</span></label>
 	  <div class="col-sm-6">
-	    <input class="form-control" type="text" id="listener_port" name="listener_port" value="<%= listener_port %>" title="Replication meta port on the target appliance. (Default is <%= listener_port %>)">
+	    <input class="form-control" type="text" id="listener_port" name="listener_port" value="{{listener_port}}" title="Replication meta port on the target appliance. (Default is {{listener_port}})">
 	  </div>
 	</div>
 	<div class="form-group">
 	  <label class="col-sm-4 control-label" for="pool">Remote pool<span class="required"> *</span></label>
 	  <div class="col-sm-6">
 	    <select class="form-control" id="pool" name="pool" title="Share will be replicated to this Pool on the remote Rockstor appliance.">
-	      <% for (var i=0; i < remote_pools.length; i++) { %>
-		 <option value="<%= remote_pools[i] %>"> <%= remote_pools[i] %></option>
-		 <% } %>
+	      {{#each remote_pools}}
+	      <option value="{{this}}"> {{this}}</option>
+	      {{/each}}
 	    </select>
 	  </div>
 	</div>
@@ -117,69 +117,68 @@ $(document).ready(function() {
   </div> <!-- col-md-8 -->
 </div> <!-- row -->
 
-<% } else { %>
+{{else}}
 <div class="row">
-<div class="col-md-8">
-<div class="panel panel-default">
-<div class="panel-heading">Edit Replication task</div>
-    <div class="panel-body">
-      <form class="form-horizontal" id="replication-task-create-form" name="aform">
-	<div class="messages"></div>
-	<div class="form-group">
-	  <label class="col-sm-4 control-label" for="task_name">Task name:</label>
-	  <div class="col-sm-6">
-	    <input type="text" class="form-control" value="<%= replica.get('task_name') %>" disabled="disabled">
+  <div class="col-md-8">
+    <div class="panel panel-default">
+      <div class="panel-heading">Edit Replication task</div>
+      <div class="panel-body">
+	<form class="form-horizontal" id="replication-task-create-form" name="aform">
+	  <div class="messages"></div>
+	  <div class="form-group">
+	    <label class="col-sm-4 control-label" for="task_name">Task name:</label>
+	    <div class="col-sm-6">
+	      <input type="text" class="form-control" value="{{replica.task_name}}" disabled="disabled">
+	    </div>
 	  </div>
-	</div>
-	<div class="form-group">
-	  <label class="col-sm-4 control-label" for="share">Share to replicate:</label>
-	  <div class="col-sm-6">
-	    <input type="text" class="form-control" value="<%= replica.get('share') %>" disabled="disabled">
+	  <div class="form-group">
+	    <label class="col-sm-4 control-label" for="share">Share to replicate:</label>
+	    <div class="col-sm-6">
+	      <input type="text" class="form-control" value="{{replica.share}}" disabled="disabled">
+	    </div>
 	  </div>
-	</div>
-	<div class="form-group">
-	  <label class="col-sm-4 control-label" for="appliance">Remote appliance:</label>
-	  <div class="col-sm-6">
-	    <input type="text" class="form-control" value="<%= replica.get('appliance') %>" disabled="disabled">
+	  <div class="form-group">
+	    <label class="col-sm-4 control-label" for="appliance">Remote appliance:</label>
+	    <div class="col-sm-6">
+	      <input type="text" class="form-control" value="{{replica.appliance}}" disabled="disabled">
+	    </div>
 	  </div>
-	</div>
-	<div class="form-group">
-	  <label class="col-sm-4 control-label" for="listener_ip">Remote Listener Address:</label>
-	  <div class="col-sm-6">
-	    <input type="text" class="form-control" name="listener_ip" value="<%= replica.get('replication_ip') %>">
+	  <div class="form-group">
+	    <label class="col-sm-4 control-label" for="listener_ip">Remote Listener Address:</label>
+	    <div class="col-sm-6">
+	      <input type="text" class="form-control" name="listener_ip" value="{{replica.replication_ip}}">
+	    </div>
 	  </div>
-	</div>
-	<div class="form-group">
-	  <label class="col-sm-4 control-label" for="listener_port">Remote Listener Port:</label>
-	  <div class="col-sm-6">
-	    <input type="text" class="form-control" name="listener_port" value="<%= replica.get('data_port') %>">
+	  <div class="form-group">
+	    <label class="col-sm-4 control-label" for="listener_port">Remote Listener Port:</label>
+	    <div class="col-sm-6">
+	      <input type="text" class="form-control" name="listener_port" value="{{replica.data_port}}">
+	    </div>
 	  </div>
-	</div>
-	<div class="form-group">
-	  <label class="col-sm-4 control-label" for="pool">Remote pool:</label>
-	  <div class="col-sm-6">
-	    <input type="text" class="form-control" value="<%= replica.get('dpool') %>" disabled="disabled">
+	  <div class="form-group">
+	    <label class="col-sm-4 control-label" for="pool">Remote pool:</label>
+	    <div class="col-sm-6">
+	      <input type="text" class="form-control" value="{{replica.dpool}}" disabled="disabled">
+	    </div>
 	  </div>
-	</div>
-	<div class="form-group">
-         <label class="col-sm-4 control-label" for="cron">Replication Frequency</label>
-         <div class="row">
-           <div class="col-sm  -6">
-             <div id="cron"></div>
-           </div>
-         </div>
-	</div>
-	<div class="form-group">
-	  <div class="col-sm-offset-4 col-sm-8">
-	    <a id="js-cancel" class="btn btn-default">Cancel</a>
-	    <input type="Submit" id="create_replication_task" class="btn btn-primary" value="Submit"></input>
+	  <div class="form-group">
+            <label class="col-sm-4 control-label" for="cron">Replication Frequency</label>
+            <div class="row">
+              <div class="col-sm  -6">
+		<div id="cron"></div>
+              </div>
+            </div>
 	  </div>
-	</div>
-      </form>
+	  <div class="form-group">
+	    <div class="col-sm-offset-4 col-sm-8">
+	      <a id="js-cancel" class="btn btn-default">Cancel</a>
+	      <input type="Submit" id="create_replication_task" class="btn btn-primary" value="Submit"></input>
+	    </div>
+	  </div>
+	</form>
 
-    </div> <!-- panel-body -->
+      </div> <!-- panel-body -->
     </div><!--panel-default-->
-      </div> <!-- col-md-8 -->
-    </div> <!-- row -->
-
-<% } %>
+  </div> <!-- col-md-8 -->
+</div> <!-- row -->
+{{/unless}}

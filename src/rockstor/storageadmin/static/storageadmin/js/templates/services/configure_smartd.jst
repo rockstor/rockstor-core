@@ -22,7 +22,7 @@
   <div class="row">
     <div class="col-md-8">
       <div class="panel panel-default">
-        <div class="panel-heading">Configure <%= service.get('display_name') %> Daemon</div>
+        <div class="panel-heading">Configure {{serviceName}} Daemon</div>
       <div class="panel-body">
 
     <form class="form-horizontal" id="smartd-form" name="aform">
@@ -30,11 +30,11 @@
   	<div class="form-group">
   	  <label class="col-sm-4 control-label" for="custom_config">configuration lines will be saved to the ROCKSTOR section in /etc/smartmontools/smartd.conf</label>
   	  <div class="col-sm-8">
-      <% if (config.custom_config){ %>
-            <textarea  class="form-control" id="smartd_config" name="custom_config" rows="10"><%= config.custom_config %></textarea>
-  	  <% } else { %>
+      {{#if config.custom_config}}
+            <textarea  class="form-control" id="smartd_config" name="custom_config" rows="10">{{config.custom_config}}</textarea>
+  	  {{else}}
             <textarea class="form-control" id="smartd_config" name="custom_config" rows="10"></textarea>
-  	  <%  } %>
+  	  {{/if}}
     </div>
   	</div>
   	<div class="form-group">

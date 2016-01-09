@@ -18,8 +18,7 @@
  *
  */
 </script>
-
-<% if (!scheduledTasks.isEmpty()) { %>
+{{#if collectionNotEmpty}}
   <div class="row">
     <div class="col-md-12">
       <table id="scheduled-tasks-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of scheduled tasks">
@@ -35,56 +34,13 @@
           </tr>
         </thead>
         <tbody>
-          <% scheduledTasks.each(function(t) { %>
-            <tr>
-              <td><a href="#edit-scheduled-task/<%= t.get('id') %>"><%= t.get('name') %></a></td>
-              <td>
-                <%= t.get('task_type') %>
-                <% if (t.get('task_type') == 'snapshot') { %>
-                  (<%= JSON.parse(t.get('json_meta')).share %>)
-                <% } else { %>
-                  (<%= JSON.parse(t.get('json_meta')).pool %>)
-                <% } %>
-              </td>
-              <td><%= moment(t.get('ts')).format(RS_DATE_FORMAT) %></td>
-              <td><%= prettyCron.toString(t.get('crontab')) %>
-              <td>
-                <% if (t.get('enabled')) { %>
-                  <input type="checkbox" disabled="true" checked="true"></input>
-                <% } else { %>
-                  <input type="checkbox" disabled="true"></input>
-                <% } %>
-              </td>
-              <td>
-                <% if (taskMap[t.id]) { %>
-                  <% if (taskMap[t.id].length > 0) { %>
-                    <% var task = taskMap[t.id][0]; %>
-                    <% if (task.get('state') != 'scheduled' && task.get('state') != 'pending' && task.get('state') != 'running' && task.get('state') != 'finished') { %>
-                      <a href="#scheduled-tasks/<%= t.id %>/log" class="task-log"><i class="glyphicon glyphicon-warning-sign"></i> <%= task.get('state') %></a>
-                    <% } else if (task.get('state') == 'finished') { %>
-                      <a href="#scheduled-tasks/<%= t.id %>/log" class="task-log"><%= moment(task.get('end')).fromNow() %></a>
-                    <% } else { %>
-		       <a href="#scheduled-tasks/<%= t.id %>/log" class="task-log"><%= task.get('state') %></a>
-		       <% } %>
-                  <% } %>
-                <% } %>
-
-
-              </td>
-              <td>
-	        <a href="#edit-scheduled-task/<%= t.get('id') %>" <i class= "glyphicon glyphicon-pencil" rel="rooltip" title="Edit"></i></a>
-		&nbsp;
-                <a href="#" data-task-name="<%= t.get('name') %>" data-task-id="<%= t.id %>" data-action="delete"><i class="glyphicon glyphicon-trash" rel="tooltip" title="Delete"></i></a>
-
-              </td>
-            </tr>
-          <% }); %>
+          {{display_scheduledTasks_table}}
         </tbody>
       </table>
-      <div class="ph-pagination"></div>
+      <div>{{pagination}}</div>
     </div>
   </div>
-<% } else { %>
+  {{else}}
   <h4>There are no tasks scheduled at this time.</h4>
-<% } %>
+{{/if}}
 <a href="#add-scheduled-task" class="btn btn-primary">Schedule a Task</a>

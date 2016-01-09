@@ -33,6 +33,7 @@ PoolRemoveDisks = RockstorWizardPage.extend({
 	this.disks_template = window.JST.common_disks_table;
 	RockstorWizardPage.prototype.initialize.apply(this, arguments);
 	this.disks.on('reset', this.renderDisks, this);
+	this.initHandlebarHelpers();
     },
 
     render: function() {
@@ -57,6 +58,24 @@ PoolRemoveDisks = RockstorWizardPage.extend({
 	});
 	this.model.set('diskNames', diskNames);
 	return $.Deferred().resolve();
-    }
+    },
+    
+    initHandlebarHelpers: function(){
+    Handlebars.registerHelper('display_disksToAdd', function(){
+		var html = '';
+		_.each(this.disks, function(disk, index) {
+			var diskName = disk.get('name');
+			html += '<tr>';
+			html += '<td>' + (index+1) + '</td>';
+			html += '<td>' + diskName + '</td>';
+			html += '<td>' + humanize.filesize(disk.get('size')*1024) + '</td>';
+			html += '<td>' + disk.get('parted') + '</td>';
+			html += '<td><input type="checkbox" name="diskname" id="' + diskName + '" value="' + diskName + '" class="diskname"></td>';
+			html += '</tr>';
+		});
+		return new Handlebars.SafeString(html);
+	});
+
+}
 
 });

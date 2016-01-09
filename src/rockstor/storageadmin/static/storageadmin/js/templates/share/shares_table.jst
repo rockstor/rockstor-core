@@ -6,7 +6,7 @@
   </p>
 </div>
 
-<% if (!collection.isEmpty()) { %>
+{{#if collectionNotEmpty}}
   <table id="shares-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of shares">
     <thead>
       <tr>
@@ -14,31 +14,23 @@
         <th>Size</th>
         <th>Pool</th>
         <th>Usage</th>
-	<th>Compression algorithm</th>
+	      <th>Compression algorithm</th>
         <th>Actions</th>
       </tr>
     </thead>
-    <tbody>
-      <% collection.each(function(share, index) { %>
-        <tr>
-          <td><a href="#shares/<%= share.get('name') %>"><i class="glyphicon glyphicon-folder-open"></i> <%= share.get('name') %></a></td>
-          <td><%= humanize.filesize(share.get('size')*1024) %></td>
-          <td><%= share.get('pool').name %></td>
-          <td><%= humanize.filesize(share.get('rusage')*1024)%></td>
-	  <td>
-	  <% if (share.get('compression_algo') && share.get('compression_algo') != 'no') { %>
-	     <%= share.get('compression_algo') %>
-	  <% } else { %>
-	     None(defaults to pool level compression, if any)
-	  <% } %>
-	   &nbsp;&nbsp;<a href="#shares/<%= share.get('name') %>/?cView=edit"><i class="glyphicon glyphicon-pencil"></i></a>
-	  </td>
-          <td><a id="delete_share_<%= share.get('name') %>" data-name="<%= share.get('name') %>" data-action="delete" data-pool="<%= share.get('pool').name %>" data-size="<%= share.get('size')*1024 %>" rel="tooltip" title="Delete share"><i class="glyphicon glyphicon-trash"></i></a></td>
-        </tr>
-      <% }); %>
-    </tbody>
+    <tbody>{{print_tbody}}</tbody>
   </table>
+  <div>
+    {{! call pagination related handlebar helper here..}}
+    {{pagination}}
+  </div>
+  <a href="#add_share" id="add_share" class="btn btn-primary"><i class="glyphicon glyphicon-edit "></i> Create Share</a>
+{{ else }}
+      <h4>No shares have been created</h4>
+      <a href="#add_share" id="add_share" class="btn btn-primary"><i class="glyphicon glyphicon-edit "></i> Create Share</a>
+{{/if}}
 
+{{! Todo: maintain a common file and function for all modals? }}
 <div id="delete-share-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -57,15 +49,3 @@
     </div><!--end modal-content-->
   </div><!--end modal-dialog-->
 </div>
-
-  <div class="pagination-ph"></div>
-<% } else { %>
-  <% if (!pools.isEmpty()) { %>
-    <h4>No shares have been created</h4>
-  <% } else { %>
-    <h4>No shares have been created. To create a share, at least one pool must be created. Please go to the <a href="#pools">Pools</a> page to create a pool.</h4>
-  <% } %>
-<% } %>
-<% if (!pools.isEmpty()) { %>
-  <a href="#add_share" id="add_share" class="btn btn-primary"><i class="glyphicon glyphicon-edit "></i> Create Share</a>
-<% } %>

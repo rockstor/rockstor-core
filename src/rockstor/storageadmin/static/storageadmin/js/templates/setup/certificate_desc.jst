@@ -22,11 +22,7 @@
   <div class="col-md-8">
     <label class="control-label"></label>
         <div class="messages">
-        <% if (_.isEmpty(name)) { %>
-        A self signed Certificate created during installation is in use by default.
-        <%} else { %>
-        Admin provided Certificate<strong>(<%= name %>)</strong> is currently in use.
-        <%} %>
+          {{display_message}}
         </div>
         <br>
         <div class="controls">

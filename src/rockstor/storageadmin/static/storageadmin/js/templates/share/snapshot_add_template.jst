@@ -37,9 +37,7 @@
          <label class="col-xs-4 control-label" for="shares">Share<span class="required"> *</span></label>
          <div class="col-sm-4">
          <select name="shares" id="shares" size="10" data-placeholder="Select share" title="Select the Share to snapshot">
-         <% shares.each( function(share, index) { %>
-         <option value="<%= share.get('name') %>" > <%= share.get('name') %></option>
-       <% }); %>
+          {{show_shares_dropdown}}
          </select>
          </div>
         </div>
@@ -47,15 +45,7 @@
         <div class="form-group">
           <label class="col-xs-4 control-label" for=writable">Writable<span class="required"> *</span></label>
           <div class="col-sm-4">
-             <% _.each(modify_choices, function(c) { %>
-                <label class="radio-inline">
-                   <% if(c.value == 'yes'){ %>
-                      <input type="radio" name="writable" value="rw" checked> <%= c.name %>
-                   <%  }else{ %>
-                      <input type="radio" name="writable" value="ro" title="Note that (1)read-only snapshots cannot be cloned and (2)Shares cannot be rolled back to read-only snapshots" > <%= c.name %>
-                <%  } %>
-               </label>
-              <% }); %>
+            {{display_writeable_options}}
            </div>
         </div>
 

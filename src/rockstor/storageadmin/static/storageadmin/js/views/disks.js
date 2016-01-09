@@ -37,9 +37,9 @@ DisksView = Backbone.View.extend({
     initialize: function() {
 	this.template = window.JST.disk_disks;
 	this.disks_table_template = window.JST.disk_disks_table;
-	this.pagination_template = window.JST.common_pagination;
 	this.collection = new DiskCollection;
 	this.collection.on("reset", this.renderDisks, this);
+	this.initHandlebarHelpers();
     },
 
     render: function() {
@@ -54,12 +54,10 @@ DisksView = Backbone.View.extend({
 	}
 	$(this.el).html(this.template({ collection: this.collection }));
 	this.$("#disks-table-ph").html(this.disks_table_template({
-	    collection: this.collection
+	    collection: this.collection,
+	    collectionNotEmpty: !this.collection.isEmpty()
 	}));
 
-	this.$(".pagination-ph").html(this.pagination_template({
-	    collection: this.collection
-	}));
 	this.$("#disks-table").tablesorter();
 	this.$("[rel=tooltip]").tooltip({
 	    placement: "right",
@@ -171,6 +169,77 @@ DisksView = Backbone.View.extend({
     cleanup: function() {
 	this.$("[rel='tooltip']").tooltip('hide');
     },
+
+    initHandlebarHelpers: function(){
+    	Handlebars.registerHelper('display_disks_tbody', function() {
+
+        var html = '',
+            warning = 'Disk names may change unfavourably upon reboot leading to inadvertent drive reallocation and potential data loss. This error is caused by the source of these disks such as your Hypervisor or SAN. Please ensure that disks are provided with unique serial numbers before proceeding further';
+
+        this.collection.each(function(disk, index) {
+          	var diskName = disk.get('name'),
+               	diskOffline = disk.get('offline'),
+               	diskSize = humanize.filesize(disk.get('size') * 1024),
+               	diskModel = disk.get('model'),
+               	diskTransport = disk.get('transport'),
+               	diskVendor = disk.get('vendor'),
+               	smartAvailable = disk.get('smart_available'),
+               	poolName = disk.get('pool_name'),
+               	serial = disk.get('serial'),
+               	btrfsUId = disk.get('btrfs_uuid'),
+               	diskParted = disk.get('parted'),
+               	smartEnabled = disk.get('smart_enabled');
+
+        html += '<tr>';
+        html += '<td><a href="#disks/' + diskName +' "><i class="glyphicon glyphicon-hdd"></i> '+ diskName +'</a>&nbsp';
+        if (diskOffline) {
+           html += '<a href="#" class="delete" data-disk-name="'+ diskName +'" title="Disk is unusable because it is offline.Click to delete it from the system" rel="tooltip"><i class="glyphicon glyphicon-trash"></i></a>';
+        } else if (diskParted) {
+           html += '<a href="#" class="wipe" data-disk-name="'+ diskName +'" title="Disk is unusable because it has some other filesystem on it.';
+           html+= 'Click to wipe it clean." rel="tooltip"><i class="glyphicon glyphicon-cog"></i></a>';
+        } else if (btrfsUId && _.isNull(poolName)) {
+           html += '<a href="#" class="btrfs_wipe" data-disk-name="'+ diskName +'" title="Disk is unusable because it has BTRFS filesystem(s) on it.Click to wipe it clean." rel="tooltip">';
+           html += '<i class="fa fa-eraser"></i></a>&nbsp;<a href="#" class="btrfs_import" data-disk-name="'+ diskName +'" title="Click to import data(pools, shares and snapshots) on this disk automatically" rel="tooltip">';
+           html += '<i class="glyphicon glyphicon-circle-arrow-down"></i></a>';
+        }
+
+        html += '</td>';
+        html += '<td>';
+	    if (serial == null || serial == '' || serial == diskName) {
+	       html += '<div class="alert alert-danger">' +
+                   + '<h4>Warning! Disk serial number or UUID is not legitimate or unique.</h4>' + warning +'</div>';
+       	}else{
+	       html += serial;
+	       if (serial) {
+	          html += '&nbsp;&nbsp;&nbsp;&nbsp;<a href="#disks/blink/'+ diskName +'" title="A tool to physically identify the hard drive with this serial number" rel="tooltip"><i class="fa fa-lightbulb-o fa-lg"></i></a>&nbsp';
+           }
+	    }
+        html += '</td>';
+        html += '<td>'+diskSize+'</td>';
+        html += '<td>';
+        if (!_.isNull(poolName)) {
+           html += '<a href="#pools/'+ poolName +'">'+ poolName + '</a>';
+        }
+        html += '</td>';
+        html += '<td>'+diskModel+'</td>';
+        html += '<td>'+diskTransport+'</td>';
+        html += '<td>'+diskVendor+'</td>';
+        if (!smartAvailable) {
+           html +='<td>Not Supported</td>';
+        }else{
+            html += '<td>';
+            if (smartEnabled) {
+		html += '<input type="checkbox" data-disk-name="' + diskName + '" data-size="mini" checked></input>';
+	    } else {
+		html += '<input type="checkbox" data-disk-name="' + diskName + '" data-size="mini"></input>';
+	    }
+	    html += '</td>';
+        }
+        html += '</tr>';
+        });
+	    return new Handlebars.SafeString(html);
+        });
+     },
 
     smartToggle: function(event, state){
       var disk_name = $(event.target).attr('data-disk-name');

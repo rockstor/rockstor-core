@@ -22,41 +22,42 @@
 <div class="row">
   <div class="col-md-8">
     <div class="panel panel-default">
-    <div class="panel-heading">Configure <%= service.get('display_name') %></div>
+    <div class="panel-heading">Configure {{serviceName}}</div>
     <div class="panel-body">
       <form class="form-horizontal" id="ldap-form" name="aform">
         <div class="messages"></div>
         <div class="form-group">
           <label class="col-sm-4 control-label" for="server">LDAP Server<span class="required"> *</span></label>
           <div class="col-sm-4">
-            <input class="form-control" type="text" id="server" name="server" value="<%= config.server %>" placeholder="LDAP Server" title="IP address of LDAP Server">
+            <input class="form-control" type="text" id="server" name="server" value="{{config.server}}" placeholder="LDAP Server" title="IP address of LDAP Server">
           </div>
         </div>
         <div class="form-group">
           <label class="col-sm-4 control-label" for="basedn">Search base DN<span class="required"> *</span></label>
           <div class="col-sm-4">
-            <input class="form-control" type="text" id="basedn" name="basedn" value="<%= config.basedn %>" placeholder="Search base DN" title="Distinguished Name ">
+            <input class="form-control" type="text" id="basedn" name="basedn" value="{{config.basedn}}" placeholder="Search base DN" title="Distinguished Name ">
           </div>
         </div>
 	<div class="checkbox">
           <label class="col-sm-4 control-label" for="enableTLS"></label>
-	    <% if (config.enabletls) { %>
+          {{#if config.enabletls}}
             <div class="col-sm-4">
-            <input type="checkbox" name="enabletls" id="enabletls"
-	    checked="true"></div>
-	    <% } else { %>
+            <input type="checkbox" name="enabletls" id="enabletls" checked="true">
+            </div>
+	    {{else}}
       <div class="col-sm-4">
 	    <input type="checkbox" name="enabletls" id="enabletls">
-	    <% } %> Enable TLS to encrypt connections?</div>
+	    {{/if}}
+	     Enable TLS to encrypt connections?</div>
         </div>
-        <% if (config.enabletls) { %>
+        {{#if config.enabletls}}
           <div class="form-group" id="cert-ph">
-          <% } else { %>
+           {{else}}
             <div class="form-group" id="cert-ph" style="visibility: hidden">
-        <% } %>
+        {{/if}}
           <label class="col-sm-4 control-label" for="cert-utl">Certificate URL<span class="required"> *</span></label>
           <div class="col-sm-4">
-            <input type="text" class="form-control" id="cert" name="cert" value="<%= config.cert %>" placeholder="Certificate URL" title="URL to download Certificate in PEM format">
+            <input type="text" class="form-control" id="cert" name="cert" value="{{config.cert}}" placeholder="Certificate URL" title="URL to download Certificate in PEM format">
           </div>
         </div>
         <div class="form-group">

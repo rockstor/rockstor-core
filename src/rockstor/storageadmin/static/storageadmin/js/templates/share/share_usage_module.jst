@@ -20,8 +20,8 @@
 </script>
 
 <div id="ph-share-info">
-  Created on <%= moment(share.get("toc")).format(RS_DATE_FORMAT) %> <br>
-  Pool: <a href="#pools/<%= share.get('pool').name %>"><%= share.get('pool').name %></a> 
+  Created on {{shareCreatedDate}} <br>
+  Pool: <a href="#pools/{{poolName}}">{{poolName}}</a> 
 </div>
 <br><br>
 <div id="chart"></div>

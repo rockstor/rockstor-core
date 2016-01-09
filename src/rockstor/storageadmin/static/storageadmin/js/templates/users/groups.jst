@@ -35,22 +35,12 @@
         </tr>
       </thead>
       <tbody>
-        <% groups.each(function(group, index) { %>
-	<% if (group.get('admin')) { %>
-           <tr>
-	    <td><i class="fa fa-group"></i> <%= group.get("groupname") %></td>
-            <td><%= group.get("gid") %></td>
-            <td>
-              <a href="#" class="delete-group" data-groupname="<%= group.get('groupname') %>" rel="tooltip" title="Delete group"><i class="glyphicon glyphicon-trash"></i></a>
-            </td>
-          </tr>
-	  <% } %>
-        <% }); %>
+      {{display_groups_table true}}
       </tbody>
     </table>
     <a href="#add-group" id="add-group" class="btn btn-primary">Add Group</a>
     <nav>
-    <div class="ph-pagination"></div>
+    <div>{{pagination}}</div>
     </nav>
 
     <h3> Other system groups </h3>
@@ -63,20 +53,10 @@
         </tr>
       </thead>
       <tbody>
-	<% groups.each(function(group, index) { %>
-	<% if (!group.get('admin')) { %>
-           <tr>
-	    <td><i class="fa fa-group"></i> <%= group.get("groupname") %></td>
-            <td><%= group.get("gid") %></td>
-            <td>
-              <a href="#" class="delete-group" data-groupname="<%= group.get('groupname') %>" rel="tooltip" title="Delete group"><i class="glyphicon glyphicon-trash"></i></a>
-            </td>
-          </tr>
-	  <% } %>
-        <% }); %>
+       {{display_groups_table false}}
       </tbody>
       </table>
-      <div class="ph-pagination"></div>
+      <div>{{pagination}}</div>
 
   </div> <!-- col-md-12 -->
 </div> <!-- row -->

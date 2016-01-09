@@ -38,6 +38,7 @@ UpdateCertificateView = RockstorLayoutView.extend({
     this.certificate = new Certificate();
     this.certificates = new Certificate();
     this.dependencies.push(this.certificates);
+    this.initHandlebarHelpers();
   },
 
   render: function() {
@@ -110,5 +111,18 @@ UpdateCertificateView = RockstorLayoutView.extend({
       }
     });
     return this;
+  },
+
+  initHandlebarHelpers: function(){
+    Handlebars.registerHelper('display_message', function(){
+      var html = '';
+      if (_.isEmpty(name)) {
+      html += 'A self signed Certificate created during installation is in use by default.';
+      } else {
+      html += 'Admin provided Certificate<strong>(' + name + ')</strong> is currently in use.';
+      }
+      return new Handlebars.SafeString(html);
+    });
   }
+
 });

@@ -178,7 +178,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     if (this.maximized) {
       // initialize disk-select
       this.$('#disk-details-ph').html(this.diskUtilSelect({
-        disks: this.disks
+          disks: this.disks.toJSON()
       }));
       if (this.selectedDisk) {
         this.$('#disk-select').val(this.selectedDisk);
@@ -392,7 +392,7 @@ DiskUtilizationWidget = RockStorWidgetView.extend({
     this.renderTopDisks();
     if (this.maximized) {
       this.$('#disk-details-ph').html(this.diskUtilSelect({
-        disks: this.disks
+          disks: this.disks.toJSON()
       }));
       if (this.selectedDisk) {
         this.$('#disk-select').val(this.selectedDisk);

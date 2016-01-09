@@ -20,11 +20,7 @@
 </script>
 
 <div class="messages"></div>
-<% if ( !status ) {%>
-<div class="alert alert-warning">
-  <strong>Warning!</strong> Rock-on service is not running. Please turn it on to use features on this screen.
-</div>
-<% } else { %>
+{{#if status}}
 <span class="h2">Rock-ons</span>
 <div class="pull-right">
   <a id="js-update-rockons" class="btn btn-primary pull-right" href="#" title="Check for new Rock-ons"><i class="glyphicon glyphicon-refresh "></i> Update</a>
@@ -37,119 +33,12 @@
 </ul>
 
 <div class="css-panes">
-
   <div>
-    <% var installed = 0; %>
-    <% rockons.each(function(rockon, index) { %>
-      <% if (rockon.get('state') == 'installed' || rockon.get('state').match('pending')) { %>
-      <% installed += 1; %>
-      <div id="js-rockons-installed" class="tab-section" style="position: relative">
-	<% if (rockon.get('state').search('pending') > -1 || rockon.get('status').search('pending') > -1) { %>
-	<% var text = 'Installing ...'; %>
-	<% if (rockon.get('state') == 'pending_uninstall') { %>
-	<% text = 'Uninstalling ...'; %>
-	<% } else if (rockon.get('status') == 'pending_start') { %>
-	<% text = 'Starting ...'; %>
-	<% } else if (rockon.get('status') == 'pending_stop') { %>
-	<% text = 'Stopping ...'; %>
-	<% } %>
-	<div class="overlay">
-	  <div class="text-center">
-	    <i class="fa fa-3x fa-cog fa-spin"></i>
-	    <div>
-	      <p class="lead"><%= text %></p>
-	    </div>
-	  </div>
-	</div>
-	<% } %>
-
-	<div class="row">
-
-	  <div class="col-md-6">
-	    <a href="<%= rockon.get('website') %>" target="_blank"><h3><u><%= rockon.get('name') %></u></h3></a>
-	    <p><%= rockon.get('description') %></p>
-	    <h4>Current status: <%= rockon.get('status') %></h4>
-
-	  </div>
-	  <div class="col-md-3"></div>
-	  <div class="col-md-3">
-	    <% if (rockon.get('state') == 'installed' && !rockon.get('status').match('pending')) { %>
-		      <% if (rockon.get('status') == 'started') { %>
-            <input type="checkbox" name="rockon-status-checkbox" data-rockon-id="<%= rockon.get('id') %>" data-size="mini" checked />
-		      <% } else { %>
-            <input type="checkbox" name="rockon-status-checkbox" data-rockon-id="<%= rockon.get('id') %>" data-size="mini" />
-		      <% } %>
-        <a id="js-rockon-settings" href="#" class="settings" data-rockon-id="<%= rockon.get('id') %>"><i class="glyphicon glyphicon-wrench"></i></a>&nbsp;&nbsp
-	      <% if (rockon.get('more_info')) { %>
-	      <a id="js-rockon-info" href="#" class="moreinfo" data-rockon-id="<%= rockon.get('id') %>"><i class="fa fa-info-circle"></i></a>
-	      <% } %>
-	      <br><br>
-	      <% if (ui_map[rockon.get('id')]) { %>
-	      <% if (rockon.get('status') == 'started') { %>
-	      <a href="<%= ui_map[rockon.get('id')] %>" target="_blank" class="btn btn-primary"><%= rockon.get('name') %> UI</a>
-	      <% } else { %>
-
-	      <a href="#" class="btn btn-primary disabled" title="Switch on to access the UI"><%= rockon.get('name') %> UI</a>
-	      <% } %>
-	      <% } %>
-	      <% if (rockon.get('status') != 'started') { %>
-	      <a id="js-uninstall-rockon" class="btn btn-danger" data-name="<%= rockon.get('id') %>">Uninstall</a>
-	      <% } %>
-
-	      <% } %>
-	  </div>
-	</div>
-      </div>
-      <% } %>
-    <% }); %>
-    <% if (installed == 0) { %>
-
-    <div class="tab-section">
-      <div class="row">
-	<div class="col-md-12">
-	  <h3>There are no Rock-ons installed currently.</h3>
-	</div>
-      </div>
-    </div>
-    <% } %>
+    {{display_installedRockons}}
   </div>
 
-
-
   <div id="js-rockons-available">
-    <% var all = 0; %>
-    <% rockons.each(function(rockon, index) { %>
-      <% if (rockon.get('state') == 'available' || rockon.get('state') == 'install_failed') { %>
-      <% all += 1; %>
-     <div class="tab-section">
-	<div class="row">
-	  <div class="col-md-12">
-	    <a href="<%= rockon.get('website') %>" target="_blank"><h3><%= rockon.get('name') %></h3></a>
-	    <p><%= rockon.get('description') %></p>
-	    <% if (rockon.get('state') == 'install_failed')  { %>
-	    <strong>Failed to install in the previous attempt.</strong> Here's how you can proceed.
-	    <ul>
-	      <li>Check logs in /opt/rockstor/var/log for clues.</li>
-	      <li>Install again.</li>
-	      <li>If the problem persists, post on the <a href="http://forum.rockstor.com" target="_blank">Forum</a> or email support@rockstor.com</li>
-	    </ul>
-	    <% } %>
-	    <a id="js-install-rockon" class="btn btn-primary pull-right" href="#" data-name="<%= rockon.get('id') %>">Install</a>
-	  </div>
-	</div>
-      </div>
-	<% } %>
-      <% }); %>
-
-    <% if (all == 0) { %>
-      <div class="tab-section">
-	<div class="row">
-	  <div class="col-md-12">
-	    <h3>Click on Update button to check for new Rock-ons.</h3>
-	  </div>
-	</div>
-      </div>
-    <% } %>
+    {{display_allRockons}}
   </div>
 </div>
 
@@ -164,4 +53,8 @@
     <div id="install-rockon-modal-contents"></div>
   </div>
 </div>
-<% } %>
+{{else}}
+<div class="alert alert-warning">
+  <strong>Warning!</strong> Rock-on service is not running. Please turn it on to use features on this screen.
+</div>
+{{/if}}

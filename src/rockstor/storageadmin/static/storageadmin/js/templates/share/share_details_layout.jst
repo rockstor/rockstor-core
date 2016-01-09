@@ -19,19 +19,12 @@
  */
 </script>
 <div class="messages"></div>
-  <% foundWritableSnapshot = false;
-    snapshots.each(function(snapshot, index) {
-      if(snapshot.get("writable")) {
-        foundWritableSnapshot = true;
-      }
-    });
-  %>
 <div class="pull-right">
   <span id="rollback-btn-ph"></span>
-    <a id="js-clone" class="btn btn-primary" href="#shares/<%= share.get('name') %>/create-clone"><i class="glyphicon glyphicon-book "></i> Clone</a>
+    <a id="js-clone" class="btn btn-primary" href="#shares/{{shareName}}/create-clone"><i class="glyphicon glyphicon-book "></i> Clone</a>
     <button id="js-delete" class="btn btn-danger" type="button" type="button"><i class="glyphicon glyphicon-trash "></i> Delete </button>
 </div>
-<span class="h2"><%= share.get('name') %></span>
+<span class="h2">{{shareName}}</span>
 <div class="alert alert-warning">
   <p>
     Share size enforcement is temporarily disabled due to incomplete support in
@@ -51,7 +44,7 @@
       </div>
       <div class="modal-body">
         <div class="messages"></div>
-        <h4>Share (<%= share.get('name') %>) will be deleted. Are you sure?</h4>
+        <h4>Share ({{shareName}}) will be deleted. Are you sure?</h4>
       </div>
       <div class="modal-footer">
         <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">Cancel</button>
