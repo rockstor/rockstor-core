@@ -26,16 +26,16 @@
 <table class="table table-bordered table-condensed">
   <tr>
     <td>Owner</td>
-    <td><%= share.get("owner") %></td>
+    <td>{{shareOwner}}</td>
   </tr>
   <tr>
     <td>Group</td>
-    <td><%= share.get("group") %></td>
+    <td>{{shareGroup}}</td>
   </tr>
   <tr>
     <td>
       Permissions<br>
-      (<span id="permStrEdit"><%= share.get("perms") %></span>)
+      (<span id="permStrEdit">{{sharePerms}}</span>)
     </td>
     <td>
       <table class="noborder table-condensed">
@@ -47,75 +47,15 @@
         </tr>
         <tr>
           <td>Read</td>
-          <td>
-            <% if (permStr[0] == "1") { %>
-              <input type="checkbox" checked="true" disabled>
-            <% } else { %>
-              <input type="checkbox" disabled>
-            <% } %>
-          </td>
-          <td>
-            <% if (permStr[3] == "1") { %>
-              <input type="checkbox" checked="true" disabled>
-            <% } else { %>
-              <input type="checkbox" disabled>
-            <% } %>
-          </td>
-          <td>
-            <% if (permStr[6] == "1") { %>
-              <input type="checkbox" checked="true" disabled>
-            <% } else { %>
-              <input type="checkbox" disabled>
-            <% } %>
-          </td>
+          {{view_read_permissions}}
         </tr>
         <tr>
           <td>Write</td>
-          <td>
-            <% if (permStr[1] == "1") { %>
-              <input type="checkbox" checked="true" disabled>
-            <% } else { %>
-              <input type="checkbox" disabled>
-            <% } %>
-          </td>
-          <td>
-            <% if (permStr[4] == "1") { %>
-              <input type="checkbox" checked="true" disabled>
-            <% } else { %>
-              <input type="checkbox" disabled>
-            <% } %>
-          </td>
-          <td>
-            <% if (permStr[7] == "1") { %>
-              <input type="checkbox" checked="true" disabled>
-            <% } else { %>
-              <input type="checkbox" disabled>
-            <% } %>
-          </td>
+          {{view_write_permissions}}
         </tr>
         <tr>
           <td>Execute</td>
-          <td>
-            <% if (permStr[2] == "1") { %>
-              <input type="checkbox" checked="true" disabled>
-            <% } else { %>
-              <input type="checkbox" disabled>
-            <% } %>
-          </td>
-          <td>
-            <% if (permStr[5] == "1") { %>
-              <input type="checkbox" checked="true" disabled>
-            <% } else { %>
-              <input type="checkbox" disabled>
-            <% } %>
-          </td>
-          <td>
-            <% if (permStr[8] == "1") { %>
-              <input type="checkbox" checked="true" disabled>
-            <% } else { %>
-              <input type="checkbox" disabled>
-            <% } %>
-          </td>
+          {{view_execute_permissions}}
         </tr>
 
       </table>

@@ -41,15 +41,7 @@
           <label class="col-sm-4 control-label" for="writable">Writable<span class="required"> *</span></label>
           <div class="controls">
 	    <div class="col-sm-8">
-             <% _.each(modify_choices, function(c) { %>
-                <label class="radio-inline">
-                   <% if(c.value == 'yes'){ %>
-                      <input type="radio" name="writable" value="rw" checked> <%= c.name %>
-                   <%  }else{ %>
-                      <input type="radio" name="writable" value="ro" title="Note that (1)read-only snapshots cannot be cloned and (2)Shares cannot be rolled back to read-only snapshots" > <%= c.name %>
-                <%  } %>
-               </label>
-		<% }); %>
+             {{show_writable_options}}
 	    </div>
            </div>
         </div>

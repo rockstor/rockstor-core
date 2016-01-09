@@ -42,26 +42,12 @@
         </tr>
       </thead>
       <tbody>
-        <% networks.each(function(network, index) { %>
-          <tr>
-            <td><i class="glyphicon glyphicon-signal"></i> <%= network.get("name") %></td>
-	    <td><%= network.get("dname") %></td>
-            <td><%= network.get("mac") %></td>
-	    <td><%= network.get("dspeed") %></td>
-	    <td><%= network.get("method") %></td>
-	    <td><%= network.get("ipaddr") %></td>
-            <td><%= network.get("netmask") %></td>
-            <td><%= network.get("gateway") %></td>
-            <td><%= network.get("dns_servers") %></td>
-            <td><%= network.get("itype") %></td>
-            <td>
-              <a href="#network/<%= network.get('name') %>/edit" class="edit-network" data-network="<%= network.get('name') %>"><i class="glyphicon glyphicon-pencil"></i></a>
-            </td>
-          </tr>
-        <% }); %>
+      {{print_networks_tbody}}
       </tbody>
     </table>
-    <div class="ph-pagination"></div>
+    <div>
+    {{pagination}}
+   </div>
 
   </div> <!-- col-md-12 -->
 </div> <!-- row -->

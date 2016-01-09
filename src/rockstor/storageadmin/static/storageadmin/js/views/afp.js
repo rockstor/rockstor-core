@@ -33,7 +33,6 @@ AFPView  = RockstorLayoutView.extend({
   initialize: function() {
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.afp_afp;
-    this.paginationTemplate = window.JST.common_pagination;
     this.module_name = 'afp';
     this.collection = new AFPCollection();
     this.dependencies.push(this.collection);
@@ -45,6 +44,7 @@ AFPView  = RockstorLayoutView.extend({
     this.shares.pageSize = 1000;
     this.dependencies.push(this.shares);
     this.updateFreq = 5000;
+    this.initHandlebarHelpers();
   },
 
   render: function() {
@@ -60,13 +60,29 @@ AFPView  = RockstorLayoutView.extend({
       });
       return !_.isUndefined(s);
     }, this);
+    
+    //check if there are shares in the system
+    var sharesExistBool = false;
+    if(this.shares.length > 0){
+    	sharesExistBool = true;
+    }
+    //check if there are free shares not associated with afp.
+    var freeSharesBool = false;
+    if(this.freeShares){
+      freeSharesBool = true;
+    }
+    //set a variable to true if both conditions are satisfied
+    var verifySharesBool = false;
+    if(freeSharesBool && sharesExistBool){
+    	verifySharesBool = true;
+    }
+
     $(this.el).html(this.template({
       collection: this.collection,
+      collectionNotEmpty : !this.collection.isEmpty(),
       freeShares: this.freeShares,
+      sharesNotEmpty: verifySharesBool,
       service: this.service
-    }));
-    this.$(".ph-pagination").html(this.paginationTemplate({
-      collection: this.collection
     }));
 
     //initalize Bootstrap Switch
@@ -175,6 +191,25 @@ AFPView  = RockstorLayoutView.extend({
     errPopupContent.html(msg);
     statusEl.click(function(){ errPopup.overlay().load(); });
   },
+
+  initHandlebarHelpers: function(){
+    Handlebars.registerHelper('display_afp_shares', function(){
+      var html = '';
+      this.collection.each(function(afpShare) {
+        var afpShareName = afpShare.get("share"),
+        afpShareID = afpShare.id;
+        html += '<tr>';
+        html += '<td>' + afpShareName + '</td>';
+        html += '<td>' + afpShare.get("time_machine") + '</td>';
+        html += '<td>';
+        html += '<a href="#afp/edit/' + afpShareID + '"><i class="glyphicon glyphicon-pencil"></i></a>&nbsp;';
+        html += '<a href="#" class="delete-afp-share" data-share="' + afpShareName + '" data-id="' + afpShareID + '"><i class="glyphicon glyphicon-trash"></i></a>';
+        html += '</td>';
+        html += '</tr>';
+     });
+      return new Handlebars.SafeString(html);
+    });
+  }
 
 });
 

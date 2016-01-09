@@ -41,12 +41,12 @@ VersionView = RockstorLayoutView.extend({
 	// call initialize of base
 	this.constructor.__super__.initialize.apply(this, arguments);
 	this.template = window.JST.update_version_info;
-	this.paginationTemplate = window.JST.common_pagination;
 	this.timeLeft = 300;
 	this.subscriptions = new UpdateSubscriptionCollection();
 	this.dependencies.push(this.subscriptions);
 	this.appliances = new ApplianceCollection();
 	this.dependencies.push(this.appliances);
+	this.initHandlebarHelpers();
     },
 
     render: function() {
@@ -95,10 +95,10 @@ VersionView = RockstorLayoutView.extend({
 	var defaultSub = null;
 	this.subscriptions.each(function(s) {
 	    if (s.get('name') == 'Stable') {
-		stableSub = s;
+		stableSub = s.toJSON();
 	    }
 	    if (s.get('name') == 'Testing') {
-		defaultSub = s;
+		defaultSub = s.toJSON();
 	    }
 	});
 	var currentAppliance = this.appliances.find(function(a) {
@@ -249,9 +249,23 @@ VersionView = RockstorLayoutView.extend({
   	    nextString[i] = logArray[i].substring(namesNum, logArray[i].length);
   	    contributors[i] = nextString[i].split(' @');
 	}
-	changeLogArray.push(changeDescription);
-	changeLogArray.push(issues);
-	changeLogArray.push(contributors);
+	for (var i = 0; i < changeDescription.length; i++) {
+	    var cl = changeDescription[i];
+	    cl += '<a href="https://github.com/rockstor/rockstor-core/issues/';
+	    cl += issues[i];
+	    cl += '" target="_blank"> #';
+	    cl += issues[i];
+	    cl += "</a>";
+
+	    for (var j = 0; j < contributors[i].length; j++) {
+		cl += '<a href="https://github.com/';
+		cl += contributors[i][j];
+		cl += '" target="_blank"> @';
+		cl += contributors[i][j];
+		cl += "</a>";
+	    }
+	    changeLogArray.push(new Handlebars.SafeString(cl));
+	}
 	return changeLogArray;
     },
 
@@ -297,6 +311,27 @@ VersionView = RockstorLayoutView.extend({
 	    success: function(data, status, xhr) {
 		_this.reloadWindow();
 	    }
+	});
+    },
+
+    initHandlebarHelpers: function() {
+	Handlebars.registerHelper('is_sub_active', function(sub, options) {
+	    if (sub && sub.status == 'active') {
+		return options.fn(this);
+	    }
+	    return options.inverse(this);
+	});
+	Handlebars.registerHelper('no_sub_active', function(options) {
+	    if (!this.defaultSub && !this.stableSub) {
+		return options.fn(this);
+	    }
+	    return options.inverse(this);
+	});
+	Handlebars.registerHelper('update_available', function(options) {
+	    if (this.currentVersion != this.mostRecentVersion) {
+		return options.fn(this);
+	    }
+	    return options.inverse(this);
 	});
     }
 });

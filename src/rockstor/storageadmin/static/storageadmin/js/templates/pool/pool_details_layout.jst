@@ -23,16 +23,16 @@
 <!-- page heading -->
 
 <div class="pull-right">
-  <a href="#add_share?poolName=<%= pool.get('name') %>" id="add_share" class="btn btn-primary"><i class="glyphicon glyphicon-edit "></i> Add Share</a>
+  <a href="#add_share?poolName={{poolName}}" id="add_share" class="btn btn-primary"><i class="glyphicon glyphicon-edit "></i> Add Share</a>
   <button id="delete-pool" class="btn btn-danger" type="button"><i class="glyphicon glyphicon-trash "></i> Delete</button>
 </div>
-<span class="h2"><%= pool.get('name') %></span>
-<% if (pool.get('name') == 'rockstor_rockstor') { %>
+<span class="h2">{{poolName}}</span>
+{{#if isPoolNameRockstor}}
    <br>
    <div class="alert alert-danger">
      <h4>Warning! This Pool is created during install and contains the OS. You can create Shares in it like in any other pool on the system. However, operations like resize, compression and deletion are not allowed.</h4>
    </div>
-<% } %>
+   {{/if}}
 <br>
 <br>
 
@@ -83,7 +83,7 @@
 
 <div class="simple-overlay" id="resize-pool-form">
   <div class="col-md-6 well">
-    <h4>Resize Pool(<%= pool.get('name') %>)</h4>
+    <h4>Resize Pool({{poolName}})</h4>
     <div id="alert-msg"></div></br>
     Select new disk(s) to add to the pool or Unselect disk(s) to remove from the pool.<br>
     You cannot add and remove disks simultaneously.<br>

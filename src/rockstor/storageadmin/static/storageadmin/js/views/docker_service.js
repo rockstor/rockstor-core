@@ -58,7 +58,6 @@ DockerServiceView = Backbone.View.extend({
     	if (typeof this.current_status == 'undefined') {
                 this.current_status = this.service.get('status');
     	}
-      console.log("current status is: " + this.current_status);
     	this.$('input[name="rockon-service-checkbox"]').bootstrapSwitch('state', this.current_status, true);
     	this.$("[type='checkbox']").bootstrapSwitch('onColor','success'); //left side text color
     	this.$("[type='checkbox']").bootstrapSwitch('offColor','danger'); //right side text color

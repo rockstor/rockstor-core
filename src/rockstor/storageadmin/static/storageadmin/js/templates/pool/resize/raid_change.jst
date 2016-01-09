@@ -3,20 +3,15 @@
   <div>Select RAID level and add disks</div>
 </div>
 <br>
-<h4>Current raid level: <%= model.get('pool').get('raid') %></h4>
+<h4>Current raid level: {{raidLevel}}</h4>
 
 <form id="raid-change-form">
-  <% var levels = ['raid0', 'raid1', 'raid10', 'raid5', 'raid6']; %>
   <div class="row">
   <div class="form-group col-md-4">
      <label for="raid-level">Select a new raid level</label>
     <select id="raid-level" name="raid-level" class="form-control">
       <option value="">Select a new raid level</option>
-      <% _.each(levels, function(level) { %>
-        <% if (model.get('pool').get('raid') != level) { %>
-          <option value="<%= level %>"><%= level %></option>
-        <% } %>
-      <% }); %>
+      {{display_raid_levels}}
     </select>
     </div>
   </div>

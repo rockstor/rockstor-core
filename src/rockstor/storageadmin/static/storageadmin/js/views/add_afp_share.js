@@ -36,7 +36,7 @@ AddAFPShareView = RockstorLayoutView.extend({
     // dont paginate shares for now
     this.shares.pageSize = RockStorGlobals.maxPageSize;
     this.dependencies.push(this.shares);
-    this.afpShareId = this.options.afpShareId;
+    this.afpShareId = this.options.afpShareId || null;
     this.afpShares = new AFPCollection({afpShareId: this.afpShareId});
     this.dependencies.push(this.afpShares);
      this.yes_no_choices = [
@@ -44,6 +44,7 @@ AddAFPShareView = RockstorLayoutView.extend({
       {name: 'no', value: 'no'},
     ];
     this.time_machine_choices = this.yes_no_choices;
+    this.initHandlebarHelpers();
   },
 
   render: function() {
@@ -53,6 +54,7 @@ AddAFPShareView = RockstorLayoutView.extend({
 
   renderAFPForm: function() {
     var _this = this;
+    var afpShareIdNotNull = false; //afpShareId is Null by default.
     this.freeShares = this.shares.reject(function(share) {
       s = this.afpShares.find(function(afpShare) {
         return (afpShare.get('share') == share.get('name'));
@@ -62,14 +64,16 @@ AddAFPShareView = RockstorLayoutView.extend({
 
      if(this.afpShareId != null){
       this.aShares = this.afpShares.get(this.afpShareId);
+      afpShareIdNotNull = true;
       }else{
       this.aShares = null;
       }
 
     $(this.el).html(this.template({
-      shares: this.freeShares,
+      freeShares: this.freeShares,
       afpShare: this.aShares,
       afpShareId: this.afpShareId,
+      afpShareIdNotNull : afpShareIdNotNull,
       time_machine_choices: this.time_machine_choices,
     }));
 
@@ -126,6 +130,46 @@ AddAFPShareView = RockstorLayoutView.extend({
     event.preventDefault();
     this.$('#add-afp-share-form :input').tooltip('hide');
     app_router.navigate('afp', {trigger: true});
+  },
+
+  initHandlebarHelpers: function(){
+    Handlebars.registerHelper('display_shares_dropdown',function(){
+      var html = '';
+      if (this.afpShareIdNotNull){
+        var afpShare = this.afpShare.get('share');
+        html += '<option value="' + afpShare + '" selected="selected">'+ afpShare + '</option>';
+      }else{
+         _.each(this.freeShares, function(share, index) {
+          var shareName = share.get('name');
+      html += '<option value="' + shareName + '">' + shareName + '</option>';
+        });
+      }
+      return new Handlebars.SafeString(html);
+    });
+
+    Handlebars.registerHelper('display_timeMachine_choices',function(){
+      var html = '';
+      _.each(this.time_machine_choices, function(c) {
+        var choiceName = c.name,
+            choiceValue = c.value;
+        html += '<label class="radio-inline">';
+        if (this.afpShareIdNotNull){
+            if(choiceValue == afpShare.get("time_machine")){
+                html += '<input type="radio" name="time_machine" value="' + choiceValue + '" title="Enable Time Machine support for this Share to backup Macs." checked> ' + choiceName;
+            }else{
+                html += '<input type="radio" name="time_machine" value="' + choiceValue + '" title="Don\'t enable Time Machine support for this Share." > ' + choiceName;
+            }
+         }else {
+           if(choiceValue == 'yes'){
+              html += '<input type="radio" name="time_machine" value="' + choiceValue + '" title="Enable Time Machine support for this Share to backup Macs" checked> ' + choiceName;
+           }else{
+              html += '<input type="radio" name="time_machine" value="' + choiceValue + '" title="Don\'t enable Time Machine support for this Share." > ' + choiceName;
+            }
+          }
+        html += '</label>';
+      });
+      return new Handlebars.SafeString(html);
+    });
   }
 
 });

@@ -31,7 +31,7 @@ $(document).ready(function() {
 });
 </script>
 
-<% if (taskDefId == null) { %>
+{{#if taskDefIdNull}}
 <div class="row">
 <div class="col-md-8">
   <div class="panel panel-default">
@@ -50,9 +50,7 @@ $(document).ready(function() {
 	  </div>
 	  <div class="col-sm-4">
             <select class="form-control" id="task-type" name="task_type">
-              <% _.each(taskTypes, function(taskType, index) { %>
-              <option value="<%= taskType %>"> <%= taskType %> </option>
-              <% }); %>
+              {{display_taskType_options}}
             </select>
 	  </div>
 	</div>
@@ -84,8 +82,7 @@ $(document).ready(function() {
 </div><!-- panel-default-->
 </div>
   <!-- col-md-8 -->
-
-  <% } else { %>
+{{else}}
   <div class="row">
     <div class="col-md-8">
 <div class="panel panel-default">
@@ -95,69 +92,69 @@ $(document).ready(function() {
           <div class="form-group">
             <label class="control-label col-sm-4" for="share">Task name: </label>
             <div class="col-sm-6">
-              <input type="text" class="form-control" value="<%= taskDef.get('name') %>" disabled />
+              <input type="text" class="form-control" value="{{taskObj.name}}" disabled />
             </div>
           </div>
           <div class="form-group">
             <label class="control-label col-sm-4" for="share">Task type: </label>
             <div class="col-sm-6">
-              <input type="text" class="form-control" value="<%= taskDef.get('task_type') %>" disabled />
+              <input type="text" class="form-control" value="{{taskObj.type}}" disabled />
             </div>
           </div>
           <!-- Type dependent fields -->
-          <% if (taskDef.get('task_type') == 'snapshot') { %>
+          {{#if isSnapshot}}
           <div class="form-group">
             <label class="control-label col-sm-4" for="share">Share: </label>
             <div class="col-sm-6">
-              <input type="text" class="form-control" value="<%= taskDef.share() %>" disabled />
+              <input type="text" class="form-control" value="{{taskObj.share}}" disabled />
             </div>
           </div>
           <div class="form-group">
             <label class="control-label col-sm-4" for="share">Snapshot prefix: </label>
             <div class="col-sm-6">
-              <input type="text" class="form-control" value="<%= taskDef.prefix() %>" disabled />
+              <input type="text" class="form-control" value="{{taskObj.prefix}}" disabled />
             </div>
           </div>
-          <% } else { %>
+          {{else}}
           <div class="form-group">
             <label class="control-label col-sm-4" for="share">Pool: </label>
             <div class="col-sm-6">
-              <input type="text" class="form-control" value="<%= taskDef.pool() %>" disabled />
+              <input type="text" class="form-control" value="{{taskObj.pool}}" disabled />
             </div>
           </div>
-          <% } %>
+          {{/if}}
 
-          <% if (taskDef.get('task_type') == 'snapshot') { %>
+           {{#if isSnapshot}}
           <div class="form-group">
             <label class="control-label col-sm-4" for="max_count">Maximum count<span class="required"> *</span></label>
 	    <div class="col-sm-6">
-              <input class="form-control" type="text" id="max_count" name="meta.max_count" value="<%= taskDef.max_count() %>" title="Older snapshots beyond this number and created by this task will be deleted">
+              <input class="form-control" type="text" id="max_count" name="meta.max_count" value="{{taskObj.maxCount}}" title="Older snapshots beyond this number and created by this task will be deleted">
 	    </div>
-
           </div>
+          
 	  <div class="form-group">
 	    <div class="col-sm-offset-4 col-sm-6">
 	      <div class="checkbox">
 		<label>
-		  <% if (taskDef.visible()) { %>
+		{{#if taskObj.visible}}
 		  <input class="checkbox" type="checkbox" checked="true" id="visible" name="meta.visible" title="Make snapshots visible to the end user"> Make snapshots visible?
-		  <% } else { %>
+		  {{else}}
 		  <input class="checkbox" type="checkbox" id="visible" name="meta.visible" title="Make snapshots visible to the end user"> Make snapshots visible?
-		  <% } %>
+		  {{/if}}
 		</label>
 	      </div>
 	    </div>
 	  </div>
-          <% } %>
+          {{/if}}
           <div class="form-group">
 	    <div class="col-sm-offset-4 col-sm-6">
 	      <div class="checkbox">
 		<label>
-              <% if (taskDef.get('enabled')) { %>
+              {{#if taskObj.enabled}}
               <input class="checkbox" type="checkbox" checked="true" id="enabled" name="enabled" title="Disabled tasks will be created but not run till they are enabled">Enable task?
-              <% } else { %>
+              {{else}}
               <input class="checkbox" type="checkbox" id="enabled" name="enabled" title="Disabled tasks will be created but not run till they are enabled">Enable task?
-              <% } %>
+              {{/if}}
 	      </label>
 	      </div>
             </div>
@@ -179,4 +176,4 @@ $(document).ready(function() {
   </div><!--panel-->
     </div>
   </div>
-  <% } %>
+{{/if}}

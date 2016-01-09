@@ -22,7 +22,7 @@
   <div class="span8">
     <label class="control-label"></label>
         <div class="messages">
-        <% if (_.isNull(email)) { %>
+        {{#if isEmailNull}}
         <div class="controls">
 	  <div class="alert alert-warning">
 	    <p>Rockstor can push notifications to you via e-mail. We recommend
@@ -32,7 +32,7 @@
 	      personal gmail account.</p>
 	  </div>
       	<button type="Submit" id="Add-email-address" class="btn btn-primary" title="Add an e-mail account to be used for sending notifications.">Add an E-mail account</button>
-        <%} else { %>
+        {{else}}
 	<div class="alert alert-warning">
 	  <p>Rockstor uses the credentials below to send e-mail notifications. Any
 	    system information sent to the root user results in a
@@ -62,9 +62,9 @@
           </thead>
           <tbody>
             <tr>
-              <td><%= email.get('sender') %></td>
-	      <td><%= email.get('receiver') %></td>
-	      <td><%= email.get('smtp_server') %></td>
+              <td>{{emailObj.sender}}</td>
+              <td>{{emailObj.receiver}}</td>
+              <td>{{emailObj.server}}</td>
               <td>
                 <a href="#" class="email-delete" id="email-delete" rel="tooltip" title="Delete email"><i class="glyphicon glyphicon-trash"></i></a>
 		<a href="#" class="send-test-message" id="send-test-message" rel="tooltip" title="Send a test e-mail"><i class="glyphicon glyphicon-send"></i></a>
@@ -72,15 +72,14 @@
             </tr>
           </tbody>
         </table>
-        <% } %>
-
+        {{/if}}
         </div>
 
         </div>
   </div>
 </div>
 
-<% if (!_.isNull(email)) { %>
+{{#if isEmailNull}}
 <div id="test-message-confirm" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -89,9 +88,9 @@
 	<h3 id="myModalLabel">Test e-mail sent successfully.</h3>
       </div>
       <div class="modal-body">
-	<p>Test e-mail is sent successfully from <code><%= email.get('sender') %></code> to <code><%= email.get('receiver') %></code>. It could take up to several minutes for the e-mail to arrive. If you do not receive it, check <code>/var/log/maillog</code> for clues. You may want to verify the input, delete and add the E-mail account again.</p>
+	<p>Test e-mail is sent successfully from <code>{{emailObj.sender}}</code> to <code>{{emailObj.receiver}}</code>. It could take up to several minutes for the e-mail to arrive. If you do not receive it, check <code>/var/log/maillog</code> for clues. You may want to verify the input, delete and add the E-mail account again.</p>
       </div>
     </div>
   </div>
 </div>
-<% } %>
+{{/if}}

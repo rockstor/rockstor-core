@@ -38,55 +38,31 @@
 <div id="details-header">
 <span class="h3">Replication Receive Tasks on this appliance</span>
 </div>
-<% if (!replicaShares.isEmpty()) { %>
-<div class="row">
-<div class="col-md-12">
-<div class="messages"></div>
-<!-- Content -->
-<table id="replica-receives-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of replica receives">
-<thead>
-<tr>
-<th scope="col" abbr="Received Task ID">Received Task ID </th>
-<th scope="col" abbr="Source Appliance">Source Appliance </th>
-<th scope="col" abbr="Source Share">Source Share </th>
-<th scope="col" abbr="Destination Pool">Destination Pool</th>
-<th scope="col" abbr="Destination Share">Destination Share</th>
-<th scope="col" abbr="Last">Last receive</th>
-</tr>
-</thead>
-<tbody>
-<% replicaShares.each(function(r, index) { %>
-<tr>
-<td><%= r.id %>&nbsp;<a href="#" data-rshare-name="<%= r.get('share') %>" data-rshare-id="<%= r.id %>" data-action="delete"><i class="glyphicon glyphicon-trash" rel="tooltip" title="Delete"></i></a></td>
-<td><%= r.get('appliance') %></td>
-<td><%= r.get('src_share') %></td>
-<td><a href="#pools/<%= r.get('pool') %>"><%= r.get('pool') %></a></td>
-<td><%= r.get('share') %></td>
-<td>
-<% if (replicaReceiveTrailMap[r.id]) { %>
-<% if (replicaReceiveTrailMap[r.id].length > 0) { %>
-<% var rrt = replicaReceiveTrailMap[r.id][0]; %>
-<% if (rrt.get('status') == 'failed') { %>
-<a href="#replication-receive/<%= r.id %>/trails" class="replica-trail"><i class="glyphicon glyphicon-warning-sign"></i> <%= rrt.get('status') %></a>
-<% } else if (rrt.get('status') == 'pending') { %>
-<a href="#replication-receive/<%= r.id %>/trails" class="replica-trail"><%= rrt.get('status') %></a>
-
-<% } else if (rrt.get('status') == 'succeeded') { %>
-<a href="#replication-receive/<%= r.id %>/trails" class="replica-trail"><%= moment(rrt.get('end_ts')).fromNow() %></a>
-<% } %>
-<% } %>
-<% } %>
-
-</td>
-</tr>
-<% }); %>
-</tbody>
-</table>
-<div class="ph-pagination"></div>
-</div> <!-- col-md-12 -->
-</div> <!-- row -->
-<% } else { %>
-<div class="alert alert-warning"><h4>No replication receives on this appliance</h4></div>
-<% } %>
+{{#if collectionNotEmpty}}
+    <div class="row">
+    <div class="col-md-12">
+    <div class="messages"></div>
+    <!-- Content -->
+    <table id="replica-receives-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of replica receives">
+    <thead>
+    <tr>
+    <th scope="col" abbr="Received Task ID">Received Task ID </th>
+    <th scope="col" abbr="Source Appliance">Source Appliance </th>
+    <th scope="col" abbr="Source Share">Source Share </th>
+    <th scope="col" abbr="Destination Pool">Destination Pool</th>
+    <th scope="col" abbr="Destination Share">Destination Share</th>
+    <th scope="col" abbr="Last">Last receive</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{replication_receive_table}}
+    </tbody>
+    </table>
+    <div>{{pagination}}</div>
+    </div> <!-- col-md-12 -->
+    </div> <!-- row -->
+{{else}} 
+    <div class="alert alert-warning"><h4>No replication receives on this appliance</h4></div>
+{{/if}}
 </div> <!-- col-md-12 -->
 </div> <!-- row -->

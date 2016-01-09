@@ -5,17 +5,7 @@
     <div class="form-box">
       <form id="custom-choice-form" name="aform" class="form-horizontal">
 	<div class="messages"></div>
-	<% cc.each(function(cci, index) { %>
-	<div class="form-group">
-	    <label class="col-sm-3 control-label" for="cc"><%= cci.get('label')%><span class="required"> *</span></label>
-	    <div class="controls">
-	      <div class="col-sm-6">
-		<input class="form-control" type="text" id="<%= cci.id %>" name="<%= cci.id %>" value="<%= cci.get('val')%>">
-	      </div>
-	      &nbsp;&nbsp<i class="fa fa-info-circle fa-lg" title="<%= cci.get('description') %>" rel="tooltip"></i>
-	    </div>
-	</div>
-	<% }); %>
+	{{display_ccForm}}
       </form>
     </div>
   </div>

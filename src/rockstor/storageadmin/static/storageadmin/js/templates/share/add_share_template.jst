@@ -36,25 +36,7 @@
         <label for="pool_name" class="col-xs-4 control-label">Pool <span class="required">*</span></label>
         <div class="col-sm-6">
           <select class="form-control" id="pool_name" name="pool_name" title="Select pool the share should belong to">
-  	  <% if(poolName == ''){%>
-            <% pools.each(function(pool, index) { %>
-            <% if (index > 0) { %>
-            <option value="<%= pool.get('name') %>"> <%= pool.get('name') %> </option>
-            <% } else{ %>
-            <option value="<%= pool.get('name') %>" selected="selected"> <%= pool.get('name') %> </option>
-            <% } %>
-            <% }); %>
-  	  <%} else { %>
-            <% pools.each(function(pool, index) { %>
-            <% if (index >= 0) { %>
-            <% if(poolName != pool.get('name')){ %>
-            <option value="<%= pool.get('name') %>"> <%= pool.get('name') %> </option>
-            <% }else{ %>
-            <option value="<%= pool.get('name') %>" selected="selected"> <%= pool.get('name') %> </option>
-            <% } %>
-            <% } %>
-            <% }); %>
-  	  <% } %>
+          {{print_pool_names}}
           </select>
         </div>
       </div>

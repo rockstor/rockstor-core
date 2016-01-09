@@ -25,53 +25,71 @@
  */
 
 AccessKeysView = RockstorLayoutView.extend({
-  events: {
-    "click a[data-action=delete]": "deleteAccessKey"
-  },
+	events: {
+		"click a[data-action=delete]": "deleteAccessKey"
+	},
 
-  initialize: function() {
-    this.constructor.__super__.initialize.apply(this, arguments);
-    this.template = window.JST.access_keys_access_keys;
-    this.collection = new AccessKeyCollection();
-    this.dependencies.push(this.collection);
-    this.collection.on("reset", this.renderAccessKeys, this);
-  },
+	initialize: function() {
+		this.constructor.__super__.initialize.apply(this, arguments);
+		this.template = window.JST.access_keys_access_keys;
+		this.collection = new AccessKeyCollection();
+		this.dependencies.push(this.collection);
+		this.collection.on("reset", this.renderAccessKeys, this);
+		this.initHandlebarHelpers();
+	},
 
-  render: function() {
-    this.fetch(this.renderAccessKeys, this);
-    return this;
-  },
+	render: function() {
+		this.fetch(this.renderAccessKeys, this);
+		return this;
+	},
 
-  renderAccessKeys: function() {
-    $(this.el).html(this.template({
-      collection: this.collection,
-    }));
-  },
+	renderAccessKeys: function() {
+		$(this.el).html(this.template({
+			collection: this.collection,
+			collectionNotEmpty: !this.collection.isEmpty(),
+		}));
+	},
 
-  deleteAccessKey: function(event) {
-    var _this = this;
-    var button = $(event.currentTarget);
-    if (buttonDisabled(button)) return false;
-    var name = button.attr('data-name');
-     if(confirm("Delete access key:  " + name + " ...Are you sure?")){
-      disableButton(button);
-      $.ajax({
-        url: "/api/oauth_app/" + name,
-        type: "DELETE",
-        dataType: "json",
-        success: function() {
-          _this.collection.fetch({reset: true});
-          enableButton(button);
-        },
-        error: function(xhr, status, error) {
-          enableButton(button);
-        }
-      });
-    }
+	deleteAccessKey: function(event) {
+		var _this = this;
+		var button = $(event.currentTarget);
+		if (buttonDisabled(button)) return false;
+		var name = button.attr('data-name');
+		if(confirm("Delete access key:  " + name + " ...Are you sure?")){
+			disableButton(button);
+			$.ajax({
+				url: "/api/oauth_app/" + name,
+				type: "DELETE",
+				dataType: "json",
+				success: function() {
+					_this.collection.fetch({reset: true});
+					enableButton(button);
+				},
+				error: function(xhr, status, error) {
+					enableButton(button);
+				}
+			});
+		}
 
-  }
+	},
+
+	initHandlebarHelpers: function(){
+		Handlebars.registerHelper('display_accessKeys_table', function(){
+			var html = '';
+			this.collection.each(function(c) {
+				var clientName = c.get('name');
+				html += '<tr>';
+				html += '<td>' + clientName + '</td>';
+				html += '<td style="vertical-align: top">' + c.get("client_id") + '</td>';
+				html += '<td style="vertical-align: top">' + c.get("client_secret") + '</td>';
+				html += '<td><a id="delete-access-key" data-name="' + clientName + '" data-action="delete" rel="tooltip" title="Delete access key"><i class="glyphicon glyphicon-trash"></i></a></td>';
+				html += '</tr>';
+			}); 
+			return new Handlebars.SafeString(html); 
+		});
+	}
 
 });
 
-// Add pagination
+//Add pagination
 Cocktail.mixin(AccessKeysView, PaginationMixin);

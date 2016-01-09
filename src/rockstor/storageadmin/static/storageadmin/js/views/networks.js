@@ -29,8 +29,8 @@ NetworksView = Backbone.View.extend({
     initialize: function() {
 	this.template = window.JST.network_networks;
 	this.collection = new NetworkInterfaceCollection();
-	this.paginationTemplate = window.JST.common_pagination;
 	this.collection.on('reset', this.renderNetworks, this);
+  this.initHandlebarHelpers();
     },
 
     render: function() {
@@ -44,13 +44,34 @@ NetworksView = Backbone.View.extend({
 	var _this = this;
 	$(this.el).empty();
 	$(this.el).append(this.template({
-	    networks: this.collection
-	}));
-	this.$(".ph-pagination").html(this.paginationTemplate({
-	    collection: this.collection
+	    collection: this.collection,
 	}));
 	setApplianceName();
     },
+
+    initHandlebarHelpers: function(){
+      Handlebars.registerHelper('print_networks_tbody', function() {
+        var html = '';
+        this.collection.each(function(network, index) {
+          var networkName = network.get('name');
+          html += '<tr>';
+          html += '<td><i class="glyphicon glyphicon-signal"></i> ' +  networkName + '</td>';
+          html += '<td>' + network.get("dname") + '</td>';
+          html += '<td>' + network.get("mac") + '</td>';
+          html += '<td>' + network.get("dspeed") + '</td>';
+          html += '<td>' + network.get("method") + '</td>';
+          html += '<td>' + network.get("ipaddr") + '</td>';
+          html += '<td>' + network.get("netmask") + '</td>';
+          html += '<td>' + network.get("gateway") + '</td>';
+          html += '<td>' + network.get("dns_servers") + '</td>';
+          html += '<td>' + network.get("itype") + '</td>';
+          html += '<td><a href="#network/'+ networkName + '/edit" class="edit-network" data-network="' + networkName + '"><i class="glyphicon glyphicon-pencil"></i></a>';
+          html += '</td>';
+          html += '</tr>';
+         });
+          return new Handlebars.SafeString(html);
+      });
+    }
 
 });
 

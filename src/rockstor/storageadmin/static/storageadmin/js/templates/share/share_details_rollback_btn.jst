@@ -1,6 +1,6 @@
-<% if (snapshots.isEmpty() || !foundWritableSnapshot) { %>
+{{#if rollbackBtnDisabler}}
   <a id="js-rollback" class="btn btn-primary disabled" title="At least one writable snapshot must exist to rollback to."><i class="glyphicon glyphicon-repeat "></i> Rollback</a>
-<% } else { %>
-  <a id="js-rollback" class="btn btn-primary" href="#shares/<%= share.get('name') %>/rollback"><i class="glyphicon glyphicon-repeat "></i> Rollback</a>
-<% } %>
+{{else}} 
+  <a id="js-rollback" class="btn btn-primary" href="#shares/{{shareName}}/rollback"><i class="glyphicon glyphicon-repeat "></i> Rollback</a>
+{{/if}}
 

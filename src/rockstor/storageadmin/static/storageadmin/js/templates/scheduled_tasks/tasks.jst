@@ -19,14 +19,10 @@
  */
 </script>
 
-<h4>Task history for <%= taskDef.get('name') %> &nbsp;
-(<% if (taskDef.get('task_type') == 'snapshot') { %>
-  Snapshot of Share[<%= JSON.parse(taskDef.get('json_meta')).share %>]
-<% } else { %>
-  Scrub of Pool[<%= JSON.parse(taskDef.get('json_meta')).pool %>]
-<% } %>)
+<h4>Task history for {{taskName}} &nbsp;
+({{display_snapshot_scrub}})
 </h4>
-<% if (!tasks.isEmpty()) { %>
+{{#if collectionNotEmpty}}
   <div class="row">
     <div class="col-md-12">
       <div class="messages"></div>
@@ -41,27 +37,10 @@
           </tr>
         </thead>
         <tbody>
-          <% tasks.each(function(task) { %>
-            <tr>
-              <td><%= task.get('id') %></td>
-              <td><%= moment(task.get('start')).format(RS_DATE_FORMAT) %></td>
-              <td>
-                <% if (task.get('end')) { %>
-                  <%= moment(task.get('end')).format(RS_DATE_FORMAT) %>
-                <% } %>
-              </td>
-              <td><%= task.get('state') %></td>
-              <td>
-                <% if (task.get('end')) { %>
-                  <%= moment(task.get('end')).from(moment(task.get('start'))) %>
-                <% } else { %>
-                <% } %>
-              </td>
-            </tr>
-          <% }); %>
+          {{display_taskHistory_tbody}}
         </tbody>
       </table>
-      <div class="pagination-ph"></div>
+      <div>{{pagination}}</div>
     </div>
   </div>
-<% } %>
+{{/if}}

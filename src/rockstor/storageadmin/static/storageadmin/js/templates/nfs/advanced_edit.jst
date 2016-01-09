@@ -31,14 +31,14 @@
         <div class="form-group">
           <label class="col-sm-4 control-label" for="nfs-text">Automatically added entries</label>
           <div class="col-sm-8">
-            <textarea id="nfs-text-ro" name="nfs-text-ro" rows="5" class="form-control" disabled><%= ro_str %></textarea>
+            <textarea id="nfs-text-ro" name="nfs-text-ro" rows="5" class="form-control" disabled>{{ro_str}}</textarea>
           </div>
         </div>
 
 	      <div class="form-group">
             <label class="col-sm-4 control-label" for="manual-export">Enter manual export entries below.</label>
           <div class="col-sm-8">
-            <textarea id="nfs-text" name="nfs-text" rows="5" columns="40" class="form-control"><%= rw_str %></textarea>
+            <textarea id="nfs-text" name="nfs-text" rows="5" columns="40" class="form-control">{{rw_str}}</textarea>
           </div>
         </div>
 

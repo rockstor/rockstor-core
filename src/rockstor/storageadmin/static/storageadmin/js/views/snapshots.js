@@ -38,7 +38,6 @@ SnapshotsView  = RockstorLayoutView.extend({
     initialize: function() {
 	this.constructor.__super__.initialize.apply(this, arguments);
 	this.template = window.JST.share_snapshots;
-	this.paginationTemplate = window.JST.common_pagination;
 	this.addTemplate = window.JST.share_snapshot_add_template;
 	this.module_name = 'snapshots';
 	this.snapshots = this.options.snapshots;
@@ -57,7 +56,7 @@ SnapshotsView  = RockstorLayoutView.extend({
 	];
 	this.parentView = this.options.parentView;
 	this.collection.on("reset", this.renderSnapshots, this);
-
+  this.initHandlebarHelpers();
     },
 
     render: function() {
@@ -73,8 +72,10 @@ SnapshotsView  = RockstorLayoutView.extend({
 	$(this.el).append(this.template({
 	    snapshots: this.collection,
 	    selectedSnapshots: this.selectedSnapshots,
-	    share: this.share,
 	    shares: this.shares,
+      //add new variables to access from template
+      collection: this.collection,
+      collectionNotEmpty: !this.collection.isEmpty(),
 	}));
 	this.$('[rel=tooltip]').tooltip({
 	    placement: 'bottom'
@@ -82,9 +83,6 @@ SnapshotsView  = RockstorLayoutView.extend({
 	this.$('#snapshots-table').tablesorter({
 	    headers: { 0: {sorter: false}}
 	});
-	this.$(".pagination-ph").html(this.paginationTemplate({
-	    collection: this.collection
-	}));
 	return this;
     },
 
@@ -97,7 +95,7 @@ SnapshotsView  = RockstorLayoutView.extend({
 	event.preventDefault();
 	$(this.el).html(this.addTemplate({
 	    snapshots: this.collection,
-	    share: this.share,
+	    //share: this.share,
 	    shares: this.shares,
 	    modify_choices: this.modify_choices
 
@@ -318,6 +316,101 @@ SnapshotsView  = RockstorLayoutView.extend({
 	this.render();
     },
 
+    initHandlebarHelpers: function(){
+      // add snapshot table helper
+      Handlebars.registerHelper('print_snapshot_tbody', function() {
+        var html = '';
+        var _this = this;
+        this.collection.each(function(snapshot, index) {
+            var snapName = snapshot.get('name'),
+                snapId = snapshot.get('id'),
+                snapVisible = snapshot.get('uvisible'),
+                snapWritable = snapshot.get('writable'),
+                snapShare = snapshot.get('share'),
+                snapUsage = humanize.filesize(snapshot.get('rusage') * 1024),
+                snapExUsage = humanize.filesize(snapshot.get('eusage') * 1024),
+                cameraIcon = '<i class="glyphicon glyphicon-camera"></i>  ',
+                cloneIcon = '<i rel="tooltip" title="Clone snapshot" class="glyphicon glyphicon-book"></i> ',
+                trashIcon = '<i class="glyphicon glyphicon-trash"></i>';
+
+            html += '<tr>';
+            html += '<td>';
+            if (RockstorUtil.listContains(_this.selectedSnapshots, 'name', snapName)) {
+                html += '<input class="js-snapshot-select inline" type="checkbox" name="snapshot-select"' +
+                'data-name="' + snapName + '" data-id="' + snapId + '" checked="checked"></input>';
+            } else {
+                html += '<input class="js-snapshot-select inline" type="checkbox" name="snapshot-select"' +
+                'data-name="' + snapName + '" data-id="' + snapId + '" ></input>';
+            }
+            html += '</td>';
+            html += '<td>' + cameraIcon + snapName + '</td>';
+            html += '<td>' + moment(snapshot.get("toc")).format(RS_DATE_FORMAT) + '</td>';
+            _this.shares.each( function(share, index) {
+              var shareName = share.get('name'),
+                  shareId = share.get('id');
+              if(snapShare == shareId){
+                html += '<td><a href="#shares/' + shareName + '">' + shareName + '</a></td>';
+              }
+            });
+            html += '<td>';
+            if (snapVisible) {
+              html += 'Visible';
+            } else {
+              html += 'Hidden';
+            }
+            html += '</td>';
+            html += '<td>';
+            if (snapWritable) {
+              html += 'Yes';
+            } else {
+              html += 'No';
+            }
+            html += '</td>';
+            html += '<td>' + snapUsage + '</td>';
+            html += '<td>' + snapExUsage + '</td>';
+            html += '<td>';
+      	    _this.shares.each( function(share, index) {
+              var shareName = share.get('name'),
+                  shareId = share.get('id');
+      	        if(snapShare == shareId){
+      	           if (snapWritable) {
+                     html += '<a class="js-snapshot-clone" href="#" data-name="' + snapName + '" data-share-name="' + shareName + '">' + cloneIcon + '</a>';
+      	           }
+      	           html += '<a href="#" class="js-snapshot-delete" id="delete_snapshot_' + snapName + '"' +
+                   'data-name="' + snapName + '" data-size="' + snapExUsage + '"' +
+                   'data-share-name="' + shareName + '" data-action="delete" title="Delete snapshot">' + trashIcon + '</a>';
+      	        }
+      	    });
+            html += '</td>';
+            html += '</tr>';
+          });
+        return new Handlebars.SafeString(html);
+      });
+
+      Handlebars.registerHelper('show_shares_dropdown', function() {
+        var html = '';
+        this.shares.each( function(share, index) {
+          var shareName = share.get('name');
+          html += '<option value="' + shareName + '">' + shareName + '</option>';
+        });
+          return new Handlebars.SafeString(html);
+      });
+
+      Handlebars.registerHelper('display_writeable_options', function() {
+        var html = '';
+        _.each(this.modify_choices, function(c) {
+           html += '<label class="radio-inline">';
+           if(c.value == 'yes'){
+              html += '<input type="radio" name="writable" value="rw" checked>' + c.name;
+           }else{
+              html += '<input type="radio" name="writable" value="ro" title="Note that (1)read-only snapshots cannot be cloned and (2)Shares cannot be rolled back to read-only snapshots" >' + c.name;
+           }
+           html += '</label>';
+         });
+          return new Handlebars.SafeString(html);
+      });
+
+    }
 });
 
 // Add pagination

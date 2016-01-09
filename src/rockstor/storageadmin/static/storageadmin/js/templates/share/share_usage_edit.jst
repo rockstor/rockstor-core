@@ -28,21 +28,12 @@
 				<label class="control-label" for="new-size">New Size</label>
 			<form class="form-inline">
 				<div class="form-group">
-					<input class="smallinput form-control" type="text" name="new-size"
-						id="new-size"
-						value="<%= humanize.filesize(share.get('size')*1024).replace(/[^0-9\.]+/g,"") %>">
+					<input class="smallinput form-control" type="text" name="new-size" id="new-size"
+						value="{{newSizeVal}}">
 				</div>
 				<div class="form-group">
-					<select class="smallinput form-control" id="size_format"
-						name="size_format">
-						<option<%if(humanize.filesize(share.get('size')*1024).match(/KB/g,"")){%>
-							selected="selected"<%}%> >KB</option>
-						<option<%if(humanize.filesize(share.get('size')*1024).match(/MB/g,"")){%>
-							selected="selected"<%}%> >MB</option>
-						<option<%if(humanize.filesize(share.get('size')*1024).match(/GB/g,"")){%>
-							selected="selected"<%}%> >GB</option>
-						<option<%if(humanize.filesize(share.get('size')*1024).match(/TB/g,"")){%>
-							selected="selected"<%}%> >TB</option>
+					<select class="smallinput form-control" id="size_format" name="size_format">
+					{{display_shareResize_units}}
 					</select>
 				</div>
 			</form><br />

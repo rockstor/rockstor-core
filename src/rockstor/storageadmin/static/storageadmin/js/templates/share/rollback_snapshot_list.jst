@@ -1,11 +1,4 @@
-<% foundWritableSnapshot = false; %>
-<% if (!snapshots.isEmpty()) { %>
-
-      <% snapshots.each(function(snapshot, index) { %>
-        <% if(snapshot.get("writable")) { %>
-        <% if (!foundWritableSnapshot) {
-       	        foundWritableSnapshot = true;
-        %>
+{{#if collectionNotEmpty}}
   <table id="snapshots-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of snapshots">
     <thead>
       <tr>
@@ -15,27 +8,9 @@
         <th>Size</th>
       </tr>
     </thead>
-    <%}%>
     <tbody>
-        <tr>
-          <td><input type="radio" name="snapshot" value="<%= snapshot.get('name') %>"></td>
-          <td><i class="glyphicon glyphicon-camera"></i> <%= snapshot.get('name') %></td>
-          <td><%= moment(snapshot.get("toc")).format(RS_DATE_FORMAT) %></td>
-          <td><%= humanize.filesize(snapshot.get('size')*1024) %></td>
-        </tr>
-        <% } %>
-      <% }); %>
+    {{display_rollbackSnaps_tbody}}
     </tbody>
   </table>
-  <div class="pagination-ph"></div>
-<% } if(!foundWritableSnapshot) { %>
-  <table id="snapshots-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of snapshots">
-    <tbody>
-      <tr>
-        <td colspan="4">
-          <h4>No writable snapshots exist for this Share</h4>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-<% } %>
+  <div>{{pagination}}</div>
+{{/if}}

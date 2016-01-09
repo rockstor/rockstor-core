@@ -22,7 +22,7 @@
 
   <a class="btn btn-primary btn-spacing" href="#" id="js-poolrebalance-start" title="Restripe data across all disks of the pool. Do this only if you need to."><i class="glyphicon glyphicon-edit "></i>Start a new balance</a>
 <br>
-<% if (!poolrebalances.isEmpty()) { %>
+{{#if collectionNotEmpty}}
   <table id="poolrebalances-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of pool balances">
     <thead>
       <tr>
@@ -34,22 +34,10 @@
       </tr>
     </thead>
     <tbody>
-      <% poolrebalances.each(function(poolrebalance, index) { %>
-        <tr>
-          <td><%= poolrebalance.get('id') %></td>
-          <td><%= poolrebalance.get('status') %></td>
-          <td>
-	  <% if (poolrebalance.get('start_time')) { %>
-	     <%= moment(poolrebalance.get('start_time')).format(RS_DATE_FORMAT) %>
-	  <% } %>
-	  </td>
-          <td><%= poolrebalance.get('percent_done') %></td>
-	  <td><%= poolrebalance.get('message') %></td>
-        </tr>
-	  <% }); %>
+      {{display_poolRebalance_table}}
     </tbody>
   </table>
-<div class="pagination-ph"></div>
-<% } else { %>
+<div>{{pagination}}</div>
+{{else}}
   <div class="alert alert-warning"><h4>There are no balances to display</h4></div>
-<% } %>
+{{/if}}

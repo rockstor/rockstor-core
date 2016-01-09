@@ -77,19 +77,9 @@
                 </tr>
               </thead>
               <tbody>
-                <% disks.each(function(disk, index) { %>
-                     <tr>
-                      <td><%= index+1 %></td>
-                      <td><%= disk.get('name') %></td>
-                      <td><%= humanize.filesize(disk.get('size')*1024) %></td>
-                      <td>
-                        <input type="checkbox" class="disk" name="<%= disk.get('name') %>" id="<%= disk.get('id') %>" value="<%= disk.get('name') %>" >
-                      </td>
-                    </tr>
-                  <% }); %>
+                {{show_disks}}
               </tbody>
             </table>
-           <div class="pagination-ph"> </div>
           </div>
         </div>
         <div class="form-group">

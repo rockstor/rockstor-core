@@ -37,6 +37,7 @@ EditNetworkView = RockstorLayoutView.extend({
 	this.template = window.JST.network_edit_network;
 	this.name = this.options.name;
 	this.network = new NetworkInterface({name: this.name});
+	this.initHandlebarHelpers();
     },
 
     render: function() {
@@ -51,7 +52,27 @@ EditNetworkView = RockstorLayoutView.extend({
 
     renderNetwork: function() {
 	var _this = this;
-	$(this.el).html(this.template({network: this.network}));
+	var methodManual, methodAuto, managementInterface = false;
+	if (this.network.get('method') == 'manual'){
+		methodManual = true;
+	}else{
+		methodAuto = true;
+	}
+	if(this.network.get('itype') == 'management'){
+		managementInterface = true;
+	}
+	$(this.el).html(this.template({
+		network: this.network,
+		networkName: this.network.get('name'),
+		ipAddr: this.network.get('ipaddr'),
+		netMask: this.network.get('netmask'),
+		gateWay: this.network.get('gateway'),
+		dnsServers: this.network.get('dns_servers'),
+		interfaceType: this.network.get('itype'),
+		methodManual: methodManual,
+		methodAuto: methodAuto,
+		managementInterface: managementInterface,
+		}));
 
 	this.$('#edit-network-form input').tooltip({placement: 'right'});
 
@@ -125,6 +146,13 @@ EditNetworkView = RockstorLayoutView.extend({
     cancel: function(event) {
 	event.preventDefault();
 	app_router.navigate("network", {trigger: true});
+    },
+    
+    initHandlebarHelpers: function(){
+    	//Disable the text field when network method is Auto. 
+    	Handlebars.registerHelper("disableIfAuto", function (condition) {
+    	    return (condition) ? "disabled" : "";
+    	});
     }
 
 });

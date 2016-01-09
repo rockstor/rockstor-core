@@ -37,7 +37,7 @@ AddShareView = Backbone.View.extend({
     var _this = this;
     this.pools = new PoolCollection();
     this.pools.pageSize = RockStorGlobals.maxPageSize;
-    this.poolName = this.options.poolName;
+    this.preSelectedPoolName = this.options.poolName || null;
     this.tickFormatter = function(d) {
       var formatter = d3.format(",.1f");
       if (d > 1024) {
@@ -51,6 +51,7 @@ AddShareView = Backbone.View.extend({
       var value = slider.value();
       _this.$('#share_size').val(_this.tickFormatter(value));
     }
+    this.initHandlebarHelpers();
   },
 
   render: function() {
@@ -59,7 +60,10 @@ AddShareView = Backbone.View.extend({
     var _this = this;
     this.pools.fetch({
       success: function(collection, response) {
-        $(_this.el).append(_this.template({pools: _this.pools, poolName: _this.poolName}));
+        $(_this.el).append(_this.template({
+          pools: _this.pools,
+          poolName: _this.poolName
+        }));
 
         var err_msg = '';
         var name_err_msg = function() {
@@ -201,6 +205,34 @@ AddShareView = Backbone.View.extend({
     event.preventDefault();
     this.$('#add-share-form :input').tooltip('hide');
     app_router.navigate('shares', {trigger: true})
+  },
+
+  initHandlebarHelpers: function(){
+    Handlebars.registerHelper('print_pool_names', function() {
+      var html = '';
+      if(this.preSelectedPoolName){
+        this.pools.each(function(pool, index) {
+          var poolName = pool.get('name');
+            if(preSelectedPoolName != pool.get('name')){
+                html += '<option value="' + poolName + '">' + poolName + '</option>';
+            } else{
+                html += '<option value="' + preSelectedPoolName + '" selected="selected">' + preSelectedPoolName + '</option>';
+            }
+        });
+  	  } else {
+        this.pools.each(function(pool, index) {
+          var poolName = pool.get('name');
+          //the pool with index zero is selected by default
+          if(index == 0){
+            html += '<option value="' + poolName + '" selected="selected">' + poolName + '</option>';
+          }else{
+             html += '<option value="' + poolName + '">' + poolName + '</option>';
+          }
+        });
+  	  }
+      return new Handlebars.SafeString(html);
+    });
+
   }
 
 });

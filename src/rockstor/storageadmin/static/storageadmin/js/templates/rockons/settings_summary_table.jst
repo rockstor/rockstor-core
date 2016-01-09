@@ -8,35 +8,9 @@
   </tr>
 </thead>
 
-  <% volumes.each(function(volume, index) { %>
-    <tr>
-      <td>Share</td>
-      <td><%= volume.get('share_name') %></td>
-      <td><%= volume.get('dest_dir') %></td>
-    </tr>
-  <% }); %>
+{{display_volumes}}
+{{display_newVolumes}}
+{{display_ports}}
+{{display_cc}}
 
-  <% for (share in new_volumes) { %>
-    <tr>
-      <td><i>Share</i></td>
-      <td><i><%= new_volumes[share] %></i></td>
-      <td><i><%= share %></i></td>
-    </tr>
-  <% } %>
-
-  <% ports.each(function(port, index) { %>
-    <tr>
-      <td>Port</td>
-      <td><%= port.get('hostp') %></td>
-      <td><%= port.get('containerp') %></td>
-    </tr>
-  <% }); %>
-
-  <% cc.each(function(cci, index) { %>
-    <tr>
-      <td>Custom</td>
-      <td><%= cci.get('val') %>&nbsp;&nbsp<i class="fa fa-info-circle" title="<%= cci.get('description') %>" rel="tooltip"></i></td>
-      <td><%= cci.get('key') %></td>
-    </tr>
-  <% }); %>
 </table>

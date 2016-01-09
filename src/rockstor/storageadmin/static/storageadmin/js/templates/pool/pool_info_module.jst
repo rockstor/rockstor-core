@@ -21,9 +21,6 @@
 
 <!-- Content -->
 <div class="module-content">
-  <h3>Details</h3>
-  Created on <strong><%= moment(model.get("toc")).format(RS_DATE_FORMAT) %></strong>
-  <br>
-  Raid Configuration: <strong><%= model.get('raid') %></strong>
+  {{display_pool_details}}
 </div> <!-- module-content -->
  

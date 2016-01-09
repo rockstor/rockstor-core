@@ -63,21 +63,26 @@ AddReplicationTaskView = RockstorLayoutView.extend({
 		return replica.get('share') == share.get('name');
 	    })) ;
 	});
+	this.freeShares2 = this.freeShares.map(function(fs) {
+	    return fs.toJSON();
+	});
 	if (this.remote_pools.length == 0) {
 	    this.fetchRemotePools();
 	}
 	//ip and port of the remote replication service.
 	var listener_ip = null;
 	var listener_port = 10002;
+	var replicaJSON = null;
 	if (this.replica) {
 	    listener_ip = this.replica.get('replicaion_ip');
 	    listener_port = this.replica.get('remote_port');
+	    replicaJSON = this.replica.toJSON();
 	}
 
 	$(this.el).html(this.template({
-	    shares: this.freeShares,
-	    appliances: this.appliances,
-	    replica: this.replica,
+	    shares: this.freeShares2,
+	    appliances: this.appliances.toJSON(),
+	    replica: this.replicaJSON,
 	    listener_ip: listener_ip,
 	    listener_port: listener_port,
 	    replicaId: this.replicaId,

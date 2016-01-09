@@ -25,7 +25,8 @@
 </div>
 </br>
 </br>
-<% if (!snapshots.isEmpty()) { %>
+
+{{#if collectionNotEmpty}}
 
 <table id="snapshots-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of snapshots">
   <thead>
@@ -43,63 +44,19 @@
       <th>Actions</th>
     </tr>
   </thead>
-  <tbody>
-    <% snapshots.each(function(snapshot, index) { %>
-    <tr>
-      <td>
-        <% if (RockstorUtil.listContains(selectedSnapshots, 'name', snapshot.get('name'))) { %>
-        <input class="js-snapshot-select inline" type="checkbox" name="snapshot-select" data-name="<%= snapshot.get('name') %>" data-id="<%= snapshot.get('id') %>" checked="checked"></input>
-        <% } else { %>
-        <input class="js-snapshot-select inline" type="checkbox" name="snapshot-select" data-name="<%= snapshot.get('name') %>" data-id="<%= snapshot.get('id') %>" ></input>
-        <% } %>
-      </td>
-      <td><i class="glyphicon glyphicon-camera"></i> <%= snapshot.get('name') %></td>
-      <td><%= moment(snapshot.get("toc")).format(RS_DATE_FORMAT) %></td>
-      <td>
-      <% shares.each( function(share, index) { %>
-      <% if(snapshot.get('share')== share.get('id')){  %>
-      <a href="#shares/<%= share.get('name') %>"> <%= share.get('name') %></a>
-      <% } %>
-      <% }); %>
-      </td>
-
-      <td>
-        <% if (snapshot.get("uvisible")) { %>
-        Visible
-        <% } else { %>
-        Hidden
-        <% } %>
-      </td>
-      <td>
-        <% if (snapshot.get("writable")) { %>
-        Yes
-        <% } else { %>
-        No
-        <% } %>
-      </td>
-      <td><%= humanize.filesize(snapshot.get('rusage')*1024) %></td>
-      <td><%= humanize.filesize(snapshot.get('eusage')*1024) %></td>
-      <td>
-	<% shares.each( function(share, index) { %>
-	<%  if(snapshot.get('share') == share.get('id')){  %>
-	<% if (snapshot.get("writable")) { %>
-        <a class="js-snapshot-clone" href="#" data-name="<%= snapshot.get('name') %>" data-share-name="<%= share.get('name') %>"><i rel="tooltip" title="Clone snapshot" class="glyphicon glyphicon-book"></i></a>
-	<% } %>
-	<a href="#" class="js-snapshot-delete" id="delete_snapshot_<%=snapshot.get('name') %>" data-name="<%= snapshot.get('name') %>" data-size="<%= humanize.filesize(snapshot.get('eusage')*1024) %>" data-share-name="<%= share.get('name') %>" data-action="delete" title="Delete snapshot"><i rel="tooltip" title="Delete snapshot" class="glyphicon glyphicon-trash"></i></a>
-	<% } %>
-	<% }); %>
-      </td>
-    </tr>
-    <% }); %>
-  </tbody>
-</table>
-<div class="pagination-ph"></div>
-<% } else { %>
-<div class="alert alert-warning"><h4>There are no snapshots to display</h4></div>
-<% } %>
-
-<div class="pull-left">
-  <% if (!snapshots.isEmpty()) { %>
+  <tbody>{{print_snapshot_tbody}}</tbody>
+  </table>
+   <div>{{pagination}}</div>
+  {{else}}
+  <div class="alert alert-warning"><h4>There are no snapshots to display</h4></div>
+  {{/if}}
+ 
+ <div class="pull-left">
+  {{#if collectionNotEmpty}}
   <a class="btn btn-danger" href="#" id="js-snapshot-delete-multiple"><i class="glyphicon glyphicon-trash "></i> Delete</a>
-  <% } %>
+  {{/if}}
 </div>
+  
+  
+  
+  
