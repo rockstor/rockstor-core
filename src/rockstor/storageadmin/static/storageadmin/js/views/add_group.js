@@ -48,7 +48,7 @@ AddGroupView = RockstorLayoutView.extend({
     var _this = this;
     $(this.el).html(this.template({
         groupname: this.groupname,
-        group: this.group
+        group: this.group.toJSON()
 
       }));
 
