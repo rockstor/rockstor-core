@@ -265,8 +265,7 @@ class RockOnView(rfc.GenericView):
         for k in self._sorted_keys(cc_d):
             ccc_d = cc_d[k]
             defaults = {'description': ccc_d['description'],
-                        'label': ccc_d['label'],
-                        'val': ccc_d.get('val', None), }
+                        'label': ccc_d['label'], }
             cco, created = DCustomConfig.objects.get_or_create(
                 rockon=ro, key=k, defaults=defaults)
             if (not created): self._update_model(cco, defaults)
@@ -278,8 +277,7 @@ class RockOnView(rfc.GenericView):
         for k in self._sorted_keys(cc_d):
             ccc_d = cc_d[k]
             defaults = {'description': ccc_d['description'],
-                        'label': ccc_d['label'],
-                        'val': ccc_d.get('val', None), }
+                        'label': ccc_d['label'], }
             cco, created = DContainerEnv.objects.get_or_create(
                 container=co, key=k, defaults=defaults)
             if (not created): self._update_model(cco, defaults)
