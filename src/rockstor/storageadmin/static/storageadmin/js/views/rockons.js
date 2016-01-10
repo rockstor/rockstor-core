@@ -334,7 +334,7 @@ RockonsView = RockstorLayoutView.extend({
 			} else {
 			    html += '<input type="checkbox" name="rockon-status-checkbox" data-rockon-id="' + rockon.get('id') + '" data-size="mini" />';
 			}
-			html +=  '<a id="js-rockon-settings" href="#" class="settings" data-rockon-id="' + rockon.get('id') + '"><i class="glyphicon glyphicon-wrench"></i></a>&nbsp;&nbsp';
+			html +=  ' <a id="js-rockon-settings" href="#" class="settings" data-rockon-id="' + rockon.get('id') + '"><i class="glyphicon glyphicon-wrench"></i></a>&nbsp;&nbsp';
 			if (rockon.get('more_info')) {
 			    html +=  '<a id="js-rockon-info" href="#" class="moreinfo" data-rockon-id="' + rockon.get('id') + '"><i class="fa fa-info-circle"></i></a>';
 			}
@@ -704,7 +704,7 @@ RockonCustomChoice = RockstorWizardPage.extend({
 		html += '<label class="control-label col-sm-3" for="cc">' + cci.get('label') + '<span class="required">*</span></label>';
 		html += '<div class="controls">';
 		html += '<div class="col-sm-6">';
-		html += '<input class="form-control" type="text" id="' + cci.id + '" name="' + cci.id + '" value="' + cci.get('val') + '">';
+		html += '<input class="form-control" type="text" id="' + cci.id + '" name="' + cci.id + '" value="' + (cci.get('val') || '') + '">';
 		html += '</div>&nbsp;&nbsp';
 		html += '<i class="fa fa-info-circle fa-lg" title="' + cci.get('description') + '" rel="tooltop"></i>';
 		html += '</div>';
@@ -721,6 +721,7 @@ RockonEnvironment = RockstorWizardPage.extend({
 	this.cc_template = window.JST.rockons_cc_form;
 	this.custom_config = this.model.get('environment');
 	RockstorWizardPage.prototype.initialize.apply(this, arguments);
+	this.initHandlebarHelpers();
     },
 
     render: function() {
@@ -738,6 +739,24 @@ RockonEnvironment = RockstorWizardPage.extend({
 	    messages: messages
 	});
 	return this;
+    },
+
+    initHandlebarHelpers: function(){
+	Handlebars.registerHelper('display_ccForm', function(){
+	    var html = '';
+	    this.cc.each(function(cci, index) {
+		html += '<div class="form-group">';
+		html += '<label class="control-label col-sm-3" for="cc">' + cci.get('label') + '<span class="required">*</span></label>';
+		html += '<div class="controls">';
+		html += '<div class="col-sm-6">';
+		html += '<input class="form-control" type="text" id="' + cci.id + '" name="' + cci.id + '" value="' + (cci.get('val') || '') + '">';
+		html += '</div>&nbsp;&nbsp';
+		html += '<i class="fa fa-info-circle fa-lg" title="' + cci.get('description') + '" rel="tooltop"></i>';
+		html += '</div>';
+		html += '</div>';
+	    });
+	    return new Handlebars.SafeString(html);
+	});
     },
 
     save: function() {
@@ -762,6 +781,7 @@ RockonInstallSummary = RockstorWizardPage.extend({
 	this.share_map = this.model.get('share_map');
 	this.port_map = this.model.get('port_map');
 	this.cc_map = this.model.get('cc_map');
+	this.env_map = this.model.get('env_map');
 	this.ports = this.model.get('ports');
 	this.environment = this.model.get('environment');
 	this.cc = this.model.get('custom_config');
@@ -775,7 +795,8 @@ RockonInstallSummary = RockstorWizardPage.extend({
 	this.$('#ph-summary-table').html(this.table_template({
 	    share_map: this.share_map,
 	    port_map: this.port_map,
-	    cc_map: this.cc_map}));
+	    cc_map: this.cc_map,
+	    env_map: this.env_map}));
 	return this;
     },
 
@@ -823,6 +844,13 @@ RockonInstallSummary = RockstorWizardPage.extend({
 		html += '<td>Custom</td>';
 		html += '<td>' + this.cc_map[c] + '</td>';
 		html += '<td>' + c + '</td>';
+		html += '</tr>';
+	    }
+	    for (e in this.env_map) {
+		html += '<tr>';
+		html += '<td>Env</td>';
+		html += '<td>' + this.env_map[e] + '</td>';
+		html += '<td>' + e + '</td>';
 		html += '</tr>';
 	    }
 	    return new Handlebars.SafeString(html);
@@ -875,6 +903,7 @@ RockonSettingsWizardView = WizardView.extend({
 	this.volumes = new RockOnVolumeCollection(null, {rid: this.rockon.id});
 	this.ports = new RockOnPortCollection(null, {rid: this.rockon.id});
 	this.custom_config = new RockOnCustomConfigCollection(null, {rid: this.rockon.id});
+	this.environment = new RockOnEnvironmentCollection(null, {rid: this.rockon.id});
 	this.shares = {};
 	this.model.set('shares', this.shares);
     },
@@ -904,6 +933,16 @@ RockonSettingsWizardView = WizardView.extend({
 	this.custom_config.fetch({
 	    success: function() {
 		_this.model.set('custom_config', _this.custom_config);
+		_this.fetchEnvironment();
+	    }
+	});
+    },
+
+    fetchEnvironment: function() {
+	var _this = this;
+	this.environment.fetch({
+	    success: function() {
+		_this.model.set('environment', _this.environment);
 		_this.addPages();
 	    }
 	});
@@ -1027,14 +1066,14 @@ RockonInfoSummary = RockstorWizardPage.extend({
     initialize: function() {
 	this.template = window.JST.rockons_settings_summary;
 	this.sub_template = window.JST.rockons_more_info;
+	this.rockon = this.model.get('rockon');
 	RockstorWizardPage.prototype.initialize.apply(this, arguments);
     },
 
     render: function() {
 	RockstorWizardPage.prototype.render.apply(this, arguments);
 	this.$('#ph-settings-summary-table').html(this.sub_template({
-	    rockonMoreInfo: this.model.get('more_info'),
-
+	    rockonMoreInfo: this.rockon.get('more_info')
 	}));
 	return this;
     }
@@ -1058,6 +1097,7 @@ RockonSettingsSummary = RockstorWizardPage.extend({
 	    new_volumes: this.model.get('shares'),
 	    ports: this.model.get('ports'),
 	    cc: this.model.get('custom_config'),
+	    env: this.model.get('environment'),
 	    rockon: this.model.get('rockon')
 	}));
 	return this;
@@ -1107,6 +1147,12 @@ RockonSettingsSummary = RockstorWizardPage.extend({
 		html += '<td>' + cci.get('val') + '&nbsp;&nbsp<i class="fa fa-info-circle" title="' + cci.get('description') + '" rel="tooltip"></i></td>';
 		html += '<td>' + cci.get('key') + '</td>';
 		html += '</tr>';
+	    });
+	    //@todo: separate env and cc stuff.
+	    this.env.each(function(envi, index) {
+		html += '<tr><td>Env</td>';
+		html += '<td>' + envi.get('val') + '&nbsp;&nbsp<i class="fa fa-info-circle" title="' + envi.get('description') + '" rel="tooltip"></i></td>';
+		html += '<td>' + envi.get('key') + '</td></tr>';
 	    });
 	    return new Handlebars.SafeString(html);
 	});
