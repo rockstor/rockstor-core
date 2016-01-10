@@ -23,13 +23,10 @@
 <div class="col-md-8">
 <div class="panel panel-default">
 {{#if nfsExportNotEmpty}}
-{{! <% if (nfsExportGroup.get('id')>0) { %> }}
 <div class="panel panel-heading">Edit NFS export</div>
 {{else}}
-{{! <%} else {%> }}
 <div class="panel panel-heading">Add NFS export</div>
 {{/if}}
-{{! <%}%>}}
 <div class="panel-body">
       <form class="form-horizontal" id="edit-nfs-export-form" name="aform" >
         <div class="messages"></div>
@@ -49,7 +46,7 @@
           <label class="col-xs-4 control-label" for="host_str">NFS Clients<span class="required"> *</span></label>
           <div class="col-sm-6">
             <input class="form-control shorten-input" type="text" name="host_str" id="host_str" data-html = "true"
-	    title="Hosts permitted to NFS mount. There are five broad categories of this input.<br><strong>anonymous:</strong> Just type a single * character and any host will be allowed.<br><strong>single host:</strong> Hostname or a IP address.<br><strong>IP networks:</strong> All hosts of a subnet given by <strong>address/netmask</strong>.<br><strong>wildcards:</strong> Names with wildcard(*, ?) characters for compact notation. for example, *.cs.foo.edu matches all hosts in the domain cs.food.edu.<br><strong>Netgroups:</strong> NIS netgroups given as @group.<br><br>For more details read the manpage for exports." 
+	    title="Hosts permitted to NFS mount. There are five broad categories of this input.<br><strong>anonymous:</strong> Just type a single * character and any host will be allowed.<br><strong>single host:</strong> Hostname or a IP address.<br><strong>IP networks:</strong> All hosts of a subnet given by <strong>address/netmask</strong>.<br><strong>wildcards:</strong> Names with wildcard(*, ?) characters for compact notation. for example, *.cs.foo.edu matches all hosts in the domain cs.food.edu.<br><strong>Netgroups:</strong> NIS netgroups given as @group.<br><br>For more details read the manpage for exports."
 	    value="{{nfsExportHostString}}">
           </div>
         </div>
