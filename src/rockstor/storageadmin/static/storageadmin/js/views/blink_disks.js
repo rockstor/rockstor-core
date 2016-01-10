@@ -52,7 +52,7 @@ BlinkDiskView = RockstorLayoutView.extend({
 
     $(this.el).html(this.template({
 	diskName: this.diskName,
-	serialNumber: serialNumber,
+	serialNumber: serialNumber
     }));
 
     this.$('#add-blink-disk-form :input').tooltip({
