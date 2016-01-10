@@ -174,7 +174,7 @@ DisksView = Backbone.View.extend({
     	Handlebars.registerHelper('display_disks_tbody', function() {
 
         var html = '',
-            warning = 'Disk names may change unfavourably upon reboot leading to inadvertent drive reallocation and potential data loss. This error is caused by the source of these disks such as your Hypervisor or SAN. Please ensure that disks are provided with unique serial numbers before proceeding further';
+            warning = 'Disk names may change unfavourably upon reboot leading to inadvertent drive reallocation and potential data loss. This error is caused by the source of these disks such as your Hypervisor or SAN. Please ensure that disks are provided with unique serial numbers before proceeding further.';
 
         this.collection.each(function(disk, index) {
           	var diskName = disk.get('name'),
