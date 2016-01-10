@@ -174,7 +174,7 @@ DisksView = Backbone.View.extend({
     	Handlebars.registerHelper('display_disks_tbody', function() {
 
         var html = '',
-            warning = 'Disk names may change unfavourably upon reboot leading to inadvertent drive reallocation and potential data loss. This error is caused by the source of these disks such as your Hypervisor or SAN. Please ensure that disks are provided with unique serial numbers before proceeding further';
+            warning = 'Disk names may change unfavourably upon reboot leading to inadvertent drive reallocation and potential data loss. This error is caused by the source of these disks such as your Hypervisor or SAN. Please ensure that disks are provided with unique serial numbers before proceeding further.';
 
         this.collection.each(function(disk, index) {
           	var diskName = disk.get('name'),
@@ -205,9 +205,9 @@ DisksView = Backbone.View.extend({
 
         html += '</td>';
         html += '<td>';
-	    if (serial == null || serial == '' || serial == diskName) {
+	    if (serial == null || serial == '' || serial == diskName || serial.length == 48) {
 	       html += '<div class="alert alert-danger">' +
-                   + '<h4>Warning! Disk serial number or UUID is not legitimate or unique.</h4>' + warning +'</div>';
+				   '<h4>Warning! Disk serial number is not legitimate or unique.</h4>' + warning +'</div>';
        	}else{
 	       html += serial;
 	       if (serial) {
