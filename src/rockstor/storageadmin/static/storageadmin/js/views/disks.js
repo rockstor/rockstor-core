@@ -207,7 +207,7 @@ DisksView = Backbone.View.extend({
         html += '<td>';
 	    if (serial == null || serial == '' || serial == diskName || serial.length == 48) {
 	       html += '<div class="alert alert-danger">' +
-				   '<h4>Warning! Disk serial number or UUID is not legitimate or unique.</h4>' + warning +'</div>';
+				   '<h4>Warning! Disk serial number is not legitimate or unique.</h4>' + warning +'</div>';
        	}else{
 	       html += serial;
 	       if (serial) {
