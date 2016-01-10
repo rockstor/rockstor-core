@@ -47,6 +47,7 @@ from rockon_id import RockOnIdView
 from rockon_volume import RockOnVolumeView
 from rockon_port import RockOnPortView
 from rockon_custom_config import RockOnCustomConfigView
+from rockon_environment import RockOnEnvironmentView
 from disk_smart import DiskSMARTDetailView
 from config_backup import (ConfigBackupListView, ConfigBackupDetailView,
                            ConfigBackupUpload)

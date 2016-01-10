@@ -642,6 +642,27 @@ var RockOnCustomConfigCollection = RockStorPaginatedCollection.extend({
     }
 });
 
+var RockOnEnvironment = Backbone.Model.extend({
+    urlRoot: '/api/rockon/environment/' + this.rid
+});
+
+var RockOnEnvironmentCollection = RockStorPaginatedCollection.extend({
+    model: RockOnEnvironment,
+    initialize: function(models, options) {
+	this.constructor.__super__.initialize.apply(this, arguments);
+	if (options) {
+	    this.rid = options.rid;
+	}
+    },
+    baseUrl: function() {
+	if (this.rid) {
+	    return '/api/rockons/environment/' + this.rid;
+	} else {
+	    return '/api/rockons/environment';
+	}
+    }
+});
+
 var EmailAccount = Backbone.Model.extend({
     urlRoot: '/api/email'
 });

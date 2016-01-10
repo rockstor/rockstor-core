@@ -24,11 +24,12 @@ from storageadmin.models import (Disk, Pool, Share, Snapshot, NFSExport,
                                  NFSExportGroup, SFTP, AdvancedNFSExport,
                                  OauthApp, NetatalkShare, Group, PoolBalance,
                                  SambaCustomConfig, TLSCertificate, RockOn,
-                                 DVolume, DPort, DCustomConfig, SMARTAttribute,
-                                 SMARTCapability, SMARTInfo, SMARTErrorLog,
-                                 SMARTErrorLogSummary, SMARTTestLog,
-                                 SMARTTestLogDetail, SMARTIdentity,
-                                 ConfigBackup, EmailClient, UpdateSubscription)
+                                 DVolume, DPort, DCustomConfig, DContainerEnv,
+                                 SMARTAttribute, SMARTCapability, SMARTInfo,
+                                 SMARTErrorLog, SMARTErrorLogSummary,
+                                 SMARTTestLog, SMARTTestLogDetail,
+                                 SMARTIdentity, ConfigBackup, EmailClient,
+                                 UpdateSubscription)
 from django.contrib.auth.models import User as DjangoUser
 
 
@@ -209,6 +210,9 @@ class RockOnCustomConfigSerializer(serializers.ModelSerializer):
     class Meta:
         model = DCustomConfig
 
+class RockOnEnvironmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DContainerEnv
 
 class SMARTCapabilitySerializer(serializers.ModelSerializer):
     class Meta:

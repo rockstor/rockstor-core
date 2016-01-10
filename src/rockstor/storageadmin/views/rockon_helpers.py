@@ -29,7 +29,7 @@ from cli.api_wrapper import APIWrapper
 from system.services import service_status
 from storageadmin.models import (RockOn, DContainer, DVolume, DPort,
                                  DCustomConfig, Share, Disk, DContainerLink,
-                                 ContainerOption)
+                                 ContainerOption, DContainerEnv)
 from fs.btrfs import mount_share
 from system.pkg_mgmt import install_pkg
 from rockon_utils import container_status
@@ -183,14 +183,36 @@ def vol_ops(container):
         ops_list.extend(['-v', '%s:%s' % (share_mnt, v.dest_dir)])
     return ops_list
 
+def vol_owner_uid(container):
+    # If there are volumes, return the uid of the owner of the first volume.
+    vo = DVolume.objects.filter(container=container).first()
+    if (vo is None): return None
+    share_mnt = ('%s%s' % (settings.MNT_PT, vo.share.name))
+    return os.stat(share_mnt).st_uid
+
+def envars(container):
+    var_list = []
+    for e in DContainerEnv.objects.filter(container=container):
+        var_list.extend(['-e', '%s=%s' % (e.key, e.val)])
+    return var_list
+
 def generic_install(rockon):
     for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
+        rm_container(c.name)
         cmd = list(DCMD2) + ['--name', c.name,]
         cmd.extend(vol_ops(c))
+        if (c.uid is not None):
+            uid = c.uid
+            if (c.uid is -1):
+                uid = vol_owner_uid(c)
+            #@todo: what if the uid does not exist? Create a user with username=container-name?
+            cmd.extend(['-u', str(uid)])
         cmd.extend(port_ops(c))
         cmd.extend(container_ops(c))
+        cmd.extend(envars(c))
         cmd.append(c.dimage.name)
         run_command(cmd)
+
 
 def openvpn_install(rockon):
     #volume container
@@ -214,23 +236,17 @@ def openvpn_install(rockon):
     run_command(server_cmd)
 
 
-def transmission_install(rockon):
-    co = DContainer.objects.get(rockon=rockon, launch_order=1)
-    cmd = list(DCMD2) + ['--name', co.name]
-    for cco in DCustomConfig.objects.filter(rockon=rockon):
-        cmd.extend(['-e', '%s=%s' % (cco.key, cco.val)])
-    cmd.extend(vol_ops(co))
-    cmd.extend(port_ops(co))
-    cmd.append(co.dimage.name)
-    run_command(cmd)
-
-
 def owncloud_install(rockon):
     for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
+        rm_container(c.name)
         cmd = list(DCMD2) + ['--name', c.name, ]
         db_user = DCustomConfig.objects.get(rockon=rockon, key='db_user').val
         db_pw = DCustomConfig.objects.get(rockon=rockon, key='db_pw').val
         if (c.dimage.name == 'postgres'):
+            #change permissions on the db volume to 700
+            vo = DVolume.objects.get(container=c)
+            share_mnt = ('%s%s' % (settings.MNT_PT, vo.share.name))
+            run_command(['/usr/bin/chmod', '700', share_mnt])
             cmd.extend(['-e', 'POSTGRES_USER=%s' % db_user, '-e',
                         'POSTGRES_PASSWORD=%s' % db_pw])
         cmd.extend(port_ops(c))
