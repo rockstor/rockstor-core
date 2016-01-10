@@ -40,6 +40,39 @@ PREP_DB = '%s/prep_db' % BASE_BIN
 SUPERCTL = '%s/supervisorctl' % BASE_BIN
 OPENSSL = '/usr/bin/openssl'
 GRUBBY = '/usr/sbin/grubby'
+RPM = '/usr/bin/rpm'
+YUM = '/usr/bin/yum'
+
+
+def delete_old_kernels(logging, num_retain=5):
+    #Don't keep more than num_retain kernels
+    o, e, rc = run_command([RPM, '-q', 'kernel-ml'])
+    ml_kernels = o[:-1] #last entry is an empty string.
+    ml_kernels = sorted(ml_kernels)
+    #centos kernels, may or may not be installed.
+    centos_kernels = []
+    o, e, rc = run_command([RPM, '-q', 'kernel'], throw=False)
+    if (rc == 0): centos_kernels = o[:-1]
+
+    #Don't delete current running kernel
+    #Don't delete current default kernel
+    running_kernel = os.uname()[2]
+    default_kernel = settings.SUPPORTED_KERNEL_VERSION
+    deleted = 0
+    for k in centos_kernels:
+        kv = k.split('kernel-')[1]
+        if (kv != running_kernel and
+            kv != default_kernel):
+            run_command([YUM, 'remove', '-y', k])
+            deleted += 1
+            logging.info('Deleted old Kernel: %s' % k)
+    for i in range(len(centos_kernels) + len(ml_kernels) - deleted - num_retain):
+        kv = ml_kernels[i].split('kernel-ml-')[1]
+        logging.info('kv = %s' % kv)
+        if (kv != running_kernel and
+            kv != default_kernel):
+            run_command([YUM, 'remove', '-y', ml_kernels[i]])
+            logging.info('Deleted old Kernel: %s' % ml_kernels[i])
 
 
 def init_update_issue():
@@ -246,6 +279,7 @@ def main():
         loglevel = logging.DEBUG
     logging.basicConfig(format='%(asctime)s: %(message)s', level=loglevel)
     set_def_kernel(logging)
+    delete_old_kernels(logging)
     shutil.copyfile('/etc/issue', '/etc/issue.rockstor')
     for i in range(30):
         try:
