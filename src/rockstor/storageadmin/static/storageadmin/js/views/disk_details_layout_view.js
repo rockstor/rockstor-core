@@ -36,6 +36,7 @@ DiskDetailsLayoutView = RockstorLayoutView.extend({
 		this.dependencies.push(this.disk);
 		this.dependencies.push(this.smartinfo);
 		this.active_tab = 0;
+		this.initHandlebarHelpers();
 	},
 
 	events: {
@@ -66,7 +67,7 @@ DiskDetailsLayoutView = RockstorLayoutView.extend({
 		var attributes = this.smartinfo.get('attributes') || [];
 		var errorlogsummary = this.smartinfo.get('errorlogsummary') || [];
 		var errorlog = this.smartinfo.get('errorlog') || [];
-		var errorlogZero, errorlogOne = null
+		var errorlogZero, errorlogOne = null;
 		if(errorlog.length != 0){
 			errorlogZero = errorlog[0].line;
 			errorlogOne = errorlog[1].line;
@@ -160,6 +161,23 @@ DiskDetailsLayoutView = RockstorLayoutView.extend({
 			},
 			error: function(xhr, status, error) {
 				enableButton(button);
+			}
+		});
+	},
+
+	initHandlebarHelpers: function () {
+		Handlebars.registerHelper('isAboveMinLength', function (minValue, target, options) {
+			// check we have all the arguments we expect
+			console.log('arguments.length = ' + arguments.length);
+			if (arguments.length != 3) {
+				throw new Error("Handlerbars Helper " +
+						"'isAboveMinLength' expects exactly 2 parameter.");
+			}
+			// do our logic and return options functions appropriately.
+			if (target.length > minValue) {
+				return options.fn(this);
+			} else {
+				return options.inverse(this);
 			}
 		});
 	}
