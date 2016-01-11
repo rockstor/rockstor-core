@@ -202,28 +202,6 @@ RockStorWidgetView = Backbone.View.extend({
 
 });
 
-RockstorButtonView = Backbone.View.extend({
-    tagName: 'div',
-    className: 'button-bar',
-
-    initialize: function() {
-	this.actions = this.options.actions;
-	this.layout = this.options.layout;
-	this.template = window.JST.common_button_bar;
-
-    },
-
-    render: function() {
-	$(this.el).append(this.template({actions: this.actions}));
-	this.attachActions();
-	return this;
-    },
-
-    attachActions: function() {
-
-    }
-
-});
 
 function getCookie(name) {
 	var cookieValue = null;
