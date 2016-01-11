@@ -198,10 +198,13 @@
 	<div id="smarterrorlogs">
 		<div class="row">
 			{{#if errorLogSummaryNull}}
-			<h3>There are no errors.</h3>
+				{{#isAboveMinLength 4 errorlog}}
+					<h3>No error summary available, please see the raw log below.</h3>
+				{{else}}
+					<h3>There are no errors.</h3>
+				{{/isAboveMinLength}}
 			{{else}}
 			<p>{{errorlogZero}}</p>
-
 			<p>{{errorlogOne}}</p>
 			<table id="smarterrorlogsummary-table"
 						 class="table table-condensed table-bordered table-hover table-striped tablesorter"
@@ -227,6 +230,7 @@
 				{{/each}}
 				</tbody>
 			</table>
+			{{/if}}
 			{{#isAboveMinLength 4 errorlog}}
 			<h3>Raw S.M.A.R.T error log</h3>
 			<pre>
@@ -235,7 +239,6 @@
 				{{/each}}
 			</pre>
 			{{/isAboveMinLength}}
-			{{/if}}
 		</div>
 	</div>
 
