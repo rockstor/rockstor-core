@@ -168,7 +168,6 @@ DiskDetailsLayoutView = RockstorLayoutView.extend({
 	initHandlebarHelpers: function () {
 		Handlebars.registerHelper('isAboveMinLength', function (minValue, target, options) {
 			// check we have all the arguments we expect
-			console.log('arguments.length = ' + arguments.length);
 			if (arguments.length != 3) {
 				throw new Error("Handlerbars Helper " +
 						"'isAboveMinLength' expects exactly 2 parameter.");
