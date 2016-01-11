@@ -1036,7 +1036,7 @@ RockonAddShare = RockstorWizardPage.extend({
 	    }
 	}, this);
 	this.$('#ph-add-shares-form').html(this.sub_template({
-	    shares: this.filtered_shares
+	    shares: this.filtered_shares.map(function(s) { return s.toJSON() })
 	}));
 	this.share_form = this.$('#vol-select-form');
 	this.validator = this.share_form.validate({
