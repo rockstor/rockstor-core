@@ -90,7 +90,7 @@
           <label class="col-sm-4 control-label">Public key</label>
           <div class="col-sm-8">
 	    {{#if user.public_key}}
-            <textarea class="form-control" rows="2" cols="50" id="public_key" name="public_key"> <%= user.get("public_key") %> </textarea>
+            <textarea class="form-control" rows="2" cols="50" id="public_key" name="public_key"> {{user.public_key}} </textarea>
 	    {{else}}
             <textarea class="form-control" rows="2" cols="50" id="public_key" name="public_key" />
 	    {{/if}}

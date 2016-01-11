@@ -4,18 +4,18 @@
     <div class="form-box">
       <form id="vol-select-form" name="aform" class="form-horizontal">
 	<div class="messages"></div>
-	<% if (shares.length == 0) { %>
-	  <h3>There are no Shares left to add. Create a new one and try again.</h3>
-	<% } else { %>
+	{{#unless shares}}
+	<h3>There are no Shares left to add. Create a new one and try again.</h3>
+	{{else}}
 	<div class="form-group">
 	  <label class="col-sm-3 control-label" for="shares">Storage <span class="required">*</span></label>
 
 	  <div class="controls col-sm-5">
 	    <select class="form-control" id="share" name="share" data-placeholder="Select shares to export">
 	      <option></option>
-	      <% _.each(shares, function(share) { %>
-	      <option value="<%= share.get('name') %>"><%= share.get('name') %></option>
-	      <% }); %>
+	      {{#each shares}}
+	      <option value="{{this.name}}">{{this.name}}</option>
+	      {{/each}}
 	    </select>
 	  </div>
 	  <i class="fa fa-info-circle fa-lg" title="Select a Share that you want to assign to this Rock-on"></i>
@@ -28,7 +28,7 @@
 	  <i class="fa fa-info-circle fa-lg" title="Provide an absolute directory path inside the Rock-on. Selected Share will be available to the Rock-on at this location. Eg: /data/media"></i>
 	</div>
     </div>
-    <% } %>
+    {{/unless}}
     </form>
   </div>
 </div>
