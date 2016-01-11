@@ -194,48 +194,52 @@
       </table>
     </div>
   </div>
-  <div id="smarterrorlogs">
-    <div class="row">
-      {{#if errorLogSummaryNull}}
-        <h3>There are no errors.</h3>
-        {{else}}
-        <p>{{errorlogZero}}</p>
-	<p>{{errorlogOne}}</p>
-      <table id="smarterrorlogsummary-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" summary="Table of S.M.A.R.T error log summary">
-	<thead>
-	  <tr>
-	    <th>Error #</th>
-	    <th>Lifetime hours</th>
-	    <th>State</th>
-	    <th>Type</th>
-	    <th>Details</th>
-	  </tr>
-	</thead>
-	<tbody>
-	  {{#each errorlogsummary as |summary|}}
-	    <tr>
-	      <td>{{summary.error_num}}</td>
-	      <td>{{summary.lifetime_hours}}</td>
-	      <td>{{summary.state}}</td>
-	      <td>{{summary.etype}}</td>
-	      <td>{{summary.details}}</td>
-	    </tr>
-	  {{/each}}
-	</tbody>
-      </table>
-      {{#if errorlog.count}}
-      <h3>Raw S.M.A.R.T error log</h3>
-      <pre>
-	{{#each errorlog as |log|}}
-        {{log.line}}<br>
-	{{/each}}
-	{{/if}}
-      </pre>
-      {{/if}}
-    </div>
-  </div>
 
-  <div id="smarttestlogs">
+	<div id="smarterrorlogs">
+		<div class="row">
+			{{#if errorLogSummaryNull}}
+			<h3>There are no errors.</h3>
+			{{else}}
+			<p>{{errorlogZero}}</p>
+
+			<p>{{errorlogOne}}</p>
+			<table id="smarterrorlogsummary-table"
+						 class="table table-condensed table-bordered table-hover table-striped tablesorter"
+						 summary="Table of S.M.A.R.T error log summary">
+				<thead>
+				<tr>
+					<th>Error #</th>
+					<th>Lifetime hours</th>
+					<th>State</th>
+					<th>Type</th>
+					<th>Details</th>
+				</tr>
+				</thead>
+				<tbody>
+				{{#each errorlogsummary as |summary|}}
+				<tr>
+					<td>{{summary.error_num}}</td>
+					<td>{{summary.lifetime_hours}}</td>
+					<td>{{summary.state}}</td>
+					<td>{{summary.etype}}</td>
+					<td>{{summary.details}}</td>
+				</tr>
+				{{/each}}
+				</tbody>
+			</table>
+			{{#isAboveMinLength 4 errorlog}}
+			<h3>Raw S.M.A.R.T error log</h3>
+			<pre>
+				{{#each errorlog as |log|}}
+					{{log.line}}
+				{{/each}}
+			</pre>
+			{{/isAboveMinLength}}
+			{{/if}}
+		</div>
+	</div>
+
+	<div id="smarttestlogs">
     <div class="row">
       {{#if testLogNull}}
       <h3>There are no Self-Test logs.</h3>
