@@ -363,7 +363,7 @@ ConfigureServiceView = RockstorLayoutView.extend({
 			var nutMonitorTypes = ['master','slave'];
 			_.each(nutMonitorTypes, function(upsmon, index) { 
 				if (upsmon == _this.config.upsmon) { 
-					htm += '<option value="' + upsmon + '" selected="selected">';
+					html += '<option value="' + upsmon + '" selected="selected">';
 					html += upsmon + '</option>';
 				} else { 
 					html += '<option value="' + upsmon + '">' + upsmon + '</option>';
