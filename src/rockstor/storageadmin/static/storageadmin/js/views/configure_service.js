@@ -377,7 +377,7 @@ ConfigureServiceView = RockstorLayoutView.extend({
 			_this = this;
 			var nutDriverTypes = ['apcsmart','apcsmart-old','apcupsd-ups','bcmxcp','bcmxcp_usb','belkin','belkinunv','bestfcom','bestfortress','bestuferrups','bestups','blazer_ser','blazer_usb','dummy-ups','etapro','everups','gamatronic','genericups','isbmex','ivtscd','liebert','liebert-esp2','masterguard','metasys','mge-shut','mge-utalk','microdowell','nutclient','nutdrv_qx','oldmge-shut','oneac','optiups','powercom','powerpanel','rhino','richcomm_usb','riello_ser','riello_usb','safenet','skel','snmp-ups','solis','tripplite','tripplite_usb','tripplitesu','upscode2','usbhid-ups','victronups'];
 			_.each(nutDriverTypes, function(driver, index) { 
-				if (driver == _this.config.nutdriver) { 
+				if (driver == _this.config.driver) {
 					html += '<option value="' + driver + '" selected="selected">';
 					html += driver + '</option>';
 				} else { 
