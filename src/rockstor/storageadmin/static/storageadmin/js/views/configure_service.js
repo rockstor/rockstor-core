@@ -347,7 +347,7 @@ ConfigureServiceView = RockstorLayoutView.extend({
 			_this = this;
 			var nutModeTypes = ['standalone','netserver','netclient']; 
 			_.each(nutModeTypes, function(mode, index) { 
-				if (mode == _this.config.nutmode) {
+				if (mode == _this.config.mode) {
 					html += '<option value="' + mode + '" selected="selected">';
 					html += mode + '</option>';
 				} else {
