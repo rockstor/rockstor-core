@@ -195,10 +195,18 @@ def configure_nut(config):
         # nut-client installs upsmon.conf and upssched.conf
         # ups.conf must be readable by upsdrvctl and any drivers and upsd
         # all nut config files by default in a CentOS install are 640 but our
-        # file editing process creates a temp file and copies it over as root
-        # the files as is are left as root.nut owner group so:-
-        # os.chmod(config_file, 0644)
+        # file editing process creates a temp file and copies it over as root.
+        # The files used to be left as root.nut owner group so previously we
+        # only had to chmod but note the following comment re the chown addition
+        # after our existing chmod:-
         run_command([CHMOD, '640', config_file])
+        # N.B. as of around Dec 2015 an os update changed the behaviour of
+        # the mechanism used here such that root.root became the owner group.
+        # This takes effect once we instantiate a fresh config which then
+        # results is a non working nut subsystems as nut the user no longer has
+        # read access. Fixed by chown root.nut on all files we edit as a matter
+        # of course.
+        run_command([CHOWN, 'root.nut', config_file])
     config_upssched()
 
 
