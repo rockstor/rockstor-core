@@ -55,10 +55,11 @@ AccessKeysView = RockstorLayoutView.extend({
 		var button = $(event.currentTarget);
 		if (buttonDisabled(button)) return false;
 		var name = button.attr('data-name');
+		var id = button.attr('data-id');
 		if(confirm("Delete access key:  " + name + " ...Are you sure?")){
 			disableButton(button);
 			$.ajax({
-				url: "/api/oauth_app/" + name,
+				url: "/api/oauth_app/" + id,
 				type: "DELETE",
 				dataType: "json",
 				success: function() {
@@ -78,11 +79,12 @@ AccessKeysView = RockstorLayoutView.extend({
 			var html = '';
 			this.collection.each(function(c) {
 				var clientName = c.get('name');
+				var id = c.get('id');
 				html += '<tr>';
 				html += '<td>' + clientName + '</td>';
 				html += '<td style="vertical-align: top">' + c.get("client_id") + '</td>';
 				html += '<td style="vertical-align: top">' + c.get("client_secret") + '</td>';
-				html += '<td><a id="delete-access-key" data-name="' + clientName + '" data-action="delete" rel="tooltip" title="Delete access key"><i class="glyphicon glyphicon-trash"></i></a></td>';
+				html += '<td><a id="delete-access-key" data-id="' + id + '" data-name="' + clientName + '" data-action="delete" rel="tooltip" title="Delete access key"><i class="glyphicon glyphicon-trash"></i></a></td>';
 				html += '</tr>';
 			}); 
 			return new Handlebars.SafeString(html); 

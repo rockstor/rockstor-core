@@ -65,22 +65,22 @@ class OauthAppView(rfc.GenericView):
             return Response(OauthAppSerializer(oauth_app).data)
 
     @transaction.atomic
-    def delete(self, request, name):
+    def delete(self, request, id):
         with self._handle_exception(request):
             try:
-                app = OauthApp.objects.get(name=name)
+                app = OauthApp.objects.get(id=id)
             except:
-                e_msg = ('application(%s) does not exist' % name)
+                e_msg = ('application with id(%s) does not exist' % id)
                 handle_exception(Exception(e_msg), request)
 
             if (app.name == settings.OAUTH_INTERNAL_APP):
-                e_msg = ('application(%s) cannot be deleted because it is '
+                e_msg = ('application with id(%s) cannot be deleted because it is '
                          'used internally by Rockstor. If you really need to '
                          'delete it, login as root and use '
                          '%sbin/delete-api-key command. If you do delete it, '
                          'please create another one with the same name as it '
                          'is required by Rockstor internally.' %
-                         (name, settings.ROOT_DIR))
+                         (id, settings.ROOT_DIR))
                 handle_exception(Exception(e_msg), request)
 
             app.application.delete()
