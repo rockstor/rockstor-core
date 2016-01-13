@@ -150,7 +150,6 @@ ScheduledTasksView = RockstorLayoutView.extend({
 					html += '(' + JSON.parse(jsonMeta).pool + ')';
 				} 
 				html += '</td>';
-				html += '<td>' + moment(t.get('ts')).format(RS_DATE_FORMAT) + '</td>';
 				html += '<td>' + prettyCron.toString(t.get('crontab')) + '</td>';
 				html += '<td>';
 				if (t.get('enabled')) {
