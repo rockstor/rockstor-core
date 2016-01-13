@@ -26,158 +26,158 @@
 
 DiskDetailsLayoutView = RockstorLayoutView.extend({
 
-	initialize: function() {
-		// call initialize of base
-		this.constructor.__super__.initialize.apply(this, arguments);
-		this.diskName = this.options.diskName;
-		this.template = window.JST.disk_disk_details_layout;
-		this.disk = new Disk({diskName: this.diskName});
-		this.smartinfo = new SmartInfo({diskName: this.diskName});
-		this.dependencies.push(this.disk);
-		this.dependencies.push(this.smartinfo);
-		this.active_tab = 0;
-		this.initHandlebarHelpers();
-	},
+    initialize: function() {
+	// call initialize of base
+	this.constructor.__super__.initialize.apply(this, arguments);
+	this.diskName = this.options.diskName;
+	this.template = window.JST.disk_disk_details_layout;
+	this.disk = new Disk({diskName: this.diskName});
+	this.smartinfo = new SmartInfo({diskName: this.diskName});
+	this.dependencies.push(this.disk);
+	this.dependencies.push(this.smartinfo);
+	this.active_tab = 0;
+	this.initHandlebarHelpers();
+    },
 
-	events: {
-		'click #smartinfo': 'refreshInfo',
-		'click #test-start': 'startTest'
-	},
+    events: {
+	'click #smartinfo': 'refreshInfo',
+	'click #test-start': 'startTest'
+    },
 
-	render: function() {
-		this.fetch(this.renderSubViews, this);
-		return this;
-	},
+    render: function() {
+	this.fetch(this.renderSubViews, this);
+	return this;
+    },
 
-	renderSubViews: function() {
-		var capabilities = this.smartinfo.get('capabilities') || [];
-		var test_capabilities = {};
-		var running_test = null;
-		capabilities.forEach(function(c) {
-			if ((c.name == 'Short self-test routine recommended polling time') ||
-					(c.name == 'Extended self-test routine recommended polling time') ||
-					(c.name == 'Conveyance self-test routine recommended polling time')) {
-				var p = c.name.indexOf("routine");
-				var short_name = c.name.substring(0, p);
-				test_capabilities[short_name] = c.capabilities;
-			} else if (c.name == 'Self-test execution status' && c.flag != 0) {
-				running_test = c.capabilities;
-			}
-		});
-		var attributes = this.smartinfo.get('attributes') || [];
-		var errorlogsummary = this.smartinfo.get('errorlogsummary') || [];
-		var errorlog = this.smartinfo.get('errorlog') || [];
-		var errorlogZero, errorlogOne = null;
-		if(errorlog.length != 0){
-			errorlogZero = errorlog[0].line;
-			errorlogOne = errorlog[1].line;
-		}
-		var testlog = this.smartinfo.get('testlog') || [];
-		var testlogLength = testlog.length;
-		var testlogdetail = this.smartinfo.get('testlogdetail') || [];
-		var identity = this.smartinfo.get('identity') || [];
-		var diskSmartNotAvailable = !this.disk.get('smart_available'); 
-		var diskSmartNotEnabled = !this.disk.get('smart_enabled'); 
-		var diskName = this.disk.get('name');
-		var errorLogSummaryNull,
-		testLogNull,
-		notRunningTest,
-		smartNotAvailableEnabled = false;
-		if(errorlogsummary.length == 0){
-			errorLogSummaryNull = true;
-		}
-		if(testlogLength == 0){
-			testLogNull = true;
-		}
-		if (diskSmartNotAvailable || diskSmartNotEnabled){
-			smartNotAvailableEnabled = true;
-		}
-		if(!running_test){
-			notRunningTest = true;
-		}
-			
-		$(this.el).html(this.template({
-			disk: this.disk, 
-			diskSmartNotAvailable: diskSmartNotAvailable,
-			diskSmartNotEnabled: diskSmartNotEnabled,
-			diskName: diskName,
-			attributes: attributes,
-			capabilities: capabilities,
-			errorlogsummary: errorlogsummary,
-			errorLogSummaryNull: errorLogSummaryNull,
-			errorlog: errorlog,
-			errorlogZero: errorlogZero,
-			errorlogOne: errorlogOne,
-			testlog: testlog,
-			testLogNull: testLogNull,
-			testlogdetail: testlogdetail,
-			smartinfo: this.smartinfo, 
-			tests: test_capabilities,
-			running_test: running_test,
-			notRunningTest: notRunningTest,
-			identity: identity
-			}));
-		this.$('input.smart-status').simpleSlider({
-			"theme": "volume",
-			allowedValues: [0,1],
-			snap: true
-		});
-		this.$("ul.nav.nav-tabs").tabs("div.css-panes > div");
-		this.$("ul.nav.nav-tabs").data("tabs").click(this.active_tab);
-		this.active_tab = 0;
-	},
-
-	refreshInfo: function(event) {
-		var _this = this;
-		var button = $(event.currentTarget);
-		if (buttonDisabled(button)) return false;
-		disableButton(button);
-		$.ajax({
-			url: '/api/disks/smart/info/' + _this.diskName,
-			type: 'POST',
-			success: function(data, status, xhr) {
-				_this.render();
-			},
-			error: function(xhr, status, error) {
-				enableButton(button);
-			}
-		});
-	},
-
-	startTest: function(event) {
-		var _this = this;
-		var button = $(event.currentTarget);
-		if (buttonDisabled(button)) return false;
-		disableButton(button);
-		var test_type = $('#test_name').val();
-		$.ajax({
-			url: '/api/disks/smart/test/' + _this.diskName,
-			type: 'POST',
-			dataType: 'json',
-			data: {'test_type': test_type},
-			success: function(data, status, xhr) {
-				_this.render();
-				_this.active_tab = 5;
-			},
-			error: function(xhr, status, error) {
-				enableButton(button);
-			}
-		});
-	},
-
-	initHandlebarHelpers: function () {
-		Handlebars.registerHelper('isAboveMinLength', function (minValue, target, options) {
-			// check we have all the arguments we expect
-			if (arguments.length != 3) {
-				throw new Error("Handlerbars Helper " +
-						"'isAboveMinLength' expects exactly 2 parameter.");
-			}
-			// do our logic and return options functions appropriately.
-			if (target.length > minValue) {
-				return options.fn(this);
-			} else {
-				return options.inverse(this);
-			}
-		});
+    renderSubViews: function() {
+	var capabilities = this.smartinfo.get('capabilities') || [];
+	var test_capabilities = {};
+	var running_test = null;
+	capabilities.forEach(function(c) {
+	    if ((c.name == 'Short self-test routine recommended polling time') ||
+		(c.name == 'Extended self-test routine recommended polling time') ||
+		(c.name == 'Conveyance self-test routine recommended polling time')) {
+		var p = c.name.indexOf("routine");
+		var short_name = c.name.substring(0, p);
+		test_capabilities[short_name] = c.capabilities;
+	    } else if (c.name == 'Self-test execution status' && c.flag != 0) {
+		running_test = c.capabilities;
+	    }
+	});
+	var attributes = this.smartinfo.get('attributes') || [];
+	var errorlogsummary = this.smartinfo.get('errorlogsummary') || [];
+	var errorlog = this.smartinfo.get('errorlog') || [];
+	var errorlogZero, errorlogOne = null;
+	if(errorlog.length != 0){
+	    errorlogZero = errorlog[0].line;
+	    errorlogOne = errorlog[1].line;
 	}
+	var testlog = this.smartinfo.get('testlog') || [];
+	var testlogLength = testlog.length;
+	var testlogdetail = this.smartinfo.get('testlogdetail') || [];
+	var identity = this.smartinfo.get('identity') || [];
+	var diskSmartNotAvailable = !this.disk.get('smart_available');
+	var diskSmartNotEnabled = !this.disk.get('smart_enabled');
+	var diskName = this.disk.get('name');
+	var errorLogSummaryNull,
+	    testLogNull,
+	    notRunningTest,
+	    smartNotAvailableEnabled = false;
+	if(errorlogsummary.length == 0){
+	    errorLogSummaryNull = true;
+	}
+	if(testlogLength == 0){
+	    testLogNull = true;
+	}
+	if (diskSmartNotAvailable || diskSmartNotEnabled){
+	    smartNotAvailableEnabled = true;
+	}
+	if(!running_test){
+	    notRunningTest = true;
+	}
+
+	$(this.el).html(this.template({
+	    disk: this.disk,
+	    diskSmartNotAvailable: diskSmartNotAvailable,
+	    diskSmartNotEnabled: diskSmartNotEnabled,
+	    diskName: diskName,
+	    attributes: attributes,
+	    capabilities: capabilities,
+	    errorlogsummary: errorlogsummary,
+	    errorLogSummaryNull: errorLogSummaryNull,
+	    errorlog: errorlog,
+	    errorlogZero: errorlogZero,
+	    errorlogOne: errorlogOne,
+	    testlog: testlog,
+	    testLogNull: testLogNull,
+	    testlogdetail: testlogdetail,
+	    smartinfo: this.smartinfo,
+	    tests: test_capabilities,
+	    running_test: running_test,
+	    notRunningTest: notRunningTest,
+	    identity: identity
+	}));
+	this.$('input.smart-status').simpleSlider({
+	    "theme": "volume",
+	    allowedValues: [0,1],
+	    snap: true
+	});
+	this.$("ul.nav.nav-tabs").tabs("div.css-panes > div");
+	this.$("ul.nav.nav-tabs").data("tabs").click(this.active_tab);
+	this.active_tab = 0;
+    },
+
+    refreshInfo: function(event) {
+	var _this = this;
+	var button = $(event.currentTarget);
+	if (buttonDisabled(button)) return false;
+	disableButton(button);
+	$.ajax({
+	    url: '/api/disks/smart/info/' + _this.diskName,
+	    type: 'POST',
+	    success: function(data, status, xhr) {
+		_this.render();
+	    },
+	    error: function(xhr, status, error) {
+		enableButton(button);
+	    }
+	});
+    },
+
+    startTest: function(event) {
+	var _this = this;
+	var button = $(event.currentTarget);
+	if (buttonDisabled(button)) return false;
+	disableButton(button);
+	var test_type = $('#test_name').val();
+	$.ajax({
+	    url: '/api/disks/smart/test/' + _this.diskName,
+	    type: 'POST',
+	    dataType: 'json',
+	    data: {'test_type': test_type},
+	    success: function(data, status, xhr) {
+		_this.render();
+		_this.active_tab = 5;
+	    },
+	    error: function(xhr, status, error) {
+		enableButton(button);
+	    }
+	});
+    },
+
+    initHandlebarHelpers: function () {
+	Handlebars.registerHelper('isAboveMinLength', function (minValue, target, options) {
+	    // check we have all the arguments we expect
+	    if (arguments.length != 3) {
+		throw new Error("Handlerbars Helper " +
+				"'isAboveMinLength' expects exactly 2 parameter.");
+	    }
+	    // do our logic and return options functions appropriately.
+	    if (target.length > minValue) {
+		return options.fn(this);
+	    } else {
+		return options.inverse(this);
+	    }
+	});
+    }
 });
