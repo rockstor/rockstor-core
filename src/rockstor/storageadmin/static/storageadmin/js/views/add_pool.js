@@ -230,6 +230,34 @@ clicked: function (event) {
 	$("input:checkbox").change(function() {
         $(this).closest("tr").toggleClass("row-highlight", this.checked);
     });
+	var _this = this;
+	var n = $("input:checked.disk").length;
+	var rawCapacity = "6 TB",
+	usableCapacity = "3 TB";
+	var tableStyle=" <div class="+"'form-group'"+"><label class="+"'col-sm-4 control-label'"+" >Selected disks summary</label><div class='col-sm-6'>";
+	var diskSummaryConstRow = tableStyle + "<table class= 'table table-condensed table-bordered  table-striped share-table tablesorter'><tr><td>Raw Capacity</td><td>" + rawCapacity + "</td></tr><tr><td>Usable Capacity</td><td>" + usableCapacity + "</td></tr>";
+	var diskSummaryDynamicRow = diskSummaryConstRow + "<tr><td>2 X 2 TB</td><td>3 X 1 TB</td></tr></table>";
+	if(n > 0){
+		$("#SelectedDisksTable").html(diskSummaryDynamicRow);
+	}else{ 
+		$("#SelectedDisksTable").empty();
+	} 
+	
+	/* var _this = this;
+	var tableStyle=" <div class="+"'form-group'"+"><label class="+"'col-sm-4 control-label'"+" >Selected disks</label><div class='col-sm-6'>";
+	var disktableHtml = tableStyle+"<table class= 'table table-condensed table-bordered  table-striped share-table tablesorter '"+"><thead><tr><th>No.</th><th>Disk Name</th><th>Capacity</th></tr></thead><tbody>";
+	var n = $("input:checked.disk").length;
+	$("input:checked.disk").each(function(index) {
+		var capacity =  humanize.filesize(_this.collection.get(this.id).get('size')*1024);
+		disktableHtml = disktableHtml+"<tr><td>"+(index+1)+"</td><td>"+$(this).val()+"</td><td>"+capacity+"</td></tr>";
+	});
+
+	disktableHtml = disktableHtml+"</tbody></table></div></div>";
+	if(n>0){
+		$("#SelectedDisksTable").html(disktableHtml);
+	}else{ 
+		$("#SelectedDisksTable").empty();
+	} */
 
 },
 
