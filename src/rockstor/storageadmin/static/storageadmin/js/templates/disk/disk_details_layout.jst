@@ -50,80 +50,80 @@
 
   <div id="smartidentity">
     <div class="row">
-    {{#if identity}}
-	<table id="smartidentity-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" summary="List of S.M.A.R.T identity attributes">
-      <thead>
-	<tr>
-	  <th>Attribute</th>
-	  <th>Value</th>
-	</tr>
-      </thead>
-      <tbody>
-	<tr>
-	  <td><strong>Model Family</strong></td>
-	  <td>{{identity.model_family}}</td>
-	</tr>
-	<tr>
-	  <td><strong>Device Model</strong></td>
-	  <td>{{identity.device_model}}</td>
-	</tr>
-	<tr>
-	  <td><strong>Serial Number</strong></td>
-	  <td>{{identity.serial_number}}</td>
-	</tr>
-	<tr>
-	  <td><strong>World Wide Name</strong></td>
-	  <td>{{identity.world_wide_name}}</td>
-	</tr>
-	<tr>
-	  <td><strong>Firmware Version</strong></td>
-	  <td>{{identity.firmware_version}}</td>
-	</tr>
-	<tr>
-	  <td><strong>Capacity</strong></td>
-	  <td>{{identity.capacity}}</td>
-	</tr>
-	<tr>
-	  <td><strong>Sector Size</strong></td>
-	  <td>{{identity.sector_size}}</td>
-	</tr>
-	<tr>
-	  <td><strong>Rotation Rate</strong></td>
-	  <td>{{identity.rotation_rate}}</td>
-	</tr>
-	<tr>
-	  <td><strong>In Smartctl Database</strong></td>
-	  <td>{{identity.in_smartdb}}</td>
-	</tr>
-	<tr>
-	  <td><strong>ATA Version</strong></td>
-	  <td>{{identity.ata_version}}</td>
-	</tr>
-	<tr>
-	  <td><strong>SATA Version</strong></td>
-	  <td>{{identity.sata_version}}</td>
-	</tr>
-	<tr>
-	  <td><strong>Scanned on</strong></td>
-	  <td>{{identity.scanned_on}}</td>
-	</tr>
-	<tr>
-	  <td><strong>SMART Supported</strong></td>
-	  <td>{{identity.supported}}</td>
-	</tr>
-	<tr>
-	  <td><strong>SMART Enabled</strong></td>
-	  <td>{{identity.enabled}}</td>
-	</tr>
-	<tr>
-	  <td><strong>Smartctl Version</strong></td>
-	  <td>{{identity.version}}</td>
-	</tr>
-	<tr>
-	  <td><strong>Overall Health Self-Assessment Test</strong></td>
-	  <td>{{identity.assessment}}</td>
-	</tr>
-      </tbody>
+      {{#if identity}}
+      <table id="smartidentity-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" summary="List of S.M.A.R.T identity attributes">
+	<thead>
+	  <tr>
+	    <th>Attribute</th>
+	    <th>Value</th>
+	  </tr>
+	</thead>
+	<tbody>
+	  <tr>
+	    <td><strong>Model Family</strong></td>
+	    <td>{{identity.model_family}}</td>
+	  </tr>
+	  <tr>
+	    <td><strong>Device Model</strong></td>
+	    <td>{{identity.device_model}}</td>
+	  </tr>
+	  <tr>
+	    <td><strong>Serial Number</strong></td>
+	    <td>{{identity.serial_number}}</td>
+	  </tr>
+	  <tr>
+	    <td><strong>World Wide Name</strong></td>
+	    <td>{{identity.world_wide_name}}</td>
+	  </tr>
+	  <tr>
+	    <td><strong>Firmware Version</strong></td>
+	    <td>{{identity.firmware_version}}</td>
+	  </tr>
+	  <tr>
+	    <td><strong>Capacity</strong></td>
+	    <td>{{identity.capacity}}</td>
+	  </tr>
+	  <tr>
+	    <td><strong>Sector Size</strong></td>
+	    <td>{{identity.sector_size}}</td>
+	  </tr>
+	  <tr>
+	    <td><strong>Rotation Rate</strong></td>
+	    <td>{{identity.rotation_rate}}</td>
+	  </tr>
+	  <tr>
+	    <td><strong>In Smartctl Database</strong></td>
+	    <td>{{identity.in_smartdb}}</td>
+	  </tr>
+	  <tr>
+	    <td><strong>ATA Version</strong></td>
+	    <td>{{identity.ata_version}}</td>
+	  </tr>
+	  <tr>
+	    <td><strong>SATA Version</strong></td>
+	    <td>{{identity.sata_version}}</td>
+	  </tr>
+	  <tr>
+	    <td><strong>Scanned on</strong></td>
+	    <td>{{identity.scanned_on}}</td>
+	  </tr>
+	  <tr>
+	    <td><strong>SMART Supported</strong></td>
+	    <td>{{identity.supported}}</td>
+	  </tr>
+	  <tr>
+	    <td><strong>SMART Enabled</strong></td>
+	    <td>{{identity.enabled}}</td>
+	  </tr>
+	  <tr>
+	    <td><strong>Smartctl Version</strong></td>
+	    <td>{{identity.version}}</td>
+	  </tr>
+	  <tr>
+	    <td><strong>Overall Health Self-Assessment Test</strong></td>
+	    <td>{{identity.assessment}}</td>
+	  </tr>
+	</tbody>
       </table>
       {{/if}}
     </div>
@@ -131,41 +131,41 @@
 
   <div id="smartattributes">
     <div class="row">
-	<table id="smartattributes-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" summary="List of S.M.A.R.T attributes">
-	  <thead>
-	    <tr>
-	      <th>Id</th>
-	      <th>Name</th>
-	      <th>Failed</th>
-	      <th>Norm-ed Value</th>
-	      <th>Worst</th>
-	      <th>Threshold</th>
-	      <th>Raw Value</th>
-	      <th>Type</th>
-	      <th>Updated</th>
-	      <th>Flag</th>
-	    </tr>
-	  </thead>
-	  <tbody>
-	    {{#each attributes as |attribute|}}
-	      <tr>
-		<td>{{attribute.aid}}</td>
-		<td>{{attribute.name}}</td>
-		<td>{{attribute.failed}}</td>
-		<td>{{attribute.normed_value}}</td>
-		<td>{{attribute.worst}}</td>
-		<td>{{attribute.threshold}}</td>
-		<td>{{attribute.raw_value}}</td>
-		<td>{{attribute.atype}}</td>
-		<td>{{attribute.updated}}</td>
-		<td>{{attribute.flag}}</td>
-	      </tr>
-	      {{else}}
-	      <h3>No S.M.A.R.T Attributes found (ATA/SATA only)</h3>
-	    {{/each}}
-	  </tbody>
-	</table>
-      </div>
+      <table id="smartattributes-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" summary="List of S.M.A.R.T attributes">
+	<thead>
+	  <tr>
+	    <th>Id</th>
+	    <th>Name</th>
+	    <th>Failed</th>
+	    <th>Norm-ed Value</th>
+	    <th>Worst</th>
+	    <th>Threshold</th>
+	    <th>Raw Value</th>
+	    <th>Type</th>
+	    <th>Updated</th>
+	    <th>Flag</th>
+	  </tr>
+	</thead>
+	<tbody>
+	  {{#each attributes as |attribute|}}
+	  <tr>
+	    <td>{{attribute.aid}}</td>
+	    <td>{{attribute.name}}</td>
+	    <td>{{attribute.failed}}</td>
+	    <td>{{attribute.normed_value}}</td>
+	    <td>{{attribute.worst}}</td>
+	    <td>{{attribute.threshold}}</td>
+	    <td>{{attribute.raw_value}}</td>
+	    <td>{{attribute.atype}}</td>
+	    <td>{{attribute.updated}}</td>
+	    <td>{{attribute.flag}}</td>
+	  </tr>
+	  {{else}}
+	  <h3>No S.M.A.R.T Attributes found (ATA/SATA only)</h3>
+	  {{/each}}
+	</tbody>
+      </table>
+    </div>
   </div>
 
   <div id="smartcapabilities">
@@ -181,27 +181,34 @@
 	</thead>
 	<tbody>
 	  {{#each capabilities as |capability|}}
-	    <tr>
-	      <td>{{capability.id}}</td>
-	      <td>{{capability.name}}</td>
-	      <td>{{capability.flag}}</td>
-	      <td>{{capability.capabilities}}</td>
-	    </tr>
-	    {{else}}
-	    <h3>No S.M.A.R.T Capabilities found (ATA/SATA only)</h3>
+	  <tr>
+	    <td>{{capability.id}}</td>
+	    <td>{{capability.name}}</td>
+	    <td>{{capability.flag}}</td>
+	    <td>{{capability.capabilities}}</td>
+	  </tr>
+	  {{else}}
+	  <h3>No S.M.A.R.T Capabilities found (ATA/SATA only)</h3>
 	  {{/each}}
 	</tbody>
       </table>
     </div>
   </div>
+
   <div id="smarterrorlogs">
     <div class="row">
       {{#if errorLogSummaryNull}}
-        <h3>There are no errors.</h3>
-        {{else}}
-        <p>{{errorlogZero}}</p>
-	<p>{{errorlogOne}}</p>
-      <table id="smarterrorlogsummary-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" summary="Table of S.M.A.R.T error log summary">
+      {{#isAboveMinLength 4 errorlog}}
+      <h3>No error summary available, please see the raw log below.</h3>
+      {{else}}
+      <h3>There are no errors.</h3>
+      {{/isAboveMinLength}}
+      {{else}}
+      <p>{{errorlogZero}}</p>
+      <p>{{errorlogOne}}</p>
+      <table id="smarterrorlogsummary-table"
+	     class="table table-condensed table-bordered table-hover table-striped tablesorter"
+	     summary="Table of S.M.A.R.T error log summary">
 	<thead>
 	  <tr>
 	    <th>Error #</th>
@@ -213,25 +220,25 @@
 	</thead>
 	<tbody>
 	  {{#each errorlogsummary as |summary|}}
-	    <tr>
-	      <td>{{summary.error_num}}</td>
-	      <td>{{summary.lifetime_hours}}</td>
-	      <td>{{summary.state}}</td>
-	      <td>{{summary.etype}}</td>
-	      <td>{{summary.details}}</td>
-	    </tr>
+	  <tr>
+	    <td>{{summary.error_num}}</td>
+	    <td>{{summary.lifetime_hours}}</td>
+	    <td>{{summary.state}}</td>
+	    <td>{{summary.etype}}</td>
+	    <td>{{summary.details}}</td>
+	  </tr>
 	  {{/each}}
 	</tbody>
       </table>
-      {{#if errorlog.count}}
+      {{/if}}
+      {{#isAboveMinLength 4 errorlog}}
       <h3>Raw S.M.A.R.T error log</h3>
       <pre>
 	{{#each errorlog as |log|}}
-        {{log.line}}<br>
+	{{log.line}}
 	{{/each}}
-	{{/if}}
       </pre>
-      {{/if}}
+      {{/isAboveMinLength}}
     </div>
   </div>
 
@@ -267,7 +274,7 @@
       </table>
       <pre>
 	{{#each testlogdetail as |detail|}}
-	{{detail.line}}<br>
+	{{detail.line}}
 	{{/each}}
       </pre>
       {{/if}}
@@ -276,7 +283,7 @@
 
   <div id="smarttests">
     <div class="row">
-    {{#if smartNotAvailableEnabled}}
+      {{#if smartNotAvailableEnabled}}
       <div class="alert alert-danger">
 	<h4>Tests cannot be run because S.M.A.R.T support is either unavailable or disabled</h4>
       </div>
