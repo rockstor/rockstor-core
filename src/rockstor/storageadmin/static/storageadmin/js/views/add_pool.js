@@ -235,13 +235,35 @@ clicked: function (event) {
 	var rawCapacity = "6 TB",
 	usableCapacity = "3 TB";
 	var tableStyle=" <div class="+"'form-group'"+"><label class="+"'col-sm-4 control-label'"+" >Selected disks summary</label><div class='col-sm-6'>";
-	var diskSummaryConstRow = tableStyle + "<table class= 'table table-condensed table-bordered  table-striped share-table tablesorter'><tr><td>Raw Capacity</td><td>" + rawCapacity + "</td></tr><tr><td>Usable Capacity</td><td>" + usableCapacity + "</td></tr>";
-	var diskSummaryDynamicRow = diskSummaryConstRow + "<tr><td>2 X 2 TB</td><td>3 X 1 TB</td></tr></table>";
+	var diskSummary = tableStyle + "<table class= 'table table-condensed table-bordered  table-striped share-table tablesorter'>";
+	diskSummary += "<tr><td>2 X 2 GB (key X value)</td><td>4 GB (total)</td></tr><tr><td>3 X 1 GB</td><td>3 GB</td></tr>";
+	diskSummary += "<tr><td>Total Raw Capacity</td><td>" + rawCapacity + "</td></tr><tr><td>Total Usable Capacity</td><td>" + usableCapacity + "</td></tr></table>";
 	if(n > 0){
-		$("#SelectedDisksTable").html(diskSummaryDynamicRow);
+		$("#SelectedDisksTable").html(diskSummary);
 	}else{ 
 		$("#SelectedDisksTable").empty();
 	} 
+	
+	var diskObj = {};
+	var ind = 0;
+	$("input:checked.disk").each(function(index) {
+		var capacity =  humanize.filesize(_this.collection.get(this.id).get('size')*1024);
+		console.log(ind);
+		//check if there are keys in the object. if  
+		if(Object.keys(diskObj).length == 0){
+			diskObj[capacity] = ind + 1;
+		} else{
+			for(var key in diskObj){
+				if(key == capacity){
+					diskObj[capacity] = diskObj[capacity] + 1;
+				}else{
+					diskObj[capacity] = ind + 1;
+				}
+				
+			}
+		}
+	});
+	console.log("The obj is: " + JSON.stringify(diskObj));
 	
 	/* var _this = this;
 	var tableStyle=" <div class="+"'form-group'"+"><label class="+"'col-sm-4 control-label'"+" >Selected disks</label><div class='col-sm-6'>";
