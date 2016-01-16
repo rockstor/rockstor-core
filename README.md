@@ -12,48 +12,48 @@ powerful cloud storage platform in a box.
 The main goal is to develop the ultimate open source NAS solution that anyone can
 simply deploy on commodity hardware, use it easily and not be restricted in any
 way. For more information, read the [team's
-mission](http://rockstor.com/about-us.html)
+mission](http://rockstor.com/about-us.html).
 
 # Who should use it?
 
 Rockstor can be used by consumers and organizations, both big and small. As of
 the current release, it's intended for advanced home users, DIY NAS builders
-and smaller organizations that need NAS or private cloud in a box. Go
-[here](http://rockstor.com) for more information.
+and smaller organizations that need NAS or private cloud in a box. Go to
+[rockstor.com](http://rockstor.com) for more information.
 
 # Getting started
 
 Best way to get started is by following the [quickstart
-guide](http://rockstor.com/docs/quickstart.html)
+guide](http://rockstor.com/docs/quickstart.html).
 
-To get in touch with developers, users and contributors, join our
-[forum](http://forum.rockstor.com)
+To get in touch with developers, users and contributors join our
+[community forum](http://forum.rockstor.com).
 
 # Documentation
 
 Documentation is in the
-[rockstor-doc](https://github.com/rockstor/rockstor-doc). You can also read it
-[online](http://rockstor.com/docs)
+[rockstor-doc](https://github.com/rockstor/rockstor-doc) repository. You can also read it
+[online](http://rockstor.com/docs).
 
 # Troubleshooting
 
-[Community forum](http://forum.rockstor.com) is the ideal place to look for
+The [community forum](http://forum.rockstor.com) is the ideal place to look for
 help and ask other users and developers questions.
 
 # Issue tracking
 
-You can go through all open issues
+You can go through all open issues for rockstor-core
 [here](https://github.com/rockstor/rockstor-core/issues).
 
 # License
 
-Please see the file COPYING
+Please see the file [COPYING](https://github.com/rockstor/rockstor-core/blob/master/COPYING).
 
 # Contributing
 
 Development environment setup and contribution guidelines are explained
-[here.](http://rockstor.com/docs/contribute.html)
+[here](http://rockstor.com/docs/contribute.html).
 
-Pull request are welcome. Pick an issue that interests you or create a new one
-to work on. You can also ask on the [forum](http://forum.rockstor.com) for
+Pull requests are welcome. Pick an issue that interests you or create a new one
+to work on. You can also ask on the [community forum](http://forum.rockstor.com) for
 guidance. We'll be happy to help.
