@@ -60,7 +60,8 @@ DiskDetailsLayoutView = RockstorLayoutView.extend({
 		var p = c.name.indexOf("routine");
 		var short_name = c.name.substring(0, p);
 		test_capabilities[short_name] = c.capabilities;
-	    } else if (c.name == 'Self-test execution status' && c.flag != 0) {
+	    } else if (c.name == 'Self-test execution status'
+				&& c.flag > 240 && c.flag < 250) {
 		running_test = c.capabilities;
 	    }
 	});
