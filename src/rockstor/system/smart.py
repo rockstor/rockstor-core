@@ -160,27 +160,18 @@ def error_logs(device, test_mode=TESTMODE):
     :return: log_l: A list containing each line in turn of the error log.
     """
     if not test_mode:
-        o, e, rc = run_command([SMART, '-l', 'error', '/dev/%s' % device],
-                           throw=False)
+        smart_command = [SMART, '-l', 'error', '/dev/%s' % device]
+        o, e, rc = run_command(smart_command, throw=False)
     else:
         o, e, rc = run_command([CAT, '/root/smartdumps/smart-l-error.out'],
                            throw=False)
     # As we mute exceptions when calling the above command we should at least
     # examine what we have as return code (rc); 64 has been seen when the error
     # log contains errors but otherwise executes successfully so we catch this.
-    if rc == 64:
-        e_msg = 'Drive /dev/%s has logged S.M.A.R.T errors. Please view ' \
-                'the Error logs tab for this device.' % device
-        logger.error(e_msg)
-        email_root('S.M.A.R.T error', e_msg)
-    # In all other instances that are an error (non zero) we raise exception
-    # as normal.
-    elif rc != 0:
-        e_msg = ('non-zero code(%d) returned by command: %s -l error output: '
-                 '%s error: %s' % (rc, SMART, o, e))
-        logger.error(e_msg)
-        raise CommandException(('%s -l error /dev/%s' % (SMART, device)), o, e,
-                               rc)
+    overide_rc = 64
+    e_msg = 'Drive /dev/%s has logged S.M.A.R.T errors. Please view ' \
+                 'the Error logs tab for this device.' % device
+    screen_return_codes(e_msg, overide_rc, o, e, rc, smart_command)
     ecode_map = {
         'ABRT' : 'Command ABoRTed',
         'AMNF' : 'Address Mark Not Found',
@@ -332,13 +323,15 @@ def screen_return_codes(msg_on_hit, return_code_target, o, e, rc, command):
     """
     Provides a central mechanism to screen return codes from executing smart
     commands. This is required as some non zero return codes would otherwise
-    cause a generic exception clause in our general purpose run_command.
-    If the target return code is found then email root with the message
-    provided, otherwise raise a generic exception with the command used.
+    trigger a generic exception clause in our general purpose run_command.
+    If the target return code is seen then email root with the message
+    provided, otherwise raise a generic exception with the command information.
     N.B. May be done better by acting as a SMART run_command wrapper (Future).
     :param msg_on_hit: message used to email root
     :param return_code_target: return code to screen for
-    :return:
+    :param o: the output from the command when it was run
+    :param e: the error from the command when it was run
+    :param rc: the return code from running the command
     """
     # if our return code is our target then log with our message and email root
     # with the same.
