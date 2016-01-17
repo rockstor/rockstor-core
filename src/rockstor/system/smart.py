@@ -239,9 +239,9 @@ def test_logs(device, test_mode=TESTMODE):
     :return: test_d as a dictionary of summarized test
     """
     if not test_mode:
-        o, e, rc = run_command(
-            [SMART, '-l', 'selftest', '-l', 'selective', '/dev/%s' % device],
-            throw=False)
+        smart_command = [SMART, '-l', 'selftest', '-l', 'selective', '/dev/%s'
+                         % device]
+        o, e, rc = run_command(smart_command, throw=False)
     else:
         o, e, rc = run_command(
             [CAT, '/root/smartdumps/smart-l-selftest-l-selective.out'])
@@ -249,21 +249,12 @@ def test_logs(device, test_mode=TESTMODE):
     # been seen when executing this command. Strange as it means
     # "Invalid argument to exit" anyway if we silence the throw of a generic
     # non 0 exception we can catch the 128, akin to 64 catch in error_logs().
-    # N.B. no official list of 128 in /usr/include/sysexits.h
-    if rc == 128:
-        e_msg = 'The command "smartctl -l selftest -l selective /dev/%s" ' \
-                'returned an error of 128. This has undetermined meaning. '\
-                'Please view the Self-Test Logs tab for this device.' % device
-        logger.error(e_msg)
-        email_root('S.M.A.R.T error', e_msg)
-    # In all other instances that are an error (non zero) we raise exception
-    # as normal.
-    elif rc != 0:
-        e_msg = ('non-zero code(%d) returned by command: %s -l error output: '
-                 '%s error: %s' % (rc, SMART, o, e))
-        logger.error(e_msg)
-        raise CommandException(('%s -l error /dev/%s' % (SMART, device)), o, e,
-                               rc)
+    # N.B. no official list of rc = 128 in /usr/include/sysexits.h
+    overide_rc = 128
+    e_msg = 'run_command(%s) returned an error of %s. This has undetermined ' \
+            'meaning. Please view the Self-Test Logs tab for this device.' \
+            % (smart_command, overide_rc)
+    screen_return_codes(e_msg, overide_rc, o, e, rc, smart_command)
     test_d = {}
     log_l = []
     for i in range(len(o)):
@@ -335,3 +326,28 @@ def update_config(config):
             tfo.write('%s\n' % l)
 
     return move(npath, SMARTD_CONFIG)
+
+
+def screen_return_codes(msg_on_hit, return_code_target, o, e, rc, command):
+    """
+    Provides a central mechanism to screen return codes from executing smart
+    commands. This is required as some non zero return codes would otherwise
+    cause a generic exception clause in our general purpose run_command.
+    If the target return code is found then email root with the message
+    provided, otherwise raise a generic exception with the command used.
+    N.B. May be done better by acting as a SMART run_command wrapper (Future).
+    :param msg_on_hit: message used to email root
+    :param return_code_target: return code to screen for
+    :return:
+    """
+    # if our return code is our target then log with our message and email root
+    # with the same.
+    if rc == return_code_target:
+        logger.error(msg_on_hit)
+        email_root('S.M.A.R.T error', msg_on_hit)
+    # In all other non zero (error) instances we raise an exception as normal.
+    elif rc != 0:
+        e_msg = ('non-zero code(%d) returned by command: %s output: '
+                 '%s error: %s' % (rc, command, o, e))
+        logger.error(e_msg)
+        raise CommandException(('%s' % command), o, e, rc)
