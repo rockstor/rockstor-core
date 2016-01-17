@@ -46,8 +46,7 @@ def info(device, test_mode=TESTMODE):
         o, e, rc = run_command([SMART, '-H', '--info', '/dev/%s' % device],
                                throw=False)
     else:  # we are testing so use a smartctl -H --info file dump instead
-        o, e, rc = run_command([CAT, '/root/smartdumps/smart-H--info.out'],
-                               throw=False)
+        o, e, rc = run_command([CAT, '/root/smartdumps/smart-H--info.out'])
     res = {}
     # List of string matches to look for in smartctrl -H --info output.
     # Note the "|" char allows for defining alternative matches ie A or B
@@ -87,8 +86,7 @@ def extended_info(device, test_mode=TESTMODE):
     if not test_mode:
         o, e, rc = run_command([SMART, '-a', '/dev/%s' % device], throw=False)
     else:  # we are testing so use a smartctl -a file dump instead
-        o, e, rc = run_command([CAT, '/root/smartdumps/smart-a.out'],
-                               throw=False)
+        o, e, rc = run_command([CAT, '/root/smartdumps/smart-a.out'])
     attributes = {}
     for i in range(len(o)):
         if (re.match('Vendor Specific SMART Attributes with Thresholds:',
@@ -163,8 +161,7 @@ def error_logs(device, test_mode=TESTMODE):
         smart_command = [SMART, '-l', 'error', '/dev/%s' % device]
         o, e, rc = run_command(smart_command, throw=False)
     else:
-        o, e, rc = run_command([CAT, '/root/smartdumps/smart-l-error.out'],
-                           throw=False)
+        o, e, rc = run_command([CAT, '/root/smartdumps/smart-l-error.out'])
     # As we mute exceptions when calling the above command we should at least
     # examine what we have as return code (rc); 64 has been seen when the error
     # log contains errors but otherwise executes successfully so we catch this.
