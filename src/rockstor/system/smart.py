@@ -240,10 +240,30 @@ def test_logs(device, test_mode=TESTMODE):
     """
     if not test_mode:
         o, e, rc = run_command(
-            [SMART, '-l', 'selftest', '-l', 'selective', '/dev/%s' % device])
+            [SMART, '-l', 'selftest', '-l', 'selective', '/dev/%s' % device],
+            throw=False)
     else:
         o, e, rc = run_command(
             [CAT, '/root/smartdumps/smart-l-selftest-l-selective.out'])
+    # A return code of 128 (non zero so run_command raises an exception) has
+    # been seen when executing this command. Strange as it means
+    # "Invalid argument to exit" anyway if we silence the throw of a generic
+    # non 0 exception we can catch the 128, akin to 64 catch in error_logs().
+    # N.B. no official list of 128 in /usr/include/sysexits.h
+    if rc == 128:
+        e_msg = 'The command "smartctl -l selftest -l selective /dev/%s" ' \
+                'returned an error of 128. This has undetermined meaning. '\
+                'Please view the Self-Test Logs tab for this device.' % device
+        logger.error(e_msg)
+        email_root('S.M.A.R.T error', e_msg)
+    # In all other instances that are an error (non zero) we raise exception
+    # as normal.
+    elif rc != 0:
+        e_msg = ('non-zero code(%d) returned by command: %s -l error output: '
+                 '%s error: %s' % (rc, SMART, o, e))
+        logger.error(e_msg)
+        raise CommandException(('%s -l error /dev/%s' % (SMART, device)), o, e,
+                               rc)
     test_d = {}
     log_l = []
     for i in range(len(o)):
