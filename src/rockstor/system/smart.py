@@ -157,8 +157,8 @@ def error_logs(device, test_mode=TESTMODE):
     error number.
     :return: log_l: A list containing each line in turn of the error log.
     """
+    smart_command = [SMART, '-l', 'error', '/dev/%s' % device]
     if not test_mode:
-        smart_command = [SMART, '-l', 'error', '/dev/%s' % device]
         o, e, rc = run_command(smart_command, throw=False)
     else:
         o, e, rc = run_command([CAT, '/root/smartdumps/smart-l-error.out'])
@@ -226,9 +226,9 @@ def test_logs(device, test_mode=TESTMODE):
     :param test_mode: Not True causes cat from file rather than smartctl command
     :return: test_d as a dictionary of summarized test
     """
+    smart_command = [SMART, '-l', 'selftest', '-l', 'selective', '/dev/%s'
+                     % device]
     if not test_mode:
-        smart_command = [SMART, '-l', 'selftest', '-l', 'selective', '/dev/%s'
-                         % device]
         o, e, rc = run_command(smart_command, throw=False)
     else:
         o, e, rc = run_command(
