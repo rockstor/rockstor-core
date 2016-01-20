@@ -138,6 +138,24 @@ class ApplianceDetailView(rfc.GenericView):
                 return Response()
 
     @transaction.atomic
+    def put(self, request, id):
+        try:
+            appliance = Appliance.objects.get(pk=id)
+        except Exception, e:
+            logger.exception(e)
+            e_msg = ('Appliance(%s) does not exist' % id)
+            handle_exception(Exception(e_msg), request)
+
+        try:
+            appliance.hostname = request.data['hostname']
+            appliance.save()
+            return Response()
+        except Exception, e:
+            logger.exception(e)
+            e_msg = ('Failed updating hostname for appliance with id = %d' % id)
+            handle_exception(e, request)  
+
+    @transaction.atomic
     def delete(self, request, id):
         try:
             appliance = Appliance.objects.get(pk=id)
