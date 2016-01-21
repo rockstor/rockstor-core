@@ -27,7 +27,9 @@
 AddPoolView = Backbone.View.extend({
 	events: {
 	"click #js-cancel": "cancel",
-	'click [type="checkbox"]': 'clicked'
+	//'click [type="checkbox"]': 'clicked',
+	'click [class="disk"]': 'clicked',
+	"click #checkAll": "selectAllCheckboxes",
 },
 
 initialize: function() {
@@ -220,65 +222,78 @@ cancel: function(event) {
 	app_router.navigate('pools', {trigger: true});
 },
 
-clicked: function (event) {
-
+selectAllCheckboxes: function(event){
 	$("#checkAll").change(function () {
 	    $("input:checkbox").prop('checked',  $(this).prop("checked"));
 	    $("input:checkbox").closest("tr").toggleClass("row-highlight", this.checked);
 	});
+	var allDisks = {};
+	var _this = this;
+	_this.collection.each(function(disk, index){
+		var cap = humanize.filesize(disk.get('size')*1024);
+		console.log("the capacity is : " + cap);
+	});
+},
+
+clicked: function (event) {
+
+	/* $("#checkAll").change(function () {
+	    $("input:checkbox").prop('checked',  $(this).prop("checked"));
+	    $("input:checkbox").closest("tr").toggleClass("row-highlight", this.checked);
+	}); */
 	
 	$("input:checkbox").change(function() {
         $(this).closest("tr").toggleClass("row-highlight", this.checked);
-    });
+    }); 
+	
+	//handle the table display separately for the select all check box
 	var _this = this;
 	var n = $("input:checked.disk").length;
-	var rawCapacity = "6 TB",
-	usableCapacity = "3 TB";
-	var tableStyle=" <div class="+"'form-group'"+"><label class="+"'col-sm-4 control-label'"+" >Selected disks summary</label><div class='col-sm-6'>";
-	var diskSummary = tableStyle + "<table class= 'table table-condensed table-bordered  table-striped share-table tablesorter'>";
-	diskSummary += "<tr><td>2 X 2 GB (key X value)</td><td>4 GB (total)</td></tr><tr><td>3 X 1 GB</td><td>3 GB</td></tr>";
-	diskSummary += "<tr><td>Total Raw Capacity</td><td>" + rawCapacity + "</td></tr><tr><td>Total Usable Capacity</td><td>" + usableCapacity + "</td></tr></table>";
+	var diskObj = {};
+	$("input:checked.disk").each(function(index) {
+		var capacity =  humanize.filesize(_this.collection.get(this.id).get('size')*1024);
+		if (capacity in diskObj) {
+			diskObj[capacity] += 1;
+		} else {
+			diskObj[capacity] = 1;
+		}
+	});
+	console.log("The obj is: " + JSON.stringify(diskObj)); 
+	
+	//loop through diskobj and get key value pairs.
+	var formStyle= "<div class="+"'form-group'"+"><label class="+"'col-sm-4 control-label'"+" >Selected disks summary</label><div class='col-sm-6'>";
+	var diskSummary = formStyle + "<table class= 'table table-condensed table-bordered  table-striped share-table tablesorter'>";
+	var grandTotal = 0;
+	for(var key in diskObj){
+		//remove GB from the key and multiply with value to get total.
+		var slicedKey =  key.slice(0,4);
+		console.log(slicedKey);
+		var totalCap = slicedKey * diskObj[key];	
+		diskSummary += "<tr>";
+		diskSummary += "<td>" + diskObj[key] + " X " + key + "</td>";
+		diskSummary += "<td>" + totalCap + " GB</td>";
+		diskSummary += "</tr>";
+		grandTotal += totalCap; 
+		diskObj.grandTotal = grandTotal;
+	} 
+	console.log(diskObj.totalCapacity);
+	diskSummary += "<tr><td><b>Total Raw Capacity</td></b><td><b>" + diskObj.grandTotal + " GB </td></b></tr>";
+	//diskSummary += "<tr><td>Total Usable Capacity</td>" + "<td>" + usableCapacity + "</td></tr>";
+	diskSummary += "</table>";
+	
 	if(n > 0){
 		$("#SelectedDisksTable").html(diskSummary);
 	}else{ 
 		$("#SelectedDisksTable").empty();
-	} 
+	}
 	
-	var diskObj = {};
-	var ind = 0;
-	$("input:checked.disk").each(function(index) {
-		var capacity =  humanize.filesize(_this.collection.get(this.id).get('size')*1024);
-		console.log(ind);
-		//check if there are keys in the object. if  
-		if(Object.keys(diskObj).length == 0){
-			diskObj[capacity] = ind + 1;
-		} else{
-			for(var key in diskObj){
-				if(key == capacity){
-					diskObj[capacity] = diskObj[capacity] + 1;
-				}else{
-					diskObj[capacity] = ind + 1;
-				}
-				
-			}
-		}
-	});
-	console.log("The obj is: " + JSON.stringify(diskObj));
+	/* calculateUsableCapacity(rawCapacity,)
+	raw capacity and raid configuration, diskObj map 
 	
-	/* var _this = this;
-	var tableStyle=" <div class="+"'form-group'"+"><label class="+"'col-sm-4 control-label'"+" >Selected disks</label><div class='col-sm-6'>";
-	var disktableHtml = tableStyle+"<table class= 'table table-condensed table-bordered  table-striped share-table tablesorter '"+"><thead><tr><th>No.</th><th>Disk Name</th><th>Capacity</th></tr></thead><tbody>";
-	var n = $("input:checked.disk").length;
-	$("input:checked.disk").each(function(index) {
-		var capacity =  humanize.filesize(_this.collection.get(this.id).get('size')*1024);
-		disktableHtml = disktableHtml+"<tr><td>"+(index+1)+"</td><td>"+$(this).val()+"</td><td>"+capacity+"</td></tr>";
-	});
-
-	disktableHtml = disktableHtml+"</tbody></table></div></div>";
-	if(n>0){
-		$("#SelectedDisksTable").html(disktableHtml);
-	}else{ 
-		$("#SelectedDisksTable").empty();
+	function calculateUsableCapacity(rawCap, raidConfig, diskObject){
+		//need to write logic here.
+		var usableCapacity = "3 TB";
+		return usableCapacity;
 	} */
 
 },
