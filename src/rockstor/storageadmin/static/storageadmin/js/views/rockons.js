@@ -340,9 +340,9 @@ RockonsView = RockstorLayoutView.extend({
 			html +=  '<br><br>';
 			if (_this.ui_map[rockon.get('id')]) {
 			    if (rockon.get('status') == 'started') {
-				html += '<a href="' + _this.ui_map[rockon.get('id')] + '" target="_blank" class="btn btn-primary">' + rockon.get('name') + ' UI</a>';
+				html += '<a href="' + _this.ui_map[rockon.get('id')] + '" target="_blank" class="btn btn-primary">' + rockon.get('name') + ' UI</a> ';
 			    } else {
-				html += '<a href="#" class="btn btn-primary disabled" title="Switch on to access the UI">' + rockon.get('name') + ' UI</a>';
+				html += '<a href="#" class="btn btn-primary disabled" title="Switch on to access the UI">' + rockon.get('name') + ' UI</a> ';
 			    }
 			}
 			if (rockon.get('status') != 'started') {
