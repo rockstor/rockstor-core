@@ -703,7 +703,13 @@ RockonCustomChoice = RockstorWizardPage.extend({
 		html += '<label class="control-label col-sm-3" for="cc">' + cci.get('label') + '<span class="required">*</span></label>';
 		html += '<div class="controls">';
 		html += '<div class="col-sm-6">';
-		html += '<input class="form-control" type="text" id="' + cci.id + '" name="' + cci.id + '" value="' + (cci.get('val') || '') + '">';
+		html += '<input class="form-control" ';
+		if (cci.get('label').match(/password/i)) {
+		    html += 'type="password" ';
+		} else {
+		    html += 'type="text" ';
+		}
+		html += 'id="' + cci.id + '" name="' + cci.id + '" value="' + (cci.get('val') || '') + '">';
 		html += '</div>&nbsp;&nbsp';
 		html += '<i class="fa fa-info-circle fa-lg" title="' + cci.get('description') + '" rel="tooltop"></i>';
 		html += '</div>';
