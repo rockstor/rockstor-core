@@ -102,7 +102,7 @@ class ShareListView(ShareMixin, rfc.GenericView):
             #It is a transient subvolume that gets rolled into a proper Share after
             #5 incremental-sends. Until then, keep such transient shares hidden from the UI,
             #mostly for costmetic and UX reasons.
-            return Share.objects.exclude(name__regex=r'^\.snapshots/.*/.*_replication_')
+            return Share.objects.exclude(name__regex=r'^\.snapshots/.*/.*_replication_').order_by('-id')
 
     @transaction.atomic
     def post(self, request):
