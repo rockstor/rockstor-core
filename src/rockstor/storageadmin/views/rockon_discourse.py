@@ -38,13 +38,14 @@ def discourse_repo(rockon):
 
 def discourse_install(rockon):
     #1. install git
-    if (not os.path.isfile('/usr/bin/git')):
+    git = '/usr/bin/git'
+    if (not os.path.isfile(git)):
         install_pkg('git')
 
     #2. prep Discourse.yml
     repo = discourse_repo(rockon)
     if (not os.path.isdir(repo)):
-        run_command(['git', 'clone',
+        run_command([git, 'clone',
                      'https://github.com/discourse/discourse_docker.git',
                      repo])
 

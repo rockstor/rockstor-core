@@ -95,7 +95,7 @@ class RockOnView(rfc.GenericView):
     def post(self, request, command=None):
         with self._handle_exception(request):
             if (command == 'update'):
-                rockons = self._get_available(request)
+                rockons = self._get_available()
                 for r in rockons:
                     try:
                         self._create_update_meta(r, rockons[r])
@@ -146,7 +146,7 @@ class RockOnView(rfc.GenericView):
                 e_msg = ('Container(%s) belongs to another '
                          'Rock-On(%s). Update rolled back.' %
                          (c, co.rockon.name))
-                handle_exception(Exception(e_msg), request)
+                handle_exception(Exception(e_msg), self.request)
             if (not created):
                 co.dimage = io
                 co.launch_order = co_defaults['launch_order']
@@ -284,12 +284,12 @@ class RockOnView(rfc.GenericView):
         for eo in DContainerEnv.objects.filter(container=co):
             if (eo.key not in cc_d): eo.delete()
 
-    def _get_available(self, request):
+    def _get_available(self):
         msg = ('Network error while checking for updates. '
                'Please try again later.')
         url_root = settings.ROCKONS.get('remote_metastore')
         remote_root = ('%s/%s' % (url_root, settings.ROCKONS.get('remote_root')))
-        with self._handle_exception(request, msg=msg):
+        with self._handle_exception(self.request, msg=msg):
             response = requests.get(remote_root, timeout=10)
             root = response.json()
             meta_cfg = {}
