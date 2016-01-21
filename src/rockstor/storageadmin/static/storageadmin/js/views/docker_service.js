@@ -30,7 +30,6 @@ DockerServiceView = Backbone.View.extend({
     },
 
     initialize: function() {
-    	this.dashboardconfig = this.options.dashboardconfig;
     	this.template = window.JST.rockons_docker_service;
     	this.serviceName = 'docker';
     	this.service = new Service({name: this.serviceName});

@@ -80,15 +80,14 @@ RockonsView = RockstorLayoutView.extend({
 	});
 
 	$(this.el).html(this.template({
-	    rockons: this.rockons,
-	    status: this.service.get('status'),
+	    rockons: _this.rockons,
+	    status: _this.service.get('status'),
 	    ui_map: ui_map
 	}));
 
 	if (!this.dockerServiceView) {
 	    this.dockerServiceView = new DockerServiceView({
-		parentView: this,
-		dockerService: this.dockerService
+		parentView: _this
 	    });
 	}
 	// Render the Rockons template with a status describing whether
