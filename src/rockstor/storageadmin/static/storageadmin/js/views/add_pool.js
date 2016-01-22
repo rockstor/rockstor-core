@@ -26,298 +26,297 @@
 
 AddPoolView = Backbone.View.extend({
 	events: {
-	"click #js-cancel": "cancel",
-	//'click [type="checkbox"]': 'clicked',
-	'click [class="disk"]': 'clicked',
-	"click #checkAll": "selectAllCheckboxes",
-},
-
-initialize: function() {
-
-	this.template = window.JST.pool_add_pool_template;
-
-	// dont paginate disk selection table for now
-	//this.pagination_template = window.JST.common_pagination;
-	this.collection = new DiskCollection();
-	// we do this as a workaround until we fix the add pool form properly.
-	// with default page size, only upto 15 drives are shown.
-	// @todo: fix this properly.
-	this.collection.setPageSize(100);
-	this.filteredCollection = new DiskCollection();
-	this.collection.on("reset", this.renderDisks, this);
-	this.initHandlebarHelpers();
-},
-
-render: function() {
-	this.collection.fetch();
-	return this;
-},
-
-renderDisks: function() {
-	$(this.el).empty();
-	var _this = this;
-	this.filteredCollection = _.reject(this.collection.models,function(disk){
-		return _.isNull(disk.get('pool')) && !disk.get('parted') && !disk.get('offline') && _.isNull(disk.get('btrfs_uuid'));
-	});
-
-	this.collection.remove(this.filteredCollection);
-	$(_this.el).append(_this.template({
-		disks: this.collection
-	}));
-
-	var err_msg = 'Incorrect number of disks';
-	var raid_err_msg = function() {
-		return err_msg;
-	}
-
-	$.validator.addMethod('validatePoolName', function(value) {
-		var pool_name = $('#pool_name').val();
-
-		if (pool_name == "") {
-			err_msg = 'Please enter pool name';
-			return false;
-		} else if(pool_name.length >255){
-			err_msg = 'Please enter pool name less than 255 characters';
-			return false;
-		} else if(/^[A-Za-z][A-Za-z0-9_.-]*$/.test(pool_name) == false){
-			err_msg = 'Please enter a valid pool name';
-			return false;
-		}
-
-		return true;
-	}, raid_err_msg);
-
-
-	$.validator.addMethod('validateRaid', function(value) {
-		var raid_level = $('#raid_level').val();
-		var n = $("input:checked.disk").length;
-		if (raid_level == 'single') {
-			if (n < 1) {
-				err_msg = 'At least one disk must be selected';
-				return false;
-			}
-		} else if (raid_level == 'raid0') {
-			if (n < 2) {
-				err_msg = 'Raid0 requires at least 2 disks to be selected';
-				return false;
-			}
-		} else if (raid_level == 'raid1') {
-			if (n < 2) {
-				err_msg = 'Raid1 requires at least 2 disks to be selected';
-				return false;
-			}
-		} else if (raid_level == 'raid5') {
-			if (n < 2) {
-				err_msg = 'Raid5 requires at least 2 disks to be selected';
-				return false;
-			}
-		} else if (raid_level == 'raid6') {
-			if (n < 3) {
-				err_msg = 'Raid6 requires at least 3 disks to be selected';
-				return false;
-			}
-		} else if (raid_level == 'raid10') {
-
-			if (n < 4) {
-				err_msg = 'Raid10 requires at least 4 disks to be selected';
-				return false;
-			}
-		}
-		return true;
-	}, raid_err_msg);
-
-
-
-	this.$("#disks-table").tablesorter({
-		headers: {
-		        // assign the first column (we start counting zero)
-		    0: {
-		        // disable it by setting the property sorter to false
-		        sorter: false
-	        },
-	            // assign the third column (we start counting zero)
-	        3: {
-		        // disable it by setting the property sorter to false
-		        sorter: false
-	        }
-	    }
-	});
-
-	this.$('#add-pool-form input').tooltip({placement: 'right'});
-
-	this.$('#raid_level').tooltip({
-		html: true,
-		placement: 'right',
-		title: "Desired RAID level of the pool<br><strong>Single</strong>: No software raid. (Recommended while using hardware raid).<br><strong>Raid0</strong>, <strong>Raid1</strong>, <strong>Raid10</strong>, <strong>Raid5</strong> and <strong>Raid6</strong> are similar to conventional implementations with key differences.<br>See documentation for more information"
-	});
-
-	this.$('#compression').tooltip({
-		html: true,
-		placement: 'right',
-		title: "Choose a compression algorithm for this Pool.<br><strong>zlib: </strong>slower but higher compression ratio.<br><strong>lzo: </strong>faster compression/decompression, but ratio smaller than zlib.<br>Enabling compression at the pool level applies to all Shares carved out of this Pool.<br>Don't enable compression here if you like to have finer control at the Share level.<br>You can change the algorithm, disable or enable it later, if necessary."
-	});
-
-
-	$('#add-pool-form').validate({
-		onfocusout: false,
-		onkeyup: false,
-		rules: {
-		pool_name: "validatePoolName",
-		raid_level: "validateRaid"
+		"click #js-cancel": "cancel",
+		'click [class="disk"]': 'clickCheckbox',
+		"click #checkAll": "selectAllCheckboxes",
 	},
 
-	submitHandler: function() {
-		var button = $('#create_pool');
-		if (buttonDisabled(button)) return false;
-		disableButton(button);
-		var pool_name = $('#pool_name').val();
-		var raid_level = $('#raid_level').val();
-		var compression = $('#compression').val();
-		if (compression == 'no') {
-			compression = null;
+	initialize: function() {
+
+		this.template = window.JST.pool_add_pool_template;
+
+		// dont paginate disk selection table for now
+		//this.pagination_template = window.JST.common_pagination;
+		this.collection = new DiskCollection();
+		// we do this as a workaround until we fix the add pool form properly.
+		// with default page size, only upto 15 drives are shown.
+		// @todo: fix this properly.
+		this.collection.setPageSize(100);
+		this.filteredCollection = new DiskCollection();
+		this.collection.on("reset", this.renderDisks, this);
+		this.initHandlebarHelpers();
+	},
+
+	render: function() {
+		this.collection.fetch();
+		return this;
+	},
+
+	renderDisks: function() {
+		$(this.el).empty();
+		var _this = this;
+		this.filteredCollection = _.reject(this.collection.models,function(disk){
+			return _.isNull(disk.get('pool')) && !disk.get('parted') && !disk.get('offline') && _.isNull(disk.get('btrfs_uuid'));
+		});
+
+		this.collection.remove(this.filteredCollection);
+		$(_this.el).append(_this.template({
+			disks: this.collection
+		}));
+
+		var err_msg = 'Incorrect number of disks';
+		var raid_err_msg = function() {
+			return err_msg;
 		}
-		var mnt_options = $('#mnt_options').val();
-		if (mnt_options == '') {
-			mnt_options = null;
-		}
-		var disk_names = [];
-		var n = $("input:checked.disk").length;
-		$("input:checked.disk").each(function(i) {
-			if (i < n) {
-				disk_names.push($(this).val());
+
+		$.validator.addMethod('validatePoolName', function(value) {
+			var pool_name = $('#pool_name').val();
+
+			if (pool_name == "") {
+				err_msg = 'Please enter pool name';
+				return false;
+			} else if(pool_name.length >255){
+				err_msg = 'Please enter pool name less than 255 characters';
+				return false;
+			} else if(/^[A-Za-z][A-Za-z0-9_.-]*$/.test(pool_name) == false){
+				err_msg = 'Please enter a valid pool name';
+				return false;
+			}
+
+			return true;
+		}, raid_err_msg);
+
+
+		$.validator.addMethod('validateRaid', function(value) {
+			var raid_level = $('#raid_level').val();
+			var n = $("input:checked.disk").length;
+			if (raid_level == 'single') {
+				if (n < 1) {
+					err_msg = 'At least one disk must be selected';
+					return false;
+				}
+			} else if (raid_level == 'raid0') {
+				if (n < 2) {
+					err_msg = 'Raid0 requires at least 2 disks to be selected';
+					return false;
+				}
+			} else if (raid_level == 'raid1') {
+				if (n < 2) {
+					err_msg = 'Raid1 requires at least 2 disks to be selected';
+					return false;
+				}
+			} else if (raid_level == 'raid5') {
+				if (n < 2) {
+					err_msg = 'Raid5 requires at least 2 disks to be selected';
+					return false;
+				}
+			} else if (raid_level == 'raid6') {
+				if (n < 3) {
+					err_msg = 'Raid6 requires at least 3 disks to be selected';
+					return false;
+				}
+			} else if (raid_level == 'raid10') {
+
+				if (n < 4) {
+					err_msg = 'Raid10 requires at least 4 disks to be selected';
+					return false;
+				}
+			}
+			return true;
+		}, raid_err_msg);
+
+
+
+		this.$("#disks-table").tablesorter({
+			headers: {
+				// assign the first column (we start counting zero)
+				0: {
+					// disable it by setting the property sorter to false
+					sorter: false
+				},
+				// assign the third column (we start counting zero)
+				3: {
+					// disable it by setting the property sorter to false
+					sorter: false
+				}
 			}
 		});
 
-		var jqxhr = $.ajax({
-			url: '/api/pools',
-			type: 'POST',
-			dataType: 'json',
-			contentType: 'application/json',
-			data: JSON.stringify({"disks": disk_names, "raid_level": raid_level,
-				"pname": pool_name, "compression": compression,
-				"mnt_options": mnt_options,}),
+		this.$('#add-pool-form input').tooltip({placement: 'right'});
+
+		this.$('#raid_level').tooltip({
+			html: true,
+			placement: 'right',
+			title: "Desired RAID level of the pool<br><strong>Single</strong>: No software raid. (Recommended while using hardware raid).<br><strong>Raid0</strong>, <strong>Raid1</strong>, <strong>Raid10</strong>, <strong>Raid5</strong> and <strong>Raid6</strong> are similar to conventional implementations with key differences.<br>See documentation for more information"
 		});
 
-		jqxhr.done(function() {
-			enableButton(button);
-
-			_this.$('#add-pool-form input').tooltip('hide');
-			app_router.navigate('pools', {trigger: true})
+		this.$('#compression').tooltip({
+			html: true,
+			placement: 'right',
+			title: "Choose a compression algorithm for this Pool.<br><strong>zlib: </strong>slower but higher compression ratio.<br><strong>lzo: </strong>faster compression/decompression, but ratio smaller than zlib.<br>Enabling compression at the pool level applies to all Shares carved out of this Pool.<br>Don't enable compression here if you like to have finer control at the Share level.<br>You can change the algorithm, disable or enable it later, if necessary."
 		});
 
-		jqxhr.fail(function(xhr, status, error) {
-			enableButton(button);
+
+		$('#add-pool-form').validate({
+			onfocusout: false,
+			onkeyup: false,
+			rules: {
+				pool_name: "validatePoolName",
+				raid_level: "validateRaid"
+			},
+
+			submitHandler: function() {
+				var button = $('#create_pool');
+				if (buttonDisabled(button)) return false;
+				disableButton(button);
+				var pool_name = $('#pool_name').val();
+				var raid_level = $('#raid_level').val();
+				var compression = $('#compression').val();
+				if (compression == 'no') {
+					compression = null;
+				}
+				var mnt_options = $('#mnt_options').val();
+				if (mnt_options == '') {
+					mnt_options = null;
+				}
+				var disk_names = [];
+				var n = $("input:checked.disk").length;
+				$("input:checked.disk").each(function(i) {
+					if (i < n) {
+						disk_names.push($(this).val());
+					}
+				});
+
+				var jqxhr = $.ajax({
+					url: '/api/pools',
+					type: 'POST',
+					dataType: 'json',
+					contentType: 'application/json',
+					data: JSON.stringify({"disks": disk_names, "raid_level": raid_level,
+						"pname": pool_name, "compression": compression,
+						"mnt_options": mnt_options,}),
+				});
+
+				jqxhr.done(function() {
+					enableButton(button);
+
+					_this.$('#add-pool-form input').tooltip('hide');
+					app_router.navigate('pools', {trigger: true})
+				});
+
+				jqxhr.fail(function(xhr, status, error) {
+					enableButton(button);
+				});
+
+			}
+
 		});
 
-	}
+		return this;
+	},
 
-	});
+	cancel: function(event) {
+		event.preventDefault();
+		this.$('#add-pool-form :input').tooltip('hide');
+		app_router.navigate('pools', {trigger: true});
+	},
 
-	return this;
-},
-
-cancel: function(event) {
-	event.preventDefault();
-	this.$('#add-pool-form :input').tooltip('hide');
-	app_router.navigate('pools', {trigger: true});
-},
-
-selectAllCheckboxes: function(event){
-	$("#checkAll").change(function () {
-	    $("input:checkbox").prop('checked',  $(this).prop("checked"));
-	    $("input:checkbox").closest("tr").toggleClass("row-highlight", this.checked);
-	});
-	var allDisks = {};
-	var _this = this;
-	_this.collection.each(function(disk, index){
-		var cap = humanize.filesize(disk.get('size')*1024);
-		console.log("the capacity is : " + cap);
-	});
-},
-
-clicked: function (event) {
-
-	/* $("#checkAll").change(function () {
-	    $("input:checkbox").prop('checked',  $(this).prop("checked"));
-	    $("input:checkbox").closest("tr").toggleClass("row-highlight", this.checked);
-	}); */
-	
-	$("input:checkbox").change(function() {
-        $(this).closest("tr").toggleClass("row-highlight", this.checked);
-    }); 
-	
-	//handle the table display separately for the select all check box
-	var _this = this;
-	var n = $("input:checked.disk").length;
-	var diskObj = {};
-	$("input:checked.disk").each(function(index) {
-		var capacity =  humanize.filesize(_this.collection.get(this.id).get('size')*1024);
-		if (capacity in diskObj) {
-			diskObj[capacity] += 1;
-		} else {
-			diskObj[capacity] = 1;
+	selectAllCheckboxes: function(event){
+		$("#checkAll").change(function () {
+			$("input:checkbox").prop('checked',  $(this).prop("checked"));
+			$("input:checkbox").closest("tr").toggleClass("row-highlight", this.checked);
+		});
+		if($('#checkAll').prop("checked")){
+			var _this = this;
+			var allDisks = {};
+			_this.collection.each(function(disk, index){
+				var capacity = humanize.filesize(disk.get('size')*1024);
+				if (capacity in allDisks) {
+					allDisks[capacity] += 1;
+				} else {
+					allDisks[capacity] = 1;
+				}
+			});
+			var diskSummary = this.diskSummaryTable(allDisks);
+			$("#SelectedDisksTable").html(diskSummary);
+		}else{
+			$("#SelectedDisksTable").empty();
 		}
-	});
-	console.log("The obj is: " + JSON.stringify(diskObj)); 
-	
-	//loop through diskobj and get key value pairs.
-	var formStyle= "<div class="+"'form-group'"+"><label class="+"'col-sm-4 control-label'"+" >Selected disks summary</label><div class='col-sm-6'>";
-	var diskSummary = formStyle + "<table class= 'table table-condensed table-bordered  table-striped share-table tablesorter'>";
-	var grandTotal = 0;
-	for(var key in diskObj){
-		//remove GB from the key and multiply with value to get total.
-		var slicedKey =  key.slice(0,4);
-		console.log(slicedKey);
-		var totalCap = slicedKey * diskObj[key];	
-		diskSummary += "<tr>";
-		diskSummary += "<td>" + diskObj[key] + " X " + key + "</td>";
-		diskSummary += "<td>" + totalCap + " GB</td>";
-		diskSummary += "</tr>";
-		grandTotal += totalCap; 
-		diskObj.grandTotal = grandTotal;
-	} 
-	console.log(diskObj.totalCapacity);
-	diskSummary += "<tr><td><b>Total Raw Capacity</td></b><td><b>" + diskObj.grandTotal + " GB </td></b></tr>";
-	//diskSummary += "<tr><td>Total Usable Capacity</td>" + "<td>" + usableCapacity + "</td></tr>";
-	diskSummary += "</table>";
-	
-	if(n > 0){
-		$("#SelectedDisksTable").html(diskSummary);
-	}else{ 
-		$("#SelectedDisksTable").empty();
-	}
-	
-	/* calculateUsableCapacity(rawCapacity,)
-	raw capacity and raid configuration, diskObj map 
-	
-	function calculateUsableCapacity(rawCap, raidConfig, diskObject){
-		//need to write logic here.
-		var usableCapacity = "3 TB";
-		return usableCapacity;
-	} */
+	},
 
-},
-
-initHandlebarHelpers: function(){
-	Handlebars.registerHelper('show_disks', function(){
-		var html = '';
-		this.disks.each(function(disk, index) {
-				 var diskName = disk.get('name'),
-				 			diskId = disk.get('id');
-				 html += '<tr>';
-				 html += '<td>' + (index+1) + '</td>';
-				 html += '<td>' + diskName + '</td>';
-				 html += '<td>' + humanize.filesize(disk.get('size') * 1024) + '</td>';
-				 html += '<td>';
-				 html += '<input type="checkbox" class="disk" name="'+ diskName +'" id="' + diskId + '" value="' + diskName + '" />';
-				 html += '</td>';
-				 html += '</tr>';
+	clickCheckbox: function (event) {
+		$("input:checkbox").change(function() {
+			$(this).closest("tr").toggleClass("row-highlight", this.checked);
+		}); 
+		var _this = this;
+		var n = $("input:checked.disk").length;
+		var singleDisk = {};
+		$("input:checked.disk").each(function(index) {
+			var capacity =  humanize.filesize(_this.collection.get(this.id).get('size')*1024);
+			if (capacity in singleDisk) {
+				singleDisk[capacity] += 1;
+			} else {
+				singleDisk[capacity] = 1;
+			}
 		});
-		return new Handlebars.SafeString(html);
-	});
-}
+		var diskSummary = this.diskSummaryTable(singleDisk);
+		if(n > 0){
+			$("#SelectedDisksTable").html(diskSummary);
+		}else{ 
+			$("#SelectedDisksTable").empty();
+		}
+	},
+	
+	diskSummaryTable: function(diskObj){
+		var formStyle= "<div class="+"'form-group'"+"><label class="+"'col-sm-4 control-label'"+" >Selected disks summary</label><div class='col-sm-6'>";
+		var diskSummary = formStyle + "<table class= 'table table-condensed table-bordered  table-striped share-table tablesorter'>";
+		var grandTotal = 0;
+		for(var key in diskObj){
+			//remove GB from the key and multiply with value to get total.
+			var slicedKey =  key.slice(0,4);
+			var totalCapacity = slicedKey * diskObj[key];	
+			diskSummary += "<tr>";
+			diskSummary += "<td>" + diskObj[key] + " X " + key + "</td>";
+			diskSummary += "<td>" + totalCapacity + " GB</td>";
+			diskSummary += "</tr>";
+			grandTotal += totalCapacity; 
+			diskObj.grandTotal = grandTotal;
+		} 
+		diskSummary += "<tr><td><b>Total Raw Capacity</td></b><td><b>" + diskObj.grandTotal + " GB </td></b></tr>";
+		/* var usableCapacity = getUsableCapacity(raid_config, diskObj);
+		diskSummary += "<tr><td>Total Usable Capacity</td>" + "<td>" + usableCapacity + "</td></tr>";
+		*/
+		diskSummary += "</table>";
+		return diskSummary; 
+	},
+	
+	getUsableCapacity: function(raidConfig, diskObject){
+		/* raw capacity can be accessed by "grandTotal" in diskObject.
+		 * Write logic to calculate usable capacity.
+		 * Return the value.
+		 */
+	},
+	
+	initHandlebarHelpers: function(){
+		Handlebars.registerHelper('show_disks', function(){
+			var html = '';
+			this.disks.each(function(disk, index) {
+				var diskName = disk.get('name'),
+				diskId = disk.get('id');
+				html += '<tr>';
+				html += '<td>' + (index+1) + '</td>';
+				html += '<td>' + diskName + '</td>';
+				html += '<td>' + humanize.filesize(disk.get('size') * 1024) + '</td>';
+				html += '<td>';
+				html += '<input type="checkbox" class="disk" name="'+ diskName +'" id="' + diskId + '" value="' + diskName + '" />';
+				html += '</td>';
+				html += '</tr>';
+			});
+			return new Handlebars.SafeString(html);
+		});
+	}
 
 });
 
-// Add pagination
+//Add pagination
 Cocktail.mixin(AddPoolView, PaginationMixin);
