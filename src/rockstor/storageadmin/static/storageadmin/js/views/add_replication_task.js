@@ -82,7 +82,7 @@ AddReplicationTaskView = RockstorLayoutView.extend({
 	$(this.el).html(this.template({
 	    shares: this.freeShares2,
 	    appliances: this.appliances.toJSON(),
-	    replica: this.replicaJSON,
+	    replica: replicaJSON,
 	    listener_ip: listener_ip,
 	    listener_port: listener_port,
 	    replicaId: this.replicaId,
