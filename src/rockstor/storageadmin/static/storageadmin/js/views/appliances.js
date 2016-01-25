@@ -98,11 +98,16 @@ AppliancesView = RockstorLayoutView.extend({
               html += '<a href="https://' + applianceIP + ':' + mgmt_port + '" target="_blank">' + applianceIP + '</a>';
           }
           html += '</td>';
-          html += '<td>' + hostName + ' <a href="#edit-hostname/'+ applianceID +'/edit" title="Edit Hostname"><i class="glyphicon glyphicon-pencil"></i></a></td>';
+          if (currAppliance) {
+              html += '<td>' + hostName + ' <a href="#edit-hostname/'+ applianceID +'/edit" title="Edit Hostname"><i class="glyphicon glyphicon-pencil"></i></a></td>';
+          } else {
+              html += '<td>' + hostName + '</td>';
+          }
+          
           html += '<td>' + mgmt_port + '</td>';
           html += '<td>';
             if (!currAppliance) {
-              html += '<a class="delete-appliance" id="' + applianceIP + '" data-id="' + applianceId + '" href="#"><i class="glyphicon glyphicon-trash"></i></a>';
+              html += '<a class="delete-appliance" id="' + applianceIP + '" data-id="' + applianceID + '" href="#"><i class="glyphicon glyphicon-trash"></i></a>';
             } else {
               html += 'N/A';
             }
