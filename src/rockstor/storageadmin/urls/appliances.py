@@ -22,5 +22,5 @@ from storageadmin.views import (ApplianceListView, ApplianceDetailView)
 urlpatterns = patterns(
     '',
     url(r'^$', ApplianceListView.as_view()),
-    url(r'^/(?P<id>\d+)$', ApplianceDetailView.as_view())
+    url(r'^/(?P<appid>\d+)$', ApplianceDetailView.as_view())
 )
