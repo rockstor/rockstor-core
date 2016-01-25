@@ -98,6 +98,7 @@ var AppRouter = Backbone.Router.extend({
 		"images": "showImages",
 		"containers": "showContainers",
 		"appliances": "showAppliances",
+		"edit-hostname/:applianceID/edit": "editHostname",
 		"add-appliance": "addAppliance",
 		"access-keys": "showAccessKeys",
 		"add-access-key": "addAccessKey",
@@ -712,6 +713,14 @@ var AppRouter = Backbone.Router.extend({
 		this.renderSidebar("system", "appliances");
 		this.cleanup();
 		this.currentLayout = new AddApplianceView();
+		$('#maincontent').empty();
+		$('#maincontent').append(this.currentLayout.render().el);
+	},
+	
+	editHostname: function(applianceID) {
+		this.renderSidebar("system", "appliances");
+		this.cleanup();
+		this.currentLayout = new EditHostnameView({applianceID: applianceID});
 		$('#maincontent').empty();
 		$('#maincontent').append(this.currentLayout.render().el);
 	},
