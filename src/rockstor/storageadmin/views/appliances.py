@@ -138,12 +138,12 @@ class ApplianceDetailView(rfc.GenericView):
                 return Response()
 
     @transaction.atomic
-    def put(self, request, id):
+    def put(self, request, appid):
         try:
-            appliance = Appliance.objects.get(pk=id)
+            appliance = Appliance.objects.get(pk=appid)
         except Exception, e:
             logger.exception(e)
-            e_msg = ('Appliance(%s) does not exist' % id)
+            e_msg = ('Appliance(%s) does not exist' % appid)
             handle_exception(Exception(e_msg), request)
 
         try:
@@ -153,16 +153,16 @@ class ApplianceDetailView(rfc.GenericView):
             return Response()
         except Exception, e:
             logger.exception(e)
-            e_msg = ('Failed updating hostname for appliance with id = %d' % id)
+            e_msg = ('Failed updating hostname for appliance with id = %d' % appid)
             handle_exception(e, request)  
 
     @transaction.atomic
-    def delete(self, request, id):
+    def delete(self, request, appid):
         try:
-            appliance = Appliance.objects.get(pk=id)
+            appliance = Appliance.objects.get(pk=appid)
         except Exception, e:
             logger.exception(e)
-            e_msg = ('Appliance(%s) does not exist' % id)
+            e_msg = ('Appliance(%s) does not exist' % appid)
             handle_exception(Exception(e_msg), request)
 
         if (Replica.objects.filter(appliance=appliance.uuid).exists()):
@@ -176,5 +176,5 @@ class ApplianceDetailView(rfc.GenericView):
             return Response()
         except Exception, e:
             logger.exception(e)
-            e_msg = ('Delete failed for appliance with id = %d' % id)
+            e_msg = ('Delete failed for appliance with id = %d' % appid)
             handle_exception(e, request)
