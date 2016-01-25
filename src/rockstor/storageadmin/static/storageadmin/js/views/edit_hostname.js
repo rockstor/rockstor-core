@@ -34,7 +34,7 @@ EditHostnameView = RockstorLayoutView.extend({
     // call initialize of base
     this.constructor.__super__.initialize.apply(this, arguments);
     this.template = window.JST.appliances_edit_hostname;
-    this.applianceId = this.options.applianceId;
+    this.applianceID = this.options.applianceID;
   },
 
   render: function() {
@@ -56,7 +56,7 @@ EditHostnameView = RockstorLayoutView.extend({
         disableButton(button);
         var data = _this.$('#edit-hostname-form').getJSON();
         $.ajax({
-          url: '/api/appliances/'+_this.applianceId,
+          url: '/api/appliances/'+_this.applianceID,
           type: 'PUT',
           dataType: 'json',
           contentType: 'application/json',
@@ -64,6 +64,7 @@ EditHostnameView = RockstorLayoutView.extend({
           success: function() {
             _this.$('#edit-hostname-form :input').tooltip('hide');
             enableButton(button);
+            setApplianceName();
             app_router.navigate('appliances', {trigger: true});
           },
           error: function(xhr, status, error) {

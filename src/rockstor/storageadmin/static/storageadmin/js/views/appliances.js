@@ -84,19 +84,21 @@ AppliancesView = RockstorLayoutView.extend({
       var html = '';
        this.collection.each(function(appliance) {
           var mgmt_port = appliance.get('mgmt_port'),
-              applianceId = appliance.get('id'),
+              applianceID = appliance.get('id'),
               applianceIP = appliance.get('ip'),
+              hostName = appliance.get('hostname'),
               currAppliance = appliance.get('current_appliance');
           html += '<tr>';
           html += '<td>' + appliance.get("uuid") + '</td>';
           html += '<td>';
           html += '<i class="fa fa-desktop"></i>&nbsp';
           if (currAppliance) {
-              html += applianceIP + ' <span class="required">*</span> <a href="#edit-hostname/'+ applianceId +'/edit" title="Edit Hostname"><i class="glyphicon glyphicon-pencil"></i></a>';
+              html += applianceIP + ' <span class="required">*</span>';
           } else {
               html += '<a href="https://' + applianceIP + ':' + mgmt_port + '" target="_blank">' + applianceIP + '</a>';
           }
           html += '</td>';
+          html += '<td>' + hostName + ' <a href="#edit-hostname/'+ applianceID +'/edit" title="Edit Hostname"><i class="glyphicon glyphicon-pencil"></i></a></td>';
           html += '<td>' + mgmt_port + '</td>';
           html += '<td>';
             if (!currAppliance) {
