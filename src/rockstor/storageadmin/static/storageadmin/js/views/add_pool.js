@@ -29,6 +29,7 @@ AddPoolView = Backbone.View.extend({
 		"click #js-cancel": "cancel",
 		'click [class="disk"]': 'clickCheckbox',
 		"click #checkAll": "selectAllCheckboxes",
+		"change #raid_level": "clickCheckbox"
 	},
 
 	initialize: function() {
@@ -230,7 +231,7 @@ AddPoolView = Backbone.View.extend({
 			var _this = this;
 			var allDisks = {};
 			_this.collection.each(function(disk, index){
-				var capacity = humanize.filesize(disk.get('size')*1024);
+				var capacity = disk.get('size')*1024;
 				if (capacity in allDisks) {
 					allDisks[capacity] += 1;
 				} else {
@@ -252,7 +253,7 @@ AddPoolView = Backbone.View.extend({
 		var n = $("input:checked.disk").length;
 		var singleDisk = {};
 		$("input:checked.disk").each(function(index) {
-			var capacity =  humanize.filesize(_this.collection.get(this.id).get('size')*1024);
+			var capacity = _this.collection.get(this.id).get('size')*1024;
 			if (capacity in singleDisk) {
 				singleDisk[capacity] += 1;
 			} else {
@@ -266,37 +267,69 @@ AddPoolView = Backbone.View.extend({
 			$("#SelectedDisksTable").empty();
 		}
 	},
-	
+
 	diskSummaryTable: function(diskObj){
 		var formStyle= "<div class="+"'form-group'"+"><label class="+"'col-sm-4 control-label'"+" >Selected disks summary</label><div class='col-sm-6'>";
-		var diskSummary = formStyle + "<table class= 'table table-condensed table-bordered  table-striped share-table tablesorter'>";
+		var diskSummary = formStyle + "<table class= 'table table-condensed table-bordered share-table tablesorter'>";
 		var grandTotal = 0;
 		for(var key in diskObj){
-			//remove GB from the key and multiply with value to get total.
-			var slicedKey =  key.slice(0,4);
-			var totalCapacity = slicedKey * diskObj[key];	
+			var readableCapacity  = humanize.filesize(key);
+			var totalCapacity = key * diskObj[key];	
 			diskSummary += "<tr>";
-			diskSummary += "<td>" + diskObj[key] + " X " + key + "</td>";
-			diskSummary += "<td>" + totalCapacity + " GB</td>";
+			diskSummary += "<td>" + diskObj[key] + " X " + readableCapacity + "</td>";
+			diskSummary += "<td>" + humanize.filesize(totalCapacity) + "</td>";
 			diskSummary += "</tr>";
 			grandTotal += totalCapacity; 
-			diskObj.grandTotal = grandTotal;
 		} 
-		diskSummary += "<tr><td><b>Total Raw Capacity</td></b><td><b>" + diskObj.grandTotal + " GB </td></b></tr>";
-		/* var usableCapacity = getUsableCapacity(raid_config, diskObj);
-		diskSummary += "<tr><td>Total Usable Capacity</td>" + "<td>" + usableCapacity + "</td></tr>";
-		*/
+		var diskUsableCapacity = this.getUsableCapacity(diskObj, humanize.filesize(grandTotal));
+		diskSummary += "<tr><td><b>Total Raw Capacity</b></td><td style='color:#EB6841;'><b>" + humanize.filesize(grandTotal) + "</td></b></tr>";
+		diskSummary += "<tr><td><b>Total Usable Capacity</b></td>" + "<td style='color:green;'><b>" + diskUsableCapacity + "</b></td></tr>";
 		diskSummary += "</table>";
 		return diskSummary; 
 	},
-	
-	getUsableCapacity: function(raidConfig, diskObject){
-		/* raw capacity can be accessed by "grandTotal" in diskObject.
-		 * Write logic to calculate usable capacity.
-		 * Return the value.
-		 */
+
+	getUsableCapacity: function(diskObject, rawCapacity){
+		var raidConfig = $('#raid_level').val();
+		
+		//get all the keys and convert them to numbers to get the disk size correctly.
+		var keysArr = Object.keys(diskObject);
+		var numericKeysArr = keysArr.map(function(key){
+			return Number(key);
+		}); 
+		//calculate least disk size from all the keys.
+		var minDiskSize = Math.min.apply(Math,numericKeysArr);
+
+		var totalSelectedDisks = 0;
+		for (var key in diskObject) {
+			totalSelectedDisks += diskObject[key];
+		}
+		
+		var usableCapacity;
+		switch (raidConfig){
+		case "single":
+			usableCapacity = rawCapacity;
+			break;
+		case "raid0":
+			usableCapacity = humanize.filesize(minDiskSize * totalSelectedDisks);
+			break;
+		case "raid1":
+			usableCapacity = humanize.filesize(minDiskSize * totalSelectedDisks/2);
+			break;
+		case "raid5":
+			usableCapacity = humanize.filesize(minDiskSize * (totalSelectedDisks - 1));
+			break;
+		case "raid6":
+			usableCapacity = humanize.filesize(minDiskSize * (totalSelectedDisks - 2));
+			break;
+		case "raid10":
+			usableCapacity = humanize.filesize(minDiskSize * totalSelectedDisks/2);
+			break;
+		} 
+		
+		return usableCapacity;
+
 	},
-	
+
 	initHandlebarHelpers: function(){
 		Handlebars.registerHelper('show_disks', function(){
 			var html = '';
