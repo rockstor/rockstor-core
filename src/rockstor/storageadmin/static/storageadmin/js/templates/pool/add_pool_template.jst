@@ -63,23 +63,25 @@
           </div>
         </div>
           <div id="SelectedDisksTable"> </div>
+          <div id="testTab"> </div>
         <div class="form-group">
           <label class="col-sm-4 control-label" for="disks">Select disks<span class="required"> *</span></label>
           <div class="col-sm-6">
-
-            <table id="disks-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of disks">
+          <div class="poolDiskTableScroll">
+              <table id="disks-table" class="table table-condensed table-bordered share-table tablesorter" summary="List of disks">
               <thead>
                 <tr>
                   <th>No.</th>
                   <th>Disk Name</th>
                   <th>Capacity</th>
-                  <th></th>
+                  <th>Select all <input type="checkbox" id="checkAll"/></th>
                 </tr>
               </thead>
               <tbody>
                 {{show_disks}}
               </tbody>
             </table>
+            </div><!--poolDiskTableScroll-->
           </div>
         </div>
         <div class="form-group">
