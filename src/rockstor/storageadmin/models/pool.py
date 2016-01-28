@@ -17,8 +17,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.db import models
+from django.conf import settings
 from smart_manager.models import PoolUsage
-
+from fs.btrfs import pool_usage
 
 class Pool(models.Model):
     """Name of the pool"""
@@ -34,19 +35,19 @@ class Pool(models.Model):
 
     @property
     def free(self, *args, **kwargs):
+        #why do we compute pool usage on the fly like this and not like
+        #share usage as part of state refresh? This is a lot simpler and
+        #less code. For share usage, this type of logic could slow things
+        #down quite a bit because there can be 100's of Shares, but number
+        #of Pools even on a large instance is usually no more than a few.
         try:
-            pu = PoolUsage.objects.filter(pool=self.name).order_by('-ts')[0]
-            return pu.free
+            return pool_usage('%s%s' % (settings.MNT_PT, self.name))[2]
         except:
             return self.size
 
     @property
     def reclaimable(self, *args, **kwargs):
-        try:
-            pu = PoolUsage.objects.filter(pool=self.name).order_by('-ts')[0]
-            return pu.reclaimable
-        except:
-            return 0
+        return 0
 
     class Meta:
         app_label = 'storageadmin'

@@ -52,9 +52,6 @@ var AppRouter = Backbone.Router.extend({
 		"snapshots": "showSnapshots",
 		"services": "showServices",
 		"services/:serviceName/edit": "configureService",
-		"support":"showSupport",
-		"support/:supportCaseId": "showSupportCase",
-		"add_support_case": "addSupportCase",
 		"users": "showUsers",
 		"users/:username/edit": "editUser",
 		"add-user": "addUser",
@@ -133,7 +130,6 @@ var AppRouter = Backbone.Router.extend({
 
 
 	loginPage: function() {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("setup", "user");
 		$('#maincontent').empty();
 		this.cleanup();
@@ -142,7 +138,6 @@ var AppRouter = Backbone.Router.extend({
 
 	},
 	doSetup: function() {
-		RockStorSocket.removeAllListeners();
 		$('#maincontent').empty();
 		this.cleanup();
 		this.currentLayout = new SetupView();
@@ -151,7 +146,6 @@ var AppRouter = Backbone.Router.extend({
 	},
 
 	showHome: function() {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("dashboard", "dashboard");
 		$('#maincontent').empty();
 		this.cleanup();
@@ -160,7 +154,6 @@ var AppRouter = Backbone.Router.extend({
 	},
 
 	showDisks: function() {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("storage", "disks");
 		$('#maincontent').empty();
 		this.cleanup();
@@ -178,7 +171,6 @@ var AppRouter = Backbone.Router.extend({
 	},
 
 	showDisk: function(diskName) {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("storage", "disks");
 		$('#maincontent').empty();
 		this.cleanup();
@@ -189,7 +181,6 @@ var AppRouter = Backbone.Router.extend({
 	},
 
 	showPools: function() {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("storage", "pools");
 		$('#maincontent').empty();
 		this.cleanup();
@@ -198,7 +189,6 @@ var AppRouter = Backbone.Router.extend({
 	},
 
 	addPool: function() {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("storage", "pools");
 		$('#maincontent').empty();
 		this.cleanup();
@@ -207,7 +197,6 @@ var AppRouter = Backbone.Router.extend({
 	},
 
 	showPool: function(poolName, cView) {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("storage", "pools");
 		$('#maincontent').empty();
 		this.cleanup();
@@ -218,41 +207,9 @@ var AppRouter = Backbone.Router.extend({
 		$('#maincontent').append(this.currentLayout.render().el);
 	},
 
-	//Support
-
-	showSupport: function() {
-		RockStorSocket.removeAllListeners();
-		this.renderSidebar("support", "support");
-		$('#maincontent').empty();
-		this.cleanup();
-		this.currentLayout = new SupportView();
-		$('#maincontent').append(this.currentLayout.render().el);
-	},
-
-
-	addSupportCase: function() {
-		RockStorSocket.removeAllListeners();
-		this.renderSidebar("support", "support");
-		$('#maincontent').empty();
-		$('#maincontent').append(addSupportCaseView.render().el);
-	},
-
-	showSupportCase: function(supportCaseId) {
-		RockStorSocket.removeAllListeners();
-		this.renderSidebar("support", "support");
-
-		var supportCaseDetailView = new SupportCaseDetailView({
-			model: new SupportCase({supportCaseId: supportCaseId})
-		});
-		$('#maincontent').empty();
-		$('#maincontent').append(supportCaseDetailView.render().el);
-	},
-
-
 	//shares
 
 	showShares: function() {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("storage", "shares");
 		$('#maincontent').empty();
 		this.cleanup();
@@ -273,7 +230,6 @@ var AppRouter = Backbone.Router.extend({
 	},
 
 	addShare: function(poolName) {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("storage", "shares");
 		$('#maincontent').empty();
 		this.cleanup();
@@ -287,7 +243,6 @@ var AppRouter = Backbone.Router.extend({
 	},
 
 	showShare: function(shareName, cView) {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("storage", "shares");
 		$('#maincontent').empty();
 		this.cleanup();
@@ -298,12 +253,7 @@ var AppRouter = Backbone.Router.extend({
 		$('#maincontent').append(this.currentLayout.render().el);
 	},
 
-	deleteShare: function(shareName) {
-
-	},
-
 	showSnapshots: function() {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("storage", "snapshots");
 		$('#maincontent').empty();
 		this.cleanup();
@@ -312,7 +262,6 @@ var AppRouter = Backbone.Router.extend({
 	},
 
 	showServices: function() {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("system", "services");
 		this.cleanup();
 		this.currentLayout = new ServicesView();
@@ -489,7 +438,6 @@ var AppRouter = Backbone.Router.extend({
 	},
 
 	showNetworks: function() {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("system", "network");
 		this.cleanup();
 		this.currentLayout = new NetworksView();
@@ -498,7 +446,6 @@ var AppRouter = Backbone.Router.extend({
 	},
 
 	editNetwork: function(name) {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("system", "network");
 		this.cleanup();
 		this.currentLayout = new EditNetworkView({name: name});
@@ -507,7 +454,6 @@ var AppRouter = Backbone.Router.extend({
 	},
 
 	createCloneFromShare: function(shareName) {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("storage", "shares");
 		this.cleanup();
 		this.currentLayout = new CreateCloneView({
@@ -519,7 +465,6 @@ var AppRouter = Backbone.Router.extend({
 	},
 
 	createCloneFromSnapshot: function(shareName, snapName) {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("storage", "shares");
 		this.cleanup();
 		this.currentLayout = new CreateCloneView({
@@ -532,7 +477,6 @@ var AppRouter = Backbone.Router.extend({
 	},
 
 	rollbackShare: function(shareName) {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("storage", "shares");
 		this.cleanup();
 		this.currentLayout = new RollbackView({
@@ -716,7 +660,7 @@ var AppRouter = Backbone.Router.extend({
 		$('#maincontent').empty();
 		$('#maincontent').append(this.currentLayout.render().el);
 	},
-	
+
 	editHostname: function(applianceID) {
 		this.renderSidebar("system", "appliances");
 		this.cleanup();
@@ -757,7 +701,6 @@ var AppRouter = Backbone.Router.extend({
 
 	cleanup: function() {
 		hideMessage();
-		RockStorSocket.removeAllListeners();
 		if (!_.isNull(this.currentLayout)) {
 			if (_.isFunction(this.currentLayout.cleanup)) {
 				this.currentLayout.cleanup();
@@ -921,11 +864,10 @@ $(document).ready(function() {
 
 	var displayLoadAvg = function(data) {
 		var n = parseInt(data);
-		var secs = n % 60;
-		var mins = Math.round(n/60) % 60;
-		var hrs = Math.round(n / (60*60)) % 24;
-		var days = Math.round(n / (60*60*24)) % 365;
-		var yrs = Math.round(n / (60*60*24*365));
+		var mins = Math.floor(n/60) % 60;
+		var hrs = Math.floor(n / (60*60)) % 24;
+		var days = Math.floor(n / (60*60*24)) % 365;
+		var yrs = Math.floor(n / (60*60*24*365));
 		var str = 'Uptime: ';
 		if (yrs == 1) {
 			str += yrs + ' year, ';

@@ -31,7 +31,7 @@ DisksView = Backbone.View.extend({
 	'click .delete': 'deleteDisk',
 	'click .btrfs_wipe': 'btrfsWipeDisk',
 	'click .btrfs_import': 'btrfsImportDisk',
-  'switchChange.bootstrapSwitch': 'smartToggle',
+	'switchChange.bootstrapSwitch': 'smartToggle'
     },
 
     initialize: function() {

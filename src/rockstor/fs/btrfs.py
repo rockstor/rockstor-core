@@ -661,10 +661,10 @@ def pool_usage(mnt_pt):
         if (num_disks > 0):
             per_disk = total / num_disks
             total = (num_disks - parity) * per_disk
-        free = total - inuse
     else:
         total = total / data_ratio
         inuse = inuse / data_ratio
+    free = total - inuse
     return (total, inuse, free)
 
 

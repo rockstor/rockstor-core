@@ -270,6 +270,7 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
             "key": "sysinfo:connected", "data": "connected"
         })
         self.start = True
+        gevent.spawn(self.update_storage_state)
         gevent.spawn(self.refresh_system)
         gevent.spawn(self.send_uptime)
         gevent.spawn(self.send_kernel_info)
@@ -285,7 +286,7 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
             self.emit('sysinfo:uptime', {
                 'data': uptime(), 'key': 'sysinfo:uptime'
             })
-            gevent.sleep(30)
+            gevent.sleep(60)
 
     def send_kernel_info(self):
             try:
@@ -308,7 +309,6 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
             logger.debug('Skipping system state refresh as it was done less '
                          'than %d seconds ago.' % self.environ['scan_interval'])
             return
-        self.update_storage_state()
         self.update_rockons()
         self.update_check()
 
@@ -320,24 +320,27 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
                          'exception: %s' % e.__str__())
 
     def update_storage_state(self):
-        resources = [{'url': 'disks/scan',
-                      'success': 'Disk state updated successfully',
-                      'error': 'Failed to update disk state.'},
-                     {'url': 'commands/refresh-pool-state',
-                      'success': 'Pool state updated successfully',
-                      'error': 'Failed to update pool state.'},
-                     {'url': 'commands/refresh-share-state',
-                      'success': 'Share state updated successfully',
-                      'error': 'Failed to update share state.'},
-                     {'url': 'commands/refresh-snapshot-state',
-                      'success': 'Snapshot state updated successfully',
-                      'error': 'Failed to update snapshot state.'},]
-        for r in resources:
-            try:
-                self.aw.api_call(r['url'], data=None, calltype='post', save_error=False)
-                logger.debug(r['success'])
-            except Exception, e:
-                logger.error('%s. exception: %s' % (r['error'], e.__str__()))
+        #update storage state once a minute as long as
+        #there is a client connected.
+        while self.start:
+            resources = [{'url': 'disks/scan',
+                          'success': 'Disk state updated successfully',
+                          'error': 'Failed to update disk state.'},
+                         {'url': 'commands/refresh-pool-state',
+                          'success': 'Pool state updated successfully',
+                          'error': 'Failed to update pool state.'},
+                         {'url': 'commands/refresh-share-state',
+                          'success': 'Share state updated successfully',
+                          'error': 'Failed to update share state.'},
+                         {'url': 'commands/refresh-snapshot-state',
+                          'success': 'Snapshot state updated successfully',
+                          'error': 'Failed to update snapshot state.'},]
+            for r in resources:
+                try:
+                    self.aw.api_call(r['url'], data=None, calltype='post', save_error=False)
+                except Exception, e:
+                    logger.error('%s. exception: %s' % (r['error'], e.__str__()))
+            gevent.sleep(60)
 
     def update_check(self):
         uinfo = update_check()

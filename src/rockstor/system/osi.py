@@ -145,7 +145,6 @@ def nfs4_mount_teardown(export_pt):
 def bind_mount(mnt_pt, export_pt):
     if (not is_mounted(export_pt)):
         run_command([MKDIR, '-p', export_pt])
-        run_command([CHMOD, '-R', '777', export_pt])
         return run_command([MOUNT, '--bind', mnt_pt, export_pt])
     return True
 
