@@ -864,11 +864,10 @@ $(document).ready(function() {
 
 	var displayLoadAvg = function(data) {
 		var n = parseInt(data);
-		var secs = n % 60;
-		var mins = Math.round(n/60) % 60;
-		var hrs = Math.round(n / (60*60)) % 24;
-		var days = Math.round(n / (60*60*24)) % 365;
-		var yrs = Math.round(n / (60*60*24*365));
+		var mins = Math.floor(n/60) % 60;
+		var hrs = Math.floor(n / (60*60)) % 24;
+		var days = Math.floor(n / (60*60*24)) % 365;
+		var yrs = Math.floor(n / (60*60*24*365));
 		var str = 'Uptime: ';
 		if (yrs == 1) {
 			str += yrs + ' year, ';
