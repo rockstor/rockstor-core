@@ -52,9 +52,6 @@ var AppRouter = Backbone.Router.extend({
 		"snapshots": "showSnapshots",
 		"services": "showServices",
 		"services/:serviceName/edit": "configureService",
-		"support":"showSupport",
-		"support/:supportCaseId": "showSupportCase",
-		"add_support_case": "addSupportCase",
 		"users": "showUsers",
 		"users/:username/edit": "editUser",
 		"add-user": "addUser",
@@ -218,41 +215,9 @@ var AppRouter = Backbone.Router.extend({
 		$('#maincontent').append(this.currentLayout.render().el);
 	},
 
-	//Support
-
-	showSupport: function() {
-		RockStorSocket.removeAllListeners();
-		this.renderSidebar("support", "support");
-		$('#maincontent').empty();
-		this.cleanup();
-		this.currentLayout = new SupportView();
-		$('#maincontent').append(this.currentLayout.render().el);
-	},
-
-
-	addSupportCase: function() {
-		RockStorSocket.removeAllListeners();
-		this.renderSidebar("support", "support");
-		$('#maincontent').empty();
-		$('#maincontent').append(addSupportCaseView.render().el);
-	},
-
-	showSupportCase: function(supportCaseId) {
-		RockStorSocket.removeAllListeners();
-		this.renderSidebar("support", "support");
-
-		var supportCaseDetailView = new SupportCaseDetailView({
-			model: new SupportCase({supportCaseId: supportCaseId})
-		});
-		$('#maincontent').empty();
-		$('#maincontent').append(supportCaseDetailView.render().el);
-	},
-
-
 	//shares
 
 	showShares: function() {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("storage", "shares");
 		$('#maincontent').empty();
 		this.cleanup();
