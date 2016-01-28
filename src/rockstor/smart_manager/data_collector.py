@@ -286,7 +286,7 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
             self.emit('sysinfo:uptime', {
                 'data': uptime(), 'key': 'sysinfo:uptime'
             })
-            gevent.sleep(30)
+            gevent.sleep(60)
 
     def send_kernel_info(self):
             try:
