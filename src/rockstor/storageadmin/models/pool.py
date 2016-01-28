@@ -17,8 +17,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.db import models
+from django.conf import settings
 from smart_manager.models import PoolUsage
-
+from fs.btrfs import pool_usage
 
 class Pool(models.Model):
     """Name of the pool"""
@@ -35,18 +36,13 @@ class Pool(models.Model):
     @property
     def free(self, *args, **kwargs):
         try:
-            pu = PoolUsage.objects.filter(pool=self.name).order_by('-ts')[0]
-            return pu.free
+            return pool_usage('%s%s' % (settings.MNT_PT, self.name))[2]
         except:
             return self.size
 
     @property
     def reclaimable(self, *args, **kwargs):
-        try:
-            pu = PoolUsage.objects.filter(pool=self.name).order_by('-ts')[0]
-            return pu.reclaimable
-        except:
-            return 0
+        return 0
 
     class Meta:
         app_label = 'storageadmin'
