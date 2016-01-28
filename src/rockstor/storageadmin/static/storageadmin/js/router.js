@@ -130,7 +130,6 @@ var AppRouter = Backbone.Router.extend({
 
 
 	loginPage: function() {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("setup", "user");
 		$('#maincontent').empty();
 		this.cleanup();
@@ -139,7 +138,6 @@ var AppRouter = Backbone.Router.extend({
 
 	},
 	doSetup: function() {
-		RockStorSocket.removeAllListeners();
 		$('#maincontent').empty();
 		this.cleanup();
 		this.currentLayout = new SetupView();
@@ -148,7 +146,6 @@ var AppRouter = Backbone.Router.extend({
 	},
 
 	showHome: function() {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("dashboard", "dashboard");
 		$('#maincontent').empty();
 		this.cleanup();
@@ -157,7 +154,6 @@ var AppRouter = Backbone.Router.extend({
 	},
 
 	showDisks: function() {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("storage", "disks");
 		$('#maincontent').empty();
 		this.cleanup();
@@ -175,7 +171,6 @@ var AppRouter = Backbone.Router.extend({
 	},
 
 	showDisk: function(diskName) {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("storage", "disks");
 		$('#maincontent').empty();
 		this.cleanup();
@@ -186,7 +181,6 @@ var AppRouter = Backbone.Router.extend({
 	},
 
 	showPools: function() {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("storage", "pools");
 		$('#maincontent').empty();
 		this.cleanup();
@@ -195,7 +189,6 @@ var AppRouter = Backbone.Router.extend({
 	},
 
 	addPool: function() {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("storage", "pools");
 		$('#maincontent').empty();
 		this.cleanup();
@@ -204,7 +197,6 @@ var AppRouter = Backbone.Router.extend({
 	},
 
 	showPool: function(poolName, cView) {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("storage", "pools");
 		$('#maincontent').empty();
 		this.cleanup();
@@ -238,7 +230,6 @@ var AppRouter = Backbone.Router.extend({
 	},
 
 	addShare: function(poolName) {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("storage", "shares");
 		$('#maincontent').empty();
 		this.cleanup();
@@ -252,7 +243,6 @@ var AppRouter = Backbone.Router.extend({
 	},
 
 	showShare: function(shareName, cView) {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("storage", "shares");
 		$('#maincontent').empty();
 		this.cleanup();
@@ -263,12 +253,7 @@ var AppRouter = Backbone.Router.extend({
 		$('#maincontent').append(this.currentLayout.render().el);
 	},
 
-	deleteShare: function(shareName) {
-
-	},
-
 	showSnapshots: function() {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("storage", "snapshots");
 		$('#maincontent').empty();
 		this.cleanup();
@@ -277,7 +262,6 @@ var AppRouter = Backbone.Router.extend({
 	},
 
 	showServices: function() {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("system", "services");
 		this.cleanup();
 		this.currentLayout = new ServicesView();
@@ -454,7 +438,6 @@ var AppRouter = Backbone.Router.extend({
 	},
 
 	showNetworks: function() {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("system", "network");
 		this.cleanup();
 		this.currentLayout = new NetworksView();
@@ -463,7 +446,6 @@ var AppRouter = Backbone.Router.extend({
 	},
 
 	editNetwork: function(name) {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("system", "network");
 		this.cleanup();
 		this.currentLayout = new EditNetworkView({name: name});
@@ -472,7 +454,6 @@ var AppRouter = Backbone.Router.extend({
 	},
 
 	createCloneFromShare: function(shareName) {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("storage", "shares");
 		this.cleanup();
 		this.currentLayout = new CreateCloneView({
@@ -484,7 +465,6 @@ var AppRouter = Backbone.Router.extend({
 	},
 
 	createCloneFromSnapshot: function(shareName, snapName) {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("storage", "shares");
 		this.cleanup();
 		this.currentLayout = new CreateCloneView({
@@ -497,7 +477,6 @@ var AppRouter = Backbone.Router.extend({
 	},
 
 	rollbackShare: function(shareName) {
-		RockStorSocket.removeAllListeners();
 		this.renderSidebar("storage", "shares");
 		this.cleanup();
 		this.currentLayout = new RollbackView({
@@ -681,7 +660,7 @@ var AppRouter = Backbone.Router.extend({
 		$('#maincontent').empty();
 		$('#maincontent').append(this.currentLayout.render().el);
 	},
-	
+
 	editHostname: function(applianceID) {
 		this.renderSidebar("system", "appliances");
 		this.cleanup();
@@ -722,7 +701,6 @@ var AppRouter = Backbone.Router.extend({
 
 	cleanup: function() {
 		hideMessage();
-		RockStorSocket.removeAllListeners();
 		if (!_.isNull(this.currentLayout)) {
 			if (_.isFunction(this.currentLayout.cleanup)) {
 				this.currentLayout.cleanup();
