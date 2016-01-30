@@ -31,6 +31,8 @@ class Pool(models.Model):
     toc = models.DateTimeField(auto_now=True)
     compression = models.CharField(max_length=256, null=True)
     mnt_options = models.CharField(max_length=4096, null=True)
+    """optional aux info. eg: role = root for OS Pool"""
+    role = models.CharField(max_length=256, null=True)
 
     @property
     def free(self, *args, **kwargs):
