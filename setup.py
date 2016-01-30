@@ -53,6 +53,7 @@ setup(
             'delete-api-key = scripts.delete_api_key:main',
             'bootstrap = scripts.bootstrap:main',
             'send-replica = scripts.scheduled_tasks.send_replica:main',
+            'qgroup-test = scripts.qgroup_test:main',
         ],
     },
 
