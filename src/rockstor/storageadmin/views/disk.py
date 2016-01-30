@@ -129,7 +129,8 @@ class DiskMixin(object):
             # the attached disk is our root disk (flagged by scan_disks)
             if (dob.pool is None and d.root is True):
                 # setup our special root disk db entry in Pool
-                p = Pool(name=settings.ROOT_POOL, raid='single')
+                #@todo: dynamically retrieve raid level.
+                p = Pool(name=d.label, raid='single', role='root')
                 p.disk_set.add(dob)
                 p.save()
                 # update disk db object to reflect special root pool status
