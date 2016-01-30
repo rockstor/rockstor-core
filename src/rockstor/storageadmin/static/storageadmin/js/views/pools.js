@@ -31,8 +31,8 @@
 PoolsView = RockstorLayoutView.extend({
     events: {
 	"click a[data-action=delete]": "deletePool",
-  'click #js-cancel': 'cancel',
-  'click #js-confirm-pool-delete': 'confirmPoolDelete'
+	'click #js-cancel': 'cancel',
+	'click #js-confirm-pool-delete': 'confirmPoolDelete'
     },
 
     initialize: function() {
@@ -45,7 +45,7 @@ PoolsView = RockstorLayoutView.extend({
 	this.dependencies.push(this.disks);
 	this.dependencies.push(this.collection);
 	this.collection.on("reset", this.renderPools, this);
-  this.initHandlebarHelpers();
+	this.initHandlebarHelpers();
 
     },
 
@@ -65,10 +65,10 @@ PoolsView = RockstorLayoutView.extend({
 		!(disk.get('parted'));
 	});
 
-    $(this.el).html(this.pools_table_template({
+	$(this.el).html(this.pools_table_template({
 	    collection: this.collection,
-      collectionNotEmpty: !this.collection.isEmpty(),
-      noOfFreeDisks: _.size(freedisks)
+	    collectionNotEmpty: !this.collection.isEmpty(),
+	    noOfFreeDisks: _.size(freedisks)
 	}));
 
 	this.$("#pools-table").tablesorter({
@@ -86,139 +86,139 @@ PoolsView = RockstorLayoutView.extend({
     },
 
     deletePool: function(event) {
-      var _this = this;
-      var button = $(event.currentTarget);
-      if (buttonDisabled(button)) return false;
-      poolName = button.attr('data-name');
-      // set share name in confirm dialog
-      _this.$('#pass-pool-name').html(poolName);
-      //show the dialog
-      _this.$('#delete-pool-modal').modal();
-      return false;
+	var _this = this;
+	var button = $(event.currentTarget);
+	if (buttonDisabled(button)) return false;
+	poolName = button.attr('data-name');
+	// set share name in confirm dialog
+	_this.$('#pass-pool-name').html(poolName);
+	//show the dialog
+	_this.$('#delete-pool-modal').modal();
+	return false;
     },
 
     //modal confirm button handler
-      confirmPoolDelete: function(event) {
+    confirmPoolDelete: function(event) {
         var _this = this;
         var button = $(event.currentTarget);
         if (buttonDisabled(button)) return false;
-          disableButton(button);
-          $.ajax({
+        disableButton(button);
+        $.ajax({
             url: "/api/pools/" + poolName,
             type: "DELETE",
             dataType: "json",
             success: function() {
-              _this.collection.fetch({reset: true});
-              enableButton(button);
-              _this.$('#delete-pool-modal').modal('hide');
-              $('.modal-backdrop').remove();
-              app_router.navigate('pools', {trigger: true})
+		_this.collection.fetch({reset: true});
+		enableButton(button);
+		_this.$('#delete-pool-modal').modal('hide');
+		$('.modal-backdrop').remove();
+		app_router.navigate('pools', {trigger: true})
             },
             error: function(xhr, status, error) {
-              enableButton(button);
+		enableButton(button);
             }
-          });
-        },
+        });
+    },
 
-        cancel: function(event) {
-          if (event) event.preventDefault();
-          app_router.navigate('pools', {trigger: true})
-        },
+    cancel: function(event) {
+        if (event) event.preventDefault();
+        app_router.navigate('pools', {trigger: true})
+    },
 
-        initHandlebarHelpers: function(){
-          Handlebars.registerHelper('print_pools_tbody', function() {
+    initHandlebarHelpers: function(){
+        Handlebars.registerHelper('print_pools_tbody', function() {
             var html = '',
-            listIcon = '<i class="glyphicon glyphicon-list"></i>  ',
-            editIcon = '<i class="fa fa-pencil-square-o"></i>',
-            trashIcon = '<i class="glyphicon glyphicon-trash"></i>',
-            toolTip = '<i class="fa fa-exclamation-circle" title="This Pool is created during install and contains the OS. You can create Shares in it like in any other pool on the system. However, operations like resize, compression and deletion are not allowed." rel="tooltip"></i>';
+		listIcon = '<i class="glyphicon glyphicon-list"></i>  ',
+		editIcon = '<i class="fa fa-pencil-square-o"></i>',
+		trashIcon = '<i class="glyphicon glyphicon-trash"></i>',
+		toolTip = '<i class="fa fa-exclamation-circle" title="This Pool is created during install and contains the OS. You can create Shares in it like in any other pool on the system. However, operations like resize, compression and deletion are not allowed." rel="tooltip"></i>';
 
             this.collection.each(function(pool, index) {
-              var poolName = pool.get('name'),
-                  poolSize = humanize.filesize(pool.get('size') * 1024),
-                  poolUsage = humanize.filesize((pool.get('size') - pool.get('reclaimable') - pool.get('free')) * 1024),
-                  poolUsagePercent = (((pool.get('size')-pool.get('reclaimable')-pool.get('free'))/pool.get('size')) * 100).toFixed(2),
-                  poolRaid = pool.get('raid'),
-                  poolCompression = pool.get('compression'),
-                  poolMtOptions = pool.get('mnt_options');
-                  if(poolMtOptions == null){poolMtOptions = '';}
+		var poolName = pool.get('name'),
+                    poolSize = humanize.filesize(pool.get('size') * 1024),
+                    poolUsage = humanize.filesize((pool.get('size') - pool.get('reclaimable') - pool.get('free')) * 1024),
+                    poolUsagePercent = (((pool.get('size')-pool.get('reclaimable')-pool.get('free'))/pool.get('size')) * 100).toFixed(2),
+                    poolRaid = pool.get('raid'),
+                    poolCompression = pool.get('compression'),
+                    poolMtOptions = pool.get('mnt_options');
+                if(poolMtOptions == null){poolMtOptions = '';}
 
-              if (poolName == 'rockstor_rockstor') {
-                  html += '<tr>';
-                  html += '<td><a href="#pools/' + poolName + '">' + listIcon + poolName +'</a> ' + toolTip + '</td>';
-                  html += '<td>'+ poolSize +'</td>';
-                  html += '<td>'+ poolUsage + '<strong>(' + poolUsagePercent + ' %)</strong></td>';
-                  html += '<td>'+ poolRaid +'</td>';
-                  html += '<td>';
-                  if (poolCompression == 'no' || _.isNull(poolCompression) || _.isUndefined(poolCompression) ) {
-                    html += 'Off';
-                  }else {
-                    html += 'On (Algorithm: <strong>' + poolCompression + '</strong>)';
-                  }
-                  html += '</td>';
-                  html += '<td>'+ poolMtOptions +'</td>';
-                  html += '<td>';
-                  var dNames =  _.reduce(pool.get('disks'),
-                  function(s, disk, i, list) {
-                     if (i < (list.length-1)){
-                        return s + disk.name + ',';
-                    } else {
-                        return s + disk.name;
+		if (pool.get('role') == 'root') {
+                    html += '<tr>';
+                    html += '<td><a href="#pools/' + poolName + '">' + listIcon + poolName +'</a> ' + toolTip + '</td>';
+                    html += '<td>'+ poolSize +'</td>';
+                    html += '<td>'+ poolUsage + '<strong>(' + poolUsagePercent + ' %)</strong></td>';
+                    html += '<td>'+ poolRaid +'</td>';
+                    html += '<td>';
+                    if (poolCompression == 'no' || _.isNull(poolCompression) || _.isUndefined(poolCompression) ) {
+			html += 'Off';
+                    }else {
+			html += 'On (Algorithm: <strong>' + poolCompression + '</strong>)';
                     }
-                  }, '');
-                  html += dNames;
-                  html += '</td>';
-                  html += '<td>N/A</td>';
-                  html += '</tr>';
+                    html += '</td>';
+                    html += '<td>'+ poolMtOptions +'</td>';
+                    html += '<td>';
+                    var dNames =  _.reduce(pool.get('disks'),
+					   function(s, disk, i, list) {
+					       if (i < (list.length-1)){
+						   return s + disk.name + ',';
+					       } else {
+						   return s + disk.name;
+					       }
+					   }, '');
+                    html += dNames;
+                    html += '</td>';
+                    html += '<td>N/A</td>';
+                    html += '</tr>';
 
-            }else{
+		} else {
 
-              html += '<tr>';
-              html += '<td><a href="#pools/' + poolName + '">' + listIcon + poolName +'</a></td>';
-              html += '<td>'+ poolSize + '&nbsp; <a href="#pools/' + poolName + '/?cView=resize">' + editIcon + '</a></td>';
-              html += '<td>'+ poolUsage + '<strong>(' + poolUsagePercent + ' %)</strong></td>';
-              html += '<td>'+ poolRaid + '&nbsp; <a href="#pools/' + poolName + '/?cView=resize">' + editIcon + '</a></td>';
-              html += '<td>';
-              if (poolCompression == 'no' || _.isNull(poolCompression) || _.isUndefined(poolCompression) ) {
-                html += 'Off';
-              }else {
-                html += 'On (Algorithm: <strong>' + poolCompression + '</strong>)';
-              }
-              html += ' &nbsp;<a href="#pools/' + poolName + '/?cView=edit">' + editIcon + '</a>';
-              html += '</td>';
-              html += '<td>' + poolMtOptions + '&nbsp;<a href="#pools/' + poolName +'/?cView=edit">' + editIcon + '</a></td>';
-              html += '<td>';
-              var dNames =  _.reduce(pool.get('disks'),
-              function(s, disk, i, list) {
-                 if (i < (list.length-1)){
-                    return s + disk.name + ',';
-                } else {
-                    return s + disk.name;
-                }
-              }, '');
-              html += dNames;
-              html += '</td>';
-              html += '<td><a id="delete_pool_' + poolName + '" data-name="'+ poolName + '" data-action="delete" rel="tooltip" title="Delete pool">' + trashIcon + '</a></td>';
+		    html += '<tr>';
+		    html += '<td><a href="#pools/' + poolName + '">' + listIcon + poolName +'</a></td>';
+		    html += '<td>'+ poolSize + '&nbsp; <a href="#pools/' + poolName + '/?cView=resize">' + editIcon + '</a></td>';
+		    html += '<td>'+ poolUsage + '<strong>(' + poolUsagePercent + ' %)</strong></td>';
+		    html += '<td>'+ poolRaid + '&nbsp; <a href="#pools/' + poolName + '/?cView=resize">' + editIcon + '</a></td>';
+		    html += '<td>';
+		    if (poolCompression == 'no' || _.isNull(poolCompression) || _.isUndefined(poolCompression) ) {
+			html += 'Off';
+		    }else {
+			html += 'On (Algorithm: <strong>' + poolCompression + '</strong>)';
+		    }
+		    html += ' &nbsp;<a href="#pools/' + poolName + '/?cView=edit">' + editIcon + '</a>';
+		    html += '</td>';
+		    html += '<td>' + poolMtOptions + '&nbsp;<a href="#pools/' + poolName +'/?cView=edit">' + editIcon + '</a></td>';
+		    html += '<td>';
+		    var dNames =  _.reduce(pool.get('disks'),
+					   function(s, disk, i, list) {
+					       if (i < (list.length-1)){
+						   return s + disk.name + ',';
+					       } else {
+						   return s + disk.name;
+					       }
+					   }, '');
+		    html += dNames;
+		    html += '</td>';
+		    html += '<td><a id="delete_pool_' + poolName + '" data-name="'+ poolName + '" data-action="delete" rel="tooltip" title="Delete pool">' + trashIcon + '</a></td>';
         	    html += '</tr>';
         	}
             });
 
             return new Handlebars.SafeString(html);
-            });
+        });
 
-          //createPool button needs to appear after the table so, call another helper function
-          Handlebars.registerHelper('print_CreatePool_Button', function() {
+        //createPool button needs to appear after the table so, call another helper function
+        Handlebars.registerHelper('print_CreatePool_Button', function() {
             var html = '',
                 editIconGlyph = '<i class="glyphicon glyphicon-edit"></i>';
             if(this.noOfFreeDisks > 0){
-              html += '<a href="#add_pool" id="add_pool" class="btn btn-primary">' + editIconGlyph + ' Create Pool</a>';
+		html += '<a href="#add_pool" id="add_pool" class="btn btn-primary">' + editIconGlyph + ' Create Pool</a>';
             }else{
-              html += '<a  id="add_pool" class="btn btn-primary disabled" title="There are no Disks available to create a Pool at this time." >' + editIconGlyph + ' Create Pool</a>';
-           }
-           return new Handlebars.SafeString(html);
-         });
-      }
-  });
+		html += '<a  id="add_pool" class="btn btn-primary disabled" title="There are no Disks available to create a Pool at this time." >' + editIconGlyph + ' Create Pool</a>';
+            }
+            return new Handlebars.SafeString(html);
+        });
+    }
+});
 
 
 // Add pagination
