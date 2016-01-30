@@ -68,7 +68,6 @@ def delete_old_kernels(logging, num_retain=5):
             logging.info('Deleted old Kernel: %s' % k)
     for i in range(len(centos_kernels) + len(ml_kernels) - deleted - num_retain):
         kv = ml_kernels[i].split('kernel-ml-')[1]
-        logging.info('kv = %s' % kv)
         if (kv != running_kernel and
             kv != default_kernel):
             run_command([YUM, 'remove', '-y', ml_kernels[i]])
@@ -266,7 +265,6 @@ def downgrade_python(logging):
     #backported some questionable changes that break gevent. So we downgrade to
     #previous version: 2.7.5-18. I've moved these packages to rockrepo for
     #now. Once the frankenversion resolves itself, we'll remove this workaround.
-    YUM = '/usr/bin/yum'
     o, e, rc = run_command([YUM, 'info', 'python'])
     for l in o:
         if (re.match('Release.*34.el7$', l) is not None):
@@ -279,7 +277,12 @@ def main():
         loglevel = logging.DEBUG
     logging.basicConfig(format='%(asctime)s: %(message)s', level=loglevel)
     set_def_kernel(logging)
-    delete_old_kernels(logging)
+    try:
+        delete_old_kernels(logging)
+    except Exception, e:
+        logging.debug('Exception while deleting old kernels. Soft error. Moving on.')
+        logging.exception(e)
+
     shutil.copyfile('/etc/issue', '/etc/issue.rockstor')
     for i in range(30):
         try:
@@ -337,6 +340,7 @@ def main():
         tz_updated = update_tz(logging)
     except Exception, e:
         logging.error('Exception while updating timezone: %s' % e.__str__())
+        logging.exception(e)
 
     try:
         logging.info('Updating sshd_config')
@@ -412,7 +416,13 @@ def main():
     run_command([SYSCTL, 'stop', 'firewalld'])
     run_command([SYSCTL, 'disable', 'firewalld'])
     update_nginx(logging)
-    downgrade_python(logging)
+    try:
+        #downgrading python is a stopgap until it's fixed in upstream.
+        downgrade_python(logging)
+    except Exception, e:
+        logging.error('Exception while downgrading python: %s' % e.__str__())
+        logging.exception(e)
+
     enable_rockstor_service(logging)
     enable_bootstrap_service(logging)
 
