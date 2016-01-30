@@ -123,6 +123,13 @@ class DiskMixin(object):
             if (Pool.objects.filter(name=d.label).exists()):
                 # update the disk db object's pool field accordingly.
                 dob.pool = Pool.objects.get(name=d.label)
+
+                #this is for backwards compatibility. root pools created
+                #before the pool.role migration need this. It can safely be
+                #removed a few versions after 3.8-11 or when we reset migrations.
+                if (d.root is True):
+                    dob.pool.role = 'root'
+                    dob.pool.save()
             else:  # this disk is not known to exist in any pool via it's label
                 dob.pool = None
             # If no pool has yet been found with this disk's label in and
