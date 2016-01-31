@@ -757,7 +757,11 @@ def btrfs_importable(disk):
 
 def root_disk():
     """
-    returns the partition(s) used for /. Typically it's sda.
+    Returns the drive device name where / mount point is found.
+    Works by parsing /proc/mounts. Eg if the root entry was as follows:
+    /dev/sdc3 / btrfs rw,noatime,ssd,space_cache,subvolid=258,subvol=/root 0 0
+    the returned value is sdc
+    The assumption is that the partition number will be a single character.
     """
     with open('/proc/mounts') as fo:
         for line in fo.readlines():
@@ -896,6 +900,7 @@ def scan_disks(min_size):
                                     dmap['root'], ]
     for d in dnames.keys():
         disks.append(Disk(*dnames[d]))
+    logger.info('root_disk returned the value of %s ', root)
     return disks
 
 
