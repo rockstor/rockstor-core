@@ -73,19 +73,9 @@ class NetworkMixin(object):
         move(npath, conf)
         superctl('nginx', 'restart')
 
-class NetworkListView(rfc.GenericView, NetworkMixin):
-    serializer_class = NetworkInterfaceSerializer
-
-    def get_queryset(self, *args, **kwargs):
-        with self._handle_exception(self.request):
-            self._net_scan()
-            #to be deprecated soon
-            update_samba_discovery()
-        return NetworkInterface.objects.all()
-
     @classmethod
     @transaction.atomic
-    def _net_scan(cls):
+    def _refresh_ni(cls):
         config_d = get_net_config(all=True)
         for dconfig in config_d.values():
             ni = None
@@ -108,20 +98,21 @@ class NetworkListView(rfc.GenericView, NetworkMixin):
                                       ctype=dconfig.get('ctype', None),
                                       state=dconfig.get('state', None))
             ni.save()
-        devices = []
         for ni in NetworkInterface.objects.all():
             if (ni.dname not in config_d):
                 logger.debug('network interface(%s) does not exist in the '
                              'system anymore. Removing from db' % (ni.name))
                 ni.delete()
-            else:
-                devices.append(ni)
-        serializer = NetworkInterfaceSerializer(devices, many=True)
-        return Response(serializer.data)
 
-    def post(self, request):
-        with self._handle_exception(request):
-            return self._net_scan()
+class NetworkListView(rfc.GenericView, NetworkMixin):
+    serializer_class = NetworkInterfaceSerializer
+
+    def get_queryset(self, *args, **kwargs):
+        with self._handle_exception(self.request):
+            self._refresh_ni()
+            #@todo to be deprecated soon
+            update_samba_discovery()
+            return NetworkInterface.objects.all()
 
 
 class NetworkDetailView(rfc.GenericView, NetworkMixin):
@@ -209,7 +200,6 @@ class NetworkDetailView(rfc.GenericView, NetworkMixin):
             if (ni.itype == 'management'):
                 try:
                     update_issue(ni.ipaddr)
-                    self._update_nginx(ni.ipaddr)
                 except Exception, e:
                     logger.error('Unable to update /etc/issue. Exception: %s' % e.__str__())
 
