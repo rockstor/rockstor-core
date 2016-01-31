@@ -900,7 +900,6 @@ def scan_disks(min_size):
                                     dmap['root'], ]
     for d in dnames.keys():
         disks.append(Disk(*dnames[d]))
-    logger.info('root_disk returned the value of %s ', root)
     return disks
 
 
