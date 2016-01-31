@@ -780,7 +780,7 @@ def scan_disks(min_size):
     dnames = {}
     disks = []
     serials = []
-    root_serial = None
+    root_serial = root_model = root_transport = root_vendor = root_hctl = None
     # to use udevadm to retrieve serial number rather than lsblk, make this True
     always_use_udev_serial = False
     device_names_seen = []
@@ -827,7 +827,17 @@ def scan_disks(min_size):
         if (dmap['TYPE'] == 'rom'):
             continue
         if (dmap['NAME'] == root):
+            # Based on our root variable we are looking at the system drive.
+            # Given lsblk doesn't return serial, model, transport, vendor, hctl
+            # when displaying partitions we grab and stash them while we are
+            # looking at the root drive directly.
+            # N.B. assumption is lsblk first displays devices then partitions,
+            # this is the observed behaviour so far.
             root_serial = dmap['SERIAL']
+            root_model = dmap['MODEL']
+            root_transport = dmap['TRAN']
+            root_vendor = dmap['VENDOR']
+            root_hctl = dmap['HCTL']
         if (dmap['TYPE'] == 'part'):
             for dname in dnames.keys():
                 if (re.match(dname, dmap['NAME']) is not None):
@@ -839,8 +849,14 @@ def scan_disks(min_size):
             if (dmap['TYPE'] == 'part' and dmap['FSTYPE'] == 'btrfs'):
                 # btrfs partition for root (rockstor_rockstor) pool
                 if (re.match(root, dmap['NAME']) is not None):
+                    # now add the properties we stashed when looking at the root
+                    # drive rather than the root partition we see here.
                     dmap['SERIAL'] = root_serial
                     dmap['root'] = True
+                    dmap['MODEL'] = root_model
+                    dmap['TRAN'] = root_transport
+                    dmap['VENDOR'] = root_vendor
+                    dmap['HCTL'] = root_hctl
                 else:
                     # ignore btrfs partitions that are not for rootfs.
                     continue
@@ -880,6 +896,7 @@ def scan_disks(min_size):
                                     dmap['root'], ]
     for d in dnames.keys():
         disks.append(Disk(*dnames[d]))
+        logger.info('disks item = %s ', Disk(*dnames[d]))
     return disks
 
 
