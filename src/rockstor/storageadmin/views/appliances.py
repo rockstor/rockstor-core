@@ -39,8 +39,9 @@ class ApplianceListView(rfc.GenericView):
     serializer_class = ApplianceSerializer
 
     def get_queryset(self, *args, **kwargs):
-        self._update_hostname()
-        return Appliance.objects.all()
+        with self._handle_exception(self.request):
+            self._update_hostname()
+            return Appliance.objects.all()
 
     @staticmethod
     @transaction.atomic
@@ -75,7 +76,7 @@ class ApplianceListView(rfc.GenericView):
                          'all inputs and try again.')
                 handle_exception(Exception(e_msg), request)
 
-    
+
     @transaction.atomic
     def post(self, request, *args, **kwargs):
         with self._handle_exception(request):
@@ -154,7 +155,7 @@ class ApplianceDetailView(rfc.GenericView):
         except Exception, e:
             logger.exception(e)
             e_msg = ('Failed updating hostname for appliance with id = %d' % appid)
-            handle_exception(e, request)  
+            handle_exception(e, request)
 
     @transaction.atomic
     def delete(self, request, appid):
