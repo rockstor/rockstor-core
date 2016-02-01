@@ -204,8 +204,9 @@ SnapshotsView  = RockstorLayoutView.extend({
 	id = $(event.currentTarget).attr('data-id');
 	var checked = $(event.currentTarget).prop('checked');
 	this.selectSnapshotWithId(id, checked);
+	this.toggleDeleteButton();
     },
-
+    
     selectSnapshotWithId: function(id, checked) {
 	if (checked) {
 	    if (!RockstorUtil.listContains(this.selectedSnapshots, 'id', id)) {
@@ -218,6 +219,14 @@ SnapshotsView  = RockstorLayoutView.extend({
 	    }
 	}
     },
+    
+    toggleDeleteButton: function(){
+    	if(this.selectedSnapshots.length == 0){
+    		$("#js-snapshot-delete-multiple").css("visibility", "hidden");
+    	}else{
+    		$("#js-snapshot-delete-multiple").css("visibility", "visible");
+    	}
+    },
 
 
     selectAllSnapshots: function(event) {
@@ -227,6 +236,7 @@ SnapshotsView  = RockstorLayoutView.extend({
 	this.$('.js-snapshot-select').each(function() {
 	    _this.selectSnapshotWithId($(this).attr('data-id'), checked);
 	});
+	this.toggleDeleteButton();
     },
 
     deleteMultipleSnapshots: function(event) {
@@ -343,8 +353,7 @@ SnapshotsView  = RockstorLayoutView.extend({
                 'data-name="' + snapName + '" data-id="' + snapId + '" ></input>';
             }
             html += '</td>';
-            html += '<td>' + cameraIcon + snapName + '</td>';
-            html += '<td>'
+            html += '<td>' + cameraIcon + snapName + '&nbsp;&nbsp;&nbsp;&nbsp;';
             _this.shares.each( function(share, index) {
                 var shareName = share.get('name'),
                     shareId = share.get('id');
