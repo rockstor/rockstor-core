@@ -90,8 +90,10 @@ SharesView = RockstorLayoutView.extend({
     var button = $(event.currentTarget);
     if (buttonDisabled(button)) return false;
     shareName = button.attr('data-name');
+    shareSize = button.attr('data-size');
     // set share name in confirm dialog
     _this.$('#pass-share-name').html(shareName);
+    _this.$('#pass-share-size').html(shareSize);
     //show the dialog
     _this.$('#delete-share-modal').modal();
     return false;
