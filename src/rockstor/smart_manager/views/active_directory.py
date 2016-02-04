@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import socket
+import subprocess
 from rest_framework.response import Response
 from storageadmin.util import handle_exception
 from system.services import (toggle_auth_service, systemctl)
@@ -65,9 +66,9 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
 
     @staticmethod
     def _join_domain(config):
-        import subprocess
         domain = config.get('domain')
-        cmd = ['realm', 'join', domain]
+        admin = config.get('username')
+        cmd = ['realm', 'join', '-U', admin, domain]
         p = subprocess.Popen(cmd, shell=False,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE,
