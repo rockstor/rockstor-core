@@ -28,7 +28,7 @@
  * Shares View
  */
 
-SharesView = RockstorLayoutView.extend({
+SharesView = SharesCommonView.extend({
   events: {
     "click a[data-action=delete]": "deleteShare",
     'click #js-cancel': 'cancel',
@@ -99,29 +99,6 @@ SharesView = RockstorLayoutView.extend({
     return false;
   },
 
-//modal confirm button handler
-  confirmShareDelete: function(event) {
-    var _this = this;
-    var button = $(event.currentTarget);
-    if (buttonDisabled(button)) return false;
-        disableButton(button);
-      $.ajax({
-        url: "/api/shares/" + shareName,
-        type: "DELETE",
-        dataType: "json",
-        success: function() {
-          _this.collection.fetch({reset: true});
-          enableButton(button);
-          _this.$('#delete-share-modal').modal('hide');
-          $('.modal-backdrop').remove();
-          app_router.navigate('shares', {trigger: true})
-        },
-        error: function(xhr, status, error) {
-          enableButton(button);
-        }
-      });
-    },
-
     initHandlebarHelpers: function(){
       //register any share related handlebar helpers here.
       Handlebars.registerHelper('print_tbody', function() {
@@ -154,11 +131,6 @@ SharesView = RockstorLayoutView.extend({
         });
         return new Handlebars.SafeString(html);
       });
-    },
-
-    cancel: function(event) {
-      if (event) event.preventDefault();
-      app_router.navigate('shares', {trigger: true})
     }
 });
 
