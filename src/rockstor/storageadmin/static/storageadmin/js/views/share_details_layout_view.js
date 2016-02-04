@@ -105,6 +105,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 		$(this.el).html(this.template({
 			share: this.share,
 			shareName: this.share.get('name'),
+			shareSize: humanize.filesize(this.share.get('size')*1024),
 			snapshots: this.snapshots,
 			permStr: this.parsePermStr(this.share.get("perms")),
 			modify_choices: this.modify_choices,
