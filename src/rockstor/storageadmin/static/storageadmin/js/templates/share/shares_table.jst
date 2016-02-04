@@ -36,15 +36,15 @@
     <div class="modal-content">
       <div class="modal-header modal-header-danger">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h3 class="modal-title">Delete Share</h3>
+        <h3 class="modal-title">Delete <span class="pass-share-name"></span> ?</h3>
       </div>
       <div class="modal-body">
         <div class="messages"></div>
-        <p><strong><span id="pass-share-size"></span></strong> of data is lost by deleting <strong><em><span id="pass-share-name"></span></em></strong>. Are you sure to Delete?</p>
+        <p>By deleting <strong><em><span class="pass-share-name"></span></em></strong>, all of it's data (<strong><span id="pass-share-size"></span></strong>) will be destroyed. Are you sure?</p>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">Cancel</button>
-        <button id="js-confirm-share-delete" class="btn btn-primary">Confirm</button>
+        <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">No</button>
+        <button id="js-confirm-share-delete" class="btn btn-primary">Yes</button>
       </div><!--end modal-fooetr-->
     </div><!--end modal-content-->
   </div><!--end modal-dialog-->
