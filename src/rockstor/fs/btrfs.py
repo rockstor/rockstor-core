@@ -769,6 +769,7 @@ def root_disk():
             if (fields[1] == '/' and
                     (fields[2] == 'ext4' or fields[2] == 'btrfs')):
                 disk = os.path.realpath(fields[0])
+                logger.debug('os.path.realpath in ROOT_DISK = %s', disk)
                 return disk[5:-1]
     msg = ('root filesystem is not BTRFS. During Rockstor installation, '
            'you must select BTRFS instead of LVM and other options for '
@@ -900,6 +901,8 @@ def scan_disks(min_size):
                                     dmap['root'], ]
     for d in dnames.keys():
         disks.append(Disk(*dnames[d]))
+        logger.info('disks item = %s ', Disk(*dnames[d]))
+    logger.info('root_disk returned the value of %s ', root)
     return disks
 
 
