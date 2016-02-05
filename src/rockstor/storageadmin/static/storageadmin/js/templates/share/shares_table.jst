@@ -18,8 +18,23 @@
         <th>Actions</th>
       </tr>
     </thead>
-    <tbody>{{print_tbody}}</tbody>
+    <tbody>
+    {{#each shares}}
+    <tr>
+        <td><a href="#shares/{{this.name}}"><i class="glyphicon glyphicon-folder-open"></i>  {{this.name}}</a></td>
+        <td>{{humanize_size this.size}}</td>
+        <td>{{this.pool.name}}</td>
+        <td>{{humanize_size this.rusage}}
+        <td>
+        {{displayCompressionAlgo this.compression_algo this.name}}
+        </td>
+        <td><a id="delete_share_{{this.name}}" data-name="{{this.name}}" data-action="delete"
+        data-pool="{{this.pool.name}}" data-size="{{humanize_size this.size}}" rel="tooltip" title="Delete share"><i class="glyphicon glyphicon-trash"></i></a></td>
+    </tr>
+    {{/each}}
+    </tbody>
   </table>
+
   <div>
     {{! call pagination related handlebar helper here..}}
     {{pagination}}
@@ -34,17 +49,17 @@
 <div id="delete-share-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
-      <div class="modal-header">
+      <div class="modal-header modal-header-danger">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h3 id="myModalLabel">Delete Share</h3>
+        <h3 class="modal-title">Delete <span class="pass-share-name"></span> ?</h3>
       </div>
       <div class="modal-body">
         <div class="messages"></div>
-        <h4>Share (<span id="pass-share-name"></span>) will be deleted. Are you sure?</h4>
+        <p>Deleting <strong><em><span class="pass-share-name"></span></em></strong> will destroy all of it's data (<strong><span id="pass-share-size"></span></strong>). Are you sure?</p>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">Cancel</button>
-        <button id="js-confirm-share-delete" class="btn btn-primary">Confirm</button>
+        <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">No</button>
+        <button id="js-confirm-share-delete" class="btn btn-primary">Yes</button>
       </div><!--end modal-fooetr-->
     </div><!--end modal-content-->
   </div><!--end modal-dialog-->
