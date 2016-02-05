@@ -209,10 +209,12 @@ SnapshotsView  = RockstorLayoutView.extend({
     
     selectSnapshotWithId: function(id, checked) {
 	if (checked) {
+		console.log("if checked: ",this.selectedSnapshots);
 	    if (!RockstorUtil.listContains(this.selectedSnapshots, 'id', id)) {
 		RockstorUtil.addToList(
 		    this.selectedSnapshots, this.collection, 'id', id);
 	    }
+	    console.log("after checked: " ,this.selectedSnapshots);
 	} else {
 	    if (RockstorUtil.listContains(this.selectedSnapshots, 'id', id)) {
 		RockstorUtil.removeFromList(this.selectedSnapshots, 'id', id);
