@@ -3,6 +3,7 @@ monkey.patch_all()
 
 import psutil
 import re
+import json
 import gevent
 from socketio.server import SocketIOServer
 from socketio import socketio_manage
@@ -241,14 +242,20 @@ class ServicesNamespace(BaseNamespace, BroadcastMixin):
         self.disconnect()
 
     def send_service_statuses(self):
-        # Iterate through the collection and assign the values accordingly
-        services = [s.name for s in Service.objects.all()]
         while True:
             data = {}
-            for service in services:
-                data[service] = {}
-                output, error, return_code = service_status(service)
-                data[service]['running'] = return_code
+            for service in Service.objects.all():
+                config = None
+                if (service.config is not None):
+                    try:
+                        config = json.loads(service.config)
+                    except Exception, e:
+                        logger.error('Exception while loading config of '
+                                     'Service(%s): %s' %
+                                     (service.name, e.__str__()))
+                data[service.name] = {}
+                output, error, return_code = service_status(service.name, config=config)
+                data[service.name]['running'] = return_code
 
             self.emit('services:get_services', {
                 'data': data, 'key': 'services:get_services'

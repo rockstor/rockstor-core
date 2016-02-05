@@ -42,7 +42,13 @@ class SambaServiceView(BaseServiceDetailView):
         service_name = 'smb'
         service = Service.objects.get(name=service_name)
         if (command == 'config'):
-            #nothing to really configure atm. just save the model
+            aso = Service.objects.get(name='active-directory')
+            if (aso.config is not None):
+                e_msg = ('Active Directory service is configured, so '
+                         'Workgroup is automatically retrieved and cannot '
+                         'be set manually')
+                handle_exception(Exception(e_msg), request)
+
             try:
                 config = request.data.get('config', {'workgroup': 'MYGROUP',})
                 workgroup = config['workgroup']

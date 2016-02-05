@@ -16,13 +16,17 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import re
+import socket
+import json
+import subprocess
 from rest_framework.response import Response
 from storageadmin.util import handle_exception
-from system.services import (toggle_auth_service, systemctl)
 from django.db import transaction
 from base_service import BaseServiceDetailView
 from smart_manager.models import Service
 from system.osi import run_command
+from system.samba import update_global_config
 
 import logging
 logger = logging.getLogger(__name__)
@@ -40,7 +44,6 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
 
     @staticmethod
     def _resolve_check(domain, request):
-        import socket
         try:
             res = socket.gethostbyname(domain)
         except Exception, e:
@@ -65,9 +68,9 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
 
     @staticmethod
     def _join_domain(config):
-        import subprocess
         domain = config.get('domain')
-        cmd = ['realm', 'join', domain]
+        admin = config.get('username')
+        cmd = ['realm', 'join', '-U', admin, domain]
         p = subprocess.Popen(cmd, shell=False,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE,
@@ -79,6 +82,43 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
             e_msg = ('Return code: %s. stdout: %s. stderr: %s.' %
                      (rc, out, err))
             raise Exception(e_msg)
+
+    @staticmethod
+    def _domain_workgroup(domain):
+        o, e, rc = run_command(['adcli', 'info', domain])
+        ms = 'domain-short = '
+        for l in o:
+            if (re.match(ms, l) is not None):
+                return l.split(ms)[1]
+        raise Exception('Failed to retrieve Workgroup. out: %s err: %s rc: %d'
+                        % (o, e, rc))
+
+    @staticmethod
+    def _update_sssd(domain):
+        #add enumerate = True in sssd so user/group lists will be
+        #visible on the web-ui.
+        el = 'enumerate = True\n'
+        from tempfile import mkstemp
+        from system.services import systemctl
+        import shutil
+        fh, npath = mkstemp()
+        sssd_config = '/etc/sssd/sssd.conf'
+        with open(sssd_config) as sfo, open(npath, 'w') as tfo:
+            domain_section = False
+            for line in sfo.readlines():
+                if (domain_section is True):
+                    if (len(line.strip()) == 0 or line[0] == '['):
+                        #empty line or new section without empty line before it.
+                        tfo.write(el)
+                        domain_section = False
+                elif (re.match('\[domain/%s]' % domain, line) is not None):
+                    domain_section = True
+                tfo.write(line)
+            if (domain_section is True):
+                #reached end of file, also coinciding with end of domain section
+                tfo.write(el)
+        shutil.move(npath, sssd_config)
+        systemctl('sssd', 'restart')
 
     @staticmethod
     def _leave_domain(config):
@@ -123,6 +163,7 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
 
             elif (command == 'start'):
                 config = self._config(service, request)
+                domain = config.get('domain')
                 #1. make sure ntpd is running, or else, don't start.
                 self._ntp_check(request)
                 #2. Name resolution check?
@@ -131,10 +172,18 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
                 try:
                     #4. realmd stuff
                     self._join_domain(config)
+                    if (config.get('enumerate') is True):
+                        self._update_sssd(domain)
                 except Exception, e:
                     e_msg = ('Failed to join AD domain(%s). Error: %s' %
                              (config.get('domain'), e.__str__()))
                     handle_exception(Exception(e_msg), request)
+
+                workgroup = self._domain_workgroup(domain)
+                so = Service.objects.get(name='smb')
+                so.config = json.dumps({'workgroup': workgroup})
+                so.save()
+                update_global_config(workgroup, domain)
 
             elif (command == 'stop'):
                 config = self._config(service, request)
