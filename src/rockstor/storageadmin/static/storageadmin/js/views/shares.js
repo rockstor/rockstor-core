@@ -102,15 +102,15 @@ SharesView = SharesCommonView.extend({
 
 
 	initHandlebarHelpers: function(){
-		
-		Handlebars.registerHelper('human_readable_size_usage', function(share_size_usage) {
-			return humanize.filesize(share_size_usage * 1024);
+
+		Handlebars.registerHelper('humanize_size', function(num) {
+			return humanize.filesize(num * 1024);
 		});
 		Handlebars.registerHelper('displayCompressionAlgo', function(shareCompression,shareName) {
 			var html = '';
 			if(shareCompression && shareCompression != 'no'){
 				html += shareCompression;
-			}else{ 
+			}else{
 				html += 'None(defaults to pool level compression, if any)   ' +
 				'<a href="#shares/' + shareName + '/?cView=edit"><i class="glyphicon glyphicon-pencil"></i></a>';
 			}

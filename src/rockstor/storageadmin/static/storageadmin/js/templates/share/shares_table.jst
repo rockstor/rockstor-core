@@ -22,19 +22,19 @@
     {{#each shares}}
     <tr>
         <td><a href="#shares/{{this.name}}"><i class="glyphicon glyphicon-folder-open"></i>  {{this.name}}</a></td>
-        <td>{{human_readable_size_usage this.size}}</td>
+        <td>{{humanize_size this.size}}</td>
         <td>{{this.pool.name}}</td>
-        <td>{{human_readable_size_usage this.rusage}}
+        <td>{{humanize_size this.rusage}}
         <td>
         {{displayCompressionAlgo this.compression_algo this.name}}
         </td>
         <td><a id="delete_share_{{this.name}}" data-name="{{this.name}}" data-action="delete"
-        data-pool="{{this.pool.name}}" data-size="{{this.size}}" rel="tooltip" title="Delete share"><i class="glyphicon glyphicon-trash"></i></a></td>
+        data-pool="{{this.pool.name}}" data-size="{{humanize_size this.size}}" rel="tooltip" title="Delete share"><i class="glyphicon glyphicon-trash"></i></a></td>
     </tr>
     {{/each}}
     </tbody>
   </table>
-  
+
   <div>
     {{! call pagination related handlebar helper here..}}
     {{pagination}}
@@ -55,7 +55,7 @@
       </div>
       <div class="modal-body">
         <div class="messages"></div>
-        <p>By deleting <strong><em><span class="pass-share-name"></span></em></strong>, all of it's data (<strong><span id="pass-share-size"></span></strong>) will be destroyed. Are you sure?</p>
+        <p>Deleting <strong><em><span class="pass-share-name"></span></em></strong> will destroy all of it's data (<strong><span id="pass-share-size"></span></strong>). Are you sure?</p>
       </div>
       <div class="modal-footer">
         <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">No</button>
