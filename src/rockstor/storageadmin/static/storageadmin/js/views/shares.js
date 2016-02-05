@@ -108,7 +108,6 @@ SharesView = SharesCommonView.extend({
 		});
 		Handlebars.registerHelper('displayCompressionAlgo', function(shareCompression,shareName) {
 			var html = '';
-			console.log("The share compression is: ", shareCompression);
 			if(shareCompression && shareCompression != 'no'){
 				html += shareCompression;
 			}else{ 
