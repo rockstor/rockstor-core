@@ -866,15 +866,17 @@ def scan_disks(min_size):
             root_transport = dmap['TRAN']
             root_vendor = dmap['VENDOR']
             root_hctl = dmap['HCTL']
-        if (dmap['TYPE'] == 'part'):
+        # md raid partitions are of type 'md' and raw md device is type 'raid1'
+        # normal partitions are of type 'part'
+        if (dmap['TYPE'] == 'part' or dmap['TYPE'] == 'md'):
             for dname in dnames.keys():
                 if (re.match(dname, dmap['NAME']) is not None):
                     dnames[dname][11] = True
-        if (((dmap['NAME'] != root and dmap['TYPE'] != 'part') or
-                (dmap['TYPE'] == 'part' and dmap['FSTYPE'] == 'btrfs'))):
+        if (((dmap['NAME'] != root and (dmap['TYPE'] != 'part' or dmap['TYPE'] != 'md')) or
+                ((dmap['TYPE'] == 'part' or dmap['TYPE'] == 'md') and dmap['FSTYPE'] == 'btrfs'))):
             dmap['parted'] = False  # part = False by default
             dmap['root'] = False
-            if (dmap['TYPE'] == 'part' and dmap['FSTYPE'] == 'btrfs'):
+            if ((dmap['TYPE'] == 'part' or dmap['TYPE'] == 'md') and dmap['FSTYPE'] == 'btrfs'):
                 # btrfs partition for root (rockstor_rockstor) pool
                 if (re.match(root, dmap['NAME']) is not None):
                     # now add the properties we stashed when looking at the root
