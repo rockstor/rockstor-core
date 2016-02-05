@@ -170,24 +170,24 @@ ServicesView = Backbone.View.extend({
 		Handlebars.registerHelper('display_services_table', function(){
 			var html = '';
 			var _this = this;
-			this.collection.each(function(service) { 
+			this.collection.each(function(service) {
 				var serviceName = service.get('name');
 				html += '<tr id="' + serviceName + '">';
 				html += '<td>';
 				html += service.get('display_name') + '&nbsp';
-				 if (_this.configurable_services.indexOf(serviceName) > -1) { 
+				 if (_this.configurable_services.indexOf(serviceName) > -1) {
 					html += '<a href="#" class="configure" data-service-name="' + serviceName + '"><i class="glyphicon glyphicon-wrench"></i></a>&nbsp';
 				}
 				if (serviceName == 'active-directory') {
-					html += '<i class="fa fa-info-circle" title="By turning this service on, the system will attempt to join Active Directory domain using the credentials provided during configuration. Note that domain user/group information is not listed anywhere in the Web-UI. However, domain users should be able to access Samba Shares and domain Administrators can set permissions from Windows computers. For support, contact support@rockstor.com"></i>';
-				} 
+					html += '<i class="fa fa-info-circle" title="By turning this service on, the system will attempt to join Active Directory domain using the credentials provided during configuration. If enumerate option is checked in configuration, users and groups are displayed in the UI."></i>';
+				}
 				html += '</td>';
 				html += '<td id="' + serviceName + '-status">';
 				if (service.get('status')) {
 					html += '<input type="checkbox" data-service-name="' + serviceName + '" data-size="mini" checked>';
-				} else { 
+				} else {
 					html += '<input type="checkbox" data-service-name="' + serviceName + '" data-size="mini">';
-				} 
+				}
 				html += '<div class="command-status" data-service-name="' + serviceName + '">&nbsp;</div>';
 				html += '<div class="simple-overlay" id="' + serviceName + '-err-popup"><div class="overlay-content"></div></div>';
 				html += '</td>';
