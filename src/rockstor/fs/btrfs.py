@@ -770,7 +770,30 @@ def root_disk():
                     (fields[2] == 'ext4' or fields[2] == 'btrfs')):
                 disk = os.path.realpath(fields[0])
                 logger.debug('os.path.realpath in ROOT_DISK = %s', disk)
-                return disk[5:-1]
+                if (re.match('/dev/md', disk) is not None):
+                    # We have an Multi Device naming scheme which is a little
+                    # different ie 3rd partition = md126p3 on the md126 device,
+                    # or md0p3 as third partition on md0 device.
+                    logger.debug('root_disk found an md device')
+                    # as md devs often have 1 to 3 numerical chars we search
+                    # for them after the 5th [index 4] char to skip /dev/??
+                    # We trim off the 2 character partition designator in our
+                    # disk string to avoid matching the partition number.
+                    # Find the indexes of the device name without the partition.
+                    # ie search for where the numbers after "md" end
+                    end = re.search('\d+', disk[:-2]).end()
+                    logger.debug('disk to -2 string = %s', disk[:-2])
+                    logger.debug('end of md numbers match = index of %s', end)
+                    # N.B. the above assumes no more than 2 numeric chars for
+                    # the partition designator but allows also for a single char
+                    # ie d2 or d11, in the second case we leave a non numeric.
+                    # todo Possible out of range if / on md126 (no partition)
+                    return disk[5:end]
+                else:
+                    # catch all that assumes we have eg /dev/sda3 and want "sda"
+                    # so start from 6th char and remove the last char
+                    # /dev/sda3 = sda
+                    return disk[5:-1]
     msg = ('root filesystem is not BTRFS. During Rockstor installation, '
            'you must select BTRFS instead of LVM and other options for '
            'root filesystem. Please re-install Rockstor properly.')
@@ -901,8 +924,8 @@ def scan_disks(min_size):
                                     dmap['root'], ]
     for d in dnames.keys():
         disks.append(Disk(*dnames[d]))
-        logger.info('disks item = %s ', Disk(*dnames[d]))
-    logger.info('root_disk returned the value of %s ', root)
+        logger.debug('disks item = %s ', Disk(*dnames[d]))
+    logger.debug('root_disk returned the value of %s ', root)
     return disks
 
 
