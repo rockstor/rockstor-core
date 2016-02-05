@@ -20,6 +20,8 @@ import re
 import socket
 import json
 import subprocess
+from tempfile import mkstemp
+import shutil
 from rest_framework.response import Response
 from storageadmin.util import handle_exception
 from django.db import transaction
@@ -27,6 +29,7 @@ from base_service import BaseServiceDetailView
 from smart_manager.models import Service
 from system.osi import run_command
 from system.samba import update_global_config
+from system.services import systemctl
 
 import logging
 logger = logging.getLogger(__name__)
@@ -98,9 +101,6 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
         #add enumerate = True in sssd so user/group lists will be
         #visible on the web-ui.
         el = 'enumerate = True\n'
-        from tempfile import mkstemp
-        from system.services import systemctl
-        import shutil
         fh, npath = mkstemp()
         sssd_config = '/etc/sssd/sssd.conf'
         with open(sssd_config) as sfo, open(npath, 'w') as tfo:
