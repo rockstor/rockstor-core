@@ -16,15 +16,17 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import re
 import socket
+import json
 import subprocess
 from rest_framework.response import Response
 from storageadmin.util import handle_exception
-from system.services import (toggle_auth_service, systemctl)
 from django.db import transaction
 from base_service import BaseServiceDetailView
 from smart_manager.models import Service
 from system.osi import run_command
+from system.samba import update_global_config
 
 import logging
 logger = logging.getLogger(__name__)
@@ -82,6 +84,16 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
             raise Exception(e_msg)
 
     @staticmethod
+    def _domain_workgroup(domain):
+        o, e, rc = run_command(['adcli', 'info', domain])
+        ms = 'domain-short = '
+        for l in o:
+            if (re.match(ms, l) is not None):
+                return l.split(ms)[1]
+        raise Exception('Failed to retrieve Workgroup. out: %s err: %s rc: %d'
+                        % (o, e, rc))
+
+    @staticmethod
     def _leave_domain(config):
         domain = config.get('domain')
         cmd = ['realm', 'leave', domain]
@@ -136,6 +148,13 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
                     e_msg = ('Failed to join AD domain(%s). Error: %s' %
                              (config.get('domain'), e.__str__()))
                     handle_exception(Exception(e_msg), request)
+
+                domain = config.get('domain')
+                workgroup = self._domain_workgroup(domain)
+                so = Service.objects.get(name='smb')
+                so.config = json.dumps({'workgroup': workgroup})
+                so.save()
+                update_global_config(workgroup, domain)
 
             elif (command == 'stop'):
                 config = self._config(service, request)
