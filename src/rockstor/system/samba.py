@@ -28,6 +28,7 @@ TESTPARM = '/usr/bin/testparm'
 SMB_CONFIG = '/etc/samba/smb.conf'
 SYSTEMCTL = '/usr/bin/systemctl'
 CHMOD = '/bin/chmod'
+RS_HEADER = '####BEGIN: Rockstor SAMBA CONFIG####'
 
 
 def test_parm(config='/etc/samba/smb.conf'):
@@ -45,7 +46,7 @@ def test_parm(config='/etc/samba/smb.conf'):
 
 
 def rockstor_smb_config(fo, exports):
-    fo.write('####BEGIN: Rockstor SAMBA CONFIG####\n')
+    fo.write('%s\n' % RS_HEADER)
     for e in exports:
         admin_users = ''
         for au in e.admin_users.all():
@@ -76,7 +77,7 @@ def refresh_smb_config(exports):
     with open(SMB_CONFIG) as sfo, open(npath, 'w') as tfo:
         rockstor_section = False
         for line in sfo.readlines():
-            if (re.match('####BEGIN: Rockstor SAMBA CONFIG####', line)
+            if (re.match(RS_HEADER, line)
                 is not None):
                 rockstor_section = True
                 rockstor_smb_config(tfo, exports)
@@ -89,13 +90,32 @@ def refresh_smb_config(exports):
     shutil.move(npath, SMB_CONFIG)
 
 
-def update_global_config(workgroup):
+def update_global_config(workgroup, realm=None):
     fh, npath = mkstemp()
     with open(SMB_CONFIG) as sfo, open(npath, 'w') as tfo:
+        tfo.write('[global]\n')
+        tfo.write('    workgroup = %s\n' % workgroup)
+        tfo.write('    server string = Samba Server Version %v\n')
+        tfo.write('    log file = /var/log/samba/log.%m\n')
+        tfo.write('    max log size = 50\n')
+        tfo.write('    encrypt passwords = yes\n')
+        tfo.write('    passdb backend = tdbsam\n')
+        if (realm is not None):
+            tfo.write('    security = ads\n')
+            tfo.write('    realm = %s\n' % realm)
+        else:
+            tfo.write('    security = user\n')
+        tfo.write('    log level = 3\n')
+        tfo.write('    load printers = no\n')
+        tfo.write('    cups options = raw\n')
+        tfo.write('    printcap name = /dev/null\n\n')
+
+        rockstor_section = False
         for line in sfo.readlines():
-            if (re.match('workgroup = ', line.strip()) is not None):
-                line = 'workgroup = %s\n' % workgroup
-            tfo.write(line)
+            if (re.match(RS_HEADER, line) is not None):
+                rockstor_section = True
+            if (rockstor_section is True):
+                tfo.write(line)
     test_parm(npath)
     shutil.move(npath, SMB_CONFIG)
 
