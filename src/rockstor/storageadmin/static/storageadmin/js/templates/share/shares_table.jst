@@ -18,8 +18,23 @@
         <th>Actions</th>
       </tr>
     </thead>
-    <tbody>{{print_tbody}}</tbody>
+    <tbody>
+    {{#each shares}}
+    <tr>
+        <td><a href="#shares/{{this.name}}"><i class="glyphicon glyphicon-folder-open"></i>  {{this.name}}</a></td>
+        <td>{{human_readable_size_usage this.size}}</td>
+        <td>{{this.pool.name}}</td>
+        <td>{{human_readable_size_usage this.rusage}}
+        <td>
+        {{displayCompressionAlgo this.compression_algo this.name}}
+        </td>
+        <td><a id="delete_share_{{this.name}}" data-name="{{this.name}}" data-action="delete"
+        data-pool="{{this.pool.name}}" data-size="{{this.size}}" rel="tooltip" title="Delete share"><i class="glyphicon glyphicon-trash"></i></a></td>
+    </tr>
+    {{/each}}
+    </tbody>
   </table>
+  
   <div>
     {{! call pagination related handlebar helper here..}}
     {{pagination}}
