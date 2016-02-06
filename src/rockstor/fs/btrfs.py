@@ -871,6 +871,9 @@ def scan_disks(min_size):
             root_transport = dmap['TRAN']
             root_vendor = dmap['VENDOR']
             root_hctl = dmap['HCTL']
+        # normal partitions are of type 'part', md partitions are of type 'md'
+        # normal disks are of type 'disk' md devices are of type eg 'raid1'
+        # disk members of eg intel bios raid md devices fstype='isw_raid_member'
         if (dmap['TYPE'] == 'part'):
             for dname in dnames.keys():
                 if (re.match(dname, dmap['NAME']) is not None):
