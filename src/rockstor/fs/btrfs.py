@@ -813,16 +813,20 @@ def scan_disks(min_size):
     always_use_udev_serial = False
     device_names_seen = []
     for l in o:
+        # skip processing of all lines that don't begin with "NAME"
         if (re.match('NAME', l) is None):
             continue
-        dmap = {}
+        dmap = {}  # dictionary to hold line info from lsblk output eg NAME=sda
         cur_name = ''
         cur_val = ''
         name_iter = True
         val_iter = False
         sl = l.strip()
+        logger.debug('stripped line to process %s', sl)
         i = 0
         while i < len(sl):
+            # We iterate over the line to parse it's information char by char
+            # keeping track of name or value and adding the char accordingly
             if (name_iter and sl[i] == '=' and sl[i + 1] == '"'):
                 name_iter = False
                 val_iter = True
@@ -843,6 +847,7 @@ def scan_disks(min_size):
                 i = i + 1
             else:
                 raise Exception('Failed to parse lsblk output: %s' % sl)
+        logger.debug('dmap extracted from above line = %s', dmap)
         # md devices, such as mdadmin software raid and some hardware raid block
         # devices show up in lsblk's output multiple times with identical info.
         # Given we only need one copy of this info we remove duplicate device
@@ -866,17 +871,17 @@ def scan_disks(min_size):
             root_transport = dmap['TRAN']
             root_vendor = dmap['VENDOR']
             root_hctl = dmap['HCTL']
-        # md raid partitions are of type 'md' and raw md device is type 'raid1'
-        # normal partitions are of type 'part'
-        if (dmap['TYPE'] == 'part' or dmap['TYPE'] == 'md'):
+        if (dmap['TYPE'] == 'part'):
             for dname in dnames.keys():
                 if (re.match(dname, dmap['NAME']) is not None):
+                    # todo this needs clarifying
+                    # logger.debug('dnames[dname][11] = %s', dnames[dname][11])
                     dnames[dname][11] = True
-        if (((dmap['NAME'] != root and (dmap['TYPE'] != 'part' or dmap['TYPE'] != 'md')) or
-                ((dmap['TYPE'] == 'part' or dmap['TYPE'] == 'md') and dmap['FSTYPE'] == 'btrfs'))):
+        if (((dmap['NAME'] != root and dmap['TYPE'] != 'part') or
+                (dmap['TYPE'] == 'part' and dmap['FSTYPE'] == 'btrfs'))):
             dmap['parted'] = False  # part = False by default
             dmap['root'] = False
-            if ((dmap['TYPE'] == 'part' or dmap['TYPE'] == 'md') and dmap['FSTYPE'] == 'btrfs'):
+            if (dmap['TYPE'] == 'part' and dmap['FSTYPE'] == 'btrfs'):
                 # btrfs partition for root (rockstor_rockstor) pool
                 if (re.match(root, dmap['NAME']) is not None):
                     # now add the properties we stashed when looking at the root
