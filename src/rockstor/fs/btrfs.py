@@ -859,6 +859,11 @@ def scan_disks(min_size):
         # We are not interested in CD / DVD rom devices so skip to next device
         if (dmap['TYPE'] == 'rom'):
             continue
+        # We are not interested in swap partitions or devices so skip further
+        # processing and move to next device.
+        # N.B. this also facilitates a simpler mechanism of classification.
+        if (dmap['FSTYPE'] == 'swap'):
+            continue
         if (dmap['NAME'] == root):
             # Based on our root variable we are looking at the system drive.
             # Given lsblk doesn't return serial, model, transport, vendor, hctl
