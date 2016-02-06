@@ -381,12 +381,16 @@ def get_disk_serial(device_name, test):
     When ID_SERIAL is accompanied by ID_SERIAL_SHORT the short variant is
     closer to lsblk and physical label. When they are both present the
     ID_SERIAL appears to be a combination of the model and the ID_SERIAL_SHORT
+    ---------
+    Additional personality added for md devices ie md0p1 or md126, these devices
+    have no serial so we search for their MD_UUID and use that instead.
     :param device_name:
     :param test:
     :return: 12345678901234567890
     """
-    # logger.info('get_disk_serial called with device name %s' % device_name)
+    logger.info('get_disk_serial called with device name %s' % device_name)
     serial_num = ''
+    md_device = False
     line_fields = []
     if test is None:
         out, err, rc = run_command([UDEVADM, 'info', '--name=' + device_name],
@@ -397,6 +401,9 @@ def get_disk_serial(device_name, test):
         rc = 0
     if rc != 0:  # if return code is an error return empty string
         return ''
+    # set flag for md personality if need be
+    if re.match('md', device_name):
+        md_device = True
     for line in out:
         if line == '':
             continue
@@ -407,6 +414,17 @@ def get_disk_serial(device_name, test):
         # less than 3 fields are of no use so just in case:-
         if len(line_fields) < 3:
             continue
+        logger.debug('UDEVADM info line as list = %s', line_fields)
+        # if we have an md device then just look for it's MD_UUID as the serial
+        if md_device:
+            # md device so search for MD_UUID
+            if line_fields[1] == 'MD_UUID':
+                serial_num = line_fields[2]
+                # we have found our md serial equivalent so break to return
+                break
+            else:  # we are md_device but haven't found our MD_UUID line
+                # move to next line of output and skip serial cascade search
+                continue
         if line_fields[1] == 'ID_SCSI_SERIAL':
             # we have an instance of SCSI_SERIAL being more reliably unique
             # when present than SERIAL_SHORT or SERIAL so overwrite whatever
@@ -425,7 +443,7 @@ def get_disk_serial(device_name, test):
                     serial_num = line_fields[2]
     # should return one of the following in order of priority
     # SCSI_SERIAL, SERIAL_SHORT, SERIAL
-    # logger.info('get_disk_serial returning serial # %s' % serial_num)
+    logger.info('get_disk_serial returning serial # %s' % serial_num)
     return serial_num
 
 
