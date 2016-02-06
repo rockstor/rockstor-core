@@ -201,27 +201,25 @@ SnapshotsView  = RockstorLayoutView.extend({
 
     selectSnapshot: function(event) {
 	var _this = this;
-	id = $(event.currentTarget).attr('data-id');
+	id = parseInt($(event.currentTarget).attr('data-id'));
 	var checked = $(event.currentTarget).prop('checked');
 	this.selectSnapshotWithId(id, checked);
 	this.toggleDeleteButton();
     },
-    
+
     selectSnapshotWithId: function(id, checked) {
 	if (checked) {
-		console.log("if checked: ",this.selectedSnapshots);
 	    if (!RockstorUtil.listContains(this.selectedSnapshots, 'id', id)) {
 		RockstorUtil.addToList(
 		    this.selectedSnapshots, this.collection, 'id', id);
 	    }
-	    console.log("after checked: " ,this.selectedSnapshots);
 	} else {
 	    if (RockstorUtil.listContains(this.selectedSnapshots, 'id', id)) {
 		RockstorUtil.removeFromList(this.selectedSnapshots, 'id', id);
 	    }
 	}
     },
-    
+
     toggleDeleteButton: function(){
     	if(this.selectedSnapshots.length == 0){
     		$("#js-snapshot-delete-multiple").css("visibility", "hidden");
@@ -236,7 +234,7 @@ SnapshotsView  = RockstorLayoutView.extend({
 	var checked = $(event.currentTarget).prop('checked');
 	this.$('.js-snapshot-select').prop('checked', checked);
 	this.$('.js-snapshot-select').each(function() {
-	    _this.selectSnapshotWithId($(this).attr('data-id'), checked);
+	    _this.selectSnapshotWithId(parseInt($(this).attr('data-id')), checked);
 	});
 	this.toggleDeleteButton();
     },
@@ -349,10 +347,10 @@ SnapshotsView  = RockstorLayoutView.extend({
             html += '<td>';
             if (RockstorUtil.listContains(_this.selectedSnapshots, 'name', snapName)) {
                 html += '<input class="js-snapshot-select inline" type="checkbox" name="snapshot-select"' +
-                'data-name="' + snapName + '" data-id="' + snapId + '" checked="checked"></input>';
+                'data-name="' + snapName + '" data-id=' + snapId + ' checked="checked"></input>';
             } else {
                 html += '<input class="js-snapshot-select inline" type="checkbox" name="snapshot-select"' +
-                'data-name="' + snapName + '" data-id="' + snapId + '" ></input>';
+                'data-name="' + snapName + '" data-id=' + snapId + ' ></input>';
             }
             html += '</td>';
             html += '<td>' + cameraIcon + snapName + '&nbsp;&nbsp;&nbsp;&nbsp;';
@@ -405,7 +403,7 @@ SnapshotsView  = RockstorLayoutView.extend({
                    'data-name="' + snapName + '" data-size="' + snapExUsage + '"' +
                    'data-share-name="' + shareName + '" data-action="delete" title="Delete snapshot">' + trashIcon + '</a>';
       	        }
-      	    }); 
+      	    });
             html += '</td>'; */
             html += '</tr>';
           });
