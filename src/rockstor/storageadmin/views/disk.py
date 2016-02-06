@@ -154,9 +154,10 @@ class DiskMixin(object):
             # find all the not offline db entries
             if (not do.offline):
                 # We have an attached disk db entry
-                if re.match('vd', do.name):
-                    # Virtio disks (named vd*) have no smart capability.
-                    # avoids cluttering logs with exceptions on these devices.
+                if re.match('vd', do.name) or re.match('md', do.name):
+                    # Virtio disks (named vd*) and md devices (named md*) have
+                    # no smart capability so avoid cluttering logs with
+                    # exceptions on these types of devices.
                     do.smart_available = do.smart_enabled = False
                     continue
                 # try to establish smart availability and status and update db
