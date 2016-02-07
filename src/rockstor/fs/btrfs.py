@@ -28,7 +28,7 @@ import signal
 import shutil
 import collections
 from system.osi import (run_command, create_tmp_dir, is_share_mounted,
-                        is_mounted, get_virtio_disk_serial, get_disk_serial)
+                        is_mounted, get_disk_serial, get_md_members)
 from system.exceptions import (CommandException, NonBTRFSRootException)
 from pool_scrub import PoolScrub
 from django_ztask.decorators import task
@@ -769,12 +769,10 @@ def root_disk():
             if (fields[1] == '/' and
                     (fields[2] == 'ext4' or fields[2] == 'btrfs')):
                 disk = os.path.realpath(fields[0])
-                logger.debug('os.path.realpath in ROOT_DISK = %s', disk)
                 if (re.match('/dev/md', disk) is not None):
                     # We have an Multi Device naming scheme which is a little
                     # different ie 3rd partition = md126p3 on the md126 device,
                     # or md0p3 as third partition on md0 device.
-                    logger.debug('root_disk found an md device')
                     # As md devs often have 1 to 3 numerical chars we search
                     # for one or more numeric characters, this assumes our dev
                     # name has no prior numerical components ie starts /dev/md
@@ -784,8 +782,6 @@ def root_disk():
                     # N.B. the following will also work if root is not in a
                     # partition ie on md126 directly.
                     end = re.search('\d+', disk).end()
-                    logger.debug('disk string = %s', disk)
-                    logger.debug('end of md numbers match = index of %s', end)
                     return disk[5:end]
                 else:
                     # catch all that assumes we have eg /dev/sda3 and want "sda"
@@ -820,7 +816,6 @@ def scan_disks(min_size):
         name_iter = True
         val_iter = False
         sl = l.strip()
-        logger.debug('stripped line to process %s', sl)
         i = 0
         while i < len(sl):
             # We iterate over the line to parse it's information char by char
@@ -845,7 +840,6 @@ def scan_disks(min_size):
                 i = i + 1
             else:
                 raise Exception('Failed to parse lsblk output: %s' % sl)
-        logger.debug('dmap extracted from above line = %s', dmap)
         # md devices, such as mdadmin software raid and some hardware raid block
         # devices show up in lsblk's output multiple times with identical info.
         # Given we only need one copy of this info we remove duplicate device
@@ -900,6 +894,12 @@ def scan_disks(min_size):
                     dmap['TRAN'] = root_transport
                     dmap['VENDOR'] = root_vendor
                     dmap['HCTL'] = root_hctl
+                    # and if we are an md device then use get_md_members string
+                    # to populate our MODEL since it is otherwise unused.
+                    logger.debug('WE ARE SETTING ROOT DETIALS')
+                    if (re.match('md', dmap['NAME']) is not None):
+                        # cheap way to display our member drives
+                        dmap['MODEL'] = get_md_members(dmap['NAME'])
                 else:
                     # ignore btrfs partitions that are not for rootfs.
                     continue
