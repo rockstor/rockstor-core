@@ -775,19 +775,17 @@ def root_disk():
                     # different ie 3rd partition = md126p3 on the md126 device,
                     # or md0p3 as third partition on md0 device.
                     logger.debug('root_disk found an md device')
-                    # as md devs often have 1 to 3 numerical chars we search
-                    # for them after the 5th [index 4] char to skip /dev/??
-                    # We trim off the 2 character partition designator in our
-                    # disk string to avoid matching the partition number.
+                    # As md devs often have 1 to 3 numerical chars we search
+                    # for one or more numeric characters, this assumes our dev
+                    # name has no prior numerical components ie starts /dev/md
+                    # but then we are here due to that match.
                     # Find the indexes of the device name without the partition.
-                    # ie search for where the numbers after "md" end
-                    end = re.search('\d+', disk[:-2]).end()
-                    logger.debug('disk to -2 string = %s', disk[:-2])
+                    # Search for where the numbers after "md" end.
+                    # N.B. the following will also work if root is not in a
+                    # partition ie on md126 directly.
+                    end = re.search('\d+', disk).end()
+                    logger.debug('disk string = %s', disk)
                     logger.debug('end of md numbers match = index of %s', end)
-                    # N.B. the above assumes no more than 2 numeric chars for
-                    # the partition designator but allows also for a single char
-                    # ie d2 or d11, in the second case we leave a non numeric.
-                    # todo Possible out of range if / on md126 (no partition)
                     return disk[5:end]
                 else:
                     # catch all that assumes we have eg /dev/sda3 and want "sda"
