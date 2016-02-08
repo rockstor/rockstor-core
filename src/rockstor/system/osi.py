@@ -422,7 +422,7 @@ def get_md_members(device_name, test=None):
     return members_string
 
 
-def get_disk_serial(device_name, test):
+def get_disk_serial(device_name, test=None):
     """
     Returns the serial number of device_name using udevadm to match that
     returned by lsblk. N.B. udevadm has been observed to return the following:-
