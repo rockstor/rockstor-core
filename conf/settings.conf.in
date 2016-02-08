@@ -413,3 +413,7 @@ ROCKONS = {
 }
 
 ZTASKD_URL = 'ipc:///var/run/rockon-ztaskd'
+
+TASK_SCHEDULER = {
+	       'max_log': 100 #max number of task log entries to keep
+}
