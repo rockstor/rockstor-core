@@ -767,6 +767,8 @@ def root_disk():
     with open('/proc/mounts') as fo:
         for line in fo.readlines():
             fields = line.split()
+            # todo does this not allow ext4 root, ie silencing no btrfs root
+            # todo exception raised here otherwise?
             if (fields[1] == '/' and
                     (fields[2] == 'ext4' or fields[2] == 'btrfs')):
                 disk = os.path.realpath(fields[0])
@@ -817,7 +819,7 @@ def scan_disks(min_size):
         # setup our line / dev name dependant variables
         # easy read categorization flags, all False until found otherwise.
         is_base_dev = False  # a base device = md126 or sda, NOT md0p2 or sda3
-        is_root_disk = False  # the base dev or partition that / is mounted on.
+        is_root_disk = False  # the base dev that / is mounted on ie system disk
         is_partition = is_btrfs = False
         dmap = {}  # dictionary to hold line info from lsblk output eg NAME: sda
         # line parser variables
@@ -908,22 +910,29 @@ def scan_disks(min_size):
                     # would have been disk or RAID1 (for base md device).
                     logger.debug('prior entry for lsblk type via dnames[dname][11] = %s', dnames[dname][11])
                     # Change the 12th entry (0 indexed) of this device to True
-                    # The 12 entry is the partition flag so we label
-                    # our existing dnames entry as partitioned.
+                    # The 12 entry is the parted flag so we label
+                    # our existing dnames entry as parted ie partitioned.
                     dnames[dname][11] = True
                     logger.debug('Changed to = %s', dnames[dname][11])
                     logger.debug('quick look at structure of dnames[dname] = %s', dnames[dname])
-        if (((dmap['NAME'] != base_root_disk and dmap['TYPE'] != 'part') or
-                (is_partition and is_btrfs))):
-            dmap['parted'] = False  # part = False by default
-            dmap['root'] = False
+        if ((not is_root_disk and not is_partition) or
+                (is_partition and is_btrfs)):
+            # We have a non system disk that is not a partition
+            # or
+            # We have a partition that is btrfs formatted
+            # In the case of a btrfs partition we override the parted flag.
+            # Or we may just be a non system disk without partitions.
+            dmap['parted'] = False
+            dmap['root'] = False  # until we establish otherwise as we might be.
             if is_partition and is_btrfs:
-                # btrfs partition for root (rockstor_rockstor) pool
+                # a btrfs partition
                 if (re.match(base_root_disk, dmap['NAME']) is not None):
-                    # now add the properties we stashed when looking at the root
-                    # drive rather than the root partition we see here.
+                    # We are assuming that a partition with a btrfs fs on is our
+                    # root if it's name begins with our base system disk name.
+                    # Now add the properties we stashed when looking at the base
+                    # root disk rather than the root partition we see here.
                     dmap['SERIAL'] = root_serial
-                    dmap['root'] = True
+                    dmap['root'] = True  # now we have base_root_disk name match
                     dmap['MODEL'] = root_model
                     dmap['TRAN'] = root_transport
                     dmap['VENDOR'] = root_vendor
@@ -935,7 +944,7 @@ def scan_disks(min_size):
                         # cheap way to display our member drives
                         dmap['MODEL'] = get_md_members(dmap['NAME'])
                 else:
-                    # ignore btrfs partitions that are not for rootfs.
+                    # ignore btrfs partitions that are not on our system disk.
                     continue
             # convert size into KB
             size_str = dmap['SIZE']
@@ -955,7 +964,7 @@ def scan_disks(min_size):
                 continue
             # No more continues so the device we have is to be passed to our db
             # entry system views/disk.py ie _update_disk_state()
-            # Do final tidy of data dmap and package for entry in dnames dict
+            # Do final tidy of data in dmap and ready for entry in dnames dict.
             # db needs unique serial so provide one where there is none found.
             # First try harder with udev if lsblk failed on serial retrieval.
             if (dmap['SERIAL'] == '' or always_use_udev_serial):
@@ -983,7 +992,7 @@ def scan_disks(min_size):
                                     dmap['FSTYPE'], dmap['LABEL'],
                                     dmap['UUID'], dmap['parted'],
                                     dmap['root'], ]
-    # Transfer our collected disk / dev entries of interest to a list
+    # Transfer our collected disk / dev entries of interest to the disks list.
     for d in dnames.keys():
         disks.append(Disk(*dnames[d]))
         logger.debug('disks item = %s ', Disk(*dnames[d]))
