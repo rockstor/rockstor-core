@@ -456,7 +456,9 @@ var RockstorUtil = function() {
 	    var i = _.indexOf(_.map(list, function(obj) {
 		return obj.get(name);
 	    }), value);
-	    list.splice(i,1);
+	    if (i != -1) {
+		list.splice(i,1);
+	    }
 	}
     };
     return util;
