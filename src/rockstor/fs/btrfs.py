@@ -797,6 +797,7 @@ def root_disk():
 
 def scan_disks(min_size):
     base_root_disk = root_disk()
+    logger.debug('root_disk returned the value of %s ', base_root_disk)
     cmd = ['/usr/bin/lsblk', '-P', '-o',
            'NAME,MODEL,SERIAL,SIZE,TRAN,VENDOR,HCTL,TYPE,FSTYPE,LABEL,UUID']
     o, e, rc = run_command(cmd)
@@ -865,14 +866,14 @@ def scan_disks(min_size):
         # N.B. this also facilitates a simpler mechanism of classification.
         if (dmap['FSTYPE'] == 'swap'):
             continue
-        # ----- Now we are done with easy exclusiong we begin classification.
+        # ----- Now we are done with easy exclusions we begin classification.
         # ------------ Start more complex classification -------------
-        if (dmap['NAME'] == base_root_disk):
-            # Based on our root variable we are looking at the system drive.
+        if (dmap['NAME'] == base_root_disk):  # as returned by root_disk()
+            # We are looking at the system drive that hosts, either
+            # directly or as a partition, the / mount point.
             # Given lsblk doesn't return serial, model, transport, vendor, hctl
             # when displaying partitions we grab and stash them while we are
-            # looking at the root drive directly, rather than the / partition on
-            # this drive.
+            # looking at the root drive directly, rather than the / partition.
             # N.B. assumption is lsblk first displays devices then partitions,
             # this is the observed behaviour so far.
             root_serial = dmap['SERIAL']
@@ -880,8 +881,7 @@ def scan_disks(min_size):
             root_transport = dmap['TRAN']
             root_vendor = dmap['VENDOR']
             root_hctl = dmap['HCTL']
-            # While we have the root base_dev identified then set
-            # readability flag:
+            # Set readability flag as base_dev identified.
             is_root_disk = True  # root as returned by root_disk()
         # Normal partitions are of type 'part', md partitions are of type 'md'
         # normal disks are of type 'disk' md devices are of type eg 'raid1'.
@@ -892,23 +892,32 @@ def scan_disks(min_size):
         # - is this a partition
         if (dmap['TYPE'] == 'part'):
             is_partition = True
-        if (dmap['NAME'] == base_root_disk):  # root as returned by root_disk()
-            is_root_disk = True
         # - is filesystem of type btrfs
         if (dmap['FSTYPE'] == 'btrfs'):
             is_btrfs = True
         # End readability variables assignment
-        if (dmap['TYPE'] == 'part'):
+        if is_partition:
+            # search our working dictionary of already scanned devices by name
             for dname in dnames.keys():
                 if (re.match(dname, dmap['NAME']) is not None):
-                    # todo this needs clarifying
-                    # logger.debug('dnames[dname][11] = %s', dnames[dname][11])
+                    # Our device name has a base device entry of interest saved:
+                    # ie we have scanned and saved sdb but looking at sdb3 now.
+                    # Given we have found a partition on an existing base dev
+                    # we should update that base dev's entry in dnames to
+                    # parted "True" as when recorded lsblk type on base device
+                    # would have been disk or RAID1 (for base md device).
+                    logger.debug('prior entry for lsblk type via dnames[dname][11] = %s', dnames[dname][11])
+                    # Change the 12th entry (0 indexed) of this device to True
+                    # The 12 entry is the partition flag so we label
+                    # our existing dnames entry as partitioned.
                     dnames[dname][11] = True
+                    logger.debug('Changed to = %s', dnames[dname][11])
+                    logger.debug('quick look at structure of dnames[dname] = %s', dnames[dname])
         if (((dmap['NAME'] != base_root_disk and dmap['TYPE'] != 'part') or
-                (dmap['TYPE'] == 'part' and dmap['FSTYPE'] == 'btrfs'))):
+                (is_partition and is_btrfs))):
             dmap['parted'] = False  # part = False by default
             dmap['root'] = False
-            if (dmap['TYPE'] == 'part' and dmap['FSTYPE'] == 'btrfs'):
+            if is_partition and is_btrfs:
                 # btrfs partition for root (rockstor_rockstor) pool
                 if (re.match(base_root_disk, dmap['NAME']) is not None):
                     # now add the properties we stashed when looking at the root
@@ -944,26 +953,29 @@ def scan_disks(min_size):
                 continue
             if (dmap['SIZE'] < min_size):
                 continue
-            # No more continues so the device we have is to be passed to our
-            # db for consideration.
-            # Do final tidy of data and package gained as entry in dnames dict
+            # No more continues so the device we have is to be passed to our db
+            # entry system views/disk.py ie _update_disk_state()
+            # Do final tidy of data dmap and package for entry in dnames dict
+            # db needs unique serial so provide one where there is none found.
+            # First try harder with udev if lsblk failed on serial retrieval.
             if (dmap['SERIAL'] == '' or always_use_udev_serial):
                 # lsblk fails to retrieve SERIAL from VirtIO drives and some
-                # sdcard devices so try specialized function.
-                # dmap['SERIAL'] = get_virtio_disk_serial(dmap['NAME'])
-                dmap['SERIAL'] = get_disk_serial(dmap['NAME'], None)
+                # sdcard devices and md devices so try specialized function.
+                dmap['SERIAL'] = get_disk_serial(dmap['NAME'])
             if (dmap['SERIAL'] == '' or (dmap['SERIAL'] in serials_seen)):
                 # No serial number still or its a repeat.
-                # Overwrite drive serial entry in db with 'fake-serial-' + uuid4
-                # see disk/disks_table.jst for a use of this flag mechanism.
+                # Overwrite drive serial entry in dmap with fake-serial- + uuid4
+                # See disk/disks_table.jst for a use of this flag mechanism.
                 # Previously we did dmap['SERIAL'] = dmap['NAME'] which is less
-                # robust as it can itself produce duplicate serial numbers in db
+                # robust as it can itself produce duplicate serial numbers.
                 dmap['SERIAL'] = 'fake-serial-' + str(uuid.uuid4())
                 # 12 chars (fake-serial-) + 36 chars (uuid4) = 48 chars
             serials_seen.append(dmap['SERIAL'])
-            for k in dmap.keys():
-                if (dmap[k] == ''):
-                    dmap[k] = None
+            # replace all dmap values of '' with None.
+            for key in dmap.keys():
+                if (dmap[key] == ''):
+                    dmap[key] = None
+            # transfer our device info as now parsed in dmap to the dnames dict
             dnames[dmap['NAME']] = [dmap['NAME'], dmap['MODEL'],
                                     dmap['SERIAL'], dmap['SIZE'],
                                     dmap['TRAN'], dmap['VENDOR'],
@@ -971,10 +983,10 @@ def scan_disks(min_size):
                                     dmap['FSTYPE'], dmap['LABEL'],
                                     dmap['UUID'], dmap['parted'],
                                     dmap['root'], ]
+    # Transfer our collected disk / dev entries of interest to a list
     for d in dnames.keys():
         disks.append(Disk(*dnames[d]))
         logger.debug('disks item = %s ', Disk(*dnames[d]))
-    logger.debug('root_disk returned the value of %s ', base_root_disk)
     return disks
 
 
