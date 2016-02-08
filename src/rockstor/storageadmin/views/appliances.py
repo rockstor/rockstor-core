@@ -127,16 +127,10 @@ class ApplianceDetailView(rfc.GenericView):
     serializer_class = ApplianceSerializer
 
     def get(self, *args, **kwargs):
-        if 'ip' in self.kwargs or 'id' in self.kwargs:
-            try:
-                if 'ip' in self.kwargs:
-                    data = Appliance.objects.get(ip=self.kwargs['ip'])
-                else:
-                    data = Appliance.objects.get(id=self.kwargs['id'])
-                serialized_data = ApplianceSerializer(data)
-                return Response(serialized_data.data)
-            except:
-                return Response()
+        with self._handle_exception(self.request):
+            data = Appliance.objects.get(id=self.kwargs.get('appid'))
+            serialized_data = ApplianceSerializer(data)
+            return Response(serialized_data.data)
 
     @transaction.atomic
     def put(self, request, appid):
