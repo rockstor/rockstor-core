@@ -95,12 +95,6 @@ TasksView = RockstorLayoutView.extend({
 				} 
 				html += '</td>';
 				html += '<td>' + task.get('state') + '</td>';
-				html += '<td>';
-				if (task.get('end')) { 
-					html += moment(task.get('end')).from(moment(task.get('start')));
-				} else { 
-				} 
-				html += '</td>';
 				html += '</tr>';
 			}); 
 			return new Handlebars.SafeString(html);
