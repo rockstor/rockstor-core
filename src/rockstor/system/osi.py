@@ -367,6 +367,7 @@ def is_mounted(mnt_pt):
                 return True
     return False
 
+
 def get_md_members(device_name, test=None):
     """
     Returns the md members from a given device, if the given device is not an
@@ -384,6 +385,7 @@ def get_md_members(device_name, test=None):
     :param test: if test is not None then it's contents is used in lieu of
     udevadm output.
     :return: String of all members listed in udevadm info --name=device_name
+    example: "[2]-/dev/sda[0]-/dev/sdb[1]-raid1" = 2 devices with level info
     """
     line_fields = []
     logger.debug('get_md_members called with device name %s' % device_name)
@@ -412,12 +414,16 @@ def get_md_members(device_name, test=None):
         if len(line_fields) < 3:
             continue
         logger.debug('MD UDEVADM info line as list = %s', line_fields)
-        logger.debug('value of re.match test = %s', re.match('MD_DEVICE', line_fields[1]))
-        if re.match('MD_DEVICE', line_fields[1]) is not None:
+        logger.debug('value of re.match test = %s',
+                     re.match('MD_DEVICE', line_fields[1]))
+        if re.match('MD_DEVICE', line_fields[1]) is not None or \
+                re.match('MD_LEVEL', line_fields[1]) is not None:
             logger.debug('found a match for MD_DEVICE, adding value')
             # add this entries value (3rd column) to our string
-            members_string += line_fields[2]
-            members_string += '-'
+            if len(line_fields[2]) == 1:
+                members_string += '[' + line_fields[2] + ']-'
+            else:
+                members_string += line_fields[2]
     logger.debug('get_md_members returning member string = %s' % members_string)
     return members_string
 
