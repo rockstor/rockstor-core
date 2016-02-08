@@ -20,17 +20,11 @@ from smart_manager.models import (Task, TaskDefinition)
 from smart_manager.serializers import TaskSerializer
 from django.conf import settings
 from django.db import transaction
-import json
-from advanced_sprobe import AdvancedSProbeView
 from rest_framework.response import Response
-from django.utils.timezone import utc
-from datetime import datetime
-from storageadmin.util import handle_exception
-import logging
-logger = logging.getLogger(__name__)
+import rest_framework_custom as rfc
 
 
-class TaskLogView(AdvancedSProbeView):
+class TaskLogView(rfc.GenericView):
     serializer_class = TaskSerializer
     valid_tasks = ('snapshot', 'scrub',)
 
@@ -50,3 +44,14 @@ class TaskLogView(AdvancedSProbeView):
         if (self.paginate_by is None):
             return None
         return settings.PAGINATION['page_size']
+
+    @transaction.atomic
+    def post(self, request, command):
+        with self._handle_exception(request):
+            if (command == 'prune'):
+                max_log = settings.TASK_SCHEDULER.get('max_log')
+                for td in TaskDefinition.objects.all():
+                    if (Task.objects.filter(task_def=td).count() > max_log):
+                        start_cutoff = Task.objects.filter(task_def=td).order_by('-start')[max_log].start
+                        Task.objects.filter(task_def=td, start__lte=start_cutoff).delete()
+            return Response()

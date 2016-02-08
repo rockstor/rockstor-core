@@ -281,6 +281,7 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
         gevent.spawn(self.refresh_system)
         gevent.spawn(self.send_uptime)
         gevent.spawn(self.send_kernel_info)
+        gevent.spawn(self.prune_logs)
 
     # Run on every disconnect
     def recv_disconnect(self):
@@ -355,6 +356,11 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
             'data': uinfo,
             'key': 'sysinfo:software-update'
         })
+
+    def prune_logs(self):
+        while self.start:
+            self.aw.api_call('sm/tasks/log/prune', data=None, calltype='post', save_error=False)
+            gevent.sleep(3600)
 
 class Application(object):
     def __init__(self):

@@ -21,12 +21,13 @@ from smart_manager.views import (TaskSchedulerListView,
                                  TaskLogView, TaskTypeView,
                                  TaskSchedulerDetailView)
 
-urlpatterns = patterns('',
+urlpatterns = patterns(
+    '',
     url(r'^$', TaskSchedulerListView.as_view(),),
-    url(r'^(?P<tdid>[0-9]+)$', TaskSchedulerDetailView.as_view(),),
-
+    url(r'^(?P<tdid>\d+)$', TaskSchedulerDetailView.as_view(),),
     url(r'^log$', TaskLogView.as_view(),),
-    url(r'^log/taskdef/(?P<tdid>[0-9]+)', TaskLogView.as_view(),),
-    url(r'^log/(?P<tid>[0-9]+)', TaskLogView.as_view(),),
+    url(r'^log/(?P<command>prune)$', TaskLogView.as_view(),),
+    url(r'^log/taskdef/(?P<tdid>\d+)', TaskLogView.as_view(),),
+    url(r'^log/(?P<tid>\d+)', TaskLogView.as_view(),),
     url(r'^types$', TaskTypeView.as_view(),),
 )

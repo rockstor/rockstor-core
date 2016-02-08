@@ -24,7 +24,7 @@ class Task(models.Model):
 
     task_def = models.ForeignKey(TaskDefinition)
     state = models.CharField(max_length=64)
-    start = models.DateTimeField(auto_now=True, db_index=True)
+    start = models.DateTimeField(null=True, db_index=True)
     end = models.DateTimeField(null=True, db_index=True)
 
     class Meta:
