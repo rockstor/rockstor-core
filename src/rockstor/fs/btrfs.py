@@ -891,8 +891,8 @@ def scan_disks(min_size):
         # Note for future re-write; when using udevadm DEVTYPE, partition and
         # disk works for both raid and non raid partitions and devices.
         # Begin readability variables assignment
-        # - is this a partition
-        if (dmap['TYPE'] == 'part'):
+        # - is this a partition regular or md type.
+        if (dmap['TYPE'] == 'part' or dmap['TYPE'] == 'md'):
             is_partition = True
         # - is filesystem of type btrfs
         if (dmap['FSTYPE'] == 'btrfs'):
