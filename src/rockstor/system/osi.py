@@ -421,9 +421,16 @@ def get_md_members(device_name, test=None):
             logger.debug('found a match for MD_DEVICE, adding value')
             # add this entries value (3rd column) to our string
             if len(line_fields[2]) == 1:
-                members_string += '[' + line_fields[2] + ']-'
+                # Surround single digits with square brackets ie the number of
+                # members and the member index (assumes max 9 md members)
+                members_string += '[' + line_fields[2] + '] '
             else:
-                members_string += line_fields[2]
+                if re.match('/dev', line_fields[2]) is not None:
+                    # We have a dev name so put it's serial in our string.
+                    members_string += get_disk_serial(line_fields[2])
+                else:
+                    # > 1 char value that doesn't start with /dev, so raid level
+                    members_string += line_fields[2]
     logger.debug('get_md_members returning member string = %s' % members_string)
     return members_string
 
