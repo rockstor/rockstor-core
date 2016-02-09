@@ -189,6 +189,7 @@ SnapshotsTableModule  = RockstorModuleView.extend({
 		name = $(event.currentTarget).attr('data-name');
 		var checked = $(event.currentTarget).prop('checked');
 		this.selectSnapshotWithName(name, checked);
+		this.toggleDeleteButton();
 	},
 
 	selectSnapshotWithName: function(name, checked) {
@@ -203,6 +204,14 @@ SnapshotsTableModule  = RockstorModuleView.extend({
 			}
 		}
 	},
+	
+	toggleDeleteButton: function(){
+    	if(this.selectedSnapshots.length == 0){
+    		$("#js-snapshot-delete-multiple").css("visibility", "hidden");
+    	}else{
+    		$("#js-snapshot-delete-multiple").css("visibility", "visible");
+    	}
+    },
 
 	selectAllSnapshots: function(event) {
 		var _this = this;
@@ -211,6 +220,7 @@ SnapshotsTableModule  = RockstorModuleView.extend({
 		this.$('.js-snapshot-select').each(function() {
 			_this.selectSnapshotWithName($(this).attr('data-name'), checked);
 		});
+		this.toggleDeleteButton();
 	},
 
 	deleteMultipleSnapshots: function(event) {
@@ -305,9 +315,9 @@ SnapshotsTableModule  = RockstorModuleView.extend({
 				html += '<tr>';
 				html += '<td>';
 				if (RockstorUtil.listContains(_this.selectedSnapshots, 'name', snapshot.get('name'))) { 
-					html += '<input class="js-snapshot-select inline" type="checkbox" name="snapshot-select" data-name="' + snapshot.get('name') + '" data-id="' + snapshot.get('id') + '" checked="checked"></input>';
+					html += '<input class="js-snapshot-select inline" type="checkbox" name="snapshot-select" data-name="' + snapshot.get('name') + '" data-id=' + snapshot.get('id') + ' checked="checked"></input>';
 				} else { 
-					html += '<input class="js-snapshot-select inline" type="checkbox" name="snapshot-select" data-name="' + snapshot.get('name') + '" data-id="' + snapshot.get('id') + '" ></input>';
+					html += '<input class="js-snapshot-select inline" type="checkbox" name="snapshot-select" data-name="' + snapshot.get('name') + '" data-id=' + snapshot.get('id') + ' ></input>';
 				} 
 				html += '</td>';
 				html += '<td><i class="glyphicon glyphicon-camera"></i> ' + snapshot.get('name') + '</td>';

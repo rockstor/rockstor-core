@@ -19,6 +19,12 @@
  */
 </script>
 <div class="messages"></div>
+<div class="pull-left">
+  {{#if collectionNotEmpty}}
+    <a class="btn btn-primary" href="#" id="js-snapshot-add"><i class="glyphicon glyphicon-edit "></i> Create</a>
+  <a class="btn btn-danger" href="#" id="js-snapshot-delete-multiple" style="visibility:hidden;"><i class="glyphicon glyphicon-trash "></i> Delete selected</a>
+  {{/if}}
+</div>
 {{#if collectionNotEmpty}}
   <table id="snapshots-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of snapshots">
     <thead>
@@ -42,13 +48,5 @@
   </table>
 <div>{{pagination}}</div>
 {{else}}
-  <div class="alert alert-warning"><h4>There are no snapshots to display</h4></div>
+  <div class="share-snapWarning"><p>There are no snapshots. <a href="#" id="js-snapshot-add">click here </a>to create</p></div>
 {{/if}}
-<div class="row">
-  <div class="pull-right">
-  {{#if collectionNotEmpty}}
-      <a class="btn btn-danger" href="#" id="js-snapshot-delete-multiple"><i class="glyphicon glyphicon-trash "></i> Delete</a>
-    {{/if}}
-    <a class="btn btn-primary" href="#" id="js-snapshot-add"><i class="glyphicon glyphicon-edit "></i> Create snapshot</a>
-  </div>
-</div>
