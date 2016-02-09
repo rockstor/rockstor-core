@@ -66,7 +66,7 @@ class DiskMixin(object):
         # 1) scrub all device names with unique but nonsense uuid4
         # 1) mark all offline disks as such via db flag
         # 2) mark all offline disks smart available and enabled flags as False
-        logger.info('update_disk_state() Called')
+        # logger.info('update_disk_state() Called')
         for do in Disk.objects.all():
             # Replace all device names with a unique placeholder on each scan
             # N.B. do not optimize by re-using uuid index as this could lead
