@@ -154,8 +154,7 @@ class DiskMixin(object):
             # find all the not offline db entries
             if (not do.offline):
                 # We have an attached disk db entry
-                if re.match('vd', do.name) or re.match('md', do.name) or\
-                        re.match('mmcblk', do.name):
+                if (re.match('vd|md|mmcblk', do.name) is not None):
                     # Virtio disks (named vd*), md devices (named md*), and
                     # an sdcard reader that provides devs named mmcblk* have
                     # no smart capability so avoid cluttering logs with

@@ -413,8 +413,7 @@ def get_md_members(device_name, test=None):
         if len(line_fields) < 3:
             continue
         # catch the lines that begin with MD_DEVICE or MD_LEVEL
-        if re.match('MD_DEVICE', line_fields[1]) is not None or \
-                re.match('MD_LEVEL', line_fields[1]) is not None:
+        if (re.match('MD_DEVICE|MD_LEVEL', line_fields[1]) is not None):
             # add this entries value (3rd column) to our string
             if len(line_fields[2]) == 1:
                 # Surround single digits with square brackets ie the number of
