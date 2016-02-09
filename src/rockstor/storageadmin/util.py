@@ -17,11 +17,18 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 from storageadmin.exceptions import RockStorAPIException
 from system.osi import run_command
+from system.pkg_mgmt import rpm_build_info
 from django.conf import settings
 
 import logging
 logger = logging.getLogger(__name__)
 
+#module level variable so it's computed once per process.
+version = 'unknown'
+try:
+    version, date = rpm_build_info('rockstor')
+except Exception, e:
+    logger.exception(e)
 
 def handle_exception(e, request, e_msg=None):
     """
@@ -37,7 +44,8 @@ def handle_exception(e, request, e_msg=None):
     logger.error('request path: %s method: %s data: %s' %
                  (request.path, request.method, request.data))
     logger.exception('exception: %s' % e.__str__())
-    run_command(['/usr/bin/tar', '-c', '-z', '-f',
-                 settings.ROOT_DIR + 'src/rockstor/logs/error.tgz',
-                 settings.ROOT_DIR + 'var/log'], throw=False)
+    logger.debug('Current Rockstor version: %s' % version)
+    fpath = '%ssrc/rockstor/logs/error.tgz' % settings.ROOT_DIR
+    logdir = '%svar/log' % settings.ROOT_DIR
+    run_command(['/usr/bin/tar', '-c', '-z', '-f', fpath, logdir], throw=False)
     raise RockStorAPIException(detail=e_msg)

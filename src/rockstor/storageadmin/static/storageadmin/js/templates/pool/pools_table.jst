@@ -14,17 +14,17 @@
   </thead>
   <tbody>
     {{print_pools_tbody}}
-	</tbody>
+  </tbody>
 </table>
 <div>
-{{print_CreatePool_Button}}
-</div>
-<div>
-{{pagination}}
+  {{pagination}}
 </div>
 {{ else }}
-      <h4>No Pools have been created</h4>
+<h4>No Pools have been created</h4>
 {{/if}}
+<div>
+  {{print_CreatePool_Button}}
+</div>
 
 <div id="delete-pool-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
   <div class="modal-dialog">
