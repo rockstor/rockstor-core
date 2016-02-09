@@ -278,7 +278,8 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
         })
         self.start = True
         gevent.spawn(self.update_storage_state)
-        gevent.spawn(self.refresh_system)
+        gevent.spawn(self.update_check)
+        gevent.spawn(self.update_rockons)
         gevent.spawn(self.send_uptime)
         gevent.spawn(self.send_kernel_info)
         gevent.spawn(self.prune_logs)
@@ -310,15 +311,6 @@ class SysinfoNamespace(BaseNamespace, BroadcastMixin):
                     'key': 'sysinfo:kernel_error'
                 })
                 self.error('unsupported_kernel', str(e))
-
-    def refresh_system(self):
-        cur_ts = datetime.utcnow()
-        if ((cur_ts - self.environ['scan_ts']).total_seconds() < self.environ['scan_interval']):
-            logger.debug('Skipping system state refresh as it was done less '
-                         'than %d seconds ago.' % self.environ['scan_interval'])
-            return
-        self.update_rockons()
-        self.update_check()
 
     def update_rockons(self):
         try:
