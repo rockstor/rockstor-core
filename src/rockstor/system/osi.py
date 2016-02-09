@@ -368,7 +368,69 @@ def is_mounted(mnt_pt):
     return False
 
 
-def get_disk_serial(device_name, test):
+def get_md_members(device_name, test=None):
+    """
+    Returns the md members from a given device, if the given device is not an
+    md device or the udevadm info command returns a non 0 (error) then the an
+    empty string is returned.
+    Example lines to parse from udevadmin:-
+    E: MD_DEVICE_sda_DEV=/dev/sda
+    E: MD_DEVICE_sda_ROLE=0
+    E: MD_DEVICE_sdb_DEV=/dev/sdb
+    E: MD_DEVICE_sdb_ROLE=1
+    Based on the get_disk_serial function.
+    N.B. may be deprecated on scan_disks move to udevadmin, or integrated.
+    Could consider parsing "mdadm --detail /dev/md1" instead
+    :param device_name: eg md126 or md0p2
+    :param test: if test is not None then it's contents is used in lieu of
+    udevadm output.
+    :return: String of all members listed in udevadm info --name=device_name
+    example: "[2]-/dev/sda[0]-/dev/sdb[1]-raid1" = 2 devices with level info
+    """
+    line_fields = []
+    # if non md device then return empty string
+    if re.match('md', device_name) is None:
+        return ''
+    members_string = ''
+    if test is None:
+        out, err, rc = run_command([UDEVADM, 'info', '--name=' + device_name],
+                                   throw=False)
+    else:
+        # test mode so process test instead of udevadmin output
+        out = test
+        rc = 0
+    if rc != 0:  # if return code is an error return empty string
+        return ''
+    # search output of udevadmin to find all current md members.
+    for line in out:
+        if line == '':
+            continue
+        # nonlocal line_fields
+        line_fields = line.strip().replace('=', ' ').split()
+        # fast replace of '=' with space so split() can divide all fields
+        # example original line "E: ID_SERIAL_SHORT=S1D5NSAF111111K"
+        # less than 3 fields are of no use so just in case:-
+        if len(line_fields) < 3:
+            continue
+        # catch the lines that begin with MD_DEVICE or MD_LEVEL
+        if re.match('MD_DEVICE', line_fields[1]) is not None or \
+                re.match('MD_LEVEL', line_fields[1]) is not None:
+            # add this entries value (3rd column) to our string
+            if len(line_fields[2]) == 1:
+                # Surround single digits with square brackets ie the number of
+                # members and the member index (assumes max 9 md members)
+                members_string += '[' + line_fields[2] + '] '
+            else:
+                if re.match('/dev', line_fields[2]) is not None:
+                    # We have a dev name so put it's serial in our string.
+                    members_string += get_disk_serial(line_fields[2])
+                else:
+                    # > 1 char value that doesn't start with /dev, so raid level
+                    members_string += line_fields[2]
+    return members_string
+
+
+def get_disk_serial(device_name, test=None):
     """
     Returns the serial number of device_name using udevadm to match that
     returned by lsblk. N.B. udevadm has been observed to return the following:-
@@ -381,12 +443,15 @@ def get_disk_serial(device_name, test):
     When ID_SERIAL is accompanied by ID_SERIAL_SHORT the short variant is
     closer to lsblk and physical label. When they are both present the
     ID_SERIAL appears to be a combination of the model and the ID_SERIAL_SHORT
+    ---------
+    Additional personality added for md devices ie md0p1 or md126, these devices
+    have no serial so we search for their MD_UUID and use that instead.
     :param device_name:
     :param test:
     :return: 12345678901234567890
     """
-    # logger.info('get_disk_serial called with device name %s' % device_name)
     serial_num = ''
+    md_device = False
     line_fields = []
     if test is None:
         out, err, rc = run_command([UDEVADM, 'info', '--name=' + device_name],
@@ -397,6 +462,9 @@ def get_disk_serial(device_name, test):
         rc = 0
     if rc != 0:  # if return code is an error return empty string
         return ''
+    # set flag for md personality if need be
+    if re.match('md', device_name) is not None:
+        md_device = True
     for line in out:
         if line == '':
             continue
@@ -407,6 +475,16 @@ def get_disk_serial(device_name, test):
         # less than 3 fields are of no use so just in case:-
         if len(line_fields) < 3:
             continue
+        # if we have an md device then just look for it's MD_UUID as the serial
+        if md_device:
+            # md device so search for MD_UUID
+            if line_fields[1] == 'MD_UUID':
+                serial_num = line_fields[2]
+                # we have found our md serial equivalent so break to return
+                break
+            else:  # we are md_device but haven't found our MD_UUID line
+                # move to next line of output and skip serial cascade search
+                continue
         if line_fields[1] == 'ID_SCSI_SERIAL':
             # we have an instance of SCSI_SERIAL being more reliably unique
             # when present than SERIAL_SHORT or SERIAL so overwrite whatever
@@ -425,7 +503,6 @@ def get_disk_serial(device_name, test):
                     serial_num = line_fields[2]
     # should return one of the following in order of priority
     # SCSI_SERIAL, SERIAL_SHORT, SERIAL
-    # logger.info('get_disk_serial returning serial # %s' % serial_num)
     return serial_num
 
 
