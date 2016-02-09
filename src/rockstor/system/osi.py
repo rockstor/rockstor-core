@@ -388,7 +388,6 @@ def get_md_members(device_name, test=None):
     example: "[2]-/dev/sda[0]-/dev/sdb[1]-raid1" = 2 devices with level info
     """
     line_fields = []
-    logger.debug('get_md_members called with device name %s' % device_name)
     # if non md device then return empty string
     if re.match('md', device_name) is None:
         return ''
@@ -413,12 +412,9 @@ def get_md_members(device_name, test=None):
         # less than 3 fields are of no use so just in case:-
         if len(line_fields) < 3:
             continue
-        logger.debug('MD UDEVADM info line as list = %s', line_fields)
-        logger.debug('value of re.match test = %s',
-                     re.match('MD_DEVICE', line_fields[1]))
+        # catch the lines that begin with MD_DEVICE or MD_LEVEL
         if re.match('MD_DEVICE', line_fields[1]) is not None or \
                 re.match('MD_LEVEL', line_fields[1]) is not None:
-            logger.debug('found a match for MD_DEVICE, adding value')
             # add this entries value (3rd column) to our string
             if len(line_fields[2]) == 1:
                 # Surround single digits with square brackets ie the number of
@@ -431,7 +427,6 @@ def get_md_members(device_name, test=None):
                 else:
                     # > 1 char value that doesn't start with /dev, so raid level
                     members_string += line_fields[2]
-    logger.debug('get_md_members returning member string = %s' % members_string)
     return members_string
 
 

@@ -767,8 +767,6 @@ def root_disk():
     with open('/proc/mounts') as fo:
         for line in fo.readlines():
             fields = line.split()
-            # todo does this not allow ext4 root, ie silencing no btrfs root
-            # todo exception raised here otherwise?
             if (fields[1] == '/' and fields[2] == 'btrfs'):
                 disk = os.path.realpath(fields[0])
                 if (re.match('/dev/md', disk) is not None):
@@ -798,7 +796,6 @@ def root_disk():
 
 def scan_disks(min_size):
     base_root_disk = root_disk()
-    logger.debug('root_disk returned the value of %s ', base_root_disk)
     cmd = ['/usr/bin/lsblk', '-P', '-o',
            'NAME,MODEL,SERIAL,SIZE,TRAN,VENDOR,HCTL,TYPE,FSTYPE,LABEL,UUID']
     o, e, rc = run_command(cmd)
@@ -907,13 +904,10 @@ def scan_disks(min_size):
                     # we should update that base dev's entry in dnames to
                     # parted "True" as when recorded lsblk type on base device
                     # would have been disk or RAID1 (for base md device).
-                    logger.debug('prior entry for lsblk type via dnames[dname][11] = %s', dnames[dname][11])
                     # Change the 12th entry (0 indexed) of this device to True
                     # The 12 entry is the parted flag so we label
                     # our existing dnames entry as parted ie partitioned.
                     dnames[dname][11] = True
-                    logger.debug('Changed to = %s', dnames[dname][11])
-                    logger.debug('quick look at structure of dnames[dname] = %s', dnames[dname])
         if ((not is_root_disk and not is_partition) or
                 (is_partition and is_btrfs)):
             # We have a non system disk that is not a partition
@@ -938,7 +932,6 @@ def scan_disks(min_size):
                     dmap['HCTL'] = root_hctl
                     # and if we are an md device then use get_md_members string
                     # to populate our MODEL since it is otherwise unused.
-                    logger.debug('WE ARE SETTING ROOT DETIALS')
                     if (re.match('md', dmap['NAME']) is not None):
                         # cheap way to display our member drives
                         dmap['MODEL'] = get_md_members(dmap['NAME'])
@@ -994,7 +987,6 @@ def scan_disks(min_size):
     # Transfer our collected disk / dev entries of interest to the disks list.
     for d in dnames.keys():
         disks.append(Disk(*dnames[d]))
-        logger.debug('disks item = %s ', Disk(*dnames[d]))
     return disks
 
 
