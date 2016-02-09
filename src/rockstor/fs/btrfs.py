@@ -769,8 +769,7 @@ def root_disk():
             fields = line.split()
             # todo does this not allow ext4 root, ie silencing no btrfs root
             # todo exception raised here otherwise?
-            if (fields[1] == '/' and
-                    (fields[2] == 'ext4' or fields[2] == 'btrfs')):
+            if (fields[1] == '/' and fields[2] == 'btrfs'):
                 disk = os.path.realpath(fields[0])
                 if (re.match('/dev/md', disk) is not None):
                     # We have an Multi Device naming scheme which is a little
