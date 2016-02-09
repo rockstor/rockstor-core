@@ -66,7 +66,7 @@ class DiskMixin(object):
         # 1) scrub all device names with unique but nonsense uuid4
         # 1) mark all offline disks as such via db flag
         # 2) mark all offline disks smart available and enabled flags as False
-        logger.info('update_disk_state() Called')
+        # logger.info('update_disk_state() Called')
         for do in Disk.objects.all():
             # Replace all device names with a unique placeholder on each scan
             # N.B. do not optimize by re-using uuid index as this could lead
@@ -154,9 +154,11 @@ class DiskMixin(object):
             # find all the not offline db entries
             if (not do.offline):
                 # We have an attached disk db entry
-                if re.match('vd', do.name):
-                    # Virtio disks (named vd*) have no smart capability.
-                    # avoids cluttering logs with exceptions on these devices.
+                if (re.match('vd|md|mmcblk', do.name) is not None):
+                    # Virtio disks (named vd*), md devices (named md*), and
+                    # an sdcard reader that provides devs named mmcblk* have
+                    # no smart capability so avoid cluttering logs with
+                    # exceptions on these types of devices.
                     do.smart_available = do.smart_enabled = False
                     continue
                 # try to establish smart availability and status and update db
