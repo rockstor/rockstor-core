@@ -320,7 +320,13 @@ SnapshotsTableModule  = RockstorModuleView.extend({
 					html += '<input class="js-snapshot-select inline" type="checkbox" name="snapshot-select" data-name="' + snapshot.get('name') + '" data-id=' + snapshot.get('id') + ' ></input>';
 				} 
 				html += '</td>';
-				html += '<td><i class="glyphicon glyphicon-camera"></i> ' + snapshot.get('name') + '</td>';
+				html += '<td><i class="glyphicon glyphicon-camera"></i> ' + snapshot.get('name') + '&nbsp;&nbsp;&nbsp;&nbsp;';
+				if (snapshot.get("writable")) { 
+					html += '<a class="js-snapshot-clone" href="#" data-name="' + snapshot.get('name') + '"><i rel="tooltip" title="Clone snapshot" class="glyphicon glyphicon-book"></i></a>&nbsp;';
+				} 
+				html += '<a href="#" class="js-snapshot-delete" id="delete_snapshot_' + snapshot.get('name') + '" data-name="' + snapshot.get('name') + '" data-size="' + humanize.filesize(snapshot.get('e_usage')*1024) + '" data-share-name="' + _this.share.get('name') + '" data-action="delete" title="Delete snapshot">';
+				html += '<i rel="tooltip" title="Delete snapshot" class="glyphicon glyphicon-trash"></i></a>';
+				html += '</td>';
 				html += '<td>' + moment(snapshot.get("toc")).format(RS_DATE_FORMAT) + '</td>';
 				html += '<td>';
 				if (snapshot.get("uvisible")) { 
@@ -338,13 +344,6 @@ SnapshotsTableModule  = RockstorModuleView.extend({
 				html += '</td>';
 				html += '<td>' + humanize.filesize(snapshot.get('rusage')*1024) + '</td>';
 				html += '<td>' + humanize.filesize(snapshot.get('eusage')*1024) + '</td>';
-				html += '<td>';
-				if (snapshot.get("writable")) { 
-					html += '<a class="js-snapshot-clone" href="#" data-name="' + snapshot.get('name') + '"><i rel="tooltip" title="Clone snapshot" class="glyphicon glyphicon-book"></i></a>&nbsp;';
-				} 
-				html += '<a href="#" class="js-snapshot-delete" id="delete_snapshot_' + snapshot.get('name') + '" data-name="' + snapshot.get('name') + '" data-size="' + humanize.filesize(snapshot.get('e_usage')*1024) + '" data-share-name="' + _this.share.get('name') + '" data-action="delete" title="Delete snapshot">';
-				html += '<i rel="tooltip" title="Delete snapshot" class="glyphicon glyphicon-trash"></i></a>';
-				html += '</td>';
 				html += '</tr>';
 			});
 			return new Handlebars.SafeString(html);
