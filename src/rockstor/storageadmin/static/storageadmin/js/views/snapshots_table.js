@@ -24,7 +24,8 @@
  *
  */
 
-SnapshotsTableModule  = RockstorModuleView.extend({
+SnapshotsTableModule = SnapshotsCommonView.extend({
+//SnapshotsTableModule  = RockstorModuleView.extend({
 	events: {
 		"click #js-snapshot-add": "add",
 		"click #js-snapshot-cancel": "cancel",
@@ -184,7 +185,7 @@ SnapshotsTableModule  = RockstorModuleView.extend({
 
 	},
 
-	selectSnapshot: function(event) {
+	/* selectSnapshot: function(event) {
 		var _this = this;
 		name = $(event.currentTarget).attr('data-name');
 		var checked = $(event.currentTarget).prop('checked');
@@ -221,7 +222,7 @@ SnapshotsTableModule  = RockstorModuleView.extend({
 			_this.selectSnapshotWithName($(this).attr('data-name'), checked);
 		});
 		this.toggleDeleteButton();
-	},
+	}, */
 
 	deleteMultipleSnapshots: function(event) {
 		var _this = this;
