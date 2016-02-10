@@ -19,13 +19,12 @@
  */
 </script>
 <div class="messages"></div>
-<div class="pull-left">
+<div class="pull-left custom-padding">
   {{#if collectionNotEmpty}}
     <a class="btn btn-primary" href="#" id="js-snapshot-add"><i class="glyphicon glyphicon-edit "></i> Create</a>
   <a class="btn btn-danger" href="#" id="js-snapshot-delete-multiple" style="visibility:hidden;"><i class="glyphicon glyphicon-trash "></i> Delete selected</a>
   {{/if}}
 </div>
-<div>
 {{#if collectionNotEmpty}}
   <table id="snapshots-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of snapshots">
     <thead>
