@@ -23,8 +23,7 @@
  * for the JavaScript code in this page.
  *
  */
-
-SnapshotsView  = RockstorLayoutView.extend({
+SnapshotsView = SnapshotsCommonView.extend({
     events: {
 	"click #js-snapshot-add": "add",
 	"click #js-snapshot-cancel": "cancel",
@@ -198,47 +197,7 @@ SnapshotsView  = RockstorLayoutView.extend({
 	app_router.navigate(url, {trigger: true});
 
     },
-
-    selectSnapshot: function(event) {
-	var _this = this;
-	id = parseInt($(event.currentTarget).attr('data-id'));
-	var checked = $(event.currentTarget).prop('checked');
-	this.selectSnapshotWithId(id, checked);
-	this.toggleDeleteButton();
-    },
-
-    selectSnapshotWithId: function(id, checked) {
-	if (checked) {
-	    if (!RockstorUtil.listContains(this.selectedSnapshots, 'id', id)) {
-		RockstorUtil.addToList(
-		    this.selectedSnapshots, this.collection, 'id', id);
-	    }
-	} else {
-	    if (RockstorUtil.listContains(this.selectedSnapshots, 'id', id)) {
-		RockstorUtil.removeFromList(this.selectedSnapshots, 'id', id);
-	    }
-	}
-    },
-
-    toggleDeleteButton: function(){
-    	if(this.selectedSnapshots.length == 0){
-    		$("#js-snapshot-delete-multiple").css("visibility", "hidden");
-    	}else{
-    		$("#js-snapshot-delete-multiple").css("visibility", "visible");
-    	}
-    },
-
-
-    selectAllSnapshots: function(event) {
-	var _this = this;
-	var checked = $(event.currentTarget).prop('checked');
-	this.$('.js-snapshot-select').prop('checked', checked);
-	this.$('.js-snapshot-select').each(function() {
-	    _this.selectSnapshotWithId(parseInt($(this).attr('data-id')), checked);
-	});
-	this.toggleDeleteButton();
-    },
-
+    
     deleteMultipleSnapshots: function(event) {
 	var _this = this;
 	event.preventDefault();
