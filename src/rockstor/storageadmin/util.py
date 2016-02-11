@@ -37,6 +37,7 @@ def handle_exception(e, request, e_msg=None):
     object is used.
     """
     if (e_msg is not None):
+        e_msg = '%s. Lower level exception: %s' % (e_msg, e.__str__())
         logger.error(e_msg)
     else:
         e_msg = e.__str__()
