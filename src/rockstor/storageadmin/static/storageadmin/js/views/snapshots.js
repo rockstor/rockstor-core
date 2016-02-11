@@ -91,10 +91,6 @@ SnapshotsView = SnapshotsCommonView.extend({
 		event.preventDefault();
 		$(this.el).html(this.addTemplate({
 			snapshots: this.collection,
-			//share: this.share,
-			shares: this.shares,
-			modify_choices: this.modify_choices
-
 		}));
 		this.$('#shares').chosen();
 		var err_msg = '';
@@ -312,7 +308,7 @@ SnapshotsView = SnapshotsCommonView.extend({
 		//Create Snapshot Template Helpers
 		Handlebars.registerHelper('show_shares_dropdown', function() {
 			var html = '';
-			this.shares.each( function(share, index) {
+			_this.shares.each( function(share, index) {
 				var shareName = share.get('name');
 				html += '<option value="' + shareName + '">' + shareName + '</option>';
 			});
@@ -321,7 +317,7 @@ SnapshotsView = SnapshotsCommonView.extend({
 
 		Handlebars.registerHelper('display_writeable_options', function() {
 			var html = '';
-			_.each(this.modify_choices, function(c) {
+			_.each(_this.modify_choices, function(c) {
 				html += '<label class="radio-inline">';
 				if(c.value == 'yes'){
 					html += '<input type="radio" name="writable" value="rw" checked>' + c.name;
