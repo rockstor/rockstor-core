@@ -68,8 +68,15 @@ SnapshotsView = SnapshotsCommonView.extend({
 		var _this = this;
 		$(this.el).empty();
 
+		var snapshots = _this.collection.toJSON();
+		for(var i = 0; i < snapshots.length; i++){
+			var shareMatch = _this.shares.find(function(share){
+				return share.get('id') == snapshots[i].share;
+			});
+			snapshots[i].share = shareMatch.get('name');
+		}
 		$(this.el).append(_this.template({
-			snapshots: _this.collection.toJSON(),
+			snapshots: snapshots,
 			snapshotsNotEmpty: !_this.collection.isEmpty(),
 			collection: _this.collection,
 		}));	
@@ -280,23 +287,16 @@ SnapshotsView = SnapshotsCommonView.extend({
 
 	initHandlebarHelpers: function(){
 		var _this = this;
-		Handlebars.registerHelper('printCheckboxes', function(snapName, snapId){
+		Handlebars.registerHelper('checkboxValue', function(snapName){
 			var html = '';
 			if (RockstorUtil.listContains(_this.selectedSnapshots, 'name', snapName)) { 
-				html += '<input class="js-snapshot-select inline" type="checkbox" name="snapshot-select" data-name="' + snapName + '" data-id=' + snapId + ' checked="checked"></input>';
+				html += 'checked="checked"';
 			} else { 
-				html += '<input class="js-snapshot-select inline" type="checkbox" name="snapshot-select" data-name="' + snapName + '" data-id=' + snapId + ' ></input>';
+				html += '';
 			} 
 			return new Handlebars.SafeString(html);
 		});
 		
-		Handlebars.registerHelper('printShare', function(shareId){			
-			var shareMatch = _this.shares.find(function(share){
-				return share.id == shareId;
-			});
-			return shareMatch.get('name');
-		});
-
 		Handlebars.registerHelper('getToc', function(toc){
 			return moment(toc).format(RS_DATE_FORMAT);
 		});
