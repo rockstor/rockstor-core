@@ -285,34 +285,35 @@ class RockOnView(rfc.GenericView):
             if (eo.key not in cc_d): eo.delete()
 
     def _get_available(self):
-        msg = ('Network error while checking for updates. '
-               'Please try again later.')
         url_root = settings.ROCKONS.get('remote_metastore')
         remote_root = ('%s/%s' % (url_root, settings.ROCKONS.get('remote_root')))
+        msg = ('Error while processing remote metastore at %s' % remote_root)
         with self._handle_exception(self.request, msg=msg):
             response = requests.get(remote_root, timeout=10)
+            if (response.status_code != 200):
+                response.raise_for_status()
             root = response.json()
-            meta_cfg = {}
-            for k,v in root.items():
-                cur_meta_url = '%s/%s' % (url_root, v)
-                try:
-                    cur_res = requests.get(cur_meta_url, timeout=10)
-                    meta_cfg.update(cur_res.json())
-                except Exception, e:
-                    logger.error('Error processing %s: %s' %
-                                 (cur_meta_url, e.__str__()))
-            local_root = settings.ROCKONS.get('local_metastore')
-            if (os.path.isdir(local_root)):
-                for f in os.listdir(local_root):
-                    fp = '%s/%s' % (local_root, f)
-                    try:
-                        with open(fp) as fo:
-                            ds = json.load(fo)
-                            meta_cfg.update(ds)
-                    except Exception, e:
-                        logger.error('Error processing %s: %s' %
-                                     (fp, e.__str__()))
-            return meta_cfg
+
+        meta_cfg = {}
+        for k,v in root.items():
+            cur_meta_url = '%s/%s' % (url_root, v)
+            msg = ('Error while processing Rock-on profile at %s' % cur_meta_url)
+            with self._handle_exception(self.request, msg=msg):
+                cur_res = requests.get(cur_meta_url, timeout=10)
+                if (cur_res.status_code != 200):
+                    cur_res.raise_for_status()
+                meta_cfg.update(cur_res.json())
+
+        local_root = settings.ROCKONS.get('local_metastore')
+        if (os.path.isdir(local_root)):
+            for f in os.listdir(local_root):
+                fp = '%s/%s' % (local_root, f)
+                msg = ('Error while processing Rock-on profile at %s' % fp)
+                with self._handle_exception(self.request, msg=msg):
+                    with open(fp) as fo:
+                        ds = json.load(fo)
+                        meta_cfg.update(ds)
+        return meta_cfg
 
     @transaction.atomic
     def delete(self, request, sname):
