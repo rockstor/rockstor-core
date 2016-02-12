@@ -133,12 +133,12 @@ class RockOnIdView(rfc.GenericView):
                 self._pending_check(request)
                 if (rockon.state != 'installed'):
                     e_msg = ('Rock-on(%s) is not currently installed. Cannot '
-                             'uninstall it' % rid)
+                             'uninstall it' % rockon.name)
                     handle_exception(Exception(e_msg), request)
                 if (rockon.status == 'started' or rockon.status == 'pending_start'):
                     e_msg = ('Rock-on(%s) must be stopped before it can '
                              'be uninstalled. Stop it and try again' %
-                             rid)
+                             rockon.name)
                     handle_exception(Exception(e_msg), request)
                 uninstall.async(rockon.id)
                 rockon.state = 'pending_uninstall'
@@ -149,12 +149,12 @@ class RockOnIdView(rfc.GenericView):
                 self._pending_check(request)
                 if (rockon.state != 'installed'):
                     e_msg = ('Rock-on(%s) is not currently installed. Cannot '
-                             'update it' % rid)
+                             'update it' % rockon.name)
                     handle_exception(Exception(e_msg), request)
                 if (rockon.status == 'started' or rockon.status == 'pending_start'):
                     e_msg = ('Rock-on(%s) must be stopped before it can '
                              'be updated. Stop it and try again' %
-                             rid)
+                             rockon.name)
                     handle_exception(Exception(e_msg), request)
                 share_map = request.data.get('shares')
                 for co in DContainer.objects.filter(rockon=rockon):
