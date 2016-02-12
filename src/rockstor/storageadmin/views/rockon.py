@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import requests
+from sets import Set
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (RockOn, DImage, DContainer, DPort, DVolume,
@@ -96,17 +97,44 @@ class RockOnView(rfc.GenericView):
         with self._handle_exception(request):
             if (command == 'update'):
                 rockons = self._get_available()
+                #Delete metadata for apps no longer in metastores.
+                self._delete_deprecated(rockons)
+
+                error_str = ''
                 for r in rockons:
                     try:
                         self._create_update_meta(r, rockons[r])
                     except Exception, e:
-                        logger.error('Exception while processing rockon(%s) '
-                                     'metadata: %s' % (r, e.__str__()))
+                        error_str = ('%s: %s' % (r, e.__str__()))
                         logger.exception(e)
+                if (len(error_str) > 0):
+                    e_msg = ('Errors occurred while processing updates '
+                             'for following Rock-ons. %s' % error_str)
+                    handle_exception(Exception(e_msg), request)
             return Response()
 
     @transaction.atomic
+    def _delete_deprecated(self, rockons):
+        cur_rockons = [ro.name for ro in RockOn.objects.filter(state='available')]
+        for cr in cur_rockons:
+            if (cr not in rockons):
+                RockOn.objects.get(name=cr).delete()
+
+
+    @staticmethod
+    def _next_available_default_hostp(port):
+        while (True):
+            if (DPort.objects.filter(hostp=port).exists()):
+                port += 1
+            else:
+                return port
+
+    @transaction.atomic
     def _create_update_meta(self, name, r_d):
+        #Update our application state with any changes from hosted app
+        #profiles(app.json files). Some attributes cannot be updated
+        #if the Rock-on is currently installed. These will be logged and
+        #ignored.
         ro_defaults = {'description': r_d['description'],
                        'website': r_d['website'],
                        'version': r_d['version'],
@@ -130,31 +158,67 @@ class RockOnView(rfc.GenericView):
         if ('more_info' in r_d):
             ro.more_info = r_d['more_info']
         ro.save()
+
         containers = r_d['containers']
+        cur_containers = [co.name for co in
+                          DContainer.objects.filter(rockon=ro)]
+        s1 = Set(containers.keys())
+        s2 = Set(cur_containers)
+        if (len(s1 - s2) != 0):
+            if (ro.state != 'available'):
+                e_msg = ('Cannot add/remove container definitions for %s as '
+                         'it is not in available state. Uninstall the '
+                         'Rock-on first and try again.' % ro.name)
+                handle_exception(Exception(e_msg), self.request)
+            #rock-on is in available state. we can safely wipe metadata
+            #and start fresh.
+            DContainer.objects.filter(rockon=ro).delete()
+
         for c in containers:
             c_d = containers[c]
+            co = None
+            if (DContainer.objects.filter(name=c).exists()):
+                co = DContainer.objects.get(name=c)
+                if (co.rockon.id != ro.id):
+                    e_msg = ('Duplicate container(%s) definition detected. '
+                             'It belongs to another Rock-on(%s). Uninstall '
+                             'one of them and try again.' % (co.name, co.rockon.name))
+                    handle_exception(Exception(e_msg), self.request)
+
+                if (co.dimage.name != c_d['image']):
+                    if (ro.state != 'available'):
+                        e_msg = ('Cannot change image of the container(%s) '
+                                 'as it belongs to an installed Rock-on(%s). '
+                                 'Uninstall it first and try again.' %
+                                 (co.name, ro.name))
+                        handle_exception(Exception(e_msg), self.request)
+                    co.dimage.delete()
+            if (co is None):
+                co = DContainer(name=c, rockon=ro)
             defaults = {'tag': c_d.get('tag', 'latest'),
                         'repo': 'na',}
             io, created = DImage.objects.get_or_create(name=c_d['image'],
                                                        defaults=defaults)
-            co_defaults = {'rockon': ro,
-                           'dimage': io,
-                           'launch_order': c_d['launch_order'],}
-            co, created = DContainer.objects.get_or_create(name=c,
-                                                           defaults=co_defaults)
-            if (co.rockon.name != ro.name):
-                e_msg = ('Container(%s) belongs to another '
-                         'Rock-On(%s). Update rolled back.' %
-                         (c, co.rockon.name))
-                handle_exception(Exception(e_msg), self.request)
-            if (not created):
-                co.dimage = io
-                co.launch_order = co_defaults['launch_order']
+            co.dimage = io
+            co.launch_order = c_d['launch_order']
             if ('uid' in c_d):
                 co.uid = int(c_d['uid'])
             co.save()
 
             ports = containers[c].get('ports', {})
+            cur_ports = [po.containerp for po in
+                         DPort.objects.filter(container=co)]
+            s1 = Set(map(int, ports.keys()))
+            s2 = Set(cur_ports)
+            if (len(s1 - s2) != 0):
+                if (ro.state != 'available'):
+                    e_msg = ('Cannot add/remove port definitions of the '
+                             'container(%s) as it belongs to an installed '
+                             'Rock-on(%s). Uninstall it first and try again.' %
+                             (co.name, ro.name))
+                    handle_exception(Exception(e_msg), self.request)
+                DPort.objects.filter(container=co).delete()
+
             for p in ports:
                 p_d = ports[p]
                 if ('protocol' not in p_d):
@@ -163,18 +227,14 @@ class RockOnView(rfc.GenericView):
                 po = None
                 if (DPort.objects.filter(containerp=p, container=co).exists()):
                     po = DPort.objects.get(containerp=p, container=co)
-                    po.hostp_default = p_d['host_default']
+                    if (po.hostp_default != p_d['host_default']):
+                        po.hostp_default = self._next_available_default_hostp(p_d['host_default'])
                     po.description = p_d['description']
                     po.protocol = p_d['protocol']
                     po.label = p_d['label']
                 else:
                     #let's find next available default if default is already taken
-                    def_hostp = p_d['host_default']
-                    while (True):
-                        if (DPort.objects.filter(hostp=def_hostp).exists()):
-                            def_hostp += 1
-                        else:
-                            break
+                    def_hostp = self._next_available_default_hostp(p_d['host_default'])
                     po = DPort(description=p_d['description'],
                                hostp=def_hostp, containerp=p,
                                hostp_default=def_hostp,
@@ -187,12 +247,21 @@ class RockOnView(rfc.GenericView):
                     ro.ui = True
                     ro.save()
                 po.save()
-            ports = [int(p) for p in ports]
-            for po in DPort.objects.filter(container=co):
-                if (po.containerp not in ports):
-                    po.delete()
 
             v_d = c_d.get('volumes', {})
+            cur_vols = [vo.dest_dir for vo in
+                        DVolume.objects.filter(container=co)]
+            s1 = Set(v_d.keys())
+            s2 = Set(cur_vols)
+            if (len(s1 - s2) != 0):
+                if (ro.state != 'available'):
+                    e_msg = ('Cannot add/remove volume definitions of the '
+                             'container(%s) as it belongs to an installed '
+                             'Rock-on(%s). Uninstall it first and try again.' %
+                             (co.name, ro.name))
+                    handle_exception(Exception(e_msg), self.request)
+                DVolume.objects.filter(container=co).delete()
+
             for v in v_d:
                 cv_d = v_d[v]
                 vo_defaults = {'description': cv_d['description'],
@@ -205,9 +274,6 @@ class RockOnView(rfc.GenericView):
                 if ('min_size' in cv_d):
                     vo.min_size = cv_d['min_size']
                 vo.save()
-            for vo in DVolume.objects.filter(container=co):
-                if (vo.dest_dir not in v_d):
-                    vo.delete()
 
             self._update_env(co, c_d)
             options = containers[c].get('opts', [])
