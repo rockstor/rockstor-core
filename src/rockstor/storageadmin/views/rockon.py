@@ -18,7 +18,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import requests
-from sets import Set
 from rest_framework.response import Response
 from django.db import transaction
 from storageadmin.models import (RockOn, DImage, DContainer, DPort, DVolume,
@@ -162,9 +161,7 @@ class RockOnView(rfc.GenericView):
         containers = r_d['containers']
         cur_containers = [co.name for co in
                           DContainer.objects.filter(rockon=ro)]
-        s1 = Set(containers.keys())
-        s2 = Set(cur_containers)
-        if (len(s1 - s2) != 0):
+        if (len(set(containers.keys()) ^ set(cur_containers)) != 0):
             if (ro.state != 'available'):
                 e_msg = ('Cannot add/remove container definitions for %s as '
                          'it is not in available state. Uninstall the '
@@ -208,9 +205,7 @@ class RockOnView(rfc.GenericView):
             ports = containers[c].get('ports', {})
             cur_ports = [po.containerp for po in
                          DPort.objects.filter(container=co)]
-            s1 = Set(map(int, ports.keys()))
-            s2 = Set(cur_ports)
-            if (len(s1 - s2) != 0):
+            if (len(set(map(int, ports.keys())) ^ set(cur_ports)) != 0):
                 if (ro.state != 'available'):
                     e_msg = ('Cannot add/remove port definitions of the '
                              'container(%s) as it belongs to an installed '
@@ -251,9 +246,7 @@ class RockOnView(rfc.GenericView):
             v_d = c_d.get('volumes', {})
             cur_vols = [vo.dest_dir for vo in
                         DVolume.objects.filter(container=co)]
-            s1 = Set(v_d.keys())
-            s2 = Set(cur_vols)
-            if (len(s1 - s2) != 0):
+            if (len(set(v_d.keys()) ^ set(cur_vols)) != 0):
                 if (ro.state != 'available'):
                     e_msg = ('Cannot add/remove volume definitions of the '
                              'container(%s) as it belongs to an installed '
