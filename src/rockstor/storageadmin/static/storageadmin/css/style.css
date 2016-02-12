@@ -40,6 +40,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
   src: url('../fonts/Roboto-Thin.ttf') format('truetype');
 }
 
+.custom-padding{
+    margin-bottom:10px; 
+}
+
+.share-snapWarning > p{
+    font-family: arial;
+    font-size: 14px;
+}
+
 #supportBox h4{
   font-family: Arial, Helvetica, sans-serif;
   font-size: medium;
