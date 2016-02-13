@@ -796,6 +796,7 @@ def root_disk():
 
 def scan_disks(min_size):
     base_root_disk = root_disk()
+    logger.debug('root_disk returned the value of %s ', base_root_disk)
     cmd = ['/usr/bin/lsblk', '-P', '-o',
            'NAME,MODEL,SERIAL,SIZE,TRAN,VENDOR,HCTL,TYPE,FSTYPE,LABEL,UUID']
     o, e, rc = run_command(cmd)
@@ -881,6 +882,11 @@ def scan_disks(min_size):
             root_hctl = dmap['HCTL']
             # Set readability flag as base_dev identified.
             is_root_disk = True  # root as returned by root_disk()
+            # And until we find a partition on this root disk we will label it
+            # as our root, this then allows for non partitioned root devices
+            # such as mdraid installs where root is directly on eg /dev/md126.
+            # N.B. this assumes base devs are listed before their partitions.
+            dmap['root'] = True
         # Normal partitions are of type 'part', md partitions are of type 'md'
         # normal disks are of type 'disk' md devices are of type eg 'raid1'.
         # Disk members of eg intel bios raid md devices fstype='isw_raid_member'
@@ -925,12 +931,19 @@ def scan_disks(min_size):
                     # Now add the properties we stashed when looking at the base
                     # root disk rather than the root partition we see here.
                     dmap['SERIAL'] = root_serial
-                    dmap['root'] = True  # now we have base_root_disk name match
                     dmap['MODEL'] = root_model
                     dmap['TRAN'] = root_transport
                     dmap['VENDOR'] = root_vendor
                     dmap['HCTL'] = root_hctl
-                    # and if we are an md device then use get_md_members string
+                    # As we have found root to be on a partition we can now
+                    # un flag the base device as having been root prior to
+                    # finding this partition on that base_root_disk
+                    # N.B. Assumes base dev is listed before it's partitions
+                    # The 13th item in dnames entries is root so index = 12
+                    dnames[base_root_disk][12] = False
+                    # And update this partition on base_root_disk as real root
+                    dmap['root'] = True
+                    # If we are an md device then use get_md_members string
                     # to populate our MODEL since it is otherwise unused.
                     if (re.match('md', dmap['NAME']) is not None):
                         # cheap way to display our member drives
@@ -987,6 +1000,7 @@ def scan_disks(min_size):
     # Transfer our collected disk / dev entries of interest to the disks list.
     for d in dnames.keys():
         disks.append(Disk(*dnames[d]))
+        logger.debug('disks item = %s ', Disk(*dnames[d]))
     return disks
 
 
