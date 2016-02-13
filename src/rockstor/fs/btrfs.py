@@ -940,10 +940,19 @@ def scan_disks(min_size):
                     # finding this partition on that base_root_disk
                     # N.B. Assumes base dev is listed before it's partitions
                     # The 13th item in dnames entries is root so index = 12
-                    # todo keyerror when called with base_root_disk of md125
-                    # todo which is otherwise correct as it's our root
-                    dnames[base_root_disk][12] = False
-                    # And update this partition on base_root_disk as real root
+                    # todo make these comments more consistent with new behaviour re root on base dev
+                    # todo test to make sure we have no regressions on existing drive categorization
+                    # only update our base_root_disk if it exists in our scaned
+                    # disks as this may be the first time we are seeing it.
+                    # search to see if we already have an entry for the
+                    # the base_root_disk which may be us or our base dev if we
+                    # are a partition
+                    for dname in dnames.keys():
+                        if (dname == base_root_disk):
+                            dnames[base_root_disk][12] = False
+                    # And update this device as real root
+                    # Note we may be looking at the base_root_disk or one of
+                    # it's partitions there after.
                     dmap['root'] = True
                     # If we are an md device then use get_md_members string
                     # to populate our MODEL since it is otherwise unused.
