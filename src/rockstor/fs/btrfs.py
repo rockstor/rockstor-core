@@ -909,22 +909,22 @@ def scan_disks(min_size):
                     # Given we have found a partition on an existing base dev
                     # we should update that base dev's entry in dnames to
                     # parted "True" as when recorded lsblk type on base device
-                    # would have been disk or RAID1 (for base md device).
+                    # would have been disk or RAID1 or raid1 (for base md dev).
                     # Change the 12th entry (0 indexed) of this device to True
                     # The 12 entry is the parted flag so we label
                     # our existing dnames entry as parted ie partitioned.
                     dnames[dname][11] = True
         if ((not is_root_disk and not is_partition) or
-                (is_partition and is_btrfs)):
+                (is_btrfs)):
             # We have a non system disk that is not a partition
             # or
-            # We have a partition that is btrfs formatted
+            # We have a device that is btrfs formatted
             # In the case of a btrfs partition we override the parted flag.
             # Or we may just be a non system disk without partitions.
             dmap['parted'] = False
             dmap['root'] = False  # until we establish otherwise as we might be.
-            if is_partition and is_btrfs:
-                # a btrfs partition
+            if is_btrfs:
+                # a btrfs file system
                 if (re.match(base_root_disk, dmap['NAME']) is not None):
                     # We are assuming that a partition with a btrfs fs on is our
                     # root if it's name begins with our base system disk name.
@@ -940,6 +940,8 @@ def scan_disks(min_size):
                     # finding this partition on that base_root_disk
                     # N.B. Assumes base dev is listed before it's partitions
                     # The 13th item in dnames entries is root so index = 12
+                    # todo keyerror when called with base_root_disk of md125
+                    # todo which is otherwise correct as it's our root
                     dnames[base_root_disk][12] = False
                     # And update this partition on base_root_disk as real root
                     dmap['root'] = True
