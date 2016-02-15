@@ -973,9 +973,16 @@ def scan_disks(min_size):
                         # cheap way to display our member drives
                         dmap['MODEL'] = get_md_members(dmap['NAME'])
                 else:
-                    logger.debug('Skipping the following attached disk as not of interest - %s', dmap)
-                    # ignore btrfs partitions that are not on our system disk.
-                    continue
+                    # We have a non system disk btrfs filesystem.
+                    # Ie we are a whole disk or a partition with btrfs on but
+                    # NOT on the system disk.
+                    # Most likely a current btrfs data drive or one we could
+                    # import.
+                    # As we don't understand / support btrfs in partitions
+                    # then ignore / skip this btrfs device if it's a partition
+                    if is_partition:
+                        logger.debug('Skipping the following attached disk as not of interest - %s', dmap)
+                        continue
             # convert size into KB
             size_str = dmap['SIZE']
             if (size_str[-1] == 'G'):
