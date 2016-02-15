@@ -901,7 +901,9 @@ def scan_disks(min_size):
             is_btrfs = True
         # End readability variables assignment
         if is_partition:
-            # search our working dictionary of already scanned devices by name
+            # Search our working dictionary of already scanned devices by name
+            # We are assuming base devices are listed first and if of interest
+            # we have recorded it and can now back port it's partitioned status.
             for dname in dnames.keys():
                 if (re.match(dname, dmap['NAME']) is not None):
                     # Our device name has a base device entry of interest saved:
@@ -921,7 +923,7 @@ def scan_disks(min_size):
             # We have a device that is btrfs formatted
             # In the case of a btrfs partition we override the parted flag.
             # Or we may just be a non system disk without partitions.
-            dmap['parted'] = False
+            dmap['parted'] = False  # could be corrected later
             dmap['root'] = False  # until we establish otherwise as we might be.
             if is_btrfs:
                 # a btrfs file system
@@ -948,7 +950,7 @@ def scan_disks(min_size):
                     # the base_root_disk which may be us or our base dev if we
                     # are a partition
                     for dname in dnames.keys():
-                        if (dname == base_root_disk):
+                        if dname == base_root_disk:
                             dnames[base_root_disk][12] = False
                     # And update this device as real root
                     # Note we may be looking at the base_root_disk or one of
@@ -960,6 +962,7 @@ def scan_disks(min_size):
                         # cheap way to display our member drives
                         dmap['MODEL'] = get_md_members(dmap['NAME'])
                 else:
+                    logger.debug('Skipping the following attached disk as not of interest - %s', dmap)
                     # ignore btrfs partitions that are not on our system disk.
                     continue
             # convert size into KB
