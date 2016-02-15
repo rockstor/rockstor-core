@@ -925,8 +925,35 @@ def scan_disks(min_size):
                     # would have been disk or RAID1 or raid1 (for base md dev).
                     # Change the 12th entry (0 indexed) of this device to True
                     # The 12 entry is the parted flag so we label
-                    # our existing dnames entry as parted ie partitioned.
+                    # our existing base dev entry as parted ie partitioned.
                     dnames[dname][11] = True
+                    # Also take this opportunity to back port software raid info
+                    # from partitions to the base device if the base device
+                    # doesn't already have an fstype identifying it's raid
+                    # member status. For Example:-
+                    # bios raid base dev gives lsblk FSTYPE="isw_raid_member";
+                    # we already catch this directly.
+                    # Pure software mdraid base dev has lsblk FSTYPE="" but a
+                    # partition on this pure software mdraid that is a member
+                    # of eg md125 has FSTYPE="linux_raid_member"
+                    logger.debug('looking at partition dev of name %s', dmap['NAME'])
+                    logger.debug('FSTYPE for this dev = %s', dmap['FSTYPE'])
+                    logger.debug('index 8 of dname currently = %s', dnames[dname][8])
+                    if dmap['FSTYPE'] == 'linux_raid_member' \
+                            and (dnames[dname][8] is None):
+                        # N.B. 9th item (index 8) in dname = FSTYPE
+                        # We are a partition that is an mdraid raid member so
+                        # backport this info to our base device ie sda1 raid
+                        # member so label sda's FSTYPE entry the same as it's
+                        # partition's entry if the above condition is met, ie
+                        # only if the base device doesn't already have an
+                        # FSTYPE entry ie == "", this way we don't overwrite
+                        # / loose info and we only need to have one partition
+                        # identified as an mdraid member to classify the entire
+                        # device (the base device) as a raid member, at least in
+                        # part.
+                        logger.debug('back propagating part fstype to base dev')
+                        dnames[dname][8] = dmap['FSTYPE']
         if ((not is_root_disk and not is_partition) or
                 (is_btrfs)):
             # We have a non system disk that is not a partition
