@@ -795,6 +795,17 @@ def root_disk():
 
 
 def scan_disks(min_size):
+    """
+    Using lsblk we scan all attached disks and categorize them according to
+    if they are partitioned, their file system, if the drive hosts our / mount
+    point etc. The result of this scan is used by:-
+    view/disk.py _update_disk_state
+    for further analysis / categorization.
+    N.B. if a device (partition or whole dev) hosts swap or is of no interest
+    then it is ignored.
+    :param min_size: Discount all devices below this size in KB
+    :return: List containing drives of interest
+    """
     base_root_disk = root_disk()
     logger.debug('root_disk returned the value of %s ', base_root_disk)
     cmd = ['/usr/bin/lsblk', '-P', '-o',
