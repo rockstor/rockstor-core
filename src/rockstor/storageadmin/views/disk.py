@@ -118,7 +118,7 @@ class DiskMixin(object):
             # If attached disk has an fs and it isn't btrfs
             if (d.fstype is not None and d.fstype != 'btrfs'):
                 dob.btrfs_uuid = None
-                dob.parted = True
+                dob.parted = True  # overload use of parted as non btrfs flag.
             # If our existing Pool db knows of this disk's pool via it's label:
             if (Pool.objects.filter(name=d.label).exists()):
                 # update the disk db object's pool field accordingly.
