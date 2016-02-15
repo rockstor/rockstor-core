@@ -170,12 +170,24 @@ ServicesView = Backbone.View.extend({
 		Handlebars.registerHelper('display_services_table', function(){
 			var html = '';
 			var _this = this;
+			var categoryObj = {};
+
 			this.collection.each(function(service) {
+				//based on category, group the service names into an array.
+				var catKey = service.get('category');
+				var serName = service.get('display_name');
+				var servicesArr = [];
+				if(categoryObj.hasOwnProperty(catKey)){
+					categoryObj[catKey].push(serName);
+				}else{ 
+					servicesArr.push(serName);
+					categoryObj[catKey] = servicesArr;
+				}
 				var serviceName = service.get('name');
 				html += '<tr id="' + serviceName + '">';
 				html += '<td>';
 				html += service.get('display_name') + '&nbsp';
-				 if (_this.configurable_services.indexOf(serviceName) > -1) {
+				if (_this.configurable_services.indexOf(serviceName) > -1) {
 					html += '<a href="#" class="configure" data-service-name="' + serviceName + '"><i class="glyphicon glyphicon-wrench"></i></a>&nbsp';
 				}
 				if (serviceName == 'active-directory') {
