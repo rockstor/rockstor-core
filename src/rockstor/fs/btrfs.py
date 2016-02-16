@@ -807,7 +807,6 @@ def scan_disks(min_size):
     :return: List containing drives of interest
     """
     base_root_disk = root_disk()
-    logger.debug('root_disk returned the value of %s ', base_root_disk)
     cmd = ['/usr/bin/lsblk', '-P', '-o',
            'NAME,MODEL,SERIAL,SIZE,TRAN,VENDOR,HCTL,TYPE,FSTYPE,LABEL,UUID']
     o, e, rc = run_command(cmd)
@@ -826,7 +825,6 @@ def scan_disks(min_size):
             continue
         # setup our line / dev name dependant variables
         # easy read categorization flags, all False until found otherwise.
-        is_base_dev = False  # a base device = md126 or sda, NOT md0p2 or sda3
         is_root_disk = False  # the base dev that / is mounted on ie system disk
         is_partition = is_btrfs = False
         dmap = {}  # dictionary to hold line info from lsblk output eg NAME: sda
@@ -936,9 +934,6 @@ def scan_disks(min_size):
                     # Pure software mdraid base dev has lsblk FSTYPE="" but a
                     # partition on this pure software mdraid that is a member
                     # of eg md125 has FSTYPE="linux_raid_member"
-                    logger.debug('looking at partition dev of name %s', dmap['NAME'])
-                    logger.debug('FSTYPE for this dev = %s', dmap['FSTYPE'])
-                    logger.debug('index 8 of dname currently = %s', dnames[dname][8])
                     if dmap['FSTYPE'] == 'linux_raid_member' \
                             and (dnames[dname][8] is None):
                         # N.B. 9th item (index 8) in dname = FSTYPE
@@ -947,12 +942,11 @@ def scan_disks(min_size):
                         # member so label sda's FSTYPE entry the same as it's
                         # partition's entry if the above condition is met, ie
                         # only if the base device doesn't already have an
-                        # FSTYPE entry ie == "", this way we don't overwrite
+                        # FSTYPE entry ie None, this way we don't overwrite
                         # / loose info and we only need to have one partition
                         # identified as an mdraid member to classify the entire
                         # device (the base device) as a raid member, at least in
                         # part.
-                        logger.debug('back propagating part fstype to base dev')
                         dnames[dname][8] = dmap['FSTYPE']
         if ((not is_root_disk and not is_partition) or
                 (is_btrfs)):
@@ -979,12 +973,10 @@ def scan_disks(min_size):
                     # un flag the base device as having been root prior to
                     # finding this partition on that base_root_disk
                     # N.B. Assumes base dev is listed before it's partitions
-                    # The 13th item in dnames entries is root so index = 12
-                    # todo make these comments more consistent with new behaviour re root on base dev
-                    # todo test to make sure we have no regressions on existing drive categorization
-                    # only update our base_root_disk if it exists in our scaned
+                    # The 13th item in dnames entries is root so index = 12.
+                    # Only update our base_root_disk if it exists in our scanned
                     # disks as this may be the first time we are seeing it.
-                    # search to see if we already have an entry for the
+                    # Search to see if we already have an entry for the
                     # the base_root_disk which may be us or our base dev if we
                     # are a partition
                     for dname in dnames.keys():
@@ -1008,7 +1000,6 @@ def scan_disks(min_size):
                     # As we don't understand / support btrfs in partitions
                     # then ignore / skip this btrfs device if it's a partition
                     if is_partition:
-                        logger.debug('Skipping the following attached disk as not of interest - %s', dmap)
                         continue
             # convert size into KB
             size_str = dmap['SIZE']
@@ -1059,7 +1050,6 @@ def scan_disks(min_size):
     # Transfer our collected disk / dev entries of interest to the disks list.
     for d in dnames.keys():
         disks.append(Disk(*dnames[d]))
-        logger.debug('disks item = %s ', Disk(*dnames[d]))
     return disks
 
 
