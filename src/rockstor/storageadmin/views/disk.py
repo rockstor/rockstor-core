@@ -119,6 +119,23 @@ class DiskMixin(object):
             if (d.fstype is not None and d.fstype != 'btrfs'):
                 dob.btrfs_uuid = None
                 dob.parted = True  # overload use of parted as non btrfs flag.
+                # N.B. this overload use may become redundant with the addition
+                # of the Disk.role field.
+                if d.fstype == 'isw_raid_member' \
+                        or d.fstype == 'linux_raid_member':
+                    logger.debug('Found scan_disks indicator of raid member '
+                                 'so updating dob role accordingly dev = %s',
+                                 d.name)
+                    # transfer fstype raid member indicator to role field
+                    dob.role = d.fstype
+                else:
+                    # no identified role from scan_disks() fstype indicator so
+                    # set as None to update db of new drive role. If we don't
+                    # do this then the same drive when re-deployed will inherit
+                    # it's previous role in the db which may be desired but in
+                    # the case of these raid member indicator from scan_disks()
+                    # we have the current truth provided.
+                    dob.role = None
             # If our existing Pool db knows of this disk's pool via it's label:
             if (Pool.objects.filter(name=d.label).exists()):
                 # update the disk db object's pool field accordingly.
