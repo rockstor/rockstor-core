@@ -19,6 +19,15 @@
   */
 </script>
 
+<script>
+$(document).ready(function() {
+    $('#services-table').DataTable({
+        "iDisplayLength": 15,
+        "aLengthMenu": [[15, 30, 45, -1], [15, 30, 45, "All"]]
+    });
+});
+</script>
+
 
 <div id="messages"></div>
 <div class="row">
@@ -27,15 +36,15 @@
     <br>
     <div id="services-list">
       <div id="service">
-        <table id="services-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" width="100%">
+        <table id="services-table" class="table table-bordered table-striped" cellspacing="0" width="100%">
           <thead>
-            {{!-- <tr>
+            <tr>
               <th scope="col">Name</th>
               <th scope="col">Status</th>
-            </tr> --}}
+            </tr>
           </thead>
           <tbody>
-          {{!-- display_services_table --}}
+          {{display_services_table}}
           </tbody>
         </table>
         <div>{{pagination}}</div>
@@ -44,7 +53,7 @@
   </div>
 </div>
 
- <div class="row">
+ {{!-- <div class="row">
 {{#each servicesColl}}
 <div class="col-sm-6">
         <div class="panel panel-default">
@@ -64,5 +73,5 @@
         </div>
         </div>
  {{/each}}
-</div><!--row-->
+</div><!--row-->--}}
 
