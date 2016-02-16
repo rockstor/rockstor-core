@@ -201,7 +201,7 @@ ServicesView = Backbone.View.extend({
 			return new Handlebars.SafeString(html)
 		});	
 
-		/* Handlebars.registerHelper('display_services_table', function(){
+		Handlebars.registerHelper('display_services_table', function(){
 			var html = '';
 			var _this = this;
 			var categoryObj = {};
@@ -240,7 +240,7 @@ ServicesView = Backbone.View.extend({
 				html += '</tr>';
 			});
 			return new Handlebars.SafeString(html);
-		}); */
+		}); 
 	}
 });
 
