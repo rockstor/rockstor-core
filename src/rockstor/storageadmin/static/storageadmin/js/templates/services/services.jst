@@ -29,13 +29,13 @@
       <div id="service">
         <table id="services-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" width="100%">
           <thead>
-            <tr>
+            {{!-- <tr>
               <th scope="col">Name</th>
               <th scope="col">Status</th>
-            </tr>
+            </tr> --}}
           </thead>
           <tbody>
-          {{display_services_table}}
+          {{!-- display_services_table --}}
           </tbody>
         </table>
         <div>{{pagination}}</div>
@@ -44,58 +44,25 @@
   </div>
 </div>
 
-
-  <div class="row">
-        <div class="col-sm-6">
+ <div class="row">
+{{#each servicesColl}}
+<div class="col-sm-6">
         <div class="panel panel-default">
-            <div class="panel-heading">Catergory 1</div>
+            <div class="panel-heading">{{@key}}</div>
             <div class="panel-body">
             <table class="table table-condensed table-striped table-bordered">
-                <thead>
-                    <th>#</th>
-                    <th>Service Name</th>
-                </thead>
-                <tbody>
-                <tr>
-                <td>1</td>
-                <td>ADP</td>
-                </tr>
-                <td>2</td>
-                <td>LDAP</td>
-                </tr>
-                <tr>
-                <td>3</td>
-                <td>NIS</td>
-                </tr>
-                </tbody>
+            {{#each this}}
+            <tr>
+            <td>{{this.name}} &nbsp;&nbsp;
+            {{configure_service this.name}} &nbsp;&nbsp;
+            <input type="checkbox" data-service-name="' + serviceName + '" data-size="mini" {{getStatus this.status}}>
+            </td>
+            </tr>
+            {{/each}}
             </table>
             </div>
         </div>
         </div>
-        <div class="col-sm-6">
-        <div class="panel panel-default">
-            <div class="panel-heading">Catergory 2</div>
-            <div class="panel-body">
-            <p>Service Name and Status<p>
-            </div>
-        </div>
-        </div>
-  </div>
-  <div class="row">
-        <div class="col-sm-6">
-        <div class="panel panel-default">
-            <div class="panel-heading">Catergory 3</div>
-            <div class="panel-body">
-            <p>Service Name and Status<p>
-            </div>
-        </div>
-        </div>
-        <div class="col-sm-6">
-        <div class="panel panel-default">
-            <div class="panel-heading">Catergory 4</div>
-            <div class="panel-body">
-            <p>Service Name and Status<p>
-            </div>
-        </div>
-        </div>
-  </div>
+ {{/each}}
+</div><!--row-->
+

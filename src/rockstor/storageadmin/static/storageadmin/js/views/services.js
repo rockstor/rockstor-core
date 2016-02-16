@@ -81,8 +81,23 @@ ServicesView = Backbone.View.extend({
 		var _this = this;
 		$(this.el).empty();
 		// find service-monitor service
+		var categoryObj = {};
+		this.collection.each(function(service) {
+			//based on category, group the service names into an array.
+			var catKey = service.get('category');
+			var serName = service.get('display_name');
+			var servicesArr = [];
+			if(categoryObj.hasOwnProperty(catKey)){
+				categoryObj[catKey].push(service.toJSON());
+			}else{ 
+				servicesArr.push(service.toJSON());
+				categoryObj[catKey] = servicesArr;
+			}
+		});
+		//console.log('the cat obj is:',categoryObj);
 		$(this.el).append(this.template({
 			collection: this.collection,
+			servicesColl: categoryObj,
 			configurable_services: this.configurable_services
 		}));
 
@@ -167,7 +182,26 @@ ServicesView = Backbone.View.extend({
 	},
 
 	initHandlebarHelpers: function(){
-		Handlebars.registerHelper('display_services_table', function(){
+		var _this = this;
+		Handlebars.registerHelper('configure_service', function(serviceName){
+			var html = '';
+			if(_this.configurable_services.indexOf(serviceName) > -1) {
+				html = '<a href="#" class="configure" data-service-name="' + serviceName + '"><i class="glyphicon glyphicon-wrench"></i></a>&nbsp';
+				return new Handlebars.SafeString(html)
+			}
+		});
+
+		Handlebars.registerHelper('getStatus', function(status){
+			var html = '';
+			if(status){
+				html = 'checked';
+			}else{
+				html = '';
+			}
+			return new Handlebars.SafeString(html)
+		});	
+
+		/* Handlebars.registerHelper('display_services_table', function(){
 			var html = '';
 			var _this = this;
 			var categoryObj = {};
@@ -206,7 +240,7 @@ ServicesView = Backbone.View.extend({
 				html += '</tr>';
 			});
 			return new Handlebars.SafeString(html);
-		});
+		}); */
 	}
 });
 
