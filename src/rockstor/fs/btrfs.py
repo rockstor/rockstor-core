@@ -795,6 +795,17 @@ def root_disk():
 
 
 def scan_disks(min_size):
+    """
+    Using lsblk we scan all attached disks and categorize them according to
+    if they are partitioned, their file system, if the drive hosts our / mount
+    point etc. The result of this scan is used by:-
+    view/disk.py _update_disk_state
+    for further analysis / categorization.
+    N.B. if a device (partition or whole dev) hosts swap or is of no interest
+    then it is ignored.
+    :param min_size: Discount all devices below this size in KB
+    :return: List containing drives of interest
+    """
     base_root_disk = root_disk()
     cmd = ['/usr/bin/lsblk', '-P', '-o',
            'NAME,MODEL,SERIAL,SIZE,TRAN,VENDOR,HCTL,TYPE,FSTYPE,LABEL,UUID']
@@ -814,7 +825,6 @@ def scan_disks(min_size):
             continue
         # setup our line / dev name dependant variables
         # easy read categorization flags, all False until found otherwise.
-        is_base_dev = False  # a base device = md126 or sda, NOT md0p2 or sda3
         is_root_disk = False  # the base dev that / is mounted on ie system disk
         is_partition = is_btrfs = False
         dmap = {}  # dictionary to hold line info from lsblk output eg NAME: sda
@@ -881,6 +891,11 @@ def scan_disks(min_size):
             root_hctl = dmap['HCTL']
             # Set readability flag as base_dev identified.
             is_root_disk = True  # root as returned by root_disk()
+            # And until we find a partition on this root disk we will label it
+            # as our root, this then allows for non partitioned root devices
+            # such as mdraid installs where root is directly on eg /dev/md126.
+            # N.B. this assumes base devs are listed before their partitions.
+            dmap['root'] = True
         # Normal partitions are of type 'part', md partitions are of type 'md'
         # normal disks are of type 'disk' md devices are of type eg 'raid1'.
         # Disk members of eg intel bios raid md devices fstype='isw_raid_member'
@@ -895,7 +910,9 @@ def scan_disks(min_size):
             is_btrfs = True
         # End readability variables assignment
         if is_partition:
-            # search our working dictionary of already scanned devices by name
+            # Search our working dictionary of already scanned devices by name
+            # We are assuming base devices are listed first and if of interest
+            # we have recorded it and can now back port it's partitioned status.
             for dname in dnames.keys():
                 if (re.match(dname, dmap['NAME']) is not None):
                     # Our device name has a base device entry of interest saved:
@@ -903,41 +920,87 @@ def scan_disks(min_size):
                     # Given we have found a partition on an existing base dev
                     # we should update that base dev's entry in dnames to
                     # parted "True" as when recorded lsblk type on base device
-                    # would have been disk or RAID1 (for base md device).
+                    # would have been disk or RAID1 or raid1 (for base md dev).
                     # Change the 12th entry (0 indexed) of this device to True
                     # The 12 entry is the parted flag so we label
-                    # our existing dnames entry as parted ie partitioned.
+                    # our existing base dev entry as parted ie partitioned.
                     dnames[dname][11] = True
+                    # Also take this opportunity to back port software raid info
+                    # from partitions to the base device if the base device
+                    # doesn't already have an fstype identifying it's raid
+                    # member status. For Example:-
+                    # bios raid base dev gives lsblk FSTYPE="isw_raid_member";
+                    # we already catch this directly.
+                    # Pure software mdraid base dev has lsblk FSTYPE="" but a
+                    # partition on this pure software mdraid that is a member
+                    # of eg md125 has FSTYPE="linux_raid_member"
+                    if dmap['FSTYPE'] == 'linux_raid_member' \
+                            and (dnames[dname][8] is None):
+                        # N.B. 9th item (index 8) in dname = FSTYPE
+                        # We are a partition that is an mdraid raid member so
+                        # backport this info to our base device ie sda1 raid
+                        # member so label sda's FSTYPE entry the same as it's
+                        # partition's entry if the above condition is met, ie
+                        # only if the base device doesn't already have an
+                        # FSTYPE entry ie None, this way we don't overwrite
+                        # / loose info and we only need to have one partition
+                        # identified as an mdraid member to classify the entire
+                        # device (the base device) as a raid member, at least in
+                        # part.
+                        dnames[dname][8] = dmap['FSTYPE']
         if ((not is_root_disk and not is_partition) or
-                (is_partition and is_btrfs)):
+                (is_btrfs)):
             # We have a non system disk that is not a partition
             # or
-            # We have a partition that is btrfs formatted
+            # We have a device that is btrfs formatted
             # In the case of a btrfs partition we override the parted flag.
             # Or we may just be a non system disk without partitions.
-            dmap['parted'] = False
+            dmap['parted'] = False  # could be corrected later
             dmap['root'] = False  # until we establish otherwise as we might be.
-            if is_partition and is_btrfs:
-                # a btrfs partition
+            if is_btrfs:
+                # a btrfs file system
                 if (re.match(base_root_disk, dmap['NAME']) is not None):
                     # We are assuming that a partition with a btrfs fs on is our
                     # root if it's name begins with our base system disk name.
                     # Now add the properties we stashed when looking at the base
                     # root disk rather than the root partition we see here.
                     dmap['SERIAL'] = root_serial
-                    dmap['root'] = True  # now we have base_root_disk name match
                     dmap['MODEL'] = root_model
                     dmap['TRAN'] = root_transport
                     dmap['VENDOR'] = root_vendor
                     dmap['HCTL'] = root_hctl
-                    # and if we are an md device then use get_md_members string
+                    # As we have found root to be on a partition we can now
+                    # un flag the base device as having been root prior to
+                    # finding this partition on that base_root_disk
+                    # N.B. Assumes base dev is listed before it's partitions
+                    # The 13th item in dnames entries is root so index = 12.
+                    # Only update our base_root_disk if it exists in our scanned
+                    # disks as this may be the first time we are seeing it.
+                    # Search to see if we already have an entry for the
+                    # the base_root_disk which may be us or our base dev if we
+                    # are a partition
+                    for dname in dnames.keys():
+                        if dname == base_root_disk:
+                            dnames[base_root_disk][12] = False
+                    # And update this device as real root
+                    # Note we may be looking at the base_root_disk or one of
+                    # it's partitions there after.
+                    dmap['root'] = True
+                    # If we are an md device then use get_md_members string
                     # to populate our MODEL since it is otherwise unused.
                     if (re.match('md', dmap['NAME']) is not None):
                         # cheap way to display our member drives
                         dmap['MODEL'] = get_md_members(dmap['NAME'])
                 else:
-                    # ignore btrfs partitions that are not on our system disk.
-                    continue
+                    # We have a non system disk btrfs filesystem.
+                    # Ie we are a whole disk or a partition with btrfs on but
+                    # NOT on the system disk.
+                    # Most likely a current btrfs data drive or one we could
+                    # import.
+                    # As we don't understand / support btrfs in partitions
+                    # then ignore / skip this btrfs device if it's a partition
+                    if is_partition:
+                        continue
             # convert size into KB
             size_str = dmap['SIZE']
             if (size_str[-1] == 'G'):
