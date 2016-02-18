@@ -239,11 +239,12 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
                 handle_exception(Exception(e_msg), request)
 
     @transaction.atomic
-    def delete(self, request, sname):
+    def delete(self, request, sname, command=''):
         """
         For now, we delete all snapshots, if any of the share and delete the
         share itself.
         """
+        force = True if (command == 'force') else False
         with self._handle_exception(request):
             share = self._validate_share(request, sname)
             if (Snapshot.objects.filter(share=share,
@@ -272,15 +273,16 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
                          'SFTP. Delete SFTP export and try again' % sname)
                 handle_exception(Exception(e_msg), request)
 
-            self._rockon_check(request, sname)
-
             if (Replica.objects.filter(share=sname).exists()):
                 e_msg = ('Share(%s) is configured for replication. If you are '
                          'sure, delete the replication task and try again.' % sname)
                 handle_exception(Exception(e_msg), request)
 
+            if (not force):
+                self._rockon_check(request, sname)
+
             try:
-                remove_share(share.pool, share.subvol_name, share.pqgroup)
+                remove_share(share.pool, share.subvol_name, share.pqgroup, force=force)
             except Exception, e:
                 logger.exception(e)
                 e_msg = ('Failed to delete the Share(%s). Error from the OS: %s' % (sname, e.__str__()))
