@@ -85,6 +85,10 @@ ServicesView = Backbone.View.extend({
 			collection: this.collection,
 			servicesColl: this.collection.toJSON(),
 		}));
+	    $('table.data-table').DataTable({
+	    	"iDisplayLength": 10,
+	    	"aLengthMenu": [[10, 15, 30, 45, -1], [10, 15, 30, 45, "All"]]
+	    });
 
 		//Initialize bootstrap switch
 		this.$("[type='checkbox']").bootstrapSwitch();
@@ -174,7 +178,7 @@ ServicesView = Backbone.View.extend({
 				return true;
 				}
 		});
-		
+
 		Handlebars.registerHelper('isServiceAD', function(serviceName){
 			if(serviceName == "active-directory") {
 				return true;
@@ -188,10 +192,7 @@ ServicesView = Backbone.View.extend({
 			}else{
 				html = '';
 			}
-			return new Handlebars.SafeString(html)
-		});	
+		    return new Handlebars.SafeString(html);
+		});
 	}
 });
-
-//Add pagination
-Cocktail.mixin(ServicesView, PaginationMixin);

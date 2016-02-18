@@ -19,16 +19,6 @@
   */
 </script>
 
-<script>
-$(document).ready(function() {
-    $('table.data-table').DataTable({
-        "iDisplayLength": 15,
-        "aLengthMenu": [[15, 30, 45, -1], [15, 30, 45, "All"]]
-    });
-});
-</script>
-
-
 <div id="messages"></div>
 <div class="row">
   <div class="col-md-12">
@@ -51,8 +41,8 @@ $(document).ready(function() {
                     <a href="#" class="configure" data-service-name="{{this.name}}"><i class="glyphicon glyphicon-wrench"></i></a>&nbsp;
                 {{/if}}
                  {{#if (isServiceAD this.name)}}
-                    <i class="fa fa-info-circle" title="By turning this service on, the system will attempt to join 
-                    Active Directory domain using the credentials provided during configuration. 
+                    <i class="fa fa-info-circle" title="By turning this service on, the system will attempt to join
+                    Active Directory domain using the credentials provided during configuration.
                     If enumerate option is checked in configuration, users and groups are displayed in the UI."></i>
                  {{/if}}
              </td>
@@ -65,7 +55,6 @@ $(document).ready(function() {
           {{/each}}
           </tbody>
         </table>
-        <div>{{pagination}}</div>
       </div>
     </div>
   </div>
