@@ -99,16 +99,16 @@ SharesView = RockstorLayoutView.extend({
 		_this.$('#delete-share-modal').modal();
 		return false;
 	},
-	
+
 	confirmShareDelete: function(event) {
 		var _this = this;
 		var button = $(event.currentTarget);
 		if (buttonDisabled(button)) return false;
 		disableButton(button);
 		$.ajax({
-			url: "/api/shares/" + shareName,
+			url: "/api/shares/" + shareName + "/force",
 			type: "DELETE",
-			dataType: "json",
+		    dataType: "json",
 			success: function() {
 				_this.collection.fetch({reset: true});
 				enableButton(button);
