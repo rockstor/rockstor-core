@@ -21,7 +21,7 @@
 
 <script>
 $(document).ready(function() {
-    $('#services-table').DataTable({
+    $('table.data-table').DataTable({
         "iDisplayLength": 15,
         "aLengthMenu": [[15, 30, 45, -1], [15, 30, 45, "All"]]
     });
@@ -36,7 +36,7 @@ $(document).ready(function() {
     <br>
     <div id="services-list">
       <div id="service">
-        <table id="services-table" class="table table-bordered table-striped" cellspacing="0" width="100%">
+        <table id="services-table" class="table table-bordered table-striped table-condensed data-table" width="100%">
           <thead>
             <tr>
               <th scope="col">Name</th>
@@ -44,7 +44,25 @@ $(document).ready(function() {
             </tr>
           </thead>
           <tbody>
-          {{display_services_table}}
+          {{#each servicesColl}}
+          <tr id="{{this.name}}">
+            <td>{{this.display_name}} &nbsp;
+                {{#if (configure_service this.name)}}
+                    <a href="#" class="configure" data-service-name="{{this.name}}"><i class="glyphicon glyphicon-wrench"></i></a>&nbsp;
+                {{/if}}
+                 {{#if (isServiceAD this.name)}}
+                    <i class="fa fa-info-circle" title="By turning this service on, the system will attempt to join 
+                    Active Directory domain using the credentials provided during configuration. 
+                    If enumerate option is checked in configuration, users and groups are displayed in the UI."></i>
+                 {{/if}}
+             </td>
+             <td id="{{this.name}}-status">
+                <input type="checkbox" data-service-name="{{this.name}}" data-size="mini" {{getStatus this.status}}>
+                <div class="command-status" data-service-name="{{this.name}}">&nbsp;</div>
+                <div class="simple-overlay" id="{{this.name}}-err-popup"><div class="overlay-content"></div></div>
+             </td>
+          </tr>
+          {{/each}}
           </tbody>
         </table>
         <div>{{pagination}}</div>
@@ -52,26 +70,3 @@ $(document).ready(function() {
     </div>
   </div>
 </div>
-
- {{!-- <div class="row">
-{{#each servicesColl}}
-<div class="col-sm-6">
-        <div class="panel panel-default">
-            <div class="panel-heading">{{@key}}</div>
-            <div class="panel-body">
-            <table class="table table-condensed table-striped table-bordered">
-            {{#each this}}
-            <tr>
-            <td>{{this.name}} &nbsp;&nbsp;
-            {{configure_service this.name}} &nbsp;&nbsp;
-            <input type="checkbox" data-service-name="' + serviceName + '" data-size="mini" {{getStatus this.status}}>
-            </td>
-            </tr>
-            {{/each}}
-            </table>
-            </div>
-        </div>
-        </div>
- {{/each}}
-</div><!--row-->--}}
-

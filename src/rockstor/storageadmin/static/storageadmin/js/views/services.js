@@ -81,24 +81,9 @@ ServicesView = Backbone.View.extend({
 		var _this = this;
 		$(this.el).empty();
 		// find service-monitor service
-		var categoryObj = {};
-		this.collection.each(function(service) {
-			//based on category, group the service names into an array.
-			var catKey = service.get('category');
-			var serName = service.get('display_name');
-			var servicesArr = [];
-			if(categoryObj.hasOwnProperty(catKey)){
-				categoryObj[catKey].push(service.toJSON());
-			}else{ 
-				servicesArr.push(service.toJSON());
-				categoryObj[catKey] = servicesArr;
-			}
-		});
-		//console.log('the cat obj is:',categoryObj);
 		$(this.el).append(this.template({
 			collection: this.collection,
-			servicesColl: categoryObj,
-			configurable_services: this.configurable_services
+			servicesColl: this.collection.toJSON(),
 		}));
 
 		//Initialize bootstrap switch
@@ -186,8 +171,13 @@ ServicesView = Backbone.View.extend({
 		Handlebars.registerHelper('configure_service', function(serviceName){
 			var html = '';
 			if(_this.configurable_services.indexOf(serviceName) > -1) {
-				html = '<a href="#" class="configure" data-service-name="' + serviceName + '"><i class="glyphicon glyphicon-wrench"></i></a>&nbsp';
-				return new Handlebars.SafeString(html)
+				return true;
+				}
+		});
+		
+		Handlebars.registerHelper('isServiceAD', function(serviceName){
+			if(serviceName == "active-directory") {
+				return true;
 			}
 		});
 
@@ -200,47 +190,6 @@ ServicesView = Backbone.View.extend({
 			}
 			return new Handlebars.SafeString(html)
 		});	
-
-		Handlebars.registerHelper('display_services_table', function(){
-			var html = '';
-			var _this = this;
-			var categoryObj = {};
-
-			this.collection.each(function(service) {
-				//based on category, group the service names into an array.
-				var catKey = service.get('category');
-				var serName = service.get('display_name');
-				var servicesArr = [];
-				if(categoryObj.hasOwnProperty(catKey)){
-					categoryObj[catKey].push(serName);
-				}else{ 
-					servicesArr.push(serName);
-					categoryObj[catKey] = servicesArr;
-				}
-				var serviceName = service.get('name');
-				html += '<tr id="' + serviceName + '">';
-				html += '<td>';
-				html += service.get('display_name') + '&nbsp';
-				if (_this.configurable_services.indexOf(serviceName) > -1) {
-					html += '<a href="#" class="configure" data-service-name="' + serviceName + '"><i class="glyphicon glyphicon-wrench"></i></a>&nbsp';
-				}
-				if (serviceName == 'active-directory') {
-					html += '<i class="fa fa-info-circle" title="By turning this service on, the system will attempt to join Active Directory domain using the credentials provided during configuration. If enumerate option is checked in configuration, users and groups are displayed in the UI."></i>';
-				}
-				html += '</td>';
-				html += '<td id="' + serviceName + '-status">';
-				if (service.get('status')) {
-					html += '<input type="checkbox" data-service-name="' + serviceName + '" data-size="mini" checked>';
-				} else {
-					html += '<input type="checkbox" data-service-name="' + serviceName + '" data-size="mini">';
-				}
-				html += '<div class="command-status" data-service-name="' + serviceName + '">&nbsp;</div>';
-				html += '<div class="simple-overlay" id="' + serviceName + '-err-popup"><div class="overlay-content"></div></div>';
-				html += '</td>';
-				html += '</tr>';
-			});
-			return new Handlebars.SafeString(html);
-		}); 
 	}
 });
 
