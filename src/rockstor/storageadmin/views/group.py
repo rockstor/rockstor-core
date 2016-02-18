@@ -35,39 +35,43 @@ class GroupListView(rfc.GenericView):
     serializer_class = GroupSerializer
 
     def get_queryset(self, *args, **kwargs):
-        return combined_groups()
+        with self._handle_exception(self.request):
+            return combined_groups()
 
     @transaction.commit_on_success
     def post(self, request):
-        groupname = request.data.get('groupname', None)
-        gid = request.data.get('gid', None)
-        admin = request.data.get('admin', True)
-        if (groupname is None or
-            re.match(settings.USERNAME_REGEX, groupname) is None):
-            e_msg = ('Groupname is invalid. It must confirm to the regex: %s' %
-                     (settings.USERNAME_REGEX))
-            handle_exception(Exception(e_msg), request)
-        if (len(groupname) > 30):
-            e_msg = ('Groupname cannot be more than 30 characters long')
-            handle_exception(Exception(e_msg), request)
-
-        for g in combined_groups():
-            if (g.groupname == groupname):
-                e_msg = ('Group(%s) already exists. Choose a different one' %
-                         g.groupname)
+        with self._handle_exception(request):
+            groupname = request.data.get('groupname', None)
+            gid = request.data.get('gid', None)
+            if (gid is not None):
+                gid = int(gid)
+            admin = request.data.get('admin', True)
+            if (groupname is None or
+                re.match(settings.USERNAME_REGEX, groupname) is None):
+                e_msg = ('Groupname is invalid. It must confirm to the regex: %s' %
+                         (settings.USERNAME_REGEX))
                 handle_exception(Exception(e_msg), request)
-            if (g.gid == gid):
-                e_msg = ('GID(%s) already exists. Choose a different one' %
-                         gid)
+            if (len(groupname) > 30):
+                e_msg = ('Groupname cannot be more than 30 characters long')
                 handle_exception(Exception(e_msg), request)
 
-        groupadd(groupname, gid)
-        grp_entries = grp.getgrnam(groupname)
-        gid = grp_entries[2]
-        group = Group(gid=gid, groupname=groupname, admin=admin)
-        group.save()
+            for g in combined_groups():
+                if (g.groupname == groupname):
+                    e_msg = ('Group(%s) already exists. Choose a different one' %
+                             g.groupname)
+                    handle_exception(Exception(e_msg), request)
+                if (g.gid == gid):
+                    e_msg = ('GID(%s) already exists. Choose a different one' %
+                             gid)
+                    handle_exception(Exception(e_msg), request)
 
-        return Response(GroupSerializer(group).data)
+            groupadd(groupname, gid)
+            grp_entries = grp.getgrnam(groupname)
+            gid = grp_entries[2]
+            group = Group(gid=gid, groupname=groupname, admin=admin)
+            group.save()
+
+            return Response(GroupSerializer(group).data)
 
 
 class GroupDetailView(rfc.GenericView):
@@ -96,27 +100,28 @@ class GroupDetailView(rfc.GenericView):
 
     @transaction.commit_on_success
     def delete(self, request, groupname):
-        if (groupname in self.exclude_list):
-            e_msg = ('Delete of restricted group(%s) is not supported.' %
-                     groupname)
-            handle_exception(Exception(e_msg), request)
-
-        if (Group.objects.filter(groupname=groupname).exists()):
-            g = Group.objects.get(groupname=groupname)
-            g.delete()
-        else:
-            found = False
-            for g in combined_groups():
-                if (g.groupname == groupname):
-                    found = True
-                    break
-            if (found is False):
-                e_msg = ('Group(%s) does not exist' % groupname)
+        with self._handle_exception(request):
+            if (groupname in self.exclude_list):
+                e_msg = ('Delete of restricted group(%s) is not supported.' %
+                         groupname)
                 handle_exception(Exception(e_msg), request)
 
-        try:
-            groupdel(groupname)
-        except Exception, e:
-            handle_exception(e, request)
+            if (Group.objects.filter(groupname=groupname).exists()):
+                g = Group.objects.get(groupname=groupname)
+                g.delete()
+            else:
+                found = False
+                for g in combined_groups():
+                    if (g.groupname == groupname):
+                        found = True
+                        break
+                if (found is False):
+                    e_msg = ('Group(%s) does not exist' % groupname)
+                    handle_exception(Exception(e_msg), request)
 
-        return Response()
+            try:
+                groupdel(groupname)
+            except Exception, e:
+                handle_exception(e, request)
+
+            return Response()
