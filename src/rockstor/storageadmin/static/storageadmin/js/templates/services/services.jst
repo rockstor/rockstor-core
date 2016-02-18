@@ -19,6 +19,15 @@
   */
 </script>
 
+<script>
+$(document).ready(function() {
+    $('table.data-table').DataTable({
+        "iDisplayLength": 15,
+        "aLengthMenu": [[15, 30, 45, -1], [15, 30, 45, "All"]]
+    });
+});
+</script>
+
 
 <div id="messages"></div>
 <div class="row">
@@ -27,7 +36,7 @@
     <br>
     <div id="services-list">
       <div id="service">
-        <table id="services-table" class="table table-condensed table-bordered table-hover table-striped tablesorter" width="100%">
+        <table id="services-table" class="table table-bordered table-striped table-condensed data-table" width="100%">
           <thead>
             <tr>
               <th scope="col">Name</th>
@@ -35,7 +44,25 @@
             </tr>
           </thead>
           <tbody>
-          {{display_services_table}}
+          {{#each servicesColl}}
+          <tr id="{{this.name}}">
+            <td>{{this.display_name}} &nbsp;
+                {{#if (configure_service this.name)}}
+                    <a href="#" class="configure" data-service-name="{{this.name}}"><i class="glyphicon glyphicon-wrench"></i></a>&nbsp;
+                {{/if}}
+                 {{#if (isServiceAD this.name)}}
+                    <i class="fa fa-info-circle" title="By turning this service on, the system will attempt to join 
+                    Active Directory domain using the credentials provided during configuration. 
+                    If enumerate option is checked in configuration, users and groups are displayed in the UI."></i>
+                 {{/if}}
+             </td>
+             <td id="{{this.name}}-status">
+                <input type="checkbox" data-service-name="{{this.name}}" data-size="mini" {{getStatus this.status}}>
+                <div class="command-status" data-service-name="{{this.name}}">&nbsp;</div>
+                <div class="simple-overlay" id="{{this.name}}-err-popup"><div class="overlay-content"></div></div>
+             </td>
+          </tr>
+          {{/each}}
           </tbody>
         </table>
         <div>{{pagination}}</div>

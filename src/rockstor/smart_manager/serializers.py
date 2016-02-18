@@ -52,7 +52,8 @@ class NetStatSerializer(serializers.ModelSerializer):
         model = NetStat
 
 
-class ServiceSerializer(serializers.ModelSerializer):
+class ServiceSerializer(serializers.ModelSerializer):    
+
     class Meta:
         model = Service
 
@@ -61,6 +62,7 @@ class ServiceStatusSerializer(serializers.ModelSerializer):
     name = serializers.CharField()
     display_name = serializers.CharField()
     config = serializers.CharField()
+    category = serializers.CharField()
 
     class Meta:
         model = ServiceStatus
