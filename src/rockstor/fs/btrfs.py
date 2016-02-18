@@ -377,7 +377,7 @@ def share_id(pool, share_name):
     raise Exception('subvolume id for share: %s not found.' % share_name)
 
 
-def remove_share(pool, share_name, pqgroup):
+def remove_share(pool, share_name, pqgroup, force=False):
     """
     umount share if its mounted.
     mount root pool
@@ -391,6 +391,12 @@ def remove_share(pool, share_name, pqgroup):
     subvol_mnt_pt = root_pool_mnt + '/' + share_name
     if (not is_subvol(subvol_mnt_pt)):
         return
+    if (force):
+        o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-o', subvol_mnt_pt])
+        for l in o:
+            if (re.match('ID ', l) is not None):
+                subvol = root_pool_mnt + '/' + l.split()[-1]
+                run_command([BTRFS, 'subvolume', 'delete', subvol], log=True)
     qgroup = ('0/%s' % share_id(pool, share_name))
     delete_cmd = [BTRFS, 'subvolume', 'delete', subvol_mnt_pt]
     run_command(delete_cmd, log=True)
