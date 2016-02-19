@@ -29,7 +29,7 @@
         {{displayCompressionAlgo this.compression_algo this.name}}
         </td>
         <td><a id="delete_share_{{this.name}}" data-name="{{this.name}}" data-action="delete"
-        data-pool="{{this.pool.name}}" data-size="{{humanize_size this.size}}" rel="tooltip" title="Delete share"><i class="glyphicon glyphicon-trash"></i></a></td>
+        data-pool="{{this.pool.name}}" data-size="{{humanize_size this.size}}" data-usage="{{humanize_size this.rusage}}" rel="tooltip" title="Delete share"><i class="glyphicon glyphicon-trash"></i></a></td>
     </tr>
     {{/each}}
     </tbody>
@@ -55,8 +55,9 @@
       </div>
       <div class="modal-body">
         <div class="messages"></div>
-        <p>Deleting <strong><em><span class="pass-share-name"></span></em></strong> will destroy all of it's data (<strong><span id="pass-share-size"></span></strong>). Are you sure?</p>
-	<label><input type="checkbox" id="force-delete" name="force-delete"> Force&nbsp<i class="fa fa-info-circle fa-lg" title="Forces the deletion of undetected Snapshots and then deletes the Share. Useful to forcefully delete the Rock-on root share, for example." rel="tooltip"></i></label>
+        <p>Deleting <strong><em><span class="pass-share-name"></span></em></strong> will destroy all of it's data (<strong><span id="pass-share-usage"></span></strong>). Are you sure?</p>
+	<label><input type="checkbox" id="force-delete" name="force-delete"> Force Delete &nbsp;<i class="fa fa-info-circle fa-lg" 
+	title="Forces the deletion of undetected Snapshots and then deletes the Share. Useful to forcefully delete the Rock-on root share, for example." rel="tooltip"></i></label>
       </div>
       <div class="modal-footer">
         <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">No</button>

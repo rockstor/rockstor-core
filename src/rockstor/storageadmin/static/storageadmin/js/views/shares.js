@@ -91,10 +91,10 @@ SharesView = RockstorLayoutView.extend({
 		var button = $(event.currentTarget);
 		if (buttonDisabled(button)) return false;
 		shareName = button.attr('data-name');
-		shareSize = button.attr('data-size');
+		shareUsage = button.attr('data-usage');
 		// set share name in confirm dialog
 		_this.$('.pass-share-name').html(shareName);
-		_this.$('#pass-share-size').html(shareSize);
+		_this.$('#pass-share-usage').html(shareUsage);
 		//show the dialog
 		_this.$('#delete-share-modal').modal();
 		return false;
@@ -105,8 +105,12 @@ SharesView = RockstorLayoutView.extend({
 		var button = $(event.currentTarget);
 		if (buttonDisabled(button)) return false;
 		disableButton(button);
+		var url = "/api/shares/" + shareName;
+		if($("#force-delete").prop("checked")){
+			url += "/force";
+		}
 		$.ajax({
-			url: "/api/shares/" + shareName + "/force",
+			url: url,
 			type: "DELETE",
 		    dataType: "json",
 			success: function() {
