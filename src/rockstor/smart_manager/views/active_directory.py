@@ -19,7 +19,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import re
 import socket
 import json
-import subprocess
 from tempfile import mkstemp
 import shutil
 from rest_framework.response import Response
@@ -33,6 +32,7 @@ from system.services import systemctl
 
 import logging
 logger = logging.getLogger(__name__)
+NET = '/usr/bin/net'
 
 
 class ActiveDirectoryServiceView(BaseServiceDetailView):
@@ -76,24 +76,11 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
         cmd = [NET, 'ads', 'join', '-U', admin]
         if (method == 'sssd'):
             cmd = ['realm', 'join', '-U', admin, domain]
-        p = subprocess.Popen(cmd, shell=False,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE,
-                             stdin=subprocess.PIPE)
-        pstr = ('%s\n' % config.get('password'))
-        out, err = p.communicate(input=pstr)
-        rc = p.returncode
-        if (rc != 0):
-            if (rc == 1 and method == 'sssd' and
-                re.search('Already joined to this domain', err) is not None):
-                return
-            e_msg = ('Return code: %s. stdout: %s. stderr: %s.' %
-                     (rc, out, err))
-            raise Exception(e_msg)
+        return run_command(cmd, input=('%s\n' % config.get('password')))
 
     @staticmethod
     def _domain_workgroup(domain=None, method='winbind'):
-        cmd = ['net', 'ads', 'workgroup']
+        cmd = [NET, 'ads', 'workgroup']
         if (method == 'sssd'):
             cmd = ['adcli', 'info', domain]
         o, e, rc = run_command(cmd)
@@ -103,7 +90,7 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
         for l in o:
             l = l.strip()
             if (re.match(match_str, l) is not None):
-                return l.split(ms)[1]
+                return l.split(match_str)[1]
         raise Exception('Failed to retrieve Workgroup. out: %s err: %s rc: %d'
                         % (o, e, rc))
 
@@ -132,10 +119,21 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
         systemctl('sssd', 'restart')
 
     @staticmethod
-    def _leave_domain(config):
-        domain = config.get('domain')
-        cmd = ['realm', 'leave', domain]
-        return run_command(cmd)
+    def _leave_domain(config, method='winbind'):
+        pstr = ('%s\n' % config.get('password'))
+        cmd = [NET, 'ads', 'leave', '-U', config.get('username')]
+        if (method == 'sssd'):
+            cmd = ['realm', 'leave', config.get('domain')]
+            return run_command(cmd)
+        try:
+            return run_command(cmd, input=pstr)
+        except:
+            status_cmd = [NET, 'ads', 'status', '-U', config.get('username')]
+            o, e, rc = run_command(status_cmd, input=pstr, throw=False)
+            if (rc != 0):
+                return logger.debug('Status shows not joined. out: %s err: %s rc: %d' %
+                                    (o, e, rc))
+            raise
 
     def _config(self, service, request):
         try:
@@ -182,38 +180,40 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
                 self._resolve_check(config.get('domain'), request)
 
                 if (method == 'winbind'):
-                    cmd = [AUTHCONFIG, ]
+                    cmd = ['/usr/sbin/authconfig', ]
                     #nss
                     cmd += ['--enablewinbind', '--enablewins',]
                     #pam
                     cmd += ['--enablewinbindauth',]
                     #kerberos
-                    cmd += ['--smbservers=ad.%s' % domain, '--krb5realm=%s' % domain.upper(),]
+                    cmd += ['--krb5realm=%s' % domain.upper(),]
                     #winbind
                     cmd += ['--enablewinbindoffline', '--enablewinbindkrb5',
                             '--winbindtemplateshell=/bin/sh',]
                     #general
                     cmd += ['--update', '--enablelocauthorize',]
                     run_command(cmd)
+                workgroup = self._domain_workgroup(domain, method=method)
+                update_global_config(workgroup, domain)
                 self._join_domain(config, method=method)
                 if (method == 'sssd' and config.get('enumerate') is True):
                     self._update_sssd(domain)
 
-                workgroup = self._domain_workgroup(domain, method=method)
+
                 so = Service.objects.get(name='smb')
                 so.config = json.dumps({'workgroup': workgroup})
                 so.save()
-                update_global_config(workgroup, domain)
+
                 if (method == 'winbind'):
-                    systemctl('enable', 'winbind')
-                    systemctl('start', 'winbind')
-                systemctl('restart', 'smb')
-                systemctl('restart', 'nmb')
+                    systemctl('winbind', 'enable')
+                    systemctl('winbind', 'start')
+                systemctl('smb', 'restart')
+                systemctl('nmb', 'restart')
 
             elif (command == 'stop'):
                 config = self._config(service, request)
                 try:
-                    self._leave_domain(config)
+                    self._leave_domain(config, method=method)
                 except Exception, e:
                     e_msg = ('Failed to leave AD domain(%s). Error: %s' %
                              (config.get('domain'), e.__str__()))
