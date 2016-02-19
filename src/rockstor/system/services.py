@@ -159,11 +159,9 @@ def service_status(service_name, config=None):
                            throw=False)
     elif (service_name == 'active-directory'):
         if (config is not None):
-            REALM = '/usr/sbin/realm'
-            o, e, rc = run_command([REALM, 'list', '--name-only'])
-            for l in o:
-                if (l == config['domain']):
-                    return '', '', 0
+            cmd = [NET, 'ads', 'status', '-U', config.get('username')]
+            return run_command(cmd, input=('%s\n' % config.get('password')),
+                               throw=False)
         # bootstrap switch subsystem interprets -1 as ON so returning 1 instead
         return '', '', 1
 
