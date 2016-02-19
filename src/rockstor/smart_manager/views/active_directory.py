@@ -90,7 +90,7 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
         for l in o:
             l = l.strip()
             if (re.match(match_str, l) is not None):
-                return l.split(match_str)[1]
+                return l.split(match_str)[1].strip()
         raise Exception('Failed to retrieve Workgroup. out: %s err: %s rc: %d'
                         % (o, e, rc))
 
@@ -185,6 +185,8 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
                     cmd += ['--enablewinbind', '--enablewins',]
                     #pam
                     cmd += ['--enablewinbindauth',]
+                    #smb
+                    cmd += ['--smbsecurity', 'ads', '--smbrealm', domain.upper(),]
                     #kerberos
                     cmd += ['--krb5realm=%s' % domain.upper(),]
                     #winbind
@@ -198,8 +200,6 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
                 self._join_domain(config, method=method)
                 if (method == 'sssd' and config.get('enumerate') is True):
                     self._update_sssd(domain)
-
-
                 so = Service.objects.get(name='smb')
                 so.config = json.dumps({'workgroup': workgroup})
                 so.save()
@@ -214,10 +214,12 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
                 config = self._config(service, request)
                 try:
                     self._leave_domain(config, method=method)
+                    update_global_config()
+                    systemctl('smb', 'restart')
+                    systemctl('nmb', 'restart')
                 except Exception, e:
                     e_msg = ('Failed to leave AD domain(%s). Error: %s' %
                              (config.get('domain'), e.__str__()))
                     handle_exception(Exception(e_msg), request)
-
 
             return Response()
