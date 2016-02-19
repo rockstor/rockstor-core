@@ -69,10 +69,12 @@ def inplace_replace(of, nf, regex, nl):
 
 
 def run_command(cmd, shell=False, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE, throw=True, log=False):
+                stderr=subprocess.PIPE, stdin=subprocess.PIPE, throw=True,
+                log=False, input=None):
     try:
-        p = subprocess.Popen(cmd, shell=shell, stdout=stdout, stderr=stderr)
-        out, err = p.communicate()
+        p = subprocess.Popen(cmd, shell=shell, stdout=stdout, stderr=stderr,
+                             stdin=stdin)
+        out, err = p.communicate(input=input)
         out = out.split('\n')
         err = err.split('\n')
         rc = p.returncode
