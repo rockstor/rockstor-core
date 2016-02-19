@@ -70,10 +70,12 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
             handle_exception(Exception(e_msg), request)
 
     @staticmethod
-    def _join_domain(config):
+    def _join_domain(config, method='winbind'):
         domain = config.get('domain')
         admin = config.get('username')
-        cmd = ['realm', 'join', '-U', admin, domain]
+        cmd = [NET, 'ads', 'join', '-U', admin]
+        if (method == 'sssd'):
+            cmd = ['realm', 'join', '-U', admin, domain]
         p = subprocess.Popen(cmd, shell=False,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE,
@@ -82,16 +84,25 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
         out, err = p.communicate(input=pstr)
         rc = p.returncode
         if (rc != 0):
+            if (rc == 1 and method == 'sssd' and
+                re.search('Already joined to this domain', err) is not None):
+                return
             e_msg = ('Return code: %s. stdout: %s. stderr: %s.' %
                      (rc, out, err))
             raise Exception(e_msg)
 
     @staticmethod
-    def _domain_workgroup(domain):
-        o, e, rc = run_command(['adcli', 'info', domain])
-        ms = 'domain-short = '
+    def _domain_workgroup(domain=None, method='winbind'):
+        cmd = ['net', 'ads', 'workgroup']
+        if (method == 'sssd'):
+            cmd = ['adcli', 'info', domain]
+        o, e, rc = run_command(cmd)
+        match_str = 'Workgroup:'
+        if (method == 'sssd'):
+            match_str = 'domain-short = '
         for l in o:
-            if (re.match(ms, l) is not None):
+            l = l.strip()
+            if (re.match(match_str, l) is not None):
                 return l.split(ms)[1]
         raise Exception('Failed to retrieve Workgroup. out: %s err: %s rc: %d'
                         % (o, e, rc))
@@ -138,6 +149,7 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
     def post(self, request, command):
 
         with self._handle_exception(request):
+            method = 'winbind'
             service = Service.objects.get(name='active-directory')
             if (command == 'config'):
                 config = request.data.get('config')
@@ -169,21 +181,34 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
                 #2. Name resolution check?
                 self._resolve_check(config.get('domain'), request)
 
-                try:
-                    #4. realmd stuff
-                    self._join_domain(config)
-                    if (config.get('enumerate') is True):
-                        self._update_sssd(domain)
-                except Exception, e:
-                    e_msg = ('Failed to join AD domain(%s). Error: %s' %
-                             (config.get('domain'), e.__str__()))
-                    handle_exception(Exception(e_msg), request)
+                if (method == 'winbind'):
+                    cmd = [AUTHCONFIG, ]
+                    #nss
+                    cmd += ['--enablewinbind', '--enablewins',]
+                    #pam
+                    cmd += ['--enablewinbindauth',]
+                    #kerberos
+                    cmd += ['--smbservers=ad.%s' % domain, '--krb5realm=%s' % domain.upper(),]
+                    #winbind
+                    cmd += ['--enablewinbindoffline', '--enablewinbindkrb5',
+                            '--winbindtemplateshell=/bin/sh',]
+                    #general
+                    cmd += ['--update', '--enablelocauthorize',]
+                    run_command(cmd)
+                self._join_domain(config, method=method)
+                if (method == 'sssd' and config.get('enumerate') is True):
+                    self._update_sssd(domain)
 
-                workgroup = self._domain_workgroup(domain)
+                workgroup = self._domain_workgroup(domain, method=method)
                 so = Service.objects.get(name='smb')
                 so.config = json.dumps({'workgroup': workgroup})
                 so.save()
                 update_global_config(workgroup, domain)
+                if (method == 'winbind'):
+                    systemctl('enable', 'winbind')
+                    systemctl('start', 'winbind')
+                systemctl('restart', 'smb')
+                systemctl('restart', 'nmb')
 
             elif (command == 'stop'):
                 config = self._config(service, request)
