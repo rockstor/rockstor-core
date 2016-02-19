@@ -230,6 +230,7 @@ def config_network_device(name, dtype='ethernet', method='auto', ipaddr=None,
             mod_cmd.extend(['connection.autoconnect', 'no'])
         if (len(mod_cmd) > 4):
             run_command(mod_cmd)
+    run_command([NMCLI, 'c', 'up', name])
     #wait for the interface to be activated
     num_attempts = 0
     while True:
