@@ -90,21 +90,27 @@ def refresh_smb_config(exports):
     shutil.move(npath, SMB_CONFIG)
 
 
-def update_global_config(workgroup, realm=None):
+def update_global_config(workgroup=None, realm=None):
     fh, npath = mkstemp()
     with open(SMB_CONFIG) as sfo, open(npath, 'w') as tfo:
         tfo.write('[global]\n')
-        tfo.write('    workgroup = %s\n' % workgroup)
-        tfo.write('    server string = Samba Server Version %v\n')
+        if (workgroup is not None):
+            tfo.write('    workgroup = %s\n' % workgroup)
         tfo.write('    log file = /var/log/samba/log.%m\n')
-        tfo.write('    max log size = 50\n')
-        tfo.write('    encrypt passwords = yes\n')
-        tfo.write('    passdb backend = tdbsam\n')
         if (realm is not None):
             tfo.write('    security = ads\n')
             tfo.write('    realm = %s\n' % realm)
-        else:
-            tfo.write('    security = user\n')
+            tfo.write('    template shell = /bin/sh\n')
+            tfo.write('    kerberos method = secrets and keytab\n')
+            tfo.write('    winbind use default domain = false\n')
+            tfo.write('    winbind offline logon = true\n')
+            tfo.write('    winbind enum users = yes\n')
+            tfo.write('    winbind enum groups = yes\n')
+            tfo.write('    idmap config * : backend = tdb\n')
+            tfo.write('    idmap config * : range = 1000000-1999999\n')
+            tfo.write('    idmap config %s : backend  = nss\n' % workgroup)
+            tfo.write('    idmap config %s : range = 1000-999999\n' % workgroup)
+        #@todo: remove log level once AD integration is working well for users.
         tfo.write('    log level = 3\n')
         tfo.write('    load printers = no\n')
         tfo.write('    cups options = raw\n')
