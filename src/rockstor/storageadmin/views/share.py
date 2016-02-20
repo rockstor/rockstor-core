@@ -28,6 +28,7 @@ from smart_manager.models import (ShareUsage, Replica)
 from fs.btrfs import (add_share, remove_share, update_quota, share_usage,
                       set_property, mount_share, qgroup_id, qgroup_create)
 from system.osi import is_share_mounted
+from system.services import systemctl
 from storageadmin.serializers import ShareSerializer
 from storageadmin.util import handle_exception
 from django.conf import settings
@@ -219,31 +220,31 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
             return Response(ShareSerializer(share).data)
 
     @staticmethod
-    def _rockon_check(request, sname):
-        try:
-            s = Service.objects.get(name='docker')
-            config = json.loads(s.config)
-        except TypeError, e:
-            return logger.debug('Could not check if the Share(%s) is docker '
-                                'root. Perhaps docker is not configured yet. '
-                                'exception: %s' % (sname, e.__str__()))
+    def _rockon_check(request, sname, force):
+        s = Service.objects.get(name='docker')
+        if (s.config is None):
+            return
 
-        if ('root_share' in config):
-            if (config['root_share'] == sname):
-                e_msg = ('Share(%s) cannot be deleted because it is in use '
-                         'by Rock-on service. If you really need to delete '
-                         'it, (1)turn the service off, (2)change its '
-                         'configuration to use a different Share and then '
-                         '(3)try deleting this Share(%s) again.' %
-                         (sname, sname))
-                handle_exception(Exception(e_msg), request)
+        config = json.loads(s.config)
+        if (config.get('root_share') == sname):
+            if (force):
+                #turn off docker service, nullify config.
+                systemctl(s.name, 'stop')
+                systemctl(s.name, 'disable')
+                s.config = None
+                return s.save()
+            e_msg = ('Share(%s) cannot be deleted because it is in use '
+                     'by Rock-on service. If you must delete anyway, select '
+                     'the force checkbox and try again.' % sname)
+            handle_exception(Exception(e_msg), request)
 
     @transaction.atomic
-    def delete(self, request, sname):
+    def delete(self, request, sname, command=''):
         """
         For now, we delete all snapshots, if any of the share and delete the
         share itself.
         """
+        force = True if (command == 'force') else False
         with self._handle_exception(request):
             share = self._validate_share(request, sname)
             if (Snapshot.objects.filter(share=share,
@@ -272,15 +273,15 @@ class ShareDetailView(ShareMixin, rfc.GenericView):
                          'SFTP. Delete SFTP export and try again' % sname)
                 handle_exception(Exception(e_msg), request)
 
-            self._rockon_check(request, sname)
-
             if (Replica.objects.filter(share=sname).exists()):
                 e_msg = ('Share(%s) is configured for replication. If you are '
                          'sure, delete the replication task and try again.' % sname)
                 handle_exception(Exception(e_msg), request)
 
+            self._rockon_check(request, sname, force=force)
+
             try:
-                remove_share(share.pool, share.subvol_name, share.pqgroup)
+                remove_share(share.pool, share.subvol_name, share.pqgroup, force=force)
             except Exception, e:
                 logger.exception(e)
                 e_msg = ('Failed to delete the Share(%s). Error from the OS: %s' % (sname, e.__str__()))
