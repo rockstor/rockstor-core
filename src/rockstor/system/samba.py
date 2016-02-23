@@ -107,9 +107,9 @@ def update_global_config(workgroup=None, realm=None):
             tfo.write('    winbind enum users = yes\n')
             tfo.write('    winbind enum groups = yes\n')
             tfo.write('    idmap config * : backend = tdb\n')
-            tfo.write('    idmap config * : range = 1000000-1999999\n')
-            tfo.write('    idmap config %s : backend  = nss\n' % workgroup)
-            tfo.write('    idmap config %s : range = 1000-999999\n' % workgroup)
+            tfo.write('    idmap config * : range = 100000-999999\n')
+            tfo.write('    idmap config %s : backend = rid\n' % workgroup)
+            tfo.write('    idmap config %s : range = 10000-99999\n' % workgroup)
         #@todo: remove log level once AD integration is working well for users.
         tfo.write('    log level = 3\n')
         tfo.write('    load printers = no\n')
