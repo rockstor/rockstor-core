@@ -50,28 +50,26 @@ EmailView = RockstorLayoutView.extend({
 	},
 
 	renderEmail: function() {
-		var email = null;
+	    var email = {};
 		if (this.emails.length > 0) {
-			email = this.emails.at(0);
-			var emailObject = {
-					sender: email.get('sender'),
-					receiver: email.get('receiver'),
-					server: email.get('smtp_server')
-			};
+		    email = this.emails.at(0).toJSON();
 		}
+	    var isEmailNull = true;
+	    if (Object.keys(email).length > 0) {
+		isEmailNull = false;
+	    }
 
 		$(this.el).html(this.template({
-			email: email,
-			isEmailNull: _.isNull(email),
-			emailObj: emailObject
+		    email: email,
+		    isEmailNull: isEmailNull
 		}));
 	},
 
 	renderEmailForm: function() {
 		var _this = this;
-		var email = null;
+	    var email = {};
 		if (this.emails.length > 0) {
-			email = this.emails.at(0);
+		    email = this.emails.at(0).toJSON();
 		}
 		$(this.el).html(this.updatetemplate({
 			email: email
@@ -163,26 +161,32 @@ EmailView = RockstorLayoutView.extend({
 		Handlebars.registerHelper('add_email', function(inputName) {
 			var html = '';
 			if(inputName == "name"){
-				if(this.email != null){
-					html += 'value="' + this.email.get('name') + '"'; 
+				if('name' in this.email){
+					html += 'value="' + this.email.name + '"';
 				}
 				html += 'title="Name associated with the email, eg: firstname lastname."';
 			}
 			if(inputName == "email"){
-				if(this.email != null){
-					html += 'value="' + this.email.get('sender') + '"'; 
+				if('sender' in this.email){
+					html += 'value="' + this.email.sender + '"';
 				}
 				html += 'title="Rockstor will send email notifications from this address / account. For better security we highly recommend using a separate dedicated email account for this purpose."';
 			}
 			if(inputName == "smtp"){
-				if(this.email != null){
-					html += 'value="' + this.email.get('smtp_server') + '"'; 
+				if('smtp_server' in this.email){
+					html += 'value="' + this.email.smtp_server + '"';
 				}
 				html += 'title="smtp server url of your email provider. eg: smtp.gmail.com, smtp.zoho.com etc.."';
 			}
+		    if (inputName == 'port') {
+			if ('port' in this.email) {
+			    html += 'value="' + this.email.port + '"';
+			}
+			html += 'value=587 title="port number for the smtp server. Defaults to 587"';
+		    }
 			if(inputName == "recipient"){
-				if(this.email != null){
-					html += 'value="' + this.email.get('receiver') + '"'; 
+				if('receiver' in this.email){
+					html += 'value="' + this.email.receiver + '"';
 				}
 				html += 'title="Rockstor will send email notifications to this address. eg: your personal email."';
 			}
