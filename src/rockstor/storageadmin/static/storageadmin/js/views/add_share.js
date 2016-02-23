@@ -145,7 +145,7 @@ AddShareView = Backbone.View.extend({
 	      }
               var size = $('#share_size').val();
               var sizeFormat = size.replace(/[^a-z]/gi, "");
-              var size_array = size.split(sizeFormat)
+		var size_array = size.split(sizeFormat);
               var size_value = Math.round(size_array[0]);
 
               if(sizeFormat == 'TB' || sizeFormat == 'tb' || sizeFormat == 'Tb') {

@@ -55,6 +55,13 @@
     </div>
 
     <div class="form-group">
+      <label class="col-sm-4 control-label">SMTP Port</label>
+      <div class="col-sm-4">
+	<input class="form-control" type="text" id="port" name="port" {{add_email "port"}}>
+      </div>
+    </div>
+
+    <div class="form-group">
       <div class="col-sm-offset-4 col-sm-8">
         <label class="radio inline">
           <input type="radio" name="secured_connection" value="TLS" checked> Secured connection using TLS
