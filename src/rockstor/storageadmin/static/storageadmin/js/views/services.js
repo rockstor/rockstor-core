@@ -179,7 +179,7 @@ ServicesView = Backbone.View.extend({
 					html += '<a href="#" class="configure" data-service-name="' + serviceName + '"><i class="glyphicon glyphicon-wrench"></i></a>&nbsp';
 				}
 				if (serviceName == 'active-directory') {
-					html += '<i class="fa fa-info-circle" title="By turning this service on, the system will attempt to join Active Directory domain using the credentials provided during configuration. If enumerate option is checked in configuration, users and groups are displayed in the UI."></i>';
+					html += '<i class="fa fa-info-circle" title="By turning this service on, the system will attempt to join Active Directory domain using the credentials provided during configuration. If configuration is modified, make sure to stop and start it again."></i>';
 				}
 				html += '</td>';
 				html += '<td id="' + serviceName + '-status">';

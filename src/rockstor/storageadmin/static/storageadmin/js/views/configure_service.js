@@ -162,6 +162,11 @@ ConfigureServiceView = RockstorLayoutView.extend({
 	    placement: 'right',
 	    title: 'Password for the above username.'
 	});
+	this.$('#active-directory-form #idmap_range').tooltip({
+	    html: true,
+	    placement: 'right',
+	    title: 'Default should work for most cases. rid idmap backend is the only one supported. The default range is 10000 - 999999.'
+	});
 	this.$('#smartd-form #smartd_config').tooltip({
 	    html: true,
 	    placement: 'right',

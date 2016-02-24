@@ -90,7 +90,7 @@ def refresh_smb_config(exports):
     shutil.move(npath, SMB_CONFIG)
 
 
-def update_global_config(workgroup=None, realm=None):
+def update_global_config(workgroup=None, realm=None, idmap_range=None):
     fh, npath = mkstemp()
     with open(SMB_CONFIG) as sfo, open(npath, 'w') as tfo:
         tfo.write('[global]\n')
@@ -98,6 +98,8 @@ def update_global_config(workgroup=None, realm=None):
             tfo.write('    workgroup = %s\n' % workgroup)
         tfo.write('    log file = /var/log/samba/log.%m\n')
         if (realm is not None):
+            idmap_high = int(idmap_range.split()[2])
+            default_range = '%s - %s' % (idmap_high + 1, idmap_high + 1000000)
             tfo.write('    security = ads\n')
             tfo.write('    realm = %s\n' % realm)
             tfo.write('    template shell = /bin/sh\n')
@@ -107,9 +109,9 @@ def update_global_config(workgroup=None, realm=None):
             tfo.write('    winbind enum users = yes\n')
             tfo.write('    winbind enum groups = yes\n')
             tfo.write('    idmap config * : backend = tdb\n')
-            tfo.write('    idmap config * : range = 100000-999999\n')
+            tfo.write('    idmap config * : range = %s\n' % default_range)
             tfo.write('    idmap config %s : backend = rid\n' % workgroup)
-            tfo.write('    idmap config %s : range = 10000-99999\n' % workgroup)
+            tfo.write('    idmap config %s : range = %s\n' % (workgroup, idmap_range))
         #@todo: remove log level once AD integration is working well for users.
         tfo.write('    log level = 3\n')
         tfo.write('    load printers = no\n')
