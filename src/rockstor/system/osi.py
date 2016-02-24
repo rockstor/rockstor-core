@@ -72,6 +72,7 @@ def run_command(cmd, shell=False, stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE, stdin=subprocess.PIPE, throw=True,
                 log=False, input=None):
     try:
+        cmd = map(str, cmd)
         p = subprocess.Popen(cmd, shell=shell, stdout=stdout, stderr=stderr,
                              stdin=stdin)
         out, err = p.communicate(input=input)
