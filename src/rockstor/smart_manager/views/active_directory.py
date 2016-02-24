@@ -160,6 +160,7 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
                 self._ntp_check(request)
 
                 #3. realm discover check?
+                #@todo: phase our realm and just use net?
                 domain = config.get('domain')
                 try:
                     cmd = ['realm', 'discover', '--name-only', domain]
@@ -168,6 +169,29 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
                     e_msg = ('Failed to discover the given(%s) AD domain. '
                              'Error: %s' % (domain, e.__str__()))
                     handle_exception(Exception(e_msg), request)
+
+                default_range = '10000 - 999999'
+                idmap_range = config.get('idmap_range', '10000 - 999999')
+                idmap_range = idmap_range.strip()
+                if (len(idmap_range) > 0):
+                    rfields = idmap_range.split()
+                    if (len(rfields) != 3):
+                        raise Exception('Invalid idmap range. valid format is '
+                                        'two integers separated by a -. eg: '
+                                        '10000 - 999999')
+                    try:
+                        rlow = int(rfields[0].strip())
+                        rhigh = int(rfields[2].strip())
+                    except Exception, e:
+                        raise Exception('Invalid idmap range. Numbers in the '
+                                        'range must be valid integers. '
+                                        'Error: %s.' % e.__str__())
+                    if (rlow >= rhigh):
+                        raise Exception('Invalid idmap range. Numbers in the '
+                                        'range must go from low to high. eg: '
+                                        '10000 - 999999')
+                else:
+                    config['idmap_range'] = default_range
 
                 self._save_config(service, config)
 
@@ -196,7 +220,7 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
                     cmd += ['--update', '--enablelocauthorize',]
                     run_command(cmd)
                 workgroup = self._domain_workgroup(domain, method=method)
-                update_global_config(workgroup, domain)
+                update_global_config(workgroup, domain, config.get('idmap_range'))
                 self._join_domain(config, method=method)
                 if (method == 'sssd' and config.get('enumerate') is True):
                     self._update_sssd(domain)

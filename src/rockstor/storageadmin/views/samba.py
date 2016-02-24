@@ -150,6 +150,7 @@ class SambaListView(SambaMixin, ShareMixin, rfc.GenericView):
                     mount_share(share, mnt_pt)
 
                 admin_users = request.data.get('admin_users', [])
+                if (admin_users is None): admin_users = []
                 self._set_admin_users(admin_users, smb_share)
             refresh_smb_config(list(SambaShare.objects.all()))
             self._restart_samba()
@@ -194,6 +195,7 @@ class SambaDetailView(SambaMixin, rfc.GenericView):
             del(options['custom_config'])
             smbo.__dict__.update(**options)
             admin_users = request.data.get('admin_users', [])
+            if (admin_users is None): admin_users = []
             for uo in User.objects.filter(smb_shares=smbo):
                 if (uo.username not in admin_users):
                     uo.smb_shares.remove(smbo)
