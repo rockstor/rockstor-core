@@ -28,7 +28,7 @@
 AddScheduledTaskView = RockstorLayoutView.extend({
 	events: {
 		"click #js-cancel": "cancel",
-		"change #task-type": "renderOptionalFields"
+		"change #task_type": "renderOptionalFields"
 	},
 
 	initialize: function() {
@@ -69,7 +69,7 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 				pool: this.taskDef.pool(),
 				maxCount: this.taskDef.max_count(),
 				visible: this.taskDef.visible(),
-				enabled: this.taskDef.get('enabled'),	
+				enabled: this.taskDef.get('enabled'),
 		};
 		var isSnapshot = false;
 		if(taskObj.type == 'snapshot'){
@@ -107,14 +107,14 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 				share: {
 					required: {
 						depends: function(element) {
-							return (_this.$('#task-type').val() == 'snapshot');
+							return (_this.$('#task_type').val() == 'snapshot');
 						}
 					}
 				},
-				prefix: {
+				'meta.prefix': {
 					required: {
 						depends: function(element) {
-							return (_this.$('#task-type').val() == 'snapshot');
+							return (_this.$('#task_type').val() == 'snapshot');
 						}
 					}
 				},
@@ -123,7 +123,7 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 					min: 1,
 					required: {
 						depends: function(element) {
-							return (_this.$('#task-type').val() == 'snapshot');
+							return (_this.$('#task_type').val() == 'snapshot');
 						},
 
 					}
@@ -131,7 +131,7 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 				pool: {
 					required: {
 						depends: function(element) {
-							return (_this.$('#task-type').val() == 'scrub');
+							return (_this.$('#task_type').val() == 'scrub');
 						}
 					}
 				}
@@ -171,7 +171,7 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 	renderOptionalFields: function() {
 		var taskType = null;
 		if (this.taskDefId == null) {
-			taskType = this.$('#task-type').val();
+			taskType = this.$('#task_type').val();
 		} else {
 			taskType = this.taskDef.get('task_type');
 		}
@@ -206,7 +206,7 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 		Handlebars.registerHelper('display_taskType_options', function(){
 			var html = '',
 			_this = this;
-			_.each(_this.taskTypes, function(taskType, index) { 
+			_.each(_this.taskTypes, function(taskType, index) {
 				html += '<option value="' + taskType + '"> ' + taskType + '</option>';
 			});
 			return new Handlebars.SafeString(html);
@@ -214,7 +214,7 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 
 		Handlebars.registerHelper('display_snapshot_shares', function(){
 			var html = '';
-			this.shares.each(function(share, index) { 
+			this.shares.each(function(share, index) {
 				html += '<option value="' + share.get('name') + '"> ' + share.get('name') + '</option>';
 			});
 			return new Handlebars.SafeString(html);
@@ -223,7 +223,7 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 		Handlebars.registerHelper('display_scrub_pools', function(){
 			var html = '';
 			console.log("the pools are: ", this.pools);
-			this.pools.each(function(pool, index) { 
+			this.pools.each(function(pool, index) {
 				html += '<option value="' + pool.get('name') + '"> ' + pool.get('name') + '</option>';
 			});
 			return new Handlebars.SafeString(html);
