@@ -235,11 +235,12 @@ AddSambaExportView = RockstorLayoutView.extend({
 
 	Handlebars.registerHelper('display_adminUser_options', function(){
 	    var html = '';
+	    var _this = this;
 	    this.users.each(function(user, index) {
 		var userName = user.get("username");
-		if (this.sambaShareIdNotNull && this.smbShare.get('admin_users').length > 0) {
-		    for(i=0; i< this.smbShare.get('admin_users').length; i++){
-			if(this.smbShare.get('admin_users')[i].username == userName){
+		if (_this.sambaShareIdNotNull && _this.smbShare.get('admin_users').length > 0) {
+		    for(i=0; i< _this.smbShare.get('admin_users').length; i++){
+			if(_this.smbShare.get('admin_users')[i].username == userName){
 			    html += '<option value="' + userName + '" selected="selected">' + userName + '</option>';
 			} else{
 			    html += '<option value="' + userName + '">' + userName + '</option>';
