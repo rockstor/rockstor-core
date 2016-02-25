@@ -25,12 +25,6 @@ class Service(models.Model):
     display_name = models.CharField(max_length=24, unique=True)
     config = models.CharField(max_length=8192, null=True)
 
-    @property
-    def category(self, *args, **kwargs):
-        l = ('cat1', 'cat2', 'cat3',)
-        import random
-        return l[random.randint(0,len(l)-1)]
-        
     class Meta:
         app_label = 'smart_manager'
 
@@ -54,9 +48,5 @@ class ServiceStatus(models.Model):
     def display_name(self, *args, **kwargs):
         return self.service.display_name
 
-    @property
-    def category(self, *args, **kwargs):
-        return self.service.category
-        
     class Meta:
         app_label = 'smart_manager'
