@@ -331,7 +331,7 @@ REPLICATION = {
 	    'listener_port': 10002,
 }
 
-SHARE_REGEX = r'[A-Za-z0-9][A-Za-z0-9_.-]*'
+SHARE_REGEX = r'[A-Za-z0-9_.-]+'
 POOL_REGEX = SHARE_REGEX
 USERNAME_REGEX = r'[A-Za-z][-a-zA-Z0-9_]*$'
 ROOT_DIR = '${buildout:depdir}/'

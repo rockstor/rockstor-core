@@ -79,7 +79,7 @@ SnapshotsView = SnapshotsCommonView.extend({
 			snapshots: snapshots,
 			snapshotsNotEmpty: !_this.collection.isEmpty(),
 			collection: _this.collection,
-		}));	
+		}));
 		this.$('[rel=tooltip]').tooltip({
 			placement: 'bottom'
 		});
@@ -106,17 +106,12 @@ SnapshotsView = SnapshotsCommonView.extend({
 		}
 
 		$.validator.addMethod('validateSnapshotName', function(value) {
-			var snapshot_name = $('#snapshot-name').val();
-			if (snapshot_name == "") {
-				err_msg = 'Please enter snapshot name';
-				return false;
-			}
-			else
-				if(/^[A-Za-z][A-Za-z0-9_.-]*$/.test(snapshot_name) == false){
-					err_msg = 'Please enter a valid snapshot name.';
-					return false;
-				}
-			return true;
+		    var snapshot_name = $('#snapshot_name').val();
+		    if (/^[A-Za-z0-9_.-]+$/.test(snapshot_name) == false) {
+			err_msg = 'Please enter a valid snapshot name.';
+			return false;
+		    }
+		    return true;
 		}, name_err_msg);
 
 		this.$('#add-snapshot-form :input').tooltip({placement: 'right'});
@@ -124,7 +119,7 @@ SnapshotsView = SnapshotsCommonView.extend({
 			onfocusout: false,
 			onkeyup: false,
 			rules: {
-				'snapshot-name': 'validateSnapshotName',
+				snapshot_name: 'required',
 				shares: 'required'
 			},
 			submitHandler: function() {
@@ -133,7 +128,7 @@ SnapshotsView = SnapshotsCommonView.extend({
 				if (buttonDisabled(button)) return false;
 				disableButton(button);
 				$.ajax({
-					url: "/api/shares/" + shareName+ "/snapshots/" + _this.$('#snapshot-name').val(),
+					url: "/api/shares/" + shareName+ "/snapshots/" + _this.$('#snapshot_name').val(),
 					type: "POST",
 					dataType: "json",
 					contentType: 'application/json',
@@ -289,14 +284,14 @@ SnapshotsView = SnapshotsCommonView.extend({
 		var _this = this;
 		Handlebars.registerHelper('checkboxValue', function(snapName){
 			var html = '';
-			if (RockstorUtil.listContains(_this.selectedSnapshots, 'name', snapName)) { 
+			if (RockstorUtil.listContains(_this.selectedSnapshots, 'name', snapName)) {
 				html += 'checked="checked"';
-			} else { 
+			} else {
 				html += '';
-			} 
+			}
 			return new Handlebars.SafeString(html);
 		});
-		
+
 		Handlebars.registerHelper('getToc', function(toc){
 			return moment(toc).format(RS_DATE_FORMAT);
 		});
