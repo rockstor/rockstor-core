@@ -104,7 +104,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 		$(this.el).html(this.template({
 			share: this.share,
 			shareName: this.share.get('name'),
-			shareSize: humanize.filesize(this.share.get('size')*1024),
+			shareUsage: humanize.filesize(this.share.get('rusage')*1024),
 			snapshots: this.snapshots,
 			permStr: this.parsePermStr(this.share.get("perms")),
 			modify_choices: this.modify_choices,
@@ -192,8 +192,12 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 		var button = $(event.currentTarget);
 		if (buttonDisabled(button)) return false;
 		disableButton(button);
+		var url = "/api/shares/" + _this.share.get('name');
+		if($("#force-delete").prop("checked")){
+			url += "/force";
+		}
 		$.ajax({
-			url: "/api/shares/" + _this.share.get('name'),
+			url: url,
 			type: "DELETE",
 			dataType: "json",
 			success: function() {

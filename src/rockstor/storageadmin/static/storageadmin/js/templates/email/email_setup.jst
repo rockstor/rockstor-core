@@ -57,14 +57,16 @@
               <th scope="col" abbr="Sender">Sender</th>
 	      <th scope="col" abbr="Receiver">Reciever</th>
 	      <th scope="col" abbr="smtp-server">SMTP Server</th>
+	      <th scope="col" abbr="port">Port</th>
               <th scope="col" abbr="Actions">Actions</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>{{emailObj.sender}}</td>
-              <td>{{emailObj.receiver}}</td>
-              <td>{{emailObj.server}}</td>
+              <td>{{email.sender}}</td>
+              <td>{{email.receiver}}</td>
+              <td>{{email.smtp_server}}</td>
+	      <td>{{email.port}}</td>
               <td>
                 <a href="#" class="email-delete" id="email-delete" rel="tooltip" title="Delete email"><i class="glyphicon glyphicon-trash"></i></a>
 		<a href="#" class="send-test-message" id="send-test-message" rel="tooltip" title="Send a test e-mail"><i class="glyphicon glyphicon-send"></i></a>
@@ -79,7 +81,6 @@
   </div>
 </div>
 
-{{#if isEmailNull}}
 <div id="test-message-confirm" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -88,9 +89,8 @@
 	<h3 id="myModalLabel">Test e-mail sent successfully.</h3>
       </div>
       <div class="modal-body">
-	<p>Test e-mail is sent successfully from <code>{{emailObj.sender}}</code> to <code>{{emailObj.receiver}}</code>. It could take up to several minutes for the e-mail to arrive. If you do not receive it, check <code>/var/log/maillog</code> for clues. You may want to verify the input, delete and add the E-mail account again.</p>
+	<p>Test e-mail is sent successfully from <code>{{email.sender}}</code> to <code>{{email.receiver}}</code>. It could take up to several minutes for the e-mail to arrive. If you do not receive it, check <code>/var/log/maillog</code> for clues. You may want to verify the input, delete and add the E-mail account again.</p>
       </div>
     </div>
   </div>
 </div>
-{{/if}}

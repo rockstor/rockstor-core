@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import pwd
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
 from django.db import transaction
@@ -99,6 +100,23 @@ class SambaMixin(object):
 
         return options
 
+    @staticmethod
+    def _set_admin_users(admin_users, smb_share):
+        for au in admin_users:
+            try:
+                auo = User.objects.get(username=au)
+            except User.DoesNotExist:
+                #check if the user is a system user, then create a temp user object.
+                try:
+                    system_user = pwd.getpwnam(au)
+                    auo = User(username=au, uid=system_user.pw_uid,
+                              gid=system_user.pw_gid, admin=False)
+                    auo.save()
+                except KeyError:
+                    #raise the outer exception as it's more meaningful to the user.
+                    raise Exception('Requested admin user(%s) does not exist.' % au)
+            finally:
+                auo.smb_shares.add(smb_share)
 
 class SambaListView(SambaMixin, ShareMixin, rfc.GenericView):
     queryset = SambaShare.objects.all()
@@ -131,12 +149,9 @@ class SambaListView(SambaMixin, ShareMixin, rfc.GenericView):
                 if (not is_share_mounted(share.name)):
                     mount_share(share, mnt_pt)
 
-                admin_users = request.data.get('admin_users', None)
-                if (admin_users is None):
-                    admin_users = []
-                for au in admin_users:
-                    auo = User.objects.get(username=au)
-                    auo.smb_shares.add(smb_share)
+                admin_users = request.data.get('admin_users', [])
+                if (admin_users is None): admin_users = []
+                self._set_admin_users(admin_users, smb_share)
             refresh_smb_config(list(SambaShare.objects.all()))
             self._restart_samba()
             return Response(SambaShareSerializer(smb_share).data)
@@ -179,17 +194,12 @@ class SambaDetailView(SambaMixin, rfc.GenericView):
             custom_config = options['custom_config']
             del(options['custom_config'])
             smbo.__dict__.update(**options)
-            admin_users = request.data.get('admin_users', None)
-            if (admin_users is None):
-                admin_users = []
+            admin_users = request.data.get('admin_users', [])
+            if (admin_users is None): admin_users = []
             for uo in User.objects.filter(smb_shares=smbo):
                 if (uo.username not in admin_users):
                     uo.smb_shares.remove(smbo)
-            for u in admin_users:
-                if (not User.objects.filter(username=u,
-                                            smb_shares=smbo).exists()):
-                    auo = User.objects.get(username=u)
-                    auo.smb_shares.add(smbo)
+            self._set_admin_users(admin_users, smbo)
             smbo.save()
             for cco in SambaCustomConfig.objects.filter(smb_share=smbo):
                 if (cco.custom_config not in custom_config):

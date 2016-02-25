@@ -32,6 +32,7 @@ urlpatterns = patterns(
     url(r'^$', ShareListView.as_view(), name='share-view'),
     url(r'^/(?P<sname>%s)$' % share_regex, ShareDetailView.as_view(),
         name='share-view'),
+    url(r'^/(?P<sname>%s)/(?P<command>force)$' % share_regex, ShareDetailView.as_view(),),
 
     #Individual snapshots don't have detailed representation in the web-ui. So
     #thre is no need for SnapshotDetailView.

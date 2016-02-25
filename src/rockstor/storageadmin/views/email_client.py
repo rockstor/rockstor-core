@@ -40,11 +40,11 @@ FOOTER = '####END: Rockstor section####'
 MAIN_CF = '/etc/postfix/main.cf'
 
 
-def rockstor_postfix_config(fo, smtp_server, revert):
+def rockstor_postfix_config(fo, smtp_server, port, revert):
     if (revert is True):
         return
     fo.write('%s\n' % HEADER)
-    fo.write('relayhost = [%s]:587\n' % smtp_server)
+    fo.write('relayhost = [%s]:%d\n' % (smtp_server, port))
     fo.write('smtp_use_tls = yes\n')
     fo.write('smtp_sasl_auth_enable = yes\n')
     fo.write('smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd\n')
@@ -81,16 +81,16 @@ def update_generic(sender, revert=False):
     run_command([POSTMAP, generic_file])
     os.chmod('%s.db' % generic_file, 0600)
 
-def update_sasl(smtp_server, sender, password, revert=False):
+def update_sasl(smtp_server, port, sender, password, revert=False):
     sasl_file = '/etc/postfix/sasl_passwd'
     with open(sasl_file, 'w') as fo:
         if (not revert):
-            fo.write('[%s]:587 %s:%s\n' % (smtp_server, sender, password))
+            fo.write('[%s]:%d %s:%s\n' % (smtp_server, port, sender, password))
     os.chmod(sasl_file, 0400)
     run_command([POSTMAP, sasl_file])
     os.chmod('%s.db' % sasl_file, 0600)
 
-def update_postfix(smtp_server, revert=False):
+def update_postfix(smtp_server, port, revert=False):
     fh, npath = mkstemp()
     with open(MAIN_CF) as mfo, open(npath, 'w') as tfo:
         rockstor_section = False
@@ -98,12 +98,12 @@ def update_postfix(smtp_server, revert=False):
             if (re.match(HEADER, line)
                 is not None):
                 rockstor_section = True
-                rockstor_postfix_config(tfo, smtp_server, revert)
+                rockstor_postfix_config(tfo, smtp_server, port, revert)
                 break
             else:
                 tfo.write(line)
         if (rockstor_section is False):
-            rockstor_postfix_config(tfo, smtp_server, revert)
+            rockstor_postfix_config(tfo, smtp_server, port, revert)
     move(npath, MAIN_CF)
     os.chmod(MAIN_CF, 0644)
 
@@ -138,24 +138,26 @@ class EmailClientView(rfc.GenericView):
             sender = request.data.get('sender')
             username = sender.split('@')[0]
             smtp_server = request.data.get('smtp_server')
+            port = int(request.data.get('port', 587))
             name = request.data.get('name')
             password = request.data.get('password')
             receiver = request.data.get('receiver')
-            eco = EmailClient(smtp_server=smtp_server, name=name, sender=sender, receiver=receiver)
+            eco = EmailClient(smtp_server=smtp_server, port=port, name=name,
+                              sender=sender, receiver=receiver)
             eco.save()
-            update_sasl(smtp_server, sender, password)
+            update_sasl(smtp_server, port, sender, password)
             update_forward(receiver)
             update_generic(sender)
-            update_postfix(smtp_server)
+            update_postfix(smtp_server, port)
             systemctl('postfix', 'restart')
             return Response(EmailClientSerializer(eco).data)
 
     @transaction.atomic
     def delete(self, request):
-        update_sasl('', '', '', revert=True)
+        update_sasl('', '', '', '', revert=True)
         update_forward('', revert=True)
         update_generic('', revert=True)
-        update_postfix('', revert=True)
+        update_postfix('', '', revert=True)
         systemctl('postfix', 'restart')
         EmailClient.objects.all().delete()
         return Response()

@@ -212,7 +212,6 @@ RockonsView = RockstorLayoutView.extend({
     },
 
     startRockon: function(rockonId) {
-	console.log(event);
 	var _this = this;
 	this.stopPolling();
 	$.ajax({

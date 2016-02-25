@@ -69,10 +69,13 @@ def inplace_replace(of, nf, regex, nl):
 
 
 def run_command(cmd, shell=False, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE, throw=True, log=False):
+                stderr=subprocess.PIPE, stdin=subprocess.PIPE, throw=True,
+                log=False, input=None):
     try:
-        p = subprocess.Popen(cmd, shell=shell, stdout=stdout, stderr=stderr)
-        out, err = p.communicate()
+        cmd = map(str, cmd)
+        p = subprocess.Popen(cmd, shell=shell, stdout=stdout, stderr=stderr,
+                             stdin=stdin)
+        out, err = p.communicate(input=input)
         out = out.split('\n')
         err = err.split('\n')
         rc = p.returncode
@@ -230,6 +233,7 @@ def config_network_device(name, dtype='ethernet', method='auto', ipaddr=None,
             mod_cmd.extend(['connection.autoconnect', 'no'])
         if (len(mod_cmd) > 4):
             run_command(mod_cmd)
+    run_command([NMCLI, 'c', 'up', name])
     #wait for the interface to be activated
     num_attempts = 0
     while True:
