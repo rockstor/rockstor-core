@@ -138,9 +138,8 @@ class ShareListView(ShareMixin, rfc.GenericView):
             sname = request.data.get('sname', None)
             if ((sname is None or
                  re.match('%s$' % settings.SHARE_REGEX, sname) is None)):
-                e_msg = ('Share name must start with a alphanumeric(a-z0-9) '
-                         'character and can be followed by any of the '
-                         'following characters: letter(a-z), digits(0-9), '
+                e_msg = ('Invalid characters in Share name. Following are '
+                         'allowed: letter(a-z or A-Z), digit(0-9), '
                          'hyphen(-), underscore(_) or a period(.).')
                 handle_exception(Exception(e_msg), request)
 

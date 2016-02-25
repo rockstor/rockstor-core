@@ -71,20 +71,12 @@ AddPoolView = Backbone.View.extend({
 		}
 
 		$.validator.addMethod('validatePoolName', function(value) {
-			var pool_name = $('#pool_name').val();
-
-			if (pool_name == "") {
-				err_msg = 'Please enter pool name';
-				return false;
-			} else if(pool_name.length >255){
-				err_msg = 'Please enter pool name less than 255 characters';
-				return false;
-			} else if(/^[A-Za-z][A-Za-z0-9_.-]*$/.test(pool_name) == false){
-				err_msg = 'Please enter a valid pool name';
-				return false;
-			}
-
-			return true;
+		    var pool_name = $('#pool_name').val();
+		    if (/^[A-Za-z0-9_.-]+$/.test(pool_name) == false) {
+			err_msg = 'Invalid characters in Pool name.';
+			return false;
+		    }
+		    return true
 		}, raid_err_msg);
 
 
@@ -248,7 +240,7 @@ AddPoolView = Backbone.View.extend({
 	clickCheckbox: function (event) {
 		$("input:checkbox").change(function() {
 			$(this).closest("tr").toggleClass("row-highlight", this.checked);
-		}); 
+		});
 		var _this = this;
 		var n = $("input:checked.disk").length;
 		var singleDisk = {};
@@ -263,7 +255,7 @@ AddPoolView = Backbone.View.extend({
 		var diskSummary = this.diskSummaryTable(singleDisk);
 		if(n > 0){
 			$("#SelectedDisksTable").html(diskSummary);
-		}else{ 
+		}else{
 			$("#SelectedDisksTable").empty();
 		}
 	},
@@ -274,28 +266,28 @@ AddPoolView = Backbone.View.extend({
 		var grandTotal = 0;
 		for(var key in diskObj){
 			var readableCapacity  = humanize.filesize(key);
-			var totalCapacity = key * diskObj[key];	
+			var totalCapacity = key * diskObj[key];
 			diskSummary += "<tr>";
 			diskSummary += "<td>" + diskObj[key] + " X " + readableCapacity + "</td>";
 			diskSummary += "<td>" + humanize.filesize(totalCapacity) + "</td>";
 			diskSummary += "</tr>";
-			grandTotal += totalCapacity; 
-		} 
+			grandTotal += totalCapacity;
+		}
 		var diskUsableCapacity = this.getUsableCapacity(diskObj, humanize.filesize(grandTotal));
 		diskSummary += "<tr><td><b>Total Raw Capacity</b></td><td style='color:#EB6841;'><b>" + humanize.filesize(grandTotal) + "</td></b></tr>";
 		diskSummary += "<tr><td><b>Total Usable Capacity</b></td>" + "<td style='color:green;'><b>" + diskUsableCapacity + "</b></td></tr>";
 		diskSummary += "</table>";
-		return diskSummary; 
+		return diskSummary;
 	},
 
 	getUsableCapacity: function(diskObject, rawCapacity){
 		var raidConfig = $('#raid_level').val();
-		
+
 		//get all the keys and convert them to numbers to get the disk size correctly.
 		var keysArr = Object.keys(diskObject);
 		var numericKeysArr = keysArr.map(function(key){
 			return Number(key);
-		}); 
+		});
 		//calculate least disk size from all the keys.
 		var minDiskSize = Math.min.apply(Math,numericKeysArr);
 
@@ -303,7 +295,7 @@ AddPoolView = Backbone.View.extend({
 		for (var key in diskObject) {
 			totalSelectedDisks += diskObject[key];
 		}
-		
+
 		var usableCapacity;
 		switch (raidConfig){
 		case "single":
@@ -324,8 +316,8 @@ AddPoolView = Backbone.View.extend({
 		case "raid10":
 			usableCapacity = humanize.filesize(minDiskSize * totalSelectedDisks/2);
 			break;
-		} 
-		
+		}
+
 		return usableCapacity;
 
 	},

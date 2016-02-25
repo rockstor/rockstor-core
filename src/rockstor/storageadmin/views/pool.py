@@ -210,9 +210,8 @@ class PoolListView(PoolMixin, rfc.GenericView):
                      request.data.get('disks')]
             pname = request.data['pname']
             if (re.match('%s$' % settings.POOL_REGEX, pname) is None):
-                e_msg = ('Pool name must start with a alphanumeric(a-z0-9) '
-                         'character and can be followed by any of the '
-                         'following characters: letter(a-z), digits(0-9), '
+                e_msg = ('Invalid characters in Pool name. Following '
+                         'characters are allowed: letter(a-z or A-Z), digit(0-9), '
                          'hyphen(-), underscore(_) or a period(.).')
                 handle_exception(Exception(e_msg), request)
 
