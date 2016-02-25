@@ -260,7 +260,7 @@ class ServicesNamespace(BaseNamespace, BroadcastMixin):
             self.emit('services:get_services', {
                 'data': data, 'key': 'services:get_services'
             })
-            gevent.sleep(5)
+            gevent.sleep(15)
 
 
 class SysinfoNamespace(BaseNamespace, BroadcastMixin):
