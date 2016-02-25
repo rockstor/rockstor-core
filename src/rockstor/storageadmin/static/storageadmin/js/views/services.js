@@ -92,7 +92,7 @@ ServicesView = Backbone.View.extend({
 	this.$("[type='checkbox']").bootstrapSwitch('offColor','danger'); //right side text color
 
 	$('table.data-table').DataTable({
-	    "iDisplayLength": 10,
+	    "iDisplayLength": 15,
 	    "aLengthMenu": [[15, 30, 45, -1], [15, 30, 45, "All"]]
 	});
     },
