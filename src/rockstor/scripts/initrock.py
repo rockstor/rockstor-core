@@ -27,8 +27,6 @@ import time
 from tempfile import mkstemp
 from django.conf import settings
 from system.pkg_mgmt import downgrade_pkgs
-from storageadmin.views.network import NetworkMixin
-from storageadmin.models import NetworkInterface
 
 
 logger = logging.getLogger(__name__)
@@ -105,6 +103,10 @@ def init_update_issue():
 
 
 def update_nginx(logger):
+    #importing here because, APIWrapper needs postgres to be setup, so
+    #importing at the top results in failure the first time. catch22.
+    from storageadmin.views.network import NetworkMixin
+    from storageadmin.models import NetworkInterface
     nm = NetworkMixin()
     nm._refresh_ni()
     try:
