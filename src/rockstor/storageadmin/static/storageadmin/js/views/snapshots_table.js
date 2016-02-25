@@ -110,7 +110,7 @@ SnapshotsTableModule = SnapshotsCommonView.extend({
 			onfocusout: false,
 			onkeyup: false,
 			rules: {
-				'snapshot-name': 'validateSnapshotName',
+				snapshot_name: 'required'
 			},
 			submitHandler: function() {
 				var button = _this.$('#js-snapshot-save');
@@ -272,11 +272,11 @@ SnapshotsTableModule = SnapshotsCommonView.extend({
 
 		Handlebars.registerHelper('printCheckboxes', function(snapName, snapId){
 			var html = '';
-			if (RockstorUtil.listContains(this.selectedSnapshots, 'name', snapName)) { 
+			if (RockstorUtil.listContains(this.selectedSnapshots, 'name', snapName)) {
 				html += '<input class="js-snapshot-select inline" type="checkbox" name="snapshot-select" data-name="' + snapName + '" data-id=' + snapId + ' checked="checked"></input>';
-			} else { 
+			} else {
 				html += '<input class="js-snapshot-select inline" type="checkbox" name="snapshot-select" data-name="' + snapName + '" data-id=' + snapId + ' ></input>';
-			} 
+			}
 			return new Handlebars.SafeString(html);
 		});
 
@@ -287,19 +287,19 @@ SnapshotsTableModule = SnapshotsCommonView.extend({
 		Handlebars.registerHelper('getSize', function(size){
 			return humanize.filesize(size * 1024);
 		});
-		
+
 		Handlebars.registerHelper('show_writable_options', function(){
 			var html = '',
 			_this = this;
-			_.each(this.modify_choices, function(c) { 
+			_.each(this.modify_choices, function(c) {
 				html += '<label class="radio-inline">';
 				if(c.value == 'yes'){
 					html += '<input type="radio" name="writable" value="rw" checked> '+ c.name;
-				}else{ 
+				}else{
 					html += '<input type="radio" name="writable" value="ro" title="Note that (1)read-only snapshots cannot be cloned and (2)Shares cannot be rolled back to read-only snapshots" > ' + c.name;
-				} 
+				}
 				html += '</label>';
-			}); 
+			});
 			return new Handlebars.SafeString(html);
 		});
 	}

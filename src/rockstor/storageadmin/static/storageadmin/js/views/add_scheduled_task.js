@@ -222,7 +222,6 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 
 		Handlebars.registerHelper('display_scrub_pools', function(){
 			var html = '';
-			console.log("the pools are: ", this.pools);
 			this.pools.each(function(pool, index) {
 				html += '<option value="' + pool.get('name') + '"> ' + pool.get('name') + '</option>';
 			});
