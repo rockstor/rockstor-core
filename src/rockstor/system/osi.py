@@ -279,7 +279,7 @@ def net_config_helper(name):
 
             elif (config['method'] == 'manual'):
                 #manual
-                if (re.match('IP4.ADDRESS', l) is not None):
+                if (re.match('ipv4.addresses', l) is not None):
                     kv_split = l.split(':')
                     if (len(kv_split) > 1):
                         vsplit = kv_split[1].split('/')
