@@ -255,6 +255,8 @@ def test_logs(device, test_mode=TESTMODE):
                     for j in range(i + 2, len(o)):
                         if (re.match('# ', o[j]) is not None):
                             fields = re.split(r'\s\s+', o[j].strip()[2:])
+                            logger.debug('fields extracted are as follows %s', fields)
+                            logger.debug('problematic field 3 = %s', fields[3])
                             fields[3] = 100 - int(fields[3][:-1])
                             test_d[fields[0]] = fields[1:]
                         else:
