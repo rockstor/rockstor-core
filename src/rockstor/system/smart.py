@@ -69,7 +69,10 @@ def info(device, test_mode=TESTMODE):
             version = ' '.join(l.split()[1:4])
         for i in range(len(matches)):
             if (re.match(matches[i], l) is not None):
+                # TODO needs improving as loses nice info ie in SATA line
+                # due to inadvertent split by second ":" in Value fields
                 res[i] = l.split(': ')[1].strip()
+    # smartctl version is expected at index 14 (15th item)
     res.insert(14, version)
     return res
 
