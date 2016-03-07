@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 SMART = '/usr/sbin/smartctl'
 CAT = '/usr/bin/cat'
+LSBLK = '/usr/bin/lsblk'
 # enables reading file dumps of smartctl output instead of running smartctl
 # currently hardwired to read from eg:- /root/smartdumps/smart-H--info.out
 # default setting = False
@@ -227,7 +228,7 @@ def test_logs(device, test_mode=TESTMODE):
     :return: test_d as a dictionary of summarized test
     """
     smart_command = [SMART, '-l', 'selftest', '-l', 'selective', '/dev/%s'
-                     % device]
+                     % get_base_device(device)]
     if not test_mode:
         o, e, rc = run_command(smart_command, throw=False)
     else:
@@ -341,3 +342,39 @@ def screen_return_codes(msg_on_hit, return_code_target, o, e, rc, command):
                  '%s error: %s' % (rc, command, o, e))
         logger.error(e_msg)
         raise CommandException(('%s' % command), o, e, rc)
+
+
+def get_base_device(device, test_mode=TESTMODE):
+    """
+    Helper function that returns the base device of a partition or if given
+    a base device then will return it as is;
+    ie
+    input sda3 output sda
+    input sda output sda
+    Works as a function of lsblk list order ie base devices first. So we return
+    the first start of line match to our supplied device name with the pattern
+    as the first element in lsblk's output and the match target as our device.
+    :param device: device name as per db entry, ie as returned from scan_disks
+    :return: base_dev: the root device ie device = sda3 base_dev = sda or None
+    if no lsblk entry was found to match.
+    """
+    base_dev = None
+    if not test_mode:
+        out, e, rc = run_command([LSBLK])
+    else:
+        out, e, rc = run_command([CAT, '/root/smartdumps/lsblk.out'])
+    # now examine the output from lsblk line by line
+    for line in out:
+        line_fields = line.split()
+        if len(line_fields) < 1:
+            # skip empty lines
+            logger.debug('get_base_device skipped an empty line')
+            continue
+        if re.match(line_fields[0], device):
+            # We have found a device string match to our device so
+            logger.debug('get_base_device found a match in lsblk out for '
+                         'device %s in line %s' % (device, line))
+            base_dev = line_fields[0]
+            break
+    # return base_dev which should now be None or first character matches
+    return base_dev
