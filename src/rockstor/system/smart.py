@@ -44,8 +44,9 @@ def info(device, test_mode=TESTMODE):
     :return: list of smart parameters extracted from device or test file
     """
     if not test_mode:
-        o, e, rc = run_command([SMART, '-H', '--info', '/dev/%s' % device],
-                               throw=False)
+        o, e, rc = run_command(
+            [SMART, '-H', '--info', '/dev/%s' % get_base_device(device)],
+            throw=False)
     else:  # we are testing so use a smartctl -H --info file dump instead
         o, e, rc = run_command([CAT, '/root/smartdumps/smart-H--info.out'])
     res = {}
@@ -85,7 +86,8 @@ def extended_info(device, test_mode=TESTMODE):
     :return: dictionary of smart attributes extracted from device or test file
     """
     if not test_mode:
-        o, e, rc = run_command([SMART, '-a', '/dev/%s' % device], throw=False)
+        o, e, rc = run_command(
+            [SMART, '-a', '/dev/%s' % get_base_device(device)], throw=False)
     else:  # we are testing so use a smartctl -a file dump instead
         o, e, rc = run_command([CAT, '/root/smartdumps/smart-a.out'])
     attributes = {}
@@ -116,7 +118,8 @@ def capabilities(device, test_mode=TESTMODE):
     :return: dictionary of smart capabilities extracted from device or test file
     """
     if not test_mode:
-        o, e, rc = run_command([SMART, '-c', '/dev/%s' % device])
+        o, e, rc = run_command(
+            [SMART, '-c', '/dev/%s' % get_base_device(device)])
     else:  # we are testing so use a smartctl -c file dump instead
         o, e, rc = run_command([CAT, '/root/smartdumps/smart-c.out'])
     cap_d = {}
@@ -158,7 +161,8 @@ def error_logs(device, test_mode=TESTMODE):
     error number.
     :return: log_l: A list containing each line in turn of the error log.
     """
-    smart_command = [SMART, '-l', 'error', '/dev/%s' % device]
+    local_base_dev = get_base_device(device)
+    smart_command = [SMART, '-l', 'error', '/dev/%s' % local_base_dev]
     if not test_mode:
         o, e, rc = run_command(smart_command, throw=False)
     else:
@@ -168,7 +172,7 @@ def error_logs(device, test_mode=TESTMODE):
     # log contains errors but otherwise executes successfully so we catch this.
     overide_rc = 64
     e_msg = 'Drive /dev/%s has logged S.M.A.R.T errors. Please view ' \
-                 'the Error logs tab for this device.' % device
+                 'the Error logs tab for this device.' % local_base_dev
     screen_return_codes(e_msg, overide_rc, o, e, rc, smart_command)
     ecode_map = {
         'ABRT' : 'Command ABoRTed',
@@ -265,7 +269,7 @@ def test_logs(device, test_mode=TESTMODE):
 
 def run_test(device, test):
     # start a smart test(short, long or conveyance)
-    return run_command([SMART, '-t', test, '/dev/%s' % device])
+    return run_command([SMART, '-t', test, '/dev/%s' % get_base_device(device)])
 
 
 def available(device, test_mode=TESTMODE):
@@ -277,7 +281,8 @@ def available(device, test_mode=TESTMODE):
     :return: available (boolean), enabled (boolean)
     """
     if not test_mode:
-        o, e, rc = run_command([SMART, '--info', ('/dev/%s' % device)])
+        o, e, rc = run_command(
+            [SMART, '--info', ('/dev/%s' % get_base_device(device))])
     else:  # we are testing so use a smartctl --info file dump instead
         o, e, rc = run_command([CAT, '/root/smartdumps/smart--info.out'])
     a = False
@@ -294,7 +299,8 @@ def available(device, test_mode=TESTMODE):
 def toggle_smart(device, enable=False):
     switch = 'on' if (enable) else 'off'
     # enable SMART support of the device
-    return run_command([SMART, '--smart=%s' % switch, '/dev/%s' % device])
+    return run_command(
+        [SMART, '--smart=%s' % switch, '/dev/%s' % get_base_device(device)])
 
 
 def update_config(config):
@@ -354,6 +360,11 @@ def get_base_device(device, test_mode=TESTMODE):
     Works as a function of lsblk list order ie base devices first. So we return
     the first start of line match to our supplied device name with the pattern
     as the first element in lsblk's output and the match target as our device.
+    N.B. this function may well be a candidate to provide more advanced smart
+    device name mapping such as is required by some 3Ware raid controllers ie
+    to redirect smart commands from sd* to twl* device names. A live mapping
+    system will be required for this but could be incorporated here since we
+    are already translating at least partition names to their base dev names.
     :param device: device name as per db entry, ie as returned from scan_disks
     :return: base_dev: the root device ie device = sda3 base_dev = sda or None
     if no lsblk entry was found to match.
