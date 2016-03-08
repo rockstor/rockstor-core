@@ -49,7 +49,6 @@ def info(device, test_mode=TESTMODE):
             throw=False)
     else:  # we are testing so use a smartctl -H --info file dump instead
         o, e, rc = run_command([CAT, '/root/smartdumps/smart-H--info.out'])
-    res = {}
     # List of string matches to look for in smartctrl -H --info output.
     # Note the "|" char allows for defining alternative matches ie A or B
     matches = ('Model Family:|Vendor:', 'Device Model:|Product:',
@@ -62,16 +61,21 @@ def info(device, test_mode=TESTMODE):
                'SMART support is:.* Available',
                'SMART support is:.* Enabled',
                'SMART overall-health self-assessment|SMART Health Status:',)
+    # create a list of empty strings ready to store our smart results / values
     res = ['', ] * len(matches)
     version = ''
-    for l in o:
-        if (re.match('smartctl ', l) is not None):
-            version = ' '.join(l.split()[1:4])
+    for line in o:
+        if (re.match('smartctl ', line) is not None):
+            version = ' '.join(line.split()[1:4])
         for i in range(len(matches)):
-            if (re.match(matches[i], l) is not None):
-                # TODO needs improving as loses nice info ie in SATA line
-                # due to inadvertent split by second ":" in Value fields
-                res[i] = l.split(': ')[1].strip()
+            if (re.match(matches[i], line) is not None):
+                # find location of first colon
+                first_colon = re.search(':', line).start()
+                # Assume all characters after colon are the result / value and
+                # strip off begin and end spaces. Limit to 64 chars for db.
+                res[i] = line[first_colon + 1:].strip()[:64]
+                logger.debug('extracted result / value of res[i] = %s', res[i])
+                logger.debug('char count of this line = %s', len(res[i]))
     # smartctl version is expected at index 14 (15th item)
     res.insert(14, version)
     return res
