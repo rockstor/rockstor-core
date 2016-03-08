@@ -74,8 +74,6 @@ def info(device, test_mode=TESTMODE):
                 # Assume all characters after colon are the result / value and
                 # strip off begin and end spaces. Limit to 64 chars for db.
                 res[i] = line[first_colon + 1:].strip()[:64]
-                logger.debug('extracted result / value of res[i] = %s', res[i])
-                logger.debug('char count of this line = %s', len(res[i]))
     # smartctl version is expected at index 14 (15th item)
     res.insert(14, version)
     return res
@@ -386,13 +384,10 @@ def get_base_device(device, test_mode=TESTMODE):
         line_fields = line.split()
         if len(line_fields) < 1:
             # skip empty lines
-            logger.debug('get_base_device skipped an empty line')
             continue
         if re.match(line_fields[0], device):
-            # We have found a device string match to our device so
-            logger.debug('get_base_device found a match in lsblk out for '
-                         'device %s in line %s' % (device, line))
+            # We have found a device string match to our device so record it.
             base_dev = line_fields[0]
             break
-    # return base_dev which should now be None or first character matches
+    # return base_dev ie None or first character matches to line start in lsblk
     return base_dev
