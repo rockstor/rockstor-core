@@ -256,7 +256,6 @@ def test_logs(device, test_mode=TESTMODE):
                         if (re.match('# ', o[j]) is not None):
                             # slit the line into fields using 2 or more spaces
                             fields = re.split(r'\s\s+', o[j].strip()[2:])
-                            logger.debug('fields extracted are as follows %s', fields)
                             # Some Seagate drives add an ongoing test progress
                             # report to the top of this log but there is then
                             # only one space delimiter and we loose a column.
@@ -278,7 +277,6 @@ def test_logs(device, test_mode=TESTMODE):
                             # and change % Remaining to % Completed.
                             fields[3] = 100 - int(fields[3][:-1])
                             test_d[fields[0]] = fields[1:]
-                            logger.debug('post processed fields = ------- %s', fields)
                         else:
                             log_l.append(o[j])
     return (test_d, log_l)
