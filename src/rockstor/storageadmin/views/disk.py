@@ -260,9 +260,12 @@ class DiskDetailView(rfc.GenericView):
                 return self._toggle_smart(dname, request, enable=True)
             if (command == 'disable-smart'):
                 return self._toggle_smart(dname, request)
+            if (command == 'smartcustom-drive'):
+                return self._smartcustom_drive(dname, request)
 
         e_msg = ('Unsupported command(%s). Valid commands are wipe, btrfs-wipe,'
-                 ' btrfs-disk-import, blink-drive, enable-smart, disable-smart' % command)
+                 ' btrfs-disk-import, blink-drive, enable-smart, disable-smart,'
+                 ' smartcustom-drive' % command)
         handle_exception(Exception(e_msg), request)
 
     @transaction.atomic
@@ -273,6 +276,17 @@ class DiskDetailView(rfc.GenericView):
         disk.btrfs_uuid = None
         disk.save()
         return Response(DiskInfoSerializer(disk).data)
+
+    @transaction.atomic
+    def _smartcustom_drive(self, dname, request):
+        disk = self._validate_disk(dname, request)
+        # todo Check on None, null, or '' for default in next command
+        custom_smart_options = str(
+            request.data.get('smartcustom_options', None))
+        disk.smart_options = custom_smart_options
+        disk.save()
+        return Response(DiskInfoSerializer(disk).data)
+
 
     @transaction.atomic
     def _btrfs_disk_import(self, dname, request):
