@@ -131,7 +131,7 @@ class DiskSMARTDetailView(rfc.GenericView):
                     test_type = 'conveyance'
                 else:
                     raise Exception('Unsupported Self-Test: %s' % test_type)
-                run_test(disk.name, disk.test_type, disk.smart_options)
+                run_test(disk.name, test_type, disk.smart_options)
                 return self._info(disk)
 
             e_msg = ('Unknown command: %s. Only valid commands are info and '
