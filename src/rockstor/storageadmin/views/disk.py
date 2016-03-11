@@ -283,7 +283,8 @@ class DiskDetailView(rfc.GenericView):
         # todo Check on None, null, or '' for default in next command
         custom_smart_options = str(
             request.data.get('smartcustom_options', None))
-        disk.smart_options = custom_smart_options
+        # strip leading and trailing white space chars before entry in db
+        disk.smart_options = custom_smart_options.strip()
         disk.save()
         return Response(DiskInfoSerializer(disk).data)
 

@@ -69,16 +69,10 @@ SmartcustomDiskView = RockstorLayoutView.extend({
 
     $.validator.addMethod('validateSmartCustom', function(value) {
         var smartcustom_options = $('#smartcustom_options').val();
-
-        if (smartcustom_options == "") {
-            err_msg = 'Please enter Custom S.M.A.R.T options';
+        if(smartcustom_options.length > 64){
+            err_msg = 'S.M.A.R.T options length must not exceed 64 characters total';
             return false;
         }
-        else
-            if(smartcustom_options.length > 64){
-		        err_msg = 'S.M.A.R.T options length must not exceed 64 characters total';
-		        return false;
-            }
         return true;
     }, smartcustom_err_msg);
 
