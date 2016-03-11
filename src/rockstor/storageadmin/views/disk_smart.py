@@ -66,11 +66,11 @@ class DiskSMARTDetailView(rfc.GenericView):
     @staticmethod
     @transaction.atomic
     def _info(disk):
-        attributes = extended_info(disk.name)
-        cap = capabilities(disk.name)
-        e_summary, e_lines = error_logs(disk.name)
-        smartid = info(disk.name)
-        test_d, log_lines = test_logs(disk.name)
+        attributes = extended_info(disk.name, disk.smart_options)
+        cap = capabilities(disk.name, disk.smart_options)
+        e_summary, e_lines = error_logs(disk.name, disk.smart_options)
+        smartid = info(disk.name, disk.smart_options)
+        test_d, log_lines = test_logs(disk.name, disk.smart_options)
         ts = datetime.utcnow().replace(tzinfo=utc)
         si = SMARTInfo(disk=disk, toc=ts)
         si.save()
@@ -131,7 +131,7 @@ class DiskSMARTDetailView(rfc.GenericView):
                     test_type = 'conveyance'
                 else:
                     raise Exception('Unsupported Self-Test: %s' % test_type)
-                run_test(disk.name, test_type)
+                run_test(disk.name, disk.test_type, disk.smart_options)
                 return self._info(disk)
 
             e_msg = ('Unknown command: %s. Only valid commands are info and '
