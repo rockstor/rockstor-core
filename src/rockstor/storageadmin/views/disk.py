@@ -181,7 +181,8 @@ class DiskMixin(object):
                 # try to establish smart availability and status and update db
                 try:
                     # for non ata/sata drives
-                    do.smart_available, do.smart_enabled = smart.available(do.name)
+                    do.smart_available, do.smart_enabled = smart.available(
+                        do.name, do.smart_options)
                 except Exception, e:
                     logger.exception(e)
                     do.smart_available = do.smart_enabled = False
@@ -325,7 +326,7 @@ class DiskDetailView(rfc.GenericView):
         if (not disk.smart_available):
             e_msg = ('S.M.A.R.T support is not available on this Disk(%s)' % dname)
             handle_exception(Exception(e_msg), request)
-        smart.toggle_smart(disk.name, enable)
+        smart.toggle_smart(disk.name, disk.smart_options, enable)
         disk.smart_enabled = enable
         disk.save()
         return Response(DiskInfoSerializer(disk).data)

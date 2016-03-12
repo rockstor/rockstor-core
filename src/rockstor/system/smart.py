@@ -415,6 +415,5 @@ def get_base_device(device, custom_options='', test_mode=TESTMODE):
             base_dev[0] = '/dev/' + line_fields[0]
             break
     # return base_dev ie None or first character matches to line start in lsblk
-    logger.debug('get_base_device received custom_options = %s', custom_options)
-    logger.debug('get_base_device returning base_dev = %s', base_dev)
+    logger.debug('get_base_device returning base_dev = %s with custom options of %s' % (base_dev, custom_options))
     return base_dev
