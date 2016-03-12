@@ -400,6 +400,7 @@ def get_base_device(device, custom_options='', test_mode=TESTMODE):
     to match.
     """
     base_dev = ['', ]
+    custom_options_list = custom_options.encode('ascii').split()
     if not test_mode:
         out, e, rc = run_command([LSBLK])
     else:
@@ -415,5 +416,6 @@ def get_base_device(device, custom_options='', test_mode=TESTMODE):
             base_dev[0] = '/dev/' + line_fields[0]
             break
     # return base_dev ie None or first character matches to line start in lsblk
-    logger.debug('get_base_device returning base_dev = %s with custom options of %s' % (base_dev, custom_options))
-    return base_dev
+    logger.debug('get_base_device returning base_dev = %s with custom options of %s' % (base_dev, custom_options_list))
+    logger.debug('----------- combined they are %s' % (custom_options_list + base_dev))
+    return (custom_options_list + base_dev)
