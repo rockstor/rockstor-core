@@ -69,15 +69,103 @@ SmartcustomDiskView = RockstorLayoutView.extend({
 
     $.validator.addMethod('validateSmartCustom', function(value) {
         var smartcustom_options = $('#smartcustom_options').val();
-        if(smartcustom_options.length > 64) {
-            err_msg = 'S.M.A.R.T options length must not exceed 64 characters total';
-            return false;
+        var devOptions = ["auto", "test", "ata", "scsi", "sat", "sat,12", "sat,16", "sat,auto", "usbprolific", "usbjmicron", "usbjmicron,0", "usbjmicron,p", "usbjmicron,x", "usbjmicron,x,1", "usbcypress", "usbsunplus"];
+        var devOptionsRaid = ["3ware", "areca", "hpt", "cciss", "megaraid", "aacraid"];
+        var toleranceOptions = ["normal", "conservative", "permissive", "verypermissive"];
+        // Check for invalid characters
+        if (/^[A-Za-z0-9,-/ ]+$/.test(smartcustom_options) == false) {
+			err_msg = 'Invalid character found, expecting only letters, numbers, and \'-\',\'/\' and \'space.\'';
+			return false;
         }
         else
-            if((!smartcustom_options.includes("-d")) && (!smartcustom_options.includes("-T"))){
-                err_msg = 'Must contain either -d or -T options or both';
+            if((!smartcustom_options.includes("-d ")) && (!smartcustom_options.includes("-T "))){
+                err_msg = 'Must contain either -d or -T options or both.';
                 return false;
             }
+        else
+            if(smartcustom_options.length > 64) {
+            err_msg = 'S.M.A.R.T options must not exceed 64 characters.';
+            return false;
+        }
+        // By now we have valid characters that include "-d " and or "-T " and
+        // less than 64 of them (including spaces) - the max db field length.
+        var first_d_option =  smartcustom_options.indexOf("-d ")
+        // check for only one instance of "-d " including ending in "-d"
+        if (first_d_option != -1 && smartcustom_options.lastIndexOf("-d") != first_d_option) {
+            err_msg = 'Only one occurrence of -d is permitted.';
+            return false;
+        }
+        // Reject unknown options ie not "d " or "T " after a -
+        // ?
+
+        // Validate each option ie
+        // find elements of given options as split by space.
+        var option_array = smartcustom_options.split(" ");
+        console.log('working with option array = ', option_array)
+        console.log('contents of first element = ', option_array[0])
+        if ((option_array[0] != "-d") && (option_array[0] != "-T")) {
+            err_msg = 'Please begin with either \'-d \' or \'-T \'';
+            return false;
+        }
+        // true if option is Device switch "-d"
+        function isDevSwitch(option) {
+            return (option == "-d");
+        }
+        // true if option is Tolerance switch ie "-T"
+        function isToleranceSwitch(option) {
+            return (option == "-T");
+        }
+        // true if not recognized as a dev option (non Raid)
+        function isNotDevOption(option) {
+            return (devOptions.indexOf(option) == -1);
+        }
+        // true if not recognized as a type option
+        function isNotToleranceOption(option) {
+            return (toleranceOptions.indexOf(option) == -1);
+        }
+        // true if not recognized as a RAID option
+        function isNotRaidOption(option) {
+            var without_values = option.substring(0, option.indexOf(","));
+            console.log('without_values = ', without_values);
+            return (devOptionsRaid.indexOf(without_values) == -1);
+        }
+        // could use for-of maybe.
+        // prob with .forEach is no break
+        var dev_options_found = [];
+        var tol_options_found = [];
+        var unknown_options_found = [];
+        var option_type = '';
+        option_array.forEach(function(option) {
+            console.log('examining option ', option);
+            console.log('isNotDevOption returned ', isNotDevOption(option));
+            console.log('isNotTypeOption returned ', isNotToleranceOption(option));
+            console.log('isNotRiadOption returned ', isNotRaidOption(option));
+            // filter our various options before assessing them as valid.
+            if (option.charAt(0) == "-") {
+                // option is a switch
+                if (isDevSwitch(option)) {
+                    option_type = "dev";
+                } else if (isToleranceSwitch(option)) {
+                    option_type = "tol";
+                } else { // unknown switch
+                    option_type = "unknown";
+                }
+            } else if (option_type == "dev") {
+                // collect all options proceeded by a -d option
+                dev_options_found.push(option);
+                console.log('dev_options_found so far = ', dev_options_found);
+            } else if (option_type == "tol") {
+                // collect all options proceeded by a -T option
+                tol_options_found.push(option);
+                console.log('tol_options_found so far = ', tol_options_found);
+            } else {
+                // collect all other options proceeded by an unknown switch.
+                unknown_options_found.push(option);
+                console.log('unknown_options_found so far = ', unknown_options_found);
+            }
+        });
+        // Don't forget about flagging if unknown switch but without option
+        // eg -t and the end of a line.
         return true;
     }, smartcustom_err_msg);
 
