@@ -90,7 +90,8 @@ SmartcustomDiskView = RockstorLayoutView.extend({
         // By now we have valid characters that include "-d " and or "-T " and
         // less than 64 of them (including spaces) - the max db field length.
         var first_d_option =  smartcustom_options.indexOf("-d ")
-        // check for only one instance of "-d " including ending in "-d"
+        // Check for only one instance of "-d " including ending in "-d", note
+        // that multiple instances of -T are valid.
         if (first_d_option != -1 && smartcustom_options.lastIndexOf("-d") != first_d_option) {
             err_msg = 'Only one occurrence of -d is permitted.';
             return false;
@@ -124,22 +125,35 @@ SmartcustomDiskView = RockstorLayoutView.extend({
             return (toleranceOptions.indexOf(option) == -1);
         }
         // true if not recognized as a RAID option
+        // consider improving to use string.match(regexp) to account of numbers
         function isNotRaidOption(option) {
             var without_values = option.substring(0, option.indexOf(","));
             console.log('without_values = ', without_values);
             return (devOptionsRaid.indexOf(without_values) == -1);
         }
-        // could use for-of maybe.
-        // prob with .forEach is no break
+        // true if not recognized as a RAID target device
+        function isNotRaidTarget(option) {
+            // /dev/twe, /dev/twa, /dev/twl followed by 1 or 2 numbers
+            if (/\/dev\/tw[e|a|l][0-9]/.test(option) == false) {
+                console.log('isNotRaidTarget is returning true on option', option, /\/dev\/tw[e|a|l][0-9]/.test(option));
+                console.log('option.toString = ', option.toString());
+                return true;
+            } else {
+                console.log('isNotRaidTarget is returning false on option', option);
+                return false;
+            }
+        }
+        // Categorize all entered options individually forEach is order safe.
         var dev_options_found = [];
         var tol_options_found = [];
         var unknown_options_found = [];
         var option_type = '';
+        var unknown_switches_found = [];
         option_array.forEach(function(option) {
             console.log('examining option ', option);
-            console.log('isNotDevOption returned ', isNotDevOption(option));
-            console.log('isNotTypeOption returned ', isNotToleranceOption(option));
-            console.log('isNotRiadOption returned ', isNotRaidOption(option));
+            // console.log('isNotDevOption returned ', isNotDevOption(option));
+            // console.log('isNotTypeOption returned ', isNotToleranceOption(option));
+            // console.log('isNotRiadOption returned ', isNotRaidOption(option));
             // filter our various options before assessing them as valid.
             if (option.charAt(0) == "-") {
                 // option is a switch
@@ -149,6 +163,7 @@ SmartcustomDiskView = RockstorLayoutView.extend({
                     option_type = "tol";
                 } else { // unknown switch
                     option_type = "unknown";
+                    unknown_switches_found.push(option);
                 }
             } else if (option_type == "dev") {
                 // collect all options proceeded by a -d option
@@ -164,8 +179,53 @@ SmartcustomDiskView = RockstorLayoutView.extend({
                 console.log('unknown_options_found so far = ', unknown_options_found);
             }
         });
-        // Don't forget about flagging if unknown switch but without option
-        // eg -t and the end of a line.
+        // report any unknown switches
+        if (unknown_switches_found != "" ) {
+            err_msg = 'One or more unknown switches found: \'' + unknown_switches_found.toString() + '\', supported switches are \'-d\' and \'-T\'';
+            return false;
+        }
+        // report any options of unknown type
+        // Note this should never trigger as the last unknown_switches_found
+        // should trigger first. We have a later one to catch unknown options
+        // after known triggers.
+        if (unknown_options_found != "") {
+            err_msg = 'The following options of an unknown type were entered:' +
+                ' \'' + unknown_options_found.toString() + '\', supported ' +
+                'options are ' + devOptions.toString() + '\n' +
+                devOptionsRaid.toString() + toleranceOptions.toString();
+            return false;
+        }
+        // Filter out unknown options on known switches ie "-d notanoption"
+        // Filter our dev options first by absolute known / allowed options
+        // filter the resulting array by the less strict known raid options
+        var unknown_dev_options_found = dev_options_found.filter(isNotDevOption).filter(isNotRaidOption).filter(isNotRaidTarget);
+        if (unknown_dev_options_found != "") {
+            err_msg = 'The following unknown \'-d\' options were found ' + unknown_dev_options_found.toString();
+            return false;
+        }
+        // Filter out unknown Tolerance options
+        var unknown_tol_options_found = tol_options_found.filter(isNotToleranceOption);
+        if (unknown_tol_options_found != "") {
+            err_msg = 'The following unknown \'-T\' options were found \'' +
+                unknown_tol_options_found.toString() + '\'. Available options' +
+                ' are ' + toleranceOptions.toString();
+            return false;
+        }
+        // Finally check if more than one -d option is given
+        if (dev_options_found.length > 1) {
+            // only legitimate -d option with 2 parameters is raid + raid target
+            if (dev_options_found.length == 2) {
+                if ((!isNotRaidOption(dev_options_found[0])) && (!isNotRaidTarget(dev_options_found[1]))) {
+                    // we have a raid option followed by a raid target dev
+                    console.log('found a raid option with a raid target')
+                    return true
+                }
+            }
+            err_msg = 'Only one \'-d\' option is supported';
+            return false;
+        }
+
+
         return true;
     }, smartcustom_err_msg);
 
