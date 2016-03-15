@@ -264,7 +264,27 @@ def test_logs(device, test_mode=TESTMODE):
                              o[i + 1]) is not None):
                     for j in range(i + 2, len(o)):
                         if (re.match('# ', o[j]) is not None):
+                            # slit the line into fields using 2 or more spaces
                             fields = re.split(r'\s\s+', o[j].strip()[2:])
+                            # Some Seagate drives add an ongoing test progress
+                            # report to the top of this log but there is then
+                            # only one space delimiter and we loose a column.
+                            if len(fields) == 5:  # it's normally 6 fields
+                                # we are missing a column (fast check)
+                                if re.match('Self-test routine in progress',
+                                            fields[2]):
+                                    # An ongoing self-test entry is to blame.
+                                    status_fields = fields[2].split()
+                                    # Move our last two line fields along one.
+                                    fields.insert(5, fields[4])
+                                    fields[4] = fields[3]
+                                    # Move end of status field percentage to
+                                    # freshly freed up column in line list.
+                                    fields[3] = status_fields[-1]
+                                    # Remove our % remaining in status field.
+                                    fields[2] = ' '.join(status_fields[:-1])
+                            # Remove the % char from this columns value
+                            # and change % Remaining to % Completed.
                             fields[3] = 100 - int(fields[3][:-1])
                             test_d[fields[0]] = fields[1:]
                         else:
