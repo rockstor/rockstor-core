@@ -140,7 +140,9 @@ SmartcustomDiskView = RockstorLayoutView.extend({
         function isNotRaidTarget(option) {
             // assumed not a raid controller target until found otherwise
             target_found = false;
-            for (var pattern of raidTargetRegExp) {
+            // for (var pattern of raidTargetRegExp) { // possible js version ?
+            for (index = 0; index < raidTargetRegExp.length; index++) {
+                var pattern = raidTargetRegExp[index]; // more compatible.
                 console.log('processing pattern ', pattern.toString());
                 if (pattern.test(option) == true) {
                 console.log('match found in raidTargetRegExp');
