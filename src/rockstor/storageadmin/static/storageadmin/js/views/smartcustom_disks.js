@@ -72,6 +72,12 @@ SmartcustomDiskView = RockstorLayoutView.extend({
         var devOptions = ["auto", "test", "ata", "scsi", "sat", "sat,12", "sat,16", "sat,auto", "usbprolific", "usbjmicron", "usbjmicron,0", "usbjmicron,p", "usbjmicron,x", "usbjmicron,x,1", "usbcypress", "usbsunplus"];
         var devOptionsRaid = ["3ware", "areca", "hpt", "cciss", "megaraid", "aacraid"];
         var toleranceOptions = ["normal", "conservative", "permissive", "verypermissive"];
+        // RegExp patters for the following RAID target devices:
+        // 3ware /dev/twe, /dev/twa, /dev/twl followed by 0-15
+        // Areca sata /dev/sg[2-9] but for hpahcisr and hpsa drivers /dev/sg[0-9]* (lsscsi -g to help)
+        // so we still have an issue there.
+        // HP Smart array with cciss driver uses /dev/cciss/c[0-9]d0
+        var raidTargetRegExp = [/\/dev\/tw[e|a|l][0-9][0-5]{0,1}$/, /\/dev\/sg[0-9]$/, /\/dev\/cciss\/c[0-9]d0$/];
         // Check for invalid characters
         if (/^[A-Za-z0-9,-/ ]+$/.test(smartcustom_options) == false) {
 			err_msg = 'Invalid character found, expecting only letters, numbers, and \'-\',\'/\' and \'space.\'';
@@ -90,17 +96,16 @@ SmartcustomDiskView = RockstorLayoutView.extend({
         // By now we have valid characters that include "-d " and or "-T " and
         // less than 64 of them (including spaces) - the max db field length.
         var first_d_option =  smartcustom_options.indexOf("-d ")
-        // Check for only one instance of "-d " including ending in "-d", note
-        // that multiple instances of -T are valid.
+        console.log('first -d option found at ', first_d_option);
+        // Check for only one instance of "-d ".
+        // Note that multiple instances of -T are valid.
         if (first_d_option != -1 && smartcustom_options.lastIndexOf("-d") != first_d_option) {
-            err_msg = 'Only one occurrence of -d is permitted.';
+            console.log('lastIndexOf -d returned ', smartcustom_options.lastIndexOf("-d"));
+            err_msg = 'Only one occurrence of the -d switch is permitted.';
             return false;
         }
-        // Reject unknown options ie not "d " or "T " after a -
-        // ?
-
-        // Validate each option ie
-        // find elements of given options as split by space.
+        // Validate each option.
+        // Find elements of given options via split by space.
         var option_array = smartcustom_options.split(" ");
         console.log('working with option array = ', option_array)
         console.log('contents of first element = ', option_array[0])
@@ -133,15 +138,28 @@ SmartcustomDiskView = RockstorLayoutView.extend({
         }
         // true if not recognized as a RAID target device
         function isNotRaidTarget(option) {
-            // /dev/twe, /dev/twa, /dev/twl followed by 1 or 2 numbers
-            if (/\/dev\/tw[e|a|l][0-9]/.test(option) == false) {
-                console.log('isNotRaidTarget is returning true on option', option, /\/dev\/tw[e|a|l][0-9]/.test(option));
+            // assumed not a raid controller target until found otherwise
+            target_found = false;
+            for (var pattern of raidTargetRegExp) {
+                console.log('processing pattern ', pattern.toString());
+                if (pattern.test(option) == true) {
+                console.log('match found in raidTargetRegExp');
                 console.log('option.toString = ', option.toString());
-                return true;
-            } else {
-                console.log('isNotRaidTarget is returning false on option', option);
-                return false;
+                    target_found = true;
+                    // match found so look no further.
+                    break;
+                }
             }
+            return !target_found
+        }
+        // rogue spaces are empty array elements after split so test for them
+        function  isRogueSpace(option) {
+            return (option.toString() == "");
+        }
+        // test for any rogue spaces
+        if (option_array.filter(isRogueSpace).length != 0) {
+            err_msg = 'One or more rouge spaces found, please re-check input';
+            return false;
         }
         // Categorize all entered options individually forEach is order safe.
         var dev_options_found = [];
