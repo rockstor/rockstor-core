@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 SMART = '/usr/sbin/smartctl'
 CAT = '/usr/bin/cat'
+LSBLK = '/usr/bin/lsblk'
 # enables reading file dumps of smartctl output instead of running smartctl
 # currently hardwired to read from eg:- /root/smartdumps/smart-H--info.out
 # default setting = False
@@ -43,11 +44,11 @@ def info(device, test_mode=TESTMODE):
     :return: list of smart parameters extracted from device or test file
     """
     if not test_mode:
-        o, e, rc = run_command([SMART, '-H', '--info', '/dev/%s' % device],
-                               throw=False)
+        o, e, rc = run_command(
+            [SMART, '-H', '--info', '/dev/%s' % get_base_device(device)],
+            throw=False)
     else:  # we are testing so use a smartctl -H --info file dump instead
         o, e, rc = run_command([CAT, '/root/smartdumps/smart-H--info.out'])
-    res = {}
     # List of string matches to look for in smartctrl -H --info output.
     # Note the "|" char allows for defining alternative matches ie A or B
     matches = ('Model Family:|Vendor:', 'Device Model:|Product:',
@@ -60,14 +61,20 @@ def info(device, test_mode=TESTMODE):
                'SMART support is:.* Available',
                'SMART support is:.* Enabled',
                'SMART overall-health self-assessment|SMART Health Status:',)
+    # create a list of empty strings ready to store our smart results / values
     res = ['', ] * len(matches)
     version = ''
-    for l in o:
-        if (re.match('smartctl ', l) is not None):
-            version = ' '.join(l.split()[1:4])
+    for line in o:
+        if (re.match('smartctl ', line) is not None):
+            version = ' '.join(line.split()[1:4])
         for i in range(len(matches)):
-            if (re.match(matches[i], l) is not None):
-                res[i] = l.split(': ')[1].strip()
+            if (re.match(matches[i], line) is not None):
+                # find location of first colon
+                first_colon = re.search(':', line).start()
+                # Assume all characters after colon are the result / value and
+                # strip off begin and end spaces. Limit to 64 chars for db.
+                res[i] = line[first_colon + 1:].strip()[:64]
+    # smartctl version is expected at index 14 (15th item)
     res.insert(14, version)
     return res
 
@@ -84,7 +91,8 @@ def extended_info(device, test_mode=TESTMODE):
     :return: dictionary of smart attributes extracted from device or test file
     """
     if not test_mode:
-        o, e, rc = run_command([SMART, '-a', '/dev/%s' % device], throw=False)
+        o, e, rc = run_command(
+            [SMART, '-a', '/dev/%s' % get_base_device(device)], throw=False)
     else:  # we are testing so use a smartctl -a file dump instead
         o, e, rc = run_command([CAT, '/root/smartdumps/smart-a.out'])
     attributes = {}
@@ -115,7 +123,8 @@ def capabilities(device, test_mode=TESTMODE):
     :return: dictionary of smart capabilities extracted from device or test file
     """
     if not test_mode:
-        o, e, rc = run_command([SMART, '-c', '/dev/%s' % device])
+        o, e, rc = run_command(
+            [SMART, '-c', '/dev/%s' % get_base_device(device)])
     else:  # we are testing so use a smartctl -c file dump instead
         o, e, rc = run_command([CAT, '/root/smartdumps/smart-c.out'])
     cap_d = {}
@@ -157,7 +166,8 @@ def error_logs(device, test_mode=TESTMODE):
     error number.
     :return: log_l: A list containing each line in turn of the error log.
     """
-    smart_command = [SMART, '-l', 'error', '/dev/%s' % device]
+    local_base_dev = get_base_device(device)
+    smart_command = [SMART, '-l', 'error', '/dev/%s' % local_base_dev]
     if not test_mode:
         o, e, rc = run_command(smart_command, throw=False)
     else:
@@ -167,7 +177,7 @@ def error_logs(device, test_mode=TESTMODE):
     # log contains errors but otherwise executes successfully so we catch this.
     overide_rc = 64
     e_msg = 'Drive /dev/%s has logged S.M.A.R.T errors. Please view ' \
-                 'the Error logs tab for this device.' % device
+                 'the Error logs tab for this device.' % local_base_dev
     screen_return_codes(e_msg, overide_rc, o, e, rc, smart_command)
     ecode_map = {
         'ABRT' : 'Command ABoRTed',
@@ -227,7 +237,7 @@ def test_logs(device, test_mode=TESTMODE):
     :return: test_d as a dictionary of summarized test
     """
     smart_command = [SMART, '-l', 'selftest', '-l', 'selective', '/dev/%s'
-                     % device]
+                     % get_base_device(device)]
     if not test_mode:
         o, e, rc = run_command(smart_command, throw=False)
     else:
@@ -264,7 +274,7 @@ def test_logs(device, test_mode=TESTMODE):
 
 def run_test(device, test):
     # start a smart test(short, long or conveyance)
-    return run_command([SMART, '-t', test, '/dev/%s' % device])
+    return run_command([SMART, '-t', test, '/dev/%s' % get_base_device(device)])
 
 
 def available(device, test_mode=TESTMODE):
@@ -276,7 +286,8 @@ def available(device, test_mode=TESTMODE):
     :return: available (boolean), enabled (boolean)
     """
     if not test_mode:
-        o, e, rc = run_command([SMART, '--info', ('/dev/%s' % device)])
+        o, e, rc = run_command(
+            [SMART, '--info', ('/dev/%s' % get_base_device(device))])
     else:  # we are testing so use a smartctl --info file dump instead
         o, e, rc = run_command([CAT, '/root/smartdumps/smart--info.out'])
     a = False
@@ -293,7 +304,8 @@ def available(device, test_mode=TESTMODE):
 def toggle_smart(device, enable=False):
     switch = 'on' if (enable) else 'off'
     # enable SMART support of the device
-    return run_command([SMART, '--smart=%s' % switch, '/dev/%s' % device])
+    return run_command(
+        [SMART, '--smart=%s' % switch, '/dev/%s' % get_base_device(device)])
 
 
 def update_config(config):
@@ -341,3 +353,41 @@ def screen_return_codes(msg_on_hit, return_code_target, o, e, rc, command):
                  '%s error: %s' % (rc, command, o, e))
         logger.error(e_msg)
         raise CommandException(('%s' % command), o, e, rc)
+
+
+def get_base_device(device, test_mode=TESTMODE):
+    """
+    Helper function that returns the base device of a partition or if given
+    a base device then will return it as is;
+    ie
+    input sda3 output sda
+    input sda output sda
+    Works as a function of lsblk list order ie base devices first. So we return
+    the first start of line match to our supplied device name with the pattern
+    as the first element in lsblk's output and the match target as our device.
+    N.B. this function may well be a candidate to provide more advanced smart
+    device name mapping such as is required by some 3Ware raid controllers ie
+    to redirect smart commands from sd* to twl* device names. A live mapping
+    system will be required for this but could be incorporated here since we
+    are already translating at least partition names to their base dev names.
+    :param device: device name as per db entry, ie as returned from scan_disks
+    :return: base_dev: the root device ie device = sda3 base_dev = sda or None
+    if no lsblk entry was found to match.
+    """
+    base_dev = None
+    if not test_mode:
+        out, e, rc = run_command([LSBLK])
+    else:
+        out, e, rc = run_command([CAT, '/root/smartdumps/lsblk.out'])
+    # now examine the output from lsblk line by line
+    for line in out:
+        line_fields = line.split()
+        if len(line_fields) < 1:
+            # skip empty lines
+            continue
+        if re.match(line_fields[0], device):
+            # We have found a device string match to our device so record it.
+            base_dev = line_fields[0]
+            break
+    # return base_dev ie None or first character matches to line start in lsblk
+    return base_dev
