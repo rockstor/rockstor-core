@@ -428,22 +428,28 @@ def get_dev_options(device, custom_options=''):
     :return: dev_options: list containing the device specific smart options and
     the appropriate smart device target.
     """
-    # convert our string of custom options into a list ready for run_command
-    dev_options = custom_options.encode('ascii').split()
+    # Initially our custom_options parameter may be None, ie db default prior
+    # to any changes having been made. Deal with this by adding a guard.
+    if custom_options is None or custom_options == '':
+        # Empty custom_options or they have never been set so just return
+        # full path to base devcie as nothing else to do.
+        dev_options = get_base_device(device)
+    else:
+        # Convert string of custom options into a list ready for run_command
+        dev_options = custom_options.encode('ascii').split()
+        # If our custom options don't contain a raid controller target then add
+        # the full path to our base device as our last device specific option.
+        if (re.search('/dev/tw|/dev/cciss/c|/dev/sg', custom_options) is None):
+            # add full path to our custom options as we see no raid target dev
+            dev_options += get_base_device(device)
     # Note on raid controller target devices.
     # /dev/twe#, or /dev/twa#, or /dev/twl# are 3ware controller targets devs
     # respectively 3x-xxxx, 3w-9xxx, and t2-sas (3ware/LSI 9750) drivers for
     # respectively 6000, 7000, 8000 or 9000 or 3ware/LSI 9750 controllers.
     # /dev/cciss/c0d0 is the first HP/Compaq Smart Array Controller using the
     # depricated cciss driver
-    # /dev/sg2 is the first hpsa or hpahcisr driver device for the same adapter.
-    # This same target device is also used by the Areca SATA RAID controller.
-    #
-    # If our custom options don't contain a raid controller target then add
-    # the full path to our base device as our last device specific option.
-    if (re.search('/dev/tw|/dev/cciss/c|/dev/sg',
-                  custom_options) is None):
-        # add the full path to our custom options as we see no raid target dev
-        dev_options += get_base_device(device)
+    # /dev/sg0 is the first hpsa or hpahcisr driver device for the same adapter.
+    # This same target device is also used by the Areca SATA RAID controller
+    # except that the first device is /dev/sg2.
     logger.debug('get_dev_options is returning the following %s', dev_options)
     return dev_options
