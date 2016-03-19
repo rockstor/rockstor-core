@@ -236,8 +236,8 @@ SmartcustomDiskView = RockstorLayoutView.extend({
         // filter the resulting array by the less strict known raid options
         var unknown_dev_options_found = dev_options_found.filter(isNotDevOption).filter(isNotRaidOption).filter(isNotRaidTarget);
         if (unknown_dev_options_found != "") {
-            err_msg = 'The following unknown \'-d\' options were found ' +
-                unknown_dev_options_found.toString();
+            err_msg = 'The following unknown \'-d\' options were found \'' +
+                unknown_dev_options_found.toString() + '\'';
             return false;
         }
         // Filter out unknown Tolerance options
