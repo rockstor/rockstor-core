@@ -73,7 +73,9 @@ setup(
         'django-ztask == 0.1.5',
         'mock == 1.0.1',
         'coverage',
-        'gevent-socketio',
+        'gevent == 1.0.2',
+        'gevent-websocket == 0.9.5',
+        'gevent-socketio == 0.3.6',
         'psycogreen',
         'psutil == 3.3.0',
     ]
