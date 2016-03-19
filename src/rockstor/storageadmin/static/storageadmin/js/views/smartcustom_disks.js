@@ -141,7 +141,8 @@ SmartcustomDiskView = RockstorLayoutView.extend({
             return (toleranceOptions.indexOf(option) == -1);
         }
         // true if not recognized as a RAID option
-        // consider improving to use string.match(regexp) to account of numbers
+        // Consider improving to use string.match(regexp) to match whole option.
+        // Currently only validates pre ',' in for example 3ware,5
         function isNotRaidOption(option) {
             var without_values = option.substring(0, option.indexOf(","));
             console.log('without_values = ', without_values);
@@ -174,12 +175,14 @@ SmartcustomDiskView = RockstorLayoutView.extend({
             err_msg = 'One or more rouge spaces found, please re-check input';
             return false;
         }
-        // Categorize all entered options individually forEach is order safe.
+        // Categorize all entered options individually, forEach is order safe.
         var dev_options_found = [];
         var tol_options_found = [];
         var unknown_options_found = [];
         var option_type = '';
         var unknown_switches_found = [];
+        var dev_switch_found = false;
+        var tol_switch_found = false;
         option_array.forEach(function(option) {
             console.log('examining option ', option);
             // console.log('isNotDevOption returned ', isNotDevOption(option));
@@ -190,8 +193,10 @@ SmartcustomDiskView = RockstorLayoutView.extend({
                 // option is a switch
                 if (isDevSwitch(option)) {
                     option_type = "dev";
+                    dev_switch_found = true;
                 } else if (isToleranceSwitch(option)) {
                     option_type = "tol";
+                    tol_switch_found = true;
                 } else { // unknown switch
                     option_type = "unknown";
                     unknown_switches_found.push(option);
@@ -231,7 +236,8 @@ SmartcustomDiskView = RockstorLayoutView.extend({
         // filter the resulting array by the less strict known raid options
         var unknown_dev_options_found = dev_options_found.filter(isNotDevOption).filter(isNotRaidOption).filter(isNotRaidTarget);
         if (unknown_dev_options_found != "") {
-            err_msg = 'The following unknown \'-d\' options were found ' + unknown_dev_options_found.toString();
+            err_msg = 'The following unknown \'-d\' options were found ' +
+                unknown_dev_options_found.toString();
             return false;
         }
         // Filter out unknown Tolerance options
@@ -240,6 +246,12 @@ SmartcustomDiskView = RockstorLayoutView.extend({
             err_msg = 'The following unknown \'-T\' options were found \'' +
                 unknown_tol_options_found.toString() + '\'. Available options' +
                 ' are ' + toleranceOptions.toString();
+            return false;
+        }
+        // Check we have at least one Tolerance option
+        if (tol_switch_found && tol_options_found.length < 1){
+            // no Tolerance options found
+            err_msg = 'Tolerance switch \'-T\' found without valid options';
             return false;
         }
         // Finally check if more than one -d option is given
