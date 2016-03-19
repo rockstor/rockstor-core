@@ -236,7 +236,7 @@ DisksView = Backbone.View.extend({
 		}else{
 			html += ' ';
 		}
-		html += '<a href="#disks/smartcustom/'+ diskName +'" title="Click to add or edit Custom SMART options" rel="tooltip">';
+		html += '<a href="#disks/smartcustom/'+ diskName +'" title="Click to add/edit Custom SMART options. Rescan to Apply." rel="tooltip">';
 		html += '<i class="glyphicon glyphicon-pencil"></i></a> ';
         if (!smartAvailable) {
            html +='Not Supported</td>';
