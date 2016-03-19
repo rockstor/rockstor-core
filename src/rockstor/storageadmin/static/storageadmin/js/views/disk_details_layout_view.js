@@ -101,6 +101,7 @@ DiskDetailsLayoutView = RockstorLayoutView.extend({
 	    disk: this.disk,
 	    diskSmartNotAvailable: diskSmartNotAvailable,
 	    diskSmartNotEnabled: diskSmartNotEnabled,
+		smartNotAvailableEnabled: smartNotAvailableEnabled,
 	    diskName: diskName,
 	    attributes: attributes,
 	    capabilities: capabilities,
