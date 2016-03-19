@@ -68,7 +68,7 @@ SmartcustomDiskView = RockstorLayoutView.extend({
       }
 
     $.validator.addMethod('validateSmartCustom', function(value) {
-        var smartcustom_options = $('#smartcustom_options').val();
+        var smartcustom_options = $('#smartcustom_options').val().trim();
         var devOptions = ["auto", "test", "ata", "scsi", "sat", "sat,12", "sat,16", "sat,auto", "usbprolific", "usbjmicron", "usbjmicron,0", "usbjmicron,p", "usbjmicron,x", "usbjmicron,x,1", "usbcypress", "usbsunplus"];
         var devOptionsRaid = ["3ware", "areca", "hpt", "cciss", "megaraid", "aacraid"];
         var toleranceOptions = ["normal", "conservative", "permissive", "verypermissive"];
@@ -79,9 +79,18 @@ SmartcustomDiskView = RockstorLayoutView.extend({
         // HP Smart array with cciss driver uses /dev/cciss/c[0-9]d0
         var raidTargetRegExp = [/\/dev\/tw[e|a|l][0-9][0-5]{0,1}$/, /\/dev\/sg[0-9]$/, /\/dev\/cciss\/c[0-9]d0$/];
         // Check for invalid characters
-        if (/^[A-Za-z0-9,-/ ]+$/.test(smartcustom_options) == false) {
-			err_msg = 'Invalid character found, expecting only letters, numbers, and \'-\',\'/\' and \'space.\'';
-			return false;
+        console.log('smartcustom_options value is read as = \'',smartcustom_options + '\'');
+        console.log('smartcustom_options length is = ', smartcustom_options.length);
+        console.log('smartcustom_options charCodeAt(0) = ', smartcustom_options.charCodeAt(0));
+        // initial cascade of syntactic checks
+        if (smartcustom_options.length == 0) {
+            // allow zero length (empty) entry to remove existing options
+            return true;
+        }
+        else
+            if (/^[A-Za-z0-9,-/ ]+$/.test(smartcustom_options) == false) {
+			    err_msg = 'Invalid character found, expecting only letters, numbers, and \'-\',\'/\' and \'space.\'';
+			    return false;
         }
         else
             if((!smartcustom_options.includes("-d ")) && (!smartcustom_options.includes("-T "))){
@@ -95,15 +104,17 @@ SmartcustomDiskView = RockstorLayoutView.extend({
         }
         // By now we have valid characters that include "-d " and or "-T " and
         // less than 64 of them (including spaces) - the max db field length.
+        // Move to repeat and semantic checks
+        //
+        // Check for only one instance of "-d ".
         var first_d_option =  smartcustom_options.indexOf("-d ")
         console.log('first -d option found at ', first_d_option);
-        // Check for only one instance of "-d ".
-        // Note that multiple instances of -T are valid.
         if (first_d_option != -1 && smartcustom_options.lastIndexOf("-d") != first_d_option) {
             console.log('lastIndexOf -d returned ', smartcustom_options.lastIndexOf("-d"));
             err_msg = 'Only one occurrence of the -d switch is permitted.';
             return false;
         }
+        // Note that multiple instances of -T are valid.
         // Validate each option.
         // Find elements of given options via split by space.
         var option_array = smartcustom_options.split(" ");
