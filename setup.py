@@ -76,7 +76,7 @@ setup(
         'gevent == 1.0.2',
         'gevent-websocket == 0.9.5',
         'gevent-socketio == 0.3.6',
-        'psycogreen',
+        'psycogreen == 1.0',
         'psutil == 3.3.0',
     ]
 
