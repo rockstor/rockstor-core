@@ -411,7 +411,6 @@ def get_base_device(device, test_mode=TESTMODE):
             base_dev[0] = '/dev/' + line_fields[0]
             break
     # Return base_dev ie [''] or first character matches to line start in lsblk.
-    logger.debug('get_base_device returning base_dev = %s', base_dev)
     return base_dev
 
 
@@ -451,5 +450,4 @@ def get_dev_options(device, custom_options=''):
     # /dev/sg0 is the first hpsa or hpahcisr driver device for the same adapter.
     # This same target device is also used by the Areca SATA RAID controller
     # except that the first device is /dev/sg2.
-    logger.debug('get_dev_options is returning the following %s', dev_options)
     return dev_options
