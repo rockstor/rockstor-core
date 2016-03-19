@@ -22,13 +22,17 @@
 <div class="messages"></div>
 <!-- page heading -->
 
-{{#if diskSmartNotAvaialble}}
+{{#if diskSmartNotAvailable}}
 <div class="alert alert-danger">
-  <h4>S.M.A.R.T support is not available for this disk ({{diskName}})</h4>
+  <h4>S.M.A.R.T support is not available for this disk ({{diskName}}).<br>
+	Please see the S.M.A.R.T column entry for this disk on the Storage - Disks
+	page; custom options may be required.</h4>
 </div>
 {{else if diskSmartNotEnabled}}
 <div class="alert alert-warning">
-  <h4>Warning! S.M.A.R.T support is not enabled for this disk ({{diskName}}).<br>If available, You can enable it in the Storage screen.</h4>
+  <h4>Warning! S.M.A.R.T support is not enabled for this disk ({{diskName}}).
+	<br>If available it can be enabled in the S.M.A.R.T column entry for this disk
+	on the Storage - Disks page.</h4>
 </div>
 {{else}}
 <div class="pull-right">
@@ -286,8 +290,7 @@
       {{#if smartNotAvailableEnabled}}
       <div class="alert alert-danger">
 	<h4>Tests cannot be run because S.M.A.R.T support is either unavailable or
-		disabled. Please see the S.M.A.R.T column entry for this disk on the Storage
-	  - Disks page; custom options may be required.</h4>
+		disabled.</h4>
       </div>
       {{else}}
       <p>
