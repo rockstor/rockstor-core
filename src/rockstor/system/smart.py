@@ -424,7 +424,7 @@ def get_dev_options(device, custom_options=''):
     raid controller smartctl targets then these will be substituted for device
     name.
     :param device:  device name as per db entry, ie as returned from scan_disks
-    :param custom_options: user entered custom smart options.
+    :param custom_options: string of user entered custom smart options.
     :return: dev_options: list containing the device specific smart options and
     the appropriate smart device target.
     """
@@ -432,7 +432,7 @@ def get_dev_options(device, custom_options=''):
     # to any changes having been made. Deal with this by adding a guard.
     if custom_options is None or custom_options == '':
         # Empty custom_options or they have never been set so just return
-        # full path to base devcie as nothing else to do.
+        # full path to base device as nothing else to do.
         dev_options = get_base_device(device)
     else:
         # Convert string of custom options into a list ready for run_command
@@ -447,7 +447,7 @@ def get_dev_options(device, custom_options=''):
     # respectively 3x-xxxx, 3w-9xxx, and t2-sas (3ware/LSI 9750) drivers for
     # respectively 6000, 7000, 8000 or 9000 or 3ware/LSI 9750 controllers.
     # /dev/cciss/c0d0 is the first HP/Compaq Smart Array Controller using the
-    # depricated cciss driver
+    # deprecated cciss driver
     # /dev/sg0 is the first hpsa or hpahcisr driver device for the same adapter.
     # This same target device is also used by the Areca SATA RAID controller
     # except that the first device is /dev/sg2.

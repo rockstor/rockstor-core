@@ -78,11 +78,7 @@ SmartcustomDiskView = RockstorLayoutView.extend({
         // so we still have an issue there.
         // HP Smart array with cciss driver uses /dev/cciss/c[0-9]d0
         var raidTargetRegExp = [/\/dev\/tw[e|a|l][0-9][0-5]{0,1}$/, /\/dev\/sg[0-9]$/, /\/dev\/cciss\/c[0-9]d0$/];
-        // Check for invalid characters
-        console.log('smartcustom_options value is read as = \'',smartcustom_options + '\'');
-        console.log('smartcustom_options length is = ', smartcustom_options.length);
-        console.log('smartcustom_options charCodeAt(0) = ', smartcustom_options.charCodeAt(0));
-        // initial cascade of syntactic checks
+        // Initial cascade of syntactic checks.
         if (smartcustom_options.length == 0) {
             // allow zero length (empty) entry to remove existing options
             return true;
@@ -108,9 +104,7 @@ SmartcustomDiskView = RockstorLayoutView.extend({
         //
         // Check for only one instance of "-d ".
         var first_d_option =  smartcustom_options.indexOf("-d ")
-        console.log('first -d option found at ', first_d_option);
         if (first_d_option != -1 && smartcustom_options.lastIndexOf("-d") != first_d_option) {
-            console.log('lastIndexOf -d returned ', smartcustom_options.lastIndexOf("-d"));
             err_msg = 'Only one occurrence of the -d switch is permitted.';
             return false;
         }
@@ -118,8 +112,6 @@ SmartcustomDiskView = RockstorLayoutView.extend({
         // Validate each option.
         // Find elements of given options via split by space.
         var option_array = smartcustom_options.split(" ");
-        console.log('working with option array = ', option_array)
-        console.log('contents of first element = ', option_array[0])
         if ((option_array[0] != "-d") && (option_array[0] != "-T")) {
             err_msg = 'Please begin with either \'-d \' or \'-T \'';
             return false;
@@ -145,7 +137,6 @@ SmartcustomDiskView = RockstorLayoutView.extend({
         // Currently only validates pre ',' in for example 3ware,5
         function isNotRaidOption(option) {
             var without_values = option.substring(0, option.indexOf(","));
-            console.log('without_values = ', without_values);
             return (devOptionsRaid.indexOf(without_values) == -1);
         }
         // true if not recognized as a RAID target device
@@ -155,10 +146,7 @@ SmartcustomDiskView = RockstorLayoutView.extend({
             // for (var pattern of raidTargetRegExp) { // possible js version ?
             for (index = 0; index < raidTargetRegExp.length; index++) {
                 var pattern = raidTargetRegExp[index]; // more compatible.
-                console.log('processing pattern ', pattern.toString());
                 if (pattern.test(option) == true) {
-                console.log('match found in raidTargetRegExp');
-                console.log('option.toString = ', option.toString());
                     target_found = true;
                     // match found so look no further.
                     break;
@@ -184,13 +172,8 @@ SmartcustomDiskView = RockstorLayoutView.extend({
         var dev_switch_found = false;
         var tol_switch_found = false;
         option_array.forEach(function(option) {
-            console.log('examining option ', option);
-            // console.log('isNotDevOption returned ', isNotDevOption(option));
-            // console.log('isNotTypeOption returned ', isNotToleranceOption(option));
-            // console.log('isNotRiadOption returned ', isNotRaidOption(option));
             // filter our various options before assessing them as valid.
-            if (option.charAt(0) == "-") {
-                // option is a switch
+            if (option.charAt(0) == "-") { // option is a switch
                 if (isDevSwitch(option)) {
                     option_type = "dev";
                     dev_switch_found = true;
@@ -204,23 +187,20 @@ SmartcustomDiskView = RockstorLayoutView.extend({
             } else if (option_type == "dev") {
                 // collect all options proceeded by a -d option
                 dev_options_found.push(option);
-                console.log('dev_options_found so far = ', dev_options_found);
             } else if (option_type == "tol") {
                 // collect all options proceeded by a -T option
                 tol_options_found.push(option);
-                console.log('tol_options_found so far = ', tol_options_found);
             } else {
                 // collect all other options proceeded by an unknown switch.
                 unknown_options_found.push(option);
-                console.log('unknown_options_found so far = ', unknown_options_found);
             }
         });
-        // report any unknown switches
+        // Report any unknown switches.
         if (unknown_switches_found != "" ) {
             err_msg = 'One or more unknown switches found: \'' + unknown_switches_found.toString() + '\', supported switches are \'-d\' and \'-T\'';
             return false;
         }
-        // report any options of unknown type
+        // Report any options of unknown type.
         // Note this should never trigger as the last unknown_switches_found
         // should trigger first. We have a later one to catch unknown options
         // after known triggers.
@@ -260,15 +240,13 @@ SmartcustomDiskView = RockstorLayoutView.extend({
             if (dev_options_found.length == 2) {
                 if ((!isNotRaidOption(dev_options_found[0])) && (!isNotRaidTarget(dev_options_found[1]))) {
                     // we have a raid option followed by a raid target dev
-                    console.log('found a raid option with a raid target')
                     return true
                 }
             }
             err_msg = 'Only one \'-d\' option is supported';
             return false;
         }
-
-
+        // not otherwise found to be invalid or valid so assume valid by now.
         return true;
     }, smartcustom_err_msg);
 
