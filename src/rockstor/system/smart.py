@@ -35,7 +35,7 @@ LSBLK = '/usr/bin/lsblk'
 TESTMODE = False
 
 
-def info(device, test_mode=TESTMODE):
+def info(device, custom_options='', test_mode=TESTMODE):
     """
     Retrieve matching properties found in smartctl -H --info output.
     Used to populate the Identity / general info tab by views/disk_smart.py
@@ -45,7 +45,7 @@ def info(device, test_mode=TESTMODE):
     """
     if not test_mode:
         o, e, rc = run_command(
-            [SMART, '-H', '--info', '/dev/%s' % get_base_device(device)],
+            [SMART, '-H', '--info'] + get_dev_options(device, custom_options),
             throw=False)
     else:  # we are testing so use a smartctl -H --info file dump instead
         o, e, rc = run_command([CAT, '/root/smartdumps/smart-H--info.out'])
@@ -79,7 +79,7 @@ def info(device, test_mode=TESTMODE):
     return res
 
 
-def extended_info(device, test_mode=TESTMODE):
+def extended_info(device, custom_options='', test_mode=TESTMODE):
     """
     Retrieves a list of SMART attributes found from parsing smartctl -a output
     Mostly ATA / SATA as SCSI uses a free form syntax for this.
@@ -92,7 +92,8 @@ def extended_info(device, test_mode=TESTMODE):
     """
     if not test_mode:
         o, e, rc = run_command(
-            [SMART, '-a', '/dev/%s' % get_base_device(device)], throw=False)
+            [SMART, '-a'] + get_dev_options(device, custom_options),
+            throw=False)
     else:  # we are testing so use a smartctl -a file dump instead
         o, e, rc = run_command([CAT, '/root/smartdumps/smart-a.out'])
     attributes = {}
@@ -111,7 +112,7 @@ def extended_info(device, test_mode=TESTMODE):
     return attributes
 
 
-def capabilities(device, test_mode=TESTMODE):
+def capabilities(device, custom_options='', test_mode=TESTMODE):
     """
     Retrieves a list of SMART capabilities found from parsing smartctl -c output
     ATA / SATA only.
@@ -124,7 +125,7 @@ def capabilities(device, test_mode=TESTMODE):
     """
     if not test_mode:
         o, e, rc = run_command(
-            [SMART, '-c', '/dev/%s' % get_base_device(device)])
+            [SMART, '-c'] + get_dev_options(device, custom_options))
     else:  # we are testing so use a smartctl -c file dump instead
         o, e, rc = run_command([CAT, '/root/smartdumps/smart-c.out'])
     cap_d = {}
@@ -156,7 +157,7 @@ def capabilities(device, test_mode=TESTMODE):
     return cap_d
 
 
-def error_logs(device, test_mode=TESTMODE):
+def error_logs(device, custom_options='', test_mode=TESTMODE):
     """
     Retrieves a parsed list of SMART errors from the output of smartctl -l error
     May be empty if no errors, also returns a raw output of the error log itself
@@ -166,8 +167,8 @@ def error_logs(device, test_mode=TESTMODE):
     error number.
     :return: log_l: A list containing each line in turn of the error log.
     """
-    local_base_dev = get_base_device(device)
-    smart_command = [SMART, '-l', 'error', '/dev/%s' % local_base_dev]
+    local_base_dev = get_dev_options(device, custom_options)
+    smart_command = [SMART, '-l', 'error'] + local_base_dev
     if not test_mode:
         o, e, rc = run_command(smart_command, throw=False)
     else:
@@ -176,7 +177,7 @@ def error_logs(device, test_mode=TESTMODE):
     # examine what we have as return code (rc); 64 has been seen when the error
     # log contains errors but otherwise executes successfully so we catch this.
     overide_rc = 64
-    e_msg = 'Drive /dev/%s has logged S.M.A.R.T errors. Please view ' \
+    e_msg = 'Drive %s has logged S.M.A.R.T errors. Please view ' \
                  'the Error logs tab for this device.' % local_base_dev
     screen_return_codes(e_msg, overide_rc, o, e, rc, smart_command)
     ecode_map = {
@@ -227,7 +228,7 @@ def error_logs(device, test_mode=TESTMODE):
     return (summary, log_l)
 
 
-def test_logs(device, test_mode=TESTMODE):
+def test_logs(device, custom_options='', test_mode=TESTMODE):
     """
     Retrieves information from SMART Self-Test logs held by the drive.
     Creates a dictionary of previous test info, indexed by test number and a
@@ -236,8 +237,8 @@ def test_logs(device, test_mode=TESTMODE):
     :param test_mode: Not True causes cat from file rather than smartctl command
     :return: test_d as a dictionary of summarized test
     """
-    smart_command = [SMART, '-l', 'selftest', '-l', 'selective', '/dev/%s'
-                     % get_base_device(device)]
+    smart_command = [SMART, '-l', 'selftest', '-l',
+                     'selective'] + get_dev_options(device, custom_options)
     if not test_mode:
         o, e, rc = run_command(smart_command, throw=False)
     else:
@@ -292,12 +293,13 @@ def test_logs(device, test_mode=TESTMODE):
     return (test_d, log_l)
 
 
-def run_test(device, test):
+def run_test(device, test, custom_options=''):
     # start a smart test(short, long or conveyance)
-    return run_command([SMART, '-t', test, '/dev/%s' % get_base_device(device)])
+    return run_command(
+        [SMART, '-t', test] + get_dev_options(device, custom_options))
 
 
-def available(device, test_mode=TESTMODE):
+def available(device, custom_options='', test_mode=TESTMODE):
     """
     Returns boolean pair: true if SMART support is available on the device and
     true if SMART support is enabled.
@@ -307,7 +309,7 @@ def available(device, test_mode=TESTMODE):
     """
     if not test_mode:
         o, e, rc = run_command(
-            [SMART, '--info', ('/dev/%s' % get_base_device(device))])
+            [SMART, '--info'] + get_dev_options(device, custom_options))
     else:  # we are testing so use a smartctl --info file dump instead
         o, e, rc = run_command([CAT, '/root/smartdumps/smart--info.out'])
     a = False
@@ -321,11 +323,12 @@ def available(device, test_mode=TESTMODE):
     return a, e
 
 
-def toggle_smart(device, enable=False):
+def toggle_smart(device, custom_options='', enable=False):
     switch = 'on' if (enable) else 'off'
     # enable SMART support of the device
     return run_command(
-        [SMART, '--smart=%s' % switch, '/dev/%s' % get_base_device(device)])
+        [SMART, '--smart=%s' % switch] + get_dev_options(device,
+                                                         custom_options))
 
 
 def update_config(config):
@@ -361,6 +364,7 @@ def screen_return_codes(msg_on_hit, return_code_target, o, e, rc, command):
     :param o: the output from the command when it was run
     :param e: the error from the command when it was run
     :param rc: the return code from running the command
+    :param command: the command that produced the previous o, e, and rc params.
     """
     # if our return code is our target then log with our message and email root
     # with the same.
@@ -377,24 +381,21 @@ def screen_return_codes(msg_on_hit, return_code_target, o, e, rc, command):
 
 def get_base_device(device, test_mode=TESTMODE):
     """
-    Helper function that returns the base device of a partition or if given
-    a base device then will return it as is;
+    Helper function that returns the full path of the base device of a partition
+    or if given a base device then will return it's full path,
     ie
-    input sda3 output sda
-    input sda output sda
+    input sda3 output /dev/sda
+    input sda output /dev/sda
     Works as a function of lsblk list order ie base devices first. So we return
     the first start of line match to our supplied device name with the pattern
     as the first element in lsblk's output and the match target as our device.
-    N.B. this function may well be a candidate to provide more advanced smart
-    device name mapping such as is required by some 3Ware raid controllers ie
-    to redirect smart commands from sd* to twl* device names. A live mapping
-    system will be required for this but could be incorporated here since we
-    are already translating at least partition names to their base dev names.
     :param device: device name as per db entry, ie as returned from scan_disks
-    :return: base_dev: the root device ie device = sda3 base_dev = sda or None
-    if no lsblk entry was found to match.
+    :param test_mode: Not True causes cat from file rather than smartctl command
+    :return: base_dev: single item list containing the root device's full path
+    ie device = sda3 the base_dev = /dev/sda or [''] if no lsblk entry was found
+    to match.
     """
-    base_dev = None
+    base_dev = ['', ]
     if not test_mode:
         out, e, rc = run_command([LSBLK])
     else:
@@ -407,7 +408,46 @@ def get_base_device(device, test_mode=TESTMODE):
             continue
         if re.match(line_fields[0], device):
             # We have found a device string match to our device so record it.
-            base_dev = line_fields[0]
+            base_dev[0] = '/dev/' + line_fields[0]
             break
-    # return base_dev ie None or first character matches to line start in lsblk
+    # Return base_dev ie [''] or first character matches to line start in lsblk.
     return base_dev
+
+
+def get_dev_options(device, custom_options=''):
+    """
+    Returns device specific options for all smartctl commands.
+    Note that in most cases this requires looking up the base device via
+    get_base_device but in some instances this is not required as in the case
+    of devices behind some raid controllers. If custom_options contains known
+    raid controller smartctl targets then these will be substituted for device
+    name.
+    :param device:  device name as per db entry, ie as returned from scan_disks
+    :param custom_options: string of user entered custom smart options.
+    :return: dev_options: list containing the device specific smart options and
+    the appropriate smart device target.
+    """
+    # Initially our custom_options parameter may be None, ie db default prior
+    # to any changes having been made. Deal with this by adding a guard.
+    if custom_options is None or custom_options == '':
+        # Empty custom_options or they have never been set so just return
+        # full path to base device as nothing else to do.
+        dev_options = get_base_device(device)
+    else:
+        # Convert string of custom options into a list ready for run_command
+        dev_options = custom_options.encode('ascii').split()
+        # If our custom options don't contain a raid controller target then add
+        # the full path to our base device as our last device specific option.
+        if (re.search('/dev/tw|/dev/cciss/c|/dev/sg', custom_options) is None):
+            # add full path to our custom options as we see no raid target dev
+            dev_options += get_base_device(device)
+    # Note on raid controller target devices.
+    # /dev/twe#, or /dev/twa#, or /dev/twl# are 3ware controller targets devs
+    # respectively 3x-xxxx, 3w-9xxx, and t2-sas (3ware/LSI 9750) drivers for
+    # respectively 6000, 7000, 8000 or 9000 or 3ware/LSI 9750 controllers.
+    # /dev/cciss/c0d0 is the first HP/Compaq Smart Array Controller using the
+    # deprecated cciss driver
+    # /dev/sg0 is the first hpsa or hpahcisr driver device for the same adapter.
+    # This same target device is also used by the Areca SATA RAID controller
+    # except that the first device is /dev/sg2.
+    return dev_options

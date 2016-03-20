@@ -188,8 +188,9 @@ DisksView = Backbone.View.extend({
                	serial = disk.get('serial'),
                	btrfsUId = disk.get('btrfs_uuid'),
                	diskParted = disk.get('parted'),
-               	smartEnabled = disk.get('smart_enabled');
-				diskRole = disk.get('role');
+               	smartEnabled = disk.get('smart_enabled'),
+				diskRole = disk.get('role'),
+				smartOptions = disk.get('smart_options');
 
         html += '<tr>';
         html += '<td><a href="#disks/' + diskName +' "><i class="glyphicon glyphicon-hdd"></i> '+ diskName +'</a>&nbsp';
@@ -228,13 +229,21 @@ DisksView = Backbone.View.extend({
         html += '<td>'+diskModel+'</td>';
         html += '<td>'+diskTransport+'</td>';
         html += '<td>'+diskVendor+'</td>';
+		// begin smart table data cell contents
+		html += '<td>';
+		if (smartOptions != null) {
+			html += smartOptions + ' ';
+		}else{
+			html += ' ';
+		}
+		html += '<a href="#disks/smartcustom/'+ diskName +'" title="Click to add/edit Custom SMART options. Rescan to Apply." rel="tooltip">';
+		html += '<i class="glyphicon glyphicon-pencil"></i></a> ';
         if (!smartAvailable) {
-           html +='<td>Not Supported</td>';
+           html +='Not Supported</td>';
         }else{
-            html += '<td>';
             if (smartEnabled) {
 		html += '<input type="checkbox" data-disk-name="' + diskName + '" data-size="mini" checked></input>';
-	    } else {
+	    	} else {
 		html += '<input type="checkbox" data-disk-name="' + diskName + '" data-size="mini"></input>';
 	    }
 	    html += '</td>';
