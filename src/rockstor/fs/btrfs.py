@@ -593,16 +593,13 @@ def share_usage(pool, share_id):
     root_pool_mnt = mount_root(pool)
     cmd = [BTRFS, 'qgroup', 'show', root_pool_mnt]
     out, err, rc = run_command(cmd, log=True)
-    rusage = eusage = None
+    rusage = eusage = -1
     for line in out:
         fields = line.split()
-        if (fields[0] == share_id):
+        if (len(fields) > 0 and fields[0] == share_id):
             rusage = convert_to_KiB(fields[-2])
             eusage = convert_to_KiB(fields[-2])
             break
-    if (rusage is None or eusage is None):
-        raise Exception('usage cannot be determined for share_id: %s' %
-                        share_id)
     return (rusage, eusage)
 
 
