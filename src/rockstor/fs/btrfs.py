@@ -547,19 +547,28 @@ def qgroup_assign(qid, pqid, mnt_pt):
     if (qgroup_is_assigned(qid, pqid, mnt_pt)):
         return True
 
-    # in btrfs-progs 4.2, qgroup assign succeeds but throws a warning:
+    # since btrfs-progs 4.2, qgroup assign succeeds but throws a warning:
     # "WARNING: # quotas may be inconsistent, rescan needed" and returns with
     # exit code 1.
     try:
-        run_command([BTRFS, 'qgroup', 'assign', qid, pqid, mnt_pt],
-                    log=True)
+        run_command([BTRFS, 'qgroup', 'assign', qid, pqid, mnt_pt])
     except CommandException, e:
         wmsg = 'WARNING: quotas may be inconsistent, rescan needed'
-        if (e.rc == 1 and e.out[0] == wmsg):
-            if (qgroup_is_assigned(qid, pqid, mnt_pt)):
-                return True
+        if (e.rc == 1 and e.err[0] == wmsg):
+            #schedule a rescan if one is not currently running.
+            dmsg = ('Quota inconsistency while assigning %s. Rescan scheduled.'
+                    % qid)
+            try:
+                run_command([BTRFS, 'quota', 'rescan', mnt_pt])
+                return logger.debug(dmsg)
+            except CommandException, e2:
+                emsg = 'ERROR: quota rescan failed: Operation now in progress'
+                if (e2.rc == 1 and e2.err[0] == emsg):
+                    return logger.debug('%s.. Another rescan already in progress.' % dmsg)
+                logger.exception(e2)
+                raise e2
+        logger.exception(e)
         raise e
-
 
 def update_quota(pool, qgroup, size_bytes):
     root_pool_mnt = mount_root(pool)
@@ -593,16 +602,13 @@ def share_usage(pool, share_id):
     root_pool_mnt = mount_root(pool)
     cmd = [BTRFS, 'qgroup', 'show', root_pool_mnt]
     out, err, rc = run_command(cmd, log=True)
-    rusage = eusage = None
+    rusage = eusage = -1
     for line in out:
         fields = line.split()
-        if (fields[0] == share_id):
+        if (len(fields) > 0 and fields[0] == share_id):
             rusage = convert_to_KiB(fields[-2])
             eusage = convert_to_KiB(fields[-2])
             break
-    if (rusage is None or eusage is None):
-        raise Exception('usage cannot be determined for share_id: %s' %
-                        share_id)
     return (rusage, eusage)
 
 

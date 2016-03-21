@@ -181,6 +181,8 @@ def vol_ops(container):
         share_mnt = ('%s%s' % (settings.MNT_PT, v.share.name))
         mount_share(v.share, share_mnt)
         ops_list.extend(['-v', '%s:%s' % (share_mnt, v.dest_dir)])
+    #map /etc/localtime for consistency across base rockstor and apps.
+    ops_list.extend(['-v', '/etc/localtime:/etc/localtime:ro'])
     return ops_list
 
 def vol_owner_uid(container):
