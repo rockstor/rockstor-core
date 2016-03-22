@@ -22,13 +22,17 @@
 <div class="messages"></div>
 <!-- page heading -->
 
-{{#if diskSmartNotAvaialble}}
+{{#if diskSmartNotAvailable}}
 <div class="alert alert-danger">
-  <h4>S.M.A.R.T support is not available for this disk ({{diskName}})</h4>
+  <h4>S.M.A.R.T support is not available for this disk ({{diskName}}).<br>
+	Please see the S.M.A.R.T column entry for this disk on the Storage - Disks
+	page; custom options may be required.</h4>
 </div>
 {{else if diskSmartNotEnabled}}
 <div class="alert alert-warning">
-  <h4>Warning! S.M.A.R.T support is not enabled for this disk ({{diskName}}).<br>If available, You can enable it in the Storage screen.</h4>
+  <h4>Warning! S.M.A.R.T support is not enabled for this disk ({{diskName}}).
+	<br>If available it can be enabled in the S.M.A.R.T column entry for this disk
+	on the Storage - Disks page.</h4>
 </div>
 {{else}}
 <div class="pull-right">
@@ -285,15 +289,15 @@
     <div class="row">
       {{#if smartNotAvailableEnabled}}
       <div class="alert alert-danger">
-	<h4>Tests cannot be run because S.M.A.R.T support is either unavailable or disabled</h4>
+	<h4>Tests cannot be run because S.M.A.R.T support is either unavailable or
+		disabled.</h4>
       </div>
       {{else}}
       <p>
 	Self-tests are built-in tests within the drive designed to recognize
 	drive fault conditions. All self-tests are safe to user data. The tests
 	can be performed during normal system operation, but will take longer
-	to complete if the drive is not idle. You will not be able to access
-	the drive's SMART data while a test is in progress.
+	to complete if the drive is not idle.
       </p>
       <div class="col-md-8">
 	<label class="control-label"></label>

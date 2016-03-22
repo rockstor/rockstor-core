@@ -36,6 +36,7 @@ var AppRouter = Backbone.Router.extend({
 	"home": "showHome",
 	"disks": "showDisks",
 	"disks/blink/:diskName": "blinkDrive",
+	"disks/smartcustom/:diskName": "smartcustomDrive",
 	"disks/:diskName": "showDisk",
 	"pools": "showPools",
 	"pools/:poolName": "showPool",
@@ -166,6 +167,14 @@ var AppRouter = Backbone.Router.extend({
 	this.renderSidebar('storage', 'disks');
 	this.cleanup();
 	this.currentLayout = new BlinkDiskView({diskName: diskName});
+	$('#maincontent').empty();
+	$('#maincontent').append(this.currentLayout.render().el);
+    },
+
+	smartcustomDrive: function(diskName) {
+	this.renderSidebar('storage', 'disks');
+	this.cleanup();
+	this.currentLayout = new SmartcustomDiskView({diskName: diskName});
 	$('#maincontent').empty();
 	$('#maincontent').append(this.currentLayout.render().el);
     },
