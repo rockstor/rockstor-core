@@ -68,8 +68,8 @@ def main():
     prefix = ('%s_' % meta['prefix'])
     snapshots = Snapshot.objects.filter(share=share, snap_type=stype,
                                         name__startswith=prefix).order_by('-id')
-    if (len(snapshots) > max_count):
-        for snap in snapshots[max_count:]:
+    if (len(snapshots) >= max_count):
+        for snap in snapshots[max_count-1:]:
             url = ('shares/%s/snapshots/%s' % (meta['share'], snap.name))
             try:
                 aw.api_call(url, data=None, calltype='delete', save_error=False)
