@@ -87,20 +87,21 @@ def main():
         t.save()
 
     snapshots = Snapshot.objects.filter(share=share, snap_type=stype, name__startswith=prefix).order_by('-id')
-
+    reduce_snapshots = 0
     if (len(snapshots) > max_count):
-        for snap in snapshots[max_count-1:]:
+        for snap in snapshots[max_count:]:
             url = ('shares/%s/snapshots/%s' % (meta['share'], snap.name))
             try:
                 aw.api_call(url, data=None, calltype='delete', save_error=False)
                 logger.debug('deleted old snapshot at %s' % url)
+                reduce_snapshots += 1
             except Exception, e:
                 logger.error('Failed to delete old snapshot at %s' % url)
                 logger.exception(e)
                 return
 
-        if (len(snapshots) > max_count):
-            logger.debug('Something going wrong deleting snapshots - %s over %s expected snapshots' % (len(snapshots), max_count))
+    if (len(snapshots)-reduce_snapshots > max_count):
+        logger.debug('Something going wrong deleting snapshots - %s over %s expected snapshots' % (len(snapshots)-reduce_snapshots, max_count))
 
 if __name__ == '__main__':
     #takes one argument. taskdef object id.
