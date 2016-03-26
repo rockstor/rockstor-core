@@ -349,12 +349,13 @@ def snaps_info(mnt_pt, share_name):
                 fields[15] not in snap_uuids):
                 continue
             snap_name, writable = parse_snap_details(mnt_pt, fields)
-            snaps_d[snap_name] = ('0/%s' % fields[1], writable, )
-            # we rely on the observation that child snaps are listed after their
-            # parents, so no need to iterate through results separately.
-            # Instead, we add the uuid of a snap to the list and look up if
-            # it's a parent of subsequent entries.
-            snap_uuids.append(fields[17])
+            if (snap_name is not None):
+                snaps_d[snap_name] = ('0/%s' % fields[1], writable, )
+                # we rely on the observation that child snaps are listed after their
+                # parents, so no need to iterate through results separately.
+                # Instead, we add the uuid of a snap to the list and look up if
+                # it's a parent of subsequent entries.
+                snap_uuids.append(fields[17])
 
     return snaps_d
 
