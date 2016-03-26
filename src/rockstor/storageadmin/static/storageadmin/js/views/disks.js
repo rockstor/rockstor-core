@@ -209,6 +209,7 @@ DisksView = Backbone.View.extend({
                 }
 
                 html += '</td>';
+                // begin Serial number column
                 html += '<td>';
                 if (serial == null || serial == '' || serial == diskName || serial.length == 48) {
                     html += '<div class="alert alert-danger">' +
@@ -220,14 +221,21 @@ DisksView = Backbone.View.extend({
                     }
                 }
                 html += '</td>';
+                // begin Capacity column
                 html += '<td>' + diskSize + '</td>';
+                // begin Pool column
                 html += '<td>';
                 if (!_.isNull(poolName)) {
                     html += '<a href="#pools/' + poolName + '">' + poolName + '</a>';
                 }
                 html += '</td>';
+                // begin Spin Down / power column
+                html += '<td>' + 'active/idle' + '</td>';
+                // begin Model column
                 html += '<td>' + diskModel + '</td>';
+                // begin Transport column
                 html += '<td>' + diskTransport + '</td>';
+                // begin Vendor column
                 html += '<td>' + diskVendor + '</td>';
                 // begin smart table data cell contents
                 html += '<td>';
