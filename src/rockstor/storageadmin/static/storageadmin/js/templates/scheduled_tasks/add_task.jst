@@ -24,6 +24,10 @@ $(document).ready(function() {
   $('#cron').cron({
   initial: "42 3 * * 5",
   customValues: {
+    "5 minutes" : "*/5 * * * *",
+    "10 minutes": "*/10 * * * *",
+    "15 minutes": "*/15 * * * *",
+    "20 minutes" : "*/20 * * * *",
     "30 minutes" : "*/30 * * * *",
   },
     useGentleSelect: true
