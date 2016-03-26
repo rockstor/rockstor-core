@@ -230,7 +230,11 @@ DisksView = Backbone.View.extend({
                 }
                 html += '</td>';
                 // begin Spin Down / power column
-                html += '<td>' + 'active/idle' + '</td>';
+                html += '<td>';
+                html += 'active/idle' + ' ';
+                html += '<a href="#disks/spindown/' + diskName + '" title="Click to configure Spin Down." rel="tooltip">';
+                html += '<i class="glyphicon glyphicon-pencil"></i></a> ';
+                html += '</td>';
                 // begin Model column
                 html += '<td>' + diskModel + '</td>';
                 // begin Transport column
