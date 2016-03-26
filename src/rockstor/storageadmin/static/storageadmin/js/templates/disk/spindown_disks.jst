@@ -30,9 +30,11 @@
 
         <!-- Spindown time selection -->
         <div class="form-group">
-          <label class="col-sm-4 control-label" for="spindown_options">Idle Time prior to Spin Down<span class="required"> *</span></label>
-          <div class="col-sm-8">
-            <input class="form-control shorten-input" type="text" name="spindown_options" id="spindown_options" title="Select Time from drop down" value="placeholder">
+          <label class="col-sm-4 control-label" for="spindown_time">Idle Time prior to Spin Down<span class="required"> *</span></label>
+          <div class="col-sm-4">
+            <select class="form-control" id="spindown_time" name="spindown_time">
+            {{display_spindown_time}}
+            </select>
           </div>
         </div>
 
