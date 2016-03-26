@@ -263,6 +263,8 @@ class DiskDetailView(rfc.GenericView):
                 return self._toggle_smart(dname, request)
             if (command == 'smartcustom-drive'):
                 return self._smartcustom_drive(dname, request)
+            if (command == 'spindown-drive'):
+                return self._spindown_drive(dname, request)
 
         e_msg = ('Unsupported command(%s). Valid commands are wipe, btrfs-wipe,'
                  ' btrfs-disk-import, blink-drive, enable-smart, disable-smart,'
@@ -338,4 +340,12 @@ class DiskDetailView(rfc.GenericView):
         blink_time = int(request.data.get('blink_time', 15))
         sleep_time = int(request.data.get('sleep_time', 5))
         blink_disk(disk.name, total_time, blink_time, sleep_time)
+        return Response()
+
+    @classmethod
+    def _spindown_drive(cls, dname, request):
+        disk = cls._validate_disk(dname, request)
+        spindown_time = str(
+            request.data.get('spindown_time', ''))
+        smart.set_disk_spindown(disk.name, spindown_time)
         return Response()
