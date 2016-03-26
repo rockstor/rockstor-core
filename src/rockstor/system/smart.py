@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 SMART = '/usr/sbin/smartctl'
 CAT = '/usr/bin/cat'
 LSBLK = '/usr/bin/lsblk'
+HDPARM = '/usr/sbin/hdparm'
 # enables reading file dumps of smartctl output instead of running smartctl
 # currently hardwired to read from eg:- /root/smartdumps/smart-H--info.out
 # default setting = False
@@ -329,6 +330,21 @@ def toggle_smart(device, custom_options='', enable=False):
     return run_command(
         [SMART, '--smart=%s' % switch] + get_dev_options(device,
                                                          custom_options))
+
+def set_disk_spindown(device, spindown_time):
+    """
+    Takes a human readable string of the form "20 minutes" and applies the
+    appropriate -S parameter of hdparm to the passed device to set spindown
+    time for that device.
+    :param disk: The name of a disk device as used in the db ie sda
+    :param spindown_time: String received from settings form ie "20 minutes"
+    :return:
+    """
+    time_fields = spindown_time.split()
+    if len(time_fields) == 2:
+        time = time_fields[0]
+        time_units = time_fields[1]
+    # todo mechanism to translate time sting into appropriate hdparm -S value
 
 
 def update_config(config):
