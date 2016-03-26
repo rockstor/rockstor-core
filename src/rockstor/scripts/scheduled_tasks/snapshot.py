@@ -52,6 +52,25 @@ def validate_snap_meta(meta):
         meta['visible'] = False
     return meta
 
+
+#Deletes overflowing snapshots beyond max_count sorted by their id(implicitly
+#create time). stop on first failure. Can be called safely with < max_count
+#snapshots, just returns true in that case.
+def delete(aw, share, snap_type, prefix, max_count):
+    snapshots = Snapshot.objects.filter(share=share, snap_type=snap_type,
+                                        name__startswith=prefix).order_by('-id')
+    for snap in snapshots[max_count:]:
+        try:
+            url = ('shares/%s/snapshots/%s' % (share.name, snap.name))
+            aw.api_call(url, data=None, calltype='delete', save_error=False)
+        except Exception, e:
+            logger.error('Failed to delete old snapshots exceeding the '
+                         'maximum count(%d)' % max_count)
+            logger.exception(e)
+            return False
+    return True
+
+
 def main():
     tid = int(sys.argv[1])
     tdo = TaskDefinition.objects.get(id=tid)
@@ -62,46 +81,41 @@ def main():
         return
     meta = json.loads(tdo.json_meta)
     validate_snap_meta(meta)
-
-    max_count = int(float(meta['max_count']))
     share = Share.objects.get(name=meta['share'])
+    max_count = int(float(meta['max_count']))
     prefix = ('%s_' % meta['prefix'])
-    
+
     now = datetime.utcnow().replace(second=0, microsecond=0, tzinfo=utc)
     t = Task(task_def=tdo, state='started', start=now)
+
+    snap_created = False
+    t.state = 'error'
     try:
         name = ('%s_%s' % (meta['prefix'], datetime.now().strftime(settings.SNAP_TS_FORMAT)))
-        url = ('shares/%s/snapshots/%s' % (meta['share'], name))
-        data = {'snap_type': stype,
-                'uvisible': meta['visible'], }
-        headers = {'content-type': 'application/json'}
-        aw.api_call(url, data=data, calltype='post', headers=headers, save_error=False)
-        logger.debug('created snapshot at %s' % url)
-        t.state = 'finished'
+        url = ('shares/%s/snapshots/%s' % (share.name, name))
+        #only create a new snap if there's no overflow situation. This prevents
+        #runaway snapshot creation beyond max_count+1.
+        if(delete(aw, share, stype, prefix, max_count)):
+            data = {'snap_type': stype,
+                    'uvisible': meta['visible'], }
+            headers = {'content-type': 'application/json'}
+            aw.api_call(url, data=data, calltype='post', headers=headers, save_error=False)
+            logger.debug('created snapshot at %s' % url)
+            t.state = 'finished'
+            snap_created = True
     except Exception, e:
         logger.error('Failed to create snapshot at %s' % url)
-        t.state = 'error'
         logger.exception(e)
     finally:
         t.end = datetime.utcnow().replace(tzinfo=utc)
         t.save()
 
-    snapshots = Snapshot.objects.filter(share=share, snap_type=stype, name__startswith=prefix).order_by('-id')
-    reduce_snapshots = 0
-    if (len(snapshots) > max_count):
-        for snap in snapshots[max_count:]:
-            url = ('shares/%s/snapshots/%s' % (meta['share'], snap.name))
-            try:
-                aw.api_call(url, data=None, calltype='delete', save_error=False)
-                logger.debug('deleted old snapshot at %s' % url)
-                reduce_snapshots += 1
-            except Exception, e:
-                logger.error('Failed to delete old snapshot at %s' % url)
-                logger.exception(e)
-                return
+    #best effort pruning without erroring out. If deletion fails, we'll have
+    #max_count+1 number of snapshots and it would be dealt with on the next
+    #round.
+    if (snap_created):
+        delete(aw, share, stype, prefix, max_count)
 
-    if (len(snapshots)-reduce_snapshots > max_count):
-        logger.debug('Something going wrong deleting snapshots - %s over %s expected snapshots' % (len(snapshots)-reduce_snapshots, max_count))
 
 if __name__ == '__main__':
     #takes one argument. taskdef object id.
