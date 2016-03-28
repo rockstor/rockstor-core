@@ -121,17 +121,14 @@ def resize_pool(pool, dev_list, add=True):
     return run_command(resize_cmd)
 
 
+#Try mounting by-label first. If that is not possible, mount using every device
+#in the set, one by one until success.
 def mount_root(pool):
-    device = pool.disk_set.first().name
     root_pool_mnt = DEFAULT_MNT_DIR + pool.name
     if (is_share_mounted(pool.name)):
         return root_pool_mnt
     create_tmp_dir(root_pool_mnt)
     mnt_device = '/dev/disk/by-label/%s' % pool.name
-    if (not os.path.exists(mnt_device)):
-        mnt_device = device
-        if (re.match('/dev/', device) is None):
-            mnt_device = ('/dev/%s' % mnt_device)
     mnt_cmd = [MOUNT, mnt_device, root_pool_mnt, ]
     mnt_options = ''
     if (pool.mnt_options is not None):
@@ -139,11 +136,33 @@ def mount_root(pool):
     if (pool.compression is not None):
         if (re.search('compress', mnt_options) is None):
             mnt_options = ('%s,compress=%s' % (mnt_options, pool.compression))
-    if (len(mnt_options) > 0):
-        mnt_cmd.extend(['-o', mnt_options])
-    run_command(mnt_cmd)
-    return root_pool_mnt
+    if (os.path.exists(mnt_device)):
+        if (len(mnt_options) > 0):
+            mnt_cmd.extend(['-o', mnt_options])
+        run_command(mnt_cmd)
+        return root_pool_mnt
 
+    #If we cannot mount by-label, let's try mounting by device one by one
+    #until we get our first success.
+    if (pool.disk_set.count() < 1):
+        raise Exception('Cannot mount Pool(%s) as it has no disks in it.' % pool.name)
+    last_device = pool.disk_set.last()
+    for device in pool.disk_set.all():
+        mnt_device = ('/dev/%s' % device.name)
+        if (os.path.exists(mnt_device)):
+            mnt_cmd = [MOUNT, mnt_device, root_pool_mnt, ]
+            if (len(mnt_options) > 0):
+                mnt_cmd.extend(['-o', mnt_options])
+            try:
+                run_command(mnt_cmd)
+                return root_pool_mnt
+            except Exception, e:
+                if (device.name == last_device.name):
+                    #exhausted mounting using all devices in the pool
+                    raise e
+                logger.error('Error mouting: %s. Will try using another device.' % mnt_cmd)
+                logger.exception(e)
+    raise Exception('Failed to mount Pool(%s) due to an unknown reason.' % pool.name)
 
 def umount_root(root_pool_mnt):
     if (is_mounted(root_pool_mnt)):
