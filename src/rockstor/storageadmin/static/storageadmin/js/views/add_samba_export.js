@@ -128,8 +128,7 @@ AddSambaExportView = RockstorLayoutView.extend({
 	    browsable_choices: this.browsable_choices,
 	    guest_ok_choices: this.guest_ok_choices,
 	    read_only_choices: this.read_only_choices,
-	    shadow_copy_choices: this.yes_no_choices,
-
+	    shadow_copy_choices: this.yes_no_choices
 	}));
 	if(this.sambaShareId == null) {
 	    this.$('#shares').chosen();
