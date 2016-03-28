@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 def combined_users():
     users = []
-    sys_users = get_users(min_uid=0)
+    sys_users = get_users()
     uname_list = sys_users.keys()
     for u in uname_list:
         try:
