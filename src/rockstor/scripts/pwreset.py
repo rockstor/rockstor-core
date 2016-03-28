@@ -18,11 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import sys
 import os
+import pwd
 os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 from django.db import transaction
 from django.contrib.auth.models import User as DjangoUser
 from storageadmin.models import User
-from system.users import (get_users, usermod, smbpasswd)
+from system.users import (usermod, smbpasswd)
+
 
 @transaction.commit_on_success
 def change_password(username, password):
@@ -38,9 +40,10 @@ def change_password(username, password):
     except:
         sys.exit('username: %s does not exist in the database' % username)
 
-    unix_users = get_users(min_uid=0, uname=username)
-    if (username not in unix_users):
-        sys.exit('username: %s does not exist in /etc/passwd' % username)
+    try:
+        pwd.getpwnam(username)
+    except KeyError:
+        sys.exit('username: %s does not exist in the system' % username)
 
     try:
         usermod(username, password)
