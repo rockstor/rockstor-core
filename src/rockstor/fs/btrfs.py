@@ -269,7 +269,7 @@ def snapshot_list(mnt_pt):
     o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-s', mnt_pt])
     snaps = []
     for s in o:
-        snaps.append(s.split()[-1])
+        snaps.append(s.split(' ', 13)[-1])
     return snaps
 
 
@@ -290,7 +290,7 @@ def shares_info(pool):
     snap_idmap = {}
     for l in o:
         if (re.match('ID ', l) is not None):
-            fields = l.strip().split()
+            fields = l.strip().split(' ', 13)
             snap_idmap[fields[1]] = fields[-1]
 
     o, e, rc = run_command([BTRFS, 'subvolume', 'list', '-p', mnt_pt])
@@ -299,7 +299,7 @@ def shares_info(pool):
     for l in o:
         if (re.match('ID ', l) is None):
             continue
-        fields = l.split()
+        fields = l.split(' ', 10)
         vol_id = fields[1]
         if (vol_id in snap_idmap):
             # snapshot
@@ -350,7 +350,7 @@ def snaps_info(mnt_pt, share_name):
     share_id = share_uuid = None
     for l in o:
         if (re.match('ID ', l) is not None):
-            fields = l.split()
+            fields = l.split(' ', 14)
             if (fields[-1] == share_name):
                 share_id = fields[1]
                 share_uuid = fields[12]
@@ -362,7 +362,7 @@ def snaps_info(mnt_pt, share_name):
     snap_uuids = []
     for l in o:
         if (re.match('ID ', l) is not None):
-            fields = l.split()
+            fields = l.split(' ', 19)
             # parent uuid must be share_uuid or another snapshot's uuid
             if (fields[7] != share_id and fields[15] != share_uuid and
                 fields[15] not in snap_uuids):
