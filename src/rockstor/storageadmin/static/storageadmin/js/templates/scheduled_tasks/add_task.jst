@@ -32,6 +32,7 @@ $(document).ready(function() {
   },
     useGentleSelect: true
 });
+  $('#cron-window').cron_window(); //added cron-window init call
 });
 </script>
 
@@ -74,6 +75,17 @@ $(document).ready(function() {
            </div>
          </div>
       </div>
+      <div class="form-group">
+         <label for="cron-window">Task execution time windows<i class="fa fa-info-circle" title="Execution time windows apply for minutes/hours tasks only.
+                    All limits indicated are inclusive, so a task running for example from Friday to Sunday
+                    will be executed on Friday and Sunday too."></i></label>
+         <div class="row">
+           <div class="col-sm-12">
+             <div id="cron-window"></div>
+           </div>
+         </div>
+      </div>
+
 
       <div class="form-group">
 	<a id="js-cancel" class="btn btn-default">Cancel</a>
@@ -169,6 +181,15 @@ $(document).ready(function() {
 	      <div id="cron"></div>
             </div>
 	  </div>
+          <div class="form-group">
+            <label class="control-label col-sm-4" for="cron">Task execution time ranges<i class="fa fa-info-circle" title="Execution time windows apply for minutes/hours tasks only.
+                    All limits indicated are inclusive, so a task running for example from Friday to Sunday
+                    will be executed on Friday and Sunday too."></i></label>
+            <div class="col-sm-6">
+              <div id="cron-window"></div>
+            </div>
+          </div>
+
           <div class="form-group">
             <div class="controls col-sm-offset-4 col-sm-6">
               <a id="js-cancel" class="btn btn-default">Cancel</a>
