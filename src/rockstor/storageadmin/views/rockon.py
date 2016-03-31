@@ -162,7 +162,7 @@ class RockOnView(rfc.GenericView):
         cur_containers = [co.name for co in
                           DContainer.objects.filter(rockon=ro)]
         if (len(set(containers.keys()) ^ set(cur_containers)) != 0):
-            if (ro.state != 'available'):
+            if (ro.state not in ('available', 'install_failed')):
                 e_msg = ('Cannot add/remove container definitions for %s as '
                          'it is not in available state. Uninstall the '
                          'Rock-on first and try again.' % ro.name)
@@ -206,7 +206,7 @@ class RockOnView(rfc.GenericView):
             cur_ports = [po.containerp for po in
                          DPort.objects.filter(container=co)]
             if (len(set(map(int, ports.keys())) ^ set(cur_ports)) != 0):
-                if (ro.state != 'available'):
+                if (ro.state not in ('available', 'install_failed')):
                     e_msg = ('Cannot add/remove port definitions of the '
                              'container(%s) as it belongs to an installed '
                              'Rock-on(%s). Uninstall it first and try again.' %
@@ -246,8 +246,10 @@ class RockOnView(rfc.GenericView):
             v_d = c_d.get('volumes', {})
             cur_vols = [vo.dest_dir for vo in
                         DVolume.objects.filter(container=co)]
-            if (len(set(v_d.keys()) ^ set(cur_vols)) != 0):
-                if (ro.state != 'available'):
+            #cur_vols can have entries not in the config for Shares mapped post
+            #install.
+            if (len(set(v_d.keys()) - set(cur_vols)) != 0):
+                if (ro.state not in ('available', 'install_failed')):
                     e_msg = ('Cannot add/remove volume definitions of the '
                              'container(%s) as it belongs to an installed '
                              'Rock-on(%s). Uninstall it first and try again.' %

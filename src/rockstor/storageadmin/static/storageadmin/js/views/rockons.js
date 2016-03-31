@@ -31,6 +31,7 @@ RockonsView = RockstorLayoutView.extend({
 	this.constructor.__super__.initialize.apply(this, arguments);
 	this.template = window.JST.rockons_rockons;
 	this.rockons = new RockOnCollection({});
+	this.rockons.pageSize = RockStorGlobals.maxPageSize;
 	this.service = new Service({ name: 'docker' });
 	this.dependencies.push(this.rockons, this.service);
 	this.updateFreq = 15000;
