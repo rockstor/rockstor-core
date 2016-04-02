@@ -38,7 +38,7 @@ class GroupListView(rfc.GenericView):
         with self._handle_exception(self.request):
             return combined_groups()
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request):
         with self._handle_exception(request):
             groupname = request.data.get('groupname', None)
@@ -98,7 +98,7 @@ class GroupDetailView(rfc.GenericView):
         e_msg = ('group edit is not supported')
         handle_exception(Exception(e_msg), request)
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def delete(self, request, groupname):
         with self._handle_exception(request):
             if (groupname in self.exclude_list):

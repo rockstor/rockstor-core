@@ -37,7 +37,7 @@ SMART = '/usr/sbin/smartctl'
 class SMARTDServiceView(BaseServiceDetailView):
     service_name = 'smartd'
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request, command):
         """
         execute a command on the service

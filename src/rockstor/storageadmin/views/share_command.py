@@ -51,7 +51,7 @@ class ShareCommandView(ShareMixin, rfc.GenericView):
                      (snap_name, share.name))
             handle_exception(Exception(e_msg), request)
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request, sname, command):
         with self._handle_exception(request):
             share = self._validate_share(request, sname)

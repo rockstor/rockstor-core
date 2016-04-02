@@ -45,7 +45,7 @@ class PoolScrubView(rfc.GenericView):
             self._scrub_status(pool)
             return PoolScrub.objects.filter(pool=pool).order_by('-id')
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def _scrub_status(self, pool):
         try:
             ps = PoolScrub.objects.filter(pool=pool).order_by('-id')[0]
@@ -61,7 +61,7 @@ class PoolScrubView(rfc.GenericView):
             PoolScrub.objects.filter(id=ps.id).update(**cur_status)
         return ps
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post(self, request, pname, command=None):
         pool = self._validate_pool(pname, request)
         if (command is not None and command != 'status'):

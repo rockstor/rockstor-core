@@ -26,7 +26,7 @@ from storageadmin.models import User
 from system.users import (usermod, smbpasswd)
 
 
-@transaction.commit_on_success
+@transaction.atomic
 def change_password(username, password):
     try:
         duser = DjangoUser.objects.get(username=username)
