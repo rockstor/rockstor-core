@@ -36,10 +36,12 @@
 
         <!-- Spindown time selection -->
         <div class="form-group">
-          <label class="col-sm-4 control-label" for="spindown_time">Idle Time prior to Spin Down<span class="required"> *</span></label>
+          <label class="col-sm-4 control-label" for="spindownTime">Idle Time prior to Spin Down<span class="required"> *</span></label>
           <div class="col-sm-4">
-            <select class="form-control" id="spindown_time" name="spindown_time">
-            {{display_spindown_time}}
+            <select class="form-control" id="spindownTime" name="spindownTime">
+              <!-- {{display_spindown_time}} -->
+              <option value="6">30 seconds</option>
+              <option value="12">60 seconds</option>
             </select>
           </div>
         </div>

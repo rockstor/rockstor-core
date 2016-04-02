@@ -55,7 +55,8 @@ SpindownDiskView = RockstorLayoutView.extend({
 
         $(this.el).html(this.template({
             diskName: this.diskName,
-            serialNumber: serialNumber
+            serialNumber: serialNumber,
+            spindownTimes: ['30 seconds', '1 minute', '5 minutes', '10 minutes', '20 minutes', '30 minutes', '1 hour', '2 hours', '3 hours', '4 hours', '6 hours', '8 hours']
         }));
 
         this.$('#add-spindown-disk-form :input').tooltip({
@@ -69,11 +70,12 @@ SpindownDiskView = RockstorLayoutView.extend({
         };
 
 
+
         this.$('#add-spindown-disk-form').validate({
             onfocusout: false,
             onkeyup: false,
             rules: {
-               // spindown_time: 'validateSpindown',
+               spindownTime: 'required'
             },
 
             submitHandler: function () {
@@ -104,20 +106,21 @@ SpindownDiskView = RockstorLayoutView.extend({
         });
     },
 
-    initHandlebarHelpers: function () {
+    initHandlebarHelpers: function(){
         // helper to fill dropdown with drive spindown values
-        Handlebars.registerHelper('display_spindown_time', function () {
+        // eg by generating dynamicaly lines of the following
+        // <option value="20 minutes">20 minutes</option>
+        Handlebars.registerHelper('display_spindown_time', function(){
             var html = '',
-                _this = this;
-            var spindownTimes = ['30 seconds', '1 minute', '5 minutes', '10 minutes', '20 minutes', '30 minutes', '1 hour', '2 hours', '3 hours', '4 hours', '6 hours', '8 hours'];
-            _.each(spindownTimes, function (timeString, index) {
+            _this = this;
+            _.each(_this.spindownTimes, function(spindownTime, index) {
                 // need to programatically retrieve current setting for previously set spindownTime ie read from systemd file
                 // note it is not possible to use smart or hdparm to read what was set previously hence read from sys file.
-                if (timeString == '20 minutes') {
-                    html += '<option value="' + timeString + '" selected="selected">';
-                    html += timeString + '</option>';
+                if (spindownTime == '20 minutes') {
+                    html += '<option value="' + spindownTime + '" selected="selected">';
+                    html += spindownTime + '</option>';
                 } else {
-                    html += '<option value="' + timeString + '">' + timeString + '</option>';
+                    html += '<option value="' + spindownTime + '">' + spindownTime + '</option>';
                 }
             });
             return new Handlebars.SafeString(html);
@@ -126,7 +129,7 @@ SpindownDiskView = RockstorLayoutView.extend({
 
     cancel: function (event) {
         event.preventDefault();
-        this.$('#add-smartcustom-disk-form :input').tooltip('hide');
+        this.$('#add-spindown-disk-form :input').tooltip('hide');
         app_router.navigate('disks', {trigger: true});
     }
 
