@@ -39,6 +39,14 @@ class RockOnIdView(rfc.GenericView):
         return RockOn.objects.all()
 
     @staticmethod
+    def _next_available_default_hostp(port):
+        while (True):
+            if (DPort.objects.filter(hostp=port).exists()):
+                port += 1
+            else:
+                return port
+
+    @staticmethod
     def _pending_check(request):
         if (RockOn.objects.filter(state__contains='pending').exists()):
             e_msg = ('Another Rock-on is in state transition. Multiple '
@@ -99,19 +107,29 @@ class RockOnIdView(rfc.GenericView):
                     # {'host_port' : 'container_port', ... }
                     for p in port_map.keys():
                         if (DPort.objects.filter(hostp=p).exists()):
-                            po = DPort.objects.get(hostp=p)
-                            if (po.container.rockon.id != rockon.id):
-                                e_msg = ('Rock-on port(%s) is dedicated to '
-                                         'another Rock-On(%s) and cannot '
-                                         'be changed. Choose a different name'
-                                         % (p, po.container.rockon.name))
-                                handle_exception(Exception(e_msg), request)
-                        else:
-                            for co2 in DContainer.objects.filter(rockon=rockon):
-                                if (DPort.objects.filter(container=co2, containerp=port_map[p]).exists()):
-                                    po = DPort.objects.get(container=co2, containerp=port_map[p])
-                                    po.hostp = p
-                                    po.save()
+                            dup_po = DPort.objects.get(hostp=p)
+                            if (dup_po.container.rockon.id != rockon.id):
+                                if (dup_po.container.rockon.state in
+                                    ('installed', 'pending_install')):
+                                    #cannot claim from a rock-on that's installed.
+                                    conf_ro = dup_po.container.rockon.name
+                                    e_msg = (
+                                        'Port(%s) belongs to another '
+                                        'Rock-n(%s). Choose a different '
+                                        'port. If you must choose the same '
+                                        'port, uninstall %s first and try again.'
+                                        % (p, conf_ro, conf_ro))
+                                    handle_exception(Exception(e_msg), request)
+                                #change the host port to next available.
+                                dup_po.hostp = self._next_available_default_hostp(dup_po.hostp)
+                                dup_po.save()
+                        for co2 in DContainer.objects.filter(rockon=rockon):
+                            if (DPort.objects.filter(container=co2, containerp=port_map[p]).exists()):
+                                #found the container that needs this port.
+                                po = DPort.objects.get(container=co2, containerp=port_map[p])
+                                po.hostp = p
+                                po.save()
+                                break
                     for c in cc_map.keys():
                         if (not DCustomConfig.objects.filter(rockon=rockon, key=c).exists()):
                             e_msg = ('Invalid custom config key(%s)' % c)
