@@ -557,3 +557,54 @@ def md5sum(fpath):
         for l in tfo.readlines():
             md5.update(l)
     return md5.hexdigest()
+
+
+def is_rotational(device_name, test=None):
+    """
+    When given a device_name a udevadmin lookup takes place to look for either:
+    E: ID_ATA_ROTATION_RATE_RPM non zero or ID_ATA_FEATURE_SET_AAM
+    AAM = Automatic Acoustic Mamanement - ie head speed / noise tradeoff
+    If neither is found for then the device is assumed to be non
+    rotational. This method appears more reliable than
+    "cat /sys/block/sda/queue/rotational"
+    and "lsblk -d -o name,rota" which will both often report usb sticks as
+    1 = rotational.
+    N.B. we use --query=property and so have only 2 fields rather than 3 and
+    no spaces, only '=' this simplifies the parsing required.
+    :param device:
+    :return: True if rotational, false if error or unknown.
+    """
+    rotational = False  # until we find otherwise
+    if test is None:
+        out, err, rc = run_command([UDEVADM, 'info', '--query=property',
+                                    '--name=' + device_name], throw=False)
+    else:
+        # test mode so process test instead of udevadmin output
+        out = test
+        rc = 0
+    if rc != 0:  # if return code is an error return False
+        return False
+    # search output of udevadmin to find
+    for line in out:
+        if line == '':
+            continue
+        # nonlocal line_fields
+        line_fields = line.strip().split('=')
+        # example original line "ID_ATA_FEATURE_SET_AAM=1"
+        # less than 2 fields are of no use so just in case:-
+        if len(line_fields) < 2:
+            continue
+        if line_fields[0] == 'ID_ATA_ROTATION_RATE_RPM':
+            # we have a rotation rate entry
+            if line_fields[1] != 0:
+                # non zero rotation so flag and look no further
+                rotational = True
+                break
+        if line_fields[0] == 'ID_ATA_FEATURE_SET_AAM':
+            # we have an Automatic Acoustic Managment entry
+            if line_fields[1] != 0:
+                # a non zero AAM entry so flag and look no further
+                rotational = True
+                break
+    return rotational
+
