@@ -90,6 +90,8 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 		if (!_.isUndefined(this.taskDefId) && !_.isNull(this.taskDefId)) {
 			var crontab = this.taskDef.get('crontab');
 			$('#cron').cron("value", crontab);
+			var cronwindow = this.taskDef.get('cronwindow'); // render execution window
+			$('#cron-window').cron_window("value", cronwindow);
 		}
 		this.renderOptionalFields();
 		this.$('#start_date').datepicker();
@@ -149,6 +151,7 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 					var req_type = 'PUT';
 				}
 				data.crontab = $("#cron").cron("value");
+				data.cronwindow = $("#cron-window").cron_window("value"); // post execution window value
 				$.ajax({
 					url: url,
 					type: req_type,
