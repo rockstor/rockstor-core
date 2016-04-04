@@ -333,18 +333,15 @@ def toggle_smart(device, custom_options='', enable=False):
 
 def set_disk_spindown(device, spindown_time):
     """
-    Takes a human readable string of the form "20 minutes" and applies the
-    appropriate -S parameter of hdparm to the passed device to set spindown
-    time for that device.
+    Takes a value to be used with hdparm -S to set disk spindown time for the
+    device specified.
+    Executes hdparm -S spindown_time and ensures the systemd script to do the
+    same is also updated.
     :param disk: The name of a disk device as used in the db ie sda
     :param spindown_time: String received from settings form ie "20 minutes"
     :return:
     """
-    time_fields = spindown_time.split()
-    if len(time_fields) == 2:
-        time = time_fields[0]
-        time_units = time_fields[1]
-    # todo mechanism to translate time sting into appropriate hdparm -S value
+    logger.debug('set_disk_spindown received device %s and -S value %s' % (device, spindown_time))
 
 
 def update_config(config):

@@ -345,7 +345,6 @@ class DiskDetailView(rfc.GenericView):
     @classmethod
     def _spindown_drive(cls, dname, request):
         disk = cls._validate_disk(dname, request)
-        spindown_time = str(
-            request.data.get('spindown_time', ''))
+        spindown_time = int(request.data.get('spindown_time', ''))
         smart.set_disk_spindown(disk.name, spindown_time)
         return Response()
