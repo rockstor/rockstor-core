@@ -35,6 +35,7 @@ SpindownDiskView = RockstorLayoutView.extend({
         this.disks = new DiskCollection();
         this.diskName = this.options.diskName;
         this.dependencies.push(this.disks);
+        this.initHandlebarHelpers();
     },
 
     render: function () {
@@ -48,6 +49,7 @@ SpindownDiskView = RockstorLayoutView.extend({
         }
         var _this = this;
         var disk_name = this.diskName;
+        var spindownTimes = {'30 seconds': 6, '1 minute': 12, '5 minutes': 60, '10 minutes': 120, '20 minutes': 240, '30 minutes': 241, '1 hour': 242, '2 hours': 244, '4 hours': 248, 'vendor defined (8-12h)': 253};
         var serialNumber = this.disks.find(function (d) {
             return (d.get('name') == disk_name);
         }).get('serial');
@@ -56,7 +58,7 @@ SpindownDiskView = RockstorLayoutView.extend({
         $(this.el).html(this.template({
             diskName: this.diskName,
             serialNumber: serialNumber,
-            spindownTimes: ['30 seconds', '1 minute', '5 minutes', '10 minutes', '20 minutes', '30 minutes', '1 hour', '2 hours', '3 hours', '4 hours', '6 hours', '8 hours']
+            spindownTimes: spindownTimes
         }));
 
         this.$('#add-spindown-disk-form :input').tooltip({
@@ -109,20 +111,23 @@ SpindownDiskView = RockstorLayoutView.extend({
     initHandlebarHelpers: function(){
         // helper to fill dropdown with drive spindown values
         // eg by generating dynamicaly lines of the following
-        // <option value="20 minutes">20 minutes</option>
+        // <option value="240">20 minutes</option>
+        // todo this helper doesnt work but I (Phil) would rather use it than
+        // todo the built in #each helper as we can then set default here.
         Handlebars.registerHelper('display_spindown_time', function(){
-            var html = '',
-            _this = this;
-            _.each(_this.spindownTimes, function(spindownTime, index) {
+            var html = '';
+            for (var timeString in this.spindownTime){
                 // need to programatically retrieve current setting for previously set spindownTime ie read from systemd file
                 // note it is not possible to use smart or hdparm to read what was set previously hence read from sys file.
-                if (spindownTime == '20 minutes') {
-                    html += '<option value="' + spindownTime + '" selected="selected">';
-                    html += spindownTime + '</option>';
+                // for now hardwire 20 mins as default (pre-selected)
+                console.log('processing timeString = ' + timeString);
+                if (timeString == '20 minutes') {
+                    html += '<option value="' + spindownTime[timeString] + '" selected="selected">';
+                    html += timeString + '</option>';
                 } else {
-                    html += '<option value="' + spindownTime + '">' + spindownTime + '</option>';
+                    html += '<option value="' + spindownTimes[timeString] + '">' + timeString+ '</option>';
                 }
-            });
+            }
             return new Handlebars.SafeString(html);
         });
     },
