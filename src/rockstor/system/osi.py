@@ -452,7 +452,7 @@ def get_disk_serial(device_name, test=None):
     ---------
     Additional personality added for md devices ie md0p1 or md126, these devices
     have no serial so we search for their MD_UUID and use that instead.
-    :param device_name:
+    :param device_name: eg sda
     :param test:
     :return: 12345678901234567890
     """
@@ -518,7 +518,7 @@ def get_virtio_disk_serial(device_name):
     Returns the serial number of device_name virtio disk eg /dev/vda
     Returns empty string if cat /sys/block/vda/serial command fails
     Note no serial entry in /sys/block/sda/ for real or KVM sata drives
-    :param device_name: vda
+    :param device_name: eg vda
     :return: 12345678901234567890
 
     Note maximum length of serial number reported = 20 chars
@@ -527,7 +527,7 @@ def get_virtio_disk_serial(device_name):
     https://github.com/qemu/qemu/blob/
     a9392bc93c8615ad1983047e9f91ee3fa8aae75f/include/standard-headers/
     linux/virtio_blk.h
-    #define VIRTIO_BLK_ID_BYTES	20	/* ID string length */
+    #define VIRTIO_BLK_ID_BYTES 20  /* ID string length */
 
     This process may not deal well with spaces in the serial number
     but VMM does not allow this.
@@ -571,13 +571,13 @@ def is_rotational(device_name, test=None):
     1 = rotational.
     N.B. we use --query=property and so have only 2 fields rather than 3 and
     no spaces, only '=' this simplifies the parsing required.
-    :param device:
+    :param device: list containing device name eg ['/dev/sda']
     :return: True if rotational, false if error or unknown.
     """
     rotational = False  # until we find otherwise
     if test is None:
         out, err, rc = run_command([UDEVADM, 'info', '--query=property',
-                                    '--name=' + device_name], throw=False)
+                                    '--name='] + device_name, throw=False)
     else:
         # test mode so process test instead of udevadmin output
         out = test
