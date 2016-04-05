@@ -38,11 +38,12 @@ class TaskSchedulerMixin(object):
     def _validate_input(request):
         meta = {}
         crontab = request.data.get('crontab')
+	crontabwindow = request.data.get('crontabwindow')
         meta = request.data.get('meta', {})
         if (type(meta) != dict):
             e_msg = ('meta must be a dictionary, not %s' % type(meta))
             handle_exception(Exception(e_msg), request)
-        return crontab, meta
+        return crontab, crontabwindow, meta
 
     @staticmethod
     def _validate_enabled(request):
@@ -78,13 +79,18 @@ class TaskSchedulerMixin(object):
                 if (td.crontab is not None):
                     tab = '%s root' % td.crontab
                     if (td.task_type == 'snapshot'):
-                        tab = ('%s %sbin/st-snapshot %d\n' %
+                        tab = ('%s %sbin/st-snapshot %d' %
                                (tab, settings.ROOT_DIR, td.id))
                     elif (td.task_type == 'scrub'):
-                        tab = ('%s %s/bin/st-pool-scrub %d\n' %
+                        tab = ('%s %s/bin/st-pool-scrub %d' %
                                (tab, settings.ROOT_DIR, td.id))
                     else:
                         logger.error('ignoring unknown task_type: %s' % td.task_type)
+                        continue
+                    if (td.crontabwindow is not None): #add crontabwindow as 2nd arg to task script, new line moved here
+                        tab = ('%s %s\n' % (tab, td.crontabwindow))
+                    else:
+                        logger.error('missing crontab window value')
                         continue
                     cfo.write(tab)
 
@@ -114,12 +120,12 @@ class TaskSchedulerListView(TaskSchedulerMixin, rfc.GenericView):
                 e_msg = ('Unknown task type: %s cannot be scheduled' % name)
                 handle_exception(Exception(e_msg), request)
 
-            crontab, meta = self._validate_input(request)
+            crontab, crontabwindow, meta = self._validate_input(request)
             json_meta = json.dumps(meta)
             enabled = self._validate_enabled(request)
 
             td = TaskDefinition(name=name, task_type=task_type,
-                                crontab=crontab, json_meta=json_meta,
+                                crontab=crontab, crontabwindow=crontabwindow, json_meta=json_meta,
                                 enabled=enabled)
             td.save()
             self._refresh_crontab()
@@ -142,7 +148,7 @@ class TaskSchedulerDetailView(TaskSchedulerMixin, rfc.GenericView):
         with self._handle_exception(request):
             tdo = self._task_def(request, tdid)
             tdo.enabled = self._validate_enabled(request)
-            tdo.crontab, new_meta = self._validate_input(request)
+            tdo.crontab, tdo.crontabwindow, new_meta = self._validate_input(request)
             meta = json.loads(tdo.json_meta)
             meta.update(new_meta)
             tdo.json_meta = json.dumps(meta)
