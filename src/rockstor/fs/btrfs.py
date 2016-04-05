@@ -1100,6 +1100,20 @@ def wipe_disk(disk):
     return run_command([WIPEFS, '-a', disk])
 
 
+def get_disk_power_status(disk):
+    """
+    When given a disk name such as that stored in the db ie sda
+    we return it's current power state via hdparm -C /dev/<disk>
+    Possible states are:
+    unknown - command not supported by disk
+    active/idle - normal operation
+    standby - low power mode, ie drive motor not active ie -y will do this
+    sleeping - lowest power mode, completely shut down ie -Y will do this
+    :param device: disk name
+    :return: single word sting of state as indicated by hdparm -C /dev/<disk>
+    """
+
+
 def blink_disk(disk, total_exec, read, sleep):
     DD_CMD = [DD, 'if=/dev/%s' % disk, 'of=/dev/null', 'bs=512',
               'conv=noerror']
