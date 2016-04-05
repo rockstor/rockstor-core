@@ -349,12 +349,14 @@ def set_disk_spindown(device, spindown_time):
     # todo look to using system/osi get_md_members(device_name, test=None)
     # todo with md devices and then treat each in turn.
     if len(base_dev[0]) == 0:
+        logger.debug('skipping hdparm -S as device = ""')
         return True;
     # Don't spin down non rotational devices, skip all and return True.
     if is_rotational(base_dev) is not True:
+        logger.debug('skipping hdparm -S as device not confirmed as rotational')
         return True;
     # setup hdparm command
-    hdparm_command = [HDPARM, '-C', spindown_time] + base_dev
+    hdparm_command = [HDPARM, '-S', '%s' % spindown_time] + base_dev
     logger.debug('proposed hdparm commnad = %s', hdparm_command)
 
 
