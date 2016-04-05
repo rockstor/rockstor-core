@@ -49,7 +49,7 @@ SpindownDiskView = RockstorLayoutView.extend({
         }
         var _this = this;
         var disk_name = this.diskName;
-        var spindownTimes = {'30 seconds': 6, '1 minute': 12, '5 minutes': 60, '10 minutes': 120, '20 minutes': 240, '30 minutes': 241, '1 hour': 242, '2 hours': 244, '4 hours': 248, 'vendor defined (8-12h)': 253};
+        var spindownTimes = {'30 seconds': 6, '1 minute': 12, '5 minutes': 60, '10 minutes': 120, '20 minutes': 240, '30 minutes': 241, '1 hour': 242, '2 hours': 244, '4 hours': 248, 'Vendor defined (8-12h)': 253, 'No spin down': 0};
         var serialNumber = this.disks.find(function (d) {
             return (d.get('name') == disk_name);
         }).get('serial');
