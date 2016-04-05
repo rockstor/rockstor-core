@@ -575,21 +575,24 @@ def is_rotational(device_name, test=None):
     :return: True if rotational, false if error or unknown.
     """
     rotational = False  # until we find otherwise
+    logger.debug('is_rotational called with the following %s', device_name)
     if test is None:
+        # todo consider changing back to throw=False for production.
         out, err, rc = run_command([UDEVADM, 'info', '--query=property',
-                                    '--name='] + device_name, throw=False)
+                                    '--name=' + device_name[0]], throw=True)
     else:
         # test mode so process test instead of udevadmin output
         out = test
         rc = 0
     if rc != 0:  # if return code is an error return False
         return False
-    # search output of udevadmin to find
+    # search output of udevadm to find signs of rotational media
     for line in out:
         if line == '':
             continue
         # nonlocal line_fields
         line_fields = line.strip().split('=')
+        logger.debug('line_fields now look like this %s', line_fields)
         # example original line "ID_ATA_FEATURE_SET_AAM=1"
         # less than 2 fields are of no use so just in case:-
         if len(line_fields) < 2:
