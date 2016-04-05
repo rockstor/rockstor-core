@@ -358,7 +358,7 @@ def set_disk_spindown(device, spindown_time):
         logger.debug('skipping hdparm -S as device not confirmed as rotational')
         return True;
     # setup hdparm command
-    hdparm_command = [HDPARM, '-S', '%s' % spindown_time] + base_dev
+    hdparm_command = [HDPARM, '-q', '-S', '%s' % spindown_time] + base_dev
     logger.debug('proposed hdparm commnad = %s', hdparm_command)
     return run_command(hdparm_command)
 
