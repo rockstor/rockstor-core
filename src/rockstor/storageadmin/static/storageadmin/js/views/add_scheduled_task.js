@@ -90,7 +90,7 @@ AddScheduledTaskView = RockstorLayoutView.extend({
 		if (!_.isUndefined(this.taskDefId) && !_.isNull(this.taskDefId)) {
 			var crontab = this.taskDef.get('crontab');
 			$('#cron').cron("value", crontab);
-			var crontabwindow = this.taskDef.get('crontabwindow'); // render execution window
+			var crontabwindow = _.isNull(this.taskDef.get('crontabwindow')) ? "*-*-*-*-*-*" : this.taskDef.get('crontabwindow'); // render execution window, on null set to *-*-*-*-*-*
 			$('#cron-window').cron_window("value", crontabwindow);
 		}
 		this.renderOptionalFields();
