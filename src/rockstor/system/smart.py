@@ -331,6 +331,7 @@ def toggle_smart(device, custom_options='', enable=False):
         [SMART, '--smart=%s' % switch] + get_dev_options(device,
                                                          custom_options))
 
+
 def set_disk_spindown(device, spindown_time):
     """
     Takes a value to be used with hdparm -S to set disk spindown time for the
@@ -343,7 +344,8 @@ def set_disk_spindown(device, spindown_time):
     :param spindown_time: String received from settings form ie "20 minutes"
     :return:
     """
-    logger.debug('set_disk_spindown received device %s and -S value %s' % (device, spindown_time))
+    logger.debug('set_disk_spindown received device %s and -S value %s' % (
+    device, spindown_time))
     base_dev = get_base_device(device)
     # md devices result in [''] from get_base_device so do nothing and return
     # todo look to using system/osi get_md_members(device_name, test=None)
@@ -358,7 +360,7 @@ def set_disk_spindown(device, spindown_time):
     # setup hdparm command
     hdparm_command = [HDPARM, '-S', '%s' % spindown_time] + base_dev
     logger.debug('proposed hdparm commnad = %s', hdparm_command)
-
+    return run_command(hdparm_command)
 
 
 def update_config(config):
