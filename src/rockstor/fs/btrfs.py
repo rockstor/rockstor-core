@@ -1115,26 +1115,26 @@ def get_disk_power_status(disk):
     any request will wake a fully sleeping drive.
     Drives in 'sleeping' mode typically require a hard or soft reset before
     becoming available for use, the kernel does this automatically however.
-    :param device: disk name eg sda.
+    :param device: disk name as stored in db / Disk model.
     :return: single word sting of state as indicated by hdparm -C /dev/<disk>
     and if we encounter an error line in the output we return unknown.
     """
     # if we use the -C -q switches then we have only one line of output:
     # hdparm -C -q /dev/sda
     # drive state is:  active/idle
-    # Note however that if there is an bad/missing sense data then it will be
-    # on the first line but then we can't trust what follows anyway then.
-    hdparm_command = [HDPARM, '-C', '-q' '/dev/%s' % disk]
-    # todo consider throw=False for production
-    out, err, rc = run_command(hdparm_command)
-    # should be only one line but trawl anyway.
-    # todo once tested loose the for loop.
-    for line in out:
-        fields = line.split()
-        # our line of interest as 4 fields when split by spaces, see above.
+    # in some instances an error can be returned even with rc=0, we ignore this
+    # ie SG_IO: bad/missing sense data, sb[]:  70 00 05 00 00 00 00 0a ......
+    # We may want to ignore / return unknown when len(err) != 1
+    out, err, rc = run_command([HDPARM, '-C', '-q', '/dev/%s' % disk],
+                               throw=False)
+    # if len(err) != 1:
+    #     logger.debug('hdparm has output to standard error of %s', err)
+    if len(out) > 0:
+        fields = out[0].split()
+        # our line of interest has 4 fields when split by spaces, see above.
         if (len(fields) == 4):
             return fields[3]
-    return 'Unknown'
+    return 'unknown'
 
 
 def blink_disk(disk, total_exec, read, sleep):
