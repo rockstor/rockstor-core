@@ -467,6 +467,8 @@ def get_dev_options(device, custom_options=''):
         dev_options = get_base_device(device)
     else:
         # Convert string of custom options into a list ready for run_command
+        # todo think this ascii should be utf-8 as that's kernel standard
+        # todo or just use str(custom_options).split()
         dev_options = custom_options.encode('ascii').split()
         # If our custom options don't contain a raid controller target then add
         # the full path to our base device as our last device specific option.
