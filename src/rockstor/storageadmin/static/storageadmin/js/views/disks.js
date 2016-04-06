@@ -190,7 +190,8 @@ DisksView = Backbone.View.extend({
                     diskParted = disk.get('parted'),
                     smartEnabled = disk.get('smart_enabled'),
                     diskRole = disk.get('role'),
-                    smartOptions = disk.get('smart_options');
+                    smartOptions = disk.get('smart_options'),
+                    powerState = disk.get('power_state');
 
                 html += '<tr>';
                 html += '<td><a href="#disks/' + diskName + ' "><i class="glyphicon glyphicon-hdd"></i> ' + diskName + '</a>&nbsp';
@@ -229,9 +230,9 @@ DisksView = Backbone.View.extend({
                     html += '<a href="#pools/' + poolName + '">' + poolName + '</a>';
                 }
                 html += '</td>';
-                // begin Spin Down / power column
+                // begin Spin Down / Power Status column
                 html += '<td>';
-                html += 'active/idle' + ' ';
+                html += powerState + ' ';
                 html += '<a href="#disks/spindown/' + diskName + '" title="Click to configure Spin Down." rel="tooltip">';
                 html += '<i class="glyphicon glyphicon-pencil"></i></a> ';
                 html += '</td>';
