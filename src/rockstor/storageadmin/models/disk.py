@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.db import models
 from storageadmin.models import Pool
+from fs.btrfs import get_disk_power_status
 
 
 class Disk(models.Model):
@@ -52,6 +53,13 @@ class Disk(models.Model):
     def pool_name(self, *args, **kwargs):
         try:
             return self.pool.name
+        except:
+            return None
+
+    @property
+    def power_state(self, *args, **kwargs):
+        try:
+            return get_disk_power_status(str(self.name))
         except:
             return None
 
