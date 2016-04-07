@@ -22,6 +22,7 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 import sys
 import json
 from datetime import datetime
+import crontabwindow #load crontabwindow module
 from storageadmin.models import (Share, Snapshot)
 from smart_manager.models import (Task, TaskDefinition)
 from cli.api_wrapper import APIWrapper
@@ -45,47 +46,51 @@ def update_state(t, pool, aw):
 
 def main():
     tid = int(sys.argv[1])
-    tdo = TaskDefinition.objects.get(id=tid)
-    if (tdo.task_type != 'scrub'):
-        return logger.error('task_type(%s) is not scrub.' % tdo.task_type)
-    meta = json.loads(tdo.json_meta)
-    aw = APIWrapper()
+    cwindow = sys.argv[2]
+    if (crontabwindow.crontab_range(cwindow)): #Performance note: immediately check task execution time/day window range to avoid other calls
+        tdo = TaskDefinition.objects.get(id=tid)
+        if (tdo.task_type != 'scrub'):
+            return logger.error('task_type(%s) is not scrub.' % tdo.task_type)
+        meta = json.loads(tdo.json_meta)
+        aw = APIWrapper()
 
-    if (Task.objects.filter(task_def=tdo).exists()):
-        ll = Task.objects.filter(task_def=tdo).order_by('-id')[0]
-        if (ll.state != 'error' and ll.state != 'finished'):
-            logger.debug('Non terminal state(%s) for task(%d). Checking '
-                         'again.' % (ll.state, tid))
-            cur_state = update_state(ll, meta['pool'], aw)
-            if (cur_state != 'error' and cur_state != 'finished'):
-                return logger.debug('Non terminal state(%s) for task(%d). '
-                                    'A new task will not be run.' % (cur_state, tid))
+        if (Task.objects.filter(task_def=tdo).exists()):
+            ll = Task.objects.filter(task_def=tdo).order_by('-id')[0]
+            if (ll.state != 'error' and ll.state != 'finished'):
+                logger.debug('Non terminal state(%s) for task(%d). Checking '
+                             'again.' % (ll.state, tid))
+                cur_state = update_state(ll, meta['pool'], aw)
+                if (cur_state != 'error' and cur_state != 'finished'):
+                    return logger.debug('Non terminal state(%s) for task(%d). '
+                                        'A new task will not be run.' % (cur_state, tid))
 
-    now = datetime.utcnow().replace(second=0, microsecond=0, tzinfo=utc)
-    t = Task(task_def=tdo, state='started', start=now)
-    url = ('pools/%s/scrub' % meta['pool'])
-    try:
-        aw.api_call(url, data=None, calltype='post', save_error=False)
-        logger.debug('Started scrub at %s' % url)
-        t.state = 'running'
-    except Exception, e:
-        logger.error('Failed to start scrub at %s' % url)
-        t.state = 'error'
-        logger.exception(e)
-    finally:
-        t.end = datetime.utcnow().replace(tzinfo=utc)
-        t.save()
+        now = datetime.utcnow().replace(second=0, microsecond=0, tzinfo=utc)
+        t = Task(task_def=tdo, state='started', start=now)
+        url = ('pools/%s/scrub' % meta['pool'])
+        try:
+            aw.api_call(url, data=None, calltype='post', save_error=False)
+            logger.debug('Started scrub at %s' % url)
+            t.state = 'running'
+        except Exception, e:
+            logger.error('Failed to start scrub at %s' % url)
+            t.state = 'error'
+            logger.exception(e)
+        finally:
+            t.end = datetime.utcnow().replace(tzinfo=utc)
+            t.save()
 
-    while True:
-        cur_state = update_state(t, meta['pool'], aw)
-        if (cur_state == 'error' or cur_state == 'finished'):
-            logger.debug('task(%d) finished with state(%s).' %
-                         (tid, cur_state))
-            break
-        logger.debug('pending state(%s) for scrub task(%d). Will check again '
-                     'in 60 seconds.' % (cur_state, tid))
-        time.sleep(60)
+        while True:
+            cur_state = update_state(t, meta['pool'], aw)
+            if (cur_state == 'error' or cur_state == 'finished'):
+                logger.debug('task(%d) finished with state(%s).' %
+                             (tid, cur_state))
+                break
+            logger.debug('pending state(%s) for scrub task(%d). Will check again '
+                         'in 60 seconds.' % (cur_state, tid))
+            time.sleep(60)
+    else:
+        logger.debug('Cron scheduled task not executed because outside time/day window ranges')
 
 if __name__ == '__main__':
-    #takes one argument. taskdef object id.
+    #takes two arguments. taskdef object id and crontabwindow.
     main()
