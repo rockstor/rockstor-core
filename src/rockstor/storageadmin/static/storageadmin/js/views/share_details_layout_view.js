@@ -377,7 +377,7 @@ ShareDetailsLayoutView = RockstorLayoutView.extend({
 				if (_this.share.get('compression_algo') == c) {
 					html += '<option value="' + c + '" selected="selected">' + _this.cOpts[c] + '</option>';
 				} else {
-					html += '<option value=' + c + '>' + _this.cOpts[c] + '</option>';
+					html += '<option value="' + c + '">' + _this.cOpts[c] + '</option>';
 				}
 			});
 			return new Handlebars.SafeString(html);
