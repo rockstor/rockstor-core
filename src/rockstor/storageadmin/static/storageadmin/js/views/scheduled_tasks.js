@@ -50,7 +50,7 @@ ScheduledTasksView = RockstorLayoutView.extend({
 		this.fetch(this.renderScheduledTasks, this);
 		return this;
 	},
-
+	
 	renderScheduledTasks: function() {
 		var _this = this;
 		this.collection.each(function(taskDef, index) {
@@ -151,6 +151,7 @@ ScheduledTasksView = RockstorLayoutView.extend({
 				} 
 				html += '</td>';
 				html += '<td>' + prettyCron.toString(t.get('crontab')) + '</td>';
+				html += '<td>' + render_cronwindow(t.get('crontabwindow')) + '</td>';
 				html += '<td>';
 				if (t.get('enabled')) {
 					html += '<input type="checkbox" disabled="true" checked="true"></input>';
@@ -188,3 +189,32 @@ ScheduledTasksView = RockstorLayoutView.extend({
 
 //Add pagination
 Cocktail.mixin(ScheduledTasksView, PaginationMixin);
+
+//Adding new inline func to render crontabwindow in a nice way and not just like a string
+
+        function render_cronwindow(cwindow) {
+                var rendercwindow;
+                if (cwindow == "*-*-*-*-*-*") {
+                        rendercwindow = 'Run always'; //render always without other checks
+                } else {
+                        var cwindow = cwindow.split('-');
+                        for (var i = 0; i < 4; i++) {
+                                if (cwindow[i] != '*' && cwindow[i].length == 1) { cwindow[i] = '0' + cwindow[i]; }
+                        }
+                        rendercwindow = '<i class="fa fa-clock-o"/>&nbsp;';
+                        if (cwindow[0] != '*') { //if hour start isn't always value the same do min start and hour min stop
+                                rendercwindow += 'from ' + cwindow[0] + ':' + cwindow[1];
+                                rendercwindow += ' to ' + cwindow[2] + ':' + cwindow[3];
+                        } else {
+                                rendercwindow += ' every hour';
+                        }
+                        rendercwindow += '&nbsp;-&nbsp;<i class="fa fa-calendar"/>&nbsp;';
+                        if (cwindow[4] != '*') { //as for hour start, if day start isn't star then day stop too
+                                var dayname = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+                                rendercwindow += dayname[cwindow[4]] + ' to ' + dayname[cwindow[5]];
+                        } else {
+                                rendercwindow += ' on every day';
+                        }
+                }
+                return rendercwindow;
+	}
