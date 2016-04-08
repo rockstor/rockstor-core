@@ -581,6 +581,7 @@ def update_quota(pool, qgroup, size_bytes):
 
 
 def convert_to_KiB(size):
+    # todo candidate for move to system/osi as not btrfs related
     SMAP = {
         'KiB': 1,
         'MiB': 1024,
@@ -777,6 +778,7 @@ def root_disk():
     The assumption with non md devices is that the partition number will be a
     single character.
     """
+    # todo candidate for move to system/osi as not btrfs related
     with open('/proc/mounts') as fo:
         for line in fo.readlines():
             fields = line.split()
@@ -819,6 +821,7 @@ def scan_disks(min_size):
     :param min_size: Discount all devices below this size in KB
     :return: List containing drives of interest
     """
+    # todo candidate for move to system/osi as not btrfs related
     base_root_disk = root_disk()
     cmd = ['/usr/bin/lsblk', '-P', '-o',
            'NAME,MODEL,SERIAL,SIZE,TRAN,VENDOR,HCTL,TYPE,FSTYPE,LABEL,UUID']
@@ -1067,6 +1070,7 @@ def scan_disks(min_size):
 
 
 def wipe_disk(disk):
+    # todo candidate for move to system/osi as not btrfs related
     disk = ('/dev/%s' % disk)
     return run_command([WIPEFS, '-a', disk])
 
@@ -1089,6 +1093,7 @@ def get_disk_power_status(disk):
     :return: single word sting of state as indicated by hdparm -C /dev/<disk>
     and if we encounter an error line in the output we return unknown.
     """
+    # todo candidate for move to system/osi as not btrfs related
     # if we use the -C -q switches then we have only one line of output:
     # hdparm -C -q /dev/sda
     # drive state is:  active/idle
@@ -1108,6 +1113,7 @@ def get_disk_power_status(disk):
 
 
 def blink_disk(disk, total_exec, read, sleep):
+    # todo candidate for move to system/osi as not btrfs related
     DD_CMD = [DD, 'if=/dev/%s' % disk, 'of=/dev/null', 'bs=512',
               'conv=noerror']
     p = subprocess.Popen(DD_CMD, shell=False, stdout=subprocess.PIPE,
