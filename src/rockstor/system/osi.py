@@ -611,3 +611,37 @@ def is_rotational(device_name, test=None):
                 break
     return rotational
 
+
+def get_dev_byid_name(device_name):
+    """
+    When given a standard dev name eg sda will return the /dev/disk/by-id
+    name, or None if error or no name available.
+    Works by querying udev via udevadm info --query=property --name device_name
+    The first line of which (DEVLINKS) is examined and parsed for the first
+    entry which has been found to be the /dev/disk/by-id symlink to our
+    device_name eg:
+    DEVLINKS=/dev/disk/by-id/ata-QEMU_HARDDISK_QM00005
+    /dev/disk/by-path/pci-0000:00:05.0-ata-1.0
+    In the above example we have the by-id name made from type, model and serial
+    and a second by-path entry which is not used here.
+    N.B. As the subsystem of the device is embeded in the by-id name a drive's
+    by-id path will change if for example it is plugged in via usb rather than
+    ata subsystem.
+    :param device_name: eg sda but can also be /dev/sda or even the by-id name
+    but only if the full path is specified with by-id
+    :return: None if error or no DEVLINKS entry found or the full path to this
+    given device_name.
+    """
+    out, err, rc = run_command(
+        [UDEVADM, 'info', '--query=property', '--name', str(device_name)],
+        throw=False)
+    if len(out) > 0:
+        # the output has at least one line
+        fields = out[0].replace('=', ' ').split()
+        if len(fields) > 1:
+            # we have at least 2 fields in this line
+            if fields[0] == 'DEVLINKS':
+                # return the first value directly after DEVLINKS
+                return fields[1]
+    # if no DEVLINKS value found or an error occurred.
+    return None
