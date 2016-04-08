@@ -285,7 +285,8 @@ PoolDetailsLayoutView = RockstorLayoutView.extend({
     showCompressionTooltips: function() {
 	this.$('#ph-compression-info #compression').tooltip({
 	    html: true,
-	    placement: 'bottom',
+	    placement: 'top',
+	    container: 'body',
 	    title: "Choose a compression algorithm for this Pool.<br><strong>zlib: </strong>slower but higher compression ratio.<br><strong>lzo: </strong>faster compression/decompression, but ratio smaller than zlib.<br>Enabling compression at the pool level applies to all Shares carved out of this Pool.<br>Don't enable compression here if you like to have finer control at the Share level.<br>You can change the algorithm, disable or enable it later, if necessary."
 	});
 	this.$('#ph-compression-info #mnt_options').tooltip({ placement: 'top' });
