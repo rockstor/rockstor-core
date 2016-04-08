@@ -637,6 +637,7 @@ def get_dev_byid_name(device_name):
         throw=False)
     if len(out) > 0:
         # the output has at least one line
+        # split this line by '=' and ' ' chars
         fields = out[0].replace('=', ' ').split()
         if len(fields) > 1:
             # we have at least 2 fields in this line
@@ -644,4 +645,67 @@ def get_dev_byid_name(device_name):
                 # return the first value directly after DEVLINKS
                 return fields[1]
     # if no DEVLINKS value found or an error occurred.
+    return None
+
+def get_devname_old(device_name):
+    """
+    Depricated / prior version of get_devname()
+    Returns the value of DEVNAME as reported by udevadm when supplied with a
+    legal device name ie a full path by-id or full path by-path ie any DEVLINKS.
+    Also works when supplied with eg "sda"
+    Primarily intended to retrieve the full path device name from a full path
+    by-id name or an abbreviated DEVNAME eg sda.
+    N.B. this is a partner function to get_dev_byid_name(device_name)
+    Works by sampling the second line of udevadm and confirming it begins with
+    DEVNAME, then returning the value found after the '=' char.
+    example line:
+    DEVNAME=/dev/sda
+    :param device_name: sda, /dev/sda, full path by-id or by-path
+    :return: Full path of device name eg /dev/sda or None if error or no DEVNAME
+    found
+    """
+    out, err, rc = run_command(
+        [UDEVADM, 'info', '--query=property', '--name', str(device_name)],
+        throw=False)
+    if len(out) > 1:
+        # the output has at least two lines
+        # split the second line by the '=' char
+        fields = out[1].split('=')
+        if len(fields) > 1:
+            # we have at least 2 fields in this line
+            if fields[0] == 'DEVNAME':
+                # return the first value directly after DEVNAME
+                return fields[1]
+    # if no DEVNAME value found or an error occurred.
+    return None
+
+
+def get_devname(device_name, addPath=False):
+    """
+    Intended as a light and quicker way to retrieve a device name with or
+    without path (default) from any legal udevadm --name parameter
+    Simple wrapper around a call to:
+    udevadm info --query=name device_name
+    Works with device_name of eg sda /dev/sda /dev/disk/by-id/ and /dev/disk/
+    If a device doesn't exist then udevadm returns multi work advise so if more
+    than one word assume failure and return None.
+    N.B. if given /dev/sdc3 or equivalent DEVLINKS this method will return sdc3
+    if no path is requested.
+    :param device_name: legal device name to --name in udevadmin
+    :return: short device name ie sda (no path) or with path /dev/sda if addPath
+    is True or None if multi word response from udevadm ie "Unknown device, .."
+    """
+    out, err, rc = run_command(
+        [UDEVADM, 'info', '--query=name', '--name', str(device_name)],
+        throw=False)
+    if len(out) > 0:
+        # we have at least a single line of output
+        fields = out[0].split()
+        if len(fields) == 1:
+            # we have a single word output so return it with or without path
+            if addPath:
+                return '/dev/%s' % fields[0]
+            # return the word (device name ie sda) without added /dev/
+            return fields[0]
+    # a non one word reply was received on the first line from udevadm or
     return None
