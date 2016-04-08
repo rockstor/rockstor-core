@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.db import models
 from storageadmin.models import Pool
-from fs.btrfs import get_disk_power_status
+from system.osi import get_disk_power_status
 
 
 class Disk(models.Model):
