@@ -46,7 +46,6 @@ DEFAULT_MNT_DIR = '/mnt2/'
 RMDIR = '/bin/rmdir'
 WIPEFS = '/usr/sbin/wipefs'
 QID = '2015'
-HDPARM = '/usr/sbin/hdparm'
 
 
 Disk = collections.namedtuple('Disk',
@@ -1073,43 +1072,6 @@ def wipe_disk(disk):
     # todo candidate for move to system/osi as not btrfs related
     disk = ('/dev/%s' % disk)
     return run_command([WIPEFS, '-a', disk])
-
-
-def get_disk_power_status(disk):
-    """
-    When given a disk name such as that stored in the db ie sda
-    we return it's current power state via hdparm -C /dev/<disk>
-    Possible states are:
-    unknown - command not supported by disk
-    active/idle - normal operation
-    standby - low power mode, ie drive motor not active ie -y will do this
-    sleeping - lowest power mode, completely shut down ie -Y will do this
-    N.B. -C shouldn't spin up a drive in standby but has been reported to wake
-    a drive from sleeping but we aren't going to invoke sleeping as pretty much
-    any request will wake a fully sleeping drive.
-    Drives in 'sleeping' mode typically require a hard or soft reset before
-    becoming available for use, the kernel does this automatically however.
-    :param device: disk name as stored in db / Disk model.
-    :return: single word sting of state as indicated by hdparm -C /dev/<disk>
-    and if we encounter an error line in the output we return unknown.
-    """
-    # todo candidate for move to system/osi as not btrfs related
-    # if we use the -C -q switches then we have only one line of output:
-    # hdparm -C -q /dev/sda
-    # drive state is:  active/idle
-    # in some instances an error can be returned even with rc=0, we ignore this
-    # ie SG_IO: bad/missing sense data, sb[]:  70 00 05 00 00 00 00 0a ......
-    # We may want to ignore / return unknown when len(err) != 1
-    out, err, rc = run_command([HDPARM, '-C', '-q', '/dev/%s' % disk],
-                               throw=False)
-    # if len(err) != 1:
-    #     logger.debug('hdparm has output to standard error of %s', err)
-    if len(out) > 0:
-        fields = out[0].split()
-        # our line of interest has 4 fields when split by spaces, see above.
-        if (len(fields) == 4):
-            return fields[3]
-    return 'unknown'
 
 
 def blink_disk(disk, total_exec, read, sleep):
