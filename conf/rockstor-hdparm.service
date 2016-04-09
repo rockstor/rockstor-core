@@ -1,0 +1,9 @@
+Description=Rockstor hdparm settings
+After=suspend.target
+
+[Service]
+Type=oneshot
+ExecStart=
+
+[Install]
+WantedBy=suspend.target basic.target

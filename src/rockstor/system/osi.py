@@ -27,6 +27,8 @@ from struct import pack
 from exceptions import CommandException
 import hashlib
 import logging
+from django.conf import settings
+
 logger = logging.getLogger(__name__)
 
 
@@ -50,6 +52,7 @@ NMCLI = '/usr/bin/nmcli'
 HOSTNAMECTL = '/usr/bin/hostnamectl'
 LSBLK = '/usr/bin/lsblk'
 HDPARM = '/usr/sbin/hdparm'
+SYSTEMCTL_BIN = '/usr/bin/systemctl'
 
 
 def inplace_replace(of, nf, regex, nl):
@@ -698,14 +701,11 @@ def set_disk_spindown(device, spindown_time):
     :param spindown_time: String received from settings form ie "20 minutes"
     :return:
     """
-    logger.debug('set_disk_spindown received device %s and -S value %s' % (
-    device, spindown_time))
     base_dev = get_base_device(device)
     # md devices result in [''] from get_base_device so do nothing and return
     # todo look to using system/osi get_md_members(device_name, test=None)
     # todo with md devices and then treat each in turn.
     if len(base_dev[0]) == 0:
-        logger.debug('skipping hdparm -S as device = ""')
         return True;
     # Don't spin down non rotational devices, skip all and return True.
     if is_rotational(base_dev) is not True:
@@ -713,7 +713,10 @@ def set_disk_spindown(device, spindown_time):
         return True;
     # setup hdparm command
     hdparm_command = [HDPARM, '-q', '-S', '%s' % spindown_time] + base_dev
-    logger.debug('proposed hdparm commnad = %s', hdparm_command)
+    logger.debug('proposed hdparm command = %s', hdparm_command)
+
+    # update_hdparm_service(base_dev, switches)
+
     return run_command(hdparm_command)
 
 
@@ -814,3 +817,69 @@ def get_devname(device_name, addPath=False):
             return fields[0]
     # a non one word reply was received on the first line from udevadm or
     return None
+
+
+def update_hdparm_service(device_name, switches, message='test_message'):
+    """
+    Updates or creates the /etc/systemd/system/rockstor-hdparm.service file for
+    the device_name given.
+    :param device_name: ie sda, will be converted internally to by-id
+    :param switches:
+    :param message:
+    :return:
+    """
+    edit_done = False
+    do_edit = False
+    clear_line_count = 0
+    # get our by-id device name
+    device_name_byid = get_dev_byid_name(device_name)
+    # first create a temp file to use as our output until we are done editing.
+    tfo, npath = mkstemp()
+    # if there is already a rockstor-hdparm.service file then we use that
+    # as our source file, otherwise use conf's empty template.
+    if os.path.isfile('/etc/systemd/system/rockstor-hdparm.service'):
+        infile = '/etc/systemd/system/rockstor-hdparm.service'
+        update = True
+    else:
+        infile = ('%s/rockstor-hdparm.service' % settings.CONFROOT)
+        update = False
+    with open(infile) as ino, open(npath, 'w') as outo:
+        for line in ino.readlines():
+            if (re.match('ExecStart=', line) is not None) and not edit_done:
+                # we have found a line beginning with "ExecStart="
+                if update:
+                    if device_name_byid != line.split()[-1]:
+                        # in update but device name doesn't match so continue
+                        continue
+                else:  # no update and ExecStart found so set edit flag
+                    do_edit = True
+            else:
+                if line == '':
+                    clear_line_count += 1
+                if clear_line_count == 2 and not edit_done:
+                    do_edit = True
+            if do_edit and not edit_done:
+                outo.write('/usr/sbin/hdparm %s %s' % (switches, device_name_byid))
+                outo.write('# %', message)
+                edit_done = True
+            # mechanism to skip a line if we have just done an edit
+            if do_edit and edit_done:
+                # we need to skip a line as we have just inserted 2
+                # first reset our do_edit as it's now been done
+                do_edit = False
+                # then continue rather than copy source line to target
+                # which effects a line skip
+                continue
+            else:
+                # copy source line over to temp file
+                outo.write(line)
+    # now copy our temp file over to our destination as we are done editing
+    shutil.move(npath, '/etc/systemd/system/rockstor-hdparm.service')
+    if update is not True:
+        # then this is a fresh systemd instance so enable it
+        # can't use systemctrl wrapper as circular then circular dependency
+        # return systemctl('rockstor-hdparm', 'enable')
+        return run_command([SYSTEMCTL_BIN, 'enable', 'rockstor-hdparm'])
+    return None
+
+
