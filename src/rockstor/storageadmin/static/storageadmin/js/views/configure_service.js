@@ -179,6 +179,7 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
 	this.$('#nut-form #mode').tooltip({
 	    html: true,
 	    placement: 'right',
+	    container: 'body',
 	    title: "<strong>Nut Mode</strong> — Select the overall mode of Network UPS Tools operation. The drop-down list offers the following options:<br> \
 <ul>\
 <li><strong>Standalone</strong> — The most common and recommended mode if you have a locally connected UPS and don't wish for Rockstor to act as a NUT server to any other LAN connected machines.</li> \
