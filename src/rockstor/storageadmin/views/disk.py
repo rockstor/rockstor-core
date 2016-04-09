@@ -30,6 +30,7 @@ from share_helpers import (import_shares, import_snapshots)
 from django.conf import settings
 import rest_framework_custom as rfc
 from system import smart
+from system.osi import set_disk_spindown
 from copy import deepcopy
 import uuid
 import logging
@@ -346,5 +347,5 @@ class DiskDetailView(rfc.GenericView):
     def _spindown_drive(cls, dname, request):
         disk = cls._validate_disk(dname, request)
         spindown_time = int(request.data.get('spindown_time', ''))
-        smart.set_disk_spindown(disk.name, spindown_time)
+        set_disk_spindown(disk.name, spindown_time)
         return Response()

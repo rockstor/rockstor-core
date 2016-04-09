@@ -48,6 +48,7 @@ UDEVADM = '/usr/sbin/udevadm'
 GREP = '/usr/bin/grep'
 NMCLI = '/usr/bin/nmcli'
 HOSTNAMECTL = '/usr/bin/hostnamectl'
+LSBLK = '/usr/bin/lsblk'
 HDPARM = '/usr/sbin/hdparm'
 
 
@@ -560,6 +561,42 @@ def md5sum(fpath):
     return md5.hexdigest()
 
 
+def get_base_device(device, test_mode=False):
+    """
+    Helper function that returns the full path of the base device of a partition
+    or if given a base device then will return it's full path,
+    ie
+    input sda3 output /dev/sda
+    input sda output /dev/sda
+    Works as a function of lsblk list order ie base devices first. So we return
+    the first start of line match to our supplied device name with the pattern
+    as the first element in lsblk's output and the match target as our device.
+    :param device: device name as per db entry, ie as returned from scan_disks
+    :param test_mode: Not True causes cat from file rather than smartctl command
+    :return: base_dev: single item list containing the root device's full path
+    ie device = sda3 the base_dev = /dev/sda or [''] if no lsblk entry was found
+    to match.
+    """
+    base_dev = ['', ]
+    if not test_mode:
+        out, e, rc = run_command([LSBLK])
+    else:
+        out, e, rc = run_command([CAT, '/root/smartdumps/lsblk.out'])
+    # now examine the output from lsblk line by line
+    for line in out:
+        line_fields = line.split()
+        if len(line_fields) < 1:
+            # skip empty lines
+            continue
+        if re.match(line_fields[0], device):
+            # We have found a device string match to our device so record it.
+            base_dev[0] = '/dev/' + line_fields[0]
+            break
+    # Return base_dev ie [''] or first character matches to line start in lsblk.
+    return base_dev
+
+
+
 def is_rotational(device_name, test=None):
     """
     When given a device_name a udevadmin lookup takes place to look for either:
@@ -647,6 +684,37 @@ def get_disk_power_status(device_name):
         if (len(fields) == 4):
             return fields[3]
     return 'unknown'
+
+
+def set_disk_spindown(device, spindown_time):
+    """
+    Takes a value to be used with hdparm -S to set disk spindown time for the
+    device specified.
+    Executes hdparm -S spindown_time and ensures the systemd script to do the
+    same on boot is also updated. Note we do not restart the systemd service
+    to enact these changes in order to keep keep our drive intervention to a
+    minimum.
+    :param device: The name of a disk device as used in the db ie sda
+    :param spindown_time: String received from settings form ie "20 minutes"
+    :return:
+    """
+    logger.debug('set_disk_spindown received device %s and -S value %s' % (
+    device, spindown_time))
+    base_dev = get_base_device(device)
+    # md devices result in [''] from get_base_device so do nothing and return
+    # todo look to using system/osi get_md_members(device_name, test=None)
+    # todo with md devices and then treat each in turn.
+    if len(base_dev[0]) == 0:
+        logger.debug('skipping hdparm -S as device = ""')
+        return True;
+    # Don't spin down non rotational devices, skip all and return True.
+    if is_rotational(base_dev) is not True:
+        logger.debug('skipping hdparm -S as device not confirmed as rotational')
+        return True;
+    # setup hdparm command
+    hdparm_command = [HDPARM, '-q', '-S', '%s' % spindown_time] + base_dev
+    logger.debug('proposed hdparm commnad = %s', hdparm_command)
+    return run_command(hdparm_command)
 
 
 def get_dev_byid_name(device_name):
