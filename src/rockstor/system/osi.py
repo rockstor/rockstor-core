@@ -100,6 +100,8 @@ def run_command(cmd, shell=False, stdout=subprocess.PIPE,
 
 def uptime():
     with open('/proc/uptime') as ufo:
+        # todo check on readline here as reads a character at a time
+        # todo xreadlines() reads one line at a time.
         return int(float(ufo.readline().split()[0]))
 
 
@@ -633,7 +635,6 @@ def is_rotational(device_name, test=None):
             continue
         # nonlocal line_fields
         line_fields = line.strip().split('=')
-        logger.debug('line_fields now look like this %s', line_fields)
         # example original line "ID_ATA_FEATURE_SET_AAM=1"
         # less than 2 fields are of no use so just in case:-
         if len(line_fields) < 2:
@@ -701,6 +702,8 @@ def set_disk_spindown(device, spindown_time):
     :param spindown_time: String received from settings form ie "20 minutes"
     :return:
     """
+    # hdparm -S work on for example /dev/sda3 so base_dev may be redundant.
+    # todo lighten by removing base_dev
     base_dev = get_base_device(device)
     # md devices result in [''] from get_base_device so do nothing and return
     # todo look to using system/osi get_md_members(device_name, test=None)
@@ -712,10 +715,10 @@ def set_disk_spindown(device, spindown_time):
         logger.debug('skipping hdparm -S as device not confirmed as rotational')
         return True;
     # setup hdparm command
-    hdparm_command = [HDPARM, '-q', '-S', '%s' % spindown_time] + base_dev
+    hdparm_command = [HDPARM, '-q', '-S', '%s' % spindown_time, '%s' % get_dev_byid_name(base_dev[0])]
     logger.debug('proposed hdparm command = %s', hdparm_command)
 
-    # update_hdparm_service(base_dev, switches)
+    update_hdparm_service(hdparm_command)
 
     return run_command(hdparm_command)
 
@@ -819,23 +822,22 @@ def get_devname(device_name, addPath=False):
     return None
 
 
-def update_hdparm_service(device_name, switches, message='test_message'):
+def update_hdparm_service(hdparm_command_list, message='test_message'):
     """
     Updates or creates the /etc/systemd/system/rockstor-hdparm.service file for
     the device_name given.
-    :param device_name: ie sda, will be converted internally to by-id
-    :param switches:
-    :param message:
-    :return:
+    :param hdparm_command_list: list containing the hdparm command elements
+    :param message: test message to follow hdparm command on next line
+    :return: None or
     """
     edit_done = False
     do_edit = False
     clear_line_count = 0
-    # get our by-id device name
-    device_name_byid = get_dev_byid_name(device_name)
+    # get our by-id device name by extracting the last hdparm list item
+    device_name_byid = hdparm_command_list[-1]
     # first create a temp file to use as our output until we are done editing.
     tfo, npath = mkstemp()
-    # if there is already a rockstor-hdparm.service file then we use that
+    # If there is already a rockstor-hdparm.service file then we use that
     # as our source file, otherwise use conf's empty template.
     if os.path.isfile('/etc/systemd/system/rockstor-hdparm.service'):
         infile = '/etc/systemd/system/rockstor-hdparm.service'
@@ -843,35 +845,44 @@ def update_hdparm_service(device_name, switches, message='test_message'):
     else:
         infile = ('%s/rockstor-hdparm.service' % settings.CONFROOT)
         update = False
+    # Create our proposed temporary file based on the source file plus edits.
     with open(infile) as ino, open(npath, 'w') as outo:
-        for line in ino.readlines():
+        for line in ino.readlines(): # readlines reads whole file in one go.
+            logger.debug('processing line with contents %s', line)
+            if do_edit and edit_done and clear_line_count != 2:
+                # We must have just edited an entry so we need to skip
+                # a line as each entry consists of an ExecStart= line and a
+                # remark line directly afterwards, but only if clear_line_count
+                # doesn't indicate an addition.
+                # reset our do_edit flag and continue
+                do_edit = False
+                continue
             if (re.match('ExecStart=', line) is not None) and not edit_done:
                 # we have found a line beginning with "ExecStart="
                 if update:
-                    if device_name_byid != line.split()[-1]:
-                        # in update but device name doesn't match so continue
-                        continue
+                    if device_name_byid == line.split()[-1]:
+                        # matching device name entry so set edit flat
+                        do_edit = True
                 else:  # no update and ExecStart found so set edit flag
                     do_edit = True
-            else:
-                if line == '':
+            # process all lines with the following
+            if line == '\n':  # empty line, or rather just a newline char
                     clear_line_count += 1
-                if clear_line_count == 2 and not edit_done:
+            if clear_line_count == 2 and not edit_done:
+                    # we are looking at our second empty line and haven't yet
+                    # achieved edit_done so do our edit / addition in this case.
                     do_edit = True
             if do_edit and not edit_done:
-                outo.write('/usr/sbin/hdparm %s %s' % (switches, device_name_byid))
-                outo.write('# %', message)
+                outo.write('ExecStart=' + ' '.join(hdparm_command_list) + '\n')
+                outo.write('# %s' % hdparm_command_list[-2] + '\n')
                 edit_done = True
             # mechanism to skip a line if we have just done an edit
-            if do_edit and edit_done:
-                # we need to skip a line as we have just inserted 2
-                # first reset our do_edit as it's now been done
-                do_edit = False
-                # then continue rather than copy source line to target
-                # which effects a line skip
-                continue
-            else:
-                # copy source line over to temp file
+            if not (do_edit and edit_done and clear_line_count != 2):
+                # if do-edit and edit_done are both true it means we have just
+                # done a line replacement so we skip copying the original line
+                # over to the target file, but only if clear_line_count also
+                # !=2 as this would indicate an addition where we do need to
+                # copy over the original files line.
                 outo.write(line)
     # now copy our temp file over to our destination as we are done editing
     shutil.move(npath, '/etc/systemd/system/rockstor-hdparm.service')
@@ -879,7 +890,8 @@ def update_hdparm_service(device_name, switches, message='test_message'):
         # then this is a fresh systemd instance so enable it
         # can't use systemctrl wrapper as circular then circular dependency
         # return systemctl('rockstor-hdparm', 'enable')
-        return run_command([SYSTEMCTL_BIN, 'enable', 'rockstor-hdparm'])
+        # return run_command([SYSTEMCTL_BIN, 'enable', 'rockstor-hdparm'])
+        return None
     return None
 
 

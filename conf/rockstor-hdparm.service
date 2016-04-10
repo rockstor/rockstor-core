@@ -1,9 +1,13 @@
+[Unit]
 Description=Rockstor hdparm settings
 After=suspend.target
+# Rockstor-hdparm - the automated maintenance of this file requires a clear line
+# at the end of the Unit and Service sections, but no other clear lines.
+# Also requires at least one ExecStart entry in Service section with a comment
+# directly after each ExecStart entry.
 
 [Service]
 Type=oneshot
-ExecStart=
 
 [Install]
 WantedBy=suspend.target basic.target
