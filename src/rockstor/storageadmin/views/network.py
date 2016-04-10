@@ -22,9 +22,9 @@ from shutil import move
 from django.db import transaction
 from django.conf import settings
 from rest_framework.response import Response
-from storageadmin.models import (NetworkInterface, Appliance)
+from storageadmin.models import (NetworkInterface, NetworkConnection, NetworkDevice, Appliance)
 from storageadmin.util import handle_exception
-from storageadmin.serializers import NetworkInterfaceSerializer
+from storageadmin.serializers import (NetworkInterfaceSerializer, NetworkDeviceSerializer, NetworkConnectionSerializer)
 from system.osi import (config_network_device, get_net_config, update_issue)
 from system.samba import update_samba_discovery
 from system.services import superctl
@@ -214,3 +214,19 @@ class NetworkDetailView(rfc.GenericView, NetworkMixin):
                     logger.error('Failed to update Nginx. Exception: %s' % e.__str__())
 
             return Response(NetworkInterfaceSerializer(ni).data)
+
+
+class NetworkDeviceListView(rfc.GenericView, NetworkMixin):
+    serializer_class = NetworkDeviceSerializer
+
+    def get_queryset(self, *args, **kwargs):
+        with self._handle_exception(self.request):
+            return NetworkDevice.objects.all()
+
+
+class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
+    serializer_class = NetworkConnectionSerializer
+
+    def get_queryset(self, *args, **kwargs):
+        with self._handle_exception(self.request):
+            return NetworkConnection.objects.all()

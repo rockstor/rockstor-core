@@ -1,0 +1,58 @@
+<script>
+/*
+ * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ *
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ *
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+</script>
+
+
+<!-- Module Body -->
+<div class="row">
+  <div class="col-md-12">
+    <div class="messages"></div>
+    <!-- Content -->
+    <table id="networks2-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of network connections">
+      <thead>
+        <tr>
+          <th scope="col" abbr="Name">Connection</th>
+	  <th scope="col" abbr="Device">Device</th>
+	  <th scope="col" abbr="Mac">MAC Address</th>
+	  <th scope="col" abbr="Speed">Speed</th>
+          <th scope="col" abbr="Method">Config method</th>
+          <th scope="col" abbr="IP">IP Address</th>
+          <th scope="col" abbr="Netmask">Netmask</th>
+          <th scope="col" abbr="Gateway">Gateway</th>
+          <th scope="col" abbr="DNS">DNS Servers</th>
+          <th scope="col" abbr="Role">Role</th>
+          <th scope="col" abbr="Actions">Actions</th>
+        </tr>
+      </thead>
+	<tbody>
+	  {{#each connections}}
+	  <tr id="{{this.name}}">
+	    <td>{{this.name}}</td>
+	  </tr>
+	  {{/each}}
+	</tbody>
+    </table>
+    <a href="#add-connection" id="add-connection" class="btn btn-primary"> New Connection</a>
+    <div>
+    {{pagination}}
+   </div>
+
+  </div> <!-- col-md-12 -->
+</div> <!-- row -->
