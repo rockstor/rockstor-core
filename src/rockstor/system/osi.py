@@ -828,7 +828,9 @@ def update_hdparm_service(hdparm_command_list, message='test_message'):
     the device_name given.
     :param hdparm_command_list: list containing the hdparm command elements
     :param message: test message to follow hdparm command on next line
-    :return: None or
+    :return: None or the result of enabling the service via run_command which is
+    only done when the service is freshly installed, ie when no existing
+    /etc/systemd/system/rockstor-hdparm.service file exists in the first place.
     """
     edit_done = False
     do_edit = False
@@ -843,6 +845,7 @@ def update_hdparm_service(hdparm_command_list, message='test_message'):
         infile = '/etc/systemd/system/rockstor-hdparm.service'
         update = True
     else:
+        # todo consider checking for template file also.
         infile = ('%s/rockstor-hdparm.service' % settings.CONFROOT)
         update = False
     # Create our proposed temporary file based on the source file plus edits.
@@ -895,3 +898,39 @@ def update_hdparm_service(hdparm_command_list, message='test_message'):
     return None
 
 
+def read_hdparm_setting(dev_byid):
+    """
+    Looks through /etc/systemd/system/rockstor-hdparm service for any comment
+    following a matching device entry and returns it if found. Returns None if
+    no file or no matching entry or comment there after was found.
+    :param dev_byid: full path device name of by-id type
+    :return: comment string immediately following an entry containing the given
+    device name.
+    """
+    infile = '/etc/systemd/system/rockstor-hdparm.service'
+    if not os.path.isfile(infile):
+        return None
+    dev_byid_found = False
+    with open(infile) as ino:
+        for line in ino.readlines():
+            if line == '\n':
+                # skip empty lines
+                continue
+            line_fields = line.split()
+            if dev_byid_found:
+                if line_fields[0] == '#':
+                    # we have a comment after our target device entry so return
+                    # that comment minus the #
+                    return ' '.join(line_fields[1:])
+                else:
+                    # no comment found directly after target dev so return None
+                    return None
+            if line_fields[0] == '#' or len(line_fields) < 4:
+                # Skip comment lines not directly after our target dev_byid.
+                # Also no device line will be of interest if below 4, this way
+                # we don't do slow re.match on non candidates.
+                continue
+            if re.match('ExecStart', line_fields[0]) and line_fields[-1] == dev_byid:
+                # we have a line beginnign with ExecStart and ending in dev_byid
+                dev_byid_found = True
+    return None
