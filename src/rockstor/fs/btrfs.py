@@ -172,10 +172,9 @@ def umount_root(root_pool_mnt):
         o, e, rc = run_command([UMOUNT, '-l', root_pool_mnt])
     except CommandException, ce:
         if (ce.rc == 32):
-            for l in e:
+            for l in ce.err:
                 l = l.strip()
                 if (re.search('not mounted$', l) is not None):
-                    run_command([RMDIR, root_pool_mnt])
                     return
             raise ce
     for i in range(20):
