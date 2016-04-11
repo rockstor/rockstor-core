@@ -110,9 +110,9 @@ class NetworkMixin(object):
     def _update_or_create_ctype(co, ctype, config):
         if (ctype == '802-3-ethernet'):
             try:
-                eco = EthernetConnection.objects.get(connection=co).update(**config)
+                eco = EthernetConnection.objects.filter(connection=co).update(**config)
             except EthernetConnection.DoesNotExist:
-                EthernetConnection(**config).save()
+                EthernetConnection.objects.create(**config)
             #elif's for other types of connections
 
     @staticmethod
@@ -140,11 +140,11 @@ class NetworkMixin(object):
             config = cmap[nco.uuid]
             if ('ctype' in config):
                 ctype = config['ctype']
-                cls._update_or_create_ctype(co, ctype, config[ctype])
+                cls._update_or_create_ctype(nco, ctype, config[ctype])
                 del(config[ctype])
                 del(config['ctype'])
             cls._update_master(nco, config, defer_master_updates)
-            nco.update(**config)
+            NetworkConnection.objects.filter(uuid=nco.uuid).update(**config)
             del cmap[nco.uuid]
         for uuid in cmap:
             #new connections not yet in administrative state.
@@ -159,8 +159,7 @@ class NetworkMixin(object):
             if ('master' in config):
                 defer_master_updates.append({'uuid': uuid, 'master': config['master']})
                 del(config['master'])
-            nco = NetworkConnection(**config)
-            nco.save()
+            nco = NetworkConnection.objects.create(**config)
             if (ctype is not None):
                 cls._update_or_create_ctype(nco, ctype, ctype_d)
         for e in defer_master_updates:
@@ -185,13 +184,13 @@ class NetworkMixin(object):
                 continue
             dconfig = dmap[ndo.name]
             update_connection(dconfig)
-            ndo.update(**dconfig)
+            NetworkDevice.objects.filter(name=ndo.name).update(**dconfig)
             del dmap[ndo.name]
         for dev in dmap:
             dconfig = dmap[dev]
             dconfig['name'] = dev
             update_connection(dconfig)
-            NetworkDevice(**dconfig).save()
+            NetworkDevice.objects.create(**dconfig)
 
 
 class NetworkListView(rfc.GenericView, NetworkMixin):
