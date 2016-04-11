@@ -122,6 +122,10 @@ def connections():
                         'cloned_mac': None,
                         'mtu': None,
                     }
+                elif (tmap['ctype'] == 'team'):
+                    tmap[tmap['ctype']] = {
+                        'config': None
+                    }
                 else:
                     tmap[tmap['ctype']] = {}
 

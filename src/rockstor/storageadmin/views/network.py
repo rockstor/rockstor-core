@@ -22,7 +22,8 @@ from shutil import move
 from django.db import transaction
 from django.conf import settings
 from rest_framework.response import Response
-from storageadmin.models import (NetworkInterface, NetworkConnection, NetworkDevice, Appliance, EthernetConnection)
+from storageadmin.models import (NetworkInterface, NetworkConnection,
+                                 NetworkDevice, Appliance, EthernetConnection, TeamConnection)
 from storageadmin.util import handle_exception
 from storageadmin.serializers import (NetworkInterfaceSerializer, NetworkDeviceSerializer, NetworkConnectionSerializer)
 from system.osi import (config_network_device, get_net_config, update_issue)
@@ -112,8 +113,14 @@ class NetworkMixin(object):
             try:
                 eco = EthernetConnection.objects.filter(connection=co).update(**config)
             except EthernetConnection.DoesNotExist:
-                EthernetConnection.objects.create(**config)
-            #elif's for other types of connections
+                EthernetConnection.objects.create(connection=co, **config)
+        elif (ctype == 'team'):
+            try:
+                tco = TeamConnection.objects.filter(connection=co).update(**config)
+            except TeamConnection.DoesNotExist:
+                TeamConnection.objects.create(connection=co, **config)
+
+        #elif's for other types of connections
 
     @staticmethod
     @transaction.atomic
