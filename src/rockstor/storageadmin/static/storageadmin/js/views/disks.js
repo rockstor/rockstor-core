@@ -234,9 +234,16 @@ DisksView = Backbone.View.extend({
                 // begin Spin Down / Power Status column
                 html += '<td>';
                 html += powerState + ' ';
-                html += '<a href="#disks/spindown/' + diskName + '" title="Click to configure Spin Down." rel="tooltip">';
-                html += '<i class="glyphicon glyphicon-hourglass"></i></a> ';
-                html += hdparmSetting + ' ';
+                if (powerState == 'unknown' || powerState == null ) {
+                    html += '<i class="glyphicon glyphicon-hourglass"></i>';
+                } else {
+                    html += '<a href="#disks/spindown/' + diskName + '" title="Click to configure Spin Down." rel="tooltip">';
+                    html += '<i class="glyphicon glyphicon-hourglass"></i></a>';
+                }
+                if (hdparmSetting != null) {
+                    html += hdparmSetting;
+                }
+                html += ' ';
                 html += '</td>';
                 // begin Model column
                 html += '<td>' + diskModel + '</td>';
