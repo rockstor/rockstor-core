@@ -206,7 +206,7 @@ DisksView = Backbone.View.extend({
                     html += 'Click to wipe it clean." rel="tooltip"><i class="glyphicon glyphicon-cog"></i></a>';
                 } else if (btrfsUId && _.isNull(poolName)) {
                     html += '<a href="#" class="btrfs_wipe" data-disk-name="' + diskName + '" title="Disk is unusable because it has BTRFS filesystem(s) on it.Click to wipe it clean." rel="tooltip">';
-                    html += '<i class="fa fa-eraser"></i></a>&nbsp;<a href="#" class="btrfs_import" data-disk-name="' + diskName + '" title="Click to import data(pools, shares and snapshots) on this disk automatically" rel="tooltip">';
+                    html += '<i class="fa fa-eraser"></i></a>&nbsp;<a href="#" class="btrfs_import" data-disk-name="' + diskName + '" title="Click to automatically import data (pools, shares and snapshots) on this disk" rel="tooltip">';
                     html += '<i class="glyphicon glyphicon-circle-arrow-down"></i></a>';
                 }
 
