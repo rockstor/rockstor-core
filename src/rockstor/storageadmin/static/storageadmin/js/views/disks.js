@@ -31,6 +31,7 @@ DisksView = Backbone.View.extend({
         'click .delete': 'deleteDisk',
         'click .btrfs_wipe': 'btrfsWipeDisk',
         'click .btrfs_import': 'btrfsImportDisk',
+        'click .pause': 'pauseDisk',
         'switchChange.bootstrapSwitch': 'smartToggle'
     },
 
@@ -83,6 +84,27 @@ DisksView = Backbone.View.extend({
         });
     },
 
+    pauseDisk: function (event) {
+        var _this = this;
+        if (event) event.preventDefault();
+        var button = $(event.currentTarget);
+        if (buttonDisabled(button)) return false;
+        disableButton(button);
+        var diskName = button.data('disk-name');
+        if (confirm('Are you sure you want to force the following device into Standby mode ' + diskName + '?')) {
+            $.ajax({
+                url: '/api/disks/' + diskName + '/pause',
+                type: 'POST',
+                success: function (data, status, xhr) {
+                    _this.render();
+                },
+                error: function (xhr, status, error) {
+                    enableButton(button);
+                }
+            });
+        }
+    },
+
     wipeDisk: function (event) {
         var _this = this;
         if (event) event.preventDefault();
@@ -103,6 +125,7 @@ DisksView = Backbone.View.extend({
             });
         }
     },
+
     btrfsWipeDisk: function (event) {
         var _this = this;
         if (event) event.preventDefault();
@@ -233,10 +256,18 @@ DisksView = Backbone.View.extend({
                 html += '</td>';
                 // begin Spin Down / Power Status column
                 html += '<td>';
-                html += powerState + ' ';
                 if (powerState == 'unknown' || powerState == null ) {
+                    html += '<i class="glyphicon glyphicon-pause"></i>';
+                    html += powerState + ' ';
                     html += '<i class="glyphicon glyphicon-hourglass"></i>';
                 } else {
+                    if (powerState == 'active/idle') {
+                        html += '<a href="#" class="pause" data-disk-name="' + diskName + '" title="Force drive into Standby mode." rel="tooltip">';
+                        html += '<i class="glyphicon glyphicon-pause"></i></a>';
+                    } else {
+                        html += '<i class="glyphicon glyphicon-pause"></i>';
+                    }
+                    html += powerState + ' ';
                     html += '<a href="#disks/spindown/' + diskName + '" title="Click to configure Spin Down." rel="tooltip">';
                     html += '<i class="glyphicon glyphicon-hourglass"></i></a>';
                 }

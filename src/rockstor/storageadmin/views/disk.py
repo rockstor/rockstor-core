@@ -30,7 +30,7 @@ from share_helpers import (import_shares, import_snapshots)
 from django.conf import settings
 import rest_framework_custom as rfc
 from system import smart
-from system.osi import set_disk_spindown
+from system.osi import set_disk_spindown, enter_standby
 from copy import deepcopy
 import uuid
 import logging
@@ -266,10 +266,12 @@ class DiskDetailView(rfc.GenericView):
                 return self._smartcustom_drive(dname, request)
             if (command == 'spindown-drive'):
                 return self._spindown_drive(dname, request)
+            if (command == 'pause'):
+                return self._pause(dname, request)
 
         e_msg = ('Unsupported command(%s). Valid commands are wipe, btrfs-wipe,'
                  ' btrfs-disk-import, blink-drive, enable-smart, disable-smart,'
-                 ' smartcustom-drive, spindown-drive' % command)
+                 ' smartcustom-drive, spindown-drive, pause' % command)
         handle_exception(Exception(e_msg), request)
 
     @transaction.atomic
@@ -348,4 +350,10 @@ class DiskDetailView(rfc.GenericView):
         disk = cls._validate_disk(dname, request)
         spindown_time = int(request.data.get('spindown_time', ''))
         set_disk_spindown(disk.name, spindown_time)
+        return Response()
+
+    @classmethod
+    def _pause(cls, dname, request):
+        disk = cls._validate_disk(dname, request)
+        enter_standby(disk.name)
         return Response()
