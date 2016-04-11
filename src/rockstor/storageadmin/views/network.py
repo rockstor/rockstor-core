@@ -328,3 +328,11 @@ class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
         with self._handle_exception(self.request):
             self._refresh_connections()
             return NetworkConnection.objects.all()
+
+
+class NetworkStateView(rfc.GenericView, NetworkMixin):
+
+    def post(self, request):
+        with self._handle_exception(request):
+            self._refresh_connections()
+            self._refresh_devices()
