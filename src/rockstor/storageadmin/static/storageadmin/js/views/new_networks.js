@@ -38,6 +38,7 @@ NewNetworksView = Backbone.View.extend({
     render: function() {
 	var _this = this;
 	this.collection.fetch();
+	this.devices.fetch();
 	return this;
     },
 
@@ -47,7 +48,8 @@ NewNetworksView = Backbone.View.extend({
 	$(this.el).empty();
 	$(this.el).append(this.template({
 	    collection: this.collection,
-	    connections: this.collection.toJSON()
+	    connections: this.collection.toJSON(),
+	    devices: this.devices.toJSON()
 	}));
 	setApplianceName();
     },
