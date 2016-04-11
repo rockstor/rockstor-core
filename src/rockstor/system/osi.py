@@ -944,3 +944,18 @@ def read_hdparm_setting(dev_byid):
                 # Found a line beginning with ExecStart and ending in dev_byid.
                 dev_byid_found = True
     return None
+
+
+def enter_standby(device_name):
+    """
+    Simple wrapper to execute hdparm -y /dev/device_name which requests that the
+    named device enter 'standby' mode which usually means it will spin down.
+    Should only be available if he power status of the device can be
+    successfully read without errors (ui inforced)
+    :param device_name: device name as stored in db ie sda
+    :return: None or out, err, rc of command
+    """
+    hdparm_command = [HDPARM, '-q', '-y', '%s' % get_devname(device_name, True)]
+    logger.debug('enter_standby called wtih device name %s', device_name)
+    logger.debug('proposed hdparm_command = %s', hdparm_command)
+    return run_command(hdparm_command)
