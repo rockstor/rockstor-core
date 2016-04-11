@@ -269,7 +269,7 @@ class DiskDetailView(rfc.GenericView):
 
         e_msg = ('Unsupported command(%s). Valid commands are wipe, btrfs-wipe,'
                  ' btrfs-disk-import, blink-drive, enable-smart, disable-smart,'
-                 ' smartcustom-drive' % command)
+                 ' smartcustom-drive, spindown-drive' % command)
         handle_exception(Exception(e_msg), request)
 
     @transaction.atomic
