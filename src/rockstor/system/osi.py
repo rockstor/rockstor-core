@@ -699,25 +699,28 @@ def set_disk_spindown(device, spindown_time):
     to enact these changes in order to keep keep our drive intervention to a
     minimum.
     :param device: The name of a disk device as used in the db ie sda
-    :param spindown_time: String received from settings form ie "20 minutes"
-    :return:
+    :param spindown_time: Integer received from settings form ie 240
+    :return: True or the results from a run_command
     """
     # hdparm -S work on for example /dev/sda3 so base_dev may be redundant.
     # todo lighten by removing base_dev
+    # todo consider normalizing return values.
     base_dev = get_base_device(device)
     # md devices result in [''] from get_base_device so do nothing and return
     # todo look to using system/osi get_md_members(device_name, test=None)
     # todo with md devices and then treat each in turn.
     if len(base_dev[0]) == 0:
-        return True;
+        return True
     # Don't spin down non rotational devices, skip all and return True.
     if is_rotational(base_dev) is not True:
         logger.debug('skipping hdparm -S as device not confirmed as rotational')
-        return True;
+        return True
     # setup hdparm command
     hdparm_command = [HDPARM, '-q', '-S', '%s' % spindown_time, '%s' % get_dev_byid_name(base_dev[0])]
     logger.debug('proposed hdparm command = %s', hdparm_command)
-
+    # todo - Catch this result or work in with run_command
+    # todo - ie examine rc of run_comand(hdparm_comamnd) and if all ok then
+    # todo - go on to update_hdparm_service with the same
     update_hdparm_service(hdparm_command)
 
     return run_command(hdparm_command)
@@ -850,8 +853,7 @@ def update_hdparm_service(hdparm_command_list, message='test_message'):
         update = False
     # Create our proposed temporary file based on the source file plus edits.
     with open(infile) as ino, open(npath, 'w') as outo:
-        for line in ino.readlines(): # readlines reads whole file in one go.
-            logger.debug('processing line with contents %s', line)
+        for line in ino.readlines():  # readlines reads whole file in one go.
             if do_edit and edit_done and clear_line_count != 2:
                 # We must have just edited an entry so we need to skip
                 # a line as each entry consists of an ExecStart= line and a
@@ -877,6 +879,8 @@ def update_hdparm_service(hdparm_command_list, message='test_message'):
                     do_edit = True
             if do_edit and not edit_done:
                 outo.write('ExecStart=' + ' '.join(hdparm_command_list) + '\n')
+                # todo - Currently writing raw value as debug aid but this is
+                # todo - intended to be the human message we are passed.
                 outo.write('# %s' % hdparm_command_list[-2] + '\n')
                 edit_done = True
             # mechanism to skip a line if we have just done an edit
@@ -907,6 +911,8 @@ def read_hdparm_setting(dev_byid):
     :return: comment string immediately following an entry containing the given
     device name.
     """
+    if dev_byid is None:
+        return None
     infile = '/etc/systemd/system/rockstor-hdparm.service'
     if not os.path.isfile(infile):
         return None
@@ -918,7 +924,9 @@ def read_hdparm_setting(dev_byid):
                 continue
             line_fields = line.split()
             if dev_byid_found:
-                if line_fields[0] == '#':
+                # we have already matched ExecStart line ending with dev_byid
+                # so now look for a non empty (>= 2) comment line following it.
+                if line_fields[0] == '#' and len(line_fields) >= 2:
                     # we have a comment after our target device entry so return
                     # that comment minus the #
                     return ' '.join(line_fields[1:])
@@ -931,6 +939,6 @@ def read_hdparm_setting(dev_byid):
                 # we don't do slow re.match on non candidates.
                 continue
             if re.match('ExecStart', line_fields[0]) and line_fields[-1] == dev_byid:
-                # we have a line beginnign with ExecStart and ending in dev_byid
+                # Found a line beginning with ExecStart and ending in dev_byid.
                 dev_byid_found = True
     return None
