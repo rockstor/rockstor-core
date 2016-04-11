@@ -90,10 +90,21 @@ ServicesView = Backbone.View.extend({
 	this.$("[type='checkbox']").bootstrapSwitch();
 	this.$("[type='checkbox']").bootstrapSwitch('onColor','success'); //left side text color
 	this.$("[type='checkbox']").bootstrapSwitch('offColor','danger'); //right side text color
-
+	
+	//added ext func to sort over input checkbox - found on DataTables pages
+	$.fn.dataTable.ext.order['dom-checkbox'] = function ( settings, col ) {
+		return this.api().column( col, {order:'index'} ).nodes().map( function ( td, i ) {
+        	return $('input', td).prop('checked') ? '1' : '0';
+    		});
+	}
+	//Added columns definition for sorting purpose
 	$('table.data-table').DataTable({
 	    "iDisplayLength": 15,
-	    "aLengthMenu": [[15, 30, 45, -1], [15, 30, 45, "All"]]
+	    "aLengthMenu": [[15, 30, 45, -1], [15, 30, 45, "All"]],
+	    "columns": [
+	    null,
+	    { "orderDataType": "dom-checkbox" }
+	    ]
 	});
     },
 
@@ -179,7 +190,8 @@ ServicesView = Backbone.View.extend({
 		return true;
 		this.collection.each(function(service) {
 		    var serviceName = service.get('name');
-		    html += '<tr id="' + serviceName + '">';
+		//code no more needed - html pagination already on jst side
+		/*    html += '<tr id="' + serviceName + '">';
 		    html += '<td>';
 		    html += service.get('display_name') + '&nbsp';
 		    if (_this.configurable_services.indexOf(serviceName) > -1) {
@@ -194,7 +206,7 @@ ServicesView = Backbone.View.extend({
 			html += '<input type="checkbox" data-service-name="' + serviceName + '" data-size="mini" checked>';
 		    } else {
 			html += '<input type="checkbox" data-service-name="' + serviceName + '" data-size="mini">';
-		    }
+		    } */
 		});
 	    }
 	});
