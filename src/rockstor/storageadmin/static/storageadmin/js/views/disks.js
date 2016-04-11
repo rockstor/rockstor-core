@@ -235,7 +235,7 @@ DisksView = Backbone.View.extend({
                 html += '<td>';
                 html += powerState + ' ';
                 html += '<a href="#disks/spindown/' + diskName + '" title="Click to configure Spin Down." rel="tooltip">';
-                html += '<i class="glyphicon glyphicon-pencil"></i></a> ';
+                html += '<i class="glyphicon glyphicon-hourglass"></i></a> ';
                 html += hdparmSetting + ' ';
                 html += '</td>';
                 // begin Model column
