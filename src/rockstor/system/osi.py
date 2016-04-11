@@ -675,13 +675,12 @@ def get_disk_power_status(device_name):
     # if we use the -C -q switches then we have only one line of output:
     # hdparm -C -q /dev/sda
     # drive state is:  active/idle
-    # in some instances an error can be returned even with rc=0, we ignore this
-    # ie SG_IO: bad/missing sense data, sb[]:  70 00 05 00 00 00 00 0a ......
-    # We may want to ignore / return unknown when len(err) != 1
     out, err, rc = run_command([HDPARM, '-C', '-q', '/dev/%s' % device_name],
                                throw=False)
-    # if len(err) != 1:
-    #     logger.debug('hdparm has output to standard error of %s', err)
+    if len(err) != 1:
+        # In some instances an error can be returned even with rc=0.
+        # ie SG_IO: bad/missing sense data, sb[]:  70 00 05 00 00 00 00 0a ...
+        return 'unknown'  # don't trust any results in this instance
     if len(out) > 0:
         fields = out[0].split()
         # our line of interest has 4 fields when split by spaces, see above.
