@@ -700,30 +700,34 @@ def set_disk_spindown(device, spindown_time):
     minimum.
     :param device: The name of a disk device as used in the db ie sda
     :param spindown_time: Integer received from settings form ie 240
-    :return: True or the results from a run_command
+    :return: False if an hdparm command was not possible ie inappropriate dev,
+    or an error was return by the command, True otherwise.
     """
     # hdparm -S work on for example /dev/sda3 so base_dev may be redundant.
     # todo lighten by removing base_dev
-    # todo consider normalizing return values.
     base_dev = get_base_device(device)
     # md devices result in [''] from get_base_device so do nothing and return
-    # todo look to using system/osi get_md_members(device_name, test=None)
-    # todo with md devices and then treat each in turn.
+    # md devices have their member disks exposed on the Disks page so for the
+    # time being their spin down times are addressed as regular disks are.
     if len(base_dev[0]) == 0:
-        return True
+        return False
     # Don't spin down non rotational devices, skip all and return True.
     if is_rotational(base_dev) is not True:
         logger.debug('skipping hdparm -S as device not confirmed as rotational')
-        return True
+        return False
     # setup hdparm command
-    hdparm_command = [HDPARM, '-q', '-S', '%s' % spindown_time, '%s' % get_dev_byid_name(base_dev[0])]
-    logger.debug('proposed hdparm command = %s', hdparm_command)
-    # todo - Catch this result or work in with run_command
-    # todo - ie examine rc of run_comand(hdparm_comamnd) and if all ok then
-    # todo - go on to update_hdparm_service with the same
-    update_hdparm_service(hdparm_command)
-
-    return run_command(hdparm_command)
+    hdparm_command = [HDPARM, '-q', '-S', '%s' % spindown_time,
+                      '%s' % get_dev_byid_name(base_dev[0])]
+    out, err, rc = run_command(hdparm_command, throw=False)
+    if rc != 0:
+        logger.error('non zero return code from hdparm command with '
+                     'error %s and return code %s' % (err, rc))
+        return False
+    # hdparm ran without issues so attempt to edit rockstor-hdparm.service
+    # with the same entry
+    if update_hdparm_service(hdparm_command) is not None:
+        return False
+    return True
 
 
 def get_dev_byid_name(device_name):
