@@ -22,12 +22,13 @@ from shutil import move
 from django.db import transaction
 from django.conf import settings
 from rest_framework.response import Response
-from storageadmin.models import (NetworkInterface, NetworkConnection, NetworkDevice, Appliance)
+from storageadmin.models import (NetworkInterface, NetworkConnection, NetworkDevice, Appliance, EthernetConnection)
 from storageadmin.util import handle_exception
 from storageadmin.serializers import (NetworkInterfaceSerializer, NetworkDeviceSerializer, NetworkConnectionSerializer)
 from system.osi import (config_network_device, get_net_config, update_issue)
 from system.samba import update_samba_discovery
 from system.services import superctl
+from system import network
 import rest_framework_custom as rfc
 
 import logging
@@ -103,6 +104,95 @@ class NetworkMixin(object):
                 logger.debug('network interface(%s) does not exist in the '
                              'system anymore. Removing from db' % (ni.name))
                 ni.delete()
+
+    @staticmethod
+    @transaction.atomic
+    def _update_or_create_ctype(co, ctype, config):
+        if (ctype == '802-3-ethernet'):
+            try:
+                eco = EthernetConnection.objects.get(connection=co).update(**config)
+            except EthernetConnection.DoesNotExist:
+                EthernetConnection(**config).save()
+            #elif's for other types of connections
+
+    @staticmethod
+    @transaction.atomic
+    def _update_master(co, config, defer_list=None):
+        if ('master' not in config):
+            return config
+        try:
+            co.master = NetworkConnection.objects.get(name=config['master'])
+        except NetworkConnection.DoesNotExist:
+            if (not isinstance(defer_list, list)):
+                raise
+            defer_list.append({'uuid': co.uuid, 'master': config['master']})
+        del(config['master'])
+
+    @classmethod
+    @transaction.atomic
+    def _refresh_connections(cls):
+        cmap = network.connections()
+        defer_master_updates = []
+        for nco in NetworkConnection.objects.all():
+            if (nco.uuid not in cmap):
+                nco.delete()
+                continue
+            config = cmap[nco.uuid]
+            if ('ctype' in config):
+                ctype = config['ctype']
+                cls._update_or_create_ctype(co, ctype, config[ctype])
+                del(config[ctype])
+                del(config['ctype'])
+            cls._update_master(nco, config, defer_master_updates)
+            nco.update(**config)
+            del cmap[nco.uuid]
+        for uuid in cmap:
+            #new connections not yet in administrative state.
+            config = cmap[uuid]
+            config['uuid'] = uuid
+            ctype = ctype_d = None
+            if ('ctype' in config):
+                ctype = config['ctype']
+                ctype_d = config[ctype]
+                del(config[ctype])
+                del(config['ctype'])
+            if ('master' in config):
+                defer_master_updates.append({'uuid': uuid, 'master': config['master']})
+                del(config['master'])
+            nco = NetworkConnection(**config)
+            nco.save()
+            if (ctype is not None):
+                cls._update_or_create_ctype(nco, ctype, ctype_d)
+        for e in defer_master_updates:
+            slave_co = NetworkConnection.objects.get(uuid=e['uuid'])
+            slave_co.master = NetworkConnection.objects.get(name=e['master'])
+            slave_co.save()
+
+    @staticmethod
+    @transaction.atomic
+    def _refresh_devices():
+        dmap = network.devices()
+        def update_connection(dconfig):
+            if ('connection' in dconfig):
+                try:
+                    dconfig['connection'] = NetworkConnection.objects.get(name=dconfig['connection'])
+                except NetworkConnection.DoesNotExist:
+                    dconfig['connection'] = None
+
+        for ndo in NetworkDevice.objects.all():
+            if (ndo.name not in dmap):
+                ndo.delete()
+                continue
+            dconfig = dmap[ndo.name]
+            update_connection(dconfig)
+            ndo.update(**dconfig)
+            del dmap[ndo.name]
+        for dev in dmap:
+            dconfig = dmap[dev]
+            dconfig['name'] = dev
+            update_connection(dconfig)
+            NetworkDevice(**dconfig).save()
+
 
 class NetworkListView(rfc.GenericView, NetworkMixin):
     serializer_class = NetworkInterfaceSerializer
@@ -221,6 +311,7 @@ class NetworkDeviceListView(rfc.GenericView, NetworkMixin):
 
     def get_queryset(self, *args, **kwargs):
         with self._handle_exception(self.request):
+            self._refresh_devices()
             return NetworkDevice.objects.all()
 
 
@@ -229,4 +320,5 @@ class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
 
     def get_queryset(self, *args, **kwargs):
         with self._handle_exception(self.request):
+            self._refresh_connections()
             return NetworkConnection.objects.all()
