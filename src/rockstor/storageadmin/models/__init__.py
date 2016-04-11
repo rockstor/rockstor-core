@@ -24,7 +24,7 @@ from nfs_export_group import NFSExportGroup
 from nfs_export import NFSExport
 from iscsi_target import IscsiTarget
 from api_keys import APIKeys
-from network_interface import (NetworkInterface, NetworkConnection, NetworkDevice)
+from network_interface import (NetworkInterface, NetworkConnection, NetworkDevice, EthernetConnection)
 from appliance import Appliance
 from support_case import SupportCase
 from dashboard_config import DashboardConfig

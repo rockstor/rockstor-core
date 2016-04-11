@@ -66,30 +66,31 @@ class NetworkConnection(models.Model):
     #active (== GENERAL.STATE: activated in nmcli), could also be activating or blank(assumed inactive) -- subtle distinction compared to state of NetworkInterface
     state = models.CharField(max_length=64, null=True)
 
-    #a space separated string of ip/nm_bits. typically just one ip/nm. eg: 192.168.1.5/24
+    #manual or dhcp
+    ipv4_method = models.CharField(max_length=64, null=True)
+    #comma separated strings of ip/nm_bits. typically just one ip/nm. eg: 192.168.1.5/24
     ipv4_addresses = models.CharField(max_length=1024, null=True)
     #there can only be one ipv4 gateway. eg: 192.168.1.1
     ipv4_gw = models.CharField(max_length=64, null=True)
-    #a space separated string of one or more dns addresses. eg: "8.8.8.8 8.8.4.4"
+    #comma separated strings of one or more dns addresses. eg: "8.8.8.8 8.8.4.4"
     ipv4_dns = models.CharField(max_length=256, null=True)
-    #a space separated string of one or more dns search domains. eg: rockstor.com
+    #comma separated strings of one or more dns search domains. eg: rockstor.com
     ipv4_dns_search = models.CharField(max_length=256, null=True)
 
     #not clear yet on ipv6 stuff.
+    ipv6_method = models.CharField(max_length=1024, null=True)
     ipv6_addresses = models.CharField(max_length=1024, null=True)
     ipv6_gw = models.CharField(max_length=64, null=True)
     ipv6_dns = models.CharField(max_length=256, null=True)
     ipv6_dns_search = models.CharField(max_length=256, null=True)
 
-    @property
-    def connection_type(self):
-        #ethernet, team, bond etc.. retrieve whichver is null
-        pass
+    #slave connections have a master. eg: team
+    master = models.ForeignKey('NetworkConnection', null=True)
 
     class Meta:
         app_label = 'storageadmin'
 
-#network interfaces are auto detected from the system via "nmcli d show"
+#network interfaces/devices are auto detected from the system via "nmcli d show"
 #They are not "directly" user configurable. but their attributes are refreshed in two ways
 #1. when user configures a NetworkConnection and inturn NetworkInterface is changed, eg: state.
 #2. When changes at the system level are picked up.
@@ -102,7 +103,7 @@ class NetworkDevice(models.Model):
     connection = models.ForeignKey(NetworkConnection, null=True, on_delete=models.SET_NULL)
     #active (== GENERAL.STATE: activated in nmcli), could also be activating or blank(assumed inactive)
     state = models.CharField(max_length=64, null=True)
-    mtu = models.IntegerField(null=True)
+    mtu = models.CharField(max_length=64, null=True)
 
     class Meta:
         app_label = 'storageadmin'
@@ -113,7 +114,7 @@ class EthernetConnection(models.Model):
     connection = models.ForeignKey(NetworkConnection, null=True)
     mac = models.CharField(max_length=64, null=True)
     cloned_mac = models.CharField(max_length=64, null=True)
-    mtu = models.IntegerField(null=True)
+    mtu = models.CharField(max_length=64, null=True)
 
     class Meta:
         app_label = 'storageadmin'
