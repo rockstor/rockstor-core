@@ -700,6 +700,8 @@ def set_disk_spindown(device, spindown_time):
     or an error was return by the command, True otherwise.
     """
     # hdparm -S work on for example /dev/sda3 so base_dev may be redundant.
+    # but it does require a full path, ie sda3 doesn't work.
+    # Could use the new get_devname(device, true) to add the dev path.
     # todo lighten by removing base_dev
     base_dev = get_base_device(device)
     # md devices result in [''] from get_base_device so do nothing and return
