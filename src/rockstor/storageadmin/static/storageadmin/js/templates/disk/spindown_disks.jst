@@ -39,10 +39,10 @@
           <label class="col-sm-4 control-label" for="spindown_time">Idle Time prior to Spin Down<span class="required"> *</span></label>
           <div class="col-sm-4">
             <select class="form-control" id="spindown_time" name="spindown_time">
-              <!--{{display_spindown_time}}-->
-              {{#each spindownTimes}}
-                <option value="{{this}}">{{@key}}</option>
-              {{/each}}
+              {{display_spindown_time}}
+              <!--{{#each spindownTimes}}-->
+                <!--<option value="{{this}}">{{@key}}</option>-->
+              <!--{{/each}}-->
             </select>
           </div>
         </div>
