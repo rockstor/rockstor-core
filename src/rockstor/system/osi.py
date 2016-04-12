@@ -618,11 +618,9 @@ def is_rotational(device_name, test=None):
     :return: True if rotational, false if error or unknown.
     """
     rotational = False  # until we find otherwise
-    logger.debug('is_rotational called with the following %s', device_name)
     if test is None:
-        # todo consider changing back to throw=False for production.
         out, err, rc = run_command([UDEVADM, 'info', '--query=property',
-                                    '--name=' + device_name[0]], throw=True)
+                                    '--name=' + device_name[0]], throw=False)
     else:
         # test mode so process test instead of udevadmin output
         out = test
@@ -716,15 +714,15 @@ def set_disk_spindown(device, spindown_time, spindown_message='no comment'):
         return False
     # Don't spin down non rotational devices, skip all and return True.
     if is_rotational(base_dev) is not True:
-        logger.debug('skipping hdparm -S as device not confirmed as rotational')
+        logger.info('skipping hdparm -S as device not confirmed as rotational')
         return False
     # setup hdparm command
     hdparm_command = [HDPARM, '-q', '-S', '%s' % spindown_time,
                       '%s' % get_dev_byid_name(base_dev[0])]
     out, err, rc = run_command(hdparm_command, throw=False)
     if rc != 0:
-        logger.error('non zero return code from hdparm command with '
-                     'error %s and return code %s' % (err, rc))
+        logger.error('non zero return code from hdparm command %s with '
+                     'error %s and return code %s' % (hdparm_command, err, rc))
         return False
     # hdparm ran without issues so attempt to edit rockstor-hdparm.service
     # with the same entry
@@ -906,9 +904,10 @@ def update_hdparm_service(hdparm_command_list, comment):
         # then this is a fresh systemd instance so enable it
         # can't use systemctrl wrapper as then circular dependency
         # return systemctl('rockstor-hdparm', 'enable')
-        # todo remember to run this and convert success (rc == 0) into True
-        # return run_command([SYSTEMCTL_BIN, 'enable', 'rockstor-hdparm'])
-        return True
+        logger.info('Enabling the rockstor-hdparm systemd service.')
+        out, err, rc = run_command([SYSTEMCTL_BIN, 'enable', 'rockstor-hdparm'])
+        if rc != 0:
+            return False
     return True
 
 
@@ -964,6 +963,4 @@ def enter_standby(device_name):
     :return: None or out, err, rc of command
     """
     hdparm_command = [HDPARM, '-q', '-y', '%s' % get_devname(device_name, True)]
-    logger.debug('enter_standby called wtih device name %s', device_name)
-    logger.debug('proposed hdparm_command = %s', hdparm_command)
     return run_command(hdparm_command)
