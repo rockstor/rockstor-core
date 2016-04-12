@@ -49,16 +49,33 @@ SpindownDiskView = RockstorLayoutView.extend({
         }
         var _this = this;
         var disk_name = this.diskName;
-        var spindownTimes = {'30 seconds': 6, '1 minute': 12, '5 minutes': 60, '10 minutes': 120, '20 minutes': 240, '30 minutes': 241, '1 hour': 242, '2 hours': 244, '4 hours': 248, 'Vendor defined (8-12h)': 253, 'No spin down': 0};
+        var spindownTimes = {
+            '30 seconds': 6,
+            '1 minute': 12,
+            '5 minutes': 60,
+            '10 minutes': 120,
+            '20 minutes': 240,
+            '30 minutes': 241,
+            '1 hour': 242,
+            '2 hours': 244,
+            '4 hours': 248,
+            'Vendor defined (8-12h)': 253,
+            'No spin down': 0
+        };
+        // retrieve local copy of disk serial number
         var serialNumber = this.disks.find(function (d) {
             return (d.get('name') == disk_name);
         }).get('serial');
-
+        // retrieve local copy of current hdparm settings
+        var hdparmSetting = this.disks.find(function (d) {
+            return (d.get('name') == disk_name);
+        }).get('hdparm_setting');
 
         $(this.el).html(this.template({
             diskName: this.diskName,
             serialNumber: serialNumber,
-            spindownTimes: spindownTimes
+            spindownTimes: spindownTimes,
+            hdparmSetting: hdparmSetting
         }));
 
         this.$('#add-spindown-disk-form :input').tooltip({
@@ -72,12 +89,11 @@ SpindownDiskView = RockstorLayoutView.extend({
         };
 
 
-
         this.$('#add-spindown-disk-form').validate({
             onfocusout: false,
             onkeyup: false,
             rules: {
-               spindownTime: 'required'
+                spindown_time: 'required'
             },
 
             submitHandler: function () {
@@ -108,24 +124,31 @@ SpindownDiskView = RockstorLayoutView.extend({
         });
     },
 
-    initHandlebarHelpers: function(){
+    initHandlebarHelpers: function () {
         // helper to fill dropdown with drive spindown values
         // eg by generating dynamicaly lines of the following
         // <option value="240">20 minutes</option>
-        // todo this helper doesnt work but I (Phil) would rather use it than
-        // todo the built in #each helper as we can then set default here.
-        Handlebars.registerHelper('display_spindown_time', function(){
+        // todo awaiting fix for the timeString of the selected item to be passed on form submission
+        Handlebars.registerHelper('display_spindown_time', function () {
             var html = '';
-            for (var timeString in this.spindownTime){
-                // need to programatically retrieve current setting for previously set spindownTime ie read from systemd file
+            // todo remove this console.log
+            console.log('testing availability of current settings ' + this.hdparmSetting);
+            for (var timeString in this.spindownTimes) {
+                // need to programmatically retrieve current setting for previously set spindownTime ie read from systemd file
                 // note it is not possible to use smart or hdparm to read what was set previously hence read from sys file.
-                // for now hardwire 20 mins as default (pre-selected)
+                // todo remove this console.log
                 console.log('processing timeString = ' + timeString);
+                // todo for now hardwire 20 mins as default (pre-selected)
+                // todo but this should show the current setting ie hdparmSetting
+                // if (timeString == this.hdparmSetting) {
                 if (timeString == '20 minutes') {
-                    html += '<option value="' + spindownTime[timeString] + '" selected="selected">';
+                    // todo remove this console.log
+                    console.log('found our CURRENT SETTING of ' + timeString);
+                    // we have found our current setting so mark it selected
+                    html += '<option value="' + this.spindownTimes[timeString] + '" selected="selected">';
                     html += timeString + '</option>';
                 } else {
-                    html += '<option value="' + spindownTimes[timeString] + '">' + timeString+ '</option>';
+                    html += '<option value="' + this.spindownTimes[timeString] + '">' + timeString + '</option>';
                 }
             }
             return new Handlebars.SafeString(html);
