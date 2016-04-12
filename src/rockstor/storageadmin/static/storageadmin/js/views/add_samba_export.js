@@ -256,6 +256,49 @@ AddSambaExportView = RockstorLayoutView.extend({
 
 	    return new Handlebars.SafeString(html);
 	});
+	
+	Handlebars.registerHelper('display_options', function(inputOption){
+	    var html = '';
+	    var _this = this;
+	    
+	    _.each(this.shadow_copy_choices, function(c) {
+		var choiceValue = c.value,
+		    choiceName = c.name;
+		html += '<label class="radio-inline">';
+		if (_this.sambaShareIdNotNull){ //edit samba export functionality
+			if(choiceValue == _this.smbShare.get(inputOption)){
+				console.log("the choice value and existing value tallyed");
+			html += '<input type="radio" name="'+ inputOption + '" value="' + choiceValue + '" checked> ' + choiceName;
+		    }else{
+		    	console.log("No tally");
+			html += '<input type="radio" name="'+ inputOption + '" value="' + choiceValue + '"> ' + choiceName;
+		    }
+		}else { // add export functionality
+			
+			if(inputOption == "browsable"){
+				if(choiceValue == 'yes'){
+					html += '<input type="radio" name="'+ inputOption + '" value="' + choiceValue + '" checked> ' + choiceName;
+				}else{
+					html += '<input type="radio" name="'+ inputOption + '" value="' + choiceValue + '"> ' + choiceName;
+				}
+			}else{
+				if(choiceValue == 'no'){
+					html += '<input type="radio" name="'+ inputOption + '" value="' + choiceValue + '" checked> ' + choiceName;
+				}else{
+					html += '<input type="radio" name="'+ inputOption + '" value="' + choiceValue + '"> ' + choiceName;
+				}
+			}
+		}
+		html += '</label>';
+	    });
+
+	    return new Handlebars.SafeString(html);
+	});
+	
+	
+	
+	
+	
 
 	Handlebars.registerHelper('display_browsable_options', function(){
 	    var html = '';
