@@ -41,9 +41,17 @@
     </div>
 
     <div class="form-group">
-      <label class="col-sm-4 control-label">Username</label>
+      <div class="col-sm-offset-4 col-sm-8">
+        <label class="checkbox inline">
+          <input type="checkbox" id="enable_username" name="enable_username"> Force username for SMTP Authentication
+        </label>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="col-sm-4 control-label">Username<span class="required"> *</span></label>
       <div class="col-sm-4">
-      <input class="form-control" type="text" id="username" name="username" {{add_email "username"}}>
+      <input class="form-control" type="text" id="username" name="username" {{add_email "username"}} disabled="true">
       </div>
     </div>
 
