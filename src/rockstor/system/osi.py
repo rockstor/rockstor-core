@@ -689,7 +689,7 @@ def get_disk_power_status(device_name):
     return 'unknown'
 
 
-def set_disk_spindown(device, spindown_time):
+def set_disk_spindown(device, spindown_time, spindown_message='no comment'):
     """
     Takes a value to be used with hdparm -S to set disk spindown time for the
     device specified.
@@ -699,6 +699,8 @@ def set_disk_spindown(device, spindown_time):
     minimum.
     :param device: The name of a disk device as used in the db ie sda
     :param spindown_time: Integer received from settings form ie 240
+    :param spindown_message: message received from drop down as human presented
+    selection, used later in systemd script to retrieve previous setting
     :return: False if an hdparm command was not possible ie inappropriate dev,
     or an error was return by the command, True otherwise.
     """
@@ -726,7 +728,7 @@ def set_disk_spindown(device, spindown_time):
         return False
     # hdparm ran without issues so attempt to edit rockstor-hdparm.service
     # with the same entry
-    if update_hdparm_service(hdparm_command) is not None:
+    if update_hdparm_service(hdparm_command, spindown_message) is not True:
         return False
     return True
 
@@ -830,12 +832,12 @@ def get_devname(device_name, addPath=False):
     return None
 
 
-def update_hdparm_service(hdparm_command_list, message='test_message'):
+def update_hdparm_service(hdparm_command_list, comment):
     """
     Updates or creates the /etc/systemd/system/rockstor-hdparm.service file for
     the device_name given.
     :param hdparm_command_list: list containing the hdparm command elements
-    :param message: test message to follow hdparm command on next line
+    :param comment: test message to follow hdparm command on next line
     :return: None or the result of enabling the service via run_command which is
     only done when the service is freshly installed, ie when no existing
     /etc/systemd/system/rockstor-hdparm.service file exists in the first place.
@@ -886,7 +888,9 @@ def update_hdparm_service(hdparm_command_list, message='test_message'):
                 outo.write('ExecStart=' + ' '.join(hdparm_command_list) + '\n')
                 # todo - Currently writing raw value as debug aid but this is
                 # todo - intended to be the human message we are passed.
-                outo.write('# %s' % hdparm_command_list[-2] + '\n')
+                # outo.write('# %s' % message + '\n')
+                # todo - remove this and the following line on message / comment pass issue resolution
+                outo.write('# %s' % hdparm_command_list[-2] + ' %s' % comment + '\n')
                 edit_done = True
             # mechanism to skip a line if we have just done an edit
             if not (do_edit and edit_done and clear_line_count != 2):
@@ -900,11 +904,12 @@ def update_hdparm_service(hdparm_command_list, message='test_message'):
     shutil.move(npath, '/etc/systemd/system/rockstor-hdparm.service')
     if update is not True:
         # then this is a fresh systemd instance so enable it
-        # can't use systemctrl wrapper as circular then circular dependency
+        # can't use systemctrl wrapper as then circular dependency
         # return systemctl('rockstor-hdparm', 'enable')
+        # todo remember to run this and convert success (rc == 0) into True
         # return run_command([SYSTEMCTL_BIN, 'enable', 'rockstor-hdparm'])
-        return None
-    return None
+        return True
+    return True
 
 
 def read_hdparm_setting(dev_byid):
