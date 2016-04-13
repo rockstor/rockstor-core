@@ -17,10 +17,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.conf.urls import patterns, url
-from storageadmin.views import NetworkListView, NetworkDetailView
+from storageadmin.views import (NetworkListView, NetworkDetailView,
+                                NetworkConnectionListView,
+                                NetworkDeviceListView, NetworkStateView)
+
 
 urlpatterns = patterns(
     '',
     url(r'^$', NetworkListView.as_view()),
+    url(r'^/connections$', NetworkConnectionListView.as_view()),
+    url(r'^/devices$', NetworkDeviceListView.as_view()),
+    url(r'^/refresh$', NetworkStateView.as_view()),
     url(r'^/(?P<iname>.*)$', NetworkDetailView.as_view(),)
     )

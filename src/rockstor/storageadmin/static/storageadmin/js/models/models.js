@@ -347,6 +347,24 @@ var NetworkInterfaceCollection = RockStorPaginatedCollection.extend({
     baseUrl: '/api/network'
 });
 
+var NetworkDevice = Backbone.Model.extend({
+    urlRoot: '/api/network/devices'
+});
+
+var NetworkDeviceCollection = RockStorPaginatedCollection.extend({
+    model: NetworkDevice,
+    baseUrl: '/api/network/devices'
+});
+
+var NetworkConnection = Backbone.Model.extend({
+    urlRoot: '/api/network/connections'
+});
+
+var NetworkConnectionCollection = RockStorPaginatedCollection.extend({
+    model: NetworkConnection,
+    baseUrl: '/api/network/connections'
+});
+
 var ProbeRun = Backbone.Model.extend({
     dataUrl: function() {
 	return '/api/sm/sprobes/' + this.get('name') + '/' + this.id + '/data?format=json';

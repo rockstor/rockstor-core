@@ -27,7 +27,8 @@ from appliances import (ApplianceListView, ApplianceDetailView)
 from login import LoginView
 from user import (UserListView, UserDetailView)
 from dashboardconfig import DashboardConfigView
-from network import NetworkListView
+from network import (NetworkListView, NetworkDeviceListView,
+                     NetworkConnectionListView, NetworkStateView)
 from network import NetworkDetailView
 from pool_scrub import PoolScrubView
 from setup_user import SetupUserView

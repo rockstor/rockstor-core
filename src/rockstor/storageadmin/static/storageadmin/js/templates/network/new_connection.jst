@@ -1,0 +1,54 @@
+<script>
+/*
+ * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ *
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ *
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+</script>
+
+<div class="row">
+  <div class="panel panel-default">
+  <div class="panel-heading">Add a new network connection</div>
+    <div class="panel-body">
+      <form class="form-horizontal" id="new-connection-form" name="aform">
+        <div class="messages"></div>
+	<div class="form-group">
+          <label class="col-sm-4 control-label" for="ipaddr">Name<span class="required"> *</span></label>
+          <div class="col-sm-4">
+            <input class="form-control" type="text" id="name" name="name" value="{{name}}" title="Choose a unique name for this network connection. Eg: Connection1, Team0, Bond0 etc..">
+          </div>
+	</div>
+        <div class="form-group">
+          <label class="col-sm-4 control-label" for="ctype">Connection Type<span class="required"> *</span></label>
+          <div class="col-sm-4">
+            <select class="form-control" id="ctype" name="ctype">
+	      {{#each ctypes}}
+	      <option value="{{this}}">{{this}}</option>
+	      {{/each}}
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="col-sm-offset-4 col-sm-8">
+	    <button id="cancel" class="btn btn-default">Cancel</button>
+	    <button type="Submit" id="submit" class="btn btn-primary">Submit</button>
+          </div>
+        </div>
+      </form>
+    </div> <!-- panel-body -->
+  </div> <!-- panel-default -->
+  </div> <!-- col-md-8 -->
+</div> <!-- row -->
