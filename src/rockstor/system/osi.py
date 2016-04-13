@@ -637,13 +637,13 @@ def is_rotational(device_name, test=None):
             continue
         if line_fields[0] == 'ID_ATA_ROTATION_RATE_RPM':
             # we have a rotation rate entry
-            if line_fields[1] != 0:
+            if line_fields[1] != '0':
                 # non zero rotation so flag and look no further
                 rotational = True
                 break
         if line_fields[0] == 'ID_ATA_FEATURE_SET_AAM':
             # we have an Automatic Acoustic Managment entry
-            if line_fields[1] != 0:
+            if line_fields[1] != '0':
                 # a non zero AAM entry so flag and look no further
                 rotational = True
                 break
@@ -702,19 +702,16 @@ def set_disk_spindown(device, spindown_time, spindown_message='no comment'):
     """
     # hdparm -S works on for example /dev/sda3 so base_dev is not needed,
     # but it does require a full path, ie sda3 doesn't work.
-    logger.debug('set_disk_spindown called with device = %s', device)
     device_with_path = get_devname(device, True)
-    logger.debug('get_devname returned %s', device_with_path)
     # md devices arn't offered a spindown config: unknown status from hdparm -C
     # Their member disks are exposed on the Disks page so for the time being
     # their spin down times are addressed as regular disks are.
-    # todo test new arrangement with md device
     if device_with_path is None:
-        logger.debug('set_disk_spindown found device_with_path = None')
         return False
     # Don't spin down non rotational devices, skip all and return True.
     if is_rotational(device_with_path) is not True:
-        logger.info('skipping hdparm -S as device not confirmed as rotational')
+        logger.info(
+            'Skipping hdparm settings: device not confirmed as rotational')
         return False
     # setup hdparm command
     hdparm_command = [HDPARM, '-q', '-S', '%s' % spindown_time,
