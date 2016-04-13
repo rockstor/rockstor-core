@@ -24,6 +24,7 @@ class EmailClient(models.Model):
     port = models.IntegerField(default=587)
     name = models.CharField(max_length=1024, unique=True)
     sender = models.CharField(max_length=1024)
+    username = models.CharField(max_length=1024)
     receiver = models.CharField(max_length=1024)
 
     class Meta:
