@@ -255,80 +255,38 @@ AddSambaExportView = RockstorLayoutView.extend({
 
 	    return new Handlebars.SafeString(html);
 	});
-
-	Handlebars.registerHelper('display_browsable_options', function(){
+	
+	Handlebars.registerHelper('display_options', function(inputOption){
 	    var html = '';
 	    var _this = this;
-	    _.each(this.browsable_choices, function(c) {
+	    _.each(this.shadow_copy_choices, function(c) {
 		var choiceValue = c.value,
 		    choiceName = c.name;
-		html += '<label class="radio-inline">';
-		if (_this.sambaShareIdNotNull){
-		    if(choiceValue == _this.smbShare.get("browsable")){
-			html += '<input type="radio" name="browsable" value="' + choiceValue + '" checked> ' + choiceName;
+		
+		html += '<label class="radio-inline"><input type="radio" name="'+ inputOption + '" value="' + choiceValue + '"';
+		
+		if (_this.sambaShareIdNotNull){ //edit samba export functionality
+			if(choiceValue == _this.smbShare.get(inputOption)){
+				html += 'checked';
 		    }else{
-			html += '<input type="radio" name="browsable" value="' + choiceValue + '"> ' + choiceName;
+		    	html += '';
 		    }
-		}else {
-		    if(choiceValue == 'yes'){
-			html += '<input type="radio" name="browsable" value="' + choiceValue + '" checked> ' + choiceName;
-		    }else{
-			html += '<input type="radio" name="browsable" value="' + choiceValue + '"> ' + choiceName;
-		    }
+		}else { // add export functionality
+			if(inputOption == "browsable"){
+				if(choiceValue == 'yes'){
+					html += 'checked';
+				}else{
+					html += '';
+				}
+			}else{
+				if(choiceValue == 'no'){
+					html += 'checked';
+				}else{
+					html += '';
+				}
+			}
 		}
-		html += '</label>';
-	    });
-
-	    return new Handlebars.SafeString(html);
-	});
-
-	Handlebars.registerHelper('display_guestOk_options', function(){
-	    var html = '';
-	    var _this = this;
-	    _.each(this.guest_ok_choices, function(c) {
-		var choiceValue = c.value,
-		    choiceName = c.name;
-		html += '<label class="radio-inline">';
-		if (_this.sambaShareIdNotNull){
-		    if(choiceValue == _this.smbShare.get("guest_ok")){
-			html += '<input type="radio" name="guest_ok" value="' + choiceValue + '" checked> ' + choiceName;
-		    }else{
-			html += '<input type="radio" name="guest_ok" value="' + choiceValue + '"> ' + choiceName;
-		    }
-		}else {
-		    if(choiceValue == 'no'){
-			html += '<input type="radio" name="guest_ok" value="' + choiceValue + '" checked> ' + choiceName;
-		    }else{
-			html += '<input type="radio" name="guest_ok" value="' + choiceValue + '"> ' + choiceName;
-		    }
-		}
-		html += '</label>';
-	    });
-
-	    return new Handlebars.SafeString(html);
-	});
-
-	Handlebars.registerHelper('display_readOnly_options', function(){
-	    var html = '';
-	    var _this = this;
-	    _.each(this.read_only_choices, function(c) {
-		var choiceValue = c.value,
-		    choiceName = c.name;
-		html += '<label class="radio-inline">';
-		if (_this.sambaShareIdNotNull){
-		    if(choiceValue == _this.smbShare.get('read_only')){
-			html += '<input type="radio" name="read_only" value="' + choiceValue + '" checked> ' + choiceName;
-		    }else{
-			html += '<input type="radio" name="read_only" value="' + choiceValue + '"> ' + choiceName;
-		    }
-		}else {
-		    if(choiceValue == 'no'){
-			html += '<input type="radio" name="read_only" value="' + choiceValue + '" checked> ' + choiceName;
-		    }else{
-			html += '<input type="radio" name="read_only" value="' + choiceValue + '"> ' + choiceName;
-		    }
-		}
-		html += '</label>';
+		html += '>' + choiceName + '</label>';
 	    });
 
 	    return new Handlebars.SafeString(html);
