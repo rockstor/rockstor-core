@@ -601,7 +601,6 @@ def get_base_device(device, test_mode=False):
     return base_dev
 
 
-
 def is_rotational(device_name, test=None):
     """
     When given a device_name a udevadmin lookup takes place to look for either:
@@ -614,13 +613,15 @@ def is_rotational(device_name, test=None):
     1 = rotational.
     N.B. we use --query=property and so have only 2 fields rather than 3 and
     no spaces, only '=' this simplifies the parsing required.
-    :param device: list containing device name eg ['/dev/sda']
+    :param device: string containing device name eg sda or /dev/sda, ie any
+    legal udevadm --name parameter.
     :return: True if rotational, false if error or unknown.
     """
     rotational = False  # until we find otherwise
     if test is None:
         out, err, rc = run_command([UDEVADM, 'info', '--query=property',
-                                    '--name=' + device_name[0]], throw=False)
+                                    '--name=' + '%s' % device_name],
+                                   throw=False)
     else:
         # test mode so process test instead of udevadmin output
         out = test
@@ -698,27 +699,29 @@ def set_disk_spindown(device, spindown_time, spindown_message='no comment'):
     :param device: The name of a disk device as used in the db ie sda
     :param spindown_time: Integer received from settings form ie 240
     :param spindown_message: message received from drop down as human presented
-    selection, used later in systemd script to retrieve previous setting
+    selection, used later in systemd script to retrieve previous setting.
     :return: False if an hdparm command was not possible ie inappropriate dev,
     or an error was return by the command, True otherwise.
     """
-    # hdparm -S work on for example /dev/sda3 so base_dev may be redundant.
+    # hdparm -S works on for example /dev/sda3 so base_dev is not needed,
     # but it does require a full path, ie sda3 doesn't work.
-    # Could use the new get_devname(device, true) to add the dev path.
-    # todo lighten by removing base_dev
-    base_dev = get_base_device(device)
-    # md devices result in [''] from get_base_device so do nothing and return
-    # md devices have their member disks exposed on the Disks page so for the
-    # time being their spin down times are addressed as regular disks are.
-    if len(base_dev[0]) == 0:
+    logger.debug('set_disk_spindown called with device = %s', device)
+    device_with_path = get_devname(device, True)
+    logger.debug('get_devname returned %s', device_with_path)
+    # md devices arn't offered a spindown config: unknown status from hdparm -C
+    # Their member disks are exposed on the Disks page so for the time being
+    # their spin down times are addressed as regular disks are.
+    # todo test new arrangement with md device
+    if device_with_path is None:
+        logger.debug('set_disk_spindown found device_with_path = None')
         return False
     # Don't spin down non rotational devices, skip all and return True.
-    if is_rotational(base_dev) is not True:
+    if is_rotational(device_with_path) is not True:
         logger.info('skipping hdparm -S as device not confirmed as rotational')
         return False
     # setup hdparm command
     hdparm_command = [HDPARM, '-q', '-S', '%s' % spindown_time,
-                      '%s' % get_dev_byid_name(base_dev[0])]
+                      '%s' % get_dev_byid_name(device_with_path)]
     out, err, rc = run_command(hdparm_command, throw=False)
     if rc != 0:
         logger.error('non zero return code from hdparm command %s with '
@@ -748,8 +751,8 @@ def get_dev_byid_name(device_name):
     ata subsystem.
     :param device_name: eg sda but can also be /dev/sda or even the by-id name
     but only if the full path is specified with by-id
-    :return: None if error or no DEVLINKS entry found or the full path to this
-    given device_name.
+    :return: None if error or no DEVLINKS entry found or the full path by-id
+    name of the given device_name.
     """
     out, err, rc = run_command(
         [UDEVADM, 'info', '--query=property', '--name', str(device_name)],
@@ -806,7 +809,7 @@ def get_devname(device_name, addPath=False):
     Simple wrapper around a call to:
     udevadm info --query=name device_name
     Works with device_name of eg sda /dev/sda /dev/disk/by-id/ and /dev/disk/
-    If a device doesn't exist then udevadm returns multi work advise so if more
+    If a device doesn't exist then udevadm returns multi word advise so if more
     than one word assume failure and return None.
     N.B. if given /dev/sdc3 or equivalent DEVLINKS this method will return sdc3
     if no path is requested.
