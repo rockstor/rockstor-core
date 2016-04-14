@@ -90,7 +90,7 @@ def refresh_smb_config(exports):
     shutil.move(npath, SMB_CONFIG)
 
 
-def update_global_config(workgroup=None, realm=None, idmap_range=None, rfc2307=False):
+def update_global_config(workgroup=None, realm=None, idmap_range=None, idmap_rfc2307=False):
     fh, npath = mkstemp()
     with open(SMB_CONFIG) as sfo, open(npath, 'w') as tfo:
         tfo.write('[global]\n')
@@ -110,10 +110,11 @@ def update_global_config(workgroup=None, realm=None, idmap_range=None, rfc2307=F
             tfo.write('    winbind enum groups = yes\n')
             tfo.write('    idmap config * : backend = tdb\n')
             tfo.write('    idmap config * : range = %s\n' % default_range)
-            if (rfc2307):
+            if (idmap_rfc2307):
                 tfo.write('    idmap config %s : backend = ad\n' % workgroup)
                 tfo.write('    idmap config %s : range = %s\n' % (workgroup, idmap_range))
                 tfo.write('    idmap config %s : schema_mode = rfc2307\n' % workgroup)
+                tfo.write('    winbind nss info = rfc2307\n')
             else:
                 tfo.write('    idmap config %s : backend = rid\n' % workgroup)
                 tfo.write('    idmap config %s : range = %s\n' % (workgroup, idmap_range))
