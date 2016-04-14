@@ -90,7 +90,7 @@ def refresh_smb_config(exports):
     shutil.move(npath, SMB_CONFIG)
 
 
-def update_global_config(workgroup=None, realm=None, idmap_range=None):
+def update_global_config(workgroup=None, realm=None, idmap_range=None, rfc2307=False):
     fh, npath = mkstemp()
     with open(SMB_CONFIG) as sfo, open(npath, 'w') as tfo:
         tfo.write('[global]\n')
@@ -110,8 +110,13 @@ def update_global_config(workgroup=None, realm=None, idmap_range=None):
             tfo.write('    winbind enum groups = yes\n')
             tfo.write('    idmap config * : backend = tdb\n')
             tfo.write('    idmap config * : range = %s\n' % default_range)
-            tfo.write('    idmap config %s : backend = rid\n' % workgroup)
-            tfo.write('    idmap config %s : range = %s\n' % (workgroup, idmap_range))
+            if (rfc2307):
+                tfo.write('    idmap config %s : backend = ad\n' % workgroup)
+                tfo.write('    idmap config %s : range = %s\n' % (workgroup, idmap_range))
+                tfo.write('    idmap config %s : schema_mode = rfc2307\n' % workgroup)
+            else:
+                tfo.write('    idmap config %s : backend = rid\n' % workgroup)
+                tfo.write('    idmap config %s : range = %s\n' % (workgroup, idmap_range))
         #@todo: remove log level once AD integration is working well for users.
         tfo.write('    log level = 3\n')
         tfo.write('    load printers = no\n')
