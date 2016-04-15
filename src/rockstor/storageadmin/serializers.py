@@ -37,6 +37,7 @@ class DiskInfoSerializer(serializers.ModelSerializer):
     pool_name = serializers.CharField()
     power_state = serializers.CharField()
     hdparm_setting = serializers.CharField()
+    apm_level = serializers.CharField()
     class Meta:
         model = Disk
 
