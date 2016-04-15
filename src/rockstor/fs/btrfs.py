@@ -164,17 +164,27 @@ def mount_root(pool):
                 logger.exception(e)
     raise Exception('Failed to mount Pool(%s) due to an unknown reason.' % pool.name)
 
+
 def umount_root(root_pool_mnt):
-    if (is_mounted(root_pool_mnt)):
-        run_command([UMOUNT, '-l', root_pool_mnt])
-        for i in range(10):
-            if (not is_mounted(root_pool_mnt)):
-                return run_command([RMDIR, root_pool_mnt])
-            time.sleep(1)
-        run_command([UMOUNT, '-f', root_pool_mnt])
-    if (os.path.exists(root_pool_mnt)):
-        return run_command([RMDIR, root_pool_mnt])
-    return True
+    if (not os.path.exists(root_pool_mnt)):
+        return
+    try:
+        o, e, rc = run_command([UMOUNT, '-l', root_pool_mnt])
+    except CommandException, ce:
+        if (ce.rc == 32):
+            for l in ce.err:
+                l = l.strip()
+                if (re.search('not mounted$', l) is not None):
+                    return
+            raise ce
+    for i in range(20):
+        if (not is_mounted(root_pool_mnt)):
+            run_command([RMDIR, root_pool_mnt])
+            return
+        time.sleep(2)
+    run_command([UMOUNT, '-f', root_pool_mnt])
+    run_command([RMDIR, root_pool_mnt])
+    return
 
 
 def remount(mnt_pt, mnt_options):
