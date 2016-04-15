@@ -81,11 +81,11 @@ def update_generic(sender, revert=False):
     run_command([POSTMAP, generic_file])
     os.chmod('%s.db' % generic_file, 0600)
 
-def update_sasl(smtp_server, port, sender, password, revert=False):
+def update_sasl(smtp_server, port, username, password, revert=False):
     sasl_file = '/etc/postfix/sasl_passwd'
     with open(sasl_file, 'w') as fo:
         if (not revert):
-            fo.write('[%s]:%d %s:%s\n' % (smtp_server, port, sender, password))
+            fo.write('[%s]:%d %s:%s\n' % (smtp_server, port, username, password))
     os.chmod(sasl_file, 0400)
     run_command([POSTMAP, sasl_file])
     os.chmod('%s.db' % sasl_file, 0600)
@@ -136,16 +136,17 @@ class EmailClientView(rfc.GenericView):
                 return Response()
 
             sender = request.data.get('sender')
-            username = sender.split('@')[0]
+            username = request.data.get('username') #collect new username field
+            username = sender if not username else username #smtp auth - use username or if empty use sender
             smtp_server = request.data.get('smtp_server')
             port = int(request.data.get('port', 587))
             name = request.data.get('name')
             password = request.data.get('password')
             receiver = request.data.get('receiver')
             eco = EmailClient(smtp_server=smtp_server, port=port, name=name,
-                              sender=sender, receiver=receiver)
+                              sender=sender, receiver=receiver, username=username)
             eco.save()
-            update_sasl(smtp_server, port, sender, password)
+            update_sasl(smtp_server, port, username, password)
             update_forward(receiver)
             update_generic(sender)
             update_postfix(smtp_server, port)
