@@ -215,7 +215,8 @@ DisksView = Backbone.View.extend({
                     diskRole = disk.get('role'),
                     smartOptions = disk.get('smart_options'),
                     powerState = disk.get('power_state'),
-                    hdparmSetting = disk.get('hdparm_setting');
+                    hdparmSetting = disk.get('hdparm_setting'),
+                    apmLevel = disk.get('apm_level');
 
                 html += '<tr>';
                 html += '<td><a href="#disks/' + diskName + ' "><i class="glyphicon glyphicon-hdd"></i> ' + diskName + '</a>&nbsp';
@@ -273,6 +274,15 @@ DisksView = Backbone.View.extend({
                 }
                 if (hdparmSetting != null) {
                     html += hdparmSetting;
+                }
+                html += ' ';
+                html += '</td>';
+                // begin APM column
+                html += '<td>';
+                if (apmLevel == 'unknown' || apmLevel == null){
+                    html += '???';
+                } else {
+                    html += apmLevel;
                 }
                 html += ' ';
                 html += '</td>';

@@ -688,6 +688,39 @@ def get_disk_power_status(device_name):
     return 'unknown'
 
 
+def get_disk_APM_level(device_name):
+    """
+    When given a disk name such as that stored in the db ie sda
+    we return it's current APM level via hdparm -B /dev/<device_name>
+    Possible return values from the command are:
+    1 to 254 ie min to max power use
+    'off' = equivalent to 255 setting
+    If we receive an error message, can happen even with rc=0 we ignore any
+    reading and return 'unknown'
+
+    :param device_name: disk name as stored in db / Disk model eg sda
+    :return: APM setting read from the drive ie 1 - 255 or off or None if an
+    error occurred ie when APM is not supported
+    """
+    # todo - consider combining with get_disk_power_status(device_name) via
+    # todo - a switch option
+    # if we use the -B -q switches then we have only one line of output:
+    # hdparm -B -q /dev/sda
+    #  APM_level<tab>= 192
+    out, err, rc = run_command([HDPARM, '-B', '-q', '/dev/%s' % device_name],
+                               throw=False)
+    if len(err) != 1:
+        # In some instances an error can be returned even with rc=0.
+        # ie SG_IO: bad/missing sense data, sb[]:  70 00 05 00 00 00 00 0a ...
+        return 'unknown'  # don't trust any results in this instance
+    if len(out) > 0:
+        fields = out[0].split()
+        # our line of interest has 3 fields when split by spaces, see above.
+        if (len(fields) == 3):
+            return fields[2]
+    return 'unknown'
+
+
 def set_disk_spindown(device, spindown_time, spindown_message='no comment'):
     """
     Takes a value to be used with hdparm -S to set disk spindown time for the
