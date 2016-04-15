@@ -42,7 +42,7 @@
 	<tbody>
 	  {{#each connections}}
 	  <tr id="{{this.uuid}}">
-	    <td>{{this.name}}</td>
+	    <td class="accordion-toggle" data-toggle="collapse" data-parent="#OrderPackages" data-target=".packageDetails1"><a> {{this.name}}</a></td>
 	    <td>{{this.uuid}}</td>
 	    <td>{{this.state}}</td>
 	    <td>{{this.ipv4_method}}</td>
@@ -52,6 +52,29 @@
 	    <td>{{this.ipv4_dns_search}}</td>
 	    <td></td>
 	  </tr>
+	  <tr>
+        <td colspan="3" class="hiddenRow">
+                    <div class="accordion-body collapse packageDetails1" id="accordion1">
+                      <p>The Device Table is: </p>
+                      <table class="table table-bordered">
+                        <tr>
+                          <th>Name</th>
+                          <th>Type</th>
+                          <th>MAC Address</th>
+                          <th>MTU</th>
+                          <th>State</th>
+                        </tr>
+                        <tr>
+                        <td>sdskfk</td>
+                        <td>sdjdjds</td>
+                        <td>sdkjsdhsakjf</td>
+                        <td>djshhsfsif</td>
+                        <td>asdksd</td>
+                      </tr>
+                      </table>
+                    </div>
+                </td>
+      </tr>
 	  {{/each}}
 	</tbody>
     </table>
