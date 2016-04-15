@@ -1,9 +1,9 @@
 <h3>Add drive specific Spin down time</h3>
 <h4>This is the time a drive must remains <strong>Idle</strong> before
   spinning down it's disks / platters to save on power and reduce drive noise.
-<br>
+  <br>
   Idle periods a disk activity can be encouraged by adding <strong>Task
-  execution time windows</strong> to relevant <strong>Scheduled Tasks</strong>.
+    execution time windows</strong> to relevant <strong>Scheduled Tasks</strong>.
   <i>See System - Scheduled Tasks</i>
 </h4>
 
@@ -17,13 +17,13 @@
   non existent spin down time may waste energy and cause a drive to create
   unwanted noise and heat. For HOME or SMALL OFFICE consider values in the
   range of 20 minutes. For larger installs consider values greater than 1 hour.
-  </h6>
+</h6>
 
 <div class="row">
   <div class="col-md-8">
     <label class="control-label"></label>
     <div class="form-box">
-      <form class="form-horizontal" id="add-spindown-disk-form"  name="aform" >
+      <form class="form-horizontal" id="add-spindown-disk-form" name="aform">
         <div class="messages"></div>
 
         <!-- Form Header Info -->
@@ -36,12 +36,14 @@
 
         <!-- Spindown time selection -->
         <div class="form-group">
-          <label class="col-sm-4 control-label" for="spindown_time">Idle Time prior to Spin Down<span class="required"> *</span></label>
+          <label class="col-sm-4 control-label" for="spindown_time">Idle Time
+            prior to Spin Down<span class="required"> *</span></label>
           <div class="col-sm-4">
-            <select class="form-control" id="spindown_time" name="spindown_time">
+            <select class="form-control" id="spindown_time"
+                    name="spindown_time">
               {{display_spindown_time}}
               <!--{{#each spindownTimes}}-->
-                <!--<option value="{{this}}">{{@key}}</option>-->
+              <!--<option value="{{this}}">{{@key}}</option>-->
               <!--{{/each}}-->
             </select>
           </div>
@@ -49,8 +51,50 @@
 
         <div class="form-group">
           <div class="col-sm-offset-4 col-sm-8">
+            <label class="checkbox inline">
+              <input type="checkbox" id="enable_apm"
+                     name="enable_apm"> Enable Advanced APM setting
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="col-xs-4 control-label" for="apm_value">APM setting<span
+              class="required"> *</span></label>
+          <div class="col-xs-8">
+            <div id="slider" class="control-label" style="width: 400px;"></div>
+            <input type="text" style="margin-top: 16px;" class="col-md-2"
+                   name="apm_value" id="apm_value"
+                   title="Enter APM Value">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="col-xs-8 col-xs-offset-4">
+            <div style="width: 15px; height: 15px; float: left"
+                 class="slider-legend-free"></div>
+            <div>&nbsp;<span id="slide_lower_half"></span>&nbsp;(1-127) May be needed to
+              allow spin down on some drives
+            </div>
+            <br>
+            <div style="width: 15px; height: 15px; float: left"
+                 class="slider-legend-reclaimable"></div>
+            <div>&nbsp;<span id="slide_upper_half"></span>&nbsp;(128-254) On some drives
+              these values may inhibit spin down
+            </div>
+            <br>
+            <div style="width: 15px; height: 15px; float: left"
+                 class="slider-legend-used"></div>
+            <div>&nbsp;<span id="slide_disabled"></span>&nbsp;(255) APM disabled
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="col-sm-offset-4 col-sm-8">
             <a id="cancel" class="btn btn-default">Cancel</a>
-            <input type="Submit" id="spindown-disk" class="btn btn-primary" value="Submit"></input>
+            <input type="Submit" id="spindown-disk" class="btn btn-primary"
+                   value="Submit"></input>
           </div>
         </div>
 

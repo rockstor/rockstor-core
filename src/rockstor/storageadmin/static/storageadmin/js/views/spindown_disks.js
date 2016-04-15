@@ -35,6 +35,19 @@ SpindownDiskView = RockstorLayoutView.extend({
         this.disks = new DiskCollection();
         this.diskName = this.options.diskName;
         this.dependencies.push(this.disks);
+        this.tickFormatter = function (d) {
+            var formatter = d3.format(",.0f");
+            if (d > 254) {
+                return formatter(d) + "off";
+            } else {
+                return formatter(d);
+            }
+        }
+        this.slider = null;
+        this.sliderCallback = function (slider) {
+            var value = slider.value();
+            _this.$('#apm_value').val(_this.tickFormatter(value));
+        }
         this.initHandlebarHelpers();
     },
 
@@ -70,12 +83,17 @@ SpindownDiskView = RockstorLayoutView.extend({
         var hdparmSetting = this.disks.find(function (d) {
             return (d.get('name') == disk_name);
         }).get('hdparm_setting');
+        // retrieve local copy of current apm level
+        var apmLevel = this.disks.find(function (d) {
+            return (d.get('name') == disk_name);
+        }).get('apm_setting');
 
         $(this.el).html(this.template({
             diskName: this.diskName,
             serialNumber: serialNumber,
             spindownTimes: spindownTimes,
-            hdparmSetting: hdparmSetting
+            hdparmSetting: hdparmSetting,
+            apmLevel: apmLevel
         }));
 
         this.$('#add-spindown-disk-form :input').tooltip({
@@ -88,12 +106,30 @@ SpindownDiskView = RockstorLayoutView.extend({
             return err_msg;
         };
 
+        this.$('#enable_apm').click(function () {
+            $('#apm_value').prop('disable', !this.checked); // disable apm text
+            //$('#slide_lower_half').prop('disable', !this.checked);
+            //$('#slide_upper_half').prop('disable', !this.checked);
+            //$('#slide_disabled').prop('disable', !this.checked);
+            if (this.checked) {
+                _this.renderSlider();
+            }
+        });
+
+        if (apmLevel != 'unknown' || apmLevel != null) {
+            // don't show apm slider if we couldn't read apm value
+            _this.renderSlider();
+        }
 
         this.$('#add-spindown-disk-form').validate({
             onfocusout: false,
             onkeyup: false,
             rules: {
-                spindown_time: 'required'
+                spindown_time: 'required',
+                slider: {
+                    required: "#enable_apm:checked" // slider required only if
+                    // APM settings tickbox enabled.
+                },
             },
 
             submitHandler: function () {
@@ -153,6 +189,18 @@ SpindownDiskView = RockstorLayoutView.extend({
             }
             return new Handlebars.SafeString(html);
         });
+    },
+
+    renderSlider: function () {
+        var value = this.apmLevel;
+        // when queried hdparm -B returns off when set to 255 so reverse this
+        if (value == 'off') {
+            value = 255;
+        }
+
+        this.$('#slider').empty();
+        this.slider = d3.slider2().min(1).max(255).ticks(10).tickFormat(this.tickFormatter).value(value).callback(this.sliderCallback);
+        d3.select('#slider').call(this.slider);
     },
 
     cancel: function (event) {
