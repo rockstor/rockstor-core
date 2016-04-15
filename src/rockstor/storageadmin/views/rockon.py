@@ -114,7 +114,7 @@ class RockOnView(rfc.GenericView):
 
     @transaction.atomic
     def _delete_deprecated(self, rockons):
-        cur_rockons = [ro.name for ro in RockOn.objects.filter(state='available')]
+        cur_rockons = [ro.name for ro in RockOn.objects.filter(state__regex=r'available|install_failed')]
         for cr in cur_rockons:
             if (cr not in rockons):
                 RockOn.objects.get(name=cr).delete()
@@ -183,7 +183,7 @@ class RockOnView(rfc.GenericView):
                     handle_exception(Exception(e_msg), self.request)
 
                 if (co.dimage.name != c_d['image']):
-                    if (ro.state != 'available'):
+                    if (ro.state not in ('available', 'install_failed')):
                         e_msg = ('Cannot change image of the container(%s) '
                                  'as it belongs to an installed Rock-on(%s). '
                                  'Uninstall it first and try again.' %
