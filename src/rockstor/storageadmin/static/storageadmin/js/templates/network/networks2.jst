@@ -41,8 +41,8 @@
       </thead>
 	<tbody>
 	  {{#each connections}}
-	  <tr id="{{this.uuid}}" class="accordion-toggle" data-toggle="collapse" data-parent="#OrderPackages" data-target=".packageDetails1">
-	    <td>{{this.name}}</td>
+	  <tr id="{{this.uuid}}">
+	    <td class="accordion-toggle" data-toggle="collapse" data-parent="#OrderPackages" data-target=".packageDetails1"><a> {{this.name}}</a></td>
 	    <td>{{this.uuid}}</td>
 	    <td>{{this.state}}</td>
 	    <td>{{this.ipv4_method}}</td>
@@ -52,7 +52,6 @@
 	    <td>{{this.ipv4_dns_search}}</td>
 	    <td></td>
 	  </tr>
-	  {{/each}}
 	  <tr>
         <td colspan="3" class="hiddenRow">
                     <div class="accordion-body collapse packageDetails1" id="accordion1">
@@ -76,6 +75,7 @@
                     </div>
                 </td>
       </tr>
+	  {{/each}}
 	</tbody>
     </table>
     <a href="#add-connection" id="add-connection" class="btn btn-primary"> New Connection</a>
