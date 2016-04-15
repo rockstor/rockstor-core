@@ -116,11 +116,10 @@ def update_global_config(workgroup=None, realm=None, idmap_range=None, rfc2307=F
                 tfo.write('    idmap config %s : backend = ad\n' % workgroup)
                 tfo.write('    idmap config %s : range = %s\n' % (workgroup, idmap_range))
                 tfo.write('    idmap config %s : schema_mode = rfc2307\n' % workgroup)
-                tfo.write('    winbind nss info = rfc2307')
+                tfo.write('    winbind nss info = rfc2307\n')
             else:
                 tfo.write('    idmap config %s : backend = rid\n' % workgroup)
                 tfo.write('    idmap config %s : range = %s\n' % (workgroup, idmap_range))
-
         #@todo: remove log level once AD integration is working well for users.
         tfo.write('    log level = 3\n')
         tfo.write('    load printers = no\n')
