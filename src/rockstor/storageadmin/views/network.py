@@ -323,12 +323,103 @@ class NetworkDeviceListView(rfc.GenericView, NetworkMixin):
 
 class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
     serializer_class = NetworkConnectionSerializer
+    con_types = ('ethernet', 'team', 'bond')
+    team_profiles = ('broadcast', 'roundrobin', 'activebackup', 'loadbalance', 'lacp')
+    #ethtool is the default link watcher.
+    runners = {
+        'broadcast': {'name': 'broadcast'},
+        'roundrobin': {'name': 'roundrobin'},
+        'activebackup': {'name': 'activebackup'},
+        'loadbalance': {'name': 'loadbalance'},
+        'lacp': {'name': 'lacp'},
+    }
+    config_methods = ('auto', 'manual')
 
     def get_queryset(self, *args, **kwargs):
         with self._handle_exception(self.request):
             self._refresh_connections()
             return NetworkConnection.objects.all()
 
+    @transaction.atomic
+    def post(self, request):
+        with self._handle_exception(request):
+            con_name = request.data.get('con_name')
+            if (NetworkConnection.objects.filter(name=con_name).exists()):
+                e_msg = ('Connection name(%s) is already in use. Choose a different name.' % con_name)
+                handle_exception(Exception(e_msg), request)
+
+            #connection type can be one of ethernet, team or bond
+            con_type = request.data.get('con_type')
+            if (con_type not in self.con_types):
+                e_msg = ('Unsupported connection type(%s). Supported ones include: %s' % (con_type, self.con_types))
+                handle_exception(Exception(e_msg), request)
+            if (con_type == 'team'):
+                #gather required input for team
+                team_profile = request.data.get('team_profile')
+                if (team_profile not in self.team_profiles):
+                    e_msg = ('Unsupported team profile(%s). Supported ones include: %s' % (team_profile, self.team_profiles))
+                    handle_exception(Exception(e_msg), request)
+
+                #comma separated list of devices to add to the team as slave connections.
+                devices = request.data.get('devices')
+                for d in devies:
+                    try:
+                        ndo = NetworkDevice.objects.get(name=d)
+                        #if device belongs to another connection, change it.
+                    except NetworkDevice.DoesNotExist:
+                        e_msg = ('Unknown network device(%s)' % d)
+                        handle_exception(Exception(e_msg), request)
+
+            elif (con_type == 'ethernet'):
+                #no extra info necessary, really.
+                pass
+            elif (con_type == 'bond'):
+                #gather required input for bond
+                pass
+
+            #auto of manual
+            config_method = request.data.get('config_method')
+            if (config_method not in self.config_methods):
+                e_msg = ('Unsupported config method(%s). Supported ones include: %s' % (config_method, self.config_methods))
+                handle_exception(Exception(e_msg), request)
+            if (config_method == 'manual'):
+                #ipaddr is of the format <IP>/<netmask>. eg: 192.168.1.2/24. If netmask is not given, it defaults to 32.
+                ipaddr = request.data.get('ipaddr')
+                gw = request.data.get('gw')
+                dns_servers = request.data.get('dns_servers', None)
+                search_domains = request.data.get('search_domains', None)
+
+            return NetworkConnection.objects.all()
+
+
+class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
+    serializer_class = NetworkConnectionSerializer
+
+    @staticmethod
+    def _nco(request, id):
+        try:
+            return NetworkConnection.objects.get(id=id)
+        except NetworkConnection.DoesNotExist:
+            e_msg = ('Network connection(%s) does not exist.' % id)
+            handle_exception(Exception(e_msg), request)
+
+    def put(self, request, id):
+        with self._handle_exception(request):
+            nco = self._nco(request, id)
+            return Response(NetworkConnectionSerializer(nco).data)
+
+    @transaction.atomic
+    def delete(self, request, id):
+        with self._handle_exception(request):
+            nco = self._nco(request, id)
+            #delete any slave connections using nmcli
+            for snco in nco.networkconnection_set.all():
+                #nmcli delete
+                pass
+
+            #delete the connection using nmcli
+            nco.delete()
+            return Response()
 
 class NetworkStateView(rfc.GenericView, NetworkMixin):
 
