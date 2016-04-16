@@ -1072,7 +1072,7 @@ RockonSettingsSummary = RockstorWizardPage.extend({
 		RockstorWizardPage.prototype.render.apply(this, arguments);
 		this.$('#ph-settings-summary-table').html(this.sub_template({
 			model: this.model,
-			volumes: this.model.get('volumes'),
+			volumes: this.model.get('volumes').toJSON(),
 			new_volumes: this.model.get('shares'),
 			ports: this.model.get('ports'),
 			cc: this.model.get('custom_config'),
@@ -1082,18 +1082,6 @@ RockonSettingsSummary = RockstorWizardPage.extend({
 		return this;
 	},
 	initHandlebarHelpers: function(){
-		Handlebars.registerHelper('display_volumes', function(){
-			var html = '';
-			this.volumes.each(function(volume, index) {
-				html += '<tr>';
-				html += '<td>Share</td>';
-				html += '<td>' + volume.get('share_name') + '</td>';
-				html += '<td>' + volume.get('dest_dir') + '</td>';
-				html += '</tr>';
-			});
-			return new Handlebars.SafeString(html);
-		});
-
 		Handlebars.registerHelper('display_newVolumes', function(){
 			var html = '';
 			for (share in this.new_volumes) {
