@@ -348,7 +348,7 @@ class DiskDetailView(rfc.GenericView):
     @classmethod
     def _spindown_drive(cls, dname, request):
         disk = cls._validate_disk(dname, request)
-        spindown_time = int(request.data.get('spindown_time', ''))
+        spindown_time = int(request.data.get('spindown_time', 20))
         # todo attempt to retrieve spindown_message as well and pass it along.
         spindown_message = str(
             request.data.get('spindown_message', 'message issue!'))
