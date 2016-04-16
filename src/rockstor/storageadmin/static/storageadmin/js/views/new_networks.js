@@ -90,7 +90,9 @@ Cocktail.mixin(NewNetworksView, PaginationMixin);
 NewNetworkConnectionView = RockstorLayoutView.extend({
 
 	events: {
-		'click #cancel': 'cancel'
+		'click #cancel': 'cancel',
+		'change #method': 'renderOptionalFields',
+		'change #ctype': 'renderTeamDropdown',
 	},
 
 	initialize: function() {
@@ -110,7 +112,9 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 		$(this.el).empty();
 		$(this.el).append(this.template({
 			devices: this.devices.toJSON(),
-			ctypes: ['ethernet', 'team', 'bond']
+			ctypes: ['ethernet', 'team', 'bond'],
+			teamProfiles: ['broadcast', 'roundrobin', 'activebackup', 'loadbalance', 'lacp']
+
 		}));
 
 		this.validator = this.$("#new-connection-form").validate({
@@ -133,6 +137,65 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 				});
 			}
 		});
+
+		this.$('#devices').chosen();
+
+		this.$('#name').tooltip({
+			html: true,
+			placement: 'right',
+			title: "Choose a unique name for this network connection. Eg: Connection1, Team0, Bond0 etc.."
+		});
+		this.$('#teamprofile').tooltip({
+			html: true,
+			placement: 'right',
+			title: "<strong>broadcast</strong> - Simple runner which directs the team device to transmit packets via all ports.<br>" +
+			"<strong>roundrobin</strong> - Simple runner which directs the team device to transmits packets in a round-robin fashion.<br>" + 
+			"<strong>activebackup</strong> - Watches for link changes and selects active port to be used for data transfers.<br>" + 
+			"<strong>loadbalance</strong> -  To do passive load balancing, runner only sets up BPF hash function which will determine port for packet transmit." + 
+			"To do active load balancing, runner moves hashes among available ports trying to reach perfect balance.<br>" + 
+			"<strong>lacp</strong> - Implements 802.3ad LACP protocol. Can use same Tx port selection possibilities as loadbalance runner."
+		});
+		this.$('#ipaddr').tooltip({
+			html: true,
+			placement: 'right',
+			title:"A usable static IP address for your network."
+		});
+		this.$('#gateway').tooltip({
+			html: true,
+			placement: 'right',
+			title:"IP address of your Gateway."
+		});
+		this.$('#dns_servers').tooltip({
+			html: true,
+			placement: 'right',
+			title:"A comma separated list of DNS server addresses."
+		});
+		this.$('#search_domains').tooltip({
+			html: true,
+			placement: 'right',
+			title:"A comma separated list of DNS search domains."
+		});
+
+	},
+
+	// hide fields when selection is auto
+	renderOptionalFields: function(){
+		var selection = this.$('#method').val();
+		if(selection == 'auto'){
+			$('#optionalFields').hide();
+		}else{
+			$('#optionalFields').show();
+		}
+	},
+
+	// show dropdown when selection is team
+	renderTeamDropdown: function(){
+		var selection = this.$('#ctype').val();
+		if(selection == 'team'){
+			$('#optionalDropdown').show();
+		}else{
+			$('#optionalDropdown').hide();
+		}
 	},
 
 	cancel: function(event) {
