@@ -22,7 +22,7 @@ import time
 import json
 import base64
 from storageadmin.exceptions import RockStorAPIException
-from storageadmin.models import (OauthApp, NetworkInterface)
+from storageadmin.models import OauthApp
 from oauth2_provider.models import AccessToken
 from django.conf import settings
 from django.utils.timezone import utc
@@ -36,18 +36,8 @@ class APIWrapper(object):
         self.expiration = time.time()
         self.client_id = client_id
         self.client_secret = client_secret
-        self.url = url
-
-        if (url is None):
-            self.url = 'https://localhost'
-            try:
-                mgmt_ip = NetworkInterface.objects.get(itype='management').ipaddr
-                if (mgmt_ip is None):
-                    print('Management IP is not defined. Falling back to localhost')
-                else:
-                    self.url = 'https://%s' % mgmt_ip
-            except NetworkInterface.DoesNotExist:
-                pass
+        #@todo: revisit this as part of #1271
+        self.url = 'https://127.0.0.1'
 
     def set_token(self):
         if (self.client_id is None or self.client_secret is None):
