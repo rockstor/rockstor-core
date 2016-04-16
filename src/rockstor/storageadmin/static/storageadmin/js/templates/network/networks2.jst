@@ -36,21 +36,20 @@
           <th scope="col" abbr="Gateway">Gateway</th>
           <th scope="col" abbr="DNS">DNS Servers</th>
           <th scope="col" abbr="DNS Search">DNS Search Domains</th>
-          <th scope="col" abbr="Actions">Actions</th>
         </tr>
       </thead>
 	<tbody>
 	  {{#each connections}}
 	  <tr id="{{this.uuid}}">
-	    <td class="accordion-toggle" data-toggle="collapse" data-parent="#OrderPackages" data-target=".packageDetails1"><a> {{this.name}}</a></td>
+	    <td class="accordion-toggle" data-toggle="collapse" data-parent="#OrderPackages" data-target=".packageDetails1"><a> {{this.name}}</a>&nbsp;&nbsp; <a href="#add-connection"><i class="glyphicon glyphicon-pencil"></i></a>
+        <a href=""><i class="glyphicon glyphicon-trash"></i></a></td>
 	    <td>{{this.uuid}}</td>
-	    <td>{{this.state}}</td>
+	    <td>{{this.state}}&nbsp;&nbsp;<input type="checkbox" data-size="mini" {{getState this.state}}></td>
 	    <td>{{this.ipv4_method}}</td>
 	    <td>{{this.ipv4_addresses}}</td>
 	    <td>{{this.ipv4_gw}}</td>
 	    <td>{{this.ipv4_dns}}</td>
 	    <td>{{this.ipv4_dns_search}}</td>
-	    <td></td>
 	  </tr>
 	  <tr>
         <td colspan="3" class="hiddenRow">
@@ -78,7 +77,7 @@
 	  {{/each}}
 	</tbody>
     </table>
-    <a href="#add-connection" id="add-connection" class="btn btn-primary"> New Connection</a>
+    <a href="#add-connection" id="add-connection" class="btn btn-primary"> New Connection</a><br><br>
     <table id="network-devices-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of network devices/interfaces">
       <thead>
 	<tr>
