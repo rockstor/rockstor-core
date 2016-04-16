@@ -139,7 +139,12 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 		});
 
 		this.$('#devices').chosen();
-		
+
+		this.$('#name').tooltip({
+			html: true,
+			placement: 'right',
+			title: "Choose a unique name for this network connection. Eg: Connection1, Team0, Bond0 etc.."
+		});
 		this.$('#teamprofile').tooltip({
 			html: true,
 			placement: 'right',
@@ -150,6 +155,27 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 			"To do active load balancing, runner moves hashes among available ports trying to reach perfect balance.<br>" + 
 			"<strong>lacp</strong> - Implements 802.3ad LACP protocol. Can use same Tx port selection possibilities as loadbalance runner."
 		});
+		this.$('#ipaddr').tooltip({
+			html: true,
+			placement: 'right',
+			title:"A usable static IP address for your network."
+		});
+		this.$('#gateway').tooltip({
+			html: true,
+			placement: 'right',
+			title:"IP address of your Gateway."
+		});
+		this.$('#dns_servers').tooltip({
+			html: true,
+			placement: 'right',
+			title:"A comma separated list of DNS server addresses."
+		});
+		this.$('#search_domains').tooltip({
+			html: true,
+			placement: 'right',
+			title:"A comma separated list of DNS search domains."
+		});
+
 	},
 
 	// hide fields when selection is auto
