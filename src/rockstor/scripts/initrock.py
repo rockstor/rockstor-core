@@ -106,14 +106,8 @@ def update_nginx(logger):
     #importing here because, APIWrapper needs postgres to be setup, so
     #importing at the top results in failure the first time. catch22.
     from storageadmin.views.network import NetworkMixin
-    from storageadmin.models import NetworkInterface
     nm = NetworkMixin()
-    nm._refresh_ni()
-    try:
-        ni = NetworkInterface.objects.get(itype='management')
-    except NetworkInterface.DoesNotExist:
-        return logger.debug('management interface not configured. Not updating Nginx conf')
-    nm._update_nginx(ni.ipaddr)
+    nm._update_nginx()
 
 
 def set_def_kernel(logger, version=settings.SUPPORTED_KERNEL_VERSION):
