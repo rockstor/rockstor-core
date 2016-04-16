@@ -738,9 +738,6 @@ def set_disk_spindown(device, spindown_time, apm_value,
     """
     # hdparm -S works on for example /dev/sda3 so base_dev is not needed,
     # but it does require a full path, ie sda3 doesn't work.
-    logger.debug(
-        'set_disk_spindown() called with dev= %s spind= %s apm= %s '
-        'message= %s' % (device, spindown_time, apm_value, spindown_message))
     device_with_path = get_devname(device, True)
     # md devices arn't offered a spindown config: unknown status from hdparm -C
     # Their member disks are exposed on the Disks page so for the time being
@@ -755,28 +752,25 @@ def set_disk_spindown(device, spindown_time, apm_value,
     dev_byid = get_dev_byid_name(device_with_path)
     # execute the -B hdparm command first as if it fails we can then not include
     # it in the final command in systemd as it will trip the whole command then.
-    # todo - check if only rc != 0 throws systemd execution ie do error returns
-    # todo - also trip the script exection
+    # todo - Check if only rc != 0 throws systemd execution ie do error returns
+    # todo - also trip the script execution.
     switch_list = []
     if apm_value > 0 and apm_value < 256:
         apm_switch_list = ['-q', '-B%s' % apm_value]
-        logger.debug('switch list is now = %s', apm_switch_list)
         hdparm_command = [HDPARM] + apm_switch_list + ['%s' % dev_byid]
-        logger.debug('-B hdparm command = %s', hdparm_command)
         # try running this -B only hdparm to see if it will run without
         # error or non zero return code.
         out, err, rc = run_command(hdparm_command, throw=False)
         if rc == 0 and len(err) == 1:
             # if execution of the -B switch ran OK then add to switch list
             switch_list += apm_switch_list
-            logger.debug('adding apm_switch_list so switch_list now = %s', switch_list)
         else:
             logger.error('non zero return code or error from hdparm '
                          'command %s with error %s and return code %s'
                          % (hdparm_command, err, rc))
     # setup -S hdparm command
     # todo shorten by combining -S with value when messaging sorted
-    standby_switch_list = ['-q', '-S', '%s' % spindown_time]
+    standby_switch_list = ['-q', '-S%s' % spindown_time]
     hdparm_command = [HDPARM] + standby_switch_list + ['%s' % dev_byid]
     out, err, rc = run_command(hdparm_command, throw=False)
     if rc != 0:
@@ -945,11 +939,7 @@ def update_hdparm_service(hdparm_command_list, comment):
                     do_edit = True
             if do_edit and not edit_done:
                 outo.write('ExecStart=' + ' '.join(hdparm_command_list) + '\n')
-                # todo - Currently writing raw value as debug aid but this is
-                # todo - intended to be the human message we are passed.
-                # outo.write('# %s' % message + '\n')
-                # todo - remove this and the following line on message / comment pass issue resolution
-                outo.write('# %s' % hdparm_command_list[-2] + ' %s' % comment + '\n')
+                outo.write('# %s' % comment + '\n')
                 edit_done = True
             # mechanism to skip a line if we have just done an edit
             if not (do_edit and edit_done and clear_line_count != 2):
