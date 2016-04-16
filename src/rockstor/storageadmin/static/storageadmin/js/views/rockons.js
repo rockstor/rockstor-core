@@ -624,12 +624,11 @@ RockonPortChoice = RockstorWizardPage.extend({
 		this.port_template = window.JST.rockons_ports_form;
 		this.ports = this.model.get('ports');
 		RockstorWizardPage.prototype.initialize.apply(this, arguments);
-		this.initHandlebarHelpers();
 	},
 
 	render: function() {
 		RockstorWizardPage.prototype.render.apply(this, arguments);
-		this.$('#ph-ports-form').html(this.port_template({ports: this.ports}));
+		this.$('#ph-ports-form').html(this.port_template({ports: this.ports.toJSON()}));
 
 		// Add form validation
 		this.portForm = this.$('#port-select-form');
@@ -663,22 +662,6 @@ RockonPortChoice = RockstorWizardPage.extend({
 		this.model.set('port_map', port_map);
 		return $.Deferred().resolve();
 	},
-
-	initHandlebarHelpers: function(){
-		Handlebars.registerHelper('display_portsForm', function(){
-			var html = '';
-			this.ports.each(function(port, index) {
-				html += '<div class="form-group">';
-				html += '<label class="control-label col-sm-3" for="ports">' + port.get('label') + '<span class="required">*</span></label>';
-				html += '<div class="col-sm-5">';
-				html += '<input class="form-control" type="text" id="' + port.id + '" name="' + port.id + '" value="' + port.get('hostp') + '">';
-				html += '</div>';
-				html += '<i class="fa fa-info-circle fa-lg" title="' + port.get('description') + '"></i>';
-				html += '</div>';
-			});
-			return new Handlebars.SafeString(html);
-		});
-	}
 });
 
 RockonCustomChoice = RockstorWizardPage.extend({
