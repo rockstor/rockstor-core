@@ -44,13 +44,13 @@
 	  <tr id="{{this.uuid}}">
 	    <td class="accordion-toggle" data-toggle="collapse" data-parent="#OrderPackages" data-target=".packageDetails1"><a> {{this.name}}</a></td>
 	    <td>{{this.uuid}}</td>
-	    <td>{{this.state}}</td>
+	    <td>{{this.state}}&nbsp;&nbsp;<input type="checkbox" data-size="mini" {{getState this.state}}></td>
 	    <td>{{this.ipv4_method}}</td>
 	    <td>{{this.ipv4_addresses}}</td>
 	    <td>{{this.ipv4_gw}}</td>
 	    <td>{{this.ipv4_dns}}</td>
 	    <td>{{this.ipv4_dns_search}}</td>
-	    <td></td>
+	    <td><a href="#add-connection"><i class="glyphicon glyphicon-pencil"></i></a></td>
 	  </tr>
 	  <tr>
         <td colspan="3" class="hiddenRow">

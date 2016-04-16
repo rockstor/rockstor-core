@@ -52,32 +52,19 @@ NewNetworksView = Backbone.View.extend({
 			devices: this.devices.toJSON()
 		}));
 		setApplianceName();
+
+		//Initialize bootstrap switch
+		this.$("[type='checkbox']").bootstrapSwitch();
+		this.$("[type='checkbox']").bootstrapSwitch('onColor','success'); //left side text color
+		this.$("[type='checkbox']").bootstrapSwitch('offColor','danger'); //right side text color
 	},
 
 	initHandlebarHelpers: function(){
-		//Disable the text field when network method is Auto. 
-		Handlebars.registerHelper("disableIfAuto", function (condition) {
-			return (condition) ? "disabled" : "";
-		});
-		Handlebars.registerHelper('print_networks_tbody', function() {
+		Handlebars.registerHelper('getState', function(state){
 			var html = '';
-			this.collection.each(function(network, index) {
-				var networkName = network.get('name');
-				html += '<tr>';
-				html += '<td><i class="glyphicon glyphicon-signal"></i> ' +  networkName + '</td>';
-				html += '<td>' + network.get("dname") + '</td>';
-				html += '<td>' + network.get("mac") + '</td>';
-				html += '<td>' + network.get("dspeed") + '</td>';
-				html += '<td>' + network.get("method") + '</td>';
-				html += '<td>' + network.get("ipaddr") + '</td>';
-				html += '<td>' + network.get("netmask") + '</td>';
-				html += '<td>' + network.get("gateway") + '</td>';
-				html += '<td>' + network.get("dns_servers") + '</td>';
-				html += '<td>' + network.get("itype") + '</td>';
-				html += '<td><a href="#network/'+ networkName + '/edit" class="edit-network" data-network="' + networkName + '"><i class="glyphicon glyphicon-pencil"></i></a>';
-				html += '</td>';
-				html += '</tr>';
-			});
+			if(state == 'activated'){
+				html = 'checked';
+			}
 			return new Handlebars.SafeString(html);
 		});
 	}
@@ -201,5 +188,6 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 	cancel: function(event) {
 		event.preventDefault();
 		app_router.navigate("network2", {trigger: true});
-	}
+	},
+
 });
