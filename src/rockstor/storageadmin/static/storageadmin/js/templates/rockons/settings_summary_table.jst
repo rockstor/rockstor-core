@@ -15,7 +15,26 @@
     </tr>
 {{/each}}
 {{display_newVolumes}}
-{{display_ports}}
-{{display_cc}}
+{{#each ports}}
+    <tr>
+        <td>Port</td>
+        <td>{{this.hostp}}</td>
+        <td>{{this.containerp}}</td>
+    </tr>
+{{/each}}
+{{#each cc}}
+    <tr>
+        <td>Custom</td>
+        <td>{{this.val}}&nbsp;&nbsp<i class="fa fa-info-circle" title="{{this.description}}" rel="tooltip"></i></td>
+        <td>{{this.key}}</td>
+    </tr>
+{{/each}}
+{{#each env}}
+    <tr>
+        <td>Env</td>
+        <td>{{this.val}}&nbsp;&nbsp<i class="fa fa-info-circle" title="{{this.description}}" rel="tooltip"></i></td>
+        <td>{{this.key}}</td>
+    </tr>
+{{/each}}
 
 </table>

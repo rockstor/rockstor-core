@@ -1070,13 +1070,14 @@ RockonSettingsSummary = RockstorWizardPage.extend({
 
 	render: function() {
 		RockstorWizardPage.prototype.render.apply(this, arguments);
+		console.log("ports json file: ", this.model.get('ports').toJSON());
 		this.$('#ph-settings-summary-table').html(this.sub_template({
 			model: this.model,
 			volumes: this.model.get('volumes').toJSON(),
 			new_volumes: this.model.get('shares'),
-			ports: this.model.get('ports'),
-			cc: this.model.get('custom_config'),
-			env: this.model.get('environment'),
+			ports: this.model.get('ports').toJSON(),
+			cc: this.model.get('custom_config').toJSON(),
+			env: this.model.get('environment').toJSON(),
 			rockon: this.model.get('rockon')
 		}));
 		return this;
@@ -1094,19 +1095,7 @@ RockonSettingsSummary = RockstorWizardPage.extend({
 			return new Handlebars.SafeString(html);
 		});
 
-		Handlebars.registerHelper('display_ports', function(){
-			var html = '';
-			this.ports.each(function(port, index) {
-				html += '<tr>';
-				html += '<td>Port</td>';
-				html += '<td>' + port.get('hostp') + '</td>';
-				html += '<td>' + port.get('containerp') + '</td>';
-				html += '</tr>';
-			});
-			return new Handlebars.SafeString(html);
-		});
-
-		Handlebars.registerHelper('display_cc', function(){
+		/* Handlebars.registerHelper('display_cc', function(){
 			var html = '';
 			this.cc.each(function(cci, index) {
 				html += '<tr>';
@@ -1114,7 +1103,7 @@ RockonSettingsSummary = RockstorWizardPage.extend({
 				html += '<td>' + cci.get('val') + '&nbsp;&nbsp<i class="fa fa-info-circle" title="' + cci.get('description') + '" rel="tooltip"></i></td>';
 				html += '<td>' + cci.get('key') + '</td>';
 				html += '</tr>';
-			});
+			}); 
 			//@todo: separate env and cc stuff.
 			this.env.each(function(envi, index) {
 				html += '<tr><td>Env</td>';
@@ -1122,7 +1111,7 @@ RockonSettingsSummary = RockstorWizardPage.extend({
 				html += '<td>' + envi.get('key') + '</td></tr>';
 			});
 			return new Handlebars.SafeString(html);
-		});
+		}); */
 
 	}
 });
