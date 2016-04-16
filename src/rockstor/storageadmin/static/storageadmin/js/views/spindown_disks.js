@@ -82,6 +82,7 @@ SpindownDiskView = RockstorLayoutView.extend({
             'Vendor defined (8-12h)': 253,
             'No spin down': 0
         };
+        _this.spindownTimes = spindownTimes;
         // retrieve local copy of disk serial number
         var serialNumber = this.disks.find(function (d) {
             return (d.get('name') == disk_name);
@@ -147,12 +148,24 @@ SpindownDiskView = RockstorLayoutView.extend({
                 disableButton(button);
                 var submitmethod = 'POST';
                 var posturl = '/api/disks/' + disk_name + '/spindown-drive';
+                var data = _this.$('#add-spindown-disk-form').getJSON();
+                var selected_time = data.spindown_time;
+                var spindown_text = "no message";
+                // look through spindownTimes to find the selected value
+                for (var time_string in _this.spindownTimes) {
+                    if (_this.spindownTimes[time_string] == selected_time) {
+                        // value found so set our text to it's key.
+                        spindown_text = time_string;
+                        break;
+                    }
+                }
+                data.spindown_message = spindown_text;
                 $.ajax({
                     url: posturl,
                     type: submitmethod,
                     dataType: 'json',
                     contentType: 'application/json',
-                    data: JSON.stringify(_this.$('#add-spindown-disk-form').getJSON()),
+                    data: JSON.stringify(data),
                     success: function () {
                         enableButton(button);
                         _this.$('#add-spindown-disk-form :input').tooltip('hide');
@@ -173,22 +186,12 @@ SpindownDiskView = RockstorLayoutView.extend({
         // helper to fill dropdown with drive spindown values
         // eg by generating dynamicaly lines of the following
         // <option value="240">20 minutes</option>
-        // todo awaiting fix for the timeString of the selected item to be passed on form submission
         Handlebars.registerHelper('display_spindown_time', function () {
             var html = '';
-            // todo remove this console.log
-            console.log('testing availability of current settings ' + this.hdparmSetting);
             for (var timeString in this.spindownTimes) {
-                // need to programmatically retrieve current setting for previously set spindownTime ie read from systemd file
-                // note it is not possible to use smart or hdparm to read what was set previously hence read from sys file.
-                // todo remove this console.log
-                console.log('processing timeString = ' + timeString);
-                // todo for now hardwire 20 mins as default (pre-selected)
-                // todo but this should show the current setting ie hdparmSetting
-                // if (timeString == this.hdparmSetting) {
-                if (timeString == '20 minutes') {
-                    // todo remove this console.log
-                    console.log('found our CURRENT SETTING of ' + timeString);
+                // Get the last setting by reading it from systemd file's
+                // comment line as neither smart or hdparm can retrieve it.
+                if (timeString == this.hdparmSetting) {
                     // we have found our current setting so mark it selected
                     html += '<option value="' + this.spindownTimes[timeString] + '" selected="selected">';
                     html += timeString + '</option>';
