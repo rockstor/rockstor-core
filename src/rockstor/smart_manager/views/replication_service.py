@@ -22,7 +22,7 @@ from system.services import superctl
 from django.db import transaction
 from base_service import BaseServiceDetailView
 from smart_manager.models import Service
-from storageadmin.models import NetworkInterface
+from storageadmin.models import NetworkConnection
 from django.conf import settings
 
 import logging
@@ -48,7 +48,7 @@ class ReplicationServiceView(BaseServiceDetailView):
                 if (listener_port < 0 or listener_port > 65535):
                     raise Exception('Invalid listener port(%d)' % listener_port)
                 ni = config['network_interface']
-                if (not NetworkInterface.objects.filter(name=ni).exists()):
+                if (not NetworkConnection.objects.filter(name=ni).exists()):
                     raise Exception('Network Interface(%s) does not exist.' % ni)
                 self._save_config(service, config)
                 return Response()
@@ -63,7 +63,7 @@ class ReplicationServiceView(BaseServiceDetailView):
                 e_msg = ('Configuration undefined. Configure the service first before starting.')
                 handle_exception(Exception(e_msg), request)
 
-            if (not NetworkInterface.objects.filter(name=config['network_interface']).exists()):
+            if (not NetworkConnection.objects.filter(name=config['network_interface']).exists()):
                 e_msg = ('Network interface does not exist. Update your configuration and try again.')
                 handle_exception(Exception(e_msg), request)
         try:
