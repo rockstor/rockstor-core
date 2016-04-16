@@ -352,7 +352,8 @@ class DiskDetailView(rfc.GenericView):
         # todo attempt to retrieve spindown_message as well and pass it along.
         spindown_message = str(
             request.data.get('spindown_message', 'message issue!'))
-        set_disk_spindown(disk.name, spindown_time, spindown_message)
+        apm_value = int(request.data.get('apm_value', 0))
+        set_disk_spindown(disk.name, spindown_time, apm_value, spindown_message)
         return Response()
 
     @classmethod

@@ -30,6 +30,7 @@ SpindownDiskView = RockstorLayoutView.extend({
     },
 
     initialize: function () {
+        var _this = this;
         this.constructor.__super__.initialize.apply(this, arguments);
         this.template = window.JST.disk_spindown_disks;
         this.disks = new DiskCollection();
@@ -37,16 +38,22 @@ SpindownDiskView = RockstorLayoutView.extend({
         this.dependencies.push(this.disks);
         this.tickFormatter = function (d) {
             var formatter = d3.format(",.0f");
-            if (d > 254) {
-                return formatter(d) + "off";
-            } else {
-                return formatter(d);
+            if (d > 254.5) {
+                return formatter(d) + " off";
             }
+            if (d < 0.5) {
+                return "remove"
+            }
+            return formatter(d);
+        }
+        this.tickFormatterText = function (d) {
+            var formatter = d3.format(",.0f");
+            return formatter(d);
         }
         this.slider = null;
         this.sliderCallback = function (slider) {
             var value = slider.value();
-            _this.$('#apm_value').val(_this.tickFormatter(value));
+            _this.$('#apm_value').val(_this.tickFormatterText(value));
         }
         this.initHandlebarHelpers();
     },
@@ -86,7 +93,7 @@ SpindownDiskView = RockstorLayoutView.extend({
         // retrieve local copy of current apm level
         var apmLevel = this.disks.find(function (d) {
             return (d.get('name') == disk_name);
-        }).get('apm_setting');
+        }).get('apm_level');
 
         $(this.el).html(this.template({
             diskName: this.diskName,
@@ -111,15 +118,17 @@ SpindownDiskView = RockstorLayoutView.extend({
             //$('#slide_lower_half').prop('disable', !this.checked);
             //$('#slide_upper_half').prop('disable', !this.checked);
             //$('#slide_disabled').prop('disable', !this.checked);
-            if (this.checked) {
-                _this.renderSlider();
-            }
+            //if (this.checked) {
+            //    _this.renderSlider();
+            //}
         });
 
-        if (apmLevel != 'unknown' || apmLevel != null) {
-            // don't show apm slider if we couldn't read apm value
-            _this.renderSlider();
-        }
+        //if (apmLevel != 'unknown' || apmLevel != null) {
+        //    // don't show apm slider if we couldn't read apm value
+        //    _this.renderSlider();
+        //}
+
+        _this.renderSlider();
 
         this.$('#add-spindown-disk-form').validate({
             onfocusout: false,
@@ -197,9 +206,8 @@ SpindownDiskView = RockstorLayoutView.extend({
         if (value == 'off') {
             value = 255;
         }
-
         this.$('#slider').empty();
-        this.slider = d3.slider2().min(1).max(255).ticks(10).tickFormat(this.tickFormatter).value(value).callback(this.sliderCallback);
+        this.slider = d3.slider2().min(0).max(255).ticks(10).tickFormat(this.tickFormatter).value(value).callback(this.sliderCallback);
         d3.select('#slider').call(this.slider);
     },
 

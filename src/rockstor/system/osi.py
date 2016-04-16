@@ -721,7 +721,8 @@ def get_disk_APM_level(device_name):
     return 'unknown'
 
 
-def set_disk_spindown(device, spindown_time, spindown_message='no comment'):
+def set_disk_spindown(device, spindown_time, apm_value,
+                      spindown_message='no comment'):
     """
     Takes a value to be used with hdparm -S to set disk spindown time for the
     device specified.
@@ -731,6 +732,8 @@ def set_disk_spindown(device, spindown_time, spindown_message='no comment'):
     minimum.
     :param device: The name of a disk device as used in the db ie sda
     :param spindown_time: Integer received from settings form ie 240
+    :param apm_value: value to be used with hdparm's -B parameter to set the
+    drives APM level should be between 1-255 and will be ignored if not.
     :param spindown_message: message received from drop down as human presented
     selection, used later in systemd script to retrieve previous setting.
     :return: False if an hdparm command was not possible ie inappropriate dev,
@@ -738,6 +741,9 @@ def set_disk_spindown(device, spindown_time, spindown_message='no comment'):
     """
     # hdparm -S works on for example /dev/sda3 so base_dev is not needed,
     # but it does require a full path, ie sda3 doesn't work.
+    logger.debug(
+        'set_disk_spindown() called with dev= %s spind= %s apm= %s '
+        'message= %s' % (device, spindown_time, apm_value, spindown_message))
     device_with_path = get_devname(device, True)
     # md devices arn't offered a spindown config: unknown status from hdparm -C
     # Their member disks are exposed on the Disks page so for the time being
@@ -749,14 +755,39 @@ def set_disk_spindown(device, spindown_time, spindown_message='no comment'):
         logger.info(
             'Skipping hdparm settings: device not confirmed as rotational')
         return False
-    # setup hdparm command
-    hdparm_command = [HDPARM, '-q', '-S', '%s' % spindown_time,
-                      '%s' % get_dev_byid_name(device_with_path)]
+    dev_byid = get_dev_byid_name(device_with_path)
+    # execute the -B hdparm command first as if it fails we can then not include
+    # it in the final command in systemd as it will trip the whole command then.
+    # todo - check if only rc != 0 throws systemd execution ie do error returns
+    # todo - also trip the script exection
+    switch_list = []
+    if apm_value > 0 and apm_value < 256:
+        apm_switch_list = ['-q', '-B%s' % apm_value]
+        logger.debug('switch list is now = %s', apm_switch_list)
+        hdparm_command = [HDPARM] + apm_switch_list + ['%s' % dev_byid]
+        logger.debug('-B hdparm command = %s', hdparm_command)
+        # try running this -B only hdparm to see if it will run without
+        # error or non zero return code.
+        out, err, rc = run_command(hdparm_command, throw=False)
+        if rc == 0 and len(err) == 1:
+            # if execution of the -B switch ran OK then add to switch list
+            switch_list += apm_switch_list
+            logger.debug('adding apm_switch_list so switch_list now = %s', switch_list)
+        else:
+            logger.error('non zero return code or error from hdparm '
+                         'command %s with error %s and return code %s'
+                         % (hdparm_command, err, rc))
+    # setup -S hdparm command
+    # todo shorten by combining -S with value when messaging sorted
+    standby_switch_list = ['-q', '-S', '%s' % spindown_time]
+    hdparm_command = [HDPARM] + standby_switch_list + ['%s' % dev_byid]
     out, err, rc = run_command(hdparm_command, throw=False)
     if rc != 0:
         logger.error('non zero return code from hdparm command %s with '
                      'error %s and return code %s' % (hdparm_command, err, rc))
         return False
+    hdparm_command = [HDPARM] + switch_list + standby_switch_list + [
+        '%s' % dev_byid]
     # hdparm ran without issues so attempt to edit rockstor-hdparm.service
     # with the same entry
     if update_hdparm_service(hdparm_command, spindown_message) is not True:
