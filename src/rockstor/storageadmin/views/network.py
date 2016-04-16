@@ -22,12 +22,11 @@ from shutil import move
 from django.db import transaction
 from django.conf import settings
 from rest_framework.response import Response
-from storageadmin.models import (NetworkInterface, NetworkConnection,
-                                 NetworkDevice, Appliance, EthernetConnection, TeamConnection)
+from storageadmin.models import (NetworkConnection, NetworkDevice, Appliance,
+                                 EthernetConnection, TeamConnection)
 from storageadmin.util import handle_exception
-from storageadmin.serializers import (NetworkInterfaceSerializer, NetworkDeviceSerializer, NetworkConnectionSerializer)
+from storageadmin.serializers import (NetworkDeviceSerializer, NetworkConnectionSerializer)
 from system.osi import (config_network_device, get_net_config, update_issue)
-from system.samba import update_samba_discovery
 from system.services import superctl
 from system import network
 import rest_framework_custom as rfc
@@ -198,118 +197,6 @@ class NetworkMixin(object):
             dconfig['name'] = dev
             update_connection(dconfig)
             NetworkDevice.objects.create(**dconfig)
-
-
-class NetworkListView(rfc.GenericView, NetworkMixin):
-    serializer_class = NetworkInterfaceSerializer
-
-    def get_queryset(self, *args, **kwargs):
-        with self._handle_exception(self.request):
-            self._refresh_ni()
-            #@todo to be deprecated soon
-            update_samba_discovery()
-            return NetworkInterface.objects.all()
-
-
-class NetworkDetailView(rfc.GenericView, NetworkMixin):
-    serializer_class = NetworkInterfaceSerializer
-
-    def get(self, *args, **kwargs):
-        try:
-            data = NetworkInterface.objects.get(name=self.kwargs['iname'])
-            serialized_data = NetworkInterfaceSerializer(data)
-            return Response(serialized_data.data)
-        except:
-            return Response()
-
-    @transaction.atomic
-    def delete(self, request, iname):
-        with self._handle_exception(request):
-            if (NetworkInterface.objects.filter(name=iname).exists()):
-                i = NetworkInterface.objects.get(name=iname)
-                i.delete()
-            return Response()
-
-    def _validate_netmask(self, request):
-        netmask = request.data.get('netmask', None)
-        e_msg = ('Provided netmask value(%s) is invalid. You can provide it '
-                 'in a IP address format(eg: 255.255.255.0) or number of '
-                 'bits(eg: 24)' % netmask)
-        if (netmask is None):
-            handle_exception(Exception(e_msg), request)
-        bits = 0
-        try:
-            bits = int(netmask)
-        except ValueError:
-            #assume ip address format was provided
-            bits = sum([bin(int(x)).count('1') for x in netmask.split('.')])
-        if (bits < 1 or bits > 32):
-            e_msg = ('Provided netmask value(%s) is invalid. Number of '
-                     'bits in netmask must be between 1-32' % netmask)
-            handle_exception(Exception(e_msg), request)
-        return bits
-
-    @transaction.atomic
-    def put(self, request, iname):
-        with self._handle_exception(request):
-            if (not NetworkInterface.objects.filter(name=iname).exists()):
-                e_msg = ('Netowrk interface(%s) does not exist.' % iname)
-                handle_exception(Exception(e_msg), request)
-            ni = NetworkInterface.objects.get(name=iname)
-
-            itype = request.data.get('itype', 'unassigned')
-            method = request.data.get('method')
-            ni.onboot = 'yes'
-            if (method == 'auto'):
-                config_network_device(ni.name)
-            elif (method == 'manual'):
-                ipaddr = request.data.get('ipaddr')
-                for i in NetworkInterface.objects.filter(ipaddr=ipaddr):
-                    if (i.id != ni.id):
-                        e_msg = ('IP: %s already in use by another '
-                                 'interface: %s' % (ni.ipaddr, i.name))
-                        handle_exception(Exception(e_msg), request)
-                netmask = self._validate_netmask(request)
-                gateway = request.data.get('gateway', None)
-                dns_servers = request.data.get('dns_servers', None)
-                config_network_device(ni.name, dtype=ni.dtype, method='manual',
-                                      ipaddr=ipaddr, netmask=netmask,
-                                      gateway=gateway, dns_servers=dns_servers)
-            else:
-                e_msg = ('Method must be auto(for dhcp) or manual(for static IP). not: %s' %
-                         method)
-                handle_exception(Exception(e_msg), request)
-            dconfig = get_net_config(name=ni.name)[ni.dname]
-            ni = self._update_ni_obj(ni, dconfig)
-            if (itype == 'management' and ni.itype != 'management'):
-                for i in NetworkInterface.objects.filter(itype='management'):
-                    if (i.name != ni.name):
-                        e_msg = ('Another interface(%s) is already configured '
-                                 'for management. You must disable it first '
-                                 'before making this change.' % i.name)
-                        handle_exception(Exception(e_msg), request)
-                a = Appliance.objects.get(current_appliance=True)
-                a.ip = ni.ipaddr
-                a.save()
-            ni.itype = itype
-            ni.save()
-            if (ni.itype == 'management'):
-                try:
-                    update_issue(ni.ipaddr)
-                except Exception, e:
-                    logger.error('Unable to update /etc/issue. Exception: %s' % e.__str__())
-
-                try:
-                    self._update_nginx(ni.ipaddr)
-                except Exception, e:
-                    logger.error('Failed to update Nginx. Exception: %s' % e.__str__())
-            else:
-                try:
-                    self._update_nginx()
-                except Exception, e:
-                    logger.error('Failed to update Nginx. Exception: %s' % e.__str__())
-
-            return Response(NetworkInterfaceSerializer(ni).data)
 
 
 class NetworkDeviceListView(rfc.GenericView, NetworkMixin):
