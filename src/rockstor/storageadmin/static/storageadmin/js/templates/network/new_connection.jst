@@ -58,28 +58,28 @@
             </select>
           </div>
         </div>
-                <div class="form-group">
+          <div class="form-group" style="display:none;" id="ipaddrDiv">
           <label class="col-sm-4 control-label" for="ipaddr">IP Address<span class="required"> *</span></label>
           <div class="col-sm-4">
-           <input class="form-control" type="text" id="ipaddr" name="ipaddr" value="{{ipAddr}}" {{disableIfAuto methodAuto}} placeholder="IP Address" title="A usable static IP address for your network.">
+           <input class="form-control" type="text"  id="ipaddr" name="ipaddr" value="{{ipAddr}}" placeholder="IP Address" title="A usable static IP address for your network.">
           </div>
         </div>
-        <div class="form-group">
+        <div class="form-group" style="display:none;" id="netmaskDiv">
           <label class="col-sm-4 control-label" for="netmask">Netmask<span class="required"> *</span></label>
           <div class="col-sm-4">
-          <input class="form-control" type="text" id="netmask" name="netmask" value="{{netMask}}" {{disableIfAuto methodAuto}} placeholder="Netmask" title="A valid Subnet Mask for your network. Eg: 255.255.255.0. You can also enter number of bits.">
+          <input class="form-control" type="text" id="netmask" name="netmask" value="{{netMask}}" placeholder="Netmask" title="A valid Subnet Mask for your network. Eg: 255.255.255.0. You can also enter number of bits.">
           </div>
         </div>
-        <div class="form-group">
+        <div class="form-group" style="display:none;" id="gatewayDiv">
           <label class="col-sm-4 control-label" for="gateway">Gateway</label>
           <div class="col-sm-4">
-          <input class="form-control" type="text" id="gateway" name="gateway" value="{{gateWay}}"  {{disableIfAuto methodAuto}} placeholder="Gateway" title="IP address of your Gateway.">
+          <input class="form-control" type="text" id="gateway" name="gateway" value="{{gateWay}}" placeholder="Gateway" title="IP address of your Gateway.">
           </div>
         </div>
-        <div class="form-group">
+        <div class="form-group" style="display:none;" id="dnsDiv">
           <label class="col-sm-4 control-label" for="dns_servers">DNS Servers</label>
           <div class="col-sm-4">
-          <input class="form-control" type="text" id="dns_servers" name="dns_servers" value="{{dnsServers}}" {{disableIfAuto methodAuto}} placeholder="DNS Servers" title="A comma separated list of DNS server addresses.">
+          <input class="form-control" type="text" id="dns_servers" name="dns_servers" value="{{dnsServers}}" placeholder="DNS Servers" title="A comma separated list of DNS server addresses.">
           </div>
         </div>
         <div class="form-group">

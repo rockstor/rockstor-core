@@ -90,7 +90,8 @@ Cocktail.mixin(NewNetworksView, PaginationMixin);
 NewNetworkConnectionView = RockstorLayoutView.extend({
 
 	events: {
-		'click #cancel': 'cancel'
+		'click #cancel': 'cancel',
+		'change #method': 'renderOptionalFields'
 	},
 
 	initialize: function() {
@@ -110,7 +111,9 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 		$(this.el).empty();
 		$(this.el).append(this.template({
 			devices: this.devices.toJSON(),
-			ctypes: ['ethernet', 'team', 'bond']
+			ctypes: ['ethernet', 'team', 'bond'],
+			teamTypes: ['type1', 'type2', 'type3']
+		
 		}));
 
 		this.validator = this.$("#new-connection-form").validate({
@@ -134,7 +137,16 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 			}
 		});
 	},
-
+	
+	renderOptionalFields: function(){
+		var selection = this.$('#method').val();
+		  if(selection == 'auto'){
+			  $("#ipaddrDiv, #netmaskDiv, #gatewayDiv, #dnsDiv").hide();
+		  }else{
+			  $("#ipaddrDiv, #netmaskDiv, #gatewayDiv, #dnsDiv").show();
+		  }
+	},
+	
 	cancel: function(event) {
 		event.preventDefault();
 		app_router.navigate("network2", {trigger: true});
