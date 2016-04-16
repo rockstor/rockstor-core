@@ -421,6 +421,15 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
             nco.delete()
             return Response()
 
+    @transaction.atomic
+    def post(self, request, id, switch):
+        #switch the connection off or on.
+        with self._handle_exception(request):
+            nco = self._nco(request, id)
+            #toggle_connection(nco)
+            return Response(NetworkConnectionSerializer(nco).data)
+
+
 class NetworkStateView(rfc.GenericView, NetworkMixin):
 
     def post(self, request):
