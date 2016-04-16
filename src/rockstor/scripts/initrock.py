@@ -93,8 +93,8 @@ def init_update_issue():
             ifo.write('Rockstor cannot be configured using the web interface '
                         'without this.\n\n')
             ifo.write('Press Enter to receive updated network status\n')
-            ifo.write('If this message persists login as root and configure '
-                      'your network manually to proceed further.\n')
+            ifo.write('If this message persists please login as root and configure '
+                      'your network using nmtui, then reboot.\n')
         else:
             ifo.write('\nRockstor is successfully installed.\n\n')
             ifo.write('You can access the web-ui by pointing your browser to '
