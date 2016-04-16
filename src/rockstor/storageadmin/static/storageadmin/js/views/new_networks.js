@@ -141,9 +141,9 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 	renderOptionalFields: function(){
 		var selection = this.$('#method').val();
 		  if(selection == 'auto'){
-			  $("#ipaddrDiv, #netmaskDiv, #gatewayDiv, #dnsDiv").hide();
+			  $('#optionalFields').hide();
 		  }else{
-			  $("#ipaddrDiv, #netmaskDiv, #gatewayDiv, #dnsDiv").show();
+			  $('#optionalFields').show();
 		  }
 	},
 	
