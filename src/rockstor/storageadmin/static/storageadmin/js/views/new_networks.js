@@ -91,7 +91,8 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 
 	events: {
 		'click #cancel': 'cancel',
-		'change #method': 'renderOptionalFields'
+		'change #method': 'renderOptionalFields',
+		'change #ctype': 'renderTeamDropdown',
 	},
 
 	initialize: function() {
@@ -112,8 +113,8 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 		$(this.el).append(this.template({
 			devices: this.devices.toJSON(),
 			ctypes: ['ethernet', 'team', 'bond'],
-			teamTypes: ['type1', 'type2', 'type3']
-		
+			teamProfiles: ['broadcast', 'roundrobin', 'activebackup', 'loadbalance', 'lacp']
+			
 		}));
 
 		this.validator = this.$("#new-connection-form").validate({
@@ -136,14 +137,36 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 				});
 			}
 		});
+		
+		_this.$('#teamprofile').tooltip({
+	          html: true,
+	          placement: 'right',
+	          title: "<strong>broadcast</strong> - Simple runner which directs the team device to transmit packets via all ports.<br>" +
+	          		 "<strong>roundrobin</strong> - Simple runner which directs the team device to transmits packets in a round-robin fashion.<br>" + 
+	          "<strong>activebackup</strong> - Watches for link changes and selects active port to be used for data transfers.<br>" + 
+	          "<strong>loadbalance</strong> -  To do passive load balancing, runner only sets up BPF hash function which will determine port for packet transmit." + 
+	          "To do active load balancing, runner moves hashes among available ports trying to reach perfect balance.<br>" + 
+	          "<strong>lacp</strong> - Implements 802.3ad LACP protocol. Can use same Tx port selection possibilities as loadbalance runner."
+	        });
 	},
 	
+	// hide fields when selection is auto
 	renderOptionalFields: function(){
 		var selection = this.$('#method').val();
 		  if(selection == 'auto'){
 			  $('#optionalFields').hide();
 		  }else{
 			  $('#optionalFields').show();
+		  }
+	},
+	
+	// show dropdown when selection is team
+	renderTeamDropdown: function(){
+		var selection = this.$('#ctype').val();
+		  if(selection == 'team'){
+			  $('#optionalDropdown').show();
+		  }else{
+			  $('#optionalDropdown').hide();
 		  }
 	},
 	

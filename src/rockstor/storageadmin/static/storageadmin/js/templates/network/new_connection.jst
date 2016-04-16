@@ -41,6 +41,18 @@
             </select>
           </div>
         </div>
+        <div id="optionalDropdown" style="display:none;">
+            <div class="form-group">
+              <label class="col-sm-4 control-label" for="teamprofile">Team Profile<span class="required"> *</span></label>
+              <div class="col-sm-4">
+                <select class="form-control" id="teamprofile" name="teamprofile">
+              {{#each teamProfiles}}
+              <option value="{{this}}">{{this}}</option>
+              {{/each}}
+                </select>
+              </div>
+            </div>
+        </div><!--close optionalDropdown -->
           <div class="form-group">
           <label class="col-sm-4 control-label" for="method">Config Method<span class="required"> *</span></label>
           <div class="col-sm-4">
