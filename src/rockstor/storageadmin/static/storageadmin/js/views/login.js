@@ -120,7 +120,7 @@ LoginView = InitView.extend({
     initialize: function() {
 	this.login_template = window.JST.home_login_template;
 	this.user_create_template = window.JST.home_user_create_template;
-	this.networkInterfaces = new NetworkInterfaceCollection();
+	this.networkInterfaces = new NetworkConnectionCollection();
 	this.networkInterfaces.pageSize = RockStorGlobals.maxPageSize;
 	this.networkInterfaces.on("reset", this.saveAppliance, this);
 	this.appliances = new ApplianceCollection();

@@ -94,7 +94,7 @@ ConfigureServiceView = RockstorLayoutView.extend({
 	this.shares = new ShareCollection();
 	this.shares.setPageSize(100);
 	this.dependencies.push(this.shares);
-	this.network = new NetworkInterfaceCollection();
+	this.network = new NetworkConnectionCollection();
 	this.dependencies.push(this.network);
 	this.initHandlebarHelpers();
     },
