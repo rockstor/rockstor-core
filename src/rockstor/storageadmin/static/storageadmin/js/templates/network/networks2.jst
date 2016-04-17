@@ -44,10 +44,10 @@
 	  {{#each connections}}
 	  <tr id="{{this.uuid}}">
 	    <td class="accordion-toggle" data-toggle="collapse" data-parent="#OrderPackages" data-target=".packageDetails1"><a> {{this.name}}</a>&nbsp;&nbsp; <a href="#add-connection"><i class="glyphicon glyphicon-pencil"></i></a>
-        <a href=""><i class="glyphicon glyphicon-trash"></i></a></td>
+        <a id="{{this.id}}" data-action="delete" rel="tooltip" title="Delete connection"><i class="glyphicon glyphicon-trash"></i></a></td>
 	    <td>{{this.uuid}}</td>
 	    <td>{{this.state}}&nbsp;&nbsp;
-    	    <input type="checkbox" data-connection-id="{{this.id}}" data-size="mini" {{getState this.state}}>
+    	    <input type="checkbox" data-connection-id="{{this.id}}" data-name="{{this.name}}" data-size="mini" {{getState this.state}}>
     	    <div class="command-status" data-connection-id="{{this.id}}">&nbsp;</div>
             <div class="simple-overlay" id="{{this.id}}-err-popup"><div class="overlay-content"></div></div>
         </td>
@@ -109,6 +109,6 @@
     <div>
     {{pagination}}
    </div>
-
+   
   </div> <!-- col-md-12 -->
 </div> <!-- row -->
