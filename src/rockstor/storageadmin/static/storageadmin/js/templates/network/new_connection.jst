@@ -41,7 +41,19 @@
             </select>
           </div>
         </div>
-        <div id="optionalDropdown" style="display:none;">
+        <div id="singleDevice">
+            <div class="form-group">
+                <label class="col-sm-4 control-label" for="device">Device <span class="required"> *</span></label>
+            <div class="col-sm-4">
+                <select class="form-control" id="device" name="device">
+                    {{#each devices}}
+                        <option value="{{this.name}}">{{this.name}}</option>
+                    {{/each}}
+                </select>
+            </div>
+            </div>
+        </div><!--close ethernetDeviceDropdown -->
+        <div id="teamProfiles" style="display:none;">
             <div class="form-group">
               <label class="col-sm-4 control-label" for="teamprofile">Team Profile<span class="required"> *</span></label>
               <div class="col-sm-4">
@@ -52,18 +64,32 @@
                 </select>
               </div>
             </div>
+        </div><!--close teamProfiles -->
+        <div id="bondProfiles" style="display:none;">
+            <div class="form-group">
+              <label class="col-sm-4 control-label" for="bondprofile">Bond Profile<span class="required"> *</span></label>
+              <div class="col-sm-4">
+                <select class="form-control" id="bondprofile" name="bondprofile">
+              {{#each bondProfiles}}
+                <option value="{{this}}">{{this}}</option>
+              {{/each}}
+                </select>
+              </div>
+            </div>
+        </div><!--close bondProfiles -->
+        <div id="multiDevice" style="display:none;">
             <div class="form-group">
                 <label class="col-sm-4 control-label" for="devices">Devices <span class="required"> *</span></label>
-            <div class="col-sm-4">
+            <div class="col-sm-4">  
                 <select class="form-control" id="devices" name="devices" size="10" data-placeholder="select devices" multiple>
                     {{#each devices}}
                         <option value="{{this.name}}">{{this.name}}</option>
                     {{/each}}
                 </select>
-                <i class="fa fa-exclamation-circle" title="select 2 or more devices to add to the team." rel="tooltip"></i>
+                <i class="fa fa-exclamation-circle" title="select 2 or more devices." rel="tooltip"></i>
             </div>
             </div>
-        </div><!--close optionalDropdown -->
+        </div><!--close multiDevice -->
           <div class="form-group">
           <label class="col-sm-4 control-label" for="method">Config Method<span class="required"> *</span></label>
           <div class="col-sm-4">
@@ -81,7 +107,7 @@
             </select>
           </div>
         </div>
-        <div id="optionalFields" style="display:none;">
+        <div id="methodOptionalFields" style="display:none;">
           <div class="form-group">
           <label class="col-sm-4 control-label" for="ipaddr">IP Address<span class="required"> *</span></label>
           <div class="col-sm-4">
@@ -106,7 +132,7 @@
           <input class="form-control" type="text" id="search_domains" name="search_domains" value="{{searchDomains}}" placeholder="Search Domains">
           </div>
         </div>
-        </div><!--close optionalFields-->
+        </div><!--close methodOptionalFields-->
         <div class="form-group">
           <div class="col-sm-offset-4 col-sm-8">
 	    <button id="cancel" class="btn btn-default">Cancel</button>

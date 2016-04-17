@@ -130,8 +130,8 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 
 	events: {
 		'click #cancel': 'cancel',
-		'change #method': 'renderOptionalFields',
-		'change #ctype': 'renderTeamDropdown',
+		'change #method': 'renderMethodOptionalFields',
+		'change #ctype': 'renderCTypeOptionalFields',
 	},
 
 	initialize: function() {
@@ -152,8 +152,8 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 		$(this.el).append(this.template({
 			devices: this.devices.toJSON(),
 			ctypes: ['ethernet', 'team', 'bond'],
-			teamProfiles: ['broadcast', 'roundrobin', 'activebackup', 'loadbalance', 'lacp']
-
+			teamProfiles: ['broadcast', 'roundrobin', 'activebackup', 'loadbalance', 'lacp'],
+			bondProfiles: ['roundrobin', 'activebackup', 'xor', 'broadcast', '802.3ad', ]
 		}));
 
 		this.validator = this.$("#new-connection-form").validate({
@@ -194,6 +194,11 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 			"To do active load balancing, runner moves hashes among available ports trying to reach perfect balance.<br>" + 
 			"<strong>lacp</strong> - Implements 802.3ad LACP protocol. Can use same Tx port selection possibilities as loadbalance runner."
 		});
+		this.$('#device').tooltip({
+			html: true,
+			placement: 'right',
+			title:"Choose a device to add."
+		});
 		this.$('#ipaddr').tooltip({
 			html: true,
 			placement: 'right',
@@ -217,23 +222,29 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 
 	},
 
-	// hide fields when selection is auto
-	renderOptionalFields: function(){
+	// hide fields when selected method is auto
+	renderMethodOptionalFields: function(){
 		var selection = this.$('#method').val();
 		if(selection == 'auto'){
-			$('#optionalFields').hide();
+			$('#methodOptionalFields').hide();
 		}else{
-			$('#optionalFields').show();
+			$('#methodOptionalFields').show();
 		}
 	},
 
-	// show dropdown when selection is team
-	renderTeamDropdown: function(){
+	// show/hide respective dropdowns based on selected connection type
+	renderCTypeOptionalFields: function(){
 		var selection = this.$('#ctype').val();
 		if(selection == 'team'){
-			$('#optionalDropdown').show();
-		}else{
-			$('#optionalDropdown').hide();
+			$('#teamProfiles, #multiDevice').show();
+			$('#bondProfiles, #singleDevice').hide();
+		}else if (selection == 'ethernet'){
+			$('#teamProfiles, #multiDevice #bondProfiles').hide();
+			$('#singleDevice').show();
+		} else {
+			//bond
+			$('#teamProfiles, #singleDevice').hide();
+			$('#bondProfiles, #multiDevice').show();
 		}
 	},
 
