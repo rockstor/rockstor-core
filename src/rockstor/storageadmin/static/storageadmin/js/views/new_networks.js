@@ -165,23 +165,31 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 
 	initialize: function() {
 		this.constructor.__super__.initialize.apply(this, arguments);
-		this.connectionId = this.options.sambaShareId || null;
+		this.connectionId = this.options.connectionId || null;
+		this.connection = null;
 		this.template = window.JST.network_new_connection;
-		this.connection = new NetworkConnectionCollection({id: this.connectionId})
 		this.devices = new NetworkDeviceCollection();
 		this.devices.on('reset', this.renderDevices, this);
 	},
 
 	render: function() {
 		this.devices.fetch();
+		if (this.connectionId != null) {
+			this.connection = new NetworkConnection({id: this.connectionId})
+			this.connection.fetch();
+		}
 		return this;
 	},
 
 	renderDevices: function() {
 		var _this = this;
 		$(this.el).empty();
+		var connection;
+		if (this.connection != null) {
+			connection = this.connection.toJSON();
+		}
 		$(this.el).append(this.template({
-			connectionId: this.connectionId,
+			connection: connection,
 			devices: this.devices.toJSON(),
 			ctypes: ['ethernet', 'team', 'bond'],
 			teamProfiles: ['broadcast', 'roundrobin', 'activebackup', 'loadbalance', 'lacp'],

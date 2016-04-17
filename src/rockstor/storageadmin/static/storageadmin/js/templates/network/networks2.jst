@@ -26,7 +26,7 @@
     <div class="messages"></div>
     <!-- Content -->
     <h3>Network Connections</h3>
-    <a href="#add-connection" id="add-connection" class="btn btn-primary"> New Connection</a><br><br>
+    <a href="#network/add" id="add-connection" class="btn btn-primary"> New Connection</a><br><br>
     <table id="networks2-table" class="table table-condensed table-bordered table-hover table-striped share-table tablesorter" summary="List of network connections">
       <thead>
         <tr>
@@ -43,7 +43,7 @@
 	<tbody>
 	  {{#each connections}}
 	  <tr id="{{this.uuid}}">
-	    <td class="accordion-toggle" data-toggle="collapse" data-parent="#connections" data-target="#accordion-{{this.id}}"><a> {{this.name}}</a>&nbsp;&nbsp; <a href="#add-connection"><i class="glyphicon glyphicon-pencil"></i></a>
+	    <td class="accordion-toggle" data-toggle="collapse" data-parent="#connections" data-target="#accordion-{{this.id}}"><a> {{this.name}}</a>&nbsp;&nbsp; <a href="#network/edit/{{this.id}}"><i class="glyphicon glyphicon-pencil"></i></a>
         <a id="{{this.id}}" data-action="delete" rel="tooltip" title="Delete connection"><i class="glyphicon glyphicon-trash"></i></a></td>
 	    <td>{{this.uuid}}</td>
 	    <td>{{this.state}}&nbsp;&nbsp;
