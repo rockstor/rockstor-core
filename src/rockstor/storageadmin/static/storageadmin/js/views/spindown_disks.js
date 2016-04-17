@@ -210,7 +210,7 @@ SpindownDiskView = RockstorLayoutView.extend({
             value = 255;
         }
         this.$('#slider').empty();
-        this.slider = d3.slider2().min(0).max(255).ticks(10).tickFormat(this.tickFormatter).value(value).callback(this.sliderCallback);
+        this.slider = d3.slider2().min(0).max(255).ticks(10).tickFormat(this.tickFormatter).value(value).reclaimable(127).used(1).callback(this.sliderCallback);
         d3.select('#slider').call(this.slider);
     },
 
