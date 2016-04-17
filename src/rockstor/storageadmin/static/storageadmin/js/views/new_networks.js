@@ -26,6 +26,10 @@
 
 NewNetworksView = Backbone.View.extend({
 
+	events: {
+		'switchChange.bootstrapSwitch': 'switchStatus'
+	},
+
 	initialize: function() {
 		this.template = window.JST.network_networks2;
 		this.collection = new NetworkConnectionCollection();
@@ -57,6 +61,54 @@ NewNetworksView = Backbone.View.extend({
 		this.$("[type='checkbox']").bootstrapSwitch();
 		this.$("[type='checkbox']").bootstrapSwitch('onColor','success'); //left side text color
 		this.$("[type='checkbox']").bootstrapSwitch('offColor','danger'); //right side text color
+	},
+
+	switchStatus: function(event,state){
+		var connectionId = $(event.target).attr('data-connection-id');
+		if (state){
+			this.toggleConnection(connectionId, 'on');
+		}else {
+			this.toggleConnection(connectionId, 'off');
+		}
+	},
+
+	toggleConnection: function(connectionId, switchState) {
+		var _this = this;
+		$.ajax({
+			url: "api/network/connections/" + connectionId + "/" + switchState,
+			type: "POST",
+			dataType: "json",
+			success: function(data, status, xhr) {
+				_this.setStatusLoading(connectionId, false);
+			},
+			error: function(xhr, status, error) {
+				_this.setStatusError(connectionId, xhr);
+			}
+		});
+	},
+
+	setStatusLoading: function(connectionId, show) {
+		var statusEl = this.$('div.command-status[data-connection-id="' + connectionId + '"]');
+		if (show) {
+			statusEl.html('<img src="/static/storageadmin/img/ajax-loader.gif"></img>');
+		} else {
+			statusEl.empty();
+		}
+	},
+
+	setStatusError: function(connectionId, xhr) {
+		var statusEl = this.$('div.command-status[data-connection-id="' + connectionId + '"]');
+		var msg = parseXhrError(xhr);
+		// remove any existing error popups
+		$('body').find('#' + connectionId + 'err-popup').remove();
+		// add icon and popup
+		statusEl.empty();
+		var icon = $('<i>').addClass('icon-exclamation-sign').attr('rel', '#' + connectionId + '-err-popup');
+		statusEl.append(icon);
+		var errPopup = this.$('#' + connectionId + '-err-popup');
+		var errPopupContent = this.$('#' + connectionId + '-err-popup > div');
+		errPopupContent.html(msg);
+		statusEl.click(function(){ errPopup.overlay().load(); });
 	},
 
 	initHandlebarHelpers: function(){
