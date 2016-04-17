@@ -111,7 +111,7 @@ NewNetworksView = Backbone.View.extend({
 		errPopupContent.html(msg);
 		statusEl.click(function(){ errPopup.overlay().load(); });
 	},
-	
+
 	deleteConnection: function(event){
 		alert("Are you sure to delete the connection?");
 		var _this = this;
@@ -122,7 +122,7 @@ NewNetworksView = Backbone.View.extend({
 		$.ajax({
 			url: "/api/network/connections/" + connectionId,
 			type: "DELETE",
-		    dataType: "json",
+			dataType: "json",
 			success: function() {
 				_this.collection.fetch({reset: true});
 				enableButton(button);
@@ -186,6 +186,50 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 		}));
 
 		this.validator = this.$("#new-connection-form").validate({
+			onfocusout: false,
+			onkeyup: false,
+			rules: {
+				name: "required",
+				ipaddr: {
+					required: {
+						depends: function(element) {
+							return (_this.$('#method').val() == 'manual')
+						}
+					}
+				},
+				gateway: {
+					required: {
+						depends: function(element){
+							return (_this.$('#method').val() == 'manual')
+						}
+
+					}
+				},
+				teamprofile: {
+					required: {
+						depends: function(element){
+							return (_this.$('#ctype').val() == 'team')
+						}
+
+					}
+				},
+				bondrofile: {
+					required: {
+						depends: function(element){
+							return (_this.$('#ctype').val() == 'bond')
+						}
+
+					}
+				},
+				devices: {
+					required: {
+						depends: function(element){
+							return (_this.$('#ctype').val() == 'team')
+						}
+
+					}
+				},
+			},
 			submitHandler: function() {
 				var button = _this.$('#submit');
 				if (buttonDisabled(button)) return false;
@@ -248,7 +292,6 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 			placement: 'right',
 			title:"A comma separated list of DNS search domains."
 		});
-
 	},
 
 	// hide fields when selected method is auto
@@ -276,6 +319,8 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 			$('#bondProfiles, #multiDevice').show();
 		}
 	},
+
+
 
 	cancel: function(event) {
 		event.preventDefault();
