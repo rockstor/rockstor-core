@@ -188,10 +188,10 @@ ServicesView = Backbone.View.extend({
 	    var html = '';
 	    if(_this.configurable_services.indexOf(serviceName) > -1) {
 		return true;
-		this.collection.each(function(service) {
-		    var serviceName = service.get('name');
-		});
 	    }
+	    this.collection.each(function(service) {
+		var serviceName = service.get('name');
+	    });
 	});
 
 	Handlebars.registerHelper('isServiceAD', function(serviceName){
