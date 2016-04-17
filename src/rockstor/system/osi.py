@@ -969,7 +969,7 @@ def read_hdparm_setting(dev_byid):
     no file or no matching entry or comment there after was found.
     :param dev_byid: full path device name of by-id type
     :return: comment string immediately following an entry containing the given
-    device name.
+    device name or None if None found or the systemd file didn't exist.
     """
     if dev_byid is None:
         return None
