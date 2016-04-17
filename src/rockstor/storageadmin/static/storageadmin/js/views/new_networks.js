@@ -27,6 +27,7 @@
 NewNetworksView = Backbone.View.extend({
 
 	events: {
+		"click a[data-action=delete]": "deleteConnection",
 		'switchChange.bootstrapSwitch': 'switchStatus'
 	},
 
@@ -109,6 +110,29 @@ NewNetworksView = Backbone.View.extend({
 		var errPopupContent = this.$('#' + connectionId + '-err-popup > div');
 		errPopupContent.html(msg);
 		statusEl.click(function(){ errPopup.overlay().load(); });
+	},
+	
+	deleteConnection: function(event){
+		alert("Are you sure to delete the connection?");
+		var _this = this;
+		var button = $(event.currentTarget);
+		var connectionId = button.attr('id');
+		console.log("connection id is: ", connectionId);
+		if (buttonDisabled(button)) return false;
+		disableButton(button);
+		$.ajax({
+			url: "/api/network/connections/" + connectionId,
+			type: "DELETE",
+		    dataType: "json",
+			success: function() {
+				_this.collection.fetch({reset: true});
+				enableButton(button);
+				app_router.navigate('network2', {trigger: true})
+			},
+			error: function(xhr, status, error) {
+				enableButton(button);
+			}
+		});
 	},
 
 	initHandlebarHelpers: function(){
