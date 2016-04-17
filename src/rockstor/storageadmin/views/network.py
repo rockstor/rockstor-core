@@ -318,8 +318,13 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
 
 
 class NetworkStateView(rfc.GenericView, NetworkMixin):
+    serializer_class = NetworkConnectionSerializer
+
+    def get_queryset(self, *args, **kwargs):
+        return NetworkConnection.objects.all()
 
     def post(self, request):
         with self._handle_exception(request):
             self._refresh_connections()
             self._refresh_devices()
+            return NetworkConnection.objects.all()
