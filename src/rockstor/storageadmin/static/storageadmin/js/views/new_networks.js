@@ -117,7 +117,6 @@ NewNetworksView = Backbone.View.extend({
 		var _this = this;
 		var button = $(event.currentTarget);
 		var connectionId = button.attr('id');
-		console.log("connection id is: ", connectionId);
 		if (buttonDisabled(button)) return false;
 		disableButton(button);
 		$.ajax({

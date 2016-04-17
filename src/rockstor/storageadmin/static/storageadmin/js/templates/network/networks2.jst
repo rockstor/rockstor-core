@@ -96,6 +96,7 @@
       </thead>
       <tbody>
 	{{#each devices}}
+	{{#unless this.connection}}
 	<tr id="{{this.name}}">
 	  <td>{{this.name}}</td>
 	  <td>{{this.dtype}}</td>
@@ -103,6 +104,7 @@
 	  <td>{{this.mtu}}</td>
 	  <td>{{this.state}}</td>
 	</tr>
+	{{/unless}}
 	{{/each}}
       </tbody>
     </table>
