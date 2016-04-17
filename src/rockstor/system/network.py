@@ -148,3 +148,7 @@ def connections():
         tmap['ipv4_dns'] = flatten(tmap['ipv4_dns'])
         cmap[uuid] = tmap
     return cmap
+
+
+def toggle_connection(uuid, switch):
+    return run_command([NMCLI, 'c', switch, uuid])
