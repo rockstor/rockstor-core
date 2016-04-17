@@ -101,7 +101,7 @@
           <div class="form-group">
           <label class="col-sm-4 control-label" for="method">Config Method<span class="required"> *</span></label>
           <div class="col-sm-4">
-            <select class="form-control" id="method" name   ="method">
+            <select class="form-control" id="method" name="method">
               {{#if methodAuto}}
                 <option value="auto" selected="selected">Auto (DHCP)</option>
               {{else}}
@@ -119,25 +119,41 @@
           <div class="form-group">
           <label class="col-sm-4 control-label" for="ipaddr">IP Address<span class="required"> *</span></label>
           <div class="col-sm-4">
-           <input class="form-control" type="text"  id="ipaddr" name="ipaddr" value="{{ipAddr}}" placeholder="IP Address">
+           {{#if connection}}
+           <input class="form-control" type="text"  id="ipaddr" name="ipaddr" value="{{connection.ipAddr}}" placeholder="IP Address">
+           {{else}}
+           <input class="form-control" type="text"  id="ipaddr" name="ipaddr" placeholder="IP Address">
+           {{/if}}          
           </div>
         </div>
         <div class="form-group">
           <label class="col-sm-4 control-label" for="gateway">Gateway<span class="required"> *</span></label>
           <div class="col-sm-4">
-          <input class="form-control" type="text" id="gateway" name="gateway" value="{{gateWay}}" placeholder="Gateway">
+          {{#if connection}}
+          <input class="form-control" type="text" id="gateway" name="gateway" value="{{connection.gateWay}}" placeholder="Gateway">
+          {{else}}
+          <input class="form-control" type="text" id="gateway" name="gateway" placeholder="Gateway">
+          {{/if}}
           </div>
         </div>
         <div class="form-group">
           <label class="col-sm-4 control-label" for="dns_servers">DNS Servers</label>
           <div class="col-sm-4">
-          <input class="form-control" type="text" id="dns_servers" name="dns_servers" value="{{dnsServers}}" placeholder="DNS Servers">
+          {{#if connection}}
+          <input class="form-control" type="text" id="dns_servers" name="dns_servers" value="{{connection.dnsServers}}" placeholder="DNS Servers">
+          {{else}}
+          <input class="form-control" type="text" id="dns_servers" name="dns_servers" placeholder="DNS Servers">
+          {{/if}}
           </div>
         </div>
         <div class="form-group">
           <label class="col-sm-4 control-label" for="search_domains">Search Domains</label>
           <div class="col-sm-4">
-          <input class="form-control" type="text" id="search_domains" name="search_domains" value="{{searchDomains}}" placeholder="Search Domains">
+          {{#if connection}}
+          <input class="form-control" type="text" id="search_domains" name="search_domains" value="{{connection.searchDomains}}" placeholder="Search Domains">
+          {{else}}
+          <input class="form-control" type="text" id="search_domains" name="search_domains" placeholder="Search Domains">
+          {{/if}}
           </div>
         </div>
         </div><!--close methodOptionalFields-->
