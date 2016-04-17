@@ -310,10 +310,10 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
 
     @transaction.atomic
     def post(self, request, id, switch):
-        #switch the connection off or on.
+        #switch the connection up, down or reload.
         with self._handle_exception(request):
             nco = self._nco(request, id)
-            #toggle_connection(nco)
+            network.toggle_connection(nco.uuid, switch)
             return Response(NetworkConnectionSerializer(nco).data)
 
 
