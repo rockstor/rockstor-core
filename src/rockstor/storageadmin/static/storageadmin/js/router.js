@@ -74,7 +74,6 @@ var AppRouter = Backbone.Router.extend({
 	"add-samba-export": "addSambaExport",
 	"samba/edit/:sambaShareId": "editSambaExport",
 	"nfs-exports/edit/:nfsExportGroupId": "editNFSExport",
-	"network": "showNetworks",
 	"network/:name/edit": "editNetwork",
 	"network2": "showNetworks2",
 	"add-connection": "addNetworkConnection",
@@ -444,14 +443,6 @@ var AppRouter = Backbone.Router.extend({
 	this.currentLayout = new EditNFSExportView({
 	    nfsExportGroupId: nfsExportGroupId
 	});
-	$('#maincontent').empty();
-	$('#maincontent').append(this.currentLayout.render().el);
-    },
-
-    showNetworks: function() {
-	this.renderSidebar("system", "network");
-	this.cleanup();
-	this.currentLayout = new NetworksView();
 	$('#maincontent').empty();
 	$('#maincontent').append(this.currentLayout.render().el);
     },

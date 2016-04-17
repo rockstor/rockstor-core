@@ -337,15 +337,6 @@ var ProbeCollection = Backbone.Collection.extend({
     }
 });
 
-var NetworkInterface = Backbone.Model.extend({
-    idAttribute: 'name',
-    urlRoot: '/api/network'
-});
-
-var NetworkInterfaceCollection = RockStorPaginatedCollection.extend({
-    model: NetworkInterface,
-    baseUrl: '/api/network'
-});
 
 var NetworkDevice = Backbone.Model.extend({
     urlRoot: '/api/network/devices'
