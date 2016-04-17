@@ -152,3 +152,7 @@ def connections():
 
 def toggle_connection(uuid, switch):
     return run_command([NMCLI, 'c', switch, uuid])
+
+
+def delete_connection(uuid):
+    return run_command([NMCLI, 'c', 'delete', uuid])
