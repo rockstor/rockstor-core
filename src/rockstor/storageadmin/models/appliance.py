@@ -41,7 +41,7 @@ class Appliance(models.Model):
                     ipaddr = ni.ipv4_addresses.split('/')[0]
                     if (ipaddr == self.ip):
                         return self.ip
-                    ip = ni.ipaddr
+                    ip = ipaddr
             return ip
         except Exception, e:
             msg = ('Failed to grab the management IP of the appliance '
