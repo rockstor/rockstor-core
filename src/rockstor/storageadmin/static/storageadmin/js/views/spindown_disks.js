@@ -38,7 +38,7 @@ SpindownDiskView = RockstorLayoutView.extend({
         this.dependencies.push(this.disks);
         this.tickFormatter = function (d) {
             var formatter = d3.format(",.0f");
-            if (d > 254.5) {
+            if (d > 254.4) {
                 return formatter(d) + " off";
             }
             if (d < 0.5) {
@@ -214,7 +214,7 @@ SpindownDiskView = RockstorLayoutView.extend({
             value = 255;
         }
         this.$('#slider').empty();
-        this.slider = d3.slider2().min(0).max(255).ticks(10).tickFormat(this.tickFormatter).value(value).reclaimable(127).used(1).callback(this.sliderCallback);
+        this.slider = d3.slider2().min(0).max(255).ticks(10).tickFormat(this.tickFormatter).value(value).reclaimable(127).used(0.5).callback(this.sliderCallback);
         d3.select('#slider').call(this.slider);
     },
 
