@@ -111,7 +111,7 @@ NewNetworksView = Backbone.View.extend({
 		errPopupContent.html(msg);
 		statusEl.click(function(){ errPopup.overlay().load(); });
 	},
-	
+
 	deleteConnection: function(event){
 		alert("Are you sure to delete the connection?");
 		var _this = this;
@@ -122,11 +122,11 @@ NewNetworksView = Backbone.View.extend({
 		$.ajax({
 			url: "/api/network/connections/" + connectionId,
 			type: "DELETE",
-		    dataType: "json",
+			dataType: "json",
 			success: function() {
 				_this.collection.fetch({reset: true});
 				enableButton(button);
-				app_router.navigate('network2', {trigger: true})
+				app_router.navigate('network', {trigger: true})
 			},
 			error: function(xhr, status, error) {
 				enableButton(button);
@@ -165,7 +165,9 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 
 	initialize: function() {
 		this.constructor.__super__.initialize.apply(this, arguments);
+		this.connectionId = this.options.sambaShareId || null;
 		this.template = window.JST.network_new_connection;
+		this.connection = new NetworkConnectionCollection({id: this.connectionId})
 		this.devices = new NetworkDeviceCollection();
 		this.devices.on('reset', this.renderDevices, this);
 	},
@@ -179,6 +181,7 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 		var _this = this;
 		$(this.el).empty();
 		$(this.el).append(this.template({
+			connectionId: this.connectionId,
 			devices: this.devices.toJSON(),
 			ctypes: ['ethernet', 'team', 'bond'],
 			teamProfiles: ['broadcast', 'roundrobin', 'activebackup', 'loadbalance', 'lacp'],
@@ -186,6 +189,50 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 		}));
 
 		this.validator = this.$("#new-connection-form").validate({
+			onfocusout: false,
+			onkeyup: false,
+			rules: {
+				name: "required",
+				ipaddr: {
+					required: {
+						depends: function(element) {
+							return (_this.$('#method').val() == 'manual')
+						}
+					}
+				},
+				gateway: {
+					required: {
+						depends: function(element){
+							return (_this.$('#method').val() == 'manual')
+						}
+
+					}
+				},
+				teamprofile: {
+					required: {
+						depends: function(element){
+							return (_this.$('#ctype').val() == 'team')
+						}
+
+					}
+				},
+				bondrofile: {
+					required: {
+						depends: function(element){
+							return (_this.$('#ctype').val() == 'bond')
+						}
+
+					}
+				},
+				devices: {
+					required: {
+						depends: function(element){
+							return (_this.$('#ctype').val() == 'team')
+						}
+
+					}
+				},
+			},
 			submitHandler: function() {
 				var button = _this.$('#submit');
 				if (buttonDisabled(button)) return false;
@@ -196,7 +243,7 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 				var data = _this.$('#new-connection-form').getJSON();
 				conn.save(data, {
 					success: function(model, response, options) {
-						app_router.navigate("network2", {trigger: true});
+						app_router.navigate("network", {trigger: true});
 					},
 					error: function(model, response, options) {
 						enableButton(button);
@@ -248,7 +295,6 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 			placement: 'right',
 			title:"A comma separated list of DNS search domains."
 		});
-
 	},
 
 	// hide fields when selected method is auto
@@ -277,9 +323,11 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 		}
 	},
 
+
+
 	cancel: function(event) {
 		event.preventDefault();
-		app_router.navigate("network2", {trigger: true});
+		app_router.navigate("network", {trigger: true});
 	},
 
 });
