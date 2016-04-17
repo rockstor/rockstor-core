@@ -43,7 +43,7 @@
 	<tbody>
 	  {{#each connections}}
 	  <tr id="{{this.uuid}}">
-	    <td class="accordion-toggle" data-toggle="collapse" data-parent="#OrderPackages" data-target=".packageDetails1"><a> {{this.name}}</a>&nbsp;&nbsp; <a href="#add-connection"><i class="glyphicon glyphicon-pencil"></i></a>
+	    <td class="accordion-toggle" data-toggle="collapse" data-parent="#connections" data-target="#accordion-{{this.id}}"><a> {{this.name}}</a>&nbsp;&nbsp; <a href="#add-connection"><i class="glyphicon glyphicon-pencil"></i></a>
         <a id="{{this.id}}" data-action="delete" rel="tooltip" title="Delete connection"><i class="glyphicon glyphicon-trash"></i></a></td>
 	    <td>{{this.uuid}}</td>
 	    <td>{{this.state}}&nbsp;&nbsp;
@@ -59,8 +59,8 @@
 	  </tr>
 	  <tr>
         <td colspan="3" class="hiddenRow">
-                    <div class="accordion-body collapse packageDetails1" id="accordion1">
-                      <p>The Device Table is: </p>
+                    <div class="accordion-body collapse" id="accordion-{{this.id}}">
+                      <p>This connection's devices</p>
                       <table class="table table-bordered">
                         <tr>
                           <th>Name</th>
@@ -69,13 +69,17 @@
                           <th>MTU</th>
                           <th>State</th>
                         </tr>
+                        {{#each ../devices}}
+                        {{#if (belongsToConnection ../this.id this.connection)}}
                         <tr>
-                        <td>sdskfk</td>
-                        <td>sdjdjds</td>
-                        <td>sdkjsdhsakjf</td>
-                        <td>djshhsfsif</td>
-                        <td>asdksd</td>
-                      </tr>
+                            <td>{{this.name}}</td>
+                            <td>{{this.dtype}}</td>
+                            <td>{{this.mac}}</td>
+                            <td>{{this.mtu}}</td>
+                            <td>{{this.state}}</td>
+                        </tr>
+                        {{/if}}
+                        {{/each}}
                       </table>
                     </div>
                 </td>

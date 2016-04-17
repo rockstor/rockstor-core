@@ -142,6 +142,12 @@ NewNetworksView = Backbone.View.extend({
 			}
 			return new Handlebars.SafeString(html);
 		});
+		Handlebars.registerHelper('belongsToConnection', function(connectionId, deviceConnectionId){
+			if(connectionId == deviceConnectionId){
+				return true;
+			}
+			return false;
+		});
 	}
 
 });
