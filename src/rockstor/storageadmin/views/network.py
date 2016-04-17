@@ -308,12 +308,10 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
     def delete(self, request, id):
         with self._handle_exception(request):
             nco = self._nco(request, id)
-            #delete any slave connections using nmcli
+            #delete any related connections using nmcli
             for snco in nco.networkconnection_set.all():
-                #nmcli delete
-                pass
-
-            #delete the connection using nmcli
+                network.delete_connection(snco.uuid)
+            network.delete_connection(nco.uuid)
             nco.delete()
             return Response()
 
