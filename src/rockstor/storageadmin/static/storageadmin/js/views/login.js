@@ -30,24 +30,10 @@ InitView = RockstorLayoutView.extend({
 	this.constructor.__super__.initialize.apply(this, arguments);
     },
 
-    setIp: function() {
-	var mgmtIface = this.networkInterfaces.find(function(iface) {
-	    return iface.get('itype') == 'management';
-	});
-	if (_.isUndefined(mgmtIface)) {
-	    mgmtIface = this.networkInterfaces.find(function(iface) {
-		if (iface.get('ipaddr')) {
-		    return iface;
-		}
-	    });
-	}
-	RockStorGlobals.ip = mgmtIface.get("ipaddr");
-    },
-
     scanNetwork: function() {
 	var _this = this;
 	$.ajax({
-	    url: "/api/network",
+	    url: "/api/network/refresh",
 	    type: "POST",
 	    dataType: "json",
 	    success: function(data, status, xhr) {
@@ -58,7 +44,6 @@ InitView = RockstorLayoutView.extend({
 
     saveAppliance: function() {
 	var _this = this;
-	this.setIp();
 	// create current appliance if not created already
 	if (this.appliances.length > 0) {
 	    var current_appliance = this.appliances.find(function(appliance) {

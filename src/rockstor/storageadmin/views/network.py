@@ -303,4 +303,5 @@ class NetworkStateView(rfc.GenericView, NetworkMixin):
         with self._handle_exception(request):
             self._refresh_connections()
             self._refresh_devices()
-            return NetworkConnection.objects.all()
+            ns = NetworkConnectionSerializer(NetworkConnection.objects.all(), many=True)
+            return Response(ns.data)
