@@ -126,7 +126,7 @@ NewNetworksView = Backbone.View.extend({
 			success: function() {
 				_this.collection.fetch({reset: true});
 				enableButton(button);
-				app_router.navigate('network2', {trigger: true})
+				app_router.navigate('network', {trigger: true})
 			},
 			error: function(xhr, status, error) {
 				enableButton(button);
@@ -165,7 +165,9 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 
 	initialize: function() {
 		this.constructor.__super__.initialize.apply(this, arguments);
+		this.connectionId = this.options.sambaShareId || null;
 		this.template = window.JST.network_new_connection;
+		this.connection = new NetworkConnectionCollection({id: this.connectionId})
 		this.devices = new NetworkDeviceCollection();
 		this.devices.on('reset', this.renderDevices, this);
 	},
@@ -179,6 +181,7 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 		var _this = this;
 		$(this.el).empty();
 		$(this.el).append(this.template({
+			connectionId: this.connectionId,
 			devices: this.devices.toJSON(),
 			ctypes: ['ethernet', 'team', 'bond'],
 			teamProfiles: ['broadcast', 'roundrobin', 'activebackup', 'loadbalance', 'lacp'],
@@ -240,7 +243,7 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 				var data = _this.$('#new-connection-form').getJSON();
 				conn.save(data, {
 					success: function(model, response, options) {
-						app_router.navigate("network2", {trigger: true});
+						app_router.navigate("network", {trigger: true});
 					},
 					error: function(model, response, options) {
 						enableButton(button);
@@ -324,7 +327,7 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 
 	cancel: function(event) {
 		event.preventDefault();
-		app_router.navigate("network2", {trigger: true});
+		app_router.navigate("network", {trigger: true});
 	},
 
 });

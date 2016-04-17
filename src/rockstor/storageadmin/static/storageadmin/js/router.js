@@ -74,8 +74,8 @@ var AppRouter = Backbone.Router.extend({
 	"add-samba-export": "addSambaExport",
 	"samba/edit/:sambaShareId": "editSambaExport",
 	"nfs-exports/edit/:nfsExportGroupId": "editNFSExport",
-	"network/:name/edit": "editNetwork",
-	"network2": "showNetworks2",
+	"network/edit/:connectionId": "editNetwork",
+	"network": "showNetworks",
 	"add-connection": "addNetworkConnection",
 	"scheduled-tasks": "showScheduledTasks",
 	"scheduled-tasks/:taskId/log": "showTasks",
@@ -447,24 +447,24 @@ var AppRouter = Backbone.Router.extend({
 	$('#maincontent').append(this.currentLayout.render().el);
     },
 
-    showNetworks2: function() {
-	this.renderSidebar("system", "network2");
+    showNetworks: function() {
+	this.renderSidebar("system", "network");
 	this.cleanup();
 	this.currentLayout = new NewNetworksView();
 	$('#maincontent').empty();
 	$('#maincontent').append(this.currentLayout.render().el);
     },
 
-    editNetwork: function(name) {
+    editNetwork: function(connectionId) {
 	this.renderSidebar("system", "network");
 	this.cleanup();
-	this.currentLayout = new EditNetworkView({name: name});
+	this.currentLayout = new NewNetworkConnectionView({connectionId: connectionId});
 	$('#maincontent').empty();
 	$('#maincontent').append(this.currentLayout.render().el);
     },
 
     addNetworkConnection: function() {
-	this.renderSidebar("system", "network2");
+	this.renderSidebar("system", "network");
 	this.cleanup();
 	this.currentLayout = new NewNetworkConnectionView();
 	$('#maincontent').empty();
