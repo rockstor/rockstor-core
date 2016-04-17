@@ -189,15 +189,14 @@ ServicesView = Backbone.View.extend({
 	    if(_this.configurable_services.indexOf(serviceName) > -1) {
 		return true;
 	    }
-	    this.collection.each(function(service) {
-		var serviceName = service.get('name');
-	    });
+	    return false;
 	});
 
 	Handlebars.registerHelper('isServiceAD', function(serviceName){
 	    if(serviceName == "active-directory") {
 		return true;
 	    }
+	    return false;
 	});
 
 	Handlebars.registerHelper('getStatus', function(status){

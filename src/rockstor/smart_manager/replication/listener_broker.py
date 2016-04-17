@@ -21,7 +21,7 @@ import zmq
 import os
 import json
 import time
-from storageadmin.models import (NetworkInterface, Appliance)
+from storageadmin.models import (NetworkConnection, Appliance)
 from smart_manager.models import (ReplicaTrail, ReplicaShare, Replica, Service)
 from django.conf import settings
 from sender import Sender
@@ -158,11 +158,15 @@ class ReplicaScheduler(ReplicationMixin, Process):
 
     def run(self):
         self.law = APIWrapper()
+
         try:
             so = Service.objects.get(name='replication')
             config_d = json.loads(so.config)
-            self.listener_interface = NetworkInterface.objects.get(name=config_d['network_interface']).ipaddr
             self.listener_port = int(config_d['listener_port'])
+            nco = NetworkConnection.objects.get(name=config_d['network_interface'])
+            self.listener_interface = nco.ipaddr
+        except NetworkConnection.DoesNotExist:
+            self.listener_interface = '0.0.0.0'
         except Exception, e:
             msg = ('Failed to fetch network interface for Listner/Broker. '
                    'Exception: %s' % e.__str__())

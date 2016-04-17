@@ -53,6 +53,12 @@ class NetworkConnection(models.Model):
     #slave connections have a master. eg: team
     master = models.ForeignKey('NetworkConnection', null=True)
 
+    @property
+    def ipaddr(self):
+        if (self.ipv4_addresses is None):
+            return None
+        return self.ipv4_addresses.split(',')[0].split('/')[0]
+
     class Meta:
         app_label = 'storageadmin'
 

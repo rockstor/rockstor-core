@@ -75,13 +75,23 @@ def delete_old_kernels(logging, num_retain=5):
             logging.info('Deleted old Kernel: %s' % ml_kernels[i])
 
 
+#@todo: update this as part of #1271. If a connection is designated for
+#management, then that takes precedence over run time logic using the route
+#method.
 def init_update_issue():
     default_if = None
+    some_if = None
     ipaddr = None
     o, e, c = run_command(['/usr/sbin/route'])
     for i in o:
+        if (len(i.strip()) == 0):
+            continue
         if (re.match('default', i) is not None):
             default_if = i.split()[-1]
+        else:
+            some_if = i.split()[-1]
+    if (default_if is None):
+        default_if = some_if
     if (default_if is not None):
         o2, e, c = run_command(['/usr/sbin/ifconfig', default_if])
         for i2 in o2:
