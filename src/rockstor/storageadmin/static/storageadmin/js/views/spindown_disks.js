@@ -188,6 +188,10 @@ SpindownDiskView = RockstorLayoutView.extend({
         // <option value="240">20 minutes</option>
         Handlebars.registerHelper('display_spindown_time', function () {
             var html = '';
+            if (this.hdparmSetting == null){
+                // if there is no previous setting then default to 20 minutes
+                this.hdparmSetting = '20 minutes';
+            }
             for (var timeString in this.spindownTimes) {
                 // Get the last setting by reading it from systemd file's
                 // comment line as neither smart or hdparm can retrieve it.
