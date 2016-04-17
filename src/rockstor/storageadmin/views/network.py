@@ -21,6 +21,7 @@ from tempfile import mkstemp
 from shutil import move
 from django.db import transaction
 from django.conf import settings
+from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from storageadmin.models import (NetworkConnection, NetworkDevice, Appliance,
                                  EthernetConnection, TeamConnection)
@@ -281,6 +282,14 @@ class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
 
 class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
     serializer_class = NetworkConnectionSerializer
+
+    def get(self, *args, **kwargs):
+        try:
+            data = NetworkConnection.objects.get(id=self.kwargs['id'])
+            sdata = NetworkConnectionSerializer(data)
+            return Response(sdata.data)
+        except NetworkConnection.DoesNotExist:
+            raise NotFound(detail=None)
 
     @staticmethod
     def _nco(request, id):
