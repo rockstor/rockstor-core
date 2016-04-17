@@ -75,37 +75,6 @@ class NetworkMixin(object):
         move(npath, conf)
         superctl('nginx', 'restart')
 
-    @classmethod
-    @transaction.atomic
-    def _refresh_ni(cls):
-        config_d = get_net_config(all=True)
-        for dconfig in config_d.values():
-            ni = None
-            if (NetworkInterface.objects.filter(
-                    name=dconfig['name']).exists()):
-                ni = NetworkInterface.objects.get(name=dconfig['name'])
-                ni = cls._update_ni_obj(ni, dconfig)
-            else:
-                ni = NetworkInterface(name=dconfig.get('name', None),
-                                      dname=dconfig.get('dname', None),
-                                      dtype=dconfig.get('dtype', None),
-                                      dspeed=dconfig.get('dspeed', None),
-                                      mac=dconfig.get('mac', None),
-                                      method=dconfig.get('method', None),
-                                      autoconnect=dconfig.get('autoconnect', None),
-                                      netmask=dconfig.get('netmask', None),
-                                      ipaddr=dconfig.get('ipaddr', None),
-                                      gateway=dconfig.get('gateway', None),
-                                      dns_servers=dconfig.get('dns_servers', None),
-                                      ctype=dconfig.get('ctype', None),
-                                      state=dconfig.get('state', None))
-            ni.save()
-        for ni in NetworkInterface.objects.all():
-            if (ni.dname not in config_d):
-                logger.debug('network interface(%s) does not exist in the '
-                             'system anymore. Removing from db' % (ni.name))
-                ni.delete()
-
     @staticmethod
     @transaction.atomic
     def _update_or_create_ctype(co, ctype, config):
