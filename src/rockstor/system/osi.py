@@ -695,30 +695,36 @@ def get_disk_APM_level(device_name):
     Possible return values from the command are:
     1 to 254 ie min to max power use
     'off' = equivalent to 255 setting
-    If we receive an error message, can happen even with rc=0 we ignore any
-    reading and return 'unknown'
-
+    If we receive an error message, can happen even with rc=0, we ignore any
+    reading and return 0. We also translate the 'off' setting back to it's
+    number equivalent
     :param device_name: disk name as stored in db / Disk model eg sda
-    :return: APM setting read from the drive ie 1 - 255 or off or None if an
-    error occurred ie when APM is not supported
+    :return: APM setting read from the drive ie 1 - 255 (off is translated to
+    it's setting equivalent of 255. If there is an error, such as can happen
+    when APM is not supported, then we return 0.
     """
     # todo - consider combining with get_disk_power_status(device_name) via
     # todo - a switch option
     # if we use the -B -q switches then we have only one line of output:
     # hdparm -B -q /dev/sda
     #  APM_level<tab>= 192
+    #  APM_level<tab>= off
+    #  APM_level<tab>= not supported
     out, err, rc = run_command([HDPARM, '-B', '-q', '/dev/%s' % device_name],
                                throw=False)
     if len(err) != 1:
         # In some instances an error can be returned even with rc=0.
         # ie SG_IO: bad/missing sense data, sb[]:  70 00 05 00 00 00 00 0a ...
-        return 'unknown'  # don't trust any results in this instance
+        return 0  # don't trust any results in this instance
     if len(out) > 0:
         fields = out[0].split()
         # our line of interest has 3 fields when split by spaces, see above.
         if (len(fields) == 3):
-            return fields[2]
-    return 'unknown'
+            level = fields[2]
+            if level == 'off':
+                return 255
+            return level
+    return 0
 
 
 def set_disk_spindown(device, spindown_time, apm_value,
@@ -733,7 +739,9 @@ def set_disk_spindown(device, spindown_time, apm_value,
     :param device: The name of a disk device as used in the db ie sda
     :param spindown_time: Integer received from settings form ie 240
     :param apm_value: value to be used with hdparm's -B parameter to set the
-    drives APM level should be between 1-255 and will be ignored if not.
+    drives APM level. Should be between 1-255 and will be ignored if not. When
+    ignored there will be no hdparm -B executed and no -B switch added to the
+    relevant systemd line.
     :param spindown_message: message received from drop down as human presented
     selection, used later in systemd script to retrieve previous setting.
     :return: False if an hdparm command was not possible ie inappropriate dev,

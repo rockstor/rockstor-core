@@ -42,7 +42,7 @@ SpindownDiskView = RockstorLayoutView.extend({
                 return formatter(d) + " off";
             }
             if (d < 0.5) {
-                return "remove"
+                return "none"
             }
             return formatter(d);
         }
@@ -150,6 +150,15 @@ SpindownDiskView = RockstorLayoutView.extend({
         // apmLevel = the current sensed level from the drive
         // apm_value = the text box and it's entered value
         // set the text box to show the current sensed APM level
+
+        // apmLevel can be 'unknown' which is displayed as
+        if (apmLevel == 0){
+            // we have a device that doesn't support APM or there was an error
+            // reading it's current level so disable / hide our APM settings.
+            console.log('the received value of APM =' + apmLevel);
+            // this.$('enable_apm').attr('checked','false')
+
+        }
         _this.renderSlider();
         // update the slider when the apm_value text box is changed
         _this.$("#apm_value").change(function () {
@@ -239,13 +248,9 @@ SpindownDiskView = RockstorLayoutView.extend({
     },
 
     renderSlider: function () {
-        var value = this.apmLevel;
-        // when queried hdparm -B returns off when set to 255 so reverse this
-        if (value == 'off') {
-            value = 255;
-        }
+        // Callback used to broadcast our changing value.
         this.$('#slider').empty();
-        this.slider = d3.slider2().min(0).max(255).ticks(10).tickFormat(this.tickFormatter).value(value).reclaimable(127).used(0.5).callback(this.sliderCallback);
+        this.slider = d3.slider2().min(0).max(255).ticks(10).tickFormat(this.tickFormatter).value(0).reclaimable(127).used(0.5).callback(this.sliderCallback);
         d3.select('#slider').call(this.slider);
     },
 
