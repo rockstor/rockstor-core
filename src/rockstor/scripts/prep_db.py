@@ -36,7 +36,8 @@ def register_services():
         'S.M.A.R.T': 'smartd',
         'NUT-UPS': 'nut',
         'ZTaskd': 'ztask-daemon',
-        'Bootstrap': 'rockstor-bootstrap', }
+        'Bootstrap': 'rockstor-bootstrap',
+        'Rockstor': 'rockstor',}
 
     for k,v in services.items():
         try:

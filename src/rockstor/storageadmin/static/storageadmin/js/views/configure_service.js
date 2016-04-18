@@ -85,6 +85,10 @@ ConfigureServiceView = RockstorLayoutView.extend({
 	    replication: {
 		listener_port: 'required',
 		network_interface: 'required'
+	    },
+	    rockstor: {
+		listener_port: 'required',
+		network_interface: 'required'
 	    }
 	}
 
@@ -106,7 +110,10 @@ ConfigureServiceView = RockstorLayoutView.extend({
 
     renderServiceConfig: function () {
 	var _this = this;
-	var default_port = 10002;
+	var default_port = 443;
+	if (this.service.get('name') == 'replication') {
+	    default_port = 10002;
+	}
 	var config = this.service.get('config');
 	var configObj = {};
 	if (config != null) {
@@ -240,6 +247,16 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
 	    html: true,
 	    placement: 'right',
 	    title: 'A valid port number(between 1-65535) for the listener. Default/Suggested port -- 10002'
+	});
+	this.$('#rockstor-form #network_interface').tooltip({
+	    html: true,
+	    placement: 'right',
+	    title: 'Select the Network connection for Rockstor. <b>WARNING!!!</b> UI may become inaccessible after changing the interface. It should be available on the new interface IP/Hostname after a momentary pause.'
+	});
+	this.$('#rockstor-form #listener_port').tooltip({
+	    html: true,
+	    placement: 'right',
+	    title: 'While default port(443) is recommended for most users, advanced users can change it to access UI on a different port. <b>Changing the port will make UI inaccessible.</b> After a momentary pause, it should be available on the new port.'
 	});
 
 	this.validator = this.$('#' + this.formName).validate({

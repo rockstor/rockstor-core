@@ -47,8 +47,8 @@ def init_service_op(service_name, command, throw=True):
     :return: out err rc
     """
     supported_services = ('nfs', 'smb', 'sshd', 'ypbind', 'rpcbind', 'ntpd',
-                          'nslcd', 'netatalk', 'snmpd', 'docker',
-                          'smartd', 'nut-server', 'rockstor-bootstrap',)
+                          'nslcd', 'netatalk', 'snmpd', 'docker', 'smartd',
+                          'nut-server', 'rockstor-bootstrap', 'rockstor')
     if (service_name not in supported_services):
         raise Exception('unknown service: %s' % service_name)
 
@@ -218,3 +218,23 @@ def refresh_afp_config(afpl):
             rockstor_afp_config(tfo, afpl)
     shutil.move(npath, AFP_CONFIG)
     os.chmod(AFP_CONFIG, 0644)
+
+
+def update_nginx(ip, port):
+    conf = '%s/etc/nginx/nginx.conf' % settings.ROOT_DIR
+    fo, npath = mkstemp()
+    with open(conf) as ifo, open(npath, 'w') as tfo:
+        for line in ifo.readlines():
+            if (re.search('listen.*80 default_server', line) is not None):
+                substr = 'listen 80'
+                if (ip is not None):
+                    substr = 'listen %s:80' % ip
+                line = re.sub(r'listen.*80', substr, line)
+            elif (re.search('listen.*default_server', line) is not None):
+                substr = 'listen %d default_server' % port
+                if (ip is not None):
+                    substr = 'listen %s:%s default_server' % (ip, port)
+                line = re.sub(r'listen.* default_server', substr, line)
+            tfo.write(line)
+    move(npath, conf)
+    superctl('nginx', 'restart')
