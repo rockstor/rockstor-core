@@ -85,6 +85,12 @@ class NetworkDevice(models.Model):
     state = models.CharField(max_length=64, null=True)
     mtu = models.CharField(max_length=64, null=True)
 
+    @property
+    def cname(self):
+        if (self.connection is None):
+            return None
+        return self.connection.name
+
     class Meta:
         app_label = 'storageadmin'
 

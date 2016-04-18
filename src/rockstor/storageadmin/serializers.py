@@ -141,6 +141,8 @@ class DashboardConfigSerializer(serializers.ModelSerializer):
 
 
 class NetworkDeviceSerializer(serializers.ModelSerializer):
+    cname = serializers.CharField()
+
     class Meta:
         model = NetworkDevice
 
