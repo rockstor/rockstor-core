@@ -39,43 +39,6 @@ logger = logging.getLogger(__name__)
 class NetworkMixin(object):
 
     @staticmethod
-    def _update_ni_obj(nio, values):
-        nio.dname = values.get('dname', nio.dname)
-        nio.mac = values.get('mac', nio.mac)
-        nio.method = values.get('method', 'manual')
-        nio.autoconnect = values.get('autoconnect', 'no')
-        nio.netmask = values.get('netmask', nio.netmask)
-        nio.ipaddr = values.get('ipaddr', nio.ipaddr)
-        nio.gateway = values.get('gateway', nio.gateway)
-        nio.dns_servers = values.get('dns_servers', nio.dns_servers)
-        nio.ctype = values.get('ctype', nio.ctype)
-        nio.dtype = values.get('dtype', nio.dtype)
-        nio.dspeed = values.get('dspeed', nio.dspeed)
-        nio.state = values.get('state', nio.state)
-        return nio
-
-    @staticmethod
-    def _update_nginx(ipaddr=None):
-        #update nginx config and restart the service
-        conf = '%s/etc/nginx/nginx.conf' % settings.ROOT_DIR
-        fo, npath = mkstemp()
-        with open(conf) as ifo, open(npath, 'w') as tfo:
-            for line in ifo.readlines():
-                if (re.search('listen.*80 default_server', line) is not None):
-                    substr = 'listen 80'
-                    if (ipaddr is not None):
-                        substr = 'listen %s:80' % ipaddr
-                    line = re.sub(r'listen.*80', substr, line)
-                elif (re.search('listen.*443 default_server', line) is not None):
-                    substr = 'listen 443'
-                    if (ipaddr is not None):
-                        substr = 'listen %s:443' % ipaddr
-                    line = re.sub(r'listen.*443', substr, line)
-                tfo.write(line)
-        move(npath, conf)
-        superctl('nginx', 'restart')
-
-    @staticmethod
     @transaction.atomic
     def _update_or_create_ctype(co, ctype, config):
         if (ctype == '802-3-ethernet'):
