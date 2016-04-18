@@ -41,11 +41,13 @@ class Appliance(models.Model):
             ip = self.ip
             so = Service.objects.get(name='rockstor')
             if (so.config is not None):
-                config = json.loads(so.config)
                 try:
-                    return NetworkConnection.objects.get(name=config['network_interface']).ipaddr
-                except NetworkConnection.DoesNotExist:
-                    return None
+                    config = json.loads(so.config)
+                    nco = NetworkConnection.objects.get(name=config['network_interface'])
+                    if (nco.ipaddr is not None):
+                        return nco.ipaddr
+                except:
+                    pass
             return ip
         except Exception, e:
             msg = ('Failed to grab the management IP of the appliance '

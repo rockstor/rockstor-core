@@ -124,11 +124,11 @@ def init_update_issue():
 
 
 def update_nginx(logger):
-    #importing here because, APIWrapper needs postgres to be setup, so
-    #importing at the top results in failure the first time. catch22.
-    from smart_manager.models import Service
-    from storageadmin.models import NetworkConnection
     try:
+        #importing here because, APIWrapper needs postgres to be setup, so
+        #importing at the top results in failure the first time.
+        from smart_manager.models import Service
+        from storageadmin.models import NetworkConnection
         ip = None
         port = 443
         so = Service.objects.get(name='rockstor')
