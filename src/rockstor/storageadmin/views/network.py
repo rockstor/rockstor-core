@@ -182,12 +182,13 @@ class NetworkDeviceListView(rfc.GenericView, NetworkMixin):
     def get_queryset(self, *args, **kwargs):
         with self._handle_exception(self.request):
             self._refresh_devices()
+            #don't return unmanaged devices
+            #return NetworkDevice.objects.filter(~Q(state='10 (unmanaged)'))
             return NetworkDevice.objects.all()
-
 
 class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
     serializer_class = NetworkConnectionSerializer
-    con_types = ('ethernet', 'team', 'bond')
+    ctypes = ('ethernet', 'team', 'bond')
     team_profiles = ('broadcast', 'roundrobin', 'activebackup', 'loadbalance', 'lacp')
     #ethtool is the default link watcher.
     runners = {
@@ -207,17 +208,18 @@ class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
     @transaction.atomic
     def post(self, request):
         with self._handle_exception(request):
-            con_name = request.data.get('con_name')
-            if (NetworkConnection.objects.filter(name=con_name).exists()):
+            logger.debug('request data = %s' % request.data)
+            name = request.data.get('name')
+            if (NetworkConnection.objects.filter(name=name).exists()):
                 e_msg = ('Connection name(%s) is already in use. Choose a different name.' % con_name)
                 handle_exception(Exception(e_msg), request)
 
             #connection type can be one of ethernet, team or bond
-            con_type = request.data.get('con_type')
-            if (con_type not in self.con_types):
+            ctype = request.data.get('ctype')
+            if (ctype not in self.ctypes):
                 e_msg = ('Unsupported connection type(%s). Supported ones include: %s' % (con_type, self.con_types))
                 handle_exception(Exception(e_msg), request)
-            if (con_type == 'team'):
+            if (ctype == 'team'):
                 #gather required input for team
                 team_profile = request.data.get('team_profile')
                 if (team_profile not in self.team_profiles):
@@ -234,26 +236,31 @@ class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
                         e_msg = ('Unknown network device(%s)' % d)
                         handle_exception(Exception(e_msg), request)
 
-            elif (con_type == 'ethernet'):
-                #no extra info necessary, really.
-                pass
+            elif (ctype == 'ethernet'):
+                device = request.data.get('device')
+                try:
+                    ndo = NetworkDevice.objects.get(name=device)
+                except NetworkDevice.DoesNotExist:
+                    e_msg = ('Network device(%s) does not exist' % device)
+                    handle_exception(Exception(e_msg), request)
+
             elif (con_type == 'bond'):
                 #gather required input for bond
                 pass
 
             #auto of manual
-            config_method = request.data.get('config_method')
-            if (config_method not in self.config_methods):
-                e_msg = ('Unsupported config method(%s). Supported ones include: %s' % (config_method, self.config_methods))
+            method = request.data.get('method')
+            if (method not in self.config_methods):
+                e_msg = ('Unsupported config method(%s). Supported ones include: %s' % (method, self.config_methods))
                 handle_exception(Exception(e_msg), request)
-            if (config_method == 'manual'):
+            if (method == 'manual'):
                 #ipaddr is of the format <IP>/<netmask>. eg: 192.168.1.2/24. If netmask is not given, it defaults to 32.
                 ipaddr = request.data.get('ipaddr')
-                gw = request.data.get('gw')
+                gateway = request.data.get('gateway')
                 dns_servers = request.data.get('dns_servers', None)
                 search_domains = request.data.get('search_domains', None)
 
-            return NetworkConnection.objects.all()
+            return Response()
 
 
 class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
