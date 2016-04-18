@@ -51,6 +51,7 @@ SpindownDiskView = RockstorLayoutView.extend({
             return formatter(d);
         }
         this.slider = null;
+        // update the text box apm_value when ever the slider is moved.
         this.sliderCallback = function (slider) {
             var value = slider.value();
             _this.$('#apm_value').val(_this.tickFormatterText(value));
@@ -146,7 +147,19 @@ SpindownDiskView = RockstorLayoutView.extend({
         //    _this.renderSlider();
         //}
 
+        // apmLevel = the current sensed level from the drive
+        // apm_value = the text box and it's entered value
+        // set the text box to show the current sensed APM level
         _this.renderSlider();
+        // update the slider when the apm_value text box is changed
+        _this.$("#apm_value").change(function () {
+            var our_value = this.value;
+            _this.slider.setValue((our_value));
+        });
+        _this.$('#apm_value').val(apmLevel);
+        // now call the change event on text box apm_value to update the slider
+        _this.$('#apm_value').change();
+
 
         this.$('#add-spindown-disk-form').validate({
             onfocusout: false,
