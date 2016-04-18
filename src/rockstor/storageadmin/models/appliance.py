@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.db import models
 from storageadmin.models import NetworkConnection
+from smart_manager.models import Service
 
 class Appliance(models.Model):
     """uuid is hostid-uid"""
@@ -36,12 +37,14 @@ class Appliance(models.Model):
             return self.ip
         try:
             ip = self.ip
-            for ni in NetworkConnection.objects.all():
-                if (ni.ipv4_addresses is not None):
-                    ipaddr = ni.ipv4_addresses.split('/')[0]
-                    if (ipaddr == self.ip):
-                        return self.ip
-                    ip = ipaddr
+            so = Service.objects.get(name='rockstor')
+            if (so.config is not None):
+                import json
+                config = json.loads(so.config)
+                try:
+                    return NetworkConnection.objects.get(name=config['network_interface']).ipaddr
+                except NetworkConnection.DoesNotExist:
+                    return None
             return ip
         except Exception, e:
             msg = ('Failed to grab the management IP of the appliance '
