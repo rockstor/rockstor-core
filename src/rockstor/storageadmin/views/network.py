@@ -80,12 +80,19 @@ class NetworkMixin(object):
     def _update_or_create_ctype(co, ctype, config):
         if (ctype == '802-3-ethernet'):
             try:
-                eco = EthernetConnection.objects.filter(connection=co).update(**config)
+                eco = EthernetConnection.objects.get(connection=co)
+                eco.mac = config['mac']
+                eco.cloned_mac = config['cloned_mac']
+                eco.mtu = config['mtu']
+                eco.save()
             except EthernetConnection.DoesNotExist:
                 EthernetConnection.objects.create(connection=co, **config)
         elif (ctype == 'team'):
             try:
-                tco = TeamConnection.objects.filter(connection=co).update(**config)
+                tco = TeamConnection.objects.get(connection=co)
+                tco.name = config['name']
+                tco.config = config['config']
+                tco.save()
             except TeamConnection.DoesNotExist:
                 TeamConnection.objects.create(connection=co, **config)
 

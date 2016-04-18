@@ -31,6 +31,7 @@
         <tr>
           <th scope="col" abbr="Name">Name</th>
 	  <th scope="col" abbr="UUID">UUID</th>
+	  <th scope="col" abbr="Type">Type</th>
 	  <th scope="col" abbr="State">State</th>
 	  <th scope="col" abbr="Method">Connection method</th>
           <th scope="col" abbr="Address">IP Address</th>
@@ -45,6 +46,7 @@
 	    <td class="accordion-toggle" data-toggle="collapse" data-parent="#connections" data-target="#accordion-{{this.id}}"><a> {{this.name}}</a>&nbsp;&nbsp; <a href="#network/edit/{{this.id}}"><i class="glyphicon glyphicon-pencil"></i></a>
         <a id="{{this.id}}" data-action="delete" rel="tooltip" title="Delete connection"><i class="glyphicon glyphicon-trash"></i></a></td>
 	    <td>{{this.uuid}}</td>
+	    <td>{{this.ctype}}</td>
 	    <td>{{this.state}}&nbsp;&nbsp;
     	    <input type="checkbox" data-connection-id="{{this.id}}" data-name="{{this.name}}" data-size="mini" {{getState this.state}}>
     	    <div class="command-status" data-connection-id="{{this.id}}">&nbsp;</div>
@@ -115,6 +117,6 @@
     <div>
     {{pagination}}
    </div>
-   
+
   </div> <!-- col-md-12 -->
 </div> <!-- row -->
