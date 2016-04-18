@@ -114,15 +114,32 @@ SpindownDiskView = RockstorLayoutView.extend({
             return err_msg;
         };
 
-        this.$('#enable_apm').click(function () {
-            $('#apm_value').prop('disable', !this.checked); // disable apm text
-            //$('#slide_lower_half').prop('disable', !this.checked);
-            //$('#slide_upper_half').prop('disable', !this.checked);
-            //$('#slide_disabled').prop('disable', !this.checked);
-            //if (this.checked) {
-            //    _this.renderSlider();
-            //}
-        });
+        $.validator.addMethod('validateApmValue', function (value) {
+            var apm_value = $('#apm_value').val();
+            if (apm_value == "") {
+                err_msg = 'Please enter an APM value (1-255), or 0 to not apply an APM settings.';
+                return false;
+            }
+            if (/^[0-9\b]+$/.test(apm_value) == false) {
+                err_msg = 'Invalid APM value: please enter a number in the range 0-255.';
+                return false;
+            }
+            if (apm_value < 0 || apm_value > 255) {
+                err_msg = 'The APM setting must be between 0 (no setting) and 255 (disabled).';
+                return false;
+            }
+            return true;
+        }, spindown_err_msg);
+
+        //this.$('#enable_apm').click(function () {
+        //    $('#apm_value').prop('disable', !this.checked); // disable apm text
+        //    //$('#slide_lower_half').prop('disable', !this.checked);
+        //    //$('#slide_upper_half').prop('disable', !this.checked);
+        //    //$('#slide_disabled').prop('disable', !this.checked);
+        //    //if (this.checked) {
+        //    //    _this.renderSlider();
+        //    //}
+        //});
 
         //if (apmLevel != 'unknown' || apmLevel != null) {
         //    // don't show apm slider if we couldn't read apm value
@@ -136,10 +153,11 @@ SpindownDiskView = RockstorLayoutView.extend({
             onkeyup: false,
             rules: {
                 spindown_time: 'required',
-                slider: {
-                    required: "#enable_apm:checked" // slider required only if
-                    // APM settings tickbox enabled.
-                },
+                apm_value: 'validateApmValue',
+                //slider: {
+                //    required: "#enable_apm:checked" // slider required only if
+                //    // APM settings tickbox enabled.
+                //},
             },
 
             submitHandler: function () {
