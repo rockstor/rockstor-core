@@ -221,6 +221,7 @@ def refresh_afp_config(afpl):
 
 
 def update_nginx(ip, port):
+    port = int(port)
     conf = '%s/etc/nginx/nginx.conf' % settings.ROOT_DIR
     fo, npath = mkstemp()
     with open(conf) as ifo, open(npath, 'w') as tfo:

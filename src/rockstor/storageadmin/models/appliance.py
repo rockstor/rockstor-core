@@ -16,9 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import json
 from django.db import models
 from storageadmin.models import NetworkConnection
 from smart_manager.models import Service
+
 
 class Appliance(models.Model):
     """uuid is hostid-uid"""
@@ -39,7 +41,6 @@ class Appliance(models.Model):
             ip = self.ip
             so = Service.objects.get(name='rockstor')
             if (so.config is not None):
-                import json
                 config = json.loads(so.config)
                 try:
                     return NetworkConnection.objects.get(name=config['network_interface']).ipaddr
