@@ -156,12 +156,17 @@ SpindownDiskView = RockstorLayoutView.extend({
             // we have a device that doesn't support APM or there was an error
             // reading it's current level so disable / hide our APM settings.
             console.log('the received value of APM =' + apmLevel);
-            // this.$('enable_apm').attr('checked','false')
+            //this.$('#enable_apm').attr('checked', 'true');
+            this.$('#enable_apm').removeAttr('checked');
+            this.$('#enable_apm').attr('disabled', 'true');
+            //this.$('#slider').hide();
+            this.$('#slider-entry').hide();
+            this.$('#slider-key').hide();
 
         }
         _this.renderSlider();
         // update the slider when the apm_value text box is changed
-        _this.$("#apm_value").change(function () {
+        _this.$('#apm_value').change(function () {
             var our_value = this.value;
             _this.slider.setValue((our_value));
         });
