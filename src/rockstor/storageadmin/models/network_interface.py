@@ -59,6 +59,14 @@ class NetworkConnection(models.Model):
             return None
         return self.ipv4_addresses.split(',')[0].split('/')[0]
 
+    @property
+    def ctype(self):
+        if (self.ethernetconnection_set.count() > 0):
+            return 'ethernet'
+        if (self.teamconnection_set.count() > 0):
+            return 'team'
+        return None
+
     class Meta:
         app_label = 'storageadmin'
 

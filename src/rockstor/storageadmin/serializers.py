@@ -146,6 +146,8 @@ class NetworkDeviceSerializer(serializers.ModelSerializer):
 
 
 class NetworkConnectionSerializer(serializers.ModelSerializer):
+    ctype = serializers.CharField()
+
     class Meta:
         model = NetworkConnection
 
