@@ -279,10 +279,14 @@ DisksView = Backbone.View.extend({
                 html += '</td>';
                 // begin APM column
                 html += '<td>';
-                if (apmLevel == 'unknown' || apmLevel == null){
+                if (apmLevel == 0 || apmLevel == null) {
                     html += '???';
                 } else {
-                    html += apmLevel;
+                    if (apmLevel == 255) {
+                        html += 'off';
+                    } else {
+                        html += apmLevel;
+                    }
                 }
                 html += ' ';
                 html += '</td>';
