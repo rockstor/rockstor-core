@@ -223,7 +223,8 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 	    devices: this.devices.toJSON(),
 	    ctypes: ['ethernet', 'team', 'bond'],
 	    teamProfiles: ['broadcast', 'roundrobin', 'activebackup', 'loadbalance', 'lacp'],
-	    bondProfiles: ['roundrobin', 'activebackup', 'xor', 'broadcast', '802.3ad', ]
+	    bondProfiles: ['balance-rr', 'active-backup', 'balance-xor', 'broadcast',
+			    '802.3ad', 'balance-tlb', 'balance-alb']
 	}));
 
 	if (this.connection) {
@@ -250,7 +251,7 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 
 		    }
 		},
-		teamprofile: {
+		team_profile: {
 		    required: {
 			depends: function(element){
 			    return (_this.$('#ctype').val() == 'team');
@@ -258,7 +259,7 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 
 		    }
 		},
-		bondrofile: {
+		bond_profile: {
 		    required: {
 			depends: function(element){
 			    return (_this.$('#ctype').val() == 'bond');
@@ -273,7 +274,7 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 			}
 
 		    }
-		},
+		}
 	    },
 	    submitHandler: function() {
 		var button = _this.$('#submit');
