@@ -22,11 +22,10 @@ from smart_manager.views import (NISServiceView, BaseServiceView,
                                  NTPServiceView, ActiveDirectoryServiceView,
                                  LdapServiceView, SFTPServiceView,
                                  ReplicationServiceView,
-                                 TaskSchedulerServiceView,
-                                 DataCollectorServiceView, ServiceMonitorView,
-                                 AFPServiceView, SNMPServiceView,
-                                 DockerServiceView, SMARTDServiceView,
-                                 NUTServiceView, ZTaskdServiceView, BootstrapServiceView)
+                                 DataCollectorServiceView, AFPServiceView,
+                                 SNMPServiceView, DockerServiceView,
+                                 SMARTDServiceView, NUTServiceView,
+                                 ZTaskdServiceView, BootstrapServiceView)
 
 command_regex = ('config|start|stop')
 
@@ -54,15 +53,9 @@ urlpatterns = patterns(
     url(r'^replication$', ReplicationServiceView.as_view()),
     url(r'^replication/(?P<command>%s)$' % command_regex,
         ReplicationServiceView.as_view()),
-    url(r'^task-scheduler$', TaskSchedulerServiceView.as_view()),
-    url(r'^task-scheduler/(?P<command>%s)$' % command_regex,
-        TaskSchedulerServiceView.as_view()),
     url(r'^data-collector$', DataCollectorServiceView.as_view()),
     url(r'^data-collector/(?P<command>%s)$' % command_regex,
         DataCollectorServiceView.as_view()),
-    url(r'^service-monitor$', ServiceMonitorView.as_view()),
-    url(r'^service-monitor/(?P<command>%s)$' % command_regex,
-        ServiceMonitorView.as_view()),
     url(r'^snmpd$', SNMPServiceView.as_view()),
     url(r'^snmpd/(?P<command>%s)$' % command_regex, SNMPServiceView.as_view()),
     url(r'^docker$', DockerServiceView.as_view()),

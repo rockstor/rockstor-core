@@ -42,9 +42,7 @@ from task_scheduler import (TaskSchedulerListView, TaskSchedulerDetailView)
 from task_log import TaskLogView
 from replica_share import (ReplicaShareListView, ReplicaShareDetailView)
 from receive_trail import (ReceiveTrailListView, ReceiveTrailDetailView)
-from ts_service import TaskSchedulerServiceView
 from dc_service import DataCollectorServiceView
-from sm_service import ServiceMonitorView
 from afp_service import AFPServiceView
 from snmp_service import SNMPServiceView
 from docker_service import DockerServiceView

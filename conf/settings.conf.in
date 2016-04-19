@@ -162,7 +162,6 @@ INSTALLED_APPS = (
     'pipeline',
     'rest_framework',
     'smart_manager',
-    'south',
     'oauth2_provider',
     'django_ztask',
 )
@@ -351,8 +350,6 @@ COMMANDS = {
 SYSCONFIG = {
 	  'ntp': '/etc/ntp.conf',
 }
-
-SOUTH_TESTS_MIGRATE = False
 
 REST_FRAMEWORK = {
 	'DEFAULT_PAGINATION_CLASS': 'rest_framework_custom.custom_pagination.CustomPagination',
