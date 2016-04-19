@@ -9,7 +9,14 @@
     </tr>
   </thead>
   <tbody>
-  {{display_disksToAdd}}
+  {{#each disks}}
+  <tr>
+    <td>{{mathHelper @index}}</td>
+    <td>{{this.name}}</td>
+    <td>{{humanReadableSize this.size}}</td>
+    <td>{{this.parted}}</td>
+    <td><input type="checkbox" name="diskname" id="{{this.name}}" value="{{this.name}}" class="diskname"></td>
+  {{/each}}
   </tbody>
 </table>
 
