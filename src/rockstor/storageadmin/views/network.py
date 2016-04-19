@@ -53,7 +53,7 @@ class NetworkMixin(object):
         elif (ctype == 'team'):
             try:
                 tco = TeamConnection.objects.get(connection=co)
-                tco.name = config['name']
+                tco.name = co.name
                 tco.config = config['config']
                 tco.save()
             except TeamConnection.DoesNotExist:
@@ -153,13 +153,14 @@ class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
     serializer_class = NetworkConnectionSerializer
     ctypes = ('ethernet', 'team', 'bond')
     team_profiles = ('broadcast', 'roundrobin', 'activebackup', 'loadbalance', 'lacp')
+    bond_profiles = ('roundrobin', 'activebackup', 'xor', 'broadcast', '802.3ad',)
     #ethtool is the default link watcher.
     runners = {
-        'broadcast': {'name': 'broadcast'},
-        'roundrobin': {'name': 'roundrobin'},
-        'activebackup': {'name': 'activebackup'},
-        'loadbalance': {'name': 'loadbalance'},
-        'lacp': {'name': 'lacp'},
+        'broadcast': '{ "runner": {"name": "broadcast"}}',
+        'roundrobin': '{ "runner": {"name": "roundrobin"}}',
+        'activebackup': '{ "runner": {"name": "activebackup"}}',
+        'loadbalance': '{ "runner": {"name": "loadbalance"}}',
+        'lacp': '{ "runner": {"name": "lacp"}}',
     }
     config_methods = ('auto', 'manual')
 
@@ -168,48 +169,30 @@ class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
             self._refresh_connections()
             return NetworkConnection.objects.all()
 
+    @staticmethod
+    def _validate_devices(devices, request, size=2):
+        if (not isinstance(devices, list)):
+            raise Exception('devices must be a list')
+        if (len(devices) < size):
+            raise Exception('A minimum of %d devices are required' % size)
+        for d in devices:
+            try:
+                ndo = NetworkDevice.objects.get(name=d)
+                #if device belongs to another connection, change it.
+            except NetworkDevice.DoesNotExist:
+                e_msg = ('Unknown network device(%s)' % d)
+                handle_exception(Exception(e_msg), request)
+        return devices
+
     @transaction.atomic
     def post(self, request):
         with self._handle_exception(request):
             logger.debug('request data = %s' % request.data)
+            ipaddr = gateway = dns_servers = search_domains = None
             name = request.data.get('name')
             if (NetworkConnection.objects.filter(name=name).exists()):
-                e_msg = ('Connection name(%s) is already in use. Choose a different name.' % con_name)
+                e_msg = ('Connection name(%s) is already in use. Choose a different name.' % name)
                 handle_exception(Exception(e_msg), request)
-
-            #connection type can be one of ethernet, team or bond
-            ctype = request.data.get('ctype')
-            if (ctype not in self.ctypes):
-                e_msg = ('Unsupported connection type(%s). Supported ones include: %s' % (con_type, self.con_types))
-                handle_exception(Exception(e_msg), request)
-            if (ctype == 'team'):
-                #gather required input for team
-                team_profile = request.data.get('team_profile')
-                if (team_profile not in self.team_profiles):
-                    e_msg = ('Unsupported team profile(%s). Supported ones include: %s' % (team_profile, self.team_profiles))
-                    handle_exception(Exception(e_msg), request)
-
-                #comma separated list of devices to add to the team as slave connections.
-                devices = request.data.get('devices')
-                for d in devies:
-                    try:
-                        ndo = NetworkDevice.objects.get(name=d)
-                        #if device belongs to another connection, change it.
-                    except NetworkDevice.DoesNotExist:
-                        e_msg = ('Unknown network device(%s)' % d)
-                        handle_exception(Exception(e_msg), request)
-
-            elif (ctype == 'ethernet'):
-                device = request.data.get('device')
-                try:
-                    ndo = NetworkDevice.objects.get(name=device)
-                except NetworkDevice.DoesNotExist:
-                    e_msg = ('Network device(%s) does not exist' % device)
-                    handle_exception(Exception(e_msg), request)
-
-            elif (con_type == 'bond'):
-                #gather required input for bond
-                pass
 
             #auto of manual
             method = request.data.get('method')
@@ -222,6 +205,37 @@ class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
                 gateway = request.data.get('gateway')
                 dns_servers = request.data.get('dns_servers', None)
                 search_domains = request.data.get('search_domains', None)
+
+            #connection type can be one of ethernet, team or bond
+            ctype = request.data.get('ctype')
+            if (ctype not in self.ctypes):
+                e_msg = ('Unsupported connection type(%s). Supported ones include: %s' % (con_type, self.con_types))
+                handle_exception(Exception(e_msg), request)
+            devices = request.data.get('devices', None)
+            if (ctype == 'team'):
+                #gather required input for team
+                team_profile = request.data.get('team_profile')
+                if (team_profile not in self.team_profiles):
+                    e_msg = ('Unsupported team profile(%s). Supported ones include: %s' % (team_profile, self.team_profiles))
+                    handle_exception(Exception(e_msg), request)
+                self._validate_devices(devices, request)
+                network.new_team_connection(name, self.runners[team_profile],
+                                            devices, ipaddr, gateway,
+                                            dns_servers, search_domains)
+
+            elif (ctype == 'ethernet'):
+                device = request.data.get('device')
+                self._validate_devices([device], request, size=1)
+                network.new_ethernet_connection(name, device, ipaddr, gateway,
+                                                dns_servers, search_domains)
+
+            elif (con_type == 'bond'):
+                bond_profile = request.data.get('bond_profile')
+                if (bond_profile not in self.bond_prfiles):
+                    e_msg = ('Unsupported bond profile(%s). Supported ones include: %s' % (bond_profile, self.bond_profiles))
+                    handle_exception(Exception(e_msg), request)
+                self._validate_devices(devices, request)
+                network.new_bond_connection()
 
             return Response()
 
@@ -246,8 +260,23 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
             handle_exception(Exception(e_msg), request)
 
     def put(self, request, id):
+
         with self._handle_exception(request):
             nco = self._nco(request, id)
+
+            if (nco.ctype == 'ethernet'):
+                #support switching between auto and manual for ethernet.
+                method = request.data.get('method')
+                if (method != nco.ipv4_method):
+                    logger.debug('changing connection method from %s to %s' % (nco.ipv4_method, method))
+                    ipaddr = request.data.get('ipaddr', None)
+                    gateway = request.data.get('gateway', None)
+                    dns_servers = request.data.get('dns_servers', None)
+                    search_domains = request.data.get('search_domains', None)
+                    device = request.data.get('device')
+                    network.delete_connection(nco.uuid)
+                    network.new_ethernet_connection(nco.name, device, ipaddr,
+                                                    gateway, dns_servers, search_domains)
             return Response(NetworkConnectionSerializer(nco).data)
 
     @transaction.atomic
