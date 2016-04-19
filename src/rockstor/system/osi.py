@@ -644,7 +644,7 @@ def is_rotational(device_name, test=None):
                 # non zero rotation so flag and look no further
                 rotational = True
                 break
-        if line_fields[0] == 'ID_ATA_FEATURE_SET_AAM':
+        if line_fields[0] == 'ID_ATA_FEATURE_SET_AAM_CURRENT_VALUE':
             # we have an Automatic Acoustic Managment entry
             if line_fields[1] != '0':
                 # a non zero AAM entry so flag and look no further
