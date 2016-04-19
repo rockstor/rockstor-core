@@ -154,9 +154,74 @@ def connections():
     return cmap
 
 
+def valid_connection(uuid):
+    o, e, rc = run_command([NMCLI, 'c', 'show', uuid], throw=False)
+    if (rc != 0):
+        return False
+    return True
+
+
 def toggle_connection(uuid, switch):
     return run_command([NMCLI, 'c', switch, uuid])
 
 
 def delete_connection(uuid):
-    return run_command([NMCLI, 'c', 'delete', uuid])
+    if (valid_connection(uuid)):
+        return run_command([NMCLI, 'c', 'delete', uuid])
+
+
+def reload_connection(uuid):
+    return run_command([NMCLI, 'c', 'reload', uuid])
+
+
+def new_ethernet_connection(cname, ifname, ipaddr=None, gateway=None,
+                            dns_servers=None, search_domains=None):
+    cmd = [NMCLI, 'c', 'add', 'type', 'ethernet', 'con-name', cname,
+           'ifname', ifname]
+    if (ipaddr is not None and len(ipaddr.strip()) > 0):
+        cmd.extend(['ip4', ipaddr])
+    if (gateway is not None and len(gateway.strip()) > 0):
+        cmd.extend(['gw4', gateway])
+
+    run_command(cmd)
+    if (dns_servers is not None and len(dns_servers.strip()) > 0):
+        run_command([NMCLI, 'c', 'mod', cname, 'ipv4.dns', dns_servers])
+    if (search_domains is not None and len(search_domains.strip()) > 0):
+        run_command([NMCLI, 'c', 'mod', cname, 'ipv4.dns-search', search_domains])
+
+    #@todo: probably better to get the uuid and reload with it instead of name.
+    reload_connection(cname)
+
+
+def new_team_connection(name, config, slaves, ipaddr=None, gateway=None,
+                        dns_servers=None, search_domains=None):
+    cmd = [NMCLI, 'c', 'add', 'type', 'team', 'con-name', name, 'ifname', name,
+           'config', config]
+    run_command(cmd)
+
+    manual = False
+    if (ipaddr is not None and len(ipaddr.strip()) > 0):
+        manual = True
+        run_command([NMCLI, 'c', 'mod', name, 'ipv4.addresses', ipaddr])
+    if (gateway is not None and len(gateway.strip()) > 0):
+        run_command([NMCLI, 'c', 'mod', name, 'ipv4.gateway', gateway])
+    if (manual):
+        run_command([NMCLI, 'c', 'mod', name, 'ipv4.method', 'manual'])
+
+    if (dns_servers is not None and len(dns_servers.strip()) > 0):
+        run_command([NMCLI, 'c', 'mod', cname, 'ipv4.dns', dns_servers])
+    if (search_domains is not None and len(search_domains.strip()) > 0):
+        run_command([NMCLI, 'c', 'mod', cname, 'ipv4.dns-search', search_domains])
+
+    for i in range(len(slaves)):
+        sname = '%s-slave-%d' % (name, i)
+        run_command([NMCLI, 'c', 'add', 'type', 'team-slave', 'con-name', sname,
+                     'ifname', slaves[i], 'master', name])
+    for i in range(len(slaves)):
+        sname = '%s-slave-%d' % (name, i)
+        run_command([NMCLI, 'c', 'up', sname])
+    reload_connection(name)
+
+
+def new_bond_connection():
+    pass
