@@ -22,7 +22,7 @@
 <div class="row">
   <div class="panel panel-default">
   {{#if connection}}
-  <div class="panel-heading">Edit network connection</div>
+  <div class="panel-heading">Edit network connection: {{connection.name}}</div>
   {{else}}
   <div class="panel-heading">Add a new network connection</div>
   {{/if}}
@@ -32,19 +32,15 @@
 	<div class="form-group">
           <label class="col-sm-4 control-label" for="name">Name<span class="required"> *</span></label>
           <div class="col-sm-4">
-          {{#if connection}}
-            <input class="form-control" type="text" id="name" name="name" value="{{connection.name}}" disabled>
-          {{else}}
-            <input class="form-control" type="text" id="name" name="name">
-          {{/if}}
+            <input class="form-control" type="text" id="name" name="name" {{#if connection}}value="{{connection.name}}" disabled{{/if}}>
           </div>
 	</div>
         <div class="form-group">
           <label class="col-sm-4 control-label" for="ctype">Connection Type<span class="required"> *</span></label>
           <div class="col-sm-4">
-            <select class="form-control" id="ctype" name="ctype">
+            <select class="form-control" id="ctype" name="ctype" {{#if connection}}disabled{{/if}}>
 	      {{#each ctypes}}
-	      <option value="{{this}}">{{this}}</option>
+	      <option value="{{this}}" {{#if ../connection}}{{selectedCtype this}}{{/if}}>{{this}}</option>
 	      {{/each}}
             </select>
           </div>
@@ -52,22 +48,22 @@
         <div id="singleDevice">
             <div class="form-group">
                 <label class="col-sm-4 control-label" for="device">Device <span class="required"> *</span></label>
-            <div class="col-sm-4">
-                <select class="form-control" id="device" name="device">
+		<div class="col-sm-4">
+                  <select class="form-control" id="device" name="device" {{#if connection}}disabled{{/if}}>
                     {{#each devices}}
-                        <option value="{{this.name}}">{{this.name}}{{#if this.cname}}  [part of connection: {{this.cname}}]{{/if}}</option>
+                    <option value="{{this.name}}">{{this.name}}{{#if this.cname}}  [part of connection: {{this.cname}}]{{/if}}</option>
                     {{/each}}
-                </select>
-            </div>
+                  </select>
+		</div>
             </div>
         </div><!--close ethernetDeviceDropdown -->
         <div id="teamProfiles" style="display:none;">
             <div class="form-group">
               <label class="col-sm-4 control-label" for="team_profile">Team Profile<span class="required"> *</span></label>
               <div class="col-sm-4">
-                <select class="form-control" id="team_profile" name="team_profile">
+                <select class="form-control" id="team_profile" name="team_profile" {{#if connection}}disabled{{/if}}>
               {{#each teamProfiles}}
-                <option value="{{this}}">{{this}}</option>
+                <option value="{{this}}" {{#if ../connection}}{{selectedTeamProfile this}}{{/if}}>{{this}}</option>
               {{/each}}
                 </select>
               </div>
@@ -89,9 +85,9 @@
             <div class="form-group">
                 <label class="col-sm-4 control-label" for="devices">Devices <span class="required"> *</span></label>
             <div class="col-sm-4">
-                <select class="form-control" id="devices" name="devices" size="20" data-placeholder="select devices" multiple>
+                <select class="form-control" id="devices" name="devices" size="20" data-placeholder="select devices" multiple {{#if connection}}disabled{{/if}}>
                     {{#each devices}}
-                        <option value="{{this.name}}">{{this.name}}</option>
+                        <option value="{{this.name}}" {{#if ../connection}}{{selectedDevice this}}{{/if}}>{{this.name}}{{#if this.cname}}  [part of connection: {{this.cname}}]{{/if}}</option>
                     {{/each}}
                 </select>
                 <i class="fa fa-exclamation-circle" title="select 2 or more devices." rel="tooltip"></i>
@@ -119,41 +115,25 @@
           <div class="form-group">
           <label class="col-sm-4 control-label" for="ipaddr">IP Address<span class="required"> *</span></label>
           <div class="col-sm-4">
-           {{#if connection}}
-           <input class="form-control" type="text"  id="ipaddr" name="ipaddr" value="{{connection.ipAddr}}" placeholder="IP Address">
-           {{else}}
-           <input class="form-control" type="text"  id="ipaddr" name="ipaddr" placeholder="IP Address">
-           {{/if}}
+            <input class="form-control" type="text"  id="ipaddr" name="ipaddr" {{#if connection}}value="{{connection.ipAddr}}"{{/if}} placeholder="IP Address">
           </div>
         </div>
         <div class="form-group">
           <label class="col-sm-4 control-label" for="gateway">Gateway<span class="required"> *</span></label>
           <div class="col-sm-4">
-          {{#if connection}}
-          <input class="form-control" type="text" id="gateway" name="gateway" value="{{connection.gateWay}}" placeholder="Gateway">
-          {{else}}
-          <input class="form-control" type="text" id="gateway" name="gateway" placeholder="Gateway">
-          {{/if}}
+            <input class="form-control" type="text" id="gateway" name="gateway" {{#if connection}}value="{{connection.gateWay}}"{{/if}} placeholder="Gateway">
           </div>
         </div>
         <div class="form-group">
           <label class="col-sm-4 control-label" for="dns_servers">DNS Servers</label>
           <div class="col-sm-4">
-          {{#if connection}}
-          <input class="form-control" type="text" id="dns_servers" name="dns_servers" value="{{connection.dnsServers}}" placeholder="DNS Servers">
-          {{else}}
-          <input class="form-control" type="text" id="dns_servers" name="dns_servers" placeholder="DNS Servers">
-          {{/if}}
+            <input class="form-control" type="text" id="dns_servers" name="dns_servers" {{#if connection}}value="{{connection.dnsServers}}"{{/if}} placeholder="DNS Servers">
           </div>
         </div>
         <div class="form-group">
           <label class="col-sm-4 control-label" for="search_domains">Search Domains</label>
           <div class="col-sm-4">
-          {{#if connection}}
-          <input class="form-control" type="text" id="search_domains" name="search_domains" value="{{connection.searchDomains}}" placeholder="Search Domains">
-          {{else}}
-          <input class="form-control" type="text" id="search_domains" name="search_domains" placeholder="Search Domains">
-          {{/if}}
+            <input class="form-control" type="text" id="search_domains" name="search_domains" {{#if connection}}value="{{connection.searchDomains}}"{{/if}} placeholder="Search Domains">
           </div>
         </div>
         </div><!--close methodOptionalFields-->
