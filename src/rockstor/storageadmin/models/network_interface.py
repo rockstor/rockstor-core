@@ -66,16 +66,29 @@ class NetworkConnection(models.Model):
             return 'ethernet'
         if (self.teamconnection_set.count() > 0):
             return 'team'
+        if (self.bondconnection_set.count() > 0):
+            return 'bond'
         return None
 
     @property
     def team_profile(self):
         profile = None
         try:
-            if (self.teamconnection_set.count() > 0):
-                tco = self.teamconnection_set.first()
-                config_d = json.loads(tco.config)
-                profile = config_d['runner']['name']
+            tco = self.teamconnection_set.first()
+            config_d = json.loads(tco.config)
+            profile = config_d['runner']['name']
+        except:
+            pass
+        finally:
+            return profile
+
+    @property
+    def bond_profile(self):
+        profile = None
+        try:
+            bco = self.bondconnection_set.first()
+            config_d = json.loads(bco.config)
+            profile = config_d['mode']
         except:
             pass
         finally:
@@ -110,7 +123,6 @@ class NetworkDevice(models.Model):
 
 #This is the most common of connection types that uses NetworkInterface of dtype=ethernet
 class EthernetConnection(models.Model):
-    friendly_name = models.CharField(max_length=64, default="ethernet/802-3-ethernet")
     connection = models.ForeignKey(NetworkConnection, null=True)
     mac = models.CharField(max_length=64, null=True)
     cloned_mac = models.CharField(max_length=64, null=True)
@@ -126,6 +138,17 @@ class TeamConnection(models.Model):
     name = models.CharField(max_length=64, null=True)
     #json config.
     config = models.CharField(max_length=2048, null=True)
+
+    class Meta:
+        app_label = 'storageadmin'
+
+
+class BondConnection(models.Model):
+    connection = models.ForeignKey(NetworkConnection, null=True)
+    name = models.CharField(max_length=64, null=True)
+    #at the NM level it's not json like in team config, but we could convert it
+    #for consistency.
+    options = models.CharField(max_length=2048, null=True)
 
     class Meta:
         app_label = 'storageadmin'
