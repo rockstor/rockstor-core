@@ -132,48 +132,54 @@ SpindownDiskView = RockstorLayoutView.extend({
             return true;
         }, spindown_err_msg);
 
-        //this.$('#enable_apm').click(function () {
-        //    $('#apm_value').prop('disable', !this.checked); // disable apm text
-        //    //$('#slide_lower_half').prop('disable', !this.checked);
-        //    //$('#slide_upper_half').prop('disable', !this.checked);
-        //    //$('#slide_disabled').prop('disable', !this.checked);
-        //    //if (this.checked) {
-        //    //    _this.renderSlider();
-        //    //}
-        //});
-
-        //if (apmLevel != 'unknown' || apmLevel != null) {
-        //    // don't show apm slider if we couldn't read apm value
-        //    _this.renderSlider();
-        //}
+        this.$('#enable_apm').click(function () {
+            // $('#apm_value').prop('disable', !this.checked); // disable apm text
+            //$('#slide_lower_half').prop('disable', !this.checked);
+            //$('#slide_upper_half').prop('disable', !this.checked);
+            //$('#slide_disabled').prop('disable', !this.checked);
+            if (this.checked) {
+                $('#slider-entry').show();
+                $('#slider-key').show();
+                $('#apm_value').val(apmLevel);
+            } else {
+                $('#slider-entry').hide();
+                $('#slider-key').hide();
+            }
+        });
 
         // apmLevel = the current sensed level from the drive
-        // apm_value = the text box and it's entered value
-        // set the text box to show the current sensed APM level
-
-        // apmLevel can be 'unknown' which is displayed as
-        if (apmLevel == 0){
+        if (apmLevel == 0) {
             // we have a device that doesn't support APM or there was an error
             // reading it's current level so disable / hide our APM settings.
-            console.log('the received value of APM =' + apmLevel);
             //this.$('#enable_apm').attr('checked', 'true');
             this.$('#enable_apm').removeAttr('checked');
             this.$('#enable_apm').attr('disabled', 'true');
             //this.$('#slider').hide();
             this.$('#slider-entry').hide();
             this.$('#slider-key').hide();
+        } else {
+            // we can't disable the slider this way:
+            // this.$('#slider').attr('disabled', 'true');
+            // the apm_value text box is greyed but the slider still updates it's
+            // contents.
+            // disable on the text box works a treat given the above
+            // this.$('#apm_value').attr('disabled', 'true');
 
+            _this.renderSlider();
+            // apmLevel = the current sensed level from the drive
+            // apm_value = the text box and it's entered value
+            // update the slider when the apm_value text box is changed
+            //_this.$('#apm_value').focusout(function () {
+            _this.$('#apm_value').change(function () {
+                var our_value = this.value;
+                _this.slider.setValue((our_value));
+            });
+            // set the text box to show the current sensed APM level
+            _this.$('#apm_value').val(apmLevel);
+            // now call the change event on text box apm_value to update the slider
+            _this.$('#apm_value').change();
+            //_this.$('#enable_apm').click();
         }
-        _this.renderSlider();
-        // update the slider when the apm_value text box is changed
-        _this.$('#apm_value').change(function () {
-            var our_value = this.value;
-            _this.slider.setValue((our_value));
-        });
-        _this.$('#apm_value').val(apmLevel);
-        // now call the change event on text box apm_value to update the slider
-        _this.$('#apm_value').change();
-
 
         this.$('#add-spindown-disk-form').validate({
             onfocusout: false,
@@ -203,6 +209,11 @@ SpindownDiskView = RockstorLayoutView.extend({
                         spindown_text = time_string;
                         break;
                     }
+                }
+                // safeguard against setting -B (APM) option if enable_apm is
+                // unticked.
+                if (data.enable_apm != true) {
+                    data.apm_value = 0;
                 }
                 data.spindown_message = spindown_text;
                 $.ajax({
