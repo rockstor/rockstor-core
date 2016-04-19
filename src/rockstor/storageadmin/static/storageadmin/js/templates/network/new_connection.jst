@@ -51,7 +51,7 @@
 		<div class="col-sm-4">
                   <select class="form-control" id="device" name="device" {{#if connection}}disabled{{/if}}>
                     {{#each devices}}
-                    <option value="{{this.name}}">{{this.name}}{{#if this.cname}}  [part of connection: {{this.cname}}]{{/if}}</option>
+                    <option value="{{this.name}}" {{#if ../connection}}{{selectedDevice this}}{{/if}}>{{this.name}}{{#if this.cname}}  [part of connection: {{this.cname}}]{{/if}}</option>
                     {{/each}}
                   </select>
 		</div>

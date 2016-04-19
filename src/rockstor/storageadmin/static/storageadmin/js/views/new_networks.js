@@ -375,7 +375,6 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 	var _this = this;
 	Handlebars.registerHelper('selectedCtype', function(ctype){
 	    var html = '';
-	    console.log('in helper');
 	    if (ctype == _this.connection.get('ctype')) {
 		html = 'selected="selected"';
 	    }
