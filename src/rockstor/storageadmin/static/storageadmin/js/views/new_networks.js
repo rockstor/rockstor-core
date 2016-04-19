@@ -227,6 +227,7 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 	}));
 
 	if (this.connection) {
+	    this.renderMethodOptionalFields();
 	    this.renderCTypeOptionalFields();
 	}
 
@@ -345,6 +346,9 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
     // hide fields when selected method is auto
     renderMethodOptionalFields: function(){
 	var selection = this.$('#method').val();
+	if (this.connection) {
+	    selection = this.connection.get('ctype');
+	}
 	if(selection == 'auto'){
 	    $('#methodOptionalFields').hide();
 	}else{
@@ -396,6 +400,13 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 		html = 'selected="selected"';
 	    }
 	    return new Handlebars.SafeString(html);
+	});
+
+	Handlebars.registerHelper('isAuto', function(connection, opts) {
+	    if (connection.ipv4_method == 'auto') {
+		return opts.fn(this);
+	    }
+	    return opts.inverse(this);
 	});
     },
 
