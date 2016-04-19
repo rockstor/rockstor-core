@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import json
 from django.db import models
 
 #This is the key abstraction for network configuration that is user configurable in Rockstor.
@@ -66,6 +67,19 @@ class NetworkConnection(models.Model):
         if (self.teamconnection_set.count() > 0):
             return 'team'
         return None
+
+    @property
+    def team_profile(self):
+        profile = None
+        try:
+            if (self.teamconnection_set.count() > 0):
+                tco = self.teamconnection_set.first()
+                config_d = json.loads(tco.config)
+                profile = config_d['runner']['name']
+        except:
+            pass
+        finally:
+            return profile
 
     class Meta:
         app_label = 'storageadmin'
