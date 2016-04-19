@@ -54,12 +54,12 @@ LogsView = RockstorLayoutView.extend({
     initHandlebarHelpers: function(){
       var avail_logs =  {
                         "Rockstor Logs" : "rockstor",
-                        "Dmesg" : "dmesg",
+                        "Dmesg (Kernel)" : "dmesg",
                         "Nmbd (Samba)" : "nmbd",
                         "Smbd (Samba)" : "smbd",
                         "Winbindd (Samba)" : "winbindd",
-                        "Nginx" : "nginx",
-                        "Yum" : "yum"
+                        "Nginx (WebUI)" : "nginx",
+                        "Yum (System updates)" : "yum"
                         };
 
     Handlebars.registerHelper('print_logs_divs', function(){
