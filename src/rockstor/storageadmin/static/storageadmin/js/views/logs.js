@@ -81,4 +81,4 @@ LogsView = RockstorLayoutView.extend({
     }
 });
 
-Cocktail.mixin(ConfigBackupView, PaginationMixin);
+Cocktail.mixin(LogsView, PaginationMixin);
