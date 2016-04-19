@@ -227,7 +227,6 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 	}));
 
 	if (this.connection) {
-	    this.renderMethodOptionalFields();
 	    this.renderCTypeOptionalFields();
 	}
 
@@ -346,9 +345,6 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
     // hide fields when selected method is auto
     renderMethodOptionalFields: function(){
 	var selection = this.$('#method').val();
-	if (this.connection) {
-	    selection = this.connection.get('ctype');
-	}
 	if(selection == 'auto'){
 	    $('#methodOptionalFields').hide();
 	}else{

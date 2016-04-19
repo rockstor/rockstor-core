@@ -103,7 +103,7 @@
             </select>
           </div>
         </div>
-        <div id="methodOptionalFields" style="display:none;">
+        <div id="methodOptionalFields" {{#if connection}}{{#isAuto connection}}style="display:none;"{{/isAuto}}{{else}}style="display:none;"{{/if}}>
           <div class="form-group">
           <label class="col-sm-4 control-label" for="ipaddr">IP Address<span class="required"> *</span></label>
           <div class="col-sm-4">
