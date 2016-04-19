@@ -37,6 +37,13 @@ logger = logging.getLogger(__name__)
 
 
 class NetworkMixin(object):
+    runners = {
+        'broadcast': '{ "runner": {"name": "broadcast"}}',
+        'roundrobin': '{ "runner": {"name": "roundrobin"}}',
+        'activebackup': '{ "runner": {"name": "activebackup"}}',
+        'loadbalance': '{ "runner": {"name": "loadbalance"}}',
+        'lacp': '{ "runner": {"name": "lacp"}}',
+    }
 
     @staticmethod
     @transaction.atomic
@@ -155,13 +162,7 @@ class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
     team_profiles = ('broadcast', 'roundrobin', 'activebackup', 'loadbalance', 'lacp')
     bond_profiles = ('roundrobin', 'activebackup', 'xor', 'broadcast', '802.3ad',)
     #ethtool is the default link watcher.
-    runners = {
-        'broadcast': '{ "runner": {"name": "broadcast"}}',
-        'roundrobin': '{ "runner": {"name": "roundrobin"}}',
-        'activebackup': '{ "runner": {"name": "activebackup"}}',
-        'loadbalance': '{ "runner": {"name": "loadbalance"}}',
-        'lacp': '{ "runner": {"name": "lacp"}}',
-    }
+
     config_methods = ('auto', 'manual')
 
     def get_queryset(self, *args, **kwargs):
@@ -259,35 +260,49 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
             e_msg = ('Network connection(%s) does not exist.' % id)
             handle_exception(Exception(e_msg), request)
 
+    @transaction.atomic
     def put(self, request, id):
 
         with self._handle_exception(request):
             nco = self._nco(request, id)
+            method = request.data.get('method')
+            ipaddr = gateway = dns_servers = search_domains = None
+            if (method == 'manual'):
+                ipaddr = request.data.get('ipaddr', None)
+                gateway = request.data.get('gateway', None)
+                dns_servers = request.data.get('dns_servers', None)
+                search_domains = request.data.get('search_domains', None)
 
             if (nco.ctype == 'ethernet'):
-                #support switching between auto and manual for ethernet.
-                method = request.data.get('method')
-                if (method != nco.ipv4_method):
-                    logger.debug('changing connection method from %s to %s' % (nco.ipv4_method, method))
-                    ipaddr = request.data.get('ipaddr', None)
-                    gateway = request.data.get('gateway', None)
-                    dns_servers = request.data.get('dns_servers', None)
-                    search_domains = request.data.get('search_domains', None)
-                    device = request.data.get('device')
-                    network.delete_connection(nco.uuid)
-                    network.new_ethernet_connection(nco.name, device, ipaddr,
-                                                    gateway, dns_servers, search_domains)
+                device = nco.networkdevice_set.first().name
+                self._delete_connection(nco)
+                network.new_ethernet_connection(nco.name, device, ipaddr,
+                                                gateway, dns_servers, search_domains)
+            elif (nco.ctype == 'team'):
+                team_profile = nco.team_profile
+                devices = []
+                for child_nco in NetworkConnection.objects.filter(master=nco):
+                    devices.append(child_nco.networkdevice_set.first().name)
+
+                self._delete_connection(nco)
+                network.new_team_connection(
+                    nco.name, self.runners[team_profile], devices, ipaddr,
+                    gateway, dns_servers, search_domains)
+
             return Response(NetworkConnectionSerializer(nco).data)
+
+    @staticmethod
+    def _delete_connection(nco):
+        for snco in nco.networkconnection_set.all():
+            network.delete_connection(snco.uuid)
+        network.delete_connection(nco.uuid)
+        nco.delete()
 
     @transaction.atomic
     def delete(self, request, id):
         with self._handle_exception(request):
             nco = self._nco(request, id)
-            #delete any related connections using nmcli
-            for snco in nco.networkconnection_set.all():
-                network.delete_connection(snco.uuid)
-            network.delete_connection(nco.uuid)
-            nco.delete()
+            self._delete_connection(nco)
             return Response()
 
     @transaction.atomic
