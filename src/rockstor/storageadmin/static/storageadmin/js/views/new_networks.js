@@ -50,10 +50,23 @@ NewNetworksView = Backbone.View.extend({
 
     renderNetworks: function() {
 	var _this = this;
+	this.pc = [];
+	this.cc = [];
+	for (var i = 0; i < this.collection.length; i++) {
+	    var c = this.collection.at(i);
+	    if (c.get('master')) {
+		this.cc.push(c.toJSON());
+	    } else {
+		this.pc.push(c.toJSON());
+	    }
+	}
+
 	$(this.el).empty();
 	$(this.el).append(this.template({
 	    collection: this.collection,
 	    connections: this.collection.toJSON(),
+	    parent_connections: this.pc,
+	    child_connections: this.cc,
 	    devices: this.devices.toJSON()
 	}));
 	setApplianceName();
@@ -67,9 +80,9 @@ NewNetworksView = Backbone.View.extend({
     switchStatus: function(event,state){
 	var connectionId = $(event.target).attr('data-connection-id');
 	if (state){
-	    this.toggleConnection(connectionId, 'on');
+	    this.toggleConnection(connectionId, 'up');
 	}else {
-	    this.toggleConnection(connectionId, 'off');
+	    this.toggleConnection(connectionId, 'down');
 	}
     },
 
@@ -81,6 +94,7 @@ NewNetworksView = Backbone.View.extend({
 	    dataType: "json",
 	    success: function(data, status, xhr) {
 		_this.setStatusLoading(connectionId, false);
+		_this.render();
 	    },
 	    error: function(xhr, status, error) {
 		_this.setStatusError(connectionId, xhr);
@@ -126,7 +140,7 @@ NewNetworksView = Backbone.View.extend({
 	    success: function() {
 		_this.collection.fetch({reset: true});
 		enableButton(button);
-		app_router.navigate('network', {trigger: true})
+		_this.render();
 	    },
 	    error: function(xhr, status, error) {
 		enableButton(button);
@@ -135,6 +149,7 @@ NewNetworksView = Backbone.View.extend({
     },
 
     initHandlebarHelpers: function(){
+	var _this = this;
 	Handlebars.registerHelper('getState', function(state){
 	    var html = '';
 	    if(state == 'activated'){
@@ -146,7 +161,21 @@ NewNetworksView = Backbone.View.extend({
 	    if(connectionId == deviceConnectionId){
 		return true;
 	    }
+	    for (var i = 0; i < _this.cc.length; i++) {
+		if (_this.cc[i].master == connectionId &&
+		    _this.cc[i].id == deviceConnectionId) {
+		    return true;
+		}
+	    }
 	    return false;
+	});
+	Handlebars.registerHelper('hasChildren', function(connection, opts) {
+	    for (var i = 0; i < _this.cc.length; i++) {
+		if (_this.cc[i].master == connection.id) {
+		    return opts.fn(this);
+		}
+	    }
+	    return opts.inverse(this);
 	});
     }
 
@@ -170,6 +199,7 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 	this.template = window.JST.network_new_connection;
 	this.devices = new NetworkDeviceCollection();
 	this.devices.on('reset', this.renderDevices, this);
+	this.initHandlebarHelpers();
     },
 
     render: function() {
@@ -185,7 +215,7 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 	var _this = this;
 	$(this.el).empty();
 	var connection;
-	if (this.connection != null) {
+	if (this.connection) {
 	    connection = this.connection.toJSON();
 	}
 	$(this.el).append(this.template({
@@ -196,6 +226,10 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 	    bondProfiles: ['roundrobin', 'activebackup', 'xor', 'broadcast', '802.3ad', ]
 	}));
 
+	if (this.connection) {
+	    this.renderCTypeOptionalFields();
+	}
+
 	this.validator = this.$("#new-connection-form").validate({
 	    onfocusout: false,
 	    onkeyup: false,
@@ -204,14 +238,14 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 		ipaddr: {
 		    required: {
 			depends: function(element) {
-			    return (_this.$('#method').val() == 'manual')
+			    return (_this.$('#method').val() == 'manual');
 			}
 		    }
 		},
 		gateway: {
 		    required: {
 			depends: function(element){
-			    return (_this.$('#method').val() == 'manual')
+			    return (_this.$('#method').val() == 'manual');
 			}
 
 		    }
@@ -219,7 +253,7 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 		teamprofile: {
 		    required: {
 			depends: function(element){
-			    return (_this.$('#ctype').val() == 'team')
+			    return (_this.$('#ctype').val() == 'team');
 			}
 
 		    }
@@ -227,7 +261,7 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 		bondrofile: {
 		    required: {
 			depends: function(element){
-			    return (_this.$('#ctype').val() == 'bond')
+			    return (_this.$('#ctype').val() == 'bond');
 			}
 
 		    }
@@ -235,7 +269,7 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 		devices: {
 		    required: {
 			depends: function(element){
-			    return (_this.$('#ctype').val() == 'team')
+			    return (_this.$('#ctype').val() == 'team');
 			}
 
 		    }
@@ -247,11 +281,14 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 		disableButton(button);
 		var cancelButton = _this.$('#cancel');
 		disableButton(cancelButton);
-		var conn = new NetworkConnection();
 		var data = _this.$('#new-connection-form').getJSON();
+		var conn = _this.connection;
+		if (!_this.connection) {
+		    conn = new NetworkConnection();
+		}
 		conn.save(data, {
 		    success: function(model, response, options) {
-			app_router.navigate("network", {trigger: true});
+			app_router.navigate('network', {trigger: true});
 		    },
 		    error: function(model, response, options) {
 			enableButton(button);
@@ -318,6 +355,9 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
     // show/hide respective dropdowns based on selected connection type
     renderCTypeOptionalFields: function(){
 	var selection = this.$('#ctype').val();
+	if (this.connection) {
+	    selection = this.connection.get('ctype');
+	}
 	if(selection == 'team'){
 	    $('#teamProfiles, #multiDevice').show();
 	    $('#bondProfiles, #singleDevice').hide();
@@ -331,9 +371,37 @@ NewNetworkConnectionView = RockstorLayoutView.extend({
 	}
     },
 
+    initHandlebarHelpers: function(){
+	var _this = this;
+	Handlebars.registerHelper('selectedCtype', function(ctype){
+	    var html = '';
+	    console.log('in helper');
+	    if (ctype == _this.connection.get('ctype')) {
+		html = 'selected="selected"';
+	    }
+	    return new Handlebars.SafeString(html);
+	});
+
+	Handlebars.registerHelper('selectedTeamProfile', function(profile) {
+	    var html = '';
+	    if (profile == _this.connection.get('team_profile')) {
+		html = 'selected="selected"';
+	    }
+	    return new Handlebars.SafeString(html);
+	});
+
+	Handlebars.registerHelper('selectedDevice', function(device) {
+	    var html = '';
+	    if (device.cname == _this.connection.get('name')) {
+		html = 'selected="selected"';
+	    }
+	    return new Handlebars.SafeString(html);
+	});
+    },
+
     cancel: function(event) {
 	event.preventDefault();
-	app_router.navigate("network", {trigger: true});
+	app_router.navigate('network', {trigger: true});
     }
 
 });
