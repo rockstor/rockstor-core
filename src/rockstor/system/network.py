@@ -93,7 +93,7 @@ def connections():
         for l in o2:
             if (re.match('ipv4.method:', l) is not None):
                 tmap['ipv4_method'] = val(l)
-            elif (re.match('GENERAL.NAME:', l) is not None):
+            elif (re.match('connection.id:', l) is not None):
                 tmap['name'] = val(l)
             elif (re.match('GENERAL.STATE:', l) is not None):
                 tmap['state'] = val(l)
@@ -135,14 +135,18 @@ def connections():
                 if (master is not None):
                     tmap['master'] = master
             elif (re.match('802-3-ethernet.mac-address:', l) is not None
-                  and '802-3-ethernet' in tmap):
-                tmap['802-3-ethernet']['mac'] = val(l)
+                  and tmap['ctype'] == '802-3-ethernet'):
+                tmap[tmap['ctype']]['mac'] = val(l)
             elif (re.match('802-3-ethernet.cloned-mac-address:', l) is not None
-                  and '802-3-ethernet' in tmap):
-                tmap['802-3-ethernet']['cloned_mac'] = val(l)
+                  and tmap['ctype'] == '802-3-ethernet'):
+                tmap[tmap['ctype']]['cloned_mac'] = val(l)
             elif (re.match('802-3-ethernet.mtu:', l) is not None
-                  and '802-3-ethernet' in tmap):
-                tmap['802-3-ethernet']['mtu'] = val(l)
+                  and tmap['ctype'] == '802-3-ethernet'):
+                tmap[tmap['ctype']]['mtu'] = val(l)
+
+            elif (re.match('team.config:', l) is not None and
+                  tmap['ctype'] == 'team'):
+                tmap[tmap['ctype']]['config'] = l.split('team.config:')[1].strip()
 
         tmap['ipv4_addresses'] = flatten(tmap['ipv4_addresses'])
         tmap['ipv4_dns'] = flatten(tmap['ipv4_dns'])
