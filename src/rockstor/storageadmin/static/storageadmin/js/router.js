@@ -84,6 +84,7 @@ var AppRouter = Backbone.Router.extend({
 	"email": "showEmail",
 	"email/:emailID/edit": "editEmail",
 	"config-backup": "configBackup",
+	"logs": "showLogs",
 	"shutdown": "showShutdownView",
 	"reboot": "showReboot",
 	"version": "showVersion",
@@ -731,7 +732,16 @@ var AppRouter = Backbone.Router.extend({
 	this.currentLayout = new EmailView({emailID: emailID});
 	$('#maincontent').empty();
 	$('#maincontent').append(this.currentLayout.render().el);
+    },
+
+    showLogs: function() {
+        this.renderSidebar('system', 'logs');
+        this.cleanup();
+        this.currentLayout = new LogsView();
+        $('#maincontent').empty();
+        $('#maincontent').append(this.currentLayout.render().el);
     }
+
 
 });
 

@@ -1,0 +1,71 @@
+<script>
+/*
+ * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ *
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ *
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+</script>
+
+<div class="container">
+<div class="row">
+	<div class="col-md-8">
+		<div class="panel panel-default">
+                	<div class="panel-heading">
+                        	<h3 class="panel-title">Live log reader</h3>
+                        </div>
+                        <div class="panel-body" id="log_funcs">
+				<form class="form-inline">
+					<div class="form-group">
+					<input type="Submit" id="live-log" class="btn btn-primary" value="Read log">
+					<select class="form-control" id="read_type" name="read_type" rel="tooltip" title="Read log with cat - full file - or tail last 30 lines">
+              					<option value="snapshot"> cat</option>
+						<option value="scrub"> tail (-n 30)</option>
+            				</select>
+                                        <select class="form-control" id="logs_optionss" name="logs_options" rel="tooltip" title="Select which log to read">
+                                        {{print_logs_options}}
+					</select>
+					</div>
+                        </div>
+                        </div>
+
+	</div>
+</div>
+	<div class="row">
+		<div class="col-md-4">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title">
+						Available Logs
+					</h3>
+				</div>
+				<div class="panel-body" id="avail_logs">
+				{{print_logs_divs}}
+				</div>
+			</div>
+		</div>
+		<div class="col-md-4">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title">
+						Logs download queue
+					</h3>
+				</div>
+				<div class="panel-body" id="download_logs">
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
