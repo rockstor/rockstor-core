@@ -37,6 +37,8 @@ logger = logging.getLogger(__name__)
 
 
 class NetworkMixin(object):
+    #Runners for teams. @todo: support basic defaults + custom configuration.
+    #@todo: lacp doesn't seem to be activating
     runners = {
         'broadcast': '{ "runner": {"name": "broadcast"}}',
         'roundrobin': '{ "runner": {"name": "roundrobin"}}',
@@ -44,6 +46,9 @@ class NetworkMixin(object):
         'loadbalance': '{ "runner": {"name": "loadbalance"}}',
         'lacp': '{ "runner": {"name": "lacp"}}',
     }
+    team_profiles = ('broadcast', 'roundrobin', 'activebackup', 'loadbalance', 'lacp')
+    bond_profiles = ('balance-rr', 'active-backup', 'balance-xor', 'broadcast',
+                     '802.3ad', 'balance-tlb', 'balance-alb')
 
     @staticmethod
     @transaction.atomic
@@ -65,8 +70,16 @@ class NetworkMixin(object):
                 tco.save()
             except TeamConnection.DoesNotExist:
                 TeamConnection.objects.create(connection=co, **config)
-
-        #elif's for other types of connections
+        elif (ctype == 'bond'):
+            try:
+                bco = BondConnection.objects.get(connection=co)
+                bco.name = co.name
+                bco.config = config['config']
+                bco.save()
+            except BondConnection.DoesNotExist:
+                BondConnection.objects.create(connection=co, **config)
+        else:
+            logger.error('Unknown ctype: %s config: %s' % (ctype, config))
 
     @staticmethod
     @transaction.atomic
@@ -159,8 +172,7 @@ class NetworkDeviceListView(rfc.GenericView, NetworkMixin):
 class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
     serializer_class = NetworkConnectionSerializer
     ctypes = ('ethernet', 'team', 'bond')
-    team_profiles = ('broadcast', 'roundrobin', 'activebackup', 'loadbalance', 'lacp')
-    bond_profiles = ('roundrobin', 'activebackup', 'xor', 'broadcast', '802.3ad',)
+
     #ethtool is the default link watcher.
 
     config_methods = ('auto', 'manual')
@@ -210,7 +222,7 @@ class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
             #connection type can be one of ethernet, team or bond
             ctype = request.data.get('ctype')
             if (ctype not in self.ctypes):
-                e_msg = ('Unsupported connection type(%s). Supported ones include: %s' % (con_type, self.con_types))
+                e_msg = ('Unsupported connection type(%s). Supported ones include: %s' % (ctype, self.ctypes))
                 handle_exception(Exception(e_msg), request)
             devices = request.data.get('devices', None)
             if (ctype == 'team'):
@@ -230,13 +242,14 @@ class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
                 network.new_ethernet_connection(name, device, ipaddr, gateway,
                                                 dns_servers, search_domains)
 
-            elif (con_type == 'bond'):
+            elif (ctype == 'bond'):
                 bond_profile = request.data.get('bond_profile')
-                if (bond_profile not in self.bond_prfiles):
+                if (bond_profile not in self.bond_profiles):
                     e_msg = ('Unsupported bond profile(%s). Supported ones include: %s' % (bond_profile, self.bond_profiles))
                     handle_exception(Exception(e_msg), request)
                 self._validate_devices(devices, request)
-                network.new_bond_connection()
+                network.new_bond_connection(name, bond_profile, devices,
+                                            ipaddr, gateway, dns_servers, search_domains)
 
             return Response()
 
