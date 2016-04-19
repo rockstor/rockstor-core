@@ -27,6 +27,11 @@
 
 PoolAddDisks = RockstorWizardPage.extend({
 
+	events:{
+		"click #checkAll": "selectAllCheckboxes",
+		'click [class="diskname"]': 'clickCheckbox',
+	},
+
 	initialize: function() {
 		this.disks = new DiskCollection();
 		this.disks.setPageSize(100);
@@ -48,6 +53,19 @@ PoolAddDisks = RockstorWizardPage.extend({
 			return disk.available();
 		}, this);
 		this.$('#ph-disks-table').html(this.disks_template({disks: disks}));
+	},
+
+	selectAllCheckboxes: function(event){
+		$("#checkAll").change(function () {
+			$("input:checkbox").prop('checked',  $(this).prop("checked"));
+			$("input:checkbox").closest("tr").toggleClass("row-highlight", this.checked);
+		});
+	},
+	
+	clickCheckbox: function (event) {
+		$("input:checkbox").change(function() {
+			$(this).closest("tr").toggleClass("row-highlight", this.checked);
+		});
 	},
 
 	save: function() {
