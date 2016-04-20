@@ -417,10 +417,12 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
 		_this = this;
 	    this.network.each(function(ni, index) {
 		var niName = ni.get('name');
-		if (niName == _this.config.network_interface) {
-		    html += '<option value="' + niName + '" selected="selected"> ' + niName + '</option>';
-		} else {
-		    html += '<option value="' + niName + '">' + niName+ '</option>';
+		if (!ni.get('master')) {
+		    if (niName == _this.config.network_interface) {
+			html += '<option value="' + niName + '" selected="selected"> ' + niName + '</option>';
+		    } else {
+			html += '<option value="' + niName + '">' + niName+ '</option>';
+		    }
 		}
 	    });
 	    return new Handlebars.SafeString(html);
