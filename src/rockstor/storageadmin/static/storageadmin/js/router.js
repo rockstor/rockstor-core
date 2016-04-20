@@ -450,7 +450,7 @@ var AppRouter = Backbone.Router.extend({
     showNetworks: function() {
 	this.renderSidebar("system", "network");
 	this.cleanup();
-	this.currentLayout = new NewNetworksView();
+	this.currentLayout = new NetworkView();
 	$('#maincontent').empty();
 	$('#maincontent').append(this.currentLayout.render().el);
     },
@@ -458,7 +458,7 @@ var AppRouter = Backbone.Router.extend({
     editNetwork: function(connectionId) {
 	this.renderSidebar("system", "network");
 	this.cleanup();
-	this.currentLayout = new NewNetworkConnectionView({connectionId: connectionId});
+	this.currentLayout = new NetworkConnectionView({connectionId: connectionId});
 	$('#maincontent').empty();
 	$('#maincontent').append(this.currentLayout.render().el);
     },
@@ -466,7 +466,7 @@ var AppRouter = Backbone.Router.extend({
     addNetworkConnection: function() {
 	this.renderSidebar("system", "network");
 	this.cleanup();
-	this.currentLayout = new NewNetworkConnectionView();
+	this.currentLayout = new NetworkConnectionView();
 	$('#maincontent').empty();
 	$('#maincontent').append(this.currentLayout.render().el);
     },

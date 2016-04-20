@@ -46,7 +46,7 @@
 	    <td class="accordion-toggle" data-toggle="collapse" data-parent="#connections" data-target="#accordion-{{this.id}}"><a> {{this.name}}</a>&nbsp;&nbsp; <a href="#network/edit/{{this.id}}"><i class="glyphicon glyphicon-pencil"></i></a>
         <a id="{{this.id}}" data-action="delete" rel="tooltip" title="Delete connection"><i class="glyphicon glyphicon-trash"></i></a></td>
 	    <td>{{this.uuid}}</td>
-	    <td>{{this.ctype}} {{#if this.team_profile}}[{{this.team_profile}}]{{/if}}</td>
+	    <td>{{this.ctype}} {{#if this.team_profile}}[{{this.team_profile}}]{{/if}}{{#if this.bond_profile}}[{{this.bond_profile}}]{{/if}}</td>
 	    <td>{{this.state}}&nbsp;&nbsp;
     	    <input type="checkbox" data-connection-id="{{this.id}}" data-name="{{this.name}}" data-size="mini" {{getState this.state}}>
     	    <div class="command-status" data-connection-id="{{this.id}}">&nbsp;</div>
@@ -65,7 +65,10 @@
 	    {{#if this.team_profile}}
 	      <h4>Team Profile: {{this.team_profile}}</h4>
 	    {{/if}}
-		<p>member Connections</p>
+	    {{#if this.bond_profile}}
+	      <h4>Bond Profile: {{this.bond_profile}}</h4>
+	    {{/if}}
+	    <p>member Connections</p>
 		<table class="table table-bordered">
 		  <tr>
 		    <th>Name</th>

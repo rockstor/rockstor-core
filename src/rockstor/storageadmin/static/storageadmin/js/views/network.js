@@ -127,25 +127,26 @@ NetworkView = Backbone.View.extend({
     },
 
     deleteConnection: function(event){
-	alert("Are you sure to delete the connection?");
-	var _this = this;
-	var button = $(event.currentTarget);
-	var connectionId = button.attr('id');
-	if (buttonDisabled(button)) return false;
-	disableButton(button);
-	$.ajax({
-	    url: "/api/network/connections/" + connectionId,
-	    type: "DELETE",
-	    dataType: "json",
-	    success: function() {
-		_this.collection.fetch({reset: true});
-		enableButton(button);
-		_this.render();
-	    },
-	    error: function(xhr, status, error) {
-		enableButton(button);
-	    }
-	});
+	if (confirm("Are you sure to delete the connection?")) {
+	    var _this = this;
+	    var button = $(event.currentTarget);
+	    var connectionId = button.attr('id');
+	    if (buttonDisabled(button)) return false;
+	    disableButton(button);
+	    $.ajax({
+		url: "/api/network/connections/" + connectionId,
+		type: "DELETE",
+		dataType: "json",
+		success: function() {
+		    _this.collection.fetch({reset: true});
+		    enableButton(button);
+		    _this.render();
+		},
+		error: function(xhr, status, error) {
+		    enableButton(button);
+		}
+	    });
+	}
     },
 
     initHandlebarHelpers: function(){

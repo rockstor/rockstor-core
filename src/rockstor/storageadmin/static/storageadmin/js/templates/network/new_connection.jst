@@ -73,9 +73,9 @@
             <div class="form-group">
               <label class="col-sm-4 control-label" for="bond_profile">Bond Profile<span class="required"> *</span></label>
               <div class="col-sm-4">
-                <select class="form-control" id="bond_profile" name="bond_profile">
+                <select class="form-control" id="bond_profile" name="bond_profile" {{#if connection}}disabled{{/if}}>
               {{#each bondProfiles}}
-                <option value="{{this}}">{{this}}</option>
+                <option value="{{this}}" {{#if ../connection}}{{selectedBondProfile this}}{{/if}}>{{this}}</option>
               {{/each}}
                 </select>
               </div>

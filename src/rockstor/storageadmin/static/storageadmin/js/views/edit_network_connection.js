@@ -231,6 +231,14 @@ NetworkConnectionView = RockstorLayoutView.extend({
 	    return new Handlebars.SafeString(html);
 	});
 
+	Handlebars.registerHelper('selectedBondProfile', function(profile) {
+	    var html = '';
+	    if (profile == _this.connection.get('bond_profile')) {
+		html = 'selected="selected"';
+	    }
+	    return new Handlebars.SafeString(html);
+	});
+
 	Handlebars.registerHelper('selectedDevice', function(device) {
 	    var html = '';
 	    if (device.cname == _this.connection.get('name')) {
