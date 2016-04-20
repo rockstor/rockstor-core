@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import re
+import json
 from osi import run_command
 
 
@@ -88,7 +89,6 @@ def connections():
                 'ipv6_dns': None,
                 'ipv6_dns_search': None,
         }
-        cmd = [NMCLI, 'c', 'show', uuid]
         o2, e2, rc2 = run_command([NMCLI, 'c', 'show', uuid,])
         for l in o2:
             if (re.match('ipv4.method:', l) is not None):
@@ -122,7 +122,7 @@ def connections():
                         'cloned_mac': None,
                         'mtu': None,
                     }
-                elif (tmap['ctype'] == 'team'):
+                elif (tmap['ctype'] in ('team', 'bond')):
                     tmap[tmap['ctype']] = {
                         'config': None
                     }
@@ -147,7 +147,12 @@ def connections():
             elif (re.match('team.config:', l) is not None and
                   tmap['ctype'] == 'team'):
                 tmap[tmap['ctype']]['config'] = l.split('team.config:')[1].strip()
-
+            elif (re.match('bond.options:', l) is not None and
+                  tmap['ctype'] == 'bond'):
+                options = l.split('bond.options:')[1].strip()
+                options_l = options.split('=')
+                #@todo: there may be more options. for now, we just care about mode.
+                tmap[tmap['ctype']]['config'] = json.dumps({options_l[0]: options_l[1]})
         tmap['ipv4_addresses'] = flatten(tmap['ipv4_addresses'])
         tmap['ipv4_dns'] = flatten(tmap['ipv4_dns'])
         cmap[uuid] = tmap
@@ -174,31 +179,7 @@ def reload_connection(uuid):
     return run_command([NMCLI, 'c', 'reload', uuid])
 
 
-def new_ethernet_connection(cname, ifname, ipaddr=None, gateway=None,
-                            dns_servers=None, search_domains=None):
-    cmd = [NMCLI, 'c', 'add', 'type', 'ethernet', 'con-name', cname,
-           'ifname', ifname]
-    if (ipaddr is not None and len(ipaddr.strip()) > 0):
-        cmd.extend(['ip4', ipaddr])
-    if (gateway is not None and len(gateway.strip()) > 0):
-        cmd.extend(['gw4', gateway])
-
-    run_command(cmd)
-    if (dns_servers is not None and len(dns_servers.strip()) > 0):
-        run_command([NMCLI, 'c', 'mod', cname, 'ipv4.dns', dns_servers])
-    if (search_domains is not None and len(search_domains.strip()) > 0):
-        run_command([NMCLI, 'c', 'mod', cname, 'ipv4.dns-search', search_domains])
-
-    #@todo: probably better to get the uuid and reload with it instead of name.
-    reload_connection(cname)
-
-
-def new_team_connection(name, config, slaves, ipaddr=None, gateway=None,
-                        dns_servers=None, search_domains=None):
-    cmd = [NMCLI, 'c', 'add', 'type', 'team', 'con-name', name, 'ifname', name,
-           'config', config]
-    run_command(cmd)
-
+def new_connection_helper(name, ipaddr, gateway, dns_servers, search_domains):
     manual = False
     if (ipaddr is not None and len(ipaddr.strip()) > 0):
         manual = True
@@ -209,19 +190,46 @@ def new_team_connection(name, config, slaves, ipaddr=None, gateway=None,
         run_command([NMCLI, 'c', 'mod', name, 'ipv4.method', 'manual'])
 
     if (dns_servers is not None and len(dns_servers.strip()) > 0):
-        run_command([NMCLI, 'c', 'mod', cname, 'ipv4.dns', dns_servers])
+        run_command([NMCLI, 'c', 'mod', name, 'ipv4.dns', dns_servers])
     if (search_domains is not None and len(search_domains.strip()) > 0):
-        run_command([NMCLI, 'c', 'mod', cname, 'ipv4.dns-search', search_domains])
+        run_command([NMCLI, 'c', 'mod', name, 'ipv4.dns-search', search_domains])
 
-    for i in range(len(slaves)):
-        sname = '%s-slave-%d' % (name, i)
-        run_command([NMCLI, 'c', 'add', 'type', 'team-slave', 'con-name', sname,
-                     'ifname', slaves[i], 'master', name])
-    for i in range(len(slaves)):
-        sname = '%s-slave-%d' % (name, i)
-        run_command([NMCLI, 'c', 'up', sname])
+
+def new_ethernet_connection(name, ifname, ipaddr=None, gateway=None,
+                            dns_servers=None, search_domains=None):
+    run_command([NMCLI, 'c', 'add', 'type', 'ethernet', 'con-name', name,
+                 'ifname', ifname])
+    new_connection_helper(name, ipaddr, gateway, dns_servers, search_domains)
+    #@todo: probably better to get the uuid and reload with it instead of name.
     reload_connection(name)
 
 
-def new_bond_connection():
-    pass
+def new_member_helper(name, members, mtype):
+    for i in range(len(members)):
+        mname = '%s-slave-%d' % (name, i)
+        run_command([NMCLI, 'c', 'add', 'type', mtype, 'con-name', mname,
+                     'ifname', members[i], 'master', name])
+    for i in range(len(members)):
+        mname = '%s-slave-%d' % (name, i)
+        run_command([NMCLI, 'c', 'up', mname])
+
+
+#keeping new_team_connection and new_bond_connection separate even though they
+#are very similar. We should consolidate after we are able to support all
+#common config parameters in both modes.
+def new_team_connection(name, config, members, ipaddr=None, gateway=None,
+                        dns_servers=None, search_domains=None):
+    run_command([NMCLI, 'c', 'add', 'type', 'team', 'con-name', name, 'ifname',
+                 name, 'config', config])
+    new_connection_helper(name, ipaddr, gateway, dns_servers, search_domains)
+    new_member_helper(name, members, 'team-slave')
+    reload_connection(name)
+
+
+def new_bond_connection(name, mode, members, ipaddr=None, gateway=None,
+                        dns_servers=None, search_domains=None):
+    run_command([NMCLI, 'c', 'add', 'type', 'bond', 'con-name', name, 'ifname',
+                 name, 'mode', mode])
+    new_connection_helper(name, ipaddr, gateway, dns_servers, search_domains)
+    new_member_helper(name, members, 'bond-slave')
+    reload_connection(name)
