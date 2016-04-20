@@ -310,27 +310,6 @@ def main():
         logging.debug('Exception while deleting old kernels. Soft error. Moving on.')
         logging.exception(e)
 
-    shutil.copyfile('/etc/issue', '/etc/issue.rockstor')
-    for i in range(30):
-        try:
-            if (init_update_issue() is not None):
-                # init_update_issue() didn't cause an exception and did return
-                # an ip so we break out of the multi try loop as we are done.
-                break
-            else:
-                # execute except block with message so we can try again.
-                raise Exception('default interface IP not yet configured')
-        except Exception, e:
-            # only executed if there is an actual exception with
-            # init_update_issue() or if it returns None so we can try again
-            # regardless as in both instances we may succeed on another try.
-            logging.debug('Exception occurred while running update_issue: %s. '
-                         'Trying again after 2 seconds.' % e.__str__())
-            if (i > 28):
-                logging.error('Waited too long and tried too many times. '
-                              'Quiting.')
-                raise e
-            time.sleep(2)
     cert_loc = '%s/certs/' % BASE_DIR
     if (os.path.isdir(cert_loc)):
         if (not os.path.isfile('%s/rockstor.cert' % cert_loc) or
@@ -450,6 +429,28 @@ def main():
     except Exception, e:
         logging.error('Exception while downgrading python: %s' % e.__str__())
         logging.exception(e)
+
+    shutil.copyfile('/etc/issue', '/etc/issue.rockstor')
+    for i in range(30):
+        try:
+            if (init_update_issue() is not None):
+                # init_update_issue() didn't cause an exception and did return
+                # an ip so we break out of the multi try loop as we are done.
+                break
+            else:
+                # execute except block with message so we can try again.
+                raise Exception('default interface IP not yet configured')
+        except Exception, e:
+            # only executed if there is an actual exception with
+            # init_update_issue() or if it returns None so we can try again
+            # regardless as in both instances we may succeed on another try.
+            logging.debug('Exception occurred while running update_issue: %s. '
+                         'Trying again after 2 seconds.' % e.__str__())
+            if (i > 28):
+                logging.error('Waited too long and tried too many times. '
+                              'Quiting.')
+                raise e
+            time.sleep(2)
 
     enable_rockstor_service(logging)
     enable_bootstrap_service(logging)
