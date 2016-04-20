@@ -4,21 +4,20 @@
     <div class="form-box">
       <form class="form-horizontal" id="vol-select-form" name="aform" >
     <div class="messages"></div>
-    {{display_volumesForm}}
-    {{!-- {{#each volumes}}
+    {{#each volumes}}
         <div class="form-group">
             <label class="control-label col-sm-3" for="shares">{{this.label}}<span class="required">*</span></label>
             <div class="col-sm-5">
                 <select class="form-control" type="text" id="{{this.id}}" name="{{this.id}}" data-placeholder="Select shares to export" >
                     <option></option>
-                    {{#each shares}}
-                        <option value="{{this.name}}">{{share.name}}</option>
+                    {{#each ../shares}}
+                        <option value="{{this.name}}">{{this.name}}</option>
                     {{/each}}
                </select>
            </div>
            <i class="fa fa-info-circle fa-lg" title="{{this.description}}"></i>
          </div>
-     {{/each}} --}}
+     {{/each}}
       </form>
     </div>
   </div>

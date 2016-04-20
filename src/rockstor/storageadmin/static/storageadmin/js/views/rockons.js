@@ -549,7 +549,6 @@ RockonShareChoice = RockstorWizardPage.extend({
 		this.shares.setPageSize(100);
 		RockstorWizardPage.prototype.initialize.apply(this, arguments);
 		this.shares.on('reset', this.renderVolumes, this);
-		this.initHandlebarHelpers();
 	},
 
 	render: function() {
@@ -559,10 +558,7 @@ RockonShareChoice = RockstorWizardPage.extend({
 	},
 
 	renderVolumes: function() {
-		/* console.log("the volumes object is: ", this.volumes.toJSON());
-    	console.log("the shares object is: ", this.shares.toJSON());
-		this.$('#ph-vols-table').html(this.vol_template({volumes: this.volumes.toJSON(), shares: this.shares.toJSON()})); */
-		this.$('#ph-vols-table').html(this.vol_template({volumes: this.volumes, shares: this.shares}));
+		this.$('#ph-vols-table').html(this.vol_template({volumes: this.volumes.toJSON(), shares: this.shares.toJSON()})); 
 		//form validation
 		this.volForm = this.$('#vol-select-form');
 		var rules = {};
@@ -593,29 +589,6 @@ RockonShareChoice = RockstorWizardPage.extend({
 		this.model.set('share_map', share_map);
 		return $.Deferred().resolve();
 	},
-
-	initHandlebarHelpers: function(){
-		Handlebars.registerHelper('display_volumesForm', function(){
-			var html = '';
-			var _this = this;
-			this.volumes.each(function(volume, index) {
-				html += '<div class="form-group">';
-				html += '<label class="control-label col-sm-3" for="shares">' + volume.get('label') + '<span class="required">*</span></label>';
-				html += '<div class="col-sm-5">';
-				html += '<select class="form-control" type="text" id="' + volume.id + '" name="' + volume.id + '" data-placeholder="Select shares to export" >';
-				html += '<option></option>';
-				_this.shares.each(function(share, index) {
-					html += '<option value="' + share.get('name') + '">' + share.get('name') + '</option>';
-				});
-				html += '</select>';
-				html += '</div>';
-				html += '<i class="fa fa-info-circle fa-lg" title="' + volume.get('description') + '"></i>';
-				html += '</div>';
-			});
-			return new Handlebars.SafeString(html);
-		});
-	}
-
 });
 
 RockonPortChoice = RockstorWizardPage.extend({
