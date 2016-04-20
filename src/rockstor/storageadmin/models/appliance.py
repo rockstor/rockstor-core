@@ -39,15 +39,18 @@ class Appliance(models.Model):
             return self.ip
         try:
             ip = self.ip
-            so = Service.objects.get(name='rockstor')
-            if (so.config is not None):
-                try:
-                    config = json.loads(so.config)
-                    nco = NetworkConnection.objects.get(name=config['network_interface'])
-                    if (nco.ipaddr is not None):
-                        return nco.ipaddr
-                except:
-                    pass
+            try:
+                so = Service.objects.get(name='rockstor')
+                if (so.config is not None):
+                    try:
+                        config = json.loads(so.config)
+                        nco = NetworkConnection.objects.get(name=config['network_interface'])
+                        if (nco.ipaddr is not None):
+                            return nco.ipaddr
+                    except:
+                        pass
+            except Service.DoesNotExist:
+                pass
             return ip
         except Exception, e:
             msg = ('Failed to grab the management IP of the appliance '
