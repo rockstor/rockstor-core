@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import re
+import json
 from tempfile import mkstemp
 from shutil import move
 from django.db import transaction
@@ -24,7 +25,9 @@ from django.conf import settings
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from storageadmin.models import (NetworkConnection, NetworkDevice, Appliance,
-                                 EthernetConnection, TeamConnection)
+                                 EthernetConnection, TeamConnection,
+                                 BondConnection)
+from smart_manager.models import Service
 from storageadmin.util import handle_exception
 from storageadmin.serializers import (NetworkDeviceSerializer, NetworkConnectionSerializer)
 from system.osi import (config_network_device, get_net_config, update_issue)
@@ -200,7 +203,6 @@ class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
     @transaction.atomic
     def post(self, request):
         with self._handle_exception(request):
-            logger.debug('request data = %s' % request.data)
             ipaddr = gateway = dns_servers = search_domains = None
             name = request.data.get('name')
             if (NetworkConnection.objects.filter(name=name).exists()):
@@ -306,8 +308,8 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
 
     @staticmethod
     def _delete_connection(nco):
-        for snco in nco.networkconnection_set.all():
-            network.delete_connection(snco.uuid)
+        for mnco in nco.networkconnection_set.all():
+            network.delete_connection(mnco.uuid)
         network.delete_connection(nco.uuid)
         nco.delete()
 
@@ -315,6 +317,20 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
     def delete(self, request, id):
         with self._handle_exception(request):
             nco = self._nco(request, id)
+            restricted = False
+            try:
+                so = Service.objects.get(name='rockstor')
+                config = json.loads(so.config)
+                if (config['network_interface'] == nco.name):
+                    restricted = True
+            except Exception, e:
+                logger.exception(e)
+            if (restricted):
+                e_msg = ('This connection(%s) is designated for '
+                         'management and cannot be deleted. If you really '
+                         'need to delete it, change the Rockstor service '
+                         'configuration and try again.' % nco.name)
+                handle_exception(Exception(e_msg), request)
             self._delete_connection(nco)
             return Response()
 
@@ -323,7 +339,14 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
         #switch the connection up, down or reload.
         with self._handle_exception(request):
             nco = self._nco(request, id)
-            network.toggle_connection(nco.uuid, switch)
+            if (switch == 'up' and nco.ctype in ('team', 'bond')):
+                #order_by('name') because in some cases member interfaces must
+                #be brought up in order. eg: active-backup.
+                for mnco in nco.networkconnection_set.all().order_by('name'):
+                    logger.debug('upping %s %s' % (mnco.name, mnco.uuid))
+                    network.toggle_connection(mnco.uuid, switch)
+            else:
+                network.toggle_connection(nco.uuid, switch)
             return Response(NetworkConnectionSerializer(nco).data)
 
 
