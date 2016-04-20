@@ -36,8 +36,12 @@ class APIWrapper(object):
         self.expiration = time.time()
         self.client_id = client_id
         self.client_secret = client_secret
-        #@todo: revisit this as part of #1271
-        self.url = 'https://127.0.0.1'
+        #directly connect to gunicorn, bypassing nginx as we are on the same
+        #host.
+        self.url = 'http://127.0.0.1:8000'
+        if (url is not None):
+            #for remote urls.
+            self.url = url
 
     def set_token(self):
         if (self.client_id is None or self.client_secret is None):
