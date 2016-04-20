@@ -1,0 +1,142 @@
+<script>
+/*
+ * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
+ * This file is part of RockStor.
+ *
+ * RockStor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ *
+ * RockStor is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+</script>
+
+<div class="row">
+  <div class="panel panel-default">
+  {{#if connection}}
+  <div class="panel-heading">Edit network connection: {{connection.name}}</div>
+  {{else}}
+  <div class="panel-heading">Add a new network connection</div>
+  {{/if}}
+    <div class="panel-body">
+      <form class="form-horizontal" id="new-connection-form" name="aform">
+        <div class="messages"></div>
+	<div class="form-group">
+          <label class="col-sm-4 control-label" for="name">Name<span class="required"> *</span></label>
+          <div class="col-sm-4">
+            <input class="form-control" type="text" id="name" name="name" {{#if connection}}value="{{connection.name}}" disabled{{/if}}>
+          </div>
+	</div>
+        <div class="form-group">
+          <label class="col-sm-4 control-label" for="ctype">Connection Type<span class="required"> *</span></label>
+          <div class="col-sm-4">
+            <select class="form-control" id="ctype" name="ctype" {{#if connection}}disabled{{/if}}>
+	      {{#each ctypes}}
+	      <option value="{{this}}" {{#if ../connection}}{{selectedCtype this}}{{/if}}>{{this}}</option>
+	      {{/each}}
+            </select>
+          </div>
+        </div>
+        <div id="singleDevice">
+            <div class="form-group">
+                <label class="col-sm-4 control-label" for="device">Device <span class="required"> *</span></label>
+		<div class="col-sm-4">
+                  <select class="form-control" id="device" name="device" {{#if connection}}disabled{{/if}}>
+                    {{#each devices}}
+                    <option value="{{this.name}}" {{#if ../connection}}{{selectedDevice this}}{{/if}}>{{this.name}}{{#if this.cname}}  [part of connection: {{this.cname}}]{{/if}}</option>
+                    {{/each}}
+                  </select>
+		</div>
+            </div>
+        </div><!--close ethernetDeviceDropdown -->
+        <div id="teamProfiles" style="display:none;">
+            <div class="form-group">
+              <label class="col-sm-4 control-label" for="team_profile">Team Profile<span class="required"> *</span></label>
+              <div class="col-sm-4">
+                <select class="form-control" id="team_profile" name="team_profile" {{#if connection}}disabled{{/if}}>
+              {{#each teamProfiles}}
+                <option value="{{this}}" {{#if ../connection}}{{selectedTeamProfile this}}{{/if}}>{{this}}</option>
+              {{/each}}
+                </select>
+              </div>
+            </div>
+        </div><!--close teamProfiles -->
+        <div id="bondProfiles" style="display:none;">
+            <div class="form-group">
+              <label class="col-sm-4 control-label" for="bond_profile">Bond Profile<span class="required"> *</span></label>
+              <div class="col-sm-4">
+                <select class="form-control" id="bond_profile" name="bond_profile" {{#if connection}}disabled{{/if}}>
+              {{#each bondProfiles}}
+                <option value="{{this}}" {{#if ../connection}}{{selectedBondProfile this}}{{/if}}>{{this}}</option>
+              {{/each}}
+                </select>
+              </div>
+            </div>
+        </div><!--close bondProfiles -->
+        <div id="multiDevice" style="display:none;">
+            <div class="form-group">
+                <label class="col-sm-4 control-label" for="devices">Devices <span class="required"> *</span></label>
+            <div class="col-sm-4">
+                <select class="form-control" id="devices" name="devices" size="20" data-placeholder="select devices" multiple {{#if connection}}disabled{{/if}}>
+                    {{#each devices}}
+                        <option value="{{this.name}}" {{#if ../connection}}{{selectedDevice this}}{{/if}}>{{this.name}}{{#if this.cname}}  [part of connection: {{this.cname}}]{{/if}}</option>
+                    {{/each}}
+                </select>
+                <i class="fa fa-exclamation-circle" title="select 2 or more devices." rel="tooltip"></i>
+            </div>
+            </div>
+        </div><!--close multiDevice -->
+          <div class="form-group">
+          <label class="col-sm-4 control-label" for="method">Config Method<span class="required"> *</span></label>
+          <div class="col-sm-4">
+            <select class="form-control" id="method" name="method">
+              <option value="auto" {{#if connection}}{{#isAuto connection}}selected="selected"{{/isAuto}}{{/if}}>Auto (DHCP)</option>
+              <option value="manual" {{#if connection}}{{#isAuto connection}}{{else}}selected="selected"{{/isAuto}}{{/if}}>Manual</option>
+            </select>
+          </div>
+        </div>
+        <div id="methodOptionalFields" {{#if connection}}{{#isAuto connection}}style="display:none;"{{/isAuto}}{{else}}style="display:none;"{{/if}}>
+          <div class="form-group">
+          <label class="col-sm-4 control-label" for="ipaddr">IP Address<span class="required"> *</span></label>
+          <div class="col-sm-4">
+            <input class="form-control" type="text"  id="ipaddr" name="ipaddr" {{#if connection}}value="{{connection.ipv4_addresses}}"{{/if}} placeholder="IP Address">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-4 control-label" for="gateway">Gateway<span class="required"> *</span></label>
+          <div class="col-sm-4">
+            <input class="form-control" type="text" id="gateway" name="gateway" {{#if connection}}value="{{connection.ipv4_gw}}"{{/if}} placeholder="Gateway">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-4 control-label" for="dns_servers">DNS Servers</label>
+          <div class="col-sm-4">
+            <input class="form-control" type="text" id="dns_servers" name="dns_servers" {{#if connection}}value="{{connection.ipv4_dns}}"{{/if}} placeholder="DNS Servers">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-4 control-label" for="search_domains">Search Domains</label>
+          <div class="col-sm-4">
+            <input class="form-control" type="text" id="search_domains" name="search_domains" {{#if connection}}value="{{connection.ipv4_dns_search}}"{{/if}} placeholder="Search Domains">
+          </div>
+        </div>
+        </div><!--close methodOptionalFields-->
+        <div class="form-group">
+          <div class="col-sm-offset-4 col-sm-8">
+	    <button id="cancel" class="btn btn-default">Cancel</button>
+	    <button type="Submit" id="submit" class="btn btn-primary">Submit</button>
+          </div>
+        </div>
+      </form>
+    </div> <!-- panel-body -->
+  </div> <!-- panel-default -->
+  </div> <!-- col-md-8 -->
+</div> <!-- row -->

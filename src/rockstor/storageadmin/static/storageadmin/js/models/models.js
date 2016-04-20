@@ -337,14 +337,23 @@ var ProbeCollection = Backbone.Collection.extend({
     }
 });
 
-var NetworkInterface = Backbone.Model.extend({
-    idAttribute: 'name',
-    urlRoot: '/api/network'
+
+var NetworkDevice = Backbone.Model.extend({
+    urlRoot: '/api/network/devices'
 });
 
-var NetworkInterfaceCollection = RockStorPaginatedCollection.extend({
-    model: NetworkInterface,
-    baseUrl: '/api/network'
+var NetworkDeviceCollection = RockStorPaginatedCollection.extend({
+    model: NetworkDevice,
+    baseUrl: '/api/network/devices'
+});
+
+var NetworkConnection = Backbone.Model.extend({
+    urlRoot: '/api/network/connections'
+});
+
+var NetworkConnectionCollection = RockStorPaginatedCollection.extend({
+    model: NetworkConnection,
+    baseUrl: '/api/network/connections'
 });
 
 var ProbeRun = Backbone.Model.extend({
