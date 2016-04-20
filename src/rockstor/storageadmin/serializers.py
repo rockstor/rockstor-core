@@ -150,6 +150,7 @@ class NetworkDeviceSerializer(serializers.ModelSerializer):
 class NetworkConnectionSerializer(serializers.ModelSerializer):
     ctype = serializers.CharField()
     team_profile = serializers.CharField()
+    bond_profile = serializers.CharField()
 
     class Meta:
         model = NetworkConnection

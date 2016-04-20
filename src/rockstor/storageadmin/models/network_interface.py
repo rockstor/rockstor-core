@@ -148,7 +148,7 @@ class BondConnection(models.Model):
     name = models.CharField(max_length=64, null=True)
     #at the NM level it's not json like in team config, but we could convert it
     #for consistency.
-    options = models.CharField(max_length=2048, null=True)
+    config = models.CharField(max_length=2048, null=True)
 
     class Meta:
         app_label = 'storageadmin'

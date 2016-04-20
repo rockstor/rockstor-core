@@ -439,9 +439,10 @@ def main():
         run_command([PREP_DB, ])
 
 
-    logging.info('Shutting down firewall...')
+    logging.info('stopping firewalld...')
     run_command([SYSCTL, 'stop', 'firewalld'])
     run_command([SYSCTL, 'disable', 'firewalld'])
+    logging.info('firewalld stopped and disabled')
     update_nginx(logging)
     try:
         #downgrading python is a stopgap until it's fixed in upstream.
