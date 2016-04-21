@@ -84,7 +84,7 @@ var AppRouter = Backbone.Router.extend({
 	"email": "showEmail",
 	"email/:emailID/edit": "editEmail",
 	"config-backup": "configBackup",
-	"logs": "showLogs",
+	"logsmanager": "showLogs",
 	"shutdown": "showShutdownView",
 	"reboot": "showReboot",
 	"version": "showVersion",
