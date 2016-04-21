@@ -31,6 +31,7 @@ DisksView = Backbone.View.extend({
         'click .delete': 'deleteDisk',
         'click .btrfs_wipe': 'btrfsWipeDisk',
         'click .btrfs_import': 'btrfsImportDisk',
+        'click .pause': 'pauseDisk',
         'switchChange.bootstrapSwitch': 'smartToggle'
     },
 
@@ -83,6 +84,27 @@ DisksView = Backbone.View.extend({
         });
     },
 
+    pauseDisk: function (event) {
+        var _this = this;
+        if (event) event.preventDefault();
+        var button = $(event.currentTarget);
+        if (buttonDisabled(button)) return false;
+        disableButton(button);
+        var diskName = button.data('disk-name');
+        if (confirm('Are you sure you want to force the following device into Standby mode ' + diskName + '?')) {
+            $.ajax({
+                url: '/api/disks/' + diskName + '/pause',
+                type: 'POST',
+                success: function (data, status, xhr) {
+                    _this.render();
+                },
+                error: function (xhr, status, error) {
+                    enableButton(button);
+                }
+            });
+        }
+    },
+
     wipeDisk: function (event) {
         var _this = this;
         if (event) event.preventDefault();
@@ -103,6 +125,7 @@ DisksView = Backbone.View.extend({
             });
         }
     },
+
     btrfsWipeDisk: function (event) {
         var _this = this;
         if (event) event.preventDefault();
@@ -190,7 +213,10 @@ DisksView = Backbone.View.extend({
                     diskParted = disk.get('parted'),
                     smartEnabled = disk.get('smart_enabled'),
                     diskRole = disk.get('role'),
-                    smartOptions = disk.get('smart_options');
+                    smartOptions = disk.get('smart_options'),
+                    powerState = disk.get('power_state'),
+                    hdparmSetting = disk.get('hdparm_setting'),
+                    apmLevel = disk.get('apm_level');
 
                 html += '<tr>';
                 html += '<td><a href="#disks/' + diskName + ' "><i class="glyphicon glyphicon-hdd"></i> ' + diskName + '</a>&nbsp';
@@ -204,11 +230,12 @@ DisksView = Backbone.View.extend({
                     html += 'Click to wipe it clean." rel="tooltip"><i class="glyphicon glyphicon-cog"></i></a>';
                 } else if (btrfsUId && _.isNull(poolName)) {
                     html += '<a href="#" class="btrfs_wipe" data-disk-name="' + diskName + '" title="Disk is unusable because it has BTRFS filesystem(s) on it.Click to wipe it clean." rel="tooltip">';
-                    html += '<i class="fa fa-eraser"></i></a>&nbsp;<a href="#" class="btrfs_import" data-disk-name="' + diskName + '" title="Click to import data(pools, shares and snapshots) on this disk automatically" rel="tooltip">';
+                    html += '<i class="fa fa-eraser"></i></a>&nbsp;<a href="#" class="btrfs_import" data-disk-name="' + diskName + '" title="Click to automatically import data (pools, shares and snapshots) on this disk" rel="tooltip">';
                     html += '<i class="glyphicon glyphicon-circle-arrow-down"></i></a>';
                 }
 
                 html += '</td>';
+                // begin Serial number column
                 html += '<td>';
                 if (serial == null || serial == '' || serial == diskName || serial.length == 48) {
                     html += '<div class="alert alert-danger">' +
@@ -220,14 +247,54 @@ DisksView = Backbone.View.extend({
                     }
                 }
                 html += '</td>';
+                // begin Capacity column
                 html += '<td>' + diskSize + '</td>';
+                // begin Pool column
                 html += '<td>';
                 if (!_.isNull(poolName)) {
                     html += '<a href="#pools/' + poolName + '">' + poolName + '</a>';
                 }
                 html += '</td>';
+                // begin Spin Down / Power Status column
+                html += '<td>';
+                if (powerState == 'unknown' || powerState == null ) {
+                    html += '<i class="glyphicon glyphicon-pause"></i>';
+                    html += powerState + ' ';
+                    html += '<i class="glyphicon glyphicon-hourglass"></i>';
+                } else {
+                    if (powerState == 'active/idle') {
+                        html += '<a href="#" class="pause" data-disk-name="' + diskName + '" title="Force drive into Standby mode." rel="tooltip">';
+                        html += '<i class="glyphicon glyphicon-pause"></i></a>';
+                    } else {
+                        html += '<i class="glyphicon glyphicon-pause"></i>';
+                    }
+                    html += powerState + ' ';
+                    html += '<a href="#disks/spindown/' + diskName + '" title="Click to configure Spin Down." rel="tooltip">';
+                    html += '<i class="glyphicon glyphicon-hourglass"></i></a>';
+                }
+                if (hdparmSetting != null) {
+                    html += hdparmSetting;
+                }
+                html += ' ';
+                html += '</td>';
+                // begin APM column
+                html += '<td>';
+                if (apmLevel == 0 || apmLevel == null) {
+                    html += '???';
+                } else {
+                    if (apmLevel == 255) {
+                        html += 'off';
+                    } else {
+                        html += apmLevel;
+                    }
+                }
+                html += ' ';
+                html += '</td>';
+                // begin Model column
                 html += '<td>' + diskModel + '</td>';
+                // begin Transport column
                 html += '<td>' + diskTransport + '</td>';
+                // begin Vendor column
                 html += '<td>' + diskVendor + '</td>';
                 // begin smart table data cell contents
                 html += '<td>';

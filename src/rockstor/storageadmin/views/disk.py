@@ -30,6 +30,7 @@ from share_helpers import (import_shares, import_snapshots)
 from django.conf import settings
 import rest_framework_custom as rfc
 from system import smart
+from system.osi import set_disk_spindown, enter_standby
 from copy import deepcopy
 import uuid
 import logging
@@ -263,10 +264,14 @@ class DiskDetailView(rfc.GenericView):
                 return self._toggle_smart(dname, request)
             if (command == 'smartcustom-drive'):
                 return self._smartcustom_drive(dname, request)
+            if (command == 'spindown-drive'):
+                return self._spindown_drive(dname, request)
+            if (command == 'pause'):
+                return self._pause(dname, request)
 
         e_msg = ('Unsupported command(%s). Valid commands are wipe, btrfs-wipe,'
                  ' btrfs-disk-import, blink-drive, enable-smart, disable-smart,'
-                 ' smartcustom-drive' % command)
+                 ' smartcustom-drive, spindown-drive, pause' % command)
         handle_exception(Exception(e_msg), request)
 
     @transaction.atomic
@@ -338,4 +343,21 @@ class DiskDetailView(rfc.GenericView):
         blink_time = int(request.data.get('blink_time', 15))
         sleep_time = int(request.data.get('sleep_time', 5))
         blink_disk(disk.name, total_time, blink_time, sleep_time)
+        return Response()
+
+    @classmethod
+    def _spindown_drive(cls, dname, request):
+        disk = cls._validate_disk(dname, request)
+        spindown_time = int(request.data.get('spindown_time', 20))
+        # todo attempt to retrieve spindown_message as well and pass it along.
+        spindown_message = str(
+            request.data.get('spindown_message', 'message issue!'))
+        apm_value = int(request.data.get('apm_value', 0))
+        set_disk_spindown(disk.name, spindown_time, apm_value, spindown_message)
+        return Response()
+
+    @classmethod
+    def _pause(cls, dname, request):
+        disk = cls._validate_disk(dname, request)
+        enter_standby(disk.name)
         return Response()

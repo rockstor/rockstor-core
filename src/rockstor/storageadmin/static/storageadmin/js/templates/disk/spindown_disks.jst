@@ -1,0 +1,104 @@
+<h3>Add drive specific Spin down time</h3>
+<h4>This is the time a drive must remains <strong>Idle</strong> before
+  spinning down it's disks / platters to save on power and reduce drive noise.
+  <br>
+  Idle periods a disk activity can be encouraged by adding <strong>Task
+    execution time windows</strong> to relevant <strong>Scheduled Tasks</strong>.
+  <i>See System - Scheduled Tasks</i>
+</h4>
+
+<h5>Please note that a drive's <i>initial</i> response time when in
+  <strong>standby</strong> mode is typically increased by tens of seconds
+  as the disk motor takes time to re-energize the platters.</h5>
+<h6>The value entered here will be used by hdparm -S to set this drives Spin
+  down delay. If this delay is set too small for a specific work load then the
+  the drive will spend more time than necessary spinning up and down and have
+  an unnecessary impact on performance and wear levels. Conversely a high or
+  non existent spin down time may waste energy and cause a drive to create
+  unwanted noise and heat. For HOME or SMALL OFFICE consider values in the
+  range of 20 minutes. For larger installs consider values greater than 1 hour.
+</h6>
+
+<div class="row">
+  <div class="col-md-8">
+    <label class="control-label"></label>
+    <div class="form-box">
+      <form class="form-horizontal" id="add-spindown-disk-form" name="aform">
+        <div class="messages"></div>
+
+        <!-- Form Header Info -->
+        <div class="form-group">
+          <div class="col-sm-offset-4 col-sm-8">
+            <h4>Drive name:&nbsp;&nbsp;<strong>{{diskName}}</strong></h4>
+            <h4>Serial number:&nbsp;&nbsp;<strong>{{serialNumber}}</strong></h4>
+          </div>
+        </div>
+
+        <!-- Spindown time selection -->
+        <div class="form-group">
+          <label class="col-sm-4 control-label" for="spindown_time">Idle Time
+            prior to Spin Down<span class="required"> *</span></label>
+          <div class="col-sm-4">
+            <select class="form-control" id="spindown_time"
+                    name="spindown_time">
+              {{display_spindown_time}}
+              <!--{{#each spindownTimes}}-->
+              <!--<option value="{{this}}">{{@key}}</option>-->
+              <!--{{/each}}-->
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="col-sm-offset-4 col-sm-8">
+            <label class="checkbox inline">
+              <input type="checkbox" id="enable_apm" checked="true"
+                     name="enable_apm"> Enable APM setting
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group" id="slider-entry">
+          <label class="col-sm-4 control-label" for="apm_value">APM
+            setting</label>
+          <div class="col-sm-8">
+            <div id="slider" class="control-label" style="width: 400px;"></div>
+            <input class="col-sm-3" type="text"
+                   name="apm_value" id="apm_value" value="0"
+                   title="Enter APM Value">
+          </div>
+        </div>
+
+        <div class="form-group" id="slider-key">
+          <div class="col-xs-8 col-xs-offset-4">
+            <div style="width: 15px; height: 15px; float: left"
+                 class="slider-legend-free"></div>
+            <div>&nbsp;<span id="slide_lower_half"></span>&nbsp;(1-127) May be
+              required for spin down - (lower power & performance).
+            </div>
+            <br>
+            <div style="width: 15px; height: 15px; float: left"
+                 class="slider-legend-reclaimable"></div>
+            <div>&nbsp;<span id="slide_upper_half"></span>&nbsp;(128-254) May
+              inhibit spin down - (higher power & performance).
+            </div>
+            <br>
+            <div style="width: 15px; height: 15px; float: left"
+                 class="slider-legend-used"></div>
+            <div>&nbsp;<span id="slide_disabled"></span>&nbsp;(255) APM off.
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="col-sm-offset-4 col-sm-8">
+            <a id="cancel" class="btn btn-default">Cancel</a>
+            <input type="Submit" id="spindown-disk" class="btn btn-primary"
+                   value="Submit"></input>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
