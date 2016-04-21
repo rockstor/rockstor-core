@@ -292,7 +292,8 @@ RockonsView = RockstorLayoutView.extend({
 			this.updateStatus();
 		}
 	},
-
+	
+	//@todo: cleanup after figuring out how to track the installed variable.
 	initHandlebarHelpers: function(){
 		Handlebars.registerHelper('display_installedRockons', function(){
 			var html = '';
@@ -626,6 +627,7 @@ RockonCustomChoice = RockstorWizardPage.extend({
 
 	render: function() {
 		RockstorWizardPage.prototype.render.apply(this, arguments);
+		//@todo: working only for the ownCloud and Discourse rockons. Fix to work for the rest
 		this.$('#ph-cc-form').html(this.cc_template({cc: this.custom_config.toJSON()}));
 		this.cc_form = this.$('#custom-choice-form');
 		var rules = {};
@@ -655,8 +657,10 @@ RockonCustomChoice = RockstorWizardPage.extend({
 		return $.Deferred().resolve();
 	},
 
+	//@todo: fix this to work for all rockons.
 	initHandlebarHelpers: function(){
 		Handlebars.registerHelper('findInputType', function(ccLabel){
+			console.log("came to the helper");
 			if (ccLabel.match(/password/i)) {
 				return true;
 			} 
@@ -718,7 +722,6 @@ RockonInstallSummary = RockstorWizardPage.extend({
 		this.cc = this.model.get('custom_config');
 		this.rockon = this.model.get('rockon');
 		RockstorWizardPage.prototype.initialize.apply(this, arguments);
-		this.initHandlebarHelpers();
 	},
 
 	render: function() {
@@ -752,43 +755,6 @@ RockonInstallSummary = RockstorWizardPage.extend({
 			error: function(request, status, error) { }
 		});
 	},
-
-	initHandlebarHelpers: function(){
-		Handlebars.registerHelper('display_rockonsSummary_table', function(){
-			var html = '';
-			console.log("the share_map object is: ", this.share_map);
-			for (s in this.share_map) {
-				html += '<tr>';
-				html += '<td>Share</td>';
-				html += '<td>' + this.share_map[s] + '</td>';
-				html += '<td>' + s + '</td>';
-				html += '</tr>';
-			}
-			for (p in this.port_map) {
-				html += '<tr>';
-				html += '<td>Port</td>';
-				html += '<td>' + this.port_map[p] + '</td>';
-				html += '<td>' + p + '</td>';
-				html += '</tr>';
-			}
-			for (c in this.cc_map) {
-				html += '<tr>';
-				html += '<td>Custom</td>';
-				html += '<td>' + this.cc_map[c] + '</td>';
-				html += '<td>' + c + '</td>';
-				html += '</tr>';
-			}
-			for (e in this.env_map) {
-				html += '<tr>';
-				html += '<td>Env</td>';
-				html += '<td>' + this.env_map[e] + '</td>';
-				html += '<td>' + e + '</td>';
-				html += '</tr>';
-			}
-			return new Handlebars.SafeString(html);
-		});
-	}
-
 });
 
 RockonInstallComplete = RockstorWizardPage.extend({
@@ -1043,6 +1009,7 @@ RockonSettingsSummary = RockstorWizardPage.extend({
 		}));
 		return this;
 	},
+	//@todo: remove this helper after finding out where new volumes is being used.
 	initHandlebarHelpers: function(){
 		Handlebars.registerHelper('display_newVolumes', function(){
 			var html = '';
@@ -1055,25 +1022,6 @@ RockonSettingsSummary = RockstorWizardPage.extend({
 			}
 			return new Handlebars.SafeString(html);
 		});
-
-		/* Handlebars.registerHelper('display_cc', function(){
-			var html = '';
-			this.cc.each(function(cci, index) {
-				html += '<tr>';
-				html += '<td>Custom</td>';
-				html += '<td>' + cci.get('val') + '&nbsp;&nbsp<i class="fa fa-info-circle" title="' + cci.get('description') + '" rel="tooltip"></i></td>';
-				html += '<td>' + cci.get('key') + '</td>';
-				html += '</tr>';
-			}); 
-			//@todo: separate env and cc stuff.
-			this.env.each(function(envi, index) {
-				html += '<tr><td>Env</td>';
-				html += '<td>' + envi.get('val') + '&nbsp;&nbsp<i class="fa fa-info-circle" title="' + envi.get('description') + '" rel="tooltip"></i></td>';
-				html += '<td>' + envi.get('key') + '</td></tr>';
-			});
-			return new Handlebars.SafeString(html);
-		}); */
-
 	}
 });
 
