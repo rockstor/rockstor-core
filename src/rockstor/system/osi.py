@@ -915,14 +915,11 @@ def update_hdparm_service(hdparm_command_list, comment):
     do_edit = False
     clear_line_count = 0
     remove_entry = False
-    execstart_count = 0
     # get our by-id device name by extracting the last hdparm list item
     device_name_byid = hdparm_command_list[-1]
     # look four our flag of a -1 value for the -S parameter
-    logger.debug('update_hdparm_service received the following parameter %s', hdparm_command_list[-2])
     if hdparm_command_list[-2] == '-S-1':
         # When a user selects "Remove config" our -S value = -1, set flag.
-        logger.debug('setting remove_entry to True')
         remove_entry = True
     # first create a temp file to use as our output until we are done editing.
     tfo, npath = mkstemp()
@@ -950,7 +947,7 @@ def update_hdparm_service(hdparm_command_list, comment):
                 # we have found a line beginning with "ExecStart="
                 if update:
                     if device_name_byid == line.split()[-1]:
-                        # matching device name entry so set edit flat
+                        # matching device name entry so set edit flag
                         do_edit = True
                 else:  # no update and ExecStart found so set edit flag
                     do_edit = True
@@ -978,8 +975,31 @@ def update_hdparm_service(hdparm_command_list, comment):
                 # !=2 as this would indicate an addition where we do need to
                 # copy over the original files line.
                 outo.write(line)
-    # now copy our temp file over to our destination as we are done editing
+    # Now count our temp files lines as if it has no more than our template then
+    # we have no ExecStart lines and so need to disable our rockstor-hdparm
+    # systemd service.
+    # Pythons _candidate_tempdir_list() should ensure our npath temp file is in
+    # memory (tmpfs) so not that heavy to open again. Our previous 'with open()'
+    # is already complex enough.
+    with open(npath) as ino:
+        tempfile_length = len(ino.readlines())
+    logger.debug('TOTAL LINES COUNT OF TEMP FILE = %s', tempfile_length)
+    # Copy our temp file over to our destination as we are done updating it.
     shutil.move(npath, '/etc/systemd/system/rockstor-hdparm.service')
+    # Now to disable the service if our systemd file is of minimum length
+    if tempfile_length == 13:
+        # our proposed systemd file is the same length as our template and so
+        # contains no ExecStart lines so we disable the rockstor-hdparm service.
+        logger.info('Disabling the rockstor-hdparm systemd service.')
+        out, err, rc = run_command([SYSTEMCTL_BIN, 'disable', 'rockstor-hdparm'])
+        if rc != 0:
+            return False
+        # and remove our rockstor-hdparm.service file as it's absence indicates
+        # a future need to restart this service via the update flag as not True.
+        if update:  # update was set true if this file exists so we check first.
+            # todo do we need try clause around this?
+            logger.info('Removing the rockstor-hdparm systemd file.')
+            os.remove('/etc/systemd/system/rockstor-hdparm.service')
     if update is not True:
         # then this is a fresh systemd instance so enable it
         # can't use systemctrl wrapper as then circular dependency
