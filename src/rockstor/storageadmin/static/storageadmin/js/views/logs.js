@@ -26,7 +26,7 @@
 
 LogsView = RockstorLayoutView.extend({
     events: {
-	'click .logs-item': 'logbaskets',
+	'click .logs-item': 'LogBaskets',
 	'click #live-log': 'LoadServerLogs',
     },
     initialize: function() {
@@ -41,7 +41,7 @@ LogsView = RockstorLayoutView.extend({
 	return this;
     },
 
-    logbaskets: function(event) {
+    LogBaskets: function(event) {
 	event.preventDefault();
 	//_this = event.currentTarget;
 	var parent_div = $(event.currentTarget).parent().attr('id');
@@ -70,7 +70,6 @@ LogsView = RockstorLayoutView.extend({
     },
 
     ShowLogReader: function() {
-        //event.preventDefault();
         $('#log_reader').modal({
             keyboard: false,
             show: false,
