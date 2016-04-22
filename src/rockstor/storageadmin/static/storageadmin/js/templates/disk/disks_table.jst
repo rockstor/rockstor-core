@@ -13,7 +13,64 @@
       </tr>
     </thead>
     <tbody>
-      {{display_disks_tbody}}
+       {{#each diskCollection}}
+        <tr>
+        <td><a href="#disks/{{this.name}}"><i class="glyphicon glyphicon-hdd"></i>&nbsp;{{this.name}}</a></td>
+        {{#if this.offline}}
+            <a href="#" class="delete" data-disk-name="{{this.name}}" title="Disk is unusable because it is offline.
+            Click to delete it from the system" rel="tooltip"><i class="glyphicon glyphicon-trash"></i></a>
+            
+        {{else if (displayInfo this.role)}}
+            <a href="#" class="raid_member" data-disk-name="{{this.name}}" title="Disk is a mdraid member." rel="tooltip">
+            <i class="glyphicon glyphicon-info-sign"></i></a>
+            
+        {{else if this.parted}}
+            <a href="#" class="wipe" data-disk-name="{{this.name}}" title="Disk is unusable because it has some other filesystem on it.
+            Click to wipe it clean." rel="tooltip"><i class="glyphicon glyphicon-cog"></i></a>
+            
+        {{else if (displayBtrfs this.btrfs_uuid this.pool_name)}}
+            <a href="#" class="btrfs_wipe" data-disk-name="{{this.name}}" title="Disk is unusable because it has BTRFS filesystem(s) on it.
+            Click to wipe it clean." rel="tooltip"><i class="fa fa-eraser"></i></a>&nbsp;<a href="#" class="btrfs_import" 
+            data-disk-name="{{this.name}}" title="Click to import data(pools, shares and snapshots) on this disk automatically" rel="tooltip">
+            <i class="glyphicon glyphicon-circle-arrow-down"></i></a>
+            
+        {{/if}}
+        </td>
+        <td>
+        {{#if (findSerial this.serial this.name)}}
+            <div class="alert alert-danger"><h4>Warning! Disk serial number is not legitimate or unique.</h4>Disk names may change unfavourably upon reboot leading to inadvertent drive reallocation and potential data loss. This error is caused by the source of these disks such as your Hypervisor or SAN. 
+            Please ensure that disks are provided with unique serial numbers before proceeding further.</div>
+        {{else if this.serial}}
+            {{this.serial}}
+                &nbsp;&nbsp;&nbsp;&nbsp;<a href="#disks/blink/{{this.name}}" title="A tool to physically identify the hard drive with this serial number" rel="tooltip">
+                <i class="fa fa-lightbulb-o fa-lg"></i></a>&nbsp;
+        {{/if}}
+        </td>
+        <td>{{humanReadableSize this.size}}</td>
+        <td>
+        {{#if pool_name}}
+            <a href="#pools/{{this.pool_name}}">{{this.pool_name}}</a>
+        {{/if}}
+        </td>
+        <td>{{this.model}}</td>
+        <td>{{this.transport}}</td>
+        <td>{{this.vendor}}</td>
+        {{!-- begin smart table data cell contents --}}
+        <td>
+        {{#if this.smart_options}}
+            {{this.smart_options}}&nbsp;
+        {{/if}}
+        <a href="#disks/smartcustom/{{this.name}}" title="Click to add/edit Custom SMART options. Rescan to Apply." rel="tooltip">
+        <i class="glyphicon glyphicon-pencil"></i></a>
+        {{#unless smart_available}}
+            Not Supported
+            </td>
+        {{else}}
+            <input type="checkbox" data-disk-name="{{this.name}}" data-size="mini" {{#if smart_enabled}}checked{{/if}}></input>
+        {{/unless}}
+            </td>
+            </tr>
+      {{/each}}
     </tbody>
   </table>
   <div>
