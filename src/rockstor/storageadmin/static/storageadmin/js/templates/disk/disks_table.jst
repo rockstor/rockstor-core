@@ -15,7 +15,7 @@
     <tbody>
        {{#each diskCollection}}
         <tr>
-        <td><a href="#disks/{{this.name}}"><i class="glyphicon glyphicon-hdd"></i>&nbsp;{{this.name}}</a></td>
+        <td><a href="#disks/{{this.name}}"><i class="glyphicon glyphicon-hdd"></i>&nbsp;{{this.name}}</a>
         {{#if this.offline}}
             <a href="#" class="delete" data-disk-name="{{this.name}}" title="Disk is unusable because it is offline.
             Click to delete it from the system" rel="tooltip"><i class="glyphicon glyphicon-trash"></i></a>
