@@ -22,6 +22,7 @@ from django.core.validators import validate_email
 from django.conf import settings
 from storageadmin.models import Group
 import grp
+import chardet
 
 
 class User(models.Model):
@@ -44,7 +45,10 @@ class User(models.Model):
         if (self.group is not None):
             return self.group.groupname
         if (self.gid is not None):
-            return grp.getgrgid(self.gid).gr_name
+            groupname = grp.getgrgid(self.gid).gr_name
+            charset = chardet.detect( groupname )
+            groupname = groupname.decode( charset['encoding'] )
+            return groupname
         return None
 
     @property
