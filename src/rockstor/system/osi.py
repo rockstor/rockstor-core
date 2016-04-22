@@ -766,7 +766,9 @@ def set_disk_spindown(device, spindown_time, apm_value,
     # todo - Check if only rc != 0 throws systemd execution ie do error returns
     # todo - also trip the script execution.
     switch_list = []
-    if apm_value > 0 and apm_value < 256:
+    # Do nothing with testing -B options if the value supplied is out of range.
+    # Also skip if we have received the remove entry flag of spindown_time = -1
+    if (apm_value > 0 and apm_value < 256) and spindown_time != -1:
         apm_switch_list = ['-q', '-B%s' % apm_value]
         hdparm_command = [HDPARM] + apm_switch_list + ['%s' % dev_byid]
         # try running this -B only hdparm to see if it will run without
@@ -780,18 +782,21 @@ def set_disk_spindown(device, spindown_time, apm_value,
                          'command %s with error %s and return code %s'
                          % (hdparm_command, err, rc))
     # setup -S hdparm command
-    # todo shorten by combining -S with value when messaging sorted
     standby_switch_list = ['-q', '-S%s' % spindown_time]
     hdparm_command = [HDPARM] + standby_switch_list + ['%s' % dev_byid]
-    out, err, rc = run_command(hdparm_command, throw=False)
-    if rc != 0:
-        logger.error('non zero return code from hdparm command %s with '
-                     'error %s and return code %s' % (hdparm_command, err, rc))
-        return False
+    # Only run the command if we haven't received the spindown_time of -1
+    # as this is our 'remove config' flag.
+    if spindown_time != -1:
+        out, err, rc = run_command(hdparm_command, throw=False)
+        if rc != 0:
+            logger.error('non zero return code from hdparm command %s with '
+                         'error %s and return code %s' % (
+                         hdparm_command, err, rc))
+            return False
     hdparm_command = [HDPARM] + switch_list + standby_switch_list + [
         '%s' % dev_byid]
-    # hdparm ran without issues so attempt to edit rockstor-hdparm.service
-    # with the same entry
+    # hdparm ran without issues or we are about to remove this devices setting
+    # so attempt to edit rockstor-hdparm.service with the same entry
     if update_hdparm_service(hdparm_command, spindown_message) is not True:
         return False
     return True
@@ -909,8 +914,16 @@ def update_hdparm_service(hdparm_command_list, comment):
     edit_done = False
     do_edit = False
     clear_line_count = 0
+    remove_entry = False
+    execstart_count = 0
     # get our by-id device name by extracting the last hdparm list item
     device_name_byid = hdparm_command_list[-1]
+    # look four our flag of a -1 value for the -S parameter
+    logger.debug('update_hdparm_service received the following parameter %s', hdparm_command_list[-2])
+    if hdparm_command_list[-2] == '-S-1':
+        # When a user selects "Remove config" our -S value = -1, set flag.
+        logger.debug('setting remove_entry to True')
+        remove_entry = True
     # first create a temp file to use as our output until we are done editing.
     tfo, npath = mkstemp()
     # If there is already a rockstor-hdparm.service file then we use that
@@ -949,8 +962,13 @@ def update_hdparm_service(hdparm_command_list, comment):
                     # achieved edit_done so do our edit / addition in this case.
                     do_edit = True
             if do_edit and not edit_done:
-                outo.write('ExecStart=' + ' '.join(hdparm_command_list) + '\n')
-                outo.write('# %s' % comment + '\n')
+                # We are due to either add or overwrite our 2 line entry but
+                # only if we are not in remove_entry mode.
+                # When remove_entry = True our writes are skipped which equates
+                # to an removal or in the case of a new addition, nothing added.
+                if not remove_entry:
+                    outo.write('ExecStart=' + ' '.join(hdparm_command_list) + '\n')
+                    outo.write('# %s' % comment + '\n')
                 edit_done = True
             # mechanism to skip a line if we have just done an edit
             if not (do_edit and edit_done and clear_line_count != 2):

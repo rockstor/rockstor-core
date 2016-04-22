@@ -81,7 +81,8 @@ SpindownDiskView = RockstorLayoutView.extend({
             '2 hours': 244,
             '4 hours': 248,
             'Vendor defined (8-12h)': 253,
-            'No spin down': 0
+            'No spin down': 0,
+            'Remove config': -1
         };
         _this.spindownTimes = spindownTimes;
         // retrieve local copy of disk serial number
