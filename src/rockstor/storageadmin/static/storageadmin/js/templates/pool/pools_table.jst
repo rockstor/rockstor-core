@@ -55,7 +55,7 @@
             <td>{{#if (isRoot this.role)}} 
                     N/A 
                 {{else}}
-                    <a id="delete_pool_' + poolName + '" data-name="'+ poolName + '" data-action="delete" rel="tooltip" title="Delete pool">
+                    <a id="delete_pool_{{this.name}}" data-name="{{this.name}}" data-action="delete" rel="tooltip" title="Delete pool">
                     <i class="glyphicon glyphicon-trash"></i></a>
                 {{/if}}
             </td>
@@ -70,7 +70,12 @@
 <h4>No Pools have been created</h4>
 {{/if}}
 <div>
-  {{print_CreatePool_Button}}
+    <a {{#if disksAvailable}} 
+            href="#add_pool" 
+        {{else}}
+            disabled title="There are no Disks available to create a Pool at this time.
+        {{/if}} 
+    id="add_pool" class="btn btn-primary"><i class="glyphicon glyphicon-edit"></i>&nbsp;Create Pool</a>
 </div>
 
 <div id="delete-pool-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
@@ -87,7 +92,7 @@
       <div class="modal-footer">
         <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">Cancel</button>
         <button id="js-confirm-pool-delete" class="btn btn-primary">Confirm</button>
-      </div><!--end modal-fooetr-->
+      </div><!--end modal-footer-->
     </div><!--end modal-content-->
   </div><!--end modal-dialog-->
 </div>

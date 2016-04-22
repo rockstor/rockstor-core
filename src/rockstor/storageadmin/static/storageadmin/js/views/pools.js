@@ -64,12 +64,17 @@ PoolsView = RockstorLayoutView.extend({
 			return (disk.get('pool') == null) && !(disk.get('offline')) &&
 			!(disk.get('parted'));
 		});
+		
+		var disksAvailable = false;
+		if(_.size(freedisks) > 0){
+			disksAvailable = true;
+		}
 
 		$(this.el).html(this.pools_table_template({
 			collection: this.collection,
 			poolCollection: this.collection.toJSON(),
 			collectionNotEmpty: !this.collection.isEmpty(),
-			noOfFreeDisks: _.size(freedisks)
+			disksAvailable: disksAvailable
 		}));
 
 		this.$("#pools-table").tablesorter({
@@ -127,17 +132,6 @@ PoolsView = RockstorLayoutView.extend({
 	},
 
 	initHandlebarHelpers: function(){
-		Handlebars.registerHelper('getDisks', function(disks) {
-			var dNames =  _.reduce(disks,
-					function(s, disk, i, list) {
-				if (i < (list.length-1)){
-					return s + disk.name + ',';
-				} else {
-					return s + disk.name;
-				}
-			}, '');
-			return dNames;
-		});
 		Handlebars.registerHelper('humanReadableSize', function(type, size, poolReclaim, poolFree) {
 			var html = '';
 			if(type == "size"){
@@ -158,23 +152,23 @@ PoolsView = RockstorLayoutView.extend({
 			return false;
 		});
 		
+		Handlebars.registerHelper('getDisks', function(disks) {
+			var dNames =  _.reduce(disks,
+					function(s, disk, i, list) {
+				if (i < (list.length-1)){
+					return s + disk.name + ',';
+				} else {
+					return s + disk.name;
+				}
+			}, '');
+			return dNames;
+		});
+		
 		Handlebars.registerHelper('isRoot', function(role) {
 			if (role == 'root') {
 				return true;
 			}
 			return false;
-		});
-
-		//createPool button needs to appear after the table so, call another helper function
-		Handlebars.registerHelper('print_CreatePool_Button', function() {
-			var html = '',
-			editIconGlyph = '<i class="glyphicon glyphicon-edit"></i>';
-			if(this.noOfFreeDisks > 0){
-				html += '<a href="#add_pool" id="add_pool" class="btn btn-primary">' + editIconGlyph + ' Create Pool</a>';
-			}else{
-				html += '<a  id="add_pool" class="btn btn-primary disabled" title="There are no Disks available to create a Pool at this time." >' + editIconGlyph + ' Create Pool</a>';
-			}
-			return new Handlebars.SafeString(html);
 		});
 	}
 });
