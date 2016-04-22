@@ -26,7 +26,8 @@
 
 LogsView = RockstorLayoutView.extend({
     events: {
-	'click .logs-item': 'logbaskets'
+	'click .logs-item': 'logbaskets',
+	'click #live-log': 'LoadServerLogs',
     },
     initialize: function() {
 	this.constructor.__super__.initialize.apply(this, arguments);
@@ -49,6 +50,33 @@ LogsView = RockstorLayoutView.extend({
 		$(dest_div).append(event.currentTarget);
 		$(event.currentTarget).fadeTo(500,1);
 	});
+    },
+    LoadServerLogs: function() {
+	var _this = this;
+	var read_type = $('#read_type').val();
+        var logs_options = $('#logs_options').val();
+        var url = '/api/sm/syslogs/';
+        url += read_type + '/' + logs_options;
+        $.ajax({
+         url: url,
+         type: 'GET',
+         dataType: 'json',
+         global: false,
+         complete: function(xhr) {
+                $('#system_log').text(xhr.responseText);
+		_this.ShowLogReader();
+         },
+        });
+    },
+
+    ShowLogReader: function() {
+        //event.preventDefault();
+        $('#log_reader').modal({
+            keyboard: false,
+            show: false,
+            backdrop: 'static'
+        });
+        $('#log_reader').modal('show');
     },
 
     initHandlebarHelpers: function(){

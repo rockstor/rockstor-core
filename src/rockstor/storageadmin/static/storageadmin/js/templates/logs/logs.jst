@@ -29,12 +29,12 @@
                         <div class="panel-body" id="log_funcs">
 				<form class="form-inline">
 					<div class="form-group">
-					<input type="Submit" id="live-log" class="btn btn-primary" value="Read log">
+					<input type="button" id="live-log" class="btn btn-primary" value="Read log">
 					<select class="form-control" id="read_type" name="read_type" rel="tooltip" title="Read log with cat - full file - or tail last 30 lines">
-              					<option value="snapshot"> cat</option>
-						<option value="scrub"> tail (-n 30)</option>
+              					<option value="cat"> cat</option>
+						<option value="tail"> tail (-n 30)</option>
             				</select>
-                                        <select class="form-control" id="logs_optionss" name="logs_options" rel="tooltip" title="Select which log to read">
+                                        <select class="form-control" id="logs_options" name="logs_options" rel="tooltip" title="Select which log to read">
                                         {{print_logs_options}}
 					</select>
 					</div>
@@ -69,3 +69,17 @@
 		</div>
 	</div>
 </div>
+<div id="log_reader" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h4 id="myModalLabel">Content of selected log</h4>
+      </div>
+      <div class="modal-body">
+	<pre><code id="system_log" name="system_log"></code></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
