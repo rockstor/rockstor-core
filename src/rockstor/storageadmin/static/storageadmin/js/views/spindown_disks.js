@@ -173,7 +173,11 @@ SpindownDiskView = RockstorLayoutView.extend({
             //_this.$('#apm_value').focusout(function () {
             _this.$('#apm_value').change(function () {
                 var our_value = this.value;
-                _this.slider.setValue((our_value));
+                // avoid passing NaN value to slider, leaving them to be
+                // validated by our forms validateApmValue
+                if (!isNaN(our_value)) {
+                    _this.slider.setValue((our_value));
+                }
             });
             // set the text box to show the current sensed APM level
             _this.$('#apm_value').val(apmLevel);
