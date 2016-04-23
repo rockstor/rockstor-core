@@ -278,6 +278,7 @@ DisksView = Backbone.View.extend({
                 html += '</td>';
                 // begin APM column
                 html += '<td>';
+                // pre-made handlebar helper for this section below
                 if (apmLevel == 0 || apmLevel == null) {
                     html += '???';
                 } else {
@@ -316,6 +317,23 @@ DisksView = Backbone.View.extend({
                 html += '</tr>';
             });
             return new Handlebars.SafeString(html);
+        });
+        // Helper to display APM value after merger with upstream changes
+        // where the above helper is replaced by many smaller ones like this.
+        // N.B. untested. Presumably we do {{humanReadableAPM this.apm_level}}
+        // in upstream disks_table.jst
+        Handlebars.registerHelper('humanReadableAPM', function (apm) {
+            var apmhtml = '';
+            if (apm == 0 || apm == null) {
+                apmhtml = '???';
+            } else {
+                if (apm == 255) {
+                    apmhtml = 'off';
+                } else {
+                    apmhtml = apm;
+                }
+            }
+            return new Handlebars.SafeString(apmhtml);
         });
     },
 
