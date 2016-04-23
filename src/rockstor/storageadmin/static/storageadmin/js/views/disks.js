@@ -275,7 +275,6 @@ DisksView = Backbone.View.extend({
                 if (hdparmSetting != null) {
                     html += hdparmSetting;
                 }
-                html += ' ';
                 html += '</td>';
                 // begin APM column
                 html += '<td>';
@@ -288,7 +287,6 @@ DisksView = Backbone.View.extend({
                         html += apmLevel;
                     }
                 }
-                html += ' ';
                 html += '</td>';
                 // begin Model column
                 html += '<td>' + diskModel + '</td>';
