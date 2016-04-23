@@ -42,13 +42,11 @@
             <select class="form-control" id="spindown_time"
                     name="spindown_time">
               {{display_spindown_time}}
-              <!--{{#each spindownTimes}}-->
-              <!--<option value="{{this}}">{{@key}}</option>-->
-              <!--{{/each}}-->
             </select>
           </div>
         </div>
 
+        <!-- Enable APM setting checkbox -->
         <div class="form-group">
           <div class="col-sm-offset-4 col-sm-8">
             <label class="checkbox inline">
@@ -58,6 +56,7 @@
           </div>
         </div>
 
+        <!-- APM setting group of Slider + Text box for value  -->
         <div class="form-group" id="slider-entry">
           <label class="col-sm-4 control-label" for="apm_value">APM
             setting</label>
@@ -69,6 +68,7 @@
           </div>
         </div>
 
+        <!-- APM slider key group -->
         <div class="form-group" id="slider-key">
           <div class="col-xs-8 col-xs-offset-4">
             <div style="width: 15px; height: 15px; float: left"
