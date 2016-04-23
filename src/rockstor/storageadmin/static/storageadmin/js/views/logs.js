@@ -50,10 +50,7 @@ LogsView = RockstorLayoutView.extend({
 		$(event.currentTarget).fadeTo(500,1);
 	});
     },
-    DishOutLiveLogs: function() {
-	var _this = this;
-	_this.LoadServerLogs().done(_this.ShowLogReader);
-    },
+
     LoadServerLogs: function() {
 	var _this = this;
 	var read_type = $('#read_type').val();
