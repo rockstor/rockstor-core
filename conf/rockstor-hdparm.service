@@ -2,7 +2,7 @@
 Description=Rockstor hdparm settings
 After=suspend.target
 # Rockstor-hdparm - the automated maintenance of this file requires a clear line
-# at the end of the Unit and Service sections, but no other clear lines.
+# at the end of both the Unit and Service sections, but no other clear lines.
 # It should also be exactly 13 lines long including these comments but not
 # including the ExecStart lines and their obligatory following one line comment.
 
