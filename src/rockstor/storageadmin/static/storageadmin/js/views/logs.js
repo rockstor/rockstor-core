@@ -43,7 +43,6 @@ LogsView = RockstorLayoutView.extend({
 
     LogBaskets: function(event) {
 	event.preventDefault();
-	//_this = event.currentTarget;
 	var parent_div = $(event.currentTarget).parent().attr('id');
 	var dest_div = parent_div == 'avail_logs' ? '#download_logs' : '#avail_logs';
 	$(event.currentTarget).fadeTo(500,0, function(){
@@ -51,27 +50,36 @@ LogsView = RockstorLayoutView.extend({
 		$(event.currentTarget).fadeTo(500,1);
 	});
     },
+    DishOutLiveLogs: function() {
+	var _this = this;
+	_this.LoadServerLogs().done(_this.ShowLogReader);
+    },
     LoadServerLogs: function() {
 	var _this = this;
 	var read_type = $('#read_type').val();
         var logs_options = $('#logs_options').val();
+	var log_file = $('#logs_options option:selected').text();
+	var read_tool = $('#read_type option:selected').text();
         var url = '/api/sm/syslogs/';
         url += read_type + '/' + logs_options;
+	var modal_title = '<b>Selected log:</b>&nbsp; ' + log_file;
+	modal_title += '<br/><b>Reader type:</b>&nbsp;' + read_tool;
+	$("#LogReaderLabel").html(modal_title);  
         $.ajax({
          url: url,
          type: 'GET',
          dataType: 'json',
          global: false,
          complete: function(xhr) {
-                $('#system_log').text(xhr.responseText);
+		$('#system_log').text(xhr.responseText);
 		_this.ShowLogReader();
          },
         });
     },
 
     ShowLogReader: function() {
-        $('#log_reader').modal({
-            keyboard: false,
+	$('#log_reader').modal({
+	    keyboard: true,
             show: false,
             backdrop: 'static'
         });
