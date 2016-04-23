@@ -983,9 +983,6 @@ def update_hdparm_service(hdparm_command_list, comment):
     # is already complex enough.
     with open(npath) as ino:
         tempfile_length = len(ino.readlines())
-    logger.debug('TOTAL LINES COUNT OF TEMP FILE = %s', tempfile_length)
-    # Copy our temp file over to our destination as we are done updating it.
-    shutil.move(npath, '/etc/systemd/system/rockstor-hdparm.service')
     # Now to disable the service if our systemd file is of minimum length
     if tempfile_length == 13:
         # our proposed systemd file is the same length as our template and so
@@ -997,11 +994,17 @@ def update_hdparm_service(hdparm_command_list, comment):
         # and remove our rockstor-hdparm.service file as it's absence indicates
         # a future need to restart this service via the update flag as not True.
         if update:  # update was set true if this file exists so we check first.
-            # todo do we need try clause around this?
             logger.info('Removing the rockstor-hdparm systemd file.')
+            # todo do we need try clause around this, we know it exists already?
             os.remove('/etc/systemd/system/rockstor-hdparm.service')
-    if update is not True:
-        # then this is a fresh systemd instance so enable it
+    else:
+        # Since we know our proposed systemd file has more than template entries
+        # it's worth copying over to our destination as we are done updating it.
+        # There is an assumption here that != 13 = greater than. Should be so.
+        shutil.move(npath, '/etc/systemd/system/rockstor-hdparm.service')
+    if update is not True and tempfile_length > 13:
+        # This is a fresh systemd instance so enable it but only if there
+        # are any entries beyond the template lines (ie > 13
         # can't use systemctrl wrapper as then circular dependency
         # return systemctl('rockstor-hdparm', 'enable')
         logger.info('Enabling the rockstor-hdparm systemd service.')
