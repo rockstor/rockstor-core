@@ -703,8 +703,6 @@ def get_disk_APM_level(device_name):
     it's setting equivalent of 255. If there is an error, such as can happen
     when APM is not supported, then we return 0.
     """
-    # todo - consider combining with get_disk_power_status(device_name) via
-    # todo - a switch option
     # if we use the -B -q switches then we have only one line of output:
     # hdparm -B -q /dev/sda
     #  APM_level<tab>= 192
