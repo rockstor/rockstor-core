@@ -257,11 +257,13 @@ DisksView = Backbone.View.extend({
                 html += '</td>';
                 // begin Spin Down / Power Status column
                 html += '<td>';
+                // pre-made handlebar helper for this conditional included below
                 if (powerState == 'unknown' || powerState == null ) {
                     html += '<i class="glyphicon glyphicon-pause"></i>';
                     html += powerState + ' ';
                     html += '<i class="glyphicon glyphicon-hourglass"></i>';
                 } else {
+                    // pre-made handlebar helper for this conditional included below
                     if (powerState == 'active/idle') {
                         html += '<a href="#" class="pause" data-disk-name="' + diskName + '" title="Force drive into Standby mode." rel="tooltip">';
                         html += '<i class="glyphicon glyphicon-pause"></i></a>';
@@ -334,6 +336,26 @@ DisksView = Backbone.View.extend({
                 }
             }
             return new Handlebars.SafeString(apmhtml);
+        });
+        // Simple helper to return true / false on powerState = null or unknown
+        // Untested. Presumably we do:
+        // {{#if (powerstateNullorUnknown this.power_state)}}
+        // in upstream disks_table.jst
+        Handlebars.registerHelper('powerStateNullorUnknown', function (pstate) {
+            if (pstate == 'unknown' || pstate == null ) {
+                return true;
+            }
+            return false;
+        });
+        // Simple helper to return true / false on powerState = active/idle
+        // Untested. Presumably we do:
+        // {{#if (powerStateActiveIdle this.power_state)}}
+        // in upstream disks_table.jst
+        Handlebars.registerHelper('powerStateActiveIdle', function (pstate) {
+            if (pstate == 'active/idle') {
+                return true;
+            }
+            return false;
         });
     },
 
