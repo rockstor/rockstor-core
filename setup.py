@@ -35,7 +35,6 @@ setup(
             'rcli = cli.rock_cli:main',
             'prep_db = scripts.prep_db:main',
             'replicad = smart_manager.replication.listener_broker:main',
-            'mgmt_ip = scripts.mgmt_ip:main',
             'pwreset = scripts.pwreset:main',
             'backup-plugin = backup.scheduler:main',
             'initrock = scripts.initrock:main',

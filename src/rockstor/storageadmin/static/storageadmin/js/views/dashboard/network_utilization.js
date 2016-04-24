@@ -1,6 +1,6 @@
 /*
  *
- * @licstart  The following is the entire license notice for the 
+ * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
  *
  * Copyright (c) 2012-2013 RockStor, Inc. <http://rockstor.com>
@@ -36,7 +36,7 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
     this.dataBuffers = {};
     this.dataLength = 300;
     this.currentTs = null;
-    this.networkInterfaces = new NetworkInterfaceCollection();
+    this.networkInterfaces = new NetworkConnectionCollection();
     this.networkInterfaces.on("reset", this.getInitialData, this);
     this.selectedInterface = null;
     this.colors = ["#1224E3", "#F25805", "#04D6D6", "#F5CC73", "#750413"];
@@ -289,7 +289,7 @@ NetworkUtilizationWidget = RockStorWidgetView.extend({
 
   tooltipFormatter: function(label, xval, yval) {
     return "%s (%p.2%)";
-    //return "%s (" + humanize.filesize(xval, 1024, 1) + ")"; 
+    //return "%s (" + humanize.filesize(xval, 1024, 1) + ")";
   },
 
   genEmptyData: function() {
@@ -344,5 +344,3 @@ RockStorWidgets.widgetDefs.push({
     category: 'Network',
     position: 5
 });
-
-

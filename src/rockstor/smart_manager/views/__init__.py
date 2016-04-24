@@ -54,4 +54,5 @@ from active_directory import ActiveDirectoryServiceView
 from receiver_pools import ReceiverPoolListView
 from ztaskd_service import ZTaskdServiceView
 from bootstrap_service import BootstrapServiceView
+from rockstor_service import RockstorServiceView
 from logs_manager import LogsReaderView
