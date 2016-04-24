@@ -21,6 +21,7 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 import sys
 import json
 from datetime import datetime
+import crontabwindow #load crontabwindow module
 from storageadmin.models import (Share, Snapshot)
 from smart_manager.models import (Task, TaskDefinition)
 from cli.api_wrapper import APIWrapper
@@ -73,50 +74,53 @@ def delete(aw, share, snap_type, prefix, max_count):
 
 def main():
     tid = int(sys.argv[1])
-    tdo = TaskDefinition.objects.get(id=tid)
-    stype = 'task_scheduler'
-    aw = APIWrapper()
-    if (tdo.task_type != 'snapshot'):
-        logger.error('task_type(%s) is not snapshot.' % tdo.task_type)
-        return
-    meta = json.loads(tdo.json_meta)
-    validate_snap_meta(meta)
-    share = Share.objects.get(name=meta['share'])
-    max_count = int(float(meta['max_count']))
-    prefix = ('%s_' % meta['prefix'])
+    cwindow = sys.argv[2]
+    if (crontabwindow.crontab_range(cwindow)): #Performance note: immediately check task execution time/day window range to avoid other calls
+        tdo = TaskDefinition.objects.get(id=tid)
+        stype = 'task_scheduler'
+        aw = APIWrapper()
+        if (tdo.task_type != 'snapshot'):
+            logger.error('task_type(%s) is not snapshot.' % tdo.task_type)
+            return
+        meta = json.loads(tdo.json_meta)
+        validate_snap_meta(meta)
+        share = Share.objects.get(name=meta['share'])
+        max_count = int(float(meta['max_count']))
+        prefix = ('%s_' % meta['prefix'])
 
-    now = datetime.utcnow().replace(second=0, microsecond=0, tzinfo=utc)
-    t = Task(task_def=tdo, state='started', start=now)
+        now = datetime.utcnow().replace(second=0, microsecond=0, tzinfo=utc)
+        t = Task(task_def=tdo, state='started', start=now)
 
-    snap_created = False
-    t.state = 'error'
-    try:
-        name = ('%s_%s' % (meta['prefix'], datetime.now().strftime(settings.SNAP_TS_FORMAT)))
-        url = ('shares/%s/snapshots/%s' % (share.name, name))
-        #only create a new snap if there's no overflow situation. This prevents
-        #runaway snapshot creation beyond max_count+1.
-        if(delete(aw, share, stype, prefix, max_count)):
-            data = {'snap_type': stype,
-                    'uvisible': meta['visible'], }
-            headers = {'content-type': 'application/json'}
-            aw.api_call(url, data=data, calltype='post', headers=headers, save_error=False)
-            logger.debug('created snapshot at %s' % url)
-            t.state = 'finished'
-            snap_created = True
-    except Exception, e:
-        logger.error('Failed to create snapshot at %s' % url)
-        logger.exception(e)
-    finally:
-        t.end = datetime.utcnow().replace(tzinfo=utc)
-        t.save()
+        snap_created = False
+        t.state = 'error'
+        try:
+            name = ('%s_%s' % (meta['prefix'], datetime.now().strftime(settings.SNAP_TS_FORMAT)))
+            url = ('shares/%s/snapshots/%s' % (share.name, name))
+            #only create a new snap if there's no overflow situation. This prevents
+            #runaway snapshot creation beyond max_count+1.
+            if(delete(aw, share, stype, prefix, max_count)):
+                data = {'snap_type': stype,
+                        'uvisible': meta['visible'], }
+                headers = {'content-type': 'application/json'}
+                aw.api_call(url, data=data, calltype='post', headers=headers, save_error=False)
+                logger.debug('created snapshot at %s' % url)
+                t.state = 'finished'
+                snap_created = True
+        except Exception, e:
+            logger.error('Failed to create snapshot at %s' % url)
+            logger.exception(e)
+        finally:
+            t.end = datetime.utcnow().replace(tzinfo=utc)
+            t.save()
 
-    #best effort pruning without erroring out. If deletion fails, we'll have
-    #max_count+1 number of snapshots and it would be dealt with on the next
-    #round.
-    if (snap_created):
-        delete(aw, share, stype, prefix, max_count)
-
+        #best effort pruning without erroring out. If deletion fails, we'll have
+        #max_count+1 number of snapshots and it would be dealt with on the next
+        #round.
+        if (snap_created):
+            delete(aw, share, stype, prefix, max_count)
+    else:
+        logger.debug('Cron scheduled task not executed because outside time/day window ranges')
 
 if __name__ == '__main__':
-    #takes one argument. taskdef object id.
+    #takes two arguments. taskdef object id and crontabwindow.
     main()
