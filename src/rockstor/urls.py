@@ -105,11 +105,13 @@ urlpatterns = patterns('',
                         include('smart_manager.urls.tasks')),
                        (r'^api/sm/replicas/',
                         include('smart_manager.urls.replicas')),
-
                        # Certificate URL
                        (r'^api/certificate', TLSCertificateView.as_view()),
                        (r'^api/rockons',
                         include('storageadmin.urls.rockons')),
+
+                       # Logs reader - downloader
+                       (r'^api/sm/syslogs/', include('smart_manager.urls.logs')),
 
                        # Config Backup
                        url(r'^api/config-backup$', ConfigBackupListView.as_view()),
