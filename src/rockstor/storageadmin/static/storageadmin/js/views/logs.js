@@ -65,11 +65,11 @@ LogsView = RockstorLayoutView.extend({
         $.ajax({
          url: url,
          type: 'GET',
-         dataType: 'json',
+         dataType: 'text',
          global: false,
-         complete: function(xhr) {
-		$('#system_log').text(xhr.responseText);
-		_this.ShowLogReader();
+         success: function(data) {
+                $('#system_log').text(data);
+                _this.ShowLogReader();
          },
         });
     },
