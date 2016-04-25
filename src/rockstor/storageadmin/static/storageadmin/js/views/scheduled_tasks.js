@@ -50,7 +50,7 @@ ScheduledTasksView = RockstorLayoutView.extend({
 		this.fetch(this.renderScheduledTasks, this);
 		return this;
 	},
-	
+
 	renderScheduledTasks: function() {
 		var _this = this;
 		this.collection.each(function(taskDef, index) {
@@ -133,7 +133,7 @@ ScheduledTasksView = RockstorLayoutView.extend({
 		Handlebars.registerHelper('display_scheduledTasks_table', function(adminBool){
 			var html = '',
 			_this = this;
-			this.collection.each(function(t) { 
+			this.collection.each(function(t) {
 				var taskId = t.get('id'),
 				taskName = t.get('name'),
 				taskType = t.get('task_type'),
@@ -144,20 +144,20 @@ ScheduledTasksView = RockstorLayoutView.extend({
 				html += '<tr>';
 				html += '<td><a href="#edit-scheduled-task/' + taskId + '">' + taskName + '</a></td>';
 				html += '<td>' + taskType + '&nbsp;';
-				if (taskType == 'snapshot') { 
+				if (taskType == 'snapshot') {
 					html += '(' + JSON.parse(jsonMeta).share + ')';
-				} else { 
+				} else {
 					html += '(' + JSON.parse(jsonMeta).pool + ')';
-				} 
+				}
 				html += '</td>';
 				html += '<td>' + prettyCron.toString(t.get('crontab')) + '</td>';
 				html += '<td>' + render_cronwindow(t.get('crontabwindow')) + '</td>';
 				html += '<td>';
 				if (t.get('enabled')) {
 					html += '<input type="checkbox" disabled="true" checked="true"></input>';
-				} else { 
+				} else {
 					html += '<input type="checkbox" disabled="true"></input>';
-				} 
+				}
 				html += '</td>';
 				html += '<td>';
 				if (taskMapId) {
@@ -165,14 +165,14 @@ ScheduledTasksView = RockstorLayoutView.extend({
 						var task = taskMapId[0],
 						taskState = task.get('state');
 
-						if (taskState != 'scheduled' && taskState != 'pending' && taskState != 'running' && taskState != 'finished') { 
+						if (taskState != 'scheduled' && taskState != 'pending' && taskState != 'running' && taskState != 'finished') {
 							html += '<a href="#scheduled-tasks/' + tId + '/log" class="task-log"><i class="glyphicon glyphicon-warning-sign"></i> ' + taskState + '</a>';
-						} else if (taskState == 'finished') { 
+						} else if (taskState == 'finished') {
 							html += '<a href="#scheduled-tasks/' + tId + '/log" class="task-log">' + moment(task.get('end')).fromNow() + '</a>';
-						} else { 
+						} else {
 							html += '<a href="#scheduled-tasks/' + tId + '/log" class="task-log">' + taskState + '</a>';
 						}
-					} 
+					}
 				}
 				html += '</td>';
 				html += '<td>';
@@ -181,7 +181,7 @@ ScheduledTasksView = RockstorLayoutView.extend({
 
 				html += '</td>';
 				html += '</tr>';
-			}); 
+			});
 			return new Handlebars.SafeString(html);
 		});
 	}
@@ -194,7 +194,7 @@ Cocktail.mixin(ScheduledTasksView, PaginationMixin);
 
         function render_cronwindow(cwindow) {
                 var rendercwindow;
-                if (cwindow == "*-*-*-*-*-*") {
+                if (!cwindow || cwindow == "*-*-*-*-*-*") {
                         rendercwindow = 'Run always'; //render always without other checks
                 } else {
                         var cwindow = cwindow.split('-');
