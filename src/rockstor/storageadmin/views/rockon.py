@@ -358,9 +358,11 @@ class RockOnView(rfc.GenericView):
         meta_cfg = {}
         for k,v in root.items():
             cur_meta_url = '%s/%s' % (url_root, v)
+            logger.debug('we are looking to retrieve the following url =%s', cur_meta_url)
             msg = ('Error while processing Rock-on profile at %s' % cur_meta_url)
             with self._handle_exception(self.request, msg=msg):
                 cur_res = requests.get(cur_meta_url, timeout=10)
+                logger.debug('this is the json retrieved %s', cur_res)
                 if (cur_res.status_code != 200):
                     cur_res.raise_for_status()
                 meta_cfg.update(cur_res.json())
