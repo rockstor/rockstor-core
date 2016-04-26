@@ -31,7 +31,20 @@
           </tr>
         </thead>
         <tbody>
-          {{display_samba_shares}}
+          {{#each samba}}
+            <tr>
+                <td>{{this.share}}</td>
+                <td>{{this.browsable}}</td>
+                <td>{{this.guest_ok}}</td>
+                <td>{{this.read_only}}</td>
+                <td>{{getAdminUsers this.admin_users}}</td>
+                <td>{{this.comment}}</td>
+                <td>
+                    <a href="#samba/edit/{{this.id}}"><i class="glyphicon glyphicon-pencil"></i></a>&nbsp;
+                    <a href="#" class="delete-samba-export" data-share="{{this.share}}" data-id="{{this.id}}"><i class="glyphicon glyphicon-trash"></i></a>
+                </td>
+            </tr>
+          {{/each}}
         </tbody>
       </table>
     {{else}}
