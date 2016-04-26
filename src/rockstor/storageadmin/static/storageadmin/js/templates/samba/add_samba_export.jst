@@ -17,7 +17,13 @@
           <label class="col-sm-4 control-label" for="shares">Shares to export<span class="required"> *</span></label>
           {{/if}}
           <div class="col-sm-4">
-           {{display_samba_shares}}
+        {{#if sambaShareIdNull}}
+            <select class="form-control" name="shares" id="shares" size="10" data-placeholder="Select shares to export" multiple>
+            {{#each shares}}
+                <option value="{{this.name}}">{{this.name}}</option>
+            {{/each}}
+            </select>
+        {{/if}}
           </div>
         </div>
 
