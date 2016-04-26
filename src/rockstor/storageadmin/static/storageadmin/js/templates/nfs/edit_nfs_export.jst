@@ -36,7 +36,10 @@
           <label class="col-sm-4 control-label" for="shares">Shares to export<span class="required"> *</span></label>
           <div class="col-sm-4">
             <select class="form-control" name="shares" id="shares" size="10" data-placeholder="Select shares to export" multiple>
-              {{display_shares_dropdown}}
+              {{!--display_shares_dropdown--}}
+              {{#each shares}} 
+                   <option value="{{this.name}}" {{showSelectedShare this.name}}>{{this.name}}</option>
+              {{/each}}
             </select>
           </div>
         </div>

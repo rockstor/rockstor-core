@@ -63,7 +63,7 @@ EditNFSExportView = RockstorLayoutView.extend({
 	renderExportForm: function() {
 		var _this = this;
 		$(this.el).html(this.template({
-			shares: this.shares,
+			shares: this.shares.toJSON(),
 			nfsExportGroup: this.nfsExportGroup,
 			nfsExportNotEmpty: this.nfsExportNotEmpty,
 			nfsExportAdminHost: this.nfsExportGroup.get('admin_host'),
@@ -116,24 +116,21 @@ EditNFSExportView = RockstorLayoutView.extend({
 		app_router.navigate('nfs-exports', {trigger: true});
 	},
 
+	
 	initHandlebarHelpers: function(){
-		Handlebars.registerHelper('display_shares_dropdown', function(){
+		var _this = this;
+		Handlebars.registerHelper('showSelectedShare', function(shareName){
 			var html = '',
-			nShares = _.map(this.nfsExportGroup.get('exports'),
+			nShares = _.map(_this.nfsExportGroup.get('exports'),
 					function(e) { return e.share; });
-			this.shares.each(function(share, index) { 
-				var shareName = share.get('name');
-				if (_.indexOf(nShares, shareName) != -1) { 
-					html += '<option value="' + shareName + '" selected="selected">' + shareName + '</option>';
-				} else { 
-					html += '<option value="' + shareName + '" >' + shareName+ '</option>';
-				} 
-			});
-
+			
+			if (_.indexOf(nShares, shareName) != -1) { 
+				html += 'selected="selected"';
+			}
+			
 			return new Handlebars.SafeString(html);
 		});
-
-
+		
 		Handlebars.registerHelper('display_accessType_choices', function(){
 			var html = '',
 			nfsEditable = this.nfsExportGroup.get('editable');
