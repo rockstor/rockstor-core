@@ -62,7 +62,7 @@ AddPoolView = Backbone.View.extend({
 
 		this.collection.remove(this.filteredCollection);
 		$(_this.el).append(_this.template({
-			disks: this.collection
+			disks: this.collection.toJSON(),
 		}));
 
 		var err_msg = 'Incorrect number of disks';
@@ -71,12 +71,12 @@ AddPoolView = Backbone.View.extend({
 		}
 
 		$.validator.addMethod('validatePoolName', function(value) {
-		    var pool_name = $('#pool_name').val();
-		    if (/^[A-Za-z0-9_.-]+$/.test(pool_name) == false) {
-			err_msg = 'Invalid characters in Pool name.';
-			return false;
-		    }
-		    return true
+			var pool_name = $('#pool_name').val();
+			if (/^[A-Za-z0-9_.-]+$/.test(pool_name) == false) {
+				err_msg = 'Invalid characters in Pool name.';
+				return false;
+			}
+			return true
 		}, raid_err_msg);
 
 
@@ -323,21 +323,12 @@ AddPoolView = Backbone.View.extend({
 	},
 
 	initHandlebarHelpers: function(){
-		Handlebars.registerHelper('show_disks', function(){
-			var html = '';
-			this.disks.each(function(disk, index) {
-				var diskName = disk.get('name'),
-				diskId = disk.get('id');
-				html += '<tr>';
-				html += '<td>' + (index+1) + '</td>';
-				html += '<td>' + diskName + '</td>';
-				html += '<td>' + humanize.filesize(disk.get('size') * 1024) + '</td>';
-				html += '<td>';
-				html += '<input type="checkbox" class="disk" name="'+ diskName +'" id="' + diskId + '" value="' + diskName + '" />';
-				html += '</td>';
-				html += '</tr>';
-			});
-			return new Handlebars.SafeString(html);
+		Handlebars.registerHelper("mathHelper", function(value, options){
+			return parseInt(value) + 1;
+		});
+
+		Handlebars.registerHelper('humanReadableSize', function(diskSize){
+			return humanize.filesize(diskSize * 1024);
 		});
 	}
 
