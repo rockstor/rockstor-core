@@ -70,13 +70,12 @@
         <div class="form-group">
           <label class="col-xs-4 control-label" for="mod_choice">Access type</label>
           <div class="col-xs-4">
-            {{!--display_accessType_choices--}}
             {{#each modify_choices}}
                 <label class="radio-inline">
-                {{#if nfsExportGrp.editable}}
-                        <input type="radio" name="mod_choice" value="{{this.value}}" {{test1 nfsExportGrp.editable this.value}} >
+                {{#if ../nfsExportGrp.editable}}
+                        <input type="radio" name="mod_choice" value="{{this.value}}" {{accessType_editView ../nfsExportGrp.editable this.value}}>
                 {{else}}          
-                        <input type="radio" name="mod_choice" value="{{this.value}}" {{test2 this.name}}>
+                        <input type="radio" name="mod_choice" value="{{this.value}}" {{accessType_addView this.name}}>
                 {{/if}}
                 {{this.name}}</label>
             {{/each}}
@@ -87,16 +86,7 @@
         <div class="form-group">
           <label class="col-xs-4 control-label" for="sync_choice">Response type</label>
           <div class="col-xs-4">
-          {{!--display_sync_choices--}}
-          {{!-- {{#each sync_choices}}
-                <label class="radio-inline">
-                {{#if nfsExportGrp.syncable}}
-                        <input type="radio" name="sync_choice" value="{{this.value}}" {{test3 nfsExportGrp.syncable this.value}} >
-                {{else}}          
-                        <input type="radio" name="sync_choice" value="{{this.value}}" {{test4 this.name}}>
-                {{/if}}
-                {{this.name}}</label>
-            {{/each}} --}}
+          {{display_sync_choices}}
           </div>
         </div>
 

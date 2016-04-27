@@ -62,7 +62,6 @@ EditNFSExportView = RockstorLayoutView.extend({
 
 	renderExportForm: function() {
 		var _this = this;
-		console.log(this.nfsExportGroup.toJSON());
 		$(this.el).html(this.template({
 			shares: this.shares.toJSON(),
 			nfsExportGroup: this.nfsExportGroup,
@@ -133,69 +132,20 @@ EditNFSExportView = RockstorLayoutView.extend({
 			return new Handlebars.SafeString(html);
 		});
 
-		Handlebars.registerHelper('test1', function(nfsEditable, choiceValue){
-			console.log("editable");
-			console.log("the nfs edit value: ", nfsEditable);
-			console.log("the choice value: ", choiceValue);
+		Handlebars.registerHelper('accessType_editView', function(nfsEditable, choiceValue){
 			var html = '';
 			if (nfsEditable == choiceValue) {
-				return 'checked="checked"';
+				html += 'checked="checked"';
 			} 
 			return new Handlebars.SafeString(html);
 		});
 
-		Handlebars.registerHelper('test2', function(choiceName){
-			console.log("writable");
+		Handlebars.registerHelper('accessType_addView', function(choiceName){
 			var html = '';
 			if (choiceName == 'Writable') {
-				return 'checked="checked"';
+				html += 'checked="checked"';
 			} 
 			return new Handlebars.SafeString(html);
-		});
-
-		/* Handlebars.registerHelper('test3', function(nfsSyncable, choiceValue){
-			var html = '';
-			if (nfsSyncable == choiceValue) {
-				return 'checked="checked"';
-			} 
-			return new Handlebars.SafeString(html);
-		});
-
-		Handlebars.registerHelper('test4', function(choiceName){
-			var html = '';
-			if (choiceName == 'async') {
-				return 'checked="checked"';
-			} 
-			return new Handlebars.SafeString(html);
-		}); */
-
-
-		/* Handlebars.registerHelper('display_accessType_choices', function(){
-			var html = '',
-			nfsEditable = this.nfsExportGroup.get('editable');
-			_.each(this.modify_choices, function(c) {
-				var choiceName = c.name,
-				choiceValue = c.value;
-				html += '<label class="radio-inline">';
-				if (nfsEditable) {
-					if (nfsEditable == choiceValue) { 
-						html += '<input type="radio" name="mod_choice" value="' + choiceValue + '" checked="checked">';
-					} else {
-						html += '<input type="radio" name="mod_choice" value="' + choiceValue + '" >';
-					}		     
-				} else {
-					if (choiceName == "Writable") { 
-						html += '<input type="radio" name="mod_choice" value="' + choiceValue + '" checked="checked">';
-					} else {
-						html += '<input type="radio" name="mod_choice" value="' + choiceValue + '">';
-					} 
-				} 
-				html += choiceName;
-				html += '</label>';
-			});
-
-			return new Handlebars.SafeString(html);
-
 		});
 
 		Handlebars.registerHelper('display_sync_choices', function(){
@@ -224,7 +174,7 @@ EditNFSExportView = RockstorLayoutView.extend({
 			});
 
 			return new Handlebars.SafeString(html);
-		}); */
+		}); 
 
 	}
 
