@@ -64,11 +64,8 @@ EditNFSExportView = RockstorLayoutView.extend({
 		var _this = this;
 		$(this.el).html(this.template({
 			shares: this.shares.toJSON(),
-			nfsExportGroup: this.nfsExportGroup,
 			nfsExportGrp: this.nfsExportGroup.toJSON(),
 			nfsExportNotEmpty: this.nfsExportNotEmpty,
-			nfsExportAdminHost: this.nfsExportGroup.get('admin_host'),
-			nfsExportHostString: this.nfsExportGroup.get('host_str'),
 			modify_choices: this.modify_choices,
 			sync_choices: this.sync_choices
 		}));
@@ -120,9 +117,9 @@ EditNFSExportView = RockstorLayoutView.extend({
 
 	initHandlebarHelpers: function(){
 		var _this = this;
-		Handlebars.registerHelper('showSelectedShare', function(shareName){
+		Handlebars.registerHelper('showSelectedShare', function(shareName, nfsExports){
 			var html = '',
-			nShares = _.map(_this.nfsExportGroup.get('exports'),
+			nShares = _.map(nfsExports,
 					function(e) { return e.share; });
 
 			if (_.indexOf(nShares, shareName) != -1) { 

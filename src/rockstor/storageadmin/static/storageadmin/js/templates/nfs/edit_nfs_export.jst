@@ -37,7 +37,7 @@
           <div class="col-sm-4">
             <select class="form-control" name="shares" id="shares" size="10" data-placeholder="Select shares to export" multiple>
               {{#each shares}} 
-                   <option value="{{this.name}}" {{showSelectedShare this.name}}>{{this.name}}</option>
+                   <option value="{{this.name}}" {{showSelectedShare this.name ../nfsExportGrp.exports}}>{{this.name}}</option>
               {{/each}}
             </select>
           </div>
@@ -49,7 +49,7 @@
           <div class="col-sm-6">
             <input class="form-control shorten-input" type="text" name="host_str" id="host_str" data-html = "true"
 	    title="Hosts permitted to NFS mount. There are five broad categories of this input.<br><strong>anonymous:</strong> Just type a single * character and any host will be allowed.<br><strong>single host:</strong> Hostname or a IP address.<br><strong>IP networks:</strong> All hosts of a subnet given by <strong>address/netmask</strong>.<br><strong>wildcards:</strong> Names with wildcard(*, ?) characters for compact notation. for example, *.cs.foo.edu matches all hosts in the domain cs.food.edu.<br><strong>Netgroups:</strong> NIS netgroups given as @group.<br><br>For more details read the manpage for exports."
-	    value="{{nfsExportHostString}}">
+	    value="{{nfsExportGrp.host_str}}">
           </div>
         </div>
 
@@ -62,7 +62,7 @@
 		   export will be available for this host with rw and no_root_squash
 		   options so that root user can change ownership and permissions of
 		   various directories from this host. This is usually preferred in
-		   conjunction with NIS." value="{{nfsExportAdminHost}}">
+		   conjunction with NIS." value="{{nfsExportGrp.admin_host}}">
 	  </div>
 	</div>
 
