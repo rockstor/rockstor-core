@@ -27,6 +27,11 @@
 
 PoolAddDisks = RockstorWizardPage.extend({
 
+	events:{
+		"click #checkAll": "selectAllCheckboxes",
+		'click [class="diskname"]': 'clickCheckbox',
+	},
+
 	initialize: function() {
 		this.disks = new DiskCollection();
 		this.disks.setPageSize(100);
@@ -47,7 +52,25 @@ PoolAddDisks = RockstorWizardPage.extend({
 		var disks = this.disks.filter(function(disk) {
 			return disk.available();
 		}, this);
+		//convert the array elements which are backbone models/collections to JSON object
+		for(var i = 0; i < disks.length; i++){
+			disks[i] = disks[i].toJSON();
+		}
+		console.log("the model object is: ", this.model.toJSON());
 		this.$('#ph-disks-table').html(this.disks_template({disks: disks}));
+	},
+
+	selectAllCheckboxes: function(event){
+		$("#checkAll").change(function () {
+			$("input:checkbox").prop('checked',  $(this).prop("checked"));
+			$("input:checkbox").closest("tr").toggleClass("row-highlight", this.checked);
+		});
+	},
+
+	clickCheckbox: function (event) {
+		$("input:checkbox").change(function() {
+			$(this).closest("tr").toggleClass("row-highlight", this.checked);
+		});
 	},
 
 	save: function() {
@@ -85,20 +108,12 @@ PoolAddDisks = RockstorWizardPage.extend({
 			return new Handlebars.SafeString(html);
 		});
 
-		Handlebars.registerHelper('display_disksToAdd', function(){
-			var html = '';
-			_.each(this.disks, function(disk, index) {
-				var diskName = disk.get('name');
-				html += '<tr>';
-				html += '<td>' + (index+1) + '</td>';
-				html += '<td>' + diskName + '</td>';
-				html += '<td>' + humanize.filesize(disk.get('size')*1024) + '</td>';
-				html += '<td>' + disk.get('parted') + '</td>';
-				html += '<td><input type="checkbox" name="diskname" id="' + diskName + '" value="' + diskName + '" class="diskname"></td>';
-				html += '</tr>';
-			});
-			return new Handlebars.SafeString(html);
+		Handlebars.registerHelper("mathHelper", function(value, options){
+			return parseInt(value) + 1;
 		});
 
+		Handlebars.registerHelper('humanReadableSize', function(diskSize){
+			return humanize.filesize(diskSize * 1024);
+		});
 	}
 });
