@@ -147,35 +147,22 @@ EditNFSExportView = RockstorLayoutView.extend({
 			} 
 			return new Handlebars.SafeString(html);
 		});
-
-		Handlebars.registerHelper('display_sync_choices', function(){
-			var html = '',
-			nfsSyncable = this.nfsExportGroup.get('syncable');
-
-			_.each(this.sync_choices, function(c) {
-				var choiceName = c.name,
-				choiceValue = c.value;
-				html += '<label class="radio-inline">';
-				if (nfsSyncable) {
-					if (nfsSyncable == choiceValue) { 
-						html += '<input type="radio" name="sync_choice" value="' + choiceValue + '" checked="checked">';
-					} else {
-						html += '<input type="radio" name="sync_choice" value="' + choiceValue + '" >';
-					}
-				} else { 
-					if (choiceName == "async") { 
-						html += '<input type="radio" name="sync_choice" value="' + choiceValue + '" checked="checked">';
-					} else {
-						html += '<input type="radio" name="sync_choice" value="' + choiceValue + '">';
-					} 
-				}
-				html += choiceName;
-				html += '</label>';
-			});
-
+		
+		Handlebars.registerHelper('responseType_editView', function(nfsSyncable, choiceValue){
+			var html = '';
+			if (nfsSyncable == choiceValue) {
+				html += 'checked="checked"';
+			} 
 			return new Handlebars.SafeString(html);
-		}); 
+		});
 
+		Handlebars.registerHelper('responseType_addView', function(choiceName){
+			var html = '';
+			if (choiceName == 'async') {
+				html += 'checked="checked"';
+			} 
+			return new Handlebars.SafeString(html);
+		});
 	}
 
 });

@@ -86,7 +86,15 @@
         <div class="form-group">
           <label class="col-xs-4 control-label" for="sync_choice">Response type</label>
           <div class="col-xs-4">
-          {{display_sync_choices}}
+          {{#each sync_choices}}
+                <label class="radio-inline">
+                {{#if ../nfsExportGrp.syncable}}
+                        <input type="radio" name="sync_choice" value="{{this.value}}" {{responseType_editView ../nfsExportGrp.syncable this.value}} >
+                {{else}}          
+                        <input type="radio" name="sync_choice" value="{{this.value}}" {{responseType_addView this.name}}>
+                {{/if}}
+                {{this.name}}</label>
+            {{/each}}
           </div>
         </div>
 
