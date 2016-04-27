@@ -68,6 +68,9 @@ PoolResizeWizardView = WizardView.extend({
 	switch(this.currentPageNum) {
 	case 0:
             this.$('#ph-wizard-buttons').hide();
+            this.model.unset('choice');
+            this.pages = [];
+            this.setCurrentPage();
             break;
 	default:
             this.$('#ph-wizard-buttons').show();
