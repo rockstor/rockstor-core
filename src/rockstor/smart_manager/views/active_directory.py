@@ -156,10 +156,7 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
                 #1. Name resolution check
                 self._resolve_check(config.get('domain'), request)
 
-                #2. ntp check
-                self._ntp_check(request)
-
-                #3. realm discover check?
+                #2. realm discover check?
                 #@todo: phase our realm and just use net?
                 domain = config.get('domain')
                 try:
