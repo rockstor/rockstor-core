@@ -29,16 +29,29 @@ LogsView = RockstorLayoutView.extend({
 	'click .logs-item': 'LogBaskets',
 	'click #live-log': 'LoadServerLogs',
     },
+
     initialize: function() {
+	RockStorSocket.logReader = io.connect('/logmanager', {'secure': true, 'force new connection': true});
 	this.constructor.__super__.initialize.apply(this, arguments);
 	this.template = window.JST.logs_logs;
 	this.initHandlebarHelpers();
     },
 
     render: function() {
+	//this.constructor.__super__.render.apply(this, arguments);
+	//var _this = this;
 	this.$el.html(this.template);
 	this.$('[rel=tooltip]').tooltip({ placement: 'top'});
+	RockStorSocket.addListener(this.getData, this, 'logReader:logcontent');
 	return this;
+    },
+
+    getData: function(data) {
+	$('#system_log').text(data);		
+    },
+
+    cleanup: function() {
+    	RockStorSocket.removeOneListener('logReader');
     },
 
     LogBaskets: function(event) {
@@ -57,21 +70,11 @@ LogsView = RockstorLayoutView.extend({
         var logs_options = $('#logs_options').val();
 	var log_file = $('#logs_options option:selected').text();
 	var read_tool = $('#read_type option:selected').text();
-        var url = '/api/sm/syslogs/';
-        url += read_type + '/' + logs_options;
 	var modal_title = '<b>Selected log:</b>&nbsp; ' + log_file;
 	modal_title += '<br/><b>Reader type:</b>&nbsp;' + read_tool;
 	$("#LogReaderLabel").html(modal_title);  
-        $.ajax({
-         url: url,
-         type: 'GET',
-         dataType: 'text',
-         global: false,
-         success: function(data) {
-                $('#system_log').text(data);
-                _this.ShowLogReader();
-         },
-        });
+        RockStorSocket.logReader.emit('readlog', read_type, logs_options);
+        _this.ShowLogReader();
     },
 
     ShowLogReader: function() {
