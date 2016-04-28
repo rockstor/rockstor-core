@@ -80,8 +80,8 @@ class ApplianceListView(rfc.GenericView):
     @transaction.atomic
     def post(self, request, *args, **kwargs):
         with self._handle_exception(request):
-            ip = request.data['ip']
-            current_appliance = request.data['current_appliance']
+            ip = request.data.get('ip', '')
+            current_appliance = request.data.get('current_appliance')
             # authenticate if not adding current appliance
             if (Appliance.objects.filter(ip=ip).exists()):
                 e_msg = ('The appliance with ip = %s already exists and '

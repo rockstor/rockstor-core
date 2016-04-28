@@ -42,7 +42,7 @@ ServicesView = Backbone.View.extend({
 	    'reload': 'reloaded'
 	};
 	this.smTs = null; // current timestamp of sm service
-	this.configurable_services = ['nis', 'ntpd', 'active-directory', 'ldap', 'snmpd', 'docker', 'smartd', 'smb', 'nut', 'replication', ];
+	this.configurable_services = ['nis', 'ntpd', 'active-directory', 'ldap', 'snmpd', 'docker', 'smartd', 'smb', 'nut', 'replication', 'rockstor'];
 	this.initHandlebarHelpers();
     },
 
@@ -188,16 +188,15 @@ ServicesView = Backbone.View.extend({
 	    var html = '';
 	    if(_this.configurable_services.indexOf(serviceName) > -1) {
 		return true;
-		this.collection.each(function(service) {
-		    var serviceName = service.get('name');
-		});
 	    }
+	    return false;
 	});
 
 	Handlebars.registerHelper('isServiceAD', function(serviceName){
 	    if(serviceName == "active-directory") {
 		return true;
 	    }
+	    return false;
 	});
 
 	Handlebars.registerHelper('getStatus', function(status){

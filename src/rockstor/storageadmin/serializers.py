@@ -20,7 +20,7 @@ from rest_framework import serializers
 from storageadmin.models import (Disk, Pool, Share, Snapshot, NFSExport,
                                  SambaShare, IscsiTarget, Appliance,
                                  SupportCase, DashboardConfig,
-                                 NetworkInterface, User, PoolScrub, Setup,
+                                 NetworkDevice, NetworkConnection, User, PoolScrub, Setup,
                                  NFSExportGroup, SFTP, AdvancedNFSExport,
                                  OauthApp, NetatalkShare, Group, PoolBalance,
                                  SambaCustomConfig, TLSCertificate, RockOn,
@@ -140,9 +140,20 @@ class DashboardConfigSerializer(serializers.ModelSerializer):
         model = DashboardConfig
 
 
-class NetworkInterfaceSerializer(serializers.ModelSerializer):
+class NetworkDeviceSerializer(serializers.ModelSerializer):
+    cname = serializers.CharField()
+
     class Meta:
-        model = NetworkInterface
+        model = NetworkDevice
+
+
+class NetworkConnectionSerializer(serializers.ModelSerializer):
+    ctype = serializers.CharField()
+    team_profile = serializers.CharField()
+    bond_profile = serializers.CharField()
+
+    class Meta:
+        model = NetworkConnection
 
 
 class PoolScrubSerializer(serializers.ModelSerializer):
