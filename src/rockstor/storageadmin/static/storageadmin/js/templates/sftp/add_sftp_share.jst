@@ -12,7 +12,9 @@
           <div class="controls">
 	    <div class="col-sm-8">
               <select class="form-control shorten-input" name="shares" id="shares" size="10" multiple data-placeholder="Select shares">
-		{{sftp_shares_dropdown}}
+        		{{#each shares}}
+        		      <option value="{{this.name}}">{{this.name}}</option>
+        		{{/each}}
               </select>
 	    </div>
           </div>
