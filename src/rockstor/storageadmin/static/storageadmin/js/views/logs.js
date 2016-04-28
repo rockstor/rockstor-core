@@ -38,8 +38,6 @@ LogsView = RockstorLayoutView.extend({
     },
 
     render: function() {
-	//this.constructor.__super__.render.apply(this, arguments);
-	//var _this = this;
 	this.$el.html(this.template);
 	this.$('[rel=tooltip]').tooltip({ placement: 'top'});
 	RockStorSocket.addListener(this.getData, this, 'logReader:logcontent');
@@ -67,7 +65,7 @@ LogsView = RockstorLayoutView.extend({
     LoadServerLogs: function() {
 	var _this = this;
 	var read_type = $('#read_type').val();
-        var logs_options = $('#logs_options').val();
+	var logs_options = $('#logs_options').val();
 	var log_file = $('#logs_options option:selected').text();
 	var read_tool = $('#read_type option:selected').text();
 	var modal_title = '<b>Selected log:</b>&nbsp; ' + log_file;
