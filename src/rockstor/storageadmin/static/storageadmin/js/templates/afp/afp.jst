@@ -26,7 +26,17 @@
           </tr>
         </thead>
         <tbody>
-          {{display_afp_shares}}
+          {{!--display_afp_shares--}}
+          {{#each afpShare}}
+            <tr>
+                <td>{{this.share}}</td>
+                <td>{{this.time_machine}}</td>
+                <td><a href="#afp/edit/{{this.id}}"><i class="glyphicon glyphicon-pencil"></i></a>&nbsp;
+                <a href="#" class="delete-afp-share" data-share="{{this.share}}" data-id="{{this.id}}">
+                <i class="glyphicon glyphicon-trash"></i></a>
+                </td>
+            </tr>
+          {{/each}}
         </tbody>
       </table>
       {{else}}

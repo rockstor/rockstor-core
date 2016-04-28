@@ -78,6 +78,7 @@ AFPView  = RockstorLayoutView.extend({
     }
 
     $(this.el).html(this.template({
+      afpShare: this.collection.toJSON(),
       collection: this.collection,
       collectionNotEmpty : !this.collection.isEmpty(),
       freeShares: this.freeShares,
