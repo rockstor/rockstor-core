@@ -902,7 +902,8 @@ def get_devname(device_name, addPath=False):
 def update_hdparm_service(hdparm_command_list, comment):
     """
     Updates or creates the /etc/systemd/system/rockstor-hdparm.service file for
-    the device_name given.
+    the device_name given. The creation of this file is based on the template
+    file in conf named rockstor-hdparm.service.
     :param hdparm_command_list: list containing the hdparm command elements
     :param comment: test message to follow hdparm command on next line
     :return: None or the result of enabling the service via run_command which is
@@ -913,6 +914,13 @@ def update_hdparm_service(hdparm_command_list, comment):
     do_edit = False
     clear_line_count = 0
     remove_entry = False
+    # Establish our systemd_template, needed when no previous config exists.
+    systemd_template = ('%s/rockstor-hdparm.service' % settings.CONFROOT)
+    # Get the line count of our systemd_template, for use in recognizing when we
+    # have removed all existing config entries.
+    # todo check for this files existence before we try and open it.
+    with open(systemd_template) as ino:
+        systemd_template_line_count = len(ino.readlines())
     # get our by-id device name by extracting the last hdparm list item
     device_name_byid = hdparm_command_list[-1]
     # look four our flag of a -1 value for the -S parameter
@@ -928,7 +936,7 @@ def update_hdparm_service(hdparm_command_list, comment):
         update = True
     else:
         # todo consider checking for template file also.
-        infile = ('%s/rockstor-hdparm.service' % settings.CONFROOT)
+        infile = systemd_template
         update = False
     # Create our proposed temporary file based on the source file plus edits.
     with open(infile) as ino, open(npath, 'w') as outo:
@@ -982,7 +990,7 @@ def update_hdparm_service(hdparm_command_list, comment):
     with open(npath) as ino:
         tempfile_length = len(ino.readlines())
     # Now to disable the service if our systemd file is of minimum length
-    if tempfile_length == 13:
+    if tempfile_length == systemd_template_line_count:
         # our proposed systemd file is the same length as our template and so
         # contains no ExecStart lines so we disable the rockstor-hdparm service.
         logger.info('Disabling the rockstor-hdparm systemd service.')
@@ -998,12 +1006,13 @@ def update_hdparm_service(hdparm_command_list, comment):
     else:
         # Since we know our proposed systemd file has more than template entries
         # it's worth copying over to our destination as we are done updating it.
-        # There is an assumption here that != 13 = greater than. Should be so.
+        # There is an assumption here that != systemd_template_linecount =
+        # greater than. Should be so.
         shutil.move(npath, '/etc/systemd/system/rockstor-hdparm.service')
-    if update is not True and tempfile_length > 13:
-        # This is a fresh systemd instance so enable it but only if there
-        # are any entries beyond the template lines (ie > 13
-        # can't use systemctrl wrapper as then circular dependency
+    if update is not True and tempfile_length > systemd_template_line_count:
+        # This is a fresh systemd instance so enable it but only if our line
+        # count (ie entries) is greater than the template file's line count.
+        # N.B. can't use systemctrl wrapper as then circular dependency ie:-
         # return systemctl('rockstor-hdparm', 'enable')
         logger.info('Enabling the rockstor-hdparm systemd service.')
         out, err, rc = run_command([SYSTEMCTL_BIN, 'enable', 'rockstor-hdparm'])
