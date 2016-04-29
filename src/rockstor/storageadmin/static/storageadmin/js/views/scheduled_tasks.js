@@ -133,7 +133,7 @@ ScheduledTasksView = RockstorLayoutView.extend({
 		Handlebars.registerHelper('display_scheduledTasks_table', function(adminBool){
 			var html = '',
 			_this = this;
-			this.collection.each(function(t) { 
+			this.collection.each(function(t) {
 				var taskId = t.get('id'),
 				taskName = t.get('name'),
 				taskType = t.get('task_type'),
@@ -144,19 +144,20 @@ ScheduledTasksView = RockstorLayoutView.extend({
 				html += '<tr>';
 				html += '<td><a href="#edit-scheduled-task/' + taskId + '">' + taskName + '</a></td>';
 				html += '<td>' + taskType + '&nbsp;';
-				if (taskType == 'snapshot') { 
+				if (taskType == 'snapshot') {
 					html += '(' + JSON.parse(jsonMeta).share + ')';
-				} else { 
+				} else {
 					html += '(' + JSON.parse(jsonMeta).pool + ')';
-				} 
+				}
 				html += '</td>';
 				html += '<td>' + prettyCron.toString(t.get('crontab')) + '</td>';
+				html += '<td>' + render_cronwindow(t.get('crontabwindow')) + '</td>';
 				html += '<td>';
 				if (t.get('enabled')) {
 					html += '<input type="checkbox" disabled="true" checked="true"></input>';
-				} else { 
+				} else {
 					html += '<input type="checkbox" disabled="true"></input>';
-				} 
+				}
 				html += '</td>';
 				html += '<td>';
 				if (taskMapId) {
@@ -164,14 +165,14 @@ ScheduledTasksView = RockstorLayoutView.extend({
 						var task = taskMapId[0],
 						taskState = task.get('state');
 
-						if (taskState != 'scheduled' && taskState != 'pending' && taskState != 'running' && taskState != 'finished') { 
+						if (taskState != 'scheduled' && taskState != 'pending' && taskState != 'running' && taskState != 'finished') {
 							html += '<a href="#scheduled-tasks/' + tId + '/log" class="task-log"><i class="glyphicon glyphicon-warning-sign"></i> ' + taskState + '</a>';
-						} else if (taskState == 'finished') { 
+						} else if (taskState == 'finished') {
 							html += '<a href="#scheduled-tasks/' + tId + '/log" class="task-log">' + moment(task.get('end')).fromNow() + '</a>';
-						} else { 
+						} else {
 							html += '<a href="#scheduled-tasks/' + tId + '/log" class="task-log">' + taskState + '</a>';
 						}
-					} 
+					}
 				}
 				html += '</td>';
 				html += '<td>';
@@ -180,7 +181,7 @@ ScheduledTasksView = RockstorLayoutView.extend({
 
 				html += '</td>';
 				html += '</tr>';
-			}); 
+			});
 			return new Handlebars.SafeString(html);
 		});
 	}
@@ -188,3 +189,32 @@ ScheduledTasksView = RockstorLayoutView.extend({
 
 //Add pagination
 Cocktail.mixin(ScheduledTasksView, PaginationMixin);
+
+//Adding new inline func to render crontabwindow in a nice way and not just like a string
+
+        function render_cronwindow(cwindow) {
+                var rendercwindow;
+                if (!cwindow || cwindow == "*-*-*-*-*-*") {
+                        rendercwindow = 'Run always'; //render always without other checks
+                } else {
+                        var cwindow = cwindow.split('-');
+                        for (var i = 0; i < 4; i++) {
+                                if (cwindow[i] != '*' && cwindow[i].length == 1) { cwindow[i] = '0' + cwindow[i]; }
+                        }
+                        rendercwindow = '<i class="fa fa-clock-o"/>&nbsp;';
+                        if (cwindow[0] != '*') { //if hour start isn't always value the same do min start and hour min stop
+                                rendercwindow += 'from ' + cwindow[0] + ':' + cwindow[1];
+                                rendercwindow += ' to ' + cwindow[2] + ':' + cwindow[3];
+                        } else {
+                                rendercwindow += ' every hour';
+                        }
+                        rendercwindow += '&nbsp;-&nbsp;<i class="fa fa-calendar"/>&nbsp;';
+                        if (cwindow[4] != '*') { //as for hour start, if day start isn't star then day stop too
+                                var dayname = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+                                rendercwindow += dayname[cwindow[4]] + ' to ' + dayname[cwindow[5]];
+                        } else {
+                                rendercwindow += ' on every day';
+                        }
+                }
+                return rendercwindow;
+	}
