@@ -964,18 +964,19 @@ def update_hdparm_service(hdparm_command_list, comment):
                     do_edit = True
             # process all lines with the following
             if line == '\n':  # empty line, or rather just a newline char
-                    clear_line_count += 1
+                clear_line_count += 1
             if clear_line_count == 2 and not edit_done:
-                    # we are looking at our second empty line and haven't yet
-                    # achieved edit_done so do our edit / addition in this case.
-                    do_edit = True
+                # we are looking at our second empty line and haven't yet
+                # achieved edit_done so do our edit / addition in this case.
+                do_edit = True
             if do_edit and not edit_done:
                 # We are due to either add or overwrite our 2 line entry but
                 # only if we are not in remove_entry mode.
                 # When remove_entry = True our writes are skipped which equates
                 # to an removal or in the case of a new addition, nothing added.
                 if not remove_entry:
-                    outo.write('ExecStart=' + ' '.join(hdparm_command_list) + '\n')
+                    outo.write(
+                        'ExecStart=' + ' '.join(hdparm_command_list) + '\n')
                     outo.write('# %s' % comment + '\n')
                 edit_done = True
             # mechanism to skip a line if we have just done an edit
@@ -999,7 +1000,8 @@ def update_hdparm_service(hdparm_command_list, comment):
         # our proposed systemd file is the same length as our template and so
         # contains no ExecStart lines so we disable the rockstor-hdparm service.
         logger.info('Disabling the rockstor-hdparm systemd service.')
-        out, err, rc = run_command([SYSTEMCTL_BIN, 'disable', 'rockstor-hdparm'])
+        out, err, rc = run_command(
+            [SYSTEMCTL_BIN, 'disable', 'rockstor-hdparm'])
         if rc != 0:
             return False
         # and remove our rockstor-hdparm.service file as it's absence indicates
