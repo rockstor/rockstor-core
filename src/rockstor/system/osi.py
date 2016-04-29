@@ -916,9 +916,14 @@ def update_hdparm_service(hdparm_command_list, comment):
     remove_entry = False
     # Establish our systemd_template, needed when no previous config exists.
     systemd_template = ('%s/rockstor-hdparm.service' % settings.CONFROOT)
+    # Check for the existence of this systemd template file.
+    if not os.path.isfile(systemd_template):
+        # We have no template file so log the error and return False.
+        logger.error('Skipping hdparm settings: no rockstor-hdparm.service '
+                     'template file found.')
+        return False
     # Get the line count of our systemd_template, for use in recognizing when we
     # have removed all existing config entries.
-    # todo check for this files existence before we try and open it.
     with open(systemd_template) as ino:
         systemd_template_line_count = len(ino.readlines())
     # get our by-id device name by extracting the last hdparm list item
@@ -935,7 +940,7 @@ def update_hdparm_service(hdparm_command_list, comment):
         infile = '/etc/systemd/system/rockstor-hdparm.service'
         update = True
     else:
-        # todo consider checking for template file also.
+        # We have already checked for the existence of our template file.
         infile = systemd_template
         update = False
     # Create our proposed temporary file based on the source file plus edits.
