@@ -38,7 +38,6 @@ AppliancesView = RockstorLayoutView.extend({
     this.new_appliance_template = window.JST.common_new_appliance;
     this.dependencies.push(this.collection);
     this.collection.on('reset', this.renderApplianceList, this);
-    this.initHandlebarHelpers();
   },
 
   render: function() {
@@ -47,7 +46,7 @@ AppliancesView = RockstorLayoutView.extend({
   },
 
   renderApplianceList: function() {
-    $(this.el).html(this.template({collection: this.collection}));
+    $(this.el).html(this.template({collection: this.collection, appliances: this.collection.toJSON()}));
   },
 
   newAppliance: function() {
@@ -78,45 +77,6 @@ AppliancesView = RockstorLayoutView.extend({
       });
     }
   },
-
-  initHandlebarHelpers: function(){
-    Handlebars.registerHelper('print_appliances_tbody', function() {
-      var html = '';
-       this.collection.each(function(appliance) {
-          var mgmt_port = appliance.get('mgmt_port'),
-              applianceID = appliance.get('id'),
-              applianceIP = appliance.get('ip'),
-              hostName = appliance.get('hostname'),
-              currAppliance = appliance.get('current_appliance');
-          html += '<tr>';
-          html += '<td>' + appliance.get("uuid") + '</td>';
-          html += '<td>';
-          html += '<i class="fa fa-desktop"></i>&nbsp';
-          if (currAppliance) {
-              html += applianceIP + ' <span class="required">*</span>';
-          } else {
-              html += '<a href="https://' + applianceIP + ':' + mgmt_port + '" target="_blank">' + applianceIP + '</a>';
-          }
-          html += '</td>';
-          if (currAppliance) {
-              html += '<td>' + hostName + ' <a href="#edit-hostname/'+ applianceID +'/edit" title="Edit Hostname"><i class="glyphicon glyphicon-pencil"></i></a></td>';
-          } else {
-              html += '<td>' + hostName + '</td>';
-          }
-          
-          html += '<td>' + mgmt_port + '</td>';
-          html += '<td>';
-            if (!currAppliance) {
-              html += '<a class="delete-appliance" id="' + applianceIP + '" data-id="' + applianceID + '" href="#"><i class="glyphicon glyphicon-trash"></i></a>';
-            } else {
-              html += 'N/A';
-            }
-          html += '</td>';
-        html += '</tr>';
-      });
-        return new Handlebars.SafeString(html);
-    });
-  }
 });
 
 // Add pagination

@@ -13,7 +13,33 @@
         </tr>
       </thead>
       <tbody>
-      {{print_appliances_tbody}}
+      {{#each appliances}}
+      <tr>
+        <td>{{this.uuid}}</td>
+        <td><i class="fa fa-desktop"></i>&nbsp;
+        {{#if this.current_appliance}}
+            {{this.ip}} <span class="required">*</span>
+        {{else}}
+            <a href="https://{{this.ip}}:{{this.mgmt_port}}" target="_blank">{{this.ip}}</a>
+        {{/if}}
+        </td>
+        <td>{{this.hostname}}
+        {{#if this.current_appliance}}
+            <a href="#edit-hostname/{{this.id}}/edit" title="Edit Hostname">
+            <i class="glyphicon glyphicon-pencil"></i></a>
+        {{/if}}
+        </td>
+        <td>{{this.mgmt_port}}</td>
+        <td>
+        {{#unless this.current_appliance}}
+            <a class="delete-appliance" id="{{this.ip}}" data-id="{{this.id}}" href="#">
+            <i class="glyphicon glyphicon-trash"></i></a>
+        {{else}}
+            N/A
+        {{/unless}}
+        </td>
+      </tr>
+      {{/each}}
     </table>
     <div>
     {{pagination}}
