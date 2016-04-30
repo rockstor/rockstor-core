@@ -268,15 +268,16 @@ To alert on temparature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
 		var button = _this.$('#submit');
 		if (buttonDisabled(button)) return false;
 		disableButton(button);
+                var data;
 		if (_this.formName == 'snmpd-form') {
 		    var optionsText = _this.$('#options').val();
 		    var entries = [];
 		    if (!_.isNull(optionsText) && optionsText.trim() != '') entries = optionsText.trim().split('\n');
 		    var params = (_this.$('#' + _this.formName).getJSON());
 		    params.aux = entries;
-		    var data = JSON.stringify({config: params});
+		    data = JSON.stringify({config: params});
 		} else {
-		    var data = JSON.stringify({config: _this.$('#' + _this.formName).getJSON()});
+		    data = JSON.stringify({config: _this.$('#' + _this.formName).getJSON()});
 		}
 
 		var jqxhr = $.ajax({
