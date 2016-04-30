@@ -77,6 +77,7 @@ setup(
         'gevent-socketio == 0.3.6',
         'psycogreen == 1.0',
         'psutil == 3.3.0',
+        'chardet == 2.3.0',
     ]
 
 )
