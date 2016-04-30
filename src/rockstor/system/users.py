@@ -27,6 +27,7 @@ import pwd
 import grp
 from shutil import move
 from tempfile import mkstemp
+import chardet
 
 import logging
 logger = logging.getLogger(__name__)
@@ -70,7 +71,9 @@ def get_users(max_wait=90):
         for u in uf[:-1]:
             ufields = u.split(':')
             if (len(ufields) > 3):
-                users[ufields[0]] = (int(ufields[2]), int(ufields[3]))
+                charset = chardet.detect( ufields[0] )
+                uname = ufields[0].decode( charset['encoding'] )
+                users[uname] = (int(ufields[2]), int(ufields[3]))
             if (time.time() - t0 > max_wait):
                 p.terminate()
                 break
@@ -81,12 +84,15 @@ def get_groups(*gids):
     if (len(gids) > 0):
         for g in gids:
             entry = grp.getgrgid(g)
-            groups[entry.gr_name] = entry.gr_gid
+            charset = chardet.detect( entry.gr_name )
+            gr_name = entry.gr_name.decode( charset['encoding'] )
+            groups[gr_name] = entry.gr_gid
     else:
         for g in grp.getgrall():
-            groups[g.gr_name] = g.gr_gid
+            charset = chardet.detect( g.gr_name )
+            gr_name = g.gr_name.decode( charset['encoding'] )
+            groups[gr_name] = g.gr_gid
     return groups
-
 
 def userdel(uname):
     try:
