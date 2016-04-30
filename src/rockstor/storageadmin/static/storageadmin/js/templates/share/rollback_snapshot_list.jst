@@ -9,7 +9,16 @@
       </tr>
     </thead>
     <tbody>
-    {{display_rollbackSnaps_tbody}}
+    {{#each rollbackSnaps}}
+        {{#if this.writable}}
+        <tr>
+            <td><input type="radio" name="snapshot" value="{{this.name}}"></td>
+            <td><i class="glyphicon glyphicon-camera"></i> {{this.name}}</td>
+            <td>{{getDate this.toc}}</td>
+            <td>{{humanReadableSize this.size}}</td>
+        </tr>
+        {{/if}}
+    {{/each}}
     </tbody>
   </table>
   <div>{{pagination}}</div>

@@ -79,6 +79,7 @@ RollbackView = RockstorLayoutView.extend({
 
 	renderSnapshotList: function() {
 		this.$('#ph-snapshot-list').html(this.snapshot_list_template({
+			rollbackSnaps: this.collection.toJSON(),
 			collection: this.collection,
 			collectionNotEmpty: !this.collection.isEmpty(),
 		}));
@@ -116,21 +117,12 @@ RollbackView = RockstorLayoutView.extend({
 	},
 
 	initHandlebarHelpers: function(){
-		Handlebars.registerHelper('display_rollbackSnaps_tbody', function(){
-			var html = '';
-			this.collection.each(function(snapshot, index) {
-				if(snapshot.get("writable")) {
-					html += '<tr>';
-					html += '<td><input type="radio" name="snapshot" value="' + snapshot.get('name') + '"></td>';
-					html += '<td><i class="glyphicon glyphicon-camera"></i> ' + snapshot.get('name') + '</td>';
-					html += '<td>' + moment(snapshot.get("toc")).format(RS_DATE_FORMAT) + '</td>';
-					html += '<td>' + humanize.filesize(snapshot.get('size')*1024) + '</td>';
-					html += '</tr>';
-				}
-			});
-			return new Handlebars.SafeString(html);
+		Handlebars.registerHelper('getDate', function(toc){
+			return moment(toc).format(RS_DATE_FORMAT);
 		});
-
+		Handlebars.registerHelper('humanReadableSize', function(size){
+			return humanize.filesize(size * 1024);
+		});
 	}
 
 });
