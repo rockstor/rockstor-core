@@ -7,10 +7,34 @@
     <th>Mapped representation&nbsp;&nbsp<i class="fa fa-info-circle fa-lg" title="Name/representation of the resource inside the Rock-on. Eg: Shares map to directories, ports map to (possibly different)ports to send traffic to the Rock-on, etc.." rel="tooltip"></i></th>
   </tr>
 </thead>
-
-{{display_volumes}}
+{{#each volumes}}
+    <tr>
+        <td>Share</td>
+        <td>{{this.share_name}}</td>
+        <td>{{this.dest_dir}}</td>
+    </tr>
+{{/each}}
 {{display_newVolumes}}
-{{display_ports}}
-{{display_cc}}
+{{#each ports}}
+    <tr>
+        <td>Port</td>
+        <td>{{this.hostp}}</td>
+        <td>{{this.containerp}}</td>
+    </tr>
+{{/each}}
+{{#each cc}}
+    <tr>
+        <td>Custom</td>
+        <td>{{this.val}}&nbsp;&nbsp<i class="fa fa-info-circle" title="{{this.description}}" rel="tooltip"></i></td>
+        <td>{{this.key}}</td>
+    </tr>
+{{/each}}
+{{#each env}}
+    <tr>
+        <td>Env</td>
+        <td>{{this.val}}&nbsp;&nbsp<i class="fa fa-info-circle" title="{{this.description}}" rel="tooltip"></i></td>
+        <td>{{this.key}}</td>
+    </tr>
+{{/each}}
 
 </table>
