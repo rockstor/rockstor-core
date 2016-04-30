@@ -31,6 +31,7 @@ sys.path[0:0] = [
     join(base, 'eggs/psycogreen-1.0-py2.7.egg'),
     join(base, 'eggs/gevent_socketio-0.3.6-py2.7.egg'),
     join(base, 'eggs/psutil-3.3.0-py2.7-linux-x86_64.egg'),
+    join(base, 'eggs/chardet-2.3.0-py2.7.egg'),
     '/opt/rockstor',
     '/opt/rockstor/src',
 ]
